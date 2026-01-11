@@ -1,0 +1,434 @@
+{
+  "audit_version": "1.0.0",
+  "audit_date": "2025-12-25",
+  "system": "ChefIApp POS Core",
+
+  "frontend_routes": {
+    "merchant_portal": {
+      "baseUrl": "http://localhost:5173",
+      "routes": [
+        {
+          "path": "/",
+          "redirectsTo": "/app/start",
+          "type": "REDIRECT",
+          "guarded": false
+        },
+        {
+          "path": "/app",
+          "component": "EntryPage",
+          "type": "REAL",
+          "dependencies": ["health_check"],
+          "guarded": false,
+          "description": "Unified entry point - email capture + health gating"
+        },
+        {
+          "path": "/app/creating",
+          "component": "CreatingPage",
+          "type": "REAL",
+          "dependencies": ["api/onboarding/start", "health_check"],
+          "guarded": false,
+          "description": "Restaurant creation flow with demo fallback"
+        },
+        {
+          "path": "/start/identity",
+          "component": "IdentityPage",
+          "type": "REAL",
+          "dependencies": [],
+          "guarded": false
+        },
+        {
+          "path": "/start/slug",
+          "component": "SlugPage",
+          "type": "REAL",
+          "dependencies": [],
+          "guarded": false
+        },
+        {
+          "path": "/start/menu",
+          "component": "MenuPage",
+          "type": "REAL",
+          "dependencies": ["internal/wizard/:id/menu"],
+          "guarded": true,
+          "guardMeta": "menuMeta"
+        },
+        {
+          "path": "/start/payments",
+          "component": "PaymentsPage",
+          "type": "REAL",
+          "dependencies": ["internal/wizard/:id/payments/stripe"],
+          "guarded": false
+        },
+        {
+          "path": "/start/publish",
+          "component": "PublishPage",
+          "type": "REAL",
+          "dependencies": ["api/publish", "health_check"],
+          "guarded": true,
+          "guardMeta": "publishMeta"
+        },
+        {
+          "path": "/start/success",
+          "component": "SuccessPage",
+          "type": "REAL",
+          "dependencies": [],
+          "guarded": false
+        },
+        {
+          "path": "/app/auth",
+          "component": "AuthPage",
+          "type": "REAL",
+          "dependencies": ["api/auth/request-magic-link", "api/auth/verify-magic-link"],
+          "guarded": false
+        },
+        {
+          "path": "/app/bootstrap",
+          "component": "BootstrapPage",
+          "type": "REAL",
+          "dependencies": [],
+          "guarded": false
+        },
+        {
+          "path": "/app/preview",
+          "component": "PreviewPage",
+          "type": "PREVIEW",
+          "dependencies": [],
+          "guarded": false
+        },
+        {
+          "path": "/app/setup/*",
+          "component": "SetupLayout",
+          "type": "REAL",
+          "dependencies": ["internal/wizard/:id/*"],
+          "guarded": false,
+          "children": ["identity", "menu", "payments", "design", "publish"]
+        },
+        {
+          "path": "/app/tpv-ready",
+          "component": "TPVReadyPage",
+          "type": "REAL",
+          "dependencies": ["health_check", "internal/wizard/:id/state"],
+          "guarded": true,
+          "guardMeta": "tpvMeta"
+        },
+        {
+          "path": "/app/tpv",
+          "component": "TPV",
+          "type": "REAL",
+          "dependencies": ["api/orders", "event_store"],
+          "guarded": false,
+          "description": "Point of Sale terminal"
+        },
+        {
+          "path": "/app/staff/worker",
+          "component": "AppStaffPage(role=worker)",
+          "type": "PREVIEW",
+          "dependencies": ["api/staff/tasks"],
+          "guarded": false,
+          "previewBanner": true
+        },
+        {
+          "path": "/app/staff/manager",
+          "component": "AppStaffPage(role=manager)",
+          "type": "PREVIEW",
+          "dependencies": ["api/staff/tasks"],
+          "guarded": false,
+          "previewBanner": true
+        },
+        {
+          "path": "/app/staff/owner",
+          "component": "AppStaffPage(role=owner)",
+          "type": "PREVIEW",
+          "dependencies": ["api/staff/tasks"],
+          "guarded": false,
+          "previewBanner": true
+        },
+        {
+          "path": "/terms",
+          "component": "InlineTermsPage",
+          "type": "STATIC",
+          "dependencies": [],
+          "guarded": false
+        },
+        {
+          "path": "/privacy",
+          "component": "InlinePrivacyPage",
+          "type": "STATIC",
+          "dependencies": [],
+          "guarded": false
+        },
+        {
+          "path": "/app/demo",
+          "component": "App (legacy)",
+          "type": "DEMO",
+          "dependencies": [],
+          "guarded": false
+        }
+      ]
+    },
+    "public_page": {
+      "baseUrl": "dynamically loaded via /public/:slug",
+      "routes": [
+        {
+          "path": "/public/:slug",
+          "component": "PublicPages",
+          "type": "REAL",
+          "dependencies": ["api/public/:slug", "api/public/:slug/orders"],
+          "views": ["home", "menu", "checkout", "success", "contact"]
+        }
+      ]
+    }
+  },
+
+  "backend_endpoints": {
+    "baseUrl": "http://localhost:4320",
+    "endpoints": [
+      {
+        "path": "/health",
+        "method": "GET",
+        "type": "HEALTH",
+        "description": "System health check"
+      },
+      {
+        "path": "/api/health",
+        "method": "GET",
+        "type": "HEALTH",
+        "alias": "/health"
+      },
+      {
+        "path": "/api/auth/request-magic-link",
+        "method": "POST",
+        "type": "AUTH",
+        "dependencies": ["DB: magic_link_tokens"]
+      },
+      {
+        "path": "/api/auth/verify-magic-link",
+        "method": "GET",
+        "type": "AUTH",
+        "dependencies": ["DB: magic_link_tokens"]
+      },
+      {
+        "path": "/api/onboarding/start",
+        "method": "POST",
+        "type": "ONBOARDING",
+        "dependencies": ["DB: restaurant_web_profiles"]
+      },
+      {
+        "path": "/api/onboarding/confirm",
+        "method": "POST",
+        "type": "ONBOARDING",
+        "dependencies": ["DB: restaurant_web_profiles"]
+      },
+      {
+        "path": "/internal/wizard/:id/state",
+        "method": "GET",
+        "type": "WIZARD",
+        "dependencies": ["DB: restaurant_web_profiles"]
+      },
+      {
+        "path": "/internal/wizard/:id/identity",
+        "method": "POST/PATCH",
+        "type": "WIZARD",
+        "dependencies": ["DB: restaurant_web_profiles"]
+      },
+      {
+        "path": "/internal/wizard/:id/menu/categories",
+        "method": "POST",
+        "type": "WIZARD",
+        "dependencies": ["DB: menu_categories"]
+      },
+      {
+        "path": "/internal/wizard/:id/menu/items",
+        "method": "POST",
+        "type": "WIZARD",
+        "dependencies": ["DB: menu_items"]
+      },
+      {
+        "path": "/internal/wizard/:id/menu/import",
+        "method": "POST",
+        "type": "WIZARD",
+        "dependencies": ["DB: menu_categories, menu_items"]
+      },
+      {
+        "path": "/internal/wizard/:id/payments/stripe",
+        "method": "POST",
+        "type": "PAYMENTS",
+        "dependencies": ["Stripe API", "DB: merchant_gateway_credentials"]
+      },
+      {
+        "path": "/internal/wizard/:id/payments/stripe/status",
+        "method": "GET",
+        "type": "PAYMENTS",
+        "dependencies": ["DB: merchant_gateway_credentials"]
+      },
+      {
+        "path": "/internal/wizard/:id/design",
+        "method": "POST/PATCH",
+        "type": "WIZARD",
+        "dependencies": ["DB: restaurant_web_profiles"]
+      },
+      {
+        "path": "/internal/wizard/:id/publish",
+        "method": "POST",
+        "type": "WIZARD",
+        "dependencies": ["DB: restaurant_web_profiles"]
+      },
+      {
+        "path": "/public/:slug",
+        "method": "GET",
+        "type": "PUBLIC",
+        "dependencies": ["DB: restaurant_web_profiles, menu_categories, menu_items"]
+      },
+      {
+        "path": "/public/:slug/menu",
+        "method": "GET",
+        "type": "PUBLIC",
+        "dependencies": ["DB: menu_categories, menu_items"]
+      },
+      {
+        "path": "/public/:slug/orders",
+        "method": "POST",
+        "type": "ORDERS",
+        "dependencies": ["DB: event_store", "Stripe API"],
+        "critical": true
+      },
+      {
+        "path": "/api/orders",
+        "method": "POST",
+        "type": "ORDERS",
+        "dependencies": ["DB: event_store"],
+        "critical": true
+      },
+      {
+        "path": "/api/orders/:id",
+        "method": "PATCH",
+        "type": "ORDERS",
+        "dependencies": ["DB: event_store"],
+        "critical": true
+      },
+      {
+        "path": "/api/orders/:id/close",
+        "method": "POST",
+        "type": "ORDERS",
+        "dependencies": ["DB: event_store"],
+        "critical": true
+      },
+      {
+        "path": "/api/staff/tasks",
+        "method": "GET",
+        "type": "STAFF",
+        "dependencies": ["DB: staff_tasks"]
+      },
+      {
+        "path": "/webhooks/payments/:restaurantId",
+        "method": "POST",
+        "type": "WEBHOOKS",
+        "dependencies": ["Stripe Webhooks", "DB: event_store"],
+        "critical": true
+      },
+      {
+        "path": "/internal/kitchen/feed",
+        "method": "GET",
+        "type": "INTERNAL",
+        "dependencies": ["DB: event_store"]
+      },
+      {
+        "path": "/internal/preview/web-pages",
+        "method": "GET",
+        "type": "PREVIEW",
+        "dependencies": []
+      },
+      {
+        "path": "/internal/preview/web-page/:level",
+        "method": "GET",
+        "type": "PREVIEW",
+        "dependencies": []
+      }
+    ]
+  },
+
+  "database_tables": [
+    "event_store",
+    "restaurant_web_profiles",
+    "menu_categories",
+    "menu_items",
+    "merchant_gateway_credentials",
+    "magic_link_tokens",
+    "audit_log",
+    "staff_tasks",
+    "sessions"
+  ],
+
+  "external_dependencies": [
+    {
+      "name": "Stripe",
+      "type": "PAYMENT_GATEWAY",
+      "endpoints": ["createPaymentIntent", "confirmPayment", "webhooks"],
+      "critical": true
+    },
+    {
+      "name": "PostgreSQL",
+      "type": "DATABASE",
+      "critical": true
+    }
+  ],
+
+  "critical_flows": [
+    {
+      "id": "ONBOARDING_COMPLETE",
+      "steps": [
+        "/app → email capture",
+        "/app/creating → restaurant creation",
+        "/start/identity → name setup",
+        "/start/slug → URL setup",
+        "/start/menu → menu creation",
+        "/start/payments → Stripe connect",
+        "/start/publish → go live"
+      ]
+    },
+    {
+      "id": "PUBLIC_ORDER",
+      "steps": [
+        "/public/:slug → view restaurant",
+        "Add to cart",
+        "/checkout → submit order",
+        "Stripe payment",
+        "Order confirmation"
+      ]
+    },
+    {
+      "id": "TPV_OPERATIONS",
+      "steps": [
+        "/app/tpv → order entry",
+        "Order status updates",
+        "Payment collection",
+        "Order close"
+      ]
+    },
+    {
+      "id": "OFFLINE_RECONCILIATION",
+      "steps": [
+        "Offline order creation",
+        "Queue to localStorage",
+        "Online detection",
+        "Sync to backend",
+        "State reconciliation"
+      ]
+    }
+  ],
+
+  "known_preview_components": [
+    {
+      "component": "AppStaff",
+      "reason": "Uses mock data, explicitly marked PREVIEW/DEMO",
+      "banner": "PreviewBanner component displayed"
+    },
+    {
+      "component": "OwnerView in AppStaff",
+      "reason": "Mock data with opacity:0.6 and grayscale filter"
+    },
+    {
+      "component": "ManagerView in AppStaff",
+      "reason": "Mock data with opacity:0.6 and grayscale filter"
+    }
+  ]
+}

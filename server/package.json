@@ -1,0 +1,24 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:load": "k6 run ../scripts/load-test.js",
+    "test:load:prod": "BASE_URL=https://api.example.com k6 run ../scripts/load-test.js",
+    "test:load:report": "k6 run -o html=../load-test-results.html ../scripts/load-test.js",
+    "check:health": "curl http://localhost:4320/health | jq .",
+    "check:indexes": "psql -c \"SELECT * FROM pg_indexes WHERE tablename IN ('orders', 'restaurants', 'event_store', 'menu_items');\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
+    "@aws-sdk/protocol-http": "^3.370.0",
+    "@aws-sdk/signature-v4": "^3.370.0",
+    "@aws-sdk/types": "^3.957.0",
+    "dotenv": "^17.2.3"
+  }
+}

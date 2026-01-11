@@ -1,0 +1,30 @@
+{
+  "country": "United Kingdom",
+  "iso": "UK",
+  "languages": ["en"],
+  "currency": "GBP",
+  "labor_laws": {
+    "max_hours_per_day": 8,
+    "max_hours_per_week": 48,
+    "mandatory_break_after": 6,
+    "night_shift_premium": 20,
+    "overtime_rules": "normal",
+    "min_rest_between_shifts_hours": 11
+  },
+  "data_protection": {
+    "gdpr": true,
+    "photo_restrictions": "explicit_consent",
+    "data_retention_max_years": 6
+  },
+  "hygiene_regulations": {
+    "haccp_required": true,
+    "temperature_logs_required": true,
+    "food_handler_certification_required": true,
+    "retention_years": 6
+  },
+  "penalties": {
+    "privacy_violations": "ICO fines vary",
+    "food_safety_violations": "up to £20,000 per offense",
+    "labor_violations": "varies"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "country": "Brazil",
+  "iso": "BR",
+  "languages": ["pt"],
+  "currency": "BRL",
+  "labor_laws": {
+    "max_hours_per_day": 8,
+    "max_hours_per_week": 44,
+    "mandatory_break_after": 6,
+    "night_shift_premium": 20,
+    "overtime_rules": "normal",
+    "min_rest_between_shifts_hours": 11
+  },
+  "data_protection": {
+    "lgpd": true,
+    "photo_restrictions": "explicit_consent",
+    "data_retention_max_years": 5
+  },
+  "hygiene_regulations": {
+    "haccp_required": true,
+    "temperature_logs_required": true,
+    "food_handler_certification_required": true,
+    "retention_years": 5
+  },
+  "penalties": {
+    "privacy_violations": "LGPD fines vary",
+    "food_safety_violations": "varies",
+    "labor_violations": "varies"
+  }
+}

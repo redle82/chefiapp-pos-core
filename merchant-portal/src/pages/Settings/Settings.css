@@ -1,0 +1,145 @@
+:root {
+  /* rely on design-system tokens; these are fallbacks */
+  --gap-2: 8px;
+  --gap-3: 12px;
+  --gap-4: 16px;
+  --gap-6: 24px;
+  --radius-2: 8px;
+  --shadow-2: 0 6px 20px rgba(0,0,0,0.06);
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-6);
+  padding: var(--gap-6);
+}
+
+.settings__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settings__title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.settings__subtitle {
+  color: rgba(0,0,0,0.6);
+  font-size: 13px;
+}
+
+.settings__badges {
+  display: flex;
+  gap: var(--gap-3);
+}
+
+.settings__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3);
+}
+
+.settings__section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.settings__section-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.settings__section-hint {
+  color: rgba(0,0,0,0.5);
+  font-size: 12px;
+}
+
+.settings__form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap-4);
+}
+
+.settings__form-grid--3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.settings__form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2);
+}
+
+.settings__form-field--full {
+  grid-column: 1 / -1;
+}
+
+.settings__label {
+  font-size: 12px;
+  color: rgba(0,0,0,0.65);
+}
+
+.settings__input,
+.settings__select {
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: var(--radius-2);
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.settings__toggle-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+}
+
+.settings__toggle-label {
+  font-size: 13px;
+}
+
+.settings__inline-notes {
+  margin-top: var(--gap-3);
+}
+
+.settings__certs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3);
+}
+
+.settings__cert-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px dashed rgba(0,0,0,0.1);
+  border-radius: var(--radius-2);
+}
+
+.settings__cert-info {
+  display: flex;
+  gap: var(--gap-3);
+  align-items: center;
+}
+
+.settings__cert-name { font-weight: 600; }
+.settings__cert-exp { color: rgba(0,0,0,0.6); font-size: 12px; }
+
+.settings__cert-actions {
+  margin-top: var(--gap-3);
+  display: flex;
+  gap: var(--gap-3);
+}
+
+@media (max-width: 860px) {
+  .settings__form-grid {
+    grid-template-columns: 1fr;
+  }
+  .settings__form-grid--3 {
+    grid-template-columns: 1fr;
+  }
+}

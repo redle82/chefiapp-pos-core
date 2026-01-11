@@ -1,0 +1,705 @@
+openapi: 3.0.3
+info:
+  title: ChefIApp POS CORE API
+  version: 1.0.0
+  description: |
+    # CORE STABLE v1.0 - Operational API
+    
+    This is the **frozen, stable** API contract for the ChefIApp POS CORE.
+    
+    ## Scope
+    
+    This specification covers **ONLY** the CORE operational functionality:
+    - Health & System Status
+    - Session Management (Magic Link Authentication)
+    - Order Lifecycle (Create, Read, Update, Lock, Close)
+    - State Machine (OPEN → LOCKED → CLOSED)
+    
+    ## Explicitly NOT Included
+    
+    The following are **NOT** part of CORE STABLE v1.0:
+    - ❌ Payment Processing (`/api/payment-intent`, Stripe integration)
+    - ❌ Billing (`/api/billing/*`, subscription management)
+    - ❌ Onboarding (`/api/onboarding/*`, wizard flows)
+    - ❌ Internal endpoints (`/internal/*`, admin operations)
+    - ❌ Public web pages (`/public/*`, customer-facing pages)
+    
+    These are Phase 2+ features and will be documented separately.
+    
+    ## Architectural Principles
+    
+    1. **Canonical HTTP Contracts**: Semantic endpoints, correct HTTP verbs
+    2. **State Machine Enforcement**: Explicit state transitions (OPEN → LOCKED → CLOSED)
+    3. **Financial Immutability**: LOCKED/CLOSED orders cannot be modified
+    4. **Ontological Gates**: Restaurant ID required for all order operations
+    5. **No Magic Actions**: No action-based PATCH operations
+    
+  contact:
+    name: ChefIApp Core Team
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:4320
+    description: Local development server
+  - url: https://api.chefiapp.com
+    description: Production server (when available)
+
+tags:
+  - name: Health
+    description: System health and status endpoints
+  - name: Authentication
+    description: Session management via magic link
+  - name: Orders
+    description: Order lifecycle management
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: System health check
+      description: |
+        Returns the operational status of the system and its critical dependencies.
+        This endpoint does not require authentication.
+      operationId: getHealth
+      responses:
+        '200':
+          description: System is operational
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: System is degraded (database unavailable)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/health:
+    get:
+      tags:
+        - Health
+      summary: Alternative health check
+      description: |
+        Alternative health check endpoint with same semantics as `/health`.
+        This endpoint does not require authentication.
+      operationId: getApiHealth
+      responses:
+        '200':
+          description: System is operational
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: System is degraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/auth/request-magic-link:
+    post:
+      tags:
+        - Authentication
+      summary: Request magic link for authentication
+      description: |
+        Initiates the magic link authentication flow.
+        Returns a token that can be used to verify the session.
+        
+        **Note:** In production, the magic link would be sent via email.
+        In development, the token is returned directly.
+      operationId: requestMagicLink
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MagicLinkRequest'
+      responses:
+        '200':
+          description: Magic link token generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MagicLinkResponse'
+        '400':
+          description: Invalid request (e.g., invalid email format)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/verify-magic-link:
+    get:
+      tags:
+        - Authentication
+      summary: Verify magic link token
+      description: |
+        Verifies a magic link token and returns a session token.
+        The session token must be included in subsequent requests via the `x-chefiapp-token` header.
+      operationId: verifyMagicLink
+      parameters:
+        - name: token
+          in: query
+          required: true
+          description: Magic link token from request-magic-link
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token verified, session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '400':
+          description: Token parameter missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Token invalid or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/orders:
+    post:
+      tags:
+        - Orders
+      summary: Create a new order
+      description: |
+        Creates a new order in OPEN state.
+        
+        **Requirements:**
+        - Session token required (via `x-chefiapp-token` header)
+        - Restaurant ID must exist (either provided or via `WEB_MODULE_RESTAURANT_ID` env var)
+        
+        **State:** Order is created in `OPEN` state, allowing modifications.
+      operationId: createOrder
+      security:
+        - SessionToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '401':
+          description: Session token required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error (e.g., restaurant_id constraint violation)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/orders/{orderId}:
+    get:
+      tags:
+        - Orders
+      summary: Get order by ID
+      description: |
+        Retrieves an order by its ID.
+        
+        **Requirements:**
+        - Session token required
+        - Order must exist
+        
+        Returns the complete order state including current items and total.
+      operationId: getOrder
+      security:
+        - SessionToken: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '401':
+          description: Session token required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      tags:
+        - Orders
+      summary: Update order items
+      description: |
+        Updates items in an OPEN order.
+        
+        **State Restrictions:**
+        - Only OPEN orders can be modified
+        - LOCKED orders: Returns 400 with `ORDER_IMMUTABLE` error
+        - CLOSED orders: Returns 400 with `ORDER_IMMUTABLE` error
+        
+        **Note:** This endpoint does NOT support action-based operations (e.g., `{"action": "lock"}`).
+        Use the dedicated `/api/orders/{orderId}/lock` endpoint to lock an order.
+      operationId: updateOrder
+      security:
+        - SessionToken: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderRequest'
+      responses:
+        '200':
+          description: Order updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Invalid request (e.g., order is LOCKED/CLOSED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Session token required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/orders/{orderId}/lock:
+    post:
+      tags:
+        - Orders
+      summary: Lock an order
+      description: |
+        Locks an order, transitioning it from OPEN to LOCKED state.
+        
+        **State Transition:** OPEN → LOCKED
+        
+        **Behavior:**
+        - Calculates `total_cents` from items: `sum(quantity * price_snapshot_cents)`
+        - Sets order state to LOCKED
+        - Makes order immutable (no further modifications allowed)
+        - Returns order with calculated total
+        
+        **Requirements:**
+        - Order must be in OPEN state
+        - Session token required
+        
+        **Note:** This is a dedicated endpoint. Do NOT use PATCH with `{"action": "lock"}`.
+      operationId: lockOrder
+      security:
+        - SessionToken: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order locked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Invalid state transition (e.g., order already LOCKED/CLOSED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Session token required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/orders/{orderId}/close:
+    post:
+      tags:
+        - Orders
+      summary: Close an order
+      description: |
+        Closes an order, transitioning it from LOCKED to CLOSED state.
+        
+        **State Transition:** LOCKED → CLOSED
+        
+        **Behavior:**
+        - Sets order state to CLOSED
+        - Makes order fully immutable (terminal state)
+        - Returns order with CLOSED state
+        
+        **Requirements:**
+        - Order must be in OPEN or LOCKED state
+        - Session token required
+        
+        **Note:** Orders can be closed directly from OPEN state (skips LOCKED).
+      operationId: closeOrder
+      security:
+        - SessionToken: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order closed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Invalid state (e.g., order already CLOSED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Session token required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    SessionToken:
+      type: apiKey
+      in: header
+      name: x-chefiapp-token
+      description: |
+        Session token obtained from `/api/auth/verify-magic-link`.
+        Required for all order operations.
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - version
+        - services
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+          description: Overall system status
+        timestamp:
+          type: string
+          format: date-time
+          description: Current server timestamp
+        version:
+          type: string
+          description: API version
+          example: "1.0.0"
+        services:
+          type: object
+          required:
+            - database
+            - api
+          properties:
+            database:
+              type: string
+              enum: [up, down]
+              description: Database connectivity status
+            api:
+              type: string
+              enum: [up, down]
+              description: API service status
+        reason:
+          type: string
+          description: Reason for degraded status (if applicable)
+          example: "DB_UNAVAILABLE"
+      example:
+        status: ok
+        timestamp: "2025-12-27T00:00:00.000Z"
+        version: "1.0.0"
+        services:
+          database: up
+          api: up
+
+    MagicLinkRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+      example:
+        email: "user@example.com"
+
+    MagicLinkResponse:
+      type: object
+      required:
+        - ok
+        - dev_token
+        - dev_link
+      properties:
+        ok:
+          type: boolean
+          description: Request successful
+        dev_token:
+          type: string
+          description: |
+            Magic link token (development only).
+            In production, this would be sent via email.
+        dev_link:
+          type: string
+          format: uri
+          description: |
+            Complete magic link URL (development only).
+            In production, this would be sent via email.
+      example:
+        ok: true
+        dev_token: "abc123..."
+        dev_link: "http://localhost:4320/api/auth/verify-magic-link?token=abc123..."
+
+    SessionResponse:
+      type: object
+      required:
+        - ok
+        - email
+        - session_token
+      properties:
+        ok:
+          type: boolean
+          description: Verification successful
+        email:
+          type: string
+          format: email
+          description: Verified email address
+        restaurant_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated restaurant ID (if available)
+        session_token:
+          type: string
+          description: |
+            Session token to use in `x-chefiapp-token` header.
+            This is the same token from the magic link.
+      example:
+        ok: true
+        email: "user@example.com"
+        restaurant_id: "00000000-0000-0000-0000-000000000001"
+        session_token: "abc123..."
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - tableId
+      properties:
+        tableId:
+          type: string
+          description: Table identifier
+          example: "table-1"
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          description: Initial order items (optional)
+          default: []
+        restaurantId:
+          type: string
+          format: uuid
+          description: |
+            Restaurant ID (optional).
+            If not provided, uses `WEB_MODULE_RESTAURANT_ID` from environment.
+        companyId:
+          type: string
+          format: uuid
+          description: |
+            Company ID (optional).
+            If not provided, resolved from restaurant_id.
+      example:
+        tableId: "table-1"
+        items: []
+
+    UpdateOrderRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          description: |
+            New items array (replaces existing items).
+            Order must be in OPEN state.
+      example:
+        items:
+          - item_id: "item-1"
+            quantity: 2
+            price_snapshot_cents: 1500
+            name: "Burger"
+
+    OrderItem:
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: Item identifier
+        product_id:
+          type: string
+          description: Product identifier (alternative to item_id)
+        menu_item_id:
+          type: string
+          description: Menu item identifier (alternative to item_id)
+        quantity:
+          type: integer
+          minimum: 1
+          description: Item quantity
+        price_snapshot_cents:
+          type: integer
+          minimum: 0
+          description: Price per unit in cents (snapshot at time of order)
+        price_cents:
+          type: integer
+          minimum: 0
+          description: Price per unit in cents (alternative to price_snapshot_cents)
+        name:
+          type: string
+          description: Item name (optional, for display)
+      required:
+        - quantity
+        - price_snapshot_cents
+
+    OrderResponse:
+      type: object
+      required:
+        - order_id
+        - state
+        - table_id
+        - items
+        - total_cents
+      properties:
+        order_id:
+          type: string
+          format: uuid
+          description: Unique order identifier
+        state:
+          type: string
+          enum: [OPEN, LOCKED, CLOSED]
+          description: |
+            Current order state.
+            - OPEN: Order can be modified
+            - LOCKED: Order is locked, total calculated, immutable
+            - CLOSED: Order is closed, terminal state, fully immutable
+        table_id:
+          type: string
+          description: Table identifier
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          description: Order items
+        total_cents:
+          type: integer
+          minimum: 0
+          description: |
+            Total order amount in cents.
+            - OPEN: 0 (not calculated yet)
+            - LOCKED: Calculated as `sum(quantity * price_snapshot_cents)`
+            - CLOSED: Same as LOCKED (immutable)
+      example:
+        order_id: "550e8400-e29b-41d4-a716-446655440000"
+        state: "OPEN"
+        table_id: "table-1"
+        items:
+          - item_id: "item-1"
+            quantity: 2
+            price_snapshot_cents: 1500
+            name: "Burger"
+        total_cents: 0
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error code
+          enum:
+            - SESSION_REQUIRED
+            - ORDER_NOT_FOUND
+            - ORDER_IMMUTABLE
+            - INVALID_STATE_TRANSITION
+            - ORDER_ALREADY_CLOSED
+            - TOKEN_REQUIRED
+            - TOKEN_INVALID_OR_EXPIRED
+            - INVALID_REQUEST
+            - INTERNAL_ERROR
+        message:
+          type: string
+          description: Human-readable error message
+      example:
+        error: "ORDER_IMMUTABLE"
+        message: "Cannot modify order in locked state"
+

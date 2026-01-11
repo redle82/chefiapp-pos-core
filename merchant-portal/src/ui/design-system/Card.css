@@ -1,0 +1,52 @@
+/* Card Styles - Sovereign Design System */
+
+.card {
+  background-color: var(--color-surface-base, #ffffff);
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid transparent;
+  transition: all 200ms ease;
+  overflow: hidden;
+  /* Contains children */
+}
+
+/* Glass Surface (Default for layouts) */
+.card--glass {
+  background-color: rgba(255, 255, 255, 0.05);
+  /* Slight tint */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  /* Premium feel */
+}
+
+/* Elevated (Floats above glass) */
+.card--elevated {
+  background-color: #1a1a1c;
+  /* Solid dark base */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  /* Depth */
+}
+
+/* Padding Variants */
+.card--padding-sm {
+  padding: 12px;
+}
+
+.card--padding-md {
+  padding: 24px;
+}
+
+.card--padding-lg {
+  padding: 32px;
+}
+
+/* Features */
+.card--clickable {
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  }
+}

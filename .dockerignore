@@ -1,0 +1,58 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Build outputs
+dist
+coverage
+*.tsbuildinfo
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Git and IDE
+.git
+.gitignore
+.vscode
+.idea
+.claude
+.DS_Store
+
+# Documentation and markdown files
+*.md
+!README.md
+docs
+:blueprint
+
+# Test artifacts
+tests
+audit-reports
+*.log
+*.txt
+audit-*.js
+onboard-*.js
+step2-*.js
+massive_results.log
+*-output.txt
+*-results.txt
+*-results.json
+*-check.txt
+*-record.json
+
+# SQL files (not needed in container - migrations handled separately)
+*.sql
+
+# Temporary files
+tmp
+temp
+*.tmp
+*.swp
+*.swo
+*~
+
+# OS files
+Thumbs.db

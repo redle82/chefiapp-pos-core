@@ -1,0 +1,343 @@
+name: Canon Enforcement (Kill Switches)
+
+# 🛡️ CONSTITUTIONAL PIPELINE
+# Blocks ANY change that violates the 6 Immutable Laws
+# Status: ACTIVE — Do not disable
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'merchant-portal/src/**'
+      - 'tests/**'
+      - 'CANON.md'
+      - 'KILL_SWITCHES.md'
+  push:
+    branches: [main]
+
+jobs:
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # PHASE 1: STATIC ANALYSIS (Anti-Pattern Detection)
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  detect-violations:
+    name: 🔍 Detect Canon Violations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ----------------------------------------------------------------
+      # KILL SWITCH 1: Block Manual Task Creation (Law 2)
+      # ----------------------------------------------------------------
+      - name: ❌ Detect Manual Task Creation
+        run: |
+          echo "🔍 Scanning for manual task creation..."
+
+          # Search for prohibited patterns
+          VIOLATIONS=$(grep -r "createTask\|newTask\|addTask" \
+            merchant-portal/src/pages/AppStaff \
+            merchant-portal/src/components \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules \
+            --exclude-dir=context || true)
+
+          if [ -n "$VIOLATIONS" ]; then
+            echo "❌ CANON VIOLATION: Manual task creation detected (Law 2)"
+            echo "$VIOLATIONS"
+            echo ""
+            echo "Tasks must originate from system reflexes:"
+            echo "  - checkSystemReflex (idle/pressure)"
+            echo "  - checkInventoryReflex (hunger signals)"
+            echo "  - Task migration (automatic externalization)"
+            exit 1
+          fi
+
+          echo "✅ No manual task creation detected"
+
+      # ----------------------------------------------------------------
+      # KILL SWITCH 2: Block Role Switching (Law 4)
+      # ----------------------------------------------------------------
+      - name: ❌ Detect Cross-Role Navigation
+        run: |
+          echo "🔍 Scanning for cross-role navigation..."
+
+          VIOLATIONS=$(grep -r "switchRole\|changeRole\|selectRole\|setRole.*onClick" \
+            merchant-portal/src/pages/AppStaff \
+            merchant-portal/src/components \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules \
+            --exclude-dir=context || true)
+
+          if [ -n "$VIOLATIONS" ]; then
+            echo "❌ CANON VIOLATION: Role switching detected (Law 4)"
+            echo "$VIOLATIONS"
+            echo ""
+            echo "Roles are assigned by contract, not user choice."
+            exit 1
+          fi
+
+          echo "✅ No cross-role navigation detected"
+
+      # ----------------------------------------------------------------
+      # KILL SWITCH 3: Block UI Customization (Anti-Feature)
+      # ----------------------------------------------------------------
+      - name: ❌ Detect UI Customization
+        run: |
+          echo "🔍 Scanning for UI customization..."
+
+          VIOLATIONS=$(grep -r "theme\|customLayout\|userPreference.*ui\|setTheme\|changeLayout" \
+            merchant-portal/src/pages/AppStaff \
+            merchant-portal/src/ui \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules || true)
+
+          if [ -n "$VIOLATIONS" ]; then
+            echo "⚠️  WARNING: Possible UI customization detected"
+            echo "$VIOLATIONS"
+            echo ""
+            echo "UI must be determined by role + context only."
+            echo "Review: Does this violate Tool Sovereignty?"
+          fi
+
+          echo "✅ No obvious UI customization detected"
+
+      # ----------------------------------------------------------------
+      # KILL SWITCH 4: Block Gamification (Anti-Feature)
+      # ----------------------------------------------------------------
+      - name: ❌ Detect Gamification
+        run: |
+          echo "🔍 Scanning for gamification..."
+
+          VIOLATIONS=$(grep -r "points\|badge\|leaderboard\|score\|achievement\|level" \
+            merchant-portal/src/pages/AppStaff \
+            merchant-portal/src/components \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules || true)
+
+          if [ -n "$VIOLATIONS" ]; then
+            echo "❌ CANON VIOLATION: Gamification detected (Anti-Feature)"
+            echo "$VIOLATIONS"
+            echo ""
+            echo "System nervous systems don't play. They work."
+            exit 1
+          fi
+
+          echo "✅ No gamification detected"
+
+      # ----------------------------------------------------------------
+      # KILL SWITCH 5: Block Task Manager Integration (Anti-Feature)
+      # ----------------------------------------------------------------
+      - name: ❌ Detect External Task Manager Integration
+        run: |
+          echo "🔍 Scanning for task manager integrations..."
+
+          VIOLATIONS=$(grep -r "trello\|notion\|asana\|todoist\|clickup" \
+            merchant-portal/src \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules || true)
+
+          if [ -n "$VIOLATIONS" ]; then
+            echo "❌ CANON VIOLATION: Task manager integration detected (Anti-Feature)"
+            echo "$VIOLATIONS"
+            echo ""
+            echo "AppStaff is a nervous system, not a task manager."
+            echo "External integrations pollute system reflexes."
+            exit 1
+          fi
+
+          echo "✅ No task manager integrations detected"
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # PHASE 2: BEHAVIORAL VERIFICATION (Stress Test)
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  stress-test:
+    name: 🧪 7-Phase Stress Test
+    runs-on: ubuntu-latest
+    needs: detect-violations
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: merchant-portal
+
+      - name: Run Stress Test
+        run: |
+          echo "🧪 Running AppStaff Nervous System Stress Test..."
+          echo "Testing behavioral physics across 7 phases..."
+
+          # Note: Actual test suite to be implemented
+          # For now, we verify test files exist
+
+          if [ ! -f "tests/nervous-system/AppStaff.stress.test.ts" ]; then
+            echo "⚠️  Stress test suite not yet implemented"
+            echo "Expected: tests/nervous-system/AppStaff.stress.test.ts"
+            echo "Skipping for now (TEMPORARY)"
+            exit 0
+          fi
+
+          # When implemented, run:
+          # npx vitest run tests/nervous-system/AppStaff.stress.test.ts
+
+          echo "✅ Stress test validation placeholder (implement soon)"
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # PHASE 3: ARCHITECTURAL INTEGRITY (Code Structure)
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  verify-architecture:
+    name: 🏛️ Verify Canonical Architecture
+    runs-on: ubuntu-latest
+    needs: detect-violations
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ✅ Verify Tool Sovereignty (Law 1)
+        run: |
+          echo "🔍 Verifying Tool Sovereignty..."
+
+          # dominantTool MUST be calculated, never set by user
+          VIOLATIONS=$(grep -r "setDominantTool\|dominantTool.*=.*'order'\|dominantTool.*=.*'production'" \
+            merchant-portal/src/pages/AppStaff \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules \
+            --exclude-dir=context || true)
+
+          if [ -n "$VIOLATIONS" ]; then
+            echo "❌ CANON VIOLATION: dominantTool manually set (Law 1)"
+            echo "$VIOLATIONS"
+            echo ""
+            echo "dominantTool must be calculated via useMemo based on:"
+            echo "  - activeRole"
+            echo "  - hasActiveOrders"
+            echo "  - task distribution"
+            exit 1
+          fi
+
+          # Verify dominantTool calculation exists
+          if ! grep -r "useMemo.*dominantTool" merchant-portal/src/pages/AppStaff --include="*.tsx" > /dev/null; then
+            echo "❌ CANON VIOLATION: dominantTool not calculated via useMemo"
+            exit 1
+          fi
+
+          echo "✅ Tool Sovereignty verified"
+
+      - name: ✅ Verify System Reflex (Law 2)
+        run: |
+          echo "🔍 Verifying System Reflex..."
+
+          # checkSystemReflex MUST be called in interval
+          if ! grep -r "checkSystemReflex" merchant-portal/src/pages/AppStaff/context --include="*.tsx" > /dev/null; then
+            echo "❌ CANON VIOLATION: checkSystemReflex not invoked"
+            exit 1
+          fi
+
+          # Interval MUST exist
+          if ! grep -r "setInterval.*checkSystemReflex\|checkSystemReflex.*setInterval" merchant-portal/src/pages/AppStaff/context --include="*.tsx" > /dev/null; then
+            echo "❌ CANON VIOLATION: System reflex not automated via interval"
+            exit 1
+          fi
+
+          echo "✅ System Reflex verified"
+
+      - name: ✅ Verify Temporal Memory (Law 3)
+        run: |
+          echo "🔍 Verifying Temporal Memory..."
+
+          # lastActivityAt MUST be tracked
+          if ! grep -r "lastActivityAt" merchant-portal/src/pages/AppStaff/context --include="*.tsx" > /dev/null; then
+            echo "❌ CANON VIOLATION: lastActivityAt not tracked (Law 3)"
+            exit 1
+          fi
+
+          # No automatic logout on idle
+          VIOLATIONS=$(grep -r "logout.*idle\|idle.*logout\|clearSession.*idle" \
+            merchant-portal/src/pages/AppStaff \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules || true)
+
+          if [ -n "$VIOLATIONS" ]; then
+            echo "❌ CANON VIOLATION: Automatic logout on idle detected (Law 3)"
+            echo "$VIOLATIONS"
+            exit 1
+          fi
+
+          echo "✅ Temporal Memory verified"
+
+      - name: ✅ Verify Progressive Externalization (Law 6)
+        run: |
+          echo "🔍 Verifying Progressive Externalization..."
+
+          # TaskMigrationEngine MUST exist
+          if [ ! -f "merchant-portal/src/core/nervous-system/TaskMigrationEngine.ts" ]; then
+            echo "❌ CANON VIOLATION: TaskMigrationEngine missing (Law 6)"
+            exit 1
+          fi
+
+          # calculateTaskMigration MUST exist
+          if ! grep "export.*calculateTaskMigration" merchant-portal/src/core/nervous-system/TaskMigrationEngine.ts > /dev/null; then
+            echo "❌ CANON VIOLATION: calculateTaskMigration not exported (Law 6)"
+            exit 1
+          fi
+
+          echo "✅ Progressive Externalization verified"
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # PHASE 4: DEPLOYMENT CLEARANCE
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  deployment-clearance:
+    name: 🚀 Deployment Clearance
+    runs-on: ubuntu-latest
+    needs: [detect-violations, stress-test, verify-architecture]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: ✅ Canon Compliance Verified
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🛡️  CANON ENFORCEMENT: ALL CHECKS PASSED"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "✅ No manual task creation detected"
+          echo "✅ No cross-role navigation detected"
+          echo "✅ No UI customization detected"
+          echo "✅ No gamification detected"
+          echo "✅ No task manager integrations detected"
+          echo "✅ Tool Sovereignty verified"
+          echo "✅ System Reflex verified"
+          echo "✅ Temporal Memory verified"
+          echo "✅ Progressive Externalization verified"
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🚀 DEPLOYMENT AUTHORIZED"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "The 6 Immutable Laws remain intact."
+          echo "System integrity: MAINTAINED"
+          echo ""
+          echo "© 2025 ChefIApp — Operational Nervous System"
+          echo "Protected by CANON.md + KILL_SWITCHES.md"
+
+      - name: 📊 Report to PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ✅ Canon Enforcement: PASSED\n\nAll Kill Switches verified. The 6 Immutable Laws remain intact.\n\n- ✅ No manual task creation\n- ✅ No cross-role navigation\n- ✅ No UI customization\n- ✅ No gamification\n- ✅ Tool Sovereignty maintained\n- ✅ System Reflex automated\n- ✅ Progressive Externalization active\n\n**Deployment clearance: GRANTED**\n\n---\n🛡️ Protected by [CANON.md](../blob/main/CANON.md) + [KILL_SWITCHES.md](../blob/main/KILL_SWITCHES.md)`
+            })

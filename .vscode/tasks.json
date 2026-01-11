@@ -1,0 +1,873 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build:merchant-portal",
+			"type": "shell",
+			"command": "npm -w merchant-portal run -s build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "build:merchant-portal",
+			"type": "shell",
+			"command": "npm -w merchant-portal run -s build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "tsc:merchant-portal",
+			"type": "shell",
+			"command": "cd merchant-portal && npx tsc -b --pretty false",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "tsc:merchant-portal",
+			"type": "shell",
+			"command": "cd merchant-portal && npx tsc -b",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "tsc:merchant-portal:full",
+			"type": "shell",
+			"command": "cd merchant-portal && (npx tsc -b --pretty false 2>&1 | cat)",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "build:merchant-portal",
+			"type": "shell",
+			"command": "npm -w merchant-portal run -s build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "test:root",
+			"type": "shell",
+			"command": "npm test --silent",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "typecheck:core",
+			"type": "shell",
+			"command": "npm run -s typecheck",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "build:merchant-portal",
+			"type": "shell",
+			"command": "npm -w merchant-portal run -s build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "diag:lsof-5173",
+			"type": "shell",
+			"command": "lsof -nP -iTCP:5173 -sTCP:LISTEN || true",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "diag:curl-5173",
+			"type": "shell",
+			"command": "curl -sS -I http://127.0.0.1:5173/ | head -n 20 || true",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "kill:vite-5173",
+			"type": "shell",
+			"command": "lsof -tiTCP:5173 -sTCP:LISTEN | xargs -r kill -9 || true",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "dev:merchant-portal:ipv4",
+			"type": "shell",
+			"command": "npm -w merchant-portal run dev -- --host 127.0.0.1 --port 5173 --strictPort",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "kill:vite-5173",
+			"type": "shell",
+			"command": "lsof -tiTCP:5173 -sTCP:LISTEN | xargs -r kill -9 || true",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "dev:merchant-portal",
+			"type": "shell",
+			"command": "npm -w merchant-portal run dev -- --host 127.0.0.1 --port 5173 --strictPort",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "copy:logo-to-merchant-portal",
+			"type": "shell",
+			"command": "cp landing-page/public/logo.png merchant-portal/public/logo.png",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "build (root + merchant-portal)",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"-s",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "build (merchant-portal only)",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"-w",
+				"merchant-portal",
+				"run",
+				"-s",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "diag: is 4320 listening",
+			"type": "shell",
+			"command": "zsh",
+			"args": [
+				"-lc",
+				"lsof -nP -iTCP:4320 -sTCP:LISTEN || echo 'nothing listening on 4320'"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "diag: curl health",
+			"type": "shell",
+			"command": "zsh",
+			"args": [
+				"-lc",
+				"curl -i --max-time 2 http://localhost:4320/health || echo 'curl failed'"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "diag: curl public sofia",
+			"type": "shell",
+			"command": "zsh",
+			"args": [
+				"-lc",
+				"curl -i --max-time 2 http://localhost:4320/public/sofia || echo 'curl failed'"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "build (merchant-portal only)",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"-w",
+				"merchant-portal",
+				"run",
+				"-s",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "build (merchant-portal) after route alignment",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"-w",
+				"merchant-portal",
+				"run",
+				"-s",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "build (merchant-portal) after setup UX improvements",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"-w",
+				"merchant-portal",
+				"run",
+				"-s",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "build (merchant-portal) after unifying app pages + removing starfield",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"-w",
+				"merchant-portal",
+				"run",
+				"-s",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "build (merchant-portal) after step dopamine banners",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"-w",
+				"merchant-portal",
+				"run",
+				"-s",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "build (merchant-portal) after MenuStep micro-states",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"-w",
+				"merchant-portal",
+				"run",
+				"-s",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "merchant-portal: build",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "merchant-portal: build",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "merchant-portal: build",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "merchant-portal: build",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "merchant-portal: build",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "merchant-portal: build",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "merchant-portal: build",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "merchant-portal: dev",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run dev -- --host 127.0.0.1 --port 5173",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "merchant-portal: build",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "merchant-portal: build",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "build merchant portal preview ghost validation",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build"
+		},
+		{
+			"label": "build patch validation",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build"
+		},
+		{
+			"label": "build ghost preview integration",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build"
+		},
+		{
+			"label": "build ghost preview integration retry",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build"
+		},
+		{
+			"label": "build ghost preview final",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build"
+		},
+		{
+			"label": "build ghost microprogress",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build"
+		},
+		{
+			"label": "build ghost transition",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build"
+		},
+		{
+			"label": "build final patch",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build"
+		},
+		{
+			"label": "audit:web-e2e",
+			"type": "shell",
+			"command": "PAGER=cat LESS=FRX npm run -s audit:web-e2e",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "audit:web-e2e (portal-only)",
+			"type": "shell",
+			"command": "PAGER=cat LESS=FRX npm run -s audit:web-e2e",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "audit:web-e2e (portal-only, lint optional)",
+			"type": "shell",
+			"command": "PAGER=cat LESS=FRX npm run -s audit:web-e2e",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "audit:web-e2e (after checks fix)",
+			"type": "shell",
+			"command": "PAGER=cat LESS=FRX npm run -s audit:web-e2e",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "audit:web-e2e (final check)",
+			"type": "shell",
+			"command": "PAGER=cat LESS=FRX npm run -s audit:web-e2e",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "audit:web-e2e (hardened)",
+			"type": "shell",
+			"command": "npm run -s audit:web-e2e",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "audit:web-e2e (with lint=FAIL)",
+			"type": "shell",
+			"command": "AUDIT_WEB_LINT=1 npm run -s audit:web-e2e",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "audit:web-e2e (final validation)",
+			"type": "shell",
+			"command": "npm run -s audit:web-e2e",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Build merchant portal",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Delete StartPage.tsx",
+			"type": "shell",
+			"command": "rm merchant-portal/src/pages/StartPage.tsx && echo 'Deleted StartPage.tsx'",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build landing page",
+			"type": "shell",
+			"command": "cd landing-page && npm run build",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Dev: landing-page",
+			"type": "shell",
+			"command": "cd landing-page && npm run dev",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Dev: merchant-portal",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run dev",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build landing page",
+			"type": "shell",
+			"command": "cd landing-page && npm run build",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build merchant portal",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build merchant portal",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build merchant portal",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build merchant portal",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Demo: Four Cores Validation",
+			"type": "shell",
+			"command": "node scripts/test-four-cores.js",
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Build merchant portal",
+			"type": "shell",
+			"command": "cd merchant-portal && npm run build",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "diag: merchant-portal dist sizes",
+			"type": "shell",
+			"command": "cd merchant-portal/dist/assets && (ls -lh | cat) && echo '---' && (wc -c * | cat)",
+			"isBackground": false
+		},
+		{
+			"label": "tsc:merchant-portal:full (no truncation)",
+			"type": "shell",
+			"command": "cd merchant-portal && npx tsc -b --pretty false --noErrorTruncation 2>&1 | cat",
+			"isBackground": false
+		},
+		{
+			"label": "tsc:merchant-portal (noErrorTruncation)",
+			"type": "shell",
+			"command": "cd merchant-portal && npx tsc -p tsconfig.json --pretty false --noErrorTruncation 2>&1 | cat",
+			"isBackground": false
+		},
+		{
+			"label": "tsc:merchant-portal (tsconfig.app)",
+			"type": "shell",
+			"command": "cd merchant-portal && npx tsc -p tsconfig.app.json --pretty false 2>&1 | cat",
+			"isBackground": false
+		},
+		{
+			"label": "tsc:merchant-portal (tsconfig.app, wide)",
+			"type": "shell",
+			"command": "cd merchant-portal && COLUMNS=200 npx tsc -p tsconfig.app.json --pretty false 2>&1 | cat",
+			"isBackground": false
+		},
+		{
+			"label": "tsc:merchant-portal capture output",
+			"type": "shell",
+			"command": "cd merchant-portal && (npx tsc -p tsconfig.app.json --pretty false > tsc-output.txt 2>&1 || true) && (wc -l tsc-output.txt | cat)",
+			"isBackground": false
+		},
+		{
+			"label": "cleanup: remove tsc-output.txt",
+			"type": "shell",
+			"command": "rm -f merchant-portal/tsc-output.txt && echo 'removed merchant-portal/tsc-output.txt'",
+			"isBackground": false
+		},
+		{
+			"label": "diag: governance baseline update output",
+			"type": "shell",
+			"command": "node scripts/audit-governance.js --update-baseline && (ls -la audit-baselines | cat)",
+			"isBackground": false
+		},
+		{
+			"label": "diag: governance gate run output",
+			"type": "shell",
+			"command": "node scripts/audit-governance.js 2>&1 | cat",
+			"isBackground": false
+		},
+		{
+			"label": "diag: git status porcelain",
+			"type": "shell",
+			"command": "git status --porcelain=v1 -uall",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "diag: git status (after commit 1)",
+			"type": "shell",
+			"command": "git status --porcelain=v1 -uall",
+			"isBackground": false
+		},
+		{
+			"label": "diag: git log -1",
+			"type": "shell",
+			"command": "git --no-pager log -1 --oneline",
+			"isBackground": false
+		},
+		{
+			"label": "diag: git user.name",
+			"type": "shell",
+			"command": "git config --get user.name || echo '<unset>'",
+			"isBackground": false
+		},
+		{
+			"label": "diag: git user.email",
+			"type": "shell",
+			"command": "git config --get user.email || echo '<unset>'",
+			"isBackground": false
+		},
+		{
+			"label": "diag: git commit.gpgsign",
+			"type": "shell",
+			"command": "git config --get commit.gpgsign || echo '<unset>'",
+			"isBackground": false
+		},
+		{
+			"label": "diag: git core.hooksPath",
+			"type": "shell",
+			"command": "git config --get core.hooksPath || echo '<unset>'",
+			"isBackground": false
+		},
+		{
+			"label": "diag: status A (supabase/migrations)",
+			"type": "shell",
+			"command": "git status --porcelain=v1 -uall -- supabase/migrations | cat",
+			"isBackground": false
+		},
+		{
+			"label": "diag: status B (governance gate files)",
+			"type": "shell",
+			"command": "git status --porcelain=v1 -uall -- scripts/audit-governance.js audit-baselines package.json .vscode/tasks.json | cat",
+			"isBackground": false
+		},
+		{
+			"label": "diag: status C (merchant-portal + server)",
+			"type": "shell",
+			"command": "git status --porcelain=v1 -uall -- merchant-portal server | cat",
+			"isBackground": false
+		},
+		{
+			"label": "diag: status D (tests)",
+			"type": "shell",
+			"command": "git status --porcelain=v1 -uall -- tests | cat",
+			"isBackground": false
+		},
+		{
+			"label": "diag: status E (docs + audit-reports + root md)",
+			"type": "shell",
+			"command": "git status --porcelain=v1 -uall -- docs audit-reports README_APPSTAFF_ACTIVATION.md TPV_100_CERTIFIED.md | cat",
+			"isBackground": false
+		},
+		{
+			"label": "diag: list .git/hooks",
+			"type": "shell",
+			"command": "ls -la .git/hooks | cat",
+			"isBackground": false
+		},
+		{
+			"label": "diag: git add dry-run (079-081)",
+			"type": "shell",
+			"command": "git add -n supabase/migrations/079_financial_event_log.sql supabase/migrations/080_failure_is_first_class.sql supabase/migrations/081_operator_is_system.sql | cat",
+			"isBackground": false
+		},
+		{
+			"label": "diag: git commit dry-run (allow-empty)",
+			"type": "shell",
+			"command": "git commit --dry-run --allow-empty -m \"diag: commit works\" 2>&1 | cat",
+			"isBackground": false
+		},
+		{
+			"label": "diag: git diff package.json (head)",
+			"type": "shell",
+			"command": "git --no-pager diff -- package.json | head -n 120 | cat",
+			"isBackground": false
+		},
+		{
+			"label": "git: reset staging",
+			"type": "shell",
+			"command": "git restore --staged . 2>/dev/null || true",
+			"isBackground": false
+		},
+		{
+			"label": "git: commit-base stage A+C",
+			"type": "shell",
+			"command": "git add supabase/migrations merchant-portal server",
+			"isBackground": false
+		},
+		{
+			"label": "git: commit-base",
+			"type": "shell",
+			"command": "git commit -m \"Constitutional hardening: DB laws + operational adapters\"",
+			"isBackground": false
+		},
+		{
+			"label": "git: verify state",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git status --porcelain -b && echo '---' && git log -1 --oneline",
+			"isBackground": false
+		},
+		{
+			"label": "git: verify state (no pager)",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git status --porcelain -b && echo '---' && git --no-pager log -1 --oneline",
+			"isBackground": false
+		},
+		{
+			"label": "git: amend commit-base with type fixes",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git add server/amazon/refresh-catalog.ts server/govern-manage/decision-service.ts server/govern/actions-generator.ts server/operational-event-bus/event-bus.ts server/web-module-api-server.ts && git commit --amend --no-edit",
+			"isBackground": false
+		},
+		{
+			"label": "git: verify after amend",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git status --porcelain -b && echo '---' && git --no-pager log -1 --oneline",
+			"isBackground": false
+		},
+		{
+			"label": "git: status (repo root)",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git status --porcelain -b",
+			"isBackground": false
+		},
+		{
+			"label": "diff: package + tasks",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git --no-pager diff -- package.json .vscode/tasks.json | head -n 200",
+			"isBackground": false
+		},
+		{
+			"label": "diff: package.json",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git --no-pager diff -- package.json | head -n 200",
+			"isBackground": false
+		},
+		{
+			"label": "git: stage commit 1 (governance + go/no-go)",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git add package.json .vscode/tasks.json audit-baselines scripts/validate-tpv-go-nogo.ts",
+			"isBackground": false
+		},
+		{
+			"label": "cherry-pick-continue",
+			"type": "shell",
+			"command": "git add -A && GIT_EDITOR=true git cherry-pick --continue && echo '---DONE---' && git log --oneline -6",
+			"isBackground": false
+		},
+		{
+			"label": "push-main",
+			"type": "shell",
+			"command": "git push origin main && echo '---PUSHED---'",
+			"isBackground": false
+		},
+		{
+			"label": "typecheck phase3c",
+			"type": "shell",
+			"command": "cd merchant-portal && npx tsc -p tsconfig.app.json --pretty false 2>&1 | head -50",
+			"isBackground": false
+		},
+		{
+			"label": "check activation errors",
+			"type": "shell",
+			"command": "cd merchant-portal && npx tsc -p tsconfig.app.json --pretty false 2>&1 | grep -E 'activation|Activation' | head -20 || echo 'No activation errors'",
+			"isBackground": false
+		},
+		{
+			"label": "push phase3c",
+			"type": "shell",
+			"command": "git log --oneline -6 && echo '---' && git push origin main",
+			"isBackground": false
+		},
+		{
+			"label": "push",
+			"type": "shell",
+			"command": "git push origin main 2>&1",
+			"isBackground": false
+		},
+		{
+			"label": "git: commit B nav",
+			"type": "shell",
+			"command": "git add merchant-portal/src/pages/Dashboard/DashboardZero.tsx merchant-portal/src/App.tsx merchant-portal/src/core/flow/CoreFlow.ts merchant-portal/src/pages/BootstrapPage.tsx merchant-portal/src/pages/ComingSoonPage.tsx merchant-portal/src/pages/Onboarding/OnboardingQuick.tsx merchant-portal/src/pages/Onboarding/migration/Step4_TheReveal.tsx && git commit -m 'feat(nav): open operational tools in new browser tabs\n\n- DashboardZero: window.open() for TPV, KDS, Menu, Orders routes\n- Add primaryOps array with 4 tools (TPV, KDS, Menu, Orders)\n- Update App.tsx routes to /app/* parent structure\n- Add legacy redirects: /dashboard -> /app/dashboard, etc.\n- CoreFlow: redirect completed users to /app/dashboard\n- Update BootstrapPage, OnboardingQuick, Step4_TheReveal redirects\n- ComingSoonPage: fix activePath and navigate to /app/dashboard\n\nE2E_NAV: new-tab behavior sealed'",
+			"isBackground": false
+		},
+		{
+			"label": "git: commit C docs",
+			"type": "shell",
+			"command": "git add merchant-portal/src/pages/TPV/TPV.tsx merchant-portal/src/pages/TPV/KDS/KitchenDisplay.tsx merchant-portal/src/pages/Menu/MenuManager.tsx merchant-portal/src/pages/AppStaff/PulseList.tsx docs/E2E_NAV_VALIDATION_2026-01-08.md && git commit -m 'docs(nav): add document titles and E2E validation checklist\n\n- TPV: document.title = ChefIApp POS — TPV\n- KDS: document.title = ChefIApp POS — KDS\n- Menu: document.title = ChefIApp POS — Menu\n- Orders: document.title = ChefIApp POS — Orders\n- Create E2E_NAV_VALIDATION_2026-01-08.md validation checklist\n\nE2E_NAV_SEALED=true'",
+			"isBackground": false
+		},
+		{
+			"label": "final verification",
+			"type": "shell",
+			"command": "echo '=== GIT LOG (last 5) ===' && git --no-pager log --oneline -5 && echo '' && echo '=== GIT STATUS ===' && git status --short && echo '' && echo '=== BUILD CHECK ===' && cd merchant-portal && npm run build 2>&1 | tail -10",
+			"isBackground": false
+		},
+		{
+			"label": "git: commit phase 4",
+			"type": "shell",
+			"command": "git add -A && git commit -m 'feat: Phase 4 — Multi-Tenant Data Layer (TenantContext, withTenant, TenantSelector)'"
+		},
+		{
+			"label": "test:tenant-resolver",
+			"type": "shell",
+			"command": "npx jest tests/unit/tenant/TenantResolver.test.ts --verbose",
+			"isBackground": false
+		},
+		{
+			"label": "test:tenant-resolver-v2",
+			"type": "shell",
+			"command": "npx jest tests/unit/tenant/TenantResolver.test.ts --verbose",
+			"isBackground": false
+		},
+		{
+			"label": "test:tenant-resolver-v3",
+			"type": "shell",
+			"command": "npx jest tests/unit/tenant/TenantResolver.test.ts --verbose",
+			"isBackground": false
+		},
+		{
+			"label": "test:tenant-resolver-v4",
+			"type": "shell",
+			"command": "npx jest tests/unit/tenant/TenantResolver.test.ts --verbose 2>&1 | head -80",
+			"isBackground": false
+		},
+		{
+			"label": "test:tenant-resolver-v5",
+			"type": "shell",
+			"command": "npx jest tests/unit/tenant/TenantResolver.test.ts --verbose 2>&1 | head -100",
+			"isBackground": false
+		},
+		{
+			"label": "test:tenant-resolver-v6",
+			"type": "shell",
+			"command": "npx jest tests/unit/tenant/TenantResolver.test.ts --verbose 2>&1 | head -120",
+			"isBackground": false
+		},
+		{
+			"label": "test:tenant-resolver-final",
+			"type": "shell",
+			"command": "npx jest tests/unit/tenant/TenantResolver.test.ts --verbose 2>&1 | head -150",
+			"isBackground": false
+		},
+		{
+			"label": "Build customer-portal",
+			"type": "shell",
+			"command": "cd customer-portal && npm run build"
+		},
+		{
+			"label": "customer-portal vite build",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/customer-portal && npx vite build"
+		},
+		{
+			"label": "test:kds-unit",
+			"type": "shell",
+			"command": "npx jest tests/unit/kds/KDSConnectionStatus.test.ts --no-coverage 2>&1 | cat",
+			"isBackground": false
+		},
+		{
+			"label": "test:merchant-portal-workspace",
+			"type": "shell",
+			"command": "npm -w merchant-portal test 2>&1 | cat",
+			"isBackground": false
+		},
+		{
+			"label": "stress-test-auto",
+			"type": "shell",
+			"command": "node scripts/stress-test-auto.js"
+		}
+	]
+}

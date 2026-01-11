@@ -1,0 +1,42 @@
+[
+    {
+        "id": "idea_001",
+        "title": "The Forgotten Alioli",
+        "problem": "Sub-items (modifiers) are often forgotten by busy staff.",
+        "solution": "Track individual item delivery status. Any item added but not marked 'served' keeps table in 'Hungry' state.",
+        "type": "Rule",
+        "status": "concept",
+        "target": "Table",
+        "priority": "high"
+    },
+    {
+        "id": "idea_002",
+        "title": "The Second Drink Alert",
+        "problem": "Revenue loss from missed re-order opportunities.",
+        "solution": "Detect when table has had Beverage but no Interaction for >15m. Prompt 'Check for Refill'.",
+        "type": "Rule",
+        "status": "concept",
+        "target": "Table",
+        "priority": "medium"
+    },
+    {
+        "id": "idea_003",
+        "title": "Pre-Opening Simulator",
+        "problem": "Restaurants open with wrong model for location.",
+        "solution": "Input: Location, Staff, Concept. Output: Viability Score and Risk warnings.",
+        "type": "Future AI",
+        "status": "concept",
+        "target": "Owner",
+        "priority": "low"
+    },
+    {
+        "id": "idea_004",
+        "title": "The Silent Signal",
+        "problem": "Customers waving hands to get attention is humiliating.",
+        "solution": "QR Code 'Call Waiter' button that changes table state to 'Signaling' (Blue) on staff dashboard without loud alarm.",
+        "type": "Automation",
+        "status": "concept",
+        "target": "Table",
+        "priority": "medium"
+    }
+]

@@ -1,0 +1,12 @@
+# ChefIApp Code Ownership
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# 🔒 LOCKED ARTIFACTS — Require explicit approval
+/landing-page/ @goldmonkey777
+
+# Core systems
+/server/ @goldmonkey777
+/supabase/migrations/ @goldmonkey777
+
+# Merchant Portal
+/merchant-portal/ @goldmonkey777

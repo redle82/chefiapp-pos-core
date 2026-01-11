@@ -1,0 +1,458 @@
+# Page snapshot
+
+```yaml
+- main [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e7]:
+      - img "ChefIApp" [ref=e8]
+      - generic [ref=e9]: ChefIApp™
+    - main [ref=e10]:
+      - generic [ref=e12]:
+        - generic [ref=e13]: ChefIApp™ OS
+        - heading "Sistema OPERACIONAL para Restaurantes" [level=1] [ref=e14]:
+          - text: Sistema OPERACIONAL
+          - text: para Restaurantes
+        - paragraph [ref=e15]: Execução em tempo real. Cozinha, salão e caixa no mesmo fluxo.
+        - generic [ref=e16]:
+          - link "Entrar em operação" [ref=e17] [cursor=pointer]:
+            - /url: /app
+          - link "Acesso existente" [ref=e18] [cursor=pointer]:
+            - /url: /app
+  - generic [ref=e20]:
+    - heading "🔥 Se você vive isto todos os dias..." [level=2] [ref=e22]
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - heading "Turnos bagunsados" [level=3] [ref=e25]
+        - paragraph [ref=e26]: Ninguém sabe quem trabalhou quantas horas
+      - generic [ref=e27]:
+        - heading "Stock que some" [level=3] [ref=e28]
+        - paragraph [ref=e29]: Ingrediente acaba no meio do serviço
+      - generic [ref=e30]:
+        - heading "Tarefas esquecidas" [level=3] [ref=e31]
+        - paragraph [ref=e32]: "\"Esqueci de repor cerveja\", \"Ninguém limpou a cozinha\""
+      - generic [ref=e33]:
+        - heading "Papel e planilha" [level=3] [ref=e34]
+        - paragraph [ref=e35]: Informação perdida, nada automatizado
+      - generic [ref=e36]:
+        - heading "Equipa perdida" [level=3] [ref=e37]
+        - paragraph [ref=e38]: Cada um pergunta o que fazer
+    - paragraph [ref=e40]:
+      - text: Isso não são problemas diferentes.
+      - text: É a mesma falha operacional a manifestar-se todos os dias.
+    - paragraph [ref=e42]:
+      - text: Você não precisa de mais um app.
+      - text: Você precisa de um sistema que imponha disciplina operacional.
+  - generic [ref=e45]:
+    - generic [ref=e46]:
+      - heading "Um ciclo completo, sem intermediários." [level=2] [ref=e47]:
+        - text: Um ciclo completo,
+        - text: sem intermediários.
+      - generic [ref=e48]:
+        - generic [ref=e49]:
+          - generic [ref=e50]: ✓
+          - generic [ref=e51]: "⚡ OperationalHub: Veja tudo que está acontecendo agora — vendas, tarefas, turnos e alertas"
+        - generic [ref=e52]:
+          - generic [ref=e53]: ✓
+          - generic [ref=e54]: "🧠 AppStaff: Cada funcionário sabe exatamente o que fazer — sem perguntar"
+        - generic [ref=e55]:
+          - generic [ref=e56]: ✓
+          - generic [ref=e57]: "📱 Menu Digital: o cardápio muda, a operação não para"
+        - generic [ref=e58]:
+          - generic [ref=e59]: ✓
+          - generic [ref=e60]: ✅ Sistema age antes que você precise pensar. Nada cai no esquecimento
+    - generic [ref=e63]:
+      - generic [ref=e65]:
+        - generic [ref=e66]: Passo 1
+        - strong [ref=e67]: Página Pública
+      - generic [ref=e68]: ↓
+      - generic [ref=e70]:
+        - generic [ref=e71]: Passo 2
+        - strong [ref=e72]: Pedido Online
+      - generic [ref=e73]: ↓
+      - generic [ref=e75]:
+        - generic [ref=e76]: Passo 3
+        - strong [ref=e77]: Pagamento & Operação
+  - generic [ref=e79]:
+    - generic [ref=e80]:
+      - heading "Para quem é" [level=2] [ref=e81]
+      - paragraph [ref=e82]: Feito para quem leva a operação a sério.
+    - generic [ref=e83]:
+      - generic [ref=e84]:
+        - generic [ref=e85]: 🍽️
+        - heading "Restaurantes Médios" [level=3] [ref=e86]
+        - list [ref=e87]:
+          - listitem [ref=e88]:
+            - generic [ref=e89]: •
+            - text: Controlo de pedidos
+          - listitem [ref=e90]:
+            - generic [ref=e91]: •
+            - text: Menos erros na ponta
+          - listitem [ref=e92]:
+            - generic [ref=e93]: •
+            - text: Margem protegida
+      - generic [ref=e94]:
+        - generic [ref=e96]: 🍸
+        - heading "Bares & Gastrobares" [level=3] [ref=e97]
+        - list [ref=e98]:
+          - listitem [ref=e99]:
+            - generic [ref=e100]: •
+            - text: Pedidos rápidos
+          - listitem [ref=e101]:
+            - generic [ref=e102]: •
+            - text: Menus simples
+          - listitem [ref=e103]:
+            - generic [ref=e104]: •
+            - text: Zero comissão
+      - generic [ref=e105]:
+        - generic [ref=e106]: 👩‍🍳
+        - heading "Dark kitchens & Grupos de restauração" [level=3] [ref=e107]
+        - list [ref=e108]:
+          - listitem [ref=e109]:
+            - generic [ref=e110]: •
+            - text: Operações híbridas e multi-marca
+          - listitem [ref=e111]:
+            - generic [ref=e112]: •
+            - text: Equipa e turnos sob pressão
+          - listitem [ref=e113]:
+            - generic [ref=e114]: •
+            - text: Escalar sem trocar sistema
+    - paragraph [ref=e115]: Operações maiores ou híbridas podem adaptar o sistema conforme necessidade.
+  - generic [ref=e117]:
+    - generic [ref=e118]:
+      - heading "Setup real. Sem chamadas. Sem espera." [level=2] [ref=e119]
+      - paragraph [ref=e120]: O que outros chamam de “onboarding”, aqui é só começar a operar.
+    - generic [ref=e122]:
+      - list [ref=e123]:
+        - listitem [ref=e124]:
+          - generic [ref=e125]: •
+          - generic [ref=e126]: Restaurante criado instantaneamente
+        - listitem [ref=e127]:
+          - generic [ref=e128]: •
+          - generic [ref=e129]: Menu web publicado em minutos
+        - listitem [ref=e130]:
+          - generic [ref=e131]: •
+          - generic [ref=e132]: TPV conectado no mesmo fluxo
+        - listitem [ref=e133]:
+          - generic [ref=e134]: •
+          - generic [ref=e135]: Equipa ativa no mesmo dia
+        - listitem [ref=e136]:
+          - generic [ref=e137]: •
+          - generic [ref=e138]: Operação funcional sem falar com suporte
+        - listitem [ref=e139]:
+          - generic [ref=e140]: •
+          - generic [ref=e141]: "Tempo real: 10–25 minutos"
+      - paragraph [ref=e142]: Se precisa falar com alguém para começar, não é sistema. É serviço disfarçado.
+  - generic [ref=e144]:
+    - generic [ref=e145]:
+      - heading "Funciona com o que você já usa. Não força trocas desnecessárias." [level=2] [ref=e146]:
+        - text: Funciona com o que você já usa.
+        - text: Não força trocas desnecessárias.
+      - paragraph [ref=e147]: ChefIApp integra-se aos sistemas de faturamento e TPV já existentes — com API, webhooks ou fluxo operacional direto.
+      - paragraph [ref=e148]: Integrações abertas. Sem dependência.
+      - generic [ref=e149]:
+        - generic [ref=e150]: Compatível por design
+        - generic [ref=e151]: Sem lock-in
+        - generic [ref=e152]: Sem parceiros exclusivos
+        - generic [ref=e153]: Sem contratos de integração
+      - paragraph [ref=e154]: ChefIApp não vende integração. Ele nasce integrável.
+    - generic [ref=e155]:
+      - generic [ref=e156]:
+        - heading "Integração real (sem marketing)" [level=3] [ref=e157]
+        - list [ref=e158]:
+          - listitem [ref=e159]:
+            - generic [ref=e160]: •
+            - generic [ref=e161]: Sistemas de faturamento (via API ou hooks)
+          - listitem [ref=e162]:
+            - generic [ref=e163]: •
+            - generic [ref=e164]: TPVs fiscais existentes
+          - listitem [ref=e165]:
+            - generic [ref=e166]: •
+            - generic [ref=e167]: Fluxos de pré-conta e fechamento
+          - listitem [ref=e168]:
+            - generic [ref=e169]: •
+            - generic [ref=e170]: Sistemas legados, quando necessário
+        - paragraph [ref=e171]: ChefIApp não quebra sua operação para vender um pacote novo.
+      - generic [ref=e172]:
+        - heading "O que já entregamos nativamente" [level=3] [ref=e173]
+        - list [ref=e174]:
+          - listitem [ref=e175]:
+            - generic [ref=e176]: •
+            - generic [ref=e177]: Página web do restaurante (menu público)
+          - listitem [ref=e178]:
+            - generic [ref=e179]: •
+            - generic [ref=e180]: Comandeiro digital
+          - listitem [ref=e181]:
+            - generic [ref=e182]: •
+            - generic [ref=e183]: Gestão de turnos, tarefas e stock
+          - listitem [ref=e184]:
+            - generic [ref=e185]: •
+            - generic [ref=e186]: Operação conectada em tempo real
+        - paragraph [ref=e187]: O que outros vendem como módulos separados, aqui nasce junto.
+    - generic [ref=e188]:
+      - paragraph [ref=e189]: ChefIApp não disputa o POS fiscal. Ele governa a operação ao redor dele.
+      - paragraph [ref=e190]: Compatível com sistemas de faturamento existentes. Aberto por design. Integrável por padrão.
+      - paragraph [ref=e191]: "Integração técnica, não comercial: API, webhooks, exportação/ingestão de dados e fluxos operacionais. Onde existe API, integramos. Onde não existe, conectamos o fluxo. Onde o sistema é fechado, não quebramos a operação."
+  - generic [ref=e193]:
+    - generic [ref=e194]:
+      - heading "Não exige equipamentos novos para começar." [level=2] [ref=e195]
+      - paragraph [ref=e196]: ChefApp foi desenhado para funcionar com a realidade do restaurante — não com setups ideais de catálogo.
+    - generic [ref=e197]:
+      - generic [ref=e198]:
+        - heading "Funciona com o que você já tem" [level=3] [ref=e199]
+        - list [ref=e200]:
+          - listitem [ref=e201]:
+            - generic [ref=e202]: •
+            - generic [ref=e203]: Funciona com as impressoras que você já tem
+          - listitem [ref=e204]:
+            - generic [ref=e205]: •
+            - generic [ref=e206]: Funciona com TPVs e caixas existentes
+          - listitem [ref=e207]:
+            - generic [ref=e208]: •
+            - generic [ref=e209]: Funciona com o telefone da equipa
+          - listitem [ref=e210]:
+            - generic [ref=e211]: •
+            - generic [ref=e212]: Não exige telas dedicadas ou hardware proprietário
+          - listitem [ref=e213]:
+            - generic [ref=e214]: •
+            - generic [ref=e215]: Um telefone por posto já resolve
+        - paragraph [ref=e216]: Se já imprime pedidos hoje, provavelmente já funciona aqui.
+      - generic [ref=e217]:
+        - heading "Se quiser evoluir, o sistema acompanha" [level=3] [ref=e218]
+        - list [ref=e219]:
+          - listitem [ref=e220]:
+            - generic [ref=e221]: •
+            - generic [ref=e222]: Pode usar tablets, telas de cozinha ou novos dispositivos
+          - listitem [ref=e223]:
+            - generic [ref=e224]: •
+            - generic [ref=e225]: Pode adicionar impressoras, pontos ou estações
+          - listitem [ref=e226]:
+            - generic [ref=e227]: •
+            - generic [ref=e228]: Pode escalar sem trocar de sistema
+        - paragraph [ref=e229]: O sistema não trava sua evolução. Ele cresce com ela.
+    - paragraph [ref=e231]: Você não adapta sua operação ao sistema. O sistema se adapta à sua operação.
+    - generic [ref=e232]:
+      - heading "Hardware não é armadilha" [level=3] [ref=e233]
+      - paragraph [ref=e234]: ChefApp não vende hardware nem obriga pacotes fechados. Se você já tem equipamentos, usamos. Se não tiver, indicamos o que faz sentido — sem comissões, sem dependência. Você decide quando investir. Não o software.
+      - generic [ref=e235]:
+        - generic [ref=e236]: Começa com o que você tem
+        - generic [ref=e237]: Nenhuma compra obrigatória
+        - generic [ref=e238]: Sem contratos de hardware
+        - generic [ref=e239]: Compatível por design
+  - generic [ref=e241]:
+    - generic [ref=e242]:
+      - heading "Delivery entra na operação. Não governa ela." [level=2] [ref=e243]
+      - paragraph [ref=e244]: ChefApp integra pedidos externos ao fluxo real do restaurante — sem duplicar telas, sem reinventar processos.
+    - generic [ref=e245]:
+      - generic [ref=e246]:
+        - heading "Integração com plataformas de delivery" [level=3] [ref=e247]
+        - list [ref=e248]:
+          - listitem [ref=e249]:
+            - generic [ref=e250]: •
+            - generic [ref=e251]: Pedidos de delivery entram no mesmo fluxo operacional
+          - listitem [ref=e252]:
+            - generic [ref=e253]: •
+            - generic [ref=e254]: Sem re-digitar pedidos
+          - listitem [ref=e255]:
+            - generic [ref=e256]: •
+            - generic [ref=e257]: Sem trocar de sistema no meio do serviço
+          - listitem [ref=e258]:
+            - generic [ref=e259]: •
+            - generic [ref=e260]: Sem dependência de “um tablet por app”
+          - listitem [ref=e261]:
+            - generic [ref=e262]: •
+            - generic [ref=e263]: Sem criar uma operação paralela
+        - paragraph [ref=e264]: Delivery deixa de ser um problema separado. Vira parte do turno.
+        - paragraph [ref=e265]: Compatível com plataformas líderes via integrações técnicas (API, webhooks ou fluxos indiretos). Sem logos, sem “parceria obrigatória”.
+      - generic [ref=e266]:
+        - heading "Integração com terceiros (sem aprisionamento)" [level=3] [ref=e267]
+        - list [ref=e268]:
+          - listitem [ref=e269]:
+            - generic [ref=e270]: •
+            - generic [ref=e271]: Plataformas de delivery
+          - listitem [ref=e272]:
+            - generic [ref=e273]: •
+            - generic [ref=e274]: Sistemas de faturamento e TPVs fiscais
+          - listitem [ref=e275]:
+            - generic [ref=e276]: •
+            - generic [ref=e277]: Ferramentas legadas já em uso
+          - listitem [ref=e278]:
+            - generic [ref=e279]: •
+            - generic [ref=e280]: Soluções específicas da empresa
+        - paragraph [ref=e281]: "Integração técnica, não comercial: API, webhooks ou fluxo operacional direto (quando não existe API)."
+        - paragraph [ref=e282]: ChefApp não força você a trocar o que já funciona nem prende a parceiros exclusivos.
+    - generic [ref=e283]:
+      - heading "Quando a integração é o produto, a operação vira refém." [level=3] [ref=e284]
+      - paragraph [ref=e285]: "ChefApp faz o inverso: a operação é o centro, as integrações orbitam, o fluxo permanece único."
+      - paragraph [ref=e286]: Delivery, POS, equipa e operação. Um sistema. Um fluxo.
+      - paragraph [ref=e287]: "Exemplo seguro: “Compatível com plataformas de delivery e POS amplamente usados na Europa.” Sem logos, sem prometer integração oficial."
+  - generic [ref=e289]:
+    - generic [ref=e290]:
+      - heading "Sistema operacional para quem vive a cozinha. Não para quem vende integração." [level=2] [ref=e291]:
+        - text: Sistema operacional para quem vive a cozinha.
+        - text: Não para quem vende integração.
+      - paragraph [ref=e292]: Aqui a operação manda. As integrações que se virem.
+    - generic [ref=e293]:
+      - generic [ref=e294]:
+        - heading "Verdade inconveniente" [level=3] [ref=e295]
+        - paragraph [ref=e296]: "Se você já passou por isso, sabe:"
+        - list [ref=e297]:
+          - listitem [ref=e298]: 🔌 Um sistema para o caixa
+          - listitem [ref=e299]: 🔌 Outro para o delivery
+          - listitem [ref=e300]: 🔌 Outro para reservas
+          - listitem [ref=e301]: 🔌 Outro para o estoque
+          - listitem [ref=e302]: 🔌 Outro para relatórios
+          - listitem [ref=e303]: 📞 E um número de suporte diferente pra cada problema
+        - paragraph [ref=e304]: No fim do dia, quem integra tudo é o cozinheiro — no grito.
+      - generic [ref=e305]:
+        - heading "No ChefIApp é diferente" [level=3] [ref=e306]
+        - paragraph [ref=e307]: A cozinha não vira refém de integração. A integração entra no ritmo da cozinha.
+        - paragraph [ref=e308]: Delivery, TPV, comandeiro, impressora, página web, pagamentos, reservas — tudo entra no mesmo serviço.
+        - list [ref=e309]:
+          - listitem [ref=e310]: • Se atrasar, não trava a casa.
+          - listitem [ref=e311]: • Se cair, a operação continua.
+          - listitem [ref=e312]: • Se funcionar, ótimo — é assim que tem que ser.
+      - generic [ref=e313]:
+        - heading "Integrações que entram na operação (e não mandam nela)" [level=3] [ref=e314]
+        - list [ref=e315]:
+          - listitem [ref=e316]: • Plataformas de delivery
+          - listitem [ref=e317]: • Sistemas de faturamento
+          - listitem [ref=e318]: • TPVs e caixas existentes
+          - listitem [ref=e319]: • Impressoras térmicas (as que você já tem)
+          - listitem [ref=e320]: • Comandeiro digital ou físico
+          - listitem [ref=e321]: • Página web própria
+          - listitem [ref=e322]: • Pagamentos
+        - paragraph [ref=e323]: Não exigimos troca de equipamento. Não forçamos fornecedor. Não vendemos “kit obrigatório”.
+        - paragraph [ref=e324]: Se você já tem, funciona. Se não tem, indicamos — não empurramos.
+      - generic [ref=e325]:
+        - heading "Funciona primeiro. Integra depois." [level=3] [ref=e326]
+        - paragraph [ref=e327]: Se a frigideira está quente, o sistema não pede atualização.
+        - paragraph [ref=e328]: ChefIApp não é um sistema com integrações. É uma operação que aceita integrações.
+  - generic [ref=e330]:
+    - heading "🗣️ Quem já testou" [level=2] [ref=e331]
+    - generic [ref=e332]:
+      - generic [ref=e333]:
+        - generic [ref=e334]: "\""
+        - generic [ref=e335]:
+          - paragraph [ref=e336]: Sistema simples, direto. Parei de perder tempo procurando papel. Turno fica rastreado automaticamente. Vale muito.
+          - generic [ref=e337]:
+            - img "Sofia Gastrobar" [ref=e339]
+            - generic [ref=e340]:
+              - img "Sofia Gastrobar Ibiza" [ref=e341]
+              - paragraph [ref=e342]: Ibiza · Verão 2025
+              - paragraph [ref=e343]: Sistema em uso real · Operação diária
+      - paragraph [ref=e344]: "* Primeiro restaurante em produção. Mais cases chegando em janeiro 2026."
+  - generic [ref=e346]:
+    - heading "🚀 Como funciona o piloto de 14 dias" [level=2] [ref=e347]
+    - paragraph [ref=e348]: Zero risco. Se em 14 dias você não sentir diferença real no caos do dia a dia, cancela e pronto.
+    - generic [ref=e349]:
+      - generic [ref=e351]:
+        - generic [ref=e352]: "01"
+        - heading "Primeiro serviço ao vivo" [level=3] [ref=e353]
+        - paragraph [ref=e354]: Mostramos a operação real (casa Sofia Gastrobar). Você vê exatamente o que vai ter.
+        - text: 15 minutos
+      - generic [ref=e355]:
+        - generic [ref=e356]: "02"
+        - heading "Setup inicial" [level=3] [ref=e357]
+        - paragraph [ref=e358]: Criamos seu restaurante, você adiciona 5 itens do menu. Pronto, já funciona.
+        - text: 10 minutos
+      - generic [ref=e359]:
+        - generic [ref=e360]: "03"
+        - heading "Operação real" [level=3] [ref=e361]
+        - paragraph [ref=e362]: Sua equipa usa de verdade. Turnos, stock, tarefas. Zero compromisso, zero custo.
+        - text: 14 dias
+      - generic [ref=e363]:
+        - generic [ref=e364]: "04"
+        - heading "Decisão" [level=3] [ref=e365]
+        - paragraph [ref=e366]: Gostou? Fica. Não gostou? Cancela. Simples assim.
+        - text: Dia 15
+  - generic [ref=e368]:
+    - heading "Não é mockup. É sistema a funcionar." [level=2] [ref=e369]:
+      - text: Não é mockup.
+      - text: É sistema a funcionar.
+    - paragraph [ref=e370]: A demonstração mostra exatamente o que o cliente final ve. Sem slides. Sem simulação.
+    - generic [ref=e371]:
+      - link "Ver página pública" [ref=e372] [cursor=pointer]:
+        - /url: https://sofiagastrobaribiza.com
+        - generic [ref=e373]: Ver página pública
+        - img [ref=e374]
+      - link "Abrir Portal" [ref=e376] [cursor=pointer]:
+        - /url: /app
+        - generic [ref=e377]: Abrir Portal
+        - img [ref=e378]
+    - generic [ref=e381]:
+      - img "Sofia Gastrobar Ibiza - captura real"
+      - generic [ref=e382]:
+        - generic [ref=e383]: Ver ao vivo no domínio oficial.
+        - link "🌐 Abrir sofiagastrobaribiza.com" [ref=e384] [cursor=pointer]:
+          - /url: https://sofiagastrobaribiza.com
+  - generic [ref=e388]:
+    - generic [ref=e389]:
+      - heading "ChefIApp" [level=2] [ref=e390]
+      - paragraph [ref=e391]: Um sistema operacional leve para restauração.
+      - paragraph [ref=e392]: Identidade própria. Não responde a categorias antigas.
+    - generic [ref=e394]:
+      - heading "Soluções que resolvem partes, não a operação:" [level=2] [ref=e395]
+      - generic [ref=e396]:
+        - generic [ref=e397]:
+          - generic [ref=e398]: ❌
+          - generic [ref=e399]: Um marketplace
+        - generic [ref=e400]:
+          - generic [ref=e401]: ❌
+          - generic [ref=e402]: Um plugin de pedidos
+        - generic [ref=e403]:
+          - generic [ref=e404]: ❌
+          - generic [ref=e405]: Um construtor genérico de sites
+      - paragraph [ref=e406]: Operação exige sistema, não remendo.
+  - generic [ref=e408]:
+    - heading "Perguntas honestas" [level=2] [ref=e409]
+    - generic [ref=e410]:
+      - generic [ref=e411]:
+        - heading "Isso substitui meu POS fiscal?" [level=3] [ref=e412]
+        - paragraph [ref=e413]: Não. E isso é intencional. ChefIApp é gestão operacional + pré-conta. O POS fiscal continua responsável pela nota. Certificação fiscal está prevista para Q2 2026.
+      - generic [ref=e414]:
+        - heading "Preciso de internet o tempo todo?" [level=3] [ref=e415]
+        - paragraph [ref=e416]: Sim, mas com tolerância. Sistema aguenta 5 min offline. Para operações críticas (pagamento, fechamento), precisa de internet ativa. Para o resto da operação, o sistema continua funcional.
+      - generic [ref=e417]:
+        - heading "Minha equipe não sabe usar computador." [level=3] [ref=e418]
+        - paragraph [ref=e419]: Interface mobile-first. Funciona no celular. A equipa só vê o que precisa fazer — quando precisa fazer. Na demo você decide se é simples o suficiente.
+      - generic [ref=e420]:
+        - heading "Quanto custa depois do piloto?" [level=3] [ref=e421]
+        - paragraph [ref=e422]: Teste primeiro. Se fizer sentido, €49/mês (Starter) ou €99/mês (Professional).
+      - generic [ref=e423]:
+        - heading "Isso dá mais trabalho pra mim?" [level=3] [ref=e424]
+        - paragraph [ref=e425]: Não. Depois do setup inicial (≈25 min), o sistema começa a cobrar o que antes dependia de você lembrar.
+      - generic [ref=e426]:
+        - heading "Posso cancelar quando quiser?" [level=3] [ref=e427]
+        - paragraph [ref=e428]: Sempre. Sem contrato, sem multa. Cancela no painel com 1 clique. Exporta todos os dados antes de sair.
+    - generic [ref=e429]:
+      - paragraph [ref=e430]: Ainda tem dúvidas?
+      - link "Falar connosco" [ref=e431] [cursor=pointer]:
+        - /url: mailto:comercial@chefiapp.com
+  - generic [ref=e433]:
+    - generic [ref=e434]:
+      - heading "Pronto para testar sua operação no mundo real? Operação real · 14 dias · Zero compromisso." [level=2] [ref=e435]:
+        - text: Pronto para testar sua operação no mundo real?
+        - text: Operação real · 14 dias · Zero compromisso.
+      - paragraph [ref=e436]:
+        - generic [ref=e437]: O tempo de montar o menu, ligar o TPV e pôr a equipa a trabalhar é o tempo de aquecer a chapa. Enquanto um ovo frita, o menu já está online. Enquanto o café sai, o TPV já conversa com a operação.
+        - generic [ref=e438]: Se a casa abre rápido, o sistema acompanha. Se funciona no primeiro serviço, funciona no dia a dia — com os seus equipamentos.
+      - generic [ref=e439]:
+        - link "🚀 Começar agora" [ref=e440] [cursor=pointer]:
+          - /url: /app
+        - link "Já tenho conta" [ref=e441] [cursor=pointer]:
+          - /url: /app
+    - generic [ref=e443]:
+      - generic [ref=e444]:
+        - generic [ref=e445]: © 2026 ChefIApp
+        - generic [ref=e446]: Produto para restauração
+      - generic [ref=e447]:
+        - link "Termos" [ref=e448] [cursor=pointer]:
+          - /url: "#terms"
+        - link "Privacidade" [ref=e449] [cursor=pointer]:
+          - /url: "#privacy"
+    - generic [ref=e450]:
+      - img "ChefIApp" [ref=e451]
+      - generic [ref=e452]: ChefIApp™
+      - link "Feito com ❤ por GoldMonkey.studio" [ref=e453] [cursor=pointer]:
+        - /url: https://goldmonkey.studio
+```

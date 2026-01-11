@@ -1,0 +1,1001 @@
+📄 PAGE HTML DUMP: <!DOCTYPE html><html lang="en" style="--color-brand-primary: #F59E0B;"><head><script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+<script type="module" src="/@vite/client"></script>
+
+<meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22&gt;&lt;text y=%22.9em%22 font-size=%2290%22&gt;👨‍🍳&lt;/text&gt;&lt;/svg&gt;">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="ChefIApp - Sistema Operacional para Restauração. Otimize sua operação com inteligência.">
+<title>ChefIApp - Merchant Portal</title>
+<style type="text/css" data-vite-dev-id="/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/src/App.css">/**
+ * ChefIApp Merchant Portal — Legacy Component Styles
+ *
+ * Phase 1 DS Hardening: Migrated to use design tokens.
+ * These classes are legacy and should be replaced with design system components.
+ *
+ * Migration status:
+ * - [x] Colors migrated to CSS variables
+ * - [x] Spacing migrated to CSS variables
+ * - [x] Border radius migrated to CSS variables
+ * - [ ] Replace with DS components (Phase 2)
+ */
+
+/* ============================================================================
+ * LAYOUT
+ * ============================================================================ */
+
+.wrap {
+  max-width: var(--breakpoint-lg);
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.row {
+  margin-top: var(--spacing-md);
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ============================================================================
+ * TYPOGRAPHY
+ * ============================================================================ */
+
+.h1 {
+  margin: 0;
+  font-size: var(--font-size-h1);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.h2 {
+  font-size: var(--font-size-h3);
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+}
+
+.h3 {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+}
+
+.muted {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.hint {
+  font-size: var(--font-size-ui-sm);
+  color: var(--text-secondary);
+  padding: var(--spacing-10) 0 0;
+}
+
+/* ============================================================================
+ * BADGE
+ * ============================================================================ */
+
+.badge {
+  display: inline-block;
+  font-size: var(--badge-font-size);
+  color: var(--text-secondary);
+  padding: var(--badge-padding-y) var(--badge-padding-x);
+  border: 1px solid var(--surface-border-active);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--spacing-sm);
+}
+
+/* ============================================================================
+ * CARD
+ * ============================================================================ */
+
+.card {
+  border: var(--card-border);
+  background: var(--surface-elevated);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-md) 0;
+}
+
+.mini {
+  border: 1px dashed var(--surface-border-active);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+/* ============================================================================
+ * FORMS
+ * ============================================================================ */
+
+label {
+  display: grid;
+  gap: 6px;
+  font-size: var(--font-size-ui-sm);
+  color: var(--text-primary);
+}
+
+input,
+select {
+  padding: var(--spacing-10);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--surface-border-hover);
+  background: var(--surface-base);
+  color: inherit;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+input:focus,
+select:focus {
+  border-color: var(--color-primary);
+}
+
+input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* ============================================================================
+ * BUTTONS
+ * ============================================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-10) var(--spacing-md);
+  border-radius: var(--radius-10);
+  border: 1px solid var(--surface-border-hover);
+  background: var(--surface-elevated);
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn:hover {
+  background: var(--surface-overlay);
+  border-color: var(--surface-border-active);
+}
+
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn.primary {
+  border-color: var(--status-primary-border);
+  background: var(--status-primary-bg);
+  color: var(--color-primary);
+}
+
+.btn.primary:hover {
+  background: rgba(201, 162, 39, 0.18);
+}
+
+/* ============================================================================
+ * STEPS
+ * ============================================================================ */
+
+.steps {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.step {
+  font-size: var(--font-size-ui-sm);
+  padding: var(--spacing-sm) var(--spacing-10);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--surface-border-hover);
+  background: var(--surface-elevated);
+}
+
+.step.completed {
+  border-color: var(--status-success-border);
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
+}
+
+.step.current {
+  border-color: var(--status-primary-border);
+  background: var(--status-primary-bg);
+  color: var(--status-primary-text);
+}
+
+.step.blocked {
+  border-color: var(--status-warning-border);
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
+}
+
+.step.pending {
+  color: var(--text-secondary);
+}
+
+/* ============================================================================
+ * BANNERS
+ * ============================================================================ */
+
+.banner {
+  margin-top: var(--spacing-md);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--surface-border);
+  background: var(--surface-elevated);
+}
+
+.bannerTitle {
+  font-weight: 800;
+  margin-bottom: var(--spacing-xs);
+}
+
+.bannerText {
+  font-size: var(--font-size-ui-sm);
+  color: var(--text-secondary);
+}
+
+.bannerActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  margin-top: var(--spacing-10);
+}
+
+.bannerActions .btn {
+  text-decoration: none;
+}
+
+.banner.ok {
+  border-color: var(--status-success-border);
+  background: var(--status-success-bg);
+}
+
+.banner.warn {
+  border-color: var(--status-warning-border);
+  background: var(--status-warning-bg);
+}
+
+.banner.neutral {
+  border-color: var(--surface-border);
+  background: var(--surface-elevated);
+}
+
+/* ============================================================================
+ * CODE / PRE
+ * ============================================================================ */
+
+pre {
+  margin: var(--spacing-10) 0 0;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--surface-base);
+  border: 1px solid var(--surface-border);
+  overflow: auto;
+  font-size: var(--font-size-ui-sm);
+}
+
+pre.error {
+  border-color: var(--status-error-border);
+  background: var(--status-error-bg);
+}
+
+/* ============================================================================
+ * IFRAME
+ * ============================================================================ */
+
+.iframeWrap {
+  margin-top: var(--spacing-md);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--surface-border);
+}
+
+.iframeWrap iframe {
+  width: 100%;
+  height: 520px;
+  border: 0;
+  background: var(--color-neutral-0);
+}
+
+/* ============================================================================
+ * RESPONSIVE
+ * ============================================================================ */
+
+@media (max-width: 860px) {
+  .top {
+    flex-direction: column;
+  }
+
+  .grid,
+  .split {
+    grid-template-columns: 1fr;
+  }
+}</style><style type="text/css" data-vite-dev-id="/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/src/ui/design-system/CoreStatusBanner.css">/**
+ * CoreStatusBanner — Global Health Indicator
+ *
+ * TRUTH LOCK: This banner is always visible when system is not UP.
+ * No hiding, no dismissing critical status.
+ */
+
+.core-status-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md, 12px);
+  padding: var(--spacing-sm, 8px) var(--spacing-lg, 24px);
+  font-size: 13px;
+  font-weight: 500;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Status variants */
+/* Status variants */
+.core-status-banner--error {
+  background-color: var(--status-down);
+  color: #fff;
+}
+
+.core-status-banner--warning {
+  background-color: var(--status-degraded);
+  color: #fff;
+  /* or black depending on contrast, white usually strictly safer on amber 500 */
+}
+
+.core-status-banner--info {
+  background-color: var(--status-demo);
+  /* Using demo/info color */
+  color: #fff;
+}
+
+/* Checking animation */
+.core-status-banner--checking .core-status-banner__icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Content layout */
+.core-status-banner__content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+  flex: 1;
+  min-width: 0;
+}
+
+.core-status-banner__icon {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.core-status-banner__message {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.core-status-banner__time {
+  flex-shrink: 0;
+  opacity: 0.7;
+  font-size: 11px;
+}
+
+/* Retry button */
+.core-status-banner__retry {
+  flex-shrink: 0;
+  padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-sm, 6px);
+  color: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.core-status-banner__retry:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.core-status-banner__retry:active {
+  transform: scale(0.98);
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .core-status-banner {
+    padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
+    font-size: 12px;
+  }
+
+  .core-status-banner__time {
+    display: none;
+  }
+
+  .core-status-banner__retry {
+    padding: var(--spacing-xs, 4px) var(--spacing-xs, 4px);
+    font-size: 11px;
+  }
+}
+
+/* Ensure content below banner has enough space */
+body:has(.core-status-banner) {
+  padding-top: 40px;
+}</style><style type="text/css" data-vite-dev-id="/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/src/ui/design-system/TruthBadge.css">/* TruthBadge Styles */
+
+.truth-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs, 4px);
+  padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+  border-radius: var(--radius-full, 9999px);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.truth-badge--ghost {
+  background-color: rgba(239, 83, 80, 0.1); /* Error/Red light */
+  color: #c62828; /* Dark red */
+  border: 1px solid rgba(239, 83, 80, 0.3);
+}
+
+.truth-badge--live {
+  background-color: rgba(76, 175, 80, 0.1); /* Success/Green light */
+  color: #2e7d32; /* Dark green */
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.truth-badge__icon {
+  font-size: 14px;
+}
+
+.truth-badge__label {
+  font-weight: 600;
+}
+</style><style type="text/css" data-vite-dev-id="/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/src/ui/design-system/TopBar.css">.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 var(--spacing-lg, 16px);
+  background: var(--color-secondary, #1A4D7A);
+  color: var(--color-neutral-0, #FFFFFF);
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+}
+
+.topbar__left,
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+  min-width: 48px;
+}
+
+.topbar__center {
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+}
+
+.topbar__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm, 8px);
+}
+
+.topbar__logo-icon {
+  font-size: 20px;
+}
+
+.topbar__title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar__subtitle {
+  font-size: 12px;
+  margin: 0;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Touch-friendly actions */
+.topbar__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: var(--spacing-sm, 8px);
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-xs, 4px);
+  transition: background var(--transition-fast, 150ms);
+}
+
+.topbar__action:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.topbar__action:focus-visible {
+  outline: 2px solid var(--color-primary, #2A9D3E);
+  outline-offset: 2px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 767px) {
+  .topbar {
+    padding: 0 var(--spacing-md, 12px);
+  }
+
+  .topbar__title {
+    font-size: 14px;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/src/ui/design-system/SideNav.css">.sidenav {
+  display: flex;
+  flex-direction: column;
+  width: 240px;
+  height: 100%;
+  background: var(--color-neutral-0, #FFFFFF);
+  border-right: 1px solid var(--color-neutral-200, #EEEEEE);
+  padding: var(--spacing-lg, 16px) 0;
+  transition: width var(--transition-standard, 200ms);
+}
+
+.sidenav--collapsed {
+  width: 64px;
+}
+
+.sidenav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs, 4px);
+}
+
+.sidenav__item {
+  padding: 0 var(--spacing-sm, 8px);
+}
+
+.sidenav__link {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 12px);
+  min-height: 44px;
+  padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
+  border-radius: var(--radius-sm, 8px);
+  color: var(--color-neutral-700, #424242);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition-fast, 150ms);
+}
+
+.sidenav__link:hover {
+  background: var(--color-neutral-100, #F5F5F5);
+  color: var(--color-neutral-900, #1A1A1A);
+}
+
+.sidenav__link:focus-visible {
+  outline: 2px solid var(--color-primary, #2A9D3E);
+  outline-offset: 2px;
+}
+
+.sidenav__link--active {
+  background: rgba(42, 157, 62, 0.1);
+  color: var(--color-primary, #2A9D3E);
+  font-weight: 600;
+}
+
+.sidenav__link--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 24px;
+  background: var(--color-primary, #2A9D3E);
+  border-radius: 0 2px 2px 0;
+}
+
+.sidenav__item {
+  position: relative;
+}
+
+.sidenav__icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+}
+
+.sidenav__label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidenav__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--color-error, #EF5350);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-full, 9999px);
+}
+
+/* Collapsed state */
+.sidenav--collapsed .sidenav__link {
+  justify-content: center;
+  padding: var(--spacing-sm, 8px);
+}
+
+.sidenav--collapsed .sidenav__label {
+  display: none;
+}
+
+.sidenav--collapsed .sidenav__badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  font-size: 10px;
+}
+
+/* Hover tooltip for collapsed */
+.sidenav--collapsed .sidenav__link:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+  padding: 6px 12px;
+  background: var(--color-neutral-800, #212121);
+  color: white;
+  font-size: 12px;
+  white-space: nowrap;
+  border-radius: var(--radius-xs, 4px);
+  z-index: 1000;
+}
+</style><style type="text/css" data-vite-dev-id="/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/src/ui/design-system/MobileNav.css">.mobilenav {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--color-neutral-0, #FFFFFF);
+  border-top: 1px solid var(--color-neutral-200, #EEEEEE);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  z-index: 1100;
+}
+
+.mobilenav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 64px;
+  min-height: 44px;
+  padding: var(--spacing-xs, 4px);
+  color: var(--color-neutral-500, #757575);
+  text-decoration: none;
+  transition: color var(--transition-fast, 150ms);
+}
+
+.mobilenav__item:focus-visible {
+  outline: 2px solid var(--color-primary, #2A9D3E);
+  outline-offset: -2px;
+}
+
+.mobilenav__item--active {
+  color: var(--color-primary, #2A9D3E);
+}
+
+.mobilenav__icon {
+  position: relative;
+  font-size: 22px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.mobilenav__label {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.mobilenav__badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: var(--color-error, #EF5350);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: var(--radius-full, 9999px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Hide on desktop */
+@media (min-width: 768px) {
+  .mobilenav {
+    display: none;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/src/ui/design-system/Stepper.css">/* Stepper Styles */
+
+.stepper {
+  width: 100%;
+  padding: var(--spacing-md, 16px) 0;
+}
+
+.stepper__track {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 4px);
+  margin-bottom: var(--spacing-lg, 24px);
+  padding: 0 var(--spacing-md, 16px);
+}
+
+/* Step circle */
+.stepper__step {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: var(--radius-full, 9999px);
+  border: 2px solid var(--color-neutral-300, #e0e0e0);
+  background-color: var(--color-neutral-0, #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: all 200ms ease;
+  font-weight: 600;
+  color: var(--color-neutral-500, #757575);
+}
+
+.stepper__step--clickable {
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-primary, #2a9d3e);
+    background-color: rgba(42, 157, 62, 0.05);
+  }
+}
+
+.stepper__step--active {
+  border-color: var(--color-primary, #2a9d3e);
+  background-color: var(--color-primary, #2a9d3e);
+  color: var(--color-neutral-0, #ffffff);
+}
+
+.stepper__step--completed {
+  border-color: var(--color-success, #4caf50);
+  background-color: var(--color-success, #4caf50);
+  color: var(--color-neutral-0, #ffffff);
+}
+
+.stepper__number {
+  font-size: 16px;
+}
+
+/* Connection line */
+.stepper__line {
+  flex: 1;
+  height: 2px;
+  background-color: var(--color-neutral-200, #eeeeee);
+  transition: background-color 200ms ease;
+}
+
+.stepper__line--completed {
+  background-color: var(--color-success, #4caf50);
+}
+
+/* Step labels */
+.stepper__labels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: var(--spacing-sm, 8px);
+  padding: 0 var(--spacing-md, 16px);
+}
+
+.stepper__label {
+  text-align: center;
+  opacity: 0.6;
+  transition: opacity 200ms ease;
+}
+
+.stepper__label--active {
+  opacity: 1;
+}
+
+.stepper__label-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-neutral-900, #1a1a1a);
+}
+
+.stepper__label-description {
+  font-size: 11px;
+  color: var(--color-neutral-500, #757575);
+  margin-top: 2px;
+}
+
+/* Mobile responsive */
+@media (max-width: 767px) {
+  .stepper__labels {
+    display: none;
+  }
+
+  .stepper__track {
+    padding: 0;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/src/ui/design-system/RiskChip.css">/* RiskChip Styles */
+
+.risk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs, 4px);
+  padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+  border-radius: var(--radius-xs, 4px);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.risk-chip--low {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: #2e7d32;
+  border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.risk-chip--medium {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: #e65100;
+  border: 1px solid rgba(255, 152, 0, 0.2);
+}
+
+.risk-chip--high {
+  background-color: rgba(239, 83, 80, 0.1);
+  color: #c62828;
+  border: 1px solid rgba(239, 83, 80, 0.2);
+}
+
+.risk-chip__icon {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.risk-chip__label {
+  font-weight: 600;
+}
+
+.risk-chip__value {
+  margin-left: var(--spacing-xs, 4px);
+  font-weight: 700;
+  opacity: 0.8;
+}
+</style><style type="text/css" data-vite-dev-id="/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/src/ui/design-system/EmptyState.css">/* EmptyState Styles - Sovereign Design System */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md, 16px);
+  padding: 64px 24px;
+  text-align: center;
+  min-height: 240px;
+  border-radius: 12px;
+
+  /* Void aesthetic: Subtle integration with background */
+  background: transparent;
+}
+
+.empty-state__icon {

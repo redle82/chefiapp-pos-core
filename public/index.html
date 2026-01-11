@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChefIApp</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+      .wrap { max-width: 980px; margin: 0 auto; padding: 40px 20px; }
+      .badge { display: inline-block; padding: 6px 10px; border: 1px solid rgba(127,127,127,.25); border-radius: 999px; font-size: 12px; opacity: .85; }
+      h1 { margin: 12px 0 8px; font-size: 40px; line-height: 1.1; }
+      p { margin: 0; opacity: .85; }
+      .lead { max-width: 66ch; }
+      .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
+      .card { border: 1px solid rgba(127,127,127,.25); border-radius: 12px; padding: 16px; }
+      .list { margin: 14px 0 0; padding-left: 18px; opacity: .9; }
+      .list li { margin: 6px 0; }
+      .how { margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+      .how .step { border: 1px solid rgba(127,127,127,.25); border-radius: 12px; padding: 14px; }
+      .k { font-size: 12px; opacity: .75; margin-bottom: 6px; }
+      .t { font-size: 14px; font-weight: 700; margin: 0 0 6px; }
+      .cta { display: inline-flex; align-items: center; justify-content: center; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(127,127,127,.35); text-decoration: none; color: inherit; margin-top: 12px; }
+      .cta.primary { border-color: rgba(100,108,255,.55); background: rgba(100,108,255,.12); }
+      .muted { font-size: 12px; opacity: .75; margin-top: 18px; }
+      @media (max-width: 860px) { .cards { grid-template-columns: 1fr; } .how { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <span class="badge">ChefIApp POS</span>
+      <h1>Pedidos, operação e controlo — num só fluxo.</h1>
+      <p class="lead">ChefIApp une o que normalmente está espalhado por 3 ferramentas: página pública, pedidos e backoffice operacional. Este site está em modo demo.</p>
+
+      <ul class="list">
+        <li>Onboarding rápido: identidade → menu → pagamentos → publicar.</li>
+        <li>Gates comerciais: quando bloqueia, orienta (CTAs claros).</li>
+        <li>Core financeiro orientado a eventos (auditável por design).</li>
+      </ul>
+
+      <div class="how">
+        <div class="step">
+          <div class="k">Passo 1</div>
+          <p class="t">Configurar</p>
+          <p style="font-size:13px; opacity:.8; margin:0;">Faz o setup no portal e valida o estado.</p>
+        </div>
+        <div class="step">
+          <div class="k">Passo 2</div>
+          <p class="t">Publicar</p>
+          <p style="font-size:13px; opacity:.8; margin:0;">Gera a página pública do restaurante.</p>
+        </div>
+        <div class="step">
+          <div class="k">Passo 3</div>
+          <p class="t">Demonstrar</p>
+          <p style="font-size:13px; opacity:.8; margin:0;">Mostra o ciclo completo em 30–60 segundos.</p>
+        </div>
+      </div>
+
+      <div class="cards">
+        <section class="card">
+          <h2 style="margin:0 0 6px; font-size:16px;">Merchant Portal</h2>
+          <p style="margin:0; font-size:13px; opacity:.8;">Wizard e visão de “gates” do produto.</p>
+          <a class="cta primary" href="/app/">Abrir Portal (/app)</a>
+        </section>
+
+        <section class="card">
+          <h2 style="margin:0 0 6px; font-size:16px;">Demo</h2>
+          <p style="margin:0; font-size:13px; opacity:.8;">Página pública com menu e preços.</p>
+          <a class="cta" href="/public/sofia-gastrobar">Abrir Página Pública</a>
+        </section>
+      </div>
+
+      <div class="muted">Nota: o portal pode tentar chamar a API local (localhost:4320). Em produção, algumas ações podem falhar — é esperado nesta fase.</div>
+    </main>
+  </body>
+</html>

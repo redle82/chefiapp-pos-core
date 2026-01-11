@@ -1,0 +1,298 @@
+/* Analytics Dashboard Styles */
+
+.analytics {
+  padding: var(--spacing-lg, 24px);
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.analytics__header {
+  margin-bottom: var(--spacing-xl, 32px);
+}
+
+.analytics__title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-neutral-900, #1a1a1a);
+}
+
+.analytics__subtitle {
+  margin: var(--spacing-xs, 4px) 0 0;
+  font-size: 14px;
+  color: var(--color-neutral-500, #757575);
+}
+
+/* Date Selector */
+.analytics__date-selector {
+  margin-bottom: var(--spacing-xl, 32px);
+}
+
+/* Section */
+.analytics__section {
+  margin-bottom: var(--spacing-xl, 32px);
+}
+
+.analytics__section-title {
+  margin: 0 0 var(--spacing-lg, 24px);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-neutral-900, #1a1a1a);
+}
+
+.analytics__section-subtitle {
+  margin: 0 0 var(--spacing-lg, 24px);
+  font-size: 13px;
+  color: var(--color-neutral-500, #757575);
+  font-style: italic;
+}
+
+/* KPI Grid */
+.analytics__kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg, 24px);
+}
+
+/* Charts Grid */
+.analytics__charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--spacing-lg, 24px);
+}
+
+.analytics__chart {
+  padding: var(--spacing-lg, 24px) var(--spacing-md, 16px);
+  min-height: 200px;
+  border: 1px dashed var(--color-neutral-200, #eeeeee);
+  border-radius: var(--radius-sm, 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.analytics__chart-placeholder {
+  text-align: center;
+  color: var(--color-neutral-500, #757575);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Sparkline: Pure CSS mini chart */
+.sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 40px;
+  padding: var(--spacing-sm) 0;
+}
+
+.sparkline__bar {
+  flex: 1;
+  min-width: 4px;
+  max-width: 12px;
+  background: var(--color-primary, #2a9d3e);
+  border-radius: 2px 2px 0 0;
+  transition: height 0.3s ease, opacity 0.2s ease;
+  opacity: 0.7;
+}
+
+.sparkline__bar:hover {
+  opacity: 1;
+}
+
+.sparkline__bar--highlight {
+  background: var(--color-primary-dark, #1e7a2e);
+  opacity: 1;
+}
+
+.sparkline--small {
+  height: 24px;
+}
+
+.sparkline--small .sparkline__bar {
+  min-width: 2px;
+  max-width: 6px;
+}
+
+/* Sparkline in KPI card */
+.kpi-sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 20px;
+  margin-top: var(--spacing-xs);
+}
+
+.kpi-sparkline__bar {
+  flex: 1;
+  min-width: 2px;
+  max-width: 4px;
+  background: currentColor;
+  border-radius: 1px 1px 0 0;
+  opacity: 0.4;
+}
+
+.kpi-sparkline__bar:last-child {
+  opacity: 1;
+}
+
+/* Hour-by-hour chart */
+.analytics__hourly-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 120px;
+  padding: var(--spacing-md) 0;
+  border-bottom: 1px solid var(--color-neutral-200, #eeeeee);
+}
+
+.analytics__hourly-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.analytics__hourly-bar-fill {
+  width: 100%;
+  max-width: 20px;
+  background: linear-gradient(180deg, var(--color-primary, #2a9d3e), var(--color-primary-light, #4caf50));
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+}
+
+.analytics__hourly-bar-label {
+  font-size: 10px;
+  color: var(--color-neutral-500, #757575);
+}
+
+.analytics__hourly-axis {
+  display: flex;
+  justify-content: space-between;
+  padding-top: var(--spacing-xs);
+}
+
+.analytics__hourly-axis span {
+  font-size: 10px;
+  color: var(--color-neutral-400, #9e9e9e);
+}
+
+/* Top Items */
+.analytics__top-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md, 16px);
+}
+
+.analytics__top-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md, 16px);
+  background-color: var(--color-neutral-50, #fafafa);
+  border-radius: var(--radius-sm, 8px);
+  border-left: 3px solid var(--color-primary, #2a9d3e);
+}
+
+.analytics__top-item-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary, #2a9d3e);
+}
+
+/* Comparison */
+.analytics__comparison {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--spacing-md, 16px);
+}
+
+.analytics__comparison-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm, 8px);
+  padding: var(--spacing-md, 16px);
+  background-color: var(--color-neutral-50, #fafafa);
+  border-radius: var(--radius-sm, 8px);
+  text-align: center;
+}
+
+.analytics__comparison-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-neutral-500, #757575);
+  letter-spacing: 0.3px;
+}
+
+.analytics__comparison-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-neutral-900, #1a1a1a);
+}
+
+/* Insights Grid */
+.analytics__insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-lg, 24px);
+}
+
+/* Footer */
+.analytics__footer {
+  padding: var(--spacing-lg, 24px);
+  background-color: rgba(42, 157, 62, 0.04);
+  border: 1px solid var(--color-neutral-200, #eeeeee);
+  border-radius: var(--radius-md, 12px);
+  text-align: center;
+}
+
+.analytics__footer p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-neutral-700, #424242);
+  line-height: 1.6;
+}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+  .analytics__kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .analytics__charts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .analytics {
+    padding: var(--spacing-md, 16px);
+  }
+
+  .analytics__title {
+    font-size: 20px;
+  }
+
+  .analytics__kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics__charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics__comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics__insights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics__chart {
+    min-height: 150px;
+  }
+}

@@ -1,0 +1,17 @@
+/blueprint/01_CORE_STATES.md# CORE STATES — ORDER
+
+An order represents a unit of consumption.
+
+States:
+- OPEN        → items can be added
+- SENT        → items sent to kitchen
+- SERVED     → all items delivered
+- PAID       → payment confirmed
+- CLOSED     → financial operation closed
+
+Rules:
+- Only OPEN orders can receive items
+- Only SENT orders go to kitchen
+- Only SERVED orders can be paid
+- Only PAID orders can be closed
+- CLOSED is final and immutable

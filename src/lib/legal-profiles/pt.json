@@ -1,0 +1,30 @@
+{
+  "country": "Portugal",
+  "iso": "PT",
+  "languages": ["pt"],
+  "currency": "EUR",
+  "labor_laws": {
+    "max_hours_per_day": 8,
+    "max_hours_per_week": 40,
+    "mandatory_break_after": 5,
+    "night_shift_premium": 25,
+    "overtime_rules": "strict",
+    "min_rest_between_shifts_hours": 11
+  },
+  "data_protection": {
+    "gdpr": true,
+    "photo_restrictions": "explicit_consent",
+    "data_retention_max_years": 10
+  },
+  "hygiene_regulations": {
+    "haccp_required": true,
+    "temperature_logs_required": true,
+    "food_handler_certification_required": true,
+    "retention_years": 7
+  },
+  "penalties": {
+    "privacy_violations": "GDPR fines up to 20M EUR",
+    "food_safety_violations": "up to 600.000 EUR",
+    "labor_violations": "varies"
+  }
+}

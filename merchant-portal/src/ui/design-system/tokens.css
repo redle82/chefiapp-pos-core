@@ -1,0 +1,582 @@
+/**
+ * Design System CSS Variables — Phase 1 Hardening
+ *
+ * ChefIApp unified design tokens as CSS custom properties.
+ * Import this file in your main CSS to use tokens in pure CSS files.
+ *
+ * Usage:
+ *   @import './ui/design-system/tokens.css';
+ *
+ *   .my-component {
+ *     color: var(--text-primary);
+ *     background: var(--surface-elevated);
+ *     padding: var(--spacing-lg);
+ *   }
+ */
+
+:root {
+  /* ========================================================================
+   * BRAND COLORS
+   * ======================================================================== */
+
+  /* ChefIApp Gold — Primary brand color */
+  --color-brand-gold: #C9A227;
+  --color-brand-gold-light: #E8C547;
+  --color-brand-gold-dark: #B8922A;
+  --gradient-brand: linear-gradient(135deg, #C9A227 0%, #B8922A 100%);
+  --shadow-brand: 0 4px 20px rgba(201, 162, 39, 0.3);
+
+  /* FIRE SYSTEM PALETTE (New Identity) */
+  /* Red OS — Kernel/Critical (The "Brasa" Identity) */
+  --color-os-red: #D9381E; /* Deep vermilion, not neon */
+  --color-os-red-dark: #B91C1C;
+  --color-os-red-dim: #4A0404; /* Vinho base */
+  
+  /* Fire Gradients - Environmental */
+  --fire-vinho: #2D0A0A;   /* Top - Deep Wine */
+  --fire-carvao: #121212;  /* Middle - Charcoal */
+  --fire-brasa: #D9381E;   /* Bottom/Accent - Glowing Ember */
+  
+  /* Semantic Gradients */
+  --gradient-fire-ignition: linear-gradient(180deg, var(--fire-vinho) 0%, var(--fire-carvao) 40%, var(--fire-brasa) 100%);
+  --gradient-fire-ritual: linear-gradient(180deg, var(--fire-vinho) 0%, var(--fire-carvao) 70%, #1A0505 100%); /* Subtler */
+  --gradient-fire-ember: radial-gradient(circle at 50% -20%, #2D0A0A 0%, #050505 100%); /* Dashboard Background */
+
+  /* Stripe Purple — Payment integration */
+  --color-stripe: #635BFF;
+  --color-stripe-light: #A259FF;
+  --gradient-stripe: linear-gradient(135deg, #635BFF 0%, #A259FF 100%);
+
+  /* ========================================================================
+   * PRIMARY / SECONDARY
+   * ======================================================================== */
+
+  --color-primary: #C9A227;
+  --color-primary-light: #E8C547;
+  --color-primary-dark: #B8922A;
+  --color-secondary: #1A4D7A;
+
+  /* Legacy green (for backward compat) */
+  --color-legacy-green: #2A9D3E;
+
+  /* ========================================================================
+   * SEMANTIC COLORS
+   * ======================================================================== */
+
+  --color-success: #22C55E;
+  --color-warning: #FBBF24;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+
+  /* Truth States (Connectivity) */
+  --status-up: #10B981;
+  /* Emerald 500 */
+  --status-down: #EF4444;
+  /* Red 500 */
+  --status-degraded: #F59E0B;
+  /* Amber 500 */
+  --status-demo: #3B82F6;
+  /* Blue 500 */
+
+  /* Queue States (Offline Engine) */
+  --queue-pending: #9CA3AF;
+  /* Gray 400 */
+  --queue-syncing: #60A5FA;
+  /* Blue 400 */
+  --queue-success: #34D399;
+  /* Emerald 400 */
+  --queue-error: #DC2626;
+  /* Red 600 */
+
+  /* Truth Opacity */
+  --opacity-dim: 0.7;
+  --opacity-offline: 0.9;
+
+  /* ========================================================================
+   * NEUTRAL SCALE
+   * ======================================================================== */
+
+  --color-neutral-0: #FFFFFF;
+  --color-neutral-50: #FAFAFA;
+  --color-neutral-100: #F5F5F5;
+  --color-neutral-200: #E5E5E5;
+  --color-neutral-300: #D4D4D4;
+  --color-neutral-400: #A3A3A3;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #1A1A1A;
+  --color-neutral-950: #0A0A0A;
+
+  /* ========================================================================
+   * SURFACE COLORS (Dark Theme)
+   * ======================================================================== */
+
+  --surface-base: #111827;
+  /* Deep Dark */
+  --surface-elevated: #1F2937;
+  /* Elevated Dark */
+  --surface-overlay: rgba(255, 255, 255, 0.04);
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --surface-border-hover: rgba(255, 255, 255, 0.12);
+  --surface-border-active: rgba(255, 255, 255, 0.15);
+
+  /* ========================================================================
+   * TEXT COLORS (Dark Theme)
+   * ======================================================================== */
+
+  --text-primary: rgba(255, 255, 255, 0.87);
+  --text-secondary: rgba(255, 255, 255, 0.60);
+  --text-tertiary: rgba(255, 255, 255, 0.40);
+  --text-disabled: rgba(255, 255, 255, 0.25);
+  --text-inverse: #1A1A1A;
+
+  /* ========================================================================
+   * STATUS COLORS (with opacity variants)
+   * ======================================================================== */
+
+  /* Success */
+  --status-success-bg: rgba(34, 197, 94, 0.12);
+  --status-success-border: rgba(34, 197, 94, 0.25);
+  --status-success-text: #22C55E;
+
+  /* Warning */
+  --status-warning-bg: rgba(251, 191, 36, 0.12);
+  --status-warning-border: rgba(251, 191, 36, 0.25);
+  --status-warning-text: #FBBF24;
+
+  /* Error */
+  --status-error-bg: rgba(239, 68, 68, 0.12);
+  --status-error-border: rgba(239, 68, 68, 0.25);
+  --status-error-text: #EF4444;
+
+  /* Info */
+  --status-info-bg: rgba(59, 130, 246, 0.12);
+  --status-info-border: rgba(59, 130, 246, 0.25);
+  --status-info-text: #3B82F6;
+
+  /* Primary */
+  --status-primary-bg: rgba(201, 162, 39, 0.12);
+  --status-primary-border: rgba(201, 162, 39, 0.25);
+  --status-primary-text: #C9A227;
+
+  /* ========================================================================
+   * RISK LEVELS
+   * ======================================================================== */
+
+  --color-risk-low: #22C55E;
+  --color-risk-medium: #FBBF24;
+  --color-risk-high: #EF4444;
+
+  /* ========================================================================
+   * SPACING SCALE (4px base)
+   * ======================================================================== */
+
+  --spacing-0: 0px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-10: 10px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-18: 18px;
+  --spacing-xl: 24px;
+  --spacing-28: 28px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 48px;
+  --spacing-4xl: 64px;
+
+  /* ========================================================================
+   * BORDER RADIUS
+   * ======================================================================== */
+
+  --radius-none: 0px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-10: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* ========================================================================
+   * TRANSITIONS
+   * ======================================================================== */
+
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-standard: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ========================================================================
+   * ELEVATION (Shadows)
+   * ======================================================================== */
+
+  --elevation-none: none;
+  --elevation-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --elevation-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+  --elevation-md: 0 4px 8px rgba(0, 0, 0, 0.12);
+  --elevation-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+  --elevation-xl: 0 12px 24px rgba(0, 0, 0, 0.18);
+  --elevation-primary: 0 4px 20px rgba(201, 162, 39, 0.3);
+
+  /* ========================================================================
+   * TYPOGRAPHY
+   * ======================================================================== */
+
+  --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+
+  /* Display sizes */
+  --font-size-display-lg: 32px;
+  --font-size-display-md: 24px;
+  --font-size-display-sm: 20px;
+
+  /* Heading sizes */
+  --font-size-h1: 28px;
+  --font-size-h2: 22px;
+  --font-size-h3: 16px;
+  --font-size-h4: 14px;
+
+  /* UI sizes */
+  --font-size-ui-lg: 16px;
+  --font-size-ui-md: 14px;
+  --font-size-ui-sm: 12px;
+  --font-size-ui-tiny: 11px;
+
+  /* ========================================================================
+   * Z-INDEX SCALE
+   * ======================================================================== */
+
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-fixed: 1200;
+  --z-modal: 1300;
+  --z-popover: 1400;
+  --z-toast: 1500;
+  --z-tooltip: 1600;
+
+  /* ========================================================================
+   * BREAKPOINTS (for reference in CSS calculations)
+   * ======================================================================== */
+
+  --breakpoint-sm: 640px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-md: 860px;
+  --breakpoint-desktop: 1024px;
+  --breakpoint-lg: 1100px;
+  --breakpoint-wide: 1440px;
+
+  /* ========================================================================
+   * COMPONENT TOKENS
+   * ======================================================================== */
+
+  /* Input/Form */
+  --input-height: 44px;
+  --input-padding-y: var(--spacing-sm);
+  --input-padding-x: var(--spacing-md);
+  --input-border-radius: var(--radius-sm);
+  --input-border-color: var(--surface-border);
+  --input-border-color-focus: var(--color-primary);
+  --input-background: rgba(0, 0, 0, 0.2);
+
+  /* Button */
+  --button-height: 44px;
+  --button-height-sm: 36px;
+  --button-height-lg: 52px;
+  --button-padding-y: var(--spacing-10);
+  --button-padding-x: var(--spacing-md);
+  --button-border-radius: var(--radius-10);
+
+  /* Card */
+  --card-padding: var(--spacing-lg);
+  --card-border-radius: var(--radius-md);
+  --card-background: var(--surface-elevated);
+  --card-border: 1px solid var(--surface-border);
+
+  /* Badge */
+  --badge-padding-y: 6px;
+  --badge-padding-x: var(--spacing-10);
+  --badge-border-radius: var(--radius-full);
+  --badge-font-size: 12px;
+
+  /* TopBar */
+  --topbar-height: 56px;
+
+  /* BottomNav */
+  --bottomnav-height: 72px;
+  --bottomnav-height-base: 56px;
+
+  /* Step */
+  --step-size: 40px;
+}
+
+/* ============================================================================
+ * UTILITY CLASSES
+ * ============================================================================ */
+
+/* Text colors */
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-tertiary {
+  color: var(--text-tertiary);
+}
+
+.text-disabled {
+  color: var(--text-disabled);
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+
+.text-info {
+  color: var(--color-info);
+}
+
+.text-brand {
+  color: var(--color-brand-gold);
+}
+
+/* Background colors */
+.bg-base {
+  background: var(--surface-base);
+}
+
+.bg-elevated {
+  background: var(--surface-elevated);
+}
+
+.bg-overlay {
+  background: var(--surface-overlay);
+}
+
+.bg-success {
+  background: var(--status-success-bg);
+}
+
+.bg-warning {
+  background: var(--status-warning-bg);
+}
+
+.bg-error {
+  background: var(--status-error-bg);
+}
+
+.bg-info {
+  background: var(--status-info-bg);
+}
+
+.bg-primary {
+  background: var(--status-primary-bg);
+}
+
+/* Border colors */
+.border-default {
+  border-color: var(--surface-border);
+}
+
+.border-hover {
+  border-color: var(--surface-border-hover);
+}
+
+.border-active {
+  border-color: var(--surface-border-active);
+}
+
+.border-success {
+  border-color: var(--status-success-border);
+}
+
+.border-warning {
+  border-color: var(--status-warning-border);
+}
+
+.border-error {
+  border-color: var(--status-error-border);
+}
+
+.border-info {
+  border-color: var(--status-info-border);
+}
+
+.border-primary {
+  border-color: var(--status-primary-border);
+}
+
+/* Spacing utilities */
+.p-0 {
+  padding: var(--spacing-0);
+}
+
+.p-xs {
+  padding: var(--spacing-xs);
+}
+
+.p-sm {
+  padding: var(--spacing-sm);
+}
+
+.p-md {
+  padding: var(--spacing-md);
+}
+
+.p-lg {
+  padding: var(--spacing-lg);
+}
+
+.p-xl {
+  padding: var(--spacing-xl);
+}
+
+.p-2xl {
+  padding: var(--spacing-2xl);
+}
+
+.m-0 {
+  margin: var(--spacing-0);
+}
+
+.m-xs {
+  margin: var(--spacing-xs);
+}
+
+.m-sm {
+  margin: var(--spacing-sm);
+}
+
+.m-md {
+  margin: var(--spacing-md);
+}
+
+.m-lg {
+  margin: var(--spacing-lg);
+}
+
+.m-xl {
+  margin: var(--spacing-xl);
+}
+
+.m-2xl {
+  margin: var(--spacing-2xl);
+}
+
+.gap-xs {
+  gap: var(--spacing-xs);
+}
+
+.gap-sm {
+  gap: var(--spacing-sm);
+}
+
+.gap-md {
+  gap: var(--spacing-md);
+}
+
+.gap-lg {
+  gap: var(--spacing-lg);
+}
+
+.gap-xl {
+  gap: var(--spacing-xl);
+}
+
+/* Border radius utilities */
+.rounded-none {
+  border-radius: var(--radius-none);
+}
+
+.rounded-xs {
+  border-radius: var(--radius-xs);
+}
+
+.rounded-sm {
+  border-radius: var(--radius-sm);
+}
+
+.rounded-md {
+  border-radius: var(--radius-md);
+}
+
+.rounded-lg {
+  border-radius: var(--radius-lg);
+}
+
+.rounded-full {
+  border-radius: var(--radius-full);
+}
+
+/* Typography utilities */
+.font-normal {
+  font-weight: 400;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-extrabold {
+  font-weight: 800;
+}
+
+.text-xs {
+  font-size: var(--font-size-ui-tiny);
+}
+
+.text-sm {
+  font-size: var(--font-size-ui-sm);
+}
+
+.text-base {
+  font-size: var(--font-size-ui-md);
+}
+
+.text-lg {
+  font-size: var(--font-size-ui-lg);
+}
+
+.text-xl {
+  font-size: var(--font-size-h3);
+}
+
+.text-2xl {
+  font-size: var(--font-size-h2);
+}
+
+.text-3xl {
+  font-size: var(--font-size-h1);
+}
+
+/* Transition utilities */
+.transition-fast {
+  transition: all var(--transition-fast);
+}
+
+.transition-standard {
+  transition: all var(--transition-standard);
+}
+
+.transition-slow {
+  transition: all var(--transition-slow);
+}

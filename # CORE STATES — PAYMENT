@@ -1,0 +1,14 @@
+# CORE STATES — PAYMENT
+
+A payment is a financial transaction.
+
+States:
+- PENDING
+- CONFIRMED
+- FAILED
+- CANCELED
+
+Rules:
+- CONFIRMED is irreversible
+- Only CONFIRMED payments can close orders
+- FAILED or CANCELED do not change order state

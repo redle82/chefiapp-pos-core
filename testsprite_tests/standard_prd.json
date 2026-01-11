@@ -1,0 +1,115 @@
+{
+  "product_name": "ChefIApp POS Core - Operational System",
+  "version": "1.0.0",
+  "description": "Core operational system for restaurant POS. Event-sourced financial core with session management, order lifecycle, and event store. This is the operational foundation - payments, billing, and subscriptions are Phase 2+ features.",
+  "test_scope": "CORE_OPERATIONAL",
+  "out_of_scope": [
+    "Stripe webhooks",
+    "Payment processing",
+    "Billing webhooks",
+    "Subscription management",
+    "Payment intents",
+    "External merchant onboarding"
+  ],
+  "tech_stack": [
+    "TypeScript",
+    "Node.js",
+    "PostgreSQL",
+    "Event Sourcing",
+    "State Machines"
+  ],
+  "core_features": [
+    {
+      "name": "Health & System Status",
+      "description": "Health check endpoints that verify system operational status, event store connectivity, and core engine availability.",
+      "endpoints": [
+        "GET /health",
+        "GET /api/health"
+      ],
+      "port": 4320,
+      "test_focus": [
+        "Server responds with 200",
+        "Database connectivity reported",
+        "Event store initialized",
+        "Core engine available"
+      ]
+    },
+    {
+      "name": "Event Store Operations",
+      "description": "Append-only event store that maintains immutable history. Events are the source of truth, state is a projection.",
+      "endpoints": [],
+      "test_focus": [
+        "Event append succeeds",
+        "Duplicate events rejected (idempotency)",
+        "Event replay produces consistent state",
+        "Stream versioning works correctly",
+        "Hash chain integrity maintained"
+      ],
+      "note": "May require direct EventStore interface testing if no HTTP endpoints exist"
+    },
+    {
+      "name": "Session Management",
+      "description": "Operational session lifecycle: INACTIVE → ACTIVE → CLOSED. Sessions represent active operational context.",
+      "endpoints": [],
+      "test_focus": [
+        "Session can be started (INACTIVE → ACTIVE)",
+        "Session can be closed (ACTIVE → CLOSED)",
+        "Closed session cannot accept new orders",
+        "Session state transitions are atomic",
+        "Session events are recorded in event store"
+      ],
+      "note": "May require direct CoreExecutor testing if no HTTP endpoints exist"
+    },
+    {
+      "name": "Order Lifecycle",
+      "description": "Order state machine: OPEN → LOCKED → PAID → CLOSED (or CANCELED). Orders group consumption items. Total is calculated once at LOCKED and becomes immutable.",
+      "endpoints": [
+        "POST /api/orders",
+        "PATCH /api/orders/{orderId}",
+        "POST /api/orders/{orderId}/close"
+      ],
+      "port": 4320,
+      "test_focus": [
+        "Order can be created (OPEN state)",
+        "Order items can be added",
+        "Order can be locked (total calculated, immutable)",
+        "Locked order cannot be modified",
+        "Order can be closed",
+        "Order state transitions generate events",
+        "Total calculation is correct and immutable after LOCKED"
+      ]
+    },
+    {
+      "name": "State Consistency",
+      "description": "System maintains consistency through event sourcing. State can be rebuilt from events deterministically.",
+      "endpoints": [],
+      "test_focus": [
+        "State rebuilt from events matches current state",
+        "Replay produces identical results",
+        "No state drift between projections",
+        "Events are ordered correctly",
+        "Concurrent operations maintain consistency"
+      ]
+    }
+  ],
+  "architectural_guarantees": [
+    "Atomicity: No Financial Fact exists without a Legal Seal",
+    "Immutability: History is Write-Once, Read-Many",
+    "Determinism: Replay always produces same state",
+    "Idempotency: Duplicate events are safely ignored"
+  ],
+  "testing_requirements": [
+    "All health endpoints must return 200 with proper status indicators",
+    "Order lifecycle must respect state machine transitions",
+    "Event store must enforce append-only and idempotency",
+    "State rebuilds must be deterministic and consistent",
+    "No direct database access - all operations via EventStore/CoreExecutor"
+  ],
+  "test_environment_requirements": [
+    "PostgreSQL database running and accessible",
+    "Event store tables initialized",
+    "No external dependencies (Stripe, billing services)",
+    "Test data can be seeded for orders/sessions"
+  ]
+}
+

@@ -1,0 +1,674 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Node.js",
+    "PostgreSQL",
+    "HTTP Server (Native)",
+    "Event Sourcing",
+    "Stripe API",
+    "Jest"
+  ],
+  "features": [
+    {
+      "name": "Webhook Server API",
+      "description": "Stripe webhook handler for payment events. Handles payment_intent.succeeded events, verifies signatures, ensures idempotency, and creates PAYMENT_CONFIRMED events in the event store.",
+      "files": [
+        "server/webhook-server.ts"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "ChefIApp Webhook Server",
+          "version": "1.0.0",
+          "description": "Stripe webhook handler for payment processing"
+        },
+        "servers": [
+          {
+            "url": "http://localhost:3000",
+            "description": "Local development server"
+          }
+        ],
+        "paths": {
+          "/health": {
+            "get": {
+              "summary": "Health check endpoint",
+              "responses": {
+                "200": {
+                  "description": "Server is healthy",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "example": "ok"
+                          },
+                          "events": {
+                            "type": "number",
+                            "example": 42
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/webhooks/stripe": {
+            "post": {
+              "summary": "Receive Stripe webhook events",
+              "description": "Verifies Stripe webhook signature and processes payment_intent.succeeded events",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Webhook received and processed",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "received": {
+                            "type": "boolean"
+                          },
+                          "processed": {
+                            "type": "boolean"
+                          },
+                          "duplicate": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/create-payment-intent": {
+            "post": {
+              "summary": "Create a new payment intent",
+              "responses": {
+                "200": {
+                  "description": "Payment intent created"
+                }
+              }
+            }
+          },
+          "/api/stats": {
+            "get": {
+              "summary": "Get server statistics",
+              "responses": {
+                "200": {
+                  "description": "Statistics retrieved"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Billing Webhook Server API",
+      "description": "Handles Stripe billing and subscription webhooks (customer.subscription.created, customer.subscription.updated, etc.). Separate from payment webhooks, focused on subscription lifecycle management.",
+      "files": [
+        "server/billing-webhook-server.ts"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "ChefIApp Billing Webhook Server",
+          "version": "1.0.0",
+          "description": "Stripe billing and subscription webhook handler"
+        },
+        "servers": [
+          {
+            "url": "http://localhost:3099",
+            "description": "Local development server"
+          }
+        ],
+        "paths": {
+          "/health": {
+            "get": {
+              "summary": "Health check with webhook statistics",
+              "responses": {
+                "200": {
+                  "description": "Server status and webhook stats",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          },
+                          "webhooks": {
+                            "type": "object",
+                            "properties": {
+                              "received": {
+                                "type": "number"
+                              },
+                              "processed": {
+                                "type": "number"
+                              },
+                              "ignored": {
+                                "type": "number"
+                              },
+                              "failed": {
+                                "type": "number"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/webhooks/billing": {
+            "post": {
+              "summary": "Receive Stripe billing webhooks",
+              "description": "Processes subscription lifecycle events",
+              "responses": {
+                "200": {
+                  "description": "Webhook processed"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Subscription Management API",
+      "description": "UI and API for managing merchant subscriptions, plan upgrades, addons, and payment methods. Provides subscription status, available features, and upgrade/downgrade capabilities.",
+      "files": [
+        "server/subscription-management-server.ts"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "ChefIApp Subscription Management",
+          "version": "1.0.0",
+          "description": "Subscription management interface and API"
+        },
+        "servers": [
+          {
+            "url": "http://localhost:4310",
+            "description": "Local development server"
+          }
+        ],
+        "paths": {
+          "/": {
+            "get": {
+              "summary": "Subscription management UI",
+              "responses": {
+                "200": {
+                  "description": "HTML interface",
+                  "content": {
+                    "text/html": {}
+                  }
+                }
+              }
+            }
+          },
+          "/api/subscription": {
+            "get": {
+              "summary": "Get current subscription details",
+              "responses": {
+                "200": {
+                  "description": "Subscription information",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "merchant": {
+                            "type": "string"
+                          },
+                          "subscription": {
+                            "type": "object"
+                          },
+                          "features": {
+                            "type": "array"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/subscription/upgrade": {
+            "post": {
+              "summary": "Upgrade subscription plan",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "tier": {
+                          "type": "string",
+                          "enum": ["STARTER", "PROFESSIONAL", "ENTERPRISE"]
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Subscription upgraded"
+                },
+                "400": {
+                  "description": "Invalid tier"
+                }
+              }
+            }
+          },
+          "/api/subscription/addon": {
+            "post": {
+              "summary": "Add or remove subscription addon",
+              "responses": {
+                "200": {
+                  "description": "Addon updated"
+                }
+              }
+            }
+          },
+          "/api/subscription/payment": {
+            "post": {
+              "summary": "Update payment method",
+              "responses": {
+                "200": {
+                  "description": "Payment method updated"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Web Module API",
+      "description": "Comprehensive API for web module functionality including public restaurant pages, menu management, onboarding wizard, order management, payment intents, authentication, and internal tools. Main API server for web-based POS operations.",
+      "files": [
+        "server/web-module-api-server.ts"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "ChefIApp Web Module API",
+          "version": "1.0.0",
+          "description": "Main API server for web module operations"
+        },
+        "servers": [
+          {
+            "url": "http://localhost:4320",
+            "description": "Local development server"
+          }
+        ],
+        "paths": {
+          "/health": {
+            "get": {
+              "summary": "Health check with database status",
+              "responses": {
+                "200": {
+                  "description": "Service healthy",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          },
+                          "timestamp": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "string"
+                          },
+                          "services": {
+                            "type": "object",
+                            "properties": {
+                              "database": {
+                                "type": "string"
+                              },
+                              "api": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "503": {
+                  "description": "Service degraded"
+                }
+              }
+            }
+          },
+          "/api/auth/request-magic-link": {
+            "post": {
+              "summary": "Request magic link for authentication",
+              "responses": {
+                "200": {
+                  "description": "Magic link sent"
+                }
+              }
+            }
+          },
+          "/api/auth/verify-magic-link": {
+            "get": {
+              "summary": "Verify magic link token",
+              "responses": {
+                "200": {
+                  "description": "Token verified"
+                }
+              }
+            }
+          },
+          "/api/onboarding/start": {
+            "post": {
+              "summary": "Start onboarding process",
+              "responses": {
+                "200": {
+                  "description": "Onboarding started"
+                }
+              }
+            }
+          },
+          "/api/onboarding/confirm": {
+            "post": {
+              "summary": "Confirm onboarding completion",
+              "responses": {
+                "200": {
+                  "description": "Onboarding confirmed"
+                }
+              }
+            }
+          },
+          "/public/{slug}": {
+            "get": {
+              "summary": "Get public restaurant page",
+              "parameters": [
+                {
+                  "name": "slug",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Restaurant page HTML"
+                }
+              }
+            }
+          },
+          "/public/{slug}/menu": {
+            "get": {
+              "summary": "Get restaurant menu",
+              "parameters": [
+                {
+                  "name": "slug",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Menu data"
+                }
+              }
+            }
+          },
+          "/api/orders": {
+            "post": {
+              "summary": "Create a new order",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "tableId": {
+                          "type": "string"
+                        },
+                        "items": {
+                          "type": "array"
+                        },
+                        "restaurantId": {
+                          "type": "string"
+                        },
+                        "companyId": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "201": {
+                  "description": "Order created"
+                },
+                "401": {
+                  "description": "Session required"
+                }
+              }
+            }
+          },
+          "/api/orders/{orderId}": {
+            "patch": {
+              "summary": "Update an order",
+              "parameters": [
+                {
+                  "name": "orderId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Order updated"
+                },
+                "401": {
+                  "description": "Session required"
+                }
+              }
+            }
+          },
+          "/api/orders/{orderId}/close": {
+            "post": {
+              "summary": "Close an order",
+              "parameters": [
+                {
+                  "name": "orderId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Order closed"
+                }
+              }
+            }
+          },
+          "/api/payment-intent": {
+            "post": {
+              "summary": "Create payment intent",
+              "responses": {
+                "200": {
+                  "description": "Payment intent created"
+                }
+              }
+            }
+          },
+          "/api/staff/tasks": {
+            "get": {
+              "summary": "Get staff tasks",
+              "responses": {
+                "200": {
+                  "description": "Tasks retrieved"
+                }
+              }
+            }
+          },
+          "/internal/wizard/{restaurantId}/state": {
+            "get": {
+              "summary": "Get onboarding wizard state",
+              "parameters": [
+                {
+                  "name": "restaurantId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Wizard state"
+                }
+              }
+            }
+          },
+          "/internal/wizard/{restaurantId}/identity": {
+            "post": {
+              "summary": "Update restaurant identity",
+              "parameters": [
+                {
+                  "name": "restaurantId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Identity updated"
+                }
+              }
+            }
+          },
+          "/internal/wizard/{restaurantId}/menu/import": {
+            "post": {
+              "summary": "Import menu from external source",
+              "parameters": [
+                {
+                  "name": "restaurantId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Menu imported"
+                }
+              }
+            }
+          },
+          "/internal/wizard/{restaurantId}/payments/stripe": {
+            "post": {
+              "summary": "Configure Stripe payments",
+              "parameters": [
+                {
+                  "name": "restaurantId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Stripe configured"
+                }
+              }
+            }
+          },
+          "/internal/wizard/{restaurantId}/publish": {
+            "post": {
+              "summary": "Publish restaurant web page",
+              "parameters": [
+                {
+                  "name": "restaurantId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Restaurant published"
+                }
+              }
+            }
+          },
+          "/webhooks/payments/{restaurantId}": {
+            "post": {
+              "summary": "Receive payment webhook",
+              "parameters": [
+                {
+                  "name": "restaurantId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Webhook processed"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
+

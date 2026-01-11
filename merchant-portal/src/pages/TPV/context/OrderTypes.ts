@@ -1,0 +1,25 @@
+export interface OrderItem {
+    id: string;
+    productId?: string;
+    name: string;
+    quantity: number;
+    price: number; // In Cents (Integer)
+    priceFormatted?: string;
+    notes?: string;
+}
+
+export interface Order {
+    id: string;
+    tableNumber?: number;
+    tableId?: string;
+    status: 'new' | 'preparing' | 'ready' | 'served' | 'paid' | 'cancelled';
+    items: OrderItem[];
+    total: number; // In Cents (Integer)
+    createdAt: Date;
+    updatedAt: Date;
+    // Core 5 -> Core 2 Flags
+    isWebOrder?: boolean;
+    origin?: 'web' | 'local';
+    customerName?: string;
+    transaction_id?: string; // Add transaction_id for consistency
+}

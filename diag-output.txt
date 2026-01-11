@@ -1,0 +1,127 @@
+=== DIAGNÓSTICO DB ===
+
+1. RESTAURANTES:
+[
+  {
+    "id": "d35ec18c-a47c-4144-bed4-4e54321b44cc",
+    "name": "Bistrô do Teste",
+    "city": null,
+    "owner_id": "cb7c465d-6c4f-4a9a-3b95-29db93b22b85",
+    "onboarding_completed_at": null
+  },
+  {
+    "id": "de110639-e522-4f70-99bc-d4c44f942037",
+    "name": "Sovereign Burger Hub SQL",
+    "city": "Lisboa",
+    "owner_id": "8fe05206-ae93-4314-a4e4-4d8ae755b95a",
+    "onboarding_completed_at": "2026-01-06T10:38:55.948028+00:00"
+  },
+  {
+    "id": "9cb3faff-fa3d-48d2-a084-ef32b977a02b",
+    "name": "sofia gastrobar",
+    "city": "Ibiza",
+    "owner_id": "5b99810f-9d7d-4bb9-8b57-b43c8f918bca",
+    "onboarding_completed_at": null
+  },
+  {
+    "id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+    "name": "Sofia Cloud",
+    "city": null,
+    "owner_id": "00000000-0000-0000-0000-000000000000",
+    "onboarding_completed_at": null
+  },
+  {
+    "id": "32d35853-d658-47bd-8998-20aa8cc5320b",
+    "name": "Elder Miranda de Andrade",
+    "city": null,
+    "owner_id": "5b99810f-9d7d-4bb9-8b57-b43c8f918bca",
+    "onboarding_completed_at": null
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "name": "GoldMonkey Test Restaurant",
+    "city": null,
+    "owner_id": "00000000-0000-0000-0000-000000000777",
+    "onboarding_completed_at": null
+  },
+  {
+    "id": "32d70a44-8795-408f-bb2b-1a8824721320",
+    "name": "Elder Miranda",
+    "city": null,
+    "owner_id": "f2bdbfeb-5433-4b1f-814b-b64c05c4e135",
+    "onboarding_completed_at": null
+  },
+  {
+    "id": "03ea505d-18b8-4a20-b21f-aea306eb29a6",
+    "name": "Elder Miranda",
+    "city": null,
+    "owner_id": "f2bdbfeb-5433-4b1f-814b-b64c05c4e135",
+    "onboarding_completed_at": null
+  },
+  {
+    "id": "50e6f2bb-df2a-489c-a2ed-29b507dfcd50",
+    "name": "Elder Miranda",
+    "city": null,
+    "owner_id": "f2bdbfeb-5433-4b1f-814b-b64c05c4e135",
+    "onboarding_completed_at": null
+  },
+  {
+    "id": "975b8409-5c3d-4eaa-80a8-79a40de6c37a",
+    "name": "Elder Miranda",
+    "city": null,
+    "owner_id": "f2bdbfeb-5433-4b1f-814b-b64c05c4e135",
+    "onboarding_completed_at": null
+  }
+]
+
+2. RESTAURANT_MEMBERS:
+[
+  {
+    "id": "3c7344ab-8d28-4f4a-8555-dc2b69b83dc2",
+    "restaurant_id": "9cb3faff-fa3d-48d2-a084-ef32b977a02b",
+    "user_id": "5b99810f-9d7d-4bb9-8b57-b43c8f918bca",
+    "role": "owner",
+    "created_at": "2025-12-30T15:26:27.197812+00:00"
+  },
+  {
+    "id": "b540ab1d-c708-4a49-bc2f-b7295eabb1d1",
+    "restaurant_id": "00000000-0000-0000-0000-000000000001",
+    "user_id": "00000000-0000-0000-0000-000000000777",
+    "role": "owner",
+    "created_at": "2026-01-03T16:18:03.30191+00:00"
+  },
+  {
+    "id": "204d26ac-688a-491e-95d0-f82febc19f93",
+    "restaurant_id": "de110639-e522-4f70-99bc-d4c44f942037",
+    "user_id": "8fe05206-ae93-4314-a4e4-4d8ae755b95a",
+    "role": "owner",
+    "created_at": "2026-01-06T10:40:46.856245+00:00"
+  }
+]
+
+3. RESTAURANTE DO USER 5b99810f-9d7d-4bb9-8b57-b43c8f918bca:
+[
+  {
+    "id": "9cb3faff-fa3d-48d2-a084-ef32b977a02b",
+    "name": "sofia gastrobar",
+    "onboarding_completed_at": null
+  },
+  {
+    "id": "32d35853-d658-47bd-8998-20aa8cc5320b",
+    "name": "Elder Miranda de Andrade",
+    "onboarding_completed_at": null
+  }
+]
+
+4. MEMBERS DO USER 5b99810f-9d7d-4bb9-8b57-b43c8f918bca:
+[
+  {
+    "id": "3c7344ab-8d28-4f4a-8555-dc2b69b83dc2",
+    "restaurant_id": "9cb3faff-fa3d-48d2-a084-ef32b977a02b",
+    "user_id": "5b99810f-9d7d-4bb9-8b57-b43c8f918bca",
+    "role": "owner",
+    "created_at": "2025-12-30T15:26:27.197812+00:00"
+  }
+]
+
+=== FIM DIAGNÓSTICO ===

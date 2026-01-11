@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+
+  /* FIRE SYSTEM PALETTE (New Identity) */
+  --fire-vinho: #2D0A0A;
+  /* Top - Deep Wine */
+  --fire-carvao: #121212;
+  /* Middle - Charcoal */
+  --fire-brasa: #D9381E;
+  /* Bottom/Accent - Glowing Ember */
+
+  --color-os-red: #D9381E;
+
+  /* Semantic Gradients */
+  --gradient-fire-ignition: linear-gradient(180deg, var(--fire-vinho) 0%, var(--fire-carvao) 40%, var(--fire-brasa) 100%);
+  --gradient-fire-ritual: linear-gradient(180deg, var(--fire-vinho) 0%, var(--fire-carvao) 70%, #1A0505 100%);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--fire-carvao);
+  color: #E0E0E0;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0F0F0F;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+::selection {
+  background: #C9A227;
+  color: #000;
+}
+
+@layer utilities {
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#C9A227] to-[#F0C436];
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 bg-[#C9A227] hover:bg-[#B08D22] text-black font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-[#C9A227]/20;
+  }
+
+  .btn-outline {
+    @apply px-6 py-3 border border-[#C9A227] text-[#C9A227] font-bold rounded-lg hover:bg-[#C9A227]/10 transition-all duration-300;
+  }
+
+  .glass-card {
+    @apply bg-[#1E1E1E]/80 backdrop-blur-lg border border-white/5 rounded-2xl;
+  }
+}

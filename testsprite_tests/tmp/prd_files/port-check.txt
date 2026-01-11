@@ -1,0 +1,2 @@
+COMMAND   PID       USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+node    23374 goldmonkey   12u  IPv6 0x56d183d0f324fec6      0t0  TCP *:chmd (LISTEN)

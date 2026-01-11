@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Type check
+        run: npm run type-check
+        working-directory: merchant-portal
+      
+      - name: Run tests (Core)
+        run: npm test
+        continue-on-error: false
+      
+      - name: Run tests (Merchant Portal)
+        run: npm test
+        working-directory: merchant-portal
+        continue-on-error: false
+
+      - name: Generate coverage report
+        run: npm run test:coverage
+        continue-on-error: false
+      
+      - name: Upload coverage to artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+      
+      - name: Check coverage threshold
+        run: |
+          COVERAGE=$(npm run test:coverage -- --coverage --coverageReporters=text-summary 2>&1 | grep -oP 'All files\s+\|\s+\K[\d.]+' | head -1 || echo "0")
+          THRESHOLD=70
+          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            echo "❌ Coverage $COVERAGE% is below threshold $THRESHOLD%"
+            exit 1
+          else
+            echo "✅ Coverage $COVERAGE% meets threshold $THRESHOLD%"
+          fi
+        continue-on-error: false
+      
+      - name: Build
+        run: npm run build
+        working-directory: merchant-portal
+      
+      - name: Check bundle size
+        run: |
+          echo "📦 Checking bundle size..."
+          DIST_DIR="merchant-portal/dist"
+          if [ -d "$DIST_DIR" ]; then
+            # Find main bundle files
+            MAIN_JS=$(find "$DIST_DIR" -name "index-*.js" -o -name "main-*.js" | head -1)
+            if [ -n "$MAIN_JS" ]; then
+              SIZE=$(du -k "$MAIN_JS" | cut -f1)
+              THRESHOLD=500
+              if [ "$SIZE" -gt "$THRESHOLD" ]; then
+                echo "⚠️  Bundle size: ${SIZE}KB (threshold: ${THRESHOLD}KB)"
+                echo "Consider code splitting or lazy loading"
+                # Don't fail, just warn
+              else
+                echo "✅ Bundle size: ${SIZE}KB (under threshold: ${THRESHOLD}KB)"
+              fi
+            else
+              echo "⚠️  Could not find main bundle file"
+            fi
+          else
+            echo "⚠️  Build directory not found"
+          fi
+        continue-on-error: true
+      
+      - name: Validate constitution
+        run: npm run validate:constitution
+        working-directory: merchant-portal
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linter
+        run: npm run lint
+        working-directory: merchant-portal
+        continue-on-error: false

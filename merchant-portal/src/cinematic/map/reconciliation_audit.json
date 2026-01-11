@@ -1,0 +1,66 @@
+{
+    "audit_timestamp": "2025-12-25T23:25:00",
+    "canonical_map": "src/cinematic/map/onboarding.scenes.map.ts",
+    "screens": [
+        {
+            "file": "src/pages/start/IdentityPage.tsx",
+            "inputs": [
+                "name?"
+            ],
+            "outputs": [
+                "identity.name",
+                "identity.category"
+            ],
+            "candidate_scene": "scene_identity",
+            "status": "MAPPABLE"
+        },
+        {
+            "file": "src/pages/start/SlugPage.tsx",
+            "inputs": [
+                "identity.name"
+            ],
+            "outputs": [
+                "identity.slug"
+            ],
+            "candidate_scene": "scene_identity",
+            "status": "MERGE_REQUIRED"
+        },
+        {
+            "file": "src/pages/start/MenuPage.tsx",
+            "inputs": [
+                "businessType"
+            ],
+            "outputs": [
+                "menu.items"
+            ],
+            "candidate_scene": "scene_menu",
+            "status": "MAPPABLE"
+        },
+        {
+            "file": "src/pages/start/PaymentsPage.tsx",
+            "inputs": [
+                "identity"
+            ],
+            "outputs": [
+                "stripe_account"
+            ],
+            "candidate_scene": "NONE",
+            "status": "FUTURE_SCENE"
+        },
+        {
+            "file": "src/pages/start/PublishPage.tsx",
+            "inputs": [
+                "all"
+            ],
+            "outputs": [
+                "contract"
+            ],
+            "candidate_scene": "scene_summary",
+            "status": "MAPPABLE"
+        }
+    ],
+    "strategy": {
+        "identity": "Create Adapter that mounts IdentityPage inside Scene2Identity wrapper, or reimplement logic using new visual components.",
+        "menu": "MenuPage contains standard form logic. Scene4/5 uses AI/Templates. Keep MenuPage as 'Advanced Mode' or absorb into 'Manual Edits' inside Scene 6."
+    }
+}

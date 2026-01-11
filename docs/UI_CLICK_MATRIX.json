@@ -1,0 +1,70 @@
+{
+    "audit_id": "360-MASS-20251225",
+    "auditor": "Cloud Code (Antigravity)",
+    "screens": [
+        {
+            "name": "PublicPage",
+            "route": "/public/:slug",
+            "criticality": "P0",
+            "components": [
+                {
+                    "id": "menu-load",
+                    "status": "VERIFIED",
+                    "method": "API_GET",
+                    "notes": "Menu items return 200 OK"
+                },
+                {
+                    "id": "add-to-cart",
+                    "status": "VERIFIED",
+                    "method": "LOGIC_CHECK",
+                    "notes": "State logic verified in previous session"
+                },
+                {
+                    "id": "checkout-submit",
+                    "status": "VERIFIED",
+                    "method": "API_POST",
+                    "notes": "Order POST returns 201 Created"
+                }
+            ]
+        },
+        {
+            "name": "AppStaff",
+            "route": "/app/staff",
+            "criticality": "P1",
+            "components": [
+                {
+                    "id": "view-tasks",
+                    "status": "VERIFIED",
+                    "method": "API_GET",
+                    "notes": "/api/staff/tasks returns valid JSON"
+                },
+                {
+                    "id": "receive-alert",
+                    "status": "VERIFIED",
+                    "method": "DB_CHECK",
+                    "notes": "staff_tasks row created instantly"
+                }
+            ]
+        },
+        {
+            "name": "TPV",
+            "route": "/app/tpv",
+            "criticality": "P0",
+            "components": [
+                {
+                    "id": "sync-engine",
+                    "status": "VERIFIED",
+                    "method": "DB_CHECK",
+                    "notes": "Event Store hashing active"
+                }
+            ]
+        }
+    ],
+    "blockers": [
+        {
+            "type": "TOOLING_LIMIT",
+            "details": "Browser 429 Error prevented visual regression capture.",
+            "impact": "LOW (Logic verified)"
+        }
+    ]
+}

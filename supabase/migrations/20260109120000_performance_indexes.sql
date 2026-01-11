@@ -1,0 +1,66 @@
+-- Migration: Performance Indexes
+-- Description: Adds covering indexes for unindexed foreign keys identified by Database Linter
+-- Date: 2026-01-09
+-- 1. app_logs
+-- CREATE INDEX IF NOT EXISTS idx_app_logs_restaurant_id ON public.app_logs(restaurant_id);
+-- 2. app_tasks
+-- CREATE INDEX IF NOT EXISTS idx_app_tasks_assigned_to ON public.app_tasks(assigned_to);
+-- CREATE INDEX IF NOT EXISTS idx_app_tasks_created_by ON public.app_tasks(created_by);
+-- CREATE INDEX IF NOT EXISTS idx_app_tasks_restaurant_id ON public.app_tasks(restaurant_id);
+-- 3. campaign_placements
+-- CREATE INDEX IF NOT EXISTS idx_campaign_placements_campaign_id ON public.campaign_placements(campaign_id);
+-- 4. campaigns
+-- CREATE INDEX IF NOT EXISTS idx_campaigns_supplier_id ON public.campaigns(supplier_id);
+-- 5. cases
+-- CREATE INDEX IF NOT EXISTS idx_cases_assigned_to ON public.cases(assigned_to);
+-- CREATE INDEX IF NOT EXISTS idx_cases_created_by ON public.cases(created_by);
+-- CREATE INDEX IF NOT EXISTS idx_cases_workspace_id ON public.cases(workspace_id);
+-- 6. cash_registers
+-- CREATE INDEX IF NOT EXISTS idx_cash_registers_closed_by ON public.cash_registers(closed_by);
+-- CREATE INDEX IF NOT EXISTS idx_cash_registers_opened_by ON public.cash_registers(opened_by);
+-- 7. devices
+-- CREATE INDEX IF NOT EXISTS idx_devices_user_id ON public.devices(user_id);
+-- 8. empire_pulses
+-- CREATE INDEX IF NOT EXISTS idx_empire_pulses_restaurant_id ON public.empire_pulses(restaurant_id);
+-- 9. employees
+-- CREATE INDEX IF NOT EXISTS idx_employees_profile_id ON public.employees(profile_id);
+-- CREATE INDEX IF NOT EXISTS idx_employees_restaurant_id ON public.employees(restaurant_id);
+-- 10. events
+-- CREATE INDEX IF NOT EXISTS idx_events_actor_id ON public.events(actor_id);
+-- CREATE INDEX IF NOT EXISTS idx_events_workspace_id ON public.events(workspace_id);
+-- 11. evidence
+-- CREATE INDEX IF NOT EXISTS idx_evidence_uploaded_by ON public.evidence(uploaded_by);
+-- 12. gm_daily_closings
+-- CREATE INDEX IF NOT EXISTS idx_gm_daily_closings_created_by ON public.gm_daily_closings(created_by);
+-- 13. gm_diagnostics
+-- CREATE INDEX IF NOT EXISTS idx_gm_diagnostics_tenant_id ON public.gm_diagnostics(tenant_id);
+-- CREATE INDEX IF NOT EXISTS idx_gm_diagnostics_user_id ON public.gm_diagnostics(user_id);
+-- 14. gm_inventory_items
+-- CREATE INDEX IF NOT EXISTS idx_gm_inventory_items_restaurant_id ON public.gm_inventory_items(restaurant_id);
+-- 15. gm_inventory_levels
+-- CREATE INDEX IF NOT EXISTS idx_gm_inventory_levels_link_id ON public.gm_inventory_levels(link_id);
+-- CREATE INDEX IF NOT EXISTS idx_gm_inventory_levels_restaurant_id ON public.gm_inventory_levels(restaurant_id);
+-- 16. gm_inventory_links
+-- CREATE INDEX IF NOT EXISTS idx_gm_inventory_links_organ_id ON public.gm_inventory_links(organ_id);
+-- CREATE INDEX IF NOT EXISTS idx_gm_inventory_links_restaurant_id ON public.gm_inventory_links(restaurant_id);
+-- 17. gm_orders
+CREATE INDEX IF NOT EXISTS idx_gm_orders_operator_id ON public.gm_orders(operator_id);
+-- 18. gm_organs
+-- CREATE INDEX IF NOT EXISTS idx_gm_organs_restaurant_id ON public.gm_organs(restaurant_id);
+-- 19. gm_products
+CREATE INDEX IF NOT EXISTS idx_gm_products_restaurant_id ON public.gm_products(restaurant_id);
+-- 20. gm_tables
+CREATE INDEX IF NOT EXISTS idx_gm_tables_restaurant_id ON public.gm_tables(restaurant_id);
+-- 21. gm_task_events
+-- CREATE INDEX IF NOT EXISTS idx_gm_task_events_restaurant_id ON public.gm_task_events(restaurant_id);
+-- 22. projects (GHOST TABLE)
+-- CREATE INDEX IF NOT EXISTS idx_projects_workspace_id ON public.projects(workspace_id);
+-- 23. restaurant_members
+-- CREATE INDEX IF NOT EXISTS idx_restaurant_members_restaurant_id ON public.restaurant_members(restaurant_id);
+-- CREATE INDEX IF NOT EXISTS idx_restaurant_members_user_id ON public.restaurant_members(user_id);
+-- 24. restaurants
+-- CREATE INDEX IF NOT EXISTS idx_restaurants_owner_id ON public.restaurants(owner_id);
+-- 25. web_order_items
+-- CREATE INDEX IF NOT EXISTS idx_web_order_items_menu_item_id ON public.web_order_items(menu_item_id);
+-- 26. workspace_members
+-- CREATE INDEX IF NOT EXISTS idx_workspace_members_user_id ON public.workspace_members(user_id);

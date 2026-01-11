@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "types": ["jest", "node"],
+    "skipLibCheck": true,
+    "jsx": "react",
+    "module": "esnext",
+    "paths": {
+      "../merchant-portal/src/core/state/SystemStateProvider": ["../tests/__mocks__/SystemStateProvider"]
+    }
+  },
+  "include": [
+    "../tests/**/*.ts",
+    "../tests/**/*.tsx",
+    "../tests/**/*.d.ts"
+  ]
+}

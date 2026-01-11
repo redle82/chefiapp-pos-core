@@ -1,0 +1,13 @@
+# CHEFIAPP POS — CORE
+
+This project is a Point of Sale (TPV).
+
+Core responsibilities:
+- Register consumption
+- Group consumption by table or order
+- Calculate totals
+- Receive payment
+- Close operation with financial consistency
+
+Everything else is optional.
+Nothing else is core.

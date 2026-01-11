@@ -1,0 +1,169 @@
+.time-machine-card {
+  background: var(--surface-card);
+  border-radius: 16px;
+  padding: 1.5rem;
+  color: var(--text-primary);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  border: 1px solid var(--border-subtle);
+}
+
+.time-machine-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.time-machine-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.time-machine-select {
+  background: var(--surface-hover);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.time-machine-summary {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.time-machine-kpi {
+  display: flex;
+  flex-direction: column;
+}
+
+.time-machine-kpi .label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.time-machine-kpi .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-highlight);
+}
+
+.time-machine-graph {
+  height: 200px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
+.bars-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  position: relative;
+  min-width: 8px;
+}
+
+.bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+  min-height: 4px;
+}
+
+.bar.historical {
+  background: linear-gradient(to top, #94a3b8, #cbd5e1); /* Grey for past */
+}
+
+.bar.chefiapp {
+  background: linear-gradient(to top, #3b82f6, #60a5fa); /* Blue for current */
+}
+
+.bar.hybrid {
+  background: linear-gradient(to top, #8b5cf6, #a78bfa); /* Purple for merged */
+}
+
+.bar-label {
+  font-size: 0.6rem;
+  text-align: center;
+  margin-top: 4px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  display: none; /* Show only on hover in complex charts, or select few */
+}
+
+/* Show details on hover */
+.bar-group:hover .bar {
+  filter: brightness(1.1);
+}
+
+.time-machine-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.legend {
+  display: flex;
+  gap: 1rem;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.dot.historical { background: #94a3b8; }
+.dot.chefiapp { background: #3b82f6; }
+.dot.hybrid { background: #8b5cf6; }
+
+.import-btn {
+  background: transparent;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.import-btn:hover {
+  background: var(--primary-color-alpha);
+}
+
+.loading-pulse, .no-data {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-style: italic;
+}

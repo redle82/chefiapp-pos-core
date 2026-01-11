@@ -1,0 +1,509 @@
+[
+  {
+    "id": "TC001",
+    "title": "get health endpoint status check",
+    "description": "Verify that the GET /health endpoint returns HTTP 200 with database connectivity status, event store status, and core engine availability. This validates the system is operational and all critical dependencies are functioning.",
+    "requirement": "R001: Health & System Status",
+    "setup": [],
+    "teardown": []
+  },
+  {
+    "id": "TC002",
+    "title": "get api health endpoint validation",
+    "description": "Verify that the GET /api/health endpoint (alternative health check) returns HTTP 200 with proper JSON response containing system status indicators.",
+    "requirement": "R001: Health & System Status",
+    "setup": [],
+    "teardown": []
+  },
+  {
+    "id": "TC003",
+    "title": "post api orders create order",
+    "description": "Test that POST /api/orders creates a new order in OPEN state. Verify the order is created with correct initial state, table_id is set, and order_id is returned. This validates the order creation workflow.",
+    "requirement": "R002: Order Lifecycle",
+    "setup": [
+      {
+        "step": "create_test_session",
+        "description": "Create a test session by requesting magic link and verifying token",
+        "endpoint": "POST /api/auth/request-magic-link",
+        "body": { "email": "test@chefiapp.test" },
+        "extract": "dev_token",
+        "then": {
+          "endpoint": "GET /api/auth/verify-magic-link?token={dev_token}",
+          "extract": "session_token",
+          "store_as": "SESSION_TOKEN"
+        }
+      }
+    ],
+    "headers": {
+      "x-chefiapp-token": "{SESSION_TOKEN}"
+    },
+    "teardown": []
+  },
+  {
+    "id": "TC004",
+    "title": "patch api orders update order items",
+    "description": "Test that PATCH /api/orders/{orderId} allows adding items to an OPEN order. Verify items are added correctly, order remains in OPEN state, and updates are persisted. This validates order modification before locking.",
+    "requirement": "R002: Order Lifecycle",
+    "setup": [
+      {
+        "step": "create_test_session",
+        "description": "Create a test session",
+        "endpoint": "POST /api/auth/request-magic-link",
+        "body": { "email": "test@chefiapp.test" },
+        "extract": "dev_token",
+        "then": {
+          "endpoint": "GET /api/auth/verify-magic-link?token={dev_token}",
+          "extract": "session_token",
+          "store_as": "SESSION_TOKEN"
+        }
+      },
+      {
+        "step": "create_test_order",
+        "description": "Create a test order in OPEN state",
+        "endpoint": "POST /api/orders",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "body": {
+          "tableId": "test-table-1",
+          "items": [],
+          "restaurantId": "test-rest-1"
+        },
+        "extract": "id",
+        "store_as": "ORDER_ID"
+      }
+    ],
+    "headers": {
+      "x-chefiapp-token": "{SESSION_TOKEN}"
+    },
+    "body": {
+      "items": [
+        {
+          "product_id": "prod-test-1",
+          "quantity": 2,
+          "price_snapshot_cents": 1500
+        }
+      ]
+    },
+    "url_params": {
+      "orderId": "{ORDER_ID}"
+    },
+    "teardown": []
+  },
+  {
+    "id": "TC005",
+    "title": "post api orders lock order",
+    "description": "Test that an order can be locked (OPEN → LOCKED transition). Verify that when order is locked: total is calculated, state changes to LOCKED, and order becomes immutable (no more items can be added). This validates the order finalization process.",
+    "requirement": "R002: Order Lifecycle",
+    "setup": [
+      {
+        "step": "create_test_session",
+        "description": "Create a test session",
+        "endpoint": "POST /api/auth/request-magic-link",
+        "body": { "email": "test@chefiapp.test" },
+        "extract": "dev_token",
+        "then": {
+          "endpoint": "GET /api/auth/verify-magic-link?token={dev_token}",
+          "extract": "session_token",
+          "store_as": "SESSION_TOKEN"
+        }
+      },
+      {
+        "step": "create_test_order_with_items",
+        "description": "Create a test order with items",
+        "endpoint": "POST /api/orders",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "body": {
+          "tableId": "test-table-1",
+          "items": [
+            {
+              "product_id": "prod-test-1",
+              "quantity": 2,
+              "price_snapshot_cents": 1500
+            },
+            {
+              "product_id": "prod-test-2",
+              "quantity": 1,
+              "price_snapshot_cents": 2000
+            }
+          ],
+          "restaurantId": "test-rest-1"
+        },
+        "extract": "id",
+        "store_as": "ORDER_ID"
+      }
+    ],
+    "headers": {
+      "x-chefiapp-token": "{SESSION_TOKEN}"
+    },
+    "endpoint": "POST /api/orders/{orderId}/lock",
+    "url_params": {
+      "orderId": "{ORDER_ID}"
+    },
+    "expected_response": {
+      "status": 200,
+      "body_contains": ["state", "LOCKED", "total_cents"],
+      "total_cents": 5000
+    },
+    "teardown": []
+  },
+  {
+    "id": "TC006",
+    "title": "patch api orders reject modification of locked order",
+    "description": "Test that PATCH /api/orders/{orderId} rejects modifications to a LOCKED order. Verify that attempting to add items or modify a locked order returns HTTP 400 with appropriate error message. This validates immutability after locking.",
+    "requirement": "R002: Order Lifecycle",
+    "setup": [
+      {
+        "step": "create_test_session",
+        "description": "Create a test session",
+        "endpoint": "POST /api/auth/request-magic-link",
+        "body": { "email": "test@chefiapp.test" },
+        "extract": "dev_token",
+        "then": {
+          "endpoint": "GET /api/auth/verify-magic-link?token={dev_token}",
+          "extract": "session_token",
+          "store_as": "SESSION_TOKEN"
+        }
+      },
+      {
+        "step": "create_and_lock_order",
+        "description": "Create and lock a test order",
+        "endpoint": "POST /api/orders",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "body": {
+          "tableId": "test-table-1",
+          "items": [
+            {
+              "product_id": "prod-test-1",
+              "quantity": 1,
+              "price_snapshot_cents": 1000
+            }
+          ],
+          "restaurantId": "test-rest-1"
+        },
+        "extract": "id",
+        "store_as": "ORDER_ID"
+      },
+      {
+        "step": "lock_order",
+        "description": "Lock the order",
+        "endpoint": "POST /api/orders/{ORDER_ID}/lock",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" }
+      }
+    ],
+    "headers": {
+      "x-chefiapp-token": "{SESSION_TOKEN}"
+    },
+    "body": {
+      "items": [
+        {
+          "product_id": "prod-test-2",
+          "quantity": 1,
+          "price_snapshot_cents": 2000
+        }
+      ]
+    },
+    "url_params": {
+      "orderId": "{ORDER_ID}"
+    },
+    "expected_response": {
+      "status": 400,
+      "body_contains": ["error", "LOCKED", "immutable"]
+    },
+    "teardown": []
+  },
+  {
+    "id": "TC007",
+    "title": "post api orders close order",
+    "description": "Test that POST /api/orders/{orderId}/close closes an order (LOCKED → CLOSED transition). Verify order state changes to CLOSED and order becomes fully immutable. This validates order closure workflow.",
+    "requirement": "R002: Order Lifecycle",
+    "setup": [
+      {
+        "step": "create_test_session",
+        "description": "Create a test session",
+        "endpoint": "POST /api/auth/request-magic-link",
+        "body": { "email": "test@chefiapp.test" },
+        "extract": "dev_token",
+        "then": {
+          "endpoint": "GET /api/auth/verify-magic-link?token={dev_token}",
+          "extract": "session_token",
+          "store_as": "SESSION_TOKEN"
+        }
+      },
+      {
+        "step": "create_and_lock_order",
+        "description": "Create and lock a test order",
+        "endpoint": "POST /api/orders",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "body": {
+          "tableId": "test-table-1",
+          "items": [
+            {
+              "product_id": "prod-test-1",
+              "quantity": 1,
+              "price_snapshot_cents": 1000
+            }
+          ],
+          "restaurantId": "test-rest-1"
+        },
+        "extract": "id",
+        "store_as": "ORDER_ID"
+      },
+      {
+        "step": "lock_order",
+        "description": "Lock the order",
+        "endpoint": "POST /api/orders/{ORDER_ID}/lock",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" }
+      }
+    ],
+    "headers": {
+      "x-chefiapp-token": "{SESSION_TOKEN}"
+    },
+    "endpoint": "POST /api/orders/{orderId}/close",
+    "url_params": {
+      "orderId": "{ORDER_ID}"
+    },
+    "expected_response": {
+      "status": 200,
+      "body_contains": ["state", "CLOSED"]
+    },
+    "teardown": []
+  },
+  {
+    "id": "TC008",
+    "title": "patch api orders reject modification of closed order",
+    "description": "Test that PATCH /api/orders/{orderId} rejects modifications to a CLOSED order. Verify that attempting to modify a closed order returns HTTP 400. This validates terminal state immutability.",
+    "requirement": "R002: Order Lifecycle",
+    "setup": [
+      {
+        "step": "create_test_session",
+        "description": "Create a test session",
+        "endpoint": "POST /api/auth/request-magic-link",
+        "body": { "email": "test@chefiapp.test" },
+        "extract": "dev_token",
+        "then": {
+          "endpoint": "GET /api/auth/verify-magic-link?token={dev_token}",
+          "extract": "session_token",
+          "store_as": "SESSION_TOKEN"
+        }
+      },
+      {
+        "step": "create_lock_and_close_order",
+        "description": "Create, lock, and close a test order",
+        "endpoint": "POST /api/orders",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "body": {
+          "tableId": "test-table-1",
+          "items": [
+            {
+              "product_id": "prod-test-1",
+              "quantity": 1,
+              "price_snapshot_cents": 1000
+            }
+          ],
+          "restaurantId": "test-rest-1"
+        },
+        "extract": "id",
+        "store_as": "ORDER_ID"
+      },
+      {
+        "step": "lock_order",
+        "description": "Lock the order",
+        "endpoint": "POST /api/orders/{ORDER_ID}/lock",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" }
+      },
+      {
+        "step": "close_order",
+        "description": "Close the order",
+        "endpoint": "POST /api/orders/{ORDER_ID}/close",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" }
+      }
+    ],
+    "headers": {
+      "x-chefiapp-token": "{SESSION_TOKEN}"
+    },
+    "body": {
+      "items": [
+        {
+          "product_id": "prod-test-2",
+          "quantity": 1,
+          "price_snapshot_cents": 2000
+        }
+      ]
+    },
+    "url_params": {
+      "orderId": "{ORDER_ID}"
+    },
+    "expected_response": {
+      "status": 400,
+      "body_contains": ["error", "CLOSED", "immutable"]
+    },
+    "teardown": []
+  },
+  {
+    "id": "TC009",
+    "title": "order total calculation immutability",
+    "description": "Test that order total_cents is calculated correctly when order is locked and remains immutable. Verify: total = sum(items.quantity * items.price_snapshot_cents), total does not change after LOCKED, and total is stored correctly. This validates financial immutability guarantee.",
+    "requirement": "R002: Order Lifecycle",
+    "setup": [
+      {
+        "step": "create_test_session",
+        "description": "Create a test session",
+        "endpoint": "POST /api/auth/request-magic-link",
+        "body": { "email": "test@chefiapp.test" },
+        "extract": "dev_token",
+        "then": {
+          "endpoint": "GET /api/auth/verify-magic-link?token={dev_token}",
+          "extract": "session_token",
+          "store_as": "SESSION_TOKEN"
+        }
+      },
+      {
+        "step": "create_order_with_multiple_items",
+        "description": "Create order with items for total calculation",
+        "endpoint": "POST /api/orders",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "body": {
+          "tableId": "test-table-1",
+          "items": [
+            {
+              "product_id": "prod-test-1",
+              "quantity": 2,
+              "price_snapshot_cents": 1500
+            },
+            {
+              "product_id": "prod-test-2",
+              "quantity": 3,
+              "price_snapshot_cents": 2000
+            },
+            {
+              "product_id": "prod-test-3",
+              "quantity": 1,
+              "price_snapshot_cents": 500
+            }
+          ],
+          "restaurantId": "test-rest-1"
+        },
+        "extract": "id",
+        "store_as": "ORDER_ID"
+      }
+    ],
+    "headers": {
+      "x-chefiapp-token": "{SESSION_TOKEN}"
+    },
+    "endpoint": "POST /api/orders/{orderId}/lock",
+    "url_params": {
+      "orderId": "{ORDER_ID}"
+    },
+    "expected_response": {
+      "status": 200,
+      "body_contains": ["total_cents", "state", "LOCKED"],
+      "total_cents": 9500
+    },
+    "note": "IMPORTANT: Use POST /api/orders/{orderId}/lock endpoint. Do NOT use PATCH with {\"action\": \"lock\"}. The lock endpoint is a dedicated POST endpoint, not a PATCH action.",
+    "validation_steps": [
+      {
+        "step": "verify_total_calculation",
+        "description": "Verify total = (2*1500) + (3*2000) + (1*500) = 9500",
+        "expected_total_cents": 9500
+      },
+      {
+        "step": "verify_total_immutability",
+        "description": "After lock, total should not change",
+        "endpoint": "GET /api/orders/{ORDER_ID}",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "expected_total_cents": 9500
+      }
+    ],
+    "teardown": []
+  },
+  {
+    "id": "TC010",
+    "title": "order state machine transitions",
+    "description": "Test that order state transitions follow the correct state machine: OPEN → LOCKED → CLOSED. Verify invalid transitions are rejected (e.g., CLOSED → OPEN, LOCKED → OPEN). This validates state machine integrity.",
+    "requirement": "R002: Order Lifecycle",
+    "setup": [
+      {
+        "step": "create_test_session",
+        "description": "Create a test session",
+        "endpoint": "POST /api/auth/request-magic-link",
+        "body": { "email": "test@chefiapp.test" },
+        "extract": "dev_token",
+        "then": {
+          "endpoint": "GET /api/auth/verify-magic-link?token={dev_token}",
+          "extract": "session_token",
+          "store_as": "SESSION_TOKEN"
+        }
+      },
+      {
+        "step": "create_order",
+        "description": "Create a test order",
+        "endpoint": "POST /api/orders",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "body": {
+          "tableId": "test-table-1",
+          "items": [
+            {
+              "product_id": "prod-test-1",
+              "quantity": 1,
+              "price_snapshot_cents": 1000
+            }
+          ],
+          "restaurantId": "test-rest-1"
+        },
+        "extract": "id",
+        "store_as": "ORDER_ID"
+      }
+    ],
+    "headers": {
+      "x-chefiapp-token": "{SESSION_TOKEN}"
+    },
+    "validation_steps": [
+      {
+        "step": "verify_initial_state_open",
+        "description": "Order should start in OPEN state",
+        "endpoint": "GET /api/orders/{ORDER_ID}",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "expected_state": "OPEN"
+      },
+      {
+        "step": "transition_open_to_locked",
+        "description": "OPEN → LOCKED should succeed",
+        "endpoint": "POST /api/orders/{ORDER_ID}/lock",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "expected_state": "LOCKED",
+        "expected_status": 200
+      },
+      {
+        "step": "verify_locked_state",
+        "description": "Order should be in LOCKED state",
+        "endpoint": "GET /api/orders/{ORDER_ID}",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "expected_state": "LOCKED"
+      },
+      {
+        "step": "transition_locked_to_closed",
+        "description": "LOCKED → CLOSED should succeed",
+        "endpoint": "POST /api/orders/{ORDER_ID}/close",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "expected_state": "CLOSED",
+        "expected_status": 200
+      },
+      {
+        "step": "verify_closed_state",
+        "description": "Order should be in CLOSED state",
+        "endpoint": "GET /api/orders/{ORDER_ID}",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "expected_state": "CLOSED"
+      },
+      {
+        "step": "reject_invalid_transition_closed_to_open",
+        "description": "CLOSED → OPEN should be rejected",
+        "endpoint": "PATCH /api/orders/{ORDER_ID}",
+        "headers": { "x-chefiapp-token": "{SESSION_TOKEN}" },
+        "body": { "state": "OPEN" },
+        "expected_status": 400,
+        "expected_error": "CLOSED"
+      }
+    ],
+    "teardown": []
+  }
+]

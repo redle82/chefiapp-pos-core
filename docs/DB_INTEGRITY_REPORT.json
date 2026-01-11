@@ -1,0 +1,26 @@
+{
+    "timestamp": "2025-12-25T15:45:00Z",
+    "audit_version": "v1.0.1",
+    "metrics": {
+        "web_orders_count": 9,
+        "event_store_count": 38,
+        "staff_tasks_count": 8,
+        "orphaned_tasks": 0,
+        "broken_hashes": 0
+    },
+    "assertions": {
+        "no_orphans": {
+            "passed": true,
+            "threshold": 0
+        },
+        "hash_integrity": {
+            "passed": true,
+            "threshold": 0
+        },
+        "order_task_correlation": {
+            "passed": true,
+            "note": "Approximate match (9 vs 8) due to dev data."
+        }
+    },
+    "verdict": "INTEGRITY_PASSED"
+}

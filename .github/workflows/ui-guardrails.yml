@@ -1,0 +1,36 @@
+name: UI Guardrails (Anti-Duplication)
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'merchant-portal/src/ui/**'
+      - 'docs/UI_CANON.md'
+      - 'scripts/check-ui-guardrails.mjs'
+      - '.github/workflows/ui-guardrails.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'merchant-portal/src/ui/**'
+      - 'docs/UI_CANON.md'
+      - 'scripts/check-ui-guardrails.mjs'
+      - '.github/workflows/ui-guardrails.yml'
+
+jobs:
+  guardrails:
+    name: 🧱 Enforce UI Canon
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run UI guardrails
+        run: node scripts/check-ui-guardrails.mjs

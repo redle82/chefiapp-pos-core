@@ -1,0 +1,224 @@
+[
+  {
+    "id": "FE001",
+    "title": "ui boots in Truth-Zero when core health is UNKNOWN",
+    "type": "e2e",
+    "description": "When the app loads and the health endpoint is unreachable/unknown, the UI must not hallucinate operational state. It must enter Truth-Zero (read-only / blocked critical actions) and show a clear system status indicator.",
+    "preconditions": [
+      "Frontend running",
+      "Backend is stopped OR health endpoint returns non-200"
+    ],
+    "steps": [
+      "Open the app root route",
+      "Observe the global system status component (AliveBadge / status banner)",
+      "Attempt to access order creation UI"
+    ],
+    "expected": [
+      "UI shows status as DOWN/UNKNOWN",
+      "Critical actions (create/lock/close order) are blocked",
+      "No fake numbers are displayed (totals/inventory)"
+    ],
+    "canon_law": "Law of Truth Lock + Truth Zero",
+    "requirement": "R-FE001: Truth-Zero gating"
+  },
+  {
+    "id": "FE002",
+    "title": "ui becomes operational only after health is OK",
+    "type": "e2e",
+    "description": "UI must transition from Truth-Zero to Operational only when /health returns OK. This validates that UI is a consequence of confirmed truth.",
+    "preconditions": [
+      "Frontend running",
+      "Backend running at http://localhost:4320",
+      "GET /health returns 200 with status ok"
+    ],
+    "steps": [
+      "Open the app root route",
+      "Wait for the health check to resolve",
+      "Navigate to ManagerDashboard"
+    ],
+    "expected": [
+      "AliveBadge shows OK/UP",
+      "Operational UI is enabled",
+      "No warnings about unknown core state"
+    ],
+    "canon_law": "Law of Truth Lock",
+    "requirement": "R-FE002: Health-driven UI"
+  },
+  {
+    "id": "FE003",
+    "title": "dark mode (The Void) is default and stable",
+    "type": "ui",
+    "description": "Verify that Dark Mode is default, consistent across routes, and does not flicker on navigation or refresh.",
+    "preconditions": [
+      "Frontend running"
+    ],
+    "steps": [
+      "Open the app",
+      "Navigate between ManagerDashboard and Staff views",
+      "Hard refresh"
+    ],
+    "expected": [
+      "Dark theme remains active",
+      "No theme flash / mismatch",
+      "All core text remains readable with sufficient contrast"
+    ],
+    "canon_law": "Tissue stability (non-core)",
+    "requirement": "R-FE003: Visual Cortex default"
+  },
+  {
+    "id": "FE004",
+    "title": "pulse animations sync with metabolic clock without performance drop",
+    "type": "ui",
+    "description": "Verify usePulse-based animations (AliveBadge, MetabolicValue, heartbeat ring) animate on the 30s rhythm without causing UI jank.",
+    "preconditions": [
+      "Frontend running",
+      "MetabolicClock active"
+    ],
+    "steps": [
+      "Open ManagerDashboard",
+      "Observe AliveBadge breathing",
+      "Trigger a value update (e.g., refresh inventory / change view)",
+      "Observe MetabolicValue flash"
+    ],
+    "expected": [
+      "Animations are smooth",
+      "No visible stutter during updates",
+      "UI remains responsive while animations run"
+    ],
+    "canon_law": "Tissue evolution (safe)",
+    "requirement": "R-FE004: Cytoplasm pulse"
+  },
+  {
+    "id": "FE005",
+    "title": "manager dashboard shows Hunger Signals from core-derived state",
+    "type": "e2e",
+    "description": "ManagerDashboard must render the Metabolic Hunger section based on core-derived HungerSignals (not manual user observation).",
+    "preconditions": [
+      "Backend running",
+      "Seed inventory low enough to trigger Warning/Urgent/Panic OR replay events that produce low stock"
+    ],
+    "steps": [
+      "Open ManagerDashboard",
+      "Locate the 'Metabolic Hunger' section",
+      "Verify HungerSignalCard entries"
+    ],
+    "expected": [
+      "At least one HungerSignalCard appears when stock is below threshold",
+      "Signal severity matches configured thresholds",
+      "Signal persists until a restock event resolves it"
+    ],
+    "canon_law": "Law of Systemic Reflex",
+    "requirement": "R-FE005: Hunger UI"
+  },
+  {
+    "id": "FE006",
+    "title": "ui reflects metabolic debt (negative inventory) without hiding it",
+    "type": "ui",
+    "description": "If inventory becomes negative (metabolic debt), UI must reflect reality (no clamping to zero, no hiding).",
+    "preconditions": [
+      "Backend running",
+      "An order causes inventory to drop below 0"
+    ],
+    "steps": [
+      "Open inventory view/dashboard",
+      "Locate the affected ingredient",
+      "Observe displayed quantity"
+    ],
+    "expected": [
+      "Displayed quantity can be negative",
+      "UI labels/indicates debt clearly",
+      "No silent correction to 0"
+    ],
+    "canon_law": "Law of Truth Lock + Institutional Atomicity",
+    "requirement": "R-FE006: Debt visibility"
+  },
+  {
+    "id": "FE007",
+    "title": "staff task stream adapts density with pressure container",
+    "type": "ui",
+    "description": "WorkerTaskStream must adapt its density based on system pressure (PressureContainer) to reduce cognitive overload.",
+    "preconditions": [
+      "Frontend running",
+      "Pressure signal available (mock or real)"
+    ],
+    "steps": [
+      "Open Staff view (WorkerTaskStream)",
+      "Simulate/trigger low pressure",
+      "Simulate/trigger high pressure"
+    ],
+    "expected": [
+      "In low pressure: tasks show richer detail",
+      "In high pressure: UI becomes denser/simplified",
+      "No layout break"
+    ],
+    "canon_law": "AppStaff nervous system (tissue)",
+    "requirement": "R-FE007: Pressure UX"
+  },
+  {
+    "id": "FE008",
+    "title": "long-press confirm prevents accidental completion",
+    "type": "ui",
+    "description": "Verify LongPressButton interaction requires intentional hold to confirm (anti-zombie).",
+    "preconditions": [
+      "Frontend running",
+      "At least one actionable task or confirmable control exists"
+    ],
+    "steps": [
+      "Try a quick tap on the confirm action",
+      "Then perform a long press until completion"
+    ],
+    "expected": [
+      "Quick tap does not confirm",
+      "Long press confirms",
+      "UI provides clear progress feedback during hold"
+    ],
+    "canon_law": "Anti-Zombie mechanism (tissue)",
+    "requirement": "R-FE008: Intentionality"
+  },
+  {
+    "id": "FE009",
+    "title": "ai observer output is separated from core facts",
+    "type": "e2e",
+    "description": "Verify that INTELLIGENCE_* suggestions/anomalies appear in UI but do not alter core state displays (inventory/order totals).",
+    "preconditions": [
+      "Backend running",
+      "AI Observer stream enabled OR mocked INTELLIGENCE_* events available"
+    ],
+    "steps": [
+      "Open ManagerDashboard",
+      "Trigger an INTELLIGENCE_SUGGESTION_CREATED",
+      "Compare inventory numbers before/after suggestion"
+    ],
+    "expected": [
+      "Suggestion appears in Anomaly/Suggestion feed",
+      "Inventory/order totals remain unchanged",
+      "UI clearly labels AI output as advice/insight"
+    ],
+    "canon_law": "AI Sovereign Observer (Passive Consumption + Suggestive Emission)",
+    "requirement": "R-FE009: Thought vs Fact boundary"
+  },
+  {
+    "id": "FE010",
+    "title": "ui survives ai failure (lobotomy protocol)",
+    "type": "e2e",
+    "description": "If the AI observer is down/timeouts, the UI must remain operational and the POS core loop must not be blocked.",
+    "preconditions": [
+      "Backend running",
+      "Ability to disable AI observer or force failure"
+    ],
+    "steps": [
+      "Disable AI observer",
+      "Open ManagerDashboard",
+      "Perform a normal navigation flow",
+      "Verify core-derived data still renders"
+    ],
+    "expected": [
+      "Core-derived sections render normally",
+      "AI sections show degraded state (e.g., 'Observer Offline')",
+      "No crashes / no blocked operations due to AI"
+    ],
+    "canon_law": "Law of Failure Isolation",
+    "requirement": "R-FE010: AI isolation"
+  }
+]
+

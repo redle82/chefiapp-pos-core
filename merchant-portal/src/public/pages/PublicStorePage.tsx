@@ -1,0 +1,120 @@
+import { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { PublicMenuProvider, usePublicMenu } from '../context/PublicMenuContext';
+import { CartProvider, useCart } from '../context/CartContext';
+import { CartFloatingButton } from '../components/CartFloatingButton';
+import { CartDrawer } from '../components/CartDrawer';
+import { motion } from 'framer-motion';
+
+const StoreLayout = () => {
+    const { storeName, products, categories } = usePublicMenu();
+    const [activeCategory, setActiveCategory] = useState<string>('all');
+
+    const filteredProducts = activeCategory === 'all'
+        ? products
+        : products.filter(p => p.category === activeCategory);
+
+    return (
+        <div className="min-h-screen bg-neutral-50 text-neutral-900 pb-20">
+            {/* Hero Section */}
+            <div className="h-48 bg-neutral-900 flex items-end p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
+                {/* Abstract Background */}
+                <div className="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center" />
+
+                <div className="relative z-20 text-white">
+                    <h1 className="text-3xl font-bold tracking-tight">{storeName}</h1>
+                    <p className="text-white/60 text-sm mt-1">Aberto • Fecha às 23:00</p>
+                </div>
+            </div>
+
+            {/* Category Filter */}
+            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-30 border-b border-neutral-200 overflow-x-auto no-scrollbar">
+                <div className="flex gap-2 p-4">
+                    <button
+                        onClick={() => setActiveCategory('all')}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${activeCategory === 'all' ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-600'
+                            }`}
+                    >
+                        Todos
+                    </button>
+                    {categories.map(cat => (
+                        <button
+                            key={cat}
+                            onClick={() => setActiveCategory(cat)}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap capitalize ${activeCategory === cat ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-600'
+                                }`}
+                        >
+                            {cat}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Product Grid */}
+            <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredProducts.map(product => (
+                    <motion.div
+                        key={product.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white p-4 rounded-xl shadow-sm border border-neutral-100 flex justify-between items-center active:scale-[0.98] transition-transform relative"
+                    >
+                        <div className="flex-1">
+                            <h3 className="font-semibold text-neutral-900">{product.name}</h3>
+                            <p className="text-neutral-500 text-sm line-clamp-2">{product.description || 'Sem descrição'}</p>
+                            <span className="block mt-2 font-medium text-neutral-900">
+                                {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(product.price)}
+                            </span>
+                        </div>
+                        {/* Image Placeholder or Action */}
+                        <div className="ml-4 w-20 h-20 bg-neutral-100 rounded-lg flex items-center justify-center text-2xl">
+                            🍔
+                        </div>
+                        <AddToCartButton product={product} />
+                    </motion.div>
+                ))}
+
+                {filteredProducts.length === 0 && (
+                    <div className="col-span-full py-12 text-center text-neutral-400">
+                        Nenhum item nesta categoria.
+                    </div>
+                )}
+            </div>
+
+            <CartFloatingButton />
+            <CartDrawer />
+        </div>
+    );
+};
+
+// Simple inline component for interaction
+const AddToCartButton = ({ product }: { product: any }) => {
+    const { addToCart } = useCart();
+
+    return (
+        <button
+            onClick={() => addToCart({
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                currency: 'EUR'
+            }, 1)}
+            className="w-8 h-8 rounded-full bg-neutral-900 hover:bg-neutral-700 text-white flex items-center justify-center text-lg transition-colors absolute bottom-4 right-4"
+        >
+            +
+        </button>
+    );
+};
+
+export const PublicStorePage = () => {
+    const { slug } = useParams();
+
+    return (
+        <PublicMenuProvider slug={slug || ''}>
+            <CartProvider slug={slug || ''}>
+                <StoreLayout />
+            </CartProvider>
+        </PublicMenuProvider>
+    );
+};

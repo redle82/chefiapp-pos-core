@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChefIApp — Piloto de 14 Dias Grátis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #f8f9fa;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 40px;
+        }
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+        header p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .cta-primary {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 18px 48px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-top: 32px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .cta-primary:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+        section {
+            background: white;
+            padding: 48px;
+            border-radius: 12px;
+            margin-bottom: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 24px;
+            color: #1a1a1a;
+        }
+        h3 {
+            font-size: 1.5rem;
+            margin: 32px 0 16px;
+            color: #374151;
+        }
+        .problem-list, .solution-list {
+            list-style: none;
+            padding: 0;
+        }
+        .problem-list li {
+            padding: 16px;
+            margin: 12px 0;
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            border-radius: 6px;
+            font-size: 1.1rem;
+        }
+        .solution-list li {
+            padding: 16px;
+            margin: 12px 0;
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            border-radius: 6px;
+            font-size: 1.1rem;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+        .feature-card {
+            padding: 32px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+        .feature-card h4 {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            color: #667eea;
+        }
+        .feature-card p {
+            color: #4b5563;
+            line-height: 1.8;
+        }
+        .steps {
+            counter-reset: step-counter;
+            list-style: none;
+        }
+        .steps li {
+            counter-increment: step-counter;
+            padding: 24px;
+            margin: 16px 0;
+            background: #eff6ff;
+            border-radius: 8px;
+            position: relative;
+            padding-left: 80px;
+        }
+        .steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #667eea;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .guarantee {
+            text-align: center;
+            padding: 32px;
+            background: #fef3c7;
+            border-radius: 8px;
+            margin: 32px 0;
+        }
+        .guarantee h3 {
+            margin-top: 0;
+            color: #92400e;
+        }
+        .testimonial {
+            padding: 32px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            font-style: italic;
+            margin: 24px 0;
+        }
+        .testimonial footer {
+            margin-top: 16px;
+            font-style: normal;
+            font-weight: 600;
+            color: #667eea;
+        }
+        .faq {
+            margin-top: 24px;
+        }
+        .faq-item {
+            padding: 24px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        .faq-item h4 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            color: #1f2937;
+        }
+        .faq-item p {
+            color: #4b5563;
+            line-height: 1.8;
+        }
+        footer {
+            text-align: center;
+            padding: 48px 20px;
+            color: #6b7280;
+        }
+        .cta-secondary {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 16px 40px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: 24px;
+            transition: all 0.3s;
+        }
+        .cta-secondary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            header p {
+                font-size: 1.1rem;
+            }
+            section {
+                padding: 32px 24px;
+            }
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍴 ChefIApp</h1>
+            <p>Pare de apagar incêndios. Tenha controle real da operação do seu restaurante.<br>Teste grátis por 14 dias.</p>
+            <a href="#piloto" class="cta-primary">Quero Testar Grátis</a>
+        </header>
+
+        <!-- Problema -->
+        <section>
+            <h2>🔥 Se você vive isto todos os dias...</h2>
+            <ul class="problem-list">
+                <li><strong>Turnos bagunçados:</strong> Ninguém sabe quem trabalhou quantas horas</li>
+                <li><strong>Stock que some:</strong> Ingrediente acaba no meio do serviço</li>
+                <li><strong>Tarefas esquecidas:</strong> "Esqueci de repor cerveja", "Ninguém limpou a cozinha"</li>
+                <li><strong>Papel e planilha:</strong> Informação perdida, nada automatizado</li>
+                <li><strong>Equipe perdida:</strong> Cada um pergunta o que fazer</li>
+            </ul>
+            <p style="margin-top: 24px; font-size: 1.2rem; font-weight: 600;">Você não precisa de mais um app. Você precisa de disciplina operacional.</p>
+        </section>
+
+        <!-- Solução -->
+        <section>
+            <h2>✅ ChefIApp resolve isto em 3 passos</h2>
+            <ul class="solution-list">
+                <li><strong>Comando Central:</strong> Vê tudo em uma tela — vendas hoje, turnos ativos, stock baixo, tarefas pendentes</li>
+                <li><strong>Tarefas automáticas:</strong> Stock baixo? Sistema cria tarefa de reposição sozinho. Turno esquecido? Alerta imediato</li>
+                <li><strong>Cada função vê só o necessário:</strong> Cozinheiro não vê finanças. Garçom não vê RH. Zero distração</li>
+            </ul>
+
+            <div class="features">
+                <div class="feature-card">
+                    <h4>⚡ OperationalHub</h4>
+                    <p>Veja tudo que está acontecendo agora: vendas, tarefas, turnos e alertas. Nada cai no esquecimento.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🧠 AppStaff</h4>
+                    <p>Cada funcionário sabe exatamente o que fazer, quando e para quem. Sistema age antes que você precise pensar.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>📱 Menu Digital</h4>
+                    <p>Menu simples, rápido e integrado à operação. Atualiza sem reimprimir, cliente vê pelo QR code.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Como Funciona -->
+        <section>
+            <h2>🚀 Como funciona o piloto de 14 dias</h2>
+            <ul class="steps">
+                <li>
+                    <strong>Demo ao vivo (15 min)</strong><br>
+                    Mostramos o dashboard com dados reais do Sofia Gastrobar. Você vê exatamente o que vai ter.
+                </li>
+                <li>
+                    <strong>Setup inicial (10 min)</strong><br>
+                    Criamos seu restaurante, você adiciona 5 itens do menu. Pronto, já funciona.
+                </li>
+                <li>
+                    <strong>Teste real (14 dias)</strong><br>
+                    Sua equipe usa de verdade. Turnos, stock, tarefas. Zero compromisso, zero custo.
+                </li>
+                <li>
+                    <strong>Decisão (dia 15)</strong><br>
+                    Gostou? Fica. Não gostou? Cancela. Simples assim.
+                </li>
+            </ul>
+
+            <div class="guarantee">
+                <h3>🎯 Garantia Total</h3>
+                <p style="font-size: 1.1rem; color: #92400e;">
+                    <strong>Zero risco.</strong> Se em 14 dias você não sentir diferença real no caos do dia a dia, cancela e pronto. Sem perguntas, sem burocracia.
+                </p>
+            </div>
+        </section>
+
+        <!-- Social Proof -->
+        <section>
+            <h2>🗣️ Quem já testou</h2>
+            <div class="testimonial">
+                <p>"Sistema simples, direto. Parei de perder tempo procurando papel. Turno fica rastreado automaticamente. Vale muito."</p>
+                <footer>— Sofia Gastrobar, Lisboa (piloto ativo desde dezembro 2025)</footer>
+            </div>
+            <p style="color: #6b7280; font-style: italic;">* Primeiro restaurante em produção. Mais cases chegando em janeiro 2026.</p>
+        </section>
+
+        <!-- FAQ -->
+        <section>
+            <h2>❓ Perguntas honestas</h2>
+            <div class="faq">
+                <div class="faq-item">
+                    <h4>Isso substitui meu POS fiscal?</h4>
+                    <p><strong>Não hoje, mas em breve.</strong> ChefIApp é gestão operacional + pré-conta. Você ainda precisa do POS fiscal para nota. Certificação fiscal vem em Q2 2026.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Preciso de internet o tempo todo?</h4>
+                    <p><strong>Sim, mas com tolerância.</strong> Sistema aguenta 5 min offline. Para operações críticas (pagamento, fechamento), precisa internet ativa. Não é para lugares sem conectividade.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Minha equipe não sabe usar computador.</h4>
+                    <p><strong>Interface é mobile-friendly.</strong> Funciona no celular, 3 botões principais. Na demo você vê e decide se é simples o suficiente.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Quanto custa depois do piloto?</h4>
+                    <p><strong>€49/mês (Starter) ou €99/mês (Professional).</strong> Mas teste primeiro. Só fecha se realmente resolver seu problema.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Posso cancelar quando quiser?</h4>
+                    <p><strong>Sempre.</strong> Sem contrato, sem multa. Cancela no painel com 1 clique. Exporta todos os dados antes de sair.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Isso dá mais trabalho pra mim?</h4>
+                    <p><strong>Não. O oposto.</strong> ChefIApp reduz perguntas repetidas, improvisos e retrabalho. Depois do setup inicial (25 min), ele economiza tempo todos os dias.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Final -->
+        <section id="piloto" style="text-align: center; padding: 64px 32px;">
+            <h2 style="margin-bottom: 16px;">Pronto para parar o caos?</h2>
+            <p style="font-size: 1.2rem; color: #4b5563; margin-bottom: 32px;">
+                14 dias grátis. Zero compromisso. Setup em 25 minutos.<br>
+                Se não funcionar, você só perdeu 1 conversa de 15 min.
+            </p>
+            <a href="https://wa.me/351XXXXXXXXX?text=Quero%20testar%20ChefIApp%20por%2014%20dias" class="cta-primary" style="margin-right: 16px;">
+                📱 WhatsApp Direto
+            </a>
+            <a href="mailto:comercial@chefiapp.com?subject=Piloto%20de%2014%20dias" class="cta-secondary">
+                ✉️ Email
+            </a>
+        </section>
+
+        <footer>
+            <p><strong>ChefIApp</strong> — Sistema de disciplina operacional para restaurantes</p>
+            <p style="margin-top: 12px;">Lisboa, Portugal | Janeiro 2026</p>
+            <p style="margin-top: 24px; font-size: 0.9rem;">
+                <a href="#" style="color: #667eea; text-decoration: none;">Política de Privacidade</a> | 
+                <a href="#" style="color: #667eea; text-decoration: none;">Termos de Uso</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# CORE STATES — SESSION
+
+A session represents an active operational context.
+
+States:
+- INACTIVE
+- ACTIVE
+- CLOSED
+
+Rules:
+- Orders can only be created in ACTIVE session
+- Payments require ACTIVE session
+- Closing a session requires zero open orders

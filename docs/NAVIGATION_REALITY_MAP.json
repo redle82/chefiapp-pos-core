@@ -1,0 +1,102 @@
+{
+    "audit_version": "1.0.0",
+    "generated_at": "2025-12-25T14:00:00Z",
+    "system_architecture": {
+        "frontend": "React SPA (Merchant Portal)",
+        "public_facing": "SSR / BackendProxy (Web Module)",
+        "backend": "Node.js (Web Module API Server)"
+    },
+    "routes": {
+        "/": {
+            "type": "Redirect",
+            "target": "/app/start",
+            "status": "Active"
+        },
+        "/start": {
+            "type": "Redirect",
+            "target": "/app/start",
+            "status": "Legacy/Active"
+        },
+        "/app/start": {
+            "type": "Redirect",
+            "target": "/app",
+            "status": "Active"
+        },
+        "/app": {
+            "component": "EntryPage",
+            "status": "Real",
+            "features": [
+                "System Health Check",
+                "Onboarding Entry"
+            ]
+        },
+        "/app/creating": {
+            "component": "CreatingPage",
+            "status": "Real",
+            "features": [
+                "API Creation",
+                "Demo Fallback"
+            ]
+        },
+        "/app/auth": {
+            "component": "AuthPage",
+            "status": "Real",
+            "features": [
+                "Health Gating",
+                "Token Storage"
+            ]
+        },
+        "/app/bootstrap": {
+            "component": "BootstrapPage",
+            "status": "Real",
+            "features": [
+                "Session Restore",
+                "State Rehydration"
+            ]
+        },
+        "/app/setup": {
+            "component": "SetupLayout",
+            "status": "Real",
+            "sub_routes": {
+                "identity": "Real (Forms, Google Mock Import)",
+                "menu": "Real (DB CRUD)",
+                "payments": "Real (Stripe Connect)",
+                "design": "Real (Theme/Level Patch)",
+                "publish": "Real (Status Update)"
+            }
+        },
+        "/app/tpv": {
+            "component": "TPV",
+            "status": "Real",
+            "features": [
+                "Order Management",
+                "Offline Sync"
+            ]
+        },
+        "/app/demo": {
+            "component": "App",
+            "status": "DevTool",
+            "notes": "Developer Playground / Debug Wizard"
+        },
+        "/public/:slug": {
+            "component": "SSR (Backend)",
+            "status": "Real",
+            "notes": "Proxied to Port 4320. Not a React Component."
+        }
+    },
+    "dead_code": [
+        "merchant-portal/src/pages/Public/PublicPages.tsx"
+    ],
+    "anomalies": [
+        {
+            "issue": "PublicPages.tsx is orphaned",
+            "severity": "Low (Cleanup)",
+            "impact": "None (Unused)"
+        },
+        {
+            "issue": "/app/demo exposed",
+            "severity": "Low",
+            "impact": "Dev tool visible if guessed"
+        }
+    ]
+}

@@ -1,0 +1,94 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
+
+// https://vite.dev/config/
+export default defineConfig(() => {
+  const base = '/'
+
+  return {
+    base,
+    plugins: [
+      react(),
+      tailwindcss(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'vite.svg'],
+        devOptions: {
+          enabled: true
+        },
+        manifest: {
+          name: 'ChefIApp POS',
+          short_name: 'ChefIApp',
+          description: 'Sistema Operacional para Restauração. Otimize sua operação com inteligência.',
+          theme_color: '#000000',
+          background_color: '#0a0a0a',
+          display: 'standalone',
+          orientation: 'portrait',
+          scope: '/',
+          start_url: '/',
+          icons: [
+            {
+              src: 'Logo Chefiapp.png',
+              sizes: '192x192', // Assuming it's large enough, ideally resize
+              type: 'image/png'
+            },
+            {
+              src: 'Logo Chefiapp.png',
+              sizes: '512x512',
+              type: 'image/png'
+            }
+          ]
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          maximumFileSizeToCacheInBytes: 5000000, // 5MB
+        }
+      })
+    ],
+    server: {
+      proxy: {
+        '/internal': {
+          target: 'http://localhost:4320',
+          changeOrigin: true,
+        },
+
+        '/webhooks': {
+          target: 'http://localhost:4320',
+          changeOrigin: true,
+        },
+        '/api': {
+          target: 'http://localhost:4320',
+          changeOrigin: true,
+        },
+      },
+      fs: {
+        allow: ['..']
+      }
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Vendor chunks
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'supabase-vendor': ['@supabase/supabase-js'],
+            'ui-vendor': ['framer-motion', 'lucide-react'],
+            // Feature chunks
+            'dashboard': ['./src/pages/Dashboard/DashboardZero'],
+            'tpv': ['./src/pages/TPV/TPV'],
+            'menu': ['./src/pages/Menu/MenuManager'],
+            'staff': ['./src/pages/AppStaff/StaffModule'],
+          },
+        },
+      },
+      chunkSizeWarningLimit: 500, // 500KB warning threshold
+    },
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      include: ['**/*.test.ts', '**/*.test.tsx'],
+    },
+  }
+})
