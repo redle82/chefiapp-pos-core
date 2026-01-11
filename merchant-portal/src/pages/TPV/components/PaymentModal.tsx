@@ -360,9 +360,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantI
                         backgroundColor: `${colors.success.base}15`,
                         borderRadius: 8
                     }}>
-                        <Text size="sm" weight="bold" color="success">
+                        <Text size="sm" weight="bold" color="success" style={{ marginBottom: spacing[2] }}>
                             ✓ Pagamento registrado com sucesso!
                         </Text>
+                        <FiscalPrintButton
+                            orderId={orderId}
+                            restaurantId={restaurantId}
+                            orderTotal={orderTotal}
+                            paymentMethod={selectedMethod}
+                            onPrintComplete={() => {
+                                // Opcional: fechar modal após impressão
+                            }}
+                        />
                     </div>
                 )}
 

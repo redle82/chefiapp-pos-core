@@ -4,6 +4,7 @@ import { KpiCard } from '../../ui/design-system/KpiCard';
 import { InsightCard } from '../../ui/design-system/InsightCard';
 import { DateRangeSelector } from '../../ui/design-system/DateRangeSelector';
 import { Card } from '../../ui/design-system/Card';
+import { useRealAnalytics } from './hooks/useRealAnalytics';
 import './Analytics.css';
 
 interface Order {
@@ -39,7 +40,13 @@ const Analytics: React.FC = () => {
   });
   const [_selectedPreset, setSelectedPreset] = useState<'today' | 'yesterday' | 'week' | 'month' | 'custom'>('today');
 
-  // Mock data estruturado (pronto para trocar por API)
+  // FASE 2: Dados reais do Supabase
+  const { data: realAnalytics, loading: analyticsLoading, error: analyticsError } = useRealAnalytics(
+    selectedRange.from,
+    selectedRange.to
+  );
+
+  // Mock data estruturado (fallback se não houver dados reais)
   const mockAnalyticsData = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);

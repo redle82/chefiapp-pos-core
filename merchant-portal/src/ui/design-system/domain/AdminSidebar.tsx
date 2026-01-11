@@ -65,6 +65,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
             items: [
                 { label: 'Fecho Diário', id: '/app/reports/daily-closing', icon: '📊' },
                 { label: 'Finanças', id: '/app/reports/finance', icon: '💰' },
+                { label: 'Clientes (CRM)', id: '/app/crm', icon: '👥' },
+                { label: 'Fidelidade', id: '/app/loyalty', icon: '🎁' },
             ]
         },
         {

@@ -25,6 +25,7 @@ import { IncomingRequests } from './components/IncomingRequests';
 import { GroupSelector } from './components/GroupSelector';
 import { CreateGroupModal } from './components/CreateGroupModal';
 import { useConsumptionGroups } from './hooks/useConsumptionGroups';
+import { useCommonTPVShortcuts } from './hooks/useTPVShortcuts';
 
 type ContextView = 'menu' | 'tables';
 
@@ -65,6 +66,29 @@ const TPVContent = () => {
   const [showOpenCashModal, setShowOpenCashModal] = useState<boolean>(false);
   const [showCloseCashModal, setShowCloseCashModal] = useState<boolean>(false);
   const [openingBalanceCents, setOpeningBalanceCents] = useState<number>(0);
+
+  // FASE 2: Atalhos de teclado para reduzir cliques
+  useCommonTPVShortcuts({
+    onCreateOrder: () => {
+      if (cashRegisterOpen) {
+        handleCreateOrder();
+      } else {
+        error('Abra o caixa antes de criar vendas');
+        setShowOpenCashModal(true);
+      }
+    },
+    onCloseOrder: () => {
+      if (activeOrderId) {
+        const order = orders.find(o => o.id === activeOrderId);
+        if (order && order.status !== 'paid') {
+          setPaymentModalOrderId(activeOrderId);
+        }
+      }
+    },
+    onSearchTable: () => {
+      setContextView('tables');
+    },
+  });
 
   console.log('[TPV] BODY RENDER. menuItems:', menuItems?.length);
 

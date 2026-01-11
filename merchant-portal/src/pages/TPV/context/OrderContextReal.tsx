@@ -543,6 +543,45 @@ export function OrderProvider({ children }: { children: ReactNode }) {
                     // Cleanup key on success (allows new payment if order re-opened later)
                     idempotencyKeys.current.delete(orderId);
 
+                    // FASE 3: Integração CRM e Loyalty (não bloqueia pagamento se falhar)
+                    try {
+                        const { CustomerService } = await import('../../../core/crm/CustomerService');
+                        const { LoyaltyService } = await import('../../../core/loyalty/LoyaltyService');
+
+                        // Buscar dados do pedido para CRM/Loyalty
+                        const orderForCRM = await OrderEngine.getOrder(orderId, restaurantId);
+                        if (orderForCRM) {
+                            // Extrair dados do cliente (se disponível)
+                            const customerPhone = orderForCRM.metadata?.customer_phone;
+                            const customerEmail = orderForCRM.metadata?.customer_email;
+                            const customerName = orderForCRM.metadata?.customer_name;
+
+                            // Atualizar CRM
+                            if (customerPhone || customerEmail) {
+                                const customer = await CustomerService.findOrCreateCustomer(restaurantId, {
+                                    email: customerEmail,
+                                    phone: customerPhone,
+                                    full_name: customerName,
+                                });
+
+                                await CustomerService.updateAfterOrder(customer.id, dbOrder.totalCents / 100);
+
+                                // Adicionar pontos de fidelidade
+                                await LoyaltyService.awardPointsForOrder(
+                                    restaurantId,
+                                    orderId,
+                                    dbOrder.totalCents,
+                                    customer.id,
+                                    customerPhone,
+                                    customerEmail
+                                );
+                            }
+                        }
+                    } catch (crmError) {
+                        // Log mas não bloqueia pagamento
+                        console.warn('[TPV] CRM/Loyalty processing failed (non-blocking):', crmError);
+                    }
+
                     // Limpar pedido ativo após pagamento
                     const currentActive = getTabIsolated('chefiapp_active_order_id');
                     if (currentActive === orderId) {

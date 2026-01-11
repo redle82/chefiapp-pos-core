@@ -11,6 +11,9 @@ import { useSettingsState } from './useSettingsState';
 
 import { OperationStatusWidget } from './components/OperationStatusWidget'; // Opus 6.0
 import { SubscriptionWidget } from './components/SubscriptionWidget';
+import { GlovoIntegrationWidget } from './components/GlovoIntegrationWidget';
+import { UberEatsIntegrationWidget } from './components/UberEatsIntegrationWidget';
+import { DeliverooIntegrationWidget } from './components/DeliverooIntegrationWidget';
 import { TableManager } from './TableManager';
 import { TableProvider } from '../TPV/context/TableContext';
 
@@ -157,7 +160,16 @@ const Settings: React.FC = () => {
             </TableProvider>
           </Section>
 
-          {/* 5. SUPPLIER VISIBILITY */}
+          {/* 5. DELIVERY INTEGRATIONS */}
+          <Section title="Integrações de Delivery">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <GlovoIntegrationWidget />
+              <UberEatsIntegrationWidget />
+              <DeliverooIntegrationWidget />
+            </div>
+          </Section>
+
+          {/* 6. SUPPLIER VISIBILITY */}
           <Section title="Parcerias & Monetização">
             <Card surface="base" padding="xl" style={{ border: '1px solid #059669' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>

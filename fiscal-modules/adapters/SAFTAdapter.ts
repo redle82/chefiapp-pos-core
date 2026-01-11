@@ -95,28 +95,47 @@ export class SAFTAdapter implements FiscalObserver {
     private generateSAFTXML(taxDoc: TaxDocument): string {
         // MVP: XML básico conforme estrutura SAF-T
         // Em produção, usar biblioteca XML ou template engine
-        const now = new Date().toISOString();
+        const now = new Date();
+        const nowISO = now.toISOString();
+        const dateStr = now.toISOString().split('T')[0];
         const protocol = `SAFT-${Date.now()}`;
 
+        // Gerar todas as linhas de itens
+        const linesXML = taxDoc.items.map((item, index) => `
+                <Line>
+                    <LineNumber>${index + 1}</LineNumber>
+                    <ProductCode>${this.escapeXML(item.code || 'N/A')}</ProductCode>
+                    <ProductDescription>${this.escapeXML(item.description || 'Item')}</ProductDescription>
+                    <Quantity>${item.quantity || 1}</Quantity>
+                    <UnitPrice>${item.unit_price.toFixed(2)}</UnitPrice>
+                    <CreditAmount>${item.total.toFixed(2)}</CreditAmount>
+                    <Tax>
+                        <TaxType>IVA</TaxType>
+                        <TaxCountryRegion>PT</TaxCountryRegion>
+                        <TaxCode>NOR</TaxCode>
+                        <TaxPercentage>23.00</TaxPercentage>
+                    </Tax>
+                </Line>`).join('');
+
         return `<?xml version="1.0" encoding="UTF-8"?>
-<AuditFile>
+<AuditFile xmlns="urn:OECD:StandardAuditFile-Tax:PT_1.04_01">
     <Header>
         <AuditFileVersion>1.04_01</AuditFileVersion>
-        <CompanyID>${taxDoc.raw_payload?.restaurant_id || 'N/A'}</CompanyID>
-        <TaxRegistrationNumber>N/A</TaxRegistrationNumber>
+        <CompanyID>${this.escapeXML(taxDoc.raw_payload?.restaurant_id?.toString().substring(0, 20) || 'RESTAURANTE')}</CompanyID>
+        <TaxRegistrationNumber>${this.escapeXML(taxDoc.raw_payload?.tax_registration_number || '999999999')}</TaxRegistrationNumber>
         <TaxAccountingBasis>N</TaxAccountingBasis>
-        <CompanyName>Restaurante</CompanyName>
+        <CompanyName>${this.escapeXML(taxDoc.raw_payload?.restaurant_name || 'Restaurante')}</CompanyName>
         <CompanyAddress>
-            <AddressDetail>N/A</AddressDetail>
-            <City>N/A</City>
-            <PostalCode>N/A</PostalCode>
+            <AddressDetail>${this.escapeXML(taxDoc.raw_payload?.address || 'N/A')}</AddressDetail>
+            <City>${this.escapeXML(taxDoc.raw_payload?.city || 'N/A')}</City>
+            <PostalCode>${this.escapeXML(taxDoc.raw_payload?.postal_code || '0000-000')}</PostalCode>
             <Country>PT</Country>
         </CompanyAddress>
-        <FiscalYear>${new Date().getFullYear()}</FiscalYear>
-        <StartDate>${now}</StartDate>
-        <EndDate>${now}</EndDate>
+        <FiscalYear>${now.getFullYear()}</FiscalYear>
+        <StartDate>${dateStr}</StartDate>
+        <EndDate>${dateStr}</EndDate>
         <CurrencyCode>EUR</CurrencyCode>
-        <DateCreated>${now}</DateCreated>
+        <DateCreated>${nowISO}</DateCreated>
         <TaxEntity>N/A</TaxEntity>
         <ProductCompanyTaxID>N/A</ProductCompanyTaxID>
         <SoftwareCertificateNumber>0</SoftwareCertificateNumber>
@@ -137,32 +156,19 @@ export class SAFTAdapter implements FiscalObserver {
     <SourceDocuments>
         <SalesInvoices>
             <Invoice>
-                <InvoiceNo>${taxDoc.ref_event_id}</InvoiceNo>
+                <InvoiceNo>${this.escapeXML(taxDoc.ref_event_id?.substring(0, 60) || 'INV-' + Date.now())}</InvoiceNo>
                 <DocumentStatus>
                     <InvoiceStatus>N</InvoiceStatus>
                 </DocumentStatus>
-                <Hash>${taxDoc.ref_seal_id}</Hash>
+                <Hash>${this.escapeXML(taxDoc.ref_seal_id?.substring(0, 172) || 'HASH')}</Hash>
                 <HashControl>1</HashControl>
-                <Period>${new Date().getMonth() + 1}</Period>
-                <InvoiceDate>${now}</InvoiceDate>
+                <Period>${String(now.getMonth() + 1).padStart(2, '0')}</Period>
+                <InvoiceDate>${dateStr}</InvoiceDate>
                 <InvoiceType>FT</InvoiceType>
                 <SourceID>TPV</SourceID>
-                <SystemEntryDate>${now}</SystemEntryDate>
+                <SystemEntryDate>${nowISO}</SystemEntryDate>
                 <CustomerID>CLIENTE</CustomerID>
-                <Line>
-                    <LineNumber>1</LineNumber>
-                    <ProductCode>${taxDoc.items[0]?.code || 'N/A'}</ProductCode>
-                    <ProductDescription>${taxDoc.items[0]?.description || 'Item'}</ProductDescription>
-                    <Quantity>${taxDoc.items[0]?.quantity || 1}</Quantity>
-                    <UnitPrice>${taxDoc.items[0]?.unit_price || 0}</UnitPrice>
-                    <CreditAmount>${taxDoc.total_amount.toFixed(2)}</CreditAmount>
-                    <Tax>
-                        <TaxType>IVA</TaxType>
-                        <TaxCountryRegion>PT</TaxCountryRegion>
-                        <TaxCode>NOR</TaxCode>
-                        <TaxPercentage>23.00</TaxPercentage>
-                    </Tax>
-                </Line>
+                ${linesXML}
                 <DocumentTotals>
                     <TaxPayable>${(taxDoc.taxes.vat || 0).toFixed(2)}</TaxPayable>
                     <NetTotal>${(taxDoc.total_amount - (taxDoc.taxes.vat || 0)).toFixed(2)}</NetTotal>
@@ -172,6 +178,16 @@ export class SAFTAdapter implements FiscalObserver {
         </SalesInvoices>
     </SourceDocuments>
 </AuditFile>`;
+    }
+
+    private escapeXML(str: string): string {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
     }
 
     private async transmitToGovernment(xml: string, taxDoc: TaxDocument): Promise<string> {

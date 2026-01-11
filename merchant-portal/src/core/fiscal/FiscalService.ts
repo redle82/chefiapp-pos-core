@@ -12,6 +12,7 @@ import { supabase } from '../supabase';
 import { FiscalObserver } from '../../../fiscal-modules/FiscalObserver';
 import { FiscalResult, TaxDocument } from '../../../fiscal-modules/types';
 import { FiscalEventStore } from '../../../fiscal-modules/FiscalEventStore';
+import { SupabaseFiscalEventStore } from './SupabaseFiscalEventStore';
 import { ConsoleFiscalAdapter } from '../../../fiscal-modules/ConsoleFiscalAdapter';
 import { TicketBAIAdapter } from '../../../fiscal-modules/adapters/TicketBAIAdapter';
 import { SAFTAdapter } from '../../../fiscal-modules/adapters/SAFTAdapter';
@@ -25,14 +26,17 @@ export interface FiscalServiceConfig {
 
 export class FiscalService {
     private adapter: FiscalObserver;
-    private eventStore: FiscalEventStore;
+    private eventStore: FiscalEventStore | SupabaseFiscalEventStore;
     private enabled: boolean;
+    private useSupabase: boolean;
 
     constructor(config: FiscalServiceConfig = {}) {
         // MVP: Usar ConsoleFiscalAdapter como default
         // Em produção, selecionar adapter baseado no país do restaurante
         this.adapter = config.adapter || new ConsoleFiscalAdapter();
-        this.eventStore = config.eventStore || new FiscalEventStore();
+        // Usar SupabaseFiscalEventStore no frontend (merchant-portal)
+        this.useSupabase = typeof window !== 'undefined';
+        this.eventStore = config.eventStore || (this.useSupabase ? new SupabaseFiscalEventStore() : new FiscalEventStore());
         this.enabled = config.enabled !== false; // Default: enabled
     }
 
@@ -112,7 +116,11 @@ export class FiscalService {
             );
 
             // 4. Armazenar em fiscal_event_store
-            await this.eventStore.recordInteraction(taxDoc, result);
+            if (this.useSupabase && this.eventStore instanceof SupabaseFiscalEventStore) {
+                await this.eventStore.recordInteraction(taxDoc, result, params.orderId, params.restaurantId);
+            } else if (this.eventStore instanceof FiscalEventStore) {
+                await this.eventStore.recordInteraction(taxDoc, result);
+            }
 
             Logger.info('[FiscalService] Fiscal document generated', {
                 orderId: params.orderId,
@@ -139,7 +147,8 @@ export class FiscalService {
             .from('gm_orders')
             .select(`
                 *,
-                items:gm_order_items(*)
+                items:gm_order_items(*),
+                restaurant:gm_restaurants(name, address, city, postal_code, country_code)
             `)
             .eq('id', orderId)
             .eq('restaurant_id', restaurantId)
@@ -148,6 +157,14 @@ export class FiscalService {
         if (error) {
             Logger.error('[FiscalService] Failed to fetch order', error, { orderId });
             return null;
+        }
+
+        // Enriquecer dados do pedido com informações do restaurante
+        if (data && data.restaurant) {
+            data.restaurant_name = data.restaurant.name;
+            data.restaurant_address = data.restaurant.address;
+            data.restaurant_city = data.restaurant.city;
+            data.restaurant_postal_code = data.restaurant.postal_code;
         }
 
         return data;
@@ -187,6 +204,11 @@ export class FiscalService {
         paymentMethod: string;
         amountCents: number;
     }, country: string = 'ES'): TaxDocument {
+        // Buscar dados do restaurante para XML SAF-T
+        const restaurantName = order.restaurant_name || 'Restaurante';
+        const restaurantAddress = order.restaurant_address || 'N/A';
+        const restaurantCity = order.restaurant_city || 'N/A';
+        const restaurantPostalCode = order.restaurant_postal_code || '0000-000';
         // Detectar tipo de documento baseado no país
         let docType: 'MOCK' | 'TICKETBAI' | 'SAF-T' = 'MOCK';
         let vatRate = 0.21; // Default: 21% (Espanha)
@@ -222,6 +244,11 @@ export class FiscalService {
             raw_payload: {
                 order_id: order.id,
                 restaurant_id: order.restaurant_id,
+                restaurant_name: restaurantName,
+                address: restaurantAddress,
+                city: restaurantCity,
+                postal_code: restaurantPostalCode,
+                tax_registration_number: order.tax_registration_number || '999999999',
                 payment_method: payment.paymentMethod,
                 total_amount: totalAmount,
                 vat_amount: vatAmount,

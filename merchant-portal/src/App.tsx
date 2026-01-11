@@ -51,6 +51,8 @@ const OperationalHubDashboard = React.lazy(() => import('./pages/OperationalHub/
 const PortioningDashboard = React.lazy(() => import('./pages/Portioning/PortioningDashboard').then(m => ({ default: m.PortioningDashboard })));
 const RestaurantGroupManager = React.lazy(() => import('./pages/MultiLocation/RestaurantGroupManager').then(m => ({ default: m.RestaurantGroupManager })));
 const GroupDashboard = React.lazy(() => import('./pages/MultiLocation/GroupDashboard').then(m => ({ default: m.GroupDashboard })));
+const CustomersPage = React.lazy(() => import('./pages/CRM/CustomersPage').then(m => ({ default: m.CustomersPage })));
+const LoyaltyPage = React.lazy(() => import('./pages/Loyalty/LoyaltyPage').then(m => ({ default: m.LoyaltyPage })));
 
 // Components
 import { FlowGate } from './core/flow/FlowGate';
@@ -250,6 +252,8 @@ function App() {
                     <Route path="portioning" element={<Suspense fallback={<div>Loading...</div>}><PortioningDashboard /></Suspense>} />
                     <Route path="multi-location" element={<Suspense fallback={<div>Loading...</div>}><RestaurantGroupManager /></Suspense>} />
                     <Route path="multi-location/:groupId/dashboard" element={<Suspense fallback={<div>Loading...</div>}><GroupDashboard /></Suspense>} />
+                    <Route path="crm" element={<Suspense fallback={<div>Loading...</div>}><CustomersPage /></Suspense>} />
+                    <Route path="loyalty" element={<Suspense fallback={<div>Loading...</div>}><LoyaltyPage /></Suspense>} />
                     <Route path="audit" element={<SystemStatusPage />} />
                     <Route path="coming-soon" element={<ComingSoonPage />} />
                   </Route>

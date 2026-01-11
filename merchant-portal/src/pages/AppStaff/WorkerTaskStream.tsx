@@ -5,10 +5,15 @@ import { Text } from '../../ui/design-system/primitives/Text';
 import { Button } from '../../ui/design-system/primitives/Button';
 import { useToast } from '../../ui/design-system';
 import { ShiftForecastWidget } from '../../ui/design-system/ShiftForecastWidget';
+import { useTableAlerts } from './hooks/useTableAlerts';
+import { useTraining } from '../../intelligence/education/TrainingContext';
+import { useContextualSuggestions } from './hooks/useContextualSuggestions';
 
 export const WorkerTaskStream: React.FC = () => {
     // Destructure completeTask here
     const { tasks, startTask, completeTask, checkOut, activeWorkerId, activeRole, shiftMetrics, forecast } = useStaff();
+    const { alerts } = useTableAlerts(); // FASE 2: Alertas automáticos
+    const { suggestions } = useContextualSuggestions(); // FASE 2: Sugestões contextuais
     const { activeLesson, completeLesson, dismissLesson } = useTraining();
     const { success } = useToast();
 
@@ -62,8 +67,42 @@ export const WorkerTaskStream: React.FC = () => {
                 />
             )}
 
+            {/* FASE 2: ALERTAS DE MESAS */}
+            {alerts.length > 0 && (
+                <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#fff3cd', borderRadius: 8, border: '1px solid #ffc107' }}>
+                    <Text size="sm" weight="bold" style={{ marginBottom: 8 }}>⚠️ Alertas de Mesas</Text>
+                    {alerts.map(alert => (
+                        <div key={alert.tableId} style={{ marginBottom: 4 }}>
+                            <Text size="xs" color={alert.severity === 'error' ? 'error' : 'warning'}>
+                                {alert.message}
+                            </Text>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* FASE 2: SUGESTÕES CONTEXTUAIS */}
+            {suggestions.length > 0 && (
+                <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#e3f2fd', borderRadius: 8, border: '1px solid #2196f3' }}>
+                    <Text size="sm" weight="bold" style={{ marginBottom: 8 }}>💡 Sugestões</Text>
+                    {suggestions.slice(0, 3).map(suggestion => (
+                        <div key={suggestion.id} style={{ marginBottom: 8, padding: 8, backgroundColor: 'white', borderRadius: 4 }}>
+                            <div style={{ display: 'flex', alignItems: 'start', gap: 8 }}>
+                                <Text size="sm">{suggestion.icon || '💡'}</Text>
+                                <div style={{ flex: 1 }}>
+                                    <Text size="sm" weight="bold">{suggestion.title}</Text>
+                                    <Text size="xs" color="tertiary" style={{ marginTop: 4, display: 'block' }}>
+                                        {suggestion.description}
+                                    </Text>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {/* EMPTY STATE */}
-            {activeTasks.length === 0 && (
+            {activeTasks.length === 0 && alerts.length === 0 && (
                 <div style={{ padding: 40, textAlign: 'center', opacity: 0.5 }}>
                     <Text size="xl">✅</Text>
                     <Text size="md" weight="bold" color="primary" style={{ marginTop: 12 }}>Tudo em dia</Text>
