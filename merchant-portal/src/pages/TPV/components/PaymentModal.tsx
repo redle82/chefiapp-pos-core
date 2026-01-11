@@ -20,6 +20,7 @@ import { createPaymentIntent, type PaymentIntentResult } from '../../../core/tpv
 import { useConsumptionGroups } from '../hooks/useConsumptionGroups';
 import { FiscalPrintButton } from './FiscalPrintButton';
 import { LoadingState } from '../../../ui/design-system/components/LoadingState';
+import { useOfflineOrder } from '../context/OfflineOrderContext';
 
 export type PaymentMethod = 'cash' | 'card' | 'pix';
 
@@ -32,16 +33,25 @@ interface PaymentModalProps {
 }
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantId, orderTotal, onPay, onCancel }) => {
+    const { isOffline } = useOfflineOrder();
     const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('cash');
     const [processing, setProcessing] = useState(false);
     const [result, setResult] = useState<'success' | 'error' | null>(null);
     const [lastClickTime, setLastClickTime] = useState<number>(0);
     const [amountGiven, setAmountGiven] = useState<string>('');
-    
+
     // Stripe Payment Intent state
     const [stripeIntent, setStripeIntent] = useState<PaymentIntentResult | null>(null);
     const [loadingStripeIntent, setLoadingStripeIntent] = useState(false);
     const [stripeError, setStripeError] = useState<string | null>(null);
+
+    // Auto-switch to cash if offline
+    useEffect(() => {
+        if (isOffline && selectedMethod !== 'cash') {
+            setSelectedMethod('cash');
+            setStripeIntent(null);
+        }
+    }, [isOffline, selectedMethod]);
 
     const totalFormatted = new Intl.NumberFormat('pt-PT', {
         style: 'currency',
@@ -53,7 +63,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantI
         if (selectedMethod === 'card' && !stripeIntent && !loadingStripeIntent) {
             setLoadingStripeIntent(true);
             setStripeError(null);
-            
+
             createPaymentIntent({
                 orderId,
                 restaurantId,
@@ -269,33 +279,46 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantI
                         Método de pagamento
                     </Text>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[2] }}>
-                        {(['cash', 'card', 'pix'] as PaymentMethod[]).map(method => (
-                            <Button
-                                key={method}
-                                variant={selectedMethod === method ? 'solid' : 'outline'}
-                                tone={selectedMethod === method ? 'action' : 'neutral'}
-                                size="lg"
-                                onClick={() => {
-                                    setSelectedMethod(method);
-                                    setAmountGiven('');
-                                    setStripeIntent(null);
-                                    setStripeError(null);
-                                }}
-                                style={{ justifyContent: 'flex-start' }}
-                                disabled={method === 'card' && loadingStripeIntent}
-                            >
-                                {method === 'cash' && '💵 Dinheiro'}
-                                {method === 'card' && (loadingStripeIntent ? (
-                                    <>
-                                        <LoadingState variant="spinner" spinnerSize="sm" style={{ display: 'inline-flex', marginRight: 8 }} />
-                                        💳 Cartão
-                                    </>
-                                ) : '💳 Cartão')}
-                                {method === 'pix' && '📱 PIX'}
-                            </Button>
-                        ))}
+                        {(['cash', 'card', 'pix'] as PaymentMethod[]).map(method => {
+                            const isOfflineDisabled = isOffline && method !== 'cash';
+
+                            return (
+                                <Button
+                                    key={method}
+                                    variant={selectedMethod === method ? 'solid' : 'outline'}
+                                    tone={selectedMethod === method ? 'action' : 'neutral'}
+                                    size="lg"
+                                    onClick={() => {
+                                        if (isOfflineDisabled) return;
+                                        setSelectedMethod(method);
+                                        setAmountGiven('');
+                                        setStripeIntent(null);
+                                        setStripeError(null);
+                                    }}
+                                    style={{ justifyContent: 'flex-start', opacity: isOfflineDisabled ? 0.5 : 1 }}
+                                    disabled={(method === 'card' && loadingStripeIntent) || isOfflineDisabled}
+                                >
+                                    {method === 'cash' && '💵 Dinheiro'}
+                                    {method === 'card' && (loadingStripeIntent ? (
+                                        <>
+                                            <LoadingState variant="spinner" spinnerSize="sm" style={{ display: 'inline-flex', marginRight: 8 }} />
+                                            💳 Cartão
+                                        </>
+                                    ) : (
+                                        <>
+                                            💳 Cartão {isOfflineDisabled && <Text size="xs" color="destructive" style={{ marginLeft: 8 }}>(Offline)</Text>}
+                                        </>
+                                    ))}
+                                    {method === 'pix' && (
+                                        <>
+                                            📱 PIX {isOfflineDisabled && <Text size="xs" color="destructive" style={{ marginLeft: 8 }}>(Offline)</Text>}
+                                        </>
+                                    )}
+                                </Button>
+                            );
+                        })}
                     </div>
-                    
+
                     {/* Erro ao criar Stripe Intent */}
                     {selectedMethod === 'card' && stripeError && (
                         <div style={{
@@ -312,81 +335,87 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantI
                 </div>
 
                 {/* Change Calculator for Cash */}
-                {selectedMethod === 'cash' && (
-                    <div style={{ marginBottom: spacing[6], padding: spacing[3], backgroundColor: '#222', borderRadius: 8 }}>
-                        <div style={{ marginBottom: spacing[3] }}>
-                            <Text size="xs" color="tertiary" style={{ marginBottom: spacing[1] }}>Valor Recebido (€)</Text>
-                            <input
-                                type="number"
-                                value={amountGiven}
-                                onChange={(e) => setAmountGiven(e.target.value)}
-                                placeholder="0.00"
-                                autoFocus
-                                style={{
-                                    width: '100%',
-                                    background: 'transparent',
-                                    border: `1px solid ${colors.border.subtle}`,
-                                    borderRadius: 6,
-                                    padding: spacing[3],
-                                    color: 'white',
-                                    fontSize: '20px',
-                                    fontWeight: 'bold',
-                                    textAlign: 'center',
-                                    outline: 'none'
+                {
+                    selectedMethod === 'cash' && (
+                        <div style={{ marginBottom: spacing[6], padding: spacing[3], backgroundColor: '#222', borderRadius: 8 }}>
+                            <div style={{ marginBottom: spacing[3] }}>
+                                <Text size="xs" color="tertiary" style={{ marginBottom: spacing[1] }}>Valor Recebido (€)</Text>
+                                <input
+                                    type="number"
+                                    value={amountGiven}
+                                    onChange={(e) => setAmountGiven(e.target.value)}
+                                    placeholder="0.00"
+                                    autoFocus
+                                    style={{
+                                        width: '100%',
+                                        background: 'transparent',
+                                        border: `1px solid ${colors.border.subtle}`,
+                                        borderRadius: 6,
+                                        padding: spacing[3],
+                                        color: 'white',
+                                        fontSize: '20px',
+                                        fontWeight: 'bold',
+                                        textAlign: 'center',
+                                        outline: 'none'
+                                    }}
+                                />
+                            </div>
+
+                            {amountGiven && !isNaN(parseFloat(amountGiven)) && (
+                                <div style={{
+                                    opacity: (parseFloat(amountGiven) - orderTotal / 100) >= 0 ? 1 : 0.5,
+                                    transition: 'all 0.3s'
+                                }}>
+                                    <Text size="xs" color="tertiary" style={{ marginBottom: spacing[1] }}>Troco</Text>
+                                    <Text size="2xl" weight="bold" color={(parseFloat(amountGiven) - orderTotal / 100) >= 0 ? 'success' : 'warning'}>
+                                        {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' })
+                                            .format(Math.max(0, parseFloat(amountGiven) - orderTotal / 100))}
+                                    </Text>
+                                </div>
+                            )}
+                        </div>
+                    )
+                }
+
+                {/* Feedback Visual */}
+                {
+                    result === 'success' && (
+                        <div style={{
+                            marginBottom: spacing[4],
+                            padding: spacing[3],
+                            backgroundColor: `${colors.success.base}15`,
+                            borderRadius: 8
+                        }}>
+                            <Text size="sm" weight="bold" color="success" style={{ marginBottom: spacing[2] }}>
+                                ✓ Pagamento registrado com sucesso!
+                            </Text>
+                            <FiscalPrintButton
+                                orderId={orderId}
+                                restaurantId={restaurantId}
+                                orderTotal={orderTotal}
+                                paymentMethod={selectedMethod}
+                                onPrintComplete={() => {
+                                    // Opcional: fechar modal após impressão
                                 }}
                             />
                         </div>
+                    )
+                }
 
-                        {amountGiven && !isNaN(parseFloat(amountGiven)) && (
-                            <div style={{
-                                opacity: (parseFloat(amountGiven) - orderTotal / 100) >= 0 ? 1 : 0.5,
-                                transition: 'all 0.3s'
-                            }}>
-                                <Text size="xs" color="tertiary" style={{ marginBottom: spacing[1] }}>Troco</Text>
-                                <Text size="2xl" weight="bold" color={(parseFloat(amountGiven) - orderTotal / 100) >= 0 ? 'success' : 'warning'}>
-                                    {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' })
-                                        .format(Math.max(0, parseFloat(amountGiven) - orderTotal / 100))}
-                                </Text>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Feedback Visual */}
-                {result === 'success' && (
-                    <div style={{
-                        marginBottom: spacing[4],
-                        padding: spacing[3],
-                        backgroundColor: `${colors.success.base}15`,
-                        borderRadius: 8
-                    }}>
-                        <Text size="sm" weight="bold" color="success" style={{ marginBottom: spacing[2] }}>
-                            ✓ Pagamento registrado com sucesso!
-                        </Text>
-                        <FiscalPrintButton
-                            orderId={orderId}
-                            restaurantId={restaurantId}
-                            orderTotal={orderTotal}
-                            paymentMethod={selectedMethod}
-                            onPrintComplete={() => {
-                                // Opcional: fechar modal após impressão
-                            }}
-                        />
-                    </div>
-                )}
-
-                {result === 'error' && (
-                    <div style={{
-                        marginBottom: spacing[4],
-                        padding: spacing[3],
-                        backgroundColor: `${colors.destructive.base}15`,
-                        borderRadius: 8
-                    }}>
-                        <Text size="sm" weight="bold" color="destructive">
-                            ✗ Erro ao processar pagamento. Tente novamente.
-                        </Text>
-                    </div>
-                )}
+                {
+                    result === 'error' && (
+                        <div style={{
+                            marginBottom: spacing[4],
+                            padding: spacing[3],
+                            backgroundColor: `${colors.destructive.base}15`,
+                            borderRadius: 8
+                        }}>
+                            <Text size="sm" weight="bold" color="destructive">
+                                ✗ Erro ao processar pagamento. Tente novamente.
+                            </Text>
+                        </div>
+                    )
+                }
 
                 <div style={{ display: 'flex', gap: spacing[3] }}>
                     <Button
@@ -408,8 +437,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantI
                         {processing ? 'Processando...' : 'Cobrar'}
                     </Button>
                 </div>
-            </Card>
-        </div>
+            </Card >
+        </div >
     );
 };
 
