@@ -111,7 +111,8 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
             let detectedContext: OnboardingEntryContext = 'external_marketing';
 
             const hasInvite = window.location.pathname.includes('invite-code');
-            const { getTabIsolated } = await import('../../core/storage/TabIsolatedStorage');
+            // getTabIsolated is already defined above
+
             const isInternalDevice = getTabIsolated('chefiapp_device_role') !== null;
 
             if (hasInvite) {

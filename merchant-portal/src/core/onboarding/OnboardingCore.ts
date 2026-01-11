@@ -338,7 +338,7 @@ export class OnboardingCore {
         return blueprint;
     }
 
-    private static saveLocal(blueprint: SystemBlueprint) {
+    private static async saveLocal(blueprint: SystemBlueprint) {
         const { setTabIsolated } = await import('../storage/TabIsolatedStorage');
         setTabIsolated(BLUEPRINT_STORAGE_KEY, JSON.stringify(blueprint));
     }

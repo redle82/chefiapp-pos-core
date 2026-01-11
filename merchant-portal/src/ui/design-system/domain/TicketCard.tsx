@@ -26,9 +26,10 @@ interface TicketCardProps {
     onAction?: (action: 'send' | 'ready' | 'close' | 'recover') => void;
     compact?: boolean;
     isActive?: boolean; // Highlight if this is the active order being edited
+    syncStatus?: 'synced' | 'pending' | 'error' | 'syncing'; // Logic for Offline Mode
 }
 
-export const TicketCard: React.FC<TicketCardProps> = ({ order, onAction, compact, isActive = false }) => {
+export const TicketCard: React.FC<TicketCardProps> = ({ order, onAction, compact, isActive = false, syncStatus = 'synced' }) => {
 
     // Resolve Semantic Status
     const getBadgeStatus = (s: TicketStatus): 'new' | 'preparing' | 'ready' | 'delivered' => {
@@ -70,6 +71,16 @@ export const TicketCard: React.FC<TicketCardProps> = ({ order, onAction, compact
                             }}>
                                 ✏️ Editando
                             </Text>
+                        )}
+                        {/* Sync Status Indicator */}
+                        {syncStatus === 'pending' && (
+                            <span title="Aguardando sincronização" style={{ fontSize: '14px', cursor: 'help' }}>☁️⏳</span>
+                        )}
+                        {syncStatus === 'syncing' && (
+                            <span title="Sincronizando..." style={{ fontSize: '14px', cursor: 'wait' }}>🔄</span>
+                        )}
+                        {syncStatus === 'error' && (
+                            <span title="Erro na sincronização" style={{ fontSize: '14px', cursor: 'help' }}>⚠️❌</span>
                         )}
                     </div>
 

@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { OfflineDB } from '../../../core/queue/db';
 import type { OfflineQueueItem, QueueStatus } from '../../../core/queue/types';
 import { OrderEngine, type OrderItemInput } from '../../../core/tpv/OrderEngine';
-import { Logger } from '../../../core/monitoring/Logger';
+import { Logger } from '../../../core/logger/Logger';
 
 // --- Types ---
 
@@ -140,18 +140,15 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
             const pendingCreation = currentQueue.find(
                 item => item.type === 'ORDER_CREATE' &&
                     (item.status === 'queued' || item.status === 'failed') &&
-                    // Assuming payload has some ID we can match, BUT for local orders created offline,
-                    // the `id` in IndexedDB is the local ID reference.
-                    // However, `addToQueue` generates a `localId` (line 92) but it is used as the key for IndexedDB.
-                    // We need to match the order. For now, we assume `orderId` passed from OrderContextReal IS the localId for offline orders.
-                    item.id === orderId
+                    // Check if payload ID matches orderId (passed from OrderContextReal for offline orders)
+                    // The payload.id was added in OrderContextReal update
+                    item.payload && (item.payload as any).id === orderId
             );
 
             if (pendingCreation) {
                 Logger.info('Merging action into pending creation', { orderId, action });
                 const orderPayload = pendingCreation.payload as any;
 
-                // MERGE LOGIC
                 if (action === 'ADD_ITEM') {
                     orderPayload.items.push({
                         product_id: payload.productId,
@@ -160,57 +157,17 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
                         quantity: payload.quantity,
                         notes: payload.notes
                     });
-                } else if (action === 'UPDATE_QTY') {
-                    // Check if item exists in payload
-                    // Note: Payload items might not have IDs if they are just raw input.
-                    // But OrderContextReal assigns temp IDs. We need to match by index or ID if available.
-                    // For simplicity in this "Blindness" phase, we will assume strict append updates for now 
-                    // OR we need to verify how OrderContextReal constructs the payload. 
-                    // Looking at `OrderContextReal.tsx` line 329, it constructs payload from `orderInput`.
-                    // It does NOT assign IDs to payload items. This makes UPDATE_QTY hard on pending orders without IDs.
 
-                    // FIX: We will just push the update as a modification if we can find it, 
-                    // otherwise properly we should block complex updates on offline pending orders or use strict indexing.
-                    // For now, let's implement the 'Append Strategy' for everything to be safe, 
-                    // UNLESS it's ADD_ITEM which is safe to append to array.
-
-                    // Actually, let's stick to the plan: Merge if possible.
-                    // Since we can't reliably match items without IDs in the raw payload, 
-                    // `ADD_ITEM` is safe (just push).
-                    // `UPDATE_QTY` / `REMOVE_ITEM` on a PENDING order is tricky.
-                    // Strategy: Re-write the entire `items` array if we can. 
-                    // But `payload` passed here is just the delta.
-
-                    // Revised Strategy for Merge: 
-                    // Only support `ADD_ITEM` merge easily. 
-                    // For `UPDATE/REMOVE`, if it's pending, we might have to let it process 
-                    // and queue the update after (Risk: it might fail if item ID depends on server).
-
-                    // BETTER APPROACH for Pending Order Update:
-                    // The `orderId` IS the key. The `pendingCreation` HAS the full `items` array.
-                    // If we want to update qty of an item that hasn't gone to server yet, we must identify it.
-                    // Reviewing `OrderContextReal`: it assigns `uuidv4()` as ID for local items (line 349).
-                    // BUT it does NOT put that ID in the payload for `addToQueue` (line 330).
-                    // This means `pendingCreation.payload.items` has NO IDs.
-                    // CRITICAL GAP.
-
-                    // HOTFIX: We will treat all actions on PENDING orders as "Add Item" (append) 
-                    // or we must fail/warn. 
-                    // Ideally, we should add `temp_id` to payload items to allow matching.
-                }
-
-                // For this critical fix (ADD_ITEM focus), we proceed with ADD_ITEM merge.
-                // For other actions on pending orders, we fall back to Append (queueing after create).
-
-                if (action === 'ADD_ITEM') {
-                    await OfflineDB.update(orderId, { payload: orderPayload });
+                    await OfflineDB.update(pendingCreation.id, { payload: orderPayload });
                     // Update memory queue
-                    setQueue(prev => prev.map(i => i.local_id === orderId ? { ...i, payload: orderPayload } : i));
+                    setQueue(prev => prev.map(i => i.local_id === pendingCreation.id ? { ...i, payload: orderPayload } : i));
                     return;
                 }
+
+                // For other actions, fallback to Append Strategy or implement deeper merge later
             }
 
-            // APPEND LOGIC (For synced orders OR non-mergeable actions)
+            // APPEND LOGIC (For synced orders OR non-merged actions)
             const localId = uuidv4();
             const now = Date.now();
 
@@ -281,8 +238,43 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
             Logger.info(`Syncing ${pendingItems.length} pending items`);
 
-            for (const item of pendingItems) {
-                await syncSingleItem(item);
+            // Use a local copy for processing (simulates sequential processing with state updates)
+            let itemsToSync = [...pendingItems];
+
+            for (let i = 0; i < itemsToSync.length; i++) {
+                const item = itemsToSync[i];
+                const currentStatus = await OfflineDB.get(item.id);
+                if (!currentStatus) continue; // Item removed or processed elsewhere?
+
+                const result = await syncSingleItem(item);
+
+                // --- ID REBASING LOGIC ---
+                if (result.success && result.newRealId && item.type === 'ORDER_CREATE') {
+                    // Check if payload had a local ID
+                    const payload = item.payload as any;
+                    const oldLocalId = payload.id; // From OrderContextReal logic
+
+                    if (oldLocalId) {
+                        const newRealId = result.newRealId;
+                        Logger.info('✨ REBASING: Updating pending actions for new ID', { oldLocalId, newRealId });
+
+                        // Scan remaining items in existing array
+                        for (let j = i + 1; j < itemsToSync.length; j++) {
+                            const futureItem = itemsToSync[j];
+                            if (futureItem.payload && futureItem.payload.orderId === oldLocalId) {
+                                Logger.info(`   -> Rebasing item ${futureItem.type} (${futureItem.id})`);
+
+                                // Update Memory
+                                futureItem.payload.orderId = newRealId;
+
+                                // Update DB Immediately
+                                await OfflineDB.update(futureItem.id, {
+                                    payload: futureItem.payload
+                                });
+                            }
+                        }
+                    }
+                }
             }
 
             // Refresh queue after sync
@@ -307,7 +299,7 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
     };
 
-    const syncSingleItem = async (item: OfflineQueueItem) => {
+    const syncSingleItem = async (item: OfflineQueueItem): Promise<{ success: boolean; newRealId?: string }> => {
         const attempts = (item.attempts || 0) + 1;
 
         // Update status to syncing
@@ -318,6 +310,8 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
         });
 
         try {
+            let newRealId: string | undefined;
+
             if (item.type === 'ORDER_CREATE') {
                 const payload = item.payload as {
                     restaurant_id: string;
@@ -344,7 +338,7 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 }));
 
                 // Create order using OrderEngine
-                await OrderEngine.createOrder({
+                const createdOrder = await OrderEngine.createOrder({
                     restaurantId: payload.restaurant_id,
                     tableNumber: payload.table_number,
                     tableId: payload.table_id,
@@ -353,29 +347,11 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     items: orderItems
                 });
 
-                Logger.info('Order synced successfully', { localId: item.id });
+                newRealId = createdOrder.id; // CAPTURE ID
+                Logger.info('Order synced successfully', { localId: item.id, realId: newRealId });
+
             } else if (item.type === 'ORDER_ADD_ITEM') {
                 const payload = item.payload as any;
-                await OrderEngine.addItemToOrder(
-                    payload.orderId,
-                    {
-                        productId: payload.productId,
-                        name: payload.name,
-                        priceCents: payload.price,
-                        quantity: payload.quantity,
-                        notes: payload.notes
-                    },
-                    payload.orderId // HACK: In Sync, we assume we might need restaurantId. OrderEngine.addItemToOrder updates by ID.
-                    // Wait, OrderEngine.addItemToOrder requires restaurantId as 3rd arg.
-                    // The payload MUST contain restaurantId or we must fetch it.
-                    // Checking payload construction... we put `orderId` and `...payload`.
-                    // We need to ensure `restaurantId` is passed in payload.
-                );
-                // We will need to fix the payload construction to include restaurantId.
-                // For now, assuming the payload has it. 
-
-                // Correction: OrderEngine.addItemToOrder signature: (orderId, item, restaurantId)
-                // We need to pass restaurantId.
                 if (!payload.restaurantId) throw new Error("Missing restaurantId in offline payload");
 
                 await OrderEngine.addItemToOrder(
@@ -418,6 +394,7 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
             // Remove from queue on success
             await OfflineDB.remove(item.id);
             Logger.info('Order removed from queue', { localId: item.id });
+            return { success: true, newRealId };
 
         } catch (err: any) {
             Logger.error('Failed to sync order', { localId: item.id, error: err });
@@ -432,6 +409,8 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 lastError: err.message || 'Unknown error',
                 nextRetryAt: attempts >= MAX_RETRIES ? null : nextRetryAt
             });
+
+            return { success: false };
         }
     };
 

@@ -8,6 +8,8 @@ import { SyncStatusIndicator } from '../../components/SyncStatusIndicator';
 import type { Order } from './context/OrderTypes';
 import { useMenuItems } from '../../hooks/useMenuItems';
 
+import { OfflineBanner } from '../../components/OfflineBanner';
+
 /* UDS Implementation (Sealed) */
 import { TPVLayout } from '../../ui/design-system/layouts/TPVLayout';
 import { TPVHeader } from '../../ui/design-system/domain/TPVHeader';
@@ -173,13 +175,13 @@ const TPVContent = () => {
       await getActiveOrders();
     } catch (err: any) {
       console.error('Failed to perform action:', err);
-      
+
       const errorMsg = getErrorMessage(err, {
         code: err.code,
         message: err.message,
         orderId: orderId
       });
-      
+
       error(errorMsg);
     }
   };
@@ -196,7 +198,7 @@ const TPVContent = () => {
       }
 
       await performOrderAction(paymentModalOrderId, 'pay', payload);
-      
+
       // Integração Fiscal (GATE 5) - Não bloqueia pagamento se falhar
       try {
         const order = activeOrders.find(o => o.id === paymentModalOrderId);
@@ -227,13 +229,13 @@ const TPVContent = () => {
       success('Pedido pago com sucesso');
     } catch (err: any) {
       console.error('Payment failed:', err);
-      
+
       const errorMsg = getErrorMessage(err, {
         code: err.code,
         message: err.message,
         orderId: paymentModalOrderId
       });
-      
+
       error(errorMsg);
       throw err; // Re-throw para modal tratar
     }
@@ -356,7 +358,7 @@ const TPVContent = () => {
       if (existingOrder) {
         // Abrir pedido existente automaticamente
         setActiveOrderId(existingOrder.id);
-          setTabIsolated('chefiapp_active_order_id', existingOrder.id);
+        setTabIsolated('chefiapp_active_order_id', existingOrder.id);
         success(`Pedido da mesa ${table.number} aberto`);
       }
     }
@@ -366,175 +368,178 @@ const TPVContent = () => {
 
   return (
     <AppShell operationalMode={true}>
-      <TPVLayout
-        header={
-          <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 16 }}>
-            <div style={{ flex: 1 }}>
-              <TPVHeader
-                operatorName="GOLDMONKEY"
-                terminalId="CAIXA 01"
-                isOnline={isOnline}
-              />
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <OfflineBanner />
+        <TPVLayout
+          header={
+            <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 16 }}>
+              <div style={{ flex: 1 }}>
+                <TPVHeader
+                  operatorName="GOLDMONKEY"
+                  terminalId="CAIXA 01"
+                  isOnline={isOnline}
+                />
+              </div>
+              <SyncStatusIndicator />
             </div>
-            <SyncStatusIndicator />
-          </div>
-        }
-        command={
-          <CommandPanel
-            onCreateOrder={handleCreateOrder}
-            onOpenTables={() => {
-              console.log('[TPV] onOpenTables clicked');
-              setContextView(prev => {
-                const newView = prev === 'menu' ? 'tables' : 'menu';
-                console.log('[TPV] contextView changed:', newView);
-                return newView;
-              });
-            }}
-            dailyTotal={dailyTotal}
-            cashRegisterOpen={cashRegisterOpen}
-            onOpenCashRegister={() => {
-              console.log('[TPV] onOpenCashRegister clicked');
-              setShowOpenCashModal(true);
-            }}
-            onCloseCashRegister={() => {
-              console.log('[TPV] onCloseCashRegister clicked');
+          }
+          command={
+            <CommandPanel
+              onCreateOrder={handleCreateOrder}
+              onOpenTables={() => {
+                console.log('[TPV] onOpenTables clicked');
+                setContextView(prev => {
+                  const newView = prev === 'menu' ? 'tables' : 'menu';
+                  console.log('[TPV] contextView changed:', newView);
+                  return newView;
+                });
+              }}
+              dailyTotal={dailyTotal}
+              cashRegisterOpen={cashRegisterOpen}
+              onOpenCashRegister={() => {
+                console.log('[TPV] onOpenCashRegister clicked');
+                setShowOpenCashModal(true);
+              }}
+              onCloseCashRegister={() => {
+                console.log('[TPV] onCloseCashRegister clicked');
 
-              // UX HARD BLOCK: Prevent closing with active orders
-              if (activeOrders.length > 0) {
-                error(`Impossível fechar caixa: Existem ${activeOrders.length} pedidos em aberto. Finalize ou cancele-os antes.`);
-                return;
-              }
+                // UX HARD BLOCK: Prevent closing with active orders
+                if (activeOrders.length > 0) {
+                  error(`Impossível fechar caixa: Existem ${activeOrders.length} pedidos em aberto. Finalize ou cancele-os antes.`);
+                  return;
+                }
 
-              setShowCloseCashModal(true);
-            }}
-          />
-        }
-        stream={
-          <>
-            <IncomingRequests
-              restaurantId={restaurantId}
-              onOrderAccepted={() => getActiveOrders()}
+                setShowCloseCashModal(true);
+              }}
             />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-              <StreamTunnel
-                orders={activeOrders}
-                onAction={handleAction}
-                activeOrderId={activeOrderId}
-              />
-            </div>
-          </>
-        }
-        context={
-          activeOrderId && activeOrders.find(o => o.id === activeOrderId) ? (
-            // Mostrar editor de itens quando há pedido ativo
-            <OrderItemEditor
-              order={activeOrders.find(o => o.id === activeOrderId) || null}
-              onUpdateQuantity={async (itemId, quantity) => {
-                if (!activeOrderId) return;
-                try {
-                  await updateItemQuantity(activeOrderId, itemId, quantity);
-                  success('Quantidade atualizada');
-                } catch (err: any) {
-                  error(err.message || 'Erro ao atualizar quantidade');
-                }
-              }}
-              onRemoveItem={async (itemId) => {
-                if (!activeOrderId) return;
-                try {
-                  await removeItemFromOrder(activeOrderId, itemId);
-                  success('Item removido');
-                } catch (err: any) {
-                  error(err.message || 'Erro ao remover item');
-                }
-              }}
-              onBackToMenu={() => {
-                setActiveOrderId(null);
-                removeTabIsolated('chefiapp_active_order_id');
-                setContextView('menu');
-              }}
-              loading={ordersLoading}
-            />
-          ) : contextView === 'menu' ? (
+          }
+          stream={
             <>
-              <QuickMenuPanel
-                items={menuItems.map(item => ({
-                  id: item.id,
-                  name: item.name,
-                  price: item.priceCents / 100, // Convert cents to euros
-                  category: item.category,
-                }))}
-                onAddItem={(item) => {
-                  // Se há grupos ativos, mostrar seletor
-                  if (activeOrderId && groups.length > 0) {
-                    setPendingItem(item);
-                    setShowGroupSelector(true);
-                  } else {
-                    // Sem grupos ou pedido novo, adicionar direto
-                    handleAddItem(item, null);
+              <IncomingRequests
+                restaurantId={restaurantId}
+                onOrderAccepted={() => getActiveOrders()}
+              />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+                <StreamTunnel
+                  orders={activeOrders}
+                  onAction={handleAction}
+                  activeOrderId={activeOrderId}
+                />
+              </div>
+            </>
+          }
+          context={
+            activeOrderId && activeOrders.find(o => o.id === activeOrderId) ? (
+              // Mostrar editor de itens quando há pedido ativo
+              <OrderItemEditor
+                order={activeOrders.find(o => o.id === activeOrderId) || null}
+                onUpdateQuantity={async (itemId, quantity) => {
+                  if (!activeOrderId) return;
+                  try {
+                    await updateItemQuantity(activeOrderId, itemId, quantity);
+                    success('Quantidade atualizada');
+                  } catch (err: any) {
+                    error(err.message || 'Erro ao atualizar quantidade');
                   }
                 }}
-                loading={menuLoading}
+                onRemoveItem={async (itemId) => {
+                  if (!activeOrderId) return;
+                  try {
+                    await removeItemFromOrder(activeOrderId, itemId);
+                    success('Item removido');
+                  } catch (err: any) {
+                    error(err.message || 'Erro ao remover item');
+                  }
+                }}
+                onBackToMenu={() => {
+                  setActiveOrderId(null);
+                  removeTabIsolated('chefiapp_active_order_id');
+                  setContextView('menu');
+                }}
+                loading={ordersLoading}
               />
-              
-              {/* Group Selector Modal */}
-              {showGroupSelector && pendingItem && activeOrderId && (
-                <div style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 1000,
-                }}>
-                  <Card surface="layer1" padding="xl" style={{ maxWidth: 500, width: '90%' }}>
-                    <Text size="lg" weight="bold" color="primary" style={{ marginBottom: spacing[4] }}>
-                      Adicionar {pendingItem.name} a qual grupo?
-                    </Text>
-                    
-                    <GroupSelector
-                      groups={groups}
-                      selectedGroupId={selectedGroupId}
-                      onSelect={(groupId) => {
-                        setSelectedGroupId(groupId);
-                        handleAddItem(pendingItem, groupId);
-                        setShowGroupSelector(false);
-                        setPendingItem(null);
-                      }}
-                      onCreateNew={() => {
-                        setShowGroupSelector(false);
-                        setShowCreateGroupModal(true);
-                      }}
-                    />
-                    
-                    <div style={{ marginTop: spacing[4], display: 'flex', gap: spacing[2] }}>
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        onClick={() => {
+            ) : contextView === 'menu' ? (
+              <>
+                <QuickMenuPanel
+                  items={menuItems.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    price: item.priceCents / 100, // Convert cents to euros
+                    category: item.category,
+                  }))}
+                  onAddItem={(item) => {
+                    // Se há grupos ativos, mostrar seletor
+                    if (activeOrderId && groups.length > 0) {
+                      setPendingItem(item);
+                      setShowGroupSelector(true);
+                    } else {
+                      // Sem grupos ou pedido novo, adicionar direto
+                      handleAddItem(item, null);
+                    }
+                  }}
+                  loading={menuLoading}
+                />
+
+                {/* Group Selector Modal */}
+                {showGroupSelector && pendingItem && activeOrderId && (
+                  <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                  }}>
+                    <Card surface="layer1" padding="xl" style={{ maxWidth: 500, width: '90%' }}>
+                      <Text size="lg" weight="bold" color="primary" style={{ marginBottom: spacing[4] }}>
+                        Adicionar {pendingItem.name} a qual grupo?
+                      </Text>
+
+                      <GroupSelector
+                        groups={groups}
+                        selectedGroupId={selectedGroupId}
+                        onSelect={(groupId) => {
+                          setSelectedGroupId(groupId);
+                          handleAddItem(pendingItem, groupId);
                           setShowGroupSelector(false);
                           setPendingItem(null);
                         }}
-                        style={{ flex: 1 }}
-                      >
-                        Cancelar
-                      </Button>
-                    </div>
-                  </Card>
-                </div>
-              )}
-            </>
-          ) : (
-            <TableMapPanel
-              tables={tables}
-              onSelectTable={handleSelectTable}
-            />
-          )
-        }
-      />
+                        onCreateNew={() => {
+                          setShowGroupSelector(false);
+                          setShowCreateGroupModal(true);
+                        }}
+                      />
+
+                      <div style={{ marginTop: spacing[4], display: 'flex', gap: spacing[2] }}>
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          onClick={() => {
+                            setShowGroupSelector(false);
+                            setPendingItem(null);
+                          }}
+                          style={{ flex: 1 }}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </Card>
+                  </div>
+                )}
+              </>
+            ) : (
+              <TableMapPanel
+                tables={tables}
+                onSelectTable={handleSelectTable}
+              />
+            )
+          }
+        />
+      </div>
 
       {/* Payment Modal */}
       {

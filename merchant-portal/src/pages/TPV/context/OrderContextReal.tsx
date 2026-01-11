@@ -332,7 +332,8 @@ export function OrderProvider({ children }: { children: ReactNode }) {
                     price: item.price,
                     quantity: item.quantity,
                     notes: item.notes
-                }))
+                })),
+                id: localId // Critical for ID Mapping in Sync
             };
 
             // 3. Add to Offline Queue (IndexedDB)
@@ -361,7 +362,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
             setOrders(prev => [...prev, localOrder]);
 
             // Persist active order (Tab-Isolated)
-            const { setTabIsolated } = await import('../../core/storage/TabIsolatedStorage');
+            const { setTabIsolated } = await import('../../../core/storage/TabIsolatedStorage');
             setTabIsolated('chefiapp_active_order_id', localOrder.id);
 
             Logger.info('Local order created (offline)', { localId, tableNumber: orderInput.tableNumber });

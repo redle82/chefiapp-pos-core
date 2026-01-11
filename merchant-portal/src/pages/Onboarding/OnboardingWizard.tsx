@@ -1036,7 +1036,7 @@ function ScreenFoundation() {
     const [isConsolidating, setIsConsolidating] = useState(false);
 
     useEffect(() => {
-        const handleResize = () => {
+        const handleResize = async () => {
             const w = window.innerWidth;
             let currentDevice: 'mobile' | 'tablet' | 'desktop' = 'desktop';
             if (w < 768) currentDevice = 'mobile';

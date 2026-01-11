@@ -1,6 +1,7 @@
 import { Text } from '../primitives/Text';
 import { TicketCard } from './TicketCard';
 import { colors } from '../tokens/colors';
+import { useOfflineOrder } from '../../../pages/TPV/context/OfflineOrderContext';
 
 interface StreamTunnelProps {
     orders: any[]; // Replace 'any' with Order type in real implementation
@@ -9,6 +10,7 @@ interface StreamTunnelProps {
 }
 
 export const StreamTunnel: React.FC<StreamTunnelProps> = ({ orders, onAction, activeOrderId }) => {
+    const { queue } = useOfflineOrder();
     return (
         <>
             {/* Stream Header */}
@@ -65,10 +67,24 @@ export const StreamTunnel: React.FC<StreamTunnelProps> = ({ orders, onAction, ac
                                 price: item.price, // Include price in cents
                             })),
                             total: order.total / 100, // Convert cents to euros for display
-                            createdAt: order.createdAt instanceof Date 
-                                ? order.createdAt.toISOString() 
+                            createdAt: order.createdAt instanceof Date
+                                ? order.createdAt.toISOString()
                                 : order.createdAt.toString(),
                         };
+
+                        // Determine Sync Status
+                        const queuedItems = queue.filter(q =>
+                            q.local_id === order.id ||
+                            (q.payload && q.payload.orderId === order.id)
+                        );
+
+                        let syncStatus: 'synced' | 'pending' | 'syncing' | 'error' = 'synced';
+                        if (queuedItems.length > 0) {
+                            if (queuedItems.some(q => q.status === 'error')) syncStatus = 'error';
+                            else if (queuedItems.some(q => q.status === 'syncing')) syncStatus = 'syncing';
+                            else syncStatus = 'pending';
+                        }
+
                         return (
                             <TicketCard
                                 key={order.id}
@@ -77,6 +93,7 @@ export const StreamTunnel: React.FC<StreamTunnelProps> = ({ orders, onAction, ac
                                 // @ts-ignore
                                 compact={false}
                                 isActive={activeOrderId === order.id}
+                                syncStatus={syncStatus}
                             />
                         );
                     })

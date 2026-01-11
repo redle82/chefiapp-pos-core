@@ -24,7 +24,7 @@ export const RequireActivation = ({ children }: { children: JSX.Element }) => {
     const [isVerified, setIsVerified] = useState(false);
 
     useEffect(() => {
-        const checkActivation = () => {
+        const checkActivation = async () => {
             // 1. Dev Bypass
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('skip_activation')) {
