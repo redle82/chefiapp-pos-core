@@ -121,7 +121,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
 
     // Network status hook
     // const { isOnline, isOffline } = useNetworkStatus(); // Replacing with OfflineContext
-    const { isOffline, addToQueue, queue: offlineQueue } = useOfflineOrder();
+    const { isOffline, addToQueue, updateOfflineOrder, queue: offlineQueue } = useOfflineOrder();
     const isOnline = !isOffline;
 
     // SAFETY: Chaves de idempotência persistentes por sessão
@@ -130,7 +130,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     // === KDS HARDENING: Refetch Strategy (Debounce + Polling) ===
     const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
-    
+
     // === REALTIME RECONNECT: Exponential Backoff ===
     const reconnectManagerRef = useRef(new ReconnectManager());
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -262,7 +262,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
             if (reconnectManagerRef.current.shouldRetry()) {
                 const delay = reconnectManagerRef.current.getDelay();
                 const attempts = reconnectManagerRef.current.getAttempts() + 1;
-                
+
                 Logger.warn(`[Realtime] Connection lost. Reconnecting in ${reconnectManagerRef.current.getDelayFormatted()} (attempt ${attempts})`, {
                     context: 'OrderContext',
                     tenantId: restaurantId,
@@ -271,7 +271,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
 
                 reconnectTimeoutRef.current = setTimeout(() => {
                     reconnectManagerRef.current.increment();
-                    
+
                     // Unsubscribe old channel
                     if (channelRef.current) {
                         supabase.removeChannel(channelRef.current);
@@ -363,7 +363,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
             // Persist active order (Tab-Isolated)
             const { setTabIsolated } = await import('../../core/storage/TabIsolatedStorage');
             setTabIsolated('chefiapp_active_order_id', localOrder.id);
-            
+
             Logger.info('Local order created (offline)', { localId, tableNumber: orderInput.tableNumber });
             return localOrder;
         }
@@ -424,6 +424,35 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     // Adicionar item
     const addItemToOrder = async (orderId: string, item: OrderItemInput): Promise<void> => {
         if (!restaurantId) throw new Error('Restaurant ID not set');
+
+        if (isOffline) {
+            Logger.info('Offline Mode: Adding item locally', { orderId, item });
+            await updateOfflineOrder(orderId, 'ADD_ITEM', {
+                ...item,
+                restaurantId // Vital for sync
+            });
+
+            // Optimistic UI Update (Local Memory)
+            // We need to update `orders` state manually since there's no DB fetch.
+            setOrders(prev => prev.map(order => {
+                if (order.id === orderId) {
+                    const newItem: OrderItem = {
+                        id: uuidv4(), // Temp local ID
+                        productId: item.productId,
+                        name: item.name,
+                        price: item.priceCents,
+                        quantity: item.quantity,
+                        notes: item.notes
+                    };
+                    const updatedItems = [...order.items, newItem];
+                    const newTotal = updatedItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+                    return { ...order, items: updatedItems, total: newTotal, updatedAt: new Date() };
+                }
+                return order;
+            }));
+            return;
+        }
+
         await OrderEngine.addItemToOrder(orderId, item, restaurantId);
         await getActiveOrders(); // Refresh
     };
@@ -431,6 +460,26 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     // Remover item
     const removeItemFromOrder = async (orderId: string, itemId: string): Promise<void> => {
         if (!restaurantId) throw new Error('Restaurant ID not set');
+
+        if (isOffline) {
+            Logger.info('Offline Mode: Removing item locally', { orderId, itemId });
+            await updateOfflineOrder(orderId, 'REMOVE_ITEM', {
+                itemId,
+                restaurantId
+            });
+
+            // Optimistic UI Update
+            setOrders(prev => prev.map(order => {
+                if (order.id === orderId) {
+                    const updatedItems = order.items.filter(i => i.id !== itemId);
+                    const newTotal = updatedItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+                    return { ...order, items: updatedItems, total: newTotal, updatedAt: new Date() };
+                }
+                return order;
+            }));
+            return;
+        }
+
         await OrderEngine.removeItemFromOrder(orderId, itemId, restaurantId);
         await getActiveOrders(); // Refresh
     };
@@ -438,6 +487,30 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     // Atualizar quantidade
     const updateItemQuantity = async (orderId: string, itemId: string, quantity: number): Promise<void> => {
         if (!restaurantId) throw new Error('Restaurant ID not set');
+
+        if (isOffline) {
+            Logger.info('Offline Mode: Updating item quantity locally', { orderId, itemId, quantity });
+            await updateOfflineOrder(orderId, 'UPDATE_QTY', {
+                itemId,
+                quantity,
+                restaurantId
+            });
+
+            // Optimistic UI Update
+            setOrders(prev => prev.map(order => {
+                if (order.id === orderId) {
+                    const updatedItems = order.items.map(i => {
+                        if (i.id === itemId) return { ...i, quantity };
+                        return i;
+                    });
+                    const newTotal = updatedItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+                    return { ...order, items: updatedItems, total: newTotal, updatedAt: new Date() };
+                }
+                return order;
+            }));
+            return;
+        }
+
         await OrderEngine.updateItemQuantity(orderId, itemId, quantity, restaurantId);
         await getActiveOrders(); // Refresh
     };
