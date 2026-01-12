@@ -21,6 +21,8 @@ import { VoiceCommandsSettings } from './components/VoiceCommandsSettings'; // P
 import { SecuritySettings } from './components/SecuritySettings'; // P5-9
 import { LanguageSettings } from './components/LanguageSettings'; // P4-5
 import { SocialMediaSettings } from './components/SocialMediaSettings'; // P6-7
+import { FiscalSettings } from './components/FiscalSettings';
+import { FiscalHistory } from './components/FiscalHistory'; // Fiscal
 
 // Helper for Section
 const Section = ({ title, children }: { title: string, children: React.ReactNode }) => (
@@ -209,6 +211,16 @@ const Settings: React.FC = () => {
           {/* P6-7: Social Media Settings */}
           <Section title="Redes Sociais">
             <SocialMediaSettings />
+          </Section>
+
+          {/* FISCAL SETTINGS */}
+          <Section title="Fiscal & Legal">
+            <FiscalSettings />
+          </Section>
+
+          {/* FISCAL HISTORY */}
+          <Section title="Histórico e Backup de Faturas">
+            <FiscalHistory restaurantId={restaurant.id} />
           </Section>
         </div>
       }

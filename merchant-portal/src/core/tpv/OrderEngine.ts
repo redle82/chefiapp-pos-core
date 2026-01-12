@@ -271,7 +271,7 @@ export class OrderEngine {
                 newStatus: status
             });
             throw new OrderEngineError(
-                `Erro ao atualizar status do pedido: ${error.message}`,
+                `Erro ao atualizar status do pedido: ${error instanceof Error ? error.message : String(error)}`,
                 'ORDER_STATUS_UPDATE_FAILED'
             );
         }
@@ -281,20 +281,6 @@ export class OrderEngine {
             throw new OrderEngineError(
                 'Pedido foi modificado por outro operador. Recarregue e tente novamente.',
                 'CONCURRENT_MODIFICATION'
-            );
-        }
-
-        if (error) {
-            // Log erro
-            Logger.error('ORDER_STATUS_UPDATE_FAILED', error, {
-                orderId,
-                restaurantId,
-                previousStatus,
-                newStatus: status
-            });
-            throw new OrderEngineError(
-                `Erro ao atualizar status do pedido: ${error.message}`,
-                'ORDER_STATUS_UPDATE_FAILED'
             );
         }
 

@@ -15,7 +15,8 @@ import { getFiscalService } from '../../../core/fiscal/FiscalService';
 import { FiscalPrinter } from '../../../core/fiscal/FiscalPrinter';
 import { useToast } from '../../../ui/design-system';
 import { supabase } from '../../../core/supabase';
-import type { TaxDocument } from '../../../../fiscal-modules/types';
+import { FiscalReceiptPreview } from './FiscalReceiptPreview';
+import type { TaxDocument } from '../../../../../fiscal-modules/types';
 
 interface FiscalPrintButtonProps {
     orderId: string;
@@ -33,6 +34,9 @@ export const FiscalPrintButton: React.FC<FiscalPrintButtonProps> = ({
     onPrintComplete,
 }) => {
     const [printing, setPrinting] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
+    const [taxDocument, setTaxDocument] = useState<TaxDocument | null>(null);
+    const [orderData, setOrderData] = useState<any>(null);
     const { success, error: showError } = useToast();
 
     const handlePrint = async () => {
@@ -70,10 +74,10 @@ export const FiscalPrintButton: React.FC<FiscalPrintButtonProps> = ({
                 throw new Error('Falha ao buscar dados do pedido');
             }
 
-            // 4. Buscar nome do restaurante
+            // 4. Buscar dados do restaurante
             const { data: restaurant } = await supabase
                 .from('gm_restaurants')
-                .select('name')
+                .select('name, address, tax_registration_number')
                 .eq('id', restaurantId)
                 .single();
 
@@ -97,16 +101,19 @@ export const FiscalPrintButton: React.FC<FiscalPrintButtonProps> = ({
                 raw_payload: payload,
             };
 
-            // 6. Imprimir recibo
-            const printer = new FiscalPrinter({ printerType: 'browser' });
-            await printer.printReceipt(taxDocument, {
+            // 6. Preparar dados para preview/impressão
+            const finalOrderData = {
                 ...orderData,
                 payment_method: paymentMethod,
                 restaurant_name: restaurant?.name || 'Restaurante',
-            });
+                restaurant_address: restaurant?.address || null,
+                restaurant_nif: restaurant?.tax_registration_number || null,
+            };
 
-            success('Recibo fiscal impresso');
-            onPrintComplete?.();
+            // 7. Mostrar preview antes de imprimir
+            setTaxDocument(taxDocument);
+            setOrderData(finalOrderData);
+            setShowPreview(true);
         } catch (err: any) {
             console.error('[FiscalPrintButton] Print failed:', err);
             showError(err.message || 'Erro ao imprimir recibo fiscal');
@@ -115,15 +122,49 @@ export const FiscalPrintButton: React.FC<FiscalPrintButtonProps> = ({
         }
     };
 
+    const handlePrintFromPreview = async () => {
+        if (!taxDocument || !orderData) return;
+
+        try {
+            const printer = new FiscalPrinter({ printerType: 'browser' });
+            await printer.printReceipt(taxDocument, orderData);
+            success('Recibo fiscal impresso');
+            setShowPreview(false);
+            onPrintComplete?.();
+        } catch (err: any) {
+            console.error('[FiscalPrintButton] Print from preview failed:', err);
+            showError(err.message || 'Erro ao imprimir recibo fiscal');
+        }
+    };
+
+    const pdfUrl = taxDocument?.raw_payload?.pdf_url || taxDocument?.raw_payload?.invoice?.pdf?.url;
+    const printer = taxDocument && orderData ? new FiscalPrinter() : null;
+    const qrCodeUrl = printer && taxDocument && orderData 
+        ? printer.generateQRCodeUrl(taxDocument, orderData) 
+        : null;
+
     return (
-        <Button
-            tone="action"
-            size="md"
-            onClick={handlePrint}
-            disabled={printing}
-            style={{ width: '100%' }}
-        >
-            {printing ? 'Imprimindo...' : '🖨️ Imprimir Recibo Fiscal'}
-        </Button>
+        <>
+            <Button
+                tone="action"
+                size="lg"
+                onClick={handlePrint}
+                disabled={printing}
+                style={{ width: '100%' }}
+            >
+                {printing ? 'Preparando...' : '🖨️ Imprimir Recibo Fiscal'}
+            </Button>
+
+            {showPreview && taxDocument && orderData && (
+                <FiscalReceiptPreview
+                    taxDoc={taxDocument}
+                    orderData={orderData}
+                    onPrint={handlePrintFromPreview}
+                    onClose={() => setShowPreview(false)}
+                    pdfUrl={pdfUrl || undefined}
+                    qrCodeUrl={qrCodeUrl || undefined}
+                />
+            )}
+        </>
     );
 };

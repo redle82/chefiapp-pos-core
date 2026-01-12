@@ -101,9 +101,9 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
             payload: orderPayload,
             createdAt: now,
             attempts: 0,
-            nextRetryAt: null,
-            lastError: null,
-            lastAttemptAt: null
+            nextRetryAt: undefined,
+            lastError: undefined,
+            lastAttemptAt: undefined
         };
 
         try {
@@ -186,9 +186,9 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 payload: { orderId, ...payload },
                 createdAt: now,
                 attempts: 0,
-                nextRetryAt: null,
-                lastError: null,
-                lastAttemptAt: null
+                nextRetryAt: undefined,
+                lastError: undefined,
+                lastAttemptAt: undefined
             };
 
             await OfflineDB.put(queueItem);
@@ -243,8 +243,7 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
             for (let i = 0; i < itemsToSync.length; i++) {
                 const item = itemsToSync[i];
-                const currentStatus = await OfflineDB.get(item.id);
-                if (!currentStatus) continue; // Item removed or processed elsewhere?
+                // Item is already in the list, no need to check again
 
                 const result = await syncSingleItem(item);
 
@@ -261,11 +260,11 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
                         // Scan remaining items in existing array
                         for (let j = i + 1; j < itemsToSync.length; j++) {
                             const futureItem = itemsToSync[j];
-                            if (futureItem.payload && futureItem.payload.orderId === oldLocalId) {
+                            if (futureItem.payload && (futureItem.payload as any).orderId === oldLocalId) {
                                 Logger.info(`   -> Rebasing item ${futureItem.type} (${futureItem.id})`);
 
                                 // Update Memory
-                                futureItem.payload.orderId = newRealId;
+                                (futureItem.payload as any).orderId = newRealId;
 
                                 // Update DB Immediately
                                 await OfflineDB.update(futureItem.id, {
@@ -407,7 +406,7 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 status: attempts >= MAX_RETRIES ? 'failed' as QueueStatus : 'queued' as QueueStatus,
                 attempts,
                 lastError: err.message || 'Unknown error',
-                nextRetryAt: attempts >= MAX_RETRIES ? null : nextRetryAt
+                nextRetryAt: attempts >= MAX_RETRIES ? undefined : nextRetryAt
             });
 
             return { success: false };

@@ -41,14 +41,43 @@ export class FiscalService {
     }
 
     /**
-     * Seleciona adapter fiscal baseado no país
+     * Seleciona adapter fiscal baseado no país e configuração do restaurante
      */
-    private selectAdapter(country?: string): FiscalObserver {
+    private async selectAdapter(country?: string, restaurantId?: string): Promise<FiscalObserver> {
+        // Se há configuração InvoiceXpress, usar InvoiceXpressAdapter
+        if (restaurantId) {
+            try {
+                const { data, error } = await supabase
+                    .from('gm_restaurants')
+                    .select('fiscal_provider, fiscal_config')
+                    .eq('id', restaurantId)
+                    .single();
+
+                if (!error && data) {
+                    const fiscalConfig = (data.fiscal_config as any) || {};
+                    const provider = data.fiscal_provider || 'mock';
+
+                    // Se InvoiceXpress está configurado, usar InvoiceXpressAdapter
+                    if (provider === 'invoice_xpress' && fiscalConfig.invoicexpress?.accountName) {
+                        const { InvoiceXpressAdapter } = await import('../../../../fiscal-modules/adapters/InvoiceXpressAdapter');
+                        return new InvoiceXpressAdapter({
+                            accountName: fiscalConfig.invoicexpress.accountName,
+                            // API key não é necessária aqui - backend busca do banco
+                        });
+                    }
+                }
+            } catch (err) {
+                Logger.warn('[FiscalService] Failed to load fiscal config, using default adapter', { error: err });
+            }
+        }
+
+        // Fallback: Adapters regionais baseados no país
         if (country === 'ES') {
             return new TicketBAIAdapter();
         } else if (country === 'PT') {
             return new SAFTAdapter();
         }
+        
         // Default: Mock adapter
         return new ConsoleFiscalAdapter();
     }
@@ -83,11 +112,34 @@ export class FiscalService {
             // 2. Detectar país do restaurante
             const country = await this.getRestaurantCountry(params.restaurantId);
             
-            // 3. Selecionar adapter baseado no país
-            const adapter = this.selectAdapter(country);
+            // 3. Selecionar adapter baseado no país e configuração
+            const adapter = await this.selectAdapter(country, params.restaurantId);
 
             // 4. Criar documento fiscal
             const taxDoc = this.createTaxDocument(order, params, country);
+
+            // 4.1. Validar conformidade legal
+            const { LegalComplianceValidator } = await import('../../../../fiscal-modules/validators/LegalComplianceValidator');
+            const validation = LegalComplianceValidator.validate(taxDoc, country as 'PT' | 'ES');
+            
+            if (!validation.isValid) {
+                Logger.error('[FiscalService] Legal compliance validation failed', {
+                    orderId: params.orderId,
+                    errors: validation.errors,
+                    warnings: validation.warnings,
+                });
+                
+                // Em produção, podemos decidir se rejeitamos ou apenas avisamos
+                // Por enquanto, apenas logamos os erros
+                if (validation.errors.length > 0) {
+                    throw new Error(`Documento fiscal não está em conformidade: ${validation.errors.map(e => e.message).join(', ')}`);
+                }
+            } else if (validation.warnings.length > 0) {
+                Logger.warn('[FiscalService] Legal compliance warnings', {
+                    orderId: params.orderId,
+                    warnings: validation.warnings,
+                });
+            }
 
             // 5. Processar via adapter regional
             const result = await adapter.onSealed(

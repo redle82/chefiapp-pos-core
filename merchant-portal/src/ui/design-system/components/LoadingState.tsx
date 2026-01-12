@@ -11,6 +11,14 @@ import { Skeleton } from '../primitives/Skeleton';
 import { Text } from '../primitives/Text';
 import { spacing } from '../tokens/spacing';
 
+// Map semantic names to numeric spacing values
+const spacingMap = {
+    xs: spacing[1],  // 0.25rem (4px)
+    sm: spacing[2],  // 0.5rem (8px)
+    md: spacing[4],  // 1rem (16px)
+    lg: spacing[6],  // 1.5rem (24px)
+};
+
 export type LoadingStateVariant = 'skeleton' | 'spinner' | 'minimal';
 
 export interface LoadingStateProps {
@@ -51,14 +59,14 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
 }) => {
     if (variant === 'skeleton') {
         return (
-            <div style={{ padding: spacing.md, ...style }} className={className}>
+            <div style={{ padding: spacingMap.md, ...style }} className={className}>
                 {message && (
-                    <Text size="sm" color="secondary" style={{ marginBottom: spacing.sm }}>
+                    <Text size="sm" color="secondary" style={{ marginBottom: spacingMap.sm }}>
                         {message}
                     </Text>
                 )}
                 {Array.from({ length: skeletonLines }).map((_, i) => (
-                    <Skeleton key={i} style={{ marginBottom: spacing.xs, height: 20 }} />
+                    <Skeleton key={i} style={{ marginBottom: spacingMap.xs, height: 20 }} />
                 ))}
             </div>
         );
@@ -78,7 +86,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: spacing.lg,
+                    padding: spacingMap.lg,
                     ...style,
                 }}
                 className={className}
@@ -94,7 +102,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
                     }}
                 />
                 {message && (
-                    <Text size="sm" color="secondary" style={{ marginTop: spacing.sm }}>
+                    <Text size="sm" color="secondary" style={{ marginTop: spacingMap.sm }}>
                         {message}
                     </Text>
                 )}
@@ -110,7 +118,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
 
     // Minimal variant (apenas texto)
     return (
-        <div style={{ padding: spacing.md, ...style }} className={className}>
+        <div style={{ padding: spacingMap.md, ...style }} className={className}>
             <Text size="sm" color="secondary">
                 {message || 'Carregando...'}
             </Text>

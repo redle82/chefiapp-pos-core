@@ -34,11 +34,14 @@ interface PaymentModalProps {
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantId, orderTotal, onPay, onCancel }) => {
     const { isOffline } = useOfflineOrder();
+    const { groups } = useConsumptionGroups(orderId);
     const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('cash');
     const [processing, setProcessing] = useState(false);
     const [result, setResult] = useState<'success' | 'error' | null>(null);
     const [lastClickTime, setLastClickTime] = useState<number>(0);
     const [amountGiven, setAmountGiven] = useState<string>('');
+    const [paymentMode, setPaymentMode] = useState<'full' | 'by-group'>('full');
+    const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
 
     // Stripe Payment Intent state
     const [stripeIntent, setStripeIntent] = useState<PaymentIntentResult | null>(null);
@@ -113,7 +116,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantI
             setTimeout(() => {
                 setResult(null);
             }, 3000);
-            throw err; // Re-throw para UI tratar
+            // Não relançar erro - já foi tratado visualmente via setResult('error')
         } finally {
             setProcessing(false);
         }

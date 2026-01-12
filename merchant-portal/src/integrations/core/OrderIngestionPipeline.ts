@@ -46,12 +46,13 @@ export class OrderIngestionPipeline {
             }
 
             // 2. Map Items to simple JSONB structure
+            // Note: OrderCreatedEvent.items has: id, name, quantity, priceCents
             const items = event.payload.items.map(item => ({
-                product_id: item.productId || null, // Might be null if external
+                product_id: item.id || null, // Use id as product_id (might be null if external)
                 name: item.name,
                 quantity: item.quantity,
-                price_cents: Math.round(item.unitPrice * 100),
-                notes: item.notes || `SKU: ${item.sku}`
+                price_cents: item.priceCents, // Already in cents
+                notes: `External item: ${item.id}` // Fallback note
             }));
 
             // 3. Calculate Totals (Trust the source, but verify later)
@@ -65,12 +66,12 @@ export class OrderIngestionPipeline {
                     // table_id: null, // TODO: Extract from metadata if present
                     items: items,
                     total_cents: totalCents,
-                    payment_method: event.payload.paymentMethod || 'UNKNOWN',
+                    payment_method: 'UNKNOWN', // Payment method not available in OrderCreatedEvent
                     status: 'PENDING',
                     request_source: event.payload.source,
                     customer_contact: {
-                        name: event.payload.customerName,
-                        phone: event.payload.customerPhone,
+                        name: event.payload.customerName || 'Cliente Externo',
+                        phone: null, // customerPhone not available in OrderCreatedEvent
                         external_id: event.payload.orderId
                     }
                 })

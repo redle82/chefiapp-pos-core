@@ -13,6 +13,43 @@ export interface LogContext {
     [key: string]: any;
 }
 
+/**
+ * Helper function to get environment variables
+ * Supports both Vite (import.meta.env) and Node.js/Jest (process.env)
+ */
+function getEnv(): { DEV: boolean; MODE: string } {
+    // Try import.meta first (Vite/browser environment)
+    try {
+        // Use eval to safely check for import.meta in environments where it's not available
+        const hasImportMeta = typeof (globalThis as any).import !== 'undefined' 
+            || (typeof window !== 'undefined' && (window as any).import);
+        
+        if (!hasImportMeta) {
+            // Check if we can access import.meta directly (Vite environment)
+            const meta = (globalThis as any).import?.meta || (typeof window !== 'undefined' ? (window as any).import?.meta : undefined);
+            if (meta?.env) {
+                return {
+                    DEV: meta.env.DEV || meta.env.MODE === 'development',
+                    MODE: meta.env.MODE || 'development',
+                };
+            }
+        }
+    } catch (e) {
+        // import.meta not available, fall through to process.env
+    }
+    
+    // Fallback to process.env (Node.js/Jest environment)
+    if (typeof process !== 'undefined' && process.env) {
+        return {
+            DEV: process.env.NODE_ENV !== 'production',
+            MODE: process.env.NODE_ENV || 'development',
+        };
+    }
+    
+    // Default fallback (tests)
+    return { DEV: false, MODE: 'test' };
+}
+
 class LoggerService {
     private static instance: LoggerService;
     private context: LogContext = {};
@@ -21,7 +58,8 @@ class LoggerService {
     private requestCounter: number = 0;
 
     private constructor() {
-        this.isDev = import.meta.env.DEV;
+        const env = getEnv();
+        this.isDev = env.DEV;
         this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     }
 

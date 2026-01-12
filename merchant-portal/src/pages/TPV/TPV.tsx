@@ -357,7 +357,7 @@ const TPVContent = () => {
       });
 
       error(errorMsg);
-      throw err; // Re-throw para modal tratar
+      // Não relançar erro - PaymentModal já trata visualmente via setResult('error')
     }
   };
 
@@ -702,7 +702,7 @@ const TPVContent = () => {
                 );
               } catch (err: any) {
                 error(err.message || 'Erro ao abrir caixa');
-                throw err;
+                // Não relançar - OpenCashRegisterModal já trata visualmente via setError()
               }
             }}
             onCancel={() => setShowOpenCashModal(false)}
@@ -732,7 +732,7 @@ const TPVContent = () => {
                 );
               } catch (err: any) {
                 error(err.message || 'Erro ao fechar caixa');
-                throw err;
+                // Não relançar - CloseCashRegisterModal já trata visualmente via setError()
               }
             }}
             onCancel={() => setShowCloseCashModal(false)}

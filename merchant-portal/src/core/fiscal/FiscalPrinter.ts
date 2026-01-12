@@ -81,7 +81,44 @@ export class FiscalPrinter {
     }
 
     /**
-     * Gera HTML do recibo fiscal
+     * Gera PDF do recibo (usando html2pdf ou similar)
+     * Retorna blob do PDF
+     */
+    async generatePDF(taxDoc: TaxDocument, orderData: any): Promise<Blob> {
+        const receiptHTML = this.generateReceiptHTML(taxDoc, orderData);
+        
+        // Usar html2pdf.js ou similar para gerar PDF
+        // Por enquanto, retornamos HTML como fallback
+        // TODO: Integrar biblioteca de geração de PDF (html2pdf.js, jsPDF, etc.)
+        
+        const blob = new Blob([receiptHTML], { type: 'text/html' });
+        return blob;
+    }
+
+    /**
+     * Gera URL de QR Code para o recibo
+     * Inclui link para visualizar fatura online (se disponível)
+     */
+    public generateQRCodeUrl(taxDoc: TaxDocument, orderData: any): string | null {
+        // Se tiver PDF URL do InvoiceXpress, usar isso
+        const pdfUrl = taxDoc.raw_payload?.pdf_url || taxDoc.raw_payload?.invoice?.pdf?.url;
+        if (pdfUrl) {
+            // Gerar QR Code usando API pública (ex: qr-server.com)
+            return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pdfUrl)}`;
+        }
+
+        // Fallback: QR Code com protocolo fiscal
+        const protocol = taxDoc.raw_payload?.gov_protocol;
+        if (protocol) {
+            const qrData = `FISCAL:${protocol}`;
+            return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+        }
+
+        return null;
+    }
+
+    /**
+     * Gera HTML do recibo fiscal (melhorado para 80mm térmico)
      */
     private generateReceiptHTML(taxDoc: TaxDocument, orderData: any): string {
         const now = new Date();
@@ -95,9 +132,13 @@ export class FiscalPrinter {
             minute: '2-digit',
         });
 
-        const vatRate = taxDoc.doc_type === 'SAF-T' ? 23 : 21; // Portugal: 23%, Espanha: 21%
+        const vatRate = taxDoc.doc_type === 'SAF-T' || taxDoc.doc_type === 'MOCK' ? 23 : 21; // Portugal: 23%, Espanha: 21%
         const vatAmount = taxDoc.taxes.vat || 0;
         const subtotal = taxDoc.total_amount - vatAmount;
+
+        // QR Code URL (se disponível)
+        const qrCodeUrl = this.generateQRCodeUrl(taxDoc, orderData);
+        const pdfUrl = taxDoc.raw_payload?.pdf_url || taxDoc.raw_payload?.invoice?.pdf?.url;
 
         return `<!DOCTYPE html>
 <html>
@@ -230,6 +271,24 @@ export class FiscalPrinter {
         ${taxDoc.raw_payload?.gov_protocol ? `
             <div class="protocol">
                 Protocolo: ${taxDoc.raw_payload.gov_protocol}
+            </div>
+        ` : ''}
+        ${qrCodeUrl ? `
+            <div style="margin-top: 10px; text-align: center;">
+                <img src="${qrCodeUrl}" alt="QR Code" style="width: 80px; height: 80px; image-rendering: pixelated;" />
+                <div style="font-size: 8px; margin-top: 5px;">
+                    ${pdfUrl ? 'Escaneie para ver fatura online' : 'Protocolo Fiscal'}
+                </div>
+            </div>
+        ` : ''}
+        ${orderData.restaurant_address ? `
+            <div style="font-size: 9px; margin-top: 10px; text-align: center;">
+                ${orderData.restaurant_address}
+            </div>
+        ` : ''}
+        ${orderData.restaurant_nif ? `
+            <div style="font-size: 9px; margin-top: 5px; text-align: center;">
+                NIF: ${orderData.restaurant_nif}
             </div>
         ` : ''}
         <div style="margin-top: 10px;">

@@ -149,7 +149,7 @@ export const OrderItemEditor: React.FC<OrderItemEditorProps> = ({
                                     </Text>
                                     <Button
                                         variant="ghost"
-                                        size="xs"
+                                        size="sm"
                                         tone="destructive"
                                         onClick={() => onRemoveItem(item.id)}
                                         disabled={loading}

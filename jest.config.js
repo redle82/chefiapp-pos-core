@@ -29,6 +29,7 @@ module.exports = {
   verbose: true,
   testTimeout: 30000,
   setupFiles: ['<rootDir>/tests/setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup-react.ts'],
   // Ignore node_modules in tests directory
   modulePathIgnorePatterns: ['<rootDir>/tests/node_modules'],
   // Map merchant-portal imports for cross-workspace testing
@@ -38,5 +39,39 @@ module.exports = {
     '^.*/core/state/SystemStateProvider$': '<rootDir>/tests/__mocks__/SystemStateProvider.ts',
     // Fix UUID ES6 module issue - use mock instead
     '^uuid$': '<rootDir>/tests/__mocks__/uuid.ts',
+    // Mock Logger to avoid import.meta issues - must be before other patterns
+    '^.*/core/logger/Logger$': '<rootDir>/tests/__mocks__/Logger.ts',
+    '^.*/core/logger/Logger\\.ts$': '<rootDir>/tests/__mocks__/Logger.ts',
   },
+  // Use jsdom for UI tests
+  projects: [
+    {
+      displayName: 'node',
+      testEnvironment: 'node',
+      testMatch: ['**/*.test.ts', '!**/ui/**/*.test.tsx'],
+      setupFiles: ['<rootDir>/tests/setup.ts'],
+    },
+    {
+      displayName: 'jsdom',
+      preset: 'ts-jest',
+      testEnvironment: 'jsdom',
+      testMatch: ['**/ui/**/*.test.tsx'],
+      setupFiles: ['<rootDir>/tests/setup-jsdom.js'],
+      setupFilesAfterEnv: ['<rootDir>/tests/setup-react.ts'],
+      transform: {
+        '^.+\\.tsx?$': ['ts-jest', {
+          tsconfig: 'tests/tsconfig.json',
+          jsx: 'react',
+        }],
+      },
+      moduleNameMapper: {
+        '^@merchant-portal/(.*)$': '<rootDir>/merchant-portal/src/$1',
+        '^.*/state/SystemStateProvider$': '<rootDir>/tests/__mocks__/SystemStateProvider.ts',
+        '^.*/core/state/SystemStateProvider$': '<rootDir>/tests/__mocks__/SystemStateProvider.ts',
+        '^uuid$': '<rootDir>/tests/__mocks__/uuid.ts',
+        '^.*/core/logger/Logger$': '<rootDir>/tests/__mocks__/Logger.ts',
+        '^.*/core/logger/Logger\\.ts$': '<rootDir>/tests/__mocks__/Logger.ts',
+      },
+    },
+  ],
 };

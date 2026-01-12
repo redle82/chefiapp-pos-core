@@ -7,6 +7,7 @@
 import { supabase } from '../supabase';
 import { PaymentEngine } from './PaymentEngine';
 import { Logger } from '../logger/Logger';
+import { logAuditEvent } from '../audit/logAuditEvent';
 
 export class CashRegisterError extends Error {
     constructor(message: string, public code: string) {

@@ -6,6 +6,8 @@
     "skipLibCheck": true,
     "jsx": "react",
     "module": "esnext",
+    "moduleResolution": "node",
+    "target": "ES2022",
     "paths": {
       "../merchant-portal/src/core/state/SystemStateProvider": ["../tests/__mocks__/SystemStateProvider"]
     }
@@ -13,6 +15,7 @@
   "include": [
     "../tests/**/*.ts",
     "../tests/**/*.tsx",
-    "../tests/**/*.d.ts"
+    "../tests/**/*.d.ts",
+    "../tests/__mocks__/vite-env.d.ts"
   ]
 }

@@ -4030,6 +4030,141 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    // PATCH /api/restaurants/:id/fiscal-config - Salvar configuração fiscal
+    const fiscalConfigMatch = url.pathname.match(/^\/api\/restaurants\/([^/]+)\/fiscal-config$/);
+    if (req.method === 'PATCH' && fiscalConfigMatch) {
+      try {
+        if (!isSessionAuthorized(req)) {
+          return sendJSON(res, 401, { error: 'SESSION_REQUIRED' });
+        }
+
+        const restaurantId = decodeURIComponent(fiscalConfigMatch[1]);
+        const body = await readJsonBody(req);
+        const { fiscal_provider, fiscal_config } = body;
+
+        if (!fiscal_provider || !fiscal_config) {
+          return sendJSON(res, 400, { error: 'INVALID_BODY', message: 'Missing fiscal_provider or fiscal_config' });
+        }
+
+        // Validar que o restaurante pertence ao usuário
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+
+          // Verificar ownership
+          const { rows: ownerRows } = await client.query(
+            `SELECT id FROM gm_restaurants WHERE id = $1 AND owner_id = (SELECT id FROM auth.users WHERE id = auth.uid())`,
+            [restaurantId]
+          );
+
+          if (ownerRows.length === 0) {
+            await client.query('ROLLBACK');
+            return sendJSON(res, 403, { error: 'FORBIDDEN', message: 'Restaurant not found or access denied' });
+          }
+
+          // Criptografar API key se presente (P0-1: segurança)
+          let encryptedConfig = fiscal_config;
+          if (fiscal_config.invoicexpress?.apiKey) {
+            const encryptionKey = getEncryptionKeyOrThrow();
+            const encryptedKey = encryptSecret(fiscal_config.invoicexpress.apiKey);
+            encryptedConfig = {
+              ...fiscal_config,
+              invoicexpress: {
+                ...fiscal_config.invoicexpress,
+                apiKey: encryptedKey.toString('base64'), // Armazenar criptografado
+              },
+            };
+          }
+
+          // Atualizar configuração fiscal
+          await client.query(
+            `UPDATE gm_restaurants 
+             SET fiscal_provider = $1, 
+                 fiscal_config = $2,
+                 updated_at = NOW()
+             WHERE id = $3`,
+            [fiscal_provider, JSON.stringify(encryptedConfig), restaurantId]
+          );
+
+          await client.query('COMMIT');
+
+          return sendJSON(res, 200, { 
+            success: true,
+            message: 'Fiscal configuration saved successfully',
+          });
+
+        } finally {
+          client.release();
+        }
+
+      } catch (e: any) {
+        console.error('[API] PATCH /api/restaurants/:id/fiscal-config failed:', e);
+        return sendJSON(res, 500, { error: 'INTERNAL_ERROR', message: e.message });
+      }
+    }
+
+    // POST /api/fiscal/invoicexpress/test - Testar conexão InvoiceXpress
+    if (req.method === 'POST' && url.pathname === '/api/fiscal/invoicexpress/test') {
+      try {
+        if (!isSessionAuthorized(req)) {
+          return sendJSON(res, 401, { error: 'SESSION_REQUIRED' });
+        }
+
+        const body = await readJsonBody(req);
+        const { accountName } = body;
+
+        if (!accountName) {
+          return sendJSON(res, 400, { error: 'INVALID_BODY', message: 'Missing accountName' });
+        }
+
+        // Buscar API key do banco
+        const client = await pool.connect();
+        try {
+          const { rows } = await client.query(
+            `SELECT fiscal_config->'invoicexpress'->>'apiKey' as api_key
+             FROM gm_restaurants
+             WHERE fiscal_config->'invoicexpress'->>'accountName' = $1
+             LIMIT 1`,
+            [accountName]
+          );
+
+          if (rows.length === 0 || !rows[0].api_key) {
+            return sendJSON(res, 404, { error: 'NOT_CONFIGURED', message: 'InvoiceXpress not configured for this account' });
+          }
+
+          // Descriptografar API key
+          const encryptedKey = Buffer.from(rows[0].api_key, 'base64');
+          const apiKey = decryptSecret(encryptedKey);
+
+          // Testar conexão (fazer uma chamada simples à API)
+          const testUrl = `https://${accountName}.app.invoicexpress.com/invoices.json?api_key=${apiKey}&per_page=1`;
+          const testResponse = await fetch(testUrl, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+          });
+
+          if (!testResponse.ok) {
+            return sendJSON(res, 400, { 
+              error: 'CONNECTION_FAILED', 
+              message: `InvoiceXpress API returned ${testResponse.status}` 
+            });
+          }
+
+          return sendJSON(res, 200, { 
+            success: true,
+            message: 'Connection test successful',
+          });
+
+        } finally {
+          client.release();
+        }
+
+      } catch (e: any) {
+        console.error('[API] POST /api/fiscal/invoicexpress/test failed:', e);
+        return sendJSON(res, 500, { error: 'INTERNAL_ERROR', message: e.message });
+      }
+    }
+
     // P0-1 FIX: POST /api/fiscal/invoicexpress/invoices - Proxy seguro para InvoiceXpress API
     // API key nunca é exposta ao cliente - backend busca do banco e faz chamada real
     if (req.method === 'POST' && url.pathname === '/api/fiscal/invoicexpress/invoices') {
