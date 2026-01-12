@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import './index.css'
+import './ui/design-system/styles/dark-mode.css' // P3-5: Dark mode styles
 import { ErrorBoundary } from './ui/design-system/ErrorBoundary'
 import { Logger } from './core/logger/Logger'
 import { performanceMonitor } from './core/monitoring/performanceMonitor'

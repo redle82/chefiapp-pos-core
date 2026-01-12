@@ -116,7 +116,8 @@ export function BootstrapPage() {
             setState('ready')
             setProgressStep(`Bem-vindo de volta!`)
             const targetPath = member.role === 'owner' ? '/dashboard' : '/preview'
-            setTimeout(() => navigate(targetPath), 800)
+            // P2-3 FIX: Navegação imediata após verificação real (sem delay artificial)
+            navigate(targetPath)
             return
           }
 
@@ -124,20 +125,23 @@ export function BootstrapPage() {
           if (onboardingMode === 'migration') {
             setState('ready')
             setProgressStep('Iniciando migração inteligente...')
-            setTimeout(() => navigate('/migration/wizard'), 800)
+            // P2-3 FIX: Navegação imediata após verificação real
+            navigate('/migration/wizard')
             return
           }
 
           if (quickDone) {
             setState('ready')
             setProgressStep('Configuração rápida concluída')
-            setTimeout(() => navigate('/app/dashboard'), 800)
+            // P2-3 FIX: Navegação imediata após verificação real
+            navigate('/app/dashboard')
             return
           }
 
           setState('ready')
           setProgressStep('Completa a configuração inicial...')
-          setTimeout(() => navigate('/onboarding/identity'), 800)
+          // P2-3 FIX: Navegação imediata após verificação real
+          navigate('/onboarding/identity')
           return
         }
 
@@ -145,7 +149,8 @@ export function BootstrapPage() {
         setState('ready')
         setProgressStep(`Bem-vindo de volta!`)
         const targetPath = member.role === 'owner' ? '/app/dashboard' : '/preview'
-        setTimeout(() => navigate(targetPath), 800)
+        // P2-3 FIX: Navegação imediata (sem delay artificial)
+        navigate(targetPath)
       } else {
         // NEW USER -> AUTO CREATE FIRST RESTAURANT
         console.log('[Bootstrap] New user detected - creating first restaurant');
@@ -185,14 +190,26 @@ export function BootstrapPage() {
 
         if (linkError) throw linkError
 
+        // P2-3 FIX: Verificação real de sucesso antes de navegar
+        // Verificar se restaurante foi realmente criado
+        const { data: verifyRest, error: verifyError } = await supabase
+          .from('gm_restaurants')
+          .select('id, name')
+          .eq('id', restData.id)
+          .single()
+
+        if (verifyError || !verifyRest) {
+          throw new Error('Falha ao verificar criação do restaurante. Tente novamente.')
+        }
+
         // Success - Set Local Context
         setTabIsolated('chefiapp_restaurant_id', restData.id)
         setTabIsolated('chefiapp_user_role', 'owner')
 
         setState('ready')
         setProgressStep('Cozinha criada com sucesso!')
-        // Redirect to Identity Onboarding
-        setTimeout(() => navigate('/onboarding/identity'), 800)
+        // P2-3 FIX: Navegação imediata após verificação real (sem delay artificial)
+        navigate('/onboarding/identity')
       }
 
     } catch (error: any) {

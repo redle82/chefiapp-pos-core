@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './PublicPages.css';
 import PublicHome from './views/PublicHome';
 import type { WebOrder } from '../../../../web-module/contracts';
@@ -6,6 +6,7 @@ import { fetchWithTimeout } from '../../core/utils/http/fetchWithTimeout';
 import { SupplierBanner } from '../../components/Supplier/SupplierBanner';
 import type { Placement } from '../../types/supplier';
 import { supabase } from '../../core/supabase';
+import { getTabIsolated, setTabIsolated } from '../../core/storage/TabIsolatedStorage';
 
 // --- Shared Types (Reused from Contracts where possible) ---
 interface PublicRestaurant {
@@ -27,7 +28,51 @@ interface PublicRestaurant {
   }[];
 }
 
-// ... (Rest of types unchanged)
+// P1-2 FIX: Cart Item Type
+interface CartItem {
+  itemId: string;
+  name: string;
+  price: number;
+  qty: number;
+}
+
+type PageView = 'home' | 'menu' | 'checkout' | 'success' | 'contact';
+
+// P1-2 FIX: Cart Storage Keys
+const CART_STORAGE_KEY = 'chefiapp_public_cart';
+const CART_TTL_KEY = 'chefiapp_public_cart_ttl';
+const CART_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
+
+// P1-2 FIX: Load cart from localStorage with TTL check
+function loadCart(restaurantId: string): CartItem[] {
+  try {
+    const ttl = getTabIsolated(`${CART_TTL_KEY}_${restaurantId}`);
+    if (ttl) {
+      const ttlTime = parseInt(ttl, 10);
+      if (Date.now() > ttlTime) {
+        // TTL expirado, limpar carrinho
+        setTabIsolated(`${CART_STORAGE_KEY}_${restaurantId}`, '[]');
+        setTabIsolated(`${CART_TTL_KEY}_${restaurantId}`, '');
+        return [];
+      }
+    }
+    
+    const stored = getTabIsolated(`${CART_STORAGE_KEY}_${restaurantId}`);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+// P1-2 FIX: Save cart to localStorage with TTL
+function saveCart(restaurantId: string, cart: CartItem[]): void {
+  try {
+    setTabIsolated(`${CART_STORAGE_KEY}_${restaurantId}`, JSON.stringify(cart));
+    setTabIsolated(`${CART_TTL_KEY}_${restaurantId}`, (Date.now() + CART_TTL_MS).toString());
+  } catch (err) {
+    console.warn('[PublicPages] Failed to save cart:', err);
+  }
+}
 
 const PublicPages: React.FC = () => {
   const [currentView, setCurrentView] = useState<PageView>('home');
@@ -79,6 +124,12 @@ const PublicPages: React.FC = () => {
 
         setRestaurant(restaurantData as any);
 
+        // P1-2 FIX: Load cart from storage when restaurant loads
+        if (restaurantData?.restaurant_id) {
+          const savedCart = loadCart(restaurantData.restaurant_id);
+          setCart(savedCart);
+        }
+
         // ... (Supplier layer unchanged)
 
       } catch (err) {
@@ -90,7 +141,66 @@ const PublicPages: React.FC = () => {
     loadData();
   }, [slug]);
 
-  // ... (addToCart unchanged)
+  // P1-2 FIX: Calculate cart total
+  const cartTotal = useMemo(() => {
+    return cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  }, [cart]);
+
+  // P1-2 FIX: Add to cart with persistence
+  const addToCart = useCallback((item: { id: string; name: string; price_cents: number }) => {
+    if (!restaurant) return;
+
+    setCart(prev => {
+      const existing = prev.find(i => i.itemId === item.id);
+      let newCart: CartItem[];
+
+      if (existing) {
+        newCart = prev.map(i =>
+          i.itemId === item.id
+            ? { ...i, qty: i.qty + 1 }
+            : i
+        );
+      } else {
+        newCart = [...prev, {
+          itemId: item.id,
+          name: item.name,
+          price: item.price_cents / 100, // Convert cents to euros
+          qty: 1
+        }];
+      }
+
+      // P1-2 FIX: Save to localStorage
+      saveCart(restaurant.restaurant_id, newCart);
+      return newCart;
+    });
+  }, [restaurant]);
+
+  // P1-2 FIX: Remove from cart with persistence
+  const removeFromCart = useCallback((itemId: string) => {
+    if (!restaurant) return;
+
+    setCart(prev => {
+      const newCart = prev.filter(i => i.itemId !== itemId);
+      saveCart(restaurant.restaurant_id, newCart);
+      return newCart;
+    });
+  }, [restaurant]);
+
+  // P1-2 FIX: Update quantity with persistence
+  const updateCartQuantity = useCallback((itemId: string, qty: number) => {
+    if (!restaurant) return;
+
+    setCart(prev => {
+      const newCart = prev.map(i =>
+        i.itemId === itemId
+          ? { ...i, qty: Math.max(0, qty) }
+          : i
+      ).filter(i => i.qty > 0); // Remove items with qty 0
+
+      saveCart(restaurant.restaurant_id, newCart);
+      return newCart;
+    });
+  }, [restaurant]);
 
   const submitOrder = async () => {
     if (!restaurant) return;
@@ -134,6 +244,10 @@ const PublicPages: React.FC = () => {
 
         console.log('[Airlock] Request Accepted:', request.id);
 
+        // P1-2 FIX: Clear cart from storage after successful order
+        if (restaurant) {
+          saveCart(restaurant.restaurant_id, []);
+        }
         setCart([]);
         setError(null);
         setCurrentView('success');
@@ -272,7 +386,14 @@ const PublicPages: React.FC = () => {
           <p>O restaurante analisará seu pedido em instantes.</p>
           <button
             className="public-hero__cta public-hero__cta--secondary"
-            onClick={() => { setCart([]); setCurrentView('home'); }}
+            onClick={() => { 
+              // P1-2 FIX: Clear cart from storage
+              if (restaurant) {
+                saveCart(restaurant.restaurant_id, []);
+              }
+              setCart([]); 
+              setCurrentView('home'); 
+            }}
           >
             ← Voltar
           </button>

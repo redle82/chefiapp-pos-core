@@ -9,6 +9,8 @@ import { Badge } from '../../ui/design-system/primitives/Badge';
 import { Button } from '../../ui/design-system/primitives/Button';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { useIntegrationBridge } from './hooks/useIntegrationBridge';
+import { useToast } from '../../ui/design-system';
+import { exportShiftReportToPDF } from './utils/exportToPDF'; // P3-6
 
 // Types for Mock Brain
 interface MetabolicInsight {
@@ -23,6 +25,7 @@ export const ManagerDashboard: React.FC = () => {
     const { currentRiskLevel, tasks, checkOut, activeWorkerId, setTasks, notifyActivity } = useStaff();
     const { items, hungerSignals } = useInventory();
     const { isAlive, pulseId } = usePulse();
+    const { info } = useToast(); // P2-2 FIX: Toast para feedback de preview
 
     // 🔌 INTEGRATION BRIDGE
     const {
@@ -40,6 +43,32 @@ export const ManagerDashboard: React.FC = () => {
     // DEV panel state
     const [showDevPanel, setShowDevPanel] = useState(false);
     const isDev = import.meta.env.DEV;
+
+    // P2-2 FIX: Wrappers com feedback para ações de preview
+    const handleSimulateOrder = () => {
+        simulateOrder();
+        info('🧪 Simulação: Novo pedido criado (não salvo)');
+    };
+
+    const handleSimulateCancel = () => {
+        simulateCancel();
+        info('🧪 Simulação: Pedido cancelado (não salvo)');
+    };
+
+    const handleSimulateDelay = () => {
+        simulateDelay();
+        info('🧪 Simulação: Atraso simulado (não salvo)');
+    };
+
+    const handleSimulateFailure = () => {
+        simulateFailure();
+        info('🧪 Simulação: Falha simulado (não salvo)');
+    };
+
+    const handleSimulateRecovery = () => {
+        simulateRecovery();
+        info('🧪 Simulação: Recuperação simulado (não salvo)');
+    };
 
     // Metabolic Radar State
     const [alerts, setAlerts] = useState<MetabolicInsight[]>([]);
@@ -62,6 +91,27 @@ export const ManagerDashboard: React.FC = () => {
     const health = getHealthStatus(currentRiskLevel);
     const interventionTasks = tasks.filter(t => t.riskLevel && t.riskLevel > 50 && t.status !== 'done');
 
+    // P3-6: Export PDF handler
+    const handleExportPDF = () => {
+        const completedTasks = tasks.filter(t => t.status === 'done').length;
+        const totalTasks = tasks.length;
+        const shiftDuration = '8h 30m'; // TODO: Calculate from actual shift start time
+        
+        exportShiftReportToPDF({
+            shiftDate: new Date().toLocaleDateString('pt-PT'),
+            workerName: activeWorkerId || 'Manager',
+            role: 'Manager',
+            tasksCompleted: completedTasks,
+            tasksTotal: totalTasks,
+            shiftDuration,
+            metrics: {
+                pressure: currentRiskLevel,
+                riskLevel: currentRiskLevel,
+                healthStatus: health.label,
+            },
+        });
+    };
+
     return (
         <StaffLayout
             title="Maestro View"
@@ -69,7 +119,12 @@ export const ManagerDashboard: React.FC = () => {
             role="Manager"
             status="active"
             actions={
-                <Button tone="neutral" variant="outline" fullWidth onClick={checkOut}>Sign Out</Button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <Button tone="action" variant="outline" fullWidth onClick={handleExportPDF}>
+                        📄 Exportar PDF
+                    </Button>
+                    <Button tone="neutral" variant="outline" fullWidth onClick={checkOut}>Sign Out</Button>
+                </div>
             }
         >
             <div style={{ maxWidth: 600, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
@@ -283,7 +338,7 @@ export const ManagerDashboard: React.FC = () => {
                                             tone="action" 
                                             variant="outline" 
                                             size="sm" 
-                                            onClick={simulateOrder}
+                                            onClick={handleSimulateOrder}
                                         >
                                             📦 Novo Pedido
                                         </Button>
@@ -291,7 +346,7 @@ export const ManagerDashboard: React.FC = () => {
                                             tone="neutral" 
                                             variant="outline" 
                                             size="sm" 
-                                            onClick={simulateCancel}
+                                            onClick={handleSimulateCancel}
                                         >
                                             ❌ Cancelar
                                         </Button>
@@ -299,7 +354,7 @@ export const ManagerDashboard: React.FC = () => {
                                             tone="warning" 
                                             variant="outline" 
                                             size="sm" 
-                                            onClick={simulateDelay}
+                                            onClick={handleSimulateDelay}
                                         >
                                             🕐 Atraso
                                         </Button>
@@ -307,7 +362,7 @@ export const ManagerDashboard: React.FC = () => {
                                             tone="destructive" 
                                             variant="outline" 
                                             size="sm" 
-                                            onClick={simulateFailure}
+                                            onClick={handleSimulateFailure}
                                         >
                                             💥 Falha
                                         </Button>
@@ -318,12 +373,26 @@ export const ManagerDashboard: React.FC = () => {
                                             tone="success" 
                                             variant="solid" 
                                             size="sm" 
-                                            onClick={simulateRecovery}
+                                            onClick={handleSimulateRecovery}
                                             fullWidth
                                         >
                                             ✅ Recuperar
                                         </Button>
                                     )}
+                                    
+                                    {/* P2-2 FIX: Indicador visual de modo preview */}
+                                    <div style={{
+                                        marginTop: 8,
+                                        padding: 8,
+                                        background: colors.warning.base + '20',
+                                        border: `1px solid ${colors.warning.base}40`,
+                                        borderRadius: 4,
+                                        textAlign: 'center'
+                                    }}>
+                                        <Text size="xs" color="warning" weight="bold">
+                                            ⚠️ Modo Preview: Ações não são salvas
+                                        </Text>
+                                    </div>
                                 </div>
                             </Card>
                         )}

@@ -9,13 +9,13 @@
  */
 
 import { supabase } from '../supabase';
-import { FiscalObserver } from '../../../fiscal-modules/FiscalObserver';
-import { FiscalResult, TaxDocument } from '../../../fiscal-modules/types';
-import { FiscalEventStore } from '../../../fiscal-modules/FiscalEventStore';
+import { FiscalObserver } from '../../../../fiscal-modules/FiscalObserver';
+import { FiscalResult, TaxDocument } from '../../../../fiscal-modules/types';
+import { FiscalEventStore } from '../../../../fiscal-modules/FiscalEventStore';
 import { SupabaseFiscalEventStore } from './SupabaseFiscalEventStore';
-import { ConsoleFiscalAdapter } from '../../../fiscal-modules/ConsoleFiscalAdapter';
-import { TicketBAIAdapter } from '../../../fiscal-modules/adapters/TicketBAIAdapter';
-import { SAFTAdapter } from '../../../fiscal-modules/adapters/SAFTAdapter';
+import { ConsoleFiscalAdapter } from '../../../../fiscal-modules/ConsoleFiscalAdapter';
+import { TicketBAIAdapter } from '../../../../fiscal-modules/adapters/TicketBAIAdapter';
+import { SAFTAdapter } from '../../../../fiscal-modules/adapters/SAFTAdapter';
 import { Logger } from '../logger/Logger';
 
 export interface FiscalServiceConfig {
@@ -109,11 +109,24 @@ export class FiscalService {
                         payment_id: params.paymentId,
                         amount_cents: params.amountCents,
                         payment_method: params.paymentMethod,
+                        tax_document: taxDoc,
                     },
                     occurred_at: new Date(),
                     idempotency_key: `fiscal:${params.orderId}`,
                 } as any // CoreEvent mock
             );
+
+            // CRITICAL: Verificar se fiscal foi rejeitado (credenciais não configuradas)
+            if (result.status === 'REJECTED') {
+                Logger.error('[FiscalService] ❌ FISCAL REJECTED - Credentials not configured', {
+                    orderId: params.orderId,
+                    error: result.error_details,
+                    restaurantId: params.restaurantId,
+                });
+                // Não armazenar resultado rejeitado - é um erro crítico
+                // Retornar null para que o sistema possa mostrar alerta
+                return null;
+            }
 
             // 4. Armazenar em fiscal_event_store
             if (this.useSupabase && this.eventStore instanceof SupabaseFiscalEventStore) {
@@ -188,7 +201,7 @@ export class FiscalService {
                 return data.country_code || data.iso || 'ES'; // Default: Espanha
             }
         } catch (err) {
-            Logger.warn('[FiscalService] Failed to fetch restaurant country', err, { restaurantId });
+            Logger.warn('[FiscalService] Failed to fetch restaurant country', { error: err, restaurantId });
         }
 
         // Default: Espanha (para Ibiza)

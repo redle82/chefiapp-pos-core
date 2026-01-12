@@ -4,14 +4,23 @@
  * Valida que integrações fiscais e Glovo funcionam juntas
  */
 
-import { FiscalService } from '../../../merchant-portal/src/core/fiscal/FiscalService';
-import { InvoiceXpressAdapter } from '../../../fiscal-modules/adapters/InvoiceXpressAdapter';
-import { GlovoAdapter } from '../../../merchant-portal/src/integrations/adapters/glovo/GlovoAdapter';
-import type { CoreEvent } from '../../../event-log/types';
-import type { LegalSeal } from '../../../legal-boundary/types';
+import { FiscalService } from '../../merchant-portal/src/core/fiscal/FiscalService';
+import { InvoiceXpressAdapter } from '../../fiscal-modules/adapters/InvoiceXpressAdapter';
+import { GlovoAdapter } from '../../merchant-portal/src/integrations/adapters/glovo/GlovoAdapter';
+import type { CoreEvent } from '../../event-log/types';
+import type { LegalSeal } from '../../legal-boundary/types';
+
+// Mock Logger
+jest.mock('../../merchant-portal/src/core/logger/Logger', () => ({
+    Logger: {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+    },
+}));
 
 // Mock Supabase
-jest.mock('../../../merchant-portal/src/core/supabase', () => ({
+jest.mock('../../merchant-portal/src/core/supabase', () => ({
     supabase: {
         from: jest.fn(() => ({
             select: jest.fn(() => ({
@@ -82,8 +91,14 @@ describe('Fiscal + Glovo Integration', () => {
 
             const seal: LegalSeal = {
                 seal_id: 'seal-123',
-                event_id: 'event-123',
+                entity_type: 'ORDER',
+                entity_id: 'glovo-order-123',
+                seal_event_id: 'event-123',
+                stream_hash: 'hash-123',
                 sealed_at: new Date(),
+                sequence: 1,
+                financial_state: JSON.stringify({ amount: 1250 }),
+                legal_state: 'PAYMENT_SEALED',
             };
 
             // 3. Processar fiscal
@@ -103,7 +118,7 @@ describe('Fiscal + Glovo Integration', () => {
             const fiscalResult = await invoiceAdapter.onSealed(seal, paymentEvent);
 
             expect(fiscalResult.status).toBe('REPORTED');
-            expect(fiscalResult.pdf_url).toBeDefined();
+            expect(fiscalResult.gov_protocol).toBeDefined();
         });
     });
 
@@ -178,8 +193,14 @@ describe('Fiscal + Glovo Integration', () => {
 
                 const seal: LegalSeal = {
                     seal_id: `seal-${order.id}`,
-                    event_id: `event-${order.id}`,
+                    entity_type: 'ORDER',
+                    entity_id: order.id,
+                    seal_event_id: `event-${order.id}`,
+                    stream_hash: `hash-${order.id}`,
                     sealed_at: new Date(),
+                    sequence: 1,
+                    financial_state: JSON.stringify({ amount: Math.round(order.total * 100) }),
+                    legal_state: 'PAYMENT_SEALED',
                 };
 
                 const fiscalResult = await invoiceAdapter.onSealed(seal, paymentEvent);

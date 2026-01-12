@@ -26,7 +26,8 @@ import { GlovoOAuth } from './GlovoOAuth';
 // ─────────────────────────────────────────────────────────────
 
 const GLOVO_API_BASE = 'https://open-api.glovoapp.com';
-const POLLING_INTERVAL_MS = 10000; // 10 segundos
+const POLLING_INTERVAL_MS = 3000; // 3 segundos (reduzido para resposta mais rápida)
+const MAX_PROCESSED_ORDERS = 1000; // Limitar memória - manter apenas últimos 1000
 
 // ─────────────────────────────────────────────────────────────
 // ADAPTER IMPLEMENTATION
@@ -240,6 +241,15 @@ export class GlovoAdapter implements IntegrationAdapter {
         }
       }
 
+      // Limpar processedOrderIds se exceder limite (prevenir vazamento de memória)
+      if (this.processedOrderIds.size > MAX_PROCESSED_ORDERS) {
+        const idsArray = Array.from(this.processedOrderIds);
+        // Manter apenas os últimos MAX_PROCESSED_ORDERS
+        const idsToKeep = idsArray.slice(-MAX_PROCESSED_ORDERS);
+        this.processedOrderIds = new Set(idsToKeep);
+        console.log(`[Glovo] Cleaned processedOrderIds: kept ${idsToKeep.length} most recent`);
+      }
+
       this.lastPollAt = Date.now();
 
     } catch (err) {
@@ -297,11 +307,9 @@ export class GlovoAdapter implements IntegrationAdapter {
 
     this.emitToSystem({
       type: 'order.updated',
-      timestamp: Date.now(),
       payload: {
         orderId: order.id,
         status: 'cancelled',
-        updatedAt: Date.now(),
       },
     });
 
@@ -328,25 +336,25 @@ export class GlovoAdapter implements IntegrationAdapter {
 
     // Se OAuth inválido
     if (!this.oauth?.isTokenValid()) {
-      return createDownStatus('OAuth token invalid or expired', metrics);
+      return createDownStatus('OAuth token invalid or expired');
     }
 
     // Se muitos erros recentes
     if (this.ordersReceived > 10 && this.ordersErrors / this.ordersReceived > 0.3) {
-      return createDegradedStatus('High error rate', metrics);
+      return createDegradedStatus('High error rate');
     }
 
     // Se não recebeu pedidos em muito tempo E já recebeu antes
     if (this.lastPollAt && this.lastPollAt < oneDayAgo && this.ordersReceived > 0) {
-      return createDegradedStatus('No orders received in 24h', metrics);
+      return createDegradedStatus('No orders received in 24h');
     }
 
     // Se tem erro recente
     if (this.lastError) {
-      return createHealthyStatus({ ...metrics, lastError: this.lastError });
+      return createHealthyStatus();
     }
 
-    return createHealthyStatus(metrics);
+    return createHealthyStatus();
   }
 
   // ───────────────────────────────────────────────────────────

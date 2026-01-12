@@ -181,15 +181,39 @@ export async function checkOrderSynced(localId: string): Promise<string | null> 
     const item = items.find(i => i.id === localId);
     
     if (!item) {
-        // Item não está na fila, pode ter sido sincronizado
-        // TODO: Verificar no banco se existe pedido com notes contendo localId
-        return null;
+        // Item não está na fila, verificar no banco se existe pedido com sync_metadata->>'localId' = localId
+        try {
+            const { supabase } = await import('../supabase');
+            const { data } = await supabase
+                .from('gm_orders')
+                .select('id')
+                .eq('sync_metadata->>localId', localId)
+                .limit(1)
+                .maybeSingle();
+            
+            return data?.id || null;
+        } catch (err) {
+            Logger.warn('[OrderEngineOffline] Error checking synced order', { error: err, localId });
+            return null;
+        }
     }
     
     if (item.status === 'applied') {
         // Item foi sincronizado, buscar ID real do banco
-        // TODO: Implementar busca por notes
-        return null;
+        try {
+            const { supabase } = await import('../supabase');
+            const { data } = await supabase
+                .from('gm_orders')
+                .select('id')
+                .eq('sync_metadata->>localId', localId)
+                .limit(1)
+                .maybeSingle();
+            
+            return data?.id || null;
+        } catch (err) {
+            Logger.warn('[OrderEngineOffline] Error fetching synced order ID', { error: err, localId });
+            return null;
+        }
     }
     
     return null;

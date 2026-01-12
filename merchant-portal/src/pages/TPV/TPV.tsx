@@ -7,8 +7,11 @@ import { OfflineOrderProvider } from './context/OfflineOrderContext';
 import { SyncStatusIndicator } from '../../components/SyncStatusIndicator';
 import type { Order } from './context/OrderTypes';
 import { useMenuItems } from '../../hooks/useMenuItems';
+import { useCoreHealth } from '../../core/health/useCoreHealth';
 
 import { OfflineBanner } from '../../components/OfflineBanner';
+import { FiscalConfigAlert } from './components/FiscalConfigAlert';
+import { CashRegisterAlert } from './components/CashRegisterAlert';
 
 /* UDS Implementation (Sealed) */
 import { TPVLayout } from '../../ui/design-system/layouts/TPVLayout';
@@ -28,6 +31,9 @@ import { GroupSelector } from './components/GroupSelector';
 import { CreateGroupModal } from './components/CreateGroupModal';
 import { useConsumptionGroups } from './hooks/useConsumptionGroups';
 import { useCommonTPVShortcuts } from './hooks/useTPVShortcuts';
+import { useCurrency } from '../../core/currency/useCurrency'; // P5-5
+import { useVoiceCommands } from '../../core/voice/useVoiceCommands'; // P5-8
+import { useAutomatedInventory } from '../../core/inventory/useAutomatedInventory'; // P5-4
 
 type ContextView = 'menu' | 'tables';
 
@@ -54,6 +60,20 @@ const TPVContent = () => {
   const { items: menuItems, loading: menuLoading } = useMenuItems(restaurantId);
   const { success, error } = useToast();
   const { tables } = useTables();
+  
+  // P1-1 FIX: Health monitoring para habilitar/desabilitar ações
+  const { status: healthStatus } = useCoreHealth({
+    autoStart: true,
+    pollInterval: 30000,
+    downPollInterval: 10000,
+  });
+  
+  // P1-1 FIX: Determinar se ações devem estar habilitadas
+  // Ações offline (criar pedido, adicionar item) sempre permitidas
+  // Ações críticas (pagamento) respeitam health status
+  // Demo mode permite ações mesmo com sistema down (para testes)
+  const isDemoData = getTabIsolated('chefiapp_demo_mode') === 'true';
+  const actionsEnabled = healthStatus === 'UP' || healthStatus === 'DEGRADED' || isDemoData || isOnline;
   const [contextView, setContextView] = useState<ContextView>('menu');
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(() => {
@@ -62,6 +82,46 @@ const TPVContent = () => {
   });
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [dailyTotal, setDailyTotal] = useState<string>('€0,00');
+  
+  // P5-5: Currency support
+  const { currency, formatAmount } = useCurrency();
+  
+  // P5-4: Automated inventory
+  const { alerts: inventoryAlerts } = useAutomatedInventory();
+  
+  // P5-8: Voice commands
+  const voiceCommands = useVoiceCommands([
+    {
+      pattern: 'novo pedido',
+      action: () => {
+        if (cashRegisterOpen) {
+          handleCreateOrder();
+        }
+      },
+      description: 'Criar novo pedido',
+    },
+    {
+      pattern: 'abrir caixa',
+      action: () => {
+        if (!cashRegisterOpen) {
+          setShowOpenCashModal(true);
+        }
+      },
+      description: 'Abrir caixa',
+    },
+    {
+      pattern: 'fechar pedido',
+      action: () => {
+        if (activeOrderId) {
+          const order = orders.find(o => o.id === activeOrderId);
+          if (order && order.status !== 'paid') {
+            setPaymentModalOrderId(activeOrderId);
+          }
+        }
+      },
+      description: 'Fechar pedido',
+    },
+  ], true);
   const [dailyTotalCents, setDailyTotalCents] = useState<number>(0);
   const [cashRegisterOpen, setCashRegisterOpen] = useState<boolean>(false);
   const [paymentModalOrderId, setPaymentModalOrderId] = useState<string | null>(null);
@@ -69,7 +129,7 @@ const TPVContent = () => {
   const [showCloseCashModal, setShowCloseCashModal] = useState<boolean>(false);
   const [openingBalanceCents, setOpeningBalanceCents] = useState<number>(0);
 
-  // FASE 2: Atalhos de teclado para reduzir cliques
+  // FASE 2 + P3-3: Atalhos de teclado para reduzir cliques
   useCommonTPVShortcuts({
     onCreateOrder: () => {
       if (cashRegisterOpen) {
@@ -89,6 +149,34 @@ const TPVContent = () => {
     },
     onSearchTable: () => {
       setContextView('tables');
+    },
+    onOpenCash: () => {
+      if (!cashRegisterOpen) {
+        setShowOpenCashModal(true);
+      }
+    },
+    onCloseCash: () => {
+      if (cashRegisterOpen) {
+        if (activeOrders.length > 0) {
+          error(`Impossível fechar caixa: Existem ${activeOrders.length} pedidos em aberto. Finalize ou cancele-os antes.`);
+          return;
+        }
+        setShowCloseCashModal(true);
+      }
+    },
+    onPayment: () => {
+      if (activeOrderId) {
+        const order = orders.find(o => o.id === activeOrderId);
+        if (order && order.status !== 'paid') {
+          setPaymentModalOrderId(activeOrderId);
+        }
+      }
+    },
+    onCancel: () => {
+      // Close any open modals
+      setShowOpenCashModal(false);
+      setShowCloseCashModal(false);
+      setPaymentModalOrderId(null);
     },
   });
 
@@ -133,9 +221,7 @@ const TPVContent = () => {
       try {
         const totalCents = await getDailyTotal();
         setDailyTotalCents(totalCents);
-        setDailyTotal(
-          new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(totalCents / 100)
-        );
+        setDailyTotal(formatAmount(totalCents));
 
         // Verificar caixa aberto
         const register = await getOpenCashRegister();
@@ -161,6 +247,17 @@ const TPVContent = () => {
 
   // Handlers
   const handleAction = async (orderId: string, action: string) => {
+    // P1-1 FIX: Bloquear ações críticas se sistema down (exceto demo)
+    const criticalActions = ['pay', 'prepare', 'ready', 'cancel'];
+    if (criticalActions.includes(action) && !actionsEnabled && !isDemoData) {
+      error('Sistema indisponível. Ação bloqueada. Tente em breve.');
+      return;
+    }
+
+    // P1-4 FIX: Truth-First - Não atualizar UI antes do Core confirmar
+    // A UI mostrará status da queue (pending/syncing/applied) via StreamTunnel
+    // Não fazemos optimistic updates aqui - aguardamos confirmação do Core
+
     try {
       // HARD RULE 2: 'pay' abre modal de pagamento
       if (action === 'pay') {
@@ -168,11 +265,16 @@ const TPVContent = () => {
         return;
       }
 
+      // P1-4 FIX: Executar ação e aguardar confirmação antes de atualizar UI
       await performOrderAction(orderId, action);
-      // HARD RULE: 'close' foi eliminado - pagamento já fecha automaticamente
-      // Não precisa mais limpar pedido ativo aqui (já é feito no 'pay')
+      
+      // P1-4 FIX: Aguardar refresh completo antes de mostrar sucesso
+      // Isso garante que a UI mostra apenas o que o Core confirmou
       console.log('[TPV] Syncing orders after action...');
       await getActiveOrders();
+      
+      // Apenas após getActiveOrders() completar, a UI será atualizada
+      // O StreamTunnel mostrará o status correto baseado nos dados do Core
     } catch (err: any) {
       console.error('Failed to perform action:', err);
 
@@ -183,12 +285,21 @@ const TPVContent = () => {
       });
 
       error(errorMsg);
+      
+      // P1-4 FIX: Em caso de erro, refresh para garantir UI sincronizada
+      await getActiveOrders();
     }
   };
 
   // Handler de pagamento (chamado pelo modal)
   const handlePayment = async (method: 'cash' | 'card' | 'pix', intentId?: string) => {
     if (!paymentModalOrderId) return;
+
+    // P1-1 FIX: Bloquear pagamento se sistema down e não for demo
+    if (!actionsEnabled && !isDemoData) {
+      error('Sistema indisponível. Pagamentos bloqueados por segurança. Tente em breve.');
+      return;
+    }
 
     try {
       // Para pagamentos Stripe (card), passar intentId no metadata
@@ -205,17 +316,26 @@ const TPVContent = () => {
         if (order && restaurantId) {
           const { getFiscalService } = await import('../../core/fiscal/FiscalService');
           const fiscalService = getFiscalService();
-          await fiscalService.processPaymentConfirmed({
+          const fiscalResult = await fiscalService.processPaymentConfirmed({
             orderId: paymentModalOrderId,
             restaurantId: restaurantId,
             paymentMethod: method,
             amountCents: order.total,
             paymentId: intentId,
           });
+          
+          // CRITICAL: Se fiscal foi rejeitado (credenciais não configuradas), mostrar alerta
+          if (!fiscalResult) {
+            error('⚠️ Fiscal não configurado - Risco de multa. Configure credenciais fiscais nas configurações.');
+          }
         }
       } catch (fiscalError) {
         // Log mas não bloqueia pagamento
         console.warn('[TPV] Fiscal processing failed (non-blocking):', fiscalError);
+        // Se erro contém mensagem sobre credenciais, mostrar alerta
+        if (fiscalError instanceof Error && fiscalError.message.includes('credentials')) {
+          error('⚠️ Fiscal não configurado - Risco de multa. Configure credenciais fiscais nas configurações.');
+        }
       }
 
       setPaymentModalOrderId(null);
@@ -370,6 +490,11 @@ const TPVContent = () => {
     <AppShell operationalMode={true}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <OfflineBanner />
+        <FiscalConfigAlert restaurantId={restaurantId} />
+        <CashRegisterAlert 
+          isOpen={cashRegisterOpen} 
+          onOpenCash={() => setShowOpenCashModal(true)} 
+        />
         <TPVLayout
           header={
             <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 16 }}>
@@ -573,7 +698,7 @@ const TPVContent = () => {
                 const totalCents = await getDailyTotal();
                 setDailyTotalCents(totalCents);
                 setDailyTotal(
-                  new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(totalCents / 100)
+                  formatAmount(totalCents)
                 );
               } catch (err: any) {
                 error(err.message || 'Erro ao abrir caixa');
@@ -603,7 +728,7 @@ const TPVContent = () => {
                 const totalCents = await getDailyTotal();
                 setDailyTotalCents(totalCents);
                 setDailyTotal(
-                  new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(totalCents / 100)
+                  formatAmount(totalCents)
                 );
               } catch (err: any) {
                 error(err.message || 'Erro ao fechar caixa');

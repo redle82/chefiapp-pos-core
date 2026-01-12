@@ -16,6 +16,11 @@ import { UberEatsIntegrationWidget } from './components/UberEatsIntegrationWidge
 import { DeliverooIntegrationWidget } from './components/DeliverooIntegrationWidget';
 import { TableManager } from './TableManager';
 import { TableProvider } from '../TPV/context/TableContext';
+import { CurrencySettings } from './components/CurrencySettings'; // P5-5
+import { VoiceCommandsSettings } from './components/VoiceCommandsSettings'; // P5-8
+import { SecuritySettings } from './components/SecuritySettings'; // P5-9
+import { LanguageSettings } from './components/LanguageSettings'; // P4-5
+import { SocialMediaSettings } from './components/SocialMediaSettings'; // P6-7
 
 // Helper for Section
 const Section = ({ title, children }: { title: string, children: React.ReactNode }) => (
@@ -196,6 +201,15 @@ const Settings: React.FC = () => {
             </Card>
           </Section>
 
+          {/* P4-5: Language Settings */}
+          <Section title="Idioma">
+            <LanguageSettings />
+          </Section>
+
+          {/* P6-7: Social Media Settings */}
+          <Section title="Redes Sociais">
+            <SocialMediaSettings />
+          </Section>
         </div>
       }
     />

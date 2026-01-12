@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { OfflineDB } from './db'
 import type { OfflineQueueItem } from './types'
+import { startGarbageCollection } from './OfflineSync'
 
 export function useOfflineQueue() {
     const [items, setItems] = useState<OfflineQueueItem[]>([])
@@ -30,6 +31,14 @@ export function useOfflineQueue() {
 
         return () => channel.close()
     }, [refresh])
+
+    // P2-4 FIX: Iniciar garbage collection periódica
+    useEffect(() => {
+        const stopGC = startGarbageCollection()
+        return () => {
+            stopGC()
+        }
+    }, [])
 
     const notify = () => {
         const channel = new BroadcastChannel('chefiapp_offline_sync')

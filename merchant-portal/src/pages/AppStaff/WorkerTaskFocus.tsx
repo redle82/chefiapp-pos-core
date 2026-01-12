@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useStaff } from './context/StaffContext';
 import type { Task } from './context/StaffCoreTypes';
 import KDS from '../TPV/KDS/KitchenDisplay'; // The Kitchen Tool
@@ -9,6 +9,7 @@ import { colors } from '../../ui/design-system/tokens/colors';
 import { radius } from '../../ui/design-system/tokens/radius';
 import { Button } from '../../ui/design-system/primitives/Button';
 import { PortioningTaskView } from './components/PortioningTaskView';
+import { useTaskTimer } from './hooks/useTaskTimer'; // P3-4
 
 // ------------------------------------------------------------------
 // 🛠️ THE TOOL RENDERER (The Heart of "Task = Tool")
@@ -16,6 +17,21 @@ import { PortioningTaskView } from './components/PortioningTaskView';
 
 export const WorkerTaskFocus: React.FC<{ task: Task; onBack?: () => void }> = ({ task, onBack }) => {
     const { completeTask, startTask } = useStaff();
+    
+    // P3-4: Task Timer
+    const timer = useTaskTimer();
+    
+    // Auto-start timer when task is focused
+    useEffect(() => {
+        if (task.status === 'focused' && !timer.isRunning) {
+            timer.start();
+        }
+        return () => {
+            if (timer.isRunning) {
+                timer.stop();
+            }
+        };
+    }, [task.status]);
 
     // Handle back/cancel - unfocus the task
     const handleBack = () => {
@@ -70,6 +86,32 @@ export const WorkerTaskFocus: React.FC<{ task: Task; onBack?: () => void }> = ({
                     ← Voltar
                 </button>
             )}
+            
+            {/* P3-4: Task Timer */}
+            {task.status === 'focused' && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: 16,
+                        right: 16,
+                        zIndex: 100,
+                        background: colors.surface.layer2,
+                        border: `1px solid ${colors.border.subtle}`,
+                        borderRadius: radius.md,
+                        padding: '8px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: colors.text.primary
+                    }}
+                >
+                    <span>⏱️</span>
+                    <span>{timer.formattedTime}</span>
+                </div>
+            )}
+            
             {renderTool()}
         </div>
     );

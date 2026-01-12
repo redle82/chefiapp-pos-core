@@ -1,13 +1,19 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStaff } from './context/StaffContext';
 import { StaffLayout } from '../../ui/design-system/layouts/StaffLayout';
 import { Text } from '../../ui/design-system/primitives/Text';
 import { Button } from '../../ui/design-system/primitives/Button';
+import { Input } from '../../ui/design-system/primitives/Input';
 import { useToast } from '../../ui/design-system';
 import { ShiftForecastWidget } from '../../ui/design-system/ShiftForecastWidget';
 import { useTableAlerts } from './hooks/useTableAlerts';
 import { useTraining } from '../../intelligence/education/TrainingContext';
 import { useContextualSuggestions } from './hooks/useContextualSuggestions';
+import { useTaskFilters } from './hooks/useTaskFilters'; // P3-1 & P3-2
+import { AdvancedSearchPanel } from './components/AdvancedSearchPanel'; // P4-8
+import { DarkModeToggle } from '../../ui/components/DarkModeToggle'; // P3-5
+import { PresenceIndicator } from './components/PresenceIndicator'; // P5-7
+import { GamificationPanel } from './components/GamificationPanel'; // P6-8
 
 export const WorkerTaskStream: React.FC = () => {
     // Destructure completeTask here
@@ -16,6 +22,12 @@ export const WorkerTaskStream: React.FC = () => {
     const { suggestions } = useContextualSuggestions(); // FASE 2: Sugestões contextuais
     const { activeLesson, completeLesson, dismissLesson } = useTraining();
     const { success } = useToast();
+
+    // P3-1 & P3-2: Task filtering and search
+    const { filter, setFilter, searchQuery, setSearchQuery, filteredTasks } = useTaskFilters(tasks);
+    
+    // P4-8: Advanced search state
+    const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
 
     // Listen for task completion events (dopamine feedback)
     useEffect(() => {
@@ -27,8 +39,8 @@ export const WorkerTaskStream: React.FC = () => {
         return () => window.removeEventListener('staff-task-complete', handleTaskComplete as EventListener);
     }, [success]);
 
-    // Filter tasks relevant to view
-    const activeTasks = tasks.filter(t => t.status !== 'done');
+    // Filter tasks relevant to view (now using filteredTasks from hook)
+    const activeTasks = filteredTasks.filter(t => t.status !== 'done');
 
     return (
         <StaffLayout
@@ -37,14 +49,17 @@ export const WorkerTaskStream: React.FC = () => {
             role={activeRole}
             status="active"
             actions={
-                <Button
-                    tone="destructive"
-                    variant="outline"
-                    fullWidth
-                    onClick={checkOut}
-                >
-                    Encerrar Turno
-                </Button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <DarkModeToggle />
+                    <Button
+                        tone="destructive"
+                        variant="outline"
+                        fullWidth
+                        onClick={checkOut}
+                    >
+                        Encerrar Turno
+                    </Button>
+                </div>
             }
         >
             {/* SHIFT HEALTH - PHASE B - Always visible */}
@@ -101,6 +116,45 @@ export const WorkerTaskStream: React.FC = () => {
                 </div>
             )}
 
+            {/* P3-1 & P3-2: FILTERS AND SEARCH */}
+            <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {/* Search Input */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <Input
+                        placeholder="🔍 Buscar tarefas..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        style={{ flex: 1 }}
+                    />
+                    <Button variant="outline" size="sm" onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}>
+                        {showAdvancedSearch ? '✕' : '🔍 Avançada'}
+                    </Button>
+                </div>
+                
+                {/* P4-8: Advanced Search Panel */}
+                {showAdvancedSearch && (
+                    <AdvancedSearchPanel onClose={() => setShowAdvancedSearch(false)} />
+                )}
+
+                {/* Filter Buttons */}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {(['all', 'pending', 'critical', 'done'] as const).map((filterOption) => (
+                        <Button
+                            key={filterOption}
+                            variant={filter === filterOption ? 'solid' : 'outline'}
+                            tone={filterOption === 'critical' ? 'destructive' : 'neutral'}
+                            size="sm"
+                            onClick={() => setFilter(filterOption)}
+                        >
+                            {filterOption === 'all' && 'Todas'}
+                            {filterOption === 'pending' && 'Pendentes'}
+                            {filterOption === 'critical' && 'Críticas'}
+                            {filterOption === 'done' && 'Concluídas'}
+                        </Button>
+                    ))}
+                </div>
+            </div>
+
             {/* EMPTY STATE */}
             {activeTasks.length === 0 && alerts.length === 0 && (
                 <div style={{ padding: 40, textAlign: 'center', opacity: 0.5 }}>
@@ -127,6 +181,11 @@ export const WorkerTaskStream: React.FC = () => {
                         }}
                     />
                 ))}
+            </div>
+            
+            {/* P6-8: Gamification Panel */}
+            <div style={{ marginTop: 24 }}>
+                <GamificationPanel />
             </div>
         </StaffLayout>
     );

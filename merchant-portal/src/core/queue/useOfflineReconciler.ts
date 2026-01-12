@@ -47,8 +47,14 @@ export function useOfflineReconciler({
 
             for (const item of pendingItems) {
                 try {
-                    // 🔵 syncing
-                    await update(item.id, { status: 'syncing' })
+                    // P1-3 FIX: Update status to syncing with error handling
+                    try {
+                        await update(item.id, { status: 'syncing' })
+                    } catch (updateError) {
+                        console.error('[OfflineReconciler] Failed to update status to syncing:', updateError)
+                        // If status update fails, skip this item (will retry on next tick)
+                        continue
+                    }
 
                     // 🔁 Processar por tipo
                     switch (item.type) {
@@ -109,13 +115,39 @@ export function useOfflineReconciler({
 
                     // 🟢 aplicado
                     console.log(`[OfflineReconciler] Success: ${item.id} (${item.type})`)
-                    await update(item.id, {
-                        status: 'applied',
-                        appliedAt: Date.now(),
-                    })
+                    try {
+                        await update(item.id, {
+                            status: 'applied',
+                            appliedAt: Date.now(),
+                        })
+                    } catch (updateError) {
+                        console.error('[OfflineReconciler] Failed to update status to applied:', updateError)
+                        // P1-3 FIX: Rollback to queued if status update fails after successful sync
+                        // This prevents item from being stuck in 'syncing' state
+                        try {
+                            await update(item.id, {
+                                status: 'queued',
+                                lastError: 'Status update failed after successful sync',
+                            })
+                        } catch (rollbackError) {
+                            console.error('[OfflineReconciler] Failed to rollback status:', rollbackError)
+                        }
+                    }
 
                 } catch (err: any) {
                     console.error('[OfflineReconciler] Falha ao reconciliar:', item.id, err)
+                    
+                    // P1-3 FIX: Rollback to queued on immediate sync failure
+                    try {
+                        await update(item.id, {
+                            status: 'queued',
+                            lastError: err instanceof Error ? err.message : 'Erro desconhecido',
+                        })
+                    } catch (rollbackError) {
+                        console.error('[OfflineReconciler] Failed to rollback on sync failure:', rollbackError)
+                        // If rollback fails, item will remain in 'syncing' but will be retried
+                        // on next tick (nextRetryAt will eventually trigger)
+                    }
 
                     // 🛑 FAIL FAST: Auth Errors (401/403)
                     // If token is dead, retrying won't help. We must stop immediately to avoid infinite loops.

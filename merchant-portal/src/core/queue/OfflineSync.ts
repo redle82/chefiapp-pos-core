@@ -47,7 +47,7 @@ async function processItem(item: OfflineQueueItem): Promise<boolean> {
                     return true;
                 }
 
-                // Criar pedido real
+                // Criar pedido real com sync_metadata
                 await OrderEngine.createOrder({
                     restaurantId: payload.restaurantId,
                     tableNumber: payload.tableNumber,
@@ -55,7 +55,12 @@ async function processItem(item: OfflineQueueItem): Promise<boolean> {
                     operatorId: payload.operatorId,
                     cashRegisterId: payload.cashRegisterId,
                     items: payload.items,
-                    notes: `[Offline] ${payload.localId}`, // Tag para idempotência
+                    notes: `[Offline] ${payload.localId}`, // Tag para idempotência (fallback)
+                    syncMetadata: {
+                        localId: payload.localId,
+                        syncAttempts: item.attempts || 0,
+                        lastSyncAt: new Date().toISOString(),
+                    },
                 });
 
                 return true;
@@ -114,22 +119,35 @@ async function processItem(item: OfflineQueueItem): Promise<boolean> {
 }
 
 /**
- * Verifica se pedido já foi criado (idempotência via notes)
+ * Verifica se pedido já foi criado (idempotência via sync_metadata)
  */
 async function checkExistingOrder(localId: string): Promise<string | null> {
-    // Buscar por notes contendo localId
-    // Isso é uma verificação simples - em produção poderia usar campo dedicado
     try {
         const { supabase } = await import('../supabase');
+        
+        // Buscar por sync_metadata->>'localId' = localId
         const { data } = await supabase
+            .from('gm_orders')
+            .select('id')
+            .eq('sync_metadata->>localId', localId)
+            .limit(1)
+            .maybeSingle();
+
+        if (data?.id) {
+            return data.id;
+        }
+
+        // Fallback: buscar por notes (para pedidos antigos)
+        const { data: fallbackData } = await supabase
             .from('gm_orders')
             .select('id')
             .ilike('notes', `%${localId}%`)
             .limit(1)
             .maybeSingle();
 
-        return data?.id || null;
-    } catch {
+        return fallbackData?.id || null;
+    } catch (err) {
+        console.error('[OfflineSync] Error checking existing order:', err);
         return null;
     }
 }
@@ -231,18 +249,59 @@ export async function syncOfflineQueue(): Promise<SyncResult> {
 }
 
 /**
- * Limpa items já processados (opcional, para manter DB limpo)
+ * P2-4 FIX: Garbage Collection - Limpa items aplicados há mais de 24h
+ * Executa periodicamente para manter IndexedDB limpo e performance otimizada
  */
+const GC_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
+
 export async function cleanupProcessedItems(): Promise<number> {
     const items = await OfflineDB.getAll();
-    const appliedItems = items.filter(i => i.status === 'applied');
+    const now = Date.now();
+    
+    // P2-4 FIX: Filtrar apenas items aplicados há mais de 24h
+    const oldAppliedItems = items.filter(i => {
+        if (i.status !== 'applied') return false;
+        if (!i.appliedAt) return false; // Se não tem appliedAt, manter (segurança)
+        
+        const age = now - i.appliedAt;
+        return age > GC_TTL_MS;
+    });
 
-    for (const item of appliedItems) {
-        await OfflineDB.remove(item.id);
+    let cleaned = 0;
+    for (const item of oldAppliedItems) {
+        try {
+            await OfflineDB.remove(item.id);
+            cleaned++;
+        } catch (err) {
+            console.warn(`[OfflineSync] Failed to remove item ${item.id}:`, err);
+        }
     }
 
-    console.log(`[OfflineSync] Cleaned up ${appliedItems.length} processed items`);
-    return appliedItems.length;
+    if (cleaned > 0) {
+        console.log(`[OfflineSync] Garbage collection: cleaned ${cleaned} items older than 24h`);
+    }
+    
+    return cleaned;
+}
+
+/**
+ * P2-4 FIX: Inicia garbage collection periódica (executa a cada hora)
+ */
+export function startGarbageCollection(): () => void {
+    // Executar imediatamente na primeira vez
+    cleanupProcessedItems().catch(err => {
+        console.error('[OfflineSync] Initial GC failed:', err);
+    });
+
+    // Executar a cada hora
+    const interval = setInterval(() => {
+        cleanupProcessedItems().catch(err => {
+            console.error('[OfflineSync] Periodic GC failed:', err);
+        });
+    }, 60 * 60 * 1000); // 1 hora
+
+    // Retornar função de limpeza
+    return () => clearInterval(interval);
 }
 
 /**

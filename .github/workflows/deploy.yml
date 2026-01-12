@@ -40,7 +40,7 @@ jobs:
         working-directory: merchant-portal
       
       - name: Deploy to Staging
-        if: env.VERCEL_TOKEN != ''
+        if: ${{ secrets.VERCEL_TOKEN != '' }}
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -91,7 +91,7 @@ jobs:
         working-directory: merchant-portal
       
       - name: Deploy to Production
-        if: env.VERCEL_TOKEN != ''
+        if: ${{ secrets.VERCEL_TOKEN != '' }}
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -105,7 +105,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       
       - name: Health Check
-        if: env.VERCEL_TOKEN != ''
+        if: ${{ secrets.VERCEL_TOKEN != '' }}
         run: |
           echo "🏥 Running health check..."
           sleep 15

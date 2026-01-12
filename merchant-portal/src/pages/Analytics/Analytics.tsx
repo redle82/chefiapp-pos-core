@@ -5,6 +5,9 @@ import { InsightCard } from '../../ui/design-system/InsightCard';
 import { DateRangeSelector } from '../../ui/design-system/DateRangeSelector';
 import { Card } from '../../ui/design-system/Card';
 import { useRealAnalytics } from './hooks/useRealAnalytics';
+import { AdvancedCharts } from './components/AdvancedCharts'; // P4-4
+import { MenuOptimizationPanel } from './components/MenuOptimizationPanel'; // P5-1
+import { PredictiveAnalyticsPanel } from './components/PredictiveAnalyticsPanel'; // P5-2
 import './Analytics.css';
 
 interface Order {
@@ -269,6 +272,28 @@ const Analytics: React.FC = () => {
             />
           </div>
         </div>
+
+        {/* P4-4: Advanced Charts */}
+        {realAnalytics && realAnalytics.length > 0 && (
+          <div className="analytics__section">
+            <h2 className="analytics__section-title">Gráficos Avançados</h2>
+            <AdvancedCharts
+              revenueData={realAnalytics.map(d => ({
+                name: new Date(d.date).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' }),
+                value: d.totalRevenue,
+              }))}
+              ordersData={realAnalytics.map(d => ({
+                name: new Date(d.date).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' }),
+                value: d.totalOrders,
+              }))}
+              topProducts={realAnalytics[0]?.topProducts?.map(p => ({
+                name: p.name,
+                value: p.quantity,
+              })) || []}
+              peakHours={realAnalytics[0]?.peakHours || {}}
+            />
+          </div>
+        )}
 
         {/* CAMADA 2: Gráficos Tendência (CSS sparklines, sem biblioteca) */}
         <div className="analytics__section">

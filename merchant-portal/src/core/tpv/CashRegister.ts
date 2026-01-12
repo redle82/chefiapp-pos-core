@@ -120,13 +120,11 @@ export class CashRegisterEngine {
             );
         }
 
-        // VALIDAÇÃO CRÍTICA: Verificar orders abertos antes de fechar
-        const { data: openOrders, error: ordersError } = await supabase
-            .from('gm_orders')
-            .select('id, table_number')
-            .eq('restaurant_id', input.restaurantId)
-            .in('status', ['pending', 'preparing', 'ready'])
-            .neq('payment_status', 'PAID');
+        // VALIDAÇÃO CRÍTICA: Verificar orders abertos antes de fechar (com FOR UPDATE lock)
+        // Usar RPC para garantir lock de linha e prevenir race condition
+        const { data: openOrders, error: ordersError } = await supabase.rpc('check_open_orders_with_lock', {
+            p_restaurant_id: input.restaurantId
+        });
 
         if (ordersError) {
             Logger.error('CASH_REGISTER_CLOSE_CHECK_FAILED', ordersError, { cashRegisterId: input.cashRegisterId });

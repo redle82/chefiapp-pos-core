@@ -115,7 +115,7 @@ class LoggerService {
         // Optional: Log 'info' if a flag is set? Keeping strict for now to save quota.
         if (['warn', 'error', 'critical'].includes(level)) {
             try {
-                const restaurantId = fullContext.tenantId || fullContext.restaurantId || getTabIsolated('chefiapp_restaurant_id');
+                const restaurantId = fullContext.tenantId || getTabIsolated('chefiapp_restaurant_id');
 
                 // Validate payload size
                 const detailsJson = JSON.stringify({ ...payload.data, ...payload.meta });

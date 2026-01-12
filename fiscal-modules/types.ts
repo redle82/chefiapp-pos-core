@@ -5,6 +5,9 @@ export interface FiscalResult {
     gov_protocol?: string;
     error_details?: string;
     reported_at: Date;
+    pdf_url?: string; // URL to download PDF invoice
+    qr_code?: string; // QR code for fiscal validation
+    fiscal_signature?: string; // Fiscal signature/hash
 }
 
 export type TaxDocumentType = "SAT_CFE" | "NFC_E" | "NF_E" | "MOCK" | "TICKETBAI" | "SAF-T";

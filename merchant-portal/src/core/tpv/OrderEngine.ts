@@ -46,6 +46,11 @@ export interface OrderInput {
     source?: 'tpv' | 'web' | 'app';
     notes?: string;
     items: OrderItemInput[];
+    syncMetadata?: {
+        localId: string;
+        syncAttempts: number;
+        lastSyncAt: string;
+    };
 }
 
 export interface Order {
@@ -135,7 +140,12 @@ export class OrderEngine {
         const { data: orderData, error } = await supabase.rpc('create_order_atomic', {
             p_restaurant_id: input.restaurantId,
             p_items: rpcItems,
-            p_payment_method: 'cash' // Default, will be updated on payment
+            p_payment_method: 'cash', // Default, will be updated on payment
+            p_sync_metadata: input.syncMetadata ? {
+                localId: input.syncMetadata.localId,
+                syncAttempts: input.syncMetadata.syncAttempts,
+                lastSyncAt: input.syncMetadata.lastSyncAt,
+            } : null
         });
 
         if (error) {
@@ -226,21 +236,53 @@ export class OrderEngine {
         status: OrderStatus,
         restaurantId: string
     ): Promise<void> {
-        // Buscar status anterior para log
+        // Buscar pedido atual com version para lock otimista
         const { data: currentOrder } = await supabase
             .from('gm_orders')
-            .select('status')
+            .select('status, version')
             .eq('id', orderId)
             .eq('restaurant_id', restaurantId)
             .single();
 
-        const previousStatus = currentOrder?.status || 'unknown';
+        if (!currentOrder) {
+            throw new OrderEngineError(
+                'Pedido não encontrado. Ele pode ter sido cancelado ou já finalizado.',
+                'ORDER_NOT_FOUND'
+            );
+        }
 
-        const { error } = await supabase
+        const previousStatus = currentOrder.status || 'unknown';
+        const currentVersion = currentOrder.version || 1;
+
+        // Atualizar com verificação de version (lock otimista)
+        const { error, data } = await supabase
             .from('gm_orders')
             .update({ status, updated_at: new Date().toISOString() })
             .eq('id', orderId)
-            .eq('restaurant_id', restaurantId);
+            .eq('restaurant_id', restaurantId)
+            .eq('version', currentVersion) // CRITICAL: Only update if version matches
+            .select();
+
+        if (error) {
+            Logger.error('ORDER_STATUS_UPDATE_FAILED', error, {
+                orderId,
+                restaurantId,
+                previousStatus,
+                newStatus: status
+            });
+            throw new OrderEngineError(
+                `Erro ao atualizar status do pedido: ${error.message}`,
+                'ORDER_STATUS_UPDATE_FAILED'
+            );
+        }
+
+        // Se nenhuma linha foi atualizada, significa que version mudou (conflito)
+        if (!data || data.length === 0) {
+            throw new OrderEngineError(
+                'Pedido foi modificado por outro operador. Recarregue e tente novamente.',
+                'CONCURRENT_MODIFICATION'
+            );
+        }
 
         if (error) {
             // Log erro
@@ -302,7 +344,7 @@ export class OrderEngine {
             throw new OrderEngineError('Order does not belong to restaurant', 'UNAUTHORIZED');
         }
 
-        // HARD RULE 5: Verificar se pedido ainda está aberto (lock otimista)
+        // HARD RULE 5: Lock otimista com versioning
         // Re-fetch para garantir que não foi modificado por outro operador
         const currentOrder = await this.getOrderById(orderId);
         if (currentOrder.status !== 'pending') {
@@ -311,6 +353,16 @@ export class OrderEngine {
                 'CONCURRENT_MODIFICATION'
             );
         }
+
+        // Get current version for optimistic lock
+        const { data: orderWithVersion } = await supabase
+            .from('gm_orders')
+            .select('version')
+            .eq('id', orderId)
+            .eq('restaurant_id', restaurantId)
+            .single();
+
+        const currentVersion = orderWithVersion?.version || 1;
 
         // Criar item
         const { data: itemData, error } = await supabase
@@ -381,6 +433,16 @@ export class OrderEngine {
             );
         }
 
+        // HARD RULE 5: Lock otimista com versioning
+        const { data: orderWithVersion } = await supabase
+            .from('gm_orders')
+            .select('version')
+            .eq('id', orderId)
+            .eq('restaurant_id', restaurantId)
+            .single();
+
+        const currentVersion = orderWithVersion?.version || 1;
+
         // Remover item
         const { error } = await supabase
             .from('gm_order_items')
@@ -433,7 +495,17 @@ export class OrderEngine {
             throw new OrderEngineError('Order does not belong to restaurant', 'UNAUTHORIZED');
         }
 
-        // HARD RULE 5: Lock otimista
+        // HARD RULE 5: Lock otimista com versioning
+        const { data: orderWithVersion } = await supabase
+            .from('gm_orders')
+            .select('version')
+            .eq('id', orderId)
+            .eq('restaurant_id', restaurantId)
+            .single();
+
+        const currentVersion = orderWithVersion?.version || 1;
+
+        // Verificar se pedido ainda está aberto
         const currentOrder = await this.getOrderById(orderId);
         if (currentOrder.status !== 'pending') {
             throw new OrderEngineError(

@@ -64,12 +64,13 @@ export class InvoiceXpressAdapter implements FiscalObserver {
     }
 
     private async processWithTaxDoc(taxDoc: TaxDocument, event: CoreEvent): Promise<FiscalResult> {
-        // MVP: Just log and return success mock if no keys.
+        // CRITICAL: Never return fake success. This is a legal requirement.
         if (!this.config || !this.config.apiKey) {
-            console.warn('[InvoiceXpressAdapter] No credentials provided. Running in DRY RUN mode.');
+            const errorMsg = 'Fiscal credentials not configured. Cannot emit invoice. Restaurant is at risk of tax penalties.';
+            console.error('[InvoiceXpressAdapter] ❌ ' + errorMsg);
             return {
-                status: 'REPORTED', // Mock success
-                gov_protocol: `INV-MOCK-${Date.now()}`,
+                status: 'REJECTED',
+                error_details: errorMsg,
                 reported_at: new Date(),
             };
         }

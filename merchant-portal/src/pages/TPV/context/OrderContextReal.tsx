@@ -520,15 +520,23 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     const performOrderAction = async (orderId: string, action: string, payload?: any): Promise<void> => {
         if (!restaurantId) throw new Error('Restaurant ID not set');
 
+        // P1-4 FIX: Truth-First - Não fazer optimistic updates
+        // A UI deve mostrar status da queue (pending/syncing/applied) até o Core confirmar
+        // Não atualizamos o estado local aqui - aguardamos getActiveOrders() após a ação
+
         try {
             switch (action) {
                 case 'send':
                 case 'prepare':
+                    // P1-4 FIX: Aguardar confirmação do Core antes de atualizar UI
                     await OrderEngine.updateOrderStatus(orderId, 'IN_PREP', restaurantId);
+                    // UI será atualizada apenas quando getActiveOrders() for chamado
                     break;
 
                 case 'ready':
+                    // P1-4 FIX: Aguardar confirmação do Core antes de atualizar UI
                     await OrderEngine.updateOrderStatus(orderId, 'READY', restaurantId);
+                    // UI será atualizada apenas quando getActiveOrders() for chamado
                     break;
 
                 case 'serve':
