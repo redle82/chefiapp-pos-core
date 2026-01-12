@@ -34,6 +34,7 @@ export class SupabaseFiscalEventStore {
                     fiscal_status: result.status === 'REPORTED' ? 'REPORTED' : 
                                   result.status === 'REJECTED' ? 'REJECTED' : 
                                   'PENDING',
+                    retry_count: 0, // P0-4 FIX: Inicializar retry_count
                 })
                 .select('fiscal_event_id')
                 .single();

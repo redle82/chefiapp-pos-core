@@ -4030,6 +4030,114 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    // P0-1 FIX: POST /api/fiscal/invoicexpress/invoices - Proxy seguro para InvoiceXpress API
+    // API key nunca é exposta ao cliente - backend busca do banco e faz chamada real
+    if (req.method === 'POST' && url.pathname === '/api/fiscal/invoicexpress/invoices') {
+      try {
+        // Verificar autenticação (token do cliente ou service key interno)
+        const authHeader = req.headers['x-chefiapp-token'] || req.headers['x-internal-service-key'];
+        const isInternal = req.headers['x-internal-service-key'] === INTERNAL_API_TOKEN;
+        
+        // Permitir chamadas internas (Edge Functions) ou autenticadas
+        if (!isInternal && !authHeader) {
+          return sendJSON(res, 401, { error: 'UNAUTHORIZED', message: 'Missing authentication token' });
+        }
+
+        const body = await readJsonBody(req);
+        const { invoice, accountName } = body;
+
+        if (!invoice || !accountName) {
+          return sendJSON(res, 400, { error: 'INVALID_BODY', message: 'Missing invoice or accountName' });
+        }
+
+        // Buscar API key do banco de dados (nunca do cliente)
+        const client = await pool.connect();
+        try {
+          const { rows } = await client.query(
+            `SELECT fiscal_config->'invoicexpress'->>'apiKey' as api_key,
+                    fiscal_config->'invoicexpress'->>'accountName' as account_name
+             FROM gm_restaurants
+             WHERE fiscal_config->'invoicexpress'->>'accountName' = $1
+             LIMIT 1`,
+            [accountName]
+          );
+
+          if (rows.length === 0) {
+            return sendJSON(res, 404, { error: 'RESTAURANT_NOT_FOUND', message: 'Restaurant with this accountName not found' });
+          }
+
+          const apiKey = rows[0].api_key;
+          if (!apiKey) {
+            return sendJSON(res, 400, { error: 'FISCAL_NOT_CONFIGURED', message: 'InvoiceXpress API key not configured for this restaurant' });
+          }
+
+          // Fazer chamada real à API InvoiceXpress (API key seguro no backend)
+          const invoiceXpressUrl = `https://${accountName}.app.invoicexpress.com/invoices.json?api_key=${apiKey}`;
+          
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+          try {
+            const response = await fetch(invoiceXpressUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+              body: JSON.stringify({ invoice }),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              let errorMessage = `InvoiceXpress API Error (${response.status})`;
+              
+              try {
+                const errorJson = JSON.parse(errorText);
+                errorMessage = errorJson.errors?.join(', ') || errorJson.message || errorMessage;
+              } catch {
+                errorMessage = errorText || errorMessage;
+              }
+
+              // Categorizar erro
+              if (response.status >= 500) {
+                return sendJSON(res, 502, { error: 'INVOICEXPRESS_SERVER_ERROR', message: errorMessage });
+              } else if (response.status === 429) {
+                return sendJSON(res, 429, { error: 'RATE_LIMIT', message: errorMessage });
+              } else {
+                return sendJSON(res, 400, { error: 'INVOICEXPRESS_CLIENT_ERROR', message: errorMessage });
+              }
+            }
+
+            const data = await response.json();
+            
+            // InvoiceXpress returns { invoice: {...} }
+            const invoiceResult = data.invoice || data;
+            
+            return sendJSON(res, 200, { invoice: invoiceResult });
+
+          } catch (fetchError: any) {
+            clearTimeout(timeoutId);
+            
+            if (fetchError.name === 'AbortError') {
+              return sendJSON(res, 504, { error: 'TIMEOUT', message: 'InvoiceXpress API did not respond in time' });
+            }
+            
+            throw fetchError;
+          }
+
+        } finally {
+          client.release();
+        }
+
+      } catch (e: any) {
+        console.error('[API] /api/fiscal/invoicexpress/invoices POST failed:', e);
+        return sendJSON(res, 500, { error: 'INTERNAL_ERROR', message: e.message });
+      }
+    }
+
     // POST /api/portioning/measurements
     if (req.method === 'POST' && url.pathname === '/api/portioning/measurements') {
       try {

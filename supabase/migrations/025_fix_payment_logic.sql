@@ -32,12 +32,14 @@ IF v_register_status != 'open' THEN RETURN jsonb_build_object(
 );
 END IF;
 -- 2. Validate Order State
+-- P0-2 FIX: SELECT FOR UPDATE previne race condition em pagamentos simultâneos
 SELECT status,
     total_cents INTO v_order_status,
     v_order_total
 FROM public.gm_orders
 WHERE id = p_order_id
-    AND restaurant_id = p_restaurant_id;
+    AND restaurant_id = p_restaurant_id
+FOR UPDATE; -- Lock pessimista: previne pagamento duplo simultâneo
 IF v_order_status IS NULL THEN RETURN jsonb_build_object('success', false, 'error', 'Order not found');
 END IF;
 -- FIX: Allow 'served' to be paid. Only block 'paid' or 'cancelled'.

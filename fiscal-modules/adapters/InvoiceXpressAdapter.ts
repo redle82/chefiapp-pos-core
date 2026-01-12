@@ -4,8 +4,8 @@ import type { LegalSeal } from '../../legal-boundary/types';
 import type { CoreEvent } from '../../event-log/types';
 
 interface InvoiceXpressConfig {
-    apiKey: string;
-    accountName: string;
+    apiKey?: string; // P0-1 FIX: Opcional - backend busca do banco
+    accountName: string; // Obrigatório - usado para identificar restaurante
 }
 
 const MAX_RETRIES = 3;
@@ -64,8 +64,9 @@ export class InvoiceXpressAdapter implements FiscalObserver {
     }
 
     private async processWithTaxDoc(taxDoc: TaxDocument, event: CoreEvent): Promise<FiscalResult> {
-        // CRITICAL: Never return fake success. This is a legal requirement.
-        if (!this.config || !this.config.apiKey) {
+        // P0-1 FIX: Não verificar apiKey aqui - backend faz isso
+        // Apenas verificar se accountName está configurado
+        if (!this.config || !this.config.accountName) {
             const errorMsg = 'Fiscal credentials not configured. Cannot emit invoice. Restaurant is at risk of tax penalties.';
             console.error('[InvoiceXpressAdapter] ❌ ' + errorMsg);
             return {
@@ -169,22 +170,51 @@ export class InvoiceXpressAdapter implements FiscalObserver {
     }
 
     private async sendToInvoiceXpress(invoice: any): Promise<any> {
-        // InvoiceXpress API endpoint
-        // Reference: https://www.invoicexpress.com/api/invoices/create
-        const url = `https://${this.config!.accountName}.app.invoicexpress.com/invoices.json?api_key=${this.config!.apiKey}`;
+        // P0-1 FIX: API key NUNCA deve ser enviada do cliente
+        // Usar backend proxy que mantém API key segura
+        // O backend busca as credenciais do restaurante e faz a chamada real
+        
+        // Detectar API base (simples e compatível)
+        let apiBase = 'http://localhost:4320'; // Default
+        if (typeof window !== 'undefined') {
+            // Buscar de localStorage ou usar default
+            const stored = localStorage.getItem('chefiapp_api_base');
+            if (stored) {
+                apiBase = stored;
+            } else {
+                // Fallback: tentar detectar do window (se configurado)
+                const win = window as any;
+                if (win.__CHEFIAPP_API_BASE__) {
+                    apiBase = win.__CHEFIAPP_API_BASE__;
+                }
+            }
+        }
+        
+        const url = `${apiBase}/api/fiscal/invoicexpress/invoices`;
 
         // Timeout controller
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
         try {
+            // P0-1 FIX: Enviar apenas accountName, não apiKey
+            // Backend busca apiKey do banco de dados
+            const token = typeof window !== 'undefined' 
+                ? (localStorage.getItem('x-chefiapp-token') || '')
+                : '';
+            
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'x-chefiapp-token': token, // Token de autenticação (não API key do InvoiceXpress)
                 },
-                body: JSON.stringify({ invoice }),
+                body: JSON.stringify({ 
+                    invoice,
+                    accountName: this.config!.accountName,
+                    // NÃO enviar apiKey - backend busca do banco
+                }),
                 signal: controller.signal
             });
 

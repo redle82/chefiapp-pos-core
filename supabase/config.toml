@@ -20,3 +20,11 @@ entrypoint = "./functions/stripe-webhook/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/stripe-webhook/*.html" ]
+
+[functions.retry-pending-fiscal]
+enabled = true
+verify_jwt = false
+import_map = "./functions/retry-pending-fiscal/deno.json"
+entrypoint = "./functions/retry-pending-fiscal/index.ts"
+# P0-4 FIX: Background job para retentar faturas PENDING
+# Configurar cron no Supabase Dashboard: 0 */5 * * * * (a cada 5 minutos)

@@ -251,8 +251,12 @@ export async function syncOfflineQueue(): Promise<SyncResult> {
 /**
  * P2-4 FIX: Garbage Collection - Limpa items aplicados há mais de 24h
  * Executa periodicamente para manter IndexedDB limpo e performance otimizada
+ * 
+ * P0-3 FIX: Adiciona limite máximo de tamanho para prevenir IndexedDB crescer indefinidamente
  */
 const GC_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
+const MAX_QUEUE_SIZE = 1000; // P0-3: Máximo de items na fila
+const MAX_QUEUE_SIZE_MB = 50; // P0-3: Máximo de 50MB (estimativa: ~50KB por item)
 
 export async function cleanupProcessedItems(): Promise<number> {
     const items = await OfflineDB.getAll();
@@ -277,8 +281,41 @@ export async function cleanupProcessedItems(): Promise<number> {
         }
     }
 
+    // P0-3 FIX: Enforce queue size limits
+    const remainingItems = await OfflineDB.getAll();
+    
+    // Limite por quantidade de items
+    if (remainingItems.length > MAX_QUEUE_SIZE) {
+        // Ordenar por prioridade: failed primeiro, depois queued, depois syncing
+        const priority = (status: string) => {
+            if (status === 'failed') return 0;
+            if (status === 'queued') return 1;
+            if (status === 'syncing') return 2;
+            return 3; // applied (menor prioridade)
+        };
+        
+        const sorted = remainingItems.sort((a, b) => {
+            const priorityDiff = priority(a.status) - priority(b.status);
+            if (priorityDiff !== 0) return priorityDiff;
+            // Mesma prioridade: mais antigo primeiro
+            return a.createdAt - b.createdAt;
+        });
+        
+        // Remover items mais antigos até ficar dentro do limite
+        const toRemove = sorted.slice(MAX_QUEUE_SIZE);
+        for (const item of toRemove) {
+            try {
+                await OfflineDB.remove(item.id);
+                cleaned++;
+                console.warn(`[OfflineSync] Removed item ${item.id} to enforce queue size limit`);
+            } catch (err) {
+                console.warn(`[OfflineSync] Failed to remove item ${item.id}:`, err);
+            }
+        }
+    }
+
     if (cleaned > 0) {
-        console.log(`[OfflineSync] Garbage collection: cleaned ${cleaned} items older than 24h`);
+        console.log(`[OfflineSync] Garbage collection: cleaned ${cleaned} items (GC + size limit)`);
     }
     
     return cleaned;
