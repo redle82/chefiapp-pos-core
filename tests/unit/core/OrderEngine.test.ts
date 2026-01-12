@@ -221,7 +221,7 @@ describe('🧾 OrderEngine - Testes Unitários', () => {
         })),
       });
 
-      const order = await OrderEngine.getOrderById('ORDER-123', mockRestaurantId);
+      const order = await OrderEngine.getOrderById('ORDER-123');
 
       expect(order).toBeDefined();
       expect(order.id).toBe('ORDER-123');
@@ -243,8 +243,8 @@ describe('🧾 OrderEngine - Testes Unitários', () => {
         })),
       });
 
-      await expect(OrderEngine.getOrderById('ORDER-NOT-FOUND', mockRestaurantId)).rejects.toThrow(OrderEngineError);
-      await expect(OrderEngine.getOrderById('ORDER-NOT-FOUND', mockRestaurantId)).rejects.toThrow('Pedido não encontrado');
+      await expect(OrderEngine.getOrderById('ORDER-NOT-FOUND')).rejects.toThrow(OrderEngineError);
+      await expect(OrderEngine.getOrderById('ORDER-NOT-FOUND')).rejects.toThrow('Pedido não encontrado');
     });
   });
 

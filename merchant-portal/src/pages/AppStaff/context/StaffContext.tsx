@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { getTabIsolated } from '../../../core/storage/TabIsolatedStorage';
 import { getTabIsolated, setTabIsolated } from '../../../core/storage/TabIsolatedStorage';
 import type {
     OperationalContract,

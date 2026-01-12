@@ -47,15 +47,21 @@ module.exports = {
   projects: [
     {
       displayName: 'node',
+      preset: 'ts-jest',
       testEnvironment: 'node',
-      testMatch: ['**/*.test.ts', '!**/ui/**/*.test.tsx'],
+      testMatch: ['**/*.test.ts', '!**/ui/**/*.test.tsx', '!**/hooks/**/*.test.ts'],
       setupFiles: ['<rootDir>/tests/setup.ts'],
+      transform: {
+        '^.+\\.tsx?$': ['ts-jest', {
+          tsconfig: 'tests/tsconfig.json',
+        }],
+      },
     },
     {
       displayName: 'jsdom',
       preset: 'ts-jest',
       testEnvironment: 'jsdom',
-      testMatch: ['**/ui/**/*.test.tsx'],
+      testMatch: ['**/ui/**/*.test.tsx', '**/hooks/**/*.test.ts'],
       setupFiles: ['<rootDir>/tests/setup-jsdom.js'],
       setupFilesAfterEnv: ['<rootDir>/tests/setup-react.ts'],
       transform: {

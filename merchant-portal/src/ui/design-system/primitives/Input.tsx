@@ -1,4 +1,4 @@
-import { type InputHTMLAttributes, forwardRef } from 'react';
+import React, { type InputHTMLAttributes, forwardRef } from 'react';
 import { colors } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 import { Text } from './Text';

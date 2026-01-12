@@ -8,7 +8,7 @@
  * - Reconciliação
  */
 
-import { processQueue, syncQueue } from '../../../merchant-portal/src/core/queue/OfflineSync';
+import { syncOfflineQueue } from '../../../merchant-portal/src/core/queue/OfflineSync';
 import { OfflineDB } from '../../../merchant-portal/src/core/queue/db';
 import { OrderEngine } from '../../../merchant-portal/src/core/tpv/OrderEngine';
 import type { OfflineQueueItem } from '../../../merchant-portal/src/core/queue/types';
@@ -52,7 +52,7 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
     type: 'ORDER_CREATE',
     status: 'queued',
     attempts: 0,
-    createdAt: new Date().toISOString(),
+    createdAt: Date.now(),
     payload: {
       restaurantId: mockRestaurantId,
       tableId: mockTableId,
@@ -89,14 +89,14 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
       });
 
       // Mock: deletar item da fila após sucesso
-      (OfflineDB.delete as jest.Mock).mockResolvedValueOnce(undefined);
+      (OfflineDB.remove as jest.Mock).mockResolvedValueOnce(undefined);
 
-      const result = await processQueue();
+      const result = await syncOfflineQueue();
 
       expect(result.processed).toBe(1);
       expect(result.failed).toBe(0);
       expect(OrderEngine.createOrder).toHaveBeenCalled();
-      expect(OfflineDB.delete).toHaveBeenCalledWith('QUEUE-1');
+      expect(OfflineDB.remove).toHaveBeenCalledWith('QUEUE-1');
     });
 
     it('1.2 - Deve pular item se pedido já foi sincronizado (idempotência)', async () => {
@@ -108,14 +108,14 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
       (checkExistingOrder as jest.Mock).mockResolvedValueOnce('ORDER-123');
 
       // Mock: deletar item da fila
-      (OfflineDB.delete as jest.Mock).mockResolvedValueOnce(undefined);
+      (OfflineDB.remove as jest.Mock).mockResolvedValueOnce(undefined);
 
-      const result = await processQueue();
+      const result = await syncOfflineQueue();
 
       expect(result.processed).toBe(1);
       expect(result.failed).toBe(0);
       expect(OrderEngine.createOrder).not.toHaveBeenCalled();
-      expect(OfflineDB.delete).toHaveBeenCalledWith('QUEUE-1');
+      expect(OfflineDB.remove).toHaveBeenCalledWith('QUEUE-1');
     });
 
     it('1.3 - Deve processar item ORDER_UPDATE (add_item)', async () => {
@@ -124,7 +124,7 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
         type: 'ORDER_UPDATE',
         status: 'queued',
         attempts: 0,
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
         payload: {
           orderId: 'ORDER-123',
           restaurantId: mockRestaurantId,
@@ -148,9 +148,9 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
       });
 
       // Mock: deletar item da fila
-      (OfflineDB.delete as jest.Mock).mockResolvedValueOnce(undefined);
+      (OfflineDB.remove as jest.Mock).mockResolvedValueOnce(undefined);
 
-      const result = await processQueue();
+      const result = await syncOfflineQueue();
 
       expect(result.processed).toBe(1);
       expect(OrderEngine.addItemToOrder).toHaveBeenCalledWith(
@@ -168,7 +168,7 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
         type: 'ORDER_UPDATE',
         status: 'queued',
         attempts: 0,
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
         payload: {
           orderId: 'ORDER-123',
           restaurantId: mockRestaurantId,
@@ -189,9 +189,9 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
       });
 
       // Mock: deletar item da fila
-      (OfflineDB.delete as jest.Mock).mockResolvedValueOnce(undefined);
+      (OfflineDB.remove as jest.Mock).mockResolvedValueOnce(undefined);
 
-      const result = await processQueue();
+      const result = await syncOfflineQueue();
 
       expect(result.processed).toBe(1);
       expect(OrderEngine.removeItemFromOrder).toHaveBeenCalledWith(
@@ -207,7 +207,7 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
         type: 'ORDER_UPDATE',
         status: 'queued',
         attempts: 0,
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
         payload: {
           orderId: 'ORDER-123',
           restaurantId: mockRestaurantId,
@@ -225,9 +225,9 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
       (OrderEngine.updateOrderStatus as jest.Mock).mockResolvedValueOnce(undefined);
 
       // Mock: deletar item da fila
-      (OfflineDB.delete as jest.Mock).mockResolvedValueOnce(undefined);
+      (OfflineDB.remove as jest.Mock).mockResolvedValueOnce(undefined);
 
-      const result = await processQueue();
+      const result = await syncOfflineQueue();
 
       expect(result.processed).toBe(1);
       expect(OrderEngine.updateOrderStatus).toHaveBeenCalledWith(
@@ -253,7 +253,7 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
       // Mock: atualizar item com attempts incrementado
       (OfflineDB.update as jest.Mock).mockResolvedValueOnce(undefined);
 
-      const result = await processQueue();
+      const result = await syncOfflineQueue();
 
       expect(result.processed).toBe(0);
       expect(result.failed).toBe(1);
@@ -285,7 +285,7 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
       // Mock: atualizar item como failed
       (OfflineDB.update as jest.Mock).mockResolvedValueOnce(undefined);
 
-      const result = await processQueue();
+      const result = await syncOfflineQueue();
 
       expect(result.processed).toBe(0);
       expect(result.failed).toBe(1);
@@ -313,9 +313,9 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
       });
 
       // Mock: deletar item da fila
-      (OfflineDB.delete as jest.Mock).mockResolvedValueOnce(undefined);
+      (OfflineDB.remove as jest.Mock).mockResolvedValueOnce(undefined);
 
-      const result = await syncQueue();
+      const result = await syncOfflineQueue();
 
       expect(result.processed).toBe(1);
       expect(result.failed).toBe(0);
@@ -325,13 +325,13 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
       const item1: OfflineQueueItem = {
         ...mockQueueItem,
         id: 'QUEUE-1',
-        createdAt: new Date('2024-01-01T10:00:00Z').toISOString(),
+        createdAt: new Date('2024-01-01T10:00:00Z').getTime(),
       };
 
       const item2: OfflineQueueItem = {
         ...mockQueueItem,
         id: 'QUEUE-2',
-        createdAt: new Date('2024-01-01T10:01:00Z').toISOString(),
+        createdAt: new Date('2024-01-01T10:01:00Z').getTime(),
       };
 
       // Mock: buscar itens da fila (ordem FIFO)
@@ -349,11 +349,11 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
         .mockResolvedValueOnce({ id: 'ORDER-2' });
 
       // Mock: deletar itens da fila
-      (OfflineDB.delete as jest.Mock)
+      (OfflineDB.remove as jest.Mock)
         .mockResolvedValueOnce(undefined)
         .mockResolvedValueOnce(undefined);
 
-      const result = await syncQueue();
+      const result = await syncOfflineQueue();
 
       expect(result.processed).toBe(2);
       expect(result.failed).toBe(0);
@@ -368,7 +368,7 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
         type: 'UNKNOWN_TYPE' as any,
         status: 'queued',
         attempts: 0,
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
         payload: {},
       };
 
@@ -378,7 +378,7 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
       // Mock: atualizar item como failed
       (OfflineDB.update as jest.Mock).mockResolvedValueOnce(undefined);
 
-      const result = await processQueue();
+      const result = await syncOfflineQueue();
 
       expect(result.processed).toBe(0);
       expect(result.failed).toBe(1);
@@ -396,7 +396,7 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
         type: 'ORDER_CREATE',
         status: 'queued',
         attempts: 0,
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
         payload: null as any,
       };
 
@@ -406,7 +406,7 @@ describe('🔄 OfflineSync - Testes Unitários', () => {
       // Mock: atualizar item como failed
       (OfflineDB.update as jest.Mock).mockResolvedValueOnce(undefined);
 
-      const result = await processQueue();
+      const result = await syncOfflineQueue();
 
       expect(result.processed).toBe(0);
       expect(result.failed).toBe(1);

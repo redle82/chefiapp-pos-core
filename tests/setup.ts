@@ -40,7 +40,7 @@ console.log(`
 `);
 
 // Mock window for Node.js environment
-if (typeof (global as any).window === 'undefined') {
+if (typeof global !== 'undefined' && typeof (global as any).window === 'undefined') {
     (global as any).window = {
         navigator: {
             userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'

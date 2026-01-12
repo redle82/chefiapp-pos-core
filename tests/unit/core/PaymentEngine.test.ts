@@ -217,7 +217,7 @@ describe('💳 PaymentEngine - Testes Unitários', () => {
   });
 
   describe('2. Métodos de Pagamento', () => {
-    const paymentMethods = ['cash', 'card', 'mbway', 'multibanco', 'other'] as const;
+    const paymentMethods = ['cash', 'card', 'pix'] as const;
 
     paymentMethods.forEach((method) => {
       it(`2.${paymentMethods.indexOf(method) + 1} - Deve processar pagamento via ${method}`, async () => {

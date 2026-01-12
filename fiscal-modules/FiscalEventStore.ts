@@ -1,7 +1,6 @@
 import { Pool } from "pg";
 import { PostgresLink } from "../gate3-persistence/PostgresLink";
 import { FiscalResult, TaxDocument } from "./types";
-import { randomUUID } from "crypto";
 import { FailpointInjector } from "../tests/harness/FailpointInjector";
 
 export interface FiscalEventRecord {
@@ -34,7 +33,7 @@ export class FiscalEventStore {
         // Failpoint: simular falha fiscal antes de gravar
         await FailpointInjector.getInstance().checkpoint('FiscalEventStore.recordInteraction.before');
 
-        const id = randomUUID();
+        const id = crypto.randomUUID();
         const query = `
             INSERT INTO fiscal_event_store
             (fiscal_event_id, ref_seal_id, ref_event_id, doc_type, gov_protocol, payload_sent, response_received, fiscal_status)
@@ -55,10 +54,10 @@ export class FiscalEventStore {
 
         try {
             await this.pool.query(query, values);
-            
+
             // Failpoint: simular falha após gravar
             await FailpointInjector.getInstance().checkpoint('FiscalEventStore.recordInteraction.after');
-            
+
             return id;
         } catch (err: any) {
             // If duplicate (idempotency key ref_seal_id + doc_type), we might handle or throw.
