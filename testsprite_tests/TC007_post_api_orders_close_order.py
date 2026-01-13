@@ -27,7 +27,7 @@ def create_order(headers, table_id=1):
     r = requests.post(f"{BASE_URL}/api/orders", json=payload, headers=headers, timeout=TIMEOUT)
     r.raise_for_status()
     order = r.json()
-    if not order.get("order_id") or order.get("state") != "OPEN":
+    if not order.get("order_id") or order.get("state") != "PENDING":
         raise ValueError("Order creation failed or wrong state")
     return order
 
@@ -71,7 +71,7 @@ def test_post_api_orders_close_order():
             {"item_id": "item2", "quantity": 1, "price_snapshot_cents": 300},
         ]
         order = patch_order_add_items(order_id, headers, items)
-        assert order["state"] == "OPEN"
+        assert order["state"] == "PENDING"
         assert "items" in order and len(order["items"]) == 2
 
         # Lock order
@@ -102,4 +102,6 @@ def test_post_api_orders_close_order():
             # If deletion endpoint existed, it would be called here to cleanup.
             pass
 
-test_post_api_orders_close_order()
+
+if __name__ == "__main__":
+    test_post_api_orders_close_order()

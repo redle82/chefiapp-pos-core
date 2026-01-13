@@ -56,7 +56,7 @@ def test_post_api_orders_create_order():
         assert "state" in data, "Response missing state"
         assert "table_id" in data, "Response missing table_id"
         assert isinstance(data["table_id"], str), f"table_id should be string but got {type(data['table_id'])}"
-        assert data["state"] == "OPEN", f"Expected state 'OPEN', got '{data['state']}'"
+        assert data["state"] == "PENDING", f"Expected state 'OPEN', got '{data['state']}'"
 
         order_id = data["order_id"]
 
@@ -69,11 +69,13 @@ def test_post_api_orders_create_order():
         get_resp.raise_for_status()
         order_data = get_resp.json()
         assert order_data["order_id"] == order_id
-        assert order_data["state"] == "OPEN"
+        assert order_data["state"] == "PENDING"
         assert "table_id" in order_data
         assert isinstance(order_data["table_id"], str), f"table_id should be string but got {type(order_data['table_id'])}"
 
     finally:
         pass
 
-test_post_api_orders_create_order()
+
+if __name__ == "__main__":
+    test_post_api_orders_create_order()

@@ -39,7 +39,7 @@ def create_order(session_token):
         order_id = data.get("order_id")
         state = data.get("state")
         assert order_id, "order_id missing in create order response"
-        assert state == "OPEN", f"Expected state OPEN, got {state}"
+        assert state == "PENDING", f"Expected state OPEN, got {state}"
         return order_id
     except requests.RequestException as e:
         raise RuntimeError(f"Create order failed: {e}")
@@ -127,4 +127,6 @@ def test_patch_api_orders_reject_modification_closed_order():
         pass
 
 
-test_patch_api_orders_reject_modification_closed_order()
+
+if __name__ == "__main__":
+    test_patch_api_orders_reject_modification_closed_order()

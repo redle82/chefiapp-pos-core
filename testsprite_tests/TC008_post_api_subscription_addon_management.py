@@ -28,4 +28,6 @@ def test_post_api_subscription_addon_management():
     assert "features" in data_addon, "Response missing features information"
 
 
-test_post_api_subscription_addon_management()
+
+if __name__ == "__main__":
+    test_post_api_subscription_addon_management()

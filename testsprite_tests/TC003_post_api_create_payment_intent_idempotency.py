@@ -46,4 +46,6 @@ def test_post_api_create_payment_intent_idempotency():
     except requests.RequestException as e:
         assert False, f"Request failed: {e}"
 
-test_post_api_create_payment_intent_idempotency()
+
+if __name__ == "__main__":
+    test_post_api_create_payment_intent_idempotency()

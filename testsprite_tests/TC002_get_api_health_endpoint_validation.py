@@ -24,4 +24,6 @@ def test_get_api_health_endpoint_validation():
     assert services.get("database") == "up", "services.database is not 'up'"
     assert services.get("api") == "up", "services.api is not 'up'"
 
-test_get_api_health_endpoint_validation()
+
+if __name__ == "__main__":
+    test_get_api_health_endpoint_validation()

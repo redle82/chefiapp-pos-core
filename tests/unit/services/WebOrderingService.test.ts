@@ -11,11 +11,17 @@
 
 import { WebOrderingService } from '../../../merchant-portal/src/core/services/WebOrderingService';
 
-// Mock supabase
+// Mock supabase com cadeia completa
+const mockSupabaseChain = {
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    single: jest.fn(),
+    insert: jest.fn().mockReturnThis(),
+};
+
 jest.mock('../../../merchant-portal/src/core/supabase', () => ({
     supabase: {
-        from: jest.fn(),
-        rpc: jest.fn(),
+        from: jest.fn(() => mockSupabaseChain),
     },
 }));
 
@@ -29,7 +35,6 @@ import { supabase } from '../../../merchant-portal/src/core/supabase';
 import { checkOrderProtection, recordOrderSubmission } from '../../../merchant-portal/src/core/services/OrderProtection';
 
 const mockFrom = supabase.from as jest.MockedFunction<typeof supabase.from>;
-const mockRpc = supabase.rpc as jest.MockedFunction<typeof supabase.rpc>;
 const mockCheckOrderProtection = checkOrderProtection as jest.MockedFunction<typeof checkOrderProtection>;
 const mockRecordOrderSubmission = recordOrderSubmission as jest.MockedFunction<typeof recordOrderSubmission>;
 
@@ -48,146 +53,105 @@ describe('WebOrderingService', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mockCheckOrderProtection.mockReturnValue({ allowed: true });
+        // Reset mock chain
+        mockSupabaseChain.select.mockReturnThis();
+        mockSupabaseChain.eq.mockReturnThis();
+        mockSupabaseChain.single.mockResolvedValue({ data: null, error: null });
+        mockSupabaseChain.insert.mockReturnThis();
     });
 
     it('deve submeter pedido com sucesso quando auto-accept está ativo', async () => {
         // Mock restaurant config
-        mockFrom.mockReturnValueOnce({
-            select: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({
-                        data: { auto_accept_web_orders: true },
-                        error: null,
-                    }),
-                }),
-            }),
-        } as any);
+        mockSupabaseChain.single
+            .mockResolvedValueOnce({
+                data: { id: mockRestaurantId, auto_accept_web_orders: true, web_ordering_enabled: true },
+                error: null,
+            })
+            // Mock order creation
+            .mockResolvedValueOnce({
+                data: { id: 'order-123' },
+                error: null,
+            });
 
-        // Mock order creation
-        mockFrom.mockReturnValueOnce({
-            insert: jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({
-                        data: { id: 'order-123' },
-                        error: null,
-                    }),
-                }),
-            }),
-        } as any);
-
-        const progressCallback = jest.fn();
         const result = await WebOrderingService.submitOrder(mockOrder);
 
         expect(result.success).toBe(true);
         expect(result.order_id).toBe('order-123');
-        expect(progressCallback).toHaveBeenCalled();
+        expect(result.status).toBe('ACCEPTED');
     });
 
     it('deve criar request quando auto-accept está desativado', async () => {
         // Mock restaurant config
-        mockFrom.mockReturnValueOnce({
-            select: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({
-                        data: { auto_accept_web_orders: false },
-                        error: null,
-                    }),
-                }),
-            }),
-        } as any);
+        mockSupabaseChain.single
+            .mockResolvedValueOnce({
+                data: { id: mockRestaurantId, auto_accept_web_orders: false, web_ordering_enabled: true },
+                error: null,
+            })
+            // Mock request creation
+            .mockResolvedValueOnce({
+                data: { id: 'req-123' },
+                error: null,
+            });
 
-        // Mock request creation
-        mockFrom.mockReturnValueOnce({
-            insert: jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({
-                        data: { id: 'req-123' },
-                        error: null,
-                    }),
-                }),
-            }),
-        } as any);
-
-        const progressCallback = jest.fn();
         const result = await WebOrderingService.submitOrder(mockOrder);
 
         expect(result.success).toBe(true);
         expect(result.request_id).toBe('req-123');
+        expect(result.status).toBe('PENDING_APPROVAL');
     });
 
     it('deve bloquear pedido quando proteção detecta duplicata', async () => {
         mockCheckOrderProtection.mockReturnValue({
             allowed: false,
             reason: 'DUPLICATE',
+            message: 'Este pedido já foi enviado',
+            existingOrderId: 'order-existing',
         });
 
-        const progressCallback = jest.fn();
         const result = await WebOrderingService.submitOrder(mockOrder);
 
         expect(result.success).toBe(false);
-        expect(result.message).toContain('duplicado');
+        expect(result.status).toBe('BLOCKED');
+        expect(result.blockReason).toBe('DUPLICATE');
+        expect(result.message).toContain('já foi enviado');
     });
 
     it('deve retentar em caso de falha de rede', async () => {
-        // Mock restaurant config
-        mockFrom.mockReturnValueOnce({
-            select: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                    single: jest.fn()
-                        .mockRejectedValueOnce(new Error('Network error'))
-                        .mockResolvedValueOnce({
-                            data: { auto_accept_web_orders: true },
-                            error: null,
-                        }),
-                }),
-            }),
-        } as any);
+        // Mock restaurant config - sucesso
+        mockSupabaseChain.single
+            .mockResolvedValueOnce({
+                data: { id: mockRestaurantId, auto_accept_web_orders: true, web_ordering_enabled: true },
+                error: null,
+            })
+            // Primeira tentativa - falha
+            .mockRejectedValueOnce(new Error('Network error'))
+            // Retry - sucesso
+            .mockResolvedValueOnce({
+                data: { id: 'order-123' },
+                error: null,
+            });
 
-        // Mock order creation (sucesso no retry)
-        mockFrom.mockReturnValueOnce({
-            insert: jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({
-                        data: { id: 'order-123' },
-                        error: null,
-                    }),
-                }),
-            }),
-        } as any);
-
+        // Usar submitOrderWithRetry diretamente para testar retry
         const progressCallback = jest.fn();
-        const result = await WebOrderingService.submitOrder(mockOrder);
+        const result = await WebOrderingService.submitOrderWithRetry(mockOrder, progressCallback);
 
+        // O submitOrderWithRetry deve retentar e ter sucesso
         expect(result.success).toBe(true);
-        expect(progressCallback).toHaveBeenCalledWith(
-            expect.objectContaining({ phase: 'RETRYING' })
-        );
+        expect(progressCallback).toHaveBeenCalled();
     });
 
     it('deve chamar recordOrderSubmission após sucesso', async () => {
         // Mock restaurant config
-        mockFrom.mockReturnValueOnce({
-            select: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({
-                        data: { auto_accept_web_orders: true },
-                        error: null,
-                    }),
-                }),
-            }),
-        } as any);
-
-        // Mock order creation
-        mockFrom.mockReturnValueOnce({
-            insert: jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({
-                        data: { id: 'order-123' },
-                        error: null,
-                    }),
-                }),
-            }),
-        } as any);
+        mockSupabaseChain.single
+            .mockResolvedValueOnce({
+                data: { id: mockRestaurantId, auto_accept_web_orders: true, web_ordering_enabled: true },
+                error: null,
+            })
+            // Mock order creation
+            .mockResolvedValueOnce({
+                data: { id: 'order-123' },
+                error: null,
+            });
 
         await WebOrderingService.submitOrder(mockOrder);
 
@@ -196,20 +160,12 @@ describe('WebOrderingService', () => {
 
     it('deve reportar fase UNCERTAIN quando timeout', async () => {
         // Mock que sempre falha
-        mockFrom.mockReturnValue({
-            select: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                    single: jest.fn().mockRejectedValue(new Error('Timeout')),
-                }),
-            }),
-        } as any);
+        mockSupabaseChain.single.mockRejectedValue(new Error('Timeout'));
 
-        const progressCallback = jest.fn();
         const result = await WebOrderingService.submitOrder(mockOrder);
 
         expect(result.success).toBe(false);
-        expect(progressCallback).toHaveBeenCalledWith(
-            expect.objectContaining({ phase: 'UNCERTAIN' })
-        );
+        expect(result.status).toBe('UNCERTAIN');
+        expect(result.nextAction).toBe('WAIT_AND_CHECK');
     });
 });

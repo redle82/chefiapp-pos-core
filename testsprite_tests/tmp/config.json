@@ -1,16 +1,19 @@
 {
-  "status": "init",
+  "status": "commited",
   "type": "backend",
   "scope": "codebase",
-  "localEndpoint": "http://localhost:4320/",
+  "localEndpoint": "http://localhost:4320",
+  "backendAuthType": "basic token",
+  "backendUsername": "contact@goldmonkey.studio",
+  "backendPassword": "Miranda87529192",
   "executionArgs": {
     "projectName": "chefiapp-pos-core",
     "projectPath": "/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core",
     "testIds": [],
-    "additionalInstruction": "Use the session infrastructure from the test plan. For tests TC003-TC010, automatically create a session by: 1) POST /api/auth/request-magic-link with email \"test@chefiapp.test\", 2) Extract dev_token, 3) GET /api/auth/verify-magic-link?token={dev_token}, 4) Extract session_token and use it in x-chefiapp-token header for all order operations. \n\nIMPORTANT: The API now returns the correct format:\n- order_id (not id)\n- state: 'OPEN'/'LOCKED'/'CLOSED' (uppercase, not status: 'open')\n- table_id, items, total_cents\n\nAll endpoints are implemented:\n- POST /api/orders - creates order with order_id and state: 'OPEN'\n- GET /api/orders/{orderId} - returns order with order_id and state\n- PATCH /api/orders/{orderId} - updates items, returns order with order_id and state\n- POST /api/orders/{orderId}/lock - locks order, calculates total_cents, returns state: 'LOCKED'\n- POST /api/orders/{orderId}/close - closes order, returns state: 'CLOSED'\n\nFor TC001 and TC002 (health endpoints), validate:\n- status === \"ok\"\n- services.database === \"up\" \n- services.api === \"up\"\n\nFocus on CORE operational testing: health checks, order lifecycle (create, modify, lock, close), state machine transitions, and immutability guarantees.",
+    "additionalInstruction": "Validar que as correções no health endpoint (systemOperational, databaseConnected) e nos endpoints de orders (/close, /lock usando gm_orders) estão funcionando corretamente.",
     "envs": {
       "API_KEY": "sk-user-fZJrHoDW_A9S7z0Sb2zoBcrYixGMRcsti5T6wi9pmUjYa3b8sTPiTPs3ZtuSHnq2DdW96rEkdUyOCWy8Z8kG6AqN1_uxYIevminokmeacEw9TopOqi4K_isqHtMk6fW6FkY"
     }
   },
-  "proxy": "http://4ba6d4a2-68cd-4d40-9d02-4d08745310d9:7l55X3JR9gNkTKYC06Z380dK0Ec3jMaU@tun.testsprite.com:8080"
+  "proxy": "http://a4cf1c7d-1d84-4e1e-b441-8bca78ae4ee8:LWwOlNIGTU7dmV4LbjfMAobEl8pyfXQw@tun.testsprite.com:8080"
 }

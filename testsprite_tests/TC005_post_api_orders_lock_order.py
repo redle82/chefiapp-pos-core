@@ -43,7 +43,7 @@ def create_order(session_token):
     data = resp.json()
     order_id = data.get("order_id")
     state = data.get("state")
-    if not order_id or state != "OPEN":
+    if not order_id or state != "PENDING":
         raise RuntimeError("Failed to create OPEN order")
     return order_id
 
@@ -57,7 +57,7 @@ def add_items_to_order(session_token, order_id, items):
     )
     resp.raise_for_status()
     data = resp.json()
-    if data.get("state") != "OPEN":
+    if data.get("state") != "PENDING":
         raise RuntimeError("Order state changed unexpectedly when adding items")
     return data
 
@@ -110,7 +110,7 @@ def test_post_api_orders_lock_order():
         ]
         updated_order = add_items_to_order(session_token, order_id, items)
         assert updated_order["order_id"] == order_id
-        assert updated_order["state"] == "OPEN"
+        assert updated_order["state"] == "PENDING"
         assert "items" in updated_order
         assert len(updated_order["items"]) == 2
 
@@ -140,4 +140,6 @@ def test_post_api_orders_lock_order():
         # No delete order endpoint in PRD, so can't delete order explicitly here
         pass
 
-test_post_api_orders_lock_order()
+
+if __name__ == "__main__":
+    test_post_api_orders_lock_order()

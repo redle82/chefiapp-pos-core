@@ -78,6 +78,11 @@ function mapStatusToLocal(status: string, paymentStatus?: string): Order['status
         return 'paid';
     }
 
+    // SEMANA 2: Se payment_status = 'PARTIALLY_PAID', order está parcialmente pago
+    if (paymentStatus === 'PARTIALLY_PAID') {
+        return 'partially_paid';
+    }
+
     // PRIORIDADE 2: Se status = 'PAID', order está pago
     if (status === 'PAID') {
         return 'paid';
@@ -100,6 +105,7 @@ function mapLocalStatusToReal(status: Order['status']): RealOrder['status'] {
         case 'ready': return 'READY';
         case 'served': return 'READY';
         case 'paid': return 'PAID';
+        case 'partially_paid': return 'OPEN'; // SEMANA 2: Status ainda é OPEN, mas payment_status é PARTIALLY_PAID
         case 'cancelled': return 'CANCELLED';
         default: return 'OPEN';
     }
@@ -609,15 +615,26 @@ export function OrderProvider({ children }: { children: ReactNode }) {
                     }
 
                     // 4. Processar pagamento (transação atômica: paga + fecha)
-                    // SEMPRE usar valor do DB, nunca do estado React
+                    // SEMANA 2: Suportar pagamento parcial (split bill)
+                    const isPartial = payload?.isPartial === true;
+                    const amountCents = isPartial && payload?.amountCents
+                        ? payload.amountCents // Pagamento parcial (split bill)
+                        : dbOrder.totalCents; // Pagamento total (comportamento padrão)
+
+                    // Validar que amount não excede o total
+                    if (amountCents > dbOrder.totalCents) {
+                        throw new Error(`Valor de pagamento (${amountCents}) excede o total do pedido (${dbOrder.totalCents})`);
+                    }
+
                     await PaymentEngine.processPayment({
                         orderId,
                         restaurantId,
                         cashRegisterId: activeRegisterId,
-                        amountCents: dbOrder.totalCents, // SEMPRE do DB
+                        amountCents, // Pode ser parcial ou total
                         method: (payload?.method || 'cash') as PaymentMethod,
                         metadata: {
                             operatorId: operatorId || undefined,
+                            isPartial, // Flag para indicar que é pagamento parcial
                         },
                         idempotencyKey: key
                     });

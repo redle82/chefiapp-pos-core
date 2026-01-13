@@ -12,7 +12,7 @@ export interface Order {
     id: string;
     tableNumber?: number;
     tableId?: string;
-    status: 'new' | 'preparing' | 'ready' | 'served' | 'paid' | 'cancelled';
+    status: 'new' | 'preparing' | 'ready' | 'served' | 'paid' | 'partially_paid' | 'cancelled';
     items: OrderItem[];
     total: number; // In Cents (Integer)
     createdAt: Date;

@@ -50,4 +50,6 @@ def test_post_api_subscription_payment_method_update():
         assert False, f"Request failed during invalid payment method test: {str(e)}"
 
 
-test_post_api_subscription_payment_method_update()
+
+if __name__ == "__main__":
+    test_post_api_subscription_payment_method_update()

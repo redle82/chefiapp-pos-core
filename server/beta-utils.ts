@@ -133,10 +133,15 @@ export async function logAuditEvent(
   eventData: Record<string, any> = {}
 ): Promise<void> {
   try {
+    // Handle 'system' or non-UUID restaurant IDs to avoid DB errors
+    const validRestaurantId = restaurantId === 'system' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(restaurantId)
+      ? '00000000-0000-0000-0000-000000000000'
+      : restaurantId;
+
     await pool.query(
       `insert into onboarding_audit_log (restaurant_id, event_type, event_data)
        values ($1, $2, $3)`,
-      [restaurantId, eventType, JSON.stringify(eventData)]
+      [validRestaurantId, eventType, JSON.stringify(eventData)]
     );
 
     // Also log to console for immediate visibility (dev/beta)

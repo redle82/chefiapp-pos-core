@@ -27,7 +27,7 @@ def create_order(headers):
     resp.raise_for_status()
     order = resp.json()
     assert order.get("order_id"), "order_id missing in create order response"
-    assert order.get("state") == "OPEN"
+    assert order.get("state") == "PENDING"
     return order.get("order_id")
 
 
@@ -78,4 +78,6 @@ def test_patch_api_orders_reject_modification_of_locked_order():
             delete_order(order_id, headers)
 
 
-test_patch_api_orders_reject_modification_of_locked_order()
+
+if __name__ == "__main__":
+    test_patch_api_orders_reject_modification_of_locked_order()

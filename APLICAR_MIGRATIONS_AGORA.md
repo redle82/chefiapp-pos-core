@@ -1,347 +1,245 @@
-# 🚀 Guia de Migração: APLIQUE AGORA (v0.9.2)
+# 🚀 APLICAR MIGRATIONS P0 - AGORA
+**Data:** 12 Janeiro 2026  
+**Status:** ⚠️ **PENDENTE** - Pronto para aplicar
 
-> [!CAUTION]
-> **ATENÇÃO:** O sistema **NÃO FUNCIONARÁ** corretamente na versão v0.9.2 sem estas alterações no banco de dados.
-> Aplique os scripts na ordem apresentada abaixo.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
----
+## ⚠️ ANTES DE COMEÇAR
 
-## 📋 Como Aplicar
+### 1. Fazer Backup do Banco
+**CRÍTICO:** Sempre fazer backup antes de aplicar migrations
 
-1.  Acesse o **Supabase Dashboard** do seu projeto.
-2.  Vá para **SQL Editor**.
-3.  Cole o conteúdo de cada bloco abaixo (um por vez) e clique em **RUN**.
-4.  Verifique se retornou "Success" (ou vazio, sem erros).
+**Via Dashboard:**
+- Acessar: https://app.supabase.com
+- Settings → Database → Backups → Create Backup
 
----
-
-## 🟢 1. Configuração Fiscal & Base (20260117)
-
-Este script prepara a estrutura para configurações fiscais.
-
-```sql
--- Migration: Add fiscal config to restaurants
--- Date: 2026-01-17
-
-ALTER TABLE public.gm_restaurants
-ADD COLUMN IF NOT EXISTS fiscal_config JSONB DEFAULT '{}'::jsonb;
-
-COMMENT ON COLUMN public.gm_restaurants.fiscal_config IS 'Configuration for fiscal integration (e.g. invoiceXpress API key, account name)';
-
--- Add setup_status column if missing (for legacy databases)
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'gm_restaurants' AND column_name = 'setup_status') THEN
-        ALTER TABLE public.gm_restaurants ADD COLUMN setup_status TEXT DEFAULT 'not_started';
-    END IF;
-END $$;
+**Via CLI:**
+```bash
+supabase db dump -f backup_pre_p0_$(date +%Y%m%d_%H%M%S).sql
 ```
 
 ---
 
-## 🟢 2. Integração Delivery (Glovo/Uber) (20260117)
+### 2. Verificar Status Atual
 
-Cria a tabela de buffer para pedidos externos e configura segurança RLS.
-
+**Verificar se migrations já foram aplicadas:**
 ```sql
--- 1. Modify gm_restaurants to support external mappings
-ALTER TABLE public.gm_restaurants
-ADD COLUMN IF NOT EXISTS external_ids JSONB DEFAULT '{}'::jsonb;
-COMMENT ON COLUMN public.gm_restaurants.external_ids IS 'Map of external provider IDs, e.g. {"glovo_store_id": "12345", "uber_uuid": "..."}';
+-- Executar no SQL Editor do Supabase Dashboard
+SELECT 
+    version,
+    name,
+    inserted_at
+FROM supabase_migrations.schema_migrations
+WHERE name LIKE '20260118%'
+ORDER BY version;
+```
 
--- Development: Reset table
-DROP TABLE IF EXISTS public.integration_orders CASCADE;
+**Se retornar vazio:** Migrations não foram aplicadas ✅  
+**Se retornar registros:** Migrations já foram aplicadas ⚠️
 
--- 2. Create integration_orders table (Buffer)
-CREATE TABLE public.integration_orders (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    external_id TEXT NOT NULL,
-    source TEXT NOT NULL,
-    reference TEXT,
-    source_restaurant_id TEXT,
-    restaurant_id UUID REFERENCES public.gm_restaurants(id),
-    event_type TEXT NOT NULL,
-    status TEXT NOT NULL,
-    customer_name TEXT,
-    customer_phone TEXT,
-    customer_email TEXT,
-    delivery_address TEXT,
-    delivery_type TEXT DEFAULT 'delivery',
-    items JSONB NOT NULL DEFAULT '[]'::jsonb,
-    total_cents INTEGER NOT NULL DEFAULT 0,
-    currency TEXT DEFAULT 'EUR',
-    payment_method TEXT,
-    payment_status TEXT,
-    instructions TEXT,
-    raw_payload JSONB,
-    received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    processed_at TIMESTAMPTZ,
-    UNIQUE(external_id, source)
-);
+---
 
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_integration_orders_source ON public.integration_orders(source);
-CREATE INDEX IF NOT EXISTS idx_integration_orders_status ON public.integration_orders(status);
-CREATE INDEX IF NOT EXISTS idx_integration_orders_restaurant ON public.integration_orders(restaurant_id);
-CREATE INDEX IF NOT EXISTS idx_integration_orders_received ON public.integration_orders(received_at DESC);
+## 🚀 MÉTODO 1: VIA SUPABASE DASHBOARD (Recomendado)
 
--- RLS
-ALTER TABLE public.integration_orders ENABLE ROW LEVEL SECURITY;
+### Passo a Passo:
 
--- Policy: Owners view their own orders
--- Ajuste: Usa 'restaurant_members' ou 'gm_restaurant_members' dependendo da sua versão. 
--- O script abaixo tenta ser compatível, mas ajuste se necessário.
--- Assumindo 'restaurant_members' como padrão legado ou 'gm_restaurant_members' se for novo schema.
--- AQUI USAMOS O PADRÃO ATUAL: gm_restaurant_members
+1. **Acessar SQL Editor**
+   - URL: https://app.supabase.com/project/[seu-project-id]/sql/new
+   - Ou: Dashboard → SQL Editor → New Query
 
-CREATE POLICY "Owners view integration orders" ON public.integration_orders FOR
-SELECT USING (
-        restaurant_id IN (
-            SELECT restaurant_id
-            FROM public.gm_restaurant_members
-            WHERE user_id = auth.uid()
-                AND role IN ('owner', 'manager')
-        )
-    );
+2. **Aplicar Migration 1: sync_metadata**
+   ```sql
+   -- Copiar TODO o conteúdo de:
+   -- supabase/migrations/20260118000001_add_sync_metadata_to_orders.sql
+   ```
+   - Colar no SQL Editor
+   - Clicar em "Run" ou pressionar Cmd+Enter
+   - Verificar que retorna "Success"
 
-CREATE POLICY "Service role full access integration orders" ON public.integration_orders FOR ALL USING (auth.role() = 'service_role');
+3. **Aplicar Migration 2: create_order_atomic**
+   ```sql
+   -- Copiar TODO o conteúdo de:
+   -- supabase/migrations/20260118000002_update_create_order_atomic_with_sync_metadata.sql
+   ```
+   - Colar no SQL Editor
+   - Clicar em "Run"
+   - Verificar que retorna "Success"
+
+4. **Aplicar Migration 3: version**
+   ```sql
+   -- Copiar TODO o conteúdo de:
+   -- supabase/migrations/20260118000003_add_version_to_orders.sql
+   ```
+   - Colar no SQL Editor
+   - Clicar em "Run"
+   - Verificar que retorna "Success"
+
+5. **Aplicar Migration 4: check_open_orders_rpc**
+   ```sql
+   -- Copiar TODO o conteúdo de:
+   -- supabase/migrations/20260118000004_add_check_open_orders_rpc.sql
+   ```
+   - Colar no SQL Editor
+   - Clicar em "Run"
+   - Verificar que retorna "Success"
+
+6. **Aplicar Migration 5: fiscal_retry_count**
+   ```sql
+   -- Copiar TODO o conteúdo de:
+   -- supabase/migrations/20260118000005_add_fiscal_retry_count.sql
+   ```
+   - Colar no SQL Editor
+   - Clicar em "Run"
+   - Verificar que retorna "Success"
+
+---
+
+## 🚀 MÉTODO 2: VIA SUPABASE CLI
+
+### Pré-requisitos:
+
+```bash
+# 1. Instalar Supabase CLI (se não tiver)
+npm install -g supabase
+
+# 2. Fazer login
+supabase login
+
+# 3. Linkar projeto
+supabase link --project-ref [seu-project-ref]
+```
+
+### Aplicar Migrations:
+
+```bash
+# Aplicar todas as migrations pendentes
+supabase db push
+
+# Ou aplicar migration específica
+supabase migration up 20260118000001
+supabase migration up 20260118000002
+supabase migration up 20260118000003
+supabase migration up 20260118000004
+supabase migration up 20260118000005
 ```
 
 ---
 
-## 🟢 3. Offline Core & Idempotência (20260118)
+## ✅ VALIDAÇÃO PÓS-APLICAÇÃO
 
-**CRÍTICO:** Necessário para sincronização offline robusta.
-
-```sql
--- 3.1 Metadata de Sincronização
-ALTER TABLE gm_orders
-ADD COLUMN IF NOT EXISTS sync_metadata JSONB DEFAULT NULL;
-
-CREATE INDEX IF NOT EXISTS idx_gm_orders_sync_local_id 
-ON gm_orders USING GIN ((sync_metadata->>'localId'));
-
-COMMENT ON COLUMN gm_orders.sync_metadata IS 'Metadata for offline sync: {localId, syncAttempts, lastSyncAt}';
-
--- 3.2 Optimistic Lock (Versionamento)
-ALTER TABLE gm_orders
-ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1 NOT NULL;
-
-CREATE INDEX IF NOT EXISTS idx_gm_orders_version 
-ON gm_orders(id, version);
-
-COMMENT ON COLUMN gm_orders.version IS 'Optimistic locking version - increments on each update';
-
-CREATE OR REPLACE FUNCTION increment_order_version()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.version := OLD.version + 1;
-    NEW.updated_at := NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trigger_increment_order_version ON gm_orders;
-CREATE TRIGGER trigger_increment_order_version
-    BEFORE UPDATE ON gm_orders
-    FOR EACH ROW
-    EXECUTE FUNCTION increment_order_version();
-```
-
----
-
-## 🟢 4. Atomic Order Creation com Idempotência (20260118)
-
-Atualiza a função RPC para suportar metadata offline e **idempotência** (evita duplicação de pedidos offline).
+### 1. Verificar Estrutura
 
 ```sql
--- Drop existing function to update signature
-DROP FUNCTION IF EXISTS public.create_order_atomic(UUID, JSONB, TEXT);
-DROP FUNCTION IF EXISTS public.create_order_atomic(UUID, JSONB, TEXT, JSONB); -- Safety drop
-
-CREATE OR REPLACE FUNCTION public.create_order_atomic(
-    p_restaurant_id UUID,
-    p_items JSONB,
-    p_payment_method TEXT DEFAULT 'cash',
-    p_sync_metadata JSONB DEFAULT NULL
-) RETURNS JSONB 
-LANGUAGE plpgsql 
-SECURITY DEFINER 
-AS $$
-DECLARE 
-    v_order_id UUID;
-    v_total_amount INTEGER := 0;
-    v_item JSONB;
-    v_item_total INTEGER;
-    v_short_id TEXT;
-    v_count INTEGER;
-BEGIN
-    -- 1. Calculate Total
-    FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) 
-    LOOP
-        v_item_total := (v_item->>'quantity')::INTEGER * (v_item->>'unit_price')::INTEGER;
-        v_total_amount := v_total_amount + v_item_total;
-    END LOOP;
-
-    -- 2. Generate Short ID
-    SELECT count(*) + 1 INTO v_count
-    FROM public.gm_orders
-    WHERE restaurant_id = p_restaurant_id;
-    v_short_id := '#' || v_count::TEXT;
-
-    -- 3. IDEMPOTÊNCIA: Verificar se pedido já existe (por localId)
-    IF p_sync_metadata IS NOT NULL AND p_sync_metadata ? 'localId' THEN
-        SELECT id INTO v_order_id
-        FROM public.gm_orders
-        WHERE restaurant_id = p_restaurant_id
-            AND (sync_metadata->>'localId')::TEXT = (p_sync_metadata->>'localId')::TEXT
-        LIMIT 1;
-
-        IF v_order_id IS NOT NULL THEN
-            -- Pedido já existe, retornar dados existentes
-            RETURN jsonb_build_object(
-                'id', v_order_id,
-                'short_id', (SELECT short_id FROM gm_orders WHERE id = v_order_id),
-                'total_amount', (SELECT total_amount FROM gm_orders WHERE id = v_order_id),
-                'status', (SELECT status FROM gm_orders WHERE id = v_order_id)
-            );
-        END IF;
-    END IF;
-
-    -- 4. Insert Order
-    INSERT INTO public.gm_orders (
-        restaurant_id,
-        short_id,
-        status,
-        total_amount,
-        payment_status,
-        payment_method,
-        sync_metadata
-    )
-    VALUES (
-        p_restaurant_id,
-        v_short_id,
-        'pending',
-        v_total_amount,
-        'pending',
-        p_payment_method,
-        p_sync_metadata
-    )
-    RETURNING id INTO v_order_id;
-
-    -- 5. Insert Items
-    FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) 
-    LOOP
-        INSERT INTO public.gm_order_items (
-            order_id,
-            product_id,
-            product_name,
-            quantity,
-            unit_price,
-            total_price
-        )
-        VALUES (
-            v_order_id,
-            (v_item->>'product_id')::UUID,
-            v_item->>'name',
-            (v_item->>'quantity')::INTEGER,
-            (v_item->>'unit_price')::INTEGER,
-            (v_item->>'quantity')::INTEGER * (v_item->>'unit_price')::INTEGER
-        );
-    END LOOP;
-
-    RETURN jsonb_build_object(
-        'id', v_order_id,
-        'short_id', v_short_id,
-        'total_amount', v_total_amount,
-        'status', 'pending'
-    );
-END;
-$$;
-```
-
----
-
-## 🟢 5. Cash Register Lock (20260118)
-
-**CRÍTICO:** Previne fechamento de caixa durante processamento de pagamento (P0-4).
-
-```sql
--- Migration: Add RPC function to check open orders with FOR UPDATE lock
--- Purpose: Prevent cash register closure during payment processing
--- Date: 2026-01-18
-
-CREATE OR REPLACE FUNCTION public.check_open_orders_with_lock(
-    p_restaurant_id UUID
-) RETURNS TABLE (
-    id UUID,
-    table_number INTEGER
-) 
-LANGUAGE plpgsql 
-SECURITY DEFINER 
-AS $$
-BEGIN
-    -- Lock rows to prevent concurrent modifications
-    RETURN QUERY
-    SELECT o.id, o.table_number
-    FROM gm_orders o
-    WHERE o.restaurant_id = p_restaurant_id
-        AND o.status IN ('pending', 'preparing', 'ready')
-        AND o.payment_status != 'PAID'
-    FOR UPDATE OF o;
-END;
-$$;
-
-COMMENT ON FUNCTION public.check_open_orders_with_lock IS 'Checks for open orders with row-level lock to prevent race conditions during cash register closure';
-```
-
----
-
-## ✅ Validação Final
-
-Após rodar todos os scripts, execute esta query para confirmar que as colunas críticas existem:
-
-```sql
-SELECT table_name, column_name 
+-- Verificar sync_metadata
+SELECT column_name, data_type 
 FROM information_schema.columns 
-WHERE table_name IN ('gm_restaurants', 'integration_orders', 'gm_orders')
-AND column_name IN ('fiscal_config', 'external_ids', 'sync_metadata', 'version');
+WHERE table_name = 'gm_orders' 
+AND column_name = 'sync_metadata';
+
+-- Verificar version
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'gm_orders' 
+AND column_name = 'version';
 ```
 
-Você deve ver:
-*   `gm_restaurants`: `fiscal_config`, `external_ids`
-*   `gm_orders`: `sync_metadata`, `version`
-*   `integration_orders`: (varias colunas)
+**Resultado Esperado:**
+- `sync_metadata` deve existir (tipo: jsonb)
+- `version` deve existir (tipo: integer)
 
----
-
-## 🔍 Validação Adicional: Funções RPC
-
-Verifique se as funções críticas foram criadas:
+### 2. Verificar Índices
 
 ```sql
-SELECT proname, pronargs 
-FROM pg_proc 
-WHERE proname IN ('create_order_atomic', 'check_open_orders_with_lock')
-ORDER BY proname;
+-- Verificar índices criados
+SELECT 
+    indexname, 
+    indexdef 
+FROM pg_indexes 
+WHERE tablename = 'gm_orders' 
+AND (indexname LIKE '%sync%' OR indexname LIKE '%version%');
 ```
 
-Você deve ver:
-*   `create_order_atomic` com 4 parâmetros (incluindo `p_sync_metadata`)
-*   `check_open_orders_with_lock` com 1 parâmetro
+**Resultado Esperado:**
+- `idx_gm_orders_sync_local_id` deve existir
+- `idx_gm_orders_version` deve existir
+
+### 3. Verificar Funções RPC
+
+```sql
+-- Verificar função check_open_orders_with_lock
+SELECT 
+    proname,
+    pg_get_function_arguments(oid) as arguments
+FROM pg_proc 
+WHERE proname = 'check_open_orders_with_lock';
+```
+
+**Resultado Esperado:**
+- Função `check_open_orders_with_lock` deve existir
+
+### 4. Verificar Triggers
+
+```sql
+-- Verificar trigger de version
+SELECT 
+    trigger_name,
+    event_manipulation,
+    event_object_table
+FROM information_schema.triggers
+WHERE trigger_name = 'trigger_increment_order_version';
+```
+
+**Resultado Esperado:**
+- Trigger `trigger_increment_order_version` deve existir
 
 ---
 
-## ✅ Próximo Passo
+## 🚨 SE DER ERRO
 
-Após aplicar todas as migrations e validar:
+### Erro: "column already exists"
+**Solução:** Migration já foi aplicada. Pular para próxima.
 
-👉 **[Seguir para Checklist Pós-Migração](./POS_MIGRATION_CHECKLIST.md)**
+### Erro: "relation does not exist"
+**Solução:** Verificar se tabela `gm_orders` existe. Pode ser necessário aplicar migrations anteriores.
 
-O checklist inclui:
-* Validação técnica (15 min)
-* Testes de sanidade (30 min)
-* Testes offline (1h)
-* Testes de race condition (30 min)
-* Teste fiscal (30 min)
-* Validação final (15 min)
+### Erro: "permission denied"
+**Solução:** Verificar permissões do usuário no Supabase. Usar conta com permissões de administrador.
+
+### Erro: "syntax error"
+**Solução:** Verificar se copiou TODO o conteúdo do arquivo SQL, incluindo linhas finais.
+
+---
+
+## 📋 CHECKLIST DE APLICAÇÃO
+
+- [ ] Backup do banco criado
+- [ ] Migration 1 aplicada e validada
+- [ ] Migration 2 aplicada e validada
+- [ ] Migration 3 aplicada e validada
+- [ ] Migration 4 aplicada e validada
+- [ ] Migration 5 aplicada e validada
+- [ ] Validação pós-aplicação executada
+- [ ] Todos os testes passando
+
+---
+
+## 🎯 PRÓXIMOS PASSOS APÓS APLICAÇÃO
+
+1. **Testar Idempotência Offline**
+   - Criar pedido offline
+   - Sincronizar
+   - Verificar que não duplica
+
+2. **Testar Versioning**
+   - Modificar pedido de múltiplos tablets
+   - Verificar que version incrementa
+   - Verificar que conflitos são detectados
+
+3. **Testar Fechamento de Caixa**
+   - Verificar que RPC funciona
+   - Testar com pedidos abertos
+
+---
+
+**Status:** Guia criado, pronto para aplicar  
+**Próximo Passo:** Fazer backup e aplicar migrations

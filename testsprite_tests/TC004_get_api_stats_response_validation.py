@@ -27,4 +27,6 @@ def test_get_api_stats_response_validation():
         assert value is not None, f"Value for key '{key}' is None"
 
 
-test_get_api_stats_response_validation()
+
+if __name__ == "__main__":
+    test_get_api_stats_response_validation()

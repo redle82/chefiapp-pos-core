@@ -133,9 +133,15 @@ export interface HealthStatus {
   timestamp: string;
   version: string;
   uptime: number;
+  systemOperational: boolean;
+  databaseConnected: boolean;
+  eventStoreInitialized: boolean;
+  coreEngineAvailable: boolean;
   services: {
     database: 'up' | 'down' | 'slow';
     api: 'up' | 'down';
+    eventStore: 'up' | 'down';
+    coreEngine: 'up' | 'down';
     memory: {
       usage: number;
       limit: number;
@@ -160,6 +166,8 @@ export async function getHealthStatus(pool: any): Promise<HealthStatus> {
   const uptime = Date.now() - startTime;
 
   let dbStatus: 'up' | 'down' | 'slow' = 'up';
+  let eventStoreStatus: 'up' | 'down' = 'up';
+  let coreEngineStatus: 'up' | 'down' = 'up';
 
   try {
     const startQuery = Date.now();
@@ -169,8 +177,38 @@ export async function getHealthStatus(pool: any): Promise<HealthStatus> {
     if (queryTime > 1000) {
       dbStatus = 'slow';
     }
+
+    // Check event store (fiscal_event_store table exists and is accessible)
+    try {
+      await pool.query(`
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'fiscal_event_store'
+        LIMIT 1
+      `);
+      eventStoreStatus = 'up';
+    } catch (e) {
+      // If table doesn't exist, event store is down
+      eventStoreStatus = 'down';
+    }
+
+    // Check core engine (event_store table exists and is accessible)
+    try {
+      await pool.query(`
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'event_store'
+        LIMIT 1
+      `);
+      coreEngineStatus = 'up';
+    } catch (e) {
+      // If table doesn't exist, core engine is down
+      coreEngineStatus = 'down';
+    }
   } catch (e) {
     dbStatus = 'down';
+    eventStoreStatus = 'down';
+    coreEngineStatus = 'down';
   }
 
   const memUsage = process.memoryUsage();
@@ -188,9 +226,15 @@ export async function getHealthStatus(pool: any): Promise<HealthStatus> {
     timestamp,
     version: '1.0.0',
     uptime,
+    systemOperational: status === 'ok' || status === 'degraded',
+    databaseConnected: dbStatus !== 'down',
+    eventStoreInitialized: eventStoreStatus === 'up',
+    coreEngineAvailable: coreEngineStatus === 'up',
     services: {
       database: dbStatus,
       api: 'up',
+      eventStore: eventStoreStatus,
+      coreEngine: coreEngineStatus,
       memory: {
         usage: Math.round(memUsage.heapUsed / 1024 / 1024),
         limit: Math.round(memUsage.heapTotal / 1024 / 1024),

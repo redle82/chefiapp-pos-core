@@ -150,11 +150,11 @@ describe('OrderProtection', () => {
 
     describe('recordOrderSubmission', () => {
         it('deve registrar submissão de pedido', () => {
-            const idempotencyKey = generateIdempotencyKey('rest-123', [
+            const items = [
                 { product_id: 'prod-1', quantity: 1 },
-            ]);
+            ];
             
-            recordOrderSubmission(idempotencyKey, 'order-123');
+            recordOrderSubmission('rest-123', items, undefined, 'order-123');
             
             expect(mockSetTabIsolated).toHaveBeenCalled();
         });
@@ -169,11 +169,11 @@ describe('OrderProtection', () => {
             
             mockGetTabIsolated.mockReturnValue(JSON.stringify(oldRecords));
             
-            const newKey = generateIdempotencyKey('rest-123', [
+            const items = [
                 { product_id: 'prod-1', quantity: 1 },
-            ]);
+            ];
             
-            recordOrderSubmission(newKey, 'order-456');
+            recordOrderSubmission('rest-123', items, undefined, 'order-456');
             
             // Verificar que setTabIsolated foi chamado
             expect(mockSetTabIsolated).toHaveBeenCalled();

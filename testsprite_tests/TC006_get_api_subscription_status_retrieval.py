@@ -34,4 +34,6 @@ def test_get_api_subscription_status_retrieval():
     features = json_data["availableFeatures"]
     assert isinstance(features, list), "'availableFeatures' should be a list"
 
-test_get_api_subscription_status_retrieval()
+
+if __name__ == "__main__":
+    test_get_api_subscription_status_retrieval()

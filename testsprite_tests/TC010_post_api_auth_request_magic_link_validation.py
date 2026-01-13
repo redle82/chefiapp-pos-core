@@ -38,4 +38,6 @@ def test_post_api_auth_request_magic_link_validation():
         except requests.RequestException as e:
             assert False, f"Request failed for invalid email input {payload.get('email')}: {e}"
 
-test_post_api_auth_request_magic_link_validation()
+
+if __name__ == "__main__":
+    test_post_api_auth_request_magic_link_validation()

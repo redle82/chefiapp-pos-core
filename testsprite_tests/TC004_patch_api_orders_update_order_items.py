@@ -42,7 +42,7 @@ def test_patch_api_orders_update_order_items():
     order = create_resp.json()
     order_id = order.get("order_id")
     assert order_id is not None, "order_id missing in create order response"
-    assert order.get("state") == "OPEN", f"Order state expected OPEN but got {order.get('state')}"
+    assert order.get("state") == "PENDING", f"Order state expected OPEN but got {order.get('state')}"
     # Make sure initial items are empty or list
     initial_items = order.get("items", [])
     assert isinstance(initial_items, list), "Initial items should be a list"
@@ -73,7 +73,7 @@ def test_patch_api_orders_update_order_items():
 
         # Validate order_id and state remain correct
         assert updated_order.get("order_id") == order_id, "order_id changed unexpectedly"
-        assert updated_order.get("state") == "OPEN", f"Order state expected OPEN but got {updated_order.get('state')}"
+        assert updated_order.get("state") == "PENDING", f"Order state expected OPEN but got {updated_order.get('state')}"
 
         # Validate items contain the new items
         patched_items = updated_order.get("items")
@@ -88,7 +88,7 @@ def test_patch_api_orders_update_order_items():
         get_resp.raise_for_status()
         get_order = get_resp.json()
         assert get_order.get("order_id") == order_id
-        assert get_order.get("state") == "OPEN"
+        assert get_order.get("state") == "PENDING"
         assert get_order.get("items") == new_items
 
     finally:
@@ -96,4 +96,6 @@ def test_patch_api_orders_update_order_items():
         # If deletion was supported, it should be here.
         pass
 
-test_patch_api_orders_update_order_items()
+
+if __name__ == "__main__":
+    test_patch_api_orders_update_order_items()

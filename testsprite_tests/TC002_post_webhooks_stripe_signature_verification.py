@@ -99,4 +99,6 @@ def test_post_webhooks_stripe_signature_verification():
     assert response_bad_sig.status_code in (400, 403), f"Expected 400 or 403 for bad signature but got {response_bad_sig.status_code}"
 
 
-test_post_webhooks_stripe_signature_verification()
+
+if __name__ == "__main__":
+    test_post_webhooks_stripe_signature_verification()

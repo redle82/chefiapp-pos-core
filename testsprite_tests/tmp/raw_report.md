@@ -5,104 +5,96 @@
 
 ## 1️⃣ Document Metadata
 - **Project Name:** chefiapp-pos-core
-- **Date:** 2025-12-27
+- **Date:** 2026-01-13
 - **Prepared by:** TestSprite AI Team
 
 ---
 
 ## 2️⃣ Requirement Validation Summary
 
-#### Test TC001
-- **Test Name:** get health endpoint status check
-- **Test Code:** [TC001_get_health_endpoint_status_check.py](./TC001_get_health_endpoint_status_check.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/319117ce-09d3-42cd-87ea-78816a7d47b1/08277465-a12f-4bbb-80ca-1352bf1399ad
+#### Test TC001 health_endpoint_should_return_200_and_status_indicators
+- **Test Code:** [TC001_health_endpoint_should_return_200_and_status_indicators.py](./TC001_health_endpoint_should_return_200_and_status_indicators.py)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/a580df56-7547-4650-a167-9148720c632f/a53f1117-a142-40ca-8217-d1910da6fa1d
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
-#### Test TC002
-- **Test Name:** get api health endpoint validation
-- **Test Code:** [TC002_get_api_health_endpoint_validation.py](./TC002_get_api_health_endpoint_validation.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/319117ce-09d3-42cd-87ea-78816a7d47b1/df4113e6-ac53-4f96-af73-98b46d3c1f0c
-- **Status:** ✅ Passed
-- **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
----
-
-#### Test TC003
-- **Test Name:** post api orders create order
-- **Test Code:** [TC003_post_api_orders_create_order.py](./TC003_post_api_orders_create_order.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/319117ce-09d3-42cd-87ea-78816a7d47b1/9bf1b32b-cf15-4d3f-b9e2-fcf62cd45337
-- **Status:** ✅ Passed
-- **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
----
-
-#### Test TC004
-- **Test Name:** patch api orders update order items
-- **Test Code:** [TC004_patch_api_orders_update_order_items.py](./TC004_patch_api_orders_update_order_items.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/319117ce-09d3-42cd-87ea-78816a7d47b1/52f5b24f-b8fd-4482-abb2-64c38149f35b
-- **Status:** ✅ Passed
-- **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
----
-
-#### Test TC005
-- **Test Name:** post api orders lock order
-- **Test Code:** [TC005_post_api_orders_lock_order.py](./TC005_post_api_orders_lock_order.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/319117ce-09d3-42cd-87ea-78816a7d47b1/8c17a9dd-547f-4fe0-9d19-23a4c039672f
-- **Status:** ✅ Passed
-- **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
----
-
-#### Test TC006
-- **Test Name:** patch api orders reject modification of locked order
-- **Test Code:** [TC006_patch_api_orders_reject_modification_of_locked_order.py](./TC006_patch_api_orders_reject_modification_of_locked_order.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/319117ce-09d3-42cd-87ea-78816a7d47b1/f6e2f567-b95e-4c89-b957-cee0dcde61ad
-- **Status:** ✅ Passed
-- **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
----
-
-#### Test TC007
-- **Test Name:** post api orders close order
-- **Test Code:** [TC007_post_api_orders_close_order.py](./TC007_post_api_orders_close_order.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/319117ce-09d3-42cd-87ea-78816a7d47b1/88576f93-dbdc-4b80-a878-98ad16e578b9
-- **Status:** ✅ Passed
-- **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
----
-
-#### Test TC008
-- **Test Name:** patch api orders reject modification of closed order
-- **Test Code:** [TC008_patch_api_orders_reject_modification_of_closed_order.py](./TC008_patch_api_orders_reject_modification_of_closed_order.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/319117ce-09d3-42cd-87ea-78816a7d47b1/ae7e0926-6815-4ed7-b076-6db28b10b72f
-- **Status:** ✅ Passed
-- **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
----
-
-#### Test TC009
-- **Test Name:** order total calculation immutability
-- **Test Code:** [TC009_order_total_calculation_immutability.py](./TC009_order_total_calculation_immutability.py)
+#### Test TC002 order_creation_should_initialize_open_state
+- **Test Code:** [TC002_order_creation_should_initialize_open_state.py](./TC002_order_creation_should_initialize_open_state.py)
 - **Test Error:** Traceback (most recent call last):
   File "/var/task/handler.py", line 258, in run_with_retry
     exec(code, exec_env)
-  File "<string>", line 106, in <module>
-  File "<string>", line 55, in test_order_total_calculation_immutability
-AssertionError
+  File "<string>", line 44, in <module>
+  File "<string>", line 22, in test_order_creation_should_initialize_open_state
+AssertionError: Expected 201 Created, got 400
 
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/319117ce-09d3-42cd-87ea-78816a7d47b1/b738b1f4-02f8-46e1-bcd7-cf9bcaedb7c2
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/a580df56-7547-4650-a167-9148720c632f/d077cadb-3525-4327-a45d-277385db825d
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
-#### Test TC010
-- **Test Name:** order state machine transitions
-- **Test Code:** [TC010_order_state_machine_transitions.py](./TC010_order_state_machine_transitions.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/319117ce-09d3-42cd-87ea-78816a7d47b1/5deb2cf2-89b9-4787-a3c5-e1dc2f2fd118
-- **Status:** ✅ Passed
+#### Test TC003 order_items_can_be_added_to_open_order
+- **Test Code:** [TC003_order_items_can_be_added_to_open_order.py](./TC003_order_items_can_be_added_to_open_order.py)
+- **Test Error:** Traceback (most recent call last):
+  File "/var/task/handler.py", line 258, in run_with_retry
+    exec(code, exec_env)
+  File "<string>", line 73, in <module>
+  File "<string>", line 25, in test_order_items_can_be_added_to_open_order
+AssertionError: Order creation failed: {"error":"22P02","message":"invalid input syntax for type uuid: \"prod-001\""}
+
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/a580df56-7547-4650-a167-9148720c632f/6d5270c1-57df-4bb8-99cd-d50b2aa5c1af
+- **Status:** ❌ Failed
+- **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
+---
+
+#### Test TC004 order_can_be_locked_and_total_becomes_immutable
+- **Test Code:** [TC004_order_can_be_locked_and_total_becomes_immutable.py](./TC004_order_can_be_locked_and_total_becomes_immutable.py)
+- **Test Error:** Traceback (most recent call last):
+  File "/var/task/handler.py", line 258, in run_with_retry
+    exec(code, exec_env)
+  File "<string>", line 108, in <module>
+  File "<string>", line 21, in test_order_can_be_locked_and_total_becomes_immutable
+  File "/var/task/requests/models.py", line 1024, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: http://localhost:4320/api/orders
+
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/a580df56-7547-4650-a167-9148720c632f/8b95501b-b8d6-45bb-b4b4-3a177aba50c9
+- **Status:** ❌ Failed
+- **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
+---
+
+#### Test TC005 locked_order_cannot_be_modified
+- **Test Code:** [TC005_locked_order_cannot_be_modified.py](./TC005_locked_order_cannot_be_modified.py)
+- **Test Error:** Traceback (most recent call last):
+  File "/var/task/handler.py", line 258, in run_with_retry
+    exec(code, exec_env)
+  File "<string>", line 61, in <module>
+  File "<string>", line 21, in test_locked_order_cannot_be_modified
+AssertionError: Unexpected create order status: 400
+
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/a580df56-7547-4650-a167-9148720c632f/19d28731-dc21-4186-9f46-d64c25dcb640
+- **Status:** ❌ Failed
+- **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
+---
+
+#### Test TC006 order_can_be_closed_successfully
+- **Test Code:** [TC006_order_can_be_closed_successfully.py](./TC006_order_can_be_closed_successfully.py)
+- **Test Error:** Traceback (most recent call last):
+  File "/var/task/handler.py", line 258, in run_with_retry
+    exec(code, exec_env)
+  File "<string>", line 70, in <module>
+  File "<string>", line 19, in test_order_can_be_closed_successfully
+AssertionError: Order creation failed: {"error":"23502","message":"null value in column \"product_name\" of relation \"gm_order_items\" violates not-null constraint"}
+
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/a580df56-7547-4650-a167-9148720c632f/37424d10-a3af-47c6-858d-e0b39101e03b
+- **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 
 ## 3️⃣ Coverage & Matching Metrics
 
-- **90.00** of tests passed
+- **16.67** of tests passed
 
 | Requirement        | Total Tests | ✅ Passed | ❌ Failed  |
 |--------------------|-------------|-----------|------------|

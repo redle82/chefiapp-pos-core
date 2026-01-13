@@ -151,4 +151,6 @@ def test_post_webhooks_billing_signature_verification():
     assert response_deleted.status_code == 200, f"Expected 200 OK for subscription deletion, got {response_deleted.status_code}"
 
 
-test_post_webhooks_billing_signature_verification()
+
+if __name__ == "__main__":
+    test_post_webhooks_billing_signature_verification()

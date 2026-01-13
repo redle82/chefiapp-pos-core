@@ -23,4 +23,6 @@ def test_get_health_endpoint_status_check():
     assert services.get("database") == "up", f"Expected database status 'up', got {services.get('database')}"
     assert services.get("api") == "up", f"Expected api status 'up', got {services.get('api')}"
 
-test_get_health_endpoint_status_check()
+
+if __name__ == "__main__":
+    test_get_health_endpoint_status_check()

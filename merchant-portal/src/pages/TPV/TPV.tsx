@@ -21,11 +21,15 @@ import { StreamTunnel } from '../../ui/design-system/domain/StreamTunnel';
 import { QuickMenuPanel } from '../../ui/design-system/domain/QuickMenuPanel';
 import { TableMapPanel } from '../../ui/design-system/domain/TableMapPanel';
 import { Toast, useToast } from '../../ui/design-system';
+import { spacing } from '../../ui/design-system/tokens/spacing';
 import { TableProvider, useTables } from './context/TableContext';
 import { PaymentModal } from './components/PaymentModal';
+import { SplitBillModalWrapper } from './components/SplitBillModalWrapper';
 import { OpenCashRegisterModal } from './components/OpenCashRegisterModal';
 import { CloseCashRegisterModal } from './components/CloseCashRegisterModal';
 import { OrderItemEditor } from './components/OrderItemEditor';
+import { OrderSummaryPanel } from './components/OrderSummaryPanel';
+import { OrderHeader } from './components/OrderHeader';
 import { IncomingRequests } from './components/IncomingRequests';
 import { GroupSelector } from './components/GroupSelector';
 import { CreateGroupModal } from './components/CreateGroupModal';
@@ -125,6 +129,7 @@ const TPVContent = () => {
   const [dailyTotalCents, setDailyTotalCents] = useState<number>(0);
   const [cashRegisterOpen, setCashRegisterOpen] = useState<boolean>(false);
   const [paymentModalOrderId, setPaymentModalOrderId] = useState<string | null>(null);
+  const [splitBillModalOrderId, setSplitBillModalOrderId] = useState<string | null>(null);
   const [showOpenCashModal, setShowOpenCashModal] = useState<boolean>(false);
   const [showCloseCashModal, setShowCloseCashModal] = useState<boolean>(false);
   const [openingBalanceCents, setOpeningBalanceCents] = useState<number>(0);
@@ -202,6 +207,33 @@ const TPVContent = () => {
     // Apenas 'delivered' e 'canceled' saem do túnel
     return orders.filter(o => o.status !== 'delivered' && o.status !== 'canceled');
   }, [orders]);
+
+  // Mapear estado visual das mesas com base em pedidos ativos
+  // Livre (free) = sem pedido ativo; Ocupada (occupied) = há pedido ativo; Reservada mantém estado original
+  // SEMANA 1 - Tarefa 1.1: Incluir informações do pedido ativo
+  const tableView = useMemo(() => {
+    return tables.map(table => {
+      const activeOrder = activeOrders.find(o => o.tableId === table.id || o.tableNumber === table.number);
+      const hasActiveOrder = !!activeOrder;
+      const derivedStatus: 'free' | 'occupied' | 'reserved' =
+        table.status === 'reserved'
+          ? 'reserved'
+          : hasActiveOrder
+          ? 'occupied'
+          : 'free';
+
+      return {
+        ...table,
+        status: derivedStatus,
+        // SEMANA 1 - Tarefa 1.1: Incluir informações do pedido ativo
+        orderInfo: activeOrder ? {
+          id: activeOrder.id,
+          status: activeOrder.status,
+          total: activeOrder.total,
+        } : undefined,
+      };
+    });
+  }, [tables, activeOrders]);
 
   // DEBUG: TPV State
   useEffect(() => {
@@ -301,6 +333,38 @@ const TPVContent = () => {
       return;
     }
 
+    // SEMANA 1 - Tarefa 1.3: Validação de saldo antes de fechar conta
+    const order = activeOrders.find(o => o.id === paymentModalOrderId);
+    if (!order) {
+      error('Pedido não encontrado');
+      return;
+    }
+
+    // Validar que pedido tem itens
+    if (!order.items || order.items.length === 0) {
+      error('Não é possível fechar conta sem itens. Adicione itens ao pedido primeiro.');
+      return;
+    }
+
+    // Validar que total é maior que zero
+    const totalCents = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    if (totalCents <= 0) {
+      error('Não é possível fechar conta com total zero. Adicione itens ao pedido primeiro.');
+      return;
+    }
+
+    // Validar que pedido não está totalmente pago
+    if (order.status === 'paid') {
+      error('Este pedido já foi totalmente pago.');
+      return;
+    }
+    
+    // SEMANA 2: Se está parcialmente pago (partially_paid), permitir continuar pagamento (split bill)
+    // Não bloquear aqui, apenas validar no backend
+
+    // SEMANA 2: Aqui adicionaremos validação de saldo parcial (split bill)
+    // Por enquanto, assumimos que se chegou aqui, o saldo está completo
+
     try {
       // Para pagamentos Stripe (card), passar intentId no metadata
       const payload: any = { method };
@@ -358,6 +422,67 @@ const TPVContent = () => {
 
       error(errorMsg);
       // Não relançar erro - PaymentModal já trata visualmente via setResult('error')
+    }
+  };
+
+  // SEMANA 2 - Tarefa 3.3: Handler de pagamento parcial (split bill)
+  const handlePartialPayment = async (amountCents: number, method: 'cash' | 'card' | 'pix') => {
+    if (!splitBillModalOrderId) return;
+
+    // P1-1 FIX: Bloquear pagamento se sistema down e não for demo
+    if (!actionsEnabled && !isDemoData) {
+      error('Sistema indisponível. Pagamentos bloqueados por segurança. Tente em breve.');
+      return;
+    }
+
+    const order = activeOrders.find(o => o.id === splitBillModalOrderId);
+    if (!order) {
+      error('Pedido não encontrado');
+      return;
+    }
+
+    // Validar que amount não é maior que o total restante
+    // (vamos buscar pagamentos para calcular quanto já foi pago)
+    try {
+      const { PaymentEngine } = await import('../../core/tpv/PaymentEngine');
+      const payments = await PaymentEngine.getPaymentsByOrder(splitBillModalOrderId);
+      const paidAmount = payments
+        .filter(p => p.status === 'PAID')
+        .reduce((sum, p) => sum + p.amountCents, 0);
+      
+      const remainingAmount = order.total - paidAmount;
+      
+      if (amountCents > remainingAmount) {
+        error(`Valor excede o saldo restante de ${formatAmount(remainingAmount)}`);
+        return;
+      }
+
+      // Processar pagamento parcial usando performOrderAction
+      // Passar amount no payload para o backend processar como parcial
+      await performOrderAction(splitBillModalOrderId, 'pay', {
+        method,
+        amountCents, // Valor parcial
+        isPartial: true, // Flag indicando que é pagamento parcial
+      });
+
+      // Atualizar lista de pedidos
+      await getActiveOrders();
+
+      success(`Pagamento de ${formatAmount(amountCents)} registrado`);
+
+      // Se saldo zerou, fechar modal
+      const newPaidAmount = paidAmount + amountCents;
+      if (newPaidAmount >= order.total) {
+        setSplitBillModalOrderId(null);
+        // Limpar pedido ativo se foi totalmente pago
+        if (activeOrderId === splitBillModalOrderId) {
+          setActiveOrderId(null);
+          removeTabIsolated('chefiapp_active_order_id');
+        }
+      }
+    } catch (err: any) {
+      console.error('Partial payment failed:', err);
+      error(err.message || 'Erro ao processar pagamento parcial');
     }
   };
 
@@ -555,34 +680,60 @@ const TPVContent = () => {
           }
           context={
             activeOrderId && activeOrders.find(o => o.id === activeOrderId) ? (
-              // Mostrar editor de itens quando há pedido ativo
-              <OrderItemEditor
-                order={activeOrders.find(o => o.id === activeOrderId) || null}
-                onUpdateQuantity={async (itemId, quantity) => {
-                  if (!activeOrderId) return;
-                  try {
-                    await updateItemQuantity(activeOrderId, itemId, quantity);
-                    success('Quantidade atualizada');
-                  } catch (err: any) {
-                    error(err.message || 'Erro ao atualizar quantidade');
-                  }
-                }}
-                onRemoveItem={async (itemId) => {
-                  if (!activeOrderId) return;
-                  try {
-                    await removeItemFromOrder(activeOrderId, itemId);
-                    success('Item removido');
-                  } catch (err: any) {
-                    error(err.message || 'Erro ao remover item');
-                  }
-                }}
-                onBackToMenu={() => {
-                  setActiveOrderId(null);
-                  removeTabIsolated('chefiapp_active_order_id');
-                  setContextView('menu');
-                }}
-                loading={ordersLoading}
-              />
+              // Mostrar resumo da conta e editor de itens quando há pedido ativo
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: spacing[3] }}>
+                {/* Header Fixo da Conta */}
+                <OrderHeader
+                  order={activeOrders.find(o => o.id === activeOrderId) || null}
+                />
+                {/* Resumo da Conta (Sempre Visível) */}
+                <OrderSummaryPanel
+                  order={activeOrders.find(o => o.id === activeOrderId) || null}
+                  onSplitBill={() => {
+                    if (activeOrderId) {
+                      setSplitBillModalOrderId(activeOrderId);
+                    }
+                  }}
+                  onPay={() => {
+                    const order = activeOrders.find(o => o.id === activeOrderId);
+                    // SEMANA 2: Permitir pagar se não está totalmente pago (permite continuar split bill)
+                    if (order && order.status !== 'paid') {
+                      setPaymentModalOrderId(activeOrderId);
+                    }
+                  }}
+                  loading={ordersLoading}
+                />
+                {/* Editor de Itens */}
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <OrderItemEditor
+                    order={activeOrders.find(o => o.id === activeOrderId) || null}
+                    onUpdateQuantity={async (itemId, quantity) => {
+                      if (!activeOrderId) return;
+                      try {
+                        await updateItemQuantity(activeOrderId, itemId, quantity);
+                        success('Quantidade atualizada');
+                      } catch (err: any) {
+                        error(err.message || 'Erro ao atualizar quantidade');
+                      }
+                    }}
+                    onRemoveItem={async (itemId) => {
+                      if (!activeOrderId) return;
+                      try {
+                        await removeItemFromOrder(activeOrderId, itemId);
+                        success('Item removido');
+                      } catch (err: any) {
+                        error(err.message || 'Erro ao remover item');
+                      }
+                    }}
+                    onBackToMenu={() => {
+                      setActiveOrderId(null);
+                      removeTabIsolated('chefiapp_active_order_id');
+                      setContextView('menu');
+                    }}
+                    loading={ordersLoading}
+                  />
+                </div>
+              </div>
             ) : contextView === 'menu' ? (
               <>
                 <QuickMenuPanel
@@ -592,6 +743,11 @@ const TPVContent = () => {
                     price: item.priceCents / 100, // Convert cents to euros
                     category: item.category,
                   }))}
+                  activeOrderItems={
+                    activeOrderId 
+                      ? activeOrders.find(o => o.id === activeOrderId)?.items || []
+                      : []
+                  }
                   onAddItem={(item) => {
                     // Se há grupos ativos, mostrar seletor
                     if (activeOrderId && groups.length > 0) {
@@ -658,8 +814,18 @@ const TPVContent = () => {
               </>
             ) : (
               <TableMapPanel
-                tables={tables}
+                tables={tableView}
                 onSelectTable={handleSelectTable}
+                onCreateOrder={async (tableId: string) => {
+                  // SEMANA 1 - Tarefa 1.1: Ação rápida para criar pedido em mesa livre
+                  const table = tables.find(t => t.id === tableId);
+                  if (table) {
+                    setSelectedTableId(tableId);
+                    // Mudar para view de menu para adicionar itens
+                    setContextView('menu');
+                    success(`Mesa ${table.number} selecionada. Adicione itens do menu para criar o pedido.`);
+                  }
+                }}
               />
             )
           }
@@ -678,6 +844,24 @@ const TPVContent = () => {
               orderTotal={order.total}
               onPay={handlePayment}
               onCancel={() => setPaymentModalOrderId(null)}
+            />
+          );
+        })()
+      }
+
+      {/* Split Bill Modal */}
+      {
+        splitBillModalOrderId && (() => {
+          const order = activeOrders.find(o => o.id === splitBillModalOrderId);
+          if (!order) return null;
+          return (
+            <SplitBillModalWrapper
+              orderId={order.id}
+              restaurantId={restaurantId || ''}
+              orderTotal={order.total}
+              onPayPartial={handlePartialPayment}
+              onCancel={() => setSplitBillModalOrderId(null)}
+              loading={ordersLoading}
             />
           );
         })()

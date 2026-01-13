@@ -1,161 +1,114 @@
-# 📚 ÍNDICE DE DOCUMENTAÇÃO — CHEFIAPP POS CORE
+# 📚 ÍNDICE DE DOCUMENTAÇÃO - ChefIApp POS Core
+**Data:** 12 Janeiro 2026  
+**Última Atualização:** Sessão de análise e planejamento completa
 
-**Última atualização:** 2026-01-16  
-**Versão:** 1.0.0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
----
+## 🎯 DOCUMENTAÇÃO PRINCIPAL
 
-## 🎯 DOCUMENTOS PRINCIPAIS
+### 📊 Análises e Auditorias
 
-### FASE 1: RESPIRAR
-- 📄 **FASE1_RESPIRAR_LICOES_APRENDIDAS.md** — 10 lições aprendidas da FASE 2
-- 📄 **FASE1_ESTADO_ATUAL_SISTEMA.md** — Estado atual consolidado do sistema
-- 📄 **FASE1_RESUMO_EXECUTIVO.md** — Resumo executivo da FASE 1
-- 📄 **FASE1_CONSOLIDACAO_DOCUMENTOS.md** — Consolidação de documentos
-- 📄 **STATUS_ATUAL_E_PROXIMOS_PASSOS.md** — Status e próximos passos
+1. **`ANALISE_EVOLUTIVA_COMPLETA.md`**
+   - Comparação com auditorias anteriores (15-17 Jan)
+   - Evolução em 21 dias (22 Dez → 12 Jan)
+   - Comparação com mercado (Toast, Square, last.app)
+   - Status atual: 13% features, 70% arquitetura
+   - **Quando usar:** Entender progresso e posição no mercado
 
-### FASE 2: PAGAR DÍVIDA RESTANTE
-- 📄 **FASE2_RESUMO_FINAL.md** — Resumo executivo oficial (100% completa)
-
-**Nota:** Documentos intermediários da FASE 2 foram arquivados em `docs/archive/fase2/`
-
-### FASE 3: VALIDAÇÃO REAL
-- 📄 **FASE3_CHECKLIST_VALIDACAO.md** — Checklist completo de validação
-
----
-
-## 📖 GUIAS OPERACIONAIS
-
-### Para Operadores
-- 📄 **README_OPERACIONAL.md** — Guia operacional completo
-  - Como usar o TPV
-  - Como usar o KDS
-  - Como processar pagamentos
-  - Como gerenciar mesas
-
-### Para Desenvolvedores
-- 📄 **DEVELOPER_ONBOARDING.md** — Onboarding de desenvolvedores
-  - Setup do ambiente
-  - Estrutura do projeto
-  - Convenções de código
-  - Processo de desenvolvimento
-
-- 📄 **CI_CD_GUIDE.md** — Guia de CI/CD
-  - GitHub Actions
-  - Deploy automatizado
-  - Health checks
-  - Rollback
-
-- 📄 **MONITORING_GUIDE.md** — Guia de monitoramento
-  - Health checks
-  - Logs estruturados
-  - Performance monitoring
-  - Alertas
-
-- 📄 **API_REFERENCE.md** — Referência de API
-  - Endpoints disponíveis
-  - Autenticação
-  - Exemplos de uso
-  - Códigos de erro
+2. **`RESUMO_SESSAO_12_JAN_2026.md`**
+   - Resumo executivo da sessão
+   - Entregas realizadas
+   - Status atual do projeto
+   - **Quando usar:** Visão geral rápida da sessão
 
 ---
 
-## 🗺️ ROADMAPS E PLANOS
+### 🚀 Guias de Ação
 
-### Roadmaps
-- 📄 **ROADMAP_90D.md** — Roadmap de 90 dias
-- 📄 **ROADMAP_Q2.md** — Roadmap Q2 2026
-- 📄 **ROADMAP_TO_100.md** — Roadmap para score 100/100
+3. **`GUIA_APLICACAO_MIGRATIONS_P0.md`**
+   - Instruções passo a passo para aplicar 5 migrations P0
+   - Métodos: Dashboard e CLI
+   - Validação pós-aplicação
+   - Scripts de rollback
+   - **Quando usar:** Antes de aplicar migrations críticas
 
-### Planos de Ação
-- 📄 **ACTION_PLAN_IMMEDIATE.md** — Plano de ação imediato
-- 📄 **PLANO_ACAO_BLOQUEADORES.md** — Plano para bloqueadores críticos
-- 📄 **NEXT_STEPS_EXECUTABLE.md** — Próximos passos executáveis
+4. **`PLANO_ACAO_PRIORITARIO.md`**
+   - 3 fases detalhadas (6 semanas)
+   - Hardening → Features → MVP
+   - Cronograma sugerido
+   - Métricas de sucesso
+   - **Quando usar:** Planejamento de trabalho
 
----
-
-## 📊 RELATÓRIOS E STATUS
-
-### Relatórios de Progresso
-- 📄 **FASE1_RESUMO_EXECUTIVO.md** — Resumo executivo da FASE 1
-- 📄 **FASE2_RESUMO_FINAL.md** — Resumo final da FASE 2 (oficial)
-- 📄 **SPRINT1_PROGRESSO_CONSOLIDADO.md** — Progresso do Sprint 1
-- 📄 **SPRINT2_VALIDACAO_FEATURES.md** — Validação do Sprint 2
-- 📄 **SPRINT3_DIA7_REALTIME_RECONNECT.md** — Realtime reconnect
-- 📄 **SPRINT3_DIA8_AUDIT_LOGS.md** — Audit logs
-- 📄 **SPRINT3_DIA9_LOAD_TESTING.md** — Load testing
-
-### Status de Features
-- 📄 **OFFLINE_MODE_INTEGRADO_STATUS.md** — Status do modo offline
-- 📄 **DIVISAO_CONTA_STATUS.md** — Status da divisão de conta
-- 📄 **IMPRESSAO_FISCAL_ANALISE.md** — Análise da impressão fiscal
+5. **`README_PROXIMOS_PASSOS.md`**
+   - Ação imediata (hoje)
+   - Checklist rápido
+   - Links para documentação
+   - **Quando usar:** Início de trabalho diário
 
 ---
 
-## 🧪 TESTES
+## 📋 ESTRUTURA DE NAVEGAÇÃO
 
-### Prioridades
-- 📄 **TEST_PRIORITIES.md** — Prioridades de testes
+### Para Começar Agora:
+1. Ler `README_PROXIMOS_PASSOS.md`
+2. Seguir `GUIA_APLICACAO_MIGRATIONS_P0.md`
+3. Consultar `PLANO_ACAO_PRIORITARIO.md` para contexto
 
-### Guias de Teste
-- 📄 **SPRINT1_DIA1_TESTES_SEGURANCA.md** — Testes de segurança
-- 📄 **SPRINT2_VALIDACAO_FEATURES.md** — Validação de features
+### Para Entender Progresso:
+1. Ler `ANALISE_EVOLUTIVA_COMPLETA.md`
+2. Consultar `RESUMO_SESSAO_12_JAN_2026.md`
 
----
-
-## 🚀 DEPLOY E INFRAESTRUTURA
-
-### Deploy
-- 📄 **SPRINT1_DIA2_DEPLOY.md** — Guia de deploy do Sprint 1
-
-### Migrations
-- 📄 **supabase/migrations/** — Todas as migrations SQL
+### Para Planejar Trabalho:
+1. Ler `PLANO_ACAO_PRIORITARIO.md`
+2. Seguir cronograma sugerido
 
 ---
 
-## 💡 COMO USAR ESTE ÍNDICE
+## 🎯 PRIORIDADES
 
-### Para Novos Desenvolvedores
-1. Começar com **DEVELOPER_ONBOARDING.md**
-2. Ler **FASE1_ESTADO_ATUAL_SISTEMA.md** para entender o estado atual
-3. Consultar **API_REFERENCE.md** quando necessário
+### 🔴 Crítico (Esta Semana):
+- [ ] Aplicar migrations P0 → `GUIA_APLICACAO_MIGRATIONS_P0.md`
+- [ ] Validar fiscal com credenciais reais
+- [ ] Testar race conditions (múltiplos tablets)
+- [ ] Testar idempotência offline real
 
-### Para Operadores
-1. Começar com **README_OPERACIONAL.md**
-2. Consultar guias específicos quando necessário
+### 🟠 Importante (Próximas 2 Semanas):
+- [ ] Split bill UI
+- [ ] Reports básicos
+- [ ] Onboarding simplificado
 
-### Para Gestores
-1. Ler **FASE2_RESUMO_FINAL.md** para entender o progresso
-2. Consultar **ROADMAP_90D.md** para visão de longo prazo
-3. Ver **STATUS_ATUAL_E_PROXIMOS_PASSOS.md** para próximos passos
-
----
-
-## 📝 CONVENÇÕES
-
-### Nomenclatura de Arquivos
-- `FASE*_*.md` — Documentos de fase
-- `SPRINT*_*.md` — Documentos de sprint
-- `*_STATUS.md` — Status de features
-- `*_GUIDE.md` — Guias operacionais
-- `*_REFERENCE.md` — Referências técnicas
-
-### Status nos Documentos
-- ✅ — Completo
-- ⏳ — Em progresso
-- ❌ — Não iniciado
-- ⚠️ — Atenção necessária
+### 🟡 MVP (Semanas 4-6):
+- [ ] Delivery webhooks
+- [ ] Loyalty funcional
+- [ ] Testes E2E
 
 ---
 
+## 📊 STATUS ATUAL
+
+**Progresso Geral:** ~55% para produção real
+
+| Área | Status | Progresso |
+|------|--------|-----------|
+| Arquitetura | ✅ Excelente | 85% |
+| Core POS | ⚠️ Bom | 70% |
+| Offline Mode | ✅ Funcional | 75% |
+| Fiscal/Legal | ⚠️ Básico | 40% |
+| Integrações | ⚠️ Estrutura | 30% |
+| UI/UX Produto | ⚠️ Básico | 45% |
+| Testes | ✅ Expandido | 40% |
+| Docs | ✅ Completo | 99% |
+
 ---
 
-## 📦 ARQUIVO
+## 🔗 LINKS RÁPIDOS
 
-Documentos históricos e desatualizados estão arquivados em:
-- 📁 `docs/archive/fase2/` — Documentos intermediários da FASE 2
+- **Próximo Passo:** `README_PROXIMOS_PASSOS.md`
+- **Aplicar Migrations:** `GUIA_APLICACAO_MIGRATIONS_P0.md`
+- **Plano Completo:** `PLANO_ACAO_PRIORITARIO.md`
+- **Análise Completa:** `ANALISE_EVOLUTIVA_COMPLETA.md`
 
 ---
 
-**Última atualização:** 2026-01-16  
-**Mantido por:** Goldmonkey Empire
+**Última Atualização:** 12 Janeiro 2026  
+**Próxima Revisão:** Após aplicação das migrations P0

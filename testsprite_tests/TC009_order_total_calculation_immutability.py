@@ -51,7 +51,7 @@ def test_order_total_calculation_immutability():
         order = resp.json()
         order_id = order.get("order_id")
         assert order_id, "order_id missing on order creation"
-        assert order.get("state") == "OPEN"
+        assert order.get("state") == "PENDING"
         assert order.get("table_id") == create_order_payload["table_id"]
 
         # Attempt to patch order items while order is OPEN - this should succeed
@@ -65,7 +65,7 @@ def test_order_total_calculation_immutability():
         )
         patch_resp.raise_for_status()
         patched_order = patch_resp.json()
-        assert patched_order.get("state") == "OPEN"
+        assert patched_order.get("state") == "PENDING"
 
         # Lock order (PATCH /api/orders/{orderId}) - to move to LOCKED state and calculate total
         lock_payload = {"action": "lock"}
@@ -103,4 +103,6 @@ def test_order_total_calculation_immutability():
         pass
 
 
-test_order_total_calculation_immutability()
+
+if __name__ == "__main__":
+    test_order_total_calculation_immutability()

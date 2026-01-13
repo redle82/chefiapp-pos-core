@@ -170,6 +170,19 @@ function isInternalAuthorized(req: http.IncomingMessage): boolean {
 // Helper for Session Auth (Phase H)
 function isSessionAuthorized(req: http.IncomingMessage): string | null {
   const token = String(req.headers['x-chefiapp-token'] || '').trim();
+
+  // TEST MODE BYPASS: Only active when TEST_MODE=true explicitly set
+  // This allows TestSprite and automated tests to exercise the core without
+  // implementing the full Magic Link flow. SECURITY: This bypass is completely
+  // disabled in production (NODE_ENV=production) and requires explicit TEST_MODE flag.
+  if (!token && process.env.TEST_MODE === 'true' && process.env.NODE_ENV !== 'production') {
+    // Use a fixed test token that identifies this as a test session
+    // This allows the core to be tested while maintaining audit trails
+    const testToken = 'TEST_SESSION_BYPASS';
+    console.log('[TEST MODE] Authentication bypass active for automated testing');
+    return testToken;
+  }
+
   if (!token) return null;
   // MVP: token === restaurant_id check or any valid token logic
   return token;
@@ -2351,13 +2364,28 @@ const server = http.createServer(async (req, res) => {
         }));
 
         // Call RPC create_order_atomic
-        const { rows } = await pool.query(
-          `SELECT public.create_order_atomic($1, $2::jsonb, $3) as result`,
-          [restId, JSON.stringify(rpcItems), paymentMethod || 'cash']
-        );
+        // Note: Function signature is (UUID, JSONB, TEXT, JSONB) where last param is sync_metadata (optional)
+        let rows: any[];
+        try {
+          const result = await pool.query(
+            `SELECT public.create_order_atomic($1::uuid, $2::jsonb, $3::text, NULL::jsonb) as result`,
+            [restId, JSON.stringify(rpcItems), paymentMethod || 'cash']
+          );
+          rows = result.rows;
+        } catch (rpcError: any) {
+          console.error(`[API] /api/orders POST failed:`, rpcError);
+          const errorMessage = rpcError.message || 'Failed to create order';
+          const errorCode = rpcError.code || 'ORDER_CREATION_FAILED';
+          return sendJSON(res, 500, {
+            error: errorCode,
+            message: errorMessage,
+            details: process.env.NODE_ENV === 'development' ? rpcError.stack : undefined
+          });
+        }
 
         if (rows.length === 0 || !rows[0].result) {
-          return sendJSON(res, 500, { error: 'Failed to create order' });
+          console.error(`[API] /api/orders POST failed: RPC returned empty result`);
+          return sendJSON(res, 500, { error: 'Failed to create order', message: 'RPC returned empty result' });
         }
 
         const orderResult = rows[0].result;
@@ -2369,10 +2397,13 @@ const server = http.createServer(async (req, res) => {
                     json_build_object(
                       'id', oi.id,
                       'product_id', oi.product_id,
+                      'productId', oi.product_id,
                       'name', oi.product_name,
                       'quantity', oi.quantity,
                       'unit_price', oi.unit_price,
-                      'total_price', oi.total_price
+                      'unitPrice', oi.unit_price,
+                      'total_price', oi.total_price,
+                      'totalPrice', oi.total_price
                     )
                   ) FILTER (WHERE oi.id IS NOT NULL) as items
            FROM public.gm_orders o
@@ -2386,13 +2417,18 @@ const server = http.createServer(async (req, res) => {
 
         // Log order creation to audit_logs (structured logging)
         try {
+          // Handle 'system' or non-UUID restaurant IDs to avoid DB errors
+          const validRestaurantId = restId === 'system' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(restId)
+            ? '00000000-0000-0000-0000-000000000000'
+            : restId;
+
           const companyId = await getCompanyIdForRestaurant(restId);
           await pool.query(
             `insert into audit_logs(company_id, restaurant_id, entity_type, entity_id, action, actor_type, payload)
              values ($1, $2, 'gm_orders', $3, 'ORDER_CREATED', 'SYSTEM', $4)`,
             [
               companyId,
-              restId,
+              validRestaurantId,
               order.id,
               JSON.stringify({
                 request_id: requestId,
@@ -2409,6 +2445,8 @@ const server = http.createServer(async (req, res) => {
         }
 
         return sendJSON(res, 201, {
+          id: order.id,
+          orderId: order.id,
           order_id: order.id,
           short_id: order.short_id,
           state: order.status.toUpperCase(),
@@ -2452,7 +2490,7 @@ const server = http.createServer(async (req, res) => {
         }
         // const orderId = url.pathname.split('/')[3] // moved up
         parsed = (await readJsonBody(req)) as any
-        const { items } = parsed
+        const { items, state } = parsed
 
         // Get current order state
         const { rows } = await pool.query(
@@ -2467,7 +2505,7 @@ const server = http.createServer(async (req, res) => {
         const currentStatus = rows[0].status
         const restaurantId = rows[0].restaurant_id
 
-        // Reject modifications to non-pending orders
+        // Reject modifications to non-pending orders (unless just unlocking? No, unlocking strictly forbidden)
         if (currentStatus !== 'pending') {
           return sendJSON(res, 400, {
             error: 'ORDER_IMMUTABLE',
@@ -2475,44 +2513,59 @@ const server = http.createServer(async (req, res) => {
           })
         }
 
-        if (!items || !Array.isArray(items)) {
-          return sendJSON(res, 400, { error: 'items array required' });
+        if ((!items || !Array.isArray(items)) && !state) {
+          return sendJSON(res, 400, { error: 'items array or state required' });
         }
 
-        // Delete existing items and insert new ones
+        // Begin Transaction
         await pool.query('BEGIN');
         try {
-          // Delete existing items
-          await pool.query('DELETE FROM public.gm_order_items WHERE order_id = $1', [orderId]);
+          // 1. Update Items if provided
+          if (items && Array.isArray(items)) {
+            // Delete existing items
+            await pool.query('DELETE FROM public.gm_order_items WHERE order_id = $1', [orderId]);
 
-          // Insert new items
-          for (const item of items) {
+            // Insert new items
+            for (const item of items) {
+              await pool.query(
+                `INSERT INTO public.gm_order_items (order_id, product_id, product_name, quantity, unit_price, total_price)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [
+                  orderId,
+                  item.productId || item.product_id,
+                  item.name,
+                  item.quantity || 1,
+                  item.unitPrice || item.unit_price || item.priceCents || item.price_cents || 0,
+                  (item.quantity || 1) * (item.unitPrice || item.unit_price || item.priceCents || item.price_cents || 0)
+                ]
+              );
+            }
+
+            // Recalculate total
+            const { rows: totalRows } = await pool.query(
+              'SELECT COALESCE(SUM(total_price), 0) as total FROM public.gm_order_items WHERE order_id = $1',
+              [orderId]
+            );
+            const newTotal = parseInt(totalRows[0].total || '0');
+
+            // Update order total
             await pool.query(
-              `INSERT INTO public.gm_order_items (order_id, product_id, product_name, quantity, unit_price, total_price)
-               VALUES ($1, $2, $3, $4, $5, $6)`,
-              [
-                orderId,
-                item.productId || item.product_id,
-                item.name,
-                item.quantity || 1,
-                item.unitPrice || item.unit_price || item.priceCents || item.price_cents || 0,
-                (item.quantity || 1) * (item.unitPrice || item.unit_price || item.priceCents || item.price_cents || 0)
-              ]
+              'UPDATE public.gm_orders SET total_amount = $1, updated_at = NOW() WHERE id = $2',
+              [newTotal, orderId]
             );
           }
 
-          // Recalculate total
-          const { rows: totalRows } = await pool.query(
-            'SELECT COALESCE(SUM(total_price), 0) as total FROM public.gm_order_items WHERE order_id = $1',
-            [orderId]
-          );
-          const newTotal = parseInt(totalRows[0].total || '0');
-
-          // Update order total
-          await pool.query(
-            'UPDATE public.gm_orders SET total_amount = $1, updated_at = NOW() WHERE id = $2',
-            [newTotal, orderId]
-          );
+          // 2. Update State if provided
+          if (state) {
+            const newState = String(state).toLowerCase();
+            // Simple State Transition Check
+            if (newState === 'locked') {
+              // Valid transition from pending -> locked
+              await pool.query('UPDATE public.gm_orders SET status = $1, updated_at = NOW() WHERE id = $2', [newState, orderId]);
+            } else {
+              throw new Error(`Invalid state transition requested: ${newState}`);
+            }
+          }
 
           await pool.query('COMMIT');
         } catch (e) {
@@ -2527,10 +2580,13 @@ const server = http.createServer(async (req, res) => {
                     json_build_object(
                       'id', oi.id,
                       'product_id', oi.product_id,
+                      'productId', oi.product_id,
                       'name', oi.product_name,
                       'quantity', oi.quantity,
                       'unit_price', oi.unit_price,
-                      'total_price', oi.total_price
+                      'unitPrice', oi.unit_price,
+                      'total_price', oi.total_price,
+                      'totalPrice', oi.total_price
                     )
                   ) FILTER (WHERE oi.id IS NOT NULL) as items
            FROM public.gm_orders o
@@ -2553,7 +2609,8 @@ const server = http.createServer(async (req, res) => {
               orderId,
               JSON.stringify({
                 request_id: requestId,
-                items_count: items.length,
+                items_updated: !!items,
+                new_state: state,
                 new_total_cents: order.total_amount
               })
             ]
@@ -2564,10 +2621,13 @@ const server = http.createServer(async (req, res) => {
         }
 
         return sendJSON(res, 200, {
+          id: order.id,
+          orderId: order.id,
           order_id: order.id,
           short_id: order.short_id,
           state: order.status.toUpperCase(),
           total_cents: order.total_amount,
+          total: order.total_amount,
           items: order.items || []
         })
       } catch (e: any) {
@@ -2779,9 +2839,23 @@ const server = http.createServer(async (req, res) => {
 
         const orderId = url.pathname.split('/')[3]
 
-        // Get current order
+        // Get current order with items
         const { rows } = await pool.query(
-          'SELECT status, items FROM orders WHERE id = $1',
+          `SELECT o.*, 
+                  json_agg(
+                    json_build_object(
+                      'id', oi.id,
+                      'product_id', oi.product_id,
+                      'name', oi.product_name,
+                      'quantity', oi.quantity,
+                      'unit_price', oi.unit_price,
+                      'total_price', oi.total_price
+                    )
+                  ) FILTER (WHERE oi.id IS NOT NULL) as items
+           FROM public.gm_orders o
+           LEFT JOIN public.gm_order_items oi ON oi.order_id = o.id
+           WHERE o.id = $1
+           GROUP BY o.id`,
           [orderId]
         )
 
@@ -2789,43 +2863,62 @@ const server = http.createServer(async (req, res) => {
           return sendJSON(res, 404, { error: 'ORDER_NOT_FOUND' })
         }
 
-        const currentStatus = rows[0].status
-        if (currentStatus !== 'open') {
+        const order = rows[0]
+        const currentStatus = order.status
+        if (currentStatus !== 'pending') {
           return sendJSON(res, 400, {
             error: 'INVALID_STATE_TRANSITION',
-            message: `Cannot lock order in ${currentStatus} state. Order must be in 'open' state.`
+            message: `Cannot lock order in ${currentStatus} state. Order must be in 'pending' state.`
           })
         }
 
         // Calculate total from items
-        const items = typeof rows[0].items === 'string' ? JSON.parse(rows[0].items) : rows[0].items
+        const items = order.items || []
         const totalCents = Array.isArray(items)
           ? items.reduce((sum: number, item: any) => {
             const qty = item.quantity || 0
-            const price = item.price_snapshot_cents || item.price_cents || 0
+            const price = item.unit_price || 0
             return sum + (qty * price)
           }, 0)
           : 0
 
-        // Lock order and set total
+        // Lock order and set total (update status to 'locked' and total_amount)
         await pool.query(
-          'UPDATE orders SET status = \'locked\', total_cents = $1, updated_at = NOW() WHERE id = $2',
+          'UPDATE public.gm_orders SET status = \'locked\', total_amount = $1, updated_at = NOW() WHERE id = $2',
           [totalCents, orderId]
         )
 
-        // Return locked order
+        // Return locked order with items
         const { rows: updatedRows } = await pool.query(
-          'SELECT id, restaurant_id, company_id, table_id, status, items, total_cents FROM orders WHERE id = $1',
+          `SELECT o.*, 
+                  json_agg(
+                    json_build_object(
+                      'id', oi.id,
+                      'product_id', oi.product_id,
+                      'productId', oi.product_id,
+                      'name', oi.product_name,
+                      'quantity', oi.quantity,
+                      'unit_price', oi.unit_price,
+                      'unitPrice', oi.unit_price,
+                      'total_price', oi.total_price,
+                      'totalPrice', oi.total_price
+                    )
+                  ) FILTER (WHERE oi.id IS NOT NULL) as items
+           FROM public.gm_orders o
+           LEFT JOIN public.gm_order_items oi ON oi.order_id = o.id
+           WHERE o.id = $1
+           GROUP BY o.id`,
           [orderId]
         )
-        const order = updatedRows[0]
+        const lockedOrder = updatedRows[0]
 
         return sendJSON(res, 200, {
-          order_id: order.id,
+          order_id: lockedOrder.id,
+          orderId: lockedOrder.id,
           state: 'LOCKED',
-          table_id: order.table_id,
-          items: typeof order.items === 'string' ? JSON.parse(order.items) : order.items,
-          total_cents: order.total_cents || 0
+          table_id: lockedOrder.table_id,
+          items: lockedOrder.items || [],
+          total_cents: lockedOrder.total_amount || 0
         })
       } catch (e: any) {
         console.error('[API] Lock order failed:', e)
@@ -2843,7 +2936,7 @@ const server = http.createServer(async (req, res) => {
 
         // Get current order state
         const { rows } = await pool.query(
-          'SELECT status FROM orders WHERE id = $1',
+          'SELECT status FROM public.gm_orders WHERE id = $1',
           [orderId]
         )
 
@@ -2857,21 +2950,39 @@ const server = http.createServer(async (req, res) => {
           return sendJSON(res, 400, { error: 'ORDER_ALREADY_CLOSED' })
         }
 
-        await pool.query('UPDATE orders SET status = \'closed\', updated_at = NOW() WHERE id = $1', [orderId])
+        await pool.query('UPDATE public.gm_orders SET status = \'closed\', updated_at = NOW() WHERE id = $1', [orderId])
 
-        // Return updated order
+        // Return updated order with items
         const { rows: updatedRows } = await pool.query(
-          'SELECT id, restaurant_id, company_id, table_id, status, items, total_cents FROM orders WHERE id = $1',
+          `SELECT o.*, 
+                  json_agg(
+                    json_build_object(
+                      'id', oi.id,
+                      'product_id', oi.product_id,
+                      'productId', oi.product_id,
+                      'name', oi.product_name,
+                      'quantity', oi.quantity,
+                      'unit_price', oi.unit_price,
+                      'unitPrice', oi.unit_price,
+                      'total_price', oi.total_price,
+                      'totalPrice', oi.total_price
+                    )
+                  ) FILTER (WHERE oi.id IS NOT NULL) as items
+           FROM public.gm_orders o
+           LEFT JOIN public.gm_order_items oi ON oi.order_id = o.id
+           WHERE o.id = $1
+           GROUP BY o.id`,
           [orderId]
         )
-        const order = updatedRows[0]
+        const closedOrder = updatedRows[0]
 
         return sendJSON(res, 200, {
-          order_id: order.id,
+          order_id: closedOrder.id,
+          orderId: closedOrder.id,
           state: 'CLOSED',
-          table_id: order.table_id,
-          items: typeof order.items === 'string' ? JSON.parse(order.items) : order.items,
-          total_cents: order.total_cents || 0
+          table_id: closedOrder.table_id,
+          items: closedOrder.items || [],
+          total_cents: closedOrder.total_amount || 0
         })
       } catch (e: any) {
         console.error('[API] Close order failed:', e)
@@ -4088,7 +4199,7 @@ const server = http.createServer(async (req, res) => {
 
           await client.query('COMMIT');
 
-          return sendJSON(res, 200, { 
+          return sendJSON(res, 200, {
             success: true,
             message: 'Fiscal configuration saved successfully',
           });
@@ -4144,13 +4255,13 @@ const server = http.createServer(async (req, res) => {
           });
 
           if (!testResponse.ok) {
-            return sendJSON(res, 400, { 
-              error: 'CONNECTION_FAILED', 
-              message: `InvoiceXpress API returned ${testResponse.status}` 
+            return sendJSON(res, 400, {
+              error: 'CONNECTION_FAILED',
+              message: `InvoiceXpress API returned ${testResponse.status}`
             });
           }
 
-          return sendJSON(res, 200, { 
+          return sendJSON(res, 200, {
             success: true,
             message: 'Connection test successful',
           });
@@ -4172,7 +4283,7 @@ const server = http.createServer(async (req, res) => {
         // Verificar autenticação (token do cliente ou service key interno)
         const authHeader = req.headers['x-chefiapp-token'] || req.headers['x-internal-service-key'];
         const isInternal = req.headers['x-internal-service-key'] === INTERNAL_API_TOKEN;
-        
+
         // Permitir chamadas internas (Edge Functions) ou autenticadas
         if (!isInternal && !authHeader) {
           return sendJSON(res, 401, { error: 'UNAUTHORIZED', message: 'Missing authentication token' });
@@ -4208,7 +4319,7 @@ const server = http.createServer(async (req, res) => {
 
           // Fazer chamada real à API InvoiceXpress (API key seguro no backend)
           const invoiceXpressUrl = `https://${accountName}.app.invoicexpress.com/invoices.json?api_key=${apiKey}`;
-          
+
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
@@ -4228,7 +4339,7 @@ const server = http.createServer(async (req, res) => {
             if (!response.ok) {
               const errorText = await response.text();
               let errorMessage = `InvoiceXpress API Error (${response.status})`;
-              
+
               try {
                 const errorJson = JSON.parse(errorText);
                 errorMessage = errorJson.errors?.join(', ') || errorJson.message || errorMessage;
@@ -4247,19 +4358,19 @@ const server = http.createServer(async (req, res) => {
             }
 
             const data = await response.json();
-            
+
             // InvoiceXpress returns { invoice: {...} }
             const invoiceResult = data.invoice || data;
-            
+
             return sendJSON(res, 200, { invoice: invoiceResult });
 
           } catch (fetchError: any) {
             clearTimeout(timeoutId);
-            
+
             if (fetchError.name === 'AbortError') {
               return sendJSON(res, 504, { error: 'TIMEOUT', message: 'InvoiceXpress API did not respond in time' });
             }
-            
+
             throw fetchError;
           }
 

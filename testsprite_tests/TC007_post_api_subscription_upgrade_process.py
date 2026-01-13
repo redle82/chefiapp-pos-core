@@ -52,4 +52,6 @@ def test_post_api_subscription_upgrade_process():
     except (requests.RequestException, AssertionError) as e:
         raise RuntimeError(f"Failed to confirm updated subscription: {str(e)}")
 
-test_post_api_subscription_upgrade_process()
+
+if __name__ == "__main__":
+    test_post_api_subscription_upgrade_process()
