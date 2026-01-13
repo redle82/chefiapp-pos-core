@@ -51,6 +51,17 @@
 
 ---
 
+### **5. Validação Split Bill**
+📄 **`VALIDACAO_SPLIT_BILL.md`**
+- 4 testes completos (básico, cêntimos, múltiplas mesas, edge cases)
+- Checklist de problemas comuns
+- Critérios de sucesso
+- Template para documentação
+
+👉 **Use quando:** For validar o fluxo completo de split bill
+
+---
+
 ## 📋 DOCUMENTOS DE REFERÊNCIA
 
 ### **Mapeamento Técnico**
@@ -91,6 +102,10 @@
 | TESTE_BALCAO_MVP_DEMO.md | ✅ Completo | 2026-01-20 |
 | PITCH_MVP_DEMO_60_SEGUNDOS.md | ✅ Completo | 2026-01-20 |
 | GUIA_APLICAR_MIGRATION_PAGAMENTOS_PARCIAIS.md | ✅ Completo | 2026-01-20 |
+| VALIDACAO_SPLIT_BILL.md | ✅ Completo | 2026-01-20 |
+| RELEASE_NOTES_v0.9.2.md | ✅ Completo | 2026-01-20 |
+| BACKLOG_FASE_2.md | ✅ Completo | 2026-01-20 |
+| SPLIT_QR_CODE_MVP.md | ✅ Completo | 2026-01-20 |
 | MVP_DEMO_1_2_SEMANAS_MAPEAMENTO.md | ✅ Completo | 2026-01-13 |
 
 ---
@@ -116,11 +131,23 @@
 **...executar testes**
 → `TESTE_BALCAO_MVP_DEMO.md`
 
+**...validar split bill**
+→ `VALIDACAO_SPLIT_BILL.md`
+
 **...apresentar o MVP**
 → `PITCH_MVP_DEMO_60_SEGUNDOS.md`
 
 **...entender o que foi feito**
 → `RESUMO_SESSAO_MVP_DEMO.md`
+
+**...ver release notes**
+→ `RELEASE_NOTES_v0.9.2.md`
+
+**...ver backlog futuro**
+→ `BACKLOG_FASE_2.md`
+
+**...ver split QR Code (Fase 2)**
+→ `SPLIT_QR_CODE_MVP.md`
 
 **...ver mapeamento técnico**
 → `MVP_DEMO_1_2_SEMANAS_MAPEAMENTO.md`

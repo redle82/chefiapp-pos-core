@@ -45,7 +45,41 @@ def create_order(headers):
     assert order.get("state") == "PENDING", f"Initial order state expected PENDING but got {order.get('state')}"
     return order["order_id"]
 
-# ... (keeping other functions same, just ensuring correct lines matched) ...
+def test_TC010_order_state_machine_transitions():
+    session_token = get_session_token()
+    headers = {
+        "x-chefiapp-token": session_token,
+        "Content-Type": "application/json",
+    }
+
+    # 1. Start: Create Order (PENDING)
+    order_id = create_order(headers)
+    print(f"Order created: {order_id} (PENDING)")
+
+    # 2. Transition: Lock Order (PENDING -> LOCKED)
+    lock_payload = {"state": "LOCKED"}
+    resp = requests.patch(f"{BASE_URL}/api/orders/{order_id}", json=lock_payload, headers=headers, timeout=TIMEOUT)
+    resp.raise_for_status()
+    locked_order = resp.json()
+    assert locked_order.get("state") == "LOCKED", f"Expected LOCKED, got {locked_order.get('state')}"
+    print(f"Order locked: {order_id} (LOCKED)")
+
+    # 3. Transition: Close Order (LOCKED -> CLOSED)
+    close_payload = {"paymentMethod": "cash", "amountPaid": 1000}
+    resp = requests.post(f"{BASE_URL}/api/orders/{order_id}/close", json=close_payload, headers=headers, timeout=TIMEOUT)
+    resp.raise_for_status()
+    closed_order = resp.json()
+    # Note: Closed order might verify payments first, but simple close should work or at least transition state
+    # Wait, simple close usually returns the closed order. Check state.
+    # If using the 'close' endpoint, it expects state to be closed or returns success.
+    # The response usually contains the order object.
+    
+    # Re-fetch to confirm if response format varies
+    resp = requests.get(f"{BASE_URL}/api/orders/{order_id}", headers=headers, timeout=TIMEOUT)
+    resp.raise_for_status()
+    final_order = resp.json()
+    assert final_order.get("state") == "CLOSED", f"Expected CLOSED, got {final_order.get('state')}"
+    print(f"Order closed: {order_id} (CLOSED)")
 
 if __name__ == "__main__":
     test_TC010_order_state_machine_transitions()

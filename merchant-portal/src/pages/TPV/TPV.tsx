@@ -374,31 +374,75 @@ const TPVContent = () => {
 
       await performOrderAction(paymentModalOrderId, 'pay', payload);
 
-      // Integração Fiscal (GATE 5) - Não bloqueia pagamento se falhar
-      try {
-        const order = activeOrders.find(o => o.id === paymentModalOrderId);
-        if (order && restaurantId) {
-          const { getFiscalService } = await import('../../core/fiscal/FiscalService');
-          const fiscalService = getFiscalService();
-          const fiscalResult = await fiscalService.processPaymentConfirmed({
-            orderId: paymentModalOrderId,
-            restaurantId: restaurantId,
-            paymentMethod: method,
-            amountCents: order.total,
-            paymentId: intentId,
-          });
+      // SPRINT 1 - Tarefa 1.1: Emissão Fiscal no Backend
+      // SPRINT 1 - Tarefa 1.4: Emitir fiscal apenas quando totalmente pago
+      // Aguardar atualização do pedido para verificar status
+      await getActiveOrders();
+      
+      // Verificar se pedido está totalmente pago antes de emitir fiscal
+      const updatedOrder = activeOrders.find(o => o.id === paymentModalOrderId);
+      if (updatedOrder && restaurantId) {
+        // Buscar pagamentos para calcular total pago
+        try {
+          const { PaymentEngine } = await import('../../core/tpv/PaymentEngine');
+          const payments = await PaymentEngine.getPaymentsByOrder(paymentModalOrderId);
+          const totalPaid = payments
+            .filter(p => p.status === 'PAID')
+            .reduce((sum, p) => sum + p.amountCents, 0);
           
-          // CRITICAL: Se fiscal foi rejeitado (credenciais não configuradas), mostrar alerta
-          if (!fiscalResult) {
-            error('⚠️ Fiscal não configurado - Risco de multa. Configure credenciais fiscais nas configurações.');
+          const orderTotal = updatedOrder.total;
+          
+          // SPRINT 1 - Tarefa 1.4: Só emitir fiscal se totalmente pago
+          if (totalPaid >= orderTotal && updatedOrder.status === 'paid') {
+            // Chamar endpoint do backend para adicionar à fila fiscal
+            try {
+              const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4320';
+              const sessionToken = localStorage.getItem('chefiapp_session_token') || 
+                                   getTabIsolated('chefiapp_session_token');
+              
+              const response = await fetch(`${apiUrl}/api/fiscal/emit`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-chefiapp-token': sessionToken || '',
+                },
+                body: JSON.stringify({
+                  orderId: paymentModalOrderId,
+                  restaurantId: restaurantId,
+                  paymentMethod: method,
+                  amountCents: orderTotal,
+                  paymentId: intentId,
+                  idempotencyKey: `fiscal:${paymentModalOrderId}:${Date.now()}`,
+                }),
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                if (errorData.error === 'ORDER_NOT_FULLY_PAID') {
+                  // Pedido não está totalmente pago ainda (split bill em progresso)
+                  console.log('[TPV] Fiscal not emitted - order not fully paid yet');
+                } else {
+                  console.warn('[TPV] Fiscal emission failed (non-blocking):', errorData);
+                }
+              } else {
+                const result = await response.json();
+                console.log('[TPV] Fiscal emission queued:', result.queue_id);
+              }
+            } catch (fiscalError) {
+              // Log mas não bloqueia pagamento
+              console.warn('[TPV] Fiscal emission request failed (non-blocking):', fiscalError);
+            }
+          } else {
+            // Pedido parcialmente pago - não emitir fiscal ainda
+            console.log('[TPV] Fiscal not emitted - order partially paid', {
+              totalPaid,
+              orderTotal,
+              status: updatedOrder.status,
+            });
           }
-        }
-      } catch (fiscalError) {
-        // Log mas não bloqueia pagamento
-        console.warn('[TPV] Fiscal processing failed (non-blocking):', fiscalError);
-        // Se erro contém mensagem sobre credenciais, mostrar alerta
-        if (fiscalError instanceof Error && fiscalError.message.includes('credentials')) {
-          error('⚠️ Fiscal não configurado - Risco de multa. Configure credenciais fiscais nas configurações.');
+        } catch (fiscalError) {
+          // Log mas não bloqueia pagamento
+          console.warn('[TPV] Fiscal emission check failed (non-blocking):', fiscalError);
         }
       }
 

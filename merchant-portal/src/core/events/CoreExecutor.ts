@@ -22,17 +22,27 @@ export const CoreExecutor = {
 
     // TPV_CORE_V1_FROZEN
     reduce(state: SystemState, event: EventEnvelope): SystemState {
-        // ... (state copy logic same as before)
-        const nextState = {
-            ...state,
-            orders: [...state.orders],
-            inventory: { ...state.inventory }
-        };
+        // 🔒 CORE HARDENING: MUTATION FIX (Phase 3.1)
+        // Use structuredClone to guarantee deep immutability.
+        // This prevents "Reference Leak" where modifying nextState accidentally mutates logic history.
+        const nextState: SystemState = structuredClone(state);
+
         const payload = event.payload;
+
+        // 🔒 CORE HARDENING: OPTIMISTIC CONCURRENCY (Phase 3.2)
+        // If an event declares a stream_version, it MUST implicitly follow the known state.
+        // NOTE: This usually requires 'state' to track a version. 
+        // Since 'SystemState' currently doesn't track version, we are injecting this logic
+        // but it will only be fully effective when SystemState adopts a '_version' field.
+        // For now, we respect the 'stream_version' if it exists on the event as a safeguard.
+        if (event.stream_version && (event.stream_version < 0)) {
+            // Placeholder for future strict check:
+            // if (event.stream_version !== state._version + 1) throw new Error('Concurrency Conflict');
+            console.warn(`[CoreExecutor] Stream Version ${event.stream_version} observed but strict check pending State Schema migration.`);
+        }
 
         switch (event.type) {
             case 'ORDER_CREATED': {
-                // ... (creation logic same as before)
                 if (nextState.orders.find(o => o.id === payload.id)) return state;
 
                 const newOrder: Order = {
@@ -64,7 +74,7 @@ export const CoreExecutor = {
                 const targetIndex = nextState.orders.findIndex(o => o.id === payload.orderId);
                 if (targetIndex === -1) return state;
 
-                const target = { ...nextState.orders[targetIndex] };
+                const target = nextState.orders[targetIndex]; // Direct ref is safe now because nextState is a Deep Clone
 
                 // IMMUTABILITY GUARD
                 if (target.status === 'cancelled') break;
@@ -79,7 +89,7 @@ export const CoreExecutor = {
                 else if (['cancel', 'void'].includes(action)) target.status = 'cancelled';
 
                 target.updatedAt = new Date(event.meta.timestamp);
-                nextState.orders[targetIndex] = target;
+                // nextState.orders[targetIndex] = target; // Not needed, target is a reference to inside nextState
                 break;
             }
 
@@ -90,11 +100,8 @@ export const CoreExecutor = {
                     // IMMUTABILITY GUARD: Dead orders stay dead
                     if (current.status === 'cancelled') break;
 
-                    nextState.orders[targetIndex] = {
-                        ...current,
-                        status: 'paid',
-                        updatedAt: new Date(event.meta.timestamp)
-                    };
+                    current.status = 'paid';
+                    current.updatedAt = new Date(event.meta.timestamp);
                 }
                 break;
             }
@@ -106,11 +113,8 @@ export const CoreExecutor = {
                     // IMMUTABILITY GUARD: Dead orders stay dead
                     if (current.status === 'cancelled') break;
 
-                    nextState.orders[targetIndex] = {
-                        ...current,
-                        status: 'served',
-                        updatedAt: new Date(event.meta.timestamp)
-                    };
+                    current.status = 'served';
+                    current.updatedAt = new Date(event.meta.timestamp);
                 }
                 break;
             }
@@ -122,11 +126,8 @@ export const CoreExecutor = {
                 const { itemId, quantity } = payload;
                 const item = nextState.inventory[itemId];
                 if (item) {
-                    nextState.inventory[itemId] = {
-                        ...item,
-                        currentStock: item.currentStock - quantity,
-                        lastUpdated: new Date(event.meta.timestamp)
-                    };
+                    item.currentStock -= quantity;
+                    item.lastUpdated = new Date(event.meta.timestamp);
                 }
                 break;
             }
@@ -135,11 +136,8 @@ export const CoreExecutor = {
                 const { itemId, quantity } = payload;
                 const item = nextState.inventory[itemId];
                 if (item) {
-                    nextState.inventory[itemId] = {
-                        ...item,
-                        currentStock: item.currentStock + quantity,
-                        lastUpdated: new Date(event.meta.timestamp)
-                    };
+                    item.currentStock += quantity;
+                    item.lastUpdated = new Date(event.meta.timestamp);
                 }
                 break;
             }
@@ -150,11 +148,8 @@ export const CoreExecutor = {
                 const { itemId, newLevel } = payload;
                 const item = nextState.inventory[itemId];
                 if (item) {
-                    nextState.inventory[itemId] = {
-                        ...item,
-                        currentStock: newLevel,
-                        lastUpdated: new Date(event.meta.timestamp)
-                    };
+                    item.currentStock = newLevel;
+                    item.lastUpdated = new Date(event.meta.timestamp);
                 }
                 break;
             }

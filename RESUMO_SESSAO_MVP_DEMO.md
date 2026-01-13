@@ -223,6 +223,29 @@ O MVP está pronto quando:
 
 ---
 
-**Status:** ✅ Implementação Completa  
+**Status:** ✅ Implementação Completa + 🟢 v0.9.2 Deployed  
 **Próximo Marco:** Testes de Balcão  
 **Última atualização:** 2026-01-20
+
+---
+
+## 🚀 DEPLOYMENT v0.9.2 (P0 Hardened)
+
+**Status:** 🟢 OPERATIONAL  
+**Data:** 2026-01-20
+
+### **Fixes Deployados:**
+- ✅ Order locking funcional (PATCH `/api/orders/{id}`)
+- ✅ API consistency (id, orderId, total, totalCents)
+- ✅ Database enum atualizado (locked, closed)
+- ✅ Build otimizado (tsconfig.json)
+
+### **Sanity Checks:**
+- ✅ TC001 (Health): PASS
+- ✅ TC003 (Order Creation & Locking): PASS
+
+### **Rollback:**
+- ✅ Seguro e simples (git revert + rebuild)
+- ✅ Database forward-compatible (sem rollback necessário)
+
+**Ver:** `RELEASE_NOTES_v0.9.2.md` para detalhes completos

@@ -45,6 +45,8 @@ import {
   validateAndReserveSlug,
 } from './beta-utils';
 import { RestaurantGroupService } from './restaurant-group-service';
+import { UberEatsAuthHandler } from './integrations/ubereats-auth';
+import { checkIdempotency } from './middleware/idempotency';
 
 dotenv.config({ override: false });
 
@@ -75,7 +77,10 @@ const billingStripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
 
 // P1 FIX: Circuit breakers para serviços externos
 const stripeCircuitBreaker = new CircuitBreaker('stripe', 5, 2, 60000);
+const stripeCircuitBreaker = new CircuitBreaker('stripe', 5, 2, 60000);
 const marketplaceCircuitBreaker = new CircuitBreaker('marketplaces', 5, 2, 60000);
+const uberAuth = new UberEatsAuthHandler(pool);
+const idempotencyGuard = checkIdempotency(pool);
 
 function getEncryptionKeyOrThrow(): Buffer {
   const env = String(CREDENTIALS_ENCRYPTION_KEY || '').trim();
@@ -1155,6 +1160,47 @@ const server = http.createServer(async (req, res) => {
       const params = OnboardingConfirmSchema.parse(body);
       const result = await confirmOnboarding(params);
       return sendJSON(res, 200, result);
+    }
+
+    // GET /api/auth/ubereats/authorize
+    if (url.pathname === '/api/auth/ubereats/authorize' && req.method === 'GET') {
+      try {
+        const redirect = uberAuth.getAuthorizationUrl(`${url.origin}/api/auth/ubereats/callback`);
+        res.writeHead(302, { Location: redirect });
+        res.end();
+        return;
+      } catch (err: any) {
+        return sendJSON(res, 500, { error: err.message });
+      }
+    }
+
+    // GET /api/auth/ubereats/callback
+    if (url.pathname === '/api/auth/ubereats/callback' && req.method === 'GET') {
+      try {
+        const code = url.searchParams.get('code');
+        if (!code) throw new Error('Missing authorization code');
+
+        // MVP: Hardcoded for single restaurant dev. Real implementation would track state/session.
+        const restaurantId = process.env.WEB_MODULE_RESTAURANT_ID || '';
+        if (!restaurantId) throw new Error('Server not configured with WEB_MODULE_RESTAURANT_ID');
+
+        await uberAuth.exchangeCode(code, `${url.origin}/api/auth/ubereats/callback`, restaurantId);
+
+        // Success HTML
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(`
+          <html>
+            <body style="font-family: sans-serif; text-align: center; padding: 50px;">
+              <h1 style="color: green;">Uber Eats Connected! ✅</h1>
+              <p>You can close this window now.</p>
+              <script>setTimeout(() => window.close(), 3000)</script>
+            </body>
+          </html>
+        `);
+        return;
+      } catch (err: any) {
+        return sendJSON(res, 500, { error: err.message });
+      }
     }
 
     // GET /internal/wizard/:restaurantId/state
@@ -2342,6 +2388,7 @@ const server = http.createServer(async (req, res) => {
           return sendJSON(res, 401, { error: 'SESSION_REQUIRED' });
         }
         parsed = (await readJsonBody(req)) as any
+        if (await idempotencyGuard(req, res, parsed)) return;
         const { items, restaurantId, paymentMethod } = parsed
 
         // Default or fallback IDs if not provided
@@ -2987,6 +3034,150 @@ const server = http.createServer(async (req, res) => {
       } catch (e: any) {
         console.error('[API] Close order failed:', e)
         return sendJSON(res, 500, { error: e.message })
+      }
+    }
+
+    // POST /api/fiscal/emit
+    // SPRINT 1 - Tarefa 1.1: Emissão Fiscal no Backend
+    // Adiciona pedido à fila fiscal para processamento assíncrono
+    if (url.pathname === '/api/fiscal/emit' && req.method === 'POST') {
+      try {
+        if (!isSessionAuthorized(req)) {
+          return sendJSON(res, 401, { error: 'SESSION_REQUIRED' });
+        }
+
+        const body = await readJsonBody(req);
+        if (await idempotencyGuard(req, res, body)) return;
+        const schema = z.object({
+          orderId: z.string().uuid(),
+          restaurantId: z.string().uuid(),
+          paymentMethod: z.string(),
+          amountCents: z.number().int().positive(),
+          paymentId: z.string().optional(),
+          idempotencyKey: z.string().optional(),
+        });
+        const params = schema.parse(body);
+
+        // SPRINT 1 - Tarefa 1.4: Validar que pedido está totalmente pago
+        const { rows: orderRows } = await pool.query(
+          `SELECT 
+            o.id,
+            o.restaurant_id,
+            o.status,
+            o.payment_status,
+            o.total_cents,
+            COALESCE(SUM(p.amount_cents), 0) as total_paid_cents
+           FROM public.gm_orders o
+           LEFT JOIN public.gm_payments p ON p.order_id = o.id AND p.status = 'paid'
+           WHERE o.id = $1 AND o.restaurant_id = $2
+           GROUP BY o.id`,
+          [params.orderId, params.restaurantId]
+        );
+
+        if (orderRows.length === 0) {
+          return sendJSON(res, 404, { error: 'ORDER_NOT_FOUND' });
+        }
+
+        const order = orderRows[0];
+
+        // Validar que pedido está totalmente pago
+        if (order.payment_status !== 'paid' && order.payment_status !== 'PAID') {
+          return sendJSON(res, 400, {
+            error: 'ORDER_NOT_FULLY_PAID',
+            message: 'Fiscal can only be emitted when order is fully paid',
+            payment_status: order.payment_status,
+            total_cents: order.total_cents,
+            total_paid_cents: Number(order.total_paid_cents),
+          });
+        }
+
+        // Validar que total pago >= total do pedido
+        const totalPaid = Number(order.total_paid_cents);
+        const orderTotal = Number(order.total_cents);
+        if (totalPaid < orderTotal) {
+          return sendJSON(res, 400, {
+            error: 'INSUFFICIENT_PAYMENT',
+            message: 'Total paid is less than order total',
+            total_cents: orderTotal,
+            total_paid_cents: totalPaid,
+          });
+        }
+
+        // Buscar dados completos do pedido para snapshot
+        const { rows: orderDataRows } = await pool.query(
+          `SELECT 
+            o.*,
+            json_agg(
+              json_build_object(
+                'id', oi.id,
+                'product_id', oi.product_id,
+                'name', oi.product_name,
+                'quantity', oi.quantity,
+                'unit_price', oi.unit_price,
+                'total_price', oi.total_price
+              )
+            ) FILTER (WHERE oi.id IS NOT NULL) as items
+           FROM public.gm_orders o
+           LEFT JOIN public.gm_order_items oi ON oi.order_id = o.id
+           WHERE o.id = $1
+           GROUP BY o.id`,
+          [params.orderId]
+        );
+
+        if (orderDataRows.length === 0) {
+          return sendJSON(res, 404, { error: 'ORDER_DATA_NOT_FOUND' });
+        }
+
+        const orderData = orderDataRows[0];
+        const paymentData = {
+          method: params.paymentMethod,
+          amountCents: params.amountCents,
+          paymentId: params.paymentId,
+        };
+
+        // Gerar idempotency key se não fornecido
+        const idempotencyKey = params.idempotencyKey || `fiscal:${params.orderId}:${Date.now()}`;
+
+        // Adicionar à fila fiscal
+        const { rows: queueRows } = await pool.query(
+          `SELECT public.add_to_fiscal_queue(
+            $1::uuid,
+            $2::uuid,
+            $3::jsonb,
+            $4::jsonb,
+            $5::text
+          ) as queue_id`,
+          [
+            params.restaurantId,
+            params.orderId,
+            JSON.stringify(orderData),
+            JSON.stringify(paymentData),
+            idempotencyKey,
+          ]
+        );
+
+        const queueId = queueRows[0].queue_id;
+
+        console.log('[API] Fiscal emission queued', {
+          queueId,
+          orderId: params.orderId,
+          restaurantId: params.restaurantId,
+          idempotencyKey,
+        });
+
+        return sendJSON(res, 202, {
+          success: true,
+          queue_id: queueId,
+          message: 'Fiscal emission queued for processing',
+          status: 'pending',
+        });
+      } catch (e: any) {
+        console.error('[API] POST /api/fiscal/emit failed:', e);
+        return sendJSON(res, 500, {
+          error: 'FISCAL_EMISSION_FAILED',
+          message: e.message,
+          details: process.env.NODE_ENV === 'development' ? e.stack : undefined,
+        });
       }
     }
 
