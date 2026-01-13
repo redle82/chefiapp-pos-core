@@ -1,5 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { crypto } from "jsr:@std/crypto";
+import { encodeHex } from "jsr:@std/encoding/hex";
 
 interface UberEatsWebhookPayload {
   event: string;
@@ -36,12 +38,47 @@ interface UberEatsWebhookPayload {
 function isValidPayload(payload: any): payload is UberEatsWebhookPayload {
   return (
     payload &&
-    payload.event &&
     payload.data &&
     payload.data.order &&
-    payload.data.order.id &&
-    payload.data.order.customer
+    payload.data.order.id
   );
+}
+
+/**
+ * Verify Uber Eats HMAC-SHA256 Signature
+ */
+async function verifyUberSignature(req: Request, rawBody: string): Promise<boolean> {
+  const signature = req.headers.get("X-Uber-Signature");
+  if (!signature) {
+    console.error("[webhook-ubereats] Missing X-Uber-Signature");
+    return false;
+  }
+
+  const clientSecret = Deno.env.get("UBER_CLIENT_SECRET");
+  if (!clientSecret) {
+    console.error("[webhook-ubereats] Missing UBER_CLIENT_SECRET in env");
+    return false; // Fail safe
+  }
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(clientSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"]
+  );
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(rawBody);
+  const signatureBytes = await crypto.subtle.sign("HMAC", key, data);
+  const calculatedSignature = encodeHex(signatureBytes);
+
+  if (calculatedSignature !== signature) {
+    console.warn(`[webhook-ubereats] Signature Mismatch! Expected: ${calculatedSignature}, Got: ${signature}`);
+    return false;
+  }
+
+  return true;
 }
 
 Deno.serve(async (req: Request) => {
@@ -51,7 +88,7 @@ Deno.serve(async (req: Request) => {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Uber-Signature',
       },
     });
   }
@@ -64,17 +101,35 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const payload = await req.json();
+    // 1. Read Raw Body for HMAC
+    const rawBody = await req.text();
+
+    // 2. Verify Signature
+    const isVerified = await verifyUberSignature(req, rawBody);
+    if (!isVerified) {
+      return new Response(JSON.stringify({ error: 'Invalid Signature' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // 3. Parse JSON
+    let payload;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch (e) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 });
+    }
 
     if (!isValidPayload(payload)) {
-      return new Response(JSON.stringify({ error: 'Invalid payload' }), {
+      return new Response(JSON.stringify({ error: 'Invalid payload structure' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
     const { event, data } = payload;
-    const order = data.order;
+    const order = data.order; // Assuming Uber format logic above
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -86,21 +141,21 @@ Deno.serve(async (req: Request) => {
       .upsert({
         external_id: order.id,
         source: 'ubereats',
-        reference: order.id,
+        reference: order.id, // Uber ID usually is reference
         restaurant_id: data.restaurant_id || null,
-        event_type: event,
-        status: order.status,
-        customer_name: `${order.customer.first_name} ${order.customer.last_name}`.trim(),
-        customer_phone: order.customer.phone,
-        customer_email: order.customer.email,
-        delivery_address: order.delivery.address,
-        delivery_type: 'delivery',
-        items: order.items,
-        total_cents: Math.round(order.total * 100),
-        currency: order.currency,
-        payment_method: 'UNKNOWN',
-        payment_status: 'PENDING',
-        instructions: '',
+        event_type: event || 'created', // Default
+        status: order.status || 'created',
+        customer_name: order.customer ? `${order.customer.first_name || ''} ${order.customer.last_name || ''}`.trim() : 'Uber Customer',
+        customer_phone: order.customer?.phone,
+        customer_email: order.customer?.email,
+        delivery_address: order.delivery?.address,
+        delivery_type: payload.data.delivery_type || 'delivery',
+        items: order.items || [],
+        total_cents: Math.round((order.total || 0) * 100),
+        currency: order.currency || 'EUR',
+        payment_method: 'ONLINE',
+        payment_status: 'PAID', // Uber handles payment
+        instructions: order.notes || '',
         raw_payload: payload,
         received_at: new Date().toISOString(),
       }, {
@@ -115,24 +170,10 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Broadcast via Realtime (if needed)
-    await supabase
-      .channel('integration_orders')
-      .send({
-        type: 'broadcast',
-        event: 'new_order',
-        payload: {
-          source: 'ubereats',
-          order_id: order.id,
-          restaurant_id: data.restaurant_id,
-        },
-      });
-
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
       },
     });
   } catch (err) {

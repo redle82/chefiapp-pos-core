@@ -24,6 +24,101 @@ export class FiscalPrinter {
         };
     }
 
+
+
+    /**
+     * Imprime pedido para cozinha (Ticket Interno)
+     */
+    async printKitchenTicket(order: any): Promise<void> {
+        // Fallback for browser print
+        const receiptHTML = this.generateKitchenTicketHTML(order);
+
+        const printWindow = window.open('', '_blank', 'width=400,height=600');
+        if (!printWindow) throw new Error('Popup blocked');
+
+        printWindow.document.write(receiptHTML);
+        printWindow.document.close();
+
+        return new Promise((resolve) => {
+            printWindow.onload = () => {
+                setTimeout(() => {
+                    printWindow.print();
+                    // printWindow.close(); // Optional
+                    resolve();
+                }, 250);
+            };
+        });
+    }
+
+    /**
+     * Gera HTML do Ticket de Cozinha
+     */
+    private generateKitchenTicketHTML(order: any): string {
+        const now = new Date();
+        const isDelivery = !!order.deliveryMetadata;
+        const metadata = order.deliveryMetadata || {};
+
+        // Delivery styles
+        const deliveryHeader = isDelivery ? `
+            <div class="delivery-provider">${metadata.provider.toUpperCase()}</div>
+            <div class="delivery-code">#${metadata.orderCode?.slice(-5) || '????'}</div>
+            <div class="customer-name">${metadata.customerName || 'Cliente'}</div>
+        ` : '';
+
+        // Standard styles
+        const standardHeader = !isDelivery ? `
+            <div class="title">COZINHA</div>
+            <div class="meta">Mesa: ${order.tableNumber || 'BALCÃO'}</div>
+            <div class="meta">Senha: #${order.id.slice(-4)}</div>
+        ` : '';
+
+        return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>COZINHA ${isDelivery ? '- DELIVERY' : ''}</title>
+    <style>
+        body { font-family: 'Courier New'; max-width: 80mm; margin: 0 auto; padding: 5mm; }
+        .header { text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+        .title { font-size: 24px; font-weight: bold; }
+        .meta { font-size: 16px; margin-top: 5px; font-weight: bold; }
+        
+        /* Delivery Specifics */
+        .delivery-provider { font-size: 32px; font-weight: 900; background: #000; color: #fff; padding: 5px; margin-bottom: 5px; }
+        .delivery-code { font-size: 24px; font-weight: bold; margin: 5px 0; border: 2px solid #000; display: inline-block; padding: 2px 8px; }
+        .customer-name { font-size: 20px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
+
+        .item { font-size: 18px; margin-bottom: 12px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+        .qty { font-weight: bold; font-size: 22px; display: inline-block; width: 40px; vertical-align: top; }
+        .name { display: inline-block; width: calc(100% - 50px); vertical-align: top; font-weight: bold; }
+        .notes { font-size: 16px; margin-top: 4px; font-weight: bold; background: #eee; padding: 4px; display: block; margin-left: 40px; }
+        .footer { margin-top: 20px; font-size: 12px; text-align: center; border-top: 1px solid #000; padding-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        ${isDelivery ? deliveryHeader : standardHeader}
+        <div class="meta">${now.toLocaleTimeString()}</div>
+    </div>
+    <div class="items">
+        ${order.items.map((item: any) => `
+            <div class="item">
+                <span class="qty">${item.quantity}</span>
+                <span class="name">${item.name}</span>
+                ${item.notes ? `<div class="notes">📝 ${item.notes}</div>` : ''}
+                ${item.modifiers && item.modifiers.length > 0 ?
+                item.modifiers.map((m: any) => `<div class="notes"> + ${m.name || m}</div>`).join('')
+                : ''}
+            </div>
+        `).join('')}
+    </div>
+    <div class="footer">
+        ${order.notes ? `<div style="font-size: 14px; font-weight: bold;">⚠️ ${order.notes}</div>` : ''}
+    </div>
+</body>
+</html>`;
+    }
+
     /**
      * Imprime recibo fiscal
      */
@@ -86,11 +181,11 @@ export class FiscalPrinter {
      */
     async generatePDF(taxDoc: TaxDocument, orderData: any): Promise<Blob> {
         const receiptHTML = this.generateReceiptHTML(taxDoc, orderData);
-        
+
         // Usar html2pdf.js ou similar para gerar PDF
         // Por enquanto, retornamos HTML como fallback
         // TODO: Integrar biblioteca de geração de PDF (html2pdf.js, jsPDF, etc.)
-        
+
         const blob = new Blob([receiptHTML], { type: 'text/html' });
         return blob;
     }

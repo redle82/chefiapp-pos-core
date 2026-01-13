@@ -10,8 +10,9 @@ import { useMenuItems } from '../../hooks/useMenuItems';
 import { useCoreHealth } from '../../core/health/useCoreHealth';
 
 import { OfflineBanner } from '../../components/OfflineBanner';
-import { FiscalConfigAlert } from './components/FiscalConfigAlert';
-import { CashRegisterAlert } from './components/CashRegisterAlert';
+import { DeliveryNotificationManager } from './components/DeliveryNotificationManager';
+
+
 
 /* UDS Implementation (Sealed) */
 import { TPVLayout } from '../../ui/design-system/layouts/TPVLayout';
@@ -64,14 +65,14 @@ const TPVContent = () => {
   const { items: menuItems, loading: menuLoading } = useMenuItems(restaurantId);
   const { success, error } = useToast();
   const { tables } = useTables();
-  
+
   // P1-1 FIX: Health monitoring para habilitar/desabilitar ações
   const { status: healthStatus } = useCoreHealth({
     autoStart: true,
     pollInterval: 30000,
     downPollInterval: 10000,
   });
-  
+
   // P1-1 FIX: Determinar se ações devem estar habilitadas
   // Ações offline (criar pedido, adicionar item) sempre permitidas
   // Ações críticas (pagamento) respeitam health status
@@ -86,13 +87,13 @@ const TPVContent = () => {
   });
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [dailyTotal, setDailyTotal] = useState<string>('€0,00');
-  
+
   // P5-5: Currency support
   const { currency, formatAmount } = useCurrency();
-  
+
   // P5-4: Automated inventory
   const { alerts: inventoryAlerts } = useAutomatedInventory();
-  
+
   // P5-8: Voice commands
   const voiceCommands = useVoiceCommands([
     {
@@ -219,8 +220,8 @@ const TPVContent = () => {
         table.status === 'reserved'
           ? 'reserved'
           : hasActiveOrder
-          ? 'occupied'
-          : 'free';
+            ? 'occupied'
+            : 'free';
 
       return {
         ...table,
@@ -299,12 +300,12 @@ const TPVContent = () => {
 
       // P1-4 FIX: Executar ação e aguardar confirmação antes de atualizar UI
       await performOrderAction(orderId, action);
-      
+
       // P1-4 FIX: Aguardar refresh completo antes de mostrar sucesso
       // Isso garante que a UI mostra apenas o que o Core confirmou
       console.log('[TPV] Syncing orders after action...');
       await getActiveOrders();
-      
+
       // Apenas após getActiveOrders() completar, a UI será atualizada
       // O StreamTunnel mostrará o status correto baseado nos dados do Core
     } catch (err: any) {
@@ -317,7 +318,7 @@ const TPVContent = () => {
       });
 
       error(errorMsg);
-      
+
       // P1-4 FIX: Em caso de erro, refresh para garantir UI sincronizada
       await getActiveOrders();
     }
@@ -358,7 +359,7 @@ const TPVContent = () => {
       error('Este pedido já foi totalmente pago.');
       return;
     }
-    
+
     // SEMANA 2: Se está parcialmente pago (partially_paid), permitir continuar pagamento (split bill)
     // Não bloquear aqui, apenas validar no backend
 
@@ -378,7 +379,7 @@ const TPVContent = () => {
       // SPRINT 1 - Tarefa 1.4: Emitir fiscal apenas quando totalmente pago
       // Aguardar atualização do pedido para verificar status
       await getActiveOrders();
-      
+
       // Verificar se pedido está totalmente pago antes de emitir fiscal
       const updatedOrder = activeOrders.find(o => o.id === paymentModalOrderId);
       if (updatedOrder && restaurantId) {
@@ -389,17 +390,17 @@ const TPVContent = () => {
           const totalPaid = payments
             .filter(p => p.status === 'PAID')
             .reduce((sum, p) => sum + p.amountCents, 0);
-          
+
           const orderTotal = updatedOrder.total;
-          
+
           // SPRINT 1 - Tarefa 1.4: Só emitir fiscal se totalmente pago
           if (totalPaid >= orderTotal && updatedOrder.status === 'paid') {
             // Chamar endpoint do backend para adicionar à fila fiscal
             try {
               const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4320';
-              const sessionToken = localStorage.getItem('chefiapp_session_token') || 
-                                   getTabIsolated('chefiapp_session_token');
-              
+              const sessionToken = localStorage.getItem('chefiapp_session_token') ||
+                getTabIsolated('chefiapp_session_token');
+
               const response = await fetch(`${apiUrl}/api/fiscal/emit`, {
                 method: 'POST',
                 headers: {
@@ -493,9 +494,9 @@ const TPVContent = () => {
       const paidAmount = payments
         .filter(p => p.status === 'PAID')
         .reduce((sum, p) => sum + p.amountCents, 0);
-      
+
       const remainingAmount = order.total - paidAmount;
-      
+
       if (amountCents > remainingAmount) {
         error(`Valor excede o saldo restante de ${formatAmount(remainingAmount)}`);
         return;
@@ -659,10 +660,11 @@ const TPVContent = () => {
     <AppShell operationalMode={true}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <OfflineBanner />
+        <DeliveryNotificationManager />
         <FiscalConfigAlert restaurantId={restaurantId} />
-        <CashRegisterAlert 
-          isOpen={cashRegisterOpen} 
-          onOpenCash={() => setShowOpenCashModal(true)} 
+        <CashRegisterAlert
+          isOpen={cashRegisterOpen}
+          onOpenCash={() => setShowOpenCashModal(true)}
         />
         <TPVLayout
           header={
@@ -788,7 +790,7 @@ const TPVContent = () => {
                     category: item.category,
                   }))}
                   activeOrderItems={
-                    activeOrderId 
+                    activeOrderId
                       ? activeOrders.find(o => o.id === activeOrderId)?.items || []
                       : []
                   }

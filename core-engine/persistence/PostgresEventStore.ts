@@ -15,16 +15,21 @@ export class PostgresEventStore implements EventStore {
         const streamParts = event.stream_id.split(":");
         if (streamParts.length < 2) throw new Error("Invalid stream_id format");
 
-        // Explicitly validate "Append Only" policy
-        // We assume the event object passed here is FINAL.
-
         const streamType = streamParts[0];
         const streamId = streamParts.slice(1).join(":");
+
+        // P0-A: Concurrency Control
+        if (expectedStreamVersion !== undefined) {
+            if (event.stream_version !== expectedStreamVersion + 1) {
+                throw new Error(`Concurrency Exception: Expected version ${expectedStreamVersion}, but trying to append ${event.stream_version}`);
+            }
+        }
 
         const query = `
       INSERT INTO event_store 
       (event_id, stream_type, stream_id, stream_version, event_type, payload, meta, created_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      ON CONFLICT (stream_type, stream_id, stream_version) DO NOTHING
     `;
 
         // Extract standard meta fields
@@ -43,19 +48,17 @@ export class PostgresEventStore implements EventStore {
         ];
 
         try {
-            await this.db.query(query, values);
+            const res = await this.db.query(query, values);
+            if (res.rowCount === 0) {
+                // Collision detected by Database (Race Condition)
+                throw new Error(`Concurrency Exception: Stream ${event.stream_id} version ${event.stream_version} already exists (DB Conflict).`);
+            }
         } catch (err: any) {
-            if (err.code === '23505') { // Unique violation
-                if (err.constraint === 'uq_event_stream_version') {
-                    throw new Error(`Concurrency Exception: Stream ${event.stream_id} version ${event.stream_version} already exists.`);
-                }
-                if (err.constraint === 'event_store_event_id_key') {
-                    // Idempotency check could happen here:
-                    // If payload matches, we might ignore?
-                    // But strict event sourcing usually demands explicit check before or fails.
-                    // We fail for now to be safe.
+            if (err.constraint === 'event_store_event_id_key' || err.code === '23505') {
+                if (err.detail?.includes('event_id')) {
                     throw new Error(`Duplicate Event ID: ${event.event_id}`);
                 }
+                throw new Error(`Concurrency Exception: Stream ${event.stream_id} version ${event.stream_version} already exists.`);
             }
             throw err;
         }

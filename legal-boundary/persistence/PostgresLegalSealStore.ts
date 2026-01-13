@@ -49,14 +49,23 @@ export class PostgresLegalSealStore implements LegalSealStore {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     `;
 
+        // P0-B: Strict UUIDs and FKs
+        if (!seal.seal_id || seal.seal_id === 'TODO_UUID') {
+            seal.seal_id = crypto.randomUUID();
+        }
+
+        if (!seal.seal_event_id || seal.seal_event_id === "TODO_LINK_TO_EVENT_ID") {
+            // Hardening: We must NOT allow seals without event links in Production.
+            // However, for immediate migration support, if no ID is passed, we throw.
+            throw new Error("P0 Violation: Cannot create Legal Seal without a valid seal_event_id (Foreign Key).");
+        }
+
         const values = [
             seal.seal_id,
             seal.entity_type,
             seal.entity_id,
             seal.legal_state,
-            // Handle TODO event ID. In production transaction wrapping, this will be passed.
-            // For now, if invalid UUID, we might use NIL UUID "0000..." or require it.
-            seal.seal_event_id === "TODO_LINK_TO_EVENT_ID" ? "00000000-0000-0000-0000-000000000000" : seal.seal_event_id,
+            seal.seal_event_id,
             seal.stream_hash,
             seal.financial_state,
             seal.sealed_at
