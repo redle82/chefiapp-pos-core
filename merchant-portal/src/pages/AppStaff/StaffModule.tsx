@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { StaffProvider } from './context/StaffContext';
 import AppStaff from './AppStaff';
-import { OrderProvider } from '../TPV/context/OrderContextReal';
 import { useSupabaseAuth } from '../../core/auth/useSupabaseAuth';
 import { useRestaurantIdentity } from '../../core/identity/useRestaurantIdentity';
 import { Text } from '../../ui/design-system/primitives/Text';
 import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
+import { InventoryReflexProvider } from '../Inventory/context/InventoryContext';
 
 // 🛰️ SATÉLITE DE STAFF
 // Agora conectado ao Auth + Identidade do Restaurante
@@ -33,14 +33,16 @@ export default function StaffModule() {
 
     const restaurantId = identity.id || getTabIsolated('chefiapp_restaurant_id');
 
+    // Cleaned up body
+
     return (
-        <OrderProvider>
-            <StaffProvider
-                restaurantId={restaurantId || undefined}
-                userId={user?.id || null}
-            >
+        <StaffProvider
+            restaurantId={restaurantId || undefined}
+            userId={user?.id || null}
+        >
+            <InventoryReflexProvider>
                 <AppStaff />
-            </StaffProvider>
-        </OrderProvider>
+            </InventoryReflexProvider>
+        </StaffProvider>
     );
 }

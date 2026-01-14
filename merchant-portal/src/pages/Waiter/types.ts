@@ -9,19 +9,21 @@
 
 export const TableStatus = {
   /** Mesa livre, disponível */
-  FREE: 'FREE',
+  FREE: 'free',
   /** Mesa ocupada (clientes sentados, sem comanda ainda) */
-  OCCUPIED: 'OCCUPIED',
+  OCCUPIED: 'occupied',
   /** Cliente chamou o garçom (urgente se repetido) */
-  CALLING: 'CALLING',
+  CALLING: 'calling',
   /** Conta foi solicitada */
-  BILL_REQUESTED: 'BILL_REQUESTED',
+  BILL_REQUESTED: 'bill_requested',
   /** Cliente está pagando */
-  PAYING: 'PAYING',
+  PAYING: 'paying',
   /** Cozinha marcou pedido como pronto */
-  KITCHEN_READY: 'KITCHEN_READY',
+  KITCHEN_READY: 'kitchen_ready',
   /** Mesa precisa de limpeza */
-  CLEANING: 'CLEANING',
+  CLEANING: 'cleaning',
+  /** Mesa Fechada (Admin) */
+  CLOSED: 'closed',
 } as const;
 export type TableStatus = typeof TableStatus[keyof typeof TableStatus];
 

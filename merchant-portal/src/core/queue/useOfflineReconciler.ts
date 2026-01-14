@@ -15,14 +15,23 @@ export function useOfflineReconciler({
     const { items, update, refresh } = useOfflineQueue()
     const runningRef = useRef(false)
     const [tick, setTick] = useState(0) // ⏰ Wake up signal
+    
+    // CRITICAL: Use refs to avoid loop from items/refresh changing
+    const itemsRef = useRef(items)
+    const refreshRef = useRef(refresh)
+    
+    useEffect(() => {
+        itemsRef.current = items
+        refreshRef.current = refresh
+    }, [items, refresh])
 
-    // Optimized Polling: Smart Heartbeat
+    // TASK-4.2.1 e TASK-4.2.2: Polling Otimizado e Adaptativo
     // 1. Listen to 'online' event for immediate reaction
-    // 2. Poll every 30s as fallback (instead of 1s)
+    // 2. Polling adaptativo baseado no número de itens pendentes
     // 3. Poll on visibility change (user comes back to tab)
     useEffect(() => {
         const triggerSync = () => {
-            refresh()
+            refreshRef.current()
             setTick(t => t + 1)
         }
 
@@ -32,15 +41,48 @@ export function useOfflineReconciler({
             if (document.visibilityState === 'visible') triggerSync()
         })
 
-        // Slow Heartbeat (30s)
-        const id = setInterval(triggerSync, 30000)
+        // TASK-4.2.2: Polling adaptativo baseado no número de itens pendentes
+        const getPollingInterval = (): number => {
+            const pendingCount = itemsRef.current.filter(item => 
+                item.status === 'queued' && 
+                (!item.nextRetryAt || Date.now() >= item.nextRetryAt)
+            ).length;
+
+            // TASK-4.2.2: Mais agressivo quando há itens pendentes, menos quando vazio
+            if (pendingCount === 0) {
+                return 10000; // 10s quando não há itens pendentes
+            } else if (pendingCount <= 3) {
+                return 5000; // 5s quando há poucos itens (TASK-4.2.1: padrão)
+            } else {
+                return 3000; // 3s quando há muitos itens (mais agressivo)
+            }
+        };
+
+        // TASK-4.2.1: Polling padrão: 5s (quando há itens pendentes)
+        // TASK-4.2.1: Polling quando offline: 10s (quando não há itens)
+        let currentInterval = getPollingInterval();
+        let id = setInterval(triggerSync, currentInterval);
+
+        // Atualizar intervalo quando items mudarem
+        const updateInterval = () => {
+            const newInterval = getPollingInterval();
+            if (newInterval !== currentInterval) {
+                clearInterval(id);
+                currentInterval = newInterval;
+                id = setInterval(triggerSync, currentInterval);
+            }
+        };
+
+        // Observar mudanças nos items para ajustar polling
+        const intervalCheck = setInterval(updateInterval, 2000); // Verificar a cada 2s
 
         return () => {
             window.removeEventListener('online', triggerSync)
             document.removeEventListener('visibilitychange', triggerSync)
             clearInterval(id)
+            clearInterval(intervalCheck)
         }
-    }, [refresh])
+    }, []) // CRITICAL: Empty deps - use refs to avoid loop
 
     // Main Sync Logic
     useEffect(() => {
@@ -48,7 +90,7 @@ export function useOfflineReconciler({
         if (runningRef.current) return
 
         const run = async () => {
-            const pendingItems = items.filter(item =>
+            const pendingItems = itemsRef.current.filter(item =>
                 item.status === 'queued' &&
                 (!item.nextRetryAt || Date.now() >= item.nextRetryAt)
             )
@@ -69,11 +111,13 @@ export function useOfflineReconciler({
                         continue // Skip if update fails
                     }
 
-                    // Headers with Idempotency Key
+                    // TASK-4.1.1: Headers with Idempotency Key
+                    // Usar idempotency_key se disponível, senão usar item.id como fallback
+                    const idempotencyKey = item.idempotency_key || item.id;
                     const headers = {
                         'Content-Type': 'application/json',
                         'x-chefiapp-token': sessionToken,
-                        'Idempotency-Key': item.id // 🛡️ GUARANTEED EXPERT IMPLEMENTATION
+                        'Idempotency-Key': idempotencyKey // TASK-4.1.1: Usar idempotency_key baseado em conteúdo
                     }
 
                     // 🔁 Process
@@ -173,6 +217,6 @@ export function useOfflineReconciler({
         }
 
         run()
-    }, [healthStatus, items, apiBase, update, tick])
+    }, [healthStatus, apiBase, update, tick]) // CRITICAL: Use itemsRef instead of items
 }
 

@@ -17,7 +17,6 @@ import { IntegrationRegistry } from '../../../integrations';
 
 interface GlovoConfig {
   clientId: string;
-  clientSecret: string;
   enabled: boolean;
 }
 
@@ -27,7 +26,6 @@ export const GlovoIntegrationWidget: React.FC = () => {
 
   const [config, setConfig] = useState<GlovoConfig>({
     clientId: getTabIsolated('glovo_client_id') || '',
-    clientSecret: getTabIsolated('glovo_client_secret') || '',
     enabled: getTabIsolated('glovo_enabled') === 'true',
   });
 
@@ -37,7 +35,7 @@ export const GlovoIntegrationWidget: React.FC = () => {
 
   // Carregar status da conexão
   useEffect(() => {
-    if (config.clientId && config.clientSecret && config.enabled) {
+    if (config.clientId && config.enabled) {
       checkConnection();
     }
   }, []);
@@ -46,11 +44,10 @@ export const GlovoIntegrationWidget: React.FC = () => {
     try {
       // Salvar no TabIsolatedStorage
       setTabIsolated('glovo_client_id', config.clientId);
-      setTabIsolated('glovo_client_secret', config.clientSecret);
       setTabIsolated('glovo_enabled', config.enabled.toString());
 
       // Se habilitado, inicializar adapter
-      if (config.enabled && config.clientId && config.clientSecret) {
+      if (config.enabled && config.clientId) {
         await initializeAdapter();
       } else if (adapter) {
         // Se desabilitado, remover adapter
@@ -71,7 +68,6 @@ export const GlovoIntegrationWidget: React.FC = () => {
       await newAdapter.initialize({
         restaurantId: restaurantId || '',
         clientId: config.clientId,
-        clientSecret: config.clientSecret,
         enabled: config.enabled,
       });
 
@@ -101,8 +97,8 @@ export const GlovoIntegrationWidget: React.FC = () => {
   const handleTestConnection = async () => {
     setIsTesting(true);
     try {
-      if (!config.clientId || !config.clientSecret) {
-        error('Preencha Client ID e Client Secret primeiro');
+      if (!config.clientId) {
+        error('Preencha Client ID primeiro');
         return;
       }
 
@@ -160,21 +156,18 @@ export const GlovoIntegrationWidget: React.FC = () => {
               fullWidth
             />
 
-            <Input
-              label="Client Secret"
-              type="password"
-              value={config.clientSecret}
-              onChange={(e) => setConfig({ ...config, clientSecret: e.target.value })}
-              placeholder="Seu Client Secret do Glovo"
-              fullWidth
-            />
+            <div style={{ padding: 12, background: 'rgba(59, 130, 246, 0.1)', borderRadius: 8, marginTop: 8 }}>
+              <Text size="xs" color="tertiary">
+                🔒 <strong>TASK-3.1.3:</strong> Client Secret é gerenciado no backend. Não é necessário configurá-lo aqui.
+              </Text>
+            </div>
 
             <div style={{ display: 'flex', gap: 8 }}>
               <Button
                 variant="primary"
                 size="md"
                 onClick={handleTestConnection}
-                disabled={isTesting || !config.clientId || !config.clientSecret}
+                disabled={isTesting || !config.clientId}
               >
                 {isTesting ? 'Testando...' : 'Testar Conexão'}
               </Button>
@@ -182,7 +175,7 @@ export const GlovoIntegrationWidget: React.FC = () => {
                 variant="secondary"
                 size="md"
                 onClick={handleSave}
-                disabled={!config.clientId || !config.clientSecret}
+                disabled={!config.clientId}
               >
                 Salvar Configuração
               </Button>
@@ -202,7 +195,7 @@ export const GlovoIntegrationWidget: React.FC = () => {
                 <a href="https://developers.glovoapp.com" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>
                   developers.glovoapp.com
                 </a>
-                {' '}e crie uma aplicação para obter Client ID e Client Secret.
+                {' '}e crie uma aplicação para obter Client ID. O Client Secret deve ser configurado no backend (variável de ambiente).
               </Text>
             </div>
           </>

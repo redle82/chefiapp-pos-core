@@ -12,6 +12,7 @@ import {
     getBasePathFromLegacy,
     getActiveTenant,
     setActiveTenant,
+    getTenantStatus,
     type TenantResolutionResult,
 } from '../tenant/TenantResolver';
 import { Logger } from '../logger/Logger';
@@ -58,7 +59,16 @@ export function FlowGate({ children }: { children: any }) {
 
         const checkFlow = async () => {
             // 1. Wait for Auth Session Protocol
-            if (sessionLoading) return;
+            if (sessionLoading) {
+                console.log('[FlowGate] ⏳ Session Loading...');
+                return;
+            }
+
+            console.log('[FlowGate] 🔍 Check Flow:', {
+                hasSession: !!session,
+                userId: session?.user?.id,
+                path: location.pathname
+            });
 
             // --- ESTADO 1: SEM SESSÃO ---
             if (!session) {
@@ -221,18 +231,43 @@ export function FlowGate({ children }: { children: any }) {
                 const baseDecision = resolveNextRoute(state);
 
                 if (baseDecision.type === 'REDIRECT') {
-                    Logger.info(`FlowGate: Blocked (Base)`, { reason: baseDecision.reason, to: baseDecision.to });
-                    navigate(baseDecision.to, { replace: true });
+                    // CRITICAL: Guard against navigation loop
+                    if (location.pathname !== baseDecision.to) {
+                        Logger.info(`FlowGate: Blocked (Base)`, { reason: baseDecision.reason, to: baseDecision.to, state });
+                        console.warn('[FlowGate] 🚫 REDIRECT BLOCK (Base):', { reason: baseDecision.reason, to: baseDecision.to, state });
+                        navigate(baseDecision.to, { replace: true });
+                    }
                     if (mounted) setIsChecking(false);
                     return;
                 }
 
-                // F. [Phase 2] Tenant Resolution for /app/* routes
                 if (location.pathname.startsWith('/app')) {
+                    // SOVEREIGN CHECK 1: If Tenant is ACTIVE, SelectTenant is FORBIDDEN
+                    const currentStatus = getTenantStatus();
+                    if (currentStatus === 'ACTIVE' && location.pathname === '/app/select-tenant') {
+                        // CRITICAL: Guard against navigation loop
+                        if (location.pathname !== '/app/dashboard') {
+                            Logger.warn('FlowGate: Sovereign Redirect (Tenant Already Active)', { to: '/app/dashboard' });
+                            navigate('/app/dashboard', { replace: true });
+                        }
+                        if (mounted) setIsChecking(false);
+                        return;
+                    }
+
+                    // SOVEREIGN CHECK 2: If Tenant is NOT Active, Operation is FORBIDDEN
+                    const isOperationalRoute = ['/tpv', '/kds', '/orders', '/menu', '/dashboard', '/settings'].some(route => location.pathname.includes(route));
+                    if (currentStatus !== 'ACTIVE' && isOperationalRoute && location.pathname !== '/app/select-tenant' && location.pathname !== '/app/access-denied') {
+                        Logger.warn('FlowGate: Sovereign Block (Tenant Not Active)', { path: location.pathname });
+                        // Let handleTenantResolution handle the redirect, but be aware
+                    }
+
                     const tenantDecision = await handleTenantResolution(session.user.id, location.pathname);
 
                     if (tenantDecision) {
-                        navigate(tenantDecision.to, { replace: true });
+                        // CRITICAL: Guard against navigation loop
+                        if (location.pathname !== tenantDecision.to) {
+                            navigate(tenantDecision.to, { replace: true });
+                        }
                         if (mounted) setIsChecking(false);
                         return;
                     }
@@ -250,8 +285,12 @@ export function FlowGate({ children }: { children: any }) {
                     const path = location.pathname;
                     // Founder cannot access Operation Modules
                     if (path.includes('/app/pos') || path.includes('/app/kds') || path.includes('/app/orders')) {
-                        Logger.warn('FlowGate: Founder Mode Restriction', { path });
-                        navigate('/app/dashboard?restriction=founder_mode', { replace: true });
+                        // CRITICAL: Guard against navigation loop
+                        const targetPath = '/app/dashboard?restriction=founder_mode';
+                        if (location.pathname !== targetPath && !location.search.includes('restriction=founder_mode')) {
+                            Logger.warn('FlowGate: Founder Mode Restriction', { path });
+                            navigate(targetPath, { replace: true });
+                        }
                         if (mounted) setIsChecking(false);
                         return;
                     }
@@ -277,8 +316,11 @@ export function FlowGate({ children }: { children: any }) {
             const decision = resolveNextRoute(state);
 
             if (decision.type === 'REDIRECT') {
-                Logger.info(`FlowGate: Blocked (Late)`, { reason: decision.reason, to: decision.to });
-                navigate(decision.to, { replace: true });
+                // CRITICAL: Guard against navigation loop
+                if (location.pathname !== decision.to) {
+                    Logger.info(`FlowGate: Blocked (Late)`, { reason: decision.reason, to: decision.to });
+                    navigate(decision.to, { replace: true });
+                }
             } else {
                 Logger.info(`FlowGate: Allowed (Late)`, { path: state.currentPath });
             }
@@ -297,6 +339,19 @@ export function FlowGate({ children }: { children: any }) {
                 return null;
             }
 
+            // 🔒 SOVEREIGNTY CHECK: Se tenant já está ACTIVE, não re-resolver
+            const activeTenantId = getActiveTenant();
+            const tenantStatus = getTenantStatus();
+            
+            if (activeTenantId && tenantStatus === 'ACTIVE') {
+                // Tenant já está selado - não re-executar resolução
+                Logger.debug('FlowGate: Tenant already sealed (ACTIVE)', {
+                    tenantId: activeTenantId,
+                    pathname
+                });
+                return null; // Allow route, tenant is sealed
+            }
+
             // Extract tenant ID from URL if present
             const urlTenantId = extractTenantFromPath(pathname);
 
@@ -311,7 +366,11 @@ export function FlowGate({ children }: { children: any }) {
                         // As rotas /app/:tenantId/* não existem no App.tsx
                         // O tenant é guardado no localStorage via setActiveTenant
                         // Não precisamos do tenant na URL
-                        setActiveTenant(result.tenantId);
+                        // 🔒 HOTFIX: Desabilitar migração de rota legacy
+                        // As rotas /app/:tenantId/* não existem no App.tsx
+                        // O tenant é guardado no localStorage via setActiveTenant
+                        // Não precisamos do tenant na URL
+                        setActiveTenant(result.tenantId, 'ACTIVE'); // Explicitly seal as ACTIVE if resolved via URL/Context
 
                         Logger.info('FlowGate: Tenant Resolved (Cached)', {
                             pathname,
@@ -374,7 +433,7 @@ export function FlowGate({ children }: { children: any }) {
         checkFlow();
 
         return () => { mounted = false; };
-    }, [session, sessionLoading, location.pathname, navigate]);
+    }, [session, sessionLoading, location.pathname]); // CRITICAL: Remove navigate from deps (it's stable but causes re-renders)
 
     // --- RENDER ---
 
@@ -382,9 +441,9 @@ export function FlowGate({ children }: { children: any }) {
     if (sessionLoading || isChecking) {
         return (
             <div style={{ height: '100vh', width: '100vw', background: '#0b0b0c', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, zIndex: 9999 }}>
-                <LoadingState 
-                    variant="spinner" 
-                    spinnerSize="lg" 
+                <LoadingState
+                    variant="spinner"
+                    spinnerSize="lg"
                     message="AUTHENTICATING"
                     style={{ color: '#666', fontFamily: 'monospace', letterSpacing: 1 }}
                 />

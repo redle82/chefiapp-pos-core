@@ -1,9 +1,11 @@
 /**
  * Middleware de Segurança e Confiabilidade
  * P1 Fixes: Rate Limiting, Connection Timeouts, Health Checks
+ * TASK-3.1.2: Criptografia de tokens OAuth
  */
 
 import { IncomingMessage, ServerResponse } from 'http';
+import crypto from 'crypto';
 
 // ============================================================================
 // RATE LIMITING
@@ -373,4 +375,64 @@ export class CircuitBreaker {
       successes: this.successCount,
     };
   }
+}
+
+// ============================================================================
+// TASK-3.1.2: OAUTH TOKEN ENCRYPTION
+// ============================================================================
+
+/**
+ * Get encryption key from environment variable
+ * TASK-3.1.2: Chave de criptografia está em variável de ambiente
+ */
+function getEncryptionKeyOrThrow(): Buffer {
+  const CREDENTIALS_ENCRYPTION_KEY = process.env.CREDENTIALS_ENCRYPTION_KEY;
+  const INTERNAL_API_TOKEN = process.env.INTERNAL_API_TOKEN;
+  
+  const env = String(CREDENTIALS_ENCRYPTION_KEY || '').trim();
+  if (env) {
+    // Accept hex (64 chars) or base64.
+    if (/^[0-9a-fA-F]{64}$/.test(env)) return Buffer.from(env, 'hex');
+    const b = Buffer.from(env, 'base64');
+    if (b.length === 32) return b;
+    throw new Error('CREDENTIALS_ENCRYPTION_KEY_INVALID');
+  }
+
+  // Fail-closed in production.
+  if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
+    throw new Error('CREDENTIALS_ENCRYPTION_KEY_REQUIRED');
+  }
+
+  // Dev fallback: derive from internal token (or static) to keep demo working.
+  const seed = INTERNAL_API_TOKEN || 'dev-insecure-key';
+  return crypto.createHash('sha256').update(seed).digest();
+}
+
+/**
+ * TASK-3.1.2: Criptografar token OAuth antes de salvar no DB
+ * Usa AES-256-GCM com IV aleatório e auth tag
+ */
+export function encryptOAuthToken(plaintext: string): Buffer {
+  const key = getEncryptionKeyOrThrow();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const ciphertext = Buffer.concat([cipher.update(String(plaintext || ''), 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  // payload = iv(12) + tag(16) + ciphertext
+  return Buffer.concat([iv, tag, ciphertext]);
+}
+
+/**
+ * TASK-3.1.2: Descriptografar token OAuth ao ler do DB
+ */
+export function decryptOAuthToken(payload: Buffer | null | undefined): string {
+  if (!payload || payload.length < 12 + 16) return '';
+  const key = getEncryptionKeyOrThrow();
+  const iv = payload.subarray(0, 12);
+  const tag = payload.subarray(12, 28);
+  const ciphertext = payload.subarray(28);
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(tag);
+  const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+  return plaintext.toString('utf8');
 }

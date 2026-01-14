@@ -6,6 +6,7 @@ export interface OrderItem {
     price: number; // In Cents (Integer)
     priceFormatted?: string;
     notes?: string;
+    categoryName?: string; // Phase 55: Station Intelligence
 }
 
 export interface Order {

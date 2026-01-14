@@ -18,6 +18,8 @@ export interface Product {
   currency?: string;
   description?: string;
   imageUrl?: string;
+  trackStock?: boolean;
+  stockQuantity?: number;
 }
 
 export interface ProductComment {
@@ -38,7 +40,11 @@ export function ProductCard({ product, comments = [], onAdd }: ProductCardProps)
   const [showComments, setShowComments] = useState(false);
   const [selectedComments, setSelectedComments] = useState<string[]>([]);
 
+  const isOutOfStock = product.trackStock && (product.stockQuantity === undefined || product.stockQuantity <= 0);
+
   const handleProductClick = () => {
+    if (isOutOfStock) return; // Block interaction
+
     if (!showQuantity) {
       setShowQuantity(true);
       setSelectedQuantity(1); // Default
@@ -46,13 +52,19 @@ export function ProductCard({ product, comments = [], onAdd }: ProductCardProps)
   };
 
   const handleQuantitySelect = (qty: number) => {
-    setSelectedQuantity(qty);
+    // Basic Client-Side Stock Check (Optional: Backend checks too)
+    if (product.trackStock && product.stockQuantity !== undefined && qty > product.stockQuantity) {
+      alert(`Apenas ${product.stockQuantity} unidades disponíveis.`);
+      setSelectedQuantity(product.stockQuantity);
+    } else {
+      setSelectedQuantity(qty);
+    }
     // Avança automaticamente para comentários
     setShowComments(true);
   };
 
   const handleCommentToggle = (commentId: string) => {
-    setSelectedComments(prev => 
+    setSelectedComments(prev =>
       prev.includes(commentId)
         ? prev.filter(id => id !== commentId)
         : [...prev, commentId]
@@ -66,7 +78,7 @@ export function ProductCard({ product, comments = [], onAdd }: ProductCardProps)
     setShowComments(false);
     setSelectedQuantity(1);
     setSelectedComments([]);
-    
+
     // Feedback visual (flash verde)
     const card = document.getElementById(`product-${product.id}`);
     if (card) {
@@ -93,24 +105,26 @@ export function ProductCard({ product, comments = [], onAdd }: ProductCardProps)
         marginBottom: spacing[3],
         border: `1px solid ${colors.border.subtle}`,
         transition: 'all 0.2s ease',
+        opacity: isOutOfStock ? 0.6 : 1, // Visual "Disabled" look
       }}
     >
       {/* Produto Principal */}
       {!showQuantity && (
         <button
           onClick={handleProductClick}
+          disabled={isOutOfStock}
           style={{
             width: '100%',
             textAlign: 'left',
             background: 'transparent',
             border: 'none',
-            cursor: 'pointer',
+            cursor: isOutOfStock ? 'not-allowed' : 'pointer',
             padding: 0,
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
             <div style={{ flex: 1 }}>
-              <Text size="lg" weight="bold" color="primary" style={{ marginBottom: spacing[1] }}>
+              <Text size="lg" weight="bold" color={isOutOfStock ? 'tertiary' : 'primary'} style={{ marginBottom: spacing[1] }}>
                 {product.name}
               </Text>
               {product.description && (
@@ -118,9 +132,24 @@ export function ProductCard({ product, comments = [], onAdd }: ProductCardProps)
                   {product.description}
                 </Text>
               )}
-              <Text size="lg" weight="bold" color="primary">
-                {priceFormatted}
-              </Text>
+
+              {isOutOfStock ? (
+                <div style={{
+                  display: 'inline-block',
+                  backgroundColor: colors.feedback.error,
+                  color: 'white',
+                  padding: '4px 8px',
+                  borderRadius: 4,
+                  fontSize: 12,
+                  fontWeight: 'bold'
+                }}>
+                  ESGOTADO
+                </div>
+              ) : (
+                <Text size="lg" weight="bold" color="primary">
+                  {priceFormatted}
+                </Text>
+              )}
             </div>
             {product.imageUrl && (
               <img
@@ -132,6 +161,7 @@ export function ProductCard({ product, comments = [], onAdd }: ProductCardProps)
                   borderRadius: 8,
                   objectFit: 'cover',
                   marginLeft: spacing[3],
+                  filter: isOutOfStock ? 'grayscale(100%)' : 'none'
                 }}
               />
             )}

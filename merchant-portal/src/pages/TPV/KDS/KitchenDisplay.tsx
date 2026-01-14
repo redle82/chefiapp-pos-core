@@ -225,6 +225,28 @@ const MiseEnPlaceMode = () => {
 };
 
 // ------------------------------------------------------------------
+// 🛡️ STATION INTELLIGENCE (Mission 55)
+// ------------------------------------------------------------------
+
+type KDSStation = 'ALL' | 'KITCHEN' | 'BAR';
+
+const isBarItem = (categoryName?: string) => {
+    if (!categoryName) return false;
+    const n = categoryName.toLowerCase();
+    return n.includes('bebida') ||
+        n.includes('drink') ||
+        n.includes('bar') ||
+        n.includes('suco') ||
+        n.includes('vinho') ||
+        n.includes('cerveja') ||
+        n.includes('refrigerante') ||
+        n.includes('água') ||
+        n.includes('agua') ||
+        n.includes('café') ||
+        n.includes('cafe');
+};
+
+// ------------------------------------------------------------------
 // 👨‍🍳 MAIN KDS
 // ------------------------------------------------------------------
 
@@ -253,6 +275,9 @@ export default function KitchenDisplay() {
     const [currentTime, setCurrentTime] = useState(new Date());
     const [actionError, setActionError] = useState<string | null>(null);
 
+    // === STATION INTELLIGENCE ===
+    const [station, setStation] = useState<KDSStation>('ALL'); // TODO: Persist in localStorage?
+
     // === KDS HARDENING: Determinar se está "cego" (sem eventos realtime) ===
     // REGRA: KDS é considerado offline quando:
     //   1. Rede está down (isConnected=false), OU
@@ -261,10 +286,10 @@ export default function KitchenDisplay() {
     const isRealtimeActive = realtimeStatus === 'SUBSCRIBED';
     const isKDSEffectivelyOffline = !isConnected || !isRealtimeActive;
     const isReconnecting = (realtimeStatus === 'SUBSCRIBING' || realtimeStatus === 'TIMED_OUT') && isConnected;
-    
+
     // Verificar se último evento foi há mais de 30s (possível problema silencioso)
-    const timeSinceLastEvent = lastRealtimeEvent 
-        ? Date.now() - lastRealtimeEvent.getTime() 
+    const timeSinceLastEvent = lastRealtimeEvent
+        ? Date.now() - lastRealtimeEvent.getTime()
         : Infinity;
     const isStale = isRealtimeActive && timeSinceLastEvent > 30000;
 
@@ -291,9 +316,23 @@ export default function KitchenDisplay() {
     }, [actionError]);
 
     // Logic: Filter Active Tickets
-    const activeTickets = orders
-        .filter(o => o.status === 'new' || o.status === 'preparing')
-        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    // MISSION 55: Apply Station Filter
+    const activeTickets = useMemo(() => {
+        let filtered = orders;
+        if (station !== 'ALL') {
+            filtered = orders.map(order => ({
+                ...order,
+                items: order.items.filter(item => {
+                    const isBar = isBarItem(item.categoryName);
+                    return station === 'BAR' ? isBar : !isBar;
+                })
+            })).filter(order => order.items.length > 0);
+        }
+
+        return filtered
+            .filter(o => o.status === 'new' || o.status === 'preparing')
+            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    }, [orders, station]);
 
     const hasPressure = activeTickets.length > 0;
     const newOrders = activeTickets.filter(o => o.status === 'new');
@@ -420,6 +459,29 @@ export default function KitchenDisplay() {
                     )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.lg }}>
+                    {/* === STATION TOGGLE (Mission 55) === */}
+                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', padding: '2px' }}>
+                        {(['ALL', 'KITCHEN', 'BAR'] as KDSStation[]).map(s => (
+                            <button
+                                key={s}
+                                onClick={() => setStation(s)}
+                                style={{
+                                    background: station === s ? (s === 'BAR' ? Colors.info : Colors.risk.medium) : 'transparent',
+                                    color: station === s ? '#fff' : Colors.kds.text.dim,
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    padding: '6px 12px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    fontSize: '12px',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                {s === 'ALL' ? 'TODOS' : (s === 'KITCHEN' ? 'COZINHA' : 'BAR')}
+                            </button>
+                        ))}
+                    </div>
+
                     {/* === SOUND TOGGLE === */}
                     <button
                         onClick={() => {
@@ -466,7 +528,7 @@ export default function KitchenDisplay() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: Colors.risk.low }}>
                                 <span style={{ fontSize: '16px' }}>🟢</span>
                                 <span style={{ fontFamily: 'monospace', fontSize: '12px', color: Colors.kds.text.dim }}>
-                                    {lastRealtimeEvent 
+                                    {lastRealtimeEvent
                                         ? `Sync: ${lastRealtimeEvent.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
                                         : 'Conectado'
                                     }

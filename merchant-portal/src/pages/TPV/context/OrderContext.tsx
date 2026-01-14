@@ -101,6 +101,8 @@ export function OrderProvider({ children }: { children: ReactNode }) {
         fetchOrders();
 
         // Realtime Synapse (No Recursion loop)
+        // CRITICAL: fetchOrders is already stable (useCallback), but use ref to be extra safe
+        const fetchOrdersRef = fetchOrders;
         const channel = supabase.channel('nervous_system_orders')
             .on('postgres_changes', {
                 event: '*',
@@ -108,15 +110,15 @@ export function OrderProvider({ children }: { children: ReactNode }) {
                 table: 'gm_orders',
                 filter: `restaurant_id=eq.${restaurantId}`
             }, (payload) => {
-                // Just refetch, SAFE now
-                fetchOrders();
+                // Just refetch, SAFE now (fetchOrders is stable via useCallback)
+                fetchOrdersRef();
             })
             .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [restaurantId, isDemo, fetchOrders]);
+    }, [restaurantId, isDemo, fetchOrders]); // fetchOrders is stable (useCallback)
 
     const resetOrders = () => {
         setOrders([]);

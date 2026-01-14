@@ -48,6 +48,10 @@ export const MenuManager: React.FC = () => {
     const [itemPrice, setItemPrice] = useState('');
     const [selectedCatId, setSelectedCatId] = useState('');
 
+    // Inventory State
+    const [trackStock, setTrackStock] = useState(false);
+    const [stockQty, setStockQty] = useState('');
+
     // --- HANDLERS ---
     const onSubmitCategory = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -84,21 +88,28 @@ export const MenuManager: React.FC = () => {
             return;
         }
         try {
+            const qty = trackStock ? parseInt(stockQty || '0') : 0;
+
             if (editingItem) {
                 // Update existing item
                 await actions.updateItem(editingItem.id, {
                     name: itemName,
                     price: parseFloat(itemPrice),
-                    category_id: selectedCatId || editingItem.category_id
+                    category_id: selectedCatId || editingItem.category_id,
+                    track_stock: trackStock,
+                    stock_quantity: qty
                 });
                 success(OSCopy.menu.feedback.prodUpdated);
             } else {
                 // Create new item
-                await actions.addItem(selectedCatId, itemName, parseFloat(itemPrice));
+                await actions.addItem(selectedCatId, itemName, parseFloat(itemPrice), trackStock, qty);
                 success(OSCopy.menu.feedback.prodCreated);
             }
+            // Reset
             setItemName('');
             setItemPrice('');
+            setTrackStock(false);
+            setStockQty('');
             setShowAddItem(false);
             setEditingItem(null);
         } catch (err: any) {
@@ -112,6 +123,11 @@ export const MenuManager: React.FC = () => {
         setItemName(item.name);
         setItemPrice(item.price.toString());
         setSelectedCatId(item.category_id);
+
+        // Load Inventory Data
+        setTrackStock(item.track_stock || false);
+        setStockQty(item.stock_quantity ? item.stock_quantity.toString() : '');
+
         setShowAddItem(true);
         setIsEditing(true);
         // BUG-017 FIX: Scroll to form for better UX
@@ -211,6 +227,18 @@ export const MenuManager: React.FC = () => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                     <div>
                                         <Text weight="bold" color="primary">{item.name}</Text>
+
+                                        {/* Stock Indicator */}
+                                        {item.track_stock && (
+                                            <div style={{ marginTop: 4 }}>
+                                                {item.stock_quantity > 0 ? (
+                                                    <Badge status="success" label={`Estoque: ${item.stock_quantity}`} variant="pill" />
+                                                ) : (
+                                                    <Badge status="error" label="ESGOTADO" variant="solid" />
+                                                )}
+                                            </div>
+                                        )}
+
                                         {/* BUG-017 FIX: Clickable Edit Button */}
                                         {isEditing && (
                                             <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
@@ -287,7 +315,7 @@ export const MenuManager: React.FC = () => {
                             <Text size="lg" weight="bold" style={{ marginBottom: spacing[4] }}>
                                 {editingItem ? 'Editar Produto' : 'Adicionar Produto'}
                             </Text>
-                            <form onSubmit={onSubmitItem} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: spacing[4], alignItems: 'flex-end' }}>
+                            <form onSubmit={onSubmitItem} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', gap: spacing[4], alignItems: 'flex-end' }}>
                                 <div>
                                     <Input
                                         label={OSCopy.menu.labels.prodName}
@@ -320,6 +348,29 @@ export const MenuManager: React.FC = () => {
                                     >
                                         {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                     </Select>
+                                </div>
+
+                                {/* Inventory Controls */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={trackStock}
+                                            onChange={e => setTrackStock(e.target.checked)}
+                                        />
+                                        <Text size="sm" weight="bold">Controlar Estoque?</Text>
+                                    </label>
+
+                                    {trackStock && (
+                                        <Input
+                                            label="Qtd."
+                                            type="number"
+                                            value={stockQty}
+                                            onChange={e => setStockQty(e.target.value)}
+                                            placeholder="0"
+                                            fullWidth
+                                        />
+                                    )}
                                 </div>
                                 <div style={{ display: 'flex', gap: spacing[2] }}>
                                     <Button tone="action" type="submit">{editingItem ? OSCopy.menu.actions.save : OSCopy.menu.actions.add}</Button>

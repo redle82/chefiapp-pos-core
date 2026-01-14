@@ -14,6 +14,7 @@
 
 import { useMemo } from 'react';
 import { useSystemState } from '../state/SystemStateProvider';
+import { getTabIsolated } from '../storage/TabIsolatedStorage';
 import { 
     ActivationAdvisor, 
     type ActivationRecommendation,

@@ -65,10 +65,8 @@ export const OrderSummaryPanel: React.FC<OrderSummaryPanelProps> = ({
     return null;
   }
 
-  // Calcular totais
-  const itemsTotal = order.items.reduce((sum, item) => {
-    return sum + (item.price * item.quantity);
-  }, 0);
+  // INV-006: UI uses Domain's total, never calculates independently
+  const itemsTotal = order.total;
 
   const remainingAmount = itemsTotal - paidAmount;
   const isPartiallyPaid = order.status === 'partially_paid' || paidAmount > 0;
@@ -317,8 +315,8 @@ export const OrderSummaryPanel: React.FC<OrderSummaryPanelProps> = ({
           {isPartiallyPaid && remainingAmount > 0
             ? `Pagar Restante (${remainingFormatted})`
             : order.status === 'paid'
-            ? 'Conta Fechada'
-            : 'Fechar e Pagar'}
+              ? 'Conta Fechada'
+              : 'Fechar e Pagar'}
         </Button>
       </div>
     </Card>

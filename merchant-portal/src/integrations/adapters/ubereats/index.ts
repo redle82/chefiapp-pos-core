@@ -5,5 +5,6 @@
  */
 
 export { UberEatsAdapter } from './UberEatsAdapter';
-export { UberEatsOAuth } from './UberEatsOAuth';
-export type { UberEatsOrder, UberEatsOrderItem } from './UberEatsTypes';
+
+// Re-export types properly
+export { type UberEatsOrder, type UberEatsOrderItem } from './UberEatsTypes';

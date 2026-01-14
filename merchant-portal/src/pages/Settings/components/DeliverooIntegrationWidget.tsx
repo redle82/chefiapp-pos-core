@@ -16,7 +16,6 @@ import { DeliverooAdapter } from '../../../integrations/adapters/deliveroo';
 
 interface DeliverooConfig {
   clientId: string;
-  clientSecret: string;
   enabled: boolean;
 }
 
@@ -26,7 +25,6 @@ export const DeliverooIntegrationWidget: React.FC = () => {
 
   const [config, setConfig] = useState<DeliverooConfig>({
     clientId: getTabIsolated('deliveroo_client_id') || '',
-    clientSecret: getTabIsolated('deliveroo_client_secret') || '',
     enabled: getTabIsolated('deliveroo_enabled') === 'true',
   });
 
@@ -36,7 +34,7 @@ export const DeliverooIntegrationWidget: React.FC = () => {
 
   // Carregar status da conexão
   useEffect(() => {
-    if (config.clientId && config.clientSecret && config.enabled && restaurantId) {
+    if (config.clientId && config.enabled && restaurantId) {
       checkConnection();
     }
   }, []);
@@ -45,11 +43,10 @@ export const DeliverooIntegrationWidget: React.FC = () => {
     try {
       // Salvar no TabIsolatedStorage
       setTabIsolated('deliveroo_client_id', config.clientId);
-      setTabIsolated('deliveroo_client_secret', config.clientSecret);
       setTabIsolated('deliveroo_enabled', config.enabled.toString());
 
       // Se habilitado, inicializar adapter
-      if (config.enabled && config.clientId && config.clientSecret && restaurantId) {
+      if (config.enabled && config.clientId && restaurantId) {
         await initializeAdapter();
       } else if (adapter) {
         setAdapter(null);
@@ -68,7 +65,6 @@ export const DeliverooIntegrationWidget: React.FC = () => {
     try {
       const newAdapter = new DeliverooAdapter({
         clientId: config.clientId,
-        clientSecret: config.clientSecret,
         restaurantId,
       });
 
@@ -96,8 +92,8 @@ export const DeliverooIntegrationWidget: React.FC = () => {
   const handleTestConnection = async () => {
     setIsTesting(true);
     try {
-      if (!config.clientId || !config.clientSecret) {
-        error('Preencha Client ID e Client Secret primeiro');
+      if (!config.clientId) {
+        error('Preencha Client ID primeiro');
         return;
       }
 
@@ -155,21 +151,18 @@ export const DeliverooIntegrationWidget: React.FC = () => {
               fullWidth
             />
 
-            <Input
-              label="Client Secret"
-              type="password"
-              value={config.clientSecret}
-              onChange={(e) => setConfig({ ...config, clientSecret: e.target.value })}
-              placeholder="Seu Client Secret do Deliveroo"
-              fullWidth
-            />
+            <div style={{ padding: 12, background: 'rgba(59, 130, 246, 0.1)', borderRadius: 8, marginTop: 8 }}>
+              <Text size="xs" color="tertiary">
+                🔒 <strong>TASK-3.1.3:</strong> Client Secret é gerenciado no backend. Não é necessário configurá-lo aqui.
+              </Text>
+            </div>
 
             <div style={{ display: 'flex', gap: 8 }}>
               <Button
                 variant="primary"
                 size="md"
                 onClick={handleTestConnection}
-                disabled={isTesting || !config.clientId || !config.clientSecret}
+                disabled={isTesting || !config.clientId}
               >
                 {isTesting ? 'Testando...' : 'Testar Conexão'}
               </Button>
@@ -177,7 +170,7 @@ export const DeliverooIntegrationWidget: React.FC = () => {
                 variant="secondary"
                 size="md"
                 onClick={handleSave}
-                disabled={!config.clientId || !config.clientSecret}
+                disabled={!config.clientId}
               >
                 Salvar Configuração
               </Button>
@@ -197,7 +190,7 @@ export const DeliverooIntegrationWidget: React.FC = () => {
                 <a href="https://developer.deliveroo.com" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>
                   developer.deliveroo.com
                 </a>
-                {' '}e crie uma aplicação para obter Client ID e Client Secret.
+                {' '}e crie uma aplicação para obter Client ID. O Client Secret deve ser configurado no backend (variável de ambiente).
               </Text>
             </div>
           </>

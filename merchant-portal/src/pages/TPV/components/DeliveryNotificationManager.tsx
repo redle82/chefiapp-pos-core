@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useOrders } from '../context/OrderContextReal';
 import { createClient } from '@supabase/supabase-js';
-import { OrderEngine } from '../../../../core/order/OrderEngine';
-import { FiscalPrinter } from '../../../../core/fiscal/FiscalPrinter';
-import { DeliveryNotificationCard } from '../../../../ui/design-system/domain/DeliveryNotificationCard';
+import { OrderEngine } from '../../../core/tpv/OrderEngine';
+import { FiscalPrinter } from '../../../core/fiscal/FiscalPrinter';
+import { DeliveryNotificationCard } from '../../../ui/design-system/domain/DeliveryNotificationCard';
 
 const supabase = createClient(
     import.meta.env.VITE_SUPABASE_URL,
@@ -20,6 +20,7 @@ export const DeliveryNotificationManager: React.FC = () => {
 
     // Play sound on new orders
     useEffect(() => {
+        if (!incomingDeliveryOrders) return; // Guard against undefined
         const newOrders = incomingDeliveryOrders.filter(o => !processedIds.has(o.id));
         if (newOrders.length > 0) {
             sound.play().catch(e => console.warn('Audio play failed', e));
@@ -100,7 +101,7 @@ export const DeliveryNotificationManager: React.FC = () => {
         await syncNow();
     };
 
-    if (incomingDeliveryOrders.length === 0) return null;
+    if (!incomingDeliveryOrders || incomingDeliveryOrders.length === 0) return null;
 
     return (
         <div className="fixed top-4 right-4 z-50 flex flex-col gap-3 w-96">

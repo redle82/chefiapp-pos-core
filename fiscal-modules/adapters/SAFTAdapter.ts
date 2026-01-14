@@ -59,8 +59,9 @@ export class SAFTAdapter implements FiscalObserver {
     private mapToTaxDocument(seal: LegalSeal, event: CoreEvent): TaxDocument {
         const payload: any = event.payload || {};
         const totalAmount = (payload.amount_cents || payload.total || 0) / 100;
-        const vatAmount = totalAmount * this.vatRate;
+        const vatAmount = totalAmount * this.vatRate / (1 + this.vatRate); // IVA incluído no total
         const subtotal = totalAmount - vatAmount;
+        const vatAmountCents = Math.round(vatAmount * 100); // TASK-2.3.1: Valor absoluto em centavos
 
         // Mapear items do payload
         const items = (payload.items || []).map((item: any) => ({
@@ -79,6 +80,9 @@ export class SAFTAdapter implements FiscalObserver {
             taxes: {
                 vat: vatAmount,
             },
+            // TASK-2.3.1: Separar vatRate de vatAmount
+            vatRate: this.vatRate, // Taxa como percentual (0.23 = 23%)
+            vatAmount: vatAmountCents, // Valor absoluto em centavos
             items: items,
             raw_payload: {
                 order_id: payload.order_id,

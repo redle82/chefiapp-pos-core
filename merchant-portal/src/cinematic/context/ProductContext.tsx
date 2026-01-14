@@ -22,6 +22,10 @@ export interface Product {
 
     // Optional Branding
     brand?: 'coca' | 'pepsi' | 'other';
+
+    // Inventory
+    trackStock?: boolean;
+    stockQuantity?: number;
 }
 
 interface ProductContextState {
@@ -53,19 +57,21 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
                 // Fetch Menu Items from real tables
                 const { data, error } = await supabase
-                    .from('gm_menu_items')
-                    .select('*, menu_categories(name)');
-                // .eq('available', true); // Removed for legacy schema compatibility
+                    .from('gm_products')
+                    .select('*, gm_menu_categories(name)')
+                    .eq('available', true);
 
                 if (error) throw error;
 
                 if (mounted && data) {
-                    console.log('[ProductContext] Loaded from Supabase:', data.length);
+                    console.log('[ProductContext] Loaded from Supabase (gm_products):', data.length);
                     const mapped: Product[] = data.map((d: any) => ({
                         id: d.id,
                         name: d.name,
-                        price: d.price, // Pulse system price (decimal)
-                        category: d.menu_categories?.name || 'Geral',
+                        price: (d.price_cents || 0) / 100, // Convert cents to decimal
+                        category: d.gm_menu_categories?.name || 'Geral',
+                        trackStock: d.track_stock,
+                        stockQuantity: d.stock_quantity,
                         status: 'permanent',
                         origin: 'manual',
                         usageCount: 0,
@@ -109,13 +115,15 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
             const { data: { user } } = await supabase.auth.getUser();
             const restaurantId = getTabIsolated('chefiapp_restaurant_id');
 
-            const { error, data } = await supabase.from('gm_menu_items').insert({
+            const { error, data } = await supabase.from('gm_products').insert({
                 restaurant_id: restaurantId,
                 name: input.name,
-                price: input.price,
-                // price_cents: Math.round(input.price * 100), // Optional
-                // currency: 'EUR', // Optional
-                // available: true // Removed for legacy schema compatibility
+                price_cents: Math.round(input.price * 100),
+                track_stock: input.trackStock || false,
+                stock_quantity: input.stockQuantity || 0,
+                available: true
+                // category_id? We are not setting it here, default null or handle generic?
+                // For 'Mínimo', we skip proper category ID lookup for manual adds unless needed.
             }).select().single();
 
             if (error) throw error;

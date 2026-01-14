@@ -5,13 +5,12 @@
  */
 
 import { DeliverooOAuth } from './DeliverooOAuth';
-import { DeliverooOrder, DeliverooOrderItem } from './DeliverooTypes';
+import type { DeliverooOrder, DeliverooOrderItem } from './DeliverooTypes';
 
 const DELIVEROO_API_BASE = 'https://api.deliveroo.com/v1';
 
 export interface DeliverooAdapterConfig {
     clientId: string;
-    clientSecret: string;
     restaurantId: string;
 }
 

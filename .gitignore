@@ -23,6 +23,14 @@ public/assets/
 .env.*.local
 .env.sofia
 
+# Sensitive files (CRITICAL - never commit)
+key-check.txt
+*.key
+*.pem
+*.p12
+testsprite_tests/TEST_CREDENTIALS.md
+**/TEST_CREDENTIALS.md
+
 # IDE
 .idea/
 *.swp

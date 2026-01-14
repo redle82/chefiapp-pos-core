@@ -34,6 +34,7 @@ export interface OrderItemInput {
     quantity: number;
     modifiers?: any[];
     notes?: string;
+    categoryName?: string;
     consumptionGroupId?: string | null; // Para divisão de conta
 }
 
@@ -83,6 +84,7 @@ export interface OrderItem {
     subtotalCents: number;
     modifiers?: any[];
     notes?: string;
+    categoryName?: string;
     createdAt: Date;
 }
 
@@ -150,7 +152,7 @@ export class OrderEngine {
 
         if (error) {
             Logger.error('OrderEngine: create_order_atomic failed', error, { input });
-            
+
             // CRITICAL: Handle race condition (unique constraint violation)
             // PostgreSQL error code 23505 = unique_violation
             // Check for both possible index names (old and new)
@@ -163,14 +165,14 @@ export class OrderEngine {
                     'TABLE_HAS_ACTIVE_ORDER'
                 );
             }
-            
+
             if (error.code === '23503') {
                 throw new OrderEngineError(
                     'Dados inválidos. Verifique se todos os produtos existem no menu.',
                     'INVALID_DATA'
                 );
             }
-            
+
             throw new OrderEngineError(
                 `Erro ao criar pedido: ${error.message}`,
                 'ORDER_CREATION_FAILED'
@@ -362,6 +364,7 @@ export class OrderEngine {
                 total_price: item.priceCents * item.quantity, // Schema: total_price
                 modifiers: item.modifiers || [],
                 notes: item.notes || null,
+                category_name: item.categoryName || null, // Persist Category (Mission 55)
                 consumption_group_id: item.consumptionGroupId || null, // Para divisão de conta
             })
             .select()
@@ -616,6 +619,7 @@ export class OrderEngine {
                 subtotalCents: item.total_price, // Schema uses total_price
                 modifiers: item.modifiers || [],
                 notes: item.notes,
+                categoryName: item.category_name, // Map Category (Mission 55)
                 createdAt: new Date(item.created_at || new Date()), // Item might not have created_at in schema? Checked: No created_at in gm_order_items definition!
             })),
         };

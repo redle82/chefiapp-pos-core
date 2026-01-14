@@ -23,7 +23,7 @@ export interface EffectContext {
 export async function calculateTotal(
   context: EffectContext
 ): Promise<void> {
-  const { repo, entityId } = context;
+  const { repo, entityId, txId } = context;
   const order = repo.getOrder(entityId);
   if (!order) {
     throw new Error(`Order ${entityId} not found`);
@@ -46,12 +46,26 @@ export async function calculateTotal(
 
   // Update order total (will be immutable after LOCKED)
   order.total_cents = totalCents;
-  repo.saveOrder(order);
+  // TASK-1.1.4: Pass txId to saveOrder
+  repo.saveOrder(order, txId);
 }
 
 export async function lockItems(context: EffectContext): Promise<void> {
-  const { repo, entityId } = context;
-  const order = repo.getOrder(entityId);
+  const { repo, entityId, txId } = context;
+  // TASK-1.2.4: getOrder returns clone, but we need to preserve changes already in transaction
+  // Check if order is already in transaction changes (from calculateTotal)
+  const tx = (repo as any).transactions?.get(txId);
+  const key = `ORDER:${entityId}`;
+  let order: any;
+  
+  if (tx && tx.changes?.has(key)) {
+    // Use order from transaction (preserves changes from calculateTotal)
+    order = tx.changes.get(key);
+  } else {
+    // Get fresh clone if not in transaction yet
+    order = repo.getOrder(entityId);
+  }
+  
   if (!order) {
     throw new Error(`Order ${entityId} not found`);
   }
@@ -63,13 +77,14 @@ export async function lockItems(context: EffectContext): Promise<void> {
   }
 
   order.state = "LOCKED";
-  repo.saveOrder(order);
+  // TASK-1.1.5: Pass txId to saveOrder
+  repo.saveOrder(order, txId);
 }
 
 export async function applyPaymentToOrder(
   context: EffectContext
 ): Promise<void> {
-  const { repo, entityId } = context;
+  const { repo, entityId, txId } = context;
   const order = repo.getOrder(entityId);
   if (!order) {
     throw new Error(`Order ${entityId} not found`);
@@ -88,7 +103,8 @@ export async function applyPaymentToOrder(
   // If total paid >= order total, mark as PAID
   if (order.total_cents && totalPaidCents >= order.total_cents) {
     order.state = "PAID";
-    repo.saveOrder(order);
+    // TASK-1.1.6: Pass txId to saveOrder
+    repo.saveOrder(order, txId);
   }
 }
 

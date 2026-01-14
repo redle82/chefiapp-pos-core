@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Telemetry } from './client';
 import { SilentTableDetector, type TrackedTable } from './detectors/silent_table';
 import { ForgottenItemDetector, type TrackedItem } from './detectors/forgotten_item';
@@ -17,6 +17,15 @@ import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
 export const GMBridgeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { orders } = useOrders();
     const { tasks } = useStaff();
+
+    // CRITICAL: Use refs to avoid loop from orders/tasks changing
+    const ordersRef = useRef(orders);
+    const tasksRef = useRef(tasks);
+    
+    useEffect(() => {
+        ordersRef.current = orders;
+        tasksRef.current = tasks;
+    }, [orders, tasks]);
 
     // Resolve Identity (L4 Truth)
     const [restaurantId, setRestaurantId] = useState<string | null>(getTabIsolated('chefiapp_restaurant_id'));
@@ -43,18 +52,18 @@ export const GMBridgeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (!restaurantId) return;
 
         const interval = setInterval(() => {
-            runDetectors();
+            runDetectors(ordersRef.current, tasksRef.current);
         }, SCAN_INTERVAL_MS);
 
         return () => clearInterval(interval);
-    }, [orders, tasks, restaurantId]);
+    }, [restaurantId]); // CRITICAL: Only restaurantId - use refs for orders/tasks
 
-    const runDetectors = () => {
+    const runDetectors = (currentOrders: Order[], currentTasks: Task[]) => {
         // 1. SILENT TABLE DETECTOR
         // We infer "Active Tables" from Orders that are NOT paid/closed.
         // In a real app, we might have a dedicated useTables hook with lastInteraction.
         // Here we use Order.updatedAt as proxy for interaction.
-        orders.forEach((order: Order) => {
+        currentOrders.forEach((order: Order) => {
             if (['served', 'paid'].includes(order.status)) return; // Ignora mesas fechadas
 
             const trackedTable: TrackedTable = {
@@ -71,7 +80,7 @@ export const GMBridgeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         });
 
         // 2. FORGOTTEN ITEM DETECTOR
-        orders.forEach((order: Order) => {
+        currentOrders.forEach((order: Order) => {
             if (['served', 'paid'].includes(order.status)) return;
 
             order.items.forEach((item: OrderItem) => {
@@ -98,7 +107,7 @@ export const GMBridgeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         // 3. STAFF VANISH DETECTOR
         // Iterate over tasks that represent "Calls" (if any)
-        tasks.forEach((task: Task) => {
+        currentTasks.forEach((task: Task) => {
             // Heuristic: High/Critical tasks that are pending > 5min are risks
             if (task.status === 'pending' && task.priority === 'critical') {
                 const trackedCall: TrackedCall = {

@@ -18,6 +18,7 @@ import { useOfflineOrder } from './OfflineOrderContext';
 import { v4 as uuidv4 } from 'uuid';
 import { getTabIsolated, setTabIsolated, removeTabIsolated } from '../../../core/storage/TabIsolatedStorage';
 import { ReconnectManager } from '../../../core/realtime/ReconnectManager';
+import { OrderContext } from './OrderContext'; // 👈 IMPORT THE TOKEN
 
 interface OrderContextType {
     orders: Order[];
@@ -43,7 +44,8 @@ interface OrderContextType {
     syncNow: () => Promise<void>;   // Forçar sync manual
 }
 
-export const OrderContext = createContext<OrderContextType | undefined>(undefined);
+// REMOVE LOCAL CONTEXT CREATION
+// export const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 // Mapear status do OrderEngine para Order local
 // Mapear Order do Engine (backend) para Order local (frontend)
@@ -111,13 +113,20 @@ function mapLocalStatusToReal(status: Order['status']): RealOrder['status'] {
     }
 }
 
-export function OrderProvider({ children }: { children: ReactNode }) {
+export function OrderProvider({ children, restaurantId: propRestaurantId }: { children: ReactNode, restaurantId?: string }) {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
-    const [restaurantId, setRestaurantId] = useState<string | null>(null);
+    // SOVEREIGN: restaurantId comes from Gate layer (TenantContext -> AppDomainWrapper)
+    const [restaurantId, setRestaurantId] = useState<string | null>(propRestaurantId || null);
     const [operatorId, setOperatorId] = useState<string | null>(null);
     const [cashRegisterId, setCashRegisterId] = useState<string | null>(null);
 
+    // Sync with prop changes (e.g., tenant switch)
+    useEffect(() => {
+        if (propRestaurantId && propRestaurantId !== restaurantId) {
+            setRestaurantId(propRestaurantId);
+        }
+    }, [propRestaurantId]);
 
     // === KDS HARDENING: Estado do Realtime ===
     // MOTIVO: KDS precisa saber se está "cego" (sem eventos realtime)
@@ -142,26 +151,22 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const channelRef = useRef<any>(null);
 
-    // Initial fetch
+    // Initial fetch - SOVEREIGN: Use prop from Gate layer, no storage fallback
     useEffect(() => {
-        const storedRestaurantId = getTabIsolated('chefiapp_restaurant_id');
-        if (storedRestaurantId) {
-            setRestaurantId(storedRestaurantId);
-        }
-
-        // ... (Maintain existing user fetch logic) ...
+        // Fetch operator ID from auth
         supabase.auth.getUser().then(({ data: { user } }) => {
             if (user) setOperatorId(user.id);
         });
 
-        if (storedRestaurantId) {
-            CashRegisterEngine.getOpenCashRegister(storedRestaurantId)
+        // Fetch open cash register if we have a restaurant ID
+        if (propRestaurantId) {
+            CashRegisterEngine.getOpenCashRegister(propRestaurantId)
                 .then(register => {
                     if (register) setCashRegisterId(register.id);
                 })
                 .catch(() => { });
         }
-    }, []);
+    }, [propRestaurantId]);
 
     // Core Fetch Logic
     const getActiveOrdersInternal = async (restId: string, isBackground = false) => {
@@ -231,33 +236,37 @@ export function OrderProvider({ children }: { children: ReactNode }) {
 
     // Subscription & Polling
     useEffect(() => {
-        if (restaurantId) {
-            Logger.info('Setting up Realtime & Polling', { context: 'OrderContext', tenantId: restaurantId });
-            getActiveOrders(false); // Initial load (with spinner)
+        if (!restaurantId) return;
 
-            // 1. SAFETY NET: Defensive Polling (30s)
-            // 🔴 RISK: Se Supabase Realtime falhar silenciosamente, este é o único fallback.
-            // Intervalo de 30s é um trade-off entre carga no servidor e latência máxima de pedidos.
-            // TODO: Considerar reduzir para 15s em horário de pico se necessário.
-            pollingRef.current = setInterval(() => {
-                Logger.info('🛡️ Defensive Polling (30s interval)', { context: 'OrderContext', tenantId: restaurantId });
-                getActiveOrders(true);
-            }, 30000);
+        Logger.info('Setting up Realtime & Polling', { context: 'OrderContext', tenantId: restaurantId });
+        getActiveOrders(false); // Initial load (with spinner)
 
-            // 2. REALTIME SUBSCRIPTION
-            const channel = setupRealtimeSubscription();
+        // 1. SAFETY NET: Defensive Polling (30s)
+        // 🔴 RISK: Se Supabase Realtime falhar silenciosamente, este é o único fallback.
+        // Intervalo de 30s é um trade-off entre carga no servidor e latência máxima de pedidos.
+        // TODO: Considerar reduzir para 15s em horário de pico se necessário.
+        pollingRef.current = setInterval(() => {
+            Logger.info('🛡️ Defensive Polling (30s interval)', { context: 'OrderContext', tenantId: restaurantId });
+            getActiveOrders(true);
+        }, 30000);
 
-            return () => {
-                Logger.info('Cleanup OrderContext subscriptions', { context: 'OrderContext', tenantId: restaurantId });
+        // 2. REALTIME SUBSCRIPTION
+        const channel = setupRealtimeSubscription();
+
+        return () => {
+            Logger.info('Cleanup OrderContext subscriptions', { context: 'OrderContext', tenantId: restaurantId });
+            try {
                 if (channel) {
                     supabase.removeChannel(channel);
                 }
-                if (pollingRef.current) clearInterval(pollingRef.current);
-                if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
-                if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-            };
-        }
-    }, [restaurantId, setupRealtimeSubscription]);
+            } catch (e) {
+                // no-op: channel may already be removed
+            }
+            if (pollingRef.current) clearInterval(pollingRef.current);
+            if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
+            if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+        };
+    }, [restaurantId]); // CRITICAL: Remove setupRealtimeSubscription from deps to prevent loop
 
     // Auto-Reconnect Logic (exponential backoff)
     useEffect(() => {

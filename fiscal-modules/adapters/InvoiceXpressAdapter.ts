@@ -43,18 +43,26 @@ export class InvoiceXpressAdapter implements FiscalObserver {
         if (!taxDoc) {
             console.warn('[InvoiceXpressAdapter] No tax_document in event payload. Using fallback.');
             // Fallback: create minimal taxDoc from event
+            const totalAmount = ((event.payload as any)?.amount_cents || 0) / 100;
+            const fallbackVatRate = 0.23; // Default: 23% (Portugal)
+            const fallbackVatAmount = totalAmount * fallbackVatRate / (1 + fallbackVatRate);
+            const fallbackVatAmountCents = Math.round(fallbackVatAmount * 100);
+            
             const fallbackDoc: TaxDocument = {
                 doc_type: 'MOCK',
                 ref_event_id: event.event_id,
                 ref_seal_id: seal.seal_id,
-                total_amount: ((event.payload as any)?.amount_cents || 0) / 100,
-                taxes: { vat: 0 },
+                total_amount: totalAmount,
+                taxes: { vat: fallbackVatAmount },
+                // TASK-2.3.1: Separar vatRate de vatAmount
+                vatRate: fallbackVatRate,
+                vatAmount: fallbackVatAmountCents,
                 items: [{
                     code: 'ITEM-001',
                     description: 'Refeição',
                     quantity: 1,
-                    unit_price: ((event.payload as any)?.amount_cents || 0) / 100,
-                    total: ((event.payload as any)?.amount_cents || 0) / 100,
+                    unit_price: totalAmount,
+                    total: totalAmount,
                 }],
             };
             return this.processWithTaxDoc(fallbackDoc, event);
@@ -150,18 +158,26 @@ export class InvoiceXpressAdapter implements FiscalObserver {
                 code: "Consumer",
                 email: undefined, // Optional
             },
-            items: taxDoc.items.map(item => ({
-                name: item.description,
-                description: item.description,
-                unit_price: item.unit_price,
-                quantity: item.quantity,
-                // InvoiceXpress calculates total automatically, but we can specify
-                unit_price_without_tax: item.unit_price / (1 + (taxDoc.taxes.vat || 0)),
-                tax: {
-                    name: "IVA",
-                    value: (taxDoc.taxes.vat || 0) * 100, // Percentage (e.g., 23 for 23%)
-                }
-            })),
+            items: taxDoc.items.map(item => {
+                // TASK-2.3.2: Usar vatRate do TaxDocument se disponível
+                const vatRate = taxDoc.vatRate || 0.23; // Default: 23% se não especificado
+                
+                // unit_price_without_tax = unit_price / (1 + vatRate)
+                const unitPriceWithoutTax = item.unit_price / (1 + vatRate);
+                
+                return {
+                    name: item.description,
+                    description: item.description,
+                    unit_price: item.unit_price,
+                    quantity: item.quantity,
+                    // TASK-2.3.2: Calcular unit_price_without_tax usando vatRate
+                    unit_price_without_tax: Number(unitPriceWithoutTax.toFixed(4)),
+                    tax: {
+                        name: "IVA",
+                        value: vatRate * 100, // Percentage (e.g., 23 for 23%)
+                    }
+                };
+            }),
             // Optional: Add reference to order
             reference: `ORDER-${(event.payload as any)?.order_id || 'N/A'}`,
             // Optional: Add notes

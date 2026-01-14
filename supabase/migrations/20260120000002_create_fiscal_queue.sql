@@ -24,10 +24,11 @@ CREATE TABLE IF NOT EXISTS public.gm_fiscal_queue (
     
     -- Retry tracking
     retry_count INTEGER NOT NULL DEFAULT 0,
-    max_retries INTEGER NOT NULL DEFAULT 5,
+    max_retries INTEGER NOT NULL DEFAULT 10, -- TASK-2.2.1: Máximo 10 tentativas
     next_retry_at TIMESTAMP WITH TIME ZONE,
     last_error TEXT,
     last_error_at TIMESTAMP WITH TIME ZONE,
+    error_history JSONB DEFAULT '[]'::jsonb, -- TASK-2.2.2: Histórico de erros [{timestamp, error, attempt}]
     
     -- Resultado (após processamento)
     result JSONB,
@@ -225,6 +226,17 @@ BEGIN
     -- Calcular próximo retry (backoff exponencial: 60s, 120s, 240s, 480s, 960s)
     v_next_retry_at := timezone('utc'::text, now()) + (p_retry_after_seconds * POWER(2, v_retry_count) || ' seconds')::INTERVAL;
     
+    -- TASK-2.2.2: Adicionar erro ao histórico
+    UPDATE public.gm_fiscal_queue
+    SET error_history = COALESCE(error_history, '[]'::jsonb) || jsonb_build_array(
+        jsonb_build_object(
+            'timestamp', timezone('utc'::text, now()),
+            'error', p_error,
+            'attempt', v_retry_count + 1
+        )
+    )
+    WHERE id = p_queue_id;
+    
     -- Se excedeu max_retries, marcar como failed permanentemente
     IF v_retry_count + 1 >= v_max_retries THEN
         UPDATE public.gm_fiscal_queue
@@ -233,6 +245,12 @@ BEGIN
             last_error_at = timezone('utc'::text, now()),
             updated_at = timezone('utc'::text, now())
         WHERE id = p_queue_id;
+        
+        -- TASK-2.2.2: Notificar admin (log crítico - em produção, pode enviar email/webhook)
+        RAISE WARNING 'Fiscal queue item % exceeded max retries (%) for order %. Last error: %', 
+            p_queue_id, v_max_retries, 
+            (SELECT order_id FROM public.gm_fiscal_queue WHERE id = p_queue_id),
+            p_error;
     ELSE
         -- Caso contrário, marcar como retrying
         UPDATE public.gm_fiscal_queue

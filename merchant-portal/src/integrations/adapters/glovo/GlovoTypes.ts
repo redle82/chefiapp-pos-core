@@ -129,7 +129,6 @@ export interface GlovoOAuthError {
 export interface GlovoConfig {
   restaurantId: string;
   clientId: string;
-  clientSecret: string;
   accessToken?: string;
   refreshToken?: string;
   enabled?: boolean;

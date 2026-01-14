@@ -64,16 +64,18 @@ export class GlovoAdapter implements IntegrationAdapter {
   // ───────────────────────────────────────────────────────────
 
   async initialize(config?: GlovoConfig): Promise<void> {
-    if (!config?.clientId || !config?.clientSecret) {
-      throw new Error('[Glovo] clientId and clientSecret are required');
+    if (!config?.clientId) {
+      throw new Error('[Glovo] clientId is required');
     }
 
     this.config = config;
 
-    // Inicializar OAuth
+    // TASK-3.1.3: GlovoOAuth ainda precisa de clientSecret, mas será obtido do backend
+    // Por enquanto, usar um placeholder - o GlovoOAuth precisa ser atualizado para usar endpoint backend
+    // TODO: Criar endpoint /api/oauth/client-credentials para Glovo
     this.oauth = new GlovoOAuth({
       clientId: config.clientId,
-      clientSecret: config.clientSecret,
+      clientSecret: '', // TASK-3.1.3: Será obtido do backend via endpoint
     });
 
     // Se temos tokens salvos, usar

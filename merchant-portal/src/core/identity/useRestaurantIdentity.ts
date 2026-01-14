@@ -97,9 +97,24 @@ export function useRestaurantIdentity() {
 
             console.log('[Identity] Member Query Response:', { memberData, memberError });
 
-            if (memberError || !memberData?.restaurant_id) {
-                console.warn('Identity: No restaurant membership found.', { memberData, memberError });
-                setIdentity(prev => ({ ...prev, name: 'Sem Restaurante', ownerName, loading: false }));
+            // CRITICAL: Guard definitivo para membership
+            if (memberError || !memberData || !('restaurant_id' in memberData) || !memberData.restaurant_id) {
+                console.error('[Identity] CRITICAL: No restaurant membership', {
+                    userId: user?.id,
+                    memberError,
+                    memberData,
+                });
+
+                setIdentity(prev => ({
+                    ...prev,
+                    name: 'Sem Restaurante',
+                    ownerName,
+                    loading: false,
+                    error: 'NO_MEMBERSHIP',
+                    restaurantId: null,
+                    role: null,
+                    restaurant: null,
+                }));
                 return;
             }
 
@@ -160,7 +175,7 @@ export function useRestaurantIdentity() {
         mountedRef.current = true;
         hydrate();
         return () => { mountedRef.current = false; };
-    }, [hydrate]);
+    }, []); // CRITICAL: hydrate is stable (useCallback with empty deps), so empty array is safe
 
     return { identity, refreshIdentity: hydrate };
 }

@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import fetch from 'node-fetch';
+import { encryptOAuthToken } from '../middleware/security';
 
 const UBER_AUTH_URL = 'https://login.uber.com/oauth/v2/authorize';
 const UBER_TOKEN_URL = 'https://login.uber.com/oauth/v2/token';
@@ -86,6 +87,12 @@ export class UberEatsAuthHandler {
     private async saveCredentials(restaurantId: string, data: any) {
         const expiresAt = new Date(Date.now() + (data.expires_in * 1000));
 
+        // TASK-3.1.2: Criptografar tokens antes de salvar no DB
+        const encryptedAccessToken = encryptOAuthToken(data.access_token);
+        const encryptedRefreshToken = data.refresh_token 
+          ? encryptOAuthToken(data.refresh_token) 
+          : null;
+
         await this.pool.query(
             `INSERT INTO integration_credentials 
        (restaurant_id, integration_type, access_token, refresh_token, expires_at, updated_at)
@@ -96,7 +103,7 @@ export class UberEatsAuthHandler {
          refresh_token = EXCLUDED.refresh_token,
          expires_at = EXCLUDED.expires_at,
          updated_at = NOW()`,
-            [restaurantId, data.access_token, data.refresh_token, expiresAt.toISOString()]
+            [restaurantId, encryptedAccessToken, encryptedRefreshToken, expiresAt.toISOString()]
         );
     }
 }

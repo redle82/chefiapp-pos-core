@@ -6,6 +6,7 @@
  */
 
 import type { Session, Order, OrderItem, Payment, Transaction } from "./types";
+import { ConcurrencyConflictError } from "./errors";
 
 export class InMemoryRepo {
   private sessions = new Map<string, Session>();
@@ -30,13 +31,70 @@ export class InMemoryRepo {
     return txId;
   }
 
+  /**
+   * TASK-1.3.1: commit compara versão antes de aplicar mudanças
+   * 
+   * Verifica se a versão atual do objeto corresponde à versão do snapshot.
+   * Se diferente, lança ConcurrencyConflictError (otimistic locking).
+   */
   async commit(txId: string): Promise<void> {
     const tx = this.transactions.get(txId);
     if (!tx) {
       throw new Error(`Transaction ${txId} not found`);
     }
 
-    // Apply all changes atomically
+    // TASK-1.3.1: Check version conflicts before applying changes
+    for (const [key, value] of tx.changes.entries()) {
+      const [entityType, id] = key.split(":");
+      const snapshotValue = tx.snapshot.get(key);
+
+      // Only check version if entity existed before (snapshot is not undefined/null)
+      if (snapshotValue !== undefined && snapshotValue !== null) {
+        let currentVersion: number | undefined;
+        let currentEntity: any;
+
+        switch (entityType) {
+          case "SESSION":
+            currentEntity = this.sessions.get(id);
+            currentVersion = currentEntity?.version;
+            break;
+          case "ORDER":
+            currentEntity = this.orders.get(id);
+            currentVersion = currentEntity?.version;
+            break;
+          case "PAYMENT":
+            // Find payment in payments array
+            for (const [orderId, payments] of this.payments.entries()) {
+              const payment = payments.find((p) => p.id === id);
+              if (payment) {
+                currentEntity = payment;
+                currentVersion = payment.version;
+                break;
+              }
+            }
+            break;
+          case "ORDER_ITEM":
+            // OrderItem doesn't have version field, skip check
+            break;
+        }
+
+        // Compare versions (only for entities with version field)
+        if (currentVersion !== undefined && snapshotValue.version !== undefined) {
+          const expectedVersion = snapshotValue.version;
+          if (currentVersion !== expectedVersion) {
+            // Version conflict detected - entity was modified by another transaction
+            throw new ConcurrencyConflictError(
+              entityType,
+              id,
+              expectedVersion,
+              currentVersion
+            );
+          }
+        }
+      }
+    }
+
+    // Apply all changes atomically (only if no conflicts)
     for (const [key, value] of tx.changes.entries()) {
       const [entityType, id] = key.split(":");
       switch (entityType) {
@@ -72,7 +130,95 @@ export class InMemoryRepo {
     this.transactions.delete(txId);
   }
 
+  /**
+   * TASK-1.2.7: rollback restaura estado do snapshot
+   * 
+   * Restaura todos os objetos que foram modificados na transação
+   * para o estado original capturado no snapshot.
+   */
   rollback(txId: string): void {
+    const tx = this.transactions.get(txId);
+    if (!tx) {
+      // Transaction already deleted or never existed - that's OK
+      return;
+    }
+
+    // Restore all entities from snapshot
+    for (const [key, snapshotValue] of tx.snapshot.entries()) {
+      const [entityType, id] = key.split(":");
+      
+      if (snapshotValue === undefined || snapshotValue === null) {
+        // Entity didn't exist before transaction - remove it
+        switch (entityType) {
+          case "SESSION":
+            this.sessions.delete(id);
+            break;
+          case "ORDER":
+            this.orders.delete(id);
+            break;
+          case "ORDER_ITEM":
+            // Find and remove item from orderItems array
+            for (const [orderId, items] of this.orderItems.entries()) {
+              const index = items.findIndex((item) => item.id === id);
+              if (index >= 0) {
+                items.splice(index, 1);
+                if (items.length === 0) {
+                  this.orderItems.delete(orderId);
+                }
+                break;
+              }
+            }
+            break;
+          case "PAYMENT":
+            // Find and remove payment from payments array
+            for (const [orderId, payments] of this.payments.entries()) {
+              const index = payments.findIndex((p) => p.id === id);
+              if (index >= 0) {
+                payments.splice(index, 1);
+                if (payments.length === 0) {
+                  this.payments.delete(orderId);
+                }
+                break;
+              }
+            }
+            break;
+        }
+      } else {
+        // Entity existed - restore it
+        switch (entityType) {
+          case "SESSION":
+            this.sessions.set(id, snapshotValue as Session);
+            break;
+          case "ORDER":
+            this.orders.set(id, snapshotValue as Order);
+            break;
+          case "ORDER_ITEM":
+            const item = snapshotValue as OrderItem;
+            const items = this.orderItems.get(item.order_id) || [];
+            const existingIndex = items.findIndex((i) => i.id === id);
+            if (existingIndex >= 0) {
+              items[existingIndex] = item;
+            } else {
+              items.push(item);
+            }
+            this.orderItems.set(item.order_id, items);
+            break;
+          case "PAYMENT":
+            const payment = snapshotValue as Payment;
+            const payments = this.payments.get(payment.order_id) || [];
+            const paymentIndex = payments.findIndex((p) => p.id === id);
+            if (paymentIndex >= 0) {
+              payments[paymentIndex] = payment;
+            } else {
+              payments.push(payment);
+            }
+            this.payments.set(payment.order_id, payments);
+            break;
+        }
+      }
+    }
+
+    // Delete transaction
     this.transactions.delete(txId);
   }
 
@@ -80,32 +226,57 @@ export class InMemoryRepo {
   // LOCKING (Simple mutex per entity)
   // ============================================================================
 
-  async withLock<T>(entityId: string, fn: () => Promise<T>): Promise<T> {
-    // Wait in loop until we can acquire the lock (prevents race condition)
-    while (true) {
-      const existingLock = this.locks.get(entityId);
-      if (!existingLock) {
-        // No lock exists, we can acquire it
-        break;
-      }
-      // Wait for existing lock to be released
-      await existingLock;
-      // After waiting, check again (another waiter might have acquired it)
-      // Loop continues until we successfully acquire the lock
-    }
+  /**
+   * TASK-1.4.1: Lock múltiplo para evitar deadlocks
+   * 
+   * Aceita um único entityId (backward compatible) ou array de entityIds.
+   * Ordem determinística (sorted) previne deadlocks.
+   */
+  async withLock<T>(entityIdOrIds: string | string[], fn: () => Promise<T>): Promise<T> {
+    // Normalizar para array e ordenar (ordem determinística previne deadlock)
+    const entityIds = Array.isArray(entityIdOrIds) 
+      ? [...entityIdOrIds].sort() // Sort para ordem determinística
+      : [entityIdOrIds];
 
-    // Create new lock atomically (we've verified no lock exists)
-    let resolveLock: () => void;
-    const lock = new Promise<void>((resolve) => {
-      resolveLock = resolve;
-    });
-    this.locks.set(entityId, lock);
+    // TASK-1.4.1: Adquirir todos os locks na ordem determinística
+    const acquiredLocks: Array<{ id: string; resolve: () => void }> = [];
 
     try {
+      // Adquirir locks sequencialmente na ordem determinística
+      for (const entityId of entityIds) {
+        // Wait in loop until we can acquire the lock (prevents race condition)
+        while (true) {
+          const existingLock = this.locks.get(entityId);
+          if (!existingLock) {
+            // No lock exists, we can acquire it
+            break;
+          }
+          // Wait for existing lock to be released
+          await existingLock;
+          // After waiting, check again (another waiter might have acquired it)
+          // Loop continues until we successfully acquire the lock
+        }
+
+        // Create new lock atomically (we've verified no lock exists)
+        let resolveLock: (() => void) | undefined;
+        const lock = new Promise<void>((resolve) => {
+          resolveLock = resolve;
+        });
+        this.locks.set(entityId, lock);
+        if (resolveLock) {
+          acquiredLocks.push({ id: entityId, resolve: resolveLock });
+        }
+      }
+
+      // Todos os locks adquiridos, executar função
       return await fn();
     } finally {
-      this.locks.delete(entityId);
-      resolveLock!();
+      // Liberar todos os locks na ordem inversa (boa prática)
+      for (let i = acquiredLocks.length - 1; i >= 0; i--) {
+        const { id, resolve } = acquiredLocks[i];
+        this.locks.delete(id);
+        resolve();
+      }
     }
   }
 
@@ -113,21 +284,37 @@ export class InMemoryRepo {
   // SESSION OPERATIONS
   // ============================================================================
 
+  /**
+   * TASK-1.2.5: getSession retorna clone para evitar mutação externa
+   * 
+   * Retorna uma cópia independente da Session, garantindo que modificações
+   * no objeto retornado não afetem o estado interno do repositório.
+   */
   getSession(id: string): Session | undefined {
-    return this.sessions.get(id);
+    const session = this.sessions.get(id);
+    if (!session) {
+      return undefined;
+    }
+    return this.cloneSession(session);
   }
 
   saveSession(session: Session, txId?: string): void {
     if (txId) {
       const tx = this.transactions.get(txId);
-      if (tx) {
-        const key = `SESSION:${session.id}`;
-        if (!tx.snapshot.has(key)) {
-          tx.snapshot.set(key, this.sessions.get(session.id));
-        }
-        tx.changes.set(key, { ...session, version: session.version + 1 });
+      if (!tx) {
+        throw new Error(`Transaction ${txId} not found`);
       }
+      const key = `SESSION:${session.id}`;
+      // TASK-1.2.7: Snapshot: salvar estado atual (clone) se ainda não foi salvo
+      if (!tx.snapshot.has(key)) {
+        const current = this.sessions.get(session.id);
+        // Store clone to preserve original state
+        tx.snapshot.set(key, current ? this.cloneSession(current) : undefined);
+      }
+      // Changes: salvar mudança na transação
+      tx.changes.set(key, { ...session, version: session.version + 1 });
     } else {
+      // Backward compatibility: salvar direto se não há txId
       this.sessions.set(session.id, session);
     }
   }
@@ -140,21 +327,37 @@ export class InMemoryRepo {
   // ORDER OPERATIONS
   // ============================================================================
 
+  /**
+   * TASK-1.2.4: getOrder retorna clone para evitar mutação externa
+   * 
+   * Retorna uma cópia independente do Order, garantindo que modificações
+   * no objeto retornado não afetem o estado interno do repositório.
+   */
   getOrder(id: string): Order | undefined {
-    return this.orders.get(id);
+    const order = this.orders.get(id);
+    if (!order) {
+      return undefined;
+    }
+    return this.cloneOrder(order);
   }
 
   saveOrder(order: Order, txId?: string): void {
     if (txId) {
       const tx = this.transactions.get(txId);
-      if (tx) {
-        const key = `ORDER:${order.id}`;
-        if (!tx.snapshot.has(key)) {
-          tx.snapshot.set(key, this.orders.get(order.id));
-        }
-        tx.changes.set(key, { ...order, version: order.version + 1 });
+      if (!tx) {
+        throw new Error(`Transaction ${txId} not found`);
       }
+      const key = `ORDER:${order.id}`;
+      // TASK-1.2.7: Snapshot: salvar estado atual (clone) se ainda não foi salvo
+      if (!tx.snapshot.has(key)) {
+        const current = this.orders.get(order.id);
+        // Store clone to preserve original state
+        tx.snapshot.set(key, current ? this.cloneOrder(current) : undefined);
+      }
+      // Changes: salvar mudança na transação
+      tx.changes.set(key, { ...order, version: order.version + 1 });
     } else {
+      // Backward compatibility: salvar direto se não há txId
       this.orders.set(order.id, order);
     }
   }
@@ -206,24 +409,36 @@ export class InMemoryRepo {
   // PAYMENT OPERATIONS
   // ============================================================================
 
+  /**
+   * TASK-1.2.6: getPayments retorna clones para evitar mutação externa
+   * 
+   * Retorna uma cópia independente do array de Payments, garantindo que modificações
+   * nos objetos retornados não afetem o estado interno do repositório.
+   */
   getPayments(orderId: string): Payment[] {
-    return this.payments.get(orderId) || [];
+    const payments = this.payments.get(orderId) || [];
+    // Clone each payment in the array
+    return payments.map(payment => this.clonePayment(payment));
   }
 
   savePayment(payment: Payment, txId?: string): void {
     if (txId) {
       const tx = this.transactions.get(txId);
-      if (tx) {
-        const key = `PAYMENT:${payment.id}`;
-        if (!tx.snapshot.has(key)) {
-          const existing = this.getPayments(payment.order_id).find(
-            (p) => p.id === payment.id
-          );
-          tx.snapshot.set(key, existing);
-        }
-        tx.changes.set(key, { ...payment, version: payment.version + 1 });
+      if (!tx) {
+        throw new Error(`Transaction ${txId} not found`);
       }
+      const key = `PAYMENT:${payment.id}`;
+      // Snapshot: salvar estado atual se ainda não foi salvo
+      if (!tx.snapshot.has(key)) {
+        const existing = this.getPayments(payment.order_id).find(
+          (p) => p.id === payment.id
+        );
+        tx.snapshot.set(key, existing);
+      }
+      // Changes: salvar mudança na transação
+      tx.changes.set(key, { ...payment, version: payment.version + 1 });
     } else {
+      // Backward compatibility: salvar direto se não há txId
       const payments = this.payments.get(payment.order_id) || [];
       const existingIndex = payments.findIndex((p) => p.id === payment.id);
       if (existingIndex >= 0) {
@@ -240,6 +455,59 @@ export class InMemoryRepo {
     return payments
       .filter((p) => p.state === "CONFIRMED")
       .reduce((sum, p) => sum + p.amount_cents, 0);
+  }
+
+  // ============================================================================
+  // CLONING (Deep Clone for Isolation)
+  // ============================================================================
+
+  /**
+   * TASK-1.2.1: Clone profundo de Order
+   * 
+   * Retorna uma cópia independente do Order, garantindo que modificações
+   * na cópia não afetem o original.
+   */
+  cloneOrder(order: Order): Order {
+    // Use structuredClone if available (Node 17+), otherwise fallback to JSON
+    if (typeof structuredClone !== 'undefined') {
+      return structuredClone(order);
+    }
+    // Fallback: JSON serialization (works for plain objects)
+    return JSON.parse(JSON.stringify(order)) as Order;
+  }
+
+  /**
+   * TASK-1.2.2: Clone profundo de Session
+   * 
+   * Retorna uma cópia independente da Session, garantindo que modificações
+   * na cópia não afetem o original.
+   */
+  cloneSession(session: Session): Session {
+    // Use structuredClone if available (Node 17+), otherwise fallback to JSON
+    if (typeof structuredClone !== 'undefined') {
+      return structuredClone(session);
+    }
+    // Fallback: JSON serialization (works for plain objects)
+    // Note: Date objects will be serialized as strings, need to restore them
+    const cloned = JSON.parse(JSON.stringify(session)) as any;
+    if (cloned.opened_at) cloned.opened_at = new Date(cloned.opened_at);
+    if (cloned.closed_at) cloned.closed_at = new Date(cloned.closed_at);
+    return cloned as Session;
+  }
+
+  /**
+   * TASK-1.2.3: Clone profundo de Payment
+   * 
+   * Retorna uma cópia independente do Payment, garantindo que modificações
+   * na cópia não afetem o original.
+   */
+  clonePayment(payment: Payment): Payment {
+    // Use structuredClone if available (Node 17+), otherwise fallback to JSON
+    if (typeof structuredClone !== 'undefined') {
+      return structuredClone(payment);
+    }
+    // Fallback: JSON serialization (works for plain objects)
+    return JSON.parse(JSON.stringify(payment)) as Payment;
   }
 
   // ============================================================================

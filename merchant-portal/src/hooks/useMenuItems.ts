@@ -12,6 +12,8 @@ export interface MenuItem {
     priceCents: number;
     category: string;
     photoUrl?: string;
+    trackStock?: boolean;
+    stockQuantity?: number;
 }
 
 export function useMenuItems(restaurantId: string | null) {
@@ -39,10 +41,10 @@ export function useMenuItems(restaurantId: string | null) {
                     .order('sort_order');
 
                 const { data: itemsData, error: itemsError } = await supabase
-                    .from('gm_menu_items')
+                    .from('gm_products')
                     .select('*')
-                    .eq('restaurant_id', restaurantId);
-                // .eq('is_active', true)
+                    .eq('restaurant_id', restaurantId)
+                    .eq('status', 'available');
                 // .order('created_at');
 
                 if (itemsError) throw itemsError;
@@ -61,6 +63,8 @@ export function useMenuItems(restaurantId: string | null) {
                     priceCents: item.price_cents,
                     category: categoryMap.get(item.category_id) || 'Outros',
                     photoUrl: item.photo_url,
+                    trackStock: item.track_stock,
+                    stockQuantity: item.stock_quantity
                 }));
 
                 if (isMounted) setItems(mappedItems);

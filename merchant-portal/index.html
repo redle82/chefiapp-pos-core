@@ -7,6 +7,42 @@
 <meta name="description"
   content="ChefIApp - Sistema Operacional para Restauração. Otimize sua operação com inteligência." />
 <title>ChefIApp - Merchant Portal</title>
+    <script>
+    window.process = { env: {} };
+  </script>
+  <!-- Polyfill Buffer for PDFMake/TPV - ESM-compatible -->
+  <script>
+    // Minimal Buffer polyfill for browser (avoids CommonJS require)
+    (function() {
+      if (typeof window.Buffer !== 'undefined') return;
+      
+      // Create a minimal Buffer implementation for PDFMake
+      const BufferPolyfill = {
+        isBuffer: function(obj) {
+          return obj instanceof Uint8Array;
+        },
+        from: function(data, encoding) {
+          if (typeof data === 'string') {
+            const encoder = new TextEncoder();
+            return encoder.encode(data);
+          }
+          if (Array.isArray(data)) {
+            return new Uint8Array(data);
+          }
+          return new Uint8Array(data);
+        },
+        alloc: function(size) {
+          return new Uint8Array(size);
+        },
+        allocUnsafe: function(size) {
+          return new Uint8Array(size);
+        }
+      };
+      
+      window.Buffer = BufferPolyfill;
+      console.log('Buffer polyfilled (inline ESM-compatible)');
+    })();
+  </script>
 </head>
 
 <body>

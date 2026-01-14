@@ -31,14 +31,7 @@ interface TableMapPanelProps {
 
 export const TableMapPanel: React.FC<TableMapPanelProps> = ({ tables, onSelectTable, onCreateOrder }) => {
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'free': return colors.success.base;
-            case 'occupied': return colors.warning.base;
-            case 'reserved': return colors.info.base;
-            default: return colors.text.tertiary;
-        }
-    };
+
 
     const getStatusLabel = (status: string, orderInfo?: TableData['orderInfo']) => {
         if (orderInfo) {
@@ -144,7 +137,7 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = ({ tables, onSelectTa
                                         {getStatusLabel(table.status, table.orderInfo)}
                                     </Text>
                                     <Text size="xs" color="tertiary">{table.seats} Lugares</Text>
-                                    
+
                                     {/* SEMANA 1 - Tarefa 1.1: Mostrar informações do pedido */}
                                     {hasOrder && table.orderInfo && (
                                         <div style={{ marginTop: spacing[1], paddingTop: spacing[1], borderTop: `1px solid ${colors.border.subtle}` }}>
@@ -162,8 +155,8 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = ({ tables, onSelectTa
 
                                 {/* SEMANA 1 - Tarefa 1.1: Botão de ação rápida para mesa livre */}
                                 {isFree && onCreateOrder && (
-                                    <div 
-                                        style={{ 
+                                    <div
+                                        style={{
                                             marginTop: spacing[2],
                                             paddingTop: spacing[2],
                                             borderTop: `1px solid ${colors.border.subtle}`
@@ -173,9 +166,9 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = ({ tables, onSelectTa
                                             onCreateOrder(table.id);
                                         }}
                                     >
-                                        <Text 
-                                            size="xs" 
-                                            color="action" 
+                                        <Text
+                                            size="xs"
+                                            color="action"
                                             weight="bold"
                                             style={{
                                                 cursor: 'pointer',

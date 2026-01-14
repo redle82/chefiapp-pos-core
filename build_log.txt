@@ -1,0 +1,61 @@
+
+> merchant-portal@1.0.0 prebuild
+> npm run validate:constitution
+
+
+> merchant-portal@1.0.0 validate:constitution
+> node ../scripts/validate-constitution.js
+
+(node:93876) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/scripts/validate-constitution.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔒 CONSTITUTION VALIDATOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ CONSTITUTION VALIDATED
+   System is clean. Build allowed.
+
+
+> merchant-portal@1.0.0 build
+> vite build
+
+vite v7.3.0 building client environment for production...
+transforming...
+✓ 2055 modules transformed.
+✗ Build failed in 1.23s
+error during build:
+[vite-plugin-pwa:build] [plugin vite-plugin-pwa:build] src/ui/design-system/domain/TableMapPanel.tsx (61:10): There was an error during the build:
+  Transform failed with 1 error:
+/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/src/ui/design-system/domain/TableMapPanel.tsx:61:10: ERROR: The symbol "getStatusColor" has already been declared
+Additionally, handling the error in the 'buildEnd' hook caused the following error:
+  Transform failed with 1 error:
+/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/src/ui/design-system/domain/TableMapPanel.tsx:61:10: ERROR: The symbol "getStatusColor" has already been declared
+file: /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/src/ui/design-system/domain/TableMapPanel.tsx:61:10
+
+The symbol "getStatusColor" has already been declared
+59 |      };
+60 |  
+61 |      const getStatusColor = (status: string, orderInfo?: TableData['orderInfo']) => {
+   |            ^
+62 |          if (orderInfo) {
+63 |              switch (orderInfo.status) {
+
+    at getRollupError (file:///Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at file:///Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/node_modules/rollup/dist/es/shared/node-entry.js:23418:39
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async catchUnfinishedHookActions (file:///Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/node_modules/rollup/dist/es/shared/node-entry.js:22876:16)
+    at async rollupInternal (file:///Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/node_modules/rollup/dist/es/shared/node-entry.js:23401:5)
+    at async buildEnvironment (file:///Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/node_modules/vite/dist/node/chunks/config.js:33540:12)
+    at async Object.build (file:///Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/node_modules/vite/dist/node/chunks/config.js:33899:19)
+    at async Object.buildApp (file:///Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/node_modules/vite/dist/node/chunks/config.js:33896:153)
+    at async CAC.<anonymous> (file:///Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/node_modules/vite/dist/node/cli.js:629:3)
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal
+npm error workspace merchant-portal@1.0.0
+npm error location /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal
+npm error command failed
+npm error command sh -c vite build

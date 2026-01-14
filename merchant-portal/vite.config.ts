@@ -9,6 +9,10 @@ export default defineConfig(() => {
 
   return {
     base,
+    define: {
+      // Polyfill global for libraries that expect Node.js global
+      global: {},
+    },
     plugins: [
       react(),
       tailwindcss(),
@@ -16,7 +20,7 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'vite.svg'],
         devOptions: {
-          enabled: true
+          enabled: false // CRITICAL: Disable in dev to prevent workbox loop
         },
         manifest: {
           name: 'ChefIApp POS',

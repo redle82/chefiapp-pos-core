@@ -164,15 +164,26 @@ class LoggerService {
                     detailsToSave = { ...detailsToSave, truncated: true, originalSize: detailsJson.length };
                 }
 
-                await supabase.from('app_logs').insert({
-                    level: level === 'critical' ? 'error' : level, // Map critical to error for DB if ENUM doesn't support it, or assume text
-                    message,
-                    details: detailsToSave,
-                    restaurant_id: restaurantId || null,
-                    url: fullContext.url || null,
-                    user_agent: fullContext.userAgent || null,
-                    created_at: payload.timestamp
-                });
+                // CRITICAL: Prevent duplicate logs (idempotency)
+                // Use try-catch to silently ignore 409 conflicts
+                try {
+                    await supabase.from('app_logs').insert({
+                        level: level === 'critical' ? 'error' : level, // Map critical to error for DB if ENUM doesn't support it, or assume text
+                        message,
+                        details: detailsToSave,
+                        restaurant_id: restaurantId || null,
+                        url: fullContext.url || null,
+                        user_agent: fullContext.userAgent || null,
+                        created_at: payload.timestamp
+                    });
+                } catch (err: any) {
+                    // Silently ignore 409 conflicts (duplicate log - idempotency working)
+                    if (err?.code === '23505' || err?.message?.includes('409') || err?.code === 'PGRST204') {
+                        return; // Idempotent - log already exists, ignore
+                    }
+                    // Log other errors but don't crash
+                    console.error('[Logger] Failed to push log (non-409):', err);
+                }
             } catch (err) {
                 // Failsafe: Logger should never crash the app
                 console.error('[Logger] Failed to push log:', err);

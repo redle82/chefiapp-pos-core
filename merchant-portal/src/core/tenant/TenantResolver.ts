@@ -23,12 +23,15 @@ import { getTabIsolated, setTabIsolated, removeTabIsolated } from '../storage/Ta
 // ============================================================================
 
 const ACTIVE_TENANT_KEY = 'chefiapp_active_tenant';
+const TENANT_STATUS_KEY = 'chefiapp_tenant_status';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export type TenantRole = 'owner' | 'admin' | 'manager' | 'staff' | 'waiter' | 'kitchen';
+
+export type TenantStatus = 'UNSELECTED' | 'SELECTING' | 'ACTIVE';
 
 export interface TenantMembership {
     restaurant_id: string;
@@ -231,9 +234,12 @@ export async function resolve(
         };
     }
 
-    // Case 3: Check cached active tenant
+    // Case 3: Check cached active tenant (SOVEREIGN CHECK)
     const cachedTenantId = getActiveTenant();
-    if (cachedTenantId) {
+    const cachedStatus = getTenantStatus();
+
+    // SOVEREIGNTY: If status is ACTIVE, strictly respect it.
+    if (cachedTenantId && cachedStatus === 'ACTIVE') {
         const membership = memberships.find(m => m.restaurant_id === cachedTenantId);
 
         if (membership) {
@@ -246,19 +252,20 @@ export async function resolve(
             logTenantEvent('tenant_resolved', {
                 userId,
                 tenantId: cachedTenantId,
-                source: 'cache',
+                source: 'sovereign_cache',
                 role: membership.role
             });
 
             return {
                 type: 'RESOLVED',
                 tenantId: cachedTenantId,
-                reason: 'Tenant resolved from cache',
+                reason: 'Tenant resolved (Sovereign Active)',
                 context
             };
         }
 
-        // Cached tenant is invalid, clear it
+        // Cached tenant is invalid (user lost access?), clear it
+        console.warn('[TenantResolver] Active tenant found but user lost access', cachedTenantId);
         clearActiveTenant();
     }
 
@@ -328,6 +335,18 @@ export async function validateAccess(
 // ============================================================================
 
 /**
+ * Get active tenant status
+ */
+export function getTenantStatus(): TenantStatus {
+    try {
+        const status = getTabIsolated(TENANT_STATUS_KEY);
+        return (status as TenantStatus) || 'UNSELECTED';
+    } catch {
+        return 'UNSELECTED';
+    }
+}
+
+/**
  * Get active tenant from TabIsolatedStorage
  */
 export function getActiveTenant(): string | null {
@@ -339,13 +358,16 @@ export function getActiveTenant(): string | null {
 }
 
 /**
- * Set active tenant in TabIsolatedStorage
+ * Set active tenant in TabIsolatedStorage (Seals Status as ACTIVE by default)
  */
-export function setActiveTenant(tenantId: string): void {
+export function setActiveTenant(tenantId: string, status: TenantStatus = 'ACTIVE'): void {
     try {
         setTabIsolated(ACTIVE_TENANT_KEY, tenantId);
+        setTabIsolated(TENANT_STATUS_KEY, status);
         // Also sync legacy key for backwards compatibility
         setTabIsolated('chefiapp_restaurant_id', tenantId);
+
+        console.info(`[TenantResolver] 🔒 Tenant Sealed: ${tenantId} [${status}]`);
     } catch (e) {
         console.error('[TenantResolver] Failed to set active tenant:', e);
     }
@@ -357,7 +379,9 @@ export function setActiveTenant(tenantId: string): void {
 export function clearActiveTenant(): void {
     try {
         removeTabIsolated(ACTIVE_TENANT_KEY);
+        removeTabIsolated(TENANT_STATUS_KEY);
         removeTabIsolated('chefiapp_restaurant_id');
+        console.info('[TenantResolver] 🔓 Tenant Unsealed');
     } catch {
         // Ignore
     }
@@ -381,7 +405,7 @@ export async function switchTenant(
         return false;
     }
 
-    setActiveTenant(tenantId);
+    setActiveTenant(tenantId, 'ACTIVE');
 
     logTenantEvent('tenant_switched', {
         userId,

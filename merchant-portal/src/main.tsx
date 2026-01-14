@@ -8,6 +8,13 @@ import { ErrorBoundary } from './ui/design-system/ErrorBoundary'
 import { Logger } from './core/logger/Logger'
 import { performanceMonitor } from './core/monitoring/performanceMonitor'
 
+import { Buffer } from 'buffer';
+
+// Polyfill Buffer for browser (Critical for TPV/Stripe)
+if (typeof window !== 'undefined') {
+  window.Buffer = Buffer;
+}
+
 // Initialize monitoring
 Logger.info('Application starting', {
   version: '1.0.0',

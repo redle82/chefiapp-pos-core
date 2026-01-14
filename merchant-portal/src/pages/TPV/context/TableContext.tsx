@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../../../core/supabase';
-import { useTenant } from '../../../core/tenant/TenantContext';
 
 export interface Table {
     id: string;
@@ -21,13 +20,12 @@ interface TableContextType {
 
 const TableContext = createContext<TableContextType | undefined>(undefined);
 
-export const TableProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const TableProvider: React.FC<{ children: React.ReactNode, restaurantId?: string }> = ({ children, restaurantId: propRestaurantId }) => {
     const [tables, setTables] = useState<Table[]>([]);
     const [loading, setLoading] = useState(true);
-    const { tenantId } = useTenant();
-
-    // Use TenantContext as single source of truth
-    const restaurantId = tenantId;
+    // SOVEREIGN: restaurantId comes from Gate layer (TenantContext -> AppDomainWrapper)
+    // No storage fallback - Gate guarantees prop is valid
+    const restaurantId = propRestaurantId || null;
 
     const fetchTables = async () => {
         if (!restaurantId) return;

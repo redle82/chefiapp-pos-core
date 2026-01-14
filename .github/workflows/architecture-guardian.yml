@@ -1,0 +1,152 @@
+name: Architecture Guardian
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  architecture-guardian:
+    name: 🏛️ Architecture Guardian
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: 🧱 Validate Kernel Layer
+        run: |
+          echo "🔍 Validating Kernel Layer..."
+          if [ ! -f "SYSTEM_TRUTH_CODEX.md" ]; then
+            echo "❌ SYSTEM_TRUTH_CODEX.md missing"
+            exit 1
+          fi
+          if [ ! -f "PARTE_3_REGRAS_DO_CORE.md" ]; then
+            echo "❌ PARTE_3_REGRAS_DO_CORE.md missing"
+            exit 1
+          fi
+          echo "✅ Kernel Layer validated"
+      
+      - name: 🔐 Validate Gates Layer
+        run: |
+          echo "🔍 Validating Gates Layer..."
+          if [ ! -f "merchant-portal/src/core/flow/FlowGate.tsx" ]; then
+            echo "❌ FlowGate.tsx missing"
+            exit 1
+          fi
+          if [ ! -f "merchant-portal/src/core/tenant/TenantResolver.ts" ]; then
+            echo "❌ TenantResolver.ts missing"
+            exit 1
+          fi
+          if [ ! -f "TENANT_RESOLUTION_CONTRACT.md" ]; then
+            echo "❌ TENANT_RESOLUTION_CONTRACT.md missing"
+            exit 1
+          fi
+          echo "✅ Gates Layer validated"
+      
+      - name: 🎯 Validate Domain Layer
+        run: |
+          echo "🔍 Validating Domain Layer..."
+          if [ ! -f "merchant-portal/src/pages/TPV/context/OrderContextReal.tsx" ]; then
+            echo "❌ OrderContextReal.tsx missing"
+            exit 1
+          fi
+          if [ ! -f "SYSTEM_OF_RECORD_SPEC.md" ]; then
+            echo "❌ SYSTEM_OF_RECORD_SPEC.md missing"
+            exit 1
+          fi
+          echo "✅ Domain Layer validated"
+      
+      - name: 🔍 Check for Gate → Domain Violations
+        run: |
+          echo "🔍 Checking for Gate → Domain violations..."
+          
+          # Check if Domain components call resolveTenant()
+          if grep -r "resolveTenant(" merchant-portal/src/pages/TPV/ merchant-portal/src/pages/KDS/ merchant-portal/src/pages/Orders/ 2>/dev/null | grep -v "// REMOVED" | grep -v "// Domain não deve"; then
+            echo "❌ VIOLATION: Domain components calling resolveTenant()"
+            echo "Domain should not resolve tenant. Gate should handle this."
+            exit 1
+          fi
+          
+          # Check if Domain components verify getActiveTenant() unnecessarily
+          if grep -r "getActiveTenant()" merchant-portal/src/pages/TPV/ merchant-portal/src/pages/KDS/ merchant-portal/src/pages/Orders/ 2>/dev/null | grep -v "// REMOVED" | grep -v "// Domain não deve"; then
+            echo "⚠️  WARNING: Domain components verifying getActiveTenant()"
+            echo "Domain should use context, not verify tenant."
+          fi
+          
+          echo "✅ No Gate → Domain violations found"
+      
+      - name: 🔒 Validate Tenant Sovereignty
+        run: |
+          echo "🔍 Validating Tenant Sovereignty..."
+          
+          # Check if FlowGate has sovereignty check
+          if ! grep -q "SOVEREIGNTY CHECK" merchant-portal/src/core/flow/FlowGate.tsx; then
+            echo "❌ VIOLATION: FlowGate missing sovereignty check"
+            echo "Tenant ACTIVE should not be re-resolved."
+            exit 1
+          fi
+          
+          # Check if sovereignty check is correct
+          if ! grep -q "tenantStatus === 'ACTIVE'" merchant-portal/src/core/flow/FlowGate.tsx; then
+            echo "❌ VIOLATION: Sovereignty check not checking ACTIVE status"
+            exit 1
+          fi
+          
+          echo "✅ Tenant Sovereignty validated"
+      
+      - name: 📊 Validate Architecture Documents
+        run: |
+          echo "🔍 Validating Architecture Documents..."
+          
+          REQUIRED_DOCS=(
+            "BOOT_SEQUENCE.md"
+            "KERNEL_MAP.md"
+            "ARQUITETURA_CANONICA_ATUAL.md"
+            "TENANT_RESOLUTION_CONTRACT.md"
+          )
+          
+          for doc in "${REQUIRED_DOCS[@]}"; do
+            if [ ! -f "$doc" ]; then
+              echo "⚠️  WARNING: $doc missing (not blocking)"
+            else
+              echo "✅ $doc found"
+            fi
+          done
+      
+      - name: 🧪 Run TypeScript Check
+        run: |
+          echo "🔍 Running TypeScript check..."
+          npm run typecheck || {
+            echo "❌ TypeScript errors found"
+            exit 1
+          }
+          echo "✅ TypeScript check passed"
+      
+      - name: 📋 Architecture Report
+        run: |
+          echo "## 🏛️ Architecture Guardian Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All architecture validations passed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Validated Layers:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Kernel Layer" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Gates Layer" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Domain Layer" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Tenant Sovereignty" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Gate → Domain Separation" >> $GITHUB_STEP_SUMMARY
+      
+      - name: ✅ Success
+        run: |
+          echo "✅ Architecture Guardian: All checks passed"
+          echo "The system maintains its architectural integrity."

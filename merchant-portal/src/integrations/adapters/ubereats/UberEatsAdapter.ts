@@ -4,28 +4,29 @@
  * FASE 3: Seguindo padrão Glovo
  */
 
-import { UberEatsOAuth } from './UberEatsOAuth';
-import { UberEatsOrder, UberEatsOrderItem } from './UberEatsTypes';
+// import { UberEatsOAuth } from './UberEatsOAuth'; // REMOVED: Security Hardening (Backend Only)
+import type { UberEatsOrder, UberEatsOrderItem } from './UberEatsTypes';
 
 const UBER_EATS_API_BASE = 'https://api.uber.com/v1/eats';
 
 export interface UberEatsAdapterConfig {
     clientId: string;
-    clientSecret: string;
     restaurantId: string;
 }
 
 export class UberEatsAdapter {
-    private oauth: UberEatsOAuth;
+    // private oauth: UberEatsOAuth;
 
     constructor(config: UberEatsAdapterConfig) {
-        this.oauth = new UberEatsOAuth(config);
+        // this.oauth = new UberEatsOAuth(config);
+        console.warn('UberEatsAdapter (Frontend) is deprecated. Use Backend Webhooks.');
     }
 
     /**
      * Obter pedidos pendentes
      */
     async getPendingOrders(): Promise<UberEatsOrder[]> {
+        /*
         const token = await this.oauth.getAccessToken();
         if (!token) {
             throw new Error('Uber Eats not authenticated');
@@ -44,6 +45,8 @@ export class UberEatsAdapter {
 
         const data = await response.json();
         return data.orders || [];
+        */
+        return [];
     }
 
     /**
@@ -87,6 +90,7 @@ export class UberEatsAdapter {
      * Aceitar pedido
      */
     async acceptOrder(orderId: string): Promise<void> {
+        /*
         const token = await this.oauth.getAccessToken();
         if (!token) {
             throw new Error('Uber Eats not authenticated');
@@ -103,17 +107,14 @@ export class UberEatsAdapter {
         if (!response.ok) {
             throw new Error(`Failed to accept order: ${response.statusText}`);
         }
+        */
+        throw new Error('Use Backend Integration');
     }
 
     /**
      * Health check
      */
     async healthCheck(): Promise<boolean> {
-        try {
-            const token = await this.oauth.getAccessToken();
-            return !!token;
-        } catch {
-            return false;
-        }
+        return false;
     }
 }

@@ -26,10 +26,8 @@ export const OrderHeader: React.FC<OrderHeaderProps> = ({ order }) => {
     return null;
   }
 
-  // Calcular total
-  const itemsTotal = order.items.reduce((sum, item) => {
-    return sum + (item.price * item.quantity);
-  }, 0);
+  // INV-006: UI uses Domain's total, never calculates independently
+  const itemsTotal = order.total;
 
   const totalFormatted = new Intl.NumberFormat('pt-PT', {
     style: 'currency',
@@ -45,9 +43,9 @@ export const OrderHeader: React.FC<OrderHeaderProps> = ({ order }) => {
   };
 
   // Identificar mesa
-  const mesaLabel = order.tableNumber 
-    ? `Mesa ${order.tableNumber}` 
-    : order.tableId 
+  const mesaLabel = order.tableNumber
+    ? `Mesa ${order.tableNumber}`
+    : order.tableId
       ? `Mesa ${order.tableId.slice(0, 8)}...`
       : 'Sem Mesa';
 

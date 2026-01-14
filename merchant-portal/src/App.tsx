@@ -29,7 +29,6 @@ const KDS = React.lazy(() => import('./pages/TPV/KDS/KitchenDisplay'));
 const KDSStandalone = React.lazy(() => import('./pages/TPV/KDS/KDSStandalone'));
 const MenuManager = React.lazy(() => import('./pages/Menu').then(m => ({ default: m.MenuManager })));
 import { MenuBootstrapPage } from './pages/Menu/Bootstrap/MenuBootstrapPage';
-import { OrderProvider } from './pages/TPV/context/OrderContextReal';
 import { BetaFeedbackWidget } from './ui/feedback/BetaFeedbackWidget';
 
 // Subgroup B: Dashboard & Reports
@@ -75,6 +74,7 @@ import { SystemGuardianProvider } from './core/guardian/SystemGuardianContext';
 import { TenantProvider } from './core/tenant/TenantContext'; // Added Provider
 import { OnboardingProvider } from './pages/Onboarding/OnboardingState';
 import { OfflineOrderProvider } from './pages/TPV/context/OfflineOrderContext';
+import { AppDomainWrapper } from './app/AppDomainWrapper';  // 🏛️ Gate → Domain Bridge
 
 // 🛰️ LAZY LOADED SATELLITES
 const StaffModule = React.lazy(() => import('./pages/AppStaff/StaffModule'));
@@ -150,25 +150,19 @@ function App() {
                   <Route path=":slug" element={<ArticlePage />} />
                 </Route>
 
-                {/* SATELLITE APPS (Standalone / Kiosk Mode) */}
-                <Route path="staff/*" element={
-                  <ErrorBoundary context="AppStaff">
-                    <Suspense fallback={<div style={{ padding: 20 }}>📡 Conectando satélite Staff...</div>}>
-                      <StaffModule />
-                    </Suspense>
-                  </ErrorBoundary>
-                } />
+                {/* REMOVED: Orphan staff/* route - Use /app/staff instead (has proper Gate chain) */}
+                {/* See: docs/canon/ROUTE_MANIFEST.md */}
 
                 <Route path="/app" element={
                   <FlowGate>
                     <TenantProvider>
-                      <RequireActivation>
-                        <OrderProvider>
+                      <AppDomainWrapper>
+                        <RequireActivation>
                           <ThemeEngine />
                           <AppLayout />
                           <BetaFeedbackWidget />
-                        </OrderProvider>
-                      </RequireActivation>
+                        </RequireActivation>
+                      </AppDomainWrapper>
                     </TenantProvider>
                   </FlowGate>
                 }>

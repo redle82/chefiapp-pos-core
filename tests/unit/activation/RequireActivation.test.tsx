@@ -74,7 +74,7 @@ describe('RequireActivation', () => {
         });
     });
 
-    it('should allow bypass with skip_activation query param', () => {
+    it('should allow bypass with skip_activation query param in DEV mode', () => {
         // Mock window.location.search
         Object.defineProperty(window, 'location', {
             value: {
@@ -82,6 +82,10 @@ describe('RequireActivation', () => {
             },
             writable: true,
         });
+
+        // Mock import.meta.env.DEV = true
+        const originalEnv = import.meta.env;
+        (import.meta as any).env = { ...originalEnv, DEV: true };
         
         const { container } = render(
             <MemoryRouter>
@@ -93,6 +97,43 @@ describe('RequireActivation', () => {
         
         expect(container.textContent).toContain('Protected Content');
         expect(mockNavigate).not.toHaveBeenCalled();
+
+        // Restore
+        (import.meta as any).env = originalEnv;
+    });
+
+    it('TASK-3.2.1: should NOT allow bypass with skip_activation in production', () => {
+        // Mock window.location.search
+        Object.defineProperty(window, 'location', {
+            value: {
+                search: '?skip_activation=true',
+            },
+            writable: true,
+        });
+
+        // Mock import.meta.env.DEV = false (production)
+        const originalEnv = import.meta.env;
+        (import.meta as any).env = { ...originalEnv, DEV: false };
+
+        mockUseTenant.mockReturnValue({
+            restaurant: null,
+        });
+        
+        render(
+            <MemoryRouter>
+                <RequireActivation>
+                    <div>Protected Content</div>
+                </RequireActivation>
+            </MemoryRouter>
+        );
+        
+        // Should redirect to /activation (bypass blocked)
+        waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith('/activation', { replace: true });
+        });
+
+        // Restore
+        (import.meta as any).env = originalEnv;
     });
 
     it('should restore session from restaurant operation_status active', async () => {

@@ -14,11 +14,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '../../core/auth/useSupabaseAuth';
-import { 
-    fetchUserMemberships, 
-    switchTenant, 
+import {
+    fetchUserMemberships,
+    switchTenant,
     buildTenantPath,
-    type TenantMembership 
+    type TenantMembership
 } from '../../core/tenant/TenantResolver';
 
 // Role badge colors
@@ -34,7 +34,7 @@ const ROLE_BADGES: Record<string, { label: string; color: string }> = {
 export function SelectTenantPage() {
     const navigate = useNavigate();
     const { session, loading: authLoading } = useSupabaseAuth();
-    
+
     const [memberships, setMemberships] = useState<TenantMembership[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSwitching, setSwitching] = useState<string | null>(null);
@@ -42,16 +42,16 @@ export function SelectTenantPage() {
 
     const handleSelect = useCallback(async (tenantId: string) => {
         if (!session?.user?.id || isSwitching) return;
-        
+
         setSwitching(tenantId);
         setError(null);
 
         try {
             const success = await switchTenant(tenantId, session.user.id);
-            
+
             if (success) {
-                // Navigate to tenant-scoped dashboard
-                navigate(buildTenantPath(tenantId, 'dashboard'), { replace: true });
+                // Navigate to dashboard (Tenant is already in Context/Storage)
+                navigate('/app/dashboard', { replace: true });
             } else {
                 setError('Você não tem acesso a este restaurante');
                 setSwitching(null);
@@ -66,7 +66,7 @@ export function SelectTenantPage() {
     useEffect(() => {
         async function loadMemberships() {
             if (authLoading) return;
-            
+
             if (!session?.user?.id) {
                 navigate('/login', { replace: true });
                 return;
@@ -74,16 +74,20 @@ export function SelectTenantPage() {
 
             try {
                 const data = await fetchUserMemberships(session.user.id);
-                setMemberships(data);
-                
+                // Deduplicate by restaurant_id to prevent React key warnings
+                const uniqueMemberships = data.filter((m, index, self) =>
+                    index === self.findIndex((t) => t.restaurant_id === m.restaurant_id)
+                );
+                setMemberships(uniqueMemberships);
+
                 // If only one tenant, auto-select
-                if (data.length === 1) {
-                    handleSelect(data[0].restaurant_id);
+                if (uniqueMemberships.length === 1) {
+                    handleSelect(uniqueMemberships[0].restaurant_id);
                     return;
                 }
-                
+
                 // If no tenants, go to onboarding
-                if (data.length === 0) {
+                if (uniqueMemberships.length === 0) {
                     navigate('/onboarding/identity', { replace: true });
                     return;
                 }
@@ -138,7 +142,7 @@ export function SelectTenantPage() {
                     {memberships.map((m) => {
                         const badge = getRoleBadge(m.role);
                         const isSelecting = isSwitching === m.restaurant_id;
-                        
+
                         return (
                             <button
                                 key={m.restaurant_id}
@@ -157,7 +161,7 @@ export function SelectTenantPage() {
                                         ID: {m.restaurant_id.slice(0, 8)}...
                                     </div>
                                 </div>
-                                
+
                                 <div style={styles.tenantActions}>
                                     <span style={{
                                         ...styles.roleBadge,
@@ -166,7 +170,7 @@ export function SelectTenantPage() {
                                     }}>
                                         {badge.label}
                                     </span>
-                                    
+
                                     {isSelecting ? (
                                         <div style={styles.miniSpinner} />
                                     ) : (
@@ -182,7 +186,7 @@ export function SelectTenantPage() {
                 <div style={styles.footer}>
                     <p style={styles.footerText}>
                         Não encontra seu restaurante?{' '}
-                        <button 
+                        <button
                             onClick={() => navigate('/onboarding/identity')}
                             style={styles.footerLink}
                         >

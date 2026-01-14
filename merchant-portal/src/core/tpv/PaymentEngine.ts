@@ -5,7 +5,8 @@
  */
 
 import { supabase } from '../supabase';
-import { OrderEngine, type PaymentMethod, type PaymentStatus } from './OrderEngine';
+import type { OrderEngine } from './OrderEngine';
+import type { PaymentMethod, PaymentStatus } from './OrderEngine';
 import { logAuditEvent } from '../audit/logAuditEvent';
 
 export interface PaymentInput {
@@ -134,6 +135,106 @@ export class PaymentEngine {
             status: paymentData.status,
             createdAt: new Date(paymentData.created_at),
             metadata: paymentData.metadata,
+        };
+    }
+
+    /**
+     * P1.1 FIX: Process split/partial payment atomically
+     * 
+     * Uses process_split_payment_atomic RPC which:
+     * - Locks the order row to prevent race conditions
+     * - Validates remaining balance atomically
+     * - Returns error if overpayment attempted
+     * 
+     * @throws Error if payment exceeds remaining or order already paid
+     */
+    static async processSplitPayment(input: PaymentInput): Promise<{
+        payment: Payment;
+        remainingAfter: number;
+        isFullyPaid: boolean;
+    }> {
+        const startTime = Date.now();
+        const idempotencyKey = input.idempotencyKey || `split-${input.orderId}-${Date.now()}-${crypto.randomUUID()}`;
+
+        // Use atomic RPC with row-level locking
+        const { data, error } = await supabase.rpc('process_split_payment_atomic', {
+            p_order_id: input.orderId,
+            p_restaurant_id: input.restaurantId,
+            p_cash_register_id: input.cashRegisterId,
+            p_method: input.method,
+            p_amount_cents: input.amountCents,
+            p_operator_id: input.metadata?.operatorId || null,
+            p_idempotency_key: idempotencyKey,
+        });
+
+        const durationMs = Date.now() - startTime;
+
+        if (error) {
+            await this.logPaymentAttempt({
+                orderId: input.orderId,
+                restaurantId: input.restaurantId,
+                operatorId: input.metadata?.operatorId,
+                amountCents: input.amountCents,
+                method: input.method,
+                result: 'fail',
+                errorCode: error.code || 'UNKNOWN',
+                errorMessage: error.message,
+                idempotencyKey,
+                durationMs,
+            });
+
+            // Parse specific errors
+            if (error.message?.includes('OVERPAYMENT')) {
+                throw new Error('Valor excede o saldo restante. Atualize e tente novamente.');
+            }
+            if (error.message?.includes('ALREADY_PAID')) {
+                throw new Error('Pedido já foi pago por outro operador.');
+            }
+            throw new Error(`Erro ao processar pagamento: ${error.message}`);
+        }
+
+        if (!data?.success) {
+            throw new Error('Transação de pagamento falhou.');
+        }
+
+        // Log success
+        await this.logPaymentAttempt({
+            orderId: input.orderId,
+            restaurantId: input.restaurantId,
+            operatorId: input.metadata?.operatorId,
+            amountCents: input.amountCents,
+            method: input.method,
+            result: 'success',
+            idempotencyKey,
+            paymentId: data.payment_id,
+            durationMs,
+        });
+
+        // Fetch the created payment
+        const { data: paymentData, error: fetchError } = await supabase
+            .from('gm_payments')
+            .select('*')
+            .eq('id', data.payment_id)
+            .single();
+
+        if (fetchError || !paymentData) {
+            throw new Error('Pagamento processado mas não encontrado.');
+        }
+
+        return {
+            payment: {
+                id: paymentData.id,
+                tenantId: paymentData.tenant_id,
+                orderId: paymentData.order_id,
+                amountCents: paymentData.amount_cents,
+                currency: paymentData.currency,
+                method: paymentData.method,
+                status: paymentData.status,
+                createdAt: new Date(paymentData.created_at),
+                metadata: paymentData.metadata,
+            },
+            remainingAfter: data.remaining_after,
+            isFullyPaid: data.is_fully_paid,
         };
     }
 

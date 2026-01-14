@@ -96,30 +96,68 @@ export async function createOrderOffline(input: OrderInput): Promise<Order> {
 }
 
 /**
+ * TASK-4.1.1: Gera idempotency_key baseado em conteúdo + timestamp
+ */
+function generateIdempotencyKey(type: string, payload: any, timestamp: number): string {
+    // Criar hash do conteúdo do payload para garantir idempotência baseada em conteúdo
+    const payloadStr = JSON.stringify({
+        type,
+        restaurantId: payload.restaurantId,
+        tableId: payload.tableId,
+        tableNumber: payload.tableNumber,
+        items: payload.items,
+        // Incluir timestamp para permitir múltiplas operações similares em momentos diferentes
+        timestamp: Math.floor(timestamp / 1000), // Segundos para reduzir colisões
+    });
+    
+    // Usar crypto.subtle se disponível, senão usar hash simples
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+        // Para navegador, usar TextEncoder + hash manual simples
+        const encoder = new TextEncoder();
+        const data = encoder.encode(payloadStr);
+        // Hash simples usando djb2
+        let hash = 5381;
+        for (let i = 0; i < data.length; i++) {
+            hash = ((hash << 5) + hash) + data[i];
+        }
+        return `offline:${type}:${hash.toString(36)}:${timestamp}`;
+    } else {
+        // Fallback: usar localId + timestamp
+        return `offline:${type}:${payload.localId || uuidv4()}:${timestamp}`;
+    }
+}
+
+/**
  * Cria pedido na fila offline (IndexedDB)
  */
 async function createOrderOfflineQueue(input: OrderInput): Promise<Order> {
     const localId = uuidv4();
     const now = Date.now();
 
+    // TASK-4.1.1: Gerar idempotency_key baseado em conteúdo
+    const payload = {
+        restaurantId: input.restaurantId,
+        tableNumber: input.tableNumber,
+        tableId: input.tableId,
+        operatorId: input.operatorId,
+        cashRegisterId: input.cashRegisterId,
+        source: input.source || 'tpv',
+        items: input.items,
+        notes: input.notes,
+        localId: localId, // Para idempotência
+    };
+    
+    const idempotencyKey = generateIdempotencyKey('ORDER_CREATE', payload, now);
+
     // Criar item da fila
     const queueItem: OfflineQueueItem = {
         id: localId,
         type: 'ORDER_CREATE',
-        payload: {
-            restaurantId: input.restaurantId,
-            tableNumber: input.tableNumber,
-            tableId: input.tableId,
-            operatorId: input.operatorId,
-            cashRegisterId: input.cashRegisterId,
-            source: input.source || 'tpv',
-            items: input.items,
-            notes: input.notes,
-            localId: localId, // Para idempotência
-        },
+        payload,
         status: 'queued',
         createdAt: now,
         attempts: 0,
+        idempotency_key: idempotencyKey, // TASK-4.1.1: Adicionar idempotency_key
     };
 
     // Salvar na fila IndexedDB

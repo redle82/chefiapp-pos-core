@@ -41,6 +41,11 @@ export const checkDevicePermission = (role: string, tool: ToolId): PermissionRul
     const safeRole = (role as DeviceRole) || 'owner_device';
     const allowed = PERMISSION_MATRIX[safeRole]?.[tool] ?? false;
 
+    // 🔓 DEV OVERRIDE: Allow everything in development for testing
+    if (import.meta.env.DEV) {
+        return { allow: true };
+    }
+
     if (!allowed) {
         return {
             allow: false,

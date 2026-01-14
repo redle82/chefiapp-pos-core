@@ -9,9 +9,9 @@
  */
 
 import { supabase } from '../supabase';
-import { FiscalObserver } from '../../../../fiscal-modules/FiscalObserver';
-import { FiscalResult, TaxDocument } from '../../../../fiscal-modules/types';
-import { FiscalEventStore } from '../../../../fiscal-modules/FiscalEventStore';
+import type { FiscalObserver } from '../../../../fiscal-modules/FiscalObserver';
+import type { FiscalResult, TaxDocument } from '../../../../fiscal-modules/types';
+import type { FiscalEventStore } from '../../../../fiscal-modules/FiscalEventStore'; // Type Only!
 import { SupabaseFiscalEventStore } from './SupabaseFiscalEventStore';
 import { ConsoleFiscalAdapter } from '../../../../fiscal-modules/ConsoleFiscalAdapter';
 import { TicketBAIAdapter } from '../../../../fiscal-modules/adapters/TicketBAIAdapter';
@@ -20,7 +20,7 @@ import { Logger } from '../logger/Logger';
 
 export interface FiscalServiceConfig {
     adapter?: FiscalObserver; // Default: ConsoleFiscalAdapter
-    eventStore?: FiscalEventStore; // Default: new FiscalEventStore()
+    eventStore?: FiscalEventStore | SupabaseFiscalEventStore; // Config dependency injection
     enabled?: boolean; // Feature flag
 }
 
@@ -36,7 +36,11 @@ export class FiscalService {
         this.adapter = config.adapter || new ConsoleFiscalAdapter();
         // Usar SupabaseFiscalEventStore no frontend (merchant-portal)
         this.useSupabase = typeof window !== 'undefined';
-        this.eventStore = config.eventStore || (this.useSupabase ? new SupabaseFiscalEventStore() : new FiscalEventStore());
+
+        // P0-CRITICAL: Decouple 'pg' (FiscalEventStore default implementation) from browser bundle.
+        // Server-side usage MUST inject eventStore via config.
+        this.eventStore = config.eventStore || new SupabaseFiscalEventStore();
+
         this.enabled = config.enabled !== false; // Default: enabled
     }
 
@@ -77,7 +81,7 @@ export class FiscalService {
         } else if (country === 'PT') {
             return new SAFTAdapter();
         }
-        
+
         // Default: Mock adapter
         return new ConsoleFiscalAdapter();
     }
@@ -111,7 +115,7 @@ export class FiscalService {
 
             // 2. Detectar país do restaurante
             const country = await this.getRestaurantCountry(params.restaurantId);
-            
+
             // 3. Selecionar adapter baseado no país e configuração
             const adapter = await this.selectAdapter(country, params.restaurantId);
 
@@ -121,14 +125,14 @@ export class FiscalService {
             // 4.1. Validar conformidade legal
             const { LegalComplianceValidator } = await import('../../../../fiscal-modules/validators/LegalComplianceValidator');
             const validation = LegalComplianceValidator.validate(taxDoc, country as 'PT' | 'ES');
-            
+
             if (!validation.isValid) {
                 Logger.error('[FiscalService] Legal compliance validation failed', {
                     orderId: params.orderId,
                     errors: validation.errors,
                     warnings: validation.warnings,
                 });
-                
+
                 // Em produção, podemos decidir se rejeitamos ou apenas avisamos
                 // Por enquanto, apenas logamos os erros
                 if (validation.errors.length > 0) {
@@ -277,7 +281,7 @@ export class FiscalService {
         // Detectar tipo de documento baseado no país
         let docType: 'MOCK' | 'TICKETBAI' | 'SAF-T' = 'MOCK';
         let vatRate = 0.21; // Default: 21% (Espanha)
-        
+
         if (country === 'ES') {
             docType = 'TICKETBAI';
             vatRate = 0.21; // 21% IVA (Espanha)
@@ -288,8 +292,9 @@ export class FiscalService {
 
         // Calcular impostos
         const totalAmount = payment.amountCents / 100; // Converter para euros
-        const vatAmount = totalAmount * vatRate;
+        const vatAmount = totalAmount * vatRate / (1 + vatRate); // IVA incluído no total
         const subtotal = totalAmount - vatAmount;
+        const vatAmountCents = Math.round(vatAmount * 100); // TASK-2.3.1: Valor absoluto em centavos
 
         return {
             doc_type: docType,
@@ -297,8 +302,11 @@ export class FiscalService {
             ref_seal_id: `SEAL-${order.id}`,
             total_amount: totalAmount,
             taxes: {
-                vat: vatAmount, // IVA (Espanha/Portugal)
+                vat: vatAmount, // IVA (Espanha/Portugal) - valor em euros
             },
+            // TASK-2.3.1: Separar vatRate de vatAmount
+            vatRate: vatRate, // Taxa como percentual (0.23 = 23%)
+            vatAmount: vatAmountCents, // Valor absoluto em centavos
             items: (order.items || []).map((item: any) => ({
                 code: item.product_id || 'N/A',
                 description: item.name_snapshot || item.product_name || 'Item',

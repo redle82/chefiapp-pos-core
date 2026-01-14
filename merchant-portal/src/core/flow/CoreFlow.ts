@@ -48,6 +48,7 @@ export function resolveNextRoute(state: UserState): FlowDecision {
 
     // --- 1. BARREIRA DE AUTENTICAÇÃO ---
     if (!isAuthenticated) {
+        console.log('[CoreFlow] 🛑 Not Authenticated at:', currentPath);
         // Public Void Protocol: Allow access to /public/* (The Menu)
         if (currentPath.startsWith('/public')) return { type: 'ALLOW' };
 

@@ -15,6 +15,7 @@ import paymentMachine from "../../state-machines/payment.state-machine.json";
 import { InMemoryRepo } from "../repo/InMemoryRepo";
 import { executeGuard, type GuardContext } from "../guards";
 import { executeEffect, type EffectContext } from "../effects";
+import { ConcurrencyConflictError } from "../repo/errors";
 
 const machines = {
   SESSION: sessionMachine as any,
@@ -35,6 +36,7 @@ export interface TransitionResult {
   newState: string;
   error?: string;
   guardFailures?: string[];
+  conflict?: boolean; // TASK-1.3.3: Indicates concurrency conflict
 }
 
 export class CoreExecutor {
@@ -56,14 +58,47 @@ export class CoreExecutor {
       };
     }
 
-    // Use lock to prevent concurrent modifications
-    return await this.repo.withLock(entityId, async () => {
+    // TASK-1.4.2: Para PAYMENT:CONFIRMED, travar tanto Payment quanto Order
+    // Determinar quais entidades travar
+    let lockIds: string[] = [entityId];
+    
+    if (entity === "PAYMENT" && event === "CONFIRMED") {
+      // Buscar order_id do payment antes de travar
+      // Precisamos buscar sem lock primeiro para obter o order_id
+      let orderId: string | null = null;
+      
+      // Tentar obter order_id do contexto primeiro
+      if (context.order_id) {
+        orderId = context.order_id as string;
+      } else {
+        // Buscar payment para obter order_id
+        // Nota: Esta busca não está protegida por lock, mas é apenas leitura
+        // e o order_id não muda após criação do payment
+        for (const oid of Array.from((this.repo as any).orders.keys()) as string[]) {
+          const payments = this.repo.getPayments(oid);
+          const payment = payments.find((p) => p.id === entityId);
+          if (payment) {
+            orderId = payment.order_id;
+            break;
+          }
+        }
+      }
+      
+      if (orderId) {
+        // TASK-1.4.2: Travar ambos Payment e Order (ordem determinística)
+        lockIds = [entityId, orderId].sort();
+      }
+    }
+
+    // Use lock múltiplo para prevenir modificações concorrentes
+    return await this.repo.withLock(lockIds, async () => {
       // Begin transaction
       const txId = this.repo.beginTransaction();
 
+      let currentState: string | null = null;
       try {
         // Get current state from repository
-        const currentState = await this.getCurrentState(entity, entityId);
+        currentState = await this.getCurrentState(entity, entityId);
         if (!currentState) {
           this.repo.rollback(txId);
           return {
@@ -149,6 +184,7 @@ export class CoreExecutor {
               entityId,
               currentState,
               newState: transition.target,
+              txId, // TASK-1.1.7: Pass txId to effects
               ...context,
             };
 
@@ -217,10 +253,22 @@ export class CoreExecutor {
         };
       } catch (error: any) {
         this.repo.rollback(txId);
+        
+        // TASK-1.3.3: Detect and handle ConcurrencyConflictError
+        if (error instanceof ConcurrencyConflictError) {
+          return {
+            success: false,
+            previousState: currentState || "",
+            newState: currentState || "",
+            conflict: true,
+            error: `Concurrency conflict: ${error.message}`,
+          };
+        }
+        
         return {
           success: false,
-          previousState: "",
-          newState: "",
+          previousState: currentState || "",
+          newState: currentState || "",
           error: `Transition failed: ${error.message}`,
         };
       }
@@ -277,7 +325,20 @@ export class CoreExecutor {
         break;
       }
       case "ORDER": {
-        const order = this.repo.getOrder(entityId);
+        // TASK-1.2.4: getOrder returns clone, but we need to preserve changes already in transaction
+        // Check if order is already in transaction changes
+        const tx = (this.repo as any).transactions.get(txId);
+        const key = `ORDER:${entityId}`;
+        let order: any;
+        
+        if (tx && tx.changes.has(key)) {
+          // Use order from transaction (preserves changes from effects like calculateTotal)
+          order = tx.changes.get(key);
+        } else {
+          // Get fresh clone if not in transaction yet
+          order = this.repo.getOrder(entityId);
+        }
+        
         if (order) {
           order.state = newState as any;
           this.repo.saveOrder(order, txId);

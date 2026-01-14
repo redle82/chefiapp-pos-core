@@ -1,5 +1,6 @@
 // 💳 STRIPE WEBHOOK HANDLER
 // Accurately reflects money movement in the database
+// P2.2 FIX: Added event deduplication to prevent duplicate processing
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import Stripe from 'npm:stripe@^14.14.0'
@@ -23,12 +24,6 @@ serve(async (req) => {
 
     let event
     try {
-      // Note: stripe-node expects Buffer or string. 
-      // Deno's Uint8Array might need casting or text decoding if constructEvent doesn't support it directly in this version.
-      // Safe bet: TextDecoder (if signature allows string) OR just pass Uint8Array and hope stripe-node handles it (it usually does).
-      // Actually, Stripe docs for Deno suggest using the text body.
-      // Let's rely on standard practice: verify logic needs exact bytes.
-      // stripe-node@14+ supports Uint8Array.
       event = stripe.webhooks.constructEvent(rawBody, signature, endpointSecret)
     } catch (err) {
       console.error(`Webhook signature verification failed: ${err.message}`)
@@ -40,7 +35,24 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    console.log(`[Webhook] Processing ${event.type}`)
+    // =========================================================================
+    // P2.2 FIX: Check if this event was already processed (R-024)
+    // Stripe may retry webhooks, causing duplicate processing
+    // =========================================================================
+    const { data: alreadyProcessed } = await supabaseClient.rpc('fn_webhook_event_exists', {
+      p_provider: 'stripe',
+      p_event_id: event.id
+    })
+
+    if (alreadyProcessed) {
+      console.log(`[Webhook] Event ${event.id} already processed - skipping (idempotent)`)
+      return new Response(JSON.stringify({ received: true, deduplicated: true }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200
+      })
+    }
+
+    console.log(`[Webhook] Processing ${event.type} (event: ${event.id})`)
 
     if (event.type === 'payment_intent.succeeded') {
       const paymentIntent = event.data.object
@@ -49,22 +61,20 @@ serve(async (req) => {
       if (order_id && restaurant_id) {
         // 1. Record Payment
         await supabaseClient.from('gm_payments').insert({
-          tenant_id: restaurant_id, // Assuming gm_payments has tenant_id column
+          tenant_id: restaurant_id,
           order_id: order_id,
           amount_cents: paymentIntent.amount,
           currency: paymentIntent.currency,
           method: 'stripe',
           status: 'succeeded',
-          metadata: paymentIntent
+          metadata: { ...paymentIntent, stripe_event_id: event.id }
         })
 
         // 2. Update Order
-        // Double check order exists and is pending? No, just force Paid.
         const { error: updateError } = await supabaseClient
           .from('gm_orders')
           .update({
             payment_status: 'paid',
-            // potentially update status to 'preparing' if auto-fire needed
             updated_at: new Date().toISOString()
           })
           .eq('id', order_id)
@@ -84,10 +94,22 @@ serve(async (req) => {
           currency: paymentIntent.currency,
           method: 'stripe',
           status: 'failed',
-          metadata: paymentIntent
+          metadata: { ...paymentIntent, stripe_event_id: event.id }
         })
       }
     }
+
+    // =========================================================================
+    // P2.2 FIX: Record this event as processed
+    // =========================================================================
+    const tenantId = (event.data.object as any).metadata?.restaurant_id || null
+    await supabaseClient.rpc('fn_record_webhook_event', {
+      p_provider: 'stripe',
+      p_event_id: event.id,
+      p_event_type: event.type,
+      p_tenant_id: tenantId,
+      p_payload: event
+    })
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { 'Content-Type': 'application/json' },
@@ -99,3 +121,4 @@ serve(async (req) => {
     return new Response(`Webhook Error: ${err.message}`, { status: 400 })
   }
 })
+

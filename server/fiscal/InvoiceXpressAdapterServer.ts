@@ -38,23 +38,24 @@ export class InvoiceXpressAdapterServer {
 
     /**
      * Emits a standard simplified invoice (FS) or Invoice (FT)
+     * 
+     * TASK-2.3.2: Usa vatRate do TaxDocument se fornecido
      */
-    async emitInvoice(orderData: any, paymentData: any): Promise<any> {
+    async emitInvoice(orderData: any, paymentData: any, vatRate?: number): Promise<any> {
         const today = new Date().toISOString().split('T')[0];
         const dueDate = today;
 
-        // VAT Determination (MVP: Blanket 23% if PT, 21% if ES)
-        // Ideally this comes from Product DB.
-        // Recovering country from orderData.restaurant_country_code if available?
-        // Worker will pass us the rate maybe? For now, standard 23%
-        const taxRate = 23.0;
+        // TASK-2.3.2: Usar vatRate fornecido ou default baseado no país
+        // vatRate vem como decimal (0.23 = 23%), converter para percentual para InvoiceXpress
+        const taxRate = vatRate ? vatRate * 100 : 23.0; // Default: 23% se não fornecido
 
         const items: InvoiceXpressItem[] = orderData.items.map((item: any) => {
             const unitPriceGross = Number(item.unit_price || 0) / 100;
             const quantity = Number(item.quantity || 1);
 
-            // MATH FIX: Calculate Base from Gross
+            // TASK-2.3.2: Calculate Base from Gross using vatRate
             // Base = Gross / (1 + Rate/100)
+            // taxRate já está em percentual (23.0 = 23%)
             const unitPriceNet = unitPriceGross / (1 + (taxRate / 100));
 
             return {
@@ -129,7 +130,7 @@ export class InvoiceXpressAdapterServer {
             throw new Error(`InvoiceXpress Error ${response2.status}: ${txt}`);
         }
 
-        const data = await response2.json();
+        const data = await response2.json() as any;
         return data.simplified_invoice || data;
     }
 }

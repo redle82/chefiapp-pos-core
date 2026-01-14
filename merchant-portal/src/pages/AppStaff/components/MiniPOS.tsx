@@ -1,43 +1,32 @@
-import React, { useState } from 'react';
-import type { Task } from '../context/StaffCoreTypes';
-import { StaffLayout } from '../../../ui/design-system/layouts/StaffLayout';
-import { Card } from '../../../ui/design-system/primitives/Card';
-import { Text } from '../../../ui/design-system/primitives/Text';
-import { Button } from '../../../ui/design-system/primitives/Button';
-import { colors } from '../../../ui/design-system/tokens/colors';
-import { radius } from '../../../ui/design-system/tokens/radius';
-import { MobileBottomNav } from './MobileBottomNav';
-import { useNavigate } from 'react-router-dom';
+import { useTables } from '../../TPV/context/TableContext';
+import { TablePanel } from '../../Waiter/TablePanel';
+import { TableStatus } from '../../Waiter/types';
 
-// ------------------------------------------------------------------
-// 🍷 CINEMATIC MINI POS (Sales Sovereign)
-// ------------------------------------------------------------------
+// ... (Existing Imports) ...
 
-interface MiniPOSProps {
-    tasks: Task[];
-    role: string;
-}
-
-const TableCard = ({ number, status, time }: { number: number, status: 'free' | 'occupied' | 'payment', time?: string }) => {
+// Updated TableCard to use Real Status
+const TableCard = ({ number, status, time, onClick }: { number: number, status: string, time?: string, onClick: () => void }) => {
     // Mapping Status to UDS props
     const borderColor = status === 'occupied' ? colors.action.base :
         status === 'payment' ? colors.success.base :
             colors.border.subtle;
 
     return (
-        <div style={{
-            position: 'relative',
-            aspectRatio: '1/1',
-            borderRadius: radius.lg,
-            border: `2px solid ${borderColor}`,
-            backgroundColor: status === 'free' ? 'transparent' : `${borderColor}20`,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            transition: 'transform 0.1s'
-        }}>
+        <div
+            onClick={onClick}
+            style={{
+                position: 'relative',
+                aspectRatio: '1/1',
+                borderRadius: radius.lg,
+                border: `2px solid ${borderColor}`,
+                backgroundColor: status === 'free' ? 'transparent' : `${borderColor}20`,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'transform 0.1s'
+            }}>
             <Text size="3xl" weight="black" color={status === 'free' ? 'tertiary' : 'primary'}>{number.toString()}</Text>
             {time && <Text size="xs" color="secondary" style={{ marginTop: 4, fontFamily: 'monospace' }}>{time}</Text>}
 
@@ -53,26 +42,31 @@ const TableCard = ({ number, status, time }: { number: number, status: 'free' | 
 export const MiniPOS: React.FC<MiniPOSProps> = ({ tasks }) => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('tables');
+    const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
 
-    // Mock Table Data for Cinematic Viz
-    const tables = [
-        { id: 1, status: 'occupied', time: '12m' },
-        { id: 2, status: 'free', time: undefined },
-        { id: 3, status: 'occupied', time: '45m' },
-        { id: 4, status: 'free', time: undefined },
-        { id: 5, status: 'occupied', time: '5m' },
-        { id: 6, status: 'payment', time: '60m' }
-    ] as const;
+    // Real Table Data
+    const { tables, loading } = useTables();
 
     const attentionTasks = tasks.filter(t => t.priority === 'attention' || t.priority === 'critical');
 
     const handleNavigate = (tab: string) => {
         if (tab === 'exit') {
-            navigate('/app/dashboard'); // Back to main dashboard or logout
+            navigate('/app/dashboard');
         } else {
             setActiveTab(tab);
+            setSelectedTableId(null); // Reset detail view
         }
     };
+
+    // Render Table Detail (TablePanel)
+    if (selectedTableId) {
+        return (
+            <TablePanel
+                tableId={selectedTableId}
+                onBack={() => setSelectedTableId(null)}
+            />
+        );
+    }
 
     return (
         <StaffLayout
@@ -113,23 +107,38 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({ tasks }) => {
                 {/* VIEW SWITCHER */}
                 {activeTab === 'tables' && (
                     <div className="animate-fade-in">
-                        <Text size="xs" weight="bold" color="tertiary" style={{ textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>Mesas</Text>
+                        <Text size="xs" weight="bold" color="tertiary" style={{ textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>
+                            Mesas {loading && '(Carregando...)'}
+                        </Text>
+
+                        {/* Real Table Grid */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                            {tables.map(t => (
-                                // @ts-ignore - Mock data type mismatch fix
-                                <TableCard key={t.id} number={t.id} status={t.status} time={t.time} />
-                            ))}
+                            {tables
+                                .sort((a, b) => a.number - b.number)
+                                .map(t => (
+                                    <TableCard
+                                        key={t.id}
+                                        number={t.number}
+                                        status={t.status}
+                                        time={t.status === 'occupied' ? 'On' : undefined}
+                                        onClick={() => setSelectedTableId(t.id)}
+                                    />
+                                ))}
                         </div>
+
+                        {/* Empty State */}
+                        {!loading && tables.length === 0 && (
+                            <Text size="sm" color="tertiary">Nenhuma mesa encontrada.</Text>
+                        )}
                     </div>
                 )}
 
+                {/* Legacy Tabs Placeholder */}
                 {activeTab === 'order' && (
+                    // ... same ...
                     <div className="flex flex-col items-center justify-center h-64 animate-fade-in">
                         <div className="text-4xl mb-4">📝</div>
                         <Text size="lg" weight="bold">Nova Comanda</Text>
-                        <Text size="sm" color="tertiary" style={{ textAlign: 'center', maxWidth: 250, marginTop: 8 }}>
-                            Selecione uma mesa livre no mapa para iniciar.
-                        </Text>
                         <Button style={{ marginTop: 24 }} onClick={() => setActiveTab('tables')}>
                             Ir para Mesas
                         </Button>
@@ -140,7 +149,6 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({ tasks }) => {
                     <div className="flex flex-col items-center justify-center h-64 animate-fade-in">
                         <div className="text-4xl mb-4">🍔</div>
                         <Text size="lg" weight="bold">Menu Digital</Text>
-                        <Text size="sm" color="tertiary">Consulta rápida de itens.</Text>
                     </div>
                 )}
 

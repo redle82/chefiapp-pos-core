@@ -11,6 +11,8 @@ import { useCoreHealth } from '../../core/health/useCoreHealth';
 
 import { OfflineBanner } from '../../components/OfflineBanner';
 import { DeliveryNotificationManager } from './components/DeliveryNotificationManager';
+import { FiscalConfigAlert } from './components/FiscalConfigAlert';
+import { CashRegisterAlert } from './components/CashRegisterAlert';
 
 
 
@@ -73,6 +75,9 @@ const TPVContent = () => {
     downPollInterval: 10000,
   });
 
+  // Online/Offline status (must be declared before use)
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
   // P1-1 FIX: Determinar se ações devem estar habilitadas
   // Ações offline (criar pedido, adicionar item) sempre permitidas
   // Ações críticas (pagamento) respeitam health status
@@ -85,7 +90,6 @@ const TPVContent = () => {
     // HARD RULE 4: Recuperar pedido ativo ao carregar (Tab-Isolated)
     return getTabIsolated('chefiapp_active_order_id');
   });
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [dailyTotal, setDailyTotal] = useState<string>('€0,00');
 
   // P5-5: Currency support
@@ -134,6 +138,10 @@ const TPVContent = () => {
   const [showOpenCashModal, setShowOpenCashModal] = useState<boolean>(false);
   const [showCloseCashModal, setShowCloseCashModal] = useState<boolean>(false);
   const [openingBalanceCents, setOpeningBalanceCents] = useState<number>(0);
+  // Group selector state (for split bill functionality)
+  const [showGroupSelector, setShowGroupSelector] = useState<boolean>(false);
+  const [pendingItem, setPendingItem] = useState<{ id: string; name: string; price: number; category: string } | null>(null);
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState<boolean>(false);
 
   // FASE 2 + P3-3: Atalhos de teclado para reduzir cliques
   useCommonTPVShortcuts({
@@ -347,8 +355,8 @@ const TPVContent = () => {
       return;
     }
 
-    // Validar que total é maior que zero
-    const totalCents = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    // INV-006: UI uses Domain's total, never calculates independently
+    const totalCents = order.total;
     if (totalCents <= 0) {
       error('Não é possível fechar conta com total zero. Adicione itens ao pedido primeiro.');
       return;
@@ -579,6 +587,7 @@ const TPVContent = () => {
             name: item.name,
             price: Math.round(item.price * 100), // em centavos
             quantity: 1,
+            categoryName: item.category, // Added for Mission 55
             consumptionGroupId: groupId || null, // Divisão de conta
           }],
           total: Math.round(item.price * 100),
@@ -599,6 +608,7 @@ const TPVContent = () => {
         name: item.name,
         priceCents: Math.round(item.price * 100), // Convert to cents
         quantity: 1,
+        categoryName: item.category, // Added for Mission 55
         consumptionGroupId: groupId || null, // Divisão de conta
       });
 
@@ -788,6 +798,8 @@ const TPVContent = () => {
                     name: item.name,
                     price: item.priceCents / 100, // Convert cents to euros
                     category: item.category,
+                    trackStock: item.trackStock,
+                    stockQuantity: item.stockQuantity
                   }))}
                   activeOrderItems={
                     activeOrderId

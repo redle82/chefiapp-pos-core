@@ -21,7 +21,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
     // State
     isLoading?: boolean;
-    
+
     // Layout
     fullWidth?: boolean;
 }
@@ -51,7 +51,7 @@ export const Button: React.FC<ButtonProps> = ({
             neutral: { base: colors.surface.highlight, hover: colors.surface.layer3, text: colors.text.primary }
         };
 
-        const target = map[tone];
+        const target = map[tone] || map.action; // Fallback to action if invalid tone
         const isSolid = variant === 'solid' || variant === 'primary';
         const isOutline = variant === 'outline';
 

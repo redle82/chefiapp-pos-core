@@ -3181,6 +3181,43 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    // GET /api/fiscal/pending-external-ids
+    // Retorna pedidos aguardando External ID ou que falharam
+    if (url.pathname === '/api/fiscal/pending-external-ids' && req.method === 'GET') {
+      try {
+        if (!isSessionAuthorized(req)) {
+          return sendJSON(res, 401, { error: 'SESSION_REQUIRED' });
+        }
+
+        const restaurantId = req.headers['x-restaurant-id'] as string || 
+                           url.searchParams.get('restaurantId') as string;
+        
+        if (!restaurantId) {
+          return sendJSON(res, 400, { error: 'restaurant_id required' });
+        }
+
+        const { rows } = await pool.query(
+          `SELECT * FROM public.v_fiscal_pending_external_ids 
+           WHERE restaurant_id = $1 
+           ORDER BY created_at DESC 
+           LIMIT 50`,
+          [restaurantId]
+        );
+
+        return sendJSON(res, 200, {
+          pending: rows.filter(r => r.external_id_status === 'PENDING_EXTERNAL_ID'),
+          failed: rows.filter(r => r.external_id_status === 'FAILED_EXTERNAL_ID'),
+          total: rows.length,
+        });
+      } catch (e: any) {
+        console.error('[API] GET /api/fiscal/pending-external-ids failed:', e);
+        return sendJSON(res, 500, {
+          error: 'FETCH_PENDING_EXTERNAL_IDS_FAILED',
+          message: e.message,
+        });
+      }
+    }
+
     // POST /api/payment-intent
     // Used by TPV to initiate a card payment (Operational Flow)
     if (url.pathname === '/api/payment-intent' && req.method === 'POST') {

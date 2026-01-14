@@ -1,17 +1,16 @@
 /**
  * DeliverooOAuth - OAuth 2.0 para Deliveroo
  * 
- * FASE 3: Autenticação Deliveroo
+ * TASK-3.1.3: Removido client_secret do frontend
+ * Agora usa endpoint backend /api/oauth/exchange
  */
 
-import { supabase } from '../../../core/supabase';
+import { CONFIG } from '../../../config';
 
 const DELIVEROO_AUTH_URL = 'https://api.deliveroo.com/oauth2/authorize';
-const DELIVEROO_TOKEN_URL = 'https://api.deliveroo.com/oauth2/token';
 
 export interface DeliverooOAuthConfig {
     clientId: string;
-    clientSecret: string;
     restaurantId: string;
 }
 
@@ -38,102 +37,68 @@ export class DeliverooOAuth {
 
     /**
      * Trocar código por token
+     * TASK-3.1.3: Usa endpoint backend /api/oauth/exchange (client_secret no backend)
      */
     async exchangeCodeForToken(code: string, redirectUri: string): Promise<string> {
-        const response = await fetch(DELIVEROO_TOKEN_URL, {
+        const response = await fetch(`${CONFIG.API_BASE}/api/oauth/exchange`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             },
-            body: new URLSearchParams({
-                client_id: this.config.clientId,
-                client_secret: this.config.clientSecret,
-                grant_type: 'authorization_code',
+            credentials: 'include', // Incluir cookies de sessão
+            body: JSON.stringify({
                 code,
-                redirect_uri: redirectUri,
+                provider: 'deliveroo',
+                redirectUri,
+                restaurantId: this.config.restaurantId,
             }),
         });
 
         if (!response.ok) {
-            throw new Error(`Deliveroo OAuth failed: ${response.statusText}`);
+            const error = await response.json().catch(() => ({ error: 'UNKNOWN_ERROR' }));
+            throw new Error(`Deliveroo OAuth failed: ${error.error || response.statusText}`);
         }
 
         const data = await response.json();
-        const accessToken = data.access_token;
-
-        // Salvar token no Supabase
-        await this.saveToken(accessToken, data.refresh_token, data.expires_in);
-
-        return accessToken;
+        // Token já foi salvo no DB pelo backend (criptografado)
+        return data.access_token;
     }
 
     /**
      * Obter token (com refresh se necessário)
+     * TASK-3.1.3: Usa endpoint backend /api/oauth/token (descriptografa token)
      */
     async getAccessToken(): Promise<string | null> {
-        const { data } = await supabase
-            .from('integration_credentials')
-            .select('access_token, refresh_token, expires_at')
-            .eq('restaurant_id', this.config.restaurantId)
-            .eq('integration_type', 'deliveroo')
-            .single();
+        try {
+            const response = await fetch(
+                `${CONFIG.API_BASE}/api/oauth/token?provider=deliveroo&restaurantId=${this.config.restaurantId}`,
+                {
+                    method: 'GET',
+                    credentials: 'include', // Incluir cookies de sessão
+                }
+            );
 
-        if (!data) return null;
+            if (!response.ok) {
+                if (response.status === 404) {
+                    return null; // Token não encontrado
+                }
+                console.error('[DeliverooOAuth] Failed to get token:', response.statusText);
+                return null;
+            }
 
-        // Verificar se token expirou
-        if (data.expires_at && new Date(data.expires_at) < new Date()) {
-            // Refresh token
-            return await this.refreshToken(data.refresh_token);
-        }
+            const data = await response.json();
+            
+            // Verificar se token expirou
+            if (data.expires_at && new Date(data.expires_at) < new Date()) {
+                // TODO: Implementar refresh token no backend
+                console.warn('[DeliverooOAuth] Token expired, refresh not yet implemented');
+                return null;
+            }
 
-        return data.access_token;
-    }
-
-    /**
-     * Refresh token
-     */
-    private async refreshToken(refreshToken: string): Promise<string | null> {
-        const response = await fetch(DELIVEROO_TOKEN_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-                client_id: this.config.clientId,
-                client_secret: this.config.clientSecret,
-                grant_type: 'refresh_token',
-                refresh_token: refreshToken,
-            }),
-        });
-
-        if (!response.ok) {
-            console.error('[DeliverooOAuth] Token refresh failed');
+            return data.access_token;
+        } catch (error) {
+            console.error('[DeliverooOAuth] Error getting token:', error);
             return null;
         }
-
-        const data = await response.json();
-        await this.saveToken(data.access_token, data.refresh_token, data.expires_in);
-
-        return data.access_token;
-    }
-
-    /**
-     * Salvar token no Supabase
-     */
-    private async saveToken(accessToken: string, refreshToken: string, expiresIn: number): Promise<void> {
-        const expiresAt = new Date(Date.now() + expiresIn * 1000);
-
-        await supabase
-            .from('integration_credentials')
-            .upsert({
-                restaurant_id: this.config.restaurantId,
-                integration_type: 'deliveroo',
-                access_token: accessToken,
-                refresh_token: refreshToken,
-                expires_at: expiresAt.toISOString(),
-                updated_at: new Date().toISOString(),
-            }, {
-                onConflict: 'restaurant_id,integration_type',
-            });
     }
 }

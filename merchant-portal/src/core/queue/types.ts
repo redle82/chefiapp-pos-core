@@ -16,4 +16,5 @@ export interface OfflineQueueItem {
     error?: string
     lastError?: string
     appliedAt?: number
+    idempotency_key?: string // TASK-4.1.1: Chave de idempotência baseada em conteúdo + timestamp
 }

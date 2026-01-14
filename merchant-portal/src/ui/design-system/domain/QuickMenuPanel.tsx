@@ -10,6 +10,8 @@ interface MenuItem {
     name: string;
     price: number;
     category: string;
+    trackStock?: boolean;
+    stockQuantity?: number;
 }
 
 interface OrderItem {
@@ -25,9 +27,9 @@ interface QuickMenuPanelProps {
     activeOrderItems?: OrderItem[]; // Para mostrar quantidades já adicionadas
 }
 
-export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = ({ 
-    items, 
-    onAddItem, 
+export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = ({
+    items,
+    onAddItem,
     loading = false,
     activeOrderItems = []
 }) => {
@@ -72,32 +74,35 @@ export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = ({
                                 {categoryItems.map(item => {
                                     const quantity = itemQuantities[item.id] || 0;
                                     const hasQuantity = quantity > 0;
-                                    
+                                    const isOutOfStock = item.trackStock && (item.stockQuantity === undefined || item.stockQuantity <= 0);
+
                                     return (
                                         <Card
                                             key={item.id}
-                                            surface={hasQuantity ? "layer1" : "layer2"}
+                                            surface={isOutOfStock ? "layer0" : (hasQuantity ? "layer1" : "layer2")}
                                             padding="md"
-                                            hoverable
-                                            onClick={() => onAddItem(item)}
+                                            hoverable={!isOutOfStock}
+                                            onClick={() => !isOutOfStock && onAddItem(item)}
                                             data-testid={`product-card-${item.id}`}
                                             style={{
-                                                cursor: 'pointer',
+                                                cursor: isOutOfStock ? 'not-allowed' : 'pointer',
                                                 border: hasQuantity ? `2px solid ${colors.action.base}` : undefined,
                                                 transition: 'all 0.2s ease',
+                                                opacity: isOutOfStock ? 0.6 : 1
                                             }}
                                         >
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[1] }}>
                                                 {/* Nome e Badge de Quantidade */}
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                    <Text 
-                                                        size="sm" 
-                                                        weight="bold" 
+                                                    <Text
+                                                        size="sm"
+                                                        weight="bold"
+                                                        color={isOutOfStock ? 'tertiary' : 'primary'}
                                                         style={{ flex: 1, lineHeight: 1.2 }}
                                                     >
                                                         {item.name}
                                                     </Text>
-                                                    {hasQuantity && (
+                                                    {hasQuantity && !isOutOfStock && (
                                                         <div style={{ marginLeft: spacing[1] }}>
                                                             <Badge
                                                                 status="ready"
@@ -108,11 +113,15 @@ export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = ({
                                                         </div>
                                                     )}
                                                 </div>
-                                                
-                                                {/* Preço */}
-                                                <Text size="xs" color="secondary" weight="semibold">
-                                                    €{item.price.toFixed(2)}
-                                                </Text>
+
+                                                {/* Preço ou ESGOTADO */}
+                                                {isOutOfStock ? (
+                                                    <Text size="xs" color="destructive" weight="bold">ESGOTADO</Text>
+                                                ) : (
+                                                    <Text size="xs" color="secondary" weight="semibold">
+                                                        €{item.price.toFixed(2)}
+                                                    </Text>
+                                                )}
                                             </div>
                                         </Card>
                                     );

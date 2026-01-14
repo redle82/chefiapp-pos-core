@@ -27,8 +27,11 @@ export interface TaxDocument {
         icms?: number;
         pis?: number;
         cofins?: number;
-        vat?: number; // IVA (Espanha/Portugal)
+        vat?: number; // IVA (Espanha/Portugal) - valor absoluto
     };
+    // TASK-2.3.1: Separar vatRate de vatAmount
+    vatRate?: number; // Taxa de IVA como percentual (0.23 = 23%)
+    vatAmount?: number; // Valor absoluto de IVA em centavos ou unidades monetárias
     items: Array<{
         code: string;
         description: string;

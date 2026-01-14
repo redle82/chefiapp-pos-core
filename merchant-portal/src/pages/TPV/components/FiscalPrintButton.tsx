@@ -17,6 +17,7 @@ import { useToast } from '../../../ui/design-system';
 import { supabase } from '../../../core/supabase';
 import { FiscalReceiptPreview } from './FiscalReceiptPreview';
 import type { TaxDocument } from '../../../../../fiscal-modules/types';
+import { getTabIsolated } from '../../../core/storage/TabIsolatedStorage';
 
 interface FiscalPrintButtonProps {
     orderId: string;
@@ -43,24 +44,44 @@ export const FiscalPrintButton: React.FC<FiscalPrintButtonProps> = ({
         setPrinting(true);
         try {
             const fiscalService = getFiscalService();
-            
+
             // 1. Buscar documento fiscal
             let fiscalDoc = await fiscalService.getFiscalDocument(orderId);
-            
-            // 2. Se não existe, gerar agora
+
+            // 2. Se não existe, adicionar à fila fiscal (backend processa)
             if (!fiscalDoc) {
-                const result = await fiscalService.processPaymentConfirmed({
-                    orderId,
-                    restaurantId,
-                    paymentMethod,
-                    amountCents: orderTotal,
+                // TASK-2.1.2: Usar endpoint do backend em vez de chamar diretamente
+                const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4320';
+                const sessionToken = localStorage.getItem('chefiapp_session_token') ||
+                    getTabIsolated('chefiapp_session_token');
+
+                const response = await fetch(`${apiUrl}/api/fiscal/emit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-chefiapp-token': sessionToken || '',
+                    },
+                    body: JSON.stringify({
+                        orderId,
+                        restaurantId,
+                        paymentMethod,
+                        amountCents: orderTotal,
+                        idempotencyKey: `fiscal:${orderId}:${Date.now()}`,
+                    }),
                 });
-                
-                if (!result) {
-                    throw new Error('Falha ao gerar documento fiscal');
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Falha ao adicionar à fila fiscal');
                 }
-                
-                // Buscar novamente após gerar
+
+                const result = await response.json();
+                console.log('[FiscalPrintButton] Fiscal emission queued', result);
+
+                // Aguardar um pouco para o worker processar (em produção, usar polling ou webhook)
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Buscar novamente após processar
                 fiscalDoc = await fiscalService.getFiscalDocument(orderId);
             }
 
@@ -139,8 +160,8 @@ export const FiscalPrintButton: React.FC<FiscalPrintButtonProps> = ({
 
     const pdfUrl = taxDocument?.raw_payload?.pdf_url || taxDocument?.raw_payload?.invoice?.pdf?.url;
     const printer = taxDocument && orderData ? new FiscalPrinter() : null;
-    const qrCodeUrl = printer && taxDocument && orderData 
-        ? printer.generateQRCodeUrl(taxDocument, orderData) 
+    const qrCodeUrl = printer && taxDocument && orderData
+        ? printer.generateQRCodeUrl(taxDocument, orderData)
         : null;
 
     return (

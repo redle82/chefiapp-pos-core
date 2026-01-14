@@ -7,7 +7,7 @@
  * - Templates de recibo fiscal
  */
 
-import { TaxDocument } from '../../../../fiscal-modules/types';
+import type { TaxDocument } from '../../../../fiscal-modules/types';
 
 export interface FiscalPrinterConfig {
     printerType?: 'browser' | 'thermal' | 'fiscal';
