@@ -212,5 +212,5 @@ EXCEPTION
 END;
 $$;
 
-COMMENT ON FUNCTION public.process_order_payment IS 
+COMMENT ON FUNCTION public.process_order_payment(UUID, UUID, UUID, UUID, INTEGER, TEXT, TEXT) IS 
 'SEMANA 2: Suporta pagamentos parciais (Split Bill). Calcula total pago e define payment_status como ''partially_paid'' se o valor pago for menor que o total, ou ''paid'' se o total foi atingido.';

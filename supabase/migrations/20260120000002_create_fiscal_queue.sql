@@ -72,7 +72,7 @@ CREATE POLICY "Enable read access for internal users" ON public.gm_fiscal_queue
     USING (
         auth.uid() IN (
             SELECT user_id
-            FROM public.restaurant_members
+            FROM public.gm_restaurant_members
             WHERE restaurant_id = gm_fiscal_queue.restaurant_id
         )
     );
@@ -82,7 +82,7 @@ CREATE POLICY "Enable insert access for internal users" ON public.gm_fiscal_queu
     WITH CHECK (
         auth.uid() IN (
             SELECT user_id
-            FROM public.restaurant_members
+            FROM public.gm_restaurant_members
             WHERE restaurant_id = gm_fiscal_queue.restaurant_id
         )
     );
@@ -92,7 +92,7 @@ CREATE POLICY "Enable update access for internal users" ON public.gm_fiscal_queu
     USING (
         auth.uid() IN (
             SELECT user_id
-            FROM public.restaurant_members
+            FROM public.gm_restaurant_members
             WHERE restaurant_id = gm_fiscal_queue.restaurant_id
         )
     );

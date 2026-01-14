@@ -2,8 +2,9 @@
 -- Purpose: Support offline sync idempotency by storing localId
 -- Date: 2026-01-18
 
--- Drop existing function
-DROP FUNCTION IF EXISTS public.create_order_atomic(UUID, JSONB, TEXT);
+-- Drop existing function with cascade to handle signature changes
+DROP FUNCTION IF EXISTS public.create_order_atomic(UUID, JSONB, TEXT) CASCADE;
+DROP FUNCTION IF EXISTS public.create_order_atomic(UUID, JSONB, TEXT, JSONB) CASCADE;
 
 -- Recreate with sync_metadata parameter
 CREATE OR REPLACE FUNCTION public.create_order_atomic(
@@ -17,7 +18,7 @@ SECURITY DEFINER
 AS $$
 DECLARE 
     v_order_id UUID;
-    v_total_amount INTEGER := 0;
+    v_total_cents INTEGER := 0;
     v_item JSONB;
     v_item_total INTEGER;
     v_short_id TEXT;
@@ -27,7 +28,7 @@ BEGIN
     FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) 
     LOOP
         v_item_total := (v_item->>'quantity')::INTEGER * (v_item->>'unit_price')::INTEGER;
-        v_total_amount := v_total_amount + v_item_total;
+        v_total_cents := v_total_cents + v_item_total;
     END LOOP;
 
     -- 2. Generate Short ID
@@ -41,7 +42,7 @@ BEGIN
         restaurant_id,
         short_id,
         status,
-        total_amount,
+        total_cents,
         payment_status,
         payment_method,
         sync_metadata
@@ -50,7 +51,7 @@ BEGIN
         p_restaurant_id,
         v_short_id,
         'pending',
-        v_total_amount,
+        v_total_cents,
         'pending',
         p_payment_method,
         p_sync_metadata

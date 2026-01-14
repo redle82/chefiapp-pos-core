@@ -38,7 +38,10 @@ const Settings = React.lazy(() => import('./pages/Settings').then(m => ({ defaul
 const ConnectorSettings = React.lazy(() => import('./pages/Settings').then(m => ({ default: m.ConnectorSettings })));
 const DailyClosing = React.lazy(() => import('./pages/Reports/DailyClosing').then(m => ({ default: m.DailyClosing })));
 const FinanceDashboard = React.lazy(() => import('./pages/Reports/FinanceDashboard').then(m => ({ default: m.FinanceDashboard })));
+const DeliveryMonitor = React.lazy(() => import('./modules/delivery/DeliveryMonitor').then(m => ({ default: m.DeliveryMonitor })));
 const StaffPage = React.lazy(() => import('./pages/Settings/StaffPage'));
+
+
 const TPVKitsPage = React.lazy(() => import('./pages/Store/TPVKitsPage').then(m => ({ default: m.TPVKitsPage })));
 const RestaurantWebPreviewPage = React.lazy(() => import('./pages/Web/RestaurantWebPreviewPage').then(m => ({ default: m.RestaurantWebPreviewPage })));
 const LocalBossPage = React.lazy(() => import('./pages/LocalBoss/LocalBossPage').then(m => ({ default: m.LocalBossPage })));
@@ -235,6 +238,7 @@ function App() {
                     <Route path="settings/connectors" element={<Suspense fallback={<div>Loading...</div>}><ConnectorSettings /></Suspense>} />
                     <Route path="reports/daily-closing" element={<Suspense fallback={<div>Loading...</div>}><DailyClosing /></Suspense>} />
                     <Route path="reports/finance" element={<Suspense fallback={<div>Loading...</div>}><FinanceDashboard /></Suspense>} />
+                    <Route path="reports/delivery" element={<Suspense fallback={<div>Loading DLQ...</div>}><DeliveryMonitor /></Suspense>} />
                     <Route path="team" element={<Suspense fallback={<div>Loading...</div>}><StaffPage /></Suspense>} />
                     <Route path="store/tpv-kits" element={<Suspense fallback={<div>Loading...</div>}><TPVKitsPage /></Suspense>} />
                     <Route path="web/preview" element={<Suspense fallback={<div>Loading...</div>}><RestaurantWebPreviewPage /></Suspense>} />

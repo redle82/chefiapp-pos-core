@@ -1,0 +1,57 @@
+{
+  "tables": {},
+  "states": {
+    "operation_status": [
+      "active",
+      "paused",
+      "suspended"
+    ],
+    "feedback_type": [
+      "bug",
+      "feature",
+      "other"
+    ],
+    "feedback_severity": [
+      "low",
+      "medium",
+      "high",
+      "critical"
+    ],
+    "feedback_status": [
+      "open",
+      "investigating",
+      "resolved",
+      "ignored"
+    ],
+    "gm_orders_status": [
+      "active",
+      "paid",
+      "cancelled"
+    ]
+  },
+  "transitions": {
+    "gm_orders": {
+      "from": {
+        "pending": [
+          "preparing",
+          "canceled"
+        ],
+        "preparing": [
+          "ready",
+          "canceled"
+        ],
+        "ready": [
+          "delivered",
+          "canceled"
+        ],
+        "delivered": [
+          "closed"
+        ],
+        "closed": [],
+        "paid": [],
+        "locked": [],
+        "canceled": []
+      }
+    }
+  }
+}

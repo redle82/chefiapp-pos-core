@@ -51,7 +51,7 @@ SELECT
   fq.created_at,
   EXTRACT(EPOCH FROM (timezone('utc'::text, now()) - fq.created_at)) / 60 AS minutes_since_created,
   o.table_number,
-  o.total_amount
+  o.total_cents
 FROM public.gm_fiscal_queue fq
 LEFT JOIN public.gm_orders o ON o.id = fq.order_id
 WHERE fq.external_id_status IN ('PENDING_EXTERNAL_ID', 'FAILED_EXTERNAL_ID')

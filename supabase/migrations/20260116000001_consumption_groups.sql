@@ -48,7 +48,7 @@ CREATE POLICY "Restaurant members can view consumption groups"
 ON public.consumption_groups FOR SELECT
 USING (
     restaurant_id IN (
-        SELECT restaurant_id FROM public.restaurant_members
+        SELECT restaurant_id FROM public.gm_restaurant_members
         WHERE user_id = auth.uid()
     )
     OR
@@ -63,7 +63,7 @@ CREATE POLICY "Restaurant members can create consumption groups"
 ON public.consumption_groups FOR INSERT
 WITH CHECK (
     restaurant_id IN (
-        SELECT restaurant_id FROM public.restaurant_members
+        SELECT restaurant_id FROM public.gm_restaurant_members
         WHERE user_id = auth.uid()
     )
     OR
@@ -78,7 +78,7 @@ CREATE POLICY "Restaurant members can update consumption groups"
 ON public.consumption_groups FOR UPDATE
 USING (
     restaurant_id IN (
-        SELECT restaurant_id FROM public.restaurant_members
+        SELECT restaurant_id FROM public.gm_restaurant_members
         WHERE user_id = auth.uid()
     )
     OR

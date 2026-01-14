@@ -1,11 +1,6 @@
 -- Migration: Delivery Integration & External IDs
 -- Date: 2026-01-12
--- DEV HELPER: Ensure auth schema exists (for local testing)
-CREATE SCHEMA IF NOT EXISTS auth;
-CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid AS $$ -- Return a mock UUID or NULL for local testing
-SELECT '00000000-0000-0000-0000-000000000000'::uuid $$ LANGUAGE SQL;
-CREATE OR REPLACE FUNCTION auth.role() RETURNS text AS $$
-SELECT 'service_role'::text $$ LANGUAGE SQL;
+
 -- 1. Modify gm_restaurants to support external mappings
 ALTER TABLE public.gm_restaurants
 ADD COLUMN IF NOT EXISTS external_ids JSONB DEFAULT '{}'::jsonb;
@@ -64,14 +59,14 @@ CREATE INDEX IF NOT EXISTS idx_integration_orders_received ON public.integration
 -- RLS
 ALTER TABLE public.integration_orders ENABLE ROW LEVEL SECURITY;
 -- Policy: Owners view their own orders
--- Assuming 'restaurant_members' is the correct table locally.
+-- Assuming 'gm_restaurant_members' is the correct table locally.
 -- Check if gm_restaurant_members exists first? No, SQL doesn't do "if table exists use it" easily in policy.
--- Using 'restaurant_members' based on \dt output.
+-- Using 'gm_restaurant_members' based on \dt output.
 CREATE POLICY "Owners view integration orders" ON public.integration_orders FOR
 SELECT USING (
         restaurant_id IN (
             SELECT restaurant_id
-            FROM public.restaurant_members
+            FROM public.gm_restaurant_members
             WHERE user_id = auth.uid()
                 AND role IN ('owner', 'manager')
         )

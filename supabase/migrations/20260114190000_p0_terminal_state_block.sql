@@ -61,6 +61,4 @@ END $$;
 -- COMMENT: Document the invariant
 -- ============================================================================
 COMMENT ON TRIGGER prevent_terminal_order_mutation_trigger ON gm_orders IS 
-  'P0 Security: Blocks ANY mutation on orders with status IN (delivered, canceled). ' ||
-  'This enforces financial immutability at the database level. ' ||
-  'Risk: R-032 | Status: ENFORCED | Date: 2026-01-14';
+  'P0 Security: Blocks ANY mutation on orders with status IN (delivered, canceled). This enforces financial immutability at the database level. Risk: R-032 | Status: ENFORCED | Date: 2026-01-14';

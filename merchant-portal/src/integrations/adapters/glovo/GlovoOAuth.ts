@@ -52,6 +52,20 @@ export class GlovoOAuth {
       }
     }
 
+    // CRITICAL SECURITY PATCH
+    // Client Credentials Flow requires Secret. 
+    // If we are in Browser (frontend), we MUST NOT use the secret.
+    // If clientSecret is empty (as per config alias), we must fail or divert to backend.
+
+    if (!this.clientSecret) {
+      throw new Error('SEC-01: Client Credentials Flow requires a Backend Proxy. Missing clientSecret or Backend Endpoint.');
+    }
+
+    // If we DO have a secret, warn loudly if we are in a browser environment
+    if (typeof window !== 'undefined') {
+      throw new Error('SEC-02: CRITICAL: Attempting to use Client Secret in Browser. This is a security vulnerability. Use the Backend Proxy.');
+    }
+
     // Obter novo token
     try {
       const response = await fetch(`${this.baseUrl}${TOKEN_ENDPOINT}`, {
@@ -75,7 +89,7 @@ export class GlovoOAuth {
       }
 
       const data: GlovoOAuthTokenResponse = await response.json();
-      
+
       this.accessToken = data.access_token;
       this.refreshToken = data.refresh_token || null;
       this.tokenExpiresAt = Date.now() + (data.expires_in * 1000) - 60000; // 1 min de margem
@@ -113,7 +127,7 @@ export class GlovoOAuth {
       }
 
       const data: GlovoOAuthTokenResponse = await response.json();
-      
+
       this.accessToken = data.access_token;
       this.refreshToken = data.refresh_token || refreshToken; // Manter o antigo se não vier novo
       this.tokenExpiresAt = Date.now() + (data.expires_in * 1000) - 60000;
@@ -140,9 +154,9 @@ export class GlovoOAuth {
    * Verificar se token está válido
    */
   isTokenValid(): boolean {
-    return this.accessToken !== null && 
-           this.tokenExpiresAt !== null && 
-           Date.now() < this.tokenExpiresAt;
+    return this.accessToken !== null &&
+      this.tokenExpiresAt !== null &&
+      Date.now() < this.tokenExpiresAt;
   }
 
   /**

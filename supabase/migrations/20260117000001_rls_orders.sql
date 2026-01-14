@@ -16,19 +16,14 @@ ALTER TABLE public.gm_payments ENABLE ROW LEVEL SECURITY;
 -- PART 2: Helper Function - Get User's Restaurant IDs
 -- ==============================================================================
 
-CREATE OR REPLACE FUNCTION auth.user_restaurant_ids()
+CREATE OR REPLACE FUNCTION public.user_restaurant_ids()
 RETURNS SETOF UUID
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
 AS $$
     -- Support both table names for compatibility
-    SELECT DISTINCT restaurant_id
-    FROM (
-        SELECT restaurant_id FROM public.gm_restaurant_memberships WHERE user_id = auth.uid() AND status = 'active'
-        UNION
-        SELECT restaurant_id FROM public.restaurant_members WHERE user_id = auth.uid()
-    ) AS memberships;
+    SELECT restaurant_id FROM public.gm_restaurant_members WHERE user_id = auth.uid()
 $$;
 
 -- ==============================================================================
@@ -51,7 +46,7 @@ CREATE POLICY "users_select_own_restaurant_orders"
     FOR SELECT
     USING (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     );
 
@@ -61,7 +56,7 @@ CREATE POLICY "users_insert_own_restaurant_orders"
     FOR INSERT
     WITH CHECK (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     );
 
@@ -71,12 +66,12 @@ CREATE POLICY "users_update_own_restaurant_orders"
     FOR UPDATE
     USING (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     )
     WITH CHECK (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     );
 
@@ -87,7 +82,7 @@ CREATE POLICY "users_delete_own_restaurant_orders"
     FOR DELETE
     USING (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     );
 
@@ -113,7 +108,7 @@ CREATE POLICY "users_select_own_restaurant_order_items"
             FROM public.gm_orders o
             WHERE o.id = gm_order_items.order_id
                 AND o.restaurant_id IN (
-                    SELECT auth.user_restaurant_ids()
+                    SELECT public.user_restaurant_ids()
                 )
         )
     );
@@ -128,7 +123,7 @@ CREATE POLICY "users_insert_own_restaurant_order_items"
             FROM public.gm_orders o
             WHERE o.id = gm_order_items.order_id
                 AND o.restaurant_id IN (
-                    SELECT auth.user_restaurant_ids()
+                    SELECT public.user_restaurant_ids()
                 )
         )
     );
@@ -143,7 +138,7 @@ CREATE POLICY "users_update_own_restaurant_order_items"
             FROM public.gm_orders o
             WHERE o.id = gm_order_items.order_id
                 AND o.restaurant_id IN (
-                    SELECT auth.user_restaurant_ids()
+                    SELECT public.user_restaurant_ids()
                 )
         )
     )
@@ -153,7 +148,7 @@ CREATE POLICY "users_update_own_restaurant_order_items"
             FROM public.gm_orders o
             WHERE o.id = gm_order_items.order_id
                 AND o.restaurant_id IN (
-                    SELECT auth.user_restaurant_ids()
+                    SELECT public.user_restaurant_ids()
                 )
         )
     );
@@ -168,7 +163,7 @@ CREATE POLICY "users_delete_own_restaurant_order_items"
             FROM public.gm_orders o
             WHERE o.id = gm_order_items.order_id
                 AND o.restaurant_id IN (
-                    SELECT auth.user_restaurant_ids()
+                    SELECT public.user_restaurant_ids()
                 )
         )
     );
@@ -190,7 +185,7 @@ CREATE POLICY "users_select_own_restaurant_tables"
     FOR SELECT
     USING (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     );
 
@@ -200,7 +195,7 @@ CREATE POLICY "users_insert_own_restaurant_tables"
     FOR INSERT
     WITH CHECK (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     );
 
@@ -210,12 +205,12 @@ CREATE POLICY "users_update_own_restaurant_tables"
     FOR UPDATE
     USING (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     )
     WITH CHECK (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     );
 
@@ -225,7 +220,7 @@ CREATE POLICY "users_delete_own_restaurant_tables"
     FOR DELETE
     USING (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     );
 
@@ -245,7 +240,7 @@ CREATE POLICY "users_select_own_restaurant_cash_registers"
     FOR SELECT
     USING (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     );
 
@@ -255,7 +250,7 @@ CREATE POLICY "users_insert_own_restaurant_cash_registers"
     FOR INSERT
     WITH CHECK (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     );
 
@@ -265,12 +260,12 @@ CREATE POLICY "users_update_own_restaurant_cash_registers"
     FOR UPDATE
     USING (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     )
     WITH CHECK (
         restaurant_id IN (
-            SELECT auth.user_restaurant_ids()
+            SELECT public.user_restaurant_ids()
         )
     );
 
@@ -294,7 +289,7 @@ CREATE POLICY "users_select_own_restaurant_payments"
             FROM public.gm_orders o
             WHERE o.id = gm_payments.order_id
                 AND o.restaurant_id IN (
-                    SELECT auth.user_restaurant_ids()
+                    SELECT public.user_restaurant_ids()
                 )
         )
     );
@@ -309,7 +304,7 @@ CREATE POLICY "users_insert_own_restaurant_payments"
             FROM public.gm_orders o
             WHERE o.id = gm_payments.order_id
                 AND o.restaurant_id IN (
-                    SELECT auth.user_restaurant_ids()
+                    SELECT public.user_restaurant_ids()
                 )
         )
     );
@@ -324,7 +319,7 @@ CREATE POLICY "users_update_own_restaurant_payments"
             FROM public.gm_orders o
             WHERE o.id = gm_payments.order_id
                 AND o.restaurant_id IN (
-                    SELECT auth.user_restaurant_ids()
+                    SELECT public.user_restaurant_ids()
                 )
         )
     )
@@ -334,7 +329,7 @@ CREATE POLICY "users_update_own_restaurant_payments"
             FROM public.gm_orders o
             WHERE o.id = gm_payments.order_id
                 AND o.restaurant_id IN (
-                    SELECT auth.user_restaurant_ids()
+                    SELECT public.user_restaurant_ids()
                 )
         )
     );
@@ -364,7 +359,5 @@ CREATE INDEX IF NOT EXISTS idx_gm_cash_registers_restaurant_id
 CREATE INDEX IF NOT EXISTS idx_gm_payments_order_id
     ON public.gm_payments(order_id);
 
--- Index to speed up user_restaurant_ids() function
-CREATE INDEX IF NOT EXISTS idx_gm_restaurant_memberships_user_status
-    ON public.gm_restaurant_memberships(user_id, status)
-    WHERE status = 'active';
+CREATE INDEX IF NOT EXISTS idx_gm_restaurant_members_user_id
+    ON public.gm_restaurant_members(user_id);

@@ -136,9 +136,10 @@ export const AuthPage = () => {
                             />
                             <Button
                                 onClick={async () => {
+                                    let email = '';
                                     try {
                                         setLoading(true);
-                                        const email = (document.getElementById('dev-email') as HTMLInputElement).value;
+                                        email = (document.getElementById('dev-email') as HTMLInputElement).value;
                                         const password = (document.getElementById('dev-password') as HTMLInputElement).value;
 
                                         if (!email || !password) throw new Error('Credenciais faltando');
@@ -171,7 +172,7 @@ export const AuthPage = () => {
                                         // 🔒 ARQUITETURA SOBERANA: Redirecionar para /app após auth
                                         window.location.href = '/app';
                                     } catch (err: any) {
-                                        Logger.error('Auth: Dev login exception', err as Error, { email });
+                                        Logger.error('Auth: Dev login exception', err as Error, { email: email || 'unknown' });
                                         setError(err.message);
                                         setLoading(false);
                                     }

@@ -3,7 +3,8 @@
 ## Where ChefIApp OS Can Still Break
 
 > **Status:** LIVING DOCUMENT  
-> **Last Audit:** 2026-01-14
+> **Last Audit:** 2026-01-14T21:35:00+01:00  
+> **Last E2E Test:** 2026-01-14T20:00-21:30+01:00
 
 ---
 
@@ -49,6 +50,8 @@
 | R-030 | Financial state inconsistent (paid ≠ delivered) | Audit failure | RPC + trigger | **Enforce in single transaction** |
 | R-031 | Order total diverges from sum of items | Receipt wrong | Trigger recalc | **Already fixed (UI uses order.total)** |
 | R-032 | Terminal state mutation (delivered → pending) | Illegal state | ✅ **FIXED** | DB trigger `prevent_terminal_order_mutation_trigger` |
+| R-033 | Missing schema column `available` in `gm_products` | Product creation fails | ✅ **FIXED** | Migration `fix_products_available_column` |
+| R-034 | Missing schema column `category_id` in `gm_products` | Product-category link broken | ✅ **FIXED** | Migration `add_category_id_to_products` |
 
 ---
 
@@ -91,10 +94,10 @@
 
 ## 🎯 PRIORITY FIXES
 
-### P0 (Before Launch) — ✅ IMPLEMENTED
+### P0 (Before Launch) — ✅ ALL IMPLEMENTED
 
 1. **R-032**: ✅ DB trigger to prevent terminal state mutation
-   - Migration: `20260114190000_p0_terminal_state_block.sql`
+   - Migration: `20260114194051_p0_terminal_state_block.sql`
    - Trigger: `prevent_terminal_order_mutation_trigger`
    - Function: `gm_block_terminal_order_mutation()`
 
@@ -103,15 +106,31 @@
    - Log: `TENANT_SWITCH_BLOCKED` when blocked
    - Checks: `activeOrderId`, `offline_queue_count`
 
-### P1 (Week 1)
+3. **R-033**: ✅ Schema fix for `available` column
+   - Migration: `20260114195816_fix_products_available_column.sql`
+   - Discovered: E2E test 2026-01-14
 
-1. **R-021**: Atomic balance check for split bill
-2. **R-022**: Push cancellation to KDS via realtime
+4. **R-034**: ✅ Schema fix for `category_id` column
+   - Migration: `20260114202123_add_category_id_to_products.sql`
+   - Discovered: E2E test 2026-01-14
+   - Added FK constraint to `gm_menu_categories`
 
-### P2 (Week 2-4)
+### P1 (Week 1) — ✅ IMPLEMENTED
 
-1. **R-024**: Webhook deduplication
-2. **R-020**: Ensure payment+order in single transaction
+1. **R-021**: ✅ Atomic balance check for split bill
+   - Migration: `20260114194124_p1_atomic_split_bill.sql`
+   - RPC: `process_split_payment_atomic`
+
+2. **R-022**: ⚠️ Push cancellation to KDS via realtime (OPEN)
+
+### P2 (Week 2-4) — ✅ IMPLEMENTED
+
+1. **R-024**: ✅ Webhook deduplication
+   - Migration: `20260114194148_p2_webhook_deduplication.sql`
+   - Table: `gm_webhook_events`
+
+2. **R-020**: ✅ Ensure payment+order in single transaction
+   - Already atomic via `process_order_payment` RPC
 
 ---
 

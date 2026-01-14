@@ -1,0 +1,94 @@
+{
+  "routes": [
+    "/public/*",
+    "/",
+    "/health",
+    "/auth",
+    "/login",
+    "/signup",
+    "/join",
+    "/start",
+    "/onboarding/*",
+    "/migration/wizard",
+    "/activation",
+    "/kds/:restaurantId",
+    "/bootstrap",
+    "/read",
+    "/app",
+    "/dashboard",
+    "/tpv",
+    "/kds",
+    "/menu",
+    "/pulses",
+    "/wizard",
+    "/dev/wizard"
+  ],
+  "actions": {
+    "/public/*": [
+      "verificar_manualmente"
+    ],
+    "/": [
+      "verificar_manualmente"
+    ],
+    "/health": [
+      "verificar_manualmente"
+    ],
+    "/auth": [
+      "verificar_manualmente"
+    ],
+    "/login": [
+      "verificar_manualmente"
+    ],
+    "/signup": [
+      "verificar_manualmente"
+    ],
+    "/join": [
+      "verificar_manualmente"
+    ],
+    "/start": [
+      "verificar_manualmente"
+    ],
+    "/onboarding/*": [
+      "verificar_manualmente"
+    ],
+    "/migration/wizard": [
+      "verificar_manualmente"
+    ],
+    "/activation": [
+      "verificar_manualmente"
+    ],
+    "/kds/:restaurantId": [
+      "verificar_manualmente"
+    ],
+    "/bootstrap": [
+      "verificar_manualmente"
+    ],
+    "/read": [
+      "verificar_manualmente"
+    ],
+    "/app": [
+      "verificar_manualmente"
+    ],
+    "/dashboard": [
+      "verificar_manualmente"
+    ],
+    "/tpv": [
+      "verificar_manualmente"
+    ],
+    "/kds": [
+      "verificar_manualmente"
+    ],
+    "/menu": [
+      "verificar_manualmente"
+    ],
+    "/pulses": [
+      "verificar_manualmente"
+    ],
+    "/wizard": [
+      "verificar_manualmente"
+    ],
+    "/dev/wizard": [
+      "verificar_manualmente"
+    ]
+  }
+}

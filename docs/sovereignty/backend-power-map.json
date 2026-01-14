@@ -1,0 +1,47 @@
+{
+  "endpoints": [],
+  "rpcs": [],
+  "functions": [
+    {
+      "name": "getOrderData",
+      "file": "server/fiscal-queue-worker.ts"
+    },
+    {
+      "name": "getRestaurantCountry",
+      "file": "server/fiscal-queue-worker.ts"
+    },
+    {
+      "name": "getRestaurantFiscalConfig",
+      "file": "server/fiscal-queue-worker.ts"
+    },
+    {
+      "name": "selectAdapter",
+      "file": "server/fiscal-queue-worker.ts"
+    },
+    {
+      "name": "createTaxDocument",
+      "file": "server/fiscal-queue-worker.ts"
+    },
+    {
+      "name": "recordFiscalEvent",
+      "file": "server/fiscal-queue-worker.ts"
+    },
+    {
+      "name": "processFiscalQueueItem",
+      "file": "server/fiscal-queue-worker.ts"
+    },
+    {
+      "name": "markCompleted",
+      "file": "server/fiscal-queue-worker.ts"
+    },
+    {
+      "name": "workerLoop",
+      "file": "server/fiscal-queue-worker.ts"
+    },
+    {
+      "name": "startWorker",
+      "file": "server/fiscal-queue-worker.ts"
+    }
+  ],
+  "domains": {}
+}

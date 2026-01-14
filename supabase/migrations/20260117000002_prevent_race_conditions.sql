@@ -72,12 +72,12 @@ CREATE INDEX IF NOT EXISTS idx_gm_orders_restaurant_active
 
 -- Index for fetching order items by order (common query)
 CREATE INDEX IF NOT EXISTS idx_gm_order_items_order_status
-    ON public.gm_order_items(order_id, created_at)
-    WHERE deleted_at IS NULL;
+    ON public.gm_order_items(order_id, created_at);
+
 
 -- Index for daily totals calculation (cash register reports)
 CREATE INDEX IF NOT EXISTS idx_gm_orders_restaurant_date_status
-    ON public.gm_orders(restaurant_id, DATE(created_at), status)
+    ON public.gm_orders(restaurant_id, created_at, status)
     WHERE status = 'PAID';
 
 -- Index for payment history queries

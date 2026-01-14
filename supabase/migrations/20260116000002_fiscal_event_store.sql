@@ -70,7 +70,7 @@ CREATE POLICY "Restaurant members can view fiscal events"
 ON public.fiscal_event_store FOR SELECT
 USING (
     restaurant_id IN (
-        SELECT restaurant_id FROM public.restaurant_members
+        SELECT restaurant_id FROM public.gm_restaurant_members
         WHERE user_id = auth.uid()
     )
     OR
@@ -85,7 +85,7 @@ CREATE POLICY "Restaurant members can insert fiscal events"
 ON public.fiscal_event_store FOR INSERT
 WITH CHECK (
     restaurant_id IN (
-        SELECT restaurant_id FROM public.restaurant_members
+        SELECT restaurant_id FROM public.gm_restaurant_members
         WHERE user_id = auth.uid()
     )
     OR
@@ -100,7 +100,7 @@ CREATE POLICY "Restaurant members can update fiscal events"
 ON public.fiscal_event_store FOR UPDATE
 USING (
     restaurant_id IN (
-        SELECT restaurant_id FROM public.restaurant_members
+        SELECT restaurant_id FROM public.gm_restaurant_members
         WHERE user_id = auth.uid()
     )
     OR

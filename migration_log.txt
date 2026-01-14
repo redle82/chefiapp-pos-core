@@ -1,0 +1,325 @@
+open supabase/.temp/profile: no such file or directory
+Supabase CLI 2.72.7
+Using profile: supabase (supabase.co)
+Connecting to local database...
+2026/01/14 22:07:39 PG Send: {"Type":"StartupMessage","ProtocolVersion":196608,"Parameters":{"database":"postgres","user":"postgres"}}
+2026/01/14 22:07:39 PG Recv: {"Type":"AuthenticationSASL","AuthMechanisms":["SCRAM-SHA-256"]}
+2026/01/14 22:07:39 PG Send: {"Type":"SASLInitialResponse","AuthMechanism":"SCRAM-SHA-256","Data":"n,,n=,r=uHE/O53rKWP5FcqNWopRfxcJ"}
+2026/01/14 22:07:39 PG Recv: {"Type":"AuthenticationSASLContinue","Data":"r=uHE/O53rKWP5FcqNWopRfxcJcppVI50Ul7FdcVsy+w/SVmdZ,s=KwzJCPlgNfXlNbUSq9hovQ==,i=4096"}
+2026/01/14 22:07:39 PG Send: {"Type":"SASLResponse","Data":"c=biws,r=uHE/O53rKWP5FcqNWopRfxcJcppVI50Ul7FdcVsy+w/SVmdZ,p=Z2A9Z5G9g79wLgQPy0D5DQjA84DW54u8nW9ckkIMdvk="}
+2026/01/14 22:07:39 PG Recv: {"Type":"AuthenticationSASLFinal","Data":"v=l469SXC9RpTy0SomcrtgFULLlokj+b7HxAjddkbsuTo="}
+2026/01/14 22:07:39 PG Recv: {"Type":"AuthenticationOK"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"in_hot_standby","Value":"off"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"integer_datetimes","Value":"on"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"TimeZone","Value":"UTC"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"IntervalStyle","Value":"postgres"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"is_superuser","Value":"off"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"application_name","Value":""}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"default_transaction_read_only","Value":"off"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"scram_iterations","Value":"4096"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"DateStyle","Value":"ISO, MDY"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"standard_conforming_strings","Value":"on"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"session_authorization","Value":"postgres"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"client_encoding","Value":"UTF8"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"server_version","Value":"17.6"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterStatus","Name":"server_encoding","Value":"UTF8"}
+2026/01/14 22:07:39 PG Recv: {"Type":"BackendKeyData","ProcessID":83849,"SecretKey":1844891584}
+2026/01/14 22:07:39 PG Recv: {"Type":"ReadyForQuery","TxStatus":"I"}
+2026/01/14 22:07:39 PG Send: {"Type":"Parse","Name":"lrupsc_1_0","Query":"SELECT version FROM supabase_migrations.schema_migrations ORDER BY version","ParameterOIDs":null}
+2026/01/14 22:07:39 PG Send: {"Type":"Describe","ObjectType":"S","Name":"lrupsc_1_0"}
+2026/01/14 22:07:39 PG Send: {"Type":"Sync"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParseComplete"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParameterDescription","ParameterOIDs":[]}
+2026/01/14 22:07:39 PG Recv: {"Type":"RowDescription","Fields":[{"Name":"version","TableOID":18411,"TableAttributeNumber":1,"DataTypeOID":25,"DataTypeSize":-1,"TypeModifier":-1,"Format":0}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"ReadyForQuery","TxStatus":"I"}
+2026/01/14 22:07:39 PG Send: {"Type":"Bind","DestinationPortal":"","PreparedStatement":"lrupsc_1_0","ParameterFormatCodes":null,"Parameters":[],"ResultFormatCodes":[0]}
+2026/01/14 22:07:39 PG Send: {"Type":"Describe","ObjectType":"P","Name":""}
+2026/01/14 22:07:39 PG Send: {"Type":"Execute","Portal":"","MaxRows":0}
+2026/01/14 22:07:39 PG Send: {"Type":"Sync"}
+2026/01/14 22:07:39 PG Recv: {"Type":"BindComplete"}
+2026/01/14 22:07:39 PG Recv: {"Type":"RowDescription","Fields":[{"Name":"version","TableOID":18411,"TableAttributeNumber":1,"DataTypeOID":25,"DataTypeSize":-1,"TypeModifier":-1,"Format":0}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"000"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"003"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"004"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"005"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"006"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"007"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"008"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"009"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"010"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"011"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"012"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"013"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"014"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"015"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"016"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"017"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"019"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"020"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"021"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"022"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"023"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"024"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"025"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"026"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"027"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"028"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"029"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"030"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"031"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"082"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260109120000"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260110000000"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260110000001"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260111000000"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260111002710"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260112000000"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260112000001"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260112000002"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260112000003"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260112000004"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260112000005"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260113000000"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260113000001"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260114000000"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"DataRow","Values":[{"text":"20260114190000"}]}
+2026/01/14 22:07:39 PG Recv: {"Type":"CommandComplete","CommandTag":"SELECT 45"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ReadyForQuery","TxStatus":"I"}
+2026/01/14 22:07:39 PG Send: {"Type":"Parse","Name":"","Query":"SET lock_timeout = '4s'","ParameterOIDs":null}
+2026/01/14 22:07:39 PG Send: {"Type":"Bind","DestinationPortal":"","PreparedStatement":"","ParameterFormatCodes":null,"Parameters":[],"ResultFormatCodes":[]}
+2026/01/14 22:07:39 PG Send: {"Type":"Describe","ObjectType":"P","Name":""}
+2026/01/14 22:07:39 PG Send: {"Type":"Execute","Portal":"","MaxRows":0}
+2026/01/14 22:07:39 PG Send: {"Type":"Parse","Name":"","Query":"CREATE SCHEMA IF NOT EXISTS supabase_migrations","ParameterOIDs":null}
+2026/01/14 22:07:39 PG Send: {"Type":"Bind","DestinationPortal":"","PreparedStatement":"","ParameterFormatCodes":null,"Parameters":[],"ResultFormatCodes":[]}
+2026/01/14 22:07:39 PG Send: {"Type":"Describe","ObjectType":"P","Name":""}
+2026/01/14 22:07:39 PG Send: {"Type":"Execute","Portal":"","MaxRows":0}
+2026/01/14 22:07:39 PG Send: {"Type":"Parse","Name":"","Query":"CREATE TABLE IF NOT EXISTS supabase_migrations.schema_migrations (version text NOT NULL PRIMARY KEY)","ParameterOIDs":null}
+2026/01/14 22:07:39 PG Send: {"Type":"Bind","DestinationPortal":"","PreparedStatement":"","ParameterFormatCodes":null,"Parameters":[],"ResultFormatCodes":[]}
+2026/01/14 22:07:39 PG Send: {"Type":"Describe","ObjectType":"P","Name":""}
+2026/01/14 22:07:39 PG Send: {"Type":"Execute","Portal":"","MaxRows":0}
+2026/01/14 22:07:39 PG Send: {"Type":"Parse","Name":"","Query":"ALTER TABLE supabase_migrations.schema_migrations ADD COLUMN IF NOT EXISTS statements text[]","ParameterOIDs":null}
+2026/01/14 22:07:39 PG Send: {"Type":"Bind","DestinationPortal":"","PreparedStatement":"","ParameterFormatCodes":null,"Parameters":[],"ResultFormatCodes":[]}
+2026/01/14 22:07:39 PG Send: {"Type":"Describe","ObjectType":"P","Name":""}
+2026/01/14 22:07:39 PG Send: {"Type":"Execute","Portal":"","MaxRows":0}
+2026/01/14 22:07:39 PG Send: {"Type":"Parse","Name":"","Query":"ALTER TABLE supabase_migrations.schema_migrations ADD COLUMN IF NOT EXISTS name text","ParameterOIDs":null}
+2026/01/14 22:07:39 PG Send: {"Type":"Bind","DestinationPortal":"","PreparedStatement":"","ParameterFormatCodes":null,"Parameters":[],"ResultFormatCodes":[]}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParseComplete"}
+2026/01/14 22:07:39 PG Send: {"Type":"Describe","ObjectType":"P","Name":""}
+2026/01/14 22:07:39 PG Recv: {"Type":"BindComplete"}
+2026/01/14 22:07:39 PG Recv: {"Type":"NoData"}
+2026/01/14 22:07:39 PG Recv: {"Type":"CommandComplete","CommandTag":"SET"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParseComplete"}
+2026/01/14 22:07:39 PG Recv: {"Type":"BindComplete"}
+2026/01/14 22:07:39 PG Send: {"Type":"Execute","Portal":"","MaxRows":0}
+2026/01/14 22:07:39 PG Send: {"Type":"Sync"}
+2026/01/14 22:07:39 PG Recv: {"Type":"NoData"}
+2026/01/14 22:07:39 PG Recv: {"Severity":"NOTICE","SeverityUnlocalized":"NOTICE","Code":"42P06","Message":"schema \"supabase_migrations\" already exists, skipping","Detail":"","Hint":"","Position":0,"InternalPosition":0,"InternalQuery":"","Where":"","SchemaName":"","TableName":"","ColumnName":"","DataTypeName":"","ConstraintName":"","File":"schemacmds.c","Line":132,"Routine":"CreateSchemaCommand","UnknownFields":null}
+2026/01/14 22:07:39 PG Recv: {"Type":"CommandComplete","CommandTag":"CREATE SCHEMA"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParseComplete"}
+2026/01/14 22:07:39 PG Recv: {"Type":"BindComplete"}
+2026/01/14 22:07:39 PG Recv: {"Type":"NoData"}
+2026/01/14 22:07:39 PG Recv: {"Severity":"NOTICE","SeverityUnlocalized":"NOTICE","Code":"42P07","Message":"relation \"schema_migrations\" already exists, skipping","Detail":"","Hint":"","Position":0,"InternalPosition":0,"InternalQuery":"","Where":"","SchemaName":"","TableName":"","ColumnName":"","DataTypeName":"","ConstraintName":"","File":"parse_utilcmd.c","Line":207,"Routine":"transformCreateStmt","UnknownFields":null}
+2026/01/14 22:07:39 PG Recv: {"Type":"CommandComplete","CommandTag":"CREATE TABLE"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParseComplete"}
+2026/01/14 22:07:39 PG Recv: {"Type":"BindComplete"}
+2026/01/14 22:07:39 PG Recv: {"Type":"NoData"}
+2026/01/14 22:07:39 PG Recv: {"Severity":"NOTICE","SeverityUnlocalized":"NOTICE","Code":"42701","Message":"column \"statements\" of relation \"schema_migrations\" already exists, skipping","Detail":"","Hint":"","Position":0,"InternalPosition":0,"InternalQuery":"","Where":"","SchemaName":"","TableName":"","ColumnName":"","DataTypeName":"","ConstraintName":"","File":"tablecmds.c","Line":7471,"Routine":"check_for_column_name_collision","UnknownFields":null}
+2026/01/14 22:07:39 PG Recv: {"Type":"CommandComplete","CommandTag":"ALTER TABLE"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ParseComplete"}
+2026/01/14 22:07:39 PG Recv: {"Type":"BindComplete"}
+2026/01/14 22:07:39 PG Recv: {"Type":"NoData"}
+2026/01/14 22:07:39 PG Recv: {"Severity":"NOTICE","SeverityUnlocalized":"NOTICE","Code":"42701","Message":"column \"name\" of relation \"schema_migrations\" already exists, skipping","Detail":"","Hint":"","Position":0,"InternalPosition":0,"InternalQuery":"","Where":"","SchemaName":"","TableName":"","ColumnName":"","DataTypeName":"","ConstraintName":"","File":"tablecmds.c","Line":7471,"Routine":"check_for_column_name_collision","UnknownFields":null}
+2026/01/14 22:07:39 PG Recv: {"Type":"CommandComplete","CommandTag":"ALTER TABLE"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ReadyForQuery","TxStatus":"I"}
+Applying migration 20260114191000_p1_atomic_split_bill.sql...
+2026/01/14 22:07:39 PG Send: {"Type":"Query","String":"RESET ALL"}
+2026/01/14 22:07:39 PG Recv: {"Type":"CommandComplete","CommandTag":"RESET"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ReadyForQuery","TxStatus":"I"}
+2026/01/14 22:07:39 PG Send: {"Type":"Parse","Name":"","Query":"-- ============================================================================\n-- P1.1 FIX: ATOMIC SPLIT BILL PAYMENT\n-- Risk: R-021 (🔴 Critical)\n-- \n-- This RPC ensures atomic balance check + payment in a single transaction.\n-- No race condition between checking remaining and processing payment.\n-- ============================================================================\n\n-- Function: process_split_payment_atomic\n-- Returns: payment_id on success, raises exception on overpayment\nCREATE OR REPLACE FUNCTION process_split_payment_atomic(\n    p_order_id uuid,\n    p_restaurant_id uuid,\n    p_cash_register_id uuid,\n    p_method text,\n    p_amount_cents integer,\n    p_operator_id uuid DEFAULT NULL,\n    p_idempotency_key text DEFAULT NULL\n) RETURNS jsonb\nLANGUAGE plpgsql\nSECURITY DEFINER\nAS $$\nDECLARE\n    v_order_total integer;\n    v_paid_sum integer;\n    v_remaining integer;\n    v_payment_id uuid;\n    v_new_paid_sum integer;\n    v_is_fully_paid boolean;\n    v_existing_payment_id uuid;\nBEGIN\n    -- ========================================================================\n    -- IDEMPOTENCY CHECK: If same key was used, return existing payment\n    -- ========================================================================\n    IF p_idempotency_key IS NOT NULL THEN\n        SELECT id INTO v_existing_payment_id\n        FROM gm_payments\n        WHERE order_id = p_order_id\n          AND metadata-\u003e\u003e'idempotency_key' = p_idempotency_key;\n        \n        IF v_existing_payment_id IS NOT NULL THEN\n            RETURN jsonb_build_object(\n                'success', true,\n                'payment_id', v_existing_payment_id,\n                'idempotent', true,\n                'message', 'Payment already processed with this key'\n            );\n        END IF;\n    END IF;\n\n    -- ========================================================================\n    -- ATOMIC LOCK: Lock the order row to prevent concurrent payments\n    -- ========================================================================\n    SELECT total_amount INTO v_order_total\n    FROM gm_orders\n    WHERE id = p_order_id\n      AND restaurant_id = p_restaurant_id\n    FOR UPDATE;  -- Row-level lock\n\n    IF v_order_total IS NULL THEN\n        RAISE EXCEPTION 'ORDER_NOT_FOUND: Order % not found', p_order_id;\n    END IF;\n\n    -- ========================================================================\n    -- CALCULATE REMAINING: Sum all PAID payments\n    -- ========================================================================\n    SELECT COALESCE(SUM(amount_cents), 0) INTO v_paid_sum\n    FROM gm_payments\n    WHERE order_id = p_order_id\n      AND status = 'paid';\n\n    v_remaining := v_order_total - v_paid_sum;\n\n    -- ========================================================================\n    -- GUARD: Check if payment exceeds remaining\n    -- ========================================================================\n    IF p_amount_cents \u003e v_remaining THEN\n        RAISE EXCEPTION 'OVERPAYMENT: Amount % exceeds remaining %. Order: %',\n            p_amount_cents, v_remaining, p_order_id;\n    END IF;\n\n    IF v_remaining \u003c= 0 THEN\n        RAISE EXCEPTION 'ALREADY_PAID: Order % is already fully paid', p_order_id;\n    END IF;\n\n    -- ========================================================================\n    -- INSERT PAYMENT\n    -- ========================================================================\n    INSERT INTO gm_payments (\n        tenant_id,\n        order_id,\n        amount_cents,\n        currency,\n        method,\n        status,\n        metadata\n    ) VALUES (\n        p_restaurant_id,\n        p_order_id,\n        p_amount_cents,\n        'EUR',\n        p_method,\n        'paid',\n        jsonb_build_object(\n            'operator_id', p_operator_id,\n            'cash_register_id', p_cash_register_id,\n            'idempotency_key', p_idempotency_key,\n            'is_partial', true,\n            'remaining_before', v_remaining\n        )\n    )\n    RETURNING id INTO v_payment_id;\n\n    -- ========================================================================\n    -- UPDATE ORDER STATUS IF FULLY PAID\n    -- ========================================================================\n    v_new_paid_sum := v_paid_sum + p_amount_cents;\n    v_is_fully_paid := v_new_paid_sum \u003e= v_order_total;\n\n    IF v_is_fully_paid THEN\n        UPDATE gm_orders\n        SET payment_status = 'PAID',\n            status = 'delivered',\n            updated_at = NOW()\n        WHERE id = p_order_id;\n    ELSE\n        UPDATE gm_orders\n        SET payment_status = 'PARTIALLY_PAID',\n            updated_at = NOW()\n        WHERE id = p_order_id;\n    END IF;\n\n    -- ========================================================================\n    -- LOG TO CASH REGISTER\n    -- ========================================================================\n    IF p_cash_register_id IS NOT NULL THEN\n        UPDATE gm_cash_registers\n        SET current_amount = current_amount + p_amount_cents,\n            transactions_count = transactions_count + 1,\n            updated_at = NOW()\n        WHERE id = p_cash_register_id;\n    END IF;\n\n    RETURN jsonb_build_object(\n        'success', true,\n        'payment_id', v_payment_id,\n        'amount_paid', p_amount_cents,\n        'remaining_after', v_remaining - p_amount_cents,\n        'is_fully_paid', v_is_fully_paid,\n        'order_id', p_order_id\n    );\nEND;\n$$;\n\n-- Grant execute to authenticated users\nGRANT EXECUTE ON FUNCTION process_split_payment_atomic TO authenticated;\n\n-- ============================================================================\n-- VERIFICATION\n-- ============================================================================\nDO $$\nBEGIN\n    IF EXISTS (\n        SELECT 1 FROM pg_proc \n        WHERE proname = 'process_split_payment_atomic'\n    ) THEN\n        RAISE NOTICE '✓ Function process_split_payment_atomic created successfully';\n    ELSE\n        RAISE EXCEPTION '✗ Failed to create function process_split_payment_atomic';\n    END IF;\nEND $$;\n\nCOMMENT ON FUNCTION process_split_payment_atomic IS \n    'P1 Fix: Atomic split bill payment with row-level locking to prevent race conditions. Risk: R-021 | Status: ENFORCED | Date: 2026-01-14';","ParameterOIDs":null}
+2026/01/14 22:07:39 PG Send: {"Type":"Bind","DestinationPortal":"","PreparedStatement":"","ParameterFormatCodes":null,"Parameters":[],"ResultFormatCodes":[]}
+2026/01/14 22:07:39 PG Send: {"Type":"Describe","ObjectType":"P","Name":""}
+2026/01/14 22:07:39 PG Send: {"Type":"Execute","Portal":"","MaxRows":0}
+2026/01/14 22:07:39 PG Send: {"Type":"Parse","Name":"","Query":"INSERT INTO supabase_migrations.schema_migrations(version, name, statements) VALUES($1, $2, $3)","ParameterOIDs":[25,25,1009]}
+2026/01/14 22:07:39 PG Send: {"Type":"Bind","DestinationPortal":"","PreparedStatement":"","ParameterFormatCodes":[0,0,1],"Parameters":[{"text":"20260114191000"},{"text":"p1_atomic_split_bill"},{"binary":"0000000100000000000000190000000100000001000018352d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a2d2d2050312e31204649583a2041544f4d49432053504c49542042494c4c205041594d454e540a2d2d205269736b3a20522d3032312028f09f94b420437269746963616c290a2d2d200a2d2d20546869732052504320656e73757265732061746f6d69632062616c616e636520636865636b202b207061796d656e7420696e20612073696e676c65207472616e73616374696f6e2e0a2d2d204e6f207261636520636f6e646974696f6e206265747765656e20636865636b696e672072656d61696e696e6720616e642070726f63657373696e67207061796d656e742e0a2d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a0a2d2d2046756e6374696f6e3a2070726f636573735f73706c69745f7061796d656e745f61746f6d69630a2d2d2052657475726e733a207061796d656e745f6964206f6e20737563636573732c2072616973657320657863657074696f6e206f6e206f7665727061796d656e740a435245415445204f52205245504c4143452046554e4354494f4e2070726f636573735f73706c69745f7061796d656e745f61746f6d6963280a20202020705f6f726465725f696420757569642c0a20202020705f72657374617572616e745f696420757569642c0a20202020705f636173685f72656769737465725f696420757569642c0a20202020705f6d6574686f6420746578742c0a20202020705f616d6f756e745f63656e747320696e74656765722c0a20202020705f6f70657261746f725f696420757569642044454641554c54204e554c4c2c0a20202020705f6964656d706f74656e63795f6b657920746578742044454641554c54204e554c4c0a292052455455524e53206a736f6e620a4c414e475541474520706c706773716c0a534543555249545920444546494e45520a41532024240a4445434c4152450a20202020765f6f726465725f746f74616c20696e74656765723b0a20202020765f706169645f73756d20696e74656765723b0a20202020765f72656d61696e696e6720696e74656765723b0a20202020765f7061796d656e745f696420757569643b0a20202020765f6e65775f706169645f73756d20696e74656765723b0a20202020765f69735f66756c6c795f7061696420626f6f6c65616e3b0a20202020765f6578697374696e675f7061796d656e745f696420757569643b0a424547494e0a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a202020202d2d204944454d504f54454e435920434845434b3a2049662073616d65206b65792077617320757365642c2072657475726e206578697374696e67207061796d656e740a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a20202020494620705f6964656d706f74656e63795f6b6579204953204e4f54204e554c4c205448454e0a202020202020202053454c45435420696420494e544f20765f6578697374696e675f7061796d656e745f69640a202020202020202046524f4d20676d5f7061796d656e74730a20202020202020205748455245206f726465725f6964203d20705f6f726465725f69640a20202020202020202020414e44206d657461646174612d3e3e276964656d706f74656e63795f6b657927203d20705f6964656d706f74656e63795f6b65793b0a20202020202020200a2020202020202020494620765f6578697374696e675f7061796d656e745f6964204953204e4f54204e554c4c205448454e0a20202020202020202020202052455455524e206a736f6e625f6275696c645f6f626a656374280a202020202020202020202020202020202773756363657373272c20747275652c0a20202020202020202020202020202020277061796d656e745f6964272c20765f6578697374696e675f7061796d656e745f69642c0a20202020202020202020202020202020276964656d706f74656e74272c20747275652c0a20202020202020202020202020202020276d657373616765272c20275061796d656e7420616c72656164792070726f63657373656420776974682074686973206b6579270a202020202020202020202020293b0a2020202020202020454e442049463b0a20202020454e442049463b0a0a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a202020202d2d2041544f4d4943204c4f434b3a204c6f636b20746865206f7264657220726f7720746f2070726576656e7420636f6e63757272656e74207061796d656e74730a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a2020202053454c45435420746f74616c5f616d6f756e7420494e544f20765f6f726465725f746f74616c0a2020202046524f4d20676d5f6f72646572730a202020205748455245206964203d20705f6f726465725f69640a202020202020414e442072657374617572616e745f6964203d20705f72657374617572616e745f69640a20202020464f52205550444154453b20202d2d20526f772d6c6576656c206c6f636b0a0a20202020494620765f6f726465725f746f74616c204953204e554c4c205448454e0a2020202020202020524149534520455843455054494f4e20274f524445525f4e4f545f464f554e443a204f726465722025206e6f7420666f756e64272c20705f6f726465725f69643b0a20202020454e442049463b0a0a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a202020202d2d2043414c43554c4154452052454d41494e494e473a2053756d20616c6c2050414944207061796d656e74730a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a2020202053454c45435420434f414c455343452853554d28616d6f756e745f63656e7473292c20302920494e544f20765f706169645f73756d0a2020202046524f4d20676d5f7061796d656e74730a202020205748455245206f726465725f6964203d20705f6f726465725f69640a202020202020414e4420737461747573203d202770616964273b0a0a20202020765f72656d61696e696e67203a3d20765f6f726465725f746f74616c202d20765f706169645f73756d3b0a0a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a202020202d2d2047554152443a20436865636b206966207061796d656e7420657863656564732072656d61696e696e670a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a20202020494620705f616d6f756e745f63656e7473203e20765f72656d61696e696e67205448454e0a2020202020202020524149534520455843455054494f4e20274f5645525041594d454e543a20416d6f756e74202520657863656564732072656d61696e696e6720252e204f726465723a2025272c0a202020202020202020202020705f616d6f756e745f63656e74732c20765f72656d61696e696e672c20705f6f726465725f69643b0a20202020454e442049463b0a0a20202020494620765f72656d61696e696e67203c3d2030205448454e0a2020202020202020524149534520455843455054494f4e2027414c52454144595f504149443a204f72646572202520697320616c72656164792066756c6c792070616964272c20705f6f726465725f69643b0a20202020454e442049463b0a0a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a202020202d2d20494e53455254205041594d454e540a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a20202020494e5345525420494e544f20676d5f7061796d656e747320280a202020202020202074656e616e745f69642c0a20202020202020206f726465725f69642c0a2020202020202020616d6f756e745f63656e74732c0a202020202020202063757272656e63792c0a20202020202020206d6574686f642c0a20202020202020207374617475732c0a20202020202020206d657461646174610a20202020292056414c55455320280a2020202020202020705f72657374617572616e745f69642c0a2020202020202020705f6f726465725f69642c0a2020202020202020705f616d6f756e745f63656e74732c0a202020202020202027455552272c0a2020202020202020705f6d6574686f642c0a20202020202020202770616964272c0a20202020202020206a736f6e625f6275696c645f6f626a656374280a202020202020202020202020276f70657261746f725f6964272c20705f6f70657261746f725f69642c0a20202020202020202020202027636173685f72656769737465725f6964272c20705f636173685f72656769737465725f69642c0a202020202020202020202020276964656d706f74656e63795f6b6579272c20705f6964656d706f74656e63795f6b65792c0a2020202020202020202020202769735f7061727469616c272c20747275652c0a2020202020202020202020202772656d61696e696e675f6265666f7265272c20765f72656d61696e696e670a2020202020202020290a20202020290a2020202052455455524e494e4720696420494e544f20765f7061796d656e745f69643b0a0a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a202020202d2d20555044415445204f52444552205354415455532049462046554c4c5920504149440a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a20202020765f6e65775f706169645f73756d203a3d20765f706169645f73756d202b20705f616d6f756e745f63656e74733b0a20202020765f69735f66756c6c795f70616964203a3d20765f6e65775f706169645f73756d203e3d20765f6f726465725f746f74616c3b0a0a20202020494620765f69735f66756c6c795f70616964205448454e0a202020202020202055504441544520676d5f6f72646572730a2020202020202020534554207061796d656e745f737461747573203d202750414944272c0a202020202020202020202020737461747573203d202764656c697665726564272c0a202020202020202020202020757064617465645f6174203d204e4f5728290a20202020202020205748455245206964203d20705f6f726465725f69643b0a20202020454c53450a202020202020202055504441544520676d5f6f72646572730a2020202020202020534554207061796d656e745f737461747573203d20275041525449414c4c595f50414944272c0a202020202020202020202020757064617465645f6174203d204e4f5728290a20202020202020205748455245206964203d20705f6f726465725f69643b0a20202020454e442049463b0a0a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a202020202d2d204c4f4720544f20434153482052454749535445520a202020202d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a20202020494620705f636173685f72656769737465725f6964204953204e4f54204e554c4c205448454e0a202020202020202055504441544520676d5f636173685f7265676973746572730a20202020202020205345542063757272656e745f616d6f756e74203d2063757272656e745f616d6f756e74202b20705f616d6f756e745f63656e74732c0a2020202020202020202020207472616e73616374696f6e735f636f756e74203d207472616e73616374696f6e735f636f756e74202b20312c0a202020202020202020202020757064617465645f6174203d204e4f5728290a20202020202020205748455245206964203d20705f636173685f72656769737465725f69643b0a20202020454e442049463b0a0a2020202052455455524e206a736f6e625f6275696c645f6f626a656374280a20202020202020202773756363657373272c20747275652c0a2020202020202020277061796d656e745f6964272c20765f7061796d656e745f69642c0a202020202020202027616d6f756e745f70616964272c20705f616d6f756e745f63656e74732c0a20202020202020202772656d61696e696e675f6166746572272c20765f72656d61696e696e67202d20705f616d6f756e745f63656e74732c0a20202020202020202769735f66756c6c795f70616964272c20765f69735f66756c6c795f706169642c0a2020202020202020276f726465725f6964272c20705f6f726465725f69640a20202020293b0a454e443b0a24243b0a0a2d2d204772616e74206578656375746520746f2061757468656e746963617465642075736572730a4752414e542045584543555445204f4e2046554e4354494f4e2070726f636573735f73706c69745f7061796d656e745f61746f6d696320544f2061757468656e746963617465643b0a0a2d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a2d2d20564552494649434154494f4e0a2d2d203d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0a444f2024240a424547494e0a2020202049462045584953545320280a202020202020202053454c45435420312046524f4d2070675f70726f63200a202020202020202057484552452070726f6e616d65203d202770726f636573735f73706c69745f7061796d656e745f61746f6d6963270a2020202029205448454e0a20202020202020205241495345204e4f544943452027e29c932046756e6374696f6e2070726f636573735f73706c69745f7061796d656e745f61746f6d69632063726561746564207375636365737366756c6c79273b0a20202020454c53450a2020202020202020524149534520455843455054494f4e2027e29c97204661696c656420746f206372656174652066756e6374696f6e2070726f636573735f73706c69745f7061796d656e745f61746f6d6963273b0a20202020454e442049463b0a454e442024243b0a0a434f4d4d454e54204f4e2046554e4354494f4e2070726f636573735f73706c69745f7061796d656e745f61746f6d6963204953200a20202020275031204669783a2041746f6d69632073706c69742062696c6c207061796d656e74207769746820726f772d6c6576656c206c6f636b696e6720746f2070726576656e74207261636520636f6e646974696f6e732e205269736b3a20522d303231207c205374617475733a20454e464f52434544207c20446174653a20323032362d30312d3134273b"}],"ResultFormatCodes":[]}
+2026/01/14 22:07:39 PG Send: {"Type":"Describe","ObjectType":"P","Name":""}
+2026/01/14 22:07:39 PG Send: {"Type":"Execute","Portal":"","MaxRows":0}
+2026/01/14 22:07:39 PG Send: {"Type":"Sync"}
+2026/01/14 22:07:39 PG Recv: {"Type":"ErrorResponse","Severity":"ERROR","SeverityUnlocalized":"ERROR","Code":"42601","Message":"cannot insert multiple commands into a prepared statement","Detail":"","Hint":"","Position":0,"InternalPosition":0,"InternalQuery":"","Where":"","SchemaName":"","TableName":"","ColumnName":"","DataTypeName":"","ConstraintName":"","File":"postgres.c","Line":1478,"Routine":"exec_parse_message","UnknownFields":null}
+2026/01/14 22:07:39 PG Recv: {"Type":"ReadyForQuery","TxStatus":"I"}
+2026/01/14 22:07:39 PG Send: {"Type":"Terminate"}
+ERROR: cannot insert multiple commands into a prepared statement (SQLSTATE 42601)                                                            
+At statement: 0                                                                                                                              
+-- ============================================================================                                                              
+-- P1.1 FIX: ATOMIC SPLIT BILL PAYMENT                                                                                                       
+-- Risk: R-021 (🔴 Critical)                                                                                                                 
+--                                                                                                                                           
+-- This RPC ensures atomic balance check + payment in a single transaction.                                                                  
+-- No race condition between checking remaining and processing payment.                                                                      
+-- ============================================================================                                                              
+                                                                                                                                             
+-- Function: process_split_payment_atomic                                                                                                    
+-- Returns: payment_id on success, raises exception on overpayment                                                                           
+CREATE OR REPLACE FUNCTION process_split_payment_atomic(                                                                                     
+    p_order_id uuid,                                                                                                                         
+    p_restaurant_id uuid,                                                                                                                    
+    p_cash_register_id uuid,                                                                                                                 
+    p_method text,                                                                                                                           
+    p_amount_cents integer,                                                                                                                  
+    p_operator_id uuid DEFAULT NULL,                                                                                                         
+    p_idempotency_key text DEFAULT NULL                                                                                                      
+) RETURNS jsonb                                                                                                                              
+LANGUAGE plpgsql                                                                                                                             
+SECURITY DEFINER                                                                                                                             
+AS $$                                                                                                                                        
+DECLARE                                                                                                                                      
+    v_order_total integer;                                                                                                                   
+    v_paid_sum integer;                                                                                                                      
+    v_remaining integer;                                                                                                                     
+    v_payment_id uuid;                                                                                                                       
+    v_new_paid_sum integer;                                                                                                                  
+    v_is_fully_paid boolean;                                                                                                                 
+    v_existing_payment_id uuid;                                                                                                              
+BEGIN                                                                                                                                        
+    -- ========================================================================                                                              
+    -- IDEMPOTENCY CHECK: If same key was used, return existing payment                                                                      
+    -- ========================================================================                                                              
+    IF p_idempotency_key IS NOT NULL THEN                                                                                                    
+        SELECT id INTO v_existing_payment_id                                                                                                 
+        FROM gm_payments                                                                                                                     
+        WHERE order_id = p_order_id                                                                                                          
+          AND metadata->>'idempotency_key' = p_idempotency_key;                                                                              
+                                                                                                                                             
+        IF v_existing_payment_id IS NOT NULL THEN                                                                                            
+            RETURN jsonb_build_object(                                                                                                       
+                'success', true,                                                                                                             
+                'payment_id', v_existing_payment_id,                                                                                         
+                'idempotent', true,                                                                                                          
+                'message', 'Payment already processed with this key'                                                                         
+            );                                                                                                                               
+        END IF;                                                                                                                              
+    END IF;                                                                                                                                  
+                                                                                                                                             
+    -- ========================================================================                                                              
+    -- ATOMIC LOCK: Lock the order row to prevent concurrent payments                                                                        
+    -- ========================================================================                                                              
+    SELECT total_amount INTO v_order_total                                                                                                   
+    FROM gm_orders                                                                                                                           
+    WHERE id = p_order_id                                                                                                                    
+      AND restaurant_id = p_restaurant_id                                                                                                    
+    FOR UPDATE;  -- Row-level lock                                                                                                           
+                                                                                                                                             
+    IF v_order_total IS NULL THEN                                                                                                            
+        RAISE EXCEPTION 'ORDER_NOT_FOUND: Order % not found', p_order_id;                                                                    
+    END IF;                                                                                                                                  
+                                                                                                                                             
+    -- ========================================================================                                                              
+    -- CALCULATE REMAINING: Sum all PAID payments                                                                                            
+    -- ========================================================================                                                              
+    SELECT COALESCE(SUM(amount_cents), 0) INTO v_paid_sum                                                                                    
+    FROM gm_payments                                                                                                                         
+    WHERE order_id = p_order_id                                                                                                              
+      AND status = 'paid';                                                                                                                   
+                                                                                                                                             
+    v_remaining := v_order_total - v_paid_sum;                                                                                               
+                                                                                                                                             
+    -- ========================================================================                                                              
+    -- GUARD: Check if payment exceeds remaining                                                                                             
+    -- ========================================================================                                                              
+    IF p_amount_cents > v_remaining THEN                                                                                                     
+        RAISE EXCEPTION 'OVERPAYMENT: Amount % exceeds remaining %. Order: %',                                                               
+            p_amount_cents, v_remaining, p_order_id;                                                                                         
+    END IF;                                                                                                                                  
+                                                                                                                                             
+    IF v_remaining <= 0 THEN                                                                                                                 
+        RAISE EXCEPTION 'ALREADY_PAID: Order % is already fully paid', p_order_id;                                                           
+    END IF;                                                                                                                                  
+                                                                                                                                             
+    -- ========================================================================                                                              
+    -- INSERT PAYMENT                                                                                                                        
+    -- ========================================================================                                                              
+    INSERT INTO gm_payments (                                                                                                                
+        tenant_id,                                                                                                                           
+        order_id,                                                                                                                            
+        amount_cents,                                                                                                                        
+        currency,                                                                                                                            
+        method,                                                                                                                              
+        status,                                                                                                                              
+        metadata                                                                                                                             
+    ) VALUES (                                                                                                                               
+        p_restaurant_id,                                                                                                                     
+        p_order_id,                                                                                                                          
+        p_amount_cents,                                                                                                                      
+        'EUR',                                                                                                                               
+        p_method,                                                                                                                            
+        'paid',                                                                                                                              
+        jsonb_build_object(                                                                                                                  
+            'operator_id', p_operator_id,                                                                                                    
+            'cash_register_id', p_cash_register_id,                                                                                          
+            'idempotency_key', p_idempotency_key,                                                                                            
+            'is_partial', true,                                                                                                              
+            'remaining_before', v_remaining                                                                                                  
+        )                                                                                                                                    
+    )                                                                                                                                        
+    RETURNING id INTO v_payment_id;                                                                                                          
+                                                                                                                                             
+    -- ========================================================================                                                              
+    -- UPDATE ORDER STATUS IF FULLY PAID                                                                                                     
+    -- ========================================================================                                                              
+    v_new_paid_sum := v_paid_sum + p_amount_cents;                                                                                           
+    v_is_fully_paid := v_new_paid_sum >= v_order_total;                                                                                      
+                                                                                                                                             
+    IF v_is_fully_paid THEN                                                                                                                  
+        UPDATE gm_orders                                                                                                                     
+        SET payment_status = 'PAID',                                                                                                         
+            status = 'delivered',                                                                                                            
+            updated_at = NOW()                                                                                                               
+        WHERE id = p_order_id;                                                                                                               
+    ELSE                                                                                                                                     
+        UPDATE gm_orders                                                                                                                     
+        SET payment_status = 'PARTIALLY_PAID',                                                                                               
+            updated_at = NOW()                                                                                                               
+        WHERE id = p_order_id;                                                                                                               
+    END IF;                                                                                                                                  
+                                                                                                                                             
+    -- ========================================================================                                                              
+    -- LOG TO CASH REGISTER                                                                                                                  
+    -- ========================================================================                                                              
+    IF p_cash_register_id IS NOT NULL THEN                                                                                                   
+        UPDATE gm_cash_registers                                                                                                             
+        SET current_amount = current_amount + p_amount_cents,                                                                                
+            transactions_count = transactions_count + 1,                                                                                     
+            updated_at = NOW()                                                                                                               
+        WHERE id = p_cash_register_id;                                                                                                       
+    END IF;                                                                                                                                  
+                                                                                                                                             
+    RETURN jsonb_build_object(                                                                                                               
+        'success', true,                                                                                                                     
+        'payment_id', v_payment_id,                                                                                                          
+        'amount_paid', p_amount_cents,                                                                                                       
+        'remaining_after', v_remaining - p_amount_cents,                                                                                     
+        'is_fully_paid', v_is_fully_paid,                                                                                                    
+        'order_id', p_order_id                                                                                                               
+    );                                                                                                                                       
+END;                                                                                                                                         
+$$;                                                                                                                                          
+                                                                                                                                             
+-- Grant execute to authenticated users                                                                                                      
+GRANT EXECUTE ON FUNCTION process_split_payment_atomic TO authenticated;                                                                     
+                                                                                                                                             
+-- ============================================================================                                                              
+-- VERIFICATION                                                                                                                              
+-- ============================================================================                                                              
+DO $$                                                                                                                                        
+BEGIN                                                                                                                                        
+    IF EXISTS (                                                                                                                              
+        SELECT 1 FROM pg_proc                                                                                                                
+        WHERE proname = 'process_split_payment_atomic'                                                                                       
+    ) THEN                                                                                                                                   
+        RAISE NOTICE '✓ Function process_split_payment_atomic created successfully';                                                         
+    ELSE                                                                                                                                     
+        RAISE EXCEPTION '✗ Failed to create function process_split_payment_atomic';                                                          
+    END IF;                                                                                                                                  
+END $$;                                                                                                                                      
+                                                                                                                                             
+COMMENT ON FUNCTION process_split_payment_atomic IS                                                                                          
+    'P1 Fix: Atomic split bill payment with row-level locking to prevent race conditions. Risk: R-021 | Status: ENFORCED | Date: 2026-01-14';

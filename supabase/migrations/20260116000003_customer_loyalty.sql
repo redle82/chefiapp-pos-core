@@ -22,14 +22,14 @@ CREATE TABLE IF NOT EXISTS public.customer_profiles (
     tags TEXT[],
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE(restaurant_id, email) WHERE email IS NOT NULL,
-    UNIQUE(restaurant_id, phone) WHERE phone IS NOT NULL
+    UNIQUE(restaurant_id, email),
+    UNIQUE(restaurant_id, phone)
 );
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_customer_profiles_restaurant ON public.customer_profiles(restaurant_id);
-CREATE INDEX IF NOT EXISTS idx_customer_profiles_email ON public.customer_profiles(email) WHERE email IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_customer_profiles_phone ON public.customer_profiles(phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_customer_profiles_email ON public.customer_profiles(restaurant_id, email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_customer_profiles_phone ON public.customer_profiles(restaurant_id, phone) WHERE phone IS NOT NULL;
 
 -- RLS
 ALTER TABLE public.customer_profiles ENABLE ROW LEVEL SECURITY;
@@ -38,8 +38,8 @@ CREATE POLICY "Users can view customers of their restaurants"
     ON public.customer_profiles FOR SELECT
     USING (
         restaurant_id IN (
-            SELECT restaurant_id FROM public.gm_restaurant_memberships
-            WHERE user_id = auth.uid() AND status = 'active'
+            SELECT restaurant_id FROM public.gm_restaurant_members
+            WHERE user_id = auth.uid()
         )
     );
 
@@ -47,8 +47,8 @@ CREATE POLICY "Users can insert customers for their restaurants"
     ON public.customer_profiles FOR INSERT
     WITH CHECK (
         restaurant_id IN (
-            SELECT restaurant_id FROM public.gm_restaurant_memberships
-            WHERE user_id = auth.uid() AND status = 'active'
+            SELECT restaurant_id FROM public.gm_restaurant_members
+            WHERE user_id = auth.uid()
         )
     );
 
@@ -56,8 +56,8 @@ CREATE POLICY "Users can update customers of their restaurants"
     ON public.customer_profiles FOR UPDATE
     USING (
         restaurant_id IN (
-            SELECT restaurant_id FROM public.gm_restaurant_memberships
-            WHERE user_id = auth.uid() AND status = 'active'
+            SELECT restaurant_id FROM public.gm_restaurant_members
+            WHERE user_id = auth.uid()
         )
     );
 
@@ -76,13 +76,13 @@ CREATE TABLE IF NOT EXISTS public.loyalty_cards (
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'expired')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     tier_upgraded_at TIMESTAMPTZ,
-    expires_at TIMESTAMPTZ,
-    UNIQUE(restaurant_id, customer_id) WHERE customer_id IS NOT NULL
+    expires_at TIMESTAMPTZ
+
 );
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_loyalty_cards_restaurant ON public.loyalty_cards(restaurant_id);
-CREATE INDEX IF NOT EXISTS idx_loyalty_cards_customer ON public.loyalty_cards(customer_id) WHERE customer_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_loyalty_cards_customer ON public.loyalty_cards(restaurant_id, customer_id) WHERE customer_id IS NOT NULL;
 
 -- RLS
 ALTER TABLE public.loyalty_cards ENABLE ROW LEVEL SECURITY;
@@ -91,8 +91,8 @@ CREATE POLICY "Users can view loyalty cards of their restaurants"
     ON public.loyalty_cards FOR SELECT
     USING (
         restaurant_id IN (
-            SELECT restaurant_id FROM public.gm_restaurant_memberships
-            WHERE user_id = auth.uid() AND status = 'active'
+            SELECT restaurant_id FROM public.gm_restaurant_members
+            WHERE user_id = auth.uid()
         )
     );
 
@@ -100,8 +100,8 @@ CREATE POLICY "Users can manage loyalty cards of their restaurants"
     ON public.loyalty_cards FOR ALL
     USING (
         restaurant_id IN (
-            SELECT restaurant_id FROM public.gm_restaurant_memberships
-            WHERE user_id = auth.uid() AND status = 'active'
+            SELECT restaurant_id FROM public.gm_restaurant_members
+            WHERE user_id = auth.uid()
         )
     );
 
@@ -127,8 +127,8 @@ CREATE POLICY "Users can view tier configs of their restaurants"
     ON public.loyalty_tier_configs FOR SELECT
     USING (
         restaurant_id IN (
-            SELECT restaurant_id FROM public.gm_restaurant_memberships
-            WHERE user_id = auth.uid() AND status = 'active'
+            SELECT restaurant_id FROM public.gm_restaurant_members
+            WHERE user_id = auth.uid()
         )
     );
 
@@ -136,8 +136,8 @@ CREATE POLICY "Users can manage tier configs of their restaurants"
     ON public.loyalty_tier_configs FOR ALL
     USING (
         restaurant_id IN (
-            SELECT restaurant_id FROM public.gm_restaurant_memberships
-            WHERE user_id = auth.uid() AND status = 'active'
+            SELECT restaurant_id FROM public.gm_restaurant_members
+            WHERE user_id = auth.uid()
         )
     );
 
@@ -164,8 +164,8 @@ CREATE POLICY "Users can view rewards of their restaurants"
     ON public.loyalty_rewards FOR SELECT
     USING (
         restaurant_id IN (
-            SELECT restaurant_id FROM public.gm_restaurant_memberships
-            WHERE user_id = auth.uid() AND status = 'active'
+            SELECT restaurant_id FROM public.gm_restaurant_members
+            WHERE user_id = auth.uid()
         )
     );
 
@@ -173,8 +173,8 @@ CREATE POLICY "Users can manage rewards of their restaurants"
     ON public.loyalty_rewards FOR ALL
     USING (
         restaurant_id IN (
-            SELECT restaurant_id FROM public.gm_restaurant_memberships
-            WHERE user_id = auth.uid() AND status = 'active'
+            SELECT restaurant_id FROM public.gm_restaurant_members
+            WHERE user_id = auth.uid()
         )
     );
 
@@ -200,8 +200,8 @@ CREATE POLICY "Users can view redemptions of their restaurants"
     ON public.loyalty_redemptions FOR SELECT
     USING (
         restaurant_id IN (
-            SELECT restaurant_id FROM public.gm_restaurant_memberships
-            WHERE user_id = auth.uid() AND status = 'active'
+            SELECT restaurant_id FROM public.gm_restaurant_members
+            WHERE user_id = auth.uid()
         )
     );
 
@@ -209,7 +209,7 @@ CREATE POLICY "Users can manage redemptions of their restaurants"
     ON public.loyalty_redemptions FOR ALL
     USING (
         restaurant_id IN (
-            SELECT restaurant_id FROM public.gm_restaurant_memberships
-            WHERE user_id = auth.uid() AND status = 'active'
+            SELECT restaurant_id FROM public.gm_restaurant_members
+            WHERE user_id = auth.uid()
         )
     );

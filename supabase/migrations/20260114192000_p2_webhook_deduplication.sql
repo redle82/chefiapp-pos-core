@@ -95,5 +95,4 @@ BEGIN
 END $$;
 
 COMMENT ON TABLE gm_webhook_events IS 
-    'P2 Fix: Webhook event deduplication to prevent duplicate processing. ' ||
-    'Risk: R-024 | Status: ENFORCED | Date: 2026-01-14';
+    'P2 Fix: Webhook event deduplication to prevent duplicate processing. Risk: R-024 | Status: ENFORCED | Date: 2026-01-14';
