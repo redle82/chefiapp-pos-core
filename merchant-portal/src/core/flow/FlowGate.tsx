@@ -10,6 +10,7 @@ import {
     getActiveTenant,
     setActiveTenant,
     getTenantStatus,
+    isTenantSealed,
     type TenantResolutionResult,
 } from '../tenant/TenantResolver';
 import { Logger } from '../logger';
@@ -103,9 +104,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
                 // don't re-run DB membership checks in a loop. Just allow the page to render.
                 // (Selection page will seal tenant explicitly.)
                 if (isDevStableMode()) {
-                    const currentStatus = getTenantStatus();
-                    const activeId = getActiveTenant();
-                    if (location.pathname === '/app/select-tenant' && (!activeId || currentStatus !== 'ACTIVE')) {
+                    if (location.pathname === '/app/select-tenant' && !isTenantSealed()) {
                         if (mounted) setIsChecking(false);
                         return;
                     }
@@ -313,14 +312,11 @@ export function FlowGate({ children }: { children: ReactNode }) {
                 if (location.pathname.startsWith('/app') &&
                     !TENANT_EXEMPT_ROUTES.some(r => location.pathname.startsWith(r))) {
 
-                    const currentStatus = getTenantStatus();
-                    const activeId = getActiveTenant();
-
-                    if (!activeId || currentStatus !== 'ACTIVE') {
+                    if (!isTenantSealed()) {
                         Logger.critical('FlowGate: Sovereign Hard-Stop (Tenant Not Sealed)', {
                             path: location.pathname,
-                            activeId,
-                            currentStatus
+                            activeId: getActiveTenant(),
+                            currentStatus: getTenantStatus()
                         });
                         // Force Selection
                         navigate('/app/select-tenant', { replace: true });
@@ -519,7 +515,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
         checkFlow();
 
         return () => { mounted = false; };
-    }, [session, sessionLoading, location.pathname]); // CRITICAL: Remove navigate from deps (it's stable but causes re-renders)
+    }, [session, sessionLoading, location.pathname, location.search, navigate]); // navigate is stable; include to satisfy hook linting
 
     // --- RENDER ---
 

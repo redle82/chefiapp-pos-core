@@ -358,6 +358,19 @@ export function getActiveTenant(): string | null {
 }
 
 /**
+ * Tenant is considered "sealed" iff:
+ * - chefiapp_active_tenant exists
+ * - chefiapp_tenant_status === 'ACTIVE'
+ *
+ * This is the single formal prerequisite for allowing /app/* and booting the Kernel.
+ * Pure read-only helper (no side effects).
+ */
+export function isTenantSealed(): boolean {
+    const id = getActiveTenant();
+    return !!id && getTenantStatus() === 'ACTIVE';
+}
+
+/**
  * Set active tenant in TabIsolatedStorage (Seals Status as ACTIVE by default)
  */
 export function setActiveTenant(tenantId: string, status: TenantStatus = 'ACTIVE'): void {
