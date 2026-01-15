@@ -1,15 +1,17 @@
 /**
  * Cash Register - Sistema de Caixa Real
  * 
+ * [CLASSIFICATION: INFRASTRUCTURE ADAPTER]
+ * [AUTHORITY: HYBRID] (See DOMAIN_WRITE_AUTHORITY_CONTRACT.md)
+ * 
  * Gerencia abertura e fechamento de caixa com totais reais.
  * 
  * [ARCHITECTURE NOTE]
- * This engine supports two modes:
- * 1. Kernel Mode (Preferred): Routes state changes through TenantKernel.execute()
- * 2. Legacy Mode: Direct Supabase writes (backward compatible)
+ * This engine operates in HYBRID MODE (Law 2 Exception):
+ * 1. Direct Write (Projection): Writes to Supabase `gm_cash_registers` (Legacy)
+ * 2. Kernel Event (Truth): Routes `OPEN/CLOSE` events through `TenantKernel` (Sovereign)
  * 
- * When Kernel is provided, events are properly sourced through the Execution Fence.
- * When not, we fall back to direct DB writes for compatibility.
+ * WARNING: Does not enforce "truth" if Kernel is missing.
  */
 
 import { supabase } from '../supabase';

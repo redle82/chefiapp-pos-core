@@ -1,0 +1,75 @@
+# Domain Write Authority Contract
+>
+> **Status:** ACTIVE (HYBRID ENFORCED)
+> **Goal:** Transition to PURE KERNEL SOVEREIGNTY
+
+## 1. The Single Writer Principle (Law 1)
+
+**"No domain-relevant state SHALL be written outside the Kernel."**
+
+There is only one valid path for state mutation in the ChefIApp Universe:
+
+1. **Command** → `TenantKernel`
+2. **Logic** → `EventExecutor`
+3. **Truth** → `EventStore`
+4. **Reality** → `Projections` (Read Models)
+
+Any code writing directly to the database (`supabase.from(table).insert/update`) violates this law unless explicitly granted a **Transitional Exception**.
+
+---
+
+## 2. Transitional Dual-Write Exception (Law 2)
+
+Legacy engines (e.g., `CashRegisterEngine`) are permitted to write state directly to the database ONLY IF:
+
+1. **Simultaneity:** They attempt to invoke the Kernel immediately in the same operation context.
+2. **Event Emission:** A corresponding Domain Event is defined and handled by the Kernel.
+3. **Projection Alignment:** The direct write is treated conceptually as a "Pre-Projection" rather than the Source of Truth.
+4. **Classification:** The engine is marked as an **Infrastructure Adapter**, not a Domain Authority.
+
+**Current Exceptions:**
+
+- `CashRegisterEngine` (Write: `gm_cash_registers`, Event: `CASH_REGISTER_OPEN/CLOSE`)
+
+---
+
+## 3. The Kill Switch (Law 3)
+
+**"Every dual-write path MUST be controlled by a sovereign configuration."**
+
+The system must support a mode switch that disables direct writes and enforces pure Kernel routing.
+
+```typescript
+export const KERNEL_WRITE_MODE = process.env.VITE_KERNEL_MODE || 'HYBRID';
+// Modes:
+// 'HYBRID' -> Allow direct DB writes (Legacy) + Kernel Events
+// 'PURE'   -> Kernel Only. Direct DB writes throw Fatal Error.
+```
+
+---
+
+## 4. Truth Supremacy (Law 4)
+
+**"If State and Event diverge, the Event wins. Always."**
+
+In a forensic audit or system rebuild:
+
+- The **Event Log** is the absolute truth.
+- The **Database Tables** (`gm_orders`, `gm_cash_registers`) are merely cached views (Projections).
+- Any row in the database that cannot be derived from the Event Log is considered **Corrupted State** ("Zombie State").
+
+---
+
+## 5. Migration Protocol (The Path to Purity)
+
+To move from **HYBRID** to **PURE**:
+
+1. **Wired:** Ensure `TenantKernel` is injected into every Legacy Engine.
+2. **Inverted:** Update Legacy Engine to read its state *from* the Kernel's `InMemoryRepo` or Projections, not write to them.
+3. **Switched:** Set `KERNEL_WRITE_MODE = 'PURE'`.
+4. **Verified:** Run full regression suite.
+
+---
+
+**Signed,**
+*ChefIApp Governance Committee*
