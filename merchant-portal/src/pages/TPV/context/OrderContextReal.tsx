@@ -244,7 +244,6 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
 
         // DEV_STABLE_MODE: do not start realtime/polling while stabilizing Gate/Auth/Tenant.
         if (isDevStableMode()) {
-            Logger.info('DEV_STABLE_MODE: Realtime/Polling disabled', { context: 'OrderContext', tenantId: restaurantId });
             // Still do an initial load so UI can render deterministically.
             getActiveOrders(false);
             return;

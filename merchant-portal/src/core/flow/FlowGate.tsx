@@ -131,7 +131,9 @@ export function FlowGate({ children }: { children: ReactNode }) {
 
                 // Set User Context early
                 Logger.setContext({ userId: session.user.id });
-                Logger.debug('FlowGate: Members Query Result', { members });
+                if (!devStable || debug) {
+                    Logger.debug('FlowGate: Members Query Result', { members });
+                }
 
                 let hasOrg = false;
                 let status: OnboardingStatus = 'not_started';
