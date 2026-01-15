@@ -164,7 +164,11 @@ class LoggerService {
         // 3. Remote Ingestion (Production or Critical/Error/Warn)
         // Log 'warn', 'error', 'critical' to Supabase
         // Optional: Log 'info' if a flag is set? Keeping strict for now to save quota.
+        // DEV_STABLE_MODE: disable remote ingestion (fail-closed, quiet)
         if (['warn', 'error', 'critical'].includes(level)) {
+            // DEV_STABLE_MODE: no remote ingestion
+            const { isDevStableMode } = await import('../runtime/devStableMode');
+            if (isDevStableMode()) return;
             // DEDUPLICATION: Prevent Log Storms (409s)
             const dedupeKey = `${level}:${message}`;
             if (this.lastSentLog === dedupeKey && Date.now() - this.lastSentTime < 5000) {

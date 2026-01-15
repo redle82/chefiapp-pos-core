@@ -65,6 +65,7 @@ export const SystemGuardianProvider = ({ children }: { children: React.ReactNode
 
     // --- CLEAR OLD ERRORS ---
     useEffect(() => {
+        if (isDevStableMode()) return;
         const interval = setInterval(() => {
             setErrors(prev => prev.filter(e => Date.now() - e.timestamp < 60000)); // Clear > 1min
         }, 30000);
