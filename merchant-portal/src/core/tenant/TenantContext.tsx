@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { supabase } from '../supabase';
 import { useSupabaseAuth } from '../auth/useSupabaseAuth';
+import { getActiveTenant, getTenantStatus, setActiveTenant } from './TenantResolver';
 
 /**
  * 🏢 TenantContext — Multi-Tenant Data Isolation (Phase 4)
@@ -90,11 +91,17 @@ export function TenantProvider({ children }: TenantProviderProps) {
         isMultiTenant: false,
     });
 
+    // In-flight guard: prevent concurrent resolveTenants() calls (StrictMode/remount safety)
+    const resolveInFlightRef = useRef<Promise<void> | null>(null);
+
     // ========================================================================
     // RESOLVE TENANTS
     // ========================================================================
 
     const resolveTenants = useCallback(async () => {
+        if (resolveInFlightRef.current) return;
+
+        const p = (async () => {
         if (!session?.user?.id) {
             setState({
                 tenantId: null,
@@ -150,16 +157,24 @@ export function TenantProvider({ children }: TenantProviderProps) {
             });
 
             // 4. Determine active tenant
-            const { getTabIsolated } = await import('../storage/TabIsolatedStorage');
-            const cachedTenantId = getTabIsolated('chefiapp_restaurant_id');
+            const cachedTenantId = getActiveTenant();
+            const cachedStatus = getTenantStatus();
             let activeTenantId: string | null = null;
 
-            if (cachedTenantId && memberships.some(m => m.restaurant_id === cachedTenantId)) {
+            if (cachedTenantId && cachedStatus === 'ACTIVE' && memberships.some(m => m.restaurant_id === cachedTenantId)) {
                 activeTenantId = cachedTenantId;
-            } else if (memberships.length > 0) {
+            } else if (memberships.length === 1) {
+                // ✅ Single-tenant: auto-seleção é permitida
                 activeTenantId = memberships[0].restaurant_id;
-                const { setTabIsolated } = await import('../storage/TabIsolatedStorage');
-                setTabIsolated('chefiapp_restaurant_id', activeTenantId);
+                // Seal tenant via the canonical resolver keys (prevents Gate/Domain drift)
+                setActiveTenant(activeTenantId);
+            } else {
+                /**
+                 * 🔒 MULTI-TENANT SOVEREIGNTY
+                 * Em multi-tenant, TenantContext não pode auto-selecionar nem escrever cache.
+                 * A seleção deve ocorrer em /app/select-tenant e ser selada pelo FlowGate/TenantResolver.
+                 */
+                activeTenantId = null;
             }
 
             // 5. Fetch FULL active restaurant data if we have an ID
@@ -191,6 +206,14 @@ export function TenantProvider({ children }: TenantProviderProps) {
                 isLoading: false,
                 error: error instanceof Error ? error.message : 'Erro ao resolver tenant',
             }));
+        }
+        })();
+
+        resolveInFlightRef.current = p;
+        try {
+            await p;
+        } finally {
+            resolveInFlightRef.current = null;
         }
     }, [session?.user?.id]);
 
@@ -228,8 +251,8 @@ export function TenantProvider({ children }: TenantProviderProps) {
             return;
         }
 
-        const { setTabIsolated } = await import('../storage/TabIsolatedStorage');
-        setTabIsolated('chefiapp_restaurant_id', newTenantId);
+        // Canonical seal (Gate truth). Prevents AppDomainWrapper tenantId=null after selection.
+        setActiveTenant(newTenantId);
 
         // Optimistic switch + Fetch
         setState(prev => ({ ...prev, isLoading: true }));
