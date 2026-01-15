@@ -3,6 +3,21 @@
 > **Status:** ACTIVE (HYBRID ENFORCED)
 > **Goal:** Transition to PURE KERNEL SOVEREIGNTY
 
+## 0. Authority Precedence (Law 0)
+
+**"If two components are capable of writing state, the one closer to the Domain Logic has absolute authority."**
+
+The hierarchy of authority is absolute:
+`UI < Infrastructure < Application < Kernel < EventStore`
+
+- **UI:** Can only request intent. Cannot determine outcome.
+- **Infrastructure (Adapters):** Can only translate intent. Cannot invent logic.
+- **Application (Services):** Can orchestrate flow. Cannot bypass Kernel rules.
+- **Kernel:** The Sovereign Decider.
+- **EventStore:** The Immortal Record.
+
+---
+
 ## 1. The Single Writer Principle (Law 1)
 
 **"No domain-relevant state SHALL be written outside the Kernel."**
@@ -68,6 +83,20 @@ To move from **HYBRID** to **PURE**:
 2. **Inverted:** Update Legacy Engine to read its state *from* the Kernel's `InMemoryRepo` or Projections, not write to them.
 3. **Switched:** Set `KERNEL_WRITE_MODE = 'PURE'`.
 4. **Verified:** Run full regression suite.
+
+---
+
+## 6. Enforcement Mechanism (Runtime Law)
+
+**"This is not a bug. This is a constitutional violation."**
+
+Any direct database write detected in **PURE** mode MUST:
+
+1. **Throw Immediately:** Abort the transaction.
+2. **Crash Loudly:** Include full stack trace and `TenantId`.
+3. **Report Critical:** Log as `CRITICAL_CONSTITUTIONAL_BREACH`.
+
+This ensures that architectural drift is treated as a severe system failure, preventing silent regression.
 
 ---
 
