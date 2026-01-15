@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
-import { OnboardingCore } from '../onboarding/OnboardingCore';
+
 import { getTabIsolated } from '../storage/TabIsolatedStorage';
+import { isDevStableMode } from '../runtime/devStableMode';
 
 // --- TYPES ---
 
@@ -72,6 +73,8 @@ export const SystemGuardianProvider = ({ children }: { children: React.ReactNode
 
     // --- PULSE CHECK (The Heartbeat) ---
     const checkPulse = useCallback(async () => {
+        // DEV_STABLE_MODE: stop pulse spam while stabilizing Gate/Auth/Tenant.
+        if (isDevStableMode()) return;
         const now = Date.now();
         console.log('[SystemGuardian] Checking Pulse...');
 
@@ -144,6 +147,7 @@ export const SystemGuardianProvider = ({ children }: { children: React.ReactNode
 
     // Initial Pulse
     useEffect(() => {
+        if (isDevStableMode()) return;
         checkPulse();
         // Optional: periodic pulse
         // const i = setInterval(checkPulse, 60000);

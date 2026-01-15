@@ -43,6 +43,43 @@
       console.log('Buffer polyfilled (inline ESM-compatible)');
     })();
   </script>
+
+  <!-- SOVEREIGN DEV SAFETY (pre-bundle): DEV must NEVER run with a PWA/Workbox Service Worker.
+       Policy contract (SSOT): merchant-portal/src/core/runtime/devStableMode.ts
+       This runs BEFORE the Vite bundle so it can stop "workbox no route found" storms. -->
+  <script>
+    (function () {
+      try {
+        var host = location.hostname;
+        var isDev =
+          host === 'localhost' ||
+          host === '127.0.0.1' ||
+          host.endsWith('.local');
+
+        if (!isDev) return;
+        if (!('serviceWorker' in navigator)) return;
+
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (r) { try { r.unregister(); } catch (e) {} });
+        });
+
+        if ('caches' in window) {
+          caches.keys().then(function (keys) {
+            keys.forEach(function (k) { try { caches.delete(k); } catch (e) {} });
+          });
+        }
+
+        // Also ensure we don't keep a "controller" alive
+        if (navigator.serviceWorker.controller) {
+          try { navigator.serviceWorker.controller.postMessage({ type: 'DEV_SW_DISABLE' }); } catch (e) {}
+        }
+
+        console.info('[SW] DEV preflight: unregister + clear caches (before bundle)');
+      } catch (e) {
+        // non-fatal
+      }
+    })();
+  </script>
 </head>
 
 <body>

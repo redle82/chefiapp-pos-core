@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../../core/supabase';
 import { useSupabaseAuth } from '../../core/auth/useSupabaseAuth';
@@ -7,16 +7,14 @@ import type { UserState, OnboardingStatus } from './CoreFlow';
 import {
     resolve as resolveTenant,
     extractTenantFromPath,
-    isLegacyRoute,
-    buildTenantPath,
-    getBasePathFromLegacy,
     getActiveTenant,
     setActiveTenant,
     getTenantStatus,
     type TenantResolutionResult,
 } from '../tenant/TenantResolver';
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 import { LoadingState } from '../../ui/design-system/components/LoadingState';
+import { isDevStableMode } from '../runtime/devStableMode';
 
 /**
  * FlowGate - O Executor do Contrato (DB-First Edition + Multi-Tenant)
@@ -46,18 +44,28 @@ const TENANT_EXEMPT_ROUTES = [
     '/app/access-denied',
 ];
 
-export function FlowGate({ children }: { children: any }) {
+export function FlowGate({ children }: { children: ReactNode }) {
     const { session, loading: sessionLoading } = useSupabaseAuth();
     const location = useLocation();
     const navigate = useNavigate();
 
     // Controlled Loading State prevents flicker
     const [isChecking, setIsChecking] = useState(true);
+    // Fuse to prevent storm loops in DEV (StrictMode + rapid redirects + transient fetch errors)
+    const lastCheckRef = useRef<{ key: string; ts: number }>({ key: '', ts: 0 });
 
     useEffect(() => {
         let mounted = true;
 
         const checkFlow = async () => {
+            // FUSE: do not re-run the full flow check more than once per 800ms for the same session+path
+            const fuseKey = `${session?.user?.id || 'anon'}::${location.pathname}`;
+            const now = Date.now();
+            if (lastCheckRef.current.key === fuseKey && now - lastCheckRef.current.ts < 800) {
+                return;
+            }
+            lastCheckRef.current = { key: fuseKey, ts: now };
+
             // 1. Wait for Auth Session Protocol
             if (sessionLoading) {
                 console.log('[FlowGate] ⏳ Session Loading...');
@@ -91,6 +99,18 @@ export function FlowGate({ children }: { children: any }) {
             }
 
             try {
+                // DEV_STABLE_MODE: if user is already on /app/select-tenant and tenant isn't sealed yet,
+                // don't re-run DB membership checks in a loop. Just allow the page to render.
+                // (Selection page will seal tenant explicitly.)
+                if (isDevStableMode()) {
+                    const currentStatus = getTenantStatus();
+                    const activeId = getActiveTenant();
+                    if (location.pathname === '/app/select-tenant' && (!activeId || currentStatus !== 'ACTIVE')) {
+                        if (mounted) setIsChecking(false);
+                        return;
+                    }
+                }
+
                 // --- ESTADO 2: COM SESSÃO (DB Lookup) ---
                 // A. Buscar Membro (Vínculo User -> Restaurant)
                 const { data: members, error: memberError } = await supabase
@@ -107,17 +127,64 @@ export function FlowGate({ children }: { children: any }) {
                 let hasOrg = false;
                 let status: OnboardingStatus = 'not_started';
                 let restaurantId = null;
+                const membershipCount = members?.length || 0;
 
                 if (members && members.length > 0) {
                     hasOrg = true;
-                    restaurantId = members[0].restaurant_id;
+                    /**
+                     * 🔒 MULTI-TENANT SOVEREIGNTY
+                     * NUNCA auto-selecionar tenant/restaurante a partir de members[0].
+                     *
+                     * Se há múltiplos tenants, a única fonte válida é:
+                     * - tenant selado (chefiapp_active_tenant + status ACTIVE), ou
+                     * - seleção explícita na tela /app/select-tenant
+                     */
+                    const sealedTenantId = getActiveTenant();
+                    const sealedStatus = getTenantStatus();
+
+                    // ✅ Se for multi-tenant e não existe tenant selado, a única ação válida é seleção explícita.
+                    // Evita que o "base flow" empurre para /onboarding/* (invalida E2E) e garante que a Gate de tenant é a próxima etapa.
+                    if (membershipCount > 1 && !(sealedTenantId && sealedStatus === 'ACTIVE')) {
+                        Logger.info('FlowGate: Needs Tenant Selection (Pre-Base)', {
+                            userId: session.user.id,
+                            membershipCount,
+                            pathname: location.pathname,
+                        });
+                        // CRITICAL: Guard against navigation loop
+                        if (location.pathname !== '/app/select-tenant') {
+                            navigate('/app/select-tenant', { replace: true });
+                        }
+                        if (mounted) setIsChecking(false);
+                        return;
+                    }
+
+                    if (membershipCount === 1) {
+                        restaurantId = members[0].restaurant_id;
+                    } else if (sealedTenantId && sealedStatus === 'ACTIVE') {
+                        restaurantId = sealedTenantId;
+                    } else {
+                        // Multi-tenant sem seleção: NÃO definir restaurantId aqui.
+                        // handleTenantResolution() vai redirecionar para /app/select-tenant.
+                        restaurantId = null;
+                        Logger.error(
+                            'CRITICAL_TENANT_DRIFT_PREVENTED',
+                            null,
+                            {
+                                reason: 'MULTI_TENANT_NO_SELECTION',
+                                membershipCount,
+                                pathname: location.pathname,
+                            }
+                        );
+                    }
 
                     // B. Buscar Restaurante (Status Real)
-                    const { data: restaurant, error: restError } = await supabase
-                        .from('gm_restaurants')
-                        .select('onboarding_completed_at')
-                        .eq('id', restaurantId)
-                        .single();
+                    const { data: restaurant, error: restError } = restaurantId
+                        ? await supabase
+                            .from('gm_restaurants')
+                            .select('onboarding_completed_at')
+                            .eq('id', restaurantId)
+                            .single()
+                        : { data: null, error: null };
 
                     if (!restError && restaurant) {
                         // Sovereign Logic: Determine exact status
@@ -212,7 +279,7 @@ export function FlowGate({ children }: { children: any }) {
                 }
 
                 // C. Sincronizar Cache Local (Tab-Isolated Storage)
-                if (restaurantId) {
+                if (restaurantId && (membershipCount === 1 || (getActiveTenant() && getTenantStatus() === 'ACTIVE'))) {
                     const { setTabIsolated } = await import('../storage/TabIsolatedStorage');
                     setTabIsolated('chefiapp_restaurant_id', restaurantId);
                     setTabIsolated('chefiapp_setup_status', status);
@@ -233,23 +300,41 @@ export function FlowGate({ children }: { children: any }) {
                 if (baseDecision.type === 'REDIRECT') {
                     // CRITICAL: Guard against navigation loop
                     if (location.pathname !== baseDecision.to) {
-                        Logger.info(`FlowGate: Blocked (Base)`, { reason: baseDecision.reason, to: baseDecision.to, state });
-                        console.warn('[FlowGate] 🚫 REDIRECT BLOCK (Base):', { reason: baseDecision.reason, to: baseDecision.to, state });
+                        Logger.info(`FlowGate: Redirecting (Base)`, { reason: baseDecision.reason, to: baseDecision.to, state });
+                        console.warn('[FlowGate] ➡️ REDIRECT (Base):', { reason: baseDecision.reason, to: baseDecision.to, state });
                         navigate(baseDecision.to, { replace: true });
                     }
                     if (mounted) setIsChecking(false);
                     return;
                 }
 
+                // 🛑 SOVEREIGN HARD-STOP (INCIDENT #004 FIX)
+                // Nenhuma rota /app/* monta antes de tenantId + restaurantId estarem selados.
+                if (location.pathname.startsWith('/app') &&
+                    !TENANT_EXEMPT_ROUTES.some(r => location.pathname.startsWith(r))) {
+
+                    const currentStatus = getTenantStatus();
+                    const activeId = getActiveTenant();
+
+                    if (!activeId || currentStatus !== 'ACTIVE') {
+                        Logger.critical('FlowGate: Sovereign Hard-Stop (Tenant Not Sealed)', {
+                            path: location.pathname,
+                            activeId,
+                            currentStatus
+                        });
+                        // Force Selection
+                        navigate('/app/select-tenant', { replace: true });
+                        if (mounted) setIsChecking(false);
+                        return;
+                    }
+                }
+
                 if (location.pathname.startsWith('/app')) {
                     // SOVEREIGN CHECK 1: If Tenant is ACTIVE, SelectTenant is FORBIDDEN
                     const currentStatus = getTenantStatus();
                     if (currentStatus === 'ACTIVE' && location.pathname === '/app/select-tenant') {
-                        // CRITICAL: Guard against navigation loop
-                        if (location.pathname !== '/app/dashboard') {
-                            Logger.warn('FlowGate: Sovereign Redirect (Tenant Already Active)', { to: '/app/dashboard' });
-                            navigate('/app/dashboard', { replace: true });
-                        }
+                        Logger.warn('FlowGate: Sovereign Redirect (Tenant Already Active)', { to: '/app/dashboard' });
+                        navigate('/app/dashboard', { replace: true });
                         if (mounted) setIsChecking(false);
                         return;
                     }
@@ -278,7 +363,8 @@ export function FlowGate({ children }: { children: any }) {
                 // GATING ENFORCEMENT (Sovereign Level 2.0)
                 const { getTabIsolated } = await import('../storage/TabIsolatedStorage');
                 const storedLevel = getTabIsolated('chefiapp_sovereign_level'); // founder | bronze | silver | gold
-                const storedModules = JSON.parse(getTabIsolated('chefiapp_modules_unlocked') || '[]');
+                // Note: stored modules are currently not used in this gate; keep read out to avoid unused-var lint.
+                // const storedModules = JSON.parse(getTabIsolated('chefiapp_modules_unlocked') || '[]');
 
                 // Rules of the Gate
                 if (storedLevel === 'founder') {
@@ -342,7 +428,7 @@ export function FlowGate({ children }: { children: any }) {
             // 🔒 SOVEREIGNTY CHECK: Se tenant já está ACTIVE, não re-resolver
             const activeTenantId = getActiveTenant();
             const tenantStatus = getTenantStatus();
-            
+
             if (activeTenantId && tenantStatus === 'ACTIVE') {
                 // Tenant já está selado - não re-executar resolução
                 Logger.debug('FlowGate: Tenant already sealed (ACTIVE)', {

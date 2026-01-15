@@ -11,15 +11,17 @@ import { OrderEngine, type Order as RealOrder, type OrderItemInput } from '../..
 import { PaymentEngine, type PaymentMethod } from '../../../core/tpv/PaymentEngine';
 import { CashRegisterEngine, type CashRegister } from '../../../core/tpv/CashRegister';
 import { supabase } from '../../../core/supabase';
-import { DbWriteGate } from '../../../core/governance/DbWriteGate';
+
 import { useNetworkStatus } from '../../../core/queue/useNetworkStatus';
-import { Logger } from '../../../core/logger/Logger'; // Opus 6.0 Logger
+import { Logger } from '../../../core/logger'; // Opus 6.0 Logger
 import type { Order, OrderItem } from './OrderTypes';
 import { useOfflineOrder } from './OfflineOrderContext';
 import { v4 as uuidv4 } from 'uuid';
 import { getTabIsolated, setTabIsolated, removeTabIsolated } from '../../../core/storage/TabIsolatedStorage';
 import { ReconnectManager } from '../../../core/realtime/ReconnectManager';
 import { OrderContext } from './OrderContext'; // 👈 IMPORT THE TOKEN
+import { useKernel } from '../../../core/kernel/KernelContext';
+import { isDevStableMode } from '../../../core/runtime/devStableMode';
 
 interface OrderContextType {
     orders: Order[];
@@ -115,6 +117,7 @@ function mapLocalStatusToReal(status: Order['status']): RealOrder['status'] {
 }
 
 export function OrderProvider({ children, restaurantId: propRestaurantId }: { children: ReactNode, restaurantId?: string }) {
+    const { kernel } = useKernel();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     // SOVEREIGN: restaurantId comes from Gate layer (TenantContext -> AppDomainWrapper)
@@ -238,6 +241,14 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
     // Subscription & Polling
     useEffect(() => {
         if (!restaurantId) return;
+
+        // DEV_STABLE_MODE: do not start realtime/polling while stabilizing Gate/Auth/Tenant.
+        if (isDevStableMode()) {
+            Logger.info('DEV_STABLE_MODE: Realtime/Polling disabled', { context: 'OrderContext', tenantId: restaurantId });
+            // Still do an initial load so UI can render deterministically.
+            getActiveOrders(false);
+            return;
+        }
 
         Logger.info('Setting up Realtime & Polling', { context: 'OrderContext', tenantId: restaurantId });
         getActiveOrders(false); // Initial load (with spinner)
@@ -412,21 +423,35 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
         }
 
         // Criar novo pedido (já valida caixa e mesa no OrderEngine)
-        const realOrder = await OrderEngine.createOrder({
+        if (!kernel) throw new Error('Kernel System not ready');
+
+        const orderId = uuidv4(); // Generate ID externally (Sovereign ID)
+
+        // SOVEREIGNTY: Execute Order Creation via Kernel
+        // This triggers 'persistOrder' effect which calls the atomic RPC
+        await kernel.execute({
+            entity: 'ORDER',
+            entityId: orderId,
+            event: 'CREATE',
+            // Context payload for Projection Effect
             restaurantId,
-            tableNumber: orderInput.tableNumber,
-            tableId: orderInput.tableId,
-            operatorId: operatorId || undefined,
-            cashRegisterId: cashRegisterId || undefined,
-            notes: orderInput.items?.find(i => i.notes)?.notes,
             items: (orderInput.items || []).map(item => ({
                 productId: item.productId,
                 name: item.name,
+                unitPrice: item.price, // Normalized to 'unitPrice' for effect
                 priceCents: item.price,
                 quantity: item.quantity,
                 notes: item.notes,
             })),
+            tableNumber: orderInput.tableNumber,
+            tableId: orderInput.tableId,
+            paymentMethod: 'cash',
+            syncMetadata: orderInput.syncMetadata
         });
+
+        // Fetch the projected order (Active Record pattern for now)
+        // This ensures we get the DB-generated short_id
+        const realOrder = await OrderEngine.getOrderById(orderId);
 
         const localOrder = mapRealOrderToLocalOrder(realOrder);
 
@@ -443,6 +468,7 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
         if (!restaurantId) throw new Error('Restaurant ID not set');
 
         if (isOffline) {
+            // ... (keep offline logic)
             Logger.info('Offline Mode: Adding item locally', { orderId, item });
             await updateOfflineOrder(orderId, 'ADD_ITEM', {
                 ...item,
@@ -470,7 +496,27 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             return;
         }
 
-        await OrderEngine.addItemToOrder(orderId, item, restaurantId);
+        if (!kernel) throw new Error('Kernel System not ready');
+
+        // SOVEREIGNTY: Execute Item Addition via Kernel
+        await kernel.execute({
+            entity: 'ORDER',
+            entityId: orderId,
+            event: 'ADD_ITEM',
+            restaurantId, // Context
+            item: {
+                productId: item.productId,
+                name: item.name,
+                priceCents: item.priceCents || item.price, // handle both
+                unitPrice: item.priceCents || item.price,
+                quantity: item.quantity,
+                notes: item.notes,
+                consumptionGroupId: item.consumptionGroupId,
+                modifiers: item.modifiers,
+                categoryName: item.categoryName
+            }
+        });
+
         await getActiveOrders(); // Refresh
     };
 
@@ -479,6 +525,7 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
         if (!restaurantId) throw new Error('Restaurant ID not set');
 
         if (isOffline) {
+            // ... (keep offline logic)
             Logger.info('Offline Mode: Removing item locally', { orderId, itemId });
             await updateOfflineOrder(orderId, 'REMOVE_ITEM', {
                 itemId,
@@ -497,7 +544,17 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             return;
         }
 
-        await OrderEngine.removeItemFromOrder(orderId, itemId, restaurantId);
+        if (!kernel) throw new Error('Kernel System not ready');
+
+        // SOVEREIGNTY: Execute Item Removal via Kernel
+        await kernel.execute({
+            entity: 'ORDER',
+            entityId: orderId,
+            event: 'REMOVE_ITEM',
+            restaurantId,
+            itemId: itemId
+        });
+
         await getActiveOrders(); // Refresh
     };
 
@@ -506,6 +563,7 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
         if (!restaurantId) throw new Error('Restaurant ID not set');
 
         if (isOffline) {
+            // ... (keep offline logic)
             Logger.info('Offline Mode: Updating item quantity locally', { orderId, itemId, quantity });
             await updateOfflineOrder(orderId, 'UPDATE_QTY', {
                 itemId,
@@ -528,7 +586,25 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             return;
         }
 
-        await OrderEngine.updateItemQuantity(orderId, itemId, quantity, restaurantId);
+        if (!kernel) throw new Error('Kernel System not ready');
+
+        // Find Unit Price for Total Calculation
+        // Use local state (orders) or fetch? Local state is faster.
+        const order = orders.find(o => o.id === orderId);
+        const item = order?.items.find(i => i.id === itemId);
+        const unitPriceCents = item?.price; // OrderItem.price is int cents
+
+        // SOVEREIGNTY: Execute Item Update via Kernel
+        await kernel.execute({
+            entity: 'ORDER',
+            entityId: orderId,
+            event: 'UPDATE_ITEM_QTY',
+            restaurantId,
+            itemId,
+            quantity,
+            unitPriceCents: unitPriceCents // Can be undefined if not found (Effect deals with it, or triggers error)
+        });
+
         await getActiveOrders(); // Refresh
     };
 
@@ -544,30 +620,44 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             switch (action) {
                 case 'send':
                 case 'prepare':
-                    // P1-4 FIX: Aguardar confirmação do Core antes de atualizar UI
-                    await OrderEngine.updateOrderStatus(orderId, 'IN_PREP', restaurantId);
+                    if (!kernel) throw new Error('Kernel System not ready');
+                    // SOVEREIGNTY: Finalize Order -> Status: IN_PREP (preparing)
+                    await kernel.execute({
+                        entity: 'ORDER',
+                        entityId: orderId,
+                        event: 'FINALIZE',
+                        restaurantId,
+                        targetStatus: 'preparing' // DB Value
+                    });
                     // UI será atualizada apenas quando getActiveOrders() for chamado
                     break;
 
                 case 'ready':
-                    // P1-4 FIX: Aguardar confirmação do Core antes de atualizar UI
-                    await OrderEngine.updateOrderStatus(orderId, 'READY', restaurantId);
+                    if (!kernel) throw new Error('Kernel System not ready');
+                    // SOVEREIGNTY: Mark Ready
+                    await kernel.execute({
+                        entity: 'ORDER',
+                        entityId: orderId,
+                        event: 'MARK_READY',
+                        restaurantId,
+                        targetStatus: 'ready'
+                    });
                     // UI será atualizada apenas quando getActiveOrders() for chamado
                     break;
 
                 case 'serve':
+                    if (!kernel) throw new Error('Kernel System not ready');
                     // Update to SERVED (Final Kitchen/Table State)
                     const nowServed = new Date().toISOString();
-                    await DbWriteGate.update(
-                        'OrderContextReal',
-                        'gm_orders',
-                        {
-                            status: 'served',
-                            served_at: nowServed
-                        },
-                        { id: orderId },
-                        { tenantId: restaurantId }
-                    );
+                    // SOVEREIGNTY: Mark Served
+                    await kernel.execute({
+                        entity: 'ORDER',
+                        entityId: orderId,
+                        event: 'SERVE',
+                        restaurantId,
+                        targetStatus: 'served',
+                        metadata: { served_at: nowServed }
+                    });
                     break;
 
                 case 'pay':
@@ -642,17 +732,21 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                         throw new Error(`Valor de pagamento (${amountCents}) excede o total do pedido (${dbOrder.totalCents})`);
                     }
 
-                    await PaymentEngine.processPayment({
-                        orderId,
+                    await kernel.execute({
+                        entity: 'ORDER',
+                        entityId: orderId,
+                        event: isPartial ? 'REGISTER_PAYMENT' : 'PAY',
                         restaurantId,
+                        // Context for persistPayment Effect
                         cashRegisterId: activeRegisterId,
-                        amountCents, // Pode ser parcial ou total
+                        amountCents,
                         method: (payload?.method || 'cash') as PaymentMethod,
                         metadata: {
                             operatorId: operatorId || undefined,
-                            isPartial, // Flag para indicar que é pagamento parcial
+                            isPartial,
                         },
-                        idempotencyKey: key
+                        idempotencyKey: key,
+                        isPartial
                     });
 
                     // Cleanup key on success (allows new payment if order re-opened later)
@@ -713,11 +807,18 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                         throw new Error('Pedido deve ser pago antes de fechar. Use "Cobrar" primeiro.');
                     }
                     // Se já está pago, apenas atualizar status (redundante, mas seguro)
-                    await OrderEngine.updateOrderStatus(orderId, 'PAID', restaurantId);
+                    // REMOVED LEGACY WRITE: kernel.execute('PAY') already sets status to PAID via Effect.
                     break;
 
                 case 'cancel':
-                    await OrderEngine.updateOrderStatus(orderId, 'CANCELLED', restaurantId);
+                    if (!kernel) throw new Error('Kernel System not ready');
+                    // SOVEREIGNTY: Cancel Order
+                    await kernel.execute({
+                        entity: 'ORDER',
+                        entityId: orderId,
+                        event: 'CANCEL',
+                        restaurantId
+                    });
                     // Limpar pedido ativo se cancelado
                     const currentActiveCancel = getTabIsolated('chefiapp_active_order_id');
                     if (currentActiveCancel === orderId) {
@@ -753,11 +854,14 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             throw new Error('Restaurant ID or Operator ID not set');
         }
 
+        if (!kernel) throw new Error('Kernel System not ready');
+
         try {
             const register = await CashRegisterEngine.openCashRegister({
                 restaurantId,
                 openingBalanceCents,
                 openedBy: currentOperatorId,
+                kernel // SOVEREIGNTY: Pass Kernel
             });
 
             setCashRegisterId(register.id);
@@ -781,11 +885,14 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             throw new Error('Missing required IDs');
         }
 
+        if (!kernel) throw new Error('Kernel System not ready');
+
         await CashRegisterEngine.closeCashRegister({
             cashRegisterId,
             restaurantId,
             closingBalanceCents,
             closedBy: operatorId,
+            kernel // SOVEREIGNTY: Pass Kernel
         });
 
         setCashRegisterId(null);
