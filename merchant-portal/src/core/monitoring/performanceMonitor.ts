@@ -7,6 +7,7 @@
 import { Logger } from '../logger';
 import { supabase } from '../supabase';
 import { getTabIsolated } from '../storage/TabIsolatedStorage';
+import { isDevStableMode } from '../runtime/devStableMode';
 
 export interface PerformanceMetric {
     name: string;
@@ -27,7 +28,6 @@ class PerformanceMonitor {
         if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
             this.initObservers();
             // DEV_STABLE_MODE: do not start remote flush loop
-            const { isDevStableMode } = require('../runtime/devStableMode');
             if (!isDevStableMode()) {
                 this.startFlushLoop();
             }
@@ -104,7 +104,6 @@ class PerformanceMonitor {
      */
     private async flushMetricsToSupabase() {
         // DEV_STABLE_MODE: zero remote flush attempts
-        const { isDevStableMode } = require('../runtime/devStableMode');
         if (isDevStableMode()) return;
         if (this.remoteFlushDisabled) return;
         if (this.metrics.length === 0) return;
