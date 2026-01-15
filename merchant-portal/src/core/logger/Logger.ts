@@ -229,9 +229,6 @@ class LoggerService {
                 // Log other errors but don't crash
                 console.error('[Logger] Failed to push log (non-409):', err);
             }
-        } catch (err) {
-            // Failsafe: Logger should never crash the app
-            console.error('[Logger] Failed to push log:', err);
         }
     }
     public debug(message: string, data?: Record<string, any>) {
