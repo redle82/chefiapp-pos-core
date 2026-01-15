@@ -25,7 +25,6 @@ if (import.meta.env.DEV) {
 // DEV HARDENING: if a previous PWA Service Worker is still registered, it can hijack
 // dev routes (e.g. /registerSW.js) and spam Workbox routing logs.
 // We explicitly unregister SWs in DEV_STABLE_MODE to prevent loop storms.
-import { isDevStableMode } from './core/runtime/devStableMode';
 if (isDevStableMode() && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   (async () => {
     try {
