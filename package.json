@@ -18,6 +18,8 @@
     "test:massive": "WORLD_FULL=true jest tests/massive --runInBand --testTimeout=300000",
     "test:pilot": "jest tests/massive --runInBand --testTimeout=60000",
     "test:stress": "WORLD_STRESS=true jest tests/massive --runInBand --testTimeout=600000",
+    "audit:writes": "npx ts-node scripts/audit-writes.ts",
+    "audit:supreme": "npm run test:massive && npm run audit:writes",
     "audit:report": "WORLD_FULL=true jest tests/massive/global.end_to_end.audit.test.ts --runInBand --testTimeout=300000",
     "audit:stress": "WORLD_STRESS=true jest tests/massive/global.end_to_end.audit.test.ts --runInBand --testTimeout=600000",
     "audit:pilot": "jest tests/massive/global.end_to_end.audit.test.ts --runInBand --testTimeout=60000",

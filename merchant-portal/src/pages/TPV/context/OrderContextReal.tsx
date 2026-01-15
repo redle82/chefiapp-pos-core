@@ -11,6 +11,7 @@ import { OrderEngine, type Order as RealOrder, type OrderItemInput } from '../..
 import { PaymentEngine, type PaymentMethod } from '../../../core/tpv/PaymentEngine';
 import { CashRegisterEngine, type CashRegister } from '../../../core/tpv/CashRegister';
 import { supabase } from '../../../core/supabase';
+import { DbWriteGate } from '../../../core/governance/DbWriteGate';
 import { useNetworkStatus } from '../../../core/queue/useNetworkStatus';
 import { Logger } from '../../../core/logger/Logger'; // Opus 6.0 Logger
 import type { Order, OrderItem } from './OrderTypes';
@@ -557,10 +558,16 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                 case 'serve':
                     // Update to SERVED (Final Kitchen/Table State)
                     const nowServed = new Date().toISOString();
-                    await supabase.from('gm_orders').update({
-                        status: 'served',
-                        served_at: nowServed
-                    }).eq('id', orderId);
+                    await DbWriteGate.update(
+                        'OrderContextReal',
+                        'gm_orders',
+                        {
+                            status: 'served',
+                            served_at: nowServed
+                        },
+                        { id: orderId },
+                        { tenantId: restaurantId }
+                    );
                     break;
 
                 case 'pay':

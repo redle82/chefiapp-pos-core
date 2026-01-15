@@ -18,6 +18,7 @@ import { supabase } from '../supabase';
 import { PaymentEngine } from './PaymentEngine';
 import { Logger } from '../logger/Logger';
 import { logAuditEvent } from '../audit/logAuditEvent';
+import { DbWriteGate } from '../governance/DbWriteGate';
 
 // TODO: Import from Kernel context when wired
 // import type { TenantKernel } from '../../../../core-engine/kernel/TenantKernel';
@@ -82,9 +83,11 @@ export class CashRegisterEngine {
         }
 
         // Criar caixa
-        const { data: registerData, error } = await supabase
-            .from('gm_cash_registers')
-            .insert({
+        // [GOVERNANCE] Authorized Hybrid Write
+        const { data: registerData, error } = await DbWriteGate.insert(
+            'CashRegisterEngine',
+            'gm_cash_registers',
+            {
                 restaurant_id: input.restaurantId,
                 name: input.name || 'Caixa Principal',
                 status: 'open',
@@ -92,7 +95,9 @@ export class CashRegisterEngine {
                 opened_by: input.openedBy,
                 opening_balance_cents: input.openingBalanceCents,
                 total_sales_cents: 0,
-            })
+            },
+            { tenantId: input.restaurantId }
+        )
             .select()
             .single();
 
@@ -128,6 +133,8 @@ export class CashRegisterEngine {
                         opening_balance_cents: input.openingBalanceCents,
                         opened_by: input.openedBy,
                         name: input.name || 'Caixa Principal',
+                        // Pass source to link this hybrid write
+                        source: 'CashRegisterEngine'
                     }
                 });
                 Logger.info('CashRegister: Event sourced via Kernel', { registerId: registerData.id });
@@ -185,17 +192,20 @@ export class CashRegisterEngine {
         );
 
         // Fechar caixa
-        const { data: registerData, error } = await supabase
-            .from('gm_cash_registers')
-            .update({
+        // [GOVERNANCE] Authorized Hybrid Write
+        const { data: registerData, error } = await DbWriteGate.update(
+            'CashRegisterEngine',
+            'gm_cash_registers',
+            {
                 status: 'closed',
                 closed_at: new Date().toISOString(),
                 closed_by: input.closedBy,
                 closing_balance_cents: input.closingBalanceCents,
                 total_sales_cents: totalSalesCents,
-            })
-            .eq('id', input.cashRegisterId)
-            .eq('restaurant_id', input.restaurantId)
+            },
+            { id: input.cashRegisterId, restaurant_id: input.restaurantId },
+            { tenantId: input.restaurantId }
+        )
             .select()
             .single();
 

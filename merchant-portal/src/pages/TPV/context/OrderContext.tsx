@@ -4,6 +4,7 @@ import { GlobalEventStore } from '../../../core/events/EventStore';
 import { CoreExecutor } from '../../../core/events/CoreExecutor';
 import type { EventEnvelope } from '../../../core/events/SystemEvents';
 import { supabase } from '../../../core/supabase';
+import { DbWriteGate } from '../../../core/governance/DbWriteGate';
 import { getTabIsolated } from '../../../core/storage/TabIsolatedStorage';
 
 // --- Types (SAFE IMPORT) ---
@@ -135,14 +136,19 @@ export function OrderProvider({ children }: { children: ReactNode }) {
         if (rId && !demo) {
             try {
                 // A. Header (gm_orders)
-                const { error: headerError } = await supabase.from('gm_orders').insert({
-                    id: order.id,
-                    restaurant_id: rId,
-                    table_number: typeof order.tableNumber === 'number' ? order.tableNumber : 0,
-                    status: 'IN_PREP',
-                    total_cents: toCents(order.total),
-                    source: 'tpv'
-                });
+                const { error: headerError } = await DbWriteGate.insert(
+                    'OrderContext',
+                    'gm_orders',
+                    {
+                        id: order.id,
+                        restaurant_id: rId,
+                        table_number: typeof order.tableNumber === 'number' ? order.tableNumber : 0,
+                        status: 'IN_PREP',
+                        total_cents: toCents(order.total),
+                        source: 'tpv'
+                    },
+                    { tenantId: rId }
+                );
 
                 if (headerError) {
                     // T3: Handle "one open order per table" constraint violation
@@ -165,7 +171,12 @@ export function OrderProvider({ children }: { children: ReactNode }) {
                         subtotal_cents: toCents(item.price * item.quantity) // REQUIRED FOR TRIGGER
                     }));
 
-                    const { error: itemsError } = await supabase.from('gm_order_items').insert(dbItems);
+                    const { error: itemsError } = await DbWriteGate.insert(
+                        'OrderContext',
+                        'gm_order_items',
+                        dbItems,
+                        { tenantId: rId }
+                    );
                     if (itemsError) throw itemsError;
                 }
 
@@ -270,17 +281,23 @@ export function OrderProvider({ children }: { children: ReactNode }) {
                 if (action === 'add_item' && payload?.items) {
                     const newTotalCents = toCents(payload.total);
 
-                    await supabase.from('gm_orders')
-                        .update({
+                    await DbWriteGate.update(
+                        'OrderContext',
+                        'gm_orders',
+                        {
                             total_cents: newTotalCents,
                             updated_at: new Date().toISOString()
-                        })
-                        .eq('id', orderId)
-                        .eq('restaurant_id', rId);
+                        },
+                        { id: orderId, restaurant_id: rId },
+                        { tenantId: rId }
+                    );
 
-                    await supabase.from('gm_order_items')
-                        .delete()
-                        .eq('order_id', orderId);
+                    await DbWriteGate.delete(
+                        'OrderContext',
+                        'gm_order_items',
+                        { order_id: orderId },
+                        { tenantId: rId }
+                    );
 
                     if (payload.items.length > 0) {
                         const dbItems = payload.items.map((item: any) => ({
@@ -292,7 +309,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
                             subtotal_cents: toCents(item.price * item.quantity) // REQUIRED FOR TRIGGER
                         }));
 
-                        await supabase.from('gm_order_items').insert(dbItems);
+                        await DbWriteGate.insert('OrderContext', 'gm_order_items', dbItems, { tenantId: rId });
                     }
                     return;
                 }
@@ -305,7 +322,13 @@ export function OrderProvider({ children }: { children: ReactNode }) {
                 if (action === 'cancel') updatePayload.status = 'CANCELLED';
 
                 if (Object.keys(updatePayload).length > 1) {
-                    await supabase.from('gm_orders').update(updatePayload).eq('id', orderId).eq('restaurant_id', rId);
+                    await DbWriteGate.update(
+                        'OrderContext',
+                        'gm_orders',
+                        updatePayload,
+                        { id: orderId, restaurant_id: rId },
+                        { tenantId: rId }
+                    );
                 }
             } catch (err) {
                 console.error('[Supabase] Action Sync Failed, Queueing:', err);
