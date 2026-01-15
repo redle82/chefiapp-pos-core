@@ -33,21 +33,31 @@ export type EventType =
   // INVENTORY events (Metabolic Loop)
   | "INVENTORY_CONSUMED"
   | "INVENTORY_RESTOCKED"
-  | "INVENTORY_ADJUSTED";
+  | "INVENTORY_ADJUSTED"
+  // CASH_REGISTER events (Shift Management)
+  | "CASH_REGISTER_OPENED"
+  | "CASH_REGISTER_CLOSED"
+  | "CASH_REGISTER_DROP"    // Sangria
+  | "CASH_REGISTER_ADD";    // Suprimento
+
+export interface EventMetadata {
+  causation_id?: string;
+  correlation_id?: string;
+  actor_ref?: string;
+  idempotency_key?: string;
+  hash_prev?: string;
+  hash?: string;
+  server_timestamp?: string; // Audit timestamp
+}
 
 export interface CoreEvent {
-  event_id: string; // UUID, unique across all events
+  event_id: string; // UUID
   stream_id: StreamId;
-  stream_version: number; // Incremental per stream, for optimistic concurrency
+  stream_version: number;
   type: EventType;
-  payload: Record<string, any>; // Event-specific data
-  occurred_at: Date;
-  causation_id?: string; // ID of command/event that caused this
-  correlation_id?: string; // ID for tracing related events
-  actor_ref?: string; // Optional external reference (not auth, just reference)
-  idempotency_key?: string; // Optional key for idempotency
-  hash_prev?: string; // Hash of previous event in stream (anti-tamper chain)
-  hash?: string; // Hash of this event (anti-tamper chain)
+  payload: Record<string, any>;
+  occurred_at: Date; // Keep as Date object for internal domain math
+  meta: EventMetadata; // [REFACTOR] Nested Metadata
 }
 
 export interface EventStore {
@@ -82,10 +92,9 @@ export interface EventStore {
   getStreamVersion(stream_id: StreamId): Promise<number>;
 }
 
-export interface EventMetadata {
+export interface StreamMetadata {
   stream_id: StreamId;
   current_version: number;
   last_event_id?: string;
   last_event_at?: Date;
 }
-

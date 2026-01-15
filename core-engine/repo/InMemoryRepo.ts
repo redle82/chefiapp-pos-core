@@ -5,7 +5,7 @@
  * Uses optimistic concurrency control with version numbers.
  */
 
-import type { Session, Order, OrderItem, Payment, Transaction } from "./types";
+import type { Session, Order, OrderItem, Payment, Transaction, CashRegister } from "./types";
 import { ConcurrencyConflictError } from "./errors";
 
 export class InMemoryRepo {
@@ -13,6 +13,7 @@ export class InMemoryRepo {
   private orders = new Map<string, Order>();
   private orderItems = new Map<string, OrderItem[]>();
   private payments = new Map<string, Payment[]>();
+  private cashRegisters = new Map<string, CashRegister>();
   private transactions = new Map<string, Transaction>();
   private locks = new Map<string, Promise<void>>(); // Simple mutex per entity
 
@@ -146,7 +147,7 @@ export class InMemoryRepo {
     // Restore all entities from snapshot
     for (const [key, snapshotValue] of tx.snapshot.entries()) {
       const [entityType, id] = key.split(":");
-      
+
       if (snapshotValue === undefined || snapshotValue === null) {
         // Entity didn't exist before transaction - remove it
         switch (entityType) {
@@ -234,7 +235,7 @@ export class InMemoryRepo {
    */
   async withLock<T>(entityIdOrIds: string | string[], fn: () => Promise<T>): Promise<T> {
     // Normalizar para array e ordenar (ordem determinística previne deadlock)
-    const entityIds = Array.isArray(entityIdOrIds) 
+    const entityIds = Array.isArray(entityIdOrIds)
       ? [...entityIdOrIds].sort() // Sort para ordem determinística
       : [entityIdOrIds];
 
@@ -457,6 +458,22 @@ export class InMemoryRepo {
       .reduce((sum, p) => sum + p.amount_cents, 0);
   }
 
+  // TASK-1.5: Direct Lookup to avoid O(N) Global Scan
+  getPaymentById(paymentId: string): Payment | undefined {
+    // This is still technically O(N) relative to orders if we don't index payments globally.
+    // Optimizing for simple in-memory: Scan all payments maps? No, build a reverse index?
+    // For now, let's keep the scan INSIDE the repo to encapsulate the ugly.
+    // Ideally: Maintain a `paymentId -> orderId` map or `paymentId -> Payment` map.
+
+    // Fast path: Scan all order buckets (Plan B)
+    for (const payments of this.payments.values()) {
+      const found = payments.find(p => p.id === paymentId);
+      if (found) return this.clonePayment(found);
+    }
+    return undefined;
+  }
+
+
   // ============================================================================
   // CLONING (Deep Clone for Isolation)
   // ============================================================================
@@ -514,13 +531,52 @@ export class InMemoryRepo {
   // UTILITY
   // ============================================================================
 
+  // ============================================================================
+  // CASH REGISTER OPERATIONS
+  // ============================================================================
+
+  getCashRegister(id: string): CashRegister | undefined {
+    const register = this.cashRegisters.get(id);
+    return register ? this.cloneCashRegister(register) : undefined;
+  }
+
+  saveCashRegister(register: CashRegister, txId?: string): void {
+    if (txId) {
+      const tx = this.transactions.get(txId);
+      if (tx) {
+        const key = `CASH_REGISTER:${register.id}`;
+        if (!tx.snapshot.has(key)) {
+          const existing = this.cashRegisters.get(register.id);
+          tx.snapshot.set(key, existing ? this.cloneCashRegister(existing) : null);
+        }
+        tx.changes.set(key, this.cloneCashRegister(register));
+      }
+    } else {
+      this.cashRegisters.set(register.id, this.cloneCashRegister(register));
+    }
+  }
+
+  private cloneCashRegister(register: CashRegister): CashRegister {
+    return JSON.parse(JSON.stringify(register)) as CashRegister;
+  }
+
   clear(): void {
     this.sessions.clear();
     this.orders.clear();
     this.orderItems.clear();
     this.payments.clear();
+    this.cashRegisters.clear();
     this.transactions.clear();
     this.locks.clear();
+  }
+
+  getDebugStats() {
+    return {
+      sessions: this.sessions.size,
+      orders: this.orders.size,
+      payments: this.payments.size,
+      cashRegisters: this.cashRegisters.size,
+    };
   }
 }
 

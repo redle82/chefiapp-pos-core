@@ -1,175 +1,69 @@
 # Route Manifest
 >
-> **Status:** LIVING | **Last Audit:** 2026-01-14
+> **Canonical Registry of Application Routes**
 
-This document defines all routes in ChefIApp and their guard requirements.
+Reflects the structure defined in `App.tsx`.
 
----
+## 1. Public Routes
 
-## Route Hierarchy
+*Accessible without authentication.*
 
-```
-App.tsx
-├── L0: Public Routes (no auth)
-├── L1: Auth Routes (auth only)
-├── L2: Satellite Routes (special gate)
-└── L3: Sovereign /app/* (full gate chain)
-```
+| Path | Component | Context | Tenant Required | Note |
+|------|-----------|---------|-----------------|------|
+| `/` | `LandingPage` | Public | No | Marketing Home |
+| `/public/*` | `PublicPages` | SovereignBoundary | No | External Menu/Links |
+| `/health` | `HealthCheckPage` | None | No | Uptime Monitoring |
 
----
+## 2. Identity & Onboarding
 
-## 🟢 PUBLIC ROUTES (No Gate Required)
+*Requires Auth (or specifically handles Auth).*
 
-| Route | Component | Purpose |
-|-------|-----------|---------|
-| `/` | `LandingPage` | Marketing |
-| `/health` | `HealthCheckPage` | System health |
-| `/auth` | `AuthPage` | Login/Signup |
-| `/public/*` | `PublicPages` | Public menus |
-| `/read/*` | `ReaderLayout` | Content hub |
-| `/join` | `ScreenInviteCode` | Staff invite |
+| Path | Component | Gates | Notes |
+|------|-----------|-------|-------|
+| `/auth` | `AuthPage` | None | Login/Signup entry |
+| `/join` | `ScreenInviteCode` | None | Staff Invite Entry |
+| `/onboarding/*` | `OnboardingWizard` | Auth | Creation of Restaurant/Profile |
+| `/migration/*` | `MigrationWizard` | Auth | Data Import Flow |
+| `/activation` | `ActivationPage` | Auth | Subscription/Payment Flow |
 
-**Status:** ✅ Correct - No gate needed
+## 3. Dedicated/Standalone
 
----
+*Specialized views running outside the main App Layout.*
 
-## 🟡 ONBOARDING ROUTES (Auth, No Tenant)
+| Path | Component | Gates | Notes |
+|------|-----------|-------|-------|
+| `/kds/:restaurantId` | `KDSStandalone` | None (Token/Auth) | **Kitchen Display**. Optimized for TV. No UI Chrome. |
+| `/read/*` | `ReaderLayout` | None | Content Hub / Help Center |
 
-| Route | Component | Purpose |
-|-------|-----------|---------|
-| `/onboarding/*` | `OnboardingWizard` | New user setup |
-| `/activation` | `ActivationPage` | Tenant activation |
-| `/bootstrap` | `BootstrapPage` | System init |
-| `/migration/wizard` | `MigrationWizard` | Data migration |
+## 4. The Sovereign Runtime (`/app`)
 
-**Status:** ✅ Correct - Auth required, tenant optional
+*The Main Application. ALL routes here are protected by the Kernel Chain.*
 
----
+**Boot Chain:** `FlowGate` → `TenantProvider` → `AppDomainWrapper` → `RequireActivation`.
 
-## 🔴 SOVEREIGN /app/* ROUTES (Full Gate Chain)
+| Path | Component | Tool Permission | Description |
+|------|-----------|-----------------|-------------|
+| `/app/dashboard` | `DashboardZero` | None | Main Command Center |
+| `/app/select-tenant` | `SelectTenantPage` | None | Switcher (if multi-tenant) |
+| `/app/tpv` | `TPV` | `tpv` | Point of Sale Terminal |
+| `/app/kds` | `KDS` | `kds` | Kitchen Management (Manager View) |
+| `/app/menu` | `MenuManager` | `menu` | Product & Catalog Management |
+| `/app/orders` | `PulseList` | `orders` | Live Order Stream |
+| `/app/staff` | `StaffModule` | `staff` | Team Management |
+| `/app/settings` | `Settings` | `settings` | System Configuration |
+| `/app/reports/*` | `Reports` | `reports` | Financial & Operational Data |
+| `/app/audit` | `SystemStatusPage` | `admin` | Internal System Health |
 
-**Required Guard Chain:**
+## 5. Operation Status Routes
 
-```
-FlowGate → TenantProvider → AppDomainWrapper → OperationGate
-```
+*Validation screens for blocked states.*
 
-| Route | Component | Guard | Status |
-|-------|-----------|-------|--------|
-| `/app/dashboard` | `DashboardZero` | GuardTool:- | ✅ |
-| `/app/tpv` | `TPV` | GuardTool:tpv | ✅ |
-| `/app/kds` | `KDS` | GuardTool:kds | ✅ |
-| `/app/menu` | `MenuManager` | GuardTool:menu | ✅ |
-| `/app/orders` | `PulseList` | GuardTool:orders | ✅ |
-| `/app/staff` | `StaffModule` | GuardTool:staff | ✅ |
-| `/app/settings` | `Settings` | - | ✅ |
-| `/app/team` | `StaffPage` | - | ✅ |
-| `/app/reports/*` | Various | - | ✅ |
-| `/app/select-tenant` | `SelectTenantPage` | Before OperationGate | ✅ |
-| `/app/access-denied` | `AccessDeniedPage` | Before OperationGate | ✅ |
-
-**Status:** ✅ All /app/* routes properly guarded
+| Path | Component | Trigger |
+|------|-----------|---------|
+| `/app/paused` | `SystemPausedPage` | OperationStatus = 'paused' (Operational Hours) |
+| `/app/suspended` | `SystemSuspendedPage` | OperationStatus = 'suspended' (Billing/Risk) |
 
 ---
-
-## ⚠️ SATELLITE ROUTES (Special Handling)
-
-### `/kds/:restaurantId` (KDS Standalone)
-
-```tsx
-<Route path="/kds/:restaurantId" element={<KDSStandalone />} />
-```
-
-| Guard | Status | Reason |
-|-------|--------|--------|
-| FlowGate | ❌ Bypassed | By design - kiosk mode |
-| TenantProvider | ❌ N/A | Uses URL param |
-| Auth | ⚠️ None | **RISK: Public access** |
-
-**Verdict:** ⚠️ INTENTIONAL BYPASS - KDS is designed for unauthenticated kiosk use.
-Tenant comes from URL param, not session.
-
-**Recommendation:** Document this as intentional. Consider adding shared secret validation.
-
----
-
-### `/staff/*` (Root Level Staff)
-
-```tsx
-<Route path="staff/*" element={<StaffModule />} />
-```
-
-| Guard | Status |
-|-------|--------|
-| FlowGate | ❌ Missing |
-| TenantProvider | ❌ Missing |
-| AppDomainWrapper | ❌ Missing |
-
-**Verdict:** ⚠️ POTENTIAL ISSUE - Staff module at root bypasses all gates.
-
-**Recommendation:** Remove or protect. Staff is already at `/app/staff` with full guards.
-
----
-
-## 🔧 DEV ROUTES
-
-| Route | Component | Purpose |
-|-------|-----------|---------|
-| `/dev/wizard` | `WizardPage` | Internal dev tool |
-| `/wizard` | Redirect → `/dev/wizard` | Legacy |
-
-**Status:** ✅ Internal only
-
----
-
-## 🔀 LEGACY REDIRECTS
-
-| Old Route | New Route |
-|-----------|-----------|
-| `/login` | `/auth` |
-| `/signup` | `/auth` |
-| `/start` | `/onboarding/start` |
-| `/dashboard` | `/app/dashboard` |
-| `/tpv` | `/app/tpv` |
-| `/kds` | `/app/kds` |
-| `/menu` | `/app/menu` |
-| `/pulses` | `/app/orders` |
-
-**Status:** ✅ Correct - Maintains backward compatibility
-
----
-
-## 🛑 ISSUES DETECTED
-
-### Issue 1: Orphan Route `/staff/*` (Root Level)
-
-**Location:** `App.tsx:154-160`
-**Problem:** Staff module accessible without any gates
-**Solution:** Remove route (duplicate of `/app/staff`)
-
-```diff
-- <Route path="staff/*" element={...} />
-```
-
-### Issue 2: KDS Standalone Unauthenticated
-
-**Location:** `App.tsx:131-142`
-**Problem:** Anyone with URL can access KDS
-**Status:** INTENTIONAL (kiosk mode)
-**Mitigation:** Consider adding shared secret param
-
----
-
-## ✅ ROUTE AUDIT VERDICT
-
-| Check | Status |
-|-------|--------|
-| /app/* has FlowGate | ✅ |
-| /app/* has TenantProvider | ✅ |
-| /app/* has AppDomainWrapper | ✅ |
-| /app/* has OperationGate | ✅ |
-| No phantom routes | ✅ |
-| No orphan routes | ⚠️ 1 (staff/*) |
-| No illegitimate access | ⚠️ 1 (KDS intentional) |
-
-**Overall:** ✅ READY (with 1 minor cleanup)
+**Verification Rule:**
+Any new route added to `App.tsx` MUST be registered here.
+Routes inside `/app` MUST NOT be accessible if Tenant is not resolved.

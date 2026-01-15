@@ -27,14 +27,16 @@ export class PostgresEventStore implements EventStore {
 
         const query = `
       INSERT INTO event_store 
-      (event_id, stream_type, stream_id, stream_version, event_type, payload, meta, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      (event_id, stream_type, stream_id, stream_version, event_type, payload, meta, created_at, idempotency_key)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       ON CONFLICT (stream_type, stream_id, stream_version) DO NOTHING
     `;
 
-        // Extract standard meta fields
-        const { causation_id, correlation_id, actor_ref, idempotency_key, hash, hash_prev } = event;
-        const metaObj = { causation_id, correlation_id, actor_ref, idempotency_key, hash, hash_prev };
+        // [HARDENING] Extract meta from nested object
+        const metaObj = event.meta;
+
+        // [HARDENING] Extract Idempotency Key explicitly
+        const idempotencyKey = metaObj.idempotency_key || null;
 
         const values = [
             event.event_id,
@@ -44,7 +46,8 @@ export class PostgresEventStore implements EventStore {
             event.type,
             JSON.stringify(event.payload),
             JSON.stringify(metaObj),
-            event.occurred_at
+            event.occurred_at,
+            idempotencyKey
         ];
 
         try {
@@ -54,10 +57,19 @@ export class PostgresEventStore implements EventStore {
                 throw new Error(`Concurrency Exception: Stream ${event.stream_id} version ${event.stream_version} already exists (DB Conflict).`);
             }
         } catch (err: any) {
+            // Handle Idempotency Collision
+            if (err.constraint === 'idx_event_store_idempotency') {
+                // Clean Error Code for Domain Handling
+                const e = new Error(`IDEMPOTENCY_COLLISION: Event with key ${idempotencyKey} already exists`);
+                (e as any).code = 'IDEMPOTENCY_COLLISION';
+                throw e;
+            }
+
             if (err.constraint === 'event_store_event_id_key' || err.code === '23505') {
                 if (err.detail?.includes('event_id')) {
                     throw new Error(`Duplicate Event ID: ${event.event_id}`);
                 }
+                // Fallback for version conflict
                 throw new Error(`Concurrency Exception: Stream ${event.stream_id} version ${event.stream_version} already exists.`);
             }
             throw err;
@@ -133,7 +145,12 @@ export class PostgresEventStore implements EventStore {
     }
 
     private mapRowToEvent(row: any): CoreEvent {
+        // [HARDENING] Reconstruct nested Metadata
         const meta = row.meta || {};
+
+        // Ensure critical audit fields are present from columns or meta
+        if (row.idempotency_key) meta.idempotency_key = row.idempotency_key;
+
         return {
             event_id: row.event_id,
             stream_id: `${row.stream_type}:${row.stream_id}`,
@@ -141,12 +158,7 @@ export class PostgresEventStore implements EventStore {
             type: row.event_type as any,
             payload: row.payload,
             occurred_at: new Date(row.created_at),
-            causation_id: meta.causation_id,
-            correlation_id: meta.correlation_id,
-            actor_ref: meta.actor_ref,
-            idempotency_key: meta.idempotency_key,
-            hash: meta.hash,
-            hash_prev: meta.hash_prev
+            meta: meta // [REFACTOR] Injected as nested object
         };
     }
 }

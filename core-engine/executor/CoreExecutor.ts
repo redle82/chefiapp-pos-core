@@ -12,6 +12,7 @@
 import sessionMachine from "../../state-machines/session.state-machine.json";
 import orderMachine from "../../state-machines/order.state-machine.json";
 import paymentMachine from "../../state-machines/payment.state-machine.json";
+import cashRegisterMachine from "../../state-machines/cash-register.state-machine.json";
 import { InMemoryRepo } from "../repo/InMemoryRepo";
 import { executeGuard, type GuardContext } from "../guards";
 import { executeEffect, type EffectContext } from "../effects";
@@ -21,10 +22,12 @@ const machines = {
   SESSION: sessionMachine as any,
   ORDER: orderMachine as any,
   PAYMENT: paymentMachine as any,
+  CASH_REGISTER: cashRegisterMachine as any,
 } as const;
 
 export interface TransitionRequest {
-  entity: "SESSION" | "ORDER" | "PAYMENT";
+  tenantId: string; // [TENANCY-CONTRACT] Required for StreamId and Persistence Scope
+  entity: "SESSION" | "ORDER" | "PAYMENT" | "CASH_REGISTER";
   entityId: string;
   event: string;
   context?: Record<string, any>;
@@ -40,7 +43,7 @@ export interface TransitionResult {
 }
 
 export class CoreExecutor {
-  constructor(private repo: InMemoryRepo) {}
+  constructor(private repo: InMemoryRepo) { }
 
   async transition(
     request: TransitionRequest
@@ -61,12 +64,12 @@ export class CoreExecutor {
     // TASK-1.4.2: Para PAYMENT:CONFIRMED, travar tanto Payment quanto Order
     // Determinar quais entidades travar
     let lockIds: string[] = [entityId];
-    
+
     if (entity === "PAYMENT" && event === "CONFIRMED") {
       // Buscar order_id do payment antes de travar
       // Precisamos buscar sem lock primeiro para obter o order_id
       let orderId: string | null = null;
-      
+
       // Tentar obter order_id do contexto primeiro
       if (context.order_id) {
         orderId = context.order_id as string;
@@ -83,7 +86,7 @@ export class CoreExecutor {
           }
         }
       }
-      
+
       if (orderId) {
         // TASK-1.4.2: Travar ambos Payment e Order (ordem determinística)
         lockIds = [entityId, orderId].sort();
@@ -253,7 +256,7 @@ export class CoreExecutor {
         };
       } catch (error: any) {
         this.repo.rollback(txId);
-        
+
         // TASK-1.3.3: Detect and handle ConcurrencyConflictError
         if (error instanceof ConcurrencyConflictError) {
           return {
@@ -264,7 +267,7 @@ export class CoreExecutor {
             error: `Concurrency conflict: ${error.message}`,
           };
         }
-        
+
         return {
           success: false,
           previousState: currentState || "",
@@ -299,6 +302,10 @@ export class CoreExecutor {
         }
         return null;
       }
+      case "CASH_REGISTER": {
+        const register = this.repo.getCashRegister(entityId);
+        return register?.state || null;
+      }
       default:
         return null;
     }
@@ -330,7 +337,7 @@ export class CoreExecutor {
         const tx = (this.repo as any).transactions.get(txId);
         const key = `ORDER:${entityId}`;
         let order: any;
-        
+
         if (tx && tx.changes.has(key)) {
           // Use order from transaction (preserves changes from effects like calculateTotal)
           order = tx.changes.get(key);
@@ -338,7 +345,7 @@ export class CoreExecutor {
           // Get fresh clone if not in transaction yet
           order = this.repo.getOrder(entityId);
         }
-        
+
         if (order) {
           order.state = newState as any;
           this.repo.saveOrder(order, txId);
@@ -363,7 +370,17 @@ export class CoreExecutor {
         }
         break;
       }
+      case "CASH_REGISTER": {
+        const register = this.repo.getCashRegister(entityId);
+        if (register) {
+          register.state = newState as any;
+          if (newState === "OPEN") {
+            register.opened_at = new Date();
+          }
+          this.repo.saveCashRegister(register, txId);
+        }
+        break;
+      }
     }
   }
 }
-

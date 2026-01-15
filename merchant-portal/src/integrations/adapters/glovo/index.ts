@@ -3,7 +3,7 @@
  */
 
 export { GlovoAdapter } from './GlovoAdapter';
-export { GlovoOAuth } from './GlovoOAuth';
+
 export type {
   GlovoOrder,
   GlovoOrderItem,

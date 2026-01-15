@@ -46,6 +46,19 @@ export interface Payment {
   version: number; // Optimistic concurrency
 }
 
+export interface CashRegister {
+  id: string;
+  restaurant_id: string;
+  name: string;
+  state: "CLOSED" | "OPEN";
+  opening_balance_cents: number;
+  current_balance_cents: number; // Dynamic: opening + adds - drops
+  total_sales_cents: number;
+  opened_by?: string;
+  opened_at?: Date;
+  version: number;
+}
+
 export interface Transaction {
   id: string;
   snapshot: Map<string, any>; // Snapshot of entities before transaction

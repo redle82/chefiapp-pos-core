@@ -145,118 +145,139 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // 1. Get RAW Body for Signature Verification 
+    // (Crucial: req.json() parses and changes formatting, breaking HMAC)
+    const rawBody = await req.text();
+
+    // 2. Security Check (HMAC)
+    // Pass the RAW string to verification. 
+    // NOTE: This runs BEFORE parsing JSON to ensure we reject bad payloads early.
+    const isVerified = await verifyGlovoSignature(req, rawBody);
+    if (!isVerified) {
+      console.error('[webhook-glovo] ⛔ Signature Mismatch');
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
+    // 3. Parse JSON for processing
+    let payload;
     try {
-      // 1. Get RAW Body for Signature Verification 
-      // (Crucial: req.json() parses and changes formatting, breaking HMAC)
-      const rawBody = await req.text();
+      payload = JSON.parse(rawBody);
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 });
+    }
 
-      // 2. Security Check (HMAC)
-      // Pass the RAW string to verification. 
-      // NOTE: This runs BEFORE parsing JSON to ensure we reject bad payloads early.
-      const isVerified = await verifyGlovoSignature(req, rawBody);
-      if (!isVerified) {
-        console.error('[webhook-glovo] ⛔ Signature Mismatch');
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-      }
+    console.log('[webhook-glovo] Received Verified Payload');
 
-      // 3. Parse JSON for processing
-      let payload;
-      try {
-        payload = JSON.parse(rawBody);
-      } catch {
-        return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 });
-      }
+    // 4. Extrair order (pode estar em payload.order ou ser o payload direto)
+    const order: GlovoOrder = (payload as any).order || payload;
 
-      console.log('[webhook-glovo] Received Verified Payload');
-
-      // 2. Extrair order (pode estar em payload.order ou ser o payload direto)
-      const order: GlovoOrder = (payload as any).order || payload;
-
-      // 3. Validate
-      if (!isValidGlovoOrder(order)) {
-        console.error('[webhook-glovo] Invalid payload structure');
-        return new Response(JSON.stringify({ error: 'Invalid payload' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      // 4. Create Supabase client
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
-      // 5. Store in database
-      const { error: insertError } = await supabase
-        .from('integration_orders')
-        .upsert({
-          external_id: order.id,
-          source: 'glovo',
-          reference: order.id, // Glovo usa o ID como referência
-          restaurant_id: order.restaurant_id || null,
-          event_type: 'order.created',
-          status: order.status.toLowerCase(),
-          customer_name: order.customer.name,
-          customer_phone: order.customer.phone,
-          customer_email: order.customer.email || null,
-          delivery_address: `${order.delivery.address.address}, ${order.delivery.address.city}`,
-          delivery_type: 'delivery', // Glovo é sempre delivery
-          items: order.items,
-          total_cents: Math.round(order.total * 100), // Converter para centavos
-          currency: order.currency,
-          payment_method: 'online', // Assumir online (ajustar se necessário)
-          payment_status: 'pending',
-          instructions: order.instructions,
-          raw_payload: payload,
-          received_at: new Date().toISOString(),
-        }, {
-          onConflict: 'external_id,source',
-        });
-
-      if (insertError) {
-        console.error('[webhook-glovo] DB error:', insertError);
-        // Não retorna erro para o Glovo - evita retry loop
-      }
-
-      // 6. Broadcast via Realtime (para frontend escutar)
-      const channel = supabase.channel('integration-events');
-      await channel.send({
-        type: 'broadcast',
-        event: 'order.received',
-        payload: {
-          source: 'glovo',
-          orderId: order.id,
-          reference: order.id,
-          eventType: 'order.created',
-          customerName: order.customer.name,
-          total: order.total,
-          deliveryType: 'delivery',
-          status: order.status,
-        },
-      });
-
-      console.log(`[webhook-glovo] ✅ Processed: order ${order.id} (${order.status})`);
-
-      // 7. Responde OK para Glovo
-      return new Response(JSON.stringify({
-        success: true,
-        orderId: order.id,
-      }), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Connection': 'keep-alive',
-        },
-      });
-
-    } catch (err) {
-      console.error('[webhook-glovo] Error:', err);
-      return new Response(JSON.stringify({
-        error: 'Internal error',
-        message: err instanceof Error ? err.message : 'Unknown'
-      }), {
-        status: 500,
+    // 5. Validate
+    if (!isValidGlovoOrder(order)) {
+      console.error('[webhook-glovo] Invalid payload structure');
+      return new Response(JSON.stringify({ error: 'Invalid payload' }), {
+        status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
-  });
+
+    // 6. Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // [P1 FIX] DEDUPE CHECK - Prevent duplicate processing
+    // If order already exists with same external_id, skip processing
+    const { data: existingOrder } = await supabase
+      .from('integration_orders')
+      .select('id, status')
+      .eq('external_id', order.id)
+      .eq('source', 'glovo')
+      .single();
+
+    if (existingOrder) {
+      // Already processed - return OK to prevent Glovo retry
+      console.log(`[webhook-glovo] ⏭️ Duplicate Ignored: order ${order.id} already exists`);
+      return new Response(JSON.stringify({
+        success: true,
+        orderId: order.id,
+        dedupe: true,
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // 7. Store in database (upsert as fallback safety)
+    const { error: insertError } = await supabase
+      .from('integration_orders')
+      .upsert({
+        external_id: order.id,
+        source: 'glovo',
+        reference: order.id, // Glovo usa o ID como referência
+        restaurant_id: order.restaurant_id || null,
+        event_type: 'order.created',
+        status: order.status.toLowerCase(),
+        customer_name: order.customer.name,
+        customer_phone: order.customer.phone,
+        customer_email: order.customer.email || null,
+        delivery_address: `${order.delivery.address.address}, ${order.delivery.address.city}`,
+        delivery_type: 'delivery', // Glovo é sempre delivery
+        items: order.items,
+        total_cents: Math.round(order.total * 100), // Converter para centavos
+        currency: order.currency,
+        payment_method: 'online', // Assumir online (ajustar se necessário)
+        payment_status: 'pending',
+        instructions: order.instructions,
+        raw_payload: payload,
+        received_at: new Date().toISOString(),
+      }, {
+        onConflict: 'external_id,source',
+      });
+
+    if (insertError) {
+      console.error('[webhook-glovo] DB error:', insertError);
+      // Não retorna erro para o Glovo - evita retry loop
+    }
+
+    // 8. Broadcast via Realtime (para frontend escutar)
+    const channel = supabase.channel('integration-events');
+    await channel.send({
+      type: 'broadcast',
+      event: 'order.received',
+      payload: {
+        source: 'glovo',
+        orderId: order.id,
+        reference: order.id,
+        eventType: 'order.created',
+        customerName: order.customer.name,
+        total: order.total,
+        deliveryType: 'delivery',
+        status: order.status,
+      },
+    });
+
+    console.log(`[webhook-glovo] ✅ Processed: order ${order.id} (${order.status})`);
+
+    // 9. Responde OK para Glovo
+    return new Response(JSON.stringify({
+      success: true,
+      orderId: order.id,
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Connection': 'keep-alive',
+      },
+    });
+
+  } catch (err) {
+    console.error('[webhook-glovo] Error:', err);
+    return new Response(JSON.stringify({
+      error: 'Internal error',
+      message: err instanceof Error ? err.message : 'Unknown'
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+});

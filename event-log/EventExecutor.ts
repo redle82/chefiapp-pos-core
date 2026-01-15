@@ -4,20 +4,16 @@
  * Integrates CoreExecutor with EventStore.
  * Transitions generate events; state is rebuilt from events.
  */
-
 import { CoreExecutor, type TransitionRequest, type TransitionResult } from "../core-engine/executor/CoreExecutor";
 import { InMemoryRepo } from "../core-engine/repo/InMemoryRepo";
 import type { EventStore, CoreEvent, StreamId } from "./types";
 import { rebuildState } from "../projections";
-import { randomUUID } from "crypto";
+import { ExecutionContext } from "../core-engine/kernel/ExecutionContext";
 
-// Fallback for environments without randomUUID
-function generateUUID(): string {
-  if (typeof randomUUID === "function") {
-    return randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-}
+// Robust UUID Generator (Browser + Node)
+const generateUUID = (): string =>
+  globalThis.crypto?.randomUUID?.() ??
+  `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 export class EventExecutor {
   private coreExecutor: CoreExecutor;
@@ -25,26 +21,44 @@ export class EventExecutor {
 
   constructor(
     private eventStore: EventStore,
-    repo?: InMemoryRepo
+    repo: InMemoryRepo,
+    private boundTenantId: string,   // [FENCE] Structural Binding
+    private boundExecutionId: string // [FENCE] Lifecycle Binding
   ) {
-    this.repo = repo || new InMemoryRepo();
+    this.repo = repo;
     this.coreExecutor = new CoreExecutor(this.repo);
   }
 
   /**
    * Execute transition and generate event
+   * [ECC] Enforced Execution Context
    */
-  async transition(
+  async execute(
     request: TransitionRequest,
+    context: ExecutionContext, // [ECC] Mandatory Envelope
     options?: {
       causation_id?: string;
-      correlation_id?: string;
-      actor_ref?: string;
       idempotency_key?: string;
     }
   ): Promise<TransitionResult & { event_id?: string }> {
+    // 0. [ECC] Validate Context
+    if (context.tenantId !== request.tenantId) {
+      throw new Error(`[EventExecutor] FATAL: Tenant Mismatch. Context: ${context.tenantId} vs Request: ${request.tenantId}`);
+    }
+    if (context.lifecycle !== 'ACTIVE') {
+      throw new Error(`[EventExecutor] FATAL: Attempted execution on dead Kernel. Lifecycle: ${context.lifecycle}`);
+    }
+
+    // [FENCE] Execution Fence Check
+    // Prevents an external caller from using a valid Context on the WRONG Executor instance.
+    if (context.tenantId !== this.boundTenantId) {
+      throw new Error(`[EventExecutor] FENCE BREACH: Context Tenant (${context.tenantId}) != Bound Tenant (${this.boundTenantId})`);
+    }
+    if (context.executionId !== this.boundExecutionId) {
+      throw new Error(`[EventExecutor] FENCE BREACH: Context ExecutionID (${context.executionId}) != Bound ID (${this.boundExecutionId})`);
+    }
     // 1. Get current stream version for optimistic concurrency
-    const streamId = this.getStreamId(request.entity, request.entityId);
+    const streamId = this.getStreamId(request.tenantId, request.entity, request.entityId);
     const currentVersion = await this.eventStore.getStreamVersion(streamId);
 
     // 2. Rebuild current state from events (ensures repo is in sync)
@@ -57,29 +71,33 @@ export class EventExecutor {
       return result;
     }
 
-    // 3. Generate event from transition
+    // 4. Generate event from transition
     const event = await this.createEvent(
       request,
       result,
       currentVersion + 1,
+      context,
       options
     );
 
-    // 4. Append event to store (with optimistic concurrency)
+    // 5. Append event to store (with optimistic concurrency)
     try {
       await this.eventStore.append(event, currentVersion);
     } catch (error: any) {
       // If append fails (concurrency), rollback state change
       // In real implementation, this would be part of transaction
-      return {
-        success: false,
-        previousState: result.previousState,
-        newState: result.previousState,
-        error: `Event append failed: ${error.message}`,
-      };
+      if (error.message.includes('Concurrency Exception') || error.code === 'CONCURRENCY_CONFLICT') {
+        return {
+          success: false,
+          previousState: result.previousState,
+          newState: result.previousState,
+          error: "CONCURRENCY_RETRY", // Standard Error Code
+        };
+      }
+      throw error;
     }
 
-    // 5. Rebuild state from events (or apply incrementally)
+    // 6. Rebuild state from events (or apply incrementally)
     await this.rebuildProjection(streamId);
 
     return {
@@ -118,18 +136,30 @@ export class EventExecutor {
   /**
    * Create event from transition
    */
+  private getStreamId(tenantId: string, entity: string, entityId: string): StreamId {
+    // [TENANCY-CONTRACT] StreamId MUST be scoped by TenantId
+    if (!tenantId) {
+      throw new Error("CRITICAL: Missing TenantId in StreamId generation. Violation of Tenancy Contract.");
+    }
+
+    // [HARDENING] Normalize Entity (UPPERCASE) and EntityID (Safe)
+    const safeEntity = entity.toUpperCase();
+    const safeId = encodeURIComponent(entityId); // Prevent ':' injection
+
+    return `${tenantId}:${safeEntity}:${safeId}`;
+  }
+
   private async createEvent(
     request: TransitionRequest,
     result: TransitionResult,
     streamVersion: number,
+    context: ExecutionContext,
     options?: {
       causation_id?: string;
-      correlation_id?: string;
-      actor_ref?: string;
       idempotency_key?: string;
     }
   ): Promise<CoreEvent> {
-    const streamId = this.getStreamId(request.entity, request.entityId);
+    const streamId = this.getStreamId(request.tenantId, request.entity, request.entityId);
     const eventType = this.getEventType(request.entity, request.event);
 
     // Get current entity state for payload
@@ -139,23 +169,25 @@ export class EventExecutor {
       result
     );
 
+    const eventId = generateUUID();
+
     return {
-      event_id: generateUUID(),
+      event_id: eventId,
       stream_id: streamId,
       stream_version: streamVersion,
       type: eventType,
-      payload,
+      payload: payload,
       occurred_at: new Date(),
-      causation_id: options?.causation_id,
-      correlation_id: options?.correlation_id || generateUUID(),
-      actor_ref: options?.actor_ref,
-      idempotency_key: options?.idempotency_key,
+      meta: {
+        causation_id: options?.causation_id,
+        correlation_id: context.correlationRoot, // [ECC] Root Trace
+        actor_ref: `kernel:${context.executionId}`, // [ECC] Execution Binding
+        idempotency_key: options?.idempotency_key,
+        server_timestamp: new Date().toISOString()
+      },
     };
   }
 
-  private getStreamId(entity: string, entityId: string): StreamId {
-    return `${entity}:${entityId}`;
-  }
 
   private getEventType(entity: string, event: string): CoreEvent["type"] {
     const mapping: Record<string, Record<string, CoreEvent["type"]>> = {
@@ -175,6 +207,12 @@ export class EventExecutor {
         FAIL: "PAYMENT_FAILED",
         CANCEL: "PAYMENT_CANCELED",
         RETRY: "PAYMENT_RETRIED",
+      },
+      CASH_REGISTER: {
+        OPEN: "CASH_REGISTER_OPENED",
+        CLOSE: "CASH_REGISTER_CLOSED",
+        DROP: "CASH_REGISTER_DROP",
+        ADD: "CASH_REGISTER_ADD",
       },
     };
 
@@ -208,16 +246,8 @@ export class EventExecutor {
         };
       }
       case "PAYMENT": {
-        // Find payment
-        let payment: any = null;
-        for (const orderId of Array.from((this.repo as any).orders.keys()) as string[]) {
-          const payments = this.repo.getPayments(orderId);
-          const found = payments.find((p) => p.id === entityId);
-          if (found) {
-            payment = found;
-            break;
-          }
-        }
+        // [SURGICAL FIX 2] Use encapsulated lookup
+        const payment = this.repo.getPaymentById(entityId);
         return {
           payment_id: entityId,
           order_id: payment?.order_id,
@@ -225,6 +255,16 @@ export class EventExecutor {
           amount_cents: payment?.amount_cents,
           method: payment?.method,
           state: result.newState,
+        };
+      }
+      case "CASH_REGISTER": {
+        const register = this.repo.getCashRegister(entityId);
+        return {
+          cash_register_id: entityId,
+          state: result.newState,
+          opening_balance_cents: register?.opening_balance_cents,
+          current_balance_cents: register?.current_balance_cents,
+          total_sales_cents: register?.total_sales_cents,
         };
       }
       default:
@@ -236,4 +276,3 @@ export class EventExecutor {
     return this.repo;
   }
 }
-

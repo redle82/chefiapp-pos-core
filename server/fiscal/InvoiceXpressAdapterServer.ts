@@ -98,25 +98,11 @@ export class InvoiceXpressAdapterServer {
 
         console.log(`[InvoiceXpressServer] Sending to ${endpoint}`);
 
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                simplified_invoice: invoice, // root key
-                api_key: this.apiKey // API Key in body is deprecated? Standard is query param.
-                // Checking docs: usually ?api_key=... OR Basic Auth.
-                // Let's assume query param based on common ruby gems.
-            })
-        });
-
-        // Try query param if body fails? Or just put it in URL.
+        // [P0-04 FIX] Only ONE call - API key in URL (InvoiceXpress standard)
+        // Previously made TWO calls: one without API key, one with. This caused duplicate invoices.
         const urlWithKey = `${endpoint}?api_key=${this.apiKey}`;
 
-        // Actually, let's redo the fetch with URL param to be safe.
-        const response2 = await fetch(urlWithKey, {
+        const response = await fetch(urlWithKey, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -125,12 +111,12 @@ export class InvoiceXpressAdapterServer {
             body: JSON.stringify({ simplified_invoice: invoice })
         });
 
-        if (!response2.ok) {
-            const txt = await response2.text();
-            throw new Error(`InvoiceXpress Error ${response2.status}: ${txt}`);
+        if (!response.ok) {
+            const txt = await response.text();
+            throw new Error(`InvoiceXpress Error ${response.status}: ${txt}`);
         }
 
-        const data = await response2.json() as any;
+        const data = await response.json() as any;
         return data.simplified_invoice || data;
     }
 }

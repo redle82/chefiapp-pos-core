@@ -74,15 +74,43 @@ export const DeliveryMonitor: React.FC = () => {
 
     if (loading) return <div className="p-8 text-center text-gray-500">Loading Delivery Stream...</div>;
 
+    const totalOrders = orders.length;
+    const totalVolumeCents = orders.reduce((sum, o) => sum + (o.total_cents || 0), 0);
+
+    const handleHealthCheck = async () => {
+        alert('Performing Health Check... (This would verify Proxy connection)');
+        // Ideally call function 'delivery-proxy' with action='health'
+    };
+
     return (
         <div className="p-6 bg-gray-50 h-full overflow-auto">
-            <header className="mb-6 flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Delivery Integration Monitor</h1>
-                    <p className="text-gray-500 text-sm">Realtime buffer view (Dead Letter Queue)</p>
+            <header className="mb-6">
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Delivery Integration Monitor</h1>
+                        <p className="text-gray-500 text-sm">Realtime buffer view (Dead Letter Queue)</p>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                        <span className="px-3 py-1 bg-violet-100 text-violet-800 rounded-full text-xs font-medium">Glovo Enabled</span>
+                        <button
+                            onClick={handleHealthCheck}
+                            className="text-xs bg-white border border-gray-300 px-3 py-1 rounded shadow-sm hover:bg-gray-50 text-gray-700"
+                        >
+                            Health Check
+                        </button>
+                    </div>
                 </div>
-                <div className="flex gap-2">
-                    <span className="px-3 py-1 bg-violet-100 text-violet-800 rounded-full text-xs font-medium">Glovo Enabled</span>
+
+                {/* KPI CARDS */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-white p-4 rounded shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-400 uppercase font-semibold">Total Orders</p>
+                        <p className="text-2xl font-bold text-gray-900">{totalOrders}</p>
+                    </div>
+                    <div className="bg-white p-4 rounded shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-400 uppercase font-semibold">Total Volume</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalVolumeCents)}</p>
+                    </div>
                 </div>
             </header>
 

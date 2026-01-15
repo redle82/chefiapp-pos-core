@@ -119,7 +119,7 @@ async function getRestaurantFiscalConfig(restaurantId: string) {
  */
 async function selectAdapter(country: string, restaurantId: string): Promise<FiscalObserver> {
   const config = await getRestaurantFiscalConfig(restaurantId);
-  
+
   if (config) {
     const fiscalConfig = (config.fiscal_config as any) || {};
     const provider = config.fiscal_provider || 'mock';
@@ -132,17 +132,17 @@ async function selectAdapter(country: string, restaurantId: string): Promise<Fis
             fiscalConfig.invoicexpress.accountName,
             fiscalConfig.invoicexpress.apiKey
           );
-          
+
           // Extrair order_data e payment_data do event payload
           const orderData = (event.payload as any)?.order_data || {};
           const paymentData = (event.payload as any)?.payment_data || {};
-          
+
           // TASK-2.3.2: Extrair vatRate do TaxDocument se disponível
           const taxDoc = (event.payload as any)?.tax_document as TaxDocument | undefined;
           const vatRate = taxDoc?.vatRate || (country === 'PT' ? 0.23 : 0.21); // Default baseado no país
-          
+
           const invoiceResult = await adapter.emitInvoice(orderData, paymentData, vatRate);
-          
+
           return {
             status: 'REPORTED',
             gov_protocol: String(invoiceResult.id || 0),
@@ -167,6 +167,10 @@ async function selectAdapter(country: string, restaurantId: string): Promise<Fis
 
 /**
  * Cria documento fiscal a partir do pedido
+ * 
+ * [P0-05 FIX] Uses order.total_cents as fiscal base, NOT payment.amountCents
+ * Reason: Payments can be partial (split payments). Tax document must reflect 
+ * the FULL order value for legal compliance.
  */
 function createTaxDocument(order: any, payment: {
   paymentMethod: string;
@@ -176,11 +180,11 @@ function createTaxDocument(order: any, payment: {
   const restaurantAddress = order.restaurant_address || 'N/A';
   const restaurantCity = order.restaurant_city || 'N/A';
   const restaurantPostalCode = order.restaurant_postal_code || '0000-000';
-  
+
   // Detectar tipo de documento baseado no país
   let docType: 'MOCK' | 'TICKETBAI' | 'SAF-T' = 'MOCK';
   let vatRate = 0.21; // Default: 21% (Espanha)
-  
+
   if (country === 'ES') {
     docType = 'TICKETBAI';
     vatRate = 0.21; // 21% IVA (Espanha)
@@ -189,8 +193,10 @@ function createTaxDocument(order: any, payment: {
     vatRate = 0.23; // 23% IVA (Portugal)
   }
 
-  // Calcular impostos
-  const totalAmount = payment.amountCents / 100; // Converter para euros
+  // [P0-05 FIX] Use order.total_cents as fiscal base (NOT payment.amountCents)
+  // payments can be partial, but fiscal document MUST reflect full order value
+  const fiscalBaseCents = order.total_cents ?? payment.amountCents;
+  const totalAmount = fiscalBaseCents / 100; // Converter para euros
   const vatAmount = totalAmount * vatRate / (1 + vatRate); // IVA incluído no total
   const subtotal = totalAmount - vatAmount;
   const vatAmountCents = Math.round(vatAmount * 100); // TASK-2.3.1: Valor absoluto em centavos
@@ -299,14 +305,14 @@ async function processFiscalQueueItem(item: FiscalQueueItem): Promise<void> {
 
     // 5. Validar conformidade legal
     const validation = LegalComplianceValidator.validate(taxDoc, country as 'PT' | 'ES');
-    
+
     if (!validation.isValid) {
       console.error(`[FiscalWorker] Legal compliance validation failed`, {
         orderId: item.order_id,
         errors: validation.errors,
         warnings: validation.warnings,
       });
-      
+
       if (validation.errors.length > 0) {
         throw new Error(`Documento fiscal não está em conformidade: ${validation.errors.map((e: any) => e.message).join(', ')}`);
       }
@@ -370,7 +376,7 @@ async function processFiscalQueueItem(item: FiscalQueueItem): Promise<void> {
         result: result,
         attempt: item.retry_count + 1,
       });
-      
+
       // Manter status PENDING_EXTERNAL_ID e forçar retry
       await pool.query(
         `UPDATE public.gm_fiscal_queue 
@@ -379,7 +385,7 @@ async function processFiscalQueueItem(item: FiscalQueueItem): Promise<void> {
          WHERE id = $1`,
         [item.id]
       );
-      
+
       throw new Error(`Fiscal ${result.status} but no protocol received - External ID missing`);
     }
 
@@ -434,13 +440,13 @@ async function processFiscalQueueItem(item: FiscalQueueItem): Promise<void> {
         error: error.message,
         attempts: nextRetryCount,
       });
-      
+
       // Marcar External ID como falhado (alerta visível no dashboard)
       await pool.query(
         `SELECT public.fail_external_id($1::uuid, $2::text)`,
         [item.id, `Max retries exceeded (${item.max_retries}). Last error: ${error.message}`]
       );
-      
+
       // TODO: Em produção, enviar notificação para gerente (push, email, webhook)
       // Por enquanto, apenas log crítico + status no DB (visível via view)
     }
@@ -475,13 +481,13 @@ async function workerLoop(): Promise<void> {
 
       if (rows.length > 0) {
         const item = rows[0] as FiscalQueueItem;
-        
+
         // Log se é retry
         if (item.retry_count > 0) {
           const backoffSeconds = 60 * Math.pow(2, item.retry_count - 1);
           console.log(`[FiscalWorker] Retrying item ${item.id} (attempt ${item.retry_count + 1}/${item.max_retries}, backoff was ${backoffSeconds}s)`);
         }
-        
+
         await processFiscalQueueItem(item);
       } else {
         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));

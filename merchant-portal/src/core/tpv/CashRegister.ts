@@ -2,12 +2,23 @@
  * Cash Register - Sistema de Caixa Real
  * 
  * Gerencia abertura e fechamento de caixa com totais reais.
+ * 
+ * [ARCHITECTURE NOTE]
+ * This engine supports two modes:
+ * 1. Kernel Mode (Preferred): Routes state changes through TenantKernel.execute()
+ * 2. Legacy Mode: Direct Supabase writes (backward compatible)
+ * 
+ * When Kernel is provided, events are properly sourced through the Execution Fence.
+ * When not, we fall back to direct DB writes for compatibility.
  */
 
 import { supabase } from '../supabase';
 import { PaymentEngine } from './PaymentEngine';
 import { Logger } from '../logger/Logger';
 import { logAuditEvent } from '../audit/logAuditEvent';
+
+// TODO: Import from Kernel context when wired
+// import type { TenantKernel } from '../../../../core-engine/kernel/TenantKernel';
 
 export class CashRegisterError extends Error {
     constructor(message: string, public code: string) {
@@ -37,6 +48,7 @@ export interface OpenCashRegisterInput {
     name?: string;
     openingBalanceCents: number;
     openedBy: string;
+    kernel?: any; // TenantKernel - typed as any for now until wiring is complete
 }
 
 export interface CloseCashRegisterInput {
@@ -44,6 +56,7 @@ export interface CloseCashRegisterInput {
     restaurantId: string;
     closingBalanceCents: number;
     closedBy: string;
+    kernel?: any; // TenantKernel
 }
 
 export class CashRegisterEngine {
@@ -101,6 +114,26 @@ export class CashRegisterEngine {
                 opening_balance_cents: input.openingBalanceCents,
             },
         });
+
+        // [KERNEL MODE] Route through Execution Fence if Kernel provided
+        if (input.kernel) {
+            try {
+                await input.kernel.execute({
+                    entity: 'CASH_REGISTER',
+                    entityId: registerData.id,
+                    event: 'OPEN',
+                    context: {
+                        opening_balance_cents: input.openingBalanceCents,
+                        opened_by: input.openedBy,
+                        name: input.name || 'Caixa Principal',
+                    }
+                });
+                Logger.info('CashRegister: Event sourced via Kernel', { registerId: registerData.id });
+            } catch (kernelError) {
+                // Log but don't fail - Supabase is source of truth for now
+                Logger.error('CASH_REGISTER_KERNEL_EVENT_FAILED', kernelError as Error, { registerId: registerData.id });
+            }
+        }
 
         return this.mapDbRegisterToRegister(registerData);
     }
@@ -184,6 +217,25 @@ export class CashRegisterEngine {
                 closing_balance_cents: input.closingBalanceCents,
             },
         });
+
+        // [KERNEL MODE] Route through Execution Fence if Kernel provided
+        if (input.kernel) {
+            try {
+                await input.kernel.execute({
+                    entity: 'CASH_REGISTER',
+                    entityId: input.cashRegisterId,
+                    event: 'CLOSE',
+                    context: {
+                        closing_balance_cents: input.closingBalanceCents,
+                        total_sales_cents: totalSalesCents,
+                        closed_by: input.closedBy,
+                    }
+                });
+                Logger.info('CashRegister: Close event sourced via Kernel', { registerId: input.cashRegisterId });
+            } catch (kernelError) {
+                Logger.error('CASH_REGISTER_KERNEL_CLOSE_FAILED', kernelError as Error, { registerId: input.cashRegisterId });
+            }
+        }
 
         return this.mapDbRegisterToRegister(registerData);
     }
@@ -296,5 +348,6 @@ export class CashRegisterEngine {
             updatedAt: new Date(dbRegister.updated_at),
         };
     }
-}
 
+    // [DEPRECATED] emitCashRegisterEvent removed - now using Kernel.execute()
+}

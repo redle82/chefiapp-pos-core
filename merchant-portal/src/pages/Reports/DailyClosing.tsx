@@ -13,6 +13,7 @@ export const DailyClosing: React.FC = () => {
     const { tenantId } = useTenant();
     const [snapshot, setSnapshot] = useState<FinanceSnapshot | null>(null);
     const [loading, setLoading] = useState(true);
+    const [fiscalQueueCount, setFiscalQueueCount] = useState<number>(0);
 
     // Inputs for reconciliation
     const [countedCash, setCountedCash] = useState<string>('');
@@ -25,6 +26,16 @@ export const DailyClosing: React.FC = () => {
                 setLoading(true);
                 const data = await FinanceEngine.getDailySnapshot(tenantId);
                 setSnapshot(data);
+
+                // Check Fiscal Queue
+                const { count, error } = await supabase
+                    .from('gm_fiscal_queue')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('restaurant_id', tenantId)
+                    .in('status', ['pending', 'failed']);
+
+                if (!error) setFiscalQueueCount(count || 0);
+
             } catch (err) {
                 Logger.error('Failed to load finance data', err);
             } finally {
@@ -34,18 +45,15 @@ export const DailyClosing: React.FC = () => {
         loadData();
     }, [tenantId]);
 
-    if (loading) return <div className="p-8 text-white">Carregando fechamento...</div>;
-    if (!snapshot) return <div className="p-8 text-white">Sem dados.</div>;
-
-    const systemCash = (snapshot.paymentMethods['cash'] || 0) / 100;
-    const systemCard = (Object.entries(snapshot.paymentMethods)
+    const systemCash = (snapshot?.paymentMethods['cash'] || 0) / 100;
+    const systemCard = (Object.entries(snapshot?.paymentMethods || {})
         .filter(([k]) => k !== 'cash')
         .reduce((sum, [, v]) => sum + v, 0)) / 100;
 
     const cashDiff = (parseFloat(countedCash) || 0) - systemCash;
 
     return (
-        <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-900 text-white animate-fade-in max-w-4xl mx-auto">
+        <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-900 text-white animate-fade-in max-w-5xl mx-auto">
             <div className="flex justify-between items-center mb-4">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Fechamento de Caixa</h1>
@@ -56,7 +64,39 @@ export const DailyClosing: React.FC = () => {
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {loading && <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">Carregando...</div>}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* 0. FISCAL STATUS */}
+                <Card surface="layer1" padding="xl">
+                    <Text size="lg" weight="bold" className="mb-6 border-b border-gray-700 pb-2">Fiscal Status</Text>
+
+                    <div className="flex flex-col items-center justify-center py-4 bg-gray-800 rounded-lg">
+                        <Text size="3xl" weight="black" color={fiscalQueueCount > 0 ? 'destructive' : 'success'}>
+                            {fiscalQueueCount}
+                        </Text>
+                        <Text size="sm" color="tertiary" className="mt-2">Faturas Pendentes</Text>
+                    </div>
+
+                    <div className="mt-4 text-center">
+                        {fiscalQueueCount > 0 ? (
+                            <>
+                                <p className="text-yellow-500 text-xs mb-3">
+                                    Existem faturas não emitidas. Tente reprocessar antes de fechar.
+                                </p>
+                                <Button variant="solid" tone="critical" fullWidth onClick={() => alert('Retry logic not implemented yet. Please check invoices manually.')}>
+                                    Reprocessar Fila
+                                </Button>
+                            </>
+                        ) : (
+                            <div className="flex items-center justify-center gap-2 text-green-500 text-sm">
+                                <span>✅</span>
+                                <span>Tudo em ordem.</span>
+                            </div>
+                        )}
+                    </div>
+                </Card>
+
                 {/* 1. SYSTEM TOTALS */}
                 <Card surface="layer1" padding="xl">
                     <Text size="lg" weight="bold" className="mb-6 border-b border-gray-700 pb-2">Totais do Sistema</Text>
@@ -92,7 +132,7 @@ export const DailyClosing: React.FC = () => {
                         />
 
                         <div className={`p-4 rounded-lg border ${Math.abs(cashDiff) < 0.1 ? 'bg-green-900/20 border-green-500/30' :
-                                cashDiff < 0 ? 'bg-red-900/20 border-red-500/30' : 'bg-yellow-900/20 border-yellow-500/30'
+                            cashDiff < 0 ? 'bg-red-900/20 border-red-500/30' : 'bg-yellow-900/20 border-yellow-500/30'
                             }`}>
                             <div className="flex justify-between items-center">
                                 <Text size="sm" color="tertiary">Diferença de Caixa</Text>

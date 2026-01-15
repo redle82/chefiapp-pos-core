@@ -266,8 +266,10 @@ export class FiscalService {
 
     /**
      * Cria documento fiscal a partir do pedido
-     * MVP: Versão simplificada (mock)
-     * Produção: Implementar adapters regionais
+     * 
+     * [P0-05 FIX] Uses order.total_cents as fiscal base, NOT payment.amountCents
+     * Reason: Payments can be partial (split payments). Tax document must reflect 
+     * the FULL order value for legal compliance.
      */
     private createTaxDocument(order: any, payment: {
         paymentMethod: string;
@@ -290,8 +292,10 @@ export class FiscalService {
             vatRate = 0.23; // 23% IVA (Portugal)
         }
 
-        // Calcular impostos
-        const totalAmount = payment.amountCents / 100; // Converter para euros
+        // [P0-05 FIX] Use order.total_cents as fiscal base (NOT payment.amountCents)
+        // payments can be partial, but fiscal document MUST reflect full order value
+        const fiscalBaseCents = order.total_cents ?? payment.amountCents;
+        const totalAmount = fiscalBaseCents / 100; // Converter para euros
         const vatAmount = totalAmount * vatRate / (1 + vatRate); // IVA incluído no total
         const subtotal = totalAmount - vatAmount;
         const vatAmountCents = Math.round(vatAmount * 100); // TASK-2.3.1: Valor absoluto em centavos
