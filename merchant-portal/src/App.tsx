@@ -149,8 +149,9 @@ function App() {
                 <Route path="/login" element={<Navigate to="/auth" replace />} />
                 <Route path="/signup" element={<Navigate to="/auth" replace />} />
                 <Route path="/join" element={<ScreenInviteCode />} />
-                <Route path="/start" element={<Navigate to="/onboarding/start" replace />} />
-                <Route path="/onboarding/*" element={<OnboardingWizard />} />
+                {/* DEV_STABLE_MODE: onboarding routes blocked (redirect handled by DevStableEntryGate) */}
+                <Route path="/start" element={<Navigate to="/app/select-tenant" replace />} />
+                <Route path="/onboarding/*" element={<Navigate to="/app/select-tenant" replace />} />
 
                 <Route path="/migration/wizard" element={<MigrationWizard />} />
                 <Route path="/activation" element={<ActivationPage />} />
