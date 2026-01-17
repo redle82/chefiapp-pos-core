@@ -4,7 +4,7 @@
  * Serviço para audit trail baseado em blockchain
  */
 
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 
 export interface BlockchainBlock {
     index: number;

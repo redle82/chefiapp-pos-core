@@ -21,8 +21,10 @@ import { supabase } from '../supabase';
 import {
     checkOrderProtection,
     recordOrderSubmission,
+    recordOrderSubmission,
     type OrderProtectionResult
 } from './OrderProtection';
+import { DbWriteGate } from '../governance/DbWriteGate';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RETRY CONFIGURATION
@@ -321,9 +323,10 @@ export const WebOrderingService = {
 
         try {
             // A. Create order header
-            const { error: orderError } = await supabase
-                .from('gm_orders')
-                .insert({
+            const { error: orderError } = await DbWriteGate.insert(
+                'WebOrderingService',
+                'gm_orders',
+                {
                     id: orderId,
                     restaurant_id: input.restaurant_id,
                     status: 'new',
@@ -335,7 +338,9 @@ export const WebOrderingService = {
                     customer_name: input.customer_name || 'Cliente Web',
                     table_number: input.table_number,
                     notes: input.notes
-                });
+                },
+                { tenantId: tenant_id }
+            );
 
             if (orderError) throw orderError;
 
@@ -351,13 +356,17 @@ export const WebOrderingService = {
                 notes: item.notes
             }));
 
-            const { error: itemsError } = await supabase
-                .from('gm_order_items')
-                .insert(orderItems);
+            const { error: itemsError } = await DbWriteGate.insert(
+                'WebOrderingService',
+                'gm_order_items',
+                orderItems,
+                { tenantId: tenant_id }
+            );
 
             if (itemsError) {
                 // Rollback order if items fail
-                await supabase.from('gm_orders').delete().eq('id', orderId);
+                const rollQ = await DbWriteGate.delete('WebOrderingService', 'gm_orders', { id: orderId }, { tenantId: tenant_id });
+                await rollQ;
                 throw itemsError;
             }
 
@@ -420,11 +429,12 @@ export const WebOrderingService = {
                 // notes field not in gm_order_requests schema - stored in customer_contact if needed
             };
 
-            const { data: request, error } = await supabase
-                .from('gm_order_requests')
-                .insert(requestPayload)
-                .select('id')
-                .single();
+            const { data: request, error } = await DbWriteGate.insert(
+                'WebOrderingService',
+                'gm_order_requests',
+                requestPayload,
+                { tenantId: tenant_id }
+            );
 
             if (error) throw error;
 

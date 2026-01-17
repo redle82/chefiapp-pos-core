@@ -74,7 +74,7 @@
  * ============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useOrders } from '../context/OrderContextReal';
 import type { Order } from '../context/OrderTypes';
 import { useStaff } from '../../AppStaff/context/StaffContext';

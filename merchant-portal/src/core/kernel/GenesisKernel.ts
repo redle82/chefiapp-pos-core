@@ -1,11 +1,14 @@
 import type { SystemBlueprint } from '../blueprint/SystemBlueprint';
 import { supabase } from '../supabase';
+import { DbWriteGate } from '../governance/DbWriteGate';
 
 /**
- * ONBOARDING CORE
+ * GENESIS KERNEL
  * 
  * The Sovereign Authority that mints the System Blueprint.
  * It Converts raw Drafts into the immutable System Law.
+ * 
+ * Replaces the legacy OnboardingCore.
  */
 
 export interface OnboardingDraft {
@@ -53,34 +56,19 @@ export async function resolveRealityConflict(
             throw new Error('TenantId obrigatório para bind');
         }
 
-        console.log('[FOE] 🔑 Executing Ritual of Possession (Bind)...');
+        console.log('[GenesisKernel] 🔑 Executing Ritual of Possession (Bind)...');
 
-        // 🔑 Amarração soberana
-        const { error } = await supabase
-            .from('tenants') // Adjust table name if strictly 'gm_restaurants' or 'tenants' - usually 'tenants' in Supabase for Multi-tenant, but 'gm_restaurants' locally? 
-            // The current file uses 'gm_restaurants'. I should check consistency.
-            // Line 224 uses 'gm_restaurants'.
-            // Line 120 uses rpc 'create_tenant_atomic'.
-            // I will use 'gm_restaurants' to be safe given line 224, OR 'tenants' if I am sure. 
-            // User said: .from('tenants'). 
-            // BUT existing code uses 'gm_restaurants' (line 224) and rpc calls. 
-            // I will follow the user's snippet strictly: .from('tenants'), but if it fails I will know why.
-            // Wait, 'gm_restaurants' IS the tenants table in this codebase likely. 
-            // Let's look at `initializeSovereign`. It calls `create_tenant_atomic`.
-            // Let's use 'gm_restaurants' to be safe? 
-            // No, user explicitly wrote `.from('tenants')`. I should probably trust the user, OR check if `tenants` is a valid view/table. 
-            // However, line 224 uses `gm_restaurants`.
-            // The user message had `.from('tenants')`. 
-            // I will stick to the user's snippet but change table to 'gm_restaurants' to match the file's conversation context if I suspect 'tenants' doesn't exist.
-            // Let's verify via the Schema? I can't easily. 
-            // But `OnboardingCore.ts` line 224: `supabase.from('gm_restaurants').update(...)`.
-            // So I will use `gm_restaurants`.
-            .from('gm_restaurants')
-            .update({ onboarding_in_progress: true }) // Validation that this column exists?
-            .eq('id', resolution.tenantId);
+        // 🔑 Amarração soberana (Via Gate)
+        const { error } = await DbWriteGate.update(
+            'GenesisKernel',
+            'gm_restaurants',
+            { onboarding_in_progress: true },
+            { id: resolution.tenantId },
+            { tenantId: resolution.tenantId }
+        );
 
         if (error) {
-            console.error('[FOE] Failed to bind tenant:', error);
+            console.error('[GenesisKernel] Failed to bind tenant:', error);
             throw new Error('Falha ao amarrar realidade: ' + error.message);
         }
 
@@ -100,7 +88,7 @@ export async function resolveRealityConflict(
     return {};
 }
 
-export class OnboardingCore {
+export class GenesisKernel {
 
     /**
      * Resolves a raw draft into a formalized System Blueprint.
@@ -169,7 +157,7 @@ export class OnboardingCore {
      * Creates the Tenant immediately. The system is born.
      */
     public static async initializeSovereign(draft: OnboardingDraft): Promise<SystemBlueprint> {
-        console.log('[OnboardingCore] 🏛️ Genesis: Creating Sovereign Identity...');
+        console.log('[GenesisKernel] 🏛️ Genesis: Creating Sovereign Identity...');
 
         if (!draft.userId) throw new Error('User ID is required for Genesis');
         if (!draft.restaurantName) throw new Error('Restaurant Name is required for Genesis');
@@ -193,35 +181,46 @@ export class OnboardingCore {
 
             // SAFETY NET: Force create Member link (RPC might be failing silently on Cloud)
             try {
-                console.log('[OnboardingCore] 🛟 Safety Net: Ensuring Member Link exists...');
-                const { error: memberError } = await supabase.from('gm_restaurant_members').insert({
-                    restaurant_id: tenantId,
-                    user_id: draft.userId,
-                    role: 'owner'
-                });
-                if (memberError) {
-                    // Start 409 conflict check (already exists)
-                    if (!memberError.message.includes('duplicate')) {
-                        console.warn('[OnboardingCore] Member Link Warning:', memberError.message);
+                console.log('[GenesisKernel] 🛟 Safety Net: Ensuring Member Link exists...');
+                try {
+                    console.log('[GenesisKernel] 🛟 Safety Net: Ensuring Member Link exists (Via Gate)...');
+                    const { error: memberError } = await DbWriteGate.insert(
+                        'GenesisKernel',
+                        'gm_restaurant_members',
+                        {
+                            restaurant_id: tenantId,
+                            user_id: draft.userId,
+                            role: 'owner'
+                        },
+                        { tenantId }
+                    );
+                    if (memberError) {
+                        // Start 409 conflict check (already exists)
+                        if (!memberError.message.includes('duplicate')) {
+                            console.warn('[GenesisKernel] Member Link Warning:', memberError.message);
+                        }
                     }
+                } catch (err) {
+                    console.warn('[GenesisKernel] Member Safety Net ignored:', err);
                 }
-            } catch (err) {
-                console.warn('[OnboardingCore] Member Safety Net ignored:', err);
+
+                console.log('[GenesisKernel] 🏛️ Sovereign Identity Established:', tenantId);
+
+                // Return partial blueprint
+                const blueprint = this.compile(draft);
+                blueprint.meta.tenantId = tenantId;
+                blueprint.organization.realityStatus = 'draft';
+
+                await this.saveLocal(blueprint);
+                return blueprint;
+
+            } catch (dbError) {
+                console.error('[GenesisKernel] Genesis Failed:', dbError);
+                throw new Error(`Failed to create system identity: ${(dbError as any).message}`);
             }
-
-            console.log('[OnboardingCore] 🏛️ Sovereign Identity Established:', tenantId);
-
-            // Return partial blueprint
-            const blueprint = this.compile(draft);
-            blueprint.meta.tenantId = tenantId;
-            blueprint.organization.realityStatus = 'draft';
-
-            await this.saveLocal(blueprint);
-            return blueprint;
-
-        } catch (dbError) {
-            console.error('[OnboardingCore] Genesis Failed:', dbError);
-            throw new Error(`Failed to create system identity: ${(dbError as any).message}`);
+        } catch (genesisError) {
+            console.error('[GenesisKernel] Genesis Critically Failed:', genesisError);
+            throw genesisError;
         }
     }
 
@@ -234,7 +233,7 @@ export class OnboardingCore {
         step: 'authority' | 'existence' | 'topology' | 'flow' | 'cash' | 'team',
         updates: Partial<OnboardingDraft>
     ): Promise<void> {
-        console.log(`[OnboardingCore] 📜 Law Update: ${step.toUpperCase()}`);
+        console.log(`[GenesisKernel] 📜 Law Update: ${step.toUpperCase()}`);
 
         if (!tenantId) throw new Error('System ID missing. Cannot advance state.');
 
@@ -242,17 +241,23 @@ export class OnboardingCore {
             // A. Update Data per Step
             if (step === 'authority') {
                 if (updates.userName && updates.userId) {
-                    await supabase.from('profiles').update({
-                        full_name: updates.userName,
-                        role: updates.userRole?.toLowerCase()
-                    }).eq('id', updates.userId);
+                    await DbWriteGate.update(
+                        'GenesisKernel',
+                        'profiles',
+                        {
+                            full_name: updates.userName,
+                            role: updates.userRole?.toLowerCase()
+                        },
+                        { id: updates.userId },
+                        { tenantId }
+                    );
                 }
             }
 
             if (step === 'existence') {
-                console.log('[OnboardingCore] 🕵️ Provas de Existência recebidas:', updates.evidence);
-                console.log('[OnboardingCore] 🔒 Nível de Soberania deifinido:', updates.onboardingLevel);
-                console.log('[OnboardingCore] 🔓 Módulos Desbloqueados:', updates.modulesUnlocked);
+                console.log('[GenesisKernel] 🕵️ Provas de Existência recebidas:', updates.evidence);
+                console.log('[GenesisKernel] 🔒 Nível de Soberania deifinido:', updates.onboardingLevel);
+                console.log('[GenesisKernel] 🔓 Módulos Desbloqueados:', updates.modulesUnlocked);
 
                 // CRITICAL: Persist to Storage for FlowGate immediate access
                 if (updates.onboardingLevel) {
@@ -282,23 +287,26 @@ export class OnboardingCore {
 
             if (Object.keys(updatesDb).length > 0) {
                 try {
-                    const { error } = await supabase
-                        .from('gm_restaurants')
-                        .update(updatesDb)
-                        .eq('id', tenantId);
+                    const { error } = await DbWriteGate.update(
+                        'GenesisKernel',
+                        'gm_restaurants',
+                        updatesDb,
+                        { id: tenantId },
+                        { tenantId }
+                    );
 
                     if (error) throw error;
-                    console.log(`[OnboardingCore] DB Updated for step ${step}:`, updatesDb);
+                    console.log(`[GenesisKernel] DB Updated for step ${step}:`, updatesDb);
                 } catch (dbError) {
-                    console.warn(`[OnboardingCore] ⚠️ DB Persist bypassed for step ${step} (Schema mismatch?):`, dbError);
+                    console.warn(`[GenesisKernel] ⚠️ DB Persist bypassed for step ${step} (Schema mismatch?):`, dbError);
                     // Proceed anyway - LocalStorage will hold the state
                 }
             }
 
-            console.log(`[OnboardingCore] State Advanced to: ${step} (Persisted)`);
+            console.log(`[GenesisKernel] State Advanced to: ${step} (Persisted)`);
 
         } catch (error) {
-            console.error('[OnboardingCore] Advance Failed:', error);
+            console.error('[GenesisKernel] Advance Failed:', error);
             throw error;
         }
     }
@@ -308,48 +316,47 @@ export class OnboardingCore {
      * Finalizes the system.
      */
     public static async consecrateSovereign(tenantId: string, draft: OnboardingDraft): Promise<SystemBlueprint> {
-        console.log('[OnboardingCore] 👑 Consecrating System...');
+        console.log('[GenesisKernel] 👑 Consecrating System...');
 
         // Final update with all accumulated draft data (just in case)
         // Final update: Seal the system
         try {
-            const { error } = await supabase
-                .from('gm_restaurants')
-                .update({
-                    onboarding_completed: true,
-                    status: 'active'
-                })
-                .eq('id', tenantId);
+            try {
+                const { error } = await DbWriteGate.update(
+                    'GenesisKernel',
+                    'gm_restaurants',
+                    {
+                        onboarding_completed: true,
+                        status: 'active'
+                    },
+                    { id: tenantId },
+                    { tenantId }
+                );
 
-            if (error) throw error;
-            console.log('[OnboardingCore] 👑 Consecration Sealed in DB.');
-        } catch (dbError) {
-            console.warn('[OnboardingCore] ⚠️ Consecration DB Write Failed (Schema mismatch?):', dbError);
-            // Proceed anyway - LocalStorage has the source of truth
+                if (error) throw error;
+                console.log('[GenesisKernel] 👑 Consecration Sealed in DB.');
+            } catch (dbError) {
+                console.warn('[GenesisKernel] ⚠️ Consecration DB Write Failed (Schema mismatch?):', dbError);
+                // Proceed anyway - LocalStorage has the source of truth
+            }
+
+            console.log('[GenesisKernel] 👑 Consecration Logic Executed.');
+
+            const blueprint = this.compile(draft);
+            blueprint.meta.tenantId = tenantId;
+            blueprint.organization.realityStatus = 'real';
+
+            await this.saveLocal(blueprint);
+            return blueprint;
+        } catch (consecrationError) {
+            console.error('[GenesisKernel] Consecration Failed:', consecrationError);
+            throw consecrationError;
         }
-
-        console.log('[OnboardingCore] 👑 Consecration Logic Executed.');
-
-        const blueprint = this.compile(draft);
-        blueprint.meta.tenantId = tenantId;
-        blueprint.organization.realityStatus = 'real';
-
-        await this.saveLocal(blueprint);
-        return blueprint;
     }
 
     private static async saveLocal(blueprint: SystemBlueprint) {
         const { setTabIsolated } = await import('../storage/TabIsolatedStorage');
         setTabIsolated(BLUEPRINT_STORAGE_KEY, JSON.stringify(blueprint));
-    }
-
-    /**
-     * Persists the Blueprint to the Database and LocalStorage.
-     * @deprecated Use initializeSovereign / advanceSovereignState / consecrateSovereign instead
-     */
-    public static async seal(draft: OnboardingDraft): Promise<SystemBlueprint> {
-        // Keeping legacy method for fallback if needed, or redirecting to new flows
-        return this.initializeSovereign(draft);
     }
 
     /**

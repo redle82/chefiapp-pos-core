@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppShell } from '../../ui/design-system/AppShell';
+import { AdminLayout } from '../../ui/design-system/layouts/AdminLayout';
+import { AdminSidebar } from '../../ui/design-system/domain/AdminSidebar';
 import { Card } from '../../ui/design-system/primitives/Card';
 import { Text } from '../../ui/design-system/primitives/Text';
 import { Button } from '../../ui/design-system/primitives/Button';
@@ -7,6 +10,9 @@ import { Select } from '../../ui/design-system/primitives/Select';
 import { useToast } from '../../ui/design-system';
 import { supabase } from '../../core/supabase';
 import { colors } from '../../ui/design-system/tokens/colors';
+
+// Use dashboard mode colors for consistency with AdminLayout
+const theme = colors.modes.dashboard;
 import { spacing } from '../../ui/design-system/tokens/spacing';
 import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
 
@@ -36,54 +42,171 @@ interface KitBundle {
 }
 
 export const TPVKitsPage: React.FC = () => {
+    const navigate = useNavigate();
     const [countries, setCountries] = useState<CountryMarket[]>([]);
-    const [selectedCountry, setSelectedCountry] = useState<string>('ES');
+    const [selectedCountry, setSelectedCountry] = useState<string>('');
     const [selectedTier, setSelectedTier] = useState<'budget' | 'standard' | 'pro' | null>(null);
     const [kits, setKits] = useState<KitBundle[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingCountries, setLoadingCountries] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [retryCount, setRetryCount] = useState(0);
+    const maxRetries = 3; // Limitar tentativas para evitar loops infinitos
     const { success, error: showError } = useToast();
+    
+    // Ref para evitar múltiplas chamadas simultâneas
+    const loadingRef = React.useRef(false);
+    const mountedRef = React.useRef(true);
 
-    // Load countries
-    useEffect(() => {
-        const loadCountries = async () => {
+    // Ref para rastrear se já tentou carregar (evita múltiplas tentativas no StrictMode)
+    const hasAttemptedLoadRef = React.useRef(false);
+    // Ref para armazenar showError sem causar recriações
+    const showErrorRef = React.useRef(showError);
+    
+    // Atualizar ref quando showError muda
+    React.useEffect(() => {
+        showErrorRef.current = showError;
+    }, [showError]);
+
+    // Load countries function (extracted for retry)
+    // FIX: Prevenir loops infinitos com ref e controle de estado
+    const loadCountries = React.useCallback(async (isRetry: boolean = false) => {
+        // Prevenir múltiplas chamadas simultâneas
+        if (loadingRef.current) {
+            console.warn('[TPVKitsPage] Load already in progress, skipping');
+            return;
+        }
+
+        // Se já tentou muitas vezes, não tenta mais automaticamente
+        if (isRetry && retryCount >= maxRetries) {
+            console.warn('[TPVKitsPage] Max retries reached, stopping automatic attempts');
+            return;
+        }
+
+        loadingRef.current = true;
+        setLoadingCountries(true);
+        if (!isRetry) {
+            setError(null); // Só limpa erro se não for retry manual
+        }
+        
+        try {
             const { data, error } = await supabase
                 .from('country_market')
                 .select('*')
                 .order('code');
 
+            if (!mountedRef.current) return; // Component unmounted
+
             if (error) {
-                console.error('Failed to load countries:', error);
-                showError('Erro ao carregar países');
+                console.error('[TPVKitsPage] Failed to load countries:', error);
+                let errorMessage: string;
+                
+                if (error.code === 'PGRST205') {
+                    errorMessage = 'Tabela "country_market" não encontrada no banco de dados. Esta funcionalidade requer configuração do banco de dados.';
+                } else {
+                    errorMessage = `Erro ao carregar países: ${error.message || 'Erro desconhecido'}.`;
+                }
+                
+                setError(errorMessage);
+                if (isRetry) {
+                    setRetryCount(prev => prev + 1);
+                } else {
+                    setRetryCount(1);
+                }
+                // Only show toast on first error, not on every retry
+                if (retryCount === 0) {
+                    showErrorRef.current('Erro ao carregar países');
+                }
+                setCountries([]);
             } else {
                 setCountries(data || []);
-                if (data && data.length > 0 && !selectedCountry) {
-                    setSelectedCountry(data[0].code);
+                if (data && data.length > 0) {
+                    // Se não há país selecionado, seleciona o primeiro
+                    setSelectedCountry(prev => prev || data[0].code);
+                    setError(null); // Clear any previous errors
+                    setRetryCount(0); // Reset retry count on success
+                } else {
+                    setError('Nenhum país disponível no sistema.');
+                    setCountries([]);
                 }
             }
-        };
+        } catch (err: any) {
+            if (!mountedRef.current) return; // Component unmounted
+            
+            console.error('[TPVKitsPage] Unexpected error loading countries:', err);
+            setError(`Erro inesperado ao carregar países: ${err?.message || 'Erro desconhecido'}.`);
+            if (isRetry) {
+                setRetryCount(prev => prev + 1);
+            } else {
+                setRetryCount(1);
+            }
+            // Only show toast on first error, not on every retry
+            if (retryCount === 0) {
+                showErrorRef.current('Erro ao carregar países');
+            }
+            setCountries([]);
+        } finally {
+            if (mountedRef.current) {
+                setLoadingCountries(false);
+            }
+            loadingRef.current = false;
+        }
+    }, [retryCount, maxRetries]); // Removed showError - using ref instead
 
-        loadCountries();
-    }, []);
+    // Load countries on mount only (once)
+    useEffect(() => {
+        // Prevenir múltiplas tentativas no StrictMode
+        if (hasAttemptedLoadRef.current) {
+            return;
+        }
+        
+        mountedRef.current = true;
+        hasAttemptedLoadRef.current = true;
+        loadCountries(false);
+        
+        return () => {
+            mountedRef.current = false;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Intentionally empty - only run once on mount
 
     // Load kits when country changes
     useEffect(() => {
-        if (!selectedCountry) return;
+        if (!selectedCountry) {
+            setKits([]);
+            setLoading(false);
+            return;
+        }
 
         const loadKits = async () => {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('kit_bundle')
-                .select('*')
-                .eq('country_code', selectedCountry)
-                .order('tier');
+            setError(null);
+            try {
+                const { data, error } = await supabase
+                    .from('kit_bundle')
+                    .select('*')
+                    .eq('country_code', selectedCountry)
+                    .order('tier');
 
-            if (error) {
-                console.error('Failed to load kits:', error);
+                if (error) {
+                    console.error('Failed to load kits:', error);
+                    setError(`Erro ao carregar kits para ${selectedCountry}. Tente novamente.`);
+                    showError('Erro ao carregar kits');
+                    setKits([]);
+                } else {
+                    setKits(data || []);
+                    if (!data || data.length === 0) {
+                        setError(null); // Não é erro, apenas não há kits
+                    }
+                }
+            } catch (err) {
+                console.error('Unexpected error loading kits:', err);
+                setError('Erro inesperado ao carregar kits.');
                 showError('Erro ao carregar kits');
-            } else {
-                setKits(data || []);
+                setKits([]);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
 
         loadKits();
@@ -141,83 +264,135 @@ export const TPVKitsPage: React.FC = () => {
 
     const getTierColor = (tier: string): string => {
         const map: Record<string, string> = {
-            budget: colors.info.base,
-            standard: colors.action.base,
-            pro: colors.warning.base,
+            budget: theme.info.base,
+            standard: theme.action.base,
+            pro: theme.warning.base,
         };
-        return map[tier] || colors.text.secondary;
+        return map[tier] || theme.text.secondary;
     };
 
     return (
         <AppShell>
-            <div style={{ padding: spacing[6], maxWidth: 1200, margin: '0 auto' }}>
-                {/* Header */}
-                <div style={{ marginBottom: spacing[8] }}>
-                    <Text size="4xl" weight="black" color="primary">
-                        Loja TPV
-                    </Text>
-                    <Text size="lg" color="secondary" style={{ marginTop: spacing[2] }}>
-                        Kits completos de equipamentos para o seu TPV
-                    </Text>
-                </div>
-
-                {/* Filters */}
-                <Card surface="layer1" padding="lg" style={{ marginBottom: spacing[6] }}>
-                    <div style={{ display: 'flex', gap: spacing[4], flexWrap: 'wrap', alignItems: 'center' }}>
-                        <div style={{ flex: '1 1 200px' }}>
-                            <Text size="sm" weight="bold" color="secondary" style={{ marginBottom: spacing[2] }}>
-                                País
+            <AdminLayout
+                sidebar={<AdminSidebar activePath="/app/store/tpv-kits" onNavigate={navigate} />}
+                content={
+                    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+                        {/* Header */}
+                        <div style={{ marginBottom: spacing[8] }}>
+                            <Text size="4xl" weight="black" color="primary">
+                                Loja TPV
                             </Text>
-                            <Select
-                                value={selectedCountry}
-                                onChange={(e) => setSelectedCountry(e.target.value)}
-                                fullWidth
-                            >
-                                {countries.map((c) => (
-                                    <option key={c.code} value={c.code}>
-                                        {c.code} ({c.currency})
-                                    </option>
-                                ))}
-                            </Select>
+                            <Text size="lg" color="secondary" style={{ marginTop: spacing[2] }}>
+                                Kits completos de equipamentos para o seu TPV
+                            </Text>
                         </div>
 
-                        <div style={{ flex: '1 1 200px' }}>
-                            <Text size="sm" weight="bold" color="secondary" style={{ marginBottom: spacing[2] }}>
-                                Tipo de Operação
-                            </Text>
-                            <select
-                                value={selectedTier || ''}
-                                onChange={(e) => setSelectedTier((e.target.value || null) as typeof selectedTier)}
-                                style={{
-                                    width: '100%',
-                                    padding: spacing[2],
-                                    borderRadius: spacing[1],
-                                    border: `1px solid ${colors.border.subtle}`,
-                                    backgroundColor: colors.surface.layer1,
-                                    color: colors.text.primary,
-                                }}
-                            >
-                                <option value="">Todos</option>
-                                <option value="budget">Orçamento</option>
-                                <option value="standard">Padrão</option>
-                                <option value="pro">Profissional</option>
-                            </select>
-                        </div>
-                    </div>
-                </Card>
+                        {/* Error Banner */}
+                        {error && (
+                            <Card surface="layer1" padding="md" style={{ marginBottom: spacing[4], border: `1px solid ${theme.destructive.base}`, backgroundColor: `${theme.destructive.base}20` }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing[3] }}>
+                                    <Text size="sm" color="destructive" weight="bold">
+                                        ⚠️ {error}
+                                    </Text>
+                                    <Button
+                                        variant="outline"
+                                        tone="destructive"
+                                        size="sm"
+                                        onClick={() => {
+                                            setError(null);
+                                            setRetryCount(0); // Reset retry count on manual retry
+                                            loadCountries(true);
+                                        }}
+                                        disabled={loadingCountries || retryCount >= maxRetries}
+                                    >
+                                        {loadingCountries 
+                                            ? 'A carregar...' 
+                                            : retryCount >= maxRetries 
+                                                ? 'Máximo de tentativas atingido' 
+                                                : 'Tentar novamente'}
+                                    </Button>
+                                </div>
+                            </Card>
+                        )}
 
-                {/* Kits Grid */}
-                {loading ? (
-                    <div style={{ textAlign: 'center', padding: spacing[12] }}>
-                        <Text color="tertiary">A carregar kits...</Text>
-                    </div>
-                ) : displayedKits.length === 0 ? (
-                    <Card surface="layer1" padding="xl" style={{ textAlign: 'center' }}>
-                        <Text size="lg" color="tertiary">
-                            Nenhum kit disponível para este país.
-                        </Text>
-                    </Card>
-                ) : (
+                        {/* Filters */}
+                        <Card surface="layer1" padding="lg" style={{ marginBottom: spacing[6] }}>
+                            <div style={{ display: 'flex', gap: spacing[4], flexWrap: 'wrap', alignItems: 'center' }}>
+                                <div style={{ flex: '1 1 200px' }}>
+                                    <Text size="sm" weight="bold" color="secondary" style={{ marginBottom: spacing[2] }}>
+                                        País
+                                    </Text>
+                                    {loadingCountries ? (
+                                        <Text size="sm" color="tertiary">Carregando países...</Text>
+                                    ) : countries.length === 0 ? (
+                                        <Text size="sm" color="destructive">Nenhum país disponível</Text>
+                                    ) : (
+                                        <Select
+                                            value={selectedCountry}
+                                            onChange={(e) => setSelectedCountry(e.target.value)}
+                                            fullWidth
+                                            disabled={loadingCountries}
+                                        >
+                                            {countries.map((c) => (
+                                                <option key={c.code} value={c.code}>
+                                                    {c.code} ({c.currency})
+                                                </option>
+                                            ))}
+                                        </Select>
+                                    )}
+                                </div>
+
+                                <div style={{ flex: '1 1 200px' }}>
+                                    <Text size="sm" weight="bold" color="secondary" style={{ marginBottom: spacing[2] }}>
+                                        Tipo de Operação
+                                    </Text>
+                                    <select
+                                        value={selectedTier || ''}
+                                        onChange={(e) => setSelectedTier((e.target.value || null) as typeof selectedTier)}
+                                        disabled={!selectedCountry || loading}
+                                        style={{
+                                            width: '100%',
+                                            padding: spacing[2],
+                                            borderRadius: spacing[1],
+                                            border: `1px solid ${theme.border.subtle}`,
+                                            backgroundColor: theme.surface.layer1,
+                                            color: theme.text.primary,
+                                            opacity: (!selectedCountry || loading) ? 0.5 : 1,
+                                            cursor: (!selectedCountry || loading) ? 'not-allowed' : 'pointer',
+                                        }}
+                                    >
+                                        <option value="">Todos</option>
+                                        <option value="budget">Orçamento</option>
+                                        <option value="standard">Padrão</option>
+                                        <option value="pro">Profissional</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </Card>
+
+                        {/* Kits Grid */}
+                        {!selectedCountry ? (
+                            <Card surface="layer1" padding="xl" style={{ textAlign: 'center' }}>
+                                <Text size="lg" color="tertiary">
+                                    Selecione um país para ver os kits disponíveis.
+                                </Text>
+                            </Card>
+                        ) : loading ? (
+                            <div style={{ textAlign: 'center', padding: spacing[12] }}>
+                                <Text color="tertiary">A carregar kits...</Text>
+                            </div>
+                        ) : displayedKits.length === 0 ? (
+                            <Card surface="layer1" padding="xl" style={{ textAlign: 'center' }}>
+                                <Text size="lg" color="tertiary" style={{ marginBottom: spacing[2] }}>
+                                    Nenhum kit disponível para este país.
+                                </Text>
+                                {selectedTier && (
+                                    <Text size="sm" color="secondary">
+                                        Tente remover o filtro de "Tipo de Operação" ou selecione outro país.
+                                    </Text>
+                                )}
+                            </Card>
+                        ) : (
                     <div
                         style={{
                             display: 'grid',
@@ -235,10 +410,12 @@ export const TPVKitsPage: React.FC = () => {
                                 getTierColor={getTierColor}
                                 formatPrice={formatPrice}
                             />
-                        ))}
+                            ))}
+                        </div>
+                        )}
                     </div>
-                )}
-            </div>
+                }
+            />
         </AppShell>
     );
 };
@@ -313,7 +490,7 @@ const KitCard: React.FC<KitCardProps> = ({
                                 display: 'flex',
                                 gap: spacing[2],
                                 padding: spacing[2],
-                                background: colors.surface.layer1,
+                                background: theme.surface.layer1,
                                 borderRadius: spacing[1],
                             }}
                         >

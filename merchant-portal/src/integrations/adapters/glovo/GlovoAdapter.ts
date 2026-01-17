@@ -18,8 +18,9 @@ import type {
   GlovoConfig,
 } from './GlovoTypes';
 import { isValidGlovoOrder, isPendingOrder, isCancelledOrder } from './GlovoTypes';
-import { supabase } from '../../core/supabase';
+import { supabase } from '../../../core/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { isDevStableMode } from '../../../core/runtime/devStableMode';
 
 // ─────────────────────────────────────────────────────────────
 // CONFIGURATION
@@ -51,7 +52,7 @@ export class GlovoAdapter implements IntegrationAdapter {
   private ordersReceived = 0;
   private ordersErrors = 0;
   private lastError: string | null = null;
-  private pollingInterval: NodeJS.Timeout | null = null;
+  // private pollingInterval: NodeJS.Timeout | null = null; // Replaced by pollTimeout
   private processedOrderIds = new Set<string>(); // Client-side de-dupe memory
 
   // Event callback (set by Registry)
@@ -66,6 +67,11 @@ export class GlovoAdapter implements IntegrationAdapter {
 
     if (!this.config?.restaurantId) {
       console.warn('[Glovo] Initialize called without restaurantId');
+      return;
+    }
+
+    // STEP 6: DEV_STABLE_MODE - no realtime, no polling
+    if (isDevStableMode()) {
       return;
     }
 
@@ -194,22 +200,34 @@ export class GlovoAdapter implements IntegrationAdapter {
   // POLLING (PROXY)
   // ───────────────────────────────────────────────────────────
 
+
+  // Backoff State
+  private currentPollInterval = POLLING_INTERVAL_MS;
+  private readonly MAX_BACKOFF = 600000; // 10 minutes max backoff
+  private pollTimeout: NodeJS.Timeout | null = null;
+
+  // ───────────────────────────────────────────────────────────
+  // POLLING (PROXY)
+  // ───────────────────────────────────────────────────────────
+
   private startPolling(): void {
-    if (this.pollingInterval) return;
-
-    console.log('[Glovo] 🔄 Starting polling (Proxy)...');
-    this.pollOrders(); // Immediate
-
-    this.pollingInterval = setInterval(() => {
-      this.pollOrders();
-    }, POLLING_INTERVAL_MS);
+    if (this.pollTimeout) return;
+    console.log('[Glovo] 🔄 Starting polling (Proxy) with Backoff...');
+    this.scheduleNextPoll(0); // Immediate
   }
 
   private stopPolling(): void {
-    if (this.pollingInterval) {
-      clearInterval(this.pollingInterval);
-      this.pollingInterval = null;
+    if (this.pollTimeout) {
+      clearTimeout(this.pollTimeout);
+      this.pollTimeout = null;
     }
+  }
+
+  private scheduleNextPoll(delayMs: number): void {
+    this.stopPolling();
+    this.pollTimeout = setTimeout(() => {
+      this.pollOrders();
+    }, delayMs);
   }
 
   private async pollOrders(): Promise<void> {
@@ -232,10 +250,21 @@ export class GlovoAdapter implements IntegrationAdapter {
 
       this.lastPollAt = Date.now();
 
+      // Success: Reset Backoff
+      if (this.currentPollInterval > POLLING_INTERVAL_MS) {
+        console.log('[Glovo] ✅ Polling recovered. Resetting interval.');
+        this.currentPollInterval = POLLING_INTERVAL_MS;
+      }
+      this.scheduleNextPoll(this.currentPollInterval);
+
     } catch (err) {
       this.ordersErrors++;
       this.lastError = err instanceof Error ? err.message : 'Unknown error';
-      console.error('[Glovo] ❌ Proxy Polling failed:', err);
+      console.error(`[Glovo] ❌ Proxy Polling failed. Backing off to ${this.currentPollInterval * 2}ms`, err);
+
+      // Failure: Exponential Backoff
+      this.currentPollInterval = Math.min(this.currentPollInterval * 2, this.MAX_BACKOFF);
+      this.scheduleNextPoll(this.currentPollInterval);
     }
   }
 

@@ -4,7 +4,7 @@
  * Serviço para recursos nativos do mobile app
  */
 
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 
 export interface PushNotificationPayload {
     title: string;

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useTenant } from '../tenant/TenantContext'; // Assuming this exists or similar
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 import { AuditService } from '../logger/AuditService';
 
 /**

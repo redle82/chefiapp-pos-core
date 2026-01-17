@@ -1,6 +1,7 @@
 import { useTables } from '../../TPV/context/TableContext';
 import { TablePanel } from '../../Waiter/TablePanel';
 import { TableStatus } from '../../Waiter/types';
+import { useKeyboardShortcuts } from '../../../core/hooks/useKeyboardShortcuts';
 
 // ... (Existing Imports) ...
 
@@ -46,6 +47,19 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({ tasks }) => {
 
     // Real Table Data
     const { tables, loading } = useTables();
+
+    // Mapping Keyboard Shortcuts
+    useKeyboardShortcuts({
+        'mod+n': (e) => { e.preventDefault(); setActiveTab('order'); },
+        'mod+m': (e) => { e.preventDefault(); setActiveTab('tables'); },
+        'mod+d': (e) => { e.preventDefault(); setActiveTab('menu'); },
+        'esc': (e) => {
+            if (selectedTableId) {
+                e.preventDefault();
+                setSelectedTableId(null);
+            }
+        }
+    }, [selectedTableId]);
 
     const attentionTasks = tasks.filter(t => t.priority === 'attention' || t.priority === 'critical');
 

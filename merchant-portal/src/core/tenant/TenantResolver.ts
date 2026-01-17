@@ -371,6 +371,15 @@ export function isTenantSealed(): boolean {
 }
 
 /**
+ * Check if a specific tenant ID is sealed (active tenant matches and status is ACTIVE).
+ * Used by Kernel to validate tenant before boot.
+ */
+export function isTenantSealedFor(tenantId: string | null | undefined): boolean {
+    if (!tenantId) return false;
+    return getActiveTenant() === tenantId && getTenantStatus() === 'ACTIVE';
+}
+
+/**
  * Set active tenant in TabIsolatedStorage (Seals Status as ACTIVE by default)
  */
 export function setActiveTenant(tenantId: string, status: TenantStatus = 'ACTIVE'): void {

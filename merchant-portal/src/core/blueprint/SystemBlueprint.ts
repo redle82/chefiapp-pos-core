@@ -2,7 +2,7 @@
  * THE SYSTEM BLUEPRINT
  * 
  * This is the SINGLE SOURCE OF TRUTH for the application instance.
- * It is generated once by the OnboardingCore and is effectively immutable
+ * It is generated once by the GenesisKernel and is effectively immutable
  * during the session (unless a major reconfiguration event occurs).
  * 
  * The System Guardian enforces that no UI is loaded without a valid Blueprint.

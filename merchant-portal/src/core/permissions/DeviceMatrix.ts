@@ -1,7 +1,7 @@
 export type DeviceRole = 'owner_device' | 'manager_terminal' | 'kds_screen';
 export type OperationMode = 'mobile_only' | 'hybrid' | 'full';
 
-export type ToolId = 'dashboard' | 'tpv' | 'kds' | 'menu' | 'orders' | 'staff';
+export type ToolId = 'dashboard' | 'tpv' | 'kds' | 'menu' | 'orders' | 'staff' | 'sovereignty';
 
 type PermissionRule = {
     allow: boolean;
@@ -16,7 +16,8 @@ const PERMISSION_MATRIX: Record<DeviceRole, Record<ToolId, boolean>> = {
         kds: false, // ❌ Mobile Owner doesn't run kitchen
         menu: true,
         orders: true, // Monitoring only
-        staff: true
+        staff: true,
+        sovereignty: true // ✅ Owner observes integrity
     },
     manager_terminal: {
         dashboard: true,
@@ -24,7 +25,8 @@ const PERMISSION_MATRIX: Record<DeviceRole, Record<ToolId, boolean>> = {
         kds: false, // Managers don't cook usually (but could allowed if hybrid?)
         menu: true,
         orders: true,
-        staff: true
+        staff: true,
+        sovereignty: true // ✅ Manager maintains integrity
     },
     kds_screen: {
         dashboard: false,
@@ -32,7 +34,8 @@ const PERMISSION_MATRIX: Record<DeviceRole, Record<ToolId, boolean>> = {
         kds: true, // ✅ KDS Only
         menu: false,
         orders: false,
-        staff: false
+        staff: false,
+        sovereignty: false
     }
 };
 

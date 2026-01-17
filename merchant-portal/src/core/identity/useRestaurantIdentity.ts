@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../supabase';
+import { getActiveTenant, getTenantStatus } from '../tenant/TenantResolver';
 
 export interface RestaurantIdentity {
     id: string | null;
@@ -78,6 +79,15 @@ export function useRestaurantIdentity() {
                 return;
             }
 
+            // 🔒 TENANT GATE: identity must NOT resolve/persist a restaurant unless tenant is sealed ACTIVE.
+            // This prevents accidental "first membership" selection in multi-tenant accounts.
+            const sealedStatus = getTenantStatus();
+            const sealedTenantId = getActiveTenant();
+            if (sealedStatus !== 'ACTIVE' || !sealedTenantId) {
+                setIdentity(prev => ({ ...prev, loading: false }));
+                return;
+            }
+
             // 0. Get Owner Profile (Rich Identity)
             const { data: profile } = await supabase
                 .from('profiles')
@@ -88,21 +98,36 @@ export function useRestaurantIdentity() {
             const ownerName = profile?.full_name || user.user_metadata?.full_name || 'Comandante';
 
             // 1. Get Restaurant Details (SCALABLE: Via Members)
-            // NOTE: restaurant_members is a VIEW, so we need 2-step fetch
-            const { data: memberData, error: memberError } = await supabase
+            // Fix for Incident #004/Identity: Handle users with multiple memberships (55+)
+            // Strategy (SOVEREIGN): only trust the sealed tenant from TenantResolver.
+            // Never use legacy keys to "guess" tenant, otherwise we can create false NO_MEMBERSHIP loops.
+            let memberQuery = supabase
                 .from('gm_restaurant_members')
                 .select('restaurant_id')
-                .eq('user_id', user.id)
-                .maybeSingle();
+                .eq('user_id', user.id);
 
-            console.log('[Identity] Member Query Response:', { memberData, memberError });
+            // Only constrain when the tenant is explicitly sealed as ACTIVE
+            if (sealedTenantId && sealedStatus === 'ACTIVE') {
+                memberQuery = memberQuery.eq('restaurant_id', sealedTenantId);
+            }
+
+            // Always use array to avoid PGRST116 and be resilient to view-related weirdness
+            const { data: memberList, error: memberError } = await memberQuery.limit(1);
+
+            console.log('[Identity] Member Query Response:', {
+                count: memberList?.length,
+                error: memberError,
+                targetTenantId: sealedTenantId
+            });
+
+            const memberData = memberList && memberList.length > 0 ? memberList[0] : null;
 
             // CRITICAL: Guard definitivo para membership
-            if (memberError || !memberData || !('restaurant_id' in memberData) || !memberData.restaurant_id) {
-                console.error('[Identity] CRITICAL: No restaurant membership', {
+            if (memberError || !memberData) {
+                console.error('[Identity] CRITICAL: No restaurant membership found', {
                     userId: user?.id,
-                    memberError,
-                    memberData,
+                    targetTenantId: sealedTenantId,
+                    memberError
                 });
 
                 setIdentity(prev => ({

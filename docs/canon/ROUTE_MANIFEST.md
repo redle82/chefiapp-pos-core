@@ -67,3 +67,8 @@ Reflects the structure defined in `App.tsx`.
 **Verification Rule:**
 Any new route added to `App.tsx` MUST be registered here.
 Routes inside `/app` MUST NOT be accessible if Tenant is not resolved.
+
+## Related Documentation
+
+- **[Surfaces Architecture](../architecture/SURFACES_ARCHITECTURE.md)** - Complete mapping of surfaces and their responsibilities. Each route belongs to a specific surface (Backoffice, TPV, KDS, Public, etc.).
+- **[Architecture Overview](../architecture/ARCHITECTURE_OVERVIEW.md)** - Technical architecture and the 6 Sovereign Blocks.

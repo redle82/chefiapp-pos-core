@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { OrderProvider, OrderContext } from './OrderContextReal';
 import { supabase } from '../../../core/supabase';
-import { Logger } from '../../../core/logger/Logger';
+import { Logger } from '../../../core/logger';
 
 // Mocks
 vi.mock('../../../core/supabase', () => ({
@@ -22,7 +22,7 @@ vi.mock('../../../core/supabase', () => ({
     }
 }));
 
-vi.mock('../../../core/logger/Logger', () => ({
+vi.mock('../../../core/logger', () => ({
     Logger: {
         info: vi.fn(),
         warn: vi.fn(),

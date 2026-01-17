@@ -5,8 +5,8 @@ import { Text } from '../../ui/design-system/primitives/Text';
 import { Button } from '../../ui/design-system/primitives/Button';
 import { Input } from '../../ui/design-system/primitives/Input';
 import { useTenant } from '../../core/tenant/TenantContext';
-import { FinanceEngine, FinanceSnapshot } from '../../core/reports/FinanceEngine';
-import { Logger } from '../../core/logger/Logger';
+import { FinanceEngine, type FinanceSnapshot } from '../../core/reports/FinanceEngine';
+import { Logger } from '../../core/logger';
 
 export const DailyClosing: React.FC = () => {
     const navigate = useNavigate();

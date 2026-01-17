@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../core/supabase';
 import { Card, Text, Button } from '../../../ui/design-system/primitives';
 import { OrderProcessingService } from '../../../core/services/OrderProcessingService';
+import { useKernel } from '../../../core/kernel/KernelContext';
 
 interface IncomingRequestsProps {
     restaurantId: string | null;
@@ -20,6 +21,7 @@ interface RequestItem {
 export const IncomingRequests: React.FC<IncomingRequestsProps> = ({ restaurantId, onOrderAccepted }) => {
     const [requests, setRequests] = useState<RequestItem[]>([]);
     const [processing, setProcessing] = useState<string | null>(null);
+    const { kernel } = useKernel(); // Sovereign Injection
 
     const [tenantId, setTenantId] = useState<string | null>(null);
 
@@ -77,7 +79,7 @@ export const IncomingRequests: React.FC<IncomingRequestsProps> = ({ restaurantId
         if (!restaurantId) return;
         setProcessing(req.id);
         try {
-            await OrderProcessingService.acceptRequest(req.id, restaurantId); // Assuming restaurantId is safe to pass or ignored if using relation
+            await OrderProcessingService.acceptRequest(req.id, restaurantId, kernel); // Pass Kernel
             // Remove from local list immediately for UX
             setRequests(prev => prev.filter(r => r.id !== req.id));
             onOrderAccepted();

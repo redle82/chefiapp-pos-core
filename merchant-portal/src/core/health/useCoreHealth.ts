@@ -69,6 +69,10 @@ export function useCoreHealth(options: UseCoreHealthOptions = {}): CoreHealthSta
   // Use only setTimeout for polling
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
+  // Use ref to track consecutive failures without causing re-renders
+  const consecutiveFailuresRef = useRef(0)
+  // Track if polling is active to prevent multiple instances
+  const isPollingActiveRef = useRef(false)
 
   const check = useCallback(async (): Promise<CoreHealthStatus> => {
     if (!mountedRef.current) return state.status
@@ -76,6 +80,7 @@ export function useCoreHealth(options: UseCoreHealthOptions = {}): CoreHealthSta
     // 🛡️ SECURITY: Bypass only allowed in DEV mode
     if (import.meta.env.DEV && getTabIsolated('chefiapp_bypass_health') === 'true') {
       const fakeStatus: CoreHealthStatus = 'UP'
+      consecutiveFailuresRef.current = 0
       setState({
         status: fakeStatus,
         lastChecked: Date.now(),
@@ -97,11 +102,12 @@ export function useCoreHealth(options: UseCoreHealthOptions = {}): CoreHealthSta
 
       if (result === 'down') {
         if (!mountedRef.current) return 'DOWN'
+        consecutiveFailuresRef.current += 1
         setState(s => ({
           ...s,
           status: 'DOWN',
           lastChecked: now,
-          consecutiveFailures: s.consecutiveFailures + 1,
+          consecutiveFailures: consecutiveFailuresRef.current,
           latencyMs,
           isChecking: false,
         }))
@@ -113,17 +119,21 @@ export function useCoreHealth(options: UseCoreHealthOptions = {}): CoreHealthSta
 
       if (!mountedRef.current) return status
 
-      if (state.status !== status) {
-        console.log(`[CoreHealth] Status changed: ${state.status} -> ${status}`)
-      }
+      // Reset consecutive failures on success
+      consecutiveFailuresRef.current = 0
 
-      setState({
-        status,
-        lastChecked: now,
-        lastSuccess: now,
-        consecutiveFailures: 0,
-        latencyMs,
-        isChecking: false,
+      setState(prevState => {
+        if (prevState.status !== status) {
+          console.log(`[CoreHealth] Status changed: ${prevState.status} -> ${status}`)
+        }
+        return {
+          status,
+          lastChecked: now,
+          lastSuccess: now,
+          consecutiveFailures: 0,
+          latencyMs,
+          isChecking: false,
+        }
       })
 
       return status
@@ -134,38 +144,70 @@ export function useCoreHealth(options: UseCoreHealthOptions = {}): CoreHealthSta
 
       if (!mountedRef.current) return 'DOWN'
 
+      consecutiveFailuresRef.current += 1
       setState(s => ({
         ...s,
         status: 'DOWN',
         lastChecked: now,
-        consecutiveFailures: s.consecutiveFailures + 1,
+        consecutiveFailures: consecutiveFailuresRef.current,
         latencyMs,
         isChecking: false,
       }))
       return 'DOWN'
     }
-  }, [opts.degradedThresholdMs, state.status])
+  }, [opts.degradedThresholdMs])
 
   const stopPolling = useCallback(() => {
     if (pollingRef.current) {
       clearTimeout(pollingRef.current)
       pollingRef.current = null
     }
+    isPollingActiveRef.current = false
   }, [])
 
   const startPolling = useCallback(() => {
+    // Prevent multiple polling instances
+    if (isPollingActiveRef.current) {
+      console.warn('[useCoreHealth] Polling already active, skipping start')
+      return
+    }
+
     stopPolling()
+    isPollingActiveRef.current = true
 
     // Define the poll loop
     const poll = async () => {
+      // Check if still mounted and polling should continue
+      if (!mountedRef.current || !isPollingActiveRef.current) {
+        isPollingActiveRef.current = false
+        return
+      }
+
       // Check first
       const currentStatus = await check()
 
-      if (!mountedRef.current) return
+      if (!mountedRef.current || !isPollingActiveRef.current) {
+        isPollingActiveRef.current = false
+        return
+      }
 
-      // Schedule next
-      const interval = currentStatus === 'DOWN' ? opts.downPollInterval : opts.pollInterval
-      pollingRef.current = setTimeout(poll, interval)
+      // Se houver muitas falhas consecutivas, aumentar intervalo exponencialmente
+      // Use ref to avoid dependency on state
+      const consecutiveFailures = consecutiveFailuresRef.current
+      let interval = currentStatus === 'DOWN' ? opts.downPollInterval : opts.pollInterval
+      
+      // Backoff exponencial após 5 falhas consecutivas
+      if (consecutiveFailures > 5) {
+        const backoffMultiplier = Math.min(Math.pow(2, consecutiveFailures - 5), 8) // Max 8x
+        interval = interval * backoffMultiplier
+      }
+
+      // Schedule next only if still active
+      if (isPollingActiveRef.current && mountedRef.current) {
+        pollingRef.current = setTimeout(poll, interval)
+      } else {
+        isPollingActiveRef.current = false
+      }
     }
 
     // Start the loop
@@ -176,15 +218,20 @@ export function useCoreHealth(options: UseCoreHealthOptions = {}): CoreHealthSta
   useEffect(() => {
     mountedRef.current = true
 
-    if (opts.autoStart) {
+    // Only start if explicitly enabled and not already active
+    if (opts.autoStart && !isPollingActiveRef.current) {
       startPolling()
+    } else if (!opts.autoStart) {
+      // Explicitly stop if autoStart is disabled
+      stopPolling()
     }
 
     return () => {
       mountedRef.current = false
       stopPolling()
     }
-  }, [opts.autoStart, startPolling, stopPolling])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opts.autoStart]) // Only depend on autoStart to prevent re-runs
 
   return {
     ...state,

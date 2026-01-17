@@ -7,7 +7,7 @@
 import { supabase } from '../supabase';
 import type { TaxDocument } from '../../../../fiscal-modules/types';
 import type { FiscalResult } from '../../../../fiscal-modules/types';
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 
 export class SupabaseFiscalEventStore {
     /**

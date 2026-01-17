@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { supabase } from '../supabase';
 import { useSupabaseAuth } from '../auth/useSupabaseAuth';
-import { getActiveTenant, getTenantStatus, setActiveTenant } from './TenantResolver';
+import { getActiveTenant, getTenantStatus, setActiveTenant, isTenantSealed } from './TenantResolver';
+import { isDevStableMode } from '../runtime/devStableMode';
 
 /**
  * 🏢 TenantContext — Multi-Tenant Data Isolation (Phase 4)
@@ -91,32 +92,50 @@ export function TenantProvider({ children }: TenantProviderProps) {
         isMultiTenant: false,
     });
 
-    // In-flight guard: prevent concurrent resolveTenants() calls (StrictMode/remount safety)
-    const resolveInFlightRef = useRef<Promise<void> | null>(null);
+    // STEP 5: In-flight guard - prevent concurrent resolveTenants() calls (StrictMode/remount safety)
+    const inFlightRef = useRef<Promise<void> | null>(null);
 
     // ========================================================================
     // RESOLVE TENANTS
     // ========================================================================
 
     const resolveTenants = useCallback(async () => {
-        if (resolveInFlightRef.current) return;
-
+        // STEP 5: In-flight guard - prevent concurrent calls
+        if (inFlightRef.current) return;
         const p = (async () => {
-        if (!session?.user?.id) {
-            setState({
-                tenantId: null,
-                restaurant: null,
-                memberships: [],
-                isLoading: false,
-                error: null,
-                isMultiTenant: false,
-            });
-            return;
-        }
-
-        setState(prev => ({ ...prev, isLoading: true, error: null }));
 
         try {
+            // STEP 5: Early return if tenant already sealed (sovereign authority)
+            // Tenant selado não é reavaliado, não é reescrito
+            const sealed = isTenantSealed();
+            const sealedTenantId = getActiveTenant();
+
+            if (sealed && sealedTenantId) {
+                // Tenant already sealed - do not re-resolve or overwrite
+                // If state is already in sync, return early
+                if (state.tenantId === sealedTenantId && state.memberships.length > 0 && !state.isLoading) {
+                    // Everything is in sync, no work needed
+                    // Não atualizar estado para evitar re-renders desnecessários
+                    return;
+                }
+                // If state is not in sync but tenant is sealed, we still need memberships for UI
+                // Continue to fetch memberships but skip sealing logic below
+            }
+
+            if (!session?.user?.id) {
+                setState({
+                    tenantId: null,
+                    restaurant: null,
+                    memberships: [],
+                    isLoading: false,
+                    error: null,
+                    isMultiTenant: false,
+                });
+                return;
+            }
+
+            setState(prev => ({ ...prev, isLoading: true, error: null }));
+
             // 1. Fetch all memberships
             const { data: members, error: memberError } = await supabase
                 .from('gm_restaurant_members')
@@ -161,20 +180,32 @@ export function TenantProvider({ children }: TenantProviderProps) {
             const cachedStatus = getTenantStatus();
             let activeTenantId: string | null = null;
 
-            if (cachedTenantId && cachedStatus === 'ACTIVE' && memberships.some(m => m.restaurant_id === cachedTenantId)) {
-                activeTenantId = cachedTenantId;
-            } else if (memberships.length === 1) {
-                // ✅ Single-tenant: auto-seleção é permitida
-                activeTenantId = memberships[0].restaurant_id;
-                // Seal tenant via the canonical resolver keys (prevents Gate/Domain drift)
-                setActiveTenant(activeTenantId);
+            // STEP 5: Fail-closed - never overwrite sealed tenant
+            if (sealed && sealedTenantId && memberships.some(m => m.restaurant_id === sealedTenantId)) {
+                // Tenant already sealed - use it directly, do not re-seal
+                activeTenantId = sealedTenantId;
             } else {
-                /**
-                 * 🔒 MULTI-TENANT SOVEREIGNTY
-                 * Em multi-tenant, TenantContext não pode auto-selecionar nem escrever cache.
-                 * A seleção deve ocorrer em /app/select-tenant e ser selada pelo FlowGate/TenantResolver.
-                 */
-                activeTenantId = null;
+                // STEP 5: Explicit multi-tenant guard - NO auto-selection
+                if (memberships.length > 1) {
+                    // Multi-tenant: only use cached if valid, never auto-select
+                    if (cachedTenantId && cachedStatus === 'ACTIVE' && memberships.some(m => m.restaurant_id === cachedTenantId)) {
+                        activeTenantId = cachedTenantId;
+                    } else {
+                        activeTenantId = null; // Must select via /app/select-tenant
+                    }
+                } else if (cachedTenantId && cachedStatus === 'ACTIVE' && memberships.some(m => m.restaurant_id === cachedTenantId)) {
+                    activeTenantId = cachedTenantId;
+                } else if (memberships.length === 1) {
+                    // Single-tenant: auto-selection is allowed
+                    activeTenantId = memberships[0].restaurant_id;
+                    // Only seal if tenant is not already sealed (prevent overwrite)
+                    const currentlySealed = isTenantSealed();
+                    if (!currentlySealed || getActiveTenant() !== activeTenantId) {
+                        setActiveTenant(activeTenantId);
+                    }
+                } else {
+                    activeTenantId = null;
+                }
             }
 
             // 5. Fetch FULL active restaurant data if we have an ID
@@ -200,7 +231,10 @@ export function TenantProvider({ children }: TenantProviderProps) {
             });
 
         } catch (error) {
-            console.error('[TenantContext] ❌ Error resolving tenants:', error);
+            const devStable = isDevStableMode();
+            if (!devStable) {
+                console.error('[TenantContext] ❌ Error resolving tenants:', error);
+            }
             setState(prev => ({
                 ...prev,
                 isLoading: false,
@@ -208,14 +242,13 @@ export function TenantProvider({ children }: TenantProviderProps) {
             }));
         }
         })();
-
-        resolveInFlightRef.current = p;
+        inFlightRef.current = p;
         try {
             await p;
         } finally {
-            resolveInFlightRef.current = null;
+            inFlightRef.current = null;
         }
-    }, [session?.user?.id]);
+    }, [session?.user?.id, state.tenantId, state.memberships.length]);
 
     // ========================================================================
     // REFRESH SINGLE TENANT (Opus 6.0)
@@ -233,9 +266,16 @@ export function TenantProvider({ children }: TenantProviderProps) {
             if (error) throw error;
 
             setState(prev => ({ ...prev, restaurant: fullRest }));
-            console.log('[TenantContext] 🔄 Refreshed active tenant data');
+            // No logs in DEV_STABLE_MODE (only hard-stop logs allowed)
+            const devStable = isDevStableMode();
+            if (!devStable) {
+                console.log('[TenantContext] 🔄 Refreshed active tenant data');
+            }
         } catch (err) {
-            console.error('[TenantContext] Failed to refresh tenant:', err);
+            const devStable = isDevStableMode();
+            if (!devStable) {
+                console.error('[TenantContext] Failed to refresh tenant:', err);
+            }
         }
     }, [state.tenantId]);
 
@@ -247,7 +287,11 @@ export function TenantProvider({ children }: TenantProviderProps) {
     const switchTenant = useCallback(async (newTenantId: string) => {
         // Validation...
         if (!state.memberships.some(m => m.restaurant_id === newTenantId)) {
-            console.error('[TenantContext] ❌ Cannot switch to unauthorized tenant:', newTenantId);
+            // No logs in DEV_STABLE_MODE (only hard-stop logs allowed)
+            const devStable = isDevStableMode();
+            if (!devStable) {
+                console.error('[TenantContext] ❌ Cannot switch to unauthorized tenant:', newTenantId);
+            }
             return;
         }
 
@@ -272,10 +316,17 @@ export function TenantProvider({ children }: TenantProviderProps) {
                 restaurant: fullRest,
                 isLoading: false
             }));
-            console.log('[TenantContext] 🔄 Switched to tenant:', newTenantId);
+            // No logs in DEV_STABLE_MODE (only hard-stop logs allowed)
+            const devStable = isDevStableMode();
+            if (!devStable) {
+                console.log('[TenantContext] 🔄 Switched to tenant:', newTenantId);
+            }
 
         } catch (err) {
-            console.error('[TenantContext] Error switching tenant details:', err);
+            const devStable = isDevStableMode();
+            if (!devStable) {
+                console.error('[TenantContext] Error switching tenant details:', err);
+            }
             setState(prev => ({ ...prev, isLoading: false, error: 'Failed to switch' }));
         }
 
@@ -295,8 +346,17 @@ export function TenantProvider({ children }: TenantProviderProps) {
     // ========================================================================
 
     useEffect(() => {
+        // Proteção adicional: não executar se tenant já está selado e estado está sincronizado
+        const sealed = isTenantSealed();
+        const sealedTenantId = getActiveTenant();
+        
+        if (sealed && sealedTenantId && state.tenantId === sealedTenantId && state.memberships.length > 0 && !state.isLoading) {
+            // Tenant selado e estado sincronizado - não re-executar
+            return;
+        }
+        
         resolveTenants();
-    }, [resolveTenants]);
+    }, [resolveTenants, state.tenantId, state.memberships.length, state.isLoading]);
 
     // ========================================================================
     // CONTEXT VALUE

@@ -6,7 +6,7 @@
  */
 
 import { supabase } from '../supabase';
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 import { realtimeCollaborationService } from './RealtimeCollaborationService';
 
 export interface ChatMessage {

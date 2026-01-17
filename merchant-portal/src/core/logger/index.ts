@@ -1,8 +1,12 @@
+// Re-export Logger class and types
+export { Logger } from './Logger';
+export type { LogLevel, LogContext } from './Logger';
 
-// Redirecting to the enhanced Logger
-import { Logger } from './logger/Logger';
+// -------------------------------------------------------------
+// Backwards compatibility layer mapping (Legacy 'logger' object)
+// -------------------------------------------------------------
+import { Logger } from './Logger';
 
-// Backwards compatibility layer mapping
 export const logger = {
     log: (level: 'info' | 'warn' | 'error', message: string, details?: any) => {
         if (level === 'error') Logger.error(message, details);

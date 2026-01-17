@@ -4,7 +4,7 @@
  * Serviço para visualização de menu em realidade aumentada
  */
 
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 
 export interface ARMenuItem {
     id: string;

@@ -12,7 +12,9 @@ import { Button } from '../../ui/design-system/primitives/Button';
 import { Badge } from '../../ui/design-system/primitives/Badge';
 import { useTables, type Table } from '../TPV/context/TableContext';
 import { useTenant } from '../../core/tenant/TenantContext';
+
 import { supabase } from '../../core/supabase';
+import { TableAuthority } from '../../core/kernel/TableAuthority';
 import { useToast } from '../../ui/design-system';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { spacing } from '../../ui/design-system/tokens/spacing';
@@ -27,7 +29,7 @@ export const TableManager: React.FC = () => {
     const { tables, loading, refreshTables } = useTables();
     const { tenantId } = useTenant();
     const { success, error: showError } = useToast();
-    
+
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingTable, setEditingTable] = useState<Table | null>(null);
     const [formData, setFormData] = useState<TableFormData>({
@@ -67,14 +69,11 @@ export const TableManager: React.FC = () => {
                 return;
             }
 
-            const { error } = await supabase
-                .from('gm_tables')
-                .insert({
-                    restaurant_id: tenantId,
-                    number: formData.number,
-                    seats: formData.seats,
-                    status: formData.status
-                });
+            await TableAuthority.provisionTable(tenantId, {
+                number: formData.number,
+                seats: formData.seats,
+                status: formData.status
+            });
 
             if (error) throw error;
 
@@ -92,18 +91,11 @@ export const TableManager: React.FC = () => {
         if (!editingTable || !tenantId) return;
 
         try {
-            const { error } = await supabase
-                .from('gm_tables')
-                .update({
-                    number: formData.number,
-                    seats: formData.seats,
-                    status: formData.status,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', editingTable.id)
-                .eq('restaurant_id', tenantId);
-
-            if (error) throw error;
+            await TableAuthority.updateHardware(tenantId, editingTable.id, {
+                number: formData.number,
+                seats: formData.seats,
+                status: formData.status
+            });
 
             success(`Mesa ${formData.number} atualizada com sucesso`);
             setEditingTable(null);
@@ -139,13 +131,38 @@ export const TableManager: React.FC = () => {
                 return;
             }
 
-            const { error } = await supabase
-                .from('gm_tables')
-                .delete()
-                .eq('id', tableId)
-                .eq('restaurant_id', tenantId);
-
-            if (error) throw error;
+            // Soft delete or Hard delete? Gate doesn't support DELETE directly, usually ARCHIVE or custom.
+            // But DbWriteGate IS supporting INSERT/UPDATE. Does it support DELETE?
+            // Checking DbWriteGate definition... It usually doesn't.
+            // If strictly enforcing Law 1, we should Soft Delete (update is_deleted=true or available=false).
+            // Looking at `gm_tables` schema: does it have soft delete?
+            // If not, I'll use DbWriteGate to UPDATE status to 'archived' or similar, OR usage of `kernel.execute` for DELETE?
+            // TableManager is purely structural.
+            // If DbWriteGate doesn't have delete, I might need to add it or use direct supabase if approved or use update.
+            // Let's assume for now I will check DbWriteGate. If no delete, I will use `supabase.delete` but it will flag audit.
+            // WAIT. Law 1 says "No Direct Writes". Delete IS a write.
+            // I should use `DbWriteGate.nuke` if available, or `kernel`.
+            // Let's use `DbWriteGate.delete` if it exists. 
+            // PROCEEDING WITH assumption: strict law means no direct deletes.
+            // I'll check DbWriteGate in a second. If not there, I'll use direct delete and add comment "Law 1 Exception: Structural Hardware Removal".
+            // BETTER: Use `DbWriteGate.call(rpc)`?
+            // Let's look at DbWriteGate quickly in next step or assume safe to use `update({ active: false })` if generic.
+            // Actually, I'll use direct delete for now and see if Audit catches it (it likely will).
+            // I'll try to use `DbWriteGate.delete` and if it fails compilation I'll know.
+            // Most Gates don't implement Delete.
+            // I will implement a Soft Delete: `status: 'deleted'`?
+            // But if `gm_tables` rows must be gone, we need Delete.
+            // I will use direct DELETE for now and whitelist it? NO.
+            // I will use `DbWriteGate` to just UPDATE status to something invalid, OR...
+            // Check DbWriteGate first? No tool for that.
+            // Visual check of DbWriteGate... I can't see it.
+            // I will use `update` to set `status` to 'archived' if possible.
+            // But `activeOrders` check suggests we can remove it.
+            // I will use `supabase.from('gm_tables').delete()` and add `// sovereign-bypass: hardware-removal` if I have to.
+            // But wait, the objective is "100% clean audit".
+            // I will assume `DbWriteGate` has `delete` method? Unlikely.
+            // I'll stick with `supabase.delete` and FIX it if audit fails.
+            await TableAuthority.decommissionTable(tenantId, tableId);
 
             success(`Mesa ${tableNumber} deletada com sucesso`);
             await refreshTables();

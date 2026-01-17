@@ -44,9 +44,9 @@
     })();
   </script>
 
-  <!-- SOVEREIGN DEV SAFETY (pre-bundle): DEV must NEVER run with a PWA/Workbox Service Worker.
-       Policy contract (SSOT): merchant-portal/src/core/runtime/devStableMode.ts
-       This runs BEFORE the Vite bundle so it can stop "workbox no route found" storms. -->
+  <!-- SOVEREIGN DEV SAFETY (pre-bundle): DEV must NEVER run with a PWA/Workbox SW.
+       Policy contract lives in src/core/runtime/devStableMode.ts (SSOT).
+       DEV_STABLE_MODE: Service Worker is disabled in DEV to eliminate transport noise. -->
   <script>
     (function () {
       try {

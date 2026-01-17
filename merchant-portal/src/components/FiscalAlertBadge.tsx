@@ -10,9 +10,10 @@
  * - Link direto para lista de pendências
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, X } from 'lucide-react';
+import { isDevStableMode } from '../core/runtime/devStableMode';
 
 interface FiscalAlertData {
   pending: number;
@@ -30,19 +31,56 @@ export function FiscalAlertBadge({ restaurantId, apiBase = '/api' }: FiscalAlert
   const [isVisible, setIsVisible] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const navigate = useNavigate();
+  const errorCountRef = useRef(0);
+  const isPollingDisabledRef = useRef(false);
 
   useEffect(() => {
     if (!restaurantId) return;
 
+    // DEV_STABLE_MODE: Não fazer polling para reduzir ruído de transporte
+    if (isDevStableMode()) {
+      return;
+    }
+
+    // Se já desabilitamos polling devido a muitos erros, não tentar novamente
+    if (isPollingDisabledRef.current) {
+      return;
+    }
+
     const fetchPendingExternalIds = async () => {
       try {
+        // Timeout de 5 segundos para evitar requisições pendentes
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
         const response = await fetch(`${apiBase}/fiscal/pending-external-ids?restaurantId=${restaurantId}`, {
           headers: {
             'x-restaurant-id': restaurantId,
           },
+          signal: controller.signal,
         });
 
-        if (!response.ok) return;
+        clearTimeout(timeoutId);
+
+        // Se erro 500 ou outro erro, incrementar contador de erros
+        if (!response.ok) {
+          errorCountRef.current += 1;
+          
+          // Se muitos erros consecutivos (3+), desabilitar polling para evitar spam
+          if (errorCountRef.current >= 3) {
+            console.warn('[FiscalAlertBadge] Too many errors, disabling polling', {
+              errorCount: errorCountRef.current,
+              status: response.status,
+            });
+            isPollingDisabledRef.current = true;
+            return;
+          }
+          return;
+        }
+
+        // Reset contador de erros em caso de sucesso
+        errorCountRef.current = 0;
+        isPollingDisabledRef.current = false;
 
         const data = await response.json();
         setAlertData(data);
@@ -56,7 +94,25 @@ export function FiscalAlertBadge({ restaurantId, apiBase = '/api' }: FiscalAlert
         if (data.total === 0 && showToast) {
           setShowToast(false);
         }
-      } catch (error) {
+      } catch (error: any) {
+        // Ignorar erros de abort (timeout)
+        if (error.name === 'AbortError') {
+          console.warn('[FiscalAlertBadge] Request timeout');
+          return;
+        }
+
+        errorCountRef.current += 1;
+        
+        // Se muitos erros consecutivos, desabilitar polling
+        if (errorCountRef.current >= 3) {
+          console.warn('[FiscalAlertBadge] Too many errors, disabling polling', {
+            errorCount: errorCountRef.current,
+            error: error.message,
+          });
+          isPollingDisabledRef.current = true;
+          return;
+        }
+
         console.error('[FiscalAlertBadge] Error fetching pending external IDs:', error);
       }
     };
@@ -65,7 +121,9 @@ export function FiscalAlertBadge({ restaurantId, apiBase = '/api' }: FiscalAlert
     fetchPendingExternalIds();
     const interval = setInterval(fetchPendingExternalIds, 30000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, [restaurantId, apiBase, showToast]);
 
   const totalPending = (alertData?.pending || 0) + (alertData?.failed || 0);

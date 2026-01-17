@@ -1,10 +1,13 @@
 import { ReactNode, useRef, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { OrderProvider } from '../pages/TPV/context/OrderContextReal';
 import { TableProvider } from '../pages/TPV/context/TableContext';
 import { useTenant } from '../core/tenant/TenantContext';
 import { LoadingState } from '../ui/design-system/components/LoadingState';
 import { hasActiveOperationalState, getOperationalStateBlockReason } from '../core/gate/OperationalStateGuard';
-import { Logger } from '../core/logger/Logger';
+import { Logger } from '../core/logger';
+import { KernelProvider } from '../core/kernel/KernelContext';
+import { OfflineOrderProvider } from '../pages/TPV/context/OfflineOrderContext';
 
 interface Props {
     children: ReactNode;
@@ -31,9 +34,52 @@ interface Props {
  */
 export function AppDomainWrapper({ children }: Props) {
     const { tenantId, isLoading } = useTenant();
+    const location = useLocation();
+    const navigate = useNavigate();
     const previousTenantRef = useRef<string | null>(null);
     const [tenantSwitchBlocked, setTenantSwitchBlocked] = useState(false);
     const [blockReason, setBlockReason] = useState<string | null>(null);
+    const hasLoggedNoTenantRef = useRef(false); // Prevent duplicate logs in StrictMode
+
+    // =========================================================================
+    // FAIL-CLOSED: If Gate did not seal tenantId, force user back to Tenant Gate.
+    // Prevents "Contexto operacional não disponível" limbo + stops mount/unmount loops.
+    // DEV_STABLE_MODE: Não redirecionar se já estiver em /app/select-tenant (é o estado esperado).
+    // =========================================================================
+    useEffect(() => {
+        if (isLoading) return;
+        
+        // Exempt routes that don't require tenant
+        const exemptRoutes = [
+            '/app/select-tenant',
+            '/app/access-denied',
+            '/app/paused',
+            '/app/suspended',
+            '/app/operation-status'
+        ];
+        
+        if (exemptRoutes.some(route => location.pathname.startsWith(route))) {
+            return;
+        }
+
+        if (!tenantId && location.pathname.startsWith('/app/')) {
+            // Only redirect if not already on select-tenant (prevent redirect loops)
+            if (location.pathname !== '/app/select-tenant') {
+                // Save the original route so we can return to it after tenant selection
+                try {
+                    sessionStorage.setItem('chefiapp_return_to', location.pathname);
+                    console.log('[AppDomainWrapper] Saved return route before redirect:', location.pathname);
+                } catch (e) {
+                    // Ignore storage errors
+                }
+                console.warn('[AppDomainWrapper] No tenantId - redirecting to /app/select-tenant', {
+                    path: location.pathname,
+                });
+                // Use navigate instead of window.location.assign to preserve sessionStorage
+                navigate('/app/select-tenant', { replace: true });
+            }
+        }
+    }, [tenantId, isLoading, location.pathname]);
 
     // =========================================================================
     // P0.2 GUARD: Block tenant switch with active operational state
@@ -119,7 +165,18 @@ export function AppDomainWrapper({ children }: Props) {
     }
 
     // GATE ENFORCEMENT: Wait for tenant to be resolved
-    if (isLoading) {
+    // DEV_STABLE_MODE: Não mostrar loading na tela de seleção de tenant
+    // A tela de seleção é justamente o mecanismo para obter tenantId
+    const exemptRoutes = [
+        '/app/select-tenant',
+        '/app/access-denied',
+        '/app/paused',
+        '/app/suspended',
+        '/app/operation-status'
+    ];
+    const isExemptRoute = exemptRoutes.some(route => location.pathname.startsWith(route));
+    
+    if (isLoading && !isExemptRoute) {
         return (
             <div style={{
                 height: '100vh',
@@ -137,10 +194,40 @@ export function AppDomainWrapper({ children }: Props) {
         );
     }
 
+    /**
+     * 🔒 GATE EXEMPTION (Select Tenant)
+     * A tela de seleção é justamente o mecanismo para obter tenantId.
+     * Portanto, ela precisa renderizar mesmo quando tenantId ainda é null.
+     * DEV_STABLE_MODE: Esta é a única entrada permitida quando não há tenant selado.
+     */
+    if (location.pathname.startsWith('/app/select-tenant') || location.pathname.startsWith('/app/access-denied')) {
+        return <>{children}</>;
+    }
+
     // GATE ENFORCEMENT: No tenant = no domain access
+    // DEV_STABLE_MODE: Não logar erro se estiver em rotas que não requerem tenant
     if (!tenantId) {
         // This should not happen if FlowGate is working correctly
-        console.error('[AppDomainWrapper] No tenantId available - Gate may have failed');
+        // Only log if we're actually on a route that requires tenant (not select-tenant or access-denied)
+        const isExemptRoute = location.pathname.startsWith('/app/select-tenant') || 
+                              location.pathname.startsWith('/app/access-denied') ||
+                              location.pathname.startsWith('/app/paused') ||
+                              location.pathname.startsWith('/app/suspended') ||
+                              location.pathname.startsWith('/app/operation-status');
+        
+        // Prevent duplicate logs in React StrictMode (dev only)
+        if (!isExemptRoute && !hasLoggedNoTenantRef.current) {
+            hasLoggedNoTenantRef.current = true;
+            console.warn('[AppDomainWrapper] No tenantId available - redirecting to select-tenant', {
+                path: location.pathname
+            });
+        }
+        
+        // Reset log flag when tenant becomes available
+        if (tenantId) {
+            hasLoggedNoTenantRef.current = false;
+        }
+        
         return (
             <div style={{
                 height: '100vh',
@@ -160,12 +247,18 @@ export function AppDomainWrapper({ children }: Props) {
         );
     }
 
+
+
     // SOVEREIGN INJECTION: Pass tenantId to Domain providers
     return (
-        <OrderProvider restaurantId={tenantId}>
-            <TableProvider restaurantId={tenantId}>
-                {children}
-            </TableProvider>
-        </OrderProvider>
+        <KernelProvider tenantId={tenantId}>
+            <OfflineOrderProvider>
+                <OrderProvider restaurantId={tenantId}>
+                    <TableProvider restaurantId={tenantId}>
+                        {children}
+                    </TableProvider>
+                </OrderProvider>
+            </OfflineOrderProvider>
+        </KernelProvider>
     );
 }

@@ -5,7 +5,7 @@
  */
 
 import { supabase } from '../supabase';
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 import { hashChainService } from '../integrity/HashChainService';
 
 export type EventType = 

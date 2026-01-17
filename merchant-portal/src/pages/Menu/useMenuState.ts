@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react';
 import { supabase } from '../../core/supabase';
 import { useSystemGuardian } from '../../core/guardian/SystemGuardianContext';
+import { useContext, useState, useEffect } from 'react';
+import { useKernel } from '../../core/kernel/KernelContext';
+import { MenuAuthority } from '../../core/kernel/MenuAuthority';
+import { useTenant } from '../../core/tenant/TenantContext';
 
-import { OnboardingCore } from '../../core/onboarding/OnboardingCore';
+import { GenesisKernel } from '../../core/kernel/GenesisKernel';
 
 export type MenuViewState = 'LOADING' | 'EMPTY' | 'DRAFT' | 'ACTIVE' | 'ERROR';
 
@@ -10,31 +13,13 @@ export type MenuViewState = 'LOADING' | 'EMPTY' | 'DRAFT' | 'ACTIVE' | 'ERROR';
 const IS_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function useMenuState() {
-    const { status } = useSystemGuardian();
+    const { status: guardianStatus } = useSystemGuardian();
+    const { tenantId } = useTenant(); // Use TenantContext as source of truth
 
-    const [restaurantId, setRestaurantId] = useState<string | null>(null);
+    // Use tenantId from TenantContext (already resolved by FlowGate/TenantProvider)
+    const restaurantId = tenantId;
 
-    // 1. Resolve Restaurant ID (Priority: Blueprint > LocalStorage > null)
-    useEffect(() => {
-        const resolveRestaurantId = async () => {
-            const blueprint = await OnboardingCore.getBlueprint();
-            if (blueprint?.meta?.tenantId && IS_UUID.test(blueprint.meta.tenantId)) {
-                setRestaurantId(blueprint.meta.tenantId);
-                return;
-            }
-
-            const { getTabIsolated } = await import('../../core/storage/TabIsolatedStorage');
-            const local = getTabIsolated('chefiapp_restaurant_id');
-            if (local && IS_UUID.test(local)) {
-                setRestaurantId(local);
-                return;
-            }
-
-            setRestaurantId(null);
-        };
-
-        resolveRestaurantId();
-    }, []);
+    const { kernel, isReady, status, executeSafe } = useKernel(); // Sovereign Injection
 
     const [categories, setCategories] = useState<any[]>([]);
     const [items, setItems] = useState<any[]>([]);
@@ -72,13 +57,13 @@ export function useMenuState() {
             return;
         }
 
-        if (status.realityStatus === 'draft') {
+        if (guardianStatus.realityStatus === 'draft') {
             setViewState('DRAFT');
             return;
         }
 
         setViewState('ACTIVE');
-    }, [loading, error, categories, status.realityStatus]);
+    }, [loading, error, categories, guardianStatus.realityStatus]);
 
     const fetchMenu = async (id: string) => {
         setLoading(true);
@@ -115,35 +100,66 @@ export function useMenuState() {
     };
 
     const addCategory = async (name: string) => {
-        if (!restaurantId) throw new Error("No Restaurant ID");
-        const { data, error } = await supabase.from('gm_menu_categories').insert({
-            restaurant_id: restaurantId,
-            name,
-            sort_order: categories.length + 1
-        }).select().single();
+        try {
+            if (!restaurantId) throw new Error("No Restaurant ID");
 
-        if (error) throw error;
-        setCategories([...categories, data]);
-        return data;
+            // Metadata/Structure -> Sovereign Kernel
+            const data = await MenuAuthority.createCategory(restaurantId, name, categories.length + 1);
+
+
+
+            setCategories([...categories, data]);
+            return data;
+        } catch (err) {
+            console.error('[useMenuState] addCategory Failed:', err);
+            throw err;
+        }
     };
 
     const addItem = async (categoryId: string, name: string, price: number, trackStock: boolean = false, stockQty: number = 0) => {
         if (!restaurantId) throw new Error("No Restaurant ID");
-        const { data, error } = await supabase.from('gm_products').insert({
+        
+        // DEV_STABLE_MODE: Fail-closed guard - kernel must be ready
+        if (!isReady || !kernel) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                ? 'Sistema em modo de estabilização' 
+                : status === 'BOOTING'
+                ? 'Sistema inicializando'
+                : 'Kernel não está pronto'}`);
+        }
+
+        const productId = crypto.randomUUID();
+
+        // Sovereign Creation (Kernel)
+        const result = await executeSafe({
+            entity: 'PRODUCT',
+            entityId: productId,
+            event: 'CREATE',
+            restaurantId,
+            payload: {
+                name,
+                priceCents: Math.round(price * 100),
+                trackStock,
+                stockQuantity: stockQty,
+                categoryId // Linking to Category
+            }
+        });
+
+        if (!result.ok) {
+            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
+        }
+
+        // Optimistic UI Update (or re-fetch, but mapping for speed)
+        const mapped = {
+            id: productId,
             restaurant_id: restaurantId,
             category_id: categoryId,
             name,
+            price: price,
             price_cents: Math.round(price * 100),
             track_stock: trackStock,
             stock_quantity: stockQty,
             available: true
-        }).select().single();
-
-        if (error) throw error;
-
-        const mapped = {
-            ...data,
-            price: (data.price_cents || 0) / 100
         };
         setItems([...items, mapped]);
         return mapped;
@@ -151,27 +167,67 @@ export function useMenuState() {
 
     const updateItem = async (itemId: string, updates: { name?: string; price?: number; category_id?: string; track_stock?: boolean; stock_quantity?: number }) => {
         if (!restaurantId) throw new Error("No Restaurant ID");
-
-        // Convert price to cents if present
-        const dbUpdates: any = { ...updates };
-        if (updates.price !== undefined) {
-            dbUpdates.price_cents = Math.round(updates.price * 100);
-            delete dbUpdates.price;
+        
+        // DEV_STABLE_MODE: Fail-closed guard - kernel must be ready
+        if (!isReady || !kernel) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                ? 'Sistema em modo de estabilização' 
+                : status === 'BOOTING'
+                ? 'Sistema inicializando'
+                : 'Kernel não está pronto'}`);
         }
 
-        const { data, error } = await supabase
-            .from('gm_products')
-            .update(dbUpdates)
-            .eq('id', itemId)
-            .eq('restaurant_id', restaurantId)
-            .select()
-            .single();
+        const currentItem = items.find(i => i.id === itemId);
+        if (!currentItem) throw new Error("Item not found locally");
 
-        if (error) throw error;
+        // Prepare Payload
+        const payload: any = {};
+        if (updates.name) payload.name = updates.name;
+        if (updates.price !== undefined) payload.priceCents = Math.round(updates.price * 100);
+        if (updates.track_stock !== undefined) payload.trackStock = updates.track_stock;
+        if (updates.stock_quantity !== undefined) payload.stockQuantity = updates.stock_quantity;
+        if (updates.category_id) payload.categoryId = updates.category_id;
+
+        // Merge with existing for defaults if needed by projection (projection checks truthiness mostly)
+        // But for update, we just send deltas if the projection supports it.
+        // ProductProjection expects full payload or merges?
+        // Let's look at ProductProjection again.
+        // It does: const { name, ... } = payload || {};
+        // It performs UPSERT. So we MUST provide ALL required fields (Name, RestaurantID).
+        // Upsert requires the full object usually if we don't want to nullify.
+        // Wait. Supabase upsert will OVERWRITE columns if we don't be careful?
+        // No, upsert updates existing if ID matches. But we need to pass the current values for fields we AREN'T updating if we are just passing a partial object?
+        // Actually, Supabase `upsert` is "insert or update".
+        // If we only pass partial fields + ID, it might fail if required columns are missing (not likely for update) OR it might nullify others if we aren't careful?
+        // Actually `upsert` replaces the row? No, usually merges if ignoring duplicates?
+        // Better to use UPDATE transition if possible, but ProductProjection uses UPSERT.
+        // To be safe, we merge current state.
+
+        const mergedPayload = {
+            name: updates.name || currentItem.name,
+            priceCents: updates.price !== undefined ? Math.round(updates.price * 100) : currentItem.price_cents,
+            trackStock: updates.track_stock !== undefined ? updates.track_stock : currentItem.track_stock,
+            stockQuantity: updates.stock_quantity !== undefined ? updates.stock_quantity : currentItem.stock_quantity,
+            categoryId: updates.category_id || currentItem.category_id
+        };
+
+        // Sovereign Update
+        const result = await executeSafe({
+            entity: 'PRODUCT',
+            entityId: itemId,
+            event: 'UPDATE', // Maps to persistProduct (Upsert)
+            restaurantId,
+            payload: mergedPayload
+        });
+
+        if (!result.ok) {
+            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
+        }
 
         const mapped = {
-            ...data,
-            price: (data.price_cents || 0) / 100
+            ...currentItem,
+            ...updates,
+            price: updates.price !== undefined ? updates.price : currentItem.price
         };
 
         setItems(prev => prev.map(i => i.id === itemId ? mapped : i));
@@ -180,20 +236,29 @@ export function useMenuState() {
 
     const deleteItem = async (itemId: string) => {
         if (!restaurantId) throw new Error("No Restaurant ID");
-        const { error } = await supabase
-            .from('gm_products')
-            .delete() // Hard Delete for now to match test logic, or update 'available=false' if prefer soft.
-            // Using DELETE to be clean for now, or match existing soft delete logic.
-            // Existing logic was: .update({ is_active: false }) on gm_menu_items.
-            // gm_products has 'available' (bool).
-            // Let's use Hard Delete (DELETE) because 'archived' product implies it's gone for the user.
-            // Wait, integration tests might fail if we delete products with orders.
-            // But UI allows deletion.
-            // I'll stick to DELETE for now, handling FK errors if they occur (User will see error).
-            .eq('id', itemId)
-            .eq('restaurant_id', restaurantId);
+        
+        // DEV_STABLE_MODE: Fail-closed guard - kernel must be ready
+        if (!isReady || !kernel) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                ? 'Sistema em modo de estabilização' 
+                : status === 'BOOTING'
+                ? 'Sistema inicializando'
+                : 'Kernel não está pronto'}`);
+        }
 
-        if (error) throw error;
+        // Sovereign Archive (Soft Delete)
+        const result = await executeSafe({
+            entity: 'PRODUCT',
+            entityId: itemId,
+            event: 'ARCHIVE',
+            restaurantId,
+            payload: {}
+        });
+
+        if (!result.ok) {
+            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
+        }
+
         setItems(prev => prev.filter(i => i.id !== itemId));
     };
 

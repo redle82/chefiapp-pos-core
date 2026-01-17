@@ -5,7 +5,7 @@
  */
 
 import { supabase } from '../supabase';
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 import { reportBuilder, type ReportConfig } from './ReportBuilder';
 
 export type ReportFormat = 'pdf' | 'excel' | 'csv' | 'json';

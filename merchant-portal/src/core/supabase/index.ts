@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { CONFIG } from '../config'
+import { CONFIG } from '../../config'
 
 // Phase F: Real Backend Connection
 // Singleton Client
@@ -32,5 +32,3 @@ if (CONFIG.IS_DEV) {
         console.log('✅ Connected to Correct Cloud Database:', EXPECTED_PROJECT_ID);
     }
 }
-
-

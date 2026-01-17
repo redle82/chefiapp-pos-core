@@ -5,6 +5,7 @@ import { AdminSidebar } from '../../ui/design-system/domain/AdminSidebar';
 import { Card } from '../../ui/design-system/primitives/Card';
 import { Text } from '../../ui/design-system/primitives/Text';
 import { Badge } from '../../ui/design-system/primitives/Badge';
+import { Button } from '../../ui/design-system/primitives/Button';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { SOVEREIGN_MANIFEST } from './dashboard_manifest';
 import type { SovereignModule } from './dashboard_manifest';
@@ -243,12 +244,19 @@ export const DashboardZero = () => {
                                         <Text size="xs" color="secondary">Passos concluídos: {advancedProgress.completed.length}</Text>
                                     )}
                                 </div>
-                                <button
-                                    onClick={() => navigate('/settings/advanced-setup')}
-                                    style={{ padding: '10px 16px', borderRadius: 10, background: colors.action.base, color: '#0b0b0c', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+                                <Button
+                                    onClick={(e) => {
+                                        e?.preventDefault();
+                                        e?.stopPropagation();
+                                        // Use absolute path to ensure correct navigation
+                                        navigate('/app/settings/advanced-setup', { replace: false });
+                                    }}
+                                    variant="solid"
+                                    tone="action"
+                                    size="default"
                                 >
                                     Iniciar Ritual Avançado
-                                </button>
+                                </Button>
                             </div>
                         )}
 

@@ -22,6 +22,7 @@ interface CartContextType {
     clearCart: () => void;
     isCartOpen: boolean;
     setIsCartOpen: (isOpen: boolean) => void;
+    slug: string;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -120,7 +121,8 @@ export function CartProvider({ children, slug }: CartProviderProps) {
             updateQuantity,
             clearCart,
             isCartOpen,
-            setIsCartOpen
+            setIsCartOpen,
+            slug // Expose for consumers (Orders Service)
         }}>
             {children}
         </CartContext.Provider>

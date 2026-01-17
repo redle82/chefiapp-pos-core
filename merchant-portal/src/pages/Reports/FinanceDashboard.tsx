@@ -4,9 +4,11 @@ import { Card } from '../../ui/design-system/primitives/Card';
 import { Text } from '../../ui/design-system/primitives/Text';
 import { Button } from '../../ui/design-system/primitives/Button';
 import { useTenant } from '../../core/tenant/TenantContext';
-import { FinanceEngine, FinanceSnapshot } from '../../core/reports/FinanceEngine';
-import { Logger } from '../../core/logger/Logger';
+import { FinanceEngine, type FinanceSnapshot } from '../../core/reports/FinanceEngine';
+import { Logger } from '../../core/logger';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { AdminLayout } from '../../ui/design-system/layouts/AdminLayout';
+import { AdminSidebar } from '../../ui/design-system/domain/AdminSidebar';
 
 export const FinanceDashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -31,11 +33,21 @@ export const FinanceDashboard: React.FC = () => {
     }, [tenantId]);
 
     if (loading) {
-        return <div className="p-8 text-white">Loading Financial Data...</div>;
+        return (
+            <AdminLayout
+                sidebar={<AdminSidebar activePath="/app/reports/finance" onNavigate={navigate} />}
+                content={<div className="p-8 text-white">Carregando dados financeiros...</div>}
+            />
+        );
     }
 
     if (!snapshot) {
-        return <div className="p-8 text-white">No data available.</div>;
+        return (
+            <AdminLayout
+                sidebar={<AdminSidebar activePath="/app/reports/finance" onNavigate={navigate} />}
+                content={<div className="p-8 text-white">Nenhum dado disponível.</div>}
+            />
+        );
     }
 
     // Transform hourly sales for Recharts
@@ -48,18 +60,18 @@ export const FinanceDashboard: React.FC = () => {
     // Let's show active hours mostly, or full day if empty.
 
     return (
-        <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-900 text-white animate-fade-in">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
-                        Relatório de Vendas
-                    </h1>
-                    <Text size="sm" color="tertiary">{new Date().toLocaleDateString()} (Hoje)</Text>
-                </div>
-                <Button onClick={() => navigate('/app/dashboard')} variant="outline" tone="neutral">
-                    Voltar
-                </Button>
-            </div>
+        <AdminLayout
+            sidebar={<AdminSidebar activePath="/app/reports/finance" onNavigate={navigate} />}
+            content={
+                <div className="flex flex-col gap-6 animate-fade-in">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h1 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
+                                Relatório de Vendas
+                            </h1>
+                            <Text size="sm" color="tertiary">{new Date().toLocaleDateString()} (Hoje)</Text>
+                        </div>
+                    </div>
 
             {/* KPI GRID */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -150,6 +162,8 @@ export const FinanceDashboard: React.FC = () => {
                     </div>
                 </Card>
             </div>
-        </div>
+                </div>
+            }
+        />
     );
 };

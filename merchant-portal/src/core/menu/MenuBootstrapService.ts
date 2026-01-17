@@ -103,10 +103,12 @@ export interface BootstrapContext {
     deliveryApps?: string[];
 }
 
+import { DbWriteGate } from '../governance/DbWriteGate';
+
 export class MenuBootstrapService {
     constructor(private supabase: SupabaseClient) { }
 
-    async injectPreset(restaurantId: string, presetKey: string, context?: BootstrapContext) {
+    async injectPreset(restaurantId: string, presetKey: string, kernel: any, context?: BootstrapContext) {
         if (!PRESETS[presetKey]) {
             throw new Error(`Preset ${presetKey} not found.`);
         }
@@ -122,28 +124,30 @@ export class MenuBootstrapService {
             operational_context: context || {}
         };
 
-        const { data: source, error: sourceError } = await this.supabase
-            .from('menu_bootstrap_sources')
-            .insert({
+        const { data: source, error: sourceError } = await DbWriteGate.insert(
+            'MenuBootstrapService',
+            'menu_bootstrap_sources',
+            {
                 restaurant_id: restaurantId,
                 source_type: 'PRESET',
                 source_origin: presetKey,
                 raw_payload: payload
-            })
-            .select()
-            .single();
+            },
+            { tenantId: restaurantId }
+        );
 
         if (sourceError) throw sourceError;
 
-        // 2. Create Run Log
-        const { data: run, error: runError } = await this.supabase
-            .from('menu_bootstrap_runs')
-            .insert({
+        // 2. Create Run Log (Gate)
+        const { data: run, error: runError } = await DbWriteGate.insert(
+            'MenuBootstrapService',
+            'menu_bootstrap_runs',
+            {
                 source_id: source.id,
                 status: 'PENDING'
-            })
-            .select()
-            .single();
+            },
+            { tenantId: restaurantId }
+        );
 
         if (runError) throw runError;
 
@@ -164,84 +168,105 @@ export class MenuBootstrapService {
                     if (isAlcohol) continue;
                 }
 
-                // A. Create/Find Category
+                // A. Create/Find Category (Via Gate - Structural Data)
                 // Ideally checks if exists, but assuming empty start for now or duplicate name acceptable
-                const { data: categoryData, error: catError } = await this.supabase
-                    .from('gm_menu_categories')
-                    .insert({
+                const { data: categoryData, error: catError } = await DbWriteGate.insert(
+                    'MenuBootstrapService',
+                    'gm_menu_categories',
+                    {
                         restaurant_id: restaurantId,
                         name: cat.name,
                         is_visible: true,
                         order: 0
-                    })
-                    .select()
-                    .single();
+                    },
+                    { tenantId: restaurantId }
+                );
 
                 if (catError) throw catError;
                 categoriesCount++;
 
-                // B. Create Items
-                const dbItems = cat.items.map((item: any) => ({
-                    restaurant_id: restaurantId,
-                    category_id: categoryData.id,
-                    name: item.name,
-                    price: item.price, // LEGACY COLUMN (Display)
-                    base_price: item.price, // KERNEL COLUMN
-                    is_active: true,
-                    // tax_profile_id: null, // V1 accepts null
-                    // cost_center_id: null  // V1 accepts null
-                }));
+                // B. Create Items (Via SOVEREIGN KERNEL - Product Domain)
+                // We use the Kernel to create products in the Sovereign Table (gm_products)
+                // This ensures TPV (which reads gm_products) sees the items.
 
-                const { error: itemsError } = await this.supabase
-                    .from('gm_menu_items')
-                    .insert(dbItems);
+                if (!kernel) {
+                    // Fallback to Gate if Kernel missing (Should not happen in V2)
+                    throw new Error('Sovereignty Violation: Kernel required for Menu Bootstrap');
+                }
 
-                if (itemsError) throw itemsError;
-                itemsCount += dbItems.length;
+                for (const item of cat.items) {
+                    const productId = crypto.randomUUID();
+                    await kernel.execute({
+                        entity: 'PRODUCT',
+                        entityId: productId,
+                        event: 'CREATE',
+                        restaurantId,
+                        payload: {
+                            name: item.name,
+                            priceCents: Math.round(item.price * 100),
+                            trackStock: false,
+                            stockQuantity: 0,
+                            categoryId: categoryData.id // Link to Category
+                        }
+                    });
+                    itemsCount++;
+                }
             }
 
-            // 4. Update Restaurant Status
-            await this.supabase
-                .from('gm_restaurants')
-                .update({
+            // 4. Update Restaurant Status (Gate)
+            await DbWriteGate.update(
+                'MenuBootstrapService',
+                'gm_restaurants',
+                {
                     menu_status: 'draft',
                     menu_version: 1
-                })
-                .eq('id', restaurantId);
+                },
+                { id: restaurantId },
+                { tenantId: restaurantId }
+            );
 
-            // 5. Success Log
-            await this.supabase
-                .from('menu_bootstrap_runs')
-                .update({
+            // 5. Success Log (Gate)
+            await DbWriteGate.update(
+                'MenuBootstrapService',
+                'menu_bootstrap_runs',
+                {
                     status: 'SUCCESS',
                     completed_at: new Date().toISOString(),
                     log: [{ message: 'Preset injection successful' }]
-                })
-                .eq('id', run.id);
+                },
+                { id: run.id },
+                { tenantId: restaurantId }
+            );
 
-            // 6. Result Record
-            await this.supabase
-                .from('menu_bootstrap_results')
-                .insert({
+            // 6. Result Record (Gate)
+            await DbWriteGate.insert(
+                'MenuBootstrapService',
+                'menu_bootstrap_results',
+                {
                     run_id: run.id,
                     created_items_count: itemsCount,
                     created_categories_count: categoriesCount,
                     normalization_report: { method: 'PRESET_DIRECT_MAP' }
-                });
+                },
+                { tenantId: restaurantId }
+            );
 
             return { success: true, itemsCount, categoriesCount };
 
         } catch (error: any) {
             console.error('[MBE] Injection Failed:', error);
 
-            await this.supabase
-                .from('menu_bootstrap_runs')
-                .update({
+            await DbWriteGate.update(
+                'MenuBootstrapService',
+                'menu_bootstrap_runs',
+                {
                     status: 'FAILED',
                     completed_at: new Date().toISOString(),
                     log: [{ message: error.message, error }]
-                })
-                .eq('id', run.id);
+                },
+                { id: run.id },
+                { tenantId: restaurantId }
+            );
 
             throw error;
         }

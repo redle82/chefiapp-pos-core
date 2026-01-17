@@ -4,7 +4,7 @@
  * Serviço para integração com redes sociais
  */
 
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 import { supabase } from '../supabase';
 
 export interface SocialMediaPost {
@@ -103,6 +103,13 @@ class SocialMediaService {
 
             return { success: true };
         } catch (err) {
+            // Non-blocking feature: if table doesn't exist in this environment, treat as disabled.
+            const status = (err as any)?.status;
+            const message = (err as any)?.message || '';
+            if (status === 404 || message.includes('social_media_campaigns') || message.includes('does not exist')) {
+                Logger.debug('SocialMedia disabled (missing table)', { reason: message });
+                return { success: false, error: 'Módulo de redes sociais indisponível neste ambiente' };
+            }
             Logger.error('Failed to create campaign', err, { campaign });
             return {
                 success: false,
@@ -131,6 +138,13 @@ class SocialMediaService {
                 enabled: c.enabled,
             }));
         } catch (err) {
+            // Non-blocking feature: if table doesn't exist in this environment, treat as disabled without noise.
+            const status = (err as any)?.status;
+            const message = (err as any)?.message || '';
+            if (status === 404 || message.includes('social_media_campaigns') || message.includes('does not exist')) {
+                Logger.debug('SocialMedia disabled (missing table)', { reason: message });
+                return [];
+            }
             Logger.error('Failed to get campaigns', err);
             return [];
         }

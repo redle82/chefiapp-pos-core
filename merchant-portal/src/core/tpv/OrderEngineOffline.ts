@@ -15,7 +15,7 @@ import { OrderEngine, type OrderInput, type Order } from './OrderEngine';
 import { OfflineDB } from '../queue/db';
 import type { OfflineQueueItem } from '../queue/types';
 import { v4 as uuidv4 } from 'uuid';
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 
 /**
  * Verifica se está online (network + Supabase)

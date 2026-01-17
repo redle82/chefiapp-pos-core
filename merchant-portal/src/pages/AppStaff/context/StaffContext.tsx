@@ -358,9 +358,14 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({ children, restaur
         setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: 'done' } : t));
 
         const completedCount = tasks.filter(t => t.status === 'done').length + 1;
-        const message = completedCount === 1
+
+        let message = completedCount === 1
             ? '✅ Tarefa concluída!'
             : `✅ ${completedCount} tarefas hoje! Ótimo trabalho!`;
+
+        if (operationalContract?.mode === 'local') {
+            message = '⚠️ Preview: Ação não salva no servidor';
+        }
 
         window.dispatchEvent(new CustomEvent('staff-task-complete', {
             detail: { message, taskTitle: task?.title }

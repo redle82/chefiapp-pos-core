@@ -73,20 +73,43 @@ export default function AppStaff() {
   }
 
   // 5. THE DOMINANT STATE LAYER (Always-On Tools)
+  const isPreview = operationalContract.mode === 'local';
+
+  // WRAPPER FOR PREVIEW BANNER
+  const withPreview = (component: React.ReactNode) => (
+    <>
+      {isPreview && (
+        <div style={{
+          background: colors.warning.base,
+          color: colors.warning.contrastText,
+          padding: '4px 12px',
+          textAlign: 'center',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          position: 'fixed',
+          top: 0, left: 0, right: 0,
+          zIndex: 9999
+        }}>
+          MODO PREVIEW — Alterações não serão salvas
+        </div>
+      )}
+      {component}
+    </>
+  );
 
   if (dominantTool === 'order') {
     // WAITERS get the POS
-    return <MiniPOS tasks={tasks} role={activeRole} />;
+    return withPreview(<MiniPOS tasks={tasks} role={activeRole} />);
   }
 
   if (dominantTool === 'production') {
     // KITCHEN (Busy) gets the KDS. Use standard component.
-    return <KitchenDisplay />;
+    return withPreview(<KitchenDisplay />);
   }
 
   if (dominantTool === 'check') {
     // CLEANING (or Kitchen Idle) gets the Checklist.
-    return <CleaningTaskView tasks={tasks} role={activeRole} />;
+    return withPreview(<CleaningTaskView tasks={tasks} role={activeRole} />);
   }
 
   // 6. THE STREAM (Generic Hand / No Dominant Tool)
@@ -96,8 +119,8 @@ export default function AppStaff() {
   const shouldBlockScreen = focusedTask && focusedTask.priority === 'critical';
 
   if (shouldBlockScreen && focusedTask) {
-    return <WorkerTaskFocus task={focusedTask} onBack={() => unfocusTask(focusedTask.id)} />;
+    return withPreview(<WorkerTaskFocus task={focusedTask} onBack={() => unfocusTask(focusedTask.id)} />);
   }
 
-  return <WorkerTaskStream />;
+  return withPreview(<WorkerTaskStream />);
 }

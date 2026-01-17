@@ -12,14 +12,16 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useSupabaseAuth } from '../../core/auth/useSupabaseAuth';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '../../core/supabase';
 import {
     fetchUserMemberships,
     switchTenant,
-    buildTenantPath,
+    setActiveTenant,
+    isTenantSealed,
     type TenantMembership
 } from '../../core/tenant/TenantResolver';
+import { useTenant } from '../../core/tenant/TenantContext';
 
 // Role badge colors
 const ROLE_BADGES: Record<string, { label: string; color: string }> = {
@@ -33,7 +35,10 @@ const ROLE_BADGES: Record<string, { label: string; color: string }> = {
 
 export function SelectTenantPage() {
     const navigate = useNavigate();
-    const { session, loading: authLoading } = useSupabaseAuth();
+    const location = useLocation();
+    const { switchTenant: switchTenantContext } = useTenant();
+    const [userId, setUserId] = useState<string | null>(null);
+    const [authLoading, setAuthLoading] = useState(true);
 
     const [memberships, setMemberships] = useState<TenantMembership[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -41,39 +46,108 @@ export function SelectTenantPage() {
     const [error, setError] = useState<string | null>(null);
 
     const handleSelect = useCallback(async (tenantId: string) => {
-        if (!session?.user?.id || isSwitching) return;
+        if (!userId || isSwitching) return;
 
         setSwitching(tenantId);
         setError(null);
 
         try {
-            const success = await switchTenant(tenantId, session.user.id);
+            // Step 1: Validate and seal tenant using TenantResolver (writes to TabIsolatedStorage)
+            const success = await switchTenant(tenantId, userId);
 
-            if (success) {
-                // Navigate to dashboard (Tenant is already in Context/Storage)
-                navigate('/app/dashboard', { replace: true });
-            } else {
+            if (!success) {
                 setError('Você não tem acesso a este restaurante');
                 setSwitching(null);
+                return;
             }
+
+            // Step 2: Ensure tenant is sealed (double-check)
+            setActiveTenant(tenantId, 'ACTIVE');
+            
+            // Step 3: Update TenantContext state (triggers re-render with new tenantId)
+            // This ensures AppDomainWrapper receives the new tenantId immediately
+            await switchTenantContext(tenantId);
+            
+            // Step 4: Verify tenant is sealed and session exists before navigating
+            // Small delay to ensure state propagation
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            if (!isTenantSealed()) {
+                console.error('[SelectTenantPage] Tenant not sealed after switch');
+                setError('Erro ao selar restaurante. Tente novamente.');
+                setSwitching(null);
+                return;
+            }
+            
+            // Step 5: Verify session is still available (prevent redirect to login)
+            const { data: { session: verifySession } } = await supabase.auth.getSession();
+            if (!verifySession) {
+                console.error('[SelectTenantPage] Session lost after tenant switch');
+                setError('Sessão perdida. Por favor, faça login novamente.');
+                setSwitching(null);
+                // Redirect to auth but preserve tenant selection for next login
+                navigate('/auth', { replace: true });
+                return;
+            }
+            
+            // Step 6: Navigate to original destination or dashboard
+            // Preserve the route the user was trying to access before tenant selection
+            const savedRoute = sessionStorage.getItem('chefiapp_return_to');
+            const returnTo = (location.state as { from?: string })?.from || 
+                            savedRoute || 
+                            '/app/dashboard';
+            
+            // Clear stored return path
+            if (savedRoute) {
+                sessionStorage.removeItem('chefiapp_return_to');
+                console.log('[SelectTenantPage] Restoring saved route:', savedRoute);
+            }
+            
+            // Navigate using React Router (preserves session, no hard reload)
+            // The tenant is already sealed and session is valid, so FlowGate will allow access
+            console.log('[SelectTenantPage] Navigating to:', returnTo);
+            navigate(returnTo, { replace: true });
+            
         } catch (e) {
             setError('Erro ao selecionar restaurante');
             console.error('[SelectTenantPage] Switch error:', e);
             setSwitching(null);
         }
-    }, [session?.user?.id, isSwitching, navigate]);
+    }, [userId, isSwitching, navigate, switchTenantContext]);
 
     useEffect(() => {
-        async function loadMemberships() {
-            if (authLoading) return;
+        let mounted = true;
 
-            if (!session?.user?.id) {
-                navigate('/login', { replace: true });
+        async function resolveSession() {
+            setAuthLoading(true);
+            const { data, error: sessionError } = await supabase.auth.getSession();
+            if (!mounted) return;
+
+            if (sessionError || !data.session?.user?.id) {
+                setUserId(null);
+                setAuthLoading(false);
+                // DEV_STABLE_MODE: Redirect to /auth instead of /login (consistent with App.tsx routes)
+                navigate('/auth', { replace: true });
                 return;
             }
 
+            setUserId(data.session.user.id);
+            setAuthLoading(false);
+        }
+
+        resolveSession();
+
+        return () => {
+            mounted = false;
+        };
+    }, [navigate]);
+
+    useEffect(() => {
+        async function loadMemberships() {
+            if (authLoading || !userId) return;
+
             try {
-                const data = await fetchUserMemberships(session.user.id);
+                const data = await fetchUserMemberships(userId);
                 // Deduplicate by restaurant_id to prevent React key warnings
                 const uniqueMemberships = data.filter((m, index, self) =>
                     index === self.findIndex((t) => t.restaurant_id === m.restaurant_id)
@@ -100,7 +174,7 @@ export function SelectTenantPage() {
         }
 
         loadMemberships();
-    }, [session, authLoading, navigate, handleSelect]);
+    }, [userId, authLoading, navigate, handleSelect]);
 
     const getRoleBadge = (role: string) => {
         return ROLE_BADGES[role] || { label: role, color: '#8e8e93' };

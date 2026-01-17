@@ -1,72 +1,65 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOfflineQueue } from '../../core/queue/useOfflineQueue';
-import { GlobalEventStore } from '../../core/events/EventStore';
-import type { EventEnvelope } from '../../core/events/SystemEvents';
-import { SealGenerator } from '../../core/events/SealGenerator';
+
 
 export const CartDrawer: React.FC = () => {
-    const { items, total, isCartOpen, setIsCartOpen, updateQuantity, clearCart } = useCart();
-    const { enqueue } = useOfflineQueue();
-    // const enqueue = async (item: any) => { console.log('Mock Enqueue:', item); };
+    const { items, total, isCartOpen, setIsCartOpen, updateQuantity, clearCart, slug } = useCart();
+
+    // Status State
+    const [status, setStatus] = React.useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+    const [message, setMessage] = React.useState('');
 
     const handleCheckout = async () => {
         if (items.length === 0) return;
+        setStatus('sending');
+        setMessage('Enviando pedido...');
 
-        // Core 5 -> Core 2 Injection 💉
-        // Core 5 -> Core 2 Injection 💉
-        // 🏗️ IRON CORE: The Customer is an Actor.
-        const orderId = `ord-${Date.now()}`;
-        const rawPayload = {
-            id: orderId,
-            tableNumber: 0, // 0 = Web/Takeaway
-            status: 'new', // Explicit status
-            items: items.map(i => ({
-                id: i.productId,
-                name: i.name,
-                quantity: i.qty,
-                price: i.price,
-                notes: i.notes
-            })),
-            total,
-            origin: 'web',
-            customerName: 'Cliente Web'
-        };
+        try {
+            // 1. Get Restaurant Config
+            const { WebOrderingService } = await import('../../core/services/WebOrderingService');
+            const config = await WebOrderingService.getWebConfig(slug);
 
-        // 1. Construct Fact
-        const event: EventEnvelope = {
-            eventId: crypto.randomUUID(),
-            type: 'ORDER_CREATED',
-            payload: rawPayload,
-            meta: {
-                timestamp: Date.now(),
-                actorId: 'public_user',
-                sessionId: 'web_session',
-                version: 1
+            if (!config) {
+                setStatus('error');
+                setMessage('Erro ao identificar restaurante. Tente recarregar.');
+                return;
             }
-        };
 
-        // 2. Seal It
-        event.seal = await SealGenerator.seal(event);
+            // 2. Submit Order
+            const result = await WebOrderingService.submitOrderWithRetry({
+                restaurant_id: config.restaurant_id,
+                items: items.map(i => ({
+                    product_id: i.productId,
+                    name: i.name,
+                    quantity: i.qty,
+                    price_cents: Math.round(i.price * 100), // Convert to cents
+                    notes: i.notes
+                })),
+                customer_name: 'Cliente Web', // TODO: Add Name Input
+                table_number: 0, // 0 = Web/Takeaway
+            }, (progress) => {
+                setMessage(progress.message);
+            });
 
-        // 3. Commit to Local History (Kiosk/User Device)
-        await GlobalEventStore.append(event);
+            if (result.success) {
+                setStatus('success');
+                setMessage(result.message);
+                setTimeout(() => {
+                    clearCart();
+                    setIsCartOpen(false);
+                    setStatus('idle');
+                }, 2000);
+            } else {
+                setStatus('error');
+                setMessage(result.message);
+            }
 
-        // 4. Emit to Sovereign Queue (Transport)
-        await enqueue({
-            id: event.eventId,
-            type: 'ORDER_CREATE',
-            payload: rawPayload, // Legacy Protocol (Server expects raw)
-            createdAt: event.meta.timestamp,
-            attempts: 0,
-            status: 'queued'
-        });
-
-        // alert(`Pedido enviado para o balcão! ID: ${orderId}`);
-        console.log(`Pedido enviado para o balcão! ID: ${orderId}`);
-        clearCart();
-        setIsCartOpen(false);
+        } catch (err) {
+            console.error('Checkout failed', err);
+            setStatus('error');
+            setMessage('Erro ao enviar pedido. Verifique sua conexão.');
+        }
     };
 
     return (

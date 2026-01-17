@@ -5,7 +5,8 @@
  */
 
 import { supabase } from '../supabase';
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
+import { isDevStableMode } from '../runtime/devStableMode';
 
 export interface PresenceUser {
     userId: string;
@@ -33,6 +34,9 @@ class RealtimeCollaborationService {
      * Initialize presence tracking
      */
     async initializePresence(restaurantId: string, userId: string, userName: string, role: string): Promise<void> {
+        // STEP 6: DEV_STABLE_MODE - no realtime subscriptions
+        if (isDevStableMode()) return;
+
         try {
             // Subscribe to presence channel
             this.presenceChannel = supabase.channel(`presence:${restaurantId}`)

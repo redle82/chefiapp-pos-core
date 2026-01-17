@@ -77,7 +77,8 @@ export const SystemGuardianProvider = ({ children }: { children: React.ReactNode
         // DEV_STABLE_MODE: stop pulse spam while stabilizing Gate/Auth/Tenant.
         if (isDevStableMode()) return;
         const now = Date.now();
-        console.log('[SystemGuardian] Checking Pulse...');
+        // No logs in DEV_STABLE_MODE (only hard-stop logs allowed)
+        // Logs já estão protegidos pelo guard acima
 
         // 1. Check Auth
         const { data: { session }, error: authError } = await supabase.auth.getSession();

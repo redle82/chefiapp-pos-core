@@ -78,3 +78,8 @@ graph TD
 2. **Tools** cannot bypass **Kernel** (must run inside `/app`).
 3. **Domain** cannot import **UI/React**.
 4. **Infra** is the only one allowed to touch external APIs (Stripe/Glovo).
+
+## Related Documentation
+
+- **[Surfaces Architecture](./SURFACES_ARCHITECTURE.md)** - Complete mapping of all user-facing surfaces (Backoffice, TPV, KDS, Public, Staff, etc.) and their responsibilities. This document provides the product/UX perspective, while this document focuses on technical architecture.
+- **[Route Manifest](../canon/ROUTE_MANIFEST.md)** - Complete registry of all application routes.

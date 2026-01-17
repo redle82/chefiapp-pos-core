@@ -16,7 +16,7 @@
 
 import { supabase } from '../supabase';
 import { PaymentEngine } from './PaymentEngine';
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 import { logAuditEvent } from '../audit/logAuditEvent';
 import { DbWriteGate } from '../governance/DbWriteGate';
 
@@ -67,189 +67,96 @@ export class CashRegisterEngine {
      * Abrir caixa
      */
     static async openCashRegister(input: OpenCashRegisterInput): Promise<CashRegister> {
-        // Verificar se já existe caixa aberto
-        const { data: existing } = await supabase
-            .from('gm_cash_registers')
-            .select('*')
-            .eq('restaurant_id', input.restaurantId)
-            .eq('status', 'open')
-            .maybeSingle();
-
-        if (existing) {
-            throw new CashRegisterError(
-                'Já existe um caixa aberto. Feche o caixa atual antes de abrir outro.',
-                'CASH_REGISTER_ALREADY_OPEN'
-            );
-        }
-
-        // Criar caixa
-        // [GOVERNANCE] Authorized Hybrid Write
-        const { data: registerData, error } = await DbWriteGate.insert(
-            'CashRegisterEngine',
-            'gm_cash_registers',
-            {
-                restaurant_id: input.restaurantId,
-                name: input.name || 'Caixa Principal',
-                status: 'open',
-                opened_at: new Date().toISOString(),
-                opened_by: input.openedBy,
-                opening_balance_cents: input.openingBalanceCents,
-                total_sales_cents: 0,
-            },
-            { tenantId: input.restaurantId }
-        )
-            .select()
-            .single();
+        // [ATOMIC] Use RPC to prevent race conditions (double open)
+        const { data: result, error } = await supabase.rpc('open_cash_register_atomic', {
+            p_restaurant_id: input.restaurantId,
+            p_name: input.name || 'Caixa Principal',
+            p_opened_by: input.openedBy,
+            p_opening_balance_cents: input.openingBalanceCents
+        });
 
         if (error) {
             Logger.error('CASH_REGISTER_OPEN_FAILED', error, { input });
+            if (error.message.includes('CASH_REGISTER_ALREADY_OPEN')) {
+                throw new CashRegisterError(
+                    'Já existe um caixa aberto. Feche o caixa atual antes de abrir outro.',
+                    'CASH_REGISTER_ALREADY_OPEN'
+                );
+            }
             throw new CashRegisterError(
                 `Erro ao abrir caixa: ${error.message || 'Erro desconhecido'}`,
                 'CASH_REGISTER_OPEN_FAILED'
             );
         }
+        // Validation
+        if (!input.restaurantId) throw new Error('Restaurant ID required');
+        if (!input.openedBy) throw new Error('Opened By required');
 
-        Logger.info('CashRegister: Opened', { registerId: registerData.id, restaurantId: input.restaurantId, openingBalanceCents: input.openingBalanceCents });
-
-        // Audit log
-        await logAuditEvent({
-            action: 'cash_register_opened',
-            resourceEntity: 'gm_cash_registers',
-            resourceId: registerData.id,
-            metadata: {
-                restaurant_id: input.restaurantId,
-                opening_balance_cents: input.openingBalanceCents,
-            },
-        });
-
-        // [KERNEL MODE] Route through Execution Fence if Kernel provided
-        if (input.kernel) {
-            try {
-                await input.kernel.execute({
-                    entity: 'CASH_REGISTER',
-                    entityId: registerData.id,
-                    event: 'OPEN',
-                    context: {
-                        opening_balance_cents: input.openingBalanceCents,
-                        opened_by: input.openedBy,
-                        name: input.name || 'Caixa Principal',
-                        // Pass source to link this hybrid write
-                        source: 'CashRegisterEngine'
-                    }
-                });
-                Logger.info('CashRegister: Event sourced via Kernel', { registerId: registerData.id });
-            } catch (kernelError) {
-                // Log but don't fail - Supabase is source of truth for now
-                Logger.error('CASH_REGISTER_KERNEL_EVENT_FAILED', kernelError as Error, { registerId: registerData.id });
-            }
+        // SOVEREIGNTY: Enforce Kernel Usage (Phase 16)
+        if (!input.kernel) {
+            throw new Error('Sovereign Kernel required for Cash Register operations (Phase 16)');
         }
 
-        return this.mapDbRegisterToRegister(registerData);
+        const tempId = uuidv4(); // Generate Sovereignty ID (or use projection return)
+
+        // Execute via Kernel
+        // This triggers 'persistOpenCashRegister' Effect -> database write.
+        await input.kernel.execute({
+            entity: 'cash_register', // Must match state machine ID
+            entityId: tempId, // Since we don't have ID yet, we might need to handle this.
+            // Wait, for OPEN, usually we don't have an ID yet.
+            // But the wrapper expects cash_register entity.
+            // The RPC returns the ID.
+            // If we generate UUID here, we must ensure RPC accepts it or we rely on RPC ID.
+            // Our Projection calls `open_cash_register_atomic` which generates an ID or takes one?
+            // Checking Projection: It does NOT pass ID to RPC. RPC generates it.
+            // Checking Projection again:
+            // "const { data: result } = await supabase.rpc(...)"
+            // "Logger.info('Opened', { id: result.id })"
+            // So RPC generates ID.
+            // PROBLEM: We need the ID back here to return it.
+            // Kernel.execute usually returns void.
+            // However, after execution, we can query "getActive".
+            // Since execution is awaited, the DB write is done.
+            event: 'OPEN',
+            restaurantId: input.restaurantId,
+            opened_by: input.openedBy,
+            opening_balance_cents: input.openingBalanceCents,
+            name: 'Caixa Principal' // Default
+        });
+
+        // After Kernel Execution (and synchronous Effect), the DB is updated.
+        // We fetch the open register.
+        const openRegister = await this.getOpenCashRegister(input.restaurantId);
+        if (!openRegister) {
+            throw new Error('Failed to open cash register (Sovereignty Verification)');
+        }
+
+        return openRegister;
     }
 
-    /**
-     * Fechar caixa
-     * 
-     * VALIDAÇÃO CRÍTICA: Não pode fechar caixa com orders abertos
-     */
+    // Close a cash register (Sovereign)
     static async closeCashRegister(input: CloseCashRegisterInput): Promise<CashRegister> {
-        // Buscar caixa
-        const register = await this.getCashRegisterById(input.cashRegisterId, input.restaurantId);
-
-        if (register.status !== 'open') {
-            throw new CashRegisterError(
-                'Caixa não está aberto. Abra o caixa antes de fechá-lo.',
-                'CASH_REGISTER_NOT_OPEN'
-            );
+        // SOVEREIGNTY: Enforce Kernel Usage (Phase 16)
+        if (!input.kernel) {
+            throw new Error('Sovereign Kernel required for Cash Register operations (Phase 16)');
         }
 
-        // VALIDAÇÃO CRÍTICA: Verificar orders abertos antes de fechar (com FOR UPDATE lock)
-        // Usar RPC para garantir lock de linha e prevenir race condition
-        const { data: openOrders, error: ordersError } = await supabase.rpc('check_open_orders_with_lock', {
-            p_restaurant_id: input.restaurantId
+        // Execute via Kernel
+        await input.kernel.execute({
+            entity: 'cash_register',
+            entityId: input.cashRegisterId,
+            event: 'CLOSE',
+            restaurantId: input.restaurantId,
+            closed_by: input.closedBy,
+            closing_balance_cents: input.closingBalanceCents
         });
 
-        if (ordersError) {
-            Logger.error('CASH_REGISTER_CLOSE_CHECK_FAILED', ordersError, { cashRegisterId: input.cashRegisterId });
-            throw new CashRegisterError(
-                `Erro ao verificar pedidos abertos: ${ordersError.message || 'Erro desconhecido'}`,
-                'CASH_REGISTER_CLOSE_CHECK_FAILED'
-            );
-        }
-
-        if (openOrders && openOrders.length > 0) {
-            throw new CashRegisterError(
-                `Não é possível fechar o caixa com ${openOrders.length} pedido(s) aberto(s). Feche ou cancele os pedidos primeiro.`,
-                'CASH_REGISTER_HAS_OPEN_ORDERS'
-            );
-        }
-
-        // Calcular total de vendas do dia
-        const todayPayments = await PaymentEngine.getTodayPayments(input.restaurantId);
-        const totalSalesCents = todayPayments.reduce(
-            (sum, payment) => sum + payment.amountCents,
-            0
-        );
-
-        // Fechar caixa
-        // [GOVERNANCE] Authorized Hybrid Write
-        const { data: registerData, error } = await DbWriteGate.update(
-            'CashRegisterEngine',
-            'gm_cash_registers',
-            {
-                status: 'closed',
-                closed_at: new Date().toISOString(),
-                closed_by: input.closedBy,
-                closing_balance_cents: input.closingBalanceCents,
-                total_sales_cents: totalSalesCents,
-            },
-            { id: input.cashRegisterId, restaurant_id: input.restaurantId },
-            { tenantId: input.restaurantId }
-        )
-            .select()
-            .single();
-
-        if (error) {
-            Logger.error('CASH_REGISTER_CLOSE_FAILED', error, { input });
-            throw new CashRegisterError(
-                `Erro ao fechar caixa: ${error.message || 'Erro desconhecido'}`,
-                'CASH_REGISTER_CLOSE_FAILED'
-            );
-        }
-
-        Logger.info('CashRegister: Closed', { registerId: registerData.id, restaurantId: input.restaurantId, closingBalanceCents: input.closingBalanceCents });
-
-        // Audit log
-        await logAuditEvent({
-            action: 'cash_register_closed',
-            resourceEntity: 'gm_cash_registers',
-            resourceId: registerData.id,
-            metadata: {
-                restaurant_id: input.restaurantId,
-                closing_balance_cents: input.closingBalanceCents,
-            },
-        });
-
-        // [KERNEL MODE] Route through Execution Fence if Kernel provided
-        if (input.kernel) {
-            try {
-                await input.kernel.execute({
-                    entity: 'CASH_REGISTER',
-                    entityId: input.cashRegisterId,
-                    event: 'CLOSE',
-                    context: {
-                        closing_balance_cents: input.closingBalanceCents,
-                        total_sales_cents: totalSalesCents,
-                        closed_by: input.closedBy,
-                    }
-                });
-                Logger.info('CashRegister: Close event sourced via Kernel', { registerId: input.cashRegisterId });
-            } catch (kernelError) {
-                Logger.error('CASH_REGISTER_KERNEL_CLOSE_FAILED', kernelError as Error, { registerId: input.cashRegisterId });
-            }
-        }
-
-        return this.mapDbRegisterToRegister(registerData);
+        // Return updated state
+        // Note: getCashRegisterById requires restaurantId in signature?
+        // Checking getCashRegisterById below... it takes (id, restaurantId).
+        // Let's check signature.
+        return this.getCashRegisterById(input.cashRegisterId, input.restaurantId);
     }
 
     /**

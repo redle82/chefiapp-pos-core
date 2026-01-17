@@ -58,6 +58,18 @@ export interface CoreEvent {
   payload: Record<string, any>;
   occurred_at: Date; // Keep as Date object for internal domain math
   meta: EventMetadata; // [REFACTOR] Nested Metadata
+
+  /**
+   * Backwards-compat (legacy flattened metadata).
+   * Some server modules still write/read these as top-level columns.
+   * Prefer using `meta.*` going forward.
+   */
+  causation_id?: string;
+  correlation_id?: string;
+  actor_ref?: string;
+  idempotency_key?: string;
+  hash_prev?: string;
+  hash?: string;
 }
 
 export interface EventStore {

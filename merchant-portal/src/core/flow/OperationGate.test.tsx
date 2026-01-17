@@ -6,7 +6,7 @@ import { OperationGate } from './OperationGate';
 import { AuditService } from '../logger/AuditService';
 
 // Mock dependencies
-vi.mock('../logger/Logger', () => ({
+vi.mock('../logger', () => ({
     Logger: {
         info: vi.fn(),
         warn: vi.fn(),

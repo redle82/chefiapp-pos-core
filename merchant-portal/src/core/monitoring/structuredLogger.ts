@@ -7,7 +7,7 @@
  * @deprecated Consider using Logger directly for new code
  */
 
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 
 export interface StructuredLogData {
     [key: string]: any;

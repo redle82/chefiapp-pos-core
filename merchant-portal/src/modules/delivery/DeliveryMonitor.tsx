@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../core/supabase';
 import { useTenant } from '../../core/tenant/TenantContext';
+import { isDevStableMode } from '../../core/runtime/devStableMode';
 
 interface IntegrationOrder {
     id: string; // Internal UUID
@@ -25,6 +26,28 @@ export const DeliveryMonitor: React.FC = () => {
     // Initial Fetch
     useEffect(() => {
         if (!tenantId) return;
+
+        // STEP 6: DEV_STABLE_MODE - one-shot load only, no realtime
+        if (isDevStableMode()) {
+            const fetchOrders = async () => {
+                setLoading(true);
+                const { data, error } = await supabase
+                    .from('integration_orders')
+                    .select('*')
+                    .eq('restaurant_id', tenantId)
+                    .order('received_at', { ascending: false })
+                    .limit(50);
+
+                if (error) {
+                    console.error('[DeliveryMonitor] Error fetching:', error);
+                } else {
+                    setOrders(data || []);
+                }
+                setLoading(false);
+            };
+            fetchOrders();
+            return;
+        }
 
         const fetchOrders = async () => {
             setLoading(true);

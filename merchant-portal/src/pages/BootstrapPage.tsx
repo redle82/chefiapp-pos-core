@@ -4,6 +4,7 @@ import { supabase } from '../core/supabase'
 import { useCoreHealth } from '../core/health'
 import { InlineAlert } from '../ui/design-system'
 import { getTabIsolated, setTabIsolated } from '../core/storage/TabIsolatedStorage'
+import { DbWriteGate } from '../core/governance/DbWriteGate'
 import '../App.css'
 
 /**
@@ -163,9 +164,12 @@ export function BootstrapPage() {
         const timestamp = Date.now().toString(36).slice(-6).toLowerCase()
         const slug = `rest-${timestamp}` // e.g., "rest-a1b2c3"
 
-        const { data: restData, error: restError } = await supabase
-          .from('gm_restaurants')
-          .insert({
+
+
+        const { data: restData, error: restError } = await DbWriteGate.insert(
+          'BootstrapPage',
+          'gm_restaurants',
+          {
             name: name,
             slug: slug,
             owner_id: user.id,
@@ -173,20 +177,23 @@ export function BootstrapPage() {
             country: 'ES',
             plan: 'trial',
             type: 'Restaurante'
-          })
-          .select()
-          .single()
+          },
+          { userId: user.id }
+        );
 
         if (restError) throw restError
 
         // B) Create Member Link (Owner) - using restaurant_members table
-        const { error: linkError } = await supabase
-          .from('gm_restaurant_members')
-          .insert({
+        const { error: linkError } = await DbWriteGate.insert(
+          'BootstrapPage',
+          'gm_restaurant_members',
+          {
             user_id: user.id,
             restaurant_id: restData.id,
             role: 'owner'
-          })
+          },
+          { tenantId: restData.id }
+        );
 
         if (linkError) throw linkError
 

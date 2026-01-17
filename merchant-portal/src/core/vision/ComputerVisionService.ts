@@ -4,7 +4,7 @@
  * Serviço para visão computacional para contagem de estoque
  */
 
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 
 export interface VisionDetection {
     itemId: string;

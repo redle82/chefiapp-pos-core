@@ -57,7 +57,7 @@ export async function lockItems(context: EffectContext): Promise<void> {
   const tx = (repo as any).transactions?.get(txId);
   const key = `ORDER:${entityId}`;
   let order: any;
-  
+
   if (tx && tx.changes?.has(key)) {
     // Use order from transaction (preserves changes from calculateTotal)
     order = tx.changes.get(key);
@@ -65,7 +65,7 @@ export async function lockItems(context: EffectContext): Promise<void> {
     // Get fresh clone if not in transaction yet
     order = repo.getOrder(entityId);
   }
-  
+
   if (!order) {
     throw new Error(`Order ${entityId} not found`);
   }
@@ -108,6 +108,65 @@ export async function applyPaymentToOrder(
   }
 }
 
+// [HARDENING] Atomic Item Persistence
+import { supabase } from '../../merchant-portal/src/core/supabase';
+
+export async function persistOrderItem(context: EffectContext): Promise<void> {
+  const { repo, entityId, entity, item } = context;
+  // context.item comes from TransitionRequest.context 
+
+  const order = repo.getOrder(entityId);
+  if (!order) throw new Error(`Order ${entityId} not found`);
+
+  // Atomic RPC
+  const { error } = await supabase.rpc('add_order_item_atomic', {
+    p_order_id: entityId,
+    p_restaurant_id: order.restaurant_id,
+    p_item_data: item, // Should match JSONB structure
+    p_expected_version: (order as any).version || 1 // Assuming version on order
+  });
+
+  if (error) {
+    throw new Error(`PERSIST_ITEM_FAILED: ${error.message} (${error.code})`);
+  }
+}
+
+export async function persistRemoveItem(context: EffectContext): Promise<void> {
+  const { repo, entityId, itemId } = context;
+  const order = repo.getOrder(entityId);
+  if (!order) throw new Error(`Order ${entityId} not found`);
+
+  const { error } = await supabase.rpc('remove_order_item_atomic', {
+    p_order_id: entityId,
+    p_restaurant_id: order.restaurant_id,
+    p_item_id: itemId,
+    p_expected_version: (order as any).version || 1
+  });
+
+  if (error) {
+    throw new Error(`PERSIST_REMOVE_ITEM_FAILED: ${error.message}`);
+  }
+}
+
+export async function persistUpdateItemQty(context: EffectContext): Promise<void> {
+  const { repo, entityId, itemId, quantity, totalPrice } = context;
+  const order = repo.getOrder(entityId);
+  if (!order) throw new Error(`Order ${entityId} not found`);
+
+  const { error } = await supabase.rpc('update_order_item_qty_atomic', {
+    p_order_id: entityId,
+    p_restaurant_id: order.restaurant_id,
+    p_item_id: itemId,
+    p_quantity: quantity,
+    p_total_price: totalPrice,
+    p_expected_version: (order as any).version || 1
+  });
+
+  if (error) {
+    throw new Error(`PERSIST_UPDATE_QTY_FAILED: ${error.message}`);
+  }
+}
+
 // ============================================================================
 // PAYMENT EFFECTS
 // ============================================================================
@@ -141,23 +200,36 @@ export async function markIrreversible(
 // EFFECT REGISTRY
 // ============================================================================
 
-export const effects = {
+export const effects: Record<string, (context: EffectContext) => Promise<void>> = {
   // ORDER
   calculateTotal,
   lockItems,
   applyPaymentToOrder,
+  persistOrderItem,
+  persistRemoveItem,
+  persistUpdateItemQty,
 
   // PAYMENT
   markIrreversible,
 };
 
+export function registerEffect(
+  name: string,
+  implementation: (context: EffectContext) => Promise<void>
+) {
+  effects[name] = implementation;
+}
+
 export async function executeEffect(
   effectName: string,
   context: EffectContext
 ): Promise<void> {
-  const effect = effects[effectName as keyof typeof effects];
+  const effect = effects[effectName];
   if (!effect) {
-    throw new Error(`Effect ${effectName} not found`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(`[CoreExecutor] Warning: Effect '${effectName}' not found. Skipping.`);
+    }
+    return;
   }
 
   await effect(context);

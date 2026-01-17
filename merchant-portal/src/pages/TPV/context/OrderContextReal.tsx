@@ -7,8 +7,8 @@
  */
 
 import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
-import { OrderEngine, type Order as RealOrder, type OrderItemInput } from '../../../core/tpv/OrderEngine';
-import { PaymentEngine, type PaymentMethod } from '../../../core/tpv/PaymentEngine';
+import { OrderEngine, type Order as RealOrder, type OrderItemInput, type PaymentMethod } from '../../../core/tpv/OrderEngine';
+import { PaymentEngine } from '../../../core/tpv/PaymentEngine';
 import { CashRegisterEngine, type CashRegister } from '../../../core/tpv/CashRegister';
 import { supabase } from '../../../core/supabase';
 
@@ -117,9 +117,15 @@ function mapLocalStatusToReal(status: Order['status']): RealOrder['status'] {
 }
 
 export function OrderProvider({ children, restaurantId: propRestaurantId }: { children: ReactNode, restaurantId?: string }) {
-    const { kernel } = useKernel();
+    const { kernel, status, isReady, executeSafe } = useKernel();
     const [orders, setOrders] = useState<Order[]>([]);
-    const [loading, setLoading] = useState(true);
+    // STEP 7: Inicializar loading como false (fail-closed - não assume kernel pronto)
+    const [loading, setLoading] = useState(false);
+    
+    // STEP 7: Helper para verificar readiness
+    const isKernelReady = useCallback(() => {
+        return isReady && status === 'READY' && kernel !== null;
+    }, [isReady, status, kernel]);
     // SOVEREIGN: restaurantId comes from Gate layer (TenantContext -> AppDomainWrapper)
     const [restaurantId, setRestaurantId] = useState<string | null>(propRestaurantId || null);
     const [operatorId, setOperatorId] = useState<string | null>(null);
@@ -157,9 +163,12 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
 
     // Initial fetch - SOVEREIGN: Use prop from Gate layer, no storage fallback
     useEffect(() => {
+        // STEP 7: Não fazer throw no mount/setup
         // Fetch operator ID from auth
         supabase.auth.getUser().then(({ data: { user } }) => {
             if (user) setOperatorId(user.id);
+        }).catch(() => {
+            // Fail-closed: não quebra se auth falhar
         });
 
         // Fetch open cash register if we have a restaurant ID
@@ -168,9 +177,18 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                 .then(register => {
                     if (register) setCashRegisterId(register.id);
                 })
-                .catch(() => { });
+                .catch(() => { 
+                    // STEP 7: Fail-closed - não quebra se falhar
+                });
         }
     }, [propRestaurantId]);
+    
+    // STEP 7: Garantir que loading = false quando kernel não está pronto (fail-closed)
+    useEffect(() => {
+        if (!isKernelReady() && loading) {
+            setLoading(false);
+        }
+    }, [isReady, status, kernel, loading]);
 
     // Core Fetch Logic
     const getActiveOrdersInternal = async (restId: string, isBackground = false) => {
@@ -282,6 +300,9 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
     // Auto-Reconnect Logic (exponential backoff)
     useEffect(() => {
         if (!restaurantId) return;
+
+        // STEP 6: DEV_STABLE_MODE - no auto-reconnect attempts
+        if (isDevStableMode()) return;
 
         // Detect disconnection and trigger reconnect
         if (realtimeStatus === 'CLOSED' || realtimeStatus === 'CHANNEL_ERROR' || realtimeStatus === 'TIMED_OUT') {
@@ -422,13 +443,19 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
         }
 
         // Criar novo pedido (já valida caixa e mesa no OrderEngine)
-        if (!kernel) throw new Error('Kernel System not ready');
+        // STEP 7: Fail-closed - não assume Kernel
+        if (!isKernelReady()) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                ? 'Sistema em modo de estabilização' 
+                : status === 'BOOTING'
+                ? 'Sistema inicializando'
+                : 'Selecione um restaurante antes de criar pedidos'}`);
+        }
 
         const orderId = uuidv4(); // Generate ID externally (Sovereign ID)
 
-        // SOVEREIGNTY: Execute Order Creation via Kernel
-        // This triggers 'persistOrder' effect which calls the atomic RPC
-        await kernel.execute({
+        // STEP 7: Usar executeSafe em vez de kernel.execute()
+        const result = await executeSafe({
             entity: 'ORDER',
             entityId: orderId,
             event: 'CREATE',
@@ -447,6 +474,10 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             paymentMethod: 'cash',
             syncMetadata: orderInput.syncMetadata
         });
+        
+        if (!result.ok) {
+            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
+        }
 
         // Fetch the projected order (Active Record pattern for now)
         // This ensures we get the DB-generated short_id
@@ -455,7 +486,6 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
         const localOrder = mapRealOrderToLocalOrder(realOrder);
 
         // HARD RULE 4: Persistir pedido ativo (Tab-Isolated)
-        const { setTabIsolated } = require('../../../core/storage/TabIsolatedStorage');
         setTabIsolated('chefiapp_active_order_id', localOrder.id);
 
         await getActiveOrders(); // Refresh
@@ -495,10 +525,17 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             return;
         }
 
-        if (!kernel) throw new Error('Kernel System not ready');
+        // STEP 7: Fail-closed - não assume Kernel
+        if (!isKernelReady()) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                ? 'Sistema em modo de estabilização' 
+                : status === 'BOOTING'
+                ? 'Sistema inicializando'
+                : 'Selecione um restaurante antes de adicionar itens'}`);
+        }
 
-        // SOVEREIGNTY: Execute Item Addition via Kernel
-        await kernel.execute({
+        // STEP 7: Usar executeSafe em vez de kernel.execute()
+        const result = await executeSafe({
             entity: 'ORDER',
             entityId: orderId,
             event: 'ADD_ITEM',
@@ -515,6 +552,10 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                 categoryName: item.categoryName
             }
         });
+        
+        if (!result.ok) {
+            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
+        }
 
         await getActiveOrders(); // Refresh
     };
@@ -543,16 +584,27 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             return;
         }
 
-        if (!kernel) throw new Error('Kernel System not ready');
+        // STEP 7: Fail-closed - não assume Kernel
+        if (!isKernelReady()) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                ? 'Sistema em modo de estabilização' 
+                : status === 'BOOTING'
+                ? 'Sistema inicializando'
+                : 'Selecione um restaurante antes de remover itens'}`);
+        }
 
-        // SOVEREIGNTY: Execute Item Removal via Kernel
-        await kernel.execute({
+        // STEP 7: Usar executeSafe em vez de kernel.execute()
+        const result = await executeSafe({
             entity: 'ORDER',
             entityId: orderId,
             event: 'REMOVE_ITEM',
             restaurantId,
             itemId: itemId
         });
+        
+        if (!result.ok) {
+            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
+        }
 
         await getActiveOrders(); // Refresh
     };
@@ -585,7 +637,14 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             return;
         }
 
-        if (!kernel) throw new Error('Kernel System not ready');
+        // STEP 7: Fail-closed - não assume Kernel
+        if (!isKernelReady()) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                ? 'Sistema em modo de estabilização' 
+                : status === 'BOOTING'
+                ? 'Sistema inicializando'
+                : 'Selecione um restaurante antes de atualizar itens'}`);
+        }
 
         // Find Unit Price for Total Calculation
         // Use local state (orders) or fetch? Local state is faster.
@@ -593,8 +652,8 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
         const item = order?.items.find(i => i.id === itemId);
         const unitPriceCents = item?.price; // OrderItem.price is int cents
 
-        // SOVEREIGNTY: Execute Item Update via Kernel
-        await kernel.execute({
+        // STEP 7: Usar executeSafe em vez de kernel.execute()
+        const result = await executeSafe({
             entity: 'ORDER',
             entityId: orderId,
             event: 'UPDATE_ITEM_QTY',
@@ -603,6 +662,10 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             quantity,
             unitPriceCents: unitPriceCents // Can be undefined if not found (Effect deals with it, or triggers error)
         });
+        
+        if (!result.ok) {
+            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
+        }
 
         await getActiveOrders(); // Refresh
     };
@@ -619,37 +682,64 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             switch (action) {
                 case 'send':
                 case 'prepare':
-                    if (!kernel) throw new Error('Kernel System not ready');
-                    // SOVEREIGNTY: Finalize Order -> Status: IN_PREP (preparing)
-                    await kernel.execute({
+                    // STEP 7: Fail-closed - não assume Kernel
+                    if (!isKernelReady()) {
+                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                            ? 'Sistema em modo de estabilização' 
+                            : status === 'BOOTING'
+                            ? 'Sistema inicializando'
+                            : 'Selecione um restaurante antes de finalizar pedido'}`);
+                    }
+                    // STEP 7: Usar executeSafe
+                    const finalizeResult = await executeSafe({
                         entity: 'ORDER',
                         entityId: orderId,
                         event: 'FINALIZE',
                         restaurantId,
                         targetStatus: 'preparing' // DB Value
                     });
+                    if (!finalizeResult.ok) {
+                        throw new Error(`KERNEL_EXECUTION_FAILED: ${finalizeResult.reason}`);
+                    }
                     // UI será atualizada apenas quando getActiveOrders() for chamado
                     break;
 
                 case 'ready':
-                    if (!kernel) throw new Error('Kernel System not ready');
-                    // SOVEREIGNTY: Mark Ready
-                    await kernel.execute({
+                    // STEP 7: Fail-closed - não assume Kernel
+                    if (!isKernelReady()) {
+                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                            ? 'Sistema em modo de estabilização' 
+                            : status === 'BOOTING'
+                            ? 'Sistema inicializando'
+                            : 'Selecione um restaurante antes de marcar pedido como pronto'}`);
+                    }
+                    // STEP 7: Usar executeSafe
+                    const readyResult = await executeSafe({
                         entity: 'ORDER',
                         entityId: orderId,
                         event: 'MARK_READY',
                         restaurantId,
                         targetStatus: 'ready'
                     });
+                    if (!readyResult.ok) {
+                        throw new Error(`KERNEL_EXECUTION_FAILED: ${readyResult.reason}`);
+                    }
                     // UI será atualizada apenas quando getActiveOrders() for chamado
                     break;
 
                 case 'serve':
-                    if (!kernel) throw new Error('Kernel System not ready');
+                    // STEP 7: Fail-closed - não assume Kernel
+                    if (!isKernelReady()) {
+                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                            ? 'Sistema em modo de estabilização' 
+                            : status === 'BOOTING'
+                            ? 'Sistema inicializando'
+                            : 'Selecione um restaurante antes de servir pedido'}`);
+                    }
                     // Update to SERVED (Final Kitchen/Table State)
                     const nowServed = new Date().toISOString();
-                    // SOVEREIGNTY: Mark Served
-                    await kernel.execute({
+                    // STEP 7: Usar executeSafe
+                    const serveResult = await executeSafe({
                         entity: 'ORDER',
                         entityId: orderId,
                         event: 'SERVE',
@@ -657,6 +747,9 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                         targetStatus: 'served',
                         metadata: { served_at: nowServed }
                     });
+                    if (!serveResult.ok) {
+                        throw new Error(`KERNEL_EXECUTION_FAILED: ${serveResult.reason}`);
+                    }
                     break;
 
                 case 'pay':
@@ -731,7 +824,16 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                         throw new Error(`Valor de pagamento (${amountCents}) excede o total do pedido (${dbOrder.totalCents})`);
                     }
 
-                    await kernel.execute({
+                    // STEP 7: Fail-closed - não assume Kernel
+                    if (!isKernelReady()) {
+                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                            ? 'Sistema em modo de estabilização' 
+                            : status === 'BOOTING'
+                            ? 'Sistema inicializando'
+                            : 'Selecione um restaurante antes de processar pagamento'}`);
+                    }
+                    // STEP 7: Usar executeSafe
+                    const payResult = await executeSafe({
                         entity: 'ORDER',
                         entityId: orderId,
                         event: isPartial ? 'REGISTER_PAYMENT' : 'PAY',
@@ -747,6 +849,9 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                         idempotencyKey: key,
                         isPartial
                     });
+                    if (!payResult.ok) {
+                        throw new Error(`KERNEL_EXECUTION_FAILED: ${payResult.reason}`);
+                    }
 
                     // Cleanup key on success (allows new payment if order re-opened later)
                     idempotencyKeys.current.delete(orderId);
@@ -810,14 +915,24 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                     break;
 
                 case 'cancel':
-                    if (!kernel) throw new Error('Kernel System not ready');
-                    // SOVEREIGNTY: Cancel Order
-                    await kernel.execute({
+                    // STEP 7: Fail-closed - não assume Kernel
+                    if (!isKernelReady()) {
+                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                            ? 'Sistema em modo de estabilização' 
+                            : status === 'BOOTING'
+                            ? 'Sistema inicializando'
+                            : 'Selecione um restaurante antes de cancelar pedido'}`);
+                    }
+                    // STEP 7: Usar executeSafe
+                    const cancelResult = await executeSafe({
                         entity: 'ORDER',
                         entityId: orderId,
                         event: 'CANCEL',
                         restaurantId
                     });
+                    if (!cancelResult.ok) {
+                        throw new Error(`KERNEL_EXECUTION_FAILED: ${cancelResult.reason}`);
+                    }
                     // Limpar pedido ativo se cancelado
                     const currentActiveCancel = getTabIsolated('chefiapp_active_order_id');
                     if (currentActiveCancel === orderId) {
@@ -853,14 +968,21 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             throw new Error('Restaurant ID or Operator ID not set');
         }
 
-        if (!kernel) throw new Error('Kernel System not ready');
+        // STEP 7: Fail-closed - não assume Kernel
+        if (!isKernelReady()) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                ? 'Sistema em modo de estabilização' 
+                : status === 'BOOTING'
+                ? 'Sistema inicializando'
+                : 'Selecione um restaurante antes de abrir caixa'}`);
+        }
 
         try {
             const register = await CashRegisterEngine.openCashRegister({
                 restaurantId,
                 openingBalanceCents,
                 openedBy: currentOperatorId,
-                kernel // SOVEREIGNTY: Pass Kernel
+                kernel: kernel! // SOVEREIGNTY: Pass Kernel (já validado acima)
             });
 
             setCashRegisterId(register.id);
@@ -884,14 +1006,21 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             throw new Error('Missing required IDs');
         }
 
-        if (!kernel) throw new Error('Kernel System not ready');
+        // STEP 7: Fail-closed - não assume Kernel
+        if (!isKernelReady()) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
+                ? 'Sistema em modo de estabilização' 
+                : status === 'BOOTING'
+                ? 'Sistema inicializando'
+                : 'Selecione um restaurante antes de fechar caixa'}`);
+        }
 
         await CashRegisterEngine.closeCashRegister({
             cashRegisterId,
             restaurantId,
             closingBalanceCents,
             closedBy: operatorId,
-            kernel // SOVEREIGNTY: Pass Kernel
+            kernel: kernel! // SOVEREIGNTY: Pass Kernel (já validado acima)
         });
 
         setCashRegisterId(null);

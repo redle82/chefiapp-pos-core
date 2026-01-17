@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTenant } from '../../core/tenant/TenantContext';
 import { supabase } from '../../core/supabase';
-import { Logger } from '../../core/logger/Logger';
+import { Logger } from '../../core/logger';
 
 export const SystemPausedPage: React.FC = () => {
     const { restaurant, refreshTenant } = useTenant();

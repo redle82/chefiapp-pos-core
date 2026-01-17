@@ -1,1 +1,1 @@
-export * from './MenuManager';
+export { MenuManager } from './MenuManager';

@@ -3,7 +3,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { OfflineDB } from '../../../core/queue/db';
 import type { OfflineQueueItem, QueueStatus } from '../../../core/queue/types';
 import { OrderEngine, type OrderItemInput } from '../../../core/tpv/OrderEngine';
-import { Logger } from '../../../core/logger/Logger';
+import { Logger } from '../../../core/logger';
+import { useKernel } from '../../../core/kernel/KernelContext';
+import { startGarbageCollection } from '../../../core/queue/OfflineGC';
 
 // --- Types ---
 
@@ -38,6 +40,13 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
     const [isSyncing, setIsSyncing] = useState(false);
     const syncLockRef = useRef(false);
+    const { kernel } = useKernel();
+
+    // Start GC
+    useEffect(() => {
+        const stopGC = startGarbageCollection();
+        return () => stopGC();
+    }, []);
 
     // --- 1. Load from IndexedDB on Mount ---
     useEffect(() => {
@@ -327,8 +336,11 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     }>;
                 };
 
-                // Convert to OrderEngine format
-                const orderItems: OrderItemInput[] = payload.items.map(item => ({
+                // Create Order Atomic via KERNEL (Sovereign)
+                // We map to the 'CREATE' event on the 'ORDER' entity.
+
+                // Map items to standard format
+                const orderItems = payload.items.map(item => ({
                     productId: item.product_id,
                     name: item.name,
                     priceCents: item.price,
@@ -336,58 +348,84 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     notes: item.notes
                 }));
 
-                // Create order using OrderEngine
-                const createdOrder = await OrderEngine.createOrder({
+                const result = await kernel.execute({
+                    entity: 'ORDER',
+                    event: 'CREATE',
+                    // Pass IDs to ensure consistency with offline intent
                     restaurantId: payload.restaurant_id,
+                    tableId: payload.table_id || undefined,
                     tableNumber: payload.table_number,
-                    tableId: payload.table_id,
                     operatorId: payload.operator_id,
                     cashRegisterId: payload.cash_register_id,
-                    items: orderItems
+                    items: orderItems, // Passes as "items" in payload
+
+                    // Critical: Pass syncMetadata for Idempotency
+                    syncMetadata: {
+                        localId: item.id,
+                        syncAttempts: attempts,
+                        lastSyncAt: new Date().toISOString()
+                    }
                 });
 
-                newRealId = createdOrder.id; // CAPTURE ID
-                Logger.info('Order synced successfully', { localId: item.id, realId: newRealId });
+                // Kernel Execute returns { success, entityId, error }? 
+                // Wait, let's check kernel signature. 
+                // Usually kernel.execute returns the snapshot or result object.
+                // Assuming it returns the created entity or we need to fetch it?
+                // Actually kernel.execute returns Promise<any> (the result of the effect).
+                // For 'CREATE', it usually returns the created Order object.
 
-            } else if (item.type === 'ORDER_ADD_ITEM') {
-                const payload = item.payload as any;
-                if (!payload.restaurantId) throw new Error("Missing restaurantId in offline payload");
+                const createdOrder = result as any;
 
-                await OrderEngine.addItemToOrder(
-                    payload.orderId,
-                    {
-                        productId: payload.productId,
-                        name: payload.name,
-                        priceCents: payload.price,
-                        quantity: payload.quantity,
-                        notes: payload.notes
-                    },
-                    payload.restaurantId
-                );
 
-            } else if (item.type === 'ORDER_UPDATE_ITEM_QTY') {
-                const payload = item.payload as any;
-                if (!payload.restaurantId) throw new Error("Missing restaurantId in offline payload");
-
-                await OrderEngine.updateItemQuantity(
-                    payload.orderId,
-                    payload.itemId,
-                    payload.quantity,
-                    payload.restaurantId
-                );
-
-            } else if (item.type === 'ORDER_REMOVE_ITEM') {
-                const payload = item.payload as any;
-                if (!payload.restaurantId) throw new Error("Missing restaurantId in offline payload");
-
-                await OrderEngine.removeItemFromOrder(
-                    payload.orderId,
-                    payload.itemId,
-                    payload.restaurantId
-                );
+                newRealId = createdOrder.id;
+                Logger.info('Order Sync: Created', { localId: item.id, realId: newRealId });
 
             } else {
-                throw new Error(`Unknown queue item type: ${item.type}`);
+                // For modifications, use Kernel Sovereign Execution
+                if (!kernel) throw new Error('Kernel not ready for sync');
+                if (!item.payload) throw new Error('Missing payload');
+
+                const payload = item.payload as any;
+                const orderId = payload.orderId;
+                const restaurantId = payload.restaurantId;
+
+                if (!orderId || !restaurantId) throw new Error('Missing ID payload');
+
+                let eventName = '';
+                let eventPayload: any = {};
+
+                if (item.type === 'ORDER_ADD_ITEM') {
+                    eventName = 'ADD_ITEM';
+                    eventPayload = {
+                        productId: payload.productId,
+                        name: payload.name,
+                        price: payload.price,
+                        quantity: payload.quantity,
+                        notes: payload.notes
+                    };
+                } else if (item.type === 'ORDER_UPDATE_ITEM_QTY') {
+                    eventName = 'UPDATE_ITEM_QTY';
+                    eventPayload = {
+                        itemId: payload.itemId,
+                        quantity: payload.quantity
+                    };
+                } else if (item.type === 'ORDER_REMOVE_ITEM') {
+                    eventName = 'REMOVE_ITEM';
+                    eventPayload = {
+                        itemId: payload.itemId
+                    };
+                } else {
+                    throw new Error(`Unknown sync item type: ${item.type}`);
+                }
+
+                // Execute via Kernel
+                await kernel.execute({
+                    entity: 'ORDER',
+                    entityId: orderId,
+                    event: eventName,
+                    restaurantId,
+                    ...eventPayload
+                });
             }
 
             // Remove from queue on success

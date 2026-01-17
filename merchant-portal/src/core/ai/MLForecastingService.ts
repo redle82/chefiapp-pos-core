@@ -4,7 +4,7 @@
  * Serviço para previsões usando Machine Learning
  */
 
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 import { supabase } from '../supabase';
 
 export interface MLForecast {

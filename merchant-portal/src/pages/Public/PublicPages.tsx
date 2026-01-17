@@ -6,6 +6,7 @@ import { fetchWithTimeout } from '../../core/utils/http/fetchWithTimeout';
 import { SupplierBanner } from '../../components/Supplier/SupplierBanner';
 import type { Placement } from '../../types/supplier';
 import { supabase } from '../../core/supabase';
+import { DbWriteGate } from '../../core/governance/DbWriteGate';
 import { getTabIsolated, setTabIsolated } from '../../core/storage/TabIsolatedStorage';
 
 // --- Shared Types (Reused from Contracts where possible) ---
@@ -56,7 +57,7 @@ function loadCart(restaurantId: string): CartItem[] {
         return [];
       }
     }
-    
+
     const stored = getTabIsolated(`${CART_STORAGE_KEY}_${restaurantId}`);
     return stored ? JSON.parse(stored) : [];
   } catch {
@@ -234,11 +235,14 @@ const PublicPages: React.FC = () => {
       try {
         console.log('[Airlock] Submitting Request...', requestPayload);
 
-        const { data: request, error: insertError } = await supabase
-          .from('gm_order_requests')
-          .insert(requestPayload)
-          .select() // Select back to confirm
-          .single();
+        console.log('[Airlock] Submitting Request (Via Gate)...', requestPayload);
+
+        const { data: request, error: insertError } = await DbWriteGate.insert(
+          'PublicPages',
+          'gm_order_requests',
+          requestPayload,
+          { tenantId: restaurant.tenant_id }
+        );
 
         if (insertError) throw insertError;
 
@@ -386,13 +390,13 @@ const PublicPages: React.FC = () => {
           <p>O restaurante analisará seu pedido em instantes.</p>
           <button
             className="public-hero__cta public-hero__cta--secondary"
-            onClick={() => { 
+            onClick={() => {
               // P1-2 FIX: Clear cart from storage
               if (restaurant) {
                 saveCart(restaurant.restaurant_id, []);
               }
-              setCart([]); 
-              setCurrentView('home'); 
+              setCart([]);
+              setCurrentView('home');
             }}
           >
             ← Voltar

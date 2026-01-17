@@ -6,6 +6,7 @@ import type { EventEnvelope } from '../../../core/events/SystemEvents';
 import { supabase } from '../../../core/supabase';
 import { DbWriteGate } from '../../../core/governance/DbWriteGate';
 import { getTabIsolated } from '../../../core/storage/TabIsolatedStorage';
+import { isDevStableMode } from '../../../core/runtime/devStableMode';
 
 // --- Types (SAFE IMPORT) ---
 import type { Order, OrderItem } from './OrderTypes';
@@ -97,6 +98,12 @@ export function OrderProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (!restaurantId || isDemo) return;
+
+        // STEP 6: DEV_STABLE_MODE - one-shot load only, no realtime
+        if (isDevStableMode()) {
+            fetchOrders();
+            return;
+        }
 
         // Initial Fetch
         fetchOrders();

@@ -27,6 +27,14 @@ export const RequireActivation = ({ children }: { children: JSX.Element }) => {
     useEffect(() => {
         const checkActivation = async () => {
             // 1. Dev Bypass (TASK-3.2.1: Só funciona em desenvolvimento)
+            // 1. Dev Bypass & Route Exemption
+            const currentPath = window.location.pathname;
+            if (currentPath.startsWith('/app/select-tenant') || currentPath.startsWith('/app/access-denied')) {
+                // Allow these routes specifically for Multi-Tenant flow
+                setIsVerified(true);
+                return;
+            }
+
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('skip_activation')) {
                 // TASK-3.2.1: Verificar se está em desenvolvimento antes de permitir bypass
@@ -58,7 +66,7 @@ export const RequireActivation = ({ children }: { children: JSX.Element }) => {
             // Se DB não confirma ativação, verificar cache (mas não confiar cegamente)
             const { getTabIsolated } = await import('../storage/TabIsolatedStorage');
             const localOpMode = getTabIsolated('chefiapp_operation_mode');
-            
+
             if (localOpMode && restaurant) {
                 // Cache existe mas DB não confirma - DB vence (não confiar em cache)
                 console.warn('[RequireActivation] ⚠️ Cache exists but DB does not confirm activation. DB wins.');

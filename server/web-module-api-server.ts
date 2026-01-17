@@ -77,7 +77,6 @@ const billingStripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
 
 // P1 FIX: Circuit breakers para serviços externos
 const stripeCircuitBreaker = new CircuitBreaker('stripe', 5, 2, 60000);
-const stripeCircuitBreaker = new CircuitBreaker('stripe', 5, 2, 60000);
 const marketplaceCircuitBreaker = new CircuitBreaker('marketplaces', 5, 2, 60000);
 const uberAuth = new UberEatsAuthHandler(pool);
 const idempotencyGuard = checkIdempotency(pool);
@@ -277,6 +276,7 @@ async function loadWebProjectionForRestaurant(restaurantId: string) {
       stream_version: Number(r.stream_version),
       type: String(r.event_type) as any,
       payload: (r.payload || {}) as any,
+      meta,
       occurred_at: new Date(r.created_at),
       causation_id: meta.causation_id,
       correlation_id: meta.correlation_id,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../core/supabase';
+import { DbWriteGate } from '../../core/governance/DbWriteGate';
 import { FireSystem } from '../../ui/design-system/sovereign/FireSystem';
 import { OSSignature } from '../../ui/design-system/sovereign/OSSignature';
 import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
@@ -79,15 +80,18 @@ export const OnboardingQuick = () => {
 
         try {
             // 1. Atualizar restaurante com dados do onboarding
-            const { error: updateError } = await supabase
-                .from('gm_restaurants')
-                .update({
+            const { error: updateError } = await DbWriteGate.update(
+                'OnboardingQuick',
+                'gm_restaurants',
+                {
                     name: name.trim(),
                     type,
                     pos_mode: mapOperationToPosMode(operation),
                     setup_status: 'quick_done'
-                })
-                .eq('id', restaurantId);
+                },
+                { id: restaurantId },
+                { tenantId: restaurantId }
+            );
 
             if (updateError) throw updateError;
 
@@ -405,12 +409,17 @@ async function provisionRestaurant(
         const baseCategories = getBaseCategoriesForType(config.type);
 
         for (const category of baseCategories) {
-            await supabase.from('gm_menu_categories').insert({
-                restaurant_id: restaurantId,
-                name: category.name,
-                sort_order: category.order,
-                is_active: true
-            });
+            await DbWriteGate.insert(
+                'OnboardingQuick',
+                'gm_menu_categories',
+                {
+                    restaurant_id: restaurantId,
+                    name: category.name,
+                    sort_order: category.order,
+                    is_active: true
+                },
+                { tenantId: restaurantId }
+            );
         }
 
         console.log('[Provision] Menu base created');

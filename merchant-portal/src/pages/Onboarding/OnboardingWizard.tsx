@@ -11,7 +11,7 @@ import { PlacesMock } from './PlacesMock';
 import type { GooglePlace } from './PlacesMock';
 
 import { RitualScreen } from './RitualScreen';
-import { OnboardingCore, resolveRealityConflict } from '../../core/onboarding/OnboardingCore';
+import { resolveRealityConflict } from '../../core/kernel/GenesisKernel';
 
 
 
@@ -916,17 +916,14 @@ const ScreenConsecration = () => {
         }
 
         setIsSealing(true);
-        const mounted = true;
         try {
-            // Ritual de Animação
-            if (mounted) setStatusIndex(0); await new Promise(r => setTimeout(r, 800));
-            if (mounted) setStatusIndex(1); await new Promise(r => setTimeout(r, 800));
+            // Ritual de Animação (Fast-Forwarded)
+            setStatusIndex(0);
 
             // O Ato Real (DB)
             await consecrateSystem();
 
-            if (mounted) setStatusIndex(2); await new Promise(r => setTimeout(r, 800));
-            if (mounted) setStatusIndex(3); await new Promise(r => setTimeout(r, 1000));
+            setStatusIndex(3);
 
             // Fim do Ritual -> Vai para Fundação (Handoff)
             navigate('/onboarding/foundation');
