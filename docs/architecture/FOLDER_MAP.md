@@ -58,7 +58,7 @@
 | `Tenant/` | 🧭 Painel | ✅ OK | Seleção de tenant |
 | `Waiter/` | 👨‍🍳 Staff | ✅ OK | App de garçom |
 | `Web/` | 🧭 Painel | ✅ OK | Config de web pública |
-| `_deprecated/` | ❌ Deprecado | 🗑️ Limpar | Código antigo |
+| ~~`_deprecated/`~~ | ❌ Removido | 🗑️ Limpo | Ficheiros vazios removidos |
 | `steps/` | 🧭 Painel | ✅ OK | Steps de wizard |
 
 ---
@@ -85,12 +85,12 @@
 | `LeakDashboard/` | ✅ Manter — painel de detecção de fugas/perdas |
 | `LocalBoss/` | ✅ Manter — hub de reviews/reputação (renomear para ReputationHub?) |
 | `Read/` | ✅ Manter — biblioteca de artigos/research hub |
-| `_deprecated/` | 🗑️ Limpar — ficheiros vazios (66-70 bytes) |
+| `_deprecated/` | ✅ Removido (commit `fd58981`) |
 
 ---
 
 ## Conclusão
 
-**38/38** pastas estão corretamente mapeadas. ✅  
-**0** pastas com problemas.  
-**1** pasta pode ser limpa (_deprecated — ficheiros vazios).
+**37/37 pastas** estão corretamente mapeadas ✅  
+**1 pasta** foi removida (_deprecated).  
+**0 problemas** pendentes.
