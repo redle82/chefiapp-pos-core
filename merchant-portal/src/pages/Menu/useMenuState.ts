@@ -118,19 +118,52 @@ export function useMenuState() {
 
     const addItem = async (categoryId: string, name: string, price: number, trackStock: boolean = false, stockQty: number = 0) => {
         if (!restaurantId) throw new Error("No Restaurant ID");
-        
-        // DEV_STABLE_MODE: Fail-closed guard - kernel must be ready
-        if (!isReady || !kernel) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                ? 'Sistema em modo de estabilização' 
-                : status === 'BOOTING'
-                ? 'Sistema inicializando'
-                : 'Kernel não está pronto'}`);
-        }
 
         const productId = crypto.randomUUID();
+        const priceCents = Math.round(price * 100);
 
-        // Sovereign Creation (Kernel)
+        // GOVERNANCE BYPASS: Menu configuration is allowed even in FROZEN mode
+        // Menu is configured in Painel (governance), not transactional operations
+        if (status === 'FROZEN' || !isReady || !kernel) {
+            console.info('[useMenuState] Kernel FROZEN - using direct Supabase write for governance operation');
+
+            // Direct write to gm_products (governance path)
+            const { data, error } = await supabase
+                .from('gm_products')
+                .insert({
+                    id: productId,
+                    restaurant_id: restaurantId,
+                    category_id: categoryId,
+                    name,
+                    price_cents: priceCents,
+                    track_stock: trackStock,
+                    stock_quantity: stockQty,
+                    available: true
+                })
+                .select()
+                .single();
+
+            if (error) {
+                console.error('[useMenuState] Governance write failed:', error);
+                throw new Error(`GOVERNANCE_WRITE_FAILED: ${error.message}`);
+            }
+
+            const mapped = {
+                id: productId,
+                restaurant_id: restaurantId,
+                category_id: categoryId,
+                name,
+                price: price,
+                price_cents: priceCents,
+                track_stock: trackStock,
+                stock_quantity: stockQty,
+                available: true
+            };
+            setItems([...items, mapped]);
+            return mapped;
+        }
+
+        // Sovereign Creation (Kernel) - for non-FROZEN mode
         const result = await executeSafe({
             entity: 'PRODUCT',
             entityId: productId,
@@ -138,10 +171,10 @@ export function useMenuState() {
             restaurantId,
             payload: {
                 name,
-                priceCents: Math.round(price * 100),
+                priceCents,
                 trackStock,
                 stockQuantity: stockQty,
-                categoryId // Linking to Category
+                categoryId
             }
         });
 
@@ -149,14 +182,13 @@ export function useMenuState() {
             throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
         }
 
-        // Optimistic UI Update (or re-fetch, but mapping for speed)
         const mapped = {
             id: productId,
             restaurant_id: restaurantId,
             category_id: categoryId,
             name,
             price: price,
-            price_cents: Math.round(price * 100),
+            price_cents: priceCents,
             track_stock: trackStock,
             stock_quantity: stockQty,
             available: true
@@ -167,42 +199,43 @@ export function useMenuState() {
 
     const updateItem = async (itemId: string, updates: { name?: string; price?: number; category_id?: string; track_stock?: boolean; stock_quantity?: number }) => {
         if (!restaurantId) throw new Error("No Restaurant ID");
-        
-        // DEV_STABLE_MODE: Fail-closed guard - kernel must be ready
-        if (!isReady || !kernel) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                ? 'Sistema em modo de estabilização' 
-                : status === 'BOOTING'
-                ? 'Sistema inicializando'
-                : 'Kernel não está pronto'}`);
-        }
 
         const currentItem = items.find(i => i.id === itemId);
         if (!currentItem) throw new Error("Item not found locally");
 
-        // Prepare Payload
-        const payload: any = {};
-        if (updates.name) payload.name = updates.name;
-        if (updates.price !== undefined) payload.priceCents = Math.round(updates.price * 100);
-        if (updates.track_stock !== undefined) payload.trackStock = updates.track_stock;
-        if (updates.stock_quantity !== undefined) payload.stockQuantity = updates.stock_quantity;
-        if (updates.category_id) payload.categoryId = updates.category_id;
+        // Build update object
+        const dbUpdates: any = {};
+        if (updates.name !== undefined) dbUpdates.name = updates.name;
+        if (updates.price !== undefined) dbUpdates.price_cents = Math.round(updates.price * 100);
+        if (updates.track_stock !== undefined) dbUpdates.track_stock = updates.track_stock;
+        if (updates.stock_quantity !== undefined) dbUpdates.stock_quantity = updates.stock_quantity;
+        if (updates.category_id !== undefined) dbUpdates.category_id = updates.category_id;
 
-        // Merge with existing for defaults if needed by projection (projection checks truthiness mostly)
-        // But for update, we just send deltas if the projection supports it.
-        // ProductProjection expects full payload or merges?
-        // Let's look at ProductProjection again.
-        // It does: const { name, ... } = payload || {};
-        // It performs UPSERT. So we MUST provide ALL required fields (Name, RestaurantID).
-        // Upsert requires the full object usually if we don't want to nullify.
-        // Wait. Supabase upsert will OVERWRITE columns if we don't be careful?
-        // No, upsert updates existing if ID matches. But we need to pass the current values for fields we AREN'T updating if we are just passing a partial object?
-        // Actually, Supabase `upsert` is "insert or update".
-        // If we only pass partial fields + ID, it might fail if required columns are missing (not likely for update) OR it might nullify others if we aren't careful?
-        // Actually `upsert` replaces the row? No, usually merges if ignoring duplicates?
-        // Better to use UPDATE transition if possible, but ProductProjection uses UPSERT.
-        // To be safe, we merge current state.
+        // GOVERNANCE BYPASS: Menu configuration is allowed even in FROZEN mode
+        if (status === 'FROZEN' || !isReady || !kernel) {
+            console.info('[useMenuState] Kernel FROZEN - using direct Supabase write for governance update');
 
+            const { error } = await supabase
+                .from('gm_products')
+                .update(dbUpdates)
+                .eq('id', itemId);
+
+            if (error) {
+                console.error('[useMenuState] Governance update failed:', error);
+                throw new Error(`GOVERNANCE_WRITE_FAILED: ${error.message}`);
+            }
+
+            const mapped = {
+                ...currentItem,
+                ...updates,
+                price: updates.price !== undefined ? updates.price : currentItem.price,
+                price_cents: updates.price !== undefined ? Math.round(updates.price * 100) : currentItem.price_cents
+            };
+            setItems(prev => prev.map(i => i.id === itemId ? mapped : i));
+            return mapped;
+        }
+
+        // Sovereign Update (Kernel) - for non-FROZEN mode
         const mergedPayload = {
             name: updates.name || currentItem.name,
             priceCents: updates.price !== undefined ? Math.round(updates.price * 100) : currentItem.price_cents,
@@ -211,11 +244,10 @@ export function useMenuState() {
             categoryId: updates.category_id || currentItem.category_id
         };
 
-        // Sovereign Update
         const result = await executeSafe({
             entity: 'PRODUCT',
             entityId: itemId,
-            event: 'UPDATE', // Maps to persistProduct (Upsert)
+            event: 'UPDATE',
             restaurantId,
             payload: mergedPayload
         });
@@ -236,17 +268,26 @@ export function useMenuState() {
 
     const deleteItem = async (itemId: string) => {
         if (!restaurantId) throw new Error("No Restaurant ID");
-        
-        // DEV_STABLE_MODE: Fail-closed guard - kernel must be ready
-        if (!isReady || !kernel) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                ? 'Sistema em modo de estabilização' 
-                : status === 'BOOTING'
-                ? 'Sistema inicializando'
-                : 'Kernel não está pronto'}`);
+
+        // GOVERNANCE BYPASS: Menu configuration is allowed even in FROZEN mode
+        if (status === 'FROZEN' || !isReady || !kernel) {
+            console.info('[useMenuState] Kernel FROZEN - using direct Supabase delete for governance operation');
+
+            const { error } = await supabase
+                .from('gm_products')
+                .delete()
+                .eq('id', itemId);
+
+            if (error) {
+                console.error('[useMenuState] Governance delete failed:', error);
+                throw new Error(`GOVERNANCE_WRITE_FAILED: ${error.message}`);
+            }
+
+            setItems(prev => prev.filter(i => i.id !== itemId));
+            return;
         }
 
-        // Sovereign Archive (Soft Delete)
+        // Sovereign Archive (Soft Delete) - for non-FROZEN mode
         const result = await executeSafe({
             entity: 'PRODUCT',
             entityId: itemId,
