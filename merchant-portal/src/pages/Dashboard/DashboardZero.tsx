@@ -158,26 +158,10 @@ export const DashboardZero = () => {
     }, []);
 
     /**
-     * Staff-style navigation: Active tools open in new browser tabs
-     * for isolated, focused operation contexts (TPV, KDS, Menu, Orders).
-     * Dashboard/settings remain in-app.
-     * 
-     * 🚨 CRÍTICO: window.open() deve ser chamado SINCRONAMENTE no onClick
-     * Nada antes, nada depois, sem await, sem navigate() antes.
+     * Navigation: All tools navigate within the same tab.
+     * No more window.open() - keeps user in Comando Central context.
      */
     const handleNavigate = (path: string) => {
-        // 🔒 ARQUITETURA LOCKED: Apps operacionais abrem em novas abas
-        // Regra de ouro: window.open() sincronamente, sem await, sem navigate() antes
-        // Ver: E2E_SOVEREIGN_NAVIGATION_VALIDATION.md
-        const toolRoutes = ['/app/tpv', '/app/kds', '/app/menu', '/app/orders', '/app/staff'];
-
-        if (toolRoutes.includes(path)) {
-            // 🚨 CRÍTICO: chamada direta e síncrona
-            console.log('OPEN TOOL:', path);
-            window.open(path, '_blank', 'noopener,noreferrer');
-            return;
-        }
-
         navigate(path);
     };
 
