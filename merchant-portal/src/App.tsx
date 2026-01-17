@@ -27,7 +27,7 @@ import { ArticlePage } from './pages/Read/ArticlePage';
 const TPV = React.lazy(() => import('./pages/TPV/TPV'));
 const KDS = React.lazy(() => import('./pages/TPV/KDS/KitchenDisplay'));
 const KDSStandalone = React.lazy(() => import('./pages/TPV/KDS/KDSStandalone'));
-const MenuManager = React.lazy(() => import('./pages/Menu').then(m => ({ default: m.MenuManager })));
+const MenuManager = React.lazy(() => import('./pages/Menu/MenuManager').then(m => ({ default: m.MenuManager })));
 import { MenuBootstrapPage } from './pages/Menu/Bootstrap/MenuBootstrapPage';
 import { BetaFeedbackWidget } from './ui/feedback/BetaFeedbackWidget';
 
@@ -47,6 +47,7 @@ const StaffPage = React.lazy(() => import('./pages/Settings/StaffPage'));
 
 
 const TPVKitsPage = React.lazy(() => import('./pages/Store/TPVKitsPage').then(m => ({ default: m.TPVKitsPage })));
+const EvolveHub = React.lazy(() => import('./pages/Evolve/EvolveHub').then(m => ({ default: m.EvolveHub })));
 const RestaurantWebPreviewPage = React.lazy(() => import('./pages/Web/RestaurantWebPreviewPage').then(m => ({ default: m.RestaurantWebPreviewPage })));
 const LocalBossPage = React.lazy(() => import('./pages/LocalBoss/LocalBossPage').then(m => ({ default: m.LocalBossPage })));
 const GovernOverviewPage = React.lazy(() => import('./pages/Govern/GovernOverviewPage').then(m => ({ default: m.GovernOverviewPage })));
@@ -289,6 +290,7 @@ function App() {
                     <Route path="crm" element={<Suspense fallback={<div>Loading...</div>}><CustomersPage /></Suspense>} />
                     <Route path="loyalty" element={<Suspense fallback={<div>Loading...</div>}><LoyaltyPage /></Suspense>} />
                     <Route path="audit" element={<SystemStatusPage />} />
+                    <Route path="evolve" element={<Suspense fallback={<div>Loading Evolve Hub...</div>}><EvolveHub /></Suspense>} />
                     <Route path="coming-soon" element={<ComingSoonPage />} />
                   </Route>
                 </Route>
@@ -311,176 +313,177 @@ function App() {
               {/* OfflineOrderProvider moved to AppDomainWrapper */}
               <DevStableEntryGate />
               <Routes>
-              {/* 1. PUBLIC */}
-              <Route path="/public/*" element={
-                <SovereignBoundary>
-                  <Suspense fallback={<div>Carregando Cardápio...</div>}>
-                    <PublicPages />
-                  </Suspense>
-                </SovereignBoundary>
-              } />
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/health" element={<HealthCheckPage />} />
-              <Route path="/auth" element={<AuthPage />} />
-              {/* Legacy redirects - manter compatibilidade temporária */}
-              <Route path="/login" element={<Navigate to="/auth" replace />} />
-              <Route path="/signup" element={<Navigate to="/auth" replace />} />
-              <Route path="/join" element={<ScreenInviteCode />} />
-              <Route path="/start" element={<Navigate to="/onboarding/start" replace />} />
-              <Route path="/onboarding/*" element={<OnboardingWizard />} />
-
-              <Route path="/migration/wizard" element={<MigrationWizard />} />
-              <Route path="/activation" element={<ActivationPage />} />
-
-              {/* 🍳 KDS STANDALONE — Cozinha Independente (Tablet/TV) */}
-              {/* ROTA: /kds/:restaurantId - Funciona sem AppLayout, sem FlowGate */}
-              <Route path="/kds/:restaurantId" element={
-                <Suspense fallback={
-                  <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 48, marginBottom: 16 }}>🍳</div>
-                      <p>Carregando KDS...</p>
-                    </div>
-                  </div>
-                }>
-                  <KDSStandalone />
-                </Suspense>
-              } />
-
-              {/* AUTH GATE (Session Only) - Redundant with FlowGate but explicit for clarity */}
-              <Route path="/bootstrap" element={<BootstrapPage />} />
-
-              {/* CONTENT HUB (Totally different layout) */}
-              <Route path="/read" element={<ReaderLayout />}>
-                <Route index element={<LibraryPage />} />
-                <Route path=":slug" element={<ArticlePage />} />
-              </Route>
-
-              {/* REMOVED: Orphan staff/* route - Use /app/staff instead (has proper Gate chain) */}
-              {/* See: docs/canon/ROUTE_MANIFEST.md */}
-
-              <Route path="/app" element={
-                <FlowGate>
-                  <TenantProvider>
-                    <AppDomainWrapper>
-                      <RequireActivation>
-                        <ThemeEngine />
-                        <AppLayout />
-                        <BetaFeedbackWidget />
-                      </RequireActivation>
-                    </AppDomainWrapper>
-                  </TenantProvider>
-                </FlowGate>
-              }>
-                {/* 🎯 /app sem subrota → Dashboard (FlowGate já validou auth) */}
-                <Route index element={<Navigate to="/app/dashboard" replace />} />
-
-                {/* [Phase 2] Multi-Tenant Routes */}
-                <Route path="select-tenant" element={<SelectTenantPage />} />
-                <Route path="access-denied" element={<AccessDeniedPage />} />
-
-                {/* [Opus 6.0] Operation Status Screens */}
-                <Route path="paused" element={<SystemPausedPage />} />
-                <Route path="suspended" element={<SystemSuspendedPage />} />
-                <Route path="operation-status" element={<OperationStatusPage />} />
-
-                {/* 🛡️ OPERATION GATE: Enforces active/paused/suspended state */}
-                <Route element={<OperationGate />}>
-                  {/* Command Center */}
-                  <Route path="dashboard" element={
-                    <Suspense fallback={<div style={{ padding: 40, color: '#32d74b' }}>💿 Sincronizando Mapa Soberano...</div>}>
-                      <DashboardZero />
+                {/* 1. PUBLIC */}
+                <Route path="/public/*" element={
+                  <SovereignBoundary>
+                    <Suspense fallback={<div>Carregando Cardápio...</div>}>
+                      <PublicPages />
                     </Suspense>
-                  } />
+                  </SovereignBoundary>
+                } />
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/health" element={<HealthCheckPage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                {/* Legacy redirects - manter compatibilidade temporária */}
+                <Route path="/login" element={<Navigate to="/auth" replace />} />
+                <Route path="/signup" element={<Navigate to="/auth" replace />} />
+                <Route path="/join" element={<ScreenInviteCode />} />
+                <Route path="/start" element={<Navigate to="/onboarding/start" replace />} />
+                <Route path="/onboarding/*" element={<OnboardingWizard />} />
 
-                  {/* Tool Routes (Staff Terminal Style - Open in New Tabs) */}
-                  {/* 🔒 ARQUITETURA LOCKED: Cada app abre em sua própria aba */}
-                  {/* Ver: E2E_SOVEREIGN_NAVIGATION_VALIDATION.md */}
-                  <Route path="tpv" element={
-                    <GuardTool tool="tpv">
-                      <Suspense fallback={<div>Loading TPV...</div>}>
-                        <TPV />
-                      </Suspense>
-                    </GuardTool>
-                  } />
-                  <Route path="kds" element={
-                    <GuardTool tool="kds">
-                      <Suspense fallback={<div>Loading KDS...</div>}>
-                        <KDS />
-                      </Suspense>
-                    </GuardTool>
-                  } />
-                  <Route path="menu" element={
-                    <GuardTool tool="menu">
-                      <Suspense fallback={<div>Loading Menu...</div>}>
-                        <MenuManager />
-                      </Suspense>
-                    </GuardTool>
-                  } />
-                  <Route path="menu/bootstrap" element={<MenuBootstrapPage />} />
-                  <Route path="orders" element={
-                    <GuardTool tool="orders">
-                      <Suspense fallback={<div>Loading Orders...</div>}>
-                        <PulseList />
-                      </Suspense>
-                    </GuardTool>
-                  } />
-                  <Route path="staff" element={
-                    <GuardTool tool="staff">
-                      <ErrorBoundary context="AppStaff">
-                        <Suspense fallback={<div style={{ padding: 20 }}>📡 Conectando satélite Staff...</div>}>
-                          <StaffModule />
-                        </Suspense>
-                      </ErrorBoundary>
-                    </GuardTool>
-                  } />
+                <Route path="/migration/wizard" element={<MigrationWizard />} />
+                <Route path="/activation" element={<ActivationPage />} />
 
-                  {/* Settings & Reports */}
-                  <Route path="settings" element={<Suspense fallback={<div>Loading Settings...</div>}><Settings /></Suspense>} />
-                  <Route path="settings/sovereignty" element={
-                    <GuardTool tool="sovereignty">
-                      <Suspense fallback={<div>Loading Sovereignty...</div>}>
-                        <SovereigntyDashboard />
-                      </Suspense>
-                    </GuardTool>
-                  } />
-                  <Route path="settings/advanced-setup" element={<AdvancedSetupPage />} />
-                  <Route path="settings/connectors" element={<Suspense fallback={<div>Loading...</div>}><ConnectorSettings /></Suspense>} />
-                  <Route path="reports/daily-closing" element={<Suspense fallback={<div>Loading...</div>}><DailyClosing /></Suspense>} />
-                  <Route path="reports/finance" element={<Suspense fallback={<div>Loading...</div>}><FinanceDashboard /></Suspense>} />
-                  <Route path="reports/delivery" element={<Suspense fallback={<div>Loading DLQ...</div>}><DeliveryMonitor /></Suspense>} />
-                  <Route path="team" element={<Suspense fallback={<div>Loading...</div>}><StaffPage /></Suspense>} />
-                  <Route path="store/tpv-kits" element={<Suspense fallback={<div>Loading...</div>}><TPVKitsPage /></Suspense>} />
-                  <Route path="web/preview" element={<Suspense fallback={<div>Loading...</div>}><RestaurantWebPreviewPage /></Suspense>} />
-                  <Route path="local-boss" element={<Suspense fallback={<div>Loading...</div>}><LocalBossPage /></Suspense>} />
-                  <Route path="govern" element={<Suspense fallback={<div>Loading...</div>}><GovernOverviewPage /></Suspense>} />
-                  <Route path="govern-manage" element={<Suspense fallback={<div>Loading...</div>}><GovernManageDashboard /></Suspense>} />
-                  <Route path="reservations" element={<Suspense fallback={<div>Loading...</div>}><ReservationsDashboard /></Suspense>} />
-                  <Route path="reputation-hub" element={<Suspense fallback={<div>Loading...</div>}><ReputationHubDashboard /></Suspense>} />
-                  <Route path="operational-hub" element={<Suspense fallback={<div>Loading...</div>}><OperationalHubDashboard /></Suspense>} />
-                  <Route path="portioning" element={<Suspense fallback={<div>Loading...</div>}><PortioningDashboard /></Suspense>} />
-                  <Route path="performance" element={<Suspense fallback={<div>Loading...</div>}><PerformanceDashboard /></Suspense>} />
-                  <Route path="multi-location" element={<Suspense fallback={<div>Loading...</div>}><RestaurantGroupManager /></Suspense>} />
-                  <Route path="multi-location/:groupId/dashboard" element={<Suspense fallback={<div>Loading...</div>}><GroupDashboard /></Suspense>} />
-                  <Route path="crm" element={<Suspense fallback={<div>Loading...</div>}><CustomersPage /></Suspense>} />
-                  <Route path="loyalty" element={<Suspense fallback={<div>Loading...</div>}><LoyaltyPage /></Suspense>} />
-                  <Route path="audit" element={<SystemStatusPage />} />
-                  <Route path="coming-soon" element={<ComingSoonPage />} />
+                {/* 🍳 KDS STANDALONE — Cozinha Independente (Tablet/TV) */}
+                {/* ROTA: /kds/:restaurantId - Funciona sem AppLayout, sem FlowGate */}
+                <Route path="/kds/:restaurantId" element={
+                  <Suspense fallback={
+                    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 48, marginBottom: 16 }}>🍳</div>
+                        <p>Carregando KDS...</p>
+                      </div>
+                    </div>
+                  }>
+                    <KDSStandalone />
+                  </Suspense>
+                } />
+
+                {/* AUTH GATE (Session Only) - Redundant with FlowGate but explicit for clarity */}
+                <Route path="/bootstrap" element={<BootstrapPage />} />
+
+                {/* CONTENT HUB (Totally different layout) */}
+                <Route path="/read" element={<ReaderLayout />}>
+                  <Route index element={<LibraryPage />} />
+                  <Route path=":slug" element={<ArticlePage />} />
                 </Route>
-              </Route>
 
-              {/* Legacy redirects: old routes -> new /app/ routes */}
-              <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
-              <Route path="/tpv" element={<Navigate to="/app/tpv" replace />} />
-              <Route path="/kds" element={<Navigate to="/app/kds" replace />} />
-              <Route path="/menu" element={<Navigate to="/app/menu" replace />} />
-              <Route path="/pulses" element={<Navigate to="/app/orders" replace />} />
+                {/* REMOVED: Orphan staff/* route - Use /app/staff instead (has proper Gate chain) */}
+                {/* See: docs/canon/ROUTE_MANIFEST.md */}
 
-              {/* INTERNAL DEV TOOL ROUTE */}
-              <Route path="/wizard" element={<Navigate to="/dev/wizard" replace />} />
-              <Route path="/dev/wizard" element={<WizardPage />} />
-              <Route path="*" element={<Navigate to="/auth" replace />} />
-            </Routes>
+                <Route path="/app" element={
+                  <FlowGate>
+                    <TenantProvider>
+                      <AppDomainWrapper>
+                        <RequireActivation>
+                          <ThemeEngine />
+                          <AppLayout />
+                          <BetaFeedbackWidget />
+                        </RequireActivation>
+                      </AppDomainWrapper>
+                    </TenantProvider>
+                  </FlowGate>
+                }>
+                  {/* 🎯 /app sem subrota → Dashboard (FlowGate já validou auth) */}
+                  <Route index element={<Navigate to="/app/dashboard" replace />} />
+
+                  {/* [Phase 2] Multi-Tenant Routes */}
+                  <Route path="select-tenant" element={<SelectTenantPage />} />
+                  <Route path="access-denied" element={<AccessDeniedPage />} />
+
+                  {/* [Opus 6.0] Operation Status Screens */}
+                  <Route path="paused" element={<SystemPausedPage />} />
+                  <Route path="suspended" element={<SystemSuspendedPage />} />
+                  <Route path="operation-status" element={<OperationStatusPage />} />
+
+                  {/* 🛡️ OPERATION GATE: Enforces active/paused/suspended state */}
+                  <Route element={<OperationGate />}>
+                    {/* Command Center */}
+                    <Route path="dashboard" element={
+                      <Suspense fallback={<div style={{ padding: 40, color: '#32d74b' }}>💿 Sincronizando Mapa Soberano...</div>}>
+                        <DashboardZero />
+                      </Suspense>
+                    } />
+
+                    {/* Tool Routes (Staff Terminal Style - Open in New Tabs) */}
+                    {/* 🔒 ARQUITETURA LOCKED: Cada app abre em sua própria aba */}
+                    {/* Ver: E2E_SOVEREIGN_NAVIGATION_VALIDATION.md */}
+                    <Route path="tpv" element={
+                      <GuardTool tool="tpv">
+                        <Suspense fallback={<div>Loading TPV...</div>}>
+                          <TPV />
+                        </Suspense>
+                      </GuardTool>
+                    } />
+                    <Route path="kds" element={
+                      <GuardTool tool="kds">
+                        <Suspense fallback={<div>Loading KDS...</div>}>
+                          <KDS />
+                        </Suspense>
+                      </GuardTool>
+                    } />
+                    <Route path="menu" element={
+                      <GuardTool tool="menu">
+                        <Suspense fallback={<div>Loading Menu...</div>}>
+                          <MenuManager />
+                        </Suspense>
+                      </GuardTool>
+                    } />
+                    <Route path="menu/bootstrap" element={<MenuBootstrapPage />} />
+                    <Route path="orders" element={
+                      <GuardTool tool="orders">
+                        <Suspense fallback={<div>Loading Orders...</div>}>
+                          <PulseList />
+                        </Suspense>
+                      </GuardTool>
+                    } />
+                    <Route path="staff" element={
+                      <GuardTool tool="staff">
+                        <ErrorBoundary context="AppStaff">
+                          <Suspense fallback={<div style={{ padding: 20 }}>📡 Conectando satélite Staff...</div>}>
+                            <StaffModule />
+                          </Suspense>
+                        </ErrorBoundary>
+                      </GuardTool>
+                    } />
+
+                    {/* Settings & Reports */}
+                    <Route path="settings" element={<Suspense fallback={<div>Loading Settings...</div>}><Settings /></Suspense>} />
+                    <Route path="settings/sovereignty" element={
+                      <GuardTool tool="sovereignty">
+                        <Suspense fallback={<div>Loading Sovereignty...</div>}>
+                          <SovereigntyDashboard />
+                        </Suspense>
+                      </GuardTool>
+                    } />
+                    <Route path="settings/advanced-setup" element={<AdvancedSetupPage />} />
+                    <Route path="settings/connectors" element={<Suspense fallback={<div>Loading...</div>}><ConnectorSettings /></Suspense>} />
+                    <Route path="reports/daily-closing" element={<Suspense fallback={<div>Loading...</div>}><DailyClosing /></Suspense>} />
+                    <Route path="reports/finance" element={<Suspense fallback={<div>Loading...</div>}><FinanceDashboard /></Suspense>} />
+                    <Route path="reports/delivery" element={<Suspense fallback={<div>Loading DLQ...</div>}><DeliveryMonitor /></Suspense>} />
+                    <Route path="team" element={<Suspense fallback={<div>Loading...</div>}><StaffPage /></Suspense>} />
+                    <Route path="store/tpv-kits" element={<Suspense fallback={<div>Loading...</div>}><TPVKitsPage /></Suspense>} />
+                    <Route path="web/preview" element={<Suspense fallback={<div>Loading...</div>}><RestaurantWebPreviewPage /></Suspense>} />
+                    <Route path="local-boss" element={<Suspense fallback={<div>Loading...</div>}><LocalBossPage /></Suspense>} />
+                    <Route path="govern" element={<Suspense fallback={<div>Loading...</div>}><GovernOverviewPage /></Suspense>} />
+                    <Route path="govern-manage" element={<Suspense fallback={<div>Loading...</div>}><GovernManageDashboard /></Suspense>} />
+                    <Route path="reservations" element={<Suspense fallback={<div>Loading...</div>}><ReservationsDashboard /></Suspense>} />
+                    <Route path="reputation-hub" element={<Suspense fallback={<div>Loading...</div>}><ReputationHubDashboard /></Suspense>} />
+                    <Route path="operational-hub" element={<Suspense fallback={<div>Loading...</div>}><OperationalHubDashboard /></Suspense>} />
+                    <Route path="portioning" element={<Suspense fallback={<div>Loading...</div>}><PortioningDashboard /></Suspense>} />
+                    <Route path="performance" element={<Suspense fallback={<div>Loading...</div>}><PerformanceDashboard /></Suspense>} />
+                    <Route path="multi-location" element={<Suspense fallback={<div>Loading...</div>}><RestaurantGroupManager /></Suspense>} />
+                    <Route path="multi-location/:groupId/dashboard" element={<Suspense fallback={<div>Loading...</div>}><GroupDashboard /></Suspense>} />
+                    <Route path="crm" element={<Suspense fallback={<div>Loading...</div>}><CustomersPage /></Suspense>} />
+                    <Route path="loyalty" element={<Suspense fallback={<div>Loading...</div>}><LoyaltyPage /></Suspense>} />
+                    <Route path="audit" element={<SystemStatusPage />} />
+                    <Route path="evolve" element={<Suspense fallback={<div>Loading Evolve Hub...</div>}><EvolveHub /></Suspense>} />
+                    <Route path="coming-soon" element={<ComingSoonPage />} />
+                  </Route>
+                </Route>
+
+                {/* Legacy redirects: old routes -> new /app/ routes */}
+                <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
+                <Route path="/tpv" element={<Navigate to="/app/tpv" replace />} />
+                <Route path="/kds" element={<Navigate to="/app/kds" replace />} />
+                <Route path="/menu" element={<Navigate to="/app/menu" replace />} />
+                <Route path="/pulses" element={<Navigate to="/app/orders" replace />} />
+
+                {/* INTERNAL DEV TOOL ROUTE */}
+                <Route path="/wizard" element={<Navigate to="/dev/wizard" replace />} />
+                <Route path="/dev/wizard" element={<WizardPage />} />
+                <Route path="*" element={<Navigate to="/auth" replace />} />
+              </Routes>
             </OnboardingProvider>
           )}
         </ErrorBoundary>

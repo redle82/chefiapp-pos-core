@@ -17,14 +17,14 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
     const navigate = useNavigate();
     const theme = colors.modes.dashboard;
 
-    // Track expanded groups. Evolution (Evoluir) is collapsed by default.
+    // Track expanded groups. EVOLVE is collapsed by default (meta-produto + comercial).
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
         'Comando': true,
         'Operar': true,
         'Analisar': true,
         'Governar': true,
         'Conectar': true,
-        'Evoluir': false // Collapsed by default
+        'Evolve': false // Collapsed by default
     });
 
     const toggleGroup = (title: string) => {
@@ -74,6 +74,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
             items: [
                 { label: 'Equipa', id: '/app/team', icon: '👥' },
                 { label: 'Controlo de Acesso', id: '/app/govern-manage', icon: '🔐' },
+                { label: 'Página Web', id: '/app/web/preview', icon: '🌐' },
                 { label: 'Segurança Alimentar', id: '/app/govern', icon: '🧼', status: 'locked' },
             ]
         },
@@ -81,17 +82,14 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
             title: 'Conectar',
             items: [
                 { label: 'Conectores', id: '/app/settings/connectors', icon: '🔌', status: 'experimental' },
-                { label: 'Página Web', id: '/app/web/preview', icon: '🌐' },
                 { label: 'Reputação Hub', id: '/app/reputation-hub', icon: '⭐', status: 'locked' },
             ]
         },
         {
-            title: 'Evoluir',
-            collapsible: true, // Mark for UI hint if needed
+            title: 'Evolve',
+            collapsible: true, // Meta-produto + Comercial unificados
             items: [
-                { label: 'Roadmap', id: '/app/coming-soon?module=evo_roadmap', icon: '🚀' },
-                { label: 'Status MVP', id: '/app/coming-soon?module=evo_mvp', icon: '🏗️' },
-                { label: 'Equipamento', id: '/app/store/tpv-kits', icon: '🛍️', status: 'planned' },
+                { label: 'Evolve Hub', id: '/app/evolve', icon: '🔮' },
             ]
         }
     ];
