@@ -36,8 +36,8 @@
 | `Home/` | 🧭 Painel | ✅ OK | Home genérica |
 | `Inventory/` | 🧭 Painel | ✅ OK | Inventário |
 | `Landing/` | 🌍 Público | ✅ OK | Landing page pública |
-| `LeakDashboard/` | 🧭 Painel | ⚠️ Revisar | Nome suspeito |
-| `LocalBoss/` | 🧭 Painel | ⚠️ Revisar | Pode ser deprecado |
+| `LeakDashboard/` | 🧭 Painel | ✅ OK | Detecção de vazamentos/perdas |
+| `LocalBoss/` | 🧭 Painel | ✅ OK | Hub de reputação/reviews |
 | `Loyalty/` | 🧭 Painel | ✅ OK | Fidelidade |
 | `Menu/` | 🧭 Painel | ✅ OK | Gestão de cardápio |
 | `MultiLocation/` | 🧭 Painel | ✅ OK | Multi-restaurante |
@@ -48,7 +48,7 @@
 | `Portioning/` | 🧭 Painel | ✅ OK | Porcionamento |
 | `Public/` | 🌍 Público | ✅ OK | Páginas públicas |
 | `Purchasing/` | 🧭 Painel | ✅ OK | Compras |
-| `Read/` | 🧭 Painel | ⚠️ Revisar | Nome genérico |
+| `Read/` | 🌍 Público | ✅ OK | Biblioteca de artigos |
 | `Reports/` | 🧭 Painel | ✅ OK | Relatórios |
 | `ReputationHub/` | 🧭 Painel | ✅ OK | Reputação |
 | `Reservations/` | 🧭 Painel | ✅ OK | Reservas |
@@ -80,17 +80,17 @@
 
 ## Itens para Revisão
 
-| Pasta | Questão |
-|-------|---------|
-| `LeakDashboard/` | Nome sugere debugging - deprecar? |
-| `LocalBoss/` | Nome antigo - renomear ou deprecar? |
-| `Read/` | Nome genérico - verificar propósito |
-| `_deprecated/` | Limpar quando possível |
+| Pasta | Resultado |
+|-------|----------|
+| `LeakDashboard/` | ✅ Manter — painel de detecção de fugas/perdas |
+| `LocalBoss/` | ✅ Manter — hub de reviews/reputação (renomear para ReputationHub?) |
+| `Read/` | ✅ Manter — biblioteca de artigos/research hub |
+| `_deprecated/` | 🗑️ Limpar — ficheiros vazios (66-70 bytes) |
 
 ---
 
 ## Conclusão
 
-**35/38** pastas estão corretamente mapeadas.  
-**3** pastas precisam revisão (LeakDashboard, LocalBoss, Read).  
-**1** pasta deve ser limpa (_deprecated).
+**38/38** pastas estão corretamente mapeadas. ✅  
+**0** pastas com problemas.  
+**1** pasta pode ser limpa (_deprecated — ficheiros vazios).
