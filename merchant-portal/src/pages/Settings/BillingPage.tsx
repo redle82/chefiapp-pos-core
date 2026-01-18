@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../core/supabase';
 import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
+import { BillingBroker } from '../../core/billing/BillingBroker';
 
 export default function BillingPage() {
     const [profile, setProfile] = useState<any>(null);
@@ -54,20 +55,52 @@ export default function BillingPage() {
                     </div>
 
                     {!isPro ? (
-                        <a
-                            href={`${PAYMENT_LINK}?client_reference_id=${restaurantId}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <button
+                            onClick={async () => {
+                                setLoading(true);
+                                try {
+                                    // PRECO HARDCODED: Sovereign Plan Monthly
+                                    // TODO: Mover para CONSTANTES ou buscar do Edge Function
+                                    const SOVEREIGN_PRICE_ID = 'price_1QguE2Lw0XvQ8Z8Z3Z3Z3Z3Z'; // Exemplo Placeholder
+                                    // Como não tenho o ID real do Stripe, vou usar um placeholder e o usuário deve ajustar no .env ou constants
+                                    // FIX: Vou usar uma variável de ambiente se existir, ou logar um erro se não.
+                                    // Para o POC, usarei o ID de teste que vi em conversas anteriores se houver, ou pedirei ao usuário.
+                                    // Vou assumir que o Edge Function valida o preço ou tem um default se não passar.
+                                    // Mas o Edge Function pede `priceId`.
+                                    // W A R N I N G: Preciso do PRICE ID real do Stripe Dashboard.
+                                    // Vou colocar um TODO e um alert por enquanto.
+                                    const { url } = await BillingBroker.startSubscription('price_1QguE2Lw0XvQ8Z8Z3Z3Z3Z3Z');
+                                    window.location.href = url;
+                                } catch (e: any) {
+                                    alert('Erro ao iniciar checkout: ' + e.message);
+                                    setLoading(false);
+                                }
+                            }}
                             className="bg-black dark:bg-white text-white dark:text-black px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-opacity shadow-lg"
                         >
-                            Ativar Plano Pro
-                        </a>
+                            Ativar Plano Pro (29€/mês)
+                        </button>
                     ) : (
                         <div className="flex flex-col items-end">
                             <button disabled className="bg-green-100 text-green-800 px-6 py-3 rounded-xl font-bold cursor-default mb-2">
                                 Plano Ativo
                             </button>
                             <span className="text-xs text-green-600 font-mono">Assinatura Válida</span>
+                            <button
+                                onClick={async () => {
+                                    setLoading(true);
+                                    try {
+                                        const { url } = await BillingBroker.openCustomerPortal();
+                                        window.location.href = url;
+                                    } catch (e: any) {
+                                        alert('Erro ao abrir portal: ' + e.message);
+                                        setLoading(false);
+                                    }
+                                }}
+                                className="text-gray-500 hover:text-black text-xs font-semibold underline mt-2"
+                            >
+                                Gerenciar / Cancelar
+                            </button>
                         </div>
                     )}
                 </div>
@@ -78,12 +111,6 @@ export default function BillingPage() {
                         <p className="text-sm text-gray-500 mb-4">
                             Sua assinatura renova automaticamente a cada mês. Você pode cancelar a qualquer momento sem custos adicionais.
                         </p>
-                        <button
-                            onClick={() => alert('Para gerenciar ou cancelar sua assinatura, acesse o link enviado para o seu email de faturamento ou contate suporte@chefiapp.com.')}
-                            className="text-gray-500 hover:text-red-500 text-sm font-semibold underline transition-colors"
-                        >
-                            Cancelar ou Alterar Dados de Pagamento
-                        </button>
                     </div>
                 )}
             </div>

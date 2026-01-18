@@ -16,7 +16,7 @@ import { Button } from '../../../ui/design-system/primitives/Button';
 import { colors } from '../../../ui/design-system/tokens/colors';
 import { spacing } from '../../../ui/design-system/tokens/spacing';
 import { StripePaymentModal } from '../../../components/payment/StripePaymentModal';
-import { createPaymentIntent, type PaymentIntentResult } from '../../../core/tpv/stripePayment';
+import { PaymentBroker, type PaymentIntentResult } from '../../../core/payment/PaymentBroker';
 import { useConsumptionGroups } from '../hooks/useConsumptionGroups';
 import { FiscalPrintButton } from './FiscalPrintButton';
 import { LoadingState } from '../../../ui/design-system/components/LoadingState';
@@ -67,10 +67,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantI
             setLoadingStripeIntent(true);
             setStripeError(null);
 
-            createPaymentIntent({
+            PaymentBroker.createPaymentIntent({
                 orderId,
                 restaurantId,
-                amountCents: orderTotal,
+                amount: orderTotal, // PaymentBroker expects amount (checking index.ts, it passes directly)
                 currency: 'EUR',
             })
                 .then((intent) => {

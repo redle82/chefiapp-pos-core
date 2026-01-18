@@ -75,6 +75,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
                 { label: 'Cardápio', id: '/app/menu', icon: '🍔' },
                 { label: 'Pedidos', id: '/app/orders', icon: '📃' },
                 { label: 'Operação Hub', id: '/app/operational-hub', icon: '📦', status: 'experimental' },
+                { label: 'Inventário', id: '/app/inventory', icon: '🧺', status: 'experimental' },
                 { label: 'Reservas', id: '/app/reservations', icon: '📅', status: 'planned' },
             ]
         },

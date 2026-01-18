@@ -10,6 +10,7 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback, ty
 import { OrderEngine, type Order as RealOrder, type OrderItemInput, type PaymentMethod } from '../../../core/tpv/OrderEngine';
 import { PaymentEngine } from '../../../core/tpv/PaymentEngine';
 import { CashRegisterEngine, type CashRegister } from '../../../core/tpv/CashRegister';
+import { InventoryEngine } from '../../../core/inventory/InventoryEngine';
 import { supabase } from '../../../core/supabase';
 
 import { useNetworkStatus } from '../../../core/queue/useNetworkStatus';
@@ -121,7 +122,7 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
     const [orders, setOrders] = useState<Order[]>([]);
     // STEP 7: Inicializar loading como false (fail-closed - não assume kernel pronto)
     const [loading, setLoading] = useState(false);
-    
+
     // STEP 7: Helper para verificar readiness
     const isKernelReady = useCallback(() => {
         return isReady && status === 'READY' && kernel !== null;
@@ -177,12 +178,12 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                 .then(register => {
                     if (register) setCashRegisterId(register.id);
                 })
-                .catch(() => { 
+                .catch(() => {
                     // STEP 7: Fail-closed - não quebra se falhar
                 });
         }
     }, [propRestaurantId]);
-    
+
     // STEP 7: Garantir que loading = false quando kernel não está pronto (fail-closed)
     useEffect(() => {
         if (!isKernelReady() && loading) {
@@ -445,11 +446,11 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
         // Criar novo pedido (já valida caixa e mesa no OrderEngine)
         // STEP 7: Fail-closed - não assume Kernel
         if (!isKernelReady()) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                ? 'Sistema em modo de estabilização' 
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                ? 'Sistema em modo de estabilização'
                 : status === 'BOOTING'
-                ? 'Sistema inicializando'
-                : 'Selecione um restaurante antes de criar pedidos'}`);
+                    ? 'Sistema inicializando'
+                    : 'Selecione um restaurante antes de criar pedidos'}`);
         }
 
         const orderId = uuidv4(); // Generate ID externally (Sovereign ID)
@@ -474,7 +475,7 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             paymentMethod: 'cash',
             syncMetadata: orderInput.syncMetadata
         });
-        
+
         if (!result.ok) {
             throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
         }
@@ -527,11 +528,11 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
 
         // STEP 7: Fail-closed - não assume Kernel
         if (!isKernelReady()) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                ? 'Sistema em modo de estabilização' 
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                ? 'Sistema em modo de estabilização'
                 : status === 'BOOTING'
-                ? 'Sistema inicializando'
-                : 'Selecione um restaurante antes de adicionar itens'}`);
+                    ? 'Sistema inicializando'
+                    : 'Selecione um restaurante antes de adicionar itens'}`);
         }
 
         // STEP 7: Usar executeSafe em vez de kernel.execute()
@@ -552,7 +553,7 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                 categoryName: item.categoryName
             }
         });
-        
+
         if (!result.ok) {
             throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
         }
@@ -586,11 +587,11 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
 
         // STEP 7: Fail-closed - não assume Kernel
         if (!isKernelReady()) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                ? 'Sistema em modo de estabilização' 
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                ? 'Sistema em modo de estabilização'
                 : status === 'BOOTING'
-                ? 'Sistema inicializando'
-                : 'Selecione um restaurante antes de remover itens'}`);
+                    ? 'Sistema inicializando'
+                    : 'Selecione um restaurante antes de remover itens'}`);
         }
 
         // STEP 7: Usar executeSafe em vez de kernel.execute()
@@ -601,7 +602,7 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             restaurantId,
             itemId: itemId
         });
-        
+
         if (!result.ok) {
             throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
         }
@@ -639,11 +640,11 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
 
         // STEP 7: Fail-closed - não assume Kernel
         if (!isKernelReady()) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                ? 'Sistema em modo de estabilização' 
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                ? 'Sistema em modo de estabilização'
                 : status === 'BOOTING'
-                ? 'Sistema inicializando'
-                : 'Selecione um restaurante antes de atualizar itens'}`);
+                    ? 'Sistema inicializando'
+                    : 'Selecione um restaurante antes de atualizar itens'}`);
         }
 
         // Find Unit Price for Total Calculation
@@ -662,7 +663,7 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             quantity,
             unitPriceCents: unitPriceCents // Can be undefined if not found (Effect deals with it, or triggers error)
         });
-        
+
         if (!result.ok) {
             throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
         }
@@ -684,11 +685,11 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                 case 'prepare':
                     // STEP 7: Fail-closed - não assume Kernel
                     if (!isKernelReady()) {
-                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                            ? 'Sistema em modo de estabilização' 
+                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                            ? 'Sistema em modo de estabilização'
                             : status === 'BOOTING'
-                            ? 'Sistema inicializando'
-                            : 'Selecione um restaurante antes de finalizar pedido'}`);
+                                ? 'Sistema inicializando'
+                                : 'Selecione um restaurante antes de finalizar pedido'}`);
                     }
                     // STEP 7: Usar executeSafe
                     const finalizeResult = await executeSafe({
@@ -707,11 +708,11 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                 case 'ready':
                     // STEP 7: Fail-closed - não assume Kernel
                     if (!isKernelReady()) {
-                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                            ? 'Sistema em modo de estabilização' 
+                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                            ? 'Sistema em modo de estabilização'
                             : status === 'BOOTING'
-                            ? 'Sistema inicializando'
-                            : 'Selecione um restaurante antes de marcar pedido como pronto'}`);
+                                ? 'Sistema inicializando'
+                                : 'Selecione um restaurante antes de marcar pedido como pronto'}`);
                     }
                     // STEP 7: Usar executeSafe
                     const readyResult = await executeSafe({
@@ -730,11 +731,11 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                 case 'serve':
                     // STEP 7: Fail-closed - não assume Kernel
                     if (!isKernelReady()) {
-                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                            ? 'Sistema em modo de estabilização' 
+                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                            ? 'Sistema em modo de estabilização'
                             : status === 'BOOTING'
-                            ? 'Sistema inicializando'
-                            : 'Selecione um restaurante antes de servir pedido'}`);
+                                ? 'Sistema inicializando'
+                                : 'Selecione um restaurante antes de servir pedido'}`);
                     }
                     // Update to SERVED (Final Kitchen/Table State)
                     const nowServed = new Date().toISOString();
@@ -826,11 +827,11 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
 
                     // STEP 7: Fail-closed - não assume Kernel
                     if (!isKernelReady()) {
-                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                            ? 'Sistema em modo de estabilização' 
+                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                            ? 'Sistema em modo de estabilização'
                             : status === 'BOOTING'
-                            ? 'Sistema inicializando'
-                            : 'Selecione um restaurante antes de processar pagamento'}`);
+                                ? 'Sistema inicializando'
+                                : 'Selecione um restaurante antes de processar pagamento'}`);
                     }
                     // STEP 7: Usar executeSafe
                     const payResult = await executeSafe({
@@ -895,6 +896,31 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                         console.warn('[TPV] CRM/Loyalty processing failed (non-blocking):', crmError);
                     }
 
+                    // FASE 4: Inventory Auto-Deductions (Reference 6)
+                    try {
+                        const paidOrder = await OrderEngine.getOrderById(orderId);
+                        // Convert to Local Order for processing (or fix types in InventoryEngine)
+                        // InventoryEngine expects 'Order' interface. Our mapped 'paidOrder' (local) matches.
+                        // Wait, getOrderById returns 'Order' (local). InventoryEngine expects 'Order' (local).
+                        await InventoryEngine.processOrder(paidOrder);
+                        Logger.info('Inventory Deducted', { context: 'OrderContext', orderId });
+
+                        // SPRINT 8: Financial Intelligence (COGS & Margins)
+                        const totalCost = await InventoryEngine.calculateOrderCost(paidOrder);
+                        const grossMargin = paidOrder.totalCents - totalCost;
+
+                        await supabase.from('gm_orders').update({
+                            total_cost_cents: totalCost,
+                            gross_margin_cents: grossMargin
+                        }).eq('id', orderId);
+
+                        Logger.info('Financials Calculated', { context: 'OrderContext', cost: totalCost, margin: grossMargin });
+
+                    } catch (invError) {
+                        Logger.error('Inventory/Finance Logic Failed', invError, { context: 'OrderContext', orderId });
+                        // Non-blocking: Stock drift is better than blocked payment
+                    }
+
                     // Limpar pedido ativo após pagamento
                     const currentActive = getTabIsolated('chefiapp_active_order_id');
                     if (currentActive === orderId) {
@@ -917,11 +943,11 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                 case 'cancel':
                     // STEP 7: Fail-closed - não assume Kernel
                     if (!isKernelReady()) {
-                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                            ? 'Sistema em modo de estabilização' 
+                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                            ? 'Sistema em modo de estabilização'
                             : status === 'BOOTING'
-                            ? 'Sistema inicializando'
-                            : 'Selecione um restaurante antes de cancelar pedido'}`);
+                                ? 'Sistema inicializando'
+                                : 'Selecione um restaurante antes de cancelar pedido'}`);
                     }
                     // STEP 7: Usar executeSafe
                     const cancelResult = await executeSafe({
@@ -970,11 +996,11 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
 
         // STEP 7: Fail-closed - não assume Kernel
         if (!isKernelReady()) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                ? 'Sistema em modo de estabilização' 
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                ? 'Sistema em modo de estabilização'
                 : status === 'BOOTING'
-                ? 'Sistema inicializando'
-                : 'Selecione um restaurante antes de abrir caixa'}`);
+                    ? 'Sistema inicializando'
+                    : 'Selecione um restaurante antes de abrir caixa'}`);
         }
 
         try {
@@ -1008,11 +1034,11 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
 
         // STEP 7: Fail-closed - não assume Kernel
         if (!isKernelReady()) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN' 
-                ? 'Sistema em modo de estabilização' 
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                ? 'Sistema em modo de estabilização'
                 : status === 'BOOTING'
-                ? 'Sistema inicializando'
-                : 'Selecione um restaurante antes de fechar caixa'}`);
+                    ? 'Sistema inicializando'
+                    : 'Selecione um restaurante antes de fechar caixa'}`);
         }
 
         await CashRegisterEngine.closeCashRegister({

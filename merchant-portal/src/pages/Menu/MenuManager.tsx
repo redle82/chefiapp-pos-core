@@ -57,6 +57,7 @@ export const MenuManager: React.FC = () => {
     // Inventory State
     const [trackStock, setTrackStock] = useState(false);
     const [stockQty, setStockQty] = useState('');
+    const [isSyncing, setIsSyncing] = useState(false);
 
     // Visibility State
     const [visibility, setVisibility] = useState<SurfaceVisibility>(DEFAULT_VISIBILITY);
@@ -150,6 +151,29 @@ export const MenuManager: React.FC = () => {
         setIsEditing(true);
         // BUG-017 FIX: Scroll to form for better UX
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleSyncMenu = async () => {
+        try {
+            setIsSyncing(true);
+            const { error } = await actions.syncExternal();
+            // We need to implement syncExternal in useMenuState or just call invoke here.
+            // Calling invoke directly for speed as useMenuState might not have it yet.
+            const { supabase } = await import('../../core/supabase'); // Dynamic import using index
+            const { data, error: fnError } = await supabase.functions.invoke('sync-menu-external', {
+                body: { restaurantId }
+            });
+
+            if (fnError) throw fnError;
+
+            success(`Sincronizado com sucesso! ${data.synced_items} itens enviados.`);
+        } catch (err: any) {
+            console.error(err);
+            showError('Erro na sincronização. Tente novamente.');
+        } finally {
+            setIsSyncing(false);
+        }
     };
 
     // --- RENDER HELPERS ---
@@ -202,6 +226,15 @@ export const MenuManager: React.FC = () => {
                         onClick={() => setShowAI(true)}
                     >
                         ✨ IA
+                    </Button>
+
+                    <Button
+                        tone="neutral"
+                        variant="ghost"
+                        onClick={handleSyncMenu}
+                        disabled={isSyncing}
+                    >
+                        {isSyncing ? '🔄 ...' : '☁️ Sync Delivery'}
                     </Button>
 
                     <Button

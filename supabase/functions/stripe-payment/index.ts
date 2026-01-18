@@ -33,7 +33,7 @@ serve(async (req) => {
       const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
       if (authError || !user) throw new Error('Unauthorized')
 
-      const { amount, currency, restaurant_id, order_id } = params
+      const { amount, currency, restaurant_id, order_id, operator_id, cash_register_id } = params
       console.log(`[Stripe] Creating TPV PaymentIntent: ${amount} ${currency} for Order ${order_id}`)
 
       const paymentIntent = await stripe.paymentIntents.create({
@@ -44,6 +44,8 @@ serve(async (req) => {
           restaurant_id,
           order_id,
           user_id: user.id,
+          operator_id,
+          cash_register_id,
           source: 'TPV'
         }
       })

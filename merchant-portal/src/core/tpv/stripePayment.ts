@@ -2,6 +2,8 @@
  * Stripe Payment Helper
  * 
  * Funções para criar e processar Payment Intents via Stripe
+ * 
+ * @deprecated Use `core/payment/PaymentBroker` instead.
  */
 
 import { supabase } from '../supabase';

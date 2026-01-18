@@ -20,7 +20,9 @@ export interface Order {
     updatedAt: Date;
     // Core 5 -> Core 2 Flags
     isWebOrder?: boolean;
-    origin?: 'web' | 'local';
+    origin?: 'web' | 'local' | 'external';
+    service_source?: 'ubereats' | 'glovo' | 'deliveroo' | 'other';
+    external_reference?: string;
     customerName?: string;
     transaction_id?: string; // Add transaction_id for consistency
 }

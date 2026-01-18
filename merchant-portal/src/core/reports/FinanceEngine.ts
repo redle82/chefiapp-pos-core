@@ -7,6 +7,8 @@ export interface FinanceSnapshot {
     averageTicket: number;
     paymentMethods: Record<string, number>;
     hourlySales: Record<number, number>;
+    totalCost: number; // New
+    grossMargin: number; // New
 }
 
 export const FinanceEngine = {
@@ -30,10 +32,10 @@ export const FinanceEngine = {
 
         if (paymentError) throw paymentError;
 
-        // Fetch Orders (Source of Truth for Volume)
+        // Fetch Orders (Source of Truth for Volume & Costs)
         const { data: orders, error: orderError } = await supabase
             .from('gm_orders') // Assuming orders table
-            .select('id, created_at')
+            .select('id, created_at, total_cost_cents, total_cents')
             .eq('restaurant_id', tenantId)
             .neq('status', 'CANCELLED') // Exclude cancelled
             .gte('created_at', start.toISOString())
@@ -45,6 +47,10 @@ export const FinanceEngine = {
         const totalRevenueCents = payments?.reduce((sum, p) => sum + p.amount_cents, 0) || 0;
         const totalOrders = orders?.length || 0;
         const averageTicketCents = totalOrders > 0 ? totalRevenueCents / totalOrders : 0;
+
+        // COGS Aggregation
+        const totalCostCents = orders?.reduce((sum, o) => sum + (o.total_cost_cents || 0), 0) || 0;
+        const grossMarginCents = totalRevenueCents - totalCostCents;
 
         // Payment Methods Breakdown
         const paymentMethods: Record<string, number> = {};
@@ -61,11 +67,32 @@ export const FinanceEngine = {
 
         return {
             date: start.toISOString().split('T')[0],
-            totalRevenue: totalRevenueCents / 100, // Convert to float for UI convenience? Or keep cents? Let's use currency formatted in UI.
+            totalRevenue: totalRevenueCents / 100,
             totalOrders,
             averageTicket: averageTicketCents / 100,
-            paymentMethods, // In cents
-            hourlySales, // In cents
+            paymentMethods,
+            hourlySales,
+            totalCost: totalCostCents / 100,
+            grossMargin: grossMarginCents / 100
         };
+    },
+    /**
+     * Get Stripe Financials (Balance & Payouts) via Edge Function
+     */
+    async getStripeFinancials(tenantId: string): Promise<{ balance: any, payouts: any[] }> {
+        const { data, error } = await supabase.functions.invoke('stripe-reports', {
+            body: {
+                action: 'get-financials',
+                restaurantId: tenantId
+            }
+        });
+
+        if (error) {
+            console.error('FinanceEngine: Failed to fetch Stripe financials', error);
+            // Return empty structure on failure to not break UI
+            return { balance: { available: 0, pending: 0, currency: 'eur' }, payouts: [] };
+        }
+
+        return data;
     }
 };

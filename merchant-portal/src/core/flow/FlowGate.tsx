@@ -59,18 +59,22 @@ export function FlowGate({ children }: { children: ReactNode }) {
     // Safety timeout to prevent infinite loading (10 seconds max)
     const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // Safety timeout state
+    const [forceRender, setForceRender] = useState(false);
+
     useEffect(() => {
         let mounted = true;
         let oauthWaitTimeout: ReturnType<typeof setTimeout> | null = null;
 
-        // Safety timeout: se loading demorar mais de 10s, forçar setIsChecking(false)
+        // Safety timeout: se loading demorar mais de 4s, forçar render
         // Isso previne travamento infinito se useSupabaseAuth falhar
         loadingTimeoutRef.current = setTimeout(() => {
-            if (mounted && isChecking) {
-                console.warn('[FlowGate] Loading timeout (10s) - forcing check completion');
+            if (mounted) {
+                console.warn('[FlowGate] Loading timeout (4s) - forcing render (Fail-Safe)');
                 setIsChecking(false);
+                setForceRender(true);
             }
-        }, 10000);
+        }, 4000);
 
         // Variável para armazenar sessão encontrada diretamente (bypass useSupabaseAuth)
         // Escopo da função checkFlow para ser acessível em todo o fluxo
@@ -157,7 +161,8 @@ export function FlowGate({ children }: { children: ReactNode }) {
 
             // 1. Wait for Auth Session Protocol
             // DEV_STABLE_MODE: Se estiver em /app/select-tenant, não esperar sessão (permite renderizar)
-            if (sessionLoading && pathname !== '/app/select-tenant') {
+            // FAIL-SAFE: Se forceRender for true, ignorar loading e prosseguir (assume que falhou)
+            if (sessionLoading && !forceRender && pathname !== '/app/select-tenant') {
                 // No logs in DEV_STABLE_MODE (only hard-stop logs allowed)
                 if (shouldLog) console.log('[FlowGate] ⏳ Session Loading...');
                 // Clear timeout se sessão carregou
@@ -232,7 +237,8 @@ export function FlowGate({ children }: { children: ReactNode }) {
             // --- ESTADO 1: SEM SESSÃO ---
 
             // If completely loaded and no session, redirect to auth (unless sealed tenant handling below)
-            if (!session && !sessionLoading) {
+            // FAIL-SAFE: Se forceRender for true, tratar como sem sessão
+            if (!session && (!sessionLoading || forceRender)) {
                 const tenantSealed = isTenantSealed();
 
                 // DEV_STABLE_MODE: Special handling for sealed tenants with session lag
@@ -321,6 +327,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
                 let hasOrg = false;
                 let status: OnboardingStatus = 'not_started';
                 let restaurantId = null;
+                let currentBillingStatus: string | null = null;
                 const membershipCount = members?.length || 0;
 
                 if (members && members.length > 0) {
@@ -369,12 +376,13 @@ export function FlowGate({ children }: { children: ReactNode }) {
                     const { data: restaurant, error: restError } = restaurantId
                         ? await supabase
                             .from('gm_restaurants')
-                            .select('onboarding_completed_at')
+                            .select('onboarding_completed_at, billing_status')
                             .eq('id', restaurantId)
                             .single()
                         : { data: null, error: null };
 
                     if (!restError && restaurant) {
+                        currentBillingStatus = restaurant.billing_status;
                         // Sovereign Logic: Determine exact status
                         // Sovereign Logic: Determine exact status
                         if (restaurant.onboarding_completed_at) {
@@ -436,7 +444,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
                                 // Verify if this tenant actually exists in DB
                                 const { data: ghostRestaurant } = await supabase
                                     .from('gm_restaurants')
-                                    .select('id, onboarding_completed_at')
+                                    .select('id, onboarding_completed_at, billing_status')
                                     .eq('id', localTenantId)
                                     .single();
 
@@ -446,6 +454,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
                                     restaurantId = localTenantId;
 
                                     // Logic same as above
+                                    currentBillingStatus = ghostRestaurant.billing_status;
                                     if (ghostRestaurant.onboarding_completed_at) {
                                         status = 'completed';
                                     } else {
@@ -579,6 +588,33 @@ export function FlowGate({ children }: { children: ReactNode }) {
                         }
                         if (mounted) setIsChecking(false);
                         return;
+                    }
+
+                    // BILLING CHECK (Sovereign 3.0)
+                    // Only enforce if we have an active restaurant
+                    if (restaurantId && status === 'completed') {
+                        // Bypass for onboarding/billing routes to avoid loops
+                        // Also bypass SELECT TENANT to allow switching away from a delinquent account
+                        const isSafeRoute = pathname.startsWith('/app/billing') ||
+                            pathname.startsWith('/app/settings') ||
+                            pathname.startsWith('/app/select-tenant') ||
+                            pathname.startsWith('/app/access-denied');
+
+                        // Check Database Status (fetched in Step B above)
+                        if (!isSafeRoute && currentBillingStatus) {
+                            // Enforce strict payment gate
+                            const isDelinquent = ['canceled', 'unpaid', 'past_due'].includes(currentBillingStatus);
+                            // Founders are exempt (unless we want to enforce them too, but usually not)
+                            const { getTabIsolated } = await import('../storage/TabIsolatedStorage');
+                            const storedLevel = getTabIsolated('chefiapp_sovereign_level');
+
+                            if (isDelinquent && storedLevel !== 'founder') {
+                                Logger.warn('FlowGate: Billing Lock (Payment Required)', { status: currentBillingStatus });
+                                navigate('/app/billing?reason=payment_required', { replace: true });
+                                if (mounted) setIsChecking(false);
+                                return;
+                            }
+                        }
                     }
                 }
 
@@ -786,7 +822,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
 
     // If tenant is sealed, don't show loading screen (session may be updating)
     // But still show loading if we're checking and tenant is not sealed
-    const shouldShowLoading = (sessionLoading || isChecking) && !isSelectTenantPage && !shouldAllowRenderWithSealedTenant;
+    const shouldShowLoading = (sessionLoading || isChecking) && !isSelectTenantPage && !shouldAllowRenderWithSealedTenant && !forceRender;
 
     if (shouldShowLoading) {
         return (
