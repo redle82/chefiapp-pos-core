@@ -112,7 +112,7 @@ surfaces:
         status: "LIVE"
         verification: "MiniPOS.tsx"
       - id: "nfc_proof"
-        status: "PLANNED"
+        status: "LIVE"
         verification: "WorkerTaskStream.tsx"
 
 genesis:
