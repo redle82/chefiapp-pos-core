@@ -108,6 +108,12 @@ surfaces:
       - id: "biometric_login"
         status: "LIVE"
         verification: "WorkerCheckInView.tsx"
+      - id: "qr_scanner"
+        status: "LIVE"
+        verification: "MiniPOS.tsx"
+      - id: "nfc_proof"
+        status: "PLANNED"
+        verification: "WorkerTaskStream.tsx"
 
 genesis:
   description: "System Birth & Onboarding"

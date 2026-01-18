@@ -2,6 +2,7 @@ import { useTables } from '../../TPV/context/TableContext';
 import { TablePanel } from '../../Waiter/TablePanel';
 import { TableStatus } from '../../Waiter/types';
 import { useKeyboardShortcuts } from '../../../core/hooks/useKeyboardShortcuts';
+import { ScannerService } from '../core/ScannerService';
 
 // ... (Existing Imports) ...
 
@@ -72,6 +73,19 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({ tasks }) => {
         }
     };
 
+    const handleScan = async () => {
+        const result = await ScannerService.scan();
+        if (result) {
+            // Check if result matches a table ID
+            const table = tables.find(t => t.id === result);
+            if (table) {
+                setSelectedTableId(table.id);
+            } else {
+                alert(`QR Code não reconhecido: ${result}`);
+            }
+        }
+    };
+
     // Render Table Detail (TablePanel)
     if (selectedTableId) {
         return (
@@ -121,9 +135,14 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({ tasks }) => {
                 {/* VIEW SWITCHER */}
                 {activeTab === 'tables' && (
                     <div className="animate-fade-in">
-                        <Text size="xs" weight="bold" color="tertiary" style={{ textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>
-                            Mesas {loading && '(Carregando...)'}
-                        </Text>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <Text size="xs" weight="bold" color="tertiary" style={{ textTransform: 'uppercase', letterSpacing: 2 }}>
+                                Mesas {loading && '(Carregando...)'}
+                            </Text>
+                            <Button size="sm" tone="neutral" onClick={handleScan}>
+                                📷 Scan QR
+                            </Button>
+                        </div>
 
                         {/* Real Table Grid */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
