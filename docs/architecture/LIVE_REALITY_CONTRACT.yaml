@@ -1,0 +1,52 @@
+# 🌍 LIVE REALITY CONTRACT
+# Definition of "Operational Truth"
+# This contract defines the evidence required to prove the system is ALIVE.
+# READY_FOR_REALITY is a right. LIVE_REALITY is a fact.
+
+meta:
+  version: "1.0.0"
+  type: "Operational Constitution"
+  enforcement: "Evidence-Based"
+
+live_reality:
+  required: true
+  
+  # 🔍 EVIDENCE OF LIFE
+  # The system must provably be operating in physical reality.
+  evidence_required:
+    
+    # 1. THE BODY (Physical Presence)
+    - id: "tpv_heartbeat"
+      must: "TPV Session active within last 60 minutes"
+      verification: "Table 'gm_devices' has active TPV session"
+
+    - id: "kds_heartbeat"
+      must: "KDS Session active within last 60 minutes"
+      verification: "Table 'gm_devices' has active KDS session"
+
+    # 2. THE TRIBE (Human Presence)
+    - id: "staff_swarm"
+      must: "At least 2 distinct user sessions active simultaneously"
+      verification: "Auth session count > 1 (excluding admin)"
+
+    # 3. THE FLOW (Economic Life)
+    - id: "money_movement"
+      must: "At least 1 completed order (Closed/Paid)"
+      verification: "Table 'gm_orders' has status='closed' AND payment_status='paid'"
+
+    # 4. THE SOVEREIGNTY (Installation)
+    - id: "local_install"
+      must: "At least 1 PWA or Native installation detected"
+      verification: "Client Hints / User Agent analysis (Standalone)"
+
+  # ⚖️ VERDICT
+  # The Live Reality Judge
+  verdict:
+    pass: "kernel_state = LIVE_REALITY"
+    fail: "kernel_state = READY_FOR_REALITY (Downgrade/Maintain)"
+    
+  # 🛡️ ENFORCEMENT
+  # How this contract is applied
+  implementation_reference:
+    check_class: "LiveRealityCheck"
+    kernel_integration: "src/core/kernel/LiveRealityCheck.ts"

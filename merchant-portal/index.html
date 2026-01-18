@@ -2,89 +2,91 @@
 <html lang="en">
 <meta charset="UTF-8" />
 <link rel="icon"
-  href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👨‍🍳</text></svg>">
+href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👨‍🍳</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#121212" />
 <meta name="description"
-  content="ChefIApp - Sistema Operacional para Restauração. Otimize sua operação com inteligência." />
+content="ChefIApp - Sistema Operacional para Restauração. Otimize sua operação com inteligência." />
 <title>ChefIApp - Merchant Portal</title>
-    <script>
-    window.process = { env: {} };
-  </script>
-  <!-- Polyfill Buffer for PDFMake/TPV - ESM-compatible -->
-  <script>
-    // Minimal Buffer polyfill for browser (avoids CommonJS require)
-    (function() {
-      if (typeof window.Buffer !== 'undefined') return;
-      
-      // Create a minimal Buffer implementation for PDFMake
-      const BufferPolyfill = {
-        isBuffer: function(obj) {
-          return obj instanceof Uint8Array;
-        },
-        from: function(data, encoding) {
-          if (typeof data === 'string') {
-            const encoder = new TextEncoder();
-            return encoder.encode(data);
-          }
-          if (Array.isArray(data)) {
-            return new Uint8Array(data);
-          }
-          return new Uint8Array(data);
-        },
-        alloc: function(size) {
-          return new Uint8Array(size);
-        },
-        allocUnsafe: function(size) {
-          return new Uint8Array(size);
-        }
-      };
-      
-      window.Buffer = BufferPolyfill;
-      console.log('Buffer polyfilled (inline ESM-compatible)');
-    })();
-  </script>
+<script>
+window.process = { env: {} };
+</script>
+<!-- Polyfill Buffer for PDFMake/TPV - ESM-compatible -->
+<script>
+// Minimal Buffer polyfill for browser (avoids CommonJS require)
+(function() {
+if (typeof window.Buffer !== 'undefined') return;
 
-  <!-- SOVEREIGN DEV SAFETY (pre-bundle): DEV must NEVER run with a PWA/Workbox SW.
-       Policy contract lives in src/core/runtime/devStableMode.ts (SSOT).
-       DEV_STABLE_MODE: Service Worker is disabled in DEV to eliminate transport noise. -->
-  <script>
-    (function () {
-      try {
-        var host = location.hostname;
-        var isDev =
-          host === 'localhost' ||
-          host === '127.0.0.1' ||
-          host.endsWith('.local');
+// Create a minimal Buffer implementation for PDFMake
+const BufferPolyfill = {
+isBuffer: function(obj) {
+return obj instanceof Uint8Array;
+},
+from: function(data, encoding) {
+if (typeof data === 'string') {
+const encoder = new TextEncoder();
+return encoder.encode(data);
+}
+if (Array.isArray(data)) {
+return new Uint8Array(data);
+}
+return new Uint8Array(data);
+},
+alloc: function(size) {
+return new Uint8Array(size);
+},
+allocUnsafe: function(size) {
+return new Uint8Array(size);
+}
+};
 
-        if (!isDev) return;
-        if (!('serviceWorker' in navigator)) return;
+window.Buffer = BufferPolyfill;
+console.log('Buffer polyfilled (inline ESM-compatible)');
+})();
+</script>
 
-        navigator.serviceWorker.getRegistrations().then(function (regs) {
-          regs.forEach(function (r) { try { r.unregister(); } catch (e) {} });
-        });
+<!-- SOVEREIGN DEV SAFETY (pre-bundle): DEV must NEVER run with a PWA/Workbox SW.
+Policy contract lives in src/core/runtime/devStableMode.ts (SSOT).
+DEV_STABLE_MODE: Service Worker is disabled in DEV to eliminate transport noise. -->
+<script>
+(function () {
+try {
+var host = location.hostname;
+var isDev =
+host === 'localhost' ||
+host === '127.0.0.1' ||
+host.endsWith('.local');
 
-        if ('caches' in window) {
-          caches.keys().then(function (keys) {
-            keys.forEach(function (k) { try { caches.delete(k); } catch (e) {} });
-          });
-        }
+if (!isDev) return;
+if (!('serviceWorker' in navigator)) return;
 
-        // Also ensure we don't keep a "controller" alive
-        if (navigator.serviceWorker.controller) {
-          try { navigator.serviceWorker.controller.postMessage({ type: 'DEV_SW_DISABLE' }); } catch (e) {}
-        }
+navigator.serviceWorker.getRegistrations().then(function (regs) {
+regs.forEach(function (r) { try { r.unregister(); } catch (e) {} });
+});
 
-        console.info('[SW] DEV preflight: unregister + clear caches (before bundle)');
-      } catch (e) {
-        // non-fatal
-      }
-    })();
-  </script>
+if ('caches' in window) {
+caches.keys().then(function (keys) {
+keys.forEach(function (k) { try { caches.delete(k); } catch (e) {} });
+});
+}
+
+// Also ensure we don't keep a "controller" alive
+if (navigator.serviceWorker.controller) {
+try { navigator.serviceWorker.controller.postMessage({ type: 'DEV_SW_DISABLE' }); } catch (e) {}
+}
+
+console.info('[SW] DEV preflight: unregister + clear caches (before bundle)');
+} catch (e) {
+// non-fatal
+}
+})();
+</script>
 </head>
 
 <body>
-  <div id="root"></div>
-  <script type="module" src="./src/main.tsx"></script>
+<div id="root"></div>
+<script type="module" src="/src/main.tsx"></script>
 </body>
 
 </html>

@@ -4,8 +4,10 @@ import { Card } from '../../ui/design-system/primitives/Card';
 import { Text } from '../../ui/design-system/primitives/Text';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { spacing } from '../../ui/design-system/tokens/spacing';
+import { useTenant } from '../../core/tenant/TenantContext';
+import { supabase } from '../../core/supabase';
 
-type TabId = 'vision' | 'store';
+type TabId = 'vision' | 'store' | 'marketplace';
 
 interface TabItem {
     id: TabId;
@@ -22,6 +24,12 @@ const TABS: TabItem[] = [
         description: 'Roadmap, evolução e transparência do produto'
     },
     {
+        id: 'marketplace',
+        label: 'Marketplace',
+        icon: '🧩',
+        description: 'Integrações, Apps e Conectores (Ref 5)'
+    },
+    {
         id: 'store',
         label: 'Loja',
         icon: '🛍️',
@@ -29,72 +37,116 @@ const TABS: TabItem[] = [
     }
 ];
 
-// Vision section items
-const VISION_ITEMS = [
-    {
-        id: 'roadmap',
-        title: 'Roadmap',
-        description: 'Funcionalidades planeadas e em desenvolvimento',
-        icon: '🚀',
-        status: 'coming-soon' as const,
-        action: '/app/coming-soon?module=product_roadmap'
-    },
-    {
-        id: 'status',
-        title: 'Status MVP',
-        description: 'Estado atual das funcionalidades core',
-        icon: '🏗️',
-        status: 'coming-soon' as const,
-        action: '/app/coming-soon?module=product_status'
-    },
-    {
-        id: 'changelog',
-        title: 'Changelog',
-        description: 'Histórico de atualizações e melhorias',
-        icon: '📝',
-        status: 'planned' as const,
-        action: null
-    }
-];
+// ... (VISION_ITEMS and STORE_ITEMS remain)
 
-// Store section items
-const STORE_ITEMS = [
+// Define Marketplace items template (status will be dynamically calculated)
+const MARKETPLACE_TEMPLATE = [
     {
-        id: 'tpv-kits',
-        title: 'Kits TPV',
-        description: 'Equipamentos completos para ponto de venda',
-        icon: '🖥️',
-        status: 'planned' as const,
-        action: '/app/store/tpv-kits'
+        id: 'ubereats',
+        title: 'Uber Eats',
+        description: 'Integração direta de pedidos e menu',
+        icon: '🛵',
+        defaultAction: null
     },
     {
-        id: 'printers',
-        title: 'Impressoras',
-        description: 'Impressoras térmicas e de etiquetas',
-        icon: '🖨️',
-        status: 'planned' as const,
-        action: null
+        id: 'glovo',
+        title: 'Glovo',
+        description: 'Gestão unificada de encomendas',
+        icon: '🎒',
+        defaultAction: null
     },
     {
-        id: 'accessories',
-        title: 'Acessórios',
-        description: 'Gavetas, leitores de código, suportes',
-        icon: '🔌',
-        status: 'planned' as const,
-        action: null
+        id: 'stripe',
+        title: 'Stripe Payments',
+        description: 'Processamento de pagamentos integrado',
+        icon: '💳',
+        defaultAction: '/app/settings/connectors'
+    },
+    {
+        id: 'whatsapp',
+        title: 'WhatsApp Bot',
+        description: 'Notificações de pedidos e marketing',
+        icon: '💬',
+        defaultAction: null
+    },
+    {
+        id: 'magalu',
+        title: 'Magalu Parceiro',
+        description: 'Venda seus produtos no marketplace Magalu',
+        icon: '🛍️',
+        defaultAction: null
     }
 ];
 
 export function EvolveHub() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<TabId>('vision');
+    const { restaurant, refreshTenant } = useTenant();
+    const [installingId, setInstallingId] = useState<string | null>(null);
     const theme = colors.modes.dashboard;
 
-    const items = activeTab === 'vision' ? VISION_ITEMS : STORE_ITEMS;
+    // Parse installed apps from restaurant data
+    const installedApps: string[] = Array.isArray(restaurant?.modules_unlocked)
+        ? restaurant.modules_unlocked
+        : [];
 
-    const handleItemClick = (action: string | null) => {
-        if (action) {
-            navigate(action);
+    // Dynamically build Marketplace items with status
+    const marketplaceItems = MARKETPLACE_TEMPLATE.map(item => {
+        const isInstalled = installedApps.includes(item.id);
+        return {
+            ...item,
+            status: isInstalled ? 'installed' : 'planned',
+            action: isInstalled ? item.defaultAction : null
+        };
+    });
+
+    const items = activeTab === 'vision'
+        ? VISION_ITEMS
+        : activeTab === 'marketplace'
+            ? marketplaceItems
+            : STORE_ITEMS;
+
+    const handleInstall = async (appId: string, title: string) => {
+        if (!restaurant?.id) return;
+
+        // Confirm installation (Mock interaction)
+        if (!window.confirm(`Deseja instalar a integração "${title}"?`)) return;
+
+        setInstallingId(appId);
+        try {
+            const newModules = [...installedApps, appId]; // Add app ID
+
+            const { error } = await supabase
+                .from('gm_restaurants')
+                .update({ modules_unlocked: newModules })
+                .eq('id', restaurant.id);
+
+            if (error) throw error;
+
+            // Refresh context to reflect new state
+            await refreshTenant();
+            alert(`${title} instalado com sucesso!`);
+        } catch (err) {
+            console.error('Failed to install app:', err);
+            alert('Erro ao instalar app via Marketplace.');
+        } finally {
+            setInstallingId(null);
+        }
+    };
+
+    const handleItemClick = (item: any) => {
+        if (activeTab === 'marketplace') {
+            if (item.status === 'installed') {
+                if (item.action) navigate(item.action);
+                else alert('Configurações desta integração em breve.');
+            } else {
+                handleInstall(item.id, item.title);
+            }
+            return;
+        }
+
+        if (item.action) {
+            navigate(item.action);
         }
     };
 
@@ -171,11 +223,11 @@ export function EvolveHub() {
                         key={item.id}
                         surface="layer1"
                         padding="lg"
-                        hoverable={!!item.action}
-                        onClick={() => handleItemClick(item.action)}
+                        hoverable={true}
+                        onClick={() => handleItemClick(item)}
                         style={{
-                            cursor: item.action ? 'pointer' : 'default',
-                            opacity: item.status === 'planned' ? 0.6 : 1
+                            cursor: 'pointer',
+                            opacity: (item.status === 'planned' && activeTab !== 'marketplace') ? 0.6 : 1
                         }}
                     >
                         <div style={{
@@ -223,6 +275,19 @@ export function EvolveHub() {
                                             fontWeight: 700
                                         }}>
                                             PREVIEW
+                                        </span>
+                                    )}
+                                    {item.status === 'installed' && (
+                                        <span style={{
+                                            fontSize: 9,
+                                            padding: '2px 6px',
+                                            borderRadius: 4,
+                                            background: 'rgba(59, 130, 246, 0.15)',
+                                            color: '#3b82f6',
+                                            textTransform: 'uppercase',
+                                            fontWeight: 700
+                                        }}>
+                                            INSTALADO
                                         </span>
                                     )}
                                 </div>

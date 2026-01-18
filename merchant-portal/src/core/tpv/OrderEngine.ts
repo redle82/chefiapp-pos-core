@@ -202,7 +202,7 @@ export class OrderEngine {
         return {
             id: dbOrder.id,
             restaurantId: dbOrder.restaurant_id,
-            tableNumber: dbOrder.table_number,
+            tableNumber: dbOrder.table_number || dbOrder.sync_metadata?.table_number,
             tableId: dbOrder.table_id,
             status: dbOrder.status as OrderStatus,
             paymentStatus: dbOrder.payment_status as PaymentStatus,
@@ -210,10 +210,10 @@ export class OrderEngine {
             subtotalCents: dbOrder.total_amount, // MVP: Subtotal = Total
             taxCents: 0,
             discountCents: 0,
-            source: dbOrder.source || 'tpv',
+            source: dbOrder.source || dbOrder.sync_metadata?.origin || 'tpv',
             operatorId: dbOrder.operator_id,
             cashRegisterId: dbOrder.cash_register_id,
-            notes: dbOrder.notes,
+            notes: dbOrder.notes || dbOrder.sync_metadata?.notes,
             createdAt: new Date(dbOrder.created_at),
             updatedAt: new Date(dbOrder.updated_at),
             items: (dbOrder.items || []).map((item: any) => ({

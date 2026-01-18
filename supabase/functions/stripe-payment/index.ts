@@ -22,33 +22,65 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     )
 
-    // 1. Authenticate User (Must be authenticated to pay?)
-    // Actually, for TPV, the user is the Staff/Owner. The customer is paying.
-    // So we need to verify the caller is a valid Staff/Owner of the tenant.
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
-    if (authError || !user) {
-      throw new Error('Unauthorized')
-    }
-
     const { action, ...params } = await req.json()
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
       apiVersion: '2023-10-16',
       httpClient: Stripe.createFetchHttpClient(),
     })
 
+    // 1. TPV Payment (Authenticated Staff/Owner)
     if (action === 'create-payment-intent') {
-      const { amount, currency, restaurant_id, order_id } = params
+      const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+      if (authError || !user) throw new Error('Unauthorized')
 
-      console.log(`[Stripe] Creating PaymentIntent: ${amount} ${currency} for Order ${order_id}`)
+      const { amount, currency, restaurant_id, order_id } = params
+      console.log(`[Stripe] Creating TPV PaymentIntent: ${amount} ${currency} for Order ${order_id}`)
 
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount), // Ensure integer cents
+        amount: Math.round(amount),
         currency: currency.toLowerCase(),
         automatic_payment_methods: { enabled: true },
         metadata: {
-          restaurant_id, // Important for determining destination logic later
+          restaurant_id,
           order_id,
-          user_id: user.id
+          user_id: user.id,
+          source: 'TPV'
+        }
+      })
+
+      return new Response(
+        JSON.stringify({
+          clientSecret: paymentIntent.client_secret,
+          id: paymentIntent.id
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      )
+    }
+
+    // 2. Public Web Payment (Anonymous but Validated)
+    if (action === 'create-public-payment-intent') {
+      const { amount, currency, restaurant_id } = params
+
+      // Verify restaurant exists and allows web ordering
+      // Use Supabase client to check (it has Anon key, so checks public table RLS)
+      const { data: restaurant, error } = await supabaseClient
+        .from('gm_restaurants')
+        .select('id, name, web_ordering_enabled')
+        .eq('id', restaurant_id)
+        .single()
+
+      if (error || !restaurant) throw new Error('Restaurant not found')
+      if (!restaurant.web_ordering_enabled) throw new Error('Web ordering disabled')
+
+      console.log(`[Stripe] Creating Public PaymentIntent: ${amount} ${currency} for ${restaurant.name}`)
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount),
+        currency: currency.toLowerCase(),
+        automatic_payment_methods: { enabled: true },
+        metadata: {
+          restaurant_id,
+          source: 'WEB_PUBLIC'
         }
       })
 

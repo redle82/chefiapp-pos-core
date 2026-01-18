@@ -77,17 +77,21 @@ EVOLVE ▼ (colapsado)
 
 ## 💳 3. TPV (Caixa)
 
-| Atributo | Valor |
+| **Atributo** | **Valor** |
 |----------|-------|
 | **Path** | `/app/tpv` |
 | **Audiência** | Operadores, Caixa |
 | **Propósito** | Execução de vendas |
+| **Natureza** | **PWA Instalável** (Janela Dedicada) |
 
 **Contém:**
 
+> [!NOTE]
+> Consulte [TPV_INSTALLATION_CONTRACT.md](./TPV_INSTALLATION_CONTRACT.md) para detalhes de instalação PWA.
+
 - Vendas, Pagamentos, Pedidos
 - Mesas, Caixa
-- Offline queue, Hardware bindings
+- Offline queue, Hardware bindings (USB/Bluetooth)
 
 **Não contém:**
 
@@ -99,16 +103,18 @@ EVOLVE ▼ (colapsado)
 
 ## 🍳 4. KDS (Cozinha)
 
-| Atributo | Valor |
+| **Atributo** | **Valor** |
 |----------|-------|
 | **Path** | `/app/kds` ou `/kds/:restaurantId` |
 | **Audiência** | Cozinha |
 | **Propósito** | Fluxo nervoso de pedidos |
+| **Natureza** | **PWA Dedicado** (Fullscreen/Kiosk) |
 
 **Contém:**
 
 - Pedidos, Estados, Timers
 - Alertas de cozinha
+- Modo de alto contraste
 
 **Não contém:**
 

@@ -177,6 +177,14 @@ class LoggerService {
 
             if (this.remoteIngestionDisabled) return;
             try {
+                // 🚨 ALERTING: Send to Discord if Critical
+                if (level === 'critical') {
+                    // Lazy import to avoid circular dependency issues if any
+                    import('../monitoring/AlertService').then(({ Alerts }) => {
+                        Alerts.sendCritical(message, fullContext);
+                    });
+                }
+
                 const restaurantId = fullContext.tenantId || getTabIsolated('chefiapp_restaurant_id');
 
                 // Validate payload size

@@ -17,6 +17,8 @@ import { useActivationAdvisor } from '../../core/activation/useActivationAdvisor
 import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
 import { useTenant } from '../../core/tenant/TenantContext';
 import { FiscalAlertBadge } from '../../components/FiscalAlertBadge';
+import { SystemHealthWidget } from './SystemHealthWidget';
+import { RealityLevelWidget } from './RealityLevelWidget';
 
 const ModuleCard = ({ module, onClick, variant = 'standard' }: { module: SovereignModule; onClick?: () => void, variant?: 'standard' | 'primary' | 'secondary' }) => {
     const isLocked = module.status === 'locked' || module.status === 'planned';
@@ -162,7 +164,13 @@ export const DashboardZero = () => {
      * No more window.open() - keeps user in Comando Central context.
      */
     const handleNavigate = (path: string) => {
-        navigate(path);
+        if (path === '/app/tpv') {
+            window.open(path, 'ChefIApp_TPV', 'width=1024,height=768,menubar=no,toolbar=no,location=no,status=no');
+        } else if (path === '/app/kds') {
+            window.open(path, 'ChefIApp_KDS');
+        } else {
+            navigate(path);
+        }
     };
 
     // 🟢 BLOCK 1: System State (Compact)
@@ -264,6 +272,9 @@ export const DashboardZero = () => {
                             <Badge status="ready" label="SECURE" variant="outline" />
                         </div>
 
+                        {/* 🏆 BLOCK: Reality Level Governance */}
+                        <RealityLevelWidget />
+
                         {/* 💡 BLOCK: Activation Insights — Personalized Recommendations */}
                         {advisorReady && highPriority.length > 0 && (
                             <div style={{
@@ -356,6 +367,24 @@ export const DashboardZero = () => {
                                     );
                                 })}
                             </div>
+                        </div>
+
+                        {/* 🧬 BLOCK: System Health — Bootstrap Kernel State */}
+                        <div style={{ marginTop: 24 }}>
+                            <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <Text size="lg" weight="bold" color="primary">Estado do Sistema</Text>
+                                <div style={{
+                                    padding: '2px 8px',
+                                    background: 'rgba(50, 215, 75, 0.15)',
+                                    borderRadius: 12,
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    color: '#32d74b'
+                                }}>
+                                    KERNEL
+                                </div>
+                            </div>
+                            <SystemHealthWidget />
                         </div>
 
                         {/* Footer Note */}

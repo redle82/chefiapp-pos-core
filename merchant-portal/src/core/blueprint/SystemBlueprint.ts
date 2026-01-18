@@ -29,12 +29,12 @@ export interface SystemBlueprint {
         logoUrl?: string;         // Optional, user might not upload
 
         /**
-         * Reality Status:
-         * - 'draft': Blueprint created, but physical existence not verified. Menu creation blocked.
-         * - 'verified': Light verification passed (Location/Doc/Payment). Menu Enabled.
-         * - 'active': Fully operational.
+         * Reality Status (Governance by Genesis Contract):
+         * - 'DRAFT': Initial state. Not verified against Reality Contract.
+         * - 'READY_FOR_REALITY': Passed GenesisRealityCheck. Qualified for real usage.
+         * - 'LIVE_REALITY': Fully operational with verified real-world usage.
          */
-        realityStatus: 'draft' | 'verified' | 'active';
+        realityStatus: 'DRAFT' | 'READY_FOR_REALITY' | 'LIVE_REALITY';
 
         verification?: {
             method: 'places' | 'doc' | 'ip' | 'payment' | 'qr_local';

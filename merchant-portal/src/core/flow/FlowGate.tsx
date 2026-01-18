@@ -75,7 +75,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
         // Variável para armazenar sessão encontrada diretamente (bypass useSupabaseAuth)
         // Escopo da função checkFlow para ser acessível em todo o fluxo
         let directSessionFound: typeof session = null;
-        
+
         const checkFlow = async () => {
             const pathname = location.pathname;
             const sealed = isTenantSealed();
@@ -169,12 +169,12 @@ export function FlowGate({ children }: { children: ReactNode }) {
             }
 
             // OAuth callback detection: check for hash fragments that indicate OAuth callback
-            const hasOAuthHash = typeof window !== 'undefined' && 
-                (window.location.hash.includes('access_token') || 
-                 window.location.hash.includes('error='));
-            
+            const hasOAuthHash = typeof window !== 'undefined' &&
+                (window.location.hash.includes('access_token') ||
+                    window.location.hash.includes('error='));
+
             // Adicionar verificação de erro no hash
-            const hasOAuthError = typeof window !== 'undefined' && 
+            const hasOAuthError = typeof window !== 'undefined' &&
                 window.location.hash.includes('error=');
 
             if (hasOAuthError) {
@@ -189,50 +189,14 @@ export function FlowGate({ children }: { children: ReactNode }) {
                     return;
                 }
             }
-            
-            // If we're on /app and there's an OAuth hash but no session yet, wait a bit for Supabase to process it
+
+            // If we're on /app and there's an OAuth hash but no session yet, wait for useSupabaseAuth to handle it
             // This prevents redirect loop when OAuth callback hasn't been processed yet
-            // Aumentar de 3 para 5 tentativas com polling ativo
-            if (pathname.startsWith('/app') && hasOAuthHash && !session && !sessionLoading && oauthWaitCountRef.current < 5) {
-                if (shouldLog) console.log('[FlowGate] 🔄 OAuth callback detected, waiting for session...', { attempt: oauthWaitCountRef.current + 1 });
-                oauthWaitCountRef.current += 1;
-                
-                // Polling ativo: verificar sessão a cada 500ms
-                const pollSession = async () => {
-                    if (!mounted) return;
-                    
-                    const { data: { session: polledSession } } = await supabase.auth.getSession();
-                    if (polledSession) {
-                        // Sessão encontrada! Limpar hash e continuar
-                        window.history.replaceState(null, '', window.location.pathname + window.location.search);
-                        oauthWaitCountRef.current = 0;
-                        checkFlow();
-                        return;
-                    }
-                    
-                    // Se ainda não há sessão e não excedeu limite, continuar polling
-                    if (oauthWaitCountRef.current < 5 && mounted) {
-                        oauthWaitTimeout = setTimeout(pollSession, 500);
-                    } else {
-                        // Timeout: limpar hash e prosseguir
-                        if (mounted) {
-                            window.history.replaceState(null, '', window.location.pathname + window.location.search);
-                            if (shouldLog) console.warn('[FlowGate] ⚠️ OAuth callback timeout - proceeding without session');
-                            oauthWaitCountRef.current = 0;
-                            checkFlow();
-                        }
-                    }
-                };
-                
-                oauthWaitTimeout = setTimeout(pollSession, 500);
+            if (pathname.startsWith('/app') && hasOAuthHash && !session && !sessionLoading) {
+                if (shouldLog) console.log('[FlowGate] 🔄 OAuth hash detected, verifying session state...');
+                // Let the hook do its job. It listens to onAuthStateChange.
+                // We just wait (return) until it either gives us a session or clears loading.
                 return;
-            } else if (oauthWaitCountRef.current >= 5) {
-                // Reset counter after max attempts
-                oauthWaitCountRef.current = 0;
-                if (shouldLog) console.warn('[FlowGate] ⚠️ OAuth callback timeout - proceeding without session');
-            } else {
-                // Reset counter when session is available or no OAuth hash
-                oauthWaitCountRef.current = 0;
             }
 
             // No logs in DEV_STABLE_MODE (only hard-stop logs allowed)
@@ -243,10 +207,10 @@ export function FlowGate({ children }: { children: ReactNode }) {
                     path: pathname,
                     hasOAuthHash
                 });
-                
+
                 // Adicionar logs detalhados para OAuth (apenas em DEV ou com debug=1)
                 if (hasOAuthHash) {
-                    const hashPreview = typeof window !== 'undefined' 
+                    const hashPreview = typeof window !== 'undefined'
                         ? window.location.hash.substring(0, 50) + (window.location.hash.length > 50 ? '...' : '')
                         : 'N/A';
                     console.log('[FlowGate] OAuth Debug:', {
@@ -266,74 +230,37 @@ export function FlowGate({ children }: { children: ReactNode }) {
             }
 
             // --- ESTADO 1: SEM SESSÃO ---
-            // IMPORTANTE: Se há hash OAuth, não redirecionar imediatamente
-            // O useSupabaseAuth pode estar processando o hash
-            const hasOAuthHashBeingProcessed = typeof window !== 'undefined' && 
-                window.location.hash.includes('access_token') && 
-                !session && 
-                sessionLoading;
-            
-            // DEV_STABLE_MODE: Se tenant está selado, não redirecionar para /auth
-            // Isso previne redirecionamento após seleção de tenant quando há um delay na sessão
-            const tenantSealed = isTenantSealed();
-            
-            if (!session && !hasOAuthHashBeingProcessed) {
-                // DEV_STABLE_MODE: Se tenant está selado, não redirecionar imediatamente
-                // O useSupabaseAuth pode estar atualizando a sessão após navegação
-                // Aguardar um pouco e verificar sessão diretamente do Supabase
+
+            // If completely loaded and no session, redirect to auth (unless sealed tenant handling below)
+            if (!session && !sessionLoading) {
+                const tenantSealed = isTenantSealed();
+
+                // DEV_STABLE_MODE: Special handling for sealed tenants with session lag
                 if (tenantSealed && pathname.startsWith('/app/')) {
-                    // Aguardar 300ms para dar tempo ao useSupabaseAuth atualizar
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                    
-                    // Verificar sessão diretamente do Supabase (bypass useSupabaseAuth state)
-                    const { data: { session: directSession }, error: sessionError } = await supabase.auth.getSession();
-                    
-                    if (directSession && !sessionError) {
-                        // Sessão existe no Supabase, mas useSupabaseAuth ainda não atualizou
-                        // Armazenar para usar como effectiveSession abaixo
-                        directSessionFound = directSession;
-                        if (shouldLog) {
-                            console.log('[FlowGate] Session found via direct check, will use it as effectiveSession');
-                        }
-                        // Não fazer return - continuar o fluxo normalmente
-                        // O código abaixo vai usar directSessionFound como effectiveSession
-                    } else {
-                        // Realmente não há sessão - mas se tenant está selado, pode ser timing
-                        // Em DEV_STABLE_MODE, permitir render mesmo sem sessão se tenant selado
-                        // (o useSupabaseAuth vai atualizar no próximo ciclo)
-                        if (shouldLog) {
-                            console.warn('[FlowGate] No session but tenant sealed - allowing render (may be timing)', {
-                                pathname,
-                                tenantId: getActiveTenant()
-                            });
-                        }
-                        // Não limpar tenant selado e não redirecionar - permitir render
-                        // O useSupabaseAuth vai atualizar no próximo ciclo e o FlowGate vai re-executar
-                        // Marcar como checking false para permitir render
-                        if (mounted) setIsChecking(false);
-                        // Fazer return aqui - evita DB queries mas permite que o componente renderize
-                        // A lógica de render abaixo (shouldAllowRenderWithSealedTenant) vai permitir children
-                        // quando tenant está selado, mesmo sem sessão
-                        return; // Retornar aqui evita DB queries, mas a lógica de render abaixo permite children
-                    }
-                } else {
-                    // Sem tenant selado e sem sessão - limpar cache e redirecionar
-                    const { removeTabIsolated } = await import('../storage/TabIsolatedStorage');
-                    removeTabIsolated('chefiapp_restaurant_id');
-                    removeTabIsolated('chefiapp_active_tenant');
-                    Logger.clearContext();
-
-                    const state: UserState = {
-                        isAuthenticated: false,
-                        hasOrganization: false,
-                        onboardingStatus: 'not_started',
-                        currentPath: pathname
-                    };
-
-                    executeDecision(state);
+                    // Allow render, trust useSupabaseAuth will fire eventually or fail-safe will catch
+                    if (shouldLog) console.warn('[FlowGate] Sealed Tenant + No Session. Waiting for Auth Hook.');
+                    // Check directly ONLY if we have waited long enough (implemented via re-renders, not here)
+                    // return to allow render
                     if (mounted) setIsChecking(false);
                     return;
                 }
+
+                // Sem tenant selado e sem sessão - limpar cache e redirecionar
+                const { removeTabIsolated } = await import('../storage/TabIsolatedStorage');
+                removeTabIsolated('chefiapp_restaurant_id');
+                removeTabIsolated('chefiapp_active_tenant');
+                Logger.clearContext();
+
+                const state: UserState = {
+                    isAuthenticated: false,
+                    hasOrganization: false,
+                    onboardingStatus: 'not_started',
+                    currentPath: pathname
+                };
+
+                executeDecision(state);
+                if (mounted) setIsChecking(false);
+                return;
             }
 
             try {
@@ -352,7 +279,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
                         }
                     }
                 }
-                
+
                 if (!effectiveSession || !effectiveSession.user) {
                     // Se tenant está selado, permitir render mesmo sem sessão (pode ser timing)
                     // O useSupabaseAuth vai atualizar no próximo ciclo e o FlowGate vai re-executar
@@ -375,7 +302,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
                     if (mounted) setIsChecking(false);
                     return;
                 }
-                
+
                 // A. Buscar Membro (Vínculo User -> Restaurant)
                 const { data: members, error: memberError } = await supabase
                     .from('gm_restaurant_members')
@@ -558,7 +485,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
                 // E. Execute base flow decision first
                 // DEV_STABLE_MODE: Skip onboarding redirects when on /app/select-tenant
                 const shouldSkipOnboardingRedirect = devStable && pathname === '/app/select-tenant' && status === 'not_started';
-                
+
                 let baseDecision;
                 if (shouldSkipOnboardingRedirect) {
                     // In DEV_STABLE_MODE, allow /app/select-tenant even if onboarding is not_started
@@ -616,6 +543,29 @@ export function FlowGate({ children }: { children: ReactNode }) {
                     if (currentStatus !== 'ACTIVE' && isOperationalRoute && pathname !== '/app/select-tenant' && pathname !== '/app/access-denied') {
                         if (shouldLog) Logger.warn('FlowGate: Sovereign Block (Tenant Not Active)', { path: pathname });
                         // Let handleTenantResolution handle the redirect, but be aware
+                    }
+
+                    // REALITY ENFORCEMENT (Genesis Contract)
+                    // Cannot open physical operations (TPV/KDS) if system is in DRAFT mode.
+                    const isPhysicalOps = pathname.includes('/app/tpv') || pathname.includes('/app/kds');
+                    if (isPhysicalOps) {
+                        try {
+                            const { getTabIsolated } = await import('../storage/TabIsolatedStorage');
+                            const rawBp = getTabIsolated('chefiapp_system_blueprint_v2');
+                            if (rawBp) {
+                                const bp = JSON.parse(rawBp);
+                                const realityStatus = bp.organization?.realityStatus || 'DRAFT';
+
+                                if (realityStatus === 'DRAFT') {
+                                    Logger.warn('FlowGate: Reality Block (Draft System)', { path: pathname });
+                                    navigate('/app/dashboard?reality_block=true', { replace: true });
+                                    if (mounted) setIsChecking(false);
+                                    return;
+                                }
+                            }
+                        } catch (e) {
+                            Logger.warn('FlowGate: Reality Check Failed', e);
+                        }
                     }
 
                     // Use effectiveSession if available, otherwise fallback to session from hook
@@ -801,7 +751,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
 
         checkFlow();
 
-        return () => { 
+        return () => {
             mounted = false;
             if (oauthWaitTimeout) {
                 clearTimeout(oauthWaitTimeout);
@@ -828,16 +778,16 @@ export function FlowGate({ children }: { children: ReactNode }) {
     // Also allow render if tenant is sealed (user just selected tenant, session may be updating)
     const isSelectTenantPage = location.pathname === '/app/select-tenant';
     const tenantSealed = isTenantSealed();
-    
+
     // If tenant is sealed and we're on an /app/* route, allow render even if session is loading
     // This prevents oscillation when user just selected tenant and session is updating
     const isAppRoute = location.pathname.startsWith('/app/');
     const shouldAllowRenderWithSealedTenant = tenantSealed && isAppRoute && !isSelectTenantPage;
-    
+
     // If tenant is sealed, don't show loading screen (session may be updating)
     // But still show loading if we're checking and tenant is not sealed
     const shouldShowLoading = (sessionLoading || isChecking) && !isSelectTenantPage && !shouldAllowRenderWithSealedTenant;
-    
+
     if (shouldShowLoading) {
         return (
             <div style={{ height: '100vh', width: '100vw', background: '#0b0b0c', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, zIndex: 9999 }}>

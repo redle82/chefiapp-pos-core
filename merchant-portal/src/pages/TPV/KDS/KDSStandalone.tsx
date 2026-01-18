@@ -21,6 +21,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { OrderProvider } from '../context/OrderContextReal';
+import { KernelProvider } from '../../../core/kernel/KernelContext';
+import { OfflineOrderProvider } from '../context/OfflineOrderContext';
 import KitchenDisplay from './KitchenDisplay';
 import { KDSLayout } from './KDSLayout';
 import { setTabIsolated } from '../../../core/storage/TabIsolatedStorage';
@@ -50,9 +52,13 @@ const KDSStandalone = () => {
 
     return (
         <KDSLayout>
-            <OrderProvider>
-                <KitchenDisplay />
-            </OrderProvider>
+            <KernelProvider tenantId={restaurantId}>
+                <OfflineOrderProvider>
+                    <OrderProvider restaurantId={restaurantId}>
+                        <KitchenDisplay />
+                    </OrderProvider>
+                </OfflineOrderProvider>
+            </KernelProvider>
         </KDSLayout>
     );
 };

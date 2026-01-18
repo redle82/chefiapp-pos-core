@@ -38,9 +38,12 @@ import { GroupSelector } from './components/GroupSelector';
 import { CreateGroupModal } from './components/CreateGroupModal';
 import { useConsumptionGroups } from './hooks/useConsumptionGroups';
 import { useCommonTPVShortcuts } from './hooks/useTPVShortcuts';
+import { TPVInstallPrompt } from './components/TPVInstallPrompt'; // Added Install Prompt
 import { useCurrency } from '../../core/currency/useCurrency'; // P5-5
 import { useVoiceCommands } from '../../core/voice/useVoiceCommands'; // P5-8
 import { useAutomatedInventory } from '../../core/inventory/useAutomatedInventory'; // P5-4
+
+import { useDynamicMenu } from '../../core/menu/DynamicMenu/hooks/useDynamicMenu';
 
 type ContextView = 'menu' | 'tables';
 
@@ -64,7 +67,51 @@ const TPVContent = () => {
   }, [restaurantId]);
 
   const { orders, createOrder, performOrderAction, addItemToOrder, removeItemFromOrder, updateItemQuantity, getDailyTotal, getOpenCashRegister, openCashRegister, closeCashRegister, getActiveOrders, loading: ordersLoading } = useOrders();
-  const { items: menuItems, loading: menuLoading } = useMenuItems(restaurantId);
+
+  // P4-6 FIX: Use Dynamic Menu (Intelligence + Sponsorships)
+  const { menu, loading: menuLoading } = useDynamicMenu({
+    restaurantId: restaurantId || '',
+    mode: 'tpv',
+    autoRefresh: true
+  });
+
+  // Adapter: Convert DynamicMenuResponse to flat MenuItem[] for QuickMenuPanel
+  const menuItems = useMemo(() => {
+    if (!menu) return [];
+
+    const items: any[] = [];
+
+    // 1. Contextual Items (High priority)
+    if (menu.contextual && menu.contextual.length > 0) {
+      menu.contextual.forEach(item => {
+        items.push({
+          id: item.id,
+          name: item.name, // Keep existing naming
+          price: item.price_cents / 100, // Convert to Float Euros
+          category: '✨ Sugestões Inteligentes',
+          trackStock: true, // Assuming default true for now or map from item
+          stockQuantity: 100, // Mock infinite for now or map
+          // Add extra metadata if needed by updated components
+        });
+      });
+    }
+
+    // 2. Full Catalog
+    menu.fullCatalog.forEach(cat => {
+      cat.products.forEach(item => {
+        items.push({
+          id: item.id,
+          name: item.name,
+          price: item.price_cents / 100,
+          category: cat.name,
+          trackStock: true, // Mock
+          stockQuantity: 100 // Mock
+        });
+      });
+    });
+
+    return items;
+  }, [menu]);
   const { success, error } = useToast();
   const { tables } = useTables();
 
@@ -676,6 +723,7 @@ const TPVContent = () => {
           isOpen={cashRegisterOpen}
           onOpenCash={() => setShowOpenCashModal(true)}
         />
+        <TPVInstallPrompt />
         <TPVLayout
           header={
             <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 16 }}>
@@ -793,14 +841,16 @@ const TPVContent = () => {
             ) : contextView === 'menu' ? (
               <>
                 <QuickMenuPanel
-                  items={menuItems.map(item => ({
-                    id: item.id,
-                    name: item.name,
-                    price: item.priceCents / 100, // Convert cents to euros
-                    category: item.category,
-                    trackStock: item.trackStock,
-                    stockQuantity: item.stockQuantity
-                  }))}
+                  items={menuItems
+                    .filter(item => !item.visibility || item.visibility.tpv !== false) // Filter by visibility
+                    .map(item => ({
+                      id: item.id,
+                      name: item.name,
+                      price: item.priceCents / 100, // Convert cents to euros
+                      category: item.category,
+                      trackStock: item.trackStock,
+                      stockQuantity: item.stockQuantity
+                    }))}
                   activeOrderItems={
                     activeOrderId
                       ? activeOrders.find(o => o.id === activeOrderId)?.items || []
@@ -959,10 +1009,12 @@ const TPVContent = () => {
             dailyTotalCents={dailyTotalCents}
             openingBalanceCents={openingBalanceCents}
             restaurantId={restaurantId}
+            operatorName="GOLDMONKEY" // TODO: Get from auth context
+            terminalId="CAIXA-01"     // TODO: Get from device settings
             onClose={async (closingBalanceCents) => {
               try {
                 await closeCashRegister(closingBalanceCents);
-                setShowCloseCashModal(false);
+                // setShowCloseCashModal(false); // CHANGED: Don't close immediately, let modal show success state
                 setCashRegisterOpen(false);
                 success('Caixa fechado com sucesso');
 
@@ -978,6 +1030,7 @@ const TPVContent = () => {
               }
             }}
             onCancel={() => setShowCloseCashModal(false)}
+            onDismiss={() => setShowCloseCashModal(false)}
           />
         )
       }

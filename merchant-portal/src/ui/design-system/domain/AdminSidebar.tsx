@@ -41,6 +41,24 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
         navigate('/start');
     };
 
+    const handleItemClick = (item: any) => {
+        if (item.type === 'launcher') {
+            // TPV Installation Contract: Launch in isolated context
+            if (item.id === '/app/tpv') {
+                // TPV Configuration: Standalone window feel
+                window.open(item.id, 'ChefIApp_TPV', 'width=1024,height=768,menubar=no,toolbar=no,location=no,status=no');
+            } else if (item.id === '/app/kds') {
+                // KDS Configuration: Fullscreen feel
+                window.open(item.id, 'ChefIApp_KDS');
+            } else {
+                window.open(item.id, '_blank');
+            }
+        } else {
+            // Standard SPA Navigation
+            onNavigate(item.id);
+        }
+    };
+
     const GROUPS = [
         {
             title: 'Comando',
@@ -52,8 +70,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
         {
             title: 'Operar',
             items: [
-                { label: 'TPV (Caixa)', id: '/app/tpv', icon: '🖥️' },
-                { label: 'KDS (Cozinha)', id: '/app/kds', icon: '👨‍🍳' },
+                { label: 'TPV (Caixa)', id: '/app/tpv', icon: '🖥️', type: 'launcher' },
+                { label: 'KDS (Cozinha)', id: '/app/kds', icon: '👨‍🍳', type: 'launcher' },
                 { label: 'Cardápio', id: '/app/menu', icon: '🍔' },
                 { label: 'Pedidos', id: '/app/orders', icon: '📃' },
                 { label: 'Operação Hub', id: '/app/operational-hub', icon: '📦', status: 'experimental' },
@@ -74,6 +92,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
             items: [
                 { label: 'Equipa', id: '/app/team', icon: '👥' },
                 { label: 'Controlo de Acesso', id: '/app/govern-manage', icon: '🔐' },
+                { label: 'Auditoria', id: '/app/audit', icon: '📋' },
                 { label: 'Página Web', id: '/app/web/preview', icon: '🌐' },
                 { label: 'Segurança Alimentar', id: '/app/govern', icon: '🧼', status: 'locked' },
             ]
@@ -133,7 +152,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
                         >
                             <span>{group.title}</span>
                             {/* Chevron / Indicator */}
-                            {group.title === 'Evoluir' && (
+                            {group.title === 'Evolve' && (
                                 <span style={{ fontSize: 10 }}>
                                     {expandedGroups[group.title] ? '▼' : '▶'}
                                 </span>
@@ -148,7 +167,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
                                     return (
                                         <div
                                             key={item.id}
-                                            onClick={() => onNavigate(item.id)}
+                                            onClick={() => handleItemClick(item)}
                                             style={{
                                                 padding: `${spacing[2]} ${spacing[4]}`,
                                                 borderRadius: 8,

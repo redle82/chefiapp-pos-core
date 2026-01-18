@@ -1,6 +1,7 @@
 import type { SystemBlueprint } from '../blueprint/SystemBlueprint';
 import { supabase } from '../supabase';
 import { DbWriteGate } from '../governance/DbWriteGate';
+import { getBeverageCanon, UNIVERSAL_BEVERAGE_CATEGORIES, getCategoryName } from '../menu/BeverageCanon';
 
 /**
  * GENESIS KERNEL
@@ -117,7 +118,7 @@ export class GenesisKernel {
                 city: draft.city || 'Unknown',
                 businessType: (draft.businessType as any) || 'Restaurant',
                 logoUrl: draft.logoUrl,
-                realityStatus: 'draft' // Default for fresh blueprints
+                realityStatus: 'DRAFT' // Default for fresh blueprints
             },
             operation: {
                 teamSize: (draft.teamSize as any) || '1-5',
@@ -206,10 +207,19 @@ export class GenesisKernel {
 
                 console.log('[GenesisKernel] 🏛️ Sovereign Identity Established:', tenantId);
 
+                // 🍹 BEVERAGE CANON: Bootstrap universal menu
+                try {
+                    await this.bootstrapBeverageCanon(tenantId, draft.countryCode || 'ES');
+                    console.log('[GenesisKernel] 🍹 Beverage Canon injected');
+                } catch (canonError) {
+                    console.warn('[GenesisKernel] ⚠️ Beverage Canon failed (non-critical):', canonError);
+                    // Non-blocking: system can proceed without canon
+                }
+
                 // Return partial blueprint
                 const blueprint = this.compile(draft);
                 blueprint.meta.tenantId = tenantId;
-                blueprint.organization.realityStatus = 'draft';
+                blueprint.organization.realityStatus = 'DRAFT';
 
                 await this.saveLocal(blueprint);
                 return blueprint;
@@ -344,7 +354,7 @@ export class GenesisKernel {
 
             const blueprint = this.compile(draft);
             blueprint.meta.tenantId = tenantId;
-            blueprint.organization.realityStatus = 'real';
+            blueprint.organization.realityStatus = 'READY_FOR_REALITY';
 
             await this.saveLocal(blueprint);
             return blueprint;
@@ -371,5 +381,177 @@ export class GenesisKernel {
         } catch (e) {
             return null;
         }
+    }
+
+    /**
+     * 4. THE REALITY TEST (Day 1 Check)
+     * Verifies if the system is truly ready for reality.
+     */
+    public static async checkRealityStatus(tenantId: string) {
+        const { GenesisRealityCheck } = await import('./GenesisRealityCheck');
+        return GenesisRealityCheck.judge(tenantId);
+    }
+
+    /**
+     * 5. THE REALITY PROMOTION (Day 1 Gate)
+     * Attempts to promote the system to 'READY_FOR_REALITY'.
+     * This is the Checkpoint Charlie of the system.
+     */
+    public static async promoteToReality(tenantId: string): Promise<SystemBlueprint> {
+        console.log('[GenesisKernel] 🎖️ Attempting Promotion to REALITY...');
+
+        // 1. Run the Judge
+        const verdict = await this.checkRealityStatus(tenantId);
+
+        if (!verdict.ready) {
+            console.error('[GenesisKernel] 🛑 Promotion DENIED by Judge:', verdict.failures);
+            throw new Error(`Reality Promotion Failed: ${verdict.failures.join(', ')}`);
+        }
+
+        console.log('[GenesisKernel] ✅ Judge Approved. Promoting System...');
+
+        // 2. Update DB
+        const { error } = await DbWriteGate.update(
+            'GenesisKernel',
+            'gm_restaurants',
+            {
+                status: 'active',
+                reality_status: 'READY_FOR_REALITY', // New Column
+                reality_verdict: verdict
+            },
+            { id: tenantId },
+            { tenantId }
+        );
+
+        if (error) {
+            throw new Error('Promotion DB Write Failed: ' + error.message);
+        }
+
+        // 3. Update Blueprint state
+        const blueprint = await this.getBlueprint();
+        if (blueprint) {
+            blueprint.organization.realityStatus = 'READY_FOR_REALITY';
+            await this.saveLocal(blueprint);
+            return blueprint;
+        }
+
+        throw new Error('Blueprint not found for promotion');
+    }
+    /**
+     * 6. THE LIFE CONFIRMATION (Operational Gate)
+     * Verifies if the system is ALIVE based on evidence.
+     * Transitions from READY_FOR_REALITY -> LIVE_REALITY.
+     */
+    public static async confirmLiveReality(tenantId: string): Promise<SystemBlueprint> {
+        console.log('[GenesisKernel] 🌍 Detecting Signs of Life...');
+
+        const { LiveRealityCheck } = await import('./LiveRealityCheck');
+        const verdict = await LiveRealityCheck.judge(tenantId);
+
+        if (!verdict.ready) {
+            console.error('[GenesisKernel] 🌑 System is DORMANT:', verdict.failures);
+            throw new Error(`Live Reality Confirmation Failed: ${verdict.failures.join(', ')}`);
+        }
+
+        console.log('[GenesisKernel] 🌞 LIFE DETECTED. System is LIVE.');
+
+        // Update DB (Persistence)
+        await DbWriteGate.update(
+            'GenesisKernel',
+            'gm_restaurants',
+            { reality_status: 'LIVE_REALITY', reality_verdict: verdict },
+            { id: tenantId },
+            { tenantId }
+        );
+
+        // Update blueprint
+        const blueprint = await this.getBlueprint();
+        if (blueprint) {
+            blueprint.organization.realityStatus = 'LIVE_REALITY';
+            await this.saveLocal(blueprint);
+            return blueprint;
+        }
+
+        throw new Error('Blueprint not found for Life Confirmation');
+    }
+
+    /**
+     * 7. BEVERAGE CANON BOOTSTRAP
+     * Injects country-specific beverages during Genesis.
+     * "Comida é local. Bebida é universal."
+     */
+    private static async bootstrapBeverageCanon(
+        tenantId: string,
+        countryCode: string
+    ): Promise<void> {
+        console.log(`[GenesisKernel] 🍹 Bootstrapping Beverage Canon for ${countryCode}...`);
+
+        const canon = getBeverageCanon(countryCode);
+        const language = countryCode === 'BR' || countryCode === 'PT' ? 'pt' : 'es';
+
+        // 1. Insert universal categories
+        const categoryMap = new Map<string, string>();
+
+        for (const category of UNIVERSAL_BEVERAGE_CATEGORIES) {
+            const categoryName = getCategoryName(category.id, language);
+
+            const { data: cat, error: catError } = await DbWriteGate.insert(
+                'GenesisKernel',
+                'gm_menu_categories',
+                {
+                    restaurant_id: tenantId,
+                    name: categoryName,
+                    sort_order: category.sort_order
+                },
+                { tenantId }
+            );
+
+            if (catError) {
+                console.warn(`[GenesisKernel] Category ${category.id} failed:`, catError);
+                continue;
+            }
+
+            if (cat && cat[0]) {
+                categoryMap.set(category.id, cat[0].id);
+            }
+        }
+
+        // 2. Insert canon beverages
+        let insertedCount = 0;
+
+        for (const item of canon.items) {
+            const categoryId = categoryMap.get(item.category);
+            if (!categoryId) {
+                console.warn(`[GenesisKernel] Skipping ${item.name}: category not found`);
+                continue;
+            }
+
+            const canonId = `${canon.country}:${item.category}:${item.name.toLowerCase().replace(/\s+/g, '-')}`;
+
+            const { error: prodError } = await DbWriteGate.insert(
+                'GenesisKernel',
+                'gm_products',
+                {
+                    restaurant_id: tenantId,
+                    category_id: categoryId,
+                    category: getCategoryName(item.category, language),
+                    name: item.name,
+                    price_cents: item.price_cents || 0,
+                    available: item.default_visibility,
+                    system_provided: true,
+                    canon_id: canonId,
+                    default_visibility: item.default_visibility
+                },
+                { tenantId }
+            );
+
+            if (prodError) {
+                console.warn(`[GenesisKernel] Product ${item.name} failed:`, prodError);
+            } else {
+                insertedCount++;
+            }
+        }
+
+        console.log(`[GenesisKernel] 🍹 Canon complete: ${insertedCount}/${canon.items.length} beverages injected`);
     }
 }

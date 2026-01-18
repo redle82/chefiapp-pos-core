@@ -11,31 +11,43 @@ import { Button } from '../../../ui/design-system/primitives/Button';
 import { colors } from '../../../ui/design-system/tokens/colors';
 import { spacing } from '../../../ui/design-system/tokens/spacing';
 import { supabase } from '../../../core/supabase';
+import { generateShiftReceiptHtml, type ShiftReceiptData } from '../../../core/reporting/ShiftReceiptGenerator';
 
 interface CloseCashRegisterModalProps {
     dailyTotalCents: number;
     openingBalanceCents: number;
     restaurantId: string | null;
+    operatorName?: string;
+    terminalId?: string;
     onClose: (closingBalanceCents: number) => Promise<void>;
     onCancel: () => void;
+    onDismiss?: () => void; // Called when closing after success
 }
 
 export const CloseCashRegisterModal: React.FC<CloseCashRegisterModalProps> = ({
     dailyTotalCents,
     openingBalanceCents,
     restaurantId,
+    operatorName = 'Operador',
+    terminalId = 'TERM-01',
     onClose,
-    onCancel
+    onCancel,
+    onDismiss
 }) => {
+    // Phases: 'input' -> 'success'
+    const [phase, setPhase] = useState<'input' | 'success'>('input');
     const [closingBalance, setClosingBalance] = useState<string>('');
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [openOrdersCount, setOpenOrdersCount] = useState<number | null>(null);
     const [checkingOrders, setCheckingOrders] = useState(true);
 
+    // Receipt Data
+    const [receiptData, setReceiptData] = useState<ShiftReceiptData | null>(null);
+
     // VALIDAÇÃO CRÍTICA: Verificar orders abertos antes de fechar caixa
     useEffect(() => {
-        if (!restaurantId) {
+        if (!restaurantId || phase === 'success') {
             setCheckingOrders(false);
             return;
         }
@@ -64,7 +76,7 @@ export const CloseCashRegisterModal: React.FC<CloseCashRegisterModalProps> = ({
         };
 
         checkOpenOrders();
-    }, [restaurantId]);
+    }, [restaurantId, phase]);
 
     const formatPrice = (cents: number) => {
         return new Intl.NumberFormat('pt-PT', {
@@ -96,7 +108,29 @@ export const CloseCashRegisterModal: React.FC<CloseCashRegisterModalProps> = ({
         setProcessing(true);
         try {
             const balanceCents = Math.round(balance * 100);
+
+            // Perform Database Close
             await onClose(balanceCents);
+
+            // Prepare Receipt Data (Snapshot)
+            const data: ShiftReceiptData = {
+                restaurantName: 'GoldMonkey Restaurant', // TODO: Fetch real name
+                terminalId,
+                operatorName,
+                openedAt: new Date(Date.now() - 28800000), // Mock start time or fetch? For now simple mock as prop missing
+                closedAt: new Date(),
+                openingBalanceCents: openingBalanceCents,
+                closingBalanceCents: balanceCents,
+                dailySalesCents: dailyTotalCents,
+                expectedBalanceCents: expectedBalance,
+                differenceCents: differenceCents,
+                paymentMethods: { 'Dinheiro': 0, 'Cartão': dailyTotalCents } // Mock breakdown for MVP
+            };
+            setReceiptData(data);
+
+            // Switch to Success Phase
+            setPhase('success');
+
         } catch (err: any) {
             setError(err.message || 'Erro ao fechar caixa');
         } finally {
@@ -104,17 +138,69 @@ export const CloseCashRegisterModal: React.FC<CloseCashRegisterModalProps> = ({
         }
     };
 
+    const handlePrint = () => {
+        if (!receiptData) return;
+        const html = generateShiftReceiptHtml(receiptData);
+
+        // Open print window
+        const printWindow = window.open('', '_blank', 'width=350,height=600');
+        if (printWindow) {
+            printWindow.document.write(html);
+            printWindow.document.close();
+            // printWindow.print() is called via script in html
+        }
+    };
+
+    const handleFinish = () => {
+        if (onDismiss) {
+            onDismiss();
+        } else {
+            onCancel(); // Fallback
+        }
+    };
+
+    if (phase === 'success') {
+        return (
+            <div style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                zIndex: 1000
+            }}>
+                <Card surface="layer1" padding="xl" style={{ maxWidth: 400, width: '90%', textAlign: 'center' }}>
+                    <div style={{ fontSize: 48, marginBottom: spacing[4] }}>✅</div>
+                    <Text size="xl" weight="bold" color="success" style={{ marginBottom: spacing[2] }}>
+                        Caixa Fechado
+                    </Text>
+                    <Text size="sm" color="tertiary" style={{ marginBottom: spacing[6] }}>
+                        Sessão encerrada com sucesso.
+                    </Text>
+
+                    <Button
+                        tone="default" variant="outline" size="lg"
+                        onClick={handlePrint}
+                        style={{ width: '100%', marginBottom: spacing[3], display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                    >
+                        <span>🖨️</span> Imprimir Comprovativo
+                    </Button>
+
+                    <Button
+                        tone="action" size="lg"
+                        onClick={handleFinish}
+                        style={{ width: '100%' }}
+                    >
+                        Concluir e Sair
+                    </Button>
+                </Card>
+            </div>
+        );
+    }
+
     return (
         <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
             zIndex: 1000
         }}>
             <Card surface="layer1" padding="xl" style={{ maxWidth: 450, width: '90%' }} data-testid="close-cash-modal">

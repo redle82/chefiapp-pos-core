@@ -1,17 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStaff } from './context/StaffContext';
 import { Text } from '../../ui/design-system/primitives/Text';
 import { Button } from '../../ui/design-system/primitives/Button';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { radius } from '../../ui/design-system/tokens/radius';
+import { BiometricService } from './core/BiometricService';
 
 export const WorkerCheckInView: React.FC = () => {
     const { checkIn } = useStaff();
     const [name, setName] = useState('');
+    const [biometricsAvailable, setBiometricsAvailable] = useState(false);
 
-    const handleEnter = () => {
+    useEffect(() => {
+        BiometricService.checkAvailability().then(setBiometricsAvailable);
+    }, []);
+
+    const handleEnter = async () => {
         if (!name.trim()) return;
+
+        // Enrollment Prompt
+        if (biometricsAvailable) {
+            const wantsBio = window.confirm(`Deseja ativar Login Rápido (FaceID/TouchID) para "${name}"?`);
+            if (wantsBio) {
+                await BiometricService.registerUser(name);
+            }
+        }
+
         checkIn(name);
+    };
+
+    const handleBiometricLogin = async () => {
+        const username = await BiometricService.verifyUser();
+        if (username) {
+            setName(username);
+            // Optional: Auto-login or just fill
+            checkIn(username);
+        } else {
+            // alert('Falha ao verificar identidade.');
+        }
     };
 
     return (
@@ -72,19 +98,33 @@ export const WorkerCheckInView: React.FC = () => {
                     />
                 </div>
 
-                {/* 4. ACTION */}
-                <Button
-                    tone="action"
-                    fullWidth
-                    size="lg"
-                    onClick={handleEnter}
-                    disabled={!name.trim()}
-                >
-                    Entrar
-                </Button>
+                {/* 4. ACTIONS */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <Button
+                        tone="action"
+                        fullWidth
+                        size="lg"
+                        onClick={handleEnter}
+                        disabled={!name.trim()}
+                    >
+                        Entrar
+                    </Button>
+
+                    {biometricsAvailable && (
+                        <Button
+                            tone="neutral"
+                            variant="ghost"
+                            fullWidth
+                            size="lg"
+                            onClick={handleBiometricLogin}
+                        >
+                            🔐 Usar Face ID
+                        </Button>
+                    )}
+                </div>
 
                 <div style={{ marginTop: 40, textAlign: 'center', opacity: 0.5 }}>
-                    <Text size="xs" color="tertiary" style={{ fontFamily: 'monospace' }}>v1.0 (UDS)</Text>
+                    <Text size="xs" color="tertiary" style={{ fontFamily: 'monospace' }}>v1.1 (Bio-Enabled)</Text>
                 </div>
             </div>
         </div>

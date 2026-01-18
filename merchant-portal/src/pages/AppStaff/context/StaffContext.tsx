@@ -400,6 +400,25 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({ children, restaur
 
         setTasks(prev => [newTask, ...prev]);
         notifyActivity();
+
+        // Persist Manual Task
+        if (operationalContract?.id) {
+            supabase.from('app_tasks').insert({
+                id: newTask.id,
+                restaurant_id: operationalContract.id,
+                title: newTask.title,
+                description: newTask.description,
+                status: 'pending',
+                priority: newTask.priority,
+                type: newTask.type,
+                assignee_role: newTask.assigneeRole,
+                assignee_id: newTask.meta?.assigneeId,
+                created_by: newTask.meta?.createdBy,
+                created_at: new Date(newTask.createdAt).toISOString()
+            }).then(({ error }) => {
+                if (error) console.error('Manual Task Insert Failed:', error);
+            });
+        }
     };
 
     const reportObligations = (source: string, newObligations: LatentObligation[]) => {

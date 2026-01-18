@@ -21,6 +21,7 @@ import { ConsoleFiscalAdapter } from '../../../../fiscal-modules/ConsoleFiscalAd
 import { TicketBAIAdapter } from '../../../../fiscal-modules/adapters/TicketBAIAdapter';
 import { SAFTAdapter } from '../../../../fiscal-modules/adapters/SAFTAdapter';
 import { Logger } from '../logger';
+import { assertNoMock, RUNTIME } from '../runtime/RuntimeContext';
 
 export interface FiscalServiceConfig {
     adapter?: FiscalObserver; // Default: ConsoleFiscalAdapter
@@ -100,6 +101,8 @@ export class FiscalService {
         }
 
         // Default: Mock adapter
+        // PRODUCTION GUARD: Crash if trying to use mock in production
+        assertNoMock('FiscalService.selectAdapter', true);
         return new ConsoleFiscalAdapter();
     }
 

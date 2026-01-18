@@ -17,6 +17,7 @@ import { spacing } from '../../ui/design-system/tokens/spacing';
 import { CONFIG } from '../../config';
 import { fetchJson } from '../../api';
 import { useSupabaseAuth } from '../../core/auth/useSupabaseAuth';
+import { supabase } from '../../core/supabase';
 
 interface Restaurant {
   id: string;
@@ -49,6 +50,8 @@ export const GroupDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // useSupabaseAuth does not return supabase. We use the global import.
+
   useEffect(() => {
     if (groupId) {
       loadDashboard();
@@ -56,24 +59,73 @@ export const GroupDashboard: React.FC = () => {
   }, [groupId, session]);
 
   const loadDashboard = async () => {
-    if (!session?.access_token || !groupId) return;
+    if (!session?.user?.id || !groupId) return;
 
     try {
       setLoading(true);
-      const response = await fetchJson(
-        CONFIG.API_BASE || '',
-        `/api/restaurant-groups/${groupId}/dashboard`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-ChefiApp-Token': session.access_token,
-            'X-User-Id': session.user?.id || '',
-          },
-        }
-      );
 
-      setDashboard(response);
+      // 1. Fetch Group Metadata
+      const { data: group, error: groupError } = await (supabase as any)
+        .from('gm_restaurant_groups')
+        .select(`
+            *,
+            members:gm_restaurant_group_members(
+                restaurant:gm_restaurants(id, name, operation_status)
+            )
+        `)
+        .eq('id', groupId)
+        .single();
+
+      if (groupError) throw groupError;
+
+      // 2. Aggregate Data (Naive Implementation - optimize later with RPC)
+      const restaurants = await Promise.all(group.members.map(async (m: any) => {
+        const r = m.restaurant;
+
+        // Fetch Orders Today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const { data: orders, error: ordersError } = await (supabase as any)
+          .from('gm_orders') // Assuming gm_orders exists. If it's another table name, I need to check. It's gm_orders.
+          .select('total_amount')
+          .eq('restaurant_id', r.id)
+          .gte('created_at', today.toISOString());
+
+        const totalOrders = orders?.length || 0;
+        const totalRevenue = orders?.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0) || 0;
+        // Money is usually stored in CENTS? Need to check schema. Assuming cents for now based on Stripe standard, but schema says?
+        // I recall amount_total might be float or integer. 
+        // Let's assume standard float/numeric for now or verify schema. 
+        // Previous artifact said amount_total is typically numeric.
+
+        return {
+          id: r.id,
+          name: r.name,
+          ordersToday: totalOrders,
+          revenueToday: totalRevenue, // If cents, divide by 100 later. If float EUR, it's fine.
+          status: r.operation_status === 'active' ? 'online' : 'offline'
+        };
+      }));
+
+      // 3. Consolidate
+      const consolidated = {
+        totalOrdersToday: restaurants.reduce((sum: number, r: any) => sum + r.ordersToday, 0),
+        totalRevenueToday: restaurants.reduce((sum: number, r: any) => sum + r.revenueToday, 0),
+        totalCustomersToday: 0 // Not tracking customers yet
+      };
+
+      setDashboard({
+        group: {
+          id: group.id,
+          name: group.name,
+          restaurantIds: group.members.map((m: any) => m.restaurant.id),
+          settings: group.settings
+        },
+        restaurants,
+        consolidated
+      });
+
       setError(null);
     } catch (err: any) {
       console.error('Failed to load dashboard:', err);

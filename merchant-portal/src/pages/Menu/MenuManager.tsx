@@ -15,6 +15,10 @@ import { spacing } from '../../ui/design-system/tokens/spacing';
 import { useMenuState } from './useMenuState';
 
 import { OSCopy } from '../../ui/design-system/sovereign/OSCopy';
+import { MenuImport } from './MenuImport';
+import { MenuAI } from './MenuAI';
+import { VisibilityToggles, DEFAULT_VISIBILITY } from './VisibilityToggles';
+import type { SurfaceVisibility } from './VisibilityToggles';
 
 // ------------------------------------------------------------------
 // 🍔 MENU MANAGER (State Driven)
@@ -23,7 +27,7 @@ import { OSCopy } from '../../ui/design-system/sovereign/OSCopy';
 export const MenuManager: React.FC = () => {
     const navigate = useNavigate();
     const { success, error: showError } = useToast();
-    const { viewState, error, data, actions } = useMenuState();
+    const { viewState, error, data, actions, restaurantId } = useMenuState();
     const { categories, items } = data;
 
     // Staff-style browser tab title for isolated tool context
@@ -42,6 +46,8 @@ export const MenuManager: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [showAddCategory, setShowAddCategory] = useState(false);
     const [showAddItem, setShowAddItem] = useState(false);
+    const [showImport, setShowImport] = useState(false);
+    const [showAI, setShowAI] = useState(false);
     const [editingItem, setEditingItem] = useState<any | null>(null);
     const [catName, setCatName] = useState('');
     const [itemName, setItemName] = useState('');
@@ -51,6 +57,9 @@ export const MenuManager: React.FC = () => {
     // Inventory State
     const [trackStock, setTrackStock] = useState(false);
     const [stockQty, setStockQty] = useState('');
+
+    // Visibility State
+    const [visibility, setVisibility] = useState<SurfaceVisibility>(DEFAULT_VISIBILITY);
 
     // --- HANDLERS ---
     const onSubmitCategory = async (e: React.FormEvent) => {
@@ -97,7 +106,8 @@ export const MenuManager: React.FC = () => {
                     price: parseFloat(itemPrice),
                     category_id: selectedCatId || editingItem.category_id,
                     track_stock: trackStock,
-                    stock_quantity: qty
+                    stock_quantity: qty,
+                    visibility
                 });
                 success(OSCopy.menu.feedback.prodUpdated);
             } else {
@@ -110,6 +120,7 @@ export const MenuManager: React.FC = () => {
             setItemPrice('');
             setTrackStock(false);
             setStockQty('');
+            setVisibility(DEFAULT_VISIBILITY);
             setShowAddItem(false);
             setEditingItem(null);
         } catch (err: any) {
@@ -127,6 +138,13 @@ export const MenuManager: React.FC = () => {
         // Load Inventory Data
         setTrackStock(item.track_stock || false);
         setStockQty(item.stock_quantity ? item.stock_quantity.toString() : '');
+
+        // Visibility (handle legacy null)
+        if (item.visibility) {
+            setVisibility(item.visibility);
+        } else {
+            setVisibility(DEFAULT_VISIBILITY);
+        }
 
         setShowAddItem(true);
         setIsEditing(true);
@@ -179,6 +197,21 @@ export const MenuManager: React.FC = () => {
             {viewState !== 'EMPTY' && (
                 <div style={{ display: 'flex', gap: spacing[3] }}>
                     <Button
+                        tone="neutral"
+                        variant="ghost"
+                        onClick={() => setShowAI(true)}
+                    >
+                        ✨ IA
+                    </Button>
+
+                    <Button
+                        tone="neutral"
+                        variant="ghost"
+                        onClick={() => setShowImport(true)}
+                    >
+                        📤 Importar CSV
+                    </Button>
+                    <Button
                         tone={isEditing ? 'action' : 'neutral'}
                         variant={isEditing ? 'solid' : 'ghost'}
                         onClick={() => setIsEditing(!isEditing)}
@@ -226,7 +259,16 @@ export const MenuManager: React.FC = () => {
                             >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                     <div>
-                                        <Text weight="bold" color="primary">{item.name}</Text>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            <Text weight="bold" color="primary">{item.name}</Text>
+
+                                            {/* Visibility Indicators */}
+                                            <div style={{ display: 'flex', gap: 2, opacity: 0.6 }}>
+                                                {(!item.visibility || item.visibility.tpv) && <span title="Visível no Caixa">📠</span>}
+                                                {(!item.visibility || item.visibility.web) && <span title="Visível Online">🖥️</span>}
+                                                {(!item.visibility || item.visibility.delivery) && <span title="Visível Delivery">🛵</span>}
+                                            </div>
+                                        </div>
 
                                         {/* Stock Indicator */}
                                         {item.track_stock && (
@@ -372,6 +414,12 @@ export const MenuManager: React.FC = () => {
                                         />
                                     )}
                                 </div>
+
+                                {/* Visibility (New Column) */}
+                                <div>
+                                    <VisibilityToggles value={visibility} onChange={setVisibility} />
+                                </div>
+
                                 <div style={{ display: 'flex', gap: spacing[2] }}>
                                     <Button tone="action" type="submit">{editingItem ? OSCopy.menu.actions.save : OSCopy.menu.actions.add}</Button>
                                     {editingItem && (
@@ -408,6 +456,28 @@ export const MenuManager: React.FC = () => {
                             <Text color="destructive">{OSCopy.menu.feedback.errorLoad}: {JSON.stringify(error)}</Text>
                             <Button tone="neutral" variant="outline" onClick={() => actions.refresh()}>{OSCopy.actions.loading}</Button>
                         </div>
+                    )}
+
+                    {showImport && restaurantId && (
+                        <MenuImport
+                            restaurantId={restaurantId}
+                            onClose={() => setShowImport(false)}
+                            onSuccess={() => {
+                                setShowImport(false);
+                                success('Menu importado com sucesso!');
+                            }}
+                        />
+                    )}
+
+                    {showAI && restaurantId && (
+                        <MenuAI
+                            restaurantId={restaurantId}
+                            onClose={() => setShowAI(false)}
+                            onSuccess={(items) => {
+                                setShowAI(false);
+                                success(`Menu mágico criado com ${items.length} itens!`);
+                            }}
+                        />
                     )}
                 </div>
             }

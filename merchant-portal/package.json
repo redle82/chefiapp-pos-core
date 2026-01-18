@@ -17,9 +17,18 @@
     "genesis:verify": "npx tsx scripts/genesis-verify.ts",
     "audit:architecture": "node scripts/audit-architecture.cjs",
     "audit:domain": "node scripts/audit-domain.cjs",
-    "audit:all": "npm run audit:architecture && npm run audit:domain"
+    "audit:all": "npm run audit:architecture && npm run audit:domain",
+    "mobile:sync": "npm run build && npx cap sync",
+    "mobile:ios": "npx cap open ios",
+    "mobile:android": "npx cap open android",
+    "mobile:run:ios": "npx cap run ios",
+    "mobile:run:android": "npx cap run android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.1",
+    "@capacitor/core": "^8.0.1",
+    "@capacitor/ios": "^8.0.1",
+    "@capgo/capacitor-native-biometric": "^8.3.1",
     "@stripe/react-stripe-js": "^5.4.1",
     "@stripe/stripe-js": "^8.6.0",
     "@supabase/supabase-js": "^2.89.0",
@@ -29,6 +38,7 @@
     "framer-motion": "^12.23.26",
     "idb": "^8.0.3",
     "lucide-react": "^0.562.0",
+    "papaparse": "^5.5.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.11.0",
@@ -36,12 +46,15 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.0.1",
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/vite": "^4.1.18",
     "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24.10.1",
+    "@types/papaparse": "^5.5.2",
     "@types/pg": "^8.16.0",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",

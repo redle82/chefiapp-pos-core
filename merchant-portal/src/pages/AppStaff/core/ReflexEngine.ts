@@ -65,23 +65,39 @@ export const useReflexEngine = (
                 });
                 sessionReflexCache.add(cacheKey);
 
-                // B. Create Physical Task
+                const newTask: Task = {
+                    id: taskId,
+                    type: 'maintenance',
+                    title: `Limpar Mesa ${order.tableNumber}`,
+                    description: 'Cliente pagou. Mesa livre.',
+                    status: 'pending',
+                    priority: 'high',
+                    riskLevel: 20,
+                    assigneeRole: 'waiter',
+                    uiMode: 'check',
+                    reason: 'Financial Closure Event',
+                    createdAt: Date.now()
+                };
+
+                // B. Create Physical Task (DB + Local)
+                // We fire and forget the DB insert to not block UI, relying on local state for immediate feedback
+                supabase.from('app_tasks').insert({
+                    id: newTask.id,
+                    restaurant_id: rId,
+                    title: newTask.title,
+                    description: newTask.description,
+                    status: 'pending',
+                    priority: newTask.priority,
+                    type: newTask.type,
+                    assignee_role: newTask.assigneeRole,
+                    created_at: new Date(newTask.createdAt).toISOString()
+                }).then(({ error }) => {
+                    if (error) console.error('Reflex Task Insert Failed:', error);
+                });
+
                 setTasks(prev => {
                     if (prev.some(t => t.id === taskId)) return prev; // Double tap protection
-
-                    return [...prev, {
-                        id: taskId,
-                        type: 'maintenance',
-                        title: `Limpar Mesa ${order.tableNumber}`,
-                        description: 'Cliente pagou. Mesa livre.',
-                        status: 'pending',
-                        priority: 'high',
-                        riskLevel: 20,
-                        assigneeRole: 'waiter',
-                        uiMode: 'check',
-                        reason: 'Financial Closure Event',
-                        createdAt: Date.now()
-                    }];
+                    return [...prev, newTask];
                 });
                 notifyActivity();
             }

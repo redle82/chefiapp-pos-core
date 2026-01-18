@@ -151,7 +151,37 @@ const TicketCard = ({ ticket, onAdvance, isUnseen = false, onTicketClick }: Tick
 
             <div style={{ padding: Spacing.lg }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: Spacing.sm }}>
-                    <span style={{ fontWeight: 900, fontSize: Typography.uiLarge.fontSize }}>#{ticket.tableNumber}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontWeight: 900, fontSize: Typography.uiLarge.fontSize }}>#{ticket.tableNumber}</span>
+                        {(ticket as any).paymentStatus === 'paid' && (
+                            <span style={{
+                                background: '#22c55e',
+                                color: '#fff',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '10px',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em'
+                            }}>
+                                PAGO
+                            </span>
+                        )}
+                        {(ticket as any).paymentStatus === 'pending' && (ticket as any).origin === 'WEB_PUBLIC' && (
+                            <span style={{
+                                background: '#f59e0b',
+                                color: '#fff',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '10px',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em'
+                            }}>
+                                P. BALCÃO
+                            </span>
+                        )}
+                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <OrderTimer createdAt={ticket.createdAt} />
                         <span style={{ fontFamily: 'monospace', opacity: 0.7 }}>{new Date(ticket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>

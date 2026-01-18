@@ -85,9 +85,11 @@ export function useMenuState() {
 
             setCategories(catData || []);
             // FIX: Map price_cents to price (float) for UI compatibility
+            // FIX: Map 'category' (old) OR 'category_id' (new) to 'category_id' for UI
             setItems((itemData || []).map(item => ({
                 ...item,
                 price: (item.price_cents || 0) / 100,
+                category_id: item.category_id || item.category, // Handle both schema variants
                 track_stock: item.track_stock,
                 stock_quantity: item.stock_quantity
             })));
@@ -128,17 +130,19 @@ export function useMenuState() {
             console.info('[useMenuState] Kernel FROZEN - using direct Supabase write for governance operation');
 
             // Direct write to gm_products (governance path)
+            // NOTE: track_stock and stock_quantity columns may not exist in DB schema
+            // Insert only known columns to avoid PGRST204 errors
+            // DB uses 'category' not 'category_id'
             const { data, error } = await supabase
                 .from('gm_products')
                 .insert({
                     id: productId,
                     restaurant_id: restaurantId,
-                    category_id: categoryId,
+                    category: categoryId,
                     name,
                     price_cents: priceCents,
-                    track_stock: trackStock,
-                    stock_quantity: stockQty,
-                    available: true
+                    available: true,
+                    visibility: { tpv: true, web: true, delivery: true }
                 })
                 .select()
                 .single();
@@ -157,7 +161,8 @@ export function useMenuState() {
                 price_cents: priceCents,
                 track_stock: trackStock,
                 stock_quantity: stockQty,
-                available: true
+                available: true,
+                visibility: { tpv: true, web: true, delivery: true }
             };
             setItems([...items, mapped]);
             return mapped;
@@ -197,7 +202,7 @@ export function useMenuState() {
         return mapped;
     };
 
-    const updateItem = async (itemId: string, updates: { name?: string; price?: number; category_id?: string; track_stock?: boolean; stock_quantity?: number }) => {
+    const updateItem = async (itemId: string, updates: { name?: string; price?: number; category_id?: string; track_stock?: boolean; stock_quantity?: number; visibility?: any }) => {
         if (!restaurantId) throw new Error("No Restaurant ID");
 
         const currentItem = items.find(i => i.id === itemId);
@@ -210,6 +215,7 @@ export function useMenuState() {
         if (updates.track_stock !== undefined) dbUpdates.track_stock = updates.track_stock;
         if (updates.stock_quantity !== undefined) dbUpdates.stock_quantity = updates.stock_quantity;
         if (updates.category_id !== undefined) dbUpdates.category_id = updates.category_id;
+        if (updates.visibility !== undefined) dbUpdates.visibility = updates.visibility;
 
         // GOVERNANCE BYPASS: Menu configuration is allowed even in FROZEN mode
         if (status === 'FROZEN' || !isReady || !kernel) {
@@ -304,9 +310,10 @@ export function useMenuState() {
     };
 
     return {
+        restaurantId,
         viewState,
         error,
         data: { categories, items },
-        actions: { addCategory, addItem, updateItem, deleteItem, refresh: () => restaurantId && fetchMenu(restaurantId) }
+        actions: { addCategory, addItem, updateItem, deleteItem, refresh: () => restaurantId && fetchMenu(restaurantId), loadMenu: () => restaurantId && fetchMenu(restaurantId) }
     };
 }

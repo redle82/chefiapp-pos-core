@@ -12,7 +12,7 @@ import { BootstrapPage } from './pages/BootstrapPage';
 import { ComingSoonPage } from './pages/ComingSoonPage';
 import { LandingPage } from './pages/Landing/LandingPage';
 import { AdvancedSetupPage } from './pages/Onboarding/AdvancedSetupPage';
-import PublicPages from './pages/Public/PublicPages';
+import PublicPages from './pages/Public/PublicOrderingPage';
 import { SelectTenantPage, AccessDeniedPage } from './pages/Tenant';
 import { HealthCheckPage } from './pages/HealthCheckPage';
 import { SystemStatusPage } from './pages/Audit/SystemStatusPage';
@@ -84,6 +84,7 @@ import { OnboardingProvider } from './pages/Onboarding/OnboardingState';
 import { OfflineOrderProvider } from './pages/TPV/context/OfflineOrderContext';
 import { AppDomainWrapper } from './app/AppDomainWrapper';  // 🏛️ Gate → Domain Bridge
 
+
 // 🛰️ LAZY LOADED SATELLITES
 const StaffModule = React.lazy(() => import('./pages/AppStaff/StaffModule'));
 
@@ -146,6 +147,8 @@ function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/health" element={<HealthCheckPage />} />
                 <Route path="/auth" element={<AuthPage />} />
+                {/* 🐞 DEBUG: Manual TPV Access */}
+
                 {/* Legacy redirects - manter compatibilidade temporária */}
                 <Route path="/login" element={<Navigate to="/auth" replace />} />
                 <Route path="/signup" element={<Navigate to="/auth" replace />} />
@@ -181,46 +184,94 @@ function App() {
                   <Route path=":slug" element={<ArticlePage />} />
                 </Route>
 
-                {/* REMOVED: Orphan staff/* route - Use /app/staff instead (has proper Gate chain) */}
-                {/* See: docs/canon/ROUTE_MANIFEST.md */}
-
                 <Route path="/app" element={
                   <FlowGate>
                     <TenantProvider>
                       <AppDomainWrapper>
                         <RequireActivation>
                           <ThemeEngine />
-                          <AppLayout />
-                          <BetaFeedbackWidget />
+                          <Outlet />
+                          {/* <AppLayout /> MOVED TO SUB-ROUTE */}
                         </RequireActivation>
                       </AppDomainWrapper>
                     </TenantProvider>
                   </FlowGate>
                 }>
-                  {/* 🎯 /app sem subrota → Dashboard (FlowGate já validou auth) */}
-                  <Route index element={<Navigate to="/app/dashboard" replace />} />
+                  {/* 1. ADMIN PANEL (Dashboard + Management) - Uses Sidebar/Header */}
+                  <Route element={
+                    <>
+                      <AppLayout />
+                      <BetaFeedbackWidget />
+                    </>
+                  }>
+                    {/* 🎯 /app sem subrota → Dashboard (FlowGate já validou auth) */}
+                    <Route index element={<Navigate to="/app/dashboard" replace />} />
 
-                  {/* [Phase 2] Multi-Tenant Routes */}
-                  <Route path="select-tenant" element={<SelectTenantPage />} />
-                  <Route path="access-denied" element={<AccessDeniedPage />} />
+                    {/* [Phase 2] Multi-Tenant Routes */}
+                    <Route path="select-tenant" element={<SelectTenantPage />} />
+                    <Route path="access-denied" element={<AccessDeniedPage />} />
 
-                  {/* [Opus 6.0] Operation Status Screens */}
-                  <Route path="paused" element={<SystemPausedPage />} />
-                  <Route path="suspended" element={<SystemSuspendedPage />} />
-                  <Route path="operation-status" element={<OperationStatusPage />} />
+                    {/* [Opus 6.0] Operation Status Screens */}
+                    <Route path="paused" element={<SystemPausedPage />} />
+                    <Route path="suspended" element={<SystemSuspendedPage />} />
+                    <Route path="operation-status" element={<OperationStatusPage />} />
 
-                  {/* 🛡️ OPERATION GATE: Enforces active/paused/suspended state */}
+                    {/* 🛡️ OPERATION GATE: Enforces active/paused/suspended state */}
+                    <Route element={<OperationGate />}>
+                      {/* Command Center */}
+                      <Route path="dashboard" element={
+                        <Suspense fallback={<div style={{ padding: 40, color: '#32d74b' }}>💿 Sincronizando Mapa Soberano...</div>}>
+                          <DashboardZero />
+                        </Suspense>
+                      } />
+
+                      <Route path="menu" element={
+                        <GuardTool tool="menu">
+                          <Suspense fallback={<div>Loading Menu...</div>}>
+                            <MenuManager />
+                          </Suspense>
+                        </GuardTool>
+                      } />
+                      <Route path="menu/bootstrap" element={<MenuBootstrapPage />} />
+
+                      {/* Settings & Reports */}
+                      <Route path="settings" element={<Suspense fallback={<div>Loading Settings...</div>}><Settings /></Suspense>} />
+                      <Route path="settings/sovereignty" element={
+                        <GuardTool tool="sovereignty">
+                          <Suspense fallback={<div>Loading Sovereignty...</div>}>
+                            <SovereigntyDashboard />
+                          </Suspense>
+                        </GuardTool>
+                      } />
+                      <Route path="settings/advanced-setup" element={<AdvancedSetupPage />} />
+                      <Route path="settings/connectors" element={<Suspense fallback={<div>Loading...</div>}><ConnectorSettings /></Suspense>} />
+                      <Route path="reports/daily-closing" element={<Suspense fallback={<div>Loading...</div>}><DailyClosing /></Suspense>} />
+                      <Route path="reports/finance" element={<Suspense fallback={<div>Loading...</div>}><FinanceDashboard /></Suspense>} />
+                      <Route path="reports/delivery" element={<Suspense fallback={<div>Loading DLQ...</div>}><DeliveryMonitor /></Suspense>} />
+                      <Route path="team" element={<Suspense fallback={<div>Loading...</div>}><StaffPage /></Suspense>} />
+                      <Route path="store/tpv-kits" element={<Suspense fallback={<div>Loading...</div>}><TPVKitsPage /></Suspense>} />
+                      <Route path="web/preview" element={<Suspense fallback={<div>Loading...</div>}><RestaurantWebPreviewPage /></Suspense>} />
+                      <Route path="local-boss" element={<Suspense fallback={<div>Loading...</div>}><LocalBossPage /></Suspense>} />
+                      <Route path="govern" element={<Suspense fallback={<div>Loading...</div>}><GovernOverviewPage /></Suspense>} />
+                      <Route path="govern-manage" element={<Suspense fallback={<div>Loading...</div>}><GovernManageDashboard /></Suspense>} />
+                      <Route path="reservations" element={<Suspense fallback={<div>Loading...</div>}><ReservationsDashboard /></Suspense>} />
+                      <Route path="reputation-hub" element={<Suspense fallback={<div>Loading...</div>}><ReputationHubDashboard /></Suspense>} />
+                      <Route path="operational-hub" element={<Suspense fallback={<div>Loading...</div>}><OperationalHubDashboard /></Suspense>} />
+                      <Route path="portioning" element={<Suspense fallback={<div>Loading...</div>}><PortioningDashboard /></Suspense>} />
+                      <Route path="performance" element={<Suspense fallback={<div>Loading...</div>}><PerformanceDashboard /></Suspense>} />
+                      <Route path="multi-location" element={<Suspense fallback={<div>Loading...</div>}><RestaurantGroupManager /></Suspense>} />
+                      <Route path="multi-location/:groupId/dashboard" element={<Suspense fallback={<div>Loading...</div>}><GroupDashboard /></Suspense>} />
+                      <Route path="crm" element={<Suspense fallback={<div>Loading...</div>}><CustomersPage /></Suspense>} />
+                      <Route path="loyalty" element={<Suspense fallback={<div>Loading...</div>}><LoyaltyPage /></Suspense>} />
+                      <Route path="audit" element={<SystemStatusPage />} />
+                      <Route path="evolve" element={<Suspense fallback={<div>Loading Evolve Hub...</div>}><EvolveHub /></Suspense>} />
+                      <Route path="coming-soon" element={<ComingSoonPage />} />
+                    </Route>
+                  </Route>
+
+                  {/* 2. DEDICATED TOOLS (TPV, KDS, Orders) - NO AppLayout / Sidebar */}
+                  {/* These run in "Fullscreen" or "App Mode" */}
                   <Route element={<OperationGate />}>
-                    {/* Command Center */}
-                    <Route path="dashboard" element={
-                      <Suspense fallback={<div style={{ padding: 40, color: '#32d74b' }}>💿 Sincronizando Mapa Soberano...</div>}>
-                        <DashboardZero />
-                      </Suspense>
-                    } />
-
-                    {/* Tool Routes (Staff Terminal Style - Open in New Tabs) */}
-                    {/* 🔒 ARQUITETURA LOCKED: Cada app abre em sua própria aba */}
-                    {/* Ver: E2E_SOVEREIGN_NAVIGATION_VALIDATION.md */}
                     <Route path="tpv" element={
                       <GuardTool tool="tpv">
                         <Suspense fallback={<div>Loading TPV...</div>}>
@@ -235,14 +286,6 @@ function App() {
                         </Suspense>
                       </GuardTool>
                     } />
-                    <Route path="menu" element={
-                      <GuardTool tool="menu">
-                        <Suspense fallback={<div>Loading Menu...</div>}>
-                          <MenuManager />
-                        </Suspense>
-                      </GuardTool>
-                    } />
-                    <Route path="menu/bootstrap" element={<MenuBootstrapPage />} />
                     <Route path="orders" element={
                       <GuardTool tool="orders">
                         <Suspense fallback={<div>Loading Orders...</div>}>
@@ -259,39 +302,6 @@ function App() {
                         </ErrorBoundary>
                       </GuardTool>
                     } />
-
-                    {/* Settings & Reports */}
-                    <Route path="settings" element={<Suspense fallback={<div>Loading Settings...</div>}><Settings /></Suspense>} />
-                    <Route path="settings/sovereignty" element={
-                      <GuardTool tool="sovereignty">
-                        <Suspense fallback={<div>Loading Sovereignty...</div>}>
-                          <SovereigntyDashboard />
-                        </Suspense>
-                      </GuardTool>
-                    } />
-                    <Route path="settings/advanced-setup" element={<AdvancedSetupPage />} />
-                    <Route path="settings/connectors" element={<Suspense fallback={<div>Loading...</div>}><ConnectorSettings /></Suspense>} />
-                    <Route path="reports/daily-closing" element={<Suspense fallback={<div>Loading...</div>}><DailyClosing /></Suspense>} />
-                    <Route path="reports/finance" element={<Suspense fallback={<div>Loading...</div>}><FinanceDashboard /></Suspense>} />
-                    <Route path="reports/delivery" element={<Suspense fallback={<div>Loading DLQ...</div>}><DeliveryMonitor /></Suspense>} />
-                    <Route path="team" element={<Suspense fallback={<div>Loading...</div>}><StaffPage /></Suspense>} />
-                    <Route path="store/tpv-kits" element={<Suspense fallback={<div>Loading...</div>}><TPVKitsPage /></Suspense>} />
-                    <Route path="web/preview" element={<Suspense fallback={<div>Loading...</div>}><RestaurantWebPreviewPage /></Suspense>} />
-                    <Route path="local-boss" element={<Suspense fallback={<div>Loading...</div>}><LocalBossPage /></Suspense>} />
-                    <Route path="govern" element={<Suspense fallback={<div>Loading...</div>}><GovernOverviewPage /></Suspense>} />
-                    <Route path="govern-manage" element={<Suspense fallback={<div>Loading...</div>}><GovernManageDashboard /></Suspense>} />
-                    <Route path="reservations" element={<Suspense fallback={<div>Loading...</div>}><ReservationsDashboard /></Suspense>} />
-                    <Route path="reputation-hub" element={<Suspense fallback={<div>Loading...</div>}><ReputationHubDashboard /></Suspense>} />
-                    <Route path="operational-hub" element={<Suspense fallback={<div>Loading...</div>}><OperationalHubDashboard /></Suspense>} />
-                    <Route path="portioning" element={<Suspense fallback={<div>Loading...</div>}><PortioningDashboard /></Suspense>} />
-                    <Route path="performance" element={<Suspense fallback={<div>Loading...</div>}><PerformanceDashboard /></Suspense>} />
-                    <Route path="multi-location" element={<Suspense fallback={<div>Loading...</div>}><RestaurantGroupManager /></Suspense>} />
-                    <Route path="multi-location/:groupId/dashboard" element={<Suspense fallback={<div>Loading...</div>}><GroupDashboard /></Suspense>} />
-                    <Route path="crm" element={<Suspense fallback={<div>Loading...</div>}><CustomersPage /></Suspense>} />
-                    <Route path="loyalty" element={<Suspense fallback={<div>Loading...</div>}><LoyaltyPage /></Suspense>} />
-                    <Route path="audit" element={<SystemStatusPage />} />
-                    <Route path="evolve" element={<Suspense fallback={<div>Loading Evolve Hub...</div>}><EvolveHub /></Suspense>} />
-                    <Route path="coming-soon" element={<ComingSoonPage />} />
                   </Route>
                 </Route>
 
@@ -358,46 +368,94 @@ function App() {
                   <Route path=":slug" element={<ArticlePage />} />
                 </Route>
 
-                {/* REMOVED: Orphan staff/* route - Use /app/staff instead (has proper Gate chain) */}
-                {/* See: docs/canon/ROUTE_MANIFEST.md */}
-
                 <Route path="/app" element={
                   <FlowGate>
                     <TenantProvider>
                       <AppDomainWrapper>
                         <RequireActivation>
                           <ThemeEngine />
-                          <AppLayout />
-                          <BetaFeedbackWidget />
+                          <Outlet />
+                          {/* <AppLayout /> MOVED TO SUB-ROUTE */}
                         </RequireActivation>
                       </AppDomainWrapper>
                     </TenantProvider>
                   </FlowGate>
                 }>
-                  {/* 🎯 /app sem subrota → Dashboard (FlowGate já validou auth) */}
-                  <Route index element={<Navigate to="/app/dashboard" replace />} />
+                  {/* 1. ADMIN PANEL (Dashboard + Management) - Uses Sidebar/Header */}
+                  <Route element={
+                    <>
+                      <AppLayout />
+                      <BetaFeedbackWidget />
+                    </>
+                  }>
+                    {/* 🎯 /app sem subrota → Dashboard (FlowGate já validou auth) */}
+                    <Route index element={<Navigate to="/app/dashboard" replace />} />
 
-                  {/* [Phase 2] Multi-Tenant Routes */}
-                  <Route path="select-tenant" element={<SelectTenantPage />} />
-                  <Route path="access-denied" element={<AccessDeniedPage />} />
+                    {/* [Phase 2] Multi-Tenant Routes */}
+                    <Route path="select-tenant" element={<SelectTenantPage />} />
+                    <Route path="access-denied" element={<AccessDeniedPage />} />
 
-                  {/* [Opus 6.0] Operation Status Screens */}
-                  <Route path="paused" element={<SystemPausedPage />} />
-                  <Route path="suspended" element={<SystemSuspendedPage />} />
-                  <Route path="operation-status" element={<OperationStatusPage />} />
+                    {/* [Opus 6.0] Operation Status Screens */}
+                    <Route path="paused" element={<SystemPausedPage />} />
+                    <Route path="suspended" element={<SystemSuspendedPage />} />
+                    <Route path="operation-status" element={<OperationStatusPage />} />
 
-                  {/* 🛡️ OPERATION GATE: Enforces active/paused/suspended state */}
+                    {/* 🛡️ OPERATION GATE: Enforces active/paused/suspended state */}
+                    <Route element={<OperationGate />}>
+                      {/* Command Center */}
+                      <Route path="dashboard" element={
+                        <Suspense fallback={<div style={{ padding: 40, color: '#32d74b' }}>💿 Sincronizando Mapa Soberano...</div>}>
+                          <DashboardZero />
+                        </Suspense>
+                      } />
+
+                      <Route path="menu" element={
+                        <GuardTool tool="menu">
+                          <Suspense fallback={<div>Loading Menu...</div>}>
+                            <MenuManager />
+                          </Suspense>
+                        </GuardTool>
+                      } />
+                      <Route path="menu/bootstrap" element={<MenuBootstrapPage />} />
+
+                      {/* Settings & Reports */}
+                      <Route path="settings" element={<Suspense fallback={<div>Loading Settings...</div>}><Settings /></Suspense>} />
+                      <Route path="settings/sovereignty" element={
+                        <GuardTool tool="sovereignty">
+                          <Suspense fallback={<div>Loading Sovereignty...</div>}>
+                            <SovereigntyDashboard />
+                          </Suspense>
+                        </GuardTool>
+                      } />
+                      <Route path="settings/advanced-setup" element={<AdvancedSetupPage />} />
+                      <Route path="settings/connectors" element={<Suspense fallback={<div>Loading...</div>}><ConnectorSettings /></Suspense>} />
+                      <Route path="reports/daily-closing" element={<Suspense fallback={<div>Loading...</div>}><DailyClosing /></Suspense>} />
+                      <Route path="reports/finance" element={<Suspense fallback={<div>Loading...</div>}><FinanceDashboard /></Suspense>} />
+                      <Route path="reports/delivery" element={<Suspense fallback={<div>Loading DLQ...</div>}><DeliveryMonitor /></Suspense>} />
+                      <Route path="team" element={<Suspense fallback={<div>Loading...</div>}><StaffPage /></Suspense>} />
+                      <Route path="store/tpv-kits" element={<Suspense fallback={<div>Loading...</div>}><TPVKitsPage /></Suspense>} />
+                      <Route path="web/preview" element={<Suspense fallback={<div>Loading...</div>}><RestaurantWebPreviewPage /></Suspense>} />
+                      <Route path="local-boss" element={<Suspense fallback={<div>Loading...</div>}><LocalBossPage /></Suspense>} />
+                      <Route path="govern" element={<Suspense fallback={<div>Loading...</div>}><GovernOverviewPage /></Suspense>} />
+                      <Route path="govern-manage" element={<Suspense fallback={<div>Loading...</div>}><GovernManageDashboard /></Suspense>} />
+                      <Route path="reservations" element={<Suspense fallback={<div>Loading...</div>}><ReservationsDashboard /></Suspense>} />
+                      <Route path="reputation-hub" element={<Suspense fallback={<div>Loading...</div>}><ReputationHubDashboard /></Suspense>} />
+                      <Route path="operational-hub" element={<Suspense fallback={<div>Loading...</div>}><OperationalHubDashboard /></Suspense>} />
+                      <Route path="portioning" element={<Suspense fallback={<div>Loading...</div>}><PortioningDashboard /></Suspense>} />
+                      <Route path="performance" element={<Suspense fallback={<div>Loading...</div>}><PerformanceDashboard /></Suspense>} />
+                      <Route path="multi-location" element={<Suspense fallback={<div>Loading...</div>}><RestaurantGroupManager /></Suspense>} />
+                      <Route path="multi-location/:groupId/dashboard" element={<Suspense fallback={<div>Loading...</div>}><GroupDashboard /></Suspense>} />
+                      <Route path="crm" element={<Suspense fallback={<div>Loading...</div>}><CustomersPage /></Suspense>} />
+                      <Route path="loyalty" element={<Suspense fallback={<div>Loading...</div>}><LoyaltyPage /></Suspense>} />
+                      <Route path="audit" element={<SystemStatusPage />} />
+                      <Route path="evolve" element={<Suspense fallback={<div>Loading Evolve Hub...</div>}><EvolveHub /></Suspense>} />
+                      <Route path="coming-soon" element={<ComingSoonPage />} />
+                    </Route>
+                  </Route>
+
+                  {/* 2. DEDICATED TOOLS (TPV, KDS, Orders) - NO AppLayout / Sidebar */}
+                  {/* These run in "Fullscreen" or "App Mode" */}
                   <Route element={<OperationGate />}>
-                    {/* Command Center */}
-                    <Route path="dashboard" element={
-                      <Suspense fallback={<div style={{ padding: 40, color: '#32d74b' }}>💿 Sincronizando Mapa Soberano...</div>}>
-                        <DashboardZero />
-                      </Suspense>
-                    } />
-
-                    {/* Tool Routes (Staff Terminal Style - Open in New Tabs) */}
-                    {/* 🔒 ARQUITETURA LOCKED: Cada app abre em sua própria aba */}
-                    {/* Ver: E2E_SOVEREIGN_NAVIGATION_VALIDATION.md */}
                     <Route path="tpv" element={
                       <GuardTool tool="tpv">
                         <Suspense fallback={<div>Loading TPV...</div>}>
@@ -412,14 +470,6 @@ function App() {
                         </Suspense>
                       </GuardTool>
                     } />
-                    <Route path="menu" element={
-                      <GuardTool tool="menu">
-                        <Suspense fallback={<div>Loading Menu...</div>}>
-                          <MenuManager />
-                        </Suspense>
-                      </GuardTool>
-                    } />
-                    <Route path="menu/bootstrap" element={<MenuBootstrapPage />} />
                     <Route path="orders" element={
                       <GuardTool tool="orders">
                         <Suspense fallback={<div>Loading Orders...</div>}>
@@ -436,39 +486,6 @@ function App() {
                         </ErrorBoundary>
                       </GuardTool>
                     } />
-
-                    {/* Settings & Reports */}
-                    <Route path="settings" element={<Suspense fallback={<div>Loading Settings...</div>}><Settings /></Suspense>} />
-                    <Route path="settings/sovereignty" element={
-                      <GuardTool tool="sovereignty">
-                        <Suspense fallback={<div>Loading Sovereignty...</div>}>
-                          <SovereigntyDashboard />
-                        </Suspense>
-                      </GuardTool>
-                    } />
-                    <Route path="settings/advanced-setup" element={<AdvancedSetupPage />} />
-                    <Route path="settings/connectors" element={<Suspense fallback={<div>Loading...</div>}><ConnectorSettings /></Suspense>} />
-                    <Route path="reports/daily-closing" element={<Suspense fallback={<div>Loading...</div>}><DailyClosing /></Suspense>} />
-                    <Route path="reports/finance" element={<Suspense fallback={<div>Loading...</div>}><FinanceDashboard /></Suspense>} />
-                    <Route path="reports/delivery" element={<Suspense fallback={<div>Loading DLQ...</div>}><DeliveryMonitor /></Suspense>} />
-                    <Route path="team" element={<Suspense fallback={<div>Loading...</div>}><StaffPage /></Suspense>} />
-                    <Route path="store/tpv-kits" element={<Suspense fallback={<div>Loading...</div>}><TPVKitsPage /></Suspense>} />
-                    <Route path="web/preview" element={<Suspense fallback={<div>Loading...</div>}><RestaurantWebPreviewPage /></Suspense>} />
-                    <Route path="local-boss" element={<Suspense fallback={<div>Loading...</div>}><LocalBossPage /></Suspense>} />
-                    <Route path="govern" element={<Suspense fallback={<div>Loading...</div>}><GovernOverviewPage /></Suspense>} />
-                    <Route path="govern-manage" element={<Suspense fallback={<div>Loading...</div>}><GovernManageDashboard /></Suspense>} />
-                    <Route path="reservations" element={<Suspense fallback={<div>Loading...</div>}><ReservationsDashboard /></Suspense>} />
-                    <Route path="reputation-hub" element={<Suspense fallback={<div>Loading...</div>}><ReputationHubDashboard /></Suspense>} />
-                    <Route path="operational-hub" element={<Suspense fallback={<div>Loading...</div>}><OperationalHubDashboard /></Suspense>} />
-                    <Route path="portioning" element={<Suspense fallback={<div>Loading...</div>}><PortioningDashboard /></Suspense>} />
-                    <Route path="performance" element={<Suspense fallback={<div>Loading...</div>}><PerformanceDashboard /></Suspense>} />
-                    <Route path="multi-location" element={<Suspense fallback={<div>Loading...</div>}><RestaurantGroupManager /></Suspense>} />
-                    <Route path="multi-location/:groupId/dashboard" element={<Suspense fallback={<div>Loading...</div>}><GroupDashboard /></Suspense>} />
-                    <Route path="crm" element={<Suspense fallback={<div>Loading...</div>}><CustomersPage /></Suspense>} />
-                    <Route path="loyalty" element={<Suspense fallback={<div>Loading...</div>}><LoyaltyPage /></Suspense>} />
-                    <Route path="audit" element={<SystemStatusPage />} />
-                    <Route path="evolve" element={<Suspense fallback={<div>Loading Evolve Hub...</div>}><EvolveHub /></Suspense>} />
-                    <Route path="coming-soon" element={<ComingSoonPage />} />
                   </Route>
                 </Route>
 
