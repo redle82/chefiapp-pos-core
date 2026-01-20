@@ -90,7 +90,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
             title: 'Operar',
             visible: true, // Always visible, but items filtered
             items: [
-                { label: 'TPV (Caixa)', id: '/app/tpv', icon: '🖥️', type: 'launcher', show: visibleModules.orders },
+                { label: 'TPV (Caixa)', id: '/app/tpv', icon: '🖥️', show: true }, // Always visible, SPA nav
                 { label: 'KDS (Cozinha)', id: '/app/kds', icon: '👨‍🍳', type: 'launcher', show: visibleModules.kitchen },
                 { label: 'Cardápio', id: '/app/menu', icon: '🍔', show: visibleModules.menu },
                 { label: 'Pedidos', id: '/app/orders', icon: '📃', show: visibleModules.orders },

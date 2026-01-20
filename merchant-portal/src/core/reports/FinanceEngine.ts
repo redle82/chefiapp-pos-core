@@ -16,6 +16,19 @@ export const FinanceEngine = {
      * Get a snapshot of finances for a specific date range (default: today).
      */
     async getDailySnapshot(tenantId: string, startDate?: Date, endDate?: Date): Promise<FinanceSnapshot> {
+        if (tenantId === 'mock-tenant-id' || tenantId === 'demo-id') {
+            return {
+                date: new Date().toISOString().split('T')[0],
+                totalRevenue: 15450,
+                totalOrders: 42,
+                averageTicket: 36.78,
+                paymentMethods: { 'credit': 10000, 'cash': 5450 },
+                hourlySales: { '12': 5000, '13': 8000, '20': 2450 },
+                totalCost: 4500,
+                grossMargin: 10950
+            };
+        }
+
         const start = startDate || new Date();
         start.setHours(0, 0, 0, 0);
 
@@ -34,9 +47,6 @@ export const FinanceEngine = {
             throw error;
         }
 
-        // Map RPC result (cents) to FinanceSnapshot (units/floats optional, but keeping consistency)
-        // Note: RPC returns numeric/bigint as numbers/strings in JSON. Supabase client handles JSON parsing.
-
         return {
             date: start.toISOString().split('T')[0],
             totalRevenue: (data.totalRevenue || 0) / 100,
@@ -44,14 +54,19 @@ export const FinanceEngine = {
             averageTicket: (data.averageTicket || 0) / 100,
             paymentMethods: data.paymentMethods || {},
             hourlySales: data.hourlySales || {},
-            totalCost: (data.totalCost || 0) / 100, // New
-            grossMargin: (data.grossMargin || 0) / 100 // New
+            totalCost: (data.totalCost || 0) / 100,
+            grossMargin: (data.grossMargin || 0) / 100
         };
     },
+
     /**
      * Get Stripe Financials (Balance & Payouts) via Edge Function
      */
     async getStripeFinancials(tenantId: string): Promise<{ balance: any, payouts: any[] }> {
+        if (tenantId === 'mock-tenant-id' || tenantId === 'demo-id') {
+            return { balance: { available: 500000, pending: 15000, currency: 'eur' }, payouts: [] };
+        }
+
         const { data, error } = await supabase.functions.invoke('stripe-reports', {
             body: {
                 action: 'get-financials',

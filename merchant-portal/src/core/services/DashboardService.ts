@@ -24,6 +24,21 @@ export class DashboardService {
      * Calls RPC `get_daily_metrics` which aggregates data at SQL level.
      */
     static async getDailyMetrics(restaurantId: string): Promise<DailyMetrics> {
+        // DEMO MODE MOCK
+        if (restaurantId === 'mock-tenant-id' || restaurantId === 'demo-id') {
+            return {
+                totalSalesCents: 1545000, // 15,450.00
+                totalOrders: 42,
+                avgTicketCents: 3678, // 36.78
+                totalCostCents: 450000,
+                salesByHour: [
+                    { hour: 11, totalCents: 120000 },
+                    { hour: 12, totalCents: 450000 },
+                    { hour: 13, totalCents: 890000 },
+                ]
+            };
+        }
+
         const { data, error } = await supabase.rpc('get_daily_metrics', {
             p_restaurant_id: restaurantId,
         });
