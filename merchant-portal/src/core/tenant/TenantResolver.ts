@@ -131,6 +131,16 @@ function logTenantEvent(event: string, data: Record<string, unknown>) {
  * Fetch user's tenant memberships from DB
  */
 export async function fetchUserMemberships(userId: string): Promise<TenantMembership[]> {
+    // MOCK: Bypass for demo-user
+    if (userId === 'demo-user') {
+        console.info('[TenantResolver] Retrieving mock memberships for demo-user');
+        return [{
+            restaurant_id: 'mock-tenant-id',
+            restaurant_name: 'Demo Restaurant (GoldMonkey)',
+            role: 'owner',
+        }];
+    }
+
     const { data: members, error } = await supabase
         .from('gm_restaurant_members')
         .select('restaurant_id, role')

@@ -1,7 +1,7 @@
 
 import { supabase } from '../supabase';
-import { InventoryItem, Recipe, StockMovement } from '../../pages/Inventory/context/InventoryTypes';
-import { Order } from '../../pages/TPV/context/OrderTypes';
+import type { InventoryItem, Recipe } from '../../pages/Inventory/context/InventoryTypes';
+import type { Order } from '../../pages/TPV/context/OrderTypes';
 
 export class InventoryEngine {
 
@@ -116,16 +116,18 @@ export class InventoryEngine {
         // We first get menu items to filter recipes by restaurant
         // Or we use the RLS which already filters by restaurant membership.
         // However, RLS works on 'auth.uid()', so just select * from recipes should return only allowed ones.
-        // But to be explicit and safe:
+        // But to be explicit and safe and ensure we only get recipes for valid products:
         const { data, error } = await supabase
             .from('gm_recipes')
             .select(`
                 *,
                 inventory_item:gm_inventory_items(*)
-            `);
+            `)
+            .eq('restaurant_id', restaurantId);
 
         if (error) throw error;
-        return data as Recipe[];
+
+        return (data || []) as Recipe[];
     }
 
     /**
@@ -149,12 +151,22 @@ export class InventoryEngine {
         const rows = ingredients.map(i => ({
             menu_item_id: menuItemId,
             inventory_item_id: i.inventoryItemId,
-            quantity_required: i.quantity
+            quantity: i.quantity // DB column is 'quantity'
+        }));
+
+        // Strategy: We need restaurant_id.
+        // Let's fetch the product first to get the restaurant_id.
+        const { data: product } = await supabase.from('gm_products').select('restaurant_id').eq('id', menuItemId).single();
+        if (!product) throw new Error('Product not found');
+
+        const rowsWithRestaurant = rows.map(r => ({
+            ...r,
+            restaurant_id: product.restaurant_id
         }));
 
         const { error: insertError } = await supabase
             .from('gm_recipes')
-            .insert(rows);
+            .insert(rowsWithRestaurant);
 
         if (insertError) throw insertError;
     }
@@ -191,7 +203,8 @@ export class InventoryEngine {
             // Sum of (Quantity Required * Cost Per Unit)
             const itemUnitCost = itemRecipes.reduce((sum: number, r: any) => {
                 const cost = r.inventory_item?.cost_per_unit || 0;
-                return sum + (r.quantity_required * cost);
+                // Use 'quantity' from DB
+                return sum + (r.quantity * cost);
             }, 0);
 
             totalCost += (itemUnitCost * orderItem.quantity);

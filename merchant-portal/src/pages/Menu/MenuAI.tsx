@@ -11,7 +11,7 @@ import type { ParsedMenuItem } from './MenuSharedTypes';
 import { generateMenu, generateFromImage, generateFromUrl } from './menuGenerator';
 import { supabase } from '../../core/supabase';
 import { useMenuState } from './useMenuState';
-import { MENU_TEMPLATES, MenuTemplateId } from './MenuTemplates';
+import { MENU_TEMPLATES, type MenuTemplateId } from './MenuTemplates';
 
 interface MenuAIProps {
     onClose: () => void;

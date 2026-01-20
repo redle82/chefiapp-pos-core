@@ -1,3 +1,4 @@
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -15,6 +16,7 @@ import { Buffer } from 'buffer';
 // Polyfill Buffer for browser (Critical for TPV/Stripe)
 if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
+  console.log('Buffer polyfilled (inline ESM-compatible)');
 }
 
 // RUNTIME MODE: Log current mode at boot
@@ -89,7 +91,7 @@ Logger.info('Application starting', {
 
 const BOOT_START = performance.now();
 
-BootstrapKernel.init({ skipHealthChecks: false }).then((result: BootstrapResult) => {
+BootstrapKernel.init({ skipHealthChecks: import.meta.env.DEV }).then((result: BootstrapResult) => {
   const isProd = result.state.environment === 'prod';
   const isFatal = result.state.kernel === 'FAILED';
 

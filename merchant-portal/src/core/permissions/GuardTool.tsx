@@ -13,6 +13,12 @@ export const GuardTool: React.FC<GuardToolProps> = ({ tool, children }) => {
     const { canAccess, role } = useDevicePermissions();
     const navigate = useNavigate();
 
+    // DEV BYPASS: Skip permission checks for TPV/KDS in DEV mode
+    if (import.meta.env.DEV && (tool === 'tpv' || tool === 'kds')) {
+        console.warn(`[GuardTool] 🚧 DEV BYPASS: Allowing ${tool} access without device permission check`);
+        return <>{children}</>;
+    }
+
     // Perform check
     const decision = canAccess(tool);
 

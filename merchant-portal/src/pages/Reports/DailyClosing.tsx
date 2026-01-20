@@ -7,6 +7,7 @@ import { Input } from '../../ui/design-system/primitives/Input';
 import { useTenant } from '../../core/tenant/TenantContext';
 import { FinanceEngine, type FinanceSnapshot } from '../../core/reports/FinanceEngine';
 import { Logger } from '../../core/logger';
+import { supabase } from '../../core/supabase';
 
 export const DailyClosing: React.FC = () => {
     const navigate = useNavigate();
@@ -52,6 +53,32 @@ export const DailyClosing: React.FC = () => {
 
     const cashDiff = (parseFloat(countedCash) || 0) - systemCash;
 
+    const handleConfirmClosing = async () => {
+        if (!tenantId) return;
+        if (!confirm('⚠️ Tem certeza que deseja fechar o caixa? Esta ação é irreversível.')) return;
+
+        try {
+            setLoading(true);
+            // 💰 REAL CLOSE
+            const result = await FinanceEngine.closeDay(
+                tenantId,
+                parseFloat(countedCash || '0'),
+                notes
+            );
+
+            // Success Feedback / Printable View
+            setLoading(false);
+            // navigate(`/app/reports/z-report/${result.id}`); 
+            // ALERT REDUNDANT IF WE REDIRECT IMMEDIATELY
+            navigate(`/app/reports/z-report/${result.id}`);
+
+        } catch (err: any) {
+            console.error(err);
+            alert('Erro ao fechar caixa: ' + err.message);
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-900 text-white animate-fade-in max-w-5xl mx-auto">
             <div className="flex justify-between items-center mb-4">
@@ -69,13 +96,15 @@ export const DailyClosing: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* 0. FISCAL STATUS */}
                 <Card surface="layer1" padding="xl">
-                    <Text size="lg" weight="bold" className="mb-6 border-b border-gray-700 pb-2">Fiscal Status</Text>
+                    <div className="mb-6 border-b border-gray-700 pb-2">
+                        <Text size="lg" weight="bold">Fiscal Status</Text>
+                    </div>
 
                     <div className="flex flex-col items-center justify-center py-4 bg-gray-800 rounded-lg">
                         <Text size="3xl" weight="black" color={fiscalQueueCount > 0 ? 'destructive' : 'success'}>
                             {fiscalQueueCount}
                         </Text>
-                        <Text size="sm" color="tertiary" className="mt-2">Faturas Pendentes</Text>
+                        <Text size="sm" color="tertiary">Faturas Pendentes</Text>
                     </div>
 
                     <div className="mt-4 text-center">
@@ -84,7 +113,7 @@ export const DailyClosing: React.FC = () => {
                                 <p className="text-yellow-500 text-xs mb-3">
                                     Existem faturas não emitidas. Tente reprocessar antes de fechar.
                                 </p>
-                                <Button variant="solid" tone="critical" fullWidth onClick={() => alert('Retry logic not implemented yet. Please check invoices manually.')}>
+                                <Button tone="destructive" fullWidth onClick={() => alert('Retry logic not implemented yet. Please check invoices manually.')}>
                                     Reprocessar Fila
                                 </Button>
                             </>
@@ -99,7 +128,9 @@ export const DailyClosing: React.FC = () => {
 
                 {/* 1. SYSTEM TOTALS */}
                 <Card surface="layer1" padding="xl">
-                    <Text size="lg" weight="bold" className="mb-6 border-b border-gray-700 pb-2">Totais do Sistema</Text>
+                    <div className="mb-6 border-b border-gray-700 pb-2">
+                        <Text size="lg" weight="bold">Totais do Sistema</Text>
+                    </div>
 
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
@@ -119,7 +150,9 @@ export const DailyClosing: React.FC = () => {
 
                 {/* 2. RECONCILIATION */}
                 <Card surface="layer1" padding="xl">
-                    <Text size="lg" weight="bold" className="mb-6 border-b border-gray-700 pb-2">Conferência Física</Text>
+                    <div className="mb-6 border-b border-gray-700 pb-2">
+                        <Text size="lg" weight="bold">Conferência Física</Text>
+                    </div>
 
                     <div className="space-y-6">
                         <Input
@@ -155,16 +188,16 @@ export const DailyClosing: React.FC = () => {
 
             <div className="flex justify-end pt-6">
                 <Button
-                    tone="accent"
-                    size="lg"
-                    onClick={() => alert(`Fechamento Simulado!\n\nDinheiro: ${systemCash}\nCartão: ${systemCard}\nDiferença: ${cashDiff.toFixed(2)}`)}
+                    tone="action"
+                    onClick={handleConfirmClosing}
+                    disabled={fiscalQueueCount > 0 || loading}
                 >
                     Confirmar Fechamento do Dia
                 </Button>
             </div>
 
             <p className="text-center text-xs text-gray-500 mt-4">
-                * Esta ação irá gerar um relatório imutável e resetar o caixa para o próximo turno. (Simulado na Sprint 4)
+                * Esta ação irá gerar um relatório imutável e resetar o caixa para o próximo turno.
             </p>
         </div>
     );

@@ -1,8 +1,11 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
-import { useOfflineQueue } from '../../../core/queue/useOfflineQueue';
+import { IndexedDBQueue } from '../../../core/sync/IndexedDBQueue';
+import { SyncEngine } from '../../../core/sync/SyncEngine';
+import type { OfflineQueueItem } from '../../../core/sync/types';
 import { GlobalEventStore } from '../../../core/events/EventStore';
-import { CoreExecutor } from '../../../core/events/CoreExecutor';
+// import type { EventEnvelope } from '../../../core/events/SystemEvents';
 import type { EventEnvelope } from '../../../core/events/SystemEvents';
+import { tpvEventBus, type OrderExceptionPayload, type DecisionMadePayload } from '../../../core/tpv/TPVCentralEvents';
 import { supabase } from '../../../core/supabase';
 import { DbWriteGate } from '../../../core/governance/DbWriteGate';
 import { getTabIsolated } from '../../../core/storage/TabIsolatedStorage';
@@ -20,18 +23,52 @@ interface OrderContextType {
     orders: Order[];
     addOrder: (order: Order) => void;
     updateOrderStatus: (orderId: string, status: Order['status']) => void;
-    createOrder: (order: Order) => Promise<void>;
+    createOrder: (order: Partial<Order>) => Promise<Order>;
+    addItemToOrder: (orderId: string, item: any) => Promise<void>;
+    removeItemFromOrder: (orderId: string, itemId: string) => Promise<void>;
+    updateItemQuantity: (orderId: string, itemId: string, quantity: number) => Promise<void>;
     performOrderAction: (orderId: string, action: string, payload?: any) => Promise<void>;
     resetOrders: () => void;
+    pendingExceptions: (OrderExceptionPayload & { eventId: string })[];
+
+    // Extended Context Interface
+    loading: boolean;
+    isConnected: boolean;
+    isOffline: boolean;
+    realtimeStatus: string;
+    lastRealtimeEvent: Date | null;
+    syncNow: () => Promise<void>;
+
+    attachCustomer: (orderId: string, customerId: string) => Promise<void>;
+    getActiveOrders: () => Promise<void>;
+    openCashRegister: (balance: number) => Promise<void>;
+    closeCashRegister: (balance: number) => Promise<void>;
+    getOpenCashRegister: () => Promise<any | null>; // Using any to avoid circular dependency with CashRegisterType for now
+    getDailyTotal: () => Promise<number>;
 }
 
 export const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 export function OrderProvider({ children }: { children: ReactNode }) {
     const [orders, setOrders] = useState<Order[]>([]);
-    const { enqueue } = useOfflineQueue();
+    const [pendingExceptions, setPendingExceptions] = useState<(OrderExceptionPayload & { eventId: string })[]>([]);
     const [restaurantId, setRestaurantId] = useState<string | null>(null);
     const [isDemo, setIsDemo] = useState(false);
+
+    // Enqueue Helper (Inlined from useOfflineQueue)
+    const enqueue = useCallback(async (item: OfflineQueueItem) => {
+        try {
+            await IndexedDBQueue.put(item);
+            console.log('Queued offline item', { id: item.id, type: item.type });
+            // Trigger background sync
+            SyncEngine.processQueue().catch(err => {
+                console.debug('[OrderContext] Background sync trigger failed', err);
+            });
+        } catch (e) {
+            console.error('Failed to enqueue item', e);
+            throw e;
+        }
+    }, []);
 
     // Safety: Idempotency keys persistent per session
     const idempotencyKeys = useRef<Map<string, string>>(new Map());
@@ -64,7 +101,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
         const { data: initialOrders, error } = await supabase
             .from('gm_orders')
             .select(`
-                id, table_number, status, total_cents, created_at,
+                id, table_number, status, total_amount, created_at,
                 items:gm_order_items(id, name:name_snapshot, price:price_snapshot, quantity) 
             `) // NOTE: 'quantity' is correct now
             .eq('restaurant_id', restaurantId)
@@ -82,9 +119,10 @@ export function OrderProvider({ children }: { children: ReactNode }) {
                     (io.status === 'COMPLETED' || io.status === 'completed') ? 'served' :
                         (io.status === 'PAID' || io.status === 'paid') ? 'paid' :
                             (io.status === 'CANCELLED' || io.status === 'cancelled') ? 'cancelled' : 'new',
-                total: fromCents(io.total_cents),
+                total: fromCents(io.total_amount || 0),
                 tableNumber: io.table_number,
                 createdAt: new Date(io.created_at),
+                updatedAt: new Date(io.created_at), // Default to createdAt if missing
                 items: io.items.map((i: any) => ({
                     id: i.id,
                     name: i.name,
@@ -130,9 +168,50 @@ export function OrderProvider({ children }: { children: ReactNode }) {
 
     const resetOrders = () => {
         setOrders([]);
+        setPendingExceptions([]);
     };
 
-    const createOrder = async (order: Order) => {
+    // --- Exception Persistence (Verification & Robustness) ---
+    useEffect(() => {
+        // Listen for new exceptions
+        const unsubscribeException = tpvEventBus.on<OrderExceptionPayload>('order.exception', (event) => {
+            console.log('[OrderContext] Caught Exception:', event.payload);
+            setPendingExceptions(prev => {
+                // Check if already exists by eventId or orderId+type
+                if (prev.some(e => e.eventId === event.id)) return prev;
+                return [...prev, { ...event.payload, eventId: event.id }];
+            });
+        });
+
+        // Listen for decisions to clear exceptions
+        const unsubscribeDecision = tpvEventBus.on<DecisionMadePayload>('order.decision_made', (event) => {
+            console.log('[OrderContext] Caught Decision:', event.payload);
+            setPendingExceptions(prev => prev.filter(e =>
+                // Remove exception if it matches the decision's orderId (and maybe type/item?)
+                // For now, assume decision resolves the pending exception for that order
+                e.orderId !== event.payload.orderId
+            ));
+        });
+
+        return () => {
+            unsubscribeException();
+            unsubscribeDecision();
+        };
+    }, []);
+
+    const createOrder = async (orderInput: Partial<Order>) => {
+        // Safe casting with defaults
+        const order: Order = {
+            id: orderInput.id || crypto.randomUUID(),
+            status: orderInput.status || 'new',
+            total: orderInput.total || 0,
+            items: orderInput.items || [],
+            createdAt: orderInput.createdAt || new Date(),
+            updatedAt: new Date(),
+            tableNumber: orderInput.tableNumber,
+            tableId: orderInput.tableId
+        };
+
         // 1. Optimistic Local Update
         setOrders(prev => [...prev, order]);
 
@@ -201,6 +280,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
                 });
             }
         }
+        return order;
     };
 
     const performOrderAction = async (orderId: string, action: string, payload?: any) => {
@@ -357,8 +437,25 @@ export function OrderProvider({ children }: { children: ReactNode }) {
             addOrder,
             updateOrderStatus,
             createOrder,
+            addItemToOrder: async (orderId, item) => performOrderAction(orderId, 'add_item', { items: [item] }),
+            removeItemFromOrder: async (orderId, itemId) => performOrderAction(orderId, 'remove_item', { itemId }),
+            updateItemQuantity: async (orderId, itemId, quantity) => performOrderAction(orderId, 'update_quantity', { itemId, quantity }),
             performOrderAction,
             resetOrders,
+            pendingExceptions,
+            // Extended Interface Defaults
+            loading: false,
+            isConnected: true,
+            isOffline: false,
+            realtimeStatus: 'SUBSCRIBED',
+            lastRealtimeEvent: null,
+            syncNow: async () => { },
+            attachCustomer: async () => { },
+            getActiveOrders: async () => { },
+            openCashRegister: async () => { },
+            closeCashRegister: async () => { },
+            getOpenCashRegister: async () => null,
+            getDailyTotal: async () => 0,
         }}>
             {children}
         </OrderContext.Provider>
@@ -373,15 +470,47 @@ export function useOrders() {
     const markOrderReady = (id: string) => context.performOrderAction(id, 'ready');
     const closeOrder = (id: string) => context.performOrderAction(id, 'close');
     const retryOrder = (id: string) => context.performOrderAction(id, 'retry');
+
     const updateOrder = (id: string, updates: any) => console.log('Update not impl yet', id, updates);
+
+    // Helpers to match OrderContextReal interface
+    const addItemToOrder = (orderId: string, item: any) => context.performOrderAction(orderId, 'add_item', { items: [item] });
+    const removeItemFromOrder = (orderId: string, itemId: string) => context.performOrderAction(orderId, 'remove_item', { itemId });
+    const updateItemQuantity = (orderId: string, itemId: string, quantity: number) => context.performOrderAction(orderId, 'update_quantity', { itemId, quantity });
+    const cancelOrder = (orderId: string, reason?: string) => context.performOrderAction(orderId, 'cancel', { reason });
+
+    const attachCustomer = async (orderId: string, customerId: string) => console.log('Attach customer not impl', orderId, customerId);
+    const getActiveOrders = async () => console.log('Get Active Orders not impl');
+    const openCashRegister = async (balance: number) => console.log('Open Cash not impl', balance);
+    const closeCashRegister = async (balance: number) => console.log('Close Cash not impl', balance);
+    const getOpenCashRegister = async () => null;
+    const getDailyTotal = async () => 0;
+    const syncNow = async () => console.log('Sync not impl');
 
     return {
         ...context,
+        loading: false,
+        // Connection placeholders
+        isConnected: true,
+        isOffline: false,
+        realtimeStatus: 'SUBSCRIBED',
+        lastRealtimeEvent: null,
+
         sendOrderToKitchen,
         markOrderReady,
         closeOrder,
         retryOrder,
         updateOrder,
-        loading: false
+        addItemToOrder,
+        removeItemFromOrder,
+        updateItemQuantity,
+        cancelOrder,
+        attachCustomer,
+        getActiveOrders,
+        openCashRegister,
+        closeCashRegister,
+        getOpenCashRegister,
+        getDailyTotal,
+        syncNow
     };
 }

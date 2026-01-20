@@ -122,47 +122,65 @@ export const IncomingRequests: React.FC<IncomingRequestsProps> = ({ restaurantId
                 <span style={{ fontSize: '12px', opacity: 0.8 }}>AO VIVO</span>
             </div>
 
-            {requests.map(req => (
-                <Card key={req.id} surface="layer2" padding="md">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                            <Text weight="bold" size="lg" color="primary">{req.customer_contact.name}</Text>
-                            <Text size="sm" color="secondary">
-                                {new Date(req.created_at).toLocaleTimeString()}
-                            </Text>
-                            <div style={{ marginTop: 8 }}>
-                                {req.items.map((item, idx) => (
-                                    <div key={idx} style={{ color: '#ccc' }}>
-                                        {item.quantity}x {item.name}
-                                    </div>
-                                ))}
+            {requests.map(req => {
+                const provider = (req as any).provider || (req as any).source || 'WEB';
+                const providerColor = provider === 'UBER' ? '#06C167' : provider === 'GLOVO' ? '#FFC244' : '#3b82f6';
+                const providerLabel = provider === 'UBER' ? 'Uber Eats' : provider === 'GLOVO' ? 'Glovo' : 'Web/App';
+
+                return (
+                    <Card key={req.id} surface="layer2" padding="md">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                                    <span style={{
+                                        backgroundColor: providerColor,
+                                        color: provider === 'GLOVO' ? 'black' : 'white',
+                                        padding: '2px 6px',
+                                        borderRadius: 4,
+                                        fontSize: '10px',
+                                        fontWeight: 'bold'
+                                    }}>
+                                        {providerLabel}
+                                    </span>
+                                    <Text weight="bold" size="lg" color="primary">{req.customer_contact.name}</Text>
+                                </div>
+                                <Text size="sm" color="secondary">
+                                    {new Date(req.created_at).toLocaleTimeString()}
+                                </Text>
+                                <div style={{ marginTop: 8 }}>
+                                    {req.items.map((item, idx) => (
+                                        <div key={idx} style={{ color: '#ccc' }}>
+                                            {item.quantity}x {item.name}
+                                        </div>
+                                    ))}
+                                </div>
+                                <div style={{ marginTop: 8, fontWeight: 'bold', color: '#fff' }}>
+                                    Total: {(req.total_cents / 100).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                                </div>
                             </div>
-                            <div style={{ marginTop: 8, fontWeight: 'bold', color: '#fff' }}>
-                                Total: {(req.total_cents / 100).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                <Button
+                                    tone="success"
+                                    size="sm"
+                                    onClick={() => handleAccept(req)}
+                                    disabled={processing === req.id}
+                                >
+                                    {processing === req.id ? '...' : 'ACEITAR'}
+                                </Button>
+                                <Button
+                                    tone="destructive"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleReject(req)}
+                                    disabled={processing === req.id}
+                                >
+                                    XXX
+                                </Button>
                             </div>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <Button
-                                tone="success"
-                                size="sm"
-                                onClick={() => handleAccept(req)}
-                                disabled={processing === req.id}
-                            >
-                                {processing === req.id ? '...' : 'ACEITAR'}
-                            </Button>
-                            <Button
-                                tone="destructive"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleReject(req)}
-                                disabled={processing === req.id}
-                            >
-                                XXX
-                            </Button>
-                        </div>
-                    </div>
-                </Card>
-            ))}
+                    </Card>
+                );
+            })}
         </div>
     );
 };

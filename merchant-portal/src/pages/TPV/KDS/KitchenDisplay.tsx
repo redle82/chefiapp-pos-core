@@ -280,7 +280,7 @@ const isBarItem = (categoryName?: string) => {
 // 👨‍🍳 MAIN KDS
 // ------------------------------------------------------------------
 
-export default function KitchenDisplay() {
+export default function KitchenDisplay({ initialStation = 'ALL' }: { initialStation?: KDSStation }) {
     // === KDS HARDENING: Obter todos os estados de conexão ===
     const {
         orders: rawOrders,
@@ -306,7 +306,7 @@ export default function KitchenDisplay() {
     const [actionError, setActionError] = useState<string | null>(null);
 
     // === STATION INTELLIGENCE ===
-    const [station, setStation] = useState<KDSStation>('ALL'); // TODO: Persist in localStorage?
+    const [station, setStation] = useState<KDSStation>(initialStation); // TODO: Persist in localStorage?
 
     // === KDS HARDENING: Determinar se está "cego" (sem eventos realtime) ===
     // REGRA: KDS é considerado offline quando:

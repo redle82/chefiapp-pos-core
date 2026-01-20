@@ -43,7 +43,7 @@ class PredictiveAnalyticsService {
 
             const { data: orders, error } = await supabase
                 .from('gm_orders')
-                .select('created_at, total_cents')
+                .select('created_at, total_amount')
                 .eq('restaurant_id', restaurantId)
                 .gte('created_at', startDate.toISOString())
                 .neq('status', 'cancelled');
@@ -61,7 +61,7 @@ class PredictiveAnalyticsService {
                 }
                 const day = dailyData.get(date)!;
                 day.orders++;
-                day.revenue += order.total_cents;
+                day.revenue += order.total_amount || 0;
             }
 
             // Calculate averages
@@ -145,7 +145,7 @@ class PredictiveAnalyticsService {
      */
     async forecastStaff(restaurantId: string, days: number = 7): Promise<StaffForecast[]> {
         const demandForecasts = await this.forecastDemand(restaurantId, days);
-        
+
         return demandForecasts.map(forecast => {
             let predictedDemand: 'low' | 'medium' | 'high' | 'very_high';
             let suggestedStaffCount: number;

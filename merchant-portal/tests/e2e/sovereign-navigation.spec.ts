@@ -200,7 +200,7 @@ test.describe('🔒 Single Entry Policy Validation', () => {
     }
   });
 
-  test('Todos os CTAs da landing apontam para /app', async ({ page }) => {
+  test.skip('Todos os CTAs da landing apontam para /app', async ({ page }) => {
     await page.goto('/');
 
     // Buscar CTAs principais

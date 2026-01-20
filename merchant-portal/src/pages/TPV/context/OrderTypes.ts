@@ -7,6 +7,7 @@ export interface OrderItem {
     priceFormatted?: string;
     notes?: string;
     categoryName?: string; // Phase 55: Station Intelligence
+    consumptionGroupId?: string | null;
 }
 
 export interface Order {
@@ -25,4 +26,5 @@ export interface Order {
     external_reference?: string;
     customerName?: string;
     transaction_id?: string; // Add transaction_id for consistency
+    customerId?: string; // Sprint 12: Loyalty
 }

@@ -52,7 +52,7 @@ export function useRealAnalytics(startDate: Date, endDate: Date) {
                     .from('gm_orders')
                     .select(`
                         id,
-                        total_cents,
+                        total_amount,
                         created_at,
                         status,
                         items:gm_order_items(
@@ -75,7 +75,7 @@ export function useRealAnalytics(startDate: Date, endDate: Date) {
 
                 for (const order of orders || []) {
                     const orderDate = new Date(order.created_at).toISOString().split('T')[0];
-                    
+
                     if (!dailyMap.has(orderDate)) {
                         dailyMap.set(orderDate, {
                             date: orderDate,
@@ -89,7 +89,7 @@ export function useRealAnalytics(startDate: Date, endDate: Date) {
                     }
 
                     const day = dailyMap.get(orderDate)!;
-                    day.totalRevenue += (order.total_cents || 0) / 100;
+                    day.totalRevenue += (order.total_amount || 0) / 100;
                     day.totalOrders += 1;
 
                     // Peak hours
@@ -98,7 +98,7 @@ export function useRealAnalytics(startDate: Date, endDate: Date) {
 
                     // Payment methods (assumir cash se não especificado)
                     const method = (order as any).payment_method || 'cash';
-                    day.paymentMethods[method] = (day.paymentMethods[method] || 0) + (order.total_cents || 0) / 100;
+                    day.paymentMethods[method] = (day.paymentMethods[method] || 0) + (order.total_amount || 0) / 100;
 
                     // Top products
                     if (order.items && Array.isArray(order.items)) {

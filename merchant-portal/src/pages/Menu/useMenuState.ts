@@ -5,12 +5,7 @@ import { useKernel } from '../../core/kernel/KernelContext';
 import { MenuAuthority } from '../../core/kernel/MenuAuthority';
 import { useTenant } from '../../core/tenant/TenantContext';
 
-import { GenesisKernel } from '../../core/kernel/GenesisKernel';
-
 export type MenuViewState = 'LOADING' | 'EMPTY' | 'DRAFT' | 'ACTIVE' | 'ERROR';
-
-// UUID Regex Validator
-const IS_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function useMenuState() {
     const { status: guardianStatus } = useSystemGuardian();
@@ -83,12 +78,24 @@ export function useMenuState() {
 
             if (itemError) throw itemError;
 
+            // [PROFITABILITY] Fetch Cost Data
+            const { data: costData } = await supabase
+                .from('gm_menu_item_costs_view')
+                .select('*');
+
+            // Map costs by menu_item_id for O(1) lookup
+            const costMap = new Map<string, number>();
+            if (costData) {
+                costData.forEach((c: any) => costMap.set(c.menu_item_id, c.total_cost));
+            }
+
             setCategories(catData || []);
             // FIX: Map price_cents to price (float) for UI compatibility
             // FIX: Map 'category' (old) OR 'category_id' (new) to 'category_id' for UI
             setItems((itemData || []).map(item => ({
                 ...item,
                 price: (item.price_cents || 0) / 100,
+                cost_price: costMap.get(item.id) || 0, // Injected Cost
                 category_id: item.category_id || item.category, // Handle both schema variants
                 track_stock: item.track_stock,
                 stock_quantity: item.stock_quantity

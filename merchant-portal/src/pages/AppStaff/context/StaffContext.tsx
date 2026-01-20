@@ -44,6 +44,7 @@ const joinRemoteOperationHelper = async (code: string, setOpContract: (c: Operat
             let role: StaffRole = 'worker';
             if (code.toLowerCase().includes('mgr')) role = 'manager';
             else if (code.toLowerCase().includes('kit')) role = 'kitchen';
+            else if (code.toLowerCase().includes('own')) role = 'owner';
 
             setActiveRole(role);
             setTabIsolated('staff_role', role);

@@ -5,7 +5,6 @@
  */
 
 import { supabase } from '../supabase';
-import type { OrderEngine } from './OrderEngine';
 import type { PaymentMethod, PaymentStatus } from './OrderEngine';
 import { logAuditEvent } from '../audit/logAuditEvent';
 
@@ -114,6 +113,12 @@ export class PaymentEngine {
             },
         });
 
+        // [INVENTORY] Trigger stock deduction
+        // We do this asynchronously to not block the UI response, but we log errors
+        this.triggerInventoryDeduction(input.orderId).catch(err => {
+            console.error('[PaymentEngine] Inventory deduction failed:', err);
+        });
+
         // Buscar pagamento criado para retornar objeto completo
         const { data: paymentData, error: fetchError } = await supabase
             .from('gm_payments')
@@ -209,6 +214,13 @@ export class PaymentEngine {
             paymentId: data.payment_id,
             durationMs,
         });
+
+        // [INVENTORY] Trigger stock deduction if fully paid
+        if (data.is_fully_paid) {
+            this.triggerInventoryDeduction(input.orderId).catch(err => {
+                console.error('[PaymentEngine] Inventory deduction failed:', err);
+            });
+        }
 
         // Fetch the created payment
         const { data: paymentData, error: fetchError } = await supabase
@@ -374,6 +386,16 @@ export class PaymentEngine {
             totalProcessedCents: data?.total_processed_cents || 0,
             mostCommonError: data?.most_common_error || null,
         };
+    }
+
+    /**
+     * [INVENTORY] Trigger the inventory deduction RPC
+     */
+    private static async triggerInventoryDeduction(orderId: string): Promise<void> {
+        const { error } = await supabase.rpc('process_inventory_deduction', {
+            p_order_id: orderId
+        });
+        if (error) throw error;
     }
 }
 

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../core/supabase';
+import { SyncEngine, type SyncEngineState } from '../../core/sync/SyncEngine';
+import { FiscalQueue } from '../../core/fiscal/FiscalQueueWorker';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface HealthState {
-    status: 'ONLINE' | 'CRITICAL' | 'WARNING' | 'RECOVERED' | 'RECOVERY';
+    status: 'ONLINE' | 'CRITICAL' | 'WARNING' | 'RECOVERED' | 'RECOVERY' | 'OFFLINE' | 'SYNCING';
     message: string;
     details?: string;
     metadata?: any;
@@ -16,7 +18,45 @@ export const SystemHealthCard = ({ restaurantId }: { restaurantId: string }) => 
     useEffect(() => {
         if (!restaurantId) return;
 
-        const checkHealth = async () => {
+        // Local State Trackers
+        let syncState: SyncEngineState = { isProcessing: false, networkStatus: navigator.onLine ? 'online' : 'offline', pendingCount: 0 };
+        let fiscalPending = 0;
+
+        const updateHealth = () => {
+            // Priority 1: Network / Sync Status
+            if (syncState.networkStatus === 'offline') {
+                setHealth({
+                    status: 'OFFLINE',
+                    message: 'Modo Offline Ativo',
+                    details: 'O sistema está operando localmente. Alterações serão sincronizadas quando a conexão retornar.'
+                });
+                return;
+            }
+
+            if (syncState.isProcessing) {
+                setHealth({
+                    status: 'SYNCING',
+                    message: 'Sincronizando Dados',
+                    details: `Processando ${syncState.pendingCount} itens pendentes...`
+                });
+                return;
+            }
+
+            // Priority 2: Fiscal Compliance
+            if (fiscalPending > 0) {
+                setHealth({
+                    status: 'WARNING',
+                    message: 'Pendências Fiscais',
+                    details: `Existem ${fiscalPending} faturas aguardando assinatura fiscal.`
+                });
+                return;
+            }
+
+            // Priority 3: Cloud Intelligence (Alerts/Recovery)
+            checkCloudHealth();
+        };
+
+        const checkCloudHealth = async () => {
             try {
                 // 1. Check for Recovery Mode Pulse (Most recent)
                 const { data: pulses } = await supabase
@@ -24,7 +64,7 @@ export const SystemHealthCard = ({ restaurantId }: { restaurantId: string }) => 
                     .select('*')
                     .eq('restaurant_id', restaurantId)
                     .order('created_at', { ascending: false })
-                    .limit(5); // Check recent history
+                    .limit(5);
 
                 const isRecovery = pulses?.some(p => p.type === 'SYSTEM_RECOVERY_MODE');
 
@@ -33,7 +73,7 @@ export const SystemHealthCard = ({ restaurantId }: { restaurantId: string }) => 
                     .from('alerts')
                     .select('*')
                     .eq('restaurant_id', restaurantId)
-                    .is('resolved_at', null) // Only active
+                    .is('resolved_at', null)
                     .order('created_at', { ascending: false });
 
                 if (isRecovery) {
@@ -45,35 +85,19 @@ export const SystemHealthCard = ({ restaurantId }: { restaurantId: string }) => 
                         metadata: recoveryPulse?.payload
                     });
                 } else if (alerts && alerts.length > 0) {
-                    const alert = alerts[0]; // Take most recent/severe
-
+                    const alert = alerts[0];
                     let status: HealthState['status'] = 'CRITICAL';
                     if (alert.severity === 'warning') status = 'WARNING';
 
-                    let message = alert.message || 'Alerta de Sistema Ativo';
-                    let details = '';
-                    const confidenceStr = alert.metadata?.confidence ? ` (Confianca: ${Math.round(alert.metadata.confidence * 100)}%)` : '';
-
-                    // Specific handling for common types
-                    if (alert.alert_type === 'ALERT_NO_PULSE') {
-                        message = 'Silêncio Operacional';
-                        details = `Sem atividade há ${alert.metadata?.silenceMinutes || '?'} min${confidenceStr}`;
-                    } else if (alert.alert_type === 'OPERATIONAL_DELAY') {
-                        message = 'Atraso em Cadeia';
-                        details = `${alert.metadata?.count || '3+'} pedidos atrasados nos últimos 10 min${confidenceStr}`;
-                    } else if (alert.alert_type === 'CHAOS_PATTERN') {
-                        message = 'Instabilidade Detectada';
-                        details = `Padrão de erros anormais detectado${confidenceStr}`;
-                    }
-
                     setHealth({
                         status,
-                        message,
-                        details,
+                        message: alert.message || 'Alerta de Sistema Ativo',
+                        details: alert.alert_type === 'ALERT_NO_PULSE' ? 'Silêncio Operacional detectado.' : 'Instabilidade detectada.',
                         metadata: alert.metadata
                     });
                 } else {
-                    setHealth({ status: 'ONLINE', message: 'Tudo em Ordem', details: 'Monitoramento ativo e estável.' });
+                    // Default Healthy
+                    setHealth({ status: 'ONLINE', message: 'Sistema Operacional', details: 'Todos os serviços ativos e sincronizados.' });
                 }
             } catch (e) {
                 console.error('Health check failed', e);
@@ -82,15 +106,31 @@ export const SystemHealthCard = ({ restaurantId }: { restaurantId: string }) => 
             }
         };
 
-        checkHealth();
+        // Subscriptions
+        const unsubSync = SyncEngine.subscribe((state) => {
+            syncState = state;
+            updateHealth();
+        });
 
+        const unsubFiscal = FiscalQueue.subscribe((count) => {
+            fiscalPending = count;
+            updateHealth();
+        });
+
+        // Cloud Subscription
         const channel = supabase
-            .channel('health-widget-v1.1')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts', filter: `restaurant_id=eq.${restaurantId}` }, () => checkHealth())
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'empire_pulses', filter: `restaurant_id=eq.${restaurantId}` }, () => checkHealth())
+            .channel('health-widget-v1.2')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts', filter: `restaurant_id=eq.${restaurantId}` }, () => checkCloudHealth())
             .subscribe();
 
-        return () => { supabase.removeChannel(channel); };
+        // Initial sanity check
+        checkCloudHealth();
+
+        return () => {
+            unsubSync();
+            unsubFiscal();
+            supabase.removeChannel(channel);
+        };
 
     }, [restaurantId]);
 
@@ -101,7 +141,9 @@ export const SystemHealthCard = ({ restaurantId }: { restaurantId: string }) => 
         WARNING: { bg: 'rgba(255, 214, 10, 0.1)', border: 'rgba(255, 214, 10, 0.3)', dot: '#ffd60a', glow: 'rgba(255, 214, 10, 0.4)' },
         ONLINE: { bg: 'rgba(50, 215, 75, 0.1)', border: 'rgba(50, 215, 75, 0.3)', dot: '#32d74b', glow: 'rgba(50, 215, 75, 0.5)' },
         RECOVERED: { bg: 'rgba(50, 215, 75, 0.1)', border: 'rgba(50, 215, 75, 0.3)', dot: '#32d74b', glow: 'none' },
-        RECOVERY: { bg: 'rgba(10, 132, 255, 0.1)', border: 'rgba(10, 132, 255, 0.3)', dot: '#0a84ff', glow: 'rgba(10, 132, 255, 0.6)' }
+        RECOVERY: { bg: 'rgba(10, 132, 255, 0.1)', border: 'rgba(10, 132, 255, 0.3)', dot: '#0a84ff', glow: 'rgba(10, 132, 255, 0.6)' },
+        OFFLINE: { bg: 'rgba(255, 69, 58, 0.1)', border: 'rgba(255, 69, 58, 0.3)', dot: '#ff453a', glow: 'none' },
+        SYNCING: { bg: 'rgba(255, 159, 10, 0.1)', border: 'rgba(255, 159, 10, 0.3)', dot: '#ff9f0a', glow: 'rgba(255, 159, 10, 0.6)' }
     };
 
     const config = colors[health.status] || colors.ONLINE;
@@ -125,8 +167,11 @@ export const SystemHealthCard = ({ restaurantId }: { restaurantId: string }) => 
         >
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1 }}>
                 <motion.div
-                    animate={health.status === 'RECOVERY' ? { scale: [1, 1.2, 1], opacity: [0.6, 1, 0.6] } : { opacity: [0.5, 1, 0.5] }}
-                    transition={{ repeat: Infinity, duration: health.status === 'RECOVERY' ? 1.5 : 2 }}
+                    animate={
+                        health.status === 'RECOVERY' || health.status === 'SYNCING' ? { scale: [1, 1.2, 1], opacity: [0.6, 1, 0.6] } :
+                            health.status === 'OFFLINE' ? { opacity: 0.5 } : { opacity: [0.5, 1, 0.5] }
+                    }
+                    transition={{ repeat: Infinity, duration: health.status === 'RECOVERY' || health.status === 'SYNCING' ? 1.5 : 2 }}
                     style={{
                         width: '12px', height: '12px', borderRadius: '50%',
                         background: config.dot,
@@ -147,7 +192,12 @@ export const SystemHealthCard = ({ restaurantId }: { restaurantId: string }) => 
             <div style={{ textAlign: 'right', zIndex: 1 }}>
                 <span style={{ fontSize: '10px', opacity: 0.5, display: 'block', letterSpacing: 1, fontWeight: 700 }}>ENGINE CORE v1.1</span>
                 <span style={{ fontSize: '14px', fontWeight: 700, color: config.dot }}>
-                    {health.status === 'ONLINE' ? 'ESTÁVEL' : health.status === 'RECOVERY' ? 'RECOVERY' : 'OBSERVANDO'}
+                    {health.status === 'ONLINE' ? 'ONLINE' :
+                        health.status === 'OFFLINE' ? 'OFFLINE' :
+                            health.status === 'SYNCING' ? 'SYNCING...' :
+                                health.status === 'RECOVERY' ? 'RECOVERY' :
+                                    health.status === 'WARNING' ? 'ALERTA' :
+                                        'OBSERVANDO'}
                 </span>
             </div>
 

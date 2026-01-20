@@ -3,47 +3,78 @@
  * Princípio: Topo fixo, grupos expandem, produtos aparecem, zero navegação profunda.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Table } from './types';
 import { TableStatus } from './types';
 import { Button } from '../../ui/design-system/primitives/Button';
 import { Text } from '../../ui/design-system/primitives/Text';
 import { BottomNavBar } from './components/BottomNavBar';
-import type { Category } from './components/CategoryStrip';
+// import type { Category } from './components/CategoryStrip';
 import { CategoryStrip } from './components/CategoryStrip';
-import type { Product, ProductComment } from './components/ProductCard';
+import type { /* Product, */ ProductComment } from './components/ProductCard';
 import { ProductCard } from './components/ProductCard';
 import { MiniMap } from './components/MiniMap';
 import { AlertSystem } from './components/AlertSystem';
+import { ExceptionReportModal } from './components/ExceptionReportModal';
 import { useWaiterCalls } from './hooks/useWaiterCalls';
-import type { WaiterCall } from './types';
-import { AlertPriority } from './types';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { spacing } from '../../ui/design-system/tokens/spacing';
+import { tpvEventBus, type DecisionMadePayload } from '../../core/tpv/TPVCentralEvents';
 
 import { useTables } from '../TPV/context/TableContext';
 import { useOrders } from '../TPV/context/OrderContextReal';
 import { useMenuItems } from '../../hooks/useMenuItems';
-import type { MenuItem } from '../../hooks/useMenuItems';
 import { useTenant } from '../../core/tenant/TenantContext';
+import { useToast } from '../../ui/design-system';
+
+import { useContextEngine } from '../../core/context';
+
+interface OrderItem {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  comments: string[];
+  price: number;
+}
 
 interface TablePanelProps {
   tableId?: string;
-  onBack?: () => void;
 }
 
-export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
+export function TablePanel({ tableId: propTableId }: TablePanelProps) {
   const navigate = useNavigate();
   const params = useParams<{ tableId: string }>();
   // Resolve tableId from Prop or URL
   const tableId = propTableId || params.tableId;
 
   const { tenantId } = useTenant(); // Needed for hooks
+  console.log('[TablePanel] Rendering. Tenant:', tenantId);
+  const { permissions, role } = useContextEngine(); // 🧠 CONTEXT ENGINE
+  console.log('[TablePanel] Context Role:', role);
+
+  // Derived State
+  const isStandalone = role === 'owner' || role === 'manager';
+
+  // --- ACTIONS ---
+  const handleCloseBill = () => {
+    // STANDALONE MODE: Process payment directly
+    if (confirm('💰 MODO STANDALONE: Processar pagamento e fechar mesa agora?')) {
+      success('✅ Pagamento Confirmado! Mesa Liberada.');
+      // In real implementation: router.push('/payment/checkout')
+    }
+  };
+
+  const handleRequestBill = () => {
+    // EXECUTION MODE: Request bill from Central TPV
+    success('Conta solicitada ao Caixa (TPV Central).');
+    // TODO: Emit real event
+  };
 
   // Real Hooks
   const { tables, loading: tablesLoading } = useTables();
-  const { items: menuItems, loading: menuLoading } = useMenuItems(tenantId);
+  const { items: menuItems } = useMenuItems(tenantId);
   const { orders, createOrder, addItemToOrder } = useOrders(); // Inject Order Context
 
   // Resolve Table
@@ -53,8 +84,37 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [sending, setSending] = useState(false); // Loading state
 
+  // Exception Reporting State
+  const [showExceptionModal, setShowExceptionModal] = useState(false);
+  const [pendingException, setPendingException] = useState(false);
+  const { success, warning } = useToast();
+
+  // Resolve Active Order
+  const activeOrder = useMemo(() =>
+    orders.find(o => o.tableId === tableId && o.status !== 'paid' && o.status !== 'cancelled'),
+    [orders, tableId]
+  );
+
+  // Listen for operator decisions on this table's orders
+  useEffect(() => {
+    const handleDecision = (event: any) => {
+      const decision = event.payload as DecisionMadePayload;
+      if (decision.tableNumber === table?.number) {
+        // Decision received for this table
+        setPendingException(false);
+        success(`✅ Decisão: ${decision.action}${decision.message ? ` - ${decision.message}` : ''}`);
+        console.log('[TablePanel] Decision received:', decision);
+      }
+    };
+
+    const unsubscribe = tpvEventBus.on('order.decision_made', handleDecision);
+    return () => {
+      unsubscribe();
+    };
+  }, [table?.number, success]);
+
   // Mock: Alertas (Keep Mock for now as Phase 6 focuses on Tables/Menu first)
-  const mockAlerts: WaiterCall[] = [];
+  // const mockAlerts: WaiterCall[] = [];
 
 
   const { calls: deduplicatedAlerts } = useWaiterCalls([]); // Changed from mockAlerts to empty array
@@ -147,9 +207,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
     setSending(true);
 
     try {
-      // 1. Check for Active Order on Table
-      const activeOrder = orders.find(o => o.tableId === table.id && o.status !== 'paid' && o.status !== 'cancelled');
-
+      // 1. Check for Active Order on Table (Already computed)
       if (activeOrder) {
         // Case A: Add to Existing Order
         // Parallelize requests for speed
@@ -157,7 +215,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
           addItemToOrder(activeOrder.id, {
             productId: item.productId,
             name: item.productName,
-            price: item.price,
+            priceCents: item.price,
             quantity: item.quantity,
             notes: item.comments.join(', ')
           })
@@ -168,6 +226,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
           tableId: table.id,
           tableNumber: table.number,
           items: orderItems.map(item => ({
+            id: `temp-${Date.now()}-${Math.random()}`,
             productId: item.productId,
             name: item.productName,
             price: item.price,
@@ -180,11 +239,19 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
       // Success
       setOrderItems([]);
       if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-      // Simple Alert for Feedback (TODO: Replace with Toast)
-      alert('Pedido enviado com sucesso!');
+
+      // FEEDBACK BASED ON MODE
+      if (isStandalone) {
+        // In Solo Mode, "Send" implies "Charge" (Direct Sale)
+        success('💸 Venda Registrada! (Pagamento Confirmado)');
+        // Future: Open Payment Selection Modal here
+      } else {
+        success('Pedido enviado para a cozinha! 👨‍🍳');
+      }
+
     } catch (error) {
       console.error('Failed to send order:', error);
-      alert('Erro ao enviar pedido. Tente novamente.');
+      warning('Erro ao enviar pedido. Tente novamente.');
     } finally {
       setSending(false);
     }
@@ -213,25 +280,27 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
         onSnooze={handleSnoozeAlert}
       />
 
-      {/* Mini-Mapa Fixo no Topo */}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 200,
-        background: colors.surface.base,
-      }}>
-        <MiniMap
-          tables={tables}
-          currentTableId={tableId}
-          onTableClick={handleTableClickFromMap}
-          area="Área 1"
-        />
-      </div>
+      {/* Mini-Mapa Fixo no Topo - Hide in STANDALONE (Solo Mode) */}
+      {!isStandalone && (
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 200,
+          background: colors.surface.base,
+        }}>
+          <MiniMap
+            tables={tables}
+            currentTableId={tableId}
+            onTableClick={handleTableClickFromMap}
+            area="Área 1"
+          />
+        </div>
+      )}
 
       {/* Topo Fixo */}
       <div style={{
         position: 'sticky',
-        top: 120, // Abaixo do mini-mapa
+        top: isStandalone ? 0 : 120, // Adjust top if map is hidden
         background: colors.surface.base,
         borderBottom: `1px solid ${colors.border.subtle}`,
         zIndex: 100,
@@ -263,43 +332,54 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
           </button>
           <div style={{ flex: 1, textAlign: 'center' }}>
             <Text size="xl" weight="bold" color="primary">
-              Mesa {table.number}
+              {isStandalone ? 'Venda Balcão' : `Mesa ${table.number}`}
             </Text>
-            <Text size="sm" color="secondary">
-              {table.status === TableStatus.OCCUPIED && seatedMinutes !== null
-                ? `Ocupada · ${seatedMinutes} min`
-                : 'Livre'}
-            </Text>
+            {!isStandalone && (
+              <Text size="sm" color="secondary">
+                {table.status === TableStatus.OCCUPIED && seatedMinutes !== null
+                  ? `Ocupada · ${seatedMinutes} min`
+                  : 'Livre'}
+              </Text>
+            )}
           </div>
           <div style={{ display: 'flex', gap: spacing[2] }}>
+            {/* Report Exception Button */}
             <button
+              onClick={() => setShowExceptionModal(true)}
               style={{
                 width: 44,
                 height: 44,
                 borderRadius: 8,
-                border: 'none',
-                background: 'transparent',
+                border: pendingException ? `2px solid ${colors.warning.base}` : 'none',
+                background: pendingException ? `${colors.warning.base}30` : 'transparent',
                 cursor: 'pointer',
                 fontSize: 20,
-                color: colors.text.secondary,
+                color: pendingException ? colors.warning.base : colors.destructive.base,
+                position: 'relative',
               }}
+              title="Reportar Problema"
             >
-              📋
+              ⚠️
+              {pendingException && (
+                <span style={{
+                  position: 'absolute',
+                  top: 4,
+                  right: 4,
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: colors.warning.base,
+                }} />
+              )}
             </button>
-            <button
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 8,
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                fontSize: 20,
-                color: colors.text.secondary,
-              }}
+            {/* CONTEXT ENGINE: Dynamic Action Button */}
+            <Button
+              tone={permissions.canCloseRegister ? 'destructive' : 'neutral'}
+              onClick={permissions.canCloseRegister ? handleCloseBill : handleRequestBill}
+              style={{ height: 44 }}
             >
-              ⚙️
-            </button>
+              {permissions.canCloseRegister ? '💰 Fechar' : '✋ Conta'}
+            </Button>
           </div>
         </div>
 
@@ -337,11 +417,15 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
               </Text>
 
               <Button
-                tone="action"
+                tone={isStandalone ? 'action' : 'action'}
                 onClick={handleSendOrder}
                 disabled={sending}
               >
-                {sending ? 'Enviando...' : 'Enviar Pedido 🚀'}
+                {sending
+                  ? 'Processando...'
+                  : isStandalone
+                    ? '💸 Cobrar'
+                    : 'Enviar Pedido 🚀'}
               </Button>
             </div>
           </div>
@@ -350,7 +434,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
 
       {/* Grupos/Categorias */}
       <CategoryStrip
-        categories={DEMO_CATEGORIES}
+        categories={categories}
         selectedId={selectedCategory || undefined}
         onSelect={(categoryId) => {
           setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
@@ -383,6 +467,19 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
           </Text>
         </div>
       )}
+
+      {/* Exception Report Modal */}
+      <ExceptionReportModal
+        isOpen={showExceptionModal}
+        onClose={() => {
+          setShowExceptionModal(false);
+          setPendingException(true); // Mark as pending until decision received
+          warning('Aguardando decisão do operador...');
+        }}
+        orderId={activeOrder?.id || `table-${tableId}`}
+        tableNumber={table?.number || 0}
+        items={activeOrder?.items.map(i => ({ id: i.id, name: i.name })) || []}
+      />
 
       <BottomNavBar />
     </div>

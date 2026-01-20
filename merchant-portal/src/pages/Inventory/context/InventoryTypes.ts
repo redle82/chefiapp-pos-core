@@ -13,7 +13,7 @@ export interface Recipe {
     id: string;
     menu_item_id: string;
     inventory_item_id: string;
-    quantity_required: number;
+    quantity: number;
     inventory_item?: InventoryItem; // Joined
 }
 

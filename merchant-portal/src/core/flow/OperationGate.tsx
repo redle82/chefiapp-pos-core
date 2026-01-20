@@ -21,6 +21,15 @@ export const OperationGate: React.FC = () => {
     const location = useLocation();
 
     useEffect(() => {
+        // DEV BYPASS: Skip operation checks for TPV/KDS in development mode
+        if (import.meta.env.DEV) {
+            const path = location.pathname;
+            if (path.includes('/tpv') || path.includes('/kds') || path.includes('/waiter')) {
+                console.warn('[OperationGate] 🚧 DEV BYPASS: Skipping operation checks for', path);
+                return;
+            }
+        }
+
         if (!restaurant) return; // FlowGate handles missing tenant
 
         const status = restaurant.operation_status || 'active'; // Default to active if missing

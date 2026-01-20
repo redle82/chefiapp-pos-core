@@ -104,9 +104,12 @@ async function initializeKernel(options: BootstrapOptions = {}): Promise<Bootstr
     const warnings: string[] = [];
 
     // 1. Detect environment
+    console.log('Kernel: Detecting environment...');
     const environment = options.forceEnvironment ?? detectEnvironment();
+    console.log('Kernel: Environment detected:', environment);
 
     // 2. Validate guards
+    console.log('Kernel: Validating guards...');
     const guards = validateGuards();
 
     if (environment === 'prod' && !guards.assertNoMock) {
@@ -150,9 +153,12 @@ async function initializeKernel(options: BootstrapOptions = {}): Promise<Bootstr
         } catch (e) {
             warnings.push(`Systems check failed: ${e}`);
         }
+    } else {
+        console.log('Kernel: SKIPPING Health Checks');
     }
 
     // 5. Check observability
+    console.log('Kernel: Checking Observability...');
     const observability = await checkObservability();
 
     if (!observability.monitoring) {
@@ -275,10 +281,10 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <SystemStateContext.Provider value= {{ state, loading, refresh }
-}>
-    { children }
-    </SystemStateContext.Provider>
+        <SystemStateContext.Provider value={{ state, loading, refresh }
+        }>
+            {children}
+        </SystemStateContext.Provider>
     );
 }
 

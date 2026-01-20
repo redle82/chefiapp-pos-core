@@ -20,9 +20,10 @@ import { PaymentBroker, type PaymentIntentResult } from '../../../core/payment/P
 import { useConsumptionGroups } from '../hooks/useConsumptionGroups';
 import { FiscalPrintButton } from './FiscalPrintButton';
 import { LoadingState } from '../../../ui/design-system/components/LoadingState';
+import { useLoyalty } from '../../../core/loyalty/LoyaltyContext';
 import { useOfflineOrder } from '../context/OfflineOrderContext';
 
-export type PaymentMethod = 'cash' | 'card' | 'pix';
+export type PaymentMethod = 'cash' | 'card' | 'pix' | 'loyalty';
 
 interface PaymentModalProps {
     orderId: string;
@@ -34,6 +35,7 @@ interface PaymentModalProps {
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantId, orderTotal, onPay, onCancel }) => {
     const { isOffline } = useOfflineOrder();
+    const { activeCustomer } = useLoyalty();
     const { groups } = useConsumptionGroups(orderId);
     const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('cash');
     const [processing, setProcessing] = useState(false);
@@ -282,8 +284,28 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantI
                         Método de pagamento
                     </Text>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[2] }}>
-                        {(['cash', 'card', 'pix'] as PaymentMethod[]).map(method => {
+                        {(['cash', 'card', 'pix', 'loyalty'] as PaymentMethod[]).map(method => {
                             const isOfflineDisabled = isOffline && method !== 'cash';
+
+                            // Loyalty specific checks
+                            let isLoyaltyDisabled = false;
+                            let loyaltySubtitle = '';
+
+                            if (method === 'loyalty') {
+                                const pointsNeeded = Math.ceil(orderTotal / 10); // 10 Cents = 1 Point
+                                if (!activeCustomer) {
+                                    isLoyaltyDisabled = true;
+                                    loyaltySubtitle = '(Identifique o cliente)';
+                                } else {
+                                    const balance = activeCustomer.points_balance || 0;
+                                    if (balance < pointsNeeded) {
+                                        isLoyaltyDisabled = true;
+                                        loyaltySubtitle = `(Saldo: ${balance} pts. Necessário: ${pointsNeeded})`;
+                                    } else {
+                                        loyaltySubtitle = `Use ${pointsNeeded} pts (Saldo: ${balance})`;
+                                    }
+                                }
+                            }
 
                             return (
                                 <Button
@@ -292,14 +314,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantI
                                     tone={selectedMethod === method ? 'action' : 'neutral'}
                                     size="lg"
                                     onClick={() => {
-                                        if (isOfflineDisabled) return;
+                                        if (isOfflineDisabled || isLoyaltyDisabled) return;
                                         setSelectedMethod(method);
                                         setAmountGiven('');
                                         setStripeIntent(null);
                                         setStripeError(null);
                                     }}
-                                    style={{ justifyContent: 'flex-start', opacity: isOfflineDisabled ? 0.5 : 1 }}
-                                    disabled={(method === 'card' && loadingStripeIntent) || isOfflineDisabled}
+                                    style={{ justifyContent: 'flex-start', opacity: (isOfflineDisabled || isLoyaltyDisabled) ? 0.5 : 1 }}
+                                    disabled={(method === 'card' && loadingStripeIntent) || isOfflineDisabled || isLoyaltyDisabled}
                                 >
                                     {method === 'cash' && '💵 Dinheiro'}
                                     {method === 'card' && (loadingStripeIntent ? (
@@ -316,6 +338,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantI
                                         <>
                                             📱 PIX {isOfflineDisabled && <Text size="xs" color="destructive" style={{ marginLeft: 8 }}>(Offline)</Text>}
                                         </>
+                                    )}
+                                    {method === 'loyalty' && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                            <span>💎 Pontos Fidelidade</span>
+                                            <span style={{ fontSize: '0.7em', opacity: 0.8 }}>{loyaltySubtitle}</span>
+                                        </div>
                                     )}
                                 </Button>
                             );

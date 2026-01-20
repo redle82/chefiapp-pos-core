@@ -56,7 +56,9 @@ export function FlowGate({ children }: { children: ReactNode }) {
     const lastCheckRef = useRef<{ key: string; ts: number }>({ key: '', ts: 0 });
     // OAuth wait counter to prevent infinite waiting
     const oauthWaitCountRef = useRef(0);
-    // Safety timeout to prevent infinite loading (10 seconds max)
+
+    // Safety timeout to prevent infinite loading
+    const LOADING_TIMEOUT_MS = 15000;
     const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Safety timeout state
@@ -66,15 +68,15 @@ export function FlowGate({ children }: { children: ReactNode }) {
         let mounted = true;
         let oauthWaitTimeout: ReturnType<typeof setTimeout> | null = null;
 
-        // Safety timeout: se loading demorar mais de 4s, forçar render
+        // Safety timeout: se loading demorar mais de LOADING_TIMEOUT_MS, forçar render
         // Isso previne travamento infinito se useSupabaseAuth falhar
         loadingTimeoutRef.current = setTimeout(() => {
             if (mounted) {
-                console.warn('[FlowGate] Loading timeout (4s) - forcing render (Fail-Safe)');
+                console.warn(`[FlowGate] Loading timeout (${LOADING_TIMEOUT_MS}ms) - forcing render (Fail-Safe)`);
                 setIsChecking(false);
                 setForceRender(true);
             }
-        }, 4000);
+        }, LOADING_TIMEOUT_MS);
 
         // Variável para armazenar sessão encontrada diretamente (bypass useSupabaseAuth)
         // Escopo da função checkFlow para ser acessível em todo o fluxo
@@ -139,24 +141,54 @@ export function FlowGate({ children }: { children: ReactNode }) {
             }
             lastCheckRef.current = { key: fuseKey, ts: now };
 
+            // DEV EXCEPTION [SUPER-EARLY]: Auto-seal & Bypas ALL CHECKS for TPV/KDS/Waiter in DEV
+            // This prevents "Have Session -> Query DB -> 429 Error" loop.
+            // effectively treating them as isolated "Kiosk" apps in Dev.
+            const params = new URLSearchParams(window.location.search);
+            const isDemo = params.get('demo') === 'true';
+            const isDevBypassRoute = pathname.includes('/tpv') || pathname.includes('/kds') || pathname.includes('/waiter') || pathname.includes('/app/waiter') || (isDemo && import.meta.env.DEV);
+
+            if (import.meta.env.DEV && isDevBypassRoute) {
+                // Auto-seal payload
+                if (!isTenantSealed()) {
+                    const DEV_TENANT_ID = import.meta.env.VITE_DEV_DEFAULT_TENANT || '6d676ae5-2375-42d2-8db3-e4e80ddb1b76';
+                    setActiveTenant(DEV_TENANT_ID, 'ACTIVE');
+                    console.warn('[FlowGate] 🚧 DEV AUTO-SEAL: Pre-sealed mock tenant:', DEV_TENANT_ID);
+                }
+
+                // If we are here, we allow the render unconditionally.
+                // We skip redirects, auth checks, and DB queries.
+                if (shouldLog) console.warn(`[FlowGate] 🚧 DEV SUPER-BYPASS: Skipping all gates for ${pathname}`);
+                if (mounted) setIsChecking(false);
+                return;
+            }
+
             // Redirect bounded: fail-closed, once only
             // If tenant is not sealed and we're on an /app/* route (except select-tenant), redirect
             if (!sealed && pathname !== '/app/select-tenant' && pathname.startsWith('/app')) {
-                // Save the original route so we can return to it after tenant selection
-                try {
-                    sessionStorage.setItem('chefiapp_return_to', pathname);
-                    if (isDevStableMode() && isDebugEnabled()) {
-                        console.log('[FlowGate] Saved return route:', pathname);
+                // DEV EXCEPTION: Auto-seal for TPV/KDS/Waiter to allow immediate access
+                if (import.meta.env.DEV && (pathname.includes('/tpv') || pathname.includes('/kds') || pathname.includes('/waiter'))) {
+                    const DEV_TENANT_ID = import.meta.env.VITE_DEV_DEFAULT_TENANT || '6d676ae5-2375-42d2-8db3-e4e80ddb1b76';
+                    setActiveTenant(DEV_TENANT_ID, 'ACTIVE');
+                    console.warn('[FlowGate] 🚧 DEV AUTO-SEAL (Early): Pre-sealed mock tenant:', DEV_TENANT_ID);
+                    // Don't redirect, allow checkFlow to proceed
+                } else {
+                    // Save the original route so we can return to it after tenant selection
+                    try {
+                        sessionStorage.setItem('chefiapp_return_to', pathname);
+                        if (isDevStableMode() && isDebugEnabled()) {
+                            console.log('[FlowGate] Saved return route:', pathname);
+                        }
+                    } catch (e) {
+                        // Ignore storage errors (private mode, etc.)
+                        if (isDevStableMode() && isDebugEnabled()) {
+                            console.warn('[FlowGate] Failed to save return route:', e);
+                        }
                     }
-                } catch (e) {
-                    // Ignore storage errors (private mode, etc.)
-                    if (isDevStableMode() && isDebugEnabled()) {
-                        console.warn('[FlowGate] Failed to save return route:', e);
-                    }
+                    navigate('/app/select-tenant', { replace: true });
+                    if (mounted) setIsChecking(false);
+                    return;
                 }
-                navigate('/app/select-tenant', { replace: true });
-                if (mounted) setIsChecking(false);
-                return;
             }
 
             // 1. Wait for Auth Session Protocol
@@ -235,6 +267,19 @@ export function FlowGate({ children }: { children: ReactNode }) {
             }
 
             // --- ESTADO 1: SEM SESSÃO ---
+
+            // DEV EXCEPTION: Allow TPV/KDS/Waiter routes to bypass auth for UI verification
+            if (!session && import.meta.env.DEV && (pathname.includes('/tpv') || pathname.includes('/kds') || pathname.includes('/waiter'))) {
+                // Also auto-seal a dev tenant to bypass tenant gate
+                if (!isTenantSealed()) {
+                    const DEV_TENANT_ID = import.meta.env.VITE_DEV_DEFAULT_TENANT || '6d676ae5-2375-42d2-8db3-e4e80ddb1b76';
+                    setActiveTenant(DEV_TENANT_ID, 'ACTIVE');
+                    console.warn('[FlowGate] 🚧 DEV AUTO-SEAL: Pre-sealed mock tenant:', DEV_TENANT_ID);
+                }
+                if (shouldLog) console.warn('[FlowGate] 🚧 DEV BYPASS: Rendering TPV/KDS without session for UI Check');
+                if (mounted) setIsChecking(false);
+                return;
+            }
 
             // If completely loaded and no session, redirect to auth (unless sealed tenant handling below)
             // FAIL-SAFE: Se forceRender for true, tratar como sem sessão
@@ -554,26 +599,50 @@ export function FlowGate({ children }: { children: ReactNode }) {
                         // Let handleTenantResolution handle the redirect, but be aware
                     }
 
+
                     // REALITY ENFORCEMENT (Genesis Contract)
                     // Cannot open physical operations (TPV/KDS) if system is in DRAFT mode.
                     const isPhysicalOps = pathname.includes('/app/tpv') || pathname.includes('/app/kds');
                     if (isPhysicalOps) {
-                        try {
-                            const { getTabIsolated } = await import('../storage/TabIsolatedStorage');
-                            const rawBp = getTabIsolated('chefiapp_system_blueprint_v2');
-                            if (rawBp) {
-                                const bp = JSON.parse(rawBp);
-                                const realityStatus = bp.organization?.realityStatus || 'DRAFT';
+                        // BYPASS: Allow TPV in Development Mode for testing
+                        if (import.meta.env.DEV) {
+                            console.warn('[FlowGate] 🚧 DEV MODE BYPASS: Skipping Reality Check for TPV/KDS.');
+                        } else {
+                            try {
+                                const { getTabIsolated } = await import('../storage/TabIsolatedStorage');
+                                const rawBp = getTabIsolated('chefiapp_system_blueprint_v2');
+                                console.log('[FlowGate] Reality Check:', { rawBpStr: rawBp?.substring(0, 50) });
 
-                                if (realityStatus === 'DRAFT') {
-                                    Logger.warn('FlowGate: Reality Block (Draft System)', { path: pathname });
-                                    navigate('/app/dashboard?reality_block=true', { replace: true });
-                                    if (mounted) setIsChecking(false);
-                                    return;
+                                if (rawBp) {
+                                    const bp = JSON.parse(rawBp);
+                                    const realityStatus = bp.organization?.realityStatus || 'DRAFT';
+                                    console.log('[FlowGate] Reality Status Resolved:', realityStatus);
+
+                                    if (realityStatus === 'DRAFT') {
+                                        // 🛑 STALE CACHE GUARD:
+                                        // If DB says we are 'completed' (Active), this local blueprint is a LIE (Stale).
+                                        // Do NOT block operation. We are LIVE.
+                                        if (status === 'completed') {
+                                            Logger.warn('FlowGate: Reality Check Override (Stale Blueprint found)', {
+                                                reason: 'DB_IS_COMPLETED',
+                                                localStatus: 'DRAFT'
+                                            });
+                                            // Auto-Correction could happen here, but for now just allow pass.
+                                        } else {
+                                            Logger.warn('FlowGate: Reality Block (Draft System)', { path: pathname });
+                                            console.warn('[FlowGate] 🛑 BLOCKING TPV - Reality is DRAFT');
+                                            navigate('/app/dashboard?reality_block=true', { replace: true });
+                                            if (mounted) setIsChecking(false);
+                                            return;
+                                        }
+                                    }
+                                } else {
+                                    console.warn('[FlowGate] Reality Check: No Blueprint Found');
                                 }
+                            } catch (e) {
+                                Logger.warn('FlowGate: Reality Check Failed', e);
+                                console.error('[FlowGate] Reality Check Exception:', e);
                             }
-                        } catch (e) {
-                            Logger.warn('FlowGate: Reality Check Failed', e);
                         }
                     }
 
@@ -823,6 +892,13 @@ export function FlowGate({ children }: { children: ReactNode }) {
     // If tenant is sealed, don't show loading screen (session may be updating)
     // But still show loading if we're checking and tenant is not sealed
     const shouldShowLoading = (sessionLoading || isChecking) && !isSelectTenantPage && !shouldAllowRenderWithSealedTenant && !forceRender;
+
+    // DEV BYPASS: Always render children for TPV/KDS routes to skip all loading states
+    const isDevTPVBypass = import.meta.env.DEV && (location.pathname.includes('/tpv') || location.pathname.includes('/kds'));
+    if (isDevTPVBypass) {
+        console.warn('[FlowGate] 🚧 DEV BYPASS: Force rendering children for TPV/KDS');
+        return children;
+    }
 
     if (shouldShowLoading) {
         return (

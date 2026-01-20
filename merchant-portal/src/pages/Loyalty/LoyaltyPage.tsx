@@ -4,29 +4,25 @@
  * FASE 3: UI para visualizar pontos e gerenciar recompensas
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../ui/design-system/layouts/AdminLayout';
 import { AdminSidebar } from '../../ui/design-system/domain/AdminSidebar';
 import { Card } from '../../ui/design-system/primitives/Card';
 import { Text } from '../../ui/design-system/primitives/Text';
-import { Input } from '../../ui/design-system/primitives/Input';
-import { Button } from '../../ui/design-system/primitives/Button';
 import { Badge } from '../../ui/design-system/primitives/Badge';
 import { useToast } from '../../ui/design-system';
-import { LoyaltyService, type LoyaltyCard } from '../../core/loyalty/LoyaltyService';
-import { CustomerService } from '../../core/crm/CustomerService';
+import type { LoyaltyCard } from '../../core/loyalty/LoyaltyService';
 import { supabase } from '../../core/supabase';
 import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
 import { useNavigate } from 'react-router-dom';
 
 export const LoyaltyPage: React.FC = () => {
     const navigate = useNavigate();
-    const { success, error } = useToast();
+    const { error } = useToast();
     const restaurantId = getTabIsolated('chefiapp_restaurant_id');
 
     const [cards, setCards] = useState<Array<LoyaltyCard & { customer?: any }>>([]);
     const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         if (restaurantId) {
@@ -41,7 +37,7 @@ export const LoyaltyPage: React.FC = () => {
         try {
             const { data, error: fetchError } = await supabase
                 .from('loyalty_cards')
-                .select('*, customer_profiles(*)')
+                .select('*, customer:gm_customers(*)')
                 .eq('restaurant_id', restaurantId)
                 .eq('status', 'active')
                 .order('current_points', { ascending: false })
@@ -57,14 +53,7 @@ export const LoyaltyPage: React.FC = () => {
         }
     };
 
-    const getTierColor = (tier: string) => {
-        switch (tier) {
-            case 'platinum': return '#e0e0e0';
-            case 'gold': return '#ffd700';
-            case 'silver': return '#c0c0c0';
-            default: return '#999';
-        }
-    };
+
 
     const getTierLabel = (tier: string) => {
         switch (tier) {
@@ -132,11 +121,7 @@ export const LoyaltyPage: React.FC = () => {
                                                 </Text>
                                                 <Badge
                                                     status="ready"
-                                                    label={getTierLabel(card.current_tier)}
-                                                    style={{
-                                                        backgroundColor: getTierColor(card.current_tier),
-                                                        color: '#000',
-                                                    }}
+                                                    label={`${getTierLabel(card.current_tier)} ★`}
                                                 />
                                             </div>
 

@@ -48,7 +48,7 @@ class CustomerBehaviorService {
                 .select(`
                     id,
                     customer_id,
-                    total_cents,
+                    total_amount,
                     created_at,
                     items:gm_order_items(product_id, product_name)
                 `)
@@ -73,7 +73,7 @@ class CustomerBehaviorService {
 
                 const customer = customerMap.get(customerId)!;
                 customer.orders.push(order);
-                customer.totalSpent += order.total_cents;
+                customer.totalSpent += order.total_amount || 0;
             }
 
             // Build profiles
@@ -82,7 +82,7 @@ class CustomerBehaviorService {
             for (const [customerId, data] of customerMap.entries()) {
                 const totalOrders = data.orders.length;
                 const averageOrderValue = totalOrders > 0 ? data.totalSpent / totalOrders : 0;
-                const lastOrder = data.orders.sort((a, b) => 
+                const lastOrder = data.orders.sort((a, b) =>
                     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
                 )[0];
 
@@ -170,7 +170,7 @@ class CustomerBehaviorService {
         try {
             const { data: orders } = await supabase
                 .from('gm_orders')
-                .select('created_at, total_cents, items:gm_order_items(product_id)')
+                .select('created_at, total_amount, items:gm_order_items(product_id)')
                 .eq('restaurant_id', restaurantId)
                 .eq('customer_id', customerId);
 
@@ -190,7 +190,7 @@ class CustomerBehaviorService {
                 }
             }
 
-            const averageOrderValue = orders.reduce((sum, o) => sum + o.total_cents, 0) / orders.length;
+            const averageOrderValue = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0) / orders.length;
             const preferredItems = Array.from(itemCounts.entries())
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 5)

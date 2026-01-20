@@ -12,22 +12,24 @@ import { useToast } from '../../ui/design-system';
 import { spacing } from '../../ui/design-system/tokens/spacing';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { InventoryEngine } from '../../core/inventory/InventoryEngine';
-import { InventoryItem, Recipe } from './context/InventoryTypes';
-import { supabase } from '../../core/supabase/client';
-import { useSupabaseAuth } from '../../core/auth/SupabaseAuthProvider';
+import type { InventoryItem, Recipe } from './context/InventoryTypes';
+import { supabase } from '../../core/supabase';
+import { useRestaurantIdentity } from '../../core/identity/useRestaurantIdentity';
 
 type Tab = 'ingredients' | 'recipes';
 
 export const InventoryManager: React.FC = () => {
     const navigate = useNavigate();
     const { success, error: showError } = useToast();
-    const { restaurantId } = useSupabaseAuth();
+    const { identity } = useRestaurantIdentity();
+    const restaurantId = identity.id;
+
 
     const [activeTab, setActiveTab] = useState<Tab>('ingredients');
 
     // Ingredients State
     const [items, setItems] = useState<InventoryItem[]>([]);
-    const [loading, setLoading] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [showAdd, setShowAdd] = useState(false);
     const [showCriticalOnly, setShowCriticalOnly] = useState(false);
     const [name, setName] = useState('');
@@ -52,14 +54,11 @@ export const InventoryManager: React.FC = () => {
 
     const loadInventory = async () => {
         try {
-            setLoading(true);
             const data = await InventoryEngine.getItems(restaurantId!);
             setItems(data);
         } catch (err: any) {
             console.error(err);
             showError('Erro ao carregar estoque');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -67,8 +66,8 @@ export const InventoryManager: React.FC = () => {
         try {
             // Fetch Menu Items
             const { data: menuData, error: menuError } = await supabase
-                .from('gm_menu_items')
-                .select('id, name, price')
+                .from('gm_products')
+                .select('id, name, price:price_cents')
                 .eq('restaurant_id', restaurantId!)
                 .eq('available', true)
                 .order('name');
@@ -130,7 +129,7 @@ export const InventoryManager: React.FC = () => {
             .filter(r => r.menu_item_id === id)
             .map(r => ({
                 inventoryItemId: r.inventory_item_id,
-                quantity: r.quantity_required
+                quantity: r.quantity
             }));
         setEditingRecipe(existing);
     };
@@ -177,7 +176,7 @@ export const InventoryManager: React.FC = () => {
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: spacing[2], borderBottom: `1px solid ${colors.neutral[200]}` }}>
+                    <div style={{ display: 'flex', gap: spacing[2], borderBottom: `1px solid ${colors.border.subtle}` }}>
                         <Button
                             variant={activeTab === 'ingredients' ? 'primary' : 'ghost'}
                             onClick={() => setActiveTab('ingredients')}
@@ -199,8 +198,8 @@ export const InventoryManager: React.FC = () => {
                                 {/* Alerts Filter */}
                                 {items.some(i => i.stock_quantity < 5) && (
                                     <Button
-                                        tone="critical"
-                                        variant={showCriticalOnly ? 'solid' : 'light'}
+                                        tone="destructive"
+                                        variant={showCriticalOnly ? 'solid' : 'primary'}
                                         onClick={() => setShowCriticalOnly(!showCriticalOnly)}
                                     >
                                         ⚠️ Alertas de Estoque ({items.filter(i => i.stock_quantity < 5).length})
@@ -264,7 +263,7 @@ export const InventoryManager: React.FC = () => {
                                                 <Badge
                                                     status={item.stock_quantity > 0 ? (item.stock_quantity < 5 ? 'warning' : 'success') : 'error'}
                                                     label={`${item.stock_quantity} ${item.unit}`}
-                                                    variant="pill"
+                                                    variant="soft"
                                                 />
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing[2] }}>
@@ -291,7 +290,7 @@ export const InventoryManager: React.FC = () => {
                                                 key={menuItem.id}
                                                 surface={selectedMenuItemId === menuItem.id ? 'layer3' : 'layer1'}
                                                 onClick={() => selectMenuItem(menuItem.id)}
-                                                style={{ cursor: 'pointer', border: selectedMenuItemId === menuItem.id ? `2px solid ${colors.primary.base}` : undefined }}
+                                                style={{ cursor: 'pointer', border: selectedMenuItemId === menuItem.id ? `2px solid ${colors.action.base}` : undefined }}
                                             >
                                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                                     <Text weight="medium">{menuItem.name}</Text>
@@ -311,7 +310,7 @@ export const InventoryManager: React.FC = () => {
                                     </div>
                                 ) : (
                                     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: spacing[4] }}>
-                                        <div style={{ borderBottom: `1px solid ${colors.neutral[200]}`, paddingBottom: spacing[4] }}>
+                                        <div style={{ borderBottom: `1px solid ${colors.border.subtle}`, paddingBottom: spacing[4] }}>
                                             <Text size="xl" weight="bold">
                                                 {menuItems.find(m => m.id === selectedMenuItemId)?.name}
                                             </Text>
@@ -324,7 +323,7 @@ export const InventoryManager: React.FC = () => {
                                                 const item = items.find(i => i.id === line.inventoryItemId);
                                                 if (!item) return null;
                                                 return (
-                                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: spacing[4], background: colors.background.layer1, padding: spacing[2], borderRadius: 4 }}>
+                                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: spacing[4], background: colors.surface.layer1, padding: spacing[2], borderRadius: 4 }}>
                                                         <Text style={{ flex: 2 }}>{item.name} ({item.unit})</Text>
                                                         <Input
                                                             type="number" step="0.001"
@@ -333,7 +332,7 @@ export const InventoryManager: React.FC = () => {
                                                             style={{ width: 100 }}
                                                         />
                                                         <Button
-                                                            variant="ghost" tone="critical" size="sm"
+                                                            variant="ghost" tone="destructive" size="sm"
                                                             onClick={() => removeIngredientFromRecipe(line.inventoryItemId)}
                                                         >
                                                             🗑️
@@ -343,7 +342,7 @@ export const InventoryManager: React.FC = () => {
                                             })}
                                         </div>
 
-                                        <div style={{ borderTop: `1px solid ${colors.neutral[200]}`, paddingTop: spacing[4], display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
+                                        <div style={{ borderTop: `1px solid ${colors.border.subtle}`, paddingTop: spacing[4], display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
                                             <Text weight="medium">Adicionar Ingrediente:</Text>
                                             <div style={{ display: 'flex', gap: spacing[2], flexWrap: 'wrap' }}>
                                                 {items.filter(i => !editingRecipe.some(r => r.inventoryItemId === i.id)).map(item => (

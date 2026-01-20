@@ -6,7 +6,7 @@ export interface FinanceSnapshot {
     totalOrders: number;
     averageTicket: number;
     paymentMethods: Record<string, number>;
-    hourlySales: Record<number, number>;
+    hourlySales: Record<string, number>;
     totalCost: number; // New
     grossMargin: number; // New
 }
@@ -22,58 +22,30 @@ export const FinanceEngine = {
         const end = endDate || new Date();
         end.setHours(23, 59, 59, 999);
 
-        // Fetch Payments (Source of Truth for Revenue)
-        const { data: payments, error: paymentError } = await supabase
-            .from('gm_payments')
-            .select('amount_cents, method, created_at')
-            .eq('restaurant_id', tenantId)
-            .gte('created_at', start.toISOString())
-            .lte('created_at', end.toISOString());
-
-        if (paymentError) throw paymentError;
-
-        // Fetch Orders (Source of Truth for Volume & Costs)
-        const { data: orders, error: orderError } = await supabase
-            .from('gm_orders') // Assuming orders table
-            .select('id, created_at, total_cost_cents, total_cents')
-            .eq('restaurant_id', tenantId)
-            .neq('status', 'CANCELLED') // Exclude cancelled
-            .gte('created_at', start.toISOString())
-            .lte('created_at', end.toISOString());
-
-        if (orderError) throw orderError;
-
-        // Aggregations
-        const totalRevenueCents = payments?.reduce((sum, p) => sum + p.amount_cents, 0) || 0;
-        const totalOrders = orders?.length || 0;
-        const averageTicketCents = totalOrders > 0 ? totalRevenueCents / totalOrders : 0;
-
-        // COGS Aggregation
-        const totalCostCents = orders?.reduce((sum, o) => sum + (o.total_cost_cents || 0), 0) || 0;
-        const grossMarginCents = totalRevenueCents - totalCostCents;
-
-        // Payment Methods Breakdown
-        const paymentMethods: Record<string, number> = {};
-        payments?.forEach(p => {
-            paymentMethods[p.method] = (paymentMethods[p.method] || 0) + p.amount_cents;
+        // Call RPC for server-side aggregation
+        const { data, error } = await supabase.rpc('get_sales_analytics', {
+            p_restaurant_id: tenantId,
+            p_start_date: start.toISOString(),
+            p_end_date: end.toISOString()
         });
 
-        // Hourly Sales
-        const hourlySales: Record<number, number> = {};
-        payments?.forEach(p => {
-            const hour = new Date(p.created_at).getHours();
-            hourlySales[hour] = (hourlySales[hour] || 0) + p.amount_cents;
-        });
+        if (error) {
+            console.error('FinanceEngine: Failed to fetch sales analytics', error);
+            throw error;
+        }
+
+        // Map RPC result (cents) to FinanceSnapshot (units/floats optional, but keeping consistency)
+        // Note: RPC returns numeric/bigint as numbers/strings in JSON. Supabase client handles JSON parsing.
 
         return {
             date: start.toISOString().split('T')[0],
-            totalRevenue: totalRevenueCents / 100,
-            totalOrders,
-            averageTicket: averageTicketCents / 100,
-            paymentMethods,
-            hourlySales,
-            totalCost: totalCostCents / 100,
-            grossMargin: grossMarginCents / 100
+            totalRevenue: (data.totalRevenue || 0) / 100,
+            totalOrders: data.totalOrders || 0,
+            averageTicket: (data.averageTicket || 0) / 100,
+            paymentMethods: data.paymentMethods || {},
+            hourlySales: data.hourlySales || {},
+            totalCost: (data.totalCost || 0) / 100, // New
+            grossMargin: (data.grossMargin || 0) / 100 // New
         };
     },
     /**
@@ -93,6 +65,105 @@ export const FinanceEngine = {
             return { balance: { available: 0, pending: 0, currency: 'eur' }, payouts: [] };
         }
 
+        return data;
+    },
+
+    /**
+     * Get Sales Forecast from Analytics Engine
+     */
+    async getSalesForecast(tenantId: string): Promise<{ historical: any[], forecast: any[], model: any }> {
+        const { data, error } = await supabase.functions.invoke('analytics-engine', {
+            body: {
+                action: 'forecast-sales',
+                restaurantId: tenantId,
+                daysToForecast: 7
+            }
+        });
+
+        if (error) {
+            console.error('FinanceEngine: Failed to fetch forecast', error);
+            return { historical: [], forecast: [], model: {} };
+        }
+
+        return data;
+    },
+
+    /**
+     * Get Staff Performance Metrics
+     */
+    async getStaffPerformance(tenantId: string, startDate?: Date, endDate?: Date): Promise<any[]> {
+        const start = startDate || new Date();
+        start.setHours(0, 0, 0, 0);
+
+        const end = endDate || new Date();
+        end.setHours(23, 59, 59, 999);
+
+        const { data: orders, error } = await supabase
+            .from('gm_orders')
+            .select('id, total_amount, operator_id, created_at, status')
+            .eq('restaurant_id', tenantId)
+            .neq('status', 'CANCELLED')
+            .gte('created_at', start.toISOString())
+            .lte('created_at', end.toISOString());
+
+        if (error) {
+            console.error('FinanceEngine: Failed to fetch staff performance', error);
+            return [];
+        }
+
+        // Aggregate by Operator
+        const staffStats: Record<string, { id: string, name: string, orders: number, revenue: number }> = {};
+
+        orders?.forEach(o => {
+            const opId = o.operator_id || 'unknown';
+            if (!staffStats[opId]) {
+                staffStats[opId] = {
+                    id: opId,
+                    name: opId === 'unknown' ? 'Não Atribuído' : `Staff ${opId.substring(0, 4)}...`, // Placeholder until we have name lookup
+                    orders: 0,
+                    revenue: 0
+                };
+            }
+            staffStats[opId].orders += 1;
+            staffStats[opId].revenue += (o.total_amount || 0);
+        });
+
+        // Try to fetch real names if we have a table for it (Simulated for now)
+        // In "The Empire", we would join with gm_worker_profiles
+
+        return Object.values(staffStats).sort((a, b) => b.revenue - a.revenue);
+    },
+
+    /**
+     * Close the Day (Z-Report)
+     * Atomically calculates totals, closes turns, and creates a snapshot.
+     */
+    async closeDay(tenantId: string, countedCash: number, notes?: string): Promise<{ id: string, gross: number, cash_diff: number }> {
+        const { data, error } = await supabase.rpc('close_day', {
+            p_restaurant_id: tenantId,
+            p_counted_cash: countedCash,
+            p_notes: notes || null
+        });
+
+        if (error) {
+            console.error('FinanceEngine: Failed to close day', error);
+            throw error;
+        }
+
+        return data; // { id, gross, cash_diff }
+    },
+
+    /**
+     * Get Z-Report details by ID
+     */
+    async getZReport(id: string): Promise<any> {
+        const { data, error } = await supabase
+            .from('gm_daily_closings')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
         return data;
     }
 };

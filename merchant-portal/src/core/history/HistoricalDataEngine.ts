@@ -86,7 +86,7 @@ export class HistoricalDataEngine {
         // 2. Buscar vendas reais (chefiapp)
         const { data: real } = await supabase
             .from('gm_orders')
-            .select('created_at, total_cents')
+            .select('created_at, total_amount')
             .eq('restaurant_id', restaurantId)
             .eq('status', 'PAID') // Apenas pagas
             .gte('created_at', startDate.toISOString())
@@ -112,7 +112,7 @@ export class HistoricalDataEngine {
             // Se já tinha histórico, vira hibrido
             if (existing.source === 'historical') existing.source = 'hybrid';
 
-            existing.totalCents += r.total_cents;
+            existing.totalCents += r.total_amount || 0;
             existing.ordersCount += 1;
             statsMap.set(day, existing);
         });

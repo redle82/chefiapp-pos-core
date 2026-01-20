@@ -392,7 +392,101 @@ export function PublicOrderingPage() {
         );
     }
 
-    return null;
+    // --- DATA LOADING STATE ---
+    if (loading) {
+        return (
+            <div className="public-loading">
+                <div className="public-loading__spinner"></div>
+                <p>Carregando cardápio...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="public-error">
+                <div className="public-error__icon">⚠️</div>
+                <h1 className="public-error__title">Indisponível</h1>
+                <p className="public-error__message">{error.message}</p>
+            </div>
+        );
+    }
+
+    if (!restaurant) {
+        return (
+            <div className="public-error">
+                <div className="public-error__icon">🏪</div>
+                <h1 className="public-error__title">Restaurante não encontrado</h1>
+            </div>
+        );
+    }
+
+    // --- HOME / MENU VIEW ---
+    // (Default fallback)
+    return (
+        <div className="public-menu">
+            <header className="public-menu__hero" style={{ backgroundImage: `url(${restaurant.cover_image_url || 'https://via.placeholder.com/800x400'})` }}>
+                <div className="public-menu__hero-content">
+                    <h1 className="public-menu__restaurant-name">{restaurant.name}</h1>
+                    <div className="public-menu__meta">
+                        {restaurant.address && <span>📍 {restaurant.address}</span>}
+                        {restaurant.phone && <span>📞 {restaurant.phone}</span>}
+                    </div>
+                </div>
+            </header>
+
+            {/* Float Cart Button */}
+            {cart.length > 0 && (
+                <button className="public-cart-float" onClick={() => setView('checkout')}>
+                    <span className="public-cart-float__count">{cartCount}</span>
+                    <span className="public-cart-float__label">Ver Pedido</span>
+                    <span className="public-cart-float__total">{formatPrice(cartTotal)}</span>
+                </button>
+            )}
+
+            <main className="public-menu__catalog">
+                {menu?.fullCatalog?.map(category => (
+                    <section key={category.id} className="public-menu__category">
+                        <h2 className="public-menu__category-title">{category.name}</h2>
+                        <div className="public-menu__items-grid">
+                            {category.items.map(product => (
+                                <div key={product.id} className="public-menu__product-card" onClick={() => addToCart(product)}>
+                                    {product.image_url && (
+                                        <div className="public-menu__product-image">
+                                            <img src={product.image_url} alt={product.name} loading="lazy" />
+                                        </div>
+                                    )}
+                                    <div className="public-menu__product-info">
+                                        <div className="public-menu__product-header">
+                                            <h3 className="public-menu__product-name">{product.name}</h3>
+                                            <span className="public-menu__product-price">{formatPrice(product.final_price_cents)}</span>
+                                        </div>
+                                        {product.description && (
+                                            <p className="public-menu__product-desc">{product.description}</p>
+                                        )}
+                                        {product.sponsorship && (
+                                            <span className="public-menu__badge-promoted">⭐ Recomendado</span>
+                                        )}
+                                    </div>
+                                    <button className="public-menu__add-btn">+</button>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                ))}
+            </main>
+
+            <footer className="public-menu__footer">
+                <p>Powered by ChefIApp™ Menu Intelligence</p>
+            </footer>
+        </div>
+    );
+}
+
+// Helper
+function formatPrice(cents: number) {
+    return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+
 }
 
 export default PublicOrderingPage;

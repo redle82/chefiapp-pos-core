@@ -9,12 +9,17 @@ import { Logger } from '../../core/logger';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { AdminLayout } from '../../ui/design-system/layouts/AdminLayout';
 import { AdminSidebar } from '../../ui/design-system/domain/AdminSidebar';
+import { SalesForecastChart } from './components/SalesForecastChart';
+import { StaffPerformanceWidget } from './components/StaffPerformanceWidget';
+import { ExportControls } from './components/ExportControls';
 
 export const FinanceDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { tenantId } = useTenant();
     const [snapshot, setSnapshot] = useState<FinanceSnapshot | null>(null);
     const [financials, setFinancials] = useState<{ balance: any, payouts: any[] } | null>(null);
+    const [forecastData, setForecastData] = useState<{ date: string; amount: number; type: 'historical' | 'forecast' }[]>([]);
+    const [staffPerformance, setStaffPerformance] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -22,12 +27,23 @@ export const FinanceDashboard: React.FC = () => {
             if (!tenantId) return;
             try {
                 setLoading(true);
-                const [snap, fin] = await Promise.all([
+                const [snap, fin, salesForecast, staffPerf] = await Promise.all([
                     FinanceEngine.getDailySnapshot(tenantId),
-                    FinanceEngine.getStripeFinancials(tenantId)
+                    FinanceEngine.getStripeFinancials(tenantId),
+                    FinanceEngine.getSalesForecast(tenantId),
+                    FinanceEngine.getStaffPerformance(tenantId)
                 ]);
                 setSnapshot(snap);
                 setFinancials(fin);
+                setStaffPerformance(staffPerf);
+
+                // Transform forecast data for chart
+                const chartData = [
+                    ...salesForecast.historical.map(h => ({ date: h.date, amount: h.amount_cents / 100, type: 'historical' as const })),
+                    ...salesForecast.forecast.map(f => ({ date: f.date, amount: f.predicted_cents / 100, type: 'forecast' as const }))
+                ];
+                setForecastData(chartData);
+
             } catch (err) {
                 Logger.error('Failed to load finance data', err);
             } finally {
@@ -56,26 +72,31 @@ export const FinanceDashboard: React.FC = () => {
     }
 
     // Transform hourly sales for Recharts
-    const chartData = Object.entries(snapshot.hourlySales).map(([hour, cents]) => ({
+    const hourlyData = Object.entries(snapshot.hourlySales).map(([hour, cents]) => ({
         hour: `${hour}:00`,
         amount: cents / 100
     })).sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
-
-    // Pad missing hours for a full 24h view if needed, or just show active hours
-    // Let's show active hours mostly, or full day if empty.
 
     return (
         <AdminLayout
             sidebar={<AdminSidebar activePath="/app/reports/finance" onNavigate={navigate} />}
             content={
-                <div className="flex flex-col gap-6 animate-fade-in">
-                    <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-6 animate-fade-in print:text-black">
+                    <div className="flex justify-between items-center print:hidden">
                         <div>
                             <h1 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
                                 Relatório de Vendas
                             </h1>
                             <Text size="sm" color="tertiary">{new Date().toLocaleDateString()} (Hoje)</Text>
                         </div>
+                        <ExportControls data={snapshot} />
+                    </div>
+
+                    {/* Print Header */}
+                    <div className="hidden print:block mb-8">
+                        <h1 className="text-3xl font-bold text-black">Relatório Financeiro</h1>
+                        <p className="text-gray-600">Data: {new Date().toLocaleDateString()}</p>
+                        <p className="text-gray-600">Restaurante: Sofia Gastrobar</p>
                     </div>
 
                     {/* KPI GRID */}
@@ -116,46 +137,52 @@ export const FinanceDashboard: React.FC = () => {
                         </Card>
                     </div>
 
-                    {/* CHART */}
-                    <Card surface="layer1" padding="xl" className="h-96">
-                        <div className="flex justify-between mb-4">
-                            <Text size="lg" weight="bold">Vendas por Hora</Text>
-                        </div>
-                        <div className="h-full w-full">
-                            <ResponsiveContainer width="100%" height="90%">
-                                <BarChart data={chartData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                                    <XAxis
-                                        dataKey="hour"
-                                        stroke="#666"
-                                        tick={{ fill: '#888' }}
-                                        axisLine={false}
-                                        tickLine={false}
-                                    />
-                                    <YAxis
-                                        stroke="#666"
-                                        tick={{ fill: '#888' }}
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tickFormatter={(value) => `R$${value}`}
-                                    />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
-                                        itemStyle={{ color: '#fff' }}
-                                        formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Vendas']}
-                                    />
-                                    <Bar
-                                        dataKey="amount"
-                                        fill="#fbbf24"
-                                        radius={[4, 4, 0, 0]}
-                                        barSize={40}
-                                    />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </Card>
+                    {/* CHARTS ROW (Hourly + Forecast) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* HOURLY SALES */}
+                        <Card surface="layer1" padding="xl" className="h-96">
+                            <div className="flex justify-between mb-4">
+                                <Text size="lg" weight="bold">Vendas por Hora (Hoje)</Text>
+                            </div>
+                            <div className="h-full w-full">
+                                <ResponsiveContainer width="100%" height="90%">
+                                    <BarChart data={hourlyData}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                                        <XAxis
+                                            dataKey="hour"
+                                            stroke="#666"
+                                            tick={{ fill: '#888' }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                        />
+                                        <YAxis
+                                            stroke="#666"
+                                            tick={{ fill: '#888' }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tickFormatter={(value) => `R$${value}`}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
+                                            itemStyle={{ color: '#fff' }}
+                                            formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Vendas']}
+                                        />
+                                        <Bar
+                                            dataKey="amount"
+                                            fill="#fbbf24"
+                                            radius={[4, 4, 0, 0]}
+                                            barSize={40}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </Card>
 
-                    {/* PAYMENT METHODS */}
+                        {/* PREDICTIVE FORECAST */}
+                        <SalesForecastChart data={forecastData} isLoading={loading} />
+                    </div>
+
+                    {/* PAYMENT METHODS & STAFF PERFORMANCE */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Card surface="layer1" padding="lg">
                             <Text size="lg" weight="bold" className="mb-4">Métodos de Pagamento</Text>
@@ -174,14 +201,7 @@ export const FinanceDashboard: React.FC = () => {
                             </div>
                         </Card>
 
-                        <Card surface="layer1" padding="lg">
-                            <Text size="lg" weight="bold" className="mb-4">Resumo Operacional</Text>
-                            <div className="space-y-2 text-sm text-gray-400">
-                                <p>Total de Transações: {Object.values(snapshot.paymentMethods).length > 0 ? 'Analítico indisponível' : '0'}</p>
-                                <p>Cancelamentos: --</p>
-                                <p>Descontos Aplicados: --</p>
-                            </div>
-                        </Card>
+                        <StaffPerformanceWidget data={staffPerformance} isLoading={loading} />
                     </div>
 
                     {/* STRIPE RECONCILIATION */}

@@ -49,34 +49,61 @@ export function useSupabaseAuth(): SupabaseAuthState {
     let mounted = true;
     let hashProcessed = false;
 
+    // DEV BYPASS: Demo Mode (Global Mock Session)
+    if (typeof window !== 'undefined') {
+      const isDemo = new URLSearchParams(window.location.search).get('demo') === 'true';
+      if (import.meta.env.DEV && isDemo) {
+        console.warn('[Auth] 🚧 DEV BYPASS: Activating Demo Mode (Mock Session)');
+        const mockUser = {
+          id: 'demo-user',
+          aud: 'authenticated',
+          role: 'authenticated',
+          email: 'demo@chefiapp.com',
+          phone: '',
+          app_metadata: { provider: 'email' },
+          user_metadata: { name: 'Demo User' },
+          created_at: new Date().toISOString(),
+        } as User;
+
+        const mockSession = {
+          access_token: 'mock-token',
+          refresh_token: 'mock-refresh-token',
+          expires_in: 3600,
+          token_type: 'bearer',
+          user: mockUser,
+        } as Session;
+
+        setSession(mockSession);
+        setUser(mockUser);
+        setLoading(false);
+        initializedRef.current = true;
+        return;
+      }
+    }
+
     // 1. Verificar se há hash OAuth na URL PRIMEIRO e processar explicitamente
-    // O Supabase processa automaticamente, mas precisamos garantir que seja processado ANTES de getSession()
     if (typeof window !== 'undefined') {
       const hash = window.location.hash;
       if (hash && hash.includes('access_token')) {
         hashProcessed = true;
-        // O Supabase processa o hash automaticamente quando getSession() é chamado
-        // Mas vamos garantir que seja processado corretamente
         console.log('[Auth] OAuth hash detected, processing...');
-        
-        // Processar hash explicitamente - getSession() processa o hash automaticamente
+
+        // Processar hash explicitamente
         supabase.auth.getSession().then(({ data: { session: hashSession }, error: hashError }) => {
           if (!mounted) return;
-          
+
           if (hashSession) {
             console.log('[Auth] OAuth hash processed successfully');
             setSession(hashSession);
             setUser(hashSession.user);
             setLoading(false);
             initializedRef.current = true;
-            // Limpar hash da URL após processamento bem-sucedido
             window.history.replaceState(null, '', window.location.pathname + window.location.search);
           } else if (hashError) {
             console.error('[Auth] Error processing OAuth hash:', hashError);
             setError(hashError);
             setLoading(false);
             initializedRef.current = true;
-            // Limpar hash mesmo em caso de erro para evitar loop
             window.history.replaceState(null, '', window.location.pathname + window.location.search);
           }
         });
@@ -88,7 +115,7 @@ export function useSupabaseAuth(): SupabaseAuthState {
     if (!hashProcessed) {
       supabase.auth.getSession().then(({ data: { session }, error }) => {
         if (!mounted) return;
-        
+
         if (error) {
           setError(error)
           setLoading(false)
@@ -125,7 +152,7 @@ export function useSupabaseAuth(): SupabaseAuthState {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
-        
+
         // Ignorar INITIAL_SESSION se já processamos uma vez
         // INITIAL_SESSION é disparado toda vez que o listener é registrado
         // Se o hook for remontado (ex: React StrictMode), isso pode causar loops
@@ -136,7 +163,7 @@ export function useSupabaseAuth(): SupabaseAuthState {
           }
           initialSessionProcessedRef.current = true;
         }
-        
+
         // Evitar double render: só atualizar se já inicializou
         if (!initializedRef.current) {
           // Primeiro evento pode vir antes do getSession() completar

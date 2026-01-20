@@ -9,7 +9,7 @@ import { Badge } from '../../ui/design-system/primitives/Badge';
 import { Input } from '../../ui/design-system/primitives/Input';
 import { Select } from '../../ui/design-system/primitives/Select';
 import { EmptyState } from '../../ui/design-system/primitives/EmptyState';
-import { Toast, useToast } from '../../ui/design-system';
+import { useToast } from '../../ui/design-system';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { spacing } from '../../ui/design-system/tokens/spacing';
 import { useMenuState } from './useMenuState';
@@ -157,7 +157,6 @@ export const MenuManager: React.FC = () => {
     const handleSyncMenu = async () => {
         try {
             setIsSyncing(true);
-            const { error } = await actions.syncExternal();
             // We need to implement syncExternal in useMenuState or just call invoke here.
             // Calling invoke directly for speed as useMenuState might not have it yet.
             const { supabase } = await import('../../core/supabase'); // Dynamic import using index
@@ -182,7 +181,7 @@ export const MenuManager: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2], marginBottom: 4 }}>
-                        <Badge status="preparing" label={OSCopy.menu.modeDraft} variant="pill" />
+                        <Badge status="preparing" label={OSCopy.menu.modeDraft} variant="soft" />
                     </div>
                     <Text size="sm" color="secondary">
                         {OSCopy.menu.draftBanner}
@@ -307,7 +306,7 @@ export const MenuManager: React.FC = () => {
                                         {item.track_stock && (
                                             <div style={{ marginTop: 4 }}>
                                                 {item.stock_quantity > 0 ? (
-                                                    <Badge status="success" label={`Estoque: ${item.stock_quantity}`} variant="pill" />
+                                                    <Badge status="success" label={`Estoque: ${item.stock_quantity}`} variant="soft" />
                                                 ) : (
                                                     <Badge status="error" label="ESGOTADO" variant="solid" />
                                                 )}
@@ -340,9 +339,18 @@ export const MenuManager: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <Text weight="bold" color="success">
-                                        {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: item.currency || 'EUR' }).format(item.price)}
-                                    </Text>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <Text weight="bold" color="success">
+                                            {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: item.currency || 'EUR' }).format(item.price)}
+                                        </Text>
+                                        {item.cost_price > 0 && (
+                                            <div>
+                                                <Text size="xs" color={((item.price - item.cost_price) / item.price) < 0.3 ? 'destructive' : 'secondary'}>
+                                                    Mg: {Math.round(((item.price - item.cost_price) / item.price) * 100)}%
+                                                </Text>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </Card>
                         ))}

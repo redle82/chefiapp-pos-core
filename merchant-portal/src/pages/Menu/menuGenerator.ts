@@ -14,6 +14,7 @@ interface TemplateItem {
     priceBase: number;
     category: string;
     desc?: string;
+    imageUrl?: string;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -26,18 +27,18 @@ const TEMPLATES: Record<string, TemplateItem[]> = {
         { category: 'Pizzas', name: 'Pepperoni', priceBase: 12, desc: 'Molho de tomate, mozzarella, pepperoni' },
         { category: 'Pizzas', name: 'Quatro Queijos', priceBase: 13, desc: 'Mozzarella, gorgonzola, parmesão, provolone' },
         { category: 'Pizzas', name: 'Frango com Catupiry', priceBase: 12, desc: 'Frango desfiado, catupiry, milho' },
-        { category: 'Bebidas', name: 'Refrigerante Lata', priceBase: 2 },
+        { category: 'Bebidas', name: 'Refrigerante Lata', priceBase: 2, imageUrl: '/assets/products/coke.png' },
         { category: 'Bebidas', name: 'Cerveja Long Neck', priceBase: 3 },
         { category: 'Sobremesas', name: 'Pizza de Chocolate', priceBase: 8, desc: 'Chocolate ao leite, morangos' },
     ],
     'burger': [
-        { category: 'Burgers', name: 'Cheeseburger', priceBase: 9, desc: 'Pão brioche, carne 150g, queijo cheddar' },
-        { category: 'Burgers', name: 'Bacon Burger', priceBase: 11, desc: 'Pão brioche, carne 150g, bacon, cheddar' },
+        { category: 'Burgers', name: 'Cheeseburger', priceBase: 9, desc: 'Pão brioche, carne 150g, queijo cheddar', imageUrl: '/assets/products/burger.png' },
+        { category: 'Burgers', name: 'Bacon Burger', priceBase: 11, desc: 'Pão brioche, carne 150g, bacon, cheddar', imageUrl: '/assets/products/burger.png' },
         { category: 'Burgers', name: 'Veggie Burger', priceBase: 10, desc: 'Burger de grão de bico, alface, tomate' },
-        { category: 'Acompanhamentos', name: 'Batata Frita', priceBase: 3 },
+        { category: 'Acompanhamentos', name: 'Batata Frita', priceBase: 3, imageUrl: '/assets/products/fries.png' },
         { category: 'Acompanhamentos', name: 'Onion Rings', priceBase: 4 },
         { category: 'Bebidas', name: 'Milkshake Chocolate', priceBase: 5 },
-        { category: 'Bebidas', name: 'Refrigerante Refil', priceBase: 3 },
+        { category: 'Bebidas', name: 'Refrigerante e Lata', priceBase: 3, imageUrl: '/assets/products/coke.png' },
     ],
     'sushi': [
         { category: 'Entradas', name: 'Sunomono', priceBase: 4, desc: 'Salada de pepino agridoce' },
@@ -90,7 +91,8 @@ export function generateMenu(prompt: MenuPrompt): Promise<ParsedMenuItem[]> {
                 preco: Math.round(t.priceBase * multiplier * 100) / 100, // Round to 2 decimals
                 descricao: t.desc,
                 ativo: true,
-                iva: 23
+                iva: 23,
+                imageUrl: t.imageUrl // Visual Polish
             }));
 
             resolve(items);

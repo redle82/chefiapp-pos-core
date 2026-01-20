@@ -9,18 +9,42 @@
  * - Total parcial
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '../../../ui/design-system/primitives/Card';
 import { Text } from '../../../ui/design-system/primitives/Text';
-import { colors } from '../../../ui/design-system/tokens/colors';
+import { useOrders } from '../context/OrderContextReal';
+import { useLoyalty } from '../../../core/loyalty/LoyaltyContext';
+import { getCustomerTier, getSmartSuggestion } from '../../../core/loyalty/LoyaltyUtils';
+import type { AICopilotSuggestion } from '../../../core/loyalty/LoyaltyUtils';
+import { CustomerSearchModal } from './CustomerSearchModal';
+import { CopilotWidget } from './CopilotWidget'; // Innovation
 import { spacing } from '../../../ui/design-system/tokens/spacing';
-import type { Order } from '../context/OrderTypes';
+import { colors } from '../../../ui/design-system/tokens/colors';
 
 interface OrderHeaderProps {
-  order: Order | null;
+  tableNumber?: number;
+  orderId?: string;
+  restaurantId?: string; // Passed from parent if available
 }
 
-export const OrderHeader: React.FC<OrderHeaderProps> = ({ order }) => {
+export const OrderHeader: React.FC<OrderHeaderProps> = ({ tableNumber, orderId, restaurantId }) => {
+  const { orders } = useOrders();
+  const { activeCustomer, setActiveCustomer } = useLoyalty();
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [dismissedSuggestion, setDismissedSuggestion] = useState(false); // Session state
+
+  // Using a temporary fallback until LoyaltyContext is updated with total_spend_cents
+  const tier = activeCustomer ? getCustomerTier(activeCustomer.total_spend_cents || 0) : null;
+  const suggestion = activeCustomer && !dismissedSuggestion ? getSmartSuggestion(activeCustomer.total_spend_cents || 0) : null;
+
+
+  // Find the active order based on orderId or tableNumber
+  const order = orderId
+    ? orders.find(o => o.id === orderId)
+    : tableNumber
+      ? orders.find(o => o.tableNumber === tableNumber)
+      : null;
+
   // Se não há pedido ativo, não renderizar
   if (!order) {
     return null;
@@ -50,34 +74,74 @@ export const OrderHeader: React.FC<OrderHeaderProps> = ({ order }) => {
       : 'Sem Mesa';
 
   return (
-    <Card
-      surface="layer1"
-      padding="md"
-      style={{
-        borderBottom: `2px solid ${colors.border.default}`,
-        marginBottom: spacing[3],
-      }}
-    >
-      <div
+    <>
+      <Card
+        surface="layer1"
+        padding="md"
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '100%',
+          borderBottom: `2px solid ${colors.border.default}`,
+          marginBottom: spacing[3],
         }}
       >
-        {/* Mesa e Hora */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[1] }}>
-          <Text size="lg" weight="bold" color="primary">
-            {mesaLabel}
-          </Text>
-          <Text size="sm" color="secondary">
-            Aberta às {formatTime(order.createdAt)}
-          </Text>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            width: '100%',
+          }}
+        >
+          {/* Título / Status */}
+          <div>
+            <Text weight="bold" size="lg" color="primary">
+              {orderId ? (tableNumber ? `Mesa ${tableNumber}` : 'Pedido Balcão') : 'Novo Pedido'}
+            </Text>
+            {order && (
+              <Text size="sm" color="secondary">
+                #{order.id.slice(0, 8)} • {order.status}
+              </Text>
+            )}
+            {/* Customer Pill */}
+            <div
+              onClick={() => setShowCustomerModal(true)}
+              style={{
+                marginTop: 4,
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '2px 8px',
+                backgroundColor: tier ? `${tier.color}20` : '#333',
+                borderRadius: 12,
+                cursor: 'pointer',
+                border: tier ? `1px solid ${tier.color}` : '1px solid #444',
+                transition: 'all 0.2s'
+              }}
+            >
+              <span style={{ marginRight: 6, fontSize: '0.9em' }}>
+                {activeCustomer ? (tier ? tier.icon : '👤') : '👤'}
+              </span>
+              <Text size="xs" color={tier ? 'primary' : 'secondary'} style={{ fontWeight: tier ? 'bold' : 'normal' }}>
+                {activeCustomer ? (
+                  <>
+                    <span style={{ color: tier?.color }}>{activeCustomer.name}</span>
+                    <span style={{ margin: '0 4px', opacity: 0.5 }}>|</span>
+                    {activeCustomer.points_balance || 0} pts
+                  </>
+                ) : 'Identificar Cliente'}
+              </Text>
+            </div>
+            {activeCustomer && (
+              <span
+                onClick={(e) => { e.stopPropagation(); setActiveCustomer(null); }}
+                style={{ marginLeft: 4, cursor: 'pointer', opacity: 0.7 }}
+              >
+                ✕
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Total Parcial */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: spacing[1] }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: spacing[1], position: 'absolute', right: 16, top: 16 }}>
           <Text size="sm" color="tertiary" weight="medium">
             Total Parcial
           </Text>
@@ -85,7 +149,32 @@ export const OrderHeader: React.FC<OrderHeaderProps> = ({ order }) => {
             {totalFormatted}
           </Text>
         </div>
-      </div>
-    </Card>
+      </Card >
+
+      {/* AI Copilot Injection */}
+      {suggestion && (
+        <div style={{ marginBottom: spacing[3] }}>
+          <CopilotWidget
+            suggestion={suggestion}
+            onDismiss={() => setDismissedSuggestion(true)}
+            onAction={() => {
+              // Future: Auto-scroll to category or open modal
+              console.log('AI Logic Triggered:', suggestion.actionLabel);
+            }}
+          />
+        </div>
+      )}
+
+      {showCustomerModal && (
+        <CustomerSearchModal
+          onClose={() => setShowCustomerModal(false)}
+          onSelect={(customer) => {
+            setActiveCustomer(customer);
+            setShowCustomerModal(false);
+            setDismissedSuggestion(false); // Reset suggestion for new customer
+          }}
+        />
+      )}
+    </>
   );
 };

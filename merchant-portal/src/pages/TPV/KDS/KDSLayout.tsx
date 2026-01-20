@@ -1,5 +1,6 @@
 import React from 'react';
 import { Colors } from '../../../ui/design-system/tokens';
+import { TPVInstallPrompt } from '../components/TPVInstallPrompt';
 
 interface KDSLayoutProps {
     children: React.ReactNode;
@@ -25,6 +26,10 @@ export const KDSLayout: React.FC<KDSLayoutProps> = ({ children }) => {
                We could add global "Flash Messages" specific to kitchen here later.
             */}
             {children}
+            <TPVInstallPrompt
+                title="Instalar KDS"
+                description="Instale o Monitor de Cozinha para operar em tela cheia e sem distrações."
+            />
         </div>
     );
 };

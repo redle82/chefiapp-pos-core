@@ -19,7 +19,7 @@ import { logAuditEvent } from '../audit/logAuditEvent';
 
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered' | 'canceled';
 export type PaymentStatus = 'PENDING' | 'PARTIALLY_PAID' | 'PAID' | 'FAILED';
-export type PaymentMethod = 'cash' | 'card' | 'pix';
+export type PaymentMethod = 'cash' | 'card' | 'pix' | 'loyalty';
 
 export class OrderEngineError extends Error {
     constructor(message: string, public code: string) {

@@ -1,4 +1,4 @@
-import { ParsedMenuItem } from "./MenuSharedTypes";
+import type { ParsedMenuItem } from "./MenuSharedTypes";
 
 export type MenuTemplateId = 'cafe' | 'bar' | 'restaurant' | 'burger' | 'pizzeria';
 

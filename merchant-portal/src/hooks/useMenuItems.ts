@@ -104,6 +104,13 @@ export function useMenuItems(restaurantId: string | null) {
         return () => { isMounted = false; };
     }, [restaurantId]);
 
-    return { items, loading, error };
+    return {
+        items: (items.length === 0 && import.meta.env.DEV) ? [
+            { id: 'mock-1', name: 'Mock Burger', priceCents: 1200, category: 'Burgers', description: 'Delicious mock burger' },
+            { id: 'mock-2', name: 'Mock Cola', priceCents: 300, category: 'Drinks', description: 'Cold mock cola' }
+        ] as MenuItem[] : items,
+        loading,
+        error
+    };
 }
 

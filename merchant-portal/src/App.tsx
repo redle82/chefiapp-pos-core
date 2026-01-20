@@ -16,6 +16,7 @@ import PublicPages from './pages/Public/PublicOrderingPage';
 import { SelectTenantPage, AccessDeniedPage } from './pages/Tenant';
 import { HealthCheckPage } from './pages/HealthCheckPage';
 import { SystemStatusPage } from './pages/Audit/SystemStatusPage';
+import { DebugTPV } from './pages/DebugTPV';
 
 // Content Hub
 import { ReaderLayout } from './pages/Read/ReaderLayout';
@@ -41,6 +42,7 @@ const ConnectorSettings = React.lazy(() => import('./pages/Settings').then(m => 
 
 
 const DailyClosing = React.lazy(() => import('./pages/Reports/DailyClosing').then(m => ({ default: m.DailyClosing })));
+const ZReportPrint = React.lazy(() => import('./pages/Reports/ZReportPrint').then(m => ({ default: m.ZReportPrint })));
 const FinanceDashboard = React.lazy(() => import('./pages/Reports/FinanceDashboard').then(m => ({ default: m.FinanceDashboard })));
 const DeliveryMonitor = React.lazy(() => import('./modules/delivery/DeliveryMonitor').then(m => ({ default: m.DeliveryMonitor })));
 const StaffPage = React.lazy(() => import('./pages/Settings/StaffPage'));
@@ -148,6 +150,7 @@ function App() {
                 <Route path="/health" element={<HealthCheckPage />} />
                 <Route path="/auth" element={<AuthPage />} />
                 {/* 🐞 DEBUG: Manual TPV Access */}
+                <Route path="/debug-tpv" element={<DebugTPV />} />
 
                 {/* Legacy redirects - manter compatibilidade temporária */}
                 <Route path="/login" element={<Navigate to="/auth" replace />} />
@@ -158,7 +161,11 @@ function App() {
                 <Route path="/onboarding/*" element={<Navigate to="/app/select-tenant" replace />} />
 
                 <Route path="/migration/wizard" element={<MigrationWizard />} />
-                <Route path="/activation" element={<ActivationPage />} />
+                <Route path="/activation" element={
+                  <OnboardingProvider>
+                    <ActivationPage />
+                  </OnboardingProvider>
+                } />
 
                 {/* 🍳 KDS STANDALONE — Cozinha Independente (Tablet/TV) */}
                 {/* ROTA: /kds/:restaurantId - Funciona sem AppLayout, sem FlowGate */}
@@ -246,6 +253,7 @@ function App() {
                       <Route path="settings/advanced-setup" element={<AdvancedSetupPage />} />
                       <Route path="settings/connectors" element={<Suspense fallback={<div>Loading...</div>}><ConnectorSettings /></Suspense>} />
                       <Route path="reports/daily-closing" element={<Suspense fallback={<div>Loading...</div>}><DailyClosing /></Suspense>} />
+                      <Route path="reports/z-report/:id" element={<Suspense fallback={<div>Loading...</div>}><ZReportPrint /></Suspense>} />
                       <Route path="reports/finance" element={<Suspense fallback={<div>Loading...</div>}><FinanceDashboard /></Suspense>} />
                       <Route path="reports/delivery" element={<Suspense fallback={<div>Loading DLQ...</div>}><DeliveryMonitor /></Suspense>} />
                       <Route path="team" element={<Suspense fallback={<div>Loading...</div>}><StaffPage /></Suspense>} />
@@ -334,6 +342,8 @@ function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/health" element={<HealthCheckPage />} />
                 <Route path="/auth" element={<AuthPage />} />
+                {/* 🐞 DEBUG: Manual TPV Access */}
+                <Route path="/debug-tpv" element={<DebugTPV />} />
                 {/* Legacy redirects - manter compatibilidade temporária */}
                 <Route path="/login" element={<Navigate to="/auth" replace />} />
                 <Route path="/signup" element={<Navigate to="/auth" replace />} />

@@ -5,7 +5,10 @@ import { Text } from '../../../ui/design-system/primitives/Text';
 import { spacing } from '../../../ui/design-system/tokens/spacing';
 import { checkHardwareCapabilities } from '../../../core/hardware/HardwareCapabilities';
 
-export const TPVInstallPrompt: React.FC = () => {
+export const TPVInstallPrompt: React.FC<{ title?: string; description?: string }> = ({
+    title = "Instalar TPV",
+    description = "Para melhor experiência e desempenho, instale o App do Caixa neste dispositivo."
+}) => {
     const [installPrompt, setInstallPrompt] = useState<any>(null);
     const [isStandalone, setIsStandalone] = useState(false);
     const [isHidden, setIsHidden] = useState(false);
@@ -28,7 +31,9 @@ export const TPVInstallPrompt: React.FC = () => {
         if (missing.length > 0) {
             // Only warn about USB/Serial as they are critical for TPV
             if (missing.includes('USB') || missing.includes('Serial')) {
-                setHwWarnings(prev => [...prev, 'Navegador incompatível com Hardware (Use Chrome/Edge)']);
+                const msg = 'Navegador incompatível com Hardware (Use Chrome/Edge)';
+                setHwWarnings(prev => [...prev, msg]);
+                console.warn(msg);
             }
         }
 
@@ -77,10 +82,10 @@ export const TPVInstallPrompt: React.FC = () => {
             width: '90%',
             maxWidth: '400px'
         }}>
-            <Card surface="layer3" elevation="high">
+            <Card elevated padding="md">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[3] }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Text variant="h4">Instalar TPV</Text>
+                        <Text as="h4" size="xl" weight="bold">{title}</Text>
                         <button
                             onClick={() => setIsHidden(true)}
                             style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
@@ -89,9 +94,17 @@ export const TPVInstallPrompt: React.FC = () => {
                         </button>
                     </div>
 
-                    <Text variant="body1" color="secondary">
-                        Para melhor experiência e desempenho, instale o App do Caixa neste dispositivo.
+                    <Text as="p" size="base" color="secondary">
+                        {description}
                     </Text>
+
+                    {hwWarnings.length > 0 && (
+                        <div style={{ padding: spacing[2], backgroundColor: 'rgba(255, 100, 100, 0.1)', borderRadius: spacing[1] }}>
+                            {hwWarnings.map((warning, idx) => (
+                                <Text key={idx} as="p" size="sm" color="warning">⚠️ {warning}</Text>
+                            ))}
+                        </div>
+                    )}
 
                     <Button
                         variant="primary"

@@ -7,6 +7,7 @@ import { Button } from '../primitives/Button';
 import { supabase } from '../../../core/supabase';
 import { OSSignature } from '../sovereign/OSSignature';
 import { removeTabIsolated } from '../../../core/storage/TabIsolatedStorage';
+import { useContextEngine } from '../../../core/context';
 
 interface AdminSidebarProps {
     activePath: string;
@@ -15,6 +16,7 @@ interface AdminSidebarProps {
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNavigate }) => {
     const navigate = useNavigate();
+    const { role, visibleModules, switchView, isViewMode, originalRole } = useContextEngine();
     const theme = colors.modes.dashboard;
 
     // Track expanded groups. EVOLVE is collapsed by default (meta-produto + comercial).
@@ -41,7 +43,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
         navigate('/start');
     };
 
-    const handleItemClick = (item: any) => {
+    const handleItemClick = (item: SidebarItem) => {
         if (item.type === 'launcher') {
             // TPV Installation Contract: Launch in isolated context
             if (item.id === '/app/tpv') {
@@ -59,9 +61,26 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
         }
     };
 
-    const GROUPS = [
+    interface SidebarItem {
+        label: string;
+        id: string;
+        icon: string;
+        type?: 'launcher';
+        status?: 'experimental' | 'locked' | 'planned' | 'active';
+        show?: boolean;
+    }
+
+    interface SidebarGroup {
+        title: string;
+        visible?: boolean;
+        collapsible?: boolean;
+        items: SidebarItem[];
+    }
+
+    const GROUPS: SidebarGroup[] = [
         {
             title: 'Comando',
+            visible: role === 'owner' || role === 'manager',
             items: [
                 { label: 'Comando Central', id: '/app/dashboard', icon: '⚡️' },
                 { label: 'Ajustes do Núcleo', id: '/app/settings', icon: '⚙️' },
@@ -69,50 +88,62 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
         },
         {
             title: 'Operar',
+            visible: true, // Always visible, but items filtered
             items: [
-                { label: 'TPV (Caixa)', id: '/app/tpv', icon: '🖥️', type: 'launcher' },
-                { label: 'KDS (Cozinha)', id: '/app/kds', icon: '👨‍🍳', type: 'launcher' },
-                { label: 'Cardápio', id: '/app/menu', icon: '🍔' },
-                { label: 'Pedidos', id: '/app/orders', icon: '📃' },
-                { label: 'Operação Hub', id: '/app/operational-hub', icon: '📦', status: 'experimental' },
-                { label: 'Inventário', id: '/app/inventory', icon: '🧺', status: 'experimental' },
-                { label: 'Reservas', id: '/app/reservations', icon: '📅', status: 'planned' },
+                { label: 'TPV (Caixa)', id: '/app/tpv', icon: '🖥️', type: 'launcher', show: visibleModules.orders },
+                { label: 'KDS (Cozinha)', id: '/app/kds', icon: '👨‍🍳', type: 'launcher', show: visibleModules.kitchen },
+                { label: 'Cardápio', id: '/app/menu', icon: '🍔', show: visibleModules.menu },
+                { label: 'Pedidos', id: '/app/orders', icon: '📃', show: visibleModules.orders },
+                { label: 'Operação Hub', id: '/app/operational-hub', icon: '📦', status: 'experimental', show: visibleModules.settings },
+                { label: 'Inventário', id: '/app/inventory', icon: '🧺', status: 'experimental', show: visibleModules.settings },
+                { label: 'Mesas', id: '/app/tables', icon: '🪑', show: visibleModules.tables }, // Added explicit tables item
+                { label: 'Reservas', id: '/app/reservations', icon: '📅', status: 'planned', show: visibleModules.settings },
             ]
         },
         {
             title: 'Analisar',
+            visible: visibleModules.reports || visibleModules.finance,
             items: [
-                { label: 'Fecho Diário', id: '/app/reports/daily-closing', icon: '📊' },
-                { label: 'Finanças', id: '/app/reports/finance', icon: '💰' },
-                { label: 'Clientes (CRM)', id: '/app/crm', icon: '👥' },
-                { label: 'Fidelidade', id: '/app/loyalty', icon: '🎁' },
+                { label: 'Fecho Diário', id: '/app/reports/daily-closing', icon: '📊', show: visibleModules.reports },
+                { label: 'Finanças', id: '/app/reports/finance', icon: '💰', show: visibleModules.finance },
+                { label: 'Clientes (CRM)', id: '/app/crm', icon: '👥', show: visibleModules.reports },
+                { label: 'Fidelidade', id: '/app/loyalty', icon: '🎁', show: visibleModules.reports },
             ]
         },
         {
             title: 'Governar',
+            visible: visibleModules.settings,
             items: [
-                { label: 'Equipa', id: '/app/team', icon: '👥' },
-                { label: 'Controlo de Acesso', id: '/app/govern-manage', icon: '🔐' },
-                { label: 'Auditoria', id: '/app/audit', icon: '📋' },
-                { label: 'Página Web', id: '/app/web/preview', icon: '🌐' },
-                { label: 'Segurança Alimentar', id: '/app/govern', icon: '🧼', status: 'locked' },
+                { label: 'Equipa', id: '/app/team', icon: '👥', show: visibleModules.settings },
+                { label: 'Controlo de Acesso', id: '/app/govern-manage', icon: '🔐', show: visibleModules.settings },
+                { label: 'Auditoria', id: '/app/audit', icon: '📋', show: visibleModules.settings },
+                { label: 'Página Web', id: '/app/web/preview', icon: '🌐', show: visibleModules.settings },
+                { label: 'Segurança Alimentar', id: '/app/govern', icon: '🧼', status: 'locked', show: visibleModules.settings },
             ]
         },
         {
             title: 'Conectar',
+            visible: visibleModules.settings,
             items: [
-                { label: 'Conectores', id: '/app/settings/connectors', icon: '🔌', status: 'experimental' },
-                { label: 'Reputação Hub', id: '/app/reputation-hub', icon: '⭐', status: 'locked' },
+                { label: 'Conectores', id: '/app/settings/connectors', icon: '🔌', status: 'experimental', show: visibleModules.settings },
+                { label: 'Reputação Hub', id: '/app/reputation-hub', icon: '⭐', status: 'locked', show: visibleModules.settings },
             ]
         },
         {
             title: 'Evolve',
             collapsible: true, // Meta-produto + Comercial unificados
+            visible: role === 'owner',
             items: [
-                { label: 'Evolve Hub', id: '/app/evolve', icon: '🔮' },
+                { label: 'Evolve Hub', id: '/app/evolve', icon: '🔮', show: true },
             ]
         }
     ];
+
+    // Filter Groups
+    const filteredGroups = GROUPS.filter(g => g.visible).map(g => ({
+        ...g,
+        items: g.items.filter(i => i.show !== false)
+    })).filter(g => g.items.length > 0);
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: spacing[4] }}>
@@ -131,7 +162,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
                 paddingRight: spacing[2],
                 marginRight: `-${spacing[2]}`
             }}>
-                {GROUPS.map(group => (
+                {filteredGroups.map(group => (
                     <div key={group.title} style={{ display: 'flex', flexDirection: 'column', gap: spacing[1] }}>
                         {/* Group Header - Clickable for toggle */}
                         <div
@@ -215,13 +246,49 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
             <div style={{ marginTop: 'auto', padding: spacing[4], borderTop: `1px solid ${theme.border.subtle}` }}>
                 <Button
                     variant="ghost"
+                    tone="neutral"
+                    onClick={() => navigate('/app/select-tenant')}
+                    style={{ width: '100%', marginBottom: spacing[2], justifyContent: 'flex-start', color: theme.text.secondary }}
+                >
+                    🏢 Trocar Restaurante
+                </Button>
+                <Button
+                    variant="ghost"
                     tone="destructive"
                     onClick={handleLogout}
-                    style={{ width: '100%', marginBottom: spacing[3] }}
+                    style={{ width: '100%', marginBottom: spacing[3], justifyContent: 'flex-start' }}
                 >
                     🚪 Encerrar Turno
                 </Button>
-                <Text size="xs" color="tertiary">v2.1.0 (Architecture of Modes)</Text>
+
+                {/* View Switcher only for pure Owner */}
+                {originalRole === 'owner' && (
+                    <div style={{ marginTop: spacing[2], paddingTop: spacing[2], borderTop: `1px dashed ${theme.border.subtle}` }}>
+                        <Text size="xs" color="tertiary" style={{ marginBottom: spacing[2] }}>MODO DE VISÃO:</Text>
+                        <select
+                            value={isViewMode ? role : 'owner'}
+                            onChange={(e) => switchView(e.target.value === 'owner' ? null : e.target.value as any)}
+                            style={{
+                                width: '100%',
+                                background: theme.surface.layer2,
+                                color: theme.text.primary,
+                                border: `1px solid ${theme.border.subtle}`,
+                                borderRadius: 4,
+                                padding: 4,
+                                fontSize: 12
+                            }}
+                        >
+                            <option value="owner">👑 Dono (Padrão)</option>
+                            <option value="manager">🧑‍💼 Gerente</option>
+                            <option value="waiter">🧍 Garçom</option>
+                            <option value="kitchen">👨‍🍳 Cozinheiro</option>
+                        </select>
+                    </div>
+                )}
+
+                <Text size="xs" color="tertiary" style={{ marginTop: spacing[3] }}>
+                    {role.toUpperCase()} • v2.2 (Context Engine)
+                </Text>
             </div>
         </div>
     );

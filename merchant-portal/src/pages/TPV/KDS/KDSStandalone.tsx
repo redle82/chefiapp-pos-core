@@ -31,6 +31,12 @@ const KDSStandalone = () => {
     const { restaurantId } = useParams<{ restaurantId: string }>();
     const [ready, setReady] = useState(false);
 
+    // Mission 55: Smart Routing (Kitchen vs Bar)
+    // Read ?station=BAR or ?station=KITCHEN from URL
+    const searchParams = new URLSearchParams(window.location.search);
+    const stationParam = searchParams.get('station')?.toUpperCase();
+    const initialStation = (stationParam === 'BAR' || stationParam === 'KITCHEN') ? stationParam : 'ALL';
+
     useEffect(() => {
         if (restaurantId) {
             // SEEDING: Inject ID into storage so OrderProvider works naturally
@@ -55,7 +61,7 @@ const KDSStandalone = () => {
             <KernelProvider tenantId={restaurantId}>
                 <OfflineOrderProvider>
                     <OrderProvider restaurantId={restaurantId}>
-                        <KitchenDisplay />
+                        <KitchenDisplay initialStation={initialStation as any} />
                     </OrderProvider>
                 </OfflineOrderProvider>
             </KernelProvider>
