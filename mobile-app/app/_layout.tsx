@@ -8,6 +8,8 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { AppStaffProvider } from '@/context/AppStaffContext';
+import { RoleSelectorDevPanel } from '@/components/RoleSelectorDevPanel';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -26,8 +28,20 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const segments = useSegments();
   const router = useRouter();
 
+  // 🛠️ DEV MODE: Bypass authentication for simulator testing
+  const DEV_BYPASS_AUTH = __DEV__;
+
   useEffect(() => {
     if (loading) return;
+
+    // Skip auth checks in DEV mode
+    if (DEV_BYPASS_AUTH) {
+      const inAuthGroup = segments[0] === '(auth)';
+      if (inAuthGroup) {
+        router.replace('/(tabs)/staff');
+      }
+      return;
+    }
 
     const inAuthGroup = segments[0] === '(auth)';
 
@@ -38,14 +52,18 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       // Redirect to app if authenticated
       router.replace('/(tabs)');
     }
-  }, [session, loading, segments]);
+  }, [session, loading, segments, DEV_BYPASS_AUTH]);
 
-  if (loading) {
+  if (loading && !DEV_BYPASS_AUTH) {
     return null; // Or a loading spinner
   }
 
   return <>{children}</>;
 }
+
+import { OrderProvider } from '@/context/OrderContext';
+
+// ...
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -70,7 +88,12 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <AppStaffProvider>
+        <OrderProvider>
+          <RootLayoutNav />
+          <RoleSelectorDevPanel />
+        </OrderProvider>
+      </AppStaffProvider>
     </AuthProvider>
   );
 }
