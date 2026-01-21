@@ -1,20 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
     FlatList,
     StyleSheet,
     TouchableOpacity,
+    Modal,
+    Alert
 } from 'react-native';
-
-interface Order {
-    id: string;
-    table: string;
-    items: { name: string; quantity: number }[];
-    total: number;
-    status: 'pending' | 'preparing' | 'ready' | 'delivered';
-    createdAt: Date;
-}
+import { ShiftGate } from '@/components/ShiftGate';
+import { useOrder, Order } from '@/context/OrderContext';
 
 const STATUS_COLORS = {
     pending: '#ff9500',
@@ -31,51 +26,32 @@ const STATUS_LABELS = {
 };
 
 export default function OrdersScreen() {
-    const [orders, setOrders] = useState<Order[]>([]);
+    const { orders, updateOrderStatus } = useOrder();
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-    useEffect(() => {
-        // Mock orders - will connect to real-time later
-        const mockOrders: Order[] = [
-            {
-                id: '1',
-                table: 'Mesa 5',
-                items: [
-                    { name: 'Francesinha', quantity: 2 },
-                    { name: 'Imperial', quantity: 2 },
-                ],
-                total: 30.00,
-                status: 'preparing',
-                createdAt: new Date(),
-            },
-            {
-                id: '2',
-                table: 'Mesa 3',
-                items: [
-                    { name: 'Bitoque', quantity: 1 },
-                    { name: 'Café', quantity: 1 },
-                ],
-                total: 10.70,
-                status: 'pending',
-                createdAt: new Date(),
-            },
-            {
-                id: '3',
-                table: 'Mesa 8',
-                items: [
-                    { name: 'Bacalhau à Brás', quantity: 3 },
-                ],
-                total: 42.00,
-                status: 'ready',
-                createdAt: new Date(),
-            },
-        ];
-        setOrders(mockOrders);
-    }, []);
+    const handleAction = (action: string) => {
+        if (!selectedOrder) return;
+
+        switch (action) {
+            case 'delivery':
+                updateOrderStatus(selectedOrder.id, 'delivered');
+                Alert.alert("Pedido Entregue", "O pedido foi marcado como entregue.");
+                break;
+            case 'cancel':
+                // In a real app, this would delete or set status to 'cancelled'
+                Alert.alert("Cancelar", "Funcionalidade de cancelamento total em breve (Requer permissão de Gerente).");
+                break;
+            case 'print':
+                Alert.alert("Imprimir", "Enviando para impressora térmica...");
+                break;
+        }
+        setSelectedOrder(null);
+    };
 
     const renderOrder = ({ item }: { item: Order }) => (
-        <TouchableOpacity style={styles.orderCard}>
+        <TouchableOpacity style={styles.orderCard} onPress={() => setSelectedOrder(item)}>
             <View style={styles.orderHeader}>
-                <Text style={styles.tableName}>{item.table}</Text>
+                <Text style={styles.tableName}>Mesa {item.table}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[item.status] }]}>
                     <Text style={styles.statusText}>{STATUS_LABELS[item.status]}</Text>
                 </View>
@@ -97,19 +73,76 @@ export default function OrdersScreen() {
     );
 
     return (
-        <View style={styles.container}>
-            <FlatList
-                data={orders}
-                renderItem={renderOrder}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.list}
-                ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>Nenhum pedido ativo</Text>
+        <ShiftGate>
+            <View style={styles.container}>
+                <FlatList
+                    data={orders}
+                    renderItem={renderOrder}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.list}
+                    ListEmptyComponent={
+                        <View style={styles.emptyContainer}>
+                            <Text style={styles.emptyText}>Nenhum pedido ativo</Text>
+                        </View>
+                    }
+                />
+
+                {/* Details / Actions Modal */}
+                <Modal
+                    visible={!!selectedOrder}
+                    transparent={true}
+                    animationType="slide"
+                    onRequestClose={() => setSelectedOrder(null)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>Ações do Pedido</Text>
+                            {selectedOrder && (
+                                <View style={styles.modalInfo}>
+                                    <Text style={styles.infoText}>Mesa: {selectedOrder.table}</Text>
+                                    <Text style={styles.infoText}>Estado: {STATUS_LABELS[selectedOrder.status]}</Text>
+                                    <Text style={styles.infoText}>Total: €{selectedOrder.total.toFixed(2)}</Text>
+                                </View>
+                            )}
+
+                            <View style={styles.actionButtons}>
+                                <TouchableOpacity
+                                    style={[styles.actionBtn, styles.printBtn]}
+                                    onPress={() => handleAction('print')}
+                                >
+                                    <Text style={styles.btnText}>🖨️ Imprimir Ticket</Text>
+                                </TouchableOpacity>
+
+                                {selectedOrder?.status === 'ready' && (
+                                    <TouchableOpacity
+                                        style={[styles.actionBtn, styles.deliveryBtn]}
+                                        onPress={() => handleAction('delivery')}
+                                    >
+                                        <Text style={styles.btnText}>✅ Marcar Entregue</Text>
+                                    </TouchableOpacity>
+                                )}
+
+                                {selectedOrder?.status === 'pending' && (
+                                    <TouchableOpacity
+                                        style={[styles.actionBtn, styles.cancelBtn]}
+                                        onPress={() => handleAction('cancel')}
+                                    >
+                                        <Text style={styles.btnText}>🚫 Cancelar</Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+
+                            <TouchableOpacity
+                                style={styles.closeButton}
+                                onPress={() => setSelectedOrder(null)}
+                            >
+                                <Text style={styles.closeButtonText}>Fechar</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                }
-            />
-        </View>
+                </Modal>
+            </View>
+        </ShiftGate>
     );
 }
 
@@ -181,6 +214,65 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         color: '#666',
+        fontSize: 16,
+    },
+    // Modal
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        justifyContent: 'center',
+        padding: 20,
+    },
+    modalContent: {
+        backgroundColor: '#1c1c1e',
+        borderRadius: 16,
+        padding: 20,
+        alignItems: 'center',
+    },
+    modalTitle: {
+        color: '#fff',
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 20,
+    },
+    modalInfo: {
+        marginBottom: 20,
+        alignItems: 'center',
+    },
+    infoText: {
+        color: '#ccc',
+        fontSize: 16,
+        marginBottom: 8,
+    },
+    actionButtons: {
+        width: '100%',
+        gap: 12,
+        marginBottom: 20,
+    },
+    actionBtn: {
+        padding: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+    },
+    printBtn: {
+        backgroundColor: '#333',
+    },
+    deliveryBtn: {
+        backgroundColor: '#32d74b',
+    },
+    cancelBtn: {
+        backgroundColor: '#ff453a',
+    },
+    btnText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    closeButton: {
+        padding: 10,
+    },
+    closeButtonText: {
+        color: '#888',
         fontSize: 16,
     },
 });
