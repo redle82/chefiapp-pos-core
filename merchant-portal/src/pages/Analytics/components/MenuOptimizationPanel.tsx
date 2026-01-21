@@ -1,108 +1,174 @@
-/**
- * P5-1: Menu Optimization Panel
- * 
- * Painel para análise e otimização de menu
- */
 
-import React, { useState, useEffect } from 'react';
-import { menuOptimizationService, type MenuItemAnalysis, type PriceSuggestion } from '../../../core/ai/MenuOptimizationService';
+import React, { useMemo } from 'react';
+import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, CartesianGrid, ReferenceLine, Label, Cell } from 'recharts';
 import { Card } from '../../../ui/design-system/primitives/Card';
 import { Text } from '../../../ui/design-system/primitives/Text';
-import { Button } from '../../../ui/design-system/primitives/Button';
-import { getTabIsolated } from '../../../core/storage/TabIsolatedStorage';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import type { ProductPerformance } from '../hooks/useRealAnalytics';
 
-export const MenuOptimizationPanel: React.FC = () => {
-    const [analyses, setAnalyses] = useState<MenuItemAnalysis[]>([]);
-    const [suggestions, setSuggestions] = useState<PriceSuggestion[]>([]);
-    const [loading, setLoading] = useState(false);
+interface MenuOptimizationPanelProps {
+    products: ProductPerformance[];
+}
 
-    const loadAnalyses = async () => {
-        const restaurantId = getTabIsolated('chefiapp_restaurant_id');
-        if (!restaurantId) return;
+interface PlotPoint {
+    name: string;
+    popularity: number; // Volume Sold
+    profitability: number; // Unit Margin €
+    totalMargin: number; // Total Margin (for bubble size logic if needed)
+    type: 'star' | 'plowhorse' | 'puzzle' | 'dog';
+}
 
-        setLoading(true);
-        try {
-            const menuAnalyses = await menuOptimizationService.analyzeMenuItems(restaurantId);
-            const priceSuggestions = await menuOptimizationService.suggestPrices(restaurantId);
-            setAnalyses(menuAnalyses);
-            setSuggestions(priceSuggestions);
-        } catch (err) {
-            console.error('[MenuOptimizationPanel] Error:', err);
-        } finally {
-            setLoading(false);
+const COLORS: Record<PlotPoint['type'], string> = {
+    star: '#10B981',      // Green - High Profit, High Pop
+    plowhorse: '#F59E0B', // Yellow - Low Profit, High Pop
+    puzzle: '#8B5CF6',    // Purple - High Profit, Low Pop
+    dog: '#EF4444'        // Red - Low Profit, Low Pop
+};
+
+export const MenuOptimizationPanel: React.FC<MenuOptimizationPanelProps> = ({ products }) => {
+
+    // 1. Calculate Averages for Quadrants
+    const { processedData, avgPopularity, avgProfitability } = useMemo(() => {
+        if (!products || products.length === 0) {
+            return { processedData: [], avgPopularity: 0, avgProfitability: 0 };
         }
+
+        const totalItems = products.length;
+        const totalVolume = products.reduce((acc, p) => acc + p.totalQuantity, 0);
+
+        // Avg Popularity = TotalVolume / CountItems (Average volume per item on menu)
+        // Or sometimes strictly "Average Popularity Share", but raw volume is easier to read
+        const avgPop = totalVolume / totalItems;
+
+        // Avg Profitability = Average Unit Margin across menu
+        // First calculate unit margin for each, then avg
+        const totalUnitMargin = products.reduce((acc, p) => {
+            const unitMargin = p.totalQuantity > 0 ? (p.grossMargin / p.totalQuantity) : 0;
+            return acc + unitMargin;
+        }, 0);
+        const avgProf = totalUnitMargin / totalItems;
+
+        const data: PlotPoint[] = products.map(p => {
+            const unitMargin = p.totalQuantity > 0 ? (p.grossMargin / p.totalQuantity) : 0;
+            let type: PlotPoint['type'] = 'dog';
+
+            if (p.totalQuantity >= avgPop && unitMargin >= avgProf) type = 'star';
+            else if (p.totalQuantity >= avgPop && unitMargin < avgProf) type = 'plowhorse';
+            else if (p.totalQuantity < avgPop && unitMargin >= avgProf) type = 'puzzle';
+            else type = 'dog';
+
+            return {
+                name: p.name,
+                popularity: p.totalQuantity,
+                profitability: unitMargin,
+                totalMargin: p.grossMargin,
+                type
+            };
+        });
+
+        return {
+            processedData: data,
+            avgPopularity: avgPop,
+            avgProfitability: avgProf
+        };
+    }, [products]);
+
+    // Custom Tooltip
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const CustomTooltip = ({ active, payload }: any) => {
+        if (active && payload && payload.length) {
+            const data = payload[0].payload as PlotPoint;
+            return (
+                <div style={{ backgroundColor: '#1E293B', padding: '10px', borderRadius: '8px', border: '1px solid #334155', color: '#FFF' }}>
+                    <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>{data.name}</p>
+                    <p style={{ fontSize: '12px' }}>📊 Vendas: {data.popularity}</p>
+                    <p style={{ fontSize: '12px' }}>💰 Margem Unit: €{data.profitability.toFixed(2)}</p>
+                    <p style={{ fontSize: '12px', textTransform: 'capitalize', color: COLORS[data.type] }}>Type: {data.type}</p>
+                </div>
+            );
+        }
+        return null;
     };
 
-    useEffect(() => {
-        loadAnalyses();
-    }, []);
-
-    const chartData = analyses.slice(0, 10).map(a => ({
-        name: a.name.substring(0, 20),
-        profit: Math.round(a.profit / 100),
-        revenue: Math.round(a.revenue / 100),
-        cost: Math.round(a.cost / 100),
-    }));
+    if (products.length === 0) {
+        return null;
+    }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <Card surface="layer1" padding="lg">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                    <Text size="lg" weight="bold">🤖 Otimização de Menu</Text>
-                    <Button variant="outline" size="sm" onClick={loadAnalyses} disabled={loading}>
-                        {loading ? 'Carregando...' : 'Atualizar'}
-                    </Button>
-                </div>
+        <Card surface="layer1" padding="lg">
+            <div style={{ marginBottom: 20 }}>
+                <Text size="lg" weight="bold">🦁 Engenharia de Menu (Menu Engineering)</Text>
+                <Text size="sm" color="secondary">Matriz de Lucratividade vs. Popularidade</Text>
+            </div>
 
-                {analyses.length > 0 && (
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="revenue" fill="#0088FE" name="Receita (€)" />
-                            <Bar dataKey="cost" fill="#FF8042" name="Custo (€)" />
-                            <Bar dataKey="profit" fill="#00C49F" name="Lucro (€)" />
-                        </BarChart>
-                    </ResponsiveContainer>
-                )}
-            </Card>
+            <ResponsiveContainer width="100%" height={400}>
+                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis
+                        type="number"
+                        dataKey="popularity"
+                        name="Popularidade (Qtd)"
+                        unit=" un"
+                        stroke="#94A3B8"
+                        tick={{ fontSize: 12 }}
+                    >
+                        <Label value="Popularidade (Volume de Vendas)" offset={-10} position="insideBottom" fill="#94A3B8" fontSize={12} />
+                    </XAxis>
+                    <YAxis
+                        type="number"
+                        dataKey="profitability"
+                        name="Lucratividade (€)"
+                        unit="€"
+                        stroke="#94A3B8"
+                        tick={{ fontSize: 12 }}
+                    >
+                        <Label value="Lucratividade (Margem Unitária)" angle={-90} position="insideLeft" fill="#94A3B8" fontSize={12} />
+                    </YAxis>
+                    <ZAxis range={[60, 400]} /> {/* Bubble size range */}
+                    <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
 
-            {/* Recommendations */}
-            <Card surface="layer1" padding="lg">
-                <Text size="lg" weight="bold" style={{ marginBottom: 16 }}>💡 Recomendações</Text>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {analyses.filter(a => a.recommendation === 'promote').slice(0, 5).map(item => (
-                        <div key={item.itemId} style={{ padding: 12, background: '#e8f5e9', borderRadius: 8 }}>
-                            <Text size="sm" weight="bold">⭐ {item.name}</Text>
-                            <Text size="xs" color="tertiary">
-                                Promover: {item.profitMargin.toFixed(1)}% margem, {item.popularity.toFixed(0)}% popularidade
-                            </Text>
-                        </div>
-                    ))}
-                </div>
-            </Card>
+                    {/* Quadrant Lines */}
+                    <ReferenceLine x={avgPopularity} stroke="#CBD5E1" strokeDasharray="3 3" strokeOpacity={0.5}>
+                        <Label value="Média Vol" position="insideTopRight" fill="#CBD5E1" fontSize={10} />
+                    </ReferenceLine>
+                    <ReferenceLine y={avgProfitability} stroke="#CBD5E1" strokeDasharray="3 3" strokeOpacity={0.5}>
+                        <Label value="Média Margem" position="insideTopRight" fill="#CBD5E1" fontSize={10} />
+                    </ReferenceLine>
 
-            {/* Price Suggestions */}
-            {suggestions.length > 0 && (
-                <Card surface="layer1" padding="lg">
-                    <Text size="lg" weight="bold" style={{ marginBottom: 16 }}>💰 Sugestões de Preço</Text>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        {suggestions.slice(0, 5).map(suggestion => (
-                            <div key={suggestion.itemId} style={{ padding: 12, background: '#fff3cd', borderRadius: 8 }}>
-                                <Text size="sm" weight="bold">{suggestion.itemId}</Text>
-                                <Text size="xs" color="tertiary">
-                                    Atual: €{(suggestion.currentPrice / 100).toFixed(2)} → Sugerido: €{(suggestion.suggestedPrice / 100).toFixed(2)}
-                                </Text>
-                                <Text size="xs" color="tertiary">{suggestion.reason}</Text>
-                            </div>
+                    <Scatter name="Menu Items" data={processedData}>
+                        {processedData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[entry.type]} />
                         ))}
-                    </div>
-                </Card>
-            )}
-        </div>
+                    </Scatter>
+
+                    {/* Quadrant Labels (Approximate positions) */}
+                    <ReferenceLine y={avgProfitability * 1.5} stroke="none">
+                        <Label value="PUZZLES (Alta Margem, Baixa Venda)" position="insideLeft" fill={COLORS.puzzle} fontSize={10} opacity={0.8} />
+                    </ReferenceLine>
+                    <ReferenceLine y={avgProfitability * 1.5} stroke="none">
+                        <Label value="STARS (Alta Margem, Alta Venda)" position="insideRight" fill={COLORS.star} fontSize={10} opacity={0.8} />
+                    </ReferenceLine>
+                </ScatterChart>
+            </ResponsiveContainer>
+
+            {/* Legend / Metrics */}
+            <div style={{ display: 'flex', gap: 20, marginTop: 20, justifyContent: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: COLORS.star }} />
+                    <Text size="sm">Stars</Text>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: COLORS.plowhorse }} />
+                    <Text size="sm">Plowhorses</Text>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: COLORS.puzzle }} />
+                    <Text size="sm">Puzzles</Text>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: COLORS.dog }} />
+                    <Text size="sm">Dogs</Text>
+                </div>
+            </div>
+        </Card>
     );
 };

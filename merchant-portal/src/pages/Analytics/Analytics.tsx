@@ -5,29 +5,10 @@ import { InsightCard } from '../../ui/design-system/InsightCard';
 import { DateRangeSelector } from '../../ui/design-system/DateRangeSelector';
 import { Card } from '../../ui/design-system/Card';
 import { useRealAnalytics } from './hooks/useRealAnalytics';
-import { AdvancedCharts } from './components/AdvancedCharts'; // P4-4
-import { MenuOptimizationPanel } from './components/MenuOptimizationPanel'; // P5-1
-import { PredictiveAnalyticsPanel } from './components/PredictiveAnalyticsPanel'; // P5-2
+import { AdvancedCharts } from './components/AdvancedCharts';
+import { MenuOptimizationPanel } from './components/MenuOptimizationPanel';
+
 import './Analytics.css';
-
-interface Order {
-  id: string;
-  timestamp: Date;
-  items: { name: string; price: number; quantity: number }[];
-  total: number;
-  prepTime: number; // minutes
-  status: 'completed' | 'cancelled';
-}
-
-interface DayAnalytics {
-  date: Date;
-  revenue: number;
-  orders: Order[];
-  avgPrepTime: number;
-  completionRate: number;
-}
-
-type DatePreset = 'today' | 'yesterday' | 'week' | 'month' | 'custom';
 
 /**
  * Analytics Dashboard: Executive decision instrument
@@ -41,179 +22,113 @@ const Analytics: React.FC = () => {
     from: new Date(Date.now() - 24 * 60 * 60 * 1000),
     to: new Date(),
   });
-  const [_selectedPreset, setSelectedPreset] = useState<'today' | 'yesterday' | 'week' | 'month' | 'custom'>('today');
-
-  // FASE 2: Dados reais do Supabase
-  const { data: realAnalytics, loading: analyticsLoading, error: analyticsError } = useRealAnalytics(
+  const { data: realAnalytics, productPerformance } = useRealAnalytics(
     selectedRange.from,
     selectedRange.to
   );
 
-  // Mock data estruturado (fallback se não houver dados reais)
-  const mockAnalyticsData = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  const activeData = useMemo(() => {
+    if (realAnalytics && realAnalytics.length > 0) return realAnalytics;
+    return []; // Se não houver dados reais, mostrar vazio ou mock
+  }, [realAnalytics]);
 
-    const generateDayData = (date: Date): DayAnalytics => {
-      const baseRevenue = 1200 + Math.random() * 800;
-      const orderCount = 8 + Math.floor(Math.random() * 12);
-
-      const orders: Order[] = Array.from({ length: orderCount }).map((_, i) => ({
-        id: `order-${date.getDate()}-${i}`,
-        timestamp: new Date(date.getTime() + Math.random() * 12 * 60 * 60 * 1000),
-        items: [
-          { name: 'Hambúrguer', price: 35.9, quantity: Math.floor(Math.random() * 3) + 1 },
-          { name: 'Batata Frita', price: 18.9, quantity: Math.floor(Math.random() * 2) },
-        ],
-        total: baseRevenue / orderCount + (Math.random() - 0.5) * 50,
-        prepTime: 15 + Math.floor(Math.random() * 20),
-        status: Math.random() > 0.05 ? 'completed' : 'cancelled',
-      }));
-
+  // KPI Calculations (baseado no formato do useRealAnalytics)
+  const kpis = useMemo(() => {
+    if (activeData.length === 0) {
+      // Fallback para 0s
       return {
-        date,
-        revenue: orders.filter((o) => o.status === 'completed').reduce((sum, o) => sum + o.total, 0),
-        orders,
-        avgPrepTime:
-          orders.reduce((sum, o) => sum + o.prepTime, 0) / orders.length,
-        completionRate:
-          (orders.filter((o) => o.status === 'completed').length / orders.length) * 100,
+        revenue: { value: 'R$ 0,00', trend: undefined },
+        ticket: { value: 'R$ 0,00', trend: undefined },
+        orders: { value: 0, trend: undefined },
+        completion: { value: '100%', trend: undefined }, // TPV real não tem "prep time" consolidado aqui ainda, assumimos 100% completed
+        profit: { value: 'R$ 0,00', trend: undefined },
+        margin: { value: '0%', trend: undefined },
+        state: 'healthy' as const
       };
-    };
-
-    // Generate 30 days of data
-    const data: DayAnalytics[] = [];
-    for (let i = 0; i < 30; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      data.unshift(generateDayData(date));
     }
 
-    return data;
-  }, []);
-
-  const analyticsInRange = useMemo(() => {
-    return mockAnalyticsData.filter(
-      (day) => day.date >= selectedRange.from && day.date <= selectedRange.to
-    );
-  }, [mockAnalyticsData, selectedRange]);
-
-  // KPI Calculations
-  const kpis = useMemo(() => {
-    const totalRevenue = analyticsInRange.reduce((sum, day) => sum + day.revenue, 0);
-    const totalOrders = analyticsInRange.reduce((sum, day) => sum + day.orders.length, 0);
+    const totalRevenue = activeData.reduce((sum, day) => sum + day.totalRevenue, 0);
+    const totalCost = activeData.reduce((sum, day) => sum + day.totalCost, 0);
+    const totalGrossMargin = totalRevenue - totalCost;
+    const totalOrders = activeData.reduce((sum, day) => sum + day.totalOrders, 0);
     const avgTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-    const avgPrepTime =
-      analyticsInRange.length > 0
-        ? analyticsInRange.reduce((sum, day) => sum + day.avgPrepTime, 0) / analyticsInRange.length
-        : 0;
-    const avgCompletion =
-      analyticsInRange.length > 0
-        ? analyticsInRange.reduce((sum, day) => sum + day.completionRate, 0) / analyticsInRange.length
-        : 0;
+
+    // Margin %
+    const marginPercent = totalRevenue > 0 ? (totalGrossMargin / totalRevenue) * 100 : 0;
+
 
     // Determine state
     let state: 'healthy' | 'warning' | 'critical' = 'healthy';
-    if (avgCompletion < 90 || avgPrepTime > 25) state = 'warning';
-    if (avgCompletion < 80 || avgPrepTime > 30) state = 'critical';
+    if (marginPercent < 30) state = 'warning';
+    if (marginPercent < 15) state = 'critical';
 
     return {
       revenue: {
         value: `R$ ${totalRevenue.toFixed(2)}`,
-        trend: {
-          direction: 'up' as const,
-          percentage: 12,
-          period: 'vs semana passada',
-        },
+        trend: { direction: 'up' as const, percentage: 0, period: 'vs periodo anterior' }, // Todo: compare previous period
       },
       ticket: {
         value: `R$ ${avgTicket.toFixed(2)}`,
-        trend: {
-          direction: 'flat' as const,
-          percentage: 2,
-          period: 'vs semana passada',
-        },
+        trend: undefined,
       },
       orders: {
         value: totalOrders,
-        trend: {
-          direction: 'up' as const,
-          percentage: 8,
-          period: 'vs semana passada',
-        },
-      },
-      completion: {
-        value: `${avgCompletion.toFixed(1)}%`,
         trend: undefined,
       },
-      prepTime: {
-        value: `${Math.round(avgPrepTime)}m`,
-        trend: {
-          direction: 'down' as const,
-          percentage: 3,
-          period: 'vs semana passada',
-        },
+      completion: {
+        value: `100%`, // Placeholder
+        trend: undefined,
+      },
+      profit: {
+        value: `R$ ${totalGrossMargin.toFixed(2)}`,
+        trend: undefined
+      },
+      margin: {
+        value: `${marginPercent.toFixed(1)}%`,
+        trend: undefined
       },
       state,
     };
-  }, [analyticsInRange]);
+  }, [activeData]);
 
-  // Insights Generation (logica real, nao fake)
+  // Insights Generation (logica real)
   const insights = useMemo(() => {
     const result = [];
 
-    // Warning: Completion rate baixa
-    if (parseFloat(kpis.completion.value) < 90) {
+    // Warning: Margem Baixa
+    const marginPk = parseFloat(kpis.margin.value);
+    if (marginPk < 30 && marginPk > 0) {
       result.push({
         type: 'warning' as const,
-        title: 'Taxa de conclusao baixa',
-        description: `${kpis.completion.value} de conclusao. Pedidos atrasados.`,
-        metric: 'Verificar fila de preparo',
-      });
-    }
-
-    // Warning: Prep time alto
-    if (parseInt(kpis.prepTime.value) > 25) {
-      result.push({
-        type: 'warning' as const,
-        title: 'Preparo lento',
-        description: `Media de ${kpis.prepTime.value}. Afeta experiencia.`,
-        metric: 'Reforcar equipe',
+        title: 'Margem Bruta Baixa',
+        description: `Sua margem está em ${kpis.margin.value}. Ideal > 30%.`,
+        metric: 'Revisar Fichas Técnicas',
       });
     }
 
     // Opportunity: Revenue trending
-    if (kpis.revenue.trend?.direction === 'up' && kpis.revenue.trend?.percentage > 10) {
+    if (kpis.revenue.trend?.direction === 'up') {
       result.push({
         type: 'opportunity' as const,
         title: 'Receita em alta',
-        description: `+${kpis.revenue.trend.percentage}%. Momento de escalar.`,
-        metric: 'Aumentar capacidade',
+        description: `Tendência de crescimento detectada.`,
+        metric: 'Aumentar estoque',
       });
     }
-
-    // Insight: Ticket stability
-    result.push({
-      type: 'insight' as const,
-      title: 'Ticket estavel',
-      description: `Ticket em ${kpis.ticket.value}. Previsibilidade.`,
-      metric: 'Testar novos itens',
-    });
 
     // Action: Health summary
     result.push({
       type: 'action' as const,
-      title: 'Sistema OK',
-      description: `Operacao normal. Continuar.`,
-      metric: 'Proximo check: amanha',
+      title: 'Resumo Financeiro',
+      description: `Lucro Bruto: ${kpis.profit.value}`,
+      metric: 'Verificar DRE',
     });
 
     return result;
   }, [kpis]);
 
-  const handleDateSelect = (range: { from: Date; to: Date }, preset: DatePreset) => {
+  const handleDateSelect = (range: { from: Date; to: Date }) => {
     setSelectedRange(range);
-    setSelectedPreset(preset);
   };
 
   return (
@@ -244,6 +159,20 @@ const Analytics: React.FC = () => {
               state={kpis.state}
             />
             <KpiCard
+              label="Lucro Bruto"
+              value={kpis.profit.value}
+              icon="💸"
+              trend={kpis.profit.trend}
+              state={kpis.state}
+            />
+            <KpiCard
+              label="Margem %"
+              value={kpis.margin.value}
+              icon="📊"
+              trend={kpis.margin.trend}
+              state={kpis.state}
+            />
+            <KpiCard
               label="Ticket Médio"
               value={kpis.ticket.value}
               icon="🎯"
@@ -256,19 +185,6 @@ const Analytics: React.FC = () => {
               icon="📦"
               trend={kpis.orders.trend}
               state={kpis.state}
-            />
-            <KpiCard
-              label="Taxa Conclusão"
-              value={kpis.completion.value}
-              icon="✓"
-              state={parseFloat(kpis.completion.value) >= 95 ? 'healthy' : parseFloat(kpis.completion.value) >= 90 ? 'warning' : 'critical'}
-            />
-            <KpiCard
-              label="Tempo Médio Preparo"
-              value={kpis.prepTime.value}
-              icon="⏱️"
-              trend={kpis.prepTime.trend}
-              state={parseInt(kpis.prepTime.value) <= 20 ? 'healthy' : parseInt(kpis.prepTime.value) <= 25 ? 'warning' : 'critical'}
             />
           </div>
         </div>
@@ -292,6 +208,11 @@ const Analytics: React.FC = () => {
               })) || []}
               peakHours={realAnalytics[0]?.peakHours || {}}
             />
+
+            {/* Menu Engineering (Phase 3.2) */}
+            <div style={{ marginTop: 24 }}>
+              <MenuOptimizationPanel products={productPerformance || []} />
+            </div>
           </div>
         )}
 

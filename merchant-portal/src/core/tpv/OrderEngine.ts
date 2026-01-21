@@ -68,6 +68,7 @@ export interface Order {
     discountCents: number;
     source: 'tpv' | 'web' | 'app';
     operatorId?: string;
+    operatorName?: string;
     cashRegisterId?: string;
     notes?: string;
     createdAt: Date;
@@ -87,6 +88,11 @@ export interface OrderItem {
     notes?: string;
     categoryName?: string;
     createdAt: Date;
+    // KDS Fields
+    status?: 'pending' | 'preparing' | 'ready' | 'voided';
+    startedAt?: Date;
+    completedAt?: Date;
+    stationId?: string;
 }
 
 export class OrderEngine {
@@ -227,9 +233,13 @@ export class OrderEngine {
                 modifiers: item.modifiers || [],
                 notes: item.notes,
                 categoryName: item.category_name, // Map Category (Mission 55)
-                createdAt: new Date(item.created_at || new Date()), // Item might not have created_at in schema? Checked: No created_at in gm_order_items definition!
+                createdAt: new Date(item.created_at || new Date()),
+                // KDS Mapping
+                status: item.status || 'pending',
+                startedAt: item.started_at ? new Date(item.started_at) : undefined,
+                completedAt: item.completed_at ? new Date(item.completed_at) : undefined,
+                stationId: item.station_id
             })),
         };
     }
 }
-

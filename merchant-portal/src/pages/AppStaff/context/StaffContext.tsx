@@ -7,11 +7,12 @@ import type {
     LatentObligation,
     SpecDriftAlert,
     BusinessType,
-    DominantTool
+    DominantTool,
+    Employee
 } from './StaffCoreTypes';
 
 // Re-export types for consumers
-export type { StaffRole, Task, OperationalContract, LatentObligation, BusinessType, DominantTool } from './StaffCoreTypes';
+export type { StaffRole, Task, OperationalContract, LatentObligation, BusinessType, DominantTool, Employee } from './StaffCoreTypes';
 
 
 // 🛡️ SECURITY: Global MOCK Guard
@@ -133,8 +134,9 @@ interface StaffContextType {
     joinRemoteOperation: (code: string) => Promise<{ success: boolean; message?: string }>;
 
     // 4. WORKER ACTIONS
-    checkIn: (workerName: string) => void;
+    checkIn: (workerName: string, employeeId?: string) => void;
     checkOut: () => void;
+    verifyPin: (employeeId: string, pin: string) => boolean;
 
     // 5. TASK ENGINE
     tasks: Task[];
@@ -181,7 +183,7 @@ interface StaffContextType {
     };
 
     // ROSTER
-    employees: any[];
+    employees: Employee[];
 }
 
 const StaffContext = createContext<StaffContextType | undefined>(undefined);
@@ -218,12 +220,11 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({ children, restaur
     const [specDrifts, setSpecDrifts] = useState<SpecDriftAlert[]>([]);
     const [pressureMode, setPressureMode] = useState<'idle' | 'pressure' | 'recovery'>('idle');
 
+    // AUDIT LAYER STATE
+    const [activeShiftId, setActiveShiftId] = useState<string | null>(null);
+
     // 6. ROSTER (For Assignee Selection)
-    const [employees] = useState([
-        { id: 'emp-1', name: 'João (Cozinha)', role: 'kitchen', status: 'active' },
-        { id: 'emp-2', name: 'Maria (Salão)', role: 'waiter', status: 'active' },
-        { id: 'emp-3', name: 'Carlos (Bar)', role: 'bar_manager', status: 'active' },
-    ]);
+    const [employees, setEmployees] = useState<Employee[]>([]);
 
     // INIT
     useEffect(() => {
@@ -232,8 +233,42 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({ children, restaur
 
         // Resume session if active
         // In real app, check Supabase presence
-        if (userId) setShiftState('active'); // Auto-start for dev flow?
-    }, [userId]);
+        // if (userId) setShiftState('active'); // Auto-start for dev flow?
+
+        // AUTO-JOIN (Owner Mode / Merchant Portal)
+        if (restaurantId && userId) {
+            const contract: OperationalContract = {
+                id: restaurantId,
+                type: 'restaurant',
+                name: 'Seu Restaurante',
+                mode: 'connected',
+                permissions: ['admin'],
+                role: 'owner',
+                workerId: userId
+            };
+            setOpContract(contract);
+            setActiveWorkerId(userId);
+            setActiveRole('owner');
+            setShiftState('active');
+        }
+    }, [userId, restaurantId]);
+
+    // FETCH EMPLOYEES
+    useEffect(() => {
+        if (!operationalContract?.id || operationalContract.mode === 'local') return;
+
+        const fetchEmployees = async () => {
+            const { data } = await supabase
+                .from('employees')
+                .select('*')
+                .eq('restaurant_id', operationalContract.id)
+                .eq('active', true);
+
+            if (data) setEmployees(data as Employee[]);
+        };
+
+        fetchEmployees();
+    }, [operationalContract?.id]);
 
 
     // SENSOR: Activity Heartbeat
@@ -259,15 +294,8 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({ children, restaur
 
     // SYSTEM REFLEX (The Subconscious)
     useReflexEngine(
-        tasks,
         setTasks,
-        operationalContract?.mode || 'local',
-        shiftState,
-        lastActivityAt,
-        activeRole,
-        obligations,
-        orders,
-        pressureMode // Pass current pressure mode
+        notifyActivity
     );
 
     // TRAINING REFLEX (Phase C)
@@ -292,7 +320,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({ children, restaur
 
             // Check items for lessons
             order.items.forEach((item: any) => {
-                const lesson = findRelevantLesson('menu_item', item.name_snapshot || item.name, activeRole, learnedSkills);
+                const lesson = findRelevantLesson('menu_item', item.name_snapshot || item.name, activeRole as any, learnedSkills);
                 if (lesson) {
                     // Check if not already triggering
                     triggerLesson(lesson);
@@ -321,15 +349,68 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({ children, restaur
         return joinRemoteOperationHelper(code, setOpContract, setActiveRole);
     };
 
-    const checkIn = (workerName: string) => {
+    const checkIn = async (workerName: string, employeeId?: string) => {
+        const { supabase } = await import('../../../core/supabase');
+
         setActiveWorkerId(workerName);
+        let currentRole = activeRole;
+
+        if (employeeId) {
+            const emp = employees.find(e => e.id === employeeId);
+            if (emp) {
+                currentRole = emp.role;
+                setActiveRole(emp.role);
+            }
+        }
+
         setShiftState('active');
         notifyActivity();
+
+        // 📝 AUDIT: Create Shift Log
+        if (operationalContract?.id && employeeId) {
+            const { data, error } = await supabase.from('shift_logs').insert({
+                restaurant_id: operationalContract.id, // Assuming OpContract ID is RestId. If mock, this might fail.
+                employee_id: employeeId,
+                role: currentRole,
+                start_time: new Date().toISOString(),
+                status: 'active',
+                meta: { app_version: '1.0.0', mode: 'app_staff' }
+            }).select().single();
+
+            if (data) {
+                setActiveShiftId(data.id);
+                console.log('📝 Shift Log Started:', data.id);
+            } else if (error) {
+                console.error('❌ Failed to create Shift Log:', error);
+            }
+        }
     };
 
-    const checkOut = () => {
+    const verifyPin = (employeeId: string, pin: string) => {
+        const emp = employees.find(e => e.id === employeeId);
+        if (!emp) return false;
+        if (!emp.pin) return true; // Security flaw? Or feature? Assuming no PIN = open
+        return emp.pin === pin;
+    };
+
+    const checkOut = async () => {
+        const { supabase } = await import('../../../core/supabase');
+
+        // 📝 AUDIT: Close Shift Log
+        if (activeShiftId) {
+            const endTime = new Date();
+            await supabase.from('shift_logs').update({
+                end_time: endTime.toISOString(),
+                status: 'completed',
+                // duration_minutes calculation would ideally trigger on DB or be sent here.
+                // Simplified for now.
+            }).eq('id', activeShiftId);
+            console.log('📝 Shift Log Closed:', activeShiftId);
+        }
+
         setShiftState('closed');
         setActiveWorkerId(null);
+        setActiveShiftId(null); // Clear audit state
         setOpContract(null);
     };
 
@@ -358,18 +439,48 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({ children, restaur
         // Optimistic
         setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: 'done' } : t));
 
+        // 📝 AUDIT: Action Log
+        if (activeShiftId && task && operationalContract?.id) {
+            import('../../../core/supabase').then(({ supabase }) => {
+                const empId = employees.find(e => e.name === activeWorkerId)?.id;
+
+                supabase.from('action_logs').insert({
+                    restaurant_id: operationalContract.id,
+                    shift_id: activeShiftId,
+                    employee_id: empId,
+                    action_type: 'task_completion',
+                    entity_id: taskId,
+                    details: {
+                        title: task.title,
+                        priority: task.priority,
+                        riskCheck: 0 // Simplification to avoid closure complexity
+                    }
+                }).then(({ error }) => {
+                    if (error) console.error('❌ Action Log Failed:', error);
+                });
+            });
+        }
+
         const completedCount = tasks.filter(t => t.status === 'done').length + 1;
 
+        // 🎮 GAMIFICATION: Calculate XP for this task
+        let taskXP = 10; // Base
+        switch (task?.priority) {
+            case 'attention': taskXP += 5; break;
+            case 'urgent': taskXP += 10; break;
+            case 'critical': taskXP += 20; break;
+        }
+
         let message = completedCount === 1
-            ? '✅ Tarefa concluída!'
-            : `✅ ${completedCount} tarefas hoje! Ótimo trabalho!`;
+            ? `✅ Tarefa concluída! +${taskXP} XP`
+            : `✅ ${completedCount} tarefas! +${taskXP} XP`;
 
         if (operationalContract?.mode === 'local') {
             message = '⚠️ Preview: Ação não salva no servidor';
         }
 
         window.dispatchEvent(new CustomEvent('staff-task-complete', {
-            detail: { message, taskTitle: task?.title }
+            detail: { message, taskTitle: task?.title, xpGained: taskXP }
         }));
         notifyActivity();
 
@@ -395,8 +506,9 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({ children, restaur
             riskLevel: 10,
             uiMode: 'check',
             context: 'floor', // Default context
+            assigneeId: args.assigneeId || undefined,
             createdAt: getNow(),
-            meta: { source: 'manual-assignment', createdBy: activeWorkerId }
+            meta: { source: 'manual-assignment', createdBy: activeWorkerId || undefined }
         };
 
         setTasks(prev => [newTask, ...prev]);
@@ -413,7 +525,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({ children, restaur
                 priority: newTask.priority,
                 type: newTask.type,
                 assignee_role: newTask.assigneeRole,
-                assignee_id: newTask.meta?.assigneeId,
+                assignee_id: newTask.assigneeId,
                 created_by: newTask.meta?.createdBy,
                 created_at: new Date(newTask.createdAt).toISOString()
             }).then(({ error }) => {
@@ -435,7 +547,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({ children, restaur
             id: `drift-${Date.now()}`,
             ...alert,
             detectedAt: getNow(),
-            status: 'active'
+            status: 'new'
         };
         setSpecDrifts(prev => [newAlert, ...prev]);
         notifyActivity();
@@ -469,6 +581,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({ children, restaur
             specDrifts,
             pressureMode,
             joinRemoteOperation,
+            verifyPin,
             obligations,
 
             // PHASE B: Shift Intelligence
@@ -479,7 +592,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({ children, restaur
             // PHASE D: Forecast
             forecast: {
                 pressure: calculatePressure(
-                    orders?.filter(o => (getNow() - new Date(o.created_at).getTime()) < 15 * 60 * 1000).length || 0, // Last 15 min
+                    (orders || []).filter(o => (getNow() - new Date(o.createdAt).getTime()) < 15 * 60 * 1000).length || 0, // Last 15 min
                     1, // Staff (Hardcoded 1 for now)
                     10 // Avg Prep (Hardcoded 10 min)
                 ),

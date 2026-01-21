@@ -1,6 +1,6 @@
 export type StaffRole = 'manager' | 'waiter' | 'kitchen' | 'cleaning' | 'worker' | 'owner';
 
-export type DominantTool = 'none' | 'order' | 'production' | 'check';
+export type DominantTool = 'none' | 'order' | 'production' | 'check' | 'hands' | 'tablet' | 'knife' | 'tray';
 
 export type BusinessType = 'restaurant' | 'bar' | 'cafe' | 'retail';
 
@@ -14,7 +14,7 @@ export interface SubTask {
 
 export interface Task {
     id: string;
-    type: 'order' | 'maintenance' | 'preventive' | 'reactive' | 'foundational' | 'delivery' | 'alert';
+    type: 'order' | 'maintenance' | 'preventive' | 'reactive' | 'foundational' | 'delivery' | 'alert' | 'mission_critical';
     title: string;
     description: string;
     // Core 5 Synapse: "Why are we doing this?"
@@ -47,7 +47,7 @@ export interface Task {
 
     // Metadata for Nervous System
     meta?: {
-        source: 'human' | 'system-reflex' | 'inventory-synapse' | 'inventory-reflex' | 'integration';
+        source: 'human' | 'system-reflex' | 'inventory-synapse' | 'inventory-reflex' | 'integration' | 'kds-sync' | 'manual-assignment';
         mode?: 'idle' | 'pressure';
         generatedAt?: number;
         recipeId?: string; // For Anti-SOP Rituals
@@ -60,6 +60,9 @@ export interface Task {
         signalId?: string;
         autoResolved?: boolean;
         resolvedAt?: number;
+        orderId?: string;
+        action?: 'advance' | 'retrograde' | 'pause';
+        createdBy?: string;
     }
 }
 
@@ -151,4 +154,16 @@ export interface SpecDriftAlert {
     detectedAt: number;
     reason: string; // "Organ 'ketchup-dispenser' lost capability 'requiresDecanting'"
     status: 'new' | 'acknowledged' | 'resolved';
+}
+
+export interface Employee {
+    id: string;
+    role: StaffRole;
+    position: 'kitchen' | 'waiter' | 'cleaning' | 'cashier' | 'manager';
+    name: string;
+    user_id?: string | null;
+    email?: string | null;
+    pin?: string;
+    active: boolean;
+    restaurant_id: string;
 }

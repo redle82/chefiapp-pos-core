@@ -13,6 +13,7 @@ import { SystemHealthCard } from '../../components/Dashboard/SystemHealthCard';
 import { ProfitabilityWidget } from '../../components/Dashboard/ProfitabilityWidget';
 import { LowStockWidget } from '../../components/Dashboard/LowStockWidget';
 import { ShiftForecastWidget } from '../../components/Dashboard/ShiftForecastWidget';
+import { StaffPerformanceWidget } from './components/StaffPerformanceWidget';
 
 export const OwnerDashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -102,7 +103,8 @@ export const OwnerDashboard: React.FC = () => {
                 {/* PROFITABILITY ENGINE (Phase 2) */}
                 <ProfitabilityWidget metrics={metrics} loading={loadingMetrics} />
 
-                {/* METRICS GRID */}
+                {/* STAFF PERFORMANCE - PHASE 4 */}
+                {identity.id && <StaffPerformanceWidget restaurantId={identity.id} />}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
                     {/* INVENTORY RADAR (Phase 3) */}
                     {identity.id && <LowStockWidget restaurantId={identity.id} />}
