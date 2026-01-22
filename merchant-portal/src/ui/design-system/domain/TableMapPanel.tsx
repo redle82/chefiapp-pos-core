@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Card } from '../primitives/Card';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
@@ -29,7 +29,8 @@ interface TableMapPanelProps {
     onCreateOrder?: (tableId: string) => void; // SEMANA 1 - Tarefa 1.1: Ação rápida para criar pedido
 }
 
-export const TableMapPanel: React.FC<TableMapPanelProps> = ({ tables, onSelectTable, onCreateOrder }) => {
+// FASE 5: Memoizar componente pesado para melhorar performance
+export const TableMapPanel: React.FC<TableMapPanelProps> = memo(({ tables, onSelectTable, onCreateOrder }) => {
 
 
 
@@ -233,4 +234,13 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = ({ tables, onSelectTa
             </div>
         </div>
     );
-};
+}, (prevProps, nextProps) => {
+    // FASE 5: Comparação customizada para evitar re-renders desnecessários
+    return (
+        prevProps.tables.length === nextProps.tables.length &&
+        prevProps.tables.every((table, idx) => 
+            table.id === nextProps.tables[idx]?.id &&
+            table.status === nextProps.tables[idx]?.status
+        )
+    );
+});

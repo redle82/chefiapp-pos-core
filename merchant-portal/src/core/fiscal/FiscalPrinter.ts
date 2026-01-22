@@ -152,27 +152,76 @@ export class FiscalPrinter {
      * Fallback universal que funciona em qualquer dispositivo
      */
     private async printViaBrowser(taxDoc: TaxDocument, orderData: any): Promise<void> {
-        // 1. Criar HTML do recibo
-        const receiptHTML = this.generateReceiptHTML(taxDoc, orderData);
+        // FASE 6: Melhorar tratamento de erros e compatibilidade
+        try {
+            // 1. Criar HTML do recibo
+            const receiptHTML = this.generateReceiptHTML(taxDoc, orderData);
 
-        // 2. Criar janela de impressão
-        const printWindow = window.open('', '_blank', 'width=400,height=600');
-        if (!printWindow) {
-            throw new Error('Não foi possível abrir janela de impressão. Verifique bloqueador de pop-ups.');
+            // 2. Criar janela de impressão
+            const printWindow = window.open('', '_blank', 'width=400,height=600');
+            if (!printWindow || printWindow.closed || typeof printWindow.closed === 'undefined') {
+                // FASE 6: Tentar fallback se pop-up foi bloqueado
+                const userConfirmed = window.confirm(
+                    'Bloqueador de pop-ups detectado. Deseja abrir o recibo em uma nova aba para impressão?'
+                );
+                if (userConfirmed) {
+                    const newWindow = window.open('', '_blank');
+                    if (newWindow) {
+                        newWindow.document.write(receiptHTML);
+                        newWindow.document.close();
+                        // Aguardar e imprimir
+                        newWindow.onload = () => {
+                            setTimeout(() => {
+                                newWindow.print();
+                            }, 250);
+                        };
+                        return;
+                    }
+                }
+                throw new Error('Não foi possível abrir janela de impressão. Verifique bloqueador de pop-ups nas configurações do navegador.');
+            }
+
+            // 3. Escrever HTML
+            printWindow.document.write(receiptHTML);
+            printWindow.document.close();
+
+            // 4. Aguardar carregamento e imprimir
+            return new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Timeout ao carregar janela de impressão. Tente novamente.'));
+                }, 5000); // 5 segundos de timeout
+
+                printWindow.onload = () => {
+                    clearTimeout(timeout);
+                    setTimeout(() => {
+                        try {
+                            printWindow.print();
+                            // FASE 6: Não fechar automaticamente para permitir visualização
+                            // printWindow.close();
+                            resolve();
+                        } catch (printError: any) {
+                            reject(new Error(`Erro ao imprimir: ${printError.message || 'Erro desconhecido'}`));
+                        }
+                    }, 250);
+                };
+
+                // FASE 6: Fallback se onload não disparar
+                if (printWindow.document.readyState === 'complete') {
+                    clearTimeout(timeout);
+                    setTimeout(() => {
+                        try {
+                            printWindow.print();
+                            resolve();
+                        } catch (printError: any) {
+                            reject(new Error(`Erro ao imprimir: ${printError.message || 'Erro desconhecido'}`));
+                        }
+                    }, 250);
+                }
+            });
+        } catch (error: any) {
+            console.error('[FiscalPrinter] Browser print error:', error);
+            throw error instanceof Error ? error : new Error(`Erro ao imprimir: ${error?.message || 'Erro desconhecido'}`);
         }
-
-        // 3. Escrever HTML
-        printWindow.document.write(receiptHTML);
-        printWindow.document.close();
-
-        // 4. Aguardar carregamento e imprimir
-        printWindow.onload = () => {
-            setTimeout(() => {
-                printWindow.print();
-                // Fechar janela após impressão (ou deixar aberta para visualização)
-                // printWindow.close();
-            }, 250);
-        };
     }
 
     /**

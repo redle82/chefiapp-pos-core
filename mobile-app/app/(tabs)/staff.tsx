@@ -1,64 +1,153 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, FlatList, SafeAreaView, Modal, Alert } from 'react-native';
-import { useAppStaff, RoleGate } from '@/context/AppStaffContext';
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, Modal, Alert } from 'react-native';
+import { useAppStaff } from '@/context/AppStaffContext';
 import { useOrder } from '@/context/OrderContext';
+import { useAuth } from '@/context/AuthContext';
+import { HapticFeedback } from '@/services/haptics';
+import { FinancialVault } from '@/components/FinancialVault';
+import { BottomActionBar } from '@/components/BottomActionBar';
+import { NowActionCard } from '@/components/NowActionCard';
+import { useNowEngine } from '@/hooks/useNowEngine';
+import { QuickPayModal, PaymentMethod } from '@/components/QuickPayModal';
+import { Ionicons } from '@expo/vector-icons';
+import { logError, addBreadcrumb } from '@/services/logging';
+import { useRouter } from 'expo-router';
 
 export default function StaffScreen() {
+    const router = useRouter();
     const {
         operationalContext,
         activeRole,
         roleConfig,
         shiftState,
         shiftStart,
+        shiftId,
         startShift,
         endShift,
-        tasks,
-        completeTask
+        canAccess
     } = useAppStaff();
 
-    const { orders } = useOrder();
-    const [isClosingModalVisible, setClosingModalVisible] = useState(false);
+    const { orders, quickPay, splitOrder } = useOrder(); // ERRO-009 Fix
+    const { nowAction, loading, completeAction, pendingCount } = useNowEngine(); // ERRO-008 Fix
+    const { session } = useAuth(); // FASE 4: Para passar userId ao completeAction
+    const [isVaultVisible, setIsVaultVisible] = useState(false);
+    const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
+    // ERRO-004 Fix: Estado de processamento para prevenir duplo clique
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-    const formatDuration = (startTime: number | null) => {
-        if (!startTime) return '0m';
-        const diffMs = Date.now() - startTime;
-        const mins = Math.floor(diffMs / 60000);
-        if (mins < 60) return `${mins}m`;
-        const hours = Math.floor(mins / 60);
-        return `${hours}h ${mins % 60}m`;
+    const handleCompleteAction = async (actionId: string) => {
+        try {
+            // Para pagamentos, abrir QuickPayModal
+            if (nowAction?.action === 'collect_payment' && nowAction.orderId) {
+                setIsPaymentModalVisible(true);
+                // O pagamento será processado via QuickPayModal
+                // O NowEngine será atualizado via realtime quando o status mudar
+                return;
+            }
+
+            // ERRO-003 Fix: Para ação "acknowledge", mostrar feedback antes de processar
+            if (nowAction?.action === 'acknowledge') {
+                HapticFeedback.success();
+                // Feedback visual: mostrar mensagem de confirmação
+                // O feedback será mostrado pelo NowEngine quando próxima ação aparecer
+            }
+
+            // Para outras ações, processar diretamente
+            // FASE 4: Passar userId para gamificação
+            // FASE 5: Haptic feedback em ação crítica
+            HapticFeedback.medium();
+            const userId = session?.user?.id;
+            await completeAction(actionId, userId);
+            
+            // ERRO-003 Fix: Feedback visual após ação completa
+            // A próxima ação aparecerá automaticamente via realtime
+            // Se não houver próxima ação, mostrará "Tudo em ordem"
+        } catch (error) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            logError(err, {
+                action: 'completeAction',
+                actionId,
+                actionType: nowAction?.type,
+            });
+            console.error('[StaffScreen] Error completing action:', error);
+            Alert.alert('Erro', 'Falha ao completar ação. Tente novamente.');
+        }
     };
 
-    const getPriorityColor = (priority: string) => {
-        switch (priority) {
-            case 'critical': return '#ff4444';
-            case 'urgent': return '#ff8800';
-            case 'attention': return '#ffcc00';
-            default: return '#888888';
+    const handlePaymentConfirm = async (method: PaymentMethod, tip: number) => {
+        // ERRO-004 Fix: Lock imediato para prevenir duplo clique
+        if (isProcessingPayment) return;
+        if (!nowAction?.orderId) return;
+
+        // ERRO-004 Fix: Lock antes de processar
+        setIsProcessingPayment(true);
+
+        try {
+            const order = orders.find(o => o.id === nowAction.orderId);
+            if (!order) {
+                setIsProcessingPayment(false); // Unlock se erro
+                Alert.alert('Erro', 'Pedido não encontrado');
+                return;
+            }
+
+            // Processar pagamento via OrderContext
+            const success = await quickPay(nowAction.orderId, method);
+            
+            if (success) {
+                setIsPaymentModalVisible(false);
+                // O NowEngine será atualizado via realtime quando o status mudar
+                // Não precisamos chamar completeAction aqui, o realtime fará isso
+            } else {
+                Alert.alert('Erro', 'Falha ao processar pagamento');
+            }
+        } catch (error) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            logError(err, {
+                action: 'processPayment',
+                orderId: nowAction?.orderId,
+                method,
+                tip,
+            });
+            console.error('[StaffScreen] Error processing payment:', error);
+            Alert.alert('Erro', 'Falha ao processar pagamento');
+        } finally {
+            // ERRO-004 Fix: Unlock após processamento
+            setIsProcessingPayment(false);
         }
     };
 
     // --- Shift Closing Logic ---
-    const handleRequestCloseShift = () => {
-        setClosingModalVisible(true);
+    // Bug #6 Fix: Validar ações pendentes antes de encerrar turno
+    const handleRequestCloseShift = async () => {
+        // Validar ações pendentes
+        if (nowAction && (nowAction.type === 'critical' || nowAction.type === 'urgent')) {
+            Alert.alert(
+                'Ações Pendentes',
+                `Há uma ação ${nowAction.type === 'critical' ? 'crítica' : 'urgente'} pendente. Resolva antes de encerrar o turno.`,
+                [{ text: 'OK' }]
+            );
+            return;
+        }
+        
+        // Verificar pedidos pendentes (se necessário)
+        // Nota: Validação completa requereria buscar do Supabase, mas por ora validamos ação atual
+        
+        Alert.alert(
+            'Encerrar Turno',
+            'Deseja realmente encerrar seu turno de trabalho?',
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                { text: 'Encerrar', style: 'destructive', onPress: () => endShift(0, 0) }
+            ]
+        );
     };
-
-    const confirmEndShift = () => {
-        endShift();
-        setClosingModalVisible(false);
-        Alert.alert("Turno Encerrado", "Bom descanso! 👋");
-    };
-
-    // --- Analysis for Summary ---
-    const sessionRevenue = orders.reduce((sum, o) => sum + o.total, 0);
-    const openOrders = orders.filter(o => o.status !== 'delivered');
-    const hasOpenOrders = openOrders.length > 0;
-    const completedTasks = tasks.filter(t => t.status === 'done');
-    const pendingTasks = tasks.filter(t => t.status !== 'done');
 
 
     // =========================================================================
-    // SHIFT START SCREEN
+    // APPSTAFF 2.0 - TELA ÚNICA
     // =========================================================================
+    
+    // Se turno não iniciado, mostrar tela de início simplificada
     if (shiftState === 'offline') {
         return (
             <SafeAreaView style={styles.container}>
@@ -67,144 +156,101 @@ export default function StaffScreen() {
                     <Text style={styles.roleLabel}>
                         {roleConfig.emoji} {roleConfig.label}
                     </Text>
-
-                    <TouchableOpacity style={styles.startButton} onPress={startShift}>
-                        <Text style={styles.startButtonText}>▶️ INICIAR TURNO</Text>
-                    </TouchableOpacity>
-
-                    <Text style={styles.hint}>
-                        Toque para começar a receber tarefas de {roleConfig.label}
-                    </Text>
                 </View>
+
+                <BottomActionBar
+                    primary={{
+                        label: "INICIAR TURNO",
+                        onPress: () => startShift()
+                    }}
+                />
             </SafeAreaView>
         );
     }
 
-    // =========================================================================
-    // ACTIVE SHIFT SCREEN (Task List)
-    // =========================================================================
+    // Tela única do AppStaff 2.0
     return (
         <SafeAreaView style={styles.container}>
-            {/* HEADER */}
-            <View style={styles.header}>
-                <View>
-                    <Text style={styles.businessNameSmall}>{operationalContext.businessName}</Text>
-                    <Text style={styles.roleLabelSmall}>
-                        {roleConfig.emoji} {roleConfig.label}
-                    </Text>
-                </View>
-                <View style={styles.shiftInfo}>
-                    <Text style={styles.shiftDuration}>⏱️ {formatDuration(shiftStart)}</Text>
-                    <TouchableOpacity style={styles.endButton} onPress={handleRequestCloseShift}>
-                        <Text style={styles.endButtonText}>Encerrar</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
+            {/* NOW ACTION CARD - Tela única */}
+            <NowActionCard
+                action={nowAction}
+                onComplete={handleCompleteAction}
+                loading={loading}
+                pendingCount={pendingCount} // ERRO-008 Fix
+            />
 
-            {/* GAMIFICATION & METRICS (Conditional) */}
+            {/* FASE 4: Botão Ranking */}
             {roleConfig.showGamification && (
-                <View style={styles.xpBar}>
-                    <Text style={styles.xpText}>⭐ XP da Sessão: {completedTasks.length * 100}</Text>
-                </View>
+                <TouchableOpacity 
+                    onPress={() => router.push('/(tabs)/leaderboard')} 
+                    style={styles.rankingButton}
+                >
+                    <Ionicons name="trophy" size={24} color="#d4a574" />
+                </TouchableOpacity>
             )}
 
-            {roleConfig.showMetrics && (
-                <View style={styles.metricsBar}>
-                    <Text style={styles.metricsText}>📊 Eficiência da Equipa: 94%</Text>
-                </View>
+            {/* VAULT ACCESS - Apenas se necessário e permitido */}
+            {canAccess('cash:handle') && nowAction?.action === 'collect_payment' && (
+                <TouchableOpacity 
+                    onPress={() => setIsVaultVisible(true)} 
+                    style={styles.vaultButton}
+                >
+                    <Ionicons name="wallet" size={24} color="#FFCC00" />
+                </TouchableOpacity>
             )}
 
-            {/* TASK LIST */}
-            <View style={styles.taskSection}>
-                <Text style={styles.sectionTitle}>
-                    {activeRole === 'owner' ? '👁️ Visão Geral' : `📋 Tarefas de ${roleConfig.label}`} ({pendingTasks.length})
-                </Text>
+            {/* BOTTOM ACTION BAR - End Shift (apenas se não há ação crítica) */}
+            {(!nowAction || nowAction.type !== 'critical') && (
+                <BottomActionBar
+                    primary={{
+                        label: "Encerrar Turno",
+                        onPress: handleRequestCloseShift,
+                        variant: 'destructive',
+                        icon: 'log-out-outline'
+                    }}
+                />
+            )}
 
-                {pendingTasks.length === 0 ? (
-                    <View style={styles.emptyState}>
-                        <Text style={styles.emptyEmoji}>✅</Text>
-                        <Text style={styles.emptyText}>Tudo em ordem!</Text>
-                    </View>
-                ) : (
-                    <FlatList
-                        data={pendingTasks}
-                        keyExtractor={(item) => item.id}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={[styles.taskCard, { borderLeftColor: getPriorityColor(item.priority) }]}
-                                onPress={() => completeTask(item.id)}
-                            >
-                                <View style={styles.taskContent}>
-                                    <View style={styles.taskHeaderRow}>
-                                        <Text style={styles.taskTitle}>{item.title}</Text>
-                                        {item.priority === 'critical' && <Text style={styles.criticalBadge}>!</Text>}
-                                    </View>
-                                    <View style={styles.taskMetaRow}>
-                                        <Text style={styles.taskPriority}>{item.priority.toUpperCase()}</Text>
-                                        <Text style={styles.taskCategory}> • {item.category}</Text>
-                                    </View>
-                                </View>
-                                <Text style={styles.taskAction}>✓</Text>
-                            </TouchableOpacity>
-                        )}
-                    />
-                )}
-            </View>
-
-            {/* RECAP MODAL */}
+            {/* FINANCIAL VAULT MODAL */}
             <Modal
-                visible={isClosingModalVisible}
-                transparent={true}
+                visible={isVaultVisible}
                 animationType="slide"
-                onRequestClose={() => setClosingModalVisible(false)}
+                presentationStyle="pageSheet"
+                onRequestClose={() => setIsVaultVisible(false)}
             >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Resumo do Turno</Text>
-
-                        {/* WARNING IF OPEN ORDERS */}
-                        {hasOpenOrders && (
-                            <View style={styles.warningBox}>
-                                <Text style={styles.warningTitle}>⚠️ {openOrders.length} Pedidos Abertos</Text>
-                                <Text style={styles.warningText}>Recomenda-se fechar todas as mesas/pedidos antes de encerrar o turno.</Text>
-                            </View>
-                        )}
-
-                        <View style={styles.statsRow}>
-                            <View style={styles.statItem}>
-                                <Text style={styles.statLabel}>Tempo</Text>
-                                <Text style={styles.statValue}>{formatDuration(shiftStart)}</Text>
-                            </View>
-                            <View style={styles.statItem}>
-                                <Text style={styles.statLabel}>Tarefas</Text>
-                                <Text style={styles.statValue}>{completedTasks.length}</Text>
-                            </View>
-                            <View style={styles.statItem}>
-                                <Text style={styles.statLabel}>Vendas</Text>
-                                <Text style={styles.statValue}>€{sessionRevenue.toFixed(0)}</Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.modalActions}>
-                            <TouchableOpacity
-                                style={[styles.modalButton, styles.cancelButton]}
-                                onPress={() => setClosingModalVisible(false)}
-                            >
-                                <Text style={styles.cancelButtonText}>Continuar Turno</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={[styles.modalButton, styles.confirmButton]}
-                                onPress={confirmEndShift}
-                            >
-                                <Text style={styles.confirmButtonText}>
-                                    {hasOpenOrders ? 'Forçar Encerramento' : 'Encerrar Turno'}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
+                <View style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
+                    <View style={{ padding: 16, alignItems: 'flex-end', backgroundColor: '#1c1c1e' }}>
+                        <TouchableOpacity onPress={() => setIsVaultVisible(false)}>
+                            <Text style={{ color: '#0a84ff', fontSize: 18, fontWeight: '600' }}>Concluído</Text>
+                        </TouchableOpacity>
                     </View>
+                    <FinancialVault />
                 </View>
             </Modal>
+
+                      {/* QUICK PAY MODAL */}
+                      {nowAction?.action === 'collect_payment' && nowAction.orderId && (() => {
+                          const order = orders.find(o => o.id === nowAction.orderId);
+                          return (
+                              <QuickPayModal
+                                  visible={isPaymentModalVisible}
+                                  total={order?.total || 0}
+                                  orderId={nowAction.orderId}
+                                  order={order || undefined} // Bug #4 Fix: Passar order para validação
+                                  onClose={() => setIsPaymentModalVisible(false)}
+                                  onConfirm={handlePaymentConfirm}
+                                  onSplitBill={async (itemIds: string[]) => {
+                                      // ERRO-009 Fix: Dividir conta
+                                      if (nowAction.orderId) {
+                                          const newOrderId = await splitOrder(nowAction.orderId, itemIds);
+                                          if (newOrderId) {
+                                              Alert.alert('Sucesso', 'Conta dividida com sucesso!');
+                                          }
+                                      }
+                                  }}
+                              />
+                          );
+                      })()}
         </SafeAreaView>
     );
 }
@@ -252,156 +298,23 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#666',
     },
-    // Active Shift Screen
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#222',
-    },
-    businessNameSmall: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#d4a574',
-    },
-    roleLabelSmall: {
-        fontSize: 14,
-        color: '#888',
-    },
-    shiftInfo: {
-        alignItems: 'flex-end',
-    },
-    shiftDuration: {
-        fontSize: 16,
-        color: '#4ade80',
-        marginBottom: 4,
-    },
-    endButton: {
-        backgroundColor: '#333',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 6,
-    },
-    endButtonText: {
-        fontSize: 12,
-        color: '#ff453a', // Red text for danger action
-        fontWeight: 'bold',
-    },
-    // Task Section
-    taskSection: {
-        flex: 1,
-        padding: 16,
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#fff',
-        marginBottom: 12,
-    },
-    taskCard: {
-        backgroundColor: '#1a1a1a',
-        borderRadius: 8,
-        padding: 16,
-        marginBottom: 8,
-        borderLeftWidth: 4,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    taskContent: {
-        flex: 1,
-    },
-    taskTitle: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#fff',
-    },
-    taskPriority: {
-        fontSize: 10,
-        color: '#888',
-        marginTop: 4,
-    },
-    taskAction: {
-        fontSize: 24,
-        color: '#4ade80',
-    },
-    // Empty State
-    emptyState: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    emptyEmoji: {
-        fontSize: 48,
-        marginBottom: 12,
-    },
-    emptyText: {
-        fontSize: 16,
-        color: '#888',
-    },
-    // Completed Bar
-    completedBar: {
-        padding: 12,
-        backgroundColor: '#1a2f1a',
-        borderTopWidth: 1,
-        borderTopColor: '#2a4a2a',
-    },
-    completedText: {
-        textAlign: 'center',
-        color: '#4ade80',
-        fontSize: 14,
-    },
-    // Gamification & Metrics
-    xpBar: {
-        backgroundColor: '#2a2010',
+    // FASE 4: Ranking Button
+    rankingButton: {
+        position: 'absolute',
+        top: 16,
+        left: 16,
         padding: 8,
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: '#d4a574',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        borderRadius: 8
     },
-    xpText: {
-        color: '#d4a574',
-        fontWeight: '700',
-        fontSize: 14,
-    },
-    metricsBar: {
-        backgroundColor: '#1a1a2e',
+    // Vault Button
+    vaultButton: {
+        position: 'absolute',
+        top: 16,
+        right: 16,
         padding: 8,
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: '#4a4ae2',
-    },
-    metricsText: {
-        color: '#a0a0ff',
-        fontWeight: '700',
-        fontSize: 14,
-    },
-    taskHeaderRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 4,
-    },
-    criticalBadge: {
-        backgroundColor: '#ff4444',
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: 'bold',
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 4,
-        marginLeft: 8,
-        overflow: 'hidden',
-    },
-    taskMetaRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    taskCategory: {
-        fontSize: 10,
-        color: '#666',
-        marginLeft: 4,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        borderRadius: 8
     },
     // Modal Styles
     modalOverlay: {
@@ -464,6 +377,9 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
     },
+
+    emptyEmoji: { fontSize: 48, marginBottom: 10 },
+    emptyText: { color: '#666', fontSize: 16 },
     modalActions: {
         flexDirection: 'row',
         gap: 12,

@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
+import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { getErrorMessage, getErrorSuggestion } from '../../core/errors/ErrorMessages';
 import { getTableHealth } from '../../core/domain/TableHealthUtils';
 import { getTabIsolated, setTabIsolated, removeTabIsolated } from '../../core/storage/TabIsolatedStorage';
@@ -26,23 +27,24 @@ import { CommandPanel } from '../../ui/design-system/domain/CommandPanel';
 import { StreamTunnel } from '../../ui/design-system/domain/StreamTunnel';
 import { QuickMenuPanel } from '../../ui/design-system/domain/QuickMenuPanel';
 import { TableMapPanel } from '../../ui/design-system/domain/TableMapPanel';
-import { useToast } from '../../ui/design-system';
+import { useToast, ToastContainer } from '../../ui/design-system';
 import { Button } from '../../ui/design-system/Button';
 import { Card } from '../../ui/design-system/Card';
 import { spacing } from '../../ui/design-system/tokens/spacing';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { Text } from '../../ui/design-system/primitives/Text';
 import { useTables } from './context/TableContext';
-import { PaymentModal } from './components/PaymentModal';
-import { SplitBillModalWrapper } from './components/SplitBillModalWrapper';
-import { OpenCashRegisterModal } from './components/OpenCashRegisterModal';
-import { CloseCashRegisterModal } from './components/CloseCashRegisterModal';
-import { OrderItemEditor } from './components/OrderItemEditor';
+// FASE 5: Lazy loading de componentes pesados (modais e componentes não sempre visíveis)
+const PaymentModal = lazy(() => import('./components/PaymentModal').then(m => ({ default: m.PaymentModal })));
+const SplitBillModalWrapper = lazy(() => import('./components/SplitBillModalWrapper').then(m => ({ default: m.SplitBillModalWrapper })));
+const OpenCashRegisterModal = lazy(() => import('./components/OpenCashRegisterModal').then(m => ({ default: m.OpenCashRegisterModal })));
+const CloseCashRegisterModal = lazy(() => import('./components/CloseCashRegisterModal').then(m => ({ default: m.CloseCashRegisterModal })));
+const OrderItemEditor = lazy(() => import('./components/OrderItemEditor').then(m => ({ default: m.OrderItemEditor })));
 import { OrderSummaryPanel } from './components/OrderSummaryPanel';
 import { OrderHeader } from './components/OrderHeader';
 import { IncomingRequests } from './components/IncomingRequests';
 import { GroupSelector } from './components/GroupSelector';
-import { CreateGroupModal } from './components/CreateGroupModal';
+const CreateGroupModal = lazy(() => import('./components/CreateGroupModal').then(m => ({ default: m.CreateGroupModal })));
 import { useConsumptionGroups } from './hooks/useConsumptionGroups';
 
 import { useCommonTPVShortcuts } from './hooks/useTPVShortcuts';
@@ -50,14 +52,14 @@ import { TPVInstallPrompt } from './components/TPVInstallPrompt'; // Added Insta
 import { useCurrency } from '../../core/currency/useCurrency'; // P5-5
 
 
-import { QuickProductModal } from './components/QuickProductModal';
+const QuickProductModal = lazy(() => import('./components/QuickProductModal'));
 
 import { useTPVVoiceControl } from './hooks/useTPVVoiceControl';
-import { ReservationBoard } from './reservations/ReservationBoard';
+const ReservationBoard = lazy(() => import('./reservations/ReservationBoard'));
 import { TPVLockScreen, type Operator } from './components/TPVLockScreen';
 import { useOperationalCortex } from '../../intelligence/nervous-system/OperationalCortex';
 import { InsightTicker } from './components/InsightTicker';
-import { TPVSettingsModal } from './components/TPVSettingsModal';
+const TPVSettingsModal = lazy(() => import('./components/TPVSettingsModal'));
 
 import { useDynamicMenu } from '../../core/menu/DynamicMenu/hooks/useDynamicMenu';
 import { TPVWarMap } from './components/TPVWarMap';
@@ -68,6 +70,9 @@ import { OperationalModeIndicator } from './components/OperationalModeIndicator'
 type ContextView = 'menu' | 'tables' | 'orders' | 'reservations' | 'delivery' | 'warmap';
 
 const TPVContent = () => {
+  // FASE 5: Toast para feedback visual (toasts e dismiss serão passados do wrapper)
+  const { success, error } = useToast();
+  
   // RITUAL: Operator Gate State
   // HOOKS REFACTORING COMPLETE - Lock screen now active in all modes
   const [isLocked, setIsLocked] = useState(true);
@@ -76,6 +81,20 @@ const TPVContent = () => {
 
   // FIX: Reactive Restaurant ID Resolution
   const [restaurantId, setRestaurantId] = useState<string | null>(getTabIsolated('chefiapp_restaurant_id'));
+
+  // FASE 2: Detectar modo demo da URL
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const isDemoMode = searchParams.get('demo') === 'true' || location.state?.demo === true;
+  
+  // Salvar modo demo no localStorage para persistir
+  useEffect(() => {
+    if (isDemoMode) {
+      setTabIsolated('chefiapp_tpv_demo_mode', 'true');
+    } else {
+      removeTabIsolated('chefiapp_tpv_demo_mode');
+    }
+  }, [isDemoMode]);
 
   // Visual Polish: Get Restaurant Identity
   const { identity } = useRestaurantIdentity();
@@ -166,7 +185,7 @@ const TPVContent = () => {
 
     return items;
   }, [menu]);
-  const { success, error } = useToast();
+  const { success, error, toasts, dismiss } = useToast();
   const { tables } = useTables();
 
   // RADAR OPERACIONAL: Calculate Table Health
@@ -225,8 +244,27 @@ const TPVContent = () => {
   // P1-1 FIX: Determinar se ações devem estar habilitadas
   // Ações offline (criar pedido, adicionar item) sempre permitidas
   // Ações críticas (pagamento) respeitam health status
+  // FASE 2: Detectar modo demo da URL
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const urlDemoMode = searchParams.get('demo') === 'true' || location.state?.demo === true;
+  const isDemoModeFromStorage = getTabIsolated('chefiapp_tpv_demo_mode') === 'true';
+  const isDemoMode = urlDemoMode || isDemoModeFromStorage;
+  
+  // Salvar modo demo no localStorage para persistir
+  useEffect(() => {
+    if (isDemoMode) {
+      setTabIsolated('chefiapp_tpv_demo_mode', 'true');
+    } else {
+      removeTabIsolated('chefiapp_tpv_demo_mode');
+    }
+  }, [isDemoMode]);
+  
+  // FASE 2: Detectar se é modo tutorial
+  const isTutorialMode = location.state?.tutorial === true || searchParams.get('tutorial') === 'true';
+
   // Demo mode permite ações mesmo com sistema down (para testes)
-  const isDemoData = getTabIsolated('chefiapp_demo_mode') === 'true';
+  const isDemoData = getTabIsolated('chefiapp_demo_mode') === 'true' || isDemoMode;
   const actionsEnabled = healthStatus === 'UP' || healthStatus === 'DEGRADED' || isDemoData || isOnline;
   const { intention, role } = useContextEngine();
 
@@ -246,8 +284,51 @@ const TPVContent = () => {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   const { formatAmount } = useCurrency();
+  
+  // FASE 5: Toast removido daqui (já declarado acima)
 
+  // FASE 2: Modo Demo - Pré-preencher dados
+  useEffect(() => {
+    if (isDemoMode && restaurantId && menuItems.length > 0 && tables.length > 0 && !activeOrderId) {
+      // Aguardar um pouco para garantir que tudo está carregado
+      const timer = setTimeout(() => {
+        // Selecionar primeira mesa
+        const firstTable = tables[0];
+        if (firstTable) {
+          setSelectedTableId(firstTable.id);
+          
+          // Adicionar 2-3 itens do menu ao carrinho
+          const itemsToAdd = menuItems.slice(0, Math.min(3, menuItems.length));
+          
+          if (itemsToAdd.length > 0) {
+            // Criar pedido com itens pré-preenchidos
+            createOrder({
+              status: 'new',
+              items: itemsToAdd.map(item => ({
+                id: item.id,
+                productId: item.id,
+                name: item.name,
+                price: Math.round(item.price * 100),
+                quantity: 1,
+                categoryName: item.category,
+              })),
+              total: itemsToAdd.reduce((sum, item) => sum + Math.round(item.price * 100), 0),
+              tableNumber: firstTable.number,
+              tableId: firstTable.id,
+            }).then((order) => {
+              setActiveOrderId(order.id);
+              setTabIsolated('chefiapp_active_order_id', order.id);
+              success('Modo Demo: Pedido criado com itens de exemplo');
+            }).catch((err) => {
+              console.error('[TPV] Error creating demo order:', err);
+            });
+          }
+        }
+      }, 1000);
 
+      return () => clearTimeout(timer);
+    }
+  }, [isDemoMode, restaurantId, menuItems, tables, activeOrderId, createOrder, success]);
 
   const handleSelectTable = async (tableId: string) => {
     setSelectedTableId(tableId);
@@ -630,9 +711,35 @@ const TPVContent = () => {
     }
   };
 
+  // FASE 2: Detectar se é modo tutorial
+  const isTutorialMode = location.state?.tutorial === true || searchParams.get('tutorial') === 'true';
+
   // Handler de pagamento (chamado pelo modal)
   const handlePayment = async (method: string, intentId?: string) => {
     if (!paymentModalOrderId) return;
+
+    // FASE 2: Modo Demo - Simular pagamento fake
+    if (isDemoMode) {
+      // Simular sucesso de pagamento
+      success('🎉 Pagamento processado com sucesso! (Modo Demo)');
+      
+      // Fechar modal
+      setPaymentModalOrderId(null);
+      
+      // Se for tutorial, redirecionar para dashboard após 2 segundos
+      if (isTutorialMode) {
+        setTimeout(() => {
+          success('Parabéns! Você completou sua primeira venda. Agora você pode usar o TPV normalmente.');
+          setTimeout(() => {
+            navigate('/app/dashboard', { 
+              state: { firstSaleCompleted: true }
+            });
+          }, 2000);
+        }, 2000);
+      }
+      
+      return;
+    }
 
     // P1-1 FIX: Bloquear pagamento se sistema down e não for demo
     if (!actionsEnabled && !isDemoData) {
@@ -985,6 +1092,22 @@ const TPVContent = () => {
   return (
     <AppShell operationalMode={true}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* FASE 2: Banner Modo Demo */}
+        {isDemoMode && (
+          <div style={{
+            background: 'linear-gradient(135deg, #32d74b 0%, #28c83e 100%)',
+            color: '#000',
+            padding: '12px 24px',
+            textAlign: 'center',
+            fontWeight: 600,
+            fontSize: '14px',
+            boxShadow: '0 2px 8px rgba(50, 215, 75, 0.3)',
+            zIndex: 1000,
+          }}>
+            🎯 MODO DEMO - Este é um pedido de exemplo. Nenhum pagamento real será processado.
+          </div>
+        )}
+
         {/* BRAIN: Operational Ticker (The Sub-Chef's Voice) */}
         {activeMode !== 'rush' && <InsightTicker insight={topInsight} />}
 
@@ -997,19 +1120,25 @@ const TPVContent = () => {
         />
         <TPVInstallPrompt />
 
+        {/* FASE 5: Toast Container para feedback visual */}
+        <ToastContainer toasts={toasts} onDismiss={dismiss} />
+
+        {/* FASE 5: Lazy loading de modais */}
         {showSettingsModal && (
-          <TPVSettingsModal
-            operatorName={activeOperator?.name}
-            onClose={() => setShowSettingsModal(false)}
-            onAdvancedSettings={() => {
-              // Navigate to /app/settings
-              window.location.href = '/app/settings';
-            }}
-            onLogout={() => {
-              setIsLocked(true);
-              setActiveOperator(null);
-            }}
-          />
+          <Suspense fallback={<div style={{ padding: 16, textAlign: 'center' }}>Carregando...</div>}>
+            <TPVSettingsModal
+              operatorName={activeOperator?.name}
+              onClose={() => setShowSettingsModal(false)}
+              onAdvancedSettings={() => {
+                // Navigate to /app/settings
+                window.location.href = '/app/settings';
+              }}
+              onLogout={() => {
+                setIsLocked(true);
+                setActiveOperator(null);
+              }}
+            />
+          </Suspense>
         )}
 
         <TPVLayoutSplit
@@ -1063,6 +1192,43 @@ const TPVContent = () => {
                     operatorId={activeOperator.id || 'op-1'}
                     operatorName={activeOperator.name || 'Chef'}
                   />
+                </div>
+              )}
+
+              {/* FASE 2: Banner Modo Demo */}
+              {isDemoMode && (
+                <div style={{
+                  padding: '12px 16px',
+                  background: 'linear-gradient(135deg, rgba(50, 215, 75, 0.2), rgba(50, 215, 75, 0.1))',
+                  border: '2px solid rgba(50, 215, 75, 0.5)',
+                  borderRadius: '8px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '24px' }}>🎯</span>
+                    <div>
+                      <Text size="sm" weight="bold" style={{ color: '#32d74b', marginBottom: '2px' }}>
+                        Modo Demo Ativo
+                      </Text>
+                      <Text size="xs" color="secondary">
+                        Você está testando o TPV. Nenhum pagamento real será processado.
+                      </Text>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      removeTabIsolated('chefiapp_tpv_demo_mode');
+                      window.location.href = '/app/tpv';
+                    }}
+                  >
+                    Sair do Demo
+                  </Button>
                 </div>
               )}
 
@@ -1169,7 +1335,9 @@ const TPVContent = () => {
 
               {contextView === 'reservations' && (
                 <div style={{ height: '100%', overflow: 'hidden' }}>
-                  <ReservationBoard restaurantId={restaurantId || ''} />
+                  <Suspense fallback={<div style={{ padding: 16, textAlign: 'center' }}>Carregando reservas...</div>}>
+                    <ReservationBoard restaurantId={restaurantId || ''} />
+                  </Suspense>
                 </div>
               )}
 
@@ -1235,35 +1403,37 @@ const TPVContent = () => {
 
                 {/* Editor de Itens (ORDER LIST should be main part of ticket) */}
                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <OrderItemEditor
-                    order={activeOrders.find(o => o.id === activeOrderId) || null}
-                    onUpdateQuantity={async (itemId, quantity) => {
-                      if (!activeOrderId) return;
-                      try {
-                        await updateItemQuantity(activeOrderId, itemId, quantity);
-                        success('Quantidade atualizada');
-                      } catch (err: any) {
-                        error(err.message || 'Erro ao atualizar quantidade');
-                      }
-                    }}
-                    onRemoveItem={async (itemId) => {
-                      if (!activeOrderId) return;
-                      try {
-                        await removeItemFromOrder(activeOrderId, itemId);
-                        success('Item removido');
-                      } catch (err: any) {
-                        error(err.message || 'Erro ao remover item');
-                      }
-                    }}
-                    onBackToMenu={() => {
-                      // On split view, back to menu might just define no active order?
-                      // Or maybe we treat "Back" as "Unselect Table"
-                      setActiveOrderId(null);
-                      removeTabIsolated('chefiapp_active_order_id');
-                      // setContextView('menu'); // View stays, context changes
-                    }}
-                    loading={ordersLoading}
-                  />
+                  <Suspense fallback={<div style={{ padding: 16, textAlign: 'center' }}>Carregando editor...</div>}>
+                    <OrderItemEditor
+                      order={activeOrders.find(o => o.id === activeOrderId) || null}
+                      onUpdateQuantity={async (itemId, quantity) => {
+                        if (!activeOrderId) return;
+                        try {
+                          await updateItemQuantity(activeOrderId, itemId, quantity);
+                          success('Quantidade atualizada');
+                        } catch (err: any) {
+                          error(err.message || 'Erro ao atualizar quantidade');
+                        }
+                      }}
+                      onRemoveItem={async (itemId) => {
+                        if (!activeOrderId) return;
+                        try {
+                          await removeItemFromOrder(activeOrderId, itemId);
+                          success('Item removido');
+                        } catch (err: any) {
+                          error(err.message || 'Erro ao remover item');
+                        }
+                      }}
+                      onBackToMenu={() => {
+                        // On split view, back to menu might just define no active order?
+                        // Or maybe we treat "Back" as "Unselect Table"
+                        setActiveOrderId(null);
+                        removeTabIsolated('chefiapp_active_order_id');
+                        // setContextView('menu'); // View stays, context changes
+                      }}
+                      loading={ordersLoading}
+                    />
+                  </Suspense>
                 </div>
 
                 {/* Resumo da Conta (Sempre Visível no fundo) */}
@@ -1306,10 +1476,12 @@ const TPVContent = () => {
 
         {/* Quick Product Modal */}
         {showQuickProductModal && (
-          <QuickProductModal
-            onClose={() => setShowQuickProductModal(false)}
-            onCreate={handleCreateQuickProduct}
-          />
+          <Suspense fallback={<div style={{ padding: 16, textAlign: 'center' }}>Carregando...</div>}>
+            <QuickProductModal
+              onClose={() => setShowQuickProductModal(false)}
+              onCreate={handleCreateQuickProduct}
+            />
+          </Suspense>
         )}
 
         {/* Group Selector Modal */}
@@ -1371,13 +1543,16 @@ const TPVContent = () => {
           const order = activeOrders.find(o => o.id === paymentModalOrderId);
           if (!order) return null;
           return (
-            <PaymentModal
-              orderId={order.id}
-              restaurantId={restaurantId || ''}
-              orderTotal={order.total}
-              onPay={handlePayment}
-              onCancel={() => setPaymentModalOrderId(null)}
-            />
+            <Suspense fallback={<div style={{ padding: 16, textAlign: 'center' }}>Carregando modal de pagamento...</div>}>
+              <PaymentModal
+                orderId={order.id}
+                restaurantId={restaurantId || ''}
+                orderTotal={order.total}
+                onPay={handlePayment}
+                onCancel={() => setPaymentModalOrderId(null)}
+                isDemoMode={isDemoMode}
+              />
+            </Suspense>
           );
         })()
       }
@@ -1388,14 +1563,16 @@ const TPVContent = () => {
           const order = activeOrders.find(o => o.id === splitBillModalOrderId);
           if (!order) return null;
           return (
-            <SplitBillModalWrapper
-              orderId={order.id}
-              restaurantId={restaurantId || ''}
-              orderTotal={order.total}
-              onPayPartial={handlePartialPayment}
-              onCancel={() => setSplitBillModalOrderId(null)}
-              loading={ordersLoading}
-            />
+            <Suspense fallback={<div style={{ padding: 16, textAlign: 'center' }}>Carregando modal de divisão...</div>}>
+              <SplitBillModalWrapper
+                orderId={order.id}
+                restaurantId={restaurantId || ''}
+                orderTotal={order.total}
+                onPayPartial={handlePartialPayment}
+                onCancel={() => setSplitBillModalOrderId(null)}
+                loading={ordersLoading}
+              />
+            </Suspense>
           );
         })()
       }
@@ -1403,83 +1580,89 @@ const TPVContent = () => {
       {/* Open Cash Register Modal */}
       {
         showOpenCashModal && (
-          <OpenCashRegisterModal
-            onOpen={async (openingBalanceCents) => {
-              try {
-                await openCashRegister(openingBalanceCents);
-                setShowOpenCashModal(false);
-                setCashRegisterOpen(true);
-                success('Caixa aberto com sucesso');
+          <Suspense fallback={<div style={{ padding: 16, textAlign: 'center' }}>Carregando modal de abertura...</div>}>
+            <OpenCashRegisterModal
+              onOpen={async (openingBalanceCents) => {
+                try {
+                  await openCashRegister(openingBalanceCents);
+                  setShowOpenCashModal(false);
+                  setCashRegisterOpen(true);
+                  success('Caixa aberto com sucesso');
 
-                // Recarregar dados
-                const totalCents = await getDailyTotal();
-                setDailyTotalCents(totalCents);
-                setDailyTotal(
-                  formatAmount(totalCents)
-                );
-              } catch (err: any) {
-                error(err.message || 'Erro ao abrir caixa');
-                // Não relançar - OpenCashRegisterModal já trata visualmente via setError()
-              }
-            }}
-            onCancel={() => setShowOpenCashModal(false)}
-          />
+                  // Recarregar dados
+                  const totalCents = await getDailyTotal();
+                  setDailyTotalCents(totalCents);
+                  setDailyTotal(
+                    formatAmount(totalCents)
+                  );
+                } catch (err: any) {
+                  error(err.message || 'Erro ao abrir caixa');
+                  // Não relançar - OpenCashRegisterModal já trata visualmente via setError()
+                }
+              }}
+              onCancel={() => setShowOpenCashModal(false)}
+            />
+          </Suspense>
         )
       }
 
       {/* Close Cash Register Modal */}
       {
         showCloseCashModal && (
-          <CloseCashRegisterModal
-            dailyTotalCents={dailyTotalCents}
-            openingBalanceCents={openingBalanceCents}
-            restaurantId={restaurantId}
-            operatorName="GOLDMONKEY" // TODO: Get from auth context
-            terminalId="CAIXA-01"     // TODO: Get from device settings
-            onClose={async (closingBalanceCents) => {
-              try {
-                await closeCashRegister(closingBalanceCents);
-                // setShowCloseCashModal(false); // CHANGED: Don't close immediately, let modal show success state
-                setCashRegisterOpen(false);
-                success('Caixa fechado com sucesso');
+          <Suspense fallback={<div style={{ padding: 16, textAlign: 'center' }}>Carregando modal de fechamento...</div>}>
+            <CloseCashRegisterModal
+              dailyTotalCents={dailyTotalCents}
+              openingBalanceCents={openingBalanceCents}
+              restaurantId={restaurantId}
+              operatorName="GOLDMONKEY" // TODO: Get from auth context
+              terminalId="CAIXA-01"     // TODO: Get from device settings
+              onClose={async (closingBalanceCents) => {
+                try {
+                  await closeCashRegister(closingBalanceCents);
+                  // setShowCloseCashModal(false); // CHANGED: Don't close immediately, let modal show success state
+                  setCashRegisterOpen(false);
+                  success('Caixa fechado com sucesso');
 
-                // Recarregar dados
-                const totalCents = await getDailyTotal();
-                setDailyTotalCents(totalCents);
-                setDailyTotal(
-                  formatAmount(totalCents)
-                );
-              } catch (err: any) {
-                error(err.message || 'Erro ao fechar caixa');
-                // Não relançar - CloseCashRegisterModal já trata visualmente via setError()
-              }
-            }}
-            onCancel={() => setShowCloseCashModal(false)}
-            onDismiss={() => setShowCloseCashModal(false)}
-          />
+                  // Recarregar dados
+                  const totalCents = await getDailyTotal();
+                  setDailyTotalCents(totalCents);
+                  setDailyTotal(
+                    formatAmount(totalCents)
+                  );
+                } catch (err: any) {
+                  error(err.message || 'Erro ao fechar caixa');
+                  // Não relançar - CloseCashRegisterModal já trata visualmente via setError()
+                }
+              }}
+              onCancel={() => setShowCloseCashModal(false)}
+              onDismiss={() => setShowCloseCashModal(false)}
+            />
+          </Suspense>
         )
       }
 
       {/* Create Group Modal */}
       {
         showCreateGroupModal && activeOrderId && (
-          <CreateGroupModal
-            onClose={() => setShowCreateGroupModal(false)}
-            onCreate={async (label, color) => {
-              await createGroup({
-                order_id: activeOrderId,
-                label,
-                color,
-              });
-              // Auto-select new group (will be selected in useEffect)
-              await fetchGroups();
-              setShowCreateGroupModal(false);
-              // Re-open group selector if there was a pending item
-              if (pendingItem) {
-                setShowGroupSelector(true);
-              }
-            }}
-          />
+          <Suspense fallback={<div style={{ padding: 16, textAlign: 'center' }}>Carregando modal de grupo...</div>}>
+            <CreateGroupModal
+              onClose={() => setShowCreateGroupModal(false)}
+              onCreate={async (label, color) => {
+                await createGroup({
+                  order_id: activeOrderId,
+                  label,
+                  color,
+                });
+                // Auto-select new group (will be selected in useEffect)
+                await fetchGroups();
+                setShowCreateGroupModal(false);
+                // Re-open group selector if there was a pending item
+                if (pendingItem) {
+                  setShowGroupSelector(true);
+                }
+              }}
+            />
+          </Suspense>
         )
       }
     </AppShell>
@@ -1492,6 +1675,9 @@ const TPVContent = () => {
 // TPV wrapper
 // Providers (TableProvider, OfflineOrderProvider) are injected by AppDomainWrapper
 const TPV = () => {
+  // FASE 5: Toast para feedback visual (no nível do wrapper para compartilhar entre componentes)
+  const { toasts, dismiss } = useToast();
+  
   // Staff-style browser tab title for isolated tool context
   useEffect(() => {
     document.title = 'ChefIApp POS — TPV';
@@ -1501,6 +1687,8 @@ const TPV = () => {
   return (
     <LoyaltyProvider>
       <TPVContent />
+      {/* FASE 5: Toast Container para feedback visual */}
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </LoyaltyProvider>
   );
 };

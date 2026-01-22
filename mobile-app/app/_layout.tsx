@@ -9,12 +9,15 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { AppStaffProvider } from '@/context/AppStaffContext';
+import { RestaurantProvider } from '@/context/RestaurantContext';
+import { OrderProvider } from '@/context/OrderContext';
+import { CommandInterceptor } from '@/components/CommandInterceptor';
 import { RoleSelectorDevPanel } from '@/components/RoleSelectorDevPanel';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { OfflineBanner } from '@/components/OfflineBanner';
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+// Initialize logging service early
+import '@/services/logging';
 
 export const unstable_settings = {
   initialRouteName: '(auth)',
@@ -61,7 +64,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-import { OrderProvider } from '@/context/OrderContext';
+// Duplicate import removed
 
 // ...
 
@@ -71,7 +74,6 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -87,14 +89,17 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <AppStaffProvider>
-        <OrderProvider>
-          <RootLayoutNav />
-          <RoleSelectorDevPanel />
-        </OrderProvider>
-      </AppStaffProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <RestaurantProvider>
+          <AppStaffProvider>
+            <OrderProvider>
+              <RootLayoutNav />
+            </OrderProvider>
+          </AppStaffProvider>
+        </RestaurantProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
@@ -103,13 +108,16 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AuthGate>
-        <Stack>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        </Stack>
-      </AuthGate>
+      {/* ERRO-006 Fix: Banner persistente de modo offline */}
+      <OfflineBanner />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="auth/login" />
+        <Stack.Screen name="onboarding/wizard" />
+      </Stack>
+      <CommandInterceptor />
+      {/* FASE 5: RoleSelectorDevPanel apenas em DEV mode */}
+      {__DEV__ && <RoleSelectorDevPanel />}
     </ThemeProvider>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { Card } from '../primitives/Card';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
@@ -28,7 +28,8 @@ interface QuickMenuPanelProps {
     activeOrderItems?: OrderItem[]; // Para mostrar quantidades já adicionadas
 }
 
-export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = ({
+// FASE 5: Memoizar componente pesado para melhorar performance
+export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = memo(({
     items,
     onAddItem,
     loading = false,
@@ -246,4 +247,12 @@ export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = ({
             </div>
         </div>
     );
-};
+}, (prevProps, nextProps) => {
+    // FASE 5: Comparação customizada para evitar re-renders desnecessários
+    return (
+        prevProps.items.length === nextProps.items.length &&
+        prevProps.loading === nextProps.loading &&
+        prevProps.activeOrderItems?.length === nextProps.activeOrderItems?.length &&
+        prevProps.items.every((item, idx) => item.id === nextProps.items[idx]?.id)
+    );
+});

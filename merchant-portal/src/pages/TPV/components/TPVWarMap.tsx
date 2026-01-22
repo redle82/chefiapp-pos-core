@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { Card } from '../../../ui/design-system/primitives/Card';
 import { Text } from '../../../ui/design-system/primitives/Text';
 import { colors } from '../../../ui/design-system/tokens/colors';
@@ -109,7 +109,8 @@ const SectorCard: React.FC<{
     );
 };
 
-export const TPVWarMap: React.FC<TPVWarMapProps> = ({
+// FASE 5: Memoizar componente pesado para melhorar performance
+export const TPVWarMap: React.FC<TPVWarMapProps> = memo(({
     tables,
     orders,
     kitchenPressure = 'low',
@@ -239,6 +240,14 @@ export const TPVWarMap: React.FC<TPVWarMapProps> = ({
             `}</style>
         </div>
     );
-};
+}, (prevProps, nextProps) => {
+    // FASE 5: Comparação customizada para evitar re-renders desnecessários
+    return (
+        prevProps.tables.length === nextProps.tables.length &&
+        prevProps.orders.length === nextProps.orders.length &&
+        prevProps.kitchenPressure === nextProps.kitchenPressure &&
+        prevProps.deliveryQueueCount === nextProps.deliveryQueueCount
+    );
+});
 
 export default TPVWarMap;
