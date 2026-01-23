@@ -12,7 +12,7 @@ import { useRouteGuard } from '@/hooks/useRouteGuard';
 export default function KitchenScreen() {
     // Bug #3 Fix: Route guard
     useRouteGuard({ allowedRoles: ['cook', 'chef', 'manager', 'owner', 'admin'] });
-    
+
     const { orders, updateOrderStatus } = useOrder();
     const { shiftId, stations, getStationForCategory } = useAppStaff();
     const [now, setNow] = useState(new Date());
@@ -60,7 +60,7 @@ export default function KitchenScreen() {
         const playSound = async () => {
             try {
                 const { sound } = await Audio.Sound.createAsync(
-                    { uri: 'https://www.soundjay.com/buttons/beep-01a.mp3' }
+                    require('@/assets/sounds/new-order.mp3')
                 );
                 await sound.playAsync();
             } catch (error) {
@@ -71,13 +71,13 @@ export default function KitchenScreen() {
         if (newOrdersCount > prevOrderCount.current) {
             playSound();
             HapticFeedback.medium(); // ERRO-007 Fix: Vibração
-            
+
             // ERRO-007 Fix: Flash visual para novos pedidos
             const newOrders = kitchenOrders.filter(o => {
                 const timeSinceCreated = Date.now() - o.createdAt.getTime();
                 return o.status === 'pending' && timeSinceCreated < 5000; // Últimos 5 segundos
             });
-            
+
             if (newOrders.length > 0) {
                 setFlashNewOrder(newOrders[0].id);
                 // Flash por 5 segundos
@@ -93,7 +93,7 @@ export default function KitchenScreen() {
                         useNativeDriver: true,
                     }),
                 ]).start();
-                
+
                 setTimeout(() => {
                     setFlashNewOrder(null);
                 }, 5000);
@@ -130,7 +130,7 @@ export default function KitchenScreen() {
                 {/* Main Production Board (The Line) */}
                 {/* ERRO-007 Fix: Flash visual para novos pedidos */}
                 {flashNewOrder && (
-                    <Animated.View 
+                    <Animated.View
                         style={[
                             styles.flashOverlay,
                             {

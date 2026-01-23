@@ -25,6 +25,7 @@ import { supabase } from '@/services/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useKitchenPressure } from '@/hooks/useKitchenPressure';
 import { KitchenPressureIndicator } from '@/components/KitchenPressureIndicator';
+import { PaymentModal, PaymentMethod } from '@/components/PaymentModal';
 
 interface MenuItem {
   id: string;
@@ -97,6 +98,11 @@ export default function MenuScreen() {
   const [selectedItemForNote, setSelectedItemForNote] = useState<MenuItem | null>(null);
   const [itemNote, setItemNote] = useState('');
 
+  // Payment Modal State
+  const [isPaymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [paymentOrderId, setPaymentOrderId] = useState<string | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState(0);
+
   const handleOpenItemModal = (item: MenuItem) => {
     setSelectedItemForNote(item);
     setItemNote('');
@@ -118,9 +124,22 @@ export default function MenuScreen() {
     HapticFeedback.success();
   };
 
-  const handlePay = (orderId: string) => {
-    updateOrderStatus(orderId, 'paid');
-    HapticFeedback.success();
+  const handlePay = (orderId: string, amount: number) => {
+    setPaymentOrderId(orderId);
+    setPaymentAmount(amount);
+    setPaymentModalVisible(true);
+    HapticFeedback.medium();
+  };
+
+  const handleConfirmPayment = (method: PaymentMethod, amount: number) => {
+    if (paymentOrderId) {
+      // Future: Save method to DB
+      console.log(`Paying Order ${paymentOrderId} via ${method} (€${amount})`);
+      updateOrderStatus(paymentOrderId, 'paid');
+      HapticFeedback.success();
+      setPaymentModalVisible(false);
+      setPaymentOrderId(null);
+    }
   };
 
   // Order Context
@@ -509,8 +528,17 @@ export default function MenuScreen() {
             </View>
           </View>
         </Modal>
+
+        {/* PAYMENT MODAL */}
+        <PaymentModal
+          visible={isPaymentModalVisible}
+          onClose={() => setPaymentModalVisible(false)}
+          onConfirm={handleConfirmPayment}
+          totalAmount={paymentAmount}
+          tableId={activeTableId || '?'}
+        />
       </View>
-    </ShiftGate>
+    </ShiftGate >
   );
 }
 
