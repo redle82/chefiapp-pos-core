@@ -1,39 +1,46 @@
 /**
  * 🧬 BOOTSTRAP KERNEL
- * 
+ *
  * The main orchestrator that gives the system self-awareness.
  * On initialization, it scans all surfaces and systems,
  * validates guards, and emits a SYSTEM_STATE.
  */
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { SurfaceRegistry } from './SurfaceRegistry';
-import { SystemsRegistry } from './SystemsRegistry';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import { SurfaceRegistry } from "./SurfaceRegistry";
+import { SystemsRegistry } from "./SystemsRegistry";
 import type {
-    SystemState,
-    Environment,
-    KernelHealth,
-    GuardStatus,
-    ObservabilityStatus,
-    BootstrapOptions,
-    BootstrapResult
-} from './types';
+  BootstrapOptions,
+  BootstrapResult,
+  Environment,
+  GuardStatus,
+  KernelHealth,
+  ObservabilityStatus,
+  SystemState,
+} from "./types";
 
 // ========================================
 // ENVIRONMENT DETECTION
 // ========================================
 
 function detectEnvironment(): Environment {
-    const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    const envVar = import.meta.env.VITE_ENV || import.meta.env.MODE;
+  const hostname =
+    typeof window !== "undefined" ? window.location.hostname : "localhost";
+  const envVar = import.meta.env.VITE_ENV || import.meta.env.MODE;
 
-    if (envVar === 'production' || hostname.includes('chefiapp.com')) {
-        return 'prod';
-    }
-    if (envVar === 'staging' || hostname.includes('staging.')) {
-        return 'staging';
-    }
-    return 'dev';
+  if (envVar === "production" || hostname.includes("chefiapp.com")) {
+    return "prod";
+  }
+  if (envVar === "staging" || hostname.includes("staging.")) {
+    return "staging";
+  }
+  return "dev";
 }
 
 // ========================================
@@ -41,33 +48,34 @@ function detectEnvironment(): Environment {
 // ========================================
 
 function validateGuards(): GuardStatus {
-    // Check assertNoMock - in production, mocks should crash
-    const env = detectEnvironment();
-    const assertNoMockActive = env !== 'prod' || import.meta.env.VITE_ALLOW_MOCKS !== 'true';
+  // Check assertNoMock - in production, mocks should crash
+  const env = detectEnvironment();
+  const assertNoMockActive =
+    env !== "prod" || import.meta.env.VITE_ALLOW_MOCKS !== "true";
 
-    // Check DbWriteGate - verify the module exists
-    let dbWriteGateActive = false;
-    try {
-        // DbWriteGate should be imported and used in sovereignty layer
-        dbWriteGateActive = true; // Simplified check
-    } catch {
-        dbWriteGateActive = false;
-    }
+  // Check DbWriteGate - verify the module exists
+  let dbWriteGateActive = false;
+  try {
+    // DbWriteGate should be imported and used in sovereignty layer
+    dbWriteGateActive = true; // Simplified check
+  } catch {
+    dbWriteGateActive = false;
+  }
 
-    // Check RuntimeContext
-    let runtimeContextActive = false;
-    try {
-        // TODO: Import and check RuntimeContext when available
-        runtimeContextActive = true;
-    } catch {
-        runtimeContextActive = false;
-    }
+  // Check RuntimeContext
+  let runtimeContextActive = false;
+  try {
+    // TODO: Import and check RuntimeContext when available
+    runtimeContextActive = true;
+  } catch {
+    runtimeContextActive = false;
+  }
 
-    return {
-        assertNoMock: assertNoMockActive,
-        dbWriteGate: dbWriteGateActive,
-        runtimeContext: runtimeContextActive
-    };
+  return {
+    assertNoMock: assertNoMockActive,
+    dbWriteGate: dbWriteGateActive,
+    runtimeContext: runtimeContextActive,
+  };
 }
 
 // ========================================
@@ -75,21 +83,21 @@ function validateGuards(): GuardStatus {
 // ========================================
 
 async function checkObservability(): Promise<ObservabilityStatus> {
-    // Logs: Check if Logger service is available
-    const logsActive = typeof console !== 'undefined';
+  // Logs: Check if Logger service is available
+  const logsActive = typeof console !== "undefined";
 
-    // Monitoring: Check if /health endpoint is configured
-    // In a real implementation, we'd ping the health endpoint
-    const monitoringActive = false; // Will be true when UptimeRobot is configured
+  // Monitoring: Check if /health endpoint is configured
+  // In a real implementation, we'd ping the health endpoint
+  const monitoringActive = false; // Will be true when UptimeRobot is configured
 
-    // Alerts: Check if Discord/Email alerts are configured
-    const alertsActive = false; // Will be true when webhooks are set up
+  // Alerts: Check if Discord/Email alerts are configured
+  const alertsActive = false; // Will be true when webhooks are set up
 
-    return {
-        logs: logsActive,
-        monitoring: monitoringActive,
-        alerts: alertsActive
-    };
+  return {
+    logs: logsActive,
+    monitoring: monitoringActive,
+    alerts: alertsActive,
+  };
 }
 
 // ========================================
@@ -97,104 +105,106 @@ async function checkObservability(): Promise<ObservabilityStatus> {
 // ========================================
 
 let _cachedState: SystemState | null = null;
-const VERSION = '1.0.0';
+const VERSION = "1.0.0";
 
-async function initializeKernel(options: BootstrapOptions = {}): Promise<BootstrapResult> {
-    const errors: string[] = [];
-    const warnings: string[] = [];
+async function initializeKernel(
+  options: BootstrapOptions = {},
+): Promise<BootstrapResult> {
+  const errors: string[] = [];
+  const warnings: string[] = [];
 
-    // 1. Detect environment
-    console.log('Kernel: Detecting environment...');
-    const environment = options.forceEnvironment ?? detectEnvironment();
-    console.log('Kernel: Environment detected:', environment);
+  // 1. Detect environment
+  console.log("Kernel: Detecting environment...");
+  const environment = options.forceEnvironment ?? detectEnvironment();
+  console.log("Kernel: Environment detected:", environment);
 
-    // 2. Validate guards
-    console.log('Kernel: Validating guards...');
-    const guards = validateGuards();
+  // 2. Validate guards
+  console.log("Kernel: Validating guards...");
+  const guards = validateGuards();
 
-    if (environment === 'prod' && !guards.assertNoMock) {
-        errors.push('CRITICAL: assertNoMock is disabled in production');
+  if (environment === "prod" && !guards.assertNoMock) {
+    errors.push("CRITICAL: assertNoMock is disabled in production");
+  }
+
+  if (!guards.dbWriteGate) {
+    warnings.push("DbWriteGate is not active");
+  }
+
+  // 3. Check surfaces
+  let surfaces = {
+    panel: "ACTIVE" as const,
+    tpv: "ACTIVE" as const,
+    kds: "ACTIVE" as const,
+    staff: "ACTIVE" as const,
+    web: "ACTIVE" as const,
+  };
+
+  if (!options.skipHealthChecks) {
+    try {
+      surfaces = await SurfaceRegistry.checkAll();
+    } catch (e) {
+      warnings.push(`Surface check failed: ${e}`);
     }
+  }
 
-    if (!guards.dbWriteGate) {
-        warnings.push('DbWriteGate is not active');
+  // 4. Check systems
+  let systems = {
+    orders: "OK" as const,
+    tables: "OK" as const,
+    cashRegister: "OK" as const,
+    fiscal: "PARTIAL" as const,
+    menu: "OK" as const,
+    staff: "OK" as const,
+  };
+
+  if (!options.skipHealthChecks) {
+    try {
+      systems = await SystemsRegistry.checkAll();
+    } catch (e) {
+      warnings.push(`Systems check failed: ${e}`);
     }
+  } else {
+    console.log("Kernel: SKIPPING Health Checks");
+  }
 
-    // 3. Check surfaces
-    let surfaces = {
-        panel: 'ACTIVE' as const,
-        tpv: 'ACTIVE' as const,
-        kds: 'ACTIVE' as const,
-        staff: 'ACTIVE' as const,
-        web: 'ACTIVE' as const
-    };
+  // 5. Check observability
+  console.log("Kernel: Checking Observability...");
+  const observability = await checkObservability();
 
-    if (!options.skipHealthChecks) {
-        try {
-            surfaces = await SurfaceRegistry.checkAll();
-        } catch (e) {
-            warnings.push(`Surface check failed: ${e}`);
-        }
-    }
+  if (!observability.monitoring) {
+    warnings.push("Monitoring is not configured");
+  }
 
-    // 4. Check systems
-    let systems = {
-        orders: 'OK' as const,
-        tables: 'OK' as const,
-        cashRegister: 'OK' as const,
-        fiscal: 'PARTIAL' as const,
-        menu: 'OK' as const,
-        staff: 'OK' as const
-    };
+  // 6. Determine kernel health
+  let kernel: KernelHealth = "OK";
 
-    if (!options.skipHealthChecks) {
-        try {
-            systems = await SystemsRegistry.checkAll();
-        } catch (e) {
-            warnings.push(`Systems check failed: ${e}`);
-        }
-    } else {
-        console.log('Kernel: SKIPPING Health Checks');
-    }
+  if (errors.length > 0) {
+    kernel = "FAILED";
+  } else if (warnings.length > 0) {
+    kernel = "DEGRADED";
+  }
 
-    // 5. Check observability
-    console.log('Kernel: Checking Observability...');
-    const observability = await checkObservability();
+  // 7. Build state
+  const state: SystemState = {
+    environment,
+    kernel,
+    surfaces,
+    systems,
+    guards,
+    observability,
+    timestamp: new Date().toISOString(),
+    version: VERSION,
+  };
 
-    if (!observability.monitoring) {
-        warnings.push('Monitoring is not configured');
-    }
+  // Cache the state
+  _cachedState = state;
 
-    // 6. Determine kernel health
-    let kernel: KernelHealth = 'OK';
-
-    if (errors.length > 0) {
-        kernel = 'FAILED';
-    } else if (warnings.length > 0) {
-        kernel = 'DEGRADED';
-    }
-
-    // 7. Build state
-    const state: SystemState = {
-        environment,
-        kernel,
-        surfaces,
-        systems,
-        guards,
-        observability,
-        timestamp: new Date().toISOString(),
-        version: VERSION
-    };
-
-    // Cache the state
-    _cachedState = state;
-
-    return {
-        success: kernel !== 'FAILED',
-        state,
-        errors,
-        warnings
-    };
+  return {
+    success: kernel !== "FAILED",
+    state,
+    errors,
+    warnings,
+  };
 }
 
 // ========================================
@@ -202,41 +212,41 @@ async function initializeKernel(options: BootstrapOptions = {}): Promise<Bootstr
 // ========================================
 
 export const BootstrapKernel = {
-    /**
-     * Initialize the kernel and scan all systems
-     */
-    async init(options?: BootstrapOptions): Promise<BootstrapResult> {
-        return initializeKernel(options);
-    },
+  /**
+   * Initialize the kernel and scan all systems
+   */
+  async init(options?: BootstrapOptions): Promise<BootstrapResult> {
+    return initializeKernel(options);
+  },
 
-    /**
-     * Get the cached system state (call init first)
-     */
-    getState(): SystemState | null {
-        return _cachedState;
-    },
+  /**
+   * Get the cached system state (call init first)
+   */
+  getState(): SystemState | null {
+    return _cachedState;
+  },
 
-    /**
-     * Force a refresh of the system state
-     */
-    async refresh(): Promise<SystemState> {
-        const result = await initializeKernel();
-        return result.state;
-    },
+  /**
+   * Force a refresh of the system state
+   */
+  async refresh(): Promise<SystemState> {
+    const result = await initializeKernel();
+    return result.state;
+  },
 
-    /**
-     * Check if kernel has been initialized
-     */
-    isInitialized(): boolean {
-        return _cachedState !== null;
-    },
+  /**
+   * Check if kernel has been initialized
+   */
+  isInitialized(): boolean {
+    return _cachedState !== null;
+  },
 
-    /**
-     * Get environment
-     */
-    getEnvironment(): Environment {
-        return _cachedState?.environment ?? detectEnvironment();
-    }
+  /**
+   * Get environment
+   */
+  getEnvironment(): Environment {
+    return _cachedState?.environment ?? detectEnvironment();
+  },
 };
 
 // ========================================
@@ -244,67 +254,76 @@ export const BootstrapKernel = {
 // ========================================
 
 interface SystemStateContextValue {
-    state: SystemState | null;
-    loading: boolean;
-    refresh: () => Promise<void>;
+  state: SystemState | null;
+  loading: boolean;
+  refresh: () => Promise<void>;
 }
 
 const SystemStateContext = createContext<SystemStateContextValue | null>(null);
 
 export function SystemStateProvider({ children }: { children: ReactNode }) {
-    const [state, setState] = useState<SystemState | null>(_cachedState);
-    const [loading, setLoading] = useState(!_cachedState);
+  const [state, setState] = useState<SystemState | null>(_cachedState);
+  const [loading, setLoading] = useState(!_cachedState);
 
-    useEffect(() => {
-        if (!_cachedState) {
-            setLoading(true);
-            BootstrapKernel.init({ skipHealthChecks: false }).then(result => {
-                setState(result.state);
-                setLoading(false);
+  useEffect(() => {
+    if (!_cachedState) {
+      setLoading(true);
+      // SOVEREIGN BOOT: Skip health checks in DEV to prevent blocking
+      const skipChecks = import.meta.env.DEV;
+      BootstrapKernel.init({ skipHealthChecks: skipChecks })
+        .then((result) => {
+          setState(result.state);
+          setLoading(false);
 
-                // Log warnings in dev
-                if (result.warnings.length && result.state.environment === 'dev') {
-                    console.warn('[BootstrapKernel] Warnings:', result.warnings);
-                }
-                if (result.errors.length) {
-                    console.error('[BootstrapKernel] Errors:', result.errors);
-                }
-            });
-        }
-    }, []);
+          // Log warnings in dev
+          if (result.warnings.length && result.state.environment === "dev") {
+            console.warn("[BootstrapKernel] Warnings:", result.warnings);
+          }
+          if (result.errors.length) {
+            console.error("[BootstrapKernel] Errors:", result.errors);
+          }
+        })
+        .catch((err) => {
+          // NEVER BLOCK — log and continue with degraded state
+          console.error("[BootstrapKernel] Init failed (non-fatal):", err);
+          setLoading(false);
+        });
+    }
+  }, []);
 
-    const refresh = async () => {
-        setLoading(true);
-        const newState = await BootstrapKernel.refresh();
-        setState(newState);
-        setLoading(false);
-    };
+  const refresh = async () => {
+    setLoading(true);
+    const newState = await BootstrapKernel.refresh();
+    setState(newState);
+    setLoading(false);
+  };
 
-    return (
-        <SystemStateContext.Provider value={{ state, loading, refresh }
-        }>
-            {children}
-        </SystemStateContext.Provider>
-    );
+  return (
+    <SystemStateContext.Provider value={{ state, loading, refresh }}>
+      {children}
+    </SystemStateContext.Provider>
+  );
 }
 
 export function useSystemState(): SystemStateContextValue {
-    const context = useContext(SystemStateContext);
-    if (!context) {
-        // Return a safe default if used outside provider
-        return {
-            state: _cachedState,
-            loading: false,
-            refresh: async () => { await BootstrapKernel.refresh(); }
-        };
-    }
-    return context;
+  const context = useContext(SystemStateContext);
+  if (!context) {
+    // Return a safe default if used outside provider
+    return {
+      state: _cachedState,
+      loading: false,
+      refresh: async () => {
+        await BootstrapKernel.refresh();
+      },
+    };
+  }
+  return context;
 }
 
 // ========================================
 // EXPORTS
 // ========================================
 
-export { SurfaceRegistry } from './SurfaceRegistry';
-export { SystemsRegistry } from './SystemsRegistry';
-export type * from './types';
+export { SurfaceRegistry } from "./SurfaceRegistry";
+export { SystemsRegistry } from "./SystemsRegistry";
+export type * from "./types";
