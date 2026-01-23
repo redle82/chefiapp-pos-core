@@ -1,67 +1,52 @@
 # PRÓXIMOS PASSOS — CHEFIAPP
 
-**Data:** 2026-01-23  
-**Status Atual:** ✅ Constituição de Engenharia Criada
+**Data da Última Atualização:** 23/01/2026
+**Status Atual:** 🟢 **SISTEMA EM SOFT LAUNCH** (Gold Version)
+
+O ciclo de estabilização está concluído. A base tecnológica (Supabase, Stripe, Billing) foi auditada e corrigida. As fricções humanas (Som KDS, Pagamento) foram resolvidas.
 
 ---
 
-## ✅ O QUE FOI FEITO
+## ✅ O QUE FOI ENTREGUE
 
-1. ✅ **FASE A** — Limpeza estrutural concluída
-2. ✅ **Fragmentação** — Resolvida por declarações
-3. ✅ **FASE 1** — Preparação completa para deploy
-4. ✅ **Auditoria Backend vs Frontend** — Concluída
-5. ✅ **Constituição de Engenharia** — Criada e configurada para 3 IDEs (Cursor, VS Code, Antigravity)
+### Fase 1 - Infraestrutura (Concluída)
 
----
+1. ✅ **Banco de Dados:** Auditoria completa e Migrações aplicadas.
+2. ✅ **Billing:** Integração Stripe Full Stack (Backend + Frontend).
+3. ✅ **Mobile App:** KDS, Garçom e Caixa blindados.
 
-## 🚀 PRÓXIMO PASSO IMEDIATO
+### Fase 2 - QA & Hardening (Concluída)
 
-### FASE 1 — Dia 1: Deploy do Billing
-
-**Tempo estimado:** 15-20 minutos  
-**Status:** 🟢 100% Preparado para Execução
-
-**Executar agora:**
-```bash
-./scripts/deploy-billing-phase1.sh
-```
-
-**Ou seguir guia rápido:**
-- Abrir: `DEPLOY_BILLING_AGORA.md` (na raiz)
-
-**Checklist rápido:**
-1. Login no Supabase CLI (`supabase login`)
-2. Linkar projeto (`supabase link --project-ref [ref]`)
-3. Verificar/criar tabelas (SQL Editor)
-4. Deploy Edge Functions (via script)
-5. Configurar variáveis (Supabase Dashboard)
-6. Configurar webhook (Stripe Dashboard)
-
-**Documentação:**
-- Resumo executivo: `DEPLOY_BILLING_AGORA.md` (raiz)
-- Consolidação: `docs/audit/FASE_1_DIA1_CONSOLIDADO.md`
-- Guia completo: `docs/audit/FASE_1_DIA1_GUIA_COMPLETO.md`
-- Script: `scripts/deploy-billing-phase1.sh`
+1. ✅ **Performance:** `fetchOrders` otimizado (filtro 24h).
+2. ✅ **Segurança:** Identidade protegida (Role Derived from Auth).
+3. ✅ **Resiliência:** `OfflineQueue` com Idempotência (Anti-Lock).
 
 ---
 
-## 📚 DOCUMENTAÇÃO PRINCIPAL
+## 🚀 ROADMAP SUGERIDO (FASE 3)
 
-**Para executar:**
-- `DEPLOY_BILLING_AGORA.md` — Resumo rápido
-- `~/.cursor/ENGINEERING_CONSTITUTION.md` — Constituição global
+Agora que a operação é segura, o foco pode mudar para **Escala e Inteligência**.
 
-**Para referência:**
-- `docs/architecture/DATABASE_AUTHORITY.md` — Autoridade do banco
-- `docs/architecture/BILLING_FLOW.md` — Mapa do fluxo
-- `docs/audit/AUDITORIA_BACKEND_VS_FRONTEND.md` — Separação de responsabilidades
-- `docs/audit/EXECUTABLE_ROADMAP.md` — Status oficial
-- `docs/ENGINEERING_ALL_IDEs_SETUP.md` — Setup completo de todos os IDEs
+### 1. 📊 Observabilidade (Monitoring)
 
-**Para navegar:**
-- `docs/audit/INDICE_CONSOLIDACAO.md` — Índice completo
+*Para saber o que acontece quando você não está olhando.*
+
+- **Logs:** Configurar Sentry ou LogRocket para capturar erros em tempo real.
+- **Analytics:** Criar Dashboard de Métricas no Supabase (Pedidos/Hora, Ticket Médio).
+
+### 2. 📣 Growth & Marketing
+
+*Para atrair mais clientes via QR Code.*
+
+- **SEO:** Otimizar `customer-portal` para busca local.
+- **Pixel:** Adicionar Meta Pixel/Google Ads no fluxo de pedido web.
+
+### 3. ✨ Features V2 (Backlog)
+
+- **Gestão de Estoque:** Baixa automática por ficha técnica.
+- **Fidelidade Avançada:** Resgate de pontos por produtos (Gamification nivel hard).
+- **Integração iFood:** Centralizar delivery no Tablet de Cozinha.
 
 ---
 
-**PRÓXIMOS PASSOS DEFINIDOS:** 2026-01-23
+**Ação Imediata:** 🏁 **Operar o Soft Launch e colher feedback real da equipe.**

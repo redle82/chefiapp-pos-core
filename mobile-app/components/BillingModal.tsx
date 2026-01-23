@@ -10,9 +10,9 @@ interface BillingModalProps {
     onClose: () => void;
 }
 
-// TODO: Move to Env or Constants
-const STRIPE_PRICE_ID_MONTHLY = 'price_1Q...'; // User needs to fill this
-const STRIPE_PRICE_ID_YEARLY = 'price_1Q...';
+// Stripe Price IDs (ChefIApp Pro - EUR)
+const STRIPE_PRICE_ID_MONTHLY = 'price_1SixfLEOB1Od9eibkJPxC8aF'; // €29 one-time test
+const STRIPE_PRICE_ID_YEARLY = 'price_1ShJydEOB1Od9eibcNNJxibr'; // Annual plan
 
 export function BillingModal({ visible, onClose }: BillingModalProps) {
     const [loading, setLoading] = useState(false);
@@ -95,7 +95,7 @@ export function BillingModal({ visible, onClose }: BillingModalProps) {
                         {/* Plans */}
                         <TouchableOpacity
                             style={styles.planCard}
-                            onPress={() => handleSubscribe('price_monthly_placeholder')}
+                            onPress={() => handleSubscribe(STRIPE_PRICE_ID_MONTHLY)}
                             disabled={loading}
                         >
                             <View>
@@ -107,7 +107,7 @@ export function BillingModal({ visible, onClose }: BillingModalProps) {
 
                         <TouchableOpacity
                             style={[styles.planCard, styles.recommended]}
-                            onPress={() => handleSubscribe('price_yearly_placeholder')}
+                            onPress={() => handleSubscribe(STRIPE_PRICE_ID_YEARLY)}
                             disabled={loading}
                         >
                             <View>

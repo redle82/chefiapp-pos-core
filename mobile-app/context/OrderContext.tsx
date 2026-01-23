@@ -150,10 +150,14 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchOrders = async () => {
         try {
+            // PERFORMANCE FIX: Only load orders from last 24h to prevent memory leak
+            const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
             const { data, error } = await supabase
                 .from('gm_orders') // RENAMED
                 .select('*, items:gm_order_items(*)')
-                .neq('status', 'PAID') // PERFORMANCE FIX: Only load active orders
+                .neq('status', 'PAID') // Only active orders
+                .gte('created_at', cutoff) // Safety Net: No ancient orders
                 .order('created_at', { ascending: true });
 
             if (error) throw error;
@@ -186,7 +190,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             const error = e instanceof Error ? e : new Error(String(e));
             logError(error, {
                 action: 'fetchOrders',
-                userId: user?.id,
+                userId: session?.user?.id,
             });
             console.error("Error fetching orders:", e);
         } finally {
@@ -475,7 +479,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             const error = e instanceof Error ? e : new Error(String(e));
             logError(error, {
                 action: 'submitOrder',
-                tableId,
+                tableId: activeTableId,
                 orderDraftCount: orderDraft.length,
             });
             console.error("Submit Order Error", e);
@@ -735,7 +739,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             // OFFLINE FALLBACK
             // Enqueue Payment Mutation
             const payload = { orderId, method, status: 'PAID' };
-            await OfflineQueueService.enqueue('PAYMENT', payload);
+            await OfflineQueueService.enqueue('ADD_PAYMENT', payload);
 
             // Optimistic UI Update
             setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'paid' } : o));

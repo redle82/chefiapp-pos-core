@@ -149,6 +149,11 @@ export const OfflineQueueService = {
         console.log('[OfflineQueue] Replaying CREATE_ORDER');
         const { error } = await this.db.from('gm_orders').insert(payload);
         if (error) {
+            // IDEMPOTENCY FIX: Ignore duplicate key error (23505)
+            if (error.code === '23505') {
+                console.log('[OfflineQueue] Duplicate order detected (Idempotency), skipping.');
+                return true; // Treat as success
+            }
             console.error('[OfflineQueue] Sync Error:', error.message);
             return false;
         }
@@ -159,6 +164,11 @@ export const OfflineQueueService = {
         console.log('[OfflineQueue] Replaying ADD_ORDER_ITEMS');
         const { error } = await this.db.from('gm_order_items').insert(payload);
         if (error) {
+            // IDEMPOTENCY FIX: Ignore duplicate key error (23505)
+            if (error.code === '23505') {
+                console.log('[OfflineQueue] Duplicate items detected (Idempotency), skipping.');
+                return true; // Treat as success
+            }
             console.error('[OfflineQueue] Sync Error:', error.message);
             return false;
         }

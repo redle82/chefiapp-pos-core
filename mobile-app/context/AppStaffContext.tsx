@@ -308,7 +308,8 @@ export function AppStaffProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Role
-    const [activeRole, setActiveRoleState] = useState<StaffRole>('manager');
+    // Role - SECURITY FIX: Default to least privilege
+    const [activeRole, setActiveRoleState] = useState<StaffRole>('waiter');
 
     // Shift state
     const [shiftState, setShiftState] = useState<ShiftState>('offline');
@@ -381,6 +382,10 @@ export function AppStaffProvider({ children }: { children: React.ReactNode }) {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user?.user_metadata?.full_name) {
                     setUserName(user.user_metadata.full_name);
+                }
+                // SECURITY FIX: Derive role from Auth Metadata
+                if (user?.user_metadata?.role) {
+                    setActiveRoleState(user.user_metadata.role);
                 }
 
                 // 1. Load Local Persistence
@@ -525,6 +530,12 @@ export function AppStaffProvider({ children }: { children: React.ReactNode }) {
     }, [shiftState]);
 
     const setActiveRole = useCallback((role: StaffRole) => {
+        // SECURITY FIX: Disable manual role switching in Production
+        if (!__DEV__) {
+            console.warn('[AppStaff] Role switching is disabled in production');
+            return;
+        }
+
         if (shiftState === 'active') {
             console.warn('[AppStaff] Cannot change role during active shift');
             return;
