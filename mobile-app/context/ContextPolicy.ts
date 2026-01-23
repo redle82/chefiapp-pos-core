@@ -1,4 +1,5 @@
-import { StaffRole, Maturity } from './AppStaffContext';
+import { Maturity, StaffRole } from './AppStaffContext';
+export type { Maturity, StaffRole };
 
 export type Permission =
     // Shift
@@ -58,7 +59,7 @@ export function getContextPermissions(role: StaffRole, maturity: Maturity): Perm
     const base = BASE_ROLE_PERMISSIONS[role] || [];
     const unlocks = MATURITY_UNLOCKS[maturity] || [];
 
-    // Filter unlocks: Only unlock if the role is conceptually capable aka "Elevated" roles might get them automatically, 
+    // Filter unlocks: Only unlock if the role is conceptually capable aka "Elevated" roles might get them automatically,
     // but here we simply ADD them.
     // However, a 'waiter' shouldn't get 'business:view_reports' even if professional.
     // So Maturity unlocks should be *Role-Specific* or *Global Enhancements*?

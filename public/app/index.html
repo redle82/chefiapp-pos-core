@@ -1,14 +1,102 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/app/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>merchant-portal</title>
-    <script type="module" crossorigin src="/app/assets/index-CjlIAY1K.js"></script>
-    <link rel="stylesheet" crossorigin href="/app/assets/index-CQg4v_4I.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<meta charset="UTF-8" />
+<link rel="icon"
+href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👨‍🍳</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#121212" />
+<meta name="description"
+content="ChefIApp - Sistema Operacional para Restauração. Otimize sua operação com inteligência." />
+<title>ChefIApp - Merchant Portal</title>
+<script>
+window.process = { env: {} };
+</script>
+<!-- Polyfill Buffer for PDFMake/TPV - ESM-compatible -->
+<script>
+// Minimal Buffer polyfill for browser (avoids CommonJS require)
+(function() {
+if (typeof window.Buffer !== 'undefined') return;
+
+// Create a minimal Buffer implementation for PDFMake
+const BufferPolyfill = {
+isBuffer: function(obj) {
+return obj instanceof Uint8Array;
+},
+from: function(data, encoding) {
+if (typeof data === 'string') {
+const encoder = new TextEncoder();
+return encoder.encode(data);
+}
+if (Array.isArray(data)) {
+return new Uint8Array(data);
+}
+return new Uint8Array(data);
+},
+alloc: function(size) {
+return new Uint8Array(size);
+},
+allocUnsafe: function(size) {
+return new Uint8Array(size);
+}
+};
+
+window.Buffer = BufferPolyfill;
+console.log('Buffer polyfilled (inline ESM-compatible)');
+})();
+</script>
+
+<!-- SOVEREIGN DEV SAFETY (pre-bundle): DEV must NEVER run with a PWA/Workbox SW.
+Policy contract lives in src/core/runtime/devStableMode.ts (SSOT).
+DEV_STABLE_MODE: Service Worker is disabled in DEV to eliminate transport noise. -->
+<script>
+(function () {
+try {
+var host = location.hostname;
+var isDev =
+host === 'localhost' ||
+host === '127.0.0.1' ||
+host.endsWith('.local');
+
+if (!isDev) return;
+if (!('serviceWorker' in navigator)) return;
+
+navigator.serviceWorker.getRegistrations().then(function (regs) {
+regs.forEach(function (r) { try { r.unregister(); } catch (e) {} });
+});
+
+if ('caches' in window) {
+caches.keys().then(function (keys) {
+keys.forEach(function (k) { try { caches.delete(k); } catch (e) {} });
+});
+}
+
+// Also ensure we don't keep a "controller" alive
+if (navigator.serviceWorker.controller) {
+try { navigator.serviceWorker.controller.postMessage({ type: 'DEV_SW_DISABLE' }); } catch (e) {}
+}
+
+console.info('[SW] DEV preflight: unregister + clear caches (before bundle)');
+} catch (e) {
+// non-fatal
+}
+})();
+</script>
+  <script type="module" crossorigin src="/assets/index-Dg2cQ_g1.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/react-vendor-Bx19C4LI.js">
+  <link rel="modulepreload" crossorigin href="/assets/ui-vendor-CPuYoDx6.js">
+  <link rel="modulepreload" crossorigin href="/assets/supabase-vendor-BjdzD5-Y.js">
+  <link rel="modulepreload" crossorigin href="/assets/dashboard-CJbjQIVA.js">
+  <link rel="modulepreload" crossorigin href="/assets/tpv-CsDMTtLt.js">
+  <link rel="modulepreload" crossorigin href="/assets/menu-DcP6uQdG.js">
+  <link rel="modulepreload" crossorigin href="/assets/staff-D46oWx3M.js">
+  <link rel="stylesheet" crossorigin href="/assets/dashboard-DIyeKtpn.css">
+  <link rel="stylesheet" crossorigin href="/assets/tpv-CZ-1PB9p.css">
+  <link rel="stylesheet" crossorigin href="/assets/index-sJaKPvh4.css">
+<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+
+<body>
+<div id="root"></div>
+</body>
+
 </html>

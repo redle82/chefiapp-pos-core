@@ -1,15 +1,15 @@
-import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { GlobalEventStore } from '../../../core/events/EventStore';
 import { IndexedDBQueue } from '../../../core/sync/IndexedDBQueue';
 import { SyncEngine } from '../../../core/sync/SyncEngine';
 import type { OfflineQueueItem } from '../../../core/sync/types';
-import { GlobalEventStore } from '../../../core/events/EventStore';
 // import type { EventEnvelope } from '../../../core/events/SystemEvents';
 import type { EventEnvelope } from '../../../core/events/SystemEvents';
-import { tpvEventBus, type OrderExceptionPayload, type DecisionMadePayload } from '../../../core/tpv/TPVCentralEvents';
-import { supabase } from '../../../core/supabase';
 import { DbWriteGate } from '../../../core/governance/DbWriteGate';
-import { getTabIsolated } from '../../../core/storage/TabIsolatedStorage';
 import { isDevStableMode } from '../../../core/runtime/devStableMode';
+import { getTabIsolated } from '../../../core/storage/TabIsolatedStorage';
+import { supabase } from '../../../core/supabase';
+import { tpvEventBus, type DecisionMadePayload, type OrderExceptionPayload } from '../../../core/tpv/TPVCentralEvents';
 
 // --- Types (SAFE IMPORT) ---
 import type { Order, OrderItem } from './OrderTypes';
@@ -102,7 +102,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
             .from('gm_orders')
             .select(`
                 id, table_number, status, total_amount, created_at,
-                items:gm_order_items(id, name:name_snapshot, price:price_snapshot, quantity) 
+                items:gm_order_items(id, name:name_snapshot, price:price_snapshot, quantity)
             `) // NOTE: 'quantity' is correct now
             .eq('restaurant_id', restaurantId)
             .gte('created_at', startOfDay.toISOString());
@@ -229,7 +229,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
                         id: order.id,
                         restaurant_id: rId,
                         table_number: typeof order.tableNumber === 'number' ? order.tableNumber : 0,
-                        status: 'IN_PREP',
+                        status: 'preparing',
                         total_cents: toCents(order.total),
                         source: 'tpv'
                     },
@@ -354,7 +354,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
 
                     if (payError) {
                         console.error('[Payment] RPC Failed:', payError);
-                        // If error is not "already processed", maybe clear key to allow retry? 
+                        // If error is not "already processed", maybe clear key to allow retry?
                         // For now, keep key safe.
                         throw payError;
                     }
@@ -403,10 +403,10 @@ export function OrderProvider({ children }: { children: ReactNode }) {
 
                 // LEGACY / STANDARD UPDATE PATH
                 const updatePayload: any = { updated_at: new Date().toISOString() };
-                if (action === 'send' || action === 'prepare') updatePayload.status = 'IN_PREP';
-                if (action === 'ready') updatePayload.status = 'READY';
-                if (action === 'serve' || action === 'close') updatePayload.status = 'COMPLETED';
-                if (action === 'cancel') updatePayload.status = 'CANCELLED';
+                if (action === 'send' || action === 'prepare') updatePayload.status = 'preparing';
+                if (action === 'ready') updatePayload.status = 'ready';
+                if (action === 'serve' || action === 'close') updatePayload.status = 'delivered';
+                if (action === 'cancel') updatePayload.status = 'canceled';
 
                 if (Object.keys(updatePayload).length > 1) {
                     await DbWriteGate.update(

@@ -1,15 +1,15 @@
+import { DbWriteGate } from '../governance/DbWriteGate';
+import { Logger } from '../logger';
+import { supabase } from '../supabase';
+import { PaymentEngine } from '../tpv/PaymentEngine';
+import { ConflictResolver } from './ConflictResolver';
 import { IndexedDBQueue } from './IndexedDBQueue';
 import { calculateNextRetry, MAX_RETRIES } from './RetryStrategy';
 import type { OfflineQueueItem } from './types';
-import { Logger } from '../logger';
-import { supabase } from '../supabase';
-import { DbWriteGate } from '../governance/DbWriteGate';
-import { ConflictResolver } from './ConflictResolver';
-import { PaymentEngine } from '../tpv/PaymentEngine';
 
 /**
  * SyncEngine - The Core Worker
- * 
+ *
  * Responsibilities:
  * 1. Monitors Network Status
  * 2. Process Offline Queue
@@ -89,7 +89,21 @@ class SyncEngineClass {
         };
     }
 
+    private isSimulatedOffline = false;
+
+    public simulateOffline(enabled: boolean) {
+        this.isSimulatedOffline = enabled;
+        if (enabled) {
+            this.setNetworkStatus('offline');
+        } else {
+            this.setNetworkStatus(navigator.onLine ? 'online' : 'offline');
+            if (this.networkStatus === 'online') this.processQueue();
+        }
+        Logger.warn(`[SyncEngine] Simulation Mode: ${enabled ? 'FORCED OFFLINE' : 'NORMAL'}`);
+    }
+
     public getNetworkStatus() {
+        if (this.isSimulatedOffline) return 'offline';
         return this.networkStatus;
     }
 
@@ -299,7 +313,7 @@ class SyncEngineClass {
         if (!orderId || !restaurantId) throw new Error('Missing orderId or restaurantId for update');
 
         // Conflict Resolution (LWW) - Skip if stale
-        // Only check for full status updates or generic updates. 
+        // Only check for full status updates or generic updates.
         // 'add_item' might be append-only, so strictly LWW on "updated_at" might not block appending items?
         // BUT if the order is CLOSED remotely, we shouldn't add items?
         // For simplicity, apply LWW check to the Order Entity itself.
@@ -336,13 +350,13 @@ class SyncEngineClass {
         }
         else if (action === 'cancel') {
             await DbWriteGate.update('SyncEngine', 'gm_orders', {
-                status: 'CANCELLED',
+                status: 'canceled',
                 updated_at: new Date().toISOString()
             }, { id: orderId }, { tenantId: restaurantId });
         }
         else if (action === 'send' || action === 'serve' || action === 'close') {
-            let status = 'IN_PREP';
-            if (action === 'serve' || action === 'close') status = 'COMPLETED';
+            let status = 'preparing';
+            if (action === 'serve' || action === 'close') status = 'delivered';
 
             await DbWriteGate.update('SyncEngine', 'gm_orders', {
                 status,

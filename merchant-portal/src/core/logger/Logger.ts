@@ -1,5 +1,5 @@
-import { supabase } from '../supabase';
 import { getTabIsolated } from '../storage/TabIsolatedStorage';
+import { supabase } from '../supabase';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
 
@@ -207,8 +207,8 @@ class LoggerService {
                 });
                 const idempotency_key = `log_${this.hashString(idemSource)}`;
 
-                await supabase.from('app_logs').upsert({
-                    level: level === 'critical' ? 'error' : level, // Map critical to error for DB if ENUM doesn't support it, or assume text
+                await supabase.from('app_logs').upsert([{
+                    level: level === 'critical' ? 'error' : level,
                     message,
                     details: detailsToSave,
                     restaurant_id: restaurantId || null,
@@ -216,7 +216,7 @@ class LoggerService {
                     user_agent: fullContext.userAgent || null,
                     created_at: payload.timestamp,
                     idempotency_key,
-                }, { onConflict: 'idempotency_key', ignoreDuplicates: true });
+                }] as any, { onConflict: 'idempotency_key', ignoreDuplicates: true });
 
                 // Mark as sent AFTER successful attempt
                 this.lastSentLog = `${level}:${message}`;

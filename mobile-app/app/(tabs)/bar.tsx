@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { KDSTicket } from '@/components/KDSTicket';
 import { ShiftGate } from '@/components/ShiftGate';
-import { useOrder, Order, OrderItem } from '@/context/OrderContext';
+import { useAppStaff } from '@/context/AppStaffContext';
+import { Order, OrderItem, useOrder } from '@/context/OrderContext';
+import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { HapticFeedback } from '@/services/haptics';
 import { Audio } from 'expo-av';
-import { KDSTicket } from '@/components/KDSTicket';
-import { useAppStaff } from '@/context/AppStaffContext';
-import { useRouteGuard } from '@/hooks/useRouteGuard';
+import React, { useEffect, useRef, useState } from 'react';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 export default function BarScreen() {
     // Bug #3 Fix: Route guard
     useRouteGuard({ allowedRoles: ['bartender', 'chef', 'manager', 'owner', 'admin'] });
-    
+
     const { orders, updateOrderStatus } = useOrder();
     const { shiftId, stations, getStationForCategory } = useAppStaff();
     const [now, setNow] = useState(new Date());
@@ -62,8 +62,8 @@ export default function BarScreen() {
         prevOrderCount.current = activeBarOrders.length;
     }, [activeBarOrders.length]);
 
-    // SIMPLIFICADO: 1 toque muda status (toque duplo era frágil)
-    const handleBump = (orderId: string, currentStatus: Order['status']) => {
+    // SIMPLIFICADO: 1 toque muda status
+    const handleBump = (orderId: string) => {
         HapticFeedback.success();
         updateOrderStatus(orderId, 'ready');
         // Confirmação visual será mostrada pelo KDSTicket (check verde)

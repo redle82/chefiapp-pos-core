@@ -1,18 +1,17 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { PersistenceService } from '@/services/persistence';
-import { supabase } from '@/services/supabase';
 import { useAppStaff } from '@/context/AppStaffContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRestaurant } from '@/context/RestaurantContext';
-import { InventoryService } from '@/services/InventoryService';
-import { printerService } from '@/services/PrinterService';
+import { PushNotifications } from '@/lib/pushNotifications'; // ERRO-006 Fix
+import { AuditLogService } from '@/services/AuditLogService';
 import { gamificationService } from '@/services/GamificationService';
+import { InventoryService } from '@/services/InventoryService';
+import { addBreadcrumb, logError } from '@/services/logging';
+import { printerService } from '@/services/PrinterService';
+import { supabase } from '@/services/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { OfflineQueueService, generateUUID } from '../services/OfflineQueueService';
-import { AuditLogService } from '@/services/AuditLogService';
-import { PushNotifications } from '@/lib/pushNotifications'; // ERRO-006 Fix
-import { logError, logEvent, addBreadcrumb } from '@/services/logging';
 
 // =============================================================================
 // TYPES
@@ -156,7 +155,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             const { data, error } = await supabase
                 .from('gm_orders') // RENAMED
                 .select('*, items:gm_order_items(*)')
-                .neq('status', 'PAID') // Only active orders
+                .neq('status', 'paid') // Only active orders
                 .gte('created_at', cutoff) // Safety Net: No ancient orders
                 .order('created_at', { ascending: true });
 
@@ -423,7 +422,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                         restaurant_id: restaurantId,
                         table_id: activeTableId,
                         table_number: parseInt(activeTableId, 10) || 0,
-                        status: 'OPEN',
+                        status: 'pending',
                         total_amount: 0, // Will be updated by trigger or later
                         user_id: session.user.id,
                         shift_id: shiftId, // Use context shiftId
@@ -499,7 +498,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                     restaurant_id: restaurantId,
                     table_id: activeTableId,
                     table_number: parseInt(activeTableId || '0', 10) || 0,
-                    status: 'OPEN',
+                    status: 'pending',
                     total_amount: 0,
                     user_id: session.user.id,
                     shift_id: shiftId,
@@ -601,7 +600,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             // Assuming we might want to log the method.
 
             const updatePayload: any = {
-                status: 'PAID',
+                status: 'paid',
                 payment_status: 'paid',
                 payment_method: method // Assuming schema supports this or we add it later. If not, it just ignores.
                 // Actually schema usually needs column. If fail, we catch.
@@ -630,7 +629,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                 .from('gm_orders')
                 .update(updatePayload)
                 .eq('id', orderId)
-                .neq('status', 'PAID') // ERRO-004 Fix: Só atualiza se não estiver pago
+                .neq('status', 'paid') // ERRO-004 Fix: Só atualiza se não estiver pago
                 .select()
                 .single();
 
@@ -642,7 +641,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                         .from('gm_orders')
                         .update(updatePayload)
                         .eq('id', orderId)
-                        .neq('status', 'PAID')
+                        .neq('status', 'paid')
                         .select()
                         .single();
 
@@ -654,7 +653,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                             .eq('id', orderId)
                             .single();
 
-                        if (currentOrder?.status === 'PAID') {
+                        if (currentOrder?.status === 'paid') {
                             console.log(`[FastPay] Order ${orderId} already paid (idempotent check)`);
                             return true;
                         }
@@ -668,7 +667,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                         .eq('id', orderId)
                         .single();
 
-                    if (currentOrder?.status === 'PAID') {
+                    if (currentOrder?.status === 'paid') {
                         console.log(`[FastPay] Order ${orderId} already paid (idempotent check)`);
                         return true;
                     }
@@ -738,7 +737,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
 
             // OFFLINE FALLBACK
             // Enqueue Payment Mutation
-            const payload = { orderId, method, status: 'PAID' };
+            const payload = { orderId, method, status: 'paid' };
             await OfflineQueueService.enqueue('ADD_PAYMENT', payload);
 
             // Optimistic UI Update
@@ -751,18 +750,18 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     const updateOrderStatus = async (orderId: string, status: Order['status']) => {
         let dbStatus: string;
         switch (status) {
-            case 'pending': dbStatus = 'OPEN'; break;
-            case 'preparing': dbStatus = 'IN_PREP'; break;
-            case 'ready': dbStatus = 'READY'; break;
-            case 'delivered': dbStatus = 'DELIVERED'; break;
-            case 'paid': dbStatus = 'PAID'; break;
-            default: dbStatus = 'OPEN'; break; // Fallback
+            case 'pending': dbStatus = 'pending'; break;
+            case 'preparing': dbStatus = 'preparing'; break;
+            case 'ready': dbStatus = 'ready'; break;
+            case 'delivered': dbStatus = 'delivered'; break;
+            case 'paid': dbStatus = 'paid'; break;
+            default: dbStatus = 'pending'; break; // Fallback
         }
 
         try {
             const updatePayload: any = { status: dbStatus };
 
-            if (dbStatus === 'PAID') {
+            if (dbStatus === 'paid') {
                 updatePayload.payment_status = 'paid';
 
                 const order = orders.find(o => o.id === orderId);
@@ -871,7 +870,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
 
     const voidItem = async (orderId: string, itemId: string, reason: string) => {
         try {
-            // MVP: Hard Delete. 
+            // MVP: Hard Delete.
             // Phase 36 Enhancement: Soft delete with reason if schema supports it.
             const { error } = await supabase
                 .from('gm_order_items')

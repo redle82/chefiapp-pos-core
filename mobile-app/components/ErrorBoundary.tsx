@@ -1,13 +1,13 @@
 /**
  * ErrorBoundary Component
- * 
+ *
  * Catches React errors and sends them to Sentry
  */
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import * as Sentry from '@sentry/react-native';
 import { logError } from '@/services/logging';
+import * as Sentry from '@sentry/react-native';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Props {
   children: ReactNode;
@@ -43,14 +43,12 @@ export class ErrorBoundary extends Component<Props, State> {
     });
 
     // Also send to Sentry directly for additional context
-    if (Sentry.getCurrentHub().getClient()) {
-      Sentry.withScope((scope) => {
-        scope.setContext('errorBoundary', {
-          componentStack: errorInfo.componentStack,
-        });
-        Sentry.captureException(error);
+    Sentry.withScope((scope) => {
+      scope.setContext('errorBoundary', {
+        componentStack: errorInfo.componentStack,
       });
-    }
+      Sentry.captureException(error);
+    });
   }
 
   handleReset = () => {

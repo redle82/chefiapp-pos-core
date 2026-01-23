@@ -1,20 +1,20 @@
 /**
  * Webhook Test Server
- * 
+ *
  * Servidor mínimo para receber webhooks reais do Stripe CLI
- * 
+ *
  * USO:
  *   STRIPE_SECRET_KEY=sk_test_xxx STRIPE_WEBHOOK_SECRET=whsec_xxx npx ts-node server/webhook-server.ts
- * 
+ *
  * STRIPE CLI:
  *   stripe listen --forward-to localhost:3000/webhooks/stripe
  */
 
-import * as http from 'http';
 import * as crypto from 'crypto';
-import { StripeGatewayAdapter } from '../gateways/StripeGatewayAdapter';
+import * as http from 'http';
 import { InMemoryEventStore } from '../event-log/InMemoryEventStore';
 import { CoreEvent } from '../event-log/types';
+import { StripeGatewayAdapter } from '../gateways/StripeGatewayAdapter';
 
 // ============================================================================
 // ENVIRONMENT CHECK
@@ -110,6 +110,10 @@ const server = http.createServer(async (req, res) => {
                     },
                     occurred_at: verified.occurredAt,
                     idempotency_key: `stripe:${verified.gatewayReference}`,
+                    meta: {
+                        server_timestamp: new Date().toISOString(),
+                        actor_ref: 'STRIPE_WEBHOOK'
+                    }
                 };
 
                 // 4. Append to event store

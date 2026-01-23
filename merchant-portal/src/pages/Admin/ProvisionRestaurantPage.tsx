@@ -1,12 +1,12 @@
 /**
  * ProvisionRestaurantPage - UI para Provisioning de Restaurantes
- * 
+ *
  * Permite criar novos restaurantes via interface administrativa
  */
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/core/supabase';
+import { supabase } from '../../core/supabase';
 import './ProvisionRestaurantPage.css';
 
 interface ProvisionFormData {

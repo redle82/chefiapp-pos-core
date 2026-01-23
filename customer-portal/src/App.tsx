@@ -1,20 +1,20 @@
 /**
  * Customer Portal - App Principal
- * 
+ *
  * Rota dinâmica: /:slug carrega o cardápio do restaurante
  * Exemplo: /sofia-gastrobar -> menu do Sofia Gastrobar
  */
 
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { MenuProvider, useMenu, type MenuItem } from './context/MenuContext';
-import { CartProvider } from './context/CartContext';
-import { MenuList } from './components/MenuList';
-import { CartFloatingButton } from './components/CartFloatingButton';
-import { ProductModal } from './components/ProductModal';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { CartDrawer } from './components/CartDrawer';
+import { CartFloatingButton } from './components/CartFloatingButton';
+import { MenuList } from './components/MenuList';
+import { ProductModal } from './components/ProductModal';
+import { CartProvider } from './context/CartContext';
+import { MenuProvider, useMenu, type MenuItem } from './context/MenuContext';
 import { useSlugFromURL } from './hooks/useSlugFromURL';
-import { NotFoundPage, LoadingPage } from './pages/NotFoundPage';
+import { LoadingPage, NotFoundPage } from './pages/NotFoundPage';
 
 // --- Header ---
 function Header() {
@@ -108,6 +108,23 @@ function HomePage() {
     );
 }
 
+// --- Checkout Page Wrapper ---
+function CheckoutRoute() {
+    const { slug, isValid, error } = useSlugFromURL();
+
+    if (!isValid || !slug) {
+        return <NotFoundPage error={error} slug={slug} />;
+    }
+
+    return (
+        <MenuProvider slug={slug}>
+            <CartProvider slug={slug}>
+                <CheckoutPage />
+            </CartProvider>
+        </MenuProvider>
+    );
+}
+
 // --- App Root ---
 function App() {
     return (
@@ -118,6 +135,9 @@ function App() {
 
                 {/* Rota dinâmica: /:slug */}
                 <Route path="/:slug" element={<RestaurantPage />} />
+
+                {/* Checkout: /:slug/checkout */}
+                <Route path="/:slug/checkout" element={<CheckoutRoute />} />
 
                 {/* Fallback para rotas não encontradas */}
                 <Route path="*" element={<NotFoundPage />} />

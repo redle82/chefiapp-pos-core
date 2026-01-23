@@ -17,7 +17,7 @@
  */
 export function isDevStableMode(): boolean {
   // Never enable outside DEV builds (non-negotiable: production unaffected)
-  if (!import.meta.env.DEV) return false;
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') return false;
 
   if (typeof window === 'undefined') return false;
 
@@ -37,7 +37,7 @@ export function isDevStableMode(): boolean {
 }
 
 export function devStableReason(): string {
-  if (!import.meta.env.DEV) return 'prod_build';
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') return 'prod_build';
   if (typeof window === 'undefined') return 'no_window';
 
   const qp = new URLSearchParams(window.location.search);

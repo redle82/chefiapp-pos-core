@@ -13,7 +13,15 @@ import { usePublicMenu, type PublicMenuProduct } from './usePublicMenu';
 import { WebOrderingService, type WebOrderResult } from '../../core/services/WebOrderingService';
 import { getTabIsolated, setTabIsolated, removeTabIsolated } from '../../core/storage/TabIsolatedStorage';
 import { StripePaymentModal } from '../../components/payment/StripePaymentModal';
+import { SEOHead } from '../../core/marketing/SEOHead';
+import { PixelService } from '../../core/marketing/PixelService';
 import './PublicPages.css';
+
+// --- Polling Helper (Mock for now to fix build) ---
+function startStatusPolling(orderId?: string, requestId?: string) {
+    console.log('[PublicOrdering] Polling started for', orderId, requestId);
+    // In a real implementation, this would start interval to check order status
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -81,8 +89,15 @@ export function PublicOrderingPage() {
     React.useEffect(() => {
         if (restaurant?.id) {
             setCart(loadCart(restaurant.id));
+
+            // Initialize Pixels
+            PixelService.init({
+                facebookPixelId: restaurant.facebook_pixel_id,
+                googleTagId: restaurant.google_tag_id
+            });
+            PixelService.track('PageView');
         }
-    }, [restaurant?.id]);
+    }, [restaurant?.id, restaurant?.facebook_pixel_id, restaurant?.google_tag_id]);
 
     // Order State
     const [submitting, setSubmitting] = useState(false);
@@ -129,6 +144,18 @@ export function PublicOrderingPage() {
             }
 
             saveCart(restaurant.id, newCart);
+
+            // MARKETING: Track AddToCart
+            if (!existing) {
+                PixelService.track('AddToCart', {
+                    content_name: item.name,
+                    content_ids: [item.id],
+                    content_type: 'product',
+                    value: item.final_price_cents / 100,
+                    currency: 'EUR'
+                });
+            }
+
             return newCart;
         });
     }, [restaurant, trackClick]);
@@ -253,6 +280,13 @@ export function PublicOrderingPage() {
             setSubmissionProgress(null);
 
             if (result.success || result.status === 'UNCERTAIN') {
+                // MARKETING: Track Purchase
+                PixelService.track('Purchase', {
+                    value: cartTotal / 100,
+                    currency: 'EUR',
+                    order_id: result.order_id
+                });
+
                 clearCart();
                 setView('success');
                 if (result.order_id || result.request_id) {
@@ -435,6 +469,12 @@ export function PublicOrderingPage() {
                 </div>
             </header>
 
+            <SEOHead
+                title={restaurant.name}
+                description={restaurant.description || `Faça seu pedido no ${restaurant.name} online.`}
+                image={restaurant.cover_image_url}
+            />
+
             {/* Float Cart Button */}
             {cart.length > 0 && (
                 <button className="public-cart-float" onClick={() => setView('checkout')}>
@@ -451,9 +491,9 @@ export function PublicOrderingPage() {
                         <div className="public-menu__items-grid">
                             {category.items.map(product => (
                                 <div key={product.id} className="public-menu__product-card" onClick={() => addToCart(product)}>
-                                    {product.image_url && (
+                                    {product.photo_url && (
                                         <div className="public-menu__product-image">
-                                            <img src={product.image_url} alt={product.name} loading="lazy" />
+                                            <img src={product.photo_url} alt={product.name} loading="lazy" />
                                         </div>
                                     )}
                                     <div className="public-menu__product-info">

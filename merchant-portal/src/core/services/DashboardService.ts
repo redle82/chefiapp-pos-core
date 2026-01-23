@@ -44,7 +44,7 @@ export class DashboardService {
         });
 
         if (error) {
-            console.error('[DashboardService] Failed to fetch metrics:', error);
+            Logger.error('[DashboardService] Failed to fetch metrics', error, { restaurantId });
             throw new Error(`Failed to fetch metrics: ${error.message}`);
         }
 

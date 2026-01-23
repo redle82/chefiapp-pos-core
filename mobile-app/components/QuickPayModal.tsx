@@ -1,18 +1,18 @@
-import React, { useState, useMemo, useRef } from 'react';
+import { HapticFeedback } from '@/services/haptics';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useMemo, useRef, useState } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    Modal,
-    TouchableOpacity,
-    TextInput,
+    ActivityIndicator,
     Alert,
     Animated,
-    ActivityIndicator,
+    Modal,
     ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { HapticFeedback } from '@/services/haptics';
 
 interface QuickPayModalProps {
     visible: boolean;
@@ -78,20 +78,20 @@ export function QuickPayModal({ visible, total, orderId, order, onClose, onConfi
         }
         return 0;
     }, [tipPercent, customTip, total]);
-    
+
     const grandTotal = total + tipAmount;
 
     const handleConfirm = async () => {
         // ERRO-004 Fix: Prevenir duplo clique - verificação síncrona com ref
         if (processingRef.current) return;
-        
+
         // ERRO-004 Fix: Debounce de 500ms mínimo entre cliques
         const now = Date.now();
         if (now - lastClickRef.current < 500) {
             return;
         }
         lastClickRef.current = now;
-        
+
         if (!selectedMethod) {
             Alert.alert('Erro', 'Selecione um método de pagamento');
             return;
@@ -135,7 +135,7 @@ export function QuickPayModal({ visible, total, orderId, order, onClose, onConfi
 
         // ERRO-004 Fix: Confirmação contextual obrigatória para valores > €100 ou múltiplos pagamentos recentes
         const needsConfirmation = grandTotal > 100;
-        const confirmationTitle = needsConfirmation 
+        const confirmationTitle = needsConfirmation
             ? '⚠️ Confirmar Pagamento (Valor Alto)'
             : 'Confirmar Pagamento';
         const confirmationMessage = needsConfirmation
@@ -147,8 +147,8 @@ export function QuickPayModal({ visible, total, orderId, order, onClose, onConfi
             confirmationTitle,
             confirmationMessage,
             [
-                { 
-                    text: 'Cancelar', 
+                {
+                    text: 'Cancelar',
                     style: 'cancel',
                     onPress: () => {
                         processingRef.current = false; // ERRO-004 Fix: Unlock ref
@@ -378,9 +378,9 @@ export function QuickPayModal({ visible, total, orderId, order, onClose, onConfi
                                 <Ionicons name="close" size={24} color="#888" />
                             </TouchableOpacity>
                         </View>
-                        
+
                         <Text style={styles.splitModalSubtitle}>Selecione os itens para dividir:</Text>
-                        
+
                         <ScrollView style={styles.splitItemsList}>
                             {order?.items.map((item: any) => {
                                 const isSelected = selectedItems.includes(item.id);
@@ -399,10 +399,10 @@ export function QuickPayModal({ visible, total, orderId, order, onClose, onConfi
                                             }
                                         }}
                                     >
-                                        <Ionicons 
-                                            name={isSelected ? "checkbox" : "checkbox-outline"} 
-                                            size={24} 
-                                            color={isSelected ? "#0a84ff" : "#888"} 
+                                        <Ionicons
+                                            name={isSelected ? "checkbox" : "checkbox-outline"}
+                                            size={24}
+                                            color={isSelected ? "#0a84ff" : "#888"}
                                         />
                                         <View style={styles.splitItemInfo}>
                                             <Text style={styles.splitItemName}>{item.name}</Text>
@@ -478,7 +478,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     orderTotal: {
-        color: '#fff',
         fontSize: 32, // ERRO-023 Fix: Valor total maior
         fontWeight: 'bold',
         color: '#d4a574', // ERRO-023 Fix: Cor destacada (dourado)

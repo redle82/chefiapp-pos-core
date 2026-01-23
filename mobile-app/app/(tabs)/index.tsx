@@ -1,31 +1,28 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Modal,
-  SafeAreaView,
-  Alert,
-  TextInput,
-  ScrollView
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { ShiftGate } from '@/components/ShiftGate';
-import { useOrder } from '@/context/OrderContext';
 import { useAppStaff } from '@/context/AppStaffContext';
+import { useOrder } from '@/context/OrderContext';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
-import { HapticFeedback } from '@/services/haptics';
 import { BottomActionBar } from '@/components/BottomActionBar';
-import { ThumbCard } from '@/components/ThumbCard';
-import { BottomSheet } from '@/components/BottomSheet';
-import { supabase } from '@/services/supabase';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useKitchenPressure } from '@/hooks/useKitchenPressure';
 import { KitchenPressureIndicator } from '@/components/KitchenPressureIndicator';
-import { PaymentModal, PaymentMethod } from '@/components/PaymentModal';
+import { PaymentMethod, PaymentModal } from '@/components/PaymentModal';
+import { ThumbCard } from '@/components/ThumbCard';
+import { useKitchenPressure } from '@/hooks/useKitchenPressure';
+import { HapticFeedback } from '@/services/haptics';
+import { supabase } from '@/services/supabase';
 
 interface MenuItem {
   id: string;
@@ -447,7 +444,6 @@ export default function MenuScreen() {
                     setCustomerPhone(sanitized);
                   }
                 }}
-                onChangeText={setCustomerPhone}
                 placeholderTextColor="#666"
               />
 

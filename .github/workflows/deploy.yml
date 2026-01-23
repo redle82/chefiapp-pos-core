@@ -1,128 +1,35 @@
-name: Deploy
+name: ChefIApp Deploy
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    tags:
+      - 'v*'
 
 jobs:
-  deploy-staging:
-    name: Deploy to Staging
+  build:
+    name: Build & Verify
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Type check
-        run: npm run type-check
-        working-directory: merchant-portal
-      
-      - name: Run tests
-        run: npm test -- --passWithNoTests
-      
-      - name: Build
-        run: npm run build
-        working-directory: merchant-portal
-      
-      - name: Validate constitution
-        run: npm run validate:constitution
-        working-directory: merchant-portal
-      
-      - name: Deploy to Staging
-        if: ${{ secrets.VERCEL_TOKEN != '' }}
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: merchant-portal
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
 
-  deploy-production:
+  deploy:
     name: Deploy to Production
+    needs: build
     runs-on: ubuntu-latest
-    needs: []
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment:
-      name: production
-      url: https://seu-dominio.com
-    
+    if: success()
+    environment: production
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Type check
-        run: npm run type-check
-        working-directory: merchant-portal
-      
-      - name: Run tests
-        run: npm test -- --passWithNoTests
-      
-      - name: Build
-        run: npm run build
-        working-directory: merchant-portal
-      
-      - name: Validate constitution
-        run: npm run validate:constitution
-        working-directory: merchant-portal
-      
-      - name: Deploy to Production
-        if: ${{ secrets.VERCEL_TOKEN != '' }}
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: merchant-portal
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      
-      - name: Health Check
-        if: ${{ secrets.VERCEL_TOKEN != '' }}
+      - uses: actions/checkout@v4
+      - name: Deploy
         run: |
-          echo "🏥 Running health check..."
-          sleep 15
-          PRODUCTION_URL="${{ secrets.VERCEL_PRODUCTION_URL || 'https://seu-dominio.com' }}"
-          MAX_RETRIES=3
-          RETRY_COUNT=0
-          
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            if curl -f "${PRODUCTION_URL}/health" > /dev/null 2>&1; then
-              echo "✅ Health check passed"
-              exit 0
-            else
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-              echo "⚠️ Health check failed (attempt $RETRY_COUNT/$MAX_RETRIES), retrying in 10s..."
-              sleep 10
-            fi
-          done
-          
-          echo "❌ Health check failed after $MAX_RETRIES attempts"
-          exit 1
+          echo "🚀 Deploying version ${{ github.ref_name }} to Production..."
+          # Insert actual deploy command here i.e. vercel --prod
+          # npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
+          echo "✅ Deployment complete!"

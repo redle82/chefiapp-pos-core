@@ -1,4 +1,3 @@
-import { Logger } from '../logger/Logger';
 
 /**
  * ALERT SERVICE (Discord Integration)
@@ -11,8 +10,8 @@ class AlertService {
     private lastAlertTime: number = 0;
 
     private constructor() {
-        this.webhookUrl = import.meta.env.VITE_DISCORD_WEBHOOK_URL;
-        this.isDev = import.meta.env.DEV;
+        this.webhookUrl = typeof process !== 'undefined' ? process.env.VITE_DISCORD_WEBHOOK_URL : undefined;
+        this.isDev = typeof process !== 'undefined' && process.env.NODE_ENV !== 'production';
     }
 
     public static getInstance(): AlertService {

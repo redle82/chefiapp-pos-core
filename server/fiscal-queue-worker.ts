@@ -1,8 +1,8 @@
 /**
  * Fiscal Queue Worker
- * 
+ *
  * TASK-2.1.1: Worker para processar fila de emissão fiscal
- * 
+ *
  * Implementa lógica completa de processamento fiscal:
  * - Busca dados do pedido do DB
  * - Detecta país do restaurante
@@ -13,17 +13,17 @@
  * - Registra em fiscal_event_store
  */
 
-import { Pool } from 'pg';
 import * as dotenv from 'dotenv';
-import { InvoiceXpressAdapterServer } from './fiscal/InvoiceXpressAdapterServer';
-import { TicketBAIAdapter } from '../fiscal-modules/adapters/TicketBAIAdapter';
-import { SAFTAdapter } from '../fiscal-modules/adapters/SAFTAdapter';
-import { ConsoleFiscalAdapter } from '../fiscal-modules/ConsoleFiscalAdapter';
-import { LegalComplianceValidator } from '../fiscal-modules/validators/LegalComplianceValidator';
-import type { TaxDocument, FiscalResult } from '../fiscal-modules/types';
-import type { FiscalObserver } from '../fiscal-modules/FiscalObserver';
-import type { LegalSeal } from '../legal-boundary/types';
+import { Pool } from 'pg';
 import type { CoreEvent } from '../event-log/types';
+import { SAFTAdapter } from '../fiscal-modules/adapters/SAFTAdapter';
+import { TicketBAIAdapter } from '../fiscal-modules/adapters/TicketBAIAdapter';
+import { ConsoleFiscalAdapter } from '../fiscal-modules/ConsoleFiscalAdapter';
+import type { FiscalObserver } from '../fiscal-modules/FiscalObserver';
+import type { FiscalResult, TaxDocument } from '../fiscal-modules/types';
+import { LegalComplianceValidator } from '../fiscal-modules/validators/LegalComplianceValidator';
+import type { LegalSeal } from '../legal-boundary/types';
+import { InvoiceXpressAdapterServer } from './fiscal/InvoiceXpressAdapterServer';
 
 dotenv.config();
 
@@ -52,7 +52,7 @@ interface FiscalQueueItem {
  */
 async function getOrderData(orderId: string, restaurantId: string): Promise<any> {
   const { rows } = await pool.query(
-    `SELECT 
+    `SELECT
       o.*,
       r.name as restaurant_name,
       r.address as restaurant_address,
@@ -167,9 +167,9 @@ async function selectAdapter(country: string, restaurantId: string): Promise<Fis
 
 /**
  * Cria documento fiscal a partir do pedido
- * 
+ *
  * [P0-05 FIX] Uses order.total_cents as fiscal base, NOT payment.amountCents
- * Reason: Payments can be partial (split payments). Tax document must reflect 
+ * Reason: Payments can be partial (split payments). Tax document must reflect
  * the FULL order value for legal compliance.
  */
 function createTaxDocument(order: any, payment: {
@@ -353,6 +353,10 @@ async function processFiscalQueueItem(item: FiscalQueueItem): Promise<void> {
       occurred_at: new Date(),
       idempotency_key: `fiscal:${item.order_id}`,
       actor_ref: 'FISCAL_WORKER',
+      meta: {
+          server_timestamp: new Date().toISOString(),
+          actor_ref: 'FISCAL_WORKER'
+      }
     };
 
     // 7. Processar via adapter
@@ -369,7 +373,7 @@ async function processFiscalQueueItem(item: FiscalQueueItem): Promise<void> {
     }
 
     // CRITICAL: Verificar se SUCCESS mas sem gov_protocol (External ID missing)
-    if ((result.status === 'SUCCESS' || result.status === 'REPORTED') && !result.gov_protocol) {
+    if (((result as any).status === 'SUCCESS' || result.status === 'REPORTED') && !result.gov_protocol) {
       console.error(`[FiscalWorker] ❌ CRITICAL: Fiscal ${result.status} but no gov_protocol (External ID missing)`, {
         orderId: item.order_id,
         restaurantId: item.restaurant_id,
@@ -379,7 +383,7 @@ async function processFiscalQueueItem(item: FiscalQueueItem): Promise<void> {
 
       // Manter status PENDING_EXTERNAL_ID e forçar retry
       await pool.query(
-        `UPDATE public.gm_fiscal_queue 
+        `UPDATE public.gm_fiscal_queue
          SET external_id_status = 'PENDING_EXTERNAL_ID',
              updated_at = timezone('utc'::text, now())
          WHERE id = $1`,
@@ -466,7 +470,7 @@ async function markCompleted(queueId: string, result: any) {
 
 /**
  * Loop principal do worker
- * 
+ *
  * TASK-2.2.1: Processa itens 'pending' e 'retrying' (quando next_retry_at <= NOW())
  * - get_next_fiscal_queue_item() já filtra itens retrying com next_retry_at <= NOW()
  * - Backoff exponencial: 2^attempts * 60 segundos (60s, 120s, 240s, 480s, 960s, ...)
@@ -518,4 +522,5 @@ if (require.main === module) {
   startWorker();
 }
 
-export { startWorker, processFiscalQueueItem };
+export { processFiscalQueueItem, startWorker };
+

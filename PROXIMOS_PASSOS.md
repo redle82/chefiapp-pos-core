@@ -41,11 +41,13 @@ Agora que a operação é segura, o foco pode mudar para **Escala e Inteligênci
 - **SEO:** Otimizar `customer-portal` para busca local.
 - **Pixel:** Adicionar Meta Pixel/Google Ads no fluxo de pedido web.
 
-### 3. ✨ Features V2 (Backlog)
+### 3. ✨ Features V2 (Concluída)
 
-- **Gestão de Estoque:** Baixa automática por ficha técnica.
-- **Fidelidade Avançada:** Resgate de pontos por produtos (Gamification nivel hard).
-- **Integração iFood:** Centralizar delivery no Tablet de Cozinha.
+- ✅ **Gestão de Estoque:** Baixa automática por ficha técnica.
+- ✅ **Fidelidade Avançada:** Resgate de pontos por produtos.
+- ✅ **Integração iFood/Uber Eats:** Centralizado no Tablet.
+- ✅ **Relatórios Financeiros:** DRE e Margem em Tempo Real.
+- ✅ **Comanda Digital:** Pedidos via QR Code (Customer Portal).
 
 ---
 

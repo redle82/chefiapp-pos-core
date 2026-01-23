@@ -1,31 +1,31 @@
 /**
  * NOW ENGINE - Motor de Decisão Única
- * 
+ *
  * Sistema que decide "o que fazer AGORA" - uma coisa por vez
- * 
+ *
  * Premissa inegociável:
  * O AppStaff mostra APENAS UMA COISA POR VEZ.
  */
 
-import { supabase } from './supabase';
 import { StaffRole } from '@/context/AppStaffContext';
-import { logError, addBreadcrumb } from './logging';
 import { gamificationService } from './GamificationService';
+import { addBreadcrumb, logError } from './logging';
+import { supabase } from './supabase';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export type ActionType = 'critical' | 'urgent' | 'attention' | 'silent';
-export type ActionName = 
-  | 'collect_payment' 
-  | 'deliver' 
-  | 'check' 
-  | 'resolve' 
-  | 'acknowledge' 
-  | 'check_kitchen' 
-  | 'prioritize_drinks' 
-  | 'routine_clean' 
+export type ActionName =
+  | 'collect_payment'
+  | 'deliver'
+  | 'check'
+  | 'resolve'
+  | 'acknowledge'
+  | 'check_kitchen'
+  | 'prioritize_drinks'
+  | 'routine_clean'
   | 'resolve_error';
 
 export interface NowAction {
@@ -122,20 +122,20 @@ class NowEngine {
   private context: OperationalContext | null = null;
   private currentAction: NowAction | null = null;
   private listeners: ((action: NowAction | null) => void)[] = [];
-  private intervalId: NodeJS.Timeout | null = null;
+  private intervalId: any = null;
   private channel: any = null;
   private restaurantId: string | null = null;
   private currentRole: StaffRole = 'waiter';
-  
+
   // ERRO-002 Fix: Armazenar dados dos pedidos para incluir origem e mesa
   private ordersCache: Map<string, { origin?: string; table_number?: string }> = new Map();
-  
+
   // Tracking de ações completadas (evita duplicação)
   private completedActions: Map<string, number> = new Map(); // actionId -> timestamp
   private readonly COMPLETED_ACTION_TTL = 60000; // 60 segundos
-  
+
   // Debounce para recalculations
-  private recalculationTimeout: NodeJS.Timeout | null = null;
+  private recalculationTimeout: any = null;
   private readonly RECALCULATION_DEBOUNCE = 1000; // 1 segundo
 
   async start(restaurantId: string, role: StaffRole) {
@@ -206,7 +206,7 @@ class NowEngine {
 
         const context = await this.gatherContext();
         const action = this.calculateNowAction(context);
-        
+
         // Verificar se ação não foi completada recentemente
         if (action && this.isActionRecentlyCompleted(action.id)) {
           // Ação foi completada recentemente, não mostrar
@@ -217,7 +217,7 @@ class NowEngine {
           }
           return;
         }
-        
+
         // Só emitir se ação mudou
         if (action?.id !== this.currentAction?.id) {
           this.currentAction = action;
@@ -227,7 +227,7 @@ class NowEngine {
         const err = error instanceof Error ? error : new Error(String(error));
         logError(err, {
           action: 'recalculate',
-          restaurantId: this.restaurantId,
+          restaurantId: this.restaurantId ?? undefined,
         });
         console.error('[NowEngine] Recalculate error:', error);
       }
@@ -359,7 +359,7 @@ class NowEngine {
     const allActions = this.calculateAllActions(context);
 
     // 2. Filtrar ações completadas recentemente
-    const filteredActions = allActions.filter(action => 
+    const filteredActions = allActions.filter(action =>
       !this.isActionRecentlyCompleted(action.id)
     );
 
@@ -375,7 +375,7 @@ class NowEngine {
 
   private calculateAllActions(context: OperationalContext): NowAction[] {
     const actions: NowAction[] = [];
-    
+
     // ERRO-002 Fix: Helper para obter dados do pedido
     const getOrderData = (orderId: string | undefined) => {
       if (!orderId) return { origin: 'GARÇOM', tableNumber: '?' };
@@ -388,8 +388,8 @@ class NowEngine {
 
     // CRÍTICO
     // 1. Cliente reclamando (< 2min)
-    const complaint = context.tables.find(t => 
-      t.status === 'needs_attention' && 
+    const complaint = context.tables.find(t =>
+      t.status === 'needs_attention' &&
       t.elapsedMinutes < 2
     );
     if (complaint) {
@@ -411,8 +411,8 @@ class NowEngine {
     }
 
     // 2. Mesa quer pagar há > 5min
-    const wantsPayCritical = context.tables.find(t => 
-      t.orderStatus === 'wants_pay' && 
+    const wantsPayCritical = context.tables.find(t =>
+      t.orderStatus === 'wants_pay' &&
       t.elapsedMinutes > 5
     );
     if (wantsPayCritical) {
@@ -452,16 +452,16 @@ class NowEngine {
       }
     });
 
-    const criticalOrder = Array.from(orderDeliveryMap.values()).find(status => 
+    const criticalOrder = Array.from(orderDeliveryMap.values()).find(status =>
       status.pendingItems.some(item => item.elapsedMinutes > 3)
     );
-    
+
     if (criticalOrder) {
       const orderData = getOrderData(criticalOrder.orderId);
       const criticalItem = criticalOrder.pendingItems.find(item => item.elapsedMinutes > 3)!;
       const pendingCount = criticalOrder.pendingItems.length;
       const deliveredCount = criticalOrder.deliveredItems.length;
-      
+
       let message = `${criticalItem.itemName} pronto há 3+ min`;
       if (pendingCount > 1) {
         message += ` (+${pendingCount - 1} ${pendingCount - 1 === 1 ? 'item' : 'itens'} pendente${pendingCount - 1 === 1 ? '' : 's'})`;
@@ -469,7 +469,7 @@ class NowEngine {
       if (deliveredCount > 0) {
         message += ` • ${deliveredCount} ${deliveredCount === 1 ? 'entregue' : 'entregues'}`;
       }
-      
+
       actions.push({
         id: `critical-ready-${criticalItem.itemId}`,
         type: 'critical',
@@ -490,9 +490,9 @@ class NowEngine {
 
     // URGENTE
     // 1. Mesa quer pagar há 2-5min
-    const wantsPayUrgent = context.tables.find(t => 
-      t.orderStatus === 'wants_pay' && 
-      t.elapsedMinutes >= 2 && 
+    const wantsPayUrgent = context.tables.find(t =>
+      t.orderStatus === 'wants_pay' &&
+      t.elapsedMinutes >= 2 &&
       t.elapsedMinutes <= 5
     );
     if (wantsPayUrgent) {
@@ -515,18 +515,18 @@ class NowEngine {
 
     // 2. Item pronto há 1-3min
     // ERRO-024 Fix: Buscar próximo pedido urgente com status completo
-    const urgentOrder = Array.from(orderDeliveryMap.values()).find(status => 
-      status.pendingItems.length > 0 && 
+    const urgentOrder = Array.from(orderDeliveryMap.values()).find(status =>
+      status.pendingItems.length > 0 &&
       status.pendingItems.every(item => item.elapsedMinutes <= 3) &&
       !criticalOrder // Só se não houver pedido crítico
     );
-    
+
     if (urgentOrder) {
       const orderData = getOrderData(urgentOrder.orderId);
       const urgentItem = urgentOrder.pendingItems[0];
       const pendingCount = urgentOrder.pendingItems.length;
       const deliveredCount = urgentOrder.deliveredItems.length;
-      
+
       let message = `${urgentItem.itemName} pronto`;
       if (pendingCount > 1) {
         message += ` (+${pendingCount - 1} ${pendingCount - 1 === 1 ? 'item' : 'itens'})`;
@@ -534,7 +534,7 @@ class NowEngine {
       if (deliveredCount > 0) {
         message += ` • ${deliveredCount} ${deliveredCount === 1 ? 'entregue' : 'entregues'}`;
       }
-      
+
       actions.push({
         id: `urgent-ready-${urgentItem.itemId}`,
         type: 'urgent',
@@ -554,8 +554,8 @@ class NowEngine {
     }
 
     // 3. Mesa ocupada há > 30min
-    const staleTable = context.tables.find(t => 
-      t.status === 'occupied' && 
+    const staleTable = context.tables.find(t =>
+      t.status === 'occupied' &&
       t.elapsedMinutes > 30 &&
       t.orderStatus !== 'wants_pay'
     );
@@ -595,9 +595,9 @@ class NowEngine {
 
     // ATENÇÃO
     // 1. Mesa ocupada há 15-30min
-    const attentionTable = context.tables.find(t => 
-      t.status === 'occupied' && 
-      t.elapsedMinutes >= 15 && 
+    const attentionTable = context.tables.find(t =>
+      t.status === 'occupied' &&
+      t.elapsedMinutes >= 15 &&
       t.elapsedMinutes <= 30
     );
     if (attentionTable) {
@@ -620,15 +620,15 @@ class NowEngine {
 
     // 2. Pedido novo (< 2min)
     // ERRO-002 Fix + ERRO-003 Fix: Incluir origem e mudar mensagem
-    const newOrder = context.tables.find(t => 
-      t.orderStatus === 'pending' && 
+    const newOrder = context.tables.find(t =>
+      t.orderStatus === 'pending' &&
       t.elapsedMinutes < 2
     );
     if (newOrder) {
       const orderData = getOrderData(newOrder.orderId);
       // ERRO-003 Fix: Mensagem mais clara e específica explicando o que fazer
-      const originText = orderData.origin === 'WEB_PUBLIC' ? 'web' : 
-                        orderData.origin === 'CAIXA' ? 'do caixa' : 
+      const originText = orderData.origin === 'WEB_PUBLIC' ? 'web' :
+                        orderData.origin === 'CAIXA' ? 'do caixa' :
                         'do garçom';
       actions.push({
         id: `attention-new-${newOrder.id}`,
@@ -654,9 +654,9 @@ class NowEngine {
     switch (role) {
       case 'waiter':
         // Garçom vê: ações de mesa, entregar itens, coletar pagamento
-        return actions.filter(a => 
-          a.tableId || 
-          a.action === 'deliver' || 
+        return actions.filter(a =>
+          a.tableId ||
+          a.action === 'deliver' ||
           a.action === 'collect_payment' ||
           a.action === 'check' ||
           a.action === 'acknowledge'
@@ -664,7 +664,7 @@ class NowEngine {
 
       case 'cook':
         // Cozinheiro vê: itens prontos, pressão de cozinha
-        return actions.filter(a => 
+        return actions.filter(a =>
           (a.action === 'deliver' && a.itemCategory !== 'drink') ||
           a.action === 'check_kitchen' ||
           a.action === 'prioritize_drinks'
@@ -672,15 +672,15 @@ class NowEngine {
 
       case 'bartender':
         // Barman vê: bebidas prontas, pressão de bar
-        return actions.filter(a => 
+        return actions.filter(a =>
           (a.action === 'deliver' && a.itemCategory === 'drink') ||
           a.action === 'prioritize_drinks'
         );
 
       case 'manager':
         // Gerente vê: crítico, urgente, exceções
-        return actions.filter(a => 
-          a.type === 'critical' || 
+        return actions.filter(a =>
+          a.type === 'critical' ||
           a.type === 'urgent' ||
           a.action === 'resolve'
         );
@@ -766,25 +766,25 @@ class NowEngine {
 
     this.channel = supabase
       .channel('now_engine_events')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
         table: 'gm_orders',
         filter: `restaurant_id=eq.${this.restaurantId}`
       }, () => {
         this.recalculate();
       })
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
         table: 'gm_tables',
         filter: `restaurant_id=eq.${this.restaurantId}`
       }, () => {
         this.recalculate();
       })
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
         table: 'gm_order_items',
         filter: `restaurant_id=eq.${this.restaurantId}`
       }, () => {
@@ -822,18 +822,18 @@ class NowEngine {
             // Marcar pedido como pago
             await supabase
               .from('gm_orders')
-              .update({ 
+              .update({
                 status: 'PAID',
                 payment_status: 'paid',
                 updated_at: new Date().toISOString()
               })
               .eq('id', action.orderId);
-            
+
             // Atualizar status da mesa se necessário
             if (action.tableId) {
               await supabase
                 .from('gm_tables')
-                .update({ 
+                .update({
                   status: 'free',
                   updated_at: new Date().toISOString()
                 })
@@ -847,7 +847,7 @@ class NowEngine {
             // Marcar item como entregue
             await supabase
               .from('gm_order_items')
-              .update({ 
+              .update({
                 status: 'delivered',
                 delivered_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
@@ -861,14 +861,14 @@ class NowEngine {
                 .select('status')
                 .eq('order_id', action.orderId);
 
-              const allDelivered = items?.every(item => 
+              const allDelivered = items?.every(item =>
                 item.status === 'delivered' || item.status === 'cancelled'
               );
 
               if (allDelivered) {
                 await supabase
                   .from('gm_orders')
-                  .update({ 
+                  .update({
                     status: 'DELIVERED',
                     updated_at: new Date().toISOString()
                   })
@@ -883,7 +883,7 @@ class NowEngine {
             // Marcar mesa como atendida
             await supabase
               .from('gm_tables')
-              .update({ 
+              .update({
                 status: 'occupied',
                 updated_at: new Date().toISOString()
               })
@@ -928,7 +928,7 @@ class NowEngine {
         action: 'completeAction',
         actionId: action.id,
         actionType: action.type,
-        restaurantId: this.restaurantId,
+        restaurantId: this.restaurantId ?? undefined,
       });
       console.error('[NowEngine] Error completing action:', error);
       throw error;
@@ -943,7 +943,7 @@ class NowEngine {
 
       const context = await this.gatherContext();
       const action = this.calculateNowAction(context);
-      
+
       // Verificar se ação não foi completada recentemente
       if (action && this.isActionRecentlyCompleted(action.id)) {
         // Ação foi completada recentemente, não mostrar
@@ -951,7 +951,7 @@ class NowEngine {
         this.emit(null);
         return;
       }
-      
+
       // Só emitir se ação mudou
       if (action?.id !== this.currentAction?.id) {
         this.currentAction = action;
@@ -961,7 +961,7 @@ class NowEngine {
       const err = error instanceof Error ? error : new Error(String(error));
       logError(err, {
         action: 'recalculateImmediate',
-        restaurantId: this.restaurantId,
+        restaurantId: this.restaurantId ?? undefined,
       });
       console.error('[NowEngine] Recalculate immediate error:', error);
     }
@@ -976,7 +976,7 @@ class NowEngine {
   private isActionRecentlyCompleted(actionId: string): boolean {
     const completedAt = this.completedActions.get(actionId);
     if (!completedAt) return false;
-    
+
     const elapsed = Date.now() - completedAt;
     return elapsed < this.COMPLETED_ACTION_TTL;
   }
@@ -998,14 +998,14 @@ class NowEngine {
         await this.recalculateImmediate();
       }
       if (!this.context) return 0;
-      
+
       const allActions = this.calculateAllActions(this.context);
       return allActions.length;
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       logError(err, {
         action: 'getPendingActionsCount',
-        restaurantId: this.restaurantId,
+        restaurantId: this.restaurantId ?? undefined,
       });
       console.error('[NowEngine] Error getting pending count:', error);
       return 0;

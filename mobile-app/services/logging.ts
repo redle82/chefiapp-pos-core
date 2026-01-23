@@ -1,6 +1,6 @@
 /**
  * Logging Service - Centralized error tracking and logging
- * 
+ *
  * Uses Sentry for error tracking and structured logging
  * Provides consistent logging interface across the app
  */
@@ -10,13 +10,13 @@ import Constants from 'expo-constants';
 import { supabase } from './supabase';
 
 // Initialize Sentry if DSN is configured
-const SENTRY_DSN = Constants.expoConfig?.extra?.sentryDsn || 
+const SENTRY_DSN = Constants.expoConfig?.extra?.sentryDsn ||
                    process.env.EXPO_PUBLIC_SENTRY_DSN;
 
 if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
-    enableInExpoDevelopment: false, // Disable in dev to avoid noise
+    // enableInExpoDevelopment: false, removed in v7, handle via environment logic if needed
     debug: __DEV__, // Enable debug in development
     environment: __DEV__ ? 'development' : 'production',
     tracesSampleRate: __DEV__ ? 1.0 : 0.1, // 100% in dev, 10% in prod
@@ -98,7 +98,7 @@ export async function logError(error: Error | string, context?: LogContext): Pro
   if (context?.restaurantId) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       await supabase.from('gm_audit_logs').insert({
         tenant_id: context.restaurantId,
         actor_id: context.userId || user?.id || null,
@@ -158,7 +158,7 @@ export async function logEvent(event: LogEvent | string, metadata?: Record<strin
   if (eventMetadata?.restaurantId && (level === 'warning' || level === 'error')) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       await supabase.from('gm_audit_logs').insert({
         tenant_id: eventMetadata.restaurantId,
         actor_id: eventMetadata.userId || user?.id || null,

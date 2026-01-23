@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, Modal, Alert } from 'react-native';
-import { useAppStaff } from '@/context/AppStaffContext';
-import { useOrder } from '@/context/OrderContext';
-import { useAuth } from '@/context/AuthContext';
-import { HapticFeedback } from '@/services/haptics';
-import { FinancialVault } from '@/components/FinancialVault';
 import { BottomActionBar } from '@/components/BottomActionBar';
+import { FinancialVault } from '@/components/FinancialVault';
 import { NowActionCard } from '@/components/NowActionCard';
+import { PaymentMethod, QuickPayModal } from '@/components/QuickPayModal';
+import { useAppStaff } from '@/context/AppStaffContext';
+import { useAuth } from '@/context/AuthContext';
+import { useOrder } from '@/context/OrderContext';
 import { useNowEngine } from '@/hooks/useNowEngine';
-import { QuickPayModal, PaymentMethod } from '@/components/QuickPayModal';
+import { HapticFeedback } from '@/services/haptics';
+import { logError } from '@/services/logging';
 import { Ionicons } from '@expo/vector-icons';
-import { logError, addBreadcrumb } from '@/services/logging';
 import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, Modal, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function StaffScreen() {
     const router = useRouter();
@@ -56,9 +56,10 @@ export default function StaffScreen() {
             // FASE 4: Passar userId para gamificação
             // FASE 5: Haptic feedback em ação crítica
             HapticFeedback.medium();
-            const userId = session?.user?.id;
-            await completeAction(actionId, userId);
-            
+            HapticFeedback.medium();
+            // User ID fetched internally by service if needed
+            await completeAction(actionId);
+
             // ERRO-003 Fix: Feedback visual após ação completa
             // A próxima ação aparecerá automaticamente via realtime
             // Se não houver próxima ação, mostrará "Tudo em ordem"
@@ -92,7 +93,7 @@ export default function StaffScreen() {
 
             // Processar pagamento via OrderContext
             const success = await quickPay(nowAction.orderId, method);
-            
+
             if (success) {
                 setIsPaymentModalVisible(false);
                 // O NowEngine será atualizado via realtime quando o status mudar
@@ -128,10 +129,10 @@ export default function StaffScreen() {
             );
             return;
         }
-        
+
         // Verificar pedidos pendentes (se necessário)
         // Nota: Validação completa requereria buscar do Supabase, mas por ora validamos ação atual
-        
+
         Alert.alert(
             'Encerrar Turno',
             'Deseja realmente encerrar seu turno de trabalho?',
@@ -146,7 +147,7 @@ export default function StaffScreen() {
     // =========================================================================
     // APPSTAFF 2.0 - TELA ÚNICA
     // =========================================================================
-    
+
     // Se turno não iniciado, mostrar tela de início simplificada
     if (shiftState === 'offline') {
         return (
@@ -184,8 +185,8 @@ export default function StaffScreen() {
 
             {/* VAULT ACCESS - Apenas se necessário e permitido */}
             {canAccess('cash:handle') && nowAction?.action === 'collect_payment' && (
-                <TouchableOpacity 
-                    onPress={() => setIsVaultVisible(true)} 
+                <TouchableOpacity
+                    onPress={() => setIsVaultVisible(true)}
                     style={styles.vaultButton}
                 >
                     <Ionicons name="wallet" size={24} color="#FFCC00" />

@@ -1,9 +1,9 @@
-import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
-import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
-import { getErrorMessage, getErrorSuggestion } from '../../core/errors/ErrorMessages';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { getTableHealth } from '../../core/domain/TableHealthUtils';
-import { getTabIsolated, setTabIsolated, removeTabIsolated } from '../../core/storage/TabIsolatedStorage';
+import { getErrorMessage, getErrorSuggestion } from '../../core/errors/ErrorMessages';
 import { LoyaltyProvider } from '../../core/loyalty/LoyaltyContext';
+import { getTabIsolated, removeTabIsolated, setTabIsolated } from '../../core/storage/TabIsolatedStorage';
 import { AppShell } from '../../ui/design-system/AppShell';
 import { useOrders } from './context/OrderContextReal';
 
@@ -13,66 +13,67 @@ import { useCoreHealth } from '../../core/health/useCoreHealth';
 import { useRestaurantIdentity } from '../../core/identity/useRestaurantIdentity'; // Visual Polish
 
 import { OfflineBanner } from '../../components/OfflineBanner';
+import { CashRegisterAlert } from './components/CashRegisterAlert';
 import { DeliveryNotificationManager } from './components/DeliveryNotificationManager';
 import { FiscalConfigAlert } from './components/FiscalConfigAlert';
-import { CashRegisterAlert } from './components/CashRegisterAlert';
 
 
 
 /* UDS Implementation (Sealed) */
-import { TPVLayoutSplit } from '../../ui/design-system/layouts/TPVLayoutSplit';
-import { TPVNavigation } from './components/TPVNavigation';
-import { TPVHeader } from '../../ui/design-system/domain/TPVHeader';
-import { CommandPanel } from '../../ui/design-system/domain/CommandPanel';
-import { StreamTunnel } from '../../ui/design-system/domain/StreamTunnel';
-import { QuickMenuPanel } from '../../ui/design-system/domain/QuickMenuPanel';
-import { TableMapPanel } from '../../ui/design-system/domain/TableMapPanel';
-import { useToast, ToastContainer } from '../../ui/design-system';
+import { ToastContainer, useToast } from '../../ui/design-system';
 import { Button } from '../../ui/design-system/Button';
 import { Card } from '../../ui/design-system/Card';
-import { spacing } from '../../ui/design-system/tokens/spacing';
-import { colors } from '../../ui/design-system/tokens/colors';
+import { CommandPanel } from '../../ui/design-system/domain/CommandPanel';
+import { QuickMenuPanel } from '../../ui/design-system/domain/QuickMenuPanel';
+import { StreamTunnel } from '../../ui/design-system/domain/StreamTunnel';
+import { TableMapPanel } from '../../ui/design-system/domain/TableMapPanel';
+import { TPVHeader } from '../../ui/design-system/domain/TPVHeader';
+import { TPVLayoutSplit } from '../../ui/design-system/layouts/TPVLayoutSplit';
 import { Text } from '../../ui/design-system/primitives/Text';
+import { colors } from '../../ui/design-system/tokens/colors';
+import { spacing } from '../../ui/design-system/tokens/spacing';
+import { GroupSelector } from './components/GroupSelector';
+import { IncomingRequests } from './components/IncomingRequests';
+import { OrderHeader } from './components/OrderHeader';
+import { OrderSummaryPanel } from './components/OrderSummaryPanel';
+import { TPVNavigation } from './components/TPVNavigation';
 import { useTables } from './context/TableContext';
+import { useConsumptionGroups } from './hooks/useConsumptionGroups';
 // FASE 5: Lazy loading de componentes pesados (modais e componentes não sempre visíveis)
 const PaymentModal = lazy(() => import('./components/PaymentModal').then(m => ({ default: m.PaymentModal })));
 const SplitBillModalWrapper = lazy(() => import('./components/SplitBillModalWrapper').then(m => ({ default: m.SplitBillModalWrapper })));
 const OpenCashRegisterModal = lazy(() => import('./components/OpenCashRegisterModal').then(m => ({ default: m.OpenCashRegisterModal })));
 const CloseCashRegisterModal = lazy(() => import('./components/CloseCashRegisterModal').then(m => ({ default: m.CloseCashRegisterModal })));
 const OrderItemEditor = lazy(() => import('./components/OrderItemEditor').then(m => ({ default: m.OrderItemEditor })));
-import { OrderSummaryPanel } from './components/OrderSummaryPanel';
-import { OrderHeader } from './components/OrderHeader';
-import { IncomingRequests } from './components/IncomingRequests';
-import { GroupSelector } from './components/GroupSelector';
 const CreateGroupModal = lazy(() => import('./components/CreateGroupModal').then(m => ({ default: m.CreateGroupModal })));
-import { useConsumptionGroups } from './hooks/useConsumptionGroups';
 
-import { useCommonTPVShortcuts } from './hooks/useTPVShortcuts';
-import { TPVInstallPrompt } from './components/TPVInstallPrompt'; // Added Install Prompt
 import { useCurrency } from '../../core/currency/useCurrency'; // P5-5
+import { TPVInstallPrompt } from './components/TPVInstallPrompt'; // Added Install Prompt
+import { useCommonTPVShortcuts } from './hooks/useTPVShortcuts';
 
 
 const QuickProductModal = lazy(() => import('./components/QuickProductModal'));
 
-import { useTPVVoiceControl } from './hooks/useTPVVoiceControl';
-const ReservationBoard = lazy(() => import('./reservations/ReservationBoard'));
-import { TPVLockScreen, type Operator } from './components/TPVLockScreen';
 import { useOperationalCortex } from '../../intelligence/nervous-system/OperationalCortex';
 import { InsightTicker } from './components/InsightTicker';
+import { TPVLockScreen, type Operator } from './components/TPVLockScreen';
+import { useTPVVoiceControl } from './hooks/useTPVVoiceControl';
+const ReservationBoard = lazy(() => import('./reservations/ReservationBoard'));
 const TPVSettingsModal = lazy(() => import('./components/TPVSettingsModal'));
 
-import { useDynamicMenu } from '../../core/menu/DynamicMenu/hooks/useDynamicMenu';
-import { TPVWarMap } from './components/TPVWarMap';
-import { TPVExceptionPanel } from './components/TPVExceptionPanel';
 import { useContextEngine } from '../../core/context';
+import { useDynamicMenu } from '../../core/menu/DynamicMenu/hooks/useDynamicMenu';
 import { OperationalModeIndicator } from './components/OperationalModeIndicator';
+import { TPVExceptionPanel } from './components/TPVExceptionPanel';
+import { TPVWarMap } from './components/TPVWarMap';
 
 type ContextView = 'menu' | 'tables' | 'orders' | 'reservations' | 'delivery' | 'warmap';
 
 const TPVContent = () => {
-  // FASE 5: Toast para feedback visual (toasts e dismiss serão passados do wrapper)
-  const { success, error } = useToast();
-  
+  /* FASE 5: Toast para feedback visual */
+  const { success, error, toasts, dismiss } = useToast();
+  const navigate = useNavigate();
+
   // RITUAL: Operator Gate State
   // HOOKS REFACTORING COMPLETE - Lock screen now active in all modes
   const [isLocked, setIsLocked] = useState(true);
@@ -86,7 +87,7 @@ const TPVContent = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true' || location.state?.demo === true;
-  
+
   // Salvar modo demo no localStorage para persistir
   useEffect(() => {
     if (isDemoMode) {
@@ -185,7 +186,7 @@ const TPVContent = () => {
 
     return items;
   }, [menu]);
-  const { success, error, toasts, dismiss } = useToast();
+
   const { tables } = useTables();
 
   // RADAR OPERACIONAL: Calculate Table Health
@@ -245,23 +246,10 @@ const TPVContent = () => {
   // Ações offline (criar pedido, adicionar item) sempre permitidas
   // Ações críticas (pagamento) respeitam health status
   // FASE 2: Detectar modo demo da URL
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const urlDemoMode = searchParams.get('demo') === 'true' || location.state?.demo === true;
-  const isDemoModeFromStorage = getTabIsolated('chefiapp_tpv_demo_mode') === 'true';
-  const isDemoMode = urlDemoMode || isDemoModeFromStorage;
-  
-  // Salvar modo demo no localStorage para persistir
-  useEffect(() => {
-    if (isDemoMode) {
-      setTabIsolated('chefiapp_tpv_demo_mode', 'true');
-    } else {
-      removeTabIsolated('chefiapp_tpv_demo_mode');
-    }
-  }, [isDemoMode]);
-  
   // FASE 2: Detectar se é modo tutorial
   const isTutorialMode = location.state?.tutorial === true || searchParams.get('tutorial') === 'true';
+
+
 
   // Demo mode permite ações mesmo com sistema down (para testes)
   const isDemoData = getTabIsolated('chefiapp_demo_mode') === 'true' || isDemoMode;
@@ -284,7 +272,7 @@ const TPVContent = () => {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   const { formatAmount } = useCurrency();
-  
+
   // FASE 5: Toast removido daqui (já declarado acima)
 
   // FASE 2: Modo Demo - Pré-preencher dados
@@ -296,10 +284,10 @@ const TPVContent = () => {
         const firstTable = tables[0];
         if (firstTable) {
           setSelectedTableId(firstTable.id);
-          
+
           // Adicionar 2-3 itens do menu ao carrinho
           const itemsToAdd = menuItems.slice(0, Math.min(3, menuItems.length));
-          
+
           if (itemsToAdd.length > 0) {
             // Criar pedido com itens pré-preenchidos
             createOrder({
@@ -561,16 +549,16 @@ const TPVContent = () => {
             const { DEFAULT_PERMISSIONS } = await import('../../core/context/ContextTypes');
             const permissionsSnapshot = DEFAULT_PERMISSIONS[permissionRole] || {};
 
-            // PENDING: Authenticate as the selected user before RPC? 
+            // PENDING: Authenticate as the selected user before RPC?
             // For now, we are using the current logged in auth session (which should be the owner/manager kiosk account)
-            // or the specific user account. 
+            // or the specific user account.
             // Since this is a POS Kiosk, often one "Device Account" is logged in, and operators just PIN in.
-            // But start_turn tracks `user_id`. 
+            // But start_turn tracks `user_id`.
             // If we are in "Kiosk Mode" (TabIsolated restaurant_id), auth.uid might be the Owner.
-            // RPC uses `auth.uid()`. 
+            // RPC uses `auth.uid()`.
             // Ideally, we would Sign In the operator here using Auth.signInWithPassword (PIN).
-            // But the user prompt says "Registrar: user_id...". 
-            // For this iteration, we will call the RPC with the *Current Auth Session*. 
+            // But the user prompt says "Registrar: user_id...".
+            // For this iteration, we will call the RPC with the *Current Auth Session*.
             // We assume the device is logged in.
 
             try {
@@ -711,8 +699,7 @@ const TPVContent = () => {
     }
   };
 
-  // FASE 2: Detectar se é modo tutorial
-  const isTutorialMode = location.state?.tutorial === true || searchParams.get('tutorial') === 'true';
+
 
   // Handler de pagamento (chamado pelo modal)
   const handlePayment = async (method: string, intentId?: string) => {
@@ -722,22 +709,22 @@ const TPVContent = () => {
     if (isDemoMode) {
       // Simular sucesso de pagamento
       success('🎉 Pagamento processado com sucesso! (Modo Demo)');
-      
+
       // Fechar modal
       setPaymentModalOrderId(null);
-      
+
       // Se for tutorial, redirecionar para dashboard após 2 segundos
       if (isTutorialMode) {
         setTimeout(() => {
           success('Parabéns! Você completou sua primeira venda. Agora você pode usar o TPV normalmente.');
           setTimeout(() => {
-            navigate('/app/dashboard', { 
+            navigate('/app/dashboard', {
               state: { firstSaleCompleted: true }
             });
           }, 2000);
         }, 2000);
       }
-      
+
       return;
     }
 
@@ -1677,7 +1664,7 @@ const TPVContent = () => {
 const TPV = () => {
   // FASE 5: Toast para feedback visual (no nível do wrapper para compartilhar entre componentes)
   const { toasts, dismiss } = useToast();
-  
+
   // Staff-style browser tab title for isolated tool context
   useEffect(() => {
     document.title = 'ChefIApp POS — TPV';

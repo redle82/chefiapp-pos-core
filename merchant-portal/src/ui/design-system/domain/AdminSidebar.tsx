@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useContextEngine } from '../../../core/context';
+import { removeTabIsolated } from '../../../core/storage/TabIsolatedStorage';
+import { supabase } from '../../../core/supabase';
+import { Button } from '../primitives/Button';
+import { Text } from '../primitives/Text';
+import { OSSignature } from '../sovereign/OSSignature';
 import { colors } from '../tokens/colors';
 import { spacing } from '../tokens/spacing';
-import { Text } from '../primitives/Text';
-import { Button } from '../primitives/Button';
-import { supabase } from '../../../core/supabase';
-import { OSSignature } from '../sovereign/OSSignature';
-import { removeTabIsolated } from '../../../core/storage/TabIsolatedStorage';
-import { useContextEngine } from '../../../core/context';
 
 interface AdminSidebarProps {
     activePath: string;
@@ -83,6 +83,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activePath, onNaviga
             visible: role === 'owner' || role === 'manager',
             items: [
                 { label: 'Comando Central', id: '/app/dashboard', icon: '⚡️' },
+                { label: 'Rede (Enterprise)', id: '/app/organization', icon: '🏢' }, // New Organization Link
                 { label: 'Ajustes do Núcleo', id: '/app/settings', icon: '⚙️' },
             ]
         },
