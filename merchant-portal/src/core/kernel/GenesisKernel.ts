@@ -428,14 +428,50 @@ export class GenesisKernel {
         }
 
         // 3. Update Blueprint state
-        const blueprint = await this.getBlueprint();
-        if (blueprint) {
-            blueprint.organization.realityStatus = 'READY_FOR_REALITY';
-            await this.saveLocal(blueprint);
-            return blueprint;
+        let blueprint = await this.getBlueprint();
+        
+        // If blueprint doesn't exist, try to create one from tenant data
+        if (!blueprint) {
+            console.warn('[GenesisKernel] ⚠️ Blueprint not found, attempting to create from tenant data...');
+            
+            try {
+                // Fetch restaurant data to create a minimal blueprint
+                const { data: restaurant, error: fetchError } = await supabase
+                    .from('gm_restaurants')
+                    .select('name, city, type, owner_id, team_size, operation_mode, menu_strategy')
+                    .eq('id', tenantId)
+                    .single();
+                
+                if (fetchError || !restaurant) {
+                    throw new Error('Cannot create blueprint: restaurant data not found. Please complete onboarding first.');
+                }
+                
+                // Create minimal blueprint from restaurant data
+                const draft: OnboardingDraft = {
+                    tenantId,
+                    restaurantName: restaurant.name || 'Restaurant',
+                    city: restaurant.city || 'Unknown',
+                    businessType: (restaurant.type as any) || 'Restaurant',
+                    teamSize: restaurant.team_size || '1-5',
+                    operationMode: (restaurant.operation_mode as any) || 'Gamified',
+                    menuStrategy: (restaurant.menu_strategy as any) || 'Quick',
+                    userRole: 'Owner',
+                    userId: restaurant.owner_id || ''
+                };
+                
+                blueprint = this.compile(draft);
+                await this.saveLocal(blueprint);
+                console.log('[GenesisKernel] ✅ Created blueprint from tenant data');
+            } catch (createError: any) {
+                console.error('[GenesisKernel] Failed to create blueprint:', createError);
+                throw new Error('Blueprint not found and cannot be created. Please complete onboarding first: ' + (createError.message || 'Unknown error'));
+            }
         }
-
-        throw new Error('Blueprint not found for promotion');
+        
+        // Update blueprint status
+        blueprint.organization.realityStatus = 'READY_FOR_REALITY';
+        await this.saveLocal(blueprint);
+        return blueprint;
     }
     /**
      * 6. THE LIFE CONFIRMATION (Operational Gate)

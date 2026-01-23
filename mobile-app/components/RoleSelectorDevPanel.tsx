@@ -95,7 +95,7 @@ export function RoleSelectorDevPanel() {
 
     const toggleShift = () => {
         if (shiftState === 'active') {
-            endShift();
+            endShift(0);
             showFeedback('🏁 Turno ENCERRADO (Debug)');
         } else {
             startShift();

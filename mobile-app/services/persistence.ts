@@ -4,6 +4,8 @@ import { Platform } from 'react-native';
 const KEYS = {
     APP_STAFF: '@chefiapp_staff_v1',
     ORDER_CTX: '@chefiapp_orders_v1',
+    TASKS: '@chefiapp_tasks_v1',
+    WAITLIST: '@chefiapp_waitlist_v1',
 };
 
 // Generic Save
@@ -43,8 +45,16 @@ export const PersistenceService = {
     saveOrders: (data: any) => saveData(KEYS.ORDER_CTX, data),
     loadOrders: () => loadData(KEYS.ORDER_CTX),
 
+    saveTasks: (data: any) => saveData(KEYS.TASKS, data),
+    loadTasks: () => loadData(KEYS.TASKS),
+
+    saveWaitlist: (data: any) => saveData(KEYS.WAITLIST, data),
+    loadWaitlist: () => loadData(KEYS.WAITLIST),
+
     clearAll: async () => {
         await clearData(KEYS.APP_STAFF);
         await clearData(KEYS.ORDER_CTX);
+        await clearData(KEYS.TASKS);
+        await clearData(KEYS.WAITLIST);
     }
 };

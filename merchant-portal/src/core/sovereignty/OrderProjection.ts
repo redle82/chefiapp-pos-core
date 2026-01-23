@@ -21,17 +21,32 @@ export async function persistOrder(context: EffectContext): Promise<void> {
         unit_price: item.priceCents || item.unitPrice // Normalized
     }));
 
+    // ERRO-002 Fix: Adicionar origem 'CAIXA' no syncMetadata para pedidos do TPV
+    const enrichedSyncMetadata = {
+        ...(syncMetadata || {}),
+        origin: 'CAIXA' // ERRO-002 Fix: Pedidos criados via TPV são do caixa
+    };
+
     // 2. Call Authorized RPC (Fat DB Logic for now)
     const { data, error } = await supabase.rpc('create_order_atomic', {
         p_restaurant_id: restaurantId,
         p_items: rpcItems,
         p_payment_method: paymentMethod || 'cash',
-        p_sync_metadata: syncMetadata || null
+        p_sync_metadata: enrichedSyncMetadata
     });
 
     if (error) {
         Logger.error('[Sovereignty] Projection Failed', error);
         throw new Error(`Projection Failed: ${error.message}`);
+    }
+
+    // ERRO-002 Fix: Atualizar origem do pedido após criação (se RPC não setou)
+    if (data.id) {
+        await supabase
+            .from('gm_orders')
+            .update({ origin: 'CAIXA' })
+            .eq('id', data.id)
+            .is('origin', null); // Só atualiza se origin for null
     }
 
     // 3. Validation

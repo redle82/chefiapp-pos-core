@@ -26,43 +26,7 @@ export const unstable_settings = {
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-function AuthGate({ children }: { children: React.ReactNode }) {
-  const { session, loading } = useAuth();
-  const segments = useSegments();
-  const router = useRouter();
-
-  // 🛠️ DEV MODE: Bypass authentication for simulator testing
-  const DEV_BYPASS_AUTH = __DEV__;
-
-  useEffect(() => {
-    if (loading) return;
-
-    // Skip auth checks in DEV mode
-    if (DEV_BYPASS_AUTH) {
-      const inAuthGroup = segments[0] === '(auth)';
-      if (inAuthGroup) {
-        router.replace('/(tabs)/staff');
-      }
-      return;
-    }
-
-    const inAuthGroup = segments[0] === '(auth)';
-
-    if (!session && !inAuthGroup) {
-      // Redirect to login if not authenticated
-      router.replace('/(auth)/login');
-    } else if (session && inAuthGroup) {
-      // Redirect to app if authenticated
-      router.replace('/(tabs)');
-    }
-  }, [session, loading, segments, DEV_BYPASS_AUTH]);
-
-  if (loading && !DEV_BYPASS_AUTH) {
-    return null; // Or a loading spinner
-  }
-
-  return <>{children}</>;
-}
+// AuthGate removed (unused and contained insecure bypass)
 
 // Duplicate import removed
 

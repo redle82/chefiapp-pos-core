@@ -69,9 +69,10 @@ export function useRealAnalytics(startDate: Date, endDate: Date) {
                         created_at,
                         status,
                         payment_status,
+                        payment_method,
                         items:gm_order_items(
                             product_id,
-                            name_snapshot,
+                            product_name,
                             quantity,
                             total_price
                         )
@@ -163,7 +164,7 @@ export function useRealAnalytics(startDate: Date, endDate: Date) {
                             } else {
                                 day.topProducts.push({
                                     product_id: item.product_id || 'unknown',
-                                    name: item.name_snapshot || 'Item',
+                                    name: item.product_name || 'Item',
                                     quantity: qty,
                                     revenue: revenue,
                                     cost: cost
@@ -175,7 +176,7 @@ export function useRealAnalytics(startDate: Date, endDate: Date) {
                             if (!productMap.has(pId)) {
                                 productMap.set(pId, {
                                     id: pId,
-                                    name: item.name_snapshot || 'Item',
+                                    name: item.product_name || 'Item',
                                     totalQuantity: 0,
                                     totalRevenue: 0,
                                     totalCost: 0,

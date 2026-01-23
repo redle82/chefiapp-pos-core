@@ -28,3 +28,15 @@ import_map = "./functions/retry-pending-fiscal/deno.json"
 entrypoint = "./functions/retry-pending-fiscal/index.ts"
 # P0-4 FIX: Background job para retentar faturas PENDING
 # Configurar cron no Supabase Dashboard: 0 */5 * * * * (a cada 5 minutos)
+
+[functions.stripe-billing]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/stripe-billing/index.ts"
+# FASE 1: Billing principal - cria subscriptions, processa checkout
+
+[functions.stripe-billing-webhook]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/stripe-billing-webhook/index.ts"
+# FASE 1: Webhook handler - processa eventos do Stripe

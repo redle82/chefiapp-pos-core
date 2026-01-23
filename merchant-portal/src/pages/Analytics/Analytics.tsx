@@ -224,63 +224,54 @@ const Analytics: React.FC = () => {
             {/* Vendas por Hora - CSS Sparkline */}
             <Card>
               <h3>Vendas por Hora (Hoje)</h3>
-              <div className="analytics__hourly-chart">
-                {[45, 30, 20, 15, 25, 40, 65, 80, 95, 100, 85, 70].map((val, i) => (
-                  <div key={i} className="analytics__hourly-bar">
-                    <div
-                      className="analytics__hourly-bar-fill"
-                      style={{ height: `${val}%` }}
-                    />
+              {(!realAnalytics || realAnalytics.length === 0 || !realAnalytics[0]) ? (
+                <div style={{ padding: 20, textAlign: 'center', color: '#666' }}>Sem dados hoje</div>
+              ) : (
+                <>
+                  <div className="analytics__hourly-chart">
+                    {[10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22].map((hour) => {
+                      const val = realAnalytics[0]?.peakHours[hour] || 0;
+                      const max = Math.max(...Object.values(realAnalytics[0]?.peakHours || { 0: 1 }));
+                      const percent = (val / (max || 1)) * 100;
+                      return (
+                        <div key={hour} className="analytics__hourly-bar">
+                          <div
+                            className="analytics__hourly-bar-fill"
+                            style={{ height: `${percent || 5}%` }}
+                            title={`${hour}h: ${val} pedidos`}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
-              <div className="analytics__hourly-axis">
-                <span>10h</span>
-                <span>12h</span>
-                <span>14h</span>
-                <span>16h</span>
-                <span>18h</span>
-                <span>20h</span>
-              </div>
+                  <div className="analytics__hourly-axis">
+                    <span>10h</span>
+                    <span>14h</span>
+                    <span>18h</span>
+                    <span>22h</span>
+                  </div>
+                </>
+              )}
             </Card>
 
             {/* Items Top */}
             <Card>
               <h3>Items Mais Vendidos</h3>
               <div className="analytics__top-items">
-                <div className="analytics__top-item">
-                  <span>Hamburguer Classic</span>
-                  <span className="analytics__top-item-value">12 vendas</span>
-                </div>
-                <div className="analytics__top-item">
-                  <span>Batata Frita Premium</span>
-                  <span className="analytics__top-item-value">8 vendas</span>
-                </div>
-                <div className="analytics__top-item">
-                  <span>Milkshake Chocolate</span>
-                  <span className="analytics__top-item-value">6 vendas</span>
-                </div>
+                {(!realAnalytics || !realAnalytics[0] || realAnalytics[0].topProducts.length === 0) ? (
+                  <div style={{ padding: 20, textAlign: 'center', color: '#666' }}>Sem vendas hoje</div>
+                ) : (
+                  realAnalytics[0].topProducts.slice(0, 5).map(p => (
+                    <div key={p.product_id} className="analytics__top-item">
+                      <span>{p.name}</span>
+                      <span className="analytics__top-item-value">{p.quantity} vendas</span>
+                    </div>
+                  ))
+                )}
               </div>
             </Card>
 
-            {/* Comparação */}
-            <Card>
-              <h3>Hoje vs Ontem</h3>
-              <div className="analytics__comparison">
-                <div className="analytics__comparison-item">
-                  <span className="analytics__comparison-label">Receita</span>
-                  <span className="analytics__comparison-value">+12%</span>
-                </div>
-                <div className="analytics__comparison-item">
-                  <span className="analytics__comparison-label">Pedidos</span>
-                  <span className="analytics__comparison-value">+8%</span>
-                </div>
-                <div className="analytics__comparison-item">
-                  <span className="analytics__comparison-label">Ticket</span>
-                  <span className="analytics__comparison-value">+2%</span>
-                </div>
-              </div>
-            </Card>
+
           </div>
         </div>
 

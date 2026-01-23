@@ -19,10 +19,17 @@ import { Text } from '../../ui/design-system/primitives/Text';
 import { supabase } from '../../core/supabase';
 import { FireSystem } from '../../ui/design-system/sovereign/FireSystem';
 import { OSSignature } from '../../ui/design-system/sovereign/OSSignature';
-import { DEFAULT_PLANS } from '../../../billing-core/types';
+import { DEFAULT_PLANS } from '../../../../billing-core/types';
 
 // Inicializar Stripe (usar variável de ambiente)
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || '';
+const isStripeConfigured = stripeKey.startsWith('pk_');
+const stripePromise = isStripeConfigured ? loadStripe(stripeKey) : null;
+
+// Log warning in dev mode if Stripe is not configured
+if (!isStripeConfigured && import.meta.env.DEV) {
+    console.warn('[CheckoutStep] ⚠️ Stripe not configured. Set VITE_STRIPE_PUBLIC_KEY in .env to enable payments.');
+}
 
 interface CheckoutStepProps {
     restaurantId?: string;

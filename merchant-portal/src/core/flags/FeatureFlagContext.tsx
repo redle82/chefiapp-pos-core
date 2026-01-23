@@ -40,9 +40,14 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({ childre
                 .select('key, value')
                 .eq('scope', 'global');
 
-            // In development, if table doesn't exist (404), use defaults silently
+            // In development, if table doesn't exist (404/PGRST205), use defaults silently
             if (globalError) {
-                if (globalError.code === 'PGRST116' || globalError.message?.includes('404')) {
+                // PGRST116 = nenhum resultado (normal)
+                // PGRST205 = tabela não encontrada (migration não aplicada ainda)
+                // 404 = não encontrado
+                if (globalError.code === 'PGRST116' || 
+                    globalError.code === 'PGRST205' || 
+                    globalError.message?.includes('404')) {
                     // Table doesn't exist - use defaults (expected in local dev)
                     setFlags(DEFAULT_FLAGS);
                     setIsLoading(false);

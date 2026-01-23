@@ -3,6 +3,8 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useAppStaff, StaffRole } from '@/context/AppStaffContext';
+import { useQualityMonitor } from '@/hooks/useQualityMonitor';
+import { SafetyProvider } from '@/context/SafetyContext';
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
@@ -12,29 +14,25 @@ function TabBarIcon(props: {
 }
 
 // Define available tabs
-type ScreenName = 'staff' | 'index' | 'orders' | 'kitchen' | 'bar' | 'manager' | 'two' | 'tables';
+type ScreenName = 'staff' | 'index' | 'orders' | 'kitchen' | 'bar' | 'manager' | 'two' | 'tables' | 'leaderboard' | 'achievements';
 
-const ALL_TABS: Record<string, any> = {
-  staff: { title: 'Turno', icon: 'clock-o' },
-  index: { title: 'Cardápio', icon: 'cutlery' },
-  orders: { title: 'Pedidos', icon: 'list-alt' },
-  kitchen: { title: 'Cozinha', icon: 'fire' },
-  bar: { title: 'Bar', icon: 'glass' },
-  manager: { title: 'Gestão', icon: 'briefcase' },
-  two: { title: 'Conta', icon: 'user' },
-  tables: { title: 'Mesas', icon: 'map' },
-};
-
-// Map Role -> Visible Tabs
+// Map Role -> Visible Tabs (these appear in the tab bar)
+// FASE 4: Adicionar leaderboard e achievements para roles que têm gamificação
 const ROLE_TABS: Record<StaffRole, ScreenName[]> = {
-  waiter: ['staff', 'tables', 'orders', 'two'],
-  bartender: ['staff', 'bar', 'two'],
-  cook: ['staff', 'kitchen', 'two'],
-  chef: ['staff', 'kitchen', 'orders', 'two'],
-  manager: ['staff', 'manager', 'tables', 'orders', 'two'],
-  owner: ['staff', 'manager', 'tables', 'orders', 'two'],
+  waiter: ['staff', 'tables', 'index', 'orders', 'leaderboard', 'two'],
+  bartender: ['staff', 'bar', 'leaderboard', 'two'],
+  cook: ['staff', 'kitchen', 'leaderboard', 'two'],
+  chef: ['staff', 'kitchen', 'orders', 'leaderboard', 'two'],
+  manager: ['staff', 'manager', 'tables', 'orders', 'leaderboard', 'two'],
+  owner: ['staff', 'manager', 'tables', 'orders', 'leaderboard', 'two'],
   cleaning: ['staff', 'two'],
-  ambulante: ['staff', 'index', 'orders', 'two'], // Ambulante accesses Menu directly (no tables)
+  ambulante: ['staff', 'index', 'orders', 'two'],
+  // New Roles
+  vendor: ['staff', 'index', 'orders', 'two'],
+  supervisor: ['staff', 'manager', 'tables', 'orders', 'leaderboard', 'two'], // Partial manager access
+  cashier: ['staff', 'index', 'orders', 'leaderboard', 'two'], // Focused on POS (Index=Menu)
+  delivery: ['staff', 'orders', 'two'], // Focused on Orders
+  admin: ['staff', 'manager', 'tables', 'orders', 'leaderboard', 'two'], // Full access
 };
 
 export default function TabLayout() {
@@ -42,101 +40,125 @@ export default function TabLayout() {
   const isDark = colorScheme === 'dark';
   const { activeRole } = useAppStaff();
 
+  // IQO: Silent Quality Monitoring
+  useQualityMonitor();
+
   // Get visible tabs for current role, default to Waiter if unknown
   const visibleTabs = ROLE_TABS[activeRole] || ROLE_TABS['waiter'];
 
+  // Helper: returns null if tab should be hidden (removes from tab bar but keeps route)
+  const getTabBarButton = (screenName: ScreenName) => {
+    return visibleTabs.includes(screenName) ? undefined : () => null;
+  };
+
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: '#d4a574',
-        tabBarInactiveTintColor: isDark ? '#666' : '#999',
-        tabBarStyle: {
-          backgroundColor: isDark ? '#0a0a0a' : '#fff',
-          borderTopColor: isDark ? '#1a1a1a' : '#e0e0e0',
-        },
-        headerStyle: {
-          backgroundColor: isDark ? '#0a0a0a' : '#fff',
-        },
-        headerTintColor: isDark ? '#fff' : '#000',
-      }}>
+    <SafetyProvider>
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: '#d4a574',
+          tabBarInactiveTintColor: isDark ? '#666' : '#999',
+          tabBarStyle: {
+            backgroundColor: isDark ? '#0a0a0a' : '#fff',
+            borderTopColor: isDark ? '#1a1a1a' : '#e0e0e0',
+          },
+          headerStyle: {
+            backgroundColor: isDark ? '#0a0a0a' : '#fff',
+          },
+          headerTintColor: isDark ? '#fff' : '#000',
+        }}>
 
-      {/* 
-         We map over all possible tabs. 
-         If a tab is NOT in visibleTabs, we use `href: null` to hide it.
-      */}
+        <Tabs.Screen
+          name="staff"
+          options={{
+            title: 'Turno',
+            tabBarIcon: ({ color }) => <TabBarIcon name="clock-o" color={color} />,
+            tabBarButton: getTabBarButton('staff'),
+          }}
+        />
 
-      <Tabs.Screen
-        name="staff"
-        options={{
-          title: 'Turno',
-          tabBarIcon: ({ color }) => <TabBarIcon name="clock-o" color={color} />,
-          href: visibleTabs.includes('staff') ? '/(tabs)/staff' : null as any,
-        }}
-      />
+        <Tabs.Screen
+          name="tables"
+          options={{
+            title: 'Mesas',
+            tabBarIcon: ({ color }) => <TabBarIcon name="map" color={color} />,
+            tabBarButton: getTabBarButton('tables'),
+          }}
+        />
 
-      <Tabs.Screen
-        name="tables"
-        options={{
-          title: 'Mesas',
-          tabBarIcon: ({ color }) => <TabBarIcon name="map" color={color} />,
-          href: visibleTabs.includes('tables') ? '/(tabs)/tables' : null as any,
-        }}
-      />
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Cardápio',
+            tabBarIcon: ({ color }) => <TabBarIcon name="cutlery" color={color} />,
+            tabBarButton: getTabBarButton('index'),
+          }}
+        />
 
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Cardápio',
-          tabBarIcon: ({ color }) => <TabBarIcon name="cutlery" color={color} />,
-          href: visibleTabs.includes('index') ? '/(tabs)/index' : null as any,
-        }}
-      />
+        <Tabs.Screen
+          name="orders"
+          options={{
+            title: 'Pedidos',
+            tabBarIcon: ({ color }) => <TabBarIcon name="list-alt" color={color} />,
+            tabBarButton: getTabBarButton('orders'),
+          }}
+        />
 
-      <Tabs.Screen
-        name="orders"
-        options={{
-          title: 'Pedidos',
-          tabBarIcon: ({ color }) => <TabBarIcon name="list-alt" color={color} />,
-          href: visibleTabs.includes('orders') ? '/(tabs)/orders' : null as any,
-        }}
-      />
+        <Tabs.Screen
+          name="kitchen"
+          options={{
+            title: 'Cozinha',
+            tabBarIcon: ({ color }) => <TabBarIcon name="fire" color={color} />,
+            tabBarButton: getTabBarButton('kitchen'),
+          }}
+        />
 
-      <Tabs.Screen
-        name="kitchen"
-        options={{
-          title: 'Cozinha',
-          tabBarIcon: ({ color }) => <TabBarIcon name="fire" color={color} />,
-          href: visibleTabs.includes('kitchen') ? '/(tabs)/kitchen' : null as any,
-        }}
-      />
+        <Tabs.Screen
+          name="bar"
+          options={{
+            title: 'Bar',
+            tabBarIcon: ({ color }) => <TabBarIcon name="glass" color={color} />,
+            tabBarButton: getTabBarButton('bar'),
+          }}
+        />
 
-      <Tabs.Screen
-        name="bar"
-        options={{
-          title: 'Bar',
-          tabBarIcon: ({ color }) => <TabBarIcon name="glass" color={color} />,
-          href: visibleTabs.includes('bar') ? '/(tabs)/bar' : null as any,
-        }}
-      />
+        <Tabs.Screen
+          name="manager"
+          options={{
+            title: 'Gestão',
+            tabBarIcon: ({ color }) => <TabBarIcon name="briefcase" color={color} />,
+            tabBarButton: getTabBarButton('manager'),
+          }}
+        />
 
-      <Tabs.Screen
-        name="manager"
-        options={{
-          title: 'Gestão',
-          tabBarIcon: ({ color }) => <TabBarIcon name="briefcase" color={color} />,
-          href: visibleTabs.includes('manager') ? '/(tabs)/manager' : null as any,
-        }}
-      />
+        <Tabs.Screen
+          name="leaderboard"
+          options={{
+            title: 'Ranking',
+            tabBarIcon: ({ color }) => <TabBarIcon name="trophy" color={color} />,
+            tabBarButton: getTabBarButton('leaderboard'),
+          }}
+        />
 
-      <Tabs.Screen
-        name="two"
-        options={{
-          title: 'Conta',
-          tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
-          href: visibleTabs.includes('two') ? '/(tabs)/two' : null as any,
-        }}
-      />
+        <Tabs.Screen
+          name="achievements"
+          options={{
+            title: 'Conquistas',
+            tabBarIcon: ({ color }) => <TabBarIcon name="star" color={color} />,
+            tabBarButton: getTabBarButton('achievements'),
+          }}
+        />
 
-    </Tabs>
+        <Tabs.Screen
+          name="two"
+          options={{
+            title: 'Conta',
+            tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
+            tabBarButton: getTabBarButton('two'),
+          }}
+        />
+
+      </Tabs>
+    </SafetyProvider>
   );
 }
+

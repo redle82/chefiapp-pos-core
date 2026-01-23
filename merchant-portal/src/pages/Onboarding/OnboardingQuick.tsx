@@ -98,9 +98,11 @@ export const OnboardingQuick = () => {
             // 2. Provisionar estrutura base
             await provisionRestaurant(restaurantId, { type, operation });
 
-            // 3. Redirecionar para dashboard
+            // 3. Redirecionar para billing (FASE 1 - Billing Integration)
             setTimeout(() => {
-                navigate('/app/dashboard');
+                navigate('/onboarding/billing', { 
+                    state: { restaurantId } 
+                });
             }, 500);
 
         } catch (err) {

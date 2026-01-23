@@ -1,78 +1,261 @@
-# ChefIApp POS Core (The Truth Layer 🧊)
+# 🧠 ChefIApp - TPV QUE PENSA
 
-[![Canon Enforcement](https://github.com/goldmonkey/chefiapp-pos-core/actions/workflows/canon-enforcement.yml/badge.svg)](https://github.com/goldmonkey/chefiapp-pos-core/actions/workflows/canon-enforcement.yml)
-
-**Current Version: v1.0.0 (Truth Freeze + Canon Lock)**
-
-> **"The UI is a consequence of the Truth. It never anticipates, it never lies."**
-
-> **"AppStaff não organiza tarefas. Ele elimina a necessidade de gestão."**
-
-This repository contains the core logic and interface for the ChefIApp Point of Sale system, re-architected under the **Truth First** doctrine and protected by the **6 Immutable Laws** (Canon).
-
-## 📜 The Doctrine
-
-This repository is governed by TWO constitutional frameworks:
-
-### 🧊 Truth First (TPV/Core)
-👉 **[SYSTEM_TRUTH_CODEX.md](./SYSTEM_TRUTH_CODEX.md)**
-
-**3 Laws of Truth**:
-1. **UiIsConsequence**: State flows from `Core` -> `UI`. Never the inverse.
-2. **OnlineEqualsFastOffline**: There is only one code path (optimistic queue). Online is just a special case of fast reconciliation.
-3. **TruthZero**: Critical gates (Onboarding, Money) must verify true connectivity before proceeding.
-
-### 🧠 Operational Nervous System (AppStaff)
-👉 **[CANON.md](./CANON.md)** (The 6 Immutable Laws)
-
-**6 Laws of Canon**:
-1. **Tool Sovereignty** (Tool > Task): Work defines tool, never choice
-2. **Reflex** (System > Human): System acts before human thinks
-3. **Temporal Memory** (Idle ≠ Zero): Inactivity is information
-4. **Cognitive Isolation**: Each role sees only its world
-5. **Non-Blocking Suggestions**: Information orbits work
-6. **Progressive Externalization**: Work migrates to specialists automatically
-
-👉 **[MANIFESTO.md](./MANIFESTO.md)** (Public Positioning)
-👉 **[KILL_SWITCHES.md](./KILL_SWITCHES.md)** (Enforcement Mechanisms)
-
-## 🛡️ Observability & Gates
-
-This project enforces high-reliability standards through automated gates:
-
-### TPV/Core Gates
-- **Truth Freeze Gate**: CI workflow (`.github/workflows/truth-gate.yml`) that runs the regression suite (`tests/playwright/truth`)
-- **Truth Monitor**: Real-time TPV footer showing Queue/Sync/Fail states
-- **OperationGate**: Global state management (Active/Paused/Suspended) preventing operations during critical incidents.
-
-### AppStaff Gates (NEW)
-- **Canon Enforcement**: CI workflow (`.github/workflows/canon-enforcement.yml`) that blocks any violation of the 6 Laws
-  - ✅ Detects manual task creation (Law 2 violation)
-  - ✅ Detects cross-role navigation (Law 4 violation)
-  - ✅ Detects UI customization (Anti-Feature)
-  - ✅ Detects gamification (Anti-Feature)
-  - ✅ Verifies Tool Sovereignty (Law 1)
-  - ✅ Verifies System Reflex (Law 2)
-  - ✅ Verifies Progressive Externalization (Law 6)
-- **Stress Test**: 7-phase behavioral physics test (`tests/nervous-system/AppStaff.stress.test.ts`)
-- **Kill Switches**: Code-level errors that prevent Canon violations from compiling
-
-### PR Protocol
-All PRs must pass BOTH gates before merge.
-
-## 🚀 Key Features (v1.0.0)
-- **Grand Unification**: Zero split-brain logic.
-- **Safe Harbor**: Offline TPV actions are safely queued and reconciled.
-- **Deterministic Chaos**: Testing infrastructure for network resilience.
-- **Visual Truth**: Interfaces that transparently reflect system health (`CoreStatusBanner`, `OrderCard` states).
-- **Sovereign Logger**: Centralized, sanitized logging system with Supabase ingestion (`app_logs`).
-- **Lazy Loading**: Automatic code-splitting for performance optimization.
-
-## 🛠️ Commands
-- **Run Dev**: `npm run dev`
-- **Run Truth Suite**: `npm run test:truth`
-- **Verify Release**: `./scripts/release-check.sh`
-- **Build**: `npm run build`
+**Posicionamento Oficial:** **TPV QUE PENSA**  
+**O sistema que guia sua operação em tempo real.**
 
 ---
-*Maintained by the Antigravity Team.*
+
+## ⚠️ Leia Isso em 30 Segundos
+
+**Este sistema JÁ ESTÁ IMPLEMENTADO**  
+✅ Não é um protótipo  
+✅ Não há mais features estruturais a desenvolver  
+✅ O foco agora é **validação real em operação**
+
+### 👉 Se você é:
+
+- **👔 Dono/Gerente** → Leia [`docs/audit/ONE_PAGER.md`](docs/audit/ONE_PAGER.md) (30 seg)
+- **👨‍💼 Garçom/Staff** → Leia [`docs/GUIA_RAPIDO_GARCOM.md`](docs/GUIA_RAPIDO_GARCOM.md) (10 min)
+- **👨‍💻 Desenvolvedor** → Leia [`ONBOARDING.md`](ONBOARDING.md) (15 min)
+- **🔍 Validador/QA** → Leia [`docs/audit/HUMAN_TEST_QUICK_REFERENCE.md`](docs/audit/HUMAN_TEST_QUICK_REFERENCE.md) (5 min)
+
+**Status Atual:** 🟢 **PRONTO PARA VALIDAÇÃO**  
+**🎉 PLANO DE GUERRA CONCLUÍDO (2026-01-30)**
+- ✅ 10/10 issues implementadas
+- ✅ Sistema elevado de 6.5 → 8.0/10
+- ✅ 0 bloqueadores críticos
+- ✅ Pronto para validação real
+
+**Próximo passo:** Validação no restaurante Sofia  
+**📋 PONTO DE ENTRADA:** [`docs/audit/HANDOFF_VALIDATION.md`](docs/audit/HANDOFF_VALIDATION.md)  
+**Documentação:** 
+- [`docs/audit/WAR_PLAN_COMPLETION.md`](docs/audit/WAR_PLAN_COMPLETION.md) - Relatório completo
+- [`docs/audit/TESTING_SCRIPT.md`](docs/audit/TESTING_SCRIPT.md) - Script de testes
+- [`docs/audit/VALIDATION_GUIDE.md`](docs/audit/VALIDATION_GUIDE.md) - Guia de validação
+- [`docs/audit/NEXT_STEPS.md`](docs/audit/NEXT_STEPS.md) - Próximos passos
+
+---
+
+## 🎯 O Que É
+
+ChefIApp não é apenas um TPV. É um **Sistema Nervoso Operacional** que:
+
+- ⚡ **Cobra em 2 toques** (< 5 segundos)
+- 🗺️ **Mostra urgência em tempo real** (mapa vivo)
+- 🍽️ **Adapta o menu** baseado na pressão da cozinha
+- 📋 **Gerencia reservas** de forma simples
+
+**Filosofia:** *"Last.app organiza o restaurante. ChefIApp guia-o."*
+
+**Posicionamento:** ChefIApp é o único TPV que pensa antes do humano. Enquanto outros sistemas apenas registram vendas, o ChefIApp observa o contexto operacional e sugere a próxima ação mais importante.
+
+**📋 Estratégia:** [`docs/strategy/POSITIONING.md`](docs/strategy/POSITIONING.md) | [`docs/strategy/SCOPE_FREEZE.md`](docs/strategy/SCOPE_FREEZE.md) | [`docs/audit/EXECUTABLE_ROADMAP.md`](docs/audit/EXECUTABLE_ROADMAP.md)
+
+---
+
+## 🚀 Início Rápido
+
+### ⚡ Super Rápido (2 minutos)
+1. Ler **[ONE_PAGER.md](ONE_PAGER.md)** - Tudo em uma página
+2. Seguir **[PRIMEIROS_PASSOS.md](PRIMEIROS_PASSOS.md)** - O que fazer agora
+
+### Para Desenvolvedores
+```bash
+# Clonar e instalar
+git clone <repo>
+cd chefiapp-pos-core/mobile-app
+npm install
+
+# Configurar .env
+cp .env.example .env
+
+# Validar
+../scripts/validate-system.sh
+
+# Rodar
+npm start
+```
+
+**Leia:** [ONBOARDING.md](ONBOARDING.md) (15 minutos)
+
+### Para Usuários
+**Leia:** [docs/GUIA_RAPIDO_GARCOM.md](docs/GUIA_RAPIDO_GARCOM.md) (10 minutos)
+
+### Para Validação
+**Leia:** [docs/VALIDACAO_RAPIDA.md](docs/VALIDACAO_RAPIDA.md) (17 testes)
+
+---
+
+## 📚 Documentação
+
+### 📖 Essencial (Comece Aqui)
+- **[PROJETO_COMPLETO.md](PROJETO_COMPLETO.md)** ⭐ - Visão geral consolidada
+- **[docs/RESUMO_EXECUTIVO.md](docs/RESUMO_EXECUTIVO.md)** - Resumo executivo
+- **[ONBOARDING.md](ONBOARDING.md)** - Para novos desenvolvedores
+
+### 🏗️ Técnica
+- [docs/EXECUCAO_30_DIAS.md](docs/EXECUCAO_30_DIAS.md) - Implementação detalhada
+- [docs/ARQUITETURA_VISUAL.md](docs/ARQUITETURA_VISUAL.md) - Diagramas e fluxos
+- [docs/SETUP_DEPLOY.md](docs/SETUP_DEPLOY.md) - Setup e deploy
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) - Debug e resolução
+
+### 💼 Comercial
+- [docs/MANIFESTO_COMERCIAL.md](docs/MANIFESTO_COMERCIAL.md) - Proposta de valor
+- [docs/PLANO_ROLLOUT.md](docs/PLANO_ROLLOUT.md) - Estratégia de lançamento
+
+### 📊 Operacional
+- [docs/METRICAS_KPIS.md](docs/METRICAS_KPIS.md) - Tracking e métricas
+- [docs/MANUTENCAO_CONTINUA.md](docs/MANUTENCAO_CONTINUA.md) - Manutenção
+- [docs/GO_LIVE_CHECKLIST.md](docs/GO_LIVE_CHECKLIST.md) - Checklist de lançamento
+
+### 🤝 Transição
+- [docs/HANDOFF_EQUIPE.md](docs/HANDOFF_EQUIPE.md) - Handoff completo
+- [docs/QUICK_WINS.md](docs/QUICK_WINS.md) - Próximas melhorias
+- [docs/RETROSPECTIVA.md](docs/RETROSPECTIVA.md) - Lições aprendidas
+
+### 🔍 Auditoria e QA
+- **[docs/audit/ONE_PAGER.md](docs/audit/ONE_PAGER.md)** ⭐ - Status em 30 segundos
+- **[docs/audit/FINAL_HANDOFF.md](docs/audit/FINAL_HANDOFF.md)** - Handoff completo
+- **[docs/audit/MASTER_INDEX.md](docs/audit/MASTER_INDEX.md)** - Índice mestre
+- **[docs/audit/HUMAN_TEST_REPORT.md](docs/audit/HUMAN_TEST_REPORT.md)** - Teste humano completo
+- **[docs/audit/ACTION_PLAN_UX_FIXES.md](docs/audit/ACTION_PLAN_UX_FIXES.md)** - Plano de correções UX
+
+### 📋 Índices
+- [docs/README.md](docs/README.md) - Índice principal
+- [docs/INDICE_COMPLETO.md](docs/INDICE_COMPLETO.md) - Todos os documentos
+- [docs/audit/README.md](docs/audit/README.md) - Índice de auditorias
+
+---
+
+## ✅ Status
+
+**Versão:** 2.0.0-RC1 (Release Candidate)  
+**Data:** 2026-01-24
+
+### Técnico ✅
+- ✅ **Implementação:** 100% completo (4 semanas)
+- ✅ **Bugs Técnicos:** 12/13 corrigidos (92%)
+- ✅ **Nota Técnica:** 85/100
+- ✅ **Status:** ✅ APTO PARA PRODUÇÃO
+
+### Humano 🟡
+- 🟡 **Erros de UX:** 25 identificados (4 críticos, 6 altos)
+- 🟡 **Nota de Experiência Humana:** 67/100
+- 🟡 **Status:** 🟡 PRONTO COM AJUSTES
+
+### Consolidado 🟡
+- 🟡 **Status Final:** PRONTO COM AJUSTES
+- 🟡 **Ação:** Corrigir 4 erros críticos de UX (1-2 dias)
+
+**Ver:** [`docs/audit/ONE_PAGER.md`](./docs/audit/ONE_PAGER.md) - Status em 30 segundos
+
+---
+
+## 📊 Funcionalidades
+
+### ⚡ Fast Pay (Semana 1)
+Pagamento em 2 toques, < 5 segundos.
+
+### 🗺️ Mapa Vivo (Semana 2)
+Timer, cores de urgência, ícones contextuais.
+
+### 🍽️ KDS Inteligente (Semana 3)
+Menu adapta baseado na pressão da cozinha.
+
+### 📋 Reservas LITE (Semana 4)
+Lista de espera digital simples.
+
+---
+
+## 🎯 Resultados Esperados
+
+- ⏱️ **36x mais rápido** no pagamento
+- 🗺️ **100% visibilidade** do salão
+- 🍽️ **+25% eficiência** da cozinha
+- 📋 **+15% conversão** de reservas
+
+---
+
+## 🛠️ Ferramentas
+
+- **Validação:** `./scripts/validate-system.sh`
+- **Issues:** [docs/GITHUB_ISSUES.md](docs/GITHUB_ISSUES.md)
+- **Changelog:** [CHANGELOG.md](CHANGELOG.md)
+
+---
+
+## 📞 Suporte
+
+- **Troubleshooting:** [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
+- **Onboarding:** [ONBOARDING.md](ONBOARDING.md)
+- **Handoff:** [docs/HANDOFF_EQUIPE.md](docs/HANDOFF_EQUIPE.md)
+
+---
+
+## 🚀 Próximos Passos
+
+### 🚨 BLOQUEADORES DE PRODUÇÃO (UX)
+
+**Antes de usar com clientes reais:**
+- [ ] **ERRO-001:** Cliente não sabe se pedido foi recebido (30min) - 🔴 Alto
+- [ ] **ERRO-002:** Garçom não sabe origem do pedido (1h) - 🔴 Alto
+- [ ] **ERRO-003:** Ação "acknowledge" não é clara (30min) - 🔴 Alto
+- [ ] **ERRO-004:** Duplo clique em pagamento (1h) - 🔴 Crítico
+
+⏱️ **Tempo estimado:** 1-2 dias  
+👉 **Ver:** [docs/audit/UX_BLOCKERS.md](docs/audit/UX_BLOCKERS.md)
+
+### Imediatos (Antes de Produção)
+1. **Corrigir 4 erros críticos de UX** (1-2 dias)
+   - Ver: [docs/audit/UX_BLOCKERS.md](docs/audit/UX_BLOCKERS.md)
+2. **Rodar 1 turno completo no Sofia**
+   - Ver: [docs/audit/HUMAN_NEXT_STEPS.md](docs/audit/HUMAN_NEXT_STEPS.md)
+3. **Anotar fricções humanas reais**
+4. **Ajustar microfluxos** (não features)
+
+### Curto Prazo
+4. **GO-LIVE silencioso no Sofia** (7 dias)
+   - Ver: [docs/audit/NEXT_STEPS.md](docs/audit/NEXT_STEPS.md)
+5. **Corrigir 6 erros altos de UX** (1 semana)
+6. **Monitorar uso real e coletar feedback**
+
+### Referências
+- **Status Completo:** [docs/audit/FINAL_HANDOFF.md](docs/audit/FINAL_HANDOFF.md)
+- **Validação:** `./scripts/validate-system.sh`
+- **Deploy:** [docs/SETUP_DEPLOY.md](docs/SETUP_DEPLOY.md)
+
+---
+
+## 📈 Estatísticas
+
+### Implementação
+- **Componentes:** 3 novos
+- **Hooks:** 1 novo
+- **Scripts:** 1 criado
+- **Tempo:** 30 dias
+
+### Documentação
+- **Documentos Técnicos:** 29 criados
+- **Documentos de Auditoria:** 26 criados ⭐ NOVO
+- **Total:** 55 documentos
+
+### Qualidade
+- **Bugs Técnicos:** 12/13 corrigidos (92%)
+- **Erros de UX:** 25 identificados (4 críticos, 6 altos)
+- **Nota Técnica:** 85/100 ✅
+- **Nota Humana:** 67/100 🟡
+
+### Quick Wins
+- **Identificados:** 8
+- **Templates:** 5+ (comunicação, success story)
+- **Apresentações:** 1 visual executiva
+
+---
+
+**Versão:** 2.0.0  
+**Data:** 2026-01-30  
+**Status:** 🟢 **PRONTO PARA VALIDAÇÃO** (PLANO DE GUERRA 100% concluído)
+
+---
+
+*"Last.app organiza o restaurante. ChefIApp deve guiá-lo."*

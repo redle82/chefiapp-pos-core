@@ -18,9 +18,17 @@ serve(async (req) => {
     }
 
     try {
+        const url = Deno.env.get('MY_SUPABASE_URL') ?? Deno.env.get('SUPABASE_URL') ?? '';
+        const key = Deno.env.get('MY_SUPABASE_ANON_KEY') ?? Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+        const authHeader = req.headers.get('Authorization');
+
+        console.log(`[Billing Debug] URL: ${url}`);
+        console.log(`[Billing Debug] Key Length: ${key?.length}`);
+        console.log(`[Billing Debug] Auth Header: ${authHeader?.substring(0, 20)}...`);
+
         const supabaseClient = createClient(
-            Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+            url,
+            key,
             {
                 global: {
                     headers: { Authorization: req.headers.get('Authorization')! },
@@ -31,9 +39,10 @@ serve(async (req) => {
         // Authenticate User
         const {
             data: { user },
+            error: authError,
         } = await supabaseClient.auth.getUser()
 
-        if (!user) {
+        if (authError || !user) {
             throw new Error('User not authenticated')
         }
 
@@ -49,15 +58,19 @@ serve(async (req) => {
         // Here, we are billing the RESTAURANT.
 
         // Let's look for the restaurant owned by this user (Validation Step).
+        console.log(`[Billing] User authenticated: ${user.id}`);
+
         const { data: restaurants, error: fetchError } = await supabaseClient
             .from('gm_restaurants')
-            .select('id, stripe_customer_id, email, name, owner_id')
+            .select('id, stripe_customer_id, name, owner_id')
             .eq('owner_id', user.id)
             .single()
 
         if (fetchError || !restaurants) {
+            console.error('[Billing] Restaurant Fetch Error:', fetchError);
+            console.error('[Billing] Restaurant Data:', restaurants);
             // Only owners can manage billing for now
-            throw new Error('Restaurant not found or you require owner privileges.')
+            throw new Error(`Restaurant not found or you require owner privileges. (User: ${user.id}, Error: ${fetchError?.message})`)
         }
 
         const restaurant = restaurants;

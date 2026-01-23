@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 import { CONFIG } from '../../config'
+import type { Database } from '../../types/database.types'
 
 // Phase F: Real Backend Connection
 // Singleton Client
-export const supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY)
+export const supabase = createClient<Database>(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY)
 
 // Log initialization in Dev
 if (CONFIG.IS_DEV) {

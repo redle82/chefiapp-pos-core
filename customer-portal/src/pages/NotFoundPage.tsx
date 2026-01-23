@@ -16,12 +16,16 @@ export function NotFoundPage({ error, slug }: NotFoundPageProps) {
 
                 {/* Title */}
                 <h1 className="text-2xl font-bold text-text-primary mb-3">
-                    Restaurante não encontrado
+                    {error && error.includes('Failed to fetch') ? 'Sem conexão' : 'Restaurante não encontrado'}
                 </h1>
 
                 {/* Error message */}
                 <p className="text-text-secondary mb-6">
-                    {error || `Não conseguimos encontrar o restaurante "${slug || 'desconhecido'}".`}
+                    {error && error.includes('Failed to fetch') ? (
+                        'Ops! Estamos sem conexão com o restaurante. Por favor, tente recarregar a página ou chame um garçom.'
+                    ) : (
+                        error || `Não conseguimos encontrar o restaurante "${slug || 'desconhecido'}".`
+                    )}
                 </p>
 
                 {/* Suggestions */}

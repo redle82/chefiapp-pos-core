@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,15 @@ import {
   Alert,
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
+import { useAppStaff } from '@/context/AppStaffContext';
+import { RoleSelector } from '@/components/RoleSelector';
+import { HapticFeedback } from '@/services/haptics';
 
 export default function AccountScreen() {
-  const { user, signOut } = useAuth();
+  const { session, signOut } = useAuth();
+  const { roleConfig, shiftState } = useAppStaff();
+  const user = session?.user;
+  const [showRoleSelector, setShowRoleSelector] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -41,16 +47,53 @@ export default function AccountScreen() {
           </Text>
         </View>
         <Text style={styles.email}>{user?.email || 'Usuário'}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, backgroundColor: '#2c2c2e', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 }}>
+          <Text style={{ fontSize: 16, color: '#fff' }}>{roleConfig.emoji} {roleConfig.label}</Text>
+        </View>
       </View>
+
+      {/* FASE 5: Botão para alterar papel */}
+      <TouchableOpacity 
+        style={styles.roleButton}
+        onPress={() => {
+          if (shiftState === 'active') {
+            Alert.alert(
+              'Turno Ativo',
+              'Não é possível alterar o papel durante um turno ativo. Encerre o turno primeiro.',
+              [{ text: 'OK' }]
+            );
+            return;
+          }
+          HapticFeedback.light();
+          setShowRoleSelector(true);
+        }}
+      >
+        <Text style={styles.roleButtonText}>Alterar Papel</Text>
+        <Text style={styles.roleButtonSubtext}>
+          {roleConfig.emoji} {roleConfig.label}
+        </Text>
+      </TouchableOpacity>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>ChefIApp Mobile</Text>
         <Text style={styles.version}>Versão 1.0.0 (Beta)</Text>
       </View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+      <TouchableOpacity 
+        style={styles.logoutButton} 
+        onPress={() => {
+          HapticFeedback.medium();
+          handleLogout();
+        }}
+      >
         <Text style={styles.logoutText}>Sair da Conta</Text>
       </TouchableOpacity>
+
+      {/* FASE 5: Role Selector Modal */}
+      <RoleSelector 
+        visible={showRoleSelector}
+        onClose={() => setShowRoleSelector(false)}
+      />
     </View>
   );
 }
@@ -83,6 +126,24 @@ const styles = StyleSheet.create({
   email: {
     color: '#fff',
     fontSize: 16,
+  },
+  roleButton: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+  },
+  roleButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  roleButtonSubtext: {
+    color: '#888',
+    fontSize: 14,
   },
   section: {
     marginBottom: 32,

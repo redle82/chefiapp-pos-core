@@ -1,59 +1,145 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAppStaff } from '@/context/AppStaffContext';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Ionicons } from '@expo/vector-icons';
+import { CashManagementModal } from './CashManagementModal';
+import { useState, useCallback } from 'react';
+import { BottomActionBar } from './BottomActionBar';
+import { useNotices, Notice } from '@/hooks/useNotices';
+import { BottomSheet } from './BottomSheet';
+import { ThumbCard } from './ThumbCard';
+import { ScrollView, Alert } from 'react-native';
 
 interface ShiftGateProps {
     children: React.ReactNode;
 }
 
 export function ShiftGate({ children }: ShiftGateProps) {
-    const { shiftState, startShift, roleConfig } = useAppStaff();
+    const { shiftState, startShift } = useAppStaff();
     const router = useRouter();
+
+    // Notice Blocker Logic
+    const { notices, fetchNotices, markAsRead } = useNotices();
+    const [isNoticeModalVisible, setIsNoticeModalVisible] = useState(false);
+    const unreadNotices = notices.filter(n => !n.read_by_me);
 
     if (shiftState === 'active') {
         return <>{children}</>;
     }
 
-    const handleGoToShift = () => {
-        // Navigate to the 'staff' tab which is the Shift hub
-        router.push('/(tabs)/staff');
+    const handleQuickStart = async () => {
+        // 1. Check for Unread Notices
+        await fetchNotices();
+
+        if (unreadNotices.length > 0) {
+            setIsNoticeModalVisible(true);
+        } else {
+            // Pure Attendance Clock-in
+            try {
+                await startShift();
+            } catch (error) {
+                console.error('Error starting shift:', error);
+            }
+        }
     };
 
-    const handleQuickStart = () => {
-        startShift();
+    const handleAcknowledgeAll = async () => {
+        // Mark all displayed unread notices as read
+        for (const notice of unreadNotices) {
+            await markAsRead(notice.id);
+        }
+        setIsNoticeModalVisible(false);
+        // Proceed to start flow
+        setTimeout(() => {
+            startShift();
+        }, 500);
     };
+
+    const handleReadOne = async (id: string) => {
+        await markAsRead(id);
+    };
+
+    // CHECKLIST REMOVIDO: Funcionário deve poder iniciar turno com 1 toque
+    // Avisos podem ser lidos durante turno (não bloqueiam início)
+    // Caixa inicial é opcional (não bloqueia)
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <View style={styles.content}>
-                <View style={styles.iconContainer}>
-                    <FontAwesome name="lock" size={48} color="#666" />
+                <View style={styles.centerContent}>
+                    <Ionicons name="lock-closed-outline" size={64} color="#333" />
+                    <Text style={styles.title}>Turno Fechado</Text>
+                    <Text style={styles.message}>
+                        Toque para iniciar seu turno.
+                    </Text>
                 </View>
 
-                <Text style={styles.title}>Turno Fechado</Text>
+                <BottomActionBar
+                    primary={{
+                        label: "Iniciar Turno",
+                        onPress: handleQuickStart
+                        // CHECKLIST REMOVIDO: Funcionário pode iniciar com 1 toque
+                    }}
+                    secondary={{
+                        label: "Ir para Gestão",
+                        onPress: () => router.navigate('/(tabs)/staff'),
+                        variant: 'secondary'
+                    }}
+                />
 
-                <Text style={styles.message}>
-                    Para acessar {roleConfig.taskCategories.length > 0 ? 'suas ferramentas' : 'esta área'},
-                    você precisa iniciar seu turno.
-                </Text>
-
-                <TouchableOpacity
-                    style={styles.primaryButton}
-                    onPress={handleQuickStart}
+                {/* BLOCKER NOTICE MODAL */}
+                <BottomSheet
+                    visible={isNoticeModalVisible}
+                    onClose={() => {
+                        setIsNoticeModalVisible(false);
+                    }}
+                    title={`Avisos Pendentes (${unreadNotices.length})`}
                 >
-                    <Text style={styles.primaryButtonText}>Iniciar Turno Agora</Text>
-                </TouchableOpacity>
+                    <View style={{ marginBottom: 20 }}>
+                        <Text style={{ color: '#888', marginBottom: 16, textAlign: 'center' }}>
+                            Você deve ler estes avisos antes de iniciar o turno.
+                        </Text>
 
-                <TouchableOpacity
-                    style={styles.secondaryButton}
-                    onPress={handleGoToShift}
-                >
-                    <Text style={styles.secondaryButtonText}>Ir para Gestão de Turno</Text>
-                </TouchableOpacity>
+                        <ScrollView style={{ maxHeight: 400 }}>
+                            {unreadNotices.map(notice => (
+                                <ThumbCard
+                                    key={notice.id}
+                                    style={{
+                                        marginBottom: 12,
+                                        borderLeftWidth: 4,
+                                        borderLeftColor: notice.severity === 'critical' ? 'red' : notice.severity === 'attention' ? 'gold' : 'blue',
+                                        backgroundColor: '#1c1c1e'
+                                    }}
+                                    onPress={() => handleReadOne(notice.id)}
+                                >
+                                    <View>
+                                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                                            <Text style={{ color: '#fff', fontWeight: 'bold' }}>{notice.severity.toUpperCase()}</Text>
+                                            <Text style={{ color: '#666' }}>{new Date(notice.created_at).toLocaleDateString()}</Text>
+                                        </View>
+                                        <Text style={{ color: '#ccc', fontSize: 16, lineHeight: 24 }}>{notice.content}</Text>
+                                        <Text style={{ color: '#0a84ff', marginTop: 12, fontSize: 12, textAlign: 'right' }}>
+                                            Toque para marcar como lido
+                                        </Text>
+                                    </View>
+                                </ThumbCard>
+                            ))}
+                        </ScrollView>
+
+                        {unreadNotices.length === 0 ? (
+                            <BottomActionBar
+                                primary={{ label: "Continuar para o Turno", onPress: handleAcknowledgeAll }}
+                            />
+                        ) : (
+                            <Text style={{ textAlign: 'center', color: '#666', marginTop: 20 }}>
+                                Leia todos os avisos para continuar.
+                            </Text>
+                        )}
+                    </View>
+                </BottomSheet>
             </View>
-        </View>
+        </SafeAreaView>
     );
 }
 
@@ -65,57 +151,27 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     content: {
+        flex: 1,
         alignItems: 'center',
-        backgroundColor: '#1a1a1a',
-        padding: 32,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: '#333',
-    },
-    iconContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#2a2a2a',
         justifyContent: 'center',
+        paddingBottom: 80, // Space for bottom bar
+    },
+    centerContent: {
         alignItems: 'center',
-        marginBottom: 24,
+        justifyContent: 'center',
+        padding: 24,
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         color: '#fff',
-        marginBottom: 12,
-        textAlign: 'center',
+        marginTop: 16,
+        marginBottom: 8,
     },
     message: {
         fontSize: 16,
         color: '#888',
         textAlign: 'center',
         marginBottom: 32,
-        lineHeight: 24,
-    },
-    primaryButton: {
-        backgroundColor: '#d4a574',
-        paddingVertical: 16,
-        paddingHorizontal: 32,
-        borderRadius: 12,
-        width: '100%',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    primaryButtonText: {
-        color: '#000',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    secondaryButton: {
-        paddingVertical: 16,
-        width: '100%',
-        alignItems: 'center',
-    },
-    secondaryButtonText: {
-        color: '#888',
-        fontSize: 14,
     },
 });

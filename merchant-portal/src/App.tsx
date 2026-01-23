@@ -6,6 +6,11 @@ import './App.css';
 import { AuthPage } from './pages/AuthPage';
 import OnboardingWizard, { ScreenInviteCode } from './pages/Onboarding/OnboardingWizard';
 import { MigrationWizard } from './pages/Onboarding/migration/MigrationWizardContainer';
+import BillingStep from './pages/Onboarding/BillingStep';
+import CheckoutStep from './pages/Onboarding/CheckoutStep';
+import TrialStart from './pages/Onboarding/TrialStart';
+import MenuDemo from './pages/Onboarding/MenuDemo';
+import FirstSaleGuide from './pages/Onboarding/FirstSaleGuide';
 import { ActivationPage } from './pages/Activation/ActivationPage';
 import { WizardPage } from './pages/WizardPage';
 import { BootstrapPage } from './pages/BootstrapPage';
@@ -13,6 +18,7 @@ import { ComingSoonPage } from './pages/ComingSoonPage';
 import { LandingPage } from './pages/Landing/LandingPage';
 import { AdvancedSetupPage } from './pages/Onboarding/AdvancedSetupPage';
 import PublicPages from './pages/Public/PublicOrderingPage';
+import { OrderStatusPage } from './public/pages/OrderStatusPage'; // ERRO-005 Fix
 import { SelectTenantPage, AccessDeniedPage } from './pages/Tenant';
 import { HealthCheckPage } from './pages/HealthCheckPage';
 import { SystemStatusPage } from './pages/Audit/SystemStatusPage';
@@ -46,6 +52,8 @@ const ZReportPrint = React.lazy(() => import('./pages/Reports/ZReportPrint').the
 const FinanceDashboard = React.lazy(() => import('./pages/Reports/FinanceDashboard').then(m => ({ default: m.FinanceDashboard })));
 const DeliveryMonitor = React.lazy(() => import('./modules/delivery/DeliveryMonitor').then(m => ({ default: m.DeliveryMonitor })));
 const StaffPage = React.lazy(() => import('./pages/Settings/StaffPage'));
+const BillingPage = React.lazy(() => import('./pages/Settings/BillingPage'));
+const ProvisionRestaurantPage = React.lazy(() => import('./pages/Admin/ProvisionRestaurantPage').then(m => ({ default: m.ProvisionRestaurantPage })));
 
 
 const TPVKitsPage = React.lazy(() => import('./pages/Store/TPVKitsPage').then(m => ({ default: m.TPVKitsPage })));
@@ -63,6 +71,8 @@ const GroupDashboard = React.lazy(() => import('./pages/MultiLocation/GroupDashb
 const CustomersPage = React.lazy(() => import('./pages/CRM/CustomersPage').then(m => ({ default: m.CustomersPage })));
 const LoyaltyPage = React.lazy(() => import('./pages/Loyalty/LoyaltyPage').then(m => ({ default: m.LoyaltyPage })));
 const PerformanceDashboard = React.lazy(() => import('./pages/Performance/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard })));
+const SafetyConfig = React.lazy(() => import('./pages/Safety/SafetyConfig'));
+const StrategicCalendar = React.lazy(() => import('./pages/Calendar/StrategicCalendar'));
 
 // Components
 import { FlowGate } from './core/flow/FlowGate';
@@ -120,9 +130,14 @@ function App() {
 
   const DevStableEntryGate = () => {
     const location = useLocation();
-    if (isDevStableMode() && location.pathname.startsWith('/onboarding')) {
+    // FASE 2: Permitir rotas de tutorial mesmo em devStable
+    const allowedOnboardingRoutes = ['/onboarding/first-sale-guide', '/onboarding/menu-demo'];
+    const isAllowedRoute = allowedOnboardingRoutes.some(route => location.pathname === route);
+    
+    if (isDevStableMode() && location.pathname.startsWith('/onboarding') && !isAllowedRoute) {
       // In DEV_STABLE_MODE, onboarding is intentionally blocked.
       // Gate + Tenant selection should be tested in isolation first.
+      // Exception: tutorial routes are allowed.
       return <Navigate to="/app/select-tenant" replace />;
     }
 
@@ -158,6 +173,9 @@ function App() {
                 <Route path="/join" element={<ScreenInviteCode />} />
                 {/* DEV_STABLE_MODE: onboarding routes blocked (redirect handled by DevStableEntryGate) */}
                 <Route path="/start" element={<Navigate to="/app/select-tenant" replace />} />
+                {/* FASE 2: Permitir rotas de tutorial mesmo em devStable */}
+                <Route path="/onboarding/first-sale-guide" element={<FirstSaleGuide />} />
+                <Route path="/onboarding/menu-demo" element={<MenuDemo />} />
                 <Route path="/onboarding/*" element={<Navigate to="/app/select-tenant" replace />} />
 
                 <Route path="/migration/wizard" element={<MigrationWizard />} />
@@ -243,6 +261,11 @@ function App() {
 
                       {/* Settings & Reports */}
                       <Route path="settings" element={<Suspense fallback={<div>Loading Settings...</div>}><Settings /></Suspense>} />
+                      <Route path="settings/billing" element={
+                        <Suspense fallback={<div>Loading Billing...</div>}>
+                          <BillingPage />
+                        </Suspense>
+                      } />
                       <Route path="settings/sovereignty" element={
                         <GuardTool tool="sovereignty">
                           <Suspense fallback={<div>Loading Sovereignty...</div>}>
@@ -349,6 +372,13 @@ function App() {
                 <Route path="/signup" element={<Navigate to="/auth" replace />} />
                 <Route path="/join" element={<ScreenInviteCode />} />
                 <Route path="/start" element={<Navigate to="/onboarding/start" replace />} />
+                {/* FASE 1 - Billing Routes */}
+                <Route path="/onboarding/billing" element={<BillingStep />} />
+                <Route path="/onboarding/checkout" element={<CheckoutStep />} />
+                <Route path="/onboarding/trial-start" element={<TrialStart />} />
+                {/* FASE 2 - Onboarding com Primeira Venda */}
+                <Route path="/onboarding/menu-demo" element={<MenuDemo />} />
+                <Route path="/onboarding/first-sale-guide" element={<FirstSaleGuide />} />
                 <Route path="/onboarding/*" element={<OnboardingWizard />} />
 
                 <Route path="/migration/wizard" element={<MigrationWizard />} />
@@ -439,6 +469,8 @@ function App() {
                       } />
                       <Route path="settings/advanced-setup" element={<AdvancedSetupPage />} />
                       <Route path="settings/connectors" element={<Suspense fallback={<div>Loading...</div>}><ConnectorSettings /></Suspense>} />
+                      <Route path="safety" element={<Suspense fallback={<div>Loading Safety...</div>}><SafetyConfig /></Suspense>} />
+                      <Route path="calendar" element={<Suspense fallback={<div>Loading Calendar...</div>}><StrategicCalendar /></Suspense>} />
                       <Route path="reports/daily-closing" element={<Suspense fallback={<div>Loading...</div>}><DailyClosing /></Suspense>} />
                       <Route path="reports/finance" element={<Suspense fallback={<div>Loading...</div>}><FinanceDashboard /></Suspense>} />
                       <Route path="reports/delivery" element={<Suspense fallback={<div>Loading DLQ...</div>}><DeliveryMonitor /></Suspense>} />

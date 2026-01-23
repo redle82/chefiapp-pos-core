@@ -4,7 +4,8 @@ import { PushNotifications, PushToken } from '@/lib/pushNotifications';
 import { useAuth } from '@/context/AuthContext';
 
 export function usePushNotifications() {
-    const { user } = useAuth();
+    const { session } = useAuth();
+    const user = session?.user;
     const [pushToken, setPushToken] = useState<PushToken | null>(null);
     const [notification, setNotification] = useState<Notifications.Notification | null>(null);
 

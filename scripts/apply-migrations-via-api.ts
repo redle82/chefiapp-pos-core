@@ -1,6 +1,14 @@
 #!/usr/bin/env npx tsx
 
 /**
+ * ⚠️ DEPRECATED: Use aplicar_migration.sh (raiz) como script oficial
+ * Este script é mantido apenas para casos específicos.
+ * 
+ * Script oficial: ./aplicar_migration.sh
+ * Fonte da verdade: docs/architecture/SCRIPTS_OFICIAIS.md
+ */
+
+/**
  * 🚀 Aplicar Migrations Críticas via Supabase API
  * 
  * Aplica DEPLOY_MIGRATIONS_CONSOLIDADO.sql usando Service Role Key

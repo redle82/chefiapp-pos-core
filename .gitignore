@@ -43,7 +43,21 @@ Thumbs.db
 # Test artifacts
 coverage/
 *.log
+*.log.*
 /tmp/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Temporary files
+*~
+*.tmp
+*.swp
+*.swo
 
 # Audit reports (may contain sensitive data)
 audit-reports/*.json

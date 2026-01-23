@@ -179,15 +179,8 @@ export default function StaffScreen() {
                 pendingCount={pendingCount} // ERRO-008 Fix
             />
 
-            {/* FASE 4: Botão Ranking */}
-            {roleConfig.showGamification && (
-                <TouchableOpacity 
-                    onPress={() => router.push('/(tabs)/leaderboard')} 
-                    style={styles.rankingButton}
-                >
-                    <Ionicons name="trophy" size={24} color="#d4a574" />
-                </TouchableOpacity>
-            )}
+            {/* GAMIFICAÇÃO REMOVIDA: Ranking não deve ser visível durante turno */}
+            {/* IQO permanece silencioso (métricas para gerente, não para funcionário) */}
 
             {/* VAULT ACCESS - Apenas se necessário e permitido */}
             {canAccess('cash:handle') && nowAction?.action === 'collect_payment' && (
@@ -298,15 +291,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#666',
     },
-    // FASE 4: Ranking Button
-    rankingButton: {
-        position: 'absolute',
-        top: 16,
-        left: 16,
-        padding: 8,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        borderRadius: 8
-    },
+    // GAMIFICAÇÃO REMOVIDA: Ranking button removido
     // Vault Button
     vaultButton: {
         position: 'absolute',

@@ -101,24 +101,21 @@ export class FiscalQueueWorker {
         try {
             Logger.debug('[FiscalQueue] Starting reconciliation...');
 
-            // 1. Get pending fiscal events (not in DLQ)
+            // 1. Get pending fiscal events
+            // Nota: A coluna dead_letter não existe na tabela fiscal_event_store
+            // Usamos apenas fiscal_status para filtrar eventos pendentes
             const { data: pendingEvents, error: pendingError } = await supabase
                 .from('fiscal_event_store')
                 .select('fiscal_event_id, order_id, restaurant_id, retry_count, fiscal_status')
                 .eq('fiscal_status', 'PENDING')
-                .or('dead_letter.is.null,dead_letter.eq.false')
                 .order('created_at', { ascending: true })
                 .limit(50); // Process in batches
 
             if (pendingError) throw pendingError;
 
-            // 2. Get dead letter count
-            const { count: dlCount } = await supabase
-                .from('fiscal_event_store')
-                .select('*', { count: 'exact', head: true })
-                .eq('dead_letter', true);
-
-            this.deadLetterCount = dlCount || 0;
+            // 2. Dead letter count - coluna dead_letter não existe, usar 0 por enquanto
+            // TODO: Adicionar coluna dead_letter na migration ou usar outro método para rastrear DLQ
+            this.deadLetterCount = 0;
             this.pendingCount = pendingEvents?.length || 0;
             this.notifyListeners();
 
@@ -246,16 +243,34 @@ export class FiscalQueueWorker {
 
     /**
      * Get dead letter events for a restaurant
+     * Nota: A coluna dead_letter não existe na tabela fiscal_event_store
+     * Por enquanto, retorna eventos rejeitados ou com muitas tentativas
      */
     public async getDeadLetterEvents(restaurantId: string) {
+        // TODO: Adicionar coluna dead_letter na migration ou usar outro método
+        // Por enquanto, retornamos eventos rejeitados ou com retry_count >= 10
         const { data, error } = await supabase
             .from('fiscal_event_store')
             .select('*')
             .eq('restaurant_id', restaurantId)
-            .eq('dead_letter', true)
+            .or('fiscal_status.eq.REJECTED,retry_count.gte.10')
             .order('updated_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            // Se a coluna retry_count não existir, retornar apenas REJECTED
+            if (error.message?.includes('retry_count')) {
+                const { data: rejectedData, error: rejectedError } = await supabase
+                    .from('fiscal_event_store')
+                    .select('*')
+                    .eq('restaurant_id', restaurantId)
+                    .eq('fiscal_status', 'REJECTED')
+                    .order('updated_at', { ascending: false });
+                
+                if (rejectedError) throw rejectedError;
+                return rejectedData || [];
+            }
+            throw error;
+        }
         return data || [];
     }
 }

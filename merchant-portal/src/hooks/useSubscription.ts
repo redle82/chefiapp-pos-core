@@ -50,8 +50,9 @@ export function useSubscription() {
                 .single();
 
             if (fetchError) {
-                // Se não encontrou, pode não ter subscription ainda (normal no onboarding)
-                if (fetchError.code === 'PGRST116') {
+                // PGRST116 = nenhum resultado (normal no onboarding)
+                // PGRST205 = tabela não encontrada (migration não aplicada ainda)
+                if (fetchError.code === 'PGRST116' || fetchError.code === 'PGRST205') {
                     setSubscription(null);
                     setLoading(false);
                     return;

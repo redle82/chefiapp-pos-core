@@ -107,51 +107,64 @@ export function BootstrapPage() {
           .eq('id', member.restaurant_id)
           .single()
 
-        if (!restCheckError && restaurant) {
-          const wizardCompleted = restaurant.wizard_completed_at !== null
-          const status = (restaurant.setup_status || 'not_started') as 'not_started' | 'quick_done' | 'advanced_in_progress' | 'advanced_done'
-          const advancedDone = wizardCompleted || status === 'advanced_done'
-          const quickDone = status === 'quick_done' || status === 'advanced_in_progress'
-
-          if (advancedDone) {
-            setState('ready')
-            setProgressStep(`Bem-vindo de volta!`)
-            const targetPath = member.role === 'owner' ? '/dashboard' : '/preview'
-            // P2-3 FIX: Navegação imediata após verificação real (sem delay artificial)
-            navigate(targetPath)
-            return
+        // Handle schema errors (columns may not exist yet) - use defaults
+        let wizardCompleted = false;
+        let status: 'not_started' | 'quick_done' | 'advanced_in_progress' | 'advanced_done' = 'not_started';
+        
+        if (restCheckError) {
+          const isSchemaError = 
+            restCheckError.code === '42703' || 
+            restCheckError.code?.startsWith('PGRST') ||
+            restCheckError.message?.includes('column') ||
+            restCheckError.message?.includes('does not exist') ||
+            (restCheckError as any).status === 400;
+          
+          if (isSchemaError) {
+            // Schema lag - columns don't exist yet, use defaults
+            console.log('[BootstrapPage] Schema lag detected (setup_status missing). Using default state.');
+          } else {
+            // Other error - log and use defaults
+            console.warn('[BootstrapPage] Error loading restaurant:', restCheckError);
           }
+        } else if (restaurant) {
+          wizardCompleted = restaurant.wizard_completed_at !== null;
+          status = (restaurant.setup_status || 'not_started') as 'not_started' | 'quick_done' | 'advanced_in_progress' | 'advanced_done';
+        }
 
-          const onboardingMode = getTabIsolated('chefiapp_onboarding_mode');
-          if (onboardingMode === 'migration') {
-            setState('ready')
-            setProgressStep('Iniciando migração inteligente...')
-            // P2-3 FIX: Navegação imediata após verificação real
-            navigate('/migration/wizard')
-            return
-          }
+        const advancedDone = wizardCompleted || status === 'advanced_done';
+        const quickDone = status === 'quick_done' || status === 'advanced_in_progress';
 
-          if (quickDone) {
-            setState('ready')
-            setProgressStep('Configuração rápida concluída')
-            // P2-3 FIX: Navegação imediata após verificação real
-            navigate('/app/dashboard')
-            return
-          }
-
+        if (advancedDone) {
           setState('ready')
-          setProgressStep('Completa a configuração inicial...')
-          // P2-3 FIX: Navegação imediata após verificação real
-          navigate('/onboarding/identity')
+          setProgressStep(`Bem-vindo de volta!`)
+          const targetPath = member.role === 'owner' ? '/dashboard' : '/preview'
+          // P2-3 FIX: Navegação imediata após verificação real (sem delay artificial)
+          navigate(targetPath)
           return
         }
 
-        // Fallback: if check fails, redirect to dashboard (existing behavior)
+        const onboardingMode = getTabIsolated('chefiapp_onboarding_mode');
+        if (onboardingMode === 'migration') {
+          setState('ready')
+          setProgressStep('Iniciando migração inteligente...')
+          // P2-3 FIX: Navegação imediata após verificação real
+          navigate('/migration/wizard')
+          return
+        }
+
+        if (quickDone) {
+          setState('ready')
+          setProgressStep('Configuração rápida concluída')
+          // P2-3 FIX: Navegação imediata após verificação real
+          navigate('/app/dashboard')
+          return
+        }
+
         setState('ready')
-        setProgressStep(`Bem-vindo de volta!`)
-        const targetPath = member.role === 'owner' ? '/app/dashboard' : '/preview'
-        // P2-3 FIX: Navegação imediata (sem delay artificial)
-        navigate(targetPath)
+        setProgressStep('Completa a configuração inicial...')
+        // P2-3 FIX: Navegação imediata após verificação real
+        navigate('/onboarding/identity')
+        return
       } else {
         // NEW USER -> AUTO CREATE FIRST RESTAURANT
         console.log('[Bootstrap] New user detected - creating first restaurant');

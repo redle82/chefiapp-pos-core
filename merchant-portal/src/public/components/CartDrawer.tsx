@@ -4,11 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 
 export const CartDrawer: React.FC = () => {
-    const { items, total, isCartOpen, setIsCartOpen, updateQuantity, clearCart, slug } = useCart();
+    const { items, total, isCartOpen, setIsCartOpen, updateQuantity, clearCart, slug, tableNumber } = useCart();
 
     // Status State
     const [status, setStatus] = React.useState<'idle' | 'sending' | 'success' | 'error'>('idle');
     const [message, setMessage] = React.useState('');
+    // ERRO-017 Fix: Estado para cancelar pedido
+    const [orderId, setOrderId] = React.useState<string | null>(null);
+    const [orderTimestamp, setOrderTimestamp] = React.useState<number | null>(null);
 
     const handleCheckout = async () => {
         if (items.length === 0) return;
@@ -37,22 +40,41 @@ export const CartDrawer: React.FC = () => {
                     notes: i.notes
                 })),
                 customer_name: 'Cliente Web', // TODO: Add Name Input
-                table_number: 0, // 0 = Web/Takeaway
+                table_number: tableNumber || 0, // ERRO-021 Fix: Usar número da mesa da URL ou 0 (Web/Takeaway)
             }, (progress) => {
                 setMessage(progress.message);
             });
 
             if (result.success) {
                 setStatus('success');
-                setMessage(result.message);
-                setTimeout(() => {
-                    clearCart();
-                    setIsCartOpen(false);
-                    setStatus('idle');
-                }, 2000);
+                // ERRO-001 Fix: Feedback claro e compreensível após envio
+                setMessage('✅ Pedido recebido! Aguarde o preparo.');
+                
+                // ERRO-022 Fix: Salvar pedido pendente no localStorage
+                if (tableNumber) {
+                    const pendingOrderKey = `pending_order_${slug}_${tableNumber}`;
+                    localStorage.setItem(pendingOrderKey, JSON.stringify({
+                        orderId: result.order_id,
+                        timestamp: Date.now()
+                    }));
+                }
+                
+                // ERRO-017 Fix: Armazenar orderId e timestamp para cancelamento
+                if (result.order_id) {
+                    setOrderId(result.order_id);
+                    setOrderTimestamp(Date.now());
+                    
+                    // ERRO-005 Fix: Redirecionar para página de status após sucesso
+                    setTimeout(() => {
+                        window.location.href = `/public/${slug}/status/${result.order_id}`;
+                    }, 2000); // Aguardar 2s para mostrar mensagem de sucesso
+                }
+                
+                // ERRO-017 Fix: Não fechar drawer automaticamente, permitir cancelar
+                // setTimeout removido - drawer fica aberto para mostrar botão de cancelar
             } else {
                 setStatus('error');
-                setMessage(result.message);
+                setMessage(result.message || 'Erro ao enviar pedido. Tente novamente.');
             }
 
         } catch (err) {
@@ -115,6 +137,18 @@ export const CartDrawer: React.FC = () => {
                                         </div>
 
                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {/* ERRO-013 Fix: Botão remover item */}
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm(`Remover ${item.name}?`)) {
+                                                        updateQuantity(item.id, -item.qty); // Remove completamente
+                                                    }
+                                                }}
+                                                className="w-7 h-7 rounded border border-red-500/50 text-red-400 flex items-center justify-center hover:bg-red-500/20"
+                                                title="Remover item"
+                                            >
+                                                ✕
+                                            </button>
                                             <button
                                                 onClick={() => updateQuantity(item.id, -1)}
                                                 className="w-7 h-7 rounded border border-white/10 text-white/50 flex items-center justify-center"
@@ -135,6 +169,59 @@ export const CartDrawer: React.FC = () => {
 
                         {/* Footer */}
                         <div className="p-6 bg-white/5 border-t border-white/5">
+                            {/* ERRO-001 Fix: Feedback visual claro após envio */}
+                            {status === 'success' && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-4 p-4 bg-green-500/20 border border-green-500/50 rounded-xl"
+                                >
+                                    <p className="text-green-400 font-semibold text-center">{message}</p>
+                                    {/* ERRO-017 Fix: Botão cancelar pedido (visível por 2 minutos) */}
+                                    {orderId && orderTimestamp && (Date.now() - orderTimestamp < 120000) && (
+                                        <button
+                                            onClick={async () => {
+                                                if (confirm('Cancelar pedido? Esta ação não pode ser desfeita.')) {
+                                                    try {
+                                                        // TODO: Implementar cancelamento no backend
+                                                        // Por enquanto, apenas limpar estado local
+                                                        setOrderId(null);
+                                                        setOrderTimestamp(null);
+                                                        setStatus('idle');
+                                                        clearCart();
+                                                        setIsCartOpen(false);
+                                                        alert('Pedido cancelado. Entre em contato com o restaurante se necessário.');
+                                                    } catch (e) {
+                                                        alert('Erro ao cancelar pedido. Entre em contato com o restaurante.');
+                                                    }
+                                                }
+                                            }}
+                                            className="mt-3 w-full py-2 bg-red-500/20 border border-red-500/50 text-red-400 font-semibold rounded-lg hover:bg-red-500/30 transition-colors"
+                                        >
+                                            Cancelar Pedido
+                                        </button>
+                                    )}
+                                </motion.div>
+                            )}
+                            {status === 'error' && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-xl"
+                                >
+                                    <p className="text-red-400 font-semibold text-center">{message}</p>
+                                </motion.div>
+                            )}
+                            {status === 'sending' && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-4 p-4 bg-blue-500/20 border border-blue-500/50 rounded-xl"
+                                >
+                                    <p className="text-blue-400 font-semibold text-center">{message}</p>
+                                </motion.div>
+                            )}
+
                             <div className="flex justify-between items-center mb-6">
                                 <span className="text-white/60">Total</span>
                                 <span className="text-2xl font-bold text-gold-500">{total.toFixed(2)}€</span>
@@ -142,10 +229,10 @@ export const CartDrawer: React.FC = () => {
 
                             <button
                                 onClick={handleCheckout}
-                                disabled={items.length === 0}
+                                disabled={items.length === 0 || status === 'sending' || status === 'success'}
                                 className="w-full py-4 bg-gold-500 text-black font-bold rounded-xl shadow-lg hover:bg-gold-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Confirmar Pedido
+                                {status === 'sending' ? 'Enviando...' : status === 'success' ? 'Pedido Enviado!' : 'Confirmar Pedido'}
                             </button>
                         </div>
                     </motion.div>

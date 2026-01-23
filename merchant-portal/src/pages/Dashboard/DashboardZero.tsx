@@ -19,6 +19,7 @@ import { useTenant } from '../../core/tenant/TenantContext';
 import { FiscalAlertBadge } from '../../components/FiscalAlertBadge';
 import { SystemHealthWidget } from './SystemHealthWidget';
 import { RealityLevelWidget } from './RealityLevelWidget';
+import { OnboardingReminder } from '../../components/OnboardingReminder';
 
 const ModuleCard = ({ module, onClick, variant = 'standard' }: { module: SovereignModule; onClick?: () => void, variant?: 'standard' | 'primary' | 'secondary' }) => {
     const isLocked = module.status === 'locked' || module.status === 'planned';
@@ -144,9 +145,14 @@ export const DashboardZero = () => {
             .single()
             .then(({ data, error }) => {
                 if (error) {
-                    // Ignore schema errors (42703) as they are expected during migration/dev
-                    if (error.code === '42703') {
-                        console.log('[Dashboard] Schema lag detected (setup_status missing). Using default state.');
+                    // Ignore schema errors (42703 = column doesn't exist, 400 = Bad Request, PGRST* = PostgREST errors)
+                    // These are expected during migration/dev when columns don't exist yet
+                    if (error.code === '42703' || 
+                        error.code?.startsWith('PGRST') ||
+                        error.message?.includes('column') ||
+                        error.message?.includes('does not exist') ||
+                        (error as any).status === 400) {
+                        console.log('[Dashboard] Schema lag detected (setup_status/advanced_progress missing). Using default state.');
                     } else {
                         console.warn('[Dashboard] Failed to load setup status', error);
                     }
@@ -216,6 +222,9 @@ export const DashboardZero = () => {
                                 <SystemStatusLine modules={systemModules} />
                             </div>
                         </div>
+
+                        {/* FASE 2: Onboarding Reminder */}
+                        <OnboardingReminder />
 
                         {setupStatus !== 'advanced_done' && (
                             <div style={{

@@ -1,34 +1,50 @@
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
-    Alert,
-    ActivityIndicator,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
+import { HapticFeedback } from '@/services/haptics';
+import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
+    const router = useRouter();
+    const { signIn, signUp } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const { signIn } = useAuth();
 
     const handleLogin = async () => {
         if (!email || !password) {
-            Alert.alert('Erro', 'Por favor, preencha todos os campos');
+            HapticFeedback.error();
+            Alert.alert("Erro", "Preencha email e senha.");
             return;
         }
 
         setLoading(true);
         try {
             await signIn(email, password);
+            HapticFeedback.success();
+            // AuthGate will redirect
         } catch (error: any) {
-            Alert.alert('Erro de Login', error.message || 'Falha ao entrar');
+            HapticFeedback.error();
+            Alert.alert("Erro de Login", error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSignUp = async () => {
+        if (!email || !password) {
+            HapticFeedback.error();
+            Alert.alert("Erro", "Preencha email e senha para cadastrar.");
+            return;
+        }
+        setLoading(true);
+        try {
+            await signUp(email, password);
+            HapticFeedback.success();
+            Alert.alert("Sucesso", "Verifique seu email para confirmar.");
+        } catch (error: any) {
+            HapticFeedback.error();
+            Alert.alert("Erro de Cadastro", error.message);
         } finally {
             setLoading(false);
         }
@@ -36,56 +52,59 @@ export default function LoginScreen() {
 
     return (
         <KeyboardAvoidingView
-            style={styles.container}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.container}
         >
-            <View style={styles.content}>
-                {/* Logo */}
-                <View style={styles.logoContainer}>
-                    <Text style={styles.logo}>🍳</Text>
-                    <Text style={styles.title}>ChefIApp</Text>
-                    <Text style={styles.subtitle}>Sistema de Gestão para Restaurantes</Text>
-                </View>
+            <View style={styles.form}>
+                <Text style={styles.title}>ChefiApp POS</Text>
+                <Text style={styles.subtitle}>Acesse sua operação</Text>
 
-                {/* Form */}
-                <View style={styles.form}>
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Email</Text>
                     <TextInput
                         style={styles.input}
-                        placeholder="Email"
+                        placeholder="seu@email.com"
                         placeholderTextColor="#666"
                         value={email}
                         onChangeText={setEmail}
-                        keyboardType="email-address"
                         autoCapitalize="none"
-                        autoCorrect={false}
+                        keyboardType="email-address"
                     />
+                </View>
 
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Senha</Text>
                     <TextInput
                         style={styles.input}
-                        placeholder="Senha"
+                        placeholder="••••••••"
                         placeholderTextColor="#666"
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry
                     />
-
-                    <TouchableOpacity
-                        style={[styles.button, loading && styles.buttonDisabled]}
-                        onPress={handleLogin}
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <ActivityIndicator color="#fff" />
-                        ) : (
-                            <Text style={styles.buttonText}>Entrar</Text>
-                        )}
-                    </TouchableOpacity>
                 </View>
 
-                {/* Footer */}
-                <Text style={styles.footer}>
-                    © 2026 ChefIApp — Feito com ❤️ em Portugal
-                </Text>
+                <TouchableOpacity
+                    style={[styles.button, loading && styles.buttonDisabled]}
+                    onPress={handleLogin}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator color="#000" />
+                    ) : (
+                        <Text style={styles.buttonText}>Entrar</Text>
+                    )}
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={handleSignUp} style={styles.linkButton}>
+                    <Text style={styles.linkText}>Criar nova conta</Text>
+                </TouchableOpacity>
+
+                {/* 
+                <TouchableOpacity onPress={() => router.replace('/(tabs)')} style={styles.bypassBtn}>
+                     <Text style={styles.bypassText}>[DEV] Pular Login (Offline)</Text>
+                </TouchableOpacity>
+                */}
             </View>
         </KeyboardAvoidingView>
     );
@@ -94,62 +113,75 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#0a0a0a',
-    },
-    content: {
-        flex: 1,
+        backgroundColor: '#000',
         justifyContent: 'center',
-        paddingHorizontal: 32,
+        padding: 24,
     },
-    logoContainer: {
-        alignItems: 'center',
-        marginBottom: 48,
-    },
-    logo: {
-        fontSize: 64,
-        marginBottom: 16,
+    form: {
+        width: '100%',
+        maxWidth: 400,
+        alignSelf: 'center',
     },
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: '#32d74b',
+        color: '#d4a574',
         marginBottom: 8,
+        textAlign: 'center',
     },
     subtitle: {
-        fontSize: 14,
+        fontSize: 16,
         color: '#888',
+        marginBottom: 48,
+        textAlign: 'center',
     },
-    form: {
-        gap: 16,
+    inputGroup: {
+        marginBottom: 20,
+    },
+    label: {
+        color: '#ccc',
+        marginBottom: 8,
+        fontSize: 14,
+        fontWeight: '600',
     },
     input: {
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#1c1c1e',
         borderRadius: 12,
         padding: 16,
-        fontSize: 16,
         color: '#fff',
+        fontSize: 16,
         borderWidth: 1,
         borderColor: '#333',
     },
     button: {
-        backgroundColor: '#32d74b',
+        backgroundColor: '#d4a574',
+        padding: 18,
         borderRadius: 12,
-        padding: 16,
         alignItems: 'center',
-        marginTop: 8,
+        marginTop: 16,
     },
     buttonDisabled: {
-        opacity: 0.6,
+        opacity: 0.7,
     },
     buttonText: {
         color: '#000',
+        fontWeight: 'bold',
         fontSize: 16,
-        fontWeight: '600',
     },
-    footer: {
-        textAlign: 'center',
-        color: '#444',
+    linkButton: {
+        marginTop: 24,
+        alignItems: 'center',
+    },
+    linkText: {
+        color: '#d4a574',
+        fontSize: 14,
+    },
+    bypassBtn: {
+        marginTop: 40,
+        alignSelf: 'center',
+    },
+    bypassText: {
+        color: '#333',
         fontSize: 12,
-        marginTop: 48,
-    },
+    }
 });

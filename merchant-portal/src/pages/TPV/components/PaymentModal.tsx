@@ -31,9 +31,10 @@ interface PaymentModalProps {
     orderTotal: number; // em centavos
     onPay: (method: PaymentMethod, intentId?: string) => Promise<void>;
     onCancel: () => void;
+    isDemoMode?: boolean; // FASE 2: Modo demo
 }
 
-export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantId, orderTotal, onPay, onCancel }) => {
+export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantId, orderTotal, onPay, onCancel, isDemoMode = false }) => {
     const { isOffline } = useOfflineOrder();
     const { activeCustomer } = useLoyalty();
     const { groups } = useConsumptionGroups(orderId);
@@ -103,6 +104,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ orderId, restaurantI
         setProcessing(true);
         setResult(null);
         try {
+            // FASE 2: Modo Demo - Simular pagamento
+            if (isDemoMode) {
+                // Simular delay de processamento
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await onPay(selectedMethod);
+                setResult('success');
+                setTimeout(() => {
+                    onCancel();
+                }, 2000);
+                return;
+            }
+
             // Para card, o pagamento é processado via StripePaymentModal
             // Este handler só é chamado para cash/pix
             await onPay(selectedMethod);

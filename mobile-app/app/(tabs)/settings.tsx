@@ -7,6 +7,7 @@ import { HapticFeedback } from '@/services/haptics';
 import { printerService } from '@/services/PrinterService';
 import { useRestaurant } from '@/context/RestaurantContext';
 import { PrinterSettings } from '@/components/PrinterSettings';
+import { BillingModal } from '@/components/BillingModal';
 
 export default function SettingsScreen() {
     const router = useRouter();
@@ -28,6 +29,7 @@ export default function SettingsScreen() {
     const [taxRate, setTaxRate] = useState('0');
     const [autoPrintReceipt, setAutoPrintReceipt] = useState(true);
     const [showPrinterSettings, setShowPrinterSettings] = useState(false);
+    const [showBilling, setShowBilling] = useState(false); // FASE 10
 
     useEffect(() => {
         loadSettings();
@@ -240,6 +242,18 @@ export default function SettingsScreen() {
                     </View>
                 </SettingsSection>
 
+                <SettingsSection title="Assinatura & Planos">
+                    <TouchableOpacity
+                        style={styles.printerSettingsButton}
+                        onPress={() => setShowBilling(true)}
+                    >
+                        <Text style={[styles.printerSettingsButtonText, { color: '#FFC107' }]}>💎 Gerenciar Assinatura Premium</Text>
+                        <Text style={styles.printerSettingsButtonSubtext}>
+                            Acesse o KDS, Analytics e mais.
+                        </Text>
+                    </TouchableOpacity>
+                </SettingsSection>
+
                 <View style={{ height: 100 }} />
             </ScrollView>
 
@@ -250,6 +264,11 @@ export default function SettingsScreen() {
                     setShowPrinterSettings(false);
                     loadSettings(); // Recarregar configurações após fechar
                 }}
+            />
+            {/* FASE 10: Billing Modal */}
+            <BillingModal
+                visible={showBilling}
+                onClose={() => setShowBilling(false)}
             />
         </KeyboardAvoidingView>
     );

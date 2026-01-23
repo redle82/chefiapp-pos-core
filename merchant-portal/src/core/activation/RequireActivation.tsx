@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTenant } from '../tenant/TenantContext';
+import { supabase } from '../supabase';
 
 /**
  * RequireActivation Guard
@@ -48,19 +49,73 @@ export const RequireActivation = ({ children }: { children: JSX.Element }) => {
                 }
             }
 
+            // FASE 1 - Billing Integration: Verificar subscription status
+            let subscriptionStatus: string | null = null;
+            if (restaurant?.id) {
+                try {
+                    const { data: subscription, error: subscriptionError } = await supabase
+                        .from('subscriptions')
+                        .select('status')
+                        .eq('restaurant_id', restaurant.id)
+                        .single();
+                    
+                    if (subscriptionError) {
+                        // PGRST116 = nenhum resultado (normal em onboarding)
+                        // PGRST205 = tabela não encontrada (migration não aplicada ainda)
+                        // 404 = não encontrado
+                        // Não logar como erro, apenas continuar sem subscription status
+                        if (subscriptionError.code !== 'PGRST116' && 
+                            subscriptionError.code !== 'PGRST205' && 
+                            subscriptionError.code !== '404') {
+                            console.warn('[RequireActivation] Error checking subscription:', subscriptionError);
+                        }
+                        subscriptionStatus = null;
+                    } else {
+                        subscriptionStatus = subscription?.status || null;
+                    }
+                } catch (err) {
+                    // Se não encontrou subscription, pode estar em onboarding (normal)
+                    // Não logar como erro crítico
+                    subscriptionStatus = null;
+                }
+            }
+
             // TASK-3.3.1: Verificar DB primeiro (fonte de verdade)
             // Se DB e cache divergem, DB vence
             const isActiveInDB = restaurant?.operation_status === 'active' ||
                 (restaurant as any)?.operation_mode === 'Gamified' ||
                 (restaurant as any)?.operation_mode === 'Active';
 
-            if (isActiveInDB) {
-                // DB diz que está ativo - sempre confiar no DB
-                console.log('[RequireActivation] ✅ DB confirms activation');
+            // FASE 1: Verificar subscription status
+            // Permitir acesso se: TRIAL, ACTIVE, ou se operation_status está ativo
+            const hasValidSubscription = subscriptionStatus === 'TRIAL' || subscriptionStatus === 'ACTIVE';
+            const isBlockedBySubscription = subscriptionStatus === 'SUSPENDED' || subscriptionStatus === 'CANCELLED';
+
+            if (isBlockedBySubscription) {
+                console.log('[RequireActivation] 🛑 Access Denied: Subscription is SUSPENDED or CANCELLED');
+                navigate('/onboarding/billing', { 
+                    replace: true,
+                    state: { reason: 'subscription_inactive' }
+                });
+                return;
+            }
+
+            if (isActiveInDB || hasValidSubscription) {
+                // DB diz que está ativo OU subscription válida - sempre confiar no DB
+                console.log('[RequireActivation] ✅ DB confirms activation or valid subscription');
                 const { setTabIsolated } = await import('../storage/TabIsolatedStorage');
                 setTabIsolated('chefiapp_operation_mode', 'active'); // Atualizar cache
                 setIsVerified(true);
                 return;
+            }
+
+            // Se não tem subscription e não está ativo, verificar se está em onboarding
+            if (!subscriptionStatus && !isActiveInDB) {
+                // Pode estar em onboarding - permitir acesso a rotas de onboarding
+                if (currentPath.startsWith('/onboarding/')) {
+                    setIsVerified(true);
+                    return;
+                }
             }
 
             // Se DB não confirma ativação, verificar cache (mas não confiar cegamente)

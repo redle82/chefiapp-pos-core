@@ -75,6 +75,10 @@
 
 # FASE 1 — Fechamento Comercial (BLOQUEADOR)
 
+**📌 FONTE DA VERDADE:** Este documento é a fonte oficial para status e progresso da FASE 1  
+**📋 FLUXO COMPLETO:** Ver `docs/architecture/BILLING_FLOW.md`  
+**🗂️ SCHEMA OFICIAL:** `subscriptions`, `billing_events`, `billing_payments` (migration `20260130000000`)
+
 ## Status
 🟢 **90% COMPLETO** (Código completo, pendente deploy e testes)
 

@@ -7,6 +7,9 @@ export type Permission =
     | 'shift:view_metrics' // View advanced metrics (sales, efficiency)
     | 'shift:view_gamification' // View XP, levels
 
+    // Cash (Financial)
+    | 'cash:handle' // Open/close cash drawer, see float amounts
+
     // Orders
     | 'order:create'
     | 'order:view_all' // View orders from other waiters
@@ -29,14 +32,19 @@ export type Permission =
 
 // Base permissions by Role (what they can do fundamentally)
 const BASE_ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
-    waiter: ['shift:start', 'shift:end', 'shift:view_gamification', 'order:create'],
-    bartender: ['shift:start', 'shift:end', 'shift:view_gamification', 'kds:view', 'kds:bump'],
-    cook: ['shift:start', 'shift:end', 'shift:view_gamification', 'kds:view', 'kds:bump'],
-    chef: ['shift:start', 'shift:end', 'shift:view_gamification', 'kds:view', 'kds:bump', 'staff:manage', 'order:void'],
-    manager: ['shift:start', 'shift:end', 'shift:view_metrics', 'staff:manage', 'order:void', 'order:discount', 'order:view_all', 'table:assign'],
-    owner: ['shift:view_metrics', 'business:view_reports', 'staff:manage', 'order:view_all'],
-    cleaning: ['shift:start', 'shift:end', 'shift:view_gamification'],
-    ambulante: ['shift:start', 'shift:end', 'order:create', 'order:view_all'], // Ambulante is usually solo
+    waiter: ['shift:start', 'shift:end', 'shift:view_gamification', 'order:create', 'cash:handle'],
+    bartender: ['shift:start', 'shift:end', 'shift:view_gamification', 'kds:view', 'kds:bump'], // NO cash
+    cook: ['shift:start', 'shift:end', 'shift:view_gamification', 'kds:view', 'kds:bump'], // NO cash
+    chef: ['shift:start', 'shift:end', 'shift:view_gamification', 'kds:view', 'kds:bump', 'staff:manage', 'order:void'], // NO cash
+    manager: ['shift:start', 'shift:end', 'shift:view_metrics', 'staff:manage', 'order:void', 'order:discount', 'order:view_all', 'table:assign', 'cash:handle'],
+    owner: ['shift:view_metrics', 'business:view_reports', 'staff:manage', 'order:view_all', 'cash:handle'],
+    cleaning: ['shift:start', 'shift:end', 'shift:view_gamification'], // NO cash
+    ambulante: ['shift:start', 'shift:end', 'order:create', 'order:view_all', 'order:void', 'shift:view_metrics', 'cash:handle'], // Solo op needs cash
+    vendor: ['shift:start', 'shift:end', 'order:create', 'order:view_all', 'order:void', 'shift:view_metrics', 'cash:handle'], // Solo op needs cash
+    supervisor: ['shift:start', 'shift:end', 'staff:manage', 'order:void', 'order:discount', 'table:assign', 'shift:view_metrics', 'cash:handle'],
+    cashier: ['shift:start', 'shift:end', 'order:view_all', 'order:discount', 'cash:handle'], // Explicitly handles cash
+    delivery: ['order:view_all', 'shift:start', 'shift:end'], // NO cash
+    admin: ['shift:start', 'shift:end', 'order:view_all', 'order:void', 'staff:manage', 'business:view_reports', 'cash:handle'], // Admin can handle cash for setup
 };
 
 // Maturity Modifiers (Unlock features as business grows)

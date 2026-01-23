@@ -67,9 +67,10 @@ export const AdvancedSetupPage: React.FC = () => {
         return;
       }
       // Try specific fields first, fallback to * if schema mismatch
+      // Note: brand_theme removed from query as it doesn't exist in schema
       let data: Record<string, unknown> | null = null;
       
-      const specificFields = 'brand_theme, site_enabled, site_template, site_domain, site_status, pos_mode, tables_enabled, tables_count, qr_enabled, qr_style, delivery_enabled, delivery_channels, hardware_profile, setup_status, advanced_progress';
+      const specificFields = 'site_enabled, site_template, site_domain, site_status, pos_mode, tables_enabled, tables_count, qr_enabled, qr_style, delivery_enabled, delivery_channels, hardware_profile, setup_status, advanced_progress';
       
       const { data: specificData, error: specificError } = await supabase
         .from('gm_restaurants')
@@ -77,22 +78,40 @@ export const AdvancedSetupPage: React.FC = () => {
         .eq('id', restaurantId)
         .single();
 
-      if (specificError && (specificError.code === 'PGRST116' || specificError.code?.startsWith('PGRST'))) {
-        // Schema mismatch - try with * instead
-        console.warn('[AdvancedSetupPage] Schema mismatch detected, falling back to * select:', specificError);
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('gm_restaurants')
-          .select('*')
-          .eq('id', restaurantId)
-          .single();
+      // Handle schema mismatch (columns don't exist) - try with * instead
+      if (specificError) {
+        // PGRST116 = no results, PGRST* = PostgREST errors, 42703 = column doesn't exist, 400 = Bad Request
+        const isSchemaMismatch = 
+          specificError.code === 'PGRST116' || 
+          specificError.code === '42703' ||
+          specificError.code?.startsWith('PGRST') ||
+          specificError.message?.includes('column') ||
+          specificError.message?.includes('does not exist') ||
+          (specificError as any).status === 400;
         
-        if (fallbackError || !fallbackData) {
-          setError('Não foi possível carregar suas configurações. Verifique o schema da tabela gm_restaurants.');
+        if (isSchemaMismatch) {
+          // Schema mismatch - try with * instead
+          console.warn('[AdvancedSetupPage] Schema mismatch detected, falling back to * select:', specificError);
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('gm_restaurants')
+            .select('*')
+            .eq('id', restaurantId)
+            .single();
+          
+          if (fallbackError || !fallbackData) {
+            setError('Não foi possível carregar suas configurações. Verifique o schema da tabela gm_restaurants.');
+            setLoading(false);
+            return;
+          }
+          data = fallbackData;
+        } else {
+          // Other error - log and show error
+          console.error('[AdvancedSetupPage] Error loading restaurant data:', specificError);
+          setError('Não foi possível carregar suas configurações.');
           setLoading(false);
           return;
         }
-        data = fallbackData;
-      } else if (specificError || !specificData) {
+      } else if (!specificData) {
         setError('Não foi possível carregar suas configurações.');
         setLoading(false);
         return;
@@ -570,3 +589,6 @@ function safeParseJSON<T>(value: string, fallback: T): T {
     return fallback;
   }
 }
+
+// Default export for compatibility
+export default AdvancedSetupPage;

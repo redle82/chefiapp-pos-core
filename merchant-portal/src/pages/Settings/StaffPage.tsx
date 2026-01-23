@@ -14,6 +14,7 @@ import { Toast, useToast } from '../../ui/design-system';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { spacing } from '../../ui/design-system/tokens/spacing';
 import { useTenant } from '../../core/tenant/TenantContext';
+import { RoleMatrix } from '../Team/RoleMatrix';
 
 // ------------------------------------------------------------------
 // 🏢 STAFF MANAGEMENT (Admin Mode)
@@ -255,7 +256,7 @@ export default function StaffPage() {
                 .from('employees')
                 .select('id')
                 .limit(1);
-            
+
             if (testQuery.error) {
                 console.error('[StaffPage] Table access test failed:', {
                     code: testQuery.error.code,
@@ -263,7 +264,7 @@ export default function StaffPage() {
                     details: testQuery.error.details,
                     hint: testQuery.error.hint
                 });
-                
+
                 if (testQuery.error.code === '42P01') {
                     toastError('A tabela "employees" não existe. Aplique a migração SQL primeiro.');
                     setBusy(false);
@@ -280,7 +281,7 @@ export default function StaffPage() {
 
             console.log('[StaffPage] Proceeding with INSERT...');
             console.log('[StaffPage] Insert data:', JSON.stringify(insertData, null, 2));
-            
+
             const { data, error } = await supabase
                 .from('employees')
                 .insert(insertData)
@@ -316,10 +317,10 @@ export default function StaffPage() {
                 details: err?.details,
                 hint: err?.hint
             });
-            
+
             // Mensagens de erro mais específicas
             let errorMessage = 'Erro ao criar funcionário.';
-            
+
             // Erro 409 Conflict (HTTP) ou 23505 (PostgreSQL unique violation)
             if (err?.code === '23505' || err?.status === 409 || err?.statusCode === 409) {
                 // Tentar extrair qual campo causou o conflito
@@ -344,7 +345,7 @@ export default function StaffPage() {
             } else if (err?.message) {
                 errorMessage = err.message;
             }
-            
+
             toastError(errorMessage);
         } finally {
             setBusy(false);
@@ -364,6 +365,8 @@ export default function StaffPage() {
             toastError('Erro ao remover.');
         }
     };
+
+    const [activeTab, setActiveTab] = useState<'members' | 'roles'>('members');
 
     // Show warning if restaurantId is not available
     if (!restaurantId) {
@@ -405,20 +408,20 @@ export default function StaffPage() {
                         </div>
                         <div style={{ display: 'flex', gap: spacing[3] }}>
                             {import.meta.env.DEV && (
-                                <Button 
-                                    tone="neutral" 
-                                    variant="outline" 
+                                <Button
+                                    tone="neutral"
+                                    variant="outline"
                                     size="sm"
                                     onClick={async () => {
                                         console.log('[StaffPage] ========== TESTE DIRETO ==========');
                                         console.log('Restaurant ID:', restaurantId);
                                         console.log('Supabase client:', supabase);
-                                        
+
                                         if (!restaurantId) {
                                             alert('❌ Restaurant ID não encontrado!');
                                             return;
                                         }
-                                        
+
                                         const testData = {
                                             restaurant_id: restaurantId,
                                             name: 'TESTE ' + Date.now(),
@@ -426,16 +429,16 @@ export default function StaffPage() {
                                             position: 'waiter',
                                             active: true
                                         };
-                                        
+
                                         console.log('Tentando inserir:', testData);
-                                        
+
                                         try {
                                             const { data, error } = await supabase
                                                 .from('employees')
                                                 .insert(testData)
                                                 .select()
                                                 .single();
-                                            
+
                                             if (error) {
                                                 console.error('❌ ERRO:', error);
                                                 alert(`ERRO: ${error.code} - ${error.message}`);
@@ -453,42 +456,70 @@ export default function StaffPage() {
                                     🧪 Teste Direto
                                 </Button>
                             )}
-                            <Button tone="action" onClick={() => setShowModal(true)}>
-                                + Adicionar
-                            </Button>
+                            {activeTab === 'members' && (
+                                <Button tone="action" onClick={() => setShowModal(true)}>
+                                    + Adicionar
+                                </Button>
+                            )}
                         </div>
                     </div>
 
-                    {/* Staff List */}
-                    {loading ? (
-                        <div style={{ padding: spacing[12], textAlign: 'center' }}>
-                            <Text color="tertiary">Carregando...</Text>
-                        </div>
-                    ) : members.length === 0 ? (
-                        <EmptyState
-                            icon={<div style={{ fontSize: 64 }}>☕️</div>}
-                            title="Equipe Vazia"
-                            description="Adicione garçons, cozinheiros e gerentes."
-                            action={{
-                                label: "Criar Primeiro Funcionário",
-                                onClick: () => setShowModal(true)
-                            }}
-                        />
-                    ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: spacing[6] }}>
-                            {members.map((member) => (
-                                <EmployeeCard
-                                    key={member.id}
-                                    member={member}
-                                    onRemove={() => handleRemoveMember(member.id)}
+                    {/* Tabs */}
+                    <div style={{ display: 'flex', gap: spacing[2], borderBottom: '1px solid #333', paddingBottom: spacing[4] }}>
+                        <Button
+                            tone={activeTab === 'members' ? 'action' : 'neutral'}
+                            variant={activeTab === 'members' ? 'solid' : 'ghost'}
+                            onClick={() => setActiveTab('members')}
+                            size="sm"
+                        >
+                            Membros
+                        </Button>
+                        <Button
+                            tone={activeTab === 'roles' ? 'action' : 'neutral'}
+                            variant={activeTab === 'roles' ? 'solid' : 'ghost'}
+                            onClick={() => setActiveTab('roles')}
+                            size="sm"
+                        >
+                            Cargos & Permissões
+                        </Button>
+                    </div>
+
+                    {/* Content Switch */}
+                    {activeTab === 'members' ? (
+                        <>
+                            {loading ? (
+                                <div style={{ padding: spacing[12], textAlign: 'center' }}>
+                                    <Text color="tertiary">Carregando...</Text>
+                                </div>
+                            ) : members.length === 0 ? (
+                                <EmptyState
+                                    icon={<div style={{ fontSize: 64 }}>☕️</div>}
+                                    title="Equipe Vazia"
+                                    description="Adicione garçons, cozinheiros e gerentes."
+                                    action={{
+                                        label: "Criar Primeiro Funcionário",
+                                        onClick: () => setShowModal(true)
+                                    }}
                                 />
-                            ))}
-                        </div>
+                            ) : (
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: spacing[6] }}>
+                                    {members.map((member) => (
+                                        <EmployeeCard
+                                            key={member.id}
+                                            member={member}
+                                            onRemove={() => handleRemoveMember(member.id)}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <RoleMatrix />
                     )}
 
                     {/* MODAL */}
                     {showModal && (
-                        <div 
+                        <div
                             style={{
                                 position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', padding: spacing[4], zIndex: 100
@@ -503,7 +534,7 @@ export default function StaffPage() {
                             <Card surface="base" padding="xl" style={{ maxWidth: '400px', width: '100%' }}>
                                 <Text size="xl" weight="bold" style={{ marginBottom: spacing[6] }}>Novo Profissional</Text>
 
-                                <form 
+                                <form
                                     onSubmit={(e) => {
                                         console.log('[StaffPage] Form onSubmit triggered');
                                         e.preventDefault();
@@ -569,16 +600,16 @@ export default function StaffPage() {
                                     </div>
 
                                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing[3], marginTop: spacing[4] }}>
-                                        <Button 
-                                            tone="neutral" 
-                                            variant="ghost" 
+                                        <Button
+                                            tone="neutral"
+                                            variant="ghost"
                                             type="button"
                                             onClick={() => setShowModal(false)}
                                         >
                                             Cancelar
                                         </Button>
-                                        <Button 
-                                            tone="action" 
+                                        <Button
+                                            tone="action"
                                             type="button"
                                             disabled={busy || !newName || !newName.trim()}
                                             onClick={(e) => {
@@ -590,29 +621,29 @@ export default function StaffPage() {
                                                     disabled: busy || !newName || !newName.trim(),
                                                     timestamp: new Date().toISOString()
                                                 });
-                                                
+
                                                 // Prevenir comportamento padrão
                                                 e.preventDefault();
                                                 e.stopPropagation();
-                                                
+
                                                 // Validações
                                                 if (busy) {
                                                     console.warn('[StaffPage] Already processing, ignoring click');
                                                     return;
                                                 }
-                                                
+
                                                 if (!newName || !newName.trim()) {
                                                     console.warn('[StaffPage] Name is required');
                                                     toastError('O nome é obrigatório.');
                                                     return;
                                                 }
-                                                
+
                                                 if (!restaurantId) {
                                                     console.error('[StaffPage] No restaurantId');
                                                     toastError('Restaurante não identificado. Por favor, selecione um restaurante.');
                                                     return;
                                                 }
-                                                
+
                                                 // Chamar diretamente - não depender do form submit
                                                 console.log('[StaffPage] Calling handleCreateEmployee directly from button');
                                                 handleCreateEmployee(e);
