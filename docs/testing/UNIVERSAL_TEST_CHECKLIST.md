@@ -6,17 +6,17 @@
 
 ## 📋 PRÉ-CONDIÇÕES (FASE 0)
 
-| #   | Item                                              | Status | Notas |
-| --- | ------------------------------------------------- | ------ | ----- |
-| 0.1 | `fetchOrders()` com filtro/paginação implementado | ⬜     |       |
-| 0.2 | RBAC no backend (RLS policies)                    | ⬜     |       |
-| 0.3 | RLS bloqueando ações financeiras                  | ⬜     |       |
-| 0.4 | `idempotency_key` em criação de pedidos           | ⬜     |       |
-| 0.5 | Logger ativo (console + backend)                  | ⬜     |       |
-| 0.6 | Ambiente de teste configurado                     | ⬜     |       |
-| 0.7 | Stripe em Test Mode                               | ⬜     |       |
+| #   | Item                                              | Status | Notas                                                           |
+| --- | ------------------------------------------------- | ------ | --------------------------------------------------------------- |
+| 0.1 | `fetchOrders()` com filtro/paginação implementado | ✅     | Filtro `startOfDay` + `useCallback` em OrderContext.tsx L95-135 |
+| 0.2 | RBAC no backend (RLS policies)                    | ✅     | 5+ migrations RLS (20260117, 20260122, 20260127)                |
+| 0.3 | RLS bloqueando ações financeiras                  | ✅     | 20260122000002_hardening_p0_locking.sql                         |
+| 0.4 | `idempotency_key` em criação de pedidos           | ✅     | Migration 021 + 072 + OrderContext L73-74, L339-352             |
+| 0.5 | Logger ativo (console + backend)                  | ✅     | Logger.ts + app_logs table                                      |
+| 0.6 | Ambiente de teste configurado                     | ⬜     | Executar test-open-simulators.sh                                |
+| 0.7 | Stripe em Test Mode                               | ⬜     | Verificar STRIPE_PUBLIC_KEY                                     |
 
-**⚠️ Se algum item acima falhar, PARE. Não continue o teste.**
+**✅ Pré-condições de código verificadas. Falta: ambiente de teste e Stripe.**
 
 ---
 
