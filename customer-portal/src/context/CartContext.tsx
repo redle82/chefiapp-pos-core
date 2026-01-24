@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { trackAddToCart, trackInitiateCheckout } from '../lib/pixel';
 
 export interface CartItem {
     id: string; // product_id
@@ -6,6 +7,7 @@ export interface CartItem {
     price: number;
     quantity: number;
     notes?: string;
+    category?: string; // For tracking
 }
 
 interface CartContextType {
@@ -13,6 +15,7 @@ interface CartContextType {
     addToCart: (item: CartItem) => void;
     removeFromCart: (itemId: string) => void;
     clearCart: () => void;
+    initiateCheckout: () => void;
     total: number;
     itemCount: number;
 }
@@ -30,6 +33,15 @@ export function CartProvider({ children, slug }: { children: ReactNode; slug: st
     }, [items, slug]);
 
     const addToCart = (newItem: CartItem) => {
+        // Track AddToCart event
+        trackAddToCart({
+            id: newItem.id,
+            name: newItem.name,
+            category: newItem.category,
+            price: newItem.price,
+            quantity: newItem.quantity,
+        });
+
         setItems(prev => {
             const existing = prev.find(i => i.id === newItem.id);
             if (existing) {
@@ -49,16 +61,30 @@ export function CartProvider({ children, slug }: { children: ReactNode; slug: st
 
     const clearCart = () => setItems([]);
 
+    const initiateCheckout = () => {
+        // Track InitiateCheckout event
+        trackInitiateCheckout({
+            items: items.map(i => ({
+                id: i.id,
+                name: i.name,
+                price: i.price,
+                quantity: i.quantity,
+            })),
+            total,
+        });
+    };
+
     const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
     return (
-        <CartContext.Provider value={{ items, addToCart, removeFromCart, clearCart, total, itemCount }}>
+        <CartContext.Provider value={{ items, addToCart, removeFromCart, clearCart, initiateCheckout, total, itemCount }}>
             {children}
         </CartContext.Provider>
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCart() {
     const context = useContext(CartContext);
     if (!context) throw new Error('useCart must be used within CartProvider');

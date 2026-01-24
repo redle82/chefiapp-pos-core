@@ -66,9 +66,10 @@ export function CartDrawer() {
                 setOrderSuccess(false);
             }, 2000);
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Order failed', error);
-            alert(error.message || 'Erro ao enviar pedido. Tente novamente.');
+            const message = error instanceof Error ? error.message : 'Erro ao enviar pedido. Tente novamente.';
+            alert(message);
         } finally {
             setIsSubmitting(false);
         }

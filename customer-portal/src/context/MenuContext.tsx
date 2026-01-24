@@ -84,9 +84,9 @@ export function MenuProvider({ slug, children }: MenuProviderProps) {
 
                 const json = await response.json();
                 setData(json);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('Menu load error:', err);
-                setError(err.message || 'Falha ao carregar cardápio');
+                setError(err instanceof Error ? err.message : 'Falha ao carregar cardápio');
             } finally {
                 setIsLoading(false);
             }
@@ -114,6 +114,7 @@ export function MenuProvider({ slug, children }: MenuProviderProps) {
 
 // --- Hook ---
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useMenu() {
     const context = useContext(MenuContext);
     if (context === undefined) {
