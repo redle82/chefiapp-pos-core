@@ -14,10 +14,11 @@ import { AdvancedSearchPanel } from './components/AdvancedSearchPanel'; // P4-8
 import { DarkModeToggle } from '../../ui/components/DarkModeToggle'; // P3-5
 import { PresenceIndicator } from './components/PresenceIndicator'; // P5-7
 import { GamificationPanel } from './components/GamificationPanel'; // P6-8
+import { SessionXPWidget } from './components/SessionXPWidget'; // Phase 3: Gamification
 
 export const WorkerTaskStream: React.FC = () => {
     // Destructure completeTask here
-    const { tasks, startTask, completeTask, checkOut, activeWorkerId, activeRole, shiftMetrics, forecast } = useStaff();
+    const { tasks, startTask, completeTask, checkOut, activeWorkerId, activeRole, shiftMetrics, forecast, shiftStart } = useStaff();
     const { alerts } = useTableAlerts(); // FASE 2: Alertas automáticos
     const { suggestions } = useContextualSuggestions(); // FASE 2: Sugestões contextuais
     const { activeLesson, completeLesson, dismissLesson } = useTraining();
@@ -25,7 +26,7 @@ export const WorkerTaskStream: React.FC = () => {
 
     // P3-1 & P3-2: Task filtering and search
     const { filter, setFilter, searchQuery, setSearchQuery, filteredTasks } = useTaskFilters(tasks);
-    
+
     // P4-8: Advanced search state
     const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
 
@@ -73,6 +74,10 @@ export const WorkerTaskStream: React.FC = () => {
                 </div>
             </div>
 
+            {/* SESSION XP - PHASE 3 GAMIFICATION */}
+            <div style={{ marginBottom: 12 }}>
+                <SessionXPWidget tasks={tasks} shiftStart={shiftStart} />
+            </div>
             {/* TRAINING CARD - PHASE C - Contextual */}
             {activeLesson && (
                 <LessonCard
@@ -130,7 +135,7 @@ export const WorkerTaskStream: React.FC = () => {
                         {showAdvancedSearch ? '✕' : '🔍 Avançada'}
                     </Button>
                 </div>
-                
+
                 {/* P4-8: Advanced Search Panel */}
                 {showAdvancedSearch && (
                     <AdvancedSearchPanel onClose={() => setShowAdvancedSearch(false)} />
@@ -182,7 +187,7 @@ export const WorkerTaskStream: React.FC = () => {
                     />
                 ))}
             </div>
-            
+
             {/* P6-8: Gamification Panel */}
             <div style={{ marginTop: 24 }}>
                 <GamificationPanel />

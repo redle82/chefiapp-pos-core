@@ -6,6 +6,26 @@
 
 import { supabase } from '../supabase';
 
+// Helper to standardise Profile from DB row
+const mapFromDb = (row: any): CustomerProfile => ({
+    id: row.id,
+    restaurant_id: row.restaurant_id,
+    email: row.email,
+    phone: row.phone,
+    full_name: row.name, // Mapped from 'name'
+    preferred_name: row.name?.split(' ')[0], // Derived
+    date_of_birth: row.date_of_birth, // If exists
+    dietary_restrictions: row.dietary_restrictions || [],
+    preferences: row.preferences || {},
+    total_visits: row.visit_count || 0, // Mapped
+    total_spent: (row.total_spend_cents || 0) / 100, // Mapped & Converted
+    last_visit_at: row.last_visit_at,
+    notes: row.notes,
+    tags: row.tags || [],
+    created_at: row.created_at,
+    updated_at: row.updated_at
+});
+
 export interface CustomerProfile {
     id: string;
     restaurant_id: string;
@@ -39,7 +59,7 @@ export class CustomerService {
     ): Promise<CustomerProfile> {
         // Tentar encontrar cliente existente
         let query = supabase
-            .from('customer_profiles')
+            .from('gm_customers')
             .select('*')
             .eq('restaurant_id', restaurantId);
 
@@ -49,26 +69,28 @@ export class CustomerService {
             query = query.eq('phone', data.phone);
         }
 
-        const { data: existing, error: searchError } = await query.single();
+        const { data: existing, error: searchError } = await query.maybeSingle();
 
         if (existing && !searchError) {
-            return existing;
+            return mapFromDb(existing);
         }
 
         // Criar novo cliente
         const { data: newCustomer, error: createError } = await supabase
-            .from('customer_profiles')
+            .from('gm_customers')
             .insert({
                 restaurant_id: restaurantId,
                 email: data.email || null,
                 phone: data.phone || null,
-                full_name: data.full_name || null,
+                name: data.full_name || null, // Map to 'name'
+                total_spend_cents: 0,
+                visit_count: 0
             })
             .select()
             .single();
 
         if (createError) throw createError;
-        return newCustomer;
+        return mapFromDb(newCustomer);
     }
 
     /**
@@ -78,30 +100,18 @@ export class CustomerService {
         customerId: string,
         orderTotal: number
     ): Promise<void> {
+        // Convert to cents
+        const amountCents = Math.round(orderTotal * 100);
+
         const { error } = await supabase.rpc('update_customer_after_visit', {
             p_customer_id: customerId,
-            p_order_total: orderTotal,
+            p_order_total_cents: amountCents,
         });
 
         if (error) {
-            // Fallback: update manual se RPC não existir
-            const { data: customer } = await supabase
-                .from('customer_profiles')
-                .select('total_visits, total_spent')
-                .eq('id', customerId)
-                .single();
-
-            if (customer) {
-                await supabase
-                    .from('customer_profiles')
-                    .update({
-                        total_visits: (customer.total_visits || 0) + 1,
-                        total_spent: (parseFloat(customer.total_spent?.toString() || '0') + orderTotal).toFixed(2),
-                        last_visit_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                    })
-                    .eq('id', customerId);
-            }
+            console.error('Failed to update customer stats via RPC', error);
+            // Fallback: update manual se RPC falhar (embora RPC seja preferido)
+            // Note: manual update of counters is racy, better to just log error.
         }
     }
 
@@ -114,15 +124,15 @@ export class CustomerService {
     ): Promise<CustomerProfile[]> {
         const searchTerm = `%${query}%`;
         const { data, error } = await supabase
-            .from('customer_profiles')
+            .from('gm_customers')
             .select('*')
             .eq('restaurant_id', restaurantId)
-            .or(`full_name.ilike.${searchTerm},email.ilike.${searchTerm},phone.ilike.${searchTerm}`)
+            .or(`name.ilike.${searchTerm},email.ilike.${searchTerm},phone.ilike.${searchTerm}`)
             .order('last_visit_at', { ascending: false, nullsFirst: false })
             .limit(20);
 
         if (error) throw error;
-        return data || [];
+        return (data || []).map(mapFromDb);
     }
 
     /**
@@ -133,14 +143,14 @@ export class CustomerService {
         limit: number = 10
     ): Promise<CustomerProfile[]> {
         const { data, error } = await supabase
-            .from('customer_profiles')
+            .from('gm_customers')
             .select('*')
             .eq('restaurant_id', restaurantId)
-            .order('total_spent', { ascending: false })
+            .order('total_spend_cents', { ascending: false })
             .limit(limit);
 
         if (error) throw error;
-        return data || [];
+        return (data || []).map(mapFromDb);
     }
 
     /**
@@ -151,13 +161,13 @@ export class CustomerService {
         customerId: string
     ): Promise<CustomerProfile | null> {
         const { data, error } = await supabase
-            .from('customer_profiles')
+            .from('gm_customers')
             .select('*')
             .eq('restaurant_id', restaurantId)
             .eq('id', customerId)
             .single();
 
         if (error && error.code !== 'PGRST116') throw error;
-        return data || null;
+        return data ? mapFromDb(data) : null;
     }
 }

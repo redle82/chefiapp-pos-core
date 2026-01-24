@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { KernelContext } from '../../core/kernel/KernelContext'; // Sovereign Dependency
 
 // --- The Living Menu Schema ---
 
@@ -43,6 +44,9 @@ interface ProductContextState {
 const ProductContext = createContext<ProductContextState | undefined>(undefined);
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    // 0. Kernel Injection (Sovereignty)
+    const { kernel } = useContext(KernelContext) || {};
+
     // 1. Truth State
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
@@ -97,7 +101,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     // --- Actions (Optimistic Updates + Sync) ---
 
     const addProduct = async (input: Omit<Product, 'usageCount' | 'firstUsedAt' | 'lastUsedAt'>) => {
-        // 1. Optimistic Update
+        // 1. Optimistic Update (UI Feedback)
         const tempId = crypto.randomUUID();
         const newProduct: Product = {
             ...input,
@@ -108,34 +112,38 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         };
         setProducts(prev => [...prev, newProduct]);
 
-        // 2. Persist
+        // 2. Sovereign Persist (Kernel Law 1)
         try {
-            const { supabase } = await import('../../core/supabase');
-            const { getTabIsolated } = await import('../../core/storage/TabIsolatedStorage');
-            const { data: { user } } = await supabase.auth.getUser();
-            const restaurantId = getTabIsolated('chefiapp_restaurant_id');
-
-            const { error, data } = await supabase.from('gm_products').insert({
-                restaurant_id: restaurantId,
-                name: input.name,
-                price_cents: Math.round(input.price * 100),
-                track_stock: input.trackStock || false,
-                stock_quantity: input.stockQuantity || 0,
-                available: true
-                // category_id? We are not setting it here, default null or handle generic?
-                // For 'Mínimo', we skip proper category ID lookup for manual adds unless needed.
-            }).select().single();
-
-            if (error) throw error;
-
-            // Fix ID after sync
-            if (data) {
-                setProducts(prev => prev.map(p => p.id === tempId ? { ...p, id: data.id } : p));
+            if (!kernel) {
+                console.error('[ProductContext] Kernel not available for Sovereign Write');
+                return;
             }
 
+            const { getTabIsolated } = await import('../../core/storage/TabIsolatedStorage');
+            const restaurantId = getTabIsolated('chefiapp_restaurant_id');
+
+            await kernel.execute({
+                entity: 'PRODUCT',
+                entityId: tempId, // Frontend Generated ID (Sovereign)
+                event: 'CREATE',
+                restaurantId,
+                payload: {
+                    name: input.name,
+                    priceCents: Math.round(input.price * 100),
+                    trackStock: input.trackStock || false,
+                    stockQuantity: input.stockQuantity || 0,
+                    categoryId: null // Explicitly null for now
+                }
+            });
+
+            console.log('[ProductContext] Sovereign Product Created:', tempId);
+
+            // No need to fix ID, as we dictated it!
+
         } catch (e) {
-            console.error('[ProductContext] Save Failed:', e);
-            // Revert or queue (Out of scope for Mínimo)
+            console.error('[ProductContext] Sovereign Save Failed:', e);
+            // Revert state on failure
+            setProducts(prev => prev.filter(p => p.id !== tempId));
         }
     };
 

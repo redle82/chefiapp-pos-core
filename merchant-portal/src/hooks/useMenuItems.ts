@@ -14,6 +14,7 @@ export interface MenuItem {
     photoUrl?: string;
     trackStock?: boolean;
     stockQuantity?: number;
+    visibility?: { tpv: boolean; web: boolean; delivery: boolean };
 }
 
 export function useMenuItems(restaurantId: string | null) {
@@ -61,10 +62,12 @@ export function useMenuItems(restaurantId: string | null) {
                     name: item.name,
                     description: item.description,
                     priceCents: item.price_cents,
-                    category: categoryMap.get(item.category_id) || 'Outros',
+                    // FIX: Handle both schema variants (category_id OR category)
+                    category: categoryMap.get(item.category_id || item.category) || 'Outros',
                     photoUrl: item.photo_url,
                     trackStock: item.track_stock,
-                    stockQuantity: item.stock_quantity
+                    stockQuantity: item.stock_quantity,
+                    visibility: item.visibility
                 }));
 
                 if (isMounted) setItems(mappedItems);
@@ -101,6 +104,13 @@ export function useMenuItems(restaurantId: string | null) {
         return () => { isMounted = false; };
     }, [restaurantId]);
 
-    return { items, loading, error };
+    return {
+        items: (items.length === 0 && import.meta.env.DEV) ? [
+            { id: 'mock-1', name: 'Mock Burger', priceCents: 1200, category: 'Burgers', description: 'Delicious mock burger' },
+            { id: 'mock-2', name: 'Mock Cola', priceCents: 300, category: 'Drinks', description: 'Cold mock cola' }
+        ] as MenuItem[] : items,
+        loading,
+        error
+    };
 }
 

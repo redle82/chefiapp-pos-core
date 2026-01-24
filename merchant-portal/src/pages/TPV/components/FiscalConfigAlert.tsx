@@ -29,9 +29,9 @@ export const FiscalConfigAlert: React.FC<FiscalConfigAlertProps> = ({ restaurant
                 // Por enquanto, verificar se há InvoiceXpress configurado
                 // TODO: Verificar configuração real quando implementar settings UI
                 const { data, error } = await supabase
-                    .from('gm_restaurant_settings')
+                    .from('gm_restaurants')
                     .select('fiscal_config')
-                    .eq('restaurant_id', restaurantId)
+                    .eq('id', restaurantId)
                     .single();
 
                 if (error && error.code !== 'PGRST116') {

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { PublicMenuProvider, usePublicMenu } from '../context/PublicMenuContext';
 import { CartProvider, useCart } from '../context/CartContext';
 import { CartFloatingButton } from '../components/CartFloatingButton';
@@ -9,6 +9,9 @@ import { motion } from 'framer-motion';
 const StoreLayout = () => {
     const { storeName, products, categories } = usePublicMenu();
     const [activeCategory, setActiveCategory] = useState<string>('all');
+    const [searchParams] = useSearchParams();
+    // ERRO-021 Fix: Extrair número da mesa da URL
+    const tableNumber = searchParams.get('table');
 
     const filteredProducts = activeCategory === 'all'
         ? products
@@ -16,6 +19,13 @@ const StoreLayout = () => {
 
     return (
         <div className="min-h-screen bg-neutral-50 text-neutral-900 pb-20">
+            {/* ERRO-021 Fix: Banner de mesa no topo */}
+            {tableNumber && (
+                <div className="bg-gold-500 text-black px-6 py-3 text-center font-bold text-lg border-b-2 border-yellow-400">
+                    🪑 Mesa {tableNumber}
+                </div>
+            )}
+            
             {/* Hero Section */}
             <div className="h-48 bg-neutral-900 flex items-end p-6 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
@@ -63,9 +73,29 @@ const StoreLayout = () => {
                         <div className="flex-1">
                             <h3 className="font-semibold text-neutral-900">{product.name}</h3>
                             <p className="text-neutral-500 text-sm line-clamp-2">{product.description || 'Sem descrição'}</p>
-                            <span className="block mt-2 font-medium text-neutral-900">
-                                {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(product.price)}
-                            </span>
+                            <div className="flex items-center gap-3 mt-2">
+                                <span className="font-medium text-neutral-900">
+                                    {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(product.price)}
+                                </span>
+                                {/* ERRO-012 Fix: Badge de tempo estimado de preparo */}
+                                {(() => {
+                                    // Estimativa baseada em categoria (pragmática, sem DB)
+                                    const category = (product.category || '').toLowerCase();
+                                    let estimatedTime = '15-20 min';
+                                    if (category.includes('bebida') || category.includes('drink') || category.includes('refrigerante')) {
+                                        estimatedTime = '5 min';
+                                    } else if (category.includes('sobremesa') || category.includes('dessert')) {
+                                        estimatedTime = '10 min';
+                                    } else if (category.includes('entrada') || category.includes('starter')) {
+                                        estimatedTime = '10-15 min';
+                                    }
+                                    return (
+                                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+                                            ⏱️ {estimatedTime}
+                                        </span>
+                                    );
+                                })()}
+                            </div>
                         </div>
                         {/* Image Placeholder or Action */}
                         <div className="ml-4 w-20 h-20 bg-neutral-100 rounded-lg flex items-center justify-center text-2xl">
@@ -109,10 +139,45 @@ const AddToCartButton = ({ product }: { product: any }) => {
 
 export const PublicStorePage = () => {
     const { slug } = useParams();
+    const [searchParams] = useSearchParams();
+    const tableNumber = searchParams.get('table');
+    const [hasPendingOrder, setHasPendingOrder] = useState(false); // ERRO-022 Fix
+
+    // ERRO-022 Fix: Verificar pedido pendente ao carregar
+    useEffect(() => {
+        const checkPendingOrder = async () => {
+            if (!tableNumber || !slug) return;
+            
+            try {
+                const { WebOrderingService } = await import('../../core/services/WebOrderingService');
+                const config = await WebOrderingService.getWebConfig(slug);
+                if (!config) return;
+
+                // Verificar se há pedido pendente para esta mesa
+                // TODO: Implementar verificação real no backend
+                // Por enquanto, apenas verificar localStorage
+                const pendingOrderKey = `pending_order_${slug}_${tableNumber}`;
+                const pending = localStorage.getItem(pendingOrderKey);
+                if (pending) {
+                    setHasPendingOrder(true);
+                }
+            } catch (e) {
+                console.error('Error checking pending order:', e);
+            }
+        };
+
+        checkPendingOrder();
+    }, [tableNumber, slug]);
 
     return (
         <PublicMenuProvider slug={slug || ''}>
-            <CartProvider slug={slug || ''}>
+            <CartProvider slug={slug || ''} tableNumber={tableNumber ? parseInt(tableNumber) : undefined}>
+                {/* ERRO-022 Fix: Banner de pedido pendente */}
+                {hasPendingOrder && (
+                    <div className="bg-blue-500 text-white px-6 py-3 text-center font-semibold border-b-2 border-blue-600">
+                        Você já tem um pedido pendente. <a href="#" className="underline">Ver status</a>
+                    </div>
+                )}
                 <StoreLayout />
             </CartProvider>
         </PublicMenuProvider>

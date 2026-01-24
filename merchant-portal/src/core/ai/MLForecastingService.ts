@@ -4,7 +4,7 @@
  * Serviço para previsões usando Machine Learning
  */
 
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 import { supabase } from '../supabase';
 
 export interface MLForecast {
@@ -52,7 +52,7 @@ class MLForecastingService {
 
             const { data: orders, error } = await supabase
                 .from('gm_orders')
-                .select('created_at, total_cents')
+                .select('created_at, total_amount')
                 .eq('restaurant_id', restaurantId)
                 .gte('created_at', startDate.toISOString())
                 .neq('status', 'cancelled');
@@ -72,7 +72,7 @@ class MLForecastingService {
                 }
                 const day = dailyData.get(date)!;
                 day.orders++;
-                day.revenue += order.total_cents;
+                day.revenue += order.total_amount || 0; // total_amount is already in cents
             }
 
             const avgOrders = Array.from(dailyData.values()).reduce((sum, d) => sum + d.orders, 0) / dailyData.size;
@@ -86,7 +86,7 @@ class MLForecastingService {
 
                 const dayOfWeek = date.getDay();
                 const weekendMultiplier = (dayOfWeek === 0 || dayOfWeek === 6) ? 1.3 : 1.0;
-                
+
                 // ML-enhanced prediction (would use actual model)
                 const predictedOrders = Math.round(avgOrders * weekendMultiplier * (1 + Math.random() * 0.1 - 0.05));
                 const predictedRevenue = Math.round(avgRevenue * weekendMultiplier * (1 + Math.random() * 0.1 - 0.05));

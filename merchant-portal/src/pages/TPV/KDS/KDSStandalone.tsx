@@ -21,6 +21,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { OrderProvider } from '../context/OrderContextReal';
+import { KernelProvider } from '../../../core/kernel/KernelContext';
+import { OfflineOrderProvider } from '../context/OfflineOrderContext';
 import KitchenDisplay from './KitchenDisplay';
 import { KDSLayout } from './KDSLayout';
 import { setTabIsolated } from '../../../core/storage/TabIsolatedStorage';
@@ -28,6 +30,12 @@ import { setTabIsolated } from '../../../core/storage/TabIsolatedStorage';
 const KDSStandalone = () => {
     const { restaurantId } = useParams<{ restaurantId: string }>();
     const [ready, setReady] = useState(false);
+
+    // Mission 55: Smart Routing (Kitchen vs Bar)
+    // Read ?station=BAR or ?station=KITCHEN from URL
+    const searchParams = new URLSearchParams(window.location.search);
+    const stationParam = searchParams.get('station')?.toUpperCase();
+    const initialStation = (stationParam === 'BAR' || stationParam === 'KITCHEN') ? stationParam : 'ALL';
 
     useEffect(() => {
         if (restaurantId) {
@@ -50,9 +58,13 @@ const KDSStandalone = () => {
 
     return (
         <KDSLayout>
-            <OrderProvider>
-                <KitchenDisplay />
-            </OrderProvider>
+            <KernelProvider tenantId={restaurantId}>
+                <OfflineOrderProvider>
+                    <OrderProvider restaurantId={restaurantId}>
+                        <KitchenDisplay initialStation={initialStation as any} />
+                    </OrderProvider>
+                </OfflineOrderProvider>
+            </KernelProvider>
         </KDSLayout>
     );
 };

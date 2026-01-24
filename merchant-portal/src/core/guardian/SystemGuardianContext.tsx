@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
-import { OnboardingCore } from '../onboarding/OnboardingCore';
+
 import { getTabIsolated } from '../storage/TabIsolatedStorage';
+import { isDevStableMode } from '../runtime/devStableMode';
 
 // --- TYPES ---
 
@@ -64,6 +65,7 @@ export const SystemGuardianProvider = ({ children }: { children: React.ReactNode
 
     // --- CLEAR OLD ERRORS ---
     useEffect(() => {
+        if (isDevStableMode()) return;
         const interval = setInterval(() => {
             setErrors(prev => prev.filter(e => Date.now() - e.timestamp < 60000)); // Clear > 1min
         }, 30000);
@@ -72,8 +74,11 @@ export const SystemGuardianProvider = ({ children }: { children: React.ReactNode
 
     // --- PULSE CHECK (The Heartbeat) ---
     const checkPulse = useCallback(async () => {
+        // DEV_STABLE_MODE: stop pulse spam while stabilizing Gate/Auth/Tenant.
+        if (isDevStableMode()) return;
         const now = Date.now();
-        console.log('[SystemGuardian] Checking Pulse...');
+        // No logs in DEV_STABLE_MODE (only hard-stop logs allowed)
+        // Logs já estão protegidos pelo guard acima
 
         // 1. Check Auth
         const { data: { session }, error: authError } = await supabase.auth.getSession();
@@ -144,6 +149,7 @@ export const SystemGuardianProvider = ({ children }: { children: React.ReactNode
 
     // Initial Pulse
     useEffect(() => {
+        if (isDevStableMode()) return;
         checkPulse();
         // Optional: periodic pulse
         // const i = setInterval(checkPulse, 60000);

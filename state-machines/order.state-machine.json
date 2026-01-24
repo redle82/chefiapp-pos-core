@@ -7,6 +7,43 @@
     "OPEN": {
       "description": "Order created, accepting items",
       "transitions": {
+        "CREATE": {
+          "target": "OPEN",
+          "description": "Persist initial creation",
+          "effects": [
+            "persistOrder"
+          ]
+        },
+        "ADD_ITEM": {
+          "target": "OPEN",
+          "description": "Add item to order",
+          "guards": [
+            "orderIsOpen"
+          ],
+          "effects": [
+            "persistOrderItem"
+          ]
+        },
+        "REMOVE_ITEM": {
+          "target": "OPEN",
+          "description": "Remove item from order",
+          "guards": [
+            "orderIsOpen"
+          ],
+          "effects": [
+            "persistRemoveItem"
+          ]
+        },
+        "UPDATE_ITEM_QTY": {
+          "target": "OPEN",
+          "description": "Update item quantity",
+          "guards": [
+            "orderIsOpen"
+          ],
+          "effects": [
+            "persistUpdateItemQty"
+          ]
+        },
         "FINALIZE": {
           "target": "LOCKED",
           "description": "Finalize order (calculate totals, no more items)",
@@ -16,7 +53,8 @@
           ],
           "effects": [
             "calculateTotal",
-            "lockItems"
+            "lockItems",
+            "persistOrderStatus"
           ]
         },
         "CANCEL": {
@@ -28,11 +66,32 @@
     "LOCKED": {
       "description": "Order finalized, total calculated (immutable)",
       "transitions": {
+        "MARK_READY": {
+          "target": "LOCKED",
+          "description": "Mark order as ready for pickup",
+          "effects": [
+            "persistOrderStatus"
+          ]
+        },
+        "SERVE": {
+          "target": "LOCKED",
+          "description": "Mark order as served",
+          "effects": [
+            "persistOrderStatus"
+          ]
+        },
+        "REGISTER_PAYMENT": {
+          "target": "LOCKED",
+          "description": "Register partial payment",
+          "effects": [
+            "persistPayment"
+          ]
+        },
         "PAY": {
           "target": "PAID",
-          "description": "Payment confirmed",
-          "guards": [
-            "hasConfirmedPayment"
+          "description": "Process full payment and close order",
+          "effects": [
+            "persistPayment"
           ]
         },
         "CANCEL": {
@@ -82,4 +141,3 @@
     }
   }
 }
-

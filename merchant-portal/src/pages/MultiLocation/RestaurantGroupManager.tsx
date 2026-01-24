@@ -16,6 +16,7 @@ import { spacing } from '../../ui/design-system/tokens/spacing';
 import { CONFIG } from '../../config';
 import { fetchJson } from '../../api';
 import { useSupabaseAuth } from '../../core/auth/useSupabaseAuth';
+import { supabase } from '../../core/supabase';
 
 interface RestaurantGroup {
   id: string;
@@ -38,6 +39,7 @@ interface Restaurant {
   name: string;
 }
 
+
 export const RestaurantGroupManager: React.FC = () => {
   const { tenantId, memberships } = useTenant();
   const { session } = useSupabaseAuth();
@@ -48,29 +50,41 @@ export const RestaurantGroupManager: React.FC = () => {
   const [newGroupName, setNewGroupName] = useState('');
   const [selectedRestaurants, setSelectedRestaurants] = useState<string[]>([]);
 
+  // Removed incorrect destructuring
+
+
   useEffect(() => {
     loadGroups();
   }, [tenantId, session]);
 
   const loadGroups = async () => {
-    if (!session?.access_token) return;
+    if (!session?.user?.id) return;
 
     try {
       setLoading(true);
-      const response = await fetchJson(
-        CONFIG.API_BASE || '',
-        '/api/restaurant-groups',
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-ChefiApp-Token': session.access_token,
-            'X-User-Id': session.user?.id || '',
-          },
-        }
-      );
+      // Fetch Groups owned by user
+      const { data: groupsData, error: groupsError } = await supabase
+        .from('gm_restaurant_groups')
+        .select(`
+          *,
+          members:gm_restaurant_group_members(restaurant_id)
+        `)
+        .eq('owner_id', session.user.id);
 
-      setGroups(response.groups || []);
+      if (groupsError) throw groupsError;
+
+      // Transform to UI shape
+      const formattedGroups = groupsData.map((g: any) => ({
+        id: g.id,
+        ownerId: g.owner_id,
+        name: g.name,
+        restaurantIds: g.members.map((m: any) => m.restaurant_id),
+        settings: g.settings,
+        createdAt: g.created_at,
+        updatedAt: g.updated_at
+      }));
+
+      setGroups(formattedGroups);
       setError(null);
     } catch (err: any) {
       console.error('Failed to load groups:', err);
@@ -81,35 +95,47 @@ export const RestaurantGroupManager: React.FC = () => {
   };
 
   const handleCreateGroup = async () => {
-    if (!session?.access_token || !newGroupName.trim() || selectedRestaurants.length === 0) {
+    if (!session?.user?.id || !newGroupName.trim() || selectedRestaurants.length === 0) {
       setError('Nome e pelo menos um restaurante são obrigatórios');
       return;
     }
 
     try {
       setLoading(true);
-      const response = await fetchJson(
-        CONFIG.API_BASE || '',
-        '/api/restaurant-groups',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-ChefiApp-Token': session.access_token,
-            'X-User-Id': session.user?.id || '',
-          },
-          body: JSON.stringify({
-            name: newGroupName,
-            restaurantIds: selectedRestaurants,
+
+      // 1. Create Group
+      const { data: groupData, error: groupError } = await supabase
+        .from('gm_restaurant_groups')
+        .insert({
+          name: newGroupName,
+          owner_id: session.user.id,
+          settings: {
             sharedMenu: false,
             sharedMarketplaceAccount: false,
             consolidatedBilling: false,
             allowLocationOverrides: true,
-          }),
-        }
-      );
+          }
+        })
+        .select()
+        .single();
 
-      setGroups([...groups, response.group]);
+      if (groupError) throw groupError;
+
+      // 2. Add Members
+      const membersPayload = selectedRestaurants.map(rid => ({
+        group_id: groupData.id,
+        restaurant_id: rid,
+        role: 'member'
+      }));
+
+      const { error: membersError } = await supabase
+        .from('gm_restaurant_group_members')
+        .insert(membersPayload);
+
+      if (membersError) throw membersError;
+
+      // 3. Refresh
+      loadGroups();
       setShowCreateModal(false);
       setNewGroupName('');
       setSelectedRestaurants([]);

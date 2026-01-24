@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useCoreHealth } from '../../core/health';
 import { CoreStatusBanner } from './CoreStatusBanner';
+import { isDevStableMode } from '../../core/runtime/devStableMode';
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -32,6 +33,10 @@ export const AppShell: React.FC<AppShellProps> = ({
   healthMonitoring = true,
   operationalMode = false,
 }) => {
+  // DEV_STABLE_MODE: Desabilitar health monitoring para reduzir ruído
+  const devStable = isDevStableMode();
+  const shouldMonitorHealth = healthMonitoring && !devStable;
+
   // BUG-023 FIX: Detect network offline status
   const [isNetworkOnline, setIsNetworkOnline] = useState(navigator.onLine);
 
@@ -49,10 +54,11 @@ export const AppShell: React.FC<AppShellProps> = ({
   }, []);
 
   // 1. Health Logic
+  // DEV_STABLE_MODE: Polling mais espaçado quando DOWN para reduzir requisições
   const { status, lastChecked, check } = useCoreHealth({
-    autoStart: healthMonitoring,
-    pollInterval: 60000,
-    downPollInterval: 10000,
+    autoStart: shouldMonitorHealth,
+    pollInterval: 60000, // 60s quando UP
+    downPollInterval: devStable ? 120000 : 30000, // 2min em DEV_STABLE, 30s normal quando DOWN
   });
 
   return (

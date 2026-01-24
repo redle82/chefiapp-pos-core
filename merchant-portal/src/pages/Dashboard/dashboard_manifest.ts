@@ -98,13 +98,6 @@ export const SOVEREIGN_MANIFEST: SovereignSection[] = [
             { id: 'fin_top', label: 'Top Performance', description: 'Produtos Estrela', status: 'locked', icon: '🌟', phase: 'Finance' },
             { id: 'fin_cash', label: 'Fecho de Caixa', description: 'Conciliação e Sangria', status: 'active', icon: '💵' }
         ]
-    },
-    {
-        id: 'evolution',
-        title: 'Evolução (Roadmap)',
-        modules: [
-            { id: 'evo_roadmap', label: 'Roadmap do Produto', description: 'O que estamos construindo', status: 'active', icon: '🚀' },
-            { id: 'evo_mvp', label: 'Status MVP', description: 'Fase de Observação Ativa', status: 'active', icon: '🏗️' }
-        ]
     }
+    // Meta-produto (Roadmap, Status MVP) moved to Evolve Hub - see MENU_CONTRACT.md
 ];

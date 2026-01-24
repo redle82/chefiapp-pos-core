@@ -1,72 +1,87 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOfflineQueue } from '../../core/queue/useOfflineQueue';
-import { GlobalEventStore } from '../../core/events/EventStore';
-import type { EventEnvelope } from '../../core/events/SystemEvents';
-import { SealGenerator } from '../../core/events/SealGenerator';
+
 
 export const CartDrawer: React.FC = () => {
-    const { items, total, isCartOpen, setIsCartOpen, updateQuantity, clearCart } = useCart();
-    const { enqueue } = useOfflineQueue();
-    // const enqueue = async (item: any) => { console.log('Mock Enqueue:', item); };
+    const { items, total, isCartOpen, setIsCartOpen, updateQuantity, clearCart, slug, tableNumber } = useCart();
+
+    // Status State
+    const [status, setStatus] = React.useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+    const [message, setMessage] = React.useState('');
+    // ERRO-017 Fix: Estado para cancelar pedido
+    const [orderId, setOrderId] = React.useState<string | null>(null);
+    const [orderTimestamp, setOrderTimestamp] = React.useState<number | null>(null);
 
     const handleCheckout = async () => {
         if (items.length === 0) return;
+        setStatus('sending');
+        setMessage('Enviando pedido...');
 
-        // Core 5 -> Core 2 Injection 💉
-        // Core 5 -> Core 2 Injection 💉
-        // 🏗️ IRON CORE: The Customer is an Actor.
-        const orderId = `ord-${Date.now()}`;
-        const rawPayload = {
-            id: orderId,
-            tableNumber: 0, // 0 = Web/Takeaway
-            status: 'new', // Explicit status
-            items: items.map(i => ({
-                id: i.productId,
-                name: i.name,
-                quantity: i.qty,
-                price: i.price,
-                notes: i.notes
-            })),
-            total,
-            origin: 'web',
-            customerName: 'Cliente Web'
-        };
+        try {
+            // 1. Get Restaurant Config
+            const { WebOrderingService } = await import('../../core/services/WebOrderingService');
+            const config = await WebOrderingService.getWebConfig(slug);
 
-        // 1. Construct Fact
-        const event: EventEnvelope = {
-            eventId: crypto.randomUUID(),
-            type: 'ORDER_CREATED',
-            payload: rawPayload,
-            meta: {
-                timestamp: Date.now(),
-                actorId: 'public_user',
-                sessionId: 'web_session',
-                version: 1
+            if (!config) {
+                setStatus('error');
+                setMessage('Erro ao identificar restaurante. Tente recarregar.');
+                return;
             }
-        };
 
-        // 2. Seal It
-        event.seal = await SealGenerator.seal(event);
+            // 2. Submit Order
+            const result = await WebOrderingService.submitOrderWithRetry({
+                restaurant_id: config.restaurant_id,
+                items: items.map(i => ({
+                    product_id: i.productId,
+                    name: i.name,
+                    quantity: i.qty,
+                    price_cents: Math.round(i.price * 100), // Convert to cents
+                    notes: i.notes
+                })),
+                customer_name: 'Cliente Web', // TODO: Add Name Input
+                table_number: tableNumber || 0, // ERRO-021 Fix: Usar número da mesa da URL ou 0 (Web/Takeaway)
+            }, (progress) => {
+                setMessage(progress.message);
+            });
 
-        // 3. Commit to Local History (Kiosk/User Device)
-        await GlobalEventStore.append(event);
+            if (result.success) {
+                setStatus('success');
+                // ERRO-001 Fix: Feedback claro e compreensível após envio
+                setMessage('✅ Pedido recebido! Aguarde o preparo.');
+                
+                // ERRO-022 Fix: Salvar pedido pendente no localStorage
+                if (tableNumber) {
+                    const pendingOrderKey = `pending_order_${slug}_${tableNumber}`;
+                    localStorage.setItem(pendingOrderKey, JSON.stringify({
+                        orderId: result.order_id,
+                        timestamp: Date.now()
+                    }));
+                }
+                
+                // ERRO-017 Fix: Armazenar orderId e timestamp para cancelamento
+                if (result.order_id) {
+                    setOrderId(result.order_id);
+                    setOrderTimestamp(Date.now());
+                    
+                    // ERRO-005 Fix: Redirecionar para página de status após sucesso
+                    setTimeout(() => {
+                        window.location.href = `/public/${slug}/status/${result.order_id}`;
+                    }, 2000); // Aguardar 2s para mostrar mensagem de sucesso
+                }
+                
+                // ERRO-017 Fix: Não fechar drawer automaticamente, permitir cancelar
+                // setTimeout removido - drawer fica aberto para mostrar botão de cancelar
+            } else {
+                setStatus('error');
+                setMessage(result.message || 'Erro ao enviar pedido. Tente novamente.');
+            }
 
-        // 4. Emit to Sovereign Queue (Transport)
-        await enqueue({
-            id: event.eventId,
-            type: 'ORDER_CREATE',
-            payload: rawPayload, // Legacy Protocol (Server expects raw)
-            createdAt: event.meta.timestamp,
-            attempts: 0,
-            status: 'queued'
-        });
-
-        // alert(`Pedido enviado para o balcão! ID: ${orderId}`);
-        console.log(`Pedido enviado para o balcão! ID: ${orderId}`);
-        clearCart();
-        setIsCartOpen(false);
+        } catch (err) {
+            console.error('Checkout failed', err);
+            setStatus('error');
+            setMessage('Erro ao enviar pedido. Verifique sua conexão.');
+        }
     };
 
     return (
@@ -122,6 +137,18 @@ export const CartDrawer: React.FC = () => {
                                         </div>
 
                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {/* ERRO-013 Fix: Botão remover item */}
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm(`Remover ${item.name}?`)) {
+                                                        updateQuantity(item.id, -item.qty); // Remove completamente
+                                                    }
+                                                }}
+                                                className="w-7 h-7 rounded border border-red-500/50 text-red-400 flex items-center justify-center hover:bg-red-500/20"
+                                                title="Remover item"
+                                            >
+                                                ✕
+                                            </button>
                                             <button
                                                 onClick={() => updateQuantity(item.id, -1)}
                                                 className="w-7 h-7 rounded border border-white/10 text-white/50 flex items-center justify-center"
@@ -142,6 +169,59 @@ export const CartDrawer: React.FC = () => {
 
                         {/* Footer */}
                         <div className="p-6 bg-white/5 border-t border-white/5">
+                            {/* ERRO-001 Fix: Feedback visual claro após envio */}
+                            {status === 'success' && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-4 p-4 bg-green-500/20 border border-green-500/50 rounded-xl"
+                                >
+                                    <p className="text-green-400 font-semibold text-center">{message}</p>
+                                    {/* ERRO-017 Fix: Botão cancelar pedido (visível por 2 minutos) */}
+                                    {orderId && orderTimestamp && (Date.now() - orderTimestamp < 120000) && (
+                                        <button
+                                            onClick={async () => {
+                                                if (confirm('Cancelar pedido? Esta ação não pode ser desfeita.')) {
+                                                    try {
+                                                        // TODO: Implementar cancelamento no backend
+                                                        // Por enquanto, apenas limpar estado local
+                                                        setOrderId(null);
+                                                        setOrderTimestamp(null);
+                                                        setStatus('idle');
+                                                        clearCart();
+                                                        setIsCartOpen(false);
+                                                        alert('Pedido cancelado. Entre em contato com o restaurante se necessário.');
+                                                    } catch (e) {
+                                                        alert('Erro ao cancelar pedido. Entre em contato com o restaurante.');
+                                                    }
+                                                }
+                                            }}
+                                            className="mt-3 w-full py-2 bg-red-500/20 border border-red-500/50 text-red-400 font-semibold rounded-lg hover:bg-red-500/30 transition-colors"
+                                        >
+                                            Cancelar Pedido
+                                        </button>
+                                    )}
+                                </motion.div>
+                            )}
+                            {status === 'error' && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-xl"
+                                >
+                                    <p className="text-red-400 font-semibold text-center">{message}</p>
+                                </motion.div>
+                            )}
+                            {status === 'sending' && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-4 p-4 bg-blue-500/20 border border-blue-500/50 rounded-xl"
+                                >
+                                    <p className="text-blue-400 font-semibold text-center">{message}</p>
+                                </motion.div>
+                            )}
+
                             <div className="flex justify-between items-center mb-6">
                                 <span className="text-white/60">Total</span>
                                 <span className="text-2xl font-bold text-gold-500">{total.toFixed(2)}€</span>
@@ -149,10 +229,10 @@ export const CartDrawer: React.FC = () => {
 
                             <button
                                 onClick={handleCheckout}
-                                disabled={items.length === 0}
+                                disabled={items.length === 0 || status === 'sending' || status === 'success'}
                                 className="w-full py-4 bg-gold-500 text-black font-bold rounded-xl shadow-lg hover:bg-gold-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Confirmar Pedido
+                                {status === 'sending' ? 'Enviando...' : status === 'success' ? 'Pedido Enviado!' : 'Confirmar Pedido'}
                             </button>
                         </div>
                     </motion.div>

@@ -22,6 +22,8 @@ export const TableStatus = {
   KITCHEN_READY: 'kitchen_ready',
   /** Mesa precisa de limpeza */
   CLEANING: 'cleaning',
+  /** Mesa Reservada */
+  RESERVED: 'reserved',
   /** Mesa Fechada (Admin) */
   CLOSED: 'closed',
 } as const;

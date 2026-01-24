@@ -4,7 +4,7 @@
  * Serviço para processamento local avançado
  */
 
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 
 export interface EdgeTask {
     id: string;

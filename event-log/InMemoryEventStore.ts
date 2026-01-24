@@ -1,20 +1,26 @@
 /**
  * In-Memory Event Store
- * 
+ *
  * Append-only event store with:
  * - Optimistic concurrency control (stream_version)
  * - Idempotency (event_id uniqueness)
  * - Anti-tamper chain (hash_prev + hash)
  */
 
-import type {
-  CoreEvent,
-  EventStore,
-  StreamId,
-  EventType,
-  EventMetadata,
-} from "./types";
 import { createHash } from "crypto";
+import type {
+    CoreEvent,
+    EventStore,
+    EventType,
+    StreamId
+} from "./types";
+
+interface EventMetadata {
+    stream_id: string;
+    current_version: number;
+    last_event_id: string;
+    last_event_at: Date;
+}
 
 export class InMemoryEventStore implements EventStore {
   private events = new Map<string, CoreEvent>(); // event_id -> event

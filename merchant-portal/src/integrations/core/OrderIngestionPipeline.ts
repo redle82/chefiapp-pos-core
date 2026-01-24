@@ -15,7 +15,9 @@
 
 import { OrderEngine, type OrderInput, type OrderItemInput } from '../../core/tpv/OrderEngine';
 import type { OrderCreatedEvent } from '../types/IntegrationEvent';
+import type { OrderCreatedEvent } from '../types/IntegrationEvent';
 import { supabase } from '../../core/supabase';
+import { DbWriteGate } from '../../governance/DbWriteGate';
 
 /**
  * AIRLOCK PROTOCOL: Public Ingestion
@@ -58,25 +60,25 @@ export class OrderIngestionPipeline {
             // 3. Calculate Totals (Trust the source, but verify later)
             const totalCents = items.reduce((sum, i) => sum + (i.price_cents * i.quantity), 0);
 
-            // 4. Insert into Airlock
-            const { data: request, error } = await supabase
-                .from('gm_order_requests')
-                .insert({
-                    tenant_id: restaurantId, // Assuming restaurantId == tenantId for this MVP
-                    // table_id: null, // TODO: Extract from metadata if present
+            // 4. Insert into Airlock (Using Gate)
+            const { data: request, error } = await DbWriteGate.insert(
+                'OrderIngestionPipeline',
+                'gm_order_requests',
+                {
+                    tenant_id: restaurantId,
                     items: items,
                     total_cents: totalCents,
-                    payment_method: 'UNKNOWN', // Payment method not available in OrderCreatedEvent
+                    payment_method: 'UNKNOWN',
                     status: 'PENDING',
                     request_source: event.payload.source,
                     customer_contact: {
                         name: event.payload.customerName || 'Cliente Externo',
-                        phone: null, // customerPhone not available in OrderCreatedEvent
+                        phone: null,
                         external_id: event.payload.orderId
                     }
-                })
-                .select()
-                .single();
+                },
+                { tenantId: restaurantId }
+            );
 
             if (error) throw new Error(`Airlock Rejection: ${error.message}`);
 

@@ -38,6 +38,10 @@ interface OrderCardProps {
     ts: number
     tone?: 'info' | 'warn' | 'error' | 'success'
   }[];
+
+  // 🔗 Hydra: External Source
+  serviceSource?: 'ubereats' | 'glovo' | 'deliveroo' | 'other';
+  externalReference?: string;
 }
 
 const pulseColors: Record<PulseState, string> = {
@@ -118,6 +122,17 @@ export const OrderCard: React.FC<OrderCardProps> = ({
             {tableNumber && (
               <span className="bg-indigo-900/40 border border-indigo-500/30 text-indigo-300 text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider">
                 Mesa {tableNumber}
+              </span>
+            )}
+            {/* 🔗 Hydra Badge */}
+            {props.serviceSource === 'ubereats' && (
+              <span className="bg-[#06C167]/20 border border-[#06C167]/50 text-[#06C167] text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider flex items-center gap-1">
+                UBER
+              </span>
+            )}
+            {props.serviceSource === 'glovo' && (
+              <span className="bg-[#FFC244]/20 border border-[#FFC244]/50 text-[#FFC244] text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider flex items-center gap-1">
+                GLOVO
               </span>
             )}
           </div>

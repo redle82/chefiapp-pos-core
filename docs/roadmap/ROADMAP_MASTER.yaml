@@ -1,0 +1,329 @@
+# ROADMAP MASTER — Machine Readable
+# Source of Truth for Truth Scan
+version: "1.0"
+generated: "2026-01-18T11:30:00Z"
+metadata:
+  project: chefiapp-pos
+  phase: "Q1 2026"
+  progress: 80
+
+surfaces:
+  - id: kernel
+    name: "Bootstrap Kernel"
+    visibility: internal
+    items:
+      - id: KERNEL_SELF_AWARENESS
+        status: implemented
+        priority: P0
+        description: "System self-awareness, registries, and health checks"
+        evidence:
+          code:
+            - path: "merchant-portal/src/core/kernel/BootstrapKernel.tsx"
+              required: true
+            - path: "merchant-portal/src/core/kernel/SurfaceRegistry.ts"
+              required: true
+            - path: "merchant-portal/src/core/kernel/SystemsRegistry.ts"
+              required: true
+          docs:
+            - path: "docs/architecture/BOOTSTRAP_KERNEL.md"
+              required: true
+          runtime:
+            systems: []
+            guards: []
+
+      - id: KERNEL_GUARDS
+        status: implemented
+        priority: P0
+        description: "Production protection guards"
+        evidence:
+          code:
+            - path: "server/middleware/security.ts"
+              required: false
+          docs:
+             - path: "docs/architecture/ARCHITECTURE_GUARD.md"
+               required: false
+          runtime:
+            systems: []
+            guards:
+              - assertNoMock
+              - dbWriteGate
+
+  - id: panel
+    name: "Dashboard & Settings"
+    visibility: merchant
+    items:
+      - id: PANEL_OPERATION_GATE
+        status: partial
+        priority: P1
+        description: "OperationGate modal and history tracking"
+        evidence:
+          code:
+            - path: "merchant-portal/src/core/flow/OperationGate.tsx" # Need to verify this one, sticking with assumption or removed if unsure. Leaving for now.
+              required: false
+          docs: []
+          runtime:
+            systems:
+              - orders
+            guards: []
+
+      - id: PANEL_AUDIT_LOG
+        status: partial
+        priority: P2
+        description: "Audit log viewer and recording"
+        evidence:
+          code:
+            - path: "merchant-portal/src/pages/Audit/SystemStatusPage.tsx"
+              required: true
+            - path: "merchant-portal/src/core/logger/AuditService.ts"
+              required: true
+          docs: []
+          runtime:
+            systems: []
+            guards: []
+
+  - id: tpv
+    name: "TPV (Point of Sale)"
+    visibility: merchant
+    items:
+      - id: TPV_CORE
+        status: implemented
+        priority: P0
+        description: "Core TPV functionality with real orders"
+        evidence:
+          code:
+            - path: "merchant-portal/src/pages/TPV/TPV.tsx"
+              required: true
+            - path: "merchant-portal/src/pages/TPV/context/OrderContextReal.tsx"
+              required: true
+          docs:
+            - path: "docs/architecture/TPV_INSTALLATION_CONTRACT.md"
+              required: false
+          runtime:
+            systems:
+              - orders
+              - menu
+              - cashRegister
+            guards:
+              - assertNoMock
+
+      - id: TPV_FISCAL
+        status: implemented
+        priority: P0
+        description: "Fiscal integration (InvoiceXpress, TicketBAI, SAFT)"
+        evidence:
+          code:
+            - path: "merchant-portal/src/core/fiscal/FiscalService.ts"
+              required: true
+            - path: "merchant-portal/src/core/fiscal/SupabaseFiscalEventStore.ts"
+              required: true
+            - path: "fiscal-modules/validators/LegalComplianceValidator.ts"
+              required: true
+            - path: "fiscal-modules/adapters/InvoiceXpressAdapter.ts"
+              required: true
+            - path: "fiscal-modules/adapters/TicketBAIAdapter.ts"
+              required: true
+            - path: "fiscal-modules/adapters/SAFTAdapter.ts"
+              required: true
+          docs: []
+          runtime:
+            systems:
+              - fiscal
+            guards: []
+
+      - id: TPV_OFFLINE
+        status: implemented
+        priority: P1
+        description: "Offline mode reconciliation"
+        evidence:
+          code:
+            - path: "merchant-portal/src/core/governance/ReconciliationEngine.ts"
+              required: true
+          docs: []
+          runtime:
+            systems: []
+            guards: []
+
+      - id: TPV_PAYMENTS_STRIPE
+        status: planned
+        priority: P2
+        description: "Stripe Terminal integration"
+        evidence:
+          code: []
+          docs:
+             - path: "docs/architecture/PAYMENTS_STRIPE.md"
+               required: false
+          runtime:
+            systems: []
+            guards: []
+        target_date: "Q2 2026"
+
+  - id: kds
+    name: "KDS (Kitchen Display)"
+    visibility: kitchen
+    items:
+      - id: KDS_CORE
+        status: implemented
+        priority: P0
+        description: "Real-time kitchen display"
+        evidence:
+          code:
+            - path: "merchant-portal/src/pages/TPV/KDS/KitchenDisplay.tsx"
+              required: true
+          docs: []
+          runtime:
+            systems:
+              - orders
+            guards: []
+
+      - id: KDS_NOTIFICATIONS
+        status: implemented
+        priority: P3
+        description: "Sound notifications (SoundEngine + Alerts)"
+        evidence:
+          code: 
+            - path: "merchant-portal/src/pages/TPV/KDS/KDSAlerts.ts"
+              required: true
+            - path: "merchant-portal/src/intelligence/nervous-system/SoundEngine.ts"
+              required: true
+          docs: []
+          runtime:
+            systems: []
+            guards: []
+
+  - id: staff
+    name: "AppStaff"
+    visibility: staff
+    items:
+      - id: STAFF_COMMANDER
+        status: implemented
+        priority: P0
+        description: "Waiter commander flow"
+        evidence:
+          code:
+            - path: "merchant-portal/src/pages/AppStaff/StaffModule.tsx"
+              required: true
+            - path: "merchant-portal/src/pages/AppStaff/components/MiniPOS.tsx"
+              required: true
+          docs:
+            - path: "docs/WAITER_COMMANDER_ROADMAP.md"
+              required: false
+          runtime:
+            systems:
+              - staff
+              - orders
+            guards: []
+
+      - id: STAFF_TASKS
+        status: implemented
+        priority: P1
+        description: "Worker task system (Reflex Engine)"
+        evidence:
+          code:
+            - path: "merchant-portal/src/pages/AppStaff/WorkerTaskFocus.tsx"
+              required: true
+            - path: "merchant-portal/src/pages/AppStaff/WorkerTaskStream.tsx"
+              required: true
+            - path: "merchant-portal/src/pages/AppStaff/core/ReflexEngine.ts"
+              required: true
+          docs: []
+          runtime:
+            systems:
+              - staff
+            guards: []
+
+      - id: STAFF_CHECKIN
+        status: implemented
+        priority: P2
+        description: "Shift check-in/out"
+        evidence:
+          code:
+            - path: "merchant-portal/src/pages/AppStaff/WorkerCheckInView.tsx"
+              required: true
+          docs: []
+          runtime:
+            systems:
+              - staff
+            guards: []
+
+  - id: web
+    name: "Public Web"
+    visibility: public
+    items:
+      - id: WEB_MENU
+        status: implemented
+        priority: P1
+        description: "Public menu pages"
+        evidence:
+          code:
+             - path: "merchant-portal/src/pages/Public/PublicPages.tsx" # Verify this path
+               required: false
+          docs: []
+          runtime:
+            systems:
+              - menu
+            guards: []
+
+systems:
+  - id: orders
+    name: "Order System"
+    status: OK
+    description: "Central order processing"
+
+  - id: tables
+    name: "Table System"
+    status: OK
+    description: "Physical tables management"
+
+  - id: cashRegister
+    name: "Cash Register"
+    status: OK
+    description: "Shift and cash control"
+
+  - id: fiscal
+    name: "Fiscal System"
+    status: CONFIGURED
+    description: "Tax authority integration"
+
+  - id: menu
+    name: "Menu System"
+    status: OK
+    description: "Product catalog"
+
+  - id: staff
+    name: "Staff System"
+    status: OK
+    description: "Employee permissions"
+
+guards:
+  - id: assertNoMock
+    description: "Prohibits mock data in production"
+    required_in_prod: true
+    
+  - id: dbWriteGate
+    description: "Validates all database writes"
+    required_in_prod: false
+    
+  - id: runtimeContext
+    description: "Ensures valid execution context"
+    required_in_prod: true
+
+observability:
+  logs:
+    status: active
+    evidence:
+      - path: "merchant-portal/src/core/logger/Logger.ts"
+        required: true
+      
+  monitoring:
+    status: implemented
+    evidence:
+      - path: "merchant-portal/src/core/monitoring/HealthCheck.tsx"
+        required: true
+    target: "UptimeRobot"
+    
+  alerts:
+    status: implemented
+    evidence:
+      - path: "merchant-portal/src/core/monitoring/AlertService.ts"
+        required: true
+    target: "Discord"

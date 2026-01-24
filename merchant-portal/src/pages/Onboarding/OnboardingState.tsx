@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { SystemBlueprint } from '../../core/blueprint/SystemBlueprint';
 import { supabase } from '../../core/supabase';
-import { OnboardingCore } from '../../core/onboarding/OnboardingCore';
+import { GenesisKernel } from '../../core/kernel/GenesisKernel';
+import { Logger } from '../../core/logger';
 
 export type OnboardingEntryContext = 'external_marketing' | 'internal_app' | 'invite_manager';
 
@@ -122,7 +123,7 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
             }
 
             setEntryContext(detectedContext);
-            console.log(`[Onboarding] 🕵️ Context Detected: ${detectedContext}`);
+            console.log(`[Onboarding] Context Detected: ${detectedContext} `);
 
             setDraft(initialDraft);
             setLoading(false);
@@ -148,7 +149,7 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
         // Step 1: Genesis (Creates Tenant)
         // INJECTION: We ensure entryContext is locked into the draft during Genesis
         const payload = { ...draft, entryContext };
-        const blueprint = await OnboardingCore.initializeSovereign(payload);
+        const blueprint = await GenesisKernel.initializeSovereign(payload);
         updateDraft({ tenantId: blueprint.meta.tenantId, entryContext });
         return blueprint;
     };
@@ -162,13 +163,28 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
 
         if (!currentData.tenantId) throw new Error('Cannot advance state: Tenant ID missing (Genesis failed?)');
 
-        await OnboardingCore.advanceSovereignState(currentData.tenantId, step, currentData);
+        await GenesisKernel.advanceSovereignState(currentData.tenantId, step, currentData);
     };
 
     const consecrateSystem = async () => {
         // Step 7: Final Seal
         if (!draft.tenantId) throw new Error('Cannot consecrate: Tenant ID missing');
-        const blueprint = await OnboardingCore.consecrateSovereign(draft.tenantId, draft);
+
+        const blueprint = await GenesisKernel.consecrateSovereign(draft.tenantId, draft);
+
+        // 🛑 ATOMIC HANDOFF (INCIDENT #004 FIX)
+        // Persist locally BEFORE redirect to prevent race conditions
+        const { setTabIsolated } = await import('../../core/storage/TabIsolatedStorage');
+        setTabIsolated('chefiapp_restaurant_id', draft.tenantId);
+        setTabIsolated('chefiapp_tenant_status', 'ACTIVE'); // Seal status
+        setTabIsolated('chefiapp_setup_status', 'completed');
+
+        // Give time for storage to settle
+        await new Promise(r => setTimeout(r, 100));
+
+        Logger.info('Onboarding: Consecration Complete. Handoff to App.');
+        window.location.href = '/app/dashboard'; // Hard navigation to force clean state
+
         resetDraft(); // Mission Complete
         return blueprint;
     };

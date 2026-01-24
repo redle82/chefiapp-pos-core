@@ -22,7 +22,7 @@ import { Card } from '../ui/design-system/Card';
 import { GlobalFooter } from '../components/GlobalFooter';
 import { OSFrame } from '../ui/design-system/sovereign/OSFrame';
 import { OSCopy } from '../ui/design-system/sovereign/OSCopy';
-import { Logger } from '../core/logger/Logger';
+import { Logger } from '../core/logger';
 
 export const AuthPage = () => {
     const [loading, setLoading] = useState(false);
@@ -136,6 +136,17 @@ export const AuthPage = () => {
                             />
                             <Button
                                 onClick={async () => {
+                                    // ANTI-429 GUARD
+                                    if (loading) return;
+
+                                    // Check cooldown
+                                    const cooldown = localStorage.getItem('auth_cooldown_until');
+                                    if (cooldown && parseInt(cooldown) > Date.now()) {
+                                        const secondsLeft = Math.ceil((parseInt(cooldown) - Date.now()) / 1000);
+                                        setError(`Muitas tentativas. Aguarde ${secondsLeft}s.`);
+                                        return;
+                                    }
+
                                     let email = '';
                                     try {
                                         setLoading(true);
@@ -148,6 +159,14 @@ export const AuthPage = () => {
                                         const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
 
                                         if (loginErr) {
+                                            // 🛡️ ANTI-429 BACKOFF
+                                            if (loginErr.status === 429 || loginErr.message?.includes('Too many requests')) {
+                                                console.warn('[AuthPage] 429 Hit - Engaging CoolDown');
+                                                const cooldownUntil = Date.now() + 60000; // 60s
+                                                localStorage.setItem('auth_cooldown_until', cooldownUntil.toString());
+                                                throw new Error('Muitas tentativas (429). Sistema entrou em modo de proteção por 60s.');
+                                            }
+
                                             // Handle "Invalid login credentials" by trying SignUp (Dev Mode lazy creation)
                                             console.log('Login failed, trying signup...', loginErr.message);
                                             Logger.warn('Auth: Dev login failed, attempting signup', {
@@ -157,9 +176,19 @@ export const AuthPage = () => {
                                             const { error: signUpErr } = await supabase.auth.signUp({
                                                 email,
                                                 password,
-                                                options: { data: { name: 'Dev Tester' } }
+                                                options: { data: { name: 'Dev Tester' } },
+                                                // Disable auto-confirm if possible or handle flow
                                             });
+
                                             if (signUpErr) {
+                                                // 🛡️ ANTI-429 BACKOFF (SignUp Path)
+                                                if (signUpErr.status === 429 || signUpErr.message?.includes('Too many requests')) {
+                                                    console.warn('[AuthPage] 429 Hit (SignUp) - Engaging CoolDown');
+                                                    const cooldownUntil = Date.now() + 60000; // 60s
+                                                    localStorage.setItem('auth_cooldown_until', cooldownUntil.toString());
+                                                    throw new Error('Muitas tentativas (429). Sistema entrou em modo de proteção por 60s.');
+                                                }
+
                                                 Logger.error('Auth: Dev signup failed', signUpErr as Error, { email });
                                                 throw signUpErr;
                                             }
@@ -167,6 +196,8 @@ export const AuthPage = () => {
                                             alert('Conta criada! Verifique email ou se auto-confirmou.');
                                         } else {
                                             Logger.info('Auth: Dev login successful', { email });
+                                            // Clear backoff on success
+                                            localStorage.removeItem('auth_cooldown_until');
                                         }
 
                                         // 🔒 ARQUITETURA SOBERANA: Redirecionar para /app após auth
@@ -179,9 +210,10 @@ export const AuthPage = () => {
                                 }}
                                 variant="secondary"
                                 size="sm"
-                                style={{ width: '100%', borderColor: 'rgba(245, 158, 11, 0.3)', color: '#f59e0b' }}
+                                disabled={loading}
+                                style={{ width: '100%', borderColor: 'rgba(245, 158, 11, 0.3)', color: '#f59e0b', opacity: loading ? 0.5 : 1 }}
                             >
-                                ⚡ Entrar (Dev Mode)
+                                {loading ? '⏳ Processando...' : '⚡ Entrar (Dev Mode)'}
                             </Button>
                         </div>
                     </div>

@@ -48,6 +48,20 @@ Legacy engines (e.g., `CashRegisterEngine`) are permitted to write state directl
 
 ---
 
+## 2.5. Compensable Dual-Write (Law 2.5)
+
+**"If you must sin (Dual-Write), you must confess and do penance (Reconcile)."**
+
+Every dual-write operation operating under **HYBRID** mode MUST be "Compensable":
+
+1. **Tagging:** The database row must be marked as `kernel_shadow_status = 'DIRTY'`.
+2. **Confession:** A reconciliation job must be enqueued immediately in `gm_reconciliation_queue`.
+3. **Penance (Auto-Correction):** An autonomous agent (Edge Function) must process the job, replay the authoritative Event Stream, and overwrite the "Dirty" state with the "Clean" Kernel truth.
+
+**Failure to enqueue a reconciliation job is a Critical Breach** (even if the DB write succeeded). The system prefers to crash than to allow uncorrectable state drift.
+
+---
+
 ## 3. The Kill Switch (Law 3)
 
 **"Every dual-write path MUST be controlled by a sovereign configuration."**
@@ -97,6 +111,19 @@ Any direct database write detected in **PURE** mode MUST:
 3. **Report Critical:** Log as `CRITICAL_CONSTITUTIONAL_BREACH`.
 
 This ensures that architectural drift is treated as a severe system failure, preventing silent regression.
+
+## 7. The Sovereignty Dashboard (Law 7)
+
+**"The system must be self-aware of its own integrity."**
+
+A standardized component (`SovereigntyDashboard`) exists to visualize:
+
+- Dirty Count (Law 2.5 backlog)
+- Quarantine Count (Corrupted state)
+- Reconciliation Queue Depth
+
+**Note:** The "Health Score" displayed is **ADVISORY ONLY**.
+It is a heuristic for human operators (`100 - penalties`). It MUST NOT be used by automated logic to determine system behavior (e.g., blocking features). The only authoritative signal for blocking is `KERNEL_WRITE_MODE` status.
 
 ---
 

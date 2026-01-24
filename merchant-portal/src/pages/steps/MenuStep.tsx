@@ -10,6 +10,8 @@ import { Button } from '../../ui/design-system/Button'
 import { InlineAlert } from '../../ui/design-system/InlineAlert'
 import { Spacing } from '../../ui/design-system/tokens'
 import { updateWizardProgress } from '../../core/wizardProgress'
+import { MenuImport } from '../Menu/MenuImport'
+import { MenuAI } from '../Menu/MenuAI'
 import '../../App.css'
 
 /**
@@ -35,6 +37,8 @@ export function MenuStep() {
   const [categoryId, setCategoryId] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showImport, setShowImport] = useState(false)
+  const [showAI, setShowAI] = useState(false)
 
   useEffect(() => {
     if (phase === 'done' && !getTabIsolated('chefiapp_evt_menu_done')) {
@@ -77,14 +81,14 @@ export function MenuStep() {
           price_cents: Math.round(itemPrice * 100),
         }),
       })
-      
+
       // Persist wizard progress: mark menu step as complete
       await updateWizardProgress(restaurantId, 'menu', {
         category_name: categoryName,
         items_count: 1,
         first_item: { name: itemName, price_cents: Math.round(itemPrice * 100) }
       })
-      
+
       await loadState()
       setPhase('done')
     } catch (e: any) {
@@ -134,8 +138,64 @@ export function MenuStep() {
             >
               Criar categoria
             </Button>
+
+            <div style={{ marginTop: Spacing.md, textAlign: 'center' }}>
+              <span style={{ color: '#666', fontSize: '13px' }}>ou</span>
+              <Button
+                variant="ghost"
+                onClick={() => setShowImport(true)}
+                fullWidth
+                className="mt-2"
+                disabled={busy}
+              >
+                📤 Importar CSV / Excel
+              </Button>
+
+              <Button
+                variant="ghost"
+                onClick={() => setShowAI(true)}
+                fullWidth
+                className="mt-2"
+                disabled={busy}
+              >
+                ✨ Gerar com IA
+              </Button>
+            </div>
           </div>
         </EmptyState>
+
+        {showImport && restaurantId && (
+          <MenuImport
+            restaurantId={restaurantId}
+            onClose={() => setShowImport(false)}
+            onSuccess={async () => {
+              setShowImport(false)
+              // Mark step as complete
+              await updateWizardProgress(restaurantId, 'menu', {
+                imported: true,
+                items_count: 5 // Mock/Approx count, real count would be better but expensive to fetch here
+              })
+              await loadState()
+              setPhase('done')
+            }}
+          />
+        )}
+
+        {showAI && restaurantId && (
+          <MenuAI
+            restaurantId={restaurantId}
+            onClose={() => setShowAI(false)}
+            onSuccess={async (items) => {
+              setShowAI(false)
+              await updateWizardProgress(restaurantId, 'menu', {
+                generated: true,
+                items_count: items.length
+              })
+              await loadState()
+              setPhase('done')
+            }}
+          />
+        )}
       </div>
     )
   }

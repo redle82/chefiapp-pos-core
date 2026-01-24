@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '../supabase';
 import { DiagnosticEngine } from '../diagnostics/DiagnosticEngine';
+import { isDevStableMode } from '../runtime/devStableMode';
 
 interface FeatureFlags {
     disable_monetization: boolean;
@@ -39,9 +40,14 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({ childre
                 .select('key, value')
                 .eq('scope', 'global');
 
-            // In development, if table doesn't exist (404), use defaults silently
+            // In development, if table doesn't exist (404/PGRST205), use defaults silently
             if (globalError) {
-                if (globalError.code === 'PGRST116' || globalError.message?.includes('404')) {
+                // PGRST116 = nenhum resultado (normal)
+                // PGRST205 = tabela não encontrada (migration não aplicada ainda)
+                // 404 = não encontrado
+                if (globalError.code === 'PGRST116' || 
+                    globalError.code === 'PGRST205' || 
+                    globalError.message?.includes('404')) {
                     // Table doesn't exist - use defaults (expected in local dev)
                     setFlags(DEFAULT_FLAGS);
                     setIsLoading(false);
@@ -81,21 +87,44 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({ childre
     useEffect(() => {
         fetchFlags();
 
+        // DEV_STABLE_MODE: do not start realtime subscription while stabilizing Gate/Auth/Tenant.
+        if (isDevStableMode()) {
+            return;
+        }
+
         // Optional: Real-time subscription to flag changes
-        const channel = supabase
-            .channel('system_config_changes')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'system_config' },
-                () => {
-                    console.log('[GM-FLAGS] Update detected, refreshing...');
-                    fetchFlags();
-                }
-            )
-            .subscribe();
+        // Adicionar tratamento de erro robusto
+        let channel: ReturnType<typeof supabase.channel> | null = null;
+        
+        try {
+            channel = supabase
+                .channel('system_config_changes')
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'system_config' },
+                    () => {
+                        console.log('[GM-FLAGS] Update detected, refreshing...');
+                        fetchFlags();
+                    }
+                )
+                .subscribe((status, err) => {
+                    if (status === 'SUBSCRIBED') {
+                        console.log('[GM-FLAGS] Realtime subscription active');
+                    } else if (status === 'CHANNEL_ERROR' || err) {
+                        // Não bloquear o app se Realtime falhar
+                        console.warn('[GM-FLAGS] Realtime subscription failed (non-critical):', err);
+                        // Continuar sem Realtime - flags ainda funcionam via polling manual
+                    }
+                });
+        } catch (err) {
+            // Erro não crítico - flags ainda funcionam sem Realtime
+            console.warn('[GM-FLAGS] Failed to setup Realtime (non-critical):', err);
+        }
 
         return () => {
-            supabase.removeChannel(channel);
+            if (channel) {
+                supabase.removeChannel(channel);
+            }
         };
     }, []);
 

@@ -9,7 +9,7 @@
  */
 
 import { supabase } from '../supabase';
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 import type { TaxDocument } from '../../../../fiscal-modules/types';
 
 export interface FiscalBackupOptions {

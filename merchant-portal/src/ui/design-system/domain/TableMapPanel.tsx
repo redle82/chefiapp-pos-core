@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Card } from '../primitives/Card';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
@@ -29,7 +29,8 @@ interface TableMapPanelProps {
     onCreateOrder?: (tableId: string) => void; // SEMANA 1 - Tarefa 1.1: Ação rápida para criar pedido
 }
 
-export const TableMapPanel: React.FC<TableMapPanelProps> = ({ tables, onSelectTable, onCreateOrder }) => {
+// FASE 5: Memoizar componente pesado para melhorar performance
+export const TableMapPanel: React.FC<TableMapPanelProps> = memo(({ tables, onSelectTable, onCreateOrder }) => {
 
 
 
@@ -51,19 +52,30 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = ({ tables, onSelectTa
         }
     };
 
-    const getStatusColor = (status: string, orderInfo?: TableData['orderInfo']) => {
+    // RADAR: Enhanced Color Logic
+    const getHealthAwareColor = (status: string, health: string | undefined, orderInfo?: TableData['orderInfo']) => {
+        // 1. Critical Operational States (Override everything)
+        if (health === 'angry') return colors.critical.base;
+        if (health === 'pulsing') return colors.action.base;
+
+        // 2. Order Status
         if (orderInfo) {
             switch (orderInfo.status) {
                 case 'partially_paid': return colors.warning.base;
                 case 'paid': return colors.success.base;
                 case 'ready': return colors.info.base;
                 case 'preparing': return colors.action.base;
-                default: return colors.warning.base;
+                default:
+                    // 3. Emotional State fallback for occupied tables
+                    return health === 'bored' ? colors.warning.base : colors.success.base;
             }
         }
+
+        // 4. Default Status Colors
         switch (status) {
             case 'free': return colors.success.base;
-            case 'occupied': return colors.warning.base;
+            // Emotional state for occupied but no order info (rare edge case)
+            case 'occupied': return health === 'bored' ? colors.warning.base : colors.success.base;
             case 'reserved': return colors.info.base;
             default: return colors.text.tertiary;
         }
@@ -86,7 +98,10 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = ({ tables, onSelectTa
                 paddingBottom: spacing[4]
             }}>
                 {tables.map(table => {
-                    const statusColor = getStatusColor(table.status, table.orderInfo);
+                    // Safe cast for augmented props
+                    const health = (table as any).health;
+                    const statusColor = getHealthAwareColor(table.status, health, table.orderInfo);
+
                     const isFree = table.status === 'free';
                     const hasOrder = !!table.orderInfo;
 
@@ -126,16 +141,46 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = ({ tables, onSelectTa
                             >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                     <Text size="2xl" weight="black" color="primary">{table.number}</Text>
+                                    {/* RADAR OPERACIONAL: Heartbeat Visualization */}
                                     <div style={{
                                         width: 12, height: 12, borderRadius: '50%',
-                                        backgroundColor: statusColor
+                                        backgroundColor: statusColor,
+                                        boxShadow: (table as any).health === 'pulsing' || (table as any).health === 'angry'
+                                            ? `0 0 8px ${statusColor}`
+                                            : 'none',
+                                        animation: (table as any).health === 'pulsing'
+                                            ? 'pulse-radar 1.5s infinite'
+                                            : (table as any).health === 'angry' ? 'pulse-slow 3s infinite' : 'none'
                                     }} />
+
+                                    {/* Inject Global Styles for Animation (Temporary, ideally in global CSS) */}
+                                    <style>{`
+                                        @keyframes pulse-radar {
+                                            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(var(--color-action-base), 0.7); }
+                                            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(var(--color-action-base), 0); }
+                                            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(var(--color-action-base), 0); }
+                                        }
+                                        @keyframes pulse-slow {
+                                            0% { opacity: 1; }
+                                            50% { opacity: 0.6; }
+                                            100% { opacity: 1; }
+                                        }
+                                    `}</style>
                                 </div>
 
                                 <div style={{ marginTop: spacing[2] }}>
-                                    <Text size="xs" weight="bold" style={{ color: statusColor }}>
-                                        {getStatusLabel(table.status, table.orderInfo)}
-                                    </Text>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text size="xs" weight="bold" style={{ color: statusColor }}>
+                                            {getStatusLabel(table.status, table.orderInfo)}
+                                        </Text>
+
+                                        {/* RADAR: Show Wait Time if relevant */}
+                                        {((table as any).waitMinutes > 15 || (table as any).health === 'pulsing') && (
+                                            <Text size="xs" color="critical" weight="bold">
+                                                {(table as any).health === 'pulsing' ? 'CHAMANDO' : `${Math.floor((table as any).waitMinutes)}m`}
+                                            </Text>
+                                        )}
+                                    </div>
                                     <Text size="xs" color="tertiary">{table.seats} Lugares</Text>
 
                                     {/* SEMANA 1 - Tarefa 1.1: Mostrar informações do pedido */}
@@ -189,4 +234,13 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = ({ tables, onSelectTa
             </div>
         </div>
     );
-};
+}, (prevProps, nextProps) => {
+    // FASE 5: Comparação customizada para evitar re-renders desnecessários
+    return (
+        prevProps.tables.length === nextProps.tables.length &&
+        prevProps.tables.every((table, idx) => 
+            table.id === nextProps.tables[idx]?.id &&
+            table.status === nextProps.tables[idx]?.status
+        )
+    );
+});

@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { type MenuItem } from '../context/MenuContext';
-import { useCart } from '../context/CartContext';
 import clsx from 'clsx';
-import { X, Minus, Plus } from 'lucide-react';
+import { Minus, Plus, X } from 'lucide-react';
+import { useState } from 'react';
+import { useCart } from '../context/CartContext';
+import { type MenuItem } from '../context/MenuContext';
 
 interface ProductModalProps {
     product: MenuItem | null;
@@ -18,7 +18,13 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
     if (!isOpen || !product) return null;
 
     const handleAdd = () => {
-        addToCart(product, qty, notes);
+        addToCart({
+            id: product.id,
+            name: product.name,
+            price: product.price_cents,
+            quantity: qty,
+            notes
+        });
         onClose();
         // Reset state for next time
         setQty(1);

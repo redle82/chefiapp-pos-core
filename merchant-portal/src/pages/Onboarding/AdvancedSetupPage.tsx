@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../core/supabase';
-import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
+import { useTenant } from '../../core/tenant/TenantContext';
+import { useKernel } from '../../core/kernel/KernelContext';
+import { Text } from '../../ui/design-system/primitives/Text';
+import { Badge } from '../../ui/design-system/primitives/Badge';
 
 type SetupStatus = 'not_started' | 'quick_done' | 'advanced_in_progress' | 'advanced_done';
 
@@ -23,6 +26,8 @@ type FormState = {
 
 export const AdvancedSetupPage: React.FC = () => {
   const navigate = useNavigate();
+  const { tenantId, isLoading: tenantLoading } = useTenant();
+  const { status: kernelStatus, isReady: kernelReady } = useKernel();
   const [state, setState] = useState<FormState>({
     brandPrimary: '#0b0b0c',
     brandAccent: '#32d74b',
@@ -40,59 +45,116 @@ export const AdvancedSetupPage: React.FC = () => {
   });
 
   const [setupStatus, setSetupStatus] = useState<SetupStatus>('not_started');
-  const [advancedProgress, setAdvancedProgress] = useState<Record<string, any>>({});
+  const [advancedProgress, setAdvancedProgress] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const restaurantId = getTabIsolated('chefiapp_restaurant_id');
+  const restaurantId = tenantId; // Use TenantContext as source of truth
 
   useEffect(() => {
     const load = async () => {
-      if (!restaurantId) {
-        navigate('/login');
+      // Wait for tenant to be resolved - don't do anything while loading
+      if (tenantLoading) {
         return;
       }
-      const { data, error: fetchError } = await supabase
+
+      // Don't redirect - let FlowGate handle authentication/tenant resolution
+      // If tenant is not available, FlowGate will redirect appropriately
+      if (!restaurantId) {
+        console.warn('[AdvancedSetupPage] No tenantId available - FlowGate should handle this');
+        setError('Restaurante não encontrado. Aguarde o carregamento...');
+        setLoading(false);
+        return;
+      }
+      // Try specific fields first, fallback to * if schema mismatch
+      // Note: brand_theme removed from query as it doesn't exist in schema
+      let data: Record<string, unknown> | null = null;
+      
+      const specificFields = 'site_enabled, site_template, site_domain, site_status, pos_mode, tables_enabled, tables_count, qr_enabled, qr_style, delivery_enabled, delivery_channels, hardware_profile, setup_status, advanced_progress';
+      
+      const { data: specificData, error: specificError } = await supabase
         .from('gm_restaurants')
-        .select(
-          'brand_theme, site_enabled, site_template, site_domain, site_status, pos_mode, tables_enabled, tables_count, qr_enabled, qr_style, delivery_enabled, delivery_channels, hardware_profile, setup_status, advanced_progress'
-        )
+        .select(specificFields)
         .eq('id', restaurantId)
         .single();
 
-      if (fetchError || !data) {
+      // Handle schema mismatch (columns don't exist) - try with * instead
+      if (specificError) {
+        // PGRST116 = no results, PGRST* = PostgREST errors, 42703 = column doesn't exist, 400 = Bad Request
+        const isSchemaMismatch = 
+          specificError.code === 'PGRST116' || 
+          specificError.code === '42703' ||
+          specificError.code?.startsWith('PGRST') ||
+          specificError.message?.includes('column') ||
+          specificError.message?.includes('does not exist') ||
+          (specificError as any).status === 400;
+        
+        if (isSchemaMismatch) {
+          // Schema mismatch - try with * instead
+          console.warn('[AdvancedSetupPage] Schema mismatch detected, falling back to * select:', specificError);
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('gm_restaurants')
+            .select('*')
+            .eq('id', restaurantId)
+            .single();
+          
+          if (fallbackError || !fallbackData) {
+            setError('Não foi possível carregar suas configurações. Verifique o schema da tabela gm_restaurants.');
+            setLoading(false);
+            return;
+          }
+          data = fallbackData;
+        } else {
+          // Other error - log and show error
+          console.error('[AdvancedSetupPage] Error loading restaurant data:', specificError);
+          setError('Não foi possível carregar suas configurações.');
+          setLoading(false);
+          return;
+        }
+      } else if (!specificData) {
+        setError('Não foi possível carregar suas configurações.');
+        setLoading(false);
+        return;
+      } else {
+        data = specificData;
+      }
+
+      // Defensive access - fields may not exist in schema
+      if (!data) {
         setError('Não foi possível carregar suas configurações.');
         setLoading(false);
         return;
       }
 
-      const brandTheme = (data.brand_theme || {}) as Record<string, string>;
+      // Type assertion: data is guaranteed non-null after check above
+      const restaurantData = data as Record<string, unknown>;
+      const brandTheme = (restaurantData.brand_theme || {}) as Record<string, string>;
       setState((prev) => ({
         ...prev,
-        brandPrimary: brandTheme.primary || prev.brandPrimary,
-        brandAccent: brandTheme.accent || prev.brandAccent,
-        siteEnabled: data.site_enabled ?? false,
-        siteTemplate: data.site_template || prev.siteTemplate,
-        siteDomain: data.site_domain || '',
-        posMode: data.pos_mode || 'counter',
-        tablesEnabled: data.tables_enabled ?? false,
-        tablesCount: data.tables_count || prev.tablesCount,
-        qrEnabled: data.qr_enabled ?? false,
-        qrStyle: data.qr_style || prev.qrStyle,
-        deliveryEnabled: data.delivery_enabled ?? false,
-        deliveryChannels: Array.isArray(data.delivery_channels)
-          ? data.delivery_channels.join(', ')
-          : '',
-        hardwareProfile: JSON.stringify(data.hardware_profile || { printer: '' }, null, 2),
+        brandPrimary: (brandTheme?.primary as string) || prev.brandPrimary,
+        brandAccent: (brandTheme?.accent as string) || prev.brandAccent,
+        siteEnabled: Boolean(restaurantData.site_enabled ?? false),
+        siteTemplate: (restaurantData.site_template as string) || prev.siteTemplate,
+        siteDomain: (restaurantData.site_domain as string) || '',
+        posMode: ((restaurantData.pos_mode as string) || 'counter') as 'counter' | 'tables' | 'hybrid',
+        tablesEnabled: Boolean(restaurantData.tables_enabled ?? false),
+        tablesCount: Number(restaurantData.tables_count) || prev.tablesCount,
+        qrEnabled: Boolean(restaurantData.qr_enabled ?? false),
+        qrStyle: (restaurantData.qr_style as string) || prev.qrStyle,
+        deliveryEnabled: Boolean(restaurantData.delivery_enabled ?? false),
+        deliveryChannels: Array.isArray(restaurantData.delivery_channels)
+          ? restaurantData.delivery_channels.join(', ')
+          : (typeof restaurantData.delivery_channels === 'string' ? restaurantData.delivery_channels : ''),
+        hardwareProfile: JSON.stringify(restaurantData.hardware_profile || { printer: '' }, null, 2),
       }));
 
-      setSetupStatus((data.setup_status || 'not_started') as SetupStatus);
-      setAdvancedProgress((data.advanced_progress as Record<string, any>) || {});
+      setSetupStatus((restaurantData.setup_status as SetupStatus) || 'not_started');
+      setAdvancedProgress((restaurantData.advanced_progress as Record<string, unknown>) || {});
       setLoading(false);
     };
 
     load();
-  }, [navigate, restaurantId]);
+  }, [navigate, restaurantId, tenantLoading]);
 
   const save = async (opts?: { markDone?: boolean }) => {
     if (!restaurantId) return;
@@ -130,34 +192,103 @@ export const AdvancedSetupPage: React.FC = () => {
 
       if (rpcError) throw rpcError;
 
-      setAdvancedProgress((data as Record<string, any>) || {});
+      setAdvancedProgress((data as Record<string, unknown>) || {});
       setSetupStatus(opts?.markDone ? 'advanced_done' : 'advanced_in_progress');
 
       // Trigger provisioning pipeline (idempotent)
       await supabase.functions.invoke('advanced-provisioner', {
         body: { restaurant_id: restaurantId },
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[AdvancedSetup] Save failed', err);
-      setError(err.message || 'Falha ao salvar.');
+      const errorMessage = err instanceof Error ? err.message : 'Falha ao salvar.';
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
+  // Show loading while tenant is being resolved or data is loading
+  if (tenantLoading || loading) {
     return (
       <div style={pageStyle}>Carregando...</div>
     );
   }
 
+  // If no tenant after loading, show error instead of redirecting immediately
+  // (redirect happens in useEffect, but we need to show something while it processes)
+  if (!restaurantId) {
+    return (
+      <div style={pageStyle}>
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <Text size="lg" weight="bold" color="destructive">Erro: Restaurante não encontrado</Text>
+          <Text size="sm" color="secondary" style={{ marginTop: 16 }}>
+            Redirecionando para autenticação...
+          </Text>
+        </div>
+      </div>
+    );
+  }
+
+  // Kernel state messages
+  const getKernelStatusMessage = () => {
+    switch (kernelStatus) {
+      case 'READY':
+        return { text: 'Sistema pronto', color: '#32d74b', bg: 'rgba(50, 215, 75, 0.1)' };
+      case 'BOOTING':
+        return { text: 'Sistema inicializando...', color: '#ff9500', bg: 'rgba(255, 149, 0, 0.1)' };
+      case 'FROZEN':
+        return { text: 'Sistema em modo de estabilização', color: '#5e5ce6', bg: 'rgba(94, 92, 230, 0.1)' };
+      case 'FAILED':
+        return { text: 'Erro no sistema', color: '#ff453a', bg: 'rgba(255, 69, 58, 0.1)' };
+      default:
+        return { text: 'Estado desconhecido', color: '#8e8e93', bg: 'rgba(142, 142, 147, 0.1)' };
+    }
+  };
+
+  const kernelStatusInfo = getKernelStatusMessage();
+  const isSystemReady = kernelReady && kernelStatus === 'READY';
+
   return (
     <div style={pageStyle}>
       <div style={{ maxWidth: 960, width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Kernel Status Indicator */}
+        <div style={{
+          padding: '12px 16px',
+          background: kernelStatusInfo.bg,
+          border: `1px solid ${kernelStatusInfo.color}40`,
+          borderRadius: 8,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: kernelStatusInfo.color
+            }} />
+            <Text size="sm" weight="medium" style={{ color: kernelStatusInfo.color }}>
+              {kernelStatusInfo.text}
+            </Text>
+            {!isSystemReady && (
+              <Text size="xs" color="secondary" style={{ marginLeft: 8 }}>
+                Algumas configurações ficarão disponíveis em instantes.
+              </Text>
+            )}
+          </div>
+          <Badge 
+            status={kernelStatus === 'READY' ? 'ready' : kernelStatus === 'FAILED' ? 'error' : 'warning'}
+            label={kernelStatus}
+          />
+        </div>
+
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h1 style={{ margin: 0 }}>Onboarding Avançado</h1>
-            <p style={{ color: '#666', margin: '4px 0' }}>Salva direto no banco, sem bloquear a operação.</p>
+            <h1 style={{ margin: 0 }}>Configuração Avançada</h1>
+            <p style={{ color: '#666', margin: '4px 0' }}>Configure parâmetros operacionais do restaurante.</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 12, color: '#555', padding: '6px 10px', background: '#f3f4f6', borderRadius: 8 }}>
@@ -165,10 +296,15 @@ export const AdvancedSetupPage: React.FC = () => {
             </span>
             <button
               onClick={() => save({ markDone: true })}
-              disabled={saving}
-              style={primaryButton}
+              disabled={saving || !isSystemReady}
+              title={!isSystemReady ? 'Disponível quando o sistema estiver pronto' : undefined}
+              style={{
+                ...primaryButton,
+                opacity: (!isSystemReady || saving) ? 0.5 : 1,
+                cursor: (!isSystemReady || saving) ? 'not-allowed' : 'pointer'
+              }}
             >
-              Marcar como concluído
+              {saving ? 'Salvando...' : 'Marcar como concluído'}
             </button>
           </div>
         </header>
@@ -183,7 +319,18 @@ export const AdvancedSetupPage: React.FC = () => {
             <LabeledInput label="Cor Primária" value={state.brandPrimary} onChange={(v) => setState({ ...state, brandPrimary: v })} />
             <LabeledInput label="Cor de Destaque" value={state.brandAccent} onChange={(v) => setState({ ...state, brandAccent: v })} />
           </div>
-          <button onClick={() => save()} disabled={saving} style={ghostButton}>Salvar identidade</button>
+          <button 
+            onClick={() => save()} 
+            disabled={saving || !isSystemReady}
+            title={!isSystemReady ? 'Disponível quando o sistema estiver pronto' : undefined}
+            style={{
+              ...ghostButton,
+              opacity: (!isSystemReady || saving) ? 0.5 : 1,
+              cursor: (!isSystemReady || saving) ? 'not-allowed' : 'pointer'
+            }}
+          >
+            Salvar identidade
+          </button>
         </section>
 
         <section style={cardStyle}>
@@ -197,7 +344,18 @@ export const AdvancedSetupPage: React.FC = () => {
             <LabeledInput label="Template" value={state.siteTemplate} onChange={(v) => setState({ ...state, siteTemplate: v })} />
             <LabeledInput label="Dominio" value={state.siteDomain} onChange={(v) => setState({ ...state, siteDomain: v })} placeholder="opcional" />
           </div>
-          <button onClick={() => save()} disabled={saving} style={ghostButton}>Salvar site</button>
+          <button 
+            onClick={() => save()} 
+            disabled={saving || !isSystemReady}
+            title={!isSystemReady ? 'Disponível quando o sistema estiver pronto' : undefined}
+            style={{
+              ...ghostButton,
+              opacity: (!isSystemReady || saving) ? 0.5 : 1,
+              cursor: (!isSystemReady || saving) ? 'not-allowed' : 'pointer'
+            }}
+          >
+            Salvar site
+          </button>
         </section>
 
         <section style={cardStyle}>
@@ -237,7 +395,18 @@ export const AdvancedSetupPage: React.FC = () => {
             onChange={(v) => setState({ ...state, qrStyle: v })}
             disabled={!state.qrEnabled}
           />
-          <button onClick={() => save()} disabled={saving} style={ghostButton}>Salvar operação</button>
+          <button 
+            onClick={() => save()} 
+            disabled={saving || !isSystemReady}
+            title={!isSystemReady ? 'Disponível quando o sistema estiver pronto' : undefined}
+            style={{
+              ...ghostButton,
+              opacity: (!isSystemReady || saving) ? 0.5 : 1,
+              cursor: (!isSystemReady || saving) ? 'not-allowed' : 'pointer'
+            }}
+          >
+            Salvar operação
+          </button>
         </section>
 
         <section style={cardStyle}>
@@ -254,7 +423,18 @@ export const AdvancedSetupPage: React.FC = () => {
             placeholder="ex: ifood, rappi"
             disabled={!state.deliveryEnabled}
           />
-          <button onClick={() => save()} disabled={saving} style={ghostButton}>Salvar delivery</button>
+          <button 
+            onClick={() => save()} 
+            disabled={saving || !isSystemReady}
+            title={!isSystemReady ? 'Disponível quando o sistema estiver pronto' : undefined}
+            style={{
+              ...ghostButton,
+              opacity: (!isSystemReady || saving) ? 0.5 : 1,
+              cursor: (!isSystemReady || saving) ? 'not-allowed' : 'pointer'
+            }}
+          >
+            Salvar delivery
+          </button>
         </section>
 
         <section style={cardStyle}>
@@ -266,8 +446,30 @@ export const AdvancedSetupPage: React.FC = () => {
             style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid #e5e7eb', fontFamily: 'monospace' }}
           />
           <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-            <button onClick={() => save()} disabled={saving} style={ghostButton}>Salvar hardware</button>
-            <button onClick={() => save({ markDone: true })} disabled={saving} style={primaryButton}>Concluir onboarding</button>
+            <button 
+              onClick={() => save()} 
+              disabled={saving || !isSystemReady}
+              title={!isSystemReady ? 'Disponível quando o sistema estiver pronto' : undefined}
+              style={{
+                ...ghostButton,
+                opacity: (!isSystemReady || saving) ? 0.5 : 1,
+                cursor: (!isSystemReady || saving) ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Salvar hardware
+            </button>
+            <button 
+              onClick={() => save({ markDone: true })} 
+              disabled={saving || !isSystemReady}
+              title={!isSystemReady ? 'Disponível quando o sistema estiver pronto' : undefined}
+              style={{
+                ...primaryButton,
+                opacity: (!isSystemReady || saving) ? 0.5 : 1,
+                cursor: (!isSystemReady || saving) ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Concluir onboarding
+            </button>
           </div>
         </section>
 
@@ -382,8 +584,11 @@ const SelectField = ({ label, value, onChange, options }: { label: string; value
 function safeParseJSON<T>(value: string, fallback: T): T {
   try {
     return JSON.parse(value) as T;
-  } catch (err) {
+  } catch {
     console.warn('[AdvancedSetup] Invalid JSON, using fallback');
     return fallback;
   }
 }
+
+// Default export for compatibility
+export default AdvancedSetupPage;

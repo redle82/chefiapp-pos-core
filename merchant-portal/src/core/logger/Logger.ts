@@ -1,7 +1,36 @@
-import { supabase } from '../supabase';
+import * as Sentry from '@sentry/react';
 import { getTabIsolated } from '../storage/TabIsolatedStorage';
+import { supabase } from '../supabase';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
+
+// ============================================================================
+// SENTRY INITIALIZATION
+// ============================================================================
+
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    environment: import.meta.env.MODE,
+    debug: import.meta.env.DEV,
+    tracesSampleRate: import.meta.env.DEV ? 1.0 : 0.1,
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
+    integrations: [
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration(),
+    ],
+    beforeSend(event) {
+      // Filter out non-critical errors in dev
+      if (import.meta.env.DEV) {
+        // Skip certain errors
+      }
+      return event;
+    },
+  });
+}
 
 export interface LogContext {
     tenantId?: string;
@@ -21,9 +50,9 @@ function getEnv(): { DEV: boolean; MODE: string } {
     // Try import.meta first (Vite/browser environment)
     try {
         // Use eval to safely check for import.meta in environments where it's not available
-        const hasImportMeta = typeof (globalThis as any).import !== 'undefined' 
+        const hasImportMeta = typeof (globalThis as any).import !== 'undefined'
             || (typeof window !== 'undefined' && (window as any).import);
-        
+
         if (!hasImportMeta) {
             // Check if we can access import.meta directly (Vite environment)
             const meta = (globalThis as any).import?.meta || (typeof window !== 'undefined' ? (window as any).import?.meta : undefined);
@@ -37,7 +66,7 @@ function getEnv(): { DEV: boolean; MODE: string } {
     } catch (e) {
         // import.meta not available, fall through to process.env
     }
-    
+
     // Fallback to process.env (Node.js/Jest environment)
     if (typeof process !== 'undefined' && process.env) {
         return {
@@ -45,7 +74,7 @@ function getEnv(): { DEV: boolean; MODE: string } {
             MODE: process.env.NODE_ENV || 'development',
         };
     }
-    
+
     // Default fallback (tests)
     return { DEV: false, MODE: 'test' };
 }
@@ -56,6 +85,9 @@ class LoggerService {
     private isDev: boolean;
     private sessionId: string;
     private requestCounter: number = 0;
+    private remoteIngestionDisabled: boolean = false;
+    private lastSentLog: string = '';
+    private lastSentTime: number = 0;
 
     private constructor() {
         const env = getEnv();
@@ -116,6 +148,16 @@ class LoggerService {
     /**
      * Internal Log Driver
      */
+    private hashString(input: string): string {
+        // Simple deterministic hash (djb2). Enough for idempotency keys.
+        let hash = 5381;
+        for (let i = 0; i < input.length; i++) {
+            hash = ((hash << 5) + hash) + input.charCodeAt(i);
+            hash = hash >>> 0; // force uint32
+        }
+        return hash.toString(16);
+    }
+
     private async emit(level: LogLevel, message: string, data?: Record<string, any>) {
         // 1. Enrich Context
         const fullContext = {
@@ -148,11 +190,53 @@ class LoggerService {
             consoleMethod(JSON.stringify(payload));
         }
 
+        // 2.5. Send to Sentry (if configured)
+        if (SENTRY_DSN && ['warn', 'error', 'critical'].includes(level)) {
+            Sentry.withScope((scope) => {
+                // Set context
+                scope.setContext('log_context', fullContext);
+                
+                if (fullContext.tenantId) {
+                    scope.setTag('tenant_id', fullContext.tenantId);
+                }
+                if (fullContext.userId) {
+                    scope.setUser({ id: fullContext.userId });
+                }
+
+                // Capture based on level
+                const sentryLevel = level === 'critical' ? 'fatal' : level;
+                if (data?.error instanceof Error) {
+                    Sentry.captureException(data.error);
+                } else {
+                    Sentry.captureMessage(message, sentryLevel as Sentry.SeverityLevel);
+                }
+            });
+        }
+
         // 3. Remote Ingestion (Production or Critical/Error/Warn)
         // Log 'warn', 'error', 'critical' to Supabase
         // Optional: Log 'info' if a flag is set? Keeping strict for now to save quota.
+        // DEV_STABLE_MODE: disable remote ingestion (fail-closed, quiet)
         if (['warn', 'error', 'critical'].includes(level)) {
+            // DEV_STABLE_MODE: no remote ingestion
+            const { isDevStableMode } = await import('../runtime/devStableMode');
+            if (isDevStableMode()) return;
+            // DEDUPLICATION: Prevent Log Storms (409s)
+            const dedupeKey = `${level}:${message}`;
+            if (this.lastSentLog === dedupeKey && Date.now() - this.lastSentTime < 5000) {
+                return; // Skip identical log within 5 seconds
+            }
+
+            if (this.remoteIngestionDisabled) return;
             try {
+                // 🚨 ALERTING: Send to Discord if Critical
+                if (level === 'critical') {
+                    // Lazy import to avoid circular dependency issues if any
+                    import('../monitoring/AlertService').then(({ Alerts }) => {
+                        Alerts.sendCritical(message, fullContext);
+                    });
+                }
+
                 const restaurantId = fullContext.tenantId || getTabIsolated('chefiapp_restaurant_id');
 
                 // Validate payload size
@@ -165,32 +249,48 @@ class LoggerService {
                 }
 
                 // CRITICAL: Prevent duplicate logs (idempotency)
-                // Use try-catch to silently ignore 409 conflicts
-                try {
-                    await supabase.from('app_logs').insert({
-                        level: level === 'critical' ? 'error' : level, // Map critical to error for DB if ENUM doesn't support it, or assume text
-                        message,
-                        details: detailsToSave,
-                        restaurant_id: restaurantId || null,
-                        url: fullContext.url || null,
-                        user_agent: fullContext.userAgent || null,
-                        created_at: payload.timestamp
-                    });
-                } catch (err: any) {
-                    // Silently ignore 409 conflicts (duplicate log - idempotency working)
-                    if (err?.code === '23505' || err?.message?.includes('409') || err?.code === 'PGRST204') {
-                        return; // Idempotent - log already exists, ignore
-                    }
-                    // Log other errors but don't crash
-                    console.error('[Logger] Failed to push log (non-409):', err);
+                // Use stable idempotency_key + upsert(ignoreDuplicates) to avoid 409 storms.
+                const idemSource = JSON.stringify({
+                    level,
+                    message,
+                    restaurantId: restaurantId || null,
+                    url: fullContext.url || null,
+                    userId: fullContext.userId || null,
+                });
+                const idempotency_key = `log_${this.hashString(idemSource)}`;
+
+                await supabase.from('app_logs').upsert([{
+                    level: level === 'critical' ? 'error' : level,
+                    message,
+                    details: detailsToSave,
+                    restaurant_id: restaurantId || null,
+                    url: fullContext.url || null,
+                    user_agent: fullContext.userAgent || null,
+                    created_at: payload.timestamp,
+                    idempotency_key,
+                }] as any, { onConflict: 'idempotency_key', ignoreDuplicates: true });
+
+                // Mark as sent AFTER successful attempt
+                this.lastSentLog = `${level}:${message}`;
+                this.lastSentTime = Date.now();
+            } catch (err: any) {
+                // Silently ignore 409 conflicts (duplicate log)
+                if (err?.status === 409 || err?.message?.includes('409') || err?.code === '23505') {
+                    this.lastSentLog = `${level}:${message}`;
+                    this.lastSentTime = Date.now();
+                    return;
                 }
-            } catch (err) {
-                // Failsafe: Logger should never crash the app
-                console.error('[Logger] Failed to push log:', err);
+                // If idempotency_key isn't present in this DB yet, disable remote ingestion for this session.
+                if (err?.status === 400 || err?.message?.includes('idempotency_key')) {
+                    this.remoteIngestionDisabled = true;
+                    console.warn('[Logger] Remote ingestion disabled (missing idempotency_key).');
+                    return;
+                }
+                // Log other errors but don't crash
+                console.error('[Logger] Failed to push log (non-409):', err);
             }
         }
     }
-
     public debug(message: string, data?: Record<string, any>) {
         this.emit('debug', message, data);
     }
@@ -227,3 +327,64 @@ class LoggerService {
 }
 
 export const Logger = LoggerService.getInstance();
+
+// ============================================================================
+// SENTRY HELPERS (exported for direct use)
+// ============================================================================
+
+/**
+ * Set user context for Sentry
+ */
+export function setSentryUser(userId: string, tenantId?: string): void {
+    if (SENTRY_DSN) {
+        Sentry.setUser({
+            id: userId,
+            ...(tenantId && { tenant_id: tenantId }),
+        });
+    }
+}
+
+/**
+ * Clear user context (e.g., on logout)
+ */
+export function clearSentryUser(): void {
+    if (SENTRY_DSN) {
+        Sentry.setUser(null);
+    }
+}
+
+/**
+ * Add breadcrumb for debugging
+ */
+export function addBreadcrumb(
+    message: string,
+    category?: string,
+    data?: Record<string, any>
+): void {
+    if (SENTRY_DSN) {
+        Sentry.addBreadcrumb({
+            message,
+            category: category || 'default',
+            data,
+            level: 'info',
+            timestamp: Date.now() / 1000,
+        });
+    }
+}
+
+/**
+ * Capture exception directly to Sentry
+ */
+export function captureException(error: Error, context?: Record<string, any>): void {
+    if (SENTRY_DSN) {
+        Sentry.withScope((scope) => {
+            if (context) {
+                scope.setContext('error_context', context);
+            }
+            Sentry.captureException(error);
+        });
+    }
+}
+
+// Re-export Sentry for advanced use cases
+export { Sentry };

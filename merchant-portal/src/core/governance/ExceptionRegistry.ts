@@ -3,7 +3,8 @@
  * 
  * Defines the ALLOWED Transitional Exceptions (Law 2).
  * Any writer not in this registry is blocked in HYBRID mode.
- * In PURE mode, this registry is ignored (ALL writes blocked).
+ * In PURE mode, this registry is ignored for OPERATIONAL STATE.
+ * System/Genesis state remains governed by the Gate.
  */
 
 export type AllowedTable =
@@ -15,7 +16,10 @@ export type AllowedTable =
     | 'gm_menu_categories'
     | 'gm_restaurant_members'
     | 'gm_diagnostics'
-    | 'gm_restaurants';
+    | 'gm_restaurants'
+    | 'gm_tables'
+    | 'gm_order_requests'
+    | 'profiles';
 
 export type AllowedOperation = 'INSERT' | 'UPDATE' | 'DELETE' | 'UPSERT';
 
@@ -25,48 +29,65 @@ interface ExceptionGrant {
     allowedOperations: AllowedOperation[];
 }
 
-export const EXCEPTION_REGISTRY: Record<string, ExceptionGrant> = {
-    'CashRegisterEngine': {
-        reason: 'Legacy engine pending full Kernel inversion (Step 11518)',
-        allowedTables: ['gm_cash_registers'],
+export type CallerTag =
+    | 'GenesisKernel'
+    | 'MenuAuthority'
+    | 'TableAuthority'
+    | 'BootstrapPage'
+    | 'OnboardingQuick'
+    | 'PublicPages'
+    | 'WebOrderingService'
+    | 'OrderContext'
+    | 'OrderProcessingService';
+
+export const EXCEPTION_REGISTRY: Record<CallerTag, ExceptionGrant> = Object.freeze({
+
+    // === SOVEREIGN KERNELS & AUTHORITIES (The Constitution) ===
+    'GenesisKernel': {
+        reason: 'Sovereign Genesis Authority',
+        allowedTables: ['gm_restaurant_members', 'gm_diagnostics', 'gm_restaurants', 'gm_menu_categories', 'profiles'],
         allowedOperations: ['INSERT', 'UPDATE']
     },
-    'OrderContext': {
-        reason: 'Legacy TPV State Management (Pending Kernel)',
-        allowedTables: ['gm_orders', 'gm_order_items'],
-        allowedOperations: ['INSERT', 'UPDATE', 'DELETE', 'UPSERT']
-    },
-    'MenuState': {
-        reason: 'Legacy Menu Management (Pending Kernel)',
-        allowedTables: ['gm_products', 'gm_menu_categories'],
+    'MenuAuthority': {
+        reason: 'Sovereign Menu Authority',
+        allowedTables: ['gm_menu_categories'],
         allowedOperations: ['INSERT', 'UPDATE']
     },
-    'OnboardingCore': {
-        reason: 'Legacy Onboarding Flow',
-        allowedTables: ['gm_restaurant_members', 'gm_diagnostics', 'gm_restaurants', 'gm_menu_categories'],
-        allowedOperations: ['INSERT', 'UPDATE']
+    'TableAuthority': {
+        reason: 'Sovereign Table Authority',
+        allowedTables: ['gm_tables'],
+        allowedOperations: ['INSERT', 'UPDATE', 'DELETE']
     },
-    'ProductContext': {
-        reason: 'Legacy Product Creation',
-        allowedTables: ['gm_products'],
+
+    // === HYBRID / TRANSITIONAL (Authorized Airlocks) ===
+    'BootstrapPage': {
+        reason: 'Restaurant Genesis (Hybrid)',
+        allowedTables: ['gm_restaurants', 'gm_restaurant_members'],
         allowedOperations: ['INSERT']
     },
-    'OrderProcessingService': {
-        reason: 'Backend Processing (Legacy)',
-        allowedTables: ['gm_orders'],
-        allowedOperations: ['DELETE']
+    'OnboardingQuick': {
+        reason: 'Onboarding Configuration (Hybrid)',
+        allowedTables: ['gm_restaurants', 'gm_menu_categories'],
+        allowedOperations: ['UPDATE', 'INSERT']
+    },
+    'PublicPages': {
+        reason: 'Public Airlock (Hybrid)',
+        allowedTables: ['gm_order_requests'],
+        allowedOperations: ['INSERT']
     },
     'WebOrderingService': {
-        reason: 'Web Order Ingestion (Legacy)',
-        allowedTables: ['gm_orders'],
-        allowedOperations: ['DELETE']
+        reason: 'Web Order Ingestion (Hybrid)',
+        allowedTables: ['gm_orders', 'gm_order_items', 'gm_order_requests'],
+        allowedOperations: ['INSERT', 'DELETE']
     },
-    'OrderContextReal': {
-        reason: 'Real TPV Context (Pending Kernel)',
-        allowedTables: ['gm_orders'],
-        allowedOperations: ['UPDATE']
+
+    // === LEGACY (To Be Migrated to Kernels) ===
+    'OrderProcessingService': {
+        reason: 'Order Processing Service',
+        allowedTables: ['gm_order_requests'], // Only update status
+        allowedOperations: ['UPDATE'] // No CREATE/DELETE
     }
-};
+});
 
 export const isAuthorized = (
     callerTag: string,

@@ -1,0 +1,217 @@
+# 🐛 Known Issues - ChefIApp
+
+**Problemas conhecidos e workarounds**
+
+---
+
+## 🔴 Críticos
+
+### Nenhum no momento
+Todos os problemas críticos foram resolvidos na v1.0.0.
+
+---
+
+## 🟡 Importantes
+
+### 1. Timer pode não atualizar em background
+**Descrição:** Timer do mapa vivo pode parar quando app está em background.
+
+**Solução implementada (v1.1.0):**
+- ✅ AppState listener adicionado ao `OrderTimer.tsx`
+- ✅ Timer recalcula imediatamente ao voltar do background
+- ✅ Intervalo dinâmico baseado em urgência (5s/15s/30s)
+
+**Status:** ✅ Resolvido  
+**Versão:** v1.1.0
+
+---
+
+### 2. Waitlist pode perder dados em caso de crash
+**Descrição:** Se app crashar antes de salvar, dados podem ser perdidos.
+
+**Solução implementada (v1.1.0):**
+- ✅ Save imediato em ações críticas (add, seat)
+- ✅ Save com debounce (500ms) em ações menores (cancel)
+- ✅ Save automático ao ir para background (AppState)
+- ✅ Save no unmount do componente
+
+**Status:** ✅ Resolvido  
+**Versão:** v1.1.0
+
+---
+
+## 🟢 Menores
+
+### 3. Banner de pressão pode piscar
+**Descrição:** Banner de pressão da cozinha pode piscar durante transições.
+
+**Solução implementada (v1.2.0):**
+- ✅ Debounce de 1s para mudanças de pressão decrescentes
+- ✅ Mudanças crescentes aplicadas imediatamente (segurança)
+- ✅ Animação de fade in/out suave (300ms)
+- ✅ Altura animada para evitar "pulo" no layout
+
+**Status:** ✅ Resolvido  
+**Versão:** v1.2.0
+
+---
+
+### 4. Cores de urgência podem não atualizar imediatamente
+**Descrição:** Cores podem levar 1-2 segundos para atualizar.
+
+**Solução implementada (v1.2.0):**
+- ✅ Timer self-updating em cada KDSTicket
+- ✅ Intervalo dinâmico baseado em urgência:
+  - Fresh: 30s
+  - Warning: 15s
+  - Critical: 5s
+- ✅ AppState awareness para recálculo ao voltar do background
+- ✅ Cálculo memoizado para performance
+
+**Status:** ✅ Resolvido  
+**Versão:** v1.2.0
+
+---
+
+## 📱 Mobile Específicos
+
+### iOS
+
+#### 5. Haptic feedback pode não funcionar em alguns dispositivos
+**Descrição:** Haptic feedback pode não funcionar em iPhones mais antigos.
+
+**Workaround:**
+- Verificar suporte antes de chamar
+- Fallback silencioso
+
+**Status:** Resolvido  
+**Prioridade:** Baixa
+
+---
+
+### Android
+
+#### 6. Performance pode variar entre dispositivos
+**Descrição:** Performance pode ser mais lenta em dispositivos Android mais antigos.
+
+**Workaround:**
+- Otimizações implementadas
+- Considerar reduzir animações em dispositivos lentos
+
+**Status:** Em monitoramento  
+**Prioridade:** Média
+
+---
+
+## 🌐 Backend
+
+### 7. Realtime pode desconectar em redes instáveis
+**Descrição:** Conexão Realtime pode desconectar em redes instáveis.
+
+**Workaround:**
+- Sistema funciona offline-first
+- Reconexão automática implementada
+
+**Status:** Aceito  
+**Prioridade:** Baixa
+
+---
+
+## 🔧 Workarounds Comuns
+
+### Timer não atualiza
+```typescript
+// Forçar atualização
+const [forceUpdate, setForceUpdate] = useState(0);
+useEffect(() => {
+  setForceUpdate(prev => prev + 1);
+}, [order]);
+```
+
+### Waitlist não persiste
+```typescript
+// Salvar manualmente
+await PersistenceService.saveWaitlist(entries);
+```
+
+### Pressão não atualiza
+```typescript
+// Forçar recálculo
+const { pressure } = useKitchenPressure();
+// Hook recalcula automaticamente
+```
+
+---
+
+## 📊 Estatísticas
+
+### Issues por Categoria
+- **Críticos:** 0
+- **Importantes:** 0 (2 resolvidos em v1.1.0)
+- **Menores:** 0 (2 resolvidos em v1.2.0)
+- **Mobile:** 2 (baixa prioridade)
+- **Backend:** 1 (aceito)
+
+### Resolução
+- **Resolvidos:** 5
+- **Aceitos:** 2
+- **Em monitoramento:** 1
+
+---
+
+## 🚀 Roadmap de Correções
+
+### v1.1.0 ✅
+- [x] Timer em background (AppState awareness)
+- [x] Auto-save waitlist mais frequente (debounce + immediate)
+
+### v1.2.0 ✅
+- [x] Debounce no banner de pressão (1s + animação fade)
+- [x] Atualização mais frequente de cores (self-updating KDSTicket)
+
+---
+
+## 📞 Reportar Issues
+
+### Template
+```markdown
+**Descrição:**
+Breve descrição do problema
+
+**Passos para Reproduzir:**
+1. Passo 1
+2. Passo 2
+
+**Comportamento Esperado:**
+O que deveria acontecer
+
+**Comportamento Atual:**
+O que está acontecendo
+
+**Ambiente:**
+- OS: iOS/Android
+- Versão: X.Y.Z
+- Device: Modelo
+
+**Logs:**
+\`\`\`
+Logs relevantes
+\`\`\`
+```
+
+### Onde Reportar
+- **GitHub Issues:** [Link]
+- **Email:** support@chefiapp.com
+
+---
+
+## 📚 Recursos
+
+- **Troubleshooting:** `docs/TROUBLESHOOTING.md`
+- **FAQ:** `docs/FAQ.md`
+- **Contributing:** `CONTRIBUTING.md`
+
+---
+
+**Versão:** 1.2.0  
+**Última atualização:** 2026-01-24

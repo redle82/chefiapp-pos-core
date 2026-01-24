@@ -95,6 +95,8 @@ export async function getDeliveryChannels(restaurantId: string): Promise<Deliver
   return result.rows;
 }
 
+import { IfoodAdapter } from './adapters/ifood';
+
 /**
  * Sync delivery orders (stub - would integrate with real APIs)
  */
@@ -102,14 +104,35 @@ export async function syncDeliveryOrders(
   restaurantId: string,
   channelName: string
 ): Promise<{ synced: number; errors: number }> {
-  // STUB: In production, this would:
-  // 1. Get channel credentials
-  // 2. Call channel API (Glovo, Uber Eats, etc.)
-  // 3. Create orders in system
-  // 4. Return sync results
+
+  if (channelName === 'ifood') {
+    const adapter = new IfoodAdapter('stub-token');
+    try {
+      const events = await adapter.poll();
+      let synced = 0;
+
+      for (const event of events) {
+        if (event.code === 'PLACED') {
+          const orderData = await adapter.fetchOrder(event.orderId);
+          const internalOrder = adapter.mapToInternal(orderData);
+
+          // In production: Save to DB here
+          // await saveOrderToDB(internalOrder);
+
+          console.log('[DeliveryService] Synced iFood Order:', internalOrder);
+          synced++;
+        }
+      }
+
+      await adapter.acknowledge(events);
+      return { synced, errors: 0 };
+    } catch (err) {
+      console.error('[DeliveryService] iFood sync error:', err);
+      return { synced: 0, errors: 1 };
+    }
+  }
 
   console.log(`[STUB] Syncing delivery orders for ${channelName}`);
-
   return { synced: 0, errors: 0 };
 }
 

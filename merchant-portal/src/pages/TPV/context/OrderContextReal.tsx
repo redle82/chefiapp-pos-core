@@ -7,28 +7,35 @@
  */
 
 import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
-import { OrderEngine, type Order as RealOrder, type OrderItemInput } from '../../../core/tpv/OrderEngine';
-import { PaymentEngine, type PaymentMethod } from '../../../core/tpv/PaymentEngine';
+import { OrderEngine, type Order as RealOrder, type OrderItemInput, type PaymentMethod } from '../../../core/tpv/OrderEngine';
+import { PaymentEngine } from '../../../core/tpv/PaymentEngine';
 import { CashRegisterEngine, type CashRegister } from '../../../core/tpv/CashRegister';
+import { InventoryEngine } from '../../../core/inventory/InventoryEngine';
 import { supabase } from '../../../core/supabase';
-import { DbWriteGate } from '../../../core/governance/DbWriteGate';
-import { useNetworkStatus } from '../../../core/queue/useNetworkStatus';
-import { Logger } from '../../../core/logger/Logger'; // Opus 6.0 Logger
+import { tpvEventBus, type OrderExceptionPayload, type DecisionMadePayload } from '../../../core/tpv/TPVCentralEvents';
+
+import { useNetworkStatus } from '../../../core/sync/useNetworkStatus';
+import { Logger } from '../../../core/logger'; // Opus 6.0 Logger
 import type { Order, OrderItem } from './OrderTypes';
 import { useOfflineOrder } from './OfflineOrderContext';
 import { v4 as uuidv4 } from 'uuid';
 import { getTabIsolated, setTabIsolated, removeTabIsolated } from '../../../core/storage/TabIsolatedStorage';
 import { ReconnectManager } from '../../../core/realtime/ReconnectManager';
 import { OrderContext } from './OrderContext'; // 👈 IMPORT THE TOKEN
+import { useKernel } from '../../../core/kernel/KernelContext';
+import { isDevStableMode } from '../../../core/runtime/devStableMode';
 
 interface OrderContextType {
     orders: Order[];
+    pendingExceptions: (OrderExceptionPayload & { eventId: string })[];
     loading: boolean;
     createOrder: (order: Partial<Order>) => Promise<Order>;
     addItemToOrder: (orderId: string, item: OrderItemInput) => Promise<void>;
     removeItemFromOrder: (orderId: string, itemId: string) => Promise<void>;
     updateItemQuantity: (orderId: string, itemId: string, quantity: number) => Promise<void>;
     performOrderAction: (orderId: string, action: string, payload?: any) => Promise<void>;
+    attachCustomer: (orderId: string, customerId: string) => Promise<void>; // Sprint 12
+    cancelOrder: (orderId: string, reason: string) => Promise<void>;
     getActiveOrders: () => Promise<void>;
     // Cash Register
     openCashRegister: (openingBalanceCents: number) => Promise<void>;
@@ -71,6 +78,7 @@ function mapRealOrderToLocalOrder(realOrder: RealOrder): Order {
         total: realOrder.totalCents, // já em centavos
         createdAt: realOrder.createdAt,
         updatedAt: realOrder.updatedAt,
+        customerId: (realOrder as any).customer_id, // Sprint 12
     };
 }
 
@@ -115,12 +123,20 @@ function mapLocalStatusToReal(status: Order['status']): RealOrder['status'] {
 }
 
 export function OrderProvider({ children, restaurantId: propRestaurantId }: { children: ReactNode, restaurantId?: string }) {
+    const { kernel, status, isReady, executeSafe } = useKernel();
     const [orders, setOrders] = useState<Order[]>([]);
-    const [loading, setLoading] = useState(true);
+    // STEP 7: Inicializar loading como false (fail-closed - não assume kernel pronto)
+    const [loading, setLoading] = useState(false);
+
+    // STEP 7: Helper para verificar readiness
+    const isKernelReady = useCallback(() => {
+        return isReady && status === 'READY' && kernel !== null;
+    }, [isReady, status, kernel]);
     // SOVEREIGN: restaurantId comes from Gate layer (TenantContext -> AppDomainWrapper)
     const [restaurantId, setRestaurantId] = useState<string | null>(propRestaurantId || null);
     const [operatorId, setOperatorId] = useState<string | null>(null);
     const [cashRegisterId, setCashRegisterId] = useState<string | null>(null);
+    const [pendingExceptions, setPendingExceptions] = useState<(OrderExceptionPayload & { eventId: string })[]>([]);
 
     // Sync with prop changes (e.g., tenant switch)
     useEffect(() => {
@@ -154,9 +170,12 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
 
     // Initial fetch - SOVEREIGN: Use prop from Gate layer, no storage fallback
     useEffect(() => {
+        // STEP 7: Não fazer throw no mount/setup
         // Fetch operator ID from auth
         supabase.auth.getUser().then(({ data: { user } }) => {
             if (user) setOperatorId(user.id);
+        }).catch(() => {
+            // Fail-closed: não quebra se auth falhar
         });
 
         // Fetch open cash register if we have a restaurant ID
@@ -165,9 +184,18 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                 .then(register => {
                     if (register) setCashRegisterId(register.id);
                 })
-                .catch(() => { });
+                .catch(() => {
+                    // STEP 7: Fail-closed - não quebra se falhar
+                });
         }
     }, [propRestaurantId]);
+
+    // STEP 7: Garantir que loading = false quando kernel não está pronto (fail-closed)
+    useEffect(() => {
+        if (!isKernelReady() && loading) {
+            setLoading(false);
+        }
+    }, [isReady, status, kernel, loading]);
 
     // Core Fetch Logic
     const getActiveOrdersInternal = async (restId: string, isBackground = false) => {
@@ -239,6 +267,13 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
     useEffect(() => {
         if (!restaurantId) return;
 
+        // DEV_STABLE_MODE: do not start realtime/polling while stabilizing Gate/Auth/Tenant.
+        if (isDevStableMode()) {
+            // Still do an initial load so UI can render deterministically.
+            getActiveOrders(false);
+            return;
+        }
+
         Logger.info('Setting up Realtime & Polling', { context: 'OrderContext', tenantId: restaurantId });
         getActiveOrders(false); // Initial load (with spinner)
 
@@ -269,9 +304,39 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
         };
     }, [restaurantId]); // CRITICAL: Remove setupRealtimeSubscription from deps to prevent loop
 
+    // === Exception Persistence (Verification & Robustness) ===
+    useEffect(() => {
+        // Listen for new exceptions
+        const unsubscribeException = tpvEventBus.on<OrderExceptionPayload>('order.exception', (event) => {
+            Logger.info('caught_order_exception', { payload: event.payload }, { context: 'OrderContext' });
+            setPendingExceptions(prev => {
+                // Check if already exists by eventId or orderId+type
+                if (prev.some(e => e.eventId === event.id)) return prev;
+                return [...prev, { ...event.payload, eventId: event.id }];
+            });
+        });
+
+        // Listen for decisions to clear exceptions
+        const unsubscribeDecision = tpvEventBus.on<DecisionMadePayload>('order.decision_made', (event) => {
+            Logger.info('caught_decision_made', { payload: event.payload }, { context: 'OrderContext' });
+            setPendingExceptions(prev => prev.filter(e =>
+                // Remove exception if it matches the decision's orderId
+                e.orderId !== event.payload.orderId
+            ));
+        });
+
+        return () => {
+            unsubscribeException();
+            unsubscribeDecision();
+        };
+    }, []);
+
     // Auto-Reconnect Logic (exponential backoff)
     useEffect(() => {
         if (!restaurantId) return;
+
+        // STEP 6: DEV_STABLE_MODE - no auto-reconnect attempts
+        if (isDevStableMode()) return;
 
         // Detect disconnection and trigger reconnect
         if (realtimeStatus === 'CLOSED' || realtimeStatus === 'CHANNEL_ERROR' || realtimeStatus === 'TIMED_OUT') {
@@ -320,7 +385,7 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
 
 
         // Check Offline Mode (Hard Check)
-        if (isOffline) {
+        if (isOffline || (status as string) === 'FROZEN') {
             Logger.warn('⚠️ Offline Mode detected. Creating local order.', { context: 'OrderContext', tenantId: restaurantId });
 
             // 1. Get cash register ID if available
@@ -412,26 +477,49 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
         }
 
         // Criar novo pedido (já valida caixa e mesa no OrderEngine)
-        const realOrder = await OrderEngine.createOrder({
+        // STEP 7: Fail-closed - não assume Kernel
+        if (!isKernelReady()) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                ? 'Sistema em modo de estabilização'
+                : status === 'BOOTING'
+                    ? 'Sistema inicializando'
+                    : 'Selecione um restaurante antes de criar pedidos'}`);
+        }
+
+        const orderId = uuidv4(); // Generate ID externally (Sovereign ID)
+
+        // STEP 7: Usar executeSafe em vez de kernel.execute()
+        const result = await executeSafe({
+            entity: 'ORDER',
+            entityId: orderId,
+            event: 'CREATE',
+            // Context payload for Projection Effect
             restaurantId,
-            tableNumber: orderInput.tableNumber,
-            tableId: orderInput.tableId,
-            operatorId: operatorId || undefined,
-            cashRegisterId: cashRegisterId || undefined,
-            notes: orderInput.items?.find(i => i.notes)?.notes,
             items: (orderInput.items || []).map(item => ({
                 productId: item.productId,
                 name: item.name,
+                unitPrice: item.price, // Normalized to 'unitPrice' for effect
                 priceCents: item.price,
                 quantity: item.quantity,
                 notes: item.notes,
             })),
+            tableNumber: orderInput.tableNumber,
+            tableId: orderInput.tableId,
+            paymentMethod: 'cash',
+            syncMetadata: orderInput.syncMetadata
         });
+
+        if (!result.ok) {
+            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
+        }
+
+        // Fetch the projected order (Active Record pattern for now)
+        // This ensures we get the DB-generated short_id
+        const realOrder = await OrderEngine.getOrderById(orderId);
 
         const localOrder = mapRealOrderToLocalOrder(realOrder);
 
         // HARD RULE 4: Persistir pedido ativo (Tab-Isolated)
-        const { setTabIsolated } = require('../../../core/storage/TabIsolatedStorage');
         setTabIsolated('chefiapp_active_order_id', localOrder.id);
 
         await getActiveOrders(); // Refresh
@@ -442,7 +530,8 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
     const addItemToOrder = async (orderId: string, item: OrderItemInput): Promise<void> => {
         if (!restaurantId) throw new Error('Restaurant ID not set');
 
-        if (isOffline) {
+        if (isOffline || (status as string) === 'FROZEN') {
+            // ... (keep offline logic)
             Logger.info('Offline Mode: Adding item locally', { orderId, item });
             await updateOfflineOrder(orderId, 'ADD_ITEM', {
                 ...item,
@@ -470,7 +559,38 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             return;
         }
 
-        await OrderEngine.addItemToOrder(orderId, item, restaurantId);
+        // STEP 7: Fail-closed - não assume Kernel
+        if (!isKernelReady()) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                ? 'Sistema em modo de estabilização'
+                : status === 'BOOTING'
+                    ? 'Sistema inicializando'
+                    : 'Selecione um restaurante antes de adicionar itens'}`);
+        }
+
+        // STEP 7: Usar executeSafe em vez de kernel.execute()
+        const result = await executeSafe({
+            entity: 'ORDER',
+            entityId: orderId,
+            event: 'ADD_ITEM',
+            restaurantId, // Context
+            item: {
+                productId: item.productId,
+                name: item.name,
+                priceCents: item.priceCents || (item as any).price, // handle both
+                unitPrice: item.priceCents || (item as any).price,
+                quantity: item.quantity,
+                notes: item.notes,
+                consumptionGroupId: item.consumptionGroupId,
+                modifiers: item.modifiers,
+                categoryName: item.categoryName
+            }
+        });
+
+        if (!result.ok) {
+            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
+        }
+
         await getActiveOrders(); // Refresh
     };
 
@@ -478,7 +598,8 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
     const removeItemFromOrder = async (orderId: string, itemId: string): Promise<void> => {
         if (!restaurantId) throw new Error('Restaurant ID not set');
 
-        if (isOffline) {
+        if (isOffline || (status as string) === 'FROZEN') {
+            // ... (keep offline logic)
             Logger.info('Offline Mode: Removing item locally', { orderId, itemId });
             await updateOfflineOrder(orderId, 'REMOVE_ITEM', {
                 itemId,
@@ -497,7 +618,28 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             return;
         }
 
-        await OrderEngine.removeItemFromOrder(orderId, itemId, restaurantId);
+        // STEP 7: Fail-closed - não assume Kernel
+        if (!isKernelReady()) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                ? 'Sistema em modo de estabilização'
+                : status === 'BOOTING'
+                    ? 'Sistema inicializando'
+                    : 'Selecione um restaurante antes de remover itens'}`);
+        }
+
+        // STEP 7: Usar executeSafe em vez de kernel.execute()
+        const result = await executeSafe({
+            entity: 'ORDER',
+            entityId: orderId,
+            event: 'REMOVE_ITEM',
+            restaurantId,
+            itemId: itemId
+        });
+
+        if (!result.ok) {
+            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
+        }
+
         await getActiveOrders(); // Refresh
     };
 
@@ -505,7 +647,8 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
     const updateItemQuantity = async (orderId: string, itemId: string, quantity: number): Promise<void> => {
         if (!restaurantId) throw new Error('Restaurant ID not set');
 
-        if (isOffline) {
+        if (isOffline || (status as string) === 'FROZEN') {
+            // ... (keep offline logic)
             Logger.info('Offline Mode: Updating item quantity locally', { orderId, itemId, quantity });
             await updateOfflineOrder(orderId, 'UPDATE_QTY', {
                 itemId,
@@ -528,49 +671,171 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             return;
         }
 
-        await OrderEngine.updateItemQuantity(orderId, itemId, quantity, restaurantId);
+        // STEP 7: Fail-closed - não assume Kernel
+        if (!isKernelReady()) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                ? 'Sistema em modo de estabilização'
+                : status === 'BOOTING'
+                    ? 'Sistema inicializando'
+                    : 'Selecione um restaurante antes de atualizar itens'}`);
+        }
+
+        // Find Unit Price for Total Calculation
+        // Use local state (orders) or fetch? Local state is faster.
+        const order = orders.find(o => o.id === orderId);
+        const item = order?.items.find(i => i.id === itemId);
+        const unitPriceCents = item?.price; // OrderItem.price is int cents
+        // STEP 7: Usar executeSafe em vez de kernel.execute()
+        const result = await executeSafe({
+            entity: 'ORDER',
+            entityId: orderId,
+            event: 'UPDATE_QUANTITY',
+            restaurantId,
+            itemId,
+            quantity
+        });
+
+        if (!result.ok) {
+            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
+        }
         await getActiveOrders(); // Refresh
+    };
+
+    // Sprint 12: Attach Customer
+    const attachCustomer = async (orderId: string, customerId: string): Promise<void> => {
+        if (!restaurantId) throw new Error('Restaurant ID not set');
+
+        const { error } = await supabase
+            .from('gm_orders')
+            .update({ customer_id: customerId })
+            .eq('id', orderId)
+            .eq('restaurant_id', restaurantId);
+
+        if (error) throw error;
+        await getActiveOrders();
+    };
+
+    // Cancelar Pedido
+    const cancelOrder = async (orderId: string, reason: string): Promise<void> => {
+        if (!restaurantId) throw new Error('Restaurant ID not set');
+
+        // STEP 7: Fail-closed - não assume Kernel
+        if (!isKernelReady()) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                ? 'Sistema em modo de estabilização'
+                : status === 'BOOTING'
+                    ? 'Sistema inicializando'
+                    : 'Selecione um restaurante antes de cancelar pedidos'}`);
+        }
+
+        const result = await executeSafe({
+            entity: 'ORDER',
+            entityId: orderId,
+            event: 'CANCEL',
+            restaurantId,
+            reason
+        });
+
+        if (!result.ok) {
+            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
+        }
+
+        await getActiveOrders();
     };
 
     // Ações do pedido
     const performOrderAction = async (orderId: string, action: string, payload?: any): Promise<void> => {
         if (!restaurantId) throw new Error('Restaurant ID not set');
 
-        // P1-4 FIX: Truth-First - Não fazer optimistic updates
-        // A UI deve mostrar status da queue (pending/syncing/applied) até o Core confirmar
-        // Não atualizamos o estado local aqui - aguardamos getActiveOrders() após a ação
-
         try {
             switch (action) {
                 case 'send':
                 case 'prepare':
-                    // P1-4 FIX: Aguardar confirmação do Core antes de atualizar UI
-                    await OrderEngine.updateOrderStatus(orderId, 'IN_PREP', restaurantId);
-                    // UI será atualizada apenas quando getActiveOrders() for chamado
+                    if (!isKernelReady()) throw new Error('KERNEL_NOT_READY');
+                    const finalizeResult = await executeSafe({
+                        entity: 'ORDER',
+                        entityId: orderId,
+                        event: 'FINALIZE',
+                        restaurantId,
+                        targetStatus: 'preparing'
+                    });
+                    if (!finalizeResult.ok) throw new Error(finalizeResult.reason);
                     break;
 
                 case 'ready':
-                    // P1-4 FIX: Aguardar confirmação do Core antes de atualizar UI
-                    await OrderEngine.updateOrderStatus(orderId, 'READY', restaurantId);
-                    // UI será atualizada apenas quando getActiveOrders() for chamado
+                    if (!isKernelReady()) throw new Error('KERNEL_NOT_READY');
+                    const readyResult = await executeSafe({
+                        entity: 'ORDER',
+                        entityId: orderId,
+                        event: 'MARK_READY',
+                        restaurantId,
+                        targetStatus: 'ready'
+                    });
+                    if (!readyResult.ok) throw new Error(readyResult.reason);
                     break;
 
                 case 'serve':
-                    // Update to SERVED (Final Kitchen/Table State)
-                    const nowServed = new Date().toISOString();
-                    await DbWriteGate.update(
-                        'OrderContextReal',
-                        'gm_orders',
-                        {
-                            status: 'served',
-                            served_at: nowServed
-                        },
-                        { id: orderId },
-                        { tenantId: restaurantId }
-                    );
+                    if (!isKernelReady()) throw new Error('KERNEL_NOT_READY');
+                    const serveResult = await executeSafe({
+                        entity: 'ORDER',
+                        entityId: orderId,
+                        event: 'SERVE',
+                        restaurantId,
+                        targetStatus: 'served',
+                        metadata: { served_at: new Date().toISOString() }
+                    });
+                    if (!serveResult.ok) throw new Error(serveResult.reason);
                     break;
 
                 case 'pay':
+                    // Offline Support
+                    if (isOffline || (status as string) === 'FROZEN') {
+                        Logger.info('Offline Mode: Processing payment locally', { orderId });
+                        if (!restaurantId) throw new Error('Restaurant ID not set');
+
+                        // Use local state for register
+                        const offlineRegisterId = cashRegisterId;
+                        if (!offlineRegisterId) {
+                            throw new Error('CASH_REGISTER_CLOSED: Caixa desconhecido (offline). Certifique-se que o caixa estava aberto antes de cair a rede.');
+                        }
+
+                        // Get order total from local state
+                        const localOrder = orders.find(o => o.id === orderId);
+                        if (!localOrder) throw new Error('Order not found locally');
+
+                        const amountCents = (payload?.isPartial && payload?.amountCents)
+                            ? payload.amountCents
+                            : localOrder.total;
+
+                        await updateOfflineOrder(orderId, 'PAY', {
+                            amountCents,
+                            method: payload?.method || 'cash',
+                            restaurantId,
+                            cashRegisterId: offlineRegisterId,
+                            isPartial: payload?.isPartial,
+                            operatorId
+                        });
+
+                        // Optimistic UI Update
+                        setOrders(prev => prev.map(o => {
+                            if (o.id === orderId) {
+                                // If full payment, mark paid. If partial, status might remain open or 'partially_paid'
+                                // For simplicity in offline: if amount >= total, paid. 
+                                // But split bill logic is complex. 
+                                // Assuming typical flow:
+                                if (!payload?.isPartial) return { ...o, status: 'paid' };
+                                return o;
+                            }
+                            return o;
+                        }));
+
+                        // Remove from active tab if paid fully
+                        if (!payload?.isPartial) {
+                            removeTabIsolated('chefiapp_active_order_id');
+                        }
+                        return;
+                    }
+
                     // HARD RULE 2: Pagar = Fechar pedido (TRANSACTION ATOMICA)
                     // CRÍTICO: Re-fetch order do DB e recalcular total (nunca confiar no frontend)
 
@@ -584,7 +849,7 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                         .eq('order_id', orderId);
 
                     if (itemsError) {
-                        throw new Error(`Failed to fetch order items: ${itemsError.message}`);
+                        throw new Error(`Failed to fetch order items: ${itemsError.message} `);
                     }
 
                     if (!items || items.length === 0) {
@@ -610,7 +875,7 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                     // IDEMPOTENCY SAFETY: Recuperar key da sessão ou gerar nova
                     let key = idempotencyKeys.current.get(orderId);
                     if (!key) {
-                        key = `${orderId}_${Date.now()}_secure`;
+                        key = `${orderId}_${Date.now()} _secure`;
                         idempotencyKeys.current.set(orderId, key);
                     }
 
@@ -639,62 +904,135 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
 
                     // Validar que amount não excede o total
                     if (amountCents > dbOrder.totalCents) {
-                        throw new Error(`Valor de pagamento (${amountCents}) excede o total do pedido (${dbOrder.totalCents})`);
+                        throw new Error(`Valor de pagamento(${amountCents}) excede o total do pedido(${dbOrder.totalCents})`);
                     }
 
-                    await PaymentEngine.processPayment({
-                        orderId,
+                    // STEP 7: Fail-closed - não assume Kernel
+                    if (!isKernelReady()) {
+                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                            ? 'Sistema em modo de estabilização'
+                            : status === 'BOOTING'
+                                ? 'Sistema inicializando'
+                                : 'Selecione um restaurante antes de processar pagamento'
+                            } `);
+                    }
+                    const method = (payload?.method || 'cash') as PaymentMethod;
+
+                    // PRE-CHECK: Loyalty Balance
+                    if (method === 'loyalty') {
+                        const orderForCheck = await OrderEngine.getOrder(orderId, restaurantId);
+                        const customerId = (orderForCheck as any).customer_id;
+                        if (!customerId) throw new Error('Cliente precisa ser identificado para pagar com pontos.');
+
+                        const { data: customerCheck } = await supabase.from('gm_customers').select('points_balance').eq('id', customerId).single();
+                        if (!customerCheck) throw new Error('Perfil de cliente não encontrado.');
+
+                        // 1 Point = 0.10 EUR (10 Cents)
+                        // AmountCents = 100 (1 EUR) -> Next Points = 10
+                        const pointsNeeded = Math.ceil(amountCents / 10);
+
+                        if ((customerCheck.points_balance || 0) < pointsNeeded) {
+                            throw new Error(`Saldo insuficiente. Necessário: ${pointsNeeded} pts. Disponível: ${customerCheck.points_balance || 0} pts.`);
+                        }
+                    }
+
+                    // STEP 7: Usar executeSafe
+                    const payResult = await executeSafe({
+                        entity: 'ORDER',
+                        entityId: orderId,
+                        event: isPartial ? 'REGISTER_PAYMENT' : 'PAY',
                         restaurantId,
+                        // Context for persistPayment Effect
                         cashRegisterId: activeRegisterId,
-                        amountCents, // Pode ser parcial ou total
-                        method: (payload?.method || 'cash') as PaymentMethod,
+                        amountCents,
+                        method: method,
                         metadata: {
                             operatorId: operatorId || undefined,
-                            isPartial, // Flag para indicar que é pagamento parcial
+                            isPartial,
                         },
-                        idempotencyKey: key
+                        idempotencyKey: key,
+                        isPartial
                     });
+                    if (!payResult.ok) {
+                        throw new Error(`KERNEL_EXECUTION_FAILED: ${payResult.reason}`);
+                    }
 
                     // Cleanup key on success (allows new payment if order re-opened later)
                     idempotencyKeys.current.delete(orderId);
 
                     // FASE 3: Integração CRM e Loyalty (não bloqueia pagamento se falhar)
                     try {
-                        const { CustomerService } = await import('../../../core/crm/CustomerService');
-                        const { LoyaltyService } = await import('../../../core/loyalty/LoyaltyService');
-
-                        // Buscar dados do pedido para CRM/Loyalty
                         const orderForCRM = await OrderEngine.getOrder(orderId, restaurantId);
-                        if (orderForCRM) {
-                            // Extrair dados do cliente (se disponível)
-                            const customerPhone = orderForCRM.metadata?.customer_phone;
-                            const customerEmail = orderForCRM.metadata?.customer_email;
-                            const customerName = orderForCRM.metadata?.customer_name;
+                        if (orderForCRM && (orderForCRM as any).customer_id) {
+                            const customerId = (orderForCRM as any).customer_id;
 
-                            // Atualizar CRM
-                            if (customerPhone || customerEmail) {
-                                const customer = await CustomerService.findOrCreateCustomer(restaurantId, {
-                                    email: customerEmail,
-                                    phone: customerPhone,
-                                    full_name: customerName,
-                                });
+                            if (method === 'loyalty') {
+                                // REDIRECCIONAMENTO: QUEIMA DE PONTOS
+                                const pointsBurned = Math.ceil(amountCents / 10);
+                                const { data: customer } = await supabase.from('gm_customers').select('points_balance, visit_count').eq('id', customerId).single();
 
-                                await CustomerService.updateAfterOrder(customer.id, dbOrder.totalCents / 100);
+                                if (customer) {
+                                    await supabase.from('gm_customers').update({
+                                        points_balance: (customer.points_balance || 0) - pointsBurned,
+                                        // Não incrementa spend nem visits em resgate (decisão de negócio)
+                                        // Ou incrementa visits? Vamos incrementar visits pois houve transação.
+                                        visit_count: (customer.visit_count || 0) + 1,
+                                        last_visit_at: new Date().toISOString()
+                                    }).eq('id', customerId);
 
-                                // Adicionar pontos de fidelidade
-                                await LoyaltyService.awardPointsForOrder(
-                                    restaurantId,
-                                    orderId,
-                                    dbOrder.totalCents,
-                                    customer.id,
-                                    customerPhone,
-                                    customerEmail
-                                );
+                                    await supabase.from('gm_loyalty_logs').insert({
+                                        restaurant_id: restaurantId,
+                                        customer_id: customerId,
+                                        order_id: orderId,
+                                        points_amount: -pointsBurned, // Negativo
+                                        description: `Resgatou ${pointsBurned} pontos (Desconto de ${(amountCents / 100).toFixed(2)}€)`
+                                    });
+                                }
+
+                            } else {
+                                // FLUXO NORMAL: GANHO DE PONTOS
+                                const spendCents = amountCents;
+                                const pointsEarned = Math.floor(spendCents / 100);
+
+                                const { data: customer } = await supabase.from('gm_customers').select('points_balance, visit_count, total_spend_cents').eq('id', customerId).single();
+
+                                if (customer) {
+                                    await supabase.from('gm_customers').update({
+                                        points_balance: (customer.points_balance || 0) + pointsEarned,
+                                        total_spend_cents: (customer.total_spend_cents || 0) + spendCents,
+                                        visit_count: (customer.visit_count || 0) + 1,
+                                        last_visit_at: new Date().toISOString()
+                                    }).eq('id', customerId);
+
+                                    await supabase.from('gm_loyalty_logs').insert({
+                                        restaurant_id: restaurantId,
+                                        customer_id: customerId,
+                                        order_id: orderId,
+                                        points_amount: pointsEarned,
+                                        description: `Ganhou ${pointsEarned} pontos (Pedido #${orderForCRM.number || orderForCRM.shortId})`
+                                    });
+                                }
                             }
                         }
                     } catch (crmError) {
-                        // Log mas não bloqueia pagamento
-                        console.warn('[TPV] CRM/Loyalty processing failed (non-blocking):', crmError);
+                        Logger.warn('Failed to update CRM/Loyalty', { error: crmError, orderId });
+                    }
+
+                    // FASE 4: Inventory Auto-Deductions
+                    try {
+                        const paidOrder = await OrderEngine.getOrderById(orderId);
+                        await InventoryEngine.processOrder(paidOrder);
+
+                        const totalCost = await InventoryEngine.calculateOrderCost(paidOrder);
+                        const grossMargin = paidOrder.totalCents - totalCost;
+
+                        await supabase.from('gm_orders').update({
+                            total_cost_cents: totalCost,
+                            gross_margin_cents: grossMargin
+                        }).eq('id', orderId);
+
+                    } catch (invError) {
+                        Logger.error('Inventory/Finance Logic Failed', invError, { context: 'OrderContext', orderId });
                     }
 
                     // Limpar pedido ativo após pagamento
@@ -713,11 +1051,29 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
                         throw new Error('Pedido deve ser pago antes de fechar. Use "Cobrar" primeiro.');
                     }
                     // Se já está pago, apenas atualizar status (redundante, mas seguro)
-                    await OrderEngine.updateOrderStatus(orderId, 'PAID', restaurantId);
+                    // REMOVED LEGACY WRITE: kernel.execute('PAY') already sets status to PAID via Effect.
                     break;
 
                 case 'cancel':
-                    await OrderEngine.updateOrderStatus(orderId, 'CANCELLED', restaurantId);
+                    // STEP 7: Fail-closed - não assume Kernel
+                    if (!isKernelReady()) {
+                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                            ? 'Sistema em modo de estabilização'
+                            : status === 'BOOTING'
+                                ? 'Sistema inicializando'
+                                : 'Selecione um restaurante antes de cancelar pedido'
+                            } `);
+                    }
+                    // STEP 7: Usar executeSafe
+                    const cancelResult = await executeSafe({
+                        entity: 'ORDER',
+                        entityId: orderId,
+                        event: 'CANCEL',
+                        restaurantId
+                    });
+                    if (!cancelResult.ok) {
+                        throw new Error(`KERNEL_EXECUTION_FAILED: ${cancelResult.reason} `);
+                    }
                     // Limpar pedido ativo se cancelado
                     const currentActiveCancel = getTabIsolated('chefiapp_active_order_id');
                     if (currentActiveCancel === orderId) {
@@ -753,11 +1109,22 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             throw new Error('Restaurant ID or Operator ID not set');
         }
 
+        // STEP 7: Fail-closed - não assume Kernel
+        if (!isKernelReady()) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                ? 'Sistema em modo de estabilização'
+                : status === 'BOOTING'
+                    ? 'Sistema inicializando'
+                    : 'Selecione um restaurante antes de abrir caixa'
+                } `);
+        }
+
         try {
             const register = await CashRegisterEngine.openCashRegister({
                 restaurantId,
                 openingBalanceCents,
                 openedBy: currentOperatorId,
+                kernel: kernel! // SOVEREIGNTY: Pass Kernel (já validado acima)
             });
 
             setCashRegisterId(register.id);
@@ -781,11 +1148,22 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
             throw new Error('Missing required IDs');
         }
 
+        // STEP 7: Fail-closed - não assume Kernel
+        if (!isKernelReady()) {
+            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
+                ? 'Sistema em modo de estabilização'
+                : status === 'BOOTING'
+                    ? 'Sistema inicializando'
+                    : 'Selecione um restaurante antes de fechar caixa'
+                } `);
+        }
+
         await CashRegisterEngine.closeCashRegister({
             cashRegisterId,
             restaurantId,
             closingBalanceCents,
             closedBy: operatorId,
+            kernel: kernel! // SOVEREIGNTY: Pass Kernel (já validado acima)
         });
 
         setCashRegisterId(null);
@@ -808,19 +1186,21 @@ export function OrderProvider({ children, restaurantId: propRestaurantId }: { ch
     return (
         <OrderContext.Provider value={{
             orders,
-            loading,
+            pendingExceptions,
+            loading, // Explicitly expose loading state
             // === KDS HARDENING: Expor todos os estados de conexão ===
             isConnected: isOnline,
             isOffline,
             realtimeStatus,       // 'SUBSCRIBED' | 'CLOSED' | 'CHANNEL_ERROR' | etc
             lastRealtimeEvent,    // Timestamp do último evento
 
-            syncNow: async () => await getActiveOrders(false), // Manual sync shows spinner
             createOrder,
             addItemToOrder,
             removeItemFromOrder,
             updateItemQuantity,
             performOrderAction,
+            attachCustomer,
+            cancelOrder,
             getActiveOrders,
             openCashRegister,
             closeCashRegister,

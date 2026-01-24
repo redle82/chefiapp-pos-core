@@ -1,0 +1,91 @@
+# 🔥 GENESIS REALITY CONTRACT
+# Definition of "100% Reality Ready"
+# This contract defines the "Test of Life" that the system must pass to be considered fully operational.
+
+meta:
+  version: "1.0.0"
+  type: "System Constitution"
+  enforcement: "Strict"
+
+genesis_reality:
+  required: true
+  target_environments: 
+    - "staging"
+    - "production"
+  
+  # 🧍‍♂️ A. CLIENT EXPEREINCE (The "No Bypass" Rule)
+  # System must be born from the outside in.
+  client_experience:
+    - id: "access_public_landing"
+      must: "Accessible without auth"
+      verification: "HTTP 200 on /"
+      
+    - id: "signup_real"
+      must: "Create real Supabase user via Auth UI"
+      constraint: "NO SEEDS. NO MANUAL DB INSERTS."
+      
+    - id: "onboarding_complete"
+      must: "Complete Wizard (Identity -> Foundation)"
+      constraint: "All 'GenesisKernel' atomic transactions commit."
+      
+    - id: "self_service_creation"
+      must: "Tenant, Menu, and Staff created via UI"
+      constraint: "No admin panel usage allowed."
+
+  # 🖥️ B. REAL INSTALLATION (The "Sovereign Runtime" Rule)
+  # TPV is not a route, it is an environment.
+  installation:
+    - id: "pwa_install_tpv"
+      must: "Installable as standalone PWA"
+      verification: "Service Worker Active & Manifest Valid"
+      
+    - id: "pwa_install_kds"
+      must: "Installable as standalone PWA"
+      verification: "Service Worker Active & Manifest Valid"
+      
+    - id: "independent_sessions"
+      must: "TPV and KDS operate with isolated storage"
+      verification: "TabIsolatedStorage/LocalStorage partitioning"
+
+  # 👥 C. PARALLEL OPERATION (The "Chaos" Rule)
+  # The system must handle concurrency like a real restaurant.
+  concurrency:
+    roles_required_simultaneously:
+      - role: "owner"
+        context: "Dashboard/Backoffice"
+      - role: "manager"
+        context: "Floor Management"
+      - role: "waiter"
+        context: "Mobile Order Taking"
+      - role: "kitchen"
+        context: "KDS (Production Line)"
+      - role: "cleaning"
+        context: "Staff App (Tasks)"
+
+  # 🍽️ D. REAL FLOW (The "Money" Rule)
+  # From intent to cash, without mocks.
+  business_flow:
+    sequence:
+      1: "Waiter creates Order on Mobile/TPV"
+      2: "Order appears on KDS (Realtime)"
+      3: "Kitchen advances Order State (Preparation -> Ready)"
+      4: "Waiter receives Ready signal"
+      5: "Payment processed (Cash/Card)"
+      6: "Fiscal Document issued (InvoiceXpress)"
+      7: "Stock decremented (Optional)"
+    
+    invariants:
+      - "assertNoMock() must pass at all steps"
+      - "Fiscal ID must be valid from authority"
+
+  # ⚖️ VERDICT
+  # The Kernel's Judgment Logic
+  verdict:
+    pass: "kernel_state = OK_FOR_REALITY"
+    fail: "kernel_state = DEGRADED"
+    
+  # 🛡️ ENFORCEMENT
+  # How this contract is applied
+  implementation_reference:
+    check_class: "GenesisRealityCheck"
+    kernel_integration: "src/core/kernel/GenesisKernel.ts"

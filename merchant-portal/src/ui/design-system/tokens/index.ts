@@ -18,3 +18,5 @@ export type TokenSpacing = typeof spacing;
 export type TokenTypography = typeof typography;
 export type TokenRadius = typeof radius;
 export type TokenShadows = typeof shadows;
+
+export { cn } from './cn';

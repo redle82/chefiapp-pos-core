@@ -11,22 +11,27 @@
 import { supabase } from '../supabase';
 import type { FiscalObserver } from '../../../../fiscal-modules/FiscalObserver';
 import type { FiscalResult, TaxDocument } from '../../../../fiscal-modules/types';
-import type { FiscalEventStore } from '../../../../fiscal-modules/FiscalEventStore'; // Type Only!
+// import type { FiscalEventStore } REMOVED to prevent pg leak
+// We define a local interface compatible with the Server implementation
+interface ServerFiscalEventStore {
+    recordInteraction(doc: TaxDocument, result: FiscalResult): Promise<string>;
+}
 import { SupabaseFiscalEventStore } from './SupabaseFiscalEventStore';
 import { ConsoleFiscalAdapter } from '../../../../fiscal-modules/ConsoleFiscalAdapter';
 import { TicketBAIAdapter } from '../../../../fiscal-modules/adapters/TicketBAIAdapter';
 import { SAFTAdapter } from '../../../../fiscal-modules/adapters/SAFTAdapter';
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
+import { assertNoMock, RUNTIME } from '../runtime/RuntimeContext';
 
 export interface FiscalServiceConfig {
     adapter?: FiscalObserver; // Default: ConsoleFiscalAdapter
-    eventStore?: FiscalEventStore | SupabaseFiscalEventStore; // Config dependency injection
+    eventStore?: ServerFiscalEventStore | SupabaseFiscalEventStore; // Config dependency injection
     enabled?: boolean; // Feature flag
 }
 
 export class FiscalService {
     private adapter: FiscalObserver;
-    private eventStore: FiscalEventStore | SupabaseFiscalEventStore;
+    private eventStore: ServerFiscalEventStore | SupabaseFiscalEventStore;
     private enabled: boolean;
     private useSupabase: boolean;
 
@@ -51,15 +56,28 @@ export class FiscalService {
         // Se há configuração InvoiceXpress, usar InvoiceXpressAdapter
         if (restaurantId) {
             try {
-                const { data, error } = await supabase
+                // Some environments may not have these columns yet (avoid 400 spam).
+                let data: any = null;
+                let error: any = null;
+
+                ({ data, error } = await supabase
                     .from('gm_restaurants')
                     .select('fiscal_provider, fiscal_config')
                     .eq('id', restaurantId)
-                    .single();
+                    .maybeSingle());
+
+                if (error && (error.status === 400 || String(error.message || '').includes('fiscal_provider'))) {
+                    // Fallback: only fiscal_config exists
+                    ({ data, error } = await supabase
+                        .from('gm_restaurants')
+                        .select('fiscal_config')
+                        .eq('id', restaurantId)
+                        .maybeSingle());
+                }
 
                 if (!error && data) {
                     const fiscalConfig = (data.fiscal_config as any) || {};
-                    const provider = data.fiscal_provider || 'mock';
+                    const provider = data.fiscal_provider || fiscalConfig?.provider || 'mock';
 
                     // Se InvoiceXpress está configurado, usar InvoiceXpressAdapter
                     if (provider === 'invoice_xpress' && fiscalConfig.invoicexpress?.accountName) {
@@ -83,6 +101,8 @@ export class FiscalService {
         }
 
         // Default: Mock adapter
+        // PRODUCTION GUARD: Crash if trying to use mock in production
+        assertNoMock('FiscalService.selectAdapter', true);
         return new ConsoleFiscalAdapter();
     }
 
@@ -187,8 +207,10 @@ export class FiscalService {
             // 4. Armazenar em fiscal_event_store
             if (this.useSupabase && this.eventStore instanceof SupabaseFiscalEventStore) {
                 await this.eventStore.recordInteraction(taxDoc, result, params.orderId, params.restaurantId);
-            } else if (this.eventStore instanceof FiscalEventStore) {
-                await this.eventStore.recordInteraction(taxDoc, result);
+            } else {
+                // Server-side fallback (assumed to be FiscalEventStore)
+                // Cast to any to avoid importing the value and pulling 'pg'
+                await (this.eventStore as any).recordInteraction(taxDoc, result);
             }
 
             Logger.info('[FiscalService] Fiscal document generated', {

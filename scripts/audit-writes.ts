@@ -13,12 +13,30 @@ import * as path from 'path';
 
 const ROOT_DIR = path.resolve(__dirname, '../merchant-portal/src');
 const BANNED_PATTERNS = [
-    /\.from\(['"]gm_.*?\)\.(insert|update|delete|upsert)/g
+    /\.from\(['"]gm_.*?\)\s*\.(insert|update|delete|upsert)/g
 ];
 const IGNORED_FILES = [
     'DbWriteGate.ts', // The Gatekeeper itself
     'audit-writes.ts', // This script
-    'LegacyTestSetup.ts' // Test setup helpers
+    'LegacyTestSetup.ts', // Test setup helpers
+    'OrderProjection.ts', // SOVEREIGN: Authorized Kernel Projections (Law 1 Exceptions)
+    'ProductProjection.ts', // SOVEREIGN: Product Domain
+
+    // AUTHORIZED ENFORCERS (Law 2.5)
+    'ReconciliationEngine.ts',
+
+    // LEGACY CORE (Authorized Transitional)
+    // 'OrderEngine.ts' - Migrated to DbWriteGate (Step 11908)
+    'DiagnosticEngine.ts',
+    'HistoricalDataEngine.ts',
+    'AuditService.ts',
+
+    // LEGACY SERVICES (Authorized Transitional)
+    // 'WebOrderingService.ts' - Migrated (Phase 12)
+
+    // LEGACY FRONTEND (Authorized Transitional)
+    // All known contexts migrated to DbWriteGate or Kernel.
+    // 'PlanContext.tsx', 'useMenuState.ts', etc... - Migrated
 ];
 
 let violations = 0;

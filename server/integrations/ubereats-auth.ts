@@ -71,7 +71,7 @@ export class UberEatsAuthHandler {
                 throw new Error(`Uber Token API failed: ${response.status} ${errText}`);
             }
 
-            const data = await response.json();
+            const data: any = await response.json();
 
             // Persist credentials securely
             await this.saveCredentials(restaurantId, data);

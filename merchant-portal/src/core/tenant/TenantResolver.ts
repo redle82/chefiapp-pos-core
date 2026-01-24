@@ -131,6 +131,16 @@ function logTenantEvent(event: string, data: Record<string, unknown>) {
  * Fetch user's tenant memberships from DB
  */
 export async function fetchUserMemberships(userId: string): Promise<TenantMembership[]> {
+    // MOCK: Bypass for demo-user
+    if (userId === 'demo-user') {
+        console.info('[TenantResolver] Retrieving mock memberships for demo-user');
+        return [{
+            restaurant_id: 'mock-tenant-id',
+            restaurant_name: 'Demo Restaurant (GoldMonkey)',
+            role: 'owner',
+        }];
+    }
+
     const { data: members, error } = await supabase
         .from('gm_restaurant_members')
         .select('restaurant_id, role')
@@ -355,6 +365,28 @@ export function getActiveTenant(): string | null {
     } catch {
         return null;
     }
+}
+
+/**
+ * Tenant is considered "sealed" iff:
+ * - chefiapp_active_tenant exists
+ * - chefiapp_tenant_status === 'ACTIVE'
+ *
+ * This is the single formal prerequisite for allowing /app/* and booting the Kernel.
+ * Pure read-only helper (no side effects).
+ */
+export function isTenantSealed(): boolean {
+    const id = getActiveTenant();
+    return !!id && getTenantStatus() === 'ACTIVE';
+}
+
+/**
+ * Check if a specific tenant ID is sealed (active tenant matches and status is ACTIVE).
+ * Used by Kernel to validate tenant before boot.
+ */
+export function isTenantSealedFor(tenantId: string | null | undefined): boolean {
+    if (!tenantId) return false;
+    return getActiveTenant() === tenantId && getTenantStatus() === 'ACTIVE';
 }
 
 /**

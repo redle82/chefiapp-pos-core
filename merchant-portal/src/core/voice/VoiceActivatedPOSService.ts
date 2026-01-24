@@ -5,7 +5,7 @@
  */
 
 import { voiceCommandService } from './VoiceCommandService';
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 
 export interface VoiceOrderItem {
     productName: string;

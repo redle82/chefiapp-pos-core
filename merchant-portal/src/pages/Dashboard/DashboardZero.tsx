@@ -5,6 +5,7 @@ import { AdminSidebar } from '../../ui/design-system/domain/AdminSidebar';
 import { Card } from '../../ui/design-system/primitives/Card';
 import { Text } from '../../ui/design-system/primitives/Text';
 import { Badge } from '../../ui/design-system/primitives/Badge';
+import { Button } from '../../ui/design-system/primitives/Button';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { SOVEREIGN_MANIFEST } from './dashboard_manifest';
 import type { SovereignModule } from './dashboard_manifest';
@@ -16,6 +17,10 @@ import { useActivationAdvisor } from '../../core/activation/useActivationAdvisor
 import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
 import { useTenant } from '../../core/tenant/TenantContext';
 import { FiscalAlertBadge } from '../../components/FiscalAlertBadge';
+import { SystemHealthWidget } from './SystemHealthWidget';
+import { RealityLevelWidget } from './RealityLevelWidget';
+import { OnboardingReminder } from '../../components/OnboardingReminder';
+import { OperationalMetricsWidget } from '../../components/Dashboard/OperationalMetricsWidget';
 
 const ModuleCard = ({ module, onClick, variant = 'standard' }: { module: SovereignModule; onClick?: () => void, variant?: 'standard' | 'primary' | 'secondary' }) => {
     const isLocked = module.status === 'locked' || module.status === 'planned';
@@ -141,9 +146,14 @@ export const DashboardZero = () => {
             .single()
             .then(({ data, error }) => {
                 if (error) {
-                    // Ignore schema errors (42703) as they are expected during migration/dev
-                    if (error.code === '42703') {
-                        console.log('[Dashboard] Schema lag detected (setup_status missing). Using default state.');
+                    // Ignore schema errors (42703 = column doesn't exist, 400 = Bad Request, PGRST* = PostgREST errors)
+                    // These are expected during migration/dev when columns don't exist yet
+                    if (error.code === '42703' || 
+                        error.code?.startsWith('PGRST') ||
+                        error.message?.includes('column') ||
+                        error.message?.includes('does not exist') ||
+                        (error as any).status === 400) {
+                        console.log('[Dashboard] Schema lag detected (setup_status/advanced_progress missing). Using default state.');
                     } else {
                         console.warn('[Dashboard] Failed to load setup status', error);
                     }
@@ -157,27 +167,17 @@ export const DashboardZero = () => {
     }, []);
 
     /**
-     * Staff-style navigation: Active tools open in new browser tabs
-     * for isolated, focused operation contexts (TPV, KDS, Menu, Orders).
-     * Dashboard/settings remain in-app.
-     * 
-     * 🚨 CRÍTICO: window.open() deve ser chamado SINCRONAMENTE no onClick
-     * Nada antes, nada depois, sem await, sem navigate() antes.
+     * Navigation: All tools navigate within the same tab.
+     * No more window.open() - keeps user in Comando Central context.
      */
     const handleNavigate = (path: string) => {
-        // 🔒 ARQUITETURA LOCKED: Apps operacionais abrem em novas abas
-        // Regra de ouro: window.open() sincronamente, sem await, sem navigate() antes
-        // Ver: E2E_SOVEREIGN_NAVIGATION_VALIDATION.md
-        const toolRoutes = ['/app/tpv', '/app/kds', '/app/menu', '/app/orders', '/app/staff'];
-
-        if (toolRoutes.includes(path)) {
-            // 🚨 CRÍTICO: chamada direta e síncrona
-            console.log('OPEN TOOL:', path);
-            window.open(path, '_blank', 'noopener,noreferrer');
-            return;
+        if (path === '/app/tpv') {
+            window.open(path, 'ChefIApp_TPV', 'width=1024,height=768,menubar=no,toolbar=no,location=no,status=no');
+        } else if (path === '/app/kds') {
+            window.open(path, 'ChefIApp_KDS');
+        } else {
+            navigate(path);
         }
-
-        navigate(path);
     };
 
     // 🟢 BLOCK 1: System State (Compact)
@@ -224,6 +224,9 @@ export const DashboardZero = () => {
                             </div>
                         </div>
 
+                        {/* FASE 2: Onboarding Reminder */}
+                        <OnboardingReminder />
+
                         {setupStatus !== 'advanced_done' && (
                             <div style={{
                                 padding: '16px 20px',
@@ -243,12 +246,19 @@ export const DashboardZero = () => {
                                         <Text size="xs" color="secondary">Passos concluídos: {advancedProgress.completed.length}</Text>
                                     )}
                                 </div>
-                                <button
-                                    onClick={() => navigate('/settings/advanced-setup')}
-                                    style={{ padding: '10px 16px', borderRadius: 10, background: colors.action.base, color: '#0b0b0c', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+                                <Button
+                                    onClick={(e) => {
+                                        e?.preventDefault();
+                                        e?.stopPropagation();
+                                        // Use absolute path to ensure correct navigation
+                                        navigate('/app/settings/advanced-setup', { replace: false });
+                                    }}
+                                    variant="solid"
+                                    tone="action"
+                                    size="default"
                                 >
                                     Iniciar Ritual Avançado
-                                </button>
+                                </Button>
                             </div>
                         )}
 
@@ -271,6 +281,12 @@ export const DashboardZero = () => {
                             </div>
                             <Badge status="ready" label="SECURE" variant="outline" />
                         </div>
+
+                        {/* 📊 BLOCK: Operational Metrics — Real-time KPIs */}
+                        <OperationalMetricsWidget />
+
+                        {/* 🏆 BLOCK: Reality Level Governance */}
+                        <RealityLevelWidget />
 
                         {/* 💡 BLOCK: Activation Insights — Personalized Recommendations */}
                         {advisorReady && highPriority.length > 0 && (
@@ -364,6 +380,24 @@ export const DashboardZero = () => {
                                     );
                                 })}
                             </div>
+                        </div>
+
+                        {/* 🧬 BLOCK: System Health — Bootstrap Kernel State */}
+                        <div style={{ marginTop: 24 }}>
+                            <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <Text size="lg" weight="bold" color="primary">Estado do Sistema</Text>
+                                <div style={{
+                                    padding: '2px 8px',
+                                    background: 'rgba(50, 215, 75, 0.15)',
+                                    borderRadius: 12,
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    color: '#32d74b'
+                                }}>
+                                    KERNEL
+                                </div>
+                            </div>
+                            <SystemHealthWidget />
                         </div>
 
                         {/* Footer Note */}

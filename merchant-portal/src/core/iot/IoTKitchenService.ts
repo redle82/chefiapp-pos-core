@@ -4,7 +4,7 @@
  * Serviço para integração com equipamentos IoT da cozinha
  */
 
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 
 export interface IoTDevice {
     id: string;

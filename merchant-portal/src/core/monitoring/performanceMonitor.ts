@@ -4,9 +4,10 @@
  * Monitora métricas de performance do sistema.
  */
 
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 import { supabase } from '../supabase';
 import { getTabIsolated } from '../storage/TabIsolatedStorage';
+import { isDevStableMode } from '../runtime/devStableMode';
 
 export interface PerformanceMetric {
     name: string;
@@ -19,13 +20,17 @@ class PerformanceMonitor {
     private metrics: PerformanceMetric[] = [];
     private observers: PerformanceObserver[] = [];
     private flushInterval: NodeJS.Timeout | null = null;
+    private remoteFlushDisabled: boolean = false;
     private readonly BATCH_SIZE = 50;
     private readonly FLUSH_INTERVAL_MS = 60000; // 1 minute
 
     constructor() {
         if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
             this.initObservers();
-            this.startFlushLoop();
+            // DEV_STABLE_MODE: do not start remote flush loop
+            if (!isDevStableMode()) {
+                this.startFlushLoop();
+            }
         }
     }
 
@@ -67,11 +72,25 @@ class PerformanceMonitor {
      * Registra uma métrica
      */
     recordMetric(metric: PerformanceMetric) {
-        this.metrics.push(metric);
+        // SECURITY: never print/record URLs containing OAuth tokens (hash/query) in DEV logs.
+        const safeName = (() => {
+            const name = String(metric.name || '');
+            if (!name.startsWith('http')) return name;
+            try {
+                const u = new URL(name);
+                // strip query + hash completely
+                return `${u.origin}${u.pathname}`;
+            } catch {
+                // fallback: drop anything after '?' or '#'
+                return name.split('#')[0].split('?')[0];
+            }
+        })();
+
+        this.metrics.push({ ...metric, name: safeName });
 
         // Debug log locally
         if (import.meta.env.DEV) {
-            console.debug(`[Perf] ${metric.name}: ${metric.value}${metric.unit}`);
+            console.debug(`[Perf] ${safeName}: ${metric.value}${metric.unit}`);
         }
 
         // Flush if buffer full
@@ -84,6 +103,9 @@ class PerformanceMonitor {
      * Aggregates and flushes metrics to Supabase
      */
     private async flushMetricsToSupabase() {
+        // DEV_STABLE_MODE: zero remote flush attempts
+        if (isDevStableMode()) return;
+        if (this.remoteFlushDisabled) return;
         if (this.metrics.length === 0) return;
 
         const metricsToFlush = [...this.metrics];
@@ -126,16 +148,57 @@ class PerformanceMonitor {
                 sample_size: metricsToFlush.length
             };
 
-            await supabase.from('app_logs').insert({
+            // IMPORTANT: avoid 409 storms by using idempotency_key + upsert(ignoreDuplicates).
+            // If the DB schema doesn't have idempotency_key yet, fail closed (no crash, no loop).
+            const restaurantId = getTabIsolated('chefiapp_restaurant_id') || null;
+            const minuteBucket = new Date().toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+            const idempotencyKey = `perf:${restaurantId || 'none'}:${minuteBucket}`;
+
+            const { error } = await supabase.from('app_logs').upsert({
                 level: 'info',
                 message: 'Performance Heartbeat',
                 details: payload,
-                restaurant_id: getTabIsolated('chefiapp_restaurant_id') || null,
-                created_at: new Date().toISOString()
-            });
+                restaurant_id: restaurantId,
+                created_at: new Date().toISOString(),
+                idempotency_key: idempotencyKey,
+            } as any, { onConflict: 'idempotency_key', ignoreDuplicates: true } as any);
+
+            if (error) {
+                // If idempotency_key doesn't exist / schema mismatch, DISABLE remote flush to stop interval spam.
+                const msg = String((error as any)?.message || '');
+                const status = (error as any)?.status;
+
+                if (status === 400 || msg.toLowerCase().includes('idempotency') || msg.toLowerCase().includes('on_conflict')) {
+                    this.remoteFlushDisabled = true;
+                    if (this.flushInterval) {
+                        clearInterval(this.flushInterval);
+                        this.flushInterval = null;
+                    }
+                    // Don't keep retrying every minute; require migration to re-enable.
+                    console.warn('[PerformanceMonitor] Remote flush disabled (app_logs schema mismatch). Apply migration to enable.');
+                    return;
+                }
+
+                // Other non-fatal errors: avoid noise
+                if (status === 409) return;
+                console.warn('[PerformanceMonitor] Flush skipped (non-fatal):', msg);
+            }
 
         } catch (err) {
-            console.error('[PerformanceMonitor] Failed to flush:', err);
+            // Network/Supabase failures can happen (offline). Don't spam; just drop this batch.
+            // If it's a schema mismatch, disable remote flush to stop interval spam.
+            const status = (err as any)?.status;
+            const msg = String((err as any)?.message || '');
+            if (status === 400 || msg.toLowerCase().includes('idempotency') || msg.toLowerCase().includes('on_conflict')) {
+                this.remoteFlushDisabled = true;
+                if (this.flushInterval) {
+                    clearInterval(this.flushInterval);
+                    this.flushInterval = null;
+                }
+                console.warn('[PerformanceMonitor] Remote flush disabled (app_logs schema mismatch). Apply migration to enable.');
+                return;
+            }
+            console.warn('[PerformanceMonitor] Failed to flush (non-fatal):', msg || err);
         }
     }
 

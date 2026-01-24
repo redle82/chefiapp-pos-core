@@ -44,29 +44,101 @@ serve(async (req) => {
 
         console.log(`Processing event: ${event.type}`)
 
+        // =========================================================================
+        // EVENT: checkout.session.completed
+        // =========================================================================
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object
             const restaurantId = session.metadata?.supabase_restaurant_id
             const subscriptionId = session.subscription
 
             if (restaurantId && subscriptionId) {
-                console.log(`Linking subscription ${subscriptionId} to restaurant ${restaurantId}`)
-
-                // Initial status might be incomplete, but usually active after checkout
-                // We will rely on subscription.updated for detailed status sync, but it's good to link immediately.
+                console.log(`[Billing Webhook] Linking subscription ${subscriptionId} to restaurant ${restaurantId}`)
 
                 const subscription = await stripe.subscriptions.retrieve(subscriptionId as string)
+                const customerId = subscription.customer as string
 
+                // Criar/atualizar registro em gm_billing_subscriptions
                 await supabaseClient
-                    .from('gm_restaurants')
-                    .update({
-                        subscription_id: subscriptionId,
-                        billing_status: subscription.status,
-                        plan: 'SOVEREIGN' // Assume standard plan for now
+                    .from('gm_billing_subscriptions')
+                    .upsert({
+                        restaurant_id: restaurantId,
+                        stripe_subscription_id: subscriptionId,
+                        stripe_customer_id: customerId,
+                        plan: session.metadata?.plan || 'starter',
+                        status: subscription.status,
+                        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+                        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                        cancel_at_period_end: subscription.cancel_at_period_end || false,
+                        updated_at: new Date().toISOString(),
+                    }, {
+                        onConflict: 'restaurant_id'
                     })
-                    .eq('id', restaurantId)
+
+                console.log(`[Billing Webhook] Subscription ${subscriptionId} linked to restaurant ${restaurantId}`)
             }
-        } else if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
+        }
+        // =========================================================================
+        // EVENT: customer.subscription.created
+        // =========================================================================
+        else if (event.type === 'customer.subscription.created') {
+            const subscription = event.data.object
+            const restaurantId = subscription.metadata?.supabase_restaurant_id
+            const customerId = subscription.customer as string
+
+            if (!restaurantId) {
+                // Tentar buscar por customer_id
+                const { data: restaurant } = await supabaseClient
+                    .from('gm_restaurants')
+                    .select('id')
+                    .eq('stripe_customer_id', customerId)
+                    .single()
+
+                if (restaurant) {
+                    const targetRestaurantId = restaurant.id
+
+                    await supabaseClient
+                        .from('gm_billing_subscriptions')
+                        .upsert({
+                            restaurant_id: targetRestaurantId,
+                            stripe_subscription_id: subscription.id,
+                            stripe_customer_id: customerId,
+                            plan: subscription.metadata?.plan || 'starter',
+                            status: subscription.status,
+                            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+                            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                            cancel_at_period_end: subscription.cancel_at_period_end || false,
+                            updated_at: new Date().toISOString(),
+                        }, {
+                            onConflict: 'restaurant_id'
+                        })
+
+                    console.log(`[Billing Webhook] Subscription ${subscription.id} created for restaurant ${targetRestaurantId}`)
+                }
+            } else {
+                await supabaseClient
+                    .from('gm_billing_subscriptions')
+                    .upsert({
+                        restaurant_id: restaurantId,
+                        stripe_subscription_id: subscription.id,
+                        stripe_customer_id: customerId,
+                        plan: subscription.metadata?.plan || 'starter',
+                        status: subscription.status,
+                        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+                        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                        cancel_at_period_end: subscription.cancel_at_period_end || false,
+                        updated_at: new Date().toISOString(),
+                    }, {
+                        onConflict: 'restaurant_id'
+                    })
+
+                console.log(`[Billing Webhook] Subscription ${subscription.id} created for restaurant ${restaurantId}`)
+            }
+        }
+        // =========================================================================
+        // EVENT: customer.subscription.updated / customer.subscription.deleted
+        // =========================================================================
+        else if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
             const subscription = event.data.object
             const restaurantId = subscription.metadata?.supabase_restaurant_id
 
@@ -87,28 +159,93 @@ serve(async (req) => {
             }
 
             if (targetRestaurantId) {
-                const status = subscription.status
-                const plan = (status === 'active' || status === 'trialing') ? 'SOVEREIGN' : 'FREE'
+                const status = event.type === 'customer.subscription.deleted' ? 'canceled' : subscription.status
 
-                // Note: Simplistic logic. If canceled, we might downgrade to FREE or just mark status.
-                // Let's stick to updating status and let the app decide access.
-
+                // Atualizar gm_billing_subscriptions
                 await supabaseClient
-                    .from('gm_restaurants')
+                    .from('gm_billing_subscriptions')
                     .update({
-                        billing_status: status,
-                        subscription_id: subscription.id,
-                        // Only change plan to Sovereign if active, otherwise maybe keep it but let status block access?
-                        // Better: If deleted/canceled, keep plan tag but status indicates access is lost.
-                        // Or set plan to downgraded. 
-                        // Let's just update fields for now.
-                        billing_status: status
+                        status: status,
+                        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+                        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                        cancel_at_period_end: subscription.cancel_at_period_end || false,
+                        updated_at: new Date().toISOString(),
                     })
-                    .eq('id', targetRestaurantId)
+                    .eq('stripe_subscription_id', subscription.id)
 
-                console.log(`Updated restaurant ${targetRestaurantId} status to ${status}`)
+                console.log(`[Billing Webhook] Updated subscription ${subscription.id} status to ${status} for restaurant ${targetRestaurantId}`)
             } else {
-                console.warn(`Could not find restaurant for subscription ${subscription.id}`)
+                console.warn(`[Billing Webhook] Could not find restaurant for subscription ${subscription.id}`)
+            }
+        }
+        // =========================================================================
+        // EVENT: invoice.paid
+        // =========================================================================
+        else if (event.type === 'invoice.paid') {
+            const invoice = event.data.object
+            const subscriptionId = invoice.subscription as string
+            const customerId = invoice.customer as string
+
+            // Buscar subscription para obter restaurant_id
+            const { data: subscription } = await supabaseClient
+                .from('gm_billing_subscriptions')
+                .select('restaurant_id, id')
+                .eq('stripe_subscription_id', subscriptionId)
+                .single()
+
+            if (subscription) {
+                // Criar/atualizar invoice em gm_billing_invoices
+                await supabaseClient
+                    .from('gm_billing_invoices')
+                    .upsert({
+                        restaurant_id: subscription.restaurant_id,
+                        subscription_id: subscription.id,
+                        stripe_invoice_id: invoice.id,
+                        amount_cents: invoice.amount_paid,
+                        currency: invoice.currency || 'BRL',
+                        status: 'paid',
+                        paid_at: new Date(invoice.status_transitions.paid_at * 1000).toISOString(),
+                        due_date: invoice.due_date ? new Date(invoice.due_date * 1000).toISOString() : null,
+                        updated_at: new Date().toISOString(),
+                    }, {
+                        onConflict: 'stripe_invoice_id'
+                    })
+
+                console.log(`[Billing Webhook] Invoice ${invoice.id} marked as paid for restaurant ${subscription.restaurant_id}`)
+            } else {
+                console.warn(`[Billing Webhook] Could not find subscription ${subscriptionId} for invoice ${invoice.id}`)
+            }
+        }
+        // =========================================================================
+        // EVENT: invoice.payment_failed
+        // =========================================================================
+        else if (event.type === 'invoice.payment_failed') {
+            const invoice = event.data.object
+            const subscriptionId = invoice.subscription as string
+
+            const { data: subscription } = await supabaseClient
+                .from('gm_billing_subscriptions')
+                .select('restaurant_id, id')
+                .eq('stripe_subscription_id', subscriptionId)
+                .single()
+
+            if (subscription) {
+                await supabaseClient
+                    .from('gm_billing_invoices')
+                    .upsert({
+                        restaurant_id: subscription.restaurant_id,
+                        subscription_id: subscription.id,
+                        stripe_invoice_id: invoice.id,
+                        amount_cents: invoice.amount_due,
+                        currency: invoice.currency || 'BRL',
+                        status: 'open',
+                        due_date: invoice.due_date ? new Date(invoice.due_date * 1000).toISOString() : null,
+                        updated_at: new Date().toISOString(),
+                    }, {
+                        onConflict: 'stripe_invoice_id'
+                    })
+
+                console.log(`[Billing Webhook] Invoice ${invoice.id} marked as payment_failed for restaurant ${subscription.restaurant_id}`)
             }
         }
 

@@ -1,0 +1,45 @@
+{
+    "initial": "ACTIVE",
+    "states": {
+        "ACTIVE": {
+            "description": "Product is available for sale",
+            "transitions": {
+                "ARCHIVE": {
+                    "target": "ARCHIVED",
+                    "description": "Archive product (soft delete)",
+                    "effects": [
+                        "persistProductArchive"
+                    ]
+                },
+                "UPDATE": {
+                    "target": "ACTIVE",
+                    "description": "Update product details",
+                    "effects": [
+                        "persistProduct"
+                    ]
+                }
+            }
+        },
+        "ARCHIVED": {
+            "description": "Product is archived (unavailable)",
+            "transitions": {
+                "RESTORE": {
+                    "target": "ACTIVE",
+                    "description": "Restore product to active state",
+                    "effects": [
+                        "persistProduct"
+                    ]
+                }
+            }
+        }
+    },
+    "globalTransitions": {
+        "CREATE": {
+            "target": "ACTIVE",
+            "description": "Create new product",
+            "effects": [
+                "persistProduct"
+            ]
+        }
+    }
+}

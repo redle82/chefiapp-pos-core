@@ -23,7 +23,8 @@ export const sendPulse = async (context?: PulseContext) => {
     // In a real scenario, these would be separate DB queries filtering by restaurant_id if we were multi-tenant in one DB.
     // Since we are "App per Restaurant" logically in Phase 1 (or RLS in Phase 2), we query global.
     // CAUTION: If RLS is on, this query naturally filters to the logged-in user's restaurant.
-    const { count: menuCount } = await supabase.from('gm_products').select('*', { count: 'exact', head: true });
+    // Nota: com head: true, não podemos usar select('*'), então usamos 'id'
+    const { count: menuCount } = await supabase.from('gm_products').select('id', { count: 'exact', head: true });
 
     // Get orders for today
     const today = new Date().toISOString().split('T')[0];

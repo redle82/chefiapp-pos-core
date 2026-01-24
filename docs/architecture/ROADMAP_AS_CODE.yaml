@@ -1,0 +1,148 @@
+# 🗺️ ROADMAP AS CODE
+# This file is the Source of Truth for the System Truth Scanner.
+# It defines what MUST be true in the codebase and runtime.
+
+meta:
+  version: "1.1.0"
+  last_updated: "2026-01-18" # Post-Reality Ritual
+  enforcement_level: "strict"
+
+surfaces:
+  tpv:
+    description: "Terminal Ponto de Venda"
+    expected_state: "LIVE"
+    features:
+      - id: "orders"
+        status: "LIVE"
+        verification: "OrderContextReal.tsx"
+      - id: "cash_register"
+        status: "LIVE"
+        verification: "CashRegister.ts"
+      - id: "fiscal"
+        status: "LIVE"
+        verification: "InvoiceXpressAdapter.ts"
+      - id: "offline"
+        status: "LIVE"
+        verification: "OfflineOrderContext.tsx"
+      - id: "payments_stripe_tpv"
+        status: "PLANNED"
+        target_sprint: "Q2"
+
+  web_ordering:
+    description: "Public Ordering & Checkout"
+    expected_state: "LIVE"
+    features:
+      - id: "public_menu"
+        status: "LIVE"
+        verification: "PublicOrderingPage.tsx"
+      - id: "stripe_checkout"
+        status: "LIVE"
+        verification: "StripePaymentModal.tsx"
+
+  kds:
+    description: "Kitchen Display System"
+    expected_state: "LIVE"
+    features:
+      - id: "realtime"
+        status: "LIVE"
+        verification: "KDSLayout.tsx"
+      - id: "timers"
+        status: "LIVE"
+        verification: "OrderCard.tsx"
+      - id: "sound_alerts"
+        status: "LIVE"
+        verification: "KitchenDisplay.tsx"
+
+  menu:
+    description: "Menu Management"
+    expected_state: "LIVE"
+    features:
+      - id: "ai_generation"
+        status: "LIVE"
+        verification: "MenuAI.tsx"
+      - id: "import_csv"
+        status: "LIVE"
+        verification: "MenuImport.tsx"
+
+  marketplace:
+    description: "Integrations & App Store"
+    expected_state: "LIVE"
+    features:
+      - id: "catalog"
+        status: "LIVE"
+        verification: "EvolveHub.tsx"
+      - id: "external_integrations"
+        status: "PLANNED"
+        target_sprint: "Q2"
+
+  multi_store:
+    description: "Restaurant Groups"
+    expected_state: "LIVE"
+    features:
+      - id: "group_manager"
+        status: "LIVE"
+        verification: "RestaurantGroupManager.tsx"
+      - id: "consolidated_dashboard"
+        status: "LIVE"
+        verification: "GroupDashboard.tsx"
+
+  mobile:
+    description: "Native Wrapper"
+    expected_state: "LIVE"
+    features:
+      - id: "capacitor_config"
+        status: "LIVE"
+        verification: "capacitor.config.ts"
+
+
+  staff:
+    description: "Staff & Waiter App"
+    expected_state: "LIVE"
+    features:
+      - id: "task_stream"
+        status: "LIVE"
+        verification: "WorkerTaskStream.tsx"
+      - id: "minipos"
+        status: "LIVE"
+        verification: "MiniPOS.tsx"
+      - id: "biometric_login"
+        status: "LIVE"
+        verification: "WorkerCheckInView.tsx"
+      - id: "qr_scanner"
+        status: "LIVE"
+        verification: "MiniPOS.tsx"
+      - id: "nfc_proof"
+        status: "LIVE"
+        verification: "WorkerTaskStream.tsx"
+
+genesis:
+  description: "System Birth & Onboarding"
+  required_flows:
+    - "onboarding_wizard"
+    - "tenant_creation"
+    - "user_creation"
+    - "menu_bootstrap"
+  constraints:
+    - "must_use_real_db"
+    - "must_not_use_seeds"
+
+runtime_guards:
+  description: "Production Safety Contracts"
+  rules:
+    - id: "assert_no_mock"
+      file: "src/core/runtime/RuntimeContext.ts"
+      pattern: "assertNoMock"
+    - id: "db_write_gate"
+      file: "src/core/governance/DbWriteGate.ts"
+      pattern: "DbWriteGate"
+
+deployment:
+  environment: "production"
+  provider: "vercel"
+  checks:
+    - "env_vars_presence"
+    - "build_success"
+
+truth_scan:
+  ignore_paths:
+    - "src/pages/Onboarding/PlacesMock.ts" # Explicit exception for external API mock

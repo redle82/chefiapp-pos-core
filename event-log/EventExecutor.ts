@@ -201,6 +201,9 @@ export class EventExecutor {
         PAY: "ORDER_PAID",
         CLOSE: "ORDER_CLOSED",
         CANCEL: "ORDER_CANCELED",
+        ADD_ITEM: "ORDER_ITEM_ADDED",
+        REMOVE_ITEM: "ORDER_ITEM_REMOVED",
+        UPDATE_ITEM_QTY: "ORDER_ITEM_QTY_UPDATED",
       },
       PAYMENT: {
         CONFIRM: "PAYMENT_CONFIRMED",

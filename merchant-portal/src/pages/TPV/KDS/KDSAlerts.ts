@@ -20,11 +20,11 @@ const CONFIG = {
     // Sound
     SOUND_ENABLED_KEY: 'kds_sound_enabled',
     SOUND_VOLUME: 0.7,
-    
+
     // Visual
     FLASH_DURATION_MS: 30_000, // 30s before auto-clearing "new" highlight
     PULSE_ANIMATION_DURATION: '1.5s',
-    
+
     // Storage
     SEEN_ORDERS_KEY: 'kds_seen_orders',
     SEEN_ORDERS_TTL_MS: 24 * 60 * 60 * 1000, // 24h
@@ -34,31 +34,16 @@ const CONFIG = {
 // AUDIO NOTIFICATION
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Base64 encoded short "ding" sound (avoids external file dependency)
-// This is a simple 440Hz sine wave beep, ~200ms
-const NOTIFICATION_SOUND_BASE64 = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1vbnmIk4iEe3J3d4mTlJGFd3VtdIGOk5KKe3hxdoSOkpCIgHZzgIqMjouFf3p8g4mLiYaCfYGEhYeGhYOAgYOEhYSEgoGBgoODg4KCgYGCgoKCgoGBgYKCgoKBgYGBgYKCgoGBgYGBgYKCgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgQ==';
-
-let audioContext: AudioContext | null = null;
-let notificationBuffer: AudioBuffer | null = null;
+import { SoundEngine } from '../../../intelligence/nervous-system/SoundEngine';
 
 /**
  * Initialize audio context (must be called after user interaction)
  */
 export async function initAudioContext(): Promise<void> {
-    if (audioContext) return;
-    
-    try {
-        audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        
-        // Decode the base64 sound
-        const response = await fetch(NOTIFICATION_SOUND_BASE64);
-        const arrayBuffer = await response.arrayBuffer();
-        notificationBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        
-        console.log('[KDSAlert] Audio context initialized');
-    } catch (err) {
-        console.warn('[KDSAlert] Failed to init audio:', err);
-    }
+    // SoundEngine handles its own initialization lazily or we can add an init method there if needed.
+    // For now, SoundEngine.playNewOrder checks context creation safely.
+    // We can just log here.
+    console.log('[KDSAlert] Audio system ready');
 }
 
 /**
@@ -66,56 +51,11 @@ export async function initAudioContext(): Promise<void> {
  */
 export function playNotificationSound(): void {
     if (!isSoundEnabled()) return;
-    
-    // Fallback: use simple beep if AudioContext not ready
-    if (!audioContext || !notificationBuffer) {
-        playFallbackBeep();
-        return;
-    }
-    
+
     try {
-        const source = audioContext.createBufferSource();
-        const gainNode = audioContext.createGain();
-        
-        source.buffer = notificationBuffer;
-        gainNode.gain.value = CONFIG.SOUND_VOLUME;
-        
-        source.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        source.start(0);
+        SoundEngine.playNewOrder();
     } catch (err) {
         console.warn('[KDSAlert] Sound play failed:', err);
-        playFallbackBeep();
-    }
-}
-
-/**
- * Fallback beep using oscillator (works without pre-loaded audio)
- */
-function playFallbackBeep(): void {
-    try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        
-        oscillator.type = 'sine';
-        oscillator.frequency.value = 880; // A5 note
-        gainNode.gain.value = CONFIG.SOUND_VOLUME * 0.3;
-        
-        oscillator.start();
-        
-        // Quick fade out
-        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-        oscillator.stop(ctx.currentTime + 0.3);
-        
-        // Cleanup
-        setTimeout(() => ctx.close(), 500);
-    } catch (err) {
-        console.warn('[KDSAlert] Fallback beep failed:', err);
     }
 }
 
@@ -159,10 +99,10 @@ function loadSeenOrders(): SeenOrdersMap {
     try {
         const stored = getTabIsolated(CONFIG.SEEN_ORDERS_KEY);
         if (!stored) return {};
-        
+
         const map: SeenOrdersMap = JSON.parse(stored);
         const now = Date.now();
-        
+
         // Clean expired entries
         const cleaned: SeenOrdersMap = {};
         for (const [id, ts] of Object.entries(map)) {
@@ -170,7 +110,7 @@ function loadSeenOrders(): SeenOrdersMap {
                 cleaned[id] = ts;
             }
         }
-        
+
         return cleaned;
     } catch {
         return {};
@@ -232,12 +172,12 @@ export function detectNewOrders(
  */
 export function alertNewOrders(newOrderIds: string[]): void {
     if (newOrderIds.length === 0) return;
-    
+
     console.log('[KDSAlert] 🔔 New orders detected:', newOrderIds.length);
-    
+
     // Play sound once (not per order)
     playNotificationSound();
-    
+
     // Browser notification (if supported and granted)
     if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('🍳 Novo Pedido!', {
@@ -254,10 +194,10 @@ export function alertNewOrders(newOrderIds: string[]): void {
  */
 export async function requestNotificationPermission(): Promise<boolean> {
     if (!('Notification' in window)) return false;
-    
+
     if (Notification.permission === 'granted') return true;
     if (Notification.permission === 'denied') return false;
-    
+
     const permission = await Notification.requestPermission();
     return permission === 'granted';
 }
@@ -270,7 +210,7 @@ const KDS_ALERT_STYLES_ID = 'kds-alert-styles';
 
 export function injectKDSAlertStyles(): void {
     if (document.getElementById(KDS_ALERT_STYLES_ID)) return;
-    
+
     const style = document.createElement('style');
     style.id = KDS_ALERT_STYLES_ID;
     style.textContent = `
@@ -313,6 +253,6 @@ export function injectKDSAlertStyles(): void {
             z-index: 10;
         }
     `;
-    
+
     document.head.appendChild(style);
 }

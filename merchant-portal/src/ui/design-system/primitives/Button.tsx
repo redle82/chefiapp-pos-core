@@ -21,6 +21,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
     // State
     isLoading?: boolean;
+    /**
+     * Back-compat alias: many callsites use `loading={...}`.
+     * We consume it here so it doesn't leak to the DOM (React warning: non-boolean attribute).
+     */
+    loading?: boolean;
 
     // Layout
     fullWidth?: boolean;
@@ -33,11 +38,13 @@ export const Button: React.FC<ButtonProps> = ({
     children,
     icon,
     isLoading,
+    loading,
     disabled,
     fullWidth,
     style, // Intercepted and blocked mostly
     ...props
 }) => {
+    const resolvedIsLoading = Boolean(isLoading ?? loading);
 
     // --- COLOR RESOLUTION ---
     const getColors = () => {
@@ -108,7 +115,7 @@ export const Button: React.FC<ButtonProps> = ({
         borderRadius: radius.lg,
         fontWeight: typography.weight.bold,
         fontFamily: typography.family.sans,
-        cursor: disabled || isLoading ? 'not-allowed' : 'pointer',
+        cursor: disabled || resolvedIsLoading ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.5 : 1,
         transition: 'all 0.2s ease',
         userSelect: 'none',
@@ -116,7 +123,7 @@ export const Button: React.FC<ButtonProps> = ({
         outline: 'none',
 
         // Dynamic
-        backgroundColor: isPressed ? c.hoverBg : (isHovered && !disabled && !isLoading ? c.hoverBg : c.bg),
+        backgroundColor: isPressed ? c.hoverBg : (isHovered && !disabled && !resolvedIsLoading ? c.hoverBg : c.bg),
         color: c.text,
         border: `1px solid ${c.border}`,
         height: s.height,
@@ -132,16 +139,16 @@ export const Button: React.FC<ButtonProps> = ({
     return (
         <button
             style={baseStyles}
-            disabled={disabled || isLoading}
-            onMouseEnter={() => !disabled && !isLoading && setIsHovered(true)}
+            disabled={disabled || resolvedIsLoading}
+            onMouseEnter={() => !disabled && !resolvedIsLoading && setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            onMouseDown={() => !disabled && !isLoading && setIsPressed(true)}
+            onMouseDown={() => !disabled && !resolvedIsLoading && setIsPressed(true)}
             onMouseUp={() => setIsPressed(false)}
-            onTouchStart={() => !disabled && !isLoading && setIsPressed(true)}
+            onTouchStart={() => !disabled && !resolvedIsLoading && setIsPressed(true)}
             onTouchEnd={() => setIsPressed(false)}
             {...props}
         >
-            {isLoading ? <span>Loading...</span> : icon}
+            {resolvedIsLoading ? <span>Loading...</span> : icon}
             {children}
         </button>
     );

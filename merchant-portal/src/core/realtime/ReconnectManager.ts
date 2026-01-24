@@ -10,7 +10,11 @@
  * - Tentativa 6+: 30s (max)
  * 
  * Reset automático após sucesso.
+ * 
+ * STEP 6: DEV_STABLE_MODE - disabled (no reconnect attempts, no timers)
  */
+
+import { isDevStableMode } from '../runtime/devStableMode';
 
 export class ReconnectManager {
     private attempts = 0;
@@ -19,9 +23,18 @@ export class ReconnectManager {
     private maxDelay = 30000; // 30 segundos
 
     /**
+     * STEP 6: Check if ReconnectManager is disabled (DEV_STABLE_MODE)
+     */
+    private static isDisabled(): boolean {
+        return isDevStableMode();
+    }
+
+    /**
      * Calcula delay para próxima tentativa (exponential backoff)
      */
     getDelay(): number {
+        // STEP 6: If disabled, return 0 (no delay, no reconnect)
+        if (ReconnectManager.isDisabled()) return 0;
         const delay = Math.min(
             this.baseDelay * Math.pow(2, this.attempts),
             this.maxDelay
@@ -33,6 +46,8 @@ export class ReconnectManager {
      * Incrementa contador de tentativas
      */
     increment(): void {
+        // STEP 6: If disabled, do nothing
+        if (ReconnectManager.isDisabled()) return;
         this.attempts = Math.min(this.attempts + 1, this.maxAttempts);
     }
 
@@ -47,6 +62,8 @@ export class ReconnectManager {
      * Verifica se deve tentar reconectar
      */
     shouldRetry(): boolean {
+        // STEP 6: If disabled, never retry
+        if (ReconnectManager.isDisabled()) return false;
         return this.attempts < this.maxAttempts;
     }
 

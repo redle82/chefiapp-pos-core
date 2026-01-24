@@ -22,6 +22,8 @@ interface CartContextType {
     clearCart: () => void;
     isCartOpen: boolean;
     setIsCartOpen: (isOpen: boolean) => void;
+    slug: string;
+    tableNumber?: number; // ERRO-021 Fix: Número da mesa
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -29,25 +31,45 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 // --- Constants ---
 
 const STORAGE_KEY = 'chefiapp_public_cart';
+const CART_TTL = 24 * 60 * 60 * 1000; // ERRO-011 Fix: 24 horas
 
 // --- Provider ---
 
 interface CartProviderProps {
     children: ReactNode;
     slug: string; // distinct carts per restaurant
+    tableNumber?: number; // ERRO-021 Fix: Número da mesa da URL
 }
 
-export function CartProvider({ children, slug }: CartProviderProps) {
+export function CartProvider({ children, slug, tableNumber }: CartProviderProps) {
     const [items, setItems] = useState<CartItem[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
 
     // 1. Hydrate
+    // ERRO-011 Fix: Restaurar carrinho com TTL
     useEffect(() => {
         try {
             const stored = getTabIsolated(`${STORAGE_KEY}_${slug}`);
             if (stored) {
                 const parsed = JSON.parse(stored);
-                if (Array.isArray(parsed)) {
+                // ERRO-011 Fix: Verificar se tem timestamp e se ainda é válido
+                if (parsed.timestamp && parsed.items) {
+                    const elapsed = Date.now() - parsed.timestamp;
+                    if (elapsed < CART_TTL) {
+                        // Carrinho ainda válido
+                        if (Array.isArray(parsed.items)) {
+                            setItems(parsed.items);
+                            // ERRO-011 Fix: Mostrar banner se houver itens restaurados
+                            if (parsed.items.length > 0) {
+                                // Banner será mostrado no CartDrawer se necessário
+                            }
+                        }
+                    } else {
+                        // Carrinho expirado, limpar
+                        setTabIsolated(`${STORAGE_KEY}_${slug}`, null);
+                    }
+                } else if (Array.isArray(parsed)) {
+                    // Formato antigo (sem timestamp), migrar
                     setItems(parsed);
                 }
             }
@@ -57,9 +79,20 @@ export function CartProvider({ children, slug }: CartProviderProps) {
     }, [slug]);
 
     // 2. Persist
+    // ERRO-011 Fix: Salvar com timestamp para TTL
     useEffect(() => {
         try {
-            setTabIsolated(`${STORAGE_KEY}_${slug}`, JSON.stringify(items));
+            if (items.length > 0) {
+                // ERRO-011 Fix: Salvar com timestamp
+                const cartData = {
+                    items,
+                    timestamp: Date.now()
+                };
+                setTabIsolated(`${STORAGE_KEY}_${slug}`, JSON.stringify(cartData));
+            } else {
+                // Limpar se carrinho vazio
+                setTabIsolated(`${STORAGE_KEY}_${slug}`, null);
+            }
         } catch (e) {
             console.error('Failed to save cart', e);
         }
@@ -120,7 +153,9 @@ export function CartProvider({ children, slug }: CartProviderProps) {
             updateQuantity,
             clearCart,
             isCartOpen,
-            setIsCartOpen
+            setIsCartOpen,
+            slug, // Expose for consumers (Orders Service)
+            tableNumber // ERRO-021 Fix: Expor número da mesa
         }}>
             {children}
         </CartContext.Provider>

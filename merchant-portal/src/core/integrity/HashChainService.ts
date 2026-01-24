@@ -4,7 +4,7 @@
  * Serviço para verificação de integridade usando hash chain
  */
 
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 
 export interface HashChainEvent {
     id: string;

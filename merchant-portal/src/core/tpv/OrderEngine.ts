@@ -12,13 +12,14 @@
  */
 
 import { supabase } from '../supabase';
+
 import { CashRegisterEngine } from './CashRegister';
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 import { logAuditEvent } from '../audit/logAuditEvent';
 
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered' | 'canceled';
 export type PaymentStatus = 'PENDING' | 'PARTIALLY_PAID' | 'PAID' | 'FAILED';
-export type PaymentMethod = 'cash' | 'card' | 'pix';
+export type PaymentMethod = 'cash' | 'card' | 'pix' | 'loyalty';
 
 export class OrderEngineError extends Error {
     constructor(message: string, public code: string) {
@@ -67,6 +68,7 @@ export interface Order {
     discountCents: number;
     source: 'tpv' | 'web' | 'app';
     operatorId?: string;
+    operatorName?: string;
     cashRegisterId?: string;
     notes?: string;
     createdAt: Date;
@@ -86,6 +88,11 @@ export interface OrderItem {
     notes?: string;
     categoryName?: string;
     createdAt: Date;
+    // KDS Fields
+    status?: 'pending' | 'preparing' | 'ready' | 'voided';
+    startedAt?: Date;
+    completedAt?: Date;
+    stationId?: string;
 }
 
 export class OrderEngine {
@@ -97,108 +104,10 @@ export class OrderEngine {
      * 2. Mesa não pode ter pedido ativo (uma mesa = um pedido)
      * 3. Deve ter pelo menos 1 item
      */
-    static async createOrder(input: OrderInput): Promise<Order> {
-        // HARD RULE 1: Caixa deve estar aberto (Exceto para Web/App que entram automaticamente)
-        let cashRegisterId: string | null = null;
-        if (input.source === 'tpv') {
-            const openCashRegister = await CashRegisterEngine.getOpenCashRegister(input.restaurantId);
-            if (!openCashRegister) {
-                throw new OrderEngineError(
-                    'Caixa não está aberto. Abra o caixa antes de criar vendas.',
-                    'CASH_REGISTER_CLOSED'
-                );
-            }
-            cashRegisterId = openCashRegister.id;
-        }
-
-        // HARD RULE 2: Mesa não pode ter pedido ativo
-        if (input.tableId) {
-            const existingOrder = await this.getActiveOrderByTable(input.restaurantId, input.tableId);
-            if (existingOrder) {
-                throw new OrderEngineError(
-                    `Mesa ${input.tableNumber || input.tableId} já possui pedido ativo. Use o pedido existente.`,
-                    'TABLE_HAS_ACTIVE_ORDER'
-                );
-            }
-        }
-
-        // HARD RULE 3: Deve ter pelo menos 1 item
-        if (!input.items || input.items.length === 0) {
-            throw new OrderEngineError(
-                'Pedido deve ter pelo menos 1 item.',
-                'EMPTY_ORDER'
-            );
-        }
-
-        // Prepare RPC items payload
-        const rpcItems = input.items.map(item => ({
-            product_id: item.productId,
-            name: item.name,
-            quantity: item.quantity,
-            unit_price: item.priceCents
-        }));
-
-        // Call RPC
-        const { data: orderData, error } = await supabase.rpc('create_order_atomic', {
-            p_restaurant_id: input.restaurantId,
-            p_items: rpcItems,
-            p_payment_method: 'cash', // Default, will be updated on payment
-            p_sync_metadata: input.syncMetadata ? {
-                localId: input.syncMetadata.localId,
-                syncAttempts: input.syncMetadata.syncAttempts,
-                lastSyncAt: input.syncMetadata.lastSyncAt,
-            } : null
-        });
-
-        if (error) {
-            Logger.error('OrderEngine: create_order_atomic failed', error, { input });
-
-            // CRITICAL: Handle race condition (unique constraint violation)
-            // PostgreSQL error code 23505 = unique_violation
-            // Check for both possible index names (old and new)
-            if (error.code === '23505' && (
-                error.message?.includes('idx_gm_orders_active_table') ||
-                error.message?.includes('idx_one_open_order_per_table')
-            )) {
-                throw new OrderEngineError(
-                    `Mesa ${input.tableNumber || input.tableId || 'N/A'} já possui pedido ativo. Use o pedido existente.`,
-                    'TABLE_HAS_ACTIVE_ORDER'
-                );
-            }
-
-            if (error.code === '23503') {
-                throw new OrderEngineError(
-                    'Dados inválidos. Verifique se todos os produtos existem no menu.',
-                    'INVALID_DATA'
-                );
-            }
-
-            throw new OrderEngineError(
-                `Erro ao criar pedido: ${error.message}`,
-                'ORDER_CREATION_FAILED'
-            );
-        }
-
-        Logger.info('OrderEngine: Order Created', { orderId: orderData.id, total: orderData.total_amount });
-
-        // Audit log
-        await logAuditEvent({
-            action: 'order_created',
-            resourceEntity: 'gm_orders',
-            resourceId: orderData.id,
-            metadata: {
-                restaurant_id: input.restaurantId,
-                table_number: input.tableNumber,
-                table_id: input.tableId,
-                items_count: input.items.length,
-                total_cents: orderData.total_amount,
-                cash_register_id: cashRegisterId,
-            },
-        });
-
-        // Return full order object by fetching it
-        return this.getOrderById(orderData.id);
-    }
+    // --- WRITE METHODS REMOVED FOR SOVEREIGNTY (Phase 15) ---
+    // createOrder has been migrated to Kernel.execute('CREATE', 'ORDER')
+    // See: OfflineOrderContext.tsx
+    // --------------------------------------------------------
 
     /**
      * Buscar pedido por ID
@@ -233,306 +142,10 @@ export class OrderEngine {
     /**
      * Atualizar status do pedido
      */
-    static async updateOrderStatus(
-        orderId: string,
-        status: OrderStatus,
-        restaurantId: string
-    ): Promise<void> {
-        // Buscar pedido atual com version para lock otimista
-        const { data: currentOrder } = await supabase
-            .from('gm_orders')
-            .select('status, version')
-            .eq('id', orderId)
-            .eq('restaurant_id', restaurantId)
-            .single();
+    // --- WRITE METHODS REMOVED FOR SOVEREIGNTY ---
+    // All modifications must go through Kernel.execute()
+    // createOrder() remains as it uses Atomic RPC (Server-Side Logic)
 
-        if (!currentOrder) {
-            throw new OrderEngineError(
-                'Pedido não encontrado. Ele pode ter sido cancelado ou já finalizado.',
-                'ORDER_NOT_FOUND'
-            );
-        }
-
-        const previousStatus = currentOrder.status || 'unknown';
-        const currentVersion = currentOrder.version || 1;
-
-        // Atualizar com verificação de version (lock otimista)
-        const { error, data } = await supabase
-            .from('gm_orders')
-            .update({ status, updated_at: new Date().toISOString() })
-            .eq('id', orderId)
-            .eq('restaurant_id', restaurantId)
-            .eq('version', currentVersion) // CRITICAL: Only update if version matches
-            .select();
-
-        if (error) {
-            Logger.error('ORDER_STATUS_UPDATE_FAILED', error, {
-                orderId,
-                restaurantId,
-                previousStatus,
-                newStatus: status
-            });
-            throw new OrderEngineError(
-                `Erro ao atualizar status do pedido: ${error instanceof Error ? error.message : String(error)}`,
-                'ORDER_STATUS_UPDATE_FAILED'
-            );
-        }
-
-        // Se nenhuma linha foi atualizada, significa que version mudou (conflito)
-        if (!data || data.length === 0) {
-            throw new OrderEngineError(
-                'Pedido foi modificado por outro operador. Recarregue e tente novamente.',
-                'CONCURRENT_MODIFICATION'
-            );
-        }
-
-        // Log sucesso (especialmente para ações KDS: preparing, ready)
-        if (status === 'preparing' || status === 'ready') {
-            Logger.info('ORDER_STATUS_UPDATED', {
-                orderId,
-                restaurantId,
-                previousStatus,
-                newStatus: status,
-                source: 'KDS',
-                action: status === 'preparing' ? 'prepare' : 'ready'
-            });
-        }
-
-        // Audit log
-        await logAuditEvent({
-            action: 'order_status_changed',
-            resourceEntity: 'gm_orders',
-            resourceId: orderId,
-            metadata: {
-                restaurant_id: restaurantId,
-                old_status: previousStatus,
-                new_status: status,
-                source: status === 'preparing' || status === 'ready' ? 'KDS' : 'TPV',
-            },
-        });
-    }
-
-    /**
-     * Adicionar item ao pedido
-     * 
-     * HARD RULE 5: Lock otimista básico
-     * Verifica se pedido ainda está no estado esperado antes de modificar.
-     */
-    static async addItemToOrder(
-        orderId: string,
-        item: OrderItemInput,
-        restaurantId: string
-    ): Promise<Order> {
-        // Verificar se pedido está aberto
-        const order = await this.getOrderById(orderId);
-        if (order.status !== 'pending') {
-            throw new OrderEngineError('Cannot add items to a closed order', 'ORDER_CLOSED');
-        }
-        if (order.restaurantId !== restaurantId) {
-            throw new OrderEngineError('Order does not belong to restaurant', 'UNAUTHORIZED');
-        }
-
-        // HARD RULE 5: Lock otimista com versioning
-        // Re-fetch para garantir que não foi modificado por outro operador
-        const currentOrder = await this.getOrderById(orderId);
-        if (currentOrder.status !== 'pending') {
-            throw new OrderEngineError(
-                'Pedido foi modificado por outro operador. Recarregue e tente novamente.',
-                'CONCURRENT_MODIFICATION'
-            );
-        }
-
-        // Get current version for optimistic lock
-        const { data: orderWithVersion } = await supabase
-            .from('gm_orders')
-            .select('version')
-            .eq('id', orderId)
-            .eq('restaurant_id', restaurantId)
-            .single();
-
-        const currentVersion = orderWithVersion?.version || 1;
-
-        // Criar item
-        const { data: itemData, error } = await supabase
-            .from('gm_order_items')
-            .insert({
-                order_id: orderId,
-                product_id: item.productId || null,
-                product_name: item.name, // Schema: product_name
-                unit_price: item.priceCents, // Schema: unit_price
-                quantity: item.quantity,
-                total_price: item.priceCents * item.quantity, // Schema: total_price
-                modifiers: item.modifiers || [],
-                notes: item.notes || null,
-                category_name: item.categoryName || null, // Persist Category (Mission 55)
-                consumption_group_id: item.consumptionGroupId || null, // Para divisão de conta
-            })
-            .select()
-            .single();
-
-        if (error) {
-            Logger.error('ORDER_ITEM_ADD_FAILED', error, { orderId, item, restaurantId });
-            throw new OrderEngineError(
-                'Erro ao adicionar item ao pedido. Verifique se o produto existe no menu.',
-                'ITEM_ADD_FAILED'
-            );
-        }
-
-        // Audit log
-        if (itemData) {
-            await logAuditEvent({
-                action: 'order_item_added',
-                resourceEntity: 'gm_order_items',
-                resourceId: itemData.id,
-                metadata: {
-                    order_id: orderId,
-                    restaurant_id: restaurantId,
-                    product_id: item.productId,
-                    quantity: item.quantity,
-                    price_cents: item.priceCents,
-                    consumption_group_id: item.consumptionGroupId,
-                },
-            });
-        }
-
-        // Trigger vai recalcular total automaticamente
-        return this.getOrderById(orderId);
-    }
-
-    /**
-     * Remover item do pedido
-     */
-    static async removeItemFromOrder(
-        orderId: string,
-        itemId: string,
-        restaurantId: string
-    ): Promise<Order> {
-        // Verificar se pedido está aberto
-        const order = await this.getOrderById(orderId);
-        if (order.status !== 'pending') {
-            throw new OrderEngineError(
-                'Não é possível remover itens de um pedido fechado.',
-                'ORDER_CLOSED'
-            );
-        }
-        if (order.restaurantId !== restaurantId) {
-            throw new OrderEngineError(
-                'Pedido não pertence a este restaurante.',
-                'UNAUTHORIZED'
-            );
-        }
-
-        // HARD RULE 5: Lock otimista com versioning
-        const { data: orderWithVersion } = await supabase
-            .from('gm_orders')
-            .select('version')
-            .eq('id', orderId)
-            .eq('restaurant_id', restaurantId)
-            .single();
-
-        const currentVersion = orderWithVersion?.version || 1;
-
-        // Remover item
-        const { error } = await supabase
-            .from('gm_order_items')
-            .delete()
-            .eq('id', itemId)
-            .eq('order_id', orderId);
-
-        if (error) {
-            Logger.error('ORDER_ITEM_REMOVE_FAILED', error, { orderId, itemId, restaurantId });
-            throw new OrderEngineError(
-                'Erro ao remover item do pedido. Tente novamente.',
-                'ITEM_REMOVE_FAILED'
-            );
-        }
-
-        // Audit log
-        await logAuditEvent({
-            action: 'order_item_removed',
-            resourceEntity: 'gm_order_items',
-            resourceId: itemId,
-            metadata: {
-                order_id: orderId,
-                restaurant_id: restaurantId,
-            },
-        });
-
-        // Trigger vai recalcular total automaticamente
-        return this.getOrderById(orderId);
-    }
-
-    /**
-     * Atualizar quantidade de item
-     */
-    static async updateItemQuantity(
-        orderId: string,
-        itemId: string,
-        quantity: number,
-        restaurantId: string
-    ): Promise<Order> {
-        if (quantity <= 0) {
-            return this.removeItemFromOrder(orderId, itemId, restaurantId);
-        }
-
-        // Verificar se pedido está aberto
-        const order = await this.getOrderById(orderId);
-        if (order.status !== 'pending') {
-            throw new OrderEngineError('Cannot update items in a closed order', 'ORDER_CLOSED');
-        }
-        if (order.restaurantId !== restaurantId) {
-            throw new OrderEngineError('Order does not belong to restaurant', 'UNAUTHORIZED');
-        }
-
-        // HARD RULE 5: Lock otimista com versioning
-        const { data: orderWithVersion } = await supabase
-            .from('gm_orders')
-            .select('version')
-            .eq('id', orderId)
-            .eq('restaurant_id', restaurantId)
-            .single();
-
-        const currentVersion = orderWithVersion?.version || 1;
-
-        // Verificar se pedido ainda está aberto
-        const currentOrder = await this.getOrderById(orderId);
-        if (currentOrder.status !== 'pending') {
-            throw new OrderEngineError(
-                'Pedido foi modificado por outro operador. Recarregue e tente novamente.',
-                'CONCURRENT_MODIFICATION'
-            );
-        }
-
-        // Buscar item atual
-        const item = order.items.find(i => i.id === itemId);
-        if (!item) {
-            throw new OrderEngineError(
-                'Item não encontrado no pedido. Recarregue o pedido e tente novamente.',
-                'ITEM_NOT_FOUND'
-            );
-        }
-
-        // Atualizar quantidade e subtotal
-        const { error } = await supabase
-            .from('gm_order_items')
-            .update({
-                quantity,
-                total_price: item.priceSnapshot * quantity, // Schema: total_price (and local item uses mapped property)
-            })
-            .eq('id', itemId)
-            .eq('order_id', orderId);
-
-        if (error) {
-            Logger.error('ORDER_ITEM_UPDATE_FAILED', error, { orderId, itemId, quantity, restaurantId });
-            throw new OrderEngineError(
-                'Erro ao atualizar quantidade do item. Tente novamente.',
-                'ITEM_UPDATE_FAILED'
-            );
-        }
-
-        // Trigger vai recalcular total automaticamente
-        return this.getOrderById(orderId);
-    }
 
     /**
      * Buscar pedido ativo por mesa
@@ -595,7 +208,7 @@ export class OrderEngine {
         return {
             id: dbOrder.id,
             restaurantId: dbOrder.restaurant_id,
-            tableNumber: dbOrder.table_number,
+            tableNumber: dbOrder.table_number || dbOrder.sync_metadata?.table_number,
             tableId: dbOrder.table_id,
             status: dbOrder.status as OrderStatus,
             paymentStatus: dbOrder.payment_status as PaymentStatus,
@@ -603,10 +216,10 @@ export class OrderEngine {
             subtotalCents: dbOrder.total_amount, // MVP: Subtotal = Total
             taxCents: 0,
             discountCents: 0,
-            source: dbOrder.source || 'tpv',
+            source: dbOrder.source || dbOrder.sync_metadata?.origin || 'tpv',
             operatorId: dbOrder.operator_id,
             cashRegisterId: dbOrder.cash_register_id,
-            notes: dbOrder.notes,
+            notes: dbOrder.notes || dbOrder.sync_metadata?.notes,
             createdAt: new Date(dbOrder.created_at),
             updatedAt: new Date(dbOrder.updated_at),
             items: (dbOrder.items || []).map((item: any) => ({
@@ -620,9 +233,13 @@ export class OrderEngine {
                 modifiers: item.modifiers || [],
                 notes: item.notes,
                 categoryName: item.category_name, // Map Category (Mission 55)
-                createdAt: new Date(item.created_at || new Date()), // Item might not have created_at in schema? Checked: No created_at in gm_order_items definition!
+                createdAt: new Date(item.created_at || new Date()),
+                // KDS Mapping
+                status: item.status || 'pending',
+                startedAt: item.started_at ? new Date(item.started_at) : undefined,
+                completedAt: item.completed_at ? new Date(item.completed_at) : undefined,
+                stationId: item.station_id
             })),
         };
     }
 }
-

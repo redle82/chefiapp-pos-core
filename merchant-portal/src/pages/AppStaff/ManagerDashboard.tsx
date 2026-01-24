@@ -11,6 +11,8 @@ import { colors } from '../../ui/design-system/tokens/colors';
 import { useIntegrationBridge } from './hooks/useIntegrationBridge';
 import { useToast } from '../../ui/design-system';
 import { exportShiftReportToPDF } from './utils/exportToPDF'; // P3-6
+import { LiveRosterWidget } from './components/LiveRosterWidget';
+import { QuickTaskModal } from './components/QuickTaskModal';
 
 // Types for Mock Brain
 interface MetabolicInsight {
@@ -22,7 +24,7 @@ interface MetabolicInsight {
 }
 
 export const ManagerDashboard: React.FC = () => {
-    const { currentRiskLevel, tasks, checkOut, activeWorkerId, setTasks, notifyActivity } = useStaff();
+    const { currentRiskLevel, tasks, checkOut, activeWorkerId, setTasks, notifyActivity, employees, operationalContract, createTask } = useStaff();
     const { items, hungerSignals } = useInventory();
     const { isAlive, pulseId } = usePulse();
     const { info } = useToast(); // P2-2 FIX: Toast para feedback de preview
@@ -42,6 +44,7 @@ export const ManagerDashboard: React.FC = () => {
 
     // DEV panel state
     const [showDevPanel, setShowDevPanel] = useState(false);
+    const [showQuickTaskModal, setShowQuickTaskModal] = useState(false);
     const isDev = import.meta.env.DEV;
 
     // P2-2 FIX: Wrappers com feedback para ações de preview
@@ -77,7 +80,7 @@ export const ManagerDashboard: React.FC = () => {
         // Mock Brain Analysis
         setAlerts([
             { itemId: 'COKE_ZERO', burnRatePerHour: 2.5, daysUntilStockout: 0.2, panicScore: 80, lastPanicEvent: Date.now() },
-            { itemId: 'BEEF_PATTY', burnRatePerHour: 10, daysUntilStockout: 3, panicScore: 10 }
+            { itemId: 'BEEF_PATTY', burnRatePerHour: 10, daysUntilStockout: 3, panicScore: 10, lastPanicEvent: Date.now() - 3600000 }
         ]);
     }, [items, pulseId]);
 
@@ -96,7 +99,7 @@ export const ManagerDashboard: React.FC = () => {
         const completedTasks = tasks.filter(t => t.status === 'done').length;
         const totalTasks = tasks.length;
         const shiftDuration = '8h 30m'; // TODO: Calculate from actual shift start time
-        
+
         exportShiftReportToPDF({
             shiftDate: new Date().toLocaleDateString('pt-PT'),
             workerName: activeWorkerId || 'Manager',
@@ -123,6 +126,9 @@ export const ManagerDashboard: React.FC = () => {
                     <Button tone="action" variant="outline" fullWidth onClick={handleExportPDF}>
                         📄 Exportar PDF
                     </Button>
+                    <Button tone="action" fullWidth onClick={() => setShowQuickTaskModal(true)}>
+                        ➕ Nova Tarefa
+                    </Button>
                     <Button tone="neutral" variant="outline" fullWidth onClick={checkOut}>Sign Out</Button>
                 </div>
             }
@@ -145,6 +151,19 @@ export const ManagerDashboard: React.FC = () => {
                         <Text size="xs" color="tertiary">Dados de demonstração. Algumas métricas são simuladas.</Text>
                     </div>
                 </div>
+
+                {/* 0.5. LIVE ROSTER */}
+                {operationalContract?.id && (
+                    <LiveRosterWidget restaurantId={operationalContract.id} />
+                )}
+
+                {/* QUICK TASK MODAL */}
+                <QuickTaskModal
+                    isOpen={showQuickTaskModal}
+                    onClose={() => setShowQuickTaskModal(false)}
+                    employees={employees}
+                    onCreateTask={createTask}
+                />
 
                 {/* 1. PULSE DASHBOARD */}
                 <Card
@@ -232,21 +251,20 @@ export const ManagerDashboard: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Text size="xs" weight="bold" color="secondary">INTEGRAÇÕES</Text>
-                        <Badge 
-                            status={aggregatedStatus === 'ok' ? 'ready' : aggregatedStatus === 'degraded' ? 'warning' : 'error'} 
-                            label={aggregatedStatus.toUpperCase()} 
-                            size="sm" 
+                        <Badge
+                            status={aggregatedStatus === 'ok' ? 'ready' : aggregatedStatus === 'degraded' ? 'warning' : 'error'}
+                            label={aggregatedStatus.toUpperCase()}
+                            size="sm"
                         />
                     </div>
                     {integrationsReady ? (
                         integrations.map(integration => (
                             <Card key={integration.id} surface="layer2" padding="md" style={{
-                                borderLeft: `4px solid ${
-                                    integration.status.status === 'ok' ? colors.success.base :
+                                borderLeft: `4px solid ${integration.status.status === 'ok' ? colors.success.base :
                                     integration.status.status === 'degraded' ? colors.warning.base :
-                                    integration.status.status === 'down' ? colors.destructive.base :
-                                    colors.border.subtle
-                                }`
+                                        integration.status.status === 'down' ? colors.destructive.base :
+                                            colors.border.subtle
+                                    }`
                             }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div>
@@ -255,13 +273,13 @@ export const ManagerDashboard: React.FC = () => {
                                             {integration.capabilities.join(' • ')}
                                         </Text>
                                     </div>
-                                    <Badge 
+                                    <Badge
                                         status={
                                             integration.status.status === 'ok' ? 'ready' :
-                                            integration.status.status === 'degraded' ? 'warning' : 'error'
-                                        } 
-                                        label={integration.status.status.toUpperCase()} 
-                                        size="sm" 
+                                                integration.status.status === 'degraded' ? 'warning' : 'error'
+                                        }
+                                        label={integration.status.status.toUpperCase()}
+                                        size="sm"
                                     />
                                 </div>
                             </Card>
@@ -276,29 +294,29 @@ export const ManagerDashboard: React.FC = () => {
                 {/* 6. DEV PANEL (only in development) */}
                 {isDev && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        <Button 
-                            tone="neutral" 
-                            variant="outline" 
-                            size="sm" 
+                        <Button
+                            tone="neutral"
+                            variant="outline"
+                            size="sm"
                             onClick={() => setShowDevPanel(!showDevPanel)}
                         >
                             {showDevPanel ? '🔽 Fechar DEV Panel' : '🔧 Abrir DEV Panel'}
                         </Button>
-                        
+
                         {showDevPanel && (
-                            <Card surface="layer2" padding="lg" style={{ 
+                            <Card surface="layer2" padding="lg" style={{
                                 border: `2px dashed ${colors.action.base}40`,
                                 background: `${colors.action.base}05`
                             }}>
                                 <Text size="xs" weight="bold" color="action" style={{ marginBottom: 16 }}>
                                     🧪 INTEGRATION DEV TOOLS
                                 </Text>
-                                
+
                                 {/* Stats */}
-                                <div style={{ 
-                                    display: 'grid', 
-                                    gridTemplateColumns: 'repeat(2, 1fr)', 
-                                    gap: 8, 
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(2, 1fr)',
+                                    gap: 8,
                                     marginBottom: 16,
                                     padding: 12,
                                     background: colors.surface.layer1,
@@ -316,70 +334,70 @@ export const ManagerDashboard: React.FC = () => {
                                         <Text size="xs" color="tertiary">State</Text>
                                         <Text size="sm" weight="bold" color={
                                             mockStats.state === 'connected' ? 'success' :
-                                            mockStats.state === 'degraded' ? 'warning' : 'destructive'
+                                                mockStats.state === 'degraded' ? 'warning' : 'destructive'
                                         }>{mockStats.state}</Text>
                                     </div>
                                     <div>
                                         <Text size="xs" color="tertiary">Last Event</Text>
                                         <Text size="sm" color="secondary">
-                                            {mockStats.lastEventAt 
-                                                ? new Date(mockStats.lastEventAt).toLocaleTimeString() 
+                                            {mockStats.lastEventAt
+                                                ? new Date(mockStats.lastEventAt).toLocaleTimeString()
                                                 : '-'}
                                         </Text>
                                     </div>
                                 </div>
-                                
+
                                 {/* Simulation Buttons */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                     <Text size="xs" color="tertiary" style={{ marginBottom: 4 }}>Simular Eventos:</Text>
-                                    
+
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                                        <Button 
-                                            tone="action" 
-                                            variant="outline" 
-                                            size="sm" 
+                                        <Button
+                                            tone="action"
+                                            variant="outline"
+                                            size="sm"
                                             onClick={handleSimulateOrder}
                                         >
                                             📦 Novo Pedido
                                         </Button>
-                                        <Button 
-                                            tone="neutral" 
-                                            variant="outline" 
-                                            size="sm" 
+                                        <Button
+                                            tone="neutral"
+                                            variant="outline"
+                                            size="sm"
                                             onClick={handleSimulateCancel}
                                         >
                                             ❌ Cancelar
                                         </Button>
-                                        <Button 
-                                            tone="warning" 
-                                            variant="outline" 
-                                            size="sm" 
+                                        <Button
+                                            tone="warning"
+                                            variant="outline"
+                                            size="sm"
                                             onClick={handleSimulateDelay}
                                         >
                                             🕐 Atraso
                                         </Button>
-                                        <Button 
-                                            tone="destructive" 
-                                            variant="outline" 
-                                            size="sm" 
+                                        <Button
+                                            tone="destructive"
+                                            variant="outline"
+                                            size="sm"
                                             onClick={handleSimulateFailure}
                                         >
                                             💥 Falha
                                         </Button>
                                     </div>
-                                    
+
                                     {mockStats.state !== 'connected' && (
-                                        <Button 
-                                            tone="success" 
-                                            variant="solid" 
-                                            size="sm" 
+                                        <Button
+                                            tone="success"
+                                            variant="solid"
+                                            size="sm"
                                             onClick={handleSimulateRecovery}
                                             fullWidth
                                         >
                                             ✅ Recuperar
                                         </Button>
                                     )}
-                                    
+
                                     {/* P2-2 FIX: Indicador visual de modo preview */}
                                     <div style={{
                                         marginTop: 8,

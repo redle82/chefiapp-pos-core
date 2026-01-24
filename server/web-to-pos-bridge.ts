@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg';
 import { v4 as uuid } from 'uuid';
-import type { CoreEvent, EventType, StreamId } from '../event-log/types';
+import type { CoreEvent, EventMetadata, EventType, StreamId } from '../event-log/types';
 
 function splitStreamId(streamId: StreamId): { streamType: string; streamId: string } {
   const parts = streamId.split(':');
@@ -45,24 +45,26 @@ async function getNextStreamInfoTx(client: PoolClient, stream_id: StreamId): Pro
 
 async function appendCoreEventTx(
   client: PoolClient,
-  input: Omit<CoreEvent, 'event_id' | 'stream_version' | 'occurred_at'> & {
+  input: Omit<CoreEvent, 'event_id' | 'stream_version' | 'occurred_at' | 'meta'> & {
     occurred_at?: Date;
     idempotency_key?: string;
+    meta?: EventMetadata;
   }
 ): Promise<CoreEvent> {
   const occurredAt = input.occurred_at || new Date();
   const { version, prevHash } = await getNextStreamInfoTx(client, input.stream_id);
 
-  const metaObj: any = {
-    causation_id: input.causation_id,
-    correlation_id: input.correlation_id,
-    actor_ref: input.actor_ref,
+  const metaObj: EventMetadata = {
+    ...(input.meta || {}),
+    causation_id: (input as any).causation_id,
+    correlation_id: (input as any).correlation_id,
+    actor_ref: (input as any).actor_ref,
     idempotency_key: input.idempotency_key,
     hash_prev: prevHash,
   };
 
   const hash = calculateEventHash(prevHash, input.type, input.stream_id, version, input.payload, metaObj);
-  metaObj.hash = hash; // Add hash to meta object for consistency if needed, but primarily for calc
+  metaObj.hash = hash;
 
   const event: CoreEvent = {
     event_id: uuid(),
@@ -71,12 +73,14 @@ async function appendCoreEventTx(
     type: input.type,
     payload: input.payload,
     occurred_at: occurredAt,
-    causation_id: input.causation_id,
-    correlation_id: input.correlation_id,
-    actor_ref: input.actor_ref,
-    idempotency_key: input.idempotency_key,
-    hash: hash,
-    hash_prev: prevHash,
+    meta: metaObj,
+    // Backwards compat (flattened)
+    causation_id: metaObj.causation_id,
+    correlation_id: metaObj.correlation_id,
+    actor_ref: metaObj.actor_ref,
+    idempotency_key: metaObj.idempotency_key,
+    hash_prev: metaObj.hash_prev,
+    hash: metaObj.hash,
   };
 
   await client.query(

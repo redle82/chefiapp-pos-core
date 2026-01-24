@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../core/supabase';
-import { OnboardingCore } from '../../../core/onboarding/OnboardingCore';
+import { GenesisKernel } from '../../../core/kernel/GenesisKernel';
 import { getTabIsolated } from '../../../core/storage/TabIsolatedStorage';
 
 export interface VerifiedProduct {
@@ -22,7 +22,7 @@ export function useRealMenu() {
         async function fetchVerifiedMenu() {
             try {
                 // 1. Get Identity from Authority (with Hardening Fallback)
-                const blueprint = await OnboardingCore.getBlueprint();
+                const blueprint = await GenesisKernel.getBlueprint();
                 let tenantId = blueprint?.meta?.tenantId;
 
                 // Fallback: Try TabIsolatedStorage direct access if Core memory is wiped

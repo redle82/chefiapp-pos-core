@@ -18,8 +18,8 @@ export function useVoiceCommands(commands: VoiceCommand[], enabled: boolean = tr
         setIsAvailable(available);
 
         if (available) {
-            // Initialize
-            voiceCommandService.initialize('pt-PT');
+            // Initialize via constructor (singleton)
+            // voiceCommandService.initialize('pt-PT'); // Method removed, logic in constructor
             
             // Register commands
             voiceCommandService.registerCommands(commands);

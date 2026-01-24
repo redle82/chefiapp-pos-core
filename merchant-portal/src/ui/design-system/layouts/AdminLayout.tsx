@@ -29,14 +29,17 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ sidebar, content }) =>
                 }}
             >
                 {/* 1. SIDEBAR ZONE */}
-                <aside style={{
-                    width: '280px',
-                    borderRight: `1px solid ${theme.border.subtle}`,
-                    backgroundColor: theme.surface.layer1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    zIndex: 20
-                }}>
+                <aside
+                    className="print:hidden"
+                    style={{
+                        width: '280px',
+                        borderRight: `1px solid ${theme.border.subtle}`,
+                        backgroundColor: theme.surface.layer1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        zIndex: 20
+                    }}
+                >
                     {sidebar}
                 </aside>
 

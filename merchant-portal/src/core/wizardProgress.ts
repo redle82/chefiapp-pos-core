@@ -80,6 +80,24 @@ export async function getWizardProgress(restaurantId: string): Promise<{
       .single();
 
     if (error) {
+      // Handle schema errors (columns may not exist yet)
+      const isSchemaError = 
+        error.code === '42703' || 
+        error.code?.startsWith('PGRST') ||
+        error.message?.includes('column') ||
+        error.message?.includes('does not exist') ||
+        (error as any).status === 400;
+      
+      if (isSchemaError) {
+        // Schema lag - columns don't exist yet, return defaults
+        console.log('[WizardProgress] Schema lag detected (setup_status missing). Using default state.');
+        return {
+          wizard_completed_at: null,
+          setup_status: 'not_started',
+          wizard_progress: {}
+        };
+      }
+      
       console.error('[WizardProgress] Error fetching progress:', error);
       return null;
     }

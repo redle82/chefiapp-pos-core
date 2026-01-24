@@ -74,7 +74,7 @@
  * ============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useOrders } from '../context/OrderContextReal';
 import type { Order } from '../context/OrderTypes';
 import { useStaff } from '../../AppStaff/context/StaffContext';
@@ -85,6 +85,8 @@ import { Button } from '../../../ui/design-system/Button';
 import { useKitchenReflex } from '../../../intelligence/nervous-system/useKitchenReflex';
 import { useNewOrderAlerts } from './useNewOrderAlerts';
 import { OrderTimer } from './OrderTimer';
+import { useBumpBar } from './hooks/useBumpBar';
+import { ItemTimer } from './components/ItemTimer';
 
 // ------------------------------------------------------------------
 // 🎨 CINEMATIC COMPONENTS (Ported & Cleaned)
@@ -94,10 +96,12 @@ interface TicketCardProps {
     ticket: Order;
     onAdvance: (o: Order) => void;
     isUnseen?: boolean;
+    isSelected?: boolean;
     onTicketClick?: () => void;
+    id?: string;
 }
 
-const TicketCard = ({ ticket, onAdvance, isUnseen = false, onTicketClick }: TicketCardProps) => {
+const TicketCard = ({ ticket, onAdvance, isUnseen = false, isSelected = false, onTicketClick, id }: TicketCardProps) => {
     const isNew = ticket.status === 'new';
 
     // Ticket "Paper" Feel
@@ -112,6 +116,7 @@ const TicketCard = ({ ticket, onAdvance, isUnseen = false, onTicketClick }: Tick
             exit={{ opacity: 0, scale: 0.95 }}
             onClick={onTicketClick}
             className={isUnseen ? 'kds-ticket-new' : ''}
+            id={id}
             style={{
                 position: 'relative',
                 display: 'flex',
@@ -126,7 +131,10 @@ const TicketCard = ({ ticket, onAdvance, isUnseen = false, onTicketClick }: Tick
                 background: bg,
                 borderLeft: `4px solid ${activeBorderColor}`,
                 color: Colors.kds.text.primary,
-                cursor: isUnseen ? 'pointer' : 'default'
+                cursor: isUnseen ? 'pointer' : 'default',
+                transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                border: isSelected ? `2px solid ${Colors.info}` : 'none',
+                zIndex: isSelected ? 10 : 1
             }}
         >
             {/* NOVO Badge for unseen orders */}
@@ -151,9 +159,39 @@ const TicketCard = ({ ticket, onAdvance, isUnseen = false, onTicketClick }: Tick
 
             <div style={{ padding: Spacing.lg }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: Spacing.sm }}>
-                    <span style={{ fontWeight: 900, fontSize: Typography.uiLarge.fontSize }}>#{ticket.tableNumber}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontWeight: 900, fontSize: Typography.uiLarge.fontSize }}>#{ticket.tableNumber}</span>
+                        {(ticket as any).paymentStatus === 'paid' && (
+                            <span style={{
+                                background: '#22c55e',
+                                color: '#fff',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '10px',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em'
+                            }}>
+                                PAGO
+                            </span>
+                        )}
+                        {(ticket as any).paymentStatus === 'pending' && (ticket as any).origin === 'WEB_PUBLIC' && (
+                            <span style={{
+                                background: '#f59e0b',
+                                color: '#fff',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '10px',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em'
+                            }}>
+                                P. BALCÃO
+                            </span>
+                        )}
+                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <OrderTimer createdAt={ticket.createdAt} />
+                        <OrderTimer createdAt={typeof ticket.createdAt === 'string' ? ticket.createdAt : ticket.createdAt.toISOString()} />
                         <span style={{ fontFamily: 'monospace', opacity: 0.7 }}>{new Date(ticket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                 </div>
@@ -161,9 +199,17 @@ const TicketCard = ({ ticket, onAdvance, isUnseen = false, onTicketClick }: Tick
                 {/* Items List */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.sm }}>
                     {ticket.items.map(item => (
-                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontWeight: 'bold' }}>{item.quantity}x {item.name}</span>
-                            {item.notes && <span style={{ color: Colors.risk.high, fontSize: '0.8em', fontStyle: 'italic' }}>{item.notes}</span>}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                {item.notes && <span style={{ color: Colors.risk.high, fontSize: '0.8em', fontStyle: 'italic', marginRight: '8px' }}>{item.notes}</span>}
+                                <ItemTimer
+                                    createdAt={typeof ticket.createdAt === 'string' ? new Date(ticket.createdAt) : ticket.createdAt}
+                                    status={item.status || 'pending'}
+                                    startedAt={item.startedAt} // already Date or undefined
+                                    completedAt={item.completedAt} // already Date or undefined
+                                />
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -182,7 +228,8 @@ const TicketCard = ({ ticket, onAdvance, isUnseen = false, onTicketClick }: Tick
                     fontWeight: 'bold',
                     textTransform: 'uppercase',
                     fontSize: '0.9em',
-                    marginTop: Spacing.sm
+                    marginTop: Spacing.sm,
+                    boxShadow: isSelected ? `0 0 10px ${Colors.info}` : 'none'
                 }}>
                 {isNew ? 'Iniciar Preparo →' : 'Marcar Pronto ✓'}
             </button>
@@ -228,7 +275,12 @@ const MiseEnPlaceMode = () => {
 // 🛡️ STATION INTELLIGENCE (Mission 55)
 // ------------------------------------------------------------------
 
-type KDSStation = 'ALL' | 'KITCHEN' | 'BAR';
+// ------------------------------------------------------------------
+// 🛡️ STATION INTELLIGENCE (Mission 55 & Phase 2.2)
+// ------------------------------------------------------------------
+
+// KDS Station can be 'ALL', 'KITCHEN', 'BAR' (Legacy) or a specific UUID
+type KDSStation = string;
 
 const isBarItem = (categoryName?: string) => {
     if (!categoryName) return false;
@@ -250,7 +302,7 @@ const isBarItem = (categoryName?: string) => {
 // 👨‍🍳 MAIN KDS
 // ------------------------------------------------------------------
 
-export default function KitchenDisplay() {
+export default function KitchenDisplay({ initialStation = 'ALL' }: { initialStation?: KDSStation }) {
     // === KDS HARDENING: Obter todos os estados de conexão ===
     const {
         orders: rawOrders,
@@ -276,7 +328,17 @@ export default function KitchenDisplay() {
     const [actionError, setActionError] = useState<string | null>(null);
 
     // === STATION INTELLIGENCE ===
-    const [station, setStation] = useState<KDSStation>('ALL'); // TODO: Persist in localStorage?
+    const [station, setStation] = useState<KDSStation>(initialStation); // TODO: Persist in localStorage?
+    const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
+    // Extract dynamic stations from active orders (auto-discovery)
+    const activeDynamicStations = useMemo(() => {
+        const stations = new Set<string>();
+        orders.forEach(o => o.items.forEach(i => {
+            if (i.stationId) stations.add(i.stationId);
+        }));
+        return Array.from(stations);
+    }, [orders]);
 
     // === KDS HARDENING: Determinar se está "cego" (sem eventos realtime) ===
     // REGRA: KDS é considerado offline quando:
@@ -320,13 +382,31 @@ export default function KitchenDisplay() {
     const activeTickets = useMemo(() => {
         let filtered = orders;
         if (station !== 'ALL') {
-            filtered = orders.map(order => ({
-                ...order,
-                items: order.items.filter(item => {
-                    const isBar = isBarItem(item.categoryName);
-                    return station === 'BAR' ? isBar : !isBar;
-                })
-            })).filter(order => order.items.length > 0);
+            if (station === 'KITCHEN') {
+                filtered = orders.map(order => ({
+                    ...order,
+                    items: order.items.filter(item => {
+                        // Legacy Kitchen: Not Bar, and NOT assigned to a specific other station
+                        const isBar = isBarItem(item.categoryName);
+                        return !isBar && !item.stationId;
+                    })
+                })).filter(order => order.items.length > 0);
+            } else if (station === 'BAR') {
+                filtered = orders.map(order => ({
+                    ...order,
+                    items: order.items.filter(item => {
+                        // Legacy Bar: Is Bar, and NOT assigned to a specific other station
+                        const isBar = isBarItem(item.categoryName);
+                        return isBar && !item.stationId;
+                    })
+                })).filter(order => order.items.length > 0);
+            } else {
+                // Specific Station UUID
+                filtered = orders.map(order => ({
+                    ...order,
+                    items: order.items.filter(item => item.stationId === station)
+                })).filter(order => order.items.length > 0);
+            }
         }
 
         return filtered
@@ -337,6 +417,44 @@ export default function KitchenDisplay() {
     const hasPressure = activeTickets.length > 0;
     const newOrders = activeTickets.filter(o => o.status === 'new');
     const preparingOrders = activeTickets.filter(o => o.status === 'preparing');
+
+    // === BUMP BAR NAVIGATION ===
+    useBumpBar({
+        onNavigate: (dir) => {
+            if (activeTickets.length === 0) return;
+            const currentIndex = activeTickets.findIndex(o => o.id === selectedOrderId);
+            let nextIndex = currentIndex;
+
+            if (currentIndex === -1) {
+                nextIndex = 0;
+            } else if (dir === 'right' || dir === 'down') {
+                nextIndex = currentIndex + 1;
+                if (nextIndex >= activeTickets.length) nextIndex = 0;
+            } else {
+                nextIndex = currentIndex - 1;
+                if (nextIndex < 0) nextIndex = activeTickets.length - 1;
+            }
+
+            const nextOrder = activeTickets[nextIndex];
+            if (nextOrder) {
+                setSelectedOrderId(nextOrder.id);
+                // Auto-scroll logic if needed could go here
+                const element = document.getElementById(`ticket-${nextOrder.id}`);
+                element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        },
+        onBump: () => {
+            const order = activeTickets.find(o => o.id === selectedOrderId);
+            if (order) handleAdvance(order);
+        }
+    });
+
+    // Auto-select first if none selected
+    useEffect(() => {
+        if (!selectedOrderId && activeTickets.length > 0) {
+            setSelectedOrderId(activeTickets[0].id);
+        }
+    }, [activeTickets.length]); // Only run when count changes to avoid fighting user selection
 
     // === KDS HARDENING: handleAdvance com proteção e logging ===
     const handleAdvance = async (order: Order) => {
@@ -459,27 +577,37 @@ export default function KitchenDisplay() {
                     )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.lg }}>
-                    {/* === STATION TOGGLE (Mission 55) === */}
-                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', padding: '2px' }}>
-                        {(['ALL', 'KITCHEN', 'BAR'] as KDSStation[]).map(s => (
-                            <button
-                                key={s}
-                                onClick={() => setStation(s)}
-                                style={{
-                                    background: station === s ? (s === 'BAR' ? Colors.info : Colors.risk.medium) : 'transparent',
-                                    color: station === s ? '#fff' : Colors.kds.text.dim,
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    padding: '6px 12px',
-                                    cursor: 'pointer',
-                                    fontWeight: 'bold',
-                                    fontSize: '12px',
-                                    transition: 'all 0.2s ease'
-                                }}
-                            >
-                                {s === 'ALL' ? 'TODOS' : (s === 'KITCHEN' ? 'COZINHA' : 'BAR')}
-                            </button>
-                        ))}
+                    {/* === STATION TOGGLE (Mission 55 & Phase 2.2) === */}
+                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', padding: '2px', gap: '2px' }}>
+                        {/* Dynamic Station Buttons */}
+                        {['ALL', 'KITCHEN', 'BAR', ...activeDynamicStations].map(s => {
+                            let label = s;
+                            if (s === 'ALL') label = 'TODOS';
+                            else if (s === 'KITCHEN') label = 'COZINHA';
+                            else if (s === 'BAR') label = 'BAR';
+                            else label = `STATION ${s.substring(0, 4).toUpperCase()}`;
+
+                            return (
+                                <button
+                                    key={s}
+                                    onClick={() => setStation(s)}
+                                    style={{
+                                        background: station === s ? (s === 'BAR' ? Colors.info : Colors.risk.medium) : 'transparent',
+                                        color: station === s ? '#fff' : Colors.kds.text.dim,
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        padding: '6px 12px',
+                                        cursor: 'pointer',
+                                        fontWeight: 'bold',
+                                        fontSize: '12px',
+                                        transition: 'all 0.2s ease',
+                                        textTransform: 'uppercase'
+                                    }}
+                                >
+                                    {label}
+                                </button>
+                            );
+                        })}
                     </div>
 
                     {/* === SOUND TOGGLE === */}
@@ -570,9 +698,14 @@ export default function KitchenDisplay() {
                                         <TicketCard
                                             key={t.id}
                                             ticket={t}
+                                            id={`ticket-${t.id}`}
                                             onAdvance={handleAdvance}
                                             isUnseen={unseenOrderIds.has(t.id)}
-                                            onTicketClick={() => markSeen(t.id)}
+                                            isSelected={selectedOrderId === t.id}
+                                            onTicketClick={() => {
+                                                markSeen(t.id);
+                                                setSelectedOrderId(t.id);
+                                            }}
                                         />
                                     ))}
                                     {newOrders.length === 0 && (
@@ -588,7 +721,14 @@ export default function KitchenDisplay() {
                                 </h2>
                                 <div style={{ flex: 1, overflowY: 'auto', paddingRight: Spacing.sm, paddingBottom: Spacing['4xl'] }}>
                                     {preparingOrders.map(t => (
-                                        <TicketCard key={t.id} ticket={t} onAdvance={handleAdvance} />
+                                        <TicketCard
+                                            key={t.id}
+                                            id={`ticket-${t.id}`}
+                                            ticket={t}
+                                            onAdvance={handleAdvance}
+                                            isSelected={selectedOrderId === t.id}
+                                            onTicketClick={() => setSelectedOrderId(t.id)}
+                                        />
                                     ))}
                                     {preparingOrders.length === 0 && (
                                         <div style={{ color: Colors.kds.text.dim, textAlign: 'center', paddingTop: Spacing['2xl'], fontStyle: 'italic' }}>Bancada livre.</div>

@@ -15,7 +15,7 @@ import { Button } from '../../../ui/design-system/primitives/Button';
 import { Input } from '../../../ui/design-system/primitives/Input';
 import { useToast } from '../../../ui/design-system';
 import { FiscalBackupService } from '../../../core/fiscal/FiscalBackupService';
-import { Logger } from '../../../core/logger/Logger';
+import { Logger } from '../../../core/logger';
 
 interface FiscalHistoryProps {
     restaurantId: string;

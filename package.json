@@ -18,6 +18,7 @@
     "test:massive": "WORLD_FULL=true jest tests/massive --runInBand --testTimeout=300000",
     "test:pilot": "jest tests/massive --runInBand --testTimeout=60000",
     "test:stress": "WORLD_STRESS=true jest tests/massive --runInBand --testTimeout=600000",
+    "truth:scan": "tsx scripts/truth-scan.ts",
     "audit:writes": "npx ts-node scripts/audit-writes.ts",
     "audit:supreme": "npm run test:massive && npm run audit:writes",
     "audit:report": "WORLD_FULL=true jest tests/massive/global.end_to_end.audit.test.ts --runInBand --testTimeout=300000",
@@ -74,23 +75,29 @@
   "description": "CHEFIAPP POS Core - Event-sourced financial core with legal immutability",
   "dependencies": {
     "@types/pg": "^8.16.0",
+    "chalk": "^5.6.2",
     "dotenv": "^17.2.3",
     "node-fetch": "^3.3.2",
     "pg": "^8.16.3",
     "stripe": "^20.1.0",
     "uuid": "^13.0.0",
+    "yaml": "^2.8.2",
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.3.1",
+    "@commitlint/config-conventional": "^20.3.1",
     "@playwright/test": "^1.49.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.0",
     "@types/uuid": "^10.0.0",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.2.0",
     "jsdom": "^27.4.0",
+    "lint-staged": "^16.2.7",
     "ts-jest": "^29.1.2",
     "typescript": "^5.3.3"
   }

@@ -24,7 +24,8 @@ describe('Hardening P0: Persistence Logic', () => {
             stream_version: 5,
             type: 'OrderCreated',
             payload: {},
-            occurred_at: new Date()
+            occurred_at: new Date(),
+            meta: { idempotency_key: 'test-key-123' }
         } as any;
 
         it('SHOULD allow append if version matches expectation', async () => {

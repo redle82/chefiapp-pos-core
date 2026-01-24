@@ -4,7 +4,7 @@
  * Serviço para criptografia pós-quântica
  */
 
-import { Logger } from '../logger/Logger';
+import { Logger } from '../logger';
 
 export interface QuantumSafeKey {
     id: string;

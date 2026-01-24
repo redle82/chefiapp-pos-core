@@ -10,8 +10,12 @@ export const OrderProcessingService = {
      * Accepts a Public Request and converts it into a Sovereign Order.
      * This is a Transactional Operation.
      */
-    async acceptRequest(requestId: string, restaurantId: string): Promise<string> {
+    async acceptRequest(requestId: string, restaurantId: string, kernel: any): Promise<string> {
         console.log('[OrderProcessing] Accepting Request:', requestId);
+
+        if (!kernel) {
+            throw new Error('Sovereignty Violation: Kernel required for Order Processing.');
+        }
 
         // 1. Fetch Request with Items
         const { data: request, error: fetchError } = await supabase
@@ -23,68 +27,61 @@ export const OrderProcessingService = {
         if (fetchError || !request) throw new Error('Solicitação não encontrada.');
         if (request.status !== 'PENDING') throw new Error('Solicitação já processada.');
 
-        // 2. Create Order (Using RPC would be safer for atomicity, but client-side transaction for MVP)
-        // We map the request payload to the internal Order structure.
+        // 2. Sovereign Creation (Kernel RPC)
+        const orderId = crypto.randomUUID();
+        const items = (request.items as any[]) || [];
 
-        // A. Create Order Header
-        const { data: newOrder, error: orderError } = await supabase
-            .from('gm_orders')
-            .insert({
-                restaurant_id: restaurantId,
-                status: 'new', // Default initial status
-                total_cents: request.total_cents,
-                customer_name: request.customer_contact?.name || 'Cliente Web',
-                origin: 'WEB_PUBLIC'
-                // table_id is null for web orders usually, or could be mapped if QR Code provided context
-            })
-            .select()
-            .single();
+        // Map items to Sovereign Input
+        const sovereignItems = items.map((item) => ({
+            productId: item.product_id,
+            name: item.name || 'Item Web',
+            quantity: item.quantity,
+            priceCents: item.price_cents || 0,
+            notes: item.notes,
+            projectId: item.project_id
+        }));
 
-        if (orderError) throw orderError;
+        await kernel.execute({
+            entity: 'ORDER',
+            entityId: orderId,
+            event: 'CREATE',
+            restaurantId,
+            payload: {
+                // Standard Kernel Payload
+                entityId: orderId,
+                restaurantId,
+                tableId: null, // Web Order
+                items: sovereignItems,
+                paymentMethod: 'online_pending',
+                totalCents: request.total_cents, // Added explicit total for Kernel to handle if needed
+                syncMetadata: {
+                    origin: 'WEB_PUBLIC',
+                    request_id: requestId,
+                    customer_name: request.customer_contact?.name || 'Cliente Web'
+                }
+            }
+        });
 
-        try {
-            // B. Create Order Items
-            const items = request.items as any[];
-            const orderItems = items.map((item) => ({
-                order_id: newOrder.id,
-                product_id: item.product_id,
-                quantity: item.quantity,
-                price_snapshot: item.price_cents || 0, // MAP TO price_snapshot
-                name_snapshot: item.name || 'Item', // MAP TO name_snapshot (Request items usually have name/price denormalized?)
-                subtotal_cents: (item.price_cents || 0) * (item.quantity || 1), // CALCULATE subtotal
-                notes: item.notes,
-                // status: 'pending' // gm_order_items missing status column? Check schema.
-            }));
+        // 3. Decorate Order - REMOVED (Sovereign PURE Mode)
+        // Kernel payload must be sufficient. Gate cannot write to gm_orders.
 
-            const { error: itemsError } = await supabase
-                .from('gm_order_items')
-                .insert(orderItems);
+        // 4. Update Request Status (Link to Order) - Using Gate for Compliance
+        const { error: updateError } = await DbWriteGate.update(
+            'OrderProcessingService',
+            'gm_order_requests',
+            {
+                status: 'ACCEPTED',
+                sovereign_order_id: orderId,
+                updated_at: new Date().toISOString()
+            },
+            { id: requestId },
+            { tenantId: restaurantId }
+        );
 
-            if (itemsError) throw itemsError;
+        if (updateError) throw updateError;
 
-            // C. Update Request Status (Link to Order)
-            const { error: updateError } = await supabase
-                .from('gm_order_requests')
-                .update({
-                    status: 'ACCEPTED',
-                    sovereign_order_id: newOrder.id,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', requestId);
-
-            if (updateError) throw updateError;
-
-            console.log('[OrderProcessing] Request Converted to Order:', newOrder.id);
-            return newOrder.id;
-
-        } catch (err) {
-            // Rollback attempted (manual) - or just leave it broken?
-            // In MVP, if item creation fails, we have an empty order.
-            // We should probably delete the order if items fail.
-            console.error('[OrderProcessing] Transaction Failed. Rolling back order...');
-            await supabase.from('gm_orders').delete().eq('id', newOrder.id);
-            throw err;
-        }
+        console.log('[OrderProcessing] Request Converted to Sovereign Order:', orderId);
+        return orderId;
     },
 
     /**
@@ -93,13 +90,21 @@ export const OrderProcessingService = {
     async rejectRequest(requestId: string): Promise<void> {
         console.log('[OrderProcessing] Rejecting Request:', requestId);
 
-        const { error } = await supabase
-            .from('gm_order_requests')
-            .update({
+        // Dynamic Import since this is a static object method
+        const { DbWriteGate } = await import('../governance/DbWriteGate');
+
+        const { error } = await DbWriteGate.update(
+            'OrderProcessingService',
+            'gm_order_requests',
+            {
                 status: 'REJECTED',
                 updated_at: new Date().toISOString()
-            })
-            .eq('id', requestId);
+            },
+            { id: requestId },
+            { tenantId: 'unknown' } // We might not have tenantId here easily? 
+            // Usually we do, but if not, Gate accepts 'unknown' for logs, or we fetch it.
+            // Request usually has tenant_id column. But Gate doesn't fetch, it just logs.
+        );
 
         if (error) throw error;
     }

@@ -38,7 +38,7 @@ export function CartDrawer() {
             const payload = {
                 tableId: tableIdFromUrl || null, // null = balcão/delivery
                 items: items.map(i => ({
-                    productId: i.productId,
+                    menu_item_id: i.productId,
                     qty: i.qty,
                     notes: i.notes
                 }))
@@ -47,7 +47,7 @@ export function CartDrawer() {
             console.log('Submitting Order:', payload);
 
             // POST para API de pedidos
-            const response = await fetch(`${apiBase}/public/${profile?.slug}/order`, {
+            const response = await fetch(`${apiBase}/public/${profile?.slug}/orders`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
@@ -66,9 +66,10 @@ export function CartDrawer() {
                 setOrderSuccess(false);
             }, 2000);
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Order failed', error);
-            alert(error.message || 'Erro ao enviar pedido. Tente novamente.');
+            const message = error instanceof Error ? error.message : 'Erro ao enviar pedido. Tente novamente.';
+            alert(message);
         } finally {
             setIsSubmitting(false);
         }

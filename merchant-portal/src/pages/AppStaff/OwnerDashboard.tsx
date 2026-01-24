@@ -9,6 +9,11 @@ import { colors } from '../../ui/design-system/tokens/colors';
 import { useRestaurantIdentity } from '../../core/identity/useRestaurantIdentity';
 import { DashboardService, type DailyMetrics } from '../../core/services/DashboardService';
 import { useOrders } from '../TPV/context/OrderContext';
+import { SystemHealthCard } from '../../components/Dashboard/SystemHealthCard';
+import { ProfitabilityWidget } from '../../components/Dashboard/ProfitabilityWidget';
+import { LowStockWidget } from '../../components/Dashboard/LowStockWidget';
+import { ShiftForecastWidget } from '../../components/Dashboard/ShiftForecastWidget';
+import { StaffPerformanceWidget } from './components/StaffPerformanceWidget';
 
 export const OwnerDashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -28,21 +33,21 @@ export const OwnerDashboard: React.FC = () => {
 
     // Fetch Metrics
     useEffect(() => {
-        if (identity.restaurantId) {
-            DashboardService.getDailyMetrics(identity.restaurantId)
+        if (identity.id) {
+            DashboardService.getDailyMetrics(identity.id)
                 .then(setMetrics)
                 .catch(err => console.error(err))
                 .finally(() => setLoadingMetrics(false));
 
             // Refresh every 30 seconds
             const interval = setInterval(() => {
-                DashboardService.getDailyMetrics(identity.restaurantId!)
+                DashboardService.getDailyMetrics(identity.id!)
                     .then(setMetrics)
                     .catch(console.error);
             }, 30000);
             return () => clearInterval(interval);
         }
-    }, [identity.restaurantId]);
+    }, [identity.id]);
 
     const activeOrdersCount = React.useMemo(() => {
         if (!orders) return 0;
@@ -87,29 +92,29 @@ export const OwnerDashboard: React.FC = () => {
                     )}
                     <div>
                         <Text size="xs" color="tertiary" style={{ textTransform: 'uppercase' }}>{identity.city || 'Operação Local'}</Text>
-                        <Text size="2xl" weight="black" color="primary">{identity.name || 'ChefIApp'}</Text>
+                        <Text size="2xl" weight="black" color="action">{identity.name || 'ChefIApp'}</Text>
                         <Text size="sm" color="secondary">{currentTime.toLocaleTimeString()}</Text>
                     </div>
                 </div>
 
-                {/* METRICS GRID */}
+                {/* SYSTEM HEALTH PULSE */}
+                {identity.id && <SystemHealthCard restaurantId={identity.id} />}
+
+                {/* PROFITABILITY ENGINE (Phase 2) */}
+                <ProfitabilityWidget metrics={metrics} loading={loadingMetrics} />
+
+                {/* STAFF PERFORMANCE - PHASE 4 */}
+                {identity.id && <StaffPerformanceWidget restaurantId={identity.id} />}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-                    {/* FORECAST (Phase D) */}
-                    {/* Temporarily using mock data for forecast until StaffContext is available in Dashboard */}
-                    {/* In a real scenario, OwnerDashboard should consume StaffContext or a dedicated IntelligenceContext */}
-                    {/* Integrating ShiftForecastWidget requires StaffContext usage or passing props */}
-                    {/* Since OwnerDashboard is not child of StaffProvider in all routes, we might need to rely on DashboardService or mock for now */}
-                    {/* BUT wait, StaffLayout implies some staff context. Let's see... */}
-                    {/* The correct way is to fetch forecast from StaffContext if available, or just render it if we are inside the provider. */}
-                    {/* Assuming OwnerDashboard IS inside StaffProvider based on previous edits.*/}
-                    {/* Actually, StaffProvider wraps AppStaff/* routes? Let's assume yes. */}
+                    {/* INVENTORY RADAR (Phase 3) */}
+                    {identity.id && <LowStockWidget restaurantId={identity.id} />}
 
                     {/* HUMAN PULSE (Phase B) */}
                     <Card surface="layer1" padding="lg">
                         <Text size="xs" weight="bold" color="secondary" style={{ textTransform: 'uppercase' }}>Pulso da Equipe</Text>
                         <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
                             <div style={{ width: 16, height: 16, borderRadius: '50%', backgroundColor: colors.success.base }} />
-                            <Text size="xl" weight="bold" color="primary">Estável</Text>
+                            <Text size="xl" weight="bold" color="action">Estável</Text>
                         </div>
                         <Text size="sm" color="tertiary" style={{ marginTop: 4 }}>
                             Carga Média: 0.5 (Saudável)
@@ -131,7 +136,7 @@ export const OwnerDashboard: React.FC = () => {
                     <Card surface="layer1" padding="lg">
                         <Text size="xs" weight="bold" color="secondary" style={{ textTransform: 'uppercase' }}>Pedidos Ativos</Text>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
-                            <Text size="3xl" weight="bold" color="primary">{activeOrdersCount}</Text>
+                            <Text size="3xl" weight="bold" color="action">{activeOrdersCount}</Text>
                             {activeOrdersCount > 5 && <Badge status="warning" label="ALTO VOLUME" size="sm" />}
                         </div>
                     </Card>
@@ -139,41 +144,19 @@ export const OwnerDashboard: React.FC = () => {
                     {/* TICKET MEDIO */}
                     <Card surface="layer1" padding="lg">
                         <Text size="xs" weight="bold" color="secondary" style={{ textTransform: 'uppercase' }}>Ticket Médio</Text>
-                        <Text size="3xl" weight="bold" color="neutral" style={{ marginTop: 8 }}>
+                        <Text size="3xl" weight="bold" color="action" style={{ marginTop: 8 }}>
                             {formatCurrency(metrics?.avgTicketCents || 0)}
                         </Text>
                     </Card>
                 </div>
 
-                {/* CHART PLACEHOLDER (Future Iteration: Recharts or Similar) */}
-                <Card surface="layer1" padding="lg">
-                    <Text size="xs" weight="bold" color="secondary" style={{ textTransform: 'uppercase', marginBottom: 16 }}>Vendas por Hora</Text>
-                    <div style={{ height: 150, display: 'flex', alignItems: 'flex-end', gap: 4, opacity: 0.8 }}>
-                        {metrics?.salesByHour.map((h) => {
-                            // Simple Bar Chart
-                            const max = Math.max(...(metrics?.salesByHour.map(x => x.totalCents) || [1]));
-                            const heightPct = (h.totalCents / max) * 100;
-
-                            return (
-                                <div key={h.hour} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                                    <div style={{
-                                        width: '80%',
-                                        height: `${heightPct}%`,
-                                        backgroundColor: colors.primary.base,
-                                        borderRadius: 4,
-                                        minHeight: 4
-                                    }} />
-                                    <Text size="xs" color="tertiary">{h.hour}h</Text>
-                                </div>
-                            )
-                        })}
-                        {(!metrics?.salesByHour || metrics.salesByHour.length === 0) && (
-                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Text size="sm" color="tertiary">Sem dados de vendas hoje.</Text>
-                            </div>
-                        )}
-                    </div>
-                </Card>
+                {/* FORECASTER (Phase 4) */}
+                {identity.id && (
+                    <ShiftForecastWidget
+                        restaurantId={identity.id}
+                        actualHourlySales={metrics?.salesByHour || []}
+                    />
+                )}
 
                 {/* QUICK LINKS */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>

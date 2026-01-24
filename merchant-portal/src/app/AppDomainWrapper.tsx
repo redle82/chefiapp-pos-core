@@ -1,13 +1,35 @@
-import { ReactNode, useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { OrderProvider } from '../pages/TPV/context/OrderContextReal';
 import { TableProvider } from '../pages/TPV/context/TableContext';
 import { useTenant } from '../core/tenant/TenantContext';
 import { LoadingState } from '../ui/design-system/components/LoadingState';
 import { hasActiveOperationalState, getOperationalStateBlockReason } from '../core/gate/OperationalStateGuard';
-import { Logger } from '../core/logger/Logger';
+import { Logger } from '../core/logger';
+import { KernelProvider } from '../core/kernel/KernelContext';
+import { OfflineOrderProvider } from '../pages/TPV/context/OfflineOrderContext';
+import { ContextEngineProvider } from '../core/context';
+import { FiscalQueue } from '../core/fiscal/FiscalQueueWorker';
 
 interface Props {
     children: ReactNode;
+}
+
+class ErrorBoundary extends React.Component<{ children: ReactNode }, { hasError: boolean, error: any }> {
+    constructor(props: any) { super(props); this.state = { hasError: false, error: null }; }
+    static getDerivedStateFromError(error: any) { return { hasError: true, error }; }
+    componentDidCatch(error: any, errorInfo: any) { console.error("Uncaught error:", error, errorInfo); }
+    render() {
+        if (this.state.hasError) {
+            return <div style={{ padding: 20, color: 'red', background: 'white', zIndex: 9999, position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', overflow: 'auto' }}>
+                <h1>💥 Critical Render Error</h1>
+                <pre style={{ whiteSpace: 'pre-wrap' }}>{this.state.error?.toString()}</pre>
+                <pre style={{ fontSize: 12 }}>{this.state.error?.stack}</pre>
+            </div>;
+        }
+        return this.props.children;
+    }
 }
 
 /**
@@ -30,10 +52,73 @@ interface Props {
  *       - TableProvider (Domain - receives tenantId)
  */
 export function AppDomainWrapper({ children }: Props) {
-    const { tenantId, isLoading } = useTenant();
+    const { tenantId, isLoading, memberships, restaurant } = useTenant();
+    const location = useLocation();
+
+    // Start Fiscal Worker Lifecycle
+    useEffect(() => {
+        FiscalQueue.start();
+        return () => FiscalQueue.stop();
+    }, []);
+
+    // Extract Role for Context Engine
+    const currentMembership = memberships.find(m => m.restaurant_id === tenantId);
+
+    // Extract Infrastructure (hasTPV) from Topology
+    // Default to TRUE (Satellite Mode) if undefined for legacy compatibility.
+    // Explicit false in topology triggers Standalone Mode.
+    const hasTPV = restaurant?.topology?.hasTPV !== false;
+
+    const navigate = useNavigate();
     const previousTenantRef = useRef<string | null>(null);
     const [tenantSwitchBlocked, setTenantSwitchBlocked] = useState(false);
-    const [blockReason, setBlockReason] = useState<string | null>(null);
+    const [_blockReason, setBlockReason] = useState<string | null>(null);
+
+    // =========================================================================
+    // FAIL-CLOSED: If Gate did not seal tenantId, force user back to Tenant Gate.
+    // Prevents "Contexto operacional não disponível" limbo + stops mount/unmount loops.
+    // DEV_STABLE_MODE: Não redirecionar se já estiver em /app/select-tenant (é o estado esperado).
+    // =========================================================================
+    useEffect(() => {
+        if (isLoading) return;
+
+        // Exempt routes that don't require tenant
+        const exemptRoutes = [
+            '/app/select-tenant',
+            '/app/access-denied',
+            '/app/paused',
+            '/app/suspended',
+            '/app/operation-status'
+        ];
+
+        if (exemptRoutes.some(route => location.pathname.startsWith(route))) {
+            return;
+        }
+
+        // DEV BYPASS: Allow TPV/KDS/Waiter routes without tenant for UI testing
+        if (import.meta.env.DEV && (location.pathname.includes('/tpv') || location.pathname.includes('/kds') || location.pathname.includes('/waiter'))) {
+            console.warn('[AppDomainWrapper] 🚧 DEV BYPASS: Allowing TPV/KDS without tenantId');
+            return;
+        }
+
+        if (!tenantId && location.pathname.startsWith('/app/')) {
+            // Only redirect if not already on select-tenant (prevent redirect loops)
+            if (location.pathname !== '/app/select-tenant') {
+                // Save the original route so we can return to it after tenant selection
+                try {
+                    sessionStorage.setItem('chefiapp_return_to', location.pathname);
+                    console.log('[AppDomainWrapper] Saved return route before redirect:', location.pathname);
+                } catch (e) {
+                    // Ignore storage errors
+                }
+                console.warn('[AppDomainWrapper] No tenantId - redirecting to /app/select-tenant', {
+                    path: location.pathname,
+                });
+                // Use navigate instead of window.location.assign to preserve sessionStorage
+                navigate('/app/select-tenant', { replace: true });
+            }
+        }
+    }, [tenantId, isLoading, location.pathname]);
 
     // =========================================================================
     // P0.2 GUARD: Block tenant switch with active operational state
@@ -119,7 +204,28 @@ export function AppDomainWrapper({ children }: Props) {
     }
 
     // GATE ENFORCEMENT: Wait for tenant to be resolved
-    if (isLoading) {
+    // DEV_STABLE_MODE: Não mostrar loading na tela de seleção de tenant
+    // A tela de seleção é justamente o mecanismo para obter tenantId
+    const exemptRoutes = [
+        '/app/select-tenant',
+        '/app/access-denied',
+        '/app/paused',
+        '/app/suspended',
+        '/app/operation-status'
+    ];
+    const isExemptRoute = exemptRoutes.some(route => location.pathname.startsWith(route));
+
+    // DEV BYPASS: Skip loading state for TPV/KDS/Waiter routes AND Demo Mode
+    const params = new URLSearchParams(location.search);
+    const isDemo = params.get('demo') === 'true';
+    const isDevTPVBypass = import.meta.env.DEV && (
+        location.pathname.includes('/tpv') ||
+        location.pathname.includes('/kds') ||
+        location.pathname.includes('/waiter') ||
+        isDemo
+    );
+
+    if (isLoading && !isExemptRoute && !isDevTPVBypass) {
         return (
             <div style={{
                 height: '100vh',
@@ -137,10 +243,52 @@ export function AppDomainWrapper({ children }: Props) {
         );
     }
 
+    /**
+     * 🔒 GATE EXEMPTION (Select Tenant)
+     * A tela de seleção é justamente o mecanismo para obter tenantId.
+     * Portanto, ela precisa renderizar mesmo quando tenantId ainda é null.
+     * DEV_STABLE_MODE: Esta é a única entrada permitida quando não há tenant selado.
+     */
+    if (location.pathname.startsWith('/app/select-tenant') || location.pathname.startsWith('/app/access-denied')) {
+        return <>{children}</>;
+    }
+
     // GATE ENFORCEMENT: No tenant = no domain access
+    // DEV_STABLE_MODE: Não logar erro se estiver em rotas que não requerem tenant
     if (!tenantId) {
+        // DEV BYPASS: Allow TPV/KDS/Waiter routes with mock tenantId for UI testing
+        if (import.meta.env.DEV && (
+            location.pathname.includes('/tpv') ||
+            location.pathname.includes('/kds') ||
+            location.pathname.includes('/waiter') ||
+            isDemo
+        )) {
+            console.warn('[AppDomainWrapper] 🚧 DEV BYPASS: Rendering TPV/KDS/Waiter with mock tenantId');
+            const DEV_TENANT_ID = import.meta.env.VITE_DEV_DEFAULT_TENANT || '6d676ae5-2375-42d2-8db3-e4e80ddb1b76';
+            // Render with mock tenantId
+            return (
+                <ErrorBoundary>
+                    <ContextEngineProvider
+                        userRole={'waiter'} // Lowercase
+                        hasTPV={true}
+                    >
+                        <KernelProvider tenantId={DEV_TENANT_ID}>
+                            <OfflineOrderProvider>
+                                <OrderProvider restaurantId={DEV_TENANT_ID}>
+                                    <TableProvider restaurantId={DEV_TENANT_ID}>
+                                        {children}
+                                    </TableProvider>
+                                </OrderProvider>
+                            </OfflineOrderProvider>
+                        </KernelProvider>
+                    </ContextEngineProvider>
+                </ErrorBoundary>
+            );
+        }
+
         // This should not happen if FlowGate is working correctly
-        console.error('[AppDomainWrapper] No tenantId available - Gate may have failed');
+        // No-tenant warning is logged via useEffect above to comply with React 19
+
         return (
             <div style={{
                 height: '100vh',
@@ -160,12 +308,23 @@ export function AppDomainWrapper({ children }: Props) {
         );
     }
 
+
+
     // SOVEREIGN INJECTION: Pass tenantId to Domain providers
     return (
-        <OrderProvider restaurantId={tenantId}>
-            <TableProvider restaurantId={tenantId}>
-                {children}
-            </TableProvider>
-        </OrderProvider>
+        <ContextEngineProvider
+            userRole={currentMembership?.role?.toLowerCase() as any || 'waiter'} // Map to lowercase UserRole
+            hasTPV={hasTPV}
+        >
+            <KernelProvider tenantId={tenantId}>
+                <OfflineOrderProvider>
+                    <OrderProvider restaurantId={tenantId}>
+                        <TableProvider restaurantId={tenantId}>
+                            {children}
+                        </TableProvider>
+                    </OrderProvider>
+                </OfflineOrderProvider>
+            </KernelProvider>
+        </ContextEngineProvider>
     );
 }
