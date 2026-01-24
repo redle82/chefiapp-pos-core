@@ -689,3 +689,26 @@ simulate-24h-giant:
 		node simulators/simulate-24h.js
 	@pkill -f "print-emulator.js" 2>/dev/null || true
 	@pkill -f "kds-kitchen.js" 2>/dev/null || true
+
+# ==============================================================================
+# FAIL-FAST MODE - Validação rápida durante refatorações
+# ==============================================================================
+
+# Simulação fail-fast (1h simulada, para no primeiro erro)
+simulate-failfast:
+	@echo ""
+	@echo "════════════════════════════════════════════════════════════════"
+	@echo "   MEGA OPERATIONAL SIMULATOR - FAIL-FAST MODE"
+	@echo "   Validação rápida: 1h simulada em ~1 min real"
+	@echo "   Para no primeiro erro de integridade"
+	@echo "════════════════════════════════════════════════════════════════"
+	@PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -c "\
+		DELETE FROM gm_kds_events; DELETE FROM gm_task_escalations; \
+		DELETE FROM gm_shift_blocks; DELETE FROM gm_offline_actions; \
+		DELETE FROM gm_order_items; DELETE FROM gm_print_jobs; \
+		DELETE FROM gm_events; DELETE FROM gm_tasks; DELETE FROM gm_orders;" > /dev/null 2>&1
+	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+		MODE=failfast DURATION_MINUTES=1 \
+		node simulators/simulate-failfast.js || (echo "\n❌ FAIL-FAST: Validação falhou" && exit 1)
+	@echo ""
+	@echo "✅ FAIL-FAST: Core intacto"
