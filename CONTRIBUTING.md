@@ -330,6 +330,114 @@ const { metrics, isLoading } = useRealtimeMetrics();
 
 ---
 
+## 🏛️ Core Development Workflow
+
+> **IMPORTANTE:** Mudanças no Core requerem validação obrigatória via simulador.
+
+### O Que é Considerado Core
+
+- `docker-tests/simulators/`
+- `docker-tests/task-engine/`
+- `merchant-portal/src/core/`
+- `mobile-app/context/` (OrderContext, AppStaffContext)
+- `mobile-app/services/` (NowEngine, PersistenceService)
+- `supabase/functions/`
+- `server/`
+- `CORE_MANIFESTO.md`
+
+### Workflow de Desenvolvimento do Core
+
+#### 1. Antes de Começar
+
+```bash
+# Ler o CORE_MANIFESTO.md
+# Verificar se a mudança viola algum princípio
+# Confirmar que o simulador pode exercitar a mudança
+```
+
+#### 2. Durante o Desenvolvimento
+
+```bash
+cd docker-tests
+
+# Validação rápida (1 min) - Use durante desenvolvimento
+make simulate-failfast
+
+# Se passar, continue
+# Se falhar, corrija antes de continuar
+```
+
+#### 3. Antes de Commit
+
+```bash
+cd docker-tests
+
+# Validação completa (5 min) - Obrigatório antes de commit
+make simulate-24h-small
+
+# Assertions de integridade
+make assertions
+
+# Se ambos passarem, pode commitar
+# Se falharem, NÃO commitar até corrigir
+```
+
+#### 4. Pull Request
+
+**Requisitos Obrigatórios:**
+
+- ✅ `make simulate-failfast` deve passar (validado automaticamente no CI)
+- ✅ `make simulate-24h-small` deve passar (validado automaticamente no CI para PRs em `main` ou `core/frozen-v1`)
+- ✅ `make assertions` deve passar (validado automaticamente no CI)
+- ✅ CORE_MANIFESTO.md não violado
+- ✅ Documentação atualizada (se necessário)
+
+**O CI/CD bloqueará o merge se qualquer validação falhar.**
+
+### Quando Usar Cada Validação
+
+| Situação | Validação | Tempo |
+|----------|-----------|-------|
+| Durante desenvolvimento | `make simulate-failfast` | ~1 min |
+| Antes de commit | `make simulate-24h-small` | ~5 min |
+| Antes de merge (main) | `make simulate-24h-small` + `make assertions` | ~5 min |
+| Validação completa | `make simulate-24h-large` ou `make simulate-24h-giant` | ~5-7 min |
+
+### Regras Absolutas
+
+1. **Nenhuma mudança no Core sem validação**
+   - Se o simulador não exercita, não é Core
+   - Código não testado = código morto
+
+2. **Nenhuma violação do CORE_MANIFESTO.md**
+   - Qualquer violação é regressão arquitetural
+   - Deve ser revertida imediatamente
+
+3. **Nenhuma lógica crítica fora do Core**
+   - Governança vive no Core
+   - Offline vive no Core
+   - SLA vive no Core
+
+4. **UI nunca governa**
+   - UI consome Core, não governa
+   - UI pode ser reescrita, Core permanece
+
+### Troubleshooting
+
+**Simulador falha:**
+1. Verificar `make assertions`
+2. Revisar mudanças recentes
+3. Consultar `docs/testing/MEGA_OPERATIONAL_SIMULATOR.md`
+4. Verificar logs do simulador
+
+**CI/CD falha:**
+1. Executar validações localmente
+2. Verificar se PostgreSQL está rodando (para CI local)
+3. Revisar mudanças que podem ter quebrado o Core
+4. Consultar `HANDOFF.md` para troubleshooting
+
+---
+
 ## 🔍 Code Review
 
 ### Checklist
@@ -338,6 +446,13 @@ const { metrics, isLoading } = useRealtimeMetrics();
 - [ ] Código funciona como esperado
 - [ ] Testes passando
 - [ ] Sem regressões
+
+**Core (se aplicável):**
+- [ ] `make simulate-failfast` passou
+- [ ] `make simulate-24h-small` passou (se PR em main/core/frozen-v1)
+- [ ] `make assertions` passou
+- [ ] CORE_MANIFESTO.md não violado
+- [ ] Simulador exercita a mudança
 
 **Código:**
 - [ ] Segue convenções
