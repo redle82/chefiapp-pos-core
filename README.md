@@ -24,6 +24,7 @@
 - **👔 Dono/Gerente** → Leia [`docs/audit/ONE_PAGER.md`](docs/audit/ONE_PAGER.md) (30 seg)
 - **👨‍💼 Garçom/Staff** → Leia [`docs/GUIA_RAPIDO_GARCOM.md`](docs/GUIA_RAPIDO_GARCOM.md) (10 min)
 - **👨‍💻 Desenvolvedor** → Leia [`ONBOARDING.md`](ONBOARDING.md) (15 min)
+- **🏛️ Desenvolvedor do Core** → Leia [`CORE_MANIFESTO.md`](CORE_MANIFESTO.md) (30 min) ⭐
 - **🔍 Validador/QA** → Leia [`docs/audit/HUMAN_TEST_QUICK_REFERENCE.md`](docs/audit/HUMAN_TEST_QUICK_REFERENCE.md) (5 min)
 
 ### O que há de novo (v1.2.0)
@@ -95,6 +96,17 @@ npm start
 - **[docs/RESUMO_EXECUTIVO.md](docs/RESUMO_EXECUTIVO.md)** - Resumo executivo
 - **[ONBOARDING.md](ONBOARDING.md)** - Para novos desenvolvedores
 
+### 🏛️ Core (Sistema Operacional)
+- **[CORE_MANIFESTO.md](CORE_MANIFESTO.md)** ⭐⭐ - Lei do sistema (leia primeiro)
+- **[START_HERE.md](START_HERE.md)** - Ponto de entrada do Core
+- **[ROADMAP.md](ROADMAP.md)** - Roadmap dos próximos níveis
+- **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - Resumo executivo do Core
+- **[docs/LEVEL_1_IMPLEMENTATION.md](docs/LEVEL_1_IMPLEMENTATION.md)** - Nível 1 implementado
+- **[docs/testing/MEGA_OPERATIONAL_SIMULATOR.md](docs/testing/MEGA_OPERATIONAL_SIMULATOR.md)** - Simulador completo
+- **[docs/testing/FAIL_FAST_MODE.md](docs/testing/FAIL_FAST_MODE.md)** - Validação rápida
+
+**Status do Core:** ✅ v1.0-core-sovereign (Validado, Protegido, Blindado)
+
 ### 🏗️ Técnica
 - [docs/EXECUCAO_30_DIAS.md](docs/EXECUCAO_30_DIAS.md) - Implementação detalhada
 - [docs/ARQUITETURA_VISUAL.md](docs/ARQUITETURA_VISUAL.md) - Diagramas e fluxos
@@ -133,6 +145,13 @@ npm start
 
 **Versão:** 1.2.0 (Production Ready)  
 **Data:** 2026-01-24
+
+### 🏛️ Core ✅
+- ✅ **Core v1.0-core-sovereign:** Limpo, Validado, Protegido, Blindado
+- ✅ **Manifesto Ratificado:** CORE_MANIFESTO.md
+- ✅ **Validação Automática:** CI/CD com fail-fast e simulação 24h
+- ✅ **Documentação:** 17 documentos completos
+- ✅ **Nível 1 Concluído:** Proteção e Automação implementada
 
 ### Sistema ✅
 - ✅ **Infraestrutura:** DB + Billing + Auth completos
