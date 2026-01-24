@@ -2,6 +2,9 @@
 
 **Guia para contribuir com o projeto**
 
+> ⚠️ **Antes de contribuir, leia o [`ENGINEERING_CONSTITUTION.md`](ENGINEERING_CONSTITUTION.md)**  
+> Este documento define as regras inegociáveis do projeto.
+
 ---
 
 ## 🎯 Como Contribuir
@@ -286,6 +289,47 @@ Outras opções
 
 ---
 
+## 📊 Observability
+
+### Logging
+
+```typescript
+// ✅ Usar Logger centralizado
+import { Logger } from '@/core/logger';
+
+Logger.info('Order created', { orderId, table });
+Logger.error('Payment failed', { orderId, error });
+
+// ❌ Evitar console.log em produção
+console.log('debug'); // Não fazer isso
+```
+
+### Erros
+
+```typescript
+// ✅ Capturar exceções com contexto
+try {
+  await processPayment(order);
+} catch (error) {
+  Logger.error('Payment error', { orderId: order.id, error });
+  throw error; // Re-throw se necessário
+}
+
+// ✅ ErrorBoundary em componentes React
+<ErrorBoundary fallback={<ErrorFallback />}>
+  <Component />
+</ErrorBoundary>
+```
+
+### Métricas
+
+```typescript
+// ✅ Usar hooks de métricas quando disponíveis
+const { metrics, isLoading } = useRealtimeMetrics();
+```
+
+---
+
 ## 🔍 Code Review
 
 ### Checklist
@@ -300,6 +344,11 @@ Outras opções
 - [ ] Bem documentado
 - [ ] Sem código morto
 - [ ] Performance OK
+
+**Observability:**
+- [ ] Erros capturados com contexto
+- [ ] Logs apropriados (info/warn/error)
+- [ ] Sem console.log em produção
 
 **Segurança:**
 - [ ] Inputs validados

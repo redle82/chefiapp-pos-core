@@ -4,6 +4,90 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ---
 
+## [1.2.0] - 2026-01-24
+
+### 🔧 Polimento Final
+
+#### Correções
+- **Banner de Pressão:** Adicionado debounce de 1s para evitar piscadas durante transições
+- **Cores de Urgência:** KDSTicket agora tem timer self-updating com intervalo dinâmico
+- **Animações:** Banner de pressão com fade in/out suave (300ms)
+
+#### Melhorias
+- `useKitchenPressure`: Debounce inteligente (imediato para aumento, 1s para redução)
+- `KDSTicket`: AppState awareness para recálculo ao voltar do background
+- Intervalos dinâmicos baseados em urgência (5s/15s/30s)
+
+### 📁 Arquivos Modificados
+- `mobile-app/hooks/useKitchenPressure.ts`
+- `mobile-app/components/KitchenPressureIndicator.tsx`
+- `mobile-app/components/KDSTicket.tsx`
+
+---
+
+## [1.1.0] - 2026-01-24
+
+### 🔧 Stability Fixes
+
+#### Correções
+- **Timer Background:** Timer agora recalcula imediatamente ao voltar do background
+- **Waitlist Persistence:** Auto-save robusto com debounce e save on background
+
+#### Melhorias
+- `OrderTimer`: AppState awareness para recálculo imediato
+- `OrderTimer`: Intervalo dinâmico (5s/15s/30s) baseado em urgência
+- `WaitlistBoard`: Save imediato em ações críticas (add, seat)
+- `WaitlistBoard`: Save com debounce 500ms em ações menores (cancel)
+- `WaitlistBoard`: Save automático ao ir para background
+- `WaitlistBoard`: Save no unmount do componente
+
+### 📁 Arquivos Modificados
+- `mobile-app/components/OrderTimer.tsx`
+- `mobile-app/components/WaitlistBoard.tsx`
+
+---
+
+## [1.0.1] - 2026-01-24
+
+### 🚀 Observability & Growth
+
+#### Observability (Sentry + Métricas)
+- **Sentry Integration:** Error tracking em merchant-portal, customer-portal, mobile-app
+- **ErrorBoundary:** Componentes de fallback com captura automática de erros
+- **Logger Centralizado:** Service de logging com integração Sentry
+- **Dashboard Métricas:** Widget de métricas operacionais em tempo real
+- **useRealtimeMetrics:** Hook para pedidos/hora, ticket médio, receita
+
+#### Growth & Marketing (SEO + Pixel)
+- **SEO Dinâmico:** Meta tags (title, description, Open Graph, Twitter Cards)
+- **Schema.org:** JSON-LD para Restaurant, Menu, BreadcrumbList
+- **Pixel Tracking:** Meta Pixel + Google Analytics integrados
+- **Eventos Rastreados:** pageView, viewItem, addToCart, initiateCheckout, purchase
+
+### 📁 Arquivos Criados
+- `merchant-portal/src/hooks/useRealtimeMetrics.ts`
+- `merchant-portal/src/components/Dashboard/OperationalMetricsWidget.tsx`
+- `customer-portal/src/lib/logger.ts`
+- `customer-portal/src/lib/seo.tsx`
+- `customer-portal/src/lib/schema.ts`
+- `customer-portal/src/lib/pixel.ts`
+- `customer-portal/src/components/ErrorBoundary.tsx`
+- `customer-portal/src/components/RestaurantSEO.tsx`
+- `docs/ops/OBSERVABILITY_SETUP.md`
+- `docs/ops/GROWTH_MARKETING_SETUP.md`
+
+### 📁 Arquivos Modificados
+- `merchant-portal/src/core/logger/Logger.ts`
+- `merchant-portal/src/ui/design-system/ErrorBoundary.tsx`
+- `merchant-portal/vite.config.ts`
+- `customer-portal/src/main.tsx`
+- `customer-portal/src/App.tsx`
+- `customer-portal/src/context/CartContext.tsx`
+- `customer-portal/vite.config.ts`
+- `customer-portal/index.html`
+
+---
+
 ## [1.0.0] - 2026-01-24
 
 ### 🎉 Lançamento: Sistema Nervoso Operacional

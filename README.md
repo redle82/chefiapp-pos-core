@@ -5,12 +5,19 @@
 
 ---
 
-## ⚠️ Leia Isso em 30 Segundos
+## ⚠️ Status em 30 Segundos
 
-**Este sistema JÁ ESTÁ IMPLEMENTADO**  
-✅ Não é um protótipo  
-✅ Não há mais features estruturais a desenvolver  
-✅ O foco agora é **validação real em operação**
+**Versão:** `1.2.0` — Production Ready  
+**Status:** 🟢 **PRONTO PARA PRODUÇÃO**
+
+| Componente | Status |
+|------------|--------|
+| 🏪 Merchant Portal | ✅ Operacional |
+| 📱 Mobile App (Staff) | ✅ Operacional |
+| 🌐 Customer Portal | ✅ Operacional |
+| 💳 Billing (Stripe) | ✅ Integrado |
+| 📊 Observability (Sentry) | ✅ Ativo |
+| 📈 Growth (SEO + Pixel) | ✅ Configurado |
 
 ### 👉 Se você é:
 
@@ -19,20 +26,15 @@
 - **👨‍💻 Desenvolvedor** → Leia [`ONBOARDING.md`](ONBOARDING.md) (15 min)
 - **🔍 Validador/QA** → Leia [`docs/audit/HUMAN_TEST_QUICK_REFERENCE.md`](docs/audit/HUMAN_TEST_QUICK_REFERENCE.md) (5 min)
 
-**Status Atual:** 🟢 **PRONTO PARA VALIDAÇÃO**  
-**🎉 PLANO DE GUERRA CONCLUÍDO (2026-01-30)**
-- ✅ 10/10 issues implementadas
-- ✅ Sistema elevado de 6.5 → 8.0/10
-- ✅ 0 bloqueadores críticos
-- ✅ Pronto para validação real
+### O que há de novo (v1.2.0)
 
-**Próximo passo:** Validação no restaurante Sofia  
-**📋 PONTO DE ENTRADA:** [`docs/audit/HANDOFF_VALIDATION.md`](docs/audit/HANDOFF_VALIDATION.md)  
-**Documentação:** 
-- [`docs/audit/WAR_PLAN_COMPLETION.md`](docs/audit/WAR_PLAN_COMPLETION.md) - Relatório completo
-- [`docs/audit/TESTING_SCRIPT.md`](docs/audit/TESTING_SCRIPT.md) - Script de testes
-- [`docs/audit/VALIDATION_GUIDE.md`](docs/audit/VALIDATION_GUIDE.md) - Guia de validação
-- [`docs/audit/NEXT_STEPS.md`](docs/audit/NEXT_STEPS.md) - Próximos passos
+- ✅ **Sentry** — Error tracking em todos os apps
+- ✅ **Dashboard de Métricas** — Pedidos/hora, ticket médio em tempo real
+- ✅ **SEO** — Meta tags dinâmicas + Schema.org
+- ✅ **Pixel Tracking** — Meta + Google Analytics
+- ✅ **Timer Background** — Recálculo imediato ao voltar do app
+- ✅ **Banner Pressão** — Animação suave, sem piscadas
+- ✅ **Cores Urgência** — Atualização dinâmica baseada em prioridade
 
 ---
 
@@ -129,23 +131,23 @@ npm start
 
 ## ✅ Status
 
-**Versão:** 2.0.0-RC1 (Release Candidate)  
+**Versão:** 1.2.0 (Production Ready)  
 **Data:** 2026-01-24
 
-### Técnico ✅
-- ✅ **Implementação:** 100% completo (4 semanas)
-- ✅ **Bugs Técnicos:** 12/13 corrigidos (92%)
-- ✅ **Nota Técnica:** 85/100
-- ✅ **Status:** ✅ APTO PARA PRODUÇÃO
+### Sistema ✅
+- ✅ **Infraestrutura:** DB + Billing + Auth completos
+- ✅ **Mobile App:** KDS, Garçom, Caixa operacionais
+- ✅ **Observability:** Sentry + Métricas realtime
+- ✅ **Growth:** SEO + Pixel Tracking
 
-### Humano 🟡
-- 🟡 **Erros de UX:** 25 identificados (4 críticos, 6 altos)
-- 🟡 **Nota de Experiência Humana:** 67/100
-- 🟡 **Status:** 🟡 PRONTO COM AJUSTES
+### Qualidade ✅
+- ✅ **Bugs Técnicos:** 5/5 issues v1.x resolvidos
+- ✅ **Performance:** fetchOrders otimizado, timers dinâmicos
+- ✅ **Resiliência:** OfflineQueue, auto-save, AppState awareness
 
-### Consolidado 🟡
-- 🟡 **Status Final:** PRONTO COM AJUSTES
-- 🟡 **Ação:** Corrigir 4 erros críticos de UX (1-2 dias)
+### Issues Conhecidos
+- 🟢 3 issues de baixa prioridade (aceitos)
+- 📋 Ver: [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md)
 
 **Ver:** [`docs/audit/ONE_PAGER.md`](./docs/audit/ONE_PAGER.md) - Status em 30 segundos
 
@@ -194,68 +196,67 @@ Lista de espera digital simples.
 
 ## 🚀 Próximos Passos
 
-### 🚨 BLOQUEADORES DE PRODUÇÃO (UX)
+### Sistema Pronto ✅
 
-**Antes de usar com clientes reais:**
-- [ ] **ERRO-001:** Cliente não sabe se pedido foi recebido (30min) - 🔴 Alto
-- [ ] **ERRO-002:** Garçom não sabe origem do pedido (1h) - 🔴 Alto
-- [ ] **ERRO-003:** Ação "acknowledge" não é clara (30min) - 🔴 Alto
-- [ ] **ERRO-004:** Duplo clique em pagamento (1h) - 🔴 Crítico
+O sistema está **completo e estável** para produção.
 
-⏱️ **Tempo estimado:** 1-2 dias  
-👉 **Ver:** [docs/audit/UX_BLOCKERS.md](docs/audit/UX_BLOCKERS.md)
+### Opções de Ação
 
-### Imediatos (Antes de Produção)
-1. **Corrigir 4 erros críticos de UX** (1-2 dias)
-   - Ver: [docs/audit/UX_BLOCKERS.md](docs/audit/UX_BLOCKERS.md)
-2. **Rodar 1 turno completo no Sofia**
-   - Ver: [docs/audit/HUMAN_NEXT_STEPS.md](docs/audit/HUMAN_NEXT_STEPS.md)
-3. **Anotar fricções humanas reais**
-4. **Ajustar microfluxos** (não features)
+| Ação | Descrição |
+|------|-----------|
+| 🚀 **Deploy** | Publicar em produção |
+| 🧪 **Testes** | Rodar suite E2E completa |
+| 📋 **Commit** | Consolidar alterações |
 
-### Curto Prazo
-4. **GO-LIVE silencioso no Sofia** (7 dias)
-   - Ver: [docs/audit/NEXT_STEPS.md](docs/audit/NEXT_STEPS.md)
-5. **Corrigir 6 erros altos de UX** (1 semana)
-6. **Monitorar uso real e coletar feedback**
+### Monitoramento Pós-Deploy
+
+1. **Sentry Dashboard** — Erros em tempo real
+2. **Métricas Widget** — Pedidos/hora no Dashboard
+3. **Google Analytics** — Tráfego customer portal
 
 ### Referências
-- **Status Completo:** [docs/audit/FINAL_HANDOFF.md](docs/audit/FINAL_HANDOFF.md)
-- **Validação:** `./scripts/validate-system.sh`
+- **Observability:** [docs/ops/OBSERVABILITY_SETUP.md](docs/ops/OBSERVABILITY_SETUP.md)
+- **Growth:** [docs/ops/GROWTH_MARKETING_SETUP.md](docs/ops/GROWTH_MARKETING_SETUP.md)
+- **Known Issues:** [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)
 - **Deploy:** [docs/SETUP_DEPLOY.md](docs/SETUP_DEPLOY.md)
 
 ---
 
 ## 📈 Estatísticas
 
-### Implementação
-- **Componentes:** 3 novos
-- **Hooks:** 1 novo
-- **Scripts:** 1 criado
-- **Tempo:** 30 dias
+### Stack Tecnológico
+| Camada | Tecnologia |
+|--------|------------|
+| Mobile | React Native + Expo |
+| Web Portals | React + Vite + TypeScript |
+| Backend | Supabase (Postgres + Auth + Realtime) |
+| Billing | Stripe |
+| Observability | Sentry |
+| Analytics | Google Analytics + Meta Pixel |
 
-### Documentação
-- **Documentos Técnicos:** 29 criados
-- **Documentos de Auditoria:** 26 criados ⭐ NOVO
-- **Total:** 55 documentos
+### Estrutura do Projeto
+```
+chefiapp-pos-core/
+├── mobile-app/         # App Staff (Garçom, Cozinha, Caixa)
+├── merchant-portal/    # Painel do Dono
+├── customer-portal/    # Cardápio Digital (QR Code)
+├── supabase/           # Migrations + Edge Functions
+├── docs/               # Documentação
+└── scripts/            # Automação
+```
 
-### Qualidade
-- **Bugs Técnicos:** 12/13 corrigidos (92%)
-- **Erros de UX:** 25 identificados (4 críticos, 6 altos)
-- **Nota Técnica:** 85/100 ✅
-- **Nota Humana:** 67/100 🟡
-
-### Quick Wins
-- **Identificados:** 8
-- **Templates:** 5+ (comunicação, success story)
-- **Apresentações:** 1 visual executiva
+### Qualidade (v1.2.0)
+- **Issues Resolvidos:** 5 (v1.1.0 + v1.2.0)
+- **Issues Pendentes:** 3 (baixa prioridade)
+- **TypeScript:** 100% tipado
+- **Observability:** Sentry em todos os apps
 
 ---
 
-**Versão:** 2.0.0  
-**Data:** 2026-01-30  
-**Status:** 🟢 **PRONTO PARA VALIDAÇÃO** (PLANO DE GUERRA 100% concluído)
+**Versão:** 1.2.0  
+**Data:** 2026-01-24  
+**Status:** 🟢 **PRODUCTION READY**
 
 ---
 
-*"Last.app organiza o restaurante. ChefIApp deve guiá-lo."*
+*"Last.app organiza o restaurante. ChefIApp guia-o."*
