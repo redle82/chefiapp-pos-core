@@ -16,26 +16,27 @@ Todos os problemas críticos foram resolvidos na v1.0.0.
 ### 1. Timer pode não atualizar em background
 **Descrição:** Timer do mapa vivo pode parar quando app está em background.
 
-**Workaround:**
-- Timer retoma automaticamente ao voltar ao foreground
-- Verificar `AppState` para pausar/retomar
+**Solução implementada (v1.1.0):**
+- ✅ AppState listener adicionado ao `OrderTimer.tsx`
+- ✅ Timer recalcula imediatamente ao voltar do background
+- ✅ Intervalo dinâmico baseado em urgência (5s/15s/30s)
 
-**Status:** Em investigação  
-**Prioridade:** Média  
-**ETA:** v1.1.0
+**Status:** ✅ Resolvido  
+**Versão:** v1.1.0
 
 ---
 
 ### 2. Waitlist pode perder dados em caso de crash
 **Descrição:** Se app crashar antes de salvar, dados podem ser perdidos.
 
-**Workaround:**
-- Dados são salvos automaticamente após cada mudança
-- Implementar auto-save mais frequente
+**Solução implementada (v1.1.0):**
+- ✅ Save imediato em ações críticas (add, seat)
+- ✅ Save com debounce (500ms) em ações menores (cancel)
+- ✅ Save automático ao ir para background (AppState)
+- ✅ Save no unmount do componente
 
-**Status:** Em desenvolvimento  
-**Prioridade:** Baixa  
-**ETA:** v1.1.0
+**Status:** ✅ Resolvido  
+**Versão:** v1.1.0
 
 ---
 
@@ -44,26 +45,31 @@ Todos os problemas críticos foram resolvidos na v1.0.0.
 ### 3. Banner de pressão pode piscar
 **Descrição:** Banner de pressão da cozinha pode piscar durante transições.
 
-**Workaround:**
-- Não afeta funcionalidade
-- Adicionar debounce na atualização
+**Solução implementada (v1.2.0):**
+- ✅ Debounce de 1s para mudanças de pressão decrescentes
+- ✅ Mudanças crescentes aplicadas imediatamente (segurança)
+- ✅ Animação de fade in/out suave (300ms)
+- ✅ Altura animada para evitar "pulo" no layout
 
-**Status:** Aceito  
-**Prioridade:** Baixa  
-**ETA:** v1.2.0
+**Status:** ✅ Resolvido  
+**Versão:** v1.2.0
 
 ---
 
 ### 4. Cores de urgência podem não atualizar imediatamente
 **Descrição:** Cores podem levar 1-2 segundos para atualizar.
 
-**Workaround:**
-- Timer atualiza a cada segundo
-- Considerar atualização mais frequente
+**Solução implementada (v1.2.0):**
+- ✅ Timer self-updating em cada KDSTicket
+- ✅ Intervalo dinâmico baseado em urgência:
+  - Fresh: 30s
+  - Warning: 15s
+  - Critical: 5s
+- ✅ AppState awareness para recálculo ao voltar do background
+- ✅ Cálculo memoizado para performance
 
-**Status:** Aceito  
-**Prioridade:** Baixa  
-**ETA:** v1.2.0
+**Status:** ✅ Resolvido  
+**Versão:** v1.2.0
 
 ---
 
@@ -141,29 +147,27 @@ const { pressure } = useKitchenPressure();
 
 ### Issues por Categoria
 - **Críticos:** 0
-- **Importantes:** 2
-- **Menores:** 2
-- **Mobile:** 2
-- **Backend:** 1
+- **Importantes:** 0 (2 resolvidos em v1.1.0)
+- **Menores:** 0 (2 resolvidos em v1.2.0)
+- **Mobile:** 2 (baixa prioridade)
+- **Backend:** 1 (aceito)
 
 ### Resolução
-- **Resolvidos:** 1
-- **Em desenvolvimento:** 1
-- **Em investigação:** 1
-- **Aceitos:** 3
+- **Resolvidos:** 5
+- **Aceitos:** 2
 - **Em monitoramento:** 1
 
 ---
 
 ## 🚀 Roadmap de Correções
 
-### v1.1.0
-- [ ] Timer em background
-- [ ] Auto-save waitlist mais frequente
+### v1.1.0 ✅
+- [x] Timer em background (AppState awareness)
+- [x] Auto-save waitlist mais frequente (debounce + immediate)
 
-### v1.2.0
-- [ ] Debounce no banner
-- [ ] Atualização mais frequente de cores
+### v1.2.0 ✅
+- [x] Debounce no banner de pressão (1s + animação fade)
+- [x] Atualização mais frequente de cores (self-updating KDSTicket)
 
 ---
 
@@ -209,5 +213,5 @@ Logs relevantes
 
 ---
 
-**Versão:** 1.0.0  
+**Versão:** 1.2.0  
 **Última atualização:** 2026-01-24

@@ -7,7 +7,7 @@
  * - Sem CRM, SMS ou overengineering
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     View,
     Text,
@@ -17,6 +17,8 @@ import {
     TextInput,
     Modal,
     Alert,
+    AppState,
+    AppStateStatus,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { HapticFeedback } from '@/services/haptics';
@@ -42,33 +44,83 @@ export function WaitlistBoard({ visible, onClose, onAssignTable }: WaitlistBoard
     const [showAddModal, setShowAddModal] = useState(false);
     const [newName, setNewName] = useState('');
     const [newTime, setNewTime] = useState('');
+    
+    // Refs for debounced save
+    const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const entriesRef = useRef<WaitlistEntry[]>(entries);
+    const isLoadedRef = useRef(false);
 
-    // Carregar lista salva ao montar
+    // Keep ref in sync with state
     useEffect(() => {
-        if (visible) {
+        entriesRef.current = entries;
+    }, [entries]);
+
+    // Immediate save function (for critical actions)
+    const saveImmediately = useCallback(async (data: WaitlistEntry[]) => {
+        // Clear any pending debounced save
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+            saveTimeoutRef.current = null;
+        }
+        await PersistenceService.saveWaitlist(data);
+    }, []);
+
+    // Debounced save function (for non-critical changes)
+    const saveDebounced = useCallback((data: WaitlistEntry[]) => {
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+        saveTimeoutRef.current = setTimeout(async () => {
+            await PersistenceService.saveWaitlist(data);
+        }, 500); // 500ms debounce
+    }, []);
+
+    // Load waitlist on mount/visible
+    useEffect(() => {
+        if (visible && !isLoadedRef.current) {
             loadWaitlist();
         }
     }, [visible]);
 
-    // Salvar lista sempre que mudar
+    // Save on AppState change (going to background)
     useEffect(() => {
-        saveWaitlist();
-    }, [entries]);
+        const handleAppStateChange = (nextAppState: AppStateStatus) => {
+            if (nextAppState.match(/inactive|background/)) {
+                // App going to background - save immediately
+                saveImmediately(entriesRef.current);
+            }
+        };
+
+        const subscription = AppState.addEventListener('change', handleAppStateChange);
+        return () => subscription.remove();
+    }, [saveImmediately]);
+
+    // Cleanup on unmount - save final state
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+            // Save on unmount
+            PersistenceService.saveWaitlist(entriesRef.current);
+        };
+    }, []);
 
     const loadWaitlist = async () => {
-        const saved = await PersistenceService.loadWaitlist();
-        if (saved && Array.isArray(saved)) {
-            // Converter strings de data de volta para Date
-            const parsed = saved.map((e: any) => ({
-                ...e,
-                createdAt: new Date(e.createdAt),
-            }));
-            setEntries(parsed);
+        try {
+            const saved = await PersistenceService.loadWaitlist();
+            if (saved && Array.isArray(saved)) {
+                // Converter strings de data de volta para Date
+                const parsed = saved.map((e: any) => ({
+                    ...e,
+                    createdAt: new Date(e.createdAt),
+                }));
+                setEntries(parsed);
+            }
+            isLoadedRef.current = true;
+        } catch (error) {
+            console.error('[WaitlistBoard] Failed to load:', error);
         }
-    };
-
-    const saveWaitlist = async () => {
-        await PersistenceService.saveWaitlist(entries);
     };
 
     const handleAdd = () => {
@@ -85,9 +137,14 @@ export function WaitlistBoard({ visible, onClose, onAssignTable }: WaitlistBoard
             status: 'waiting',
         };
 
-        setEntries(prev => [...prev, entry].sort((a, b) => 
+        const newEntries = [...entries, entry].sort((a, b) => 
             a.time.localeCompare(b.time)
-        ));
+        );
+        setEntries(newEntries);
+        
+        // CRITICAL: Save immediately after adding
+        saveImmediately(newEntries);
+        
         setNewName('');
         setNewTime('');
         setShowAddModal(false);
@@ -104,7 +161,12 @@ export function WaitlistBoard({ visible, onClose, onAssignTable }: WaitlistBoard
                     text: `Mesa ${tableNum}`,
                     onPress: () => {
                         onAssignTable(entry.id, String(tableNum));
-                        setEntries(prev => prev.filter(e => e.id !== entry.id));
+                        const newEntries = entries.filter(e => e.id !== entry.id);
+                        setEntries(newEntries);
+                        
+                        // CRITICAL: Save immediately after seating
+                        saveImmediately(newEntries);
+                        
                         HapticFeedback.success();
                     }
                 }))
@@ -113,9 +175,14 @@ export function WaitlistBoard({ visible, onClose, onAssignTable }: WaitlistBoard
     };
 
     const handleCancel = (entryId: string) => {
-        setEntries(prev => prev.map(e => 
+        const newEntries = entries.map(e => 
             e.id === entryId ? { ...e, status: 'cancelled' as const } : e
-        ));
+        );
+        setEntries(newEntries);
+        
+        // Save with debounce (cancel is less critical)
+        saveDebounced(newEntries);
+        
         HapticFeedback.light();
     };
 

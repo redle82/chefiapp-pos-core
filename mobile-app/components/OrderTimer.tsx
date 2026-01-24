@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, Animated, AppState, AppStateStatus } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface OrderTimerProps {
@@ -40,20 +40,57 @@ const URGENCY_COLORS: Record<UrgencyLevel, string> = {
 export function OrderTimer({ createdAt, compact = false }: OrderTimerProps) {
     const [elapsed, setElapsed] = useState(0);
     const [pulseAnim] = useState(new Animated.Value(1));
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const appState = useRef(AppState.currentState);
 
-    useEffect(() => {
+    // Calculate elapsed time
+    const calculateElapsed = useCallback(() => {
         const startTime = typeof createdAt === 'string' ? new Date(createdAt).getTime() : createdAt.getTime();
-
-        // Initial calculation
-        setElapsed(Date.now() - startTime);
-
-        // Update every 30 seconds
-        const interval = setInterval(() => {
-            setElapsed(Date.now() - startTime);
-        }, 30000);
-
-        return () => clearInterval(interval);
+        return Date.now() - startTime;
     }, [createdAt]);
+
+    // Setup timer with AppState awareness
+    useEffect(() => {
+        // Initial calculation
+        setElapsed(calculateElapsed());
+
+        // Determine update interval based on urgency
+        const getInterval = () => {
+            const minutes = Math.floor(calculateElapsed() / 60000);
+            // Update more frequently when urgent
+            if (minutes >= 20) return 5000;  // Red: every 5s
+            if (minutes >= 10) return 15000; // Yellow: every 15s
+            return 30000; // Green: every 30s
+        };
+
+        // Start interval
+        const startTimer = () => {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+            intervalRef.current = setInterval(() => {
+                setElapsed(calculateElapsed());
+            }, getInterval());
+        };
+
+        startTimer();
+
+        // AppState listener - recalculate immediately when app comes to foreground
+        const handleAppStateChange = (nextAppState: AppStateStatus) => {
+            if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+                // App came to foreground - recalculate immediately
+                setElapsed(calculateElapsed());
+                // Restart timer with appropriate interval
+                startTimer();
+            }
+            appState.current = nextAppState;
+        };
+
+        const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+            subscription.remove();
+        };
+    }, [createdAt, calculateElapsed]);
 
     const minutes = Math.floor(elapsed / 60000);
     const urgency = getUrgencyLevel(minutes);

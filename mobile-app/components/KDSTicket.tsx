@@ -1,23 +1,76 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, AppState, AppStateStatus } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Order } from '@/context/OrderContext';
 
 interface TicketProps {
     order: Order;
-    now: Date;
+    now: Date; // Kept for backwards compatibility, but we use internal timer
     items: { count: number, name: string }[];
     onBump: (orderId: string, currentStatus: Order['status']) => void;
     station: 'kitchen' | 'bar';
 }
 
-export const KDSTicket: React.FC<TicketProps> = ({ order, now, items, onBump, station }) => {
+/**
+ * KDSTicket - v1.2.0
+ * 
+ * Self-updating timer for more responsive urgency colors.
+ * Uses internal interval that respects AppState.
+ */
+export const KDSTicket: React.FC<TicketProps> = ({ order, items, onBump, station }) => {
     // Local State for Strikethrough
     const [completedItems, setCompletedItems] = useState<Set<string>>(new Set());
     const [blinkAnim] = useState(new Animated.Value(1));
+    
+    // v1.2.0: Self-updating elapsed time for responsive urgency
+    const [elapsedMinutes, setElapsedMinutes] = useState(() => 
+        Math.floor((Date.now() - order.createdAt.getTime()) / 60000)
+    );
 
-    // 1. Calculate Urgency
-    const elapsedMinutes = Math.floor((now.getTime() - order.createdAt.getTime()) / 60000);
+    // Calculate elapsed and update urgency
+    const calculateElapsed = useCallback(() => {
+        return Math.floor((Date.now() - order.createdAt.getTime()) / 60000);
+    }, [order.createdAt]);
+
+    // Self-updating timer with AppState awareness
+    useEffect(() => {
+        setElapsedMinutes(calculateElapsed());
+
+        // Update interval based on urgency (more frequent when critical)
+        const getInterval = () => {
+            const mins = calculateElapsed();
+            if (mins >= 20) return 5000;   // Critical: every 5s
+            if (mins >= 10) return 15000;  // Warning: every 15s
+            return 30000;                   // Fresh: every 30s
+        };
+
+        let intervalId: ReturnType<typeof setInterval>;
+        
+        const startTimer = () => {
+            intervalId = setInterval(() => {
+                setElapsedMinutes(calculateElapsed());
+            }, getInterval());
+        };
+
+        startTimer();
+
+        // Handle app state changes
+        const handleAppStateChange = (nextAppState: AppStateStatus) => {
+            if (nextAppState === 'active') {
+                // Recalculate immediately when app comes to foreground
+                setElapsedMinutes(calculateElapsed());
+                clearInterval(intervalId);
+                startTimer();
+            }
+        };
+
+        const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+        return () => {
+            clearInterval(intervalId);
+            subscription.remove();
+        };
+    }, [calculateElapsed]);
 
     const urgency = useMemo(() => {
         if (elapsedMinutes < 10) return 'fresh';
