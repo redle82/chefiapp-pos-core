@@ -19,10 +19,66 @@ import { ManagerCalendarView } from '@/components/ManagerCalendarView';
 import { OwnerCalendarView } from '@/components/OwnerCalendarView';
 
 export default function ManagerScreen() {
-    const { orders } = useOrder();
-    const { roleConfig, createTask, allRoles, activeRole, canAccess } = useAppStaff();
+    // ============================================================
+    // HOOKS - SEMPRE NO TOPO (Rules of Hooks)
+    // ============================================================
     
-    // Bug #2 Fix: Guard - Verificar permissão
+    // Context hooks
+    const { orders } = useOrder();
+    const { 
+        roleConfig, 
+        createTask, 
+        allRoles, 
+        activeRole, 
+        canAccess,
+        shiftId,
+        endShift,
+        operationalContext 
+    } = useAppStaff();
+    
+    // Custom hooks
+    const { notices, postNotice, deleteNotice, fetchNotices: refreshNotices } = useNotices();
+    const { sendCommand, sentCommands } = useDirectCommand();
+    
+    // View State
+    const [viewMode, setViewMode] = useState<'ops' | 'analytics' | 'planning'>('ops');
+    
+    // Task Modal State
+    const [isTaskModalVisible, setIsTaskModalVisible] = useState(false);
+    const [taskTitle, setTaskTitle] = useState('');
+    const [taskRole, setTaskRole] = useState<StaffRole>('waiter');
+    const [taskPriority, setTaskPriority] = useState<'attention' | 'urgent'>('attention');
+    
+    // History State
+    const [isHistoryModalVisible, setIsHistoryModalVisible] = useState(false);
+    const [historyShifts, setHistoryShifts] = useState<any[]>([]);
+    
+    // Manager Modals
+    const [isMenuManagerOpen, setIsMenuManagerOpen] = useState(false);
+    const [isCashManagerOpen, setIsCashManagerOpen] = useState(false);
+    
+    // Product Form State
+    const [isProductModalVisible, setIsProductModalVisible] = useState(false);
+    const [prodName, setProdName] = useState('');
+    const [prodPrice, setProdPrice] = useState('');
+    const [prodCategory, setProdCategory] = useState<'food' | 'drink' | 'other'>('food');
+    
+    // Notice Board State
+    const [isNoticeModalVisible, setIsNoticeModalVisible] = useState(false);
+    const [noticeContent, setNoticeContent] = useState('');
+    const [noticeSeverity, setNoticeSeverity] = useState<'info' | 'attention' | 'critical'>('info');
+    
+    // Direct Command State
+    const [isCommandModalVisible, setIsCommandModalVisible] = useState(false);
+    const [commandTarget, setCommandTarget] = useState<StaffRole>('waiter');
+    const [commandContent, setCommandContent] = useState('');
+    const [activeStaffList, setActiveStaffList] = useState<any[]>([]);
+    const [targetId, setTargetId] = useState('');
+    
+    // ============================================================
+    // GUARDS - APÓS TODOS OS HOOKS
+    // ============================================================
+    
     if (!canAccess('business:view_reports') && activeRole !== 'owner' && activeRole !== 'manager') {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0a0a0a' }}>
@@ -32,13 +88,16 @@ export default function ManagerScreen() {
             </View>
         );
     }
-    const [viewMode, setViewMode] = useState<'ops' | 'analytics' | 'planning'>('ops');
-    const [isTaskModalVisible, setIsTaskModalVisible] = useState(false);
-
-    // Task Form State
-    const [taskTitle, setTaskTitle] = useState('');
-    const [taskRole, setTaskRole] = useState<StaffRole>('waiter');
-    const [taskPriority, setTaskPriority] = useState<'attention' | 'urgent'>('attention');
+    
+    // ============================================================
+    // COMPUTED VALUES
+    // ============================================================
+    
+    const sessionOrders = orders.filter(o => o.shiftId === shiftId);
+    
+    // ============================================================
+    // HANDLERS
+    // ============================================================
 
     const handleCreateTask = () => {
         if (!taskTitle.trim()) {
@@ -53,12 +112,8 @@ export default function ManagerScreen() {
         Alert.alert("Sucesso", "Tarefa criada e atribuída!");
     };
 
-    // History State
-    const [isHistoryModalVisible, setIsHistoryModalVisible] = useState(false);
-    const [historyShifts, setHistoryShifts] = useState<any[]>([]);
-
     const fetchHistory = async () => {
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('gm_shifts')
             .select('*')
             .order('started_at', { ascending: false })
@@ -69,16 +124,6 @@ export default function ManagerScreen() {
             setIsHistoryModalVisible(true);
         }
     };
-
-    // Modals
-    const [isMenuManagerOpen, setIsMenuManagerOpen] = useState(false);
-    const [isCashManagerOpen, setIsCashManagerOpen] = useState(false);
-
-    // Product Form State
-    const [isProductModalVisible, setIsProductModalVisible] = useState(false);
-    const [prodName, setProdName] = useState('');
-    const [prodPrice, setProdPrice] = useState('');
-    const [prodCategory, setProdCategory] = useState<'food' | 'drink' | 'other'>('food');
 
     const handleCreateProduct = async () => {
         if (!prodName || !prodPrice) {
@@ -95,14 +140,10 @@ export default function ManagerScreen() {
 
         const priceCents = Math.round(price * 100);
 
-        // Try to insert into gm_products
-        // Note: 'category' field might expect a UUID in the real Portal schema.
-        // For MVP/Demo alignment, we attempt to send the text. If it fails due to UUID constraint,
-        // we'd need to fetch categories first.
         const { error } = await supabase.from('gm_products').insert({
             name: prodName,
             price_cents: priceCents,
-            category: prodCategory, // 'food' | 'drink'
+            category: prodCategory,
             available: true,
             visibility: { tpv: true, mobile: true }
         });
@@ -118,12 +159,6 @@ export default function ManagerScreen() {
             Alert.alert("Sucesso", "Produto adicionado ao cardápio!");
         }
     };
-
-    // --- NOTICE BOARD (MURAL) ---
-    const { notices, postNotice, deleteNotice, fetchNotices: refreshNotices } = useNotices();
-    const [isNoticeModalVisible, setIsNoticeModalVisible] = useState(false);
-    const [noticeContent, setNoticeContent] = useState('');
-    const [noticeSeverity, setNoticeSeverity] = useState<'info' | 'attention' | 'critical'>('info');
 
     const handlePostNotice = async () => {
         if (!noticeContent.trim()) {
@@ -153,35 +188,8 @@ export default function ManagerScreen() {
         ]);
     };
 
-    // --- DIRECT COMMAND (THE RED PHONE) ---
-    const { sendCommand, sentCommands } = useDirectCommand();
-    const [isCommandModalVisible, setIsCommandModalVisible] = useState(false);
-    const [commandTarget, setCommandTarget] = useState<StaffRole>('waiter'); // Simple target by role for MVP, ideal is by User
-    const [commandContent, setCommandContent] = useState('');
-
-    // For MVP, we send to ALL waiters? No, that's broadcast.
-    // The requirement says "Select Staff".
-    // I need a list of active staff. `useAppStaff` generally knows about roles.
-    // Let's assume we select a ROLE and send to the first available or broadcast to role?
-    // "Direct Command" implies specific person.
-    // Since I don't have a "List of Active Users" easily accessible in this screen context without fetching,
-    // I will simplify for MVP: "Send to Role" (broadcasts to all in role) OR just simulate user selection.
-    // Let's check `useAppStaff`: accessing `allRoles` gives valid role keys.
-    // I'll stick to ROLE based targeting for this iteration, effectively "Radio to all Waiters".
-    // Wait, the hook `sendCommand` takes `receiverId`. I need real IDs.
-    // I'll fetch active staff list when opening the modal.
-
-    const [activeStaffList, setActiveStaffList] = useState<any[]>([]);
-
     const fetchActiveStaff = async () => {
-        // Fetch users associated with this restaurant
-        // In real app, `gm_staff` table.
-        // For Hackathon/MVP: I'll list "Mock Users" or query `auth.users` via RPC if allowed? Unlikely.
-        // I'll fallback to: "Input Receiver ID" for debug OOOOR 
-        // Send to myself for testing?
-        // Let's implement a quick "Select Receiver" using `gm_shifts` (active shifts).
-
-        const { operationalContext } = useAppStaff();
+        // Use operationalContext from hook (already extracted at top)
         const { data } = await supabase
             .from('gm_shifts')
             .select('user_id, active_role')
@@ -189,14 +197,10 @@ export default function ManagerScreen() {
             .eq('restaurant_id', operationalContext.businessId);
 
         if (data) {
-            // We might not have names, just IDs. 
-            // I'll display Role + ID short.
             setActiveStaffList(data);
             if (data.length > 0) setTargetId(data[0].user_id);
         }
     };
-
-    const [targetId, setTargetId] = useState('');
 
     const handleSendCommand = async () => {
         if (!commandContent.trim()) {
@@ -219,14 +223,10 @@ export default function ManagerScreen() {
         }
     };
 
-    // Filter orders for Current Shift
-    const { shiftId } = useAppStaff();
-    const sessionOrders = orders.filter(o => o.shiftId === shiftId);
-
-    // 1. Calculate Revenue (Total Value of all orders)
+    // Calculate Revenue (Total Value of all orders)
     const totalRevenue = sessionOrders.reduce((sum, order) => sum + order.total, 0);
 
-    // 5. Detailed Breakdown (Food vs Drink)
+    // Detailed Breakdown (Food vs Drink)
     const foodRevenue = sessionOrders.reduce((sum, order) => {
         const foodItems = order.items.filter(i => i.category === 'food' || i.category === 'other');
         return sum + foodItems.reduce((s, i) => s + i.price, 0);
@@ -237,10 +237,7 @@ export default function ManagerScreen() {
         return sum + drinkItems.reduce((s, i) => s + i.price, 0);
     }, 0);
 
-
-    // CLOSE SHIFT LOGIC (Z-REPORT)
-    const { endShift } = useAppStaff();
-
+    // Close Shift Handler (Z-Report)
     const handleCloseShift = () => {
         Alert.alert(
             "Fechar Turno (Relatório Z)",
