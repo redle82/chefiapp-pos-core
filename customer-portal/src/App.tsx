@@ -11,10 +11,12 @@ import { CartDrawer } from './components/CartDrawer';
 import { CartFloatingButton } from './components/CartFloatingButton';
 import { MenuList } from './components/MenuList';
 import { ProductModal } from './components/ProductModal';
+import { RestaurantSEO } from './components/RestaurantSEO';
 import { CartProvider } from './context/CartContext';
 import { MenuProvider, useMenu, type MenuItem } from './context/MenuContext';
 import { useSlugFromURL } from './hooks/useSlugFromURL';
 import { LoadingPage, NotFoundPage } from './pages/NotFoundPage';
+import { trackViewItem } from './lib/pixel';
 
 // --- Header ---
 function Header() {
@@ -33,9 +35,23 @@ function Header() {
 }
 
 // --- Main Layout (dentro do contexto do menu) ---
-function MainLayout() {
+function MainLayout({ slug }: { slug: string }) {
     const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null);
     const { isLoading, error } = useMenu();
+
+    // Handle product selection with tracking
+    const handleProductSelect = (product: MenuItem) => {
+        setSelectedProduct(product);
+        
+        // Track view item event
+        trackViewItem({
+            id: product.id,
+            name: product.name,
+            category: product.category_id,
+            price: product.price_cents / 100,
+            currency: product.currency || 'EUR',
+        });
+    };
 
     // Loading state
     if (isLoading) {
@@ -49,10 +65,13 @@ function MainLayout() {
 
     return (
         <div className="min-h-screen w-full bg-surface-base text-text-primary relative">
+            {/* Dynamic SEO & Schema.org */}
+            <RestaurantSEO slug={slug} />
+            
             <Header />
 
             <main className="pt-md pb-24">
-                <MenuList onProductSelect={setSelectedProduct} />
+                <MenuList onProductSelect={handleProductSelect} />
             </main>
 
             <ProductModal
@@ -80,7 +99,7 @@ function RestaurantPage() {
     return (
         <MenuProvider slug={slug}>
             <CartProvider slug={slug}>
-                <MainLayout />
+                <MainLayout slug={slug} />
             </CartProvider>
         </MenuProvider>
     );
