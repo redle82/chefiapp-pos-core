@@ -1,0 +1,14 @@
+{
+  "name": "chefiapp-test-seed",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "seed": "node seed.js",
+    "seed:100": "RESTAURANT_COUNT=100 node seed.js",
+    "seed:10": "RESTAURANT_COUNT=10 node seed.js",
+    "cleanup": "node cleanup.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  }
+}

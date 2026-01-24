@@ -1,0 +1,75 @@
+# ==============================================================================
+# ChefIApp - Docker Compose Override
+# ==============================================================================
+# Otimizações para ambiente de teste massivo
+# ==============================================================================
+
+x-logging: &default-logging
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  # Otimizar logging de todos os serviços
+  postgres:
+    <<: *default-logging
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chefiapp_test
+    command:
+      - postgres
+      - -c
+      - max_connections=500
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - work_mem=16MB
+      - -c
+      - log_min_messages=WARNING
+
+  rest:
+    <<: *default-logging
+
+  realtime:
+    <<: *default-logging
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: chefiapp_test
+      DB_SSL: "false"
+      PORT: 4000
+      JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters
+      REPLICATION_MODE: RLS
+      REPLICATION_POLL_INTERVAL: 100
+      SECURE_CHANNELS: "false"
+      SLOT_NAME: supabase_realtime_rls
+      TEMPORARY_SLOT: "true"
+      # Desabilitar analytics cloud
+      DISABLE_TELEMETRY: "true"
+
+  auth:
+    <<: *default-logging
+
+  kong:
+    <<: *default-logging
+
+  # Simuladores otimizados
+  simulator-orders:
+    <<: *default-logging
+
+  simulator-kds:
+    <<: *default-logging
+
+  simulator-tasks:
+    <<: *default-logging
+
+  chaos:
+    <<: *default-logging
+
+  metrics:
+    <<: *default-logging

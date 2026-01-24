@@ -1,0 +1,12 @@
+{
+  "name": "chefiapp-test-scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "metrics": "node metrics.js",
+    "report": "node report.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  }
+}

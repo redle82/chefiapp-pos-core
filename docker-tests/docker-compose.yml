@@ -1,0 +1,311 @@
+# ==============================================================================
+# ChefIApp Massive Test Environment
+# ==============================================================================
+# Usage:
+#   docker compose up -d                    # Start all services
+#   docker compose down -v                  # Stop and remove volumes
+#   docker compose exec seed npm run seed   # Run seed script
+#   docker compose logs -f simulator-orders # Watch simulator logs
+# ==============================================================================
+
+version: '3.9'
+
+name: chefiapp-massive-tests
+
+# ==============================================================================
+# NETWORKS
+# ==============================================================================
+networks:
+  chefiapp-test-net:
+    driver: bridge
+
+# ==============================================================================
+# VOLUMES
+# ==============================================================================
+volumes:
+  postgres-data:
+  storage-data:
+  test-results:
+
+# ==============================================================================
+# SERVICES
+# ==============================================================================
+services:
+  # ============================================================================
+  # CORE INFRASTRUCTURE
+  # ============================================================================
+  
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: chefiapp-test-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chefiapp_test
+    ports:
+      - "54399:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./seeds/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - chefiapp-test-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Supabase GoTrue (Auth)
+  auth:
+    image: supabase/gotrue:v2.143.0
+    container_name: chefiapp-test-auth
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://localhost:54321
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:postgres@postgres:5432/chefiapp_test?sslmode=disable
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_URI_ALLOW_LIST: "*"
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+    ports:
+      - "9999:9999"
+    networks:
+      - chefiapp-test-net
+
+  # Supabase PostgREST (API)
+  rest:
+    image: postgrest/postgrest:v12.0.2
+    container_name: chefiapp-test-rest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@postgres:5432/chefiapp_test
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+    ports:
+      - "3000:3000"
+    networks:
+      - chefiapp-test-net
+
+  # Supabase Realtime
+  realtime:
+    image: supabase/realtime:v2.28.32
+    container_name: chefiapp-test-realtime
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: chefiapp_test
+      DB_SSL: "false"
+      PORT: 4000
+      JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters
+      REPLICATION_MODE: RLS
+      REPLICATION_POLL_INTERVAL: 100
+      SECURE_CHANNELS: "false"
+      SLOT_NAME: supabase_realtime_rls
+      TEMPORARY_SLOT: "true"
+    ports:
+      - "4000:4000"
+    networks:
+      - chefiapp-test-net
+
+  # Kong API Gateway
+  kong:
+    image: kong:3.4
+    container_name: chefiapp-test-kong
+    restart: unless-stopped
+    depends_on:
+      - rest
+      - auth
+      - realtime
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+    volumes:
+      - ./config/kong.yml:/kong/kong.yml:ro
+    ports:
+      - "54398:8000"
+      - "54397:8443"
+    networks:
+      - chefiapp-test-net
+
+  # ============================================================================
+  # SEED SERVICE
+  # ============================================================================
+  seed:
+    build:
+      context: ./seeds
+      dockerfile: Dockerfile
+    container_name: chefiapp-test-seed
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/chefiapp_test
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE2NDY2ODM4MDAsImV4cCI6MTk2MjI1OTgwMH0.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
+      RESTAURANT_COUNT: 100
+    volumes:
+      - ./seeds:/app
+      - test-results:/app/results
+    networks:
+      - chefiapp-test-net
+    command: ["npm", "run", "seed"]
+    profiles:
+      - seed
+
+  # ============================================================================
+  # SIMULATORS
+  # ============================================================================
+  
+  # Orders Simulator - Creates concurrent orders
+  simulator-orders:
+    build:
+      context: ./simulators
+      dockerfile: Dockerfile
+    container_name: chefiapp-test-simulator-orders
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/chefiapp_test
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE2NDY2ODM4MDAsImV4cCI6MTk2MjI1OTgwMH0.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
+      SIMULATOR_TYPE: orders
+      ORDERS_PER_MINUTE: 100
+      CONCURRENCY: 20
+    volumes:
+      - ./simulators:/app
+      - test-results:/app/results
+    networks:
+      - chefiapp-test-net
+    command: ["npm", "run", "simulate:orders"]
+    profiles:
+      - simulate
+
+  # KDS Simulator - Simulates kitchen display system interactions
+  simulator-kds:
+    build:
+      context: ./simulators
+      dockerfile: Dockerfile
+    container_name: chefiapp-test-simulator-kds
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/chefiapp_test
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE2NDY2ODM4MDAsImV4cCI6MTk2MjI1OTgwMH0.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
+      SIMULATOR_TYPE: kds
+      BUMP_DELAY_MS: 2000
+    volumes:
+      - ./simulators:/app
+      - test-results:/app/results
+    networks:
+      - chefiapp-test-net
+    command: ["npm", "run", "simulate:kds"]
+    profiles:
+      - simulate
+
+  # Tasks Simulator - Creates and completes staff tasks
+  simulator-tasks:
+    build:
+      context: ./simulators
+      dockerfile: Dockerfile
+    container_name: chefiapp-test-simulator-tasks
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/chefiapp_test
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE2NDY2ODM4MDAsImV4cCI6MTk2MjI1OTgwMH0.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
+      SIMULATOR_TYPE: tasks
+      TASKS_PER_MINUTE: 50
+    volumes:
+      - ./simulators:/app
+      - test-results:/app/results
+    networks:
+      - chefiapp-test-net
+    command: ["npm", "run", "simulate:tasks"]
+    profiles:
+      - simulate
+
+  # ============================================================================
+  # CHAOS ENGINEERING
+  # ============================================================================
+  chaos:
+    build:
+      context: ./chaos
+      dockerfile: Dockerfile
+    container_name: chefiapp-test-chaos
+    depends_on:
+      - postgres
+      - rest
+      - realtime
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+      TARGET_CONTAINERS: chefiapp-test-realtime,chefiapp-test-rest
+      CHAOS_INTERVAL_MS: 30000
+      RESTART_PROBABILITY: 0.3
+      NETWORK_DELAY_MS: 500
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./chaos:/app
+      - test-results:/app/results
+    networks:
+      - chefiapp-test-net
+    command: ["npm", "run", "chaos"]
+    profiles:
+      - chaos
+
+  # ============================================================================
+  # OBSERVABILITY
+  # ============================================================================
+  metrics:
+    build:
+      context: ./scripts
+      dockerfile: Dockerfile.metrics
+    container_name: chefiapp-test-metrics
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/chefiapp_test
+      POLL_INTERVAL_MS: 5000
+      REPORT_INTERVAL_MS: 60000
+    volumes:
+      - ./scripts:/app
+      - test-results:/app/results
+    ports:
+      - "9090:9090"
+    networks:
+      - chefiapp-test-net
+    command: ["npm", "run", "metrics"]
+    profiles:
+      - observe
