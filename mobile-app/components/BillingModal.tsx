@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Linking } from 'react-native';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/services/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../constants/Colors';
 

@@ -13,7 +13,7 @@
  */
 
 import { useMemo } from 'react';
-import { useSystemState } from '../state/SystemStateProvider';
+import { useSystemState } from '../kernel/BootstrapKernel';
 import { getTabIsolated } from '../storage/TabIsolatedStorage';
 import { 
     ActivationAdvisor, 

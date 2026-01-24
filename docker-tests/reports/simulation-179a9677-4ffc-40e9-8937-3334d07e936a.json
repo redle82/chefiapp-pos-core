@@ -1,0 +1,456 @@
+{
+  "simulation": {
+    "id": "179a9677-4ffc-40e9-8937-3334d07e936a",
+    "mode": "small",
+    "seed": 1769274501674,
+    "real_duration_seconds": 300.953,
+    "simulated_hours": 24,
+    "time_multiplier": 288,
+    "restaurants_count": 5
+  },
+  "metrics": {
+    "orders_created": 340,
+    "orders_by_source": {
+      "mobile": 130,
+      "pos": 158,
+      "qr_web": 52
+    },
+    "print_jobs": 790,
+    "events": 350,
+    "tasks_created": 70,
+    "tasks_completed": 66,
+    "tasks_escalated": 25,
+    "tasks_failed": 4,
+    "tasks_blocked_shift": 30,
+    "escalations_to_manager": 17,
+    "escalations_to_owner": 8,
+    "shift_blocks": 15,
+    "shift_overrides": 4,
+    "kds_events": 340
+  },
+  "hourly_distribution": {
+    "0": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "1": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "2": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "3": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "4": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "5": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "6": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "7": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "8": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "9": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "10": {
+      "orders": 18,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "11": {
+      "orders": 31,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "12": {
+      "orders": 32,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "13": {
+      "orders": 35,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "14": {
+      "orders": 29,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "15": {
+      "orders": 28,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "16": {
+      "orders": 35,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "17": {
+      "orders": 22,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "18": {
+      "orders": 30,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "19": {
+      "orders": 33,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "20": {
+      "orders": 26,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "21": {
+      "orders": 16,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "22": {
+      "orders": 5,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "23": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    }
+  },
+  "escalation_log": [
+    {
+      "time": "10:08",
+      "restaurant": "Test Restaurant 1",
+      "task": "Verificar caixa inicial",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:08",
+      "restaurant": "Test Restaurant 1",
+      "task": "Verificar equipamentos",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:08",
+      "restaurant": "Test Restaurant 3",
+      "task": "Verificar equipamentos",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:08",
+      "restaurant": "Test Restaurant 4",
+      "task": "Verificar temperatura das câmaras frias",
+      "from": "kitchen (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:08",
+      "restaurant": "Test Restaurant 4",
+      "task": "Verificar caixa inicial",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:08",
+      "restaurant": "Test Restaurant 4",
+      "task": "Verificar equipamentos",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 1",
+      "task": "Limpar salão",
+      "from": "cleaning (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": false
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 3",
+      "task": "Limpar salão",
+      "from": "cleaning (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": false
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 3",
+      "task": "Verificar equipamentos",
+      "from": "owner (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 7,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 4",
+      "task": "Verificar estoque crítico",
+      "from": "kitchen (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 5,
+      "hard_blocking": false
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 4",
+      "task": "Verificar temperatura das câmaras frias",
+      "from": "manager (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 7,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 4",
+      "task": "Verificar caixa inicial",
+      "from": "owner (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 7,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:18",
+      "restaurant": "Test Restaurant 1",
+      "task": "Limpar salão",
+      "from": "manager (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 7,
+      "hard_blocking": false
+    },
+    {
+      "time": "10:18",
+      "restaurant": "Test Restaurant 3",
+      "task": "Limpar salão",
+      "from": "manager (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 6,
+      "hard_blocking": false
+    },
+    {
+      "time": "10:18",
+      "restaurant": "Test Restaurant 4",
+      "task": "Verificar estoque crítico",
+      "from": "manager (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 9,
+      "hard_blocking": false
+    },
+    {
+      "time": "11:08",
+      "restaurant": "Test Restaurant 2",
+      "task": "Verificar equipamentos",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "11:08",
+      "restaurant": "Test Restaurant 5",
+      "task": "Verificar caixa inicial",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "11:08",
+      "restaurant": "Test Restaurant 5",
+      "task": "Verificar equipamentos",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "11:13",
+      "restaurant": "Test Restaurant 5",
+      "task": "Verificar equipamentos",
+      "from": "owner (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 7,
+      "hard_blocking": true
+    },
+    {
+      "time": "21:36",
+      "restaurant": "Test Restaurant 1",
+      "task": "Limpar bar",
+      "from": "bar (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 4,
+      "hard_blocking": false
+    },
+    {
+      "time": "21:36",
+      "restaurant": "Test Restaurant 4",
+      "task": "Limpar bar",
+      "from": "bar (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 4,
+      "hard_blocking": false
+    },
+    {
+      "time": "21:41",
+      "restaurant": "Test Restaurant 1",
+      "task": "Limpar bar",
+      "from": "manager (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 9,
+      "hard_blocking": false
+    },
+    {
+      "time": "22:16",
+      "restaurant": "Test Restaurant 2",
+      "task": "Desligar equipamentos",
+      "from": "kitchen (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 4,
+      "hard_blocking": false
+    },
+    {
+      "time": "22:21",
+      "restaurant": "Test Restaurant 5",
+      "task": "Reportar incidentes",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 4,
+      "hard_blocking": false
+    },
+    {
+      "time": "23:15",
+      "restaurant": "Test Restaurant 3",
+      "task": "Desligar equipamentos",
+      "from": "kitchen (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 5,
+      "hard_blocking": false
+    }
+  ],
+  "database_state": {
+    "orders": [
+      {
+        "source": "mobile",
+        "status": "pending",
+        "count": "130"
+      },
+      {
+        "source": "qr_web",
+        "status": "pending",
+        "count": "52"
+      },
+      {
+        "source": "pos",
+        "status": "pending",
+        "count": "158"
+      }
+    ],
+    "prints": [
+      {
+        "station": "table",
+        "status": "printed",
+        "count": "340"
+      },
+      {
+        "station": "bar",
+        "status": "printed",
+        "count": "110"
+      },
+      {
+        "station": "kitchen",
+        "status": "printed",
+        "count": "340"
+      }
+    ],
+    "tasks": [
+      {
+        "status": "failed",
+        "count": "4"
+      },
+      {
+        "status": "completed",
+        "count": "66"
+      }
+    ],
+    "escalations": [
+      {
+        "to_level": 2,
+        "count": "8"
+      },
+      {
+        "to_level": 1,
+        "count": "17"
+      }
+    ],
+    "shift_blocks": [
+      {
+        "was_overridden": false,
+        "count": "3"
+      },
+      {
+        "was_overridden": true,
+        "count": "12"
+      }
+    ]
+  },
+  "assertions": {
+    "orphan_items": 0,
+    "orders_created": 340,
+    "events_created": 350,
+    "tasks_created": 70,
+    "tasks_completed": 66,
+    "tasks_escalated": 25,
+    "tasks_failed": 4
+  },
+  "passed": true
+}

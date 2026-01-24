@@ -1,0 +1,49 @@
+{
+  "id": "medio",
+  "name": "Restaurante Médio",
+  "description": "Restaurante com 10-30 funcionários, operação estruturada",
+  "staff_count": 20,
+  "stations": {
+    "kitchen": true,
+    "bar": true,
+    "cleaning": true,
+    "manager": true
+  },
+  "tables_count": 30,
+  "menu_size": 60,
+  "opening_hours": {
+    "open": "10:00",
+    "close": "00:00"
+  },
+  "peak_hours": {
+    "lunch": { "start": "12:00", "end": "15:30", "intensity": 0.9 },
+    "dinner": { "start": "19:00", "end": "23:30", "intensity": 1.0 }
+  },
+  "order_sources": {
+    "mobile": 0.6,
+    "pos": 0.25,
+    "qr_web": 0.15
+  },
+  "avg_orders_per_hour": {
+    "calm": 5,
+    "normal": 20,
+    "peak": 50
+  },
+  "avg_items_per_order": 4,
+  "avg_prep_time_seconds": 900,
+  "policy_packs": [
+    "OPENING_STANDARD",
+    "CLOSING_STANDARD", 
+    "CLEANING_STANDARD",
+    "FOOD_SAFETY_STANDARD",
+    "MISE_EN_PLACE",
+    "SHIFT_HANDOVER"
+  ],
+  "offline_probability": 0.02,
+  "printer_count": 4,
+  "printer_failure_rate": 0.03,
+  "shifts": [
+    { "name": "morning", "start": "10:00", "end": "16:00" },
+    { "name": "evening", "start": "16:00", "end": "00:00" }
+  ]
+}

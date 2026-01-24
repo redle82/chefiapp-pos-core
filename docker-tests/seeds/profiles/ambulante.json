@@ -1,0 +1,37 @@
+{
+  "id": "ambulante",
+  "name": "Ambulante / Food Truck",
+  "description": "Negócio móvel com 1-2 pessoas, operação simples",
+  "staff_count": 2,
+  "stations": {
+    "kitchen": true,
+    "bar": false,
+    "cleaning": false
+  },
+  "tables_count": 0,
+  "menu_size": 10,
+  "opening_hours": {
+    "open": "10:00",
+    "close": "22:00"
+  },
+  "peak_hours": {
+    "lunch": { "start": "12:00", "end": "14:00", "intensity": 0.8 },
+    "dinner": { "start": "18:00", "end": "21:00", "intensity": 0.9 }
+  },
+  "order_sources": {
+    "mobile": 0.1,
+    "pos": 0.8,
+    "qr_web": 0.1
+  },
+  "avg_orders_per_hour": {
+    "calm": 5,
+    "normal": 15,
+    "peak": 40
+  },
+  "avg_items_per_order": 2,
+  "avg_prep_time_seconds": 180,
+  "policy_packs": ["OPENING_BASIC", "CLOSING_BASIC"],
+  "offline_probability": 0.05,
+  "printer_count": 1,
+  "printer_failure_rate": 0.01
+}

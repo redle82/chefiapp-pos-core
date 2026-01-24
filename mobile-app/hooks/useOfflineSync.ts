@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { OfflineQueue, QueuedAction } from '@/lib/offlineQueue';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/services/supabase';
 
 export interface SyncState {
     isOnline: boolean;

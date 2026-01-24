@@ -1,0 +1,218 @@
+{
+  "simulation": {
+    "id": "2ab2b38e-3492-49df-bde9-01c5ef8d5e67",
+    "mode": "small",
+    "seed": 1769272942814,
+    "real_duration_seconds": 300.657,
+    "simulated_hours": 24,
+    "time_multiplier": 288,
+    "restaurants_count": 5
+  },
+  "metrics": {
+    "orders_created": 356,
+    "orders_by_source": {
+      "mobile": 122,
+      "pos": 178,
+      "qr_web": 56
+    },
+    "print_jobs": 807,
+    "events": 366,
+    "tasks_created": 70,
+    "tasks_completed": 66,
+    "tasks_escalated": 4,
+    "offline_actions": 0,
+    "offline_synced": 0,
+    "kds_events": 356
+  },
+  "hourly_distribution": {
+    "0": {
+      "orders": 0,
+      "tasks": 0,
+      "events": 0
+    },
+    "1": {
+      "orders": 0,
+      "tasks": 0,
+      "events": 0
+    },
+    "2": {
+      "orders": 0,
+      "tasks": 0,
+      "events": 0
+    },
+    "3": {
+      "orders": 0,
+      "tasks": 0,
+      "events": 0
+    },
+    "4": {
+      "orders": 0,
+      "tasks": 0,
+      "events": 0
+    },
+    "5": {
+      "orders": 0,
+      "tasks": 0,
+      "events": 0
+    },
+    "6": {
+      "orders": 0,
+      "tasks": 0,
+      "events": 0
+    },
+    "7": {
+      "orders": 0,
+      "tasks": 0,
+      "events": 0
+    },
+    "8": {
+      "orders": 0,
+      "tasks": 0,
+      "events": 0
+    },
+    "9": {
+      "orders": 0,
+      "tasks": 0,
+      "events": 0
+    },
+    "10": {
+      "orders": 17,
+      "tasks": 0,
+      "events": 0
+    },
+    "11": {
+      "orders": 30,
+      "tasks": 0,
+      "events": 0
+    },
+    "12": {
+      "orders": 36,
+      "tasks": 0,
+      "events": 0
+    },
+    "13": {
+      "orders": 38,
+      "tasks": 0,
+      "events": 0
+    },
+    "14": {
+      "orders": 31,
+      "tasks": 0,
+      "events": 0
+    },
+    "15": {
+      "orders": 33,
+      "tasks": 0,
+      "events": 0
+    },
+    "16": {
+      "orders": 27,
+      "tasks": 0,
+      "events": 0
+    },
+    "17": {
+      "orders": 30,
+      "tasks": 0,
+      "events": 0
+    },
+    "18": {
+      "orders": 30,
+      "tasks": 0,
+      "events": 0
+    },
+    "19": {
+      "orders": 29,
+      "tasks": 0,
+      "events": 0
+    },
+    "20": {
+      "orders": 27,
+      "tasks": 0,
+      "events": 0
+    },
+    "21": {
+      "orders": 22,
+      "tasks": 0,
+      "events": 0
+    },
+    "22": {
+      "orders": 6,
+      "tasks": 0,
+      "events": 0
+    },
+    "23": {
+      "orders": 0,
+      "tasks": 0,
+      "events": 0
+    }
+  },
+  "database_state": {
+    "orders": [
+      {
+        "source": "pos",
+        "status": "preparing",
+        "count": "121"
+      },
+      {
+        "source": "mobile",
+        "status": "preparing",
+        "count": "90"
+      },
+      {
+        "source": "pos",
+        "status": "ready",
+        "count": "57"
+      },
+      {
+        "source": "mobile",
+        "status": "ready",
+        "count": "32"
+      },
+      {
+        "source": "qr_web",
+        "status": "ready",
+        "count": "12"
+      },
+      {
+        "source": "qr_web",
+        "status": "preparing",
+        "count": "44"
+      }
+    ],
+    "prints": [
+      {
+        "station": "table",
+        "status": "printed",
+        "count": "356"
+      },
+      {
+        "station": "bar",
+        "status": "printed",
+        "count": "95"
+      },
+      {
+        "station": "kitchen",
+        "status": "printed",
+        "count": "356"
+      }
+    ],
+    "tasks": [
+      {
+        "status": "escalated",
+        "count": "4"
+      },
+      {
+        "status": "completed",
+        "count": "66"
+      }
+    ]
+  },
+  "assertions": {
+    "orphan_items": 0,
+    "orders_created": 356,
+    "events_created": 366,
+    "tasks_created": 70,
+    "tasks_completed": 66
+  },
+  "passed": true
+}
