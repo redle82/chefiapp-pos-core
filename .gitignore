@@ -65,3 +65,6 @@ audit-reports/*.json
 .vercel
 .env*.local
 merchant-portal/artifacts/
+
+# Agent workspace
+.agent/
