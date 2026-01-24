@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Button } from './Button';
-import { Logger } from '../../core/logger';
+import { Logger, captureException, Sentry } from '../../core/logger';
 
 interface Props {
     children: ReactNode;
@@ -11,31 +11,44 @@ interface Props {
 interface State {
     hasError: boolean;
     error: Error | null;
+    eventId: string | null;
 }
 
 /**
  * ErrorBoundary - The Safety Net (Layer 4)
  * 
  * Prevents the "White Screen of Death". 
+ * Captures errors to Sentry for monitoring.
  * Adheres to CANON Law 1: Tool Sovereignty (Maintain control).
  */
 export class ErrorBoundary extends Component<Props, State> {
     public state: State = {
         hasError: false,
         error: null,
+        eventId: null,
     };
 
-    public static getDerivedStateFromError(error: Error): State {
+    public static getDerivedStateFromError(error: Error): Partial<State> {
         return { hasError: true, error };
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error('💥 Uncaught error:', error, errorInfo);
 
-        // H.3 Observability: Centralized Logging
+        // H.3 Observability: Centralized Logging + Sentry
         Logger.critical('Uncaught Error in Boundary', error, {
             context: this.props.context || 'Global',
             componentStack: errorInfo.componentStack
+        });
+
+        // Send to Sentry with full context
+        Sentry.withScope((scope) => {
+            scope.setTag('boundary_context', this.props.context || 'Global');
+            scope.setContext('react_error_info', {
+                componentStack: errorInfo.componentStack,
+            });
+            const eventId = Sentry.captureException(error);
+            this.setState({ eventId });
         });
     }
 

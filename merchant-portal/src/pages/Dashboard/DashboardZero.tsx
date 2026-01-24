@@ -20,6 +20,7 @@ import { FiscalAlertBadge } from '../../components/FiscalAlertBadge';
 import { SystemHealthWidget } from './SystemHealthWidget';
 import { RealityLevelWidget } from './RealityLevelWidget';
 import { OnboardingReminder } from '../../components/OnboardingReminder';
+import { OperationalMetricsWidget } from '../../components/Dashboard/OperationalMetricsWidget';
 
 const ModuleCard = ({ module, onClick, variant = 'standard' }: { module: SovereignModule; onClick?: () => void, variant?: 'standard' | 'primary' | 'secondary' }) => {
     const isLocked = module.status === 'locked' || module.status === 'planned';
@@ -280,6 +281,9 @@ export const DashboardZero = () => {
                             </div>
                             <Badge status="ready" label="SECURE" variant="outline" />
                         </div>
+
+                        {/* 📊 BLOCK: Operational Metrics — Real-time KPIs */}
+                        <OperationalMetricsWidget />
 
                         {/* 🏆 BLOCK: Reality Level Governance */}
                         <RealityLevelWidget />

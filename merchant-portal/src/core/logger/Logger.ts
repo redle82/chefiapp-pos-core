@@ -1,7 +1,36 @@
+import * as Sentry from '@sentry/react';
 import { getTabIsolated } from '../storage/TabIsolatedStorage';
 import { supabase } from '../supabase';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
+
+// ============================================================================
+// SENTRY INITIALIZATION
+// ============================================================================
+
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    environment: import.meta.env.MODE,
+    debug: import.meta.env.DEV,
+    tracesSampleRate: import.meta.env.DEV ? 1.0 : 0.1,
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
+    integrations: [
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration(),
+    ],
+    beforeSend(event) {
+      // Filter out non-critical errors in dev
+      if (import.meta.env.DEV) {
+        // Skip certain errors
+      }
+      return event;
+    },
+  });
+}
 
 export interface LogContext {
     tenantId?: string;
@@ -161,6 +190,29 @@ class LoggerService {
             consoleMethod(JSON.stringify(payload));
         }
 
+        // 2.5. Send to Sentry (if configured)
+        if (SENTRY_DSN && ['warn', 'error', 'critical'].includes(level)) {
+            Sentry.withScope((scope) => {
+                // Set context
+                scope.setContext('log_context', fullContext);
+                
+                if (fullContext.tenantId) {
+                    scope.setTag('tenant_id', fullContext.tenantId);
+                }
+                if (fullContext.userId) {
+                    scope.setUser({ id: fullContext.userId });
+                }
+
+                // Capture based on level
+                const sentryLevel = level === 'critical' ? 'fatal' : level;
+                if (data?.error instanceof Error) {
+                    Sentry.captureException(data.error);
+                } else {
+                    Sentry.captureMessage(message, sentryLevel as Sentry.SeverityLevel);
+                }
+            });
+        }
+
         // 3. Remote Ingestion (Production or Critical/Error/Warn)
         // Log 'warn', 'error', 'critical' to Supabase
         // Optional: Log 'info' if a flag is set? Keeping strict for now to save quota.
@@ -275,3 +327,64 @@ class LoggerService {
 }
 
 export const Logger = LoggerService.getInstance();
+
+// ============================================================================
+// SENTRY HELPERS (exported for direct use)
+// ============================================================================
+
+/**
+ * Set user context for Sentry
+ */
+export function setSentryUser(userId: string, tenantId?: string): void {
+    if (SENTRY_DSN) {
+        Sentry.setUser({
+            id: userId,
+            ...(tenantId && { tenant_id: tenantId }),
+        });
+    }
+}
+
+/**
+ * Clear user context (e.g., on logout)
+ */
+export function clearSentryUser(): void {
+    if (SENTRY_DSN) {
+        Sentry.setUser(null);
+    }
+}
+
+/**
+ * Add breadcrumb for debugging
+ */
+export function addBreadcrumb(
+    message: string,
+    category?: string,
+    data?: Record<string, any>
+): void {
+    if (SENTRY_DSN) {
+        Sentry.addBreadcrumb({
+            message,
+            category: category || 'default',
+            data,
+            level: 'info',
+            timestamp: Date.now() / 1000,
+        });
+    }
+}
+
+/**
+ * Capture exception directly to Sentry
+ */
+export function captureException(error: Error, context?: Record<string, any>): void {
+    if (SENTRY_DSN) {
+        Sentry.withScope((scope) => {
+            if (context) {
+                scope.setContext('error_context', context);
+            }
+            Sentry.captureException(error);
+        });
+    }
+}
+
+// Re-export Sentry for advanced use cases
+export { Sentry };

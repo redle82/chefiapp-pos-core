@@ -1,10 +1,13 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 // https://vite.dev/config/
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const useSentry = !!env.SENTRY_AUTH_TOKEN && mode === 'production'
   const base = '/'
 
   return {
@@ -16,6 +19,15 @@ export default defineConfig(() => {
     plugins: [
       react(),
       tailwindcss(),
+      // Sentry plugin for sourcemaps (production only, requires SENTRY_AUTH_TOKEN)
+      ...(useSentry ? [sentryVitePlugin({
+        org: env.SENTRY_ORG || 'chefiapp',
+        project: env.SENTRY_PROJECT || 'merchant-portal',
+        authToken: env.SENTRY_AUTH_TOKEN,
+        sourcemaps: {
+          filesToDeleteAfterUpload: ['**/*.map'],
+        },
+      })] : []),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'vite.svg'],
@@ -72,6 +84,7 @@ export default defineConfig(() => {
       }
     },
     build: {
+      sourcemap: useSentry, // Enable sourcemaps for Sentry (production only)
       rollupOptions: {
         output: {
           manualChunks: {
