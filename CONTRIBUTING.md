@@ -1,13 +1,42 @@
 # 🤝 Contributing Guide - ChefIApp
 
-**Guia para contribuir com o projeto**
+**Guide for contributing to the project**
 
-> ⚠️ **Antes de contribuir, leia o [`ENGINEERING_CONSTITUTION.md`](ENGINEERING_CONSTITUTION.md)**  
-> Este documento define as regras inegociáveis do projeto.
+> ⚠️ **Before contributing, read [`ENGINEERING_CONSTITUTION.md`](ENGINEERING_CONSTITUTION.md)**  
+> This document defines the non-negotiable rules of the project.
 
 ---
 
-## 🎯 Como Contribuir
+## 🌍 Language Policy
+
+> **MANDATORY:** All code, commits, documentation, issues, and PRs must be in **English**.  
+> See [`docs/LANGUAGE_POLICY.md`](docs/LANGUAGE_POLICY.md) for complete rules.
+
+**Quick rule:** "If a Stripe / Oracle / SAP engineer opens this, do they understand?"
+- **Yes** → English is mandatory
+- **No (personal notes only)** → Portuguese is acceptable
+
+**Examples:**
+```bash
+# ✅ CORRECT
+git commit -m "feat: add SLA escalation engine"
+git commit -m "fix: prevent duplicate offline orders"
+
+# ❌ FORBIDDEN
+git commit -m "feat: adiciona motor de escalação"
+git commit -m "fix: corrige bug de duplicação"
+```
+
+**Portuguese is allowed ONLY in:**
+- `docs/notes/` - Personal notes
+- `docs/sessions/` - Session logs
+- `docs/brain-dump/` - Mental drafts
+
+**Never mix languages in the same file.**
+
+---
+
+## 🎯 How to Contribute
 
 ### 1. Fork e Clone
 ```bash
@@ -19,11 +48,11 @@ cd chefiapp-pos-core
 
 ### 2. Branch
 ```bash
-# Criar branch para feature
-git checkout -b feature/nova-feature
+# Create branch for feature
+git checkout -b feature/new-feature
 
-# Ou para bugfix
-git checkout -b fix/corrigir-bug
+# Or for bugfix
+git checkout -b fix/fix-bug
 ```
 
 ### 3. Desenvolvimento
@@ -40,10 +69,10 @@ npm test
 
 ### 4. Commit
 ```bash
-# Commits descritivos
-git commit -m "feat: adiciona nova feature X"
-git commit -m "fix: corrige bug Y"
-git commit -m "docs: atualiza documentação Z"
+# Descriptive commits (MUST be in English)
+git commit -m "feat: add new feature X"
+git commit -m "fix: fix bug Y"
+git commit -m "docs: update documentation Z"
 ```
 
 ### 5. Push e PR
@@ -60,22 +89,24 @@ git push origin feature/nova-feature
 
 ### Commits (Conventional Commits)
 
+**MANDATORY: All commit messages must be in English.**
+
 ```
-feat: adiciona nova feature
-fix: corrige bug
-docs: atualiza documentação
-style: formatação (não afeta código)
-refactor: refatoração
-test: adiciona testes
-chore: tarefas de manutenção
+feat: add new feature
+fix: fix bug
+docs: update documentation
+style: formatting (doesn't affect code)
+refactor: refactoring
+test: add tests
+chore: maintenance tasks
 ```
 
-**Exemplos:**
+**Examples:**
 ```bash
-feat: adiciona integração com iFood
-fix: corrige timer do mapa vivo
-docs: atualiza API reference
-refactor: simplifica FastPayButton
+feat: add iFood integration
+fix: fix live map timer
+docs: update API reference
+refactor: simplify FastPayButton
 ```
 
 ### Nomenclatura
@@ -447,12 +478,18 @@ make assertions
 - [ ] Testes passando
 - [ ] Sem regressões
 
-**Core (se aplicável):**
-- [ ] `make simulate-failfast` passou
-- [ ] `make simulate-24h-small` passou (se PR em main/core/frozen-v1)
-- [ ] `make assertions` passou
-- [ ] CORE_MANIFESTO.md não violado
-- [ ] Simulador exercita a mudança
+**Core (if applicable):**
+- [ ] `make simulate-failfast` passed
+- [ ] `make simulate-24h-small` passed (if PR to main/core/frozen-v1)
+- [ ] `make assertions` passed
+- [ ] CORE_MANIFESTO.md not violated
+- [ ] Simulator exercises the change
+
+**Language:**
+- [ ] All code in English
+- [ ] All commits in English
+- [ ] All documentation in English (if canonical)
+- [ ] No language mixing in files
 
 **Código:**
 - [ ] Segue convenções
