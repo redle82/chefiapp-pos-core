@@ -5,10 +5,13 @@
 
 ---
 
-## ⚠️ Status em 30 Segundos
+## ⚠️ Status in 30 Seconds
 
-**Versão:** `1.2.0` — Production Ready  
-**Status:** 🟢 **PRONTO PARA PRODUÇÃO**
+**Version:** `1.2.0` — Production Ready  
+**Status:** 🟢 **READY FOR PRODUCTION**
+
+> **🌍 Language:** All code, commits, and canonical documentation are in **English**.  
+> See [`docs/LANGUAGE_POLICY.md`](docs/LANGUAGE_POLICY.md) for complete rules.
 
 | Componente | Status |
 |------------|--------|
