@@ -98,6 +98,7 @@ npm start
 
 ### 🏛️ Core (Sistema Operacional)
 - **[CORE_MANIFESTO.md](CORE_MANIFESTO.md)** ⭐⭐ - Lei do sistema (leia primeiro)
+- **[docs/CORE_OVERVIEW.md](docs/CORE_OVERVIEW.md)** ⭐⭐⭐ - **MAPA MENTAL DO CORE** (o que é intocável)
 - **[START_HERE.md](START_HERE.md)** - Ponto de entrada do Core
 - **[ROADMAP.md](ROADMAP.md)** - Roadmap dos próximos níveis
 - **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - Resumo executivo do Core
@@ -106,6 +107,10 @@ npm start
 - **[docs/testing/FAIL_FAST_MODE.md](docs/testing/FAIL_FAST_MODE.md)** - Validação rápida
 
 **Status do Core:** ✅ v1.0-core-sovereign (Validado, Protegido, Blindado)
+
+**Status Detalhado:**
+- **[docs/STATUS_TECH.md](docs/STATUS_TECH.md)** - Status técnico (estabilidade)
+- **[docs/STATUS_OPERATION.md](docs/STATUS_OPERATION.md)** - Status operacional (impacto real)
 
 ### 🏗️ Técnica
 - [docs/EXECUCAO_30_DIAS.md](docs/EXECUCAO_30_DIAS.md) - Implementação detalhada
