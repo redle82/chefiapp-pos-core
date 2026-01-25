@@ -38,15 +38,15 @@ git commit -m "fix: corrige bug de duplicação"
 
 ## 🎯 How to Contribute
 
-### 1. Fork e Clone
+### 1. Fork and Clone
 ```bash
-# Fork o repositório no GitHub
-# Clone seu fork
-git clone https://github.com/seu-usuario/chefiapp-pos-core.git
+# Fork the repository on GitHub
+# Clone your fork
+git clone https://github.com/your-username/chefiapp-pos-core.git
 cd chefiapp-pos-core
 ```
 
-### 2. Branch
+### 2. Create Branch
 ```bash
 # Create branch for feature
 git checkout -b feature/new-feature
@@ -55,15 +55,15 @@ git checkout -b feature/new-feature
 git checkout -b fix/fix-bug
 ```
 
-### 3. Desenvolvimento
+### 3. Development
 ```bash
-# Instalar dependências
+# Install dependencies
 npm install
 
-# Executar em desenvolvimento
+# Run in development mode
 npm start
 
-# Executar testes
+# Run tests
 npm test
 ```
 
@@ -75,12 +75,12 @@ git commit -m "fix: fix bug Y"
 git commit -m "docs: update documentation Z"
 ```
 
-### 5. Push e PR
+### 5. Push and PR
 ```bash
-# Push para seu fork
-git push origin feature/nova-feature
+# Push to your fork
+git push origin feature/new-feature
 
-# Criar Pull Request no GitHub
+# Create Pull Request on GitHub
 ```
 
 ---
@@ -109,9 +109,9 @@ docs: update API reference
 refactor: simplify FastPayButton
 ```
 
-### Nomenclatura
+### Naming Conventions
 
-**Componentes:**
+**Components:**
 ```typescript
 // PascalCase
 FastPayButton.tsx
@@ -121,7 +121,7 @@ WaitlistBoard.tsx
 
 **Hooks:**
 ```typescript
-// camelCase com "use" prefix
+// camelCase with "use" prefix
 useKitchenPressure.ts
 useOrder.ts
 useAppStaff.ts
@@ -144,9 +144,9 @@ calculateTotal.ts
 
 ---
 
-## 🧪 Testes
+## 🧪 Testing
 
-### Escrever Testes
+### Writing Tests
 
 ```typescript
 // __tests__/components/FastPayButton.test.tsx
@@ -154,16 +154,16 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { FastPayButton } from '@/components/FastPayButton';
 
 describe('FastPayButton', () => {
-  it('deve processar pagamento', async () => {
-    // Teste
+  it('should process payment', async () => {
+    // Test
   });
 });
 ```
 
-### Executar Testes
+### Running Tests
 
 ```bash
-# Todos os testes
+# All tests
 npm test
 
 # Watch mode
@@ -173,39 +173,39 @@ npm run test:watch
 npm run test:coverage
 ```
 
-### Cobertura Mínima
-- **Componentes críticos:** > 90%
+### Minimum Coverage
+- **Critical components:** > 90%
 - **Hooks:** > 85%
 - **Services:** > 80%
 - **Utils:** > 95%
 
 ---
 
-## 📚 Documentação
+## 📚 Documentation
 
-### Atualizar Documentação
+### Updating Documentation
 
-Ao adicionar feature:
-1. Atualizar `CHANGELOG.md`
-2. Atualizar `docs/API_REFERENCE.md` (se necessário)
-3. Adicionar exemplo em `docs/CODE_EXAMPLES.md`
-4. Atualizar `QUICK_REFERENCE.md` (se relevante)
+When adding a feature:
+1. Update `CHANGELOG.md`
+2. Update `docs/API_REFERENCE.md` (if necessary)
+3. Add example in `docs/CODE_EXAMPLES.md`
+4. Update `QUICK_REFERENCE.md` (if relevant)
 
-### Formato
+### Format
 
 ```markdown
-## Nova Feature
+## New Feature
 
-**Descrição:** Breve descrição
+**Description:** Brief description
 
-**Uso:**
+**Usage:**
 \`\`\`typescript
-// Exemplo de código
+// Code example
 \`\`\`
 
 **Props:**
-- `prop1`: tipo - descrição
-- `prop2`: tipo - descrição
+- `prop1`: type - description
+- `prop2`: type - description
 ```
 
 ---
@@ -215,19 +215,19 @@ Ao adicionar feature:
 ### TypeScript
 
 ```typescript
-// ✅ Tipos explícitos
+// ✅ Explicit types
 interface Props {
   orderId: string;
   total: number;
 }
 
-// ✅ Evitar any
+// ✅ Avoid any
 const data: unknown = await fetch();
 if (isValidData(data)) {
-  // usar data tipado
+  // use typed data
 }
 
-// ✅ Nomes descritivos
+// ✅ Descriptive names
 const elapsedMinutes = calculateElapsed(order);
 // ❌ const time = ...
 ```
@@ -235,16 +235,16 @@ const elapsedMinutes = calculateElapsed(order);
 ### React
 
 ```typescript
-// ✅ Componentes funcionais
+// ✅ Functional components
 export function FastPayButton({ orderId, total }: Props) {
   // ...
 }
 
-// ✅ Hooks no topo
+// ✅ Hooks at the top
 const { orders } = useOrder();
 const [state, setState] = useState();
 
-// ✅ useEffect com cleanup
+// ✅ useEffect with cleanup
 useEffect(() => {
   const interval = setInterval(() => {}, 1000);
   return () => clearInterval(interval);
@@ -254,7 +254,7 @@ useEffect(() => {
 ### Imports
 
 ```typescript
-// ✅ Ordem: externos, internos, relativos
+// ✅ Order: external, internal, relative
 import React from 'react';
 import { View, Text } from 'react-native';
 import { useOrder } from '@/context/OrderContext';
@@ -263,59 +263,59 @@ import { FastPayButton } from '@/components/FastPayButton';
 
 ---
 
-## 🐛 Reportar Bugs
+## 🐛 Reporting Bugs
 
 ### Template
 
 ```markdown
-**Descrição:**
-Breve descrição do bug
+**Description:**
+Brief description of the bug
 
-**Passos para Reproduzir:**
-1. Passo 1
-2. Passo 2
-3. Passo 3
+**Steps to Reproduce:**
+1. Step 1
+2. Step 2
+3. Step 3
 
-**Comportamento Esperado:**
-O que deveria acontecer
+**Expected Behavior:**
+What should happen
 
-**Comportamento Atual:**
-O que está acontecendo
+**Actual Behavior:**
+What is happening
 
-**Ambiente:**
+**Environment:**
 - OS: iOS/Android
-- Versão: 1.0.0
+- Version: 1.0.0
 - Device: iPhone 13 / Pixel 6
 
 **Logs:**
 \`\`\`
-Logs relevantes
+Relevant logs
 \`\`\`
 ```
 
 ---
 
-## 💡 Sugerir Features
+## 💡 Suggesting Features
 
 ### Template
 
 ```markdown
 **Feature:**
-Nome da feature
+Feature name
 
-**Problema:**
-Qual problema resolve
+**Problem:**
+What problem it solves
 
-**Solução Proposta:**
-Como resolveria
+**Proposed Solution:**
+How it would solve it
 
-**Alternativas Consideradas:**
-Outras opções
+**Alternatives Considered:**
+Other options
 
-**Impacto:**
-- Usuários afetados
-- Complexidade
-- Tempo estimado
+**Impact:**
+- Affected users
+- Complexity
+- Estimated time
 ```
 
 ---
@@ -325,37 +325,37 @@ Outras opções
 ### Logging
 
 ```typescript
-// ✅ Usar Logger centralizado
+// ✅ Use centralized Logger
 import { Logger } from '@/core/logger';
 
 Logger.info('Order created', { orderId, table });
 Logger.error('Payment failed', { orderId, error });
 
-// ❌ Evitar console.log em produção
-console.log('debug'); // Não fazer isso
+// ❌ Avoid console.log in production
+console.log('debug'); // Don't do this
 ```
 
-### Erros
+### Errors
 
 ```typescript
-// ✅ Capturar exceções com contexto
+// ✅ Capture exceptions with context
 try {
   await processPayment(order);
 } catch (error) {
   Logger.error('Payment error', { orderId: order.id, error });
-  throw error; // Re-throw se necessário
+  throw error; // Re-throw if necessary
 }
 
-// ✅ ErrorBoundary em componentes React
+// ✅ ErrorBoundary in React components
 <ErrorBoundary fallback={<ErrorFallback />}>
   <Component />
 </ErrorBoundary>
 ```
 
-### Métricas
+### Metrics
 
 ```typescript
-// ✅ Usar hooks de métricas quando disponíveis
+// ✅ Use metrics hooks when available
 const { metrics, isLoading } = useRealtimeMetrics();
 ```
 
@@ -363,9 +363,9 @@ const { metrics, isLoading } = useRealtimeMetrics();
 
 ## 🏛️ Core Development Workflow
 
-> **IMPORTANTE:** Mudanças no Core requerem validação obrigatória via simulador.
+> **IMPORTANT:** Changes to the Core require mandatory validation via simulator.
 
-### O Que é Considerado Core
+### What is Considered Core
 
 - `docker-tests/simulators/`
 - `docker-tests/task-engine/`
@@ -376,82 +376,82 @@ const { metrics, isLoading } = useRealtimeMetrics();
 - `server/`
 - `CORE_MANIFESTO.md`
 
-### Workflow de Desenvolvimento do Core
+### Core Development Workflow
 
-#### 1. Antes de Começar
+#### 1. Before Starting
 
 ```bash
-# Ler o CORE_MANIFESTO.md
-# Verificar se a mudança viola algum princípio
-# Confirmar que o simulador pode exercitar a mudança
+# Read CORE_MANIFESTO.md
+# Verify if the change violates any principle
+# Confirm that the simulator can exercise the change
 ```
 
-#### 2. Durante o Desenvolvimento
+#### 2. During Development
 
 ```bash
 cd docker-tests
 
-# Validação rápida (1 min) - Use durante desenvolvimento
+# Quick validation (1 min) - Use during development
 make simulate-failfast
 
-# Se passar, continue
-# Se falhar, corrija antes de continuar
+# If it passes, continue
+# If it fails, fix before continuing
 ```
 
-#### 3. Antes de Commit
+#### 3. Before Commit
 
 ```bash
 cd docker-tests
 
-# Validação completa (5 min) - Obrigatório antes de commit
+# Complete validation (5 min) - Mandatory before commit
 make simulate-24h-small
 
-# Assertions de integridade
+# Integrity assertions
 make assertions
 
-# Se ambos passarem, pode commitar
-# Se falharem, NÃO commitar até corrigir
+# If both pass, you can commit
+# If they fail, DO NOT commit until fixed
 ```
 
 #### 4. Pull Request
 
-**Requisitos Obrigatórios:**
+**Mandatory Requirements:**
 
-- ✅ `make simulate-failfast` deve passar (validado automaticamente no CI)
-- ✅ `make simulate-24h-small` deve passar (validado automaticamente no CI para PRs em `main` ou `core/frozen-v1`)
-- ✅ `make assertions` deve passar (validado automaticamente no CI)
-- ✅ CORE_MANIFESTO.md não violado
-- ✅ Documentação atualizada (se necessário)
+- ✅ `make simulate-failfast` must pass (automatically validated in CI)
+- ✅ `make simulate-24h-small` must pass (automatically validated in CI for PRs to `main` or `core/frozen-v1`)
+- ✅ `make assertions` must pass (automatically validated in CI)
+- ✅ CORE_MANIFESTO.md not violated
+- ✅ Documentation updated (if necessary)
 
-**O CI/CD bloqueará o merge se qualquer validação falhar.**
+**CI/CD will block merge if any validation fails.**
 
-### Quando Usar Cada Validação
+### When to Use Each Validation
 
-| Situação | Validação | Tempo |
-|----------|-----------|-------|
-| Durante desenvolvimento | `make simulate-failfast` | ~1 min |
-| Antes de commit | `make simulate-24h-small` | ~5 min |
-| Antes de merge (main) | `make simulate-24h-small` + `make assertions` | ~5 min |
-| Validação completa | `make simulate-24h-large` ou `make simulate-24h-giant` | ~5-7 min |
+| Situation | Validation | Time |
+|-----------|------------|------|
+| During development | `make simulate-failfast` | ~1 min |
+| Before commit | `make simulate-24h-small` | ~5 min |
+| Before merge (main) | `make simulate-24h-small` + `make assertions` | ~5 min |
+| Complete validation | `make simulate-24h-large` or `make simulate-24h-giant` | ~5-7 min |
 
-### Regras Absolutas
+### Absolute Rules
 
-1. **Nenhuma mudança no Core sem validação**
-   - Se o simulador não exercita, não é Core
-   - Código não testado = código morto
+1. **No Core changes without validation**
+   - If the simulator doesn't exercise it, it's not Core
+   - Untested code = dead code
 
-2. **Nenhuma violação do CORE_MANIFESTO.md**
-   - Qualquer violação é regressão arquitetural
-   - Deve ser revertida imediatamente
+2. **No violation of CORE_MANIFESTO.md**
+   - Any violation is architectural regression
+   - Must be reverted immediately
 
-3. **Nenhuma lógica crítica fora do Core**
-   - Governança vive no Core
-   - Offline vive no Core
-   - SLA vive no Core
+3. **No critical logic outside Core**
+   - Governance lives in Core
+   - Offline lives in Core
+   - SLA lives in Core
 
-4. **UI nunca governa**
-   - UI consome Core, não governa
-   - UI pode ser reescrita, Core permanece
+4. **UI never governs**
+   - UI consumes Core, doesn't govern
+   - UI can be rewritten, Core remains
 
 ### Troubleshooting
 
@@ -473,10 +473,10 @@ make assertions
 
 ### Checklist
 
-**Funcionalidade:**
-- [ ] Código funciona como esperado
-- [ ] Testes passando
-- [ ] Sem regressões
+**Functionality:**
+- [ ] Code works as expected
+- [ ] Tests passing
+- [ ] No regressions
 
 **Core (if applicable):**
 - [ ] `make simulate-failfast` passed
@@ -491,26 +491,26 @@ make assertions
 - [ ] All documentation in English (if canonical)
 - [ ] No language mixing in files
 
-**Código:**
-- [ ] Segue convenções
-- [ ] Bem documentado
-- [ ] Sem código morto
+**Code:**
+- [ ] Follows conventions
+- [ ] Well documented
+- [ ] No dead code
 - [ ] Performance OK
 
 **Observability:**
-- [ ] Erros capturados com contexto
-- [ ] Logs apropriados (info/warn/error)
-- [ ] Sem console.log em produção
+- [ ] Errors captured with context
+- [ ] Appropriate logs (info/warn/error)
+- [ ] No console.log in production
 
-**Segurança:**
-- [ ] Inputs validados
-- [ ] Sem dados sensíveis expostos
-- [ ] Erros tratados
+**Security:**
+- [ ] Inputs validated
+- [ ] No sensitive data exposed
+- [ ] Errors handled
 
-**Documentação:**
-- [ ] README atualizado (se necessário)
-- [ ] Changelog atualizado
-- [ ] Comentários claros
+**Documentation:**
+- [ ] README updated (if necessary)
+- [ ] Changelog updated
+- [ ] Clear comments
 
 ---
 
@@ -524,18 +524,18 @@ make assertions
 - `1.0.0` → `1.1.0` (minor: feature)
 - `1.0.0` → `2.0.0` (major: breaking)
 
-### Checklist de Release
+### Release Checklist
 
-- [ ] Todos os testes passando
-- [ ] Changelog atualizado
+- [ ] All tests passing
+- [ ] Changelog updated
 - [ ] Version bump
-- [ ] Tag criada
-- [ ] Release notes escritas
-- [ ] Deploy testado
+- [ ] Tag created
+- [ ] Release notes written
+- [ ] Deploy tested
 
 ---
 
-## 📞 Contato
+## 📞 Contact
 
 - **Issues:** GitHub Issues
 - **Discussions:** GitHub Discussions
@@ -543,13 +543,13 @@ make assertions
 
 ---
 
-## 📜 Licença
+## 📜 License
 
-Ao contribuir, você concorda que suas contribuições serão licenciadas sob a mesma licença do projeto.
+By contributing, you agree that your contributions will be licensed under the same license as the project.
 
 ---
 
-**Obrigado por contribuir! 🎉**
+**Thank you for contributing! 🎉**
 
-**Versão:** 1.0.0  
-**Última atualização:** 2026-01-24
+**Version:** 1.0.0  
+**Last updated:** 2026-01-24
