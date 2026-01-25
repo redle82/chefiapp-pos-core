@@ -1,358 +1,358 @@
-# MANIFESTO DO CORE
+# CORE MANIFESTO
 
-> Este documento define o que o ChefIApp Core **É** e o que **NUNCA SERÁ**.
-> Qualquer violação deste manifesto é uma regressão arquitetural.
-
----
-
-## PREÂMBULO
-
-O ChefIApp Core foi validado em **simulação de produção** com:
-- 24 horas de operação contínua
-- Governança completa (SLA, escalonamento, hard-blocking)
-- Resiliência offline durante picos
-- Zero orphans, zero duplicatas, zero perda de dados
-
-Este manifesto codifica as decisões que tornaram isso possível.
-
-**Data de ratificação:** 2026-01-24  
-**Validado por:** MEGA OPERATIONAL SIMULATOR v2.1
+> This document defines what the ChefIApp Core **IS** and what it **WILL NEVER BE**.
+> Any violation of this manifesto is an architectural regression.
 
 ---
 
-## SEÇÃO I — O QUE O CORE É
+## PREAMBLE
 
-### 1.1 Sistema Operacional de Restauração
+The ChefIApp Core has been validated in **production simulation** with:
+- 24 hours of continuous operation
+- Complete governance (SLA, escalation, hard-blocking)
+- Offline resilience during peak hours
+- Zero orphans, zero duplicates, zero data loss
 
-O Core não é um aplicativo. É um **sistema operacional** que governa:
-- Pedidos
-- Tarefas
-- Turnos
-- Governança
-- Integridade de dados
+This manifesto codifies the decisions that made this possible.
 
-### 1.2 Governador de Comportamento Humano
+**Ratification date:** 2026-01-24  
+**Validated by:** MEGA OPERATIONAL SIMULATOR v2.1
 
-O Core não sugere. O Core **exige**.
+---
 
-- Tarefas têm SLA
-- SLA expirado = escalonamento automático
-- Escalonamento ignora hierarquia social
-- Hard-blocking impede operações até resolução
+## SECTION I — WHAT THE CORE IS
 
-### 1.3 Fonte Única de Verdade
+### 1.1 Restaurant Operating System
 
-Existe **uma** fonte de verdade para cada domínio:
+The Core is not an application. It is an **operating system** that governs:
+- Orders
+- Tasks
+- Shifts
+- Governance
+- Data integrity
 
-| Domínio | Fonte de Verdade |
-|---------|------------------|
-| Pedidos | `gm_orders` |
-| Tarefas | `gm_tasks` |
-| Eventos | `gm_events` |
-| Governança | `task-engine/policies/*.json` |
-| Perfis | `seeds/profiles/*.json` |
+### 1.2 Human Behavior Governor
 
-**Duplicar é proibido. Consolidar é obrigatório.**
+The Core does not suggest. The Core **demands**.
 
-### 1.4 Offline-First por Design
+- Tasks have SLA
+- Expired SLA = automatic escalation
+- Escalation ignores social hierarchy
+- Hard-blocking prevents operations until resolution
 
-Offline não é erro. Offline é **estado válido**.
+### 1.3 Single Source of Truth
 
-- Ações são enfileiradas localmente
-- Idempotency keys previnem duplicação
-- Reconciliação é automática
-- Integridade é garantida em qualquer cenário de rede
+There is **one** source of truth for each domain:
+
+| Domain | Source of Truth |
+|--------|----------------|
+| Orders | `gm_orders` |
+| Tasks | `gm_tasks` |
+| Events | `gm_events` |
+| Governance | `task-engine/policies/*.json` |
+| Profiles | `seeds/profiles/*.json` |
+
+**Duplication is forbidden. Consolidation is mandatory.**
+
+### 1.4 Offline-First by Design
+
+Offline is not an error. Offline is a **valid state**.
+
+- Actions are queued locally
+- Idempotency keys prevent duplication
+- Reconciliation is automatic
+- Integrity is guaranteed in any network scenario
 
 ### 1.5 Event-Driven
 
-O Core se comunica por **eventos**, não por chamadas diretas.
+The Core communicates through **events**, not direct calls.
 
 ```
-Ação → Evento → Reação
+Action → Event → Reaction
 ```
 
-Eventos são:
-- Imutáveis
-- Auditáveis
-- Reproduzíveis
+Events are:
+- Immutable
+- Auditable
+- Reproducible
 
-### 1.6 Governado por SLA
+### 1.6 SLA-Governed
 
-Nenhuma tarefa existe sem deadline.  
-Nenhum deadline existe sem consequência.
+No task exists without a deadline.  
+No deadline exists without consequences.
 
 ```
-Tarefa criada → SLA definido → Monitoramento → Escalonamento → Resolução ou Falha
+Task created → SLA defined → Monitoring → Escalation → Resolution or Failure
 ```
 
-### 1.7 Testado por Simulação
+### 1.7 Tested by Simulation
 
-A única prova de funcionamento é o simulador.
+The only proof of functionality is the simulator.
 
 ```bash
 make simulate-24h-small
 make assertions
 ```
 
-**Se passa: está correto.**  
-**Se falha: está errado.**
+**If it passes: it's correct.**  
+**If it fails: it's wrong.**
 
-Não há exceções. Não há "funciona na minha máquina".
+There are no exceptions. There is no "works on my machine".
 
 ---
 
-## SEÇÃO II — O QUE O CORE NUNCA SERÁ
+## SECTION II — WHAT THE CORE WILL NEVER BE
 
-### 2.1 Nunca Será um POS Comum
+### 2.1 Will Never Be a Common POS
 
-POS comum = interface de venda.  
-ChefIApp Core = sistema de governança operacional.
+Common POS = sales interface.  
+ChefIApp Core = operational governance system.
 
-A diferença:
-- POS registra vendas
-- Core **governa operações**
+The difference:
+- POS records sales
+- Core **governs operations**
 
-### 2.2 Nunca Será UI-First
+### 2.2 Will Never Be UI-First
 
-UI é **consumidor** do Core, não fonte de verdade.
-
-```
-ERRADO: UI decide → Core obedece
-CERTO:  Core decide → UI exibe
-```
-
-Se a UI discorda do Core, a UI está errada.
-
-### 2.3 Nunca Será Permissivo
-
-O Core não pergunta "você tem certeza?".  
-O Core diz "você não pode até que X esteja feito".
-
-Permissividade é bug. Rigidez é feature.
-
-### 2.4 Nunca Será "Best Effort"
-
-Não existe "tentamos enviar".  
-Existe "enviado" ou "falhou com audit trail".
+UI is a **consumer** of the Core, not a source of truth.
 
 ```
-PROIBIDO: fire-and-forget
-OBRIGATÓRIO: confirm-or-retry-with-audit
+WRONG: UI decides → Core obeys
+RIGHT: Core decides → UI displays
 ```
 
-### 2.5 Nunca Será Feature Playground
+If the UI disagrees with the Core, the UI is wrong.
 
-Novas features não entram no Core por vontade.  
-Entram por **necessidade validada pelo simulador**.
+### 2.3 Will Never Be Permissive
 
-Critério de entrada:
-1. A feature resolve problema operacional real?
-2. O simulador pode exercitar a feature?
-3. A feature mantém integridade sob stress?
+The Core does not ask "are you sure?".  
+The Core says "you cannot until X is done".
 
-**3 sim = pode entrar.**  
-**Qualquer não = não entra.**
+Permissiveness is a bug. Rigidity is a feature.
 
-### 2.6 Nunca Será Dependente de UI
+### 2.4 Will Never Be "Best Effort"
 
-O Core funciona **sem**:
+There is no "we tried to send".  
+There is "sent" or "failed with audit trail".
+
+```
+FORBIDDEN: fire-and-forget
+REQUIRED: confirm-or-retry-with-audit
+```
+
+### 2.5 Will Never Be a Feature Playground
+
+New features do not enter the Core by will.  
+They enter by **need validated by the simulator**.
+
+Entry criteria:
+1. Does the feature solve a real operational problem?
+2. Can the simulator exercise the feature?
+3. Does the feature maintain integrity under stress?
+
+**3 yes = can enter.**  
+**Any no = does not enter.**
+
+### 2.6 Will Never Be UI-Dependent
+
+The Core works **without**:
 - Mobile app
 - Web app
 - Dashboard
-- Interface gráfica
+- Graphical interface
 
-Se todas as UIs forem deletadas, o Core continua governando.
+If all UIs are deleted, the Core continues governing.
 
-### 2.7 Nunca Aceitará Lógica Crítica Fora do Core
+### 2.7 Will Never Accept Critical Logic Outside the Core
 
-| Tipo de Lógica | Onde Vive | Onde NUNCA Vive |
-|----------------|-----------|-----------------|
-| Governança | Core | UI |
+| Logic Type | Where It Lives | Where It NEVER Lives |
+|------------|----------------|---------------------|
+| Governance | Core | UI |
 | SLA | Core | Mobile |
-| Escalonamento | Core | Web |
-| Hard-blocking | Core | Componentes |
-| Offline sync | Core | Hooks avulsos |
+| Escalation | Core | Web |
+| Hard-blocking | Core | Components |
+| Offline sync | Core | Scattered hooks |
 
-**Se é crítico, está no Core. Sem exceção.**
-
----
-
-## SEÇÃO III — PRINCÍPIOS NÃO NEGOCIÁVEIS
-
-### 3.1 Governança > Conveniência
-
-Se a governança diz "não pode fechar turno", o turno não fecha.  
-Não importa se o gerente está com pressa.  
-Não importa se "é só dessa vez".
-
-### 3.2 Integridade > Velocidade
-
-Uma operação lenta e correta é melhor que uma rápida e corrompida.
-
-O Core prefere:
-- Bloquear a perder dados
-- Retry a falhar silenciosamente
-- Audit trail a performance
-
-### 3.3 Offline é Estado Válido
-
-Perder conexão não é emergência.  
-É cenário esperado e testado.
-
-O sistema deve:
-- Continuar operando
-- Enfileirar ações
-- Reconciliar automaticamente
-- Nunca duplicar
-
-### 3.4 UI é Descartável
-
-Qualquer UI pode ser:
-- Reescrita
-- Substituída
-- Deletada
-
-O Core permanece intacto.
-
-### 3.5 Se o Simulador Não Exercita, Não é Core
-
-```
-Código no Core + Simulador não testa = Código morto
-Código morto = Remover
-```
-
-Não há código "importante demais para testar".
+**If it's critical, it's in the Core. No exceptions.**
 
 ---
 
-## SEÇÃO IV — REGRAS PARA O FUTURO
+## SECTION III — NON-NEGOTIABLE PRINCIPLES
 
-### 4.1 Como Novas Features Entram
+### 3.1 Governance > Convenience
+
+If governance says "cannot close shift", the shift does not close.  
+It doesn't matter if the manager is in a hurry.  
+It doesn't matter if "it's just this once".
+
+### 3.2 Integrity > Speed
+
+A slow and correct operation is better than a fast and corrupted one.
+
+The Core prefers:
+- Blocking over losing data
+- Retry over failing silently
+- Audit trail over performance
+
+### 3.3 Offline is a Valid State
+
+Losing connection is not an emergency.  
+It is an expected and tested scenario.
+
+The system must:
+- Continue operating
+- Queue actions
+- Reconcile automatically
+- Never duplicate
+
+### 3.4 UI is Disposable
+
+Any UI can be:
+- Rewritten
+- Replaced
+- Deleted
+
+The Core remains intact.
+
+### 3.5 If the Simulator Doesn't Exercise It, It's Not Core
 
 ```
-1. Proposta documentada
-2. Simulador atualizado para exercitar
-3. Implementação
-4. make simulate-24h-* passa
-5. make assertions passa
-6. Merge permitido
+Code in Core + Simulator doesn't test = Dead code
+Dead code = Remove
 ```
 
-**Pular qualquer passo = PR rejeitado.**
+There is no code "too important to test".
 
-### 4.2 Onde Lógica Pode Viver
+---
 
-| Tipo | Localização Permitida |
-|------|----------------------|
-| Governança | `core/sovereignty/`, `task-engine/` |
-| Eventos | `core/events/` |
+## SECTION IV — RULES FOR THE FUTURE
+
+### 4.1 How New Features Enter
+
+```
+1. Documented proposal
+2. Simulator updated to exercise
+3. Implementation
+4. make simulate-24h-* passes
+5. make assertions passes
+6. Merge allowed
+```
+
+**Skipping any step = PR rejected.**
+
+### 4.2 Where Logic Can Live
+
+| Type | Allowed Location |
+|------|----------------|
+| Governance | `core/sovereignty/`, `task-engine/` |
+| Events | `core/events/` |
 | Offline | `core/offline/`, `simulators/` |
 | Fiscal | `core/fiscal/` |
-| Pagamentos | `core/payment/` |
+| Payments | `core/payment/` |
 | UI Components | `pages/`, `components/` |
-| Integrações | `server/integrations/` |
+| Integrations | `server/integrations/` |
 
-**Lógica no lugar errado = refatorar ou remover.**
+**Logic in the wrong place = refactor or remove.**
 
-### 4.3 Quando Algo Vira Legacy
+### 4.3 When Something Becomes Legacy
 
-Código vira legacy quando:
-- Não é exercitado pelo simulador por 2 ciclos
-- Tem @deprecated há mais de 1 mês
-- Duplica lógica existente no Core
-- Não tem owner documentado
+Code becomes legacy when:
+- Not exercised by simulator for 2 cycles
+- Has @deprecated for more than 1 month
+- Duplicates existing logic in Core
+- Has no documented owner
 
-**Legacy = candidato a remoção.**
+**Legacy = candidate for removal.**
 
-### 4.4 Quem Decide Exceções
+### 4.4 Who Decides Exceptions
 
-**Quase ninguém.**
+**Almost no one.**
 
-Exceções ao manifesto requerem:
-1. Documento escrito justificando
-2. Aprovação de 2+ maintainers
-3. Plano de remoção da exceção
-4. Prazo máximo de 30 dias
+Exceptions to the manifesto require:
+1. Written document justifying
+2. Approval from 2+ maintainers
+3. Plan to remove the exception
+4. Maximum deadline of 30 days
 
-Exceção sem prazo = não é exceção, é violação.
+Exception without deadline = not an exception, it's a violation.
 
 ---
 
-## SEÇÃO V — DEFINIÇÕES
+## SECTION V — DEFINITIONS
 
 ### Core
-Código que governa operação, testado pelo simulador, independente de UI.
+Code that governs operations, tested by the simulator, independent of UI.
 
 ### UI
-Qualquer interface visual que consome o Core.
+Any visual interface that consumes the Core.
 
 ### Legacy
-Código não exercitado, marcado para remoção.
+Code not exercised, marked for removal.
 
-### Governança
-Sistema de regras que força comportamento correto.
+### Governance
+System of rules that enforces correct behavior.
 
 ### Hard-Blocking
-Restrição que impede operação até resolução.
+Restriction that prevents operation until resolution.
 
-### Escalonamento
-Transferência automática de responsabilidade por SLA expirado.
+### Escalation
+Automatic transfer of responsibility due to expired SLA.
 
-### Simulador
-Ferramenta que valida o Core sem UI, sob condições reais.
+### Simulator
+Tool that validates the Core without UI, under real conditions.
 
 ---
 
-## SEÇÃO VI — ASSINATURAS
+## SECTION VI — SIGNATURES
 
-Este manifesto foi validado por:
+This manifesto has been validated by:
 
 - **MEGA OPERATIONAL SIMULATOR v2.1**
-  - 24h simuladas
-  - 964+ pedidos
-  - 210+ tarefas
-  - 89+ escalações
+  - 24h simulated
+  - 964+ orders
+  - 210+ tasks
+  - 89+ escalations
   - 0 orphans
-  - 0 duplicatas
+  - 0 duplicates
 
-- **Limpeza Total (2026-01-24)**
-  - 25 arquivos removidos
-  - 11 diretórios removidos
-  - 8 edge functions removidas
-  - 0 regressões
+- **Total Cleanup (2026-01-24)**
+  - 25 files removed
+  - 11 directories removed
+  - 8 edge functions removed
+  - 0 regressions
 
 ---
 
-## APÊNDICE — COMANDOS DE VALIDAÇÃO
+## APPENDIX — VALIDATION COMMANDS
 
 ```bash
-# Validação rápida
+# Quick validation
 make simulate-24h-small && make assertions
 
-# Validação completa
+# Complete validation
 make simulate-24h-small && \
 make simulate-24h-large && \
 make simulate-24h-giant && \
 make assertions
 
-# Verificar integridade
+# Check integrity
 make assertions
 ```
 
-**Se qualquer comando falhar, o Core está em violação.**
+**If any command fails, the Core is in violation.**
 
 ---
 
-## EPÍLOGO
+## EPILOGUE
 
-> O ChefIApp Core não é flexível.  
-> Não é amigável.  
-> Não é permissivo.  
+> The ChefIApp Core is not flexible.  
+> It is not friendly.  
+> It is not permissive.  
 >
-> É **correto**.
+> It is **correct**.
 >
-> E ser correto é mais importante que ser conveniente.
+> And being correct is more important than being convenient.
 
 ---
 
-*Este manifesto é lei. Violações são bugs. Bugs são corrigidos ou removidos.*
+*This manifesto is law. Violations are bugs. Bugs are fixed or removed.*

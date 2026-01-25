@@ -1,246 +1,246 @@
-# Status Operacional — Visão de Impacto Real
+# Operational Status — Real-World Impact View
 
-> **Este documento responde: "O sistema funciona no bar? Qual o impacto real na operação?"**  
-> **Última atualização:** 2026-01-24  
-> **Público-alvo:** Donos de restaurante, Gerentes, Operadores
-
----
-
-## 🎯 Propósito
-
-Este documento foca em **impacto operacional**, não em detalhes técnicos. Ele responde perguntas como:
-
-- O sistema ajuda ou atrapalha a operação?
-- Quais funcionalidades estão prontas para uso?
-- O que ainda precisa ser melhorado?
-- Qual o ROI real?
+> **This document answers: "Does the system work in the restaurant? What's the real operational impact?"**  
+> **Last updated:** 2026-01-24  
+> **Target audience:** Restaurant owners, Managers, Operators
 
 ---
 
-## ✅ Status Geral
+## 🎯 Purpose
 
-**Versão:** `v1.0-core-sovereign`  
-**Status Operacional:** 🟡 **CORE VALIDADO, UI EM EVOLUÇÃO**
+This document focuses on **operational impact**, not technical details. It answers questions like:
 
-**Tradução:** O motor do sistema está sólido e testado. As interfaces visuais ainda estão sendo refinadas.
+- Does the system help or hinder operations?
+- Which features are ready for use?
+- What still needs improvement?
+- What's the real ROI?
 
 ---
 
-## 🏪 Funcionalidades por Módulo
+## ✅ General Status
+
+**Version:** `v1.0-core-sovereign`  
+**Operational Status:** 🟡 **CORE VALIDATED, UI IN EVOLUTION**
+
+**Translation:** The system engine is solid and tested. Visual interfaces are still being refined.
+
+---
+
+## 🏪 Features by Module
 
 ### 📱 Mobile App (Staff)
 
-| Funcionalidade | Status | Impacto | Notas |
-|----------------|--------|---------|-------|
-| Receber Pedidos | ✅ Operacional | Alto | Core validado |
-| Visualizar Tarefas | ✅ Operacional | Alto | SLA e escalonamento ativos |
-| Fechar Turno | ✅ Operacional | Crítico | Hard-blocking validado |
-| Modo Offline | ✅ Operacional | Crítico | Idempotência garantida |
-| KDS (Kitchen Display) | ✅ Operacional | Alto | Headless validado |
+| Feature | Status | Impact | Notes |
+|---------|--------|--------|-------|
+| Receive Orders | ✅ Operational | High | Core validated |
+| View Tasks | ✅ Operational | High | SLA and escalation active |
+| Close Shift | ✅ Operational | Critical | Hard-blocking validated |
+| Offline Mode | ✅ Operational | Critical | Idempotency guaranteed |
+| KDS (Kitchen Display) | ✅ Operational | High | Headless validated |
 
-**Impacto Real:**
-- ✅ Garçons podem trabalhar mesmo com rede instável
-- ✅ Tarefas críticas não são esquecidas (escalonamento automático)
-- ✅ Turno não fecha sem compliance (hard-blocking)
+**Real Impact:**
+- ✅ Waiters can work even with unstable network
+- ✅ Critical tasks are not forgotten (automatic escalation)
+- ✅ Shift doesn't close without compliance (hard-blocking)
 
 ---
 
 ### 🏪 Merchant Portal
 
-| Funcionalidade | Status | Impacto | Notas |
-|----------------|--------|---------|-------|
-| Dashboard | ✅ Operacional | Médio | Métricas em tempo real |
-| Configuração | ✅ Operacional | Alto | Perfis de restaurante |
-| Relatórios | 🟡 Parcial | Médio | Em evolução |
-| Gestão de Staff | ✅ Operacional | Alto | Roles e permissões |
+| Feature | Status | Impact | Notes |
+|---------|--------|--------|-------|
+| Dashboard | ✅ Operational | Medium | Real-time metrics |
+| Configuration | ✅ Operational | High | Restaurant profiles |
+| Reports | 🟡 Partial | Medium | In evolution |
+| Staff Management | ✅ Operational | High | Roles and permissions |
 
-**Impacto Real:**
-- ✅ Donos podem configurar o sistema para seu tipo de restaurante
-- ✅ Gestão de equipe funcional
-- 🟡 Relatórios ainda em desenvolvimento
+**Real Impact:**
+- ✅ Owners can configure the system for their restaurant type
+- ✅ Team management functional
+- 🟡 Reports still in development
 
 ---
 
 ### 🌐 Customer Portal
 
-| Funcionalidade | Status | Impacto | Notas |
-|----------------|--------|---------|-------|
-| Menu Digital | ✅ Operacional | Alto | QR Code funcional |
-| Pedidos Online | ✅ Operacional | Alto | Integração com cozinha |
-| Carrinho | ✅ Operacional | Médio | UX em refinamento |
+| Feature | Status | Impact | Notes |
+|---------|--------|--------|-------|
+| Digital Menu | ✅ Operational | High | QR Code functional |
+| Online Orders | ✅ Operational | High | Kitchen integration |
+| Cart | ✅ Operational | Medium | UX being refined |
 
-**Impacto Real:**
-- ✅ Clientes podem fazer pedidos via QR Code
-- ✅ Pedidos chegam direto na cozinha
-- 🟡 Experiência de carrinho ainda sendo otimizada
-
----
-
-## 📊 Métricas Operacionais
-
-### Validação por Simulação
-
-O Core foi validado simulando **24 horas de operação real**:
-
-| Métrica | Valor | Status |
-|---------|-------|--------|
-| Pedidos processados | 300+ | ✅ Suportado |
-| Tarefas geradas | 70+ | ✅ Funcional |
-| Tarefas completadas | 65+ | ✅ Realista |
-| Escalonamentos | 0 (esperado) | ✅ SLA adequado |
-| Bloqueios de turno | 15 | ✅ Compliance ativo |
-| Ações offline | 50+ | ✅ Resiliente |
-| Orphan items | 0 | ✅ Integridade perfeita |
-
-**Tradução:** O sistema aguenta uma operação real de restaurante médio/grande.
+**Real Impact:**
+- ✅ Customers can place orders via QR Code
+- ✅ Orders arrive directly in kitchen
+- 🟡 Cart experience still being optimized
 
 ---
 
-### Tipos de Restaurante Suportados
+## 📊 Operational Metrics
 
-| Perfil | Staff | Status | Validação |
-|--------|-------|--------|-----------|
-| Ambulante | 1-3 | ✅ Validado | Simulação completa |
-| Pequeno | 5-15 | ✅ Validado | Simulação completa |
-| Médio | 20-50 | ✅ Validado | Simulação completa |
-| Grande | 50-100 | ✅ Validado | Simulação completa |
-| Gigante | 300+ | ✅ Validado | Simulação completa |
+### Validation by Simulation
 
-**Impacto Real:** O sistema funciona desde food trucks até grandes restaurantes.
+The Core was validated by simulating **24 hours of real operation**:
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| Orders processed | 300+ | ✅ Supported |
+| Tasks generated | 70+ | ✅ Functional |
+| Tasks completed | 65+ | ✅ Realistic |
+| Escalations | 0 (expected) | ✅ SLA adequate |
+| Shift blocks | 15 | ✅ Compliance active |
+| Offline actions | 50+ | ✅ Resilient |
+| Orphan items | 0 | ✅ Perfect integrity |
+
+**Translation:** The system handles a real medium/large restaurant operation.
 
 ---
 
-## 🎯 Funcionalidades Críticas
+### Supported Restaurant Types
 
-### ✅ Implementadas e Validadas
+| Profile | Staff | Status | Validation |
+|---------|-------|--------|------------|
+| Ambulante | 1-3 | ✅ Validated | Complete simulation |
+| Pequeno | 5-15 | ✅ Validated | Complete simulation |
+| Médio | 20-50 | ✅ Validated | Complete simulation |
+| Grande | 50-100 | ✅ Validated | Complete simulation |
+| Gigante | 300+ | ✅ Validated | Complete simulation |
 
-1. **Governança Operacional**
-   - ✅ Tarefas com SLA
-   - ✅ Escalonamento automático
-   - ✅ Hard-blocking de operações críticas
-   - **Impacto:** Compliance não é mais opcional
+**Real Impact:** The system works from food trucks to large restaurants.
 
-2. **Resiliência Offline**
-   - ✅ Fila de ações offline
-   - ✅ Reconciliação automática
-   - ✅ Zero duplicação
-   - **Impacto:** Sistema funciona mesmo com rede instável
+---
 
-3. **Integridade de Dados**
+## 🎯 Critical Features
+
+### ✅ Implemented and Validated
+
+1. **Operational Governance**
+   - ✅ Tasks with SLA
+   - ✅ Automatic escalation
+   - ✅ Hard-blocking of critical operations
+   - **Impact:** Compliance is no longer optional
+
+2. **Offline Resilience**
+   - ✅ Offline action queue
+   - ✅ Automatic reconciliation
+   - ✅ Zero duplication
+   - **Impact:** System works even with unstable network
+
+3. **Data Integrity**
    - ✅ Zero orphan items
-   - ✅ Zero duplicatas
-   - ✅ Zero perda de dados
-   - **Impacto:** Confiança total nos dados
+   - ✅ Zero duplicates
+   - ✅ Zero data loss
+   - **Impact:** Total trust in data
 
 ---
 
-### 🟡 Em Evolução
+### 🟡 In Evolution
 
 1. **UI/UX**
-   - 🟡 Refinamento contínuo
-   - 🟡 Melhorias de usabilidade
-   - **Impacto:** Funciona, mas pode ser mais intuitivo
+   - 🟡 Continuous refinement
+   - 🟡 Usability improvements
+   - **Impact:** Works, but can be more intuitive
 
-2. **Relatórios Avançados**
-   - 🟡 Dashboard básico funcional
-   - 🟡 Relatórios detalhados em desenvolvimento
-   - **Impacto:** Métricas básicas disponíveis, avançadas em breve
-
----
-
-## 🚨 Limitações Conhecidas (Operacionais)
-
-### Nenhuma Limitação Crítica
-
-**Status:** ✅ Sistema operacional
-
-**Observações:**
-- Core estável e validado
-- UI em refinamento contínuo
-- Funcionalidades críticas todas operacionais
+2. **Advanced Reports**
+   - 🟡 Basic dashboard functional
+   - 🟡 Detailed reports in development
+   - **Impact:** Basic metrics available, advanced coming soon
 
 ---
 
-## 💰 ROI Esperado
+## 🚨 Known Limitations (Operational)
 
-### Economia de Tempo
+### No Critical Limitations
 
-| Atividade | Antes | Depois | Economia |
-|-----------|-------|--------|----------|
-| Fechamento de turno | 30-45 min | 10-15 min | 20-30 min |
-| Gestão de tarefas | Manual | Automática | 100% |
-| Reconciliação offline | 1-2 horas | Automática | 100% |
+**Status:** ✅ System operational
 
-**Impacto:** ~2-3 horas economizadas por dia em restaurante médio.
-
----
-
-### Redução de Erros
-
-| Tipo de Erro | Antes | Depois | Redução |
-|--------------|-------|--------|---------|
-| Tarefas esquecidas | 5-10/dia | 0 | 100% |
-| Duplicação de pedidos | 2-3/semana | 0 | 100% |
-| Perda de dados offline | 1-2/semana | 0 | 100% |
-
-**Impacto:** Zero erros operacionais críticos.
+**Observations:**
+- Core stable and validated
+- UI in continuous refinement
+- All critical features operational
 
 ---
 
-## 📋 Checklist de Uso Real
+## 💰 Expected ROI
 
-Antes de usar em produção, verifique:
+### Time Savings
 
-- [ ] Perfil de restaurante configurado corretamente
-- [ ] Policy packs adequados ao tipo de operação
-- [ ] Staff treinado nas funcionalidades básicas
-- [ ] Backup de dados configurado
-- [ ] Suporte técnico disponível
+| Activity | Before | After | Savings |
+|----------|--------|-------|---------|
+| Shift closure | 30-45 min | 10-15 min | 20-30 min |
+| Task management | Manual | Automatic | 100% |
+| Offline reconciliation | 1-2 hours | Automatic | 100% |
 
-**Se todos os itens estão ✅, o sistema está pronto para uso.**
-
----
-
-## 🎯 Próximos Passos Operacionais
-
-### Curto Prazo (1-2 semanas)
-
-- [ ] Refinar UI/UX baseado em feedback real
-- [ ] Expandir relatórios operacionais
-- [ ] Adicionar mais perfis de restaurante
-
-### Médio Prazo (1 mês)
-
-- [ ] Implementar Nível 2 do Roadmap (UI Improvements)
-- [ ] Adicionar métricas de negócio (ROI, conversão)
-- [ ] Expandir integrações (ERP, fiscal)
+**Impact:** ~2-3 hours saved per day in medium restaurant.
 
 ---
 
-## 📚 Documentos Relacionados
+### Error Reduction
 
-- **[docs/STATUS_TECH.md](./STATUS_TECH.md)** - Status técnico (estabilidade)
-- **[docs/CORE_OVERVIEW.md](./CORE_OVERVIEW.md)** - Mapa mental do Core
-- **[docs/GUIA_RAPIDO_GARCOM.md](./GUIA_RAPIDO_GARCOM.md)** - Guia para staff
-- **[ROADMAP.md](../../ROADMAP.md)** - Próximos níveis
+| Error Type | Before | After | Reduction |
+|------------|--------|-------|-----------|
+| Forgotten tasks | 5-10/day | 0 | 100% |
+| Order duplication | 2-3/week | 0 | 100% |
+| Offline data loss | 1-2/week | 0 | 100% |
 
----
-
-## ✅ Conclusão
-
-**Status Operacional:** 🟡 **CORE VALIDADO, UI EM EVOLUÇÃO**
-
-O sistema está **operacionalmente funcional** para uso real. O Core está sólido e validado. As interfaces visuais estão em refinamento contínuo.
-
-**Impacto Real:**
-- ✅ Economia de tempo significativa
-- ✅ Redução de erros operacionais
-- ✅ Compliance automático
-- ✅ Resiliência offline
-
-**Última validação:** 2026-01-24  
-**Próxima revisão:** Após feedback de uso real
+**Impact:** Zero critical operational errors.
 
 ---
 
-*Este documento é parte do Core v1.0-core-sovereign.*
+## 📋 Real-World Usage Checklist
+
+Before using in production, verify:
+
+- [ ] Restaurant profile configured correctly
+- [ ] Policy packs adequate for operation type
+- [ ] Staff trained on basic features
+- [ ] Data backup configured
+- [ ] Technical support available
+
+**If all items are ✅, the system is ready for use.**
+
+---
+
+## 🎯 Next Operational Steps
+
+### Short Term (1-2 weeks)
+
+- [ ] Refine UI/UX based on real feedback
+- [ ] Expand operational reports
+- [ ] Add more restaurant profiles
+
+### Medium Term (1 month)
+
+- [ ] Implement Roadmap Level 2 (UI Improvements)
+- [ ] Add business metrics (ROI, conversion)
+- [ ] Expand integrations (ERP, fiscal)
+
+---
+
+## 📚 Related Documents
+
+- **[docs/STATUS_TECH.md](./STATUS_TECH.md)** - Technical status (stability)
+- **[docs/CORE_OVERVIEW.md](./CORE_OVERVIEW.md)** - Core mental map
+- **[docs/GUIA_RAPIDO_GARCOM.md](./GUIA_RAPIDO_GARCOM.md)** - Staff guide
+- **[ROADMAP.md](../../ROADMAP.md)** - Next levels
+
+---
+
+## ✅ Conclusion
+
+**Operational Status:** 🟡 **CORE VALIDATED, UI IN EVOLUTION**
+
+The system is **operationally functional** for real-world use. The Core is solid and validated. Visual interfaces are in continuous refinement.
+
+**Real Impact:**
+- ✅ Significant time savings
+- ✅ Reduction in operational errors
+- ✅ Automatic compliance
+- ✅ Offline resilience
+
+**Last validation:** 2026-01-24  
+**Next review:** After real-world usage feedback
+
+---
+
+*This document is part of Core v1.0-core-sovereign.*

@@ -1,441 +1,441 @@
-# Core Overview — Mapa Mental do Sistema
+# Core Overview — System Mental Map
 
-> **Este documento responde: "O que é intocável? O que é extensível? O que é descartável?"**  
-> **Última atualização:** 2026-01-24  
-> **Status:** RATIFICADO
-
----
-
-## 🎯 Propósito
-
-Este documento é um **mapa mental explícito** do ChefIApp Core. Ele não explica "como fazer", mas sim **"por que existe"** e **"o que nunca pode mudar"**.
-
-**Público-alvo:**
-- Desenvolvedores que vão tocar no Core
-- Investidores que precisam entender a arquitetura
-- Auditores que precisam validar integridade
-- Advogados que precisam defender o sistema
+> **This document answers: "What is untouchable? What is extensible? What is disposable?"**  
+> **Last updated:** 2026-01-24  
+> **Status:** RATIFIED
 
 ---
 
-## 🏛️ O Núcleo Sagrado (IMMUTABLE)
+## 🎯 Purpose
 
-### Definição
+This document is an **explicit mental map** of the ChefIApp Core. It does not explain "how to do", but rather **"why it exists"** and **"what can never change"**.
 
-O **Núcleo Sagrado** é o conjunto de componentes que **NUNCA** podem ser alterados sem invalidar todo o sistema. Se você mudar isso, o sistema deixa de ser o ChefIApp.
-
-### Componentes Sagrados
-
-#### 1. **Sistema de Eventos (Event-Driven Architecture)**
-
-**O que é:**
-- Todos os fatos operacionais são eventos imutáveis
-- Eventos são a única linguagem de comunicação entre componentes
-- Eventos são auditáveis, reproduzíveis e ordenados
-
-**Por que é sagrado:**
-- Sem eventos, não há auditoria
-- Sem auditoria, não há confiança
-- Sem confiança, não há produto
-
-**Onde vive:**
-- `gm_events` (tabela)
-- `docker-tests/task-engine/` (geração e processamento)
-- `docker-tests/simulators/simulate-24h.js` (validação)
-
-**Violação = Sistema inválido**
+**Target audience:**
+- Developers who will touch the Core
+- Investors who need to understand the architecture
+- Auditors who need to validate integrity
+- Lawyers who need to defend the system
 
 ---
 
-#### 2. **Governança por SLA (Task Engine)**
+## 🏛️ The Sacred Nucleus (IMMUTABLE)
 
-**O que é:**
-- Toda tarefa tem deadline
-- Deadline expirado = escalonamento automático
-- Escalonamento ignora hierarquia social
-- Hard-blocking impede operações até resolução
+### Definition
 
-**Por que é sagrado:**
-- Sem SLA, tarefas são "sugestões"
-- Sem escalonamento, problemas ficam invisíveis
-- Sem hard-blocking, compliance é opcional
+The **Sacred Nucleus** is the set of components that **NEVER** can be changed without invalidating the entire system. If you change this, the system ceases to be ChefIApp.
 
-**Onde vive:**
-- `docker-tests/task-engine/policies/*.json` (definições)
-- `docker-tests/task-engine/escalation-engine.js` (execução)
-- `gm_tasks`, `gm_task_escalations`, `gm_shift_blocks` (persistência)
+### Sacred Components
 
-**Violação = Governança quebrada**
+#### 1. **Event System (Event-Driven Architecture)**
 
----
+**What it is:**
+- All operational facts are immutable events
+- Events are the only language of communication between components
+- Events are auditable, reproducible, and ordered
 
-#### 3. **Offline-First por Design**
+**Why it's sacred:**
+- Without events, there is no audit
+- Without audit, there is no trust
+- Without trust, there is no product
 
-**O que é:**
-- Offline não é erro, é estado válido
-- Ações são enfileiradas localmente
-- Idempotency keys previnem duplicação
-- Reconciliação é automática
+**Where it lives:**
+- `gm_events` (table)
+- `docker-tests/task-engine/` (generation and processing)
+- `docker-tests/simulators/simulate-24h.js` (validation)
 
-**Por que é sagrado:**
-- Restaurantes operam em ambientes com rede instável
-- Sem offline-first, o sistema quebra na primeira queda de rede
-- Sem idempotência, há duplicação de pedidos/pagamentos
-
-**Onde vive:**
-- `docker-tests/simulators/simulate-24h.js` (simulação de offline)
-- `gm_offline_actions` (auditoria de ações offline)
-- Lógica de retry e reconciliação (a ser consolidada)
-
-**Violação = Sistema não confiável**
+**Violation = Invalid system**
 
 ---
 
-#### 4. **Fonte Única de Verdade (Single Source of Truth)**
+#### 2. **SLA Governance (Task Engine)**
 
-**O que é:**
-- Cada domínio tem **uma** e apenas **uma** fonte de verdade
-- Duplicação de lógica é proibida
-- Consolidação é obrigatória
+**What it is:**
+- Every task has a deadline
+- Expired deadline = automatic escalation
+- Escalation ignores social hierarchy
+- Hard-blocking prevents operations until resolution
 
-**Tabelas Sagradas:**
-| Domínio | Fonte de Verdade | Violação |
-|---------|------------------|----------|
-| Pedidos | `gm_orders` | Criar outra tabela de pedidos |
-| Tarefas | `gm_tasks` | Lógica de tarefas fora do task-engine |
-| Eventos | `gm_events` | Eventos em múltiplos lugares |
-| Governança | `task-engine/policies/*.json` | SLA fora do task-engine |
-| Perfis | `seeds/profiles/*.json` | Perfis hardcoded no código |
+**Why it's sacred:**
+- Without SLA, tasks are "suggestions"
+- Without escalation, problems become invisible
+- Without hard-blocking, compliance is optional
 
-**Por que é sagrado:**
-- Duplicação = inconsistência
-- Inconsistência = bugs
-- Bugs = perda de confiança
+**Where it lives:**
+- `docker-tests/task-engine/policies/*.json` (definitions)
+- `docker-tests/task-engine/escalation-engine.js` (execution)
+- `gm_tasks`, `gm_task_escalations`, `gm_shift_blocks` (persistence)
 
-**Violação = Integridade quebrada**
+**Violation = Broken governance**
 
 ---
 
-#### 5. **Validação por Simulação**
+#### 3. **Offline-First by Design**
 
-**O que é:**
-- A única prova de funcionamento é o simulador
-- Se `make simulate-24h-small` passa, está correto
-- Se falha, está errado
-- Não há exceções
+**What it is:**
+- Offline is not an error, it's a valid state
+- Actions are queued locally
+- Idempotency keys prevent duplication
+- Reconciliation is automatic
 
-**Por que é sagrado:**
-- Sem simulação, não há validação objetiva
-- Sem validação objetiva, não há confiança
-- Sem confiança, não há produto
+**Why it's sacred:**
+- Restaurants operate in environments with unstable networks
+- Without offline-first, the system breaks on the first network drop
+- Without idempotency, there is duplication of orders/payments
 
-**Onde vive:**
-- `docker-tests/simulators/simulate-24h.js` (simulação completa)
-- `docker-tests/simulators/simulate-failfast.js` (validação rápida)
-- `docker-tests/Makefile` (orquestração)
+**Where it lives:**
+- `docker-tests/simulators/simulate-24h.js` (offline simulation)
+- `gm_offline_actions` (offline actions audit)
+- Retry and reconciliation logic (to be consolidated)
 
-**Violação = Sistema não validado**
+**Violation = Unreliable system**
 
 ---
 
-## 🔧 O Que É Extensível (EVOLUTIVE)
+#### 4. **Single Source of Truth**
 
-### Definição
+**What it is:**
+- Each domain has **one** and only **one** source of truth
+- Logic duplication is forbidden
+- Consolidation is mandatory
 
-Componentes que **podem** ser modificados, estendidos ou substituídos, desde que respeitem os contratos do Núcleo Sagrado.
+**Sacred Tables:**
+| Domain | Source of Truth | Violation |
+|--------|----------------|-----------|
+| Orders | `gm_orders` | Create another orders table |
+| Tasks | `gm_tasks` | Task logic outside task-engine |
+| Events | `gm_events` | Events in multiple places |
+| Governance | `task-engine/policies/*.json` | SLA outside task-engine |
+| Profiles | `seeds/profiles/*.json` | Profiles hardcoded in code |
 
-### Componentes Extensíveis
+**Why it's sacred:**
+- Duplication = inconsistency
+- Inconsistency = bugs
+- Bugs = loss of trust
 
-#### 1. **Perfis de Restaurante**
+**Violation = Broken integrity**
 
-**O que é:**
-- Configurações JSON que definem características de restaurantes
-- Exemplos: `ambulante`, `pequeno`, `medio`, `grande`, `gigante`
+---
 
-**Pode ser:**
-- ✅ Adicionar novos perfis
-- ✅ Modificar características existentes
-- ✅ Adicionar novos campos
+#### 5. **Validation by Simulation**
 
-**Não pode:**
-- ❌ Remover campos obrigatórios
-- ❌ Quebrar contratos do task-engine
-- ❌ Violar integridade de dados
+**What it is:**
+- The only proof of functionality is the simulator
+- If `make simulate-24h-small` passes, it's correct
+- If it fails, it's wrong
+- There are no exceptions
 
-**Onde vive:**
+**Why it's sacred:**
+- Without simulation, there is no objective validation
+- Without objective validation, there is no trust
+- Without trust, there is no product
+
+**Where it lives:**
+- `docker-tests/simulators/simulate-24h.js` (complete simulation)
+- `docker-tests/simulators/simulate-failfast.js` (quick validation)
+- `docker-tests/Makefile` (orchestration)
+
+**Violation = Unvalidated system**
+
+---
+
+## 🔧 What Is Extensible (EVOLUTIVE)
+
+### Definition
+
+Components that **can** be modified, extended, or replaced, as long as they respect the contracts of the Sacred Nucleus.
+
+### Extensible Components
+
+#### 1. **Restaurant Profiles**
+
+**What it is:**
+- JSON configurations that define restaurant characteristics
+- Examples: `ambulante`, `pequeno`, `medio`, `grande`, `gigante`
+
+**Can be:**
+- ✅ Add new profiles
+- ✅ Modify existing characteristics
+- ✅ Add new fields
+
+**Cannot:**
+- ❌ Remove required fields
+- ❌ Break task-engine contracts
+- ❌ Violate data integrity
+
+**Where it lives:**
 - `docker-tests/seeds/profiles/*.json`
 
 ---
 
-#### 2. **Policy Packs (Pacotes de Compliance)**
+#### 2. **Policy Packs (Compliance Packages)**
 
-**O que é:**
-- Definições JSON de tarefas operacionais
-- Exemplos: `OPENING_STANDARD`, `CLOSING_STANDARD`, `FOOD_SAFETY_STANDARD`
+**What it is:**
+- JSON definitions of operational tasks
+- Examples: `OPENING_STANDARD`, `CLOSING_STANDARD`, `FOOD_SAFETY_STANDARD`
 
-**Pode ser:**
-- ✅ Adicionar novos policy packs
-- ✅ Modificar SLA de tarefas
-- ✅ Adicionar novos triggers
+**Can be:**
+- ✅ Add new policy packs
+- ✅ Modify task SLA
+- ✅ Add new triggers
 
-**Não pode:**
-- ❌ Remover validação de SLA
-- ❌ Bypassar escalonamento
-- ❌ Remover hard-blocking de tarefas críticas
+**Cannot:**
+- ❌ Remove SLA validation
+- ❌ Bypass escalation
+- ❌ Remove hard-blocking from critical tasks
 
-**Onde vive:**
+**Where it lives:**
 - `docker-tests/task-engine/policies/*.json`
 
 ---
 
-#### 3. **Simuladores e Testes**
+#### 3. **Simulators and Tests**
 
-**O que é:**
-- Scripts que validam o comportamento do sistema
-- Exemplos: `simulate-24h.js`, `simulate-failfast.js`, `kds-kitchen.js`
+**What it is:**
+- Scripts that validate system behavior
+- Examples: `simulate-24h.js`, `simulate-failfast.js`, `kds-kitchen.js`
 
-**Pode ser:**
-- ✅ Adicionar novos cenários de teste
-- ✅ Modificar parâmetros de simulação
-- ✅ Adicionar novas métricas
+**Can be:**
+- ✅ Add new test scenarios
+- ✅ Modify simulation parameters
+- ✅ Add new metrics
 
-**Não pode:**
-- ❌ Remover validações de integridade
-- ❌ Bypassar verificações de orphans
-- ❌ Falsificar resultados
+**Cannot:**
+- ❌ Remove integrity validations
+- ❌ Bypass orphan checks
+- ❌ Falsify results
 
-**Onde vive:**
+**Where it lives:**
 - `docker-tests/simulators/*.js`
 - `docker-tests/Makefile`
 
 ---
 
-#### 4. **UI e Cascas (Apps)**
+#### 4. **UI and Shells (Apps)**
 
-**O que é:**
-- Interfaces visuais que consomem o Core
-- Exemplos: `merchant-portal`, `mobile-app`, `customer-portal`
+**What it is:**
+- Visual interfaces that consume the Core
+- Examples: `merchant-portal`, `mobile-app`, `customer-portal`
 
-**Pode ser:**
-- ✅ Refazer completamente a UI
-- ✅ Mudar frameworks (React → Vue, etc.)
-- ✅ Adicionar novas telas
+**Can be:**
+- ✅ Completely rewrite the UI
+- ✅ Change frameworks (React → Vue, etc.)
+- ✅ Add new screens
 
-**Não pode:**
-- ❌ Bypassar validações do Core
-- ❌ Criar lógica de negócio na UI
-- ❌ Duplicar fontes de verdade
+**Cannot:**
+- ❌ Bypass Core validations
+- ❌ Create business logic in UI
+- ❌ Duplicate sources of truth
 
-**Onde vive:**
+**Where it lives:**
 - `merchant-portal/`
 - `mobile-app/`
 - `customer-portal/`
 
 ---
 
-## 🗑️ O Que É Descartável (DISPOSABLE)
+## 🗑️ What Is Disposable (DISPOSABLE)
 
-### Definição
+### Definition
 
-Componentes que **podem** ser removidos, refeitos ou ignorados sem impactar o Núcleo Sagrado.
+Components that **can** be removed, redone, or ignored without impacting the Sacred Nucleus.
 
-### Componentes Descartáveis
+### Disposable Components
 
-#### 1. **Documentação de Transição**
+#### 1. **Transition Documentation**
 
-**O que é:**
-- Documentos criados durante migrações
-- Exemplos: `LEGACY_INVENTORY.md`, `CLEANUP_REPORT.md`
+**What it is:**
+- Documents created during migrations
+- Examples: `LEGACY_INVENTORY.md`, `CLEANUP_REPORT.md`
 
-**Pode ser:**
-- ✅ Removido após migração completa
-- ✅ Arquivado em `docs/archive/`
-- ✅ Ignorado se não for mais relevante
+**Can be:**
+- ✅ Removed after complete migration
+- ✅ Archived in `docs/archive/`
+- ✅ Ignored if no longer relevant
 
-**Onde vive:**
+**Where it lives:**
 - `docs/refactor/`
 - `docs/archive/`
 
 ---
 
-#### 2. **Scripts de Migração Única**
+#### 2. **One-Time Migration Scripts**
 
-**O que é:**
-- Scripts SQL ou Node.js executados uma vez
-- Exemplos: migrações de schema, seeds iniciais
+**What it is:**
+- SQL or Node.js scripts executed once
+- Examples: schema migrations, initial seeds
 
-**Pode ser:**
-- ✅ Removido após execução
-- ✅ Mantido apenas para histórico
+**Can be:**
+- ✅ Removed after execution
+- ✅ Kept only for history
 
-**Onde vive:**
-- `supabase/migrations/` (após execução em produção)
-- Scripts temporários em `docker-tests/`
+**Where it lives:**
+- `supabase/migrations/` (after production execution)
+- Temporary scripts in `docker-tests/`
 
 ---
 
-#### 3. **Configurações de Ambiente Específicas**
+#### 3. **Environment-Specific Configurations**
 
-**O que é:**
-- Arquivos `.env.example`, configurações locais
-- Exemplos: chaves de API de desenvolvimento, URLs de staging
+**What it is:**
+- `.env.example` files, local configurations
+- Examples: development API keys, staging URLs
 
-**Pode ser:**
-- ✅ Modificado livremente
-- ✅ Removido se não for mais necessário
+**Can be:**
+- ✅ Modified freely
+- ✅ Removed if no longer necessary
 
-**Onde vive:**
+**Where it lives:**
 - `.env.example`
-- Configurações locais
+- Local configurations
 
 ---
 
-## 📐 Arquitetura em Camadas
+## 📐 Layered Architecture
 
-### Camada 0: Núcleo Sagrado (IMMUTABLE)
+### Layer 0: Sacred Nucleus (IMMUTABLE)
 
 ```
 ┌─────────────────────────────────────────┐
-│   NÚCLEO SAGRADO (NUNCA MUDAR)          │
+│   SACRED NUCLEUS (NEVER CHANGE)          │
 ├─────────────────────────────────────────┤
-│  • Sistema de Eventos                   │
-│  • Governança por SLA                   │
+│  • Event System                         │
+│  • SLA Governance                       │
 │  • Offline-First                        │
-│  • Fonte Única de Verdade               │
-│  • Validação por Simulação              │
+│  • Single Source of Truth               │
+│  • Validation by Simulation             │
 └─────────────────────────────────────────┘
 ```
 
-**Regra:** Se você tocar aqui, o sistema deixa de ser válido.
+**Rule:** If you touch here, the system becomes invalid.
 
 ---
 
-### Camada 1: Runtime (EVOLUTIVE)
+### Layer 1: Runtime (EVOLUTIVE)
 
 ```
 ┌─────────────────────────────────────────┐
-│   RUNTIME (EXTENSÍVEL COM CONTRATOS)    │
+│   RUNTIME (EXTENSIBLE WITH CONTRACTS)   │
 ├─────────────────────────────────────────┤
-│  • Perfis de Restaurante               │
+│  • Restaurant Profiles                  │
 │  • Policy Packs                         │
-│  • Simuladores                          │
+│  • Simulators                           │
 │  • Apps (UI)                            │
 └─────────────────────────────────────────┘
 ```
 
-**Regra:** Pode mudar, desde que respeite os contratos do Núcleo Sagrado.
+**Rule:** Can change, as long as it respects the contracts of the Sacred Nucleus.
 
 ---
 
-### Camada 2: Descartável (DISPOSABLE)
+### Layer 2: Disposable (DISPOSABLE)
 
 ```
 ┌─────────────────────────────────────────┐
-│   DESCARTÁVEL (PODE REMOVER)           │
+│   DISPOSABLE (CAN REMOVE)               │
 ├─────────────────────────────────────────┤
-│  • Documentação de transição            │
-│  • Scripts de migração única            │
-│  • Configurações temporárias            │
+│  • Transition documentation             │
+│  • One-time migration scripts           │
+│  • Temporary configurations            │
 └─────────────────────────────────────────┘
 ```
 
-**Regra:** Pode remover sem impacto no Core.
+**Rule:** Can remove without impacting the Core.
 
 ---
 
-## 🚨 Regras de Ouro
+## 🚨 Golden Rules
 
-### Regra 1: Se Não É Exercitado pelo Simulador, Não É Core
+### Rule 1: If Not Exercised by Simulator, It's Not Core
 
-Se uma funcionalidade não aparece no `simulate-24h.js`, ela não faz parte do Núcleo Sagrado.
+If a functionality doesn't appear in `simulate-24h.js`, it's not part of the Sacred Nucleus.
 
-**Exemplo:**
-- ❌ Feature de "compartilhar receita no Instagram" → Não é Core
-- ✅ Sistema de tarefas com SLA → É Core (exercitado pelo simulador)
-
----
-
-### Regra 2: Duplicação = Violação
-
-Se você vê lógica duplicada, consolide imediatamente.
-
-**Exemplo:**
-- ❌ Lógica de retry em 3 lugares diferentes → Violação
-- ✅ Lógica de retry em `offline-controller` → Correto
+**Example:**
+- ❌ Feature to "share recipe on Instagram" → Not Core
+- ✅ Task system with SLA → Is Core (exercised by simulator)
 
 ---
 
-### Regra 3: UI Não Decide, Core Decide
+### Rule 2: Duplication = Violation
 
-A UI nunca toma decisões de negócio. Ela apenas reflete o estado do Core.
+If you see duplicated logic, consolidate immediately.
 
-**Exemplo:**
-- ❌ UI verifica se pode fechar turno → Violação
-- ✅ UI consulta Core, Core retorna `canCloseShift: false` → Correto
-
----
-
-### Regra 4: Sem Validação, Sem Confiança
-
-Se uma mudança não passa no `make simulate-24h-small`, ela não pode ser commitada.
-
-**Exemplo:**
-- ❌ "Funciona na minha máquina" → Violação
-- ✅ "Passou no simulador" → Correto
+**Example:**
+- ❌ Retry logic in 3 different places → Violation
+- ✅ Retry logic in `offline-controller` → Correct
 
 ---
 
-## 📊 Matriz de Decisão
+### Rule 3: UI Doesn't Decide, Core Decides
 
-Use esta matriz para decidir se algo é Sagrado, Extensível ou Descartável:
+The UI never makes business decisions. It only reflects the Core's state.
 
-| Critério | Sagrado | Extensível | Descartável |
-|----------|---------|------------|-------------|
-| **Aparece no simulador?** | ✅ Sim | ✅ Sim | ❌ Não |
-| **Se remover, sistema quebra?** | ✅ Sim | ❌ Não | ❌ Não |
-| **Pode ser substituído?** | ❌ Não | ✅ Sim | ✅ Sim |
-| **Tem contrato formal?** | ✅ Sim | ✅ Sim | ❌ Não |
-| **É auditável?** | ✅ Sim | ✅ Sim | ❌ Não |
+**Example:**
+- ❌ UI checks if it can close shift → Violation
+- ✅ UI queries Core, Core returns `canCloseShift: false` → Correct
 
 ---
 
-## 🎯 Próximos Passos Recomendados
+### Rule 4: Without Validation, No Trust
 
-### Para Desenvolvedores
+If a change doesn't pass `make simulate-24h-small`, it cannot be committed.
 
-1. **Leia este documento antes de tocar no Core**
-2. **Consulte `CORE_MANIFESTO.md` para regras específicas**
-3. **Execute `make simulate-failfast` antes de cada commit**
-4. **Execute `make simulate-24h-small` antes de cada PR**
-
-### Para Investidores/Auditores
-
-1. **Foque na Camada 0 (Núcleo Sagrado)**
-2. **Valide que o simulador cobre todos os componentes sagrados**
-3. **Verifique que não há duplicação de lógica**
-4. **Confirme que a validação é automática e reproduzível**
+**Example:**
+- ❌ "Works on my machine" → Violation
+- ✅ "Passed in simulator" → Correct
 
 ---
 
-## 📚 Documentos Relacionados
+## 📊 Decision Matrix
 
-- **[CORE_MANIFESTO.md](../../CORE_MANIFESTO.md)** - Lei do sistema (regras específicas)
-- **[docs/CORE_ARCHITECTURE.md](../CORE_ARCHITECTURE.md)** - Arquitetura técnica
-- **[docs/testing/MEGA_OPERATIONAL_SIMULATOR.md](../testing/MEGA_OPERATIONAL_SIMULATOR.md)** - Validação completa
-- **[START_HERE.md](../../START_HERE.md)** - Ponto de entrada
+Use this matrix to decide if something is Sacred, Extensible, or Disposable:
 
----
-
-## ✅ Conclusão
-
-Este documento define **o que é intocável** no ChefIApp Core.
-
-**Resumo em uma frase:**
-> O Núcleo Sagrado é o que faz o ChefIApp ser o ChefIApp. Tudo mais é extensível ou descartável.
-
-**Última validação:** 2026-01-24  
-**Próxima revisão:** Quando houver mudança arquitetural significativa
+| Criterion | Sacred | Extensible | Disposable |
+|-----------|--------|------------|------------|
+| **Appears in simulator?** | ✅ Yes | ✅ Yes | ❌ No |
+| **If removed, system breaks?** | ✅ Yes | ❌ No | ❌ No |
+| **Can be replaced?** | ❌ No | ✅ Yes | ✅ Yes |
+| **Has formal contract?** | ✅ Yes | ✅ Yes | ❌ No |
+| **Is auditable?** | ✅ Yes | ✅ Yes | ❌ No |
 
 ---
 
-*Este documento é parte do Core v1.0-core-sovereign.*
+## 🎯 Recommended Next Steps
+
+### For Developers
+
+1. **Read this document before touching the Core**
+2. **Consult `CORE_MANIFESTO.md` for specific rules**
+3. **Run `make simulate-failfast` before each commit**
+4. **Run `make simulate-24h-small` before each PR**
+
+### For Investors/Auditors
+
+1. **Focus on Layer 0 (Sacred Nucleus)**
+2. **Validate that the simulator covers all sacred components**
+3. **Verify there is no logic duplication**
+4. **Confirm validation is automatic and reproducible**
+
+---
+
+## 📚 Related Documents
+
+- **[CORE_MANIFESTO.md](../../CORE_MANIFESTO.md)** - System law (specific rules)
+- **[docs/CORE_ARCHITECTURE.md](../CORE_ARCHITECTURE.md)** - Technical architecture
+- **[docs/testing/MEGA_OPERATIONAL_SIMULATOR.md](../testing/MEGA_OPERATIONAL_SIMULATOR.md)** - Complete validation
+- **[START_HERE.md](../../START_HERE.md)** - Entry point
+
+---
+
+## ✅ Conclusion
+
+This document defines **what is untouchable** in the ChefIApp Core.
+
+**Summary in one sentence:**
+> The Sacred Nucleus is what makes ChefIApp be ChefIApp. Everything else is extensible or disposable.
+
+**Last validation:** 2026-01-24  
+**Next review:** When there is a significant architectural change
+
+---
+
+*This document is part of Core v1.0-core-sovereign.*
