@@ -1,207 +1,207 @@
 # NEXT STEPS - ChefIApp Core
 
-> Checklist de próximos passos após limpeza, validação e ratificação do Core.
-> Data: 2026-01-24
+> Checklist of next steps after cleanup, validation, and ratification of the Core.
+> Date: 2026-01-24
 
 ---
 
-## ✅ COMPLETADO NESTA SESSÃO
+## ✅ COMPLETED IN THIS SESSION
 
-- [x] Limpeza total do código (25 arquivos, 11 diretórios)
-- [x] Validação completa (simulação 24h)
-- [x] Manifesto do Core ratificado
-- [x] Fail-fast mode implementado
-- [x] Documentação completa criada
-- [x] Commits organizados
-- [x] Tag histórica criada (`v1.0-core-sovereign`)
+- [x] Total code cleanup (25 files, 11 directories)
+- [x] Complete validation (24h simulation)
+- [x] Core Manifesto ratified
+- [x] Fail-fast mode implemented
+- [x] Complete documentation created
+- [x] Commits organized
+- [x] Historical tag created (`v1.0-core-sovereign`)
 
 ---
 
-## 🚀 PRÓXIMOS PASSOS
+## 🚀 NEXT STEPS
 
-### Imediato (Hoje/Amanhã)
+### Immediate (Today/Tomorrow)
 
-- [ ] **Push para remote**
+- [ ] **Push to remote**
   ```bash
   git push -u origin core/frozen-v1
   git push origin v1.0-core-sovereign
   ```
 
-- [ ] **Revisar documentação criada**
-  - Ler `START_HERE.md`
-  - Revisar `CORE_MANIFESTO.md`
-  - Validar `EXECUTIVE_SUMMARY.md`
+- [ ] **Review created documentation**
+  - Read `START_HERE.md`
+  - Review `CORE_MANIFESTO.md`
+  - Validate `EXECUTIVE_SUMMARY.md`
 
-### Curto Prazo (Esta Semana)
+### Short Term (This Week)
 
-- [ ] **Integrar fail-fast no CI/CD**
-  - Adicionar step no GitHub Actions / GitLab CI
-  - Executar `make simulate-failfast` em cada PR
-  - Bloquear merge se falhar
+- [ ] **Integrate fail-fast in CI/CD**
+  - Add step in GitHub Actions / GitLab CI
+  - Run `make simulate-failfast` on each PR
+  - Block merge if it fails
 
-- [ ] **Adicionar gate de PRs**
-  - Requisito: `make simulate-24h-small` deve passar
-  - Requisito: `make assertions` deve passar
-  - Documentar no `CONTRIBUTING.md`
+- [ ] **Add PR gates**
+  - Requirement: `make simulate-24h-small` must pass
+  - Requirement: `make assertions` must pass
+  - Document in `CONTRIBUTING.md`
 
-- [ ] **Documentar workflow de desenvolvimento**
-  - Como fazer mudanças no Core
-  - Quando usar fail-fast vs simulação completa
-  - Processo de validação antes de commit
+- [ ] **Document development workflow**
+  - How to make changes to Core
+  - When to use fail-fast vs complete simulation
+  - Validation process before commit
 
-### Médio Prazo (Este Mês)
+### Medium Term (This Month)
 
-- [ ] **Retornar à UI com calma**
-  - Core está protegido, pode evoluir UI sem risco
-  - Focar em melhorias de UX
-  - Manter Core intacto
+- [ ] **Return to UI calmly**
+  - Core is protected, can evolve UI without risk
+  - Focus on UX improvements
+  - Keep Core intact
 
-- [ ] **Testes com restaurante real**
-  - Identificar restaurante piloto
-  - Validar Core em operação real
-  - Coletar feedback
+- [ ] **Tests with real restaurant**
+  - Identify pilot restaurant
+  - Validate Core in real operation
+  - Collect feedback
 
-- [ ] **Piloto pequeno**
-  - 1-3 restaurantes
-  - Validação de governança em produção
-  - Ajustes baseados em feedback
+- [ ] **Small pilot**
+  - 1-3 restaurants
+  - Governance validation in production
+  - Adjustments based on feedback
 
-### Longo Prazo (Próximos 3 Meses)
+### Long Term (Next 3 Months)
 
-- [ ] **Arquitetura-alvo 2026+**
-  - Planejar evoluções arquiteturais
-  - Documentar visão de longo prazo
-  - Alinhar com manifesto
+- [ ] **Target architecture 2026+**
+  - Plan architectural evolutions
+  - Document long-term vision
+  - Align with manifesto
 
-- [ ] **Plano de entrada no mercado**
-  - Narrativa de produto
-  - Posicionamento competitivo
-  - Estratégia de go-to-market
+- [ ] **Market entry plan**
+  - Product narrative
+  - Competitive positioning
+  - Go-to-market strategy
 
-- [ ] **Narrativa de produto**
-  - Diferencial competitivo
-  - Casos de uso
-  - Prova de valor
+- [ ] **Product narrative**
+  - Competitive differentiator
+  - Use cases
+  - Value proof
 
 ---
 
-## 🔧 MELHORIAS TÉCNICAS
+## 🔧 TECHNICAL IMPROVEMENTS
 
-### Simulador
+### Simulator
 
-- [ ] Adicionar mais perfis de restaurante
-- [ ] Criar modo "ultra-fast" (30 segundos)
-- [ ] Adicionar métricas de performance
-- [ ] Criar dashboard de métricas
+- [ ] Add more restaurant profiles
+- [ ] Create "ultra-fast" mode (30 seconds)
+- [ ] Add performance metrics
+- [ ] Create metrics dashboard
 
-### Documentação
+### Documentation
 
-- [ ] Adicionar exemplos de uso do Core
-- [ ] Criar guia de troubleshooting
-- [ ] Documentar APIs do Core
-- [ ] Criar diagramas de arquitetura
+- [ ] Add Core usage examples
+- [ ] Create troubleshooting guide
+- [ ] Document Core APIs
+- [ ] Create architecture diagrams
 
 ### CI/CD
 
-- [ ] Automatizar validação em cada commit
-- [ ] Criar relatórios automáticos
-- [ ] Integrar com ferramentas de monitoramento
-- [ ] Adicionar alertas de regressão
+- [ ] Automate validation on each commit
+- [ ] Create automatic reports
+- [ ] Integrate with monitoring tools
+- [ ] Add regression alerts
 
 ---
 
-## 📊 MÉTRICAS A ACOMPANHAR
+## 📊 METRICS TO TRACK
 
 ### Core
 
-- [ ] Número de violações do manifesto
-- [ ] Taxa de sucesso do simulador
-- [ ] Tempo de execução do fail-fast
-- [ ] Cobertura de testes
+- [ ] Number of manifesto violations
+- [ ] Simulator success rate
+- [ ] Fail-fast execution time
+- [ ] Test coverage
 
-### Desenvolvimento
+### Development
 
-- [ ] Tempo médio de validação
-- [ ] Taxa de regressões detectadas
-- [ ] Número de PRs bloqueados por falha
-- [ ] Satisfação do time
-
----
-
-## 🎯 OBJETIVOS DE ALTO NÍVEL
-
-### Proteção do Core
-
-- [ ] Zero violações do manifesto
-- [ ] 100% de PRs validados pelo simulador
-- [ ] Zero regressões em produção
-
-### Evolução do Core
-
-- [ ] Novas features sempre validadas
-- [ ] Documentação sempre atualizada
-- [ ] Simulador sempre exercitando
-
-### Produto
-
-- [ ] Core validado em produção real
-- [ ] Feedback incorporado
-- [ ] Roadmap alinhado com manifesto
+- [ ] Average validation time
+- [ ] Detected regression rate
+- [ ] Number of PRs blocked by failure
+- [ ] Team satisfaction
 
 ---
 
-## 📝 NOTAS
+## 🎯 HIGH-LEVEL OBJECTIVES
 
-### Decisões Pendentes
+### Core Protection
 
-- [ ] Avaliar edge functions referenciadas mas não configuradas
+- [ ] Zero manifesto violations
+- [ ] 100% of PRs validated by simulator
+- [ ] Zero regressions in production
+
+### Core Evolution
+
+- [ ] New features always validated
+- [ ] Documentation always updated
+- [ ] Simulator always exercising
+
+### Product
+
+- [ ] Core validated in real production
+- [ ] Feedback incorporated
+- [ ] Roadmap aligned with manifesto
+
+---
+
+## 📝 NOTES
+
+### Pending Decisions
+
+- [ ] Evaluate referenced but unconfigured edge functions
   - `analytics-engine`
   - `reconcile`
   - `health`
 
-- [ ] Decidir sobre adapters de delivery
+- [ ] Decide on delivery adapters
   - `ifood.ts`
   - `uber-eats.ts`
 
-- [ ] Revisar TODOs antigos (80+)
-  - Converter em issues ou remover
+- [ ] Review old TODOs (80+)
+  - Convert to issues or remove
 
-### Riscos Identificados
+### Identified Risks
 
-- [ ] TypeScript errors no pre-commit hook
-  - Resolver ou ajustar hook
+- [ ] TypeScript errors in pre-commit hook
+  - Resolve or adjust hook
 
-- [ ] Código comentado extensivo (60+ arquivos)
-  - Revisar e limpar
-
----
-
-## 🎓 LIÇÕES PARA O FUTURO
-
-1. **Manter manifesto atualizado**
-   - Revisar periodicamente
-   - Atualizar quando necessário
-   - Comunicar mudanças
-
-2. **Simulador é prioridade**
-   - Sempre exercitar novas features
-   - Manter cobertura alta
-   - Usar fail-fast durante desenvolvimento
-
-3. **Documentação é investimento**
-   - Manter atualizada
-   - Facilitar onboarding
-   - Reduzir dúvidas
+- [ ] Extensive commented code (60+ files)
+  - Review and clean
 
 ---
 
-## 💬 CONTATO E SUPORTE
+## 🎓 LESSONS FOR THE FUTURE
 
-Para dúvidas sobre próximos passos:
-- Consulte `START_HERE.md` para navegação
-- Consulte `CORE_MANIFESTO.md` para princípios
-- Consulte `docs/PROJECT_STATUS.md` para estado atual
+1. **Keep manifesto updated**
+   - Review periodically
+   - Update when necessary
+   - Communicate changes
+
+2. **Simulator is priority**
+   - Always exercise new features
+   - Maintain high coverage
+   - Use fail-fast during development
+
+3. **Documentation is investment**
+   - Keep updated
+   - Facilitate onboarding
+   - Reduce questions
 
 ---
 
-*Este documento deve ser revisado e atualizado periodicamente.*
+## 💬 CONTACT AND SUPPORT
+
+For questions about next steps:
+- Consult `START_HERE.md` for navigation
+- Consult `CORE_MANIFESTO.md` for principles
+- Consult `docs/PROJECT_STATUS.md` for current state
+
+---
+
+*This document should be reviewed and updated periodically.*

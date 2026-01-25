@@ -1,169 +1,169 @@
 # HANDOFF - ChefIApp Core
 
-> Documento de transição para continuidade do trabalho no ChefIApp Core.
-> Data: 2026-01-24
+> Transition document for continuity of work on ChefIApp Core.
+> Date: 2026-01-24
 
 ---
 
-## 🎯 CONTEXTO
+## 🎯 CONTEXT
 
-O ChefIApp Core foi completamente limpo, validado e protegido. Este documento facilita a transição para a próxima fase de desenvolvimento.
-
----
-
-## ✅ O QUE FOI FEITO
-
-### Limpeza Total
-
-- **25 arquivos removidos** (código morto, stubs, exemplos)
-- **11 diretórios removidos** (vazios ou duplicados)
-- **8 edge functions removidas** (não configuradas, não referenciadas)
-- **~5,500 linhas removidas**
-- **0 regressões funcionais**
-
-### Validação Completa
-
-- **Simulação 24h** validada (964 pedidos, 210 tarefas, 89 escalações)
-- **Integridade garantida** (0 orphans, 0 duplicatas)
-- **Governança validada** (SLA, escalonamento, hard-blocking)
-- **Offline validado** (70/70 pedidos sincronizados - 100%)
-
-### Proteção Formal
-
-- **CORE_MANIFESTO.md** ratificado (lei do sistema)
-- **Fail-fast mode** implementado (validação rápida)
-- **Simulador** como juiz supremo
+ChefIApp Core has been completely cleaned, validated, and protected. This document facilitates the transition to the next development phase.
 
 ---
 
-## 📚 DOCUMENTAÇÃO DISPONÍVEL
+## ✅ WHAT WAS DONE
 
-### Para Começar
+### Total Cleanup
 
-1. **`START_HERE.md`** - Ponto de entrada, navegação rápida
-2. **`CORE_MANIFESTO.md`** - Lei do sistema (leia primeiro)
-3. **`EXECUTIVE_SUMMARY.md`** - Resumo executivo consolidado
+- **25 files removed** (dead code, stubs, examples)
+- **11 directories removed** (empty or duplicated)
+- **8 edge functions removed** (not configured, not referenced)
+- **~5,500 lines removed**
+- **0 functional regressions**
 
-### Para Desenvolver
+### Complete Validation
 
-- **`docs/PROJECT_STATUS.md`** - Estado atual, comandos, métricas
-- **`docs/testing/MEGA_OPERATIONAL_SIMULATOR.md`** - Simulador completo
-- **`docs/testing/FAIL_FAST_MODE.md`** - Validação rápida
-- **`NEXT_STEPS.md`** - Checklist de próximos passos
+- **24h simulation** validated (964 orders, 210 tasks, 89 escalations)
+- **Integrity guaranteed** (0 orphans, 0 duplicates)
+- **Governance validated** (SLA, escalation, hard-blocking)
+- **Offline validated** (70/70 orders synchronized - 100%)
 
-### Para Referência
+### Formal Protection
 
-- **`docs/refactor/CLEANUP_REPORT.md`** - Relatório de limpeza
-- **`docs/refactor/LEGACY_INVENTORY.md`** - Inventário de legacy
-- **`SESSION_COMPLETE.md`** - Resumo da sessão
+- **CORE_MANIFESTO.md** ratified (system law)
+- **Fail-fast mode** implemented (quick validation)
+- **Simulator** as supreme judge
 
 ---
 
-## 🚀 COMANDOS ESSENCIAIS
+## 📚 AVAILABLE DOCUMENTATION
 
-### Validação
+### To Start
+
+1. **`START_HERE.md`** - Entry point, quick navigation
+2. **`CORE_MANIFESTO.md`** - System law (read first)
+3. **`EXECUTIVE_SUMMARY.md`** - Consolidated executive summary
+
+### To Develop
+
+- **`docs/PROJECT_STATUS.md`** - Current state, commands, metrics
+- **`docs/testing/MEGA_OPERATIONAL_SIMULATOR.md`** - Complete simulator
+- **`docs/testing/FAIL_FAST_MODE.md`** - Quick validation
+- **`NEXT_STEPS.md`** - Next steps checklist
+
+### For Reference
+
+- **`docs/refactor/CLEANUP_REPORT.md`** - Cleanup report
+- **`docs/refactor/LEGACY_INVENTORY.md`** - Legacy inventory
+- **`SESSION_COMPLETE.md`** - Session summary
+
+---
+
+## 🚀 ESSENTIAL COMMANDS
+
+### Validation
 
 ```bash
 cd docker-tests
 
-# Validação rápida (1 min) - Use durante desenvolvimento
+# Quick validation (1 min) - Use during development
 make simulate-failfast
 
-# Validação completa (5 min) - Use antes de commits importantes
+# Complete validation (5 min) - Use before important commits
 make simulate-24h-small
 
-# Assertions de integridade
+# Integrity assertions
 make assertions
 ```
 
-### Desenvolvimento
+### Development
 
 ```bash
-# Limpar dados
+# Clean data
 cd docker-tests && make clean
 
-# Iniciar serviços (KDS, Print)
+# Start services (KDS, Print)
 cd docker-tests && make kds-start
 ```
 
 ---
 
-## 🏷️ MARCO HISTÓRICO
+## 🏷️ HISTORICAL MILESTONE
 
 **Tag:** `v1.0-core-sovereign`  
 **Branch:** `core/frozen-v1`  
-**Commits principais:**
+**Main commits:**
 - `7ed7483` - Core frozen and ratified
 - `11da15e` - Fail-fast mode added
 - `43cf7fb` - Executive summary added
 
-**Para continuar:**
+**To continue:**
 ```bash
 git checkout core/frozen-v1
-# ou
+# or
 git checkout v1.0-core-sovereign
 ```
 
 ---
 
-## ⚠️ REGRAS ABSOLUTAS
+## ⚠️ ABSOLUTE RULES
 
-### O Core NUNCA Pode
+### The Core CAN NEVER
 
-1. **Violar o CORE_MANIFESTO.md**
-   - Qualquer violação é regressão arquitetural
-   - Deve ser revertida imediatamente
+1. **Violate CORE_MANIFESTO.md**
+   - Any violation is an architectural regression
+   - Must be reverted immediately
 
-2. **Aceitar código não testado pelo simulador**
-   - Se o simulador não exercita, não é Core
-   - Código morto = remover
+2. **Accept code not tested by simulator**
+   - If simulator doesn't exercise it, it's not Core
+   - Dead code = remove
 
-3. **Depender de UI**
-   - O Core funciona sem UI
-   - UI é consumidor, não fonte de verdade
+3. **Depend on UI**
+   - Core works without UI
+   - UI is consumer, not source of truth
 
-4. **Ser permissivo**
-   - Governança > Conveniência
-   - Hard-blocking é feature, não bug
+4. **Be permissive**
+   - Governance > Convenience
+   - Hard-blocking is feature, not bug
 
-### O Core SEMPRE Deve
+### The Core MUST ALWAYS
 
-1. **Ser validado pelo simulador**
-   - Fail-fast durante desenvolvimento
-   - Simulação completa antes de merge
+1. **Be validated by simulator**
+   - Fail-fast during development
+   - Complete simulation before merge
 
-2. **Manter integridade**
+2. **Maintain integrity**
    - 0 orphans
-   - 0 duplicatas
-   - 100% de reconciliação
+   - 0 duplicates
+   - 100% reconciliation
 
-3. **Respeitar o manifesto**
-   - Decisões são verificadas, não debatidas
-   - Exceções requerem justificativa formal
+3. **Respect the manifesto**
+   - Decisions are verified, not debated
+   - Exceptions require formal justification
 
 ---
 
-## 🔧 ARQUITETURA ATUAL
+## 🔧 CURRENT ARCHITECTURE
 
-### Core (Soberano)
+### Core (Sovereign)
 
 ```
 docker-tests/simulators/
-├── simulate-24h.js          # Simulação completa (24h)
-├── simulate-failfast.js     # Validação rápida (1h)
-├── kds-kitchen.js           # Consumidor KDS cozinha
-├── kds-bar.js               # Consumidor KDS bar
-└── print-emulator.js        # Emulador de impressão
+├── simulate-24h.js          # Complete simulation (24h)
+├── simulate-failfast.js     # Quick validation (1h)
+├── kds-kitchen.js           # Kitchen KDS consumer
+├── kds-bar.js               # Bar KDS consumer
+└── print-emulator.js        # Print emulator
 
 docker-tests/task-engine/
-├── policies/                # Políticas de governança
+├── policies/                # Governance policies
 │   ├── opening.json
 │   ├── closing.json
 │   └── cleaning.json
-└── escalation-engine.js     # Motor de escalonamento
+└── escalation-engine.js     # Escalation engine
 
 docker-tests/seeds/
-└── profiles/                # Perfis de restaurante
+└── profiles/                # Restaurant profiles
     ├── ambulante.json
     ├── pequeno.json
     ├── medio.json
@@ -171,172 +171,172 @@ docker-tests/seeds/
     └── gigante.json
 ```
 
-### Princípios Arquiteturais
+### Architectural Principles
 
 1. **Event-Driven**
-   - Ação → Evento → Reação
-   - Eventos são imutáveis, auditáveis, reproduzíveis
+   - Action → Event → Reaction
+   - Events are immutable, auditable, reproducible
 
 2. **Offline-First**
-   - Funciona sem conexão
-   - Fila local + idempotency keys
-   - Reconciliação automática
+   - Works without connection
+   - Local queue + idempotency keys
+   - Automatic reconciliation
 
-3. **Governança por SLA**
-   - Tarefa criada → SLA definido → Monitoramento → Escalonamento
+3. **SLA Governance**
+   - Task created → SLA defined → Monitoring → Escalation
 
-4. **Fonte Única de Verdade**
-   - Pedidos: `gm_orders`
-   - Tarefas: `gm_tasks`
-   - Eventos: `gm_events`
-   - Governança: `task-engine/policies/*.json`
+4. **Single Source of Truth**
+   - Orders: `gm_orders`
+   - Tasks: `gm_tasks`
+   - Events: `gm_events`
+   - Governance: `task-engine/policies/*.json`
 
 ---
 
-## 📊 MÉTRICAS DE VALIDAÇÃO
+## 📊 VALIDATION METRICS
 
-### Última Simulação Completa
+### Last Complete Simulation
 
-| Métrica | Valor |
-|---------|-------|
-| Pedidos | 964 |
+| Metric | Value |
+|--------|-------|
+| Orders | 964 |
 | Print Jobs | 2,171 |
-| Eventos | 994 |
-| Tarefas Criadas | 210 |
-| Tarefas Completadas | 196 |
-| Escalações | 89 |
-| Bloqueios de Turno | 45 |
+| Events | 994 |
+| Tasks Created | 210 |
+| Tasks Completed | 196 |
+| Escalations | 89 |
+| Shift Blocks | 45 |
 | Orphan Items | 0 |
 | Orphan Print Jobs | 0 |
 | Offline Synced | 70/70 (100%) |
 
-### Critérios de Sucesso
+### Success Criteria
 
-- ✅ **0 orphans** (items ou print jobs)
-- ✅ **0 duplicatas** (reconciliação offline)
-- ✅ **100% sincronização** (offline → online)
-- ✅ **Governança funcionando** (SLA, escalonamento, hard-blocking)
+- ✅ **0 orphans** (items or print jobs)
+- ✅ **0 duplicates** (offline reconciliation)
+- ✅ **100% synchronization** (offline → online)
+- ✅ **Governance working** (SLA, escalation, hard-blocking)
 
 ---
 
-## 🎯 PRÓXIMOS PASSOS RECOMENDADOS
+## 🎯 RECOMMENDED NEXT STEPS
 
-### Imediato
+### Immediate
 
-1. **Push para remote**
+1. **Push to remote**
    ```bash
    git push -u origin core/frozen-v1
    git push origin v1.0-core-sovereign
    ```
 
-2. **Revisar documentação**
-   - Ler `START_HERE.md`
-   - Revisar `CORE_MANIFESTO.md`
-   - Validar `EXECUTIVE_SUMMARY.md`
+2. **Review documentation**
+   - Read `START_HERE.md`
+   - Review `CORE_MANIFESTO.md`
+   - Validate `EXECUTIVE_SUMMARY.md`
 
-### Curto Prazo
+### Short Term
 
-1. **Integrar fail-fast no CI/CD**
-   - Adicionar step no pipeline
-   - Bloquear merge se falhar
+1. **Integrate fail-fast in CI/CD**
+   - Add step in pipeline
+   - Block merge if it fails
 
-2. **Adicionar gate de PRs**
-   - Requisito: `make simulate-24h-small` deve passar
-   - Documentar em `CONTRIBUTING.md`
+2. **Add PR gates**
+   - Requirement: `make simulate-24h-small` must pass
+   - Document in `CONTRIBUTING.md`
 
-3. **Documentar workflow**
-   - Como fazer mudanças no Core
-   - Quando usar fail-fast vs completo
+3. **Document workflow**
+   - How to make changes to Core
+   - When to use fail-fast vs complete
 
-### Médio Prazo
+### Medium Term
 
-1. **Retornar à UI** (Core protegido)
-2. **Testes com restaurante real**
-3. **Piloto pequeno** (1-3 restaurantes)
+1. **Return to UI** (Core protected)
+2. **Tests with real restaurant**
+3. **Small pilot** (1-3 restaurants)
 
 ---
 
-## ⚠️ AVISOS IMPORTANTES
+## ⚠️ IMPORTANT WARNINGS
 
-### Não Fazer
+### Do Not Do
 
-- ❌ Adicionar código não testado pelo simulador
-- ❌ Violar o CORE_MANIFESTO.md
-- ❌ Tornar o Core dependente de UI
-- ❌ Remover validações do simulador
-- ❌ Aceitar regressões "por conveniência"
+- ❌ Add code not tested by simulator
+- ❌ Violate CORE_MANIFESTO.md
+- ❌ Make Core dependent on UI
+- ❌ Remove simulator validations
+- ❌ Accept regressions "for convenience"
 
-### Sempre Fazer
+### Always Do
 
-- ✅ Validar com `make simulate-failfast` durante desenvolvimento
-- ✅ Validar com `make simulate-24h-small` antes de merge
-- ✅ Verificar `make assertions` após mudanças
-- ✅ Respeitar o CORE_MANIFESTO.md
-- ✅ Documentar decisões importantes
+- ✅ Validate with `make simulate-failfast` during development
+- ✅ Validate with `make simulate-24h-small` before merge
+- ✅ Check `make assertions` after changes
+- ✅ Respect CORE_MANIFESTO.md
+- ✅ Document important decisions
 
 ---
 
 ## 🆘 TROUBLESHOOTING
 
-### Simulador Falha
+### Simulator Fails
 
-1. Verificar integridade: `make assertions`
-2. Verificar logs do simulador
-3. Verificar dados no banco
-4. Revisar mudanças recentes
-5. Consultar `docs/testing/MEGA_OPERATIONAL_SIMULATOR.md`
+1. Check integrity: `make assertions`
+2. Check simulator logs
+3. Check database data
+4. Review recent changes
+5. Consult `docs/testing/MEGA_OPERATIONAL_SIMULATOR.md`
 
-### Violação do Manifesto
+### Manifesto Violation
 
-1. Revisar `CORE_MANIFESTO.md`
-2. Identificar violação específica
-3. Decidir: corrigir ou justificar exceção
-4. Se exceção: documentar formalmente
+1. Review `CORE_MANIFESTO.md`
+2. Identify specific violation
+3. Decide: fix or justify exception
+4. If exception: document formally
 
-### Regressão Detectada
+### Regression Detected
 
-1. Reverter mudança imediatamente
-2. Investigar causa raiz
-3. Adicionar teste ao simulador
-4. Re-aplicar mudança com validação
+1. Revert change immediately
+2. Investigate root cause
+3. Add test to simulator
+4. Re-apply change with validation
 
 ---
 
-## 📞 CONTATO E SUPORTE
+## 📞 CONTACT AND SUPPORT
 
-### Documentação
+### Documentation
 
-- **Navegação:** `START_HERE.md`
-- **Princípios:** `CORE_MANIFESTO.md`
-- **Estado:** `docs/PROJECT_STATUS.md`
-- **Próximos passos:** `NEXT_STEPS.md`
+- **Navigation:** `START_HERE.md`
+- **Principles:** `CORE_MANIFESTO.md`
+- **Status:** `docs/PROJECT_STATUS.md`
+- **Next steps:** `NEXT_STEPS.md`
 
-### Comandos
+### Commands
 
-- **Validação rápida:** `make simulate-failfast`
-- **Validação completa:** `make simulate-24h-small`
+- **Quick validation:** `make simulate-failfast`
+- **Complete validation:** `make simulate-24h-small`
 - **Assertions:** `make assertions`
 
 ---
 
-## 🎓 LIÇÕES APRENDIDAS
+## 🎓 LESSONS LEARNED
 
-1. **Limpeza é possível sem regressão** quando há validação automática
-2. **Manifesto protege contra feature creep** e decisões ruins
-3. **Simulador é juiz supremo** - se passa, está correto
-4. **Core soberano** permite evoluir UI sem risco
-5. **Fail-fast** acelera desenvolvimento iterativo
-
----
-
-## 💬 FRASE FINAL
-
-> O ChefIApp Core não é flexível. Não é amigável. Não é permissivo.
-> 
-> É **correto**.
-> 
-> E ser correto é mais importante que ser conveniente.
+1. **Cleanup is possible without regression** when there's automatic validation
+2. **Manifesto protects against feature creep** and bad decisions
+3. **Simulator is supreme judge** - if it passes, it's correct
+4. **Sovereign Core** allows evolving UI without risk
+5. **Fail-fast** accelerates iterative development
 
 ---
 
-*Este documento deve ser atualizado conforme o projeto evolui.*
+## 💬 FINAL STATEMENT
+
+> ChefIApp Core is not flexible. It is not friendly. It is not permissive.
+> 
+> It is **correct**.
+> 
+> And being correct is more important than being convenient.
+
+---
+
+*This document should be updated as the project evolves.*
