@@ -1,128 +1,128 @@
 # EXECUTIVE SUMMARY - ChefIApp Core
 
-> Resumo executivo do estado atual do ChefIApp Core após limpeza, validação e ratificação.
-> Data: 2026-01-24
+> Executive summary of the current state of ChefIApp Core after cleanup, validation, and ratification.
+> Date: 2026-01-24
 
 ---
 
-## RESUMO EM UMA FRASE
+## SUMMARY IN ONE SENTENCE
 
-O ChefIApp Core foi transformado de um sistema de POS em um **sistema operacional de restauração**, validado por simulação de 24 horas, protegido por manifesto formal, e agora opera de forma **soberana** (independente de UI).
-
----
-
-## O QUE FOI ALCANÇADO
-
-### 1. Limpeza Total do Código
-
-| Métrica | Valor |
-|---------|-------|
-| Arquivos removidos | 25 |
-| Diretórios removidos | 11 |
-| Edge functions removidas | 8 |
-| Linhas removidas | ~5,500 |
-| Regressões funcionais | 0 |
-
-**Resultado:** Core menor, mais claro, mais seguro.
-
-### 2. Validação Completa
-
-| Aspecto | Status | Evidência |
-|---------|--------|-----------|
-| Simulação 24h | ✅ | 964 pedidos, 210 tarefas, 89 escalações |
-| Integridade | ✅ | 0 orphans, 0 duplicatas |
-| Governança | ✅ | SLA, escalonamento, hard-blocking funcionando |
-| Offline | ✅ | 70/70 pedidos sincronizados (100%) |
-| Escala | ✅ | 20 restaurantes simultâneos validados |
-
-**Resultado:** Core validado sob condições reais.
-
-### 3. Proteção Formal
-
-| Artefato | Propósito |
-|----------|-----------|
-| `CORE_MANIFESTO.md` | Define o que o Core É e NUNCA SERÁ |
-| `MEGA OPERATIONAL SIMULATOR` | Valida o Core sem UI |
-| `FAIL_FAST_MODE` | Validação rápida durante desenvolvimento |
-
-**Resultado:** Core protegido contra regressão conceitual.
+ChefIApp Core has been transformed from a POS system into a **restaurant operating system**, validated by 24-hour simulation, protected by formal manifesto, and now operates **sovereignly** (independent of UI).
 
 ---
 
-## DIFERENCIAL COMPETITIVO
+## WHAT WAS ACHIEVED
 
-### O Que o ChefIApp Core É
+### 1. Total Code Cleanup
 
-1. **Sistema Operacional de Restauração**
-   - Não é um POS comum
-   - Governa operações, não apenas registra vendas
+| Metric | Value |
+|--------|-------|
+| Files removed | 25 |
+| Directories removed | 11 |
+| Edge functions removed | 8 |
+| Lines removed | ~5,500 |
+| Functional regressions | 0 |
 
-2. **Governador de Comportamento Humano**
-   - SLA por tarefa
-   - Escalonamento automático
-   - Hard-blocking (não permissivo)
+**Result:** Smaller, clearer, safer Core.
 
-3. **Offline-First por Design**
-   - Funciona sem conexão
-   - Reconciliação automática
-   - Zero duplicatas
+### 2. Complete Validation
 
-4. **Testado por Simulação**
-   - 24 horas simuladas em 5 minutos
-   - Validação sem UI
-   - Integridade garantida
+| Aspect | Status | Evidence |
+|--------|--------|----------|
+| 24h simulation | ✅ | 964 orders, 210 tasks, 89 escalations |
+| Integrity | ✅ | 0 orphans, 0 duplicates |
+| Governance | ✅ | SLA, escalation, hard-blocking working |
+| Offline | ✅ | 70/70 orders synchronized (100%) |
+| Scale | ✅ | 20 simultaneous restaurants validated |
 
-### O Que o ChefIApp Core NUNCA Será
+**Result:** Core validated under real conditions.
 
-- ❌ POS comum
+### 3. Formal Protection
+
+| Artifact | Purpose |
+|----------|---------|
+| `CORE_MANIFESTO.md` | Defines what the Core IS and WILL NEVER BE |
+| `MEGA OPERATIONAL SIMULATOR` | Validates Core without UI |
+| `FAIL_FAST_MODE` | Quick validation during development |
+
+**Result:** Core protected against conceptual regression.
+
+---
+
+## COMPETITIVE DIFFERENTIATOR
+
+### What ChefIApp Core Is
+
+1. **Restaurant Operating System**
+   - Not a common POS
+   - Governs operations, not just records sales
+
+2. **Human Behavior Governor**
+   - SLA per task
+   - Automatic escalation
+   - Hard-blocking (not permissive)
+
+3. **Offline-First by Design**
+   - Works without connection
+   - Automatic reconciliation
+   - Zero duplicates
+
+4. **Tested by Simulation**
+   - 24 hours simulated in 5 minutes
+   - Validation without UI
+   - Integrity guaranteed
+
+### What ChefIApp Core WILL NEVER Be
+
+- ❌ Common POS
 - ❌ UI-first
-- ❌ Permissivo
+- ❌ Permissive
 - ❌ "Best effort"
 - ❌ Feature playground
-- ❌ Dependente de UI
+- ❌ UI-dependent
 
 ---
 
-## CAPACIDADES VALIDADAS
+## VALIDATED CAPABILITIES
 
-### Governança
+### Governance
 
 ```
-Tarefa criada → SLA definido → Monitoramento → Escalonamento → Resolução ou Falha
+Task created → SLA defined → Monitoring → Escalation → Resolution or Failure
 ```
 
-- **SLA:** Deadlines definidos e monitorados
-- **Escalonamento:** role → manager → owner (automático)
-- **Hard-blocking:** Turno não fecha sem checklist
-- **Auditoria:** Todas as ações registradas
+- **SLA:** Deadlines defined and monitored
+- **Escalation:** role → manager → owner (automatic)
+- **Hard-blocking:** Shift doesn't close without checklist
+- **Audit:** All actions recorded
 
-### Resiliência
+### Resilience
 
-- **Offline-first:** Funciona sem conexão
-- **Fila local:** Ações enfileiradas durante offline
-- **Idempotência:** Zero duplicatas na reconciliação
-- **Reconciliação:** Sincronização automática ao voltar online
+- **Offline-first:** Works without connection
+- **Local queue:** Actions queued during offline
+- **Idempotency:** Zero duplicates in reconciliation
+- **Reconciliation:** Automatic synchronization when back online
 
-### Escala
+### Scale
 
-- **Perfis:** De ambulante a gigante (300+ staff)
-- **Multi-restaurante:** 20+ restaurantes simultâneos
-- **Volume:** 900+ pedidos em 24h simuladas
-- **Integridade:** 0 orphans em qualquer escala
+- **Profiles:** From ambulante to giant (300+ staff)
+- **Multi-restaurant:** 20+ simultaneous restaurants
+- **Volume:** 900+ orders in 24h simulated
+- **Integrity:** 0 orphans at any scale
 
 ---
 
-## VALIDAÇÃO TÉCNICA
+## TECHNICAL VALIDATION
 
-### Última Simulação Completa
+### Last Complete Simulation
 
 ```
-Pedidos: 964
+Orders: 964
 Print Jobs: 2,171
-Eventos: 994
-Tarefas: 210 criadas, 196 completadas
-Escalações: 89 (66 → manager, 23 → owner)
-Bloqueios de Turno: 45
+Events: 994
+Tasks: 210 created, 196 completed
+Escalations: 89 (66 → manager, 23 → owner)
+Shift Blocks: 45
 Overrides: 10
 Orphan Items: 0
 Orphan Print Jobs: 0
@@ -130,131 +130,131 @@ Offline Events: 40
 Offline Synced: 70/70 (100%)
 ```
 
-### Comandos de Validação
+### Validation Commands
 
 ```bash
-# Validação rápida (1 min)
+# Quick validation (1 min)
 make simulate-failfast
 
-# Validação completa (5 min)
+# Complete validation (5 min)
 make simulate-24h-small
 
-# Assertions de integridade
+# Integrity assertions
 make assertions
 ```
 
 ---
 
-## ARQUITETURA
+## ARCHITECTURE
 
-### Core (Soberano)
+### Core (Sovereign)
 
 ```
 docker-tests/simulators/
-├── simulate-24h.js          # Simulação completa (24h)
-├── simulate-failfast.js     # Validação rápida (1h)
-├── kds-kitchen.js           # Consumidor KDS cozinha
-├── kds-bar.js               # Consumidor KDS bar
-└── print-emulator.js        # Emulador de impressão
+├── simulate-24h.js          # Complete simulation (24h)
+├── simulate-failfast.js     # Quick validation (1h)
+├── kds-kitchen.js           # Kitchen KDS consumer
+├── kds-bar.js               # Bar KDS consumer
+└── print-emulator.js        # Print emulator
 
 docker-tests/task-engine/
-├── policies/                # Políticas de governança
-└── escalation-engine.js     # Motor de escalonamento
+├── policies/                # Governance policies
+└── escalation-engine.js     # Escalation engine
 
 docker-tests/seeds/
-└── profiles/                # Perfis de restaurante
+└── profiles/                # Restaurant profiles
 ```
 
-### Documentação
+### Documentation
 
 ```
-CORE_MANIFESTO.md            # Lei do sistema
-PROJECT_STATUS.md            # Estado atual
-docs/refactor/               # Relatórios de limpeza
-docs/testing/                # Documentação de testes
+CORE_MANIFESTO.md            # System law
+PROJECT_STATUS.md            # Current state
+docs/refactor/               # Cleanup reports
+docs/testing/                # Testing documentation
 ```
 
 ---
 
-## PRINCÍPIOS RATIFICADOS
+## RATIFIED PRINCIPLES
 
-1. **Governança > Conveniência**
-   - O Core não pergunta "você tem certeza?"
-   - O Core diz "você não pode até que X esteja feito"
+1. **Governance > Convenience**
+   - Core doesn't ask "are you sure?"
+   - Core says "you cannot until X is done"
 
-2. **Integridade > Velocidade**
-   - Uma operação lenta e correta é melhor que uma rápida e corrompida
+2. **Integrity > Speed**
+   - A slow and correct operation is better than a fast and corrupted one
 
-3. **Offline é Estado Válido**
-   - Perder conexão não é emergência
-   - É cenário esperado e testado
+3. **Offline is a Valid State**
+   - Losing connection is not an emergency
+   - It is an expected and tested scenario
 
-4. **UI é Descartável**
-   - Qualquer UI pode ser reescrita, substituída ou deletada
-   - O Core permanece intacto
+4. **UI is Disposable**
+   - Any UI can be rewritten, replaced, or deleted
+   - Core remains intact
 
-5. **Se o Simulador Não Exercita, Não é Core**
-   - Código no Core + Simulador não testa = Código morto
-   - Código morto = Remover
+5. **If the Simulator Doesn't Exercise It, It's Not Core**
+   - Code in Core + Simulator doesn't test = Dead code
+   - Dead code = Remove
 
 ---
 
-## MARCO HISTÓRICO
+## HISTORICAL MILESTONE
 
 **Tag:** `v1.0-core-sovereign`  
 **Branch:** `core/frozen-v1`  
-**Data:** 2026-01-24
+**Date:** 2026-01-24
 
-Este marco representa o momento em que o ChefIApp Core:
-- Foi completamente limpo de código morto
-- Foi validado por simulação de 24 horas
-- Foi protegido por manifesto formal
-- Tornou-se soberano (independente de UI)
-
----
-
-## PRÓXIMOS PASSOS
-
-### Curto Prazo
-
-- [ ] Integrar fail-fast no CI/CD
-- [ ] Adicionar gate de PRs (simulador obrigatório)
-- [ ] Documentar workflow de desenvolvimento
-
-### Médio Prazo
-
-- [ ] Retornar à UI com calma (Core protegido)
-- [ ] Testes com restaurante real
-- [ ] Piloto pequeno
-
-### Longo Prazo
-
-- [ ] Arquitetura-alvo 2026+
-- [ ] Plano de entrada no mercado
-- [ ] Narrativa de produto
+This milestone represents the moment when ChefIApp Core:
+- Was completely cleaned of dead code
+- Was validated by 24-hour simulation
+- Was protected by formal manifesto
+- Became sovereign (independent of UI)
 
 ---
 
-## CONCLUSÃO
+## NEXT STEPS
 
-O ChefIApp Core está:
-- ✅ **Limpo** (sem código morto)
-- ✅ **Validado** (simulação de 24h)
-- ✅ **Protegido** (manifesto ratificado)
-- ✅ **Soberano** (independente de UI)
-- ✅ **Testável** (fail-fast + completo)
+### Short Term
 
-**O Core não depende mais de pessoas. Depende de leis.**
+- [ ] Integrate fail-fast in CI/CD
+- [ ] Add PR gates (simulator mandatory)
+- [ ] Document development workflow
+
+### Medium Term
+
+- [ ] Return to UI calmly (Core protected)
+- [ ] Tests with real restaurant
+- [ ] Small pilot
+
+### Long Term
+
+- [ ] Target architecture 2026+
+- [ ] Market entry plan
+- [ ] Product narrative
 
 ---
 
-## CONTATO E REFERÊNCIAS
+## CONCLUSION
+
+ChefIApp Core is:
+- ✅ **Clean** (no dead code)
+- ✅ **Validated** (24h simulation)
+- ✅ **Protected** (manifesto ratified)
+- ✅ **Sovereign** (independent of UI)
+- ✅ **Testable** (fail-fast + complete)
+
+**The Core no longer depends on people. It depends on laws.**
+
+---
+
+## CONTACT AND REFERENCES
 
 - **Manifesto:** `CORE_MANIFESTO.md`
 - **Status:** `docs/PROJECT_STATUS.md`
-- **Validação:** `docs/CORE_VALIDATION_CERTIFICATE.md`
-- **Simulador:** `docs/testing/MEGA_OPERATIONAL_SIMULATOR.md`
+- **Validation:** `docs/CORE_VALIDATION_CERTIFICATE.md`
+- **Simulator:** `docs/testing/MEGA_OPERATIONAL_SIMULATOR.md`
 
 ---
 
-*Este documento consolida o estado atual do ChefIApp Core após limpeza, validação e ratificação formal.*
+*This document consolidates the current state of ChefIApp Core after cleanup, validation, and formal ratification.*
