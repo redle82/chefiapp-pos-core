@@ -20,7 +20,7 @@ All critical canonical documents have been converted from Portuguese to English,
 - ✅ `docs/STATUS_TECH.md`
 - ✅ `docs/STATUS_OPERATION.md`
 - ✅ `docs/LANGUAGE_POLICY.md`
-- ✅ `CONTRIBUTING.md` (partially)
+- ✅ `CONTRIBUTING.md` ✅ (fully converted - 2026-01-24)
 
 ### Phase 2: Entry Points (3)
 - ✅ `README.md`
@@ -36,7 +36,7 @@ All critical canonical documents have been converted from Portuguese to English,
 - ✅ `NEXT_STEPS.md`
 - ✅ `HANDOFF.md`
 
-**Total:** 13 critical documents converted
+**Total:** 14 critical documents converted (13 + CONTRIBUTING.md fully completed)
 
 ---
 
@@ -73,7 +73,7 @@ docs/
 
 | Metric | Value |
 |--------|-------|
-| Documents converted | 13 |
+| Documents converted | 14 |
 | Commits | 8 |
 | Branch | `chore/language-sovereignty` |
 | Tag | `v1.0-language-sovereign` |
