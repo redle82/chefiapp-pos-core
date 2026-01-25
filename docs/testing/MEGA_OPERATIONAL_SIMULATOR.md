@@ -1,51 +1,51 @@
 # MEGA OPERATIONAL SIMULATOR v2
 
-> Simulação de 24 horas de operação em minutos usando Time Warp.
-> **FASE 2A: SLA + Escalonamento + Hard-Blocking**
+> 24-hour operation simulation in minutes using Time Warp.
+> **PHASE 2A: SLA + Escalation + Hard-Blocking**
 
 ---
 
-## Visão Geral
+## Overview
 
-O MEGA OPERATIONAL SIMULATOR permite validar o comportamento do ChefIApp sob condições operacionais realistas, incluindo:
+The MEGA OPERATIONAL SIMULATOR allows validating ChefIApp behavior under realistic operational conditions, including:
 
-- **Picos de almoço e jantar**
-- **Períodos de calmaria**
-- **Abertura e fechamento**
-- **Trocas de turno**
-- **Tarefas operacionais e compliance**
-- **Múltiplos perfis de restaurante**
-- **SLA por tarefa com deadline**
-- **Escalonamento automático (role → manager → owner)**
-- **Hard-blocking (turno não fecha sem checklist)**
-- **Auditoria completa de falhas**
+- **Lunch and dinner peaks**
+- **Calm periods**
+- **Opening and closing**
+- **Shift changes**
+- **Operational tasks and compliance**
+- **Multiple restaurant profiles**
+- **SLA per task with deadline**
+- **Automatic escalation (role → manager → owner)**
+- **Hard-blocking (shift doesn't close without checklist)**
+- **Complete failure audit**
 
-Tudo isso **sem UI**, **100% headless**, **reprodutível** e **em minutos**.
+All of this **without UI**, **100% headless**, **reproducible** and **in minutes**.
 
 ---
 
-## Comandos Disponíveis
+## Available Commands
 
 ```bash
-# Simulação pequena (10 restaurantes, 5 min real = 24h simuladas)
+# Small simulation (10 restaurants, 5 min real = 24h simulated)
 make simulate-24h-small
 
-# Simulação enterprise (100 restaurantes, 10 min)
+# Enterprise simulation (100 restaurants, 10 min)
 make simulate-24h-enterprise
 
-# Simulação máxima (stress test, 15 min)
+# Maximum simulation (stress test, 15 min)
 make simulate-24h-max
 
-# Validar asserts
+# Validate assertions
 make assertions
 
-# Ver último relatório
+# View last report
 make report-24h
 ```
 
 ---
 
-## Arquitetura
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -53,7 +53,7 @@ make report-24h
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌──────────────────┐                                           │
-│  │   TIME WARP      │  ← 24h simuladas em 5-15 min              │
+│  │   TIME WARP      │  ← 24h simulated in 5-15 min              │
 │  │   ENGINE         │                                           │
 │  └────────┬─────────┘                                           │
 │           │                                                      │
@@ -92,120 +92,120 @@ make report-24h
 
 ---
 
-## Perfis de Restaurante
+## Restaurant Profiles
 
 ### Ambulante (Food Truck)
-- **Staff:** 1-2 pessoas
-- **Mesas:** 0
-- **Menu:** 10 itens
-- **Picos:** Almoço 80%, Jantar 90%
+- **Staff:** 1-2 people
+- **Tables:** 0
+- **Menu:** 10 items
+- **Peaks:** Lunch 80%, Dinner 90%
 - **Policy Packs:** OPENING_BASIC, CLOSING_BASIC
 
-### Pequeno (Familiar)
-- **Staff:** 2-5 pessoas
-- **Mesas:** 10
-- **Menu:** 30 itens
+### Pequeno (Family)
+- **Staff:** 2-5 people
+- **Tables:** 10
+- **Menu:** 30 items
 - **Stations:** Kitchen, Bar, Cleaning
 - **Policy Packs:** OPENING_STANDARD, CLOSING_STANDARD, CLEANING_STANDARD
 
-### Médio (Estruturado)
-- **Staff:** 10-30 pessoas
-- **Mesas:** 30
-- **Menu:** 60 itens
+### Médio (Structured)
+- **Staff:** 10-30 people
+- **Tables:** 30
+- **Menu:** 60 items
 - **Stations:** Kitchen, Bar, Cleaning, Manager
-- **Policy Packs:** Completo + MISE_EN_PLACE + SHIFT_HANDOVER
+- **Policy Packs:** Complete + MISE_EN_PLACE + SHIFT_HANDOVER
 
 ---
 
 ## Policy Packs
 
 ### OPENING_STANDARD
-Tarefas de abertura:
-- Verificar temperatura câmaras (hard blocking)
-- Verificar estoque crítico
+Opening tasks:
+- Check chamber temperature (hard blocking)
+- Check critical inventory
 - Mise en place
-- Verificar caixa (hard blocking)
-- Limpar salão
-- Verificar equipamentos (hard blocking)
+- Check cash register (hard blocking)
+- Clean dining room
+- Check equipment (hard blocking)
 
 ### CLOSING_STANDARD
-Tarefas de fechamento:
-- Fechar caixa (hard blocking)
-- Temperatura final (hard blocking)
-- Limpar cozinha
-- Limpar bar
-- Limpar salão
-- Desligar equipamentos
-- Verificar segurança (hard blocking)
+Closing tasks:
+- Close cash register (hard blocking)
+- Final temperature (hard blocking)
+- Clean kitchen
+- Clean bar
+- Clean dining room
+- Turn off equipment
+- Check security (hard blocking)
 
 ### CLEANING_STANDARD
-Tarefas contínuas:
-- Limpar mesa (trigger: table.closed)
-- Limpar banheiros (cron: 2h)
-- Verificar lixeiras (cron: 2h)
-- Limpar derramamento (trigger: incident.spill)
+Continuous tasks:
+- Clean table (trigger: table.closed)
+- Clean bathrooms (cron: 2h)
+- Check trash bins (cron: 2h)
+- Clean spill (trigger: incident.spill)
 
 ---
 
 ## Time Warp
 
-O sistema usa um multiplicador de tempo para simular 24h em minutos:
+The system uses a time multiplier to simulate 24h in minutes:
 
-| Modo | Duração Real | Horas Simuladas | Multiplicador |
-|------|--------------|-----------------|---------------|
+| Mode | Real Duration | Simulated Hours | Multiplier |
+|------|---------------|-----------------|------------|
 | small | 5 min | 24h | 288x |
 | enterprise | 10 min | 24h | 144x |
 | max | 15 min | 24h | 96x |
 
 ---
 
-## Métricas Coletadas
+## Collected Metrics
 
-- Pedidos por hora (virtual)
-- Pedidos por fonte (mobile, pos, qr_web)
-- Print jobs gerados
-- Eventos disparados
-- Tarefas criadas/completadas/escaladas
-- KDS events (tempo de preparo)
-- Backlog de cozinha
+- Orders per hour (virtual)
+- Orders by source (mobile, pos, qr_web)
+- Print jobs generated
+- Events triggered
+- Tasks created/completed/escalated
+- KDS events (preparation time)
+- Kitchen backlog
 
 ---
 
-## Asserts (Critérios de Sucesso)
+## Asserts (Success Criteria)
 
-| Assert | Condição |
-|--------|----------|
+| Assert | Condition |
+|--------|-----------|
 | Orphan Items | = 0 |
 | Orphan Print Jobs | = 0 |
-| Eventos Perdidos | = 0 |
-| Pedidos Duplicados | = 0 |
+| Lost Events | = 0 |
+| Duplicate Orders | = 0 |
 
 ---
 
-## Relatórios
+## Reports
 
-Após cada simulação, um relatório é gerado em:
+After each simulation, a report is generated in:
 - `reports/simulation-{id}.md` (Markdown)
-- `reports/simulation-{id}.json` (JSON completo)
+- `reports/simulation-{id}.json` (Complete JSON)
 
-O relatório inclui:
-- Configuração da simulação
-- Métricas gerais
-- Distribuição por hora
-- Status dos asserts
-- Heatmap de picos
+The report includes:
+- Simulation configuration
+- General metrics
+- Hourly distribution
+- Assert status
+- Peak heatmap
 
 ---
 
-## Estrutura de Arquivos
+## File Structure
 
 ```
 docker-tests/
 ├── simulators/
-│   ├── simulate-24h.js       # Engine principal
-│   ├── offline-controller.js # Controlador de offline
-│   ├── kds-kitchen.js        # Consumer cozinha
-│   ├── kds-bar.js            # Consumer bar
+│   ├── simulate-24h.js       # Main engine
+│   ├── offline-controller.js # Offline controller
+│   ├── kds-kitchen.js        # Kitchen consumer
+│   ├── kds-bar.js            # Bar consumer
 │   └── ...
 ├── task-engine/
 │   └── policies/
@@ -224,52 +224,52 @@ docker-tests/
 
 ---
 
-## Sistema de Governança (FASE 2A)
+## Governance System (PHASE 2A)
 
-### SLA por Tarefa
+### SLA per Task
 
-Cada tarefa tem um deadline calculado automaticamente:
+Each task has a deadline calculated automatically:
 
 ```
 sla_deadline = created_at + sla_minutes
 ```
 
-Tarefas que excedem o SLA são escalonadas automaticamente.
+Tasks that exceed SLA are automatically escalated.
 
-### Escalonamento Automático
+### Automatic Escalation
 
-| Nível | Role | Escala Para |
-|-------|------|-------------|
+| Level | Role | Escalates To |
+|-------|------|--------------|
 | 0 | kitchen, bar, cleaning | manager |
 | 1 | manager | owner |
-| 2 | owner | (não escala) |
+| 2 | owner | (doesn't escalate) |
 
-O escalonamento ocorre **10 minutos** após o SLA ser excedido.
+Escalation occurs **10 minutes** after SLA is exceeded.
 
 ### Hard-Blocking
 
-Tarefas marcadas como `hard_blocking = true`:
-- Impedem o fechamento do turno
-- Exigem conclusão ou override manual
-- São auditadas em `gm_shift_blocks`
+Tasks marked as `hard_blocking = true`:
+- Prevent shift closure
+- Require completion or manual override
+- Are audited in `gm_shift_blocks`
 
-**Comportamento no fechamento:**
-1. Sistema detecta tarefas pendentes obrigatórias
-2. Tenta completar "sob pressão" (70% chance)
-3. Se ainda houver pendentes, aplica **override**
-4. Tarefas não completadas são marcadas como **FAILED**
+**Behavior on closure:**
+1. System detects pending mandatory tasks
+2. Tries to complete "under pressure" (70% chance)
+3. If still pending, applies **override**
+4. Uncompleted tasks are marked as **FAILED**
 
-### Tabelas de Auditoria
+### Audit Tables
 
 ```sql
--- Log de escalações
+-- Escalation log
 gm_task_escalations (
   task_id, from_level, to_level,
   from_role, to_role, reason,
   sla_exceeded_by_minutes
 )
 
--- Bloqueios de turno
+-- Shift blocks
 gm_shift_blocks (
   shift_id, task_id, block_reason,
   was_overridden, override_reason
@@ -278,29 +278,29 @@ gm_shift_blocks (
 
 ---
 
-## Métricas de Governança
+## Governance Metrics
 
-O relatório agora inclui:
+The report now includes:
 
-| Métrica | Descrição |
-|---------|-----------|
-| Escalações → Manager | Tarefas escaladas para gerente |
-| Escalações → Owner | Tarefas escaladas para dono |
-| Bloqueios de Turno | Tentativas de fechar com tarefas pendentes |
-| Overrides | Fechamentos forçados |
-| Tasks Failed | Tarefas não completadas |
-
----
-
-## Próximas Evoluções
-
-- [x] ~~FASE 2A: SLA + Escalonamento + Hard-Blocking~~
-- [ ] FASE 2B: Offline agressivo durante picos
-- [ ] FASE 2C: Perfis grandes (50-300 pax)
-- [ ] Enterprise: gm_enterprises + dashboards agregados
-- [ ] Chaos network (latência, packet loss)
+| Metric | Description |
+|--------|-------------|
+| Escalations → Manager | Tasks escalated to manager |
+| Escalations → Owner | Tasks escalated to owner |
+| Shift Blocks | Attempts to close with pending tasks |
+| Overrides | Forced closures |
+| Tasks Failed | Uncompleted tasks |
 
 ---
 
-*Documentação gerada para MEGA OPERATIONAL SIMULATOR v2.0*
-*FASE 2A: SLA + Escalonamento + Hard-Blocking*
+## Next Evolutions
+
+- [x] ~~PHASE 2A: SLA + Escalation + Hard-Blocking~~
+- [ ] PHASE 2B: Aggressive offline during peaks
+- [ ] PHASE 2C: Large profiles (50-300 pax)
+- [ ] Enterprise: gm_enterprises + aggregated dashboards
+- [ ] Chaos network (latency, packet loss)
+
+---
+
+*Documentation generated for MEGA OPERATIONAL SIMULATOR v2.0*
+*PHASE 2A: SLA + Escalation + Hard-Blocking*

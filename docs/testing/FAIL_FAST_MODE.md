@@ -1,25 +1,25 @@
-# FAIL-FAST MODE - Validação Rápida do Core
+# FAIL-FAST MODE - Quick Core Validation
 
-> Modo de validação rápida para uso durante refatorações e desenvolvimento iterativo.
-
----
-
-## OBJETIVO
-
-Validar integridade do Core em **~1 minuto real** (1 hora simulada), parando no primeiro erro detectado.
+> Quick validation mode for use during refactoring and iterative development.
 
 ---
 
-## USO
+## OBJECTIVE
 
-### Via Makefile (Recomendado)
+Validate Core integrity in **~1 real minute** (1 simulated hour), stopping at the first detected error.
+
+---
+
+## USAGE
+
+### Via Makefile (Recommended)
 
 ```bash
 cd docker-tests
 make simulate-failfast
 ```
 
-### Direto
+### Direct
 
 ```bash
 cd docker-tests
@@ -30,130 +30,130 @@ node simulators/simulate-failfast.js
 
 ---
 
-## CARACTERÍSTICAS
+## CHARACTERISTICS
 
-| Característica | Valor |
+| Characteristic | Value |
 |----------------|-------|
-| Duração real | 1 minuto |
-| Duração simulada | 1 hora |
-| Multiplicador | 60x |
-| Restaurantes | 5 (pequeno) |
-| Validações | Integridade apenas |
-| Output | Minimalista |
-| Exit code | 0 = OK, 1 = FALHA |
+| Real duration | 1 minute |
+| Simulated duration | 1 hour |
+| Multiplier | 60x |
+| Restaurants | 5 (small) |
+| Validations | Integrity only |
+| Output | Minimalist |
+| Exit code | 0 = OK, 1 = FAILURE |
 
 ---
 
-## VALIDAÇÕES EXECUTADAS
+## EXECUTED VALIDATIONS
 
 1. **Orphan Items**
-   - Verifica se há `gm_order_items` sem `gm_orders` correspondente
-   - Falha imediata se detectado
+   - Checks if there are `gm_order_items` without corresponding `gm_orders`
+   - Immediate failure if detected
 
 2. **Orphan Print Jobs**
-   - Verifica se há `gm_print_jobs` sem `gm_orders` correspondente
-   - Falha imediata se detectado
+   - Checks if there are `gm_print_jobs` without corresponding `gm_orders`
+   - Immediate failure if detected
 
 ---
 
-## QUANDO USAR
+## WHEN TO USE
 
-✅ **Use fail-fast quando:**
-- Refatorando código do Core
-- Adicionando novas features
-- Fazendo mudanças em lógica crítica
-- Antes de commits importantes
-- Durante desenvolvimento iterativo
+✅ **Use fail-fast when:**
+- Refactoring Core code
+- Adding new features
+- Making changes to critical logic
+- Before important commits
+- During iterative development
 
-❌ **NÃO use fail-fast para:**
-- Validação completa (use `simulate-24h-small`)
-- Testes de escala (use `simulate-24h-large`)
-- Validação de governança completa (use `simulate-24h-small`)
+❌ **DO NOT use fail-fast for:**
+- Complete validation (use `simulate-24h-small`)
+- Scale tests (use `simulate-24h-large`)
+- Complete governance validation (use `simulate-24h-small`)
 
 ---
 
-## INTEGRAÇÃO COM CI/CD
+## CI/CD INTEGRATION
 
 ```yaml
-# Exemplo GitHub Actions
+# GitHub Actions example
 - name: Fail-Fast Validation
   run: |
     cd docker-tests
     make simulate-failfast
 ```
 
-**Vantagem:** Validação rápida em PRs sem bloquear o pipeline.
+**Advantage:** Quick validation in PRs without blocking the pipeline.
 
 ---
 
 ## EXIT CODES
 
-| Código | Significado |
-|--------|-------------|
-| 0 | ✅ Core intacto |
-| 1 | ❌ Erro de integridade detectado |
+| Code | Meaning |
+|------|---------|
+| 0 | ✅ Core intact |
+| 1 | ❌ Integrity error detected |
 
 ---
 
 ## OUTPUT
 
-### Sucesso
+### Success
 
 ```
 ⚡ FAIL-FAST MODE
-   Duração: 1 min → 1h simulada
-   Multiplicador: 60.0x
+   Duration: 1 min → 1h simulated
+   Multiplier: 60.0x
 
-🚀 Iniciando simulação...
+🚀 Starting simulation...
 
-🔍 Validando integridade...
+🔍 Validating integrity...
 
 ✅ PASS
-   Pedidos: X
-   Eventos: Y
-   Erros: 0
+   Orders: X
+   Events: Y
+   Errors: 0
 
-✅ FAIL-FAST: Core intacto
+✅ FAIL-FAST: Core intact
 ```
 
-### Falha
+### Failure
 
 ```
-❌ FAIL-FAST: Orphan items detectados: 5
+❌ FAIL-FAST: Orphan items detected: 5
 ```
 
 ---
 
-## DIFERENÇAS DO MODO COMPLETO
+## DIFFERENCES FROM COMPLETE MODE
 
-| Aspecto | Fail-Fast | Completo (24h) |
-|---------|-----------|----------------|
-| Duração | 1 min | 5-7 min |
-| Horas simuladas | 1h | 24h |
-| Validações | Integridade | Tudo |
-| Governança | Não | Sim |
-| Offline | Não | Sim |
-| Escalonamento | Não | Sim |
-| Relatório | Não | Sim |
-
----
-
-## PRÓXIMOS PASSOS
-
-Após fail-fast passar:
-1. ✅ Core está funcionalmente correto
-2. ⏭️ Execute `simulate-24h-small` para validação completa
-3. ⏭️ Execute `make assertions` para validação final
+| Aspect | Fail-Fast | Complete (24h) |
+|--------|-----------|----------------|
+| Duration | 1 min | 5-7 min |
+| Simulated hours | 1h | 24h |
+| Validations | Integrity | Everything |
+| Governance | No | Yes |
+| Offline | No | Yes |
+| Escalation | No | Yes |
+| Report | No | Yes |
 
 ---
 
-## NOTAS TÉCNICAS
+## NEXT STEPS
 
-- Usa seed fixo para reprodutibilidade
-- Limpa dados antes de executar
-- Não cria relatórios (foco em velocidade)
-- Para no primeiro erro (fail-fast)
+After fail-fast passes:
+1. ✅ Core is functionally correct
+2. ⏭️ Run `simulate-24h-small` for complete validation
+3. ⏭️ Run `make assertions` for final validation
 
 ---
 
-*Este modo é parte do MEGA OPERATIONAL SIMULATOR v2.1*
+## TECHNICAL NOTES
+
+- Uses fixed seed for reproducibility
+- Cleans data before execution
+- Doesn't create reports (focus on speed)
+- Stops at first error (fail-fast)
+
+---
+
+*This mode is part of MEGA OPERATIONAL SIMULATOR v2.1*
