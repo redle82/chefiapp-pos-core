@@ -36,7 +36,10 @@ All critical canonical documents have been converted from Portuguese to English,
 - ✅ `NEXT_STEPS.md`
 - ✅ `HANDOFF.md`
 
-**Total:** 14 critical documents converted (13 + CONTRIBUTING.md fully completed)
+### Additional Canonical Documents (1)
+- ✅ `CHANGELOG.md` ✅ (fully converted - 2026-01-24)
+
+**Total:** 15 critical documents converted (14 + CHANGELOG.md)
 
 ---
 
@@ -73,7 +76,7 @@ docs/
 
 | Metric | Value |
 |--------|-------|
-| Documents converted | 14 |
+| Documents converted | 15 |
 | Commits | 8 |
 | Branch | `chore/language-sovereignty` |
 | Tag | `v1.0-language-sovereign` |

@@ -36,6 +36,9 @@
 - [x] NEXT_STEPS.md
 - [x] HANDOFF.md
 
+### Additional Canonical Documents ✅
+- [x] CHANGELOG.md ✅ (fully converted - 2026-01-24)
+
 ---
 
 ## Files Still Pending ⏳
