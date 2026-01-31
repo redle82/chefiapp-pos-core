@@ -35,7 +35,7 @@ echo ""
 echo "📋 2. Validando E2E Navigation Flow..."
 if command -v npx &> /dev/null && [ -f "merchant-portal/tests/e2e/sovereign-navigation.spec.ts" ]; then
     # Verificar se o servidor está rodando
-    if curl -s http://localhost:5173 > /dev/null 2>&1; then
+    if curl -s http://localhost:5175 > /dev/null 2>&1; then
         if cd merchant-portal && npx playwright test tests/e2e/sovereign-navigation.spec.ts --reporter=list 2>/dev/null; then
             echo "   ✅ E2E Navigation Flow validado"
         else

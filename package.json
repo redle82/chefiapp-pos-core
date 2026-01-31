@@ -10,6 +10,9 @@
     "test": "tests"
   },
   "scripts": {
+    "chef:portal:up": "./chef.sh portal up",
+    "chef:audit": "./chef.sh audit",
+    "contract:gate": "bash ./scripts/audit-contracts-referenced.sh && bash ./scripts/contract-gate.sh",
     "_test:info": "echo 'Run all tests from repo root with: npm test'",
     "test": "jest",
     "test:unit": "jest tests/unit",
@@ -65,9 +68,13 @@
     "validate:tenant-isolation": "./scripts/validate-tenant-isolation.sh",
     "ci:gate:navigation": "./scripts/ci-gate-sovereign-navigation.sh",
     "ci:gate:tenant": "./scripts/validate-tenant-isolation.sh",
+    "test:e2e": "npm run test:e2e -w merchant-portal",
     "test:e2e:navigation": "cd merchant-portal && npx playwright test tests/e2e/sovereign-navigation.spec.ts",
     "test:appstaff": "cd merchant-portal && npx vitest run ../tests/nervous-system/AppStaff.stress.test.ts || echo 'AppStaff test file not found, skipping...'",
-    "test:all": "npm test && npm run test:appstaff"
+    "test:all": "npm test && npm run test:appstaff",
+    "supreme:e2e": "bash ./scripts/supreme-e2e.sh",
+    "supreme:stations": "bash ./scripts/supreme-stations.sh",
+    "supreme:seed": "npx tsx scripts/supreme-seed.ts"
   },
   "keywords": [],
   "author": "Goldmonkey Empire",
@@ -86,6 +93,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^20.3.1",
+    "fast-check": "^3.22.0",
     "@commitlint/config-conventional": "^20.3.1",
     "@playwright/test": "^1.49.1",
     "@testing-library/jest-dom": "^6.9.1",

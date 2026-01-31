@@ -1,1234 +1,613 @@
-import React, { Suspense } from "react";
-import { HelmetProvider } from "react-helmet-async";
-import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
-import "./App.css";
-
-// Pages
-import { ActivationPage } from "./pages/Activation/ActivationPage";
-import { SystemStatusPage } from "./pages/Audit/SystemStatusPage";
-import { AuthPage } from "./pages/AuthPage";
-import { BootstrapPage } from "./pages/BootstrapPage";
-import { ComingSoonPage } from "./pages/ComingSoonPage";
-import { DebugTPV } from "./pages/DebugTPV";
-import { HealthCheckPage } from "./pages/HealthCheckPage";
-import { LandingPage } from "./pages/Landing/LandingPage";
-import { AdvancedSetupPage } from "./pages/Onboarding/AdvancedSetupPage";
-import BillingStep from "./pages/Onboarding/BillingStep";
-import CheckoutStep from "./pages/Onboarding/CheckoutStep";
-import FirstSaleGuide from "./pages/Onboarding/FirstSaleGuide";
-import MenuDemo from "./pages/Onboarding/MenuDemo";
-import OnboardingWizard, {
-  ScreenInviteCode,
-} from "./pages/Onboarding/OnboardingWizard";
-import TrialStart from "./pages/Onboarding/TrialStart";
-import { MigrationWizard } from "./pages/Onboarding/migration/MigrationWizardContainer";
-import PublicPages from "./pages/Public/PublicOrderingPage";
-import { AccessDeniedPage, SelectTenantPage } from "./pages/Tenant";
-import { WizardPage } from "./pages/WizardPage";
-
-// Content Hub
-import { MenuBootstrapPage } from "./pages/Menu/Bootstrap/MenuBootstrapPage";
-import { ArticlePage } from "./pages/Read/ArticlePage";
-import { LibraryPage } from "./pages/Read/LibraryPage";
-import { ReaderLayout } from "./pages/Read/ReaderLayout";
-import { BetaFeedbackWidget } from "./ui/feedback/BetaFeedbackWidget";
-
-// Subgroup A: TPV & Menu
-// Subgroup A: TPV & Menu
-const TPV = React.lazy(() => import("./pages/TPV/TPV"));
-const KDS = React.lazy(() => import("./pages/TPV/KDS/KitchenDisplay"));
-const KDSStandalone = React.lazy(() => import("./pages/TPV/KDS/KDSStandalone"));
-const MenuManager = React.lazy(() =>
-  import("./pages/Menu/MenuManager").then((m) => ({ default: m.MenuManager })),
-);
-
-// Subgroup B: Dashboard & Reports
-const DashboardZero = React.lazy(
-  () => import("./pages/Dashboard/DashboardZero"),
-);
-const PulseList = React.lazy(() =>
-  import("./pages/AppStaff/PulseList").then((m) => ({ default: m.PulseList })),
-);
-const Settings = React.lazy(() =>
-  import("./pages/Settings").then((m) => ({ default: m.Settings })),
-);
-const SovereigntyDashboard = React.lazy(() =>
-  import("./pages/Settings/SovereigntyDashboard").then((m) => ({
-    default: m.SovereigntyDashboard,
-  })),
-);
-const ConnectorSettings = React.lazy(() =>
-  import("./pages/Settings").then((m) => ({ default: m.ConnectorSettings })),
-);
-
-const DailyClosing = React.lazy(() =>
-  import("./pages/Reports/DailyClosing").then((m) => ({
-    default: m.DailyClosing,
-  })),
-);
-const ZReportPrint = React.lazy(() =>
-  import("./pages/Reports/ZReportPrint").then((m) => ({
-    default: m.ZReportPrint,
-  })),
-);
-const FinanceDashboard = React.lazy(() =>
-  import("./pages/Reports/FinanceDashboard").then((m) => ({
-    default: m.FinanceDashboard,
-  })),
-);
-const DeliveryMonitor = React.lazy(() =>
-  import("./modules/delivery/DeliveryMonitor").then((m) => ({
-    default: m.DeliveryMonitor,
-  })),
-);
-const StaffPage = React.lazy(() => import("./pages/Settings/StaffPage"));
-const BillingPage = React.lazy(() => import("./pages/Settings/BillingPage"));
-const ProvisionRestaurantPage = React.lazy(() =>
-  import("./pages/Admin/ProvisionRestaurantPage").then((m) => ({
-    default: m.ProvisionRestaurantPage,
-  })),
-);
-
-const TPVKitsPage = React.lazy(() =>
-  import("./pages/Store/TPVKitsPage").then((m) => ({ default: m.TPVKitsPage })),
-);
-const EvolveHub = React.lazy(() =>
-  import("./pages/Evolve/EvolveHub").then((m) => ({ default: m.EvolveHub })),
-);
-const RestaurantWebPreviewPage = React.lazy(() =>
-  import("./pages/Web/RestaurantWebPreviewPage").then((m) => ({
-    default: m.RestaurantWebPreviewPage,
-  })),
-);
-const LocalBossPage = React.lazy(() =>
-  import("./pages/LocalBoss/LocalBossPage").then((m) => ({
-    default: m.LocalBossPage,
-  })),
-);
-const GovernOverviewPage = React.lazy(() =>
-  import("./pages/Govern/GovernOverviewPage").then((m) => ({
-    default: m.GovernOverviewPage,
-  })),
-);
-const GovernManageDashboard = React.lazy(() =>
-  import("./pages/GovernManage/GovernManageDashboard").then((m) => ({
-    default: m.GovernManageDashboard,
-  })),
-);
-const ReservationsDashboard = React.lazy(() =>
-  import("./pages/Reservations/ReservationsDashboard").then((m) => ({
-    default: m.ReservationsDashboard,
-  })),
-);
-const ReputationHubDashboard = React.lazy(() =>
-  import("./pages/ReputationHub/ReputationHubDashboard").then((m) => ({
-    default: m.ReputationHubDashboard,
-  })),
-);
-const OperationalHubDashboard = React.lazy(() =>
-  import("./pages/OperationalHub/OperationalHubDashboard").then((m) => ({
-    default: m.OperationalHubDashboard,
-  })),
-);
-const PortioningDashboard = React.lazy(() =>
-  import("./pages/Portioning/PortioningDashboard").then((m) => ({
-    default: m.PortioningDashboard,
-  })),
-);
-const RestaurantGroupManager = React.lazy(() =>
-  import("./pages/MultiLocation/RestaurantGroupManager").then((m) => ({
-    default: m.RestaurantGroupManager,
-  })),
-);
-const GroupDashboard = React.lazy(() =>
-  import("./pages/MultiLocation/GroupDashboard").then((m) => ({
-    default: m.GroupDashboard,
-  })),
-);
-const CustomersPage = React.lazy(() =>
-  import("./pages/CRM/CustomersPage").then((m) => ({
-    default: m.CustomersPage,
-  })),
-);
-const LoyaltyPage = React.lazy(() =>
-  import("./pages/Loyalty/LoyaltyPage").then((m) => ({
-    default: m.LoyaltyPage,
-  })),
-);
-const PerformanceDashboard = React.lazy(() =>
-  import("./pages/Performance/PerformanceDashboard").then((m) => ({
-    default: m.PerformanceDashboard,
-  })),
-);
-const SafetyConfig = React.lazy(() => import("./pages/Safety/SafetyConfig"));
-const StrategicCalendar = React.lazy(
-  () => import("./pages/Calendar/StrategicCalendar"),
-);
-const OrganizationDashboard = React.lazy(() =>
-  import("./pages/Organization/OrganizationDashboard").then((m) => ({
-    default: m.OrganizationDashboard,
-  })),
-);
-
-// Components
-import { AppLayout } from "./components/Layout/AppLayout";
-import { ThemeEngine } from "./components/theme/ThemeEngine";
-import { RequireActivation } from "./core/activation";
-import { FlowGate } from "./core/flow/FlowGate";
-import { OperationGate } from "./core/flow/OperationGate"; // Opus 6.0
-import { GuardTool } from "./core/permissions/GuardTool";
-import { SovereignBoundary } from "./ui/components/SovereignBoundary";
-
-// Pages - Operation
-import { OperationStatusPage } from "./pages/Operation/OperationStatusPage"; // Opus 6.0
-import { SystemPausedPage } from "./pages/Operation/SystemPausedPage"; // Opus 6.0
-import { SystemSuspendedPage } from "./pages/Operation/SystemSuspendedPage"; // Opus 6.0
-
-// Providers
-import { AppDomainWrapper } from "./app/AppDomainWrapper"; // 🏛️ Gate → Domain Bridge
-import { FeatureFlagProvider } from "./core/flags/FeatureFlagContext";
-import { SystemGuardianProvider } from "./core/guardian/SystemGuardianContext";
-import { TenantProvider } from "./core/tenant/TenantContext"; // Added Provider
-import { OnboardingProvider } from "./pages/Onboarding/OnboardingState";
-
-// 🛰️ LAZY LOADED SATELLITES
-const StaffModule = React.lazy(() => import("./pages/AppStaff/StaffModule"));
-
-import { isDevStableMode } from "./core/runtime/devStableMode";
-import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
-
 /**
- * E2E NAVIGATION VALIDATION CHECKLIST:
+ * APP.TSX — RESET CONTROLADO
  *
- * 1. Landing → Login: Navigate to `/` → Click CTA → Google OAuth
- * 2. Auth → Onboarding: New user → `/onboarding/identity`
- * 3. Onboarding → Dashboard: Complete wizard → `/app/dashboard`
- * 4. Dashboard → Tools (NEW TAB): Click TPV/KDS/Menu/Orders card → Opens in new browser tab
- * 5. Refresh Safety: Directly load `/app/tpv`, `/app/kds`, `/app/menu`, `/app/orders` → Each renders independently
+ * Esta é a versão limpa após remoção total de UI/UX legada.
  *
- * Tab Titles:
- * - /app/dashboard → "ChefIApp POS — Dashboard"
- * - /app/tpv → "ChefIApp POS — TPV"
- * - /app/kds → "ChefIApp POS — KDS"
- * - /app/menu → "ChefIApp POS — Menu"
- * - /app/orders → "ChefIApp POS — Orders"
+ * REGRAS:
+ * - Nenhuma rota antiga
+ * - Nenhum redirecionamento automático
+ * - Nenhum uso de Supabase fora do Core
+ * - Apenas tela neutra de reset
+ *
+ * FASE 0: BLOQUEIO DE CONTAMINAÇÃO — CONCLUÍDA
+ * FASE 1: ISOLAMENTO DO CORE — CONCLUÍDA
+ * FASE 2: RESET TOTAL DA UI — CONCLUÍDA
+ * FASE 3: RECONSTRUÇÃO GUIADA — AGUARDANDO
  */
+
+import { Link, Navigate, Route, Routes } from "react-router-dom";
+import "./App.css";
+import { RestaurantRuntimeProvider } from "./context/RestaurantRuntimeContext";
+import { ShiftProvider } from "./core/shift/ShiftContext";
+import { AppStaffMobileOnlyPage } from "./pages/AppStaff/AppStaffMobileOnlyPage";
+import { BackofficePage } from "./pages/Backoffice/BackofficePage";
+import { BillingPage } from "./pages/Billing/BillingPage";
+import { BootstrapPage } from "./pages/BootstrapPage";
+import { BillingSuccessPage } from "./pages/Billing/BillingSuccessPage";
+import { CoreResetPage } from "./pages/CoreReset/CoreResetPage";
+import { DebugTPV } from "./pages/DebugTPV";
+import { InventoryStockMinimal } from "./pages/InventoryStock/InventoryStockMinimal";
+import { KDSMinimal } from "./pages/KDSMinimal/KDSMinimal";
+import { MenuBuilderMinimal } from "./pages/MenuBuilder/MenuBuilderMinimal";
+import { OperacaoMinimal } from "./pages/Operacao/OperacaoMinimal";
+import { CustomerOrderStatusView } from "./pages/Public/CustomerOrderStatusView";
+import { PublicKDS } from "./pages/Public/PublicKDS";
+import { PublicWebPage } from "./pages/PublicWeb/PublicWebPage";
+import { TablePage } from "./pages/PublicWeb/TablePage";
+import { ShoppingListMinimal } from "./pages/ShoppingList/ShoppingListMinimal";
+import { TPVMinimal } from "./pages/TPVMinimal/TPVMinimal";
+import { TaskSystemMinimal } from "./pages/TaskSystem/TaskSystemMinimal";
+
+// Novas rotas - Perfis (Employee, Manager, Owner)
+import { ManagementAdvisor } from "./components/onboarding/ManagementAdvisor";
+import { OperationalFullscreenWrapper } from "./components/operational/OperationalFullscreenWrapper";
+import { RequireOperational } from "./components/operational/RequireOperational";
+import { useSupabaseAuth } from "./core/auth/useSupabaseAuth";
+import { RoleGate, RoleProvider } from "./core/roles";
+import { ShiftGuard } from "./core/shift/ShiftGuard";
+import { TenantProvider } from "./core/tenant/TenantContext";
+import { AlertsDashboardPage } from "./pages/Alerts/AlertsDashboardPage";
+import { ConfigIdentityPage } from "./pages/Config/ConfigIdentityPage";
+import { ConfigIntegrationsPage } from "./pages/Config/ConfigIntegrationsPage";
+import { ConfigLayout } from "./pages/Config/ConfigLayout";
+import { ConfigLocationPage } from "./pages/Config/ConfigLocationPage";
+import { ConfigModulesPage } from "./pages/Config/ConfigModulesPage";
+import { ConfigPaymentsPage } from "./pages/Config/ConfigPaymentsPage";
+import { ConfigPeoplePage } from "./pages/Config/ConfigPeoplePage";
+import { ConfigPerceptionPage } from "./pages/Config/ConfigPerceptionPage";
+import { ConfigSchedulePage } from "./pages/Config/ConfigSchedulePage";
+import { ConfigStatusPage } from "./pages/Config/ConfigStatusPage";
+import { DashboardPortal } from "./pages/Dashboard/DashboardPortal";
+import { DemoTourPage } from "./pages/Demo/DemoTourPage";
+import { EmployeeHomePage } from "./pages/Employee/HomePage";
+import { EmployeeKDSIntelligentPage } from "./pages/Employee/KDSIntelligentPage";
+import { EmployeeMentorPage } from "./pages/Employee/MentorPage";
+import { EmployeeOperationPage } from "./pages/Employee/OperationPage";
+import { EmployeeTasksPage } from "./pages/Employee/TasksPage";
+import { FinancialDashboardPage } from "./pages/Financial/FinancialDashboardPage";
+import { GroupsDashboardPage } from "./pages/Groups/GroupsDashboardPage";
+import { HealthDashboardPage } from "./pages/Health/HealthDashboardPage";
+import { InstallPage } from "./pages/InstallPage";
+import { FeaturesPage } from "./pages/Landing/FeaturesPage";
+import { AuthPage } from "./pages/AuthPage";
+import { LandingPage } from "./pages/Landing/LandingPage";
+import { PricingPage } from "./pages/Landing/PricingPage";
+import { ManagerAnalysisPage } from "./pages/Manager/AnalysisPage";
+import { ManagerCentralPage } from "./pages/Manager/CentralPage";
+import { ManagerDashboardPage } from "./pages/Manager/DashboardPage";
+import { ManagerReservationsPage } from "./pages/Manager/ReservationsPage";
+import { ManagerScheduleCreatePage } from "./pages/Manager/ScheduleCreatePage";
+import { ManagerSchedulePage } from "./pages/Manager/SchedulePage";
+import { MentorDashboardPage } from "./pages/Mentor/MentorDashboardPage";
+import { OwnerPurchasesPage } from "./pages/Owner/PurchasesPage";
+import { OwnerSimulationPage } from "./pages/Owner/SimulationPage";
+import { OwnerStockRealPage } from "./pages/Owner/StockRealPage";
+import { OwnerVisionPage } from "./pages/Owner/VisionPage";
+import { PublishPage } from "./pages/PublishPage";
+import { PeopleDashboardPage } from "./pages/People/PeopleDashboardPage";
+import { TimeTrackingPage } from "./pages/People/TimeTrackingPage";
+import { PurchasesDashboardPage } from "./pages/Purchases/PurchasesDashboardPage";
+import { ReservationsDashboardPage } from "./pages/Reservations/ReservationsDashboardPage";
+import { SelectTenantPage } from "./pages/SelectTenantPage";
+import { SystemTreePage } from "./pages/SystemTree/SystemTreePage";
+import { RecurringTasksPage } from "./pages/Tasks/RecurringTasksPage";
+import { TaskDashboardPage } from "./pages/Tasks/TaskDashboardPage";
+import { TaskDetailPage } from "./pages/Tasks/TaskDetailPage";
+import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
+import { ModeIndicator } from "./ui/design-system/ModeIndicator";
+
+/** Sem sessão, /app → /auth (comportamento FlowGate; E2E sovereign-navigation). Com sessão → /app/dashboard. */
+function RedirectAppWhenUnauthenticated() {
+  const { session, loading } = useSupabaseAuth();
+  if (loading) return null;
+  if (!session) return <Navigate to="/auth" replace />;
+  return <Navigate to="/app/dashboard" replace />;
+}
+
 function App() {
-  // ===========================================================================
-  // DEV_STABLE_MODE — Entrada Única (Fase A)
-  // Enquanto estivermos estabilizando, DEV deve montar APENAS /app/*
-  // para evitar competição onboarding ↔ app e estados contraditórios.
-  // Desligue com ?devStable=0
-  // ===========================================================================
-  const devStable = isDevStableMode();
-
-  const DevStableEntryGate = () => {
-    const location = useLocation();
-    // FASE 2: Permitir rotas de tutorial mesmo em devStable
-    const allowedOnboardingRoutes = [
-      "/onboarding/first-sale-guide",
-      "/onboarding/menu-demo",
-    ];
-    const isAllowedRoute = allowedOnboardingRoutes.some(
-      (route) => location.pathname === route,
-    );
-
-    if (
-      isDevStableMode() &&
-      location.pathname.startsWith("/onboarding") &&
-      !isAllowedRoute
-    ) {
-      // In DEV_STABLE_MODE, onboarding is intentionally blocked.
-      // Gate + Tenant selection should be tested in isolation first.
-      // Exception: tutorial routes are allowed.
-      return <Navigate to="/app/select-tenant" replace />;
-    }
-
-    return null;
-  };
-
   return (
-    <FeatureFlagProvider>
-      <HelmetProvider>
-        <SystemGuardianProvider>
-          <ErrorBoundary context="AppRoot">
-            {devStable ? (
-              <>
-                {/* DEV_STABLE_MODE: onboarding must not mount (no side effects). */}
-                <DevStableEntryGate />
-                <Routes>
-                  {/* 1. PUBLIC */}
-                  <Route
-                    path="/public/*"
-                    element={
-                      <SovereignBoundary>
-                        <Suspense fallback={<div>Carregando Cardápio...</div>}>
-                          <PublicPages />
-                        </Suspense>
-                      </SovereignBoundary>
-                    }
-                  />
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/health" element={<HealthCheckPage />} />
-                  <Route path="/auth" element={<AuthPage />} />
-                  {/* 🐞 DEBUG: Manual TPV Access */}
-                  <Route path="/debug-tpv" element={<DebugTPV />} />
+    <Routes>
+      {/* APPLICATION_BOOT_CONTRACT: PUBLIC/AUTH — sem Runtime/Shift (landing 100% desacoplada do Core) */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/features" element={<FeaturesPage />} />
+      <Route path="/demo" element={<DemoTourPage />} />
+      <Route path="/login" element={<Navigate to="/auth" replace />} />
+      <Route path="/signup" element={<Navigate to="/auth?mode=signup" replace />} />
+      <Route path="/forgot-password" element={<Navigate to="/auth" replace />} />
+      <Route path="/auth" element={<AuthPage />} />
+      <Route path="/billing/success" element={<BillingSuccessPage />} />
+      <Route path="/onboarding" element={<Navigate to="/app/dashboard" replace />} />
+      <Route path="/onboarding/:section" element={<Navigate to="/app/dashboard" replace />} />
+      <Route path="*" element={<AppWithRuntime />} />
+    </Routes>
+  );
+}
 
-                  {/* Legacy redirects - manter compatibilidade temporária */}
-                  <Route
-                    path="/login"
-                    element={<Navigate to="/auth" replace />}
-                  />
-                  <Route
-                    path="/signup"
-                    element={<Navigate to="/auth" replace />}
-                  />
-                  <Route path="/join" element={<ScreenInviteCode />} />
-                  {/* DEV_STABLE_MODE: onboarding routes blocked (redirect handled by DevStableEntryGate) */}
-                  <Route
-                    path="/start"
-                    element={<Navigate to="/app/select-tenant" replace />}
-                  />
-                  {/* FASE 2: Permitir rotas de tutorial mesmo em devStable */}
-                  <Route
-                    path="/onboarding/first-sale-guide"
-                    element={<FirstSaleGuide />}
-                  />
-                  <Route path="/onboarding/menu-demo" element={<MenuDemo />} />
-                  <Route
-                    path="/onboarding/*"
-                    element={<Navigate to="/app/select-tenant" replace />}
-                  />
+/** APPLICATION_BOOT_CONTRACT: MANAGEMENT/OPERATIONAL — Runtime + Shift só para rotas que precisam de Core. */
+function AppWithRuntime() {
+  return (
+    <RestaurantRuntimeProvider>
+      <ShiftProvider>
+        <RoleProvider>
+          <TenantProvider>
+            <ShiftGuard>
+              <ModeIndicator />
+              <Routes>
+              <Route path="/public/:slug" element={<PublicWebPage />} />
+            <Route path="/public/:slug/mesa/:number" element={<TablePage />} />
+            <Route
+              path="/public/:slug/order/:orderId"
+              element={<CustomerOrderStatusView />}
+            />
+            <Route path="/public/:slug/kds" element={<PublicKDS />} />
 
-                  <Route
-                    path="/migration/wizard"
-                    element={<MigrationWizard />}
-                  />
-                  <Route
-                    path="/activation"
-                    element={
-                      <OnboardingProvider>
-                        <ActivationPage />
-                      </OnboardingProvider>
-                    }
-                  />
+            <Route path="/bootstrap" element={<BootstrapPage />} />
+            <Route path="/app/select-tenant" element={<SelectTenantPage />} />
+            {/* Sem auth, /app → /auth (comportamento FlowGate; E2E sovereign-navigation) */}
+            <Route path="/app" element={<RedirectAppWhenUnauthenticated />} />
 
-                  {/* 🍳 KDS STANDALONE — Cozinha Independente (Tablet/TV) */}
-                  {/* ROTA: /kds/:restaurantId - Funciona sem AppLayout, sem FlowGate */}
-                  <Route
-                    path="/kds/:restaurantId"
-                    element={
-                      <Suspense
-                        fallback={
-                          <div
-                            style={{
-                              minHeight: "100vh",
-                              background: "#0a0a0a",
-                              color: "#fff",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <div style={{ textAlign: "center" }}>
-                              <div style={{ fontSize: 48, marginBottom: 16 }}>
-                                🍳
-                              </div>
-                              <p>Carregando KDS...</p>
-                            </div>
-                          </div>
-                        }
+            {/* Rotas protegidas por papel (RoleGate) — inclui /op/* (OPERATIONAL_ROUTES_CONTRACT) */}
+            <Route element={<RoleGate />}>
+              {/* OPERATIONAL_ROUTES_CONTRACT: /op/* com gates (RequireOperational) */}
+              <Route
+                path="/op/tpv"
+                element={
+                  <ErrorBoundary
+                    context="TPV"
+                    fallback={
+                      <div
+                        style={{
+                          minHeight: "100vh",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: 24,
+                          background: "#0f172a",
+                          color: "#e2e8f0",
+                          fontFamily: "system-ui, sans-serif",
+                          textAlign: "center",
+                        }}
                       >
-                        <KDSStandalone />
-                      </Suspense>
-                    }
-                  />
-
-                  {/* AUTH GATE (Session Only) - Redundant with FlowGate but explicit for clarity */}
-                  <Route path="/bootstrap" element={<BootstrapPage />} />
-
-                  {/* CONTENT HUB (Totally different layout) */}
-                  <Route path="/read" element={<ReaderLayout />}>
-                    <Route index element={<LibraryPage />} />
-                    <Route path=":slug" element={<ArticlePage />} />
-                  </Route>
-
-                  <Route
-                    path="/app"
-                    element={
-                      <FlowGate>
-                        <TenantProvider>
-                          <AppDomainWrapper>
-                            <RequireActivation>
-                              <ThemeEngine />
-                              <Outlet />
-                              {/* <AppLayout /> MOVED TO SUB-ROUTE */}
-                            </RequireActivation>
-                          </AppDomainWrapper>
-                        </TenantProvider>
-                      </FlowGate>
+                        <p style={{ fontSize: 18, marginBottom: 16, maxWidth: 400 }}>
+                          TPV temporariamente indisponível. Tente novamente ou volte ao portal.
+                        </p>
+                        <Link
+                          to="/dashboard"
+                          style={{
+                            padding: "12px 24px",
+                            background: "#f8fafc",
+                            color: "#0f172a",
+                            borderRadius: 8,
+                            fontWeight: 600,
+                            textDecoration: "none",
+                          }}
+                        >
+                          Ir para o Portal
+                        </Link>
+                      </div>
                     }
                   >
-                    {/* 1. ADMIN PANEL (Dashboard + Management) - Uses Sidebar/Header */}
-                    <Route
-                      element={
-                        <>
-                          <AppLayout />
-                          <BetaFeedbackWidget />
-                        </>
-                      }
-                    >
-                      {/* 🎯 /app sem subrota → Dashboard (FlowGate já validou auth) */}
-                      <Route
-                        index
-                        element={<Navigate to="/app/dashboard" replace />}
-                      />
-
-                      {/* [Phase 2] Multi-Tenant Routes */}
-                      <Route
-                        path="select-tenant"
-                        element={<SelectTenantPage />}
-                      />
-                      <Route
-                        path="access-denied"
-                        element={<AccessDeniedPage />}
-                      />
-
-                      {/* [Opus 6.0] Operation Status Screens */}
-                      <Route path="paused" element={<SystemPausedPage />} />
-                      <Route
-                        path="suspended"
-                        element={<SystemSuspendedPage />}
-                      />
-                      <Route
-                        path="operation-status"
-                        element={<OperationStatusPage />}
-                      />
-
-                      {/* 🛡️ OPERATION GATE: Enforces active/paused/suspended state */}
-                      <Route element={<OperationGate />}>
-                        {/* Command Center */}
-                        <Route
-                          path="dashboard"
-                          element={
-                            <Suspense
-                              fallback={
-                                <div style={{ padding: 40, color: "#32d74b" }}>
-                                  💿 Sincronizando Mapa Soberano...
-                                </div>
-                              }
-                            >
-                              <DashboardZero />
-                            </Suspense>
-                          }
-                        />
-
-                        <Route
-                          path="menu"
-                          element={
-                            <GuardTool tool="menu">
-                              <Suspense fallback={<div>Loading Menu...</div>}>
-                                <MenuManager />
-                              </Suspense>
-                            </GuardTool>
-                          }
-                        />
-                        <Route
-                          path="menu/bootstrap"
-                          element={<MenuBootstrapPage />}
-                        />
-
-                        {/* Settings & Reports */}
-                        <Route
-                          path="settings"
-                          element={
-                            <Suspense fallback={<div>Loading Settings...</div>}>
-                              <Settings />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="settings/billing"
-                          element={
-                            <Suspense fallback={<div>Loading Billing...</div>}>
-                              <BillingPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="settings/sovereignty"
-                          element={
-                            <GuardTool tool="sovereignty">
-                              <Suspense
-                                fallback={<div>Loading Sovereignty...</div>}
-                              >
-                                <SovereigntyDashboard />
-                              </Suspense>
-                            </GuardTool>
-                          }
-                        />
-                        <Route
-                          path="settings/advanced-setup"
-                          element={<AdvancedSetupPage />}
-                        />
-                        <Route
-                          path="settings/connectors"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ConnectorSettings />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/daily-closing"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <DailyClosing />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/z-report/:id"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ZReportPrint />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/finance"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <FinanceDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/delivery"
-                          element={
-                            <Suspense fallback={<div>Loading DLQ...</div>}>
-                              <DeliveryMonitor />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="team"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <StaffPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="store/tpv-kits"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <TPVKitsPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="web/preview"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <RestaurantWebPreviewPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="local-boss"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <LocalBossPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="govern"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <GovernOverviewPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="govern-manage"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <GovernManageDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reservations"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ReservationsDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reputation-hub"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ReputationHubDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="operational-hub"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <OperationalHubDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="portioning"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <PortioningDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="performance"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <PerformanceDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="multi-location"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <RestaurantGroupManager />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="multi-location/:groupId/dashboard"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <GroupDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="organization"
-                          element={
-                            <Suspense
-                              fallback={<div>Loading Enterprise...</div>}
-                            >
-                              <OrganizationDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="crm"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <CustomersPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="loyalty"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <LoyaltyPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route path="audit" element={<SystemStatusPage />} />
-                        <Route
-                          path="evolve"
-                          element={
-                            <Suspense
-                              fallback={<div>Loading Evolve Hub...</div>}
-                            >
-                              <EvolveHub />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="coming-soon"
-                          element={<ComingSoonPage />}
-                        />
-                      </Route>
-                    </Route>
-
-                    {/* 2. DEDICATED TOOLS (TPV, KDS, Orders) - NO AppLayout / Sidebar */}
-                    {/* These run in "Fullscreen" or "App Mode" */}
-                    <Route element={<OperationGate />}>
-                      <Route
-                        path="tpv"
-                        element={
-                          <GuardTool tool="tpv">
-                            <Suspense fallback={<div>Loading TPV...</div>}>
-                              <TPV />
-                            </Suspense>
-                          </GuardTool>
-                        }
-                      />
-                      <Route
-                        path="kds"
-                        element={
-                          <GuardTool tool="kds">
-                            <Suspense fallback={<div>Loading KDS...</div>}>
-                              <KDS />
-                            </Suspense>
-                          </GuardTool>
-                        }
-                      />
-                      <Route
-                        path="orders"
-                        element={
-                          <GuardTool tool="orders">
-                            <Suspense fallback={<div>Loading Orders...</div>}>
-                              <PulseList />
-                            </Suspense>
-                          </GuardTool>
-                        }
-                      />
-                      <Route
-                        path="staff"
-                        element={
-                          <GuardTool tool="staff">
-                            <ErrorBoundary context="AppStaff">
-                              <Suspense
-                                fallback={
-                                  <div style={{ padding: 20 }}>
-                                    📡 Conectando satélite Staff...
-                                  </div>
-                                }
-                              >
-                                <StaffModule />
-                              </Suspense>
-                            </ErrorBoundary>
-                          </GuardTool>
-                        }
-                      />
-                    </Route>
-                  </Route>
-
-                  {/* Legacy redirects: old routes -> new /app/ routes */}
-                  <Route
-                    path="/dashboard"
-                    element={<Navigate to="/app/dashboard" replace />}
-                  />
-                  <Route
-                    path="/tpv"
-                    element={<Navigate to="/app/tpv" replace />}
-                  />
-                  <Route
-                    path="/kds"
-                    element={<Navigate to="/app/kds" replace />}
-                  />
-                  <Route
-                    path="/menu"
-                    element={<Navigate to="/app/menu" replace />}
-                  />
-                  <Route
-                    path="/pulses"
-                    element={<Navigate to="/app/orders" replace />}
-                  />
-
-                  {/* INTERNAL DEV TOOL ROUTE */}
-                  <Route
-                    path="/wizard"
-                    element={<Navigate to="/dev/wizard" replace />}
-                  />
-                  <Route path="/dev/wizard" element={<WizardPage />} />
-                  <Route path="*" element={<Navigate to="/auth" replace />} />
-                </Routes>
-              </>
-            ) : (
-              <OnboardingProvider>
-                {/* OfflineOrderProvider moved to AppDomainWrapper */}
-                <DevStableEntryGate />
-                <Routes>
-                  {/* 1. PUBLIC */}
-                  <Route
-                    path="/public/*"
-                    element={
-                      <SovereignBoundary>
-                        <Suspense fallback={<div>Carregando Cardápio...</div>}>
-                          <PublicPages />
-                        </Suspense>
-                      </SovereignBoundary>
-                    }
-                  />
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/health" element={<HealthCheckPage />} />
-                  <Route path="/auth" element={<AuthPage />} />
-                  {/* 🐞 DEBUG: Manual TPV Access */}
-                  <Route path="/debug-tpv" element={<DebugTPV />} />
-                  {/* Legacy redirects - manter compatibilidade temporária */}
-                  <Route
-                    path="/login"
-                    element={<Navigate to="/auth" replace />}
-                  />
-                  <Route
-                    path="/signup"
-                    element={<Navigate to="/auth" replace />}
-                  />
-                  <Route path="/join" element={<ScreenInviteCode />} />
-                  <Route
-                    path="/start"
-                    element={<Navigate to="/onboarding/start" replace />}
-                  />
-                  {/* FASE 1 - Billing Routes */}
-                  <Route path="/onboarding/billing" element={<BillingStep />} />
-                  <Route
-                    path="/onboarding/checkout"
-                    element={<CheckoutStep />}
-                  />
-                  <Route
-                    path="/onboarding/trial-start"
-                    element={<TrialStart />}
-                  />
-                  {/* FASE 2 - Onboarding com Primeira Venda */}
-                  <Route path="/onboarding/menu-demo" element={<MenuDemo />} />
-                  <Route
-                    path="/onboarding/first-sale-guide"
-                    element={<FirstSaleGuide />}
-                  />
-                  <Route path="/onboarding/*" element={<OnboardingWizard />} />
-
-                  <Route
-                    path="/migration/wizard"
-                    element={<MigrationWizard />}
-                  />
-                  <Route path="/activation" element={<ActivationPage />} />
-
-                  {/* 🍳 KDS STANDALONE — Cozinha Independente (Tablet/TV) */}
-                  {/* ROTA: /kds/:restaurantId - Funciona sem AppLayout, sem FlowGate */}
-                  <Route
-                    path="/kds/:restaurantId"
-                    element={
-                      <Suspense
-                        fallback={
-                          <div
-                            style={{
-                              minHeight: "100vh",
-                              background: "#0a0a0a",
-                              color: "#fff",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <div style={{ textAlign: "center" }}>
-                              <div style={{ fontSize: 48, marginBottom: 16 }}>
-                                🍳
-                              </div>
-                              <p>Carregando KDS...</p>
-                            </div>
-                          </div>
-                        }
+                    <RequireOperational>
+                      <OperationalFullscreenWrapper>
+                        <TPVMinimal />
+                      </OperationalFullscreenWrapper>
+                    </RequireOperational>
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/op/kds"
+                element={
+                  <ErrorBoundary
+                    context="KDS"
+                    fallback={
+                      <div
+                        style={{
+                          minHeight: "100vh",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: 24,
+                          background: "#0f172a",
+                          color: "#e2e8f0",
+                          fontFamily: "system-ui, sans-serif",
+                          textAlign: "center",
+                        }}
                       >
-                        <KDSStandalone />
-                      </Suspense>
-                    }
-                  />
-
-                  {/* AUTH GATE (Session Only) - Redundant with FlowGate but explicit for clarity */}
-                  <Route path="/bootstrap" element={<BootstrapPage />} />
-
-                  {/* CONTENT HUB (Totally different layout) */}
-                  <Route path="/read" element={<ReaderLayout />}>
-                    <Route index element={<LibraryPage />} />
-                    <Route path=":slug" element={<ArticlePage />} />
-                  </Route>
-
-                  <Route
-                    path="/app"
-                    element={
-                      <FlowGate>
-                        <TenantProvider>
-                          <AppDomainWrapper>
-                            <RequireActivation>
-                              <ThemeEngine />
-                              <Outlet />
-                              {/* <AppLayout /> MOVED TO SUB-ROUTE */}
-                            </RequireActivation>
-                          </AppDomainWrapper>
-                        </TenantProvider>
-                      </FlowGate>
+                        <p style={{ fontSize: 18, marginBottom: 16, maxWidth: 400 }}>
+                          KDS temporariamente indisponível. Tente novamente ou volte ao portal.
+                        </p>
+                        <Link
+                          to="/dashboard"
+                          style={{
+                            padding: "12px 24px",
+                            background: "#f8fafc",
+                            color: "#0f172a",
+                            borderRadius: 8,
+                            fontWeight: 600,
+                            textDecoration: "none",
+                          }}
+                        >
+                          Ir para o Portal
+                        </Link>
+                      </div>
                     }
                   >
-                    {/* 1. ADMIN PANEL (Dashboard + Management) - Uses Sidebar/Header */}
-                    <Route
-                      element={
-                        <>
-                          <AppLayout />
-                          <BetaFeedbackWidget />
-                        </>
-                      }
-                    >
-                      {/* 🎯 /app sem subrota → Dashboard (FlowGate já validou auth) */}
-                      <Route
-                        index
-                        element={<Navigate to="/app/dashboard" replace />}
-                      />
+                    <RequireOperational>
+                      <OperationalFullscreenWrapper>
+                        <KDSMinimal />
+                      </OperationalFullscreenWrapper>
+                    </RequireOperational>
+                  </ErrorBoundary>
+                }
+              />
+              <Route path="/op/cash" element={<Navigate to="/op/tpv" replace />} />
+              <Route path="/op/staff" element={<AppStaffMobileOnlyPage />} />
+              {/* Redirects legados para /op/* */}
+              <Route path="/tpv" element={<Navigate to="/op/tpv" replace />} />
+              <Route path="/kds-minimal" element={<Navigate to="/op/kds" replace />} />
 
-                      {/* [Phase 2] Multi-Tenant Routes */}
-                      <Route
-                        path="select-tenant"
-                        element={<SelectTenantPage />}
-                      />
-                      <Route
-                        path="access-denied"
-                        element={<AccessDeniedPage />}
-                      />
+              <Route path="/dashboard" element={<DashboardPortal />} />
+              <Route
+                path="/app/dashboard"
+                element={<Navigate to="/dashboard" replace />}
+              />
+              <Route path="/menu-builder" element={<MenuBuilderMinimal />} />
+              <Route
+                path="/operacao"
+                element={
+                  <RequireOperational>
+                    <OperacaoMinimal />
+                  </RequireOperational>
+                }
+              />
+              <Route
+                path="/inventory-stock"
+                element={<InventoryStockMinimal />}
+              />
+              <Route path="/task-system" element={<TaskSystemMinimal />} />
+              <Route path="/shopping-list" element={<ShoppingListMinimal />} />
+              <Route
+                path="/tpv-test"
+                element={
+                  <RequireOperational>
+                    <DebugTPV />
+                  </RequireOperational>
+                }
+              />
+              <Route path="/garcom" element={<AppStaffMobileOnlyPage />} />
+              <Route
+                path="/garcom/mesa/:tableId"
+                element={<AppStaffMobileOnlyPage />}
+              />
+              <Route
+                path="/app/backoffice"
+                element={
+                  <ManagementAdvisor>
+                    <BackofficePage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/app/setup/menu"
+                element={<Navigate to="/menu-builder" replace />}
+              />
+              <Route
+                path="/app/setup/mesas"
+                element={<Navigate to="/operacao" replace />}
+              />
+              <Route
+                path="/app/setup/equipe"
+                element={<Navigate to="/config/people" replace />}
+              />
+              <Route
+                path="/app/setup/horarios"
+                element={<Navigate to="/config/schedule" replace />}
+              />
+              <Route
+                path="/app/setup/pagamentos"
+                element={<Navigate to="/config/payments" replace />}
+              />
+              <Route
+                path="/app/setup/tpv"
+                element={<Navigate to="/op/tpv" replace />}
+              />
+              <Route
+                path="/app/setup/kds"
+                element={<Navigate to="/op/kds" replace />}
+              />
+              <Route
+                path="/app/setup/estoque"
+                element={<Navigate to="/inventory-stock" replace />}
+              />
+              <Route
+                path="/app/setup/preferencias"
+                element={<Navigate to="/config" replace />}
+              />
+              <Route
+                path="/employee/home"
+                element={
+                  <ManagementAdvisor>
+                    <EmployeeHomePage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/employee/tasks"
+                element={
+                  <ManagementAdvisor>
+                    <EmployeeTasksPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/employee/operation"
+                element={
+                  <ManagementAdvisor>
+                    <EmployeeOperationPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/employee/operation/kitchen"
+                element={
+                  <ManagementAdvisor>
+                    <EmployeeKDSIntelligentPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/employee/mentor"
+                element={
+                  <ManagementAdvisor>
+                    <EmployeeMentorPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/manager/dashboard"
+                element={
+                  <ManagementAdvisor>
+                    <ManagerDashboardPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/manager/central"
+                element={
+                  <ManagementAdvisor>
+                    <ManagerCentralPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/manager/analysis"
+                element={
+                  <ManagementAdvisor>
+                    <ManagerAnalysisPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/manager/schedule"
+                element={
+                  <ManagementAdvisor>
+                    <ManagerSchedulePage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/manager/schedule/create"
+                element={
+                  <ManagementAdvisor>
+                    <ManagerScheduleCreatePage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/manager/reservations"
+                element={
+                  <ManagementAdvisor>
+                    <ManagerReservationsPage />
+                  </ManagementAdvisor>
+                }
+              />
+              {/* Dono (Owner) */}
+              <Route
+                path="/owner/vision"
+                element={
+                  <ManagementAdvisor>
+                    <OwnerVisionPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/owner/stock"
+                element={
+                  <ManagementAdvisor>
+                    <OwnerStockRealPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/owner/simulation"
+                element={
+                  <ManagementAdvisor>
+                    <OwnerSimulationPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/owner/purchases"
+                element={
+                  <ManagementAdvisor>
+                    <OwnerPurchasesPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route path="/config" element={<ConfigLayout />}>
+                <Route
+                  index
+                  element={<Navigate to="/config/identity" replace />}
+                />
+                <Route path="identity" element={<ConfigIdentityPage />} />
+                <Route path="location" element={<ConfigLocationPage />} />
+                <Route
+                  path="location/address"
+                  element={<ConfigLocationPage />}
+                />
+                <Route
+                  path="location/tables"
+                  element={<ConfigLocationPage />}
+                />
+                <Route path="schedule" element={<ConfigSchedulePage />} />
+                <Route path="schedule/hours" element={<ConfigSchedulePage />} />
+                <Route path="people" element={<ConfigPeoplePage />} />
+                <Route path="people/employees" element={<ConfigPeoplePage />} />
+                <Route path="people/roles" element={<ConfigPeoplePage />} />
+                <Route path="payments" element={<ConfigPaymentsPage />} />
+                <Route
+                  path="integrations"
+                  element={<ConfigIntegrationsPage />}
+                />
+                <Route path="modules" element={<ConfigModulesPage />} />
+                <Route path="perception" element={<ConfigPerceptionPage />} />
+                <Route path="status" element={<ConfigStatusPage />} />
+              </Route>
+              <Route path="/system-tree" element={<SystemTreePage />} />
+              <Route
+                path="/tasks"
+                element={
+                  <ManagementAdvisor>
+                    <TaskDashboardPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/tasks/:taskId"
+                element={
+                  <ManagementAdvisor>
+                    <TaskDetailPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/tasks/recurring"
+                element={
+                  <ManagementAdvisor>
+                    <RecurringTasksPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/people"
+                element={
+                  <ManagementAdvisor>
+                    <PeopleDashboardPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/people/time"
+                element={
+                  <ManagementAdvisor>
+                    <TimeTrackingPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/health"
+                element={
+                  <ManagementAdvisor>
+                    <HealthDashboardPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/alerts"
+                element={
+                  <ManagementAdvisor>
+                    <AlertsDashboardPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/mentor"
+                element={
+                  <ManagementAdvisor>
+                    <MentorDashboardPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/purchases"
+                element={
+                  <ManagementAdvisor>
+                    <PurchasesDashboardPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/financial"
+                element={
+                  <ManagementAdvisor>
+                    <FinancialDashboardPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/reservations"
+                element={
+                  <ManagementAdvisor>
+                    <ReservationsDashboardPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/groups"
+                element={
+                  <ManagementAdvisor>
+                    <GroupsDashboardPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/app/billing"
+                element={
+                  <ManagementAdvisor>
+                    <BillingPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/app/publish"
+                element={
+                  <ManagementAdvisor>
+                    <PublishPage />
+                  </ManagementAdvisor>
+                }
+              />
+              <Route
+                path="/app/install"
+                element={
+                  <ManagementAdvisor>
+                    <InstallPage />
+                  </ManagementAdvisor>
+                }
+              />
 
-                      {/* [Opus 6.0] Operation Status Screens */}
-                      <Route path="paused" element={<SystemPausedPage />} />
-                      <Route
-                        path="suspended"
-                        element={<SystemSuspendedPage />}
-                      />
-                      <Route
-                        path="operation-status"
-                        element={<OperationStatusPage />}
-                      />
-
-                      {/* 🛡️ OPERATION GATE: Enforces active/paused/suspended state */}
-                      <Route element={<OperationGate />}>
-                        {/* Command Center */}
-                        <Route
-                          path="dashboard"
-                          element={
-                            <Suspense
-                              fallback={
-                                <div style={{ padding: 40, color: "#32d74b" }}>
-                                  💿 Sincronizando Mapa Soberano...
-                                </div>
-                              }
-                            >
-                              <DashboardZero />
-                            </Suspense>
-                          }
-                        />
-
-                        <Route
-                          path="menu"
-                          element={
-                            <GuardTool tool="menu">
-                              <Suspense fallback={<div>Loading Menu...</div>}>
-                                <MenuManager />
-                              </Suspense>
-                            </GuardTool>
-                          }
-                        />
-                        <Route
-                          path="menu/bootstrap"
-                          element={<MenuBootstrapPage />}
-                        />
-
-                        {/* Settings & Reports */}
-                        <Route
-                          path="settings"
-                          element={
-                            <Suspense fallback={<div>Loading Settings...</div>}>
-                              <Settings />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="settings/sovereignty"
-                          element={
-                            <GuardTool tool="sovereignty">
-                              <Suspense
-                                fallback={<div>Loading Sovereignty...</div>}
-                              >
-                                <SovereigntyDashboard />
-                              </Suspense>
-                            </GuardTool>
-                          }
-                        />
-                        <Route
-                          path="settings/advanced-setup"
-                          element={<AdvancedSetupPage />}
-                        />
-                        <Route
-                          path="settings/connectors"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ConnectorSettings />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="safety"
-                          element={
-                            <Suspense fallback={<div>Loading Safety...</div>}>
-                              <SafetyConfig />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="calendar"
-                          element={
-                            <Suspense fallback={<div>Loading Calendar...</div>}>
-                              <StrategicCalendar />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/daily-closing"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <DailyClosing />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/finance"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <FinanceDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/delivery"
-                          element={
-                            <Suspense fallback={<div>Loading DLQ...</div>}>
-                              <DeliveryMonitor />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="team"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <StaffPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="store/tpv-kits"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <TPVKitsPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="web/preview"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <RestaurantWebPreviewPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="local-boss"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <LocalBossPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="govern"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <GovernOverviewPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="govern-manage"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <GovernManageDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reservations"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ReservationsDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reputation-hub"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ReputationHubDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="operational-hub"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <OperationalHubDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="portioning"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <PortioningDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="performance"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <PerformanceDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="multi-location"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <RestaurantGroupManager />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="multi-location/:groupId/dashboard"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <GroupDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="crm"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <CustomersPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="loyalty"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <LoyaltyPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route path="audit" element={<SystemStatusPage />} />
-                        <Route
-                          path="evolve"
-                          element={
-                            <Suspense
-                              fallback={<div>Loading Evolve Hub...</div>}
-                            >
-                              <EvolveHub />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="coming-soon"
-                          element={<ComingSoonPage />}
-                        />
-                      </Route>
-                    </Route>
-
-                    {/* 2. DEDICATED TOOLS (TPV, KDS, Orders) - NO AppLayout / Sidebar */}
-                    {/* These run in "Fullscreen" or "App Mode" */}
-                    <Route element={<OperationGate />}>
-                      <Route
-                        path="tpv"
-                        element={
-                          <GuardTool tool="tpv">
-                            <Suspense fallback={<div>Loading TPV...</div>}>
-                              <TPV />
-                            </Suspense>
-                          </GuardTool>
-                        }
-                      />
-                      <Route
-                        path="kds"
-                        element={
-                          <GuardTool tool="kds">
-                            <Suspense fallback={<div>Loading KDS...</div>}>
-                              <KDS />
-                            </Suspense>
-                          </GuardTool>
-                        }
-                      />
-                      <Route
-                        path="orders"
-                        element={
-                          <GuardTool tool="orders">
-                            <Suspense fallback={<div>Loading Orders...</div>}>
-                              <PulseList />
-                            </Suspense>
-                          </GuardTool>
-                        }
-                      />
-                      <Route
-                        path="staff"
-                        element={
-                          <GuardTool tool="staff">
-                            <ErrorBoundary context="AppStaff">
-                              <Suspense
-                                fallback={
-                                  <div style={{ padding: 20 }}>
-                                    📡 Conectando satélite Staff...
-                                  </div>
-                                }
-                              >
-                                <StaffModule />
-                              </Suspense>
-                            </ErrorBoundary>
-                          </GuardTool>
-                        }
-                      />
-                    </Route>
-                  </Route>
-
-                  {/* Legacy redirects: old routes -> new /app/ routes */}
-                  <Route
-                    path="/dashboard"
-                    element={<Navigate to="/app/dashboard" replace />}
-                  />
-                  <Route
-                    path="/tpv"
-                    element={<Navigate to="/app/tpv" replace />}
-                  />
-                  <Route
-                    path="/kds"
-                    element={<Navigate to="/app/kds" replace />}
-                  />
-                  <Route
-                    path="/menu"
-                    element={<Navigate to="/app/menu" replace />}
-                  />
-                  <Route
-                    path="/pulses"
-                    element={<Navigate to="/app/orders" replace />}
-                  />
-
-                  {/* INTERNAL DEV TOOL ROUTE */}
-                  <Route
-                    path="/wizard"
-                    element={<Navigate to="/dev/wizard" replace />}
-                  />
-                  <Route path="/dev/wizard" element={<WizardPage />} />
-                  <Route path="*" element={<Navigate to="/auth" replace />} />
-                </Routes>
-              </OnboardingProvider>
-            )}
-          </ErrorBoundary>
-        </SystemGuardianProvider>
-      </HelmetProvider>
-    </FeatureFlagProvider>
+              {/* Tela neutra de reset (padrão) */}
+              <Route path="*" element={<CoreResetPage />} />
+            </Route>
+          </Routes>
+        </ShiftGuard>
+          </TenantProvider>
+        </RoleProvider>
+      </ShiftProvider>
+    </RestaurantRuntimeProvider>
   );
 }
 

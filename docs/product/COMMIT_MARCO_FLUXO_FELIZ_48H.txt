@@ -1,0 +1,21 @@
+docs(product): contenção B1+B2+B4 + checklist fluxo feliz + índice
+
+Marco: fluxo feliz 48h operacional (Landing → Signup → Menu → Publicar → TPV → Pedido → KDS).
+
+Contenção implementada e documentada:
+- B1 (cardápio): fallback localStorage quando Core falha; toUserMessage; B1_MENU_CONTENCAO.md.
+- B2 (TPV): ErrorBoundary em /op/tpv; fallback produtos; hardening TPVMinimal; B2_TPV_CONTENCAO.md.
+- B4 (KDS): ErrorBoundary em /op/kds; fallback pedidos em rede (isNetworkError); guards restaurantId;
+  toUserMessage; loadTasks silencioso; polish "Modo Piloto"; B4_KDS_CONTENCAO.md.
+
+Produto:
+- FLUXO_FELIZ_CHECKLIST.md: checklist técnico (~10–15 min) para verificar o fluxo antes do piloto.
+- VALIDACAO_OPERACAO_PILOTO_01.md: secção "Estado das contenções (48h)" + referência ao checklist.
+- INDICE_MDS.md: secção "Produto (48h fluxo feliz / piloto)" com B1, B2, B4, checklist, piloto.
+
+E2E: fecho D1–D3 — sovereign-navigation + publish-to-operational; 11 passaram, 3 skipped (env-dependent);
+  soft assertion "Apps abrem em novas abas"; regex refresh com dashboard; script test:e2e na raiz; CI porta 5175.
+B1 doc: secção "Implementação B1 (estado)" em B1_MENU_CONTENCAO.md.
+
+Próximo: executar FLUXO_FELIZ_CHECKLIST.md; depois sessão piloto com VALIDACAO_OPERACAO_PILOTO_01.md.
+Ref: B1_MENU_CONTENCAO.md, B2_TPV_CONTENCAO.md, B4_KDS_CONTENCAO.md, FLUXO_FELIZ_CHECKLIST.md.
