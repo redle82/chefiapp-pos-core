@@ -12,6 +12,7 @@ import type {
   CoreOrderItem,
   CoreTask,
 } from "../../core-boundary/docker-core/types";
+import { useGlobalUIState } from "../../context/GlobalUIStateContext";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import {
   readActiveOrders,
@@ -24,6 +25,12 @@ import {
 } from "../../core-boundary/writers/OrderWriter";
 import { isNetworkError } from "../../core-boundary/menuPilotFallback";
 import { ModeGate } from "../../runtime/ModeGate";
+import {
+  GlobalEmptyView,
+  GlobalErrorView,
+  GlobalLoadingView,
+  GlobalPilotBanner,
+} from "../../ui/design-system/components";
 import { toUserMessage } from "../../ui/errors";
 import { ItemTimer } from "./ItemTimer";
 
@@ -52,13 +59,12 @@ import { TaskPanel } from "./TaskPanel";
 
 export function KDSMinimal() {
   const { runtime } = useRestaurantRuntime();
+  const globalUI = useGlobalUIState();
   const restaurantId = runtime?.restaurant_id ?? DEFAULT_RESTAURANT_ID;
 
   const [orders, setOrders] = useState<
     (CoreOrder & { items: CoreOrderItem[] })[]
   >([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null); // ID do pedido sendo atualizado
   const [markingItem, setMarkingItem] = useState<string | null>(null); // ID do item sendo marcado como pronto
   const [realtimeStatus, setRealtimeStatus] = useState<string>("DISCONNECTED");
@@ -84,9 +90,9 @@ export function KDSMinimal() {
   const loadOrders = async (isBackground = false) => {
     try {
       if (!isBackground) {
-        setLoading(true);
+        globalUI.setScreenLoading(true);
       }
-      setError(null);
+      globalUI.setScreenError(null);
 
       const activeOrders = await readActiveOrders(restaurantId);
 
@@ -98,17 +104,19 @@ export function KDSMinimal() {
       );
 
       setOrders(ordersWithItems);
+      globalUI.setScreenEmpty(ordersWithItems.length === 0);
       await loadTasks();
     } catch (err) {
       if (isNetworkError(err)) {
         setOrders([]);
-        setError(null);
+        globalUI.setScreenEmpty(true);
+        globalUI.setScreenError(null);
       } else {
-        setError(toUserMessage(err, "Erro ao carregar pedidos. Tente novamente."));
+        globalUI.setScreenError(toUserMessage(err, "Erro ao carregar pedidos. Tente novamente."));
       }
     } finally {
       if (!isBackground) {
-        setLoading(false);
+        globalUI.setScreenLoading(false);
       }
     }
   };
@@ -141,7 +149,7 @@ export function KDSMinimal() {
       }
     } catch (err) {
       console.error("Erro ao marcar item como pronto:", err);
-      setError(toUserMessage(err, "Erro ao marcar item como pronto. Tente novamente."));
+      globalUI.setScreenError(toUserMessage(err, "Erro ao marcar item como pronto. Tente novamente."));
     } finally {
       setMarkingItem(null);
     }
@@ -150,84 +158,45 @@ export function KDSMinimal() {
   const handleStartPreparation = async (orderId: string) => {
     try {
       setUpdating(orderId);
-      setError(null);
+      globalUI.setScreenError(null);
       await updateOrderStatus(orderId, "IN_PREP", restaurantId);
       loadOrders(true);
     } catch (err) {
-      setError(toUserMessage(err, "Erro ao atualizar pedido. Tente novamente."));
+      globalUI.setScreenError(toUserMessage(err, "Erro ao atualizar pedido. Tente novamente."));
     } finally {
       setUpdating(null);
     }
   };
 
-  if (loading) {
+  if (globalUI.isLoadingCritical) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: VPC.space,
-          color: VPC.textMuted,
-          backgroundColor: VPC.bg,
-          fontFamily: "Inter, system-ui, sans-serif",
-          fontSize: VPC.fontSizeBase,
-        }}
-      >
-        <p style={{ margin: 0, opacity: 0.9, animation: "vpc-fade 1.2s ease-in-out infinite alternate" }}>
-          A carregar pedidos...
-        </p>
-      </div>
+      <GlobalLoadingView
+        message="A carregar pedidos..."
+        layout="operational"
+        variant="fullscreen"
+      />
     );
   }
 
-  if (error) {
+  if (globalUI.isError && globalUI.errorMessage) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: VPC.space,
-          color: VPC.textMuted,
-          backgroundColor: VPC.bg,
-          fontFamily: "Inter, system-ui, sans-serif",
-          textAlign: "center",
-          fontSize: VPC.fontSizeBase,
-        }}
-      >
-        <p style={{ margin: 0, fontWeight: 600, color: VPC.text }}>Problema ao carregar</p>
-        <p style={{ margin: "8px 0 0" }}>{error}</p>
-      </div>
+      <GlobalErrorView
+        message={globalUI.errorMessage}
+        title="Problema ao carregar"
+        layout="operational"
+        variant="fullscreen"
+      />
     );
   }
 
-  if (orders.length === 0) {
+  if (globalUI.isEmpty) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: VPC.space,
-          color: VPC.textMuted,
-          backgroundColor: VPC.bg,
-          fontFamily: "Inter, system-ui, sans-serif",
-          textAlign: "center",
-          fontSize: VPC.fontSizeBase,
-        }}
-      >
-        <p style={{ margin: 0, fontWeight: 600, color: VPC.text }}>Nenhum pedido ativo</p>
-        <p style={{ margin: "8px 0 0" }}>
-          Os pedidos aparecerão aqui quando forem criados no TPV ou no app.
-        </p>
-      </div>
+      <GlobalEmptyView
+        title="Nenhum pedido ativo"
+        description="Os pedidos aparecerão aqui quando forem criados no TPV ou no app."
+        layout="operational"
+        variant="fullscreen"
+      />
     );
   }
 
@@ -261,6 +230,11 @@ export function KDSMinimal() {
           padding: VPC.space,
         }}
       >
+        {globalUI.isPilot && (
+          <div style={{ marginBottom: VPC.space }}>
+            <GlobalPilotBanner />
+          </div>
+        )}
         <div style={{ marginBottom: VPC.space }}>
           <div
             style={{

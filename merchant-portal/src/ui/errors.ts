@@ -26,6 +26,11 @@ export function toUserMessage(err: unknown, fallback: string) {
     if (msg.toLowerCase().includes('failed to fetch')) {
       return 'Não conseguimos ligar ao servidor agora. Se estiveres em desenvolvimento, confirma que o backend está ligado.'
     }
+    // Mensagens técnicas (readers, fetch com status/errorText) → fallback neutro
+    const lower = msg.toLowerCase()
+    if (lower.startsWith('failed to read') || lower.startsWith('failed to ') || lower.includes('pgrst') || (lower.includes('status') && lower.includes('response'))) {
+      return fallback
+    }
     if (msg) return msg
   }
 

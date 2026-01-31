@@ -49,6 +49,7 @@
 - [ ] Com Core em baixo: cardápio mostra produtos (fallback B1) e não "Failed to fetch".
 - [ ] Com Core em baixo: TPV mostra fallback neutro ou lista vazia; KDS idem.
 - [ ] Nenhuma mensagem técnica (Docker, Supabase, stack) visível ao utilizador.
+- [ ] Estados loading/empty/error: mensagens neutras (sem status HTTP, PGRST ou stack); carrinho vazio não aparece como "Erro" (ref. GLOBAL_UI_STATE_MAP).
 
 ---
 
@@ -80,3 +81,4 @@ O fluxo feliz completo (Signup → Menu → Publicar → TPV → Pedido → KDS)
 - B2: `docs/product/B2_TPV_CONTENCAO.md`
 - B4: `docs/product/B4_KDS_CONTENCAO.md`
 - Piloto: `docs/product/VALIDACAO_OPERACAO_PILOTO_01.md`
+- Estados globais UI: `docs/product/GLOBAL_UI_STATE_MAP.md`
