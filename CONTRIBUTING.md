@@ -67,6 +67,13 @@ npm start
 npm test
 ```
 
+### 3.1 Validate before PR (fail-fast)
+Before pushing, run from repo root (CI runs the same):
+```bash
+make simulate-failfast   # typecheck + build
+```
+Optional: `npm test -- --ci --testPathIgnorePatterns="e2e|playwright|massive|offline" --testTimeout=15000 --maxWorkers=2` and `bash ./scripts/sovereignty-gate.sh`.
+
 ### 4. Commit
 ```bash
 # Descriptive commits (MUST be in English)
