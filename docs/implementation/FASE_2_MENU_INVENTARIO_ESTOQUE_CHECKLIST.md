@@ -71,3 +71,12 @@ Checklist executável por dev. Referência: `docs/ROADMAP_POS_FUNDACAO.md`.
 ## Ordem recomendada
 
 1 → 2 → 3 → 4 → 5. Validar após cada passo.
+
+---
+
+## Estado de implementação (FASE 2)
+
+- **Passo 2:** InventoryStockMinimal — tab Ingredientes: botão "Novo ingrediente", form (nome, unidade: g/kg/ml/l/unit), insert em gm_ingredients. Custo: pendente (coluna no Core se existir).
+- **Passo 3:** InventoryStockMinimal — tab Receitas: carregamento de produtos (gm_products); botão "Nova receita", form (produto, ingrediente, qtd. por unidade), insert em gm_product_bom; listagem BOM com nome do produto e do ingrediente.
+- **Passo 4:** Já existente — tab Estoque com qty, min_qty e alerta "BAIXO" / "CRÍTICO".
+- **Passos 1 e 5:** Pendentes (produtos com categoria; efeito venda → estoque no Core/TPV).
