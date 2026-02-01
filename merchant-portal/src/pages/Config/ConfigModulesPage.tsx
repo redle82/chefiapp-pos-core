@@ -11,6 +11,11 @@ import { useRestaurantId } from "../../core/hooks/useRestaurantId";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
 import { tpvInstaller } from "../../core/modules/tpv/TPVInstaller";
 import type { HealthStatus } from "../../core/modules/types";
+import {
+  getModulesEnabled,
+  setModulesEnabled,
+  type ModulesEnabled,
+} from "../../core/storage/modulesConfigStorage";
 import { supabase } from "../../core/supabase";
 
 interface InstalledModule {
@@ -77,6 +82,26 @@ export function ConfigModulesPage() {
   const [restaurantId, setRestaurantId] = useState<string>("");
   const restaurantIdForFetch =
     runtime?.restaurant_id ?? runtimeRestaurantId ?? "";
+  // FASE 1 Passo 2: preferência TPV/KDS ativo (localStorage até haver backend)
+  const ridForModules =
+    restaurantIdForFetch ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem("chefiapp_restaurant_id")
+      : null) ||
+    "";
+  const [modulesEnabled, setModulesEnabledState] = useState<ModulesEnabled>(
+    () => getModulesEnabled(ridForModules),
+  );
+
+  useEffect(() => {
+    setModulesEnabledState(getModulesEnabled(ridForModules || null));
+  }, [ridForModules]);
+
+  const handleToggleModuleEnabled = (key: keyof ModulesEnabled, value: boolean) => {
+    const next = { ...modulesEnabled, [key]: value };
+    setModulesEnabledState(next);
+    setModulesEnabled(ridForModules || null, next);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -239,6 +264,40 @@ export function ConfigModulesPage() {
         <p style={{ fontSize: "14px", color: "#666", margin: 0 }}>
           Instale e gerencie módulos do sistema
         </p>
+      </div>
+
+      {/* FASE 1 Passo 2: TPV/KDS ativo (preferência Dono) */}
+      <div
+        style={{
+          marginBottom: "24px",
+          padding: "16px",
+          border: "1px solid #e0e0e0",
+          borderRadius: "8px",
+          backgroundColor: "#fafafa",
+        }}
+      >
+        <h2 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 12px 0" }}>
+          Módulos operacionais
+        </h2>
+        <p style={{ fontSize: "13px", color: "#666", margin: "0 0 12px 0" }}>
+          Ative ou desative o TPV e o KDS para este restaurante.
+        </p>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <input
+            type="checkbox"
+            checked={modulesEnabled.tpv}
+            onChange={(e) => handleToggleModuleEnabled("tpv", e.target.checked)}
+          />
+          <span>TPV ativo</span>
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <input
+            type="checkbox"
+            checked={modulesEnabled.kds}
+            onChange={(e) => handleToggleModuleEnabled("kds", e.target.checked)}
+          />
+          <span>KDS ativo</span>
+        </label>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>

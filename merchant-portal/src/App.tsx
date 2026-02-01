@@ -2,54 +2,50 @@
  * APP.TSX — RESET CONTROLADO
  *
  * Esta é a versão limpa após remoção total de UI/UX legada.
- *
- * REGRAS:
- * - Nenhuma rota antiga
- * - Nenhum redirecionamento automático
- * - Nenhum uso de Supabase fora do Core
- * - Apenas tela neutra de reset
- *
- * FASE 0: BLOQUEIO DE CONTAMINAÇÃO — CONCLUÍDA
- * FASE 1: ISOLAMENTO DO CORE — CONCLUÍDA
- * FASE 2: RESET TOTAL DA UI — CONCLUÍDA
- * FASE 3: RECONSTRUÇÃO GUIADA — AGUARDANDO
  */
 
-import { useEffect } from "react";
-import { Link, Navigate, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
+import { useEffect, type ReactNode } from "react";
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
 import "./App.css";
 import { GlobalUIStateProvider } from "./context/GlobalUIStateContext";
-import { RestaurantRuntimeProvider } from "./context/RestaurantRuntimeContext";
-import { ShiftProvider } from "./core/shift/ShiftContext";
+import type { RestaurantRuntime } from "./context/RestaurantRuntimeContext";
+import { RestaurantRuntimeContext } from "./context/RestaurantRuntimeContext";
+import { deriveLifecycle } from "./core/lifecycle/Lifecycle";
+import { ShiftContext } from "./core/shift/ShiftContext";
 import { AppStaffMobileOnlyPage } from "./pages/AppStaff/AppStaffMobileOnlyPage";
 import { BackofficePage } from "./pages/Backoffice/BackofficePage";
 import { BillingPage } from "./pages/Billing/BillingPage";
 import { BillingSuccessPage } from "./pages/Billing/BillingSuccessPage";
 import { BootstrapPage } from "./pages/BootstrapPage";
-import { FirstProductPage } from "./pages/Onboarding/FirstProductPage";
 import { CoreResetPage } from "./pages/CoreReset/CoreResetPage";
 import { DebugTPV } from "./pages/DebugTPV";
 import { InventoryStockMinimal } from "./pages/InventoryStock/InventoryStockMinimal";
 import { KDSMinimal } from "./pages/KDSMinimal/KDSMinimal";
 import { MenuBuilderMinimal } from "./pages/MenuBuilder/MenuBuilderMinimal";
+import { FirstProductPage } from "./pages/Onboarding/FirstProductPage";
 import { OperacaoMinimal } from "./pages/Operacao/OperacaoMinimal";
 import { CustomerOrderStatusView } from "./pages/Public/CustomerOrderStatusView";
 import { PublicKDS } from "./pages/Public/PublicKDS";
 import { PublicWebPage } from "./pages/PublicWeb/PublicWebPage";
 import { TablePage } from "./pages/PublicWeb/TablePage";
 import { ShoppingListMinimal } from "./pages/ShoppingList/ShoppingListMinimal";
-import { TPVMinimal } from "./pages/TPVMinimal/TPVMinimal";
-import { TPVDemoPage } from "./pages/TPVMinimal/TPVDemoPage";
 import { TaskSystemMinimal } from "./pages/TaskSystem/TaskSystemMinimal";
+import { TPVDemoPage } from "./pages/TPVMinimal/TPVDemoPage";
+import { TPVMinimal } from "./pages/TPVMinimal/TPVMinimal";
 
-// Novas rotas - Perfis (Employee, Manager, Owner)
 import { ManagementAdvisor } from "./components/onboarding/ManagementAdvisor";
 import { OperationalFullscreenWrapper } from "./components/operational/OperationalFullscreenWrapper";
+import { ModuleGate } from "./components/operational/ModuleGate";
 import { RequireOperational } from "./components/operational/RequireOperational";
 import { useGlobalUIState } from "./context/GlobalUIStateContext";
-import { RoleGate, RoleProvider } from "./core/roles";
+import { RoleGate } from "./core/roles";
 import { ShiftGuard } from "./core/shift/ShiftGuard";
-import { TenantProvider } from "./core/tenant/TenantContext";
 import { AlertsDashboardPage } from "./pages/Alerts/AlertsDashboardPage";
 import { AuthPage } from "./pages/AuthPage";
 import { ConfigIdentityPage } from "./pages/Config/ConfigIdentityPage";
@@ -76,6 +72,7 @@ import { InstallPage } from "./pages/InstallPage";
 import { FeaturesPage } from "./pages/Landing/FeaturesPage";
 import { LandingPage } from "./pages/Landing/LandingPage";
 import { PricingPage } from "./pages/Landing/PricingPage";
+import { ProductFirstLandingPage } from "./pages/Landing/ProductFirstLandingPage";
 import { ManagerAnalysisPage } from "./pages/Manager/AnalysisPage";
 import { ManagerCentralPage } from "./pages/Manager/CentralPage";
 import { ManagerDashboardPage } from "./pages/Manager/DashboardPage";
@@ -112,73 +109,139 @@ function TPVRouteHandler() {
   if (searchParams.get("mode") === "demo") {
     return <TPVDemoPage />;
   }
-  return <AppWithRuntime />;
+  return <AppOperationalWrapper />;
+}
+
+// =============================================================================
+// PUBLIC TREE (SEM AUTH) — providers mínimos para / e /op/tpv?mode=demo
+// =============================================================================
+const DEMO_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
+const demoRuntime: RestaurantRuntime = {
+  restaurant_id: DEMO_RESTAURANT_ID,
+  mode: "onboarding",
+  productMode: "demo",
+  installed_modules: [],
+  active_modules: [],
+  plan: "basic",
+  status: "onboarding",
+  billing_status: "trial",
+  capabilities: {},
+  setup_status: {},
+  isPublished: false,
+  lifecycle: deriveLifecycle(DEMO_RESTAURANT_ID, false, false),
+  loading: false,
+  error: null,
+  coreReachable: true,
+};
+const demoRuntimeContextValue = {
+  runtime: demoRuntime,
+  refresh: async () => {},
+  updateSetupStatus: async () => {},
+  publishRestaurant: async () => {},
+  installModule: async () => {},
+  setProductMode: () => {},
+};
+const demoShiftValue = {
+  isShiftOpen: true,
+  isChecking: false,
+  lastCheckedAt: new Date(),
+  refreshShiftStatus: async () => {},
+};
+
+function PublicProviders({ children }: { children: ReactNode }) {
+  return (
+    <RestaurantRuntimeContext.Provider value={demoRuntimeContextValue}>
+      <ShiftContext.Provider value={demoShiftValue}>
+        <GlobalUIStateProvider>{children}</GlobalUIStateProvider>
+      </ShiftContext.Provider>
+    </RestaurantRuntimeContext.Provider>
+  );
+}
+
+/** /op/tpv: se mode=demo → TPV demo (árvore pública); senão → redirect /auth (árvore de app). */
+function TPVDemoGate() {
+  const [searchParams] = useSearchParams();
+  if (searchParams.get("mode") === "demo") {
+    return (
+      <PublicProviders>
+        <TPVDemoPage />
+      </PublicProviders>
+    );
+  }
+  return <Navigate to="/auth" replace />;
 }
 
 function App() {
   return (
-    <Routes>
-      {/* APPLICATION_BOOT_CONTRACT: PUBLIC/AUTH — sem Runtime/Shift (landing 100% desacoplada do Core) */}
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/pricing" element={<PricingPage />} />
-      <Route path="/features" element={<FeaturesPage />} />
-      <Route path="/demo" element={<DemoTourPage />} />
-      <Route path="/login" element={<Navigate to="/auth" replace />} />
-      <Route
-        path="/signup"
-        element={<Navigate to="/auth?mode=signup" replace />}
-      />
-      <Route
-        path="/forgot-password"
-        element={<Navigate to="/auth" replace />}
-      />
-      <Route path="/auth" element={<AuthPage />} />
-      <Route path="/billing/success" element={<BillingSuccessPage />} />
-      <Route
-        path="/onboarding"
-        element={<Navigate to="/app/dashboard" replace />}
-      />
-      <Route
-        path="/onboarding/:section"
-        element={<Navigate to="/app/dashboard" replace />}
-      />
-      {/* NAVIGATION_OPERATIONAL_CONTRACT: /op/tpv?mode=demo sem RequireOperational */}
-      <Route path="/op/tpv" element={<TPVRouteHandler />} />
-      <Route path="*" element={<AppWithRuntime />} />
-    </Routes>
+    <>
+      <BillingsPreloader />
+      <Routes>
+        {/* Public / Landing */}
+        <Route path="/" element={<ProductFirstLandingPage />} />
+        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/demo" element={<DemoTourPage />} />
+
+        {/* Auth / Onboarding Redirects */}
+        <Route path="/login" element={<Navigate to="/auth" replace />} />
+        <Route
+          path="/signup"
+          element={<Navigate to="/auth?mode=signup" replace />}
+        />
+        <Route
+          path="/forgot-password"
+          element={<Navigate to="/auth" replace />}
+        />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/bootstrap" element={<BootstrapPage />} />
+
+        {/* Core Operations */}
+        <Route path="/billing/success" element={<BillingSuccessPage />} />
+        <Route path="/op/tpv" element={<TPVRouteHandler />} />
+
+        {/* App Content (Management/Operational) */}
+        <Route path="/*" element={<AppOperationalWrapper />} />
+      </Routes>
+    </>
   );
 }
 
-/** APPLICATION_BOOT_CONTRACT: MANAGEMENT/OPERATIONAL — Runtime + Shift só para rotas que precisam de Core. */
-function AppWithRuntime() {
+function BillingsPreloader() {
+  // Se precisarmos pré-carregar algo globalmente
   return (
-    <RestaurantRuntimeProvider>
-      <ShiftProvider>
-        <GlobalUIStateProvider>
-          <RoleProvider>
-            <TenantProvider>
-              <FlowGate>
-                <ShiftGuard>
-                  <AppContentWithBilling />
-                </ShiftGuard>
-              </FlowGate>
-            </TenantProvider>
-          </RoleProvider>
-        </GlobalUIStateProvider>
-      </ShiftProvider>
-    </RestaurantRuntimeProvider>
+    <>
+      <ModeIndicator />
+      <CoreUnavailableBanner />
+    </>
+  );
+}
+
+/** APPLICATION_BOOT_CONTRACT: MANAGEMENT/OPERATIONAL — Apenas Guards para rotas que precisam de Core. */
+function AppOperationalWrapper() {
+  return (
+    <FlowGate>
+      <ShiftGuard>
+        <AppContentWithBilling />
+      </ShiftGuard>
+    </FlowGate>
   );
 }
 
 const LAST_ROUTE_KEY = "chefiapp_lastRoute";
-const LAST_ROUTE_ALLOWED = ["/dashboard", "/app/dashboard", "/op/tpv", "/op/kds", "/op/cash"];
+const LAST_ROUTE_ALLOWED = [
+  "/dashboard",
+  "/app/dashboard",
+  "/op/tpv",
+  "/op/kds",
+  "/op/cash",
+];
 const CRITICAL_BILLING_ROUTES = ["/op/tpv", "/op/kds", "/op/cash"];
 
 function AppContentWithBilling() {
   const { isBillingBlocked, billingStatus } = useGlobalUIState();
   const location = useLocation();
 
-  // LANDING_STATE_ROUTING_CONTRACT: persistir último contexto para "Já tenho acesso" → retomar modo/rota
   useEffect(() => {
     const path = location.pathname;
     if (LAST_ROUTE_ALLOWED.includes(path)) {
@@ -232,54 +295,13 @@ function AppContentWithBilling() {
           <Route
             path="/op/tpv"
             element={
-              <ErrorBoundary
-                context="TPV"
-                fallback={
-                  <div
-                    style={{
-                      minHeight: "100vh",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: 24,
-                      background: "#0a0a0a",
-                      color: "#e2e8f0",
-                      fontFamily: "Inter, system-ui, sans-serif",
-                      textAlign: "center",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontSize: 18,
-                        marginBottom: 16,
-                        maxWidth: 400,
-                        color: "#a3a3a3",
-                      }}
-                    >
-                      TPV temporariamente indisponível. Tente novamente ou volte
-                      ao portal.
-                    </p>
-                    <Link
-                      to="/dashboard"
-                      style={{
-                        padding: "12px 24px",
-                        background: "#fff",
-                        color: "#0a0a0a",
-                        borderRadius: 8,
-                        fontWeight: 600,
-                        textDecoration: "none",
-                      }}
-                    >
-                      Ir para o Portal
-                    </Link>
-                  </div>
-                }
-              >
+              <ErrorBoundary context="TPV">
                 <RequireOperational>
-                  <OperationalFullscreenWrapper>
-                    <TPVMinimal />
-                  </OperationalFullscreenWrapper>
+                  <ModuleGate moduleId="tpv">
+                    <OperationalFullscreenWrapper>
+                      <TPVMinimal />
+                    </OperationalFullscreenWrapper>
+                  </ModuleGate>
                 </RequireOperational>
               </ErrorBoundary>
             }
@@ -287,53 +309,13 @@ function AppContentWithBilling() {
           <Route
             path="/op/kds"
             element={
-              <ErrorBoundary
-                context="KDS"
-                fallback={
-                  <div
-                    style={{
-                      minHeight: "100vh",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: 24,
-                      background: "#0f172a",
-                      color: "#e2e8f0",
-                      fontFamily: "system-ui, sans-serif",
-                      textAlign: "center",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontSize: 18,
-                        marginBottom: 16,
-                        maxWidth: 400,
-                      }}
-                    >
-                      KDS temporariamente indisponível. Tente novamente ou volte
-                      ao portal.
-                    </p>
-                    <Link
-                      to="/dashboard"
-                      style={{
-                        padding: "12px 24px",
-                        background: "#f8fafc",
-                        color: "#0f172a",
-                        borderRadius: 8,
-                        fontWeight: 600,
-                        textDecoration: "none",
-                      }}
-                    >
-                      Ir para o Portal
-                    </Link>
-                  </div>
-                }
-              >
+              <ErrorBoundary context="KDS">
                 <RequireOperational>
-                  <OperationalFullscreenWrapper>
-                    <KDSMinimal />
-                  </OperationalFullscreenWrapper>
+                  <ModuleGate moduleId="kds">
+                    <OperationalFullscreenWrapper>
+                      <KDSMinimal />
+                    </OperationalFullscreenWrapper>
+                  </ModuleGate>
                 </RequireOperational>
               </ErrorBoundary>
             }
@@ -351,7 +333,10 @@ function AppContentWithBilling() {
             path="/app/dashboard"
             element={<Navigate to="/dashboard" replace />}
           />
-          <Route path="/onboarding/first-product" element={<FirstProductPage />} />
+          <Route
+            path="/onboarding/first-product"
+            element={<FirstProductPage />}
+          />
           <Route path="/menu-builder" element={<MenuBuilderMinimal />} />
           <Route
             path="/operacao"
