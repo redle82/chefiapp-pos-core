@@ -6,6 +6,12 @@
 
 **Estado Passo 1:** 1.1 ICP — template pronto (1 frase, 3 obrigatórios, 2 exclusão). 1.2 Lista 10 alvos — preencher tabela (§6). 1.3 Script — email curto + telefone 30–60 s prontos (§7). 1.4 Agendar 5 instalações — preencher tabela (§9). Quando 5 datas confirmadas → P1 ativo.
 
+**👉 Próximo passo (fazer agora):** §6 — preencher tabela com 10 restaurantes/contactos (nome, contacto, cidade, notas). §9 — preencher tabela com 5 datas de instalação confirmadas.
+
+**Progresso P1:**
+- [ ] §6 Lista 10 alvos preenchida
+- [ ] §9 Agendar 5 instalações (5 datas confirmadas) → P1 ativo
+
 ---
 
 ## 5. ICP (Ideal Customer Profile) — Passo 1.1
