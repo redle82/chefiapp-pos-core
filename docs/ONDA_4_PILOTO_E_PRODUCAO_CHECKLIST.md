@@ -2,7 +2,8 @@
 
 **Data:** 2026-02-01  
 **Referências:** [ONDA_4_TAREFAS_30_45_DIAS.md](./ONDA_4_TAREFAS_30_45_DIAS.md) · [NEXT_STEPS.md](../NEXT_STEPS.md)  
-**Objetivo:** Roteiro executável (blocos 0–5, 24 itens) com checkboxes e comandos exatos para piloto e produção.
+**Objetivo:** Roteiro executável (blocos 0–5, 24 itens) com checkboxes e comandos exatos para piloto e produção.  
+**Roteiro oficial (ordem e gates):** [PLANO_PASSO_A_PASSO_CHEFIAPP.md](./PLANO_PASSO_A_PASSO_CHEFIAPP.md). Este doc mantém os checkboxes e comandos; o roteiro define a sequência e os critérios de avanço.
 
 ---
 
@@ -20,7 +21,7 @@ Gate antes de contactar qualquer cliente. Validações, build, happy path manual
   ```bash
   cd merchant-portal && npm run build
   ```
-- [ ] **3. TPV manual (happy path)** — Percorrer fluxo completo: Signup → Bootstrap (criar restaurante) → First Product (criar 1 produto) → TPV → criar pedido → pagar → ver dashboard. Confirmar que pedido e pagamento ficam persistidos e que as métricas do dia aparecem.
+- [x] **3. TPV manual (happy path)** — Percorrer fluxo completo: Signup → Bootstrap (criar restaurante) → First Product (criar 1 produto) → TPV → criar pedido → pagar → ver dashboard. Confirmar que pedido e pagamento ficam persistidos e que as métricas do dia aparecem.
 - [x] **4. Snapshot** — Atualizar [NEXT_STEPS.md](../NEXT_STEPS.md) com a data atual e a frase "Pronto para piloto".
 
 ---

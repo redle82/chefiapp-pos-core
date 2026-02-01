@@ -4,15 +4,30 @@
 **Referências:** [ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md](../ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md) (Bloco 1) · [TARGET_RESTAURANT_PROFILE.md](../TARGET_RESTAURANT_PROFILE.md)  
 **Objetivo:** Preencher itens 5–9 do checklist: ICP, lista de alvos, script de abordagem, checklist onboarding, agendamento de 5 instalações.
 
+**Estado Passo 1:** 1.1 ICP — template pronto (1 frase, 3 obrigatórios, 2 exclusão). 1.2 Lista 10 alvos — preencher tabela (§6). 1.3 Script — email curto + telefone 30–60 s prontos (§7). 1.4 Agendar 5 instalações — preencher tabela (§9). Quando 5 datas confirmadas → P1 ativo.
+
 ---
 
-## 5. ICP (Ideal Customer Profile)
+## 5. ICP (Ideal Customer Profile) — Passo 1.1
 
 **Doc canónico:** [TARGET_RESTAURANT_PROFILE.md](../TARGET_RESTAURANT_PROFILE.md) — perfil principal, o que valorizam, o que não são.
 
-Para o piloto Onda 4, refinar (opcional):
-- [ ] Critérios específicos do piloto (ex.: 1 localização, TPV em uso ou a adoptar, disponibilidade 2 semanas).
-- [ ] Uma frase de ICP para usar em abordagem: *"Restaurante pequeno/médio, dono ou gerente com operação real (sala, cozinha, caixa), que queira reduzir caos operacional com TPV + KDS."*
+Preencher apenas (15–30 min). Nada técnico. Nada visionário. Realidade de restaurante.
+
+**1 frase clara (para usar em abordagem):**
+- *Sugestão:* "Restaurante pequeno ou médio, dono ou gerente com operação real (sala, cozinha, caixa), que queira reduzir caos operacional e ter TPV + cozinha em tempo real."
+- [ ] Frase final (editar acima ou escrever aqui): _____________________________________
+
+**3 critérios obrigatórios (tem de cumprir os 3):**
+1. _____________________________________ *(sugestão: 1 localização; dono ou gerente com poder de decisão)*
+2. _____________________________________ *(sugestão: TPV em uso ou a adoptar em breve)*
+3. _____________________________________ *(sugestão: disponibilidade para 2 semanas de piloto com check-ins)*
+
+**2 critérios de exclusão (se cumprir, não é alvo):**
+1. _____________________________________ *(sugestão: grande rede com dezenas de localizações)*
+2. _____________________________________ *(sugestão: só quer TPV básico sem ligação sala-cozinha)*
+
+- [ ] ICP final aprovado (1 frase + 3 obrigatórios + 2 exclusão).
 
 ---
 
@@ -35,21 +50,23 @@ Preencher 10 restaurantes/contactos candidatos ao piloto.
 
 ---
 
-## 7. Script abordagem
+## 7. Script abordagem — Passo 1.3
 
-Rascunho para email ou chamada (ajustar tom e canal).
+**Objetivo único:** "2 semanas de piloto, sem custo, com apoio direto."
 
-**Assunto (email):** *Piloto ChefIApp — TPV + cozinha em tempo real, 2 semanas sem custo*
+**Email curto (copiar/colar e ajustar):**
 
-**Corpo (exemplo):**
-- Quem somos: ChefIApp — TPV que liga sala e cozinha em tempo real.
-- Oferta piloto: 2 semanas de uso com apoio próximo; zero custo na fase piloto.
-- Pedido: 15 min para mostrar o sistema e ver se faz sentido para o vosso dia a dia.
-- CTA: Propor 2–3 horários para call ou visita.
+**Assunto:** Piloto ChefIApp — TPV + cozinha em tempo real, 2 semanas sem custo
 
-**Telefone (resumo):** Mesma mensagem em 30–60 s; pedir disponibilidade para demo.
+**Corpo:**
+Olá [nome], sou [o teu nome]. O ChefIApp é um TPV que liga sala e cozinha em tempo real. Estamos a fazer um piloto de 2 semanas, sem custo e com apoio direto, para restaurantes como o vosso. Se fizer sentido, proponho 15 min para mostrar o sistema. Quando teriam disponibilidade esta semana ou a próxima? Cumprimentos, [nome]
 
-- [ ] Script final revisado e guardado aqui ou em [Commercial/](../Commercial/).
+- [ ] Email final revisado (editar acima).
+
+**Versão telefone (30–60 s):**
+"Olá, [nome]. Chamo-me [o teu nome]. Temos um TPV que liga sala e cozinha em tempo real e estamos a fazer um piloto de 2 semanas, sem custo, com apoio próximo. Gostava de mostrar em 15 minutos se faz sentido para vocês. Quando teriam disponibilidade?"
+
+- [ ] Script telefone ensaiado e guardado aqui.
 
 ---
 

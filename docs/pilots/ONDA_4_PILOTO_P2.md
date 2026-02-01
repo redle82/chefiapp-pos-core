@@ -4,9 +4,11 @@
 **Referências:** [ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md](../ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md) (Bloco 2) · [ONDA_4_TAREFAS_30_45_DIAS.md](../ONDA_4_TAREFAS_30_45_DIAS.md)  
 **Objetivo:** Preencher itens 10–13: métricas de piloto, template de report, checklist 2 semanas, regra de decisão go/no-go para Onda 5.
 
+**Passo 2 — Medição, não opinião.** Usar este doc ao fim das 2 semanas de piloto (ou em paralelo para preparar métricas e template).
+
 ---
 
-## 10. Métricas de piloto
+## 10. Métricas de piloto — Passo 2.1
 
 Definir métricas a recolher durante o piloto (2 semanas). Sugestão:
 
@@ -21,9 +23,9 @@ Definir métricas a recolher durante o piloto (2 semanas). Sugestão:
 
 ---
 
-## 11. Template report (2 semanas)
+## 11. Template report (2 semanas) — Passo 2.2
 
-Mini-relatório a preencher ao fim de 2 semanas de piloto por restaurante (ou agregado).
+Mini-report 1 página: Resumo, Métricas, Feedback cru, Observações. Preencher ao fim de 2 semanas de piloto por restaurante (ou agregado).
 
 **Cabeçalho**
 - Restaurante / contacto:
@@ -62,9 +64,9 @@ Verificação ao fim de 2 semanas de piloto (por restaurante ou global).
 
 ---
 
-## 13. Regra de decisão (go/no-go Onda 5)
+## 13. Regra de decisão (go/no-go Onda 5) — Passo 2.3
 
-Critérios para decidir: avançar para Onda 5 (go) ou ajustar/adiar (no-go).
+Definir regra GO / NO-GO. Exemplo (ajustar): ≥2 restaurantes a usar diariamente; 0 bugs críticos; ≥1 disposto a pagar. Se não cumprir → não existe Onda 5. Critérios para decidir: avançar para Onda 5 (go) ou ajustar/adiar (no-go).
 
 **Exemplo de critérios (ajustar ao contexto):**
 

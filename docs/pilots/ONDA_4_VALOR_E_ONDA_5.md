@@ -6,9 +6,9 @@
 
 ---
 
-## Bloco 4 — Valor percebido
+## Bloco 4 — Valor percebido (Passo 3, em paralelo ao piloto)
 
-### 19. Welcome + 3 passos
+### 19. Welcome + 3 passos — Passo 3.1
 
 Mensagem de boas-vindas e “3 passos” para o restaurante (onboarding percebido).
 
@@ -25,9 +25,9 @@ Mensagem de boas-vindas e “3 passos” para o restaurante (onboarding percebid
 
 ---
 
-### 20. Landing / pitch
+### 20. Pitch 1 página — Passo 3.2
 
-Atualizar landing ou pitch (uma página) com proposta de valor e CTA para piloto.
+Headline, 3 bullets, CTA piloto. Sem comparações. Sem features. Resultado prático. Atualizar landing ou pitch (uma página).
 
 **Refs existentes:**
 - [PITCH_5_MIN_DONO.md](../PITCH_5_MIN_DONO.md) — script 5 min (problema, solução, diferencial, valor, fechamento).
@@ -43,9 +43,9 @@ Atualizar landing ou pitch (uma página) com proposta de valor e CTA para piloto
 
 ---
 
-### 21. Preço piloto
+### 21. Preço piloto — Passo 3.3
 
-Definir preço (ou grátis) para a fase piloto e como comunicar.
+Grátis / desconto / valor simbólico + frase clara. Mesmo que seja grátis, define o preço futuro. Definir preço (ou grátis) para a fase piloto e como comunicar.
 
 **Opções:**
 - **Grátis** — 2 semanas sem custo; comunicar como “piloto sem compromisso”.
