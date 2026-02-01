@@ -43,6 +43,7 @@ import { ManagementAdvisor } from "./components/onboarding/ManagementAdvisor";
 import { OperationalFullscreenWrapper } from "./components/operational/OperationalFullscreenWrapper";
 import { ModuleGate } from "./components/operational/ModuleGate";
 import { RequireOperational } from "./components/operational/RequireOperational";
+import { ShiftGate } from "./components/operational/ShiftGate";
 import { useGlobalUIState } from "./context/GlobalUIStateContext";
 import { RoleGate } from "./core/roles";
 import { ShiftGuard } from "./core/shift/ShiftGuard";
@@ -298,9 +299,11 @@ function AppContentWithBilling() {
               <ErrorBoundary context="TPV">
                 <RequireOperational>
                   <ModuleGate moduleId="tpv">
-                    <OperationalFullscreenWrapper>
-                      <TPVMinimal />
-                    </OperationalFullscreenWrapper>
+                    <ShiftGate>
+                      <OperationalFullscreenWrapper>
+                        <TPVMinimal />
+                      </OperationalFullscreenWrapper>
+                    </ShiftGate>
                   </ModuleGate>
                 </RequireOperational>
               </ErrorBoundary>
