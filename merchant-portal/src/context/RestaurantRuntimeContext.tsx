@@ -77,8 +77,10 @@ export interface RestaurantRuntime {
   /** Módulos que podem rodar engine / ler-escrever (safe no ambiente atual) */
   active_modules: string[];
   plan: PlanTier;
-  /** Status bruto vindo do DB (active, past_due, suspended, etc) */
+  /** Status bruto vindo do DB (operacional: active, paused, onboarding) */
   status: string;
+  /** Estado de faturação SaaS (gm_restaurants.billing_status): trial | active | past_due | canceled */
+  billing_status?: string | null;
   /** Por módulo: dataSource (mock|core), offline */
   capabilities: Record<string, ModuleCapabilityEntry>;
   setup_status: SetupStatus;
@@ -107,6 +109,7 @@ const INITIAL_RUNTIME: RestaurantRuntime = {
   active_modules: [],
   plan: "basic",
   status: "onboarding",
+  billing_status: null,
   capabilities: {},
   setup_status: {},
   isPublished: false,
@@ -177,6 +180,7 @@ export function RestaurantRuntimeProvider({
       | "active_modules"
       | "plan"
       | "status"
+      | "billing_status"
       | "capabilities"
       | "setup_status"
       | "isPublished"
@@ -214,6 +218,8 @@ export function RestaurantRuntimeProvider({
         ? "premium"
         : "basic";
     const status: string = restaurant?.status ?? "onboarding";
+    const billing_status: string | null =
+      restaurant?.billing_status ?? null;
     const capabilities: Record<string, ModuleCapabilityEntry> = {};
     for (const id of installed_modules.length > 0
       ? installed_modules
@@ -228,6 +234,7 @@ export function RestaurantRuntimeProvider({
       active_modules,
       plan,
       status,
+      billing_status,
       capabilities,
       setup_status: setupSections,
       isPublished: mode === "active",
@@ -257,6 +264,7 @@ export function RestaurantRuntimeProvider({
       | "active_modules"
       | "plan"
       | "status"
+      | "billing_status"
       | "capabilities"
       | "setup_status"
       | "isPublished"
@@ -276,6 +284,7 @@ export function RestaurantRuntimeProvider({
         active_modules: [],
         plan: "basic",
         status: "active",
+        billing_status: "trial",
         capabilities: {},
         setup_status: DEMO_SETUP_STATUS,
         isPublished: true,
@@ -303,6 +312,7 @@ export function RestaurantRuntimeProvider({
       ),
       plan: "basic",
       status: "active",
+      billing_status: "trial",
       capabilities,
       setup_status: {},
       isPublished: true,
@@ -373,6 +383,7 @@ export function RestaurantRuntimeProvider({
       const installed_modules: string[] = coreState.installed_modules || [];
       const plan = coreState.plan ?? "basic";
       const status = coreState.status ?? "active";
+      const billing_status = coreState.billing_status ?? null;
       const capabilities = coreState.capabilities ?? {};
       const productMode: ProductMode =
         coreState.productMode ?? resolveProductModeFromEnv();
@@ -387,6 +398,7 @@ export function RestaurantRuntimeProvider({
         active_modules: coreState.active_modules ?? installed_modules,
         plan,
         status,
+        billing_status,
         capabilities,
         setup_status,
         isPublished,

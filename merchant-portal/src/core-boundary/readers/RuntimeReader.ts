@@ -16,6 +16,9 @@ let identityCache: { key: string; data: CoreRestaurantIdentityRow | null; ts: nu
 
 export type CoreProductMode = "demo" | "pilot" | "live";
 
+/** billing_status: trial | active | past_due | canceled (SaaS). Fonte = gm_restaurants. */
+export type CoreBillingStatus = "trial" | "active" | "past_due" | "canceled";
+
 export interface CoreRestaurantRow {
   id: string;
   name: string;
@@ -23,6 +26,8 @@ export interface CoreRestaurantRow {
   status: string;
   tenant_id: string | null;
   product_mode?: CoreProductMode | null;
+  /** Estado de faturação SaaS (gm_restaurants.billing_status). */
+  billing_status?: CoreBillingStatus | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -85,7 +90,7 @@ export async function fetchRestaurant(
 
   const { data, error } = await dockerCoreClient
     .from("gm_restaurants")
-    .select("id,name,slug,status,tenant_id,product_mode,created_at,updated_at")
+    .select("id,name,slug,status,tenant_id,product_mode,billing_status,created_at,updated_at")
     .eq("id", restaurantId)
     .maybeSingle();
 

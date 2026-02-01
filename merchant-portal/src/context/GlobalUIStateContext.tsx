@@ -117,14 +117,23 @@ export function GlobalUIStateProvider({
       isPilot: !!runtime && runtime.productMode === "pilot",
       coreReachable: runtime?.coreReachable ?? true,
       billingStatus: (function () {
+        const billing = runtime?.billing_status;
+        if (billing === "canceled") return "suspended";
+        if (billing === "past_due") return "past_due";
+        if (billing === "trial") return "trial";
+        if (billing === "active") return "active";
         if (runtime?.status === "suspended") return "suspended";
         if (runtime?.status === "past_due") return "past_due";
         if (runtime?.status === "active" && runtime?.plan === "basic")
           return "trial";
         return "active";
       })() as BillingStatus,
-      isBillingBlocked: runtime?.status === "suspended",
-      isBillingWarning: runtime?.status === "past_due",
+      isBillingBlocked:
+        runtime?.billing_status === "canceled" ||
+        runtime?.status === "suspended",
+      isBillingWarning:
+        runtime?.billing_status === "past_due" ||
+        runtime?.status === "past_due",
     };
   }, [
     runtime,

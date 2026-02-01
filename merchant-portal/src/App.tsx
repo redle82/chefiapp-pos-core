@@ -99,6 +99,7 @@ import { TaskDashboardPage } from "./pages/Tasks/TaskDashboardPage";
 import { TaskDetailPage } from "./pages/Tasks/TaskDetailPage";
 import { BillingBanner } from "./ui/billing/BillingBanner";
 import { BillingBlockedView } from "./ui/billing/BillingBlockedView";
+import { GlobalBlockedView } from "./ui/design-system/components/GlobalBlockedView";
 import { CoreUnavailableBanner } from "./ui/design-system/CoreUnavailableBanner";
 import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
 import { ModeIndicator } from "./ui/design-system/ModeIndicator";
@@ -171,9 +172,10 @@ function AppWithRuntime() {
 
 const LAST_ROUTE_KEY = "chefiapp_lastRoute";
 const LAST_ROUTE_ALLOWED = ["/dashboard", "/app/dashboard", "/op/tpv", "/op/kds", "/op/cash"];
+const CRITICAL_BILLING_ROUTES = ["/op/tpv", "/op/kds", "/op/cash"];
 
 function AppContentWithBilling() {
-  const { isBillingBlocked } = useGlobalUIState();
+  const { isBillingBlocked, billingStatus } = useGlobalUIState();
   const location = useLocation();
 
   // LANDING_STATE_ROUTING_CONTRACT: persistir último contexto para "Já tenho acesso" → retomar modo/rota
@@ -192,6 +194,20 @@ function AppContentWithBilling() {
 
   if (isBillingBlocked && !isBillingManagement) {
     return <BillingBlockedView />;
+  }
+
+  if (
+    billingStatus === "past_due" &&
+    CRITICAL_BILLING_ROUTES.includes(location.pathname) &&
+    !isBillingManagement
+  ) {
+    return (
+      <GlobalBlockedView
+        title="Pagamento pendente"
+        description="Regularize a faturação para continuar a usar o TPV e o KDS."
+        action={{ label: "Ir à Faturação", to: "/app/billing" }}
+      />
+    );
   }
 
   return (

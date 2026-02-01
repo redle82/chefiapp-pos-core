@@ -81,12 +81,16 @@ export const PaymentGuard: React.FC<PaymentGuardProps> = ({ children }) => {
   }
 
   if (status === "past_due") {
-    // Warn but render children
     return (
       <>
-        <div className="w-full bg-red-600 text-white text-xs font-bold px-4 py-1 text-center">
-          ⚠️ Payment Past Due. Access will be revoked soon. Please update
-          payment method.
+        <div className="w-full bg-amber-600 text-white text-xs font-bold px-4 py-2 text-center flex items-center justify-center gap-3 flex-wrap">
+          <span>⚠️ Pagamento pendente. Regularize para evitar a suspensão.</span>
+          <a
+            href="/app/billing"
+            className="underline font-semibold hover:opacity-90"
+          >
+            Escolher plano
+          </a>
         </div>
         {children}
       </>

@@ -1,11 +1,10 @@
 /**
  * BillingSuccessPage — Página exibida após checkout Stripe concluído
  *
- * Mostra mensagem clara "Assinatura ativa — modo live ativado"
- * e CTA para o Dashboard.
+ * Mensagem clara "Assinatura ativa" e links para Dashboard e TPV.
  */
 
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export function BillingSuccessPage() {
   const navigate = useNavigate();
@@ -54,22 +53,40 @@ export function BillingSuccessPage() {
         >
           O modo ao vivo foi ativado. O seu restaurante está pronto para operar.
         </p>
-        <button
-          type="button"
-          onClick={() => navigate("/dashboard")}
-          style={{
-            padding: "12px 24px",
-            fontSize: 15,
-            fontWeight: 600,
-            color: "#fff",
-            backgroundColor: "#22c55e",
-            border: "none",
-            borderRadius: 10,
-            cursor: "pointer",
-          }}
-        >
-          Ir ao Dashboard
-        </button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard")}
+            style={{
+              padding: "12px 24px",
+              fontSize: 15,
+              fontWeight: 600,
+              color: "#fff",
+              backgroundColor: "#22c55e",
+              border: "none",
+              borderRadius: 10,
+              cursor: "pointer",
+            }}
+          >
+            Ir ao Dashboard
+          </button>
+          <Link
+            to="/op/tpv"
+            style={{
+              padding: "12px 24px",
+              fontSize: 15,
+              fontWeight: 600,
+              color: "#166534",
+              backgroundColor: "transparent",
+              border: "1px solid #22c55e",
+              borderRadius: 10,
+              textDecoration: "none",
+              display: "block",
+            }}
+          >
+            Ir ao TPV
+          </Link>
+        </div>
       </div>
     </div>
   );

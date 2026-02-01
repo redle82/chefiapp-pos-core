@@ -1,22 +1,25 @@
+import { Link } from "react-router-dom";
 import { useGlobalUIState } from "../../context/GlobalUIStateContext";
 import { colors } from "../design-system/tokens/colors";
 
-export function BillingBanner() {
-  const { billingStatus, isBillingBlocked, isBillingWarning } =
-    useGlobalUIState();
+const CTA_ESCOLHER_PLANO = "Escolher plano";
 
-  if (isBillingBlocked || !isBillingWarning) return null;
+export function BillingBanner() {
+  const { billingStatus, isBillingBlocked } = useGlobalUIState();
+
+  if (isBillingBlocked) return null;
 
   const config = {
     past_due: {
       message:
-        "Faturação Pendente: Por favor, regularize para evitar a suspensão do serviço.",
+        "Pagamento pendente. Regularize para evitar a suspensão do serviço.",
       color: colors.palette.amber[500],
       bg: "rgba(245, 158, 11, 0.15)",
       textColor: colors.palette.amber[400],
     },
     trial: {
-      message: "Modo de Demonstração Activa. Explore o potencial do ChefIApp.",
+      message:
+        "Trial ativo. Escolha o seu plano para continuar após o período de teste.",
       color: colors.palette.blue[500],
       bg: "rgba(59, 130, 246, 0.15)",
       textColor: colors.palette.blue[400],
@@ -49,18 +52,19 @@ export function BillingBanner() {
       <span style={{ fontWeight: 500, letterSpacing: "0.01em" }}>
         {current.message}
       </span>
-      <button
+      <Link
+        to="/app/billing"
         style={{
           border: `1px solid ${current.color}66`,
           background: "rgba(255, 255, 255, 0.05)",
           color: current.textColor,
           padding: "4px 12px",
           borderRadius: "100px",
-          cursor: "pointer",
           fontSize: "11px",
           fontWeight: "bold",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
+          textDecoration: "none",
           transition: "background 0.2s",
         }}
         onMouseOver={(e) =>
@@ -69,10 +73,9 @@ export function BillingBanner() {
         onMouseOut={(e) =>
           (e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)")
         }
-        onClick={() => (window.location.href = "/app/billing")}
       >
-        Gerir Conta
-      </button>
+        {CTA_ESCOLHER_PLANO}
+      </Link>
     </div>
   );
 }

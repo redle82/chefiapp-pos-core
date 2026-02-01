@@ -101,7 +101,7 @@ export function TPVDemoPage() {
                   ← {OSCopy.demo.voltarDemonstracao}
                 </button>
                 <Link
-                  to="/auth"
+                  to="/auth?mode=signup"
                   style={{
                     padding: "8px 16px",
                     fontSize: 14,
@@ -111,6 +111,21 @@ export function TPVDemoPage() {
                     border: "none",
                     borderRadius: 8,
                     cursor: "pointer",
+                    textDecoration: "none",
+                  }}
+                >
+                  {OSCopy.demo.ctaComecarAgoraTrial}
+                </Link>
+                <Link
+                  to="/auth"
+                  style={{
+                    padding: "8px 16px",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: "#e2e8f0",
+                    backgroundColor: "transparent",
+                    border: "1px solid #475569",
+                    borderRadius: 8,
                     textDecoration: "none",
                   }}
                 >

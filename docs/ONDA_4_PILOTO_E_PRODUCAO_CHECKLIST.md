@@ -26,6 +26,16 @@ Gate antes de contactar qualquer cliente. Validações, build, happy path manual
 
 ---
 
+## Onda 4.5 — Máquina de venda
+
+Funil fechado: Landing → Auth → Onboarding → TPV; Billing dentro do app.
+
+- [x] **CTA único** — Hero e Footer com CTA principal "Começar agora" → `/auth`; "Explorar demonstração" → `/op/tpv?mode=demo`; OSCopy e TPVDemoPage alinhados.
+- [x] **Billing no fluxo** — BillingBanner (trial/past_due) com "Escolher plano" → `/app/billing`; PaymentGuard lógica; BillingSuccessPage com link Dashboard e TPV.
+- [x] **Design system unificado** — Landing com OSFrame `context="landing"`; Hero/Footer com tokens do produto.
+
+---
+
 ## Bloco 1 — Piloto P1
 
 Tarefas produto/ops: definição de alvos, abordagem e agendamento. **Preencher em:** [docs/pilots/ONDA_4_PILOTO_P1.md](./pilots/ONDA_4_PILOTO_P1.md).

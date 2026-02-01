@@ -24,6 +24,9 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: "Cancelada",
 };
 
+/* Preço exibido quando STRIPE_PRICE_ID está configurado (mínimo vendável) */
+const PLAN_PRICE_LABEL = "79 €/mês";
+
 /* VPC — valores locais para esta página (billing = página do cartão) */
 const VPC = {
   bg: "#0a0a0a",
@@ -260,13 +263,26 @@ export function BillingPage() {
                 style={{
                   fontSize: VPC.fontSizeBase,
                   color: VPC.textMuted,
-                  marginBottom: VPC.spaceLg,
+                  marginBottom: priceId ? 8 : VPC.spaceLg,
                   marginTop: 0,
                 }}
               >
                 Ainda não tem uma assinatura ativa. Assine um plano para ativar
                 o modo ao vivo.
               </p>
+              {priceId && (
+                <p
+                  style={{
+                    fontSize: VPC.fontSizeBase,
+                    fontWeight: 600,
+                    color: VPC.text,
+                    marginBottom: VPC.spaceLg,
+                    marginTop: 0,
+                  }}
+                >
+                  Plano — {PLAN_PRICE_LABEL}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={handleStartSubscription}

@@ -1,9 +1,8 @@
 /**
  * Hero Component - Landing Page
  *
- * Consciência de runtime (§7): se há sessão, CTA principal = "Voltar ao sistema" → /dashboard;
- * sem sessão = "Entrar em operação" → /auth + microcopy "Configuração guiada. 15 minutos."
- * FlowGate permanece autoridade; landing apenas reflecte estado.
+ * CTA único: "Começar agora" → /auth; "Explorar demonstração" → /op/tpv?mode=demo; "Já tenho acesso" → /auth (link).
+ * Com sessão: "Voltar ao sistema" → /dashboard. FlowGate permanece autoridade; landing reflecte estado.
  */
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -31,7 +30,7 @@ export const Hero = () => {
     }, [hasSession, navigate]);
 
     return (
-        <div className="min-h-screen bg-transparent text-white flex flex-col relative overflow-hidden">
+        <div className="min-h-screen bg-transparent text-[var(--text-primary)] flex flex-col relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-amber-950/10 pointer-events-none z-0" />
 
             <header className="w-full absolute top-0 left-0 p-6 z-50 flex justify-between items-center">
@@ -41,9 +40,9 @@ export const Hero = () => {
                 </div>
                 <Link
                     to={hasSession ? '/dashboard' : '/auth'}
-                    className="px-6 py-2 bg-neutral-900 border border-neutral-800 rounded-full hover:bg-neutral-800 hover:border-amber-900/50 transition-all text-sm font-medium text-neutral-400 hover:text-white"
+                    className="px-6 py-2 rounded-full border text-sm font-medium transition-all bg-[var(--surface-elevated)] border-[var(--surface-border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--color-primary)]"
                 >
-                    {hasSession ? 'Voltar ao sistema' : OSCopy.landing.ctaSecondary}
+                    {hasSession ? 'Voltar ao sistema' : OSCopy.landing.ctaJaTenhoAcesso}
                 </Link>
             </header>
 
@@ -57,30 +56,30 @@ export const Hero = () => {
                 </div>
 
                 <div className="mb-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-                    <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-amber-500/30 bg-black/50 backdrop-blur-sm">
-                        <span className="text-sm font-bold tracking-widest text-amber-500">CHEFIAPP™</span>
-                        <span className="text-sm font-bold tracking-widest text-red-500">OS</span>
+                    <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-[var(--color-primary)]/30 bg-black/50 backdrop-blur-sm">
+                        <span className="text-sm font-bold tracking-widest text-[var(--color-primary)]">CHEFIAPP™</span>
+                        <span className="text-sm font-bold tracking-widest text-[var(--color-os-red)]">OS</span>
                     </div>
                     {/* Indicador de runtime (§7) — visível para confirmar consciência de sessão */}
                     <span
-                        className="text-xs font-medium px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-neutral-400"
+                        className="text-xs font-medium px-3 py-1.5 rounded-full border border-[var(--surface-border)] bg-[var(--surface-overlay)] text-[var(--text-secondary)]"
                         aria-live="polite"
                     >
                         {loading ? 'A verificar sessão…' : hasSession ? 'Sessão ativa · A redirecionar' : 'Modo visita'}
                     </span>
                 </div>
 
-                <h1 className="font-outfit text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight max-w-5xl mx-auto text-white">
-                    Sistema <span className="text-amber-500">OPERACIONAL</span> <br />
+                <h1 className="font-outfit text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight max-w-5xl mx-auto text-[var(--text-primary)]">
+                    Sistema <span className="text-[var(--color-primary)]">OPERACIONAL</span> <br />
                     <span>{OSCopy.landing.heroSubtitle}</span>
                 </h1>
 
-                <p className="text-xl md:text-2xl text-neutral-400 mb-12 max-w-3xl mx-auto leading-relaxed">
+                <p className="text-xl md:text-2xl text-[var(--text-secondary)] mb-12 max-w-3xl mx-auto leading-relaxed">
                     {OSCopy.landing.heroDescription}
                 </p>
 
-                <p className="text-neutral-400 text-base mb-8">
-                    A partir de <strong className="text-white">49 €/mês</strong>. Primeiro mês de teste grátis.
+                <p className="text-[var(--text-secondary)] text-base mb-8">
+                    A partir de <strong className="text-[var(--text-primary)]">49 €/mês</strong>. Primeiro mês de teste grátis.
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center gap-4 justify-center w-full max-w-2xl mx-auto flex-wrap">
@@ -88,13 +87,13 @@ export const Hero = () => {
                         <>
                             <Link
                                 to="/dashboard"
-                                className="w-full sm:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-extrabold text-lg rounded-xl shadow-[0_0_30px_rgba(245,158,11,0.2)] hover:shadow-[0_0_50px_rgba(245,158,11,0.4)] transition-all transform hover:-translate-y-1"
+                                className="w-full sm:w-auto px-8 py-4 bg-primary hover:opacity-90 text-[var(--text-inverse)] font-extrabold text-lg rounded-xl shadow-[var(--elevation-primary)] transition-all transform hover:-translate-y-1"
                             >
                                 Voltar ao sistema
                             </Link>
                             <Link
-                                to="/demo"
-                                className="w-full sm:w-auto px-8 py-4 bg-transparent border border-neutral-600 hover:border-amber-500 text-white hover:text-amber-500 font-bold text-lg rounded-xl transition-all"
+                                to="/op/tpv?mode=demo"
+                                className="w-full sm:w-auto px-8 py-4 bg-transparent border border-[var(--surface-border)] hover:border-[var(--color-primary)] text-[var(--text-primary)] hover:text-[var(--color-primary)] font-bold text-lg rounded-xl transition-all"
                             >
                                 {OSCopy.landing.ctaExplorarDemo}
                             </Link>
@@ -106,7 +105,7 @@ export const Hero = () => {
                             >
                                 👉 Fale no WhatsApp
                             </a>
-                            <p className="w-full text-center text-neutral-500 text-sm mt-2">
+                            <p className="w-full text-center text-[var(--text-tertiary)] text-sm mt-2">
                                 A redirecionar para o comando em instantes…
                             </p>
                         </>
@@ -114,13 +113,13 @@ export const Hero = () => {
                         <>
                             <Link
                                 to="/auth"
-                                className="w-full sm:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-extrabold text-lg rounded-xl shadow-[0_0_30px_rgba(245,158,11,0.2)] hover:shadow-[0_0_50px_rgba(245,158,11,0.4)] transition-all transform hover:-translate-y-1"
+                                className="w-full sm:w-auto px-8 py-4 bg-primary hover:opacity-90 text-[var(--text-inverse)] font-extrabold text-lg rounded-xl shadow-[var(--elevation-primary)] transition-all transform hover:-translate-y-1"
                             >
-                                {OSCopy.landing.ctaOperar}
+                                {OSCopy.landing.ctaComecarAgora}
                             </Link>
                             <Link
-                                to="/demo"
-                                className="w-full sm:w-auto px-8 py-4 bg-transparent border border-neutral-600 hover:border-amber-500 text-white hover:text-amber-500 font-bold text-lg rounded-xl transition-all"
+                                to="/op/tpv?mode=demo"
+                                className="w-full sm:w-auto px-8 py-4 bg-transparent border border-[var(--surface-border)] hover:border-[var(--color-primary)] text-[var(--text-primary)] hover:text-[var(--color-primary)] font-bold text-lg rounded-xl transition-all"
                             >
                                 {OSCopy.landing.ctaExplorarDemo}
                             </Link>
@@ -134,12 +133,12 @@ export const Hero = () => {
                             </a>
                             <Link
                                 to="/auth"
-                                className="w-full sm:w-auto px-6 py-3 text-neutral-500 hover:text-white text-sm font-medium transition-colors"
+                                className="w-full sm:w-auto px-6 py-3 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] text-sm font-medium transition-colors"
                             >
                                 {OSCopy.landing.ctaJaTenhoAcesso}
                             </Link>
                             <p className="w-full text-center mt-3">
-                                <span className="inline-block px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-200/90 text-sm font-medium">
+                                <span className="inline-block px-4 py-2 rounded-full bg-[var(--status-primary-bg)] border border-[var(--status-primary-border)] text-[var(--status-primary-text)] text-sm font-medium">
                                     Configuração guiada · 15 minutos
                                 </span>
                             </p>

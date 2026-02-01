@@ -26,6 +26,7 @@ export const OSCopy = {
         heroDescription: 'Execução em tempo real. Cozinha, salão e caixa no mesmo fluxo.',
         ctaPrimary: 'Operar meu restaurante',
         ctaSecondary: 'Acesso existente',
+        ctaComecarAgora: 'Começar agora',
         ctaOperar: 'Operar meu restaurante',
         ctaExplorarDemo: 'Explorar demonstração',
         ctaJaTenhoAcesso: 'Já tenho acesso',
@@ -88,6 +89,7 @@ export const OSCopy = {
         voltarLanding: 'Voltar à landing',
         voltarDemonstracao: 'Voltar à demonstração',
         criarContaOperar: 'Criar conta e operar de verdade',
+        ctaComecarAgoraTrial: 'Começar agora (14 dias grátis)',
     },
     research: {
         hubTitle: 'RESEARCH HUB',
