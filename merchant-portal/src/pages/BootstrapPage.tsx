@@ -38,6 +38,25 @@ type BootstrapState =
 // S0 CONFIG: More tolerant values
 const BOOTSTRAP_TIMEOUT = 15000; // 15s (was 10s) - Give slow backends a chance
 
+// FASE 1 Passo 1: presets por país (nome, tipo, país/moeda, timezone)
+const COUNTRY_PRESETS: Record<
+  string,
+  { timezone: string; currency: string; locale: string }
+> = {
+  BR: { timezone: "America/Sao_Paulo", currency: "BRL", locale: "pt-BR" },
+  ES: { timezone: "Europe/Madrid", currency: "EUR", locale: "es-ES" },
+  PT: { timezone: "Europe/Lisbon", currency: "EUR", locale: "pt-PT" },
+  US: { timezone: "America/New_York", currency: "USD", locale: "en-US" },
+};
+
+const RESTAURANT_TYPES = [
+  "Restaurante",
+  "Café",
+  "Bar",
+  "Snack",
+  "Catering",
+] as const;
+
 export function BootstrapPage() {
   const navigate = useNavigate();
   const { status: _health } = useCoreHealth({
@@ -49,9 +68,11 @@ export function BootstrapPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showProgress, setShowProgress] = useState(false);
   const [progressStep, setProgressStep] = useState<string | null>(null);
-  // Onda 4 A2: form nome + contacto antes de criar restaurante
+  // Onda 4 A2 + FASE 1 Passo 1: form nome, tipo, país, contacto
   const [restaurantName, setRestaurantName] = useState("");
   const [restaurantContact, setRestaurantContact] = useState("");
+  const [restaurantType, setRestaurantType] = useState<string>("Restaurante");
+  const [restaurantCountry, setRestaurantCountry] = useState<string>("PT");
 
   const switchToDemoMode = () => {
     setTabIsolated("chefiapp_demo_mode", "true");
@@ -59,7 +80,7 @@ export function BootstrapPage() {
     if (!getTabIsolated("chefiapp_restaurant_id")) {
       setTabIsolated("chefiapp_restaurant_id", "demo-restaurant-id");
     }
-    navigate("/preview");
+    navigate("/onboarding/first-product");
   };
 
   const bootstrap = useCallback(async () => {
@@ -82,6 +103,14 @@ export function BootstrapPage() {
       error: authError,
     });
 
+    // Docker backend: quando não há getSession (session null), permitir passar a /onboarding/first-product
+    // para evitar loop bootstrap → login → bootstrap quando Core está em baixo
+    if (getBackendType() === BackendType.docker && session === null) {
+      setState("ready");
+      setTimeout(() => navigate("/onboarding/first-product"), 500);
+      return;
+    }
+
     // DEMO MODE BYPASS
     const isDemo = getTabIsolated("chefiapp_demo_mode") === "true";
     if (isDemo || (!session && !authError)) {
@@ -92,9 +121,9 @@ export function BootstrapPage() {
         setTimeout(() => navigate("/login"), 300);
         return;
       }
-      // If Demo (or Docker sem sessão) -> Allow pass
+      // If Demo -> Allow pass
       setState("ready");
-      setTimeout(() => navigate("/preview"), 500);
+      setTimeout(() => navigate("/onboarding/first-product"), 500);
       return;
     }
 
@@ -180,8 +209,7 @@ export function BootstrapPage() {
         if (advancedDone) {
           setState("ready");
           setProgressStep(`Bem-vindo de volta!`);
-          const targetPath =
-            member.role === "owner" ? "/dashboard" : "/preview";
+          const targetPath = member.role === "owner" ? "/dashboard" : "/op/tpv";
           // P2-3 FIX: Navegação imediata após verificação real (sem delay artificial)
           navigate(targetPath);
           return;
@@ -211,7 +239,9 @@ export function BootstrapPage() {
         return;
       } else {
         // NEW USER -> Onda 4 A2: mostrar form nome + contacto antes de criar
-        console.log("[Bootstrap] New user detected - show create restaurant form");
+        console.log(
+          "[Bootstrap] New user detected - show create restaurant form",
+        );
         setState("create_form");
       }
     } catch (error: any) {
@@ -245,14 +275,18 @@ export function BootstrapPage() {
           return;
         }
 
-        // 1) Tentar RPC create_tenant_atomic (nome + cidade/contacto)
+        const preset =
+          COUNTRY_PRESETS[restaurantCountry] ||
+          COUNTRY_PRESETS.PT;
+
+        // 1) Tentar RPC create_tenant_atomic (nome, tipo, país, cidade/contacto)
         const { data: rpcData, error: rpcError } = await supabase.rpc(
           "create_tenant_atomic",
           {
             p_restaurant_name: name,
             p_city: restaurantContact.trim() || null,
-            p_type: "Restaurante",
-            p_country: "ES",
+            p_type: restaurantType,
+            p_country: restaurantCountry,
           },
         );
 
@@ -265,7 +299,7 @@ export function BootstrapPage() {
           return;
         }
 
-        // 2) Fallback: insert direto (BootstrapPage já autorizado)
+        // 2) Fallback: insert direto com nome, tipo, país, moeda, timezone (FASE 1 Passo 1)
         const timestamp = Date.now().toString(36).slice(-6).toLowerCase();
         const slug = `rest-${timestamp}`;
         const { data: restData, error: restError } = await DbWriteGate.insert(
@@ -276,9 +310,12 @@ export function BootstrapPage() {
             slug,
             owner_id: user.id,
             status: "active",
-            country: "ES",
+            country: restaurantCountry,
             plan: "trial",
-            type: "Restaurante",
+            type: restaurantType,
+            timezone: preset.timezone,
+            currency: preset.currency,
+            locale: preset.locale,
           },
           { userId: user.id },
         );
@@ -309,7 +346,13 @@ export function BootstrapPage() {
         );
       }
     },
-    [restaurantName, restaurantContact, navigate],
+    [
+      restaurantName,
+      restaurantContact,
+      restaurantType,
+      restaurantCountry,
+      navigate,
+    ],
   );
 
   useEffect(() => {
@@ -345,7 +388,10 @@ export function BootstrapPage() {
           {/* Onda 4 A2: form criar restaurante (nome + contacto) */}
           {state === "create_form" && (
             <>
-              <h1 className="h1" style={{ fontSize: 22, color: "#fff", marginBottom: 8 }}>
+              <h1
+                className="h1"
+                style={{ fontSize: 22, color: "#fff", marginBottom: 8 }}
+              >
                 Criar o teu restaurante
               </h1>
               <p className="muted" style={{ marginBottom: 24, fontSize: 14 }}>
@@ -394,6 +440,75 @@ export function BootstrapPage() {
                       color: "#fafafa",
                     }}
                   />
+                </div>
+                <div>
+                  <label
+                    htmlFor="restaurant-type"
+                    style={{
+                      display: "block",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: "#a3a3a3",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Tipo *
+                  </label>
+                  <select
+                    id="restaurant-type"
+                    value={restaurantType}
+                    onChange={(e) => setRestaurantType(e.target.value)}
+                    style={{
+                      width: "100%",
+                      boxSizing: "border-box",
+                      padding: "12px 14px",
+                      fontSize: 15,
+                      border: "1px solid #404040",
+                      borderRadius: 8,
+                      backgroundColor: "#171717",
+                      color: "#fafafa",
+                    }}
+                  >
+                    {RESTAURANT_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label
+                    htmlFor="restaurant-country"
+                    style={{
+                      display: "block",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: "#a3a3a3",
+                      marginBottom: 6,
+                    }}
+                  >
+                    País / Moeda *
+                  </label>
+                  <select
+                    id="restaurant-country"
+                    value={restaurantCountry}
+                    onChange={(e) => setRestaurantCountry(e.target.value)}
+                    style={{
+                      width: "100%",
+                      boxSizing: "border-box",
+                      padding: "12px 14px",
+                      fontSize: 15,
+                      border: "1px solid #404040",
+                      borderRadius: 8,
+                      backgroundColor: "#171717",
+                      color: "#fafafa",
+                    }}
+                  >
+                    <option value="PT">Portugal (EUR)</option>
+                    <option value="ES">Espanha (EUR)</option>
+                    <option value="BR">Brasil (BRL)</option>
+                    <option value="US">EUA (USD)</option>
+                  </select>
                 </div>
                 <div>
                   <label
@@ -464,7 +579,10 @@ export function BootstrapPage() {
                 Criando o teu restaurante
               </h1>
               {progressStep && (
-                <p className="muted" style={{ marginTop: 10, color: "#32d74b" }}>
+                <p
+                  className="muted"
+                  style={{ marginTop: 10, color: "#32d74b" }}
+                >
                   {progressStep}
                 </p>
               )}
@@ -702,6 +820,27 @@ export function BootstrapPage() {
                     }}
                   >
                     Entrar Agora (Demo)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setTabIsolated("chefiapp_restaurant_id", "pilot-mock-id");
+                      setTabIsolated("chefiapp_user_role", "owner");
+                      navigate("/onboarding/first-product");
+                    }}
+                    style={{
+                      padding: "14px 24px",
+                      background: "rgba(50, 215, 75, 0.1)",
+                      border: "1px solid #32d74b",
+                      borderRadius: 10,
+                      color: "#32d74b",
+                      fontSize: 15,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      width: "100%",
+                      marginBottom: 8,
+                    }}
+                  >
+                    Simular Criação (Offline)
                   </button>
                   <button
                     onClick={bootstrap}
