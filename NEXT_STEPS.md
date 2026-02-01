@@ -34,7 +34,7 @@ Ver: [docs/ONDA_3_TAREFAS_90_DIAS.md](docs/ONDA_3_TAREFAS_90_DIAS.md) · [docs/C
 
 ### Immediate (Today/Tomorrow)
 
-- **Onda 4.5 — Máquina de venda ligada.** CTA → Auth → Onboarding → TPV; Billing dentro do app (BillingBanner, /app/billing, past_due gating em TPV/KDS/Cash). **Próximo:** validar smoke test real e checkout Stripe em produção; reforçar gating past_due se necessário.
+- **Onda 4.5 — Máquina de venda ligada.** CTA → Auth → Onboarding → TPV; Billing dentro do app (BillingBanner, /app/billing, past_due gating em TPV/KDS/Cash). **Próximo:** instalar em 1 restaurante real e ativar Stripe (€79). Checklist: [docs/pilots/CHECKLIST_PRIMEIRO_CLIENTE_PAGANTE.md](docs/pilots/CHECKLIST_PRIMEIRO_CLIENTE_PAGANTE.md). Pendência BD: aplicar migração `20260201180000_add_billing_status_to_gm_restaurants.sql` se ainda não aplicada.
 - [ ] **Checklist Piloto e Produção (Onda 4)** — **Roteiro oficial:** [docs/PLANO_PASSO_A_PASSO_CHEFIAPP.md](docs/PLANO_PASSO_A_PASSO_CHEFIAPP.md). Passo 0.1 concluído. Passo 1: 1.1 ICP e 1.3 script preparados em [ONDA_4_PILOTO_P1.md](docs/pilots/ONDA_4_PILOTO_P1.md). **Próximo passo:** preencher 1.2 (lista 10 restaurantes) e 1.4 (agendar 5 instalações). Em paralelo: Passo 3 (Valor percebido) em [ONDA_4_VALOR_E_ONDA_5.md](docs/pilots/ONDA_4_VALOR_E_ONDA_5.md).
 - [x] **Onda 4 — POS Ultra-Rápido (escopo engenharia)** — A1–A4, B1–B6, C1–C3, D1–D2 concluídos. Ref.: [ONDA_4_TAREFAS_30_45_DIAS.md](docs/ONDA_4_TAREFAS_30_45_DIAS.md). **Próximo:** P1–P2 piloto (2–5 restaurantes; métricas) ou push/CI/testes.
 - [ ] **Refinamentos pós-Onda 3** — Itens ainda 🟡 em [CHECKLIST_FECHO_GAPS](docs/CHECKLIST_FECHO_GAPS.md) (ex.: revisão jurídica/DPO em GDPR_MAPPING, RETENTION_POLICY; C2). Ou: push, CI, testes.

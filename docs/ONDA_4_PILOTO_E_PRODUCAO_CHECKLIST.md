@@ -33,6 +33,7 @@ Funil fechado: Landing → Auth → Onboarding → TPV; Billing dentro do app.
 - [x] **CTA único** — Hero e Footer com CTA principal "Começar agora" → `/auth`; "Explorar demonstração" → `/op/tpv?mode=demo`; OSCopy e TPVDemoPage alinhados.
 - [x] **Billing no fluxo** — BillingBanner (trial/past_due) com "Escolher plano" → `/app/billing`; PaymentGuard lógica; BillingSuccessPage com link Dashboard e TPV.
 - [x] **Design system unificado** — Landing com OSFrame `context="landing"`; Hero/Footer com tokens do produto.
+- [ ] **Primeiro cliente pagante** — Executar [CHECKLIST_PRIMEIRO_CLIENTE_PAGANTE.md](./pilots/CHECKLIST_PRIMEIRO_CLIENTE_PAGANTE.md): 1 restaurante piloto, 1 turno real, "Ativar agora", €79, feedback. Pré-requisito: migração `billing_status` em gm_restaurants aplicada.
 
 ---
 
