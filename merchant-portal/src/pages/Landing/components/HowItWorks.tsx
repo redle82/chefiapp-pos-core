@@ -1,28 +1,34 @@
+import { Link } from 'react-router-dom';
+
 export const HowItWorks = () => {
     const steps = [
         {
             num: "01",
             title: "Demo ao vivo",
             desc: "Mostramos o dashboard com dados reais do Sofia Gastrobar. Você vê exatamente o que vai ter.",
-            action: "15 MINUTOS"
+            action: "15 MINUTOS",
+            link: "/demo"
         },
         {
             num: "02",
             title: "Setup inicial",
             desc: "Criamos seu restaurante, você adiciona 5 itens do menu. Pronto, já funciona.",
-            action: "10 MINUTOS"
+            action: "10 MINUTOS",
+            link: null
         },
         {
             num: "03",
             title: "Teste real",
             desc: "Sua equipa usa de verdade. Turnos, stock, tarefas. Zero compromisso, zero custo.",
-            action: "14 DIAS GRÁTIS"
+            action: "14 DIAS GRÁTIS",
+            link: null
         },
         {
             num: "04",
             title: "Decisão",
             desc: "Gostou? Fica. Não gostou? Cancela. Simples assim.",
-            action: "DIA 15"
+            action: "DIA 15",
+            link: null
         }
     ];
 
@@ -47,7 +53,11 @@ export const HowItWorks = () => {
                             </div>
                             <h3 className="text-xl font-bold mb-4 text-white">{step.title}</h3>
                             <p className="text-neutral-400 text-sm mb-6 px-4 leading-relaxed">{step.desc}</p>
-                            <span className="text-xs uppercase tracking-widest text-amber-500 font-bold">{step.action}</span>
+                            {step.link ? (
+                                <Link to={step.link} className="inline-block text-xs uppercase tracking-widest text-amber-500 font-bold hover:text-amber-400 underline">{step.action}</Link>
+                            ) : (
+                                <span className="text-xs uppercase tracking-widest text-amber-500 font-bold">{step.action}</span>
+                            )}
                         </div>
                     ))}
                 </div>

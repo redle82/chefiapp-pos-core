@@ -1,25 +1,10 @@
-/**
- * OrderSummaryPanel - Resumo Lateral da Conta
- * 
- * SEMANA 1 - Tarefa 2.3
- * 
- * Objetivo: Mostrar sempre visível quando há pedido ativo:
- * - Lista de itens (nome + qty + subtotal)
- * - Total parcial
- * - Ações: "Dividir conta" e "Fechar e pagar"
- */
-
-import React, { useState, useEffect } from 'react';
-import { Card } from '../../../ui/design-system/primitives/Card';
-import { Text } from '../../../ui/design-system/primitives/Text';
-import { Button } from '../../../ui/design-system/primitives/Button';
-import { colors } from '../../../ui/design-system/tokens/colors';
-import { spacing } from '../../../ui/design-system/tokens/spacing';
-import type { Order } from '../context/OrderTypes';
-import { PaymentEngine } from '../../../core/tpv/PaymentEngine';
+import React from "react";
+import { Button } from "../../../ui/design-system/Button";
+import { Card } from "../../../ui/design-system/Card";
+import { Text } from "../../../ui/design-system/primitives/Text";
 
 interface OrderSummaryPanelProps {
-  order: Order | null;
+  order: any;
   onSplitBill: () => void;
   onPay: () => void;
   loading?: boolean;
@@ -29,296 +14,81 @@ export const OrderSummaryPanel: React.FC<OrderSummaryPanelProps> = ({
   order,
   onSplitBill,
   onPay,
-  loading = false,
+  loading,
 }) => {
-  const [paidAmount, setPaidAmount] = useState<number>(0);
-  const [loadingPayments, setLoadingPayments] = useState<boolean>(false);
+  const items = order?.items || [];
+  const total = order?.total_amount || 0;
 
-  // Buscar pagamentos quando o pedido mudar ou quando status for partially_paid
-  useEffect(() => {
-    if (!order || order.status !== 'partially_paid') {
-      setPaidAmount(0);
-      return;
-    }
-
-    const fetchPayments = async () => {
-      try {
-        setLoadingPayments(true);
-        const payments = await PaymentEngine.getPaymentsByOrder(order.id);
-        const totalPaid = payments
-          .filter(p => p.status === 'PAID')
-          .reduce((sum, p) => sum + p.amountCents, 0);
-        setPaidAmount(totalPaid);
-      } catch (err) {
-        console.error('Failed to fetch payments:', err);
-        setPaidAmount(0);
-      } finally {
-        setLoadingPayments(false);
-      }
-    };
-
-    fetchPayments();
-  }, [order?.id, order?.status]);
-
-  // Se não há pedido ativo, não renderizar
-  if (!order) {
-    return null;
-  }
-
-  // INV-006: UI uses Domain's total, never calculates independently
-  const itemsTotal = order.total;
-
-  const remainingAmount = itemsTotal - paidAmount;
-  const isPartiallyPaid = order.status === 'partially_paid' || paidAmount > 0;
-
-  const totalFormatted = new Intl.NumberFormat('pt-PT', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(itemsTotal / 100);
-
-  const paidFormatted = new Intl.NumberFormat('pt-PT', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(paidAmount / 100);
-
-  const remainingFormatted = new Intl.NumberFormat('pt-PT', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(remainingAmount / 100);
-
-  // Formatar subtotal de item
-  const formatItemSubtotal = (price: number, quantity: number): string => {
-    const subtotal = (price * quantity) / 100;
-    return new Intl.NumberFormat('pt-PT', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(subtotal);
-  };
-
-  // Formatar preço unitário
-  const formatUnitPrice = (price: number): string => {
-    return new Intl.NumberFormat('pt-PT', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(price / 100);
-  };
+  if (loading)
+    return <div className="p-4 text-center">Carregando resumo...</div>;
 
   return (
-    <Card
-      surface="layer2"
-      padding="lg"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Header */}
-      <div style={{ marginBottom: spacing[4] }}>
-        <Text size="lg" weight="bold" color="primary">
-          Conta {order.tableNumber ? `Mesa ${order.tableNumber}` : 'Sem Mesa'}
-        </Text>
-        {order.tableId && (
-          <Text size="sm" color="secondary" style={{ marginTop: spacing[1] }}>
-            ID: {order.tableId.slice(0, 8)}...
-          </Text>
-        )}
-      </div>
-
-      {/* Lista de Itens */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          marginBottom: spacing[4],
-          borderTop: `1px solid ${colors.border.subtle}`,
-          borderBottom: `1px solid ${colors.border.subtle}`,
-          paddingTop: spacing[3],
-          paddingBottom: spacing[3],
-        }}
-      >
-        {order.items.length === 0 ? (
-          <Text size="sm" color="secondary" align="center" style={{ padding: spacing[4] }}>
-            Nenhum item adicionado
-          </Text>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[3] }}>
-            {order.items.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  padding: spacing[2],
-                  backgroundColor: colors.surface.layer1,
-                  borderRadius: '4px',
-                }}
-              >
-                {/* Nome e Quantidade */}
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    marginBottom: spacing[1],
-                  }}
-                >
-                  <Text size="base" weight="medium" color="primary" style={{ flex: 1 }}>
-                    {item.name}
-                  </Text>
-                  <Text size="sm" color="secondary" style={{ marginLeft: spacing[2] }}>
-                    x{item.quantity}
-                  </Text>
-                </div>
-
-                {/* Preço Unitário e Subtotal */}
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Text size="sm" color="tertiary">
-                    {formatUnitPrice(item.price)} un.
-                  </Text>
-                  <Text size="base" weight="semibold" color="primary">
-                    {formatItemSubtotal(item.price, item.quantity)}
-                  </Text>
-                </div>
-
-                {/* Observações (se houver) */}
-                {item.notes && (
-                  <Text
-                    size="xs"
-                    color="tertiary"
-                    style={{
-                      marginTop: spacing[1],
-                      fontStyle: 'italic',
-                    }}
-                  >
-                    {item.notes}
-                  </Text>
-                )}
-              </div>
-            ))}
+    <div className="flex flex-col h-full bg-surface">
+      <div className="flex-1 overflow-y-auto p-4 space-y-1">
+        {items?.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-zinc-500 opacity-50 gap-2">
+            <div className="text-4xl">🧾</div>
+            <Text className="text-sm">Nenhum item adicionado</Text>
           </div>
+        ) : (
+          items.map((item: any, idx: number) => (
+            <div
+              key={idx}
+              className="flex justify-between items-start py-3 border-b border-white/5 last:border-0 hover:bg-white/5 px-2 rounded-lg transition-colors group"
+            >
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-400">
+                  {item.quantity}
+                </div>
+                <div>
+                  <Text className="font-medium text-zinc-200">{item.name}</Text>
+                  {item.notes && (
+                    <Text className="text-xs text-amber-500/80 mt-0.5">
+                      📝 {item.notes}
+                    </Text>
+                  )}
+                  {item.category && item.category !== "Uncategorized" && (
+                    <Text className="text-[10px] text-zinc-600 uppercase tracking-widest mt-0.5">
+                      {item.category}
+                    </Text>
+                  )}
+                </div>
+              </div>
+              <Text className="font-mono text-zinc-300">
+                {((item.unit_price * item.quantity) / 100).toFixed(2)}
+              </Text>
+            </div>
+          ))
         )}
       </div>
 
-      {/* Total e Status de Pagamento */}
-      <div
-        style={{
-          paddingTop: spacing[4],
-          borderTop: `2px solid ${colors.border.default}`,
-          marginBottom: spacing[4],
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: spacing[2],
-          }}
-        >
-          <Text size="lg" weight="bold" color="primary">
-            Total:
+      <Card className="mb-3 p-4 border-b border-white/5 bg-zinc-900/40 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.5)] z-10">
+        <div className="flex justify-between mb-4 items-end">
+          <Text className="text-zinc-500 text-sm font-medium uppercase tracking-widest">
+            Total
           </Text>
-          <Text size="xl" weight="bold" color="primary">
-            {totalFormatted}
+          <Text className="text-3xl text-primary font-bold tracking-tight">
+            {(total / 100).toFixed(2)}
+            <span className="text-lg text-zinc-500 ml-1 font-normal">€</span>
           </Text>
         </div>
-
-        {/* Status de Pagamento Parcial (se aplicável) */}
-        {isPartiallyPaid && !loadingPayments && (
-          <>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: spacing[1],
-                paddingTop: spacing[2],
-                borderTop: `1px solid ${colors.border.subtle}`,
-              }}
-            >
-              <Text size="sm" color="tertiary">
-                Já Pago:
-              </Text>
-              <Text size="base" weight="semibold" color="success">
-                {paidFormatted}
-              </Text>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: spacing[2],
-              }}
-            >
-              <Text size="base" weight="bold" color="primary">
-                Saldo Restante:
-              </Text>
-              <Text size="lg" weight="bold" color={remainingAmount > 0 ? 'warning' : 'success'}>
-                {remainingFormatted}
-              </Text>
-            </div>
-            {order.status === 'partially_paid' && (
-              <div
-                style={{
-                  padding: spacing[2],
-                  backgroundColor: colors.info.base + '20',
-                  borderRadius: 4,
-                  marginTop: spacing[2],
-                }}
-              >
-                <Text size="xs" color="info" weight="medium">
-                  ⚠️ Conta parcialmente paga. Continue dividindo ou finalize o pagamento.
-                </Text>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Ações */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: spacing[3],
-        }}
-      >
-        <Button
-          tone="info"
-          variant="outline"
-          size="lg"
-          fullWidth
-          onClick={onSplitBill}
-          disabled={loading || order.items.length === 0 || itemsTotal === 0}
-        >
-          Dividir Conta
-        </Button>
-
-        <Button
-          tone="action"
-          variant="solid"
-          size="xl"
-          fullWidth
-          onClick={onPay}
-          disabled={loading || order.items.length === 0 || itemsTotal === 0 || order.status === 'paid'}
-          isLoading={loading}
-        >
-          {isPartiallyPaid && remainingAmount > 0
-            ? `Pagar Restante (${remainingFormatted})`
-            : order.status === 'paid'
-              ? 'Conta Fechada'
-              : 'Fechar e Pagar'}
-        </Button>
-      </div>
-    </Card>
+        <div className="grid grid-cols-3 gap-3">
+          <Button
+            variant="secondary"
+            onClick={onSplitBill}
+            className="h-14 text-sm font-bold bg-zinc-800 hover:bg-zinc-700 border-zinc-700"
+          >
+            ✂️ Dividir
+          </Button>
+          <Button
+            variant="primary"
+            onClick={onPay}
+            className="col-span-2 h-14 text-xl font-bold bg-primary hover:bg-primary/90 text-black shadow-lg shadow-primary/20"
+          >
+            Pagamento
+          </Button>
+        </div>
+      </Card>
+    </div>
   );
 };

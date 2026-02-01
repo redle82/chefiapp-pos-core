@@ -1,11 +1,15 @@
-import { useEffect, useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { supabase } from '../core/supabase'
-import { useCoreHealth } from '../core/health'
-import { InlineAlert } from '../ui/design-system'
-import { getTabIsolated, setTabIsolated } from '../core/storage/TabIsolatedStorage'
-import { DbWriteGate } from '../core/governance/DbWriteGate'
-import '../App.css'
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "../App.css";
+import { DbWriteGate } from "../core/governance/DbWriteGate";
+import { useCoreHealth } from "../core/health";
+import { BackendType, getBackendType } from "../core/infra/backendAdapter";
+import {
+  getTabIsolated,
+  setTabIsolated,
+} from "../core/storage/TabIsolatedStorage";
+import { supabase } from "../core/supabase";
+import { InlineAlert } from "../ui/design-system";
 
 /**
  * BootstrapPage — System Initialization
@@ -15,279 +19,488 @@ import '../App.css'
  * This page verifies the system is ready before allowing progression.
  * If restaurant_id exists in localStorage, proceeds to preview.
  * Otherwise, redirects to start flow.
- * 
+ *
  * UPDATE: S0 Resilience Check
  * Ensure this page NEVER blocks the user, even if the backend is down.
  */
 
 type BootstrapState =
-  | 'checking'
-  | 'checking_restaurant'
-  | 'checking_health'
-  | 'ready'
-  | 'error'
-  | 'timeout'
-  | 'redirecting'
+  | "checking"
+  | "checking_restaurant"
+  | "checking_health"
+  | "create_form"
+  | "creating"
+  | "ready"
+  | "error"
+  | "timeout"
+  | "redirecting";
 
 // S0 CONFIG: More tolerant values
-const BOOTSTRAP_TIMEOUT = 15000 // 15s (was 10s) - Give slow backends a chance
+const BOOTSTRAP_TIMEOUT = 15000; // 15s (was 10s) - Give slow backends a chance
 
 export function BootstrapPage() {
-  const navigate = useNavigate()
-  const { status: _health } = useCoreHealth({ autoStart: false, timeout: BOOTSTRAP_TIMEOUT })
+  const navigate = useNavigate();
+  const { status: _health } = useCoreHealth({
+    autoStart: false,
+    timeout: BOOTSTRAP_TIMEOUT,
+  });
 
-  const [state, setState] = useState<BootstrapState>('checking')
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [showProgress, setShowProgress] = useState(false)
-  const [progressStep, setProgressStep] = useState<string | null>(null)
+  const [state, setState] = useState<BootstrapState>("checking");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showProgress, setShowProgress] = useState(false);
+  const [progressStep, setProgressStep] = useState<string | null>(null);
+  // Onda 4 A2: form nome + contacto antes de criar restaurante
+  const [restaurantName, setRestaurantName] = useState("");
+  const [restaurantContact, setRestaurantContact] = useState("");
 
   const switchToDemoMode = () => {
-    setTabIsolated('chefiapp_demo_mode', 'true')
+    setTabIsolated("chefiapp_demo_mode", "true");
     // Safety: ensure we have a dummy ID to pass guards
-    if (!getTabIsolated('chefiapp_restaurant_id')) {
-      setTabIsolated('chefiapp_restaurant_id', 'demo-restaurant-id')
+    if (!getTabIsolated("chefiapp_restaurant_id")) {
+      setTabIsolated("chefiapp_restaurant_id", "demo-restaurant-id");
     }
-    navigate('/preview')
-  }
+    navigate("/preview");
+  };
 
   const bootstrap = useCallback(async () => {
-    console.log('[Bootstrap] Starting authentication check...');
-    setState('checking')
-    setErrorMessage(null)
-    setShowProgress(false)
-    setProgressStep(null)
+    console.log("[Bootstrap] Starting authentication check...");
+    setState("checking");
+    setErrorMessage(null);
+    setShowProgress(false);
+    setProgressStep(null);
 
-    // 1. Check Auth Session
-    const { data: { session }, error: authError } = await supabase.auth.getSession()
-    console.log('[Bootstrap] Session check result:', { hasSession: !!session, error: authError });
+    // 1. Check Auth Session (em Docker não chamar Supabase)
+    let session: unknown = null;
+    let authError: unknown = null;
+    if (getBackendType() !== BackendType.docker) {
+      const result = await supabase.auth.getSession();
+      session = result.data?.session ?? null;
+      authError = result.error ?? null;
+    }
+    console.log("[Bootstrap] Session check result:", {
+      hasSession: !!session,
+      error: authError,
+    });
 
     // DEMO MODE BYPASS
-    const isDemo = getTabIsolated('chefiapp_demo_mode') === 'true'
+    const isDemo = getTabIsolated("chefiapp_demo_mode") === "true";
     if (isDemo || (!session && !authError)) {
       // If no session and not demo -> Redirect Start
       if (!isDemo && !session) {
-        console.log('[Bootstrap] No session found, redirecting to login');
-        setState('redirecting')
-        setTimeout(() => navigate('/login'), 300)
-        return
+        console.log("[Bootstrap] No session found, redirecting to login");
+        setState("redirecting");
+        setTimeout(() => navigate("/login"), 300);
+        return;
       }
-      // If Demo -> Allow pass
-      setState('ready')
-      setTimeout(() => navigate('/preview'), 500)
-      return
+      // If Demo (or Docker sem sessão) -> Allow pass
+      setState("ready");
+      setTimeout(() => navigate("/preview"), 500);
+      return;
     }
 
-    setState('checking_restaurant')
-    setProgressStep('Verificando identidade...')
+    setState("checking_restaurant");
+    setProgressStep("Verificando identidade...");
 
     try {
       // 2. Check Membership (Sovereign Link)
-      const user = session!.user
-      console.log('[Bootstrap] Checking membership for user:', user.id);
+      const user = (session as { user?: { id: string } })?.user;
+      if (!user) {
+        setState("redirecting");
+        setTimeout(() => navigate("/login"), 300);
+        return;
+      }
+      console.log("[Bootstrap] Checking membership for user:", user.id);
       const { data: members, error: memberError } = await supabase
-        .from('gm_restaurant_members')
-        .select('restaurant_id, role')
-        .eq('user_id', user.id)
+        .from("gm_restaurant_members")
+        .select("restaurant_id, role")
+        .eq("user_id", user.id);
 
-      console.log('[Bootstrap] Membership query result:', { members, error: memberError });
+      console.log("[Bootstrap] Membership query result:", {
+        members,
+        error: memberError,
+      });
 
-      if (memberError) throw memberError
+      if (memberError) throw memberError;
 
       if (members && members.length > 0) {
         // EXISTING OWNER/STAFF
-        const member = members[0]
-        console.log('[Bootstrap] Existing member found:', member);
-        setTabIsolated('chefiapp_restaurant_id', member.restaurant_id)
-        setTabIsolated('chefiapp_user_role', member.role)
+        const member = members[0];
+        console.log("[Bootstrap] Existing member found:", member);
+        setTabIsolated("chefiapp_restaurant_id", member.restaurant_id);
+        setTabIsolated("chefiapp_user_role", member.role);
 
         // WIZARD COMPLETION GATE: Check if wizard is completed
         const { data: restaurant, error: restCheckError } = await supabase
-          .from('gm_restaurants')
-          .select('wizard_completed_at, setup_status')
-          .eq('id', member.restaurant_id)
-          .single()
+          .from("gm_restaurants")
+          .select("wizard_completed_at, setup_status")
+          .eq("id", member.restaurant_id)
+          .single();
 
         // Handle schema errors (columns may not exist yet) - use defaults
         let wizardCompleted = false;
-        let status: 'not_started' | 'quick_done' | 'advanced_in_progress' | 'advanced_done' = 'not_started';
-        
+        let status:
+          | "not_started"
+          | "quick_done"
+          | "advanced_in_progress"
+          | "advanced_done" = "not_started";
+
         if (restCheckError) {
-          const isSchemaError = 
-            restCheckError.code === '42703' || 
-            restCheckError.code?.startsWith('PGRST') ||
-            restCheckError.message?.includes('column') ||
-            restCheckError.message?.includes('does not exist') ||
+          const isSchemaError =
+            restCheckError.code === "42703" ||
+            restCheckError.code?.startsWith("PGRST") ||
+            restCheckError.message?.includes("column") ||
+            restCheckError.message?.includes("does not exist") ||
             (restCheckError as any).status === 400;
-          
+
           if (isSchemaError) {
             // Schema lag - columns don't exist yet, use defaults
-            console.log('[BootstrapPage] Schema lag detected (setup_status missing). Using default state.');
+            console.log(
+              "[BootstrapPage] Schema lag detected (setup_status missing). Using default state.",
+            );
           } else {
             // Other error - log and use defaults
-            console.warn('[BootstrapPage] Error loading restaurant:', restCheckError);
+            console.warn(
+              "[BootstrapPage] Error loading restaurant:",
+              restCheckError,
+            );
           }
         } else if (restaurant) {
           wizardCompleted = restaurant.wizard_completed_at !== null;
-          status = (restaurant.setup_status || 'not_started') as 'not_started' | 'quick_done' | 'advanced_in_progress' | 'advanced_done';
+          status = (restaurant.setup_status || "not_started") as
+            | "not_started"
+            | "quick_done"
+            | "advanced_in_progress"
+            | "advanced_done";
         }
 
-        const advancedDone = wizardCompleted || status === 'advanced_done';
-        const quickDone = status === 'quick_done' || status === 'advanced_in_progress';
+        const advancedDone = wizardCompleted || status === "advanced_done";
+        const quickDone =
+          status === "quick_done" || status === "advanced_in_progress";
 
         if (advancedDone) {
-          setState('ready')
-          setProgressStep(`Bem-vindo de volta!`)
-          const targetPath = member.role === 'owner' ? '/dashboard' : '/preview'
+          setState("ready");
+          setProgressStep(`Bem-vindo de volta!`);
+          const targetPath =
+            member.role === "owner" ? "/dashboard" : "/preview";
           // P2-3 FIX: Navegação imediata após verificação real (sem delay artificial)
-          navigate(targetPath)
-          return
+          navigate(targetPath);
+          return;
         }
 
-        const onboardingMode = getTabIsolated('chefiapp_onboarding_mode');
-        if (onboardingMode === 'migration') {
-          setState('ready')
-          setProgressStep('Iniciando migração inteligente...')
+        const onboardingMode = getTabIsolated("chefiapp_onboarding_mode");
+        if (onboardingMode === "migration") {
+          setState("ready");
+          setProgressStep("Iniciando migração inteligente...");
           // P2-3 FIX: Navegação imediata após verificação real
-          navigate('/migration/wizard')
-          return
+          navigate("/migration/wizard");
+          return;
         }
 
         if (quickDone) {
-          setState('ready')
-          setProgressStep('Configuração rápida concluída')
+          setState("ready");
+          setProgressStep("Configuração rápida concluída");
           // P2-3 FIX: Navegação imediata após verificação real
-          navigate('/app/dashboard')
-          return
+          navigate("/app/dashboard");
+          return;
         }
 
-        setState('ready')
-        setProgressStep('Completa a configuração inicial...')
-        // P2-3 FIX: Navegação imediata após verificação real
-        navigate('/onboarding/identity')
-        return
+        setState("ready");
+        setProgressStep("Completa a configuração inicial...");
+        // GloriaFood: Portal central — destino sempre /app/dashboard
+        navigate("/app/dashboard");
+        return;
       } else {
-        // NEW USER -> AUTO CREATE FIRST RESTAURANT
-        console.log('[Bootstrap] New user detected - creating first restaurant');
-        setProgressStep('Criando o teu restaurante...')
+        // NEW USER -> Onda 4 A2: mostrar form nome + contacto antes de criar
+        console.log("[Bootstrap] New user detected - show create restaurant form");
+        setState("create_form");
+      }
+    } catch (error: any) {
+      console.error("[Bootstrap] Fatal:", error);
+      setState("error");
+      setErrorMessage(error.message || "Erro ao conectar ao banco de dados.");
+    }
+  }, [navigate]);
 
-        // A) Create Restaurant using gm_restaurants table
-        // Use user metadata or default for name
-        const name = user.user_metadata?.name || 'Meu Restaurante'
-        // Generate safe, collision-resistant slug (timestamp-based, 6 chars)
-        const timestamp = Date.now().toString(36).slice(-6).toLowerCase()
-        const slug = `rest-${timestamp}` // e.g., "rest-a1b2c3"
+  /** Onda 4 A2: criar restaurante a partir do form (nome + contacto). Tenta RPC create_tenant_atomic, senão fallback insert. */
+  const handleCreateRestaurant = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const name = restaurantName.trim();
+      if (!name) {
+        setErrorMessage("Nome do restaurante é obrigatório.");
+        return;
+      }
+      setState("creating");
+      setErrorMessage(null);
+      setProgressStep("Criando o teu restaurante...");
 
+      try {
+        const {
+          data: { session: sess },
+        } = await supabase.auth.getSession();
+        const user = (sess as { user?: { id: string } } | null)?.user;
+        if (!user) {
+          setState("redirecting");
+          setTimeout(() => navigate("/login"), 300);
+          return;
+        }
 
-
-        const { data: restData, error: restError } = await DbWriteGate.insert(
-          'BootstrapPage',
-          'gm_restaurants',
+        // 1) Tentar RPC create_tenant_atomic (nome + cidade/contacto)
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          "create_tenant_atomic",
           {
-            name: name,
-            slug: slug,
-            owner_id: user.id,
-            status: 'active',
-            country: 'ES',
-            plan: 'trial',
-            type: 'Restaurante'
+            p_restaurant_name: name,
+            p_city: restaurantContact.trim() || null,
+            p_type: "Restaurante",
+            p_country: "ES",
           },
-          { userId: user.id }
         );
 
-        if (restError) throw restError
+        if (!rpcError && rpcData?.tenant_id) {
+          setTabIsolated("chefiapp_restaurant_id", rpcData.tenant_id);
+          setTabIsolated("chefiapp_user_role", "owner");
+          setState("ready");
+          setProgressStep("Cozinha criada com sucesso!");
+          navigate("/onboarding/first-product", { replace: true });
+          return;
+        }
 
-        // B) Create Member Link (Owner) - using restaurant_members table
+        // 2) Fallback: insert direto (BootstrapPage já autorizado)
+        const timestamp = Date.now().toString(36).slice(-6).toLowerCase();
+        const slug = `rest-${timestamp}`;
+        const { data: restData, error: restError } = await DbWriteGate.insert(
+          "BootstrapPage",
+          "gm_restaurants",
+          {
+            name,
+            slug,
+            owner_id: user.id,
+            status: "active",
+            country: "ES",
+            plan: "trial",
+            type: "Restaurante",
+          },
+          { userId: user.id },
+        );
+        if (restError) throw restError;
+
         const { error: linkError } = await DbWriteGate.insert(
-          'BootstrapPage',
-          'gm_restaurant_members',
+          "BootstrapPage",
+          "gm_restaurant_members",
           {
             user_id: user.id,
             restaurant_id: restData.id,
-            role: 'owner'
+            role: "owner",
           },
-          { tenantId: restData.id }
+          { tenantId: restData.id },
         );
+        if (linkError) throw linkError;
 
-        if (linkError) throw linkError
-
-        // P2-3 FIX: Verificação real de sucesso antes de navegar
-        // Verificar se restaurante foi realmente criado
-        const { data: verifyRest, error: verifyError } = await supabase
-          .from('gm_restaurants')
-          .select('id, name')
-          .eq('id', restData.id)
-          .single()
-
-        if (verifyError || !verifyRest) {
-          throw new Error('Falha ao verificar criação do restaurante. Tente novamente.')
-        }
-
-        // Success - Set Local Context
-        setTabIsolated('chefiapp_restaurant_id', restData.id)
-        setTabIsolated('chefiapp_user_role', 'owner')
-
-        setState('ready')
-        setProgressStep('Cozinha criada com sucesso!')
-        // P2-3 FIX: Navegação imediata após verificação real (sem delay artificial)
-        navigate('/onboarding/identity')
+        setTabIsolated("chefiapp_restaurant_id", restData.id);
+        setTabIsolated("chefiapp_user_role", "owner");
+        setState("ready");
+        setProgressStep("Cozinha criada com sucesso!");
+        navigate("/onboarding/first-product", { replace: true });
+      } catch (err: unknown) {
+        console.error("[Bootstrap] Create restaurant:", err);
+        setState("error");
+        setErrorMessage(
+          err instanceof Error ? err.message : "Erro ao criar restaurante.",
+        );
       }
-
-    } catch (error: any) {
-      console.error('[Bootstrap] Fatal:', error)
-      setState('error')
-      setErrorMessage(error.message || 'Erro ao conectar ao banco de dados.')
-    }
-  }, [navigate])
+    },
+    [restaurantName, restaurantContact, navigate],
+  );
 
   useEffect(() => {
-    bootstrap()
-  }, [bootstrap])
+    bootstrap();
+  }, [bootstrap]);
 
   return (
-    <div style={{ background: '#0b0b0c', minHeight: '100vh', color: '#f5f5f7' }}>
+    <div
+      style={{ background: "#0b0b0c", minHeight: "100vh", color: "#f5f5f7" }}
+    >
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: '100vh',
-          padding: '0 20px',
-          paddingBottom: 'env(safe-area-inset-bottom)',
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100vh",
+          padding: "0 20px",
+          paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
         <main
           style={{
             flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            textAlign: 'center',
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            textAlign: "center",
             maxWidth: 420,
-            margin: '0 auto',
-            width: '100%',
+            margin: "0 auto",
+            width: "100%",
           }}
         >
+          {/* Onda 4 A2: form criar restaurante (nome + contacto) */}
+          {state === "create_form" && (
+            <>
+              <h1 className="h1" style={{ fontSize: 22, color: "#fff", marginBottom: 8 }}>
+                Criar o teu restaurante
+              </h1>
+              <p className="muted" style={{ marginBottom: 24, fontSize: 14 }}>
+                Nome e contacto para começar.
+              </p>
+              <form
+                onSubmit={handleCreateRestaurant}
+                style={{
+                  width: "100%",
+                  maxWidth: 320,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 16,
+                  textAlign: "left",
+                }}
+              >
+                <div>
+                  <label
+                    htmlFor="restaurant-name"
+                    style={{
+                      display: "block",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: "#a3a3a3",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Nome do restaurante *
+                  </label>
+                  <input
+                    id="restaurant-name"
+                    type="text"
+                    value={restaurantName}
+                    onChange={(e) => setRestaurantName(e.target.value)}
+                    placeholder="ex: Sofia Gastrobar"
+                    required
+                    autoFocus
+                    style={{
+                      width: "100%",
+                      boxSizing: "border-box",
+                      padding: "12px 14px",
+                      fontSize: 15,
+                      border: "1px solid #404040",
+                      borderRadius: 8,
+                      backgroundColor: "#171717",
+                      color: "#fafafa",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="restaurant-contact"
+                    style={{
+                      display: "block",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: "#a3a3a3",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Contacto (cidade, email ou telefone)
+                  </label>
+                  <input
+                    id="restaurant-contact"
+                    type="text"
+                    value={restaurantContact}
+                    onChange={(e) => setRestaurantContact(e.target.value)}
+                    placeholder="opcional"
+                    style={{
+                      width: "100%",
+                      boxSizing: "border-box",
+                      padding: "12px 14px",
+                      fontSize: 15,
+                      border: "1px solid #404040",
+                      borderRadius: 8,
+                      backgroundColor: "#171717",
+                      color: "#fafafa",
+                    }}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  style={{
+                    padding: "14px 20px",
+                    fontSize: 15,
+                    fontWeight: 600,
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    backgroundColor: "#32d74b",
+                    color: "#000",
+                    width: "100%",
+                  }}
+                >
+                  Criar e continuar
+                </button>
+              </form>
+            </>
+          )}
 
-          {/* CHECKING STATE */}
-          {(state === 'checking' || state === 'checking_restaurant' || state === 'checking_health') && (
+          {/* CREATING STATE (Onda 4 A2) */}
+          {state === "creating" && (
             <>
               <div
                 style={{
                   width: 60,
                   height: 60,
-                  border: '3px solid rgba(50, 215, 75, 0.2)',
-                  borderTopColor: '#32d74b',
-                  borderRadius: '50%',
-                  animation: 'spin 1s linear infinite',
+                  border: "3px solid rgba(50, 215, 75, 0.2)",
+                  borderTopColor: "#32d74b",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
                   marginBottom: 24,
-                  boxShadow: '0 0 20px rgba(50, 215, 75, 0.1)'
                 }}
               />
-              <h1 className="h1" style={{ fontSize: 22, color: '#fff' }}>
+              <h1 className="h1" style={{ fontSize: 22, color: "#fff" }}>
+                Criando o teu restaurante
+              </h1>
+              {progressStep && (
+                <p className="muted" style={{ marginTop: 10, color: "#32d74b" }}>
+                  {progressStep}
+                </p>
+              )}
+            </>
+          )}
+
+          {/* CHECKING STATE */}
+          {(state === "checking" ||
+            state === "checking_restaurant" ||
+            state === "checking_health") && (
+            <>
+              <div
+                style={{
+                  width: 60,
+                  height: 60,
+                  border: "3px solid rgba(50, 215, 75, 0.2)",
+                  borderTopColor: "#32d74b",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
+                  marginBottom: 24,
+                  boxShadow: "0 0 20px rgba(50, 215, 75, 0.1)",
+                }}
+              />
+              <h1 className="h1" style={{ fontSize: 22, color: "#fff" }}>
                 Conectando ao Sistema Nervoso
               </h1>
               {showProgress && progressStep && (
-                <p className="muted" style={{ marginTop: 10, fontSize: 15, fontWeight: 500, color: '#32d74b' }}>
+                <p
+                  className="muted"
+                  style={{
+                    marginTop: 10,
+                    fontSize: 15,
+                    fontWeight: 500,
+                    color: "#32d74b",
+                  }}
+                >
                   {progressStep}
                 </p>
               )}
@@ -300,20 +513,20 @@ export function BootstrapPage() {
           )}
 
           {/* TIMEOUT STATE - S0 GUARD */}
-          {state === 'timeout' && (
+          {state === "timeout" && (
             <>
               <div
                 style={{
                   width: 60,
                   height: 60,
-                  background: 'rgba(255, 59, 48, 0.1)',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  background: "rgba(255, 59, 48, 0.1)",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   fontSize: 28,
                   marginBottom: 24,
-                  border: '1px solid rgba(255, 59, 48, 0.3)'
+                  border: "1px solid rgba(255, 59, 48, 0.3)",
                 }}
               >
                 ⏱
@@ -324,19 +537,27 @@ export function BootstrapPage() {
               <p className="muted" style={{ marginTop: 10, marginBottom: 24 }}>
                 A conexão segura está demorando.
               </p>
-              <div style={{ width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div
+                style={{
+                  width: "100%",
+                  maxWidth: 320,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
                 <button
                   onClick={bootstrap}
                   style={{
-                    padding: '14px 24px',
-                    background: 'transparent',
-                    border: '1px solid #32d74b',
+                    padding: "14px 24px",
+                    background: "transparent",
+                    border: "1px solid #32d74b",
                     borderRadius: 10,
-                    color: '#32d74b',
+                    color: "#32d74b",
                     fontSize: 15,
                     fontWeight: 600,
-                    cursor: 'pointer',
-                    width: '100%',
+                    cursor: "pointer",
+                    width: "100%",
                   }}
                 >
                   Tentar conectar novamente
@@ -344,15 +565,15 @@ export function BootstrapPage() {
                 <button
                   onClick={switchToDemoMode}
                   style={{
-                    padding: '14px 24px',
-                    background: '#32d74b', // Primary Action now
-                    border: 'none',
+                    padding: "14px 24px",
+                    background: "#32d74b", // Primary Action now
+                    border: "none",
                     borderRadius: 10,
-                    color: '#000',
+                    color: "#000",
                     fontSize: 15,
                     fontWeight: 600,
-                    cursor: 'pointer',
-                    width: '100%',
+                    cursor: "pointer",
+                    width: "100%",
                   }}
                 >
                   Entrar em Modo Demo (Offline)
@@ -362,45 +583,52 @@ export function BootstrapPage() {
           )}
 
           {/* READY STATE */}
-          {state === 'ready' && (
+          {state === "ready" && (
             <>
               <div
                 style={{
                   width: 60,
                   height: 60,
-                  background: 'rgba(50, 215, 75, 0.1)',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  background: "rgba(50, 215, 75, 0.1)",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   fontSize: 28,
                   marginBottom: 24,
-                  border: '1px solid #32d74b',
-                  boxShadow: '0 0 30px rgba(50, 215, 75, 0.2)'
+                  border: "1px solid #32d74b",
+                  boxShadow: "0 0 30px rgba(50, 215, 75, 0.2)",
                 }}
               >
-                <div style={{ width: '12px', height: '12px', background: '#32d74b', borderRadius: '50%' }}></div>
+                <div
+                  style={{
+                    width: "12px",
+                    height: "12px",
+                    background: "#32d74b",
+                    borderRadius: "50%",
+                  }}
+                ></div>
               </div>
-              <h1 className="h1" style={{ fontSize: 22, color: '#fff' }}>
+              <h1 className="h1" style={{ fontSize: 22, color: "#fff" }}>
                 Acesso Autorizado
               </h1>
-              <p className="muted" style={{ marginTop: 10, color: '#32d74b' }}>
+              <p className="muted" style={{ marginTop: 10, color: "#32d74b" }}>
                 Iniciando protocolos...
               </p>
             </>
           )}
 
           {/* REDIRECTING STATE */}
-          {state === 'redirecting' && (
+          {state === "redirecting" && (
             <>
               <div
                 style={{
                   width: 60,
                   height: 60,
-                  border: '3px solid rgba(50, 215, 75, 0.2)',
-                  borderTopColor: '#32d74b',
-                  borderRadius: '50%',
-                  animation: 'spin 1s linear infinite',
+                  border: "3px solid rgba(50, 215, 75, 0.2)",
+                  borderTopColor: "#32d74b",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
                   marginBottom: 24,
                 }}
               />
@@ -414,17 +642,17 @@ export function BootstrapPage() {
           )}
 
           {/* ERROR STATE - S0 GUARD */}
-          {state === 'error' && (
+          {state === "error" && (
             <>
               <div
                 style={{
                   width: 60,
                   height: 60,
-                  background: 'rgba(239, 83, 80, 0.1)',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  background: "rgba(239, 83, 80, 0.1)",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   fontSize: 28,
                   marginBottom: 24,
                 }}
@@ -435,28 +663,42 @@ export function BootstrapPage() {
                 Falha na Conexão
               </h1>
 
-              <div style={{ marginTop: 16, width: '100%', maxWidth: 320 }}>
+              <div style={{ marginTop: 16, width: "100%", maxWidth: 320 }}>
                 <InlineAlert
                   type="error"
-                  message={errorMessage || 'Erro desconhecido'}
+                  message={errorMessage || "Erro desconhecido"}
                 />
 
-                <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <p className="muted" style={{ fontSize: 13, textAlign: 'center', marginBottom: 8 }}>
+                <div
+                  style={{
+                    marginTop: 24,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                  }}
+                >
+                  <p
+                    className="muted"
+                    style={{
+                      fontSize: 13,
+                      textAlign: "center",
+                      marginBottom: 8,
+                    }}
+                  >
                     Você pode continuar em modo offline/demo.
                   </p>
                   <button
                     onClick={switchToDemoMode}
                     style={{
-                      padding: '14px 24px',
-                      background: '#32d74b', // Primary Action
-                      border: 'none',
+                      padding: "14px 24px",
+                      background: "#32d74b", // Primary Action
+                      border: "none",
                       borderRadius: 10,
-                      color: '#000',
+                      color: "#000",
                       fontSize: 15,
                       fontWeight: 600,
-                      cursor: 'pointer',
-                      width: '100%',
+                      cursor: "pointer",
+                      width: "100%",
                     }}
                   >
                     Entrar Agora (Demo)
@@ -464,15 +706,15 @@ export function BootstrapPage() {
                   <button
                     onClick={bootstrap}
                     style={{
-                      padding: '14px 24px',
-                      background: 'transparent',
-                      border: '1px solid #333',
+                      padding: "14px 24px",
+                      background: "transparent",
+                      border: "1px solid #333",
                       borderRadius: 10,
-                      color: '#888',
+                      color: "#888",
                       fontSize: 14,
                       fontWeight: 500,
-                      cursor: 'pointer',
-                      width: '100%',
+                      cursor: "pointer",
+                      width: "100%",
                     }}
                   >
                     Tentar Reconectar
@@ -491,5 +733,5 @@ export function BootstrapPage() {
         `}</style>
       </div>
     </div>
-  )
+  );
 }

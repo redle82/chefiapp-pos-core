@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { getTableClient } from '../infra/coreOrSupabaseRpc';
 import { getFiscalService } from './FiscalService';
 import { Logger } from '../logger';
 
@@ -60,7 +60,8 @@ export class FiscalQueueWorker {
      */
     public async retryEvent(fiscalEventId: string): Promise<boolean> {
         try {
-            const { data: event, error } = await supabase
+            const client = await getTableClient();
+            const { data: event, error } = await client
                 .from('fiscal_event_store')
                 .select('*')
                 .eq('fiscal_event_id', fiscalEventId)
@@ -71,8 +72,7 @@ export class FiscalQueueWorker {
                 return false;
             }
 
-            // Reset retry count for manual retry
-            await supabase
+            await client
                 .from('fiscal_event_store')
                 .update({
                     dead_letter: false,
@@ -104,14 +104,24 @@ export class FiscalQueueWorker {
             // 1. Get pending fiscal events
             // Nota: A coluna dead_letter não existe na tabela fiscal_event_store
             // Usamos apenas fiscal_status para filtrar eventos pendentes
-            const { data: pendingEvents, error: pendingError } = await supabase
+            const runClient = await getTableClient();
+            const { data: pendingEvents, error: pendingError } = await runClient
                 .from('fiscal_event_store')
                 .select('fiscal_event_id, order_id, restaurant_id, retry_count, fiscal_status')
                 .eq('fiscal_status', 'PENDING')
                 .order('created_at', { ascending: true })
                 .limit(50); // Process in batches
 
-            if (pendingError) throw pendingError;
+            // Handle table not found (404) gracefully - table may not exist in local schema
+            if (pendingError) {
+                if (pendingError.code === '42P01' || pendingError.message?.includes('does not exist') || pendingError.status === 404) {
+                    Logger.debug('[FiscalQueue] fiscal_event_store table not found, skipping reconciliation');
+                    this.pendingCount = 0;
+                    this.notifyListeners();
+                    return;
+                }
+                throw pendingError;
+            }
 
             // 2. Dead letter count - coluna dead_letter não existe, usar 0 por enquanto
             // TODO: Adicionar coluna dead_letter na migration ou usar outro método para rastrear DLQ
@@ -189,7 +199,8 @@ export class FiscalQueueWorker {
             // Move to Dead Letter Queue
             Logger.error(`[FiscalQueue] Event ${event.fiscal_event_id} reached MAX_RETRIES (${MAX_RETRIES}). Moving to Dead Letter Queue.`);
 
-            await supabase
+            const failClient = await getTableClient();
+            await failClient
                 .from('fiscal_event_store')
                 .update({
                     retry_count: retryCount,
@@ -204,8 +215,8 @@ export class FiscalQueueWorker {
             this.sendOwnerAlert(event.restaurant_id, 'CRITICAL', `Invoice moved to Dead Letter Queue after ${MAX_RETRIES} failures`);
 
         } else {
-            // Update retry count
-            await supabase
+            const updateClient = await getTableClient();
+            await updateClient
                 .from('fiscal_event_store')
                 .update({
                     retry_count: retryCount,
@@ -227,9 +238,9 @@ export class FiscalQueueWorker {
         // TODO: Integrate with notification system (email, push, in-app)
         Logger.warn(`[FiscalQueue] OWNER ALERT (${severity}) for ${restaurantId}: ${message}`);
 
-        // For now, log to a notifications table if it exists
         try {
-            await supabase.from('gm_notifications').insert({
+            const client = await getTableClient();
+            await client.from('gm_notifications').insert({
                 restaurant_id: restaurantId,
                 type: 'FISCAL_ALERT',
                 severity,
@@ -247,9 +258,8 @@ export class FiscalQueueWorker {
      * Por enquanto, retorna eventos rejeitados ou com muitas tentativas
      */
     public async getDeadLetterEvents(restaurantId: string) {
-        // TODO: Adicionar coluna dead_letter na migration ou usar outro método
-        // Por enquanto, retornamos eventos rejeitados ou com retry_count >= 10
-        const { data, error } = await supabase
+        const client = await getTableClient();
+        const { data, error } = await client
             .from('fiscal_event_store')
             .select('*')
             .eq('restaurant_id', restaurantId)
@@ -257,21 +267,19 @@ export class FiscalQueueWorker {
             .order('updated_at', { ascending: false });
 
         if (error) {
-            // Se a coluna retry_count não existir, retornar apenas REJECTED
             if (error.message?.includes('retry_count')) {
-                const { data: rejectedData, error: rejectedError } = await supabase
+                const { data: rejectedData, error: rejectedError } = await client
                     .from('fiscal_event_store')
                     .select('*')
                     .eq('restaurant_id', restaurantId)
                     .eq('fiscal_status', 'REJECTED')
                     .order('updated_at', { ascending: false });
-                
                 if (rejectedError) throw rejectedError;
-                return rejectedData || [];
+                return (Array.isArray(rejectedData) ? rejectedData : []) || [];
             }
             throw error;
         }
-        return data || [];
+        return Array.isArray(data) ? data : [];
     }
 }
 

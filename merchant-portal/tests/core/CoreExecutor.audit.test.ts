@@ -9,7 +9,7 @@ describe('CoreExecutor Audit Enforcement', () => {
         type,
         payload,
         stream_version: version, // 🔒 Version Injection
-        meta: { timestamp: 1000, actorId: 'auditor' }
+        meta: { timestamp: 1000, actorId: 'auditor', version: version ?? 1 }
     });
 
     it('🔒 MUST BE Deeply Immutable (The "False Atomic" Fix)', () => {

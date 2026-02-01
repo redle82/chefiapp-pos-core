@@ -1,76 +1,62 @@
 /**
- * BillingBroker - Gestor de Assinaturas SaaS
- * 
- * Abstrai a comunicação com o Supabase Edge Function 'stripe-billing'.
- * Permite iniciar checkout de assinatura e abrir portal do cliente.
+ * BillingBroker — Gestão de assinatura SaaS (ChefIApp → Stripe)
+ *
+ * NO SUPABASE. Chama apenas a API do Core (Docker).
+ * Contrato: CORE_BILLING_AND_PAYMENTS_CONTRACT.md
+ *
+ * Portal e checkout: Core expõe RPCs create_saas_portal_session e create_checkout_session
+ * que chamam Stripe e devolvem a URL. A UI só redirecciona.
  */
 
-import { supabase } from '../supabase';
+import {
+  createSaasPortalSession,
+  createCheckoutSession,
+} from "./coreBillingApi";
 
 export interface BillingSessionResult {
-    url: string;
-    sessionId?: string;
+  url: string;
+  sessionId?: string;
 }
 
 export class BillingBroker {
+  /**
+   * Inicia sessão Stripe Checkout para assinatura.
+   * Chama Core RPC create_checkout_session; Core retorna URL.
+   */
+  static async startSubscription(
+    priceId: string,
+  ): Promise<BillingSessionResult> {
+    const successUrl = `${window.location.origin}/billing/success`;
+    const cancelUrl = `${window.location.origin}/app/billing?billing=cancel`;
 
-    /**
-     * Inicia uma sessão de Checkout para Assinatura
-     * @param priceId ID do preço no Stripe (ex: price_123...)
-     */
-    static async startSubscription(priceId: string): Promise<BillingSessionResult> {
-        console.log('[BillingBroker] Starting Subscription Checkout:', priceId);
+    const { url, sessionId, error } = await createCheckoutSession(
+      priceId,
+      successUrl,
+      cancelUrl,
+    );
 
-        const { data, error } = await supabase.functions.invoke('stripe-billing', {
-            body: {
-                action: 'create-checkout-session',
-                priceId: priceId,
-                successUrl: `${window.location.origin}/app/dashboard?billing=success`,
-                cancelUrl: `${window.location.origin}/app/billing?billing=cancel`,
-            }
-        });
-
-        if (error) {
-            console.error('[BillingBroker] Edge Function Error:', error);
-            throw new Error(`Erro ao iniciar checkout: ${error.message}`);
-        }
-
-        if (data?.error) {
-            console.error('[BillingBroker] Stripe Error:', data.error);
-            throw new Error(data.error);
-        }
-
-        return {
-            url: data.url,
-            sessionId: data.sessionId
-        };
+    if (error) {
+      console.error("[BillingBroker] Core checkout error:", error);
+      throw new Error(error);
     }
 
-    /**
-     * Abre o Portal do Cliente (Self-Serve)
-     */
-    static async openCustomerPortal(): Promise<BillingSessionResult> {
-        console.log('[BillingBroker] Opening Customer Portal');
+    return { url, sessionId };
+  }
 
-        const { data, error } = await supabase.functions.invoke('stripe-billing', {
-            body: {
-                action: 'create-portal-session',
-                returnUrl: `${window.location.origin}/app/billing`,
-            }
-        });
+  /**
+   * Abre Stripe Customer Portal (self-serve).
+   * Chama Core RPC create_saas_portal_session; Core retorna URL.
+   */
+  static async openCustomerPortal(): Promise<BillingSessionResult> {
+    const returnUrl = `${window.location.origin}/app/billing`;
 
-        if (error) {
-            console.error('[BillingBroker] Edge Function Error:', error);
-            throw new Error(`Erro ao abrir portal: ${error.message}`);
-        }
+    const { url, error } = await createSaasPortalSession(returnUrl);
 
-        if (data?.error) {
-            console.error('[BillingBroker] Stripe Error:', data.error);
-            throw new Error(data.error);
-        }
-
-        return {
-            url: data.url
-        };
+    if (error) {
+      console.error("[BillingBroker] Core portal error:", error);
+      throw new Error(error);
     }
+
+    return { url };
+  }
 }

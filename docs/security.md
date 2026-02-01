@@ -23,20 +23,20 @@ USING (
 
 ### Critical Tables with RLS
 
-| Table | Read | Insert | Update | Delete |
-|-------|------|--------|--------|--------|
-| `gm_orders` | Members | Members | Members | — |
-| `gm_payments` | Members | Members | — | — |
-| `gm_fiscal_queue` | Members | System | System | — |
-| `daily_closings` | Members | Members | — | — |
+| Table             | Read    | Insert  | Update  | Delete |
+| ----------------- | ------- | ------- | ------- | ------ |
+| `gm_orders`       | Members | Members | Members | —      |
+| `gm_payments`     | Members | Members | —       | —      |
+| `gm_fiscal_queue` | Members | System  | System  | —      |
+| `daily_closings`  | Members | Members | —       | —      |
 
 ## Secrets Management
 
-| Secret | Location | Access |
-|--------|----------|--------|
-| Supabase Keys | `.env.local` / Vercel | Frontend |
-| Stripe Secret | Supabase Vault | Edge Functions |
-| AT Fiscal Key | Supabase Vault | Edge Functions |
+| Secret        | Location              | Access         |
+| ------------- | --------------------- | -------------- |
+| Supabase Keys | `.env.local` / Vercel | Frontend       |
+| Stripe Secret | Supabase Vault        | Edge Functions |
+| AT Fiscal Key | Supabase Vault        | Edge Functions |
 
 **Never commit secrets to git.**
 
@@ -46,9 +46,12 @@ USING (
 
 ```typescript
 // Always verify auth
-const { data: { user }, error } = await supabase.auth.getUser();
+const {
+  data: { user },
+  error,
+} = await supabase.auth.getUser();
 if (!user) {
-  return new Response('Unauthorized', { status: 401 });
+  return new Response("Unauthorized", { status: 401 });
 }
 ```
 
@@ -80,3 +83,11 @@ All writes go through `DbWriteGate` which:
 2. Rotate Supabase + Stripe secrets
 3. Check `app_logs` for unauthorized access
 4. Notify affected users if data breach
+
+### Dispositivo roubado (sessão ativa)
+
+Playbook completo: **[docs/ops/INCIDENT_PLAYBOOK_STOLEN_DEVICE.md](ops/INCIDENT_PLAYBOOK_STOLEN_DEVICE.md)**.
+
+- **Contenção:** Revogar sessão (Supabase Auth) ou desativar membro via RPC `admin_disable_staff_member`. O membro fica com `disabled_at` preenchido e deixa de ter acesso (RLS usa apenas membros ativos).
+- **Audit:** Eventos `user_disabled` / `user_reenabled` em `app_logs` (details: target_user_id, performed_by, reason).
+- **Front:** Serviço `core/incident/StaffIncidentService.ts` — `disableStaffMember()`, `reenableStaffMember()` (owner/manager).

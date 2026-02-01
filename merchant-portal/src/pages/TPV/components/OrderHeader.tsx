@@ -1,180 +1,68 @@
-/**
- * OrderHeader - Header Fixo da Conta Ativa
- * 
- * SEMANA 1 - Tarefa 1.2
- * 
- * Objetivo: Mostrar sempre visível quando há pedido ativo:
- * - Mesa (número ou ID)
- * - Hora de abertura
- * - Total parcial
- */
-
-import React, { useState } from 'react';
-import { Card } from '../../../ui/design-system/primitives/Card';
-import { Text } from '../../../ui/design-system/primitives/Text';
-import { useOrders } from '../context/OrderContextReal';
-import { useLoyalty } from '../../../core/loyalty/LoyaltyContext';
-import { getCustomerTier, getSmartSuggestion } from '../../../core/loyalty/LoyaltyUtils';
-import type { AICopilotSuggestion } from '../../../core/loyalty/LoyaltyUtils';
-import { CustomerSearchModal } from './CustomerSearchModal';
-import { CopilotWidget } from './CopilotWidget'; // Innovation
-import { spacing } from '../../../ui/design-system/tokens/spacing';
-import { colors } from '../../../ui/design-system/tokens/colors';
+import React from "react";
+import { Card } from "../../../ui/design-system/Card";
+import { Text } from "../../../ui/design-system/primitives/Text";
 
 interface OrderHeaderProps {
-  tableNumber?: number;
-  orderId?: string;
-  restaurantId?: string; // Passed from parent if available
+  order: any;
+  tableName?: string;
+  customerName?: string;
 }
 
-export const OrderHeader: React.FC<OrderHeaderProps> = ({ tableNumber, orderId, restaurantId }) => {
-  const { orders } = useOrders();
-  const { activeCustomer, setActiveCustomer } = useLoyalty();
-  const [showCustomerModal, setShowCustomerModal] = useState(false);
-  const [dismissedSuggestion, setDismissedSuggestion] = useState(false); // Session state
-
-  // Using a temporary fallback until LoyaltyContext is updated with total_spend_cents
-  const tier = activeCustomer ? getCustomerTier(activeCustomer.total_spend_cents || 0) : null;
-  const suggestion = activeCustomer && !dismissedSuggestion ? getSmartSuggestion(activeCustomer.total_spend_cents || 0) : null;
-
-
-  // Find the active order based on orderId or tableNumber
-  const order = orderId
-    ? orders.find(o => o.id === orderId)
-    : tableNumber
-      ? orders.find(o => o.tableNumber === tableNumber)
-      : null;
-
-  // Se não há pedido ativo, não renderizar
-  if (!order) {
-    return null;
-  }
-
-  // INV-006: UI uses Domain's total, never calculates independently
-  const itemsTotal = order.total;
-
-  const totalFormatted = new Intl.NumberFormat('pt-PT', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(itemsTotal / 100);
-
-  // Formatar hora de abertura
-  const formatTime = (date: Date): string => {
-    return new Intl.DateTimeFormat('pt-PT', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
+export const OrderHeader: React.FC<OrderHeaderProps> = ({
+  order,
+  tableName,
+  customerName,
+}) => {
+  const statusColors: Record<string, string> = {
+    new: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    preparing: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    ready: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    delivered: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30",
+    paid: "bg-primary/20 text-primary border-primary/30",
   };
 
-  // Identificar mesa
-  const mesaLabel = order.tableNumber
-    ? `Mesa ${order.tableNumber}`
-    : order.tableId
-      ? `Mesa ${order.tableId.slice(0, 8)}...`
-      : 'Sem Mesa';
+  const status = order?.status || "new";
+  const badgeClass =
+    statusColors[status] || "bg-zinc-800 text-zinc-400 border-zinc-700";
 
   return (
-    <>
-      <Card
-        surface="layer1"
-        padding="md"
-        style={{
-          borderBottom: `2px solid ${colors.border.default}`,
-          marginBottom: spacing[3],
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          {/* Título / Status */}
-          <div>
-            <Text weight="bold" size="lg" color="primary">
-              {orderId ? (tableNumber ? `Mesa ${tableNumber}` : 'Pedido Balcão') : 'Novo Pedido'}
-            </Text>
-            {order && (
-              <Text size="sm" color="secondary">
-                #{order.id.slice(0, 8)} • {order.status}
-              </Text>
-            )}
-            {/* Customer Pill */}
-            <div
-              onClick={() => setShowCustomerModal(true)}
-              style={{
-                marginTop: 4,
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '2px 8px',
-                backgroundColor: tier ? `${tier.color}20` : '#333',
-                borderRadius: 12,
-                cursor: 'pointer',
-                border: tier ? `1px solid ${tier.color}` : '1px solid #444',
-                transition: 'all 0.2s'
-              }}
-            >
-              <span style={{ marginRight: 6, fontSize: '0.9em' }}>
-                {activeCustomer ? (tier ? tier.icon : '👤') : '👤'}
-              </span>
-              <Text size="xs" color={tier ? 'primary' : 'secondary'} style={{ fontWeight: tier ? 'bold' : 'normal' }}>
-                {activeCustomer ? (
-                  <>
-                    <span style={{ color: tier?.color }}>{activeCustomer.name}</span>
-                    <span style={{ margin: '0 4px', opacity: 0.5 }}>|</span>
-                    {activeCustomer.points_balance || 0} pts
-                  </>
-                ) : 'Identificar Cliente'}
-              </Text>
+    <Card
+      variant="glass"
+      className="mb-3 p-4 border-b border-white/5 bg-zinc-900/40 backdrop-blur-md"
+    >
+      <div className="flex justify-between items-start">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 font-bold text-sm">
+              {tableName ? tableName.substring(0, 3).toUpperCase() : "CTR"}
             </div>
-            {activeCustomer && (
-              <span
-                onClick={(e) => { e.stopPropagation(); setActiveCustomer(null); }}
-                style={{ marginLeft: 4, cursor: 'pointer', opacity: 0.7 }}
-              >
-                ✕
-              </span>
-            )}
+            <Text
+              as="h3"
+              size="lg"
+              weight="bold"
+              className="text-white tracking-tight"
+            >
+              {tableName || "Walk-in Counter"}
+            </Text>
           </div>
+          {customerName && (
+            <Text size="sm" className="text-zinc-400 ml-10">
+              👤 {customerName}
+            </Text>
+          )}
         </div>
 
-        {/* Total Parcial */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: spacing[1], position: 'absolute', right: 16, top: 16 }}>
-          <Text size="sm" color="tertiary" weight="medium">
-            Total Parcial
+        <div className="flex flex-col items-end gap-1">
+          <div
+            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${badgeClass}`}
+          >
+            {status}
+          </div>
+          <Text size="xs" className="text-zinc-600 font-mono text-[10px]">
+            ID: {order?.id?.substring(0, 8).toUpperCase() || "NEW"}
           </Text>
-          <Text size="xl" weight="bold" color="primary">
-            {totalFormatted}
-          </Text>
         </div>
-      </Card >
-
-      {/* AI Copilot Injection */}
-      {suggestion && (
-        <div style={{ marginBottom: spacing[3] }}>
-          <CopilotWidget
-            suggestion={suggestion}
-            onDismiss={() => setDismissedSuggestion(true)}
-            onAction={() => {
-              // Future: Auto-scroll to category or open modal
-              console.log('AI Logic Triggered:', suggestion.actionLabel);
-            }}
-          />
-        </div>
-      )}
-
-      {showCustomerModal && (
-        <CustomerSearchModal
-          onClose={() => setShowCustomerModal(false)}
-          onSelect={(customer) => {
-            setActiveCustomer(customer);
-            setShowCustomerModal(false);
-            setDismissedSuggestion(false); // Reset suggestion for new customer
-          }}
-        />
-      )}
-    </>
+      </div>
+    </Card>
   );
 };

@@ -143,6 +143,7 @@ Ver: FISCAL_VALIDACAO_REAL.md
                 },
                 occurred_at: new Date(),
                 idempotency_key: 'fiscal:ORDER-REAL-TEST',
+                meta: { idempotency_key: 'fiscal:ORDER-REAL-TEST' },
             };
 
             const result = await adapter.onSealed(mockSeal, mockEvent);

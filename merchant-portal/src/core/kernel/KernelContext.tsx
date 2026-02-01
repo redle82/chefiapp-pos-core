@@ -3,6 +3,7 @@ import { TenantKernel } from '../../../../core-engine/kernel/TenantKernel';
 // import { PostgresEventStore } from '../../../../core-engine/persistence/PostgresEventStore'; // REMOVED: Incompatible with Browser (pg)
 import { BrowserEventStore } from './BrowserEventStore';
 import { Logger } from '../logger';
+import { classifyFailure, type FailureClass } from '../errors/FailureClassifier';
 import { isDevStableMode } from '../runtime/devStableMode';
 import { isTenantSealedFor } from '../tenant/TenantResolver';
 import type { TransitionRequest, TransitionResult } from '../../../../core-engine/executor/CoreExecutor';
@@ -18,7 +19,8 @@ interface KernelContextType {
     error: Error | null;
     // STEP 7: Wrapper fail-closed para kernel.execute()
     // Aceita campos extras além de TransitionRequest (como restaurantId, items, etc.)
-    executeSafe: (request: Omit<TransitionRequest, "tenantId"> & Record<string, any>) => Promise<{ ok: boolean; result?: TransitionResult; reason?: string; error?: any }>;
+    // failureClass: CORE_FAILURE_MODEL — UI não reclassifica; usa para retry vs bloquear vs alertar
+    executeSafe: (request: Omit<TransitionRequest, "tenantId"> & Record<string, any>) => Promise<{ ok: boolean; result?: TransitionResult; reason?: string; error?: any; failureClass?: FailureClass; classifiedReason?: string }>;
 }
 
 const KernelContext = createContext<KernelContextType | undefined>(undefined);
@@ -140,21 +142,17 @@ export function KernelProvider({ tenantId, children }: KernelProviderProps) {
     // Aceita campos extras além de TransitionRequest (como restaurantId, items, etc.)
     const executeSafe = useCallback(async (request: Omit<TransitionRequest, "tenantId"> & Record<string, any>) => {
         if (status !== 'READY' || !kernel) {
-            return {
-                ok: false,
-                reason: status === 'FROZEN' ? 'KERNEL_FROZEN' 
-                     : status === 'BOOTING' ? 'KERNEL_BOOTING'
-                     : status === 'FAILED' ? 'KERNEL_FAILED'
-                     : 'KERNEL_NOT_READY'
-            };
+            const reason = status === 'FROZEN' ? 'KERNEL_FROZEN' : status === 'BOOTING' ? 'KERNEL_BOOTING' : status === 'FAILED' ? 'KERNEL_FAILED' : 'KERNEL_NOT_READY';
+            return { ok: false, reason, failureClass: 'degradation' as const };
         }
         
         try {
             const result = await kernel.execute(request);
             return { ok: true, result };
         } catch (err) {
-            // STEP 7: Kernel nunca lança exceção para fora - captura interna
-            return { ok: false, reason: 'KERNEL_EXECUTION_ERROR', error: err };
+            // STEP 7: CORE_FAILURE_MODEL — Core classifica; UI obedece (retry vs bloquear vs alertar)
+            const { class: failureClass, reason: classifiedReason } = classifyFailure(err);
+            return { ok: false, reason: 'KERNEL_EXECUTION_ERROR', error: err, failureClass, classifiedReason };
         }
     }, [status, kernel]);
 

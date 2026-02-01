@@ -1,14 +1,13 @@
 /**
  * RuntimeContext - Production vs Demo Mode Detection
- * 
- * This module enforces the PRODUCTION_READINESS_CONTRACT.md:
- * - Production mode: Mocks are FORBIDDEN (crash on detection)
- * - Demo mode: Mocks are allowed for development/testing
- * 
- * CRITICAL: This is a kernel-level guard. All services that could
- * potentially use mocks MUST call assertNoMock() before operation.
+ *
+ * Enforces PRODUCTION_READINESS_CONTRACT.md and exposes backend type.
+ * - backendType: 'docker' | 'supabase' (SSOT from backendAdapter)
+ * - Production mode: Mocks are FORBIDDEN
+ * - Demo mode: Mocks are allowed
  */
 
+import { getBackendType, type BackendType } from '../infra/backendAdapter';
 import { isDevStableMode } from './devStableMode';
 
 // ============================================================================
@@ -17,8 +16,11 @@ import { isDevStableMode } from './devStableMode';
 
 export type RuntimeMode = 'demo' | 'production';
 
+export type { BackendType };
+
 export interface RuntimeContext {
     mode: RuntimeMode;
+    backendType: BackendType;
     isProduction: boolean;
     isDemo: boolean;
     devStableActive: boolean;
@@ -30,20 +32,21 @@ export interface RuntimeContext {
 
 /**
  * Determines the current runtime mode based on environment variables.
- * 
+ * Uses process.env so it works in both Vite (injects env at build) and Node/Jest.
  * Priority:
  * 1. VITE_RUNTIME_MODE env var (explicit)
  * 2. Production builds (NODE_ENV === 'production') → production
  * 3. Default → demo
  */
 function detectRuntimeMode(): RuntimeMode {
+    const env = typeof process !== 'undefined' ? process.env : ({} as NodeJS.ProcessEnv);
     // 1. Explicit override via env var
-    const explicit = import.meta.env.VITE_RUNTIME_MODE;
+    const explicit = env.VITE_RUNTIME_MODE;
     if (explicit === 'production') return 'production';
     if (explicit === 'demo') return 'demo';
 
     // 2. Production build defaults to production mode
-    if (import.meta.env.PROD) return 'production';
+    if (env.NODE_ENV === 'production') return 'production';
 
     // 3. Development defaults to demo
     return 'demo';
@@ -57,6 +60,7 @@ const RUNTIME_MODE: RuntimeMode = detectRuntimeMode();
 
 export const RUNTIME: Readonly<RuntimeContext> = Object.freeze({
     mode: RUNTIME_MODE,
+    backendType: getBackendType(),
     isProduction: RUNTIME_MODE === 'production',
     isDemo: RUNTIME_MODE === 'demo',
     devStableActive: isDevStableMode(),
@@ -116,6 +120,7 @@ export function logRuntimeStatus(): void {
     const devStable = RUNTIME.devStableActive ? ' [DEV_STABLE]' : '';
 
     console.log(`${icon} Runtime Mode: ${modeLabel}${devStable}`);
+    console.log(`   → Backend: ${RUNTIME.backendType}`);
 
     if (RUNTIME.isProduction) {
         console.log('   → Mocks are FORBIDDEN');

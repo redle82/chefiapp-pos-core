@@ -1,5 +1,5 @@
 import type { DiagnosticEvent, DiagnosticReport } from './types';
-import { supabase } from '../supabase'; // Standard Supabase client access
+import { getTableClient } from '../infra/coreOrSupabaseRpc';
 import { getTabIsolated, setTabIsolated } from '../storage/TabIsolatedStorage';
 
 const MAX_BUFFER_SIZE = 200;
@@ -107,8 +107,10 @@ class DiagnosticEngineClass {
 
     private async syncToEmpire(event: DiagnosticEvent) {
         try {
+            const { supabase } = await import('../supabase');
             const { data: { session } } = await supabase.auth.getSession();
-            await supabase.from('gm_diagnostics').insert({
+            const client = await getTableClient();
+            await client.from('gm_diagnostics').insert({
                 code: event.code,
                 title: event.title,
                 metric_type: event.metricType,

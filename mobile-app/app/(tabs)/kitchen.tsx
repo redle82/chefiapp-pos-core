@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Animated } from 'react-native';
+import { colors, radius, spacing } from '@/constants/designTokens';
 import { ShiftGate } from '@/components/ShiftGate';
 import { useOrder, Order } from '@/context/OrderContext';
 import { HapticFeedback } from '@/services/haptics';
@@ -121,7 +122,7 @@ export default function KitchenScreen() {
                 {/* Header - Minimalist */}
                 <View style={styles.header}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Ionicons name="restaurant" size={24} color="#FFCC00" style={{ marginRight: 8 }} />
+                        <Ionicons name="restaurant" size={24} color={colors.warning} style={{ marginRight: 8 }} />
                         <Text style={styles.screenTitle}>COZINHA</Text>
                     </View>
                     <Text style={styles.clock}>{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
@@ -159,39 +160,38 @@ export default function KitchenScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#000', // Deep black for better contrast
+        backgroundColor: colors.background,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingTop: 12, // More spacing for header
-        paddingBottom: 12,
-        backgroundColor: '#1c1c1e',
+        paddingHorizontal: spacing[4],
+        paddingTop: spacing[3],
+        paddingBottom: spacing[3],
+        backgroundColor: colors.surface,
         borderBottomWidth: 1,
-        borderBottomColor: '#333'
+        borderBottomColor: colors.border,
     },
     screenTitle: {
-        color: '#FFCC00',
+        color: colors.warning,
         fontSize: 20,
         fontWeight: '900',
         letterSpacing: 2,
     },
     clock: {
-        color: '#888',
+        color: colors.textSecondary,
         fontSize: 18,
         fontWeight: 'bold',
-        fontVariant: ['tabular-nums']
+        fontVariant: ['tabular-nums'],
     },
-    // ERRO-007 Fix: Flash visual para novos pedidos
     flashOverlay: {
         position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: '#ff4444',
+        backgroundColor: colors.error,
         zIndex: 1000,
         pointerEvents: 'none',
     },

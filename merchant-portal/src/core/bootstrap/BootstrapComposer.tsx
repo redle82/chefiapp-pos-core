@@ -2,9 +2,11 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { WebCoreProvider } from '../useWebCore'
 import { ProductProvider } from '../../cinematic/context/ProductContext'
-import { OrderProvider } from '../../pages/TPV/context/OrderContext'
+// FASE 3.4: BootstrapComposer é legado - OrderProvider movido para OrderContextReal
+// Por enquanto, comentado para não quebrar se ainda for usado
+// import { OrderProvider } from '../../pages/TPV/context/OrderContextReal'
 import { StaffProvider } from '../../pages/AppStaff/context/StaffContext'
-import { InventoryReflexProvider } from '../../pages/Inventory/context/InventoryContext'
+// REMOVIDO: InventoryReflexProvider foi removido na refatoração Fase 1-2
 import { OnboardingEngineProvider } from '../../cinematic/context/OnboardingEngineProvider'
 import { AutopilotProvider } from '../../cinematic/context/AutopilotContext'
 import { InventoryReflexBridge } from '../../intelligence/nervous-system/InventoryReflexBridge'
@@ -60,11 +62,11 @@ const WorldLayer = ({ children }: { children: ReactNode }) => (
 )
 
 // Layer L4: Truth (Data State)
+// FASE 3.4: OrderProvider removido - BootstrapComposer é legado e não é usado
 const DataLayer = ({ children }: { children: ReactNode }) => (
     <ProductProvider>
-        <OrderProvider>
-            {children}
-        </OrderProvider>
+        {/* OrderProvider removido - usar OrderContextReal em AppDomainWrapper se necessário */}
+        {children}
     </ProductProvider>
 )
 
@@ -76,14 +78,13 @@ const LogicLayer = ({ children }: { children: ReactNode }) => (
 )
 
 // Layer L6: Intelligence (Nervous System)
+// REMOVIDO: InventoryReflexProvider foi removido na refatoração Fase 1-2
 const IntelligenceLayer = ({ children }: { children: ReactNode }) => (
-    <InventoryReflexProvider>
-        <AutopilotProvider>
-            <InventoryReflexBridge />
-            <SubconsciousVisuals />
-            {children}
-        </AutopilotProvider>
-    </InventoryReflexProvider>
+    <AutopilotProvider>
+        <InventoryReflexBridge />
+        <SubconsciousVisuals />
+        {children}
+    </AutopilotProvider>
 )
 
 export const BootstrapComposer = ({ children }: { children: ReactNode }) => {

@@ -1,4 +1,5 @@
-import type { Order } from '../../pages/TPV/context/OrderContext';
+// FASE 3.3: Isolado - core não depende de páginas
+import type { Order } from '../contracts';
 import type { Task } from '../../pages/AppStaff/context/StaffContext';
 
 // ------------------------------------------------------------------

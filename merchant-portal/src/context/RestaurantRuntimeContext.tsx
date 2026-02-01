@@ -19,7 +19,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { CONFIG } from "../config";
 import {
   fetchInstalledModules,
   fetchRestaurant,
@@ -32,6 +31,7 @@ import {
   setRestaurantStatus as persistRestaurantStatus,
   upsertSetupStatus as persistSetupStatus,
 } from "../core-boundary/writers/RuntimeWriter";
+import { isDockerBackend } from "../core/infra/backendAdapter";
 import {
   deriveLifecycle,
   type RestaurantLifecycle,
@@ -77,6 +77,8 @@ export interface RestaurantRuntime {
   /** Módulos que podem rodar engine / ler-escrever (safe no ambiente atual) */
   active_modules: string[];
   plan: PlanTier;
+  /** Status bruto vindo do DB (active, past_due, suspended, etc) */
+  status: string;
   /** Por módulo: dataSource (mock|core), offline */
   capabilities: Record<string, ModuleCapabilityEntry>;
   setup_status: SetupStatus;
@@ -84,6 +86,8 @@ export interface RestaurantRuntime {
   lifecycle: RestaurantLifecycle;
   loading: boolean;
   error: string | null;
+  /** false quando backend é Docker e o Core está em baixo (usa fallback). */
+  coreReachable: boolean;
 }
 
 interface RestaurantRuntimeContextType {
@@ -102,12 +106,14 @@ const INITIAL_RUNTIME: RestaurantRuntime = {
   installed_modules: [],
   active_modules: [],
   plan: "basic",
+  status: "onboarding",
   capabilities: {},
   setup_status: {},
   isPublished: false,
   lifecycle: deriveLifecycle(null, false, false),
   loading: true,
   error: null,
+  coreReachable: true,
 };
 
 export const RestaurantRuntimeContext =
@@ -127,9 +133,7 @@ export function RestaurantRuntimeProvider({
 }) {
   const [runtime, setRuntime] = useState<RestaurantRuntime>(INITIAL_RUNTIME);
   const isInitialLoadRef = useRef(true);
-  const isDockerCore =
-    CONFIG.SUPABASE_URL.includes("localhost:3001") ||
-    CONFIG.SUPABASE_URL.includes("127.0.0.1:3001");
+  const isDockerCore = isDockerBackend();
 
   /**
    * TODO FASE 1 → FASE 3:
@@ -149,7 +153,7 @@ export function RestaurantRuntimeProvider({
   async function loadOrCreateRestaurantFromCore(): Promise<string | null> {
     try {
       return await getOrCreateRestaurantId();
-    } catch (e) {
+    } catch {
       if (import.meta.env.DEV) {
         console.warn("[RestaurantRuntime] Core indisponível, usando seed id:");
       }
@@ -172,6 +176,7 @@ export function RestaurantRuntimeProvider({
       | "installed_modules"
       | "active_modules"
       | "plan"
+      | "status"
       | "capabilities"
       | "setup_status"
       | "isPublished"
@@ -208,6 +213,7 @@ export function RestaurantRuntimeProvider({
       installed_modules.length >= ALL_KNOWN_MODULES.length
         ? "premium"
         : "basic";
+    const status: string = restaurant?.status ?? "onboarding";
     const capabilities: Record<string, ModuleCapabilityEntry> = {};
     for (const id of installed_modules.length > 0
       ? installed_modules
@@ -221,6 +227,7 @@ export function RestaurantRuntimeProvider({
       installed_modules,
       active_modules,
       plan,
+      status,
       capabilities,
       setup_status: setupSections,
       isPublished: mode === "active",
@@ -240,7 +247,7 @@ export function RestaurantRuntimeProvider({
 
   /** Fallback quando Core não é Docker ou quando fetch do Core falha. */
   async function fetchRuntimeStateFallback(
-    restaurantId: string,
+    _restaurantId: string,
   ): Promise<
     Pick<
       RestaurantRuntime,
@@ -249,6 +256,7 @@ export function RestaurantRuntimeProvider({
       | "installed_modules"
       | "active_modules"
       | "plan"
+      | "status"
       | "capabilities"
       | "setup_status"
       | "isPublished"
@@ -267,6 +275,7 @@ export function RestaurantRuntimeProvider({
         installed_modules: [],
         active_modules: [],
         plan: "basic",
+        status: "active",
         capabilities: {},
         setup_status: DEMO_SETUP_STATUS,
         isPublished: true,
@@ -293,6 +302,7 @@ export function RestaurantRuntimeProvider({
         ALL_SAFE_MODULES_DEV.includes(id),
       ),
       plan: "basic",
+      status: "active",
       capabilities,
       setup_status: {},
       isPublished: true,
@@ -342,10 +352,17 @@ export function RestaurantRuntimeProvider({
         return;
       }
 
+      let coreReachable = true;
       const coreState = isDockerCore
-        ? await fetchRuntimeStateFromCore(restaurantId).catch(() =>
-            fetchRuntimeStateFallback(restaurantId),
-          )
+        ? await fetchRuntimeStateFromCore(restaurantId)
+            .then((s) => {
+              coreReachable = true;
+              return s;
+            })
+            .catch(async () => {
+              coreReachable = false;
+              return fetchRuntimeStateFallback(restaurantId);
+            })
         : await fetchRuntimeStateFallback(restaurantId);
 
       const mode: RestaurantMode = coreState.mode;
@@ -354,38 +371,36 @@ export function RestaurantRuntimeProvider({
         ? DEMO_SETUP_STATUS
         : rawSetup;
       const installed_modules: string[] = coreState.installed_modules || [];
-      const active_modules: string[] = isDevStableMode()
-        ? installed_modules
-        : coreState.active_modules ?? installed_modules;
       const plan = coreState.plan ?? "basic";
+      const status = coreState.status ?? "active";
       const capabilities = coreState.capabilities ?? {};
       const productMode: ProductMode =
         coreState.productMode ?? resolveProductModeFromEnv();
 
       const isPublished = coreState.isPublished ?? mode === "active";
 
-      const lifecycle = deriveLifecycle(restaurantId, isPublished, false);
-
       setRuntime({
         restaurant_id: restaurantId,
         mode,
         productMode,
         installed_modules,
-        active_modules,
+        active_modules: coreState.active_modules ?? installed_modules,
         plan,
+        status,
         capabilities,
         setup_status,
         isPublished,
-        lifecycle,
+        lifecycle: deriveLifecycle(restaurantId, isPublished, false),
         loading: false,
         error: null,
+        coreReachable,
       });
 
       console.log("[RestaurantRuntime] ✅ Estado carregado:", {
         restaurant_id: restaurantId,
         mode,
         installed_modules: installed_modules.length,
-        active_modules: active_modules.length,
+        active_modules: (coreState.active_modules ?? installed_modules).length,
         plan,
         setup_status,
       });
@@ -397,7 +412,7 @@ export function RestaurantRuntimeProvider({
         error: error?.message || "Erro ao carregar restaurante",
       }));
     }
-  }, [loadOrCreateRestaurant]);
+  }, [loadOrCreateRestaurant, isDockerCore]);
 
   /**
    * Atualizar status de uma seção do onboarding.
@@ -486,6 +501,7 @@ export function RestaurantRuntimeProvider({
       const active_modules = baseModules.filter((id) =>
         ALL_SAFE_MODULES_DEV.includes(id),
       );
+
       const capabilities: Record<string, ModuleCapabilityEntry> = {};
       for (const id of baseModules) {
         capabilities[id] = getModuleCapabilityEntry(id);
@@ -560,13 +576,14 @@ export function RestaurantRuntimeProvider({
     [isDockerCore, runtime.restaurant_id],
   );
 
-  // Carregar estado inicial
+  // Carregar estado inicial - Somente na primeira vez ou quando o restaurantId mudar
+  // Não depender de 'refresh' diretamente se ele for recriado a cada render do runtime
   useEffect(() => {
     if (isInitialLoadRef.current) {
       isInitialLoadRef.current = false;
       refresh();
     }
-  }, [refresh]);
+  }, [runtime.restaurant_id]); // Apenas re-hidratar se o restaurantId (propriedade externa) mudar
 
   const value: RestaurantRuntimeContextType = {
     runtime,

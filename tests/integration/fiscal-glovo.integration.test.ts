@@ -49,6 +49,12 @@ describe('Fiscal + Glovo Integration', () => {
         jest.clearAllMocks();
     });
 
+    afterEach(async () => {
+        if (glovoAdapter && typeof glovoAdapter.dispose === 'function') {
+            await glovoAdapter.dispose();
+        }
+    });
+
     describe('Fluxo Completo: Glovo Order → Payment → Fiscal', () => {
         it('deve processar pedido Glovo, pagamento e gerar fiscal', async () => {
             // 1. Receber pedido Glovo
@@ -69,11 +75,10 @@ describe('Fiscal + Glovo Integration', () => {
             await glovoAdapter.initialize({
                 restaurantId: 'rest-123',
                 clientId: 'client-id',
-                clientSecret: 'client-secret',
                 enabled: true,
             });
 
-            const webhookResult = glovoAdapter.handleWebhook(glovoOrder);
+            const webhookResult = glovoAdapter.processIncomingOrder(glovoOrder as any);
             expect(webhookResult.success).toBe(true);
 
             // 2. Processar pagamento (simulado)
@@ -87,6 +92,7 @@ describe('Fiscal + Glovo Integration', () => {
                     order_id: 'glovo-order-123',
                     amount_cents: 1250,
                 },
+                meta: {},
             };
 
             const seal: LegalSeal = {
@@ -152,13 +158,12 @@ describe('Fiscal + Glovo Integration', () => {
             await glovoAdapter.initialize({
                 restaurantId: 'rest-123',
                 clientId: 'client-id',
-                clientSecret: 'client-secret',
                 enabled: true,
             });
 
             // Processar pedidos
             for (const order of orders) {
-                const result = glovoAdapter.handleWebhook(order);
+                const result = glovoAdapter.processIncomingOrder(order as any);
                 expect(result.success).toBe(true);
             }
 
@@ -189,6 +194,7 @@ describe('Fiscal + Glovo Integration', () => {
                         order_id: order.id,
                         amount_cents: Math.round(order.total * 100),
                     },
+                    meta: {},
                 };
 
                 const seal: LegalSeal = {

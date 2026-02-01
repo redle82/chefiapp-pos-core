@@ -9,7 +9,9 @@
  *   npx ts-node scripts/seed-massive-test.ts --restaurants=10 --cleanup
  */
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import pg from 'pg';
+
+const { Pool } = pg;
 
 // =============================================================================
 // CONFIGURATION
@@ -92,17 +94,17 @@ interface TestResults {
 }
 
 // =============================================================================
-// SUPABASE CLIENT
+// DATABASE CLIENT
 // =============================================================================
 
-function getSupabaseClient(): SupabaseClient {
-  const supabaseUrl = process.env.SUPABASE_URL || 'http://127.0.0.1:54321';
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
-    process.env.SUPABASE_ANON_KEY ||
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
-
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false }
+function getDbPool(): pg.Pool {
+  const dbUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:54320/chefiapp_core';
+  
+  return new Pool({
+    connectionString: dbUrl,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
   });
 }
 

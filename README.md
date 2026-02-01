@@ -1,28 +1,28 @@
 # 🧠 ChefIApp - POS That Thinks
 
-**Official Positioning:** **POS THAT THINKS**  
+**Official Positioning:** **POS THAT THINKS**
 **The system that guides your operation in real-time.**
 
 ---
 
 ## ⚠️ Status in 30 Seconds
 
-**Version:** `1.2.0` — Production Ready  
+**Version:** `1.2.0` — Production Ready
 **Status:** 🟢 **READY FOR PRODUCTION**
 
-> **🌍 Language:** All code, commits, and canonical documentation are in **English**.  
+> **🌍 Language:** All code, commits, and canonical documentation are in **English**.
 > See [`docs/LANGUAGE_POLICY.md`](docs/LANGUAGE_POLICY.md) for complete rules.
 
-| Component | Status |
-|-----------|--------|
-| 🏪 Merchant Portal | ✅ Operational |
-| 📱 Mobile App (Staff) | ✅ Operational |
-| 🌐 Customer Portal | ✅ Operational |
-| 💳 Billing (Stripe) | ✅ Integrated |
-| 📊 Observability (Sentry) | ✅ Active |
-| 📈 Growth (SEO + Pixel) | ✅ Configured |
+| Component                 | Status         |
+| ------------------------- | -------------- |
+| 🏪 Merchant Portal        | ✅ Operational |
+| 📱 Mobile App (Staff)     | ✅ Operational |
+| 🌐 Customer Portal        | ✅ Operational |
+| 💳 Billing (Stripe)       | ✅ Integrated  |
+| 📊 Observability (Sentry) | ✅ Active      |
+| 📈 Growth (SEO + Pixel)   | ✅ Configured  |
 
-### 👉 If you are:
+### 👉 If you are
 
 - **👔 Owner/Manager** → Read [`docs/audit/ONE_PAGER.md`](docs/audit/ONE_PAGER.md) (30 sec)
 - **👨‍💼 Waiter/Staff** → Read [`docs/GUIA_RAPIDO_GARCOM.md`](docs/GUIA_RAPIDO_GARCOM.md) (10 min)
@@ -51,21 +51,26 @@ ChefIApp is not just a POS. It is an **Operational Nervous System** that:
 - 🍽️ **Adapts the menu** based on kitchen pressure
 - 📋 **Manages reservations** simply
 
-**Philosophy:** *"Last.app organizes the restaurant. ChefIApp guides it."*
+**Philosophy:** _"Last.app organizes the restaurant. ChefIApp guides it."_
 
 **Positioning:** ChefIApp is the only POS that thinks before the human. While other systems only record sales, ChefIApp observes the operational context and suggests the next most important action.
 
 **📋 Strategy:** [`docs/strategy/POSITIONING.md`](docs/strategy/POSITIONING.md) | [`docs/strategy/SCOPE_FREEZE.md`](docs/strategy/SCOPE_FREEZE.md) | [`docs/audit/EXECUTABLE_ROADMAP.md`](docs/audit/EXECUTABLE_ROADMAP.md)
+
+**📚 Technical Documentation:** Organized in layers — see [`docs/DOC_INDEX.md`](docs/DOC_INDEX.md)
+**📍 Current Status:** See [`docs/ONDE_ESTAMOS_AGORA.md`](docs/ONDE_ESTAMOS_AGORA.md) for where we are now
 
 ---
 
 ## 🚀 Quick Start
 
 ### ⚡ Super Quick (2 minutes)
+
 1. Read **[ONE_PAGER.md](ONE_PAGER.md)** - Everything in one page
 2. Follow **[PRIMEIROS_PASSOS.md](PRIMEIROS_PASSOS.md)** - What to do now
 
 ### For Developers
+
 ```bash
 # Clone and install
 git clone <repo>
@@ -85,9 +90,11 @@ npm start
 **Read:** [ONBOARDING.md](ONBOARDING.md) (15 minutes)
 
 ### For Users
+
 **Read:** [docs/GUIA_RAPIDO_GARCOM.md](docs/GUIA_RAPIDO_GARCOM.md) (10 minutes)
 
 ### For Validation
+
 **Read:** [docs/VALIDACAO_RAPIDA.md](docs/VALIDACAO_RAPIDA.md) (17 tests)
 
 ---
@@ -95,11 +102,13 @@ npm start
 ## 📚 Documentation
 
 ### 📖 Essential (Start Here)
+
 - **[PROJETO_COMPLETO.md](PROJETO_COMPLETO.md)** ⭐ - Consolidated overview
 - **[docs/RESUMO_EXECUTIVO.md](docs/RESUMO_EXECUTIVO.md)** - Executive summary
 - **[ONBOARDING.md](ONBOARDING.md)** - For new developers
 
 ### 🏛️ Core (Operating System)
+
 - **[CORE_MANIFESTO.md](CORE_MANIFESTO.md)** ⭐⭐ - System law (read first)
 - **[docs/CORE_OVERVIEW.md](docs/CORE_OVERVIEW.md)** ⭐⭐⭐ - **CORE MENTAL MAP** (what is untouchable)
 - **[START_HERE.md](START_HERE.md)** - Core entry point
@@ -112,30 +121,36 @@ npm start
 **Core Status:** ✅ v1.0-core-sovereign (Validated, Protected, Shielded)
 
 **Detailed Status:**
+
 - **[docs/STATUS_TECH.md](docs/STATUS_TECH.md)** - Technical status (stability)
 - **[docs/STATUS_OPERATION.md](docs/STATUS_OPERATION.md)** - Operational status (real-world impact)
 
 ### 🏗️ Technical
+
 - [docs/EXECUCAO_30_DIAS.md](docs/EXECUCAO_30_DIAS.md) - Detailed implementation
 - [docs/ARQUITETURA_VISUAL.md](docs/ARQUITETURA_VISUAL.md) - Diagrams and flows
 - [docs/SETUP_DEPLOY.md](docs/SETUP_DEPLOY.md) - Setup and deploy
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) - Debug and resolution
 
 ### 💼 Commercial
+
 - [docs/MANIFESTO_COMERCIAL.md](docs/MANIFESTO_COMERCIAL.md) - Value proposition
 - [docs/PLANO_ROLLOUT.md](docs/PLANO_ROLLOUT.md) - Launch strategy
 
 ### 📊 Operational
+
 - [docs/METRICAS_KPIS.md](docs/METRICAS_KPIS.md) - Tracking and metrics
 - [docs/MANUTENCAO_CONTINUA.md](docs/MANUTENCAO_CONTINUA.md) - Maintenance
 - [docs/GO_LIVE_CHECKLIST.md](docs/GO_LIVE_CHECKLIST.md) - Launch checklist
 
 ### 🤝 Transition
+
 - [docs/HANDOFF_EQUIPE.md](docs/HANDOFF_EQUIPE.md) - Complete handoff
 - [docs/QUICK_WINS.md](docs/QUICK_WINS.md) - Next improvements
 - [docs/RETROSPECTIVA.md](docs/RETROSPECTIVA.md) - Lessons learned
 
 ### 🔍 Audit and QA
+
 - **[docs/audit/ONE_PAGER.md](docs/audit/ONE_PAGER.md)** ⭐ - Status in 30 seconds
 - **[docs/audit/FINAL_HANDOFF.md](docs/audit/FINAL_HANDOFF.md)** - Complete handoff
 - **[docs/audit/MASTER_INDEX.md](docs/audit/MASTER_INDEX.md)** - Master index
@@ -143,6 +158,7 @@ npm start
 - **[docs/audit/ACTION_PLAN_UX_FIXES.md](docs/audit/ACTION_PLAN_UX_FIXES.md)** - UX fixes plan
 
 ### 📋 Indexes
+
 - [docs/README.md](docs/README.md) - Main index
 - [docs/INDICE_COMPLETO.md](docs/INDICE_COMPLETO.md) - All documents
 - [docs/audit/README.md](docs/audit/README.md) - Audit index
@@ -151,10 +167,11 @@ npm start
 
 ## ✅ Status
 
-**Version:** 1.2.0 (Production Ready)  
+**Version:** 1.2.0 (Production Ready)
 **Date:** 2026-01-24
 
 ### 🏛️ Core ✅
+
 - ✅ **Core v1.0-core-sovereign:** Clean, Validated, Protected, Shielded
 - ✅ **Manifesto Ratified:** CORE_MANIFESTO.md
 - ✅ **Automatic Validation:** CI/CD with fail-fast and 24h simulation
@@ -162,17 +179,20 @@ npm start
 - ✅ **Level 1 Completed:** Protection and Automation implemented
 
 ### System ✅
+
 - ✅ **Infrastructure:** DB + Billing + Auth complete
 - ✅ **Mobile App:** KDS, Waiter, Cashier operational
 - ✅ **Observability:** Sentry + Real-time metrics
 - ✅ **Growth:** SEO + Pixel Tracking
 
 ### Quality ✅
+
 - ✅ **Technical Bugs:** 5/5 v1.x issues resolved
 - ✅ **Performance:** fetchOrders optimized, dynamic timers
 - ✅ **Resilience:** OfflineQueue, auto-save, AppState awareness
 
 ### Known Issues
+
 - 🟢 3 low-priority issues (accepted)
 - 📋 See: [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md)
 
@@ -183,15 +203,19 @@ npm start
 ## 📊 Features
 
 ### ⚡ Fast Pay (Week 1)
+
 Payment in 2 taps, < 5 seconds.
 
 ### 🗺️ Live Map (Week 2)
+
 Timer, urgency colors, contextual icons.
 
 ### 🍽️ Smart KDS (Week 3)
+
 Menu adapts based on kitchen pressure.
 
 ### 📋 Reservations LITE (Week 4)
+
 Simple digital waiting list.
 
 ---
@@ -229,11 +253,11 @@ The system is **complete and stable** for production.
 
 ### Action Options
 
-| Action | Description |
-|--------|-------------|
-| 🚀 **Deploy** | Publish to production |
-| 🧪 **Tests** | Run complete E2E suite |
-| 📋 **Commit** | Consolidate changes |
+| Action        | Description            |
+| ------------- | ---------------------- |
+| 🚀 **Deploy** | Publish to production  |
+| 🧪 **Tests**  | Run complete E2E suite |
+| 📋 **Commit** | Consolidate changes    |
 
 ### Post-Deploy Monitoring
 
@@ -242,6 +266,8 @@ The system is **complete and stable** for production.
 3. **Google Analytics** — Customer portal traffic
 
 ### References
+
+- **Next actions (scope & validation):** [docs/strategy/NEXT_ACTIONS.md](docs/strategy/NEXT_ACTIONS.md) — FASE 1–3 validation, FASE 5 polish, FASE 6 print
 - **Observability:** [docs/ops/OBSERVABILITY_SETUP.md](docs/ops/OBSERVABILITY_SETUP.md)
 - **Growth:** [docs/ops/GROWTH_MARKETING_SETUP.md](docs/ops/GROWTH_MARKETING_SETUP.md)
 - **Known Issues:** [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)
@@ -252,16 +278,18 @@ The system is **complete and stable** for production.
 ## 📈 Statistics
 
 ### Technology Stack
-| Layer | Technology |
-|-------|------------|
-| Mobile | React Native + Expo |
-| Web Portals | React + Vite + TypeScript |
-| Backend | Supabase (Postgres + Auth + Realtime) |
-| Billing | Stripe |
-| Observability | Sentry |
-| Analytics | Google Analytics + Meta Pixel |
+
+| Layer         | Technology                            |
+| ------------- | ------------------------------------- |
+| Mobile        | React Native + Expo                   |
+| Web Portals   | React + Vite + TypeScript             |
+| Backend       | Supabase (Postgres + Auth + Realtime) |
+| Billing       | Stripe                                |
+| Observability | Sentry                                |
+| Analytics     | Google Analytics + Meta Pixel         |
 
 ### Project Structure
+
 ```
 chefiapp-pos-core/
 ├── mobile-app/         # Staff App (Waiter, Kitchen, Cashier)
@@ -273,6 +301,7 @@ chefiapp-pos-core/
 ```
 
 ### Quality (v1.2.0)
+
 - **Issues Resolved:** 5 (v1.1.0 + v1.2.0)
 - **Pending Issues:** 3 (low priority)
 - **TypeScript:** 100% typed
@@ -280,10 +309,10 @@ chefiapp-pos-core/
 
 ---
 
-**Version:** 1.2.0  
-**Date:** 2026-01-24  
+**Version:** 1.2.0
+**Date:** 2026-01-24
 **Status:** 🟢 **PRODUCTION READY**
 
 ---
 
-*"Last.app organizes the restaurant. ChefIApp guides it."*
+_"Last.app organizes the restaurant. ChefIApp guides it."_

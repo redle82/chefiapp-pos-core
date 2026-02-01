@@ -1,0 +1,105 @@
+{
+  "totalOfflineOrders": 10,
+  "replayedOrders": 10,
+  "lostOrders": 0,
+  "duplicates": 0,
+  "orderCorrect": true,
+  "avgReplayLatencyMs": 3.9,
+  "maxReplayLatencyMs": 6,
+  "constraintViolations": 0,
+  "stateConsistent": true,
+  "passed": true,
+  "errors": [],
+  "offlineOrders": [
+    {
+      "localId": "1f274450-89d1-413f-96cb-56063f2543ea",
+      "tableNumber": 1,
+      "createdAt": "2026-01-25T19:08:07.249Z",
+      "replayedAt": "2026-01-25T19:08:07.253Z",
+      "replayedOrderId": "a18c9d2f-6251-46f0-86f6-ddb16b0c7725",
+      "replayLatencyMs": 4,
+      "replaySuccess": true
+    },
+    {
+      "localId": "876b7a41-23a2-4dd8-84e1-c11f6aa84fa2",
+      "tableNumber": 2,
+      "createdAt": "2026-01-25T19:08:07.249Z",
+      "replayedAt": "2026-01-25T19:08:07.358Z",
+      "replayedOrderId": "215eb97e-d8b3-4bd2-a81c-e40157888cd0",
+      "replayLatencyMs": 4,
+      "replaySuccess": true
+    },
+    {
+      "localId": "92d81ff2-ba69-4b60-891b-297711791505",
+      "tableNumber": 3,
+      "createdAt": "2026-01-25T19:08:07.249Z",
+      "replayedAt": "2026-01-25T19:08:07.461Z",
+      "replayedOrderId": "368bd0d5-c542-412a-8e74-1213246ad776",
+      "replayLatencyMs": 2,
+      "replaySuccess": true
+    },
+    {
+      "localId": "b6dcdcef-1565-4a8e-b0d8-ab42beec5f20",
+      "tableNumber": 4,
+      "createdAt": "2026-01-25T19:08:07.249Z",
+      "replayedAt": "2026-01-25T19:08:07.567Z",
+      "replayedOrderId": "62c5cead-2ff5-45b0-ab37-a1ea170c3ad0",
+      "replayLatencyMs": 4,
+      "replaySuccess": true
+    },
+    {
+      "localId": "63bcfd83-6bee-4f01-ba6a-cd7653fa3748",
+      "tableNumber": 5,
+      "createdAt": "2026-01-25T19:08:07.249Z",
+      "replayedAt": "2026-01-25T19:08:07.674Z",
+      "replayedOrderId": "d0e8a06d-1ff1-4e8b-bb2a-4acebddbce2c",
+      "replayLatencyMs": 6,
+      "replaySuccess": true
+    },
+    {
+      "localId": "22b7fd0c-c2f3-4b99-9696-c81ba4e54cf8",
+      "tableNumber": 6,
+      "createdAt": "2026-01-25T19:08:07.249Z",
+      "replayedAt": "2026-01-25T19:08:07.779Z",
+      "replayedOrderId": "2a27458f-912d-4a95-aa41-fecc846e4659",
+      "replayLatencyMs": 4,
+      "replaySuccess": true
+    },
+    {
+      "localId": "a92892f8-aee9-485b-b862-65d4d9609b38",
+      "tableNumber": 7,
+      "createdAt": "2026-01-25T19:08:07.249Z",
+      "replayedAt": "2026-01-25T19:08:07.885Z",
+      "replayedOrderId": "e5c98bc2-e525-42d5-b6f7-75fc2b6763d0",
+      "replayLatencyMs": 5,
+      "replaySuccess": true
+    },
+    {
+      "localId": "53e0e0e7-2741-446b-b0a2-cd54b3cc7951",
+      "tableNumber": 8,
+      "createdAt": "2026-01-25T19:08:07.249Z",
+      "replayedAt": "2026-01-25T19:08:07.993Z",
+      "replayedOrderId": "ee78a3ed-e324-48f7-af68-0a83d33acfd9",
+      "replayLatencyMs": 5,
+      "replaySuccess": true
+    },
+    {
+      "localId": "66662f10-7945-4a79-9231-09c8654a1b2c",
+      "tableNumber": 9,
+      "createdAt": "2026-01-25T19:08:07.249Z",
+      "replayedAt": "2026-01-25T19:08:08.097Z",
+      "replayedOrderId": "569fa0a1-e535-4846-8d5b-c2b84b4618da",
+      "replayLatencyMs": 4,
+      "replaySuccess": true
+    },
+    {
+      "localId": "4be56b29-28f9-4532-a9ca-d994a0f42c5d",
+      "tableNumber": 10,
+      "createdAt": "2026-01-25T19:08:07.249Z",
+      "replayedAt": "2026-01-25T19:08:08.199Z",
+      "replayedOrderId": "deaa2889-a8de-4451-99c5-2d614de32a77",
+      "replayLatencyMs": 1,
+      "replaySuccess": true
+    }
+  ]
+}

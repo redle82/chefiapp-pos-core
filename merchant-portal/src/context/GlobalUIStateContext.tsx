@@ -8,9 +8,17 @@
  * blocked → error → pilot → loading → empty.
  */
 
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { useRestaurantRuntime } from "./RestaurantRuntimeContext";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import { useShift } from "../core/shift/ShiftContext";
+import { useRestaurantRuntime } from "./RestaurantRuntimeContext";
+
+export type BillingStatus = "trial" | "active" | "past_due" | "suspended";
 
 export interface GlobalUIState {
   /** Bloqueia interação principal (runtime ou carregamento da tela) */
@@ -35,6 +43,14 @@ export interface GlobalUIState {
   setScreenError: (msg: string | null) => void;
   /** Modo piloto / em teste */
   isPilot: boolean;
+  /** Conexão ao Docker Core está ativa */
+  coreReachable: boolean;
+  /** Estado de faturação (Trial, Activo, Atraso, Suspenso) */
+  billingStatus: BillingStatus;
+  /** Bloqueado por falta de pagamento (suspended) */
+  isBillingBlocked: boolean;
+  /** Aviso de faturação pendente (past_due) */
+  isBillingWarning: boolean;
 }
 
 const defaultState: GlobalUIState = {
@@ -49,6 +65,10 @@ const defaultState: GlobalUIState = {
   errorMessage: null,
   setScreenError: () => {},
   isPilot: false,
+  coreReachable: true,
+  billingStatus: "trial",
+  isBillingBlocked: false,
+  isBillingWarning: false,
 };
 
 const GlobalUIStateContext = createContext<GlobalUIState>(defaultState);
@@ -75,7 +95,7 @@ export function GlobalUIStateProvider({
   }, []);
 
   const value = useMemo<GlobalUIState>(() => {
-    const isBlockedByGate = !runtime?.isPublished ?? true;
+    const isBlockedByGate = !(runtime?.isPublished ?? false);
     const isShiftOpen = shift?.isShiftOpen ?? false;
     const isBlockedByShift = !isShiftOpen;
     const isBlocked = isBlockedByGate || isBlockedByShift;
@@ -94,13 +114,20 @@ export function GlobalUIStateProvider({
       isError,
       errorMessage,
       setScreenError,
-      isPilot: runtime?.productMode === "pilot",
+      isPilot: !!runtime && runtime.productMode === "pilot",
+      coreReachable: runtime?.coreReachable ?? true,
+      billingStatus: (function () {
+        if (runtime?.status === "suspended") return "suspended";
+        if (runtime?.status === "past_due") return "past_due";
+        if (runtime?.status === "active" && runtime?.plan === "basic")
+          return "trial";
+        return "active";
+      })() as BillingStatus,
+      isBillingBlocked: runtime?.status === "suspended",
+      isBillingWarning: runtime?.status === "past_due",
     };
   }, [
-    runtime?.loading,
-    runtime?.isPublished,
-    runtime?.error,
-    runtime?.productMode,
+    runtime,
     shift?.isShiftOpen,
     screenError,
     screenLoading,

@@ -47,6 +47,7 @@ describe("IMPOSSIBLE CASE #1: Create ORDER without ACTIVE session", () => {
 
     // Attempt to finalize order (requires ACTIVE session)
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "ORDER",
       entityId: order.id,
       event: "FINALIZE",
@@ -78,6 +79,7 @@ describe("IMPOSSIBLE CASE #1: Create ORDER without ACTIVE session", () => {
     repo.saveOrder(order);
 
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "ORDER",
       entityId: order.id,
       event: "FINALIZE",
@@ -124,6 +126,7 @@ describe("IMPOSSIBLE CASE #2: Create PAYMENT for non-LOCKED order", () => {
 
     // Attempt to confirm payment (requires LOCKED order)
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "PAYMENT",
       entityId: payment.id,
       event: "CONFIRM",
@@ -166,6 +169,7 @@ describe("IMPOSSIBLE CASE #2: Create PAYMENT for non-LOCKED order", () => {
     repo.savePayment(payment);
 
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "PAYMENT",
       entityId: payment.id,
       event: "CONFIRM",
@@ -273,6 +277,7 @@ describe("IMPOSSIBLE CASE #5: Close session with OPEN or LOCKED orders", () => {
     repo.saveOrder(order);
 
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "SESSION",
       entityId: session.id,
       event: "CLOSE",
@@ -300,6 +305,7 @@ describe("IMPOSSIBLE CASE #5: Close session with OPEN or LOCKED orders", () => {
     repo.saveOrder(order);
 
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "SESSION",
       entityId: session.id,
       event: "CLOSE",
@@ -335,6 +341,7 @@ describe("IMPOSSIBLE CASE #6: Transition ORDER to PAID without CONFIRMED payment
     // No payments exist
 
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "ORDER",
       entityId: order.id,
       event: "PAY",
@@ -373,6 +380,7 @@ describe("IMPOSSIBLE CASE #6: Transition ORDER to PAID without CONFIRMED payment
     repo.savePayment(payment);
 
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "ORDER",
       entityId: order.id,
       event: "PAY",
@@ -430,6 +438,7 @@ describe("IMPOSSIBLE CASE #8: Reverse CONFIRMED payment", () => {
 
     // Attempt to transition from CONFIRMED (should fail - terminal state)
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "PAYMENT",
       entityId: payment.id,
       event: "CANCEL",
@@ -463,6 +472,7 @@ describe("IMPOSSIBLE CASE #9: Modify ORDER after CLOSED or CANCELED", () => {
     repo.saveOrder(order);
 
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "ORDER",
       entityId: order.id,
       event: "FINALIZE",
@@ -489,6 +499,7 @@ describe("IMPOSSIBLE CASE #9: Modify ORDER after CLOSED or CANCELED", () => {
     repo.saveOrder(order);
 
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "ORDER",
       entityId: order.id,
       event: "FINALIZE",
@@ -549,6 +560,7 @@ describe("STRESS TEST: Invalid State Transitions", () => {
     repo.saveOrder(order);
 
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "ORDER",
       entityId: order.id,
       event: "PAY",
@@ -588,13 +600,15 @@ describe("STRESS TEST: Concurrency (Race Conditions)", () => {
 
     // Simulate two concurrent FINALIZE attempts
     const [result1, result2] = await Promise.all([
-      executor.transition({
-        entity: "ORDER",
+executor.transition({
+    tenantId: 'test-tenant',
+    entity: "ORDER",
         entityId: order.id,
         event: "FINALIZE",
       }),
-      executor.transition({
-        entity: "ORDER",
+executor.transition({
+    tenantId: 'test-tenant',
+    entity: "ORDER",
         entityId: order.id,
         event: "FINALIZE",
       }),
@@ -646,14 +660,16 @@ describe("STRESS TEST: Concurrency (Race Conditions)", () => {
 
     // Concurrent confirmations
     const [result1, result2] = await Promise.all([
-      executor.transition({
-        entity: "PAYMENT",
+executor.transition({
+    tenantId: 'test-tenant',
+    entity: "PAYMENT",
         entityId: payment1.id,
         event: "CONFIRM",
         context: { order_id: order.id },
       }),
-      executor.transition({
-        entity: "PAYMENT",
+executor.transition({
+    tenantId: 'test-tenant',
+    entity: "PAYMENT",
         entityId: payment2.id,
         event: "CONFIRM",
         context: { order_id: order.id },
@@ -696,6 +712,7 @@ describe("STRESS TEST: Payment Retry", () => {
     repo.savePayment(payment);
 
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "PAYMENT",
       entityId: payment.id,
       event: "RETRY",
@@ -748,6 +765,7 @@ describe("STRESS TEST: Split Bill (Multiple Payments)", () => {
 
     // Confirm first payment
     const result1 = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "PAYMENT",
       entityId: payment1.id,
       event: "CONFIRM",
@@ -756,6 +774,7 @@ describe("STRESS TEST: Split Bill (Multiple Payments)", () => {
 
     // Confirm second payment
     const result2 = await executor.transition({
+      tenantId: 'test-tenant',
       entity: "PAYMENT",
       entityId: payment2.id,
       event: "CONFIRM",

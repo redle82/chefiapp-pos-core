@@ -52,7 +52,7 @@ export const OnboardingReminder: React.FC = () => {
                         </div>
                         <Button
                             variant="primary"
-                            onClick={() => navigate('/onboarding/menu-demo')}
+                            onClick={() => navigate('/menu-builder')}
                         >
                             Criar Menu
                         </Button>
@@ -82,12 +82,9 @@ export const OnboardingReminder: React.FC = () => {
                         </div>
                         <Button
                             variant="constructive"
-                            onClick={() => {
-                                // FASE 2: Navegar para tutorial (funciona mesmo em devStable)
-                                navigate('/onboarding/first-sale-guide', { replace: false });
-                            }}
+                            onClick={() => navigate('/tpv', { replace: false })}
                         >
-                            Ver Tutorial
+                            Ir para TPV
                         </Button>
                     </div>
                 </Card>

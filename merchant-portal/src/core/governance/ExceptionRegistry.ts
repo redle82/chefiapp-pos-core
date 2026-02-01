@@ -37,6 +37,7 @@ export type CallerTag =
     | 'OnboardingQuick'
     | 'PublicPages'
     | 'WebOrderingService'
+    | 'OrderIngestionPipeline'
     | 'OrderContext'
     | 'OrderProcessingService';
 
@@ -66,8 +67,8 @@ export const EXCEPTION_REGISTRY: Record<CallerTag, ExceptionGrant> = Object.free
         allowedOperations: ['INSERT']
     },
     'OnboardingQuick': {
-        reason: 'Onboarding Configuration (Hybrid)',
-        allowedTables: ['gm_restaurants', 'gm_menu_categories'],
+        reason: 'Onboarding Configuration (Hybrid) — Onda 4 A3: primeiro produto',
+        allowedTables: ['gm_restaurants', 'gm_menu_categories', 'gm_products'],
         allowedOperations: ['UPDATE', 'INSERT']
     },
     'PublicPages': {
@@ -79,6 +80,16 @@ export const EXCEPTION_REGISTRY: Record<CallerTag, ExceptionGrant> = Object.free
         reason: 'Web Order Ingestion (Hybrid)',
         allowedTables: ['gm_orders', 'gm_order_items', 'gm_order_requests'],
         allowedOperations: ['INSERT', 'DELETE']
+    },
+    'OrderIngestionPipeline': {
+        reason: 'External Order Airlock (Hybrid)',
+        allowedTables: ['gm_order_requests'],
+        allowedOperations: ['INSERT']
+    },
+    'OrderContext': {
+        reason: 'Order Context (TPV/UI)',
+        allowedTables: ['gm_orders', 'gm_order_items'],
+        allowedOperations: ['INSERT', 'UPDATE']
     },
 
     // === LEGACY (To Be Migrated to Kernels) ===
@@ -94,7 +105,7 @@ export const isAuthorized = (
     table: string,
     operation: AllowedOperation
 ): boolean => {
-    const grant = EXCEPTION_REGISTRY[callerTag];
+    const grant = EXCEPTION_REGISTRY[callerTag as CallerTag];
     if (!grant) return false;
 
     // @ts-ignore - String to type safe check

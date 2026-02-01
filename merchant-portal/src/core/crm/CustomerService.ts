@@ -1,10 +1,9 @@
 /**
  * CustomerService - Serviço para gerenciar clientes (CRM)
- * 
- * FASE 3: Integração completa com TPV
+ * Core quando Docker — Fase 4
  */
 
-import { supabase } from '../supabase';
+import { getTableClient } from '../infra/coreOrSupabaseRpc';
 
 // Helper to standardise Profile from DB row
 const mapFromDb = (row: any): CustomerProfile => ({
@@ -103,7 +102,8 @@ export class CustomerService {
         // Convert to cents
         const amountCents = Math.round(orderTotal * 100);
 
-        const { error } = await supabase.rpc('update_customer_after_visit', {
+        const { invokeRpc } = await import('../infra/coreOrSupabaseRpc');
+        const { error } = await invokeRpc('update_customer_after_visit', {
             p_customer_id: customerId,
             p_order_total_cents: amountCents,
         });
@@ -123,16 +123,17 @@ export class CustomerService {
         query: string
     ): Promise<CustomerProfile[]> {
         const searchTerm = `%${query}%`;
-        const { data, error } = await supabase
+        const client = await getTableClient();
+        const { data, error } = await client
             .from('gm_customers')
             .select('*')
             .eq('restaurant_id', restaurantId)
             .or(`name.ilike.${searchTerm},email.ilike.${searchTerm},phone.ilike.${searchTerm}`)
-            .order('last_visit_at', { ascending: false, nullsFirst: false })
+            .order('last_visit_at', { ascending: false })
             .limit(20);
 
         if (error) throw error;
-        return (data || []).map(mapFromDb);
+        return (Array.isArray(data) ? data : []).map(mapFromDb);
     }
 
     /**
@@ -142,7 +143,8 @@ export class CustomerService {
         restaurantId: string,
         limit: number = 10
     ): Promise<CustomerProfile[]> {
-        const { data, error } = await supabase
+        const client = await getTableClient();
+        const { data, error } = await client
             .from('gm_customers')
             .select('*')
             .eq('restaurant_id', restaurantId)
@@ -150,7 +152,7 @@ export class CustomerService {
             .limit(limit);
 
         if (error) throw error;
-        return (data || []).map(mapFromDb);
+        return (Array.isArray(data) ? data : []).map(mapFromDb);
     }
 
     /**
@@ -160,7 +162,8 @@ export class CustomerService {
         restaurantId: string,
         customerId: string
     ): Promise<CustomerProfile | null> {
-        const { data, error } = await supabase
+        const client = await getTableClient();
+        const { data, error } = await client
             .from('gm_customers')
             .select('*')
             .eq('restaurant_id', restaurantId)

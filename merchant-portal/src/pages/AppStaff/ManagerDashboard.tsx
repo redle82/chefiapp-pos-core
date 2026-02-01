@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStaff } from './context/StaffContext';
-import { useInventory } from '../Inventory/context/InventoryContext';
+// REMOVIDO: InventoryContext foi removido na refatoração Fase 1-2
 import { usePulse } from '../../ui/hooks/usePulse';
 import { StaffLayout } from '../../ui/design-system/layouts/StaffLayout';
 import { Card } from '../../ui/design-system/primitives/Card';
@@ -13,6 +13,8 @@ import { useToast } from '../../ui/design-system';
 import { exportShiftReportToPDF } from './utils/exportToPDF'; // P3-6
 import { LiveRosterWidget } from './components/LiveRosterWidget';
 import { QuickTaskModal } from './components/QuickTaskModal';
+import { MiniKDSMinimal } from './components/MiniKDSMinimal';
+import { MiniTPVMinimal } from './components/MiniTPVMinimal';
 
 // Types for Mock Brain
 interface MetabolicInsight {
@@ -25,7 +27,9 @@ interface MetabolicInsight {
 
 export const ManagerDashboard: React.FC = () => {
     const { currentRiskLevel, tasks, checkOut, activeWorkerId, setTasks, notifyActivity, employees, operationalContract, createTask } = useStaff();
-    const { items, hungerSignals } = useInventory();
+    // REMOVIDO: useInventory foi removido na refatoração Fase 1-2
+    const items: any[] = [];
+    const hungerSignals: any[] = [];
     const { isAlive, pulseId } = usePulse();
     const { info } = useToast(); // P2-2 FIX: Toast para feedback de preview
 
@@ -155,6 +159,14 @@ export const ManagerDashboard: React.FC = () => {
                 {/* 0.5. LIVE ROSTER */}
                 {operationalContract?.id && (
                     <LiveRosterWidget restaurantId={operationalContract.id} />
+                )}
+
+                {/* 0.6. MINI KDS + TPV */}
+                {operationalContract?.id && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <MiniKDSMinimal restaurantId={operationalContract.id} maxHeight="500px" />
+                        <MiniTPVMinimal restaurantId={operationalContract.id} maxHeight="500px" />
+                    </div>
                 )}
 
                 {/* QUICK TASK MODAL */}

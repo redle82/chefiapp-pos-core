@@ -49,15 +49,16 @@ export const PulseList: React.FC = () => {
 
             // B) REAL MODE
             try {
+                // FASE 3.5: Usa dockerCoreClient em vez de supabase direto
+                const { dockerCoreClient } = await import('../../../core-boundary/docker-core/connection');
+                const { readRestaurantMemberByUserId, readEmpirePulses } = await import('../../../core-boundary/readers/PulseReader');
+                
+                // 1. Get Restaurant ID via auth (ainda precisa do supabase para auth)
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) { navigate('/login'); return; }
 
-                // 1. Get Restaurant ID
-                const { data: member } = await supabase
-                    .from('gm_restaurant_members')
-                    .select('restaurant_id, restaurants(name)')
-                    .eq('user_id', user.id)
-                    .single();
+                // 2. Get Restaurant Member (via PulseReader)
+                const member = await readRestaurantMemberByUserId(user.id);
 
                 if (!member) {
                     console.error('Member not found');
@@ -67,13 +68,8 @@ export const PulseList: React.FC = () => {
 
                 setRestaurantName((member.restaurants as any)?.name || 'Unknown');
 
-                // 2. Fetch History
-                const { data: history } = await supabase
-                    .from('empire_pulses')
-                    .select('*')
-                    .eq('restaurant_id', member.restaurant_id)
-                    .order('created_at', { ascending: false })
-                    .limit(50);
+                // 3. Fetch History (via PulseReader)
+                const history = await readEmpirePulses(member.restaurant_id, 50);
 
                 setPulses(history || []);
                 setLoading(false);

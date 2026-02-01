@@ -1,6 +1,6 @@
 # Checklist — Fluxo feliz (verificação técnica)
 
-**Objetivo:** Verificar em ~10–15 min que o fluxo Landing → Signup → Produto → Publicar → TPV → Pedido → KDS está operacional antes do piloto real.  
+**Objetivo:** Verificar em ~10–15 min que o fluxo Landing → Signup → Produto → Publicar → TPV → Pedido → KDS está operacional antes do piloto real.
 **Quando:** Antes da sessão do piloto (VALIDACAO_OPERACAO_PILOTO_01.md) ou após alterações em B1/B2/B4.
 
 ---

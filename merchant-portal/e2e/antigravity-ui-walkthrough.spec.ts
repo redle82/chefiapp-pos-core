@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
  * This is a "Depth" test, whereas the Human Walkthrough was a "Breadth" test.
  */
 
-const BASE_URL = 'http://localhost:5173'; // Dev server (make sure it's running)
+const BASE_URL = 'http://localhost:5175'; // Dev server (make sure it's running)
 
 test('Antigravity UI Walkthrough - Alive Check', async ({ page }) => {
     // 1. Setup Auth

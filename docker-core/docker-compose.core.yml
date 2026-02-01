@@ -1,0 +1,123 @@
+# =============================================================================
+# CHEFIAPP CORE - Docker Compose Oficial
+# =============================================================================
+# Banco limpo, schema oficial, zero resíduos.
+# 
+# Uso:
+#   docker compose -f docker-compose.core.yml up -d    # Subir Core
+#   docker compose -f docker-compose.core.yml down -v  # Limpar tudo
+#   docker compose -f docker-compose.core.yml logs -f   # Ver logs
+# =============================================================================
+
+version: '3.9'
+
+name: chefiapp-core
+
+services:
+  # ============================================================================
+  # POSTGRES (Core Database)
+  # ============================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: chefiapp-core-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chefiapp_core
+    command: postgres -c wal_level=logical  # Necessário para Realtime
+    ports:
+      - "54320:5432"  # Porta diferente do Supabase local (54322)
+    volumes:
+      - postgres-core-data:/var/lib/postgresql/data
+      - ./schema/core_schema.sql:/docker-entrypoint-initdb.d/01-core-schema.sql:ro
+      - ./schema/seeds_dev.sql:/docker-entrypoint-initdb.d/02-seeds-dev.sql:ro
+    networks:
+      - chefiapp-core-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================================
+  # POSTGREST (REST API for RPCs)
+  # ============================================================================
+  # Nginx proxy para mapear /rest/v1/ para / (compatibilidade com Supabase client)
+  nginx:
+    image: nginx:alpine
+    container_name: chefiapp-core-nginx
+    restart: unless-stopped
+    depends_on:
+      postgrest:
+        condition: service_started
+      realtime:
+        condition: service_started
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "3001:3001"
+    networks:
+      - chefiapp-core-net
+
+  postgrest:
+    image: postgrest/postgrest:v12.0.2
+    container_name: chefiapp-core-postgrest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@postgres:5432/chefiapp_core
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_SCHEMAS: public  # Explicitamente definir schemas a expor
+      PGRST_DB_ANON_ROLE: postgres  # Core is authoritative, no RLS for now
+      # PostgREST requer JWT_SECRET mesmo sem usar JWT para autenticação
+      # O secret é usado internamente pelo PostgREST, mas não valida tokens
+      PGRST_JWT_SECRET: chefiapp-core-secret-key-min-32-chars-long
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+    expose:
+      - "3000"  # Exposto apenas internamente, nginx faz proxy
+    networks:
+      - chefiapp-core-net
+
+  # ============================================================================
+  # REALTIME (WebSocket for KDS/TPV sync)
+  # ============================================================================
+  realtime:
+    image: supabase/realtime:v2.34.47
+    container_name: chefiapp-core-realtime
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: chefiapp_core
+      DB_AFTER_CONNECT_QUERY: 'SET search_path TO _realtime'
+      DB_ENC_KEY: supabaserealtime
+      API_JWT_SECRET: chefiapp-core-secret-key-min-32-chars-long
+      JWT_SECRET: chefiapp-core-secret-key-min-32-chars-long
+      SECRET_KEY_BASE: d04ed7d1bcadcf7421f64c1eca6ee9d34adff52ed594e7061b0f5ed3f2a4739742a672cc10d7328efb7226ed0d9ce7f86c74cfb361630d11d0d35b0bb2a52f41
+      APP_NAME: realtime
+      ERL_AFLAGS: -proto_dist inet_tcp
+      DNS_NODES: "''"
+      RLIMIT_NOFILE: "10000"
+      SECURE_CHANNELS: "false"
+      # Permitir conexões com apikey (sem JWT obrigatório)
+      JWT_CLAIM_VALIDATORS: "{}"
+    ports:
+      - "4000:4000"
+    networks:
+      - chefiapp-core-net
+
+networks:
+  chefiapp-core-net:
+    driver: bridge
+
+volumes:
+  postgres-core-data:

@@ -47,7 +47,8 @@ describe("Gate 7: UI Projections", () => {
                 table_id: tableId,
                 state: "OPEN",
                 total_cents: 0
-            } as Order
+            } as Order,
+            meta: {},
         };
 
         await manager.handleEvent(createdEvent);
@@ -76,7 +77,8 @@ describe("Gate 7: UI Projections", () => {
                     quantity: 2,
                     subtotal_cents: 2000
                 } as OrderItem
-            }
+            },
+            meta: {},
         };
 
         await manager.handleEvent(itemEvent);
@@ -96,7 +98,8 @@ describe("Gate 7: UI Projections", () => {
             payload: {
                 order_id: orderId,
                 total_cents: 2000
-            }
+            },
+            meta: {},
         };
 
         await manager.handleEvent(paidEvent);

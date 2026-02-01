@@ -12,6 +12,7 @@
  */
 
 import { supabase } from '../supabase';
+import { createOrderAtomic } from '../infra/CoreOrdersApi';
 
 import { CashRegisterEngine } from './CashRegister';
 import { Logger } from '../logger';
@@ -97,30 +98,55 @@ export interface OrderItem {
 
 export class OrderEngine {
     /**
-     * Criar novo pedido
-     * 
-     * REGRAS CRÍTICAS:
-     * 1. Caixa deve estar aberto (gatekeeper)
-     * 2. Mesa não pode ter pedido ativo (uma mesa = um pedido)
-     * 3. Deve ter pelo menos 1 item
+     * Criar novo pedido via RPC create_order_atomic.
+     * Exposto para testes E2E e chamadas server-side que precisam criar pedido de forma atômica.
+     * UI usa Kernel/OrderContext; este método usa o mesmo RPC para consistência.
      */
-    // --- WRITE METHODS REMOVED FOR SOVEREIGNTY (Phase 15) ---
-    // createOrder has been migrated to Kernel.execute('CREATE', 'ORDER')
-    // See: OfflineOrderContext.tsx
-    // --------------------------------------------------------
+    static async createOrder(input: OrderInput): Promise<Order> {
+        if (!input.items?.length) {
+            throw new OrderEngineError('Pedido deve ter pelo menos um item.', 'ORDER_NO_ITEMS');
+        }
+        const rpcItems = input.items.map((item) => ({
+            product_id: item.productId ?? null,
+            name: item.name,
+            quantity: item.quantity,
+            unit_price: item.priceCents,
+        }));
+        const syncMetadata: Record<string, unknown> = {
+            origin: input.source === 'web' ? 'WEB' : input.source === 'app' ? 'APP' : 'CAIXA',
+        };
+        if (input.tableId) syncMetadata.table_id = input.tableId;
+        if (input.tableNumber != null) syncMetadata.table_number = input.tableNumber;
+
+        const { data, error } = await createOrderAtomic({
+            p_restaurant_id: input.restaurantId,
+            p_items: rpcItems,
+            p_payment_method: 'cash',
+            p_sync_metadata: syncMetadata,
+        });
+
+        if (error) {
+            Logger.error('ORDER_CREATE_FAILED', error, { restaurantId: input.restaurantId });
+            throw new OrderEngineError(
+                error.message ?? 'Falha ao criar pedido.',
+                error.code ?? 'ORDER_CREATE_FAILED'
+            );
+        }
+        if (!data?.id) {
+            throw new OrderEngineError('RPC não retornou ID do pedido.', 'ORDER_CREATE_FAILED');
+        }
+        return this.getOrderById(data.id);
+    }
 
     /**
      * Buscar pedido por ID
      */
     static async getOrderById(orderId: string): Promise<Order> {
-        const { data: orderData, error } = await supabase
-            .from('gm_orders')
-            .select(`
+        const chain = (supabase as any).from('gm_orders').select(`
                 *,
                 items:gm_order_items(*)
-            `)
-            .eq('id', orderId)
-            .single();
+            `).eq('id', orderId).single();
+        const { data: orderData, error } = await chain as { data: unknown; error: { message?: string } | null };
 
         if (error) {
             Logger.error('ORDER_FETCH_FAILED', error, { orderId });
@@ -136,7 +162,7 @@ export class OrderEngine {
             );
         }
 
-        return this.mapDbOrderToOrder(orderData);
+        return this.mapDbOrderToOrder(orderData as Parameters<typeof OrderEngine.mapDbOrderToOrder>[0]);
     }
 
     /**
@@ -151,18 +177,13 @@ export class OrderEngine {
      * Buscar pedido ativo por mesa
      */
     static async getActiveOrderByTable(restaurantId: string, tableId: string): Promise<Order | null> {
-        const { data, error } = await supabase
-            .from('gm_orders')
-            .select(`
+        const chain = (supabase as any).from('gm_orders').select(`
                 *,
                 items:gm_order_items(*)
-            `)
-            .eq('restaurant_id', restaurantId)
-            .eq('table_id', tableId)
+            `).eq('restaurant_id', restaurantId).eq('table_id', tableId)
             .in('status', ['pending', 'preparing', 'ready'])
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+            .order('created_at', { ascending: false }).limit(1).maybeSingle();
+        const { data, error } = await chain as { data: unknown; error: { message?: string } | null };
 
         if (error) {
             Logger.error('ORDER_FETCH_BY_TABLE_FAILED', error, { restaurantId, tableId });
@@ -173,22 +194,20 @@ export class OrderEngine {
         }
         if (!data) return null;
 
-        return this.mapDbOrderToOrder(data);
+        return this.mapDbOrderToOrder(data as Parameters<typeof OrderEngine.mapDbOrderToOrder>[0]);
     }
 
     /**
      * Buscar pedidos ativos do restaurante
      */
     static async getActiveOrders(restaurantId: string): Promise<Order[]> {
-        const { data, error } = await supabase
-            .from('gm_orders')
-            .select(`
+        const chain = (supabase as any).from('gm_orders').select(`
                 *,
                 items:gm_order_items(*)
-            `)
-            .eq('restaurant_id', restaurantId)
+            `).eq('restaurant_id', restaurantId)
             .in('status', ['pending', 'preparing', 'ready'])
             .order('created_at', { ascending: false });
+        const { data, error } = await chain as { data: unknown[] | null; error: { message?: string } | null };
 
         if (error) {
             Logger.error('ACTIVE_ORDERS_FETCH_FAILED', error, { restaurantId });
@@ -198,7 +217,8 @@ export class OrderEngine {
             );
         }
 
-        return (data || []).map(this.mapDbOrderToOrder);
+        type DbOrder = Parameters<typeof OrderEngine.mapDbOrderToOrder>[0];
+        return (data || []).map((row) => this.mapDbOrderToOrder(row as DbOrder));
     }
 
     /**

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../core/supabase';
 import { SyncEngine, type SyncEngineState } from '../../core/sync/SyncEngine';
 import { FiscalQueue } from '../../core/fiscal/FiscalQueueWorker';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 interface HealthState {
     status: 'ONLINE' | 'CRITICAL' | 'WARNING' | 'RECOVERED' | 'RECOVERY' | 'OFFLINE' | 'SYNCING';

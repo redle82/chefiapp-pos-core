@@ -93,10 +93,10 @@ describe('TASK-2.4.2: Fiscal Payment Validation', () => {
             [orderId, restaurantId, orderTotal]
           );
         } catch (e2: any) {
-          // Se ainda falhar, tentar com status 'OPEN' (texto)
+          // Se ainda falhar, tentar com status 'pending' e total_amount (schema com enum)
           await pool.query(
-            `INSERT INTO public.gm_orders (id, restaurant_id, status, payment_status, total_cents, created_at)
-             VALUES ($1, $2, 'OPEN', 'partially_paid', $3, NOW())`,
+            `INSERT INTO public.gm_orders (id, restaurant_id, status, payment_status, total_amount, created_at)
+             VALUES ($1, $2, 'pending', 'PARTIALLY_PAID', $3, NOW())`,
             [orderId, restaurantId, orderTotal]
           );
         }
@@ -159,8 +159,8 @@ describe('TASK-2.4.2: Fiscal Payment Validation', () => {
           );
         } catch (e2: any) {
           await pool.query(
-            `INSERT INTO public.gm_orders (id, restaurant_id, status, payment_status, total_cents, created_at)
-             VALUES ($1, $2, 'OPEN', 'paid', $3, NOW())`,
+            `INSERT INTO public.gm_orders (id, restaurant_id, status, payment_status, total_amount, created_at)
+             VALUES ($1, $2, 'pending', 'PAID', $3, NOW())`,
             [orderId, restaurantId, orderTotal]
           );
         }
@@ -224,8 +224,8 @@ describe('TASK-2.4.2: Fiscal Payment Validation', () => {
           );
         } catch (e2: any) {
           await pool.query(
-            `INSERT INTO public.gm_orders (id, restaurant_id, status, payment_status, total_cents, created_at)
-             VALUES ($1, $2, 'OPEN', 'paid', $3, NOW())`,
+            `INSERT INTO public.gm_orders (id, restaurant_id, status, payment_status, total_amount, created_at)
+             VALUES ($1, $2, 'pending', 'PAID', $3, NOW())`,
             [orderId, restaurantId, orderTotal]
           );
         }
@@ -289,8 +289,8 @@ describe('TASK-2.4.2: Fiscal Payment Validation', () => {
           );
         } catch (e2: any) {
           await pool.query(
-            `INSERT INTO public.gm_orders (id, restaurant_id, status, payment_status, total_cents, created_at)
-             VALUES ($1, $2, 'OPEN', 'paid', $3, NOW())`,
+            `INSERT INTO public.gm_orders (id, restaurant_id, status, payment_status, total_amount, created_at)
+             VALUES ($1, $2, 'pending', 'PAID', $3, NOW())`,
             [orderId, restaurantId, orderTotal]
           );
         }

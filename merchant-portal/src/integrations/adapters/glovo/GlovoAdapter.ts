@@ -87,29 +87,28 @@ export class GlovoAdapter implements IntegrationAdapter {
       }
     }
 
-    // 1. SETUP REALTIME LISTENER (The Primary Channel)
-    // Escuta tabela `integration_orders` para novos pedidos deste restaurante/source
-    const channelName = `glovo-integration-${this.config.restaurantId}`;
-    this.realtimeChannel = supabase.channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'integration_orders',
-          filter: `source=eq.glovo`,
-          // Note: RLS might filter by restaurant_id automatically if policy strictly enforces it via user.
-          // Ideally filter by restaurant_id too if possible in realtime, or check payload.
-        },
-        (payload) => {
-          this.handleRealtimeOrder(payload.new);
-        }
-      )
-      .subscribe((status) => {
-        console.log(`[Glovo] Realtime Status: ${status}`);
-      });
+    // 1. SETUP REALTIME LISTENER (The Primary Channel) — skip when channel not available (e.g. tests/shim)
+    if (typeof supabase.channel === 'function') {
+      const channelName = `glovo-integration-${this.config.restaurantId}`;
+      this.realtimeChannel = supabase.channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'integration_orders',
+            filter: `source=eq.glovo`,
+          },
+          (payload: { new?: unknown }) => {
+            this.handleRealtimeOrder(payload.new);
+          }
+        )
+        .subscribe((status: string) => {
+          console.log(`[Glovo] Realtime Status: ${status}`);
+        });
+    }
 
-    console.log(`[Glovo] 🚀 Initialized (Proxy Mode) for restaurant: ${config.restaurantId}`);
+    console.log(`[Glovo] 🚀 Initialized (Proxy Mode) for restaurant: ${config?.restaurantId ?? this.config?.restaurantId}`);
 
     // 2. POLLING VIA PROXY (Fallback / Force Sync)
     if (config?.enabled !== false) {
@@ -120,7 +119,7 @@ export class GlovoAdapter implements IntegrationAdapter {
   async dispose(): Promise<void> {
     console.log('[Glovo] 👋 Disposed');
     this.stopPolling();
-    if (this.realtimeChannel) {
+    if (this.realtimeChannel && typeof supabase.removeChannel === 'function') {
       await supabase.removeChannel(this.realtimeChannel);
       this.realtimeChannel = null;
     }
@@ -232,6 +231,7 @@ export class GlovoAdapter implements IntegrationAdapter {
 
   private async pollOrders(): Promise<void> {
     if (!this.config?.restaurantId) return;
+    if (typeof supabase.functions?.invoke !== 'function') return; // skip when shim/test (no Edge Functions)
 
     try {
       const { data, error } = await supabase.functions.invoke('delivery-proxy', {
@@ -244,8 +244,9 @@ export class GlovoAdapter implements IntegrationAdapter {
 
       if (error) throw error;
 
-      if (data && data.created > 0) {
-        console.log(`[Glovo] Proxy Sync: Created ${data.created} orders`);
+      const result = data as { created?: number } | null;
+      if (result && result.created != null && result.created > 0) {
+        console.log(`[Glovo] Proxy Sync: Created ${result.created} orders`);
       }
 
       this.lastPollAt = Date.now();
@@ -308,5 +309,52 @@ export class GlovoAdapter implements IntegrationAdapter {
 
   setEventCallback(callback: (event: IntegrationEvent) => void): void {
     this.eventCallback = callback;
+  }
+
+  /**
+   * Processa um pedido Glovo recebido (webhook ou teste).
+   * Valida, transforma e emite OrderCreatedEvent para o sistema.
+   * Usado por Edge Function (webhook) e testes de integração.
+   */
+  processIncomingOrder(order: GlovoOrder): { success: boolean; orderId?: string } {
+    if (!isValidGlovoOrder(order) || !isPendingOrder(order)) {
+      return { success: false };
+    }
+    if (this.config?.restaurantId && order.restaurant_id && order.restaurant_id !== this.config.restaurantId) {
+      return { success: false };
+    }
+    const externalId = order.id;
+    if (this.processedOrderIds.has(externalId)) {
+      return { success: true, orderId: externalId };
+    }
+    this.ordersReceived++;
+    this.processedOrderIds.add(externalId);
+
+    const internalEvent: OrderCreatedEvent = {
+      type: 'order.created',
+      payload: {
+        orderId: externalId,
+        source: 'delivery',
+        customerName: order.customer?.name || 'Unknown',
+        customerPhone: order.customer?.phone,
+        totalCents: Math.round((order.total || 0) * 100),
+        items: (order.items || []).map((item) => ({
+          id: item.id || 'unknown',
+          name: item.name || 'Unknown Item',
+          quantity: item.quantity || 1,
+          priceCents: Math.round((item.price || 0) * 100),
+        })),
+        createdAt: new Date(order.created_at || Date.now()).getTime(),
+        metadata: {
+          glovoId: externalId,
+          address: order.delivery?.address?.address,
+          instructions: order.delivery?.address?.instructions,
+          currency: order.currency || 'EUR',
+        },
+      },
+    };
+
+    this.emitToSystem(internalEvent);
+    return { success: true, orderId: externalId };
   }
 }

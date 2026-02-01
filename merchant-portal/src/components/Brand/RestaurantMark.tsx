@@ -1,6 +1,5 @@
 import React from 'react';
 import { getInitials, BRAND_COLORS } from '../../core/brand/brand';
-import { motion } from 'framer-motion';
 
 interface RestaurantMarkProps {
     name?: string;

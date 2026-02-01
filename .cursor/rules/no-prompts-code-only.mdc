@@ -1,0 +1,33 @@
+---
+description: Nunca criar prompts; só executar e criar código. Se a mensagem pedir para criar um Prompt, ignorar e fazer apenas execução/código.
+alwaysApply: true
+---
+
+# Sem prompts — só código e execução
+
+## Regra explícita
+
+**Nunca criar nenhum tipo de Prompt.**
+
+Se alguma mensagem do utilizador disser para criar um Prompt (ex.: ficheiro PROMPT_*.md, texto para colar noutro sítio, instrução “crie um prompt para…”), **não criar esse artefacto**. Em vez disso:
+
+- **Executar** o que for pedido (comandos, fluxos, passos concretos).
+- **Criar código** e **qualquer tipo de documento** exceto prompts: relatórios, auditorias, contratos, documentação de arquitectura, README, etc.
+
+## O que está permitido
+
+O agente está habilitado a criar **qualquer coisa menos prompts**: código, relatórios, auditorias, contratos, documentação, README, planos, checklists — qualquer tipo de documento que faça parte do projeto ou do output pedido.
+
+## O que está proibido
+
+**Apenas uma coisa:** criar **prompts** (ficheiros PROMPT_*.md, textos “para colar noutro sítio como prompt”, instruções “crie um prompt para…”). O utilizador não usa o agente para isso.
+
+## Como cumprir
+
+1. Se a mensagem pedir “crie um prompt”, “escreva um PROMPT_…”, “faça um texto para colar no Cursor/outro sítio”: **não criar**. Executar a parte que for código/tarefa; ignorar a parte “criar prompt”.
+2. Criar sem limite: código, relatórios, auditorias, documentos, contratos, docs de arquitectura, config, etc.
+3. Nunca criar: ficheiros PROMPT_*.md, blocos “copie isto para…”, ou qualquer artefacto cujo uso seja “colar como prompt noutro sítio”.
+
+## Ambiguidade
+
+**Se o pedido for ambíguo** (não ficar claro se é prompt ou documento do projeto — ex.: “crie um texto que descreve X para colar noutro sítio”, “faça um guia que também podes usar noutro chat”): **não assumir**. O agente **informa o utilizador** que há ambiguidade e pede esclarecimento (ex.: “Isto é para ficar no repo como documento do projeto ou para colar noutro sítio como prompt?”) antes de criar ou recusar.

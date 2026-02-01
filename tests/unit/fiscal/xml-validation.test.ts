@@ -47,6 +47,7 @@ describe('Unit - Fiscal XML Validation', () => {
                 },
             ],
         },
+        meta: {},
         occurred_at: new Date(),
         idempotency_key: 'test-key',
     };

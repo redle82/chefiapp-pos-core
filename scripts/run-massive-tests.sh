@@ -62,31 +62,48 @@ echo ""
 # Check for test-results directory
 mkdir -p test-results
 
+# Check Docker Core
+echo -e "${YELLOW}📌 STEP 0: Verifying Docker Core${NC}"
+echo ""
+if ! docker compose -f docker-core/docker-compose.core.yml ps postgres | grep -q "Up"; then
+    echo -e "${RED}❌ Docker Core not running. Start it first:${NC}"
+    echo "   cd docker-core && docker compose -f docker-compose.core.yml up -d"
+    exit 1
+fi
+echo -e "${GREEN}✅ Docker Core is running${NC}"
+echo ""
+
 # Step 1: Seed
 if [ "$SKIP_SEED" = false ]; then
-    echo -e "${YELLOW}📌 STEP 1: Seeding Test Data${NC}"
+    echo -e "${YELLOW}📌 STEP 1: Seeding Test Data (Docker Core)${NC}"
     echo ""
-    npx ts-node scripts/seed-massive-test.ts --restaurants=$RESTAURANTS --cleanup
+    npx ts-node scripts/seed-massive-test-docker.ts --restaurants=$RESTAURANTS --cleanup
     echo ""
 else
     echo -e "${YELLOW}📌 STEP 1: Skipping Seed (--skip-seed)${NC}"
     echo ""
 fi
 
-# Step 2: Stress Test
-echo -e "${YELLOW}📌 STEP 2: Running Stress Test${NC}"
+# Step 2: Stress Test (using massive-concurrent-test which uses Docker Core)
+echo -e "${YELLOW}📌 STEP 2: Running Stress Test (Docker Core)${NC}"
 echo ""
-npx ts-node scripts/stress-orders-massive.ts --orders=$ORDERS_PER_RESTAURANT || true
-echo ""
-
-# Step 3: Chaos Test
-echo -e "${YELLOW}📌 STEP 3: Running Chaos Tests${NC}"
-echo ""
-npx ts-node scripts/chaos-test-massive.ts --scenario=all || true
+./scripts/run-massive-concurrent-test.sh --orders=$ORDERS_PER_RESTAURANT --concurrency=10 || true
 echo ""
 
-# Step 4: Generate Report
-echo -e "${YELLOW}📌 STEP 4: Generating Report${NC}"
+# Step 3: Lifecycle Test
+echo -e "${YELLOW}📌 STEP 3: Running Lifecycle Test${NC}"
+echo ""
+./scripts/run-lifecycle-test.sh --cycles=50 || true
+echo ""
+
+# Step 4: Chaos Test (optional - can be adapted later)
+echo -e "${YELLOW}📌 STEP 4: Chaos Tests (TODO - adapt for Docker Core)${NC}"
+echo ""
+echo "   ⚠️  Chaos tests need adaptation for Docker Core"
+echo ""
+
+# Step 5: Generate Report
+echo -e "${YELLOW}📌 STEP 5: Generating Report${NC}"
 echo ""
 npx ts-node scripts/generate-test-report.ts
 echo ""

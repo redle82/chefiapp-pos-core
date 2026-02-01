@@ -18,6 +18,7 @@
  */
 
 import { supabase } from '../supabase';
+import { createOrderAtomic } from '../infra/CoreOrdersApi';
 import {
     checkOrderProtection,
     recordOrderSubmission,
@@ -56,6 +57,7 @@ export interface WebOrderInput {
     items: WebOrderItem[];
     customer_name?: string;
     customer_phone?: string;
+    customer_email?: string;
     table_number?: number;
     notes?: string;
     // Payment Details
@@ -95,7 +97,7 @@ export const WebOrderingService = {
      * Get restaurant web configuration
      */
     async getWebConfig(slug: string): Promise<RestaurantWebConfig | null> {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
             .from('gm_restaurants')
             .select('id, name, slug, web_ordering_enabled, auto_accept_web_orders')
             .eq('slug', slug)
@@ -124,10 +126,14 @@ export const WebOrderingService = {
      * 
      * @param input Order data
      * @param onProgress Optional callback for UI progress updates
+     * @param origin Optional origin override (default: 'WEB_PUBLIC')
+     * @param tableId Optional table_id UUID (for QR_MESA orders)
      */
     async submitOrderWithRetry(
         input: WebOrderInput,
-        onProgress?: (progress: SubmissionProgress) => void
+        onProgress?: (progress: SubmissionProgress) => void,
+        origin: string = 'WEB_PUBLIC',
+        tableId?: string
     ): Promise<WebOrderResult> {
         const notify = (progress: SubmissionProgress) => {
             console.log(`[WebOrderingService] ${progress.phase}: ${progress.message}`);
@@ -199,7 +205,7 @@ export const WebOrderingService = {
             try {
                 // Actual submission with timeout
                 const result = await Promise.race([
-                    this._submitOrderInternal(input),
+                    this._submitOrderInternal(input, origin, tableId),
                     new Promise<never>((_, reject) =>
                         setTimeout(() => reject(new Error('TIMEOUT')), RETRY_CONFIG.TIMEOUT_MS)
                     )
@@ -264,11 +270,15 @@ export const WebOrderingService = {
     /**
      * Internal submission (no retry) - called by submitOrderWithRetry
      */
-    async _submitOrderInternal(input: WebOrderInput): Promise<WebOrderResult> {
+    async _submitOrderInternal(
+        input: WebOrderInput,
+        origin: string = 'WEB_PUBLIC',
+        tableId?: string
+    ): Promise<WebOrderResult> {
         console.log('[WebOrderingService] _submitOrderInternal:', input.restaurant_id);
 
         // 1. Fetch restaurant config
-        const { data: restaurant, error: configError } = await supabase
+        const { data: restaurant, error: configError } = await (supabase as any)
             .from('gm_restaurants')
             .select('id, auto_accept_web_orders, web_ordering_enabled')
             .eq('id', input.restaurant_id)
@@ -300,9 +310,9 @@ export const WebOrderingService = {
 
         // 4. Route based on auto_accept setting
         if (restaurant.auto_accept_web_orders) {
-            return this.createDirectOrder(input, restaurant.id, total_cents); // Use ID as tenant_id
+            return this.createDirectOrder(input, restaurant.id, total_cents, origin, tableId); // Use ID as tenant_id
         } else {
-            return this.createAirlockRequest(input, restaurant.id, total_cents); // Use ID as tenant_id
+            return this.createAirlockRequest(input, restaurant.id, total_cents, origin); // Use ID as tenant_id
         }
     },
 
@@ -316,69 +326,69 @@ export const WebOrderingService = {
 
     /**
      * Create order directly in gm_orders (auto-accept path)
+     * 
+     * IMPORTANT: Uses create_order_atomic RPC to respect Core constraints
+     * (e.g., idx_one_open_order_per_table)
      */
     async createDirectOrder(
         input: WebOrderInput,
         tenant_id: string,
-        total_cents: number
+        total_cents: number,
+        origin: string = 'WEB_PUBLIC',
+        tableId?: string
     ): Promise<WebOrderResult> {
-        const orderId = crypto.randomUUID();
-
         try {
-            // A. Create order header
-            // BYPASS DBWriteGate/Select for RLS (anon user)
-            const headerPayload = {
-                id: orderId,
-                restaurant_id: input.restaurant_id,
-                status: 'pending',
-                total_amount: total_cents,
-                // Use input payment details or default to pending/cash
-                payment_status: input.payment_status || 'pending',
-                payment_method: input.payment_method || 'cash',
-                version: 1,
-                // Real Columns (Now exist)
-                customer_name: input.customer_name || 'Cliente Web',
-                table_number: input.table_number,
-                notes: input.notes,
-                origin: 'WEB_PUBLIC',
-                // Keep minimal metadata
-                sync_metadata: {
-                    userAgent: navigator.userAgent,
-                    transaction_id: input.transaction_id
-                }
-            };
-
-            const { error: orderError } = await supabase
-                .from('gm_orders')
-                .insert(headerPayload);
-
-            if (orderError) throw orderError;
-
-            // B. Create order items
-            const orderItems = input.items.map(item => ({
-                id: crypto.randomUUID(),
-                order_id: orderId,
+            // Prepare RPC payload
+            const rpcItems = input.items.map(item => ({
                 product_id: item.product_id,
-                // Schema Mapping
-                product_name: item.name,        // was name_snapshot
-                unit_price: item.price_cents,   // was price_snapshot
+                name: item.name,
                 quantity: item.quantity,
-                total_price: item.price_cents * item.quantity, // was subtotal_cents
-                notes: item.notes
+                unit_price: item.price_cents
             }));
 
-            // BYPASS DBWriteGate for Items as well
-            const { error: itemsError } = await supabase
-                .from('gm_order_items')
-                .insert(orderItems);
+            // Prepare sync_metadata with origin and table info
+            const syncMetadata: any = {
+                origin: origin,
+                userAgent: navigator.userAgent,
+                transaction_id: input.transaction_id
+            };
 
-            if (itemsError) {
-                // Rollback order if items fail (Best effort)
-                await supabase.from('gm_orders').delete().eq('id', orderId);
-                throw itemsError;
+            if (tableId) {
+                syncMetadata.table_id = tableId;
             }
 
-            console.log('[WebOrderingService] Direct order created:', orderId);
+            if (input.table_number) {
+                syncMetadata.table_number = input.table_number;
+            }
+
+            // Core Orders API: Docker Core quando ativo; Supabase transicional (FINANCIAL_CORE_VIOLATION_AUDIT remediated)
+            const { data, error } = await createOrderAtomic({
+                p_restaurant_id: input.restaurant_id,
+                p_items: rpcItems,
+                p_payment_method: input.payment_method || 'cash',
+                p_sync_metadata: syncMetadata
+            });
+
+            if (error) {
+                // Check if it's a constraint violation (one_open_order_per_table)
+                if (error.code === '23505' || error.message?.includes('unique') || error.message?.includes('idx_one_open_order_per_table') || error.message?.includes('TABLE_HAS_ACTIVE_ORDER')) {
+                    return {
+                        success: false,
+                        status: 'REJECTED',
+                        message: 'Já existe um pedido ativo para esta mesa. Aguarde a finalização.'
+                    };
+                }
+
+                throw new Error(error.message);
+            }
+
+            const orderId = data?.id;
+
+            if (!orderId) {
+                throw new Error('RPC returned no order ID');
+            }
+
+            console.log('[WebOrderingService] Direct order created via RPC:', orderId);
 
             // 🛡️ Record successful submission for protection
             recordOrderSubmission(
@@ -398,6 +408,16 @@ export const WebOrderingService = {
 
         } catch (err: any) {
             console.error('[WebOrderingService] Direct order failed:', err);
+            
+            // Handle constraint violations gracefully
+            if (err.code === '23505' || err.message?.includes('unique') || err.message?.includes('idx_one_open_order_per_table')) {
+                return {
+                    success: false,
+                    status: 'REJECTED',
+                    message: 'Já existe um pedido ativo para esta mesa. Aguarde a finalização.'
+                };
+            }
+
             return {
                 success: false,
                 status: 'REJECTED',
@@ -412,7 +432,8 @@ export const WebOrderingService = {
     async createAirlockRequest(
         input: WebOrderInput,
         tenant_id: string,
-        total_cents: number
+        total_cents: number,
+        origin: string = 'WEB_PUBLIC'
     ): Promise<WebOrderResult> {
         try {
             const requestId = crypto.randomUUID();
@@ -423,7 +444,7 @@ export const WebOrderingService = {
                 id: requestId,
                 tenant_id,
                 status: 'PENDING',
-                source: 'WEB_PUBLIC',
+                source: origin,
                 payload: {
                     restaurant_id: input.restaurant_id,
                     items: input.items.map(i => ({
@@ -440,14 +461,14 @@ export const WebOrderingService = {
                         email: input.customer_email
                     },
                     table_number: input.table_number,
-                    request_source: 'WEB_PUBLIC'
+                    request_source: origin
                 }
             };
 
             // 6. Insert into gm_order_requests
             // BYPASS DBWriteGate.insert because it uses .select() which fails RLS for anon users
             // We generate ID client-side, so we don't need to read it back.
-            const { error } = await supabase
+            const { error } = await (supabase as any)
                 .from('gm_order_requests')
                 .insert(requestPayload);
 
@@ -486,7 +507,7 @@ export const WebOrderingService = {
      */
     async initiatePublicPayment(restaurantId: string, amountCents: number): Promise<{ clientSecret: string; id: string } | null> {
         try {
-            const { data, error } = await supabase.functions.invoke('stripe-payment', {
+            const { data, error } = await (supabase as any).functions.invoke('stripe-payment', {
                 body: {
                     action: 'create-public-payment-intent',
                     restaurant_id: restaurantId,
@@ -515,7 +536,7 @@ export const WebOrderingService = {
         message: string;
     }> {
         if (orderId) {
-            const { data } = await supabase
+            const { data } = await (supabase as any)
                 .from('gm_orders')
                 .select('status')
                 .eq('id', orderId)
@@ -538,7 +559,7 @@ export const WebOrderingService = {
         }
 
         if (requestId) {
-            const { data } = await supabase
+            const { data } = await (supabase as any)
                 .from('gm_order_requests')
                 .select('status, sovereign_order_id')
                 .eq('id', requestId)

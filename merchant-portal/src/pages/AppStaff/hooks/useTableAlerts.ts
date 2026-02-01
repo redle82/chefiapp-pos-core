@@ -8,8 +8,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useTables } from '../../TPV/context/TableContext';
-import { useOrders } from '../../TPV/context/OrderContextReal';
+import { useAppStaffTables } from './useAppStaffTables';
+import { useAppStaffOrders } from './useAppStaffOrders';
 import { useStaff } from '../context/StaffContext';
 import type { Task } from '../context/StaffCoreTypes';
 
@@ -26,9 +26,28 @@ const NO_ORDER_THRESHOLD_MS = 20 * 60 * 1000; // 20 minutos
 const LONG_WAIT_THRESHOLD_MS = 45 * 60 * 1000; // 45 minutos
 
 export function useTableAlerts() {
-    const { tables } = useTables();
-    const { orders } = useOrders();
-    const { createTask, tasks } = useStaff();
+    const { createTask, tasks, operationalContract } = useStaff();
+    // FASE 3.3: Isolado - AppStaff não depende de TPV
+    const { tables: appStaffTables } = useAppStaffTables(operationalContract?.id || null);
+    const { orders: appStaffOrders } = useAppStaffOrders(operationalContract?.id || null);
+    // Converter para formato esperado
+    const tables = appStaffTables.map(table => ({
+      id: table.id,
+      number: table.number,
+      status: table.status,
+      lastOrderAt: null as any, // TODO: adicionar se necessário
+      occupiedAt: null as any, // TODO: adicionar se necessário
+    }));
+    const orders = appStaffOrders.map(order => ({
+      id: order.id,
+      tableId: order.table_id || undefined,
+      status: (order.status === 'OPEN' ? 'new' : 
+               order.status === 'IN_PREP' ? 'preparing' : 
+               order.status === 'READY' ? 'ready' : 
+               order.status === 'PAID' ? 'paid' : 
+               order.status === 'CANCELLED' ? 'cancelled' : 'new') as 'new' | 'preparing' | 'ready' | 'served' | 'paid' | 'partially_paid' | 'cancelled',
+      created_at: order.created_at,
+    }));
     const [alerts, setAlerts] = useState<TableAlert[]>([]);
 
     useEffect(() => {

@@ -11,6 +11,33 @@
 #   make clean        - Remove all containers and volumes
 # ==============================================================================
 
+# ==============================================================================
+# DATABASE CONFIGURATION
+# ==============================================================================
+# Use DATABASE_URL from environment if set (CI), otherwise use local default
+# This allows the Makefile to work both locally (port 54322) and in CI (port 5432)
+# ==============================================================================
+
+# Default database URL for local development (port 54322)
+# CI will override this via environment variable (port 5432)
+DB_URL_DEFAULT = postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+# Helper function to extract DB connection params from DATABASE_URL
+# Usage: $(call get_db_var,host|port|user|pass|name)
+# This is evaluated at runtime in each command
+define get_db_params
+	DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+	DB_HOST=$$(echo $$DB_URL | sed -E 's|.*@([^:]+).*|\1|'); \
+	DB_PORT=$$(echo $$DB_URL | sed -E 's|.*:([0-9]+)/.*|\1|'); \
+	DB_USER=$$(echo $$DB_URL | sed -E 's|postgresql://([^:]+):.*|\1|'); \
+	DB_PASS=$$(echo $$DB_URL | sed -E 's|postgresql://[^:]+:([^@]+)@.*|\1|'); \
+	DB_NAME=$$(echo $$DB_URL | sed -E 's|.*/([^?]+).*|\1|')
+endef
+
+# Use DATABASE_URL from environment if available (CI), otherwise use default
+# This is evaluated at runtime in each command, not at Makefile parse time
+export DATABASE_URL
+
 .PHONY: all start stop clean seed simulate chaos observe logs report help
 
 # Default target
@@ -252,28 +279,34 @@ universal-test:
 	@echo "🎯 Running Universal Test Harness (10 tenants, 60s)..."
 	@echo ""
 	@echo "Starting Print Emulator..."
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/print-emulator.js &
 	@echo "Starting Task Engine..."
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node task-engine/task-engine.js &
 	@sleep 3
 	@echo ""
 	@echo "Starting POS Simulator..."
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		TENANTS=10 DURATION=60 ORDER_RATE=2 \
 		node simulators/simulate-pos.js &
 	@echo "Starting QR Web Simulator..."
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		TENANTS=10 DURATION=60 ORDER_RATE=3 \
 		node simulators/simulate-qr-web.js &
 	@echo "Starting API Orders Simulator..."
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		TENANTS=10 DURATION=60 ORDERS_PER_MINUTE=5 \
 		node simulators/simulate-orders.js &
 	@echo ""
 	@echo "Running orchestrator..."
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		TENANTS=10 DURATION=65 \
 		node simulators/universal-orchestrator.js
 	@echo ""
@@ -285,21 +318,27 @@ universal-test:
 universal-test-full:
 	@echo "🎯 Running FULL Universal Test Harness (100 tenants, 300s)..."
 	@echo ""
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/print-emulator.js &
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node task-engine/task-engine.js &
 	@sleep 3
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		TENANTS=100 DURATION=300 ORDER_RATE=5 \
 		node simulators/simulate-pos.js &
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		TENANTS=100 DURATION=300 ORDER_RATE=5 \
 		node simulators/simulate-qr-web.js &
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		TENANTS=100 DURATION=300 ORDERS_PER_MINUTE=10 \
 		node simulators/simulate-orders.js &
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		TENANTS=100 DURATION=310 \
 		node simulators/universal-orchestrator.js
 	@pkill -f "print-emulator.js" 2>/dev/null || true
@@ -317,7 +356,13 @@ prints:
 # Status das tarefas
 tasks-status:
 	@echo "📋 Tasks Status:"
-	@PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -c "\
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		DB_HOST=$$(echo $$DB_URL | sed -E 's|.*@([^:]+).*|\1|'); \
+		DB_PORT=$$(echo $$DB_URL | sed -E 's|.*:([0-9]+)/.*|\1|'); \
+		DB_USER=$$(echo $$DB_URL | sed -E 's|postgresql://([^:]+):.*|\1|'); \
+		DB_PASS=$$(echo $$DB_URL | sed -E 's|postgresql://[^:]+:([^@]+)@.*|\1|'); \
+		DB_NAME=$$(echo $$DB_URL | sed -E 's|.*/([^?]+).*|\1|'); \
+		PGPASSWORD=$$DB_PASS psql -h $$DB_HOST -p $$DB_PORT -U $$DB_USER -d $$DB_NAME -c "\
 		SELECT task_type, status, COUNT(*) FROM gm_tasks GROUP BY task_type, status ORDER BY task_type;"
 
 # Status do KDS (pedidos por status)
@@ -335,7 +380,13 @@ events-status:
 # Limpar dados do Universal Test
 universal-clean:
 	@echo "🧹 Clearing Universal Test data..."
-	@PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -c "\
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		DB_HOST=$$(echo $$DB_URL | sed -E 's|.*@([^:]+).*|\1|'); \
+		DB_PORT=$$(echo $$DB_URL | sed -E 's|.*:([0-9]+)/.*|\1|'); \
+		DB_USER=$$(echo $$DB_URL | sed -E 's|postgresql://([^:]+):.*|\1|'); \
+		DB_PASS=$$(echo $$DB_URL | sed -E 's|postgresql://[^:]+:([^@]+)@.*|\1|'); \
+		DB_NAME=$$(echo $$DB_URL | sed -E 's|.*/([^?]+).*|\1|'); \
+		PGPASSWORD=$$DB_PASS psql -h $$DB_HOST -p $$DB_PORT -U $$DB_USER -d $$DB_NAME -c "\
 		TRUNCATE gm_events, gm_print_jobs CASCADE;"
 	@rm -rf prints/*.txt 2>/dev/null || true
 	@echo "✅ Universal Test data cleared"
@@ -343,26 +394,30 @@ universal-clean:
 # Iniciar apenas Print Emulator
 print-emulator:
 	@echo "🖨️  Starting Print Emulator..."
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/print-emulator.js
 
 # Iniciar apenas Task Engine
 task-engine:
 	@echo "🔧 Starting Task Engine..."
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node task-engine/task-engine.js
 
 # Simular apenas POS
 simulate-pos:
 	@echo "💳 Running POS Simulator..."
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		TENANTS=$${TENANTS:-10} DURATION=$${DURATION:-60} ORDER_RATE=$${ORDER_RATE:-2} \
 		node simulators/simulate-pos.js
 
 # Simular apenas QR Web
 simulate-qr:
 	@echo "📱 Running QR Web Simulator..."
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		TENANTS=$${TENANTS:-10} DURATION=$${DURATION:-60} ORDER_RATE=$${ORDER_RATE:-3} \
 		node simulators/simulate-qr-web.js
 
@@ -522,7 +577,13 @@ simulate-24h-small:
 	@echo "════════════════════════════════════════════════════════════════"
 	@echo ""
 	@echo "🧹 Limpando dados anteriores..."
-	@PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -c "\
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		DB_HOST=$$(echo $$DB_URL | sed -E 's|.*@([^:]+).*|\1|'); \
+		DB_PORT=$$(echo $$DB_URL | sed -E 's|.*:([0-9]+)/.*|\1|'); \
+		DB_USER=$$(echo $$DB_URL | sed -E 's|postgresql://([^:]+):.*|\1|'); \
+		DB_PASS=$$(echo $$DB_URL | sed -E 's|postgresql://[^:]+:([^@]+)@.*|\1|'); \
+		DB_NAME=$$(echo $$DB_URL | sed -E 's|.*/([^?]+).*|\1|'); \
+		PGPASSWORD=$$DB_PASS psql -h $$DB_HOST -p $$DB_PORT -U $$DB_USER -d $$DB_NAME -c "\
 		DELETE FROM gm_kds_events; \
 		DELETE FROM gm_task_runs; \
 		DELETE FROM gm_offline_actions; \
@@ -534,17 +595,21 @@ simulate-24h-small:
 	@echo "   ✅ Dados limpos"
 	@echo ""
 	@echo "🖨️  Iniciando serviços de backend..."
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/print-emulator.js > /dev/null 2>&1 &
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/kds-kitchen.js > /dev/null 2>&1 &
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/kds-bar.js > /dev/null 2>&1 &
 	@sleep 2
 	@echo "   ✅ Print Emulator, KDS Kitchen, KDS Bar ativos"
 	@echo ""
 	@echo "🚀 Iniciando simulação 24h..."
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		MODE=small DURATION_MINUTES=5 \
 		node simulators/simulate-24h.js
 	@echo ""
@@ -558,18 +623,28 @@ simulate-24h-enterprise:
 	@echo "════════════════════════════════════════════════════════════════"
 	@echo "   MEGA OPERATIONAL SIMULATOR - ENTERPRISE (100 restaurants)"
 	@echo "════════════════════════════════════════════════════════════════"
-	@PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -c "\
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		DB_HOST=$$(echo $$DB_URL | sed -E 's|.*@([^:]+).*|\1|'); \
+		DB_PORT=$$(echo $$DB_URL | sed -E 's|.*:([0-9]+)/.*|\1|'); \
+		DB_USER=$$(echo $$DB_URL | sed -E 's|postgresql://([^:]+):.*|\1|'); \
+		DB_PASS=$$(echo $$DB_URL | sed -E 's|postgresql://[^:]+:([^@]+)@.*|\1|'); \
+		DB_NAME=$$(echo $$DB_URL | sed -E 's|.*/([^?]+).*|\1|'); \
+		PGPASSWORD=$$DB_PASS psql -h $$DB_HOST -p $$DB_PORT -U $$DB_USER -d $$DB_NAME -c "\
 		DELETE FROM gm_kds_events; DELETE FROM gm_task_runs; DELETE FROM gm_offline_actions; \
 		DELETE FROM gm_order_items; DELETE FROM gm_orders; DELETE FROM gm_print_jobs; \
 		DELETE FROM gm_events; DELETE FROM gm_tasks;" > /dev/null 2>&1
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/print-emulator.js > /dev/null 2>&1 &
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/kds-kitchen.js > /dev/null 2>&1 &
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/kds-bar.js > /dev/null 2>&1 &
 	@sleep 2
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		MODE=enterprise DURATION_MINUTES=10 \
 		node simulators/simulate-24h.js
 	@pkill -f "print-emulator.js" 2>/dev/null || true
@@ -582,18 +657,28 @@ simulate-24h-max:
 	@echo "════════════════════════════════════════════════════════════════"
 	@echo "   MEGA OPERATIONAL SIMULATOR - MAX STRESS"
 	@echo "════════════════════════════════════════════════════════════════"
-	@PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -c "\
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		DB_HOST=$$(echo $$DB_URL | sed -E 's|.*@([^:]+).*|\1|'); \
+		DB_PORT=$$(echo $$DB_URL | sed -E 's|.*:([0-9]+)/.*|\1|'); \
+		DB_USER=$$(echo $$DB_URL | sed -E 's|postgresql://([^:]+):.*|\1|'); \
+		DB_PASS=$$(echo $$DB_URL | sed -E 's|postgresql://[^:]+:([^@]+)@.*|\1|'); \
+		DB_NAME=$$(echo $$DB_URL | sed -E 's|.*/([^?]+).*|\1|'); \
+		PGPASSWORD=$$DB_PASS psql -h $$DB_HOST -p $$DB_PORT -U $$DB_USER -d $$DB_NAME -c "\
 		DELETE FROM gm_kds_events; DELETE FROM gm_task_runs; DELETE FROM gm_offline_actions; \
 		DELETE FROM gm_order_items; DELETE FROM gm_orders; DELETE FROM gm_print_jobs; \
 		DELETE FROM gm_events; DELETE FROM gm_tasks;" > /dev/null 2>&1
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/print-emulator.js > /dev/null 2>&1 &
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/kds-kitchen.js > /dev/null 2>&1 &
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/kds-bar.js > /dev/null 2>&1 &
 	@sleep 2
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		MODE=max DURATION_MINUTES=15 \
 		node simulators/simulate-24h.js
 	@pkill -f "print-emulator.js" 2>/dev/null || true
@@ -603,9 +688,11 @@ simulate-24h-max:
 # Iniciar KDS consumers
 kds-start:
 	@echo "🍳 Starting KDS consumers..."
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/kds-kitchen.js &
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/kds-bar.js &
 	@echo "✅ KDS Kitchen and Bar started"
 
@@ -615,20 +702,32 @@ assertions:
 	@echo "════════════════════════════════════════════════════════════════"
 	@echo "   VALIDAÇÃO DE ASSERTS"
 	@echo "════════════════════════════════════════════════════════════════"
-	@ORPHANS=$$(PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -t -c "\
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		DB_HOST=$$(echo $$DB_URL | sed -E 's|.*@([^:]+).*|\1|'); \
+		DB_PORT=$$(echo $$DB_URL | sed -E 's|.*:([0-9]+)/.*|\1|'); \
+		DB_USER=$$(echo $$DB_URL | sed -E 's|postgresql://([^:]+):.*|\1|'); \
+		DB_PASS=$$(echo $$DB_URL | sed -E 's|postgresql://[^:]+:([^@]+)@.*|\1|'); \
+		DB_NAME=$$(echo $$DB_URL | sed -E 's|.*/([^?]+).*|\1|'); \
+		ORPHANS=$$(PGPASSWORD=$$DB_PASS psql -h $$DB_HOST -p $$DB_PORT -U $$DB_USER -d $$DB_NAME -t -c "\
 		SELECT COUNT(*) FROM gm_order_items WHERE order_id NOT IN (SELECT id FROM gm_orders);" | tr -d ' '); \
-	if [ "$$ORPHANS" != "0" ]; then \
-		echo "❌ FALHA: Orphan items = $$ORPHANS"; exit 1; \
-	else \
-		echo "✅ Orphan items: 0"; \
-	fi
-	@ORPHAN_PRINTS=$$(PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -t -c "\
+		if [ "$$ORPHANS" != "0" ]; then \
+			echo "❌ FALHA: Orphan items = $$ORPHANS"; exit 1; \
+		else \
+			echo "✅ Orphan items: 0"; \
+		fi
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		DB_HOST=$$(echo $$DB_URL | sed -E 's|.*@([^:]+).*|\1|'); \
+		DB_PORT=$$(echo $$DB_URL | sed -E 's|.*:([0-9]+)/.*|\1|'); \
+		DB_USER=$$(echo $$DB_URL | sed -E 's|postgresql://([^:]+):.*|\1|'); \
+		DB_PASS=$$(echo $$DB_URL | sed -E 's|postgresql://[^:]+:([^@]+)@.*|\1|'); \
+		DB_NAME=$$(echo $$DB_URL | sed -E 's|.*/([^?]+).*|\1|'); \
+		ORPHAN_PRINTS=$$(PGPASSWORD=$$DB_PASS psql -h $$DB_HOST -p $$DB_PORT -U $$DB_USER -d $$DB_NAME -t -c "\
 		SELECT COUNT(*) FROM gm_print_jobs WHERE order_id NOT IN (SELECT id FROM gm_orders);" | tr -d ' '); \
-	if [ "$$ORPHAN_PRINTS" != "0" ]; then \
-		echo "❌ FALHA: Orphan print jobs = $$ORPHAN_PRINTS"; exit 1; \
-	else \
-		echo "✅ Orphan print jobs: 0"; \
-	fi
+		if [ "$$ORPHAN_PRINTS" != "0" ]; then \
+			echo "❌ FALHA: Orphan print jobs = $$ORPHAN_PRINTS"; exit 1; \
+		else \
+			echo "✅ Orphan print jobs: 0"; \
+		fi
 	@echo ""
 	@echo "✅ TODOS OS ASSERTS PASSARAM"
 
@@ -651,17 +750,26 @@ simulate-24h-large:
 	@echo "   MEGA OPERATIONAL SIMULATOR - LARGE PROFILES"
 	@echo "   Inclui perfis: ambulante, pequeno, médio, GRANDE"
 	@echo "════════════════════════════════════════════════════════════════"
-	@PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -c "\
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		DB_HOST=$$(echo $$DB_URL | sed -E 's|.*@([^:]+).*|\1|'); \
+		DB_PORT=$$(echo $$DB_URL | sed -E 's|.*:([0-9]+)/.*|\1|'); \
+		DB_USER=$$(echo $$DB_URL | sed -E 's|postgresql://([^:]+):.*|\1|'); \
+		DB_PASS=$$(echo $$DB_URL | sed -E 's|postgresql://[^:]+:([^@]+)@.*|\1|'); \
+		DB_NAME=$$(echo $$DB_URL | sed -E 's|.*/([^?]+).*|\1|'); \
+		PGPASSWORD=$$DB_PASS psql -h $$DB_HOST -p $$DB_PORT -U $$DB_USER -d $$DB_NAME -c "\
 		DELETE FROM gm_task_escalations; DELETE FROM gm_shift_blocks; \
 		DELETE FROM gm_kds_events; DELETE FROM gm_offline_actions; \
 		DELETE FROM gm_order_items; DELETE FROM gm_orders; \
 		DELETE FROM gm_print_jobs; DELETE FROM gm_events; DELETE FROM gm_tasks;" > /dev/null 2>&1
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/print-emulator.js > /dev/null 2>&1 &
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/kds-kitchen.js > /dev/null 2>&1 &
 	@sleep 2
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		MODE=small DURATION_MINUTES=5 \
 		node simulators/simulate-24h.js
 	@pkill -f "print-emulator.js" 2>/dev/null || true
@@ -674,17 +782,26 @@ simulate-24h-giant:
 	@echo "   MEGA OPERATIONAL SIMULATOR - GIANT PROFILES"
 	@echo "   Inclui perfis: pequeno, médio, GRANDE, GIGANTE"
 	@echo "════════════════════════════════════════════════════════════════"
-	@PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -c "\
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		DB_HOST=$$(echo $$DB_URL | sed -E 's|.*@([^:]+).*|\1|'); \
+		DB_PORT=$$(echo $$DB_URL | sed -E 's|.*:([0-9]+)/.*|\1|'); \
+		DB_USER=$$(echo $$DB_URL | sed -E 's|postgresql://([^:]+):.*|\1|'); \
+		DB_PASS=$$(echo $$DB_URL | sed -E 's|postgresql://[^:]+:([^@]+)@.*|\1|'); \
+		DB_NAME=$$(echo $$DB_URL | sed -E 's|.*/([^?]+).*|\1|'); \
+		PGPASSWORD=$$DB_PASS psql -h $$DB_HOST -p $$DB_PORT -U $$DB_USER -d $$DB_NAME -c "\
 		DELETE FROM gm_task_escalations; DELETE FROM gm_shift_blocks; \
 		DELETE FROM gm_kds_events; DELETE FROM gm_offline_actions; \
 		DELETE FROM gm_order_items; DELETE FROM gm_orders; \
 		DELETE FROM gm_print_jobs; DELETE FROM gm_events; DELETE FROM gm_tasks;" > /dev/null 2>&1
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/print-emulator.js > /dev/null 2>&1 &
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		node simulators/kds-kitchen.js > /dev/null 2>&1 &
 	@sleep 2
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		MODE=enterprise DURATION_MINUTES=7 \
 		node simulators/simulate-24h.js
 	@pkill -f "print-emulator.js" 2>/dev/null || true
@@ -702,12 +819,19 @@ simulate-failfast:
 	@echo "   Validação rápida: 1h simulada em ~1 min real"
 	@echo "   Para no primeiro erro de integridade"
 	@echo "════════════════════════════════════════════════════════════════"
-	@PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -c "\
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		DB_HOST=$$(echo $$DB_URL | sed -E 's|.*@([^:]+).*|\1|'); \
+		DB_PORT=$$(echo $$DB_URL | sed -E 's|.*:([0-9]+)/.*|\1|'); \
+		DB_USER=$$(echo $$DB_URL | sed -E 's|postgresql://([^:]+):.*|\1|'); \
+		DB_PASS=$$(echo $$DB_URL | sed -E 's|postgresql://[^:]+:([^@]+)@.*|\1|'); \
+		DB_NAME=$$(echo $$DB_URL | sed -E 's|.*/([^?]+).*|\1|'); \
+		PGPASSWORD=$$DB_PASS psql -h $$DB_HOST -p $$DB_PORT -U $$DB_USER -d $$DB_NAME -c "\
 		DELETE FROM gm_kds_events; DELETE FROM gm_task_escalations; \
 		DELETE FROM gm_shift_blocks; DELETE FROM gm_offline_actions; \
 		DELETE FROM gm_order_items; DELETE FROM gm_print_jobs; \
 		DELETE FROM gm_events; DELETE FROM gm_tasks; DELETE FROM gm_orders;" > /dev/null 2>&1
-	@DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+	@DB_URL=$${DATABASE_URL:-$(DB_URL_DEFAULT)}; \
+		export DATABASE_URL=$$DB_URL; \
 		MODE=failfast DURATION_MINUTES=1 \
 		node simulators/simulate-failfast.js || (echo "\n❌ FAIL-FAST: Validação falhou" && exit 1)
 	@echo ""

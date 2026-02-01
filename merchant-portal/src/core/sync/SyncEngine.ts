@@ -1,6 +1,8 @@
+import { classifyFailure } from '../errors/FailureClassifier'; // CORE_FAILURE_MODEL: critical → dead_letter
 import { DbWriteGate } from '../governance/DbWriteGate';
+import { createOrderAtomic } from '../infra/CoreOrdersApi';
+import { getBackendType, BackendType } from '../infra/backendAdapter';
 import { Logger } from '../logger';
-import { supabase } from '../supabase';
 import { PaymentEngine } from '../tpv/PaymentEngine';
 import { ConflictResolver } from './ConflictResolver';
 import { IndexedDBQueue } from './IndexedDBQueue';
@@ -193,6 +195,14 @@ class SyncEngineClass {
 
         } catch (err: any) {
             const currentAttempts = (item.attempts || 0) + 1;
+            const { class: failureClass } = classifyFailure(err);
+
+            // CORE_FAILURE_MODEL: critical → dead_letter (no infinite retry); acceptable/degradation → retry with backoff
+            if (failureClass === 'critical') {
+                Logger.error(`[SyncEngine] Item ${item.id} classified CRITICAL. Moving to Dead Letter. Error: ${err?.message}`);
+                await IndexedDBQueue.updateStatus(item.id, 'dead_letter', err?.message || 'Critical failure');
+                return;
+            }
 
             if (currentAttempts > MAX_RETRIES) {
                 Logger.error(`[SyncEngine] Item ${item.id} reached max retries (${MAX_RETRIES}). Moving to Dead Letter. Error: ${err.message}`);
@@ -200,17 +210,14 @@ class SyncEngineClass {
                 return;
             }
 
-            // Calculate Retry
             const nextRetry = Date.now() + calculateNextRetry(item.attempts || 0);
-
             await IndexedDBQueue.updateStatus(
                 item.id,
                 'failed',
                 err.message || 'Unknown error',
                 nextRetry
             );
-
-            Logger.warn(`[SyncEngine] Item ${item.id} failed. Retrying in ${(nextRetry - Date.now()) / 1000}s`, err);
+            Logger.warn(`[SyncEngine] Item ${item.id} failed (${failureClass}). Retrying in ${(nextRetry - Date.now()) / 1000}s`, err);
         }
     }
 
@@ -253,27 +260,34 @@ class SyncEngineClass {
 
     /**
      * Handler: ORDER_CREATE
-     * Uses create_order_atomic RPC which MUST handle idempotency via localId
+     * Core Orders API — Docker Core quando ativo; totais calculados pelo Core (FINANCIAL_CORE_VIOLATION_AUDIT remediated).
      */
     private async syncOrderCreate(payload: any) {
-        // Ensure payload has minimal required fields for RPC
         if (!payload.items || payload.items.length === 0) {
             throw new Error('Order has no items');
         }
 
-        // Call RPC
-        const { data, error } = await supabase.rpc('create_order_atomic', {
+        const rpcItems = (payload.items || []).map((item: any) => ({
+            product_id: item.product_id ?? item.id ?? null,
+            name: item.name ?? '',
+            quantity: Number(item.quantity) || 1,
+            unit_price: Number(item.unit_price ?? item.price ?? 0)
+        }));
+
+        const { data, error } = await createOrderAtomic({
             p_restaurant_id: payload.restaurantId,
-            p_table_number: payload.tableNumber,
-            p_items: payload.items,
-            p_source: payload.source || 'offline_sync',
+            p_items: rpcItems,
+            p_payment_method: payload.payment_method ?? 'cash',
             p_sync_metadata: {
                 localId: payload.localId,
-                syncedAt: new Date().toISOString()
+                syncedAt: new Date().toISOString(),
+                origin: payload.source || 'offline_sync',
+                table_number: payload.tableNumber,
+                table_id: payload.tableId
             }
         });
 
-        if (error) throw error;
+        if (error) throw new Error(error.message);
         return data;
     }
 
@@ -327,21 +341,18 @@ class SyncEngineClass {
 
         // Replicate DbWriteGate logic from OrderContext
         if (action === 'add_item' && payload.items) {
-            // Recalculate total? In async mode, we might trust the payload's total
-            // or just append items safely.
-            // Using DbWriteGate to ensure consistency.
-
             await DbWriteGate.insert('SyncEngine', 'gm_order_items', payload.items.map((item: any) => ({
                 order_id: orderId,
                 product_id: item.id || item.product_id,
                 name_snapshot: item.name,
-                price_snapshot: Math.round(item.price * 100), // Ensure cents
+                price_snapshot: Math.round(item.price * 100),
                 quantity: item.quantity,
                 subtotal_cents: Math.round(item.price * item.quantity * 100)
             })), { tenantId: restaurantId });
 
-            // Update header total if provided
-            if (payload.total !== undefined) {
+            // CORE_FINANCIAL_SOVEREIGNTY: Em modo Docker não atualizamos total_cents a partir do cliente (payload.total).
+            // Totais são autoridade do Core; sync não é fonte de verdade de totais.
+            if (payload.total !== undefined && getBackendType() !== BackendType.docker) {
                 await DbWriteGate.update('SyncEngine', 'gm_orders', {
                     total_cents: Math.round(payload.total * 100),
                     updated_at: new Date().toISOString()

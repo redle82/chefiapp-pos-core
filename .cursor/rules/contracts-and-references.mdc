@@ -1,0 +1,31 @@
+---
+description: Regra de ouro para contratos e referências a ficheiros — evita "Create File" fantasma no Cursor
+alwaysApply: true
+---
+
+# Contratos e referências a ficheiros
+
+## Regra de ouro
+
+**Do not reference files that do not exist.**
+
+If a new document is required, explicitly create it with full content.
+
+## Porquê
+
+Prompts longos com referências a `.md` (ex.: `@docs/architecture/CORE_X.md`) fazem o Cursor mostrar "Create File" ao clicar se o ficheiro **não existir no disco**. Isso não é bug — é referência sem ficheiro.
+
+## Como cumprir
+
+1. **Não misturar no mesmo prompt:** "criar contrato" + "referenciar contrato" + "implementar contrato". Usar 3 fases: DECISÃO (conceito, sem path) → CONTRATO (Create file explícito com path e conteúdo) → ENFORCEMENT (implementar o que está no doc).
+
+2. **Só referenciar ficheiros que já existem.** Antes de mencionar `FOO.md`, confirmar que existe em `docs/`, `docs/architecture/` ou `docs/contracts/`.
+
+3. **Criar documentos um a um.** Prompt explícito: "Create file: `docs/architecture/FOO.md`" com conteúdo completo ou esqueleto.
+
+## Auditoria
+
+- `./scripts/audit-md-references.sh` — lista .md referenciados em docs que não existem.
+- `./scripts/audit-contracts-referenced.sh` — documentos canónicos + CORE_CONTRACT_INDEX vs disco.
+
+Checklist completo: `docs/PROMPT_BEFORE_PASTE_CHECKLIST.md`.

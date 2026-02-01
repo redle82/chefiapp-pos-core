@@ -4,7 +4,7 @@
 # Complete stack with all services, database, and networking
 # ==============================================================================
 
-version: '3.8'
+version: "3.8"
 
 services:
   # ============================================================================
@@ -31,7 +31,11 @@ services:
       # Optional: Custom PostgreSQL config
       # - ./postgres.conf:/etc/postgresql/postgresql.conf:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-test_user} -d ${POSTGRES_DB:-chefiapp_core_test}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-test_user} -d ${POSTGRES_DB:-chefiapp_core_test}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -46,6 +50,26 @@ services:
       - DAC_OVERRIDE
       - SETGID
       - SETUID
+
+  # ============================================================================
+  # POSTGREST - API Gateway for the core database (port 3001)
+  # ============================================================================
+  postgrest:
+    image: postgrest/postgrest:v12.0.2
+    container_name: chefiapp-core-postgrest
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      PGRST_DB_URI: postgresql://${POSTGRES_USER:-test_user}:${POSTGRES_PASSWORD:-test_password}@db:5432/${POSTGRES_DB:-chefiapp_core_test}
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: ${POSTGRES_USER:-test_user}
+      PGRST_JWT_SECRET: ${VITE_SUPABASE_ANON_KEY:-chefiapp-core-secret-key-min-32-chars-long}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - chefiapp-network
 
   # ============================================================================
   # WEBHOOK SERVER - Stripe webhook handler (port 3000)
@@ -73,7 +97,15 @@ services:
         condition: service_healthy
     command: ["node", "dist/server/webhook-server.js"]
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -117,7 +149,15 @@ services:
         condition: service_healthy
     command: ["node", "dist/server/billing-webhook-server.js"]
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3099/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3099/health",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -160,7 +200,15 @@ services:
         condition: service_healthy
     command: ["node", "dist/server/subscription-management-server.js"]
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4310/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:4310/health",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -202,7 +250,15 @@ services:
         condition: service_healthy
     command: ["node", "dist/server/web-module-api-server.js"]
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4320/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:4320/health",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -229,8 +285,8 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@chefiapp.local}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
     ports:
       - "${PGADMIN_PORT:-5050}:80"
     depends_on:

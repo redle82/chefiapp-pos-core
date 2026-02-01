@@ -268,6 +268,7 @@ describe('TASK-1.3.4: Concurrency Tests (Lost Update)', () => {
 
     // Start transition (creates transaction internally)
     const transitionPromise = executor.transition({
+      tenantId: 'test-tenant',
       entity: 'ORDER',
       entityId: 'order-1',
       event: 'FINALIZE',

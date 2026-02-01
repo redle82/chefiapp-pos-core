@@ -1,4 +1,4 @@
-import { useTables } from '../../TPV/context/TableContext';
+import { useAppStaffTables } from '../hooks/useAppStaffTables';
 import { TablePanel } from '../../Waiter/TablePanel';
 import { TableStatus } from '../../Waiter/types';
 import { useKeyboardShortcuts } from '../../../core/hooks/useKeyboardShortcuts';
@@ -46,8 +46,15 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({ tasks }) => {
     const [activeTab, setActiveTab] = useState('tables');
     const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
 
-    // Real Table Data
-    const { tables, loading } = useTables();
+    // FASE 3.3: Isolado - AppStaff não depende de TPV
+    // TODO: Obter restaurantId do contexto
+    const { tables: appStaffTables, loading } = useAppStaffTables(null); // TODO: passar restaurantId
+    // Converter CoreTable para formato esperado
+    const tables = appStaffTables.map(table => ({
+      id: table.id,
+      number: table.number,
+      status: table.status,
+    }));
 
     // Mapping Keyboard Shortcuts
     useKeyboardShortcuts({

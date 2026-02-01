@@ -1,6 +1,5 @@
 import { Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Skeleton } from '../ui/design-system';
 import { useSupabaseAuth } from '../core/auth/useSupabaseAuth';
 import { getTabIsolated, setTabIsolated } from '../core/storage/TabIsolatedStorage';
 

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { KernelContext } from '../../core/kernel/KernelContext'; // Sovereign Dependency
+import { getErrorMessage } from '../../core/errors/ErrorMessages'; // CORE_FAILURE_MODEL: UI shows Core message
 
 // --- The Living Menu Schema ---
 
@@ -34,33 +35,38 @@ interface ProductContextState {
     addProduct: (product: Omit<Product, 'usageCount' | 'firstUsedAt' | 'lastUsedAt'>) => void;
     recordUsage: (productId: string) => void;
     promoteProduct: (productId: string) => void;
-    // Query Helpers
-    getMenu: () => Product[]; // Returns only permanent products (for public menu)
-    getAllProducts: () => Product[]; // Returns everything (for TPV search)
+    getMenu: () => Product[];
+    getAllProducts: () => Product[];
     initializeFromContract: (contract: any) => void;
     loading: boolean;
+    /** CORE_FAILURE_MODEL: set when addProduct fails with critical; UI must show, not hide */
+    lastError: string | null;
+    clearLastError: () => void;
 }
 
 const ProductContext = createContext<ProductContextState | undefined>(undefined);
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    // 0. Kernel Injection (Sovereignty)
-    const { kernel } = useContext(KernelContext) || {};
+    // 0. Kernel Injection (Sovereignty). Prefer executeSafe for CORE_FAILURE_MODEL.
+    const ctx = useContext(KernelContext);
+    const kernel = ctx?.kernel ?? undefined;
+    const executeSafe = ctx?.executeSafe;
 
     // 1. Truth State
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const [lastError, setLastError] = useState<string | null>(null);
 
-    // 2. Real Connection (Supabase)
+    // 2. Real Connection (Docker Core via ProductReader)
     useEffect(() => {
         let mounted = true;
         const fetchProducts = async () => {
             try {
-                // Dynamic Import for Safety
-                const { supabase } = await import('../../core/supabase');
-
-                // Fetch Menu Items from real tables
-                const { data, error } = await supabase
+                // FASE 3.5: Usa ProductReader (dockerCoreClient) em vez de supabase direto
+                // Por enquanto, busca produtos sem filtro de restaurante (compatibilidade)
+                // TODO: Obter restaurantId do contexto quando disponível e usar readProductsByRestaurant
+                const { dockerCoreClient } = await import('../../core-boundary/docker-core/connection');
+                const { data, error } = await dockerCoreClient
                     .from('gm_products')
                     .select('*, gm_menu_categories(name)')
                     .eq('available', true);
@@ -68,7 +74,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
                 if (error) throw error;
 
                 if (mounted && data) {
-                    console.log('[ProductContext] Loaded from Supabase (gm_products):', data.length);
+                    console.log('[ProductContext] Loaded from Docker Core (gm_products):', data.length);
                     const mapped: Product[] = data.map((d: any) => ({
                         id: d.id,
                         name: d.name,
@@ -100,8 +106,10 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     // --- Actions (Optimistic Updates + Sync) ---
 
+    const clearLastError = () => setLastError(null);
+
     const addProduct = async (input: Omit<Product, 'usageCount' | 'firstUsedAt' | 'lastUsedAt'>) => {
-        // 1. Optimistic Update (UI Feedback)
+        setLastError(null); // Clear on retry
         const tempId = crypto.randomUUID();
         const newProduct: Product = {
             ...input,
@@ -112,38 +120,49 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         };
         setProducts(prev => [...prev, newProduct]);
 
-        // 2. Sovereign Persist (Kernel Law 1)
-        try {
-            if (!kernel) {
-                console.error('[ProductContext] Kernel not available for Sovereign Write');
+        if (!executeSafe && !kernel) {
+            console.error('[ProductContext] Kernel not available for Sovereign Write');
+            setProducts(prev => prev.filter(p => p.id !== tempId));
+            setLastError('Sistema não disponível. Tente novamente.');
+            return;
+        }
+
+        const payload = {
+            entity: 'PRODUCT',
+            entityId: tempId,
+            event: 'CREATE',
+            restaurantId: null as string | null,
+            payload: {
+                name: input.name,
+                priceCents: Math.round(input.price * 100),
+                trackStock: input.trackStock || false,
+                stockQuantity: input.stockQuantity || 0,
+                categoryId: null
+            }
+        };
+
+        if (executeSafe) {
+            const { getTabIsolated } = await import('../../core/storage/TabIsolatedStorage');
+            (payload as any).restaurantId = getTabIsolated('chefiapp_restaurant_id');
+            const res = await executeSafe(payload);
+            if (!res.ok) {
+                setProducts(prev => prev.filter(p => p.id !== tempId));
+                if (res.failureClass === 'critical') {
+                    setLastError(getErrorMessage(res.error) || 'Erro ao gravar produto. Não continue como se nada fosse.');
+                }
                 return;
             }
+            return;
+        }
 
+        try {
             const { getTabIsolated } = await import('../../core/storage/TabIsolatedStorage');
-            const restaurantId = getTabIsolated('chefiapp_restaurant_id');
-
-            await kernel.execute({
-                entity: 'PRODUCT',
-                entityId: tempId, // Frontend Generated ID (Sovereign)
-                event: 'CREATE',
-                restaurantId,
-                payload: {
-                    name: input.name,
-                    priceCents: Math.round(input.price * 100),
-                    trackStock: input.trackStock || false,
-                    stockQuantity: input.stockQuantity || 0,
-                    categoryId: null // Explicitly null for now
-                }
-            });
-
-            console.log('[ProductContext] Sovereign Product Created:', tempId);
-
-            // No need to fix ID, as we dictated it!
-
+            (payload as any).restaurantId = getTabIsolated('chefiapp_restaurant_id');
+            await kernel!.execute(payload);
         } catch (e) {
             console.error('[ProductContext] Sovereign Save Failed:', e);
-            // Revert state on failure
             setProducts(prev => prev.filter(p => p.id !== tempId));
+            setLastError(getErrorMessage(e));
         }
     };
 
@@ -182,7 +201,9 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
             getMenu,
             getAllProducts,
             initializeFromContract,
-            loading
+            loading,
+            lastError,
+            clearLastError
         }}>
             {children}
         </ProductContext.Provider>

@@ -27,6 +27,7 @@ import { useOrders } from '../TPV/context/OrderContextReal';
 import { useMenuItems } from '../../hooks/useMenuItems';
 import { useTenant } from '../../core/tenant/TenantContext';
 import { useToast } from '../../ui/design-system';
+import { supabase } from '../../core/supabase';
 
 import { useContextEngine } from '../../core/context';
 
@@ -207,6 +208,30 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
     setSending(true);
 
     try {
+      // Obter autoria (user_id e role) para divisão de conta
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id || null;
+      
+      // Detectar contexto e role
+      const isAppStaff = window.location.pathname.includes('/app/staff') || window.location.pathname.includes('/garcom');
+      let userRole: string = 'waiter'; // Default
+      let orderOrigin: string = 'CAIXA';
+      
+      if (isAppStaff) {
+        // No AppStaff, usar role do contexto (waiter, manager, owner)
+        // Se role do contexto engine for manager/owner, usar isso
+        if (role === 'manager') {
+          userRole = 'manager';
+          orderOrigin = 'APPSTAFF_MANAGER';
+        } else if (role === 'owner') {
+          userRole = 'owner';
+          orderOrigin = 'APPSTAFF_OWNER';
+        } else {
+          userRole = 'waiter';
+          orderOrigin = 'APPSTAFF';
+        }
+      }
+
       // 1. Check for Active Order on Table (Already computed)
       if (activeOrder) {
         // Case A: Add to Existing Order
@@ -222,6 +247,7 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
         ));
       } else {
         // Case B: Create New Order
+        // Incluir autoria em cada item para divisão de conta
         await createOrder({
           tableId: table.id,
           tableNumber: table.number,
@@ -231,8 +257,17 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
             name: item.productName,
             price: item.price,
             quantity: item.quantity,
-            notes: item.comments.join(', ')
-          }))
+            notes: item.comments.join(', '),
+            // Autoria do item (para divisão de conta)
+            created_by_user_id: userId,
+            created_by_role: userRole
+          })),
+          syncMetadata: {
+            origin: orderOrigin,
+            // Incluir autoria também no sync_metadata para referência
+            created_by_user_id: userId,
+            created_by_role: userRole
+          }
         });
       }
 

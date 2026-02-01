@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { colors, radius, spacing, fontSize, fontWeight } from '@/constants/designTokens';
 import { useAuth } from '@/context/AuthContext';
 import { useAppStaff } from '@/context/AppStaffContext';
 import { RoleSelector } from '@/components/RoleSelector';
@@ -47,8 +48,8 @@ export default function AccountScreen() {
           </Text>
         </View>
         <Text style={styles.email}>{user?.email || 'Usuário'}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, backgroundColor: '#2c2c2e', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 }}>
-          <Text style={{ fontSize: 16, color: '#fff' }}>{roleConfig.emoji} {roleConfig.label}</Text>
+        <View style={styles.roleBadge}>
+          <Text style={styles.roleBadgeText}>{roleConfig.emoji} {roleConfig.label}</Text>
         </View>
       </View>
 
@@ -101,74 +102,87 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
-    padding: 24,
+    backgroundColor: colors.background,
+    padding: spacing[6],
   },
   header: {
     alignItems: 'center',
-    marginBottom: 48,
-    marginTop: 24,
+    marginBottom: spacing[12],
+    marginTop: spacing[6],
   },
   avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#32d74b',
+    backgroundColor: colors.success,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing[4],
   },
   avatarText: {
-    color: '#000',
-    fontSize: 32,
-    fontWeight: 'bold',
+    color: colors.textInverse,
+    fontSize: fontSize.display,
+    fontWeight: fontWeight.bold,
   },
   email: {
-    color: '#fff',
-    fontSize: 16,
+    color: colors.textPrimary,
+    fontSize: fontSize.base,
+  },
+  roleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing[2],
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: radius.lg,
+  },
+  roleBadgeText: {
+    fontSize: fontSize.base,
+    color: colors.textPrimary,
   },
   roleButton: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing[4],
+    marginBottom: spacing[6],
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: colors.border,
   },
   roleButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
+    color: colors.textPrimary,
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    marginBottom: spacing[1],
   },
   roleButtonSubtext: {
-    color: '#888',
-    fontSize: 14,
+    color: colors.textSecondary,
+    fontSize: fontSize.sm,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: spacing[8],
     alignItems: 'center',
   },
   sectionTitle: {
-    color: '#888',
-    fontSize: 14,
+    color: colors.textSecondary,
+    fontSize: fontSize.sm,
   },
   version: {
-    color: '#666',
-    fontSize: 12,
-    marginTop: 4,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    marginTop: spacing[1],
   },
   logoutButton: {
-    backgroundColor: '#ff3b30',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.error,
+    borderRadius: radius.lg,
+    padding: spacing[4],
     alignItems: 'center',
     marginTop: 'auto',
-    marginBottom: 32,
+    marginBottom: spacing[8],
   },
   logoutText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.textPrimary,
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
   },
 });

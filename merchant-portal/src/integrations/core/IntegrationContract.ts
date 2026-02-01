@@ -1,27 +1,28 @@
 /**
  * IntegrationContract — Contrato universal para adapters
- * 
+ *
  * Regra de ouro:
  * - Adapters NÃO importam TPV, Staff ou Inventory
  * - Adapters APENAS reagem a eventos
  * - Falhas são isoladas (não quebram o sistema)
  */
 
-import type { IntegrationEvent } from '../types/IntegrationEvent';
-import type { IntegrationStatus } from '../types/IntegrationStatus';
+import type { IntegrationEvent } from "../types/IntegrationEvent";
+import type { IntegrationStatus } from "../types/IntegrationStatus";
 
 // ─────────────────────────────────────────────────────────────
 // CAPABILITIES
 // ─────────────────────────────────────────────────────────────
 
 export type IntegrationCapability =
-  | 'orders.receive'      // Pode receber pedidos externos
-  | 'orders.send'         // Pode enviar pedidos para fora
-  | 'orders.status'       // Pode atualizar status de pedidos
-  | 'menu.sync'           // Pode sincronizar cardápio
-  | 'delivery.track'      // Pode rastrear entregas
-  | 'payments.process'    // Pode processar pagamentos
-  | 'analytics.export';   // Pode exportar dados
+  | "orders.receive" // Pode receber pedidos externos (ex.: WhatsApp)
+  | "orders.send" // Pode enviar pedidos para fora
+  | "orders.status" // Pode atualizar status de pedidos
+  | "menu.sync" // Pode sincronizar cardápio
+  | "delivery.track" // Pode rastrear entregas
+  | "payments.process" // Pode processar pagamentos
+  | "analytics.export" // Pode exportar dados
+  | "notifications.send"; // Pode enviar notificações (ex.: WhatsApp order.ready, alertas)
 
 // ─────────────────────────────────────────────────────────────
 // ADAPTER INTERFACE
@@ -53,7 +54,7 @@ export interface IntegrationAdapter {
   /**
    * Handler de eventos — chamado pelo EventBus
    * Retorna void ou Promise<void>
-   * 
+   *
    * IMPORTANTE: Erros aqui são capturados e logados,
    * mas NÃO propagam para o resto do sistema.
    */
@@ -84,14 +85,17 @@ export interface IntegrationAdapter {
 
 export const hasCapability = (
   adapter: IntegrationAdapter,
-  capability: IntegrationCapability
+  capability: IntegrationCapability,
 ): boolean => adapter.capabilities.includes(capability);
 
 export const canReceiveOrders = (adapter: IntegrationAdapter): boolean =>
-  hasCapability(adapter, 'orders.receive');
+  hasCapability(adapter, "orders.receive");
 
 export const canSyncMenu = (adapter: IntegrationAdapter): boolean =>
-  hasCapability(adapter, 'menu.sync');
+  hasCapability(adapter, "menu.sync");
 
 export const canTrackDelivery = (adapter: IntegrationAdapter): boolean =>
-  hasCapability(adapter, 'delivery.track');
+  hasCapability(adapter, "delivery.track");
+
+export const canSendNotifications = (adapter: IntegrationAdapter): boolean =>
+  hasCapability(adapter, "notifications.send");

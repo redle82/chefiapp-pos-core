@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../supabase';
+import { getTableClient } from '../infra/coreOrSupabaseRpc';
 
 /**
- * HEADLESS HEALTH CHECK
+ * HEADLESS HEALTH CHECK (Core quando Docker — Fase 4)
  * Designed for UptimeRobot / Pingdom
  * Renders minimalistic JSON/Text to save bandwidth.
  */
@@ -14,8 +14,8 @@ export const HealthCheck: React.FC = () => {
         const check = async () => {
             const start = Date.now();
             try {
-                // Check DB Connection
-                const { error } = await supabase.from('kernel_registry').select('count').limit(1).single();
+                const client = await getTableClient();
+                const { error } = await client.from('kernel_registry').select('count').limit(1).single();
 
                 if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows", which implies connection is OK active
 

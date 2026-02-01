@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useOrders } from '../../TPV/context/OrderContext';
+import { useAppStaffOrders } from '../hooks/useAppStaffOrders';
 import { useStaff } from '../context/StaffContext';
 import type { Task } from '../context/StaffCoreTypes';
 
@@ -11,9 +11,21 @@ const sessionReflexCache = new Set<string>();
 
 export const useReflexEngine = (
     setTasks: React.Dispatch<React.SetStateAction<Task[]>>,
-    notifyActivity: () => void
+    notifyActivity: () => void,
+    restaurantId: string | null
 ) => {
-    const { orders } = useOrders();
+    // FASE 3.3: Isolado - AppStaff não depende de TPV
+    const { orders: appStaffOrders } = useAppStaffOrders(restaurantId);
+    // Converter para formato esperado
+    const orders = appStaffOrders.map(order => ({
+      id: order.id,
+      status: (order.status === 'OPEN' ? 'new' : 
+               order.status === 'IN_PREP' ? 'preparing' : 
+               order.status === 'READY' ? 'ready' : 
+               order.status === 'PAID' ? 'paid' : 
+               order.status === 'CANCELLED' ? 'cancelled' : 'new') as 'new' | 'preparing' | 'ready' | 'served' | 'paid' | 'partially_paid' | 'cancelled',
+      tableNumber: order.table_number || undefined,
+    }));
 
     useEffect(() => {
         if (!orders) return;

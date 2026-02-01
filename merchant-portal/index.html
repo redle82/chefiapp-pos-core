@@ -1,14 +1,21 @@
 <!doctype html>
 <html lang="en">
 <meta charset="UTF-8" />
+<link href="https://fonts.googleapis.com/css2?family=Hind:wght@600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet" />
 <link rel="icon"
 href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👨‍🍳</text></svg>">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="manifest" href="/manifest.json" />
 <meta name="theme-color" content="#121212" />
 <meta name="description"
-content="ChefIApp - Sistema Operacional para Restauração. Otimize sua operação com inteligência." />
-<title>ChefIApp - Merchant Portal</title>
+content="ChefIApp — TPV que SUGERE ações, não só registra. Veja como observa, pensa e sugere chamadas de ação para sua operação de restaurante. Experimente a demo em 5 minutos." />
+<title>ChefIApp — TPV que pensa antes do humano</title>
+<meta property="og:title" content="ChefIApp — TPV que pensa antes do humano" />
+<meta property="og:description" content="O único TPV que observa contexto operacional e sugere a próxima ação mais importante. Demo gratuita em 5 minutos." />
+<meta property="og:type" content="website" />
 <script>
 window.process = { env: {} };
 </script>
@@ -86,7 +93,7 @@ console.info('[SW] DEV preflight: unregister + clear caches (before bundle)');
 
 <body>
 <div id="root"></div>
-<script type="module" src="/src/main.tsx"></script>
+<script type="module" src="/src/main_debug.tsx?v=nuclear_v1"></script>
 </body>
 
 </html>

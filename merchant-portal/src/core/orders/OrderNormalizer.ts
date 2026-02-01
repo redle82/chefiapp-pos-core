@@ -1,5 +1,5 @@
 
-import { Order, OrderItem } from '../../pages/TPV/context/OrderTypes';
+import type { Order, OrderItem } from '../contracts';
 
 interface ExternalOrderPayload {
     id: string;

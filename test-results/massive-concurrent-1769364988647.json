@@ -1,0 +1,515 @@
+{
+  "phase": "A1 - Stress Lógico",
+  "totalOrders": 50,
+  "successfulOrders": 0,
+  "failedOrders": 50,
+  "constraintViolations": 0,
+  "avgLatencyMs": 0,
+  "p95LatencyMs": 0,
+  "maxLatencyMs": 0,
+  "ordersPerSecond": 0,
+  "duration": 113,
+  "orderResults": [
+    {
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 6,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 13,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 13,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 17,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 13,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 13,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 13,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 13,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 13,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 13,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 13,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 17,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 13,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 9,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 12,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 9,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 12,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 10,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 10,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 12,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 11,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 11,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 11,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 11,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 13,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 12,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 15,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 11,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 11,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 11,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 12,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 16,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 18,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    },
+    {
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "itemCount": 0,
+      "totalCents": 0,
+      "latencyMs": 18,
+      "success": false,
+      "error": "column \"payment_method\" of relation \"gm_orders\" does not exist",
+      "errorCode": "42703"
+    }
+  ],
+  "errors": []
+}

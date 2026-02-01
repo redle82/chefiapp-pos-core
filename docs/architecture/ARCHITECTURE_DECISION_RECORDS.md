@@ -1,13 +1,23 @@
 # 📐 Architecture Decision Records (ADR) - ChefIApp Multi-Tenant
 
 **Versão:** 1.0  
-**Data:** 2026-01-24
+**Data:** 2026-01-24  
+**Referência Livro:** Secção 11 — ADRs (T11-1). [CHECKLIST_FECHO_GAPS.md](../CHECKLIST_FECHO_GAPS.md)
 
 ---
 
 ## 🎯 OBJETIVO
 
 Documentar decisões arquiteturais importantes do roadmap multi-tenant para referência futura e evitar retrabalho.
+
+---
+
+## Como usar
+
+- **ADRs (este documento):** Decisões estruturadas por contexto, alternativas, consequências e validação (ADR-001 a ADR-010 e futuros).
+- **CORE_DECISION_LOG:** [CORE_DECISION_LOG.md](./CORE_DECISION_LOG.md) — Log datado de decisões operacionais e de contratos (quem, quando, impacto). Use para decisões que afectam contratos, topologia ou comportamento do sistema.
+- **Antes de implementar:** Ver se a decisão já está aqui ou no Decision Log.
+- **Depois de decidir:** Adicionar ADR novo (se for decisão arquitectural) ou entrada no CORE_DECISION_LOG (se for decisão operacional/contrato).
 
 ---
 

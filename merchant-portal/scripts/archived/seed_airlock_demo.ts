@@ -84,7 +84,7 @@ async function seedDemoData() {
     });
 
     console.log("✅ Seed Complete!");
-    console.log(`🌍 URL: http://localhost:5173/public/demo-grill`);
+    console.log(`🌍 URL: http://localhost:5175/public/demo-grill`);
 }
 
 seedDemoData();

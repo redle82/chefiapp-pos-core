@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { getTableClient } from '../infra/coreOrSupabaseRpc';
 import { Logger } from '../logger';
 
 interface EffectContext {
@@ -22,7 +22,8 @@ export async function persistProduct(context: EffectContext): Promise<void> {
 
     Logger.info('[Sovereignty] Projecting Product...', { entityId, name });
 
-    const { error } = await supabase.from('gm_products').upsert({
+    const client = await getTableClient();
+    const { error } = await client.from('gm_products').upsert({
         id: entityId,
         restaurant_id: restaurantId,
         name,
@@ -32,7 +33,7 @@ export async function persistProduct(context: EffectContext): Promise<void> {
         available: true,
         category_id: categoryId || null,
         updated_at: new Date().toISOString()
-    });
+    }, { onConflict: 'id' });
 
     if (error) {
         Logger.error('[Sovereignty] Product Projection Failed', error);
@@ -48,7 +49,8 @@ export async function persistProductArchive(context: EffectContext): Promise<voi
 
     Logger.info('[Sovereignty] Archiving Product...', { entityId });
 
-    const { error } = await supabase.from('gm_products').update({
+    const client = await getTableClient();
+    const { error } = await client.from('gm_products').update({
         available: false,
         updated_at: new Date().toISOString()
     }).eq('id', entityId);

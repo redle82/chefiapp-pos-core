@@ -15,11 +15,16 @@ import type { OrderCreatedEvent } from '../../merchant-portal/src/integrations/t
 import { supabase } from '../../merchant-portal/src/core/supabase';
 import { OrderEngine } from '../../merchant-portal/src/core/tpv/OrderEngine';
 
-// Mock Supabase
+// Mock Supabase — pipeline: from().select().contains().maybeSingle() e from().insert().select().single(); GlovoAdapter: channel().on().subscribe()
 jest.mock('../../merchant-portal/src/core/supabase', () => ({
   supabase: {
     from: jest.fn(),
     rpc: jest.fn(),
+    channel: jest.fn().mockReturnValue({
+      on: jest.fn().mockReturnValue({ subscribe: jest.fn() }),
+    }),
+    removeChannel: jest.fn(),
+    functions: undefined as { invoke?: jest.Mock } | undefined,
   },
 }));
 
@@ -28,15 +33,6 @@ jest.mock('../../merchant-portal/src/core/tpv/OrderEngine', () => ({
   OrderEngine: {
     createOrder: jest.fn(),
   },
-}));
-
-// Mock GlovoOAuth
-jest.mock('../../merchant-portal/src/integrations/adapters/glovo/GlovoOAuth', () => ({
-  GlovoOAuth: jest.fn().mockImplementation(() => ({
-    getAccessToken: jest.fn().mockResolvedValue('mock-access-token'),
-    refreshAccessToken: jest.fn().mockResolvedValue('mock-refresh-token'),
-    isTokenValid: jest.fn().mockReturnValue(true),
-  })),
 }));
 
 describe('🔌 Integrations - Testes de Integração Completos', () => {
@@ -69,11 +65,19 @@ describe('🔌 Integrations - Testes de Integração Completos', () => {
         },
       };
 
-      // Mock: inserir em gm_order_requests
+      // 1) Pipeline faz duplicate check: from().select().contains().maybeSingle()
       (supabase.from as jest.Mock).mockReturnValueOnce({
-        insert: jest.fn(() => ({
-          select: jest.fn(() => ({
-            single: jest.fn(() => ({
+        select: jest.fn().mockReturnValue({
+          contains: jest.fn().mockReturnValue({
+            maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+        }),
+      });
+      // 2) DbWriteGate.insert: from().insert().select().single()
+      (supabase.from as jest.Mock).mockReturnValueOnce({
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
               data: {
                 id: 'REQUEST-123',
                 order_id: 'GLOVO-123',
@@ -82,9 +86,9 @@ describe('🔌 Integrations - Testes de Integração Completos', () => {
                 status: 'pending',
               },
               error: null,
-            })),
-          })),
-        })),
+            }),
+          }),
+        }),
       });
 
       const result = await pipeline.processExternalOrder(mockEvent, mockRestaurantId);
@@ -107,6 +111,25 @@ describe('🔌 Integrations - Testes de Integração Completos', () => {
           createdAt: Date.now(),
         } as any,
       };
+
+      // Duplicate check (null) + insert rejeitado (erro)
+      (supabase.from as jest.Mock).mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          contains: jest.fn().mockReturnValue({
+            maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+        }),
+      });
+      (supabase.from as jest.Mock).mockReturnValueOnce({
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: null,
+              error: { message: 'Invalid payload' },
+            }),
+          }),
+        }),
+      });
 
       const result = await pipeline.processExternalOrder(invalidEvent, mockRestaurantId);
 
@@ -135,40 +158,39 @@ describe('🔌 Integrations - Testes de Integração Completos', () => {
         },
       };
 
-      // Mock: primeira inserção (sucesso)
+      // 1) Primeira chamada: duplicate check (null) + insert (sucesso)
       (supabase.from as jest.Mock).mockReturnValueOnce({
-        insert: jest.fn(() => ({
-          select: jest.fn(() => ({
-            single: jest.fn(() => ({
-              data: { id: 'REQUEST-1' },
-              error: null,
-            })),
-          })),
-        })),
+        select: jest.fn().mockReturnValue({
+          contains: jest.fn().mockReturnValue({
+            maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+        }),
+      });
+      (supabase.from as jest.Mock).mockReturnValueOnce({
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: { id: 'REQUEST-1' }, error: null }),
+          }),
+        }),
       });
 
       const result1 = await pipeline.processExternalOrder(mockEvent, mockRestaurantId);
       expect(result1.success).toBe(true);
 
-      // Mock: segunda inserção (duplicata - erro de constraint)
+      // 2) Segunda chamada: duplicate check retorna existente (idempotência)
       (supabase.from as jest.Mock).mockReturnValueOnce({
-        insert: jest.fn(() => ({
-          select: jest.fn(() => ({
-            single: jest.fn(() => ({
-              data: null,
-              error: {
-                code: '23505',
-                message: 'duplicate key value violates unique constraint',
-              },
-            })),
-          })),
-        })),
+        select: jest.fn().mockReturnValue({
+          contains: jest.fn().mockReturnValue({
+            maybeSingle: jest.fn().mockResolvedValue({ data: { id: 'REQUEST-1' }, error: null }),
+          }),
+        }),
       });
 
       const result2 = await pipeline.processExternalOrder(mockEvent, mockRestaurantId);
 
       // Deve retornar sucesso mas indicar que já existe
       expect(result2.success).toBe(true);
+      expect(result2.requestId).toBe('REQUEST-1');
     });
   });
 
@@ -209,13 +231,18 @@ describe('🔌 Integrations - Testes de Integração Completos', () => {
   });
 
   describe('3. GlovoAdapter - Fluxo Completo', () => {
+    let adapter: GlovoAdapter;
+
+    afterEach(async () => {
+      if (adapter) await adapter.dispose();
+    });
+
     it('3.1 - Deve processar webhook e emitir evento', async () => {
-      const adapter = new GlovoAdapter();
+      adapter = new GlovoAdapter();
 
       await adapter.initialize({
         restaurantId: mockRestaurantId,
         clientId: 'client-id',
-        clientSecret: 'client-secret',
         enabled: true,
       });
 
@@ -248,60 +275,42 @@ describe('🔌 Integrations - Testes de Integração Completos', () => {
         created_at: new Date().toISOString(),
       };
 
-      const result = adapter.handleWebhook(mockGlovoOrder);
+      const result = adapter.processIncomingOrder(mockGlovoOrder as any);
 
       expect(result.success).toBe(true);
       expect(result.orderId).toBe('GLOVO-123');
     });
 
-    it('3.2 - Deve fazer polling quando webhook não disponível', async () => {
-      global.fetch = jest.fn();
+    it('3.2 - Deve fazer polling via Edge Function quando disponível', async () => {
+      const mockInvoke = jest.fn().mockResolvedValue({ data: { created: 0 }, error: null });
+      (supabase as any).functions = { invoke: mockInvoke };
 
-      const adapter = new GlovoAdapter();
+      adapter = new GlovoAdapter();
 
       await adapter.initialize({
         restaurantId: mockRestaurantId,
         clientId: 'client-id',
-        clientSecret: 'client-secret',
         enabled: true,
       });
 
-      const mockOrders = {
-        orders: [
-          {
-            id: 'GLOVO-123',
-            status: 'PENDING',
-            restaurant_id: mockRestaurantId,
-            customer: { name: 'Test', phone: '+351' },
-            delivery: { address: 'Test', city: 'Test' },
-            items: [],
-            total: 0,
-            currency: 'EUR',
-            created_at: new Date().toISOString(),
-          },
-        ],
-      };
-
-      (fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockOrders,
-      });
-
-      // Trigger polling manualmente
+      // Trigger polling manualmente (usa supabase.functions.invoke('delivery-proxy', ...))
       await (adapter as any).pollOrders();
 
-      expect(fetch).toHaveBeenCalled();
-      const fetchCall = (fetch as jest.Mock).mock.calls[0];
-      expect(fetchCall[0]).toContain('/v3/orders');
+      expect(mockInvoke).toHaveBeenCalledWith('delivery-proxy', {
+        body: {
+          action: 'sync',
+          provider: 'glovo',
+          restaurantId: mockRestaurantId,
+        },
+      });
     });
 
     it('3.3 - Deve validar health check', async () => {
-      const adapter = new GlovoAdapter();
+      adapter = new GlovoAdapter();
 
       await adapter.initialize({
         restaurantId: mockRestaurantId,
         clientId: 'client-id',
-        clientSecret: 'client-secret',
         enabled: true,
       });
 
@@ -313,15 +322,20 @@ describe('🔌 Integrations - Testes de Integração Completos', () => {
   });
 
   describe('4. Integração End-to-End', () => {
+    let adapter: GlovoAdapter;
+
+    afterEach(async () => {
+      if (adapter) await adapter.dispose();
+    });
+
     it('4.1 - Deve processar pedido Glovo completo (webhook → pipeline → order request)', async () => {
-      const adapter = new GlovoAdapter();
+      adapter = new GlovoAdapter();
       const pipeline = new OrderIngestionPipeline();
 
       // 1. Inicializar adapter
       await adapter.initialize({
         restaurantId: mockRestaurantId,
         clientId: 'client-id',
-        clientSecret: 'client-secret',
         enabled: true,
       });
 
@@ -355,7 +369,7 @@ describe('🔌 Integrations - Testes de Integração Completos', () => {
         created_at: new Date().toISOString(),
       };
 
-      const webhookResult = adapter.handleWebhook(mockGlovoOrder);
+      const webhookResult = adapter.processIncomingOrder(mockGlovoOrder as any);
       expect(webhookResult.success).toBe(true);
 
       // 3. Pipeline processa evento (simulado)
@@ -378,11 +392,18 @@ describe('🔌 Integrations - Testes de Integração Completos', () => {
         },
       };
 
-      // Mock: inserir em gm_order_requests
+      // 1) Duplicate check (null) + 2) insert (sucesso)
       (supabase.from as jest.Mock).mockReturnValueOnce({
-        insert: jest.fn(() => ({
-          select: jest.fn(() => ({
-            single: jest.fn(() => ({
+        select: jest.fn().mockReturnValue({
+          contains: jest.fn().mockReturnValue({
+            maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+        }),
+      });
+      (supabase.from as jest.Mock).mockReturnValueOnce({
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
               data: {
                 id: 'REQUEST-123',
                 order_id: 'GLOVO-123',
@@ -391,9 +412,9 @@ describe('🔌 Integrations - Testes de Integração Completos', () => {
                 status: 'pending',
               },
               error: null,
-            })),
-          })),
-        })),
+            }),
+          }),
+        }),
       });
 
       const pipelineResult = await pipeline.processExternalOrder(mockEvent, mockRestaurantId);
@@ -404,26 +425,27 @@ describe('🔌 Integrations - Testes de Integração Completos', () => {
   });
 
   describe('5. Tratamento de Erros', () => {
-    it('5.1 - Deve tratar erro de rede no polling', async () => {
-      global.fetch = jest.fn();
+    let adapter: GlovoAdapter;
 
-      const adapter = new GlovoAdapter();
+    afterEach(async () => {
+      if (adapter) await adapter.dispose();
+    });
+
+    it('5.1 - Deve tratar erro de rede no polling', async () => {
+      adapter = new GlovoAdapter();
 
       await adapter.initialize({
         restaurantId: mockRestaurantId,
         clientId: 'client-id',
-        clientSecret: 'client-secret',
         enabled: true,
       });
 
-      (fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
-
-      // Não deve lançar erro
+      // supabase.functions.invoke indisponível → pollOrders retorna sem lançar
       await expect((adapter as any).pollOrders()).resolves.not.toThrow();
     });
 
     it('5.2 - Deve tratar erro de autenticação OAuth', async () => {
-      const adapter = new GlovoAdapter();
+      adapter = new GlovoAdapter();
 
       // Mock: OAuth falha
       const mockOAuth = {

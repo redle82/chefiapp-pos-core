@@ -5,6 +5,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { useAppStaff, StaffRole } from '@/context/AppStaffContext';
 import { useQualityMonitor } from '@/hooks/useQualityMonitor';
 import { SafetyProvider } from '@/context/SafetyContext';
+import { colors } from '@/constants/designTokens';
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
@@ -13,26 +14,24 @@ function TabBarIcon(props: {
   return <FontAwesome size={24} style={{ marginBottom: -3 }} {...props} />;
 }
 
-// Define available tabs
-type ScreenName = 'staff' | 'index' | 'orders' | 'kitchen' | 'bar' | 'manager' | 'two' | 'tables' | 'leaderboard' | 'achievements';
+// Define available tabs (index = redirect only, not in bar; cardapio = Menu)
+type ScreenName = 'staff' | 'index' | 'cardapio' | 'orders' | 'kitchen' | 'bar' | 'manager' | 'two' | 'tables' | 'leaderboard' | 'achievements';
 
-// Map Role -> Visible Tabs (these appear in the tab bar)
-// FASE 4: Adicionar leaderboard e achievements para roles que têm gamificação
+// Map Role -> Visible Tabs (CORE_APPSTAFF_CONTRACT §9: tarefas primeiro, depois mini KDS, mini TPV)
 const ROLE_TABS: Record<StaffRole, ScreenName[]> = {
-  waiter: ['staff', 'tables', 'index', 'orders', 'leaderboard', 'two'],
-  bartender: ['staff', 'bar', 'leaderboard', 'two'],
-  cook: ['staff', 'kitchen', 'leaderboard', 'two'],
-  chef: ['staff', 'kitchen', 'orders', 'leaderboard', 'two'],
-  manager: ['staff', 'manager', 'tables', 'orders', 'leaderboard', 'two'],
-  owner: ['staff', 'manager', 'tables', 'orders', 'leaderboard', 'two'],
+  waiter: ['staff', 'orders', 'kitchen', 'tables', 'cardapio', 'two'],
+  bartender: ['staff', 'bar', 'two'],
+  cook: ['staff', 'kitchen', 'two'],
+  chef: ['staff', 'kitchen', 'orders', 'two'],
+  manager: ['staff', 'manager', 'orders', 'tables', 'two'],
+  owner: ['staff', 'manager', 'orders', 'tables', 'two'],
   cleaning: ['staff', 'two'],
-  ambulante: ['staff', 'index', 'orders', 'two'],
-  // New Roles
-  vendor: ['staff', 'index', 'orders', 'two'],
-  supervisor: ['staff', 'manager', 'tables', 'orders', 'leaderboard', 'two'], // Partial manager access
-  cashier: ['staff', 'index', 'orders', 'leaderboard', 'two'], // Focused on POS (Index=Menu)
-  delivery: ['staff', 'orders', 'two'], // Focused on Orders
-  admin: ['staff', 'manager', 'tables', 'orders', 'leaderboard', 'two'], // Full access
+  ambulante: ['staff', 'orders', 'cardapio', 'two'],
+  vendor: ['staff', 'orders', 'cardapio', 'two'],
+  supervisor: ['staff', 'manager', 'orders', 'tables', 'two'],
+  cashier: ['staff', 'orders', 'cardapio', 'two'],
+  delivery: ['staff', 'orders', 'two'],
+  admin: ['staff', 'manager', 'orders', 'tables', 'two'],
 };
 
 export default function TabLayout() {
@@ -54,17 +53,18 @@ export default function TabLayout() {
   return (
     <SafetyProvider>
       <Tabs
+        initialRouteName="staff"
         screenOptions={{
-          tabBarActiveTintColor: '#d4a574',
-          tabBarInactiveTintColor: isDark ? '#666' : '#999',
+          tabBarActiveTintColor: colors.accent,
+          tabBarInactiveTintColor: isDark ? colors.textMuted : colors.textSecondary,
           tabBarStyle: {
-            backgroundColor: isDark ? '#0a0a0a' : '#fff',
-            borderTopColor: isDark ? '#1a1a1a' : '#e0e0e0',
+            backgroundColor: isDark ? colors.background : colors.backgroundLight,
+            borderTopColor: isDark ? colors.border : colors.borderLight,
           },
           headerStyle: {
-            backgroundColor: isDark ? '#0a0a0a' : '#fff',
+            backgroundColor: isDark ? colors.background : colors.backgroundLight,
           },
-          headerTintColor: isDark ? '#fff' : '#000',
+          headerTintColor: isDark ? colors.textPrimary : colors.background,
         }}>
 
         <Tabs.Screen
@@ -88,9 +88,15 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
+            tabBarButton: () => null,
+          }}
+        />
+        <Tabs.Screen
+          name="cardapio"
+          options={{
             title: 'Cardápio',
             tabBarIcon: ({ color }) => <TabBarIcon name="cutlery" color={color} />,
-            tabBarButton: getTabBarButton('index'),
+            tabBarButton: getTabBarButton('cardapio'),
           }}
         />
 

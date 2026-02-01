@@ -1,56 +1,54 @@
 /**
  * OrderContext Real - Usando OrderEngine
- * 
+ *
  * Substitui o mock por implementação real com persistência.
  * REALTIME-RELIABLE: Implementa Throttling, Polling Defensivo e Auto-Heal na reconexão.
  * ONLINE-ONLY: Modo offline apenas notifica visualmente. Operações de escrita requerem conexão.
  */
 
-import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
-import { OrderEngine, type Order as RealOrder, type OrderItemInput, type PaymentMethod } from '../../../core/tpv/OrderEngine';
-import { PaymentEngine } from '../../../core/tpv/PaymentEngine';
-import { CashRegisterEngine, type CashRegister } from '../../../core/tpv/CashRegister';
-import { InventoryEngine } from '../../../core/inventory/InventoryEngine';
-import { supabase } from '../../../core/supabase';
-import { tpvEventBus, type OrderExceptionPayload, type DecisionMadePayload } from '../../../core/tpv/TPVCentralEvents';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { InventoryEngine } from "../../../core/inventory/InventoryEngine";
+import {
+  CashRegisterEngine,
+  type CashRegister,
+} from "../../../core/tpv/CashRegister";
+import {
+  OrderEngine,
+  type OrderItemInput,
+  type PaymentMethod,
+  type Order as RealOrder,
+} from "../../../core/tpv/OrderEngine";
+import { PaymentEngine } from "../../../core/tpv/PaymentEngine";
+// DOCKER CORE: Usar dockerCoreClient em vez de supabase genérico
+import { dockerCoreClient } from "../../../core-boundary/docker-core/connection";
+import {
+  tpvEventBus,
+  type DecisionMadePayload,
+  type OrderExceptionPayload,
+} from "../../../core/tpv/TPVCentralEvents";
 
-import { useNetworkStatus } from '../../../core/sync/useNetworkStatus';
-import { Logger } from '../../../core/logger'; // Opus 6.0 Logger
-import type { Order, OrderItem } from './OrderTypes';
-import { useOfflineOrder } from './OfflineOrderContext';
-import { v4 as uuidv4 } from 'uuid';
-import { getTabIsolated, setTabIsolated, removeTabIsolated } from '../../../core/storage/TabIsolatedStorage';
-import { ReconnectManager } from '../../../core/realtime/ReconnectManager';
-import { OrderContext } from './OrderContext'; // 👈 IMPORT THE TOKEN
-import { useKernel } from '../../../core/kernel/KernelContext';
-import { isDevStableMode } from '../../../core/runtime/devStableMode';
-
-interface OrderContextType {
-    orders: Order[];
-    pendingExceptions: (OrderExceptionPayload & { eventId: string })[];
-    loading: boolean;
-    createOrder: (order: Partial<Order>) => Promise<Order>;
-    addItemToOrder: (orderId: string, item: OrderItemInput) => Promise<void>;
-    removeItemFromOrder: (orderId: string, itemId: string) => Promise<void>;
-    updateItemQuantity: (orderId: string, itemId: string, quantity: number) => Promise<void>;
-    performOrderAction: (orderId: string, action: string, payload?: any) => Promise<void>;
-    attachCustomer: (orderId: string, customerId: string) => Promise<void>; // Sprint 12
-    cancelOrder: (orderId: string, reason: string) => Promise<void>;
-    getActiveOrders: () => Promise<void>;
-    // Cash Register
-    openCashRegister: (openingBalanceCents: number) => Promise<void>;
-    closeCashRegister: (closingBalanceCents: number) => Promise<void>;
-    getOpenCashRegister: () => Promise<CashRegister | null>;
-    // Daily totals
-    getDailyTotal: () => Promise<number>;
-    // Connection status (for KDS and TPV)
-    isConnected: boolean;           // Network connectivity
-    isOffline: boolean;             // Network offline
-    realtimeStatus: string;         // Supabase realtime: 'SUBSCRIBED' | 'CLOSED' | 'CHANNEL_ERROR' | 'TIMED_OUT' | 'SUBSCRIBING'
-    lastRealtimeEvent: Date | null; // Timestamp do último evento realtime recebido
-
-    syncNow: () => Promise<void>;   // Forçar sync manual
-}
+import { v4 as uuidv4 } from "uuid";
+import type { Order, OrderItem } from "../../../core/contracts";
+import { classifyFailure } from "../../../core/errors/FailureClassifier";
+import { Logger } from "../../../core/logger"; // Opus 6.0 Logger
+import { ReconnectManager } from "../../../core/realtime/ReconnectManager";
+import {
+  getTabIsolated,
+  removeTabIsolated,
+  setTabIsolated,
+} from "../../../core/storage/TabIsolatedStorage";
+import { useOfflineOrder } from "./OfflineOrderContext";
+import { OrderContext } from "./OrderContextToken"; // FASE 3.4: Token isolado
+// DOCKER CORE: Removida dependência do Kernel - acesso direto ao Core
+// import { useKernel } from '../../../core/kernel/KernelContext'; // REMOVIDO
+import { isDevStableMode } from "../../../core/runtime/devStableMode";
 
 // REMOVE LOCAL CONTEXT CREATION
 // export const OrderContext = createContext<OrderContextType | undefined>(undefined);
@@ -61,1160 +59,1482 @@ interface OrderContextType {
 // Backend usa: status='PAID' OU payment_status='PAID'
 // Frontend usa: status='paid'
 function mapRealOrderToLocalOrder(realOrder: RealOrder): Order {
-    return {
-        id: realOrder.id,
-        tableNumber: realOrder.tableNumber,
-        tableId: realOrder.tableId,
-        // CRÍTICO: Verificar payment_status primeiro (fonte soberana)
-        status: mapStatusToLocal(realOrder.status, realOrder.paymentStatus),
-        items: realOrder.items.map(item => ({
-            id: item.id,
-            productId: item.productId,
-            name: item.nameSnapshot,
-            price: item.priceSnapshot, // já em centavos
-            quantity: item.quantity,
-            notes: item.notes,
-        })),
-        total: realOrder.totalCents, // já em centavos
-        createdAt: realOrder.createdAt,
-        updatedAt: realOrder.updatedAt,
-        customerId: (realOrder as any).customer_id, // Sprint 12
-    };
+  return {
+    id: realOrder.id,
+    tableNumber: realOrder.tableNumber,
+    tableId: realOrder.tableId,
+    // CRÍTICO: Verificar payment_status primeiro (fonte soberana)
+    status: mapStatusToLocal(realOrder.status, realOrder.paymentStatus),
+    items: realOrder.items.map((item) => ({
+      id: item.id,
+      productId: item.productId,
+      name: item.nameSnapshot,
+      price: item.priceSnapshot, // já em centavos
+      quantity: item.quantity,
+      notes: item.notes,
+    })),
+    total: realOrder.totalCents, // já em centavos
+    createdAt: realOrder.createdAt,
+    updatedAt: realOrder.updatedAt,
+    customerId: (realOrder as any).customer_id, // Sprint 12
+  };
 }
 
 // Mapear status considerando payment_status (fonte soberana)
-function mapStatusToLocal(status: string, paymentStatus?: string): Order['status'] {
-    // PRIORIDADE 1: Se payment_status = 'PAID', order está pago
-    if (paymentStatus === 'PAID') {
-        return 'paid';
-    }
+function mapStatusToLocal(
+  status: string,
+  paymentStatus?: string,
+): Order["status"] {
+  // PRIORIDADE 1: Se payment_status = 'PAID', order está pago
+  if (paymentStatus === "PAID") {
+    return "paid";
+  }
 
-    // SEMANA 2: Se payment_status = 'PARTIALLY_PAID', order está parcialmente pago
-    if (paymentStatus === 'PARTIALLY_PAID') {
-        return 'partially_paid';
-    }
+  // SEMANA 2: Se payment_status = 'PARTIALLY_PAID', order está parcialmente pago
+  if (paymentStatus === "PARTIALLY_PAID") {
+    return "partially_paid";
+  }
 
-    // PRIORIDADE 2: Se status = 'PAID', order está pago
-    if (status === 'PAID') {
-        return 'paid';
-    }
+  // PRIORIDADE 2: Se status = 'PAID', order está pago
+  if (status === "PAID") {
+    return "paid";
+  }
 
-    // PRIORIDADE 3: Mapear outros status
-    switch (status) {
-        case 'OPEN': return 'new';
-        case 'IN_PREP': return 'preparing';
-        case 'READY': return 'ready';
-        case 'CANCELLED': return 'cancelled';
-        default: return 'new';
-    }
+  // PRIORIDADE 3: Mapear outros status
+  switch (status) {
+    case "OPEN":
+      return "new";
+    case "IN_PREP":
+      return "preparing";
+    case "READY":
+      return "ready";
+    case "CANCELLED":
+      return "cancelled";
+    default:
+      return "new";
+  }
 }
 
-function mapLocalStatusToReal(status: Order['status']): RealOrder['status'] {
-    switch (status) {
-        case 'new': return 'OPEN';
-        case 'preparing': return 'IN_PREP';
-        case 'ready': return 'READY';
-        case 'served': return 'READY';
-        case 'paid': return 'PAID';
-        case 'partially_paid': return 'OPEN'; // SEMANA 2: Status ainda é OPEN, mas payment_status é PARTIALLY_PAID
-        case 'cancelled': return 'CANCELLED';
-        default: return 'OPEN';
-    }
+function mapLocalStatusToReal(status: Order["status"]): RealOrder["status"] {
+  switch (status) {
+    case "new":
+      return "OPEN";
+    case "preparing":
+      return "IN_PREP";
+    case "ready":
+      return "READY";
+    case "served":
+      return "READY";
+    case "paid":
+      return "PAID";
+    case "partially_paid":
+      return "OPEN"; // SEMANA 2: Status ainda é OPEN, mas payment_status é PARTIALLY_PAID
+    case "cancelled":
+      return "CANCELLED";
+    default:
+      return "OPEN";
+  }
 }
 
-export function OrderProvider({ children, restaurantId: propRestaurantId }: { children: ReactNode, restaurantId?: string }) {
-    const { kernel, status, isReady, executeSafe } = useKernel();
-    const [orders, setOrders] = useState<Order[]>([]);
-    // STEP 7: Inicializar loading como false (fail-closed - não assume kernel pronto)
-    const [loading, setLoading] = useState(false);
+export function OrderProvider({
+  children,
+  restaurantId: propRestaurantId,
+}: {
+  children: ReactNode;
+  restaurantId?: string;
+}) {
+  // DOCKER CORE: Removida dependência do Kernel - acesso direto ao Core
+  // const { kernel, status, isReady, executeSafe } = useKernel(); // REMOVIDO
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-    // STEP 7: Helper para verificar readiness
-    const isKernelReady = useCallback(() => {
-        return isReady && status === 'READY' && kernel !== null;
-    }, [isReady, status, kernel]);
-    // SOVEREIGN: restaurantId comes from Gate layer (TenantContext -> AppDomainWrapper)
-    const [restaurantId, setRestaurantId] = useState<string | null>(propRestaurantId || null);
-    const [operatorId, setOperatorId] = useState<string | null>(null);
-    const [cashRegisterId, setCashRegisterId] = useState<string | null>(null);
-    const [pendingExceptions, setPendingExceptions] = useState<(OrderExceptionPayload & { eventId: string })[]>([]);
+  // DOCKER CORE: Sem Kernel, sempre "pronto" para ações diretas
+  const isKernelReady = useCallback(() => {
+    return true; // Docker Core não precisa de Kernel
+  }, []);
+  // SOVEREIGN: restaurantId comes from Gate layer (TenantContext -> AppDomainWrapper)
+  const [restaurantId, setRestaurantId] = useState<string | null>(
+    propRestaurantId || null,
+  );
+  const [operatorId, setOperatorId] = useState<string | null>(null);
+  const [cashRegisterId, setCashRegisterId] = useState<string | null>(null);
+  const [pendingExceptions, setPendingExceptions] = useState<
+    (OrderExceptionPayload & { eventId: string })[]
+  >([]);
 
-    // Sync with prop changes (e.g., tenant switch)
-    useEffect(() => {
-        if (propRestaurantId && propRestaurantId !== restaurantId) {
-            setRestaurantId(propRestaurantId);
-        }
-    }, [propRestaurantId]);
+  // Sync with prop changes (e.g., tenant switch)
+  useEffect(() => {
+    if (propRestaurantId && propRestaurantId !== restaurantId) {
+      setRestaurantId(propRestaurantId);
+    }
+  }, [propRestaurantId]);
 
-    // === KDS HARDENING: Estado do Realtime ===
-    // MOTIVO: KDS precisa saber se está "cego" (sem eventos realtime)
-    const [realtimeStatus, setRealtimeStatus] = useState<string>('SUBSCRIBING');
-    const [lastRealtimeEvent, setLastRealtimeEvent] = useState<Date | null>(null);
-    const wasDisconnectedRef = useRef(false); // Para detectar reconexão
+  // === KDS HARDENING: Estado do Realtime ===
+  // MOTIVO: KDS precisa saber se está "cego" (sem eventos realtime)
+  const [realtimeStatus, setRealtimeStatus] = useState<string>("SUBSCRIBING");
+  const [lastRealtimeEvent, setLastRealtimeEvent] = useState<Date | null>(null);
+  const wasDisconnectedRef = useRef(false); // Para detectar reconexão
 
-    // Network status hook
-    // const { isOnline, isOffline } = useNetworkStatus(); // Replacing with OfflineContext
-    const { isOffline, addToQueue, updateOfflineOrder, queue: offlineQueue } = useOfflineOrder();
-    const isOnline = !isOffline;
+  // Network status hook
+  // const { isOnline, isOffline } = useNetworkStatus(); // Replacing with OfflineContext
+  const {
+    isOffline,
+    addToQueue,
+    updateOfflineOrder,
+    queue: offlineQueue,
+  } = useOfflineOrder();
+  const isOnline = !isOffline;
 
-    // SAFETY: Chaves de idempotência persistentes por sessão
-    const idempotencyKeys = useRef<Map<string, string>>(new Map());
+  // SAFETY: Chaves de idempotência persistentes por sessão
+  const idempotencyKeys = useRef<Map<string, string>>(new Map());
 
-    // === KDS HARDENING: Refetch Strategy (Debounce + Polling) ===
-    const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
-    const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  // === KDS HARDENING: Refetch Strategy (Debounce + Polling) ===
+  const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
-    // === REALTIME RECONNECT: Exponential Backoff ===
-    const reconnectManagerRef = useRef(new ReconnectManager());
-    const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const channelRef = useRef<any>(null);
+  // === REALTIME RECONNECT: Exponential Backoff ===
+  const reconnectManagerRef = useRef(new ReconnectManager());
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const channelRef = useRef<any>(null);
 
-    // Initial fetch - SOVEREIGN: Use prop from Gate layer, no storage fallback
-    useEffect(() => {
-        // STEP 7: Não fazer throw no mount/setup
-        // Fetch operator ID from auth
-        supabase.auth.getUser().then(({ data: { user } }) => {
-            if (user) setOperatorId(user.id);
-        }).catch(() => {
-            // Fail-closed: não quebra se auth falhar
+  // Initial fetch - SOVEREIGN: Use prop from Gate layer, no storage fallback
+  useEffect(() => {
+    // STEP 7: Não fazer throw no mount/setup
+    // DOCKER CORE: Não usa auth, então operatorId pode ser null ou usar um ID fixo para desenvolvimento
+    // Em produção, isso viria de um sistema de autenticação externo
+    // Por enquanto, deixamos null e o sistema funcionará sem operatorId
+    // setOperatorId(null); // Docker Core não requer auth
+
+    // Fetch open cash register if we have a restaurant ID
+    if (propRestaurantId) {
+      CashRegisterEngine.getOpenCashRegister(propRestaurantId)
+        .then((register) => {
+          if (register) setCashRegisterId(register.id);
+        })
+        .catch(() => {
+          // STEP 7: Fail-closed - não quebra se falhar
         });
+    }
+  }, [propRestaurantId]);
 
-        // Fetch open cash register if we have a restaurant ID
-        if (propRestaurantId) {
-            CashRegisterEngine.getOpenCashRegister(propRestaurantId)
-                .then(register => {
-                    if (register) setCashRegisterId(register.id);
-                })
-                .catch(() => {
-                    // STEP 7: Fail-closed - não quebra se falhar
-                });
-        }
-    }, [propRestaurantId]);
+  // DOCKER CORE: Sem Kernel, não precisa dessa verificação
 
-    // STEP 7: Garantir que loading = false quando kernel não está pronto (fail-closed)
-    useEffect(() => {
-        if (!isKernelReady() && loading) {
-            setLoading(false);
-        }
-    }, [isReady, status, kernel, loading]);
+  // Core Fetch Logic
+  const getActiveOrdersInternal = async (
+    restId: string,
+    isBackground = false,
+  ) => {
+    // Only show loading on explicit big actions, not on background syncs
+    if (!isBackground) {
+      setLoading(true);
+      setError(null);
+    }
+    try {
+      const realOrders = await OrderEngine.getActiveOrders(restId);
+      setOrders(realOrders.map(mapRealOrderToLocalOrder));
+      if (!isBackground) setError(null);
+    } catch (err: any) {
+      Logger.error("Failed to load orders", err, {
+        context: "OrderContext",
+        tenantId: restId,
+      });
+      if (!isBackground) setError(err);
+    } finally {
+      if (!isBackground) setLoading(false);
+    }
+  };
 
-    // Core Fetch Logic
-    const getActiveOrdersInternal = async (restId: string, isBackground = false) => {
-        // Only show loading on explicit big actions, not on background syncs
-        if (!isBackground) setLoading(true);
-        try {
-            const realOrders = await OrderEngine.getActiveOrders(restId);
-            setOrders(realOrders.map(mapRealOrderToLocalOrder));
-        } catch (err) {
-            Logger.error('Failed to load orders', err, { context: 'OrderContext', tenantId: restId });
-        } finally {
-            if (!isBackground) setLoading(false);
-        }
-    };
+  const getActiveOrders = async (isBackground = false) => {
+    if (!restaurantId) return;
+    await getActiveOrdersInternal(restaurantId, isBackground);
+  };
 
-    const getActiveOrders = async (isBackground = false) => {
-        if (!restaurantId) return;
-        await getActiveOrdersInternal(restaurantId, isBackground);
-    };
+  // Setup Realtime Subscription (extracted for reuse)
+  const setupRealtimeSubscription = useCallback(() => {
+    if (!restaurantId) return null;
 
-    // Setup Realtime Subscription (extracted for reuse)
-    const setupRealtimeSubscription = useCallback(() => {
-        if (!restaurantId) return null;
+    Logger.info("Setting up Realtime subscription", {
+      context: "OrderContext",
+      tenantId: restaurantId,
+    });
 
-        Logger.info('Setting up Realtime subscription', { context: 'OrderContext', tenantId: restaurantId });
+    // DOCKER CORE: Usar dockerCoreClient para Realtime
+    const channel = dockerCoreClient
+      .channel(`orders_realtime_${restaurantId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "gm_orders",
+          filter: `restaurant_id=eq.${restaurantId}`,
+        },
+        (payload) => {
+          Logger.info("Realtime event received", {
+            context: "OrderContext",
+            eventType: payload.eventType,
+            tenantId: restaurantId,
+          });
+          setLastRealtimeEvent(new Date());
 
-        const channel = supabase
-            .channel(`orders_realtime_${restaurantId}`)
-            .on('postgres_changes', {
-                event: '*',
-                schema: 'public',
-                table: 'gm_orders',
-                filter: `restaurant_id=eq.${restaurantId}`,
-            }, (payload) => {
-                Logger.info('Realtime event received', { context: 'OrderContext', eventType: payload.eventType, tenantId: restaurantId });
-                setLastRealtimeEvent(new Date());
+          // DEBOUNCE: Avoid refetch storm on bursts
+          if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
+          fetchDebounceRef.current = setTimeout(() => {
+            getActiveOrders(true); // Background fetch
+          }, 500);
+        },
+      )
+      .subscribe((status) => {
+        setRealtimeStatus(status);
+        if (status === "SUBSCRIBED") {
+          // Reset reconnect manager on success
+          reconnectManagerRef.current.reset();
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = null;
+          }
 
-                // DEBOUNCE: Avoid refetch storm on bursts
-                if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
-                fetchDebounceRef.current = setTimeout(() => {
-                    getActiveOrders(true); // Background fetch
-                }, 500);
-            })
-            .subscribe((status) => {
-                setRealtimeStatus(status);
-                if (status === 'SUBSCRIBED') {
-                    // Reset reconnect manager on success
-                    reconnectManagerRef.current.reset();
-                    if (reconnectTimeoutRef.current) {
-                        clearTimeout(reconnectTimeoutRef.current);
-                        reconnectTimeoutRef.current = null;
-                    }
-
-                    if (wasDisconnectedRef.current) {
-                        Logger.info('🔄 RECONNECTED - Syncing', { context: 'OrderContext', tenantId: restaurantId });
-                        getActiveOrders(true);
-                        wasDisconnectedRef.current = false;
-                    }
-                } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                    wasDisconnectedRef.current = true;
-                }
+          if (wasDisconnectedRef.current) {
+            Logger.info("🔄 RECONNECTED - Syncing", {
+              context: "OrderContext",
+              tenantId: restaurantId,
             });
-
-        channelRef.current = channel;
-        return channel;
-    }, [restaurantId]);
-
-    // Subscription & Polling
-    useEffect(() => {
-        if (!restaurantId) return;
-
-        // DEV_STABLE_MODE: do not start realtime/polling while stabilizing Gate/Auth/Tenant.
-        if (isDevStableMode()) {
-            // Still do an initial load so UI can render deterministically.
-            getActiveOrders(false);
-            return;
-        }
-
-        Logger.info('Setting up Realtime & Polling', { context: 'OrderContext', tenantId: restaurantId });
-        getActiveOrders(false); // Initial load (with spinner)
-
-        // 1. SAFETY NET: Defensive Polling (30s)
-        // 🔴 RISK: Se Supabase Realtime falhar silenciosamente, este é o único fallback.
-        // Intervalo de 30s é um trade-off entre carga no servidor e latência máxima de pedidos.
-        // TODO: Considerar reduzir para 15s em horário de pico se necessário.
-        pollingRef.current = setInterval(() => {
-            Logger.info('🛡️ Defensive Polling (30s interval)', { context: 'OrderContext', tenantId: restaurantId });
             getActiveOrders(true);
-        }, 30000);
+            wasDisconnectedRef.current = false;
+          }
+        } else if (
+          status === "CLOSED" ||
+          status === "CHANNEL_ERROR" ||
+          status === "TIMED_OUT"
+        ) {
+          wasDisconnectedRef.current = true;
+        }
+      });
 
-        // 2. REALTIME SUBSCRIPTION
-        const channel = setupRealtimeSubscription();
+    channelRef.current = channel;
+    return channel;
+  }, [restaurantId]);
 
-        return () => {
-            Logger.info('Cleanup OrderContext subscriptions', { context: 'OrderContext', tenantId: restaurantId });
-            try {
-                if (channel) {
-                    supabase.removeChannel(channel);
-                }
-            } catch (e) {
-                // no-op: channel may already be removed
-            }
-            if (pollingRef.current) clearInterval(pollingRef.current);
-            if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
-            if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-        };
-    }, [restaurantId]); // CRITICAL: Remove setupRealtimeSubscription from deps to prevent loop
+  // Subscription & Polling
+  useEffect(() => {
+    if (!restaurantId) return;
 
-    // === Exception Persistence (Verification & Robustness) ===
-    useEffect(() => {
-        // Listen for new exceptions
-        const unsubscribeException = tpvEventBus.on<OrderExceptionPayload>('order.exception', (event) => {
-            Logger.info('caught_order_exception', { payload: event.payload }, { context: 'OrderContext' });
-            setPendingExceptions(prev => {
-                // Check if already exists by eventId or orderId+type
-                if (prev.some(e => e.eventId === event.id)) return prev;
-                return [...prev, { ...event.payload, eventId: event.id }];
+    // DEV_STABLE_MODE: do not start realtime/polling while stabilizing Gate/Auth/Tenant.
+    if (isDevStableMode()) {
+      // Still do an initial load so UI can render deterministically.
+      getActiveOrders(false);
+      return;
+    }
+
+    Logger.info("Setting up Realtime & Polling", {
+      context: "OrderContext",
+      tenantId: restaurantId,
+    });
+    getActiveOrders(false); // Initial load (with spinner)
+
+    // 1. SAFETY NET: Defensive Polling (30s)
+    // 🔴 RISK: Se Supabase Realtime falhar silenciosamente, este é o único fallback.
+    // Intervalo de 30s é um trade-off entre carga no servidor e latência máxima de pedidos.
+    // TODO: Considerar reduzir para 15s em horário de pico se necessário.
+    pollingRef.current = setInterval(() => {
+      Logger.info("🛡️ Defensive Polling (30s interval)", {
+        context: "OrderContext",
+        tenantId: restaurantId,
+      });
+      getActiveOrders(true);
+    }, 30000);
+
+    // 2. REALTIME SUBSCRIPTION
+    const channel = setupRealtimeSubscription();
+
+    return () => {
+      Logger.info("Cleanup OrderContext subscriptions", {
+        context: "OrderContext",
+        tenantId: restaurantId,
+      });
+      try {
+        if (channel) {
+          dockerCoreClient.removeChannel(channel);
+        }
+      } catch (e) {
+        // no-op: channel may already be removed
+      }
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
+      if (reconnectTimeoutRef.current)
+        clearTimeout(reconnectTimeoutRef.current);
+    };
+  }, [restaurantId]); // CRITICAL: Remove setupRealtimeSubscription from deps to prevent loop
+
+  // === Exception Persistence (Verification & Robustness) ===
+  useEffect(() => {
+    // Listen for new exceptions
+    const unsubscribeException = tpvEventBus.on<OrderExceptionPayload>(
+      "order.exception",
+      (event) => {
+        Logger.info(
+          "caught_order_exception",
+          { payload: event.payload },
+          { context: "OrderContext" },
+        );
+        setPendingExceptions((prev) => {
+          // Check if already exists by eventId or orderId+type
+          if (prev.some((e) => e.eventId === event.id)) return prev;
+          return [...prev, { ...event.payload, eventId: event.id }];
+        });
+      },
+    );
+
+    // Listen for decisions to clear exceptions
+    const unsubscribeDecision = tpvEventBus.on<DecisionMadePayload>(
+      "order.decision_made",
+      (event) => {
+        Logger.info(
+          "caught_decision_made",
+          { payload: event.payload },
+          { context: "OrderContext" },
+        );
+        setPendingExceptions((prev) =>
+          prev.filter(
+            (e) =>
+              // Remove exception if it matches the decision's orderId
+              e.orderId !== event.payload.orderId,
+          ),
+        );
+      },
+    );
+
+    return () => {
+      unsubscribeException();
+      unsubscribeDecision();
+    };
+  }, []);
+
+  // Auto-Reconnect Logic (exponential backoff)
+  useEffect(() => {
+    if (!restaurantId) return;
+
+    // STEP 6: DEV_STABLE_MODE - no auto-reconnect attempts
+    if (isDevStableMode()) return;
+
+    // Detect disconnection and trigger reconnect
+    if (
+      realtimeStatus === "CLOSED" ||
+      realtimeStatus === "CHANNEL_ERROR" ||
+      realtimeStatus === "TIMED_OUT"
+    ) {
+      if (reconnectManagerRef.current.shouldRetry()) {
+        const delay = reconnectManagerRef.current.getDelay();
+        const attempts = reconnectManagerRef.current.getAttempts() + 1;
+
+        Logger.warn(
+          `[Realtime] Connection lost. Reconnecting in ${reconnectManagerRef.current.getDelayFormatted()} (attempt ${attempts})`,
+          {
+            context: "OrderContext",
+            tenantId: restaurantId,
+            status: realtimeStatus,
+          },
+        );
+
+        reconnectTimeoutRef.current = setTimeout(() => {
+          reconnectManagerRef.current.increment();
+
+          // Unsubscribe old channel
+          if (channelRef.current) {
+            dockerCoreClient.removeChannel(channelRef.current);
+            channelRef.current = null;
+          }
+
+          // Re-subscribe
+          setupRealtimeSubscription();
+        }, delay);
+      } else {
+        Logger.error(
+          "[Realtime] Max reconnection attempts reached. Using polling fallback only.",
+          {
+            context: "OrderContext",
+            tenantId: restaurantId,
+          },
+        );
+      }
+    }
+
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+    };
+  }, [realtimeStatus, restaurantId, setupRealtimeSubscription]);
+
+  // Criar pedido
+  const createOrder = async (orderInput: Partial<Order>): Promise<Order> => {
+    if (!restaurantId) throw new Error("Restaurant ID not set");
+
+    // DOCKER CORE: Verificar apenas offline real (sem status FROZEN do Kernel)
+    if (isOffline) {
+      Logger.warn("⚠️ Offline Mode detected. Creating local order.", {
+        context: "OrderContext",
+        tenantId: restaurantId,
+      });
+
+      // 1. Get cash register ID if available
+      let cashRegisterId: string | undefined;
+      try {
+        const openRegister = await CashRegisterEngine.getOpenCashRegister(
+          restaurantId,
+        );
+        cashRegisterId = openRegister?.id;
+      } catch (e) {
+        Logger.warn("Could not get cash register for offline order", {
+          error: e,
+        });
+      }
+
+      // 2. Create Local Payload (Format for OrderEngine)
+      const localId = uuidv4();
+      const now = new Date().toISOString();
+
+      const payload = {
+        restaurant_id: restaurantId,
+        table_number: orderInput.tableNumber,
+        table_id: orderInput.tableId,
+        operator_id: operatorId,
+        cash_register_id: cashRegisterId,
+        items: (orderInput.items || []).map((item) => ({
+          product_id: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          notes: item.notes,
+        })),
+        id: localId, // Critical for ID Mapping in Sync
+      };
+
+      // 3. Add to Offline Queue (IndexedDB)
+      await addToQueue(payload);
+
+      // 4. Optimistic UI Update
+      const totalCents = (orderInput.items || []).reduce(
+        (sum, i) => sum + i.price * i.quantity,
+        0,
+      );
+      const localOrder: Order = {
+        id: localId,
+        tableNumber: orderInput.tableNumber,
+        tableId: orderInput.tableId,
+        status: "new",
+        items: (orderInput.items || []).map((item) => ({
+          id: uuidv4(), // Temp ID
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          notes: item.notes,
+        })),
+        total: totalCents,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      setOrders((prev) => [...prev, localOrder]);
+
+      // Persist active order (Tab-Isolated)
+      const { setTabIsolated } = await import(
+        "../../../core/storage/TabIsolatedStorage"
+      );
+      setTabIsolated("chefiapp_active_order_id", localOrder.id);
+
+      Logger.info("Local order created (offline)", {
+        localId,
+        tableNumber: orderInput.tableNumber,
+      });
+      return localOrder;
+    }
+
+    // ONLINE MODE: Fluxo normal
+    // Verificar caixa aberto (gatekeeper)
+    if (!cashRegisterId) {
+      const openRegister = await CashRegisterEngine.getOpenCashRegister(
+        restaurantId,
+      );
+      if (!openRegister) {
+        throw new Error(
+          "CASH_REGISTER_CLOSED: Abra o caixa antes de criar vendas.",
+        );
+      }
+      setCashRegisterId(openRegister.id);
+    }
+
+    // Verificar se mesa já tem pedido ativo
+    if (orderInput.tableId) {
+      try {
+        const existingOrder = await OrderEngine.getActiveOrderByTable(
+          restaurantId,
+          orderInput.tableId,
+        );
+        if (existingOrder) {
+          const localOrder = mapRealOrderToLocalOrder(existingOrder);
+          // Salvar como pedido ativo
+          setTabIsolated("chefiapp_active_order_id", localOrder.id);
+          await getActiveOrders();
+          return localOrder;
+        }
+      } catch (err) {
+        // Se não encontrar, continua criando novo
+      }
+    }
+
+    // Criar novo pedido (já valida caixa e mesa no OrderEngine)
+    // DOCKER CORE: Validação mínima - apenas restaurante necessário
+    if (!restaurantId) {
+      throw new Error("Restaurante não selecionado");
+    }
+
+    // DOCKER CORE: Criar pedido diretamente via RPC create_order_atomic
+    // Incluir autoria em cada item para divisão de conta
+    const rpcItems = (orderInput.items || []).map((item: any) => ({
+      product_id: item.productId,
+      name: item.name,
+      quantity: item.quantity,
+      unit_price: Math.round(item.price * 100), // Converter para centavos
+      // Autoria do item (para divisão de conta)
+      created_by_user_id: item.created_by_user_id || null,
+      created_by_role: item.created_by_role || null,
+      device_id: item.device_id || null,
+    }));
+
+    const syncMetadata: any = {
+      origin: orderInput.syncMetadata?.origin || "CAIXA",
+      ...orderInput.syncMetadata,
+    };
+
+    if (orderInput.tableId) {
+      syncMetadata.table_id = orderInput.tableId;
+    }
+
+    if (orderInput.tableNumber) {
+      syncMetadata.table_number = orderInput.tableNumber;
+    }
+
+    // DOCKER CORE: Usar dockerCoreClient para garantir conexão correta
+    const { data: orderResult, error: createError } =
+      await dockerCoreClient.rpc("create_order_atomic", {
+        p_restaurant_id: restaurantId,
+        p_items: rpcItems,
+        p_payment_method: "cash",
+        p_sync_metadata: syncMetadata,
+      });
+
+    if (createError) {
+      // Preserve error details from RPC (especially constraint codes)
+      const error = createError as any;
+      if (error && error.code) {
+        // Preserve constraint error codes (e.g., 23505 for idx_one_open_order_per_table)
+        const dbError = new Error(
+          error.message || `RPC_EXECUTION_FAILED: ${createError.message}`,
+        );
+        (dbError as any).code = error.code;
+        (dbError as any).constraint = error.constraint;
+        (dbError as any).tableId = orderInput.tableId;
+        (dbError as any).tableNumber = orderInput.tableNumber;
+        throw dbError;
+      }
+      throw createError;
+    }
+
+    const orderId = orderResult?.id || uuidv4();
+
+    // Fetch the projected order (Active Record pattern for now)
+    // This ensures we get the DB-generated short_id
+    const realOrder = await OrderEngine.getOrderById(orderId);
+
+    const localOrder = mapRealOrderToLocalOrder(realOrder);
+
+    // HARD RULE 4: Persistir pedido ativo (Tab-Isolated)
+    setTabIsolated("chefiapp_active_order_id", localOrder.id);
+
+    await getActiveOrders(); // Refresh
+    return localOrder;
+  };
+
+  // Adicionar item
+  const addItemToOrder = async (
+    orderId: string,
+    item: OrderItemInput,
+  ): Promise<void> => {
+    if (!restaurantId) throw new Error("Restaurant ID not set");
+
+    if (isOffline) {
+      // ... (keep offline logic)
+      Logger.info("Offline Mode: Adding item locally", { orderId, item });
+      await updateOfflineOrder(orderId, "ADD_ITEM", {
+        ...item,
+        restaurantId, // Vital for sync
+      });
+
+      // Optimistic UI Update (Local Memory)
+      // We need to update `orders` state manually since there's no DB fetch.
+      setOrders((prev) =>
+        prev.map((order) => {
+          if (order.id === orderId) {
+            const newItem: OrderItem = {
+              id: uuidv4(), // Temp local ID
+              productId: item.productId,
+              name: item.name,
+              price: item.priceCents,
+              quantity: item.quantity,
+              notes: item.notes,
+            };
+            const updatedItems = [...order.items, newItem];
+            const newTotal = updatedItems.reduce(
+              (sum, i) => sum + i.price * i.quantity,
+              0,
+            );
+            return {
+              ...order,
+              items: updatedItems,
+              total: newTotal,
+              updatedAt: new Date(),
+            };
+          }
+          return order;
+        }),
+      );
+      return;
+    }
+
+    // STEP 7: Fail-closed - não assume Kernel
+    // DOCKER CORE: Adicionar item diretamente via PostgREST
+    const { error: addError } = await dockerCoreClient
+      .from("gm_order_items")
+      .insert({
+        order_id: orderId,
+        product_id: item.productId,
+        name_snapshot: item.name,
+        price_snapshot: item.priceCents || (item as any).price,
+        quantity: item.quantity,
+        subtotal_cents:
+          (item.priceCents || (item as any).price) * item.quantity,
+      });
+
+    if (addError) throw addError;
+
+    // Atualizar total do pedido
+    const order = orders.find((o) => o.id === orderId);
+    const currentTotal = order?.total || 0;
+    const itemTotal = (item.priceCents || (item as any).price) * item.quantity;
+    const newTotal = currentTotal + itemTotal;
+
+    const { error: updateTotalError } = await dockerCoreClient
+      .from("gm_orders")
+      .update({
+        total_cents: newTotal,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", orderId);
+
+    if (updateTotalError) throw updateTotalError;
+
+    await getActiveOrders(); // Refresh
+  };
+
+  // Remover item
+  const removeItemFromOrder = async (
+    orderId: string,
+    itemId: string,
+  ): Promise<void> => {
+    if (!restaurantId) throw new Error("Restaurant ID not set");
+
+    if (isOffline) {
+      // ... (keep offline logic)
+      Logger.info("Offline Mode: Removing item locally", { orderId, itemId });
+      await updateOfflineOrder(orderId, "REMOVE_ITEM", {
+        itemId,
+        restaurantId,
+      });
+
+      // Optimistic UI Update
+      setOrders((prev) =>
+        prev.map((order) => {
+          if (order.id === orderId) {
+            const updatedItems = order.items.filter((i) => i.id !== itemId);
+            const newTotal = updatedItems.reduce(
+              (sum, i) => sum + i.price * i.quantity,
+              0,
+            );
+            return {
+              ...order,
+              items: updatedItems,
+              total: newTotal,
+              updatedAt: new Date(),
+            };
+          }
+          return order;
+        }),
+      );
+      return;
+    }
+
+    // STEP 7: Fail-closed - não assume Kernel
+    // DOCKER CORE: Remover item diretamente via PostgREST
+    const item = orders
+      .find((o) => o.id === orderId)
+      ?.items.find((i) => i.id === itemId);
+    const itemTotal = item ? item.price * item.quantity : 0;
+
+    const { error: deleteError } = await dockerCoreClient
+      .from("gm_order_items")
+      .delete()
+      .eq("id", itemId)
+      .eq("order_id", orderId);
+
+    if (deleteError) throw deleteError;
+
+    // Atualizar total do pedido
+    const order = orders.find((o) => o.id === orderId);
+    const currentTotal = order?.total || 0;
+    const newTotal = Math.max(0, currentTotal - itemTotal);
+
+    const { error: updateTotalError } = await dockerCoreClient
+      .from("gm_orders")
+      .update({
+        total_cents: newTotal,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", orderId);
+
+    if (updateTotalError) throw updateTotalError;
+
+    await getActiveOrders(); // Refresh
+  };
+
+  // Atualizar quantidade
+  const updateItemQuantity = async (
+    orderId: string,
+    itemId: string,
+    quantity: number,
+  ): Promise<void> => {
+    if (!restaurantId) throw new Error("Restaurant ID not set");
+
+    if (isOffline) {
+      // ... (keep offline logic)
+      Logger.info("Offline Mode: Updating item quantity locally", {
+        orderId,
+        itemId,
+        quantity,
+      });
+      await updateOfflineOrder(orderId, "UPDATE_QTY", {
+        itemId,
+        quantity,
+        restaurantId,
+      });
+
+      // Optimistic UI Update
+      setOrders((prev) =>
+        prev.map((order) => {
+          if (order.id === orderId) {
+            const updatedItems = order.items.map((i) => {
+              if (i.id === itemId) return { ...i, quantity };
+              return i;
             });
-        });
-
-        // Listen for decisions to clear exceptions
-        const unsubscribeDecision = tpvEventBus.on<DecisionMadePayload>('order.decision_made', (event) => {
-            Logger.info('caught_decision_made', { payload: event.payload }, { context: 'OrderContext' });
-            setPendingExceptions(prev => prev.filter(e =>
-                // Remove exception if it matches the decision's orderId
-                e.orderId !== event.payload.orderId
-            ));
-        });
-
-        return () => {
-            unsubscribeException();
-            unsubscribeDecision();
-        };
-    }, []);
-
-    // Auto-Reconnect Logic (exponential backoff)
-    useEffect(() => {
-        if (!restaurantId) return;
-
-        // STEP 6: DEV_STABLE_MODE - no auto-reconnect attempts
-        if (isDevStableMode()) return;
-
-        // Detect disconnection and trigger reconnect
-        if (realtimeStatus === 'CLOSED' || realtimeStatus === 'CHANNEL_ERROR' || realtimeStatus === 'TIMED_OUT') {
-            if (reconnectManagerRef.current.shouldRetry()) {
-                const delay = reconnectManagerRef.current.getDelay();
-                const attempts = reconnectManagerRef.current.getAttempts() + 1;
-
-                Logger.warn(`[Realtime] Connection lost. Reconnecting in ${reconnectManagerRef.current.getDelayFormatted()} (attempt ${attempts})`, {
-                    context: 'OrderContext',
-                    tenantId: restaurantId,
-                    status: realtimeStatus,
-                });
-
-                reconnectTimeoutRef.current = setTimeout(() => {
-                    reconnectManagerRef.current.increment();
-
-                    // Unsubscribe old channel
-                    if (channelRef.current) {
-                        supabase.removeChannel(channelRef.current);
-                        channelRef.current = null;
-                    }
-
-                    // Re-subscribe
-                    setupRealtimeSubscription();
-                }, delay);
-            } else {
-                Logger.error('[Realtime] Max reconnection attempts reached. Using polling fallback only.', {
-                    context: 'OrderContext',
-                    tenantId: restaurantId,
-                });
-            }
-        }
-
-        return () => {
-            if (reconnectTimeoutRef.current) {
-                clearTimeout(reconnectTimeoutRef.current);
-                reconnectTimeoutRef.current = null;
-            }
-        };
-    }, [realtimeStatus, restaurantId, setupRealtimeSubscription]);
-
-    // Criar pedido
-    const createOrder = async (orderInput: Partial<Order>): Promise<Order> => {
-        if (!restaurantId) throw new Error('Restaurant ID not set');
-
-
-
-        // Check Offline Mode (Hard Check)
-        if (isOffline || (status as string) === 'FROZEN') {
-            Logger.warn('⚠️ Offline Mode detected. Creating local order.', { context: 'OrderContext', tenantId: restaurantId });
-
-            // 1. Get cash register ID if available
-            let cashRegisterId: string | undefined;
-            try {
-                const openRegister = await CashRegisterEngine.getOpenCashRegister(restaurantId);
-                cashRegisterId = openRegister?.id;
-            } catch (e) {
-                Logger.warn('Could not get cash register for offline order', { error: e });
-            }
-
-            // 2. Create Local Payload (Format for OrderEngine)
-            const localId = uuidv4();
-            const now = new Date().toISOString();
-
-            const payload = {
-                restaurant_id: restaurantId,
-                table_number: orderInput.tableNumber,
-                table_id: orderInput.tableId,
-                operator_id: operatorId,
-                cash_register_id: cashRegisterId,
-                items: (orderInput.items || []).map(item => ({
-                    product_id: item.productId,
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity,
-                    notes: item.notes
-                })),
-                id: localId // Critical for ID Mapping in Sync
+            const newTotal = updatedItems.reduce(
+              (sum, i) => sum + i.price * i.quantity,
+              0,
+            );
+            return {
+              ...order,
+              items: updatedItems,
+              total: newTotal,
+              updatedAt: new Date(),
             };
+          }
+          return order;
+        }),
+      );
+      return;
+    }
 
-            // 3. Add to Offline Queue (IndexedDB)
-            await addToQueue(payload);
+    // DOCKER CORE: Validação mínima - apenas restaurante necessário
+    if (!restaurantId) {
+      throw new Error("Restaurante não selecionado");
+    }
 
-            // 4. Optimistic UI Update
-            const totalCents = (orderInput.items || []).reduce((sum, i) => sum + (i.price * i.quantity), 0);
-            const localOrder: Order = {
-                id: localId,
-                tableNumber: orderInput.tableNumber,
-                tableId: orderInput.tableId,
-                status: 'new',
-                items: (orderInput.items || []).map(item => ({
-                    id: uuidv4(), // Temp ID
-                    productId: item.productId,
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity,
-                    notes: item.notes
-                })),
-                total: totalCents,
-                createdAt: now,
-                updatedAt: now
-            };
+    // Find Unit Price for Total Calculation
+    // Use local state (orders) or fetch? Local state is faster.
+    const order = orders.find((o) => o.id === orderId);
+    const item = order?.items.find((i) => i.id === itemId);
+    if (!item) throw new Error("Item não encontrado");
+    const unitPriceCents = item.price; // OrderItem.price is int cents
+    // DOCKER CORE: Atualizar quantidade diretamente via PostgREST
 
-            setOrders(prev => [...prev, localOrder]);
+    const oldSubtotal = item.price * item.quantity;
+    const newSubtotal = item.price * quantity;
+    const totalDiff = newSubtotal - oldSubtotal;
 
-            // Persist active order (Tab-Isolated)
-            const { setTabIsolated } = await import('../../../core/storage/TabIsolatedStorage');
-            setTabIsolated('chefiapp_active_order_id', localOrder.id);
+    const { error: updateItemError } = await dockerCoreClient
+      .from("gm_order_items")
+      .update({
+        quantity,
+        subtotal_cents: newSubtotal,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", itemId)
+      .eq("order_id", orderId);
 
-            Logger.info('Local order created (offline)', { localId, tableNumber: orderInput.tableNumber });
-            return localOrder;
-        }
+    if (updateItemError) throw updateItemError;
 
-        // ONLINE MODE: Fluxo normal
-        // Verificar caixa aberto (gatekeeper)
-        if (!cashRegisterId) {
-            const openRegister = await CashRegisterEngine.getOpenCashRegister(restaurantId);
+    // Atualizar total do pedido
+    // Reutilizar order já declarado acima
+    const currentTotal = order?.total || 0;
+    const newTotal = currentTotal + totalDiff;
+
+    const { error: updateTotalError } = await dockerCoreClient
+      .from("gm_orders")
+      .update({
+        total_cents: newTotal,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", orderId);
+
+    if (updateTotalError) throw updateTotalError;
+    await getActiveOrders(); // Refresh
+  };
+
+  // Sprint 12: Attach Customer
+  const attachCustomer = async (
+    orderId: string,
+    customerId: string,
+  ): Promise<void> => {
+    if (!restaurantId) throw new Error("Restaurant ID not set");
+
+    const { error } = await dockerCoreClient
+      .from("gm_orders")
+      .update({ customer_id: customerId })
+      .eq("id", orderId)
+      .eq("restaurant_id", restaurantId);
+
+    if (error) throw error;
+    await getActiveOrders();
+  };
+
+  // Cancelar Pedido
+  const cancelOrder = async (
+    orderId: string,
+    reason: string,
+  ): Promise<void> => {
+    if (!restaurantId) throw new Error("Restaurant ID not set");
+
+    // DOCKER CORE: Cancelar pedido diretamente via PostgREST, sem Kernel
+    const { error: cancelError } = await dockerCoreClient
+      .from("gm_orders")
+      .update({
+        status: "CANCELLED",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", orderId)
+      .eq("restaurant_id", restaurantId);
+
+    if (cancelError) throw cancelError;
+
+    await getActiveOrders();
+  };
+
+  // Ações do pedido
+  const performOrderAction = async (
+    orderId: string,
+    action: string,
+    payload?: any,
+  ): Promise<void> => {
+    if (!restaurantId) throw new Error("Restaurant ID not set");
+
+    try {
+      switch (action) {
+        case "send":
+        case "prepare":
+          // DOCKER CORE: Atualizar diretamente via PostgREST, sem Kernel
+          const { error: updateError } = await dockerCoreClient
+            .from("gm_orders")
+            .update({ status: "IN_PREP", updated_at: new Date().toISOString() })
+            .eq("id", orderId);
+
+          if (updateError) throw updateError;
+          break;
+
+        case "ready":
+          // DOCKER CORE: Atualizar diretamente via PostgREST, sem Kernel
+          const { error: readyError } = await dockerCoreClient
+            .from("gm_orders")
+            .update({ status: "READY", updated_at: new Date().toISOString() })
+            .eq("id", orderId);
+
+          if (readyError) throw readyError;
+          break;
+
+        case "serve":
+          // DOCKER CORE: Atualizar diretamente via PostgREST, sem Kernel
+          const { error: serveError } = await dockerCoreClient
+            .from("gm_orders")
+            .update({ status: "CLOSED", updated_at: new Date().toISOString() })
+            .eq("id", orderId);
+
+          if (serveError) throw serveError;
+          break;
+
+        case "pay":
+          // Offline Support
+          if (isOffline) {
+            Logger.info("Offline Mode: Processing payment locally", {
+              orderId,
+            });
+            if (!restaurantId) throw new Error("Restaurant ID not set");
+
+            // Use local state for register
+            const offlineRegisterId = cashRegisterId;
+            if (!offlineRegisterId) {
+              throw new Error(
+                "CASH_REGISTER_CLOSED: Caixa desconhecido (offline). Certifique-se que o caixa estava aberto antes de cair a rede.",
+              );
+            }
+
+            // Get order total from local state
+            const localOrder = orders.find((o) => o.id === orderId);
+            if (!localOrder) throw new Error("Order not found locally");
+
+            const amountCents =
+              payload?.isPartial && payload?.amountCents
+                ? payload.amountCents
+                : localOrder.total;
+
+            await updateOfflineOrder(orderId, "PAY", {
+              amountCents,
+              method: payload?.method || "cash",
+              restaurantId,
+              cashRegisterId: offlineRegisterId,
+              isPartial: payload?.isPartial,
+              operatorId,
+            });
+
+            // Optimistic UI Update
+            setOrders((prev) =>
+              prev.map((o) => {
+                if (o.id === orderId) {
+                  // If full payment, mark paid. If partial, status might remain open or 'partially_paid'
+                  // For simplicity in offline: if amount >= total, paid.
+                  // But split bill logic is complex.
+                  // Assuming typical flow:
+                  if (!payload?.isPartial) return { ...o, status: "paid" };
+                  return o;
+                }
+                return o;
+              }),
+            );
+
+            // Remove from active tab if paid fully
+            if (!payload?.isPartial) {
+              removeTabIsolated("chefiapp_active_order_id");
+            }
+            return;
+          }
+
+          // HARD RULE 2: Pagar = Fechar pedido (TRANSACTION ATOMICA)
+          // CRÍTICO: Re-fetch order do DB e recalcular total (nunca confiar no frontend)
+
+          // 1. Re-fetch order do DB (fonte soberana)
+          const dbOrder = await OrderEngine.getOrderById(orderId);
+
+          // 2. Recalcular total baseado em items (double-check contra tampering)
+          const { data: items, error: itemsError } = await dockerCoreClient
+            .from("gm_order_items")
+            .select("price_snapshot, quantity")
+            .eq("order_id", orderId);
+
+          if (itemsError) {
+            throw new Error(
+              `Failed to fetch order items: ${itemsError.message} `,
+            );
+          }
+
+          if (!items || items.length === 0) {
+            throw new Error("Order has no items");
+          }
+
+          const calculatedTotal = items.reduce(
+            (sum, i) => sum + i.price_snapshot * i.quantity,
+            0,
+          );
+
+          // 3. Validar que total do DB = total calculado (proteção contra tampering)
+          if (calculatedTotal !== dbOrder.totalCents) {
+            Logger.critical("Total mismatch detected during payment", null, {
+              context: "OrderContext",
+              dbTotal: dbOrder.totalCents,
+              calculatedTotal,
+              orderId,
+            });
+            throw new Error(
+              "Total mismatch - possible tampering detected. Please refresh and try again.",
+            );
+          }
+
+          // IDEMPOTENCY SAFETY: Recuperar key da sessão ou gerar nova
+          let key = idempotencyKeys.current.get(orderId);
+          if (!key) {
+            key = `${orderId}_${Date.now()} _secure`;
+            idempotencyKeys.current.set(orderId, key);
+          }
+
+          // 0. Enforce Open Cash Register (Sovereign Rule)
+          if (!cashRegisterId) {
+            // Double check DB
+            const openRegister = await CashRegisterEngine.getOpenCashRegister(
+              restaurantId,
+            );
             if (!openRegister) {
-                throw new Error('CASH_REGISTER_CLOSED: Abra o caixa antes de criar vendas.');
+              throw new Error(
+                "CASH_REGISTER_CLOSED: Abra o caixa antes de receber pagamentos.",
+              );
             }
             setCashRegisterId(openRegister.id);
-        }
+            // Use fetched ID for this transaction to avoid state lag
+          }
+          const activeRegisterId =
+            cashRegisterId ||
+            (await CashRegisterEngine.getOpenCashRegister(restaurantId))?.id;
 
-        // Verificar se mesa já tem pedido ativo
-        if (orderInput.tableId) {
-            try {
-                const existingOrder = await OrderEngine.getActiveOrderByTable(restaurantId, orderInput.tableId);
-                if (existingOrder) {
-                    const localOrder = mapRealOrderToLocalOrder(existingOrder);
-                    // Salvar como pedido ativo
-                    setTabIsolated('chefiapp_active_order_id', localOrder.id);
-                    await getActiveOrders();
-                    return localOrder;
-                }
-            } catch (err) {
-                // Se não encontrar, continua criando novo
+          if (!activeRegisterId) {
+            throw new Error(
+              "CASH_REGISTER_CLOSED: Abra o caixa antes de receber pagamentos.",
+            );
+          }
+
+          // 4. Processar pagamento (transação atômica: paga + fecha)
+          // SEMANA 2: Suportar pagamento parcial (split bill)
+          const isPartial = payload?.isPartial === true;
+          const amountCents =
+            isPartial && payload?.amountCents
+              ? payload.amountCents // Pagamento parcial (split bill)
+              : dbOrder.totalCents; // Pagamento total (comportamento padrão)
+
+          // Validar que amount não excede o total
+          if (amountCents > dbOrder.totalCents) {
+            throw new Error(
+              `Valor de pagamento(${amountCents}) excede o total do pedido(${dbOrder.totalCents})`,
+            );
+          }
+
+          // DOCKER CORE: Validação mínima - apenas restaurante necessário
+          if (!restaurantId) {
+            throw new Error("Restaurante não selecionado");
+          }
+          const method = (payload?.method || "cash") as PaymentMethod;
+
+          // PRE-CHECK: Loyalty Balance
+          if (method === "loyalty") {
+            const orderForCheck = await OrderEngine.getOrder(
+              orderId,
+              restaurantId,
+            );
+            const customerId = (orderForCheck as any).customer_id;
+            if (!customerId)
+              throw new Error(
+                "Cliente precisa ser identificado para pagar com pontos.",
+              );
+
+            const { data: customerCheck } = await dockerCoreClient
+              .from("gm_customers")
+              .select("points_balance")
+              .eq("id", customerId)
+              .single();
+            if (!customerCheck)
+              throw new Error("Perfil de cliente não encontrado.");
+
+            // 1 Point = 0.10 EUR (10 Cents)
+            // AmountCents = 100 (1 EUR) -> Next Points = 10
+            const pointsNeeded = Math.ceil(amountCents / 10);
+
+            if ((customerCheck.points_balance || 0) < pointsNeeded) {
+              throw new Error(
+                `Saldo insuficiente. Necessário: ${pointsNeeded} pts. Disponível: ${
+                  customerCheck.points_balance || 0
+                } pts.`,
+              );
             }
-        }
+          }
 
-        // Criar novo pedido (já valida caixa e mesa no OrderEngine)
-        // STEP 7: Fail-closed - não assume Kernel
-        if (!isKernelReady()) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
-                ? 'Sistema em modo de estabilização'
-                : status === 'BOOTING'
-                    ? 'Sistema inicializando'
-                    : 'Selecione um restaurante antes de criar pedidos'}`);
-        }
-
-        const orderId = uuidv4(); // Generate ID externally (Sovereign ID)
-
-        // STEP 7: Usar executeSafe em vez de kernel.execute()
-        const result = await executeSafe({
-            entity: 'ORDER',
-            entityId: orderId,
-            event: 'CREATE',
-            // Context payload for Projection Effect
-            restaurantId,
-            items: (orderInput.items || []).map(item => ({
-                productId: item.productId,
-                name: item.name,
-                unitPrice: item.price, // Normalized to 'unitPrice' for effect
-                priceCents: item.price,
-                quantity: item.quantity,
-                notes: item.notes,
-            })),
-            tableNumber: orderInput.tableNumber,
-            tableId: orderInput.tableId,
-            paymentMethod: 'cash',
-            syncMetadata: orderInput.syncMetadata
-        });
-
-        if (!result.ok) {
-            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
-        }
-
-        // Fetch the projected order (Active Record pattern for now)
-        // This ensures we get the DB-generated short_id
-        const realOrder = await OrderEngine.getOrderById(orderId);
-
-        const localOrder = mapRealOrderToLocalOrder(realOrder);
-
-        // HARD RULE 4: Persistir pedido ativo (Tab-Isolated)
-        setTabIsolated('chefiapp_active_order_id', localOrder.id);
-
-        await getActiveOrders(); // Refresh
-        return localOrder;
-    };
-
-    // Adicionar item
-    const addItemToOrder = async (orderId: string, item: OrderItemInput): Promise<void> => {
-        if (!restaurantId) throw new Error('Restaurant ID not set');
-
-        if (isOffline || (status as string) === 'FROZEN') {
-            // ... (keep offline logic)
-            Logger.info('Offline Mode: Adding item locally', { orderId, item });
-            await updateOfflineOrder(orderId, 'ADD_ITEM', {
-                ...item,
-                restaurantId // Vital for sync
+          // DOCKER CORE: Processar pagamento diretamente via RPC, sem Kernel
+          const { data: payResult, error: payError } =
+            await dockerCoreClient.rpc("process_order_payment", {
+              p_restaurant_id: restaurantId,
+              p_order_id: orderId,
+              p_cash_register_id: activeRegisterId,
+              p_operator_id: operatorId || null,
+              p_amount_cents: amountCents,
+              p_method: method,
+              p_idempotency_key: key,
             });
 
-            // Optimistic UI Update (Local Memory)
-            // We need to update `orders` state manually since there's no DB fetch.
-            setOrders(prev => prev.map(order => {
-                if (order.id === orderId) {
-                    const newItem: OrderItem = {
-                        id: uuidv4(), // Temp local ID
-                        productId: item.productId,
-                        name: item.name,
-                        price: item.priceCents,
-                        quantity: item.quantity,
-                        notes: item.notes
-                    };
-                    const updatedItems = [...order.items, newItem];
-                    const newTotal = updatedItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-                    return { ...order, items: updatedItems, total: newTotal, updatedAt: new Date() };
+          if (payError) {
+            throw new Error(`PAYMENT_RPC_FAILED: ${payError.message}`);
+          }
+
+          if (!payResult || !payResult.success) {
+            throw new Error(
+              `PAYMENT_FAILED: ${payResult?.error || "Erro desconhecido"}`,
+            );
+          }
+
+          // Cleanup key on success (allows new payment if order re-opened later)
+          idempotencyKeys.current.delete(orderId);
+
+          // FASE 3: Integração CRM e Loyalty (não bloqueia pagamento se falhar)
+          try {
+            const orderForCRM = await OrderEngine.getOrder(
+              orderId,
+              restaurantId,
+            );
+            if (orderForCRM && (orderForCRM as any).customer_id) {
+              const customerId = (orderForCRM as any).customer_id;
+
+              if (method === "loyalty") {
+                // REDIRECCIONAMENTO: QUEIMA DE PONTOS
+                const pointsBurned = Math.ceil(amountCents / 10);
+                const { data: customer } = await dockerCoreClient
+                  .from("gm_customers")
+                  .select("points_balance, visit_count")
+                  .eq("id", customerId)
+                  .single();
+
+                if (customer) {
+                  await dockerCoreClient
+                    .from("gm_customers")
+                    .update({
+                      points_balance:
+                        (customer.points_balance || 0) - pointsBurned,
+                      // Não incrementa spend nem visits em resgate (decisão de negócio)
+                      // Ou incrementa visits? Vamos incrementar visits pois houve transação.
+                      visit_count: (customer.visit_count || 0) + 1,
+                      last_visit_at: new Date().toISOString(),
+                    })
+                    .eq("id", customerId);
+
+                  await dockerCoreClient.from("gm_loyalty_logs").insert({
+                    restaurant_id: restaurantId,
+                    customer_id: customerId,
+                    order_id: orderId,
+                    points_amount: -pointsBurned, // Negativo
+                    description: `Resgatou ${pointsBurned} pontos (Desconto de ${(
+                      amountCents / 100
+                    ).toFixed(2)}€)`,
+                  });
                 }
-                return order;
-            }));
-            return;
-        }
+              } else {
+                // FLUXO NORMAL: GANHO DE PONTOS
+                const spendCents = amountCents;
+                const pointsEarned = Math.floor(spendCents / 100);
 
-        // STEP 7: Fail-closed - não assume Kernel
-        if (!isKernelReady()) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
-                ? 'Sistema em modo de estabilização'
-                : status === 'BOOTING'
-                    ? 'Sistema inicializando'
-                    : 'Selecione um restaurante antes de adicionar itens'}`);
-        }
+                const { data: customer } = await dockerCoreClient
+                  .from("gm_customers")
+                  .select("points_balance, visit_count, total_spend_cents")
+                  .eq("id", customerId)
+                  .single();
 
-        // STEP 7: Usar executeSafe em vez de kernel.execute()
-        const result = await executeSafe({
-            entity: 'ORDER',
-            entityId: orderId,
-            event: 'ADD_ITEM',
-            restaurantId, // Context
-            item: {
-                productId: item.productId,
-                name: item.name,
-                priceCents: item.priceCents || (item as any).price, // handle both
-                unitPrice: item.priceCents || (item as any).price,
-                quantity: item.quantity,
-                notes: item.notes,
-                consumptionGroupId: item.consumptionGroupId,
-                modifiers: item.modifiers,
-                categoryName: item.categoryName
+                if (customer) {
+                  await dockerCoreClient
+                    .from("gm_customers")
+                    .update({
+                      points_balance:
+                        (customer.points_balance || 0) + pointsEarned,
+                      total_spend_cents:
+                        (customer.total_spend_cents || 0) + spendCents,
+                      visit_count: (customer.visit_count || 0) + 1,
+                      last_visit_at: new Date().toISOString(),
+                    })
+                    .eq("id", customerId);
+
+                  await dockerCoreClient.from("gm_loyalty_logs").insert({
+                    restaurant_id: restaurantId,
+                    customer_id: customerId,
+                    order_id: orderId,
+                    points_amount: pointsEarned,
+                    description: `Ganhou ${pointsEarned} pontos (Pedido #${
+                      orderForCRM.number || orderForCRM.shortId
+                    })`,
+                  });
+                }
+              }
             }
-        });
-
-        if (!result.ok) {
-            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
-        }
-
-        await getActiveOrders(); // Refresh
-    };
-
-    // Remover item
-    const removeItemFromOrder = async (orderId: string, itemId: string): Promise<void> => {
-        if (!restaurantId) throw new Error('Restaurant ID not set');
-
-        if (isOffline || (status as string) === 'FROZEN') {
-            // ... (keep offline logic)
-            Logger.info('Offline Mode: Removing item locally', { orderId, itemId });
-            await updateOfflineOrder(orderId, 'REMOVE_ITEM', {
-                itemId,
-                restaurantId
+          } catch (crmError) {
+            Logger.warn("Failed to update CRM/Loyalty", {
+              error: crmError,
+              orderId,
             });
+          }
 
-            // Optimistic UI Update
-            setOrders(prev => prev.map(order => {
-                if (order.id === orderId) {
-                    const updatedItems = order.items.filter(i => i.id !== itemId);
-                    const newTotal = updatedItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-                    return { ...order, items: updatedItems, total: newTotal, updatedAt: new Date() };
-                }
-                return order;
-            }));
-            return;
-        }
+          // FASE 4: Inventory Auto-Deductions
+          try {
+            const paidOrder = await OrderEngine.getOrderById(orderId);
+            await InventoryEngine.processOrder(paidOrder);
 
-        // STEP 7: Fail-closed - não assume Kernel
-        if (!isKernelReady()) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
-                ? 'Sistema em modo de estabilização'
-                : status === 'BOOTING'
-                    ? 'Sistema inicializando'
-                    : 'Selecione um restaurante antes de remover itens'}`);
-        }
+            const totalCost = await InventoryEngine.calculateOrderCost(
+              paidOrder,
+            );
+            const grossMargin = paidOrder.totalCents - totalCost;
 
-        // STEP 7: Usar executeSafe em vez de kernel.execute()
-        const result = await executeSafe({
-            entity: 'ORDER',
-            entityId: orderId,
-            event: 'REMOVE_ITEM',
-            restaurantId,
-            itemId: itemId
-        });
-
-        if (!result.ok) {
-            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
-        }
-
-        await getActiveOrders(); // Refresh
-    };
-
-    // Atualizar quantidade
-    const updateItemQuantity = async (orderId: string, itemId: string, quantity: number): Promise<void> => {
-        if (!restaurantId) throw new Error('Restaurant ID not set');
-
-        if (isOffline || (status as string) === 'FROZEN') {
-            // ... (keep offline logic)
-            Logger.info('Offline Mode: Updating item quantity locally', { orderId, itemId, quantity });
-            await updateOfflineOrder(orderId, 'UPDATE_QTY', {
-                itemId,
-                quantity,
-                restaurantId
+            await dockerCoreClient
+              .from("gm_orders")
+              .update({
+                total_cost_cents: totalCost,
+                gross_margin_cents: grossMargin,
+              })
+              .eq("id", orderId);
+          } catch (invError) {
+            Logger.error("Inventory/Finance Logic Failed", invError, {
+              context: "OrderContext",
+              orderId,
             });
+          }
 
-            // Optimistic UI Update
-            setOrders(prev => prev.map(order => {
-                if (order.id === orderId) {
-                    const updatedItems = order.items.map(i => {
-                        if (i.id === itemId) return { ...i, quantity };
-                        return i;
-                    });
-                    const newTotal = updatedItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-                    return { ...order, items: updatedItems, total: newTotal, updatedAt: new Date() };
-                }
-                return order;
-            }));
-            return;
-        }
+          // Limpar pedido ativo após pagamento
+          const currentActive = getTabIsolated("chefiapp_active_order_id");
+          if (currentActive === orderId) {
+            removeTabIsolated("chefiapp_active_order_id");
+          }
+          break;
 
-        // STEP 7: Fail-closed - não assume Kernel
-        if (!isKernelReady()) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
-                ? 'Sistema em modo de estabilização'
-                : status === 'BOOTING'
-                    ? 'Sistema inicializando'
-                    : 'Selecione um restaurante antes de atualizar itens'}`);
-        }
+        case "close":
+          // HARD RULE: 'close' foi eliminado
+          // Pagamento já fecha o pedido automaticamente (transação atômica)
+          // Esta ação não deve mais existir, mas mantemos para compatibilidade
+          const orderToClose = await OrderEngine.getOrderById(orderId);
+          if (orderToClose.paymentStatus !== "PAID") {
+            throw new Error(
+              'Pedido deve ser pago antes de fechar. Use "Cobrar" primeiro.',
+            );
+          }
+          // Se já está pago, apenas atualizar status (redundante, mas seguro)
+          // REMOVED LEGACY WRITE: kernel.execute('PAY') already sets status to PAID via Effect.
+          break;
 
-        // Find Unit Price for Total Calculation
-        // Use local state (orders) or fetch? Local state is faster.
-        const order = orders.find(o => o.id === orderId);
-        const item = order?.items.find(i => i.id === itemId);
-        const unitPriceCents = item?.price; // OrderItem.price is int cents
-        // STEP 7: Usar executeSafe em vez de kernel.execute()
-        const result = await executeSafe({
-            entity: 'ORDER',
-            entityId: orderId,
-            event: 'UPDATE_QUANTITY',
-            restaurantId,
-            itemId,
-            quantity
+        case "cancel":
+          // DOCKER CORE: Atualizar diretamente via PostgREST, sem Kernel
+          const { error: cancelError } = await dockerCoreClient
+            .from("gm_orders")
+            .update({
+              status: "CANCELLED",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", orderId);
+
+          if (cancelError) throw cancelError;
+
+          // Limpar pedido ativo se cancelado
+          const currentActiveCancel = getTabIsolated(
+            "chefiapp_active_order_id",
+          );
+          if (currentActiveCancel === orderId) {
+            removeTabIsolated("chefiapp_active_order_id");
+          }
+          break;
+
+        default:
+          Logger.warn("Unknown action", {
+            context: "OrderContext",
+            action,
+            orderId,
+          });
+      }
+
+      await getActiveOrders(); // Refresh
+    } catch (err: any) {
+      Logger.error("Action failed", err, {
+        context: "OrderContext",
+        action,
+        orderId,
+      });
+      throw err;
+    }
+  };
+
+  // Abrir caixa
+  const openCashRegister = async (
+    openingBalanceCents: number,
+  ): Promise<void> => {
+    // DOCKER CORE: Não usa auth, então operatorId pode ser null
+    // Para desenvolvimento, podemos usar um ID fixo ou null
+    // Em produção, isso viria de um sistema de autenticação externo
+    const currentOperatorId = operatorId || null; // Docker Core não requer operatorId obrigatório
+
+    if (!restaurantId) {
+      Logger.error("Missing Restaurant ID for OpenCashRegister", null, {
+        restaurantId,
+      });
+      throw new Error("Restaurant ID not set");
+    }
+
+    // STEP 7: Fail-closed - não assume Kernel
+    // DOCKER CORE: Validação mínima - apenas restaurante necessário
+    if (!restaurantId) {
+      throw new Error("Restaurante não selecionado");
+    }
+
+    try {
+      // DOCKER CORE: Abrir caixa diretamente via RPC, sem Kernel
+      const { data: registerResult, error: openError } =
+        await dockerCoreClient.rpc("open_cash_register_atomic", {
+          p_restaurant_id: restaurantId,
+          p_name: "Caixa Principal",
+          p_opened_by: currentOperatorId, // Pode ser null no Docker Core
+          p_opening_balance_cents: openingBalanceCents,
         });
 
-        if (!result.ok) {
-            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
-        }
-        await getActiveOrders(); // Refresh
-    };
-
-    // Sprint 12: Attach Customer
-    const attachCustomer = async (orderId: string, customerId: string): Promise<void> => {
-        if (!restaurantId) throw new Error('Restaurant ID not set');
-
-        const { error } = await supabase
-            .from('gm_orders')
-            .update({ customer_id: customerId })
-            .eq('id', orderId)
-            .eq('restaurant_id', restaurantId);
-
-        if (error) throw error;
-        await getActiveOrders();
-    };
-
-    // Cancelar Pedido
-    const cancelOrder = async (orderId: string, reason: string): Promise<void> => {
-        if (!restaurantId) throw new Error('Restaurant ID not set');
-
-        // STEP 7: Fail-closed - não assume Kernel
-        if (!isKernelReady()) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
-                ? 'Sistema em modo de estabilização'
-                : status === 'BOOTING'
-                    ? 'Sistema inicializando'
-                    : 'Selecione um restaurante antes de cancelar pedidos'}`);
-        }
-
-        const result = await executeSafe({
-            entity: 'ORDER',
-            entityId: orderId,
-            event: 'CANCEL',
+      if (openError) {
+        if (openError.message.includes("CASH_REGISTER_ALREADY_OPEN")) {
+          // Se já está aberto, recuperar o ID
+          const existing = await CashRegisterEngine.getOpenCashRegister(
             restaurantId,
-            reason
+          );
+          if (existing) {
+            setCashRegisterId(existing.id);
+            return; // Treat as success
+          }
+        }
+        throw openError;
+      }
+
+      if (!registerResult || !registerResult.id) {
+        throw new Error("Failed to open cash register: no ID returned");
+      }
+
+      setCashRegisterId(registerResult.id);
+
+      // Verificar que o registro foi criado corretamente
+      const verifyRegister = await CashRegisterEngine.getOpenCashRegister(
+        restaurantId,
+      );
+      if (!verifyRegister) {
+        throw new Error("Failed to verify cash register after opening");
+      }
+    } catch (err: any) {
+      // Robustness: If already open, just recover the ID and proceed
+      if (
+        err.message?.includes("already open") ||
+        err.message?.includes("já está aberto")
+      ) {
+        Logger.warn("Register already open. recovering...", {
+          context: "OrderContext",
+          tenantId: restaurantId,
         });
-
-        if (!result.ok) {
-            throw new Error(`KERNEL_EXECUTION_FAILED: ${result.reason}`);
+        const existing = await CashRegisterEngine.getOpenCashRegister(
+          restaurantId,
+        );
+        if (existing) {
+          setCashRegisterId(existing.id);
+          return; // Treat as success
         }
+      }
+      const classified = classifyFailure(err);
+      (err as any).failureClass = classified.class;
+      (err as any).classifiedReason = classified.reason;
+      throw err;
+    }
+  };
 
-        await getActiveOrders();
-    };
+  // Fechar caixa
+  const closeCashRegister = async (
+    closingBalanceCents: number,
+  ): Promise<void> => {
+    if (!restaurantId || !operatorId || !cashRegisterId) {
+      const err = new Error("Missing required IDs");
+      const classified = classifyFailure(err);
+      (err as any).failureClass = classified.class;
+      (err as any).classifiedReason = classified.reason;
+      throw err;
+    }
 
-    // Ações do pedido
-    const performOrderAction = async (orderId: string, action: string, payload?: any): Promise<void> => {
-        if (!restaurantId) throw new Error('Restaurant ID not set');
+    try {
+      // DOCKER CORE: Fechar caixa diretamente via PostgREST (sem Kernel)
+      const { error: closeError } = await dockerCoreClient
+        .from("gm_cash_registers")
+        .update({
+          status: "closed",
+          closing_balance_cents: closingBalanceCents,
+          closed_at: new Date().toISOString(),
+          closed_by: operatorId || null, // Pode ser null no Docker Core
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", cashRegisterId)
+        .eq("restaurant_id", restaurantId);
 
-        try {
-            switch (action) {
-                case 'send':
-                case 'prepare':
-                    if (!isKernelReady()) throw new Error('KERNEL_NOT_READY');
-                    const finalizeResult = await executeSafe({
-                        entity: 'ORDER',
-                        entityId: orderId,
-                        event: 'FINALIZE',
-                        restaurantId,
-                        targetStatus: 'preparing'
-                    });
-                    if (!finalizeResult.ok) throw new Error(finalizeResult.reason);
-                    break;
+      if (closeError) throw closeError;
 
-                case 'ready':
-                    if (!isKernelReady()) throw new Error('KERNEL_NOT_READY');
-                    const readyResult = await executeSafe({
-                        entity: 'ORDER',
-                        entityId: orderId,
-                        event: 'MARK_READY',
-                        restaurantId,
-                        targetStatus: 'ready'
-                    });
-                    if (!readyResult.ok) throw new Error(readyResult.reason);
-                    break;
+      setCashRegisterId(null);
+    } catch (err: any) {
+      const classified = classifyFailure(err);
+      (err as any).failureClass = classified.class;
+      (err as any).classifiedReason = classified.reason;
+      throw err;
+    }
+  };
 
-                case 'serve':
-                    if (!isKernelReady()) throw new Error('KERNEL_NOT_READY');
-                    const serveResult = await executeSafe({
-                        entity: 'ORDER',
-                        entityId: orderId,
-                        event: 'SERVE',
-                        restaurantId,
-                        targetStatus: 'served',
-                        metadata: { served_at: new Date().toISOString() }
-                    });
-                    if (!serveResult.ok) throw new Error(serveResult.reason);
-                    break;
+  // Buscar caixa aberto
+  const getOpenCashRegister = async (): Promise<CashRegister | null> => {
+    if (!restaurantId) return null;
+    return CashRegisterEngine.getOpenCashRegister(restaurantId);
+  };
 
-                case 'pay':
-                    // Offline Support
-                    if (isOffline || (status as string) === 'FROZEN') {
-                        Logger.info('Offline Mode: Processing payment locally', { orderId });
-                        if (!restaurantId) throw new Error('Restaurant ID not set');
+  // Total do dia
+  const getDailyTotal = async (): Promise<number> => {
+    if (!restaurantId) return 0;
 
-                        // Use local state for register
-                        const offlineRegisterId = cashRegisterId;
-                        if (!offlineRegisterId) {
-                            throw new Error('CASH_REGISTER_CLOSED: Caixa desconhecido (offline). Certifique-se que o caixa estava aberto antes de cair a rede.');
-                        }
+    const payments = await PaymentEngine.getTodayPayments(restaurantId);
+    return payments.reduce((sum, p) => sum + p.amountCents, 0);
+  };
 
-                        // Get order total from local state
-                        const localOrder = orders.find(o => o.id === orderId);
-                        if (!localOrder) throw new Error('Order not found locally');
+  return (
+    <OrderContext.Provider
+      value={{
+        orders,
+        pendingExceptions,
+        loading,
+        error,
+        // === KDS HARDENING: Expor todos os estados de conexão ===
+        isConnected: isOnline,
+        isOffline,
+        realtimeStatus, // 'SUBSCRIBED' | 'CLOSED' | 'CHANNEL_ERROR' | etc
+        lastRealtimeEvent, // Timestamp do último evento
 
-                        const amountCents = (payload?.isPartial && payload?.amountCents)
-                            ? payload.amountCents
-                            : localOrder.total;
-
-                        await updateOfflineOrder(orderId, 'PAY', {
-                            amountCents,
-                            method: payload?.method || 'cash',
-                            restaurantId,
-                            cashRegisterId: offlineRegisterId,
-                            isPartial: payload?.isPartial,
-                            operatorId
-                        });
-
-                        // Optimistic UI Update
-                        setOrders(prev => prev.map(o => {
-                            if (o.id === orderId) {
-                                // If full payment, mark paid. If partial, status might remain open or 'partially_paid'
-                                // For simplicity in offline: if amount >= total, paid. 
-                                // But split bill logic is complex. 
-                                // Assuming typical flow:
-                                if (!payload?.isPartial) return { ...o, status: 'paid' };
-                                return o;
-                            }
-                            return o;
-                        }));
-
-                        // Remove from active tab if paid fully
-                        if (!payload?.isPartial) {
-                            removeTabIsolated('chefiapp_active_order_id');
-                        }
-                        return;
-                    }
-
-                    // HARD RULE 2: Pagar = Fechar pedido (TRANSACTION ATOMICA)
-                    // CRÍTICO: Re-fetch order do DB e recalcular total (nunca confiar no frontend)
-
-                    // 1. Re-fetch order do DB (fonte soberana)
-                    const dbOrder = await OrderEngine.getOrderById(orderId);
-
-                    // 2. Recalcular total baseado em items (double-check contra tampering)
-                    const { data: items, error: itemsError } = await supabase
-                        .from('gm_order_items')
-                        .select('price_snapshot, quantity')
-                        .eq('order_id', orderId);
-
-                    if (itemsError) {
-                        throw new Error(`Failed to fetch order items: ${itemsError.message} `);
-                    }
-
-                    if (!items || items.length === 0) {
-                        throw new Error('Order has no items');
-                    }
-
-                    const calculatedTotal = items.reduce(
-                        (sum, i) => sum + (i.price_snapshot * i.quantity),
-                        0
-                    );
-
-                    // 3. Validar que total do DB = total calculado (proteção contra tampering)
-                    if (calculatedTotal !== dbOrder.totalCents) {
-                        Logger.critical('Total mismatch detected during payment', null, {
-                            context: 'OrderContext',
-                            dbTotal: dbOrder.totalCents,
-                            calculatedTotal,
-                            orderId
-                        });
-                        throw new Error('Total mismatch - possible tampering detected. Please refresh and try again.');
-                    }
-
-                    // IDEMPOTENCY SAFETY: Recuperar key da sessão ou gerar nova
-                    let key = idempotencyKeys.current.get(orderId);
-                    if (!key) {
-                        key = `${orderId}_${Date.now()} _secure`;
-                        idempotencyKeys.current.set(orderId, key);
-                    }
-
-                    // 0. Enforce Open Cash Register (Sovereign Rule)
-                    if (!cashRegisterId) {
-                        // Double check DB
-                        const openRegister = await CashRegisterEngine.getOpenCashRegister(restaurantId);
-                        if (!openRegister) {
-                            throw new Error('CASH_REGISTER_CLOSED: Abra o caixa antes de receber pagamentos.');
-                        }
-                        setCashRegisterId(openRegister.id);
-                        // Use fetched ID for this transaction to avoid state lag
-                    }
-                    const activeRegisterId = cashRegisterId || (await CashRegisterEngine.getOpenCashRegister(restaurantId))?.id;
-
-                    if (!activeRegisterId) {
-                        throw new Error('CASH_REGISTER_CLOSED: Abra o caixa antes de receber pagamentos.');
-                    }
-
-                    // 4. Processar pagamento (transação atômica: paga + fecha)
-                    // SEMANA 2: Suportar pagamento parcial (split bill)
-                    const isPartial = payload?.isPartial === true;
-                    const amountCents = isPartial && payload?.amountCents
-                        ? payload.amountCents // Pagamento parcial (split bill)
-                        : dbOrder.totalCents; // Pagamento total (comportamento padrão)
-
-                    // Validar que amount não excede o total
-                    if (amountCents > dbOrder.totalCents) {
-                        throw new Error(`Valor de pagamento(${amountCents}) excede o total do pedido(${dbOrder.totalCents})`);
-                    }
-
-                    // STEP 7: Fail-closed - não assume Kernel
-                    if (!isKernelReady()) {
-                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
-                            ? 'Sistema em modo de estabilização'
-                            : status === 'BOOTING'
-                                ? 'Sistema inicializando'
-                                : 'Selecione um restaurante antes de processar pagamento'
-                            } `);
-                    }
-                    const method = (payload?.method || 'cash') as PaymentMethod;
-
-                    // PRE-CHECK: Loyalty Balance
-                    if (method === 'loyalty') {
-                        const orderForCheck = await OrderEngine.getOrder(orderId, restaurantId);
-                        const customerId = (orderForCheck as any).customer_id;
-                        if (!customerId) throw new Error('Cliente precisa ser identificado para pagar com pontos.');
-
-                        const { data: customerCheck } = await supabase.from('gm_customers').select('points_balance').eq('id', customerId).single();
-                        if (!customerCheck) throw new Error('Perfil de cliente não encontrado.');
-
-                        // 1 Point = 0.10 EUR (10 Cents)
-                        // AmountCents = 100 (1 EUR) -> Next Points = 10
-                        const pointsNeeded = Math.ceil(amountCents / 10);
-
-                        if ((customerCheck.points_balance || 0) < pointsNeeded) {
-                            throw new Error(`Saldo insuficiente. Necessário: ${pointsNeeded} pts. Disponível: ${customerCheck.points_balance || 0} pts.`);
-                        }
-                    }
-
-                    // STEP 7: Usar executeSafe
-                    const payResult = await executeSafe({
-                        entity: 'ORDER',
-                        entityId: orderId,
-                        event: isPartial ? 'REGISTER_PAYMENT' : 'PAY',
-                        restaurantId,
-                        // Context for persistPayment Effect
-                        cashRegisterId: activeRegisterId,
-                        amountCents,
-                        method: method,
-                        metadata: {
-                            operatorId: operatorId || undefined,
-                            isPartial,
-                        },
-                        idempotencyKey: key,
-                        isPartial
-                    });
-                    if (!payResult.ok) {
-                        throw new Error(`KERNEL_EXECUTION_FAILED: ${payResult.reason}`);
-                    }
-
-                    // Cleanup key on success (allows new payment if order re-opened later)
-                    idempotencyKeys.current.delete(orderId);
-
-                    // FASE 3: Integração CRM e Loyalty (não bloqueia pagamento se falhar)
-                    try {
-                        const orderForCRM = await OrderEngine.getOrder(orderId, restaurantId);
-                        if (orderForCRM && (orderForCRM as any).customer_id) {
-                            const customerId = (orderForCRM as any).customer_id;
-
-                            if (method === 'loyalty') {
-                                // REDIRECCIONAMENTO: QUEIMA DE PONTOS
-                                const pointsBurned = Math.ceil(amountCents / 10);
-                                const { data: customer } = await supabase.from('gm_customers').select('points_balance, visit_count').eq('id', customerId).single();
-
-                                if (customer) {
-                                    await supabase.from('gm_customers').update({
-                                        points_balance: (customer.points_balance || 0) - pointsBurned,
-                                        // Não incrementa spend nem visits em resgate (decisão de negócio)
-                                        // Ou incrementa visits? Vamos incrementar visits pois houve transação.
-                                        visit_count: (customer.visit_count || 0) + 1,
-                                        last_visit_at: new Date().toISOString()
-                                    }).eq('id', customerId);
-
-                                    await supabase.from('gm_loyalty_logs').insert({
-                                        restaurant_id: restaurantId,
-                                        customer_id: customerId,
-                                        order_id: orderId,
-                                        points_amount: -pointsBurned, // Negativo
-                                        description: `Resgatou ${pointsBurned} pontos (Desconto de ${(amountCents / 100).toFixed(2)}€)`
-                                    });
-                                }
-
-                            } else {
-                                // FLUXO NORMAL: GANHO DE PONTOS
-                                const spendCents = amountCents;
-                                const pointsEarned = Math.floor(spendCents / 100);
-
-                                const { data: customer } = await supabase.from('gm_customers').select('points_balance, visit_count, total_spend_cents').eq('id', customerId).single();
-
-                                if (customer) {
-                                    await supabase.from('gm_customers').update({
-                                        points_balance: (customer.points_balance || 0) + pointsEarned,
-                                        total_spend_cents: (customer.total_spend_cents || 0) + spendCents,
-                                        visit_count: (customer.visit_count || 0) + 1,
-                                        last_visit_at: new Date().toISOString()
-                                    }).eq('id', customerId);
-
-                                    await supabase.from('gm_loyalty_logs').insert({
-                                        restaurant_id: restaurantId,
-                                        customer_id: customerId,
-                                        order_id: orderId,
-                                        points_amount: pointsEarned,
-                                        description: `Ganhou ${pointsEarned} pontos (Pedido #${orderForCRM.number || orderForCRM.shortId})`
-                                    });
-                                }
-                            }
-                        }
-                    } catch (crmError) {
-                        Logger.warn('Failed to update CRM/Loyalty', { error: crmError, orderId });
-                    }
-
-                    // FASE 4: Inventory Auto-Deductions
-                    try {
-                        const paidOrder = await OrderEngine.getOrderById(orderId);
-                        await InventoryEngine.processOrder(paidOrder);
-
-                        const totalCost = await InventoryEngine.calculateOrderCost(paidOrder);
-                        const grossMargin = paidOrder.totalCents - totalCost;
-
-                        await supabase.from('gm_orders').update({
-                            total_cost_cents: totalCost,
-                            gross_margin_cents: grossMargin
-                        }).eq('id', orderId);
-
-                    } catch (invError) {
-                        Logger.error('Inventory/Finance Logic Failed', invError, { context: 'OrderContext', orderId });
-                    }
-
-                    // Limpar pedido ativo após pagamento
-                    const currentActive = getTabIsolated('chefiapp_active_order_id');
-                    if (currentActive === orderId) {
-                        removeTabIsolated('chefiapp_active_order_id');
-                    }
-                    break;
-
-                case 'close':
-                    // HARD RULE: 'close' foi eliminado
-                    // Pagamento já fecha o pedido automaticamente (transação atômica)
-                    // Esta ação não deve mais existir, mas mantemos para compatibilidade
-                    const orderToClose = await OrderEngine.getOrderById(orderId);
-                    if (orderToClose.paymentStatus !== 'PAID') {
-                        throw new Error('Pedido deve ser pago antes de fechar. Use "Cobrar" primeiro.');
-                    }
-                    // Se já está pago, apenas atualizar status (redundante, mas seguro)
-                    // REMOVED LEGACY WRITE: kernel.execute('PAY') already sets status to PAID via Effect.
-                    break;
-
-                case 'cancel':
-                    // STEP 7: Fail-closed - não assume Kernel
-                    if (!isKernelReady()) {
-                        throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
-                            ? 'Sistema em modo de estabilização'
-                            : status === 'BOOTING'
-                                ? 'Sistema inicializando'
-                                : 'Selecione um restaurante antes de cancelar pedido'
-                            } `);
-                    }
-                    // STEP 7: Usar executeSafe
-                    const cancelResult = await executeSafe({
-                        entity: 'ORDER',
-                        entityId: orderId,
-                        event: 'CANCEL',
-                        restaurantId
-                    });
-                    if (!cancelResult.ok) {
-                        throw new Error(`KERNEL_EXECUTION_FAILED: ${cancelResult.reason} `);
-                    }
-                    // Limpar pedido ativo se cancelado
-                    const currentActiveCancel = getTabIsolated('chefiapp_active_order_id');
-                    if (currentActiveCancel === orderId) {
-                        removeTabIsolated('chefiapp_active_order_id');
-                    }
-                    break;
-
-                default:
-                    Logger.warn('Unknown action', { context: 'OrderContext', action, orderId });
-            }
-
-            await getActiveOrders(); // Refresh
-        } catch (err: any) {
-            Logger.error('Action failed', err, { context: 'OrderContext', action, orderId });
-            throw err;
-        }
-    };
-
-    // Abrir caixa
-    const openCashRegister = async (openingBalanceCents: number): Promise<void> => {
-        // LAZY LOAD: If operatorId is missing, try to fetch it one last time
-        let currentOperatorId = operatorId;
-        if (!currentOperatorId) {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                currentOperatorId = user.id;
-                setOperatorId(user.id);
-            }
-        }
-
-        if (!restaurantId || !currentOperatorId) {
-            Logger.error('Missing IDs for OpenCashRegister', null, { restaurantId, operatorId: currentOperatorId });
-            throw new Error('Restaurant ID or Operator ID not set');
-        }
-
-        // STEP 7: Fail-closed - não assume Kernel
-        if (!isKernelReady()) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
-                ? 'Sistema em modo de estabilização'
-                : status === 'BOOTING'
-                    ? 'Sistema inicializando'
-                    : 'Selecione um restaurante antes de abrir caixa'
-                } `);
-        }
-
-        try {
-            const register = await CashRegisterEngine.openCashRegister({
-                restaurantId,
-                openingBalanceCents,
-                openedBy: currentOperatorId,
-                kernel: kernel! // SOVEREIGNTY: Pass Kernel (já validado acima)
-            });
-
-            setCashRegisterId(register.id);
-        } catch (err: any) {
-            // Robustness: If already open, just recover the ID and proceed
-            if (err.message?.includes('already open') || err.message?.includes('já está aberto')) {
-                Logger.warn('Register already open. recovering...', { context: 'OrderContext', tenantId: restaurantId });
-                const existing = await CashRegisterEngine.getOpenCashRegister(restaurantId);
-                if (existing) {
-                    setCashRegisterId(existing.id);
-                    return; // Treat as success
-                }
-            }
-            throw err;
-        }
-    };
-
-    // Fechar caixa
-    const closeCashRegister = async (closingBalanceCents: number): Promise<void> => {
-        if (!restaurantId || !operatorId || !cashRegisterId) {
-            throw new Error('Missing required IDs');
-        }
-
-        // STEP 7: Fail-closed - não assume Kernel
-        if (!isKernelReady()) {
-            throw new Error(`KERNEL_NOT_READY: ${status === 'FROZEN'
-                ? 'Sistema em modo de estabilização'
-                : status === 'BOOTING'
-                    ? 'Sistema inicializando'
-                    : 'Selecione um restaurante antes de fechar caixa'
-                } `);
-        }
-
-        await CashRegisterEngine.closeCashRegister({
-            cashRegisterId,
-            restaurantId,
-            closingBalanceCents,
-            closedBy: operatorId,
-            kernel: kernel! // SOVEREIGNTY: Pass Kernel (já validado acima)
-        });
-
-        setCashRegisterId(null);
-    };
-
-    // Buscar caixa aberto
-    const getOpenCashRegister = async (): Promise<CashRegister | null> => {
-        if (!restaurantId) return null;
-        return CashRegisterEngine.getOpenCashRegister(restaurantId);
-    };
-
-    // Total do dia
-    const getDailyTotal = async (): Promise<number> => {
-        if (!restaurantId) return 0;
-
-        const payments = await PaymentEngine.getTodayPayments(restaurantId);
-        return payments.reduce((sum, p) => sum + p.amountCents, 0);
-    };
-
-    return (
-        <OrderContext.Provider value={{
-            orders,
-            pendingExceptions,
-            loading, // Explicitly expose loading state
-            // === KDS HARDENING: Expor todos os estados de conexão ===
-            isConnected: isOnline,
-            isOffline,
-            realtimeStatus,       // 'SUBSCRIBED' | 'CLOSED' | 'CHANNEL_ERROR' | etc
-            lastRealtimeEvent,    // Timestamp do último evento
-
-            createOrder,
-            addItemToOrder,
-            removeItemFromOrder,
-            updateItemQuantity,
-            performOrderAction,
-            attachCustomer,
-            cancelOrder,
-            getActiveOrders,
-            openCashRegister,
-            closeCashRegister,
-            getOpenCashRegister,
-            getDailyTotal,
-        }}>
-            {children}
-        </OrderContext.Provider>
-    );
+        createOrder,
+        addOrder: (order: Order) => setOrders((prev) => [...prev, order]),
+        updateOrderStatus: (orderId: string, status: Order["status"]) =>
+          setOrders((prev) =>
+            prev.map((o) => (o.id === orderId ? { ...o, status } : o)),
+          ),
+        resetOrders: () => setOrders([]),
+        addItemToOrder,
+        removeItemFromOrder,
+        updateItemQuantity,
+        performOrderAction,
+        attachCustomer,
+        cancelOrder,
+        getActiveOrders,
+        syncNow: () => getActiveOrders(),
+        openCashRegister,
+        closeCashRegister,
+        getOpenCashRegister,
+        getDailyTotal,
+        cashRegisterId,
+      }}
+    >
+      {children}
+    </OrderContext.Provider>
+  );
 }
 
 export function useOrders() {
-    const context = useContext(OrderContext);
-    if (!context) throw new Error('useOrders must be used within an OrderProvider');
-    return context;
+  const context = useContext(OrderContext);
+  if (!context)
+    throw new Error("useOrders must be used within an OrderProvider");
+  return context;
 }
-

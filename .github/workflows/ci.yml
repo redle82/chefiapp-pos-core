@@ -35,3 +35,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Run tests
+        run: npm test -- --ci --testPathIgnorePatterns="e2e|playwright|massive|offline" --testTimeout=15000 --maxWorkers=2
+
+      - name: Sovereignty gate (order creation via Core)
+        run: bash ./scripts/sovereignty-gate.sh

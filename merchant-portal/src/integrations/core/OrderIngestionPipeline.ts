@@ -15,9 +15,8 @@
 
 import { OrderEngine, type OrderInput, type OrderItemInput } from '../../core/tpv/OrderEngine';
 import type { OrderCreatedEvent } from '../types/IntegrationEvent';
-import type { OrderCreatedEvent } from '../types/IntegrationEvent';
 import { supabase } from '../../core/supabase';
-import { DbWriteGate } from '../../governance/DbWriteGate';
+import { DbWriteGate } from '../../core/governance/DbWriteGate';
 
 /**
  * AIRLOCK PROTOCOL: Public Ingestion

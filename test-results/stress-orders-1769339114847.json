@@ -1,0 +1,241 @@
+{
+  "totalOrders": 25,
+  "successfulOrders": 25,
+  "failedOrders": 0,
+  "totalItems": 83,
+  "totalRevenueCents": 135335,
+  "avgLatencyMs": 8.04,
+  "maxLatencyMs": 16,
+  "minLatencyMs": 5,
+  "p95LatencyMs": 14,
+  "ordersPerSecond": 34.770514603616135,
+  "duration": 719,
+  "errors": [],
+  "orderResults": [
+    {
+      "orderId": "d4ae08e4-4237-4c68-a3b3-b8b0824f39a2",
+      "restaurantId": "e7889143-e254-401e-877f-2a90671275bf",
+      "tableId": "a40baa55-a480-459c-92cb-f7b70cbe7ffd",
+      "itemCount": 3,
+      "totalCents": 6009,
+      "latencyMs": 16,
+      "success": true
+    },
+    {
+      "orderId": "5a94460d-76ed-42f2-8134-9c5d2907d919",
+      "restaurantId": "e7889143-e254-401e-877f-2a90671275bf",
+      "tableId": "370a87f8-eecf-4210-8ed9-53ac7f109bb6",
+      "itemCount": 5,
+      "totalCents": 6469,
+      "latencyMs": 11,
+      "success": true
+    },
+    {
+      "orderId": "893891a7-5806-4577-8fab-f195f276d9ec",
+      "restaurantId": "e7889143-e254-401e-877f-2a90671275bf",
+      "tableId": "63d5f60b-c713-495c-8515-7c361d5079f1",
+      "itemCount": 4,
+      "totalCents": 6609,
+      "latencyMs": 12,
+      "success": true
+    },
+    {
+      "orderId": "9c57bfc1-fb7d-4a70-8cc9-8f6cc1bec38c",
+      "restaurantId": "e7889143-e254-401e-877f-2a90671275bf",
+      "tableId": "a3c38b78-2105-474e-b943-174a32208cc9",
+      "itemCount": 3,
+      "totalCents": 4680,
+      "latencyMs": 12,
+      "success": true
+    },
+    {
+      "orderId": "b9a013d8-f778-4052-a5f4-be4c0ed42666",
+      "restaurantId": "e7889143-e254-401e-877f-2a90671275bf",
+      "tableId": "f3a36dc0-3154-418c-939b-374afafff669",
+      "itemCount": 2,
+      "totalCents": 3500,
+      "latencyMs": 14,
+      "success": true
+    },
+    {
+      "orderId": "be5c69ea-9a40-41b4-944b-2ecace0445e3",
+      "restaurantId": "ae4c01cc-233b-46ed-a9d6-7e17ef45eafc",
+      "tableId": "8625c3d6-017a-49cb-b3a4-20805d9e3340",
+      "itemCount": 2,
+      "totalCents": 2885,
+      "latencyMs": 11,
+      "success": true
+    },
+    {
+      "orderId": "deec8496-d884-45dc-ae90-6363d69ce447",
+      "restaurantId": "ae4c01cc-233b-46ed-a9d6-7e17ef45eafc",
+      "tableId": "652e0176-48ec-4043-af95-1c6c661b315f",
+      "itemCount": 2,
+      "totalCents": 2798,
+      "latencyMs": 6,
+      "success": true
+    },
+    {
+      "orderId": "ac3ea419-5528-4bde-91ca-ef5d52007704",
+      "restaurantId": "ae4c01cc-233b-46ed-a9d6-7e17ef45eafc",
+      "tableId": "e603fd0f-b341-45e8-b9d6-cfb86fdb2014",
+      "itemCount": 2,
+      "totalCents": 2385,
+      "latencyMs": 7,
+      "success": true
+    },
+    {
+      "orderId": "723dd575-56cc-4712-bd50-75e1f32c5d58",
+      "restaurantId": "ae4c01cc-233b-46ed-a9d6-7e17ef45eafc",
+      "tableId": "5a2d9d06-d646-4c3f-8790-e55baf1f379b",
+      "itemCount": 3,
+      "totalCents": 4401,
+      "latencyMs": 7,
+      "success": true
+    },
+    {
+      "orderId": "c86388a9-dc60-4ea0-b1f3-4c670e312c6f",
+      "restaurantId": "ae4c01cc-233b-46ed-a9d6-7e17ef45eafc",
+      "tableId": "3af39c09-7c0a-4686-badb-2b7c0624c3bc",
+      "itemCount": 5,
+      "totalCents": 6552,
+      "latencyMs": 8,
+      "success": true
+    },
+    {
+      "orderId": "6c454f54-fc08-414d-84e2-59a8ec6b6ac8",
+      "restaurantId": "4b8e5c02-dda5-4d35-a7fb-0e83616b1e18",
+      "tableId": "840ae517-e9e7-4e1b-a9e3-4b1a0f1cb141",
+      "itemCount": 4,
+      "totalCents": 6721,
+      "latencyMs": 7,
+      "success": true
+    },
+    {
+      "orderId": "48829371-84eb-4700-b8ee-071eac98f0c2",
+      "restaurantId": "4b8e5c02-dda5-4d35-a7fb-0e83616b1e18",
+      "tableId": "6e41691b-3485-455d-a9d4-480f7c487935",
+      "itemCount": 2,
+      "totalCents": 4896,
+      "latencyMs": 6,
+      "success": true
+    },
+    {
+      "orderId": "d79fb86a-12c7-46dd-a2ff-bf852266bddc",
+      "restaurantId": "4b8e5c02-dda5-4d35-a7fb-0e83616b1e18",
+      "tableId": "53d3c533-273a-4a8e-8d7b-43fe5afd274c",
+      "itemCount": 3,
+      "totalCents": 4334,
+      "latencyMs": 7,
+      "success": true
+    },
+    {
+      "orderId": "6c822ede-0bf0-4f6e-b8dc-f776f00d29d0",
+      "restaurantId": "4b8e5c02-dda5-4d35-a7fb-0e83616b1e18",
+      "tableId": "fa213cb2-b5a3-41bc-96a4-4df8d50eda4c",
+      "itemCount": 5,
+      "totalCents": 11564,
+      "latencyMs": 6,
+      "success": true
+    },
+    {
+      "orderId": "3d161a32-a07a-4982-a885-f200f82fd434",
+      "restaurantId": "4b8e5c02-dda5-4d35-a7fb-0e83616b1e18",
+      "tableId": "5fa9b706-b851-4e84-91ee-00acc2399306",
+      "itemCount": 3,
+      "totalCents": 4471,
+      "latencyMs": 8,
+      "success": true
+    },
+    {
+      "orderId": "4366ba05-bb6b-44ad-b5b7-f9e097f98424",
+      "restaurantId": "927a563d-8547-489a-a9ad-abb5675b7855",
+      "tableId": "33313d15-dcdb-41cb-a0b3-5b84bc8f8d63",
+      "itemCount": 5,
+      "totalCents": 7109,
+      "latencyMs": 6,
+      "success": true
+    },
+    {
+      "orderId": "97552330-cd0b-460e-adc3-4b39d3cdae74",
+      "restaurantId": "927a563d-8547-489a-a9ad-abb5675b7855",
+      "tableId": "2759e812-58cd-4b7b-a546-845f47dcc5cb",
+      "itemCount": 3,
+      "totalCents": 5399,
+      "latencyMs": 5,
+      "success": true
+    },
+    {
+      "orderId": "1d336c4b-a13c-45f1-a229-e424b237aeb4",
+      "restaurantId": "927a563d-8547-489a-a9ad-abb5675b7855",
+      "tableId": "d49e70d2-70f9-4935-a8f5-0066640c2dd9",
+      "itemCount": 3,
+      "totalCents": 5075,
+      "latencyMs": 6,
+      "success": true
+    },
+    {
+      "orderId": "9d363a6b-9a06-41b2-b931-3b2ba74774dd",
+      "restaurantId": "927a563d-8547-489a-a9ad-abb5675b7855",
+      "tableId": "23737a9d-2ad6-45ff-a322-8b4bb0d490f2",
+      "itemCount": 5,
+      "totalCents": 11055,
+      "latencyMs": 5,
+      "success": true
+    },
+    {
+      "orderId": "77d68015-6ef5-4a4c-ac31-7b39a62314bb",
+      "restaurantId": "927a563d-8547-489a-a9ad-abb5675b7855",
+      "tableId": "f1802096-fbb7-4ee8-ae18-848096584f97",
+      "itemCount": 4,
+      "totalCents": 8402,
+      "latencyMs": 6,
+      "success": true
+    },
+    {
+      "orderId": "42494bcf-5cc6-4b4c-9101-96fa44359dad",
+      "restaurantId": "9298dcb1-b6e0-4aad-a4f4-ce3520b520ba",
+      "tableId": "1a694d75-5cbe-40c7-98fc-f64cfd90818a",
+      "itemCount": 2,
+      "totalCents": 1811,
+      "latencyMs": 7,
+      "success": true
+    },
+    {
+      "orderId": "b574d972-9080-4200-880d-c17a004142b8",
+      "restaurantId": "9298dcb1-b6e0-4aad-a4f4-ce3520b520ba",
+      "tableId": "59ba51b0-0edb-4255-a94f-1b0d3f8e7cd7",
+      "itemCount": 2,
+      "totalCents": 3758,
+      "latencyMs": 7,
+      "success": true
+    },
+    {
+      "orderId": "c0576a17-a914-46e8-9768-108c9e32cbc0",
+      "restaurantId": "9298dcb1-b6e0-4aad-a4f4-ce3520b520ba",
+      "tableId": "722d4fed-db84-4b9f-93fb-31dff2d859df",
+      "itemCount": 5,
+      "totalCents": 5768,
+      "latencyMs": 6,
+      "success": true
+    },
+    {
+      "orderId": "65fd08bc-5c3a-442c-8a49-933d05f20221",
+      "restaurantId": "9298dcb1-b6e0-4aad-a4f4-ce3520b520ba",
+      "tableId": "cf9828f0-f620-4549-8193-9c998ed4c894",
+      "itemCount": 3,
+      "totalCents": 4100,
+      "latencyMs": 7,
+      "success": true
+    },
+    {
+      "orderId": "9460dcaa-bd9c-4ec8-b479-0c07fc7e7f07",
+      "restaurantId": "9298dcb1-b6e0-4aad-a4f4-ce3520b520ba",
+      "tableId": "8869601b-fbc3-44f0-822c-bb826695007a",
+      "itemCount": 3,
+      "totalCents": 4584,
+      "latencyMs": 8,
+      "success": true
+    }
+  ]
+}

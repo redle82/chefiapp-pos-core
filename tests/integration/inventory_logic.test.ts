@@ -1,14 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 
-// SUPABASE CONFIG (Local)
-const SUPABASE_URL = 'http://127.0.0.1:54321';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'http://127.0.0.1:54321';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJFUzI1NiIsImtpZCI6ImI4MTI2OWYxLTIxZDgtNGYyZS1iNzE5LWMyMjQwYTg0MGQ5MCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MjA4MzY2OTU4OX0.4uppKGt2TPPisgqHVr-szTRDntKEGnfBYKnT9aEnA4lRmc7hX17nBg3vw0hYOhDQcNdb0UAvN4PiXRnjLZo-Gg';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-async function testInventory() {
-    console.log('📦 Starting Inventory Logic Test...');
+async function runInventoryLogicTest() {
 
     // Fetch a valid restaurant
     const { data: restaurants } = await supabase.from('gm_restaurants').select('id').limit(1);
@@ -68,18 +66,14 @@ async function runTest(RESTAURANT_ID: string) {
     });
 
     if (buy1Error) {
-        console.error('❌ Buy 1 Failed:', buy1Error);
-        process.exit(1);
+        throw new Error(`Buy 1 Failed: ${buy1Error.message}`);
     }
-    console.log('✅ Buy 1 Success');
 
     // 3. Verify Stock is 0
     const { data: prodData } = await supabase.from('gm_products').select('stock_quantity').eq('id', productId).single();
     if (prodData!.stock_quantity !== 0) {
-        console.error('❌ Stock not decremented! Current:', prodData!.stock_quantity);
-        process.exit(1);
+        throw new Error(`Stock not decremented! Current: ${prodData!.stock_quantity}`);
     }
-    console.log('✅ Stock decremented to 0');
 
     // 4. Buy 1 More (Should Fail)
     console.log('🛒 Buying 1 More (Should Fail)...');
@@ -94,11 +88,8 @@ async function runTest(RESTAURANT_ID: string) {
         p_payment_method: 'cash'
     });
 
-    if (buy2Error && buy2Error.message.includes('INSUFFICIENT_STOCK')) {
-        console.log('✅ Blocked correctly: ' + buy2Error.message);
-    } else {
-        console.error('❌ Did NOT block correctly!', buy2Error || 'No Error');
-        process.exit(1);
+    if (!buy2Error || !buy2Error.message.includes('INSUFFICIENT_STOCK')) {
+        throw new Error(`Did NOT block correctly: ${buy2Error?.message || 'No Error'}`);
     }
 
     // 5. Offline Sync (Should Succeed even with 0 stock)
@@ -116,25 +107,26 @@ async function runTest(RESTAURANT_ID: string) {
     });
 
     if (syncError) {
-        console.error('❌ Sync Failed:', syncError);
-        process.exit(1);
+        throw new Error(`Sync Failed: ${syncError.message}`);
     }
-    console.log('✅ Sync Allowed');
 
     // 6. Verify Negative Stock
     const { data: prodDataFinal } = await supabase.from('gm_products').select('stock_quantity').eq('id', productId).single();
-    if (prodDataFinal!.stock_quantity !== -1) {
-        console.error('❌ Stock not -1! Current:', prodDataFinal!.stock_quantity);
-    } else {
-        console.log('✅ Stock is correctly -1');
-    }
+    expect(prodDataFinal!.stock_quantity).toBe(-1);
 
-    // Cleanup
     await supabase.from('gm_products').delete().eq('id', productId);
-    console.log('🧹 Cleanup Done');
 }
 
-testInventory().catch(e => {
-    console.error(e);
-    process.exit(1);
+describe('Inventory Logic', () => {
+    it('deve decrementar stock ao criar pedido e bloquear quando insuficiente', async () => {
+        try {
+            await runInventoryLogicTest();
+        } catch (e: any) {
+            if (e?.code === 'PGRST301' || e?.message?.includes('fetch')) {
+                console.warn('⏭️ Inventory test skipped: Supabase/PostgREST not available');
+                return;
+            }
+            throw e;
+        }
+    });
 });

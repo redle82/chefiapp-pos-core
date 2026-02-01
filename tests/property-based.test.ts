@@ -13,6 +13,7 @@ import { describe, it, expect, beforeEach } from "@jest/globals";
 import * as fc from "fast-check";
 import { InMemoryEventStore } from "../event-log/InMemoryEventStore";
 import { EventExecutor } from "../event-log/EventExecutor";
+import { InMemoryRepo } from "../core-engine/repo/InMemoryRepo";
 import { rebuildState } from "../projections";
 import type { Session, Order, OrderItem, Payment } from "../core-engine/repo/types";
 
@@ -20,12 +21,27 @@ import type { Session, Order, OrderItem, Payment } from "../core-engine/repo/typ
 // TEST SETUP
 // ============================================================================
 
+const TEST_TENANT = "test-tenant";
+const TEST_EXEC_ID = "exec-1";
+
+function testContext() {
+  return {
+    tenantId: TEST_TENANT,
+    executionId: TEST_EXEC_ID,
+    lifecycle: "ACTIVE" as const,
+    source: "API" as const,
+    correlationRoot: "test",
+    timestamp: new Date(),
+  };
+}
+
 let eventStore: InMemoryEventStore;
 let executor: EventExecutor;
 
 beforeEach(() => {
   eventStore = new InMemoryEventStore();
-  executor = new EventExecutor(eventStore);
+  const repo = new InMemoryRepo();
+  executor = new EventExecutor(eventStore, repo, TEST_TENANT, TEST_EXEC_ID);
 });
 
 // ============================================================================
@@ -78,11 +94,10 @@ describe("PROPERTY 1: Immutability of total_cents after LOCKED", () => {
           }
 
           // Finalize order (LOCKED)
-          const finalizeResult = await executor.transition({
-            entity: "ORDER",
-            entityId: order.id,
-            event: "FINALIZE",
-          });
+          const finalizeResult = await executor.execute(
+            { tenantId: TEST_TENANT, entity: "ORDER", entityId: order.id, event: "FINALIZE" },
+            testContext()
+          );
 
           expect(finalizeResult.success).toBe(true);
           expect(finalizeResult.event_id).toBeDefined();
@@ -96,7 +111,7 @@ describe("PROPERTY 1: Immutability of total_cents after LOCKED", () => {
           const originalTotalCents = lockedOrder!.total_cents;
           
           // Verify event was created with total_cents (event is source of truth)
-          const orderEventsStream = await eventStore.readStream(`ORDER:${order.id}`);
+          const orderEventsStream = await eventStore.readStream(`${TEST_TENANT}:ORDER:${order.id}`);
           const lockedEvent = orderEventsStream.find(e => e.type === "ORDER_LOCKED");
           expect(lockedEvent).toBeDefined();
           expect(lockedEvent?.payload.total_cents).toBe(expectedTotalCents);
@@ -193,12 +208,10 @@ describe("PROPERTY 2: Irreversibility of CONFIRMED payments", () => {
           executor.getRepo().savePayment(payment);
 
           // Confirm payment
-          const confirmResult = await executor.transition({
-            entity: "PAYMENT",
-            entityId: payment.id,
-            event: "CONFIRM",
-            context: { order_id: order.id },
-          });
+          const confirmResult = await executor.execute(
+            { tenantId: TEST_TENANT, entity: "PAYMENT", entityId: payment.id, event: "CONFIRM", context: { order_id: order.id } },
+            testContext()
+          );
 
           expect(confirmResult.success).toBe(true);
           expect(confirmResult.event_id).toBeDefined();
@@ -212,7 +225,7 @@ describe("PROPERTY 2: Irreversibility of CONFIRMED payments", () => {
           const originalState = confirmedPayment!.state;
           
           // Verify event was created (event is source of truth)
-          const paymentEventsStream = await eventStore.readStream(`PAYMENT:${payment.id}`);
+          const paymentEventsStream = await eventStore.readStream(`${TEST_TENANT}:PAYMENT:${payment.id}`);
           const confirmedEvent = paymentEventsStream.find(e => e.type === "PAYMENT_CONFIRMED");
           expect(confirmedEvent).toBeDefined();
           expect(confirmedEvent?.payload.payment_id).toBe(payment.id);
@@ -220,27 +233,24 @@ describe("PROPERTY 2: Irreversibility of CONFIRMED payments", () => {
 
           // Attempt various state transitions (all should fail)
           // 1. Try to FAIL
-          const failResult = await executor.transition({
-            entity: "PAYMENT",
-            entityId: payment.id,
-            event: "FAIL",
-          });
+          const failResult = await executor.execute(
+            { tenantId: TEST_TENANT, entity: "PAYMENT", entityId: payment.id, event: "FAIL" },
+            testContext()
+          );
           expect(failResult.success).toBe(false); // Terminal state
 
           // 2. Try to CANCEL
-          const cancelResult = await executor.transition({
-            entity: "PAYMENT",
-            entityId: payment.id,
-            event: "CANCEL",
-          });
+          const cancelResult = await executor.execute(
+            { tenantId: TEST_TENANT, entity: "PAYMENT", entityId: payment.id, event: "CANCEL" },
+            testContext()
+          );
           expect(cancelResult.success).toBe(false); // Terminal state
 
           // 3. Try to RETRY
-          const retryResult = await executor.transition({
-            entity: "PAYMENT",
-            entityId: payment.id,
-            event: "RETRY",
-          });
+          const retryResult = await executor.execute(
+            { tenantId: TEST_TENANT, entity: "PAYMENT", entityId: payment.id, event: "RETRY" },
+            testContext()
+          );
           expect(retryResult.success).toBe(false); // Terminal state
 
           // Verify state is still CONFIRMED
@@ -315,13 +325,12 @@ describe("PROPERTY 3: Concurrency without inconsistent states", () => {
           }
 
           // Concurrently confirm all payments
+          const ctx = testContext();
           const confirmPromises = payments.map((payment) =>
-            executor.transition({
-              entity: "PAYMENT",
-              entityId: payment.id,
-              event: "CONFIRM",
-              context: { order_id: order.id },
-            })
+            executor.execute(
+              { tenantId: TEST_TENANT, entity: "PAYMENT", entityId: payment.id, event: "CONFIRM", context: { order_id: order.id } },
+              ctx
+            )
           );
 
           const results = await Promise.allSettled(confirmPromises);
@@ -414,11 +423,10 @@ describe("PROPERTY 3: Concurrency without inconsistent states", () => {
           const finalizePromises = Array(5)
             .fill(null)
             .map(() =>
-              executor.transition({
-                entity: "ORDER",
-                entityId: order.id,
-                event: "FINALIZE",
-              })
+              executor.execute(
+                { tenantId: TEST_TENANT, entity: "ORDER", entityId: order.id, event: "FINALIZE" },
+                testContext()
+              )
             );
 
           const results = await Promise.allSettled(finalizePromises);
@@ -484,6 +492,7 @@ describe("PROPERTY 4: Deterministic replay", () => {
               session_id: "session-1",
               total_cents: 10000,
             },
+            meta: {},
             occurred_at: new Date(`2024-01-01T${10 + index}:00:00Z`),
           }));
 

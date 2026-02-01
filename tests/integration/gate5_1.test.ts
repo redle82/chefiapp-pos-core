@@ -78,7 +78,8 @@ describe("GATE 5.1: Fiscal Persistence", () => {
             stream_version: 1,
             type: "PAYMENT_CONFIRMED",
             payload: { payment_id: "pay-persist", amount: 300 },
-            occurred_at: new Date()
+            occurred_at: new Date(),
+            meta: {},
         };
 
         await txManager.appendAndSeal(event, getStreamHash);

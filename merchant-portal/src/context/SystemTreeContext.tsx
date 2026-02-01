@@ -11,6 +11,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { dockerCoreClient } from "../core-boundary/docker-core/connection";
 import { useRestaurantIdentity } from "../core/identity/useRestaurantIdentity";
 import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
 import {
@@ -201,12 +202,20 @@ export function SystemTreeProvider({
         status: "installed",
       }));
 
+      // Buscar terminais (Heartbeat)
+      const { data: terminals } = await dockerCoreClient
+        .from("gm_terminals")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .order("last_heartbeat_at", { ascending: false });
+
       // Construir árvore
       const nodes = await buildSystemTree({
         restaurantId,
         restaurantStatus,
         installedModules: installedModules || [],
         setupStatus: runtimeSetupStatus,
+        terminals: terminals || [],
       });
 
       setState((prev) => ({
@@ -220,15 +229,27 @@ export function SystemTreeProvider({
       console.error("Error refreshing system tree:", error);
       setState((prev) => ({ ...prev, loading: false }));
     }
-  }, [restaurantIdFromRuntime, identity.id, runtimeContext?.runtime?.mode]);
+  }, [
+    restaurantIdFromRuntime,
+    identity.id,
+    runtimeContext?.runtime?.mode,
+    runtimeContext?.runtime?.installed_modules,
+    runtimeContext?.runtime?.setup_status,
+  ]);
 
   useEffect(() => {
     if (restaurantIdFromRuntime || (!identity.loading && identity.id)) {
       refresh();
     }
-    // Array fixo (4 itens) para evitar "useEffect changed size between renders"
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restaurantIdFromRuntime, runtimeLoaded, identity.id, identity.loading]);
+  }, [
+    restaurantIdFromRuntime,
+    runtimeLoaded,
+    identity.id,
+    identity.loading,
+    runtimeContext?.runtime?.installed_modules,
+    runtimeContext?.runtime?.setup_status,
+  ]);
 
   return (
     <SystemTreeContext.Provider
@@ -274,9 +295,9 @@ async function buildSystemTree(params: {
   restaurantStatus: "draft" | "active" | "paused";
   installedModules: Array<{ module_id: string; status: string }>;
   setupStatus: SetupStatus;
+  terminals: any[];
 }): Promise<SystemNode[]> {
-  const { restaurantId, restaurantStatus, installedModules, setupStatus } =
-    params;
+  const { restaurantStatus, installedModules, setupStatus, terminals } = params;
 
   const installedModuleIds = new Set(installedModules.map((m) => m.module_id));
   const isPublished = restaurantStatus === "active";
@@ -797,6 +818,37 @@ async function buildSystemTree(params: {
               icon: "📡",
               type: "data",
               status: "active",
+            },
+            {
+              id: "data-terminals",
+              label: "Live Terminals",
+              icon: "📱",
+              type: "data" as const,
+              status: (terminals.length > 0
+                ? "active"
+                : "inactive") as NodeStatus,
+              description: "Terminais e dispositivos conectados agora",
+              children: terminals.map((t) => {
+                const lastPulse = new Date(t.last_heartbeat_at).getTime();
+                const now = Date.now();
+                const isOnline = now - lastPulse < 60000; // 1 minuto de tolerância
+
+                return {
+                  id: `terminal-${t.id}`,
+                  label: `${t.name} (${t.type})`,
+                  icon: isOnline ? "🟢" : "🔴",
+                  type: "data" as const,
+                  status: (isOnline ? "active" : "inactive") as NodeStatus,
+                  description: `ID: ${t.id} | Ping: ${new Date(
+                    t.last_heartbeat_at,
+                  ).toLocaleTimeString()}`,
+                  metadata: {
+                    type: t.type,
+                    lastHeartbeat: t.last_heartbeat_at,
+                    device: t.metadata?.userAgent,
+                  },
+                };
+              }),
             },
           ],
         },

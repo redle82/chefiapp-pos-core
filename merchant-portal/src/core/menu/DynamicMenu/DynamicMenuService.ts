@@ -43,6 +43,7 @@ export class DynamicMenuService {
         }
 
         // 2. Get all products with their dynamics
+        // Note: Fetching products without 'category' column (may not exist in schema)
         const { data: products, error: productsError } = await supabase
             .from('gm_products')
             .select(`
@@ -50,20 +51,29 @@ export class DynamicMenuService {
                 name,
                 description,
                 photo_url,
-                category,
                 price_cents,
                 available,
-                category_id,
-                gm_menu_categories!fk_products_category (
-                    id,
-                    name
-                )
+                category_id
             `)
             .eq('restaurant_id', restaurantId)
             .eq('available', true);
 
         if (productsError || !products) {
             throw new Error('Failed to load products: ' + productsError?.message);
+        }
+
+        // 2b. Get categories separately if needed
+        const categoryIds = [...new Set(products.map(p => p.category_id).filter(Boolean))];
+        let categoriesMap = new Map();
+        if (categoryIds.length > 0) {
+            const { data: categories } = await supabase
+                .from('gm_menu_categories')
+                .select('id, name')
+                .in('id', categoryIds);
+            
+            if (categories) {
+                categoriesMap = new Map(categories.map(c => [c.id, c.name]));
+            }
         }
 
         // 3. Get product dynamics
@@ -84,12 +94,14 @@ export class DynamicMenuService {
         // 5. Calculate scores for all products
         const productsWithScores: ProductWithScore[] = products.map(product => {
             const productDynamics = dynamicsMap.get(product.id);
+            // Get category name from map if available, otherwise use category_id as fallback
+            const categoryName = categoriesMap.get(product.category_id) || product.category_id || '';
 
             let score = 0;
             if (productDynamics) {
                 const scoreResult = calculateDynamicScore(
                     productDynamics,
-                    product.category,
+                    categoryName,
                     currentHour,
                     settings.score_weights
                 );
@@ -97,7 +109,7 @@ export class DynamicMenuService {
             } else {
                 // No dynamics: use fallback based on category + time
                 const timeSlot = getCurrentTimeSlot(currentHour);
-                score = this.getFallbackScore(product.category, timeSlot);
+                score = this.getFallbackScore(categoryName, timeSlot);
             }
 
             return {
@@ -105,7 +117,7 @@ export class DynamicMenuService {
                 name: product.name,
                 description: product.description,
                 photo_url: product.photo_url,
-                category: product.category,
+                category: categoryName, // Use category name from map
                 price_cents: product.price_cents,
                 available: product.available,
                 score,
@@ -244,7 +256,9 @@ export class DynamicMenuService {
             .eq('id', restaurantId)
             .single();
 
+        // If column doesn't exist or query fails, return defaults
         if (error || !data?.menu_settings) {
+            console.warn('[DynamicMenu] menu_settings not found, using defaults:', error?.message);
             // Return defaults
             return {
                 dynamic_menu_enabled: true,
@@ -270,15 +284,29 @@ export class DynamicMenuService {
         // Simple alphabetical sort when dynamic is disabled
         const { data: products } = await supabase
             .from('gm_products')
-            .select('*')
+            .select('id, name, price_cents, available, category_id')
             .eq('restaurant_id', restaurantId)
             .eq('available', true)
             .order('name');
 
+        // Get category names if needed
+        const categoryIds = [...new Set((products || []).map(p => p.category_id).filter(Boolean))];
+        let categoriesMap = new Map();
+        if (categoryIds.length > 0) {
+            const { data: categories } = await supabase
+                .from('gm_menu_categories')
+                .select('id, name')
+                .in('id', categoryIds);
+            
+            if (categories) {
+                categoriesMap = new Map(categories.map(c => [c.id, c.name]));
+            }
+        }
+
         const productsWithScores: ProductWithScore[] = (products || []).map(p => ({
             id: p.id,
             name: p.name,
-            category: p.category,
+            category: categoriesMap.get(p.category_id) || p.category_id || '',
             price_cents: p.price_cents,
             available: p.available,
             score: 0,

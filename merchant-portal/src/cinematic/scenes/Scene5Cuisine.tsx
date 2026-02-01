@@ -10,7 +10,7 @@ import { useOnboardingEngine } from '../context/OnboardingEngineProvider';
 export const Scene5Cuisine: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { addProduct } = useProducts();
+    const { addProduct, lastError, clearLastError } = useProducts();
     const { engine, refresh } = useOnboardingEngine();
     const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
@@ -58,6 +58,12 @@ export const Scene5Cuisine: React.FC = () => {
     return (
         <CinemaLayout>
             <div className="flex-1 flex flex-col items-center justify-start pt-16 px-6 relative z-20 w-full max-w-5xl mx-auto h-full overflow-y-auto pb-32">
+                {lastError && (
+                    <div role="alert" className="mb-4 p-4 bg-red-900/80 text-white rounded-lg flex justify-between items-center">
+                        <span>{lastError}</span>
+                        <button type="button" onClick={clearLastError} className="text-sm underline">Fechar</button>
+                    </div>
+                )}
                 <div className="text-center mb-10">
                     <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">Qual é a base da cozinha?</h1>
                     <p className="text-neutral-400 text-lg">Escolhe a origem. Nós sugerimos os clássicos.</p>

@@ -93,7 +93,7 @@ export const RequireActivation = ({ children }: { children: JSX.Element }) => {
 
             if (isBlockedBySubscription) {
                 console.log('[RequireActivation] 🛑 Access Denied: Subscription is SUSPENDED or CANCELLED');
-                navigate('/onboarding/billing', { 
+                navigate('/app/billing', {
                     replace: true,
                     state: { reason: 'subscription_inactive' }
                 });
@@ -109,10 +109,9 @@ export const RequireActivation = ({ children }: { children: JSX.Element }) => {
                 return;
             }
 
-            // Se não tem subscription e não está ativo, verificar se está em onboarding
+            // Portal central: permitir acesso ao portal; billing/checklist são apenas avisos
             if (!subscriptionStatus && !isActiveInDB) {
-                // Pode estar em onboarding - permitir acesso a rotas de onboarding
-                if (currentPath.startsWith('/onboarding/')) {
+                if (currentPath.startsWith('/app/')) {
                     setIsVerified(true);
                     return;
                 }

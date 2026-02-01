@@ -4,7 +4,13 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/tests'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
-  testPathIgnorePatterns: ['/node_modules/', '/nervous-system/AppStaff.stress.test.ts', 'property-based.test.ts'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/nervous-system/AppStaff.stress.test.ts',
+    'property-based.test.ts',
+    // merchant-portal usa Vitest; não rodar com Jest (evita "Vitest cannot be imported in CommonJS")
+    '<rootDir>/merchant-portal/',
+  ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
@@ -49,6 +55,9 @@ module.exports = {
       displayName: 'node',
       preset: 'ts-jest',
       testEnvironment: 'node',
+      // Só pastas com testes Jest; merchant-portal usa Vitest (npm test dentro de merchant-portal)
+      roots: ['<rootDir>/tests', '<rootDir>/core-engine', '<rootDir>/fiscal-modules'],
+      testPathIgnorePatterns: ['/node_modules/'],
       testMatch: ['**/*.test.ts', '!**/ui/**/*.test.tsx', '!**/hooks/**/*.test.ts'],
       setupFiles: ['<rootDir>/tests/setup.ts'],
       transform: {
@@ -61,6 +70,8 @@ module.exports = {
       displayName: 'jsdom',
       preset: 'ts-jest',
       testEnvironment: 'jsdom',
+      roots: ['<rootDir>/tests'],
+      testPathIgnorePatterns: ['/node_modules/', '/merchant-portal/'],
       testMatch: ['**/ui/**/*.test.tsx', '**/hooks/**/*.test.ts'],
       setupFiles: ['<rootDir>/tests/setup-jsdom.js'],
       setupFilesAfterEnv: ['<rootDir>/tests/setup-react.ts'],

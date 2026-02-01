@@ -1,3 +1,8 @@
+const CONTACT_EMAIL =
+  (typeof import.meta !== 'undefined' &&
+    (import.meta as unknown as { env?: { VITE_CONTACT_EMAIL?: string } })?.env?.VITE_CONTACT_EMAIL) ||
+  'contacto@chefiapp.com';
+
 export const FAQ = () => {
     const faqs = [
         {
@@ -45,7 +50,7 @@ export const FAQ = () => {
                 <div className="text-center mt-16">
                     <p className="text-neutral-500 mb-6 font-mono text-xs uppercase tracking-wider">Ainda tem dúvidas?</p>
                     <a
-                        href="mailto:comercial@chefiapp.com"
+                        href={`mailto:${CONTACT_EMAIL}`}
                         className="inline-flex items-center gap-2 px-6 py-3 rounded-md border border-white/10 text-white hover:bg-white/5 hover:border-amber-500/50 transition-all font-medium text-sm"
                     >
                         <span>✉️</span> Falar connosco

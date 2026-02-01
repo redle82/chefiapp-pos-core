@@ -7,8 +7,10 @@ import { Button } from '../../ui/design-system/primitives/Button';
 import { Badge } from '../../ui/design-system/primitives/Badge';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { useRestaurantIdentity } from '../../core/identity/useRestaurantIdentity';
+// FASE 3.3: DashboardService movido para core-boundary ou será substituído por chamadas diretas ao Core
+// Por enquanto, mantido para não quebrar funcionalidade
 import { DashboardService, type DailyMetrics } from '../../core/services/DashboardService';
-import { useOrders } from '../TPV/context/OrderContext';
+import { useAppStaffOrders } from './hooks/useAppStaffOrders';
 import { SystemHealthCard } from '../../components/Dashboard/SystemHealthCard';
 import { ProfitabilityWidget } from '../../components/Dashboard/ProfitabilityWidget';
 import { LowStockWidget } from '../../components/Dashboard/LowStockWidget';
@@ -19,7 +21,17 @@ export const OwnerDashboard: React.FC = () => {
     const navigate = useNavigate();
     const [currentTime, setCurrentTime] = useState(new Date());
     const { identity } = useRestaurantIdentity();
-    const { orders } = useOrders(); // Still useful for active orders count
+    // FASE 3.3: Isolado - AppStaff não depende de TPV
+    const { orders: appStaffOrders } = useAppStaffOrders(identity.id || null);
+    const orders = appStaffOrders.map(order => ({
+      id: order.id,
+      status: (order.status === 'OPEN' ? 'new' : 
+               order.status === 'IN_PREP' ? 'preparing' : 
+               order.status === 'READY' ? 'ready' : 
+               order.status === 'PAID' ? 'paid' : 
+               order.status === 'CANCELLED' ? 'cancelled' : 'new') as 'new' | 'preparing' | 'ready' | 'served' | 'paid' | 'partially_paid' | 'cancelled',
+      tableNumber: order.table_number || undefined,
+    }));
 
     // Real Data State
     const [metrics, setMetrics] = useState<DailyMetrics | null>(null);

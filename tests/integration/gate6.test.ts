@@ -89,6 +89,7 @@ describe("Gate 6: Payment Gateway Abstraction (Witness Pattern)", () => {
                 status: "CONFIRMED"
             },
             occurred_at: new Date(),
+            meta: { idempotency_key: `pay_${verified!.gatewayReference}` },
             correlation_id: verified!.gatewayReference,
         };
 

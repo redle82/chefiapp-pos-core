@@ -1,0 +1,20 @@
+docs(soberania): mapa v1 + diagramas + auditor de mudanças
+
+Marco: mapa de soberania AS-IS fechado e auditor como firewall.
+
+- ARQUITETURA_GERAL_CHEFIAPP_AS_IS.md: mapa completo (governança, gates,
+  Core/Runtime/UI, contratos, riscos, estado de confiança). Secções 2–15
+  como eixos soberanos.
+- DIAGRAMAS_SOBERANIA_CHEFIAPP.md: diagramas Mermaid (state machine,
+  autoridade por decisão, fronteira Core/Runtime/UI).
+- AUDITOR_MUDANCAS_SOBERANIA.md: contrato do auditor (5 eixos + manuais).
+  Nota: falhas atuais no check 2 = dívida técnica conhecida; auditor v1
+  para impedir novas violações. Uso: manual / PRs sensíveis; CI global
+  quando dívida reduzida ou check só sobre ficheiros alterados (fase 2).
+- scripts/auditor-soberania.sh: braço executável (invoca sovereignty-gate,
+  check escrita/acesso Core fora boundary, check gates não escrevem).
+  Exit 0 = pass; exit 1 = fail + "Rever AUDITOR_MUDANCAS_SOBERANIA.md".
+- INDICE_MDS.md + ARQUITETURA_GERAL: referências ao auditor.
+
+Não altera comportamento do sistema. Ref: ARQUITETURA_GERAL_CHEFIAPP_AS_IS.md,
+secção Riscos AS-IS.

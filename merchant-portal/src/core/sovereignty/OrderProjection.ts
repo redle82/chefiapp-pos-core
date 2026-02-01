@@ -1,6 +1,8 @@
-import { supabase } from '../supabase';
+import { createOrderAtomic } from '../infra/CoreOrdersApi';
+import { getBackendType, BackendType } from '../infra/backendAdapter';
 import type { EffectContext } from '../../../../core-engine/effects';
 import { Logger } from '../logger';
+import { supabase } from '../supabase';
 
 /**
  * Order Projection (Sovereign Write)
@@ -27,8 +29,8 @@ export async function persistOrder(context: EffectContext): Promise<void> {
         origin: 'CAIXA' // ERRO-002 Fix: Pedidos criados via TPV são do caixa
     };
 
-    // 2. Call Authorized RPC (Fat DB Logic for now)
-    const { data, error } = await supabase.rpc('create_order_atomic', {
+    // 2. Core Orders API — Docker Core quando ativo; Supabase transicional (FINANCIAL_CORE_VIOLATION_AUDIT remediated)
+    const { data, error } = await createOrderAtomic({
         p_restaurant_id: restaurantId,
         p_items: rpcItems,
         p_payment_method: paymentMethod || 'cash',
@@ -37,16 +39,25 @@ export async function persistOrder(context: EffectContext): Promise<void> {
 
     if (error) {
         Logger.error('[Sovereignty] Projection Failed', error);
-        throw new Error(`Projection Failed: ${error.message}`);
+        const constraintError = { code: error.code, message: error.message };
+        if (constraintError.code === '23505' && constraintError.message?.includes('idx_one_open_order_per_table')) {
+            const dbError = new Error(`TABLE_HAS_ACTIVE_ORDER: ${constraintError.message}`);
+            (dbError as any).code = '23505';
+            (dbError as any).constraint = 'idx_one_open_order_per_table';
+            throw dbError;
+        }
+        const dbError = new Error(`Projection Failed: ${error.message}`);
+        if (constraintError.code) (dbError as any).code = constraintError.code;
+        throw dbError;
     }
 
-    // ERRO-002 Fix: Atualizar origem do pedido após criação (se RPC não setou)
-    if (data.id) {
+    // RPC já seta origin via sync_metadata. Em modo Docker não escrevemos em gm_orders via Supabase.
+    if (data?.id && getBackendType() === BackendType.supabase) {
         await supabase
             .from('gm_orders')
             .update({ origin: 'CAIXA' })
             .eq('id', data.id)
-            .is('origin', null); // Só atualiza se origin for null
+            .is('origin', null);
     }
 
     // 3. Validation

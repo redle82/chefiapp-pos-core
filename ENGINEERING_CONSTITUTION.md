@@ -47,6 +47,19 @@ Nothing enters the system that cannot be reverted.
 - Features have feature flags
 - Deploys have immediate rollback
 
+## 📑 Architectural Contracts
+
+To maintain the project's integrity, I have formalized the **[OPERATIONAL_PULSE_CONTRACT](file:///Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/OPERATIONAL_PULSE_CONTRACT.md)**.
+This document defines:
+
+- **Heartbeat Interval**: 30s.
+- **Thresholds**: Online (<1m), Offline (>1m).
+- **Data Integrity**: Immutable terminal IDs stored in `localStorage`.
+
+---
+
+**Operation Pulse is now active and governed by law. Operational awareness has been upgraded.** 📡
+
 ---
 
 ## PART II — ABSOLUTE INVARIANTS
@@ -55,28 +68,28 @@ Nothing enters the system that cannot be reverted.
 
 ### Art. 4. Order Invariants
 
-| ID      | Invariant                                   |
-| ------- | -------------------------------------------- |
+| ID      | Invariant                                          |
+| ------- | -------------------------------------------------- |
 | ORD-001 | Order does not exist without valid `restaurant_id` |
-| ORD-003 | Closed order is **IMMUTABLE**                |
-| ORD-005 | `idempotency_key` guarantees unique creation      |
+| ORD-003 | Closed order is **IMMUTABLE**                      |
+| ORD-005 | `idempotency_key` guarantees unique creation       |
 
 ### Art. 5. Financial Invariants
 
-| ID      | Invariant                                          |
-| ------- | --------------------------------------------------- |
-| PAY-001 | Payment cannot be applied twice          |
-| PAY-002 | Sum of payments ≤ order total                |
-| FIN-001 | Cash register closure is **IRREVERSIBLE**              |
+| ID      | Invariant                                               |
+| ------- | ------------------------------------------------------- |
+| PAY-001 | Payment cannot be applied twice                         |
+| PAY-002 | Sum of payments ≤ order total                           |
+| FIN-001 | Cash register closure is **IRREVERSIBLE**               |
 | FIN-003 | **Offline NEVER alters already synchronized financial** |
 
 ### Art. 6. Synchronization Invariants
 
-| ID      | Invariant                                 |
-| ------- | ------------------------------------------ |
-| SYN-001 | Backend is ALWAYS the final source             |
+| ID      | Invariant                             |
+| ------- | ------------------------------------- |
+| SYN-001 | Backend is ALWAYS the final source    |
 | SYN-003 | Conflict never results in silent loss |
-| SYN-004 | Replay respects chronological order          |
+| SYN-004 | Replay respects chronological order   |
 
 **📚 Complete reference**: [BUSINESS_INVARIANTS.md](docs/BUSINESS_INVARIANTS.md)
 
@@ -115,12 +128,12 @@ Any conflict involving:
 
 ### Art. 9. Conflict Policy
 
-| Scenario                             | Who Wins                      |
-| ----------------------------------- | ------------------------------- |
-| Two waiters edit order          | Last event                   |
-| Offline vs Online                   | Online wins                    |
-| Offline action, order closed online | Offline discarded              |
-| Duplicate payment                 | Second ignored (idempotency) |
+| Scenario                            | Who Wins                     |
+| ----------------------------------- | ---------------------------- |
+| Two waiters edit order              | Last event                   |
+| Offline vs Online                   | Online wins                  |
+| Offline action, order closed online | Offline discarded            |
+| Duplicate payment                   | Second ignored (idempotency) |
 
 **📚 Complete reference**: [CONFLICT_POLICY.md](docs/CONFLICT_POLICY.md)
 
@@ -132,12 +145,12 @@ Any conflict involving:
 
 **No client enters production without passing PHASE 4 (Total Offline).**
 
-| Phase     | Mandatory For |
-| -------- | ---------------- |
-| PHASE 0   | Every deploy      |
-| PHASE 1-2 | Every deploy      |
+| Phase     | Mandatory For  |
+| --------- | -------------- |
+| PHASE 0   | Every deploy   |
+| PHASE 1-2 | Every deploy   |
 | PHASE 3-4 | New client     |
-| PHASE 5-6 | Major release    |
+| PHASE 5-6 | Major release  |
 | PHASE 7   | Before scaling |
 
 **📚 Reference**: [UNIVERSAL_TEST_PLAN.md](docs/testing/UNIVERSAL_TEST_PLAN.md)
@@ -231,13 +244,13 @@ Minimum criteria for client:
 
 ### Art. 19. Violation = Incident
 
-| Violation Type    | Severity | Action                    |
-| ------------------- | ---------- | ----------------------- |
-| Broken invariant | CRITICAL    | Stop development   |
-| RBAC violation      | CRITICAL    | Block deploy         |
-| Financial conflict | GRAVE      | Postmortem              |
-| Lint/Type error     | MÉDIO      | Fix before merge |
-| Clean state dirty   | LOW      | Cannot declare done  |
+| Violation Type     | Severity | Action              |
+| ------------------ | -------- | ------------------- |
+| Broken invariant   | CRITICAL | Stop development    |
+| RBAC violation     | CRITICAL | Block deploy        |
+| Financial conflict | GRAVE    | Postmortem          |
+| Lint/Type error    | MÉDIO    | Fix before merge    |
+| Clean state dirty  | LOW      | Cannot declare done |
 
 ### Art. 20. Mandatory Postmortem
 
@@ -261,10 +274,14 @@ Last updated: **2026-01-23**
 
 ## REFERENCES
 
-| Document                                                                                      | Purpose                |
-| ---------------------------------------------------------------------------------------------- | ------------------------ |
-| [BUSINESS_INVARIANTS.md](docs/BUSINESS_INVARIANTS.md)                                          | 26 absolute invariants |
-| [EVENT_MODEL.md](docs/EVENT_MODEL.md)                                                          | 35+ domain events   |
-| [CONFLICT_POLICY.md](docs/CONFLICT_POLICY.md)                                                  | Resolution matrix      |
-| [UNIVERSAL_TEST_PLAN.md](docs/testing/UNIVERSAL_TEST_PLAN.md)                                  | Sovereign test plan  |
-| [ConflictMetricsDashboard.tsx](merchant-portal/src/pages/Reports/ConflictMetricsDashboard.tsx) | Conflict dashboard   |
+| Document                                                                                                 | Purpose                  |
+| -------------------------------------------------------------------------------------------------------- | ------------------------ |
+| [BUSINESS_INVARIANTS.md](docs/BUSINESS_INVARIANTS.md)                                                    | 26 absolute invariants   |
+| [EVENT_MODEL.md](docs/EVENT_MODEL.md)                                                                    | 35+ domain events        |
+| [CONFLICT_POLICY.md](docs/CONFLICT_POLICY.md)                                                            | Resolution matrix        |
+| [UNIVERSAL_TEST_PLAN.md](docs/testing/UNIVERSAL_TEST_PLAN.md)                                            | Sovereign test plan      |
+| [OPERATIONAL_PULSE_CONTRACT.md](OPERATIONAL_PULSE_CONTRACT.md)                                           | Heartbeat & Liveness     |
+| [TERMINAL_IDENTITY_CONTRACT.md](TERMINAL_IDENTITY_CONTRACT.md)                                           | Disposable Identity      |
+| [DATA_VISIBILITY_CONTRACT.md](DATA_VISIBILITY_CONTRACT.md)                                               | Read Access Boundaries   |
+| [TENANT_ISOLATION_SECURITY_MODEL.md](docs/security/TENANT_ISOLATION_SECURITY_MODEL.md)                   | 15 Golden Security Rules |
+| [ConflictMetricsDashboard.tsx](merchant-portal/src/pages/Reports/Conflicts/ConflictMetricsDashboard.tsx) | Audit Interface          |

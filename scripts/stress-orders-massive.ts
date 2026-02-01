@@ -259,10 +259,24 @@ async function runStressTest(config: StressTestConfig): Promise<StressTestResult
         continue;
       }
 
+      // Close any existing OPEN orders on test tables first
+      // This respects the constraint: one OPEN order per table
+      console.log(`   🔄 Closing existing OPEN orders on test tables...`);
+      for (const table of tables) {
+        await supabase
+          .from('gm_orders')
+          .update({ status: 'CLOSED', payment_status: 'PAID' })
+          .eq('restaurant_id', restaurant.id)
+          .eq('table_id', table.id)
+          .eq('status', 'OPEN');
+      }
+
       // Create orders in batches
       const orderPromises: Promise<OrderResult>[] = [];
       
       for (let i = 0; i < config.ordersPerRestaurant; i++) {
+        // Use different tables to avoid constraint violation
+        // Or reuse tables but ensure previous orders are closed
         const table = tables[i % tables.length];
         const itemCount = Math.floor(
           Math.random() * (config.itemsPerOrder.max - config.itemsPerOrder.min + 1)
@@ -299,6 +313,54 @@ async function runStressTest(config: StressTestConfig): Promise<StressTestResult
       console.log(`   ❌ Error: ${errorMsg}`);
     }
   }
+
+  // =============================================================================
+  // VALIDATION: Assert Constitutional Rules
+  // =============================================================================
+  
+  console.log('');
+  console.log('🔍 Validating Constitutional Rules...');
+  
+  // Assert: Uma mesa não pode ter dois pedidos abertos
+  for (const restaurant of restaurants) {
+    const { data: openOrders, error: ordersError } = await supabase
+      .from('gm_orders')
+      .select('table_id, id')
+      .eq('restaurant_id', restaurant.id)
+      .eq('status', 'OPEN');
+    
+    if (ordersError) {
+      console.warn(`   ⚠️  Could not validate rules for ${restaurant.name}: ${ordersError.message}`);
+      continue;
+    }
+    
+    // Count orders per table
+    const tableCounts = new Map<string, number>();
+    openOrders?.forEach(order => {
+      if (order.table_id) {
+        const count = tableCounts.get(order.table_id) || 0;
+        tableCounts.set(order.table_id, count + 1);
+      }
+    });
+    
+    // Verify no table has more than 1 open order
+    let violations = 0;
+    for (const [tableId, count] of tableCounts.entries()) {
+      if (count > 1) {
+        violations++;
+        console.error(`   ❌ VIOLATION: Table ${tableId} has ${count} open orders (expected ≤1)`);
+      }
+    }
+    
+    if (violations === 0) {
+      console.log(`   ✅ ${restaurant.name}: All tables respect 'one open order per table' rule`);
+    } else {
+      throw new Error(`Constitutional rule violated: ${violations} tables have multiple open orders`);
+    }
+  }
+  
+  console.log('   ✅ All constitutional rules validated');
+  console.log('');
 
   // Calculate results
   const duration = Date.now() - startTime;

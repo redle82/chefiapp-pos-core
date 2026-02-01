@@ -1,6 +1,6 @@
 # Mapa de Estados Globais de UI (Dia 1 — Unificação Perceptiva)
 
-**Data:** 2026-01-31  
+**Data:** 2026-01-31
 **Objetivo:** Mapeamento AS-IS dos estados loading, empty, error, blocked e pilot; proposta canónica GlobalUIState; acordo visual mínimo. Alinhado a [DESIGN_SYSTEM_PERCEPTUAL_CONTRACT.md](../architecture/DESIGN_SYSTEM_PERCEPTUAL_CONTRACT.md).
 
 **Critério de sucesso Dia 1:** Três screenshots (Portal, TPV, KDS) no mesmo estado — qualquer pessoa diz que são do mesmo sistema.
@@ -139,7 +139,7 @@ Para que o mesmo estado **pareça** o mesmo em Portal, TPV e KDS, foram criados 
 | **GlobalPilotBanner** | Indicador modo piloto | `message?` (default canónico) |
 | **GlobalBlockedView** | Estado blocked (ex.: não publicado) | `title`, `description`, `action` ({ label, to? \| onClick? }) |
 
-**Layout:** `operational` = VPC escuro (TPV/KDS); `portal` = claro (Dashboard, MenuBuilder).  
+**Layout:** `operational` = VPC escuro (TPV/KDS); `portal` = claro (Dashboard, MenuBuilder).
 **Variant:** `fullscreen` = ocupa viewport; `inline` = bloco no fluxo.
 
 - **KDS:** KDSMinimal usa `GlobalLoadingView`, `GlobalErrorView`, `GlobalEmptyView` e `GlobalPilotBanner` (layout operational, fullscreen/inline conforme estado).

@@ -60,7 +60,8 @@ describe("GATE 5: Fiscal Integration (Observer Pattern)", () => {
             stream_version: 1,
             type: "PAYMENT_CONFIRMED",
             payload: { payment_id: "pay-fiscal", amount: 200 },
-            occurred_at: new Date()
+            occurred_at: new Date(),
+            meta: {},
         };
 
         // 1. Core Transaction (The "Real" work)

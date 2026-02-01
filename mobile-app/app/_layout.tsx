@@ -4,11 +4,13 @@ import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { Platform, View, Text, StyleSheet } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { AppStaffProvider } from '@/context/AppStaffContext';
+import { AppStaffOperationalProvider } from '@/context/AppStaffOperationalContext';
 import { RestaurantProvider } from '@/context/RestaurantContext';
 import { OrderProvider } from '@/context/OrderContext';
 import { CommandInterceptor } from '@/components/CommandInterceptor';
@@ -52,14 +54,30 @@ export default function RootLayout() {
     return null;
   }
 
+  // CORE_APPSTAFF_CONTRACT: AppStaff runs ONLY on iOS/Android. Block web.
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.webBlock}>
+        <Text style={styles.webBlockTitle}>AppStaff</Text>
+        <Text style={styles.webBlockMessage}>
+          Disponível apenas no app mobile (iOS e Android).{'\n'}
+          Use o simulador ou um dispositivo físico.
+        </Text>
+        <Text style={styles.webBlockHint}>npm run ios | npm run android</Text>
+      </View>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <AuthProvider>
         <RestaurantProvider>
           <AppStaffProvider>
-            <OrderProvider>
-              <RootLayoutNav />
-            </OrderProvider>
+            <AppStaffOperationalProvider>
+              <OrderProvider>
+                <RootLayoutNav />
+              </OrderProvider>
+            </AppStaffOperationalProvider>
           </AppStaffProvider>
         </RestaurantProvider>
       </AuthProvider>
@@ -85,3 +103,31 @@ function RootLayoutNav() {
     </ThemeProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  webBlock: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0a0a0a',
+    padding: 32,
+  },
+  webBlockTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#fafafa',
+    marginBottom: 16,
+  },
+  webBlockMessage: {
+    fontSize: 16,
+    color: '#a3a3a3',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  webBlockHint: {
+    fontSize: 14,
+    color: '#525252',
+    fontFamily: 'monospace',
+  },
+});

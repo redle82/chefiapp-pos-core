@@ -1,10 +1,24 @@
 import { Link } from 'react-router-dom';
+import { useSupabaseAuth } from '../../../core/auth/useSupabaseAuth';
+import { OSCopy } from '../../../ui/design-system/sovereign/OSCopy';
+
+const WHATSAPP_NUMBER =
+  (typeof import.meta !== 'undefined' &&
+    (import.meta as unknown as { env?: { VITE_CONTACT_WHATSAPP?: string } })?.env?.VITE_CONTACT_WHATSAPP) ||
+  '351000000000';
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, '')}`;
+const CONTACT_EMAIL =
+  (typeof import.meta !== 'undefined' &&
+    (import.meta as unknown as { env?: { VITE_CONTACT_EMAIL?: string } })?.env?.VITE_CONTACT_EMAIL) ||
+  'contacto@chefiapp.com';
 
 export const Footer = () => {
+    const { session } = useSupabaseAuth();
+    const hasSession = !!session;
+
     return (
         <footer className="pt-24 pb-12 font-sans relative">
             <div className="container mx-auto px-6">
-                {/* Final CTA */}
                 <div className="text-center mb-24">
                     <h2 className="text-4xl md:text-6xl font-bold mb-8 text-white font-outfit drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
                         Pronto para testar sua operação <br />
@@ -17,22 +31,32 @@ export const Footer = () => {
                             O tempo de montar o menu, ligar o TPV e pôr a equipa a trabalhar é o tempo de aquecer a chapa. Enquanto um ovo frita, o menu já está online.
                         </span>
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                        {/* 🚨 ALERTA ARQUITETURAL: NUNCA mais altere este link para /login ou /onboarding. */}
-                        {/* A landing page APENAS redireciona para /auth. FlowGate decide o resto. */}
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
                         <Link
-                            to="/auth"
+                            to={hasSession ? '/dashboard' : '/auth'}
                             className="w-full sm:w-auto px-10 py-5 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-extrabold text-lg rounded-xl shadow-[0_0_30px_rgba(245,158,11,0.2)] hover:shadow-[0_0_50px_rgba(245,158,11,0.4)] transition-all transform hover:-translate-y-1"
                         >
-                            🚀 Começar agora (14 dias grátis)
+                            {hasSession ? 'Voltar ao sistema' : `${OSCopy.landing.ctaOperar} · 14 dias grátis`}
                         </Link>
-                        {/* 🚨 ALERTA ARQUITETURAL: NUNCA mais altere este link para /login ou /onboarding. */}
-                        {/* A landing page APENAS redireciona para /auth. FlowGate decide o resto. */}
                         <Link
-                            to="/auth"
+                            to="/demo"
+                            className="w-full sm:w-auto px-10 py-5 bg-transparent border border-neutral-600 hover:border-amber-500 text-white hover:text-amber-500 font-bold text-lg rounded-xl transition-all"
+                        >
+                            {OSCopy.landing.ctaExplorarDemo}
+                        </Link>
+                        <a
+                            href={WHATSAPP_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full sm:w-auto px-10 py-5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-lg rounded-xl transition-all inline-flex items-center justify-center"
+                        >
+                            👉 WhatsApp
+                        </a>
+                        <Link
+                            to={hasSession ? '/dashboard' : '/auth'}
                             className="w-full sm:w-auto px-10 py-5 bg-transparent border border-neutral-700 hover:border-neutral-500 text-white hover:text-amber-500 font-bold text-lg rounded-xl transition-all"
                         >
-                            Já tenho conta
+                            {hasSession ? 'Voltar ao comando' : OSCopy.landing.ctaJaTenhoAcesso}
                         </Link>
                     </div>
                 </div>
@@ -40,11 +64,16 @@ export const Footer = () => {
                 {/* Subtle Divider (Gradient to Transparent) */}
                 <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-12" />
 
-                <div className="flex flex-col md:flex-row justify-between items-center text-sm text-neutral-500/80 hover:text-neutral-400 transition-colors">
-                    <div className="flex gap-8 items-center">
+                <div className="flex flex-col md:flex-row justify-between items-center text-sm text-neutral-500/80 hover:text-neutral-400 transition-colors gap-4">
+                    <div className="flex flex-wrap gap-4 md:gap-8 items-center">
                         <span>© {new Date().getFullYear()} ChefIApp</span>
                         <span className="hidden md:inline text-neutral-700">•</span>
                         <span>Produto para restauração</span>
+                        <span className="hidden md:inline text-neutral-700">•</span>
+                        <span>Dúvidas?</span>
+                        <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-amber-500 transition-colors font-medium text-[#25D366]">WhatsApp</a>
+                        <span>ou</span>
+                        <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-amber-500 transition-colors">{CONTACT_EMAIL}</a>
                     </div>
 
                     <div className="flex gap-8 mt-4 md:mt-0">

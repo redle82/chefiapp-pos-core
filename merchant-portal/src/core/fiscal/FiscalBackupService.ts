@@ -372,7 +372,19 @@ export class FiscalBackupService {
 
             const { data: fiscals, error } = await query;
 
+            // Handle table not found (404) gracefully - table may not exist in local schema
             if (error) {
+                if (error.code === '42P01' || error.message?.includes('does not exist') || error.status === 404) {
+                    // Return empty stats when table doesn't exist
+                    return {
+                        total: 0,
+                        reported: 0,
+                        pending: 0,
+                        rejected: 0,
+                        totalAmount: 0,
+                        totalVat: 0,
+                    };
+                }
                 throw new Error(`Failed to fetch stats: ${error.message}`);
             }
 

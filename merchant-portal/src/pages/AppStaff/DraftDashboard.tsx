@@ -4,12 +4,14 @@ import { motion } from 'framer-motion';
 import { Colors, Spacing, Typography } from '../../ui/design-system/tokens';
 import { Card } from '../../ui/design-system/Card';
 import { Button } from '../../ui/design-system/Button';
+import { recordLogout } from '../../core/auth/authAudit';
 import { supabase } from '../../core/supabase';
 
 export const DraftDashboard: React.FC = () => {
     const navigate = useNavigate();
 
     const handleSignOut = async () => {
+        await recordLogout();
         await supabase.auth.signOut();
         navigate('/login');
     };

@@ -100,6 +100,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
       },
       occurred_at: new Date(),
       idempotency_key: 'fiscal:ORDER-123',
+      meta: { idempotency_key: 'fiscal:ORDER-123' },
     };
 
     it('1.1 - Deve criar adapter sem config (fallback)', () => {
@@ -311,6 +312,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 
@@ -347,6 +349,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 
@@ -409,6 +412,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 
@@ -467,6 +471,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 
@@ -521,6 +526,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 
@@ -581,6 +587,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 
@@ -640,6 +647,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 
@@ -710,6 +718,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 
@@ -775,6 +784,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 
@@ -821,6 +831,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 
@@ -874,6 +885,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 
@@ -926,6 +938,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 
@@ -990,6 +1003,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 
@@ -1049,6 +1063,7 @@ describe('🧾 FISCAL COMPLETE TEST SUITE', () => {
           },
           occurred_at: new Date(),
           idempotency_key: 'fiscal:ORDER-123',
+          meta: { idempotency_key: 'fiscal:ORDER-123' },
         } as CoreEvent
       );
 

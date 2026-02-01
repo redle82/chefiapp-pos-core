@@ -1,0 +1,22 @@
+{
+  "name": "@chefiapp/core-design-system",
+  "version": "1.0.0",
+  "description": "ChefIApp OS — tokens, typography, spacing. Fonte única para Web e Mobile. Subordinado ao Core e aos contratos.",
+  "private": true,
+  "type": "module",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./tokens.css": "./tokens.css"
+  },
+  "files": [
+    "*.ts",
+    "*.css",
+    "components/*.ts",
+    "components/*.tsx",
+    "states/*.ts",
+    "states/*.tsx"
+  ],
+  "sideEffects": ["tokens.css"]
+}

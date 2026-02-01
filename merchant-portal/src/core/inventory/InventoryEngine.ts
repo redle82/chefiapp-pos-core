@@ -1,7 +1,6 @@
-
-import { supabase } from '../supabase';
+import { getTableClient } from '../infra/coreOrSupabaseRpc';
 import type { InventoryItem, Recipe } from '../../pages/Inventory/context/InventoryTypes';
-import type { Order } from '../../pages/TPV/context/OrderTypes';
+import type { Order } from '../contracts';
 
 export class InventoryEngine {
 
@@ -17,8 +16,9 @@ export class InventoryEngine {
 
         if (menuItemIds.length === 0) return;
 
-        // 2. Fetch recipes for these items
-        const { data: recipes, error } = await supabase
+        // 2. Fetch recipes for these items (Core quando Docker — Fase 4)
+        const client = await getTableClient();
+        const { data: recipes, error } = await client
             .from('gm_recipes')
             .select('*')
             .in('menu_item_id', menuItemIds);
@@ -65,8 +65,9 @@ export class InventoryEngine {
         // We will simple increment the column atomically using Supabase rpc if possible, 
         // or just read-write for now (optimistic locking not critical for MVP Inventory).
 
-        // Fetch current
-        const { data: item, error: fetchError } = await supabase
+        // Fetch current (Core quando Docker — Fase 4)
+        const fetchClient = await getTableClient();
+        const { data: item, error: fetchError } = await fetchClient
             .from('gm_inventory_items')
             .select('stock_quantity')
             .eq('id', itemId)
@@ -77,7 +78,7 @@ export class InventoryEngine {
         const newStock = Number(item.stock_quantity) + delta;
 
         // 2. Update Item
-        const { error: updateError } = await supabase
+        const { error: updateError } = await fetchClient
             .from('gm_inventory_items')
             .update({ stock_quantity: newStock, updated_at: new Date().toISOString() })
             .eq('id', itemId);
@@ -85,7 +86,7 @@ export class InventoryEngine {
         if (updateError) throw updateError;
 
         // 3. Log Movement
-        const { error: moveError } = await supabase
+        const { error: moveError } = await fetchClient
             .from('gm_stock_movements')
             .insert({
                 inventory_item_id: itemId,
@@ -99,11 +100,12 @@ export class InventoryEngine {
     }
 
     static async getItems(restaurantId: string): Promise<InventoryItem[]> {
-        const { data, error } = await supabase
+        const client = await getTableClient();
+        const { data, error } = await client
             .from('gm_inventory_items')
             .select('*')
             .eq('restaurant_id', restaurantId)
-            .order('name');
+            .order('name', { ascending: true });
 
         if (error) throw error;
         return data as InventoryItem[];
@@ -117,7 +119,8 @@ export class InventoryEngine {
         // Or we use the RLS which already filters by restaurant membership.
         // However, RLS works on 'auth.uid()', so just select * from recipes should return only allowed ones.
         // But to be explicit and safe and ensure we only get recipes for valid products:
-        const { data, error } = await supabase
+        const recipesClient = await getTableClient();
+        const { data, error } = await recipesClient
             .from('gm_recipes')
             .select(`
                 *,
@@ -138,7 +141,8 @@ export class InventoryEngine {
         ingredients: { inventoryItemId: string; quantity: number }[]
     ): Promise<void> {
         // 1. Delete existing recipes for this menu item
-        const { error: deleteError } = await supabase
+        const updateClient = await getTableClient();
+        const { error: deleteError } = await updateClient
             .from('gm_recipes')
             .delete()
             .eq('menu_item_id', menuItemId);
@@ -155,8 +159,7 @@ export class InventoryEngine {
         }));
 
         // Strategy: We need restaurant_id.
-        // Let's fetch the product first to get the restaurant_id.
-        const { data: product } = await supabase.from('gm_products').select('restaurant_id').eq('id', menuItemId).single();
+        const { data: product } = await updateClient.from('gm_products').select('restaurant_id').eq('id', menuItemId).single();
         if (!product) throw new Error('Product not found');
 
         const rowsWithRestaurant = rows.map(r => ({
@@ -164,7 +167,7 @@ export class InventoryEngine {
             restaurant_id: product.restaurant_id
         }));
 
-        const { error: insertError } = await supabase
+        const { error: insertError } = await updateClient
             .from('gm_recipes')
             .insert(rowsWithRestaurant);
 
@@ -180,8 +183,9 @@ export class InventoryEngine {
         const menuItemIds = order.items.map(i => i.productId).filter(Boolean) as string[];
         if (menuItemIds.length === 0) return 0;
 
-        // Fetch recipes with ingredient costs
-        const { data: recipes, error } = await supabase
+        // Fetch recipes with ingredient costs (Core quando Docker — Fase 4)
+        const costClient = await getTableClient();
+        const { data: recipes, error } = await costClient
             .from('gm_recipes')
             .select(`
                 *,

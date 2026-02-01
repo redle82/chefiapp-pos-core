@@ -18,6 +18,11 @@ public/app/*.map
 public/assets/
 
 # Environment (CRITICAL - never commit)
+# Match .env files in root and all subdirectories
+**/.env
+**/.env.local
+**/.env.*.local
+**/.env.sofia
 .env
 .env.local
 .env.*.local

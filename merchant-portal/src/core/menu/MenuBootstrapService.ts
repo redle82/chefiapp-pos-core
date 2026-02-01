@@ -103,12 +103,21 @@ export interface BootstrapContext {
     deliveryApps?: string[];
 }
 
+import { getErrorMessage } from '../errors/ErrorMessages';
 import { DbWriteGate } from '../governance/DbWriteGate';
+import type { ExecuteSafeFn } from '../services/OrderProcessingService';
 
 export class MenuBootstrapService {
     constructor(private supabase: SupabaseClient) { }
 
-    async injectPreset(restaurantId: string, presetKey: string, kernel: any, context?: BootstrapContext) {
+    /** CORE_FAILURE_MODEL: pass executeSafe (from useKernel()) to get failureClass on error */
+    async injectPreset(
+        restaurantId: string,
+        presetKey: string,
+        kernel: any,
+        context?: BootstrapContext,
+        executeSafe?: ExecuteSafeFn
+    ) {
         if (!PRESETS[presetKey]) {
             throw new Error(`Preset ${presetKey} not found.`);
         }
@@ -189,14 +198,13 @@ export class MenuBootstrapService {
                 // We use the Kernel to create products in the Sovereign Table (gm_products)
                 // This ensures TPV (which reads gm_products) sees the items.
 
-                if (!kernel) {
-                    // Fallback to Gate if Kernel missing (Should not happen in V2)
-                    throw new Error('Sovereignty Violation: Kernel required for Menu Bootstrap');
+                if (!kernel && !executeSafe) {
+                    throw new Error('Sovereignty Violation: Kernel or executeSafe required for Menu Bootstrap');
                 }
 
                 for (const item of cat.items) {
                     const productId = crypto.randomUUID();
-                    await kernel.execute({
+                    const payload = {
                         entity: 'PRODUCT',
                         entityId: productId,
                         event: 'CREATE',
@@ -206,9 +214,20 @@ export class MenuBootstrapService {
                             priceCents: Math.round(item.price * 100),
                             trackStock: false,
                             stockQuantity: 0,
-                            categoryId: categoryData.id // Link to Category
+                            categoryId: categoryData.id
                         }
-                    });
+                    };
+
+                    if (executeSafe) {
+                        const res = await executeSafe(payload);
+                        if (!res.ok) {
+                            const err = new Error(getErrorMessage(res.error) || 'Erro ao criar produto do preset.') as Error & { failureClass?: string };
+                            err.failureClass = res.failureClass;
+                            throw err;
+                        }
+                    } else {
+                        await kernel.execute(payload);
+                    }
                     itemsCount++;
                 }
             }

@@ -1,0 +1,81 @@
+name: Check All Screens
+
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  check-screens:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: merchant-portal/package.json
+
+      - name: Install dependencies
+        working-directory: merchant-portal
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: merchant-portal
+        run: npx playwright install --with-deps chromium
+
+      - name: Start dev server
+        working-directory: merchant-portal
+        run: npm run dev &
+        env:
+          CI: true
+
+      - name: Wait for server
+        run: |
+          timeout=60
+          elapsed=0
+          while ! curl -f http://localhost:5173 > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              echo "Server failed to start"
+              exit 1
+            fi
+            sleep 2
+            elapsed=$((elapsed + 2))
+          done
+          echo "Server is ready"
+
+      - name: Run screen check
+        working-directory: .
+        run: node scripts/open_screens.mjs
+        env:
+          CI: true
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: artifacts/screenshots/
+          retention-days: 7
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screen-report
+          path: artifacts/screens_report.md
+          retention-days: 7
+
+      - name: Check for errors
+        run: |
+          if grep -q "❌ Erros:" artifacts/screens_report.md; then
+            echo "❌ Some screens failed to load"
+            cat artifacts/screens_report.md
+            exit 1
+          else
+            echo "✅ All screens loaded successfully"
+          fi

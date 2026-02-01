@@ -63,6 +63,21 @@ As tabelas abaixo existem por razões históricas. Elas **NÃO DEVEM** ser usada
 
 ---
 
+## 🐳 PRODUÇÃO / PILOT: CORE = DOCKER CORE
+
+**Em produção e em piloto, a autoridade do Financial Core é o Docker Core (`docker-core`).**
+
+- **Stack:** Postgres + PostgREST + Realtime em `docker-core/` (ver `docker-core/README.md`, `docker-compose.core.yml`).
+- **Criação de pedidos, totais, pagamentos, caixa, reconciliação:** apenas via Core (PostgREST RPC ou API Core). Nenhum terminal usa Supabase como autoridade para estas operações quando o modo Docker está ativo.
+- **Supabase é transicional.** Permitido apenas para:
+  - **Auth/sessão:** `supabase.auth.getSession()`, `getUser()`, `signOut()`, `onAuthStateChange` (até existir auth do Core).
+  - **Leitura não financeira de UI:** onde documentado como technical debt e explicitamente não autoritativo (ex.: listagens de diagnóstico, health check legado).
+- **Proibido:** usar Supabase como autoridade para pagamentos, abertura/fecho de caixa, reconciliação, **totais de pedidos**, criação de tenant, ou criação de pedidos. Essas operações devem ser feitas via Docker Core (CoreOrdersApi, coreBillingApi, RPCs PostgREST).
+
+**Enforcement:** O script `scripts/sovereignty-gate.sh` falha se módulos críticos (OrderEngine, WebOrderingService, OrderProjection, SyncEngine) chamarem `supabase.rpc('create_order_atomic')` em vez de CoreOrdersApi. Ver [CONTRACT_ENFORCEMENT.md](./CONTRACT_ENFORCEMENT.md).
+
+---
+
 ## 🛡️ PROTOCOLOS DE SEGURANÇA
 
 ### 1. Identificação de Tenant

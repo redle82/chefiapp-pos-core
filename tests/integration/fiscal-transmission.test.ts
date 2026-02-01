@@ -50,6 +50,7 @@ describe('Integration - Fiscal Transmission', () => {
         },
         occurred_at: new Date(),
         idempotency_key: 'test-key',
+        meta: { idempotency_key: 'test-key' },
     };
 
     describe('Transmissão Simulada', () => {

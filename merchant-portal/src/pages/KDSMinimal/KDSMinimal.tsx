@@ -7,13 +7,14 @@
 import { useEffect, useRef, useState } from "react";
 // FASE 3.5: Migrado para OrderReader (usa dockerCoreClient)
 import { DemoExplicativoCard } from "../../components/DemoExplicativo";
+import { useGlobalUIState } from "../../context/GlobalUIStateContext";
+import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import type {
   CoreOrder,
   CoreOrderItem,
   CoreTask,
 } from "../../core-boundary/docker-core/types";
-import { useGlobalUIState } from "../../context/GlobalUIStateContext";
-import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { isNetworkError } from "../../core-boundary/menuPilotFallback";
 import {
   readActiveOrders,
   readOrderItems,
@@ -23,16 +24,17 @@ import {
   markItemReady,
   updateOrderStatus,
 } from "../../core-boundary/writers/OrderWriter";
-import { isNetworkError } from "../../core-boundary/menuPilotFallback";
 import { ModeGate } from "../../runtime/ModeGate";
-import {
-  GlobalEmptyView,
-  GlobalErrorView,
-  GlobalLoadingView,
-  GlobalPilotBanner,
-} from "../../ui/design-system/components";
+import { GlobalPilotBanner } from "../../ui/design-system/components";
 import { toUserMessage } from "../../ui/errors";
+import { TPVStateDisplay } from "../TPV/components/TPVStateDisplay";
 import { ItemTimer } from "./ItemTimer";
+import {
+  calculateOrderStatus,
+  type OrderStatusResult,
+} from "./OrderStatusCalculator";
+import { OriginBadge } from "./OriginBadge";
+import { TaskPanel } from "./TaskPanel";
 
 /** B4: Fallback quando runtime não tem restaurant_id (piloto). */
 const DEFAULT_RESTAURANT_ID = "bbce08c7-63c0-473d-b693-ec2997f73a68";
@@ -50,17 +52,13 @@ const VPC = {
   fontSizeBase: 16,
   fontSizeLarge: 20,
 } as const;
-import {
-  calculateOrderStatus,
-  type OrderStatusResult,
-} from "./OrderStatusCalculator";
-import { OriginBadge } from "./OriginBadge";
-import { TaskPanel } from "./TaskPanel";
 
 export function KDSMinimal() {
   const { runtime } = useRestaurantRuntime();
   const globalUI = useGlobalUIState();
+  const runtimeContext = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? DEFAULT_RESTAURANT_ID;
+  const coreReachable = globalUI.coreReachable;
 
   const [orders, setOrders] = useState<
     (CoreOrder & { items: CoreOrderItem[] })[]
@@ -112,7 +110,9 @@ export function KDSMinimal() {
         globalUI.setScreenEmpty(true);
         globalUI.setScreenError(null);
       } else {
-        globalUI.setScreenError(toUserMessage(err, "Erro ao carregar pedidos. Tente novamente."));
+        globalUI.setScreenError(
+          toUserMessage(err, "Erro ao carregar pedidos. Tente novamente."),
+        );
       }
     } finally {
       if (!isBackground) {
@@ -149,7 +149,9 @@ export function KDSMinimal() {
       }
     } catch (err) {
       console.error("Erro ao marcar item como pronto:", err);
-      globalUI.setScreenError(toUserMessage(err, "Erro ao marcar item como pronto. Tente novamente."));
+      globalUI.setScreenError(
+        toUserMessage(err, "Erro ao marcar item como pronto. Tente novamente."),
+      );
     } finally {
       setMarkingItem(null);
     }
@@ -162,7 +164,9 @@ export function KDSMinimal() {
       await updateOrderStatus(orderId, "IN_PREP", restaurantId);
       loadOrders(true);
     } catch (err) {
-      globalUI.setScreenError(toUserMessage(err, "Erro ao atualizar pedido. Tente novamente."));
+      globalUI.setScreenError(
+        toUserMessage(err, "Erro ao atualizar pedido. Tente novamente."),
+      );
     } finally {
       setUpdating(null);
     }
@@ -170,33 +174,34 @@ export function KDSMinimal() {
 
   if (globalUI.isLoadingCritical) {
     return (
-      <GlobalLoadingView
-        message="A carregar pedidos..."
-        layout="operational"
-        variant="fullscreen"
-      />
+      <div style={{ minHeight: "100vh", padding: "100px 20px" }}>
+        <TPVStateDisplay type="generic" title="A carregar pedidos..." />
+      </div>
     );
   }
 
   if (globalUI.isError && globalUI.errorMessage) {
     return (
-      <GlobalErrorView
-        message={globalUI.errorMessage}
-        title="Problema ao carregar"
-        layout="operational"
-        variant="fullscreen"
-      />
+      <div style={{ minHeight: "100vh", padding: "100px 20px" }}>
+        <TPVStateDisplay
+          type="error"
+          title="Problema ao carregar"
+          description={globalUI.errorMessage}
+          onRetry={() => loadOrders(true)}
+        />
+      </div>
     );
   }
 
   if (globalUI.isEmpty) {
     return (
-      <GlobalEmptyView
-        title="Nenhum pedido ativo"
-        description="Os pedidos aparecerão aqui quando forem criados no TPV ou no app."
-        layout="operational"
-        variant="fullscreen"
-      />
+      <div style={{ minHeight: "100vh", padding: "100px 20px" }}>
+        <TPVStateDisplay
+          type="empty_orders"
+          title="Nenhum pedido ativo"
+          description="Os pedidos aparecerão aqui quando forem criados no TPV ou no app."
+        />
+      </div>
     );
   }
 
@@ -230,6 +235,42 @@ export function KDSMinimal() {
           padding: VPC.space,
         }}
       >
+        {/* Contingency Mode Banner */}
+        {!coreReachable && (
+          <div
+            style={{
+              background: "#ff453a",
+              color: "#fff",
+              padding: "12px 24px",
+              textAlign: "center",
+              fontWeight: 600,
+              fontSize: "14px",
+              marginBottom: VPC.space,
+              borderRadius: VPC.radius,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "12px",
+            }}
+          >
+            <span>🚨 Modo de Contingência: O Core não está acessível.</span>
+            <button
+              onClick={() => runtimeContext?.refresh()}
+              style={{
+                background: "rgba(255,255,255,0.2)",
+                border: "1px solid rgba(255,255,255,0.4)",
+                color: "white",
+                padding: "4px 12px",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "12px",
+              }}
+            >
+              Tentar Reconectar
+            </button>
+          </div>
+        )}
+
         {globalUI.isPilot && (
           <div style={{ marginBottom: VPC.space }}>
             <GlobalPilotBanner />
@@ -258,7 +299,8 @@ export function KDSMinimal() {
             <div
               style={{
                 fontSize: VPC.fontSizeBase,
-                color: realtimeStatus === "SUBSCRIBED" ? VPC.accent : VPC.textMuted,
+                color:
+                  realtimeStatus === "SUBSCRIBED" ? VPC.accent : VPC.textMuted,
               }}
             >
               {realtimeStatus === "SUBSCRIBED"
@@ -434,7 +476,8 @@ export function KDSMinimal() {
                         padding: "12px 24px",
                         fontSize: VPC.fontSizeBase,
                         fontWeight: 600,
-                        backgroundColor: updating === order.id ? VPC.textMuted : VPC.accent,
+                        backgroundColor:
+                          updating === order.id ? VPC.textMuted : VPC.accent,
                         color: "#fff",
                         border: "none",
                         borderRadius: VPC.radius,
@@ -628,8 +671,7 @@ export function KDSMinimal() {
                                         fontWeight: "bold",
                                       }}
                                     >
-                                      €{" "}
-                                      {(item.subtotal_cents / 100).toFixed(2)}
+                                      € {(item.subtotal_cents / 100).toFixed(2)}
                                     </span>
                                   </div>
 
@@ -672,7 +714,10 @@ export function KDSMinimal() {
                                           padding: "8px 16px",
                                           fontSize: VPC.fontSizeBase,
                                           fontWeight: 600,
-                                          backgroundColor: markingItem === item.id ? VPC.textMuted : VPC.accent,
+                                          backgroundColor:
+                                            markingItem === item.id
+                                              ? VPC.textMuted
+                                              : VPC.accent,
                                           color: "#fff",
                                           border: "none",
                                           borderRadius: VPC.radius,

@@ -1,5 +1,10 @@
+import { getErrorMessage } from '../errors/ErrorMessages';
+import { DbWriteGate } from '../governance/DbWriteGate';
 import { supabase } from '../supabase';
-import type { Order, OrderItem } from '../../pages/TPV/context/OrderTypes';
+import type { Order, OrderItem } from '../contracts';
+
+/** CORE_FAILURE_MODEL: caller can pass executeSafe to get failureClass on throw */
+export type ExecuteSafeFn = (req: any) => Promise<{ ok: boolean; result?: any; reason?: string; error?: any; failureClass?: string }>;
 
 /**
  * SOVEREIGN KERNEL: Order Processing Service
@@ -8,17 +13,22 @@ import type { Order, OrderItem } from '../../pages/TPV/context/OrderTypes';
 export const OrderProcessingService = {
     /**
      * Accepts a Public Request and converts it into a Sovereign Order.
-     * This is a Transactional Operation.
+     * Pass executeSafe (from useKernel()) to get failureClass on error; otherwise uses kernel.execute.
      */
-    async acceptRequest(requestId: string, restaurantId: string, kernel: any): Promise<string> {
+    async acceptRequest(
+        requestId: string,
+        restaurantId: string,
+        kernel: any,
+        executeSafe?: ExecuteSafeFn
+    ): Promise<string> {
         console.log('[OrderProcessing] Accepting Request:', requestId);
 
-        if (!kernel) {
-            throw new Error('Sovereignty Violation: Kernel required for Order Processing.');
+        if (!kernel && !executeSafe) {
+            throw new Error('Sovereignty Violation: Kernel or executeSafe required for Order Processing.');
         }
 
-        // 1. Fetch Request with Items
-        const { data: request, error: fetchError } = await supabase
+        // 1. Fetch Request with Items (shim returns Promise<never>; cast for TS under Jest)
+        const { data: request, error: fetchError } = await (supabase as any)
             .from('gm_order_requests')
             .select('*')
             .eq('id', requestId)
@@ -31,7 +41,6 @@ export const OrderProcessingService = {
         const orderId = crypto.randomUUID();
         const items = (request.items as any[]) || [];
 
-        // Map items to Sovereign Input
         const sovereignItems = items.map((item) => ({
             productId: item.product_id,
             name: item.name || 'Item Web',
@@ -41,26 +50,36 @@ export const OrderProcessingService = {
             projectId: item.project_id
         }));
 
-        await kernel.execute({
+        const payload = {
             entity: 'ORDER',
             entityId: orderId,
             event: 'CREATE',
             restaurantId,
             payload: {
-                // Standard Kernel Payload
                 entityId: orderId,
                 restaurantId,
-                tableId: null, // Web Order
+                tableId: null,
                 items: sovereignItems,
                 paymentMethod: 'online_pending',
-                totalCents: request.total_cents, // Added explicit total for Kernel to handle if needed
+                totalCents: request.total_cents,
                 syncMetadata: {
                     origin: 'WEB_PUBLIC',
                     request_id: requestId,
                     customer_name: request.customer_contact?.name || 'Cliente Web'
                 }
             }
-        });
+        };
+
+        if (executeSafe) {
+            const res = await executeSafe(payload);
+            if (!res.ok) {
+                const err = new Error(getErrorMessage(res.error) || 'Erro ao criar pedido soberano.') as Error & { failureClass?: string };
+                err.failureClass = res.failureClass;
+                throw err;
+            }
+        } else {
+            await kernel.execute(payload);
+        }
 
         // 3. Decorate Order - REMOVED (Sovereign PURE Mode)
         // Kernel payload must be sufficient. Gate cannot write to gm_orders.
@@ -89,9 +108,6 @@ export const OrderProcessingService = {
      */
     async rejectRequest(requestId: string): Promise<void> {
         console.log('[OrderProcessing] Rejecting Request:', requestId);
-
-        // Dynamic Import since this is a static object method
-        const { DbWriteGate } = await import('../governance/DbWriteGate');
 
         const { error } = await DbWriteGate.update(
             'OrderProcessingService',

@@ -75,12 +75,21 @@ export function useMenuItems(restaurantId: string | null) {
                 console.error('[useMenuItems] Error:', err);
                 if (isMounted) {
                     setError(err as Error);
-                    // Retry logic (Max 3 retries)
+                    const msg = err instanceof Error ? err.message : String(err);
+                    const isConnectionRefused =
+                        msg.includes('Failed to fetch') ||
+                        msg.includes('ERR_CONNECTION_REFUSED') ||
+                        msg.includes('NetworkError');
+                    // Não fazer 3 retries quando o backend está em baixo (reduz rajada de pedidos)
+                    if (isConnectionRefused) {
+                        setLoading(false);
+                        return;
+                    }
+                    // Retry logic (Max 3 retries) para erros transitórios
                     if (retryCount < 3) {
                         retryCount++;
                         console.log(`[useMenuItems] Retrying... (${retryCount})`);
                         setTimeout(loadMenuItems, 2000);
-                        // INTENTIONAL: Do not set loading=false here, keep it true during retry delay
                         return;
                     }
                 }

@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { recordLoginFailure, recordLoginSuccess } from "../core/auth/authAudit";
 import { BackendType, getBackendType } from "../core/infra/backendAdapter";
 import { getSupabaseClient } from "../core/infra/supabaseClient";
 import { useSupabaseAuth } from "../core/auth/useSupabaseAuth";
@@ -91,6 +92,17 @@ export function AuthPage() {
   const navigate = useNavigate();
   const isSupabase = getBackendType() === BackendType.supabase;
 
+  const getLastRoute = (): string => {
+    try {
+      const stored = sessionStorage.getItem("chefiapp_lastRoute");
+      const allowed = ["/dashboard", "/app/dashboard", "/op/tpv", "/op/kds", "/op/cash"];
+      if (stored && allowed.includes(stored)) return stored;
+    } catch {
+      // ignore
+    }
+    return "/app/dashboard";
+  };
+
   useEffect(() => {
     setMode(modeFromUrl);
   }, [modeFromUrl]);
@@ -98,7 +110,7 @@ export function AuthPage() {
   useEffect(() => {
     if (authLoading) return;
     if (session) {
-      navigate("/app/dashboard", { replace: true });
+      navigate(getLastRoute(), { replace: true });
     }
   }, [session, authLoading, navigate]);
 
@@ -121,12 +133,17 @@ export function AuthPage() {
         const { error: err } = await client.auth.signUp({ email, password });
         if (err) throw err;
         setError(null);
-        navigate("/app/dashboard", { replace: true });
+        // Onda 4 A1/A2: novo utilizador → bootstrap (criar restaurante) em vez de dashboard
+        navigate("/bootstrap", { replace: true });
       } else {
         const { error: err } = await client.auth.signInWithPassword({ email, password });
-        if (err) throw err;
+        if (err) {
+          await recordLoginFailure(email, err.message);
+          throw err;
+        }
+        await recordLoginSuccess();
         setError(null);
-        navigate("/app/dashboard", { replace: true });
+        navigate(getLastRoute(), { replace: true });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao iniciar sessão ou criar conta.";
@@ -166,8 +183,8 @@ export function AuthPage() {
             </p>
             <p style={{ margin: 0 }}>
               Em desenvolvimento pode continuar com{" "}
-              <Link to="/?demo=true" style={styles.link}>
-                modo demonstração
+              <Link to="/demo" style={styles.link}>
+                Explorar demonstração
               </Link>
               .
             </p>

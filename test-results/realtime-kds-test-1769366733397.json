@@ -1,0 +1,31 @@
+{
+  "ordersCreated": [
+    {
+      "orderId": "63a95281-d785-4786-92d8-5e564b2ed9cf",
+      "restaurantId": "00000000-0000-0000-0000-000000000100",
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "createdAt": "2026-01-25T18:45:30.868Z"
+    }
+  ],
+  "ordersReceived": [],
+  "duplicates": 0,
+  "missing": 1,
+  "avgLatencyMs": 0,
+  "maxLatencyMs": 0,
+  "orderCorrect": false,
+  "noResurrection": true,
+  "passed": false,
+  "errors": [
+    "Failed to subscribe to Realtime channel",
+    "Failed to subscribe to Realtime channel",
+    "Failed to subscribe to Realtime channel",
+    "Failed to subscribe to Realtime channel",
+    "Failed to create order 2: TABLE_HAS_ACTIVE_ORDER: Esta mesa já possui um pedido aberto",
+    "Failed to create order 3: TABLE_HAS_ACTIVE_ORDER: Esta mesa já possui um pedido aberto",
+    "Failed to create order 4: TABLE_HAS_ACTIVE_ORDER: Esta mesa já possui um pedido aberto",
+    "Failed to create order 5: TABLE_HAS_ACTIVE_ORDER: Esta mesa já possui um pedido aberto",
+    "Failed to subscribe to Realtime channel",
+    "Failed to subscribe to Realtime channel"
+  ]
+}

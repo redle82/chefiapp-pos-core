@@ -31,11 +31,13 @@
 
 | O quê | Onde |
 |-------|------|
+| **Contratos contenção 48h (piloto, fallback, resiliência, order_origin)** | [docs/architecture/CORE_CONTRACT_INDEX.md](./architecture/CORE_CONTRACT_INDEX.md) §0d4 (PILOT_MODE_RUNTIME, MENU_FALLBACK, OPERATIONAL_UI_RESILIENCE, ORDER_ORIGIN_CLASSIFICATION) |
 | **Contenção B1 — Cardápio** | [docs/product/B1_MENU_CONTENCAO.md](./product/B1_MENU_CONTENCAO.md) |
 | **Contenção B2 — TPV** | [docs/product/B2_TPV_CONTENCAO.md](./product/B2_TPV_CONTENCAO.md) |
 | **Contenção B4 — KDS** | [docs/product/B4_KDS_CONTENCAO.md](./product/B4_KDS_CONTENCAO.md) |
 | **Checklist fluxo feliz (verificação técnica)** | [docs/product/FLUXO_FELIZ_CHECKLIST.md](./product/FLUXO_FELIZ_CHECKLIST.md) |
 | **Validação operacional — Piloto 01** | [docs/product/VALIDACAO_OPERACAO_PILOTO_01.md](./product/VALIDACAO_OPERACAO_PILOTO_01.md) |
+| **Mapa estados globais UI (Dia 1 unificação perceptiva)** | [docs/product/GLOBAL_UI_STATE_MAP.md](./product/GLOBAL_UI_STATE_MAP.md) — AS-IS loading/empty/error/blocked/pilot, proposta GlobalUIState, acordo visual. |
 
 ---
 
@@ -51,6 +53,7 @@
 
 ## Auditoria
 
+- **Cobertura contrato ↔ código (contenção 48h)** | [docs/audit/AUDIT_CONTRACT_CODE_COVERAGE_48H.md](./audit/AUDIT_CONTRACT_CODE_COVERAGE_48H.md) — por contrato: onde está implementado, onde pode vazar, enforcement em falta, testes.
 - **Referências .md em falta:** `./scripts/audit-md-references.sh`
 - **Contratos referenciados vs disco:** `./scripts/audit-contracts-referenced.sh`
 

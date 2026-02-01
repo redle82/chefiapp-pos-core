@@ -74,7 +74,9 @@
     "test:all": "npm test && npm run test:appstaff",
     "supreme:e2e": "bash ./scripts/supreme-e2e.sh",
     "supreme:stations": "bash ./scripts/supreme-stations.sh",
-    "supreme:seed": "npx tsx scripts/supreme-seed.ts"
+    "supreme:seed": "npx tsx scripts/supreme-seed.ts",
+    "docker:core:up": "cd docker-core && docker compose -f docker-compose.core.yml up -d",
+    "docker:core:down": "cd docker-core && docker compose -f docker-compose.core.yml down"
   },
   "keywords": [],
   "author": "Goldmonkey Empire",

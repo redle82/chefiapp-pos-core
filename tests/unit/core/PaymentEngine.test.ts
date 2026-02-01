@@ -296,18 +296,13 @@ describe('💳 PaymentEngine - Testes Unitários', () => {
         })),
       });
 
-      // Mock: logPaymentAttempt (insert)
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        insert: jest.fn(() => ({
-          data: [{ id: 'LOG-123' }],
-          error: null,
-        })),
-      });
+      // Mock: logPaymentAttempt usa RPC fn_log_payment_attempt (chamado após sucesso)
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce(undefined);
 
       await PaymentEngine.processPayment(mockPaymentInput);
 
-      // Verificar que log foi criado
-      expect(supabase.from).toHaveBeenCalledWith('payment_attempts');
+      // Verificar que log foi criado via RPC
+      expect(supabase.rpc).toHaveBeenCalledWith('fn_log_payment_attempt', expect.any(Object));
     });
 
     it('3.2 - Deve logar tentativa de pagamento falhada', async () => {
@@ -320,18 +315,13 @@ describe('💳 PaymentEngine - Testes Unitários', () => {
         },
       });
 
-      // Mock: logPaymentAttempt (insert)
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        insert: jest.fn(() => ({
-          data: [{ id: 'LOG-123' }],
-          error: null,
-        })),
-      });
+      // Mock: logPaymentAttempt (RPC fn_log_payment_attempt) - chamado ao logar falha
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce(undefined);
 
       await expect(PaymentEngine.processPayment(mockPaymentInput)).rejects.toThrow();
 
-      // Verificar que log de falha foi criado
-      expect(supabase.from).toHaveBeenCalledWith('payment_attempts');
+      // Verificar que log de falha foi criado via RPC
+      expect(supabase.rpc).toHaveBeenCalledWith('fn_log_payment_attempt', expect.any(Object));
     });
   });
 

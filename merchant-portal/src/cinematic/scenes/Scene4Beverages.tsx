@@ -18,7 +18,7 @@ export const Scene4Beverages: React.FC = () => {
     // Local UI State for Brand (since it's transient before commit)
     const [brandGroup, setBrandGroup] = useState<'coca' | 'pepsi'>('coca'); // Default
 
-    const { addProduct, getMenu } = useProducts();
+    const { addProduct, getMenu, lastError, clearLastError } = useProducts();
 
     // State for Selected Item IDs { 'coca': true, 'water_s': true ... }
     const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>({});
@@ -132,6 +132,12 @@ export const Scene4Beverages: React.FC = () => {
         <CinemaLayout>
             <div className="flex-1 flex flex-col items-center justify-start pt-16 px-6 relative z-20 w-full max-w-4xl mx-auto h-full overflow-y-auto pb-32">
 
+                {lastError && (
+                    <div role="alert" className="mb-4 p-4 bg-red-900/80 text-white rounded-lg flex justify-between items-center">
+                        <span>{lastError}</span>
+                        <button type="button" onClick={clearLastError} className="text-sm underline">Fechar</button>
+                    </div>
+                )}
                 <div className="text-center mb-10">
                     <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">Bebidas & Marcas</h1>
                     <p className="text-neutral-400 text-lg">Escolhe o teu parceiro principal.</p>

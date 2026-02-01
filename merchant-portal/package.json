@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "type-check": "tsc --noEmit",
     "genesis:prove": "npx tsx scripts/genesis-prove.ts",
     "genesis:verify": "npx tsx scripts/genesis-verify.ts",
@@ -25,6 +26,7 @@
     "mobile:run:android": "npx cap run android"
   },
   "dependencies": {
+    "@chefiapp/core-design-system": "file:../core-design-system",
     "@capacitor-mlkit/barcode-scanning": "^8.0.0",
     "@capacitor/android": "^8.0.1",
     "@capacitor/core": "^8.0.1",

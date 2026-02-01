@@ -1,0 +1,915 @@
+{
+  "totalCycles": 100,
+  "successfulCycles": 100,
+  "failedCycles": 0,
+  "zombieOrders": 0,
+  "stuckTables": 0,
+  "avgOpenLatencyMs": 0.61,
+  "avgCloseLatencyMs": 0.42,
+  "avgReopenLatencyMs": 0.67,
+  "maxLatencyMs": 4,
+  "duration": 319,
+  "cycleResults": [
+    {
+      "cycle": 1,
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "openLatencyMs": 4,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 2,
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 3,
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 4,
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 5,
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 6,
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 7,
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 8,
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 9,
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 10,
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 11,
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 12,
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 13,
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 14,
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 15,
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 16,
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 17,
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 18,
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 19,
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 20,
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 21,
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 22,
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 23,
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 24,
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 25,
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 26,
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 27,
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 28,
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 29,
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 30,
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 31,
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 32,
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 33,
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 34,
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 35,
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 36,
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 37,
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 38,
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 39,
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 40,
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 41,
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 42,
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 43,
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 44,
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 45,
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 46,
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 47,
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 48,
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 49,
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 50,
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 51,
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 52,
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 53,
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 54,
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 55,
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 56,
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 57,
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 58,
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 59,
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 60,
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 61,
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 62,
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 63,
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 64,
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 65,
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 66,
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 67,
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 68,
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 69,
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 70,
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 71,
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 72,
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 73,
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 74,
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 75,
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 76,
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 77,
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 78,
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 79,
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 80,
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 81,
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 82,
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 83,
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 84,
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 85,
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 86,
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 87,
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 88,
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 89,
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 90,
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 91,
+      "tableId": "8e6fdd73-57be-4f61-9be7-3b948d0ed2b4",
+      "tableNumber": 1,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 92,
+      "tableId": "6dc69345-fba4-4177-81bd-f1589da2dd30",
+      "tableNumber": 2,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 93,
+      "tableId": "627bdf39-a11d-4b39-85c4-9a9bdf91739e",
+      "tableNumber": 3,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 94,
+      "tableId": "53bdb1a7-596b-4893-afe4-0c6f1991ef41",
+      "tableNumber": 4,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 95,
+      "tableId": "dbba391b-99ce-4778-8ca6-7b69ae66487f",
+      "tableNumber": 5,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 96,
+      "tableId": "c4223864-f5f3-432e-9828-0489af6e9a76",
+      "tableNumber": 6,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 97,
+      "tableId": "175d583b-18a6-4592-b416-437572bfd14b",
+      "tableNumber": 7,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 0,
+      "success": true
+    },
+    {
+      "cycle": 98,
+      "tableId": "d8db5559-0fdf-4354-895b-b7d98dd536ee",
+      "tableNumber": 8,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 1,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 99,
+      "tableId": "040d8ec3-146e-48ed-af24-c5d40d3d308b",
+      "tableNumber": 9,
+      "openLatencyMs": 0,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 1,
+      "success": true
+    },
+    {
+      "cycle": 100,
+      "tableId": "e82b89e4-1a64-4c6b-93c0-9339ed6b5ac4",
+      "tableNumber": 10,
+      "openLatencyMs": 1,
+      "closeLatencyMs": 0,
+      "reopenLatencyMs": 0,
+      "success": true
+    }
+  ],
+  "errors": []
+}

@@ -3,17 +3,18 @@
  * Visual: VPC (escuro, superfície, botão CTA verde).
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { CONFIG } from "../../../config";
 import { createOrder } from "../../../core-boundary/writers/OrderWriter";
 import { toUserMessage } from "../../../ui/errors";
 
 const VPC = {
-  bg: '#0a0a0a',
-  surface: '#141414',
-  border: '#262626',
-  text: '#fafafa',
-  textMuted: '#a3a3a3',
-  accent: '#22c55e',
+  bg: "#0a0a0a",
+  surface: "#141414",
+  border: "#262626",
+  text: "#fafafa",
+  textMuted: "#a3a3a3",
+  accent: "#22c55e",
   radius: 8,
   space: 12,
   btnMinHeight: 48,
@@ -40,24 +41,33 @@ interface MiniTPVMinimalProps {
   maxHeight?: string;
 }
 
-export function MiniTPVMinimal({ restaurantId, maxHeight = '400px' }: MiniTPVMinimalProps) {
+export function MiniTPVMinimal({
+  restaurantId,
+  maxHeight = "400px",
+}: MiniTPVMinimalProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const coreUnreachableRef = useRef(false);
 
-  // Carregar produtos
+  // Carregar produtos (fail-fast quando Core está em baixo)
   const loadProducts = async () => {
+    if (coreUnreachableRef.current) {
+      setLoading(false);
+      setProducts([]);
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
 
-      const DOCKER_CORE_URL = import.meta.env.VITE_SUPABASE_URL || "http://localhost:3001";
-      const DOCKER_CORE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "chefiapp-core-secret-key-min-32-chars-long";
+      const DOCKER_CORE_URL = CONFIG.SUPABASE_URL;
+      const DOCKER_CORE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
 
-      const url = `${DOCKER_CORE_URL}/rest/v1/gm_products?select=*&restaurant_id=eq.${restaurantId}&available=eq.true&limit=10`;
+      const url = `${DOCKER_CORE_URL}/gm_products?select=*&restaurant_id=eq.${restaurantId}&available=eq.true&limit=10`;
 
       const response = await fetch(url, {
         method: "GET",
@@ -74,6 +84,14 @@ export function MiniTPVMinimal({ restaurantId, maxHeight = '400px' }: MiniTPVMin
       const data = await response.json();
       setProducts((data || []) as Product[]);
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (
+        msg.includes("Failed to fetch") ||
+        msg.includes("NetworkError") ||
+        msg.includes("ERR_CONNECTION_REFUSED")
+      ) {
+        coreUnreachableRef.current = true;
+      }
       setError(toUserMessage(err, "Erro ao carregar produtos."));
     } finally {
       setLoading(false);
@@ -146,17 +164,11 @@ export function MiniTPVMinimal({ restaurantId, maxHeight = '400px' }: MiniTPVMin
       setError(null);
       setSuccess(null);
 
-      const result = await createOrder(
-        restaurantId,
-        cart,
-        "CAIXA",
-        "cash",
-        {},
-      );
+      const result = await createOrder(restaurantId, cart, "CAIXA", "cash", {});
 
       setSuccess(`Pedido #${result.id.slice(0, 8)} criado!`);
       setCart([]);
-      
+
       // Limpar mensagem de sucesso após 3s
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -171,10 +183,10 @@ export function MiniTPVMinimal({ restaurantId, maxHeight = '400px' }: MiniTPVMin
       <div
         style={{
           padding: VPC.space,
-          textAlign: 'center',
+          textAlign: "center",
           fontSize: VPC.fontSizeBase,
           color: VPC.textMuted,
-          fontFamily: 'Inter, system-ui, sans-serif',
+          fontFamily: "Inter, system-ui, sans-serif",
         }}
       >
         A carregar produtos...
@@ -187,12 +199,12 @@ export function MiniTPVMinimal({ restaurantId, maxHeight = '400px' }: MiniTPVMin
       style={{
         border: `1px solid ${VPC.border}`,
         borderRadius: VPC.radius,
-        overflow: 'hidden',
+        overflow: "hidden",
         maxHeight,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         backgroundColor: VPC.surface,
-        fontFamily: 'Inter, system-ui, sans-serif',
+        fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
       <div
@@ -202,16 +214,24 @@ export function MiniTPVMinimal({ restaurantId, maxHeight = '400px' }: MiniTPVMin
           borderBottom: `1px solid ${VPC.border}`,
         }}
       >
-        <span style={{ fontSize: VPC.fontSizeBase, fontWeight: 600, color: VPC.text }}>TPV Mínimo</span>
+        <span
+          style={{
+            fontSize: VPC.fontSizeBase,
+            fontWeight: 600,
+            color: VPC.text,
+          }}
+        >
+          TPV Mínimo
+        </span>
       </div>
 
-      <div style={{ overflowY: 'auto', flex: 1, padding: VPC.space }}>
+      <div style={{ overflowY: "auto", flex: 1, padding: VPC.space }}>
         {error && (
           <div
             style={{
               padding: VPC.space,
-              backgroundColor: 'rgba(185, 28, 28, 0.12)',
-              color: '#f87171',
+              backgroundColor: "rgba(185, 28, 28, 0.12)",
+              color: "#f87171",
               borderRadius: VPC.radius,
               marginBottom: VPC.space,
               fontSize: VPC.fontSizeSmall,
@@ -225,7 +245,7 @@ export function MiniTPVMinimal({ restaurantId, maxHeight = '400px' }: MiniTPVMin
           <div
             style={{
               padding: VPC.space,
-              backgroundColor: 'rgba(34, 197, 94, 0.12)',
+              backgroundColor: "rgba(34, 197, 94, 0.12)",
               color: VPC.accent,
               borderRadius: VPC.radius,
               marginBottom: VPC.space,
@@ -237,10 +257,23 @@ export function MiniTPVMinimal({ restaurantId, maxHeight = '400px' }: MiniTPVMin
         )}
 
         <div style={{ marginBottom: VPC.space }}>
-          <div style={{ fontSize: VPC.fontSizeSmall, fontWeight: 600, marginBottom: 8, color: VPC.textMuted }}>
+          <div
+            style={{
+              fontSize: VPC.fontSizeSmall,
+              fontWeight: 600,
+              marginBottom: 8,
+              color: VPC.textMuted,
+            }}
+          >
             Produtos ({products.length})
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: VPC.space }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
+              gap: VPC.space,
+            }}
+          >
             {products.slice(0, 6).map((product) => (
               <div
                 key={product.id}
@@ -249,14 +282,18 @@ export function MiniTPVMinimal({ restaurantId, maxHeight = '400px' }: MiniTPVMin
                   border: `1px solid ${VPC.border}`,
                   padding: VPC.space,
                   borderRadius: VPC.radius,
-                  cursor: 'pointer',
+                  cursor: "pointer",
                   fontSize: VPC.fontSizeSmall,
                   backgroundColor: VPC.bg,
                   color: VPC.text,
                 }}
               >
-                <div style={{ fontWeight: 600, marginBottom: 2 }}>{product.name}</div>
-                <div style={{ color: VPC.textMuted, fontSize: VPC.fontSizeSmall }}>
+                <div style={{ fontWeight: 600, marginBottom: 2 }}>
+                  {product.name}
+                </div>
+                <div
+                  style={{ color: VPC.textMuted, fontSize: VPC.fontSizeSmall }}
+                >
                   € {((product.price_cents || 0) / 100).toFixed(2)}
                 </div>
               </div>
@@ -265,17 +302,29 @@ export function MiniTPVMinimal({ restaurantId, maxHeight = '400px' }: MiniTPVMin
         </div>
 
         {cart.length > 0 && (
-          <div style={{ borderTop: `1px solid ${VPC.border}`, paddingTop: VPC.space }}>
-            <div style={{ fontSize: VPC.fontSizeSmall, fontWeight: 600, marginBottom: 8, color: VPC.text }}>
+          <div
+            style={{
+              borderTop: `1px solid ${VPC.border}`,
+              paddingTop: VPC.space,
+            }}
+          >
+            <div
+              style={{
+                fontSize: VPC.fontSizeSmall,
+                fontWeight: 600,
+                marginBottom: 8,
+                color: VPC.text,
+              }}
+            >
               Carrinho ({cart.length})
             </div>
             {cart.map((item) => (
               <div
                 key={item.product_id}
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                   padding: VPC.space,
                   border: `1px solid ${VPC.border}`,
                   borderRadius: VPC.radius,
@@ -291,36 +340,42 @@ export function MiniTPVMinimal({ restaurantId, maxHeight = '400px' }: MiniTPVMin
                     € {(item.unit_price / 100).toFixed(2)} x {item.quantity}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                   <button
                     type="button"
-                    onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
+                    onClick={() =>
+                      updateQuantity(item.product_id, item.quantity - 1)
+                    }
                     style={{
-                      padding: '4px 8px',
+                      padding: "4px 8px",
                       minWidth: 32,
                       fontSize: VPC.fontSizeBase,
                       border: `1px solid ${VPC.border}`,
                       borderRadius: VPC.radius,
-                      backgroundColor: 'transparent',
+                      backgroundColor: "transparent",
                       color: VPC.text,
-                      cursor: 'pointer',
+                      cursor: "pointer",
                     }}
                   >
                     −
                   </button>
-                  <span style={{ minWidth: 20, textAlign: 'center' }}>{item.quantity}</span>
+                  <span style={{ minWidth: 20, textAlign: "center" }}>
+                    {item.quantity}
+                  </span>
                   <button
                     type="button"
-                    onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
+                    onClick={() =>
+                      updateQuantity(item.product_id, item.quantity + 1)
+                    }
                     style={{
-                      padding: '4px 8px',
+                      padding: "4px 8px",
                       minWidth: 32,
                       fontSize: VPC.fontSizeBase,
                       border: `1px solid ${VPC.border}`,
                       borderRadius: VPC.radius,
-                      backgroundColor: 'transparent',
+                      backgroundColor: "transparent",
                       color: VPC.text,
-                      cursor: 'pointer',
+                      cursor: "pointer",
                     }}
                   >
                     +
@@ -346,20 +401,21 @@ export function MiniTPVMinimal({ restaurantId, maxHeight = '400px' }: MiniTPVMin
               onClick={handleCreateOrder}
               disabled={creating || cart.length === 0}
               style={{
-                width: '100%',
+                width: "100%",
                 minHeight: VPC.btnMinHeight,
-                padding: '12px 24px',
+                padding: "12px 24px",
                 marginTop: VPC.space,
                 fontSize: VPC.fontSizeBase,
                 fontWeight: 600,
-                backgroundColor: creating || cart.length === 0 ? VPC.textMuted : VPC.accent,
-                color: '#fff',
-                border: 'none',
+                backgroundColor:
+                  creating || cart.length === 0 ? VPC.textMuted : VPC.accent,
+                color: "#fff",
+                border: "none",
                 borderRadius: VPC.radius,
-                cursor: creating ? 'wait' : 'pointer',
+                cursor: creating ? "wait" : "pointer",
               }}
             >
-              {creating ? 'A criar...' : 'Criar pedido'}
+              {creating ? "A criar..." : "Criar pedido"}
             </button>
           </div>
         )}

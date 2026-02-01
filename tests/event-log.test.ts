@@ -11,6 +11,7 @@
 import { describe, it, expect, beforeEach } from "@jest/globals";
 import { InMemoryEventStore } from "../event-log/InMemoryEventStore";
 import { EventExecutor } from "../event-log/EventExecutor";
+import { InMemoryRepo } from "../core-engine/repo/InMemoryRepo";
 import { rebuildState } from "../projections";
 import type { CoreEvent } from "../event-log/types";
 import type { Session, Order, OrderItem } from "../core-engine/repo/types";
@@ -19,12 +20,16 @@ import type { Session, Order, OrderItem } from "../core-engine/repo/types";
 // TEST SETUP
 // ============================================================================
 
+const TEST_TENANT = "test-tenant";
+const TEST_EXEC_ID = "exec-1";
+
 let eventStore: InMemoryEventStore;
 let executor: EventExecutor;
 
 beforeEach(() => {
   eventStore = new InMemoryEventStore();
-  executor = new EventExecutor(eventStore);
+  const repo = new InMemoryRepo();
+  executor = new EventExecutor(eventStore, repo, TEST_TENANT, TEST_EXEC_ID);
 });
 
 // ============================================================================
@@ -39,6 +44,7 @@ describe("IDEMPOTENCY: Duplicate commands", () => {
       stream_version: 0,
       type: "ORDER_CREATED",
       payload: { order_id: "order-1", session_id: "session-1" },
+      meta: {},
       occurred_at: new Date(),
     };
 
@@ -57,6 +63,7 @@ describe("IDEMPOTENCY: Duplicate commands", () => {
       stream_version: 0,
       type: "ORDER_CREATED",
       payload: { order_id: "order-1" },
+      meta: {},
       occurred_at: new Date(),
       idempotency_key: idempotencyKey,
     };
@@ -67,6 +74,7 @@ describe("IDEMPOTENCY: Duplicate commands", () => {
       stream_version: 0,
       type: "ORDER_CREATED",
       payload: { order_id: "order-1" },
+      meta: {},
       occurred_at: new Date(),
       idempotency_key: idempotencyKey, // Same key
     };
@@ -95,6 +103,7 @@ describe("CONCURRENCY: Optimistic concurrency control", () => {
       stream_version: 0,
       type: "ORDER_CREATED",
       payload: { order_id: "order-1" },
+      meta: {},
       occurred_at: new Date(),
     };
 
@@ -104,6 +113,7 @@ describe("CONCURRENCY: Optimistic concurrency control", () => {
       stream_version: 1,
       type: "ORDER_LOCKED",
       payload: { order_id: "order-1", total_cents: 10000 },
+      meta: {},
       occurred_at: new Date(),
     };
 
@@ -122,6 +132,7 @@ describe("CONCURRENCY: Optimistic concurrency control", () => {
       stream_version: 0,
       type: "ORDER_CREATED",
       payload: { order_id: "order-1" },
+      meta: {},
       occurred_at: new Date(),
     };
 
@@ -131,6 +142,7 @@ describe("CONCURRENCY: Optimistic concurrency control", () => {
       stream_version: 1,
       type: "ORDER_LOCKED",
       payload: { order_id: "order-1", total_cents: 10000 },
+      meta: {},
       occurred_at: new Date(),
     };
 
@@ -159,6 +171,7 @@ describe("CRASH RECOVERY: Rebuild state from events", () => {
           session_id: "session-1",
           table_id: "table-1",
         },
+        meta: {},
         occurred_at: new Date("2024-01-01T10:00:00Z"),
       },
       {
@@ -173,6 +186,7 @@ describe("CRASH RECOVERY: Rebuild state from events", () => {
           quantity: 2,
           price_snapshot_cents: 1000,
         },
+        meta: {},
         occurred_at: new Date("2024-01-01T10:01:00Z"),
       },
       {
@@ -184,6 +198,7 @@ describe("CRASH RECOVERY: Rebuild state from events", () => {
           order_id: "order-1",
           total_cents: 2000,
         },
+        meta: {},
         occurred_at: new Date("2024-01-01T10:02:00Z"),
       },
     ];
@@ -212,6 +227,7 @@ describe("CRASH RECOVERY: Rebuild state from events", () => {
         stream_version: 0,
         type: "SESSION_STARTED",
         payload: { session_id: "session-1" },
+        meta: {},
         occurred_at: new Date("2024-01-01T09:00:00Z"),
       },
       {
@@ -220,6 +236,7 @@ describe("CRASH RECOVERY: Rebuild state from events", () => {
         stream_version: 1,
         type: "SESSION_CLOSED",
         payload: { session_id: "session-1" },
+        meta: {},
         occurred_at: new Date("2024-01-01T18:00:00Z"),
       },
     ];
@@ -247,6 +264,7 @@ describe("IMMUTABILITY: Events cannot be modified", () => {
         stream_version: 0,
         type: "ORDER_CREATED",
         payload: { order_id: "order-1", session_id: "session-1" },
+        meta: {},
         occurred_at: new Date(),
       },
       {
@@ -255,6 +273,7 @@ describe("IMMUTABILITY: Events cannot be modified", () => {
         stream_version: 1,
         type: "ORDER_LOCKED",
         payload: { order_id: "order-1", total_cents: 10000 },
+        meta: {},
         occurred_at: new Date(),
       },
       {
@@ -263,6 +282,7 @@ describe("IMMUTABILITY: Events cannot be modified", () => {
         stream_version: 2,
         type: "ORDER_PAID",
         payload: { order_id: "order-1" },
+        meta: {},
         occurred_at: new Date(),
       },
       {
@@ -271,6 +291,7 @@ describe("IMMUTABILITY: Events cannot be modified", () => {
         stream_version: 3,
         type: "ORDER_CLOSED",
         payload: { order_id: "order-1" },
+        meta: {},
         occurred_at: new Date(),
       },
     ];
@@ -299,6 +320,7 @@ describe("ANTI-TAMPER: Hash chain integrity", () => {
       stream_version: 0,
       type: "ORDER_CREATED",
       payload: { order_id: "order-1" },
+      meta: {},
       occurred_at: new Date(),
     };
 
@@ -308,6 +330,7 @@ describe("ANTI-TAMPER: Hash chain integrity", () => {
       stream_version: 1,
       type: "ORDER_LOCKED",
       payload: { order_id: "order-1", total_cents: 10000 },
+      meta: {},
       occurred_at: new Date(),
     };
 
@@ -316,7 +339,7 @@ describe("ANTI-TAMPER: Hash chain integrity", () => {
 
     const events = await eventStore.readStream("ORDER:order-1");
 
-    expect(events[0].hash_prev).toBeNull();
+    expect(events[0].hash_prev).toBeUndefined(); // First event has no previous hash
     expect(events[0].hash).toBeDefined();
 
     expect(events[1].hash_prev).toBe(events[0].hash);
@@ -338,18 +361,32 @@ describe("INTEGRATION: EventExecutor with state machine", () => {
     };
     executor.getRepo().saveSession(session);
 
+    const ctx = {
+      tenantId: TEST_TENANT,
+      executionId: TEST_EXEC_ID,
+      lifecycle: "ACTIVE" as const,
+      source: "API" as const,
+      correlationRoot: "test",
+      timestamp: new Date(),
+    };
+
     // Start session (should generate SESSION_STARTED event)
-    const result = await executor.transition({
-      entity: "SESSION",
-      entityId: session.id,
-      event: "START",
-    });
+    const result = await executor.execute(
+      {
+        tenantId: TEST_TENANT,
+        entity: "SESSION",
+        entityId: session.id,
+        event: "START",
+      },
+      ctx
+    );
 
     expect(result.success).toBe(true);
     expect(result.event_id).toBeDefined();
 
-    // Verify event was stored
-    const events = await eventStore.readStream(`SESSION:${session.id}`);
+    // Verify event was stored (stream_id is tenantId:ENTITY:entityId)
+    const streamId = `${TEST_TENANT}:SESSION:${session.id}`;
+    const events = await eventStore.readStream(streamId);
     expect(events.length).toBe(1);
     expect(events[0].type).toBe("SESSION_STARTED");
   });

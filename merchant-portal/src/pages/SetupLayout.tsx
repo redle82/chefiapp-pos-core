@@ -248,8 +248,10 @@ export function SetupLayout() {
                 <div style={{ marginTop: 'auto', paddingTop: 20 }}>
                   <button
                     onClick={async () => {
-                      await import("../core/supabase").then(m => m.supabase.auth.signOut())
-                      navigate('/app/auth')
+                      const { recordLogout } = await import("../core/auth/authAudit");
+                      await recordLogout();
+                      await import("../core/supabase").then(m => m.supabase.auth.signOut());
+                      navigate('/app/auth');
                     }}
                     style={{
                       display: 'flex',
