@@ -2,21 +2,23 @@
 
 **Guide for contributing to the project**
 
-> ⚠️ **Before contributing, read [`ENGINEERING_CONSTITUTION.md`](ENGINEERING_CONSTITUTION.md)**  
+> ⚠️ **Before contributing, read [`ENGINEERING_CONSTITUTION.md`](ENGINEERING_CONSTITUTION.md)**
 > This document defines the non-negotiable rules of the project.
 
 ---
 
 ## 🌍 Language Policy
 
-> **MANDATORY:** All code, commits, documentation, issues, and PRs must be in **English**.  
+> **MANDATORY:** All code, commits, documentation, issues, and PRs must be in **English**.
 > See [`docs/LANGUAGE_POLICY.md`](docs/LANGUAGE_POLICY.md) for complete rules.
 
 **Quick rule:** "If a Stripe / Oracle / SAP engineer opens this, do they understand?"
+
 - **Yes** → English is mandatory
 - **No (personal notes only)** → Portuguese is acceptable
 
 **Examples:**
+
 ```bash
 # ✅ CORRECT
 git commit -m "feat: add SLA escalation engine"
@@ -28,6 +30,7 @@ git commit -m "fix: corrige bug de duplicação"
 ```
 
 **Portuguese is allowed ONLY in:**
+
 - `docs/notes/` - Personal notes
 - `docs/sessions/` - Session logs
 - `docs/brain-dump/` - Mental drafts
@@ -39,6 +42,7 @@ git commit -m "fix: corrige bug de duplicação"
 ## 🎯 How to Contribute
 
 ### 1. Fork and Clone
+
 ```bash
 # Fork the repository on GitHub
 # Clone your fork
@@ -47,6 +51,7 @@ cd chefiapp-pos-core
 ```
 
 ### 2. Create Branch
+
 ```bash
 # Create branch for feature
 git checkout -b feature/new-feature
@@ -56,6 +61,7 @@ git checkout -b fix/fix-bug
 ```
 
 ### 3. Development
+
 ```bash
 # Install dependencies
 npm install
@@ -68,13 +74,17 @@ npm test
 ```
 
 ### 3.1 Validate before PR (fail-fast)
+
 Before pushing, run from repo root (CI runs the same):
+
 ```bash
 make simulate-failfast   # typecheck + build
 ```
+
 Optional: `npm test -- --ci --testPathIgnorePatterns="e2e|playwright|massive|offline" --testTimeout=15000 --maxWorkers=2` and `bash ./scripts/sovereignty-gate.sh`.
 
 ### 4. Commit
+
 ```bash
 # Descriptive commits (MUST be in English)
 git commit -m "feat: add new feature X"
@@ -83,12 +93,15 @@ git commit -m "docs: update documentation Z"
 ```
 
 ### 5. Push and PR
+
 ```bash
 # Push to your fork
 git push origin feature/new-feature
 
 # Create Pull Request on GitHub
 ```
+
+**PR gates (CI):** The branch must pass: `make simulate-failfast` (typecheck + build), Prettier check, Lint, `npm test` (subset), and `scripts/sovereignty-gate.sh`. Run `make simulate-failfast` locally before pushing to avoid failed CI.
 
 ---
 
@@ -109,6 +122,7 @@ chore: maintenance tasks
 ```
 
 **Examples:**
+
 ```bash
 feat: add iFood integration
 fix: fix live map timer
@@ -119,34 +133,38 @@ refactor: simplify FastPayButton
 ### Naming Conventions
 
 **Components:**
+
 ```typescript
 // PascalCase
-FastPayButton.tsx
-KitchenPressureIndicator.tsx
-WaitlistBoard.tsx
+FastPayButton.tsx;
+KitchenPressureIndicator.tsx;
+WaitlistBoard.tsx;
 ```
 
 **Hooks:**
+
 ```typescript
 // camelCase with "use" prefix
-useKitchenPressure.ts
-useOrder.ts
-useAppStaff.ts
+useKitchenPressure.ts;
+useOrder.ts;
+useAppStaff.ts;
 ```
 
 **Services:**
+
 ```typescript
 // PascalCase
-PersistenceService.ts
-InventoryService.ts
-PrinterService.ts
+PersistenceService.ts;
+InventoryService.ts;
+PrinterService.ts;
 ```
 
 **Utils:**
+
 ```typescript
 // camelCase
-getUrgencyColor.ts
-calculateTotal.ts
+getUrgencyColor.ts;
+calculateTotal.ts;
 ```
 
 ---
@@ -157,11 +175,11 @@ calculateTotal.ts
 
 ```typescript
 // __tests__/components/FastPayButton.test.tsx
-import { render, fireEvent } from '@testing-library/react-native';
-import { FastPayButton } from '@/components/FastPayButton';
+import { render, fireEvent } from "@testing-library/react-native";
+import { FastPayButton } from "@/components/FastPayButton";
 
-describe('FastPayButton', () => {
-  it('should process payment', async () => {
+describe("FastPayButton", () => {
+  it("should process payment", async () => {
     // Test
   });
 });
@@ -181,6 +199,7 @@ npm run test:coverage
 ```
 
 ### Minimum Coverage
+
 - **Critical components:** > 90%
 - **Hooks:** > 85%
 - **Services:** > 80%
@@ -193,6 +212,7 @@ npm run test:coverage
 ### Updating Documentation
 
 When adding a feature:
+
 1. Update `CHANGELOG.md`
 2. Update `docs/API_REFERENCE.md` (if necessary)
 3. Add example in `docs/CODE_EXAMPLES.md`
@@ -211,6 +231,7 @@ When adding a feature:
 \`\`\`
 
 **Props:**
+
 - `prop1`: type - description
 - `prop2`: type - description
 ```
@@ -262,10 +283,10 @@ useEffect(() => {
 
 ```typescript
 // ✅ Order: external, internal, relative
-import React from 'react';
-import { View, Text } from 'react-native';
-import { useOrder } from '@/context/OrderContext';
-import { FastPayButton } from '@/components/FastPayButton';
+import React from "react";
+import { View, Text } from "react-native";
+import { useOrder } from "@/context/OrderContext";
+import { FastPayButton } from "@/components/FastPayButton";
 ```
 
 ---
@@ -279,6 +300,7 @@ import { FastPayButton } from '@/components/FastPayButton';
 Brief description of the bug
 
 **Steps to Reproduce:**
+
 1. Step 1
 2. Step 2
 3. Step 3
@@ -290,6 +312,7 @@ What should happen
 What is happening
 
 **Environment:**
+
 - OS: iOS/Android
 - Version: 1.0.0
 - Device: iPhone 13 / Pixel 6
@@ -320,6 +343,7 @@ How it would solve it
 Other options
 
 **Impact:**
+
 - Affected users
 - Complexity
 - Estimated time
@@ -333,13 +357,13 @@ Other options
 
 ```typescript
 // ✅ Use centralized Logger
-import { Logger } from '@/core/logger';
+import { Logger } from "@/core/logger";
 
-Logger.info('Order created', { orderId, table });
-Logger.error('Payment failed', { orderId, error });
+Logger.info("Order created", { orderId, table });
+Logger.error("Payment failed", { orderId, error });
 
 // ❌ Avoid console.log in production
-console.log('debug'); // Don't do this
+console.log("debug"); // Don't do this
 ```
 
 ### Errors
@@ -349,14 +373,14 @@ console.log('debug'); // Don't do this
 try {
   await processPayment(order);
 } catch (error) {
-  Logger.error('Payment error', { orderId: order.id, error });
+  Logger.error("Payment error", { orderId: order.id, error });
   throw error; // Re-throw if necessary
 }
 
 // ✅ ErrorBoundary in React components
 <ErrorBoundary fallback={<ErrorFallback />}>
   <Component />
-</ErrorBoundary>
+</ErrorBoundary>;
 ```
 
 ### Metrics
@@ -434,24 +458,27 @@ make assertions
 
 ### When to Use Each Validation
 
-| Situation | Validation | Time |
-|-----------|------------|------|
-| During development | `make simulate-failfast` | ~1 min |
-| Before commit | `make simulate-24h-small` | ~5 min |
-| Before merge (main) | `make simulate-24h-small` + `make assertions` | ~5 min |
+| Situation           | Validation                                             | Time     |
+| ------------------- | ------------------------------------------------------ | -------- |
+| During development  | `make simulate-failfast`                               | ~1 min   |
+| Before commit       | `make simulate-24h-small`                              | ~5 min   |
+| Before merge (main) | `make simulate-24h-small` + `make assertions`          | ~5 min   |
 | Complete validation | `make simulate-24h-large` or `make simulate-24h-giant` | ~5-7 min |
 
 ### Absolute Rules
 
 1. **No Core changes without validation**
+
    - If the simulator doesn't exercise it, it's not Core
    - Untested code = dead code
 
 2. **No violation of CORE_MANIFESTO.md**
+
    - Any violation is architectural regression
    - Must be reverted immediately
 
 3. **No critical logic outside Core**
+
    - Governance lives in Core
    - Offline lives in Core
    - SLA lives in Core
@@ -463,12 +490,14 @@ make assertions
 ### Troubleshooting
 
 **Simulador falha:**
+
 1. Verificar `make assertions`
 2. Revisar mudanças recentes
 3. Consultar `docs/testing/MEGA_OPERATIONAL_SIMULATOR.md`
 4. Verificar logs do simulador
 
 **CI/CD falha:**
+
 1. Executar validações localmente
 2. Verificar se PostgreSQL está rodando (para CI local)
 3. Revisar mudanças que podem ter quebrado o Core
@@ -481,11 +510,13 @@ make assertions
 ### Checklist
 
 **Functionality:**
+
 - [ ] Code works as expected
 - [ ] Tests passing
 - [ ] No regressions
 
 **Core (if applicable):**
+
 - [ ] `make simulate-failfast` passed
 - [ ] `make simulate-24h-small` passed (if PR to main/core/frozen-v1)
 - [ ] `make assertions` passed
@@ -493,28 +524,33 @@ make assertions
 - [ ] Simulator exercises the change
 
 **Language:**
+
 - [ ] All code in English
 - [ ] All commits in English
 - [ ] All documentation in English (if canonical)
 - [ ] No language mixing in files
 
 **Code:**
+
 - [ ] Follows conventions
 - [ ] Well documented
 - [ ] No dead code
 - [ ] Performance OK
 
 **Observability:**
+
 - [ ] Errors captured with context
 - [ ] Appropriate logs (info/warn/error)
 - [ ] No console.log in production
 
 **Security:**
+
 - [ ] Inputs validated
 - [ ] No sensitive data exposed
 - [ ] Errors handled
 
 **Documentation:**
+
 - [ ] README updated (if necessary)
 - [ ] Changelog updated
 - [ ] Clear comments
@@ -526,6 +562,7 @@ make assertions
 ### Versão
 
 **Semantic Versioning:**
+
 - `MAJOR.MINOR.PATCH`
 - `1.0.0` → `1.0.1` (patch: bugfix)
 - `1.0.0` → `1.1.0` (minor: feature)
@@ -558,5 +595,5 @@ By contributing, you agree that your contributions will be licensed under the sa
 
 **Thank you for contributing! 🎉**
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Last updated:** 2026-01-24
