@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { InstallAppPrompt } from "../../components/pwa/InstallAppPrompt";
 import type { ProductMode } from "../../context/RestaurantRuntimeContext";
 import { useGlobalUIState } from "../../context/GlobalUIStateContext";
@@ -40,7 +40,12 @@ import { PurchasesDashboardPage } from "../Purchases/PurchasesDashboardPage";
 import { ReservationsDashboardPage } from "../Reservations/ReservationsDashboardPage";
 import { TPVMinimal } from "../TPVMinimal/TPVMinimal";
 import { TaskDashboardPage } from "../Tasks/TaskDashboardPage";
+import { alertEngine } from "../../core/alerts/AlertEngine";
+import { EcraZeroView } from "../../components/Dashboard/EcraZeroView";
 import { OperationalMetricsCards } from "../../components/Dashboard/OperationalMetricsCards";
+import { ShiftHistorySection } from "../../components/Dashboard/ShiftHistorySection";
+import { OSCopy } from "../../ui/design-system/sovereign/OSCopy";
+import { useEcraZeroState } from "../../core/dashboard/useEcraZeroState";
 
 const ESTADO_COPY: Record<
   ProductMode,
@@ -330,6 +335,15 @@ const SYSTEMS: SystemCard[] = [
     color: "#4facfe",
   },
   {
+    id: "inventory-stock",
+    name: "Estoque",
+    icon: "📦",
+    description: "Inventário e estoque (alerta baixo)",
+    route: "/inventory-stock",
+    moduleId: "inventory-stock",
+    color: "#2d5016",
+  },
+  {
     id: "tasks",
     name: "Tarefas",
     icon: "✅",
@@ -484,9 +498,64 @@ export function DashboardPortal() {
   const roleContext = useRoleOptional();
   const role = roleContext?.role ?? null;
   const setRole = roleContext?.setRole;
-  const { toasts, dismiss, warning } = useToast();
+  const { toasts, dismiss, warning, show } = useToast();
   const roleDeniedShown = useRef(false);
+  const criticalAlertToastShown = useRef(false);
   const [activeModule, setActiveModule] = useState<string | null>(null);
+  const [alertsActiveCount, setAlertsActiveCount] = useState<number>(0);
+  const [alertsCriticalCount, setAlertsCriticalCount] = useState<number>(0);
+  const [showFullDashboard, setShowFullDashboard] = useState(false);
+  const ecraZero = useEcraZeroState(runtime.restaurant_id ?? null);
+
+  useEffect(() => {
+    if (!runtime.restaurant_id) {
+      setAlertsActiveCount(0);
+      setAlertsCriticalCount(0);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const [active, critical] = await Promise.all([
+          alertEngine.getActive(runtime.restaurant_id),
+          alertEngine.getCritical(runtime.restaurant_id),
+        ]);
+        if (!cancelled) {
+          setAlertsActiveCount(active.length);
+          setAlertsCriticalCount(critical.length);
+        }
+      } catch {
+        if (!cancelled) {
+          setAlertsActiveCount(0);
+          setAlertsCriticalCount(0);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [runtime.restaurant_id]);
+
+  // O5.10: notificação in-app quando há alertas críticos (ALERT_ACTION_CONTRACT)
+  useEffect(() => {
+    if (alertsCriticalCount === 0) {
+      criticalAlertToastShown.current = false;
+      return;
+    }
+    if (!criticalAlertToastShown.current) {
+      criticalAlertToastShown.current = true;
+      const n = alertsCriticalCount;
+      show({
+        message: n === 1 ? "Tens 1 alerta crítico." : `Tens ${n} alertas críticos.`,
+        type: "error",
+        duration: 8000,
+        action: {
+          label: "Ver alertas",
+          onClick: () => navigate("/app/alerts"),
+        },
+      });
+    }
+  }, [alertsCriticalCount, show, navigate]);
 
   useEffect(() => {
     if (location.state?.reason === "role_denied" && !roleDeniedShown.current) {
@@ -509,6 +578,70 @@ export function DashboardPortal() {
         layout="portal"
         variant="fullscreen"
       />
+    );
+  }
+
+  // Ecrã Zero do Dono (docs/product/ECRA_ZERO_DONO.md): primeiro ecrã após login; um juízo, uma causa, um gesto.
+  if (role === "owner" && !showFullDashboard) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          backgroundColor: "#f8f9fa",
+          paddingTop: runtime.mode !== "active" ? 52 : 0,
+        }}
+      >
+        {runtime.mode !== "active" && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: 40,
+              padding: "10px 16px",
+              background: "linear-gradient(90deg, #fef3c7 0%, #fde68a 100%)",
+              borderBottom: "1px solid #f59e0b",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 8,
+            }}
+          >
+            <span style={{ fontSize: 14, color: "#92400e", fontWeight: 500 }}>
+              ⚙️ Complete a configuração para ativar TPV, KDS e presença online.
+            </span>
+            <button
+              onClick={() => navigate("/config/identity")}
+              style={{
+                padding: "6px 14px",
+                backgroundColor: "#1a1a1a",
+                color: "#fff",
+                border: "none",
+                borderRadius: 6,
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              Checklist de Configuração
+            </button>
+          </div>
+        )}
+        <EcraZeroView
+          state={ecraZero.state}
+          reason={ecraZero.reason}
+          loading={ecraZero.loading}
+          onAction={() => {
+            if (ecraZero.state === "vermelho") {
+              navigate("/alerts");
+            } else {
+              setShowFullDashboard(true);
+            }
+          }}
+        />
+      </div>
     );
   }
 
@@ -804,6 +937,57 @@ export function DashboardPortal() {
           {/* Promover instalação PWA — um ícone no desktop */}
           <InstallAppPrompt compact />
 
+          {/* Próximo passo: criar primeiro produto (trial/onboarding) */}
+          {runtime.mode !== "active" && (
+            <section
+              style={{
+                marginBottom: "24px",
+                padding: "16px 20px",
+                borderRadius: 12,
+                backgroundColor: "#fef3c7",
+                border: "1px solid #f59e0b",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "#92400e",
+                  margin: "0 0 6px 0",
+                }}
+              >
+                {OSCopy.emptyStates.primeiroProduto.titulo}
+              </h2>
+              <p
+                style={{
+                  fontSize: "13px",
+                  color: "#78350f",
+                  margin: "0 0 12px 0",
+                  lineHeight: 1.4,
+                }}
+              >
+                {OSCopy.emptyStates.primeiroProduto.descricao}
+              </p>
+              <Link
+                to="/onboarding/first-product"
+                style={{
+                  display: "inline-block",
+                  padding: "8px 16px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: "#0a0a0a",
+                  backgroundColor: "#eab308",
+                  border: "none",
+                  borderRadius: 8,
+                  textDecoration: "none",
+                  cursor: "pointer",
+                }}
+              >
+                {OSCopy.emptyStates.primeiroProduto.cta}
+              </Link>
+            </section>
+          )}
+
           {/* Card Estado do sistema — DEMO / PILOT / LIVE + CTA contextual */}
           <EstadoDoSistemaCard style={{ marginBottom: "32px" }} />
 
@@ -887,7 +1071,129 @@ export function DashboardPortal() {
           {/* Painel do módulo ativo — uma única fonte de conteúdo (não grid de cards) */}
           {!activeModule ? (
             <>
+              {/* Onda 5 O5.1: atalhos rápidos (visão de dono) — TPV, KDS, Menu, Billing */}
+              <section
+                style={{
+                  marginBottom: "24px",
+                  padding: "20px 24px",
+                  borderRadius: 14,
+                  backgroundColor: "#fff",
+                  border: "1px solid #e5e7eb",
+                }}
+              >
+                <h2
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: "#64748b",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    marginBottom: 12,
+                  }}
+                >
+                  Atalhos rápidos
+                </h2>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "10px",
+                    alignItems: "center",
+                  }}
+                >
+                  {[
+                    { id: "tpv", label: "TPV (Caixa)", icon: "🖥️" },
+                    { id: "kds", label: "Cozinha (KDS)", icon: "📺" },
+                    { id: "menu", label: "Cardápio", icon: "📋" },
+                    { id: "billing", label: "Faturação", icon: "💳" },
+                  ].map(({ id, label, icon }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setActiveModule(id)}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "10px 16px",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: "#1a1a1a",
+                        backgroundColor: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: 10,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span style={{ fontSize: "18px" }}>{icon}</span>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
               <OperationalMetricsCards />
+
+              {/* Onda 5 O5.6: histórico por turno (RPC get_shift_history) */}
+              <ShiftHistorySection />
+
+              {/* Onda 5 O5.8: alertas acionáveis no hub — resumo + atalho */}
+              <section
+                style={{
+                  marginTop: "24px",
+                  marginBottom: "24px",
+                  padding: "16px 24px",
+                  borderRadius: 14,
+                  backgroundColor: "#fff",
+                  border: "1px solid #e5e7eb",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <h2
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: "#64748b",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.04em",
+                      marginBottom: 4,
+                    }}
+                  >
+                    Alertas
+                  </h2>
+                  <p style={{ fontSize: "14px", color: "#475569", margin: 0 }}>
+                    {alertsActiveCount} ativos
+                    {alertsCriticalCount > 0 && (
+                      <span style={{ color: "#dc2626", fontWeight: 600 }}>
+                        {" "}
+                        · {alertsCriticalCount} críticos
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveModule("alerts")}
+                  style={{
+                    padding: "8px 16px",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: "#fff",
+                    backgroundColor: alertsCriticalCount > 0 ? "#dc2626" : "#64748b",
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                  }}
+                >
+                  Ver alertas
+                </button>
+              </section>
+
               <section
                 style={{
                   marginTop: "24px",

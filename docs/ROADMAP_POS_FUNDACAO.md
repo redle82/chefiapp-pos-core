@@ -152,7 +152,7 @@ Agora está nomeado. Agora há caminho. Agora dá para executar sem ansiedade.
 ## Ordem de execução
 
 1. Executar FASE 1 usando a checklist técnica (`docs/implementation/FASE_1_BOOTSTRAP_RESTAURANTE_CHECKLIST.md`).
-2. Só depois avançar para Menu/Inventário (FASE 2).
+2. Executar FASE 2 usando a checklist técnica (`docs/implementation/FASE_2_MENU_INVENTARIO_ESTOQUE_CHECKLIST.md`).
 3. Depois Pessoas/Tarefas (FASE 3).
 4. Depois Presença Digital (FASE 4).
 5. Por fim Consolidação (FASE 5).
