@@ -1,7 +1,7 @@
 # NEXT STEPS - ChefIApp Core
 
 > Checklist of next steps after cleanup, validation, and ratification of the Core.
-> Date: 2026-01-24 · Updated: Onda 3 concluída (Fev 2026).
+> Date: 2026-02-01 · Updated: Pronto para piloto (Bloco 0 Pré-flight: validações + build OK).
 
 ---
 
@@ -34,6 +34,7 @@ Ver: [docs/ONDA_3_TAREFAS_90_DIAS.md](docs/ONDA_3_TAREFAS_90_DIAS.md) · [docs/C
 
 ### Immediate (Today/Tomorrow)
 
+- [ ] **Checklist Piloto e Produção (Onda 4)** — Bloco 0 (itens 1, 2, 4) e Bloco 3 (itens 14–18) concluídos; estrutura dos Blocos 1, 2, 4 e 5 em [docs/pilots/](docs/pilots/) (ONDA_4_PILOTO_P1, P2, VALOR_E_ONDA_5). **Próximo executável:** (1) item 3 — TPV manual happy path (`cd merchant-portal && npm run dev` → Signup → Bootstrap → First Product → TPV → pedido → pagar → dashboard); (2) preencher [ONDA_4_PILOTO_P1.md](docs/pilots/ONDA_4_PILOTO_P1.md) (ICP, 10 alvos, script, onboarding, 5 instalações).
 - [x] **Onda 4 — POS Ultra-Rápido (escopo engenharia)** — A1–A4, B1–B6, C1–C3, D1–D2 concluídos. Ref.: [ONDA_4_TAREFAS_30_45_DIAS.md](docs/ONDA_4_TAREFAS_30_45_DIAS.md). **Próximo:** P1–P2 piloto (2–5 restaurantes; métricas) ou push/CI/testes.
 - [ ] **Refinamentos pós-Onda 3** — Itens ainda 🟡 em [CHECKLIST_FECHO_GAPS](docs/CHECKLIST_FECHO_GAPS.md) (ex.: revisão jurídica/DPO em GDPR_MAPPING, RETENTION_POLICY; C2). Ou: push, CI, testes.
 - [x] **Jest: excluir merchant-portal** — Em `jest.config.js`, o projeto `node` usa `roots` apenas em pastas com testes Jest; merchant-portal (Vitest) deixou de ser corrido pelo `npm test` na raiz. Resultado: 99 suítes (18 menos), 53 passam, 46 falham (falhas restantes em `tests/` — integração, mocks, tipos).
