@@ -94,3 +94,14 @@ Validar o critério global:
 - Vender algo: TPV operacional após Passos 1–4; primeiro produto pode vir do fluxo existente (ex. first-product) ou do menu quando existir.
 
 Ordem recomendada de implementação: 1 → 2 → 3 → 4. Validar após cada passo antes de avançar.
+
+---
+
+## Estado de implementação (FASE 1)
+
+- **Passo 1:** BootstrapPage com nome, tipo, país/moeda (presets timezone/currency/locale); RPC e fallback insert com tipo, country, timezone, currency, locale.
+- **Passo 2:** modulesConfigStorage (localStorage); ModuleGate em /op/tpv e /op/kds; ConfigModulesPage com checkboxes TPV ativo, KDS ativo.
+- **Passo 3:** paymentMethodsConfigStorage (localStorage); ConfigPaymentsPage com checkboxes Dinheiro, Cartão; nota impressão/ecrã futuro.
+- **Passo 4:** ShiftGate em /op/tpv: sem turno aberto mostra form "Abrir turno" (caixa inicial) e chama RPC open_cash_register_atomic; após abertura revalida e mostra TPV.
+
+Critério de conclusão da FASE 1: *"Consigo criar um restaurante, abrir o TPV e vender algo."* — Fluxo: Auth → Bootstrap (criar restaurante) → first-product (primeiro produto) → Config > Módulos (TPV ativo) → /op/tpv → ShiftGate (abrir turno com caixa inicial) → TPV → vender.
