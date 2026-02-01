@@ -79,4 +79,6 @@ Checklist executável por dev. Referência: `docs/ROADMAP_POS_FUNDACAO.md`.
 - **Passo 2:** InventoryStockMinimal — tab Ingredientes: botão "Novo ingrediente", form (nome, unidade: g/kg/ml/l/unit), insert em gm_ingredients. Custo: pendente (coluna no Core se existir).
 - **Passo 3:** InventoryStockMinimal — tab Receitas: carregamento de produtos (gm_products); botão "Nova receita", form (produto, ingrediente, qtd. por unidade), insert em gm_product_bom; listagem BOM com nome do produto e do ingrediente.
 - **Passo 4:** Já existente — tab Estoque com qty, min_qty e alerta "BAIXO" / "CRÍTICO".
-- **Passos 1 e 5:** Pendentes (produtos com categoria; efeito venda → estoque no Core/TPV).
+- **Passo 5 (alertar):** useEcraZeroState — além dos alertas do AlertEngine, consulta readStockLevels; se algum qty <= min_qty, Ecrã Zero passa a amarelo com motivo "Estoque baixo" (ou nome do ingrediente). Dono vê no Dashboard/Ecrã Zero.
+- **Passo 5 (venda → consumir estoque):** Responsabilidade do Core. O frontend chama create_order_atomic e process_order_payment; o Core deve ter (ou vir a ter) trigger/RPC que, ao concluir pedido, consome estoque conforme BOM (gm_product_bom). Documentar ou implementar no Core quando for prioridade.
+- **Passo 1:** Pendente (produtos com categoria explícita, se desejado).
