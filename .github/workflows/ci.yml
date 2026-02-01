@@ -24,17 +24,14 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Fail-fast (typecheck + build)
+        run: make simulate-failfast
+
       - name: Check Formatting
         run: npx prettier --check .
 
       - name: Lint
         run: npm run -w merchant-portal lint
-
-      - name: Type Check
-        run: npm run typecheck
-
-      - name: Build
-        run: npm run build
 
       - name: Run tests
         run: npm test -- --ci --testPathIgnorePatterns="e2e|playwright|massive|offline" --testTimeout=15000 --maxWorkers=2

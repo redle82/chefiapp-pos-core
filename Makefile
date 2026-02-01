@@ -1,19 +1,22 @@
-# ChefIApp POS Core — Root Makefile
-# Contract gate: run audit + contract-gate (no empty docs, no broken links, no unindexed docs).
+# ChefIApp POS Core — Makefile para CI e validação local
+# NEXT_STEPS: "Integrate fail-fast in CI/CD" — Run make simulate-failfast on each PR
 
-.PHONY: contract-gate supreme-e2e supreme-stations supreme-seed
+.PHONY: simulate-failfast typecheck build test sovereignty-gate
 
-contract-gate:
-	./scripts/audit-contracts-referenced.sh && ./scripts/contract-gate.sh
+# Fail-fast: typecheck + build (quick checks; CI runs rest after)
+simulate-failfast: typecheck build
+	@echo "[make] simulate-failfast OK"
 
-# Supreme E2E + Stress: Docker Core → seed → E2E → load → PASS/FAIL
-supreme-e2e:
-	bash ./scripts/supreme-e2e.sh
+typecheck:
+	npm run typecheck
 
-# Open visual stations (Command Center, TPV, KDS, Web Public)
-supreme-stations:
-	bash ./scripts/supreme-stations.sh
+build:
+	npm run build
 
-# Seed only (requires Docker Core up)
-supreme-seed:
-	DATABASE_URL=$${DATABASE_URL:-postgresql://postgres:postgres@localhost:54320/chefiapp_core} npx tsx scripts/supreme-seed.ts
+# Sovereignty gate (order creation via Core, not Supabase RPC)
+sovereignty-gate:
+	bash ./scripts/sovereignty-gate.sh
+
+# Full test run (CI uses npm test with args directly)
+test:
+	npm test -- --ci --testPathIgnorePatterns="e2e|playwright|massive|offline" --testTimeout=15000 --maxWorkers=2
