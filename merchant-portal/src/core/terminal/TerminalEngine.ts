@@ -11,6 +11,10 @@ export interface TerminalMetadata {
 
 export class TerminalEngine {
   private static STORAGE_KEY = "chefiapp_terminal_id";
+  /** Evita spam na consola quando o Core está em baixo (404). */
+  private static _loggedCoreUnavailable = false;
+  /** Após 404/indisponível, deixa de enviar heartbeats nesta sessão (evita Failed to load resource repetidos). */
+  private static _skipHeartbeatCoreUnavailable = false;
 
   /**
    * Obtém ou gera um ID único persistente para este terminal (browser/device)
@@ -33,6 +37,8 @@ export class TerminalEngine {
     name: string;
     metadata?: TerminalMetadata;
   }): Promise<void> {
+    if (TerminalEngine._skipHeartbeatCoreUnavailable) return;
+
     const id = this.getTerminalId();
     const { restaurantId, type, name, metadata = {} } = options;
 
@@ -57,7 +63,23 @@ export class TerminalEngine {
         .upsert(payload, { onConflict: "id" });
 
       if (error) {
-        console.warn("[TerminalEngine] Falha ao enviar heartbeat:", error);
+        const err = error as { message?: string; code?: string };
+        const msg = String(err?.message ?? "").toLowerCase();
+        const isCoreUnavailable =
+          msg.includes("not found") ||
+          msg.includes("backend indisponível") ||
+          err?.code === "BACKEND_UNAVAILABLE";
+        if (isCoreUnavailable) {
+          TerminalEngine._skipHeartbeatCoreUnavailable = true;
+          if (!TerminalEngine._loggedCoreUnavailable) {
+            TerminalEngine._loggedCoreUnavailable = true;
+            console.debug(
+              "[TerminalEngine] Core indisponível (gm_terminals); heartbeats pausados nesta sessão."
+            );
+          }
+        } else if (!isCoreUnavailable) {
+          console.warn("[TerminalEngine] Falha ao enviar heartbeat:", error);
+        }
       }
     } catch (err) {
       console.error("[TerminalEngine] Erro crítico no heartbeat:", err);

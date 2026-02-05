@@ -1,5 +1,4 @@
 
-import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -21,9 +20,7 @@ const __dirname = path.dirname(__filename);
 const envPath = path.resolve(process.cwd(), '.env');
 dotenv.config({ path: envPath });
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const { coreClient: supabase } = await import('../services/coreClient');
 
 async function verifyOfflineLogic() {
     console.log("🛡️ Starting Phase 45 Verification: Offline Sync Logic");

@@ -1,15 +1,17 @@
 /**
- * Core Billing API — Chamadas ao Core (Docker). NO SUPABASE.
+ * Core Billing API — Chamadas ao Core (Docker).
  *
  * Contrato: CORE_BILLING_AND_PAYMENTS_CONTRACT.md
  * Billing é soberania do Core. UI só consome esta API.
+ * Sem fallback Supabase: quando Core não está disponível, FlowGate usa a flag
+ * onboarding_just_completed (sessionStorage) para permitir TPV após skip no primeiro produto.
  */
 
 import { CONFIG } from "../../config";
 import { BackendType, getBackendType } from "../infra/backendAdapter";
 
-const DOCKER_CORE_URL = CONFIG.SUPABASE_URL;
-const CORE_ANON = CONFIG.SUPABASE_ANON_KEY;
+const DOCKER_CORE_URL = CONFIG.CORE_URL;
+const CORE_ANON = CONFIG.CORE_ANON_KEY;
 
 const REST = DOCKER_CORE_URL.endsWith("/rest")
   ? DOCKER_CORE_URL
@@ -27,7 +29,7 @@ function coreHeaders(): HeadersInit {
 function requireCore(): void {
   if (getBackendType() !== BackendType.docker) {
     throw new Error(
-      "[coreBillingApi] Billing requires Core (Docker). No Supabase. Configure backend to Docker or implement Core RPCs.",
+      "[coreBillingApi] Billing requires Core (Docker). Configure backend to Docker."
     );
   }
 }
@@ -37,47 +39,30 @@ function requireCore(): void {
 export type BillingStatus = "trial" | "active" | "past_due" | "canceled";
 
 /**
- * Obter billing_status do restaurante (SaaS). Fonte = Core quando backend Docker.
- * FINANCIAL_CORE_VIOLATION_AUDIT: quando não Docker, fallback Supabase (technical debt).
+ * Obter billing_status do restaurante (SaaS). Fonte = Core (Docker) only.
+ * CORE_FINANCIAL_SOVEREIGNTY_CONTRACT §4: Domain = Core (Docker) only.
  */
 export async function getBillingStatus(
-  restaurantId: string,
+  restaurantId: string
 ): Promise<BillingStatus | null> {
-  if (getBackendType() === BackendType.docker) {
-    const url = `${REST}/gm_restaurants?id=eq.${encodeURIComponent(
-      restaurantId,
-    )}&select=billing_status&limit=1`;
-    const res = await fetch(url, { method: "GET", headers: coreHeaders() });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
-    const status = row?.billing_status;
-    if (
-      status === "trial" ||
-      status === "active" ||
-      status === "past_due" ||
-      status === "canceled"
-    ) {
-      return status;
-    }
-    return null;
+  requireCore();
+  const url = `${REST}/gm_restaurants?id=eq.${encodeURIComponent(
+    restaurantId
+  )}&select=billing_status&limit=1`;
+  const res = await fetch(url, { method: "GET", headers: coreHeaders() });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
+  const status = row?.billing_status;
+  if (
+    status === "trial" ||
+    status === "active" ||
+    status === "past_due" ||
+    status === "canceled"
+  ) {
+    return status;
   }
-  // Technical debt: backend não Docker — ler de Supabase (não autoritativo; ver FINANCIAL_CORE_VIOLATION_AUDIT).
-  try {
-    const { supabase } = await import("../supabase");
-    const { data, error } = await supabase
-      .from("gm_restaurants")
-      .select("billing_status")
-      .eq("id", restaurantId)
-      .single();
-    if (error || !data?.billing_status) return null;
-    const s = data.billing_status as string;
-    if (s === "trial" || s === "active" || s === "past_due" || s === "canceled")
-      return s;
-    return null;
-  } catch {
-    return null;
-  }
+  return null;
 }
 
 /** Dados de status do restaurante (onboarding + billing). Fonte = Core quando Docker. */
@@ -89,19 +74,60 @@ export interface RestaurantStatusRow {
 
 /**
  * Obter onboarding_completed_at e billing_status do restaurante.
- * Fonte = Core quando backend Docker; fallback Supabase (technical debt).
- * FINANCIAL_CORE_VIOLATION_AUDIT: usado por FlowGate.
+ * Fonte = Core (Docker) only. cache: no-store para dados frescos.
+ * Fallback quando Core falha ou dados ainda não propagaram: FlowGate consome a flag
+ * onboarding_just_completed (core/storage/onboardingFlowFlag.ts) e trata como completed.
  */
 export async function getRestaurantStatus(
-  restaurantId: string,
+  restaurantId: string
 ): Promise<RestaurantStatusRow | null> {
-  if (getBackendType() === BackendType.docker) {
-    const url = `${REST}/gm_restaurants?id=eq.${encodeURIComponent(
-      restaurantId,
-    )}&select=id,onboarding_completed_at,billing_status&limit=1`;
-    const res = await fetch(url, { method: "GET", headers: coreHeaders() });
-    if (!res.ok) return null;
-    const data = await res.json();
+  requireCore();
+  // Pilot: restaurante criado por mock no bootstrap — devolver mock para não 404
+  if (typeof window !== "undefined") {
+    const pilotMock = localStorage.getItem("chefiapp_pilot_mock_restaurant");
+    if (pilotMock) {
+      try {
+        const row = JSON.parse(pilotMock) as {
+          id: string;
+          onboarding_completed_at: string | null;
+          billing_status: string;
+        };
+        if (row.id === restaurantId) {
+          const completedAt =
+            row.onboarding_completed_at ?? new Date().toISOString();
+          return {
+            id: row.id,
+            onboarding_completed_at: completedAt,
+            billing_status:
+              row.billing_status === "trial" ||
+              row.billing_status === "active" ||
+              row.billing_status === "past_due" ||
+              row.billing_status === "canceled"
+                ? row.billing_status
+                : "trial",
+          };
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+  const url = `${REST}/gm_restaurants?id=eq.${encodeURIComponent(
+    restaurantId
+  )}&select=id,onboarding_completed_at,billing_status&limit=1`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: coreHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  const text = await res.text();
+  const ct = res.headers.get("Content-Type")?.toLowerCase() ?? "";
+  if (text.trim() && !ct.includes("application/json")) {
+    return null;
+  }
+  try {
+    const data = text ? JSON.parse(text) : [];
     const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
     if (!row) return null;
     const status = row.billing_status;
@@ -114,23 +140,6 @@ export async function getRestaurantStatus(
       id: row.id,
       onboarding_completed_at: row.onboarding_completed_at ?? null,
       billing_status: validStatus ? status : null,
-    };
-  }
-  try {
-    const { supabase } = await import("../supabase");
-    const { data, error } = await supabase
-      .from("gm_restaurants")
-      .select("id, onboarding_completed_at, billing_status")
-      .eq("id", restaurantId)
-      .single();
-    if (error || !data) return null;
-    const s = data.billing_status as string | null;
-    const validStatus =
-      s === "trial" || s === "active" || s === "past_due" || s === "canceled";
-    return {
-      id: data.id,
-      onboarding_completed_at: data.onboarding_completed_at ?? null,
-      billing_status: validStatus ? s : null,
     };
   } catch {
     return null;
@@ -154,11 +163,11 @@ export interface BillingConfigRow {
  * Implementação: GET rest/v1/billing_configs?restaurant_id=eq.{id}
  */
 export async function getBillingConfig(
-  restaurantId: string,
+  restaurantId: string
 ): Promise<BillingConfigRow | null> {
   requireCore();
   const url = `${REST}/billing_configs?restaurant_id=eq.${encodeURIComponent(
-    restaurantId,
+    restaurantId
   )}&select=*&limit=1`;
   const res = await fetch(url, { method: "GET", headers: coreHeaders() });
   if (!res.ok) {
@@ -177,7 +186,7 @@ export async function setBillingConfig(
   restaurantId: string,
   config: Omit<BillingConfigRow, "restaurant_id" | "updated_at"> & {
     updated_at?: string;
-  },
+  }
 ): Promise<{ error: string | null }> {
   requireCore();
   const body = {
@@ -205,14 +214,13 @@ export async function setBillingConfig(
 
 /**
  * POST /core/billing/saas/portal — Criar sessão Stripe Customer Portal.
- * Implementação Core: RPC create_saas_portal_session(return_url) ou serviço que chama Stripe e devolve { url }.
+ * Core (Docker) only.
  */
 export async function createSaasPortalSession(returnUrl: string): Promise<{
   url: string;
   error?: string;
 }> {
   requireCore();
-  // PostgREST: POST /rest/v1/rpc/create_saas_portal_session
   const rpcUrl = `${REST}/rpc/create_saas_portal_session`;
   const res = await fetch(rpcUrl, {
     method: "POST",
@@ -240,12 +248,12 @@ export async function createSaasPortalSession(returnUrl: string): Promise<{
 
 /**
  * Criar sessão Stripe Checkout (assinatura).
- * Implementação Core: RPC create_checkout_session(price_id, success_url, cancel_url).
+ * Core (Docker) only.
  */
 export async function createCheckoutSession(
   priceId: string,
   successUrl: string,
-  cancelUrl: string,
+  cancelUrl: string
 ): Promise<{ url: string; sessionId?: string; error?: string }> {
   requireCore();
   const rpcUrl = `${REST}/rpc/create_checkout_session`;

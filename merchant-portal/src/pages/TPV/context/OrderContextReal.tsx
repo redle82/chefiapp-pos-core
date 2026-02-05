@@ -28,6 +28,7 @@ import {
 import { PaymentEngine } from "../../../core/tpv/PaymentEngine";
 // DOCKER CORE: Usar dockerCoreClient em vez de supabase genérico
 import { dockerCoreClient } from "../../../core-boundary/docker-core/connection";
+import { updateOrderStatus as coreUpdateOrderStatus } from "../../../core/infra/CoreOrdersApi";
 import {
   tpvEventBus,
   type DecisionMadePayload,
@@ -37,6 +38,11 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import type { Order, OrderItem } from "../../../core/contracts";
 import { classifyFailure } from "../../../core/errors/FailureClassifier";
+import {
+  MSG_CASH_REGISTER_CLOSED_CREATE,
+  MSG_CASH_REGISTER_CLOSED_PAY,
+  MSG_CASH_UNKNOWN_OFFLINE,
+} from "../../../core/guards/GuardMessages";
 import { Logger } from "../../../core/logger"; // Opus 6.0 Logger
 import { ReconnectManager } from "../../../core/realtime/ReconnectManager";
 import {
@@ -44,6 +50,7 @@ import {
   removeTabIsolated,
   setTabIsolated,
 } from "../../../core/storage/TabIsolatedStorage";
+import { eventTaskGenerator } from "../../../core/tasks/EventTaskGenerator";
 import { useOfflineOrder } from "./OfflineOrderContext";
 import { OrderContext } from "./OrderContextToken"; // FASE 3.4: Token isolado
 // DOCKER CORE: Removida dependência do Kernel - acesso direto ao Core
@@ -83,7 +90,7 @@ function mapRealOrderToLocalOrder(realOrder: RealOrder): Order {
 // Mapear status considerando payment_status (fonte soberana)
 function mapStatusToLocal(
   status: string,
-  paymentStatus?: string,
+  paymentStatus?: string
 ): Order["status"] {
   // PRIORIDADE 1: Se payment_status = 'PAID', order está pago
   if (paymentStatus === "PAID") {
@@ -155,7 +162,7 @@ export function OrderProvider({
   }, []);
   // SOVEREIGN: restaurantId comes from Gate layer (TenantContext -> AppDomainWrapper)
   const [restaurantId, setRestaurantId] = useState<string | null>(
-    propRestaurantId || null,
+    propRestaurantId || null
   );
   const [operatorId, setOperatorId] = useState<string | null>(null);
   const [cashRegisterId, setCashRegisterId] = useState<string | null>(null);
@@ -188,6 +195,13 @@ export function OrderProvider({
 
   // SAFETY: Chaves de idempotência persistentes por sessão
   const idempotencyKeys = useRef<Map<string, string>>(new Map());
+
+  // FASE 1 — Fluxo de Pedido Operacional: pedidos confirmados são imutáveis (sem add/remove item).
+  // Ver docs/contracts/FLUXO_DE_PEDIDO_OPERACIONAL.md
+  const confirmedOrderIdsRef = useRef<Set<string>>(new Set());
+  const isOrderConfirmed = useCallback((orderId: string) => {
+    return confirmedOrderIdsRef.current.has(orderId);
+  }, []);
 
   // === KDS HARDENING: Refetch Strategy (Debounce + Polling) ===
   const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -223,7 +237,7 @@ export function OrderProvider({
   // Core Fetch Logic
   const getActiveOrdersInternal = async (
     restId: string,
-    isBackground = false,
+    isBackground = false
   ) => {
     // Only show loading on explicit big actions, not on background syncs
     if (!isBackground) {
@@ -283,7 +297,7 @@ export function OrderProvider({
           fetchDebounceRef.current = setTimeout(() => {
             getActiveOrders(true); // Background fetch
           }, 500);
-        },
+        }
       )
       .subscribe((status) => {
         setRealtimeStatus(status);
@@ -376,14 +390,14 @@ export function OrderProvider({
         Logger.info(
           "caught_order_exception",
           { payload: event.payload },
-          { context: "OrderContext" },
+          { context: "OrderContext" }
         );
         setPendingExceptions((prev) => {
           // Check if already exists by eventId or orderId+type
           if (prev.some((e) => e.eventId === event.id)) return prev;
           return [...prev, { ...event.payload, eventId: event.id }];
         });
-      },
+      }
     );
 
     // Listen for decisions to clear exceptions
@@ -393,16 +407,16 @@ export function OrderProvider({
         Logger.info(
           "caught_decision_made",
           { payload: event.payload },
-          { context: "OrderContext" },
+          { context: "OrderContext" }
         );
         setPendingExceptions((prev) =>
           prev.filter(
             (e) =>
               // Remove exception if it matches the decision's orderId
-              e.orderId !== event.payload.orderId,
-          ),
+              e.orderId !== event.payload.orderId
+          )
         );
-      },
+      }
     );
 
     return () => {
@@ -434,7 +448,7 @@ export function OrderProvider({
             context: "OrderContext",
             tenantId: restaurantId,
             status: realtimeStatus,
-          },
+          }
         );
 
         reconnectTimeoutRef.current = setTimeout(() => {
@@ -455,7 +469,7 @@ export function OrderProvider({
           {
             context: "OrderContext",
             tenantId: restaurantId,
-          },
+          }
         );
       }
     }
@@ -468,7 +482,9 @@ export function OrderProvider({
     };
   }, [realtimeStatus, restaurantId, setupRealtimeSubscription]);
 
-  // Criar pedido
+  // -------------------------------------------------------------------------
+  // FLOW: Nascimento do pedido (TPV → Core). Autoridade: create_order_atomic.
+  // -------------------------------------------------------------------------
   const createOrder = async (orderInput: Partial<Order>): Promise<Order> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
 
@@ -483,7 +499,7 @@ export function OrderProvider({
       let cashRegisterId: string | undefined;
       try {
         const openRegister = await CashRegisterEngine.getOpenCashRegister(
-          restaurantId,
+          restaurantId
         );
         cashRegisterId = openRegister?.id;
       } catch (e) {
@@ -518,7 +534,7 @@ export function OrderProvider({
       // 4. Optimistic UI Update
       const totalCents = (orderInput.items || []).reduce(
         (sum, i) => sum + i.price * i.quantity,
-        0,
+        0
       );
       const localOrder: Order = {
         id: localId,
@@ -557,12 +573,10 @@ export function OrderProvider({
     // Verificar caixa aberto (gatekeeper)
     if (!cashRegisterId) {
       const openRegister = await CashRegisterEngine.getOpenCashRegister(
-        restaurantId,
+        restaurantId
       );
       if (!openRegister) {
-        throw new Error(
-          "CASH_REGISTER_CLOSED: Abra o caixa antes de criar vendas.",
-        );
+        throw new Error(MSG_CASH_REGISTER_CLOSED_CREATE);
       }
       setCashRegisterId(openRegister.id);
     }
@@ -572,7 +586,7 @@ export function OrderProvider({
       try {
         const existingOrder = await OrderEngine.getActiveOrderByTable(
           restaurantId,
-          orderInput.tableId,
+          orderInput.tableId
         );
         if (existingOrder) {
           const localOrder = mapRealOrderToLocalOrder(existingOrder);
@@ -592,7 +606,9 @@ export function OrderProvider({
       throw new Error("Restaurante não selecionado");
     }
 
-    // DOCKER CORE: Criar pedido diretamente via RPC create_order_atomic
+    // FLOW: Única escrita de criação — RPC create_order_atomic (Core soberano).
+    // FASE 1: Na Fase 1, gm_orders.status = 'OPEN' é tratado como equivalente a CONFIRMED do contrato.
+    // Ver docs/contracts/FLUXO_DE_PEDIDO_OPERACIONAL.md
     // Incluir autoria em cada item para divisão de conta
     const rpcItems = (orderInput.items || []).map((item: any) => ({
       product_id: item.productId,
@@ -633,7 +649,7 @@ export function OrderProvider({
       if (error && error.code) {
         // Preserve constraint error codes (e.g., 23505 for idx_one_open_order_per_table)
         const dbError = new Error(
-          error.message || `RPC_EXECUTION_FAILED: ${createError.message}`,
+          error.message || `RPC_EXECUTION_FAILED: ${createError.message}`
         );
         (dbError as any).code = error.code;
         (dbError as any).constraint = error.constraint;
@@ -652,8 +668,24 @@ export function OrderProvider({
 
     const localOrder = mapRealOrderToLocalOrder(realOrder);
 
+    // Cada pedido que aparece é uma tarefa (CONTRATO_DE_ATIVIDADE_OPERACIONAL)
+    const realOrderAny = realOrder as { number?: number; short_id?: string };
+    eventTaskGenerator
+      .generateFromEvent(restaurantId, "order_created", {
+        orderId: localOrder.id,
+        orderNumber:
+          realOrderAny.number ?? realOrderAny.short_id ?? localOrder.id,
+        tableNumber: localOrder.tableNumber ?? orderInput.tableNumber ?? null,
+      })
+      .catch((err) =>
+        console.warn("[OrderContextReal] Tarefa por pedido não criada:", err)
+      );
+
     // HARD RULE 4: Persistir pedido ativo (Tab-Isolated)
     setTabIsolated("chefiapp_active_order_id", localOrder.id);
+
+    // FASE 1: Marcar como confirmado — imutável (sem add/remove item). Ver FLUXO_DE_PEDIDO_OPERACIONAL.md
+    confirmedOrderIdsRef.current.add(localOrder.id);
 
     await getActiveOrders(); // Refresh
     return localOrder;
@@ -662,9 +694,11 @@ export function OrderProvider({
   // Adicionar item
   const addItemToOrder = async (
     orderId: string,
-    item: OrderItemInput,
+    item: OrderItemInput
   ): Promise<void> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
+    // FASE 1: Pedido confirmado é imutável. Ver FLUXO_DE_PEDIDO_OPERACIONAL.md
+    if (confirmedOrderIdsRef.current.has(orderId)) return;
 
     if (isOffline) {
       // ... (keep offline logic)
@@ -690,7 +724,7 @@ export function OrderProvider({
             const updatedItems = [...order.items, newItem];
             const newTotal = updatedItems.reduce(
               (sum, i) => sum + i.price * i.quantity,
-              0,
+              0
             );
             return {
               ...order,
@@ -700,7 +734,7 @@ export function OrderProvider({
             };
           }
           return order;
-        }),
+        })
       );
       return;
     }
@@ -743,9 +777,11 @@ export function OrderProvider({
   // Remover item
   const removeItemFromOrder = async (
     orderId: string,
-    itemId: string,
+    itemId: string
   ): Promise<void> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
+    // FASE 1: Pedido confirmado é imutável. Ver FLUXO_DE_PEDIDO_OPERACIONAL.md
+    if (confirmedOrderIdsRef.current.has(orderId)) return;
 
     if (isOffline) {
       // ... (keep offline logic)
@@ -762,7 +798,7 @@ export function OrderProvider({
             const updatedItems = order.items.filter((i) => i.id !== itemId);
             const newTotal = updatedItems.reduce(
               (sum, i) => sum + i.price * i.quantity,
-              0,
+              0
             );
             return {
               ...order,
@@ -772,7 +808,7 @@ export function OrderProvider({
             };
           }
           return order;
-        }),
+        })
       );
       return;
     }
@@ -814,9 +850,11 @@ export function OrderProvider({
   const updateItemQuantity = async (
     orderId: string,
     itemId: string,
-    quantity: number,
+    quantity: number
   ): Promise<void> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
+    // FASE 1: Pedido confirmado é imutável. Ver FLUXO_DE_PEDIDO_OPERACIONAL.md
+    if (confirmedOrderIdsRef.current.has(orderId)) return;
 
     if (isOffline) {
       // ... (keep offline logic)
@@ -841,7 +879,7 @@ export function OrderProvider({
             });
             const newTotal = updatedItems.reduce(
               (sum, i) => sum + i.price * i.quantity,
-              0,
+              0
             );
             return {
               ...order,
@@ -851,7 +889,7 @@ export function OrderProvider({
             };
           }
           return order;
-        }),
+        })
       );
       return;
     }
@@ -905,7 +943,7 @@ export function OrderProvider({
   // Sprint 12: Attach Customer
   const attachCustomer = async (
     orderId: string,
-    customerId: string,
+    customerId: string
   ): Promise<void> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
 
@@ -922,7 +960,7 @@ export function OrderProvider({
   // Cancelar Pedido
   const cancelOrder = async (
     orderId: string,
-    reason: string,
+    reason: string
   ): Promise<void> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
 
@@ -941,11 +979,14 @@ export function OrderProvider({
     await getActiveOrders();
   };
 
-  // Ações do pedido
+  // -------------------------------------------------------------------------
+  // FLOW: Transições de estado (prepare → IN_PREP, ready → READY, serve → CLOSED, pay → PaymentEngine).
+  // Autoridade: Core (gm_orders / PaymentEngine). TPV e KDS são clientes.
+  // -------------------------------------------------------------------------
   const performOrderAction = async (
     orderId: string,
     action: string,
-    payload?: any,
+    payload?: any
   ): Promise<void> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
 
@@ -953,33 +994,36 @@ export function OrderProvider({
       switch (action) {
         case "send":
         case "prepare":
-          // DOCKER CORE: Atualizar diretamente via PostgREST, sem Kernel
-          const { error: updateError } = await dockerCoreClient
-            .from("gm_orders")
-            .update({ status: "IN_PREP", updated_at: new Date().toISOString() })
-            .eq("id", orderId);
-
-          if (updateError) throw updateError;
+          // FLOW: "Enviado à cozinha" — pedido passa a IN_PREP. FASE 1: única via RPC (auditável). Autoridade canónica para IN_PREP/READY é KDS; TPV pode chamar por compatibilidade.
+          const { error: updateError } = await coreUpdateOrderStatus({
+            order_id: orderId,
+            restaurant_id: restaurantId,
+            new_status: "IN_PREP",
+            origin: "TPV",
+          });
+          if (updateError) throw new Error(updateError.message);
           break;
 
         case "ready":
-          // DOCKER CORE: Atualizar diretamente via PostgREST, sem Kernel
-          const { error: readyError } = await dockerCoreClient
-            .from("gm_orders")
-            .update({ status: "READY", updated_at: new Date().toISOString() })
-            .eq("id", orderId);
-
-          if (readyError) throw readyError;
+          // FLOW: Pedido pronto para servir — status READY. FASE 1: única via RPC (auditável).
+          const { error: readyErr } = await coreUpdateOrderStatus({
+            order_id: orderId,
+            restaurant_id: restaurantId,
+            new_status: "READY",
+            origin: "TPV",
+          });
+          if (readyErr) throw new Error(readyErr.message);
           break;
 
         case "serve":
-          // DOCKER CORE: Atualizar diretamente via PostgREST, sem Kernel
-          const { error: serveError } = await dockerCoreClient
-            .from("gm_orders")
-            .update({ status: "CLOSED", updated_at: new Date().toISOString() })
-            .eq("id", orderId);
-
-          if (serveError) throw serveError;
+          // FLOW: Pedido servido — status CLOSED. FASE 1: única via RPC (auditável).
+          const { error: serveErr } = await coreUpdateOrderStatus({
+            order_id: orderId,
+            restaurant_id: restaurantId,
+            new_status: "CLOSED",
+            origin: "TPV",
+          });
+          if (serveErr) throw new Error(serveErr.message);
           break;
 
         case "pay":
@@ -993,9 +1037,7 @@ export function OrderProvider({
             // Use local state for register
             const offlineRegisterId = cashRegisterId;
             if (!offlineRegisterId) {
-              throw new Error(
-                "CASH_REGISTER_CLOSED: Caixa desconhecido (offline). Certifique-se que o caixa estava aberto antes de cair a rede.",
-              );
+              throw new Error(MSG_CASH_UNKNOWN_OFFLINE);
             }
 
             // Get order total from local state
@@ -1028,7 +1070,7 @@ export function OrderProvider({
                   return o;
                 }
                 return o;
-              }),
+              })
             );
 
             // Remove from active tab if paid fully
@@ -1052,7 +1094,7 @@ export function OrderProvider({
 
           if (itemsError) {
             throw new Error(
-              `Failed to fetch order items: ${itemsError.message} `,
+              `Failed to fetch order items: ${itemsError.message} `
             );
           }
 
@@ -1062,7 +1104,7 @@ export function OrderProvider({
 
           const calculatedTotal = items.reduce(
             (sum, i) => sum + i.price_snapshot * i.quantity,
-            0,
+            0
           );
 
           // 3. Validar que total do DB = total calculado (proteção contra tampering)
@@ -1074,7 +1116,7 @@ export function OrderProvider({
               orderId,
             });
             throw new Error(
-              "Total mismatch - possible tampering detected. Please refresh and try again.",
+              "Total mismatch - possible tampering detected. Please refresh and try again."
             );
           }
 
@@ -1089,12 +1131,10 @@ export function OrderProvider({
           if (!cashRegisterId) {
             // Double check DB
             const openRegister = await CashRegisterEngine.getOpenCashRegister(
-              restaurantId,
+              restaurantId
             );
             if (!openRegister) {
-              throw new Error(
-                "CASH_REGISTER_CLOSED: Abra o caixa antes de receber pagamentos.",
-              );
+              throw new Error(MSG_CASH_REGISTER_CLOSED_PAY);
             }
             setCashRegisterId(openRegister.id);
             // Use fetched ID for this transaction to avoid state lag
@@ -1104,9 +1144,7 @@ export function OrderProvider({
             (await CashRegisterEngine.getOpenCashRegister(restaurantId))?.id;
 
           if (!activeRegisterId) {
-            throw new Error(
-              "CASH_REGISTER_CLOSED: Abra o caixa antes de receber pagamentos.",
-            );
+            throw new Error(MSG_CASH_REGISTER_CLOSED_PAY);
           }
 
           // 4. Processar pagamento (transação atômica: paga + fecha)
@@ -1120,7 +1158,7 @@ export function OrderProvider({
           // Validar que amount não excede o total
           if (amountCents > dbOrder.totalCents) {
             throw new Error(
-              `Valor de pagamento(${amountCents}) excede o total do pedido(${dbOrder.totalCents})`,
+              `Valor de pagamento(${amountCents}) excede o total do pedido(${dbOrder.totalCents})`
             );
           }
 
@@ -1134,12 +1172,12 @@ export function OrderProvider({
           if (method === "loyalty") {
             const orderForCheck = await OrderEngine.getOrder(
               orderId,
-              restaurantId,
+              restaurantId
             );
             const customerId = (orderForCheck as any).customer_id;
             if (!customerId)
               throw new Error(
-                "Cliente precisa ser identificado para pagar com pontos.",
+                "Cliente precisa ser identificado para pagar com pontos."
               );
 
             const { data: customerCheck } = await dockerCoreClient
@@ -1158,7 +1196,7 @@ export function OrderProvider({
               throw new Error(
                 `Saldo insuficiente. Necessário: ${pointsNeeded} pts. Disponível: ${
                   customerCheck.points_balance || 0
-                } pts.`,
+                } pts.`
               );
             }
           }
@@ -1181,7 +1219,7 @@ export function OrderProvider({
 
           if (!payResult || !payResult.success) {
             throw new Error(
-              `PAYMENT_FAILED: ${payResult?.error || "Erro desconhecido"}`,
+              `PAYMENT_FAILED: ${payResult?.error || "Erro desconhecido"}`
             );
           }
 
@@ -1192,7 +1230,7 @@ export function OrderProvider({
           try {
             const orderForCRM = await OrderEngine.getOrder(
               orderId,
-              restaurantId,
+              restaurantId
             );
             if (orderForCRM && (orderForCRM as any).customer_id) {
               const customerId = (orderForCRM as any).customer_id;
@@ -1278,7 +1316,7 @@ export function OrderProvider({
             await InventoryEngine.processOrder(paidOrder);
 
             const totalCost = await InventoryEngine.calculateOrderCost(
-              paidOrder,
+              paidOrder
             );
             const grossMargin = paidOrder.totalCents - totalCost;
 
@@ -1310,7 +1348,7 @@ export function OrderProvider({
           const orderToClose = await OrderEngine.getOrderById(orderId);
           if (orderToClose.paymentStatus !== "PAID") {
             throw new Error(
-              'Pedido deve ser pago antes de fechar. Use "Cobrar" primeiro.',
+              'Pedido deve ser pago antes de fechar. Use "Cobrar" primeiro.'
             );
           }
           // Se já está pago, apenas atualizar status (redundante, mas seguro)
@@ -1331,7 +1369,7 @@ export function OrderProvider({
 
           // Limpar pedido ativo se cancelado
           const currentActiveCancel = getTabIsolated(
-            "chefiapp_active_order_id",
+            "chefiapp_active_order_id"
           );
           if (currentActiveCancel === orderId) {
             removeTabIsolated("chefiapp_active_order_id");
@@ -1359,7 +1397,7 @@ export function OrderProvider({
 
   // Abrir caixa
   const openCashRegister = async (
-    openingBalanceCents: number,
+    openingBalanceCents: number
   ): Promise<void> => {
     // DOCKER CORE: Não usa auth, então operatorId pode ser null
     // Para desenvolvimento, podemos usar um ID fixo ou null
@@ -1393,7 +1431,7 @@ export function OrderProvider({
         if (openError.message.includes("CASH_REGISTER_ALREADY_OPEN")) {
           // Se já está aberto, recuperar o ID
           const existing = await CashRegisterEngine.getOpenCashRegister(
-            restaurantId,
+            restaurantId
           );
           if (existing) {
             setCashRegisterId(existing.id);
@@ -1411,7 +1449,7 @@ export function OrderProvider({
 
       // Verificar que o registro foi criado corretamente
       const verifyRegister = await CashRegisterEngine.getOpenCashRegister(
-        restaurantId,
+        restaurantId
       );
       if (!verifyRegister) {
         throw new Error("Failed to verify cash register after opening");
@@ -1427,7 +1465,7 @@ export function OrderProvider({
           tenantId: restaurantId,
         });
         const existing = await CashRegisterEngine.getOpenCashRegister(
-          restaurantId,
+          restaurantId
         );
         if (existing) {
           setCashRegisterId(existing.id);
@@ -1443,7 +1481,7 @@ export function OrderProvider({
 
   // Fechar caixa
   const closeCashRegister = async (
-    closingBalanceCents: number,
+    closingBalanceCents: number
   ): Promise<void> => {
     if (!restaurantId || !operatorId || !cashRegisterId) {
       const err = new Error("Missing required IDs");
@@ -1509,7 +1547,7 @@ export function OrderProvider({
         addOrder: (order: Order) => setOrders((prev) => [...prev, order]),
         updateOrderStatus: (orderId: string, status: Order["status"]) =>
           setOrders((prev) =>
-            prev.map((o) => (o.id === orderId ? { ...o, status } : o)),
+            prev.map((o) => (o.id === orderId ? { ...o, status } : o))
           ),
         resetOrders: () => setOrders([]),
         addItemToOrder,
@@ -1525,6 +1563,7 @@ export function OrderProvider({
         getOpenCashRegister,
         getDailyTotal,
         cashRegisterId,
+        isOrderConfirmed,
       }}
     >
       {children}

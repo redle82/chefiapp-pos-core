@@ -4,9 +4,11 @@
  * Monitora métricas de performance do sistema.
  */
 
+import { BackendType, getBackendType } from "../infra/backendAdapter";
+import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
 import { isDevStableMode } from "../runtime/devStableMode";
 import { getTabIsolated } from "../storage/TabIsolatedStorage";
-import { supabase } from "../supabase";
+// ANTI-SUPABASE §4: app_logs telemetry ONLY via Core. Skip flush when not Docker.
 
 export interface PerformanceMetric {
   name: string;
@@ -161,17 +163,24 @@ class PerformanceMonitor {
       const minuteBucket = new Date().toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
       const idempotencyKey = `perf:${restaurantId || "none"}:${minuteBucket}`;
 
-      const { error } = await supabase.from("app_logs").upsert(
-        {
-          level: "info",
-          message: "Performance Heartbeat",
-          details: payload,
-          restaurant_id: restaurantId,
-          created_at: new Date().toISOString(),
-          idempotency_key: idempotencyKey,
-        } as any,
-        { onConflict: "idempotency_key", ignoreDuplicates: true } as any,
-      );
+      if (getBackendType() !== BackendType.docker) return;
+
+      const core = getDockerCoreFetchClient();
+      const result = await core
+        .from("app_logs")
+        .upsert(
+          {
+            level: "info",
+            message: "Performance Heartbeat",
+            details: payload,
+            restaurant_id: restaurantId,
+            created_at: new Date().toISOString(),
+            idempotency_key: idempotencyKey,
+          } as any,
+          { onConflict: "idempotency_key" }
+        )
+        .then((r) => r);
+      const error = result.error;
 
       if (error) {
         // If idempotency_key doesn't exist / schema mismatch, DISABLE remote flush to stop interval spam.

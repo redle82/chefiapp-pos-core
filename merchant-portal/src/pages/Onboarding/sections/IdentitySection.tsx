@@ -5,16 +5,16 @@
  */
 
 import React, { useEffect, useRef } from "react";
-import { useOnboarding } from "../../../context/OnboardingContext";
+import { useOnboardingOptional } from "../../../context/OnboardingContext";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { dockerCoreClient } from "../../../core-boundary/docker-core/connection";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
+import { useCoreAuth } from "../../../core/auth/useCoreAuth";
 import {
   BackendType,
   getBackendType,
-  isDockerBackend,
 } from "../../../core/infra/backendAdapter";
-import { supabase } from "../../../core/supabase";
+// Domain writes ONLY via Core. No Supabase.
 
 // Presets oficiais por país para reduzir atrito no onboarding.
 // País virou a fonte de verdade; timezone/moeda/idioma vêm daqui
@@ -43,25 +43,78 @@ const COUNTRY_PRESETS = {
 } as const;
 
 export function IdentitySection() {
-  const { state, updateSectionStatus, updateIdentityForm } = useOnboarding();
+  const onboarding = useOnboardingOptional();
   const { identity } = useRestaurantIdentity();
   const { runtime, updateSetupStatus } = useRestaurantRuntime();
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { user: authUser } = useCoreAuth();
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastIsValidRef = useRef<boolean | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
 
-  // Alias para reduzir ruído abaixo
-  const formData = state.identityForm;
+  // Standalone Mode: use local state if onboarding context is missing
+  const [localForm, setLocalForm] = React.useState({
+    name: "",
+    type: "RESTAURANT" as
+      | "RESTAURANT"
+      | "BAR"
+      | "HOTEL"
+      | "BEACH_CLUB"
+      | "CAFE"
+      | "OTHER",
+    country: "",
+    timezone: "",
+    currency: "BRL",
+    locale: "pt-BR",
+  });
+
+  const formData = onboarding ? onboarding.state.identityForm : localForm;
+
+  // Standalone Mode: Load existing data from DB
+  useEffect(() => {
+    if (onboarding || !runtime.restaurant_id) return;
+
+    // Load from DB
+    import("../../../core-boundary/readers/RuntimeReader").then(
+      ({ fetchRestaurant }) => {
+        fetchRestaurant(runtime.restaurant_id!).then((row) => {
+          if (row) {
+            setLocalForm({
+              name: row.name || "",
+              type: (row.type as any) || "RESTAURANT",
+              country: row.country || "",
+              timezone: row.timezone || "",
+              currency: row.currency || "BRL",
+              locale: row.locale || "pt-BR",
+            });
+          }
+        });
+      }
+    );
+  }, [onboarding, runtime.restaurant_id]);
+
+  const updateIdentityForm = (patch: Partial<typeof formData>) => {
+    if (onboarding) {
+      onboarding.updateIdentityForm(patch);
+    } else {
+      setLocalForm((prev) => ({ ...prev, ...patch }));
+    }
+  };
+
+  const updateSectionStatus = (section: string, status: string) => {
+    if (onboarding) {
+      onboarding.updateSectionStatus(section as any, status as any);
+    }
+  };
 
   // Salvar no banco quando dados mudarem (com debounce)
   useEffect(() => {
     const isValid =
       formData.name.length >= 3 &&
-      formData.type &&
-      formData.country &&
-      formData.timezone &&
-      formData.currency &&
-      formData.locale;
+      !!formData.type &&
+      !!formData.country &&
+      !!formData.timezone &&
+      !!formData.currency &&
+      !!formData.locale;
 
     const status = isValid
       ? "COMPLETE"
@@ -70,9 +123,11 @@ export function IdentitySection() {
       : "NOT_STARTED";
 
     // Só atualiza o status se realmente mudou, para evitar loop de renders/saves
-    const currentStatus = state.sections.identity.status;
-    if (currentStatus !== status) {
-      updateSectionStatus("identity", status);
+    if (onboarding) {
+      const currentStatus = onboarding.state.sections.identity.status;
+      if (currentStatus !== status) {
+        updateSectionStatus("identity", status);
+      }
     }
 
     // Atualizar RestaurantRuntimeContext (persistência real) apenas quando o isValid mudar
@@ -81,7 +136,7 @@ export function IdentitySection() {
       updateSetupStatus("identity", isValid).catch((error) => {
         console.error(
           "[IdentitySection] Erro ao atualizar setup_status:",
-          error,
+          error
         );
       });
     }
@@ -117,7 +172,7 @@ export function IdentitySection() {
           name: formData.name,
           type: formData.type,
           country: formData.country,
-        },
+        }
       );
 
       // Criar restaurante automaticamente (com debounce para evitar múltiplas tentativas)
@@ -129,51 +184,17 @@ export function IdentitySection() {
         try {
           console.log("[IdentitySection] Verificando autenticação...");
 
-          // Tentar obter usuário autenticado
-          let user = null;
-          let userId: string | null = null;
-
-          try {
-            const {
-              data: { user: authUser },
-              error: authError,
-            } = await supabase.auth.getUser();
-            if (!authError && authUser) {
-              user = authUser;
-              userId = authUser.id;
-              console.log("[IdentitySection] Usuário autenticado:", userId);
-            }
-          } catch (authErr: any) {
-            console.warn(
-              "[IdentitySection] Erro ao verificar autenticação (pode ser modo demo):",
-              authErr.message,
+          // ANTI-SUPABASE §4: Identity/restaurant write ONLY via Core. Fail explicit if not Docker.
+          if (getBackendType() !== BackendType.docker) {
+            alert(
+              "Core indisponível. Configure o Docker Core para criar o restaurante."
             );
+            window.location.href = "/bootstrap";
+            return;
           }
 
-          // Se não estiver autenticado, verificar se é Docker Core
-          // Docker Core não tem RLS/autenticação, então podemos criar sem JWT
-          if (!userId) {
-            const isDockerCore = isDockerBackend();
-
-            if (isDockerCore) {
-              // Docker Core: usar owner_id mock (não precisa de autenticação)
-              // O owner_id pode ser NULL ou um UUID mock
-              console.log(
-                "[IdentitySection] Docker Core detectado. Criando restaurante sem autenticação (owner_id será NULL)...",
-              );
-              userId = null; // Docker Core permite owner_id NULL
-            } else {
-              // Supabase Cloud: precisa de autenticação
-              console.warn(
-                "[IdentitySection] Usuário não autenticado. Não é possível criar restaurante.",
-              );
-              alert(
-                "Você precisa estar autenticado para criar um restaurante. Faça login primeiro ou acesse /bootstrap.",
-              );
-              window.location.href = "/bootstrap";
-              return;
-            }
-          }
+          // Auth optional. Core: owner_id pode ser null.
+          const userId: string | null = authUser?.id ?? null;
 
           // Gerar slug único
           const timestamp = Date.now().toString(36).slice(-6).toLowerCase();
@@ -206,24 +227,26 @@ export function IdentitySection() {
 
           console.log(
             "[IdentitySection] Dados do restaurante:",
-            restaurantData,
+            restaurantData
           );
 
-          const { data: newRestaurant, error: createError } = await supabase
-            .from("gm_restaurants")
-            .insert(restaurantData)
-            .select()
-            .single();
+          // Domain write ONLY via Core
+          const { data: newRestaurant, error: createError } =
+            await dockerCoreClient
+              .from("gm_restaurants")
+              .insert(restaurantData)
+              .select()
+              .single();
 
           if (createError) {
             console.error(
               "[IdentitySection] Erro ao criar restaurante:",
-              createError,
+              createError
             );
             alert(
               `Erro ao criar restaurante: ${
                 createError.message
-              }\n\nDetalhes: ${JSON.stringify(createError, null, 2)}`,
+              }\n\nDetalhes: ${JSON.stringify(createError, null, 2)}`
             );
             return;
           }
@@ -236,7 +259,7 @@ export function IdentitySection() {
             }
             console.log(
               "[IdentitySection] ✅ Restaurante criado:",
-              newRestaurantId,
+              newRestaurantId
             );
 
             // Atualizar RestaurantRuntimeContext (vai recarregar estado)
@@ -262,15 +285,18 @@ export function IdentitySection() {
       saveTimeoutRef.current = setTimeout(async () => {
         setIsSaving(true);
         try {
-          const isDocker = getBackendType() === BackendType.docker;
-          const client = isDocker ? dockerCoreClient : supabase;
-          console.log("[IdentitySection] Salvando no banco...", {
+          // Identity write ONLY via Core. Fail explicit if not Docker.
+          if (getBackendType() !== BackendType.docker) {
+            throw new Error(
+              "Core indisponível. Configure o Docker Core para salvar a identidade."
+            );
+          }
+          console.log("[IdentitySection] Salvando no banco (Core)...", {
             restaurantId,
             formData,
-            backend: isDocker ? "docker" : "supabase",
           });
 
-          const { error } = await client
+          const { error } = await dockerCoreClient
             .from("gm_restaurants")
             .update({
               name: formData.name,
@@ -286,11 +312,18 @@ export function IdentitySection() {
           if (error) {
             console.error(
               "[IdentitySection] Erro ao salvar identidade:",
-              error,
+              error
             );
             alert(`Erro ao salvar: ${error.message}`);
           } else {
             console.log("[IdentitySection] ✅ Identidade salva no banco");
+            // Persistir setup_status.identity no banco para não voltar ao nome ao recarregar
+            updateSetupStatus("identity", true).catch((err) => {
+              console.warn(
+                "[IdentitySection] Erro ao persistir setup_status:",
+                err
+              );
+            });
           }
         } catch (error: any) {
           console.error("[IdentitySection] Erro ao salvar identidade:", error);
@@ -301,21 +334,28 @@ export function IdentitySection() {
       }, 1500);
     } else if (isValid && !restaurantId) {
       console.warn(
-        "[IdentitySection] Dados válidos mas sem restaurantId. Aguardando...",
+        "[IdentitySection] Dados válidos mas sem restaurantId. Aguardando..."
       );
     }
 
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
+    // NOTE: The previous block was huge. I need to be careful not to delete the internal logic of the useEffect.
+    // The previous tool call was "replace lines 45-320".
+    // I need to make sure I include the HUGE useEffect content or I will lose it.
+    // Or I can use multi_replace to target specific snippets?
+    // No, multi_replace is for non-contiguous.
+    // I will rewrite the component start (hooks) and the update functions, but keep the useEffect body intact by including it in the replacement or splitting the edit.
+
+    // Actually, simply rewriting the hook calls and variable setups is safer.
+    // I will edit lines 8 (import) and 45-56 (hooks setup) separately.
+    // And also define the wrapper functions.
+
+    // Let's do it in smaller chunks. First imports.
   }, [
     formData,
     identity.id,
-    updateSectionStatus,
     runtime.restaurant_id,
     updateSetupStatus,
+    onboarding, // Added dependency
   ]);
 
   const handleChange = (field: string, value: any) => {

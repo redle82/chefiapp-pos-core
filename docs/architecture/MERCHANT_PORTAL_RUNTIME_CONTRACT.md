@@ -12,7 +12,7 @@ The **Merchant Portal** is the operational nerve center (Cockpit). It must opera
 | ------------- | ----------- | ------- | ------------------------------- | ------------------------------------------------------------- |
 | **Core API**  | `localhost` | `3001`  | PostgREST (Supabase compatible) | Main data entry point for restaurants, orders, and registers. |
 | **Realtime**  | `localhost` | `4000`  | WebSockets (Supabase Realtime)  | Sync for TPV/KDS events.                                      |
-| **Portal UI** | `localhost` | `5175`  | Vite/React                      | Merchant Portal interface.                                    |
+| **Portal UI** | `localhost` | `5157`  | Vite/React                      | Merchant Portal interface (porta oficial; não mudar).         |
 | **Core DB**   | `localhost` | `54320` | PostgreSQL                      | Physical persistence layer.                                   |
 
 ---
@@ -45,7 +45,7 @@ To ensure consistency, the development environment should be started using the `
 
 The Portal is considered healthy only if:
 
-1. `localhost:5175` returns the login/onboarding screen.
+1. `localhost:5157` returns the login/onboarding screen.
 2. The browser console shows `Runtime Mode: DEMO` or `Runtime Mode: PRODUCTION`.
 3. Calls to `localhost:3001/rest/v1/gm_restaurants` return `200 OK`.
 

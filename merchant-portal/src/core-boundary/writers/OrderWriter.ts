@@ -3,6 +3,7 @@
  *
  * FASE 6: Ação Única (Mudança de Estado)
  * FASE 8: Criação de Pedido via Web
+ * FASE 1: Fluxo de Pedido Operacional — criação e update de status canónicos aqui.
  *
  * REGRAS:
  * - Apenas uma ação por vez
@@ -10,6 +11,9 @@
  * - Usa RPC create_order_atomic para criar pedidos
  * - Valida estado antes de atualizar
  * - Retorna erro claro se falhar
+ *
+ * Mutações pós-criação em itens (add/remove/update item) estão em CoreOrdersApi e são @legacy
+ * (FLUXO_DE_PEDIDO_OPERACIONAL); Fase 1 não usa após confirmação.
  */
 
 import type {
@@ -20,9 +24,10 @@ import type {
 } from "../../core/contracts";
 
 import { CONFIG } from "../../config";
+import { eventTaskGenerator } from "../../core/tasks/EventTaskGenerator";
 
-const DOCKER_CORE_URL = CONFIG.SUPABASE_URL;
-const DOCKER_CORE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
+const DOCKER_CORE_URL = CONFIG.CORE_URL;
+const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
 
 // Re-export para compatibilidade
 export type {
@@ -41,7 +46,7 @@ export type {
 export async function updateOrderStatus(
   orderId: string,
   newStatus: "OPEN" | "IN_PREP" | "READY" | "CLOSED" | "CANCELLED",
-  restaurantId: string,
+  restaurantId: string
 ): Promise<void> {
   const url = `${DOCKER_CORE_URL}/rpc/update_order_status`;
 
@@ -61,7 +66,7 @@ export async function updateOrderStatus(
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
-      `Failed to update order status: ${response.status} ${response.statusText} - ${errorText}`,
+      `Failed to update order status: ${response.status} ${response.statusText} - ${errorText}`
     );
   }
 
@@ -70,7 +75,7 @@ export async function updateOrderStatus(
   // Verificar que o RPC retornou sucesso
   if (!data || !data.success) {
     throw new Error(
-      `Order status update failed: ${data?.message || "Unknown error"}`,
+      `Order status update failed: ${data?.message || "Unknown error"}`
     );
   }
 }
@@ -92,13 +97,55 @@ export async function createOrder(
   items: OrderItemInput[],
   origin: OrderOrigin | string = "WEB",
   paymentMethod: string = "cash",
-  syncMetadata?: CreateOrderSyncMetadata,
+  syncMetadata?: CreateOrderSyncMetadata
 ): Promise<CreateOrderResult> {
   if (!items || items.length === 0) {
     throw new Error("Pedido deve conter pelo menos um item");
   }
 
-  // DOCKER CORE: Usar /rest/v1/ para compatibilidade com Supabase client
+  // Guardrail FK (Opção 2 do plano):
+  // Antes de chamar create_order_atomic, garantir que todos os product_id existem
+  // em gm_products para este restaurante. Se algum não existir, falhar com erro
+  // amigável em vez de deixar o Postgres lançar 409 (FK violation).
+  const uniqueProductIds = Array.from(
+    new Set(items.map((item) => item.product_id).filter(Boolean))
+  );
+
+  if (uniqueProductIds.length === 0) {
+    throw new Error(
+      "Pedido inválido: itens sem product_id associado. Atualize o cardápio e tente novamente."
+    );
+  }
+
+  const encodedIds = encodeURIComponent(`(${uniqueProductIds.join(",")})`);
+  const validationUrl = `${DOCKER_CORE_URL}/rest/v1/gm_products?id=in.${encodedIds}&restaurant_id=eq.${restaurantId}&select=id`;
+
+  const validationResponse = await fetch(validationUrl, {
+    method: "GET",
+    headers: {
+      apikey: DOCKER_CORE_ANON_KEY,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!validationResponse.ok) {
+    const errorText = await validationResponse.text();
+    throw new Error(
+      `Não foi possível validar os produtos do pedido: ${validationResponse.status} ${validationResponse.statusText} - ${errorText}`
+    );
+  }
+
+  const validationData = (await validationResponse.json()) as { id: string }[];
+  const foundIds = new Set(validationData.map((p) => p.id));
+
+  const missingIds = uniqueProductIds.filter((id) => !foundIds.has(id));
+  if (missingIds.length > 0) {
+    throw new Error(
+      "Um ou mais produtos deste pedido já não estão disponíveis no Core. Atualize o cardápio ou remova os itens afetados antes de tentar novamente."
+    );
+  }
+
+  // DOCKER CORE: Usar /rest/v1/ (PostgREST)
   const url = `${DOCKER_CORE_URL}/rpc/create_order_atomic`;
 
   const syncMetadataWithOrigin = {
@@ -123,7 +170,7 @@ export async function createOrder(
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
-      `Failed to create order: ${response.status} ${response.statusText} - ${errorText}`,
+      `Failed to create order: ${response.status} ${response.statusText} - ${errorText}`
     );
   }
 
@@ -132,9 +179,20 @@ export async function createOrder(
   // Verificar que o RPC retornou dados válidos
   if (!data || !data.id) {
     throw new Error(
-      `Order creation failed: ${data?.message || "Unknown error"}`,
+      `Order creation failed: ${data?.message || "Unknown error"}`
     );
   }
+
+  // Cada pedido que aparece é uma tarefa (CONTRATO_DE_ATIVIDADE_OPERACIONAL)
+  eventTaskGenerator
+    .generateFromEvent(restaurantId, "order_created", {
+      orderId: data.id,
+      orderNumber: data.number ?? data.short_id ?? data.id,
+      tableNumber: syncMetadata?.table_number ?? null,
+    })
+    .catch((err) =>
+      console.warn("[OrderWriter] Tarefa por pedido não criada:", err)
+    );
 
   return {
     id: data.id,
@@ -155,7 +213,7 @@ export async function createOrder(
  */
 export async function markItemReady(
   itemId: string,
-  restaurantId: string,
+  restaurantId: string
 ): Promise<{
   success: boolean;
   all_items_ready: boolean;
@@ -178,7 +236,7 @@ export async function markItemReady(
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
-      `Failed to mark item ready: ${response.status} ${response.statusText} - ${errorText}`,
+      `Failed to mark item ready: ${response.status} ${response.statusText} - ${errorText}`
     );
   }
 
@@ -186,7 +244,7 @@ export async function markItemReady(
 
   if (!data || !data.success) {
     throw new Error(
-      `Item ready update failed: ${data?.message || "Unknown error"}`,
+      `Item ready update failed: ${data?.message || "Unknown error"}`
     );
   }
 

@@ -4,7 +4,7 @@
  * Gerencia pagamentos de pedidos com métodos reais e persistência.
  */
 
-import { invokeRpc, getTableClient } from '../infra/coreOrSupabaseRpc';
+import { invokeRpc, getTableClient } from '../infra/coreRpc';
 import { BackendType, getBackendType } from '../infra/backendAdapter';
 import type { PaymentMethod, PaymentStatus } from './OrderEngine';
 import { logAuditEvent } from '../audit/logAuditEvent';
@@ -282,7 +282,7 @@ export class PaymentEngine {
 
     /**
      * Buscar pagamentos do dia (Core quando Docker — Fase 4)
-     * Core usa restaurant_id; Supabase usa tenant_id.
+     * Core usa restaurant_id.
      */
     static async getTodayPayments(restaurantId: string): Promise<Payment[]> {
         const today = new Date();

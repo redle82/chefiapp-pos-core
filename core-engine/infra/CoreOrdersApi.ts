@@ -1,10 +1,8 @@
 /**
- * Core Orders API — Criação de pedidos via Core (Docker). NO SUPABASE como autoridade.
+ * Core Orders API — Criação de pedidos via Core (Docker) exclusivamente.
  *
  * Contrato: CORE_FINANCIAL_SOVEREIGNTY_CONTRACT.md
- * Criação de pedidos e totais são soberania do Core. UI chama esta API apenas.
- * Quando Docker Core está ativo: PostgREST RPC exclusivamente.
- * Quando Supabase (transicional): fallback técnico; não usar como autoridade para totais.
+ * Criação de pedidos e totais são soberania do Core. Backend único: Docker Core.
  */
 
 import { BackendType, getBackendType } from "./backendAdapter";
@@ -29,9 +27,7 @@ export type CoreOrdersApiResult<T> = {
 };
 
 /**
- * Invoca create_order_atomic no Core (Docker) ou no Supabase (transicional).
- * Em modo Docker: única autoridade; totais calculados pelo Core.
- * Em modo Supabase: technical debt; não usar como autoridade para totais.
+ * Invoca create_order_atomic no Core (Docker). Backend único: Docker Core.
  */
 export async function createOrderAtomic(
   params: CreateOrderAtomicParams
@@ -43,49 +39,34 @@ export async function createOrderAtomic(
     p_sync_metadata: params.p_sync_metadata ?? null,
   };
 
-  if (getBackendType() === BackendType.docker) {
-    const client = getDockerCoreFetchClient();
-    const out = await client.rpc("create_order_atomic", normalized);
-    const data = out.data as CreateOrderAtomicResult | null;
-    if (out.error) {
-      return {
-        data: null,
-        error: {
-          message: out.error.message,
-          code: out.error.code,
-        },
-      };
-    }
-    if (!data?.id) {
-      return {
-        data: null,
-        error: { message: "Core RPC did not return order id" },
-      };
-    }
-    return { data, error: null };
-  }
-
-  // Transicional: Supabase (technical debt — FINANCIAL_CORE_VIOLATION_AUDIT)
-  try {
-    const { supabase } = await import("../supabase");
-    const raw = await (supabase as any).rpc("create_order_atomic", normalized) as {
-      data: CreateOrderAtomicResult | null;
-      error: { message?: string; code?: string } | null;
-    };
-    if (raw.error) {
-      return {
-        data: null,
-        error: {
-          message: raw.error.message ?? "Unknown error",
-          code: raw.error.code,
-        },
-      };
-    }
-    return { data: raw.data, error: null };
-  } catch (e: any) {
+  if (getBackendType() !== BackendType.docker) {
     return {
       data: null,
-      error: { message: e?.message ?? String(e) },
+      error: {
+        message:
+          "Backend must be Docker Core. Configure VITE_CORE_URL (or run dev with proxy).",
+        code: "BACKEND_NOT_DOCKER",
+      },
     };
   }
+
+  const client = getDockerCoreFetchClient();
+  const out = await client.rpc("create_order_atomic", normalized);
+  const data = out.data as CreateOrderAtomicResult | null;
+  if (out.error) {
+    return {
+      data: null,
+      error: {
+        message: out.error.message,
+        code: out.error.code,
+      },
+    };
+  }
+  if (!data?.id) {
+    return {
+      data: null,
+      error: { message: "Core RPC did not return order id" },
+    };
+  }
+  return { data, error: null };
 }

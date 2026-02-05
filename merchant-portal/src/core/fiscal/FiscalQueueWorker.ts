@@ -1,4 +1,4 @@
-import { getTableClient } from '../infra/coreOrSupabaseRpc';
+import { getTableClient } from '../infra/coreRpc';
 import { getFiscalService } from './FiscalService';
 import { Logger } from '../logger';
 

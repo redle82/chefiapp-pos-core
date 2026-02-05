@@ -6,6 +6,8 @@
 
 import { useLocation, useNavigate } from "react-router-dom";
 import { LocationSection } from "../Onboarding/sections/LocationSection";
+import { PublicPresenceFields } from "./PublicPresenceFields";
+import { PublicQRSection } from "./PublicQRSection";
 
 export function ConfigLocationPage() {
   const location = useLocation();
@@ -93,14 +95,20 @@ export function ConfigLocationPage() {
       </div>
 
       {/* Conteúdo */}
-      {isAddressTab && <LocationSection />}
+      {isAddressTab && (
+        <>
+          <LocationSection />
+          <PublicPresenceFields />
+        </>
+      )}
       {isTablesTab && (
-        <div>
-          <p style={{ color: "#666" }}>
+        <>
+          <p style={{ color: "#666", marginBottom: 24 }}>
             Gerenciamento de mesas e zonas será implementado aqui. Por enquanto,
             use a rota <code>/operacao</code> para visualizar mesas.
           </p>
-        </div>
+          <PublicQRSection />
+        </>
       )}
     </div>
   );

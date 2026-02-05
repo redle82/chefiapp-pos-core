@@ -15,7 +15,7 @@
  * - Logs obrigatórios para auditoria
  */
 
-import { getTableClient } from "../infra/coreOrSupabaseRpc";
+import { getTableClient } from "../infra/coreRpc";
 import {
   getTabIsolated,
   removeTabIsolated,

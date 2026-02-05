@@ -7,7 +7,7 @@
  * - PURE Mode: Blocks all OPERATIONAL STATE direct writes.
  * - HYBRID Mode: Checks ExceptionRegistry.
  */
-import { supabase } from '../supabase';
+import { getTableClient } from '../infra/coreRpc';
 import { isAuthorized, type AllowedOperation, type AllowedTable, type CallerTag } from './ExceptionRegistry';
 import { Logger } from '../logger';
 import { ReconciliationEngine } from './ReconciliationEngine';
@@ -39,7 +39,8 @@ export class DbWriteGate {
         // [LAW 2.5] Mark Dirty if applicable
         const modifiedData = this.applyDirtyStatus(table, data);
 
-        const result = await (supabase as any).from(table).insert(modifiedData).select().single();
+        const client = getTableClient();
+        const result = await client.from(table).insert(modifiedData).select().single();
 
         // [LAW 2.5] Enqueue Reconciliation
         if (!result.error && context.tenantId && this.isShadowTable(table)) {
@@ -105,7 +106,8 @@ export class DbWriteGate {
         // [LAW 2.5] Mark Dirty
         const modifiedData = this.applyDirtyStatus(table, data);
 
-        let query = (supabase as any).from(table).update(modifiedData);
+        const client = getTableClient();
+        let query = client.from(table).update(modifiedData);
 
         // Apply match filters (AND capture them for reconciliation if needed, but ID is best)
         // If we update multiple rows, reconciliation is harder. Hybrid writes usually target single ID.
@@ -182,7 +184,8 @@ export class DbWriteGate {
             throw error;
         }
 
-        let query = (supabase as any).from(table).delete();
+        const client = getTableClient();
+        let query = client.from(table).delete();
 
         // Apply match filters
         Object.entries(match).forEach(([key, value]) => {
@@ -202,7 +205,8 @@ export class DbWriteGate {
         context: { tenantId?: string }
     ) {
         this.enforce('UPSERT', callerTag, table, context);
-        return await (supabase as any).from(table).upsert(data).select();
+        const client = getTableClient();
+        return await client.from(table).upsert(data).select();
     }
 
     /**

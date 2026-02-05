@@ -1,4 +1,4 @@
-import { invokeRpc, getTableClient } from '../infra/coreOrSupabaseRpc';
+import { invokeRpc, getTableClient } from '../infra/coreRpc';
 import type { EffectContext } from '../../../../core-engine/effects';
 import { Logger } from '../logger';
 import { DbWriteGate } from '../governance/DbWriteGate';

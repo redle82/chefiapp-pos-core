@@ -4,7 +4,7 @@
  * Implementa ModuleInterface para o módulo TPV
  */
 
-import { invokeRpc } from '../../infra/coreOrSupabaseRpc';
+import { invokeRpc } from '../../infra/coreRpc';
 import type { ModuleInterface, ModuleConfig, InstallResult, UninstallResult, HealthStatus, ModuleStatus } from '../types';
 
 export class TPVInstaller implements ModuleInterface {

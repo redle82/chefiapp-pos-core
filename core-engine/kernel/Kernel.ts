@@ -5,7 +5,6 @@ import {
   getCategoryName,
   UNIVERSAL_BEVERAGE_CATEGORIES,
 } from "../menu/BeverageCanon";
-import { supabase } from "../supabase";
 
 /**
  * GENESIS KERNEL
@@ -173,7 +172,7 @@ export class Kernel {
     try {
       // CALL ATOMIC RPC with "Identity" Only
       // Pass defaults ("Pending") for future steps to allow creation
-      const { invokeRpc } = await import("../infra/coreOrSupabaseRpc");
+      const { invokeRpc } = await import("../infra/coreRpc");
       const { data, error } = await invokeRpc("create_tenant_atomic", {
         p_restaurant_name: draft.restaurantName,
         p_city: draft.city || "Unknown",
@@ -485,8 +484,10 @@ export class Kernel {
       );
 
       try {
-        // Fetch restaurant data to create a minimal blueprint
-        const { data: restaurant, error: fetchError } = await supabase
+        // Fetch restaurant data to create a minimal blueprint (Core-only)
+        const { getTableClient } = await import("../infra/coreRpc");
+        const client = getTableClient();
+        const { data: restaurant, error: fetchError } = await client
           .from("gm_restaurants")
           .select(
             "name, city, type, owner_id, team_size, operation_mode, menu_strategy",

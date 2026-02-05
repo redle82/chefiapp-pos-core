@@ -1,27 +1,63 @@
 /**
  * ORDER READER — Adaptador de Leitura do Core (Read-Only)
  *
- * FASE 1: Contrato do Core (Leitura)
- *
- * REGRAS:
- * - Apenas leitura (read-only)
- * - Não cria nada
- * - Não altera estado
- * - Usa core-boundary/docker-core/connection.ts
+ * Contrato: ORDER_STATUS_CONTRACT_v1.
+ * - ACTIVE: OPEN, PREPARING, IN_PREP, READY (KDS mostra).
+ * - TERMINAL: SERVED, CANCELLED, FAILED, ARCHIVED, CLOSED (KDS não mostra).
+ * - UNKNOWN: qualquer outro valor; mostrado no KDS com badge e log canónico.
+ * UNKNOWN não é ACTIVE; é exibido por segurança operacional; nunca entra em métricas de produção.
  */
 
 import { dockerCoreClient } from "../docker-core/connection";
 import type { CoreOrder, CoreOrderItem } from "../docker-core/types";
 
+/** Status que o KDS deve mostrar (pedido ainda ativo). Ver ORDER_STATUS_CONTRACT_v1. */
+export const ACTIVE_ORDER_STATUSES = [
+  "OPEN",
+  "PREPARING",
+  "IN_PREP",
+  "READY",
+] as const;
+
+/** Status terminais (KDS não mostra). Inclui CLOSED (legacy alias de SERVED). */
+const TERMINAL_ORDER_STATUSES = new Set([
+  "SERVED",
+  "CANCELLED",
+  "FAILED",
+  "ARCHIVED",
+  "CLOSED",
+]);
+
+const ACTIVE_SET = new Set(ACTIVE_ORDER_STATUSES.map((s) => s));
+
+/** Pedido com flag opcional para status desconhecido (KDS mostra com badge). */
+export type ActiveOrderRow = CoreOrder & { _unknownStatus?: boolean };
+
+function normalizeStatus(raw: unknown): string {
+  if (raw == null || raw === "") return "";
+  return String(raw).toUpperCase().trim();
+}
+
+/** Log canónico para status desconhecido (parte do contrato, não opcional). */
+function logUnknownStatus(orderId: string, rawStatus: unknown): void {
+  const raw = rawStatus != null ? String(rawStatus) : "";
+  console.warn(
+    `[WARN][ORDER_STATUS_CONTRACT]\norder_id=${orderId}\nraw_status=${raw}\nnormalized_status=UNKNOWN\nsource=OrderReader`
+  );
+}
+
 /**
- * Lê pedidos ativos de um restaurante.
+ * Lê pedidos activos + desconhecidos de um restaurante (para KDS).
+ *
+ * Inclui ACTIVE e UNKNOWN; exclui TERMINAL e CREATED.
+ * UNKNOWN aparece com _unknownStatus: true (KDS mostra badge).
  *
  * @param restaurantId ID do restaurante
- * @returns Lista de pedidos com status OPEN, IN_PREP ou READY
+ * @returns Lista de pedidos a mostrar no KDS (activos ou desconhecidos)
  */
 export async function readActiveOrders(
-  restaurantId: string,
-): Promise<CoreOrder[]> {
+  restaurantId: string
+): Promise<ActiveOrderRow[]> {
   const { data, error } = await dockerCoreClient
     .from("gm_orders")
     .select("*")
@@ -33,14 +69,64 @@ export async function readActiveOrders(
   }
 
   const rows = (data || []) as CoreOrder[];
-  // Filtro em memória para status ativos, já que o cliente PostgREST simplificado
-  // ainda não suporta `.in(...)` diretamente.
-  const ACTIVE_STATUSES: Array<CoreOrder["status"]> = [
-    "OPEN",
-    "IN_PREP",
-    "READY",
-  ];
-  return rows.filter((o) => ACTIVE_STATUSES.includes(o.status));
+  const result: ActiveOrderRow[] = [];
+
+  for (const o of rows) {
+    const raw = o?.status;
+    const s = normalizeStatus(raw);
+
+    if (!s) {
+      result.push({ ...o, _unknownStatus: true });
+      logUnknownStatus(o.id, raw);
+      continue;
+    }
+
+    if (ACTIVE_SET.has(s as (typeof ACTIVE_ORDER_STATUSES)[number])) {
+      result.push({ ...o, status: o.status });
+      continue;
+    }
+
+    if (TERMINAL_ORDER_STATUSES.has(s) || s === "CREATED") {
+      continue;
+    }
+
+    result.push({ ...o, _unknownStatus: true });
+    logUnknownStatus(o.id, raw);
+  }
+
+  if (import.meta.env.DEV && rows.length > 0) {
+    const activeCount = result.filter((r) => !r._unknownStatus).length;
+    const unknownCount = result.filter((r) => r._unknownStatus).length;
+    console.log(
+      `[OrderReader] gm_orders: ${rows.length} linha(s), ${activeCount} activo(s), ${unknownCount} unknown`
+    );
+  }
+  return result;
+}
+
+/**
+ * Lê pedidos READY (prontos, ainda não SERVED) para a tela "Agora" / Orders Lite.
+ * Entrega = marcar SERVED via update_order_status.
+ */
+export async function readReadyOrders(
+  restaurantId: string
+): Promise<ActiveOrderRow[]> {
+  const { data, error } = await dockerCoreClient
+    .from("gm_orders")
+    .select("*")
+    .eq("restaurant_id", restaurantId)
+    .eq("status", "READY")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to read ready orders: ${error.message}`);
+  }
+
+  const rows = (data || []) as CoreOrder[];
+  return rows.map((o) => ({
+    ...o,
+    _unknownStatus: false,
+  })) as ActiveOrderRow[];
 }
 
 /**
@@ -50,7 +136,7 @@ export async function readActiveOrders(
  * @returns Pedido ou null se não encontrado
  */
 export async function readOrderById(
-  orderId: string,
+  orderId: string
 ): Promise<CoreOrder | null> {
   const { data, error } = await dockerCoreClient
     .from("gm_orders")
@@ -76,7 +162,7 @@ export async function readOrderById(
  * @returns Lista de itens do pedido
  */
 export async function readOrderItems(
-  orderId: string,
+  orderId: string
 ): Promise<CoreOrderItem[]> {
   const { data, error } = await dockerCoreClient
     .from("gm_order_items")
@@ -91,6 +177,33 @@ export async function readOrderItems(
   return (data || []) as CoreOrderItem[];
 }
 
+/**
+ * Obtém a data/hora do último pedido criado no restaurante (qualquer status).
+ * Usado pelo sensor de ociosidade (CONTRATO_DE_ATIVIDADE_OPERACIONAL) para calcular
+ * "tempo desde último pedido".
+ *
+ * @param restaurantId ID do restaurante
+ * @returns Data do último pedido (created_at) ou null se não houver pedidos
+ */
+export async function getLastOrderCreatedAt(
+  restaurantId: string
+): Promise<Date | null> {
+  const { data, error } = await dockerCoreClient
+    .from("gm_orders")
+    .select("created_at")
+    .eq("restaurant_id", restaurantId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to read last order: ${error.message}`);
+  }
+
+  if (!data?.created_at) return null;
+  return new Date(data.created_at);
+}
+
 const ANALYTICS_ORDERS_LIMIT = 1000;
 
 /**
@@ -103,7 +216,7 @@ const ANALYTICS_ORDERS_LIMIT = 1000;
  */
 export async function readOrdersForAnalytics(
   restaurantId: string,
-  limit: number = ANALYTICS_ORDERS_LIMIT,
+  limit: number = ANALYTICS_ORDERS_LIMIT
 ): Promise<CoreOrder[]> {
   const { data, error } = await dockerCoreClient
     .from("gm_orders")
@@ -126,7 +239,7 @@ export async function readOrdersForAnalytics(
  * @returns Pedido com itens ou null se não encontrado
  */
 export async function readOrderWithItems(
-  orderId: string,
+  orderId: string
 ): Promise<(CoreOrder & { items: CoreOrderItem[] }) | null> {
   const order = await readOrderById(orderId);
   if (!order) {

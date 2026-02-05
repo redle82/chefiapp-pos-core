@@ -10,8 +10,8 @@
  */
 
 import { useEffect, useState } from "react";
-import { alertEngine } from "../alerts/AlertEngine";
 import { readStockLevels } from "../../core-boundary/readers/InventoryStockReader";
+import { alertEngine } from "../alerts/AlertEngine";
 
 export type EcraZeroState = "verde" | "amarelo" | "vermelho";
 
@@ -56,8 +56,23 @@ export function useEcraZeroState(restaurantId: string | null): EcraZeroResult {
               setReason(
                 low.length === 1
                   ? `Estoque baixo: ${low[0].ingredient?.name ?? "ingrediente"}`
-                  : `Estoque baixo: ${low.length} ingrediente(s)`,
+                  : `Estoque baixo: ${low.length} ingrediente(s)`
               );
+              // Trigger real: criar alerta stock_low para aparecer no Dashboard de Alertas (idempotente: só criamos se ainda não há active)
+              const hasStockLow = active.some(
+                (a) => a.alertType === "stock_low"
+              );
+              if (!hasStockLow) {
+                const first = low[0];
+                alertEngine
+                  .createFromEvent(restaurantId, "stock_low", {
+                    productName: first?.ingredient?.name ?? "ingrediente",
+                    count: low.length,
+                    entityType: "inventory",
+                    entityId: first?.id,
+                  })
+                  .catch(() => {});
+              }
             } else if (!cancelled) {
               setState("verde");
               setReason(null);

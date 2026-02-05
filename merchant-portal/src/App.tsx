@@ -25,23 +25,32 @@ import { BillingSuccessPage } from "./pages/Billing/BillingSuccessPage";
 import { BootstrapPage } from "./pages/BootstrapPage";
 import { CoreResetPage } from "./pages/CoreReset/CoreResetPage";
 import { DebugTPV } from "./pages/DebugTPV";
+import { HelpStartLocalPage } from "./pages/HelpStartLocalPage";
 import { InventoryStockMinimal } from "./pages/InventoryStock/InventoryStockMinimal";
 import { KDSMinimal } from "./pages/KDSMinimal/KDSMinimal";
 import { MenuBuilderMinimal } from "./pages/MenuBuilder/MenuBuilderMinimal";
 import { FirstProductPage } from "./pages/Onboarding/FirstProductPage";
+import { OnboardingDayProfilePage } from "./pages/Onboarding/OnboardingDayProfilePage";
+import { OnboardingIntroPage } from "./pages/Onboarding/OnboardingIntroPage";
+import { OnboardingIdentityPage } from "./pages/Onboarding/OnboardingIdentityPage";
+import { OnboardingLocationPage } from "./pages/Onboarding/OnboardingLocationPage";
+import { OnboardingPlanTrialPage } from "./pages/Onboarding/OnboardingPlanTrialPage";
+import { OnboardingProductsPage } from "./pages/Onboarding/OnboardingProductsPage";
+import { OnboardingRitualPage } from "./pages/Onboarding/OnboardingRitualPage";
+import { OnboardingShiftSetupPage } from "./pages/Onboarding/OnboardingShiftSetupPage";
+import { OnboardingTpvPreviewPage } from "./pages/Onboarding/OnboardingTpvPreviewPage";
 import { OperacaoMinimal } from "./pages/Operacao/OperacaoMinimal";
 import { CustomerOrderStatusView } from "./pages/Public/CustomerOrderStatusView";
 import { PublicKDS } from "./pages/Public/PublicKDS";
 import { PublicWebPage } from "./pages/PublicWeb/PublicWebPage";
 import { TablePage } from "./pages/PublicWeb/TablePage";
 import { ShoppingListMinimal } from "./pages/ShoppingList/ShoppingListMinimal";
-import { TaskSystemMinimal } from "./pages/TaskSystem/TaskSystemMinimal";
 import { TPVDemoPage } from "./pages/TPVMinimal/TPVDemoPage";
 import { TPVMinimal } from "./pages/TPVMinimal/TPVMinimal";
+import { TaskSystemMinimal } from "./pages/TaskSystem/TaskSystemMinimal";
 
 import { ManagementAdvisor } from "./components/onboarding/ManagementAdvisor";
 import { OperationalFullscreenWrapper } from "./components/operational/OperationalFullscreenWrapper";
-import { ModuleGate } from "./components/operational/ModuleGate";
 import { RequireOperational } from "./components/operational/RequireOperational";
 import { ShiftGate } from "./components/operational/ShiftGate";
 import { useGlobalUIState } from "./context/GlobalUIStateContext";
@@ -60,7 +69,6 @@ import { ConfigPerceptionPage } from "./pages/Config/ConfigPerceptionPage";
 import { ConfigSchedulePage } from "./pages/Config/ConfigSchedulePage";
 import { ConfigStatusPage } from "./pages/Config/ConfigStatusPage";
 import { DashboardPortal } from "./pages/Dashboard/DashboardPortal";
-import { DemoTourPage } from "./pages/Demo/DemoTourPage";
 import { EmployeeHomePage } from "./pages/Employee/HomePage";
 import { EmployeeKDSIntelligentPage } from "./pages/Employee/KDSIntelligentPage";
 import { EmployeeMentorPage } from "./pages/Employee/MentorPage";
@@ -89,7 +97,10 @@ import { PeopleDashboardPage } from "./pages/People/PeopleDashboardPage";
 import { TimeTrackingPage } from "./pages/People/TimeTrackingPage";
 import { PublishPage } from "./pages/PublishPage";
 import { PurchasesDashboardPage } from "./pages/Purchases/PurchasesDashboardPage";
+import { DailyClosingReportPage } from "./pages/Reports/DailyClosingReportPage";
+import { SalesByPeriodReportPage } from "./pages/Reports/SalesByPeriodReportPage";
 import { ReservationsDashboardPage } from "./pages/Reservations/ReservationsDashboardPage";
+import { RunbookCorePage } from "./pages/RunbookCorePage";
 import { SelectTenantPage } from "./pages/SelectTenantPage";
 import { SystemTreePage } from "./pages/SystemTree/SystemTreePage";
 import { RecurringTasksPage } from "./pages/Tasks/RecurringTasksPage";
@@ -97,12 +108,13 @@ import { TaskDashboardPage } from "./pages/Tasks/TaskDashboardPage";
 import { TaskDetailPage } from "./pages/Tasks/TaskDetailPage";
 import { BillingBanner } from "./ui/billing/BillingBanner";
 import { BillingBlockedView } from "./ui/billing/BillingBlockedView";
-import { GlobalBlockedView } from "./ui/design-system/components/GlobalBlockedView";
 import { CoreUnavailableBanner } from "./ui/design-system/CoreUnavailableBanner";
 import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
 import { ModeIndicator } from "./ui/design-system/ModeIndicator";
+import { GlobalBlockedView } from "./ui/design-system/components/GlobalBlockedView";
 
 import { FlowGate } from "./core/flow/FlowGate";
+import { EventMonitorBootstrap } from "./core/tasks/EventMonitorBootstrap";
 
 /** NAVIGATION_OPERATIONAL_CONTRACT: quando mode=demo, TPV sem RequireOperational; senão app normal. */
 function TPVRouteHandler() {
@@ -175,14 +187,18 @@ function TPVDemoGate() {
 function App() {
   return (
     <>
+      {/* <PublicLifecycleSync /> */}
       <BillingsPreloader />
       <Routes>
-        {/* Public / Landing */}
-        <Route path="/" element={<ProductFirstLandingPage />} />
-        <Route path="/landing" element={<LandingPage />} />
+        {/* Public / Landing — canónica: / e /landing = mesma Landing Operacional */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/landing" element={<Navigate to="/" replace />} />
+        <Route path="/app/demo-tpv" element={<ProductFirstLandingPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/features" element={<FeaturesPage />} />
-        <Route path="/demo" element={<DemoTourPage />} />
+        {/* Demo: redireccionado para auth (demo-guiado removido em refactor pós-freeze). */}
+        <Route path="/demo" element={<Navigate to="/auth" replace />} />
+        <Route path="/demo-guiado" element={<Navigate to="/auth" replace />} />
 
         {/* Auth / Onboarding Redirects */}
         <Route path="/login" element={<Navigate to="/auth" replace />} />
@@ -199,7 +215,7 @@ function App() {
 
         {/* Core Operations */}
         <Route path="/billing/success" element={<BillingSuccessPage />} />
-        <Route path="/op/tpv" element={<TPVRouteHandler />} />
+        <Route path="/help/start-local" element={<HelpStartLocalPage />} />
 
         {/* App Content (Management/Operational) */}
         <Route path="/*" element={<AppOperationalWrapper />} />
@@ -233,6 +249,7 @@ const LAST_ROUTE_KEY = "chefiapp_lastRoute";
 const LAST_ROUTE_ALLOWED = [
   "/dashboard",
   "/app/dashboard",
+  "/config",
   "/op/tpv",
   "/op/kds",
   "/op/cash",
@@ -274,9 +291,16 @@ function AppContentWithBilling() {
     );
   }
 
+  const isDashboard =
+    location.pathname === "/dashboard" ||
+    location.pathname === "/app/dashboard";
+  const isOperationalSurface =
+    location.pathname.startsWith("/op/tpv") ||
+    location.pathname.startsWith("/op/kds");
   return (
     <>
-      <BillingBanner />
+      <EventMonitorBootstrap />
+      {!isDashboard && !isOperationalSurface && <BillingBanner />}
       <ModeIndicator />
       <CoreUnavailableBanner />
       <Routes>
@@ -289,23 +313,30 @@ function AppContentWithBilling() {
         <Route path="/public/:slug/kds" element={<PublicKDS />} />
 
         <Route path="/bootstrap" element={<BootstrapPage />} />
+        {/* Onboarding 5min — 9 telas (docs/contracts/ONBOARDING_5MIN_9_TELAS_CONTRACT.md) */}
+        <Route path="/onboarding" element={<Navigate to="/onboarding/intro" replace />} />
+        <Route path="/onboarding/intro" element={<OnboardingIntroPage />} />
+        <Route path="/onboarding/identity" element={<OnboardingIdentityPage />} />
+        <Route path="/onboarding/location" element={<OnboardingLocationPage />} />
+        <Route path="/onboarding/day-profile" element={<OnboardingDayProfilePage />} />
+        <Route path="/onboarding/shift-setup" element={<OnboardingShiftSetupPage />} />
+        <Route path="/onboarding/products" element={<OnboardingProductsPage />} />
+        <Route path="/onboarding/tpv-preview" element={<OnboardingTpvPreviewPage />} />
+        <Route path="/onboarding/plan-trial" element={<OnboardingPlanTrialPage />} />
+        <Route path="/onboarding/ritual-open" element={<OnboardingRitualPage />} />
         <Route path="/app/select-tenant" element={<SelectTenantPage />} />
         <Route path="/app" element={<Navigate to="/app/dashboard" replace />} />
 
         <Route element={<RoleGate />}>
           <Route
-            path="/op/tpv"
+            path="/op/tpv/*"
             element={
               <ErrorBoundary context="TPV">
-                <RequireOperational>
-                  <ModuleGate moduleId="tpv">
-                    <ShiftGate>
-                      <OperationalFullscreenWrapper>
-                        <TPVMinimal />
-                      </OperationalFullscreenWrapper>
-                    </ShiftGate>
-                  </ModuleGate>
-                </RequireOperational>
+                <ShiftGate>
+                  <OperationalFullscreenWrapper>
+                    <TPVMinimal />
+                  </OperationalFullscreenWrapper>
+                </ShiftGate>
               </ErrorBoundary>
             }
           />
@@ -313,13 +344,9 @@ function AppContentWithBilling() {
             path="/op/kds"
             element={
               <ErrorBoundary context="KDS">
-                <RequireOperational>
-                  <ModuleGate moduleId="kds">
-                    <OperationalFullscreenWrapper>
-                      <KDSMinimal />
-                    </OperationalFullscreenWrapper>
-                  </ModuleGate>
-                </RequireOperational>
+                <OperationalFullscreenWrapper>
+                  <KDSMinimal />
+                </OperationalFullscreenWrapper>
               </ErrorBoundary>
             }
           />
@@ -330,12 +357,18 @@ function AppContentWithBilling() {
             path="/kds-minimal"
             element={<Navigate to="/op/kds" replace />}
           />
+          <Route path="/kds" element={<Navigate to="/op/kds" replace />} />
+          <Route
+            path="/tpv-minimal"
+            element={<Navigate to="/op/tpv" replace />}
+          />
 
           <Route path="/dashboard" element={<DashboardPortal />} />
           <Route
             path="/app/dashboard"
             element={<Navigate to="/dashboard" replace />}
           />
+          <Route path="/app/runbook-core" element={<RunbookCorePage />} />
           <Route
             path="/onboarding/first-product"
             element={<FirstProductPage />}
@@ -355,7 +388,7 @@ function AppContentWithBilling() {
           <Route
             path="/tpv-test"
             element={
-              <RequireOperational>
+              <RequireOperational surface="TPV">
                 <DebugTPV />
               </RequireOperational>
             }
@@ -375,6 +408,11 @@ function AppContentWithBilling() {
           />
           <Route
             path="/app/setup/menu"
+            element={<Navigate to="/menu-builder" replace />}
+          />
+          {/* /app/menu-builder: destino final direto (sem tela intermédia "Core Conectado"). */}
+          <Route
+            path="/app/menu-builder"
             element={<Navigate to="/menu-builder" replace />}
           />
           <Route
@@ -666,6 +704,31 @@ function AppContentWithBilling() {
                 <InstallPage />
               </ManagementAdvisor>
             }
+          />
+          <Route
+            path="/app/reports/daily-closing"
+            element={
+              <ManagementAdvisor>
+                <DailyClosingReportPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/app/reports/sales-by-period"
+            element={
+              <ManagementAdvisor>
+                <SalesByPeriodReportPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/app/reports/finance"
+            element={<Navigate to="/financial" replace />}
+          />
+          {/* Página Web (sidebar) → Dashboard (comando central; em SETUP mostra "Complete o setup"). Não usar /config (onboarding antigo morto). */}
+          <Route
+            path="/app/web/preview"
+            element={<Navigate to="/dashboard" replace />}
           />
 
           {/* Tela neutra de reset (padrão) */}

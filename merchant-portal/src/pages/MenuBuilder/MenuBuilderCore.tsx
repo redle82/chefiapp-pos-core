@@ -1,17 +1,41 @@
 /**
- * MenuBuilderCore — Núcleo do Menu Builder (form + lista)
+ * MenuBuilderCore — Núcleo do Menu Builder (form + lista).
  *
- * Não define layout de página (sem maxWidth, minHeight:100vh, fundo global).
- * Recebe restaurantId e variant (panel = VPC escuro, page = claro).
- * Estado default útil: se menu vazio → CTA "Criar menu"; se existir → mostra itens.
+ * FLUXO PRINCIPAL
+ * 1. Carrega: readProductsByRestaurant(restaurantId) + readMenuCategories(restaurantId) no mount (useEffect [restaurantId]).
+ * 2. Tabs: manual | foto | pdf | link | ia; só "manual" tem form + lista ativos; outras mostram "Funcionalidade não ativa".
+ * 3. Manual: preset por businessType (getMenuPresetByBusinessType) → handleUseExampleMenu; form criar/editar (MenuItemInput) → createMenuItem/updateMenuItem/deleteMenuItem (MenuWriter).
+ * 4. Validação: validateMenuItemInput(payload) antes de escrever; preço via parseMoneyInput(priceInput).
+ * 5. Após criar/editar/apagar: readProductsByRestaurant de novo e setProducts; em fallback, addPilotProduct/getPilotProducts e lista local.
+ *
+ * GUARDS CRÍTICOS
+ * - restaurantId obrigatório (props); sem ele não há carga.
+ * - isBackendUnavailable(err): em loadData → pilot fallback (getPilotProducts, setProducts local); em handleCreate/handleSaveEdit/handleDelete → addPilotProduct ou atualizar localStorage e setProducts; mensagem "guardado localmente".
+ * - Validação: parseMoneyInput + validateMenuItemInput antes de create/update; erro em globalUI.setScreenError.
+ *
+ * DEPENDÊNCIAS REAIS
+ * - ProductReader: readProductsByRestaurant(restaurantId).
+ * - RestaurantReader: readMenuCategories(restaurantId).
+ * - MenuWriter: createMenuItem, updateMenuItem, deleteMenuItem (Core).
+ * - menuPilotFallback: getPilotProducts, addPilotProduct, pilotMenuKey, isBackendUnavailable (localStorage quando Core não responde).
+ * - Menu contract: MenuItemInput, validateMenuItemInput (core/contracts/Menu).
+ * - useBootstrapState, useRestaurantRuntime (runtime.coreMode para mensagens offline-intencional vs offline-erro).
  */
 
 import { useEffect, useState } from "react";
+import { useGlobalUIState } from "../../context/GlobalUIStateContext";
+import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import {
   addPilotProduct,
   getPilotProducts,
-  isNetworkError,
+  isBackendUnavailable,
+  pilotMenuKey,
 } from "../../core-boundary/menuPilotFallback";
+import {
+  BUSINESS_TYPE_LABELS,
+  getMenuPresetByBusinessType,
+  type BusinessType,
+} from "../../core-boundary/readers/MenuPresetReader";
 import type {
   CoreProduct,
   CoreProductWithCategory,
@@ -26,13 +50,17 @@ import {
 } from "../../core-boundary/writers/MenuWriter";
 import type { MenuItemInput } from "../../core/contracts/Menu";
 import { validateMenuItemInput } from "../../core/contracts/Menu";
-import { useGlobalUIState } from "../../context/GlobalUIStateContext";
+import { useBootstrapState } from "../../hooks/useBootstrapState";
 import {
   GlobalEmptyView,
   GlobalErrorView,
   GlobalLoadingView,
 } from "../../ui/design-system/components";
+import { Button, Card, Input, Select } from "../../ui/design-system/primitives";
+import { Spacing } from "../../ui/design-system/tokens";
+import { radius } from "../../ui/design-system/tokens/radius";
 import { toUserMessage } from "../../ui/errors";
+import { formatMoney, parseMoneyInput } from "./utils/moneyInput";
 
 const VPC_PANEL = {
   text: "#fafafa",
@@ -62,6 +90,33 @@ const VPC_PAGE = {
   radius: 8,
 } as const;
 
+/** Estado inicial do form criar/editar item (evita duplicação). */
+const EMPTY_MENU_ITEM_FORM: MenuItemInput = {
+  name: "",
+  description: "",
+  price_cents: 0,
+  category_id: null,
+  station: "KITCHEN",
+  prep_time_minutes: 5,
+  prep_category: "main",
+  available: true,
+};
+
+/** Pure: converte lista pilot para CoreProductWithCategory (gm_menu_categories null). */
+function mapPilotToWithCategory(
+  pilot: Array<{
+    id: string;
+    name: string;
+    price_cents: number;
+    [key: string]: unknown;
+  }>
+): CoreProductWithCategory[] {
+  return pilot.map((p) => ({
+    ...p,
+    gm_menu_categories: null as { name: string } | null,
+  })) as CoreProductWithCategory[];
+}
+
 export interface MenuBuilderCoreProps {
   restaurantId: string;
   /** panel = dentro do OS (VPC escuro); page = rota própria (claro). */
@@ -74,6 +129,8 @@ export function MenuBuilderCore({
 }: MenuBuilderCoreProps) {
   const theme = variant === "panel" ? VPC_PANEL : VPC_PAGE;
   const globalUI = useGlobalUIState();
+  const bootstrap = useBootstrapState();
+  const { runtime } = useRestaurantRuntime();
 
   const [products, setProducts] = useState<CoreProductWithCategory[]>([]);
   const [categories, setCategories] = useState<CoreMenuCategory[]>([]);
@@ -81,6 +138,7 @@ export function MenuBuilderCore({
   const [editingProduct, setEditingProduct] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [loadingExample, setLoadingExample] = useState(false);
+  const [usedBackendFallback, setUsedBackendFallback] = useState(false);
 
   const [formData, setFormData] = useState<MenuItemInput>({
     name: "",
@@ -92,6 +150,12 @@ export function MenuBuilderCore({
     prep_category: "main",
     available: true,
   });
+  /** Valor do preço como string (digitação livre, sem setas); sincronizado em edit/reset. */
+  const [priceInput, setPriceInput] = useState("");
+  /** Tipo de negócio para preset (dentro da tab Manual). */
+  const [businessType, setBusinessType] = useState<BusinessType>("cafe_bar");
+  type MenuBuilderTab = "manual" | "foto" | "pdf" | "link" | "ia";
+  const [activeTab, setActiveTab] = useState<MenuBuilderTab>("manual");
 
   useEffect(() => {
     const loadData = async () => {
@@ -102,21 +166,19 @@ export function MenuBuilderCore({
           readProductsByRestaurant(restaurantId, true, false),
           readMenuCategories(restaurantId),
         ]);
+        setUsedBackendFallback(false);
         setProducts(productsData);
         setCategories(categoriesData);
         globalUI.setScreenEmpty(productsData.length === 0);
       } catch (err) {
-        // B1 48h: fallback quando Core não responde (docs/product/B1_MENU_CONTENCAO.md)
-        if (isNetworkError(err)) {
+        // B1 48h + API_ERROR_CONTRACT: fallback quando Core não responde ou devolve HTML
+        if (isBackendUnavailable(err)) {
+          setUsedBackendFallback(true);
           setCategories([]);
           const pilot = getPilotProducts(restaurantId);
-          const pilotWithCategory = pilot.map((p) => ({
-            ...p,
-            gm_menu_categories: null as { name: string } | null,
-          })) as CoreProductWithCategory[];
-          setProducts(pilotWithCategory);
+          setProducts(mapPilotToWithCategory(pilot));
           globalUI.setScreenError(null);
-          globalUI.setScreenEmpty(pilotWithCategory.length === 0);
+          globalUI.setScreenEmpty(pilot.length === 0);
         } else {
           globalUI.setScreenError(toUserMessage(err, "Erro ao carregar menu"));
         }
@@ -132,43 +194,73 @@ export function MenuBuilderCore({
       setCreating(true);
       globalUI.setScreenError(null);
       setSuccessMessage(null);
-      const validation = validateMenuItemInput(formData);
-      if (!validation.valid) {
-        globalUI.setScreenError(`Validação falhou: ${validation.errors.join(", ")}`);
+      const parsed = parseMoneyInput(priceInput);
+      if (parsed.valueNumber === null || parsed.valueNumber < 0) {
+        globalUI.setScreenError("Preço inválido. Use ex.: 2,50 ou 0,09");
         return;
       }
-      await createMenuItem(restaurantId, formData);
+      const payload: MenuItemInput = {
+        ...formData,
+        price_cents: Math.round(parsed.valueNumber * 100),
+      };
+      const validation = validateMenuItemInput(payload);
+      if (!validation.valid) {
+        globalUI.setScreenError(
+          `Validação falhou: ${validation.errors.join(", ")}`
+        );
+        return;
+      }
+      await createMenuItem(restaurantId, payload);
 
       // B1 Pilot Fallback: Persist locally if saving works or fails (for 48h resilience)
       addPilotProduct(restaurantId, {
         id: crypto.randomUUID(),
         restaurant_id: restaurantId,
-        name: formData.name,
-        price_cents: formData.price_cents,
+        name: payload.name,
+        price_cents: payload.price_cents,
         available: true,
         station: formData.station as "BAR" | "KITCHEN",
-        prep_time_seconds: (formData.prep_time_minutes || 5) * 60,
+        prep_time_seconds: (payload.prep_time_minutes || 5) * 60,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
 
       const productsData = await readProductsByRestaurant(restaurantId, true);
       setProducts(productsData);
-      setFormData({
-        name: "",
-        description: "",
-        price_cents: 0,
-        category_id: null,
-        station: "KITCHEN",
-        prep_time_minutes: 5,
-        prep_category: "main",
-        available: true,
-      });
+      setFormData(EMPTY_MENU_ITEM_FORM);
+      setPriceInput("");
       setSuccessMessage("Produto criado");
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
+      // P0: quando Core devolve HTML / rede falha, guardar em fallback local e mostrar produto na lista
+      if (isBackendUnavailable(err)) {
+        setUsedBackendFallback(true);
+        const id = crypto.randomUUID();
+        const now = new Date().toISOString();
+        addPilotProduct(restaurantId, {
+          id,
+          restaurant_id: restaurantId,
+          name: payload.name,
+          price_cents: payload.price_cents,
+          available: payload.available !== false,
+          station: payload.station as "BAR" | "KITCHEN",
+          prep_time_seconds: (payload.prep_time_minutes || 5) * 60,
+          created_at: now,
+          updated_at: now,
+        });
+        const pilotAfterCreate = getPilotProducts(restaurantId);
+        setProducts(mapPilotToWithCategory(pilotAfterCreate));
+        setFormData(EMPTY_MENU_ITEM_FORM);
+        setPriceInput("");
+        globalUI.setScreenError(null);
+        setSuccessMessage(
+          "Produto guardado localmente (servidor indisponível)."
+        );
+        setTimeout(() => setSuccessMessage(null), 4000);
+        return;
+      }
       globalUI.setScreenError(
-        toUserMessage(err, "Não foi possível guardar. Tente novamente."),
+        toUserMessage(err, "Não foi possível guardar. Tente novamente.")
       );
     } finally {
       setCreating(false);
@@ -189,6 +281,7 @@ export function MenuBuilderCore({
       prep_category: product.prep_category || "main",
       available: product.available,
     });
+    setPriceInput(formatMoney(product.price_cents / 100));
   };
 
   const handleSaveEdit = async () => {
@@ -196,32 +289,77 @@ export function MenuBuilderCore({
     try {
       setCreating(true);
       globalUI.setScreenError(null);
-      const validation = validateMenuItemInput(formData);
-      if (!validation.valid) {
-        globalUI.setScreenError(`Validação falhou: ${validation.errors.join(", ")}`);
+      const parsed = parseMoneyInput(priceInput);
+      if (parsed.valueNumber === null || parsed.valueNumber < 0) {
+        globalUI.setScreenError("Preço inválido. Use ex.: 2,50 ou 0,09");
         return;
       }
-      await updateMenuItem(editingProduct, restaurantId, formData);
+      const payload: MenuItemInput = {
+        ...formData,
+        price_cents: Math.round(parsed.valueNumber * 100),
+      };
+      const validation = validateMenuItemInput(payload);
+      if (!validation.valid) {
+        globalUI.setScreenError(
+          `Validação falhou: ${validation.errors.join(", ")}`
+        );
+        return;
+      }
+      await updateMenuItem(editingProduct, restaurantId, payload);
       const productsData = await readProductsByRestaurant(
         restaurantId,
         true,
-        false,
+        false
       );
       setProducts(productsData);
       globalUI.setScreenError(null);
       setEditingProduct(null);
-      setFormData({
-        name: "",
-        description: "",
-        price_cents: 0,
-        category_id: null,
-        station: "KITCHEN",
-        prep_time_minutes: 5,
-        prep_category: "main",
-        available: true,
-      });
+      setFormData(EMPTY_MENU_ITEM_FORM);
+      setPriceInput("");
     } catch (err) {
-      globalUI.setScreenError(err instanceof Error ? err.message : "Erro ao atualizar item");
+      if (isBackendUnavailable(err)) {
+        const parsed = parseMoneyInput(priceInput);
+        const editPayload: MenuItemInput = {
+          ...formData,
+          price_cents:
+            parsed.valueNumber !== null && parsed.valueNumber >= 0
+              ? Math.round(parsed.valueNumber * 100)
+              : formData.price_cents,
+        };
+        setUsedBackendFallback(true);
+        const pilot = getPilotProducts(restaurantId);
+        const now = new Date().toISOString();
+        const updated = pilot.map((p) =>
+          p.id === editingProduct
+            ? {
+                ...p,
+                name: editPayload.name,
+                price_cents: editPayload.price_cents,
+                station: editPayload.station as "BAR" | "KITCHEN",
+                prep_time_seconds: (editPayload.prep_time_minutes || 5) * 60,
+                available: editPayload.available !== false,
+                updated_at: now,
+              }
+            : p
+        );
+        localStorage.setItem(
+          pilotMenuKey(restaurantId),
+          JSON.stringify(updated)
+        );
+        setProducts(mapPilotToWithCategory(updated));
+        setEditingProduct(null);
+        setFormData(EMPTY_MENU_ITEM_FORM);
+        setPriceInput("");
+        globalUI.setScreenError(null);
+        setSuccessMessage(
+          "Item atualizado localmente (servidor indisponível)."
+        );
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        globalUI.setScreenError(
+          toUserMessage(err, "Erro ao atualizar item. Tente novamente.")
+        );
+      }
     } finally {
       setCreating(false);
     }
@@ -231,58 +369,16 @@ export function MenuBuilderCore({
     if (
       products.length > 0 &&
       !confirm(
-        "Já existem itens no menu. Deseja adicionar os itens de exemplo na mesma?",
+        "Já existem itens no menu. Deseja adicionar os itens do preset na mesma?"
       )
     )
       return;
     try {
       setLoadingExample(true);
       globalUI.setScreenError(null);
-      const examples: MenuItemInput[] = [
-        {
-          name: "Café",
-          description: null,
-          price_cents: 150,
-          category_id: null,
-          station: "BAR",
-          prep_time_minutes: 2,
-          prep_category: "main",
-          available: true,
-        },
-        {
-          name: "Água",
-          description: null,
-          price_cents: 200,
-          category_id: null,
-          station: "BAR",
-          prep_time_minutes: 1,
-          prep_category: "main",
-          available: true,
-        },
-        {
-          name: "Sanduíche",
-          description: null,
-          price_cents: 850,
-          category_id: null,
-          station: "KITCHEN",
-          prep_time_minutes: 8,
-          prep_category: "main",
-          available: true,
-        },
-        {
-          name: "Sumo natural",
-          description: null,
-          price_cents: 450,
-          category_id: null,
-          station: "BAR",
-          prep_time_minutes: 3,
-          prep_category: "main",
-          available: true,
-        },
-      ];
+      const examples = getMenuPresetByBusinessType(businessType);
       for (const item of examples) {
-        await createMenuItem(restaurantId, item);
-        addPilotProduct(restaurantId, {
+        const pilotItem = {
           id: crypto.randomUUID(),
           restaurant_id: restaurantId,
           name: item.name,
@@ -292,19 +388,34 @@ export function MenuBuilderCore({
           prep_time_seconds: (item.prep_time_minutes || 5) * 60,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        });
+        };
+        try {
+          await createMenuItem(restaurantId, item);
+          addPilotProduct(restaurantId, pilotItem);
+        } catch (e) {
+          if (isBackendUnavailable(e)) {
+            setUsedBackendFallback(true);
+            addPilotProduct(restaurantId, pilotItem);
+          } else throw e;
+        }
       }
       const productsData = await readProductsByRestaurant(
         restaurantId,
         true,
-        false,
+        false
       );
       setProducts(productsData);
       globalUI.setScreenError(null);
     } catch (err) {
-      globalUI.setScreenError(
-        err instanceof Error ? err.message : "Erro ao carregar menu de exemplo",
-      );
+      if (usedBackendFallback) {
+        const pilot = getPilotProducts(restaurantId);
+        setProducts(mapPilotToWithCategory(pilot));
+        globalUI.setScreenError(null);
+      } else {
+        globalUI.setScreenError(
+          toUserMessage(err, "Erro ao aplicar preset. Tente novamente.")
+        );
+      }
     } finally {
       setLoadingExample(false);
     }
@@ -318,7 +429,19 @@ export function MenuBuilderCore({
       setProducts(productsData);
       globalUI.setScreenError(null);
     } catch (err) {
-      globalUI.setScreenError(err instanceof Error ? err.message : "Erro ao deletar item");
+      if (isBackendUnavailable(err)) {
+        setUsedBackendFallback(true);
+        const pilot = getPilotProducts(restaurantId).filter(
+          (p) => p.id !== productId
+        );
+        localStorage.setItem(pilotMenuKey(restaurantId), JSON.stringify(pilot));
+        setProducts(mapPilotToWithCategory(pilot));
+        globalUI.setScreenError(null);
+      } else {
+        globalUI.setScreenError(
+          toUserMessage(err, "Erro ao deletar item. Tente novamente.")
+        );
+      }
     }
   };
 
@@ -358,15 +481,54 @@ export function MenuBuilderCore({
           20 minutos.
         </p>
 
+        {usedBackendFallback && runtime.coreMode === "offline-erro" && (
+          <p
+            style={{
+              margin: "0 0 16px 0",
+              fontSize: 13,
+              color: theme.textMuted,
+              backgroundColor:
+                variant === "panel" ? "rgba(234,179,8,0.1)" : "#fef9c3",
+              padding: "8px 12px",
+              borderRadius: 6,
+              border: `1px solid ${
+                variant === "panel" ? "#854d0e" : "#eab308"
+              }`,
+            }}
+          >
+            Core não responde na porta 3001. Inicie o Docker Core para guardar
+            no servidor.
+          </p>
+        )}
+        {usedBackendFallback && runtime.coreMode === "offline-intencional" && (
+          <p
+            style={{
+              margin: "0 0 16px 0",
+              fontSize: 13,
+              color: theme.textMuted,
+              backgroundColor:
+                variant === "panel" ? "rgba(59,130,246,0.1)" : "#eff6ff",
+              padding: "8px 12px",
+              borderRadius: 6,
+              border: `1px solid ${
+                variant === "panel" ? "#1e40af" : "#93c5fd"
+              }`,
+            }}
+          >
+            A editar menu localmente. Os dados serão sincronizados quando o Core
+            estiver ativo.
+          </p>
+        )}
+
         {isEmpty && (
           <div style={{ marginBottom: 24 }}>
             <GlobalEmptyView
               title="Ainda não há itens no menu."
-              description="Crie o primeiro item abaixo ou use o menu de exemplo para começar rápido."
+              description="Use o preset ou crie itens manualmente na tab Manual para começar."
               layout={variant === "panel" ? "operational" : "portal"}
               variant="inline"
               action={{
-                label: "📋 Usar menu de exemplo",
+                label: "📋 Aplicar preset",
                 onClick: handleUseExampleMenu,
               }}
               actionLoading={loadingExample}
@@ -375,27 +537,17 @@ export function MenuBuilderCore({
         )}
 
         {!isEmpty && (
-          <button
-            type="button"
-            onClick={handleUseExampleMenu}
-            disabled={loadingExample}
-            style={{
-              marginBottom: 16,
-              padding: "10px 18px",
-              fontSize: 14,
-              fontWeight: 600,
-              color: variant === "panel" ? theme.accent : "#166534",
-              backgroundColor: variant === "panel" ? "transparent" : "#dcfce7",
-              border: `1px solid ${
-                variant === "panel" ? theme.border : "#86efac"
-              }`,
-              borderRadius: theme.radius,
-              cursor: loadingExample ? "not-allowed" : "pointer",
-              opacity: loadingExample ? 0.7 : 1,
-            }}
-          >
-            {loadingExample ? "A carregar..." : "📋 Usar menu de exemplo"}
-          </button>
+          <div style={{ marginBottom: Spacing.lg }}>
+            <Button
+              tone="success"
+              variant="outline"
+              onClick={handleUseExampleMenu}
+              disabled={loadingExample}
+              isLoading={loadingExample}
+            >
+              {loadingExample ? "A aplicar..." : "📋 Aplicar preset"}
+            </Button>
+          </div>
         )}
 
         {globalUI.isError && globalUI.errorMessage && (
@@ -424,382 +576,386 @@ export function MenuBuilderCore({
           </div>
         )}
 
-        {/* Form */}
+        {/* Tabs: Manual, Foto, PDF, Link, IA (FASE 3 — 5 formas de criar menu) */}
         <div
           style={{
-            border: `1px solid ${theme.border}`,
-            borderRadius: theme.radius,
-            padding: 24,
+            display: "flex",
+            gap: 4,
             marginBottom: 24,
-            backgroundColor: theme.surface,
+            flexWrap: "wrap",
           }}
         >
-          <h2
-            style={{
-              marginBottom: 16,
-              fontSize: 16,
-              fontWeight: 600,
-              color: theme.text,
-            }}
-          >
-            {editingProduct ? "Editar Item" : "Criar Novo Item"}
-          </h2>
+          {(
+            [
+              { id: "manual" as const, label: "Manual" },
+              { id: "foto" as const, label: "Foto" },
+              { id: "pdf" as const, label: "PDF" },
+              { id: "link" as const, label: "Link" },
+              { id: "ia" as const, label: "IA" },
+            ] as const
+          ).map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActiveTab(id)}
+              style={{
+                padding: "10px 16px",
+                fontSize: 14,
+                fontWeight: 600,
+                color: activeTab === id ? "#fff" : theme.text,
+                backgroundColor:
+                  activeTab === id ? theme.primary : theme.surface,
+                border: `1px solid ${theme.border}`,
+                borderRadius: radius.lg,
+                cursor: "pointer",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 16,
-              marginBottom: 16,
-            }}
-          >
-            <div>
-              <label
+        {activeTab === "manual" && (
+          <>
+            {/* Preset: dentro da tab Manual */}
+            <Card padding="lg" style={{ marginBottom: 24 }}>
+              <h2
                 style={{
-                  display: "block",
-                  marginBottom: 4,
+                  marginBottom: Spacing.lg,
+                  fontSize: 16,
                   fontWeight: 600,
                   color: theme.text,
+                }}
+              >
+                Qual tipo de negócio?
+              </h2>
+              <p
+                style={{
+                  marginBottom: Spacing.lg,
+                  color: theme.textMuted,
                   fontSize: 14,
                 }}
               >
-                Nome *
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                style={{
-                  width: "100%",
-                  padding: 10,
-                  border: `1px solid ${theme.inputBorder}`,
-                  borderRadius: 4,
-                  backgroundColor: theme.inputBg,
-                  color: theme.text,
-                }}
-                placeholder="Ex: Hambúrguer Artesanal"
-              />
-            </div>
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 4,
-                  fontWeight: 600,
-                  color: theme.text,
-                  fontSize: 14,
-                }}
-              >
-                Preço (€) *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={(formData.price_cents / 100).toFixed(2)}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    price_cents: Math.round(parseFloat(e.target.value) * 100),
-                  })
-                }
-                style={{
-                  width: "100%",
-                  padding: 10,
-                  border: `1px solid ${theme.inputBorder}`,
-                  borderRadius: 4,
-                  backgroundColor: theme.inputBg,
-                  color: theme.text,
-                }}
-                placeholder="25.00"
-              />
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 16,
-              marginBottom: 16,
-            }}
-          >
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 4,
-                  fontWeight: 600,
-                  color: theme.text,
-                  fontSize: 14,
-                }}
-              >
-                Estação *
-              </label>
-              <select
-                value={formData.station}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    station: e.target.value as "BAR" | "KITCHEN",
-                  })
-                }
-                style={{
-                  width: "100%",
-                  padding: 10,
-                  border: `1px solid ${theme.inputBorder}`,
-                  borderRadius: 4,
-                  backgroundColor: theme.inputBg,
-                  color: theme.text,
-                }}
-              >
-                <option value="KITCHEN">🍳 Cozinha</option>
-                <option value="BAR">🍺 Bar</option>
-              </select>
-            </div>
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 4,
-                  fontWeight: 600,
-                  color: theme.text,
-                  fontSize: 14,
-                }}
-              >
-                Tempo (min) *
-              </label>
+                Escolha o tipo para aplicar um menu base com preços sugeridos.
+                Tudo é editável e apagável.
+              </p>
               <div
                 style={{
                   display: "flex",
-                  gap: 8,
-                  marginBottom: 8,
                   flexWrap: "wrap",
+                  gap: 8,
+                  marginBottom: Spacing.lg,
                 }}
               >
-                {[2, 3, 5, 8, 12].map((mins) => (
+                {(
+                  [
+                    "cafe_bar",
+                    "restaurante",
+                    "fast_food",
+                    "pizzaria",
+                    "bar_noturno",
+                    "padaria",
+                    "outro",
+                  ] as BusinessType[]
+                ).map((type) => (
                   <button
-                    key={mins}
+                    key={type}
                     type="button"
-                    onClick={() =>
-                      setFormData({ ...formData, prep_time_minutes: mins })
-                    }
+                    onClick={() => setBusinessType(type)}
                     style={{
-                      padding: "6px 12px",
-                      fontSize: 12,
+                      padding: "8px 14px",
+                      fontSize: 13,
+                      fontWeight: businessType === type ? 600 : 500,
+                      color: businessType === type ? "#fff" : theme.text,
                       backgroundColor:
-                        formData.prep_time_minutes === mins
-                          ? theme.primary
-                          : variant === "panel"
-                          ? theme.surface
-                          : "#f3f4f6",
-                      color:
-                        formData.prep_time_minutes === mins
-                          ? "#fff"
-                          : theme.text,
+                        businessType === type ? theme.primary : theme.surface,
                       border: `1px solid ${theme.border}`,
-                      borderRadius: 4,
+                      borderRadius: radius.lg,
                       cursor: "pointer",
                     }}
                   >
-                    {mins} min
+                    {BUSINESS_TYPE_LABELS[type]}
                   </button>
                 ))}
               </div>
-              <input
-                type="number"
-                min={0.5}
-                max={60}
-                step={0.5}
-                value={formData.prep_time_minutes}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    prep_time_minutes: parseFloat(e.target.value) || 0,
-                  })
-                }
-                style={{
-                  width: "100%",
-                  padding: 10,
-                  border: `1px solid ${theme.inputBorder}`,
-                  borderRadius: 4,
-                  backgroundColor: theme.inputBg,
-                  color: theme.text,
-                }}
-              />
-            </div>
-          </div>
+              <Button
+                tone="success"
+                variant="solid"
+                onClick={handleUseExampleMenu}
+                disabled={loadingExample}
+                isLoading={loadingExample}
+              >
+                {loadingExample ? "A aplicar..." : "Aplicar preset"}
+              </Button>
+            </Card>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 16,
-              marginBottom: 16,
-            }}
-          >
-            <div>
-              <label
+            {/* Formulário criar/editar item */}
+            <Card padding="lg" style={{ marginBottom: 24 }}>
+              <h2
                 style={{
-                  display: "block",
-                  marginBottom: 4,
+                  marginBottom: Spacing.lg,
+                  fontSize: 16,
                   fontWeight: 600,
                   color: theme.text,
-                  fontSize: 14,
                 }}
               >
-                Categoria
-              </label>
-              <select
-                value={formData.category_id || ""}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    category_id: e.target.value || null,
-                  })
-                }
-                style={{
-                  width: "100%",
-                  padding: 10,
-                  border: `1px solid ${theme.inputBorder}`,
-                  borderRadius: 4,
-                  backgroundColor: theme.inputBg,
-                  color: theme.text,
-                }}
-              >
-                <option value="">Sem categoria</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 4,
-                  fontWeight: 600,
-                  color: theme.text,
-                  fontSize: 14,
-                }}
-              >
-                Tipo
-              </label>
-              <select
-                value={formData.prep_category || "main"}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    prep_category: e.target.value as
-                      | "drink"
-                      | "starter"
-                      | "main"
-                      | "dessert",
-                  })
-                }
-                style={{
-                  width: "100%",
-                  padding: 10,
-                  border: `1px solid ${theme.inputBorder}`,
-                  borderRadius: 4,
-                  backgroundColor: theme.inputBg,
-                  color: theme.text,
-                }}
-              >
-                <option value="drink">Bebida</option>
-                <option value="starter">Entrada</option>
-                <option value="main">Principal</option>
-                <option value="dessert">Sobremesa</option>
-              </select>
-            </div>
-          </div>
+                {editingProduct ? "Editar Item" : "Criar Novo Item"}
+              </h2>
 
-          <div style={{ marginBottom: 16 }}>
-            <label
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: Spacing.lg,
+                  marginBottom: Spacing.lg,
+                }}
+              >
+                <Input
+                  label="Nome *"
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder="Ex: Hambúrguer Artesanal"
+                  fullWidth
+                />
+                <Input
+                  label="Preço (€) *"
+                  type="text"
+                  inputMode="decimal"
+                  value={priceInput}
+                  onChange={(e) =>
+                    setPriceInput(parseMoneyInput(e.target.value).rawSanitized)
+                  }
+                  placeholder="ex: 2,50"
+                  fullWidth
+                />
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: Spacing.lg,
+                  marginBottom: Spacing.lg,
+                }}
+              >
+                <Select
+                  label="Estação *"
+                  value={formData.station}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      station: e.target.value as "BAR" | "KITCHEN",
+                    })
+                  }
+                  options={[
+                    { value: "KITCHEN", label: "🍳 Cozinha" },
+                    { value: "BAR", label: "🍺 Bar" },
+                  ]}
+                  fullWidth
+                />
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontWeight: 600,
+                      color: theme.text,
+                      fontSize: 14,
+                    }}
+                  >
+                    Tempo (min) *
+                  </label>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      marginBottom: 8,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {[2, 3, 5, 8, 12].map((mins) => (
+                      <button
+                        key={mins}
+                        type="button"
+                        onClick={() =>
+                          setFormData({ ...formData, prep_time_minutes: mins })
+                        }
+                        style={{
+                          padding: "6px 12px",
+                          fontSize: 12,
+                          backgroundColor:
+                            formData.prep_time_minutes === mins
+                              ? theme.primary
+                              : variant === "panel"
+                              ? theme.surface
+                              : "#f3f4f6",
+                          color:
+                            formData.prep_time_minutes === mins
+                              ? "#fff"
+                              : theme.text,
+                          border: `1px solid ${theme.border}`,
+                          borderRadius: 4,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {mins} min
+                      </button>
+                    ))}
+                  </div>
+                  <Input
+                    type="number"
+                    min={0.5}
+                    max={60}
+                    step={0.5}
+                    value={String(formData.prep_time_minutes)}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        prep_time_minutes: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    fullWidth
+                    style={{ marginBottom: 0 }}
+                  />
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: Spacing.lg,
+                  marginBottom: Spacing.lg,
+                }}
+              >
+                <Select
+                  label="Categoria"
+                  value={formData.category_id || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      category_id: e.target.value || null,
+                    })
+                  }
+                  options={[
+                    { value: "", label: "Sem categoria" },
+                    ...categories.map((cat) => ({
+                      value: cat.id,
+                      label: cat.name,
+                    })),
+                  ]}
+                  fullWidth
+                />
+                <Select
+                  label="Tipo"
+                  value={formData.prep_category || "main"}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      prep_category: e.target.value as
+                        | "drink"
+                        | "starter"
+                        | "main"
+                        | "dessert",
+                    })
+                  }
+                  options={[
+                    { value: "drink", label: "Bebida" },
+                    { value: "starter", label: "Entrada" },
+                    { value: "main", label: "Principal" },
+                    { value: "dessert", label: "Sobremesa" },
+                  ]}
+                  fullWidth
+                />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    color: theme.text,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={formData.available}
+                    onChange={(e) =>
+                      setFormData({ ...formData, available: e.target.checked })
+                    }
+                  />
+                  <span>Disponível</span>
+                </label>
+              </div>
+
+              <div style={{ display: "flex", gap: Spacing.sm }}>
+                {editingProduct ? (
+                  <>
+                    <Button
+                      tone="action"
+                      variant="solid"
+                      onClick={handleSaveEdit}
+                      disabled={creating}
+                      isLoading={creating}
+                    >
+                      {creating ? "A guardar..." : "Guardar"}
+                    </Button>
+                    <Button
+                      tone="neutral"
+                      variant="outline"
+                      onClick={() => {
+                        setEditingProduct(null);
+                        setFormData(EMPTY_MENU_ITEM_FORM);
+                        setPriceInput("");
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    tone="success"
+                    variant="solid"
+                    onClick={handleCreate}
+                    disabled={creating}
+                    isLoading={creating}
+                  >
+                    {creating ? "A criar..." : "Criar Item"}
+                  </Button>
+                )}
+              </div>
+            </Card>
+          </>
+        )}
+
+        {(activeTab === "foto" ||
+          activeTab === "pdf" ||
+          activeTab === "link" ||
+          activeTab === "ia") && (
+          <Card padding="lg" style={{ marginBottom: 24 }}>
+            <p style={{ margin: 0, color: theme.textMuted, fontSize: 14 }}>
+              {activeTab === "foto" && "Envie uma foto do seu menu (PNG/JPG)."}
+              {activeTab === "pdf" && "Envie um PDF do seu menu."}
+              {activeTab === "link" && "Cole o link do seu menu."}
+              {activeTab === "ia" &&
+                "Descreva o seu menu e deixe a IA sugerir itens."}
+            </p>
+            <p
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                color: theme.text,
+                margin: "8px 0 0 0",
+                fontSize: 13,
+                color: theme.textMuted,
               }}
             >
-              <input
-                type="checkbox"
-                checked={formData.available}
-                onChange={(e) =>
-                  setFormData({ ...formData, available: e.target.checked })
-                }
-              />
-              <span>Disponível</span>
-            </label>
-          </div>
-
-          <div style={{ display: "flex", gap: 8 }}>
-            {editingProduct ? (
-              <>
-                <button
-                  onClick={handleSaveEdit}
-                  disabled={creating}
-                  style={{
-                    padding: "10px 18px",
-                    backgroundColor: theme.primary,
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 4,
-                    cursor: creating ? "wait" : "pointer",
-                    fontWeight: 600,
-                  }}
-                >
-                  {creating ? "A guardar..." : "Guardar"}
-                </button>
-                <button
-                  onClick={() => {
-                    setEditingProduct(null);
-                    setFormData({
-                      name: "",
-                      description: "",
-                      price_cents: 0,
-                      category_id: null,
-                      station: "KITCHEN",
-                      prep_time_minutes: 5,
-                      prep_category: "main",
-                      available: true,
-                    });
-                  }}
-                  style={{
-                    padding: "10px 18px",
-                    backgroundColor: theme.textMuted,
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 4,
-                    cursor: "pointer",
-                  }}
-                >
-                  Cancelar
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={handleCreate}
-                disabled={creating}
-                style={{
-                  padding: "10px 18px",
-                  backgroundColor: theme.accent,
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 4,
-                  cursor: creating ? "wait" : "pointer",
-                  fontWeight: 600,
-                }}
-              >
-                {creating ? "A criar..." : "Criar Item"}
-              </button>
-            )}
-          </div>
-        </div>
+              Funcionalidade não ativa. Use a tab Manual para criar ou editar
+              itens.
+            </p>
+          </Card>
+        )}
 
         {/* Lista */}
         <div>
@@ -824,7 +980,7 @@ export function MenuBuilderCore({
                   key={product.id}
                   style={{
                     border: `1px solid ${theme.border}`,
-                    borderRadius: theme.radius,
+                    borderRadius: radius.lg,
                     padding: 16,
                     backgroundColor: theme.surface,
                   }}
@@ -887,35 +1043,23 @@ export function MenuBuilderCore({
                         {product.prep_category && ` • ${product.prep_category}`}
                       </div>
                     </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button
+                    <div style={{ display: "flex", gap: Spacing.sm }}>
+                      <Button
+                        size="sm"
+                        tone="action"
+                        variant="solid"
                         onClick={() => handleEdit(product)}
-                        style={{
-                          padding: "6px 12px",
-                          fontSize: 12,
-                          backgroundColor: theme.primary,
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: 4,
-                          cursor: "pointer",
-                        }}
                       >
                         Editar
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        size="sm"
+                        tone="destructive"
+                        variant="solid"
                         onClick={() => handleDelete(product.id)}
-                        style={{
-                          padding: "6px 12px",
-                          fontSize: 12,
-                          backgroundColor: "#ef4444",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: 4,
-                          cursor: "pointer",
-                        }}
                       >
                         Deletar
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>

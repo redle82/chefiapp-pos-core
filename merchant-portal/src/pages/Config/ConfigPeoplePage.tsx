@@ -6,7 +6,8 @@
 
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { PeopleSection } from '../Onboarding/sections/PeopleSection';
+import { RestaurantPeopleSection } from './RestaurantPeopleSection';
+import { RolesSummarySection } from './RolesSummarySection';
 
 export function ConfigPeoplePage() {
   const location = useLocation();
@@ -71,15 +72,10 @@ export function ConfigPeoplePage() {
         </button>
       </div>
 
-      {/* Conteúdo */}
-      {isEmployeesTab && <PeopleSection />}
-      {isRolesTab && (
-        <div>
-          <p style={{ color: '#666' }}>
-            Gerenciamento de papéis e permissões será implementado aqui.
-          </p>
-        </div>
-      )}
+      {/* Conteúdo: FASE 3 Passo 1 — pessoas operacionais (gm_restaurant_people) com código/QR */}
+      {isEmployeesTab && <RestaurantPeopleSection />}
+      {/* FASE 3 Passo 4: resumo do que cada papel pode fazer */}
+      {isRolesTab && <RolesSummarySection />}
     </div>
   );
 }

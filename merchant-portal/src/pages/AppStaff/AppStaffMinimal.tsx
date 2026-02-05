@@ -8,18 +8,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { InstallAppPrompt } from "../../components/pwa/InstallAppPrompt";
+import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { readActiveOrders } from "../../core-boundary/readers/OrderReader";
+import { readOpenTasks } from "../../core-boundary/readers/TaskReader";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
-import { canAccessPath } from "../../core/roles/rolePermissions";
-import { useRole } from "../../core/roles/RoleContext";
 import { getStaffCopy } from "../../core/roles";
+import { useRole } from "../../core/roles/RoleContext";
+import { canAccessPath } from "../../core/roles/rolePermissions";
 import {
   getTabIsolated,
   removeTabIsolated,
   setTabIsolated,
 } from "../../core/storage/TabIsolatedStorage";
 import { ToastContainer, useToast } from "../../ui/design-system/Toast";
-import { readActiveOrders } from "../../core-boundary/readers/OrderReader";
-import { readOpenTasks } from "../../core-boundary/readers/TaskReader";
 import { TaskPanel } from "../KDSMinimal/TaskPanel";
 import { GamificationPanel } from "./components/GamificationPanel";
 import { MiniKDSMinimal } from "./components/MiniKDSMinimal";
@@ -69,10 +70,25 @@ function MinimalCheckInScreen({
           ← Voltar ao Dashboard
         </button>
       )}
-      <h1 style={{ fontSize: vpc.fontSizeLarge, fontWeight: 700, margin: "0 0 8px 0", color: vpc.text, textAlign: "center" }}>
+      <h1
+        style={{
+          fontSize: vpc.fontSizeLarge,
+          fontWeight: 700,
+          margin: "0 0 8px 0",
+          color: vpc.text,
+          textAlign: "center",
+        }}
+      >
         Entrar em turno
       </h1>
-      <p style={{ fontSize: vpc.fontSizeBase, color: vpc.textMuted, margin: "0 0 24px 0", textAlign: "center" }}>
+      <p
+        style={{
+          fontSize: vpc.fontSizeBase,
+          color: vpc.textMuted,
+          margin: "0 0 24px 0",
+          textAlign: "center",
+        }}
+      >
         Identifique-se para aceder ao KDS, TPV e tarefas.
       </p>
       <input
@@ -144,13 +160,15 @@ export function AppStaffMinimal() {
   const roleDeniedShown = useRef(false);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"kds" | "tarefas" | "pontos">("kds");
-  // Estado de turno (CORE_TIME_AND_TURN_CONTRACT): em turno = workerName preenchido
-  const [workerName, setWorkerName] = useState<string | null>(() =>
-    getTabIsolated(MINIMAL_TURN_KEY) || null
+  const [activeTab, setActiveTab] = useState<"kds" | "tarefas" | "pontos">(
+    "kds"
   );
-  const [checkedInAt, setCheckedInAt] = useState<string | null>(() =>
-    getTabIsolated(MINIMAL_TURN_AT_KEY) || null
+  // Estado de turno (CORE_TIME_AND_TURN_CONTRACT): em turno = workerName preenchido
+  const [workerName, setWorkerName] = useState<string | null>(
+    () => getTabIsolated(MINIMAL_TURN_KEY) || null
+  );
+  const [checkedInAt, setCheckedInAt] = useState<string | null>(
+    () => getTabIsolated(MINIMAL_TURN_AT_KEY) || null
   );
   // Métricas de consciência (CORE_OPERATIONAL_AWARENESS_CONTRACT) e alertas (tarefas abertas)
   const [openTaskCount, setOpenTaskCount] = useState(0);
@@ -159,6 +177,8 @@ export function AppStaffMinimal() {
     queue: number;
     pressure: "baixa" | "média" | "alta";
   }>({ delayed: 0, queue: 0, pressure: "baixa" });
+
+  const { runtime } = useRestaurantRuntime();
 
   // Id para leituras (evita "before initialization" nos effects)
   const restaurantIdOrDefault = restaurantId ?? DEFAULT_RESTAURANT_ID;
@@ -183,6 +203,10 @@ export function AppStaffMinimal() {
   useEffect(() => {
     const load = async () => {
       try {
+        if (runtime.loading || !runtime.coreReachable) {
+          setOpenTaskCount(0);
+          return;
+        }
         const tasks = await readOpenTasks(restaurantIdOrDefault);
         setOpenTaskCount(tasks.length);
       } catch {
@@ -192,7 +216,7 @@ export function AppStaffMinimal() {
     load();
     const interval = setInterval(load, 10000);
     return () => clearInterval(interval);
-  }, [restaurantIdOrDefault]);
+  }, [restaurantIdOrDefault, runtime.loading, runtime.coreReachable]);
 
   useEffect(() => {
     const load = async () => {
@@ -212,8 +236,8 @@ export function AppStaffMinimal() {
           delayed > 2 || queue > 4
             ? "alta"
             : delayed > 0 || queue > 2
-              ? "média"
-              : "baixa";
+            ? "média"
+            : "baixa";
         setMetrics({ delayed, queue, pressure });
       } catch {
         setMetrics({ delayed: 0, queue: 0, pressure: "baixa" });
@@ -384,7 +408,12 @@ export function AppStaffMinimal() {
               Em turno: {workerName}
             </span>
             <span style={{ fontSize: 13, color: VPC.textMuted }}>
-              Papel: {role === "owner" ? "Dono" : role === "manager" ? "Gerente" : "Staff"}
+              Papel:{" "}
+              {role === "owner"
+                ? "Dono"
+                : role === "manager"
+                ? "Gerente"
+                : "Staff"}
             </span>
             {checkedInAt && (
               <span style={{ fontSize: 13, color: VPC.textMuted }}>
@@ -435,7 +464,12 @@ export function AppStaffMinimal() {
           }}
         >
           <span>
-            Atrasados: <strong style={{ color: metrics.delayed > 0 ? "#ef4444" : VPC.text }}>{metrics.delayed}</strong>
+            Atrasados:{" "}
+            <strong
+              style={{ color: metrics.delayed > 0 ? "#ef4444" : VPC.text }}
+            >
+              {metrics.delayed}
+            </strong>
           </span>
           <span>
             Fila: <strong style={{ color: VPC.text }}>{metrics.queue}</strong>
@@ -448,8 +482,8 @@ export function AppStaffMinimal() {
                   metrics.pressure === "alta"
                     ? "#ef4444"
                     : metrics.pressure === "média"
-                      ? "#eab308"
-                      : VPC.accent,
+                    ? "#eab308"
+                    : VPC.accent,
               }}
             >
               {metrics.pressure}
@@ -473,14 +507,17 @@ export function AppStaffMinimal() {
           }}
         >
           <span>
-            Ticket médio do turno: <strong style={{ color: VPC.text }}>—</strong>
+            Ticket médio do turno:{" "}
+            <strong style={{ color: VPC.text }}>—</strong>
           </span>
           {(role === "manager" || role === "owner") && (
             <span>
               Resumo turno: <strong style={{ color: VPC.text }}>—</strong>
             </span>
           )}
-          <span style={{ fontSize: 12, opacity: 0.8 }}>(quando o Core expuser)</span>
+          <span style={{ fontSize: 12, opacity: 0.8 }}>
+            (quando o Core expuser)
+          </span>
         </div>
 
         {/* Tabs — VPC: accent verde, min-height 48px */}

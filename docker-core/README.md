@@ -9,6 +9,7 @@ Este é o Core oficial do ChefIApp rodando em Docker, desacoplado do Supabase.
 ## 🎯 Objetivo
 
 Criar um ambiente limpo onde:
+
 - ✅ Postgres puro (sem abstrações Supabase)
 - ✅ Schema oficial do Core (sem resíduos)
 - ✅ RPCs reais (`create_order_atomic`)
@@ -19,20 +20,33 @@ Criar um ambiente limpo onde:
 
 ## 🚀 Quick Start
 
-### 1. Subir o Core
+### 1. Subir o Core (um comando sobe o planeta)
 
-**Na raiz do repositório:**
+**Na raiz do repositório (recomendado):**
+
+```bash
+make world-up
+# ou
+./scripts/chef-world-up.sh
+```
+
+**Alternativa (npm):**
+
 ```bash
 npm run docker:core:up
 ```
 
 **Ou dentro de `docker-core`:**
+
 ```bash
 cd docker-core
 docker compose -f docker-compose.core.yml up -d
 ```
 
+**CLI completa (world-up, world-down, world-chaos):** [docs/strategy/CLI_CHEFIAPP_OS.md](../docs/strategy/CLI_CHEFIAPP_OS.md)
+
 **Aguarde até ver:**
+
 ```
 chefiapp-core-postgres    | database system is ready to accept connections
 ```
@@ -46,9 +60,13 @@ docker compose -f docker-compose.core.yml ps
 ```
 
 **Deve mostrar:**
+
 - `chefiapp-core-postgres` - healthy
 - `chefiapp-core-postgrest` - running
 - `chefiapp-core-realtime` - running
+- `chefiapp-core-keycloak` - running (auth)
+- `chefiapp-core-minio` - running (storage)
+- `chefiapp-core-pgadmin` - running (opcional)
 
 ### 3. Conectar ao Banco
 
@@ -58,13 +76,17 @@ docker compose -f docker-core/docker-compose.core.yml exec postgres psql -U post
 
 ---
 
-## 📊 Endpoints
+## 📊 Endpoints (stack local — zero Supabase)
 
-| Serviço | URL | Descrição |
-|---------|-----|-----------|
-| **Postgres** | `localhost:54320` | Banco de dados |
-| **PostgREST** | `http://localhost:3001` | REST API (RPCs) |
-| **Realtime** | `ws://localhost:4000` | WebSocket (KDS sync) |
+| Serviço       | URL                     | Descrição                      |
+| ------------- | ----------------------- | ------------------------------ |
+| **Postgres**  | `localhost:54320`       | Banco de dados                 |
+| **PostgREST** | `http://localhost:3001` | REST API (RPCs, /rest/v1/)     |
+| **Realtime**  | `ws://localhost:4000`   | WebSocket (KDS sync)           |
+| **Keycloak**  | `http://localhost:8080` | Auth (substitui Supabase Auth) |
+| **MinIO**     | `http://localhost:9000` | API S3 (storage)               |
+| **MinIO UI**  | `http://localhost:9001` | Consola MinIO                  |
+| **pgAdmin**   | `http://localhost:5050` | Admin UI Postgres (opcional)   |
 
 ---
 
@@ -89,16 +111,37 @@ VITE_API_BASE=http://localhost:3000
 
 ## 📦 Migrations
 
-O `core_schema.sql` é aplicado apenas no primeiro `up` (initdb). Migrations adicionais em `schema/migrations/` devem ser aplicadas manualmente após o Core estar rodando.
+No primeiro `up` (initdb), o Postgres aplica por ordem:
 
-**Exemplo — coluna `product_mode` (persistência demo/pilot/live):**
+1. **01-core-schema.sql** — tabelas base (gm_restaurants, gm_orders, gm_order_items, etc.) e RPC `create_order_atomic`
+2. **02-seeds-dev.sql** — seeds mínimas para desenvolvimento
+3. **03-migrations-consolidated.sql** — migrações consolidadas: prep_time, station, ready_at, gm_tasks, gm_cash_registers, gm_payments, billing_configs, product_mode, RPCs `mark_item_ready`, `update_order_status`, `get_operational_metrics`, `get_shift_history`, tipos de tarefa PEDIDO_NOVO/MODO_INTERNO, etc.
+4. **04-modules-and-extras.sql** — tabelas por módulo: gm_restaurant_members (people), installed_modules, module_permissions, event_store, legal_seals, gm_locations, gm_equipment, gm_ingredients, gm_stock_levels, gm_product_bom, gm_stock_ledger (stock/inventory).
+5. **05-device-kinds.sql** — gm_equipment.kind passa a incluir TPV e KDS (dispositivos com identidade fixa).
+6. **06-seed-enterprise.sql** — seeds enterprise.
+7. **07-role-anon.sql** — role `anon` para PostgREST (opcional; actualmente usa `postgres`).
 
-```bash
-cd docker-core
-make migrate-product-mode
-```
+**Um reset total (`down -v` + `up`) deixa o banco com todas as tabelas e RPCs usados pelo front e back (menu, pedidos, tarefas, caixa, pessoas, módulos, event store, stock).**
 
-Isso adiciona `gm_restaurants.product_mode` (demo | pilot | live). Sem essa migration, o modo continua só em sessão na UI.
+Migrations individuais em `schema/migrations/` existem para referência; para um Core novo, não é necessário aplicá-las manualmente (já estão em `03-migrations-consolidated.sql`). Os targets `make migrate-*` servem apenas se tiver um volume antigo criado antes da consolidação.
+
+---
+
+## 💾 Backup e rollback
+
+**Antes de aplicar migrations de DROP (ex.: `20260203_drop_legacy_untouched.sql`):**
+
+1. **Backup lógico:** Exportar dados das tabelas alvo (ou schema completo) para SQL.
+   ```bash
+   docker compose -f docker-compose.core.yml exec postgres pg_dump -U postgres -d chefiapp_core -t mentor_suggestions -t mentor_recommendations [outras tabelas...] > docker-core/backups/pre_drop_legacy_YYYYMMDD.sql
+   ```
+   Guardar em `docker-core/backups/` (criar o directório se não existir) com nome datado.
+
+2. **Restaurar (rollback):** Se precisar de reverter o DROP:
+   - **Opção A:** Restaurar a partir do backup: `psql -U postgres -d chefiapp_core < docker-core/backups/pre_drop_legacy_YYYYMMDD.sql`
+   - **Opção B:** Re-aplicar as migrations originais que criaram essas tabelas (ex.: `20260127_mentoria_ia.sql`, etc.) a partir de `schema/migrations/`.
+
+**Referência:** [docs/ops/DB_TABLE_CLASSIFICATION.md](../docs/ops/DB_TABLE_CLASSIFICATION.md); plano DROP físico LEGACY (Opção A).
 
 ---
 
@@ -112,10 +155,11 @@ docker compose -f docker-compose.core.yml up -d
 ```
 
 Isso:
+
 - Remove todos os volumes
 - Recria o banco do zero
-- Aplica o schema limpo
-- Insere seeds mínimas
+- Aplica 01-core-schema, 02-seeds-dev e 03-migrations-consolidated (schema + tabelas + RPCs completos)
+- Deixa o Core alinhado com o que o front e o back usam
 
 ---
 
@@ -123,12 +167,32 @@ Isso:
 
 ```
 docker-core/
-├── docker-compose.core.yml    # Orquestração
+├── docker-compose.core.yml    # Orquestração (initdb.d: 01, 02, 03)
 ├── schema/
-│   ├── core_schema.sql        # Schema oficial do Core
-│   └── seeds_dev.sql          # Seeds para desenvolvimento
+│   ├── core_schema.sql        # 01 — Schema oficial do Core
+│   ├── seeds_dev.sql          # 02 — Seeds para desenvolvimento
+│   ├── 03-migrations-consolidated.sql  # 03 — Migrações (gm_tasks, caixa, RPCs)
+│   ├── 04-modules-and-extras.sql      # 04 — Módulos (members, installed_modules, event_store, stock)
+│   ├── 06-seed-enterprise.sql        # 06 — Seeds enterprise
+│   ├── 07-role-anon.sql              # 07 — Role anon (PostgREST)
+│   ├── migrations/           # Migrações individuais (referência)
+│   ├── rpc_mark_item_ready.sql
+│   └── rpc_update_order_status.sql
 └── README.md                  # Este arquivo
 ```
+
+---
+
+## 🧪 Teste global (todas as tabelas + TPV + tarefas)
+
+Com o Core em cima, execute:
+
+```bash
+cd docker-core
+make test-global
+```
+
+Valida: Core acessível, tabelas por módulo (gm\_\*, installed_modules, event_store, stock), abrir turno (TPV), criar pedido (`create_order_atomic`), inserir tarefa MODO_INTERNO (fluxo "sem pedidos → tarefas"). Para E2E no browser: `npm run dev` (merchant-portal) e noutro terminal `npm run test:e2e:smoke`.
 
 ---
 
@@ -152,11 +216,13 @@ docker compose -f docker-compose.core.yml exec postgres psql -U postgres -d chef
 ## 🔄 Migração do Supabase
 
 **Fase A (Agora):**
+
 - ✅ Core Docker rodando
 - ✅ UI aponta para Docker
 - ✅ Supabase congelado (não usado)
 
 **Fase B (Futuro - sem pressa):**
+
 - Decidir se quer Supabase Cloud
 - Ou RDS
 - Ou bare metal
@@ -168,21 +234,26 @@ docker compose -f docker-compose.core.yml exec postgres psql -U postgres -d chef
 
 ## 🚨 Troubleshooting
 
+**Logs e saúde do Core:** ver [docs/strategy/OBSERVABILITY_MINIMA.md](../docs/strategy/OBSERVABILITY_MINIMA.md) (logs, Postgres, PostgREST, Realtime).
+
 ### Postgres não sobe
+
 ```bash
 docker compose -f docker-compose.core.yml logs postgres
 ```
 
 ### PostgREST não conecta
+
 ```bash
 docker compose -f docker-compose.core.yml logs postgrest
 ```
 
 ### Realtime não funciona
+
 ```bash
 docker compose -f docker-compose.core.yml logs realtime
 ```
 
 ---
 
-*"Banco novo para sistema novo. Sempre."*
+_"Banco novo para sistema novo. Sempre."_

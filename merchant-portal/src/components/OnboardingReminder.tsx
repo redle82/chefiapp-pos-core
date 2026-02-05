@@ -21,9 +21,25 @@ export const OnboardingReminder: React.FC = () => {
     const navigate = useNavigate();
     const { hasMenu, hasFirstSale, loading } = useOnboardingStatus();
 
-    // Não mostrar nada se já completou ou está carregando
-    if (loading || (hasMenu && hasFirstSale)) {
+    // Já completou: não mostrar reminder
+    if (hasMenu && hasFirstSale) {
         return null;
+    }
+
+    // A carregar: placeholder para não deixar buraco no layout
+    if (loading) {
+        return (
+            <div style={{
+                marginBottom: '24px',
+                padding: '12px 16px',
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                borderRadius: 8,
+                fontSize: 13,
+                color: 'rgba(255,255,255,0.6)',
+            }}>
+                A carregar estado do onboarding…
+            </div>
+        );
     }
 
     return (

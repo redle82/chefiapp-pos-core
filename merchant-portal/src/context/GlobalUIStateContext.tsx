@@ -15,7 +15,9 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import type { RestaurantLifecycleState } from "../core/lifecycle/LifecycleState";
 import { useShift } from "../core/shift/ShiftContext";
+import { useLifecycleStateContext } from "./LifecycleStateContext";
 import { useRestaurantRuntime } from "./RestaurantRuntimeContext";
 
 export type BillingStatus = "trial" | "active" | "past_due" | "suspended";
@@ -51,6 +53,8 @@ export interface GlobalUIState {
   isBillingBlocked: boolean;
   /** Aviso de faturação pendente (past_due) */
   isBillingWarning: boolean;
+  /** Estado da jornada do restaurante (Vida do Restaurante). Ref: CONTRATO_VIDA_RESTAURANTE. */
+  lifecycleState: RestaurantLifecycleState | null;
 }
 
 const defaultState: GlobalUIState = {
@@ -69,6 +73,7 @@ const defaultState: GlobalUIState = {
   billingStatus: "trial",
   isBillingBlocked: false,
   isBillingWarning: false,
+  lifecycleState: null,
 };
 
 const GlobalUIStateContext = createContext<GlobalUIState>(defaultState);
@@ -80,6 +85,7 @@ export function GlobalUIStateProvider({
 }) {
   const { runtime } = useRestaurantRuntime();
   const shift = useShift();
+  const { lifecycleState } = useLifecycleStateContext();
   const [screenError, setScreenErrorState] = useState<string | null>(null);
   const [screenLoading, setScreenLoadingState] = useState(false);
   const [screenEmpty, setScreenEmptyState] = useState(false);
@@ -114,7 +120,8 @@ export function GlobalUIStateProvider({
       isError,
       errorMessage,
       setScreenError,
-      isPilot: !!runtime && runtime.productMode === "pilot",
+      /** CORREÇÃO 3: derivado de systemState (não productMode). Trial = fase piloto. */
+      isPilot: runtime?.systemState === "TRIAL",
       coreReachable: runtime?.coreReachable ?? true,
       billingStatus: (function () {
         const billing = runtime?.billing_status;
@@ -134,6 +141,7 @@ export function GlobalUIStateProvider({
       isBillingWarning:
         runtime?.billing_status === "past_due" ||
         runtime?.status === "past_due",
+      lifecycleState,
     };
   }, [
     runtime,
@@ -141,6 +149,7 @@ export function GlobalUIStateProvider({
     screenError,
     screenLoading,
     screenEmpty,
+    lifecycleState,
     setScreenError,
     setScreenLoading,
     setScreenEmpty,

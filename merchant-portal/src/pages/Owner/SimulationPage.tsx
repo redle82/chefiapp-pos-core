@@ -1,8 +1,8 @@
 /**
  * Owner Simulation - Simulação de Futuro (Time Warp UI)
- * 
+ *
  * Pergunta: "E se...?"
- * 
+ *
  * Componentes:
  * - Cenário base
  * - Ajustes (staff, estoque, reservas)
@@ -15,9 +15,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/navigation/Header';
 import { BottomTabs } from '../../components/navigation/BottomTabs';
+import { DataModeBanner } from '../../components/DataModeBanner';
+import { useRestaurantRuntime } from '../../context/RestaurantRuntimeContext';
 
 export function OwnerSimulationPage() {
   const navigate = useNavigate();
+  const { runtime } = useRestaurantRuntime();
   const [scenario, setScenario] = useState({
     period: 'next_week',
     staff: 3,
@@ -64,7 +67,7 @@ export function OwnerSimulationPage() {
         subtitle="E se...?"
         onBack={() => navigate('/owner/vision')}
       />
-
+      <DataModeBanner dataMode={runtime.dataMode} />
       <div style={{ padding: '16px' }}>
         {/* Cenário Base */}
         <div style={{ marginBottom: '24px' }}>

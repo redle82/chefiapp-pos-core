@@ -1,35 +1,100 @@
 /**
  * OperationalMetricsCards - Visibilidade mínima por tenant (G4 Onda 3)
  *
- * Chama get_operational_metrics(restaurantId, startOfDay, endOfDay) e exibe
- * cards: pedidos do dia, receita, turnos ativos, export requested.
- * Ver docs/ops/DASHBOARD_METRICS.md.
+ * FASE D: SETUP → "Configure o restaurante para começar."; TRIAL sem dados →
+ * "Ainda não há pedidos. Abra o TPV para a primeira venda."; ACTIVE → métricas reais.
  */
 
-import React from "react";
+import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { useRestaurantId } from "../../core/hooks/useRestaurantId";
 import { useOperationalMetrics } from "../../hooks/useOperationalMetrics";
-import { GlobalLoadingView } from "../../ui/design-system/components";
 
 function formatCents(cents: number): string {
-  return new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(cents / 100);
+  return new Intl.NumberFormat("pt-PT", {
+    style: "currency",
+    currency: "EUR",
+  }).format(cents / 100);
 }
 
 export function OperationalMetricsCards() {
   const { restaurantId, loading: loadingRestaurant } = useRestaurantId();
-  const { data, loading, error, refresh } = useOperationalMetrics(restaurantId);
+  const { runtime } = useRestaurantRuntime();
+  const systemState = runtime.systemState ?? "SETUP";
+  const { data, loading, error, refresh } = useOperationalMetrics(
+    restaurantId,
+    systemState
+  );
 
   if (loadingRestaurant || !restaurantId) {
-    return null;
+    return (
+      <section
+        style={{
+          marginTop: "24px",
+          padding: "20px 24px",
+          backgroundColor: "#f8fafc",
+          border: "1px solid #e2e8f0",
+          borderRadius: 14,
+        }}
+      >
+        <p style={{ fontSize: "14px", color: "#64748b", margin: 0 }}>
+          Configure o restaurante para ver as métricas do dia.
+        </p>
+      </section>
+    );
   }
 
+  if (systemState === "SETUP") {
+    return (
+      <section
+        style={{
+          marginTop: "24px",
+          padding: "20px 24px",
+          backgroundColor: "#fffbeb",
+          border: "1px solid #fcd34d",
+          borderRadius: 14,
+        }}
+      >
+        <p style={{ fontSize: "14px", color: "#92400e", margin: 0 }}>
+          Configure o restaurante para começar.
+        </p>
+      </section>
+    );
+  }
+
+  // Nunca gate de render: mostrar secção inline (não fullscreen) para não bloquear a web de configuração.
   if (loading && !data) {
     return (
-      <GlobalLoadingView
-        message="A carregar métricas do dia..."
-        layout="portal"
-        variant="fullscreen"
-      />
+      <section
+        style={{
+          marginTop: "24px",
+          padding: "20px 24px",
+          backgroundColor: "#f8fafc",
+          border: "1px solid #e2e8f0",
+          borderRadius: 14,
+        }}
+      >
+        <p style={{ fontSize: "14px", color: "#64748b", margin: 0 }}>
+          A carregar métricas do dia...
+        </p>
+      </section>
+    );
+  }
+
+  if ((systemState === "TRIAL" || systemState === "ACTIVE") && !data && !loading) {
+    return (
+      <section
+        style={{
+          marginTop: "24px",
+          padding: "20px 24px",
+          backgroundColor: "#f0fdf4",
+          border: "1px solid #bbf7d0",
+          borderRadius: 14,
+        }}
+      >
+        <p style={{ fontSize: "14px", color: "#166534", margin: 0 }}>
+          Ainda sem vendas hoje. Abra um turno e use o TPV para a primeira venda.
+        </p>
+      </section>
     );
   }
 
@@ -45,9 +110,8 @@ export function OperationalMetricsCards() {
         }}
       >
         <p style={{ fontSize: "14px", color: "#991b1b", marginBottom: "8px" }}>
-          Não foi possível carregar as métricas do dia.
+          Não foi possível carregar as métricas do dia. Verifique a ligação ao servidor e tente novamente.
         </p>
-        <p style={{ fontSize: "13px", color: "#b91c1c" }}>{error}</p>
         <button
           type="button"
           onClick={refresh}
@@ -92,6 +156,11 @@ export function OperationalMetricsCards() {
       icon: "📤",
     },
   ];
+  const allZero =
+    m &&
+    (m.daily_orders_count ?? 0) === 0 &&
+    (m.daily_revenue_cents ?? 0) === 0 &&
+    (m.active_shifts_count ?? 0) === 0;
 
   return (
     <section
@@ -156,15 +225,31 @@ export function OperationalMetricsCards() {
               borderRadius: 10,
             }}
           >
-            <div style={{ fontSize: "12px", color: "#64748b", marginBottom: 4 }}>
+            <div
+              style={{ fontSize: "12px", color: "#64748b", marginBottom: 4 }}
+            >
               {icon} {label}
             </div>
-            <div style={{ fontSize: "20px", fontWeight: 700, color: "#1e293b" }}>
+            <div
+              style={{ fontSize: "20px", fontWeight: 700, color: "#1e293b" }}
+            >
               {value}
             </div>
           </div>
         ))}
       </div>
+      {allZero && (
+        <p
+          style={{
+            marginTop: 12,
+            marginBottom: 0,
+            fontSize: "13px",
+            color: "#64748b",
+          }}
+        >
+          Ainda sem vendas hoje. As métricas preenchem-se após a primeira venda no TPV.
+        </p>
+      )}
     </section>
   );
 }

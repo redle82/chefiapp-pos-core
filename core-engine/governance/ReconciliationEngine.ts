@@ -11,7 +11,7 @@
  * FINANCIAL_CORE_VIOLATION_AUDIT Fase 4: usa getTableClient() e invokeRpc (Core quando Docker).
  */
 
-import { getTableClient, invokeRpc } from '../infra/coreOrSupabaseRpc';
+import { getTableClient, invokeRpc } from '../infra/coreRpc';
 import { Logger } from '../logger';
 import { DbWriteGate } from './DbWriteGate'; // For authorized updates during reconcile
 

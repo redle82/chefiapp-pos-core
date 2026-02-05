@@ -16,7 +16,7 @@ Este diretório contém toda a documentação do projeto de transformação do C
 
 Documentos em `audit/`, `archive/`, `pilots/` e outros runbooks antigos podem referir a porta **5173**. Essa porta foi usada em fases iniciais do projeto.
 
-👉 **Porta canónica atual:** **5175** ([CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md)).
+👉 **Porta oficial do portal:** **5157** ([CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md)).
 👉 **Nota completa:** [HISTORICAL_NOTES.md](./HISTORICAL_NOTES.md).
 
 👉 **Índice de todos os MDs:** [INDICE_MDS.md](./INDICE_MDS.md) — entradas canónicas (README, architecture, contracts, auditoria).
@@ -33,7 +33,7 @@ Documentos em `audit/`, `archive/`, `pilots/` e outros runbooks antigos podem re
 - **[Architecture README](./architecture/README.md)** — entrada canónica de arquitetura
 - **[Contracts README](./contracts/README.md)** — entrada canónica de contratos
 - **[CAMINHO_DO_CLIENTE.md](./architecture/CAMINHO_DO_CLIENTE.md)** — visão produto: fluxo do cliente (Landing → Signup → Portal → Billing → Operação)
-- **[CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md)** — runtime/rotas/porta canónica (5175)
+- **[CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md)** — runtime/rotas/porta oficial do portal (5157)
 
 ### Documentos “principais” (planeados / em evolução)
 Os itens abaixo fazem parte do roadmap documental, mas **podem ainda não existir**. O acesso deve ser feito via **INDICE_MDS** (que só lista o que existe).

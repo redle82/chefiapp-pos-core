@@ -214,6 +214,8 @@ export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = memo(
                     return (
                       <Card
                         key={item.id}
+                        data-testid="product-card"
+                        data-product-name={item.name}
                         surface={
                           isOutOfStock
                             ? "base"
@@ -352,5 +354,5 @@ export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = memo(
         nextProps.currentOrderItems?.length &&
       prevProps.items.every((item, idx) => item.id === nextProps.items[idx]?.id)
     );
-  },
+  }
 );

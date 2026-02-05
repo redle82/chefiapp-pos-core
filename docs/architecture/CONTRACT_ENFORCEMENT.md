@@ -12,12 +12,13 @@
 
 ## 0. Soberania Financeira (CORE_FINANCIAL_SOVEREIGNTY_CONTRACT — Supreme Contract)
 
-| Regra                                                                    | Onde está aplicada                                                                                                                                                         |
-| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Docker Core = único Financial Core; Supabase/Firebase não são Core       | Contrato [CORE_FINANCIAL_SOVEREIGNTY_CONTRACT.md](./CORE_FINANCIAL_SOVEREIGNTY_CONTRACT.md); CORE*CONTRACT_INDEX §0; todos os CORE*\*\_CONTRACT.md com secção Sovereignty. |
-| Nenhum terminal calcula totais/preços/estado de pagamento/SLA localmente | Contrato; auditoria [FINANCIAL_CORE_VIOLATION_AUDIT.md](./FINANCIAL_CORE_VIOLATION_AUDIT.md) — violações classificadas (c) a migrar para Core.                             |
-| Nenhuma UI persiste verdade financeira ou operacional                    | Contrato; readers/writers Core (dockerCoreClient, coreBillingApi); violações na auditoria.                                                                                 |
-| Nenhum contrato omite referência ao Financial Core                       | Todos os CORE\_\*\_CONTRACT.md incluem secção "Sovereignty" subordinada a CORE_FINANCIAL_SOVEREIGNTY_CONTRACT.                                                             |
+| Regra                                                                    | Onde está aplicada                                                                                                                                                           |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Docker Core = único Financial Core; Supabase/Firebase não são Core       | Contrato [CORE_FINANCIAL_SOVEREIGNTY_CONTRACT.md](./CORE_FINANCIAL_SOVEREIGNTY_CONTRACT.md); CORE*CONTRACT_INDEX §0; todos os CORE*\*\_CONTRACT.md com secção Sovereignty.   |
+| Nenhum terminal calcula totais/preços/estado de pagamento/SLA localmente | Contrato; auditoria [FINANCIAL_CORE_VIOLATION_AUDIT.md](./FINANCIAL_CORE_VIOLATION_AUDIT.md) — violações classificadas (c) a migrar para Core.                               |
+| Nenhuma UI persiste verdade financeira ou operacional                    | Contrato; readers/writers Core (dockerCoreClient, coreBillingApi); violações na auditoria.                                                                                   |
+| Nenhum contrato omite referência ao Financial Core                       | Todos os CORE\_\*\_CONTRACT.md incluem secção "Sovereignty" subordinada a CORE_FINANCIAL_SOVEREIGNTY_CONTRACT.                                                               |
+| Validar soberania financeira antes de merge (anti-regressão)             | Script `scripts/check-financial-supabase.sh`; CI executa antes de merge. Ver [ANTI_SUPABASE_CHECKLIST.md](./ANTI_SUPABASE_CHECKLIST.md) § Check automatizado anti-regressão. |
 
 ---
 
@@ -58,12 +59,12 @@
 
 ## 0f. AppStaff iOS UI/UX (CORE_APPSTAFF_IOS_UIUX_CONTRACT)
 
-| Regra                                                                                            | Onde está aplicada                                                                                                                                                                           |
-| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UI legacy = sem DS + sem Core como única fonte; não serve                                       | Contrato: [CORE_APPSTAFF_IOS_UIUX_CONTRACT.md](./CORE_APPSTAFF_IOS_UIUX_CONTRACT.md). UI canónica = tokens core-design-system + comunicação só com Docker Core.                               |
-| AppStaff iOS DEVE usar tokens do core-design-system (cores, tipografia, espaçamento, radius)   | Contrato; `mobile-app/` deve importar de core-design-system ou mapeamento documentado; proibido cor/font-size hardcoded em StyleSheets de UI.                                               |
-| AppStaff iOS comunica apenas com Docker Core (localhost:3001)                                   | Contrato; alinhado a CORE_MOBILE_TERMINALS_CONTRACT; chamadas de rede em mobile-app só para Core.                                                                                             |
-| Migração de ecrãs legacy para UI canónica obrigatória                                          | Contrato; ecrãs sem DS listados como legacy (ex.: DESIGN_SYSTEM_COVERAGE ou APPSTAFF_UIUX_MIGRATION); novo código não pode introduzir UI legacy.                                               |
+| Regra                                                                                        | Onde está aplicada                                                                                                                                              |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI legacy = sem DS + sem Core como única fonte; não serve                                    | Contrato: [CORE_APPSTAFF_IOS_UIUX_CONTRACT.md](./CORE_APPSTAFF_IOS_UIUX_CONTRACT.md). UI canónica = tokens core-design-system + comunicação só com Docker Core. |
+| AppStaff iOS DEVE usar tokens do core-design-system (cores, tipografia, espaçamento, radius) | Contrato; `mobile-app/` deve importar de core-design-system ou mapeamento documentado; proibido cor/font-size hardcoded em StyleSheets de UI.                   |
+| AppStaff iOS comunica apenas com Docker Core (localhost:3001)                                | Contrato; alinhado a CORE_MOBILE_TERMINALS_CONTRACT; chamadas de rede em mobile-app só para Core.                                                               |
+| Migração de ecrãs legacy para UI canónica obrigatória                                        | Contrato; ecrãs sem DS listados como legacy (ex.: DESIGN_SYSTEM_COVERAGE ou APPSTAFF_UIUX_MIGRATION); novo código não pode introduzir UI legacy.                |
 
 ---
 

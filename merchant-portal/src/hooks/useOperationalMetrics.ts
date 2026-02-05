@@ -1,12 +1,14 @@
 /**
  * useOperationalMetrics - Métricas operacionais por tenant e período (RPC get_operational_metrics)
  *
- * Alinhado a [DASHBOARD_METRICS](../../../docs/ops/DASHBOARD_METRICS.md) e METRICS_DICTIONARY.
- * Usado pelo dashboard operacional por tenant (G4 Onda 3).
+ * O5.7: Fonte única — usa coreRpc (Core Docker only).
+ * FASE D: Se systemState === "SETUP" não chama RPC. Se RPC falha (schema cache / function not found)
+ * trata como "sem dados", não fatal — não derruba sessão.
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { getSupabaseClient } from "../core/infra/supabaseClient";
+import { invokeRpc } from "../core/infra/coreRpc";
+import type { SystemState } from "../core/lifecycle/LifecycleState";
 
 export interface OperationalMetricsPayload {
   schema_version: string;
@@ -24,22 +26,49 @@ export interface OperationalMetricsPayload {
 }
 
 function startOfDayUTC(d: Date): string {
-  const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0));
+  const start = new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0)
+  );
   return start.toISOString();
 }
 
 function endOfDayUTC(d: Date): string {
-  const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999));
+  const end = new Date(
+    Date.UTC(
+      d.getUTCFullYear(),
+      d.getUTCMonth(),
+      d.getUTCDate(),
+      23,
+      59,
+      59,
+      999
+    )
+  );
   return end.toISOString();
 }
 
-export function useOperationalMetrics(restaurantId: string | null) {
+/** Erro de RPC inexistente ou backend indisponível = "sem dados", não fatal (API_ERROR_CONTRACT). */
+function isRpcUnavailableError(message: string, code?: string): boolean {
+  if (code === "BACKEND_UNAVAILABLE") return true;
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("backend indisponível") ||
+    lower.includes("schema cache") ||
+    (lower.includes("function") && lower.includes("not found")) ||
+    lower.includes("does not exist")
+  );
+}
+
+export function useOperationalMetrics(
+  restaurantId: string | null,
+  systemState: SystemState = "SETUP"
+) {
   const [data, setData] = useState<OperationalMetricsPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchMetrics = useCallback(async () => {
-    if (!restaurantId) {
+    if (!restaurantId || systemState === "SETUP") {
       setData(null);
       setError(null);
       return;
@@ -47,29 +76,41 @@ export function useOperationalMetrics(restaurantId: string | null) {
     setLoading(true);
     setError(null);
     try {
-      const client = getSupabaseClient();
       const now = new Date();
       const p_from = startOfDayUTC(now);
       const p_to = endOfDayUTC(now);
-      const { data: result, error: rpcError } = await client.rpc("get_operational_metrics", {
-        p_restaurant_id: restaurantId,
-        p_from,
-        p_to,
-      });
+      const { data: result, error: rpcError } =
+        await invokeRpc<OperationalMetricsPayload>("get_operational_metrics", {
+          p_restaurant_id: restaurantId,
+          p_from,
+          p_to,
+        });
       if (rpcError) {
-        setError(rpcError.message ?? "Erro ao carregar métricas");
-        setData(null);
+        const msg = rpcError.message ?? "Erro ao carregar métricas";
+        if (isRpcUnavailableError(msg, rpcError.code)) {
+          setError(null);
+          setData(null);
+        } else {
+          setError(msg);
+          setData(null);
+        }
         return;
       }
-      setData((result as OperationalMetricsPayload) ?? null);
+      setData(result ?? null);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro ao carregar métricas";
-      setError(msg);
-      setData(null);
+      const msg =
+        err instanceof Error ? err.message : "Erro ao carregar métricas";
+      if (isRpcUnavailableError(msg)) {
+        setError(null);
+        setData(null);
+      } else {
+        setError(msg);
+        setData(null);
+      }
     } finally {
       setLoading(false);
     }
-  }, [restaurantId]);
+  }, [restaurantId, systemState]);
 
   useEffect(() => {
     fetchMetrics();

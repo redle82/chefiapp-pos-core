@@ -1,11 +1,15 @@
 /**
- * PaymentBroker - Intermediario de Pagamentos
- * 
- * Abstrai a comunicacao com o Supabase Edge Function 'stripe-payment'.
- * Garante que o Frontend nao precise saber detalhes de HTTP/Headers do Stripe.
+ * PaymentBroker - Intermediário de Pagamentos
+ *
+ * Abstrai a comunicação com o Core (RPC stripe-payment).
+ * ANTI-SUPABASE §4: Payment ONLY via Docker Core. No supabase.functions.invoke.
  */
 
-import { supabase } from '../supabase';
+import { BackendType, getBackendType } from '../infra/backendAdapter';
+import { getDockerCoreFetchClient } from '../infra/dockerCoreFetchClient';
+
+const CORE_REQUIRED_MSG =
+  'Payment requires Docker Core. Supabase domain fallback is forbidden.';
 
 export interface PaymentIntentResult {
     id: string;
@@ -24,38 +28,45 @@ export interface CreatePaymentParams {
 export class PaymentBroker {
 
     /**
-     * Cria um PaymentIntent no Stripe via Edge Function
+     * Cria um PaymentIntent no Stripe via Core RPC.
+     * If not Docker: throw.
      */
     static async createPaymentIntent(params: CreatePaymentParams): Promise<PaymentIntentResult> {
         console.log('[PaymentBroker] Requesting PaymentIntent:', params);
 
-        const { data, error } = await supabase.functions.invoke('stripe-payment', {
-            body: {
-                action: 'create-payment-intent',
-                amount: params.amount, // Valor em centavos (ou unidade principal dependendo do Edge Function, mas o nosso index.ts espera major units e converte, vamos verificar)
-                // VERIFICACAO: O index.ts faz `Math.round(amount)`. Se passarmos centavos (1000), vira 1000.
-                // O index.ts atual parece esperar centavos ja. Vamos confirmar no codigo do index.ts.
-                currency: params.currency,
-                restaurant_id: params.restaurantId,
-                order_id: params.orderId,
-                operator_id: params.operatorId,
-                cash_register_id: params.cashRegisterId
-            }
-        });
-
-        if (error) {
-            console.error('[PaymentBroker] Edge Function Error:', error);
-            throw new Error(`Erro ao criar pagamento: ${error.message}`);
+        if (getBackendType() !== BackendType.docker) {
+            throw new Error(CORE_REQUIRED_MSG);
         }
 
+        const core = getDockerCoreFetchClient();
+        const res = await core.rpc('stripe-payment', {
+            action: 'create-payment-intent',
+            amount: params.amount,
+            currency: params.currency,
+            restaurant_id: params.restaurantId,
+            order_id: params.orderId,
+            operator_id: params.operatorId,
+            cash_register_id: params.cashRegisterId,
+        });
+
+        if (res.error) {
+            console.error('[PaymentBroker] Core RPC Error:', res.error);
+            throw new Error(`Erro ao criar pagamento: ${res.error.message}`);
+        }
+
+        const data = res.data as { id?: string; clientSecret?: string; error?: string } | null;
         if (data?.error) {
             console.error('[PaymentBroker] Stripe Error:', data.error);
             throw new Error(data.error);
         }
 
+        if (!data?.id || !data?.clientSecret) {
+            throw new Error('Core não retornou id ou clientSecret');
+        }
+
         return {
             id: data.id,
-            clientSecret: data.clientSecret
+            clientSecret: data.clientSecret,
         };
     }
 }

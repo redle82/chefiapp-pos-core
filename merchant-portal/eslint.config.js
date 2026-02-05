@@ -64,7 +64,46 @@ export default defineConfig([
       "react-hooks/impure-function-during-render": "off",
       "react-hooks/variable-access-before-declaration": "off",
       "react-hooks/dependency-expression-issue": "off",
+      "react-hooks/variable-access-before-declaration": "off",
+      "react-hooks/dependency-expression-issue": "off",
       "react-hooks/react-compiler": "off",
+      // ARCHITECTURE: THE GOLDEN RULE
+      // UI cannot talk to Supabase directly. It must go through Docker Core.
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@supabase/supabase-js",
+              message:
+                "ARCHITECTURAL VIOLATION: UI must not import supabase-js directly. Use dockerCoreClient (Core Boundary) or endpoints.",
+            },
+            {
+              name: "../../core/supabase",
+              message:
+                "ARCHITECTURAL VIOLATION: Do not import raw Supabase client. Use dockerCoreClient.",
+            },
+            {
+              name: "../../../core/supabase",
+              message:
+                "ARCHITECTURAL VIOLATION: Do not import raw Supabase client. Use dockerCoreClient.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // EXEMPTIONS: Infrastructure & Auth layers are allowed to touch the metal.
+  {
+    files: [
+      "src/core/infra/**/*.{ts,tsx}",
+      "src/core/auth/**/*.{ts,tsx}",
+      "src/core/supabase/**/*.{ts,tsx}",
+      "src/core/scripts/**/*.{ts,tsx}", // Scripts often need direct access
+      "src/integrations/adapters/glovo/GlovoAdapter.ts", // TODO: Refactor this later (Legacy Exception)
+    ],
+    rules: {
+      "no-restricted-imports": "off",
     },
   },
 ]);

@@ -1,6 +1,0 @@
-{"__PROGRESS__":true,"phase":"BOOT","step":"init","op":"INFO","message":"Progress Bus iniciado (run_id=fa85795e-eaf5-4f69-9916-caf53fe9accf)","timestamp":1769462880502}
-{"__PROGRESS__":true,"phase":"FASE 0","step":"run_id","op":"INFO","message":"run_id=fa85795e-eaf5-4f69-9916-caf53fe9accf","timestamp":1769462880502}
-{"__PROGRESS__":true,"phase":"FASE 0","step":"results_dir","op":"INFO","message":"/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/test-results/NIVEL_5/fa85795e-eaf5-4f69-9916-caf53fe9accf","resource":"/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/test-results/NIVEL_5/fa85795e-eaf5-4f69-9916-caf53fe9accf","timestamp":1769462880502}
-{"__PROGRESS__":true,"phase":"FASE 0","step":"complete","op":"INFO","message":"COMPLETA (44ms)","timestamp":1769462880503}
-{"__PROGRESS__":true,"phase":"FASE 0: Preflight","step":"complete","op":"INFO","message":"COMPLETA (44ms)","timestamp":1769462880504}
-{"__PROGRESS__":true,"phase":"FASE 1: Setup Massivo","step":"start","op":"EXEC","message":"Iniciando fase","timestamp":1769462880504}

@@ -84,7 +84,7 @@ function mockInfer(intent: Intent, context: InferContext): InferResult {
     case "demo_narration":
       return {
         explanation:
-          "Modo demonstração. O sistema mostra o que seria observado em operação real, sem executar ações.",
+          "Dados de demonstração. O sistema mostra o que seria observado em operação real, sem executar ações.",
         meta: { intent },
       };
     case "system_diagnosis":

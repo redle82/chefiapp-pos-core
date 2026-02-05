@@ -3,6 +3,7 @@
  *
  * Árvore de configuração persistente, acessível após publicação.
  * Visual: Restaurant OS Design System (core-design-system tokens).
+ * MENU_OPERATIONAL_STATE: indicador do MenuState (ícone + label curto).
  */
 
 import {
@@ -13,6 +14,10 @@ import {
   fontFamily,
 } from "@chefiapp/core-design-system";
 import { useLocation, useNavigate } from "react-router-dom";
+import {
+  useMenuState,
+  MENU_STATE_MESSAGES,
+} from "../../core/menu/MenuState";
 import {
   canAccessPath,
   getConfigCopy,
@@ -191,7 +196,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     label: "Entender o sistema",
     icon: "🧭",
     description: "Como tudo se conecta",
-    path: "/demo",
+    path: "/auth",
   },
 ];
 
@@ -220,6 +225,13 @@ function filterSectionsByRole(
     .filter((s): s is ConfigSectionConfig => s !== null);
 }
 
+const MENU_STATE_ICON: Record<string, string> = {
+  LIVE: "🟢",
+  VALID_UNPUBLISHED: "🟡",
+  INCOMPLETE: "🟠",
+  EMPTY: "⚪",
+};
+
 export function ConfigSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -227,6 +239,7 @@ export function ConfigSidebar() {
   const role = roleContext?.role ?? null;
   const configCopy = getConfigCopy(role);
   const sections = filterSectionsByRole(SECTIONS, role);
+  const menuState = useMenuState();
 
   const isActive = (path: string) => {
     return (
@@ -266,6 +279,22 @@ export function ConfigSidebar() {
         <p style={{ margin: "4px 0 0", fontSize: `${fontSize.sm}px`, color: colors.textSecondary }}>
           {configCopy.subtitle}
         </p>
+        {/* MENU_OPERATIONAL_STATE: indicador do menu (ícone + label curto). */}
+        <div
+          style={{
+            marginTop: space[3],
+            padding: `${space[2]}px ${space[3]}px`,
+            borderRadius: 6,
+            backgroundColor: colors.surface,
+            border: `1px solid ${colors.border}`,
+            fontSize: `${fontSize.xs}px`,
+            fontWeight: fontWeight.medium,
+            color: colors.textSecondary,
+          }}
+        >
+          <span style={{ marginRight: 6 }}>{MENU_STATE_ICON[menuState] ?? "⚪"}</span>
+          {MENU_STATE_MESSAGES[menuState].short}
+        </div>
       </div>
 
       {/* Seções */}

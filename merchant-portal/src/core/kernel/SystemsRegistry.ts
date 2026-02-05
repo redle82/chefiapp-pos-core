@@ -5,6 +5,7 @@
  * Each system has a health check and evidence files for Truth Scan.
  */
 
+// LEGACY / LAB — blocked in Docker mode
 import { supabase } from "../supabase";
 import type { SystemDefinition, SystemId, SystemStatus } from "./types";
 

@@ -1,143 +1,118 @@
 /**
  * Hook para gerenciar subscription do restaurante
- * 
+ *
  * Funcionalidades:
  * - Buscar subscription atual
  * - Criar subscription (trial ou pago)
  * - Verificar status da subscription
+ *
+ * Em modo Docker: não usa Supabase; devolve estado mock "trial" para a Billing page
+ * renderizar (Período de teste + botão Ativar agora). Checkout continua via Core RPC.
  */
 
-import { useState, useEffect } from 'react';
-import { supabase } from '../core/supabase';
-import { getTabIsolated } from '../core/storage/TabIsolatedStorage';
-import type { SubscriptionStatus, PlanTier } from '../../../billing-core/types';
+import { useEffect, useState } from "react";
+import type { PlanTier, SubscriptionStatus } from "../../../billing-core/types";
+import { BackendType, getBackendType } from "../core/infra/backendAdapter";
+import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
+// ANTI-SUPABASE §4: Subscription domain ONLY via Core. No Supabase fetch/create path.
 
 export interface Subscription {
-    subscription_id: string;
-    restaurant_id: string;
-    plan_id: string;
-    plan_tier: PlanTier;
-    status: SubscriptionStatus;
-    trial_ends_at?: string;
-    current_period_end: string;
-    next_payment_at: string;
-    enabled_features: string[];
+  subscription_id: string;
+  restaurant_id: string;
+  plan_id: string;
+  plan_tier: PlanTier;
+  status: SubscriptionStatus;
+  trial_ends_at?: string;
+  current_period_end: string;
+  next_payment_at: string;
+  enabled_features: string[];
 }
 
 export function useSubscription() {
-    const [subscription, setSubscription] = useState<Subscription | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const restaurantId = getTabIsolated('chefiapp_restaurant_id');
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const restaurantId = getTabIsolated("chefiapp_restaurant_id");
 
-    useEffect(() => {
-        if (!restaurantId) {
-            setLoading(false);
-            return;
-        }
-        fetchSubscription();
-    }, [restaurantId]);
+  useEffect(() => {
+    if (!restaurantId) {
+      setLoading(false);
+      return;
+    }
+    fetchSubscription();
+  }, [restaurantId]);
 
-    const fetchSubscription = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            // Buscar subscription da tabela 'subscriptions' (billing-core)
-            const { data, error: fetchError } = await supabase
-                .from('subscriptions')
-                .select('*')
-                .eq('restaurant_id', restaurantId)
-                .single();
+  const fetchSubscription = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // ANTI-SUPABASE §4: Subscription read ONLY via Core. If not Docker, fail explicit (no Supabase path).
+      if (getBackendType() !== BackendType.docker) {
+        setError("Subscription requires Docker Core. Supabase domain fallback is forbidden.");
+        setLoading(false);
+        return;
+      }
 
-            if (fetchError) {
-                // PGRST116 = nenhum resultado (normal no onboarding)
-                // PGRST205 = tabela não encontrada (migration não aplicada ainda)
-                if (fetchError.code === 'PGRST116' || fetchError.code === 'PGRST205') {
-                    setSubscription(null);
-                    setLoading(false);
-                    return;
-                }
-                throw fetchError;
-            }
+      // Docker Core: trial mock for Billing page; real subscription when Core exposes subscriptions table/RPC
+      const mock: Subscription = {
+        subscription_id: "demo-trial",
+        restaurant_id: restaurantId ?? "",
+        plan_id: "",
+        plan_tier: "standard" as PlanTier,
+        status: "TRIAL" as SubscriptionStatus,
+        trial_ends_at: undefined,
+        current_period_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .slice(0, 10),
+        next_payment_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .slice(0, 10),
+        enabled_features: [],
+      };
+      setSubscription(restaurantId ? mock : null);
+    } catch (err: any) {
+      console.error("[useSubscription] Error:", err);
+      setError(err.message || "Erro ao buscar subscription");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            if (data) {
-                setSubscription({
-                    subscription_id: data.subscription_id,
-                    restaurant_id: data.restaurant_id,
-                    plan_id: data.plan_id,
-                    plan_tier: data.plan_tier as PlanTier,
-                    status: data.status as SubscriptionStatus,
-                    trial_ends_at: data.trial_ends_at,
-                    current_period_end: data.current_period_end,
-                    next_payment_at: data.next_payment_at,
-                    enabled_features: data.enabled_features || [],
-                });
-            }
-        } catch (err: any) {
-            console.error('[useSubscription] Error:', err);
-            setError(err.message || 'Erro ao buscar subscription');
-        } finally {
-            setLoading(false);
-        }
-    };
+  const createSubscription = async (
+    planId: string,
+    startTrial: boolean = true
+  ): Promise<Subscription> => {
+    if (!restaurantId) throw new Error("Restaurant ID não encontrado");
+    // ANTI-SUPABASE §4: Create subscription ONLY via Core. No Supabase functions.invoke.
+    if (getBackendType() !== BackendType.docker) {
+      throw new Error(
+        "Create subscription requires Docker Core. Supabase domain fallback is forbidden."
+      );
+    }
+    throw new Error(
+      'Use o botão "Ativar agora" na página de Billing (checkout via Core).'
+    );
+  };
 
-    const createSubscription = async (planId: string, startTrial: boolean = true): Promise<Subscription> => {
-        if (!restaurantId) throw new Error('Restaurant ID não encontrado');
+  const isActive = (): boolean => {
+    if (!subscription) return false;
+    return subscription.status === "ACTIVE" || subscription.status === "TRIAL";
+  };
 
-        try {
-            // FASE 1: Chamar Edge Function create-subscription
-            const { data, error: createError } = await supabase.functions.invoke('create-subscription', {
-                body: {
-                    restaurant_id: restaurantId,
-                    plan_id: planId,
-                    start_trial: startTrial,
-                }
-            });
+  const isBlocked = (): boolean => {
+    if (!subscription) return true; // Sem subscription = bloqueado
+    return (
+      subscription.status === "SUSPENDED" || subscription.status === "CANCELLED"
+    );
+  };
 
-            if (createError) throw createError;
-            if (data?.error) throw new Error(data.error);
-
-            // Atualizar subscription local
-            if (data?.subscription) {
-                const newSubscription: Subscription = {
-                    subscription_id: data.subscription.subscription_id,
-                    restaurant_id: data.subscription.restaurant_id,
-                    plan_id: data.subscription.plan_id,
-                    plan_tier: data.subscription.plan_tier as PlanTier,
-                    status: data.subscription.status as SubscriptionStatus,
-                    trial_ends_at: data.subscription.trial_ends_at,
-                    current_period_end: data.subscription.current_period_end,
-                    next_payment_at: data.subscription.next_payment_at,
-                    enabled_features: data.subscription.enabled_features || [],
-                };
-                setSubscription(newSubscription);
-                return newSubscription;
-            }
-
-            throw new Error('Subscription criada mas dados não retornados');
-        } catch (err: any) {
-            console.error('[useSubscription] Error creating subscription:', err);
-            throw err;
-        }
-    };
-
-    const isActive = (): boolean => {
-        if (!subscription) return false;
-        return subscription.status === 'ACTIVE' || subscription.status === 'TRIAL';
-    };
-
-    const isBlocked = (): boolean => {
-        if (!subscription) return true; // Sem subscription = bloqueado
-        return subscription.status === 'SUSPENDED' || subscription.status === 'CANCELLED';
-    };
-
-    return {
-        subscription,
-        loading,
-        error,
-        isActive: isActive(),
-        isBlocked: isBlocked(),
-        refetch: fetchSubscription,
-        createSubscription,
-    };
+  return {
+    subscription,
+    loading,
+    error,
+    isActive: isActive(),
+    isBlocked: isBlocked(),
+    refetch: fetchSubscription,
+    createSubscription,
+  };
 }

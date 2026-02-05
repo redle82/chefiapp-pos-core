@@ -6,6 +6,10 @@
 
 **Passo 2 — Medição, não opinião.** Usar este doc ao fim das 2 semanas de piloto (ou em paralelo para preparar métricas e template).
 
+**Estado:** Estrutura pronta (§10–§13). Preencher quando P1 tiver 2 semanas de instalações (check-ins dia 3 e 10 feitos; dados de uso disponíveis).
+
+**👉 Próximo passo (quando P1 ativo):** Aprovar métricas §10; ao fim da 2.ª semana, recolher dados, preencher template §11 por restaurante, executar checklist §12 e aplicar regra §13 (go/no-go Onda 5).
+
 ---
 
 ## 10. Métricas de piloto — Passo 2.1
@@ -86,5 +90,7 @@ Definir regra GO / NO-GO. Exemplo (ajustar): ≥2 restaurantes a usar diariament
 - [ ] Data da reunião de decisão: _____________
 
 ---
+
+**Estado atual do Piloto P2:** Estrutura §10–§13 pronta. Itens 10–13 do [ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md](../ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md) ficam pendentes até P1 ter 2 semanas; então preencher métricas, report e regra aqui.
 
 *Preencher este doc e marcar os itens 10–13 no [ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md](../ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md) à medida que forem concluídos.*

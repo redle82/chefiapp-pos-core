@@ -37,7 +37,7 @@ interface UseDynamicMenuReturn {
 }
 
 export function useDynamicMenu(
-  options: UseDynamicMenuOptions,
+  options: UseDynamicMenuOptions
 ): UseDynamicMenuReturn {
   const {
     restaurantId,
@@ -71,7 +71,7 @@ export function useDynamicMenu(
             available: true,
             score: 0,
             is_favorite: false,
-          }),
+          })
         );
 
         const fullCatalog: CategoryWithProducts[] = [
@@ -101,27 +101,31 @@ export function useDynamicMenu(
       setError(err as Error);
       console.error("[useDynamicMenu] Load failed:", err);
 
-      // Critical Resilience: Attempt B1 fallback even on unexpected catch
-      const pilot = getPilotProducts(restaurantId);
-      if (pilot.length > 0) {
-        const mapped: ProductWithScore[] = pilot.map(
-          (p: PilotProductStored) => ({
-            id: p.id,
-            name: p.name,
-            category: "Contingência",
-            price_cents: p.price_cents,
-            available: true,
-            score: 0,
-            is_favorite: false,
-          }),
-        );
-        setMenu({
-          contextual: mapped,
-          favorites: [],
-          fullCatalog: [
-            { id: "contingencia", name: "Contingência", products: mapped },
-          ],
-        });
+      // Guardrail FK: só usar pilot products quando Core está unreachable (evitar 409)
+      if (coreReachable === false) {
+        const pilot = getPilotProducts(restaurantId);
+        if (pilot.length > 0) {
+          const mapped: ProductWithScore[] = pilot.map(
+            (p: PilotProductStored) => ({
+              id: p.id,
+              name: p.name,
+              category: "Contingência",
+              price_cents: p.price_cents,
+              available: true,
+              score: 0,
+              is_favorite: false,
+            })
+          );
+          setMenu({
+            contextual: mapped,
+            favorites: [],
+            fullCatalog: [
+              { id: "contingencia", name: "Contingência", products: mapped },
+            ],
+          });
+        }
+      } else {
+        setMenu(null);
       }
     } finally {
       setLoading(false);
@@ -157,7 +161,7 @@ export function useDynamicMenu(
         console.error("[useDynamicMenu] Track click failed:", err);
       }
     },
-    [restaurantId, loadMenu],
+    [restaurantId, loadMenu]
   );
 
   const toggleFavorite = useCallback(
@@ -166,7 +170,7 @@ export function useDynamicMenu(
         await DynamicMenuService.toggleFavorite(
           restaurantId,
           productId,
-          isFavorite,
+          isFavorite
         );
 
         // Immediately refresh to reflect change
@@ -176,7 +180,7 @@ export function useDynamicMenu(
         throw err;
       }
     },
-    [restaurantId, loadMenu],
+    [restaurantId, loadMenu]
   );
 
   // Initial load

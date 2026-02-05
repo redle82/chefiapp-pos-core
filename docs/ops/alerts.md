@@ -273,6 +273,8 @@ Regras concretas alinhadas a [ANOMALY_DEFINITION.md](../architecture/ANOMALY_DEF
 
 ## 📚 REFERÊNCIAS
 
+- [ALERT_THRESHOLDS_CONTRACT.md](./ALERT_THRESHOLDS_CONTRACT.md) — Limiares operacionais (pedido atrasado, mesa sem atendimento) no portal
+- [ALERT_ACTION_CONTRACT.md](./ALERT_ACTION_CONTRACT.md) — Ação imediata para alertas críticos (notificação in-app, link runbook)
 - [ANOMALY_DEFINITION.md](../architecture/ANOMALY_DEFINITION.md) — Definição de anomalias (G3 Onda 3)
 - [SLO_SLI.md](../architecture/SLO_SLI.md) — SLO e janelas
 - [EVENT_PIPELINE.md](./EVENT_PIPELINE.md) — Consumo de gm_audit_logs para alertas

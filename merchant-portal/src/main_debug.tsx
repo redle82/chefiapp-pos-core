@@ -1,11 +1,21 @@
 import "@chefiapp/core-design-system/tokens.css";
-import { StrictMode } from "react";
+import { StrictMode, useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
+import { GlobalUIStateProvider } from "./context/GlobalUIStateContext";
+import {
+  LifecycleStateProvider,
+  type LifecycleStateContextValue,
+} from "./context/LifecycleStateContext";
+import { RestaurantRuntimeProvider } from "./context/RestaurantRuntimeContext";
+import type { RestaurantLifecycleState } from "./core/lifecycle/LifecycleState";
 import { Logger } from "./core/logger";
-import { devStableReason, isDevStableMode } from "./core/runtime/devStableMode";
+import { RoleProvider } from "./core/roles";
 import { logRuntimeStatus } from "./core/runtime/RuntimeContext";
+import { devStableReason, isDevStableMode } from "./core/runtime/devStableMode";
+import { ShiftProvider } from "./core/shift/ShiftContext";
+import { TenantProvider } from "./core/tenant/TenantContext";
 import "./index.css";
 import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
 // import "./ui/design-system/styles/dark-mode.css"; // P3-5: Dark mode styles
@@ -19,19 +29,15 @@ if (typeof window !== "undefined") {
 // RUNTIME MODE: Log current mode at boot
 logRuntimeStatus();
 
-// DEV_STABLE_MODE banner (single-line, deterministic)
-// Note: Behavior changes are applied in later steps; this is observability only.
+// STABLE_MODE banner (single-line, deterministic) — só em builds não-produção
 if (import.meta.env.DEV) {
   console.info(
-    `[DEV_STABLE_MODE] ${
-      isDevStableMode() ? "ON" : "OFF"
-    } (${devStableReason()})`,
+    `[STABLE_MODE] ${isDevStableMode() ? "ON" : "OFF"} (${devStableReason()})`
   );
 }
 
-// DEV HARDENING: if a previous PWA Service Worker is still registered, it can hijack
-// dev routes (e.g. /registerSW.js) and spam Workbox routing logs.
-// We explicitly unregister SWs in DEV_STABLE_MODE to prevent loop storms.
+// Se um Service Worker anterior ainda estiver registado, pode interceptar rotas e gerar ruído.
+// Em STABLE_MODE (localhost) desregistamos SWs para evitar loops.
 if (
   isDevStableMode() &&
   typeof window !== "undefined" &&
@@ -48,10 +54,10 @@ if (
       }
 
       console.info(
-        "[SW] DEV cleanup: service workers unregistered and caches cleared",
+        "[SW] Cleanup: service workers unregistered and caches cleared"
       );
     } catch (e) {
-      console.warn("[SW] DEV cleanup failed (non-fatal):", e);
+      console.warn("[SW] Cleanup failed (non-fatal):", e);
     }
   })();
 }
@@ -61,7 +67,7 @@ if (
 
 Logger.info("Application starting", {
   version: "1.0.0",
-  environment: import.meta.env.MODE,
+  environment: import.meta.env.MODE === "production" ? "production" : "local",
 });
 
 // ============================================================================
@@ -69,16 +75,44 @@ Logger.info("Application starting", {
 // ============================================================================
 // MARKETING (/, /demo, /auth, /billing/success) renderiza SEM RestaurantRuntime
 // nem ShiftProvider — landing 100% desacoplada do Core (ver App.tsx).
+// Estado do lifecycle no entry evita duas instâncias de React (Invalid hook call).
 // ============================================================================
+
+function RootWithLifecycle() {
+  const [lifecycleState, setLifecycleState] =
+    useState<RestaurantLifecycleState | null>(null);
+  const setter = useCallback((s: RestaurantLifecycleState | null) => {
+    setLifecycleState(s);
+  }, []);
+  const lifecycleValue: LifecycleStateContextValue = {
+    lifecycleState,
+    setLifecycleState: setter,
+  };
+  return (
+    <LifecycleStateProvider value={lifecycleValue}>
+      <RestaurantRuntimeProvider>
+        <ShiftProvider>
+          <GlobalUIStateProvider>
+            <RoleProvider>
+              <TenantProvider>
+                <App />
+              </TenantProvider>
+            </RoleProvider>
+          </GlobalUIStateProvider>
+        </ShiftProvider>
+      </RestaurantRuntimeProvider>
+    </LifecycleStateProvider>
+  );
+}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary context="Root">
       <BrowserRouter>
-        <App />
+        <RootWithLifecycle />
       </BrowserRouter>
     </ErrorBoundary>
-  </StrictMode>,
+  </StrictMode>
 );
 
 // DOCKER CORE: Kernel init removido - Core gerencia seu próprio estado

@@ -41,7 +41,7 @@ check_phase_1() {
     # Verificar se código está completo
     if [ -f "merchant-portal/src/pages/Onboarding/BillingStep.tsx" ] && \
        [ -f "merchant-portal/src/pages/Onboarding/CheckoutStep.tsx" ] && \
-       [ -f "supabase/functions/create-subscription/index.ts" ]; then
+       [ -f "legacy_supabase/functions/create-subscription/index.ts" ]; then
         echo -e "${GREEN}✓ FASE 1: Código completo${NC}"
         
         # Verificar se migration foi executada (se DATABASE_URL disponível)
@@ -59,7 +59,7 @@ check_phase_1() {
         # Verificar Edge Functions
         FUNCTIONS_DEPLOYED=0
         for func in "create-subscription" "update-subscription-status" "cancel-subscription" "change-plan"; do
-            if [ -f "supabase/functions/$func/index.ts" ]; then
+            if [ -f "legacy_supabase/functions/$func/index.ts" ]; then
                 ((FUNCTIONS_DEPLOYED++))
             fi
         done

@@ -6,7 +6,7 @@
 
 # Core systems
 /server/ @goldmonkey777
-/supabase/migrations/ @goldmonkey777
+/legacy_supabase/migrations/ @goldmonkey777
 
 # Merchant Portal
 /merchant-portal/ @goldmonkey777

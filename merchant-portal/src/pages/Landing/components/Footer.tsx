@@ -31,33 +31,37 @@ export const Footer = () => {
                             O tempo de montar o menu, ligar o TPV e pôr a equipa a trabalhar é o tempo de aquecer a chapa. Enquanto um ovo frita, o menu já está online.
                         </span>
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 justify-center flex-wrap">
                         <Link
-                            to={hasSession ? '/dashboard' : '/auth'}
+                            to={hasSession ? '/app/dashboard' : '/auth'}
                             className="w-full sm:w-auto px-10 py-5 bg-primary hover:opacity-90 text-[var(--text-inverse)] font-extrabold text-lg rounded-xl shadow-[var(--elevation-primary)] transition-all transform hover:-translate-y-1"
                         >
-                            {hasSession ? 'Voltar ao sistema' : OSCopy.landing.ctaComecarAgora}
+                            {hasSession ? OSCopy.landing.ctaIrAoSistema : OSCopy.landing.ctaEntrarSistema}
                         </Link>
-                        <Link
-                            to="/op/tpv?mode=demo"
-                            className="w-full sm:w-auto px-10 py-5 bg-transparent border border-[var(--surface-border)] hover:border-[var(--color-primary)] text-[var(--text-primary)] hover:text-[var(--color-primary)] font-bold text-lg rounded-xl transition-all"
-                        >
-                            {OSCopy.landing.ctaExplorarDemo}
-                        </Link>
-                        <a
-                            href={WHATSAPP_URL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full sm:w-auto px-10 py-5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-lg rounded-xl transition-all inline-flex items-center justify-center"
-                        >
-                            👉 WhatsApp
-                        </a>
-                        <Link
-                            to={hasSession ? '/dashboard' : '/auth'}
-                            className="w-full sm:w-auto px-10 py-5 bg-transparent border border-[var(--surface-border)] hover:border-[var(--color-primary)] text-[var(--text-primary)] hover:text-[var(--color-primary)] font-bold text-lg rounded-xl transition-all"
-                        >
-                            {hasSession ? 'Voltar ao comando' : OSCopy.landing.ctaJaTenhoAcesso}
-                        </Link>
+                        <span className="flex items-center gap-3 text-sm text-[var(--text-tertiary)]">
+                            <Link
+                                to="/op/tpv?mode=demo"
+                                className="font-medium hover:text-[var(--color-primary)] transition-colors"
+                            >
+                                {OSCopy.landing.ctaVerDemonstracao}
+                            </Link>
+                            <span className="text-[var(--text-disabled)]">·</span>
+                            <Link
+                                to="/auth"
+                                className="font-medium hover:text-[var(--color-primary)] transition-colors"
+                            >
+                                {OSCopy.landing.ctaJaTenhoAcesso}
+                            </Link>
+                            <span className="text-[var(--text-disabled)]">·</span>
+                            <a
+                                href={WHATSAPP_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-medium hover:text-[#25D366] transition-colors"
+                            >
+                                WhatsApp
+                            </a>
+                        </span>
                     </div>
                 </div>
 

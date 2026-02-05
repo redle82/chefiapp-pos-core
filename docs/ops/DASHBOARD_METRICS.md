@@ -95,11 +95,47 @@ Eventos de `gm_audit_logs` estão disponíveis via **Supabase Realtime** (subscr
 
 ---
 
-## 6. Referências
+## 7. Histórico por turno (Onda 5 O5.6)
+
+**Objetivo:** Lista ou resumo por turno (abertura, fecho, total vendas, nº pedidos) para o Owner Dashboard. Fonte: Core (tabelas de turnos e pagamentos).
+
+**Contrato desejado (RPC a implementar no Core):**
+
+- **Nome sugerido:** `get_shift_history(p_restaurant_id, p_from, p_to)`
+- **Parâmetros:** `p_restaurant_id` (UUID), `p_from` e `p_to` (ISO 8601 UTC).
+- **Retorno:** Array de objetos por turno (ordem decrescente por `closed_at` ou `opened_at`):
+
+| Campo | Descrição | Unidade |
+|-------|-----------|---------|
+| shift_id | ID do turno (ex.: turn_sessions.id) | UUID |
+| opened_at | Abertura do turno (ISO 8601) | — |
+| closed_at | Fecho do turno (null se ainda aberto) | ISO 8601 ou null |
+| total_sales_cents | Montante total de pagamentos no turno | cents |
+| orders_count | Número de pedidos no turno | count |
+
+**Acesso:** Apenas owner ou membro ativo do restaurante. Quando o RPC existir, o merchant-portal pode exibir no hub uma secção «Histórico por turno» (lista ou tabela) alimentada por este contrato.
+
+**Estado:** RPC implementado no Core (migração `20260301120000_get_shift_history.sql`). UI no merchant-portal implementada (ShiftHistorySection no hub, últimos 7 dias). Ref.: [ONDA_5_TAREFAS.md](../pilots/ONDA_5_TAREFAS.md).
+
+---
+
+## 8. Fonte única (Onda 5 O5.7)
+
+**Regra:** As métricas do dashboard (operacional hoje + histórico por turno) vêm de **uma única fonte**: Core (Docker) ou Supabase, conforme backend ativo. **Nunca mock em produção.**
+
+- **Implementação:** No merchant-portal, os hooks `useOperationalMetrics` e `useShiftHistory` usam `invokeRpc` de `core/infra/coreOrSupabaseRpc.ts`: quando backend é Docker → RPC via PostgREST Core; quando Supabase → RPC via Supabase. Assim, o dashboard não chama `getSupabaseClient()` directamente; segue o mesmo adapter que billing e outros RPCs.
+- **Comportamento:** Se o RPC falhar (Core indisponível, sem env em produção), a UI mostra estado de erro ("Não foi possível carregar as métricas") e não valores inventados.
+- **Referência:** [ONDA_5_TAREFAS.md](../pilots/ONDA_5_TAREFAS.md) O5.7.
+
+---
+
+## 9. Referências
 
 - [METRICS_DICTIONARY.md](../architecture/METRICS_DICTIONARY.md) — definição das métricas
+- §8 Fonte única (O5.7) — Core/Supabase via coreOrSupabaseRpc; não mock em produção
 - [EVENT_TAXONOMY.md](../architecture/EVENT_TAXONOMY.md) — eventos emitidos
 - [EVENT_PIPELINE.md](./EVENT_PIPELINE.md) — pipeline de eventos (G1 Onda 3)
 - [AUDIT_LOG_QUERY.md](./AUDIT_LOG_QUERY.md) — consulta à trilha de auditoria
 - [SLO_SLI.md](../architecture/SLO_SLI.md) — SLO quando definidos
 - [ANOMALY_DEFINITION.md](../architecture/ANOMALY_DEFINITION.md) — alertas
+- [ONDA_5_TAREFAS.md](../pilots/ONDA_5_TAREFAS.md) — O5.6 histórico por turno

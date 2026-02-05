@@ -4,7 +4,7 @@
  * Audit trail é gravado em app_logs pelo backend.
  */
 
-import { invokeRpc } from "../infra/coreOrSupabaseRpc";
+import { invokeRpc } from "../infra/coreRpc";
 
 export interface DisableResult {
   ok: boolean;

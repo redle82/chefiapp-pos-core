@@ -8,11 +8,23 @@
  * para reduzir rajadas de requests gm_restaurants.
  */
 
+import {
+  removeTabIsolated,
+  setTabIsolated,
+} from "../../core/storage/TabIsolatedStorage";
 import { dockerCoreClient } from "../docker-core/connection";
 
 const RESTAURANT_CACHE_TTL_MS = 10_000; // 10 segundos
-let restaurantCache: { key: string; data: CoreRestaurantRow | null; ts: number } | null = null;
-let identityCache: { key: string; data: CoreRestaurantIdentityRow | null; ts: number } | null = null;
+let restaurantCache: {
+  key: string;
+  data: CoreRestaurantRow | null;
+  ts: number;
+} | null = null;
+let identityCache: {
+  key: string;
+  data: CoreRestaurantIdentityRow | null;
+  ts: number;
+} | null = null;
 
 export type CoreProductMode = "demo" | "pilot" | "live";
 
@@ -28,6 +40,12 @@ export interface CoreRestaurantRow {
   product_mode?: CoreProductMode | null;
   /** Estado de faturação SaaS (gm_restaurants.billing_status). */
   billing_status?: CoreBillingStatus | null;
+  /** Campos de identidade estendida (opcionais pois dependem do select) */
+  country?: string | null;
+  timezone?: string | null;
+  currency?: string | null;
+  locale?: string | null;
+  type?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -56,6 +74,28 @@ export interface CoreSetupStatusRow {
 
 const SEED_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
 
+/** IDs placeholder que não existem no Core; nunca devolver para evitar 404 e loops. */
+const INVALID_OR_SEED_RESTAURANT_IDS = new Set([
+  "00000000-0000-0000-0000-000000000100",
+  "10000000-0000-0000-0000-000000000000",
+]);
+
+/**
+ * Verifica se o restaurante existe no Core (só DB; ignora mock e cache).
+ * Usado em getOrCreateRestaurantId para validar o ID guardado.
+ */
+export async function restaurantExistsInCore(
+  restaurantId: string
+): Promise<boolean> {
+  const { data, error } = await dockerCoreClient
+    .from("gm_restaurants")
+    .select("id")
+    .eq("id", restaurantId)
+    .maybeSingle();
+  if (error) return false;
+  return data != null;
+}
+
 /**
  * Retorna o primeiro restaurante do Core (para dev / get-or-create).
  */
@@ -79,24 +119,62 @@ export async function fetchFirstRestaurantId(): Promise<string | null> {
 
 /**
  * Busca restaurante por id. Cache TTL 10s.
+ * Pilot: devolve mock quando restaurante foi criado por bypass (chefiapp_pilot_mock_restaurant).
  */
 export async function fetchRestaurant(
-  restaurantId: string,
+  restaurantId: string
 ): Promise<CoreRestaurantRow | null> {
   const now = Date.now();
-  if (restaurantCache?.key === restaurantId && now - restaurantCache.ts < RESTAURANT_CACHE_TTL_MS) {
+  if (
+    restaurantCache?.key === restaurantId &&
+    now - restaurantCache.ts < RESTAURANT_CACHE_TTL_MS
+  ) {
     return restaurantCache.data;
+  }
+
+  if (typeof window !== "undefined") {
+    const pilotMock = localStorage.getItem("chefiapp_pilot_mock_restaurant");
+    if (pilotMock) {
+      try {
+        const row = JSON.parse(pilotMock) as { id: string };
+        if (row.id === restaurantId) {
+          const mock: CoreRestaurantRow = {
+            id: row.id,
+            name: "Restaurante (Pilot)",
+            slug: "pilot",
+            status: "active",
+            tenant_id: null,
+            product_mode: "pilot",
+            billing_status: "trial",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          restaurantCache = { key: restaurantId, data: mock, ts: now };
+          return mock;
+        }
+      } catch {
+        // ignore
+      }
+    }
   }
 
   const { data, error } = await dockerCoreClient
     .from("gm_restaurants")
-    .select("id,name,slug,status,tenant_id,product_mode,billing_status,created_at,updated_at")
+    .select(
+      "id,name,slug,status,tenant_id,product_mode,billing_status,country,timezone,currency,locale,type,created_at,updated_at"
+    )
     .eq("id", restaurantId)
     .maybeSingle();
 
   if (error) {
+    console.warn(
+      "[RuntimeReader] fetchRestaurant FAILED:",
+      error.message,
+      error.details,
+      error.hint
+    );
     if (import.meta.env.DEV) {
-      console.warn("[RuntimeReader] fetchRestaurant:", error.message);
+      console.warn("[RuntimeReader] fetchRestaurant error details:", error);
     }
     return null;
   }
@@ -108,19 +186,56 @@ export async function fetchRestaurant(
 /**
  * Busca restaurante por id com colunas de identidade (name, city, type, slug).
  * Usado por useRestaurantIdentity quando backend é Docker. Cache TTL 10s.
+ * Pilot: devolve mock quando chefiapp_pilot_mock_restaurant.
  */
 export async function fetchRestaurantForIdentity(
-  restaurantId: string,
+  restaurantId: string
 ): Promise<CoreRestaurantIdentityRow | null> {
   const now = Date.now();
-  if (identityCache?.key === restaurantId && now - identityCache.ts < RESTAURANT_CACHE_TTL_MS) {
+  if (
+    identityCache?.key === restaurantId &&
+    now - identityCache.ts < RESTAURANT_CACHE_TTL_MS
+  ) {
     return identityCache.data;
+  }
+
+  if (typeof window !== "undefined") {
+    const pilotMock = localStorage.getItem("chefiapp_pilot_mock_restaurant");
+    if (pilotMock) {
+      try {
+        const row = JSON.parse(pilotMock) as {
+          id: string;
+          name?: string | null;
+          type?: string | null;
+          city?: string | null;
+        };
+        if (row.id === restaurantId) {
+          const mock: CoreRestaurantIdentityRow = {
+            id: row.id,
+            name: row.name ?? "Restaurante (Pilot)",
+            slug: "pilot",
+            status: "active",
+            tenant_id: null,
+            type: row.type ?? "Restaurante",
+            city: row.city ?? null,
+            address: null,
+            description: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          identityCache = { key: restaurantId, data: mock, ts: now };
+          return mock;
+        }
+      } catch {
+        // ignore
+      }
+    }
   }
 
   const { data, error } = await dockerCoreClient
     .from("gm_restaurants")
     .select(
-      "id,name,slug,status,tenant_id,type,city,address,description,created_at,updated_at",
+      "id,name,slug,status,tenant_id,type,city,address,description,created_at,updated_at"
     )
     .eq("id", restaurantId)
     .maybeSingle();
@@ -129,7 +244,7 @@ export async function fetchRestaurantForIdentity(
     if (import.meta.env.DEV) {
       console.warn(
         "[RuntimeReader] fetchRestaurantForIdentity:",
-        error.message,
+        error.message
       );
     }
     return null;
@@ -143,7 +258,7 @@ export async function fetchRestaurantForIdentity(
  * Lista módulos instalados (status = active) para o restaurante.
  */
 export async function fetchInstalledModules(
-  restaurantId: string,
+  restaurantId: string
 ): Promise<string[]> {
   const { data, error } = await dockerCoreClient
     .from("installed_modules")
@@ -165,7 +280,7 @@ export async function fetchInstalledModules(
  * Busca status do onboarding (sections) do Core.
  */
 export async function fetchSetupStatus(
-  restaurantId: string,
+  restaurantId: string
 ): Promise<Record<string, boolean>> {
   const { data, error } = await dockerCoreClient
     .from("restaurant_setup_status")
@@ -180,15 +295,73 @@ export async function fetchSetupStatus(
   return typeof sections === "object" && sections !== null ? sections : {};
 }
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * Get-or-create: retorna id do localStorage, ou primeiro restaurante do Core, ou seed id (dev).
+ * Pilot: se stored for mock-* (UUID inválido), migra para id de chefiapp_pilot_mock_restaurant.
  */
 export async function getOrCreateRestaurantId(): Promise<string | null> {
-  const stored =
+  let stored: string | null =
     typeof window !== "undefined"
       ? localStorage.getItem("chefiapp_restaurant_id")
       : null;
-  if (stored) return stored;
+  // Em Docker o seed existe no Core (06-seed-enterprise); não limpar para Dashboard carregar
+  if (
+    stored &&
+    INVALID_OR_SEED_RESTAURANT_IDS.has(stored) &&
+    stored !== SEED_RESTAURANT_ID
+  ) {
+    if (typeof window !== "undefined") {
+      removeTabIsolated("chefiapp_restaurant_id");
+    }
+    stored = null;
+  }
+  if (stored?.startsWith("mock-") && typeof window !== "undefined") {
+    try {
+      const pilotMock = localStorage.getItem("chefiapp_pilot_mock_restaurant");
+      if (pilotMock) {
+        const row = JSON.parse(pilotMock) as { id?: string };
+        if (row.id && UUID_REGEX.test(row.id)) {
+          localStorage.setItem("chefiapp_restaurant_id", row.id);
+          setTabIsolated("chefiapp_restaurant_id", row.id);
+          stored = row.id;
+        } else {
+          stored = null;
+        }
+      } else {
+        stored = null;
+      }
+    } catch {
+      stored = null;
+    }
+  }
+  // Quando temos um ID guardado: validar que existe no Core (evita FK em gm_cash_registers etc.).
+  // Usar restaurantExistsInCore (não fetchRestaurant) para ignorar mock de pilot.
+  if (stored) {
+    const existsInCore = await restaurantExistsInCore(stored);
+    if (existsInCore) return stored;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("chefiapp_restaurant_id");
+      removeTabIsolated("chefiapp_restaurant_id");
+      // Limpar mock de pilot para este ID; evita que fetchRestaurant volte a devolver mock.
+      try {
+        const pilotMock = localStorage.getItem(
+          "chefiapp_pilot_mock_restaurant"
+        );
+        if (pilotMock) {
+          const row = JSON.parse(pilotMock) as { id?: string };
+          if (row.id === stored) {
+            localStorage.removeItem("chefiapp_pilot_mock_restaurant");
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    stored = null;
+  }
 
   const firstId = await fetchFirstRestaurantId();
   if (firstId) {

@@ -11,7 +11,7 @@ Alguns documentos antigos (audit, archive, pilots, runbooks antigos) referem a p
 
 Essa porta foi usada em fases iniciais do projeto.
 
-👉 **A porta canónica atual do Merchant Portal é 5175**, conforme definido em [CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md).
+👉 **A porta oficial do Merchant Portal é 5157**, conforme definido em [CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md).
 
 Documentos históricos são mantidos como estão para **contexto e auditoria**. Não são atualizados retroativamente.
 
@@ -21,6 +21,6 @@ Documentos históricos são mantidos como estão para **contexto e auditoria**. 
 
 - **Contrato canónico manda.** (Runtime, rotas, porta oficial.)
 - **Docs históricos explicam.** (Memória do projeto.)
-- **Código executa.** (Vite, testes, scripts vivos usam 5175.)
+- **Porta oficial do portal:** **5157** (não mudar).
 
-Em caso de dúvida sobre porta ou URL do portal: usar **localhost:5175** e o contrato de runtime.
+Em caso de dúvida sobre porta ou URL do portal: usar **localhost:5157** e o contrato de runtime.

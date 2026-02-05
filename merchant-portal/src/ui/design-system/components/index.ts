@@ -14,8 +14,5 @@ export type { GlobalEmptyViewProps, GlobalEmptyLayout } from "./GlobalEmptyView"
 export { GlobalErrorView } from "./GlobalErrorView";
 export type { GlobalErrorViewProps, GlobalErrorLayout } from "./GlobalErrorView";
 
-export { GlobalPilotBanner } from "./GlobalPilotBanner";
-export type { GlobalPilotBannerProps } from "./GlobalPilotBanner";
-
 export { GlobalBlockedView } from "./GlobalBlockedView";
 export type { GlobalBlockedViewProps } from "./GlobalBlockedView";

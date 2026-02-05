@@ -53,24 +53,6 @@ function ConfigContent() {
           color: colors.textPrimary,
         }}
       >
-        {!moduleLabel && (
-          <div
-            style={{
-              marginBottom: space.lg,
-              padding: "14px 18px",
-              borderRadius: radius.md,
-              backgroundColor: "rgba(34, 197, 94, 0.12)",
-              border: `1px solid ${colors.border}`,
-              fontSize: `${fontSize.sm}px`,
-              color: colors.accent,
-            }}
-          >
-            <strong>Configuração do restaurante.</strong> As alterações são
-            guardadas e ficam associadas ao seu restaurante. Preencha cada
-            secção e as informações são gravadas automaticamente (ou use o botão
-            Guardar quando existir).
-          </div>
-        )}
         {moduleLabel && (
           <div
             style={{

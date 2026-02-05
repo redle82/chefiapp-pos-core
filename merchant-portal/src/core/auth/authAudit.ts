@@ -1,18 +1,17 @@
 /**
  * F1 Onda 3 — Registo de eventos de autenticação em gm_audit_logs (AUDIT_LOG_SPEC §3.1).
  * login_success, login_failure, logout para trilha de auditoria.
- * Usar getSupabaseClient() para garantir cliente real em modo Supabase.
+ * Usa Core (invokeRpc) quando backend é Docker.
  */
 
 import { BackendType, getBackendType } from "../infra/backendAdapter";
-import { getSupabaseClient } from "../infra/supabaseClient";
+import { invokeRpc } from "../infra/coreRpc";
 
-/** Regista login bem-sucedido (chamar após signInWithPassword success). */
+/** Regista login bem-sucedido (chamar após signIn success). */
 export async function recordLoginSuccess(): Promise<void> {
-  if (getBackendType() !== BackendType.supabase) return;
+  if (getBackendType() !== BackendType.docker) return;
   try {
-    const client = getSupabaseClient();
-    await client.rpc("record_auth_event", {
+    await invokeRpc("record_auth_event", {
       p_event_type: "login_success",
       p_metadata: {},
     });
@@ -23,10 +22,9 @@ export async function recordLoginSuccess(): Promise<void> {
 
 /** Regista logout (chamar ANTES de signOut para manter sessão). */
 export async function recordLogout(): Promise<void> {
-  if (getBackendType() !== BackendType.supabase) return;
+  if (getBackendType() !== BackendType.docker) return;
   try {
-    const client = getSupabaseClient();
-    await client.rpc("record_auth_event", {
+    await invokeRpc("record_auth_event", {
       p_event_type: "logout",
       p_metadata: {},
     });
@@ -36,11 +34,13 @@ export async function recordLogout(): Promise<void> {
 }
 
 /** Regista tentativa de login falhada (callable anon). */
-export async function recordLoginFailure(identifier: string, reason: string): Promise<void> {
-  if (getBackendType() !== BackendType.supabase) return;
+export async function recordLoginFailure(
+  identifier: string,
+  reason: string
+): Promise<void> {
+  if (getBackendType() !== BackendType.docker) return;
   try {
-    const client = getSupabaseClient();
-    await client.rpc("log_login_failure", {
+    await invokeRpc("log_login_failure", {
       p_identifier: identifier ?? "",
       p_reason: reason ?? "",
     });

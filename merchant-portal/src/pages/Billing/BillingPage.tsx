@@ -267,8 +267,8 @@ export function BillingPage() {
                   marginTop: 0,
                 }}
               >
-                Ainda não tem uma assinatura ativa. Assine um plano para ativar
-                o modo ao vivo.
+                Ainda não tem uma assinatura ativa. Assine um plano para passar
+                a plano ativo (operação ao vivo).
               </p>
               {priceId && (
                 <p

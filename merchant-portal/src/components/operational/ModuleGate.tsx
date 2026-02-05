@@ -2,6 +2,11 @@
  * ModuleGate — FASE 1 Passo 2: só permite acesso ao TPV/KDS se o módulo estiver ativo
  *
  * Usa preferência em localStorage (modulesConfigStorage) até haver backend.
+ *
+ * ORE: Para rotas TPV/KDS, preferir useOperationalReadiness("TPV"|"KDS"); o ORE trata
+ * MODULE_NOT_ENABLED e devolve BlockingScreen. Este componente é legado quando a rota
+ * já usa ORE na página (ex.: TPVMinimal, KDSMinimal).
+ * @see docs/bootstrap/OPERATIONAL_READINESS_ENGINE.md
  */
 
 import React, { useContext } from "react";

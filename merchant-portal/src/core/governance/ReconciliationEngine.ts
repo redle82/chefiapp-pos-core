@@ -11,7 +11,7 @@
  * FINANCIAL_CORE_VIOLATION_AUDIT Fase 4: usa getTableClient() e invokeRpc (Core quando Docker).
  */
 
-import { getTableClient, invokeRpc } from '../infra/coreOrSupabaseRpc';
+import { getTableClient, invokeRpc } from '../infra/coreRpc';
 import { Logger } from '../logger';
 import { DbWriteGate } from './DbWriteGate'; // For authorized updates during reconcile
 
@@ -149,9 +149,9 @@ export class ReconciliationEngine {
         for (const event of eventsList) {
             lastEventId = event.event_id; // Check column name in PostgresEventStore (event_id)
             lastVersion = event.stream_version;
-            const payload = event.payload || {}; // Payload is JSONB, might come as object directly from Supabase client
+            const payload = event.payload || {}; // Payload is JSONB, might come as object from Core
 
-            // Parse payload if string (Supabase client might auto-parse, but be safe)
+            // Parse payload if string (Core client might auto-parse, but be safe)
             const data = (typeof payload === 'string') ? JSON.parse(payload) : payload;
 
             const type = event.event_type || event.type; // Column event_type

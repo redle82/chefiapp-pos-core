@@ -1,5 +1,5 @@
 # Events & Streams Contract
->
+
 > **The Language of History**
 
 This document defines the naming conventions, structure, and rules for the Event Store.
@@ -24,20 +24,21 @@ This document defines the naming conventions, structure, and rules for the Event
 - **ORDER:** `ORDER_CREATED`, `ORDER_LOCKED`, `ORDER_PAID`, `ORDER_CANCELED`, `ORDER_CLOSED`
 - **PAYMENT:** `PAYMENT_CREATED`, `PAYMENT_CONFIRMED`, `PAYMENT_FAILED`
 - **INVENTORY:** `INVENTORY_CONSUMED`, `INVENTORY_RESTOCKED`
+- **RESTAURANT:** `RESTAURANT_IDLE` — Restaurante em modo interno (turno aberto, sem pedidos ativos, tempo desde último pedido ≥ X min). Usado para disparar geração de tarefas operacionais internas (limpeza, organização, checklist diário, preparação). Ver [CONTRATO_DE_ATIVIDADE_OPERACIONAL.md](./CONTRATO_DE_ATIVIDADE_OPERACIONAL.md). Em código: `restaurant_idle`.
 
 ## 3. Structure (CloudEvents Compatible)
 
 ```typescript
 interface CoreEvent {
-  event_id: UUID;        // Unique ID
-  stream_id: string;     // See Section 1
-  stream_version: number;// 1, 2, 3... (Version Control)
-  type: string;          // See Section 2
-  payload: JSON;         // The Data Mutation
+  event_id: UUID; // Unique ID
+  stream_id: string; // See Section 1
+  stream_version: number; // 1, 2, 3... (Version Control)
+  type: string; // See Section 2
+  payload: JSON; // The Data Mutation
   meta: {
     causation_id?: UUID; // What command caused this?
-    correlation_id: UUID;// Trace ID
-    actor_ref?: string;  // Who did this?
+    correlation_id: UUID; // Trace ID
+    actor_ref?: string; // Who did this?
     idempotency_key?: string; // Deduplication Key
   };
   occurred_at: ISO8601;

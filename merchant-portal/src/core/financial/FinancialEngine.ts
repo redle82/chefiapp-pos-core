@@ -2,11 +2,12 @@
  * FinancialEngine - Engine Financeiro
  *
  * Gerencia fluxo de caixa, margens, custos, desperdício e previsões.
- * DOCKER MODE: não usa Supabase; retorna dados mock (lista vazia, saldo zero)
+ * Core (Docker) only; retorna dados mock quando backend não configurado (lista vazia, saldo zero)
  * para a página /financial carregar sem erro.
  */
 
 import { BackendType, getBackendType } from "../infra/backendAdapter";
+// Core client (core/supabase alias = getDockerCoreFetchClient)
 import { supabase } from "../supabase";
 
 export type TransactionType = "income" | "expense" | "transfer";
@@ -151,7 +152,7 @@ export class FinancialEngine {
       type?: TransactionType[];
       category?: TransactionCategory[];
       limit?: number;
-    },
+    }
   ): Promise<CashFlowTransaction[]> {
     if (getBackendType() === BackendType.docker) {
       return [];
@@ -164,14 +165,14 @@ export class FinancialEngine {
     if (filters?.startDate) {
       query = query.gte(
         "transaction_date",
-        filters.startDate.toISOString().split("T")[0],
+        filters.startDate.toISOString().split("T")[0]
       );
     }
 
     if (filters?.endDate) {
       query = query.lte(
         "transaction_date",
-        filters.endDate.toISOString().split("T")[0],
+        filters.endDate.toISOString().split("T")[0]
       );
     }
 
@@ -200,7 +201,7 @@ export class FinancialEngine {
    */
   async calculateCashBalance(
     restaurantId: string,
-    asOfDate?: Date,
+    asOfDate?: Date
   ): Promise<{ income: number; expenses: number; balance: number }> {
     if (getBackendType() === BackendType.docker) {
       return { income: 0, expenses: 0, balance: 0 };
@@ -245,7 +246,7 @@ export class FinancialEngine {
     restaurantId: string,
     productId: string,
     periodStart: Date,
-    periodEnd: Date,
+    periodEnd: Date
   ): Promise<ProductMargin> {
     if (getBackendType() === BackendType.docker) {
       return {
@@ -262,7 +263,9 @@ export class FinancialEngine {
         unitsWasted: 0,
       };
     }
-    const { data, error } = await (await import("../infra/coreOrSupabaseRpc")).invokeRpc("calculate_product_margin", {
+    const { data, error } = await (
+      await import("../infra/coreRpc")
+    ).invokeRpc("calculate_product_margin", {
       p_restaurant_id: restaurantId,
       p_product_id: productId,
       p_period_start: periodStart.toISOString().split("T")[0],
@@ -294,7 +297,7 @@ export class FinancialEngine {
       periodStart?: Date;
       periodEnd?: Date;
       limit?: number;
-    },
+    }
   ): Promise<ProductMargin[]> {
     if (getBackendType() === BackendType.docker) {
       return [];
@@ -307,14 +310,14 @@ export class FinancialEngine {
     if (filters?.periodStart) {
       query = query.gte(
         "period_start",
-        filters.periodStart.toISOString().split("T")[0],
+        filters.periodStart.toISOString().split("T")[0]
       );
     }
 
     if (filters?.periodEnd) {
       query = query.lte(
         "period_end",
-        filters.periodEnd.toISOString().split("T")[0],
+        filters.periodEnd.toISOString().split("T")[0]
       );
     }
 
@@ -382,7 +385,7 @@ export class FinancialEngine {
       endDate?: Date;
       lossType?: LossType[];
       limit?: number;
-    },
+    }
   ): Promise<WasteAndLoss[]> {
     if (getBackendType() === BackendType.docker) {
       return [];
@@ -422,7 +425,7 @@ export class FinancialEngine {
   async calculateTotalWasteAndLosses(
     restaurantId: string,
     startDate?: Date,
-    endDate?: Date,
+    endDate?: Date
   ): Promise<number> {
     if (getBackendType() === BackendType.docker) {
       return 0;
@@ -446,7 +449,7 @@ export class FinancialEngine {
 
     return (data || []).reduce(
       (sum, row) => sum + parseFloat(row.total_loss || 0),
-      0,
+      0
     );
   }
 

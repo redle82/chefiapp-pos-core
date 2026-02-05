@@ -2,6 +2,8 @@
 
 > "A Lei Única que governa a navegação do Merchant Portal."
 
+**Sequência Canônica v1.0:** Este fluxo implementa os 8 passos oficiais (Landing → Auth → Bootstrap → Primeiro produto [pulável] → Aha Moment → Trial silencioso → Operação → Billing assíncrono). Contrato: `docs/contracts/FUNIL_VIDA_CLIENTE.md#sequência-canônica-oficial-v10`. Código: `core/flow/canonicalFlow.ts`.
+
 ## 1. Introdução
 Este documento define a máquina de estados soberana que decide para onde um usuário deve ser roteado. Nenhuma tela (Login, Splash, Onboarding) deve decidir seu próprio destino. Elas apenas **executam** a decisão deste contrato.
 

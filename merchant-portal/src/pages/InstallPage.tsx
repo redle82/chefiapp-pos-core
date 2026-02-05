@@ -1,13 +1,22 @@
 /**
- * InstallPage — Instalar TPV / KDS como Web App Operacional Instalável
+ * InstallPage — Instalar TPV / KDS como dispositivos com identidade fixa
  *
- * /app/install — Explica "Instalar TPV / KDS", dois cards (TPV, KDS),
- * instruções por navegador (Chrome/Edge, Safari iPad/iPhone, Safari macOS),
- * botões "Abrir TPV" e "Abrir KDS" que abrem em nova aba.
- * Apenas capacidades nativas do browser (sem Electron, sem PWA complexo).
+ * /app/install — Escolher "Instalar como TPV" ou "Instalar como KDS".
+ * Requer restaurante no runtime (login). Cria gm_equipment + installed_modules
+ * e guarda identidade local (device_id, restaurant_id, module) para o dispositivo
+ * nunca mais perguntar qual é o restaurante.
  */
 
-import { useMemo } from "react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useRestaurantRuntime } from "../context/RestaurantRuntimeContext";
+import { dockerCoreClient } from "../core-boundary/docker-core/connection";
+import { insertInstalledModule } from "../core-boundary/writers/RuntimeWriter";
+import { BackendType, getBackendType } from "../core/infra/backendAdapter";
+import {
+  setInstalledDevice,
+  type InstalledDeviceModule,
+} from "../core/storage/installedDeviceStorage";
 
 const styles = {
   page: {
@@ -20,7 +29,12 @@ const styles = {
     margin: "0 auto",
   },
   title: { fontSize: 24, fontWeight: 700, marginBottom: 8 },
-  subtitle: { fontSize: 15, color: "#a3a3a3", marginBottom: 32, lineHeight: 1.5 },
+  subtitle: {
+    fontSize: 15,
+    color: "#a3a3a3",
+    marginBottom: 32,
+    lineHeight: 1.5,
+  },
   card: {
     padding: 24,
     borderRadius: 12,
@@ -29,10 +43,22 @@ const styles = {
     marginBottom: 24,
   },
   cardTitle: { fontSize: 18, fontWeight: 600, marginBottom: 8 },
-  cardDesc: { fontSize: 14, color: "#a3a3a3", marginBottom: 16, lineHeight: 1.5 },
+  cardDesc: {
+    fontSize: 14,
+    color: "#a3a3a3",
+    marginBottom: 16,
+    lineHeight: 1.5,
+  },
   link: { fontSize: 13, color: "#eab308", wordBreak: "break-all" as const },
   section: { marginTop: 20, marginBottom: 12 },
-  sectionTitle: { fontSize: 12, fontWeight: 600, color: "#737373", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 8 },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#737373",
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.05em",
+    marginBottom: 8,
+  },
   instructions: { fontSize: 14, color: "#d4d4d4", lineHeight: 1.6, margin: 0 },
   btn: {
     display: "inline-block",
@@ -46,91 +72,201 @@ const styles = {
     marginRight: 12,
   },
   btnPrimary: { backgroundColor: "#eab308", color: "#0a0a0a" },
-  btnSecondary: { backgroundColor: "transparent", color: "#a3a3a3", border: "1px solid #404040" },
+  btnSecondary: {
+    backgroundColor: "transparent",
+    color: "#a3a3a3",
+    border: "1px solid #404040",
+  },
+  input: {
+    padding: "12px 14px",
+    fontSize: 15,
+    border: "1px solid #404040",
+    borderRadius: 8,
+    background: "#171717",
+    color: "#fafafa",
+    width: "100%",
+    maxWidth: 320,
+    marginBottom: 16,
+  },
+  error: { fontSize: 13, color: "#ff6b6b", marginBottom: 12 },
 };
 
-function useBaseUrl(): string {
-  return useMemo(() => {
-    if (typeof window === "undefined") return "";
-    return window.location.origin;
-  }, []);
-}
-
 export function InstallPage() {
-  const baseUrl = useBaseUrl();
-  const tpvUrl = `${baseUrl}/op/tpv`;
-  const kdsUrl = `${baseUrl}/op/kds`;
+  const { runtime } = useRestaurantRuntime();
+  const navigate = useNavigate();
+  const restaurantId = runtime?.restaurant_id ?? null;
+  const isDocker = getBackendType() === BackendType.docker;
 
-  const openTpv = () => window.open(tpvUrl, "_blank", "noopener,noreferrer");
-  const openKds = () => window.open(kdsUrl, "_blank", "noopener,noreferrer");
+  const [installing, setInstalling] = useState<InstalledDeviceModule | null>(
+    null
+  );
+  const [deviceNameTpv, setDeviceNameTpv] = useState("");
+  const [deviceNameKds, setDeviceNameKds] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleInstall(moduleId: InstalledDeviceModule) {
+    if (!restaurantId || !isDocker) {
+      setError(
+        "Requer restaurante e Core Docker. Faça login e escolha o restaurante."
+      );
+      return;
+    }
+    const defaultName = moduleId === "tpv" ? "TPV_BALCAO_01" : "KDS_COZINHA_01";
+    const name =
+      (moduleId === "tpv" ? deviceNameTpv : deviceNameKds).trim() ||
+      defaultName;
+    setError(null);
+    setInstalling(moduleId);
+    try {
+      const kind = moduleId === "tpv" ? "TPV" : "KDS";
+      const { data: equipment, error: eqError } = await dockerCoreClient
+        .from("gm_equipment")
+        .insert({
+          restaurant_id: restaurantId,
+          name,
+          kind,
+          is_active: true,
+        })
+        .select("id")
+        .single();
+
+      if (eqError || !equipment?.id) {
+        throw new Error(
+          eqError?.message ?? "Falha ao criar dispositivo no Core."
+        );
+      }
+
+      const { error: modError } = await insertInstalledModule(
+        restaurantId,
+        moduleId,
+        moduleId === "tpv" ? "TPV" : "KDS"
+      );
+      if (modError) {
+        throw new Error(modError);
+      }
+
+      setInstalledDevice({
+        device_id: equipment.id,
+        restaurant_id: restaurantId,
+        module_id: moduleId,
+        device_name: name,
+      });
+
+      navigate(moduleId === "tpv" ? "/op/tpv" : "/op/kds", { replace: true });
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Erro ao instalar dispositivo."
+      );
+    } finally {
+      setInstalling(null);
+    }
+  }
+
+  if (!restaurantId) {
+    return (
+      <div style={styles.page}>
+        <h1 style={styles.title}>Instalar TPV e KDS</h1>
+        <p style={styles.subtitle}>
+          Para instalar um dispositivo (TPV ou KDS), é necessário ter um
+          restaurante associado. Faça login e escolha o restaurante no portal.
+        </p>
+        <Link to="/dashboard" style={{ ...styles.btn, ...styles.btnPrimary }}>
+          Ir para o Dashboard
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.page}>
-        <h1 style={styles.title}>Instalar TPV e KDS</h1>
-        <p style={styles.subtitle}>
-          Instale o TPV (Caixa) e o KDS (Cozinha) como apps dedicados em tela cheia, sem barra do navegador.
-          Use apenas o modo nativo do browser — sem software extra.
+      <h1 style={styles.title}>Instalar TPV e KDS</h1>
+      <p style={styles.subtitle}>
+        Instale este browser como TPV (Caixa) ou KDS (Cozinha). O dispositivo
+        fica ligado a este restaurante e deixa de perguntar qual é o
+        restaurante.
+      </p>
+
+      {error && <p style={styles.error}>{error}</p>}
+
+      {/* Card TPV */}
+      <div style={styles.card}>
+        <h2 style={styles.cardTitle}>TPV (Caixa)</h2>
+        <p style={styles.cardDesc}>
+          Este dispositivo passará a ser o TPV deste restaurante. Produtos e
+          pedidos usam este restaurante.
         </p>
-
-        {/* Card TPV */}
-        <div style={styles.card}>
-          <h2 style={styles.cardTitle}>TPV (Caixa)</h2>
-          <p style={styles.cardDesc}>
-            Abra o link abaixo no Chrome, Edge ou Safari e use a opção do navegador para “Instalar app” ou “Adicionar à tela de início”.
-          </p>
-          <p style={styles.link}>{tpvUrl}</p>
-          <div style={styles.section}>
-            <div style={styles.sectionTitle}>Chrome / Edge (Windows ou macOS)</div>
-            <p style={styles.instructions}>
-              Abra o TPV no Chrome ou Edge e clique em: Menu ⋮ → “Instalar app” ou “Criar atalho” → Abrir como janela.
-            </p>
-          </div>
-          <div style={styles.section}>
-            <div style={styles.sectionTitle}>Safari (iPad / iPhone)</div>
-            <p style={styles.instructions}>
-              Compartilhar → Adicionar à Tela de Início.
-            </p>
-          </div>
-          <div style={styles.section}>
-            <div style={styles.sectionTitle}>Safari (macOS)</div>
-            <p style={styles.instructions}>
-              Arquivo → Adicionar ao Dock (quando disponível), ou Adicionar aos Favoritos e abrir em tela cheia.
-            </p>
-          </div>
-          <button type="button" style={{ ...styles.btn, ...styles.btnPrimary }} onClick={openTpv}>
-            Abrir TPV
-          </button>
-        </div>
-
-        {/* Card KDS */}
-        <div style={styles.card}>
-          <h2 style={styles.cardTitle}>KDS (Cozinha)</h2>
-          <p style={styles.cardDesc}>
-            Abra o link abaixo no Chrome, Edge ou Safari e use a opção do navegador para “Instalar app” ou “Adicionar à tela de início”.
-          </p>
-          <p style={styles.link}>{kdsUrl}</p>
-          <div style={styles.section}>
-            <div style={styles.sectionTitle}>Chrome / Edge (Windows ou macOS)</div>
-            <p style={styles.instructions}>
-              Abra o KDS no Chrome ou Edge e clique em: Menu ⋮ → “Instalar app” ou “Criar atalho” → Abrir como janela.
-            </p>
-          </div>
-          <div style={styles.section}>
-            <div style={styles.sectionTitle}>Safari (iPad / iPhone)</div>
-            <p style={styles.instructions}>
-              Compartilhar → Adicionar à Tela de Início.
-            </p>
-          </div>
-          <div style={styles.section}>
-            <div style={styles.sectionTitle}>Safari (macOS)</div>
-            <p style={styles.instructions}>
-              Arquivo → Adicionar ao Dock (quando disponível), ou Adicionar aos Favoritos e abrir em tela cheia.
-            </p>
-          </div>
-          <button type="button" style={{ ...styles.btn, ...styles.btnPrimary }} onClick={openKds}>
-            Abrir KDS
-          </button>
-        </div>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 8,
+            fontSize: 13,
+            color: "#a3a3a3",
+          }}
+        >
+          Nome do dispositivo (ex: TPV_BALCAO_01)
+        </label>
+        <input
+          type="text"
+          style={styles.input}
+          placeholder="TPV_BALCAO_01"
+          value={deviceNameTpv}
+          onChange={(e) => setDeviceNameTpv(e.target.value)}
+          disabled={!!installing}
+        />
+        <button
+          type="button"
+          style={{ ...styles.btn, ...styles.btnPrimary }}
+          onClick={() => handleInstall("tpv")}
+          disabled={!!installing}
+        >
+          {installing === "tpv" ? "A instalar…" : "Instalar como TPV"}
+        </button>
       </div>
+
+      {/* Card KDS */}
+      <div style={styles.card}>
+        <h2 style={styles.cardTitle}>KDS (Cozinha)</h2>
+        <p style={styles.cardDesc}>
+          Este dispositivo passará a ser o KDS deste restaurante. Verá os
+          pedidos criados no TPV.
+        </p>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 8,
+            fontSize: 13,
+            color: "#a3a3a3",
+          }}
+        >
+          Nome do dispositivo (ex: KDS_COZINHA_01)
+        </label>
+        <input
+          type="text"
+          style={styles.input}
+          placeholder="KDS_COZINHA_01"
+          value={deviceNameKds}
+          onChange={(e) => setDeviceNameKds(e.target.value)}
+          disabled={!!installing}
+        />
+        <button
+          type="button"
+          style={{ ...styles.btn, ...styles.btnPrimary }}
+          onClick={() => handleInstall("kds")}
+          disabled={!!installing}
+        >
+          {installing === "kds" ? "A instalar…" : "Instalar como KDS"}
+        </button>
+      </div>
+
+      <div style={styles.section}>
+        <div style={styles.sectionTitle}>Como usar depois</div>
+        <p style={styles.instructions}>
+          Depois de instalar, abra <strong>/op/tpv</strong> ou{" "}
+          <strong>/op/kds</strong>. O dispositivo não voltará a pedir o
+          restaurante. Para instalar noutro browser ou dispositivo, volte a esta
+          página com o mesmo utilizador e restaurante.
+        </p>
+      </div>
+    </div>
   );
 }

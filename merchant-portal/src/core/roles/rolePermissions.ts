@@ -9,17 +9,19 @@ export type UserRole = "owner" | "manager" | "staff";
 
 /**
  * Rotas ou prefixos → roles permitidos.
+ * FASE 3 Passo 4: Staff só executa; Gerente acompanha; Dono vê tudo.
  * Ordem de match: mais específico primeiro (ex.: /config/integrations antes /config).
- * Paths são normalizadas via normalizePath antes de consultar.
  */
 const ROUTE_ALLOWED_ROLES: Record<string, UserRole[]> = {
-  // Config: owner-only
+  // Config: apenas owner/manager (staff não acede a configuração sensível)
   "/config/integrations": ["owner"],
   "/config/modules": ["owner"],
   "/config/status": ["owner"],
   "/config/payments": ["owner"],
   "/config/perception": ["owner", "manager"],
-  "/dashboard": ["owner", "manager", "staff"],
+  "/config": ["owner", "manager"],
+  // Dashboard: owner/manager (gerente acompanha; staff só execução em /op, /tasks, etc.)
+  "/dashboard": ["owner", "manager"],
   "/billing": ["owner"],
   "/app/billing": ["owner"],
   "/mentor": ["owner", "manager"],
@@ -36,10 +38,12 @@ const ROUTE_ALLOWED_ROLES: Record<string, UserRole[]> = {
   "/operacao": ["owner", "manager"],
   "/inventory-stock": ["owner", "manager"],
   "/financial": ["owner", "manager"],
+  "/app/reports": ["owner", "manager"],
   "/groups": ["owner"],
   "/purchases": ["owner", "manager"],
   "/reservations": ["owner", "manager"],
-  // App tree: backoffice, setup redirects
+  // App tree: backoffice owner/manager; staff só execução (garcom, tpv, etc.)
+  "/app/backoffice": ["owner", "manager"],
   "/app": ["owner", "manager", "staff"],
   // Perfil: owner-only, manager-only, staff pode employee
   "/owner": ["owner"],

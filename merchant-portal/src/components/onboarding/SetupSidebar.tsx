@@ -193,10 +193,10 @@ export function SetupSidebar() {
           }}
         >
           <a
-            href="/demo"
+            href="/auth"
             onClick={(e) => {
               e.preventDefault();
-              window.location.href = "/demo";
+              window.location.href = "/auth";
             }}
             style={{
               display: "flex",

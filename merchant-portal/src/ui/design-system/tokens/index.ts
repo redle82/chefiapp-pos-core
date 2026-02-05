@@ -1,8 +1,8 @@
 import { colors } from './colors';
-import { spacing } from './spacing';
-import { typography } from './typography';
 import { radius } from './radius';
 import { shadows } from './shadows';
+import { spacing } from './spacing';
+import { typography } from './typography';
 
 export const tokens = {
     colors,
@@ -20,3 +20,4 @@ export type TokenRadius = typeof radius;
 export type TokenShadows = typeof shadows;
 
 export { cn } from './cn';
+export { spacing } from './spacing';

@@ -29,14 +29,14 @@ const DASHBOARD_COPY: Record<Exclude<UserRole, "staff">, DashboardCopy> = {
     sidebarSubtitle: "Estado do sistema",
     mainTitle: "Seu Sistema Operacional",
     mainSubtitle:
-      "Estado do sistema: em cima o que está ativo; no meio o que pode ativar no piloto; embaixo em evolução.",
+      "Setup, trial ou plano ativo — uma única verdade de estado (CONTRATO_TRIAL_REAL).",
   },
   manager: {
     sidebarTitle: "ChefIApp OS",
     sidebarSubtitle: "O que fazer agora",
     mainTitle: "O que fazer agora",
     mainSubtitle:
-      "Em cima, o que você usa hoje; no meio, o que podemos ativar no piloto; embaixo, o que está em evolução.",
+      "Visão do que está ativo e do que fazer a seguir.",
   },
 };
 

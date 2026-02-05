@@ -8,9 +8,12 @@ import { Header } from '../../components/navigation/Header';
 import { BottomTabs } from '../../components/navigation/BottomTabs';
 import { EmptyState } from '../../components/ui/EmptyState';
 import type { ShoppingListItem } from '../../types/purchases';
+import { DataModeBanner } from '../../components/DataModeBanner';
+import { useRestaurantRuntime } from '../../context/RestaurantRuntimeContext';
 
 export function OwnerPurchasesPage() {
   const navigate = useNavigate();
+  const { runtime } = useRestaurantRuntime();
   const [filter, setFilter] = useState<'auto' | 'manual' | 'all'>('auto');
 
   // TODO: Integrar com generate_shopping_list
@@ -20,6 +23,7 @@ export function OwnerPurchasesPage() {
 
   return (
     <div style={{ paddingBottom: '80px' }}>
+      <DataModeBanner dataMode={runtime.dataMode} />
       <Header
         title="Compras"
         actions={

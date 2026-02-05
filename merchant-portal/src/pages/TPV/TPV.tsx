@@ -1,5 +1,40 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+/**
+ * TPV — Ponto de venda (fluxo real: mesa → pedido → pagar).
+ *
+ * FLUXO PRINCIPAL
+ * 1. Operador desbloqueia (TPVLockScreen) → start_turn RPC → restaurante/turno ativo.
+ * 2. Navegação: menu | tables | orders | reservations | delivery | warmap (ContextView).
+ * 3. Criar pedido: só ao adicionar primeiro item (handleAddItem) ou via mapa (handleCreateOrderViaMap); nunca pedido vazio.
+ * 4. Pedido ativo: activeOrderId + StreamTunnel (lista) + OrderSummaryPanel (ticket) + OrderItemEditor; ações via performOrderAction.
+ * 5. Pagamento: handleAction("pay") abre PaymentModal → handlePayment → performOrderAction("pay") → fiscal emit se total pago.
+ *
+ * GUARDS CRÍTICOS (ordem de bloqueio)
+ * - useOperationalReadiness("TPV"): bootstrap/tenant; redireciona ou BlockingScreen se não pronto.
+ * - isLocked: TPVLockScreen até start_turn sucesso (sessão + RPC).
+ * - cashRegisterOpen: criar venda exige caixa aberto (handleCreateOrder, handleCreateOrderViaMap, handleAddItem implícito via createOrder).
+ * - guards.canCreateOrder: bootstrap.publishStatus === "publicado" (evita 409 em gm_order_items).
+ * - guards.actionsEnabled: healthStatus UP/DEGRADED ou isDemoData ou isOnline; bloqueia pay/prepare/ready/cancel se Core down (exceto demo).
+ * - role: fechar/abrir caixa só gerente (useCommonTPVShortcuts).
+ *
+ * DEPENDÊNCIAS REAIS
+ * - OrderProvider (OrderContextReal): useOrders → createOrder, addItemToOrder, performOrderAction, getOpenCashRegister, openCashRegister, closeCashRegister (CoreOrdersApi / PaymentEngine).
+ * - TableProvider: useTables (mesas do Core).
+ * - useDynamicMenu(restaurantId, mode: "tpv"): menu para QuickMenuPanel; coreReachable = bootstrap.coreStatus === "online".
+ * - useCoreHealth: healthStatus para guards.actionsEnabled.
+ * - useShift: refreshShiftStatus após abrir/fechar caixa.
+ * - Bootstrap: publishStatus, operationMode, coreStatus (exploração vs operação real).
+ */
+// Auth only — temporary until Core Auth (getSession for start_turn)
 import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  Navigate,
   useLocation,
   useNavigate,
   useParams,
@@ -17,7 +52,10 @@ import {
   setTabIsolated,
 } from "../../core/storage/TabIsolatedStorage";
 import { AppShell } from "../../ui/design-system/AppShell";
-import { OfflineOrderProvider } from "./context/OfflineOrderContext";
+import {
+  OfflineOrderProvider,
+  useOfflineOrder,
+} from "./context/OfflineOrderContext";
 import { OrderProvider, useOrders } from "./context/OrderContextReal";
 import { TableProvider } from "./context/TableContext";
 
@@ -25,8 +63,21 @@ import { SyncStatusIndicator } from "../../components/SyncStatusIndicator";
 
 import { useGlobalUIState } from "../../context/GlobalUIStateContext";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import {
+  MSG_CASH_ALREADY_CLOSED,
+  MSG_CASH_REGISTER_CLOSED_CREATE,
+  MSG_MANAGER_ONLY_CLOSE_CASH,
+  MSG_MANAGER_ONLY_OPEN_CASH,
+  MSG_OPEN_CASH_BEFORE_CREATE,
+  MSG_SYSTEM_UNAVAILABLE_ACTION,
+  MSG_SYSTEM_UNAVAILABLE_PAYMENT,
+  MSG_VERIFY_CASH_ERROR,
+} from "../../core/guards/GuardMessages";
 import { useCoreHealth } from "../../core/health/useCoreHealth";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity"; // Visual Polish
+import { BlockingScreen, useOperationalReadiness } from "../../core/readiness";
+import { useShift } from "../../core/shift/ShiftContext";
+import { useBootstrapState } from "../../hooks/useBootstrapState";
 
 import { OfflineBanner } from "../../components/OfflineBanner";
 import { CashRegisterAlert } from "./components/CashRegisterAlert";
@@ -37,6 +88,7 @@ import { FiscalConfigAlert } from "./components/FiscalConfigAlert";
 import { ToastContainer, useToast } from "../../ui/design-system";
 import { Button } from "../../ui/design-system/Button";
 import { Card } from "../../ui/design-system/Card";
+import { GlobalLoadingView } from "../../ui/design-system/components";
 import { CommandPanel } from "../../ui/design-system/domain/CommandPanel";
 import { QuickMenuPanel } from "../../ui/design-system/domain/QuickMenuPanel";
 import { StreamTunnel } from "../../ui/design-system/domain/StreamTunnel";
@@ -57,32 +109,32 @@ import { useConsumptionGroups } from "./hooks/useConsumptionGroups";
 const PaymentModal = lazy(() =>
   import("./components/PaymentModal").then((m) => ({
     default: m.PaymentModal,
-  })),
+  }))
 );
 const SplitBillModalWrapper = lazy(() =>
   import("./components/SplitBillModalWrapper").then((m) => ({
     default: m.SplitBillModalWrapper,
-  })),
+  }))
 );
 const OpenCashRegisterModal = lazy(() =>
   import("./components/OpenCashRegisterModal").then((m) => ({
     default: m.OpenCashRegisterModal,
-  })),
+  }))
 );
 const CloseCashRegisterModal = lazy(() =>
   import("./components/CloseCashRegisterModal").then((m) => ({
     default: m.CloseCashRegisterModal,
-  })),
+  }))
 );
 const OrderItemEditor = lazy(() =>
   import("./components/OrderItemEditor").then((m) => ({
     default: m.OrderItemEditor,
-  })),
+  }))
 );
 const CreateGroupModal = lazy(() =>
   import("./components/CreateGroupModal").then((m) => ({
     default: m.CreateGroupModal,
-  })),
+  }))
 );
 
 import { useCurrency } from "../../core/currency/useCurrency"; // P5-5
@@ -92,7 +144,7 @@ import { useCommonTPVShortcuts } from "./hooks/useTPVShortcuts";
 const QuickProductModal = lazy(() =>
   import("./components/QuickProductModal").then((m) => ({
     default: m.QuickProductModal,
-  })),
+  }))
 );
 
 import { useOperationalCortex } from "../../intelligence/nervous-system/OperationalCortex";
@@ -115,6 +167,44 @@ type ContextView =
   | "reservations"
   | "delivery"
   | "warmap";
+
+/** Pure: deriva guards operacionais (sem side-effects). */
+function computeGuards(params: {
+  isLocked: boolean;
+  cashRegisterOpen: boolean;
+  publishStatus: string;
+  healthStatus: string;
+  isDemoData: boolean;
+  isOnline: boolean;
+}) {
+  const canCreateOrder = params.publishStatus === "publicado";
+  const actionsEnabled =
+    params.healthStatus === "UP" ||
+    params.healthStatus === "DEGRADED" ||
+    params.isDemoData ||
+    params.isOnline;
+  return {
+    isLocked: params.isLocked,
+    cashRegisterOpen: params.cashRegisterOpen,
+    canCreateOrder,
+    actionsEnabled,
+  };
+}
+
+/** Render do ecrã de bloqueio (TPVLockScreen). Sem hooks. */
+function renderLockedState(props: {
+  onUnlock: (
+    op: Operator,
+    mode: "command" | "rush" | "training"
+  ) => Promise<void>;
+}) {
+  return (
+    <AppShell>
+      <OfflineBanner />
+      <TPVLockScreen onUnlock={props.onUnlock} />
+    </AppShell>
+  );
+}
 
 class DebugErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -164,7 +254,8 @@ const TPVContent = () => {
   const navigate = useNavigate();
   const globalUI = useGlobalUIState();
   const runtimeContext = useRestaurantRuntime();
-  const coreReachable = globalUI.coreReachable;
+  const bootstrap = useBootstrapState();
+  const shift = useShift();
 
   // RITUAL: Operator Gate State
   // HOOKS REFACTORING COMPLETE - Lock screen now active in all modes
@@ -190,13 +281,13 @@ const TPVContent = () => {
     }
   }, [urlRestaurantId]);
 
-  // FASE 2: Detectar modo demo da URL
+  // FASE 2: Detectar exploração da URL (?demo=)
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const isDemoMode =
     searchParams.get("demo") === "true" || location.state?.demo === true;
 
-  // Salvar modo demo no localStorage para persistir
+  // Persistir estado de exploração no localStorage
   useEffect(() => {
     if (isDemoMode) {
       setTabIsolated("chefiapp_tpv_demo_mode", "true");
@@ -226,7 +317,7 @@ const TPVContent = () => {
   const [dailyTotalCents, setDailyTotalCents] = useState<number>(0);
   const [cashRegisterOpen, setCashRegisterOpen] = useState<boolean>(false);
   const [paymentModalOrderId, setPaymentModalOrderId] = useState<string | null>(
-    null,
+    null
   );
   const [splitBillModalOrderId, setSplitBillModalOrderId] = useState<
     string | null
@@ -260,9 +351,22 @@ const TPVContent = () => {
     openCashRegister,
     closeCashRegister,
     getActiveOrders,
+    isOrderConfirmed,
     loading: ordersLoading,
     error: ordersError,
   } = useOrders();
+
+  // FASE 1 — Rascunho em memória até confirmação. Ver FLUXO_DE_PEDIDO_OPERACIONAL.md
+  const [draftItems, setDraftItems] = useState<
+    Array<{
+      id: string;
+      productId: string;
+      name: string;
+      price: number;
+      quantity: number;
+      category?: string;
+    }>
+  >([]);
 
   // P4-6 FIX: Use Dynamic Menu (Intelligence + Sponsorships)
   const {
@@ -274,7 +378,7 @@ const TPVContent = () => {
     restaurantId: restaurantId || "",
     mode: "tpv",
     autoRefresh: true,
-    coreReachable,
+    coreReachable: bootstrap.coreStatus === "online",
   });
 
   // Adapter: Convert DynamicMenuResponse to flat MenuItem[] for QuickMenuPanel
@@ -287,7 +391,7 @@ const TPVContent = () => {
     if (menu.contextual && menu.contextual.length > 0) {
       console.log(
         "[TPV] Raw Contextual Item 0:",
-        JSON.stringify(menu.contextual[0], null, 2),
+        JSON.stringify(menu.contextual[0], null, 2)
       );
       menu.contextual.forEach((item) => {
         items.push({
@@ -336,7 +440,7 @@ const TPVContent = () => {
         (o) =>
           o.tableId === table.id &&
           o.status !== "paid" &&
-          o.status !== "cancelled",
+          o.status !== "cancelled"
       );
 
       const lastActivityTime = activeOrder
@@ -354,7 +458,7 @@ const TPVContent = () => {
         table.status as any,
         lastActivityTime,
         lastActivityTime, // seated time roughly same as order creation for now
-        false, // No "Call Waiter" signal yet
+        false // No "Call Waiter" signal yet
       );
 
       // Calculate wait minutes for display
@@ -390,25 +494,41 @@ const TPVContent = () => {
   });
 
   // Online/Offline status (must be declared before use)
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const { isOffline } = useOfflineOrder();
+  const isOnline = !isOffline;
 
   // P1-1 FIX: Determinar se ações devem estar habilitadas
   // Ações offline (criar pedido, adicionar item) sempre permitidas
   // Ações críticas (pagamento) respeitam health status
-  // FASE 2: Detectar modo demo da URL
+  // FASE 2: Detectar exploração da URL (?demo=)
   // FASE 2: Detectar se é modo tutorial
   const isTutorialMode =
     location.state?.tutorial === true ||
     searchParams.get("tutorial") === "true";
 
-  // Demo mode permite ações mesmo com sistema down (para testes)
-  const isDemoData =
-    getTabIsolated("chefiapp_demo_mode") === "true" || isDemoMode;
-  const actionsEnabled =
-    healthStatus === "UP" ||
-    healthStatus === "DEGRADED" ||
-    isDemoData ||
-    isOnline;
+  // Bootstrap: decisão de exploração vem do estado canónico
+  const isDemoData = bootstrap.operationMode === "exploracao";
+
+  // Guards operacionais (agrupados por intenção)
+  const guards = useMemo(
+    () =>
+      computeGuards({
+        isLocked,
+        cashRegisterOpen,
+        publishStatus: bootstrap.publishStatus,
+        healthStatus,
+        isDemoData,
+        isOnline,
+      }),
+    [
+      isLocked,
+      cashRegisterOpen,
+      bootstrap.publishStatus,
+      healthStatus,
+      isDemoData,
+      isOnline,
+    ]
+  );
   const { intention, role } = useContextEngine();
 
   const [contextView, setContextView] = useState<ContextView>(() => {
@@ -431,10 +551,11 @@ const TPVContent = () => {
 
   // FASE 5: Toast removido daqui (já declarado acima)
 
-  // FASE 2: Modo Demo - Pré-preencher dados
+  // FASE 2: Pré-preencher dados de exemplo (só quando publicado, para evitar 409)
   useEffect(() => {
     if (
-      isDemoMode &&
+      isDemoData &&
+      guards.canCreateOrder &&
       restaurantId &&
       menuItems.length > 0 &&
       tables.length > 0 &&
@@ -464,7 +585,7 @@ const TPVContent = () => {
               })),
               total: itemsToAdd.reduce(
                 (sum, item) => sum + Math.round(item.price * 100),
-                0,
+                0
               ),
               tableNumber: firstTable.number,
               tableId: firstTable.id,
@@ -472,7 +593,7 @@ const TPVContent = () => {
               .then((order) => {
                 setActiveOrderId(order.id);
                 setTabIsolated("chefiapp_active_order_id", order.id);
-                success("Modo Demo: Pedido criado com itens de exemplo");
+                success("Pedido criado com itens de exemplo");
               })
               .catch((err: any) => {
                 console.error("[TPV] Error creating demo order:", err);
@@ -491,7 +612,8 @@ const TPVContent = () => {
       return () => clearTimeout(timer);
     }
   }, [
-    isDemoMode,
+    isDemoData,
+    guards.canCreateOrder,
     restaurantId,
     menuItems,
     tables,
@@ -510,7 +632,7 @@ const TPVContent = () => {
         (o) =>
           o.tableId === tableId &&
           o.status !== "paid" &&
-          o.status !== "cancelled",
+          o.status !== "cancelled"
       ); // Use 'orders' instead of 'activeOrders' if undefined
       if (existingOrder) {
         // Abrir pedido existente automaticamente
@@ -528,6 +650,10 @@ const TPVContent = () => {
       const tempId = crypto.randomUUID();
 
       if (activeOrderId) {
+        if (isOrderConfirmed(activeOrderId)) {
+          error("Pedido já confirmado. Inicie um novo pedido para adicionar itens.");
+          return;
+        }
         await addItemToOrder(activeOrderId, {
           productId: tempId,
           name: name,
@@ -537,27 +663,22 @@ const TPVContent = () => {
         });
         success(`Produto "${name}" adicionado!`);
       } else {
-        // Create new order with this item
-        const newOrder = await createOrder({
-          status: "new",
-          items: [
-            {
-              id: tempId,
-              productId: tempId,
-              name: name,
-              price: Math.round(price * 100),
-              quantity: 1,
-              categoryName: "⚡ Agile Created",
-            },
-          ],
-          total: Math.round(price * 100),
-          tableId: selectedTableId || undefined,
-          tableNumber: selectedTableId
-            ? tables.find((t) => t.id === selectedTableId)?.number
-            : undefined,
-        });
-        setActiveOrderId(newOrder.id);
-        success(`Produto "${name}" criado`);
+        if (!guards.canCreateOrder) {
+          error("Publique o menu para criar pedidos reais.");
+          return;
+        }
+        setDraftItems((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            productId: tempId,
+            name: name,
+            price: Math.round(price * 100),
+            quantity: 1,
+            category: "⚡ Agile Created",
+          },
+        ]);
+        success(`Produto "${name}" adicionado ao rascunho`);
       }
     } catch (err: any) {
       console.error("Quick product failed:", err);
@@ -589,7 +710,7 @@ const TPVContent = () => {
     // HARD RULE: Pedidos pagos são 'preparing' ou 'ready' (ainda ativos na cozinha/tela)
     // Apenas 'delivered' e 'canceled' saem do túnel
     return orders.filter(
-      (o) => o.status !== "paid" && o.status !== "cancelled",
+      (o) => o.status !== "paid" && o.status !== "cancelled"
     );
   }, [orders]);
 
@@ -604,7 +725,7 @@ const TPVContent = () => {
       onSwitchView: setContextView,
       onCloseCash: () => {
         if (cashRegisterOpen) setShowCloseCashModal(true);
-        else error("Caixa já está fechado");
+        else error(MSG_CASH_ALREADY_CLOSED);
       },
       onOpenPayment: () => {
         if (activeOrderId) setPaymentModalOrderId(activeOrderId);
@@ -625,7 +746,7 @@ const TPVContent = () => {
       if (cashRegisterOpen) {
         handleCreateOrder();
       } else {
-        error("Abra o caixa antes de criar vendas");
+        error(MSG_OPEN_CASH_BEFORE_CREATE);
         setShowOpenCashModal(true);
       }
     },
@@ -642,7 +763,7 @@ const TPVContent = () => {
     },
     onOpenCash: () => {
       if (role === "waiter") {
-        error("Apenas gerentes podem abrir o caixa principal");
+        error(MSG_MANAGER_ONLY_OPEN_CASH);
         return;
       }
       if (!cashRegisterOpen) {
@@ -651,13 +772,13 @@ const TPVContent = () => {
     },
     onCloseCash: () => {
       if (role === "waiter") {
-        error("Apenas gerentes podem fechar o caixa");
+        error(MSG_MANAGER_ONLY_CLOSE_CASH);
         return;
       }
       if (cashRegisterOpen) {
         if (activeOrders.length > 0) {
           error(
-            `Impossível fechar caixa: Existem ${activeOrders.length} pedidos em aberto. Finalize ou cancele-os antes.`,
+            `Impossível fechar caixa: Existem ${activeOrders.length} pedidos em aberto. Finalize ou cancele-os antes.`
           );
           return;
         }
@@ -757,125 +878,101 @@ const TPVContent = () => {
     return deviceId;
   };
 
+  const handleUnlock = useCallback(
+    async (op: Operator, mode: "command" | "rush" | "training") => {
+      const dbMode = mode === "command" ? "tower" : mode;
+      const permissionRole = op.role === "manager" ? "manager" : "waiter";
+      const { DEFAULT_PERMISSIONS } = await import(
+        "../../core/context/ContextTypes"
+      );
+      const permissionsSnapshot = DEFAULT_PERMISSIONS[permissionRole] || {};
+
+      try {
+        if (!restaurantId) {
+          console.error("[TPV] Cannot start turn: Missing Restaurant ID");
+          error("Erro crítico: Restaurant ID não identificado.");
+          return;
+        }
+
+        console.log("[TPV] invoking start_turn RPC with:", {
+          mode: dbMode,
+          role: op.role,
+          perms: permissionsSnapshot,
+        });
+
+        const { supabase } = await import("../../core/supabase");
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) {
+          const { isDevStableMode } = await import(
+            "../../core/runtime/devStableMode"
+          );
+          if (isDemoData || isDevStableMode()) {
+            console.log(
+              "[TPV] Demo/DEV_STABLE Mode: Simulating start_turn success"
+            );
+            setActiveOperator(op);
+            setIsLocked(false);
+            success(`Comando Assumido (Demo): ${op.name}`);
+            return;
+          }
+          throw new Error("SESSION_EXPIRED");
+        }
+
+        const { data: rpcData, error: rpcError } = await import(
+          "../../core/infra/coreRpc"
+        ).then((m) =>
+          m.invokeRpc<{
+            success?: boolean;
+            error?: string;
+            session_id?: string;
+          }>("start_turn", {
+            p_restaurant_id: restaurantId,
+            p_operational_mode: dbMode,
+            p_device_id: getDeviceId(),
+            p_device_name: "TPV Browser",
+            p_role_at_turn: op.role,
+            p_permissions_snapshot: permissionsSnapshot,
+          })
+        );
+
+        if (rpcError) throw new Error(rpcError.message);
+        if (rpcData && rpcData.success === false) {
+          throw new Error(rpcData.error);
+        }
+
+        setActiveOperator(op);
+        setActiveMode(mode);
+        setIsLocked(false);
+        if (rpcData?.session_id) {
+          localStorage.setItem("chefiapp_turn_session_id", rpcData.session_id);
+        }
+        success(`Comando Assumido: ${op.name}`);
+      } catch (err: any) {
+        console.error("Start Turn Failed:", err);
+        const msg =
+          err.message === "TOWER_MODE_FORBIDDEN"
+            ? "Acesso Negado: Apenas Gerentes podem acessar a Torre de Controle."
+            : "Erro ao iniciar turno. Verifique conexão.";
+        error(msg);
+      }
+    },
+    [
+      restaurantId,
+      isDemoData,
+      error,
+      success,
+      setActiveOperator,
+      setActiveMode,
+      setIsLocked,
+    ]
+  );
+
   // --------------------------------------------------------------------------------
   // RITUAL: THE GATEKEEPER
   // --------------------------------------------------------------------------------
-  if (isLocked) {
-    return (
-      <AppShell>
-        <TPVLockScreen
-          onUnlock={async (op, mode) => {
-            // Map UI Mode to DB Mode
-            const dbMode = mode === "command" ? "tower" : mode;
-
-            // Map UI Role to Permission Role
-            // This is a simplification. In real app, we fetch the real user role.
-            const permissionRole = op.role === "manager" ? "manager" : "waiter";
-            const { DEFAULT_PERMISSIONS } = await import(
-              "../../core/context/ContextTypes"
-            );
-            const permissionsSnapshot =
-              DEFAULT_PERMISSIONS[permissionRole] || {};
-
-            // PENDING: Authenticate as the selected user before RPC?
-            // For now, we are using the current logged in auth session (which should be the owner/manager kiosk account)
-            // or the specific user account.
-            // Since this is a POS Kiosk, often one "Device Account" is logged in, and operators just PIN in.
-            // But start_turn tracks `user_id`.
-            // If we are in "Kiosk Mode" (TabIsolated restaurant_id), auth.uid might be the Owner.
-            // RPC uses `auth.uid()`.
-            // Ideally, we would Sign In the operator here using Auth.signInWithPassword (PIN).
-            // But the user prompt says "Registrar: user_id...".
-            // For this iteration, we will call the RPC with the *Current Auth Session*.
-            // We assume the device is logged in.
-
-            try {
-              if (!restaurantId) {
-                console.error("[TPV] Cannot start turn: Missing Restaurant ID");
-                error("Erro crítico: Restaurant ID não identificado.");
-                return;
-              }
-
-              const snapshot = permissionsSnapshot; // Alias for debug
-              console.log("[TPV] invoking start_turn RPC with:", {
-                // Sensitive: restaurantId,
-                mode: dbMode,
-                role: op.role,
-                perms: snapshot,
-              });
-
-              const { supabase } = await import("../../core/supabase");
-
-              // P1-1 FIX: Validar sessão antes da chamada RPC
-              const {
-                data: { session },
-              } = await supabase.auth.getSession();
-              if (!session) {
-                // Se estiver em modo demo ou DEV_STABLE, simular sucesso
-                const { isDevStableMode } = await import(
-                  "../../core/runtime/devStableMode"
-                );
-                if (isDemoData || isDevStableMode()) {
-                  console.log(
-                    "[TPV] Demo/DEV_STABLE Mode: Simulating start_turn success",
-                  );
-                  setActiveOperator(op);
-                  setIsLocked(false);
-                  success(`Comando Assumido (Demo): ${op.name}`);
-                  return;
-                }
-                throw new Error("SESSION_EXPIRED");
-              }
-
-              const { data, error: rpcError } = await import(
-                "../../core/infra/coreOrSupabaseRpc"
-              ).then((m) =>
-                m.invokeRpc<{
-                  success?: boolean;
-                  error?: string;
-                  session_id?: string;
-                }>("start_turn", {
-                  p_restaurant_id: restaurantId,
-                  p_operational_mode: dbMode,
-                  p_device_id: getDeviceId(),
-                  p_device_name: "TPV Browser",
-                  p_role_at_turn: op.role,
-                  p_permissions_snapshot: snapshot,
-                }),
-              );
-
-              if (rpcError) throw new Error(rpcError.message);
-
-              if (data && data.success === false) {
-                throw new Error(data.error);
-              }
-
-              // Success
-              setActiveOperator(op);
-              setActiveMode(mode);
-              setIsLocked(false);
-
-              if (data?.session_id) {
-                localStorage.setItem(
-                  "chefiapp_turn_session_id",
-                  data.session_id,
-                );
-              }
-
-              success(`Comando Assumido: ${op.name}`);
-            } catch (err: any) {
-              console.error("Start Turn Failed:", err);
-              const msg =
-                err.message === "TOWER_MODE_FORBIDDEN"
-                  ? "Acesso Negado: Apenas Gerentes podem acessar a Torre de Controle."
-                  : "Erro ao iniciar turno. Verifique conexão.";
-              error(msg);
-            }
-          }}
-        />
-      </AppShell>
-    );
-  }
+  if (isLocked) return renderLockedState({ onUnlock: handleUnlock });
   // --------------------------------------------------------------------------------
   // END GUARD
   // --------------------------------------------------------------------------------
@@ -895,12 +992,16 @@ const TPVContent = () => {
       typeof item.price === "number" && !isNaN(item.price) ? item.price : 0,
   }));
 
-  // Handlers
+  // FLOW: Transições de estado (prepare/ready/serve/pay/cancel) — performOrderAction → Core.
   const handleAction = async (orderId: string, action: string) => {
     // P1-1 FIX: Bloquear ações críticas se sistema down (exceto demo)
     const criticalActions = ["pay", "prepare", "ready", "cancel"];
-    if (criticalActions.includes(action) && !actionsEnabled && !isDemoData) {
-      error("Sistema indisponível. Ação bloqueada. Tente em breve.");
+    if (
+      criticalActions.includes(action) &&
+      !guards.actionsEnabled &&
+      !isDemoData
+    ) {
+      error(MSG_SYSTEM_UNAVAILABLE_ACTION);
       return;
     }
 
@@ -952,10 +1053,10 @@ const TPVContent = () => {
   const handlePayment = async (method: string, intentId?: string) => {
     if (!paymentModalOrderId) return;
 
-    // FASE 2: Modo Demo - Simular pagamento fake
-    if (isDemoMode) {
+    // FASE 2: Simular pagamento (exploração) — decisão do bootstrap
+    if (isDemoData) {
       // Simular sucesso de pagamento
-      success("🎉 Pagamento processado com sucesso! (Modo Demo)");
+      success("🎉 Pagamento processado com sucesso!");
 
       // Fechar modal
       setPaymentModalOrderId(null);
@@ -964,7 +1065,7 @@ const TPVContent = () => {
       if (isTutorialMode) {
         setTimeout(() => {
           success(
-            "Parabéns! Você completou sua primeira venda. Agora você pode usar o TPV normalmente.",
+            "Parabéns! Você completou sua primeira venda. Agora você pode usar o TPV normalmente."
           );
           setTimeout(() => {
             navigate("/app/dashboard", {
@@ -978,10 +1079,8 @@ const TPVContent = () => {
     }
 
     // P1-1 FIX: Bloquear pagamento se sistema down e não for demo
-    if (!actionsEnabled && !isDemoData) {
-      error(
-        "Sistema indisponível. Pagamentos bloqueados por segurança. Tente em breve.",
-      );
+    if (!guards.actionsEnabled && !isDemoData) {
+      error(MSG_SYSTEM_UNAVAILABLE_PAYMENT);
       return;
     }
 
@@ -995,7 +1094,7 @@ const TPVContent = () => {
     // Validar que pedido tem itens
     if (!order.items || order.items.length === 0) {
       error(
-        "Não é possível fechar conta sem itens. Adicione itens ao pedido primeiro.",
+        "Não é possível fechar conta sem itens. Adicione itens ao pedido primeiro."
       );
       return;
     }
@@ -1004,7 +1103,7 @@ const TPVContent = () => {
     const totalCents = order.total;
     if (totalCents <= 0) {
       error(
-        "Não é possível fechar conta com total zero. Adicione itens ao pedido primeiro.",
+        "Não é possível fechar conta com total zero. Adicione itens ao pedido primeiro."
       );
       return;
     }
@@ -1037,7 +1136,7 @@ const TPVContent = () => {
 
       // Verificar se pedido está totalmente pago antes de emitir fiscal
       const updatedOrder = activeOrders.find(
-        (o) => o.id === paymentModalOrderId,
+        (o) => o.id === paymentModalOrderId
       );
       if (updatedOrder && restaurantId) {
         // Buscar pagamentos para calcular total pago
@@ -1046,7 +1145,7 @@ const TPVContent = () => {
             "../../core/tpv/PaymentEngine"
           );
           const payments = await PaymentEngine.getPaymentsByOrder(
-            paymentModalOrderId,
+            paymentModalOrderId
           );
           const totalPaid = payments
             .filter((p) => p.status === "PAID")
@@ -1085,23 +1184,26 @@ const TPVContent = () => {
                 if (errorData.error === "ORDER_NOT_FULLY_PAID") {
                   // Pedido não está totalmente pago ainda (split bill em progresso)
                   console.log(
-                    "[TPV] Fiscal not emitted - order not fully paid yet",
+                    "[TPV] Fiscal not emitted - order not fully paid yet"
                   );
                 } else {
                   console.warn(
                     "[TPV] Fiscal emission failed (non-blocking):",
-                    errorData,
+                    errorData
                   );
                 }
               } else {
-                const result = await response.json();
-                console.log("[TPV] Fiscal emission queued:", result.queue_id);
+                const fiscalEmitResult = await response.json();
+                console.log(
+                  "[TPV] Fiscal emission queued:",
+                  fiscalEmitResult.queue_id
+                );
               }
             } catch (fiscalError) {
               // Log mas não bloqueia pagamento
               console.warn(
                 "[TPV] Fiscal emission request failed (non-blocking):",
-                fiscalError,
+                fiscalError
               );
             }
           } else {
@@ -1116,7 +1218,7 @@ const TPVContent = () => {
           // Log mas não bloqueia pagamento
           console.warn(
             "[TPV] Fiscal emission check failed (non-blocking):",
-            fiscalError,
+            fiscalError
           );
         }
       }
@@ -1147,15 +1249,13 @@ const TPVContent = () => {
   // SEMANA 2 - Tarefa 3.3: Handler de pagamento parcial (split bill)
   const handlePartialPayment = async (
     amountCents: number,
-    method: "cash" | "card" | "pix",
+    method: "cash" | "card" | "pix"
   ) => {
     if (!splitBillModalOrderId) return;
 
     // P1-1 FIX: Bloquear pagamento se sistema down e não for demo
-    if (!actionsEnabled && !isDemoData) {
-      error(
-        "Sistema indisponível. Pagamentos bloqueados por segurança. Tente em breve.",
-      );
+    if (!guards.actionsEnabled && !isDemoData) {
+      error(MSG_SYSTEM_UNAVAILABLE_PAYMENT);
       return;
     }
 
@@ -1170,7 +1270,7 @@ const TPVContent = () => {
     try {
       const { PaymentEngine } = await import("../../core/tpv/PaymentEngine");
       const payments = await PaymentEngine.getPaymentsByOrder(
-        splitBillModalOrderId,
+        splitBillModalOrderId
       );
       const paidAmount = payments
         .filter((p) => p.status === "PAID")
@@ -1180,7 +1280,7 @@ const TPVContent = () => {
 
       if (amountCents > remainingAmount) {
         error(
-          `Valor excede o saldo restante de ${formatAmount(remainingAmount)}`,
+          `Valor excede o saldo restante de ${formatAmount(remainingAmount)}`
         );
         return;
       }
@@ -1217,7 +1317,7 @@ const TPVContent = () => {
   const handleCreateOrder = async () => {
     // HARD-BLOCK 1: Verificar caixa antes de qualquer ação (UI)
     if (!cashRegisterOpen) {
-      error("Abra o caixa antes de criar vendas");
+      error(MSG_OPEN_CASH_BEFORE_CREATE);
       setShowOpenCashModal(true);
       return;
     }
@@ -1226,13 +1326,13 @@ const TPVContent = () => {
     try {
       const register = await getOpenCashRegister();
       if (!register) {
-        error("Caixa não está aberto. Abra o caixa antes de criar vendas.");
+        error(MSG_CASH_REGISTER_CLOSED_CREATE);
         setCashRegisterOpen(false);
         setShowOpenCashModal(true);
         return;
       }
     } catch (_err) {
-      error("Erro ao verificar caixa. Abra o caixa antes de criar vendas.");
+      error(MSG_VERIFY_CASH_ERROR);
       setShowOpenCashModal(true);
       return;
     }
@@ -1245,14 +1345,12 @@ const TPVContent = () => {
     error("Adicione itens do menu para criar um pedido");
   };
 
-  // Handler for creating order from table map
+  // FLOW: Nascimento do pedido (via mapa de mesas) — createOrder vazio; primeiro item vem do menu.
   const handleCreateOrderViaMap = async (tableId: string) => {
     // Check if table already has an order
     const existingOrder = orders.find(
       (o) =>
-        o.tableId === tableId &&
-        o.status !== "paid" &&
-        o.status !== "cancelled",
+        o.tableId === tableId && o.status !== "paid" && o.status !== "cancelled"
     );
     if (existingOrder) {
       setActiveOrderId(existingOrder.id);
@@ -1262,8 +1360,14 @@ const TPVContent = () => {
 
     // Check cash register
     if (!cashRegisterOpen) {
-      error("Abra o caixa antes de criar vendas");
+      error(MSG_OPEN_CASH_BEFORE_CREATE);
       setShowOpenCashModal(true);
+      return;
+    }
+
+    // Guardrail FK: criar pedido só com menu publicado
+    if (!guards.canCreateOrder) {
+      error("Publique o menu para criar pedidos reais.");
       return;
     }
 
@@ -1313,72 +1417,54 @@ const TPVContent = () => {
     }
   };
 
+  // FLOW: FASE 1 — Rascunho em memória; createOrder só ao clicar Confirmar. Ver FLUXO_DE_PEDIDO_OPERACIONAL.md
   const handleAddItem = async (
     item: { id: string; name: string; price: number; category: string },
-    groupId?: string | null,
+    groupId?: string | null
   ) => {
     console.log(
       "[TPV] handleAddItem called for:",
       item.name,
       item.id,
       "group:",
-      groupId,
+      groupId
     );
     try {
-      // Find or create active order
-      let currentOrderId = activeOrderId;
-
-      if (!currentOrderId) {
-        // HARD RULE: Criar pedido apenas quando adicionar primeiro item
-        // (não criar pedido vazio)
-        try {
-          const newOrder = await createOrder({
-            status: "new",
-            items: [
-              {
-                id: item.id,
-                productId: item.id,
-                name: item.name,
-                price: Math.round(item.price * 100), // em centavos
-                quantity: 1,
-                categoryName: item.category, // Added for Mission 55
-                consumptionGroupId: groupId || undefined, // Divisão de conta
-              },
-            ],
-            total: Math.round(item.price * 100),
-            tableNumber: selectedTableId
-              ? tables.find((t) => t.id === selectedTableId)?.number
-              : undefined,
-            tableId: selectedTableId || undefined,
-          });
-          currentOrderId = newOrder.id;
-          setActiveOrderId(currentOrderId);
-          // Refresh groups after order creation (trigger cria grupo padrão)
-          setTimeout(() => fetchGroups(), 500);
-          success(`${item.name} adicionado`);
+      // FASE 1: Sem pedido ativo → adicionar ao rascunho (nenhum write no Core)
+      if (!activeOrderId) {
+        if (!guards.canCreateOrder) {
+          error("Publique o menu para criar pedidos reais.");
           return;
-        } catch (orderErr: any) {
-          // Re-throw with context for outer catch to handle
-          const enhancedError = new Error(
-            orderErr.message || "Erro ao criar pedido",
-          );
-          (enhancedError as any).code = orderErr.code;
-          (enhancedError as any).tableId = selectedTableId;
-          (enhancedError as any).tableNumber = selectedTableId
-            ? tables.find((t) => t.id === selectedTableId)?.number
-            : undefined;
-          throw enhancedError;
         }
+        setDraftItems((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            productId: item.id,
+            name: item.name,
+            price: Math.round(item.price * 100),
+            quantity: 1,
+            category: item.category,
+          },
+        ]);
+        success(`${item.name} adicionado ao rascunho`);
+        return;
       }
 
-      // Add item to existing order
-      await addItemToOrder(currentOrderId, {
+      // FASE 1: Pedido já confirmado → imutável
+      if (isOrderConfirmed(activeOrderId)) {
+        error("Pedido já confirmado. Inicie um novo pedido para adicionar itens.");
+        return;
+      }
+
+      // Pedido ativo ainda editável (legacy path, ex.: mapa de mesas)
+      await addItemToOrder(activeOrderId, {
         productId: item.id,
         name: item.name,
-        priceCents: Math.round(item.price * 100), // Convert to cents
+        priceCents: Math.round(item.price * 100),
         quantity: 1,
-        categoryName: item.category, // Added for Mission 55
-        consumptionGroupId: groupId || undefined, // Divisão de conta
+        categoryName: item.category,
+        consumptionGroupId: groupId || undefined,
       });
 
       success(`${item.name} adicionado`);
@@ -1413,7 +1499,7 @@ const TPVContent = () => {
         err.message?.includes("TABLE_HAS_ACTIVE_ORDER")
       ) {
         const existingOrder = activeOrders.find(
-          (o) => o.tableId === selectedTableId,
+          (o) => o.tableId === selectedTableId
         );
         if (existingOrder) {
           setActiveOrderId(existingOrder.id);
@@ -1423,35 +1509,80 @@ const TPVContent = () => {
     }
   };
 
+  // FASE 1 — Confirmar rascunho: única escrita no Core (create_order_atomic). Ver FLUXO_DE_PEDIDO_OPERACIONAL.md
+  const handleConfirmDraft = async () => {
+    if (draftItems.length === 0) return;
+    if (!guards.canCreateOrder) {
+      error("Publique o menu para criar pedidos reais.");
+      return;
+    }
+    try {
+      const newOrder = await createOrder({
+        status: "new",
+        items: draftItems.map((i) => ({
+          id: i.id,
+          productId: i.productId,
+          name: i.name,
+          price: i.price / 100,
+          quantity: i.quantity,
+          categoryName: i.category,
+        })),
+        total: draftItems.reduce((s, i) => s + i.price * i.quantity, 0),
+        tableNumber: selectedTableId
+          ? tables.find((t) => t.id === selectedTableId)?.number
+          : undefined,
+        tableId: selectedTableId || undefined,
+      });
+      setActiveOrderId(newOrder.id);
+      setTabIsolated("chefiapp_active_order_id", newOrder.id);
+      setDraftItems([]);
+      setTimeout(() => fetchGroups(), 500);
+      success("Pedido confirmado");
+    } catch (err: any) {
+      const errorMsg = getErrorMessage(err, {
+        code: err.code,
+        message: err.message,
+        tableId: selectedTableId || undefined,
+        tableNumber: selectedTableId
+          ? tables.find((t) => t.id === selectedTableId)?.number
+          : undefined,
+      });
+      error(errorMsg);
+    }
+  };
+
   return (
     <AppShell operationalMode={true}>
+      <OfflineBanner />
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
         {/* Contingency Mode Banner */}
-        {!coreReachable && (
+        {bootstrap.coreStatus === "offline-erro" && (
           <div
             style={{
-              background: "#ff453a",
-              color: "#fff",
+              background: "#262626",
+              color: "#a3a3a3",
               padding: "12px 24px",
               textAlign: "center",
-              fontWeight: 600,
+              fontWeight: 500,
               fontSize: "14px",
               zIndex: 1000,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: "12px",
+              borderBottom: "1px solid #404040",
             }}
           >
             <span>
-              🚨 Modo de Contingência: O Core não está acessível. Usando
-              catálogo local (B1).
+              {bootstrap.operationMode === "exploracao"
+                ? "Dados ilustrativos. Publique o menu para operar em tempo real."
+                : "Core indisponível. Pode usar com dados de exemplo."}
             </span>
             <button
               onClick={() => runtimeContext?.refresh()}
               style={{
-                background: "rgba(255,255,255,0.2)",
-                border: "1px solid rgba(255,255,255,0.4)",
+                background: "rgba(255,255,255,0.1)",
+                border: "1px solid rgba(255,255,255,0.3)",
                 color: "white",
                 padding: "4px 12px",
                 borderRadius: "4px",
@@ -1459,27 +1590,8 @@ const TPVContent = () => {
                 fontSize: "12px",
               }}
             >
-              Tentar Reconectar
+              Tentar novamente
             </button>
-          </div>
-        )}
-
-        {/* FASE 2: Banner Modo Demo */}
-        {isDemoMode && (
-          <div
-            style={{
-              background: "linear-gradient(135deg, #32d74b 0%, #28c83e 100%)",
-              color: "#000",
-              padding: "12px 24px",
-              textAlign: "center",
-              fontWeight: 600,
-              fontSize: "14px",
-              boxShadow: "0 2px 8px rgba(50, 215, 75, 0.3)",
-              zIndex: 1000,
-            }}
-          >
-            🎯 MODO DEMO - Este é um pedido de exemplo. Nenhum pagamento real
-            será processado.
           </div>
         )}
 
@@ -1580,57 +1692,6 @@ const TPVContent = () => {
                     operatorId={activeOperator.id || "op-1"}
                     operatorName={activeOperator.name || "Chef"}
                   />
-                </div>
-              )}
-
-              {/* FASE 2: Banner Modo Demo */}
-              {isDemoMode && (
-                <div
-                  style={{
-                    padding: "12px 16px",
-                    background:
-                      "linear-gradient(135deg, rgba(50, 215, 75, 0.2), rgba(50, 215, 75, 0.1))",
-                    border: "2px solid rgba(50, 215, 75, 0.5)",
-                    borderRadius: "8px",
-                    marginBottom: "16px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "16px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                    }}
-                  >
-                    <span style={{ fontSize: "24px" }}>🎯</span>
-                    <div>
-                      <Text
-                        size="sm"
-                        weight="bold"
-                        style={{ color: "#32d74b", marginBottom: "2px" }}
-                      >
-                        Modo Demo Ativo
-                      </Text>
-                      <Text size="xs" color="secondary">
-                        Você está testando o TPV. Nenhum pagamento real será
-                        processado.
-                      </Text>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      removeTabIsolated("chefiapp_tpv_demo_mode");
-                      window.location.href = "/app/tpv";
-                    }}
-                  >
-                    Sair do Demo
-                  </Button>
                 </div>
               )}
 
@@ -1736,7 +1797,7 @@ const TPVContent = () => {
                       (o) =>
                         o.tableId === tableId &&
                         o.status !== "paid" &&
-                        o.status !== "cancelled",
+                        o.status !== "cancelled"
                     );
                     if (order) {
                       setActiveOrderId(order.id);
@@ -1819,7 +1880,7 @@ const TPVContent = () => {
                     <StreamTunnel
                       orders={activeOrders.filter(
                         (o) =>
-                          (o as any).source && (o as any).source !== "local",
+                          (o as any).source && (o as any).source !== "local"
                       )}
                       onAction={handleAction}
                       activeOrderId={activeOrderId}
@@ -1864,7 +1925,7 @@ const TPVContent = () => {
                   }
                   deliveryQueueCount={
                     activeOrders.filter(
-                      (o) => (o as any).source && (o as any).source !== "local",
+                      (o) => (o as any).source && (o as any).source !== "local"
                     ).length
                   }
                   onSectorClick={(sector: any) => {
@@ -1878,9 +1939,10 @@ const TPVContent = () => {
             </>
           }
           ticket={
-            activeOrderId &&
-            activeOrders.find((o) => o.id === activeOrderId) ? (
-              // Mostrar resumo da conta e editor de itens quando há pedido ativo
+            (activeOrderId &&
+              activeOrders.find((o) => o.id === activeOrderId)) ||
+            draftItems.length > 0 ? (
+              // FASE 1: Mostrar rascunho ou pedido ativo. Rascunho = só em memória até Confirmar.
               <div
                 style={{
                   display: "flex",
@@ -1890,88 +1952,184 @@ const TPVContent = () => {
                   padding: spacing[4],
                 }}
               >
-                {/* Header Fixo da Conta */}
-                <OrderHeader
-                  order={activeOrders.find((o) => o.id === activeOrderId)}
-                  tableName={
-                    activeOrders
-                      .find((o) => o.id === activeOrderId)
-                      ?.tableNumber?.toString() || ""
-                  }
-                  customerName={""}
-                />
-
-                {/* Editor de Itens (ORDER LIST should be main part of ticket) */}
-                <div style={{ flex: 1, overflow: "hidden" }}>
-                  <Suspense
-                    fallback={
-                      <div style={{ padding: 16, textAlign: "center" }}>
-                        Carregando editor...
-                      </div>
-                    }
-                  >
-                    <OrderItemEditor
-                      order={
-                        activeOrders.find((o) => o.id === activeOrderId) || null
+                {draftItems.length > 0 && !activeOrderId ? (
+                  <>
+                    <OrderHeader
+                      order={{
+                        id: "draft",
+                        status: "new",
+                        items: draftItems.map((i) => ({
+                          id: i.id,
+                          name: i.name,
+                          quantity: i.quantity,
+                          price: i.price,
+                        })),
+                        total: draftItems.reduce(
+                          (s, i) => s + i.price * i.quantity,
+                          0
+                        ),
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                      }}
+                      tableName={
+                        selectedTableId
+                          ? tables.find((t) => t.id === selectedTableId)
+                              ?.number?.toString() || ""
+                          : "Rascunho"
                       }
-                      onUpdateQuantity={async (
-                        itemId: string,
-                        quantity: number,
-                      ) => {
-                        if (!activeOrderId) return;
-                        try {
-                          await updateItemQuantity(
-                            activeOrderId,
-                            itemId,
-                            quantity,
-                          );
-                          success("Quantidade atualizada");
-                        } catch (err: any) {
-                          error(err.message || "Erro ao atualizar quantidade");
+                      customerName={""}
+                    />
+                    <div style={{ flex: 1, overflow: "hidden" }}>
+                      <Suspense
+                        fallback={
+                          <div style={{ padding: 16, textAlign: "center" }}>
+                            Carregando...
+                          </div>
+                        }
+                      >
+                        <OrderItemEditor
+                          order={{
+                            id: "draft",
+                            status: "new",
+                            items: draftItems.map((i) => ({
+                              id: i.id,
+                              productId: i.productId,
+                              name: i.name,
+                              quantity: i.quantity,
+                              price: i.price,
+                            })),
+                            total: draftItems.reduce(
+                              (s, i) => s + i.price * i.quantity,
+                              0
+                            ),
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                          }}
+                          onUpdateQuantity={(
+                            itemId: string,
+                            quantity: number
+                          ) => {
+                            setDraftItems((prev) =>
+                              prev.map((i) =>
+                                i.id === itemId ? { ...i, quantity } : i
+                              )
+                            );
+                          }}
+                          onRemoveItem={(itemId: string) => {
+                            setDraftItems((prev) =>
+                              prev.filter((i) => i.id !== itemId)
+                            );
+                          }}
+                          onBackToMenu={() => setDraftItems([])}
+                          loading={false}
+                        />
+                      </Suspense>
+                    </div>
+                    <OrderSummaryPanel
+                      order={{
+                        id: "draft",
+                        status: "new",
+                        items: draftItems.map((i) => ({
+                          id: i.id,
+                          name: i.name,
+                          quantity: i.quantity,
+                          price: i.price,
+                        })),
+                        total: draftItems.reduce(
+                          (s, i) => s + i.price * i.quantity,
+                          0
+                        ),
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                      }}
+                      onConfirm={handleConfirmDraft}
+                      loading={ordersLoading}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <OrderHeader
+                      order={activeOrders.find((o) => o.id === activeOrderId)}
+                      tableName={
+                        activeOrders
+                          .find((o) => o.id === activeOrderId)
+                          ?.tableNumber?.toString() || ""
+                      }
+                      customerName={""}
+                    />
+                    <div style={{ flex: 1, overflow: "hidden" }}>
+                      <Suspense
+                        fallback={
+                          <div style={{ padding: 16, textAlign: "center" }}>
+                            Carregando editor...
+                          </div>
+                        }
+                      >
+                        <OrderItemEditor
+                          order={
+                            activeOrders.find(
+                              (o) => o.id === activeOrderId
+                            ) || null
+                          }
+                          onUpdateQuantity={async (
+                            itemId: string,
+                            quantity: number
+                          ) => {
+                            if (!activeOrderId) return;
+                            try {
+                              await updateItemQuantity(
+                                activeOrderId,
+                                itemId,
+                                quantity
+                              );
+                              success("Quantidade atualizada");
+                            } catch (err: any) {
+                              error(err.message || "Erro ao atualizar quantidade");
+                            }
+                          }}
+                          onRemoveItem={async (itemId: string) => {
+                            if (!activeOrderId) return;
+                            try {
+                              await removeItemFromOrder(
+                                activeOrderId,
+                                itemId
+                              );
+                              success("Item removido");
+                            } catch (err: any) {
+                              error(err.message || "Erro ao remover item");
+                            }
+                          }}
+                          onBackToMenu={() => {
+                            setActiveOrderId(null);
+                            removeTabIsolated("chefiapp_active_order_id");
+                          }}
+                          loading={ordersLoading}
+                        />
+                      </Suspense>
+                    </div>
+                    <OrderSummaryPanel
+                      order={
+                        activeOrders.find(
+                          (o) => o.id === activeOrderId
+                        ) || null
+                      }
+                      onSplitBill={() => {
+                        if (activeOrderId) {
+                          setSplitBillModalOrderId(activeOrderId);
                         }
                       }}
-                      onRemoveItem={async (itemId: string) => {
-                        if (!activeOrderId) return;
-                        try {
-                          await removeItemFromOrder(activeOrderId, itemId);
-                          success("Item removido");
-                        } catch (err: any) {
-                          error(err.message || "Erro ao remover item");
+                      onPay={() => {
+                        const order = activeOrders.find(
+                          (o) => o.id === activeOrderId
+                        );
+                        if (order && order.status !== "paid") {
+                          setPaymentModalOrderId(activeOrderId);
                         }
-                      }}
-                      onBackToMenu={() => {
-                        // On split view, back to menu might just define no active order?
-                        // Or maybe we treat "Back" as "Unselect Table"
-                        setActiveOrderId(null);
-                        removeTabIsolated("chefiapp_active_order_id");
-                        // setContextView('menu'); // View stays, context changes
                       }}
                       loading={ordersLoading}
                     />
-                  </Suspense>
-                </div>
-
-                {/* Resumo da Conta (Sempre Visível no fundo) */}
-                <OrderSummaryPanel
-                  order={
-                    activeOrders.find((o) => o.id === activeOrderId) || null
-                  }
-                  onSplitBill={() => {
-                    if (activeOrderId) {
-                      setSplitBillModalOrderId(activeOrderId);
-                    }
-                  }}
-                  onPay={() => {
-                    const order = activeOrders.find(
-                      (o) => o.id === activeOrderId,
-                    );
-                    // SEMANA 2: Permitir pagar se não está totalmente pago (permite continuar split bill)
-                    if (order && order.status !== "paid") {
-                      setPaymentModalOrderId(activeOrderId);
-                    }
-                  }}
-                  loading={ordersLoading}
-                />
+                  </>
+                )}
               </div>
             ) : (
               // EMPTY STATE / GENERIC TICKET
@@ -1984,7 +2142,7 @@ const TPVContent = () => {
                 onCloseCashRegister={() => {
                   if (activeOrders.length > 0) {
                     error(
-                      `Impossível fechar caixa: Existem ${activeOrders.length} pedidos em aberto.`,
+                      `Impossível fechar caixa: Existem ${activeOrders.length} pedidos em aberto.`
                     );
                     return;
                   }
@@ -2095,7 +2253,7 @@ const TPVContent = () => {
                 orderTotal={order.total}
                 onPay={handlePayment}
                 onCancel={() => setPaymentModalOrderId(null)}
-                isDemoMode={isDemoMode}
+                isDemoMode={isDemoData}
               />
             </Suspense>
           );
@@ -2105,7 +2263,7 @@ const TPVContent = () => {
       {splitBillModalOrderId &&
         (() => {
           const order = activeOrders.find(
-            (o) => o.id === splitBillModalOrderId,
+            (o) => o.id === splitBillModalOrderId
           );
           if (!order) return null;
           return (
@@ -2144,6 +2302,8 @@ const TPVContent = () => {
                 setShowOpenCashModal(false);
                 setCashRegisterOpen(true);
                 success("Caixa aberto com sucesso");
+                // Lei do Turno: notificar fonte única para Dashboard/KDS não mostrarem "turno fechado"
+                await shift?.refreshShiftStatus?.();
 
                 // Recarregar dados
                 const totalCents = await getDailyTotal();
@@ -2246,7 +2406,7 @@ const TPVContent = () => {
 // TPV wrapper
 // DOCKER CORE: Providers agora são adicionados diretamente aqui, já que App.tsx não usa AppDomainWrapper
 const TPV = () => {
-  // FASE 5: Toast para feedback visual (no nível do wrapper para compartilhar entre componentes)
+  const readiness = useOperationalReadiness("TPV");
   const { toasts, dismiss } = useToast();
 
   // Staff-style browser tab title for isolated tool context
@@ -2264,6 +2424,31 @@ const TPV = () => {
     urlRestaurantId ||
     getTabIsolated("chefiapp_restaurant_id") ||
     "00000000-0000-0000-0000-000000000100";
+
+  if (readiness.loading) {
+    return (
+      <GlobalLoadingView
+        message="Verificando estado operacional..."
+        layout="operational"
+        variant="fullscreen"
+      />
+    );
+  }
+  if (!readiness.ready && readiness.uiDirective === "SHOW_BLOCKING_SCREEN") {
+    return (
+      <BlockingScreen
+        reason={readiness.blockingReason}
+        redirectTo={readiness.redirectTo}
+      />
+    );
+  }
+  if (
+    !readiness.ready &&
+    readiness.uiDirective === "REDIRECT" &&
+    readiness.redirectTo
+  ) {
+    return <Navigate to={readiness.redirectTo} replace />;
+  }
 
   return (
     <ContextEngineProvider userRole="waiter" hasTPV={true}>

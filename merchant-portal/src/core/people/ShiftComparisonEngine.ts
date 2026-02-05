@@ -1,10 +1,11 @@
 /**
  * ShiftComparisonEngine - Engine de Comparação Turno Real vs Planejado
- * 
+ *
  * Compara turno planejado com turno real executado
  */
 
-import { supabase } from '../supabase';
+// LEGACY / LAB — blocked in Docker mode via core/supabase shim
+import { supabase } from "../supabase";
 
 export interface ShiftComparison {
   id: string;
@@ -45,25 +46,39 @@ export class ShiftComparisonEngine {
     deviationReason?: string;
   }): Promise<string> {
     // Calcular diferenças
-    const startDelay = comparison.actualStart && comparison.plannedStart
-      ? Math.max(0, (comparison.actualStart.getTime() - comparison.plannedStart.getTime()) / (1000 * 60))
-      : 0;
+    const startDelay =
+      comparison.actualStart && comparison.plannedStart
+        ? Math.max(
+            0,
+            (comparison.actualStart.getTime() -
+              comparison.plannedStart.getTime()) /
+              (1000 * 60)
+          )
+        : 0;
 
-    const endDelay = comparison.actualEnd && comparison.plannedEnd
-      ? Math.max(0, (comparison.actualEnd.getTime() - comparison.plannedEnd.getTime()) / (1000 * 60))
-      : 0;
+    const endDelay =
+      comparison.actualEnd && comparison.plannedEnd
+        ? Math.max(
+            0,
+            (comparison.actualEnd.getTime() - comparison.plannedEnd.getTime()) /
+              (1000 * 60)
+          )
+        : 0;
 
-    const tasksDifference = (comparison.actualTasksCompleted || 0) - (comparison.plannedTasks?.length || 0);
+    const tasksDifference =
+      (comparison.actualTasksCompleted || 0) -
+      (comparison.plannedTasks?.length || 0);
 
     // Calcular score de eficiência (1.0 = perfeito)
     let efficiencyScore = 1.0;
-    if (startDelay > 0) efficiencyScore -= startDelay / 60 * 0.1; // -0.1 por hora de atraso
-    if (endDelay > 0) efficiencyScore -= endDelay / 60 * 0.1;
-    if (tasksDifference < 0) efficiencyScore -= Math.abs(tasksDifference) * 0.05; // -0.05 por tarefa não feita
+    if (startDelay > 0) efficiencyScore -= (startDelay / 60) * 0.1; // -0.1 por hora de atraso
+    if (endDelay > 0) efficiencyScore -= (endDelay / 60) * 0.1;
+    if (tasksDifference < 0)
+      efficiencyScore -= Math.abs(tasksDifference) * 0.05; // -0.05 por tarefa não feita
     efficiencyScore = Math.max(0, Math.min(1, efficiencyScore));
 
     const { data, error } = await supabase
-      .from('shift_comparisons')
+      .from("shift_comparisons")
       .insert({
         restaurant_id: comparison.restaurantId,
         shift_id: comparison.shiftId || null,
@@ -82,7 +97,7 @@ export class ShiftComparisonEngine {
         efficiency_score: efficiencyScore,
         deviation_reason: comparison.deviationReason || null,
       })
-      .select('id')
+      .select("id")
       .single();
 
     if (error) throw error;
@@ -98,17 +113,17 @@ export class ShiftComparisonEngine {
     endDate?: Date
   ): Promise<ShiftComparison[]> {
     let query = supabase
-      .from('shift_comparisons')
-      .select('*')
-      .eq('employee_id', employeeId)
-      .order('planned_start', { ascending: false });
+      .from("shift_comparisons")
+      .select("*")
+      .eq("employee_id", employeeId)
+      .order("planned_start", { ascending: false });
 
     if (startDate) {
-      query = query.gte('planned_start', startDate.toISOString());
+      query = query.gte("planned_start", startDate.toISOString());
     }
 
     if (endDate) {
-      query = query.lte('planned_start', endDate.toISOString());
+      query = query.lte("planned_start", endDate.toISOString());
     }
 
     const { data, error } = await query;
@@ -125,7 +140,11 @@ export class ShiftComparisonEngine {
     startDate?: Date,
     endDate?: Date
   ): Promise<number> {
-    const comparisons = await this.listByEmployee(employeeId, startDate, endDate);
+    const comparisons = await this.listByEmployee(
+      employeeId,
+      startDate,
+      endDate
+    );
 
     if (comparisons.length === 0) return 1.0;
 

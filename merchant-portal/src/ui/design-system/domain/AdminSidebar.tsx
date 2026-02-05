@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useContextEngine } from "../../../core/context";
+import { getAuthActions } from "../../../core/auth/authAdapter";
 import { recordLogout } from "../../../core/auth/authAudit";
+import { useContextEngine } from "../../../core/context";
 import { removeTabIsolated } from "../../../core/storage/TabIsolatedStorage";
-import { supabase } from "../../../core/supabase";
 import { BillingWarningBadge } from "../../billing/BillingWarningBadge";
+import { CoreStatusBadge } from "../../components/CoreStatusBadge/CoreStatusBadge";
 import { Button } from "../primitives/Button";
 import { Text } from "../primitives/Text";
 import { OSSignature } from "../sovereign/OSSignature";
@@ -21,8 +22,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onNavigate,
 }) => {
   const navigate = useNavigate();
-  const { role, visibleModules, switchView, isViewMode, originalRole } =
-    useContextEngine();
+  const { role, visibleModules } = useContextEngine();
   const theme = colors.modes.dashboard;
 
   // Track expanded groups. EVOLVE is collapsed by default (meta-produto + comercial).
@@ -34,7 +34,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       Governar: true,
       Conectar: true,
       Evolve: false, // Collapsed by default
-    },
+    }
   );
 
   const toggleGroup = (title: string) => {
@@ -46,7 +46,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
   const handleLogout = async () => {
     await recordLogout();
-    await supabase.auth.signOut();
+    await getAuthActions().signOut();
     removeTabIsolated("chefiapp_restaurant_id");
     removeTabIsolated("chefiapp_demo_mode");
     navigate("/start");
@@ -60,7 +60,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         window.open(
           item.id,
           "ChefIApp_TPV",
-          "width=1024,height=768,menubar=no,toolbar=no,location=no,status=no",
+          "width=1024,height=768,menubar=no,toolbar=no,location=no,status=no"
         );
       } else if (item.id === "/app/kds") {
         // KDS Configuration: Fullscreen feel
@@ -161,6 +161,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           label: "Fecho Diário",
           id: "/app/reports/daily-closing",
           icon: "📊",
+          show: visibleModules.reports,
+        },
+        {
+          label: "Vendas por período",
+          id: "/app/reports/sales-by-period",
+          icon: "📈",
           show: visibleModules.reports,
         },
         {
@@ -425,6 +431,15 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           borderTop: `1px solid ${theme.border.subtle}`,
         }}
       >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: spacing[3],
+          }}
+        >
+          <CoreStatusBadge />
+        </div>
         <Button
           variant="ghost"
           tone="neutral"
@@ -451,47 +466,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           🚪 Encerrar Turno
         </Button>
 
-        {/* View Switcher only for pure Owner */}
-        {originalRole === "owner" && (
-          <div
-            style={{
-              marginTop: spacing[2],
-              paddingTop: spacing[2],
-              borderTop: `1px dashed ${theme.border.subtle}`,
-            }}
-          >
-            <Text
-              size="xs"
-              color="tertiary"
-              style={{ marginBottom: spacing[2] }}
-            >
-              MODO DE VISÃO:
-            </Text>
-            <select
-              value={isViewMode ? role : "owner"}
-              onChange={(e) =>
-                switchView(
-                  e.target.value === "owner" ? null : (e.target.value as any),
-                )
-              }
-              style={{
-                width: "100%",
-                background: theme.surface.layer2,
-                color: theme.text.primary,
-                border: `1px solid ${theme.border.subtle}`,
-                borderRadius: 4,
-                padding: 4,
-                fontSize: 12,
-              }}
-            >
-              <option value="owner">👑 Dono (Padrão)</option>
-              <option value="manager">🧑‍💼 Gerente</option>
-              <option value="waiter">🧍 Garçom</option>
-              <option value="kitchen">👨‍🍳 Cozinheiro</option>
-            </select>
-          </div>
-        )}
-
+        {/* CONTRATO_OWNER_ONLY_WEB: sem seletor de papel; web = Dono apenas. */}
         <Text size="xs" color="tertiary" style={{ marginTop: spacing[3] }}>
           {role.toUpperCase()} • v2.2 (Context Engine)
         </Text>

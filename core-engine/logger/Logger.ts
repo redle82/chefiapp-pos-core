@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/react";
 import { getTabIsolated } from "../storage/TabIsolatedStorage";
-import { supabase } from "../supabase";
+import { getTableClient } from "../infra/coreRpc";
 
 export type LogLevel = "debug" | "info" | "warn" | "error" | "critical";
 
@@ -302,7 +302,8 @@ class LoggerService {
         });
         const idempotency_key = `log_${this.hashString(idemSource)}`;
 
-        await (supabase as any).from("app_logs").upsert(
+        const client = getTableClient();
+        await client.from("app_logs").upsert(
           [
             {
               level: level === "critical" ? "error" : level,
@@ -314,8 +315,8 @@ class LoggerService {
               created_at: payload.timestamp,
               idempotency_key,
             },
-          ] as any,
-          { onConflict: "idempotency_key", ignoreDuplicates: true },
+          ],
+          { onConflict: "idempotency_key" },
         );
 
         // Mark as sent AFTER successful attempt

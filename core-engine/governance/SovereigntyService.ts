@@ -1,4 +1,4 @@
-import { getTableClient } from '../infra/coreOrSupabaseRpc';
+import { getTableClient } from '../infra/coreRpc';
 
 export interface SovereigntyMetrics {
     dirtyCount: number;
@@ -116,15 +116,26 @@ export class SovereigntyService {
     }
 
     /**
-     * Trigger Manual Reconciliation (Edge Function)
-     * Ainda usa Supabase Functions; quando Core tiver job de reconciliação, migrar.
+     * Trigger Manual Reconciliation.
+     * Chama o endpoint de reconciliação (Core ou legacy_supabase functions/v1/reconcile).
      */
     static async triggerHealer(): Promise<any> {
-        const { supabase } = await import('../supabase');
-        const { data, error } = await supabase.functions.invoke('reconcile', {
+        const env = typeof process !== 'undefined' ? process.env : ({} as NodeJS.ProcessEnv);
+        const baseUrl = (env.VITE_CORE_URL || env.VITE_SUPABASE_URL || 'http://localhost:3001').replace(/\/$/, '');
+        const anonKey = env.VITE_CORE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || 'chefiapp-core-secret-key-min-32-chars-long';
+        const url = `${baseUrl}/functions/v1/reconcile`;
+        const res = await fetch(url, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${anonKey}`,
+                'apikey': anonKey,
+            },
         });
-        if (error) throw error;
-        return data;
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`Reconcile failed: ${res.status} ${text}`);
+        }
+        return res.json().catch(() => ({}));
     }
 }

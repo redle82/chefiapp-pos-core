@@ -8,18 +8,20 @@
 import { CONFIG } from "../../config";
 
 const BASE_URL =
-  CONFIG.SUPABASE_URL ||
+  CONFIG.CORE_URL ||
   (typeof window !== "undefined" ? window.location.origin : "");
 const ANON_KEY =
-  CONFIG.SUPABASE_ANON_KEY || "chefiapp-core-secret-key-min-32-chars-long";
+  CONFIG.CORE_ANON_KEY || "chefiapp-core-secret-key-min-32-chars-long";
 
-// Ensure REST is a valid base for URL construction
+// Ensure REST is PostgREST base: .../rest/v1 (evita rest/rest/v1 quando client usa /rest/v1/table)
 const REST_BASE = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
-const REST = REST_BASE.endsWith("/rest")
+const REST = REST_BASE.endsWith("/rest/v1")
   ? REST_BASE
+  : REST_BASE.endsWith("/rest")
+  ? `${REST_BASE}/v1`
   : REST_BASE
-  ? `${REST_BASE}/rest`
-  : "/rest";
+  ? `${REST_BASE}/rest/v1`
+  : "/rest/v1";
 
 function headers(extra: Record<string, string> = {}): Headers {
   const h = new Headers({
@@ -48,7 +50,7 @@ interface FilterBuilder {
   insert(body: object | object[]): FilterBuilder;
   upsert(
     body: object | object[],
-    opts?: { onConflict?: string },
+    opts?: { onConflict?: string }
   ): FilterBuilder;
   update(body: object): FilterBuilder;
   delete(): FilterBuilder;
@@ -62,7 +64,7 @@ interface FilterBuilder {
   maybeSingle(): Promise<PostgrestResponse>;
   then<T>(
     onfulfilled?: (value: PostgrestResponse) => T | PromiseLike<T>,
-    onrejected?: (reason: unknown) => never,
+    onrejected?: (reason: unknown) => never
   ): Promise<T>;
 }
 
@@ -107,7 +109,7 @@ function buildFilterBuilder(table: string): FilterBuilder {
     if (state.method === "GET") {
       url.searchParams.set("select", state.selectCols);
       Object.entries(state.params).forEach(([k, v]) =>
-        url.searchParams.set(k, v),
+        url.searchParams.set(k, v)
       );
       if (state.single || state.maybeSingle) url.searchParams.set("limit", "1");
     } else {
@@ -116,7 +118,7 @@ function buildFilterBuilder(table: string): FilterBuilder {
         url.searchParams.set("select", state.selectCols);
       }
       Object.entries(state.params).forEach(([k, v]) =>
-        url.searchParams.set(k, v),
+        url.searchParams.set(k, v)
       );
       // PostgREST: on_conflict é query param (não header) para upsert em UNIQUE.
       if (state.method === "POST" && state.upsertOpts?.onConflict) {
@@ -134,7 +136,7 @@ function buildFilterBuilder(table: string): FilterBuilder {
     ) {
       (init.headers as Headers).set(
         "Range",
-        `${state.rangeFrom}-${state.rangeTo}`,
+        `${state.rangeFrom}-${state.rangeTo}`
       );
     }
     if (state.method === "POST" && state.body !== undefined) {
@@ -157,6 +159,18 @@ function buildFilterBuilder(table: string): FilterBuilder {
       });
       clearTimeout(id);
       const text = await res.text();
+      // API_ERROR_CONTRACT: se resposta não é JSON (ex.: HTML 404), não fazer parse; devolver erro tipado.
+      const ct = res.headers.get("Content-Type")?.toLowerCase() ?? "";
+      const isJson = ct.includes("application/json");
+      if (text.trim() && !isJson) {
+        return {
+          data: null,
+          error: {
+            message: "Backend indisponível",
+            code: "BACKEND_UNAVAILABLE",
+          },
+        };
+      }
       // Upsert idempotente: 409 Conflict = linha já existe (ex.: installed_modules), tratar como sucesso.
       if (
         res.status === 409 &&
@@ -182,7 +196,19 @@ function buildFilterBuilder(table: string): FilterBuilder {
       if (text === "" || state.method === "DELETE") {
         return { data: state.method === "DELETE" ? null : [], error: null };
       }
-      const data = JSON.parse(text);
+      let data: unknown;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // API_ERROR_CONTRACT: corpo não-JSON (ex.: HTML) mesmo com Content-Type enganador
+        return {
+          data: null,
+          error: {
+            message: "Backend indisponível",
+            code: "BACKEND_UNAVAILABLE",
+          },
+        };
+      }
       if (state.single && Array.isArray(data)) {
         if (data.length === 0)
           return {
@@ -287,7 +313,7 @@ export interface RealtimeChannelStub {
   on(
     event: string,
     filter: object,
-    callback: (payload: any) => void,
+    callback: (payload: any) => void
   ): RealtimeChannelStub;
 }
 
@@ -317,6 +343,18 @@ export function getDockerCoreFetchClient(): DockerCoreClientShape {
           body: JSON.stringify(params),
         });
         const text = await res.text();
+        // API_ERROR_CONTRACT: se resposta não é JSON, não fazer parse; devolver erro tipado.
+        const ct = res.headers.get("Content-Type")?.toLowerCase() ?? "";
+        const isJson = ct.includes("application/json");
+        if (text.trim() && !isJson) {
+          return {
+            data: null,
+            error: {
+              message: "Backend indisponível",
+              code: "BACKEND_UNAVAILABLE",
+            },
+          };
+        }
         if (!res.ok) {
           let err: PostgrestError;
           try {
@@ -327,8 +365,20 @@ export function getDockerCoreFetchClient(): DockerCoreClientShape {
           }
           return { data: null, error: err };
         }
-        const data = text === "" ? null : JSON.parse(text);
-        return { data, error: null };
+        if (text === "") return { data: null, error: null };
+        try {
+          const data = JSON.parse(text);
+          return { data, error: null };
+        } catch {
+          // API_ERROR_CONTRACT: corpo não-JSON
+          return {
+            data: null,
+            error: {
+              message: "Backend indisponível",
+              code: "BACKEND_UNAVAILABLE",
+            },
+          };
+        }
       } catch (e: any) {
         return {
           data: null,

@@ -29,7 +29,7 @@ Durante o piloto fechado:
 **Runtime oficial:**
 
 - Host: localhost
-- Porta: 5175
+- Porta: 5157 (porta oficial do portal; não mudar)
 - Protocolo: http
 
 Nenhuma outra porta é permitida no piloto.

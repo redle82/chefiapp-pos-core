@@ -1,8 +1,8 @@
 /**
  * Owner Vision - Visão (KPIs de negócio)
- * 
+ *
  * Pergunta: "Como está o negócio?"
- * 
+ *
  * Componentes:
  * - KPIs principais
  * - Previsão operacional
@@ -13,9 +13,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/navigation/Header';
 import { BottomTabs } from '../../components/navigation/BottomTabs';
+import { DataModeBanner } from '../../components/DataModeBanner';
+import { useRestaurantRuntime } from '../../context/RestaurantRuntimeContext';
 
 export function OwnerVisionPage() {
   const navigate = useNavigate();
+  const { runtime } = useRestaurantRuntime();
 
   // TODO: Integrar com Core para buscar KPIs reais
   // TODO: Buscar previsão operacional
@@ -41,7 +44,7 @@ export function OwnerVisionPage() {
   return (
     <div style={{ paddingBottom: '80px' }}>
       <Header title="Visão" subtitle="KPIs de negócio" />
-
+      <DataModeBanner dataMode={runtime.dataMode} />
       <div style={{ padding: '16px' }}>
         {/* KPIs */}
         <div style={{ marginBottom: '24px' }}>

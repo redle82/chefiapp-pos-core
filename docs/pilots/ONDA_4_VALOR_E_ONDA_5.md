@@ -70,11 +70,11 @@ Documentar escopo e critérios de sucesso da Onda 5.
 **Refs:** [ROADMAP_FECHO_GAPS_CHEFIAPP.md](../ROADMAP_FECHO_GAPS_CHEFIAPP.md) · [ONDAS_4_A_7_ESTRATEGIA.md](../ONDAS_4_A_7_ESTRATEGIA.md) (Onda 5 = expansão pós-POS ultra-rápido).
 
 **Preencher:**
-- **Escopo Onda 5 (resumo):** *ex.: “Plataforma completa (Lightspeed vibe) — multi-local, relatórios, integrações” ou “Refinamentos POS + primeiros pagamentos” — ajustar ao roadmap.*
-- **Critérios de sucesso:** *ex.: “X restaurantes ativos; Y vendas/semana; NPS ≥ Z.”*
-- **Duração estimada:** *ex.: 60–90 dias.*
+- **Escopo Onda 5 (resumo):** Owner Dashboard & controlo: métricas reais (vendas, pedidos, turnos), alertas acionáveis e visão de dono para restaurantes que já operam. Mercado-alvo: restaurantes médios (POS + dono).
+- **Critérios de sucesso:** (1) Pelo menos 2 restaurantes com dashboard em uso regular; (2) zero bloqueadores críticos reportados; (3) um indicador de satisfação (ex.: "recomendaria?" sim/não ou NPS) com resultado positivo.
+- **Duração estimada:** 30 dias (alinhado a ONDAS_4_A_7). Opcional: 60 dias se se incluir itens do ROADMAP_FECHO_GAPS na mesma janela.
 
-- [ ] Escopo Onda 5 documentado aqui ou em [ROADMAP_FECHO_GAPS_CHEFIAPP.md](../ROADMAP_FECHO_GAPS_CHEFIAPP.md) / doc dedicado.
+- [x] Escopo Onda 5 documentado aqui ou em [ROADMAP_FECHO_GAPS_CHEFIAPP.md](../ROADMAP_FECHO_GAPS_CHEFIAPP.md) / doc dedicado.
 - [ ] Critérios de sucesso aprovados.
 
 ---
@@ -83,7 +83,9 @@ Documentar escopo e critérios de sucesso da Onda 5.
 
 Congelar escopo da Onda 5 e comunicar (doc ou issue).
 
-- [ ] Escopo Onda 5 congelado (versão final em doc ou issue).
+**Escopo congelado:** §22 deste documento (escopo, critérios, duração). Versão final: [ONDA_5_ESCOPO_CONGELADO.md](./ONDA_5_ESCOPO_CONGELADO.md).
+
+- [x] Escopo Onda 5 congelado (versão final em doc ou issue).
 - [ ] Equipa / stakeholders informados (data: _____________).
 
 ---
@@ -92,9 +94,11 @@ Congelar escopo da Onda 5 e comunicar (doc ou issue).
 
 Iniciar execução da Onda 5 conforme plano.
 
+**Primeiras tarefas:** [ONDA_5_TAREFAS.md](./ONDA_5_TAREFAS.md) (Owner Dashboard, métricas reais, alertas acionáveis).
+
 - [ ] Plano Onda 5 aprovado e kick-off marcado.
-- [ ] Primeiras tarefas identificadas e atribuídas (ou em backlog).
+- [x] Primeiras tarefas identificadas e atribuídas (ou em backlog).
 
 ---
 
-*Preencher este doc e marcar os itens 19–24 no [ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md](../ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md) à medida que forem concluídos.*
+*Preencher este doc e marcar os itens 19–24 no [ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md](../ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md) à medida que forem concluídos. **Checklist de execução diária:** [CHECKLIST_EXECUCAO_DIARIA_ONDA_4_5.md](./CHECKLIST_EXECUCAO_DIARIA_ONDA_4_5.md) (copy aprovado 19–21, infra local, próximo passo único).*

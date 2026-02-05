@@ -1,15 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../App.css";
+import { BootstrapStepIndicator } from "../components/bootstrap/BootstrapStepIndicator";
+import { upsertSetupStatus } from "../core-boundary/writers/RuntimeWriter";
 import { DbWriteGate } from "../core/governance/DbWriteGate";
 import { useCoreHealth } from "../core/health";
 import { BackendType, getBackendType } from "../core/infra/backendAdapter";
+import { getDockerCoreFetchClient } from "../core/infra/dockerCoreFetchClient";
+import { Logger } from "../core/logger";
 import {
   getTabIsolated,
   setTabIsolated,
 } from "../core/storage/TabIsolatedStorage";
+// TEMPORARY: Supabase auth only (quarantine). Domain reads/writes removed — Core only.
 import { supabase } from "../core/supabase";
+import { setActiveTenant } from "../core/tenant/TenantResolver";
+import { useBootstrapState } from "../hooks/useBootstrapState";
 import { InlineAlert } from "../ui/design-system";
+import { Button, Card, Input, Select } from "../ui/design-system/primitives";
+import { colors } from "../ui/design-system/tokens/colors";
+import { spacing } from "../ui/design-system/tokens/spacing";
 
 /**
  * BootstrapPage — System Initialization
@@ -57,8 +67,13 @@ const RESTAURANT_TYPES = [
   "Catering",
 ] as const;
 
-export function BootstrapPage() {
+export function BootstrapPage({
+  successNextPath = "/onboarding/first-product",
+}: {
+  successNextPath?: string;
+} = {}) {
   const navigate = useNavigate();
+  const bootstrap = useBootstrapState();
   const { status: _health } = useCoreHealth({
     autoStart: false,
     timeout: BOOTSTRAP_TIMEOUT,
@@ -83,31 +98,43 @@ export function BootstrapPage() {
     navigate("/onboarding/first-product");
   };
 
-  const bootstrap = useCallback(async () => {
-    console.log("[Bootstrap] Starting authentication check...");
+  const runBootstrap = useCallback(async () => {
+    console.log("[Bootstrap] Starting bootstrap...");
     setState("checking");
     setErrorMessage(null);
     setShowProgress(false);
     setProgressStep(null);
 
-    // 1. Check Auth Session (em Docker não chamar Supabase)
+    // ANTI-SUPABASE §4: Domain only via Core (Docker). No Supabase backend for domain.
+    if (getBackendType() !== BackendType.docker) {
+      setState("error");
+      setErrorMessage(
+        "Sistema Nervoso (Core) indisponível. Configure o Docker Core para continuar."
+      );
+      return;
+    }
+
+    // 1. Auth Session (temporary Supabase auth quarantine; domain data from Core only)
     let session: unknown = null;
     let authError: unknown = null;
-    if (getBackendType() !== BackendType.docker) {
+    try {
       const result = await supabase.auth.getSession();
       session = result.data?.session ?? null;
       authError = result.error ?? null;
+    } catch (e) {
+      authError = e;
     }
     console.log("[Bootstrap] Session check result:", {
       hasSession: !!session,
       error: authError,
     });
 
-    // Docker backend: quando não há getSession (session null), permitir passar a /onboarding/first-product
-    // para evitar loop bootstrap → login → bootstrap quando Core está em baixo
-    if (getBackendType() === BackendType.docker && session === null) {
-      setState("ready");
-      setTimeout(() => navigate("/onboarding/first-product"), 500);
+    // Docker: when no session, show create-restaurant form and enable Pilot mode
+    if (session === null) {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("chefiapp_pilot_mode", "true");
+      }
+      setState("create_form");
       return;
     }
 
@@ -138,13 +165,17 @@ export function BootstrapPage() {
         setTimeout(() => navigate("/login"), 300);
         return;
       }
-      console.log("[Bootstrap] Checking membership for user:", user.id);
-      const { data: members, error: memberError } = await supabase
+      // Domain reads ONLY via Core (Supabase removed — §4)
+      const core = getDockerCoreFetchClient();
+      const membersRes = await core
         .from("gm_restaurant_members")
         .select("restaurant_id, role")
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .then((r) => r);
+      const members = Array.isArray(membersRes.data) ? membersRes.data : null;
+      const memberError = membersRes.error;
 
-      console.log("[Bootstrap] Membership query result:", {
+      console.log("[Bootstrap] Membership query result (Core):", {
         members,
         error: memberError,
       });
@@ -153,17 +184,19 @@ export function BootstrapPage() {
 
       if (members && members.length > 0) {
         // EXISTING OWNER/STAFF
-        const member = members[0];
+        const member = members[0] as { restaurant_id: string; role: string };
         console.log("[Bootstrap] Existing member found:", member);
         setTabIsolated("chefiapp_restaurant_id", member.restaurant_id);
         setTabIsolated("chefiapp_user_role", member.role);
 
-        // WIZARD COMPLETION GATE: Check if wizard is completed
-        const { data: restaurant, error: restCheckError } = await supabase
+        // WIZARD COMPLETION GATE: Check if wizard is completed (Core only)
+        const restRes = await core
           .from("gm_restaurants")
           .select("wizard_completed_at, setup_status")
           .eq("id", member.restaurant_id)
           .single();
+        const restaurant = restRes.data;
+        const restCheckError = restRes.error;
 
         // Handle schema errors (columns may not exist yet) - use defaults
         let wizardCompleted = false;
@@ -184,13 +217,13 @@ export function BootstrapPage() {
           if (isSchemaError) {
             // Schema lag - columns don't exist yet, use defaults
             console.log(
-              "[BootstrapPage] Schema lag detected (setup_status missing). Using default state.",
+              "[BootstrapPage] Schema lag detected (setup_status missing). Using default state."
             );
           } else {
             // Other error - log and use defaults
             console.warn(
               "[BootstrapPage] Error loading restaurant:",
-              restCheckError,
+              restCheckError
             );
           }
         } else if (restaurant) {
@@ -240,7 +273,7 @@ export function BootstrapPage() {
       } else {
         // NEW USER -> Onda 4 A2: mostrar form nome + contacto antes de criar
         console.log(
-          "[Bootstrap] New user detected - show create restaurant form",
+          "[Bootstrap] New user detected - show create restaurant form"
         );
         setState("create_form");
       }
@@ -251,7 +284,7 @@ export function BootstrapPage() {
     }
   }, [navigate]);
 
-  /** Onda 4 A2: criar restaurante a partir do form (nome + contacto). Tenta RPC create_tenant_atomic, senão fallback insert. */
+  /** Onda 4 A2: criar restaurante SOMENTE via Core (Docker). No Supabase domain path. */
   const handleCreateRestaurant = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -260,89 +293,106 @@ export function BootstrapPage() {
         setErrorMessage("Nome do restaurante é obrigatório.");
         return;
       }
+      // ANTI-SUPABASE §4: Create restaurant only via Core. Fail explicit if not Docker.
+      if (getBackendType() !== BackendType.docker) {
+        setState("error");
+        setErrorMessage(
+          "Core indisponível. Configure o Docker Core para criar o restaurante."
+        );
+        return;
+      }
       setState("creating");
       setErrorMessage(null);
       setProgressStep("Criando o teu restaurante...");
 
       try {
-        const {
-          data: { session: sess },
-        } = await supabase.auth.getSession();
-        const user = (sess as { user?: { id: string } } | null)?.user;
+        let user: { id: string } | null = null;
+        try {
+          const {
+            data: { session: sess },
+          } = await supabase.auth.getSession();
+          user = (sess as { user?: { id: string } } | null)?.user ?? null;
+        } catch {
+          // Auth optional in Pilot/Docker: use mock user id
+        }
         if (!user) {
-          setState("redirecting");
-          setTimeout(() => navigate("/login"), 300);
-          return;
+          user = { id: self.crypto.randomUUID() };
         }
 
-        const preset =
-          COUNTRY_PRESETS[restaurantCountry] ||
-          COUNTRY_PRESETS.PT;
+        const preset = COUNTRY_PRESETS[restaurantCountry] || COUNTRY_PRESETS.PT;
 
-        // 1) Tentar RPC create_tenant_atomic (nome, tipo, país, cidade/contacto)
-        const { data: rpcData, error: rpcError } = await supabase.rpc(
-          "create_tenant_atomic",
-          {
-            p_restaurant_name: name,
-            p_city: restaurantContact.trim() || null,
-            p_type: restaurantType,
-            p_country: restaurantCountry,
-          },
-        );
-
-        if (!rpcError && rpcData?.tenant_id) {
-          setTabIsolated("chefiapp_restaurant_id", rpcData.tenant_id);
-          setTabIsolated("chefiapp_user_role", "owner");
-          setState("ready");
-          setProgressStep("Cozinha criada com sucesso!");
-          navigate("/onboarding/first-product", { replace: true });
-          return;
-        }
-
-        // 2) Fallback: insert direto com nome, tipo, país, moeda, timezone (FASE 1 Passo 1)
+        // Insert ONLY via Core (DbWriteGate → Docker PostgREST)
+        // Core gm_restaurants: id, tenant_id, name, slug, description, owner_id, status, billing_status, product_mode (sem country/type/timezone/currency/locale)
         const timestamp = Date.now().toString(36).slice(-6).toLowerCase();
         const slug = `rest-${timestamp}`;
+        const restaurantPayload: Record<string, unknown> = {
+          name,
+          slug,
+          owner_id: user.id,
+          status: "active",
+        };
         const { data: restData, error: restError } = await DbWriteGate.insert(
           "BootstrapPage",
           "gm_restaurants",
-          {
-            name,
-            slug,
-            owner_id: user.id,
-            status: "active",
-            country: restaurantCountry,
-            plan: "trial",
-            type: restaurantType,
-            timezone: preset.timezone,
-            currency: preset.currency,
-            locale: preset.locale,
-          },
-          { userId: user.id },
+          restaurantPayload,
+          { userId: user.id }
         );
         if (restError) throw restError;
 
-        const { error: linkError } = await DbWriteGate.insert(
-          "BootstrapPage",
-          "gm_restaurant_members",
-          {
-            user_id: user.id,
-            restaurant_id: restData.id,
-            role: "owner",
-          },
-          { tenantId: restData.id },
-        );
-        if (linkError) throw linkError;
+        // Members: only via Core (DbWriteGate). If Core does not support table, insert may fail — no silent fallback.
+        try {
+          const { error: linkError } = await DbWriteGate.insert(
+            "BootstrapPage",
+            "gm_restaurant_members",
+            {
+              user_id: user.id,
+              restaurant_id: restData.id,
+              role: "owner",
+            },
+            { tenantId: restData.id }
+          );
+          if (linkError)
+            Logger.info("[Bootstrap] gm_restaurant_members insert:", linkError);
+        } catch (e) {
+          Logger.info(
+            "[Bootstrap] Core members write skipped or failed (no fallback):",
+            e
+          );
+        }
 
-        setTabIsolated("chefiapp_restaurant_id", restData.id);
+        // Persistir setup_status no banco (identity = true) para ao recarregar não voltar ao nome
+        if (getBackendType() === BackendType.docker) {
+          const { error: setupErr } = await upsertSetupStatus(restData.id, {
+            identity: true,
+          });
+          if (setupErr) {
+            console.warn("[BootstrapPage] upsertSetupStatus:", setupErr);
+          }
+        }
+
+        // Fechar estado: tenant resolvido (evita loop Auth/FlowGate)
+        setActiveTenant(restData.id, "ACTIVE");
         setTabIsolated("chefiapp_user_role", "owner");
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("chefiapp_restaurant_id", restData.id);
+          window.localStorage.setItem(
+            "chefiapp_pilot_mock_restaurant",
+            JSON.stringify({
+              id: restData.id,
+              name: restaurantName?.trim() || restData.name || "Meu Restaurante",
+              onboarding_completed_at: null,
+              billing_status: "trial",
+            })
+          );
+        }
         setState("ready");
         setProgressStep("Cozinha criada com sucesso!");
-        navigate("/onboarding/first-product", { replace: true });
+        navigate(successNextPath, { replace: true });
       } catch (err: unknown) {
         console.error("[Bootstrap] Create restaurant:", err);
         setState("error");
         setErrorMessage(
-          err instanceof Error ? err.message : "Erro ao criar restaurante.",
+          err instanceof Error ? err.message : "Erro ao criar restaurante."
         );
       }
     },
@@ -352,26 +402,32 @@ export function BootstrapPage() {
       restaurantType,
       restaurantCountry,
       navigate,
-    ],
+      successNextPath,
+    ]
   );
 
   useEffect(() => {
-    bootstrap();
-  }, [bootstrap]);
+    runBootstrap();
+  }, [runBootstrap]);
 
   return (
     <div
-      style={{ background: "#0b0b0c", minHeight: "100vh", color: "#f5f5f7" }}
+      style={{
+        background: colors.surface.base,
+        minHeight: "100vh",
+        color: colors.text.primary,
+      }}
     >
       <div
         style={{
           display: "flex",
           flexDirection: "column",
           minHeight: "100vh",
-          padding: "0 20px",
+          padding: `0 ${spacing[5]}`,
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
+        <BootstrapStepIndicator step={3} total={8} />
         <main
           style={{
             flex: 1,
@@ -390,174 +446,88 @@ export function BootstrapPage() {
             <>
               <h1
                 className="h1"
-                style={{ fontSize: 22, color: "#fff", marginBottom: 8 }}
+                style={{
+                  fontSize: 22,
+                  color: colors.text.primary,
+                  marginBottom: spacing[2],
+                }}
               >
                 Criar o teu restaurante
               </h1>
-              <p className="muted" style={{ marginBottom: 24, fontSize: 14 }}>
-                Nome e contacto para começar.
-              </p>
-              <form
-                onSubmit={handleCreateRestaurant}
+              <p
+                className="muted"
                 style={{
-                  width: "100%",
-                  maxWidth: 320,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 16,
-                  textAlign: "left",
+                  marginBottom: spacing[6],
+                  fontSize: 14,
+                  color: colors.text.secondary,
                 }}
               >
-                <div>
-                  <label
-                    htmlFor="restaurant-name"
-                    style={{
-                      display: "block",
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: "#a3a3a3",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Nome do restaurante *
-                  </label>
-                  <input
+                Nome e contacto para começar.
+              </p>
+              <Card padding="lg" style={{ width: "100%", maxWidth: 320 }}>
+                <form
+                  onSubmit={handleCreateRestaurant}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: spacing[4],
+                    textAlign: "left",
+                  }}
+                >
+                  <Input
                     id="restaurant-name"
+                    label="Nome do restaurante *"
                     type="text"
                     value={restaurantName}
                     onChange={(e) => setRestaurantName(e.target.value)}
                     placeholder="ex: Sofia Gastrobar"
                     required
                     autoFocus
-                    style={{
-                      width: "100%",
-                      boxSizing: "border-box",
-                      padding: "12px 14px",
-                      fontSize: 15,
-                      border: "1px solid #404040",
-                      borderRadius: 8,
-                      backgroundColor: "#171717",
-                      color: "#fafafa",
-                    }}
+                    fullWidth
                   />
-                </div>
-                <div>
-                  <label
-                    htmlFor="restaurant-type"
-                    style={{
-                      display: "block",
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: "#a3a3a3",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Tipo *
-                  </label>
-                  <select
+                  <Select
                     id="restaurant-type"
+                    label="Tipo *"
                     value={restaurantType}
                     onChange={(e) => setRestaurantType(e.target.value)}
-                    style={{
-                      width: "100%",
-                      boxSizing: "border-box",
-                      padding: "12px 14px",
-                      fontSize: 15,
-                      border: "1px solid #404040",
-                      borderRadius: 8,
-                      backgroundColor: "#171717",
-                      color: "#fafafa",
-                    }}
-                  >
-                    {RESTAURANT_TYPES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label
-                    htmlFor="restaurant-country"
-                    style={{
-                      display: "block",
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: "#a3a3a3",
-                      marginBottom: 6,
-                    }}
-                  >
-                    País / Moeda *
-                  </label>
-                  <select
+                    options={RESTAURANT_TYPES.map((t) => ({
+                      value: t,
+                      label: t,
+                    }))}
+                    fullWidth
+                  />
+                  <Select
                     id="restaurant-country"
+                    label="País / Moeda *"
                     value={restaurantCountry}
                     onChange={(e) => setRestaurantCountry(e.target.value)}
-                    style={{
-                      width: "100%",
-                      boxSizing: "border-box",
-                      padding: "12px 14px",
-                      fontSize: 15,
-                      border: "1px solid #404040",
-                      borderRadius: 8,
-                      backgroundColor: "#171717",
-                      color: "#fafafa",
-                    }}
-                  >
-                    <option value="PT">Portugal (EUR)</option>
-                    <option value="ES">Espanha (EUR)</option>
-                    <option value="BR">Brasil (BRL)</option>
-                    <option value="US">EUA (USD)</option>
-                  </select>
-                </div>
-                <div>
-                  <label
-                    htmlFor="restaurant-contact"
-                    style={{
-                      display: "block",
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: "#a3a3a3",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Contacto (cidade, email ou telefone)
-                  </label>
-                  <input
+                    options={[
+                      { value: "PT", label: "Portugal (EUR)" },
+                      { value: "ES", label: "Espanha (EUR)" },
+                      { value: "BR", label: "Brasil (BRL)" },
+                      { value: "US", label: "EUA (USD)" },
+                    ]}
+                    fullWidth
+                  />
+                  <Input
                     id="restaurant-contact"
+                    label="Contacto (cidade, email ou telefone)"
                     type="text"
                     value={restaurantContact}
                     onChange={(e) => setRestaurantContact(e.target.value)}
                     placeholder="opcional"
-                    style={{
-                      width: "100%",
-                      boxSizing: "border-box",
-                      padding: "12px 14px",
-                      fontSize: 15,
-                      border: "1px solid #404040",
-                      borderRadius: 8,
-                      backgroundColor: "#171717",
-                      color: "#fafafa",
-                    }}
+                    fullWidth
                   />
-                </div>
-                <button
-                  type="submit"
-                  style={{
-                    padding: "14px 20px",
-                    fontSize: 15,
-                    fontWeight: 600,
-                    border: "none",
-                    borderRadius: 8,
-                    cursor: "pointer",
-                    backgroundColor: "#32d74b",
-                    color: "#000",
-                    width: "100%",
-                  }}
-                >
-                  Criar e continuar
-                </button>
-              </form>
+                  <Button
+                    type="submit"
+                    tone="success"
+                    variant="solid"
+                    fullWidth
+                  >
+                    Criar e continuar
+                  </Button>
+                </form>
+              </Card>
             </>
           )}
 
@@ -665,7 +635,7 @@ export function BootstrapPage() {
                 }}
               >
                 <button
-                  onClick={bootstrap}
+                  onClick={runBootstrap}
                   style={{
                     padding: "14px 24px",
                     background: "transparent",
@@ -680,22 +650,42 @@ export function BootstrapPage() {
                 >
                   Tentar conectar novamente
                 </button>
-                <button
-                  onClick={switchToDemoMode}
-                  style={{
-                    padding: "14px 24px",
-                    background: "#32d74b", // Primary Action now
-                    border: "none",
-                    borderRadius: 10,
-                    color: "#000",
-                    fontSize: 15,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    width: "100%",
-                  }}
-                >
-                  Entrar em Modo Demo (Offline)
-                </button>
+                {bootstrap.coreStatus === "offline-intencional" && (
+                  <button
+                    onClick={switchToDemoMode}
+                    style={{
+                      padding: "14px 24px",
+                      background: "#32d74b",
+                      border: "none",
+                      borderRadius: 10,
+                      color: "#000",
+                      fontSize: 15,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      width: "100%",
+                    }}
+                  >
+                    Continuar sem sessão (offline)
+                  </button>
+                )}
+                {bootstrap.coreStatus === "offline-erro" && (
+                  <button
+                    onClick={bootstrap}
+                    style={{
+                      padding: "14px 24px",
+                      background: "#32d74b",
+                      border: "none",
+                      borderRadius: 10,
+                      color: "#000",
+                      fontSize: 15,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      width: "100%",
+                    }}
+                  >
+                    Iniciar Core
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -803,45 +793,93 @@ export function BootstrapPage() {
                       marginBottom: 8,
                     }}
                   >
-                    Você pode continuar em modo offline/demo.
+                    {bootstrap.coreStatus === "offline-intencional"
+                      ? "Pode continuar sem sessão (offline)."
+                      : bootstrap.coreStatus === "offline-erro"
+                      ? "Inicie o Core para conectar."
+                      : "Você pode continuar em modo offline/demo."}
                   </p>
-                  <button
-                    onClick={switchToDemoMode}
-                    style={{
-                      padding: "14px 24px",
-                      background: "#32d74b", // Primary Action
-                      border: "none",
-                      borderRadius: 10,
-                      color: "#000",
-                      fontSize: 15,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      width: "100%",
-                    }}
-                  >
-                    Entrar Agora (Demo)
-                  </button>
-                  <button
-                    onClick={() => {
-                      setTabIsolated("chefiapp_restaurant_id", "pilot-mock-id");
-                      setTabIsolated("chefiapp_user_role", "owner");
-                      navigate("/onboarding/first-product");
-                    }}
-                    style={{
-                      padding: "14px 24px",
-                      background: "rgba(50, 215, 75, 0.1)",
-                      border: "1px solid #32d74b",
-                      borderRadius: 10,
-                      color: "#32d74b",
-                      fontSize: 15,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      width: "100%",
-                      marginBottom: 8,
-                    }}
-                  >
-                    Simular Criação (Offline)
-                  </button>
+                  {bootstrap.coreStatus === "offline-intencional" && (
+                    <button
+                      onClick={switchToDemoMode}
+                      style={{
+                        padding: "14px 24px",
+                        background: "#32d74b",
+                        border: "none",
+                        borderRadius: 10,
+                        color: "#000",
+                        fontSize: 15,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        width: "100%",
+                      }}
+                    >
+                      Continuar sem sessão (offline)
+                    </button>
+                  )}
+                  {bootstrap.coreStatus === "offline-erro" && (
+                    <button
+                      onClick={bootstrap}
+                      style={{
+                        padding: "14px 24px",
+                        background: "#32d74b",
+                        border: "none",
+                        borderRadius: 10,
+                        color: "#000",
+                        fontSize: 15,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        width: "100%",
+                      }}
+                    >
+                      Iniciar Core
+                    </button>
+                  )}
+                  {bootstrap.coreStatus !== "offline-intencional" &&
+                    bootstrap.coreStatus !== "offline-erro" && (
+                      <>
+                        <button
+                          onClick={switchToDemoMode}
+                          style={{
+                            padding: "14px 24px",
+                            background: "#32d74b",
+                            border: "none",
+                            borderRadius: 10,
+                            color: "#000",
+                            fontSize: 15,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            width: "100%",
+                          }}
+                        >
+                          Entrar Agora (Demo)
+                        </button>
+                        <button
+                          onClick={() => {
+                            setTabIsolated(
+                              "chefiapp_restaurant_id",
+                              "pilot-mock-id"
+                            );
+                            setTabIsolated("chefiapp_user_role", "owner");
+                            navigate("/onboarding/first-product");
+                          }}
+                          style={{
+                            padding: "14px 24px",
+                            background: "rgba(50, 215, 75, 0.1)",
+                            border: "1px solid #32d74b",
+                            borderRadius: 10,
+                            color: "#32d74b",
+                            fontSize: 15,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            width: "100%",
+                            marginBottom: 8,
+                          }}
+                        >
+                          Simular Criação (Offline)
+                        </button>
+                      </>
+                    )}
                   <button
                     onClick={bootstrap}
                     style={{

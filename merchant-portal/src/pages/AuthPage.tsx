@@ -4,21 +4,26 @@
  * /auth = login (já tenho conta)
  * /signup = registo (entrar em operação)
  * Sem Runtime/Core. Após sucesso → /app/dashboard.
- * Quando backend é Docker: mostra mensagem e link demo. Quando Supabase: formulário email/password.
+ * Backend único: Docker Core (Keycloak + mock). Demo/pilot: link ou mensagem.
  */
 
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { recordLoginFailure, recordLoginSuccess } from "../core/auth/authAudit";
-import { BackendType, getBackendType } from "../core/infra/backendAdapter";
-import { getSupabaseClient } from "../core/infra/supabaseClient";
 import { useSupabaseAuth } from "../core/auth/useSupabaseAuth";
+import { getAuthActions } from "../core/auth/authAdapter";
+import {
+  BackendType,
+  getBackendConfigured,
+  getBackendType,
+} from "../core/infra/backendAdapter";
 import { GlobalLoadingView } from "../ui/design-system/components";
+import { OSCopy } from "../ui/design-system/sovereign/OSCopy";
 
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(to bottom, #0a0a0a 0%, #171717 50%, #1c1917 100%)",
+    background:
+      "linear-gradient(to bottom, #0a0a0a 0%, #171717 50%, #1c1917 100%)",
     display: "flex",
     flexDirection: "column" as const,
     alignItems: "center",
@@ -38,7 +43,13 @@ const styles = {
   },
   title: { fontSize: 22, fontWeight: 700, marginBottom: 8, color: "#fafafa" },
   subtitle: { fontSize: 14, color: "#a3a3a3", marginBottom: 24 },
-  label: { display: "block", fontSize: 13, fontWeight: 500, color: "#a3a3a3", marginBottom: 6 },
+  label: {
+    display: "block",
+    fontSize: 13,
+    fontWeight: 500,
+    color: "#a3a3a3",
+    marginBottom: 6,
+  },
   input: {
     width: "100%",
     boxSizing: "border-box" as const,
@@ -52,6 +63,7 @@ const styles = {
   },
   button: {
     width: "100%",
+    minHeight: 44,
     padding: "14px 20px",
     fontSize: 15,
     fontWeight: 600,
@@ -61,11 +73,21 @@ const styles = {
     marginTop: 8,
   },
   buttonPrimary: { backgroundColor: "#eab308", color: "#0a0a0a" },
-  buttonSecondary: { backgroundColor: "transparent", color: "#a3a3a3", border: "1px solid #404040" },
+  buttonSecondary: {
+    backgroundColor: "transparent",
+    color: "#a3a3a3",
+    border: "1px solid #404040",
+  },
   error: { fontSize: 13, color: "#f87171", marginBottom: 12 },
   link: { color: "#eab308", textDecoration: "none", fontWeight: 500 },
   tabs: { display: "flex", gap: 8, marginBottom: 24 },
-  tab: { padding: "8px 16px", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: 500 },
+  tab: {
+    padding: "8px 16px",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontSize: 14,
+    fontWeight: 500,
+  },
   tabActive: { backgroundColor: "#262626", color: "#fafafa" },
   tabInactive: { color: "#737373" },
   demoBox: {
@@ -81,7 +103,8 @@ const styles = {
 
 export function AuthPage() {
   const [searchParams] = useSearchParams();
-  const modeFromUrl = searchParams.get("mode") === "signup" ? "signup" : "login";
+  const modeFromUrl =
+    searchParams.get("mode") === "signup" ? "signup" : "login";
   const [mode, setMode] = useState<"login" | "signup">(modeFromUrl);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -90,12 +113,19 @@ export function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const { session, loading: authLoading } = useSupabaseAuth();
   const navigate = useNavigate();
-  const isSupabase = getBackendType() === BackendType.supabase;
+  // Backend único: Docker Core (Keycloak + mock). Sem Supabase.
+  const hasCore = getBackendType() === BackendType.docker;
 
   const getLastRoute = (): string => {
     try {
       const stored = sessionStorage.getItem("chefiapp_lastRoute");
-      const allowed = ["/dashboard", "/app/dashboard", "/op/tpv", "/op/kds", "/op/cash"];
+      const allowed = [
+        "/dashboard",
+        "/app/dashboard",
+        "/op/tpv",
+        "/op/kds",
+        "/op/cash",
+      ];
       if (stored && allowed.includes(stored)) return stored;
     } catch {
       // ignore
@@ -125,33 +155,52 @@ export function AuthPage() {
       setError("A palavra-passe deve ter pelo menos 6 caracteres.");
       return;
     }
-    if (!isSupabase) return;
     setLoading(true);
     try {
-      const client = getSupabaseClient();
-      if (mode === "signup") {
-        const { error: err } = await client.auth.signUp({ email, password });
-        if (err) throw err;
-        setError(null);
-        // Onda 4 A1/A2: novo utilizador → bootstrap (criar restaurante) em vez de dashboard
-        navigate("/bootstrap", { replace: true });
-      } else {
-        const { error: err } = await client.auth.signInWithPassword({ email, password });
-        if (err) {
-          await recordLoginFailure(email, err.message);
-          throw err;
-        }
-        await recordLoginSuccess();
-        setError(null);
-        navigate(getLastRoute(), { replace: true });
+      // Docker Core only: Keycloak redirect or mock; no Supabase auth.
+      if (hasCore) {
+        getAuthActions().signIn();
+        return;
       }
+      setError("Backend não configurado. Defina VITE_CORE_URL e VITE_CORE_ANON_KEY.");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro ao iniciar sessão ou criar conta.";
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Erro ao iniciar sessão ou criar conta.";
       setError(msg);
     } finally {
       setLoading(false);
     }
   };
+
+  if (!getBackendConfigured()) {
+    return (
+      <div style={styles.page}>
+        <div style={styles.card}>
+          <h1 style={styles.title}>Backend não configurado</h1>
+          <p style={{ ...styles.subtitle, marginBottom: 16 }}>
+            Em produção é preciso definir as variáveis de ambiente{" "}
+            <code style={{ fontSize: 12, color: "#a3a3a3" }}>
+              VITE_CORE_URL
+            </code>{" "}
+            e{" "}
+            <code style={{ fontSize: 12, color: "#a3a3a3" }}>
+              VITE_CORE_ANON_KEY
+            </code>{" "}
+            (Docker Core). Ver{" "}
+            <code style={{ fontSize: 12, color: "#a3a3a3" }}>
+              docs/DEPLOY_VERCEL.md
+            </code>
+            .
+          </p>
+          <Link to="/" style={styles.link}>
+            ← Voltar à landing
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (authLoading) {
     return (
@@ -164,31 +213,66 @@ export function AuthPage() {
   }
 
   if (session) {
-    return null;
+    return (
+      <GlobalLoadingView
+        message="A redirecionar..."
+        layout="operational"
+        variant="fullscreen"
+      />
+    );
   }
 
   return (
     <div style={styles.page}>
       <div style={styles.card}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <img src="/Logo Chefiapp.png" alt="ChefIApp" style={{ width: 48, height: 48, objectFit: "contain", borderRadius: 12 }} />
+          <img
+            src="/Logo Chefiapp.png"
+            alt="ChefIApp"
+            style={{
+              width: 48,
+              height: 48,
+              objectFit: "contain",
+              borderRadius: 12,
+            }}
+          />
           <h1 style={{ ...styles.title, marginTop: 12 }}>ChefIApp</h1>
           <p style={styles.subtitle}>TPV que pensa antes do humano</p>
         </div>
 
-        {!isSupabase ? (
+        {hasCore ? (
           <div style={styles.demoBox}>
             <p style={{ margin: "0 0 12px 0" }}>
-              Em modo Docker não há registo na web. Para criar conta e comprar o produto, use o ambiente com Supabase configurado.
+              Em modo local não há registo na web. Para criar conta e comprar o
+              produto, use a aplicação em produção (URL real).
             </p>
             <p style={{ margin: 0 }}>
-              Em desenvolvimento pode continuar com{" "}
-              <Link to="/demo" style={styles.link}>
-                Explorar demonstração
+              Pode continuar com{" "}
+              <Link to="/auth" style={styles.link}>
+                Ver demonstração (3 min)
               </Link>
               .
             </p>
-            <Link to="/" style={{ ...styles.link, display: "inline-block", marginTop: 12 }}>
+            <button
+              onClick={() => {
+                localStorage.setItem("chefiapp_pilot_mode", "true");
+                navigate("/bootstrap");
+              }}
+              style={{
+                ...styles.button,
+                ...styles.buttonSecondary,
+                marginTop: 16,
+                backgroundColor: "rgba(50, 215, 75, 0.1)",
+                borderColor: "#32d74b",
+                color: "#32d74b",
+              }}
+            >
+              Simular Registo (Piloto)
+            </button>
+            <Link
+              to="/"
+              style={{ ...styles.link, display: "inline-block", marginTop: 12 }}
+            >
               ← Voltar à landing
             </Link>
           </div>
@@ -197,14 +281,22 @@ export function AuthPage() {
             <div style={styles.tabs}>
               <button
                 type="button"
-                style={{ ...styles.tab, ...(mode === "login" ? styles.tabActive : styles.tabInactive) }}
+                style={{
+                  ...styles.tab,
+                  ...(mode === "login" ? styles.tabActive : styles.tabInactive),
+                }}
                 onClick={() => setMode("login")}
               >
                 Entrar
               </button>
               <button
                 type="button"
-                style={{ ...styles.tab, ...(mode === "signup" ? styles.tabActive : styles.tabInactive) }}
+                style={{
+                  ...styles.tab,
+                  ...(mode === "signup"
+                    ? styles.tabActive
+                    : styles.tabInactive),
+                }}
                 onClick={() => setMode("signup")}
               >
                 Criar conta
@@ -231,7 +323,9 @@ export function AuthPage() {
                 placeholder="••••••••"
                 required
                 style={styles.input}
-                autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                autoComplete={
+                  mode === "signup" ? "new-password" : "current-password"
+                }
               />
               {mode === "signup" && (
                 <>
@@ -252,31 +346,71 @@ export function AuthPage() {
                 disabled={loading}
                 style={{ ...styles.button, ...styles.buttonPrimary }}
               >
-                {loading ? "A processar..." : mode === "signup" ? "Criar conta" : "Entrar"}
+                {loading
+                  ? "A processar..."
+                  : mode === "signup"
+                  ? "Criar conta"
+                  : "Entrar"}
               </button>
             </form>
 
-            <p style={{ fontSize: 13, color: "#737373", marginTop: 20, textAlign: "center" }}>
+            <p
+              style={{
+                fontSize: 13,
+                color: "#737373",
+                marginTop: 20,
+                textAlign: "center",
+              }}
+            >
               {mode === "login" ? (
                 <>
                   Ainda não tem conta?{" "}
-                  <Link to="/signup" style={styles.link} onClick={() => setMode("signup")}>
+                  <Link
+                    to="/signup"
+                    style={styles.link}
+                    onClick={() => setMode("signup")}
+                  >
                     Criar conta
                   </Link>
                 </>
               ) : (
                 <>
                   Já tem conta?{" "}
-                  <Link to="/auth" style={styles.link} onClick={() => setMode("login")}>
+                  <Link
+                    to="/auth"
+                    style={styles.link}
+                    onClick={() => setMode("login")}
+                  >
                     Entrar
                   </Link>
                 </>
               )}
             </p>
+            <p
+              style={{
+                fontSize: 13,
+                color: "#737373",
+                marginTop: 12,
+                textAlign: "center",
+              }}
+            >
+              <Link to="/auth" style={styles.link}>
+                {OSCopy.landing.ctaVerSistema3Min}
+              </Link>
+            </p>
           </>
         )}
 
-        <Link to="/" style={{ ...styles.link, display: "block", marginTop: 24, textAlign: "center", fontSize: 13 }}>
+        <Link
+          to="/"
+          style={{
+            ...styles.link,
+            display: "block",
+            marginTop: 24,
+            textAlign: "center",
+            fontSize: 13,
+          }}
+        >
           ← Voltar à landing
         </Link>
       </div>

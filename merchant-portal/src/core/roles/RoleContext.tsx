@@ -2,9 +2,11 @@
  * RoleContext — papel do utilizador para gates e navegação
  * Ver docs/CHEFIAPP_ROLE_SYSTEM_SPEC.md
  *
+ * FASE B: Sem roleOverride, role é "owner". Toggle por localStorage só com ?debug=1.
+ *
  * Fonte do role:
  * - roleOverride (opcional): quando fornecido (ex.: sessão/backend), é a fonte de verdade; setRole fica no-op.
- * - Sem roleOverride: usa localStorage (gate DEV/UX). Segurança real virá do backend.
+ * - Sem roleOverride: "owner" em produto; com ?debug=1 permite override por localStorage (testes).
  */
 
 import {
@@ -14,6 +16,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { isDebugMode } from "../debugMode";
 import type { UserRole } from "./rolePermissions";
 
 const STORAGE_KEY = "chefiapp_user_role";
@@ -28,7 +31,7 @@ function readStoredRole(): UserRole {
 export interface RoleContextValue {
   role: UserRole;
   setRole: (role: UserRole) => void;
-  /** true quando o role vem do backend/sessão (roleOverride); false quando vem de localStorage */
+  /** true quando o role vem do backend/sessão (roleOverride); false quando vem de default owner */
   fromServer: boolean;
 }
 
@@ -49,23 +52,24 @@ export function RoleProvider({
 }: RoleProviderProps) {
   const [localRole, setLocalRole] = useState<UserRole>(readStoredRole);
 
-  const role = roleOverride ?? localRole;
+  // Sem override: "owner" em produto; com ?debug=1 permite toggle (localStorage) para testes.
+  const role: UserRole = roleOverride ?? (isDebugMode() ? localRole : "owner");
   const fromServer = roleOverride != null;
 
   const setRole = useCallback(
     (next: UserRole) => {
-      if (fromServer) return; // backend é fonte de verdade, não permitir override no cliente
+      if (fromServer) return;
       setLocalRole(next);
       if (typeof window !== "undefined") {
         window.localStorage.setItem(STORAGE_KEY, next);
       }
     },
-    [fromServer],
+    [fromServer]
   );
 
   const value = useMemo(
     () => ({ role, setRole, fromServer }),
-    [role, setRole, fromServer],
+    [role, setRole, fromServer]
   );
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;

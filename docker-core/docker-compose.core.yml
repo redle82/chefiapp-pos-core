@@ -2,14 +2,13 @@
 # CHEFIAPP CORE - Docker Compose Oficial
 # =============================================================================
 # Banco limpo, schema oficial, zero resíduos.
-# 
+#
 # Uso:
 #   docker compose -f docker-compose.core.yml up -d    # Subir Core
 #   docker compose -f docker-compose.core.yml down -v  # Limpar tudo
 #   docker compose -f docker-compose.core.yml logs -f   # Ver logs
 # =============================================================================
-
-version: '3.9'
+# (version obsoleto removido — Docker Compose v2+ ignora; evita warning no smoke)
 
 name: chefiapp-core
 
@@ -25,13 +24,19 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: chefiapp_core
-    command: postgres -c wal_level=logical  # Necessário para Realtime
+    command: postgres -c wal_level=logical # Necessário para Realtime
     ports:
-      - "54320:5432"  # Porta diferente do Supabase local (54322)
+      - "54320:5432" # Porta diferente do Supabase local (54322)
     volumes:
       - postgres-core-data:/var/lib/postgresql/data
       - ./schema/core_schema.sql:/docker-entrypoint-initdb.d/01-core-schema.sql:ro
       - ./schema/seeds_dev.sql:/docker-entrypoint-initdb.d/02-seeds-dev.sql:ro
+      - ./schema/03-migrations-consolidated.sql:/docker-entrypoint-initdb.d/03-migrations-consolidated.sql:ro
+      - ./schema/04-modules-and-extras.sql:/docker-entrypoint-initdb.d/04-modules-and-extras.sql:ro
+      - ./schema/05-device-kinds.sql:/docker-entrypoint-initdb.d/05-device-kinds.sql:ro
+      - ./schema/migrations/20260127_onboarding_persistence.sql:/docker-entrypoint-initdb.d/05.1-onboarding-persistence.sql:ro
+      - ./schema/06-seed-enterprise.sql:/docker-entrypoint-initdb.d/06-seed-enterprise.sql:ro
+      - ./schema/07-role-anon.sql:/docker-entrypoint-initdb.d/07-role-anon.sql:ro
     networks:
       - chefiapp-core-net
     healthcheck:
@@ -70,14 +75,14 @@ services:
     environment:
       PGRST_DB_URI: postgres://postgres:postgres@postgres:5432/chefiapp_core
       PGRST_DB_SCHEMA: public
-      PGRST_DB_SCHEMAS: public  # Explicitamente definir schemas a expor
-      PGRST_DB_ANON_ROLE: postgres  # Core is authoritative, no RLS for now
+      PGRST_DB_SCHEMAS: public # Explicitamente definir schemas a expor
+      PGRST_DB_ANON_ROLE: postgres # Core is authoritative, no RLS for now
       # PostgREST requer JWT_SECRET mesmo sem usar JWT para autenticação
       # O secret é usado internamente pelo PostgREST, mas não valida tokens
       PGRST_JWT_SECRET: chefiapp-core-secret-key-min-32-chars-long
       PGRST_DB_USE_LEGACY_GUCS: "false"
     expose:
-      - "3000"  # Exposto apenas internamente, nginx faz proxy
+      - "3000" # Exposto apenas internamente, nginx faz proxy
     networks:
       - chefiapp-core-net
 
@@ -98,7 +103,7 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: chefiapp_core
-      DB_AFTER_CONNECT_QUERY: 'SET search_path TO _realtime'
+      DB_AFTER_CONNECT_QUERY: "SET search_path TO _realtime"
       DB_ENC_KEY: supabaserealtime
       API_JWT_SECRET: chefiapp-core-secret-key-min-32-chars-long
       JWT_SECRET: chefiapp-core-secret-key-min-32-chars-long
@@ -115,9 +120,82 @@ services:
     networks:
       - chefiapp-core-net
 
+  # ============================================================================
+  # KEYCLOAK (Auth local - substitui Supabase Auth)
+  # ============================================================================
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: chefiapp-core-keycloak
+    restart: unless-stopped
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    networks:
+      - chefiapp-core-net
+
+  # ============================================================================
+  # MINIO (Storage local - substitui Supabase Storage)
+  # ============================================================================
+  minio:
+    image: minio/minio:latest
+    container_name: chefiapp-core-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: gm
+      MINIO_ROOT_PASSWORD: gmstorage
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - chefiapp-core-net
+
+  # ============================================================================
+  # PGADMIN (Admin UI para Postgres - opcional)
+  # ============================================================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: chefiapp-core-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gm.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    networks:
+      - chefiapp-core-net
+
+  # ============================================================================
+  # SIMULATOR ORDERS (injecta pedidos em massa no Core)
+  # ============================================================================
+  # Uso: docker compose -f docker-compose.core.yml run --rm -e COUNT=20 simulator-orders
+  # Ver: simulators/orders/README.md
+  simulator-orders:
+    build:
+      context: ..
+      dockerfile: simulators/orders/Dockerfile
+    image: chefiapp-simulator-orders:latest
+    container_name: chefiapp-simulator-orders
+    depends_on:
+      - nginx
+    environment:
+      POSTGREST_URL: http://nginx:3001
+      RESTAURANT_ID: "00000000-0000-0000-0000-000000000100"
+      COUNT: "5"
+      SOURCE: tpv
+      DELAY_MS: "500"
+    networks:
+      - chefiapp-core-net
+
 networks:
   chefiapp-core-net:
     driver: bridge
 
 volumes:
   postgres-core-data:
+  minio-data:

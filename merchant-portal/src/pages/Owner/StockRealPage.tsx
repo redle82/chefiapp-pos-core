@@ -1,8 +1,8 @@
 /**
  * Owner Stock Real - Estoque Real
- * 
+ *
  * Pergunta: "O que vai acabar e quando?"
- * 
+ *
  * Componentes:
  * - Estoque atual
  * - Consumo real
@@ -16,9 +16,12 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/navigation/Header';
 import { BottomTabs } from '../../components/navigation/BottomTabs';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { DataModeBanner } from '../../components/DataModeBanner';
+import { useRestaurantRuntime } from '../../context/RestaurantRuntimeContext';
 
 export function OwnerStockRealPage() {
   const navigate = useNavigate();
+  const { runtime } = useRestaurantRuntime();
   const [filter, setFilter] = useState<'critical' | 'attention' | 'all'>('critical');
 
   // TODO: Integrar com Core para buscar estoque real
@@ -52,6 +55,7 @@ export function OwnerStockRealPage() {
 
   return (
     <div style={{ paddingBottom: '80px' }}>
+      <DataModeBanner dataMode={runtime.dataMode} />
       <Header
         title="Estoque Real"
         subtitle="O que vai acabar e quando"

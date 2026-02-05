@@ -1,9 +1,11 @@
 /**
  * AlertCard - Card de Alerta Individual
+ * O5.10: alertas críticos incluem link "Ver runbook" (ALERT_ACTION_CONTRACT).
  */
 
 import React from 'react';
 import type { Alert } from '../../core/alerts/AlertEngine';
+import { getRunbookUrl } from '../../core/alerts/alertRunbooks';
 
 interface Props {
   alert: Alert;
@@ -85,6 +87,18 @@ export function AlertCard({ alert, onAcknowledge, onResolve, variant = 'light' }
             {alert.escalationLevel > 0 && (
               <span style={{ color: '#f87171', marginLeft: 12 }}>
                 Escalado {alert.escalationLevel}x
+              </span>
+            )}
+            {alert.severity === 'critical' && (
+              <span style={{ marginLeft: 12 }}>
+                <a
+                  href={getRunbookUrl(alert.alertType)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#60a5fa', textDecoration: 'underline' }}
+                >
+                  Ver runbook
+                </a>
               </span>
             )}
           </div>

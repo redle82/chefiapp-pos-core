@@ -4,7 +4,9 @@
 
 **O AppStaff não é um app. É o terminal humano do ChefIApp OS.**
 
-**Plataforma:** AppStaff roda **exclusivamente em mobile** (iOS e Android), em simulador ou dispositivo. Não é web, não é dashboard, não é KDS/TPV de desktop. No merchant-portal (web), as rotas `/garcom` e `/garcom/mesa/:tableId` mostram apenas a mensagem «Disponível apenas no app mobile»; o terminal real está no projecto `mobile-app` (Expo).
+**Plataforma (lei dos 4 terminais):** AppStaff é o terminal humano do OS (trabalha). O terminal pode rodar em **mobile** (iOS/Android, projecto `mobile-app` Expo) ou, **em piloto**, **dentro do merchant-portal** (web, rotas `/garcom` ou equivalentes) para velocidade e menos risco; separação futura em `apps/staff` ou app mobile permanece possível.
+
+**Piloto (escopo actual):** Para o piloto fechado, AppStaff é entregue **no merchant-portal** (web): as rotas de staff renderizam o terminal (Staff Home, Tasks, Orders Lite, KDS Lite, Inventory Lite, Shift/Handover). Não é apenas mensagem «Disponível apenas no app mobile». O Core e os contratos (Identity, Turn, Tasks, Order Status, ACCESS_RULES_MINIMAL) aplicam-se igualmente; RBAC por papel (Owner, Manager, Staff, Kitchen, etc.) governa o que cada um vê e pode fazer.
 
 Este documento é contrato formal no Core. Não é sugestão. O AppStaff é a interface viva do sistema com pessoas: o ponto onde operação, disciplina, informação e feedback se encontram. O sistema fala com humanos através dele; não o contrário.
 
@@ -91,14 +93,14 @@ AppStaff
 
 ## 6. Onde o contrato se aplica
 
-| Área                                                 | Contrato AppStaff aplica?               |
-| ---------------------------------------------------- | --------------------------------------- |
-| **AppStaff (mobile)** — iOS/Android, projecto `mobile-app` (Expo) | Sim. Terminal real: tarefas, mini KDS, mini TPV, check-in, perfil, comunicação. |
-| **Web (merchant-portal)** — rotas `/garcom`, `/garcom/mesa/:tableId` | Apenas mensagem «Disponível apenas no app mobile»; não se renderiza o terminal. |
-| Dashboard (painel AppStaff no web)                   | Mostra a mesma mensagem; não simula staff. |
-| Dashboard owner/manager (não staff)                  | Não (OUC aplica; AppStaff contract não) |
-| Rotas públicas, landing                              | Não                                     |
-| Backoffice (config, billing)                         | Não                                     |
+| Área                                                              | Contrato AppStaff aplica?                                                                                                |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **AppStaff (mobile)** — iOS/Android, projecto `mobile-app` (Expo) | Sim. Terminal real: tarefas, mini KDS, mini TPV, check-in, perfil, comunicação.                                          |
+| **Web (merchant-portal) — piloto** — rotas `/garcom`, `/garcom/*` | Sim. Terminal staff no piloto: Staff Home, Tasks, Orders Lite, KDS Lite, Inventory Lite, Shift/Handover; RBAC por papel. |
+| Dashboard (painel AppStaff no web, fora do piloto)                | Se piloto activo: mesmo que acima; senão: mensagem «Disponível apenas no app mobile» ou redirecionamento.                |
+| Dashboard owner/manager (não staff)                               | Não (OUC aplica; AppStaff contract não)                                                                                  |
+| Rotas públicas, landing                                           | Não                                                                                                                      |
+| Backoffice (config, billing)                                      | Não                                                                                                                      |
 
 ---
 
@@ -113,30 +115,30 @@ Design sem contrato vira app genérico. Terminal sem contrato vira caos. Este do
 
 ---
 
-## 8. Plataforma (decisão fixa)
+## 8. Plataforma (decisão fixa + piloto)
 
-| Onde roda AppStaff | Onde não roda |
-| -------------------- | -------------- |
-| 📱 iOS Simulator (`mobile-app`: `npm run ios` / `expo run:ios`) | merchant-portal (web) |
-| 🤖 Android Emulator (`mobile-app`: `npm run android` / `expo run:android`) | Dashboard web |
-|  | Rotas desktop (KDS/TPV são desktop/edge) |
+| Onde roda AppStaff                    | Observação                                                                                                                                                                                     |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 📱 iOS/Android (`mobile-app`, Expo)   | Terminal real móvel; suportado.                                                                                                                                                                |
+| 🌐 **Merchant-portal (web) — piloto** | Durante o piloto, o terminal staff roda no merchant-portal: rotas `/garcom` (e equivalentes) renderizam Staff Home, Tasks, Orders Lite, KDS Lite, Inventory Lite, Shift/Handover; RBAC aplica. |
+| Rotas desktop (KDS/TPV dedicados)     | KDS/TPV são terminais distintos; não são AppStaff.                                                                                                                                             |
 
-O merchant-portal não renderiza o terminal staff; mostra **AppStaffMobileOnlyPage** em `/garcom` e `/garcom/mesa/:tableId`. Nenhuma lógica de AppStaff (check-in, tarefas, mini KDS, mini TPV) é movida para web.
+**Piloto:** No merchant-portal, as rotas de staff **renderizam o terminal** (não apenas mensagem «Disponível apenas no app mobile»). Separação futura em `apps/staff` ou reforço do `mobile-app` permanece possível sem alterar a lei dos 4 terminais.
 
 ---
 
 ## 9. Implementação canónica (o AppStaff que foi criado no Core)
 
-O AppStaff definido neste contrato e nos seis subcontratos **já existe** e está implementado no projecto **`mobile-app`** (Expo, iOS/Android). É este o terminal humano do OS ligado ao Core — não uma lista de módulos soltos nem ecrãs legacy.
+O AppStaff definido neste contrato e nos seis subcontratos **já existe** em duas formas: (1) **Piloto:** no **merchant-portal** (web), em `merchant-portal/src/pages/AppStaff/` — Staff Home, ManagerDashboard, tarefas, ReflexEngine, StaffContext, Orders Lite, KDS Lite, etc.; (2) **Mobile:** no projecto **`mobile-app`** (Expo, iOS/Android). Durante o piloto, o terminal staff é entregue no merchant-portal; separação futura em `apps/staff` ou reforço do `mobile-app` permanece possível. É este o terminal humano do OS ligado ao Core — não uma lista de módulos soltos nem ecrãs legacy.
 
-| Elemento contratual | Onde está no `mobile-app` |
-| -------------------- | -------------------------- |
-| **Tarefas** (mostrar, confirmar, executar) | Tab **Turno** (`staff.tsx`): NowActionCard, acção do momento, completeAction. |
-| **Mini TPV** (contexto pedidos, pagamento) | Tab **Turno**: QuickPayModal, FinancialVault quando acção = collect_payment. Tab **Cardápio** (`index.tsx`): menu, carrinho, criar pedido. |
-| **Mini KDS** (pedidos, estado, tempo) | Tab **Cozinha** (`kitchen.tsx`): visualização fila/estado. Tab **Pedidos** (`orders.tsx`): lista de pedidos. |
-| **Check-in / Check-out** | Tab **Turno**: ecrã "Iniciar turno" quando fora de turno; "Encerrar turno" no BottomActionBar. |
-| **Perfil** | Tab **Conta** (`two.tsx`). |
-| **Consciência operacional** (atrasos, fila, pressão) | Hooks e componentes (useKitchenPressure, KitchenPressureIndicator, etc.); dados do Core. |
+| Elemento contratual                                  | Onde está no `mobile-app`                                                                                                                  |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Tarefas** (mostrar, confirmar, executar)           | Tab **Turno** (`staff.tsx`): NowActionCard, acção do momento, completeAction.                                                              |
+| **Mini TPV** (contexto pedidos, pagamento)           | Tab **Turno**: QuickPayModal, FinancialVault quando acção = collect_payment. Tab **Cardápio** (`index.tsx`): menu, carrinho, criar pedido. |
+| **Mini KDS** (pedidos, estado, tempo)                | Tab **Cozinha** (`kitchen.tsx`): visualização fila/estado. Tab **Pedidos** (`orders.tsx`): lista de pedidos.                               |
+| **Check-in / Check-out**                             | Tab **Turno**: ecrã "Iniciar turno" quando fora de turno; "Encerrar turno" no BottomActionBar.                                             |
+| **Perfil**                                           | Tab **Conta** (`two.tsx`).                                                                                                                 |
+| **Consciência operacional** (atrasos, fila, pressão) | Hooks e componentes (useKitchenPressure, KitchenPressureIndicator, etc.); dados do Core.                                                   |
 
 **Escopo contratual do piloto:** Os tabs visíveis na barra são **Turno, Mesas, Cardápio, Pedidos, Cozinha, Bar/Gestão (por papel), Conta**. Ranking e Conquistas **não** fazem parte do escopo obrigatório do [CORE_MOBILE_TERMINALS_CONTRACT](./CORE_MOBILE_TERMINALS_CONTRACT.md) (mini TPV, mini KDS, tarefas, check-in, perfil, mural, chat técnico); ficam fora da barra por defeito. Qualquer UI que não seja mini TPV, mini KDS ou tarefas ligadas ao Core é legacy até migração (ver [CORE_APPSTAFF_IOS_UIUX_CONTRACT](./CORE_APPSTAFF_IOS_UIUX_CONTRACT.md)).
 

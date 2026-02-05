@@ -7,10 +7,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useOnboarding } from "../../../context/OnboardingContext";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
-import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
-import { getBackendType, BackendType } from "../../../core/infra/backendAdapter";
 import { dockerCoreClient } from "../../../core-boundary/docker-core/connection";
-import { supabase } from "../../../core/supabase";
+import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
+import {
+  BackendType,
+  getBackendType,
+} from "../../../core/infra/backendAdapter";
+// Domain reads/writes ONLY via Core (Supabase removed — §4). No fallback.
 
 export function LocationSection() {
   const { updateSectionStatus } = useOnboarding();
@@ -43,24 +46,30 @@ export function LocationSection() {
 
       if (!restaurantId) return;
 
-      const isDocker = getBackendType() === BackendType.docker;
-      const client = isDocker ? dockerCoreClient : supabase;
+      // ANTI-SUPABASE §4: Domain read ONLY via Core. Fail if not Docker.
+      if (getBackendType() !== BackendType.docker) {
+        console.warn(
+          "[LocationSection] Core indisponível. Não é possível carregar localização."
+        );
+        return;
+      }
 
       try {
-        const { data: restaurant, error: restaurantError } = await client
-          .from("gm_restaurants")
-          .select("address, city, postal_code, state, capacity")
-          .eq("id", restaurantId)
-          .maybeSingle();
+        const { data: restaurant, error: restaurantError } =
+          await dockerCoreClient
+            .from("gm_restaurants")
+            .select("address, city, postal_code, state, capacity")
+            .eq("id", restaurantId)
+            .maybeSingle();
 
         if (restaurantError) {
           console.warn(
             "[LocationSection] Erro ao carregar localização:",
-            restaurantError,
+            restaurantError
           );
         }
 
-        const { data: zonesData, error: zonesError } = await client
+        const { data: zonesData, error: zonesError } = await dockerCoreClient
           .from("restaurant_zones")
           .select("type")
           .eq("restaurant_id", restaurantId);
@@ -83,7 +92,7 @@ export function LocationSection() {
       } catch (error) {
         console.warn(
           "[LocationSection] Erro inesperado ao carregar localização:",
-          error,
+          error
         );
       }
     };
@@ -116,7 +125,7 @@ export function LocationSection() {
       updateSetupStatus("location", isValid).catch((error) => {
         console.error(
           "[LocationSection] Erro ao atualizar setup_status:",
-          error,
+          error
         );
       });
     }
@@ -137,16 +146,19 @@ export function LocationSection() {
       saveTimeoutRef.current = setTimeout(async () => {
         setIsSaving(true);
         try {
-          const isDocker = getBackendType() === BackendType.docker;
-          const client = isDocker ? dockerCoreClient : supabase;
-          console.log("[LocationSection] Salvando no banco...", {
+          // ANTI-SUPABASE §4: Location write ONLY via Core. Fail explicit if not Docker.
+          if (getBackendType() !== BackendType.docker) {
+            throw new Error(
+              "Core indisponível. Configure o Docker Core para salvar a localização."
+            );
+          }
+          console.log("[LocationSection] Salvando no banco (Core)...", {
             restaurantId,
             formData,
-            backend: isDocker ? "docker" : "supabase",
           });
 
-          // 1. Salvar dados de localização em gm_restaurants
-          const { error: restaurantError } = await client
+          // 1. Salvar dados de localização em gm_restaurants (Core only)
+          const { error: restaurantError } = await dockerCoreClient
             .from("gm_restaurants")
             .update({
               address: formData.address,
@@ -161,47 +173,42 @@ export function LocationSection() {
           if (restaurantError) {
             console.error(
               "[LocationSection] Erro ao salvar localização:",
-              restaurantError,
+              restaurantError
             );
             alert(`Erro ao salvar: ${restaurantError.message}`);
             return;
           }
 
-          // 2. Criar zonas em restaurant_zones
-          // Primeiro, deletar zonas antigas
-          await client
+          // 2. Criar zonas em restaurant_zones (Core only)
+          await dockerCoreClient
             .from("restaurant_zones")
             .delete()
             .eq("restaurant_id", restaurantId);
 
-          // Criar novas zonas
           for (const zoneType of formData.zones) {
-            await client.from("restaurant_zones").insert({
+            await dockerCoreClient.from("restaurant_zones").insert({
               restaurant_id: restaurantId,
               name: zoneType,
               type: zoneType,
             });
           }
 
-          // 3. Criar mesas automaticamente usando a função RPC
-          const { data: tablesData, error: tablesError } = await client.rpc(
-            "create_tables_from_capacity",
-            {
+          // 3. Criar mesas via RPC (Core only)
+          const { data: tablesData, error: tablesError } =
+            await dockerCoreClient.rpc("create_tables_from_capacity", {
               p_restaurant_id: restaurantId,
               p_capacity: formData.capacity,
               p_tables_per_zone: 5,
-            },
-          );
+            });
 
           if (tablesError) {
             console.warn(
               "[LocationSection] Erro ao criar mesas (pode não existir a função ainda):",
-              tablesError,
+              tablesError
             );
-            // Fallback: criar mesas manualmente
             const tablesToCreate = Math.ceil(formData.capacity / 4);
             for (let i = 1; i <= tablesToCreate; i++) {
-              await client.from("gm_tables").upsert(
+              await dockerCoreClient.from("gm_tables").upsert(
                 {
                   restaurant_id: restaurantId,
                   number: i,
@@ -209,12 +216,18 @@ export function LocationSection() {
                 },
                 {
                   onConflict: "restaurant_id,number",
-                },
+                }
               );
             }
           }
 
           console.log("[LocationSection] ✅ Localização salva no banco");
+          updateSetupStatus("location", true).catch((err) => {
+            console.warn(
+              "[LocationSection] Erro ao persistir setup_status:",
+              err
+            );
+          });
         } catch (error: any) {
           console.error("[LocationSection] Erro ao salvar localização:", error);
           alert(`Erro ao salvar: ${error?.message || "Erro desconhecido"}`);
@@ -224,7 +237,7 @@ export function LocationSection() {
       }, 1500);
     } else if (isValid && !restaurantId) {
       console.warn(
-        "[LocationSection] Dados válidos mas sem restaurantId. Aguardando...",
+        "[LocationSection] Dados válidos mas sem restaurantId. Aguardando..."
       );
     }
 

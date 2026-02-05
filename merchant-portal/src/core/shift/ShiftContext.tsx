@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { getTpvRestaurantId } from "../storage/installedDeviceStorage";
 import { CashRegisterEngine } from "../tpv/CashRegister";
 
 interface ShiftContextValue {
@@ -14,9 +15,12 @@ interface ShiftContextValue {
   isChecking: boolean;
   lastCheckedAt: Date | null;
   refreshShiftStatus: () => Promise<void>;
+  /** Marca turno como aberto (ex.: quando o RPC devolve CASH_REGISTER_ALREADY_OPEN). */
+  markShiftOpen: () => void;
 }
 
-const ShiftContext = createContext<ShiftContextValue | null>(null);
+/** Exported for public/demo tree (minimal providers). */
+export const ShiftContext = createContext<ShiftContextValue | null>(null);
 
 const INITIAL_INTERVAL = 5000; // 5s initial retry if failed
 const MAX_INTERVAL = 60000; // 60s max interval
@@ -25,8 +29,13 @@ export const ShiftProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { runtime } = useRestaurantRuntime();
-  const restaurantId = runtime.restaurant_id;
+  const installedTpvRestaurantId = getTpvRestaurantId();
+  const restaurantId =
+    runtime.restaurant_id ?? installedTpvRestaurantId ?? null;
+  const canCheckShift =
+    !!restaurantId && (runtime.isPublished || !!installedTpvRestaurantId);
 
+  // Estado do caixa vem sempre do Core (incluindo seed); evita "Caixa Fechado" quando o seed já tem caixa aberto.
   const [isShiftOpen, setIsShiftOpen] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null);
@@ -35,12 +44,12 @@ export const ShiftProvider: React.FC<{ children: React.ReactNode }> = ({
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const checkShiftStatus = useCallback(async () => {
-    if (!restaurantId || !runtime.isPublished) return;
+    if (!restaurantId || !canCheckShift) return;
 
     setIsChecking(true);
     try {
       const register = await CashRegisterEngine.getOpenCashRegister(
-        restaurantId,
+        restaurantId
       );
       const isOpen = !!register;
 
@@ -50,20 +59,27 @@ export const ShiftProvider: React.FC<{ children: React.ReactNode }> = ({
       // Success! Reset backoff to normal polling
       backoffRef.current = MAX_INTERVAL;
     } catch (err: unknown) {
-      // If connection refused, implement exponential backoff
       const msg = err instanceof Error ? err.message : String(err);
+      const isAbort =
+        err instanceof Error &&
+        (err.name === "AbortError" || msg.includes("aborted"));
+
+      if (isAbort) {
+        backoffRef.current = MAX_INTERVAL;
+        return;
+      }
+
       const isConnectionError =
         msg.includes("Failed to fetch") ||
         msg.includes("net::ERR_CONNECTION_REFUSED");
 
       if (isConnectionError) {
-        // Backoff: double the interval up to MAX_INTERVAL
         backoffRef.current = Math.min(backoffRef.current * 2, MAX_INTERVAL);
       } else {
-        // Other errors: maybe just log and stick to current backoff
+        backoffRef.current = MAX_INTERVAL;
         console.warn(
           "[ShiftContext] Non-connection error checking shift:",
-          err,
+          err
         );
       }
     } finally {
@@ -73,11 +89,10 @@ export const ShiftProvider: React.FC<{ children: React.ReactNode }> = ({
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(checkShiftStatus, backoffRef.current);
     }
-  }, [restaurantId, runtime.isPublished]);
+  }, [restaurantId, canCheckShift]);
 
   useEffect(() => {
-    if (restaurantId && runtime.isPublished) {
-      // Start polling
+    if (restaurantId && canCheckShift) {
       backoffRef.current = INITIAL_INTERVAL;
       checkShiftStatus();
     }
@@ -88,13 +103,19 @@ export const ShiftProvider: React.FC<{ children: React.ReactNode }> = ({
         timeoutRef.current = null;
       }
     };
-  }, [restaurantId, runtime.isPublished]); // Removing checkShiftStatus dependency to avoid loops
+  }, [restaurantId, canCheckShift]); // Removing checkShiftStatus dependency to avoid loops
+
+  const markShiftOpen = useCallback(() => {
+    setIsShiftOpen(true);
+    setLastCheckedAt(new Date());
+  }, []);
 
   const value = {
     isShiftOpen,
     isChecking,
     lastCheckedAt,
     refreshShiftStatus: checkShiftStatus,
+    markShiftOpen,
   };
 
   return (

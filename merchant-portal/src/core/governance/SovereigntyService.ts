@@ -1,4 +1,4 @@
-import { getTableClient } from '../infra/coreOrSupabaseRpc';
+import { getTableClient } from '../infra/coreRpc';
 
 export interface SovereigntyMetrics {
     dirtyCount: number;
@@ -116,15 +116,19 @@ export class SovereigntyService {
     }
 
     /**
-     * Trigger Manual Reconciliation (Edge Function)
-     * Ainda usa Supabase Functions; quando Core tiver job de reconciliação, migrar.
+     * Trigger Manual Reconciliation — Core only.
+     * Reconciliation: Core (Docker) only. If not Docker, throw.
      */
     static async triggerHealer(): Promise<any> {
-        const { supabase } = await import('../supabase');
-        const { data, error } = await supabase.functions.invoke('reconcile', {
-            method: 'POST',
-        });
-        if (error) throw error;
-        return data;
+        const { BackendType, getBackendType } = await import('../infra/backendAdapter');
+        if (getBackendType() !== BackendType.docker) {
+            throw new Error(
+                'Reconciliation requires Docker Core. Backend not configured or not Docker.'
+            );
+        }
+        const core = (await import('../infra/dockerCoreFetchClient')).getDockerCoreFetchClient();
+        const res = await core.rpc('reconcile', {});
+        if (res.error) throw res.error;
+        return res.data;
     }
 }

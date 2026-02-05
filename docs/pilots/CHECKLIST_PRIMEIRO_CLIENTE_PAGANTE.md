@@ -2,6 +2,8 @@
 
 **Objetivo:** Instalar em 1 restaurante real e ativar o Stripe. Cobrar €79. Aprender com dinheiro real.
 
+**Na sequência FASE 5:** [FASE B](../implementation/FASE_5_FASE_B_TESTE_HUMANO.md) PASSOU → [Supabase ON](../implementation/FASE_5_SUPABASE_DEPLOY.md) → [Estado real / ritual](../implementation/FASE_5_ESTADO_REAL.md) → este checklist.
+
 **Referências:** [ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md](../ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md) · [ONDA_4_PILOTO_P1.md](./ONDA_4_PILOTO_P1.md) · [PLANO_PASSO_A_PASSO_CHEFIAPP.md](../PLANO_PASSO_A_PASSO_CHEFIAPP.md)
 
 ---
@@ -9,7 +11,7 @@
 ## Pré-requisitos (antes do dia)
 
 - [ ] **Core/BD:** Coluna `gm_restaurants.billing_status` existe (migração `20260201180000_add_billing_status_to_gm_restaurants.sql` aplicada).
-- [ ] **Stripe:** Conta Stripe configurada; `VITE_STRIPE_PRICE_ID` (e chaves) no ambiente do merchant-portal e Core RPC `create_checkout_session` operacional.
+- [ ] **Stripe:** Conta Stripe configurada; `VITE_STRIPE_PRICE_ID` (e chaves) no merchant-portal; checkout operacional (Edge Function `stripe-billing` ou Core RPC `create_checkout_session`); webhook `stripe-billing-webhook` a atualizar `billing_status`.
 - [ ] **1 restaurante piloto** escolhido (nome, contacto, acordo: 2 semanas piloto + primeiro mês €79).
 
 ---

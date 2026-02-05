@@ -41,6 +41,11 @@ npm test -- --ci --testPathIgnorePatterns="e2e|playwright|massive|offline" --tes
 - **Do not use:** `npx vite` or `npx vite --port N` — they ignore the config and can start on another port.
 - If 5175 is in use, Vite fails (no fallback). Free the port or stop the other process.
 
+### Piloto Onda 4 (P1)
+
+- **Doc:** [docs/pilots/ONDA_4_PILOTO_P1.md](./docs/pilots/ONDA_4_PILOTO_P1.md) — ICP, lista 10, script, checklist, §9 agendamento, §10 plano Dia 1–14.
+- **Próximo passo:** Confirmar 5 datas em §9 (enviar proposta a 2 restaurantes, atualizar Estado → confirmada, repetir até 5) → P1 ativo. Ver [NEXT_STEPS.md](./NEXT_STEPS.md) para roteiro completo.
+
 ---
 
 ## 📚 COMPLETE DOCUMENTATION
@@ -133,6 +138,8 @@ cd docker-tests && make kds-start
 ## 🎯 NEXT STEPS
 
 **👉 Próximo passo imediato:** [NEXT_STEPS.md](NEXT_STEPS.md) — lista completa. Piloto P1: preencher [ONDA_4_PILOTO_P1](docs/pilots/ONDA_4_PILOTO_P1.md) §6 (lista 10 alvos) e §9 (agendar 5 instalações).
+
+**Menu (soberania):** Implementação do estado operacional do Menu concluída. Próximos passos: [Congelamento 7 dias (A)](docs/pilots/CONGELAMENTO_7_DIAS_A.md) → [Primeira venda auditável (C)](docs/pilots/PRIMEIRA_VENDA_AUDITAVEL_C.md).
 
 ### FASE 5 — Implementation (Merchant Portal)
 

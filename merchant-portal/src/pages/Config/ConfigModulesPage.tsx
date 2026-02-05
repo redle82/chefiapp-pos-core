@@ -16,6 +16,7 @@ import {
   setModulesEnabled,
   type ModulesEnabled,
 } from "../../core/storage/modulesConfigStorage";
+// Auth only — temporary until Core Auth (session)
 import { supabase } from "../../core/supabase";
 
 interface InstalledModule {
@@ -90,14 +91,17 @@ export function ConfigModulesPage() {
       : null) ||
     "";
   const [modulesEnabled, setModulesEnabledState] = useState<ModulesEnabled>(
-    () => getModulesEnabled(ridForModules),
+    () => getModulesEnabled(ridForModules)
   );
 
   useEffect(() => {
     setModulesEnabledState(getModulesEnabled(ridForModules || null));
   }, [ridForModules]);
 
-  const handleToggleModuleEnabled = (key: keyof ModulesEnabled, value: boolean) => {
+  const handleToggleModuleEnabled = (
+    key: keyof ModulesEnabled,
+    value: boolean
+  ) => {
     const next = { ...modulesEnabled, [key]: value };
     setModulesEnabledState(next);
     setModulesEnabled(ridForModules || null, next);
@@ -149,7 +153,7 @@ export function ConfigModulesPage() {
             version: m.version,
             status: m.status,
             installedAt: new Date(m.installed_at),
-          })),
+          }))
         );
 
         const healthMap: Record<string, HealthStatus> = {};
@@ -173,7 +177,7 @@ export function ConfigModulesPage() {
       return runtime.installed_modules.includes(moduleId);
     }
     return modules.some(
-      (m) => m.moduleId === moduleId && m.status === "active",
+      (m) => m.moduleId === moduleId && m.status === "active"
     );
   };
 
@@ -191,7 +195,7 @@ export function ConfigModulesPage() {
         await runtimeInstallModule(moduleId);
         await refresh();
         alert(
-          `${moduleId === "tpv" ? "TPV" : moduleId} instalado com sucesso!`,
+          `${moduleId === "tpv" ? "TPV" : moduleId} instalado com sucesso!`
         );
       } else if (moduleId === "tpv") {
         const result = await tpvInstaller.install(rid);
@@ -209,7 +213,7 @@ export function ConfigModulesPage() {
       alert(
         `Erro ao instalar módulo: ${
           error instanceof Error ? error.message : String(error)
-        }`,
+        }`
       );
     } finally {
       setInstalling(null);
@@ -219,7 +223,7 @@ export function ConfigModulesPage() {
   const handleUninstall = async (moduleId: string) => {
     if (isDocker) {
       alert(
-        "Desinstalação de módulos em modo Docker ainda não disponível. Os módulos instalados permanecem ativos.",
+        "Desinstalação de módulos em modo Docker ainda não disponível. Os módulos instalados permanecem ativos."
       );
       return;
     }
@@ -282,7 +286,14 @@ export function ConfigModulesPage() {
         <p style={{ fontSize: "13px", color: "#666", margin: "0 0 12px 0" }}>
           Ative ou desative o TPV e o KDS para este restaurante.
         </p>
-        <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginBottom: 8,
+          }}
+        >
           <input
             type="checkbox"
             checked={modulesEnabled.tpv}

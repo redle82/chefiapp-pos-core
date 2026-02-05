@@ -41,11 +41,11 @@ Funil fechado: Landing → Auth → Onboarding → TPV; Billing dentro do app.
 
 Tarefas produto/ops: definição de alvos, abordagem e agendamento. **Preencher em:** [docs/pilots/ONDA_4_PILOTO_P1.md](./pilots/ONDA_4_PILOTO_P1.md).
 
-- [ ] **5. ICP** — Definir Ideal Customer Profile (quem é o restaurante-alvo do piloto). Ref.: [TARGET_RESTAURANT_PROFILE.md](./TARGET_RESTAURANT_PROFILE.md).
-- [ ] **6. Lista 10 alvos** — Listar 10 restaurantes/contactos candidatos ao piloto (tabela em ONDA_4_PILOTO_P1.md).
-- [ ] **7. Script abordagem** — Redigir script (email/telefone) para abordagem aos alvos.
-- [ ] **8. Checklist onboarding** — Checklist mínimo para instalação/onboarding de um novo restaurante no piloto. Ref.: [PILOT_SETUP.md](./pilots/PILOT_SETUP.md).
-- [ ] **9. Agendar 5 instalações** — Agendar (ou confirmar datas) para 5 instalações piloto (tabela em ONDA_4_PILOTO_P1.md).
+- [x] **5. ICP** — Definir Ideal Customer Profile (quem é o restaurante-alvo do piloto). Ref.: [TARGET_RESTAURANT_PROFILE.md](./TARGET_RESTAURANT_PROFILE.md). **Feito:** §5 fechado (1 frase + 3 obrigatórios + 2 exclusão).
+- [x] **6. Lista 10 alvos** — Listar 10 restaurantes/contactos candidatos ao piloto (tabela em ONDA_4_PILOTO_P1.md). **Feito:** §6 preenchida.
+- [x] **7. Script abordagem** — Redigir script (email/telefone) para abordagem aos alvos. **Feito:** §7 pronto (email + telefone + versão Ibiza/local).
+- [x] **8. Checklist onboarding** — Checklist mínimo para instalação/onboarding de um novo restaurante no piloto. Ref.: [PILOT_SETUP.md](./pilots/PILOT_SETUP.md). **Feito:** §8 ok; plano semanal §10 (Dia 1–14) pronto.
+- [ ] **9. Agendar 5 instalações** — Agendar (ou confirmar datas) para 5 instalações piloto (tabela em ONDA_4_PILOTO_P1.md). **Pendente:** tabela §9 pronta; enviar proposta a 2 restaurantes, atualizar Estado → confirmada, repetir até 5 confirmadas → P1 ativo.
 
 ---
 
@@ -94,9 +94,9 @@ Mensagem e preço para o piloto. **Preencher em:** [docs/pilots/ONDA_4_VALOR_E_O
 
 Preparação da próxima onda. **Preencher em:** [docs/pilots/ONDA_4_VALOR_E_ONDA_5.md](./pilots/ONDA_4_VALOR_E_ONDA_5.md) (§ Bloco 5).
 
-- [ ] **22. Definir Onda 5** — Documentar escopo e critérios de sucesso da Onda 5 (ex.: em [ROADMAP_FECHO_GAPS_CHEFIAPP.md](./ROADMAP_FECHO_GAPS_CHEFIAPP.md) ou [ONDAS_4_A_7_ESTRATEGIA.md](./ONDAS_4_A_7_ESTRATEGIA.md)).
-- [ ] **23. Congelar escopo** — Congelar escopo da Onda 5 e comunicar (doc ou issue).
-- [ ] **24. Executar** — Iniciar execução da Onda 5 conforme plano.
+- [x] **22. Definir Onda 5** — Escopo e critérios em [ONDA_4_VALOR_E_ONDA_5.md](./pilots/ONDA_4_VALOR_E_ONDA_5.md) §22.
+- [x] **23. Congelar escopo** — Escopo congelado em [ONDA_5_ESCOPO_CONGELADO.md](./pilots/ONDA_5_ESCOPO_CONGELADO.md). Comunicar equipa (preencher data no doc).
+- [x] **24. Executar** — Primeiras tarefas em [ONDA_5_TAREFAS.md](./pilots/ONDA_5_TAREFAS.md). O5.1 (hub + atalhos), O5.5 (métricas do dia), O5.8 (alertas no hub) implementados. Kick-off: marcar e comunicar.
 
 ---
 

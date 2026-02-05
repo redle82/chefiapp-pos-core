@@ -1,5 +1,4 @@
-
-import { supabase } from '../supabase';
+import { getTableClient } from '../infra/coreRpc';
 import type { RealityVerdict } from './GenesisRealityCheck';
 
 /**
@@ -43,13 +42,16 @@ export class LiveRealityCheck {
 
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
-        const { count: recentOrders } = await supabase
+        const client = getTableClient();
+        const { data: recentOrdersData } = await client
             .from('gm_orders')
-            .select('*', { count: 'exact', head: true })
+            .select('id')
             .eq('restaurant_id', tenantId)
-            .gte('created_at', oneHourAgo);
+            .gte('created_at', oneHourAgo)
+            .limit(1);
 
-        if ((recentOrders || 0) > 0) {
+        const recentOrders = Array.isArray(recentOrdersData) ? recentOrdersData.length : 0;
+        if (recentOrders > 0) {
             checksPassed++; // TPV/KDS Heartbeat proxy (Orders are being made)
         } else {
             failures.push('No recent heartbeat (No orders in last hour)');
@@ -62,13 +64,14 @@ export class LiveRealityCheck {
         // But for "LIVE", we want Evidence.
         // Let's assume if Recent Orders > 0, Humans are present.
         // Let's add a check for valid Staff structure > 1.
-        const { count: staffCount } = await supabase
-            .from('employees')
-            .select('*', { count: 'exact', head: true })
+        const { data: staffData } = await client
+            .from('gm_restaurant_members')
+            .select('id')
             .eq('restaurant_id', tenantId)
-            .eq('active', true);
+            .limit(2);
 
-        if ((staffCount || 0) >= 2) {
+        const staffCount = Array.isArray(staffData) ? staffData.length : 0;
+        if (staffCount >= 2) {
             checksPassed++;
         } else {
             failures.push('Tribe too small for Reality (Need >= 2 Active Staff)');
@@ -76,13 +79,14 @@ export class LiveRealityCheck {
 
         // 3. THE FLOW (Money)
         // Check for at least one PAID order in history.
-        const { count: paidOrders } = await supabase
+        const { data: paidOrdersData } = await client
             .from('gm_orders')
-            .select('*', { count: 'exact', head: true })
+            .select('id')
             .eq('restaurant_id', tenantId)
-            .eq('payment_status', 'paid');
+            .eq('payment_status', 'PAID');
 
-        if ((paidOrders || 0) > 0) {
+        const paidOrders = Array.isArray(paidOrdersData) ? paidOrdersData.length : 0;
+        if (paidOrders > 0) {
             checksPassed++;
         } else {
             failures.push('No Proof of Money (0 Paid Orders)');

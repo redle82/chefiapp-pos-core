@@ -54,17 +54,33 @@ describe('HungerEngine', () => {
     });
 
     it('generates no signals when stock is healthy', () => {
+        // Mock Date to non-ritual day so calendar rule (item-2) does not fire
+        const MockDate = class extends Date {
+            getDay() { return 1; } // Monday
+            getHours() { return 12; }
+        } as any;
+        const originalDate = global.Date;
+        global.Date = MockDate;
         const signals = generateHungerSignals(mockInventory);
         expect(signals).toHaveLength(0);
+        global.Date = originalDate;
     });
 
     it('generates signal when stock drops below min threshold', () => {
         mockInventory[0].currentStock = 1.5; // Below min 2
+        // Mock Date to non-ritual day so only item-1 (threshold) signals
+        const MockDate = class extends Date {
+            getDay() { return 1; }
+            getHours() { return 12; }
+        } as any;
+        const originalDate = global.Date;
+        global.Date = MockDate;
         const signals = generateHungerSignals(mockInventory);
 
         expect(signals).toHaveLength(1);
         expect(signals[0].itemId).toBe('item-1');
         expect(signals[0].kind).toBe('HUNGER');
+        global.Date = originalDate;
     });
 
     it('generates signal on calendar day (simulation)', () => {

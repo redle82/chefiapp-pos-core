@@ -21,6 +21,9 @@ export function AppStaffMobileOnlyPage() {
       <div className="text-6xl mb-6" aria-hidden>
         📱
       </div>
+      <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 mb-3">
+        Módulo Mobile — não configurável via web
+      </span>
       <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-3">
         AppStaff — disponível apenas no app mobile
       </h2>
@@ -41,6 +44,9 @@ export function AppStaffMobileOnlyPage() {
       </div>
 
       <div className="text-sm text-neutral-500 dark:text-neutral-500 space-y-2 border-t border-neutral-100 dark:border-neutral-800 pt-6 w-full max-w-md">
+        <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-2">
+          Documentação: <code className="text-xs">docs/routes/web/appstaff-web.md</code>
+        </p>
         <p className="font-medium mb-1">Comandos para desenvolvedores:</p>
         <p>
           iOS Simulator:{" "}

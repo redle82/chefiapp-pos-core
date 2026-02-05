@@ -16,6 +16,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -31,11 +32,16 @@ import {
   setRestaurantStatus as persistRestaurantStatus,
   upsertSetupStatus as persistSetupStatus,
 } from "../core-boundary/writers/RuntimeWriter";
+import { isDebugMode } from "../core/debugMode";
 import { isDockerBackend } from "../core/infra/backendAdapter";
 import {
   deriveLifecycle,
   type RestaurantLifecycle,
 } from "../core/lifecycle/Lifecycle";
+import {
+  deriveSystemState,
+  type SystemState,
+} from "../core/lifecycle/LifecycleState";
 import {
   ALL_KNOWN_MODULES,
   ALL_SAFE_MODULES_DEV,
@@ -43,6 +49,30 @@ import {
   type ModuleCapabilityEntry,
 } from "../core/modules/moduleCatalog";
 import { isDevStableMode } from "../core/runtime/devStableMode";
+import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
+import { clearActiveTenant } from "../core/tenant/TenantResolver";
+
+/** Estado operacional do Core: avisos só quando coreMode === 'offline-erro'. */
+export type CoreMode = "offline-intencional" | "online" | "offline-erro";
+
+export function deriveCoreMode(
+  coreReachable: boolean,
+  allowLocalMode: boolean
+): CoreMode {
+  if (coreReachable) return "online";
+  if (allowLocalMode) return "offline-intencional";
+  return "offline-erro";
+}
+
+function allowLocalMode(
+  systemState: SystemState,
+  productMode: ProductMode
+): boolean {
+  if (systemState === "SETUP") return true;
+  if (productMode === "demo") return true;
+  if (getTabIsolated("chefiapp_demo_mode") === "true") return true;
+  return false;
+}
 
 export type RestaurantMode = "onboarding" | "active" | "paused";
 export type ProductMode = "demo" | "pilot" | "live";
@@ -68,10 +98,15 @@ function resolveProductModeFromEnv(): ProductMode {
   return "demo";
 }
 
+/** Verdade dos dados: demo = simulação, live = dados reais. Derivado de productMode. */
+export type DataMode = "demo" | "live";
+
 export interface RestaurantRuntime {
   restaurant_id: string | null;
   mode: RestaurantMode;
   productMode: ProductMode;
+  /** Verdade dos dados: demo = simulação, live = dados reais. Derivado de productMode. */
+  dataMode: DataMode;
   /** Módulos declarados como instalados (UI e roteamento) */
   installed_modules: string[];
   /** Módulos que podem rodar engine / ler-escrever (safe no ambiente atual) */
@@ -90,6 +125,10 @@ export interface RestaurantRuntime {
   error: string | null;
   /** false quando backend é Docker e o Core está em baixo (usa fallback). */
   coreReachable: boolean;
+  /** FASE C: estado único do sistema (SETUP | TRIAL | ACTIVE | SUSPENDED). Derivado de hasOrganization, billing_status, isBootstrapComplete. */
+  systemState: SystemState;
+  /** Estado operacional: avisos só quando === 'offline-erro'. */
+  coreMode: CoreMode;
 }
 
 interface RestaurantRuntimeContextType {
@@ -105,6 +144,7 @@ const INITIAL_RUNTIME: RestaurantRuntime = {
   restaurant_id: null,
   mode: "onboarding",
   productMode: resolveProductModeFromEnv(),
+  dataMode: resolveProductModeFromEnv() === "live" ? "live" : "demo",
   installed_modules: [],
   active_modules: [],
   plan: "basic",
@@ -116,7 +156,10 @@ const INITIAL_RUNTIME: RestaurantRuntime = {
   lifecycle: deriveLifecycle(null, false, false),
   loading: true,
   error: null,
-  coreReachable: true,
+  // Fail-fast por omissão: assumimos Core inacessível até o primeiro refresh bem-sucedido.
+  coreReachable: false,
+  systemState: "SETUP",
+  coreMode: "online",
 };
 
 export const RestaurantRuntimeContext =
@@ -170,7 +213,7 @@ export function RestaurantRuntimeProvider({
 
   /** Quando backend é Docker: lê estado do Core (gm_restaurants, installed_modules, restaurant_setup_status). */
   async function fetchRuntimeStateFromCore(
-    restaurantId: string,
+    restaurantId: string
   ): Promise<
     Pick<
       RestaurantRuntime,
@@ -211,15 +254,14 @@ export function RestaurantRuntimeProvider({
 
     const installed_modules = installedIds.length > 0 ? installedIds : [];
     const active_modules = installed_modules.filter((id) =>
-      ALL_SAFE_MODULES_DEV.includes(id),
+      ALL_SAFE_MODULES_DEV.includes(id)
     );
     const plan: PlanTier =
       installed_modules.length >= ALL_KNOWN_MODULES.length
         ? "premium"
         : "basic";
     const status: string = restaurant?.status ?? "onboarding";
-    const billing_status: string | null =
-      restaurant?.billing_status ?? null;
+    const billing_status: string | null = restaurant?.billing_status ?? null;
     const capabilities: Record<string, ModuleCapabilityEntry> = {};
     for (const id of installed_modules.length > 0
       ? installed_modules
@@ -254,7 +296,7 @@ export function RestaurantRuntimeProvider({
 
   /** Fallback quando Core não é Docker ou quando fetch do Core falha. */
   async function fetchRuntimeStateFallback(
-    _restaurantId: string,
+    _restaurantId: string
   ): Promise<
     Pick<
       RestaurantRuntime,
@@ -268,6 +310,7 @@ export function RestaurantRuntimeProvider({
       | "capabilities"
       | "setup_status"
       | "isPublished"
+      | "systemState"
     >
   > {
     if (isDevStableMode()) {
@@ -288,6 +331,11 @@ export function RestaurantRuntimeProvider({
         capabilities: {},
         setup_status: DEMO_SETUP_STATUS,
         isPublished: true,
+        systemState: deriveSystemState({
+          hasOrganization: true,
+          billingStatus: "trial",
+          isBootstrapComplete: true,
+        }),
       };
     }
     const baseInstalled = [
@@ -308,7 +356,7 @@ export function RestaurantRuntimeProvider({
       productMode: resolveProductModeFromEnv(),
       installed_modules: baseInstalled,
       active_modules: baseInstalled.filter((id) =>
-        ALL_SAFE_MODULES_DEV.includes(id),
+        ALL_SAFE_MODULES_DEV.includes(id)
       ),
       plan: "basic",
       status: "active",
@@ -316,6 +364,11 @@ export function RestaurantRuntimeProvider({
       capabilities,
       setup_status: {},
       isPublished: true,
+      systemState: deriveSystemState({
+        hasOrganization: true,
+        billingStatus: "trial",
+        isBootstrapComplete: true,
+      }),
     };
   }
 
@@ -338,7 +391,7 @@ export function RestaurantRuntimeProvider({
     } catch (error) {
       console.error(
         "[RestaurantRuntime] Erro ao carregar/criar restaurante:",
-        error,
+        error
       );
       return null;
     }
@@ -363,17 +416,35 @@ export function RestaurantRuntimeProvider({
       }
 
       let coreReachable = true;
-      const coreState = isDockerCore
-        ? await fetchRuntimeStateFromCore(restaurantId)
-            .then((s) => {
-              coreReachable = true;
-              return s;
-            })
-            .catch(async () => {
-              coreReachable = false;
-              return fetchRuntimeStateFallback(restaurantId);
-            })
-        : await fetchRuntimeStateFallback(restaurantId);
+      let coreState: Awaited<
+        ReturnType<typeof fetchRuntimeStateFromCore>
+      > | null = null;
+      if (isDockerCore) {
+        try {
+          coreState = await fetchRuntimeStateFromCore(restaurantId);
+          coreReachable = true;
+        } catch (err: unknown) {
+          coreReachable = false;
+          const msg = err instanceof Error ? err.message : String(err);
+          if (msg === "Restaurant not found in Core") {
+            clearActiveTenant();
+            setRuntime((prev) => ({
+              ...prev,
+              restaurant_id: null,
+              loading: false,
+              error: "Restaurante não encontrado",
+            }));
+            return;
+          }
+          coreState = await fetchRuntimeStateFallback(restaurantId);
+        }
+      } else {
+        coreState = await fetchRuntimeStateFallback(restaurantId);
+      }
+
+      if (!coreState) {
+        return;
+      }
 
       const mode: RestaurantMode = coreState.mode;
       const rawSetup = coreState.setup_status || {};
@@ -389,11 +460,20 @@ export function RestaurantRuntimeProvider({
         coreState.productMode ?? resolveProductModeFromEnv();
 
       const isPublished = coreState.isPublished ?? mode === "active";
+      const systemState = deriveSystemState({
+        hasOrganization: true,
+        billingStatus: billing_status,
+        isBootstrapComplete: mode === "active",
+      });
+
+      const allowLocal = allowLocalMode(systemState, productMode);
+      const coreMode = deriveCoreMode(coreReachable, allowLocal);
 
       setRuntime({
         restaurant_id: restaurantId,
         mode,
         productMode,
+        dataMode: productMode === "live" ? "live" : "demo",
         installed_modules,
         active_modules: coreState.active_modules ?? installed_modules,
         plan,
@@ -406,6 +486,8 @@ export function RestaurantRuntimeProvider({
         loading: false,
         error: null,
         coreReachable,
+        systemState,
+        coreMode,
       });
 
       console.log("[RestaurantRuntime] ✅ Estado carregado:", {
@@ -434,7 +516,7 @@ export function RestaurantRuntimeProvider({
     async (section: string, complete: boolean) => {
       if (!runtime.restaurant_id) {
         console.warn(
-          "[RestaurantRuntime] Sem restaurant_id para atualizar setup_status",
+          "[RestaurantRuntime] Sem restaurant_id para atualizar setup_status"
         );
         return;
       }
@@ -448,7 +530,7 @@ export function RestaurantRuntimeProvider({
         if (isDockerCore) {
           const { error } = await persistSetupStatus(
             runtime.restaurant_id,
-            newSetupStatus,
+            newSetupStatus
           );
           if (error) {
             console.warn("[RestaurantRuntime] persistSetupStatus:", error);
@@ -458,11 +540,11 @@ export function RestaurantRuntimeProvider({
       } catch (error) {
         console.error(
           "[RestaurantRuntime] Erro ao atualizar setup_status:",
-          error,
+          error
         );
       }
     },
-    [runtime.restaurant_id, runtime.setup_status, isDockerCore],
+    [runtime.restaurant_id, runtime.setup_status, isDockerCore]
   );
 
   /**
@@ -496,7 +578,7 @@ export function RestaurantRuntimeProvider({
       if (isDockerCore) {
         const { error: statusErr } = await persistRestaurantStatus(
           runtime.restaurant_id,
-          "active",
+          "active"
         );
         if (statusErr) {
           console.warn("[RestaurantRuntime] setRestaurantStatus:", statusErr);
@@ -505,13 +587,13 @@ export function RestaurantRuntimeProvider({
           await persistInstalledModule(
             runtime.restaurant_id,
             moduleId,
-            moduleId,
+            moduleId
           );
         }
       }
 
       const active_modules = baseModules.filter((id) =>
-        ALL_SAFE_MODULES_DEV.includes(id),
+        ALL_SAFE_MODULES_DEV.includes(id)
       );
 
       const capabilities: Record<string, ModuleCapabilityEntry> = {};
@@ -519,13 +601,21 @@ export function RestaurantRuntimeProvider({
         capabilities[id] = getModuleCapabilityEntry(id);
       }
 
-      setRuntime((prev) => ({
-        ...prev,
-        mode: "active",
-        installed_modules: baseModules,
-        active_modules,
-        capabilities,
-      }));
+      setRuntime((prev) => {
+        const systemState = deriveSystemState({
+          hasOrganization: true,
+          billingStatus: prev.billing_status,
+          isBootstrapComplete: true,
+        });
+        return {
+          ...prev,
+          mode: "active",
+          installed_modules: baseModules,
+          active_modules,
+          capabilities,
+          systemState,
+        };
+      });
 
       if (typeof window !== "undefined") {
         localStorage.removeItem("chefiapp_onboarding_state");
@@ -551,7 +641,7 @@ export function RestaurantRuntimeProvider({
           const { error } = await persistInstalledModule(
             runtime.restaurant_id,
             moduleId,
-            moduleId,
+            moduleId
           );
           if (error) {
             console.warn("[RestaurantRuntime] insertInstalledModule:", error);
@@ -568,13 +658,17 @@ export function RestaurantRuntimeProvider({
         throw error;
       }
     },
-    [runtime.restaurant_id, isDockerCore],
+    [runtime.restaurant_id, isDockerCore]
   );
 
   /** Altera productMode: persiste no Core quando backend é Docker; atualiza estado local. */
   const setProductMode = useCallback(
     async (mode: ProductMode) => {
-      setRuntime((prev) => ({ ...prev, productMode: mode }));
+      setRuntime((prev) => ({
+        ...prev,
+        productMode: mode,
+        dataMode: mode === "live" ? "live" : "demo",
+      }));
       if (typeof localStorage !== "undefined") {
         localStorage.setItem("chefiapp_product_mode", mode);
       }
@@ -585,7 +679,7 @@ export function RestaurantRuntimeProvider({
         }
       }
     },
-    [isDockerCore, runtime.restaurant_id],
+    [isDockerCore, runtime.restaurant_id]
   );
 
   // Carregar estado inicial - Somente na primeira vez ou quando o restaurantId mudar
@@ -597,19 +691,29 @@ export function RestaurantRuntimeProvider({
     }
   }, [runtime.restaurant_id]); // Apenas re-hidratar se o restaurantId (propriedade externa) mudar
 
-  const value: RestaurantRuntimeContextType = {
-    runtime,
-    refresh,
-    updateSetupStatus,
-    publishRestaurant,
-    installModule,
-    setProductMode,
-  };
+  const value = useMemo<RestaurantRuntimeContextType>(
+    () => ({
+      runtime,
+      refresh,
+      updateSetupStatus,
+      publishRestaurant,
+      installModule,
+      setProductMode,
+    }),
+    [
+      runtime,
+      refresh,
+      updateSetupStatus,
+      publishRestaurant,
+      installModule,
+      setProductMode,
+    ]
+  );
 
-  // Expose pilot setter to window for B1 resilience (Demo cards bypass)
+  // CONTRATO_TRIAL_REAL: não expor setter de pilot na UI. Bypass apenas em debug (?debug=1) para testes.
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // @ts-ignore
+    if (typeof window !== "undefined" && isDebugMode()) {
+      // @ts-expect-error debug-only hook for E2E/tests
       window.__CHEF_SET_PILOT = () => setProductMode("pilot");
     }
   }, [setProductMode]);

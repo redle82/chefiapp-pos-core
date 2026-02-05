@@ -6,12 +6,35 @@
  */
 
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import {
+  GlobalErrorView,
+  GlobalLoadingView,
+} from "../../ui/design-system/components";
 import { MenuBuilderCore } from "./MenuBuilderCore";
 
 export function MenuBuilderPage() {
-  const context = useRestaurantRuntime();
+  const { runtime } = useRestaurantRuntime();
+
+  // Prevent premature loading with invalid ID (FK violation risk)
+  if (runtime.loading) {
+    return <GlobalLoadingView message="A carregar contexto..." />;
+  }
+
+  if (runtime.error) {
+    return (
+      <div style={{ padding: 24, margin: "0 auto", maxWidth: 600 }}>
+        <GlobalErrorView
+          title="Erro de Contexto"
+          message={runtime.error}
+          layout="portal"
+        />
+      </div>
+    );
+  }
+
+  // Use runtime ID or fallback only if absolutely necessary for demo/dev
   const restaurantId =
-    context?.runtime?.restaurant_id ?? "00000000-0000-0000-0000-000000000100";
+    runtime.restaurant_id ?? "bbce08c7-63c0-473d-b693-ec2997f73a68";
 
   return (
     <div

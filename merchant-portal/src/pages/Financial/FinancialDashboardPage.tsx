@@ -5,13 +5,16 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { DataModeBanner } from '../../components/DataModeBanner';
 import { CashFlowSummary } from '../../components/Financial/CashFlowSummary';
 import { TransactionsList } from '../../components/Financial/TransactionsList';
 import { financialEngine, type CashFlowTransaction } from '../../core/financial/FinancialEngine';
 import { useRestaurantId } from '../../core/hooks/useRestaurantId';
 import { GlobalLoadingView } from '../../ui/design-system/components';
+import { useRestaurantRuntime } from '../../context/RestaurantRuntimeContext';
 
 export function FinancialDashboardPage() {
+  const { runtime } = useRestaurantRuntime();
   const { restaurantId, loading: loadingRestaurantId } = useRestaurantId();
   const [transactions, setTransactions] = useState<CashFlowTransaction[]>([]);
   const [cashBalance, setCashBalance] = useState<{ income: number; expenses: number; balance: number } | null>(null);
@@ -53,6 +56,7 @@ export function FinancialDashboardPage() {
 
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+      <DataModeBanner dataMode={runtime.dataMode} />
       <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '24px' }}>
         Financeiro
       </h1>

@@ -54,6 +54,8 @@ export interface OrderContextType {
   getOpenCashRegister: () => Promise<any | null>;
   getDailyTotal: () => Promise<number>;
   cashRegisterId: string | null;
+  /** FASE 1: true se o pedido já foi confirmado (imutável). Ver FLUXO_DE_PEDIDO_OPERACIONAL.md */
+  isOrderConfirmed: (orderId: string) => boolean;
 }
 
 /**

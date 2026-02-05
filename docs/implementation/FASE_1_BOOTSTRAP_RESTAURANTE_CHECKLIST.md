@@ -70,8 +70,9 @@ Checklist executável por dev. Dono-only. Referência: `docs/ROADMAP_POS_FUNDACA
 **Estado atual no código:**
 
 - `merchant-portal/src/core/shift/ShiftContext.tsx`: verifica turno aberto via `CashRegisterEngine.getOpenCashRegister(restaurantId)`; polling com backoff.
-- Dashboard e fluxos de abertura de caixa existem (ex. `DashboardPortal`, histórico de turnos).
-- Não existe gating explícito na entrada do TPV: "só aceder se turno aberto".
+- `merchant-portal/src/pages/Dashboard/DashboardPortal.tsx` e fluxos de abertura de caixa existem (histórico de turnos).
+- Ecrã Zero e alertas já consideram turno (ref. `docs/ESTADO_CONSOLIDADO_SISTEMA.md`).
+- Lacuna: não existe gating explícito na entrada do TPV — "só aceder se turno aberto".
 
 **Tarefas:**
 
@@ -104,4 +105,4 @@ Ordem recomendada de implementação: 1 → 2 → 3 → 4. Validar após cada pa
 - **Passo 3:** paymentMethodsConfigStorage (localStorage); ConfigPaymentsPage com checkboxes Dinheiro, Cartão; nota impressão/ecrã futuro.
 - **Passo 4:** ShiftGate em /op/tpv: sem turno aberto mostra form "Abrir turno" (caixa inicial) e chama RPC open_cash_register_atomic; após abertura revalida e mostra TPV.
 
-Critério de conclusão da FASE 1: *"Consigo criar um restaurante, abrir o TPV e vender algo."* — Fluxo: Auth → Bootstrap (criar restaurante) → first-product (primeiro produto) → Config > Módulos (TPV ativo) → /op/tpv → ShiftGate (abrir turno com caixa inicial) → TPV → vender.
+Critério de conclusão da FASE 1: _"Consigo criar um restaurante, abrir o TPV e vender algo."_ — Fluxo: Auth → Bootstrap (criar restaurante) → first-product (primeiro produto) → Config > Módulos (TPV ativo) → /op/tpv → ShiftGate (abrir turno com caixa inicial) → TPV → vender.

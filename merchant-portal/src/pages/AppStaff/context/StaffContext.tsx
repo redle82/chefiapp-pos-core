@@ -6,10 +6,12 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { isDebugMode } from "../../../core/debugMode";
 import {
   getTabIsolated,
   setTabIsolated,
 } from "../../../core/storage/TabIsolatedStorage";
+// Auth only — temporary until Core Auth (session / signOut)
 import { supabase } from "../../../core/supabase";
 import { findRelevantLesson } from "../../../intelligence/education/MicroLessonEngine";
 import {
@@ -47,21 +49,23 @@ export type {
   Task,
 } from "./StaffCoreTypes";
 
-// 🛡️ SECURITY: Global MOCK Guard
-const ALLOW_MOCKS = import.meta.env.DEV || import.meta.env.MODE === "test";
+// Mock path só com ?debug=1 ou em testes (MODE=test)
+const allowMocks = () =>
+  isDebugMode() ||
+  (typeof import.meta !== "undefined" && import.meta.env?.MODE === "test");
 
 // MODE B: REMOTE CONTRACT (Connect via Bridge)
 // Unified function (Client + Mock Hybrid)
 const joinRemoteOperationHelper = async (
   code: string,
   setOpContract: (c: OperationalContract) => void,
-  setActiveRole: (r: StaffRole) => void,
+  setActiveRole: (r: StaffRole) => void
 ): Promise<{ success: boolean; message?: string }> => {
   try {
     console.log("🔌 Connecting to Bridge with code:", code);
 
     // A) MOCK PATH (Dev Only)
-    if (ALLOW_MOCKS && code.includes("mock")) {
+    if (allowMocks() && code.includes("mock")) {
       // Simulate network
       await new Promise((resolve) => setTimeout(resolve, 800));
 
@@ -159,7 +163,7 @@ interface StaffContextType {
   // 3. SETUP ACTIONS
   createLocalContract: (type: BusinessType) => void;
   joinRemoteOperation: (
-    code: string,
+    code: string
   ) => Promise<{ success: boolean; message?: string }>;
 
   // 4. WORKER ACTIONS
@@ -198,7 +202,7 @@ interface StaffContextType {
 
   // 🛡️ IMMUNE SYSTEM (Human Sensor -> Brain)
   reportSpecDrift: (
-    alert: Omit<SpecDriftAlert, "id" | "detectedAt" | "status">,
+    alert: Omit<SpecDriftAlert, "id" | "detectedAt" | "status">
   ) => void;
   specDrifts: SpecDriftAlert[]; // 🛡️ Telemetry for Owner Dashboard
   pressureMode: "idle" | "pressure" | "recovery"; // 🩺 Real-time Pulse
@@ -236,7 +240,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   // EXTERNAL SIGNALS (The Senses)
   // FASE 3.3: Isolado - AppStaff não depende de TPV/context
   const { orders: appStaffOrders, refetch: refetchOrders } = useAppStaffOrders(
-    operationalContract?.id || null,
+    operationalContract?.id || null
   );
   // Converter CoreOrder para Order (compatibilidade)
   const orders = appStaffOrders.map((order) => ({
@@ -285,7 +289,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       // Refetch após ação
       await refetchOrders();
     },
-    [refetchOrders],
+    [refetchOrders]
   );
   const { triggerLesson, learnedSkills } = useTraining(); // Phase C: Training
 
@@ -293,7 +297,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   const [operationalContract, setOpContract] =
     useState<OperationalContract | null>(null);
   const [activeWorkerId, setActiveWorkerId] = useState<string | null>(
-    userId || null,
+    userId || null
   );
   const [activeRole, setActiveRole] = useState<StaffRole>("worker");
 
@@ -390,7 +394,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     // Kitchen: visualiza pedidos ou checklist
     if (activeRole === "kitchen") {
       const hasActiveOrders = orders.some(
-        (o) => o.status === "OPEN" || o.status === "IN_PREP",
+        (o) => o.status === "OPEN" || o.status === "IN_PREP"
       );
       return hasActiveOrders ? "production" : "check";
     }
@@ -406,7 +410,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     if (shiftState !== "active") return 0;
     const totalRisk = tasks.reduce(
       (acc, t) => (t.status === "pending" ? acc + (t.riskLevel || 0) : acc),
-      0,
+      0
     );
     return Math.min(100, totalRisk);
   }, [tasks, shiftState]);
@@ -428,7 +432,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
         t.meta?.source === "kds-sync" &&
         t.status === "pending" &&
         // Simple check: created in last 10 seconds (in real logic we'd mark 'trainingChecked')
-        getNow() - new Date(t.createdAt).getTime() < 10000,
+        getNow() - new Date(t.createdAt).getTime() < 10000
     );
 
     recentTasks.forEach((task) => {
@@ -444,7 +448,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
           "menu_item",
           item.name_snapshot || item.name,
           activeRole as any,
-          learnedSkills,
+          learnedSkills
         );
         if (lesson) {
           // Check if not already triggering
@@ -548,7 +552,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
   const startTask = (taskId: string) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: "focused" } : t)),
+      prev.map((t) => (t.id === taskId ? { ...t, status: "focused" } : t))
     );
     notifyActivity();
   };
@@ -563,7 +567,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       task.meta.action
     ) {
       console.log(
-        `🌉 BRIDGE: Triggering Action ${task.meta.action} for Order ${task.meta.orderId}`,
+        `🌉 BRIDGE: Triggering Action ${task.meta.action} for Order ${task.meta.orderId}`
       );
       performOrderAction(task.meta.orderId, task.meta.action)
         .then(() => console.log("✅ BRIDGE: Action Success"))
@@ -572,9 +576,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
           alert("Falha ao sincronizar com KDS. Tente novamente.");
           // Revert optimistic update?
           setTasks((prev) =>
-            prev.map((t) =>
-              t.id === taskId ? { ...t, status: "pending" } : t,
-            ),
+            prev.map((t) => (t.id === taskId ? { ...t, status: "pending" } : t))
           );
           return; // Stop completion
         });
@@ -582,7 +584,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
     // Optimistic
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: "done" } : t)),
+      prev.map((t) => (t.id === taskId ? { ...t, status: "done" } : t))
     );
 
     // 📝 AUDIT: Action Log
@@ -638,7 +640,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     window.dispatchEvent(
       new CustomEvent("staff-task-complete", {
         detail: { message, taskTitle: task?.title, xpGained: taskXP },
-      }),
+      })
     );
     notifyActivity();
 
@@ -654,7 +656,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
   const unfocusTask = (taskId: string) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: "pending" } : t)),
+      prev.map((t) => (t.id === taskId ? { ...t, status: "pending" } : t))
     );
   };
 
@@ -706,19 +708,19 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
   const reportObligations = (
     source: string,
-    newObligations: LatentObligation[],
+    newObligations: LatentObligation[]
   ) => {
     // Simple merge for now, avoiding duplicates by ID
     setObligations((prev) => {
       const others = prev.filter(
-        (o) => !newObligations.some((n) => n.id === o.id),
+        (o) => !newObligations.some((n) => n.id === o.id)
       );
       return [...others, ...newObligations];
     });
   };
 
   const reportSpecDrift = (
-    alert: Omit<SpecDriftAlert, "id" | "detectedAt" | "status">,
+    alert: Omit<SpecDriftAlert, "id" | "detectedAt" | "status">
   ) => {
     const newAlert: SpecDriftAlert = {
       id: `drift-${Date.now()}`,
@@ -766,18 +768,17 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
         activeStaffCount: 1,
         shiftMetrics: calculateShiftLoad(
           tasks.filter((t) => t.status !== "done").length,
-          1,
+          1
         ),
 
         // PHASE D: Forecast
         forecast: {
           pressure: calculatePressure(
             (orders || []).filter(
-              (o) =>
-                getNow() - new Date(o.createdAt).getTime() < 15 * 60 * 1000,
+              (o) => getNow() - new Date(o.createdAt).getTime() < 15 * 60 * 1000
             ).length || 0, // Last 15 min
             1, // Staff (Hardcoded 1 for now)
-            10, // Avg Prep (Hardcoded 10 min)
+            10 // Avg Prep (Hardcoded 10 min)
           ),
           prediction: getShiftPrediction(new Date(getNow())),
         },

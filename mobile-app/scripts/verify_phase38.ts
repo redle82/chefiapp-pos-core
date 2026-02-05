@@ -1,5 +1,3 @@
-
-import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -7,20 +5,16 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Try resolving from root (../../.env) or current directory's parent (../.env)
 const envPath = path.resolve(process.cwd(), '../.env');
-console.log("Loading .env from:", envPath);
 dotenv.config({ path: envPath });
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+// Docker Core client (no @supabase/supabase-js)
+const { coreClient: supabase } = await import('../services/coreClient');
 
-if (!supabaseUrl || !supabaseKey) {
-    console.error("Missing Supabase Env Vars");
+if (!process.env.EXPO_PUBLIC_CORE_URL && !process.env.EXPO_PUBLIC_SUPABASE_URL) {
+    console.error("Missing EXPO_PUBLIC_CORE_URL or EXPO_PUBLIC_SUPABASE_URL");
     process.exit(1);
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function verifyInventoryLogic() {
     console.log("📦 Starting Phase 38 Verification: Inventory Logic...");

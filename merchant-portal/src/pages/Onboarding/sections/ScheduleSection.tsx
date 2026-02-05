@@ -13,7 +13,7 @@ import {
   BackendType,
   getBackendType,
 } from "../../../core/infra/backendAdapter";
-import { supabase } from "../../../core/supabase";
+// Domain writes ONLY via Core (Supabase removed — §4). No fallback.
 
 const DAYS = [
   { id: 0, label: "Domingo", short: "Dom" },
@@ -48,7 +48,7 @@ export function ScheduleSection() {
   const updateSchedule = (
     day: number,
     field: "open" | "start" | "end",
-    value: boolean | string,
+    value: boolean | string
   ) => {
     setSchedules((prev) => ({
       ...prev,
@@ -73,7 +73,7 @@ export function ScheduleSection() {
       updateSetupStatus("schedule", isValid).catch((error) => {
         console.error(
           "[ScheduleSection] Erro ao atualizar setup_status:",
-          error,
+          error
         );
       });
     }
@@ -95,21 +95,22 @@ export function ScheduleSection() {
       saveTimeoutRef.current = setTimeout(async () => {
         setIsSaving(true);
         try {
-          const isDocker = getBackendType() === BackendType.docker;
-          const client = isDocker ? dockerCoreClient : supabase;
-          console.log("[ScheduleSection] Salvando no banco...", {
+          // ANTI-SUPABASE §4: Schedule write ONLY via Core. Fail explicit if not Docker.
+          if (getBackendType() !== BackendType.docker) {
+            throw new Error(
+              "Core indisponível. Configure o Docker Core para salvar os horários."
+            );
+          }
+          console.log("[ScheduleSection] Salvando no banco (Core)...", {
             restaurantId,
             schedules,
-            backend: isDocker ? "docker" : "supabase",
           });
 
-          // Deletar horários antigos
-          await client
+          await dockerCoreClient
             .from("restaurant_schedules")
             .delete()
             .eq("restaurant_id", restaurantId);
 
-          // Criar novos horários
           const schedulesToInsert = Object.entries(schedules).map(
             ([day, schedule]) => ({
               restaurant_id: restaurantId,
@@ -117,10 +118,10 @@ export function ScheduleSection() {
               open: schedule.open,
               start_time: schedule.start,
               end_time: schedule.end,
-            }),
+            })
           );
 
-          const { error } = await client
+          const { error } = await dockerCoreClient
             .from("restaurant_schedules")
             .insert(schedulesToInsert);
 
@@ -129,6 +130,12 @@ export function ScheduleSection() {
             alert(`Erro ao salvar: ${error.message}`);
           } else {
             console.log("[ScheduleSection] ✅ Horários salvos no banco");
+            updateSetupStatus("schedule", true).catch((err) => {
+              console.warn(
+                "[ScheduleSection] Erro ao persistir setup_status:",
+                err
+              );
+            });
           }
         } catch (error: any) {
           console.error("[ScheduleSection] Erro ao salvar horários:", error);
@@ -139,7 +146,7 @@ export function ScheduleSection() {
       }, 1500);
     } else if (isValid && !restaurantId) {
       console.warn(
-        "[ScheduleSection] Dados válidos mas sem restaurantId. Aguardando...",
+        "[ScheduleSection] Dados válidos mas sem restaurantId. Aguardando..."
       );
     }
 

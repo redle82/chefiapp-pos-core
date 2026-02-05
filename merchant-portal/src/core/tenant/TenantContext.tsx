@@ -8,14 +8,17 @@ import {
   type ReactNode,
 } from "react";
 import { useSupabaseAuth } from "../auth/useSupabaseAuth";
+import { isDebugMode } from "../debugMode";
+import { BackendType, getBackendType } from "../infra/backendAdapter";
+import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
 import { isDevStableMode } from "../runtime/devStableMode";
-import { supabase } from "../supabase";
 import {
   getActiveTenant,
   getTenantStatus,
   isTenantSealed,
   setActiveTenant,
 } from "./TenantResolver";
+// ANTI-SUPABASE §4: Tenant/members resolution ONLY via Core. No Supabase domain path.
 
 /**
  * 🏢 TenantContext — Multi-Tenant Data Isolation (Phase 4)
@@ -140,15 +143,13 @@ export function TenantProvider({ children }: TenantProviderProps) {
         }
 
         if (!session?.user?.id) {
-          // DEV BYPASS: If tenant is sealed (DEV auto-seal) but no session, provide mock data for TPV/KDS
-          // DEV BYPASS: If demo mode or generic bypass routes, provide mock restaurant data
-          if (import.meta.env.DEV) {
+          // Bypass: mock tenant só com ?debug=1 e rota TPV/KDS ou demo
+          if (isDebugMode()) {
             const path =
               typeof window !== "undefined" ? window.location.pathname : "";
             const search =
               typeof window !== "undefined" ? window.location.search : "";
             const isDemo = new URLSearchParams(search).get("demo") === "true";
-            // Use sealedTenantId if available, otherwise default to a mock ID
             const targetTenantId = sealedTenantId || "mock-tenant-id";
 
             if (
@@ -157,22 +158,13 @@ export function TenantProvider({ children }: TenantProviderProps) {
               path.includes("/tpv") ||
               path.includes("/kds")
             ) {
-              // Ensure tenant is sealed for consistency
               if (!sealed || getActiveTenant() !== targetTenantId) {
-                console.warn(
-                  "[TenantContext] 🚧 DEV BYPASS: Auto-sealing mock tenant",
-                  targetTenantId,
-                );
                 setActiveTenant(targetTenantId);
               }
 
-              console.warn(
-                "[TenantContext] 🚧 DEV BYPASS: Providing mock restaurant data for",
-                targetTenantId,
-              );
               const mockRestaurant: Restaurant = {
                 id: targetTenantId,
-                name: "DEV Restaurant (Mock)",
+                name: "Restaurante (dados indisponíveis)",
                 operation_status: "active",
               };
               setState({
@@ -181,7 +173,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
                 memberships: [
                   {
                     restaurant_id: targetTenantId,
-                    restaurant_name: "DEV Restaurant (Mock)",
+                    restaurant_name: "Restaurante (dados indisponíveis)",
                     role: "owner",
                   },
                 ],
@@ -205,11 +197,23 @@ export function TenantProvider({ children }: TenantProviderProps) {
 
         setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-        // 1. Fetch all memberships
-        const { data: members, error: memberError } = await supabase
+        // ANTI-SUPABASE §4: Tenant/members ONLY via Core. Fail explicit if not Docker.
+        if (getBackendType() !== BackendType.docker) {
+          throw new Error(
+            "Core indisponível. Configure o Docker Core para resolver o tenant."
+          );
+        }
+
+        const core = getDockerCoreFetchClient();
+
+        // 1. Fetch all memberships (Core only)
+        const membersRes = await core
           .from("gm_restaurant_members")
           .select("restaurant_id, role")
-          .eq("user_id", session.user.id);
+          .eq("user_id", session.user.id)
+          .then((r) => r);
+        const members = Array.isArray(membersRes.data) ? membersRes.data : null;
+        const memberError = membersRes.error;
 
         if (memberError) throw memberError;
 
@@ -225,24 +229,35 @@ export function TenantProvider({ children }: TenantProviderProps) {
           return;
         }
 
-        // 2. Fetch restaurant basic info for list
-        const restaurantIds = members.map((m) => m.restaurant_id);
-        const { data: restaurants, error: restError } = await supabase
+        // 2. Fetch restaurant basic info for list (Core only)
+        const restaurantIds = members.map(
+          (m: { restaurant_id: string }) => m.restaurant_id
+        );
+        const restListRes = await core
           .from("gm_restaurants")
           .select("id, name")
-          .in("id", restaurantIds);
+          .in("id", restaurantIds)
+          .then((r) => r);
+        const restaurants = Array.isArray(restListRes.data)
+          ? restListRes.data
+          : null;
+        const restError = restListRes.error;
 
         if (restError) throw restError;
 
         // 3. Build memberships
-        const memberships: TenantMembership[] = members.map((m) => {
-          const restaurant = restaurants?.find((r) => r.id === m.restaurant_id);
-          return {
-            restaurant_id: m.restaurant_id,
-            restaurant_name: restaurant?.name || "Restaurante sem nome",
-            role: m.role as TenantMembership["role"],
-          };
-        });
+        const memberships: TenantMembership[] = members.map(
+          (m: { restaurant_id: string; role: string }) => {
+            const restaurant = restaurants?.find(
+              (r: { id: string; name: string }) => r.id === m.restaurant_id
+            );
+            return {
+              restaurant_id: m.restaurant_id,
+              restaurant_name: restaurant?.name || "Restaurante sem nome",
+              role: m.role as TenantMembership["role"],
+            };
+          }
+        );
 
         // 4. Determine active tenant
         const cachedTenantId = getActiveTenant();
@@ -289,17 +304,17 @@ export function TenantProvider({ children }: TenantProviderProps) {
           }
         }
 
-        // 5. Fetch FULL active restaurant data if we have an ID
+        // 5. Fetch FULL active restaurant data (Core only)
         let activeRestaurant: Restaurant | null = null;
         if (activeTenantId) {
-          const { data: fullRest, error: fullRestError } = await supabase
+          const fullRestRes = await core
             .from("gm_restaurants")
             .select("*")
             .eq("id", activeTenantId)
             .single();
 
-          if (fullRestError) throw fullRestError;
-          activeRestaurant = fullRest;
+          if (fullRestRes.error) throw fullRestRes.error;
+          activeRestaurant = fullRestRes.data as Restaurant | null;
         }
 
         setState({
@@ -336,17 +351,22 @@ export function TenantProvider({ children }: TenantProviderProps) {
   // ========================================================================
   const refreshTenant = useCallback(async () => {
     if (!state.tenantId) return;
+    if (getBackendType() !== BackendType.docker) return;
 
     try {
-      const { data: fullRest, error } = await supabase
+      const core = getDockerCoreFetchClient();
+      const res = await core
         .from("gm_restaurants")
         .select("*")
         .eq("id", state.tenantId)
         .single();
 
-      if (error) throw error;
+      if (res.error) throw res.error;
 
-      setState((prev) => ({ ...prev, restaurant: fullRest }));
+      setState((prev) => ({
+        ...prev,
+        restaurant: res.data as Restaurant | null,
+      }));
       // No logs in DEV_STABLE_MODE (only hard-stop logs allowed)
       const devStable = isDevStableMode();
       if (!devStable) {
@@ -373,7 +393,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
         if (!devStable) {
           console.error(
             "[TenantContext] ❌ Cannot switch to unauthorized tenant:",
-            newTenantId,
+            newTenantId
           );
         }
         return;
@@ -386,18 +406,27 @@ export function TenantProvider({ children }: TenantProviderProps) {
       setState((prev) => ({ ...prev, isLoading: true }));
 
       try {
-        const { data: fullRest, error } = await supabase
+        if (getBackendType() !== BackendType.docker) {
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error: "Core indisponível",
+          }));
+          return;
+        }
+        const core = getDockerCoreFetchClient();
+        const res = await core
           .from("gm_restaurants")
           .select("*")
           .eq("id", newTenantId)
           .single();
 
-        if (error) throw error;
+        if (res.error) throw res.error;
 
         setState((prev) => ({
           ...prev,
           tenantId: newTenantId,
-          restaurant: fullRest,
+          restaurant: res.data as Restaurant | null,
           isLoading: false,
         }));
         // No logs in DEV_STABLE_MODE (only hard-stop logs allowed)
@@ -417,7 +446,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
         }));
       }
     },
-    [state.memberships],
+    [state.memberships]
   );
 
   // ========================================================================
@@ -426,7 +455,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
 
   const getCurrentTenantName = useCallback(() => {
     const membership = state.memberships.find(
-      (m) => m.restaurant_id === state.tenantId,
+      (m) => m.restaurant_id === state.tenantId
     );
     return membership?.restaurant_name || null;
   }, [state.memberships, state.tenantId]);

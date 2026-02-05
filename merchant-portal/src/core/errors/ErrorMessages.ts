@@ -3,7 +3,10 @@
  *
  * Provides specific, actionable error messages for common scenarios.
  * Replaces generic "Erro ao..." messages with context-aware messages.
+ * Fase 4: mensagens de guards (caixa, etc.) vêm de GuardMessages para consistência.
  */
+
+import { MSG_CASH_REGISTER_CLOSED_CREATE } from "../guards/GuardMessages";
 
 export interface ErrorContext {
   code?: string;
@@ -28,7 +31,7 @@ export function getErrorMessage(error: any, context?: ErrorContext): string {
     code === "CASH_REGISTER_CLOSED" ||
     message.includes("CASH_REGISTER_CLOSED")
   ) {
-    return "Caixa não está aberto. Abra o caixa antes de criar vendas.";
+    return MSG_CASH_REGISTER_CLOSED_CREATE;
   }
 
   if (
@@ -165,7 +168,7 @@ export function getErrorMessage(error: any, context?: ErrorContext): string {
  */
 export function getErrorSuggestion(
   error: any,
-  context?: ErrorContext,
+  context?: ErrorContext
 ): string | null {
   const code = error?.code || context?.code;
   const message = error?.message || context?.message || "";

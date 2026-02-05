@@ -1,4 +1,4 @@
-import { getTableClient } from '../infra/coreOrSupabaseRpc';
+import { getTableClient } from '../infra/coreRpc';
 import { Logger } from '../logger';
 
 interface EffectContext {

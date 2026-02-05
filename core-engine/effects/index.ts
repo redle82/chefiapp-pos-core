@@ -108,8 +108,8 @@ export async function applyPaymentToOrder(
   }
 }
 
-// [HARDENING] Atomic Item Persistence
-import { supabase } from '../../merchant-portal/src/core/supabase';
+// [HARDENING] Atomic Item Persistence — Core (Docker) only
+import { supabase } from '../supabase';
 
 export async function persistOrderItem(context: EffectContext): Promise<void> {
   const { repo, entityId, entity, item } = context;

@@ -83,7 +83,7 @@ if (navigator.serviceWorker.controller) {
 try { navigator.serviceWorker.controller.postMessage({ type: 'DEV_SW_DISABLE' }); } catch (e) {}
 }
 
-console.info('[SW] DEV preflight: unregister + clear caches (before bundle)');
+console.info('[SW] Preflight: unregister + clear caches (before bundle)');
 } catch (e) {
 // non-fatal
 }
@@ -93,7 +93,7 @@ console.info('[SW] DEV preflight: unregister + clear caches (before bundle)');
 
 <body>
 <div id="root"></div>
-<script type="module" src="/src/main_debug.tsx?v=nuclear_v1"></script>
+<script type="module" src="/src/main_debug.tsx"></script>
 </body>
 
 </html>

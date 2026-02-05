@@ -1,8 +1,4 @@
 import { useState } from "react";
-import { getSupabaseClient } from "../core/infra/supabaseClient";
-
-const supabase = getSupabaseClient();
-// DOCKER CORE: Usar dockerCoreClient em vez de supabase genérico
 import { dockerCoreClient } from "../core-boundary/docker-core/connection";
 import { VoiceCommandService } from "../core/voice/VoiceCommandService";
 import { TPVHeader } from "../ui/design-system/domain/TPVHeader";
@@ -34,14 +30,14 @@ export const DebugTPV = () => {
   const [isListening, setIsListening] = useState(false);
   const [wakeWord, setWakeWord] = useState("");
   const [svcInstance, setSvcInstance] = useState<VoiceCommandService | null>(
-    null,
+    null
   );
   const [seedStatus, setSeedStatus] = useState<string>("");
 
   const handleSeed = async () => {
     if (
       !confirm(
-        "This will inject ~50 test products into YOUR ACTIVE RESTAURANT. Continue?",
+        "This will inject ~50 test products into YOUR ACTIVE RESTAURANT. Continue?"
       )
     )
       return;
@@ -117,7 +113,7 @@ export const DebugTPV = () => {
 
         console.log(
           "[DebugTPV] Service instantiated with Wake Word:",
-          wakeWord || "(none)",
+          wakeWord || "(none)"
         );
       } catch (e) {
         console.error("[DebugTPV] Service error", e);
@@ -270,7 +266,7 @@ export const DebugTPV = () => {
             <button
               onClick={() => {
                 const isOffline = confirm(
-                  "Sovereign Mode Simulation:\nOK = Force Offline (Cut Wire)\nCancel = Restore Online",
+                  "Sovereign Mode Simulation:\nOK = Force Offline (Cut Wire)\nCancel = Restore Online"
                 );
                 // @ts-ignore - accessing private singleton or we need to cast import
                 // Importing SyncEngine directly to call public method
@@ -279,7 +275,7 @@ export const DebugTPV = () => {
                   alert(
                     `Simulation: ${
                       isOffline ? "OFFLINE (Signal Cut)" : "ONLINE (Restored)"
-                    }`,
+                    }`
                   );
                 });
               }}
@@ -329,7 +325,7 @@ export const DebugTPV = () => {
             <button
               onClick={async () => {
                 try {
-                  const { error } = await supabase
+                  const { error } = await dockerCoreClient
                     .from("gm_cash_registers")
                     .insert({
                       restaurant_id: "00000000-0000-0000-0000-000000000100",
@@ -364,12 +360,12 @@ export const DebugTPV = () => {
                 );
                 try {
                   // Find open shift
-                  const { data: shifts } = await supabase
+                  const { data: shifts } = await dockerCoreClient
                     .from("gm_cash_registers")
                     .select("id")
                     .eq("status", "open");
                   if (shifts && shifts.length > 0) {
-                    const { error } = await supabase
+                    const { error } = await dockerCoreClient
                       .from("gm_cash_registers")
                       .update({
                         status: "closed",

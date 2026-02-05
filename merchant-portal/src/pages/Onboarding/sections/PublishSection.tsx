@@ -7,11 +7,13 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useOnboarding } from "../../../context/OnboardingContext";
+import { useBootstrapState } from "../../../hooks/useBootstrapState";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 
 export function PublishSection() {
   const { state, canPublish } = useOnboarding();
-  const { runtime, publishRestaurant: publishRuntime } = useRestaurantRuntime();
+  const bootstrap = useBootstrapState();
+  const { publishRestaurant: publishRuntime } = useRestaurantRuntime();
   const [isPublishing, setIsPublishing] = React.useState(false);
   const navigate = useNavigate();
 
@@ -136,28 +138,59 @@ export function PublishSection() {
         </ul>
       </div>
 
-      {/* Botão Publicar */}
+      {/* Aviso Core offline: só quando offline-erro */}
+      {bootstrap.coreStatus === "offline-erro" && (
+        <div
+          style={{
+            marginBottom: "24px",
+            padding: "16px",
+            backgroundColor: "#fef2f2",
+            borderRadius: "8px",
+            border: "1px solid #fecaca",
+            fontSize: "14px",
+            color: "#991b1b",
+          }}
+        >
+          Core indisponível. Inicie o Core para publicar.
+        </div>
+      )}
+
+      {/* Botão Publicar: desativar quando Core não está online */}
       <button
         onClick={handlePublish}
-        disabled={!canPublish() || isPublishing}
+        disabled={
+          !canPublish() ||
+          isPublishing ||
+          bootstrap.coreStatus !== "online"
+        }
         style={{
           width: "100%",
           padding: "16px",
           fontSize: "16px",
           fontWeight: 600,
           color: "#fff",
-          backgroundColor: canPublish() ? "#667eea" : "#ccc",
+          backgroundColor:
+            canPublish() && bootstrap.coreStatus === "online" && !isPublishing
+              ? "#667eea"
+              : "#ccc",
           border: "none",
           borderRadius: "8px",
-          cursor: canPublish() && !isPublishing ? "pointer" : "not-allowed",
+          cursor:
+            canPublish() &&
+            bootstrap.coreStatus === "online" &&
+            !isPublishing
+              ? "pointer"
+              : "not-allowed",
           transition: "all 0.2s ease",
         }}
       >
         {isPublishing
           ? "Publicando..."
-          : canPublish()
-          ? "🚀 Publicar Restaurante"
-          : "Complete as seções obrigatórias"}
+          : bootstrap.coreStatus !== "online"
+            ? "Core indisponível — aguarde"
+            : canPublish()
+              ? "🚀 Publicar Restaurante"
+              : "Complete as seções obrigatórias"}
       </button>
 
       {!canPublish() && (
@@ -440,7 +473,7 @@ export function PublishSection() {
 
           {/* Como tudo se conecta (MODO_DEMO_EXPLICATIVO_SPEC) */}
           <button
-            onClick={() => navigate("/demo")}
+            onClick={() => navigate("/auth")}
             style={{
               padding: "12px",
               fontSize: "14px",

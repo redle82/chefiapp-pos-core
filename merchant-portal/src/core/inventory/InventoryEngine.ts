@@ -1,4 +1,4 @@
-import { getTableClient } from '../infra/coreOrSupabaseRpc';
+import { getTableClient } from '../infra/coreRpc';
 import type { InventoryItem, Recipe } from '../../pages/Inventory/context/InventoryTypes';
 import type { Order } from '../contracts';
 
@@ -62,7 +62,7 @@ export class InventoryEngine {
         reason?: string
     ): Promise<void> {
         // 1. Get current stock (Optional, for safety, or we just increment)
-        // We will simple increment the column atomically using Supabase rpc if possible, 
+        // We will simple increment the column atomically using Core rpc if possible, 
         // or just read-write for now (optimistic locking not critical for MVP Inventory).
 
         // Fetch current (Core quando Docker — Fase 4)

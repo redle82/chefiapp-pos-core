@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { healthEngine } from "./HealthEngine";
 
 export interface SimpleHealthScore {
@@ -18,12 +19,20 @@ export interface SimpleHealthScore {
 
 export function useHealthScore(restaurantId: string | null) {
   const [healthScore, setHealthScore] = useState<SimpleHealthScore | null>(
-    null,
+    null
   );
   const [loading, setLoading] = useState(true);
 
+  const { runtime } = useRestaurantRuntime();
+
   useEffect(() => {
     if (!restaurantId) {
+      setLoading(false);
+      return;
+    }
+
+    // Fail-fast: não dispara requests quando o Core está em baixo ou runtime ainda está a carregar.
+    if (runtime.loading || !runtime.coreReachable) {
       setLoading(false);
       return;
     }
@@ -32,7 +41,7 @@ export function useHealthScore(restaurantId: string | null) {
       try {
         setLoading(true);
         const score = await healthEngine.calculateSimpleHealthScore(
-          restaurantId,
+          restaurantId
         );
         setHealthScore(score);
       } catch (error) {
@@ -52,11 +61,11 @@ export function useHealthScore(restaurantId: string | null) {
 
     calculateScore();
 
-    // Atualizar score a cada 30 segundos
+    // Atualizar score a cada 30 segundos enquanto o Core estiver alcançável
     const interval = setInterval(calculateScore, 30000);
 
     return () => clearInterval(interval);
-  }, [restaurantId]);
+  }, [restaurantId, runtime.loading, runtime.coreReachable]);
 
   return { healthScore, loading };
 }

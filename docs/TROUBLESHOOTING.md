@@ -6,6 +6,16 @@
 
 ## 🚨 Problemas Comuns
 
+### Merchant Portal — Core indisponível (500, loop login)
+
+**Sintoma:** Banner "Core indisponível", 500 em chamadas a `/rest/v1/...`, ou loop "No session found, redirecting to login".
+
+**Causa:** Backend configurado como Docker e o Core não está a correr.
+
+**Solução:** Na raiz do repo: `npm run docker:core:up`. Ver [DEV_CORE_DOWN.md](./DEV_CORE_DOWN.md) para comportamento esperado e atalhos.
+
+---
+
 ### Fast Pay
 
 #### "Caixa Fechado" ao Pagar em Dinheiro

@@ -1,3 +1,4 @@
+import { getTableClient } from '../infra/coreRpc';
 import { supabase } from '../supabase';
 import { Logger } from './Logger';
 import { getTabIsolated } from '../storage/TabIsolatedStorage';
@@ -49,7 +50,8 @@ class AuditServiceCore {
                 return;
             }
 
-            const { error } = await supabase
+            const client = getTableClient();
+            const { error } = await client
                 .from('gm_audit_logs')
                 .insert({
                     tenant_id: tenantId,

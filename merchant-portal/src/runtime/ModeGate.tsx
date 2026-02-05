@@ -11,6 +11,13 @@ type ModeGateProps = {
   fallback?: React.ReactNode;
 };
 
+/** CORREÇÃO 3: modo derivado de systemState (UI não lê productMode). ACTIVE→live, TRIAL→pilot, resto→demo. */
+function modeFromSystemState(systemState: string | undefined): ProductMode {
+  if (systemState === "ACTIVE") return "live";
+  if (systemState === "TRIAL") return "pilot";
+  return "demo";
+}
+
 export function ModeGate({
   allow,
   moduleId,
@@ -18,7 +25,7 @@ export function ModeGate({
   fallback,
 }: ModeGateProps) {
   const { runtime } = useRestaurantRuntime();
-  const mode: ProductMode = runtime.productMode ?? "demo";
+  const mode: ProductMode = modeFromSystemState(runtime?.systemState);
 
   if (!allow.includes(mode)) {
     return (

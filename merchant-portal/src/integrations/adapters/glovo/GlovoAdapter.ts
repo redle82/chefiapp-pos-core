@@ -1,26 +1,39 @@
 /**
  * GlovoAdapter — Integração com Glovo (HARDENED)
- * 
+ *
  * Este adapter:
- * 1. Escuta eventos via Supabase Realtime (integration_orders)
+ * 1. Escuta eventos via Core Realtime (integration_orders)
  * 2. Comanda sincronização via Edge Function (delivery-proxy)
  * 3. NÃO manipula segredos (Client Secret) no frontend
- * 
+ *
  * Architecture: "Air Gapped" Frontend
  */
 
-import type { IntegrationAdapter, IntegrationCapability } from '../../core/IntegrationContract';
-import type { IntegrationEvent, OrderCreatedEvent } from '../../types/IntegrationEvent';
-import type { IntegrationStatus } from '../../types/IntegrationStatus';
-import { createHealthyStatus, createDegradedStatus, createDownStatus } from '../../types/IntegrationStatus';
+import {
+  BackendType,
+  getBackendType,
+} from "../../../core/infra/backendAdapter";
+import { getDockerCoreFetchClient } from "../../../core/infra/dockerCoreFetchClient";
 import type {
-  GlovoOrder,
-  GlovoConfig,
-} from './GlovoTypes';
-import { isValidGlovoOrder, isPendingOrder, isCancelledOrder } from './GlovoTypes';
-import { supabase } from '../../../core/supabase';
-import type { RealtimeChannel } from '@supabase/supabase-js';
-import { isDevStableMode } from '../../../core/runtime/devStableMode';
+  IntegrationAdapter,
+  IntegrationCapability,
+} from "../../core/IntegrationContract";
+import type {
+  IntegrationEvent,
+  OrderCreatedEvent,
+} from "../../types/IntegrationEvent";
+import type { IntegrationStatus } from "../../types/IntegrationStatus";
+import {
+  createDegradedStatus,
+  createHealthyStatus,
+} from "../../types/IntegrationStatus";
+import type { GlovoConfig, GlovoOrder } from "./GlovoTypes";
+import { isPendingOrder, isValidGlovoOrder } from "./GlovoTypes";
+import { isDevStableMode } from "../../../core/runtime/devStableMode";
+import { supabase } from "../../../core/supabase";
+
+/** Canal Realtime do Core (noop ou PostgREST Realtime). */
+type CoreRealtimeChannel = ReturnType<typeof supabase.channel>;
 
 // ─────────────────────────────────────────────────────────────
 // CONFIGURATION
@@ -35,17 +48,15 @@ const MAX_PROCESSED_ORDERS = 1000;
 
 export class GlovoAdapter implements IntegrationAdapter {
   // Identity
-  readonly id = 'glovo';
-  readonly name = 'Glovo';
-  readonly description = 'Integração com Glovo - Delivery Platform';
-  readonly type = 'delivery' as const;
-  readonly capabilities: IntegrationCapability[] = [
-    'orders.receive',
-  ];
+  readonly id = "glovo";
+  readonly name = "Glovo";
+  readonly description = "Integração com Glovo - Delivery Platform";
+  readonly type = "delivery" as const;
+  readonly capabilities: IntegrationCapability[] = ["orders.receive"];
 
   // Config
   private config: GlovoConfig | null = null;
-  private realtimeChannel: RealtimeChannel | null = null;
+  private realtimeChannel: CoreRealtimeChannel | null = null;
 
   // State
   private lastPollAt: number | null = null;
@@ -66,7 +77,7 @@ export class GlovoAdapter implements IntegrationAdapter {
     this.config = config || null;
 
     if (!this.config?.restaurantId) {
-      console.warn('[Glovo] Initialize called without restaurantId');
+      console.warn("[Glovo] Initialize called without restaurantId");
       return;
     }
 
@@ -76,27 +87,28 @@ export class GlovoAdapter implements IntegrationAdapter {
     }
 
     // Load processed IDs
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem('glovo_processed_ids');
+        const saved = localStorage.getItem("glovo_processed_ids");
         if (saved) {
           this.processedOrderIds = new Set(JSON.parse(saved));
         }
       } catch (e) {
-        console.warn('[Glovo] Failed to load processed IDs', e);
+        console.warn("[Glovo] Failed to load processed IDs", e);
       }
     }
 
     // 1. SETUP REALTIME LISTENER (The Primary Channel) — skip when channel not available (e.g. tests/shim)
-    if (typeof supabase.channel === 'function') {
+    if (typeof supabase.channel === "function") {
       const channelName = `glovo-integration-${this.config.restaurantId}`;
-      this.realtimeChannel = supabase.channel(channelName)
+      this.realtimeChannel = supabase
+        .channel(channelName)
         .on(
-          'postgres_changes',
+          "postgres_changes",
           {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'integration_orders',
+            event: "INSERT",
+            schema: "public",
+            table: "integration_orders",
             filter: `source=eq.glovo`,
           },
           (payload: { new?: unknown }) => {
@@ -108,7 +120,11 @@ export class GlovoAdapter implements IntegrationAdapter {
         });
     }
 
-    console.log(`[Glovo] 🚀 Initialized (Proxy Mode) for restaurant: ${config?.restaurantId ?? this.config?.restaurantId}`);
+    console.log(
+      `[Glovo] 🚀 Initialized (Proxy Mode) for restaurant: ${
+        config?.restaurantId ?? this.config?.restaurantId
+      }`
+    );
 
     // 2. POLLING VIA PROXY (Fallback / Force Sync)
     if (config?.enabled !== false) {
@@ -117,17 +133,20 @@ export class GlovoAdapter implements IntegrationAdapter {
   }
 
   async dispose(): Promise<void> {
-    console.log('[Glovo] 👋 Disposed');
+    console.log("[Glovo] 👋 Disposed");
     this.stopPolling();
-    if (this.realtimeChannel && typeof supabase.removeChannel === 'function') {
+    if (this.realtimeChannel && typeof supabase.removeChannel === "function") {
       await supabase.removeChannel(this.realtimeChannel);
       this.realtimeChannel = null;
     }
     this.config = null;
     this.eventCallback = null;
 
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('glovo_processed_ids', JSON.stringify(Array.from(this.processedOrderIds)));
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "glovo_processed_ids",
+        JSON.stringify(Array.from(this.processedOrderIds))
+      );
     }
     this.processedOrderIds.clear();
   }
@@ -146,7 +165,11 @@ export class GlovoAdapter implements IntegrationAdapter {
 
   private handleRealtimeOrder(row: any): void {
     // Validate Logic Match
-    if (this.config?.restaurantId && row.restaurant_id && row.restaurant_id !== this.config.restaurantId) {
+    if (
+      this.config?.restaurantId &&
+      row.restaurant_id &&
+      row.restaurant_id !== this.config.restaurantId
+    ) {
       return; // Ignora pedidos de outros restaurantes (safety check)
     }
 
@@ -173,11 +196,11 @@ export class GlovoAdapter implements IntegrationAdapter {
     // Aqui usamos uma transformação híbrida simplificada
 
     const internalEvent: OrderCreatedEvent = {
-      type: 'order.created',
+      type: "order.created",
       payload: {
         orderId: externalId,
-        source: 'delivery',
-        customerName: row.customer_name || 'Unknown',
+        source: "delivery",
+        customerName: row.customer_name || "Unknown",
         customerPhone: row.customer_phone,
         totalCents: row.total_cents || 0,
         items: row.items ? this.transformItemsFromDb(row.items) : [],
@@ -186,10 +209,10 @@ export class GlovoAdapter implements IntegrationAdapter {
           glovoId: externalId,
           address: row.delivery_address,
           instructions: row.instructions,
-          currency: row.currency || 'EUR',
-          deliveryType: row.delivery_type
-        }
-      }
+          currency: row.currency || "EUR",
+          deliveryType: row.delivery_type,
+        },
+      },
     };
 
     this.emitToSystem(internalEvent);
@@ -198,7 +221,6 @@ export class GlovoAdapter implements IntegrationAdapter {
   // ───────────────────────────────────────────────────────────
   // POLLING (PROXY)
   // ───────────────────────────────────────────────────────────
-
 
   // Backoff State
   private currentPollInterval = POLLING_INTERVAL_MS;
@@ -211,7 +233,7 @@ export class GlovoAdapter implements IntegrationAdapter {
 
   private startPolling(): void {
     if (this.pollTimeout) return;
-    console.log('[Glovo] 🔄 Starting polling (Proxy) with Backoff...');
+    console.log("[Glovo] 🔄 Starting polling (Proxy) with Backoff...");
     this.scheduleNextPoll(0); // Immediate
   }
 
@@ -231,20 +253,24 @@ export class GlovoAdapter implements IntegrationAdapter {
 
   private async pollOrders(): Promise<void> {
     if (!this.config?.restaurantId) return;
-    if (typeof supabase.functions?.invoke !== 'function') return; // skip when shim/test (no Edge Functions)
+    if (getBackendType() !== BackendType.docker) {
+      this.lastError =
+        "Glovo sync requires Docker Core. Backend not configured or not Docker.";
+      this.scheduleNextPoll(this.currentPollInterval);
+      return;
+    }
 
     try {
-      const { data, error } = await supabase.functions.invoke('delivery-proxy', {
-        body: {
-          action: 'sync',
-          provider: 'glovo',
-          restaurantId: this.config.restaurantId
-        }
+      const core = getDockerCoreFetchClient();
+      const res = await core.rpc("delivery-proxy", {
+        action: "sync",
+        provider: "glovo",
+        restaurantId: this.config.restaurantId,
       });
 
-      if (error) throw error;
+      if (res.error) throw res.error;
 
-      const result = data as { created?: number } | null;
+      const result = res.data as { created?: number } | null;
       if (result && result.created != null && result.created > 0) {
         console.log(`[Glovo] Proxy Sync: Created ${result.created} orders`);
       }
@@ -253,22 +279,28 @@ export class GlovoAdapter implements IntegrationAdapter {
 
       // Success: Reset Backoff
       if (this.currentPollInterval > POLLING_INTERVAL_MS) {
-        console.log('[Glovo] ✅ Polling recovered. Resetting interval.');
+        console.log("[Glovo] ✅ Polling recovered. Resetting interval.");
         this.currentPollInterval = POLLING_INTERVAL_MS;
       }
       this.scheduleNextPoll(this.currentPollInterval);
-
     } catch (err) {
       this.ordersErrors++;
-      this.lastError = err instanceof Error ? err.message : 'Unknown error';
-      console.error(`[Glovo] ❌ Proxy Polling failed. Backing off to ${this.currentPollInterval * 2}ms`, err);
+      this.lastError = err instanceof Error ? err.message : "Unknown error";
+      console.error(
+        `[Glovo] ❌ Proxy Polling failed. Backing off to ${
+          this.currentPollInterval * 2
+        }ms`,
+        err
+      );
 
       // Failure: Exponential Backoff
-      this.currentPollInterval = Math.min(this.currentPollInterval * 2, this.MAX_BACKOFF);
+      this.currentPollInterval = Math.min(
+        this.currentPollInterval * 2,
+        this.MAX_BACKOFF
+      );
       this.scheduleNextPoll(this.currentPollInterval);
     }
   }
-
 
   // ───────────────────────────────────────────────────────────
   // HEALTH CHECK
@@ -276,7 +308,7 @@ export class GlovoAdapter implements IntegrationAdapter {
 
   async healthCheck(): Promise<IntegrationStatus> {
     // Simplified Health Check
-    if (this.lastError && (Date.now() - (this.lastPollAt || 0) < 600000)) {
+    if (this.lastError && Date.now() - (this.lastPollAt || 0) < 600000) {
       return createDegradedStatus(`Last Sync Error: ${this.lastError}`);
     }
     return createHealthyStatus();
@@ -289,11 +321,11 @@ export class GlovoAdapter implements IntegrationAdapter {
   private transformItemsFromDb(items: any[]): any[] {
     // Format check
     if (!Array.isArray(items)) return [];
-    return items.map(item => ({
-      id: item.id || 'unknown',
-      name: item.name || 'Unknown Item',
+    return items.map((item) => ({
+      id: item.id || "unknown",
+      name: item.name || "Unknown Item",
       quantity: item.quantity || 1,
-      priceCents: Math.round((item.price || 0) * 100) // Ensure cents
+      priceCents: Math.round((item.price || 0) * 100), // Ensure cents
     }));
   }
 
@@ -302,7 +334,7 @@ export class GlovoAdapter implements IntegrationAdapter {
       try {
         this.eventCallback(event);
       } catch (err) {
-        console.error('[Glovo] ❌ Error emitting event:', err);
+        console.error("[Glovo] ❌ Error emitting event:", err);
       }
     }
   }
@@ -316,11 +348,18 @@ export class GlovoAdapter implements IntegrationAdapter {
    * Valida, transforma e emite OrderCreatedEvent para o sistema.
    * Usado por Edge Function (webhook) e testes de integração.
    */
-  processIncomingOrder(order: GlovoOrder): { success: boolean; orderId?: string } {
+  processIncomingOrder(order: GlovoOrder): {
+    success: boolean;
+    orderId?: string;
+  } {
     if (!isValidGlovoOrder(order) || !isPendingOrder(order)) {
       return { success: false };
     }
-    if (this.config?.restaurantId && order.restaurant_id && order.restaurant_id !== this.config.restaurantId) {
+    if (
+      this.config?.restaurantId &&
+      order.restaurant_id &&
+      order.restaurant_id !== this.config.restaurantId
+    ) {
       return { success: false };
     }
     const externalId = order.id;
@@ -331,16 +370,16 @@ export class GlovoAdapter implements IntegrationAdapter {
     this.processedOrderIds.add(externalId);
 
     const internalEvent: OrderCreatedEvent = {
-      type: 'order.created',
+      type: "order.created",
       payload: {
         orderId: externalId,
-        source: 'delivery',
-        customerName: order.customer?.name || 'Unknown',
+        source: "delivery",
+        customerName: order.customer?.name || "Unknown",
         customerPhone: order.customer?.phone,
         totalCents: Math.round((order.total || 0) * 100),
         items: (order.items || []).map((item) => ({
-          id: item.id || 'unknown',
-          name: item.name || 'Unknown Item',
+          id: item.id || "unknown",
+          name: item.name || "Unknown Item",
           quantity: item.quantity || 1,
           priceCents: Math.round((item.price || 0) * 100),
         })),
@@ -349,7 +388,7 @@ export class GlovoAdapter implements IntegrationAdapter {
           glovoId: externalId,
           address: order.delivery?.address?.address,
           instructions: order.delivery?.address?.instructions,
-          currency: order.currency || 'EUR',
+          currency: order.currency || "EUR",
         },
       },
     };

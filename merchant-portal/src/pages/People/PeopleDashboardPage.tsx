@@ -72,20 +72,6 @@ export function PeopleDashboardPage() {
       }}
     >
       <div style={{ marginBottom: "24px" }}>
-        <span
-          style={{
-            display: "inline-block",
-            padding: "4px 10px",
-            borderRadius: "9999px",
-            background: "#1e3a5f",
-            color: "#93c5fd",
-            fontSize: "12px",
-            fontWeight: 600,
-            marginBottom: "8px",
-          }}
-        >
-          DEMO
-        </span>
         <h1
           style={{
             fontSize: "24px",

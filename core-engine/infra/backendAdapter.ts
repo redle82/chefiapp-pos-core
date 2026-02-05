@@ -1,7 +1,7 @@
 /**
  * BackendAdapter — SSOT do backend ativo
  *
- * Define qual infraestrutura está em uso (Docker Core vs Supabase).
+ * Backend único: Docker Core (PostgREST). Sem Supabase.
  * Em modo Docker: ZERO instâncias de Supabase/GoTrueClient.
  *
  * IMPORTANT: Do not use import.meta here. This file is loaded by Jest (commonjs);
@@ -10,47 +10,53 @@
 
 export enum BackendType {
   docker = "docker",
-  supabase = "supabase",
+  none = "none",
 }
 
-const DOCKER_INDICATORS = ["localhost:3001", "127.0.0.1:3001"];
+declare const process: {
+  env: Record<string, string | undefined>;
+  NODE_ENV: string;
+};
+
+const DOCKER_INDICATORS = ["localhost:3001", "127.0.0.1:3001", "/rest"];
+
+function getRawBaseUrl(): string {
+  let url = "";
+  if (typeof process !== "undefined" && process.env?.VITE_CORE_URL) {
+    url = process.env.VITE_CORE_URL;
+  } else if (typeof process !== "undefined" && process.env?.VITE_SUPABASE_URL) {
+    url = process.env.VITE_SUPABASE_URL;
+  }
+  return (url || "").replace(/\/$/, "");
+}
 
 function getUrl(): string {
-  if (typeof process !== "undefined" && process.env?.VITE_SUPABASE_URL) {
-    return process.env.VITE_SUPABASE_URL;
+  const url = getRawBaseUrl();
+  if (!url) {
+    const isProd =
+      typeof process !== "undefined" && process.env.NODE_ENV === "production";
+    if (isProd) return "";
+    return "/rest";
   }
-  return "";
+  return url.replace(/https?:\/\/(localhost|127\.0\.0\.1):3001/, "/rest");
 }
 
 /**
- * Retorna o backend ativo com base na config.
- * localhost:3001 / 127.0.0.1:3001 => docker (PostgREST direto).
+ * Retorna o backend ativo. Único backend: Docker Core.
+ * URL configurada => docker; sem URL => none.
  */
 export function getBackendType(): BackendType {
   const url = getUrl();
-  if (DOCKER_INDICATORS.some((h) => url.includes(h))) return BackendType.docker;
-  return BackendType.supabase;
+  if (url.includes("/rest") || DOCKER_INDICATORS.some((h) => url.includes(h))) {
+    return BackendType.docker;
+  }
+  return url ? BackendType.docker : BackendType.none;
 }
 
 export function isDockerBackend(): boolean {
   return getBackendType() === BackendType.docker;
 }
 
-export function isSupabaseBackend(): boolean {
-  return getBackendType() === BackendType.supabase;
-}
-
-/**
- * Em DEV: se alguém tentar usar Supabase em modo Docker, falhar alto.
- */
-export function assertSupabaseAllowed(): void {
-  if (getBackendType() === BackendType.docker) {
-    const msg =
-      "Supabase client forbidden in Docker mode. Use dockerCoreClient (PostgREST fetch) or mock.";
-    const isDev = typeof process !== "undefined" && process.env.NODE_ENV === "development";
-    if (isDev) {
-      console.error("[BackendAdapter]", msg);
-    }
-    throw new Error(msg);
-  }
+export function isBackendNone(): boolean {
+  return getBackendType() === BackendType.none;
 }

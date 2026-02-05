@@ -6,8 +6,10 @@
  */
 
 const env = typeof process !== "undefined" ? process.env : ({} as NodeJS.ProcessEnv);
-const BASE_URL = env.VITE_SUPABASE_URL || "http://localhost:3001";
+const BASE_URL =
+  env.VITE_CORE_URL || env.VITE_SUPABASE_URL || "http://localhost:3001";
 const ANON_KEY =
+  env.VITE_CORE_ANON_KEY ||
   env.VITE_SUPABASE_ANON_KEY ||
   "chefiapp-core-secret-key-min-32-chars-long";
 
@@ -45,6 +47,7 @@ interface FilterBuilder {
   update(body: object): FilterBuilder;
   delete(): FilterBuilder;
   eq(column: string, value: unknown): FilterBuilder;
+  gte(column: string, value: unknown): FilterBuilder;
   in(column: string, values: unknown[]): FilterBuilder;
   or(filter: string): FilterBuilder;
   order(column: string, opts?: { ascending?: boolean }): FilterBuilder;
@@ -198,6 +201,10 @@ function buildFilterBuilder(table: string): FilterBuilder {
     },
     eq(column: string, value: unknown) {
       state.params[column] = `eq.${value}`;
+      return chain;
+    },
+    gte(column: string, value: unknown) {
+      state.params[column] = `gte.${value}`;
       return chain;
     },
     in(column: string, values: unknown[]) {

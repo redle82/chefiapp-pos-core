@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { DataModeBanner } from "../../components/DataModeBanner";
 import { PurchaseOrdersList } from "../../components/Purchases/PurchaseOrdersList";
 import { PurchaseSuggestions } from "../../components/Purchases/PurchaseSuggestions";
 import { SuppliersList } from "../../components/Purchases/SuppliersList";
@@ -72,6 +73,7 @@ export function PurchasesDashboardPage() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
+      <DataModeBanner dataMode={runtime.dataMode} />
       <div
         style={{
           display: "flex",

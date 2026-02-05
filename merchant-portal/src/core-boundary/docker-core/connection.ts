@@ -1,30 +1,17 @@
-import { createClient } from "@supabase/supabase-js";
+// Core connection (PostgREST via fetch). No Supabase BaaS.
+import { getDockerCoreFetchClient } from "../../core/infra/dockerCoreFetchClient";
 
-import { CONFIG } from "../../config";
-
-console.log("!!! CONNECTION.TS EXECUTING !!!");
-
-const supabaseUrl = CONFIG.SUPABASE_URL;
-const supabaseKey = CONFIG.SUPABASE_ANON_KEY;
-
-// Cliente canônico para o Docker Core (PostgREST + Realtime)
-export const dockerCoreClient = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-});
+/** Cliente canónico para o Docker Core (PostgREST fetch). */
+export const dockerCoreClient = getDockerCoreFetchClient();
 
 /**
  * Verifica se o Core está acessível.
  */
 export async function checkDockerCoreHealth(): Promise<boolean> {
   try {
-    const { error } = await dockerCoreClient
-      .from("gm_restaurants")
-      .select("id")
-      .limit(1);
-    return !error;
+    const client = getDockerCoreFetchClient();
+    const res = await client.from("gm_restaurants").select("id").limit(1);
+    return !res.error;
   } catch {
     return false;
   }

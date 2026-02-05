@@ -309,3 +309,7 @@ export function useOnboarding() {
   }
   return context;
 }
+
+export function useOnboardingOptional() {
+  return useContext(OnboardingContext);
+}

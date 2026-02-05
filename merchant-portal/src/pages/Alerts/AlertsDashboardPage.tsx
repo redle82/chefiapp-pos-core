@@ -7,9 +7,11 @@
 
 import { useEffect, useState } from "react";
 import { AlertCard } from "../../components/Alerts/AlertCard";
-import { alertEngine, type Alert } from "../../core/alerts/AlertEngine";
+import { DataModeBanner } from "../../components/DataModeBanner";
+import { alertEngine, type Alert, type AlertCategory, type AlertSeverity } from "../../core/alerts/AlertEngine";
 import { useRestaurantId } from "../../core/hooks/useRestaurantId";
 import { GlobalLoadingView } from "../../ui/design-system/components";
+import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 
 const VPC = {
   bg: "#0a0a0a",
@@ -28,11 +30,14 @@ const VPC = {
 } as const;
 
 export function AlertsDashboardPage() {
+  const { runtime } = useRestaurantRuntime();
   const { restaurantId, loading: loadingRestaurantId } = useRestaurantId();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [criticalAlerts, setCriticalAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "active" | "critical">("all");
+  const [categoryFilter, setCategoryFilter] = useState<AlertCategory | "all">("all");
+  const [severityFilter, setSeverityFilter] = useState<AlertSeverity | "all">("all");
 
   useEffect(() => {
     if (!restaurantId) {
@@ -86,7 +91,15 @@ export function AlertsDashboardPage() {
     );
   }
 
-  const displayAlerts = filter === "critical" ? criticalAlerts : alerts;
+  const baseAlerts = filter === "critical" ? criticalAlerts : alerts;
+  const byCategory =
+    categoryFilter === "all"
+      ? baseAlerts
+      : baseAlerts.filter((a) => a.category === categoryFilter);
+  const displayAlerts =
+    severityFilter === "all"
+      ? byCategory
+      : byCategory.filter((a) => a.severity === severityFilter);
 
   return (
     <div
@@ -100,6 +113,7 @@ export function AlertsDashboardPage() {
       }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <DataModeBanner dataMode={runtime.dataMode} />
         <header
           style={{
             display: "flex",
@@ -121,7 +135,7 @@ export function AlertsDashboardPage() {
           >
             Alertas
           </h1>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
             <button
               type="button"
               onClick={() => setFilter("all")}
@@ -156,6 +170,49 @@ export function AlertsDashboardPage() {
             >
               Críticos ({criticalAlerts.length})
             </button>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value as AlertCategory | "all")}
+              style={{
+                minHeight: VPC.btnMinHeight,
+                padding: "12px 16px",
+                fontSize: VPC.fontSizeBase,
+                backgroundColor: VPC.surface,
+                color: VPC.text,
+                border: `1px solid ${VPC.border}`,
+                borderRadius: VPC.radius,
+                cursor: "pointer",
+              }}
+              aria-label="Filtrar por categoria"
+            >
+              <option value="all">Categoria: Todas</option>
+              <option value="operational">Operacional</option>
+              <option value="financial">Financeiro</option>
+              <option value="compliance">Compliance</option>
+              <option value="human">Humano</option>
+              <option value="system">Sistema</option>
+            </select>
+            <select
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value as AlertSeverity | "all")}
+              style={{
+                minHeight: VPC.btnMinHeight,
+                padding: "12px 16px",
+                fontSize: VPC.fontSizeBase,
+                backgroundColor: VPC.surface,
+                color: VPC.text,
+                border: `1px solid ${VPC.border}`,
+                borderRadius: VPC.radius,
+                cursor: "pointer",
+              }}
+              aria-label="Filtrar por severidade"
+            >
+              <option value="all">Severidade: Todas</option>
+              <option value="low">Baixa</option>
+              <option value="medium">Média</option>
+              <option value="high">Alta</option>
+              <option value="critical">Crítica</option>
+            </select>
           </div>
         </header>
 
@@ -174,6 +231,8 @@ export function AlertsDashboardPage() {
             <div style={{ fontSize: 48, marginBottom: 16, color: VPC.accent }}>✅</div>
             <p style={{ margin: 0 }}>
               Nenhum alerta {filter === "critical" ? "crítico" : "ativo"}
+              {categoryFilter !== "all" ? ` na categoria "${categoryFilter}"` : ""}
+              {severityFilter !== "all" ? ` com severidade "${severityFilter}"` : ""}
             </p>
           </div>
         ) : (

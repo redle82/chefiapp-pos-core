@@ -1,24 +1,43 @@
-import { supabase } from './supabase'
+import {
+  BackendType,
+  getBackendHealthCheckBaseUrl,
+  getBackendType,
+} from "./infra/backendAdapter";
 
-export type HealthStatus = 'ok' | 'down'
+export type HealthStatus = "ok" | "down";
 
-export async function fetchHealth(basePath: string = ''): Promise<HealthStatus> {
-  // IGNORE basePath - We are going Serverless (Supabase Functions)
+const CORE_REQUIRED_MSG =
+  "Health check requires Docker Core. Supabase domain fallback is forbidden.";
+
+/**
+ * Health check ONLY via Docker Core (GET /rest/v1/).
+ * ANTI-SUPABASE §4: No supabase.functions.invoke; if not Docker, throw.
+ */
+export async function fetchHealth(
+  basePath: string = ""
+): Promise<HealthStatus> {
+  if (getBackendType() !== BackendType.docker) {
+    throw new Error(CORE_REQUIRED_MSG);
+  }
+
+  let base = getBackendHealthCheckBaseUrl();
+  // Fallback: em browser com proxy (/rest), usar origin para o health ir via Vite proxy
+  if (!base && typeof window !== "undefined") {
+    base = window.location.origin;
+  }
+  if (!base) {
+    console.warn("[Health] Docker Core URL not configured");
+    return "down";
+  }
   try {
-    const { data, error } = await supabase.functions.invoke('health')
-
-    if (error) {
-      console.warn('[Health] Check failed:', error)
-      return 'down'
-    }
-
-    const status = String((data && (data.status || data.health)) || '').toLowerCase()
-    return status === 'ok' ? 'ok' : 'down'
+    const url = `${base}/rest/v1/`;
+    const res = await fetch(url, { method: "GET", mode: "cors" });
+    return res.ok ? "ok" : "down";
   } catch (e) {
-    console.warn('[Health] Exception:', e)
-    return 'down'
+    console.warn("[Health] Docker Core unreachable:", e);
+    return "down";
   }
 }
 
-export * from './health/useCoreHealth'
-export * from './health/gating'
+export * from "./health/gating";
+export * from "./health/useCoreHealth";

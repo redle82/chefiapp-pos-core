@@ -7,10 +7,10 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ShiftChecklistSection } from "../../components/Tasks/ShiftChecklistSection";
 import { TaskCard } from "../../components/Tasks/TaskCard";
 import { TaskSuggestions } from "../../components/Tasks/TaskSuggestions";
 import { useRestaurantId } from "../../core/hooks/useRestaurantId";
-import { eventMonitor } from "../../core/tasks/EventMonitor";
 import {
   taskFiltering,
   type Task,
@@ -51,12 +51,12 @@ export function TaskDashboardPage() {
 
       const fetchedTasks = await taskFiltering.getPendingTasksForRole(
         restaurantId,
-        mockRole,
+        mockRole
       );
       setTasks(fetchedTasks);
 
       const fetchedSuggestions = await taskMentor.analyzeAndSuggest(
-        restaurantId,
+        restaurantId
       );
       setSuggestions(fetchedSuggestions);
 
@@ -65,10 +65,8 @@ export function TaskDashboardPage() {
 
     if (!loadingRestaurantId && restaurantId) {
       fetchUserData();
-      eventMonitor.start(restaurantId);
-      return () => {
-        eventMonitor.stop();
-      };
+      // EventMonitor é iniciado no contexto operacional (EventMonitorBootstrap em App.tsx)
+      // para que o sensor de ociosidade corra mesmo no Dashboard/TPV/KDS, não só em /tasks.
     }
   }, [restaurantId, loadingRestaurantId, role]);
 
@@ -116,6 +114,16 @@ export function TaskDashboardPage() {
             Tarefas pendentes e sugestões
           </p>
         </header>
+
+        {/* FASE 3 Passo 2: Checklist do turno (quando há turno ativo) */}
+        {restaurantId && (
+          <section style={{ marginBottom: VPC.spaceLg }}>
+            <ShiftChecklistSection
+              restaurantId={restaurantId}
+              variant="compact"
+            />
+          </section>
+        )}
 
         {suggestions.length > 0 && (
           <section style={{ marginBottom: VPC.spaceLg }}>

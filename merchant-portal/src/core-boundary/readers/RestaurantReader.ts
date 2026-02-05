@@ -5,7 +5,7 @@
  *
  * REGRAS:
  * - Apenas leitura
- * - Usa fetch direto (bypass Supabase client)
+ * - Usa fetch direto (Core PostgREST)
  * - Retorna dados do restaurante e menu
  *
  * PERFORMANCE: Cache TTL 10s em readMenuCategories e readProducts
@@ -14,8 +14,8 @@
 
 import { CONFIG } from "../../config";
 
-const DOCKER_CORE_URL = CONFIG.SUPABASE_URL;
-const DOCKER_CORE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
+const DOCKER_CORE_URL = CONFIG.CORE_URL;
+const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
 
 export interface CoreRestaurant {
   id: string;
@@ -24,6 +24,12 @@ export interface CoreRestaurant {
   description: string | null;
   created_at: string;
   updated_at: string;
+  /** gm_restaurants.status: 'active' = publicado (menu LIVE). MENU_OPERATIONAL_STATE. */
+  status?: string;
+  /** FASE 4: localização para a página pública */
+  address_text?: string | null;
+  /** FASE 4: horários em texto livre (ex: Seg-Sex 9h-18h) */
+  opening_hours_text?: string | null;
 }
 
 export interface CoreMenuCategory {
@@ -56,6 +62,19 @@ let menuCategoriesCache: {
 let productsCache: { key: string; data: CoreProduct[]; ts: number } | null =
   null;
 
+/** API_ERROR_CONTRACT: nunca parse de não-JSON (evita Unexpected token '<'). */
+function parseJsonIfOk<T>(response: Response, text: string): T {
+  const ct = response.headers.get("Content-Type") ?? "";
+  if (!ct.includes("application/json")) {
+    throw new Error("Backend indisponível");
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error("Backend indisponível");
+  }
+}
+
 /**
  * Lê restaurante por slug.
  */
@@ -71,22 +90,15 @@ export async function readRestaurantBySlug(
       "Content-Type": "application/json",
     },
   });
-
+  const text = await response.text();
   if (!response.ok) {
-    if (response.status === 404) {
-      return null;
-    }
-    const errorText = await response.text();
+    if (response.status === 404) return null;
     throw new Error(
-      `Failed to read restaurant: ${response.status} ${response.statusText} - ${errorText}`,
+      `Falha ao carregar restaurante (${response.status}). Tente novamente.`,
     );
   }
-
-  const data = await response.json();
-  if (!data || data.length === 0) {
-    return null;
-  }
-
+  const data = parseJsonIfOk<CoreRestaurant[]>(response, text);
+  if (!data || data.length === 0) return null;
   return data[0] as CoreRestaurant;
 }
 
@@ -104,14 +116,14 @@ export async function readRestaurantById(
       "Content-Type": "application/json",
     },
   });
+  const text = await response.text();
   if (!response.ok) {
     if (response.status === 404) return null;
-    const errorText = await response.text();
     throw new Error(
-      `Failed to read restaurant: ${response.status} ${response.statusText} - ${errorText}`,
+      `Falha ao carregar restaurante (${response.status}). Tente novamente.`,
     );
   }
-  const data = await response.json();
+  const data = parseJsonIfOk<CoreRestaurant[]>(response, text);
   if (!data || data.length === 0) return null;
   return data[0] as CoreRestaurant;
 }
@@ -139,15 +151,13 @@ export async function readMenuCategories(
       "Content-Type": "application/json",
     },
   });
-
+  const text = await response.text();
   if (!response.ok) {
-    const errorText = await response.text();
     throw new Error(
-      `Failed to read menu categories: ${response.status} ${response.statusText} - ${errorText}`,
+      `Falha ao carregar categorias (${response.status}). Tente novamente.`,
     );
   }
-
-  const data = await response.json();
+  const data = parseJsonIfOk<CoreMenuCategory[]>(response, text);
   const result = (data || []) as CoreMenuCategory[];
   menuCategoriesCache = { key: restaurantId, data: result, ts: now };
   return result;
@@ -176,15 +186,13 @@ export async function readProducts(
       "Content-Type": "application/json",
     },
   });
-
+  const text = await response.text();
   if (!response.ok) {
-    const errorText = await response.text();
     throw new Error(
-      `Failed to read products: ${response.status} ${response.statusText} - ${errorText}`,
+      `Falha ao carregar produtos (${response.status}). Tente novamente.`,
     );
   }
-
-  const data = await response.json();
+  const data = parseJsonIfOk<CoreProduct[]>(response, text);
   const result = (data || []) as CoreProduct[];
   productsCache = { key: restaurantId, data: result, ts: now };
   return result;
@@ -230,21 +238,14 @@ export async function readTableByNumber(
       "Content-Type": "application/json",
     },
   });
-
+  const text = await response.text();
   if (!response.ok) {
-    if (response.status === 404) {
-      return null;
-    }
-    const errorText = await response.text();
+    if (response.status === 404) return null;
     throw new Error(
-      `Failed to read table: ${response.status} ${response.statusText} - ${errorText}`,
+      `Falha ao carregar mesa (${response.status}). Tente novamente.`,
     );
   }
-
-  const data = await response.json();
-  if (!data || data.length === 0) {
-    return null;
-  }
-
+  const data = parseJsonIfOk<CoreTable[]>(response, text);
+  if (!data || data.length === 0) return null;
   return data[0] as CoreTable;
 }

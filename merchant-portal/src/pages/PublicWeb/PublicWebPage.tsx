@@ -2,11 +2,15 @@
  * PUBLIC WEB PAGE — Página Web Pública
  *
  * Menu do restaurante em /public/:slug. Visual: VPC (escuro, botões grandes, CTA verde).
+ * MENU_OPERATIONAL_STATE: só mostra cardápio se restaurante publicado (status === 'active').
  */
 
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { BlockingScreen, useOperationalReadiness } from "../../core/readiness";
+import { MENU_NOT_LIVE_WEB_MESSAGE } from "../../core/menu/MenuState";
+import { GlobalBlockedView } from "../../ui/design-system/components";
 import {
   readMenu,
   readRestaurantById,
@@ -43,9 +47,12 @@ interface CartItem {
 }
 
 export function PublicWebPage() {
+  const readiness = useOperationalReadiness("WEB");
   const { slug } = useParams<{ slug: string }>();
   const { runtime } = useRestaurantRuntime();
   const [restaurant, setRestaurant] = useState<CoreRestaurant | null>(null);
+  /** MENU_OPERATIONAL_STATE: menu só visível se LIVE (restaurante publicado). */
+  const [menuNotLive, setMenuNotLive] = useState(false);
   const [categories, setCategories] = useState<CoreMenuCategory[]>([]);
   const [products, setProducts] = useState<CoreProduct[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -53,6 +60,28 @@ export function PublicWebPage() {
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  if (!readiness.ready && readiness.uiDirective === "SHOW_BLOCKING_SCREEN") {
+    return (
+      <BlockingScreen
+        reason={readiness.blockingReason}
+        redirectTo={readiness.redirectTo}
+      />
+    );
+  }
+  if (!readiness.ready && readiness.uiDirective === "REDIRECT" && readiness.redirectTo) {
+    return <Navigate to={readiness.redirectTo} replace />;
+  }
+
+  if (menuNotLive) {
+    return (
+      <GlobalBlockedView
+        title="Cardápio não disponível"
+        description={MENU_NOT_LIVE_WEB_MESSAGE}
+        action={{ label: "Voltar ao início", to: "/" }}
+      />
+    );
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -87,6 +116,13 @@ export function PublicWebPage() {
         }
 
         setRestaurant(restaurantData);
+
+        // MENU_OPERATIONAL_STATE: QR/Web só abre se menu LIVE (restaurante publicado)
+        if (restaurantData.status !== "active") {
+          setMenuNotLive(true);
+          setLoading(false);
+          return;
+        }
 
         const menu = await readMenu(restaurantData.id);
         setCategories(menu.categories);
@@ -260,7 +296,7 @@ export function PublicWebPage() {
 
   return (
     <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem" }}>
-      {/* Header do Restaurante */}
+      {/* Header do Restaurante — FASE 4: nome, descrição, horários, localização */}
       <div style={{ marginBottom: "3rem", textAlign: "center" }}>
         <h1 style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>
           {restaurant.name}
@@ -269,6 +305,26 @@ export function PublicWebPage() {
           <p style={{ fontSize: "1.2rem", color: "#666" }}>
             {restaurant.description}
           </p>
+        )}
+        {(restaurant.opening_hours_text || restaurant.address_text) && (
+          <div
+            style={{
+              marginTop: "1rem",
+              fontSize: "0.95rem",
+              color: VPC.textMuted,
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.25rem",
+              alignItems: "center",
+            }}
+          >
+            {restaurant.opening_hours_text && (
+              <span>🕐 {restaurant.opening_hours_text}</span>
+            )}
+            {restaurant.address_text && (
+              <span>📍 {restaurant.address_text}</span>
+            )}
+          </div>
         )}
       </div>
 

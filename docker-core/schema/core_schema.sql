@@ -117,6 +117,15 @@ CREATE TABLE IF NOT EXISTS public.gm_orders (
     CONSTRAINT orders_payment_status_check CHECK (payment_status IN ('PENDING', 'PAID', 'FAILED', 'REFUNDED'))
 );
 
+-- FASE 1 — Fluxo de Pedido Operacional (docs/contracts/FLUXO_DE_PEDIDO_OPERACIONAL.md):
+-- gm_orders.status mapeamento conceptual:
+--   OPEN     ≈ pedido CONFIRMADO, pronto para cozinha (TPV confirmou; não confundir com "rascunho").
+--   IN_PREP  ≈ EM_PREPARO (KDS iniciou preparo).
+--   READY    ≈ PRONTO (KDS marcou pronto).
+--   CLOSED   ≈ pedido fechado/entregue.
+-- Transições esperadas: OPEN → IN_PREP → READY → CLOSED. CANCELLED em qualquer momento.
+-- Apenas KDS altera estados de cozinha (IN_PREP, READY); criação vem do TPV (OPEN).
+
 -- 6. Order Items
 CREATE TABLE IF NOT EXISTS public.gm_order_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

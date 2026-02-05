@@ -1,37 +1,35 @@
-import * as Sentry from "@sentry/react";
 import { getTabIsolated } from "../storage/TabIsolatedStorage";
+// LEGACY / LAB — blocked in Docker mode via core/supabase shim
 import { supabase } from "../supabase";
 
 export type LogLevel = "debug" | "info" | "warn" | "error" | "critical";
 
 // ============================================================================
-// SENTRY INITIALIZATION
+// SENTRY — stub quando @sentry/react não está instalado (evita 500 no Vite)
+// Instale @sentry/react e defina VITE_SENTRY_DSN para ativar Sentry real.
 // ============================================================================
 
-// Use process.env only so this file compiles under Jest (no import.meta in CommonJS)
-const SENTRY_DSN = typeof process !== "undefined" ? process.env.VITE_SENTRY_DSN : undefined;
-const isDev = typeof process !== "undefined" && process.env.NODE_ENV === "development";
+const SENTRY_DSN =
+  typeof import.meta !== "undefined" && (import.meta as any).env
+    ? (import.meta as any).env.VITE_SENTRY_DSN
+    : typeof process !== "undefined"
+      ? process.env.VITE_SENTRY_DSN
+      : undefined;
 
-if (SENTRY_DSN) {
-  Sentry.init({
-    dsn: SENTRY_DSN,
-    environment: typeof process !== "undefined" ? (process.env.NODE_ENV ?? "development") : "development",
-    debug: !!isDev,
-    tracesSampleRate: isDev ? 1.0 : 0.1,
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration(),
-    ],
-    beforeSend(event) {
-      if (isDev) {
-        // Skip certain errors in dev
-      }
-      return event;
-    },
-  });
-}
+const noop = () => {};
+const stub = {
+  init: noop,
+  withScope: (fn: (scope: { setContext: typeof noop; setTag: typeof noop; setUser: typeof noop }) => void) => {
+    fn({ setContext: noop, setTag: noop, setUser: noop });
+  },
+  setUser: noop,
+  addBreadcrumb: noop,
+  captureException: noop,
+  captureMessage: noop,
+};
+
+/** Stub quando @sentry/react não está instalado; substituir por import real quando o pacote existir. */
+const Sentry = stub;
 
 export interface LogContext {
   tenantId?: string;
@@ -181,7 +179,7 @@ class LoggerService {
   private async emit(
     level: LogLevel,
     message: string,
-    data?: Record<string, any>,
+    data?: Record<string, any>
   ) {
     // 1. Enrich Context
     const fullContext = {
@@ -222,25 +220,17 @@ class LoggerService {
       consoleMethod(JSON.stringify(payload));
     }
 
-    // 2.5. Send to Sentry (if configured)
-    if (SENTRY_DSN && ["warn", "error", "critical"].includes(level)) {
+    // 2.5. Send to Sentry (if configured e módulo carregado)
+    if (SENTRY_DSN && Sentry && ["warn", "error", "critical"].includes(level)) {
       Sentry.withScope((scope) => {
-        // Set context
         scope.setContext("log_context", fullContext);
-
-        if (fullContext.tenantId) {
-          scope.setTag("tenant_id", fullContext.tenantId);
-        }
-        if (fullContext.userId) {
-          scope.setUser({ id: fullContext.userId });
-        }
-
-        // Capture based on level
+        if (fullContext.tenantId) scope.setTag("tenant_id", fullContext.tenantId);
+        if (fullContext.userId) scope.setUser({ id: fullContext.userId });
         const sentryLevel = level === "critical" ? "fatal" : level;
         if (data?.error instanceof Error) {
           Sentry.captureException(data.error);
         } else {
-          Sentry.captureMessage(message, sentryLevel as Sentry.SeverityLevel);
+          Sentry.captureMessage(message, sentryLevel as "fatal" | "error" | "warning" | "info" | "debug");
         }
       });
     }
@@ -315,7 +305,7 @@ class LoggerService {
               idempotency_key,
             },
           ] as any,
-          { onConflict: "idempotency_key", ignoreDuplicates: true },
+          { onConflict: "idempotency_key", ignoreDuplicates: true }
         );
 
         // Mark as sent AFTER successful attempt
@@ -336,7 +326,7 @@ class LoggerService {
         if (err?.status === 400 || err?.message?.includes("idempotency_key")) {
           this.remoteIngestionDisabled = true;
           console.warn(
-            "[Logger] Remote ingestion disabled (missing idempotency_key).",
+            "[Logger] Remote ingestion disabled (missing idempotency_key)."
           );
           return;
         }
@@ -409,9 +399,9 @@ export function setSentryUser(
   tenantId?: string,
   options?: Partial<
     Pick<SentryContextOptions, "role" | "appVersion" | "device">
-  >,
+  >
 ): void {
-  if (SENTRY_DSN) {
+  if (SENTRY_DSN && Sentry) {
     Sentry.setUser({
       id: userId,
       ...(tenantId && { tenant_id: tenantId }),
@@ -427,7 +417,7 @@ export function setSentryUser(
  * Clear user context (e.g., on logout)
  */
 export function clearSentryUser(): void {
-  if (SENTRY_DSN) {
+  if (SENTRY_DSN && Sentry) {
     Sentry.setUser(null);
   }
 }
@@ -438,9 +428,9 @@ export function clearSentryUser(): void {
 export function addBreadcrumb(
   message: string,
   category?: string,
-  data?: Record<string, any>,
+  data?: Record<string, any>
 ): void {
-  if (SENTRY_DSN) {
+  if (SENTRY_DSN && Sentry) {
     Sentry.addBreadcrumb({
       message,
       category: category || "default",
@@ -456,17 +446,15 @@ export function addBreadcrumb(
  */
 export function captureException(
   error: Error,
-  context?: Record<string, any>,
+  context?: Record<string, any>
 ): void {
-  if (SENTRY_DSN) {
+  if (SENTRY_DSN && Sentry) {
     Sentry.withScope((scope) => {
-      if (context) {
-        scope.setContext("error_context", context);
-      }
+      if (context) scope.setContext("error_context", context);
       Sentry.captureException(error);
     });
   }
 }
 
-// Re-export Sentry for advanced use cases
+// Re-export Sentry quando disponível (pode ser null se @sentry/react não instalado)
 export { Sentry };

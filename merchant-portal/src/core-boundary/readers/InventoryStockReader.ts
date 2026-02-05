@@ -1,16 +1,16 @@
 /**
  * INVENTORY STOCK READER
- * 
+ *
  * Lê dados de inventário (equipamentos, locais) e estoque (ingredientes, níveis).
  */
 
-import { dockerCoreClient } from '../docker-core/connection';
+import { dockerCoreClient } from "../docker-core/connection";
 
 export interface CoreLocation {
   id: string;
   restaurant_id: string;
   name: string;
-  kind: 'KITCHEN' | 'BAR' | 'STORAGE' | 'SERVICE' | 'OTHER';
+  kind: "KITCHEN" | "BAR" | "STORAGE" | "SERVICE" | "OTHER";
   created_at: string;
   updated_at?: string;
 }
@@ -20,7 +20,17 @@ export interface CoreEquipment {
   restaurant_id: string;
   location_id?: string;
   name: string;
-  kind: 'FRIDGE' | 'FREEZER' | 'OVEN' | 'GRILL' | 'PLANCHA' | 'COFFEE_MACHINE' | 'ICE_MACHINE' | 'KEG_SYSTEM' | 'SHELF' | 'OTHER';
+  kind:
+    | "FRIDGE"
+    | "FREEZER"
+    | "OVEN"
+    | "GRILL"
+    | "PLANCHA"
+    | "COFFEE_MACHINE"
+    | "ICE_MACHINE"
+    | "KEG_SYSTEM"
+    | "SHELF"
+    | "OTHER";
   capacity_note?: string;
   is_active: boolean;
   created_at: string;
@@ -31,7 +41,7 @@ export interface CoreIngredient {
   id: string;
   restaurant_id: string;
   name: string;
-  unit: 'g' | 'kg' | 'ml' | 'l' | 'unit';
+  unit: "g" | "kg" | "ml" | "l" | "unit";
   created_at: string;
   updated_at?: string;
 }
@@ -52,7 +62,7 @@ export interface CoreProductBOM {
   product_id: string;
   ingredient_id: string;
   qty_per_unit: number;
-  station: 'KITCHEN' | 'BAR';
+  station: "KITCHEN" | "BAR";
   preferred_location_kind?: string;
   created_at: string;
   updated_at?: string;
@@ -61,12 +71,14 @@ export interface CoreProductBOM {
 /**
  * Lê locais de um restaurante.
  */
-export async function readLocations(restaurantId: string): Promise<CoreLocation[]> {
+export async function readLocations(
+  restaurantId: string
+): Promise<CoreLocation[]> {
   const { data, error } = await dockerCoreClient
-    .from('gm_locations')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .order('name', { ascending: true });
+    .from("gm_locations")
+    .select("*")
+    .eq("restaurant_id", restaurantId)
+    .order("name", { ascending: true });
 
   if (error) {
     throw new Error(`Failed to read locations: ${error.message}`);
@@ -78,12 +90,14 @@ export async function readLocations(restaurantId: string): Promise<CoreLocation[
 /**
  * Lê equipamentos de um restaurante.
  */
-export async function readEquipment(restaurantId: string): Promise<CoreEquipment[]> {
+export async function readEquipment(
+  restaurantId: string
+): Promise<CoreEquipment[]> {
   const { data, error } = await dockerCoreClient
-    .from('gm_equipment')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .order('name', { ascending: true });
+    .from("gm_equipment")
+    .select("*")
+    .eq("restaurant_id", restaurantId)
+    .order("name", { ascending: true });
 
   if (error) {
     throw new Error(`Failed to read equipment: ${error.message}`);
@@ -95,12 +109,14 @@ export async function readEquipment(restaurantId: string): Promise<CoreEquipment
 /**
  * Lê ingredientes de um restaurante.
  */
-export async function readIngredients(restaurantId: string): Promise<CoreIngredient[]> {
+export async function readIngredients(
+  restaurantId: string
+): Promise<CoreIngredient[]> {
   const { data, error } = await dockerCoreClient
-    .from('gm_ingredients')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .order('name', { ascending: true });
+    .from("gm_ingredients")
+    .select("*")
+    .eq("restaurant_id", restaurantId)
+    .order("name", { ascending: true });
 
   if (error) {
     throw new Error(`Failed to read ingredients: ${error.message}`);
@@ -112,16 +128,22 @@ export async function readIngredients(restaurantId: string): Promise<CoreIngredi
 /**
  * Lê níveis de estoque de um restaurante (com joins para ingrediente e local).
  */
-export async function readStockLevels(restaurantId: string): Promise<(CoreStockLevel & { ingredient: CoreIngredient; location: CoreLocation })[]> {
+export async function readStockLevels(
+  restaurantId: string
+): Promise<
+  (CoreStockLevel & { ingredient: CoreIngredient; location: CoreLocation })[]
+> {
   const { data, error } = await dockerCoreClient
-    .from('gm_stock_levels')
-    .select(`
+    .from("gm_stock_levels")
+    .select(
+      `
       *,
       ingredient:gm_ingredients(*),
       location:gm_locations(*)
-    `)
-    .eq('restaurant_id', restaurantId)
-    .order('updated_at', { ascending: false });
+    `
+    )
+    .eq("restaurant_id", restaurantId)
+    .order("updated_at", { ascending: false });
 
   if (error) {
     throw new Error(`Failed to read stock levels: ${error.message}`);
@@ -131,26 +153,50 @@ export async function readStockLevels(restaurantId: string): Promise<(CoreStockL
     ...item,
     ingredient: item.ingredient as CoreIngredient,
     location: item.location as CoreLocation,
-  })) as (CoreStockLevel & { ingredient: CoreIngredient; location: CoreLocation })[];
+  })) as (CoreStockLevel & {
+    ingredient: CoreIngredient;
+    location: CoreLocation;
+  })[];
+}
+
+export type StockAlertRow = CoreStockLevel & {
+  ingredient: CoreIngredient;
+  location: CoreLocation;
+};
+
+/**
+ * Lê alertas de estoque (qty <= min_qty, min_qty > 0) para Inventory Lite / AppStaff.
+ * "Repor X" quando produto esgotou (ERROS_CANON E56–E60).
+ */
+export async function readStockAlerts(
+  restaurantId: string
+): Promise<StockAlertRow[]> {
+  const levels = await readStockLevels(restaurantId);
+  return levels.filter((l) => l.min_qty > 0 && l.qty <= l.min_qty);
 }
 
 /**
  * Lê BOM (receitas) de produtos de um restaurante.
  */
-export async function readProductBOM(restaurantId: string, productId?: string): Promise<(CoreProductBOM & { ingredient: CoreIngredient })[]> {
+export async function readProductBOM(
+  restaurantId: string,
+  productId?: string
+): Promise<(CoreProductBOM & { ingredient: CoreIngredient })[]> {
   let query = dockerCoreClient
-    .from('gm_product_bom')
-    .select(`
+    .from("gm_product_bom")
+    .select(
+      `
       *,
       ingredient:gm_ingredients(*)
-    `)
-    .eq('restaurant_id', restaurantId);
+    `
+    )
+    .eq("restaurant_id", restaurantId);
 
   if (productId) {
-    query = query.eq('product_id', productId);
+    query = query.eq("product_id", productId);
   }
 
-  const { data, error } = await query.order('created_at', { ascending: false });
+  const { data, error } = await query.order("created_at", { ascending: false });
 
   if (error) {
     throw new Error(`Failed to read product BOM: ${error.message}`);

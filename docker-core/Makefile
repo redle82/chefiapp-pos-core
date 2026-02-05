@@ -4,7 +4,7 @@
 # Comandos úteis para gerenciar o Core Docker
 # =============================================================================
 
-.PHONY: up down reset logs ps validate test-rpc migrate-product-mode help
+.PHONY: up down reset logs ps validate test-rpc migrate-product-mode migrate-onboarding-completed migrate-terminals migrate-staff help
 
 # Default target
 help:
@@ -20,6 +20,12 @@ help:
 	@echo "  make validate            - Validar RPC e constraints"
 	@echo "  make test-rpc            - Testar create_order_atomic"
 	@echo "  make migrate-product-mode - Aplicar migration product_mode (gm_restaurants)"
+	@echo "  make migrate-cash-registers - Aplicar migration caixa e pagamentos"
+	@echo "  make migrate-operational-rpcs - Aplicar RPCs get_operational_metrics e get_shift_history"
+	@echo "  make migrate-onboarding-completed - Aplicar coluna onboarding_completed_at (gm_restaurants)"
+	@echo "  make migrate-terminals - Aplicar tabela gm_terminals (registro de terminais)"
+	@echo "  make migrate-staff - Aplicar tabela gm_staff (staff operacional)"
+	@echo "  make test-global            - Teste global: tabelas + TPV + tarefas (script)"
 	@echo ""
 
 # Subir Core
@@ -104,3 +110,35 @@ migrate-cash-registers:
 	@cat schema/migrations/20260128_core_payments_and_cash_registers.sql | docker compose -f docker-compose.core.yml exec -T postgres \
 		psql -U postgres -d chefiapp_core -f - && echo "✅ gm_cash_registers aplicado" || \
 		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# Aplicar RPCs get_operational_metrics e get_shift_history (dashboard; requer migrate-cash-registers)
+migrate-operational-rpcs:
+	@echo "📦 Aplicando RPCs operacionais (get_operational_metrics, get_shift_history)..."
+	@cat schema/migrations/20260201_rpc_operational_metrics_and_shift_history.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ RPCs operacionais aplicadas" || \
+		(echo "❌ Migration falhou (confira se o Core está up e migrate-cash-registers aplicada: make up && make migrate-cash-registers)" && exit 1)
+
+# Aplicar coluna onboarding_completed_at em gm_restaurants (First Product / ativação restaurante)
+migrate-onboarding-completed:
+	@echo "📦 Aplicando migration onboarding_completed_at (gm_restaurants)..."
+	@cat schema/migrations/20260203_gm_restaurants_onboarding_completed_at.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ onboarding_completed_at aplicado" || \
+		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# Aplicar tabela gm_terminals (registro de terminais TPV/KDS/AppStaff)
+migrate-terminals:
+	@echo "📦 Aplicando migration gm_terminals..."
+	@cat schema/migrations/20260203_gm_terminals.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ gm_terminals aplicado" || \
+		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# Aplicar tabela gm_staff (staff operacional: sala, cozinha, gerente)
+migrate-staff:
+	@echo "📦 Aplicando migration gm_staff..."
+	@cat schema/migrations/20260203_gm_staff.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ gm_staff aplicado" || \
+		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# Teste global: Core + todas as tabelas + TPV (turno + pedido) + tarefas (MODO_INTERNO)
+test-global:
+	@./test-global-todas-tabelas.sh

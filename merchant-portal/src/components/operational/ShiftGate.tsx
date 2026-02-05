@@ -5,12 +5,18 @@
  * Após abertura, revalida e mostra o TPV.
  */
 
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
+import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
+import { isBackendUnavailable } from "../../core-boundary/menuPilotFallback";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
 import { useShift } from "../../core/shift/ShiftContext";
-import { GlobalBlockedView, GlobalLoadingView } from "../../ui/design-system/components";
+import { getTpvRestaurantId } from "../../core/storage/installedDeviceStorage";
+import {
+  GlobalBlockedView,
+  GlobalLoadingView,
+} from "../../ui/design-system/components";
 
 interface Props {
   children: React.ReactNode;
@@ -19,12 +25,17 @@ interface Props {
 export function ShiftGate({ children }: Props) {
   const shift = useShift();
   const { runtime } = useRestaurantRuntime();
-  const restaurantId = runtime?.restaurant_id ?? null;
+  const restaurantId = runtime?.restaurant_id ?? getTpvRestaurantId() ?? null;
 
   const [opening, setOpening] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isDocker = getBackendType() === BackendType.docker;
+
+  // DEBUG_DIRECT_FLOW: vertical slice sem turno; TPV e KDS diretos.
+  if (CONFIG.DEBUG_DIRECT_FLOW) {
+    return <>{children}</>;
+  }
 
   if (shift.isChecking && !shift.isShiftOpen) {
     return (
@@ -40,12 +51,12 @@ export function ShiftGate({ children }: Props) {
     return <>{children}</>;
   }
 
-  // Sem turno aberto: mostrar "Abrir turno" com caixa inicial (só Docker Core)
+  // Sem turno aberto: mostrar CTA único para abrir turno (só Docker Core)
   if (!isDocker || !restaurantId) {
     return (
       <GlobalBlockedView
         title="Abrir turno"
-        description="Para usar o TPV, abra primeiro o turno com caixa inicial no Dashboard."
+        description="Para começar a vender, abra o turno com caixa inicial no Dashboard."
         action={{ label: "Ir para o Dashboard", to: "/dashboard" }}
       />
     );
@@ -81,6 +92,7 @@ function ShiftOpenForm({
   onSuccess,
 }: ShiftOpenFormProps) {
   const [caixaEur, setCaixaEur] = useState("0");
+  const [openedSuccess, setOpenedSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,33 +106,70 @@ function ShiftOpenForm({
 
     onOpeningChange(true);
     try {
+      // FASE 2.2: sem ações anónimas — opened_by com label quando não há utilizador
       const { data, error: rpcError } = await dockerCoreClient.rpc(
         "open_cash_register_atomic",
         {
           p_restaurant_id: restaurantId,
           p_name: "Caixa Principal",
-          p_opened_by: null,
+          p_opened_by: "Operador TPV",
           p_opening_balance_cents: openingBalanceCents,
-        },
+        }
       );
 
       if (rpcError) {
-        onErrorChange(rpcError.message || "Erro ao abrir turno.");
+        onErrorChange(
+          "Não foi possível abrir o turno. Verifique a ligação ao servidor e tente novamente."
+        );
         return;
       }
       if (!data?.id) {
-        onErrorChange("Turno não foi aberto. Tente novamente.");
+        onErrorChange("Não foi possível abrir o turno. Tente novamente.");
         return;
       }
-      await onSuccess();
+      onOpeningChange(false);
+      setOpenedSuccess(true);
+      setTimeout(() => {
+        onSuccess();
+      }, 1500);
     } catch (err) {
-      onErrorChange(
-        err instanceof Error ? err.message : "Erro ao abrir turno.",
-      );
+      const msg = isBackendUnavailable(err)
+        ? "Servidor indisponível. Verifique a ligação e tente novamente."
+        : "Não foi possível abrir o turno. Tente novamente.";
+      onErrorChange(msg);
     } finally {
       onOpeningChange(false);
     }
   };
+
+  if (openedSuccess) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+          background: "#0b0b0c",
+          color: "#f5f5f7",
+        }}
+      >
+        <p
+          style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: "#32d74b",
+            marginBottom: 8,
+          }}
+        >
+          Turno aberto
+        </p>
+        <p style={{ fontSize: 14, color: "#a3a3a3" }}>A carregar o TPV...</p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -135,9 +184,10 @@ function ShiftOpenForm({
         color: "#f5f5f7",
       }}
     >
-      <h1 style={{ fontSize: 22, marginBottom: 8 }}>Abrir turno</h1>
+      <h1 style={{ fontSize: 22, marginBottom: 8 }}>Começar a vender</h1>
       <p style={{ fontSize: 14, color: "#a3a3a3", marginBottom: 24 }}>
-        Para usar o TPV, abra o turno com o valor de caixa inicial.
+        Um passo só: defina o valor de caixa inicial e clique no botão para
+        abrir o turno e usar o TPV.
       </p>
       <form
         onSubmit={handleSubmit}
@@ -178,8 +228,8 @@ function ShiftOpenForm({
           disabled={opening}
           style={{
             padding: "14px 20px",
-            fontSize: 15,
-            fontWeight: 600,
+            fontSize: 16,
+            fontWeight: 700,
             border: "none",
             borderRadius: 8,
             cursor: opening ? "not-allowed" : "pointer",
@@ -187,7 +237,7 @@ function ShiftOpenForm({
             color: "#000",
           }}
         >
-          {opening ? "A abrir..." : "Abrir turno"}
+          {opening ? "A abrir..." : "Clique aqui para começar a vender AGORA"}
         </button>
       </form>
       <p style={{ fontSize: 13, color: "#666", marginTop: 24 }}>

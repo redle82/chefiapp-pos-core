@@ -3,7 +3,7 @@
  * Persists wizard progress (Core quando Docker — Fase 4) e marca conclusão no publish.
  */
 
-import { invokeRpc } from './infra/coreOrSupabaseRpc';
+import { invokeRpc } from './infra/coreRpc';
 
 export type WizardStep = 'identity' | 'menu' | 'payments' | 'design' | 'publish';
 

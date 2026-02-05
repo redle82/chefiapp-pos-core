@@ -1,5 +1,5 @@
 /**
- * ORDER READER DIRECT — Leitura direta via fetch (bypass Supabase client)
+ * ORDER READER DIRECT — Leitura direta via fetch (Core PostgREST)
  *
  * ⚠️ LEGADO - DEPRECADO
  *
@@ -15,8 +15,8 @@ import type { CoreOrder, CoreOrderItem } from "../docker-core/types";
 
 import { CONFIG } from "../../config";
 
-const DOCKER_CORE_URL = CONFIG.SUPABASE_URL;
-const DOCKER_CORE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
+const DOCKER_CORE_URL = CONFIG.CORE_URL;
+const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
 
 /**
  * Lê pedidos ativos de um restaurante (versão direta via fetch).

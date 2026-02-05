@@ -5,11 +5,24 @@
  * - Este módulo está marcado como `dataSource: "mock"` em `moduleCatalog`.
  * - Portanto, NÃO deve chamar Supabase nem RPCs reais.
  * - Implementação atual: store in-memory por sessão, suficiente para demo/UX.
+ *
+ * OPERATIONAL_ALERTS_CONTRACT: severity "critical" = bloqueio ou perda de verdade;
+ * não usar critical para estado normal (ex.: N pedidos activos). Usar info/warn/critical conforme contrato.
  */
 
-export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';
-export type AlertCategory = 'operational' | 'financial' | 'human' | 'system' | 'compliance';
-export type AlertStatus = 'active' | 'acknowledged' | 'resolved' | 'ignored' | 'escalated';
+export type AlertSeverity = "low" | "medium" | "high" | "critical";
+export type AlertCategory =
+  | "operational"
+  | "financial"
+  | "human"
+  | "system"
+  | "compliance";
+export type AlertStatus =
+  | "active"
+  | "acknowledged"
+  | "resolved"
+  | "ignored"
+  | "escalated";
 
 export interface Alert {
   id: string;
@@ -113,7 +126,7 @@ export class AlertEngine {
     }
   ): Promise<Alert[]> {
     const all = Array.from(alertsStore.values()).filter(
-      (a) => a.restaurantId === restaurantId,
+      (a) => a.restaurantId === restaurantId
     );
 
     let filtered = all;
@@ -130,9 +143,7 @@ export class AlertEngine {
       filtered = filtered.filter((a) => filters.category!.includes(a.category));
     }
 
-    filtered.sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
-    );
+    filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     if (filters?.limit) {
       filtered = filtered.slice(0, filters.limit);
@@ -145,14 +156,17 @@ export class AlertEngine {
    * Buscar alertas ativos
    */
   async getActive(restaurantId: string): Promise<Alert[]> {
-    return this.list(restaurantId, { status: ['active', 'escalated'] });
+    return this.list(restaurantId, { status: ["active", "escalated"] });
   }
 
   /**
    * Buscar alertas críticos
    */
   async getCritical(restaurantId: string): Promise<Alert[]> {
-    return this.list(restaurantId, { severity: ['critical'], status: ['active', 'escalated'] });
+    return this.list(restaurantId, {
+      severity: ["critical"],
+      status: ["active", "escalated"],
+    });
   }
 
   /**
@@ -166,7 +180,10 @@ export class AlertEngine {
   ): Promise<void> {
     const existing = alertsStore.get(alertId);
     if (!existing) {
-      console.warn("[AlertEngine] updateStatus: alerta não encontrado", alertId);
+      console.warn(
+        "[AlertEngine] updateStatus: alerta não encontrado",
+        alertId
+      );
       return;
     }
 
@@ -230,15 +247,17 @@ export class AlertEngine {
   /**
    * Buscar histórico de alerta
    */
-  async getHistory(alertId: string): Promise<Array<{
-    action: string;
-    actorId?: string;
-    actorName?: string;
-    oldStatus?: string;
-    newStatus?: string;
-    notes?: string;
-    timestamp: Date;
-  }>> {
+  async getHistory(alertId: string): Promise<
+    Array<{
+      action: string;
+      actorId?: string;
+      actorName?: string;
+      oldStatus?: string;
+      newStatus?: string;
+      notes?: string;
+      timestamp: Date;
+    }>
+  > {
     const history = alertsHistoryStore.get(alertId) || [];
     return history.map((h) => ({
       ...h,
@@ -254,31 +273,93 @@ export class AlertEngine {
     eventType: string,
     eventData: Record<string, any>
   ): Promise<string | null> {
-    const alertMap: Record<string, { severity: AlertSeverity; title: string; message: string }> = {
+    const alertMap: Record<
+      string,
+      {
+        severity: AlertSeverity;
+        category?: AlertCategory;
+        title: string;
+        message: string;
+      }
+    > = {
       order_delayed: {
-        severity: 'high',
-        title: 'Pedido atrasado',
-        message: `Pedido #${eventData.orderId || 'N/A'} está atrasado há ${eventData.delayMinutes || 0} minutos`,
+        severity: "high",
+        category: "operational",
+        title: "Pedido atrasado",
+        message: `Pedido #${eventData.orderId || "N/A"} está atrasado há ${
+          eventData.delayMinutes || 0
+        } minutos`,
+      },
+      order_sla_breach: {
+        severity: "critical",
+        category: "operational",
+        title: "SLA de pedido violado",
+        message: `Pedido #${
+          eventData.orderId || "N/A"
+        } excedeu o tempo máximo de espera (${
+          eventData.delayMinutes ?? "—"
+        } min)`,
       },
       stock_low: {
-        severity: 'medium',
-        title: 'Estoque baixo',
-        message: `Produto ${eventData.productName || 'N/A'} está com estoque baixo`,
+        severity: "medium",
+        category: "operational",
+        title: "Estoque baixo",
+        message: `Produto ${
+          eventData.productName || "N/A"
+        } está com estoque baixo`,
+      },
+      stock_rupture_predicted: {
+        severity: "high",
+        category: "operational",
+        title: "Ruptura prevista",
+        message: `Ingrediente ${
+          eventData.ingredientName || eventData.productName || "N/A"
+        } pode esgotar em breve (projeção: ${eventData.hoursLeft ?? "—"} h)`,
+      },
+      margin_deviation: {
+        severity: "medium",
+        category: "financial",
+        title: "Desvio de margem",
+        message:
+          eventData.message ||
+          `Margem fora do esperado: ${eventData.productName ?? "produto"}`,
+      },
+      fiscal_delayed: {
+        severity: "high",
+        category: "compliance",
+        title: "Fiscal em atraso",
+        message:
+          eventData.message ||
+          "Fecho fiscal pendente. Regularize para evitar sanções.",
       },
       employee_absent: {
-        severity: 'critical',
-        title: 'Funcionário ausente',
-        message: `Funcionário ${eventData.employeeName || 'N/A'} não compareceu ao turno`,
+        severity: "critical",
+        category: "human",
+        title: "Funcionário ausente",
+        message: `Funcionário ${
+          eventData.employeeName || "N/A"
+        } não compareceu ao turno`,
       },
       kitchen_overloaded: {
-        severity: 'high',
-        title: 'Cozinha sobrecarregada',
-        message: 'Cozinha está sobrecarregada. Tempo médio de preparo aumentou significativamente',
+        severity: "high",
+        category: "operational",
+        title: "Cozinha sobrecarregada",
+        message:
+          "Cozinha está sobrecarregada. Tempo médio de preparo aumentou significativamente",
       },
       dining_overloaded: {
-        severity: 'medium',
-        title: 'Salão sobrecarregado',
-        message: 'Salão está sobrecarregado. Mesas aguardando atendimento',
+        severity: "medium",
+        category: "operational",
+        title: "Salão sobrecarregado",
+        message: "Salão está sobrecarregado. Mesas aguardando atendimento",
+      },
+      table_unattended: {
+        severity: "medium",
+        category: "operational",
+        title: "Mesa aguardando atendimento",
+        message: `Mesa ${eventData.tableNumber ?? "N/A"} aguardando há ${
+          eventData.minutesUnattended ?? 0
+        } min`,
       },
     };
 
@@ -290,6 +371,7 @@ export class AlertEngine {
         restaurantId,
         alertType: eventType,
         severity: alertConfig.severity,
+        category: alertConfig.category,
         title: alertConfig.title,
         message: alertConfig.message,
         details: eventData,

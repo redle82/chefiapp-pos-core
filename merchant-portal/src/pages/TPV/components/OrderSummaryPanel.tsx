@@ -5,8 +5,10 @@ import { Text } from "../../../ui/design-system/primitives/Text";
 
 interface OrderSummaryPanelProps {
   order: any;
-  onSplitBill: () => void;
-  onPay: () => void;
+  onSplitBill?: () => void;
+  onPay?: () => void;
+  /** FASE 1: quando presente, mostra "Confirmar pedido" em vez de Split/Pay. Ver FLUXO_DE_PEDIDO_OPERACIONAL.md */
+  onConfirm?: () => void;
   loading?: boolean;
 }
 
@@ -14,10 +16,11 @@ export const OrderSummaryPanel: React.FC<OrderSummaryPanelProps> = ({
   order,
   onSplitBill,
   onPay,
+  onConfirm,
   loading,
 }) => {
   const items = order?.items || [];
-  const total = order?.total_amount || 0;
+  const total = order?.total ?? order?.total_amount ?? 0;
 
   if (loading)
     return <div className="p-4 text-center">Carregando resumo...</div>;
@@ -73,20 +76,32 @@ export const OrderSummaryPanel: React.FC<OrderSummaryPanelProps> = ({
           </Text>
         </div>
         <div className="grid grid-cols-3 gap-3">
-          <Button
-            variant="secondary"
-            onClick={onSplitBill}
-            className="h-14 text-sm font-bold bg-zinc-800 hover:bg-zinc-700 border-zinc-700"
-          >
-            ✂️ Dividir
-          </Button>
-          <Button
-            variant="primary"
-            onClick={onPay}
-            className="col-span-2 h-14 text-xl font-bold bg-primary hover:bg-primary/90 text-black shadow-lg shadow-primary/20"
-          >
-            Pagamento
-          </Button>
+          {onConfirm ? (
+            <Button
+              variant="primary"
+              onClick={onConfirm}
+              className="col-span-3 h-14 text-xl font-bold bg-primary hover:bg-primary/90 text-black shadow-lg shadow-primary/20"
+            >
+              Confirmar pedido
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="secondary"
+                onClick={onSplitBill}
+                className="h-14 text-sm font-bold bg-zinc-800 hover:bg-zinc-700 border-zinc-700"
+              >
+                ✂️ Dividir
+              </Button>
+              <Button
+                variant="primary"
+                onClick={onPay}
+                className="col-span-2 h-14 text-xl font-bold bg-primary hover:bg-primary/90 text-black shadow-lg shadow-primary/20"
+              >
+                Pagamento
+              </Button>
+            </>
+          )}
         </div>
       </Card>
     </div>

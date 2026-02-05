@@ -12,12 +12,12 @@ Está fisicamente e logicamente no Docker Core (Postgres + Kernel + Execution En
 
 ## 1. Docker Core como Core Financeiro Soberano
 
-| Aspecto | Regra |
-|--------|--------|
-| **Localização** | O Financial Core está no Docker Core: Postgres (dados), Kernel (gatekeeper), Execution Engine (orquestração). |
-| **Fonte de verdade** | Estado financeiro, pedidos, totais, estado de pagamentos, reconciliação e decisões de bloqueio/SLA são **apenas** no Core. |
-| **Autoridade de execução** | O Core decide. Terminais (Web, AppStaff, KDS, TPV) obedecem e executam acções permitidas. |
-| **Proibição explícita** | Supabase, Firebase ou qualquer BaaS **NÃO** podem ser usados como Core. **NÃO** podem ser fonte de verdade. **PODEM** aparecer apenas como integrações futuras e subordinadas (explicitamente não autoritativas). |
+| Aspecto                    | Regra                                                                                                                                                                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Localização**            | O Financial Core está no Docker Core: Postgres (dados), Kernel (gatekeeper), Execution Engine (orquestração).                                                                                                     |
+| **Fonte de verdade**       | Estado financeiro, pedidos, totais, estado de pagamentos, reconciliação e decisões de bloqueio/SLA são **apenas** no Core.                                                                                        |
+| **Autoridade de execução** | O Core decide. Terminais (Web, AppStaff, KDS, TPV) obedecem e executam acções permitidas.                                                                                                                         |
+| **Proibição explícita**    | Supabase, Firebase ou qualquer BaaS **NÃO** podem ser usados como Core. **NÃO** podem ser fonte de verdade. **PODEM** aparecer apenas como integrações futuras e subordinadas (explicitamente não autoritativas). |
 
 ---
 
@@ -39,7 +39,27 @@ Está fisicamente e logicamente no Docker Core (Postgres + Kernel + Execution En
 
 ---
 
-## 4. Hierarquia de subordinação
+## 4. Proibição explícita — Supabase como domínio
+
+**Supabase é explicitamente proibido como:**
+
+- Fonte de verdade de domínio
+- Backend de leitura ou escrita de pedidos, menus, restaurantes, billing ou relatórios
+- Fallback operacional
+
+**Qualquer uso de Supabase fora de Auth temporário** (explicitamente marcado como Technical Debt até Core Auth existir) **é considerado violação arquitetónica.**
+
+Supabase **não pode:** ler/criar pedidos, ler/criar restaurantes, ler menu, gerar relatórios de domínio, decidir billing, decidir estado operacional.
+
+Supabase **pode** existir apenas como: (a) Auth temporário, marcado como dívida técnica e agendado para remoção quando Core Auth existir; (b) integração futura não autoritativa (ex.: export, analytics secundário, mirror read-only), sob novo contrato e nova auditoria — **não agora.**
+
+Nenhum reader/writer de domínio. Nenhuma decisão. Nenhum fallback silencioso.
+
+**Frase canónica:** Supabase is explicitly forbidden as a domain backend. Any future use requires a new contract, a new audit, and explicit approval.
+
+---
+
+## 5. Hierarquia de subordinação
 
 ```
 Docker Financial Core (Postgres + Kernel + Execution Engine)
@@ -55,7 +75,7 @@ Docker Financial Core (Postgres + Kernel + Execution Engine)
 
 ---
 
-## 5. Referências
+## 6. Referências
 
 - [CORE_CONTRACT_INDEX.md](./CORE_CONTRACT_INDEX.md) — Contrato #0 (Supreme Contract / Root of Authority).
 - [CORE_EXECUTION_TOPOLOGY.md](./CORE_EXECUTION_TOPOLOGY.md) — Quem executa o quê; Core decide, UI chama.
@@ -63,4 +83,4 @@ Docker Financial Core (Postgres + Kernel + Execution Engine)
 
 ---
 
-**Frase de sistema maduro:** *O Core financeiro manda. Docker é o soberano. Nenhum BaaS é autoridade.*
+**Frase de sistema maduro:** _O Core financeiro manda. Docker é o soberano. Nenhum BaaS é autoridade._

@@ -3,9 +3,10 @@
  *
  * Usado por Portal, TPV e KDS para que "loading" pareça o mesmo estado.
  * Alinhado a docs/product/GLOBAL_UI_STATE_MAP.md e DESIGN_SYSTEM_PERCEPTUAL_CONTRACT.
+ * P0.4: Se passar longDelay ms, mostra longMessage (evita "carrega para sempre" sem explicação).
  */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 export type GlobalLoadingLayout = "operational" | "portal";
 
@@ -17,6 +18,10 @@ export interface GlobalLoadingViewProps {
   /** fullscreen = ocupa viewport; inline = bloco no fluxo */
   variant?: "fullscreen" | "inline";
   style?: React.CSSProperties;
+  /** Após este ms, mostrar longMessage em vez de message (ex.: 5000) */
+  longDelay?: number;
+  /** Mensagem após longDelay (ex.: "A demorar mais do que o habitual. A verificar ligação...") */
+  longMessage?: string;
 }
 
 const OPERATIONAL = {
@@ -40,8 +45,18 @@ export const GlobalLoadingView: React.FC<GlobalLoadingViewProps> = ({
   layout = "operational",
   variant = "fullscreen",
   style,
+  longDelay,
+  longMessage,
 }) => {
   const theme = layout === "operational" ? OPERATIONAL : PORTAL;
+  const [showLong, setShowLong] = useState(false);
+  useEffect(() => {
+    if (longDelay == null || !longMessage) return;
+    const t = setTimeout(() => setShowLong(true), longDelay);
+    return () => clearTimeout(t);
+  }, [longDelay, longMessage]);
+
+  const displayMessage = showLong && longMessage ? longMessage : message;
 
   const content = (
     <p
@@ -56,7 +71,7 @@ export const GlobalLoadingView: React.FC<GlobalLoadingViewProps> = ({
             : undefined,
       }}
     >
-      {message}
+      {displayMessage}
     </p>
   );
 

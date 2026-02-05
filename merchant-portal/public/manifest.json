@@ -8,13 +8,13 @@
   "theme_color": "#121212",
   "icons": [
     {
-      "src": "/pwa-icon-192.png",
+      "src": "/Logo Chefiapp.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "/pwa-icon-512.png",
+      "src": "/Logo Chefiapp.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"

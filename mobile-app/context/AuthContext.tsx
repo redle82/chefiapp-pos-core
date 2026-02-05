@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/services/supabase';
 
+/** Minimal session type (Core auth; no @supabase/supabase-js). */
+export type Session = { user: { id: string; email?: string }; access_token?: string } | null;
+
 interface AuthContextType {
-    session: Session | null;
+    session: Session;
     loading: boolean;
     isAdmin: boolean;
     signOut: () => Promise<void>;
@@ -14,7 +16,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [session, setSession] = useState<Session | null>(null);
+    const [session, setSession] = useState<Session>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

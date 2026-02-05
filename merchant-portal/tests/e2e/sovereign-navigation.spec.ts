@@ -64,22 +64,23 @@ test.describe('🔒 Sovereign Navigation Flow', () => {
     expect(page.url()).toMatch(/\/(auth|login)/);
   });
 
-  test('FlowGate: Sem auth → /auth', async ({ page }) => {
+  test('FlowGate: Sem auth → redireciona para landing ou auth', async ({ page }) => {
     // Acessar /app diretamente sem autenticação
-    await page.goto('/app');
+    await page.goto('/app', { waitUntil: 'networkidle', timeout: 15000 });
 
-    // FlowGate deve redirecionar para /auth
-    await page.waitForURL(/\/(auth|login)/, { timeout: 5000 });
-    expect(page.url()).toMatch(/\/(auth|login)/);
+    // Contrato v2: VISITOR tem destino canónico "/"; FlowGate redireciona para / ou /auth
+    await page.waitForURL((u) => u.pathname === '/' || u.pathname === '/auth' || u.pathname.startsWith('/login'), { timeout: 8000 });
+    const path = new URL(page.url()).pathname;
+    expect(path === '/' || path === '/auth' || path.startsWith('/login')).toBe(true);
   });
 
   test('Auth page: formulário ou modo demo visível', async ({ page }) => {
     await page.goto('/auth');
     await page.waitForLoadState('domcontentloaded');
 
-    // Com Supabase: botão Entrar ou Criar conta. Sem Supabase: caixa demo (link "Voltar à landing" ou "modo demonstração")
+    // Com Supabase: botão Entrar ou Criar conta. Sem Supabase: caixa com link "Voltar à landing" ou "Ver demonstração"
     const hasForm = await page.getByRole('button', { name: /Entrar|Criar conta/ }).count() > 0;
-    const hasDemoBox = await page.getByRole('link', { name: /Voltar à landing|modo demonstração/ }).count() > 0;
+    const hasDemoBox = await page.getByRole('link', { name: /Voltar à landing|demonstração|Ver demonstração/ }).count() > 0;
     expect(hasForm || hasDemoBox).toBe(true);
   });
 

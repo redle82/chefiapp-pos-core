@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getTableClient } from '../infra/coreOrSupabaseRpc';
+import { getTableClient } from '../infra/coreRpc';
 
 /**
  * HEADLESS HEALTH CHECK (Core quando Docker — Fase 4)

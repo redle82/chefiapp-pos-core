@@ -5,17 +5,20 @@
  *
  * LOOP MÍNIMO: Evento → Tarefa → Saúde
  * - Detecta order_delayed e table_unattended
+ * - Detecta restaurante ocioso (RESTAURANT_IDLE) — CONTRATO_DE_ATIVIDADE_OPERACIONAL
  * - Gera tarefas via EventTaskGenerator
  * - Funciona em DEV_STABLE_MODE com fallbacks seguros
  */
 
 import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
-import { readActiveOrders } from "../../core-boundary/readers/OrderReader";
+import {
+  getLastOrderCreatedAt,
+  readActiveOrders,
+} from "../../core-boundary/readers/OrderReader";
+import { alertEngine } from "../alerts/AlertEngine";
+import { getAlertThresholds } from "../alerts/alertThresholds";
+import { CashRegisterEngine } from "../tpv/CashRegister";
 import { eventTaskGenerator } from "./EventTaskGenerator";
-
-const CHECK_INTERVAL_MS = 60000; // 1 minuto
-const ORDER_DELAY_THRESHOLD_MINUTES = 15; // Pedido atrasado após 15 min
-const TABLE_UNATTENDED_THRESHOLD_MINUTES = 10; // Mesa sem atendimento após 10 min
 
 interface DetectedEvent {
   type: "order_delayed" | "table_unattended";
@@ -29,21 +32,24 @@ interface DetectedEvent {
  */
 export class EventMonitor {
   private intervalId: NodeJS.Timeout | null = null;
+  private currentRestaurantId: string | null = null;
   private lastCheckedOrders: Set<string> = new Set();
   private lastCheckedTables: Set<number> = new Set();
 
   /**
-   * Iniciar monitoramento contínuo
+   * Iniciar monitoramento contínuo (idempotente: se já a correr para o mesmo restaurantId, não relançar).
    */
   start(restaurantId: string): void {
+    if (this.intervalId && this.currentRestaurantId === restaurantId) {
+      return;
+    }
     if (this.intervalId) {
       this.stop();
     }
 
-    console.log(
-      "[EventMonitor] Iniciando monitoramento para restaurante",
-      restaurantId,
-    );
+    this.currentRestaurantId = restaurantId;
+
+    const thresholds = getAlertThresholds(restaurantId);
 
     // Primeira verificação imediata
     this.checkEvents(restaurantId).catch((error) => {
@@ -55,7 +61,7 @@ export class EventMonitor {
       this.checkEvents(restaurantId).catch((error) => {
         console.error("[EventMonitor] Erro na verificação periódica:", error);
       });
-    }, CHECK_INTERVAL_MS);
+    }, thresholds.event_check_interval_ms);
   }
 
   /**
@@ -65,7 +71,7 @@ export class EventMonitor {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
-      console.log("[EventMonitor] Monitoramento parado");
+      this.currentRestaurantId = null;
     }
   }
 
@@ -74,29 +80,89 @@ export class EventMonitor {
    */
   async checkEvents(restaurantId: string): Promise<DetectedEvent[]> {
     const events: DetectedEvent[] = [];
+    const thresholds = getAlertThresholds(restaurantId);
 
     try {
       // 1. Verificar pedidos atrasados
-      const delayedEvents = await this.checkDelayedOrders(restaurantId);
+      const delayedEvents = await this.checkDelayedOrders(
+        restaurantId,
+        thresholds.order_delayed_minutes
+      );
       events.push(...delayedEvents);
 
       // 2. Verificar mesas sem atendimento
-      const unattendedEvents = await this.checkUnattendedTables(restaurantId);
+      const unattendedEvents = await this.checkUnattendedTables(
+        restaurantId,
+        thresholds.table_unattended_minutes
+      );
       events.push(...unattendedEvents);
+
+      // 2b. Sensor de ociosidade (CONTRATO_DE_ATIVIDADE_OPERACIONAL): turno aberto + zero pedidos ativos + tempo desde último pedido >= X → RESTAURANT_IDLE
+      await this.checkIdle(restaurantId);
 
       // 3. Gerar tarefas apenas quando não existir tarefa OPEN para o mesmo order/evento (idempotência)
       let generated = 0;
       for (const event of events) {
         const created = await this.generateTaskFromEventIfNeeded(
           restaurantId,
-          event,
+          event
         );
         if (created) generated++;
       }
 
+      // 4. Criar alertas reais para eventos detectados (FASE 5 triggers)
+      for (const event of events) {
+        if (event.type === "order_delayed") {
+          await alertEngine.createFromEvent(restaurantId, "order_delayed", {
+            orderId: event.data.orderId,
+            orderNumber: event.data.orderNumber,
+            delayMinutes: event.data.delayMinutes,
+            entityType: "order",
+            entityId: event.data.orderId,
+          });
+          if (event.data.delayMinutes >= thresholds.order_sla_breach_minutes) {
+            await alertEngine.createFromEvent(
+              restaurantId,
+              "order_sla_breach",
+              {
+                orderId: event.data.orderId,
+                orderNumber: event.data.orderNumber,
+                delayMinutes: event.data.delayMinutes,
+                entityType: "order",
+                entityId: event.data.orderId,
+              }
+            );
+          }
+        } else if (event.type === "table_unattended") {
+          await alertEngine.createFromEvent(restaurantId, "table_unattended", {
+            tableId: event.data.tableId,
+            tableNumber: event.data.tableNumber,
+            orderId: event.data.orderId,
+            minutesUnattended: event.data.minutesUnattended,
+            entityType: "table",
+            entityId: event.data.tableId,
+          });
+        }
+      }
+
+      // 5. Salão sobrecarregado: quando 2+ mesas sem atendimento (dining_overloaded)
+      const unattendedCount = events.filter(
+        (e) => e.type === "table_unattended"
+      ).length;
+      if (unattendedCount >= 2) {
+        const unattendedTables = events
+          .filter((e) => e.type === "table_unattended")
+          .map((e) => e.data.tableNumber);
+        await alertEngine.createFromEvent(restaurantId, "dining_overloaded", {
+          count: unattendedCount,
+          tableNumbers: unattendedTables,
+          entityType: "dining",
+        });
+      }
+
       if (events.length > 0) {
         console.log(
-          `[EventMonitor] ✅ ${events.length} evento(s) detectado(s), ${generated} tarefa(s) criada(s) (idempotente)`,
+          `[EventMonitor] ✅ ${events.length} evento(s) detectado(s), ${generated} tarefa(s) criada(s) (idempotente)`
         );
       }
     } catch (error) {
@@ -111,6 +177,7 @@ export class EventMonitor {
    */
   private async checkDelayedOrders(
     restaurantId: string,
+    orderDelayedThresholdMinutes: number
   ): Promise<DetectedEvent[]> {
     const events: DetectedEvent[] = [];
 
@@ -130,7 +197,7 @@ export class EventMonitor {
 
         // Se passou do threshold e ainda não detectamos este pedido
         if (
-          elapsedMinutes > ORDER_DELAY_THRESHOLD_MINUTES &&
+          elapsedMinutes > orderDelayedThresholdMinutes &&
           !this.lastCheckedOrders.has(order.id)
         ) {
           events.push({
@@ -157,7 +224,7 @@ export class EventMonitor {
     } catch (error) {
       console.error(
         "[EventMonitor] Erro ao verificar pedidos atrasados:",
-        error,
+        error
       );
     }
 
@@ -169,6 +236,7 @@ export class EventMonitor {
    */
   private async checkUnattendedTables(
     restaurantId: string,
+    tableUnattendedThresholdMinutes: number
   ): Promise<DetectedEvent[]> {
     const events: DetectedEvent[] = [];
 
@@ -209,7 +277,7 @@ export class EventMonitor {
 
         // Se passou do threshold e ainda não detectamos esta mesa
         if (
-          elapsedMinutes > TABLE_UNATTENDED_THRESHOLD_MINUTES &&
+          elapsedMinutes > tableUnattendedThresholdMinutes &&
           !this.lastCheckedTables.has(table.number)
         ) {
           events.push({
@@ -241,12 +309,87 @@ export class EventMonitor {
   }
 
   /**
+   * Sensor de ociosidade (CONTRATO_DE_ATIVIDADE_OPERACIONAL).
+   * IF turno_aberto AND pedidos_ativos == 0 AND minutos_desde_ultimo_pedido >= X THEN emit RESTAURANT_IDLE.
+   * Idempotência: no máximo uma tarefa OPEN com source_event = restaurant_idle por restaurante.
+   */
+  private async checkIdle(restaurantId: string): Promise<void> {
+    const thresholds = getAlertThresholds(restaurantId);
+    const idleMinutes = thresholds.restaurant_idle_minutes ?? 15;
+
+    try {
+      // 1. Turno tem de estar aberto
+      const register = await CashRegisterEngine.getOpenCashRegister(
+        restaurantId
+      );
+      if (!register) return;
+
+      // 2. Zero pedidos ativos
+      const activeOrders = await readActiveOrders(restaurantId);
+      if (activeOrders.length > 0) return;
+
+      // 3. Tempo desde último pedido >= idleMinutes
+      const lastOrderCreatedAt = await getLastOrderCreatedAt(restaurantId);
+      const now = Date.now();
+      const minutesSinceLastOrder = lastOrderCreatedAt
+        ? (now - new Date(lastOrderCreatedAt).getTime()) / (1000 * 60)
+        : Infinity;
+      if (minutesSinceLastOrder < idleMinutes) return;
+
+      // 4. Idempotência: já existe tarefa OPEN restaurant_idle para este restaurante?
+      const hasExisting = await this.hasExistingOpenTaskForRestaurantIdle(
+        restaurantId
+      );
+      if (hasExisting) return;
+
+      const taskId = await eventTaskGenerator.generateFromEvent(
+        restaurantId,
+        "restaurant_idle",
+        {
+          minutesSinceLastOrder: Math.floor(minutesSinceLastOrder),
+          shiftOpenAt: register.openedAt?.toISOString?.() ?? undefined,
+        }
+      );
+      if (taskId) {
+        console.log(
+          `[EventMonitor] ✅ RESTAURANT_IDLE: tarefa ${taskId} criada (modo interno)`
+        );
+      }
+    } catch (error) {
+      console.error("[EventMonitor] Erro ao verificar ociosidade:", error);
+    }
+  }
+
+  /**
+   * Verifica se já existe tarefa OPEN com source_event = restaurant_idle para o restaurante (idempotência).
+   */
+  private async hasExistingOpenTaskForRestaurantIdle(
+    restaurantId: string
+  ): Promise<boolean> {
+    try {
+      const { data, error } = await dockerCoreClient
+        .from("gm_tasks")
+        .select("id")
+        .eq("restaurant_id", restaurantId)
+        .eq("source_event", "restaurant_idle")
+        .eq("status", "OPEN")
+        .limit(1)
+        .maybeSingle();
+
+      if (error) return false;
+      return !!data;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Verifica se já existe tarefa OPEN para o mesmo pedido e tipo de evento (idempotência).
    */
   private async hasExistingOpenTaskForOrder(
     restaurantId: string,
     sourceEvent: string,
-    orderId: string,
+    orderId: string
   ): Promise<boolean> {
     try {
       const { data, error } = await dockerCoreClient
@@ -271,14 +414,14 @@ export class EventMonitor {
    */
   private async generateTaskFromEventIfNeeded(
     restaurantId: string,
-    event: DetectedEvent,
+    event: DetectedEvent
   ): Promise<boolean> {
     const orderId = event.data?.orderId;
     if (orderId) {
       const exists = await this.hasExistingOpenTaskForOrder(
         restaurantId,
         event.type,
-        orderId,
+        orderId
       );
       if (exists) return false;
     }
@@ -287,19 +430,19 @@ export class EventMonitor {
       const taskId = await eventTaskGenerator.generateFromEvent(
         event.restaurantId,
         event.type,
-        event.data,
+        event.data
       );
 
       if (taskId) {
         console.log(
-          `[EventMonitor] ✅ Tarefa gerada: ${taskId} para evento ${event.type}`,
+          `[EventMonitor] ✅ Tarefa gerada: ${taskId} para evento ${event.type}`
         );
         return true;
       }
     } catch (error) {
       console.error(
         `[EventMonitor] Erro ao gerar tarefa para evento ${event.type}:`,
-        error,
+        error
       );
     }
     return false;

@@ -4,7 +4,22 @@ Documento oficial: por que parte do escopo não estava na arquitetura e roadmap 
 
 ---
 
-## Parte 1 — Por que isso não estava na arquitetura (e por que não foi esquecimento)
+## Índice
+
+- [Parte 1 — Por que não estava na arquitetura](#parte-1--por-que-não-estava-na-arquitetura)
+- [Parte 2 — Roadmap em fases](#parte-2--roadmap-em-fases)
+  - [FASE 0 — Fundação (FECHADA)](#fase-0--fundação-fechada)
+- [FASE 1 — Bootstrap do Restaurante (DONO ONLY)](#fase-1--bootstrap-do-restaurante-dono-only)
+- [FASE 2 — Menu, Inventário e Estoque (TUDO LIGADO)](#fase-2--menu-inventário-e-estoque-tudo-ligado)
+- [FASE 3 — Pessoas e Tarefas (APP STAFF, NÃO CORE)](#fase-3--pessoas-e-tarefas-app-staff-não-core)
+- [FASE 4 — Presença Digital (ONDA DE VALOR)](#fase-4--presença-digital-onda-de-valor)
+- [FASE 5 — Consolidação (SÓ DEPOIS DO €79)](#fase-5--consolidação-só-depois-do-79)
+- [Resumo final](#resumo-final)
+- [Ordem de execução](#ordem-de-execução)
+
+---
+
+## Parte 1 — Por que não estava na arquitetura
 
 ### Verdade curta
 
@@ -35,7 +50,7 @@ Estes blocos não são fundação técnica, são fundação de negócio. Como n�
 
 - Não foi "esquecer features".
 - Não foi "arquitetura incompleta".
-- Foi não escrever explicitamente: *"Neste momento, apenas o Dono existe. Gerente e Staff não fazem parte do bootstrap. Presença digital entra numa onda posterior de valor."*
+- Foi não escrever explicitamente: _"Neste momento, apenas o Dono existe. Gerente e Staff não fazem parte do bootstrap. Presença digital entra numa onda posterior de valor."_
 
 Isso está agora explícito neste documento. É sinal de maturidade do produto.
 
@@ -44,6 +59,15 @@ Isso está agora explícito neste documento. É sinal de maturidade do produto.
 ## Parte 2 — Roadmap em fases
 
 Cada fase tem: objetivo, princípio, passos um a um, critério de conclusão.
+
+```mermaid
+flowchart LR
+  F0[Fase_0_Fundacao] --> F1[Fase_1_Bootstrap]
+  F1 --> F2[Fase_2_Menu_Inventario]
+  F2 --> F3[Fase_3_Pessoas_Tarefas]
+  F3 --> F4[Fase_4_Presenca_Digital]
+  F4 --> F5[Fase_5_Consolidacao]
+```
 
 ---
 
@@ -154,7 +178,9 @@ Agora está nomeado. Agora há caminho. Agora dá para executar sem ansiedade.
 1. Executar FASE 1 usando a checklist técnica (`docs/implementation/FASE_1_BOOTSTRAP_RESTAURANTE_CHECKLIST.md`).
 2. Executar FASE 2 usando a checklist técnica (`docs/implementation/FASE_2_MENU_INVENTARIO_ESTOQUE_CHECKLIST.md`).
 3. Executar FASE 3 usando a checklist técnica (`docs/implementation/FASE_3_PESSOAS_TAREFAS_CHECKLIST.md`).
-4. Depois Presença Digital (FASE 4).
-5. Por fim Consolidação (FASE 5).
+4. Executar FASE 4 usando a checklist técnica (`docs/implementation/FASE_4_PRESENCA_DIGITAL_CHECKLIST.md`).
+5. Executar FASE 5 usando a checklist técnica (`docs/implementation/FASE_5_CONSOLIDACAO_CHECKLIST.md`) — condicionada a pós-€79.
+
+**Índice de todas as checklists e status:** [docs/implementation/INDEX.md](implementation/INDEX.md).
 
 Este documento é a referência única do roadmap pós-fundação.

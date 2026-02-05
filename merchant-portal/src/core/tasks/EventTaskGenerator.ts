@@ -9,6 +9,7 @@
  */
 
 import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
+import { getAlertThresholds } from "../alerts/alertThresholds";
 
 export interface TaskRule {
   id: string;
@@ -55,7 +56,7 @@ export class EventTaskGenerator {
   async generateFromEvent(
     restaurantId: string,
     eventType: string,
-    eventData: Record<string, any>,
+    eventData: Record<string, any>
   ): Promise<string | null> {
     try {
       const title = this.getDefaultTitle(eventType, eventData);
@@ -74,12 +75,14 @@ export class EventTaskGenerator {
         critical: "CRITICA",
       };
 
-      // Determinar task_type baseado no evento
+      // Determinar task_type baseado no evento (CONTRATO_DE_ATIVIDADE_OPERACIONAL: restaurant_idle)
       const taskTypeMap: Record<string, string> = {
         order_delayed: "ATRASO_ITEM",
         table_unattended: "PEDIDO_ESQUECIDO",
         stock_low: "ESTOQUE_CRITICO",
         employee_absent: "EQUIPAMENTO_CHECK",
+        restaurant_idle: "MODO_INTERNO",
+        order_created: "PEDIDO_NOVO",
       };
 
       // Criar tarefa diretamente em gm_tasks
@@ -113,7 +116,7 @@ export class EventTaskGenerator {
       }
 
       console.log(
-        `[EventTaskGenerator] ✅ Tarefa criada: ${data.id} para evento ${eventType}`,
+        `[EventTaskGenerator] ✅ Tarefa criada: ${data.id} para evento ${eventType}`
       );
       return data.id;
     } catch (error) {
@@ -123,14 +126,15 @@ export class EventTaskGenerator {
   }
 
   /**
-   * Criar regras padrão
+   * Criar regras padrão (limiares conforme ALERT_THRESHOLDS_CONTRACT)
    */
   async createDefaultRules(restaurantId: string): Promise<void> {
+    const thresholds = getAlertThresholds(restaurantId);
     const defaultRules: Omit<TaskRule, "id">[] = [
       {
         restaurantId,
         eventType: "order_delayed",
-        condition: { delay_minutes: { $gt: 15 } },
+        condition: { delay_minutes: { $gt: thresholds.order_delayed_minutes } },
         taskTemplate: {
           title: "Pedido atrasado",
           description: "Verificar pedido atrasado e tomar ação",
@@ -169,10 +173,12 @@ export class EventTaskGenerator {
       {
         restaurantId,
         eventType: "table_unattended",
-        condition: { minutes_unattended: { $gt: 10 } },
+        condition: {
+          minutes_unattended: { $gt: thresholds.table_unattended_minutes },
+        },
         taskTemplate: {
           title: "Mesa sem atendimento",
-          description: "Mesa aguardando atendimento há mais de 10 minutos",
+          description: `Mesa aguardando atendimento há mais de ${thresholds.table_unattended_minutes} minutos`,
           assignedRole: "employee",
           priority: "high",
           dueAt: "0 minutes",
@@ -195,7 +201,7 @@ export class EventTaskGenerator {
    */
   async listRules(
     restaurantId: string,
-    activeOnly: boolean = true,
+    activeOnly: boolean = true
   ): Promise<TaskRule[]> {
     let query = dockerCoreClient
       .from("task_rules")
@@ -216,7 +222,7 @@ export class EventTaskGenerator {
 
   private getDefaultTitle(
     eventType: string,
-    eventData: Record<string, any>,
+    eventData: Record<string, any>
   ): string {
     const titles: Record<string, string> = {
       order_delayed: `Pedido atrasado #${eventData.orderId || "N/A"}`,
@@ -227,6 +233,10 @@ export class EventTaskGenerator {
       table_unattended: `Mesa ${
         eventData.tableNumber || "N/A"
       } sem atendimento`,
+      restaurant_idle: "Restaurante em modo interno — checklist e organização",
+      order_created: `Preparar pedido #${
+        eventData.orderNumber ?? eventData.orderId ?? "N/A"
+      }`,
     };
 
     return titles[eventType] || `Tarefa gerada por ${eventType}`;
@@ -234,7 +244,7 @@ export class EventTaskGenerator {
 
   private getDefaultDescription(
     eventType: string,
-    eventData: Record<string, any>,
+    eventData: Record<string, any>
   ): string {
     const descriptions: Record<string, string> = {
       order_delayed: `Pedido #${eventData.orderId} está atrasado. Verificar status e tomar ação.`,
@@ -247,6 +257,12 @@ export class EventTaskGenerator {
       } está aguardando atendimento há ${
         eventData.minutesUnattended || "N/A"
       } minutos.`,
+      restaurant_idle: `Modo interno: sem pedidos ativos há ${
+        eventData.minutesSinceLastOrder ?? "?"
+      } min. Aproveitar para checklist do turno, limpeza, organização ou preparação.`,
+      order_created: `Novo pedido criado. Mesa ${
+        eventData.tableNumber ?? "—"
+      }. Preparar e entregar.`,
     };
 
     return (
@@ -256,13 +272,15 @@ export class EventTaskGenerator {
   }
 
   private getDefaultPriority(
-    eventType: string,
+    eventType: string
   ): "low" | "normal" | "high" | "critical" {
     const priorities: Record<string, "low" | "normal" | "high" | "critical"> = {
       order_delayed: "high",
       stock_low: "high",
       employee_absent: "critical",
       table_unattended: "high",
+      restaurant_idle: "normal",
+      order_created: "high",
     };
 
     return priorities[eventType] || "normal";
@@ -275,9 +293,11 @@ export class EventTaskGenerator {
       stock_low: 2 * 60 * 60 * 1000, // 2 horas
       employee_absent: 0, // Imediato
       table_unattended: 0, // Imediato
+      restaurant_idle: 60 * 60 * 1000, // 1 hora (modo interno)
+      order_created: 15 * 60 * 1000, // 15 min (preparar pedido)
     };
 
-    const delay = dueAtMap[eventType] || 60 * 60 * 1000; // 1 hora padrão
+    const delay = dueAtMap[eventType] ?? 60 * 60 * 1000; // 1 hora padrão
     return new Date(now.getTime() + delay);
   }
 

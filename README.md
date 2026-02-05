@@ -57,6 +57,8 @@ ChefIApp is not just a POS. It is an **Operational Nervous System** that:
 
 **📋 Strategy:** [`docs/strategy/POSITIONING.md`](docs/strategy/POSITIONING.md) | [`docs/strategy/SCOPE_FREEZE.md`](docs/strategy/SCOPE_FREEZE.md) | [`docs/audit/EXECUTABLE_ROADMAP.md`](docs/audit/EXECUTABLE_ROADMAP.md)
 
+**ChefIApp OS – Como funciona de verdade:** [`docs/strategy/CHEFIAPP_OS_COMO_FUNCIONA.md`](docs/strategy/CHEFIAPP_OS_COMO_FUNCIONA.md) — narrativa (Docker = mundo, Kernel = leis, Core Finance = coração, TPV/KDS = braços, ERO = consciência). Links: [ERO_CANON](docs/ERO_CANON.md), [BOOTSTRAP_CANON](docs/boot/BOOTSTRAP_CANON.md), [checklist operacional](docs/strategy/CHECKLIST_OPERACIONAL_TPV_KDS_CLIENTE.md), [CLI](docs/strategy/CLI_CHEFIAPP_OS.md).
+
 **📚 Technical Documentation:** Organized in layers — see [`docs/DOC_INDEX.md`](docs/DOC_INDEX.md)
 **📍 Current Status:** See [`docs/ONDE_ESTAMOS_AGORA.md`](docs/ONDE_ESTAMOS_AGORA.md) for where we are now
 

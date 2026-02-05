@@ -5,9 +5,9 @@
 
 set -e
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MIGRATIONS="${REPO_ROOT}/supabase/migrations"
+MIGRATIONS="${REPO_ROOT}/legacy_supabase/migrations"
 
-echo "=== Lineage check: escritores de tabelas críticas (supabase/migrations) ==="
+echo "=== Lineage check: escritores de tabelas críticas (legacy_supabase/migrations) ==="
 echo "Compare com docs/architecture/DATA_LINEAGE.md §3."
 echo ""
 

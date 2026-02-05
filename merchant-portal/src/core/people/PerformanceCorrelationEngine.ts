@@ -1,13 +1,14 @@
 /**
  * PerformanceCorrelationEngine - Engine de Correlação Tempo ↔ Desempenho
- * 
+ *
  * Analisa correlação entre horas trabalhadas e desempenho
  */
 
-import { supabase } from '../supabase';
-import { timeTrackingEngine } from './TimeTrackingEngine';
-import { taskFiltering } from '../tasks/TaskFiltering';
-import { employeeProfileEngine } from './EmployeeProfileEngine';
+// LEGACY / LAB — blocked in Docker mode via core/supabase shim
+import { supabase } from "../supabase";
+import { taskFiltering } from "../tasks/TaskFiltering";
+import { employeeProfileEngine } from "./EmployeeProfileEngine";
+import { timeTrackingEngine } from "./TimeTrackingEngine";
 
 export interface PerformanceCorrelation {
   id: string;
@@ -52,7 +53,7 @@ export class PerformanceCorrelationEngine {
     // Buscar métricas de desempenho (tarefas)
     const tasks = await taskFiltering.getTasksForRole(
       restaurantId,
-      'employee',
+      "employee",
       employeeId,
       {
         dueAfter: periodStart,
@@ -60,20 +61,24 @@ export class PerformanceCorrelationEngine {
       }
     );
 
-    const completedTasks = tasks.filter(t => t.status === 'completed');
-    const onTimeTasks = completedTasks.filter(t => {
+    const completedTasks = tasks.filter((t) => t.status === "completed");
+    const onTimeTasks = completedTasks.filter((t) => {
       if (!t.completedAt) return false;
       return t.completedAt <= t.dueAt;
     });
 
     // Calcular tempo médio de tarefa
-    const tasksWithTime = completedTasks.filter(t => t.startedAt && t.completedAt);
-    const averageTaskTime = tasksWithTime.length > 0
-      ? tasksWithTime.reduce((sum, t) => {
-          const duration = (t.completedAt!.getTime() - t.startedAt!.getTime()) / (1000 * 60);
-          return sum + duration;
-        }, 0) / tasksWithTime.length
-      : 0;
+    const tasksWithTime = completedTasks.filter(
+      (t) => t.startedAt && t.completedAt
+    );
+    const averageTaskTime =
+      tasksWithTime.length > 0
+        ? tasksWithTime.reduce((sum, t) => {
+            const duration =
+              (t.completedAt!.getTime() - t.startedAt!.getTime()) / (1000 * 60);
+            return sum + duration;
+          }, 0) / tasksWithTime.length
+        : 0;
 
     // Buscar perfil para quality score
     const profile = await employeeProfileEngine.get(employeeId, restaurantId);
@@ -87,7 +92,10 @@ export class PerformanceCorrelationEngine {
     if (timeMetrics.totalHours > 0 && completedTasks.length > 0) {
       // Normalizar métricas
       const hoursPerTask = timeMetrics.totalHours / completedTasks.length;
-      const onTimeRate = completedTasks.length > 0 ? onTimeTasks.length / completedTasks.length : 0;
+      const onTimeRate =
+        completedTasks.length > 0
+          ? onTimeTasks.length / completedTasks.length
+          : 0;
 
       // Correlação simples: se mais horas = mais tarefas completas e no prazo, correlação positiva
       // Se mais horas = mais atrasos, correlação negativa
@@ -111,41 +119,46 @@ export class PerformanceCorrelationEngine {
 
     // Gerar insights
     const insights: Record<string, any> = {
-      recommendation: correlationScore < -0.3
-        ? 'Reduzir carga de trabalho - fadiga detectada'
-        : correlationScore > 0.3
-        ? 'Aumentar responsabilidades - bom desempenho'
-        : 'Manter carga atual',
-      optimalHours: timeMetrics.totalHours / daysInPeriod < 6
-        ? 'Aumentar horas para melhorar produtividade'
-        : timeMetrics.totalHours / daysInPeriod > 10
-        ? 'Reduzir horas para evitar fadiga'
-        : 'Horas adequadas',
+      recommendation:
+        correlationScore < -0.3
+          ? "Reduzir carga de trabalho - fadiga detectada"
+          : correlationScore > 0.3
+          ? "Aumentar responsabilidades - bom desempenho"
+          : "Manter carga atual",
+      optimalHours:
+        timeMetrics.totalHours / daysInPeriod < 6
+          ? "Aumentar horas para melhorar produtividade"
+          : timeMetrics.totalHours / daysInPeriod > 10
+          ? "Reduzir horas para evitar fadiga"
+          : "Horas adequadas",
     };
 
     // Salvar correlação
     const { data, error } = await supabase
-      .from('performance_correlations')
-      .upsert({
-        employee_id: employeeId,
-        restaurant_id: restaurantId,
-        period_start: periodStart.toISOString().split('T')[0],
-        period_end: periodEnd.toISOString().split('T')[0],
-        total_hours_worked: timeMetrics.totalHours,
-        average_hours_per_day: timeMetrics.totalHours / daysInPeriod,
-        overtime_hours: timeMetrics.overtimeHours,
-        late_arrivals: timeMetrics.lateArrivals,
-        absences: timeMetrics.absences,
-        tasks_completed: completedTasks.length,
-        tasks_on_time: onTimeTasks.length,
-        average_task_time: averageTaskTime,
-        quality_score: qualityScore,
-        correlation_score: correlationScore,
-        insights: insights,
-      }, {
-        onConflict: 'employee_id,period_start,period_end',
-      })
-      .select('*')
+      .from("performance_correlations")
+      .upsert(
+        {
+          employee_id: employeeId,
+          restaurant_id: restaurantId,
+          period_start: periodStart.toISOString().split("T")[0],
+          period_end: periodEnd.toISOString().split("T")[0],
+          total_hours_worked: timeMetrics.totalHours,
+          average_hours_per_day: timeMetrics.totalHours / daysInPeriod,
+          overtime_hours: timeMetrics.overtimeHours,
+          late_arrivals: timeMetrics.lateArrivals,
+          absences: timeMetrics.absences,
+          tasks_completed: completedTasks.length,
+          tasks_on_time: onTimeTasks.length,
+          average_task_time: averageTaskTime,
+          quality_score: qualityScore,
+          correlation_score: correlationScore,
+          insights: insights,
+        },
+        {
+          onConflict: "employee_id,period_start,period_end",
+        }
+      )
+      .select("*")
       .single();
 
     if (error) throw error;
@@ -158,10 +171,10 @@ export class PerformanceCorrelationEngine {
    */
   async listByEmployee(employeeId: string): Promise<PerformanceCorrelation[]> {
     const { data, error } = await supabase
-      .from('performance_correlations')
-      .select('*')
-      .eq('employee_id', employeeId)
-      .order('period_start', { ascending: false });
+      .from("performance_correlations")
+      .select("*")
+      .eq("employee_id", employeeId)
+      .order("period_start", { ascending: false });
 
     if (error) throw error;
     return (data || []).map(this.mapToCorrelation);

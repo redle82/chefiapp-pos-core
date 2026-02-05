@@ -6,25 +6,25 @@
  * Core nunca processa pagamento; credenciais = referência cifrada.
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   colors,
-  space,
-  spacing,
+  fontFamily,
   fontSize,
   fontWeight,
-  fontFamily,
   radius,
+  space,
+  spacing,
   tapTarget,
 } from "@chefiapp/core-design-system";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import {
   getBillingConfig,
   setBillingConfig,
   type BillingConfigRow,
 } from "../../core/billing/coreBillingApi";
-import { getBackendType, BackendType } from "../../core/infra/backendAdapter";
+import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
 
 const GATEWAYS = [
   { id: "stripe" as const, label: "Stripe", region: "Global" },
@@ -49,14 +49,23 @@ export function BillingConfigPanel() {
   const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "ok" | "err">("idle");
+  const [configLoaded, setConfigLoaded] = useState<
+    BillingConfigRow | null | "pending"
+  >("pending");
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "ok" | "err"
+  >("idle");
 
   const loadConfig = useCallback(async () => {
-    if (!restaurantId || !isCore) return;
+    if (!restaurantId || !isCore) {
+      setConfigLoaded(null);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const config = await getBillingConfig(restaurantId);
+      setConfigLoaded(config ?? null);
       if (config) {
         setProvider(config.provider);
         setCurrency(config.currency);
@@ -64,6 +73,7 @@ export function BillingConfigPanel() {
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+      setConfigLoaded(null);
     } finally {
       setLoading(false);
     }
@@ -126,8 +136,8 @@ export function BillingConfigPanel() {
           color: colors.textSecondary,
         }}
       >
-        Subscrição ChefIApp (SaaS) e gateways de pagamento do restaurante (clientes finais).
-        O Core valida e reconcilia; não processa dinheiro.
+        Subscrição ChefIApp (SaaS) e gateways de pagamento do restaurante
+        (clientes finais). O Core valida e reconcilia; não processa dinheiro.
       </p>
 
       {/* SaaS: link para /app/billing */}
@@ -205,8 +215,25 @@ export function BillingConfigPanel() {
             color: colors.textSecondary,
           }}
         >
-          Gateway inactivo → TPV bloqueia cobrança. O restaurante escolhe; o Core valida e reconcilia.
+          Gateway inactivo → TPV bloqueia cobrança. O restaurante escolhe; o
+          Core valida e reconcilia.
         </p>
+        {!loading &&
+          configLoaded === null &&
+          !error &&
+          isCore &&
+          restaurantId && (
+            <p
+              style={{
+                margin: "0 0 " + space.md + "px 0",
+                fontSize: `${fontSize.sm}px`,
+                color: colors.textMuted,
+                fontStyle: "italic",
+              }}
+            >
+              Configuração de faturação ainda não definida.
+            </p>
+          )}
 
         <div style={{ marginBottom: space.md }}>
           <label
@@ -310,7 +337,14 @@ export function BillingConfigPanel() {
           />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: space.sm, marginBottom: space.md }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: space.sm,
+            marginBottom: space.md,
+          }}
+        >
           <input
             type="checkbox"
             id="billing-enabled"
@@ -330,7 +364,9 @@ export function BillingConfigPanel() {
           </label>
         </div>
         {isCore && restaurantId && (
-          <div style={{ display: "flex", alignItems: "center", gap: spacing[3] }}>
+          <div
+            style={{ display: "flex", alignItems: "center", gap: spacing[3] }}
+          >
             <button
               type="button"
               onClick={handleSave}
@@ -344,13 +380,24 @@ export function BillingConfigPanel() {
                 backgroundColor: colors.accent,
                 border: "none",
                 borderRadius: radius.md,
-                cursor: loading || saveStatus === "saving" ? "not-allowed" : "pointer",
+                cursor:
+                  loading || saveStatus === "saving"
+                    ? "not-allowed"
+                    : "pointer",
               }}
             >
-              {saveStatus === "saving" ? "A guardar…" : saveStatus === "ok" ? "Guardado" : "Guardar"}
+              {saveStatus === "saving"
+                ? "A guardar…"
+                : saveStatus === "ok"
+                ? "Guardado"
+                : "Guardar"}
             </button>
             {error && (
-              <span style={{ fontSize: `${fontSize.sm}px`, color: colors.error }}>{error}</span>
+              <span
+                style={{ fontSize: `${fontSize.sm}px`, color: colors.error }}
+              >
+                {error}
+              </span>
             )}
           </div>
         )}
@@ -363,7 +410,8 @@ export function BillingConfigPanel() {
           color: colors.textMuted,
         }}
       >
-        Contrato: CORE_BILLING_AND_PAYMENTS_CONTRACT. Core nunca guarda dados de cartão; pagamento offline proibido.
+        Contrato: CORE_BILLING_AND_PAYMENTS_CONTRACT. Core nunca guarda dados de
+        cartão; pagamento offline proibido.
       </p>
     </div>
   );

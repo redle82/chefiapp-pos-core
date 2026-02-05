@@ -17,7 +17,6 @@
     "@react-native-community/netinfo": "^11.4.1",
     "@react-navigation/native": "^7.1.8",
     "@sentry/react-native": "~7.2.0",
-    "@supabase/supabase-js": "^2.91.0",
     "buffer": "^6.0.3",
     "esc-pos-encoder": "^3.0.0",
     "events": "^3.3.0",

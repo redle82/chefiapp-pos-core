@@ -8,6 +8,7 @@
 
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
+import { OnboardingProvider } from "../../context/OnboardingContext";
 import { RestaurantRuntimeContext } from "../../context/RestaurantRuntimeContext";
 
 interface Props {
@@ -20,7 +21,7 @@ export function ManagementAdvisor({ children }: Props) {
 
   // Don't show anything during initial load or if already published
   if (!runtime || runtime.loading || runtime.isPublished) {
-    return <>{children}</>;
+    return <OnboardingProvider>{children}</OnboardingProvider>;
   }
 
   return (
@@ -61,7 +62,9 @@ export function ManagementAdvisor({ children }: Props) {
         </div>
       </div>
 
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto">
+        <OnboardingProvider>{children}</OnboardingProvider>
+      </main>
     </div>
   );
 }

@@ -64,8 +64,8 @@ export function MiniTPVMinimal({
       setLoading(true);
       setError(null);
 
-      const DOCKER_CORE_URL = CONFIG.SUPABASE_URL;
-      const DOCKER_CORE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
+const DOCKER_CORE_URL = CONFIG.CORE_URL;
+const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
 
       const url = `${DOCKER_CORE_URL}/gm_products?select=*&restaurant_id=eq.${restaurantId}&available=eq.true&limit=10`;
 
