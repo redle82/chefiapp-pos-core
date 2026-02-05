@@ -20,6 +20,7 @@ import { useGlobalUIState } from "../../context/GlobalUIStateContext";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { alertEngine } from "../../core/alerts/AlertEngine";
 import { useEcraZeroState } from "../../core/dashboard/useEcraZeroState";
+import { deriveRestaurantReadiness } from "../../core/dashboard/restaurantReadiness";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import {
   MENU_STATE_MESSAGES,
@@ -954,6 +955,12 @@ function DashboardPortalContent() {
   // O5.10 + OPERATIONAL_ALERTS_CONTRACT: notificação quando há alertas que exigem atenção; critical = bloqueio/verdade; máx. 1–3 visíveis, link "Ver alertas"
   const displayCriticalCap = Math.min(alertsCriticalCount, 3);
   const hasManyCritical = alertsCriticalCount > 3;
+
+  // DASHBOARD_READINESS_CONTRACT: estados macro de prontidão (configuração vs operação)
+  const restaurantReadiness = deriveRestaurantReadiness({
+    preflight,
+    runtimeRestaurantId: runtime.restaurant_id ?? null,
+  });
   useEffect(() => {
     if (alertsCriticalCount === 0) {
       criticalAlertToastShown.current = false;
