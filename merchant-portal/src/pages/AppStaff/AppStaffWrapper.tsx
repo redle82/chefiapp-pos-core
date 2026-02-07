@@ -1,11 +1,12 @@
 /**
- * AppStaffWrapper
- * 
- * Wrapper que fornece OrderProvider para o StaffModule.
- * Necessário porque StaffContext usa useOrders() que requer OrderProvider.
+ * AppStaffWrapper — ENTRYPONT REAL do AppStaff (web).
+ * Montado em App.tsx como element de Route path="/app/staff". Não usar o componente legado AppStaff.tsx.
+ * Cadeia: AppStaffWrapper → StaffModule → StaffAppGate → StaffAppShellLayout → páginas (ex. StaffLauncherPage → AppStaffHome).
+ * Fornece OfflineOrderProvider + OrderProvider + TableProvider para o StaffModule.
  */
 
 import { OrderProvider } from '../TPV/context/OrderContextReal';
+import { OfflineOrderProvider } from '../TPV/context/OfflineOrderContext';
 import { TableProvider } from '../TPV/context/TableContext';
 import { useRestaurantIdentity } from '../../core/identity/useRestaurantIdentity';
 import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
@@ -17,10 +18,12 @@ export function AppStaffWrapper() {
 
   // Se não houver restaurantId, StaffModule vai lidar com o loading
   return (
-    <OrderProvider restaurantId={restaurantId || undefined}>
-      <TableProvider restaurantId={restaurantId || undefined}>
-        <StaffModule />
-      </TableProvider>
-    </OrderProvider>
+    <OfflineOrderProvider>
+      <OrderProvider restaurantId={restaurantId || undefined}>
+        <TableProvider restaurantId={restaurantId || undefined}>
+          <StaffModule />
+        </TableProvider>
+      </OrderProvider>
+    </OfflineOrderProvider>
   );
 }

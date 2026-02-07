@@ -141,7 +141,8 @@ export function MiniKDSMinimal({ restaurantId, maxHeight = '400px' }: MiniKDSMin
         </span>
       </div>
 
-      <div style={{ overflowY: 'auto', flex: 1 }}>
+      {/* Scroll é do Shell quando dentro do AppStaff; sem overflow próprio para evitar scroll duplo */}
+      <div style={{ flex: 1, minHeight: 0 }}>
         {orders.length === 0 ? (
           <div
             style={{

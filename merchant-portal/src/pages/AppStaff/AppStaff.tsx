@@ -1,3 +1,9 @@
+/**
+ * LEGADO — Não utilizado em rotas. Não importar para novas funcionalidades.
+ * Entrypoint real do AppStaff (web): AppStaffWrapper (Route path="/app/staff" em App.tsx).
+ * Cadeia real: AppStaffWrapper → StaffModule → StaffAppGate → StaffAppShellLayout → StaffLauncherPage → AppStaffHome.
+ * Este componente fazia routing por role (manager/owner/waiter) num único tree; foi substituído pelo shell + rotas por página.
+ */
 import React from 'react';
 import { useStaff } from './context/StaffContext';
 import { AppStaffLanding } from './AppStaffLanding';
@@ -9,11 +15,13 @@ import { WorkerTaskFocus } from './WorkerTaskFocus';
 import KitchenDisplay from '../TPV/KDS/KitchenDisplay'; // The Production Tool
 import { MiniPOS } from './components/MiniPOS';
 import { CleaningTaskView } from './views/CleaningTaskView';
+import { LocationSelectView } from './views/LocationSelectView';
+import { NoLocationsView } from './views/NoLocationsView';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { Text } from '../../ui/design-system/primitives/Text';
 
 export default function AppStaff() {
-  const { activeWorkerId, activeRole, operationalContract, tasks, dominantTool, unfocusTask } = useStaff();
+  const { activeLocation, activeLocations, activeWorkerId, activeRole, operationalContract, tasks, dominantTool, unfocusTask } = useStaff();
   const [booting, setBooting] = React.useState(true);
 
   React.useEffect(() => {
@@ -52,6 +60,12 @@ export default function AppStaff() {
     );
   }
 
+  // 0. LOCATION (Staff Session requires Location — STAFF_SESSION_LOCATION_CONTRACT)
+  if (!activeLocation) {
+    if (activeLocations.length === 0) return <NoLocationsView />;
+    return <LocationSelectView />;
+  }
+
   // 1. THE DOOR (No Contract)
   if (!operationalContract) {
     return <AppStaffLanding />;
@@ -67,9 +81,9 @@ export default function AppStaff() {
     return <ManagerDashboard />;
   }
 
-  // 4. THE CONSCIOUSNESS (Owner)
+  // 4. THE CONSCIOUSNESS (Owner) — Modo Consciência no app: variante "app" (Visão do Dono)
   if (activeRole === 'owner') {
-    return <OwnerDashboard />;
+    return <OwnerDashboard variant="app" />;
   }
 
   // 5. THE DOMINANT STATE LAYER (Always-On Tools)

@@ -113,7 +113,8 @@ export const PulseList: React.FC = () => {
     <div
       style={{
         padding: Spacing.xl,
-        minHeight: "100vh",
+        flex: 1,
+        minHeight: 0,
         background: Colors.surface.base,
         color: Colors.text.primary,
         fontFamily: Typography.fontFamily,

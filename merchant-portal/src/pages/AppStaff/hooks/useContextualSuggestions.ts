@@ -24,10 +24,11 @@ export interface ContextualSuggestion {
 }
 
 export function useContextualSuggestions() {
-    const { tasks, activeRole, shiftState, forecast, operationalContract } = useStaff();
-    // FASE 3.3: Isolado - AppStaff não depende de TPV
-    const { orders: appStaffOrders } = useAppStaffOrders(operationalContract?.id || null);
-    const { tables: appStaffTables } = useAppStaffTables(operationalContract?.id || null);
+    const { tasks, activeRole, shiftState, forecast, coreRestaurantId, operationalContract } = useStaff();
+    // FASE 3.3: Core API usa UUID (coreRestaurantId quando contrato é local)
+    const restaurantIdForCore = coreRestaurantId ?? operationalContract?.id ?? null;
+    const { orders: appStaffOrders } = useAppStaffOrders(restaurantIdForCore);
+    const { tables: appStaffTables } = useAppStaffTables(restaurantIdForCore);
     // Converter para formato esperado
     const orders = appStaffOrders.map(order => ({
       id: order.id,

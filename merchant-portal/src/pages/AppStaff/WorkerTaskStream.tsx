@@ -29,6 +29,7 @@ export const WorkerTaskStream: React.FC = () => {
     shiftMetrics,
     forecast,
     shiftStart,
+    coreRestaurantId,
     operationalContract,
   } = useStaff();
   const { alerts } = useTableAlerts(); // FASE 2: Alertas automáticos
@@ -89,7 +90,7 @@ export const WorkerTaskStream: React.FC = () => {
       {operationalContract?.id && (
         <div style={{ marginBottom: 16 }}>
           <AgoraSection
-            restaurantId={operationalContract.id}
+            restaurantId={coreRestaurantId ?? operationalContract.id}
             userId={activeWorkerId ?? undefined}
           />
         </div>
@@ -98,7 +99,7 @@ export const WorkerTaskStream: React.FC = () => {
       {/* INVENTORY LITE - Alertas de stock (repor X) */}
       {operationalContract?.id && (
         <div style={{ marginBottom: 16 }}>
-          <InventoryLiteSection restaurantId={operationalContract.id} />
+          <InventoryLiteSection restaurantId={coreRestaurantId ?? operationalContract.id} />
         </div>
       )}
 

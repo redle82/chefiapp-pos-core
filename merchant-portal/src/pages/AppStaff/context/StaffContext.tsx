@@ -6,11 +6,12 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { isDebugMode } from "../../../core/debugMode";
+import { RUNTIME } from "../../../core/runtime/RuntimeContext";
 import {
   getTabIsolated,
   setTabIsolated,
 } from "../../../core/storage/TabIsolatedStorage";
+import { connectByCode } from "../../../features/auth/connectByCode";
 // Auth only — temporary until Core Auth (session / signOut)
 import { supabase } from "../../../core/supabase";
 import { findRelevantLesson } from "../../../intelligence/education/MicroLessonEngine";
@@ -25,6 +26,8 @@ import { getShiftPrediction } from "../../../intelligence/forecast/ShiftPredicto
 import { now as getNow } from "../../../intelligence/nervous-system/Clock";
 import type { ShiftMetrics } from "../../../intelligence/nervous-system/ShiftEngine";
 import { calculateShiftLoad } from "../../../intelligence/nervous-system/ShiftEngine";
+import { locationsStore } from "../../../features/admin/locations/store/locationsStore";
+import type { Location } from "../../../features/admin/locations/types";
 import { useReflexEngine } from "../core/ReflexEngine";
 import { useAppStaffOrders } from "../hooks/useAppStaffOrders";
 import type {
@@ -49,108 +52,25 @@ export type {
   Task,
 } from "./StaffCoreTypes";
 
-// Mock path só com ?debug=1 ou em testes (MODE=test)
-const allowMocks = () =>
-  isDebugMode() ||
-  (typeof import.meta !== "undefined" && import.meta.env?.MODE === "test");
-
-// MODE B: REMOTE CONTRACT (Connect via Bridge)
-// Unified function (Client + Mock Hybrid)
-const joinRemoteOperationHelper = async (
-  code: string,
-  setOpContract: (c: OperationalContract) => void,
-  setActiveRole: (r: StaffRole) => void
-): Promise<{ success: boolean; message?: string }> => {
-  try {
-    console.log("🔌 Connecting to Bridge with code:", code);
-
-    // A) MOCK PATH (Dev Only)
-    if (allowMocks() && code.includes("mock")) {
-      // Simulate network
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      if (code === "FAIL")
-        return { success: false, message: "Simulação de Falha de Rede." };
-
-      const contract: OperationalContract = {
-        id: "mock-restaurant-connected",
-        type: "restaurant",
-        name: "Restaurante Conectado (Demo)",
-        mode: "connected",
-        permissions: [],
-      };
-
-      setOpContract(contract);
-
-      // Auto-set role
-      let role: StaffRole = "worker";
-      if (code.toLowerCase().includes("mgr")) role = "manager";
-      else if (code.toLowerCase().includes("kit")) role = "kitchen";
-      else if (code.toLowerCase().includes("own")) role = "owner";
-
-      setActiveRole(role);
-      setTabIsolated("staff_role", role);
-      return { success: true };
-    }
-
-    // B) REAL PATH (Production / Supabase)
-    if (typeof supabase === "undefined") {
-      return {
-        success: false,
-        message: "Modo remoto indisponível (Supabase Runtime Missing).",
-      };
-    }
-
-    const { data, error } = await supabase
-      .from("active_invites")
-      .select("*")
-      .eq("code", code)
-      .single();
-
-    if (error || !data) {
-      // Mensagem específica baseada no erro
-      let errorMessage = "Código inválido ou expirado.";
-      if (error?.code === "PGRST116") {
-        errorMessage =
-          "Código não encontrado. Verifique se digitou corretamente.";
-      } else if (error?.code === "22P02") {
-        errorMessage =
-          "Formato de código inválido. Use o formato CHEF-XXXX-XX.";
-      } else if (error?.message?.includes("expired")) {
-        errorMessage = "Este código expirou. Solicite um novo ao gerente.";
-      }
-      return { success: false, message: errorMessage };
-    }
-
-    const contract: OperationalContract = {
-      id: data.restaurant_id,
-      type: "restaurant",
-      name: "Restaurante Conectado",
-      mode: "connected",
-      permissions: [],
-    };
-
-    setOpContract(contract);
-
-    const role = (data.role_granted as StaffRole) || "worker";
-    setActiveRole(role);
-    setTabIsolated("staff_role", role);
-
-    return { success: true };
-  } catch (err) {
-    console.error(err);
-    return { success: false, message: "Erro de conexão." };
-  }
-};
-
-// ...
+// MODE B: REMOTE CONTRACT — connectByCode (role always from contract/invite, never from code text)
 
 // ------------------------------------------------------------------
 // 🧠 MODELO MENTAL (The State Engine)
 // ------------------------------------------------------------------
 
+const STAFF_LOCATION_STORAGE_KEY = "chefiapp_staff_location_id";
+
 interface StaffContextType {
+  // 0. LOCATION (Staff Session requires Location — STAFF_SESSION_LOCATION_CONTRACT)
+  activeLocation: Location | null;
+  activeLocations: Location[];
+  setActiveLocation: (loc: Location | null) => void;
+
   // 1. IDENTITY & CONTRACT
+  /** Restaurant ID from identity/runtime (StaffModule). Use for Core API when contract id is local. */
+  restaurantId: string | null;
+  /** For Core API: UUID from contract if valid, else restaurantId (avoids 400 when contract is local-restaurant-*). */
+  coreRestaurantId: string | null;
   operationalContract: OperationalContract | null;
   activeWorkerId: string | null;
   activeRole: StaffRole;
@@ -170,6 +90,8 @@ interface StaffContextType {
   checkIn: (workerName: string, employeeId?: string) => void;
   checkOut: () => void;
   verifyPin: (employeeId: string, pin: string) => boolean;
+  /** DEV ONLY: entrada rápida por perfil sem tabela; usar apenas quando isDebugMode(). */
+  devQuickCheckIn: (role: StaffRole) => void;
 
   // 5. TASK ENGINE
   tasks: Task[];
@@ -221,14 +143,67 @@ interface StaffContextType {
 
   // ROSTER
   employees: Employee[];
+
+  // APPSTAFF_RUNTIME_MODEL: role source and simulated (tab vs login vs debug)
+  roleSource: "tab" | "login" | "debug" | "invite";
+  isSimulated: boolean;
+}
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isUuid(s: string | null | undefined): boolean {
+  return typeof s === "string" && UUID_REGEX.test(s);
+}
+
+function getActiveLocations(): Location[] {
+  return locationsStore.getLocations().filter((l) => l.isActive);
+}
+
+function restoreLocationId(): string | null {
+  try {
+    const id = sessionStorage.getItem(STAFF_LOCATION_STORAGE_KEY);
+    return id || null;
+  } catch {
+    return null;
+  }
+}
+
+function persistLocationId(id: string | null): void {
+  try {
+    if (id) sessionStorage.setItem(STAFF_LOCATION_STORAGE_KEY, id);
+    else sessionStorage.removeItem(STAFF_LOCATION_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
 }
 
 const StaffContext = createContext<StaffContextType | undefined>(undefined);
+
+const VALID_STAFF_ROLES: StaffRole[] = [
+  "manager",
+  "waiter",
+  "kitchen",
+  "cleaning",
+  "worker",
+  "owner",
+];
+
+function isValidStaffRole(s: string): s is StaffRole {
+  return VALID_STAFF_ROLES.includes(s as StaffRole);
+}
+
+function parseStaffRole(value: string | null): StaffRole {
+  if (value && isValidStaffRole(value)) return value;
+  return "worker";
+}
+
+export { isValidStaffRole, parseStaffRole };
 
 type StaffProviderProps = {
   children: React.ReactNode;
   restaurantId?: string | null;
   userId?: string | null;
+  /** APPSTAFF_RUNTIME_MODEL: role from ?role= (tab); takes precedence over tab storage. */
+  initialRole?: StaffRole | null;
 };
 
 // INTERNAL PROVIDER (Where logic lives)
@@ -236,11 +211,12 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   children,
   restaurantId,
   userId,
+  initialRole: initialRoleProp,
 }) => {
   // EXTERNAL SIGNALS (The Senses)
-  // FASE 3.3: Isolado - AppStaff não depende de TPV/context
+  // FASE 3.3: Isolado - AppStaff não depende de TPV/context. Usar restaurantId (prop) para evitar TDZ: operationalContract é declarado mais abaixo.
   const { orders: appStaffOrders, refetch: refetchOrders } = useAppStaffOrders(
-    operationalContract?.id || null
+    restaurantId ?? null
   );
   // Converter CoreOrder para Order (compatibilidade)
   const orders = appStaffOrders.map((order) => ({
@@ -293,18 +269,73 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   );
   const { triggerLesson, learnedSkills } = useTraining(); // Phase C: Training
 
-  // 1. IDENTITY
-  const [operationalContract, setOpContract] =
-    useState<OperationalContract | null>(null);
-  const [activeWorkerId, setActiveWorkerId] = useState<string | null>(
-    userId || null
+  // 0. LOCATION (Staff Session requires Location — STAFF_SESSION_LOCATION_CONTRACT)
+  const [activeLocations, setActiveLocations] = useState<Location[]>(() =>
+    getActiveLocations()
   );
-  const [activeRole, setActiveRole] = useState<StaffRole>("worker");
+  const [activeLocation, setActiveLocationState] =
+    useState<Location | null>(() => {
+      const list = getActiveLocations();
+      const storedId = restoreLocationId();
+      if (storedId) {
+        const found = list.find((l) => l.id === storedId);
+        if (found) return found;
+      }
+      if (list.length === 1) return list[0];
+      return null;
+    });
 
-  // 2. SHIFT STATE
+  const setActiveLocation = useCallback((loc: Location | null) => {
+    setActiveLocationState(loc);
+    persistLocationId(loc?.id ?? null);
+  }, []);
+
+  // 1. IDENTITY — inicialização síncrona para Owner/Manager (restaurantId+userId) evitam flash de "Inserir Código"
+  // DEMO: nunca AUTO-JOIN como owner; mostrar Launcher de Pessoas (connectByCode por persona)
+  const allowAutoJoin = Boolean(restaurantId && userId && !RUNTIME.isDemo);
+  const initialContract =
+    allowAutoJoin
+      ? ({
+          id: restaurantId!,
+          type: "restaurant",
+          name: "Seu Restaurante",
+          mode: "connected",
+          permissions: ["admin"],
+        } as OperationalContract)
+      : null;
+  const [operationalContract, setOpContract] =
+    useState<OperationalContract | null>(() => initialContract);
+  const [activeWorkerId, setActiveWorkerId] = useState<string | null>(
+    allowAutoJoin ? userId : null
+  );
+  const resolvedInitialRole =
+    allowAutoJoin && !initialRoleProp
+      ? "owner"
+      : parseStaffRole(initialRoleProp ?? getTabIsolated("staff_role"));
+  const [activeRole, setActiveRoleState] = useState<StaffRole>(resolvedInitialRole);
+  const [roleSource, setRoleSource] = useState<"tab" | "login" | "debug" | "invite">(
+    allowAutoJoin && !initialRoleProp
+      ? "login"
+      : initialRoleProp
+      ? "tab"
+      : getTabIsolated("staff_role")
+      ? "tab"
+      : "tab"
+  );
+  const isSimulated = roleSource === "tab";
+
+  const setActiveRole = useCallback(
+    (r: StaffRole) => {
+      setActiveRoleState(r);
+      setTabIsolated("staff_role", r);
+    },
+    []
+  );
+
+  // 2. SHIFT STATE — activo desde o início quando AUTO-JOIN (restaurantId+userId); DEMO não AUTO-JOIN
   const [shiftState, setShiftState] = useState<
     "offline" | "active" | "closing" | "closed"
-  >("offline");
+  >(() => (allowAutoJoin ? "active" : "offline"));
   const [lastActivityAt, setLastActivityAt] = useState<number>(getNow());
 
   // 3. TASK ENGINE (The Conscious Mind)
@@ -326,17 +357,43 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   // 6. ROSTER (For Assignee Selection)
   const [employees, setEmployees] = useState<Employee[]>([]);
 
-  // INIT
+  // INIT: refresh active locations on mount; auto-select if 1; revalidate stored id
+  useEffect(() => {
+    const list = getActiveLocations();
+    setActiveLocations(list);
+    setActiveLocationState((prev) => {
+      if (list.length === 0) return null;
+      if (list.length === 1) {
+        persistLocationId(list[0].id);
+        return list[0];
+      }
+      const storedId = restoreLocationId();
+      if (storedId) {
+        const found = list.find((l) => l.id === storedId);
+        if (found) return found;
+      }
+      return prev ?? null;
+    });
+  }, []);
+
+  // INIT (APPSTAFF_RUNTIME_MODEL: initialRole from ?role=, then stored, then AUTO-JOIN)
   useEffect(() => {
     const storedRole = getTabIsolated("staff_role");
-    if (storedRole) setActiveRole(storedRole as StaffRole);
 
-    // Resume session if active
-    // In real app, check Supabase presence
-    // if (userId) setShiftState('active'); // Auto-start for dev flow?
+    if (initialRoleProp) {
+      const role = parseStaffRole(initialRoleProp);
+      setActiveRoleState(role);
+      setTabIsolated("staff_role", role);
+      setRoleSource("tab");
+      // Continue to AUTO-JOIN below if owner context
+    } else if (storedRole) {
+      setActiveRoleState(parseStaffRole(storedRole));
+      setRoleSource("tab");
+    }
 
-    // AUTO-JOIN (Owner Mode / Merchant Portal)
-    if (restaurantId && userId) {
+    // AUTO-JOIN (Owner Mode / Merchant Portal) — don't override role when opened with ?role=
+    // DEMO: nunca AUTO-JOIN; Launcher de Pessoas (connectByCode) é a única entrada
+    if (restaurantId && userId && !RUNTIME.isDemo) {
       const contract: OperationalContract = {
         id: restaurantId,
         type: "restaurant",
@@ -348,10 +405,14 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       };
       setOpContract(contract);
       setActiveWorkerId(userId);
-      setActiveRole("owner");
       setShiftState("active");
+      if (!initialRoleProp) {
+        setActiveRoleState("owner");
+        setTabIsolated("staff_role", "owner");
+        setRoleSource("login");
+      }
     }
-  }, [userId, restaurantId]);
+  }, [userId, restaurantId, initialRoleProp]);
 
   // FETCH EMPLOYEES
   useEffect(() => {
@@ -415,8 +476,16 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     return Math.min(100, totalRisk);
   }, [tasks, shiftState]);
 
+  // Core API: UUID do contrato se válido, senão restaurantId (evita 400 com contrato local)
+  const coreRestaurantId = useMemo(
+    () =>
+      (operationalContract?.id && isUuid(operationalContract.id))
+        ? operationalContract.id
+        : (restaurantId ?? null),
+    [operationalContract?.id, restaurantId]
+  );
   // SYSTEM REFLEX (The Subconscious)
-  useReflexEngine(setTasks, notifyActivity, operationalContract?.id || null);
+  useReflexEngine(setTasks, notifyActivity, coreRestaurantId);
 
   // Removido: useReflexEngine antigo que dependia de TPV
   // useReflexEngine(setTasks, notifyActivity);
@@ -469,13 +538,31 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       mode: "local",
       permissions: ["admin"], // Local creator is admin
     });
-    setActiveRole("manager"); // Creator is manager
+    setActiveRoleState("manager"); // Creator is manager
+    setTabIsolated("staff_role", "manager");
+    setRoleSource("debug");
     setShiftState("active");
     notifyActivity();
   };
 
   const joinRemoteOperation = async (code: string) => {
-    return joinRemoteOperationHelper(code, setOpContract, setActiveRole);
+    const result = await connectByCode(code, { restaurantHint: restaurantId ?? undefined });
+    if (!result.success) {
+      return { success: false, message: result.message };
+    }
+    if (result.operationalContract) setOpContract(result.operationalContract);
+    if (result.resolvedRole != null) {
+      setActiveRoleState(result.resolvedRole);
+      setTabIsolated("staff_role", result.resolvedRole);
+    }
+    if (result.roleSource) {
+      if (result.roleSource === "invite") {
+        setRoleSource("invite");
+      } else {
+        setRoleSource("login");
+      }
+    }
+    return { success: true };
   };
 
   const checkIn = async (workerName: string, employeeId?: string) => {
@@ -525,6 +612,22 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     if (!emp.pin) return true; // Security flaw? Or feature? Assuming no PIN = open
     return emp.pin === pin;
   };
+
+  /** DEV ONLY: simula check-in por perfil (sem tabela employees/shift_logs). */
+  const devQuickCheckIn = useCallback(
+    (role: StaffRole) => {
+      if (!operationalContract) {
+        createLocalContract("restaurant");
+      }
+      setActiveWorkerId("dev-" + role);
+      setActiveRoleState(role);
+      setTabIsolated("staff_role", role);
+      setRoleSource("debug");
+      setShiftState("active");
+      notifyActivity();
+    },
+    [operationalContract, createLocalContract, notifyActivity]
+  );
 
   const checkOut = async () => {
     const { supabase } = await import("../../../core/supabase");
@@ -735,6 +838,11 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   return (
     <StaffContext.Provider
       value={{
+        activeLocation,
+        activeLocations,
+        setActiveLocation,
+        restaurantId: restaurantId ?? null,
+        coreRestaurantId,
         operationalContract,
         activeWorkerId,
         activeRole,
@@ -761,6 +869,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
         pressureMode,
         joinRemoteOperation,
         verifyPin,
+        devQuickCheckIn,
         obligations,
 
         // PHASE B: Shift Intelligence
@@ -782,6 +891,8 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
           ),
           prediction: getShiftPrediction(new Date(getNow())),
         },
+        roleSource,
+        isSimulated,
       }}
     >
       {children}

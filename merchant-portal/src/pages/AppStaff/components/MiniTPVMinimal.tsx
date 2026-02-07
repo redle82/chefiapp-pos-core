@@ -78,11 +78,27 @@ const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
       });
 
       if (!response.ok) {
-        throw new Error("Erro ao carregar produtos.");
+        setProducts([]);
+        setError(null);
+        return;
       }
 
-      const data = await response.json();
-      setProducts((data || []) as Product[]);
+      const ct = response.headers.get("Content-Type")?.toLowerCase() ?? "";
+      const text = await response.text();
+      if (!text.trim() || !ct.includes("application/json") || text.trimStart().startsWith("<")) {
+        setProducts([]);
+        setError(null);
+        return;
+      }
+      let data: unknown;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        setProducts([]);
+        setError(null);
+        return;
+      }
+      setProducts((Array.isArray(data) ? data : []) as Product[]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (
@@ -225,7 +241,8 @@ const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
         </span>
       </div>
 
-      <div style={{ overflowY: "auto", flex: 1, padding: VPC.space }}>
+      {/* Scroll é do Shell quando dentro do AppStaff; sem overflow próprio para evitar scroll duplo */}
+      <div style={{ flex: 1, minHeight: 0, padding: VPC.space }}>
         {error && (
           <div
             style={{

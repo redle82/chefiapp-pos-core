@@ -17,6 +17,7 @@ import { Card } from "../../../ui/design-system/primitives/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { useAgoraData } from "../hooks/useAgoraData";
 import { useAppStaffPermissions } from "../hooks/useAppStaffPermissions";
+import { useAppStaffHaptics } from "../hooks/useAppStaffHaptics";
 
 export interface AgoraSectionProps {
   restaurantId: string | undefined | null;
@@ -37,9 +38,11 @@ export const AgoraSection: React.FC<AgoraSectionProps> = ({
   const perms = useAppStaffPermissions();
   const { success, error: toastError } = useToast();
   const [busy, setBusy] = useState<Record<string, boolean>>({});
+  const { triggerHaptic } = useAppStaffHaptics();
 
   const handleStartTask = async (taskId: string) => {
     if (!restaurantId) return;
+    triggerHaptic("primaryAction");
     setBusy((b) => ({ ...b, [taskId]: true }));
     try {
       await startTaskRpc(taskId, userId ?? null, restaurantId);
@@ -54,6 +57,7 @@ export const AgoraSection: React.FC<AgoraSectionProps> = ({
 
   const handleCompleteTask = async (taskId: string) => {
     if (!restaurantId) return;
+    triggerHaptic("taskComplete");
     setBusy((b) => ({ ...b, [taskId]: true }));
     try {
       await completeTaskRpc(taskId, userId ?? null, restaurantId);
@@ -68,6 +72,7 @@ export const AgoraSection: React.FC<AgoraSectionProps> = ({
 
   const handleRejectTask = async (taskId: string) => {
     if (!restaurantId) return;
+    triggerHaptic("error");
     setBusy((b) => ({ ...b, [taskId]: true }));
     try {
       await rejectTaskRpc(
@@ -87,6 +92,7 @@ export const AgoraSection: React.FC<AgoraSectionProps> = ({
 
   const handleMarkServed = async (orderId: string) => {
     if (!restaurantId || !perms.canMarkServed) return;
+    triggerHaptic("primaryAction");
     setBusy((b) => ({ ...b, [orderId]: true }));
     try {
       const result = await updateOrderStatus({
@@ -140,7 +146,17 @@ export const AgoraSection: React.FC<AgoraSectionProps> = ({
   const hasOrders = readyOrders.length > 0;
   if (!hasTasks && !hasOrders) {
     return (
-      <Card surface="layer2" padding="md">
+      <Card
+        surface="layer2"
+        padding="md"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
+          gap: 8,
+        }}
+      >
         <Text
           size="xs"
           weight="bold"
@@ -149,8 +165,15 @@ export const AgoraSection: React.FC<AgoraSectionProps> = ({
         >
           Agora
         </Text>
-        <Text size="sm" color="tertiary" style={{ marginTop: 8 }}>
-          Nenhuma tarefa pendente nem pedido pronto para entrega.
+        <div style={{ fontSize: 28, marginTop: 4 }} aria-hidden>
+          🌈
+        </div>
+        <Text size="sm" color="secondary" weight="bold">
+          Tudo em dia
+        </Text>
+        <Text size="sm" color="tertiary">
+          Nenhuma tarefa pendente nem pedido pronto neste momento. Mantenha o
+          fluxo e fique atento a novos toques.
         </Text>
       </Card>
     );
