@@ -987,5 +987,95 @@ GRANT EXECUTE ON FUNCTION public.complete_task TO postgres;
 GRANT EXECUTE ON FUNCTION public.reject_task TO postgres;
 
 -- =============================================================================
+-- shift_logs — Registo de turnos (check-in/check-out) por funcionário
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.shift_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    restaurant_id UUID NOT NULL REFERENCES public.gm_restaurants(id) ON DELETE CASCADE,
+    employee_id UUID NOT NULL REFERENCES public.gm_staff(id) ON DELETE CASCADE,
+    role TEXT NOT NULL,
+    start_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    end_time TIMESTAMPTZ,
+    duration_minutes INTEGER,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'cancelled')),
+    meta JSONB DEFAULT '{}'::JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_shift_logs_restaurant_active ON public.shift_logs(restaurant_id) WHERE status = 'active';
+CREATE INDEX IF NOT EXISTS idx_shift_logs_employee ON public.shift_logs(employee_id);
+COMMENT ON TABLE public.shift_logs IS 'Registo de turnos (check-in/check-out). AppStaff LiveRoster e DEVICE_TURN_SHIFT_TASK_CONTRACT.';
+
+-- =============================================================================
+-- Menu digital: catálogo visual (gm_catalog_menus, gm_catalog_categories, gm_catalog_items)
+-- =============================================================================
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER TABLE public.gm_restaurants
+  ADD COLUMN IF NOT EXISTS menu_catalog_enabled BOOLEAN NOT NULL DEFAULT false;
+COMMENT ON COLUMN public.gm_restaurants.menu_catalog_enabled IS 'Se true, o catálogo visual (menu digital) está ativo para este restaurante.';
+
+CREATE TABLE IF NOT EXISTS public.gm_catalog_menus (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  restaurant_id UUID NOT NULL REFERENCES public.gm_restaurants(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  language TEXT NOT NULL DEFAULT 'pt-BR',
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_gm_catalog_menus_restaurant ON public.gm_catalog_menus(restaurant_id);
+CREATE INDEX IF NOT EXISTS idx_gm_catalog_menus_active ON public.gm_catalog_menus(restaurant_id, is_active) WHERE is_active = true;
+COMMENT ON TABLE public.gm_catalog_menus IS 'Menu do catálogo visual (um ativo por restaurante é o caso comum).';
+
+CREATE TABLE IF NOT EXISTS public.gm_catalog_categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  menu_id UUID NOT NULL REFERENCES public.gm_catalog_menus(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_gm_catalog_categories_menu ON public.gm_catalog_categories(menu_id);
+COMMENT ON TABLE public.gm_catalog_categories IS 'Categorias do catálogo visual (ex.: Entrantes, Carnes).';
+
+CREATE TABLE IF NOT EXISTS public.gm_catalog_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category_id UUID NOT NULL REFERENCES public.gm_catalog_categories(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  price_cents INTEGER NOT NULL DEFAULT 0,
+  image_url TEXT,
+  video_url TEXT,
+  allergens JSONB NOT NULL DEFAULT '[]'::JSONB,
+  is_available BOOLEAN NOT NULL DEFAULT true,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_gm_catalog_items_category ON public.gm_catalog_items(category_id);
+CREATE INDEX IF NOT EXISTS idx_gm_catalog_items_available ON public.gm_catalog_items(category_id, is_available) WHERE is_available = true;
+COMMENT ON TABLE public.gm_catalog_items IS 'Prato do catálogo visual. Regra: sem image_url válido não exibir no catálogo.';
+COMMENT ON COLUMN public.gm_catalog_items.allergens IS 'Array de códigos (ex.: gluten, lactose, huevos).';
+COMMENT ON COLUMN public.gm_catalog_items.video_url IS 'Opcional; vídeo só carrega ao abrir o prato (performance).';
+
+DROP TRIGGER IF EXISTS update_gm_catalog_menus_updated_at ON public.gm_catalog_menus;
+CREATE TRIGGER update_gm_catalog_menus_updated_at
+  BEFORE UPDATE ON public.gm_catalog_menus
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_gm_catalog_items_updated_at ON public.gm_catalog_items;
+CREATE TRIGGER update_gm_catalog_items_updated_at
+  BEFORE UPDATE ON public.gm_catalog_items
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- =============================================================================
 -- FIM 03-migrations-consolidated.sql
 -- =============================================================================

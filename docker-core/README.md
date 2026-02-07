@@ -125,6 +125,17 @@ No primeiro `up` (initdb), o Postgres aplica por ordem:
 
 Migrations individuais em `schema/migrations/` existem para referência; para um Core novo, não é necessário aplicá-las manualmente (já estão em `03-migrations-consolidated.sql`). Os targets `make migrate-*` servem apenas se tiver um volume antigo criado antes da consolidação.
 
+### Menu digital (catálogo visual)
+
+Schema: **incluído em `03-migrations-consolidated.sql`** — Core novo (ou após `make reset`) já tem as tabelas `gm_catalog_menus`, `gm_catalog_categories`, `gm_catalog_items` e a coluna `gm_restaurants.menu_catalog_enabled`. Para **Core existente** (volume antigo), aplicar manualmente a partir de `docker-core/`:
+
+```bash
+make migrate-menu-catalog
+make migrate-menu-catalog-seed   # opcional: dados de exemplo para /menu-v2
+```
+
+Ver: [MENU_VISUAL_RUNTIME_CONTRACT](../docs/architecture/MENU_VISUAL_RUNTIME_CONTRACT.md), [ONDE_VER_NO_NAVEGADOR](../docs/architecture/ONDE_VER_NO_NAVEGADOR.md#3-menu-digital-catálogo-visual).
+
 ---
 
 ## 💾 Backup e rollback

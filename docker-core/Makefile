@@ -4,7 +4,7 @@
 # Comandos úteis para gerenciar o Core Docker
 # =============================================================================
 
-.PHONY: up down reset logs ps validate test-rpc migrate-product-mode migrate-onboarding-completed migrate-terminals migrate-staff help
+.PHONY: up down reset logs ps validate test-rpc migrate-product-mode migrate-onboarding-completed migrate-terminals migrate-staff migrate-restaurant-people help
 
 # Default target
 help:
@@ -25,6 +25,9 @@ help:
 	@echo "  make migrate-onboarding-completed - Aplicar coluna onboarding_completed_at (gm_restaurants)"
 	@echo "  make migrate-terminals - Aplicar tabela gm_terminals (registro de terminais)"
 	@echo "  make migrate-staff - Aplicar tabela gm_staff (staff operacional)"
+	@echo "  make migrate-menu-catalog - Aplicar tabelas gm_catalog_* (menu digital /menu-v2)"
+	@echo "  make migrate-menu-catalog-seed - Seed opcional do catálogo (dados de exemplo)"
+	@echo "  make migrate-restaurant-people - Aplicar tabela gm_restaurant_people (pessoas operacionais / AppStaff)"
 	@echo "  make test-global            - Teste global: tabelas + TPV + tarefas (script)"
 	@echo ""
 
@@ -137,6 +140,34 @@ migrate-staff:
 	@echo "📦 Aplicando migration gm_staff..."
 	@cat schema/migrations/20260203_gm_staff.sql | docker compose -f docker-compose.core.yml exec -T postgres \
 		psql -U postgres -d chefiapp_core -f - && echo "✅ gm_staff aplicado" || \
+		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# Aplicar tabela shift_logs (registo de turnos; AppStaff LiveRoster)
+migrate-shift-logs:
+	@echo "📦 Aplicando migration shift_logs..."
+	@cat schema/migrations/20260205_shift_logs.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ shift_logs aplicado" || \
+		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# Aplicar tabelas do menu digital (gm_catalog_menus, gm_catalog_categories, gm_catalog_items; /menu-v2)
+migrate-menu-catalog:
+	@echo "📦 Aplicando migration menu catalog (gm_catalog_*)..."
+	@cat schema/migrations/20260206_menu_catalog.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ menu catalog aplicado" || \
+		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# Seed opcional do catálogo (menu + categorias + itens de exemplo para /menu-v2)
+migrate-menu-catalog-seed:
+	@echo "📦 Aplicando seed menu catalog..."
+	@cat schema/migrations/20260206_menu_catalog_seed.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ menu catalog seed aplicado" || \
+		(echo "❌ Seed falhou (aplique antes: make migrate-menu-catalog)" && exit 1)
+
+# Aplicar tabela gm_restaurant_people (pessoas operacionais; código/QR para AppStaff e Config → Empregados)
+migrate-restaurant-people:
+	@echo "📦 Aplicando migration gm_restaurant_people..."
+	@cat schema/migrations/20260207_gm_restaurant_people.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ gm_restaurant_people aplicado" || \
 		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
 
 # Teste global: Core + todas as tabelas + TPV (turno + pedido) + tarefas (MODO_INTERNO)
