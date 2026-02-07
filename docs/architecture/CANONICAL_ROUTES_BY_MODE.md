@@ -72,6 +72,8 @@ flowchart TB
 | `/app/dashboard`, `/app/*` | Piloto ou Operacional | Semântica conforme runtime: `productMode === 'pilot'` vs publicado/billing |
 | `/op/tpv`, `/op/kds` | Piloto ou Operacional | Idem; gates (published) e modo piloto conforme [OPERATIONAL_GATES_CONTRACT.md](./OPERATIONAL_GATES_CONTRACT.md) e [PILOT_MODE_RUNTIME_CONTRACT.md](./PILOT_MODE_RUNTIME_CONTRACT.md) |
 | `/op/cash` | Operacional | Exige turno aberto (operational === true) |
+| `/owner/dashboard` | Piloto ou Operacional | Web: home do dono. **App:** acesso secundário (Visão do Dono / toggle / PIN), não home. Ver [COGNITIVE_MODES_OWNER_DASHBOARD.md](./COGNITIVE_MODES_OWNER_DASHBOARD.md). |
+| `/admin/config`, `/admin/config/*` | Piloto ou Operacional | Configuração estilo Last.app; árvore completa em [CONFIGURATION_MAP_V1.md](./CONFIGURATION_MAP_V1.md) secção 5. |
 
 ---
 
@@ -83,3 +85,4 @@ flowchart TB
 - [APPLICATION_BOOT_CONTRACT.md](./APPLICATION_BOOT_CONTRACT.md) — boot modes (PUBLIC, AUTH, MANAGEMENT, OPERATIONAL)
 - [PILOT_MODE_RUNTIME_CONTRACT.md](./PILOT_MODE_RUNTIME_CONTRACT.md) — modo piloto: não escreve no Core
 - [CORE_CONTRACT_INDEX.md](./CORE_CONTRACT_INDEX.md) — índice de contratos
+- [COGNITIVE_MODES_OWNER_DASHBOARD.md](./COGNITIVE_MODES_OWNER_DASHBOARD.md) — modos Operação vs Consciência; Owner Dashboard na Web (home) vs App (acesso secundário)

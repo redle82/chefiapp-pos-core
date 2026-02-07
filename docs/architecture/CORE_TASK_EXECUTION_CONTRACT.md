@@ -72,7 +72,14 @@ Comentários ou threads ligados a uma tarefa (ex.: “pedir ajuda”, “bloquei
 
 ---
 
-## 7. Resumo
+## 7. Tarefas operacionais vs tarefas de ritual
+
+- **Tarefas operacionais** (gm_tasks): pedidos, KDS, estações (BAR/KITCHEN/SERVICE). Criadas pelo Core ou pelo fluxo de pedidos; estados OPEN/ACKNOWLEDGED/RESOLVED/DISMISSED.
+- **Tarefas de ritual** (ritual_tasks): momento do turno (ex.: Antes de abrir — Gerente). Em demo/pilot persistidas localmente (localStorage); bloqueiam TPV/Dashboard até conclusão (gate `MANDATORY_RITUAL_INCOMPLETE`). Sync com Core em fase posterior. Ver [TASK_SYSTEM_MATRIX_AND_RITUAL.md](./TASK_SYSTEM_MATRIX_AND_RITUAL.md).
+
+---
+
+## 8. Resumo
 
 - Tarefa = acto operacional com peso; Core define quem cria, quem recebe, prazo, impacto.
 - AppStaff mostra, confirma, executa, reporta; não cria, não atribui, não calcula impacto.

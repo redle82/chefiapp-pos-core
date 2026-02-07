@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppStaff — Mapa visual (.pen)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0d0d0d;
+      color: #e5e5e5;
+      min-height: 100vh;
+      overflow: auto;
+    }
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      padding: 12px 24px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 600; }
+    header a { color: #60a5fa; text-decoration: none; font-size: 0.9rem; }
+    header a:hover { text-decoration: underline; }
+    #canvas {
+      position: relative;
+      margin-top: 52px;
+      padding: 40px;
+      min-width: 2100px;
+      min-height: 2200px;
+    }
+    .frame {
+      position: absolute;
+      border: 1px solid #404040;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .frame-name {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #252525;
+      border-bottom: 1px solid #333;
+      color: #ccc;
+    }
+    .frame-body {
+      padding: 12px;
+      font-size: 11px;
+      color: #888;
+      flex: 1;
+      overflow: hidden;
+    }
+    #connections {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    #connections line {
+      stroke: #404040;
+      stroke-width: 1.5;
+      marker-end: url(#arrow);
+    }
+    .frame-body .placeholder-block {
+      margin-bottom: 8px;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      font-size: 10px;
+      color: #888;
+      border: 1px solid #333;
+    }
+    .frame-body .placeholder-block:last-child { margin-bottom: 0; }
+    .frame-body .placeholder-label { font-weight: 600; color: #999; margin-bottom: 4px; }
+
+    /* Prévia: cara de aplicativo (uma tela mock) */
+    .app-preview {
+      margin-top: 52px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .app-preview-title {
+      font-size: 0.75rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .app-mock {
+      width: 360px;
+      height: 640px;
+      background: #111;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 0 0 2px #333, 0 20px 60px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+    }
+    .app-mock-topbar {
+      height: 56px;
+      padding: 0 16px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    .app-mock-topbar .brand { font-weight: 700; font-size: 16px; color: #fff; }
+    .app-mock-topbar .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      color: #888;
+    }
+    .app-mock-topbar .status span {
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+    }
+    .app-mock-content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .app-mock-card {
+      background: #1e1e1e;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #2a2a2a;
+    }
+    .app-mock-card h3 { font-size: 13px; font-weight: 600; color: #e5e5e5; margin-bottom: 4px; }
+    .app-mock-card p { font-size: 11px; color: #888; }
+    .app-mock-nav {
+      height: 64px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      border-top: 1px solid #2a2a2a;
+    }
+    .app-mock-nav a {
+      font-size: 12px;
+      color: #888;
+      text-decoration: none;
+    }
+    .app-mock-nav a.active { color: #60a5fa; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ChefIApp — Mapa completo (projeto + portal + AppStaff)</h1>
+    <a href="APPSTAFF_MAP_PEN_README.md">README</a>
+  </header>
+
+  <section class="app-preview">
+    <p class="app-preview-title">Fluxo real: AppStaffWrapper → StaffAppGate → Shell → Launcher / Modos (operation, turn, team, tpv, kds, tasks, alerts) e Perfil</p>
+    <div class="app-mock">
+      <div class="app-mock-topbar">
+        <span class="brand">ChefIApp</span>
+        <div class="status">
+          <span>Turno ativo</span>
+          <span>Saúde OK</span>
+          <span>Perfil</span>
+        </div>
+      </div>
+      <div class="app-mock-content">
+        <div class="app-mock-card">
+          <h3>Turno Atual</h3>
+          <p>Estado do turno, equipa em sala</p>
+        </div>
+        <div class="app-mock-card">
+          <h3>Equipe em Turno</h3>
+          <p>Quem está em turno, funções</p>
+        </div>
+        <div class="app-mock-card">
+          <h3>Dispositivos & Operação</h3>
+          <p>TPV, KDS, terminais</p>
+        </div>
+        <div class="app-mock-card">
+          <h3>Alertas</h3>
+          <p>Pendentes, reconhecer, escalar</p>
+        </div>
+      </div>
+      <nav class="app-mock-nav">
+        <a href="#" class="active">Home</a>
+        <a href="#">Tarefas</a>
+        <a href="#">Perfil</a>
+      </nav>
+    </div>
+  </section>
+
+  <p style="text-align: center; font-size: 0.75rem; color: #555; margin-top: -8px; margin-bottom: 24px;">↓ Mapa completo (blueprint) abaixo ↓</p>
+
+  <!-- Mapa por trabalhador — referência para Pencil (APPSTAFF_MAPA_TELAS_POR_TRABALHADOR.md) -->
+  <section id="mapa-por-trabalhador" style="max-width: 900px; margin: 0 auto 32px; padding: 20px; background: #151515; border: 1px solid #333; border-radius: 12px;">
+    <h2 style="font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: #e5e5e5;">Mapa AppStaff — Telas por trabalhador</h2>
+    <p style="font-size: 0.8rem; color: #888; margin-bottom: 16px;">Referência para desenhar/atualizar <code>appstaff-map.pen</code> na extensão Pencil. Doc completo: <code>APPSTAFF_MAPA_TELAS_POR_TRABALHADOR.md</code>.</p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+      <div class="frame" style="padding: 12px; border-radius: 8px; border: 1px solid #333;">
+        <div class="frame-name" style="margin-bottom: 8px; font-weight: 600; color: #f59e0b;">Dono (owner)</div>
+        <div class="frame-body" style="font-size: 11px; color: #999;">
+          Home → Visão Geral, Equipe, Relatórios<br>
+          → /mode/operation, /mode/team, /app/dashboard
+        </div>
+      </div>
+      <div class="frame" style="padding: 12px; border-radius: 8px; border: 1px solid #333;">
+        <div class="frame-name" style="margin-bottom: 8px; font-weight: 600; color: #60a5fa;">Gerente (manager)</div>
+        <div class="frame-body" style="font-size: 11px; color: #999;">
+          Home → FOCO AGORA; TPV, Cozinha, Equipe; nav Status, Equipe, Tarefas, Alertas<br>
+          → /mode/operation, /mode/tpv, /mode/kds, /mode/team, /mode/tasks, /mode/alerts
+        </div>
+      </div>
+      <div class="frame" style="padding: 12px; border-radius: 8px; border: 1px solid #333;">
+        <div class="frame-name" style="margin-bottom: 8px; font-weight: 600; color: #34d399;">Garçom (waiter)</div>
+        <div class="frame-body" style="font-size: 11px; color: #999;">
+          Home = grid mesas → toque mesa → TPV<br>
+          → /mode/tpv (state.tableId), /mode/turn
+        </div>
+      </div>
+      <div class="frame" style="padding: 12px; border-radius: 8px; border: 1px solid #333;">
+        <div class="frame-name" style="margin-bottom: 8px; font-weight: 600; color: #f97316;">Cozinha (kitchen)</div>
+        <div class="frame-body" style="font-size: 11px; color: #999;">
+          Home = KDS (KitchenDisplay embebido)<br>
+          → /mode/kds (mesmo componente)
+        </div>
+      </div>
+      <div class="frame" style="padding: 12px; border-radius: 8px; border: 1px solid #333;">
+        <div class="frame-name" style="margin-bottom: 8px; font-weight: 600; color: #a78bfa;">Limpeza (cleaning)</div>
+        <div class="frame-body" style="font-size: 11px; color: #999;">
+          Home = lista tarefas; botão «Ver tarefas»<br>
+          → /mode/tasks
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 0.75rem; color: #666; margin-top: 12px;">Shell (todos): Bottom bar → Início, Operação, TPV, KDS, Mais (Tasks, Alerts, Team, Perfil, Turno).</p>
+  </section>
+
+  <div id="canvas">
+    <svg id="connections" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+          <polygon points="0 0, 8 4, 0 8" fill="#404040" />
+        </marker>
+      </defs>
+    </svg>
+  </div>
+  <script>
+    (function () {
+      const PADDING = 40;
+      const frameById = new Map();
+
+      /** Blueprint completo: 3 setores (CORE, MERCHANT PORTAL, APPSTAFF). Fallback quando appstaff-map.pen não está disponível. */
+      const FULL_APP_BLUEPRINT = {
+        children: [
+          /* 1. CORE / INFRA */
+          { id: 'project-root', type: 'frame', name: 'chefiapp-pos-core (projeto)', x: 0, y: -520, width: 320, height: 70 },
+          { id: 'docker-core', type: 'frame', name: 'Docker Core (container)', x: 0, y: -440, width: 280, height: 56 },
+          { id: 'core-postgres', type: 'frame', name: 'PostgreSQL', x: 0, y: -380, width: 280, height: 48 },
+          { id: 'core-migrations', type: 'frame', name: 'Migrations (schema/migrations)', x: 0, y: -328, width: 280, height: 48 },
+          { id: 'core-gm-restaurants', type: 'frame', name: 'gm_restaurants', x: 0, y: -276, width: 280, height: 48 },
+          { id: 'core-gm-restaurant-people', type: 'frame', name: 'gm_restaurant_people', x: 0, y: -224, width: 280, height: 48 },
+          { id: 'core-gm-staff', type: 'frame', name: 'gm_staff', x: 0, y: -172, width: 280, height: 48 },
+          { id: 'core-auth-session', type: 'frame', name: 'Auth / Session', x: 0, y: -120, width: 280, height: 48 },
+          { id: 'core-runtime-context', type: 'frame', name: 'Runtime Context', x: 0, y: -68, width: 280, height: 48 },
+          { id: 'core-feature-flags', type: 'frame', name: 'Feature Flags', x: 0, y: -16, width: 280, height: 48 },
+          { id: 'core-billing-plans', type: 'frame', name: 'Billing / Plans', x: 0, y: 36, width: 280, height: 48 },
+          /* 2. MERCHANT PORTAL */
+          { id: 'merchant-portal-container', type: 'frame', name: 'Merchant Portal (React)', x: 360, y: -520, width: 280, height: 70 },
+          { id: 'auth', type: 'frame', name: 'Auth — /auth/phone, verify, email', x: 360, y: -440, width: 260, height: 48 },
+          { id: 'bootstrap', type: 'frame', name: 'Setup — /bootstrap, /setup/*', x: 360, y: -388, width: 260, height: 48 },
+          { id: 'config', type: 'frame', name: 'Config — /config/general, identity, location', x: 360, y: -336, width: 260, height: 48 },
+          { id: 'config-people', type: 'frame', name: '/config/people — Cria dados que desbloqueiam AppStaff', x: 360, y: -284, width: 280, height: 56 },
+          { id: 'dashboard', type: 'frame', name: 'Dashboard — /dashboard, /app/dashboard', x: 360, y: -224, width: 260, height: 48 },
+          { id: 'admin', type: 'frame', name: 'Admin — /app/backoffice, /admin/*', x: 360, y: -172, width: 260, height: 48 },
+          { id: 'owner-central', type: 'frame', name: 'Owner central — /app/control-room', x: 360, y: -120, width: 280, height: 48 },
+          { id: 'tpv-portal', type: 'frame', name: 'TPV (op/tpv)', x: 360, y: -68, width: 200, height: 48 },
+          { id: 'kds-portal', type: 'frame', name: 'KDS (op/kds)', x: 580, y: -68, width: 200, height: 48 },
+          { id: 'setup', type: 'frame', name: 'Setup (menu, mesas, equipe)', x: 360, y: -16, width: 260, height: 48 },
+          { id: 'mobile-app', type: 'frame', name: 'Mobile App', x: 980, y: -260, width: 220, height: 70 },
+          { id: 'docs', type: 'frame', name: 'Docs / Architecture', x: 1240, y: -260, width: 240, height: 70 },
+          /* 3. APPSTAFF — Entry + Gates */
+          { id: '3PefB', type: 'frame', name: '/app/staff — AppStaffWrapper / StaffModule', x: 0, y: 0, width: 340, height: 100 },
+          { id: 'jpys2', type: 'frame', name: 'StaffAppGate', x: 380, y: 0, width: 340, height: 120 },
+          { id: 'CyZO1', type: 'frame', name: 'NoLocationsView', x: 760, y: 0, width: 320, height: 100 },
+          { id: 'rndCd', type: 'frame', name: 'LocationSelectView', x: 760, y: 120, width: 320, height: 100 },
+          { id: 'jI6wh', type: 'frame', name: 'AppStaffLanding', x: 760, y: 240, width: 320, height: 100 },
+          { id: 'BiwGS', type: 'frame', name: 'WorkerCheckInView', x: 760, y: 360, width: 320, height: 120 },
+          { id: 'appshell', type: 'frame', name: 'StaffAppShellLayout — DONO DA ALTURA E DO SCROLL', x: 380, y: 140, width: 360, height: 140 },
+          { id: 'bmtTV', type: 'frame', name: '/app/staff/home — StaffLauncherPage, AppStaffHome', x: 760, y: 500, width: 340, height: 120 },
+          { id: 'mwssQ', type: 'frame', name: '/app/staff/mode/operation', x: 1140, y: 0, width: 300, height: 90 },
+          { id: 'lBAfc', type: 'frame', name: '/app/staff/mode/turn', x: 1140, y: 110, width: 300, height: 90 },
+          { id: 'L4rf2', type: 'frame', name: 'ManagerEquipePage', x: 1140, y: 220, width: 300, height: 90 },
+          { id: 'bDdLT', type: 'frame', name: '/app/staff/mode/tpv', x: 1140, y: 330, width: 300, height: 90 },
+          { id: 'CcmO1', type: 'frame', name: '/app/staff/mode/kds', x: 1140, y: 440, width: 300, height: 90 },
+          { id: 'LSoW5', type: 'frame', name: '/app/staff/mode/tasks', x: 1140, y: 550, width: 300, height: 90 },
+          { id: '85RWD', type: 'frame', name: '/app/staff/mode/alerts', x: 1140, y: 660, width: 300, height: 90 },
+          { id: '3h6ik', type: 'frame', name: 'StaffProfilePage', x: 760, y: 640, width: 340, height: 100 },
+          { id: 'notifications', type: 'frame', name: 'StaffNotificationsPage', x: 1140, y: 770, width: 280, height: 80 },
+          { id: 'help', type: 'frame', name: 'StaffHelpPage', x: 1140, y: 860, width: 280, height: 80 },
+          { id: 'history', type: 'frame', name: 'StaffHistoryPage', x: 1140, y: 950, width: 280, height: 80 },
+          { id: 'owner-home', type: 'frame', name: 'OwnerDashboard', x: 1140, y: 770, width: 280, height: 90 },
+          { id: 'manager-home', type: 'frame', name: 'ManagerDashboard', x: 1140, y: 880, width: 280, height: 90 },
+          { id: 'waiter-home', type: 'frame', name: 'Waiter tiles', x: 1140, y: 990, width: 280, height: 90 },
+          { id: 'kitchen-home', type: 'frame', name: 'Kitchen tiles', x: 1140, y: 1100, width: 280, height: 90 },
+          { id: 'cleaning-home', type: 'frame', name: 'Cleaning tiles', x: 1140, y: 1210, width: 280, height: 90 },
+          { id: 'tarefas-lista', type: 'frame', name: 'Tarefas (lista)', x: 1480, y: 0, width: 280, height: 90 },
+          { id: 'tarefas-detalhe', type: 'frame', name: 'Tarefas (detalhe)', x: 1480, y: 110, width: 280, height: 90 },
+          { id: 'turno-atual', type: 'frame', name: 'Turno Atual', x: 1480, y: 220, width: 280, height: 90 },
+          { id: 'dispositivos', type: 'frame', name: 'Dispositivos & Operação', x: 1480, y: 330, width: 280, height: 90 },
+          { id: 'alertas', type: 'frame', name: 'Alertas / Exceções', x: 1480, y: 440, width: 280, height: 90 },
+          { id: 'saude', type: 'frame', name: 'Saúde do Sistema', x: 1480, y: 550, width: 280, height: 90 },
+          { id: 'owner-pessoas', type: 'frame', name: 'Owner Pessoas e papeis', x: 1780, y: 770, width: 260, height: 80 },
+          { id: 'owner-relatorios', type: 'frame', name: 'Owner Relatorios', x: 1780, y: 860, width: 260, height: 80 },
+          { id: 'waiter-checklists', type: 'frame', name: 'StaffWaiterChecklistsPage', x: 1780, y: 990, width: 260, height: 80 },
+          { id: 'waiter-chamados', type: 'frame', name: 'Waiter Chamados', x: 1780, y: 1080, width: 260, height: 80 },
+          { id: 'kitchen-preparacao', type: 'frame', name: 'Kitchen Preparacao', x: 1780, y: 1170, width: 260, height: 80 },
+          { id: 'kitchen-alerts', type: 'frame', name: 'Kitchen Alertas', x: 1780, y: 1260, width: 260, height: 80 },
+          { id: 'cleaning-checklists', type: 'frame', name: 'StaffCleaningPage Checklists', x: 1780, y: 1350, width: 260, height: 80 },
+          { id: 'cleaning-alerts', type: 'frame', name: 'Cleaning Alertas', x: 1780, y: 1440, width: 260, height: 80 },
+          /* Conexões Core → Portal → AppStaff */
+          { type: 'connection', source: { path: 'project-root', anchor: 'right' }, target: { path: 'docker-core', anchor: 'left' } },
+          { type: 'connection', source: { path: 'project-root', anchor: 'right' }, target: { path: 'merchant-portal-container', anchor: 'left' } },
+          { type: 'connection', source: { path: 'project-root', anchor: 'right' }, target: { path: 'mobile-app', anchor: 'left' } },
+          { type: 'connection', source: { path: 'project-root', anchor: 'right' }, target: { path: 'docs', anchor: 'left' } },
+          { type: 'connection', source: { path: 'docker-core', anchor: 'right' }, target: { path: 'merchant-portal-container', anchor: 'left' } },
+          { type: 'connection', source: { path: 'merchant-portal-container', anchor: 'bottom' }, target: { path: 'auth', anchor: 'top' } },
+          { type: 'connection', source: { path: 'merchant-portal-container', anchor: 'bottom' }, target: { path: 'bootstrap', anchor: 'top' } },
+          { type: 'connection', source: { path: 'merchant-portal-container', anchor: 'bottom' }, target: { path: 'config', anchor: 'top' } },
+          { type: 'connection', source: { path: 'merchant-portal-container', anchor: 'bottom' }, target: { path: 'config-people', anchor: 'top' } },
+          { type: 'connection', source: { path: 'config-people', anchor: 'right' }, target: { path: 'BiwGS', anchor: 'left' } },
+          { type: 'connection', source: { path: 'merchant-portal-container', anchor: 'bottom' }, target: { path: 'dashboard', anchor: 'top' } },
+          { type: 'connection', source: { path: 'merchant-portal-container', anchor: 'bottom' }, target: { path: '3PefB', anchor: 'top' } },
+          { type: 'connection', source: { path: 'merchant-portal-container', anchor: 'bottom' }, target: { path: 'tpv-portal', anchor: 'top' } },
+          { type: 'connection', source: { path: 'merchant-portal-container', anchor: 'bottom' }, target: { path: 'kds-portal', anchor: 'top' } },
+          { type: 'connection', source: { path: 'merchant-portal-container', anchor: 'bottom' }, target: { path: 'admin', anchor: 'top' } },
+          { type: 'connection', source: { path: 'merchant-portal-container', anchor: 'bottom' }, target: { path: 'setup', anchor: 'top' } },
+          { type: 'connection', source: { path: 'merchant-portal-container', anchor: 'bottom' }, target: { path: 'owner-central', anchor: 'top' } },
+          { type: 'connection', source: { path: '3PefB', anchor: 'right' }, target: { path: 'jpys2', anchor: 'left' } },
+          { type: 'connection', source: { path: 'jpys2', anchor: 'right' }, target: { path: 'CyZO1', anchor: 'left' } },
+          { type: 'connection', source: { path: 'jpys2', anchor: 'right' }, target: { path: 'rndCd', anchor: 'left' } },
+          { type: 'connection', source: { path: 'jpys2', anchor: 'right' }, target: { path: 'jI6wh', anchor: 'left' } },
+          { type: 'connection', source: { path: 'jpys2', anchor: 'right' }, target: { path: 'BiwGS', anchor: 'left' } },
+          { type: 'connection', source: { path: 'jpys2', anchor: 'right' }, target: { path: 'appshell', anchor: 'left' } },
+          { type: 'connection', source: { path: 'appshell', anchor: 'right' }, target: { path: 'bmtTV', anchor: 'left' } },
+          { type: 'connection', source: { path: 'appshell', anchor: 'right' }, target: { path: 'mwssQ', anchor: 'left' } },
+          { type: 'connection', source: { path: 'appshell', anchor: 'right' }, target: { path: 'lBAfc', anchor: 'left' } },
+          { type: 'connection', source: { path: 'appshell', anchor: 'right' }, target: { path: 'L4rf2', anchor: 'left' } },
+          { type: 'connection', source: { path: 'appshell', anchor: 'right' }, target: { path: 'bDdLT', anchor: 'left' } },
+          { type: 'connection', source: { path: 'appshell', anchor: 'right' }, target: { path: 'CcmO1', anchor: 'left' } },
+          { type: 'connection', source: { path: 'appshell', anchor: 'right' }, target: { path: 'LSoW5', anchor: 'left' } },
+          { type: 'connection', source: { path: 'appshell', anchor: 'right' }, target: { path: '85RWD', anchor: 'left' } },
+          { type: 'connection', source: { path: 'appshell', anchor: 'right' }, target: { path: '3h6ik', anchor: 'left' } },
+          { type: 'connection', source: { path: 'BiwGS', anchor: 'bottom' }, target: { path: 'bmtTV', anchor: 'top' } },
+          { type: 'connection', source: { path: 'appshell', anchor: 'right' }, target: { path: 'notifications', anchor: 'left' } },
+          { type: 'connection', source: { path: 'appshell', anchor: 'right' }, target: { path: 'help', anchor: 'left' } },
+          { type: 'connection', source: { path: 'appshell', anchor: 'right' }, target: { path: 'history', anchor: 'left' } },
+          { type: 'connection', source: { path: 'bmtTV', anchor: 'right' }, target: { path: 'owner-home', anchor: 'left' } },
+          { type: 'connection', source: { path: 'bmtTV', anchor: 'right' }, target: { path: 'manager-home', anchor: 'left' } },
+          { type: 'connection', source: { path: 'bmtTV', anchor: 'right' }, target: { path: 'waiter-home', anchor: 'left' } },
+          { type: 'connection', source: { path: 'manager-home', anchor: 'right' }, target: { path: 'turno-atual', anchor: 'left' } },
+          { type: 'connection', source: { path: 'manager-home', anchor: 'right' }, target: { path: 'dispositivos', anchor: 'left' } },
+          { type: 'connection', source: { path: 'waiter-home', anchor: 'right' }, target: { path: 'tarefas-lista', anchor: 'left' } },
+          { type: 'connection', source: { path: 'tarefas-lista', anchor: 'right' }, target: { path: 'tarefas-detalhe', anchor: 'left' } },
+          { type: 'connection', source: { path: 'owner-home', anchor: 'right' }, target: { path: 'saude', anchor: 'left' } },
+          { type: 'connection', source: { path: 'owner-home', anchor: 'right' }, target: { path: 'alertas', anchor: 'left' } },
+          { type: 'connection', source: { path: 'owner-home', anchor: 'right' }, target: { path: 'owner-pessoas', anchor: 'left' } },
+          { type: 'connection', source: { path: 'owner-home', anchor: 'right' }, target: { path: 'owner-relatorios', anchor: 'left' } },
+          { type: 'connection', source: { path: 'waiter-home', anchor: 'right' }, target: { path: 'waiter-checklists', anchor: 'left' } },
+          { type: 'connection', source: { path: 'waiter-home', anchor: 'right' }, target: { path: 'waiter-chamados', anchor: 'left' } },
+          { type: 'connection', source: { path: 'kitchen-home', anchor: 'right' }, target: { path: 'kitchen-preparacao', anchor: 'left' } },
+          { type: 'connection', source: { path: 'kitchen-home', anchor: 'right' }, target: { path: 'kitchen-alerts', anchor: 'left' } },
+          { type: 'connection', source: { path: 'cleaning-home', anchor: 'right' }, target: { path: 'cleaning-checklists', anchor: 'left' } },
+          { type: 'connection', source: { path: 'cleaning-home', anchor: 'right' }, target: { path: 'cleaning-alerts', anchor: 'left' } }
+        ]
+      };
+
+      function loadPen() {
+        return fetch('appstaff-map.pen')
+          .then(r => r.ok ? r.json() : Promise.reject(new Error('Ficheiro não encontrado')))
+          .then(data => {
+            if (data && data.children && data.children.length > 0) return data;
+            return FULL_APP_BLUEPRINT;
+          })
+          .catch(() => FULL_APP_BLUEPRINT);
+      }
+
+      function getAnchor(node, anchor) {
+        const x = node.x ?? 0;
+        const y = node.y ?? 0;
+        const w = node.width && typeof node.width === 'number' ? node.width : 360;
+        const h = node.height && typeof node.height === 'number' ? node.height : 420;
+        switch (anchor) {
+          case 'left': return [x, y + h / 2];
+          case 'right': return [x + w, y + h / 2];
+          case 'top': return [x + w / 2, y];
+          case 'bottom': return [x + w / 2, y + h];
+          default: return [x + w / 2, y + h / 2];
+        }
+      }
+
+      // Projeto + Portal + AppStaff: placeholders por frame
+      const placeholders = {
+        'project-root': [
+          { label: 'Repo', text: 'chefiapp-pos-core' },
+          { label: 'Conteúdo', text: 'docker-core, merchant-portal, mobile-app, docs, core-engine' }
+        ],
+        'docker-core': [
+          { label: 'Stack', text: 'PostgreSQL, PostgREST, Realtime' },
+          { label: 'Schema', text: 'gm_*, migrations, RPCs' }
+        ],
+        'core-postgres': [ { label: 'DB', text: 'PostgreSQL' } ],
+        'core-migrations': [ { label: 'Path', text: 'schema/migrations' } ],
+        'core-gm-restaurants': [ { label: 'Tabela', text: 'gm_restaurants' } ],
+        'core-gm-restaurant-people': [ { label: 'Tabela', text: 'gm_restaurant_people — fonte WorkerCheckInView' } ],
+        'core-gm-staff': [ { label: 'Tabela', text: 'gm_staff' } ],
+        'core-auth-session': [ { label: 'Auth', text: 'Session, JWT' } ],
+        'core-runtime-context': [ { label: 'Context', text: 'RestaurantRuntimeContext' } ],
+        'core-feature-flags': [ { label: 'Flags', text: 'Feature toggles' } ],
+        'core-billing-plans': [ { label: 'Billing', text: 'Plans, assinaturas' } ],
+        'merchant-portal-container': [
+          { label: 'App', text: 'React (Vite)' },
+          { label: 'Rotas', text: 'Auth, Config, Dashboard, /app/staff, /op/tpv, /op/kds' }
+        ],
+        'merchant-portal': [
+          { label: 'App', text: 'React (Vite)' },
+          { label: 'Rotas', text: 'Auth, Config, Dashboard, /app/staff, /op/tpv, /op/kds' }
+        ],
+        'mobile-app': [
+          { label: 'App', text: 'React Native / Expo' },
+          { label: 'Uso', text: 'Terminal móvel' }
+        ],
+        docs: [
+          { label: 'Conteúdo', text: 'docs/, docs/architecture, contratos' }
+        ],
+        auth: [
+          { label: 'Rotas', text: '/auth/phone, /auth/verify, /auth/email' },
+          { label: 'Componentes', text: 'PhoneLoginPage, VerifyCodePage, AuthPage' }
+        ],
+        bootstrap: [
+          { label: 'Rota', text: '/bootstrap' },
+          { label: 'Conteúdo', text: 'Billing, primeiro produto' }
+        ],
+        config: [
+          { label: 'Rota', text: '/config/*' },
+          { label: 'Secções', text: 'general, identity, location, people, payments' }
+        ],
+        dashboard: [
+          { label: 'Rotas', text: '/dashboard, /app/dashboard, /app/reports/*' },
+          { label: 'Conteúdo', text: 'Owner dashboard, relatórios' }
+        ],
+        'tpv-portal': [
+          { label: 'Rota', text: '/op/tpv' },
+          { label: 'Componente', text: 'TPVMinimal / Operational TPV' }
+        ],
+        'kds-portal': [
+          { label: 'Rota', text: '/op/kds' },
+          { label: 'Componente', text: 'KitchenDisplay' }
+        ],
+        admin: [
+          { label: 'Rota', text: '/app/backoffice, /admin/*' },
+          { label: 'Conteúdo', text: 'Backoffice, pagamentos, clientes' }
+        ],
+        setup: [
+          { label: 'Rotas', text: '/app/setup/*, menu-builder, mesas' },
+          { label: 'Conteúdo', text: 'Menu, mesas, equipe, horários' }
+        ],
+        'config-people': [
+          { label: 'Rota', text: '/config/people' },
+          { label: 'Nota', text: 'Cria dados que desbloqueiam AppStaff' },
+          { label: 'Dados', text: 'RestaurantPeopleSection → gm_restaurant_people → WorkerCheckInView' }
+        ],
+        'owner-central': [
+          { label: 'Rota', text: '/app/control-room' },
+          { label: 'Redirect', text: '→ /app/staff/mode/operation' }
+        ],
+        'app-root': [
+          { label: 'Componente', text: 'AppStaffWrapper → StaffModule' },
+          { label: 'Providers', text: 'StaffProvider, OperatorSessionProvider' },
+          { label: 'Outlet', text: 'Rotas nested /app/staff/*' }
+        ],
+        gate: [
+          { label: 'Ordem', text: 'Location → Contrato → Worker' },
+          { label: 'Fallbacks', text: 'NoLocations | LocationSelect | Landing | WorkerCheckIn' },
+          { label: 'OK', text: 'Outlet → StaffAppShellLayout' }
+        ],
+        'no-locations': [
+          { label: 'Condição', text: 'activeLocations.length === 0' },
+          { label: 'UI', text: 'NoLocationsView' }
+        ],
+        'location-select': [
+          { label: 'Condição', text: '!activeLocation && locais existem' },
+          { label: 'UI', text: 'Lista locais → Escolher local' }
+        ],
+        landing: [
+          { label: 'Condição', text: '!operationalContract' },
+          { label: 'UI', text: 'AppStaffLanding (contrato)' }
+        ],
+        'worker-checkin': [
+          { label: 'Condição', text: '!activeWorkerId' },
+          { label: 'Dados', text: 'readRestaurantPeople(restaurantId)' },
+          { label: 'UI', text: 'Lista pessoas ou "Nenhuma pessoa configurada"' }
+        ],
+        appshell: [
+          { label: 'TopBar', text: 'Turno · Saúde · Perfil (APPSTAFF_VISUAL_CANON)' },
+          { label: 'Área central', text: '<Outlet /> por rota' },
+          { label: 'Navegação', text: 'Bottom nav: Home · Tarefas · Perfil' }
+        ],
+        launcher: [
+          { label: 'Rota', text: '/app/staff/home (index)' },
+          { label: 'Componente', text: 'StaffLauncherPage' },
+          { label: 'Conteúdo', text: 'Tiles por papel (owner/manager/waiter/kitchen/cleaning)' }
+        ],
+        'mode-operation': [
+          { label: 'Rota', text: '/app/staff/mode/operation' },
+          { label: 'Componente', text: 'OperationModePage' }
+        ],
+        'mode-turn': [
+          { label: 'Rota', text: '/app/staff/mode/turn' },
+          { label: 'Componente', text: 'ManagerTurnoPage' }
+        ],
+        'mode-team': [
+          { label: 'Rota', text: '/app/staff/mode/team' },
+          { label: 'Componente', text: 'ManagerEquipePage' }
+        ],
+        'mode-tpv': [
+          { label: 'Rota', text: '/app/staff/mode/tpv' },
+          { label: 'Componente', text: 'StaffTpvPage' }
+        ],
+        'mode-kds': [
+          { label: 'Rota', text: '/app/staff/mode/kds' },
+          { label: 'Componente', text: 'KitchenDisplay (KDS)' }
+        ],
+        'mode-tasks': [
+          { label: 'Rota', text: '/app/staff/mode/tasks' },
+          { label: 'Componente', text: 'ManagerTarefasPage' }
+        ],
+        'mode-alerts': [
+          { label: 'Rota', text: '/app/staff/mode/alerts' },
+          { label: 'Componente', text: 'ManagerExcecoesPage' }
+        ],
+        profile: [
+          { label: 'Rota', text: '/app/staff/profile' },
+          { label: 'Componente', text: 'StaffProfilePage' },
+          { label: 'Abas', text: 'Dados · Papel · Histórico · Sessão' }
+        ],
+        'home-gen': [
+          { label: 'Gate', text: 'Location → Contrato → Worker' },
+          { label: 'Redirect', text: 'owner / manager / waiter / kitchen / cleaning' }
+        ],
+        login: [
+          { label: 'Campo', text: 'Código operação' },
+          { label: 'Acção', text: 'Entrar' }
+        ],
+        'selecao-local': [
+          { label: 'Lista', text: 'Locais disponíveis' },
+          { label: 'Acção', text: 'Escolher local' }
+        ],
+        perfil: [
+          { label: 'Abas', text: 'Dados · Papel · Histórico · Sessão' },
+          { label: 'Conteúdo', text: 'Dados do operador, turno, localização' }
+        ],
+        'owner-home': [
+          { label: 'Card', text: 'Visão Geral' },
+          { label: 'Card', text: 'Saúde do sistema' },
+          { label: 'Card', text: 'Alertas' },
+          { label: 'Card', text: 'Dispositivos & Turnos' }
+        ],
+        'manager-home': [
+          { label: 'Card', text: 'Turno Atual' },
+          { label: 'Card', text: 'Equipe em Turno' },
+          { label: 'Card', text: 'Dispositivos & Operação' },
+          { label: 'Card', text: 'Alertas' }
+        ],
+        'waiter-home': [
+          { label: 'Card', text: 'Minhas tarefas' },
+          { label: 'Card', text: 'Mesas' },
+          { label: 'Card', text: 'Checklists' },
+          { label: 'Card', text: 'Chamados' }
+        ],
+        'kitchen-home': [
+          { label: 'Área', text: 'KDS — fluxo directo' },
+          { label: 'Conteúdo', text: 'Preparação, alertas' }
+        ],
+        'cleaning-home': [
+          { label: 'Área', text: 'Checklists do turno' },
+          { label: 'Conteúdo', text: 'Alertas' }
+        ],
+        'tarefas-lista': [
+          { label: 'Lista', text: 'Tarefas pendentes / activas' },
+          { label: 'Acção', text: 'Toque → detalhe' }
+        ],
+        'tarefas-detalhe': [
+          { label: 'Campo', text: 'Título, estado' },
+          { label: 'Acções', text: 'Iniciar · Concluir · Rejeitar' }
+        ],
+        'turno-atual': [
+          { label: 'Estado', text: 'Turno activo / fechado' },
+          { label: 'Lista', text: 'Equipa em turno' }
+        ],
+        dispositivos: [
+          { label: 'Lista', text: 'Dispositivos' },
+          { label: 'Estado', text: 'Turnos por dispositivo' }
+        ],
+        alertas: [
+          { label: 'Lista', text: 'Alertas activos' },
+          { label: 'Acção', text: 'Reconhecer / Escalar' }
+        ],
+        saude: [
+          { label: 'Estado', text: 'Core · Dispositivo' },
+          { label: 'Indicadores', text: 'UP / DOWN / degradado' }
+        ],
+        notifications: [
+          { label: 'Nav', text: 'COMMON_NAV' },
+          { label: 'Componente', text: 'StaffNotificationsPage' },
+          { label: 'Conteúdo', text: 'Alertas e notificações para o operador' }
+        ],
+        help: [
+          { label: 'Nav', text: 'COMMON_NAV' },
+          { label: 'Componente', text: 'StaffHelpPage' },
+          { label: 'Conteúdo', text: 'Ajuda / Estado do sistema (não técnico)' }
+        ],
+        history: [
+          { label: 'Nav', text: 'COMMON_NAV' },
+          { label: 'Componente', text: 'StaffHistoryPage' },
+          { label: 'Conteúdo', text: 'Tarefas, turnos e acções do operador' }
+        ],
+        'owner-pessoas': [
+          { label: 'Owner nav', text: 'owner/pessoas' },
+          { label: 'Conteúdo', text: 'Pessoas & papéis (Config → Empregados)' }
+        ],
+        'owner-relatorios': [
+          { label: 'Owner nav', text: 'owner/relatorios' },
+          { label: 'Conteúdo', text: 'Relatórios' }
+        ],
+        'waiter-checklists': [
+          { label: 'Waiter nav', text: 'waiter/checklists' },
+          { label: 'Componente', text: 'StaffWaiterChecklistsPage' }
+        ],
+        'waiter-chamados': [
+          { label: 'Waiter nav', text: 'waiter/chamados' },
+          { label: 'Conteúdo', text: 'Chamados' }
+        ],
+        'kitchen-preparacao': [
+          { label: 'Kitchen nav', text: 'kitchen/preparacao' },
+          { label: 'Conteúdo', text: 'Preparação' }
+        ],
+        'kitchen-alerts': [
+          { label: 'Kitchen nav', text: 'kitchen/alerts' },
+          { label: 'Conteúdo', text: 'Alertas cozinha' }
+        ],
+        'cleaning-checklists': [
+          { label: 'Cleaning nav', text: 'cleaning/checklists' },
+          { label: 'Componente', text: 'StaffCleaningPage' }
+        ],
+        'cleaning-alerts': [
+          { label: 'Cleaning nav', text: 'cleaning/alerts' },
+          { label: 'Conteúdo', text: 'Alertas limpeza' }
+        ]
+      };
+
+      // Mapeamento nome do frame (.pen) → chave do placeholder (quando o .pen usa ids gerados; match por início se nome longo)
+      const nameToPlaceholderKey = {
+        'AppStaffWrapper / StaffModule': 'app-root',
+        '/app/staff — AppStaffWrapper': 'app-root',
+        'StaffAppGate': 'gate',
+        'NoLocationsView': 'no-locations',
+        'LocationSelectView': 'location-select',
+        'AppStaffLanding': 'landing',
+        'WorkerCheckInView': 'worker-checkin',
+        'StaffAppShellLayout': 'appshell',
+        'StaffAppShellLayout — DONO': 'appshell',
+        'StaffLauncherPage /app/staff/home': 'launcher',
+        '/app/staff/home — StaffLauncherPage': 'launcher',
+        'OperationModePage': 'mode-operation',
+        '/app/staff/mode/operation': 'mode-operation',
+        'ManagerTurnoPage': 'mode-turn',
+        '/app/staff/mode/turn': 'mode-turn',
+        'ManagerEquipePage': 'mode-team',
+        'StaffTpvPage': 'mode-tpv',
+        '/app/staff/mode/tpv': 'mode-tpv',
+        'KDS KitchenDisplay': 'mode-kds',
+        '/app/staff/mode/kds': 'mode-kds',
+        'ManagerTarefasPage': 'mode-tasks',
+        '/app/staff/mode/tasks': 'mode-tasks',
+        'ManagerExcecoesPage': 'mode-alerts',
+        '/app/staff/mode/alerts': 'mode-alerts',
+        'StaffProfilePage': 'profile',
+        'Home Gate to Launcher': 'home-gen',
+        'Entrada por codigo': 'login',
+        'Selecao de Local': 'selecao-local',
+        'Perfil StaffProfilePage': 'perfil',
+        'StaffNotificationsPage': 'notifications',
+        'StaffHelpPage': 'help',
+        'StaffHistoryPage': 'history',
+        'Owner Pessoas e papeis': 'owner-pessoas',
+        'Owner Relatorios': 'owner-relatorios',
+        'StaffWaiterChecklistsPage': 'waiter-checklists',
+        'Waiter Chamados': 'waiter-chamados',
+        'Kitchen Preparacao': 'kitchen-preparacao',
+        'Kitchen Alertas': 'kitchen-alerts',
+        'StaffCleaningPage Checklists': 'cleaning-checklists',
+        'Cleaning Alertas': 'cleaning-alerts',
+        'chefiapp-pos-core (projeto)': 'project-root',
+        'Docker Core': 'docker-core',
+        'Docker Core (container)': 'docker-core',
+        'Merchant Portal (React)': 'merchant-portal-container',
+        'Mobile App': 'mobile-app',
+        'Docs / Architecture': 'docs',
+        'Auth (phone, verify, email)': 'auth',
+        'Auth —': 'auth',
+        'Bootstrap': 'bootstrap',
+        'Setup —': 'bootstrap',
+        'Config (general, location, people)': 'config',
+        'Config —': 'config',
+        '/config/people —': 'config-people',
+        'Dashboard / Reports': 'dashboard',
+        'Dashboard —': 'dashboard',
+        'Admin / Backoffice': 'admin',
+        'Admin —': 'admin',
+        'Owner central —': 'owner-central',
+        'TPV (op/tpv)': 'tpv-portal',
+        'KDS (op/kds)': 'kds-portal',
+        'Setup (menu, mesas, equipe)': 'setup'
+      };
+      function bodyContent(node) {
+        let key = placeholders[node.id] ? node.id : (nameToPlaceholderKey[node.name] || null);
+        if (!key && node.name) {
+          for (const k of Object.keys(nameToPlaceholderKey)) {
+            if (node.name.startsWith(k)) { key = nameToPlaceholderKey[k]; break; }
+          }
+        }
+        key = key || node.id;
+        const blocks = placeholders[key];
+        if (blocks && blocks.length) {
+          return blocks.map(b => '<div class="placeholder-block"><div class="placeholder-label">' + b.label + '</div>' + b.text + '</div>').join('');
+        }
+        if (node.children && node.children.length) return '…';
+        return '';
+      }
+
+      function render(data) {
+        const canvas = document.getElementById('canvas');
+        const svg = document.getElementById('connections');
+        const frames = (data.children || []).filter(c => c.type === 'frame' && (c.x !== undefined || c.y !== undefined));
+        const connections = (data.children || []).filter(c => c.type === 'connection');
+
+        const minY = frames.length ? Math.min(...frames.map(f => f.y ?? 0)) : 0;
+        const yOffset = minY < 0 ? -minY : 0;
+
+        frames.forEach(node => {
+          const w = node.width && typeof node.width === 'number' ? node.width : 360;
+          const h = node.height && typeof node.height === 'number' ? node.height : 420;
+          const x = (node.x ?? 0) + PADDING;
+          const y = (node.y ?? 0) + PADDING + yOffset;
+          frameById.set(node.id, { ...node, x, y, width: w, height: h });
+
+          const el = document.createElement('div');
+          el.className = 'frame';
+          el.id = 'frame-' + node.id;
+          el.style.left = x + 'px';
+          el.style.top = y + 'px';
+          el.style.width = w + 'px';
+          el.style.height = h + 'px';
+          el.style.background = node.fill || '#1a1a1a';
+          el.innerHTML = '<div class="frame-name">' + (node.name || node.id) + '</div><div class="frame-body">' + bodyContent(node) + '</div>';
+          canvas.appendChild(el);
+        });
+
+        connections.forEach(conn => {
+          const src = frameById.get(conn.source.path);
+          const tgt = frameById.get(conn.target.path);
+          if (!src || !tgt) return;
+          const [x1, y1] = getAnchor(src, conn.source.anchor);
+          const [x2, y2] = getAnchor(tgt, conn.target.anchor);
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', x1);
+          line.setAttribute('y1', y1);
+          line.setAttribute('x2', x2);
+          line.setAttribute('y2', y2);
+          svg.appendChild(line);
+        });
+      }
+
+      loadPen()
+        .then(data => render(data))
+        .catch(err => {
+          document.getElementById('canvas').innerHTML = '<div style="padding: 48px; color: #888;">' + err.message + '</div>';
+        });
+    })();
+  </script>
+</body>
+</html>

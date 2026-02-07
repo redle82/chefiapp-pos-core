@@ -4,6 +4,8 @@ Documento de referência única para as checklists técnicas do roadmap pós-fun
 
 **Próximo passo (FASE 5):** FASE C feita; FASE B E2E local PASSOU (2026-02-01). Próximo executável: 1) [Supabase deploy](FASE_5_SUPABASE_DEPLOY.md) → 2) [FASE B em Supabase](FASE_5_FASE_B_SUPABASE_RUNBOOK.md) (URL real) → 3) Se PASSOU → [Primeiro cliente pagante €79](../pilots/CHECKLIST_PRIMEIRO_CLIENTE_PAGANTE.md). Local = dev-only ([Local ≠ Produção](FASE_5_LOCAL_NAO_PRODUCAO.md)).
 
+**Plano final (execução cirúrgica):** [PLANO_FINAL_EXECUCAO.md](PLANO_FINAL_EXECUCAO.md) — 4 frentes (AppStaff, Menu, Dados reais, Fechamento); seed Sofia Gastrobar: `docker-core/schema/migrations/20260207_seed_sofia_gastrobar.sql`. Fechamento: [KNOWN_LIMITATIONS_AND_GO_LIVE.md](KNOWN_LIMITATIONS_AND_GO_LIVE.md).
+
 ---
 
 ## Roadmap em fases — Status
@@ -53,6 +55,8 @@ Documento de referência única para as checklists técnicas do roadmap pós-fun
 - **FASE_4_EXTENSOES_FUTURAS.md** — Pontos de extensão para reviews, SEO local e fidelização (FASE 4 Passo 3).
 - **WEB*QR_MESA*\*.md** — Detalhes de implementação QR mesa/menu.
 - **APPSTAFF*2.0*\*.md** — Rastreio e próximos passos do App Staff 2.0.
+- **CODE_AND_DEVICE_PAIRING_IMPLEMENTATION_CHECKLIST.md** — Guia executável: códigos + device pairing (PIN) sem quebrar baseline; auditoria, connectByCode, StaffContext, pairing MVP, admin “Gerar PIN”, tela Vincular TPV/KDS, critérios de pronto e mapa de aceitação (10 asserts). Contrato: [CODE_AND_DEVICE_PAIRING_CONTRACT](../architecture/CODE_AND_DEVICE_PAIRING_CONTRACT.md).
+- **Menu digital (catálogo visual):** Rotas `/menu` e `/menu-v2`. Reader: `MenuCatalogReader.ts` (Docker Core). Hook: `useMenuCatalog(restaurantId)`. Página V2: **header fixo** (35vh), clip-path onda (forma inferior do header), spacer, conteúdo **entra por trás**; só logo pequeno ou monograma no hero (sem foto de ambiente). Fundo wrapper e section = mesma cor (neutral-100). Contratos: [MENU_VISUAL_RUNTIME_CONTRACT](../architecture/MENU_VISUAL_RUNTIME_CONTRACT.md), [MENU_HEADER_WAVE_CONTRACT](../architecture/MENU_HEADER_WAVE_CONTRACT.md) (camadas, fundo, SVG, anti-patterns), [MENU_VISUAL_CONTRACT](../architecture/MENU_VISUAL_CONTRACT.md). Ver: [ONDE_VER_NO_NAVEGADOR](../architecture/ONDE_VER_NO_NAVEGADOR.md#3-menu-digital-catálogo-visual).
 
 ---
 
@@ -61,4 +65,4 @@ Documento de referência única para as checklists técnicas do roadmap pós-fun
 1. FASE 1 → FASE 2 → FASE 3 → FASE 4 (concluídas na prática).
 2. FASE 5: executar quando a condição de negócio "pós-€79" for atendida.
 
-Última atualização: 2026-02-01.
+Última atualização: 2026-02-06.

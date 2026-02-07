@@ -80,11 +80,34 @@
 | [FLUXO_DE_PEDIDO_OPERACIONAL.md](../contracts/FLUXO_DE_PEDIDO_OPERACIONAL.md) | Fluxo de pedido operacional TPV → Core → KDS para a Fase 1: estados, eventos, responsabilidades de superfícies e critérios de sucesso (20 pedidos sem erro). |
 | [OPERATIONAL_SURFACES_CONTRACT.md](../contracts/OPERATIONAL_SURFACES_CONTRACT.md) | Contrato de superfícies operacionais: Dashboard / TPV / KDS / AppStaff — matriz pode/não pode; gate e relação com instalação (Fase 2.1). |
 
+### Dois dashboards (referência)
+
+| Documento | Descrição |
+|-----------|-----------|
+| [TWO_DASHBOARDS_REFERENCE.md](./TWO_DASHBOARDS_REFERENCE.md) | Referência única: 2 dashboards (Staff + Owner), onde vivem (App/Web), regra "não misturar tempos mentais". ~60 s. |
+| [COGNITIVE_MODES_OWNER_DASHBOARD.md](./COGNITIVE_MODES_OWNER_DASHBOARD.md) | Contrato profundo: modos Operação vs Consciência; Owner Dashboard web (completo) e app (compacto). |
+| [EVENTS_CONTRACT_V1.md](./EVENTS_CONTRACT_V1.md) | Tipos de evento, severidade, onde aparecem (feed web/app); base para Staff produtor e Owner consumidor. |
+| [CONFIGURATION_MAP_V1.md](./CONFIGURATION_MAP_V1.md) | Mapa da Configuração Last.app: checklist por setor, status (feito/parcial/não iniciado), árvore de rotas `/admin/config/*`. |
+
 ### Caixa e Pagamentos
 
 | Documento | Descrição |
 |-----------|-----------|
 | [CASH_REGISTER_AND_PAYMENTS_CONTRACT.md](../contracts/CASH_REGISTER_AND_PAYMENTS_CONTRACT.md) | Caixa como contexto financeiro activo; estados de pagamento (UNPAID/PAID); fluxo TPV (confirmar → marcar pagamento); fecho com total esperado/declarado/diferença; Dashboard só leitura (Fase 2.3). |
+
+### Dispositivo / Turno / Tarefa
+
+| Documento | Descrição |
+|-----------|-----------|
+| [DEVICE_TURN_SHIFT_TASK_CONTRACT.md](./DEVICE_TURN_SHIFT_TASK_CONTRACT.md) | Dispositivo como ator operacional; ligação Dispositivo ↔ Turno ↔ Operador ↔ Tarefa; eventos → tarefas; bloqueios operacionais; offline e runtime local. |
+
+### AppStaff / AppShell
+
+| Documento | Descrição |
+|-----------|-----------|
+| [APPSTAFF_APPSHELL_MAP.md](./APPSTAFF_APPSHELL_MAP.md) | Mapa completo do AppShell: estrutura (TopBar, área central, navegação contextual), áreas comuns, áreas por papel, destino da Master View; sem código. |
+| [APPSTAFF_ROUTE_MAP.md](./APPSTAFF_ROUTE_MAP.md) | Rotas e componentes implementados sob `/app/staff`; mapeamento rota → componente. |
+| [APPSTAFF_UI_SURGERY_SUMMARY.md](./APPSTAFF_UI_SURGERY_SUMMARY.md) | Resumo da refatoração layout: uma tela = uma responsabilidade; Visão Operacional, Turno, Equipe, Tarefas, Exceções, TPV/KDS em tela cheia. |
 
 ### Planos
 

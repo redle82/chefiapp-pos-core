@@ -48,5 +48,6 @@ AppBootMode inclui `STAFF_MOBILE`. No app mobile (Expo), o boot carrega Restaura
 - [CORE_APPSTAFF_CONTRACT.md](./CORE_APPSTAFF_CONTRACT.md) — lei macro do AppStaff.
 - [CORE_APPSTAFF_IOS_UIUX_CONTRACT.md](./CORE_APPSTAFF_IOS_UIUX_CONTRACT.md) — UI/UX canónica iOS.
 - [CORE_MOBILE_TERMINALS_CONTRACT.md](./CORE_MOBILE_TERMINALS_CONTRACT.md) — AppStaff não é Web; só app nativo.
+- [STAFF_SESSION_LOCATION_CONTRACT.md](./STAFF_SESSION_LOCATION_CONTRACT.md) — sessão Staff exige Location ativo; seleção ou auto-seleção.
 
 **Violação = regressão arquitetural.**
