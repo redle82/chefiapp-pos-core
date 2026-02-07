@@ -79,3 +79,7 @@ merchant-portal/artifacts/
 
 # Agent workspace
 .agent/
+
+# Antigravity awesome-skills (external repo, 708+ skills)
+# Update via: cd .agents/skills && git pull
+.agents/skills/
