@@ -52,16 +52,32 @@ export async function readActiveShifts(restaurantId: string): Promise<CoreShiftL
       role,
       start_time,
       status,
-      employees ( name )
+      gm_staff ( name )
     `)
     .eq('restaurant_id', restaurantId)
     .eq('status', 'active');
 
   if (error) {
-    throw new Error(`Failed to read active shifts: ${error.message}`);
+    const msg = error.message ?? "";
+    const isDemoFallback =
+      msg.includes("does not exist") ||
+      msg.includes("Backend indisponível") ||
+      (error as { code?: string }).code === "42P01";
+    if (isDemoFallback) {
+      if (import.meta.env.DEV) {
+        console.debug("[ShiftReader] shift_logs fallback (table missing/demo):", msg.slice(0, 80));
+      }
+      return [];
+    }
+    throw new Error(`Failed to read active shifts: ${msg}`);
   }
 
-  return (data || []) as CoreShiftLogWithEmployee[];
+  // Docker Core usa gm_staff; expor como employees para compatibilidade com LiveRosterWidget
+  const rows = (data || []) as Array<CoreShiftLog & { gm_staff?: { name: string } | null }>;
+  return rows.map((row) => ({
+    ...row,
+    employees: row.gm_staff ? { name: row.gm_staff.name } : null,
+  })) as CoreShiftLogWithEmployee[];
 }
 
 /**

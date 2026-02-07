@@ -65,7 +65,18 @@ export async function readActiveOrders(
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error(`Failed to read orders: ${error.message}`);
+    const msg = error.message ?? "";
+    const isDemoFallback =
+      msg.includes("invalid input syntax for type uuid") ||
+      (error as { code?: string }).code === "22P02" ||
+      msg.includes("Backend indisponível");
+    if (isDemoFallback) {
+      if (import.meta.env.DEV) {
+        console.debug("[OrderReader] gm_orders fallback (demo/local id):", msg.slice(0, 80));
+      }
+      return [];
+    }
+    throw new Error(`Failed to read orders: ${msg}`);
   }
 
   const rows = (data || []) as CoreOrder[];
@@ -119,7 +130,18 @@ export async function readReadyOrders(
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error(`Failed to read ready orders: ${error.message}`);
+    const msg = error.message ?? "";
+    const isDemoFallback =
+      msg.includes("invalid input syntax for type uuid") ||
+      (error as { code?: string }).code === "22P02" ||
+      msg.includes("Backend indisponível");
+    if (isDemoFallback) {
+      if (import.meta.env.DEV) {
+        console.debug("[OrderReader] gm_orders ready fallback (demo/local id):", msg.slice(0, 80));
+      }
+      return [];
+    }
+    throw new Error(`Failed to read ready orders: ${msg}`);
   }
 
   const rows = (data || []) as CoreOrder[];

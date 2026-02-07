@@ -76,7 +76,34 @@ function allowLocalMode(
 
 export type RestaurantMode = "onboarding" | "active" | "paused";
 export type ProductMode = "demo" | "pilot" | "live";
+
+/**
+ * Nós canónicos de setup crítico do restaurante.
+ *
+ * Estes são os mesmos nós que o Dashboard e a SystemTree tratam como
+ * bloqueantes para operar: identidade, localização/moeda, menu e publicação.
+ */
+export type CriticalSetupNode = "identity" | "location" | "menu" | "publish";
+
+/**
+ * Valor conceptual de estado de setup para um nó crítico.
+ *
+ * NOTA: atualmente o Core persiste apenas flags booleanas por secção
+ * (ex.: `identity: true`), mas a UI pode mapear essas flags para
+ * INCOMPLETE/PARTIAL/COMPLETE conforme necessário.
+ */
+export type SetupStatusValue = "INCOMPLETE" | "PARTIAL" | "COMPLETE";
+
+/**
+ * Estado bruto de setup vindo do Core (restaurant_setup_status).
+ *
+ * Mantemos o formato flexível (Record<string, boolean>) para compatibilidade
+ * com secções adicionais (schedule, people, payments, tables, etc.).
+ * Os nós críticos são expostos via `CriticalSetupNode` e derivados
+ * (por exemplo, em `deriveSystemTreeState`).
+ */
 export type SetupStatus = Record<string, boolean>;
+
 export type PlanTier = "basic" | "premium";
 
 function resolveProductModeFromEnv(): ProductMode {
