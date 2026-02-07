@@ -57,7 +57,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Supabase GoTrue (Auth)
+  # GoTrue (Auth)
   auth:
     image: supabase/gotrue:v2.143.0
     container_name: chefiapp-test-auth
@@ -84,7 +84,7 @@ services:
     networks:
       - chefiapp-test-net
 
-  # Supabase PostgREST (API)
+  # PostgREST (API)
   rest:
     image: postgrest/postgrest:v12.0.2
     container_name: chefiapp-test-rest
@@ -103,7 +103,7 @@ services:
     networks:
       - chefiapp-test-net
 
-  # Supabase Realtime
+  # Realtime
   realtime:
     image: supabase/realtime:v2.28.32
     container_name: chefiapp-test-realtime
@@ -124,7 +124,7 @@ services:
       REPLICATION_MODE: RLS
       REPLICATION_POLL_INTERVAL: 100
       SECURE_CHANNELS: "false"
-      SLOT_NAME: supabase_realtime_rls
+      SLOT_NAME: realtime_rls
       TEMPORARY_SLOT: "true"
     ports:
       - "4001:4000"
@@ -168,8 +168,8 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/chefiapp_test
-      SUPABASE_URL: http://kong:8000
-      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE2NDY2ODM4MDAsImV4cCI6MTk2MjI1OTgwMH0.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
+      CORE_API_URL: http://kong:8000
+      CORE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE2NDY2ODM4MDAsImV4cCI6MTk2MjI1OTgwMH0.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
       RESTAURANT_COUNT: 100
     volumes:
       - ./seeds:/app
@@ -195,8 +195,8 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/chefiapp_test
-      SUPABASE_URL: http://kong:8000
-      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE2NDY2ODM4MDAsImV4cCI6MTk2MjI1OTgwMH0.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
+      CORE_API_URL: http://kong:8000
+      CORE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE2NDY2ODM4MDAsImV4cCI6MTk2MjI1OTgwMH0.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
       SIMULATOR_TYPE: orders
       ORDERS_PER_MINUTE: 100
       CONCURRENCY: 20
@@ -220,8 +220,8 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/chefiapp_test
-      SUPABASE_URL: http://kong:8000
-      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE2NDY2ODM4MDAsImV4cCI6MTk2MjI1OTgwMH0.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
+      CORE_API_URL: http://kong:8000
+      CORE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE2NDY2ODM4MDAsImV4cCI6MTk2MjI1OTgwMH0.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
       SIMULATOR_TYPE: kds
       BUMP_DELAY_MS: 2000
     volumes:
@@ -244,8 +244,8 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/chefiapp_test
-      SUPABASE_URL: http://kong:8000
-      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE2NDY2ODM4MDAsImV4cCI6MTk2MjI1OTgwMH0.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
+      CORE_API_URL: http://kong:8000
+      CORE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE2NDY2ODM4MDAsImV4cCI6MTk2MjI1OTgwMH0.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
       SIMULATOR_TYPE: tasks
       TASKS_PER_MINUTE: 50
     volumes:

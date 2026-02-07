@@ -64,7 +64,7 @@ services:
       PGRST_DB_URI: postgresql://${POSTGRES_USER:-test_user}:${POSTGRES_PASSWORD:-test_password}@db:5432/${POSTGRES_DB:-chefiapp_core_test}
       PGRST_DB_SCHEMA: public
       PGRST_DB_ANON_ROLE: ${POSTGRES_USER:-test_user}
-      PGRST_JWT_SECRET: ${VITE_SUPABASE_ANON_KEY:-chefiapp-core-secret-key-min-32-chars-long}
+      PGRST_JWT_SECRET: ${VITE_CORE_ANON_KEY:-chefiapp-core-secret-key-min-32-chars-long}
     depends_on:
       db:
         condition: service_healthy

@@ -30,10 +30,10 @@ import {
 import type { GlovoConfig, GlovoOrder } from "./GlovoTypes";
 import { isPendingOrder, isValidGlovoOrder } from "./GlovoTypes";
 import { isDevStableMode } from "../../../core/runtime/devStableMode";
-import { supabase } from "../../../core/supabase";
+import { db } from "../../../core/db";
 
 /** Canal Realtime do Core (noop ou PostgREST Realtime). */
-type CoreRealtimeChannel = ReturnType<typeof supabase.channel>;
+type CoreRealtimeChannel = ReturnType<typeof db.channel>;
 
 // ─────────────────────────────────────────────────────────────
 // CONFIGURATION
@@ -99,9 +99,9 @@ export class GlovoAdapter implements IntegrationAdapter {
     }
 
     // 1. SETUP REALTIME LISTENER (The Primary Channel) — skip when channel not available (e.g. tests/shim)
-    if (typeof supabase.channel === "function") {
+    if (typeof db.channel === "function") {
       const channelName = `glovo-integration-${this.config.restaurantId}`;
-      this.realtimeChannel = supabase
+      this.realtimeChannel = db
         .channel(channelName)
         .on(
           "postgres_changes",
@@ -135,8 +135,8 @@ export class GlovoAdapter implements IntegrationAdapter {
   async dispose(): Promise<void> {
     console.log("[Glovo] 👋 Disposed");
     this.stopPolling();
-    if (this.realtimeChannel && typeof supabase.removeChannel === "function") {
-      await supabase.removeChannel(this.realtimeChannel);
+    if (this.realtimeChannel && typeof db.removeChannel === "function") {
+      await db.removeChannel(this.realtimeChannel);
       this.realtimeChannel = null;
     }
     this.config = null;

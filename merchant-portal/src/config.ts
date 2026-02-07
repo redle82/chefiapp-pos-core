@@ -11,15 +11,9 @@ export const CONFIG = {
   // API (Web Module)
   API_BASE: import.meta.env.VITE_API_BASE || "http://localhost:4320",
 
-  // Docker Core (PostgREST). Backend único. VITE_CORE_* canónico; VITE_SUPABASE_* fallback @legacy-remove
+  // Docker Core (PostgREST). Backend único.
   CORE_URL: (function () {
-    const coreUrl = import.meta.env.VITE_CORE_URL;
-    const legacyUrl = import.meta.env.VITE_SUPABASE_URL;
-    const envUrl = coreUrl || legacyUrl || "";
-    if (!coreUrl && legacyUrl && typeof console !== "undefined") {
-      console.warn("[CONFIG] @legacy-remove: Using VITE_SUPABASE_URL. Prefer VITE_CORE_URL.");
-    }
-    const raw = envUrl || (import.meta.env.PROD ? "" : "/rest");
+    const raw = import.meta.env.VITE_CORE_URL || (import.meta.env.PROD ? "" : "/rest");
 
     // Dev + browser: sempre usar proxy (same-origin) para evitar CORS com Core em 3001
     if (import.meta.env.DEV && typeof window !== "undefined") {
@@ -40,14 +34,7 @@ export const CONFIG = {
 
     return `http://localhost:5175${raw}`;
   })(),
-  CORE_ANON_KEY: (function () {
-    const coreKey = import.meta.env.VITE_CORE_ANON_KEY;
-    const legacyKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    if (!coreKey && legacyKey && typeof console !== "undefined") {
-      console.warn("[CONFIG] @legacy-remove: Using VITE_SUPABASE_ANON_KEY. Prefer VITE_CORE_ANON_KEY.");
-    }
-    return coreKey || legacyKey || "";
-  })(),
+  CORE_ANON_KEY: import.meta.env.VITE_CORE_ANON_KEY || "",
 
   // Stripe (billing: checkout + portal)
   STRIPE_PUBLIC_KEY:

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useSupabaseAuth } from '../../../core/auth/useSupabaseAuth';
+import { useAuth } from '../../../core/auth/useAuth';
 import { OSCopy } from '../../../ui/design-system/sovereign/OSCopy';
 
 const WHATSAPP_NUMBER =
@@ -13,7 +13,7 @@ const CONTACT_EMAIL =
   'contacto@chefiapp.com';
 
 export const Footer = () => {
-    const { session } = useSupabaseAuth();
+    const { session } = useAuth();
     const hasSession = !!session;
 
     return (

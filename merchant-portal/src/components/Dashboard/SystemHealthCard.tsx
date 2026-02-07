@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 // LEGACY / LAB — blocked in Docker mode
 import { motion } from "framer-motion";
 import { FiscalQueue } from "../../core/fiscal/FiscalQueueWorker";
-import { supabase } from "../../core/supabase";
+import { db } from "../../core/db";
 import { SyncEngine, type SyncEngineState } from "../../core/sync/SyncEngine";
 
 interface HealthState {
@@ -79,7 +79,7 @@ export const SystemHealthCard = ({
     const checkCloudHealth = async () => {
       try {
         // 1. Check for Recovery Mode Pulse (Most recent)
-        const { data: pulses } = await supabase
+        const { data: pulses } = await db
           .from("empire_pulses")
           .select("*")
           .eq("restaurant_id", restaurantId)
@@ -91,7 +91,7 @@ export const SystemHealthCard = ({
         );
 
         // 2. Check for Active Alerts
-        const { data: alerts } = await supabase
+        const { data: alerts } = await db
           .from("alerts")
           .select("*")
           .eq("restaurant_id", restaurantId)
@@ -150,7 +150,7 @@ export const SystemHealthCard = ({
     });
 
     // Cloud Subscription
-    const channel = supabase
+    const channel = db
       .channel("health-widget-v1.2")
       .on(
         "postgres_changes",
@@ -170,7 +170,7 @@ export const SystemHealthCard = ({
     return () => {
       unsubSync();
       unsubFiscal();
-      supabase.removeChannel(channel);
+      db.removeChannel(channel);
     };
   }, [restaurantId]);
 

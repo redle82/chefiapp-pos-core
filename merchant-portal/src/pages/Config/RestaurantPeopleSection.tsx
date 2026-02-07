@@ -14,7 +14,7 @@ import { isBackendUnavailable } from "../../core-boundary/menuPilotFallback";
 import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { QRCodeGenerator } from "../../components/QRCodeGenerator";
-import { supabase } from "../../core/supabase";
+import { db } from "../../core/db";
 
 type InviteSummary = {
   id: string;

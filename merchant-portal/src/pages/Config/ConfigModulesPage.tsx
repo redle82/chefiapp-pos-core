@@ -17,7 +17,7 @@ import {
   type ModulesEnabled,
 } from "../../core/storage/modulesConfigStorage";
 // Auth only — temporary until Core Auth (session)
-import { supabase } from "../../core/supabase";
+import { db } from "../../core/db";
 
 interface InstalledModule {
   id: string;
@@ -124,10 +124,10 @@ export function ConfigModulesPage() {
         // Buscar restaurant_id (apenas quando backend não é Docker)
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await db.auth.getSession();
         if (!session) return;
 
-        const { data: profile } = await supabase
+        const { data: profile } = await db
           .from("profiles")
           .select("restaurant_id")
           .eq("id", session.user.id)

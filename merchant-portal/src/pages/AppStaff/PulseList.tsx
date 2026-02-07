@@ -6,7 +6,7 @@ import { Card } from "../../ui/design-system/Card";
 import { Colors, Spacing, Typography } from "../../ui/design-system/tokens";
 // LEGACY / LAB — blocked in Docker mode
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
-import { supabase } from "../../core/supabase";
+import { db } from "../../core/db";
 
 // ------------------------------------------------------------------
 // 🫀 PULSE HISTORIAN: THE SYSTEM MEMORY
@@ -75,10 +75,10 @@ export const PulseList: React.FC = () => {
           "../../../core-boundary/readers/PulseReader"
         );
 
-        // 1. Get Restaurant ID via auth (ainda precisa do supabase para auth)
+        // 1. Get Restaurant ID via auth
         const {
           data: { user },
-        } = await supabase.auth.getUser();
+        } = await db.auth.getUser();
         if (!user) {
           navigate("/login");
           return;

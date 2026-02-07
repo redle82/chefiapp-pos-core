@@ -13,7 +13,7 @@ import {
   setTabIsolated,
 } from "../core/storage/TabIsolatedStorage";
 // TEMPORARY: Supabase auth only (quarantine). Domain reads/writes removed — Core only.
-import { supabase } from "../core/supabase";
+import { db } from "../core/db";
 import { setActiveTenant } from "../core/tenant/TenantResolver";
 import { useBootstrapState } from "../hooks/useBootstrapState";
 import { InlineAlert } from "../ui/design-system";
@@ -114,11 +114,11 @@ export function BootstrapPage({
       return;
     }
 
-    // 1. Auth Session (temporary Supabase auth quarantine; domain data from Core only)
+    // 1. Auth Session (Core auth; domain data from Core only)
     let session: unknown = null;
     let authError: unknown = null;
     try {
-      const result = await supabase.auth.getSession();
+      const result = await db.auth.getSession();
       session = result.data?.session ?? null;
       authError = result.error ?? null;
     } catch (e) {
@@ -310,7 +310,7 @@ export function BootstrapPage({
         try {
           const {
             data: { session: sess },
-          } = await supabase.auth.getSession();
+          } = await db.auth.getSession();
           user = (sess as { user?: { id: string } } | null)?.user ?? null;
         } catch {
           // Auth optional in Pilot/Docker: use mock user id

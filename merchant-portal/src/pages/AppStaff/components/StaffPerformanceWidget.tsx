@@ -4,7 +4,7 @@ import { Card } from "../../../ui/design-system/primitives/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { colors } from "../../../ui/design-system/tokens/colors";
 // LEGACY / LAB — blocked in Docker mode
-import { supabase } from "../../../core/supabase";
+import { db } from "../../../core/db";
 
 interface StaffPerformance {
   employeeId: string;

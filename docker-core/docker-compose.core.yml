@@ -26,7 +26,7 @@ services:
       POSTGRES_DB: chefiapp_core
     command: postgres -c wal_level=logical # Necessário para Realtime
     ports:
-      - "54320:5432" # Porta diferente do Supabase local (54322)
+      - "54320:5432" # Docker Core port
     volumes:
       - postgres-core-data:/var/lib/postgresql/data
       - ./schema/core_schema.sql:/docker-entrypoint-initdb.d/01-core-schema.sql:ro
@@ -104,7 +104,7 @@ services:
       DB_PASSWORD: postgres
       DB_NAME: chefiapp_core
       DB_AFTER_CONNECT_QUERY: "SET search_path TO _realtime"
-      DB_ENC_KEY: supabaserealtime
+      DB_ENC_KEY: chefiapp-realtime-enc-key
       API_JWT_SECRET: chefiapp-core-secret-key-min-32-chars-long
       JWT_SECRET: chefiapp-core-secret-key-min-32-chars-long
       SECRET_KEY_BASE: d04ed7d1bcadcf7421f64c1eca6ee9d34adff52ed594e7061b0f5ed3f2a4739742a672cc10d7328efb7226ed0d9ce7f86c74cfb361630d11d0d35b0bb2a52f41
@@ -121,7 +121,7 @@ services:
       - chefiapp-core-net
 
   # ============================================================================
-  # KEYCLOAK (Auth local - substitui Supabase Auth)
+  # KEYCLOAK (Auth local)
   # ============================================================================
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
@@ -137,7 +137,7 @@ services:
       - chefiapp-core-net
 
   # ============================================================================
-  # MINIO (Storage local - substitui Supabase Storage)
+  # MINIO (Object Storage local)
   # ============================================================================
   minio:
     image: minio/minio:latest

@@ -11,7 +11,7 @@
 // LEGACY / LAB — blocked in Docker mode
 import { useEffect, useState } from "react";
 import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
-import { supabase } from "../core/supabase";
+import { db } from "../core/db";
 
 export interface OnboardingStatus {
   hasMenu: boolean;

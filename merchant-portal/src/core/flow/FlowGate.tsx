@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { CONFIG } from "../../config";
 import { useLifecycleStateContext } from "../../context/LifecycleStateContext";
 import { GlobalLoadingView } from "../../ui/design-system/components";
-import { useSupabaseAuth } from "../auth/useSupabaseAuth";
+import { useAuth } from "../auth/useAuth";
 import { getRestaurantStatus } from "../billing/coreBillingApi";
 import { BackendType, getBackendType } from "../infra/backendAdapter";
 import { getTableClient } from "../infra/coreRpc";
@@ -42,7 +42,7 @@ const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function FlowGate({ children }: { children: ReactNode }) {
-  const { session, loading: sessionLoading } = useSupabaseAuth();
+  const { session, loading: sessionLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { setLifecycleState } = useLifecycleStateContext();

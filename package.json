@@ -13,7 +13,7 @@
     "chef:portal:up": "./chef.sh portal up",
     "chef:audit": "./chef.sh audit",
     "contract:gate": "bash ./scripts/audit-contracts-referenced.sh && bash ./scripts/contract-gate.sh",
-    "audit:supabase-domain": "bash ./scripts/check-financial-supabase.sh",
+    "audit:core-domain": "bash ./scripts/check-financial-supabase.sh",
     "_test:info": "echo 'Run all tests from repo root with: npm test'",
     "test": "jest",
     "test:ci": "jest --ci --testPathIgnorePatterns='e2e|playwright|massive|offline|legacy-skip|doc-only' --maxWorkers=2",

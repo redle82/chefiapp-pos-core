@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 // LEGACY / LAB — blocked in Docker mode
 import { isDevStableMode } from "../../core/runtime/devStableMode";
-import { supabase } from "../../core/supabase";
+import { db } from "../../core/db";
 import { useTenant } from "../../core/tenant/TenantContext";
 
 interface IntegrationOrder {
@@ -34,7 +34,7 @@ export const DeliveryMonitor: React.FC = () => {
     if (isDevStableMode()) {
       const fetchOrders = async () => {
         setLoading(true);
-        const { data, error } = await supabase
+        const { data, error } = await db
           .from("integration_orders")
           .select("*")
           .eq("restaurant_id", tenantId)
@@ -54,7 +54,7 @@ export const DeliveryMonitor: React.FC = () => {
 
     const fetchOrders = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("integration_orders")
         .select("*")
         .eq("restaurant_id", tenantId)
@@ -72,7 +72,7 @@ export const DeliveryMonitor: React.FC = () => {
     fetchOrders();
 
     // Realtime Subscription (using the one enabled by migration)
-    const channel = supabase
+    const channel = db
       .channel(`monitor-delivery-${tenantId}`)
       .on(
         "postgres_changes",
@@ -90,7 +90,7 @@ export const DeliveryMonitor: React.FC = () => {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      db.removeChannel(channel);
     };
   }, [tenantId]);
 

@@ -10,13 +10,13 @@
  * 3. Pipeline Normaliza Dados
  * 4. Pipeline Encontra/Cria Cliente
  * 5. Pipeline Injeta no OrderEngine (Cria Pedido Real no Banco)
- * 6. Pipeline Notifica KDS (via Realtime do Supabase implícito na criação)
+ * 6. Pipeline Notifica KDS (via Realtime implícito na criação)
  */
 
 import type { OrderCreatedEvent } from "../types/IntegrationEvent";
 // LEGACY / LAB — blocked in Docker mode
 import { DbWriteGate } from "../../core/governance/DbWriteGate";
-import { supabase } from "../../core/supabase";
+import { db } from "../../core/db";
 
 /**
  * AIRLOCK PROTOCOL: Public Ingestion

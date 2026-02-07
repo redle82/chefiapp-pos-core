@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useSupabaseAuth } from "../core/auth/useSupabaseAuth";
+import { useAuth } from "../core/auth/useAuth";
 import { getAuthActions } from "../core/auth/authAdapter";
 import {
   BackendType,
@@ -111,7 +111,7 @@ export function AuthPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { session, loading: authLoading } = useSupabaseAuth();
+  const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   // Backend único: Docker Core (Keycloak + mock). Sem Supabase.
   const hasCore = getBackendType() === BackendType.docker;

@@ -19,7 +19,7 @@
     "genesis:verify": "npx tsx scripts/genesis-verify.ts",
     "audit:architecture": "node scripts/audit-architecture.cjs",
     "audit:domain": "node scripts/audit-domain.cjs",
-    "audit:supabase-domain": "bash ../scripts/check-financial-supabase.sh",
+    "audit:core-domain": "bash ../scripts/check-financial-supabase.sh",
     "audit:all": "npm run audit:architecture && npm run audit:domain",
     "mobile:sync": "npm run build && npx cap sync",
     "mobile:ios": "npx cap open ios",

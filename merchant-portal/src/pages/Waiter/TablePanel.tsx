@@ -31,7 +31,7 @@ import { useToast } from "../../ui/design-system";
 import { useOrders } from "../TPV/context/OrderContextReal";
 import { useTables } from "../TPV/context/TableContext";
 // LEGACY / LAB — blocked in Docker mode
-import { supabase } from "../../core/supabase";
+import { db } from "../../core/db";
 
 import { useContextEngine } from "../../core/context";
 
@@ -243,7 +243,7 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
       // Obter autoria (user_id e role) para divisão de conta
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      } = await db.auth.getUser();
       const userId = user?.id || null;
 
       // Detectar contexto e role

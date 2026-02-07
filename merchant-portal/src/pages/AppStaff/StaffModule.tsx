@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Outlet, useSearchParams } from "react-router-dom";
 import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { useSupabaseAuth } from "../../core/auth/useSupabaseAuth";
+import { useAuth } from "../../core/auth/useAuth";
 import { isDebugMode } from "../../core/debugMode";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { RUNTIME } from "../../core/runtime/RuntimeContext";
@@ -14,7 +14,7 @@ import type { StaffRole } from "./context/StaffCoreTypes";
 
 /** StaffModule — parte da cadeia real: AppStaffWrapper → StaffModule → StaffAppGate → StaffAppShellLayout → páginas. Fornece StaffProvider + OperatorSessionProvider; renderiza Outlet (rotas nested). */
 export default function StaffModule() {
-  const { user, loading: authLoading } = useSupabaseAuth();
+  const { user, loading: authLoading } = useAuth();
   const { identity } = useRestaurantIdentity();
   const { runtime } = useRestaurantRuntime();
   const [searchParams] = useSearchParams();

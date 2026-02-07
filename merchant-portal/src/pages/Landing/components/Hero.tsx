@@ -6,7 +6,7 @@
  */
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useSupabaseAuth } from "../../../core/auth/useSupabaseAuth";
+import { useAuth } from "../../../core/auth/useAuth";
 import { OSCopy } from "../../../ui/design-system/sovereign/OSCopy";
 
 const WHATSAPP_NUMBER =
@@ -19,7 +19,7 @@ const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, "")}`;
 const REDIRECT_WHEN_SESSION_MS = 2500;
 
 export const Hero = () => {
-  const { session, loading } = useSupabaseAuth();
+  const { session, loading } = useAuth();
   const navigate = useNavigate();
   const hasSession = !!session;
 

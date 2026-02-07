@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { useSupabaseAuth } from '../core/auth/useSupabaseAuth';
+import { useAuth } from '../core/auth/useAuth';
 import { getTabIsolated, setTabIsolated } from '../core/storage/TabIsolatedStorage';
 
 /**
@@ -11,7 +11,7 @@ import { getTabIsolated, setTabIsolated } from '../core/storage/TabIsolatedStora
  * Princípio: "Supabase Auth é a única fonte de verdade de identidade"
  */
 export function RequireAuth({ children }: { children: JSX.Element }) {
-    const { session, loading } = useSupabaseAuth();
+    const { session, loading } = useAuth();
 
     // Demo mode check (legacy support)
     useEffect(() => {

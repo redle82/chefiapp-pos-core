@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { useSupabaseAuth } from '../../core/auth/useSupabaseAuth';
+import { useAuth } from '../../core/auth/useAuth';
 import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
 
 /**
@@ -15,7 +15,7 @@ import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
  * Uso: /dashboard, /settings, /onboarding, /tpv
  */
 export function RequireApp({ children }: { children: JSX.Element }) {
-    const { session, loading } = useSupabaseAuth();
+    const { session, loading } = useAuth();
     const location = useLocation();
 
     // 1. Loading Check

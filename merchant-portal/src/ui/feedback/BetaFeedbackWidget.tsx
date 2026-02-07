@@ -9,7 +9,7 @@ import {
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
-import { useSupabaseAuth } from "../../core/auth/useSupabaseAuth";
+import { useAuth } from "../../core/auth/useAuth";
 import { useTenant } from "../../core/tenant/TenantContext";
 import "./BetaFeedbackWidget.css";
 
@@ -29,7 +29,7 @@ export const BetaFeedbackWidget: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const location = useLocation();
-  const { user } = useSupabaseAuth(); // Use the hook directly
+  const { user } = useAuth();
   const { tenantId } = useTenant(); // Use the hook directly
 
   // Only show for authenticated users (rough check, can be refined)

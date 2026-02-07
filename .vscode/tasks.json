@@ -868,6 +868,208 @@
 			"label": "stress-test-auto",
 			"type": "shell",
 			"command": "node scripts/stress-test-auto.js"
+		},
+		{
+			"label": "git: commit and push cleanup",
+			"type": "shell",
+			"command": "GIT_PAGER=cat PAGER=cat git add .markdownlint.json skills/chefi-pos/SKILL.md .gitignore && GIT_PAGER=cat PAGER=cat git rm -r --cached merchant-portal/test-results/ 2>/dev/null; GIT_PAGER=cat PAGER=cat git commit -m 'chore: add markdownlint config, fix SKILL.md frontmatter, gitignore test-results' && GIT_PAGER=cat PAGER=cat git push origin core/frozen-v1"
+		},
+		{
+			"label": "delete old HTML maps",
+			"type": "shell",
+			"command": "rm -v docs/architecture/appstaff-map.html docs/architecture/appstaff-mapa-por-trabalhador.html && echo 'DONE'"
+		},
+		{
+			"label": "verify HTML maps deleted",
+			"type": "shell",
+			"command": "find docs/architecture -name '*.html' -type f 2>/dev/null && echo '---' && ls -la docs/architecture/appstaff-map* 2>/dev/null && echo 'DONE'"
+		},
+		{
+			"label": "git status check",
+			"type": "shell",
+			"command": "git status --porcelain && echo '---STATUS-END---'"
+		},
+		{
+			"label": "check pen file git state",
+			"type": "shell",
+			"command": "git ls-files docs/architecture/appstaff-map.pen && echo '---TRACKED---' && git check-ignore docs/architecture/appstaff-map.pen 2>&1 && echo '---IGNORE---' && git diff --stat HEAD -- docs/architecture/appstaff-map.pen && echo '---DIFF-END---'"
+		},
+		{
+			"label": "stage map changes",
+			"type": "shell",
+			"command": "git add docs/architecture/MAPS_AUDIT_REPORT.md docs/architecture/appstaff-map.html docs/architecture/appstaff-map.pen docs/architecture/appstaff-mapa-por-trabalhador.html && git status --porcelain && echo '---STAGED---'"
+		},
+		{
+			"label": "commit maps work",
+			"type": "shell",
+			"command": "git commit -m 'docs: add maps audit report, delete old HTML maps — replaced by Pencil diagrams' && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "push to remote",
+			"type": "shell",
+			"command": "git push origin core/frozen-v1 && echo '---PUSH-OK---'"
+		},
+		{
+			"label": "local http server",
+			"type": "shell",
+			"command": "cd docs/architecture && python3 -m http.server 8787 &",
+			"isBackground": true
+		},
+		{
+			"label": "typecheck merchant-portal",
+			"type": "shell",
+			"command": "cd merchant-portal && npx tsc --noEmit 2>&1 | tail -20 && echo '---TSC-DONE---'"
+		},
+		{
+			"label": "git status",
+			"type": "shell",
+			"command": "git status --porcelain 2>&1 && echo '---STATUS---'"
+		},
+		{
+			"label": "git stage Phase 1",
+			"type": "shell",
+			"command": "git add .env.example Dockerfile docker-compose.yml merchant-portal/src/core/auth/authKeycloak.ts package.json tsconfig.server.json docker-core/keycloak/ docs/architecture/project-map.html docs/architecture/worker-map.html && git status --porcelain --short && echo '---STAGED---'"
+		},
+		{
+			"label": "git commit Phase 1",
+			"type": "shell",
+			"command": "git commit -m 'feat: Phase 1 — Docker builds, Keycloak auth, OIDC flow complete\n\n- tsconfig.server.json: compiles _legacy_isolation/ server code to dist/\n- Dockerfile: updated COPY paths from _legacy_isolation/ subdirs\n- package.json: added build:server, docker:up/down/build/logs scripts\n- docker-compose.yml: added Keycloak 24.0 with auto-import realm config\n- authKeycloak.ts: full OIDC Authorization Code flow (code exchange, token refresh, JWT decode)\n- chefiapp-realm.json: 5 roles, 2 clients, 3 demo users, tenant/restaurant mappers\n- .env.example: added Keycloak environment variables\n- HTML maps: project-map.html + worker-map.html for browser viewing' 2>&1 && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "git commit Phase 1 v2",
+			"type": "shell",
+			"command": "git commit -m 'feat: Phase 1 - Docker builds, Keycloak auth, OIDC flow complete' 2>&1 && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "git commit Phase 1 v3",
+			"type": "shell",
+			"command": "git commit -m 'feat: phase 1 docker builds, keycloak auth, oidc flow' 2>&1 && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "git push Phase 1",
+			"type": "shell",
+			"command": "git push origin core/frozen-v1 2>&1 && echo '---PUSH-OK---'"
+		},
+		{
+			"label": "check docker",
+			"type": "shell",
+			"command": "docker info --format '{{.ServerVersion}}' 2>&1 && echo '---DOCKER-OK---' || echo '---DOCKER-FAIL---'"
+		},
+		{
+			"label": "check env files",
+			"type": "shell",
+			"command": "ls -la .env .env.example schema.sql 2>&1 && echo '---LS-END---'"
+		},
+		{
+			"label": "check env keys",
+			"type": "shell",
+			"command": "grep -E 'STRIPE|KEYCLOAK' .env 2>&1 && echo '---ENV-END---'"
+		},
+		{
+			"label": "docker compose build",
+			"type": "shell",
+			"command": "docker compose build --no-cache 2>&1 | tail -80 && echo '---BUILD-END---'",
+			"isBackground": false
+		},
+		{
+			"label": "docker build v2",
+			"type": "shell",
+			"command": "docker compose build 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "docker build v3",
+			"type": "shell",
+			"command": "docker compose build 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "docker build v4",
+			"type": "shell",
+			"command": "docker compose build 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "docker compose up",
+			"type": "shell",
+			"command": "docker compose up -d 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "docker restart",
+			"type": "shell",
+			"command": "docker compose down --remove-orphans 2>&1 && docker compose up -d 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "docker fix orphan",
+			"type": "shell",
+			"command": "docker rm -f chefiapp-core-postgrest 2>&1 && docker compose up -d 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "check port 8080",
+			"type": "shell",
+			"command": "lsof -i :8080 -t 2>&1 | head -5; echo '---' ; docker ps -a --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}' 2>&1; echo '---PS-END---'"
+		},
+		{
+			"label": "docker up v2",
+			"type": "shell",
+			"command": "docker rm -f chefiapp-core-keycloak chefiapp-test-rest 2>&1; KEYCLOAK_PORT=8180 docker compose up -d 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "docker status",
+			"type": "shell",
+			"command": "docker ps --filter 'name=chefiapp-' --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}' 2>&1 | grep -E 'chefiapp-(db|keycloak|core-postgrest|webhook|billing|subscription|web-module)' ; echo '---'; docker compose ps 2>&1"
+		},
+		{
+			"label": "docker logs check",
+			"type": "shell",
+			"command": "docker compose ps 2>&1 | tail -20; echo '===LOGS==='; docker compose logs subscription-ui --tail 30 2>&1; echo '===KC-LOGS==='; docker compose logs keycloak --tail 10 2>&1"
+		},
+		{
+			"label": "rebuild subscription-ui",
+			"type": "shell",
+			"command": "docker compose build subscription-ui 2>&1 | tail -15 && docker compose up -d subscription-ui 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "verify all healthy",
+			"type": "shell",
+			"command": "sleep 10 && docker compose ps 2>&1 | grep -v 'WARN' | grep -v '^$'"
+		},
+		{
+			"label": "git stage docker fixes",
+			"type": "shell",
+			"command": "git add Dockerfile docker-compose.yml tsconfig.server.json _legacy_isolation/server/subscription-management-server.ts && git status --short 2>&1 && echo '---STAGED---'"
+		},
+		{
+			"label": "git commit docker fixes",
+			"type": "shell",
+			"command": "git commit -m 'fix: docker stack builds and runs all 7 services healthy' 2>&1 && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "git push",
+			"type": "shell",
+			"command": "git push origin core/frozen-v1 2>&1 && echo '---PUSH-OK---'"
+		},
+		{
+			"label": "shell: stop supabase containers",
+			"type": "shell",
+			"command": "docker ps --filter 'name=supabase' --format '{{.Names}}' | head -20"
+		},
+		{
+			"label": "shell: stop all supabase containers",
+			"type": "shell",
+			"command": "docker ps --filter 'name=supabase' --format '{{.Names}}' | xargs -r docker rm -f 2>&1 && echo '---STOPPED---' && docker ps --filter 'name=supabase' --format '{{.Names}}' 2>&1 && echo '---VERIFY---'"
+		},
+		{
+			"label": "shell: tsc:merchant-portal (supabase purge)",
+			"type": "shell",
+			"command": "cd merchant-portal && npx tsc --noEmit 2>&1 | head -60 && echo '---TSC-DONE---'"
+		},
+		{
+			"label": "shell: vite build (supabase purge)",
+			"type": "shell",
+			"command": "cd merchant-portal && npx vite build 2>&1 | tail -25 && echo '---BUILD-DONE---'"
+		},
+		{
+			"label": "shell: git stage supabase purge",
+			"type": "shell",
+			"command": "git add -A && git status --short 2>&1 | head -40 && echo '---' && git diff --cached --stat 2>&1 | tail -5"
 		}
 	]
 }

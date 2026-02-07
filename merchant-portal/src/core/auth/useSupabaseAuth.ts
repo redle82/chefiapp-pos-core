@@ -1,10 +1,4 @@
 /**
- * @deprecated Use useCoreAuth. Re-export para compatibilidade durante migração.
- * Auth: Core (Docker) only — Keycloak + mock. Sem Supabase.
+ * @deprecated Use `useAuth` from `core/auth/useAuth`. Re-export barrel.
  */
-
-import type { CoreAuthState } from "./useCoreAuth";
-import { useCoreAuth } from "./useCoreAuth";
-
-export type { CoreAuthState as SupabaseAuthState };
-export { useCoreAuth as useSupabaseAuth };
+export { useAuth as useSupabaseAuth, type AuthState as SupabaseAuthState } from "./useAuth";

@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useSupabaseAuth } from "../auth/useSupabaseAuth";
+import { useAuth } from "../auth/useAuth";
 import { isDebugMode } from "../debugMode";
 import { BackendType, getBackendType } from "../infra/backendAdapter";
 import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
@@ -98,7 +98,7 @@ interface TenantProviderProps {
 }
 
 export function TenantProvider({ children }: TenantProviderProps) {
-  const { session, loading } = useSupabaseAuth();
+  const { session, loading } = useAuth();
 
   const [state, setState] = useState<TenantState>({
     tenantId: null,

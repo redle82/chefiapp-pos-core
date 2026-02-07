@@ -13,7 +13,7 @@ import {
 } from "../../../core/storage/TabIsolatedStorage";
 import { connectByCode } from "../../../features/auth/connectByCode";
 // Auth only — temporary until Core Auth (session / signOut)
-import { supabase } from "../../../core/supabase";
+import { db } from "../../../core/db";
 import { findRelevantLesson } from "../../../intelligence/education/MicroLessonEngine";
 import {
   TrainingProvider,
@@ -420,7 +420,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       return;
 
     const fetchEmployees = async () => {
-      const { data } = await supabase
+      const { data } = await db
         .from("employees")
         .select("*")
         .eq("restaurant_id", operationalContract.id)
@@ -566,7 +566,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   };
 
   const checkIn = async (workerName: string, employeeId?: string) => {
-    const { supabase } = await import("../../../core/supabase");
+    const { db: coreDb } = await import("../../../core/db");
 
     setActiveWorkerId(workerName);
     let currentRole = activeRole;
@@ -584,7 +584,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
     // 📝 AUDIT: Create Shift Log
     if (operationalContract?.id && employeeId) {
-      const { data, error } = await supabase
+      const { data, error } = await coreDb
         .from("shift_logs")
         .insert({
           restaurant_id: operationalContract.id, // Assuming OpContract ID is RestId. If mock, this might fail.
@@ -630,12 +630,12 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   );
 
   const checkOut = async () => {
-    const { supabase } = await import("../../../core/supabase");
+    const { db: coreDb } = await import("../../../core/db");
 
     // 📝 AUDIT: Close Shift Log
     if (activeShiftId) {
       const endTime = new Date();
-      await supabase
+      await coreDb
         .from("shift_logs")
         .update({
           end_time: endTime.toISOString(),
@@ -692,10 +692,10 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
     // 📝 AUDIT: Action Log
     if (activeShiftId && task && operationalContract?.id) {
-      import("../../../core/supabase").then(({ supabase }) => {
+      import("../../../core/db").then(({ db: coreDb }) => {
         const empId = employees.find((e) => e.name === activeWorkerId)?.id;
 
-        supabase
+        coreDb
           .from("action_logs")
           .insert({
             restaurant_id: operationalContract.id,
@@ -747,9 +747,9 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     );
     notifyActivity();
 
-    // Supabase
+    // Core DB
     if (!taskId.startsWith("temp") && !taskId.startsWith("init")) {
-      supabase
+      db
         .from("app_tasks")
         .update({ status: "done", completed_at: new Date().toISOString() })
         .eq("id", taskId)
@@ -788,7 +788,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
     // Persist Manual Task
     if (operationalContract?.id) {
-      supabase
+      db
         .from("app_tasks")
         .insert({
           id: newTask.id,

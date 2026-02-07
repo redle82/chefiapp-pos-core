@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 // LEGACY / LAB — blocked in Docker mode
 import { GenesisKernel } from "../../../core/kernel/GenesisKernel";
 import { getTabIsolated } from "../../../core/storage/TabIsolatedStorage";
-import { supabase } from "../../../core/supabase";
+import { db } from "../../../core/db";
 
 export interface VerifiedProduct {
   id: string;
