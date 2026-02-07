@@ -87,7 +87,7 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
   // Resolve Table
   const table = useMemo(
     () => tables.find((t) => t.id === tableId),
-    [tables, tableId]
+    [tables, tableId],
   );
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -106,9 +106,9 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
         (o) =>
           o.tableId === tableId &&
           o.status !== "paid" &&
-          o.status !== "cancelled"
+          o.status !== "cancelled",
       ),
-    [orders, tableId]
+    [orders, tableId],
   );
 
   // Listen for operator decisions on this table's orders
@@ -121,7 +121,7 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
         success(
           `✅ Decisão: ${decision.action}${
             decision.message ? ` - ${decision.message}` : ""
-          }`
+          }`,
         );
         console.log("[TablePanel] Decision received:", decision);
       }
@@ -209,7 +209,7 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
   const handleAddItem = (
     productId: string,
     quantity: number,
-    commentIds: string[]
+    commentIds: string[],
   ) => {
     const product = visibleProducts.find((p) => p.id === productId);
     if (!product) return;
@@ -280,8 +280,8 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
               priceCents: item.price,
               quantity: item.quantity,
               notes: item.comments.join(", "),
-            })
-          )
+            }),
+          ),
         );
       } else {
         // Case B: Create New Order
@@ -331,7 +331,7 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
 
   const totalAmount = orderItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
-    0
+    0,
   );
 
   const handleTableClickFromMap = (t: Table) => {
@@ -548,7 +548,7 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
         selectedId={selectedCategory || undefined}
         onSelect={(categoryId) => {
           setSelectedCategory(
-            categoryId === selectedCategory ? null : categoryId
+            categoryId === selectedCategory ? null : categoryId,
           );
         }}
       />

@@ -16,7 +16,6 @@
 import type { OrderCreatedEvent } from "../types/IntegrationEvent";
 // LEGACY / LAB — blocked in Docker mode
 import { DbWriteGate } from "../../core/governance/DbWriteGate";
-import { db } from "../../core/db";
 
 /**
  * AIRLOCK PROTOCOL: Public Ingestion
@@ -30,10 +29,10 @@ export class OrderIngestionPipeline {
    */
   async processExternalOrder(
     event: OrderCreatedEvent,
-    restaurantId: string
+    restaurantId: string,
   ): Promise<{ success: boolean; requestId?: string; error?: string }> {
     console.log(
-      `[Airlock] Ingesting request: ${event.payload.orderId} from ${event.payload.source}`
+      `[Airlock] Ingesting request: ${event.payload.orderId} from ${event.payload.source}`,
     );
 
     try {
@@ -47,7 +46,7 @@ export class OrderIngestionPipeline {
 
       if (existing) {
         console.log(
-          `[Airlock] Request ${event.payload.orderId} already in queue as ${existing.id}.`
+          `[Airlock] Request ${event.payload.orderId} already in queue as ${existing.id}.`,
         );
         return { success: true, requestId: existing.id };
       }
@@ -65,7 +64,7 @@ export class OrderIngestionPipeline {
       // 3. Calculate Totals (Trust the source, but verify later)
       const totalCents = items.reduce(
         (sum, i) => sum + i.price_cents * i.quantity,
-        0
+        0,
       );
 
       // 4. Insert into Airlock (Using Gate)
@@ -85,7 +84,7 @@ export class OrderIngestionPipeline {
             external_id: event.payload.orderId,
           },
         },
-        { tenantId: restaurantId }
+        { tenantId: restaurantId },
       );
 
       if (error) throw new Error(`Airlock Rejection: ${error.message}`);

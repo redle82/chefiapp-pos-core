@@ -8,8 +8,8 @@ import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity
 import { RUNTIME } from "../../core/runtime/RuntimeContext";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { Text } from "../../ui/design-system/primitives/Text";
-import { isValidStaffRole, StaffProvider } from "./context/StaffContext";
 import { OperatorSessionProvider } from "./context/OperatorSessionContext";
+import { isValidStaffRole, StaffProvider } from "./context/StaffContext";
 import type { StaffRole } from "./context/StaffCoreTypes";
 
 /** StaffModule — parte da cadeia real: AppStaffWrapper → StaffModule → StaffAppGate → StaffAppShellLayout → páginas. Fornece StaffProvider + OperatorSessionProvider; renderiza Outlet (rotas nested). */
@@ -47,7 +47,9 @@ export default function StaffModule() {
       ? searchParams.get("role")
       : null;
   const initialRole: StaffRole | undefined =
-    roleParam && isValidStaffRole(roleParam) ? (roleParam as StaffRole) : undefined;
+    roleParam && isValidStaffRole(roleParam)
+      ? (roleParam as StaffRole)
+      : undefined;
 
   if (loading) {
     return (

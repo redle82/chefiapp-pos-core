@@ -1070,6 +1070,36 @@
 			"label": "shell: git stage supabase purge",
 			"type": "shell",
 			"command": "git add -A && git status --short 2>&1 | head -40 && echo '---' && git diff --cached --stat 2>&1 | tail -5"
+		},
+		{
+			"label": "shell: git commit supabase purge",
+			"type": "shell",
+			"command": "git commit -m 'refactor: replace all supabase references with docker core naming' 2>&1 && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "shell: git push supabase purge",
+			"type": "shell",
+			"command": "git push origin core/frozen-v1 2>&1 && echo '---PUSH-OK---'"
+		},
+		{
+			"label": "shell: git rm .env.function",
+			"type": "shell",
+			"command": "git rm --cached .env.function 2>/dev/null; echo 'REMOVED' || echo 'NOT-TRACKED'"
+		},
+		{
+			"label": "shell: tsc verify blockers",
+			"type": "shell",
+			"command": "cd merchant-portal && npx tsc --noEmit 2>&1 | tail -10 && echo '---TSC-DONE---'"
+		},
+		{
+			"label": "shell: vite build blockers",
+			"type": "shell",
+			"command": "cd merchant-portal && npx vite build 2>&1 | tail -10 && echo '---BUILD-DONE---'"
+		},
+		{
+			"label": "shell: git commit production readiness",
+			"type": "shell",
+			"command": "git add -A && git status --short 2>&1 | head -30 && echo '---STAGED---' && git commit -m 'feat: production readiness - migration runner, billing db, keycloak prod, deploy pipeline, secrets cleanup' 2>&1 && echo '---COMMIT-OK---'"
 		}
 	]
 }

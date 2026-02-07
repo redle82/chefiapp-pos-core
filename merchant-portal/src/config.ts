@@ -13,7 +13,8 @@ export const CONFIG = {
 
   // Docker Core (PostgREST). Backend único.
   CORE_URL: (function () {
-    const raw = import.meta.env.VITE_CORE_URL || (import.meta.env.PROD ? "" : "/rest");
+    const raw =
+      import.meta.env.VITE_CORE_URL || (import.meta.env.PROD ? "" : "/rest");
 
     // Dev + browser: sempre usar proxy (same-origin) para evitar CORS com Core em 3001
     if (import.meta.env.DEV && typeof window !== "undefined") {

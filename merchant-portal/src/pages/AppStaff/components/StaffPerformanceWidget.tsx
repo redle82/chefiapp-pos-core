@@ -4,7 +4,6 @@ import { Card } from "../../../ui/design-system/primitives/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { colors } from "../../../ui/design-system/tokens/colors";
 // LEGACY / LAB — blocked in Docker mode
-import { db } from "../../../core/db";
 
 interface StaffPerformance {
   employeeId: string;
@@ -53,7 +52,7 @@ export const StaffPerformanceWidget: React.FC<StaffPerformanceWidgetProps> = ({
                     duration_minutes,
                     status,
                     employees ( name )
-                `
+                `,
         )
         .eq("restaurant_id", restaurantId)
         .eq("status", "completed")
@@ -96,7 +95,7 @@ export const StaffPerformanceWidget: React.FC<StaffPerformanceWidgetProps> = ({
 
         // Count actions for this shift
         const shiftActions = (actions || []).filter(
-          (a: any) => a.shift_id === shift.id
+          (a: any) => a.shift_id === shift.id,
         );
         existing.actionsCount += shiftActions.length;
 

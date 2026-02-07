@@ -1,5 +1,5 @@
 /**
  * @deprecated Use `core-engine/db` instead. Re-export barrel for backward compat.
  */
-export { db, db as supabase, coreClient, coreNotImplemented } from "../db";
+export { coreClient, coreNotImplemented, db, db as supabase } from "../db";
 export type { CoreClient } from "../db";

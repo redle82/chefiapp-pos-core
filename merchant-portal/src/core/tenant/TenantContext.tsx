@@ -200,7 +200,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
         // ANTI-SUPABASE §4: Tenant/members ONLY via Core. Fail explicit if not Docker.
         if (getBackendType() !== BackendType.docker) {
           throw new Error(
-            "Core indisponível. Configure o Docker Core para resolver o tenant."
+            "Core indisponível. Configure o Docker Core para resolver o tenant.",
           );
         }
 
@@ -231,7 +231,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
 
         // 2. Fetch restaurant basic info for list (Core only)
         const restaurantIds = members.map(
-          (m: { restaurant_id: string }) => m.restaurant_id
+          (m: { restaurant_id: string }) => m.restaurant_id,
         );
         const restListRes = await core
           .from("gm_restaurants")
@@ -249,14 +249,14 @@ export function TenantProvider({ children }: TenantProviderProps) {
         const memberships: TenantMembership[] = members.map(
           (m: { restaurant_id: string; role: string }) => {
             const restaurant = restaurants?.find(
-              (r: { id: string; name: string }) => r.id === m.restaurant_id
+              (r: { id: string; name: string }) => r.id === m.restaurant_id,
             );
             return {
               restaurant_id: m.restaurant_id,
               restaurant_name: restaurant?.name || "Restaurante sem nome",
               role: m.role as TenantMembership["role"],
             };
-          }
+          },
         );
 
         // 4. Determine active tenant
@@ -393,7 +393,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
         if (!devStable) {
           console.error(
             "[TenantContext] ❌ Cannot switch to unauthorized tenant:",
-            newTenantId
+            newTenantId,
           );
         }
         return;
@@ -446,7 +446,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
         }));
       }
     },
-    [state.memberships]
+    [state.memberships],
   );
 
   // ========================================================================
@@ -455,7 +455,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
 
   const getCurrentTenantName = useCallback(() => {
     const membership = state.memberships.find(
-      (m) => m.restaurant_id === state.tenantId
+      (m) => m.restaurant_id === state.tenantId,
     );
     return membership?.restaurant_name || null;
   }, [state.memberships, state.tenantId]);

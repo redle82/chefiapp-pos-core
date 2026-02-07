@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 // LEGACY / LAB — blocked in Docker mode
 import { motion } from "framer-motion";
-import { FiscalQueue } from "../../core/fiscal/FiscalQueueWorker";
 import { db } from "../../core/db";
+import { FiscalQueue } from "../../core/fiscal/FiscalQueueWorker";
 import { SyncEngine, type SyncEngineState } from "../../core/sync/SyncEngine";
 
 interface HealthState {
@@ -87,7 +87,7 @@ export const SystemHealthCard = ({
           .limit(5);
 
         const isRecovery = pulses?.some(
-          (p) => p.type === "SYSTEM_RECOVERY_MODE"
+          (p) => p.type === "SYSTEM_RECOVERY_MODE",
         );
 
         // 2. Check for Active Alerts
@@ -100,7 +100,7 @@ export const SystemHealthCard = ({
 
         if (isRecovery) {
           const recoveryPulse = pulses?.find(
-            (p) => p.type === "SYSTEM_RECOVERY_MODE"
+            (p) => p.type === "SYSTEM_RECOVERY_MODE",
           );
           setHealth({
             status: "RECOVERY",
@@ -160,7 +160,7 @@ export const SystemHealthCard = ({
           table: "alerts",
           filter: `restaurant_id=eq.${restaurantId}`,
         },
-        () => checkCloudHealth()
+        () => checkCloudHealth(),
       )
       .subscribe();
 

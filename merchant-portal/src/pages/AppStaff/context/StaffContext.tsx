@@ -14,6 +14,8 @@ import {
 import { connectByCode } from "../../../features/auth/connectByCode";
 // Auth only — temporary until Core Auth (session / signOut)
 import { db } from "../../../core/db";
+import { locationsStore } from "../../../features/admin/locations/store/locationsStore";
+import type { Location } from "../../../features/admin/locations/types";
 import { findRelevantLesson } from "../../../intelligence/education/MicroLessonEngine";
 import {
   TrainingProvider,
@@ -26,8 +28,6 @@ import { getShiftPrediction } from "../../../intelligence/forecast/ShiftPredicto
 import { now as getNow } from "../../../intelligence/nervous-system/Clock";
 import type { ShiftMetrics } from "../../../intelligence/nervous-system/ShiftEngine";
 import { calculateShiftLoad } from "../../../intelligence/nervous-system/ShiftEngine";
-import { locationsStore } from "../../../features/admin/locations/store/locationsStore";
-import type { Location } from "../../../features/admin/locations/types";
 import { useReflexEngine } from "../core/ReflexEngine";
 import { useAppStaffOrders } from "../hooks/useAppStaffOrders";
 import type {
@@ -83,7 +83,7 @@ interface StaffContextType {
   // 3. SETUP ACTIONS
   createLocalContract: (type: BusinessType) => void;
   joinRemoteOperation: (
-    code: string
+    code: string,
   ) => Promise<{ success: boolean; message?: string }>;
 
   // 4. WORKER ACTIONS
@@ -124,7 +124,7 @@ interface StaffContextType {
 
   // 🛡️ IMMUNE SYSTEM (Human Sensor -> Brain)
   reportSpecDrift: (
-    alert: Omit<SpecDriftAlert, "id" | "detectedAt" | "status">
+    alert: Omit<SpecDriftAlert, "id" | "detectedAt" | "status">,
   ) => void;
   specDrifts: SpecDriftAlert[]; // 🛡️ Telemetry for Owner Dashboard
   pressureMode: "idle" | "pressure" | "recovery"; // 🩺 Real-time Pulse
@@ -149,7 +149,8 @@ interface StaffContextType {
   isSimulated: boolean;
 }
 
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function isUuid(s: string | null | undefined): boolean {
   return typeof s === "string" && UUID_REGEX.test(s);
 }
@@ -216,7 +217,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   // EXTERNAL SIGNALS (The Senses)
   // FASE 3.3: Isolado - AppStaff não depende de TPV/context. Usar restaurantId (prop) para evitar TDZ: operationalContract é declarado mais abaixo.
   const { orders: appStaffOrders, refetch: refetchOrders } = useAppStaffOrders(
-    restaurantId ?? null
+    restaurantId ?? null,
   );
   // Converter CoreOrder para Order (compatibilidade)
   const orders = appStaffOrders.map((order) => ({
@@ -265,16 +266,16 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       // Refetch após ação
       await refetchOrders();
     },
-    [refetchOrders]
+    [refetchOrders],
   );
   const { triggerLesson, learnedSkills } = useTraining(); // Phase C: Training
 
   // 0. LOCATION (Staff Session requires Location — STAFF_SESSION_LOCATION_CONTRACT)
   const [activeLocations, setActiveLocations] = useState<Location[]>(() =>
-    getActiveLocations()
+    getActiveLocations(),
   );
-  const [activeLocation, setActiveLocationState] =
-    useState<Location | null>(() => {
+  const [activeLocation, setActiveLocationState] = useState<Location | null>(
+    () => {
       const list = getActiveLocations();
       const storedId = restoreLocationId();
       if (storedId) {
@@ -283,7 +284,8 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       }
       if (list.length === 1) return list[0];
       return null;
-    });
+    },
+  );
 
   const setActiveLocation = useCallback((loc: Location | null) => {
     setActiveLocationState(loc);
@@ -293,44 +295,43 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   // 1. IDENTITY — inicialização síncrona para Owner/Manager (restaurantId+userId) evitam flash de "Inserir Código"
   // DEMO: nunca AUTO-JOIN como owner; mostrar Launcher de Pessoas (connectByCode por persona)
   const allowAutoJoin = Boolean(restaurantId && userId && !RUNTIME.isDemo);
-  const initialContract =
-    allowAutoJoin
-      ? ({
-          id: restaurantId!,
-          type: "restaurant",
-          name: "Seu Restaurante",
-          mode: "connected",
-          permissions: ["admin"],
-        } as OperationalContract)
-      : null;
+  const initialContract = allowAutoJoin
+    ? ({
+        id: restaurantId!,
+        type: "restaurant",
+        name: "Seu Restaurante",
+        mode: "connected",
+        permissions: ["admin"],
+      } as OperationalContract)
+    : null;
   const [operationalContract, setOpContract] =
     useState<OperationalContract | null>(() => initialContract);
   const [activeWorkerId, setActiveWorkerId] = useState<string | null>(
-    allowAutoJoin ? userId : null
+    allowAutoJoin ? userId : null,
   );
   const resolvedInitialRole =
     allowAutoJoin && !initialRoleProp
       ? "owner"
       : parseStaffRole(initialRoleProp ?? getTabIsolated("staff_role"));
-  const [activeRole, setActiveRoleState] = useState<StaffRole>(resolvedInitialRole);
-  const [roleSource, setRoleSource] = useState<"tab" | "login" | "debug" | "invite">(
+  const [activeRole, setActiveRoleState] =
+    useState<StaffRole>(resolvedInitialRole);
+  const [roleSource, setRoleSource] = useState<
+    "tab" | "login" | "debug" | "invite"
+  >(
     allowAutoJoin && !initialRoleProp
       ? "login"
       : initialRoleProp
       ? "tab"
       : getTabIsolated("staff_role")
       ? "tab"
-      : "tab"
+      : "tab",
   );
   const isSimulated = roleSource === "tab";
 
-  const setActiveRole = useCallback(
-    (r: StaffRole) => {
-      setActiveRoleState(r);
-      setTabIsolated("staff_role", r);
-    },
-    []
-  );
+  const setActiveRole = useCallback((r: StaffRole) => {
+    setActiveRoleState(r);
+    setTabIsolated("staff_role", r);
+  }, []);
 
   // 2. SHIFT STATE — activo desde o início quando AUTO-JOIN (restaurantId+userId); DEMO não AUTO-JOIN
   const [shiftState, setShiftState] = useState<
@@ -455,7 +456,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     // Kitchen: visualiza pedidos ou checklist
     if (activeRole === "kitchen") {
       const hasActiveOrders = orders.some(
-        (o) => o.status === "OPEN" || o.status === "IN_PREP"
+        (o) => o.status === "OPEN" || o.status === "IN_PREP",
       );
       return hasActiveOrders ? "production" : "check";
     }
@@ -471,7 +472,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     if (shiftState !== "active") return 0;
     const totalRisk = tasks.reduce(
       (acc, t) => (t.status === "pending" ? acc + (t.riskLevel || 0) : acc),
-      0
+      0,
     );
     return Math.min(100, totalRisk);
   }, [tasks, shiftState]);
@@ -479,10 +480,10 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   // Core API: UUID do contrato se válido, senão restaurantId (evita 400 com contrato local)
   const coreRestaurantId = useMemo(
     () =>
-      (operationalContract?.id && isUuid(operationalContract.id))
+      operationalContract?.id && isUuid(operationalContract.id)
         ? operationalContract.id
-        : (restaurantId ?? null),
-    [operationalContract?.id, restaurantId]
+        : restaurantId ?? null,
+    [operationalContract?.id, restaurantId],
   );
   // SYSTEM REFLEX (The Subconscious)
   useReflexEngine(setTasks, notifyActivity, coreRestaurantId);
@@ -501,7 +502,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
         t.meta?.source === "kds-sync" &&
         t.status === "pending" &&
         // Simple check: created in last 10 seconds (in real logic we'd mark 'trainingChecked')
-        getNow() - new Date(t.createdAt).getTime() < 10000
+        getNow() - new Date(t.createdAt).getTime() < 10000,
     );
 
     recentTasks.forEach((task) => {
@@ -517,7 +518,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
           "menu_item",
           item.name_snapshot || item.name,
           activeRole as any,
-          learnedSkills
+          learnedSkills,
         );
         if (lesson) {
           // Check if not already triggering
@@ -546,7 +547,9 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   };
 
   const joinRemoteOperation = async (code: string) => {
-    const result = await connectByCode(code, { restaurantHint: restaurantId ?? undefined });
+    const result = await connectByCode(code, {
+      restaurantHint: restaurantId ?? undefined,
+    });
     if (!result.success) {
       return { success: false, message: result.message };
     }
@@ -626,7 +629,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       setShiftState("active");
       notifyActivity();
     },
-    [operationalContract, createLocalContract, notifyActivity]
+    [operationalContract, createLocalContract, notifyActivity],
   );
 
   const checkOut = async () => {
@@ -655,7 +658,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
   const startTask = (taskId: string) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: "focused" } : t))
+      prev.map((t) => (t.id === taskId ? { ...t, status: "focused" } : t)),
     );
     notifyActivity();
   };
@@ -670,7 +673,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       task.meta.action
     ) {
       console.log(
-        `🌉 BRIDGE: Triggering Action ${task.meta.action} for Order ${task.meta.orderId}`
+        `🌉 BRIDGE: Triggering Action ${task.meta.action} for Order ${task.meta.orderId}`,
       );
       performOrderAction(task.meta.orderId, task.meta.action)
         .then(() => console.log("✅ BRIDGE: Action Success"))
@@ -679,7 +682,9 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
           alert("Falha ao sincronizar com KDS. Tente novamente.");
           // Revert optimistic update?
           setTasks((prev) =>
-            prev.map((t) => (t.id === taskId ? { ...t, status: "pending" } : t))
+            prev.map((t) =>
+              t.id === taskId ? { ...t, status: "pending" } : t,
+            ),
           );
           return; // Stop completion
         });
@@ -687,7 +692,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
     // Optimistic
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: "done" } : t))
+      prev.map((t) => (t.id === taskId ? { ...t, status: "done" } : t)),
     );
 
     // 📝 AUDIT: Action Log
@@ -743,14 +748,13 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     window.dispatchEvent(
       new CustomEvent("staff-task-complete", {
         detail: { message, taskTitle: task?.title, xpGained: taskXP },
-      })
+      }),
     );
     notifyActivity();
 
     // Core DB
     if (!taskId.startsWith("temp") && !taskId.startsWith("init")) {
-      db
-        .from("app_tasks")
+      db.from("app_tasks")
         .update({ status: "done", completed_at: new Date().toISOString() })
         .eq("id", taskId)
         .then();
@@ -759,7 +763,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
   const unfocusTask = (taskId: string) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: "pending" } : t))
+      prev.map((t) => (t.id === taskId ? { ...t, status: "pending" } : t)),
     );
   };
 
@@ -788,8 +792,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
     // Persist Manual Task
     if (operationalContract?.id) {
-      db
-        .from("app_tasks")
+      db.from("app_tasks")
         .insert({
           id: newTask.id,
           restaurant_id: operationalContract.id,
@@ -811,19 +814,19 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
   const reportObligations = (
     source: string,
-    newObligations: LatentObligation[]
+    newObligations: LatentObligation[],
   ) => {
     // Simple merge for now, avoiding duplicates by ID
     setObligations((prev) => {
       const others = prev.filter(
-        (o) => !newObligations.some((n) => n.id === o.id)
+        (o) => !newObligations.some((n) => n.id === o.id),
       );
       return [...others, ...newObligations];
     });
   };
 
   const reportSpecDrift = (
-    alert: Omit<SpecDriftAlert, "id" | "detectedAt" | "status">
+    alert: Omit<SpecDriftAlert, "id" | "detectedAt" | "status">,
   ) => {
     const newAlert: SpecDriftAlert = {
       id: `drift-${Date.now()}`,
@@ -877,17 +880,18 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
         activeStaffCount: 1,
         shiftMetrics: calculateShiftLoad(
           tasks.filter((t) => t.status !== "done").length,
-          1
+          1,
         ),
 
         // PHASE D: Forecast
         forecast: {
           pressure: calculatePressure(
             (orders || []).filter(
-              (o) => getNow() - new Date(o.createdAt).getTime() < 15 * 60 * 1000
+              (o) =>
+                getNow() - new Date(o.createdAt).getTime() < 15 * 60 * 1000,
             ).length || 0, // Last 15 min
             1, // Staff (Hardcoded 1 for now)
-            10 // Avg Prep (Hardcoded 10 min)
+            10, // Avg Prep (Hardcoded 10 min)
           ),
           prediction: getShiftPrediction(new Date(getNow())),
         },

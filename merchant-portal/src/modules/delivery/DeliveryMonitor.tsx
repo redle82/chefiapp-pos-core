@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 // LEGACY / LAB — blocked in Docker mode
-import { isDevStableMode } from "../../core/runtime/devStableMode";
 import { db } from "../../core/db";
+import { isDevStableMode } from "../../core/runtime/devStableMode";
 import { useTenant } from "../../core/tenant/TenantContext";
 
 interface IntegrationOrder {
@@ -23,7 +23,7 @@ export const DeliveryMonitor: React.FC = () => {
   const [orders, setOrders] = useState<IntegrationOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<IntegrationOrder | null>(
-    null
+    null,
   );
 
   // Initial Fetch
@@ -85,7 +85,7 @@ export const DeliveryMonitor: React.FC = () => {
         (payload) => {
           const newOrder = payload.new as IntegrationOrder;
           setOrders((prev) => [newOrder, ...prev].slice(0, 50));
-        }
+        },
       )
       .subscribe();
 
@@ -111,7 +111,7 @@ export const DeliveryMonitor: React.FC = () => {
   const totalOrders = orders.length;
   const totalVolumeCents = orders.reduce(
     (sum, o) => sum + (o.total_cents || 0),
-    0
+    0,
   );
 
   const handleHealthCheck = async () => {

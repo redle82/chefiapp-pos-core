@@ -5,8 +5,8 @@
 import type { CoreAuthState } from "./useCoreAuth";
 import { useCoreAuth } from "./useCoreAuth";
 
-export type { CoreAuthState as AuthState };
 export { useCoreAuth as useAuth };
+export type { CoreAuthState as AuthState };
 
 /**
  * @deprecated Use `useAuth` from `core/auth/useAuth`. Kept for backward compat.

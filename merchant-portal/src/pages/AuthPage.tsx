@@ -9,8 +9,8 @@
 
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "../core/auth/useAuth";
 import { getAuthActions } from "../core/auth/authAdapter";
+import { useAuth } from "../core/auth/useAuth";
 import {
   BackendType,
   getBackendConfigured,
@@ -162,7 +162,9 @@ export function AuthPage() {
         getAuthActions().signIn();
         return;
       }
-      setError("Backend não configurado. Defina VITE_CORE_URL e VITE_CORE_ANON_KEY.");
+      setError(
+        "Backend não configurado. Defina VITE_CORE_URL e VITE_CORE_ANON_KEY.",
+      );
     } catch (err: unknown) {
       const msg =
         err instanceof Error

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 // LEGACY / LAB — blocked in Docker mode
 import { GenesisKernel } from "../../../core/kernel/GenesisKernel";
 import { getTabIsolated } from "../../../core/storage/TabIsolatedStorage";
-import { db } from "../../../core/db";
 
 export interface VerifiedProduct {
   id: string;
@@ -53,7 +52,7 @@ export function useRealMenu() {
         if (!tenantId) {
           // Do not throw, just return empty. The TPV will handle the empty state.
           console.warn(
-            "[useRealMenu] No active tenant found in blueprint or storage."
+            "[useRealMenu] No active tenant found in blueprint or storage.",
           );
           if (mounted) {
             setProducts([]);

@@ -23,16 +23,19 @@ public/assets/
 **/.env.local
 **/.env.*.local
 **/.env.sofia
+**/.env.function
 .env
 .env.local
 .env.*.local
 .env.sofia
+.env.function
 
 # Sensitive files (CRITICAL - never commit)
 key-check.txt
 *.key
 *.pem
 *.p12
+merchant-001-record.json
 testsprite_tests/TEST_CREDENTIALS.md
 **/TEST_CREDENTIALS.md
 

@@ -23,18 +23,13 @@ export const db = {
   removeChannel: (_ch: unknown) => Promise.resolve(),
   functions: {
     invoke: (_name: string, _opts?: unknown) =>
-      Promise.reject(
-        new Error("Use Core endpoint for serverless functions.")
-      ),
+      Promise.reject(new Error("Use Core endpoint for serverless functions.")),
   },
   auth: {
-    getSession: () =>
-      Promise.resolve({ data: { session: null }, error: null }),
+    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
     onAuthStateChange: () => ({ data: { subscription: noopSubscription } }),
-    getUser: () =>
-      Promise.resolve({ data: { user: null }, error: null }),
-    signInWithPassword: () =>
-      Promise.reject(new Error("Use Core auth.")),
+    getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+    signInWithPassword: () => Promise.reject(new Error("Use Core auth.")),
     signOut: () => Promise.resolve(),
   },
 };
@@ -42,6 +37,8 @@ export const db = {
 /** @deprecated Use `db` directly. */
 export const supabase = db;
 
-export async function coreNotImplemented<T = unknown>(feature: string): Promise<T> {
+export async function coreNotImplemented<T = unknown>(
+  feature: string,
+): Promise<T> {
   throw new Error(`CORE TODO: ${feature}`);
 }

@@ -5,16 +5,15 @@
  * para uso no App Staff (check-in, tarefas).
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { QRCodeGenerator } from "../../components/QRCodeGenerator";
+import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
+import { isBackendUnavailable } from "../../core-boundary/menuPilotFallback";
 import {
   readRestaurantPeople,
   type CoreRestaurantPerson,
 } from "../../core-boundary/readers/RestaurantPeopleReader";
-import { isBackendUnavailable } from "../../core-boundary/menuPilotFallback";
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
-import { QRCodeGenerator } from "../../components/QRCodeGenerator";
-import { db } from "../../core/db";
 
 type InviteSummary = {
   id: string;
@@ -127,7 +126,9 @@ export function RestaurantPeopleSection() {
     } catch (e) {
       const msg = isBackendUnavailable(e)
         ? "Não foi possível carregar. O servidor pode estar indisponível. Tente novamente."
-        : e instanceof Error ? e.message : "Erro ao carregar pessoas";
+        : e instanceof Error
+        ? e.message
+        : "Erro ao carregar pessoas";
       setError(msg);
       setPeople([]);
     } finally {
@@ -219,7 +220,9 @@ export function RestaurantPeopleSection() {
             staff_code: staffCode,
             qr_token: qrToken,
           })
-          .select("id, restaurant_id, name, role, staff_code, qr_token, created_at, updated_at")
+          .select(
+            "id, restaurant_id, name, role, staff_code, qr_token, created_at, updated_at",
+          )
           .single();
         if (insertError) {
           if (insertError.code === "23505") {
@@ -239,7 +242,9 @@ export function RestaurantPeopleSection() {
         break;
       }
       if (attempts >= maxAttempts) {
-        throw new Error("Não foi possível gerar um código único. Tente novamente.");
+        throw new Error(
+          "Não foi possível gerar um código único. Tente novamente.",
+        );
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao adicionar pessoa");
@@ -287,7 +292,8 @@ export function RestaurantPeopleSection() {
   return (
     <div style={{ maxWidth: "800px" }}>
       <p style={{ fontSize: "14px", color: "#666", marginBottom: "24px" }}>
-        Crie pessoas (funcionários/gerentes) com nome e função. Cada pessoa recebe um código e QR para check-in no App Staff.
+        Crie pessoas (funcionários/gerentes) com nome e função. Cada pessoa
+        recebe um código e QR para check-in no App Staff.
       </p>
 
       {error && (
@@ -316,7 +322,10 @@ export function RestaurantPeopleSection() {
         <h3 style={{ fontSize: "16px", fontWeight: 600, marginBottom: "12px" }}>
           Adicionar pessoa
         </h3>
-        <form onSubmit={handleAdd} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        <form
+          onSubmit={handleAdd}
+          style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+        >
           <input
             type="text"
             placeholder="Nome"
@@ -367,7 +376,15 @@ export function RestaurantPeopleSection() {
         {loading ? (
           <p style={{ color: "#666" }}>A carregar…</p>
         ) : people.length === 0 ? (
-          <p style={{ fontSize: "14px", color: "#999", fontStyle: "italic", padding: "24px", textAlign: "center" }}>
+          <p
+            style={{
+              fontSize: "14px",
+              color: "#999",
+              fontStyle: "italic",
+              padding: "24px",
+              textAlign: "center",
+            }}
+          >
             Nenhuma pessoa adicionada. Use o formulário acima para criar.
           </p>
         ) : (
@@ -381,13 +398,35 @@ export function RestaurantPeopleSection() {
                 backgroundColor: "#fff",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  flexWrap: "wrap",
+                  gap: "12px",
+                }}
+              >
                 <div>
-                  <div style={{ fontSize: "16px", fontWeight: 600 }}>{person.name}</div>
-                  <div style={{ fontSize: "12px", color: "#667eea", marginTop: "4px" }}>
+                  <div style={{ fontSize: "16px", fontWeight: 600 }}>
+                    {person.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: "#667eea",
+                      marginTop: "4px",
+                    }}
+                  >
                     {person.role === "manager" ? "Gerente" : "Funcionário"}
                   </div>
-                  <div style={{ marginTop: "8px", fontSize: "13px", color: "#666" }}>
+                  <div
+                    style={{
+                      marginTop: "8px",
+                      fontSize: "13px",
+                      color: "#666",
+                    }}
+                  >
                     Código:{" "}
                     {revealedCodeId === person.id ? (
                       <strong>{person.staff_code}</strong>
@@ -396,7 +435,11 @@ export function RestaurantPeopleSection() {
                     )}
                     <button
                       type="button"
-                      onClick={() => setRevealedCodeId((id) => (id === person.id ? null : person.id))}
+                      onClick={() =>
+                        setRevealedCodeId((id) =>
+                          id === person.id ? null : person.id,
+                        )
+                      }
                       style={{
                         marginLeft: "8px",
                         padding: "4px 8px",
@@ -412,7 +455,11 @@ export function RestaurantPeopleSection() {
                     </button>
                   </div>
                   <div
-                    style={{ marginTop: "4px", fontSize: "12px", color: "#4b5563" }}
+                    style={{
+                      marginTop: "4px",
+                      fontSize: "12px",
+                      color: "#4b5563",
+                    }}
                   >
                     {(() => {
                       const invite = invitesByPersonId[person.id];
@@ -428,10 +475,7 @@ export function RestaurantPeopleSection() {
                           Convite AppStaff:{" "}
                           <strong>{formatInviteStatus(invite.status)}</strong>
                           {invite.expires_at && (
-                            <>
-                              {" "}
-                              • expira em {formatDate(invite.expires_at)}
-                            </>
+                            <> • expira em {formatDate(invite.expires_at)}</>
                           )}
                         </span>
                       );
@@ -457,7 +501,9 @@ export function RestaurantPeopleSection() {
                     <button
                       type="button"
                       onClick={() =>
-                        setShowQRId((id) => (id === person.id ? null : person.id))
+                        setShowQRId((id) =>
+                          id === person.id ? null : person.id,
+                        )
                       }
                       style={{
                         padding: "6px 12px",

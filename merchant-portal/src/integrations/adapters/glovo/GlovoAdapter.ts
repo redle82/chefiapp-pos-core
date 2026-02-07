@@ -9,11 +9,13 @@
  * Architecture: "Air Gapped" Frontend
  */
 
+import { db } from "../../../core/db";
 import {
   BackendType,
   getBackendType,
 } from "../../../core/infra/backendAdapter";
 import { getDockerCoreFetchClient } from "../../../core/infra/dockerCoreFetchClient";
+import { isDevStableMode } from "../../../core/runtime/devStableMode";
 import type {
   IntegrationAdapter,
   IntegrationCapability,
@@ -29,8 +31,6 @@ import {
 } from "../../types/IntegrationStatus";
 import type { GlovoConfig, GlovoOrder } from "./GlovoTypes";
 import { isPendingOrder, isValidGlovoOrder } from "./GlovoTypes";
-import { isDevStableMode } from "../../../core/runtime/devStableMode";
-import { db } from "../../../core/db";
 
 /** Canal Realtime do Core (noop ou PostgREST Realtime). */
 type CoreRealtimeChannel = ReturnType<typeof db.channel>;
@@ -113,7 +113,7 @@ export class GlovoAdapter implements IntegrationAdapter {
           },
           (payload: { new?: unknown }) => {
             this.handleRealtimeOrder(payload.new);
-          }
+          },
         )
         .subscribe((status: string) => {
           console.log(`[Glovo] Realtime Status: ${status}`);
@@ -123,7 +123,7 @@ export class GlovoAdapter implements IntegrationAdapter {
     console.log(
       `[Glovo] 🚀 Initialized (Proxy Mode) for restaurant: ${
         config?.restaurantId ?? this.config?.restaurantId
-      }`
+      }`,
     );
 
     // 2. POLLING VIA PROXY (Fallback / Force Sync)
@@ -145,7 +145,7 @@ export class GlovoAdapter implements IntegrationAdapter {
     if (typeof window !== "undefined") {
       localStorage.setItem(
         "glovo_processed_ids",
-        JSON.stringify(Array.from(this.processedOrderIds))
+        JSON.stringify(Array.from(this.processedOrderIds)),
       );
     }
     this.processedOrderIds.clear();
@@ -290,13 +290,13 @@ export class GlovoAdapter implements IntegrationAdapter {
         `[Glovo] ❌ Proxy Polling failed. Backing off to ${
           this.currentPollInterval * 2
         }ms`,
-        err
+        err,
       );
 
       // Failure: Exponential Backoff
       this.currentPollInterval = Math.min(
         this.currentPollInterval * 2,
-        this.MAX_BACKOFF
+        this.MAX_BACKOFF,
       );
       this.scheduleNextPoll(this.currentPollInterval);
     }

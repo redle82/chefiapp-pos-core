@@ -5,8 +5,8 @@ import { Button } from "../../ui/design-system/Button";
 import { Card } from "../../ui/design-system/Card";
 import { Colors, Spacing, Typography } from "../../ui/design-system/tokens";
 // LEGACY / LAB — blocked in Docker mode
-import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { db } from "../../core/db";
+import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 
 // ------------------------------------------------------------------
 // 🫀 PULSE HISTORIAN: THE SYSTEM MEMORY

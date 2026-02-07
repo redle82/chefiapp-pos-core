@@ -53,14 +53,16 @@ export const BetaFeedbackWidget: React.FC = () => {
         },
       };
 
-      const { error: dbError } = await dockerCoreClient.from("beta_feedback").insert({
-        tenant_id: tenantId,
-        user_id: user.id,
-        type,
-        severity: type === "bug" ? severity : "low", // severity mainly relevant for bugs
-        message,
-        metadata,
-      });
+      const { error: dbError } = await dockerCoreClient
+        .from("beta_feedback")
+        .insert({
+          tenant_id: tenantId,
+          user_id: user.id,
+          type,
+          severity: type === "bug" ? severity : "low", // severity mainly relevant for bugs
+          message,
+          metadata,
+        });
 
       if (dbError) throw dbError;
 

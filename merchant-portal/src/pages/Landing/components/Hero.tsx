@@ -28,7 +28,7 @@ export const Hero = () => {
     if (!hasSession) return;
     const t = setTimeout(
       () => navigate("/app/dashboard", { replace: true }),
-      REDIRECT_WHEN_SESSION_MS
+      REDIRECT_WHEN_SESSION_MS,
     );
     return () => clearTimeout(t);
   }, [hasSession, navigate]);

@@ -7,13 +7,13 @@ import { useAuth } from "../auth/useAuth";
 import { getRestaurantStatus } from "../billing/coreBillingApi";
 import { BackendType, getBackendType } from "../infra/backendAdapter";
 import { getTableClient } from "../infra/coreRpc";
+import type { RestaurantLifecycleState } from "../lifecycle/LifecycleState";
 import {
   deriveLifecycleState,
   deriveSystemState,
   getCanonicalDestination,
   isPathAllowedForState,
 } from "../lifecycle/LifecycleState";
-import type { RestaurantLifecycleState } from "../lifecycle/LifecycleState";
 import {
   hasOperationalRestaurant,
   INVALID_OR_SEED_RESTAURANT_IDS,
@@ -124,7 +124,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
             pathname,
             isAuthenticated: !!session?.user?.id,
             hasOrganization: true,
-          })
+          }),
         );
         if (mounted) {
           clearLoadingTimeout();
@@ -184,7 +184,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
             pathname,
             isAuthenticated: !!session?.user?.id,
             hasOrganization: true,
-          })
+          }),
         );
         if (mounted) {
           clearLoadingTimeout();
@@ -266,7 +266,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
           ) {
             try {
               const pilotMock = window.localStorage.getItem(
-                "chefiapp_pilot_mock_restaurant"
+                "chefiapp_pilot_mock_restaurant",
               );
               if (pilotMock) {
                 const row = JSON.parse(pilotMock) as { id?: string };
@@ -297,7 +297,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
             setTabIsolated("chefiapp_restaurant_id", SEED_RESTAURANT_ID);
             window.localStorage.setItem(
               "chefiapp_restaurant_id",
-              SEED_RESTAURANT_ID
+              SEED_RESTAURANT_ID,
             );
             setActiveTenant(SEED_RESTAURANT_ID);
             localRestaurantId = SEED_RESTAURANT_ID;
@@ -318,7 +318,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
             if (debug)
               console.warn(
                 "[FlowGate] Member check error (fallback):",
-                memberError
+                memberError,
               );
             const fallbackId =
               getActiveTenant() ||
@@ -373,7 +373,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
                 if (debug)
                   console.warn(
                     "[FlowGate] Restaurant not found (404), clearing invalid id:",
-                    restaurantId
+                    restaurantId,
                   );
                 clearActiveTenant();
                 hasOrg = false;

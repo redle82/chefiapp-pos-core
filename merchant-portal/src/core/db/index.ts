@@ -35,7 +35,10 @@ export const db = {
   },
   auth: {
     getSession: () =>
-      getCoreSessionAsync().then((session) => ({ data: { session }, error: null })),
+      getCoreSessionAsync().then((session) => ({
+        data: { session },
+        error: null,
+      })),
     getUser: () =>
       getCoreSessionAsync().then((session) => ({
         data: { user: session?.user ?? null },
@@ -54,7 +57,7 @@ export const db = {
 export const supabase = db;
 
 export async function coreNotImplemented<T = unknown>(
-  feature: string
+  feature: string,
 ): Promise<T> {
   console.warn(`[CORE] Legacy: ${feature} not implemented. Use Core client.`);
   throw new Error(`CORE: ${feature} not implemented. Use Core client.`);

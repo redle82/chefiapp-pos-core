@@ -109,7 +109,7 @@ export function BootstrapPage({
     if (getBackendType() !== BackendType.docker) {
       setState("error");
       setErrorMessage(
-        "Sistema Nervoso (Core) indisponível. Configure o Docker Core para continuar."
+        "Sistema Nervoso (Core) indisponível. Configure o Docker Core para continuar.",
       );
       return;
     }
@@ -217,13 +217,13 @@ export function BootstrapPage({
           if (isSchemaError) {
             // Schema lag - columns don't exist yet, use defaults
             console.log(
-              "[BootstrapPage] Schema lag detected (setup_status missing). Using default state."
+              "[BootstrapPage] Schema lag detected (setup_status missing). Using default state.",
             );
           } else {
             // Other error - log and use defaults
             console.warn(
               "[BootstrapPage] Error loading restaurant:",
-              restCheckError
+              restCheckError,
             );
           }
         } else if (restaurant) {
@@ -273,7 +273,7 @@ export function BootstrapPage({
       } else {
         // NEW USER -> Onda 4 A2: mostrar form nome + contacto antes de criar
         console.log(
-          "[Bootstrap] New user detected - show create restaurant form"
+          "[Bootstrap] New user detected - show create restaurant form",
         );
         setState("create_form");
       }
@@ -297,7 +297,7 @@ export function BootstrapPage({
       if (getBackendType() !== BackendType.docker) {
         setState("error");
         setErrorMessage(
-          "Core indisponível. Configure o Docker Core para criar o restaurante."
+          "Core indisponível. Configure o Docker Core para criar o restaurante.",
         );
         return;
       }
@@ -335,7 +335,7 @@ export function BootstrapPage({
           "BootstrapPage",
           "gm_restaurants",
           restaurantPayload,
-          { userId: user.id }
+          { userId: user.id },
         );
         if (restError) throw restError;
 
@@ -349,14 +349,14 @@ export function BootstrapPage({
               restaurant_id: restData.id,
               role: "owner",
             },
-            { tenantId: restData.id }
+            { tenantId: restData.id },
           );
           if (linkError)
             Logger.info("[Bootstrap] gm_restaurant_members insert:", linkError);
         } catch (e) {
           Logger.info(
             "[Bootstrap] Core members write skipped or failed (no fallback):",
-            e
+            e,
           );
         }
 
@@ -379,10 +379,11 @@ export function BootstrapPage({
             "chefiapp_pilot_mock_restaurant",
             JSON.stringify({
               id: restData.id,
-              name: restaurantName?.trim() || restData.name || "Meu Restaurante",
+              name:
+                restaurantName?.trim() || restData.name || "Meu Restaurante",
               onboarding_completed_at: null,
               billing_status: "trial",
-            })
+            }),
           );
         }
         setState("ready");
@@ -392,7 +393,7 @@ export function BootstrapPage({
         console.error("[Bootstrap] Create restaurant:", err);
         setState("error");
         setErrorMessage(
-          err instanceof Error ? err.message : "Erro ao criar restaurante."
+          err instanceof Error ? err.message : "Erro ao criar restaurante.",
         );
       }
     },
@@ -403,7 +404,7 @@ export function BootstrapPage({
       restaurantCountry,
       navigate,
       successNextPath,
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -858,7 +859,7 @@ export function BootstrapPage({
                           onClick={() => {
                             setTabIsolated(
                               "chefiapp_restaurant_id",
-                              "pilot-mock-id"
+                              "pilot-mock-id",
                             );
                             setTabIsolated("chefiapp_user_role", "owner");
                             navigate("/dashboard");

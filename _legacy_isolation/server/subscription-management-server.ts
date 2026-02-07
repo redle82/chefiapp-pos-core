@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import fs from "fs";
 import http from "http";
 import path from "path";
+import { Client } from "pg";
 import Stripe from "stripe";
 import { URL } from "url";
 import { FeatureGateService } from "../billing-core/FeatureGateService";
@@ -14,6 +15,23 @@ dotenv.config({ override: true });
 
 const PORT = Number(process.env.SUBSCRIPTION_UI_PORT || 4310);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+const DATABASE_URL =
+  process.env.DATABASE_URL ||
+  `postgresql://${process.env.POSTGRES_USER || "test_user"}:${
+    process.env.POSTGRES_PASSWORD || "test_password"
+  }@${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || "5432"}/${
+    process.env.POSTGRES_DB || "chefiapp_core_test"
+  }`;
+
+let dbClient: Client | null = null;
+
+async function getDb(): Promise<Client> {
+  if (!dbClient) {
+    dbClient = new Client({ connectionString: DATABASE_URL });
+    await dbClient.connect();
+  }
+  return dbClient;
+}
 
 // Price IDs (mensal) - alinhados com setup Stripe
 const PRICE_IDS: Record<string, string> = {
@@ -43,9 +61,27 @@ const STATUS_MAP: Record<string, SubscriptionStatus> = {
 };
 
 function readMerchantRecord() {
+  // Try DB first, fall back to JSON file for backward compatibility
+  return readMerchantRecordFromDb();
+}
+
+async function readMerchantRecordFromDb() {
+  try {
+    const db = await getDb();
+    const { rows } = await db.query(
+      "SELECT merchant_id, business_name, stripe_customer_id, stripe_subscription_id FROM merchant_subscriptions LIMIT 1",
+    );
+    if (rows.length > 0) return rows[0];
+  } catch {
+    // DB not available or table not created yet — fall back to JSON
+  }
+
+  // Legacy fallback: read from JSON file
   const recordPath = path.join(process.cwd(), "merchant-001-record.json");
   if (!fs.existsSync(recordPath)) {
-    throw new Error("merchant-001-record.json não encontrado");
+    throw new Error(
+      "No merchant record found. Run migration 20260207_01_merchant_subscriptions.sql and seed a merchant, or create merchant-001-record.json",
+    );
   }
   return JSON.parse(fs.readFileSync(recordPath, "utf8"));
 }
