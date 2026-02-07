@@ -1,0 +1,20 @@
+---
+description: Contrato de identidade do AppStaff Launcher; leitura obrigatória ao editar /app/staff/home
+globs: ["**/AppStaff/AppStaffHome.tsx", "**/AppStaff/**/StaffLauncherPage*", "**/AppStaff/**/StaffAppShellLayout*", "**/AppStaff/**/launcher*"]
+alwaysApply: false
+---
+
+# AppStaff Launcher — contrato de identidade
+
+Ao editar ficheiros que afectam o ecrã `/app/staff/home` (ex.: `AppStaffHome.tsx`, `StaffLauncherPage.tsx`, `StaffAppShellLayout.tsx`, ou estilos/layout do launcher), **ler primeiro** `docs/architecture/APPSTAFF_LAUNCHER_CONTRACT.md`. **Ler também** `docs/architecture/APPSTAFF_VISUAL_CANON.md` **(Lei Final).** Código que viole o Canon deve ser rejeitado.
+
+O ecrã é um **APP LAUNCHER OPERACIONAL**, não uma página web nem dashboard.
+
+**Não violar:**
+
+- Full-screen real (sem scroll da página)
+- Top bar como barra de estado (cockpit), não banner
+- Hierarquia de modos (1 dominante + subordinados)
+- Bottom nav fixa e dominante
+
+**Validar com:** *"Isto parece app nativo de operação ou página web bonita?"* — Se parecer web → rejeitar. Frase-Lei do Canon: *"Se o AppStaff não impõe presença imediata como ferramenta ativa, está em violação de produto."*

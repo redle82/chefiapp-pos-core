@@ -17,11 +17,13 @@ Prompts longos com referências a `.md` (ex.: `@docs/architecture/CORE_X.md`) fa
 
 ## Como cumprir
 
-1. **Não misturar no mesmo prompt:** "criar contrato" + "referenciar contrato" + "implementar contrato". Usar 3 fases: DECISÃO (conceito, sem path) → CONTRATO (Create file explícito com path e conteúdo) → ENFORCEMENT (implementar o que está no doc).
+1. **Para alterações ao launcher (`/app/staff/home`):** Ler `docs/architecture/APPSTAFF_LAUNCHER_CONTRACT.md` antes e não violar (full-screen real, top bar como barra de estado, hierarquia de modos, bottom nav fixa). Validar: "Isto parece app nativo de operação ou página web bonita?" — se web, rejeitar.
 
-2. **Só referenciar ficheiros que já existem.** Antes de mencionar `FOO.md`, confirmar que existe em `docs/`, `docs/architecture/` ou `docs/contracts/`.
+2. **Não misturar no mesmo prompt:** "criar contrato" + "referenciar contrato" + "implementar contrato". Usar 3 fases: DECISÃO (conceito, sem path) → CONTRATO (Create file explícito com path e conteúdo) → ENFORCEMENT (implementar o que está no doc).
 
-3. **Criar documentos um a um.** Prompt explícito: "Create file: `docs/architecture/FOO.md`" com conteúdo completo ou esqueleto.
+3. **Só referenciar ficheiros que já existem.** Antes de mencionar `FOO.md`, confirmar que existe em `docs/`, `docs/architecture/` ou `docs/contracts/`.
+
+4. **Criar documentos um a um.** Prompt explícito: "Create file: `docs/architecture/FOO.md`" com conteúdo completo ou esqueleto.
 
 ## Auditoria
 
