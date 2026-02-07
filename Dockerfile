@@ -38,23 +38,29 @@ COPY package.json package-lock.json tsconfig.json ./
 RUN npm ci --ignore-scripts && \
     npm cache clean --force
 
-# Copy source code
+# Copy source code — active modules
 COPY core-engine ./core-engine
-COPY event-log ./event-log
-COPY state-machines ./state-machines
 COPY fiscal-modules ./fiscal-modules
-COPY legal-boundary ./legal-boundary
-COPY gate3-persistence ./gate3-persistence
-COPY gateways ./gateways
-COPY billing-core ./billing-core
-COPY projections ./projections
-COPY server ./server
-COPY sdk ./sdk
-COPY web-module ./web-module
 COPY migrations ./migrations
+COPY types ./types
 
-# Build TypeScript
-RUN npm run build
+# Copy server modules from _legacy_isolation/ (maintaining relative import paths)
+COPY _legacy_isolation/server ./_legacy_isolation/server
+COPY _legacy_isolation/event-log ./_legacy_isolation/event-log
+COPY _legacy_isolation/state-machines ./_legacy_isolation/state-machines
+COPY _legacy_isolation/legal-boundary ./_legacy_isolation/legal-boundary
+COPY _legacy_isolation/gate3-persistence ./_legacy_isolation/gate3-persistence
+COPY _legacy_isolation/gateways ./_legacy_isolation/gateways
+COPY _legacy_isolation/billing-core ./_legacy_isolation/billing-core
+COPY _legacy_isolation/projections ./_legacy_isolation/projections
+COPY _legacy_isolation/sdk ./_legacy_isolation/sdk
+COPY _legacy_isolation/web-module ./_legacy_isolation/web-module
+
+# Copy server tsconfig
+COPY tsconfig.server.json ./
+
+# Build TypeScript (types + server)
+RUN npm run build:server
 
 # ==============================================================================
 # Stage 3: Runtime (minimal production image)

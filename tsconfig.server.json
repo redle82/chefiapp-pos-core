@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./_legacy_isolation",
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": false,
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+    "baseUrl": "_legacy_isolation",
+    "types": ["node"]
+  },
+  "include": [
+    "_legacy_isolation/server/**/*.ts",
+    "_legacy_isolation/event-log/**/*.ts",
+    "_legacy_isolation/state-machines/**/*.ts",
+    "_legacy_isolation/legal-boundary/**/*.ts",
+    "_legacy_isolation/gate3-persistence/**/*.ts",
+    "_legacy_isolation/gateways/**/*.ts",
+    "_legacy_isolation/billing-core/**/*.ts",
+    "_legacy_isolation/projections/**/*.ts",
+    "_legacy_isolation/sdk/**/*.ts",
+    "_legacy_isolation/web-module/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "_legacy_isolation/server/node_modules",
+    "_legacy_isolation/**/node_modules"
+  ]
+}
