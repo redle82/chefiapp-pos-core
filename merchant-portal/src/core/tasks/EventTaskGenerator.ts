@@ -8,6 +8,7 @@
  * - Usa Docker Core (`gm_task_rules`, RPCs) via dockerCoreClient.
  */
 
+import type { PulseZone } from "../../../../core-engine/pulse";
 import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
 import { getAlertThresholds } from "../alerts/alertThresholds";
 
@@ -56,12 +57,16 @@ export class EventTaskGenerator {
   async generateFromEvent(
     restaurantId: string,
     eventType: string,
-    eventData: Record<string, any>
+    eventData: Record<string, any>,
+    pulseZone?: PulseZone,
   ): Promise<string | null> {
     try {
       const title = this.getDefaultTitle(eventType, eventData);
       const description = this.getDefaultDescription(eventType, eventData);
-      const priority = this.getDefaultPriority(eventType);
+      const basePriority = this.getDefaultPriority(eventType);
+      const priority = pulseZone
+        ? this.adjustPriorityForPulse(basePriority, eventType, pulseZone)
+        : basePriority;
       const dueAt = this.calculateDueAt(eventType);
 
       // Mapear prioridade para formato do Core
@@ -116,7 +121,7 @@ export class EventTaskGenerator {
       }
 
       console.log(
-        `[EventTaskGenerator] ✅ Tarefa criada: ${data.id} para evento ${eventType}`
+        `[EventTaskGenerator] ✅ Tarefa criada: ${data.id} para evento ${eventType}`,
       );
       return data.id;
     } catch (error) {
@@ -201,7 +206,7 @@ export class EventTaskGenerator {
    */
   async listRules(
     restaurantId: string,
-    activeOnly: boolean = true
+    activeOnly: boolean = true,
   ): Promise<TaskRule[]> {
     let query = dockerCoreClient
       .from("task_rules")
@@ -220,9 +225,45 @@ export class EventTaskGenerator {
     return (data || []).map(this.mapToTaskRule);
   }
 
+  /**
+   * Ajustar prioridade baseado na zona do Pulso Operacional
+   *
+   * FLOW_ALTO (70-100): escalar urgentes, suprimir triviais
+   * FLOW_PARCIAL (30-69): manter padrão
+   * FLOW_BASE (0-29): tudo em ritmo calmo
+   */
+  adjustPriorityForPulse(
+    base: "low" | "normal" | "high" | "critical",
+    eventType: string,
+    zone: PulseZone,
+  ): "low" | "normal" | "high" | "critical" {
+    if (zone === "FLOW_ALTO") {
+      // Urgentes escalam para critical durante pico
+      const urgentEvents = [
+        "order_delayed",
+        "table_unattended",
+        "employee_absent",
+      ];
+      if (urgentEvents.includes(eventType)) return "critical";
+      // Modo interno não faz sentido em pico — suprimir para low
+      if (eventType === "restaurant_idle") return "low";
+      // Demais sobem um nível
+      if (base === "normal") return "high";
+      return base;
+    }
+    if (zone === "FLOW_BASE") {
+      // Restaurante calmo — baixar prioridades não-críticas
+      if (base === "critical") return "critical"; // nunca baixar critical
+      if (base === "high") return "normal";
+      return "low";
+    }
+    // FLOW_PARCIAL — manter padrão
+    return base;
+  }
+
   private getDefaultTitle(
     eventType: string,
-    eventData: Record<string, any>
+    eventData: Record<string, any>,
   ): string {
     const titles: Record<string, string> = {
       order_delayed: `Pedido atrasado #${eventData.orderId || "N/A"}`,
@@ -244,7 +285,7 @@ export class EventTaskGenerator {
 
   private getDefaultDescription(
     eventType: string,
-    eventData: Record<string, any>
+    eventData: Record<string, any>,
   ): string {
     const descriptions: Record<string, string> = {
       order_delayed: `Pedido #${eventData.orderId} está atrasado. Verificar status e tomar ação.`,
@@ -272,7 +313,7 @@ export class EventTaskGenerator {
   }
 
   private getDefaultPriority(
-    eventType: string
+    eventType: string,
   ): "low" | "normal" | "high" | "critical" {
     const priorities: Record<string, "low" | "normal" | "high" | "critical"> = {
       order_delayed: "high",

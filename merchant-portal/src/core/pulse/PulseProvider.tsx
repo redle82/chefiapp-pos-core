@@ -147,6 +147,19 @@ export const PulseProvider: React.FC<PulseProviderProps> = ({
   const { snapshot, isActive, previousZone, zoneChanged, recalculate } =
     usePulse(getInput, pulseOptions);
 
+  // Emit METABOLIC_PULSE_LOGGED on every new snapshot
+  useEffect(() => {
+    if (snapshot) {
+      SystemEvents.emit("METABOLIC_PULSE_LOGGED", {
+        score: snapshot.score,
+        zone: snapshot.zone,
+        components: snapshot.components,
+        timestamp: snapshot.timestamp,
+        zoneChanged,
+      });
+    }
+  }, [snapshot, zoneChanged]);
+
   const value = useMemo<PulseContextValue>(
     () => ({
       snapshot,

@@ -60,8 +60,26 @@ export class RecurringTaskEngine {
 
   /**
    * Gerar tarefas recorrentes para hoje
+   *
+   * Quando pulseZone é FLOW_ALTO, tarefas não-urgentes
+   * (cleaning, maintenance com prioridade low/normal) são suprimidas.
    */
-  async generateForToday(restaurantId: string, date?: Date): Promise<number> {
+  async generateForToday(
+    restaurantId: string,
+    date?: Date,
+    pulseZone?: PulseZone,
+  ): Promise<number> {
+    // Em FLOW_ALTO, suprimir tarefas não-urgentes antes de gerar
+    if (pulseZone === "FLOW_ALTO") {
+      const suppressed = await this.suppressNonUrgent(restaurantId);
+      if (suppressed > 0) {
+        console.log(
+          `[RecurringTaskEngine] ⏸ Suprimidas ${suppressed} tarefas ` +
+            `não-urgentes (FLOW_ALTO)`,
+        );
+      }
+    }
+
     const { data, error } = await dockerCoreClient.rpc(
       "generate_recurring_tasks_for_today",
       {
@@ -74,6 +92,50 @@ export class RecurringTaskEngine {
 
     if (error) throw error;
     return data as number;
+  }
+
+  /**
+   * Suprimir tarefas não-urgentes durante FLOW_ALTO.
+   * Desativa temporariamente tarefas de cleaning/maintenance
+   * com prioridade low ou normal.
+   */
+  async suppressNonUrgent(restaurantId: string): Promise<number> {
+    const suppressCategories: RecurringTask["category"][] = [
+      "cleaning",
+      "maintenance",
+    ];
+    const suppressPriorities: RecurringTask["priority"][] = ["low", "normal"];
+
+    const { data, error } = await dockerCoreClient
+      .from("recurring_tasks")
+      .select("id")
+      .eq("restaurant_id", restaurantId)
+      .eq("is_active", true)
+      .in("category", suppressCategories)
+      .in("priority", suppressPriorities);
+
+    if (error || !data?.length) return 0;
+    return data.length; // count only — actual suppression is skip-based
+  }
+
+  /**
+   * Verificar se tarefa deve ser suprimida pelo Pulso
+   */
+  shouldSuppressForPulse(
+    category: RecurringTask["category"],
+    priority: RecurringTask["priority"],
+    pulseZone: PulseZone,
+  ): boolean {
+    if (pulseZone !== "FLOW_ALTO") return false;
+    const suppressCategories: RecurringTask["category"][] = [
+      "cleaning",
+      "maintenance",
+    ];
+    const suppressPriorities: RecurringTask["priority"][] = ["low", "normal"];
+    return (
+      suppressCategories.includes(category) &&
+      suppressPriorities.includes(priority)
+    );
   }
 
   /**
