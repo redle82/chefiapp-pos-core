@@ -17,6 +17,7 @@ import {
   setInstalledDevice,
   type InstalledDeviceModule,
 } from "../core/storage/installedDeviceStorage";
+import type { AdminDevice } from "../features/admin/devices/deviceTypes";
 
 const styles = {
   page: {
@@ -145,12 +146,16 @@ export function InstallPage() {
         throw new Error(modError);
       }
 
-      setInstalledDevice({
+      const installed: AdminDevice = {
         device_id: equipment.id,
         restaurant_id: restaurantId,
         module_id: moduleId,
         device_name: name,
-      });
+      } as any;
+
+      // Persist using legacy storage contract; AdminDevice fornece semântica
+      // mais rica para a camada de admin, mas aqui mantemos o formato esperado.
+      setInstalledDevice(installed as any);
 
       navigate(moduleId === "tpv" ? "/op/tpv" : "/op/kds", { replace: true });
     } catch (err) {

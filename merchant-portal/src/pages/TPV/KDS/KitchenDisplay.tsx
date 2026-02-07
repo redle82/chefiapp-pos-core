@@ -76,6 +76,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useKitchenReflex } from "../../../intelligence/nervous-system/useKitchenReflex";
 import { EmptyState } from "../../../ui/design-system/EmptyState";
 import {
@@ -411,15 +412,13 @@ const TicketCard = ({
 // ------------------------------------------------------------------
 
 const MiseEnPlaceMode = () => {
-  // In strict mode, we might not have tasks context available if not inside StaffProvider?
-  // But KDS is routed inside OrderProvider, StaffProvider might be separate.
-  // Let's degrade gracefully if useStaff fails or returns empty.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isAppStaff = location.pathname.startsWith("/app/staff");
 
-  // Actually, KDS route in App.tsx is NOT inside StaffProvider wrapper explicitly (it's inside OrderProvider).
-  // And StaffContext errors if not inside provider.
-  // SO: KDS cannot safely use useStaff unless we wrap it.
-  // DECISION: Remove Staff specific tasks from KDS Idle screen to avoid crash.
-  // Keep it simple: Just "Bancada Limpa".
+  const action = isAppStaff
+    ? { label: "Voltar ao início", onClick: () => navigate("/app/staff/home") }
+    : { label: "Atualizar", onClick: () => window.location.reload() };
 
   return (
     <motion.div
@@ -438,10 +437,7 @@ const MiseEnPlaceMode = () => {
         icon={<div style={{ fontSize: 64 }}>🔪</div>}
         title="Bancada Limpa"
         description="Sem pedidos ativos. Mantenha o foco."
-        action={{
-          label: "Atualizar",
-          onClick: () => window.location.reload(),
-        }}
+        action={action}
       />
     </motion.div>
   );

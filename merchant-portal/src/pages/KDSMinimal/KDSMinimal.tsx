@@ -26,6 +26,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
+import { DevicePairingView } from "../../features/auth/connectByCode/DevicePairingView";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 // FASE 3.5: Migrado para OrderReader (usa dockerCoreClient)
 import { CONFIG } from "../../config";
@@ -383,50 +384,20 @@ export function KDSMinimal() {
     return <Navigate to={readiness.redirectTo} replace />;
   }
 
+  // Vincular dispositivo (PIN) ou instalar no portal — CODE_AND_DEVICE_PAIRING_CONTRACT
   if (hasNoIdentity && !CONFIG.DEBUG_DIRECT_FLOW) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 24,
-          backgroundColor: VPC.bg,
-          color: VPC.text,
-          fontFamily: "Inter, system-ui, sans-serif",
-          textAlign: "center",
-        }}
-      >
-        <h1 style={{ fontSize: 22, marginBottom: 12 }}>KDS não instalado</h1>
-        <p
-          style={{
-            fontSize: 15,
-            color: VPC.textMuted,
-            marginBottom: 24,
-            maxWidth: 360,
-          }}
-        >
-          Este dispositivo ainda não está ligado a um restaurante. Instale o KDS
-          no portal para ver pedidos da cozinha.
-        </p>
-        <Link
-          to="/app/install"
-          style={{
-            display: "inline-block",
-            padding: "14px 24px",
-            fontSize: 16,
-            fontWeight: 600,
-            borderRadius: 8,
-            backgroundColor: VPC.accent,
-            color: "#000",
-            textDecoration: "none",
-          }}
-        >
-          Instalar KDS
-        </Link>
-      </div>
+      <>
+        <DevicePairingView deviceType="kds" />
+        <div style={{ position: "absolute", bottom: 24, left: 0, right: 0, textAlign: "center" }}>
+          <Link
+            to="/admin/devices"
+            style={{ fontSize: 14, color: VPC.textMuted, textDecoration: "underline" }}
+          >
+            Ou instalar KDS no portal
+          </Link>
+        </div>
+      </>
     );
   }
 

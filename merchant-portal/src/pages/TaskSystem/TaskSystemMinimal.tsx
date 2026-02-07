@@ -38,7 +38,7 @@ export function TaskSystemMinimal() {
   const DEFAULT_RESTAURANT_ID = "bbce08c7-63c0-473d-b693-ec2997f73a68"; // Restaurante Alpha
 
   useEffect(() => {
-    // Obter restaurantId (mesmo padrão do KDSMinimal e AppStaffMinimal)
+    // Obter restaurantId (mesmo padrão do KDSMinimal)
     const id =
       identity.id ||
       getTabIsolated("chefiapp_restaurant_id") ||

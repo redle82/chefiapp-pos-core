@@ -68,7 +68,7 @@ const RESTAURANT_TYPES = [
 ] as const;
 
 export function BootstrapPage({
-  successNextPath = "/onboarding/first-product",
+  successNextPath = "/dashboard",
 }: {
   successNextPath?: string;
 } = {}) {
@@ -95,7 +95,7 @@ export function BootstrapPage({
     if (!getTabIsolated("chefiapp_restaurant_id")) {
       setTabIsolated("chefiapp_restaurant_id", "demo-restaurant-id");
     }
-    navigate("/onboarding/first-product");
+    navigate("/dashboard");
   };
 
   const runBootstrap = useCallback(async () => {
@@ -148,9 +148,9 @@ export function BootstrapPage({
         setTimeout(() => navigate("/login"), 300);
         return;
       }
-      // If Demo -> Allow pass
+      // If Demo -> Allow pass → Dashboard config-first
       setState("ready");
-      setTimeout(() => navigate("/onboarding/first-product"), 500);
+      setTimeout(() => navigate("/dashboard"), 500);
       return;
     }
 
@@ -861,7 +861,7 @@ export function BootstrapPage({
                               "pilot-mock-id"
                             );
                             setTabIsolated("chefiapp_user_role", "owner");
-                            navigate("/onboarding/first-product");
+                            navigate("/dashboard");
                           }}
                           style={{
                             padding: "14px 24px",

@@ -14,6 +14,7 @@
 
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
+import { DevicePairingView } from "../../features/auth/connectByCode/DevicePairingView";
 import { CONFIG } from "../../config";
 import { useGlobalUIState } from "../../context/GlobalUIStateContext";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
@@ -278,50 +279,20 @@ export function TPVMinimal({
   }, []);
 
   // --- EARLY RETURNS (Render Logic) ---
+  // Vincular dispositivo (PIN) ou instalar no portal — CODE_AND_DEVICE_PAIRING_CONTRACT
   if (!restaurantId && !CONFIG.DEBUG_DIRECT_FLOW && !isPreview) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 24,
-          backgroundColor: "#0a0a0a",
-          color: "#fafafa",
-          fontFamily: "Inter, system-ui, sans-serif",
-          textAlign: "center",
-        }}
-      >
-        <h1 style={{ fontSize: 22, marginBottom: 12 }}>TPV não instalado</h1>
-        <p
-          style={{
-            fontSize: 15,
-            color: "#a3a3a3",
-            marginBottom: 24,
-            maxWidth: 360,
-          }}
-        >
-          Este dispositivo ainda não está ligado a um restaurante. Instale o TPV
-          no portal para carregar produtos e criar pedidos.
-        </p>
-        <Link
-          to="/app/install"
-          style={{
-            display: "inline-block",
-            padding: "14px 24px",
-            fontSize: 16,
-            fontWeight: 600,
-            borderRadius: 8,
-            backgroundColor: "#22c55e",
-            color: "#000",
-            textDecoration: "none",
-          }}
-        >
-          Instalar TPV
-        </Link>
-      </div>
+      <>
+        <DevicePairingView deviceType="tpv" />
+        <div style={{ position: "absolute", bottom: 24, left: 0, right: 0, textAlign: "center" }}>
+          <Link
+            to="/admin/devices"
+            style={{ fontSize: 14, color: "#a3a3a3", textDecoration: "underline" }}
+          >
+            Ou instalar TPV no portal
+          </Link>
+        </div>
+      </>
     );
   }
 
