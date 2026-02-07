@@ -1,100 +1,89 @@
 import { describe, expect, it } from "vitest";
-import { UserState, resolveNextRoute } from "./CoreFlow";
+import { resolveNextRoute, type UserState } from "./CoreFlow";
 
-describe("CoreFlow Logic", () => {
-  // Default valid state helper
+describe("CoreFlow Logic — telefone → setup mínimo → dashboard", () => {
   const baseState: UserState = {
     isAuthenticated: true,
-    hasOrganization: true,
-    onboardingStatus: "completed",
-    currentPath: "/app/dashboard",
+    hasOrganization: false,
+    currentPath: "/",
+    systemState: "SETUP",
   };
 
-  describe("1. Authentication Barrier", () => {
-    it("should allow public access to /public/*", () => {
-      const decision = resolveNextRoute({
+  it("permite acesso público a / e /public/* sem sessão", () => {
+    expect(
+      resolveNextRoute({
         ...baseState,
         isAuthenticated: false,
         currentPath: "/public/menu/123",
-      });
-      expect(decision).toEqual({ type: "ALLOW" });
-    });
+      })
+    ).toEqual({ type: "ALLOW" });
 
-    it("should allow public access to /", () => {
-      const decision = resolveNextRoute({
+    expect(
+      resolveNextRoute({
         ...baseState,
         isAuthenticated: false,
         currentPath: "/",
-      });
-      expect(decision).toEqual({ type: "ALLOW" });
-    });
+      })
+    ).toEqual({ type: "ALLOW" });
+  });
 
-    it("should redirect unauthenticated user to /auth", () => {
-      const decision = resolveNextRoute({
-        ...baseState,
-        isAuthenticated: false,
-        currentPath: "/app/dashboard",
-      });
-      expect(decision).toEqual({
-        type: "REDIRECT",
-        to: "/auth",
-        reason: "Auth required",
-      });
+  it("redireciona não autenticado para /auth/phone", () => {
+    const decision = resolveNextRoute({
+      ...baseState,
+      isAuthenticated: false,
+      currentPath: "/dashboard",
+    });
+    expect(decision).toEqual({
+      type: "REDIRECT",
+      to: "/auth/phone",
+      reason: "Auth required",
     });
   });
 
-  describe("2. Organization Barrier (Bootstrap gate)", () => {
-    it("should redirect to /bootstrap when organization is missing (contract: auth → bootstrap)", () => {
-      const decision = resolveNextRoute({
-        ...baseState,
-        hasOrganization: false,
-        currentPath: "/app/dashboard",
-      });
-      expect(decision).toEqual({
-        type: "REDIRECT",
-        to: "/bootstrap",
-        reason: "No org → bootstrap (contract: auth → bootstrap obrigatório)",
-      });
+  it("utilizador autenticado sem restaurante vai sempre para /setup/restaurant-minimal", () => {
+    const decision = resolveNextRoute({
+      ...baseState,
+      isAuthenticated: true,
+      hasOrganization: false,
+      hasRestaurant: false,
+      currentPath: "/dashboard",
     });
-
-    it("should allow /bootstrap and /onboarding/first-product when organization is missing", () => {
-      expect(
-        resolveNextRoute({
-          ...baseState,
-          hasOrganization: false,
-          currentPath: "/bootstrap",
-        })
-      ).toEqual({ type: "ALLOW" });
-      expect(
-        resolveNextRoute({
-          ...baseState,
-          hasOrganization: false,
-          currentPath: "/onboarding/first-product",
-        })
-      ).toEqual({ type: "ALLOW" });
+    expect(decision).toEqual({
+      type: "REDIRECT",
+      to: "/setup/restaurant-minimal",
+      reason:
+        "No org → setup mínimo (telefone/identidade) antes do Dashboard",
     });
   });
 
-  describe("3. Authenticated with organization (Sovereign Entry)", () => {
-    it("should allow /app/dashboard when hasOrganization", () => {
-      const decision = resolveNextRoute({
-        ...baseState,
-        onboardingStatus: "completed",
-        currentPath: "/app/dashboard",
-      });
-      expect(decision).toEqual({ type: "ALLOW" });
+  it("utilizador autenticado com restaurante cai no /dashboard ao entrar por /auth/phone", () => {
+    const decision = resolveNextRoute({
+      ...baseState,
+      isAuthenticated: true,
+      hasOrganization: true,
+      hasRestaurant: true,
+      currentPath: "/auth/phone",
     });
+    expect(decision).toEqual({
+      type: "REDIRECT",
+      to: "/dashboard",
+      reason: "Sovereign Entry to Dashboard",
+    });
+  });
 
-    it("should redirect /auth to dashboard when hasOrganization", () => {
-      const decision = resolveNextRoute({
-        ...baseState,
-        currentPath: "/auth",
-      });
-      expect(decision).toEqual({
-        type: "REDIRECT",
-        to: "/app/dashboard",
-        reason: "Sovereign Entry to Dashboard",
-      });
+  it("bloqueia TPV/KDS em SETUP redirecionando para /dashboard", () => {
+    const decision = resolveNextRoute({
+      ...baseState,
+      isAuthenticated: true,
+      hasOrganization: true,
+      hasRestaurant: true,
+      systemState: "SETUP",
+      currentPath: "/op/tpv",
+    });
+    expect(decision).toEqual({
+      type: "REDIRECT",
+      to: "/dashboard",
+      reason: "Complete o setup no Dashboard para aceder ao TPV/KDS",
     });
   });
 });

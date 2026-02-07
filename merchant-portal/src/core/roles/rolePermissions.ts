@@ -18,6 +18,7 @@ const ROUTE_ALLOWED_ROLES: Record<string, UserRole[]> = {
   "/config/modules": ["owner"],
   "/config/status": ["owner"],
   "/config/payments": ["owner"],
+  "/config/suscripcion": ["owner"],
   "/config/perception": ["owner", "manager"],
   "/config": ["owner", "manager"],
   // Dashboard: owner/manager (gerente acompanha; staff só execução em /op, /tasks, etc.)
@@ -42,6 +43,14 @@ const ROUTE_ALLOWED_ROLES: Record<string, UserRole[]> = {
   "/groups": ["owner"],
   "/purchases": ["owner", "manager"],
   "/reservations": ["owner", "manager"],
+  // Catálogo (admin)
+  "/admin/catalogs": ["owner", "manager"],
+  "/admin/catalog-assignments": ["owner", "manager"],
+  "/admin/products": ["owner", "manager"],
+  "/admin/modules": ["owner", "manager"],
+  "/admin/modifiers": ["owner", "manager"],
+  "/admin/combos": ["owner", "manager"],
+  "/admin/translations": ["owner", "manager"],
   // App tree: backoffice owner/manager; staff só execução (garcom, tpv, etc.)
   "/app/backoffice": ["owner", "manager"],
   "/app": ["owner", "manager", "staff"],

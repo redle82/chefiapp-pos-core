@@ -17,7 +17,6 @@ import {
 import type { BlockingReason } from "./types";
 
 const DASHBOARD = "/app/dashboard";
-const ONBOARDING_FIRST_PRODUCT = "/onboarding/first-product";
 const CONFIG_MODULES = "/config/modules";
 
 interface BlockingScreenProps {
@@ -39,9 +38,16 @@ const COPY: Record<
   BOOTSTRAP_INCOMPLETE: {
     title: "Configuração incompleta",
     description:
-      "Complete o setup do restaurante (primeiro produto ou continue sem adicionar agora) para aceder ao TPV e KDS. Sequência Canônica v1.0 — passo 4 é opcional.",
-    actionLabel: "Continuar",
-    defaultTo: ONBOARDING_FIRST_PRODUCT,
+      "Faltam passos essenciais de configuração. Revê o Dashboard para completar identidade, local, cardápio e publicação antes de operar.",
+    actionLabel: "Ir para o Dashboard",
+    defaultTo: DASHBOARD,
+  },
+  MANDATORY_RITUAL_INCOMPLETE: {
+    title: "Abertura de turno pendente",
+    description:
+      "Conclua as tarefas de abertura no AppStaff (Gerente): validar prontidão e abrir turno no terminal operacional. Só depois pode vender.",
+    actionLabel: "Ver instruções no painel",
+    defaultTo: DASHBOARD,
   },
   NO_OPEN_CASH_REGISTER: {
     title: "O turno ainda não está aberto",

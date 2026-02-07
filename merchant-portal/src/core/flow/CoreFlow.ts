@@ -24,22 +24,16 @@
  * Ver: ARCHITECTURE_FLOW_LOCKED.md
  */
 
-export type OnboardingStatus =
-  | "not_started"
-  | "identity"
-  | "authority"
-  | "topology"
-  | "flow"
-  | "cash"
-  | "team"
-  | "completed";
-
 export type UserState = {
   isAuthenticated: boolean;
   hasOrganization: boolean;
-  onboardingStatus: OnboardingStatus;
+  /**
+   * Identidade primária: ter restaurante criado.
+   * Alias de hasOrganization para manter compatibilidade interna.
+   */
+  hasRestaurant?: boolean;
   currentPath: string;
-  /** FASE E: estado do sistema; quando SETUP, rotas TPV/KDS redirecionam para /onboarding/first-product. */
+  /** FASE E: estado do sistema; quando SETUP, rotas TPV/KDS redirecionam para o Dashboard/config-first. */
   systemState?: "SETUP" | "TRIAL" | "ACTIVE" | "SUSPENDED";
 };
 
@@ -70,7 +64,6 @@ export function isWebConfigPath(path: string): boolean {
     path.startsWith("/config") ||
     path === "/menu-builder" ||
     path === "/app/install" ||
-    path === "/onboarding/first-product" ||
     path.startsWith("/app/billing") ||
     path === "/billing/success"
   );
@@ -80,10 +73,12 @@ export function resolveNextRoute(state: UserState): FlowDecision {
   const {
     isAuthenticated,
     hasOrganization,
-    onboardingStatus,
+    hasRestaurant,
     currentPath,
     systemState,
   } = state;
+
+  const hasOrg = hasRestaurant ?? hasOrganization;
 
   // --- 1. BARREIRA DE AUTENTICAÇÃO ---
   if (!isAuthenticated) {
@@ -91,17 +86,19 @@ export function resolveNextRoute(state: UserState): FlowDecision {
     // Public Void Protocol: Allow access to /public/* (The Menu)
     if (currentPath.startsWith("/public")) return { type: "ALLOW" };
 
-    // Landing, Auth e demo guiado são públicas
+    // Landing, Auth (telefone) e demo guiado são públicas
     if (
       currentPath === "/" ||
       currentPath === "/auth" ||
+      currentPath === "/auth/phone" ||
+      currentPath === "/auth/verify" ||
       currentPath === "/demo-guiado" ||
       currentPath === "/demo"
     )
       return { type: "ALLOW" };
 
     // Qualquer outra rota requer autenticação
-    return { type: "REDIRECT", to: "/auth", reason: "Auth required" };
+    return { type: "REDIRECT", to: "/auth/phone", reason: "Auth required" };
   }
 
   // Se autenticado e está em /auth ou /, redireciona para o fluxo correto
@@ -110,11 +107,11 @@ export function resolveNextRoute(state: UserState): FlowDecision {
   }
 
   // --- 2. BOOTSTRAP GATE (CONTRATO VIDA RESTAURANTE) ---
-  // Sem organização: só bootstrap e onboarding. Nunca /, nunca dashboard.
-  if (!hasOrganization) {
+  // Sem restaurante: apenas setup mínimo. Nunca /dashboard direto.
+  if (!hasOrg) {
     if (
       currentPath === "/bootstrap" ||
-      currentPath === "/onboarding/first-product"
+      currentPath === "/setup/restaurant-minimal"
     )
       return { type: "ALLOW" };
     if (
@@ -124,8 +121,9 @@ export function resolveNextRoute(state: UserState): FlowDecision {
       return { type: "ALLOW" };
     return {
       type: "REDIRECT",
-      to: "/onboarding/intro",
-      reason: "No org → onboarding intro (contract: auth → onboarding 5min)",
+      to: "/setup/restaurant-minimal",
+      reason:
+        "No org → setup mínimo (telefone/identidade) antes do Dashboard",
     };
   }
 
@@ -133,8 +131,8 @@ export function resolveNextRoute(state: UserState): FlowDecision {
   if (systemState === "SETUP" && isOperationalPath(currentPath)) {
     return {
       type: "REDIRECT",
-      to: "/onboarding/first-product",
-      reason: "Complete o setup para aceder ao TPV/KDS",
+      to: "/dashboard",
+      reason: "Complete o setup no Dashboard para aceder ao TPV/KDS",
     };
   }
   // Web de configuração (dashboard, config, billing, etc.): ALLOW; sem gate por systemState.
@@ -161,12 +159,14 @@ export function resolveNextRoute(state: UserState): FlowDecision {
   // 🎯 REDIRECIONAMENTO DE ENTRADA
   if (
     currentPath === "/auth" ||
+    currentPath === "/auth/phone" ||
+    currentPath === "/auth/verify" ||
     currentPath === "/" ||
     currentPath === "/app"
   ) {
     return {
       type: "REDIRECT",
-      to: "/app/dashboard",
+      to: hasOrg ? "/dashboard" : "/setup/restaurant-minimal",
       reason: "Sovereign Entry to Dashboard",
     };
   }

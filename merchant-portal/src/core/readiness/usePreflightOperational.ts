@@ -11,6 +11,8 @@ import { useCoreHealth } from "../health/useCoreHealth";
 import { useShift } from "../shift/ShiftContext";
 import type { PreflightOperationalResult } from "./preflightOperational";
 import { computePreflight } from "./preflightOperational";
+import { runtimeToRestaurant } from "../restaurant/runtimeToRestaurant";
+import { deriveRestaurantReadiness } from "../restaurant/deriveRestaurantReadiness";
 
 export interface UsePreflightOptions {
   /** Desativar polling do health (ex.: quando já há outro consumer). */
@@ -33,8 +35,19 @@ export function usePreflightOperational(
   const shift = useShift();
 
   return useMemo((): PreflightOperationalResult => {
-    const hasPublishedMenu = runtime?.isPublished ?? false;
-    const hasIdentity = runtime?.setup_status?.identity === true;
+    // Adapter config-first: Runtime → Restaurant → Readiness.
+    const restaurant = runtimeToRestaurant({
+      runtime,
+      // TODO: mapear owner real quando o Core o expuser diretamente.
+      ownerUserId: "runtime-owner-unavailable",
+      ownerPhone: "runtime-owner-phone-unavailable",
+    });
+    const restaurantReadiness = deriveRestaurantReadiness(restaurant);
+
+    const hasPublishedMenu = restaurantReadiness.configStatus === "READY";
+    const hasIdentity = !restaurantReadiness.blockingReasons.includes(
+      "Identidade"
+    );
     const isCashOpen = shift?.isShiftOpen ?? false;
 
     return computePreflight({

@@ -2,16 +2,15 @@
  * Restaurant Lifecycle State (jornada do utilizador)
  *
  * Fonte única de verdade para "em que ponto da vida do restaurante estamos".
- * Alinhado à Sequência Canônica v1.0 e ao Onboarding 5min (9 telas): docs/contracts/ONBOARDING_5MIN_9_TELAS_CONTRACT.md
- * VISITOR → passos 1–2 (Landing, Auth); BOOTSTRAP_* → onboarding 9 telas ou bootstrap/first-product (legado); READY_TO_OPERATE → passos 6–8.
+ * Modelo atual: sem onboarding wizard; apenas um setup mínimo em
+ * `/setup/restaurant-minimal` (alias técnico de bootstrap) antes do
+ * Dashboard/config-first.
  *
  * Ref: docs/contracts/CONTRATO_VIDA_RESTAURANTE.md (v2)
  *
  * Não confundir com Lifecycle.ts (configured/published/operational).
- * v2: Eliminados DEMO_GUIDED e DEMO_FINISHED; fluxo único Landing → Auth → Bootstrap → Operação.
+ * Fluxo: Landing/Auth → Bootstrap (se ainda não houver organização) → Dashboard/Operação.
  */
-
-import { ONBOARDING_5MIN_ALL_ROUTES } from "../flow/onboarding5minState";
 
 export type RestaurantLifecycleState =
   | "VISITOR"
@@ -25,12 +24,11 @@ export interface LifecycleStateInput {
   hasOrganization: boolean;
 }
 
-/** Rotas de onboarding 5min (9 telas) + legado bootstrap/first-product. */
+/** Rotas permitidas durante a fase de bootstrap (sem organização criada). */
 const BOOTSTRAP_ALLOWED_ROUTES = [
   "/bootstrap",
   "/auth",
-  "/onboarding/first-product",
-  ...ONBOARDING_5MIN_ALL_ROUTES,
+  "/setup/restaurant-minimal",
 ];
 
 /** Rotas permitidas por estado (matriz do contrato v2 + onboarding 9 telas). */
@@ -50,11 +48,11 @@ const ROUTES_BY_STATE: Record<RestaurantLifecycleState, string[]> = {
   READY_TO_OPERATE: [], // todas permitidas (tratado em isPathAllowedForState)
 };
 
-/** Destino canónico para redirecionamento quando a rota não é permitida. Onboarding 5min: início em intro. */
+/** Destino canónico para redirecionamento quando a rota não é permitida. */
 const CANONICAL_DESTINATION: Record<RestaurantLifecycleState, string> = {
   VISITOR: "/",
-  BOOTSTRAP_REQUIRED: "/onboarding/intro",
-  BOOTSTRAP_IN_PROGRESS: "/onboarding/intro",
+  BOOTSTRAP_REQUIRED: "/setup/restaurant-minimal",
+  BOOTSTRAP_IN_PROGRESS: "/setup/restaurant-minimal",
   READY_TO_OPERATE: "/dashboard",
 };
 
@@ -63,6 +61,10 @@ const CANONICAL_DESTINATION: Record<RestaurantLifecycleState, string> = {
  * Função pura e determinística.
  *
  * Prioridade (contrato v2): hasOrganization → READY; isAuthenticated → BOOTSTRAP_*; senão → VISITOR.
+ *
+ * Nota: onboarding 5min e rotas `/onboarding/*` foram removidos. O estado de
+ * bootstrap usa apenas `/setup/restaurant-minimal` (e `/bootstrap` como alias
+ * técnico legado).
  */
 export function deriveLifecycleState(
   params: LifecycleStateInput
@@ -76,8 +78,7 @@ export function deriveLifecycleState(
   if (isAuthenticated) {
     if (
       pathname === "/bootstrap" ||
-      pathname === "/onboarding/first-product" ||
-      ONBOARDING_5MIN_ALL_ROUTES.includes(pathname)
+      pathname === "/setup/restaurant-minimal"
     ) {
       return "BOOTSTRAP_IN_PROGRESS";
     }

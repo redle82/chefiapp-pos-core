@@ -20,7 +20,6 @@ import {
 } from "../readiness/operationalRestaurant";
 import { isDemo } from "../runtime/RuntimeContext";
 import { isDebugEnabled, isDevStableMode } from "../runtime/devStableMode";
-import { consumeOnboardingJustCompletedFlag } from "../storage/onboardingFlowFlag";
 import { getTabIsolated, setTabIsolated } from "../storage/TabIsolatedStorage";
 import {
   clearActiveTenant,
@@ -28,8 +27,7 @@ import {
   isTenantSealed,
   setActiveTenant,
 } from "../tenant/TenantResolver";
-import { ONBOARDING_5MIN_ALL_ROUTES } from "./onboarding5minState";
-import type { OnboardingStatus, UserState } from "./CoreFlow";
+import type { UserState } from "./CoreFlow";
 import { resolveNextRoute } from "./CoreFlow";
 
 /**
@@ -107,13 +105,15 @@ export function FlowGate({ children }: { children: ReactNode }) {
         return d;
       };
 
-      // P0: Rotas operacionais / app que não exigem revalidação para landing (dashboard, config, menu-builder, /app/install).
+      // P0: Rotas operacionais / app que não exigem revalidação para landing (dashboard, config, menu-builder, /app/install, /app/staff).
       // Em DEMO/PILOT com restaurant_id válido → nunca bloquear. Sem exceções.
+      // /app/staff: STAFF_SESSION_LOCATION_CONTRACT — Staff usa Location (localStorage); não exige Core ativo.
       const isOperationalAppPath =
         pathname === "/dashboard" ||
         pathname.startsWith("/config") ||
         pathname === "/menu-builder" ||
-        pathname === "/app/install";
+        pathname === "/app/install" ||
+        pathname === "/app/staff";
       const isPilot =
         typeof window !== "undefined" &&
         window.localStorage.getItem("chefiapp_pilot_mode") === "true";
@@ -166,13 +166,9 @@ export function FlowGate({ children }: { children: ReactNode }) {
         }
       }
 
-      // Bootstrap / Onboarding 5min: temos tenant em storage — não recomeçar
-      const isOnboardingPath =
-        pathname === "/bootstrap" ||
-        pathname === "/onboarding/first-product" ||
-        ONBOARDING_5MIN_ALL_ROUTES.includes(pathname);
+      // Bootstrap: temos tenant em storage — não recomeçar se já houver organização.
       if (
-        isOnboardingPath &&
+        pathname === "/bootstrap" &&
         (sealed ||
           (() => {
             const id =
@@ -243,7 +239,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
         let hasOrg = false;
         let restaurantId: string | null = null;
         let currentBillingStatus: string | null = null;
-        let status: OnboardingStatus = "not_started";
+        let isBootstrapComplete = false;
 
         if (isDocker) {
           const SEED_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
@@ -368,9 +364,9 @@ export function FlowGate({ children }: { children: ReactNode }) {
             const restaurant = await getRestaurantStatus(restaurantId);
             if (restaurant) {
               currentBillingStatus = restaurant.billing_status;
-              status = restaurant.onboarding_completed_at
-                ? "completed"
-                : "not_started";
+              // Consideramos bootstrap completo quando o restaurante está ativo
+              // ou publicado no Core (sem depender de onboarding_completed_at).
+              isBootstrapComplete = restaurant.status === "active";
             } else {
               // 404 ou restaurante inexistente: limpar id inválido para evitar loop e 404 repetidos
               if (isDocker && typeof window !== "undefined") {
@@ -402,11 +398,6 @@ export function FlowGate({ children }: { children: ReactNode }) {
           }
         }
 
-        // Sequência Canônica v1.0: após skip no primeiro produto, flag permite TPV sem refetch
-        if (consumeOnboardingJustCompletedFlag()) {
-          status = "completed";
-        }
-
         const lifecycleState = deriveLifecycleState({
           pathname,
           isAuthenticated: !!session,
@@ -429,12 +420,12 @@ export function FlowGate({ children }: { children: ReactNode }) {
         const systemState = deriveSystemState({
           hasOrganization: hasOrg,
           billingStatus: currentBillingStatus,
-          isBootstrapComplete: status === "completed",
+          isBootstrapComplete,
         });
         const state: UserState = {
           isAuthenticated: !!session,
           hasOrganization: hasOrg,
-          onboardingStatus: status,
+          hasRestaurant: hasOrg,
           currentPath: pathname,
           systemState,
         };

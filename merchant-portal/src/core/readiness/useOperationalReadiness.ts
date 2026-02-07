@@ -13,8 +13,10 @@ import { useContext, useMemo } from "react";
 import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
-import { useMenuState } from "../menu/MenuState";
 import { ShiftContext } from "../shift/ShiftContext";
+import { runtimeToRestaurant } from "../restaurant/runtimeToRestaurant";
+import { deriveRestaurantReadiness } from "../restaurant/deriveRestaurantReadiness";
+import { isBeforeOpenRitualComplete } from "../ritual/ritualBeforeOpenStorage";
 import {
   getKdsRestaurantId,
   getTpvRestaurantId,
@@ -27,7 +29,6 @@ import type {
   UiDirective,
 } from "./types";
 
-const ONBOARDING_FIRST_PRODUCT = "/onboarding/first-product";
 const DASHBOARD = "/app/dashboard";
 const CONFIG_MODULES = "/config/modules";
 
@@ -60,11 +61,14 @@ function uiDirectiveFor(surface: Surface, reason: BlockingReason): UiDirective {
   return "SHOW_BLOCKING_SCREEN";
 }
 
+const APPSTAFF_GERENTE = "/garcom";
+
 function redirectFor(
   surface: Surface,
   reason: BlockingReason
 ): string | undefined {
-  if (reason === "BOOTSTRAP_INCOMPLETE") return ONBOARDING_FIRST_PRODUCT;
+  if (reason === "BOOTSTRAP_INCOMPLETE") return DASHBOARD;
+  if (reason === "MANDATORY_RITUAL_INCOMPLETE") return APPSTAFF_GERENTE;
   if (reason === "MODULE_NOT_ENABLED") return CONFIG_MODULES;
   if (
     reason === "RESTAURANT_NOT_FOUND" &&
@@ -81,7 +85,6 @@ export function useOperationalReadiness(
   const { runtime } = useRestaurantRuntime();
   const shift = useContext(ShiftContext);
   const bootstrap = useBootstrapState();
-  const menuState = useMenuState();
 
   return useMemo((): UseOperationalReadinessResult => {
     // Vertical slice brutal: ignora Turno, ORE, MenuState. TPV/KDS/Dashboard leem/escrevem direto no Core.
@@ -119,6 +122,14 @@ export function useOperationalReadiness(
 
     const modules = getModulesEnabled(effectiveRestaurantId ?? null);
 
+    // Derivação canónica de readiness de configuração + operação.
+    const restaurant = runtimeToRestaurant({
+      runtime,
+      ownerUserId: "runtime-owner-unavailable",
+      ownerPhone: "runtime-owner-phone-unavailable",
+    });
+    const restaurantReadiness = deriveRestaurantReadiness(restaurant);
+
     // Ordem de avaliação (primeiro bloqueio ganha)
     let reason: BlockingReason | undefined;
 
@@ -136,9 +147,17 @@ export function useOperationalReadiness(
     } else if (
       !hasInstalledDevice &&
       (surface === "TPV" || surface === "KDS") &&
-      menuState !== "LIVE"
+      restaurantReadiness.configStatus === "INCOMPLETE"
     ) {
-      reason = "NOT_PUBLISHED";
+      // Configuração incompleta segundo o schema canónico (identity/local/menu/publication).
+      reason = "BOOTSTRAP_INCOMPLETE";
+    } else if (
+      (surface === "TPV" || surface === "KDS" || surface === "DASHBOARD") &&
+      bootstrap.operationMode === "operacao-real" &&
+      effectiveRestaurantId &&
+      !isBeforeOpenRitualComplete(effectiveRestaurantId, shift?.isShiftOpen)
+    ) {
+      reason = "MANDATORY_RITUAL_INCOMPLETE";
     } else if (
       (surface === "TPV" || surface === "KDS") &&
       bootstrap.operationMode === "operacao-real" &&
@@ -199,7 +218,6 @@ export function useOperationalReadiness(
     runtime.coreMode,
     runtime.systemState,
     runtime.restaurant_id,
-    menuState,
     bootstrap.operationMode,
     shift?.isShiftOpen,
     shift?.isChecking,

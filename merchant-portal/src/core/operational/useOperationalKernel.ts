@@ -2,7 +2,7 @@
  * useOperationalKernel — Estado operacional único (OPERATIONAL_KERNEL_CONTRACT)
  *
  * Agrega CoreHealth, Preflight, Shift e Terminais num único estado para a UI.
- * Consumidores: DashboardPortal (primeira dobra), outros ecrãs que precisem do estado operacional.
+ * Consumidores: OwnerDashboardWithMapLayout (/admin/reports/overview), outros ecrãs que precisem do estado operacional.
  */
 
 import { useMemo } from "react";
