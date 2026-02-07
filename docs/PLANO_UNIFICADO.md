@@ -52,14 +52,14 @@ Score 0-100 que detecta automaticamente o ritmo do restaurante:
 | `FLOW_PARCIAL` | 30-69  | Normal — equilíbrio        |
 | `FLOW_BASE`    | 0-29   | Calmo — tarefas de preparo |
 
-### B.0 Core Engine (2-3h)
+### B.0 Core Engine (2-3h) ✅ `5f904d6c`
 
 Criar `core-engine/pulse/`:
 
-- `PulseState.ts` — Tipos: `PulseScore`, `PulseZone`, `PulseSnapshot`
-- `PulseConfig.ts` — Thresholds configuráveis por restaurante
-- `OperationalPulse.ts` — Cálculo puro: `(activeOrders, ordersLast30m, capacity, hourOfDay) → PulseSnapshot`
-- `__tests__/OperationalPulse.test.ts` — 8+ cenários
+- ✅ `PulseState.ts` — Tipos: `PulseScore`, `PulseZone`, `PulseSnapshot`
+- ✅ `PulseConfig.ts` — Thresholds configuráveis por restaurante
+- ✅ `OperationalPulse.ts` — Cálculo puro: `(activeOrders, ordersLast30m, capacity, hourOfDay) → PulseSnapshot`
+- ✅ `tests/unit/pulse/OperationalPulse.test.ts` — 20 cenários (5 describes)
 
 **Fórmula:**
 
@@ -70,19 +70,21 @@ timeBias = hourCurve[hour] × 20
 pulse = clamp(orderPressure + flowRate + timeBias, 0, 100)
 ```
 
-### B.1 React Hook + Provider (4-6h)
+### B.1 React Hook + Provider (4-6h) ✅ `9bc2e05`
 
 Criar `merchant-portal/src/core/pulse/`:
 
-- `usePulse.ts` — Hook que calcula score a cada 30s
-- `PulseProvider.tsx` — Context provider com estado reativo
-- `PulseIndicator.tsx` — Badge no header (🔴🟡🟢) com animação
+- ✅ `usePulse.ts` — Hook puro com interval refresh, zone tracking
+- ✅ `PulseProvider.tsx` — Context provider com dados do OrderReader
+- ✅ `PulseIndicator.tsx` — Badge (🔴🟡🟢) com animação CSS
+- ✅ `index.ts` — Barrel exports
 
-### B.2 Integração Tarefas (1 dia)
+### B.2 Integração Tarefas (1 dia) — ✅ `11258f3`
 
-- `EventTaskGenerator`: prioridade dinâmica baseada em pulse
-- `RecurringTaskEngine`: suprimir tarefas não-urgentes em FLOW_ALTO
-- Eventos: emitir `METABOLIC_PULSE_LOGGED` no SystemBus
+- ✅ `EventTaskGenerator`: `adjustPriorityForPulse()` — prioridade dinâmica
+- ✅ `RecurringTaskEngine`: `shouldSuppressForPulse()` + `suppressNonUrgent()`
+- ✅ `PulseProvider`: emite `METABOLIC_PULSE_LOGGED` no SystemBus
+- ✅ 27/27 testes unitários (self-contained pure logic)
 
 ### B.3 Integração Contexto (2 dias)
 
