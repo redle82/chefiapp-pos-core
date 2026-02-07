@@ -8,6 +8,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { LocationSection } from "../Onboarding/sections/LocationSection";
 import { PublicPresenceFields } from "./PublicPresenceFields";
 import { PublicQRSection } from "./PublicQRSection";
+import { RestaurantSetupLayout } from "./RestaurantSetupLayout";
 
 export function ConfigLocationPage() {
   const location = useLocation();
@@ -16,41 +17,10 @@ export function ConfigLocationPage() {
   const isTablesTab = location.pathname.includes("/tables");
 
   return (
-    <div>
-      <div style={{ marginBottom: "24px" }}>
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: 600,
-            margin: 0,
-            marginBottom: "8px",
-          }}
-        >
-          Localização
-        </h1>
-        <p
-          style={{
-            fontSize: "14px",
-            color: "#666",
-            margin: 0,
-            marginBottom: "8px",
-          }}
-        >
-          Gerencie endereço, mesas e zonas do restaurante.
-        </p>
-        <p
-          style={{
-            fontSize: "13px",
-            color: "#059669",
-            margin: 0,
-            fontWeight: 500,
-          }}
-        >
-          Preencha o endereço ou defina mesas e zonas. As alterações são
-          guardadas para o seu restaurante.
-        </p>
-      </div>
-
+    <RestaurantSetupLayout
+      title="Localização do restaurante"
+      description="Gerencie endereço, mesas e zonas do restaurante."
+    >
       {/* Tabs */}
       <div
         style={{
@@ -110,6 +80,6 @@ export function ConfigLocationPage() {
           <PublicQRSection />
         </>
       )}
-    </div>
+    </RestaurantSetupLayout>
   );
 }

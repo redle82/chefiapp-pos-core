@@ -181,10 +181,23 @@ export function ConfigPerceptionPage() {
         >
           Percepção Operacional
         </h1>
-        <p style={{ fontSize: VPC.fontSizeBase, color: VPC.textMuted, margin: "0 0 8px 0" }}>
+        <p
+          style={{
+            fontSize: VPC.fontSizeBase,
+            color: VPC.textMuted,
+            margin: "0 0 8px 0",
+          }}
+        >
           Link da câmera (stream ou partilha) e análise de cena com IA. Sem identificar pessoas.
         </p>
-        <p style={{ fontSize: VPC.fontSizeBase, color: VPC.accent, margin: 0, fontWeight: 500 }}>
+        <p
+          style={{
+            fontSize: VPC.fontSizeBase,
+            color: VPC.accent,
+            margin: 0,
+            fontWeight: 500,
+          }}
+        >
           Cole o link da câmera abaixo, guarde e use «Analisar com IA» para obter uma descrição da cena.
         </p>
       </header>

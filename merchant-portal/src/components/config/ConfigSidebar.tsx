@@ -32,6 +32,20 @@ export type { ConfigSection, ConfigSectionConfig };
 
 const SECTIONS: ConfigSectionConfig[] = [
   {
+    id: "general",
+    label: "Geral",
+    icon: "🏢",
+    description: "Identidade, idioma, recibo, integrações",
+    path: "/config/general",
+  },
+  {
+    id: "ubicaciones",
+    label: "Ubicaciones",
+    icon: "📍",
+    description: "Locais operacionais, mesas, zonas",
+    path: "/config/ubicaciones",
+  },
+  {
     id: "identity",
     label: "Identidade",
     icon: "🏢",

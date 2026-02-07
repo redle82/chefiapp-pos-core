@@ -6,11 +6,62 @@
  */
 
 import React, { useState, useEffect, useCallback } from "react";
-import { readRestaurantPeople, type CoreRestaurantPerson } from "../../core-boundary/readers/RestaurantPeopleReader";
+import {
+  readRestaurantPeople,
+  type CoreRestaurantPerson,
+} from "../../core-boundary/readers/RestaurantPeopleReader";
 import { isBackendUnavailable } from "../../core-boundary/menuPilotFallback";
 import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { QRCodeGenerator } from "../../components/QRCodeGenerator";
+import { supabase } from "../../core/supabase";
+
+type InviteSummary = {
+  id: string;
+  person_id: string;
+  status: string;
+  code: string;
+  expires_at: string | null;
+  max_uses: number | null;
+  used_count: number | null;
+};
+
+function mapPersonRoleToStaffRole(
+  role: CoreRestaurantPerson["role"],
+): "waiter" | "manager" {
+  if (role === "manager") return "manager";
+  // Funcionário genérico cai como garçom (waiter) no AppStaff.
+  return "waiter";
+}
+
+function formatInviteStatus(status: string): string {
+  switch (status) {
+    case "active":
+      return "válido";
+    case "expired":
+      return "expirado";
+    case "revoked":
+      return "revogado";
+    case "used":
+      return "usado";
+    default:
+      return status;
+  }
+}
+
+function formatDate(dateIso: string | null): string {
+  if (!dateIso) return "";
+  try {
+    const d = new Date(dateIso);
+    return d.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
 
 function generateStaffCode(): string {
   const n = 1000 + Math.floor(Math.random() * 9000);
@@ -31,6 +82,9 @@ export function RestaurantPeopleSection() {
 
   const [revealedCodeId, setRevealedCodeId] = useState<string | null>(null);
   const [showQRId, setShowQRId] = useState<string | null>(null);
+  const [invitesByPersonId, setInvitesByPersonId] = useState<
+    Record<string, InviteSummary | undefined>
+  >({});
 
   const loadPeople = useCallback(async () => {
     if (!restaurantId) {
@@ -42,6 +96,34 @@ export function RestaurantPeopleSection() {
       setError(null);
       const list = await readRestaurantPeople(restaurantId);
       setPeople(list);
+      if (list.length > 0) {
+        const personIds = list.map((p) => p.id);
+        const { data, error: invitesError } = await supabase
+          .from("active_invites")
+          .select(
+            "id, person_id, status, code, expires_at, max_uses, used_count",
+          )
+          .eq("restaurant_id", restaurantId)
+          .in("person_id", personIds);
+
+        if (!invitesError && data) {
+          const map: Record<string, InviteSummary> = {};
+          (data as any[]).forEach((row) => {
+            map[row.person_id] = {
+              id: row.id,
+              person_id: row.person_id,
+              status: row.status,
+              code: row.code,
+              expires_at: row.expires_at ?? null,
+              max_uses: row.max_uses ?? null,
+              used_count: row.used_count ?? null,
+            };
+          });
+          setInvitesByPersonId(map);
+        }
+      } else {
+        setInvitesByPersonId({});
+      }
     } catch (e) {
       const msg = isBackendUnavailable(e)
         ? "Não foi possível carregar. O servidor pode estar indisponível. Tente novamente."
@@ -56,6 +138,66 @@ export function RestaurantPeopleSection() {
   useEffect(() => {
     loadPeople();
   }, [loadPeople]);
+
+  const ensureInviteForPerson = useCallback(
+    async (person: CoreRestaurantPerson) => {
+      try {
+        if (!restaurantId) return null;
+        const roleGranted = mapPersonRoleToStaffRole(person.role);
+        const expiresAt = new Date(
+          Date.now() + 24 * 60 * 60 * 1000,
+        ).toISOString(); // MVP: 24h
+
+        const { data, error } = await supabase
+          .from("active_invites")
+          .upsert(
+            {
+              restaurant_id: restaurantId,
+              person_id: person.id,
+              role_granted: roleGranted,
+              code: person.staff_code,
+              max_uses: 1,
+              status: "active",
+              expires_at: expiresAt,
+            },
+            { onConflict: "person_id" },
+          )
+          .select(
+            "id, person_id, status, code, expires_at, max_uses, used_count",
+          )
+          .single();
+
+        if (error) throw new Error(error.message);
+
+        const invite: InviteSummary = {
+          id: (data as any).id,
+          person_id: (data as any).person_id,
+          status: (data as any).status,
+          code: (data as any).code,
+          expires_at: (data as any).expires_at ?? null,
+          max_uses: (data as any).max_uses ?? null,
+          used_count: (data as any).used_count ?? null,
+        };
+
+        setInvitesByPersonId((prev) => ({
+          ...prev,
+          [invite.person_id]: invite,
+        }));
+
+        return invite;
+      } catch (e) {
+        // Não bloqueia fluxo principal; apenas regista erro.
+        console.error("Erro ao gerar convite para pessoa:", e);
+        setError(
+          e instanceof Error
+            ? e.message
+            : "Erro ao gerar convite para esta pessoa",
+        );
+        return null;
+      }
+    },
+    [restaurantId],
+  );
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +234,8 @@ export function RestaurantPeopleSection() {
         setNewRole("staff");
         setRevealedCodeId(data.id);
         setShowQRId(data.id);
+        // Criar imediatamente um active_invite para esta pessoa (ponte Empleados → AppStaff).
+        await ensureInviteForPerson(data as CoreRestaurantPerson);
         break;
       }
       if (attempts >= maxAttempts) {
@@ -99,6 +243,17 @@ export function RestaurantPeopleSection() {
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao adicionar pessoa");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleGenerateInvite = async (person: CoreRestaurantPerson) => {
+    setSaving(true);
+    try {
+      await ensureInviteForPerson(person);
+      setRevealedCodeId(person.id);
+      setShowQRId(person.id);
     } finally {
       setSaving(false);
     }
@@ -256,10 +411,54 @@ export function RestaurantPeopleSection() {
                       {revealedCodeId === person.id ? "Ocultar" : "Mostrar"}
                     </button>
                   </div>
+                  <div
+                    style={{ marginTop: "4px", fontSize: "12px", color: "#4b5563" }}
+                  >
+                    {(() => {
+                      const invite = invitesByPersonId[person.id];
+                      if (!invite) {
+                        return (
+                          <span>
+                            Convite AppStaff: <em>ainda não gerado</em>
+                          </span>
+                        );
+                      }
+                      return (
+                        <span>
+                          Convite AppStaff:{" "}
+                          <strong>{formatInviteStatus(invite.status)}</strong>
+                          {invite.expires_at && (
+                            <>
+                              {" "}
+                              • expira em {formatDate(invite.expires_at)}
+                            </>
+                          )}
+                        </span>
+                      );
+                    })()}
+                  </div>
                   <div style={{ marginTop: "8px" }}>
                     <button
                       type="button"
-                      onClick={() => setShowQRId((id) => (id === person.id ? null : person.id))}
+                      onClick={() => handleGenerateInvite(person)}
+                      style={{
+                        padding: "6px 12px",
+                        fontSize: "12px",
+                        border: "1px solid #667eea",
+                        borderRadius: "4px",
+                        background: "transparent",
+                        color: "#667eea",
+                        cursor: "pointer",
+                        marginRight: "8px",
+                      }}
+                    >
+                      Gerar / Regenerar código AppStaff
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowQRId((id) => (id === person.id ? null : person.id))
+                      }
                       style={{
                         padding: "6px 12px",
                         fontSize: "12px",
@@ -275,10 +474,18 @@ export function RestaurantPeopleSection() {
                     {showQRId === person.id && (
                       <div style={{ marginTop: "12px" }}>
                         <QRCodeGenerator
-                          url={`chefiapp://staff?c=${encodeURIComponent(person.staff_code)}&r=${encodeURIComponent(person.restaurant_id)}`}
+                          url={`chefiapp://staff?c=${encodeURIComponent(
+                            person.staff_code,
+                          )}&r=${encodeURIComponent(person.restaurant_id)}`}
                           size={140}
                         />
-                        <p style={{ fontSize: "11px", color: "#666", marginTop: "4px" }}>
+                        <p
+                          style={{
+                            fontSize: "11px",
+                            color: "#666",
+                            marginTop: "4px",
+                          }}
+                        >
                           Use este QR no App Staff para check-in.
                         </p>
                       </div>
