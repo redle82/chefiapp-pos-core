@@ -95,11 +95,12 @@ Criar `merchant-portal/src/core/pulse/`:
 - ✅ Corrige imports B.2: useEffect, SystemEvents, PulseZone
 - ✅ 16/16 testes (PulseContextIntegration.test.ts)
 
-### B.4 Gamificação + Analytics (1 dia)
+### B.4 Gamificacao + Analytics (1 dia) — ✅ `3b9f888`
 
-- `GamificationService`: XP bonus em FLOW_ALTO
-- `TaskAnalytics`: correlação pulse × task completion rate
-- Histórico: gráfico de pulse ao longo do turno
+- ✅ `GamificationService`: XP bonus em FLOW_ALTO
+- ✅ `TaskAnalytics`: correlacao pulse x task completion rate
+- ✅ Historico: grafico de pulse ao longo do turno
+- ✅ 12/12 testes unitarios (PulseGamificationAnalytics.test.ts)
 
 ---
 
