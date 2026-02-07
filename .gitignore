@@ -77,8 +77,9 @@ audit-reports/*.json
 .env*.local
 merchant-portal/artifacts/
 
-# Agent workspace
-.agent/
+# Agent workspace (ignore internal state, track rules)
+.agent/*
+!.agent/rules/
 
 # Antigravity awesome-skills (external repo, 708+ skills)
 # Update via: cd .agents/skills && git pull
