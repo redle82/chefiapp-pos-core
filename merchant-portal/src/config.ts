@@ -94,6 +94,15 @@ export const CONFIG = {
   TERMINAL_INSTALLATION_TRACK:
     import.meta.env.VITE_TERMINAL_INSTALLATION_TRACK === "true" ||
     import.meta.env.VITE_TERMINAL_INSTALLATION_TRACK === "1",
+
+  /**
+   * ALLOW_STAFF_ROLE_QUERY — Permite definir role do AppStaff via query ?role= (abas paralelas por papel).
+   * true: DEMO, PILOT, LOCAL; false em produção desativa leitura de ?role= (role só por login/tab).
+   * Ref: APPSTAFF_RUNTIME_MODEL.md
+   */
+  ALLOW_STAFF_ROLE_QUERY:
+    import.meta.env.VITE_ALLOW_STAFF_ROLE_QUERY !== "false" &&
+    import.meta.env.VITE_ALLOW_STAFF_ROLE_QUERY !== "0",
 };
 
 // Runtime Check (Fail Loud in PROD)

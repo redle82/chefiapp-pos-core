@@ -7,6 +7,7 @@
 import { useEffect, type ReactNode } from "react";
 import {
   Navigate,
+  Outlet,
   Route,
   Routes,
   useLocation,
@@ -14,11 +15,39 @@ import {
 } from "react-router-dom";
 import "./App.css";
 import { GlobalUIStateProvider } from "./context/GlobalUIStateContext";
+import { OnboardingProvider } from "./context/OnboardingContext";
 import type { RestaurantRuntime } from "./context/RestaurantRuntimeContext";
 import { RestaurantRuntimeContext } from "./context/RestaurantRuntimeContext";
 import { deriveLifecycle } from "./core/lifecycle/Lifecycle";
 import { ShiftContext } from "./core/shift/ShiftContext";
 import { AppStaffMobileOnlyPage } from "./pages/AppStaff/AppStaffMobileOnlyPage";
+import { AppStaffWrapper } from "./pages/AppStaff/AppStaffWrapper";
+import { StaffAppGate } from "./pages/AppStaff/routing/StaffAppGate";
+import { StaffAppShellLayout } from "./pages/AppStaff/routing/StaffAppShellLayout";
+import { StaffIndexRedirect } from "./pages/AppStaff/routing/StaffIndexRedirect";
+import { StaffHomeRedirect } from "./pages/AppStaff/routing/StaffHomeRedirect";
+import { OwnerHome } from "./pages/AppStaff/homes/OwnerHome";
+import { ManagerHome } from "./pages/AppStaff/homes/ManagerHome";
+import { WaiterHome } from "./pages/AppStaff/homes/WaiterHome";
+import { KitchenHome } from "./pages/AppStaff/homes/KitchenHome";
+import { CleaningHome } from "./pages/AppStaff/homes/CleaningHome";
+import { StaffProfilePage } from "./pages/AppStaff/apps/profile";
+import { StaffNotificationsPage } from "./pages/AppStaff/pages/StaffNotificationsPage";
+import { StaffHelpPage } from "./pages/AppStaff/pages/StaffHelpPage";
+import { StaffHistoryPage } from "./pages/AppStaff/pages/StaffHistoryPage";
+import { StaffPlaceholderPage } from "./pages/AppStaff/pages/StaffPlaceholderPage";
+import { ManagerTurnoPage } from "./pages/AppStaff/pages/ManagerTurnoPage";
+import { ManagerEquipePage } from "./pages/AppStaff/apps/team";
+import { ManagerTarefasPage } from "./pages/AppStaff/apps/tasks";
+import { ManagerExcecoesPage } from "./pages/AppStaff/apps/alerts";
+import { OperationModePage } from "./pages/AppStaff/pages/OperationModePage";
+import { StaffTpvPage } from "./pages/AppStaff/apps/tpv";
+import { StaffCleaningPage } from "./pages/AppStaff/pages/StaffCleaningPage";
+import { StaffWaiterChecklistsPage } from "./pages/AppStaff/pages/StaffWaiterChecklistsPage";
+import { ManagerDashboard } from "./pages/AppStaff/ManagerDashboard";
+import { WorkerTaskStream } from "./pages/AppStaff/WorkerTaskStream";
+import { CleaningTaskView } from "./pages/AppStaff/views/CleaningTaskView";
+import { KitchenDisplay } from "./pages/AppStaff/apps/kds";
 import { BackofficePage } from "./pages/Backoffice/BackofficePage";
 import { BillingPage } from "./pages/Billing/BillingPage";
 import { BillingSuccessPage } from "./pages/Billing/BillingSuccessPage";
@@ -26,19 +55,11 @@ import { BootstrapPage } from "./pages/BootstrapPage";
 import { CoreResetPage } from "./pages/CoreReset/CoreResetPage";
 import { DebugTPV } from "./pages/DebugTPV";
 import { HelpStartLocalPage } from "./pages/HelpStartLocalPage";
+import { MenuCatalogPage } from "./pages/MenuCatalog/MenuCatalogPage";
+import { MenuCatalogPageV2 } from "./pages/MenuCatalog/MenuCatalogPageV2";
 import { InventoryStockMinimal } from "./pages/InventoryStock/InventoryStockMinimal";
 import { KDSMinimal } from "./pages/KDSMinimal/KDSMinimal";
 import { MenuBuilderMinimal } from "./pages/MenuBuilder/MenuBuilderMinimal";
-import { FirstProductPage } from "./pages/Onboarding/FirstProductPage";
-import { OnboardingDayProfilePage } from "./pages/Onboarding/OnboardingDayProfilePage";
-import { OnboardingIntroPage } from "./pages/Onboarding/OnboardingIntroPage";
-import { OnboardingIdentityPage } from "./pages/Onboarding/OnboardingIdentityPage";
-import { OnboardingLocationPage } from "./pages/Onboarding/OnboardingLocationPage";
-import { OnboardingPlanTrialPage } from "./pages/Onboarding/OnboardingPlanTrialPage";
-import { OnboardingProductsPage } from "./pages/Onboarding/OnboardingProductsPage";
-import { OnboardingRitualPage } from "./pages/Onboarding/OnboardingRitualPage";
-import { OnboardingShiftSetupPage } from "./pages/Onboarding/OnboardingShiftSetupPage";
-import { OnboardingTpvPreviewPage } from "./pages/Onboarding/OnboardingTpvPreviewPage";
 import { OperacaoMinimal } from "./pages/Operacao/OperacaoMinimal";
 import { CustomerOrderStatusView } from "./pages/Public/CustomerOrderStatusView";
 import { PublicKDS } from "./pages/Public/PublicKDS";
@@ -58,17 +79,22 @@ import { RoleGate } from "./core/roles";
 import { ShiftGuard } from "./core/shift/ShiftGuard";
 import { AlertsDashboardPage } from "./pages/Alerts/AlertsDashboardPage";
 import { AuthPage } from "./pages/AuthPage";
+import { PhoneLoginPage } from "./pages/AuthPhone/PhoneLoginPage";
+import { VerifyCodePage } from "./pages/AuthPhone/VerifyCodePage";
+import { ConfigGeneralPage } from "./pages/Config/ConfigGeneralPage";
 import { ConfigIdentityPage } from "./pages/Config/ConfigIdentityPage";
 import { ConfigIntegrationsPage } from "./pages/Config/ConfigIntegrationsPage";
 import { ConfigLayout } from "./pages/Config/ConfigLayout";
 import { ConfigLocationPage } from "./pages/Config/ConfigLocationPage";
+import { UbicacionCreatePage } from "./pages/Config/UbicacionCreatePage";
+import { UbicacionEditPage } from "./pages/Config/UbicacionEditPage";
+import { UbicacionesPage } from "./pages/Config/UbicacionesPage";
 import { ConfigModulesPage } from "./pages/Config/ConfigModulesPage";
 import { ConfigPaymentsPage } from "./pages/Config/ConfigPaymentsPage";
 import { ConfigPeoplePage } from "./pages/Config/ConfigPeoplePage";
 import { ConfigPerceptionPage } from "./pages/Config/ConfigPerceptionPage";
 import { ConfigSchedulePage } from "./pages/Config/ConfigSchedulePage";
 import { ConfigStatusPage } from "./pages/Config/ConfigStatusPage";
-import { DashboardPortal } from "./pages/Dashboard/DashboardPortal";
 import { EmployeeHomePage } from "./pages/Employee/HomePage";
 import { EmployeeKDSIntelligentPage } from "./pages/Employee/KDSIntelligentPage";
 import { EmployeeMentorPage } from "./pages/Employee/MentorPage";
@@ -89,6 +115,7 @@ import { ManagerReservationsPage } from "./pages/Manager/ReservationsPage";
 import { ManagerScheduleCreatePage } from "./pages/Manager/ScheduleCreatePage";
 import { ManagerSchedulePage } from "./pages/Manager/SchedulePage";
 import { MentorDashboardPage } from "./pages/Mentor/MentorDashboardPage";
+import { OwnerDashboard } from "./pages/AppStaff/OwnerDashboard";
 import { OwnerPurchasesPage } from "./pages/Owner/PurchasesPage";
 import { OwnerSimulationPage } from "./pages/Owner/SimulationPage";
 import { OwnerStockRealPage } from "./pages/Owner/StockRealPage";
@@ -99,9 +126,13 @@ import { PublishPage } from "./pages/PublishPage";
 import { PurchasesDashboardPage } from "./pages/Purchases/PurchasesDashboardPage";
 import { DailyClosingReportPage } from "./pages/Reports/DailyClosingReportPage";
 import { SalesByPeriodReportPage } from "./pages/Reports/SalesByPeriodReportPage";
+import { SalesSummaryReportPage } from "./pages/Reports/SalesSummaryReportPage";
+import { OperationalActivityReportPage } from "./pages/Reports/OperationalActivityReportPage";
+import { GamificationImpactReportPage } from "./pages/Reports/GamificationImpactReportPage";
 import { ReservationsDashboardPage } from "./pages/Reservations/ReservationsDashboardPage";
 import { RunbookCorePage } from "./pages/RunbookCorePage";
 import { SelectTenantPage } from "./pages/SelectTenantPage";
+import { RestaurantMinimalSetupPage } from "./pages/Setup/RestaurantMinimalSetupPage";
 import { SystemTreePage } from "./pages/SystemTree/SystemTreePage";
 import { RecurringTasksPage } from "./pages/Tasks/RecurringTasksPage";
 import { TaskDashboardPage } from "./pages/Tasks/TaskDashboardPage";
@@ -115,6 +146,39 @@ import { GlobalBlockedView } from "./ui/design-system/components/GlobalBlockedVi
 
 import { FlowGate } from "./core/flow/FlowGate";
 import { EventMonitorBootstrap } from "./core/tasks/EventMonitorBootstrap";
+import { CatalogAssignmentsPage } from "./features/admin/catalog/pages/CatalogAssignmentsPage";
+import { CatalogListPage } from "./features/admin/catalog/pages/CatalogListPage";
+import { CombosPage } from "./features/admin/catalog/pages/CombosPage";
+import { ModifiersPage } from "./features/admin/catalog/pages/ModifiersPage";
+import { ProductsPage } from "./features/admin/catalog/pages/ProductsPage";
+import { TranslationsPage } from "./features/admin/catalog/pages/TranslationsPage";
+import { ClosuresPage } from "./features/admin/closures/pages/ClosuresPage";
+import { CustomerDetailPage } from "./features/admin/customers/pages/CustomerDetailPage";
+import { CustomersPage } from "./features/admin/customers/pages/CustomersPage";
+import { AdminConfigLayout } from "./features/admin/config/components/AdminConfigLayout";
+import { DeliveryConfigPage } from "./features/admin/config/pages/DeliveryConfigPage";
+import { DispositivosConfigPage } from "./features/admin/config/pages/DispositivosConfigPage";
+import { EmpleadosConfigPage } from "./features/admin/config/pages/EmpleadosConfigPage";
+import { EntidadesLegalesConfigPage } from "./features/admin/config/pages/EntidadesLegalesConfigPage";
+import { GeneralConfigPage } from "./features/admin/config/pages/GeneralConfigPage";
+import { ImpresorasConfigPage } from "./features/admin/config/pages/ImpresorasConfigPage";
+import { IntegracionesConfigPage } from "./features/admin/config/pages/IntegracionesConfigPage";
+import { MarcasConfigPage } from "./features/admin/config/pages/MarcasConfigPage";
+import { ProductosConfigPage } from "./features/admin/config/pages/ProductosConfigPage";
+import { ReservasConfigPage } from "./features/admin/config/pages/ReservasConfigPage";
+import { SoftwareTpvConfigPage } from "./features/admin/config/pages/SoftwareTpvConfigPage";
+import { SuscripcionConfigPage } from "./features/admin/config/pages/SuscripcionConfigPage";
+import { UbicacionesConfigPage } from "./features/admin/config/pages/UbicacionesConfigPage";
+import { UsuariosConfigPage } from "./features/admin/config/pages/UsuariosConfigPage";
+import { DashboardLayout } from "./features/admin/dashboard/components/DashboardLayout";
+import { AdminReportsOverview } from "./features/admin/reports/AdminReportsOverview";
+import { AdminPlaceholderPage } from "./features/admin/dashboard/pages/AdminPlaceholderPage";
+import { DashboardHomePage } from "./features/admin/dashboard/pages/DashboardHomePage";
+import { PaymentsLayout } from "./features/admin/payments/pages/PaymentsLayout";
+import { PayoutsPage } from "./features/admin/payments/pages/PayoutsPage";
+import { TransactionsPage } from "./features/admin/payments/pages/TransactionsPage";
+import { ModulesPage } from "./features/admin/modules/pages/ModulesPage";
+import { PromotionsPage } from "./features/admin/promotions/pages/PromotionsPage";
 
 /** NAVIGATION_OPERATIONAL_CONTRACT: quando mode=demo, TPV sem RequireOperational; senão app normal. */
 function TPVRouteHandler() {
@@ -201,21 +265,29 @@ function App() {
         <Route path="/demo-guiado" element={<Navigate to="/auth" replace />} />
 
         {/* Auth / Onboarding Redirects */}
-        <Route path="/login" element={<Navigate to="/auth" replace />} />
-        <Route
-          path="/signup"
-          element={<Navigate to="/auth?mode=signup" replace />}
-        />
+        <Route path="/login" element={<Navigate to="/auth/phone" replace />} />
+        <Route path="/signup" element={<Navigate to="/auth/phone" replace />} />
         <Route
           path="/forgot-password"
-          element={<Navigate to="/auth" replace />}
+          element={<Navigate to="/auth/email" replace />}
         />
-        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/auth" element={<Navigate to="/auth/phone" replace />} />
+        <Route path="/auth/phone" element={<PhoneLoginPage />} />
+        <Route path="/auth/verify" element={<VerifyCodePage />} />
+        <Route path="/auth/email" element={<AuthPage />} />
         <Route path="/bootstrap" element={<BootstrapPage />} />
+        <Route
+          path="/setup/restaurant-minimal"
+          element={<RestaurantMinimalSetupPage />}
+        />
 
         {/* Core Operations */}
         <Route path="/billing/success" element={<BillingSuccessPage />} />
         <Route path="/help/start-local" element={<HelpStartLocalPage />} />
+
+        {/* Menu: catálogo visual de decisão (spec MENU_CATALOG_VISUAL_SPEC) */}
+        <Route path="/menu" element={<MenuCatalogPage />} />
+        <Route path="/menu-v2" element={<MenuCatalogPageV2 />} />
 
         {/* App Content (Management/Operational) */}
         <Route path="/*" element={<AppOperationalWrapper />} />
@@ -297,10 +369,15 @@ function AppContentWithBilling() {
   const isOperationalSurface =
     location.pathname.startsWith("/op/tpv") ||
     location.pathname.startsWith("/op/kds");
+  const isStaffLauncher =
+    location.pathname === "/app/staff/home" ||
+    location.pathname.startsWith("/app/staff/home/") ||
+    location.pathname === "/app/staff" ||
+    location.pathname === "/app/staff/";
   return (
     <>
       <EventMonitorBootstrap />
-      {!isDashboard && !isOperationalSurface && <BillingBanner />}
+      {!isDashboard && !isOperationalSurface && !isStaffLauncher && <BillingBanner />}
       <ModeIndicator />
       <CoreUnavailableBanner />
       <Routes>
@@ -313,19 +390,9 @@ function AppContentWithBilling() {
         <Route path="/public/:slug/kds" element={<PublicKDS />} />
 
         <Route path="/bootstrap" element={<BootstrapPage />} />
-        {/* Onboarding 5min — 9 telas (docs/contracts/ONBOARDING_5MIN_9_TELAS_CONTRACT.md) */}
-        <Route path="/onboarding" element={<Navigate to="/onboarding/intro" replace />} />
-        <Route path="/onboarding/intro" element={<OnboardingIntroPage />} />
-        <Route path="/onboarding/identity" element={<OnboardingIdentityPage />} />
-        <Route path="/onboarding/location" element={<OnboardingLocationPage />} />
-        <Route path="/onboarding/day-profile" element={<OnboardingDayProfilePage />} />
-        <Route path="/onboarding/shift-setup" element={<OnboardingShiftSetupPage />} />
-        <Route path="/onboarding/products" element={<OnboardingProductsPage />} />
-        <Route path="/onboarding/tpv-preview" element={<OnboardingTpvPreviewPage />} />
-        <Route path="/onboarding/plan-trial" element={<OnboardingPlanTrialPage />} />
-        <Route path="/onboarding/ritual-open" element={<OnboardingRitualPage />} />
         <Route path="/app/select-tenant" element={<SelectTenantPage />} />
-        <Route path="/app" element={<Navigate to="/app/dashboard" replace />} />
+        {/* App operacional único: /app → home do shell (Home | Operação | TPV | KDS | Mais) */}
+        <Route path="/app" element={<Navigate to="/app/staff/home" replace />} />
 
         <Route element={<RoleGate />}>
           <Route
@@ -363,16 +430,15 @@ function AppContentWithBilling() {
             element={<Navigate to="/op/tpv" replace />}
           />
 
-          <Route path="/dashboard" element={<DashboardPortal />} />
+          <Route
+            path="/dashboard"
+            element={<Navigate to="/admin/reports/overview" replace />}
+          />
           <Route
             path="/app/dashboard"
-            element={<Navigate to="/dashboard" replace />}
+            element={<Navigate to="/admin/reports/overview" replace />}
           />
           <Route path="/app/runbook-core" element={<RunbookCorePage />} />
-          <Route
-            path="/onboarding/first-product"
-            element={<FirstProductPage />}
-          />
           <Route path="/menu-builder" element={<MenuBuilderMinimal />} />
           <Route
             path="/operacao"
@@ -405,6 +471,112 @@ function AppContentWithBilling() {
                 <BackofficePage />
               </ManagementAdvisor>
             }
+          />
+          {/* AppStaff: /app/staff → redirect para /app/staff/home; rotas do shell para evitar cair em /app/dashboard (reports). */}
+          <Route path="/app/staff" element={<AppStaffWrapper />}>
+            <Route index element={<StaffIndexRedirect />} />
+            <Route
+              path="home"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <Outlet />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            >
+              <Route index element={<StaffHomeRedirect />} />
+              <Route path="owner" element={<OwnerHome />} />
+              <Route path="manager" element={<ManagerHome />} />
+              <Route path="waiter" element={<WaiterHome />} />
+              <Route path="kitchen" element={<KitchenHome />} />
+              <Route path="cleaning" element={<CleaningHome />} />
+            </Route>
+            <Route
+              path="mode/operation"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <OperationModePage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="mode/turn"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <ManagerTurnoPage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="mode/team"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <ManagerEquipePage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="mode/tpv"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <StaffTpvPage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="mode/kds"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <KitchenDisplay />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="mode/tasks"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <ManagerTarefasPage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="mode/alerts"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <ManagerExcecoesPage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="profile"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <StaffProfilePage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+          </Route>
+          {/* Control Room não é app separado: visão dono/gerente vive em Home/Operação */}
+          <Route
+            path="/app/control-room"
+            element={<Navigate to="/app/staff/mode/operation" replace />}
           />
           <Route
             path="/app/setup/menu"
@@ -536,6 +708,14 @@ function AppContentWithBilling() {
             }
           />
           <Route
+            path="/owner/dashboard"
+            element={
+              <ManagementAdvisor>
+                <OwnerDashboard />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
             path="/owner/vision"
             element={
               <ManagementAdvisor>
@@ -567,10 +747,308 @@ function AppContentWithBilling() {
               </ManagementAdvisor>
             }
           />
+          <Route
+            path="/admin"
+            element={<Navigate to="/admin/reports/overview" replace />}
+          />
+          <Route
+            path="/admin/home"
+            element={
+              <ManagementAdvisor>
+                <DashboardHomePage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/clients"
+            element={<Navigate to="/admin/customers" replace />}
+          />
+          <Route
+            path="/admin/customers"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <CustomersPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/customers/:id"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <CustomerDetailPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/closures"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <ClosuresPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/reservations"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <ReservationsDashboardPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/payments/list"
+            element={<Navigate to="/admin/payments/transactions" replace />}
+          />
+          <Route
+            path="/admin/payments/refunds"
+            element={
+              <ManagementAdvisor>
+                <AdminPlaceholderPage
+                  title="Pagos eliminados / Reembolsos"
+                  message="Em breve."
+                />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/payments/pending"
+            element={
+              <ManagementAdvisor>
+                <AdminPlaceholderPage
+                  title="Pagos pendentes"
+                  message="Em breve."
+                />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/payments"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <PaymentsLayout />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          >
+            <Route index element={<Navigate to="transactions" replace />} />
+            <Route path="transactions" element={<TransactionsPage />} />
+            <Route path="payouts" element={<PayoutsPage />} />
+          </Route>
+          <Route
+            path="/admin/promotions"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <PromotionsPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/catalogs"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <CatalogListPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/catalog-assignments"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <CatalogAssignmentsPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/products"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <ProductsPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/modules"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <ModulesPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/catalog/products"
+            element={<Navigate to="/admin/products" replace />}
+          />
+          <Route
+            path="/admin/modifiers"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <ModifiersPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/combos"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <CombosPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/translations"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <TranslationsPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/catalog"
+            element={<Navigate to="/admin/products" replace />}
+          />
+          <Route
+            path="/admin/reports/overview"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <AdminReportsOverview />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/reports/sales"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <SalesByPeriodReportPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/reports/staff"
+            element={
+              <ManagementAdvisor>
+                <AdminPlaceholderPage
+                  title="Reportes — Staff"
+                  message="Em breve."
+                />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/reports/operations"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <OperationalActivityReportPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/reports/human-performance"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <GamificationImpactReportPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/reports"
+            element={<Navigate to="/admin/reports/overview" replace />}
+          />
+          <Route
+            path="/admin/devices"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <InstallPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={<Navigate to="/admin/config" replace />}
+          />
+          <Route
+            path="/admin/config"
+            element={
+              <ManagementAdvisor>
+                <OnboardingProvider>
+                  <DashboardLayout>
+                    <AdminConfigLayout />
+                  </DashboardLayout>
+                </OnboardingProvider>
+              </ManagementAdvisor>
+            }
+          >
+            <Route index element={<Navigate to="general" replace />} />
+            <Route path="general" element={<GeneralConfigPage />} />
+            <Route path="productos" element={<ProductosConfigPage />} />
+            <Route path="suscripcion" element={<SuscripcionConfigPage />} />
+            <Route path="ubicaciones" element={<UbicacionesConfigPage />} />
+            <Route path="ubicaciones/address" element={<UbicacionesConfigPage />} />
+            <Route path="ubicaciones/tables" element={<UbicacionesConfigPage />} />
+            <Route path="entidades-legales" element={<EntidadesLegalesConfigPage />} />
+            <Route path="marcas" element={<MarcasConfigPage />} />
+            <Route path="usuarios" element={<UsuariosConfigPage />} />
+            <Route path="dispositivos" element={<DispositivosConfigPage />} />
+            <Route path="impresoras" element={<ImpresorasConfigPage />} />
+            <Route path="integraciones" element={<IntegracionesConfigPage />} />
+            <Route path="delivery" element={<DeliveryConfigPage />} />
+            <Route path="delivery/plano-mesas" element={<DeliveryConfigPage />} />
+            <Route path="delivery/horarios" element={<DeliveryConfigPage />} />
+            <Route path="delivery/qr" element={<DeliveryConfigPage />} />
+            <Route path="empleados" element={<EmpleadosConfigPage />} />
+            <Route path="empleados/employees" element={<EmpleadosConfigPage />} />
+            <Route path="empleados/roles" element={<EmpleadosConfigPage />} />
+            <Route path="software-tpv" element={<SoftwareTpvConfigPage />} />
+            <Route path="software-tpv/config" element={<SoftwareTpvConfigPage />} />
+            <Route path="software-tpv/modo-rapido" element={<SoftwareTpvConfigPage />} />
+            <Route path="reservas" element={<ReservasConfigPage />} />
+            <Route path="reservas/disponibilidad" element={<ReservasConfigPage />} />
+            <Route path="reservas/garantia" element={<ReservasConfigPage />} />
+            <Route path="reservas/turnos" element={<ReservasConfigPage />} />
+            <Route path="reservas/mensajes" element={<ReservasConfigPage />} />
+          </Route>
           <Route path="/config" element={<ConfigLayout />}>
-            <Route index element={<Navigate to="/config/identity" replace />} />
+            <Route index element={<Navigate to="/config/general" replace />} />
+            <Route path="general" element={<ConfigGeneralPage />} />
             <Route path="identity" element={<ConfigIdentityPage />} />
             <Route path="location" element={<ConfigLocationPage />} />
+            <Route path="ubicaciones" element={<UbicacionesPage />} />
+            <Route path="ubicaciones/nova" element={<UbicacionCreatePage />} />
+            <Route path="ubicaciones/:id" element={<UbicacionEditPage />} />
             <Route path="location/address" element={<ConfigLocationPage />} />
             <Route path="location/tables" element={<ConfigLocationPage />} />
             <Route path="schedule" element={<ConfigSchedulePage />} />
@@ -718,6 +1196,14 @@ function AppContentWithBilling() {
             element={
               <ManagementAdvisor>
                 <SalesByPeriodReportPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/app/reports/sales-summary"
+            element={
+              <ManagementAdvisor>
+                <SalesSummaryReportPage />
               </ManagementAdvisor>
             }
           />

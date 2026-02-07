@@ -1,8 +1,8 @@
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -12,7 +12,9 @@ const localReactDom = path.resolve(__dirname, "node_modules", "react-dom");
 const rootReact = path.resolve(__dirname, "..", "node_modules", "react");
 const rootReactDom = path.resolve(__dirname, "..", "node_modules", "react-dom");
 const reactPath = fs.existsSync(localReact) ? localReact : rootReact;
-const reactDomPath = fs.existsSync(localReactDom) ? localReactDom : rootReactDom;
+const reactDomPath = fs.existsSync(localReactDom)
+  ? localReactDom
+  : rootReactDom;
 
 // https://vite.dev/config/
 export default defineConfig(async ({ mode }) => {
@@ -32,7 +34,7 @@ export default defineConfig(async ({ mode }) => {
           sourcemaps: {
             filesToDeleteAfterUpload: ["**/*.map"],
           },
-        })
+        }),
       );
     } catch {
       // @sentry/vite-plugin não instalado; build sem sourcemaps Sentry
@@ -80,22 +82,24 @@ export default defineConfig(async ({ mode }) => {
           short_name: "ChefIApp",
           description:
             "Sistema operacional para restaurantes. TPV, KDS e App Staff num só lugar.",
-          theme_color: "#000000",
-          background_color: "#0a0a0a",
+          theme_color: "#121212",
+          background_color: "#121212",
           display: "standalone",
           orientation: "portrait",
           scope: "/",
-          start_url: "/",
+          start_url: "/app/staff/home",
           icons: [
             {
               src: "Logo Chefiapp.png",
-              sizes: "192x192", // Assuming it's large enough, ideally resize
+              sizes: "192x192",
               type: "image/png",
+              purpose: "any maskable",
             },
             {
               src: "Logo Chefiapp.png",
               sizes: "512x512",
               type: "image/png",
+              purpose: "any maskable",
             },
           ],
         },
@@ -106,9 +110,8 @@ export default defineConfig(async ({ mode }) => {
       }),
     ],
     server: {
-      // CORE_RUNTIME_AND_ROUTES_CONTRACT: porta oficial do merchant-portal (5157; não mudar)
-      // Se PORT estiver definido (ex.: porta 5157 ocupada), usa essa porta e não falha.
-      port: parseInt(process.env.PORT || "5157", 10),
+      // Porta de desenvolvimento: 5175 (override com PORT se necessário).
+      port: parseInt(process.env.PORT || "5175", 10),
       strictPort: !process.env.PORT,
       proxy: {
         "/internal": {
@@ -142,12 +145,70 @@ export default defineConfig(async ({ mode }) => {
       sourcemap: useSentry, // Enable sourcemaps for Sentry (production only)
       rollupOptions: {
         output: {
-          manualChunks: {
-            // Vendor chunks
-            "react-vendor": ["react", "react-dom", "react-router-dom"],
-            "ui-vendor": ["framer-motion", "lucide-react"],
-            // Feature chunks (entries mortos removidos: DashboardZero, MenuManager, TPV legado)
-            staff: ["./src/pages/AppStaff/StaffModule"],
+          manualChunks(id) {
+            // ── Vendor chunks ──
+            if (
+              id.includes("node_modules/react/") ||
+              id.includes("node_modules/react-dom/") ||
+              id.includes("node_modules/react-router")
+            ) {
+              return "react-vendor";
+            }
+            if (
+              id.includes("node_modules/framer-motion") ||
+              id.includes("node_modules/lucide-react")
+            ) {
+              return "ui-vendor";
+            }
+            if (
+              id.includes("node_modules/recharts") ||
+              id.includes("node_modules/d3-") ||
+              id.includes("node_modules/victory-")
+            ) {
+              return "charts-vendor";
+            }
+            if (id.includes("node_modules/@stripe")) {
+              return "stripe-vendor";
+            }
+
+            // ── Feature chunks (pages split by domain) ──
+            if (id.includes("/pages/AppStaff/")) return "staff";
+            if (
+              id.includes("/pages/TPV/") ||
+              id.includes("/pages/TPVMinimal/") ||
+              id.includes("/pages/KDSMinimal/")
+            )
+              return "tpv";
+            if (
+              id.includes("/pages/Config/") ||
+              id.includes("/pages/Backoffice/")
+            )
+              return "config";
+            if (
+              id.includes("/pages/Owner/") ||
+              id.includes("/pages/Manager/") ||
+              id.includes("/pages/Reports/") ||
+              id.includes("/pages/Dashboard/")
+            )
+              return "admin";
+            if (
+              id.includes("/pages/Onboarding/") ||
+              id.includes("/pages/Setup/") ||
+              id.includes("/pages/Landing/")
+            )
+              return "onboarding";
+            if (
+              id.includes("/pages/MenuBuilder/") ||
+              id.includes("/pages/MenuCatalog/")
+            )
+              return "menu";
+            if (
+              id.includes("/pages/Public/") ||
+              id.includes("/pages/PublicWeb/")
+            )
+              return "public";
+
+            // ── Core engine stays in main bundle ──
           },
         },
       },

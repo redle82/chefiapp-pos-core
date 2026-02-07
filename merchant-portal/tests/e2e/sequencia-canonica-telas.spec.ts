@@ -7,7 +7,7 @@
 
 import { expect, test } from "@playwright/test";
 
-test.describe("Sequência Canônica v1.0 — Telas", () => {
+test.describe("Fluxo telefone → setup mínimo → dashboard", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => {
@@ -16,72 +16,33 @@ test.describe("Sequência Canônica v1.0 — Telas", () => {
     });
   });
 
-  test("Passo 1–2: Landing e Auth acessíveis", async ({ page }) => {
+  test("Landing aponta para login por telefone (/auth/phone)", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 15000 });
     await expect(page).toHaveURL(/\//);
-    const cta = page.locator('a[href*="/auth"]').first();
-    await expect(cta).toBeVisible({ timeout: 8000 });
+    const ctaTelefone = page.locator('a[href*="/auth/phone"]').first();
+    await expect(ctaTelefone).toBeVisible({ timeout: 8000 });
+  });
 
+  test("Auth por telefone acessível e redirecionamento canónico /auth → /auth/phone", async ({
+    page,
+  }) => {
     await page.goto("/auth", { waitUntil: "domcontentloaded", timeout: 15000 });
-    await expect(page).toHaveURL(/\/auth/);
+    await expect(page).toHaveURL(/\/auth\/phone/);
+    const titulo = page.getByText("Entrar com telefone");
+    await expect(titulo).toBeVisible();
   });
 
-  test("Passo 3: Bootstrap mostra 'Passo 3 de 8' e novo fluxo (data-canonical-flow)", async ({
+  test("Bootstrap/setup mínimo leva sempre ao Dashboard config-first", async ({
     page,
   }) => {
-    const res = await page.goto("/bootstrap", {
+    const res = await page.goto("/setup/restaurant-minimal", {
       waitUntil: "domcontentloaded",
       timeout: 15000,
     });
     expect(res?.status() ?? 999).toBeLessThan(500);
     await page.waitForLoadState("domcontentloaded");
 
-    await expect(
-      page.getByText(/Passo 3 de 8/, { exact: false })
-    ).toBeVisible({ timeout: 5000 });
-    await expect(
-      page.locator("[data-canonical-flow=v1.0][data-step=3]")
-    ).toBeVisible({ timeout: 3000 });
-  });
-
-  test("Passo 4: First product mostra 'Passo 4 de 8', opcional e novo fluxo (data-canonical-flow)", async ({
-    page,
-  }) => {
-    const res = await page.goto("/onboarding/first-product", {
-      waitUntil: "domcontentloaded",
-      timeout: 15000,
-    });
-    expect(res?.status() ?? 999).toBeLessThan(500);
-    await page.waitForLoadState("domcontentloaded");
-
-    await expect(
-      page.getByText(/Passo 4 de 8/, { exact: false })
-    ).toBeVisible({ timeout: 5000 });
-    await expect(
-      page.locator("[data-canonical-flow=v1.0][data-step=4]")
-    ).toBeVisible({ timeout: 3000 });
-    await expect(
-      page.getByRole("button", { name: /Continuar sem adicionar agora/i })
-    ).toBeVisible({ timeout: 3000 });
-  });
-
-  test("First product: botões 'Continuar sem adicionar agora' e 'Ir à web de configuração' existem", async ({
-    page,
-  }) => {
-    await page.goto("/onboarding/first-product", {
-      waitUntil: "domcontentloaded",
-      timeout: 15000,
-    });
-    await page.waitForLoadState("domcontentloaded");
-
-    const skipBtn = page.getByRole("button", {
-      name: /Continuar sem adicionar agora/i,
-    });
-    await expect(skipBtn).toBeVisible({ timeout: 5000 });
-
-    const webBtn = page.getByRole("button", {
-      name: /Ir à web de configuração/i,
-    });
-    await expect(webBtn).toBeVisible({ timeout: 3000 });
+    // Após setup mínimo, o destino canónico é sempre o Dashboard
+    await expect(page).toHaveURL(/\/dashboard/);
   });
 });
