@@ -28,19 +28,18 @@ test.describe("Fluxo Total — passos 1–4 e smoke 5–8", () => {
     expect(page.url()).toMatch(/\/auth/);
   });
 
-  test("Fase 2: Auth tem CTA e não redireciona para landing após demo", async ({
-    page,
-  }) => {
+  test("Fase 2: Auth tem formulário de telefone e CTA", async ({ page }) => {
     await page.goto("/auth", {
       waitUntil: "domcontentloaded",
       timeout: 15000,
     });
     await page.waitForLoadState("domcontentloaded");
 
-    const cta = page
-      .getByRole("button", { name: /continuar|demonstração|explorar/i })
-      .or(page.getByRole("link", { name: /continuar|demonstração|explorar/i }));
-    await expect(cta.first()).toBeVisible({ timeout: 5000 });
+    // Auth page now shows phone login with "Receber código" button
+    const phoneTitle = page.getByRole("heading", {
+      name: /Entrar com telefone/i,
+    });
+    await expect(phoneTitle).toBeVisible({ timeout: 5000 });
   });
 
   test("Fase 3–4: Rotas bootstrap e first-product carregam (200 ou redirect)", async ({

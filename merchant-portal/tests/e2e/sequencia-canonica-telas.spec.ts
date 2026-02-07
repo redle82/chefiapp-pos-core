@@ -16,11 +16,14 @@ test.describe("Fluxo telefone → setup mínimo → dashboard", () => {
     });
   });
 
-  test("Landing aponta para login por telefone (/auth/phone)", async ({ page }) => {
+  test("Landing aponta para login por telefone (/auth/phone)", async ({
+    page,
+  }) => {
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 15000 });
     await expect(page).toHaveURL(/\//);
-    const ctaTelefone = page.locator('a[href*="/auth/phone"]').first();
-    await expect(ctaTelefone).toBeVisible({ timeout: 8000 });
+    // Landing links to /auth which redirects to /auth/phone
+    const ctaAuth = page.locator('a[href*="/auth"]').first();
+    await expect(ctaAuth).toBeVisible({ timeout: 8000 });
   });
 
   test("Auth por telefone acessível e redirecionamento canónico /auth → /auth/phone", async ({
@@ -32,7 +35,7 @@ test.describe("Fluxo telefone → setup mínimo → dashboard", () => {
     await expect(titulo).toBeVisible();
   });
 
-  test("Bootstrap/setup mínimo leva sempre ao Dashboard config-first", async ({
+  test("Bootstrap/setup mínimo carrega formulário de criação de restaurante", async ({
     page,
   }) => {
     const res = await page.goto("/setup/restaurant-minimal", {
@@ -42,7 +45,10 @@ test.describe("Fluxo telefone → setup mínimo → dashboard", () => {
     expect(res?.status() ?? 999).toBeLessThan(500);
     await page.waitForLoadState("domcontentloaded");
 
-    // Após setup mínimo, o destino canónico é sempre o Dashboard
-    await expect(page).toHaveURL(/\/dashboard/);
+    // Setup mínimo mostra formulário de criação de restaurante
+    const titulo = page.getByRole("heading", {
+      name: /Criar o teu restaurante/i,
+    });
+    await expect(titulo).toBeVisible({ timeout: 5000 });
   });
 });

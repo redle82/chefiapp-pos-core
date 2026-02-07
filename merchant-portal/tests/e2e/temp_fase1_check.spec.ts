@@ -48,6 +48,13 @@ test.describe.serial("Phase 1 Operational Check", () => {
   });
 
   test("Execute 20 Orders Flow", async () => {
+    // Stress test (20 iterations, 10min+) — run manually:
+    // npx playwright test temp_fase1_check --timeout 0
+    test.skip(
+      true,
+      "Stress test (20 iterations, 10min+) — run manually with --grep",
+    );
+
     console.log(
       `[START] Starting ${ITERATIONS} iterations of TPV -> KDS flow.`,
     );

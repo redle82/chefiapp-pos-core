@@ -9,17 +9,23 @@ test.describe("Immutable Shift Contract Verification", () => {
     // 1. Initial State: No Shift Open
     // 0. Inject Authentication Mocks & Demo Mode
     await page.addInitScript(() => {
+      localStorage.clear();
+      sessionStorage.clear();
       localStorage.setItem("chefiapp_demo_mode", "true");
       localStorage.setItem("chefiapp_restaurant_id", "demo-restaurant-id");
-      // If RoleGate or similar checks specific tokens:
-      // localStorage.setItem('supabase.auth.token', ...);
       localStorage.setItem("chefiapp_user_role", "owner");
-      // But the previous test in human_audit used 'chefiapp_demo_mode' to presumably bypass things
-      // OR the app handles demo mode gracefully.
     });
 
     // Hardcoded restaurant ID from the app/debug page
     const restId = "00000000-0000-0000-0000-000000000100";
+
+    // Mock initial shift API to return closed state (no open shift)
+    await page.route(
+      "**/rest/v1/gm_cash_registers*status=eq.open*",
+      async (route) => {
+        await route.fulfill({ json: null });
+      },
+    );
 
     // 1. Initial State: No Shift Open
     await page.goto("/tpv-test");
@@ -31,7 +37,10 @@ test.describe("Immutable Shift Contract Verification", () => {
       .isVisible()
       .catch(() => false);
     if (!tpvDebugVisible) {
-      test.skip(true, "TPV debug page not available (Core/auth or /tpv-test not reachable)");
+      test.skip(
+        true,
+        "TPV debug page not available (Core/auth or /tpv-test not reachable)",
+      );
     }
 
     // Ensure we are in Debug TPV (assert after skip for same-run consistency)

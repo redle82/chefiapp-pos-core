@@ -39,25 +39,30 @@ test.describe("Fase B: Chaos Night Simulation", () => {
       // Assumindo auth via credenciais de teste ou sessão preservada se configurado globalmente
       // Para simplificar, vamos na rota direta e logar se necessário
 
+      // Auth bypass via Pilot Mode injection (phone auth replaces email login)
+      const injectPilot = async (ctx: typeof contextKDS) => {
+        await ctx.addInitScript(() => {
+          window.sessionStorage.setItem("chefiapp_debug", "1");
+          window.localStorage.setItem("chefiapp_pilot_mode", "true");
+          window.sessionStorage.setItem(
+            "chefiapp_keycloak_session",
+            JSON.stringify({
+              session: { access_token: "mock-pilot-token" },
+              user: { id: "pilot-user-id", email: "pilot@example.com" },
+            }),
+          );
+        });
+      };
+
       // KDS
+      await injectPilot(contextKDS);
       await pageKDS.goto("/op/kds");
-      if (await pageKDS.url().includes("/auth")) {
-        await pageKDS.fill('input[type="email"]', "admin@admin.com");
-        await pageKDS.fill('input[type="password"]', "admin123");
-        await pageKDS.click('button[type="submit"]');
-        await pageKDS.waitForURL("/op/kds");
-      }
+      await pageKDS.waitForLoadState("domcontentloaded");
 
       // Staff
-      await pageStaff.goto("/op/tpv"); // Usando TPV como proxy do Staff por enquanto se /op/staff exigir mais setup
-      // Check login
-      if (await pageStaff.url().includes("/auth")) {
-        // Se já logou no KDS, talvez precise logar aqui também se os contextos não compartilharem state (eles não compartilham)
-        await pageStaff.fill('input[type="email"]', "admin@admin.com");
-        await pageStaff.fill('input[type="password"]', "admin123");
-        await pageStaff.click('button[type="submit"]');
-        await pageStaff.waitForURL("/op/tpv");
-      }
+      await injectPilot(contextStaff);
+      await pageStaff.goto("/op/tpv");
+      await pageStaff.waitForLoadState("domcontentloaded");
     });
 
     // 2. CLIENTE: Pedido Via QR (Simulado via acesso público ou demo)
@@ -133,9 +138,9 @@ test.describe("Fase B: Chaos Night Simulation", () => {
       window.localStorage.setItem("chefiapp_pilot_mode", "true");
     });
 
-    // Navigate to Auth - should auto-redirect to Dashboard due to Pilot Mode
-    await page.goto("/auth");
-    await page.waitForURL("/app/dashboard");
+    // Navigate directly to dashboard (Pilot Mode bypasses auth; /auth now uses phone login)
+    await page.goto("/app/dashboard");
+    await page.waitForLoadState("domcontentloaded");
 
     // Navegar TPV
     await page.goto("/op/tpv");
@@ -149,7 +154,7 @@ test.describe("Fase B: Chaos Night Simulation", () => {
           .getByText("Core indisponível")
           .waitFor({ state: "visible", timeout: 5000 });
         console.log(
-          "SUCESSO: TPV bloqueado imediatamente (Core down na inicialização)."
+          "SUCESSO: TPV bloqueado imediatamente (Core down na inicialização).",
         );
         return;
       } catch (e) {
@@ -214,22 +219,19 @@ test.describe("Fase B: Chaos Night Simulation", () => {
     const context = await browser.newContext();
     const page = await context.newPage();
 
-    // Login (ou já redirecionado para app)
-    await page.goto("/auth", { waitUntil: "domcontentloaded" });
-    await page
-      .waitForURL(/\/(auth|app|dashboard|op)/, { timeout: 12000 })
-      .catch(() => {});
-    if (page.url().includes("/auth")) {
-      const emailInput = page.locator('input[type="email"]').first();
-      if (await emailInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await emailInput.fill("admin@admin.com");
-        await page.locator('input[type="password"]').first().fill("admin123");
-        await page.locator('button[type="submit"]').first().click();
-        await page
-          .waitForURL(/\/(app|dashboard|op)/, { timeout: 10000 })
-          .catch(() => {});
-      }
-    }
+    // Auth bypass via Pilot Mode (phone auth replaces email login)
+    await context.addInitScript(() => {
+      window.sessionStorage.setItem("chefiapp_debug", "1");
+      window.localStorage.setItem("chefiapp_pilot_mode", "true");
+      window.sessionStorage.setItem(
+        "chefiapp_keycloak_session",
+        JSON.stringify({
+          session: { access_token: "mock-pilot-token" },
+          user: { id: "pilot-user-id", email: "pilot@example.com" },
+        }),
+      );
+    });
+    await page.goto("/app/dashboard", { waitUntil: "domcontentloaded" });
 
     // Assumindo que o usuário tem acesso a mudar restaurante
     // Fluxo: Ir config -> Mudar Restaurante -> Ir TPV
@@ -245,7 +247,7 @@ test.describe("Fase B: Chaos Night Simulation", () => {
       // Se não conseguir trocar fácil, logamos como DOR.
 
       console.log(
-        "Teste de troca de restaurante pendente de implementação de fluxo de UI específico."
+        "Teste de troca de restaurante pendente de implementação de fluxo de UI específico.",
       );
     });
 
