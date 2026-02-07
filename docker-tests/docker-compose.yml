@@ -127,7 +127,7 @@ services:
       SLOT_NAME: supabase_realtime_rls
       TEMPORARY_SLOT: "true"
     ports:
-      - "4000:4000"
+      - "4001:4000"
     networks:
       - chefiapp-test-net
 
