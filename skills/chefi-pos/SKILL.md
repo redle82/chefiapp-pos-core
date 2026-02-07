@@ -1,15 +1,6 @@
 ---
 name: chefi-pos
 description: ChefIApp POS CORE operational assistant. Use when the user asks about restaurant operations, orders, shifts (turnos), menu, stock, KDS, TPV, tables, staff, payments, or any restaurant management task. Handles order lifecycle (OPEN→LOCKED→CLOSED), shift management (open/close cash register), menu queries, stock alerts, daily reports, and staff coordination. Speaks Portuguese (PT-BR) by default. Trigger on any mention of: pedido, turno, caixa, cardápio, estoque, mesa, KDS, TPV, funcionário, relatório, venda.
-metadata:
-  {
-    "openclaw":
-      {
-        "emoji": "🍳",
-        "homepage": "https://chefiapp.com",
-        "requires": { "bins": ["curl"] },
-      },
-  }
 ---
 
 # ChefIApp POS — Skill Operacional
