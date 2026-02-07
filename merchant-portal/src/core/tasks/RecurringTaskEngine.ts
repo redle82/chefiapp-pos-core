@@ -8,6 +8,7 @@
  * - Usa Docker Core (`gm_recurring_tasks`, RPCs) via dockerCoreClient.
  */
 
+import type { PulseZone } from "../../../../core-engine/pulse";
 import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
 
 export interface RecurringTask {

@@ -9,6 +9,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
+import { usePulseOptional } from "../../core/pulse";
 import {
   DashboardService,
   type DailyMetrics,
@@ -72,6 +73,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
   const navigate = useNavigate();
   const { identity } = useRestaurantIdentity();
   const shift = useShift();
+  const pulseCtx = usePulseOptional();
   const { orders: appStaffOrders } = useAppStaffOrders(identity.id ?? null);
 
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -315,7 +317,22 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
               </Text>
             </Card>
 
-            <Card surface="layer2" padding="lg" style={{ padding: spacing.xl }}>
+            <Card
+              surface="layer2"
+              padding="lg"
+              style={{
+                padding: spacing.xl,
+                borderLeft: pulseCtx?.snapshot
+                  ? `3px solid ${
+                      pulseCtx.snapshot.zone === "FLOW_ALTO"
+                        ? colors.destructive.base
+                        : pulseCtx.snapshot.zone === "FLOW_PARCIAL"
+                        ? colors.warning.base
+                        : colors.success.base
+                    }`
+                  : undefined,
+              }}
+            >
               <Text
                 size="xs"
                 color="tertiary"
@@ -344,6 +361,36 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                 <Text size="xl" weight="bold" color="primary">
                   {shift.isShiftOpen ? "Aberto" : "Fechado"}
                 </Text>
+                {pulseCtx?.snapshot && (
+                  <span
+                    style={{
+                      marginLeft: "auto",
+                      padding: "2px 8px",
+                      borderRadius: radius.md,
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      backgroundColor:
+                        pulseCtx.snapshot.zone === "FLOW_ALTO"
+                          ? "rgba(239,68,68,0.15)"
+                          : pulseCtx.snapshot.zone === "FLOW_PARCIAL"
+                          ? "rgba(245,158,11,0.15)"
+                          : "rgba(34,197,94,0.15)",
+                      color:
+                        pulseCtx.snapshot.zone === "FLOW_ALTO"
+                          ? colors.destructive.base
+                          : pulseCtx.snapshot.zone === "FLOW_PARCIAL"
+                          ? colors.warning.base
+                          : colors.success.base,
+                    }}
+                  >
+                    {pulseCtx.snapshot.zone === "FLOW_ALTO"
+                      ? "🔴 Rush"
+                      : pulseCtx.snapshot.zone === "FLOW_PARCIAL"
+                      ? "🟡 Parcial"
+                      : "🟢 Calmo"}{" "}
+                    {pulseCtx.snapshot.score}
+                  </span>
+                )}
               </div>
               <Text
                 size="sm"
@@ -705,7 +752,19 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
           <Card
             surface="layer2"
             padding="lg"
-            style={{ display: "flex", flexDirection: "column" }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              borderLeft: pulseCtx?.snapshot
+                ? `3px solid ${
+                    pulseCtx.snapshot.zone === "FLOW_ALTO"
+                      ? colors.destructive.base
+                      : pulseCtx.snapshot.zone === "FLOW_PARCIAL"
+                      ? colors.warning.base
+                      : colors.success.base
+                  }`
+                : undefined,
+            }}
           >
             <div
               style={{
@@ -719,6 +778,36 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
               <Text size="md" weight="bold" color="primary">
                 Motor da operação
               </Text>
+              {pulseCtx?.snapshot && (
+                <span
+                  style={{
+                    marginLeft: "auto",
+                    padding: "2px 8px",
+                    borderRadius: radius.md,
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    backgroundColor:
+                      pulseCtx.snapshot.zone === "FLOW_ALTO"
+                        ? "rgba(239,68,68,0.15)"
+                        : pulseCtx.snapshot.zone === "FLOW_PARCIAL"
+                        ? "rgba(245,158,11,0.15)"
+                        : "rgba(34,197,94,0.15)",
+                    color:
+                      pulseCtx.snapshot.zone === "FLOW_ALTO"
+                        ? colors.destructive.base
+                        : pulseCtx.snapshot.zone === "FLOW_PARCIAL"
+                        ? colors.warning.base
+                        : colors.success.base,
+                  }}
+                >
+                  {pulseCtx.snapshot.zone === "FLOW_ALTO"
+                    ? "🔴 Rush"
+                    : pulseCtx.snapshot.zone === "FLOW_PARCIAL"
+                    ? "🟡 Parcial"
+                    : "🟢 Calmo"}{" "}
+                  {pulseCtx.snapshot.score}
+                </span>
+              )}
             </div>
             <Text
               size="xs"

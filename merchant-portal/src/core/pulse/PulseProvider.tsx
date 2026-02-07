@@ -12,6 +12,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -24,6 +25,7 @@ import type {
 } from "../../../../core-engine/pulse";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { readActiveOrders } from "../../core-boundary/readers/OrderReader";
+import { SystemEvents } from "../events/SystemEvents";
 import { useShift } from "../shift/ShiftContext";
 import type { UsePulseOptions } from "./usePulse";
 import { usePulse } from "./usePulse";
