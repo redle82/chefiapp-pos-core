@@ -1,10 +1,9 @@
 {
   "name": "chefiapp-pos-core",
-  "version": "1.0.1",
+  "version": "1.0.0-pilot",
   "main": "index.js",
   "workspaces": [
-    "merchant-portal",
-    "customer-portal"
+    "merchant-portal"
   ],
   "directories": {
     "test": "tests"
@@ -34,12 +33,7 @@
     "build:core": "tsc -p tsconfig.json",
     "export:portal": "rm -rf public/app && mkdir -p public/app && cp -R merchant-portal/dist/. public/app/",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "server:webhook": "npx ts-node server/webhook-server.ts",
-    "server:billing": "npx ts-node server/billing-webhook-server.ts",
-    "server:subscription-ui": "npx ts-node server/subscription-management-server.ts",
-    "server:web-module": "npx ts-node server/web-module-api-server.ts",
-    "seed:web-module": "npx ts-node server/seed-web-module.ts",
-    "refresh:amazon": "npx ts-node server/amazon/refresh-catalog-cli.ts",
+    "_legacy:server-info": "echo 'Server scripts moved to _legacy_isolation/server/ — see docs/audit/AUDIT_SUPREMA_20260207.md'",
     "demo:appstaff": "npx ts-node tests/appstaff-demo-mode.ts",
     "demo:appstaff:one": "bash scripts/demo-one-command.sh",
     "demo:voice": "bash scripts/demo-voice.sh",

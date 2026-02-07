@@ -8,7 +8,7 @@
 #   docker compose logs -f simulator-orders # Watch simulator logs
 # ==============================================================================
 
-version: '3.9'
+version: "3.9"
 
 name: chefiapp-massive-tests
 
@@ -34,7 +34,7 @@ services:
   # ============================================================================
   # CORE INFRASTRUCTURE
   # ============================================================================
-  
+
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
@@ -183,7 +183,7 @@ services:
   # ============================================================================
   # SIMULATORS
   # ============================================================================
-  
+
   # Orders Simulator - Creates concurrent orders
   simulator-orders:
     build:
