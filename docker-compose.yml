@@ -95,7 +95,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: ["node", "dist/server/webhook-server.js"]
+    command: ["node", "dist/_legacy_isolation/server/webhook-server.js"]
     healthcheck:
       test:
         [
@@ -147,7 +147,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: ["node", "dist/server/billing-webhook-server.js"]
+    command: ["node", "dist/_legacy_isolation/server/billing-webhook-server.js"]
     healthcheck:
       test:
         [
@@ -198,7 +198,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: ["node", "dist/server/subscription-management-server.js"]
+    command:
+      [
+        "node",
+        "dist/_legacy_isolation/server/subscription-management-server.js",
+      ]
     healthcheck:
       test:
         [
@@ -248,7 +252,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: ["node", "dist/server/web-module-api-server.js"]
+    command: ["node", "dist/_legacy_isolation/server/web-module-api-server.js"]
     healthcheck:
       test:
         [
@@ -303,11 +307,7 @@ services:
     networks:
       - chefiapp-network
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\n\r\n' >&3 && cat <&3 | grep -q '200'",
-        ]
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5

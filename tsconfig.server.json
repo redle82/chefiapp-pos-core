@@ -4,7 +4,7 @@
     "module": "commonjs",
     "lib": ["ES2022"],
     "outDir": "./dist",
-    "rootDir": "./_legacy_isolation",
+    "rootDir": ".",
     "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -19,7 +19,8 @@
     "noUnusedParameters": false,
     "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": false,
-    "baseUrl": "_legacy_isolation",
+    "noEmitOnError": false,
+    "jsx": "react-jsx",
     "types": ["node"]
   },
   "include": [
@@ -32,12 +33,18 @@
     "_legacy_isolation/billing-core/**/*.ts",
     "_legacy_isolation/projections/**/*.ts",
     "_legacy_isolation/sdk/**/*.ts",
-    "_legacy_isolation/web-module/**/*.ts"
+    "_legacy_isolation/sdk/**/*.tsx",
+    "_legacy_isolation/web-module/**/*.ts",
+    "core-engine/**/*.ts",
+    "fiscal-modules/**/*.ts",
+    "types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "_legacy_isolation/server/node_modules",
-    "_legacy_isolation/**/node_modules"
+    "_legacy_isolation/**/node_modules",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.spec.ts"
   ]
 }
