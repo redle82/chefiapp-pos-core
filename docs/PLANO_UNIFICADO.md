@@ -86,11 +86,14 @@ Criar `merchant-portal/src/core/pulse/`:
 - ✅ `PulseProvider`: emite `METABOLIC_PULSE_LOGGED` no SystemBus
 - ✅ 27/27 testes unitários (self-contained pure logic)
 
-### B.3 Integração Contexto (2 dias)
+### B.3 Integração Contexto (2 dias) — ✅ `b7f86e9`
 
-- `ContextLogic`: `OperationalMode` reage ao pulse (tower↔rush)
-- `useOperationalKernel`: expor `pulse` no `OperationalState`
-- Dashboard: cards adaptam layout conforme zone
+- ✅ `ContextLogic`: `resolveOperationalMode()` mapeia zone→rush/tower/calmo
+- ✅ `ContextEngine`: injeta `pulseZone` via `usePulseOptional()`
+- ✅ `useOperationalKernel`: expõe `pulse { score, zone }` no `OperationalState`
+- ✅ `OwnerDashboard`: badge colorido (🔴🟡🟢) em ambas variantes
+- ✅ Corrige imports B.2: useEffect, SystemEvents, PulseZone
+- ✅ 16/16 testes (PulseContextIntegration.test.ts)
 
 ### B.4 Gamificação + Analytics (1 dia)
 
