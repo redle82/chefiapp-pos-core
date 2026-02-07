@@ -145,8 +145,8 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: gm
-      MINIO_ROOT_PASSWORD: gmstorage
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -163,7 +163,7 @@ services:
     container_name: chefiapp-core-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@gm.local
+      PGADMIN_DEFAULT_EMAIL: admin@chefiapp.dev
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"

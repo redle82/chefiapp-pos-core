@@ -2,6 +2,10 @@
 -- ChefIApp Test Database Initialization
 -- ==============================================================================
 
+-- Create required schemas for Supabase compatibility
+CREATE SCHEMA IF NOT EXISTS auth;
+CREATE SCHEMA IF NOT EXISTS storage;
+
 -- Create roles
 CREATE ROLE anon NOLOGIN;
 CREATE ROLE authenticated NOLOGIN;

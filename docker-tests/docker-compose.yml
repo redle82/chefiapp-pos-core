@@ -120,6 +120,7 @@ services:
       DB_SSL: "false"
       PORT: 4000
       JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters
+      SECRET_KEY_BASE: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
       REPLICATION_MODE: RLS
       REPLICATION_POLL_INTERVAL: 100
       SECURE_CHANNELS: "false"
