@@ -33,6 +33,12 @@ export function PublicQRSection() {
       .then((r) => {
         if (!cancelled && r?.slug) setSlug(r.slug);
       })
+      .catch((err) => {
+        const msg = err?.message ?? String(err);
+        if (!cancelled && !msg.includes("abort") && !msg.includes("Failed to fetch")) {
+          console.warn("[PublicQRSection] Erro ao carregar restaurante:", err);
+        }
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });

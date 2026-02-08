@@ -567,11 +567,14 @@ export function RestaurantRuntimeProvider({
           }
         }
         setRuntime((prev) => ({ ...prev, setup_status: newSetupStatus }));
-      } catch (error) {
-        console.error(
-          "[RestaurantRuntime] Erro ao atualizar setup_status:",
-          error,
-        );
+      } catch (error: any) {
+        const msg = error?.message ?? String(error);
+        if (!msg.includes("abort") && !msg.includes("Failed to fetch")) {
+          console.error(
+            "[RestaurantRuntime] Erro ao atualizar setup_status:",
+            error,
+          );
+        }
       }
     },
     [runtime.restaurant_id, runtime.setup_status, isDockerCore],

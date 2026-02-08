@@ -63,7 +63,8 @@ export function LocationSection() {
             .maybeSingle();
 
         if (restaurantError) {
-          if (!cancelled) {
+          const msg = restaurantError?.message ?? String(restaurantError);
+          if (!cancelled && !msg.includes("abort") && !msg.includes("Failed to fetch")) {
             console.warn(
               "[LocationSection] Erro ao carregar localização:",
               restaurantError,
@@ -80,7 +81,10 @@ export function LocationSection() {
           .eq("restaurant_id", restaurantId);
 
         if (zonesError && !cancelled) {
-          console.warn("[LocationSection] Erro ao carregar zonas:", zonesError);
+          const zMsg = zonesError?.message ?? String(zonesError);
+          if (!zMsg.includes("abort") && !zMsg.includes("Failed to fetch")) {
+            console.warn("[LocationSection] Erro ao carregar zonas:", zonesError);
+          }
         }
 
         if (!cancelled && restaurant) {
@@ -94,8 +98,9 @@ export function LocationSection() {
             zones: zonesData?.map((z: any) => z.type as string) ?? prev.zones,
           }));
         }
-      } catch (error) {
-        if (!cancelled) {
+      } catch (error: any) {
+        const msg = error?.message ?? String(error);
+        if (!cancelled && !msg.includes("abort") && !msg.includes("Failed to fetch")) {
           console.warn(
             "[LocationSection] Erro inesperado ao carregar localização:",
             error,
