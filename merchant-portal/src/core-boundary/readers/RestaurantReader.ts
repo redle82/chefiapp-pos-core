@@ -17,6 +17,9 @@ import { CONFIG } from "../../config";
 const DOCKER_CORE_URL = CONFIG.CORE_URL;
 const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
 
+/** PostgREST base: nginx no Core espera /rest/v1/* */
+const REST_V1 = `${DOCKER_CORE_URL}/rest/v1`;
+
 export interface CoreRestaurant {
   id: string;
   name: string;
@@ -81,7 +84,7 @@ function parseJsonIfOk<T>(response: Response, text: string): T {
 export async function readRestaurantBySlug(
   slug: string,
 ): Promise<CoreRestaurant | null> {
-  const url = `${DOCKER_CORE_URL}/gm_restaurants?select=*&slug=eq.${slug}`;
+  const url = `${REST_V1}/gm_restaurants?select=*&slug=eq.${slug}`;
 
   const response = await fetch(url, {
     method: "GET",
@@ -108,7 +111,7 @@ export async function readRestaurantBySlug(
 export async function readRestaurantById(
   restaurantId: string,
 ): Promise<CoreRestaurant | null> {
-  const url = `${DOCKER_CORE_URL}/gm_restaurants?select=*&id=eq.${restaurantId}`;
+  const url = `${REST_V1}/gm_restaurants?select=*&id=eq.${restaurantId}`;
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -142,7 +145,7 @@ export async function readMenuCategories(
     return menuCategoriesCache.data;
   }
 
-  const url = `${DOCKER_CORE_URL}/gm_menu_categories?select=*&restaurant_id=eq.${restaurantId}&order=sort_order.asc,created_at.asc`;
+  const url = `${REST_V1}/gm_menu_categories?select=*&restaurant_id=eq.${restaurantId}&order=sort_order.asc,created_at.asc`;
 
   const response = await fetch(url, {
     method: "GET",
@@ -177,7 +180,7 @@ export async function readProducts(
     return productsCache.data;
   }
 
-  const url = `${DOCKER_CORE_URL}/gm_products?select=*&restaurant_id=eq.${restaurantId}&available=eq.true&order=created_at.asc`;
+  const url = `${REST_V1}/gm_products?select=*&restaurant_id=eq.${restaurantId}&available=eq.true&order=created_at.asc`;
 
   const response = await fetch(url, {
     method: "GET",
@@ -229,7 +232,7 @@ export async function readTableByNumber(
   restaurantId: string,
   tableNumber: number,
 ): Promise<CoreTable | null> {
-  const url = `${DOCKER_CORE_URL}/gm_tables?select=*&restaurant_id=eq.${restaurantId}&number=eq.${tableNumber}`;
+  const url = `${REST_V1}/gm_tables?select=*&restaurant_id=eq.${restaurantId}&number=eq.${tableNumber}`;
 
   const response = await fetch(url, {
     method: "GET",
