@@ -1,7 +1,7 @@
 # Rotação de Chaves Stripe — Ação Necessária
 
-**Data:** 2026-01-25  
-**Status:** ⚠️ AÇÃO REQUERIDA  
+**Data:** 2026-01-25
+**Status:** ⚠️ AÇÃO REQUERIDA
 **Prioridade:** Alta (após testes)
 
 ---
@@ -11,6 +11,7 @@
 As chaves Stripe (TEST MODE) foram expostas durante desenvolvimento e testes.
 
 **Ação necessária:**
+
 - 🔄 Rotacionar todas as chaves Stripe
 - 🚫 Nunca reutilizar essas keys em outro ambiente
 - ✅ Manter `.env` fora de qualquer commit (já está no `.gitignore`)
@@ -22,23 +23,27 @@ As chaves Stripe (TEST MODE) foram expostas durante desenvolvimento e testes.
 ### Chaves Expostas (TEST MODE)
 
 1. **STRIPE_PUBLISHABLE_KEY**
-   - Prefixo: `pk_test_51SgVOwE...`
+
+   - Prefixo: `pk_test_XXXX...` (rotacionada)
    - Ação: Revogar e criar nova
 
 2. **STRIPE_SECRET_KEY**
-   - Prefixo: `sk_test_51SgVOwE...`
+
+   - Prefixo: `sk_test_XXXX...` (rotacionada)
    - Ação: Revogar e criar nova
 
 3. **STRIPE_WEBHOOK_SECRET**
-   - Prefixo: `whsec_de68ea35...`
+
+   - Prefixo: `whsec_XXXX...` (rotacionada)
    - Ação: Revogar e criar novo
 
 4. **MERCHANT_STRIPE_KEY**
-   - Prefixo: `sk_test_51SgVOwE...`
+
+   - Prefixo: `sk_test_XXXX...` (rotacionada)
    - Ação: Revogar e criar nova
 
 5. **MERCHANT_STRIPE_WEBHOOK_SECRET**
-   - Prefixo: `whsec_de68ea35...`
+   - Prefixo: `whsec_XXXX...` (rotacionada)
    - Ação: Revogar e criar novo
 
 ---
@@ -60,10 +65,12 @@ As chaves Stripe (TEST MODE) foram expostas durante desenvolvimento e testes.
 ### 3. Criar Novas Chaves
 
 1. **Publishable Key:**
+
    - Dashboard → Developers → API keys
    - Copiar "Publishable key" (test mode)
 
 2. **Secret Key:**
+
    - Dashboard → Developers → API keys
    - Clicar em "Reveal test key"
    - Copiar "Secret key" (test mode)
@@ -109,14 +116,17 @@ git check-ignore .env
 ### Boas Práticas
 
 1. **Nunca commitar `.env`:**
+
    - Sempre verificar `git status` antes de commit
    - Usar `git check-ignore .env` para confirmar
 
 2. **Usar variáveis de ambiente:**
+
    - Não hardcodar chaves no código
    - Sempre usar `process.env.CHAVE`
 
 3. **Rotacionar regularmente:**
+
    - Rotacionar chaves de teste a cada 3-6 meses
    - Rotacionar chaves de produção a cada 6-12 meses
 

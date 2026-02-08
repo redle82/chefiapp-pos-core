@@ -1,7 +1,7 @@
 # 🥇 MERCHANT ONBOARDING CHECKLIST
 
-> **Objetivo:** Ativar o primeiro merchant real no ChefIApp  
-> **Data:** 23 Dezembro 2025  
+> **Objetivo:** Ativar o primeiro merchant real no ChefIApp
+> **Data:** 23 Dezembro 2025
 > **Status:** PRONTO PARA EXECUÇÃO
 
 ---
@@ -21,6 +21,7 @@
 ### 1.1 Escolher Merchant
 
 **Opção A: Merchant Real (Sofia Gastrobar)**
+
 ```
 Business Name: Sofia Gastrobar
 Type: RESTAURANT
@@ -31,6 +32,7 @@ Trial: 14 dias
 ```
 
 **Opção B: Dev Test Merchant**
+
 ```
 Business Name: DevSolo Test Restaurant
 Type: RESTAURANT
@@ -44,7 +46,7 @@ Trial: 14 dias
 
 ```bash
 # Definir variáveis
-export STRIPE_SECRET_KEY=sk_test_51SgVOwEOB1Od9eib...
+export STRIPE_SECRET_KEY="$STRIPE_SECRET_KEY"   # set via .env or 1Password
 
 # Executar script
 node onboard-first-merchant.js
@@ -66,27 +68,27 @@ node onboard-first-merchant.js
 ```javascript
 // Contexto do merchant onboarded
 const context = {
-  status: 'TRIAL',           // Do Stripe webhook
-  tier: 'PROFESSIONAL',      // Do plano
-  addons: ['RESERVATIONS'],  // Do subscription
+  status: "TRIAL", // Do Stripe webhook
+  tier: "PROFESSIONAL", // Do plano
+  addons: ["RESERVATIONS"], // Do subscription
 };
 
 // Testes
-canUse('CORE_POS')        // → true (tier PROFESSIONAL)
-canUse('RESERVATIONS')    // → true (addon)
-canUse('MULTI_VENUE')     // → false (não tem addon)
-canUse('API_ACCESS')      // → true (tier PROFESSIONAL)
+canUse("CORE_POS"); // → true (tier PROFESSIONAL)
+canUse("RESERVATIONS"); // → true (addon)
+canUse("MULTI_VENUE"); // → false (não tem addon)
+canUse("API_ACCESS"); // → true (tier PROFESSIONAL)
 ```
 
 ### 2.2 Simular Mudanças de Status
 
-| Cenário | Status | Resultado Esperado |
-|---------|--------|-------------------|
-| Trial normal | `TRIAL` | Todas features do tier + addons |
-| Pagamento ok | `ACTIVE` | Todas features do tier + addons |
-| Atraso leve | `PAST_DUE` | Continua funcionando (grace) |
-| Suspenso | `SUSPENDED` | **TUDO BLOQUEADO** |
-| Cancelado | `CANCELLED` | **TUDO BLOQUEADO** |
+| Cenário      | Status      | Resultado Esperado              |
+| ------------ | ----------- | ------------------------------- |
+| Trial normal | `TRIAL`     | Todas features do tier + addons |
+| Pagamento ok | `ACTIVE`    | Todas features do tier + addons |
+| Atraso leve  | `PAST_DUE`  | Continua funcionando (grace)    |
+| Suspenso     | `SUSPENDED` | **TUDO BLOQUEADO**              |
+| Cancelado    | `CANCELLED` | **TUDO BLOQUEADO**              |
 
 ### 2.3 API Endpoints (mínimos)
 
@@ -127,11 +129,11 @@ POST /api/features/check        → verificar feature específica
 
 ### 3.2 Ações
 
-| Botão | Ação |
-|-------|------|
-| Upgrade Plano | Stripe Checkout → novo price |
-| Add-ons | Modal com addons disponíveis |
-| Atualizar Pagamento | Stripe Customer Portal |
+| Botão               | Ação                         |
+| ------------------- | ---------------------------- |
+| Upgrade Plano       | Stripe Checkout → novo price |
+| Add-ons             | Modal com addons disponíveis |
+| Atualizar Pagamento | Stripe Customer Portal       |
 
 ---
 
@@ -145,7 +147,7 @@ POST /api/features/check        → verificar feature específica
 // Merchant processa venda de €45.50
 const intent = await stripe.paymentIntents.create({
   amount: 4550,
-  currency: 'eur',
+  currency: "eur",
   // Chave do MERCHANT, não do ChefI
   // Ou Stripe Connect com destination
 });
@@ -165,21 +167,25 @@ Evento: payment_intent.succeeded
 ## ✅ CRITÉRIOS DE SUCESSO
 
 ### Passo 1 — Onboarding
+
 - [ ] Merchant no Stripe com subscription ativa
 - [ ] Record persistido com IDs corretos
 - [ ] Email de boas-vindas (opcional)
 
 ### Passo 2 — Feature Gates Live
+
 - [ ] Merchant usa feature permitida → OK
 - [ ] Merchant tenta feature bloqueada → Erro claro
 - [ ] Webhook atualiza status em tempo real
 
 ### Passo 3 — UI Funcional
+
 - [ ] Merchant vê seu plano
 - [ ] Merchant consegue fazer upgrade
 - [ ] Merchant adiciona addon
 
 ### Passo 4 — Payments
+
 - [ ] Cliente paga no POS
 - [ ] Dinheiro vai para conta do merchant
 - [ ] ChefI não toca no dinheiro do cliente
@@ -199,12 +205,12 @@ Evento: payment_intent.succeeded
 
 ## 📅 TIMELINE SUGERIDA
 
-| Dia | Tarefa |
-|-----|--------|
-| Hoje | Passo 1 — Onboarding primeiro merchant |
-| +1 | Passo 2 — Feature Gates conectados |
-| +2 | Passo 3 — UI de gestão básica |
-| +7 | Passo 4 — Payments gateway (se merchant precisar) |
+| Dia  | Tarefa                                            |
+| ---- | ------------------------------------------------- |
+| Hoje | Passo 1 — Onboarding primeiro merchant            |
+| +1   | Passo 2 — Feature Gates conectados                |
+| +2   | Passo 3 — UI de gestão básica                     |
+| +7   | Passo 4 — Payments gateway (se merchant precisar) |
 
 ---
 
@@ -213,7 +219,7 @@ Evento: payment_intent.succeeded
 ```bash
 cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core
 
-export STRIPE_SECRET_KEY=sk_test_51SgVOwEOB1Od9eibr4UEWPbWPtpXo4H2bsT9sO9bBGqz0rIJHFLZlAG8Wwe0vXp9CrPTVbHF1u1UtT3bPDcFe56B00Y0FD7n8Y
+export STRIPE_SECRET_KEY="$STRIPE_SECRET_KEY"   # set via .env or 1Password
 
 node onboard-first-merchant.js
 ```

@@ -66,24 +66,15 @@ function readMerchantRecord() {
 }
 
 async function readMerchantRecordFromDb() {
-  try {
-    const db = await getDb();
-    const { rows } = await db.query(
-      "SELECT merchant_id, business_name, stripe_customer_id, stripe_subscription_id FROM merchant_subscriptions LIMIT 1",
-    );
-    if (rows.length > 0) return rows[0];
-  } catch {
-    // DB not available or table not created yet — fall back to JSON
-  }
+  const db = await getDb();
+  const { rows } = await db.query(
+    "SELECT merchant_id, business_name, stripe_customer_id, stripe_subscription_id FROM merchant_subscriptions LIMIT 1",
+  );
+  if (rows.length > 0) return rows[0];
 
-  // Legacy fallback: read from JSON file
-  const recordPath = path.join(process.cwd(), "merchant-001-record.json");
-  if (!fs.existsSync(recordPath)) {
-    throw new Error(
-      "No merchant record found. Run migration 20260207_01_merchant_subscriptions.sql and seed a merchant, or create merchant-001-record.json",
-    );
-  }
-  return JSON.parse(fs.readFileSync(recordPath, "utf8"));
+  throw new Error(
+    "No merchant record found. Run migration 20260207_01_merchant_subscriptions.sql and seed a merchant.",
+  );
 }
 
 function detectTier(productName: string, amount: number): PlanTier | null {

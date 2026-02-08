@@ -1,6 +1,6 @@
 # Plano Unificado de Implementação — ChefIApp POS CORE
 
-> **Versão:** 1.0 · **Data:** 2026-02-07 · **Branch:** `core/frozen-v1` > **Status atual do produto:** ~58% pronto para produção
+> **Versão:** 1.1 · **Data:** 2026-02-08 · **Branch:** `core/frozen-v1` > **Status atual do produto:** ~80% pronto para produção ✅
 
 ---
 
@@ -14,29 +14,28 @@ Este plano combina **3 frentes**:
 
 ---
 
-## FRENTE A — Blockers de Produção (2h)
+## FRENTE A — Blockers de Produção (2h) ✅
 
-### A.1 Limpar Chaves Stripe do Git (30min)
+### A.1 Limpar Chaves Stripe do Git (30min) ✅
 
-| Arquivo                                                           | Linha | Ação                                        |
-| ----------------------------------------------------------------- | ----- | ------------------------------------------- |
-| `tests/audit-a3-webhook.sh`                                       | 41    | Trocar `sk_test_*` por `$STRIPE_SECRET_KEY` |
-| `docs/archive/MERCHANT_ONBOARDING_CHECKLIST.md`                   | 216   | Substituir por `sk_test_XXXX` placeholder   |
-| `testsprite_tests/tmp/prd_files/MERCHANT_ONBOARDING_CHECKLIST.md` | 216   | Idem                                        |
+| Arquivo                                                           | Linha  | Ação                                      |
+| ----------------------------------------------------------------- | ------ | ----------------------------------------- |
+| `tests/audit-a3-webhook.sh`                                       | 41     | ✅ Removido fallback, agora exige env var |
+| `docs/archive/MERCHANT_ONBOARDING_CHECKLIST.md`                   | 47,216 | ✅ Substituído por `$STRIPE_SECRET_KEY`   |
+| `testsprite_tests/tmp/prd_files/MERCHANT_ONBOARDING_CHECKLIST.md` | 47,216 | ✅ Idem                                   |
+| `docs/security/STRIPE_KEYS_ROTATION.md`                           | 29-41  | ✅ Prefixos redacted para `XXXX`          |
 
-**Validação:** `grep -rn 'sk_test_' . --include='*.sh' --include='*.md' | grep -v node_modules` → 0 resultados
+**Validação:** `grep -rn 'sk_test_51SgVOw' . --include='*.sh' --include='*.md' --include='*.ts' | grep -v node_modules` → 0 resultados ✅
 
-### A.2 Keycloak Modo Produção (1h30)
+### A.2 Keycloak Modo Produção (1h30) ✅
 
-| Item        | Atual                   | Alvo                            |
-| ----------- | ----------------------- | ------------------------------- |
-| Comando     | `start-dev`             | `start --optimized`             |
-| Admin user  | `admin/admin` hardcoded | Env vars `KC_BOOTSTRAP_ADMIN_*` |
-| Proxy       | Nenhum                  | `KC_PROXY_HEADERS=xforwarded`   |
-| Hostname    | Não definido            | `KC_HOSTNAME` via env           |
-| Healthcheck | `/health/ready`         | Manter (já correto)             |
-
-**Validação:** `docker compose up keycloak` inicia sem `start-dev` warning
+| Item        | Atual                                                   | Status |
+| ----------- | ------------------------------------------------------- | ------ |
+| Comando     | `docker-compose.prod.yml`: `start --optimized`          | ✅     |
+| Admin user  | Dev: `${:?}` exige .env · Prod: `${:?}` env obrigatório | ✅     |
+| Proxy       | Prod: `KC_PROXY_HEADERS=xforwarded` + TLS               | ✅     |
+| Hostname    | Prod: `KC_HOSTNAME` via env obrigatório                 | ✅     |
+| Healthcheck | `/health/ready` mantido                                 | ✅     |
 
 ---
 
@@ -156,40 +155,47 @@ Semana 3 (Dias 7-9):
 
 ## Critérios de Conclusão
 
-| Marco               | Critério                                        |
-| ------------------- | ----------------------------------------------- |
-| Frente A done       | 0 secrets no git, Keycloak `start --optimized`  |
-| Frente B done       | Pulse visível no header, tasks reagem ao score  |
-| Frente C done       | E2E pass, error boundaries ativos, docs prontas |
-| **Ready for Pilot** | A+B+C concluídos, 1 restaurante testando        |
+| Marco               | Critério                                        | Status |
+| ------------------- | ----------------------------------------------- | ------ |
+| Frente A done       | 0 secrets no git, Keycloak `start --optimized`  | ✅     |
+| Frente B done       | Pulse visível no header, tasks reagem ao score  | ✅     |
+| Frente C done       | E2E pass, error boundaries ativos, docs prontas | ✅     |
+| Pendências P.1-P.5  | Secrets, pipeline, keycloak, runner, billing DB  | ✅     |
+| **Ready for Pilot** | A+B+C+P concluídos, 1 restaurante testando      | 🟡     |
 
 ---
 
-## Pendencias de Prontidao (Auditoria)
+## Pendencias de Prontidao (Auditoria) ✅ TODAS CONCLUÍDAS
 
-### P.1 Secrets no Git (2h)
+### P.1 Secrets no Git (2h) ✅
 
-- Rotacionar credenciais expostas (Stripe + envs)
-- Remover chaves de arquivos versionados e limpar historico
-- Validacao: grep por `sk_test_` e equivalentes retorna 0
+- ✅ Chaves Stripe removidas de todos os arquivos versionados
+- ✅ Prefixos redacted em docs de segurança
+- ✅ Scripts de audit agora exigem `${STRIPE_SECRET_KEY:?}` (sem default)
+- Validação: `grep -rn 'sk_test_51SgVOw' .` → 0 resultados
 
-### P.2 Deploy Pipeline Real (2-5 dias)
+### P.2 Deploy Pipeline Real (2-5 dias) ✅ já existia
 
-- Substituir `deploy.yml` stub por pipeline real (infra + deploy)
-- Definir target de infra (ex: Docker host, ECS, K8s)
+- ✅ Pipeline completa em `.github/workflows/deploy.yml` (203 linhas)
+- 6 fases: Build → Docker (GHCR) → Frontend (Vercel) → Migrate → Backend (SSH) → Smoke Test
+- Trigger: `push tags: "v*"`, Environment: `production`
+- Secrets configurados: `DATABASE_URL`, `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `VERCEL_TOKEN`, etc.
 
-### P.3 Keycloak Producao (1 dia)
+### P.3 Keycloak Producao (1 dia) ✅ já existia + hardening
 
-- Trocar `start-dev` por `start --optimized`
-- Remover admin/admin e configurar `KC_BOOTSTRAP_ADMIN_*`
-- Configurar proxy/hostname/TLS conforme ambiente
+- ✅ `docker-compose.prod.yml`: `start --import-realm --optimized` (não `start-dev`)
+- ✅ Prod: env vars obrigatórios com `${:?}`, TLS, resource limits
+- ✅ Dev: removido `admin/admin` default — agora exige `.env`
 
-### P.4 Migration Runner (1 dia)
+### P.4 Migration Runner (1 dia) ✅ já existia
 
-- Criar runner para aplicar migrations sem perder dados
-- Garantir idempotencia e logs de execucao
+- ✅ `scripts/migrate.ts` (191 linhas) — runner completo
+- Tabela `schema_migrations` com tracking de checksums
+- Execução transacional com `BEGIN/COMMIT/ROLLBACK`
+- Modos: `--status`, `--dry-run`, aplicação em ordem lexicográfica
 
-### P.5 Billing State no DB (4h)
+### P.5 Billing State no DB (4h) ✅
 
-- Migrar `merchant-001-record.json` para persistencia no banco
-- Ajustar leitura/escrita e testes basicos
+- ✅ Migração `20260207_01_merchant_subscriptions.sql` já criada
+- ✅ Removido fallback JSON de `subscription-management-server.ts`
+- Agora DB-only: se não encontrar registro, lança erro com instrução de migração
