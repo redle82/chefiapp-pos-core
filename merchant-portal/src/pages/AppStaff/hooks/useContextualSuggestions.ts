@@ -10,8 +10,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useStaff } from '../context/StaffContext';
-import { useOrders } from '../../TPV/context/OrderContextReal';
-import { useTables } from '../../TPV/context/TableContext';
+import { useAppStaffOrders } from './useAppStaffOrders';
+import { useAppStaffTables } from './useAppStaffTables';
 
 export interface ContextualSuggestion {
     id: string;
@@ -24,9 +24,27 @@ export interface ContextualSuggestion {
 }
 
 export function useContextualSuggestions() {
-    const { tasks, activeRole, shiftState, forecast } = useStaff();
-    const { orders } = useOrders();
-    const { tables } = useTables();
+    const { tasks, activeRole, shiftState, forecast, coreRestaurantId, operationalContract } = useStaff();
+    // FASE 3.3: Core API usa UUID (coreRestaurantId quando contrato é local)
+    const restaurantIdForCore = coreRestaurantId ?? operationalContract?.id ?? null;
+    const { orders: appStaffOrders } = useAppStaffOrders(restaurantIdForCore);
+    const { tables: appStaffTables } = useAppStaffTables(restaurantIdForCore);
+    // Converter para formato esperado
+    const orders = appStaffOrders.map(order => ({
+      id: order.id,
+      tableId: order.table_id || undefined,
+      status: (order.status === 'OPEN' ? 'new' : 
+               order.status === 'IN_PREP' ? 'preparing' : 
+               order.status === 'READY' ? 'ready' : 
+               order.status === 'PAID' ? 'paid' : 
+               order.status === 'CANCELLED' ? 'cancelled' : 'new') as 'new' | 'preparing' | 'ready' | 'served' | 'paid' | 'partially_paid' | 'cancelled',
+      created_at: order.created_at,
+    }));
+    const tables = appStaffTables.map(table => ({
+      id: table.id,
+      number: table.number,
+      status: table.status,
+    }));
     const [suggestions, setSuggestions] = useState<ContextualSuggestion[]>([]);
 
     // Analisar contexto e gerar sugestões

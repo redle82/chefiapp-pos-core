@@ -1,0 +1,91 @@
+{
+  "id": "CLOSING_STANDARD",
+  "name": "Checklist de Fechamento Padrão",
+  "description": "Tarefas obrigatórias ao fechar o restaurante",
+  "jurisdiction": "ES",
+  "segment": "OPERATIONS",
+  "trigger": {
+    "type": "event",
+    "event": "shift.closed",
+    "conditions": {
+      "shift_type": "last_of_day"
+    }
+  },
+  "tasks": [
+    {
+      "id": "close_001",
+      "name": "Fechar caixa",
+      "description": "Contagem de caixa e conferência com sistema",
+      "role": "manager",
+      "sla_minutes": 30,
+      "hard_blocking": true,
+      "requires_value": true,
+      "value_type": "currency"
+    },
+    {
+      "id": "close_002",
+      "name": "Registrar temperatura final",
+      "description": "Verificar e registrar temperatura das câmaras",
+      "role": "kitchen",
+      "sla_minutes": 10,
+      "hard_blocking": true,
+      "requires_value": true,
+      "value_type": "temperature",
+      "compliance": "FOOD_SAFETY"
+    },
+    {
+      "id": "close_003",
+      "name": "Limpar cozinha",
+      "description": "Limpar bancadas, fogões, fornos e utensílios",
+      "role": "kitchen",
+      "sla_minutes": 45,
+      "hard_blocking": false
+    },
+    {
+      "id": "close_004",
+      "name": "Limpar bar",
+      "description": "Limpar balcão, máquinas e organizar bebidas",
+      "role": "bar",
+      "sla_minutes": 30,
+      "hard_blocking": false
+    },
+    {
+      "id": "close_005",
+      "name": "Limpar salão",
+      "description": "Varrer, passar pano, organizar mesas e cadeiras",
+      "role": "cleaning",
+      "sla_minutes": 45,
+      "hard_blocking": false
+    },
+    {
+      "id": "close_006",
+      "name": "Desligar equipamentos",
+      "description": "Desligar fornos, fritadeiras (manter geladeiras)",
+      "role": "kitchen",
+      "sla_minutes": 10,
+      "hard_blocking": false
+    },
+    {
+      "id": "close_007",
+      "name": "Verificar segurança",
+      "description": "Verificar portas, janelas, alarme",
+      "role": "manager",
+      "sla_minutes": 10,
+      "hard_blocking": true
+    },
+    {
+      "id": "close_008",
+      "name": "Reportar incidentes",
+      "description": "Registrar qualquer problema ocorrido no dia",
+      "role": "manager",
+      "sla_minutes": 15,
+      "hard_blocking": false,
+      "optional": true
+    }
+  ],
+  "escalation": {
+    "after_sla_exceeded_minutes": 15,
+    "escalate_to": "owner",
+    "notify": ["owner"]
+  }
+}

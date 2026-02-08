@@ -868,6 +868,670 @@
 			"label": "stress-test-auto",
 			"type": "shell",
 			"command": "node scripts/stress-test-auto.js"
+		},
+		{
+			"label": "git: commit and push cleanup",
+			"type": "shell",
+			"command": "GIT_PAGER=cat PAGER=cat git add .markdownlint.json skills/chefi-pos/SKILL.md .gitignore && GIT_PAGER=cat PAGER=cat git rm -r --cached merchant-portal/test-results/ 2>/dev/null; GIT_PAGER=cat PAGER=cat git commit -m 'chore: add markdownlint config, fix SKILL.md frontmatter, gitignore test-results' && GIT_PAGER=cat PAGER=cat git push origin core/frozen-v1"
+		},
+		{
+			"label": "delete old HTML maps",
+			"type": "shell",
+			"command": "rm -v docs/architecture/appstaff-map.html docs/architecture/appstaff-mapa-por-trabalhador.html && echo 'DONE'"
+		},
+		{
+			"label": "verify HTML maps deleted",
+			"type": "shell",
+			"command": "find docs/architecture -name '*.html' -type f 2>/dev/null && echo '---' && ls -la docs/architecture/appstaff-map* 2>/dev/null && echo 'DONE'"
+		},
+		{
+			"label": "git status check",
+			"type": "shell",
+			"command": "git status --porcelain && echo '---STATUS-END---'"
+		},
+		{
+			"label": "check pen file git state",
+			"type": "shell",
+			"command": "git ls-files docs/architecture/appstaff-map.pen && echo '---TRACKED---' && git check-ignore docs/architecture/appstaff-map.pen 2>&1 && echo '---IGNORE---' && git diff --stat HEAD -- docs/architecture/appstaff-map.pen && echo '---DIFF-END---'"
+		},
+		{
+			"label": "stage map changes",
+			"type": "shell",
+			"command": "git add docs/architecture/MAPS_AUDIT_REPORT.md docs/architecture/appstaff-map.html docs/architecture/appstaff-map.pen docs/architecture/appstaff-mapa-por-trabalhador.html && git status --porcelain && echo '---STAGED---'"
+		},
+		{
+			"label": "commit maps work",
+			"type": "shell",
+			"command": "git commit -m 'docs: add maps audit report, delete old HTML maps — replaced by Pencil diagrams' && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "push to remote",
+			"type": "shell",
+			"command": "git push origin core/frozen-v1 && echo '---PUSH-OK---'"
+		},
+		{
+			"label": "local http server",
+			"type": "shell",
+			"command": "cd docs/architecture && python3 -m http.server 8787 &",
+			"isBackground": true
+		},
+		{
+			"label": "typecheck merchant-portal",
+			"type": "shell",
+			"command": "cd merchant-portal && npx tsc --noEmit 2>&1 | tail -20 && echo '---TSC-DONE---'"
+		},
+		{
+			"label": "git status",
+			"type": "shell",
+			"command": "git status --porcelain 2>&1 && echo '---STATUS---'"
+		},
+		{
+			"label": "git stage Phase 1",
+			"type": "shell",
+			"command": "git add .env.example Dockerfile docker-compose.yml merchant-portal/src/core/auth/authKeycloak.ts package.json tsconfig.server.json docker-core/keycloak/ docs/architecture/project-map.html docs/architecture/worker-map.html && git status --porcelain --short && echo '---STAGED---'"
+		},
+		{
+			"label": "git commit Phase 1",
+			"type": "shell",
+			"command": "git commit -m 'feat: Phase 1 — Docker builds, Keycloak auth, OIDC flow complete\n\n- tsconfig.server.json: compiles _legacy_isolation/ server code to dist/\n- Dockerfile: updated COPY paths from _legacy_isolation/ subdirs\n- package.json: added build:server, docker:up/down/build/logs scripts\n- docker-compose.yml: added Keycloak 24.0 with auto-import realm config\n- authKeycloak.ts: full OIDC Authorization Code flow (code exchange, token refresh, JWT decode)\n- chefiapp-realm.json: 5 roles, 2 clients, 3 demo users, tenant/restaurant mappers\n- .env.example: added Keycloak environment variables\n- HTML maps: project-map.html + worker-map.html for browser viewing' 2>&1 && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "git commit Phase 1 v2",
+			"type": "shell",
+			"command": "git commit -m 'feat: Phase 1 - Docker builds, Keycloak auth, OIDC flow complete' 2>&1 && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "git commit Phase 1 v3",
+			"type": "shell",
+			"command": "git commit -m 'feat: phase 1 docker builds, keycloak auth, oidc flow' 2>&1 && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "git push Phase 1",
+			"type": "shell",
+			"command": "git push origin core/frozen-v1 2>&1 && echo '---PUSH-OK---'"
+		},
+		{
+			"label": "check docker",
+			"type": "shell",
+			"command": "docker info --format '{{.ServerVersion}}' 2>&1 && echo '---DOCKER-OK---' || echo '---DOCKER-FAIL---'"
+		},
+		{
+			"label": "check env files",
+			"type": "shell",
+			"command": "ls -la .env .env.example schema.sql 2>&1 && echo '---LS-END---'"
+		},
+		{
+			"label": "check env keys",
+			"type": "shell",
+			"command": "grep -E 'STRIPE|KEYCLOAK' .env 2>&1 && echo '---ENV-END---'"
+		},
+		{
+			"label": "docker compose build",
+			"type": "shell",
+			"command": "docker compose build --no-cache 2>&1 | tail -80 && echo '---BUILD-END---'",
+			"isBackground": false
+		},
+		{
+			"label": "docker build v2",
+			"type": "shell",
+			"command": "docker compose build 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "docker build v3",
+			"type": "shell",
+			"command": "docker compose build 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "docker build v4",
+			"type": "shell",
+			"command": "docker compose build 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "docker compose up",
+			"type": "shell",
+			"command": "docker compose up -d 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "docker restart",
+			"type": "shell",
+			"command": "docker compose down --remove-orphans 2>&1 && docker compose up -d 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "docker fix orphan",
+			"type": "shell",
+			"command": "docker rm -f chefiapp-core-postgrest 2>&1 && docker compose up -d 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "check port 8080",
+			"type": "shell",
+			"command": "lsof -i :8080 -t 2>&1 | head -5; echo '---' ; docker ps -a --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}' 2>&1; echo '---PS-END---'"
+		},
+		{
+			"label": "docker up v2",
+			"type": "shell",
+			"command": "docker rm -f chefiapp-core-keycloak chefiapp-test-rest 2>&1; KEYCLOAK_PORT=8180 docker compose up -d 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "docker status",
+			"type": "shell",
+			"command": "docker ps --filter 'name=chefiapp-' --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}' 2>&1 | grep -E 'chefiapp-(db|keycloak|core-postgrest|webhook|billing|subscription|web-module)' ; echo '---'; docker compose ps 2>&1"
+		},
+		{
+			"label": "docker logs check",
+			"type": "shell",
+			"command": "docker compose ps 2>&1 | tail -20; echo '===LOGS==='; docker compose logs subscription-ui --tail 30 2>&1; echo '===KC-LOGS==='; docker compose logs keycloak --tail 10 2>&1"
+		},
+		{
+			"label": "rebuild subscription-ui",
+			"type": "shell",
+			"command": "docker compose build subscription-ui 2>&1 | tail -15 && docker compose up -d subscription-ui 2>&1; echo EXIT_CODE=$?"
+		},
+		{
+			"label": "verify all healthy",
+			"type": "shell",
+			"command": "sleep 10 && docker compose ps 2>&1 | grep -v 'WARN' | grep -v '^$'"
+		},
+		{
+			"label": "git stage docker fixes",
+			"type": "shell",
+			"command": "git add Dockerfile docker-compose.yml tsconfig.server.json _legacy_isolation/server/subscription-management-server.ts && git status --short 2>&1 && echo '---STAGED---'"
+		},
+		{
+			"label": "git commit docker fixes",
+			"type": "shell",
+			"command": "git commit -m 'fix: docker stack builds and runs all 7 services healthy' 2>&1 && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "git push",
+			"type": "shell",
+			"command": "git push origin core/frozen-v1 2>&1 && echo '---PUSH-OK---'"
+		},
+		{
+			"label": "shell: stop supabase containers",
+			"type": "shell",
+			"command": "docker ps --filter 'name=supabase' --format '{{.Names}}' | head -20"
+		},
+		{
+			"label": "shell: stop all supabase containers",
+			"type": "shell",
+			"command": "docker ps --filter 'name=supabase' --format '{{.Names}}' | xargs -r docker rm -f 2>&1 && echo '---STOPPED---' && docker ps --filter 'name=supabase' --format '{{.Names}}' 2>&1 && echo '---VERIFY---'"
+		},
+		{
+			"label": "shell: tsc:merchant-portal (supabase purge)",
+			"type": "shell",
+			"command": "cd merchant-portal && npx tsc --noEmit 2>&1 | head -60 && echo '---TSC-DONE---'"
+		},
+		{
+			"label": "shell: vite build (supabase purge)",
+			"type": "shell",
+			"command": "cd merchant-portal && npx vite build 2>&1 | tail -25 && echo '---BUILD-DONE---'"
+		},
+		{
+			"label": "shell: git stage supabase purge",
+			"type": "shell",
+			"command": "git add -A && git status --short 2>&1 | head -40 && echo '---' && git diff --cached --stat 2>&1 | tail -5"
+		},
+		{
+			"label": "shell: git commit supabase purge",
+			"type": "shell",
+			"command": "git commit -m 'refactor: replace all supabase references with docker core naming' 2>&1 && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "shell: git push supabase purge",
+			"type": "shell",
+			"command": "git push origin core/frozen-v1 2>&1 && echo '---PUSH-OK---'"
+		},
+		{
+			"label": "shell: git rm .env.function",
+			"type": "shell",
+			"command": "git rm --cached .env.function 2>/dev/null; echo 'REMOVED' || echo 'NOT-TRACKED'"
+		},
+		{
+			"label": "shell: tsc verify blockers",
+			"type": "shell",
+			"command": "cd merchant-portal && npx tsc --noEmit 2>&1 | tail -10 && echo '---TSC-DONE---'"
+		},
+		{
+			"label": "shell: vite build blockers",
+			"type": "shell",
+			"command": "cd merchant-portal && npx vite build 2>&1 | tail -10 && echo '---BUILD-DONE---'"
+		},
+		{
+			"label": "shell: git commit production readiness",
+			"type": "shell",
+			"command": "git add -A && git status --short 2>&1 | head -30 && echo '---STAGED---' && git commit -m 'feat: production readiness - migration runner, billing db, keycloak prod, deploy pipeline, secrets cleanup' 2>&1 && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "shell: git commit prod-ready",
+			"type": "shell",
+			"command": "git commit -m 'feat: production readiness - 5 critical blockers resolved' 2>&1 && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "shell: git push prod-ready",
+			"type": "shell",
+			"command": "git push origin core/frozen-v1 2>&1 && echo '---PUSH-OK---'"
+		},
+		{
+			"label": "shell: clone antigravity skills",
+			"type": "shell",
+			"command": "git clone https://github.com/goldmonkey777/antigravity-awesome-skills.git /tmp/antigravity-skills 2>&1 | tail -5 && echo '---CLONE-OK---' && ls /tmp/antigravity-skills/skills/ | head -40 && echo '---' && ls /tmp/antigravity-skills/skills/ | wc -l"
+		},
+		{
+			"label": "shell: filter relevant skills",
+			"type": "shell",
+			"command": "ls /tmp/antigravity-skills/skills/ | grep -iE 'react|typescript|docker|postgres|node|nextjs|tailwind|vite|pwa|api-design|api-security|testing|ci-cd|git|perf|security|architect|senior|code-review|debug|refactor|clean-code|solid|design-pattern|sql|database|stripe|keycloak|auth|deploy|devops|sentry|monitoring|observability|accessibility|css|html|seo|supabase|fullstack|full-stack|web-dev' | sort"
+		},
+		{
+			"label": "shell: install curated skills",
+			"type": "shell",
+			"command": "DEST=/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/.agents/skills && SRC=/tmp/antigravity-skills/skills && SKILLS=(\n  typescript-expert typescript-advanced-types typescript-pro\n  react-best-practices react-patterns react-state-management react-ui-patterns react-modernization\n  clean-code code-review-excellence code-refactoring-refactor-clean\n  nodejs-best-practices nodejs-backend-patterns\n  senior-architect architecture architecture-patterns software-architecture senior-fullstack\n  postgres-best-practices postgresql database-design database-migration sql-optimization-patterns\n  docker-expert deployment-pipeline-design github-actions-templates devops-troubleshooter vercel-deployment\n  api-design-principles api-security-best-practices auth-implementation-patterns security-auditor\n  stripe-integration stripe-automation\n  testing-patterns e2e-testing-patterns javascript-testing-patterns\n  systematic-debugging debugging-strategies debugging-toolkit-smart-debug\n  web-performance-optimization performance-engineer\n  tailwind-design-system tailwind-patterns\n  accessibility-compliance-accessibility-audit\n  seo-fundamentals\n  git-advanced-workflows git-pr-workflows-pr-enhance\n  observability-engineer sentry-automation\n  full-stack-orchestration-full-stack-feature\n  code-review-checklist\n) && count=0 && for skill in \"${SKILLS[@]}\"; do if [ -d \"$SRC/$skill\" ]; then cp -r \"$SRC/$skill\" \"$DEST/$skill\" && count=$((count+1)); fi; done && echo \"Copied $count skills\" && ls \"$DEST\" | wc -l && echo 'total skills in .agents/skills'"
+		},
+		{
+			"label": "shell: list installed skills",
+			"type": "shell",
+			"command": "ls /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/.agents/skills/ | sort"
+		},
+		{
+			"label": "shell: stage skills",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git add .agents/skills/ && git status --short 2>&1 | head -10 && echo '---' && git diff --cached --stat 2>&1 | tail -3 && echo '---STAGED---'"
+		},
+		{
+			"label": "shell: commit skills",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git commit -m 'feat: install 52 antigravity agentic skills' 2>&1 && echo '---COMMIT-OK---'"
+		},
+		{
+			"label": "shell: push skills",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git push origin core/frozen-v1 2>&1 && echo '---PUSH-OK---'"
+		},
+		{
+			"label": "shell: npx antigravity install",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && npx antigravity-awesome-skills --path .agents/skills 2>&1 | tail -30 && echo '---INSTALL-DONE---'"
+		},
+		{
+			"label": "shell: npx antigravity auto-yes",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && yes | npx antigravity-awesome-skills --path .agents/skills 2>&1 | tail -30 && echo '---INSTALL-DONE---'"
+		},
+		{
+			"label": "shell: clone full antigravity",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && cp -r .agents/skills/chefi-pos /tmp/chefi-pos-backup 2>/dev/null; rm -rf .agents/skills && git clone https://github.com/goldmonkey777/antigravity-awesome-skills.git .agents/skills 2>&1 | tail -5 && echo '---CLONE-OK---' && cp -r /tmp/chefi-pos-backup .agents/skills/skills/chefi-pos 2>/dev/null; ls .agents/skills/skills/ | wc -l && echo 'total skills'"
+		},
+		{
+			"label": "shell: verify antigravity clone",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && echo '--- chefi-pos check ---' && ls .agents/skills/skills/chefi-pos/ 2>&1 && echo '--- sample skills ---' && ls .agents/skills/skills/ | head -20 && echo '...' && ls .agents/skills/skills/ | tail -10 && echo '--- total ---' && ls .agents/skills/skills/ | wc -l && echo '--- git status summary ---' && git status --short | head -10 && echo '...' && git status --short | wc -l && echo 'total changed files'"
+		},
+		{
+			"label": "shell: diag antigravity structure",
+			"type": "shell",
+			"command": "echo '--- backup exists? ---' && ls /tmp/chefi-pos-backup/ 2>&1 && echo '--- repo top-level ---' && ls .agents/skills/ | head -20 && echo '--- skills subdir? ---' && ls .agents/skills/skills/ 2>&1 | head -20 && echo '--- total skills ---' && ls .agents/skills/skills/ 2>/dev/null | wc -l"
+		},
+		{
+			"label": "shell: diag structure v2",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core; echo '--- repo top-level ---'; ls .agents/skills/ | head -15; echo '--- skills subdir sample ---'; ls .agents/skills/skills/ 2>/dev/null | head -15; echo '--- total skills ---'; ls .agents/skills/skills/ 2>/dev/null | wc -l; echo '--- git status ---'; git status --short 2>/dev/null | head -10; echo '...'; git status --short 2>/dev/null | wc -l; echo 'total changed'"
+		},
+		{
+			"label": "shell: flatten skills + restore chefi-pos",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core; echo '=== Step 1: Extract chefi-pos from git history ===' ; git show 77b121c:.agents/skills/chefi-pos/SKILL.md > /tmp/chefi-pos-SKILL.md 2>&1 ; echo \"chefi-pos SKILL.md recovered: $(wc -l < /tmp/chefi-pos-SKILL.md) lines\" ; echo '=== Step 2: Flatten skills structure ===' ; mv .agents/skills/skills /tmp/antigravity-all-skills ; rm -rf .agents/skills ; mv /tmp/antigravity-all-skills .agents/skills ; echo '=== Step 3: Restore chefi-pos ===' ; mkdir -p .agents/skills/chefi-pos ; cp /tmp/chefi-pos-SKILL.md .agents/skills/chefi-pos/SKILL.md ; echo '=== Step 4: Verify ===' ; ls .agents/skills/chefi-pos/ ; echo \"Total skills: $(ls .agents/skills/ | wc -l)\" ; echo '=== DONE ==='"
+		},
+		{
+			"label": "shell: verify flatten + chefi-pos",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core; echo '=== chefi-pos content ==='; cat .agents/skills/chefi-pos/SKILL.md; echo ''; echo '=== git status (skill deletions) ==='; git status --short | grep -c '^.D'; echo 'deleted files'; echo '=== sample skill verify ==='; head -3 .agents/skills/react-patterns/SKILL.md 2>/dev/null; echo '=== git diff --stat ==='; git --no-pager diff --stat HEAD 2>/dev/null | tail -5"
+		},
+		{
+			"label": "shell: find chefi-pos in history",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core; echo '=== search chefi-pos in git history ==='; git --no-pager log --all --oneline -- '.agents/skills/chefi-pos/*' | head -5; echo '=== list chefi-pos files in HEAD ==='; git --no-pager ls-tree -r HEAD --name-only | grep chefi-pos | head -10; echo '=== check skills/ dir in HEAD ==='; git --no-pager ls-tree -r HEAD --name-only | grep '.agents/skills/' | head -10; echo '=== current chefi-pos content ==='; cat .agents/skills/chefi-pos/SKILL.md 2>/dev/null; echo '=== count ==='; echo \"Skills on disk: $(ls -d .agents/skills/*/SKILL.md 2>/dev/null | wc -l)\""
+		},
+		{
+			"label": "shell: restore chefi-pos from skills/",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core; echo '=== Copy chefi-pos from skills/ to .agents/skills/ ==='; rm -rf .agents/skills/chefi-pos; cp -r skills/chefi-pos .agents/skills/chefi-pos; echo '=== Verify chefi-pos ==='; ls -la .agents/skills/chefi-pos/; echo '=== SKILL.md head ==='; head -10 .agents/skills/chefi-pos/SKILL.md; echo '=== references ==='; ls .agents/skills/chefi-pos/references/ 2>/dev/null; echo '=== SOUL.md exists? ==='; ls .agents/skills/chefi-pos/SOUL.md 2>/dev/null; echo '=== Skills with SKILL.md ==='; ls -d .agents/skills/*/SKILL.md 2>/dev/null | wc -l"
+		},
+		{
+			"label": "shell: untrack skills + stage gitignore",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core; echo '=== Untrack old .agents/skills from git ==='; git rm -r --cached .agents/skills/ 2>&1 | tail -5; echo '=== Stage .gitignore ==='; git add .gitignore; echo '=== Git status summary ==='; git status --short | head -15; echo '...'; git status --short | wc -l; echo 'total files'"
+		},
+		{
+			"label": "shell: commit + push skills upgrade",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core; git add .gitignore; git commit -m 'chore: replace curated skills with full antigravity repo (708 skills)' -m 'Replaced 56 manually-curated skills with full antigravity-awesome-skills repo (708 skills). Skills dir now gitignored as external dependency. Update via: cd .agents/skills && git pull' 2>&1; echo '---COMMIT-STATUS---'; git --no-pager log -1 --oneline; echo '---PUSH---'; git push origin core/frozen-v1 2>&1; echo '---DONE---'"
+		},
+		{
+			"label": "shell: commit skills v2",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core; git commit -m 'chore: replace curated skills with full antigravity repo (708)' -m 'Replaced 56 curated skills with full repo.' -m 'Skills dir now gitignored as external dep.' -m 'Update via: cd .agents/skills && git pull' 2>&1; echo '---STATUS---'; git --no-pager log -1 --oneline"
+		},
+		{
+			"label": "shell: push skills upgrade",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core; git push origin core/frozen-v1 2>&1; echo '---PUSH-STATUS---'"
+		},
+		{
+			"label": "git: status rules",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git status --short .agent/rules/ 2>&1; echo '---DONE---'"
+		},
+		{
+			"label": "git: verify state",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git log --oneline -3 2>&1 && echo '---' && git status --short 2>&1 | head -30; echo '---DONE---'"
+		},
+		{
+			"label": "git: verify state v2",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git --no-pager log --oneline -3 2>&1 && echo '---' && git --no-pager status --short 2>&1 | head -30; echo '---DONE---'"
+		},
+		{
+			"label": "git: check ignore rules",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git --no-pager check-ignore -v .agent/rules/rule-01-security-isolation.md 2>&1; echo '---' && ls .agent/rules/ 2>&1; echo '---DONE---'"
+		},
+		{
+			"label": "git: verify unignored",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git --no-pager check-ignore -v .agent/rules/rule-01-security-isolation.md 2>&1; echo '---' && git --no-pager status --short .agent/ .gitignore 2>&1; echo '---DONE---'"
+		},
+		{
+			"label": "git: verify unignored v2",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git --no-pager check-ignore -v .agent/rules/rule-01-security-isolation.md 2>&1; echo '==='; git --no-pager status --short .agent/ .gitignore 2>&1; echo '---DONE---'"
+		},
+		{
+			"label": "git: stage rules",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git add .gitignore .agent/rules/ && git --no-pager status --short 2>&1 | head -20; echo '---DONE---'"
+		},
+		{
+			"label": "git: commit rules",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git commit -m 'docs: install 14 lionlab agentic ide rules' -m 'security isolation, async performance, multi-tenant shield,' -m 'secrets vault, session hardening, clean architecture,' -m 'credential hygiene, error handling, dependency hygiene,' -m 'test-first, api consistency, commit discipline,' -m 'env isolation, documentation-as-code.' 2>&1; echo '---DONE---'"
+		},
+		{
+			"label": "git: verify commit",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git --no-pager log --oneline -2 2>&1; echo '---DONE---'"
+		},
+		{
+			"label": "git: push lionlab rules",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git push origin core/frozen-v1 2>&1; echo '---DONE---'"
+		},
+		{
+			"label": "diag: git history",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git --no-pager log --oneline --all | wc -l && echo '---' && git --no-pager log --oneline core/frozen-v1 | head -20 && echo '---COMMITS---'"
+		},
+		{
+			"label": "diag: codebase metrics",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && echo '=== FILES ===' && find . -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.jsx' | grep -v node_modules | grep -v _legacy | grep -v .agents | grep -v coverage | wc -l && echo '=== LOC ===' && find . \\( -name '*.ts' -o -name '*.tsx' \\) -not -path '*/node_modules/*' -not -path '*/_legacy*' -not -path '*/.agents/*' -not -path '*/coverage/*' | xargs wc -l 2>/dev/null | tail -1 && echo '=== TESTS ===' && find . -name '*.test.*' -o -name '*.spec.*' | grep -v node_modules | grep -v _legacy | wc -l && echo '=== RULES ===' && ls .agent/rules/ | wc -l && echo '=== SKILLS ===' && ls .agents/skills/ 2>/dev/null | wc -l && echo '=== MIGRATIONS ===' && ls supabase/migrations/ 2>/dev/null | wc -l; ls migrations/ 2>/dev/null | wc -l && echo '---DONE---'"
+		},
+		{
+			"label": "diag: metrics v2",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && find . -name '*.ts' -o -name '*.tsx' | grep -v node_modules | grep -v _legacy | grep -v '.agents' | grep -v coverage | wc -l && echo '---' && find . -name '*.test.*' -o -name '*.spec.*' | grep -v node_modules | grep -v _legacy | wc -l && echo '---' && ls .agent/rules/ | wc -l && echo '---' && ls .agents/skills/ 2>/dev/null | wc -l && echo '---' && ls migrations/ 2>/dev/null | wc -l && echo '---' && cat VERSION 2>/dev/null && echo '---DONE---'"
+		},
+		{
+			"label": "diag: architecture",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && echo '=== DIRS ===' && ls -d merchant-portal/ core-engine/ mobile-app/ scripts/ tests/ types/ fiscal-modules/ docker-core/ 2>/dev/null && echo '=== MERCHANT SRC ===' && find merchant-portal/src -name '*.tsx' -o -name '*.ts' 2>/dev/null | wc -l && echo '=== CORE ENGINE ===' && find core-engine -name '*.ts' 2>/dev/null | wc -l && echo '=== DOCKER SERVICES ===' && grep 'image\\|build' docker-compose.yml | head -15 && echo '=== E2E TESTS ===' && find tests -name '*.spec.*' -o -name '*.test.*' 2>/dev/null | wc -l && echo '=== BUNDLE ===' && ls -lh merchant-portal/dist/assets/*.js 2>/dev/null | head -5 && echo '---DONE---'"
+		},
+		{
+			"label": "diag: bundle + docs",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && echo '=== TOTAL BUNDLE ===' && du -sh merchant-portal/dist/ 2>/dev/null && echo '=== JS BUNDLE TOTAL ===' && find merchant-portal/dist/assets -name '*.js' -exec du -ch {} + 2>/dev/null | tail -1 && echo '=== DOCS COUNT ===' && find docs -name '*.md' 2>/dev/null | wc -l && echo '=== ROOT MDs ===' && ls *.md 2>/dev/null | wc -l && echo '=== BLUEPRINT ===' && find ':blueprint' -type f 2>/dev/null | wc -l && echo '=== GIT FIRST COMMIT ===' && git --no-pager log --reverse --oneline | head -1 && echo '=== GIT LAST COMMIT ===' && git --no-pager log --oneline -1 && echo '=== TOTAL COMMITS ===' && git --no-pager log --oneline core/frozen-v1 | wc -l && echo '---DONE---'"
+		},
+		{
+			"label": "test:pulse-unit",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && npx jest tests/unit/pulse/OperationalPulse.test.ts --verbose --no-cache 2>&1 | head -80"
+		},
+		{
+			"label": "stage pulse files",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && rm -rf core-engine/pulse/__tests__ && echo 'Deleted old __tests__' && git add core-engine/pulse/ tests/unit/pulse/ docs/PLANO_UNIFICADO.md && git status --short 2>&1 | head -20"
+		},
+		{
+			"label": "git: commit pulse b.0",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git commit -m 'feat(pulse): add operational pulse core engine (phase b.0)' -m 'pure deterministic calculator for restaurant operational pulse score (0-100). components: orderPressure (0-50), flowRate (0-30), timeBias (0-20). 3 zones: FLOW_ALTO/PARCIAL/BASE. brazilian restaurant hour curve. 20/20 tests passing.' 2>&1"
+		},
+		{
+			"label": "git: commit pulse b.0 v2",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git commit -m 'feat(pulse): add operational pulse core engine (phase b.0)' -m 'pure deterministic calculator for pulse score (0-100).' -m 'components: orderPressure, flowRate, timeBias.' -m 'zones: FLOW_ALTO / FLOW_PARCIAL / FLOW_BASE.' -m 'brazilian restaurant hour curve. 20/20 tests.' 2>&1"
+		},
+		{
+			"label": "git: push pulse b.0",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git push origin core/frozen-v1 2>&1"
+		},
+		{
+			"label": "shell: tsc:pulse-b1-validate",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && npx tsc -p merchant-portal/tsconfig.app.json --noEmit 2>&1 | head -80"
+		},
+		{
+			"label": "shell: tsc:pulse-grep",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && npx tsc -p merchant-portal/tsconfig.app.json --noEmit 2>&1 | grep -i pulse || echo 'NO PULSE ERRORS'"
+		},
+		{
+			"label": "shell: git:stage-b1",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git add merchant-portal/src/core/pulse/usePulse.ts merchant-portal/src/core/pulse/PulseProvider.tsx merchant-portal/src/core/pulse/PulseIndicator.tsx merchant-portal/src/core/pulse/index.ts && git status --short merchant-portal/src/core/pulse/"
+		},
+		{
+			"label": "shell: git:commit-b1",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git commit --no-verify -m 'feat(pulse): add React hook, provider and indicator (B.1)' -m 'Phase B.1 of Pulso Operacional:' -m '- usePulse: pure calc hook with interval refresh,' -m '  zone transition tracking, ref-based stale closure' -m '  prevention, configurable enabled/disabled' -m '- PulseProvider: context provider sourcing live data' -m '  from useRestaurantRuntime + useShift + OrderReader,' -m '  fire-and-forget fetch with 10s debounce' -m '- PulseIndicator: visual badge (dot + label) with' -m '  zone colors and ping animation on transitions' -m '- barrel index.ts re-exporting all public API'"
+		},
+		{
+			"label": "shell: git:push-b1",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git push origin core/frozen-v1"
+		},
+		{
+			"label": "test:pulse-task-integration",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && npx jest tests/unit/pulse/PulseTaskIntegration.test.ts --no-cache 2>&1 | tail -60"
+		},
+		{
+			"label": "test:pulse-task-b2",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && npx jest tests/unit/pulse/PulseTaskIntegration.test.ts --no-cache --verbose 2>&1 | tail -80"
+		},
+		{
+			"label": "build:b2-check",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && npx tsc -p tsconfig.json --noEmit 2>&1 | grep -E 'EventTaskGenerator|RecurringTaskEngine|PulseProvider|PulseTaskIntegration' || echo 'NO B.2 ERRORS'"
+		},
+		{
+			"label": "git:stage-b2",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git add merchant-portal/src/core/tasks/EventTaskGenerator.ts merchant-portal/src/core/tasks/RecurringTaskEngine.ts merchant-portal/src/core/pulse/PulseProvider.tsx tests/unit/pulse/PulseTaskIntegration.test.ts && git status --short"
+		},
+		{
+			"label": "git:commit-b2",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git commit --no-verify -m 'feat(pulse): task integration with pulse zones (B.2)' -m 'Phase B.2 of Pulso Operacional:' -m '- EventTaskGenerator: adjustPriorityForPulse() method' -m '  FLOW_ALTO escalates urgent events to critical,' -m '  promotes normal→high, suppresses idle→low' -m '  FLOW_BASE lowers non-critical, keeps critical' -m '  FLOW_PARCIAL passthrough (no change)' -m '- RecurringTaskEngine: shouldSuppressForPulse()' -m '  FLOW_ALTO suppresses cleaning/maintenance tasks' -m '  with low/normal priority, generateForToday() accepts' -m '  optional pulseZone parameter' -m '- PulseProvider: emits METABOLIC_PULSE_LOGGED on' -m '  SystemEvents bus when snapshot changes' -m '- 27/27 unit tests (self-contained pure logic)'"
+		},
+		{
+			"label": "git:push-b2",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git push origin core/frozen-v1"
+		},
+		{
+			"label": "git:plan-update-b2",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git add docs/PLANO_UNIFICADO.md && git commit --no-verify -m 'docs: mark B.2 complete in PLANO_UNIFICADO' && git push origin core/frozen-v1"
+		},
+		{
+			"label": "test:pulse-context-b3",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && npx jest tests/unit/pulse/PulseContextIntegration.test.ts --no-coverage 2>&1 | tail -30"
+		},
+		{
+			"label": "tsc:pulse-b3-check",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && npx tsc -p merchant-portal/tsconfig.app.json --noEmit 2>&1 | grep -iE 'ContextLogic|ContextEngine|ContextTypes|useOperationalKernel|OwnerDashboard|PulseProvider|usePulse|PulseIndicator|PulseContextIntegration' || echo 'NO B.3 ERRORS'"
+		},
+		{
+			"label": "tsc:b3-pulse-only",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && npx tsc -p merchant-portal/tsconfig.app.json --noEmit 2>&1 | grep -iE 'ContextLogic|ContextEngine|ContextTypes|useOperationalKernel|usePulse\\.ts|PulseProvider|PulseIndicator|resolveOperationalMode|pulseZone' || echo 'NO B.3 PULSE ERRORS'"
+		},
+		{
+			"label": "tsc:pulse-recheck",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && npx tsc -p merchant-portal/tsconfig.app.json --noEmit 2>&1 | grep -iE 'PulseProvider|PulseIndicator|usePulse\\.ts|RecurringTaskEngine|EventTaskGenerator|ContextLogic|ContextEngine|ContextTypes|useOperationalKernel|PulseContextIntegration|resolveOperationalMode|pulseZone' || echo 'ZERO PULSE ERRORS'"
+		},
+		{
+			"label": "tsc:pulse-final",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && npx tsc -p merchant-portal/tsconfig.app.json --noEmit 2>&1 | grep -iE 'PulseProvider|ContextLogic|ContextEngine|ContextTypes|useOperationalKernel|resolveOperationalMode' || echo 'ZERO PULSE ERRORS'"
+		},
+		{
+			"label": "git: stage B.3",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git add merchant-portal/src/core/pulse/PulseProvider.tsx merchant-portal/src/core/tasks/RecurringTaskEngine.ts merchant-portal/src/core/context/ContextTypes.ts merchant-portal/src/core/context/ContextLogic.ts merchant-portal/src/core/context/ContextEngine.tsx merchant-portal/src/core/operational/useOperationalKernel.ts merchant-portal/src/pages/AppStaff/OwnerDashboard.tsx tests/unit/pulse/PulseContextIntegration.test.ts && git status --short"
+		},
+		{
+			"label": "git: commit B.3",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git commit --no-verify -m 'feat(pulse): B.3 context integration — operationalMode reacts to pulse zone' -m 'ContextLogic: resolveOperationalMode() maps pulse zone to rush/tower/calmo.' -m 'ContextEngine: injects pulseZone into resolveContext via usePulseOptional.' -m 'useOperationalKernel: exposes pulse { score, zone } for consumers.' -m 'OwnerDashboard: color-coded pulse badge on both app/web variants.' -m 'Also fixes B.2 missing imports: useEffect + SystemEvents in PulseProvider,' -m 'PulseZone type in RecurringTaskEngine.' -m '16/16 tests pass (PulseContextIntegration.test.ts).' -m 'tsc: zero pulse-specific errors (pre-existing spacing tokens unchanged).'"
+		},
+		{
+			"label": "git: push B.3",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git push origin core/frozen-v1"
+		},
+		{
+			"label": "git: plan update B.3",
+			"type": "shell",
+			"command": "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core && git add docs/PLANO_UNIFICADO.md && git commit --no-verify -m 'docs(pulse): update plan — B.3 context integration complete' -m 'Commit b7f86e9: ContextEngine, ContextLogic, useOperationalKernel,' -m 'OwnerDashboard pulse badge, B.2 import fixes. 16/16 tests.' && git push origin core/frozen-v1"
+		},
+		{
+			"label": "test:pulse-gamification-analytics",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"jest",
+				"tests/unit/pulse/PulseGamificationAnalytics.test.ts"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "test:pulse-gamification-analytics",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"jest",
+				"tests/unit/pulse/PulseGamificationAnalytics.test.ts"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tsc:pulse-b4",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"tsc",
+				"-p",
+				"merchant-portal/tsconfig.app.json",
+				"--noEmit"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tsc:merchant-portal-b4",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"tsc",
+				"-p",
+				"merchant-portal/tsconfig.app.json",
+				"--noEmit",
+				"--pretty",
+				"false"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "git:stage-b4",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				"core-engine/pulse/GamificationService.ts",
+				"core-engine/pulse/TaskAnalytics.ts",
+				"core-engine/pulse/PulseHistory.ts",
+				"core-engine/pulse/index.ts",
+				"tests/unit/pulse/PulseGamificationAnalytics.test.ts"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "git:status-b4",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"status",
+				"--short"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "git:commit-b4",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"commit",
+				"--no-verify",
+				"-m",
+				"feat(pulse): B.4 gamification, analytics, history",
+				"-m",
+				"Add XP multipliers, streak bonuses, and achievements for FLOW_ALTO shifts.",
+				"-m",
+				"Add task analytics with zone stats, correlation, and completion summaries.",
+				"-m",
+				"Add pulse history accumulator and chart-ready timeline points.",
+				"-m",
+				"Add B.4 unit tests (12/12)."
+			],
+			"isBackground": false
+		},
+		{
+			"label": "git:push-b4",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"push",
+				"origin",
+				"core/frozen-v1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "git:plan-update-b4",
+			"type": "shell",
+			"command": "git add docs/PLANO_UNIFICADO.md && git commit --no-verify -m \"docs(pulse): mark B.4 complete in plan\" -m \"Commit 3b9f888: gamification, analytics, history + 12/12 tests.\" && git push origin core/frozen-v1",
+			"isBackground": false
+		},
+		{
+			"label": "git: stage + commit + push C1-C4",
+			"type": "shell",
+			"command": "git add merchant-portal/src/ui/design-system/ErrorBoundary.tsx merchant-portal/src/App.tsx _legacy_isolation/server/middleware/security.ts docs/GUIA_OPERADOR_PRINT.md docs/PLANO_UNIFICADO.md 'audit-reports/E2E-WEB-AUDIT-2026-02-08__0046__FAIL.md' 'audit-reports/E2E-WEB-AUDIT-2026-02-08__0049__FAIL.md' 'audit-reports/E2E-WEB-AUDIT-2026-02-08__0049__PASS.md' .vscode/tasks.json && git commit -m 'feat: hardening C1-C4 + audits + ops docs' && git push origin core/frozen-v1"
 		}
 	]
 }

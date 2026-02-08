@@ -3,33 +3,201 @@ name: ChefIApp Deploy
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # ==========================================================================
+  # Phase 1: Build & Test
+  # ==========================================================================
   build:
     name: Build & Verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm run build
+          node-version: "20"
+          cache: "npm"
 
-  deploy:
-    name: Deploy to Production
+      - run: npm ci
+
+      - name: TypeScript check
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test:ci
+
+      - name: Build merchant portal
+        run: npm -w merchant-portal run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: merchant-portal-dist
+          path: merchant-portal/dist/
+          retention-days: 7
+
+  # ==========================================================================
+  # Phase 2: Build Docker image
+  # ==========================================================================
+  docker:
+    name: Build & Push Docker Image
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ github.ref_name }}
+
+  # ==========================================================================
+  # Phase 3: Deploy frontend to Vercel
+  # ==========================================================================
+  deploy-frontend:
+    name: Deploy Frontend (Vercel)
     needs: build
     runs-on: ubuntu-latest
     if: success()
     environment: production
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: merchant-portal-dist
+          path: merchant-portal/dist/
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Deploy to Vercel
         run: |
-          echo "🚀 Deploying version ${{ github.ref_name }} to Production..."
-          # Insert actual deploy command here i.e. vercel --prod
-          # npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
-          echo "✅ Deployment complete!"
+          vercel deploy --prod \
+            --token ${{ secrets.VERCEL_TOKEN }} \
+            --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  # ==========================================================================
+  # Phase 4: Run migrations on production DB
+  # ==========================================================================
+  migrate:
+    name: Run Database Migrations
+    needs: docker
+    runs-on: ubuntu-latest
+    if: success()
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Run migrations
+        run: npx tsx scripts/migrate.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # ==========================================================================
+  # Phase 5: Deploy backend (Docker Compose on target host)
+  # ==========================================================================
+  deploy-backend:
+    name: Deploy Backend
+    needs: [docker, migrate]
+    runs-on: ubuntu-latest
+    if: success()
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /opt/chefiapp
+            git fetch origin --tags
+            git checkout ${{ github.ref_name }}
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose ps
+            echo "Deploy complete: ${{ github.ref_name }}"
+
+  # ==========================================================================
+  # Phase 6: Post-deploy smoke test
+  # ==========================================================================
+  smoke-test:
+    name: Smoke Test
+    needs: [deploy-frontend, deploy-backend]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Check frontend health
+        run: |
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://chefiapp.com/ || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "Frontend is healthy (HTTP $STATUS)"
+              exit 0
+            fi
+            echo "Attempt $i: HTTP $STATUS — retrying in 10s..."
+            sleep 10
+          done
+          echo "Frontend health check failed"
+          exit 1
+
+      - name: Check API health
+        run: |
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.chefiapp.com/health || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "API is healthy (HTTP $STATUS)"
+              exit 0
+            fi
+            echo "Attempt $i: HTTP $STATUS — retrying in 10s..."
+            sleep 10
+          done
+          echo "API health check failed"
+          exit 1

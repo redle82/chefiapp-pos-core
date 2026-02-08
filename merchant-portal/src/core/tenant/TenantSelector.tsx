@@ -209,9 +209,12 @@ export function TenantSelector({ compact = false, className = '' }: TenantSelect
 // ============================================================================
 
 /**
- * Full-page tenant selector (for /tenant-selector route)
+ * Full-page tenant selector (for /tenant-selector route).
+ * Nunca ecrã vazio: loading ou single-tenant mostram estado visual.
  */
 export function TenantSelectorPage() {
+    const { isMultiTenant, isLoading } = useTenant();
+
     return (
         <div style={{
             minHeight: '100vh',
@@ -227,11 +230,11 @@ export function TenantSelectorPage() {
                 maxWidth: 400,
             }}>
                 <div style={{ textAlign: 'center', marginBottom: 32 }}>
-                    <h1 style={{ 
-                        color: '#fff', 
-                        fontSize: 24, 
+                    <h1 style={{
+                        color: '#fff',
+                        fontSize: 24,
                         fontWeight: 600,
-                        marginBottom: 8 
+                        marginBottom: 8
                     }}>
                         ChefIApp POS
                     </h1>
@@ -239,8 +242,31 @@ export function TenantSelectorPage() {
                         Selecione o restaurante para operar
                     </p>
                 </div>
-                
-                <TenantSelector />
+
+                {isLoading ? (
+                    <div style={{
+                        padding: 24,
+                        textAlign: 'center',
+                        color: '#8e8e93',
+                        fontSize: 14,
+                    }}>
+                        A carregar…
+                    </div>
+                ) : !isMultiTenant ? (
+                    <div style={{
+                        padding: 24,
+                        backgroundColor: 'rgba(255,255,255,0.06)',
+                        borderRadius: 12,
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: '#8e8e93',
+                        fontSize: 14,
+                        textAlign: 'center',
+                    }}>
+                        Um único restaurante associado à sua conta. Pode continuar para o dashboard.
+                    </div>
+                ) : (
+                    <TenantSelector />
+                )}
             </div>
         </div>
     );

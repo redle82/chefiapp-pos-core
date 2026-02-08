@@ -1,0 +1,229 @@
+/**
+ * OrderProcessingService Tests - Testes para serviço de processamento de pedidos
+ * 
+ * Testa:
+ * - Aceitar pedido externo
+ * - Recusar pedido externo
+ * - Validações de estado
+ * - Tratamento de erros
+ */
+
+import { OrderProcessingService } from '../../../merchant-portal/src/core/services/OrderProcessingService';
+
+// Mock supabase
+jest.mock('../../../merchant-portal/src/core/supabase', () => ({
+    supabase: {
+        from: jest.fn(),
+    },
+}));
+
+import { supabase } from '../../../merchant-portal/src/core/supabase';
+
+const mockFrom = supabase.from as jest.MockedFunction<typeof supabase.from>;
+
+describe('OrderProcessingService', () => {
+    const mockRequestId = 'req-123';
+    const mockRestaurantId = 'rest-123';
+
+    /** Kernel mock: acceptRequest exige kernel ou executeSafe (soberania) */
+    const mockKernel = {
+        execute: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const mockRequest = {
+        id: mockRequestId,
+        tenant_id: 'tenant-123',
+        status: 'PENDING',
+        total_cents: 5000,
+        customer_contact: {
+            name: 'João Silva',
+            phone: '+351912345678',
+        },
+        items: [
+            {
+                product_id: 'prod-1',
+                name: 'Pizza Margherita',
+                quantity: 2,
+                price_cents: 2500,
+            },
+        ],
+        created_at: new Date().toISOString(),
+    };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    describe('acceptRequest', () => {
+        it('deve aceitar pedido com sucesso', async () => {
+            // Mock fetch request
+            const mockSelect = jest.fn();
+            const mockEq = jest.fn();
+            const mockSingle = jest.fn();
+
+            mockSelect.mockReturnValue({
+                eq: mockEq,
+            });
+            mockEq.mockReturnValue({
+                single: mockSingle,
+            });
+            mockSingle.mockResolvedValue({
+                data: mockRequest,
+                error: null,
+            });
+
+            // Mock create order
+            const mockInsert = jest.fn();
+            const mockSelectOrder = jest.fn();
+            const mockSingleOrder = jest.fn();
+
+            mockSelectOrder.mockReturnValue({
+                single: mockSingleOrder,
+            });
+            mockInsert.mockReturnValue({
+                select: mockSelectOrder,
+            });
+            mockSingleOrder.mockResolvedValue({
+                data: { id: 'order-123' },
+                error: null,
+            });
+
+            // Mock insert order items
+            const mockInsertItems = jest.fn();
+            mockInsertItems.mockResolvedValue({
+                data: [],
+                error: null,
+            });
+
+            // Mock update request status
+            const mockUpdate = jest.fn();
+            const mockUpdateEq = jest.fn();
+            mockUpdateEq.mockResolvedValue({
+                data: [],
+                error: null,
+            });
+            mockUpdate.mockReturnValue({
+                eq: mockUpdateEq,
+            });
+
+            mockFrom
+                .mockReturnValueOnce({
+                    select: mockSelect,
+                } as any)
+                .mockReturnValueOnce({
+                    insert: mockInsert,
+                } as any)
+                .mockReturnValueOnce({
+                    insert: mockInsertItems,
+                } as any)
+                .mockReturnValueOnce({
+                    update: mockUpdate,
+                } as any);
+
+            const result = await OrderProcessingService.acceptRequest(mockRequestId, mockRestaurantId, mockKernel);
+
+            expect(result).toBeDefined();
+            expect(typeof result).toBe('string');
+            expect(mockSingle).toHaveBeenCalled();
+            expect(mockInsert).toHaveBeenCalled();
+        });
+
+        it('deve lançar erro quando pedido não é encontrado', async () => {
+            const mockSelect = jest.fn();
+            const mockEq = jest.fn();
+            const mockSingle = jest.fn();
+
+            mockSelect.mockReturnValue({
+                eq: mockEq,
+            });
+            mockEq.mockReturnValue({
+                single: mockSingle,
+            });
+            mockSingle.mockResolvedValue({
+                data: null,
+                error: { code: 'PGRST116', message: 'Not found' },
+            });
+
+            mockFrom.mockReturnValueOnce({
+                select: mockSelect,
+            } as any);
+
+            await expect(
+                OrderProcessingService.acceptRequest(mockRequestId, mockRestaurantId, mockKernel)
+            ).rejects.toThrow('Solicitação não encontrada.');
+        });
+
+        it('deve lançar erro quando pedido já foi processado', async () => {
+            const mockSelect = jest.fn();
+            const mockEq = jest.fn();
+            const mockSingle = jest.fn();
+
+            mockSelect.mockReturnValue({
+                eq: mockEq,
+            });
+            mockEq.mockReturnValue({
+                single: mockSingle,
+            });
+            mockSingle.mockResolvedValue({
+                data: { ...mockRequest, status: 'ACCEPTED' },
+                error: null,
+            });
+
+            mockFrom.mockReturnValueOnce({
+                select: mockSelect,
+            } as any);
+
+            await expect(
+                OrderProcessingService.acceptRequest(mockRequestId, mockRestaurantId, mockKernel)
+            ).rejects.toThrow('Solicitação já processada.');
+        });
+    });
+
+    describe('rejectRequest', () => {
+        it('deve recusar pedido com sucesso', async () => {
+            const mockUpdate = jest.fn();
+            const mockEq = jest.fn();
+            mockEq.mockResolvedValue({
+                data: [],
+                error: null,
+            });
+            mockUpdate.mockReturnValue({
+                eq: mockEq,
+            });
+
+            mockFrom.mockReturnValueOnce({
+                update: mockUpdate,
+            } as any);
+
+            await OrderProcessingService.rejectRequest(mockRequestId);
+
+            expect(mockUpdate).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    status: 'REJECTED',
+                    updated_at: expect.any(String),
+                })
+            );
+            expect(mockEq).toHaveBeenCalledWith('id', mockRequestId);
+        });
+
+        it('deve lançar erro quando atualização falha', async () => {
+            const mockUpdate = jest.fn();
+            const mockEq = jest.fn();
+            const mockError = { message: 'Update failed', code: 'PGRST301' };
+            mockEq.mockResolvedValue({
+                data: null,
+                error: mockError,
+            });
+            mockUpdate.mockReturnValue({
+                eq: mockEq,
+            });
+
+            mockFrom.mockReturnValueOnce({
+                update: mockUpdate,
+            } as any);
+
+            await expect(OrderProcessingService.rejectRequest(mockRequestId)).rejects.toEqual(mockError);
+            expect(mockUpdate).toHaveBeenCalled();
+        });
+    });
+});

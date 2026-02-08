@@ -2,7 +2,7 @@
     "rewrites": [
         {
             "source": "/(.*)",
-            "destination": "/merchant-portal/index.html"
+            "destination": "/index.html"
         }
     ],
     "headers": [

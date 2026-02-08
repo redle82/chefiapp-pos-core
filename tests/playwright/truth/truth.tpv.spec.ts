@@ -18,39 +18,27 @@ const S = {
     badgeFailed: '[data-testid="badge-offline-failed"]',
 }
 
-// 🛑 Truth Zero & One: Onboarding Gate
+// 🛑 Truth Zero & One: Onboarding Gate (deprecated — "/" é agora ProductFirstLandingPage)
 test.describe('Truth Lock — Onboarding Gate', () => {
-    test('Scenario Zero: Server DOWN blocks Onboarding', async ({ page }) => {
-        // Mock DOWN
+    test.skip('Scenario Zero: Server DOWN blocks Onboarding (legacy landing at "/")', async ({ page }) => {
+        // "/" é agora ProductFirstLandingPage (TPV demo + overlay). Coberto por truth.landing-product.spec.ts
         await page.route('**/api/health', r =>
             r.fulfill({ status: 503, body: JSON.stringify({ status: 'DOWN' }) })
         )
-
         await page.goto('/')
-
-        // Expect Alert & Disabled Button
         await expect(page.locator(S.landingAlert)).toBeVisible()
         await expect(page.locator(S.landingCta)).toBeDisabled()
     })
 
-    test('Scenario One: Server UP allows Onboarding', async ({ page }) => {
-        // Mock UP
+    test.skip('Scenario One: Server UP allows Onboarding (legacy landing at "/")', async ({ page }) => {
+        // Mantido apenas para histórico. Coberto por truth.landing-product.spec.ts
         await page.route('**/api/health', r =>
             r.fulfill({ status: 200, body: JSON.stringify({ status: 'UP' }) })
         )
-
         await page.goto('/')
-
-        // Expect Alert Gone
         await expect(page.locator(S.landingAlert)).not.toBeVisible()
-
-        // Input Enabled?
         await expect(page.locator(S.landingEmail)).toBeEnabled()
-
-        // 🟡 Type Email to enable button
         await page.locator(S.landingEmail).fill('test@chefiapp.com')
-
-        // Expect Enabled Button
         await expect(page.locator(S.landingCta)).toBeEnabled()
     })
 })

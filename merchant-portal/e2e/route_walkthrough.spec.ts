@@ -140,7 +140,7 @@ test('Route Walkthrough (AntGravit)', async ({ page, browser }) => {
     const lines: string[] = [];
     lines.push(`# Route Walkthrough Report`);
     lines.push(`**Date:** ${new Date().toISOString()}`);
-    lines.push(`**BaseURL:** ${process.env.E2E_BASE_URL || 'http://localhost:5173'}`);
+    lines.push(`**BaseURL:** ${process.env.E2E_BASE_URL || 'http://localhost:5175'}`);
     lines.push('');
 
     for (const r of log) {

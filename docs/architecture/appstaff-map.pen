@@ -1,0 +1,1498 @@
+{
+  "version": "2.7",
+  "children": [
+    {
+      "type": "frame",
+      "id": "project-root",
+      "x": 0,
+      "y": -520,
+      "name": "chefiapp-pos-core (projeto)",
+      "width": 320,
+      "height": 70
+    },
+    {
+      "type": "frame",
+      "id": "docker-core",
+      "x": 0,
+      "y": -440,
+      "name": "Docker Core (container)",
+      "width": 280,
+      "height": 56
+    },
+    {
+      "type": "frame",
+      "id": "core-postgres",
+      "x": 0,
+      "y": -380,
+      "name": "PostgreSQL",
+      "width": 280,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "core-migrations",
+      "x": 0,
+      "y": -328,
+      "name": "Migrations (schema/migrations)",
+      "width": 280,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "core-gm-restaurants",
+      "x": 0,
+      "y": -276,
+      "name": "gm_restaurants",
+      "width": 280,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "core-gm-restaurant-people",
+      "x": 0,
+      "y": -224,
+      "name": "gm_restaurant_people",
+      "width": 280,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "core-gm-staff",
+      "x": 0,
+      "y": -172,
+      "name": "gm_staff",
+      "width": 280,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "core-auth-session",
+      "x": 0,
+      "y": -120,
+      "name": "Auth / Session",
+      "width": 280,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "core-runtime-context",
+      "x": 0,
+      "y": -68,
+      "name": "Runtime Context",
+      "width": 280,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "core-feature-flags",
+      "x": 0,
+      "y": -16,
+      "name": "Feature Flags",
+      "width": 280,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "core-billing-plans",
+      "x": 0,
+      "y": 36,
+      "name": "Billing / Plans",
+      "width": 280,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "merchant-portal-container",
+      "x": 360,
+      "y": -520,
+      "name": "Merchant Portal (React)",
+      "width": 280,
+      "height": 70
+    },
+    {
+      "type": "frame",
+      "id": "mobile-app",
+      "x": 980,
+      "y": -260,
+      "name": "Mobile App",
+      "width": 220,
+      "height": 70
+    },
+    {
+      "type": "frame",
+      "id": "docs",
+      "x": 1240,
+      "y": -260,
+      "name": "Docs / Architecture",
+      "width": 240,
+      "height": 70
+    },
+    {
+      "type": "frame",
+      "id": "auth",
+      "x": 360,
+      "y": -440,
+      "name": "Auth — /auth/phone, /auth/verify, /auth/email",
+      "width": 260,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "bootstrap",
+      "x": 360,
+      "y": -388,
+      "name": "Setup — /bootstrap, /setup/*",
+      "width": 260,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "config",
+      "x": 360,
+      "y": -336,
+      "name": "Config — /config/general, identity, location",
+      "width": 260,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "config-people",
+      "x": 360,
+      "y": -284,
+      "name": "/config/people — Cria dados que desbloqueiam AppStaff (RestaurantPeopleSection → gm_restaurant_people → WorkerCheckInView)",
+      "width": 280,
+      "height": 56
+    },
+    {
+      "type": "frame",
+      "id": "dashboard",
+      "x": 360,
+      "y": -224,
+      "name": "Dashboard — /dashboard, /app/dashboard",
+      "width": 260,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "admin",
+      "x": 360,
+      "y": -172,
+      "name": "Admin — /app/backoffice, /admin/*",
+      "width": 260,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "owner-central",
+      "x": 360,
+      "y": -120,
+      "name": "Owner central — /app/control-room → /app/staff/mode/operation",
+      "width": 280,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "tpv-portal",
+      "x": 360,
+      "y": -68,
+      "name": "TPV (op/tpv)",
+      "width": 200,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "kds-portal",
+      "x": 580,
+      "y": -68,
+      "name": "KDS (op/kds)",
+      "width": 200,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "setup",
+      "x": 360,
+      "y": -16,
+      "name": "Setup (menu, mesas, equipe)",
+      "width": 260,
+      "height": 48
+    },
+    {
+      "type": "frame",
+      "id": "appshell",
+      "x": 380,
+      "y": 140,
+      "name": "StaffAppShellLayout — DONO DA ALTURA E DO SCROLL (Canon)",
+      "clip": true,
+      "width": 360,
+      "height": 140,
+      "layout": "none",
+      "children": [
+        {
+          "type": "frame",
+          "id": "topbar",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "topbar-left",
+              "x": 0,
+              "y": 0,
+              "clip": true,
+              "width": 0,
+              "height": 0,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "lbl-turno",
+                  "x": 0,
+                  "y": 0,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "lbl-saude",
+                  "x": 0,
+                  "y": 0,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "topbar-right",
+              "x": 0,
+              "y": 0,
+              "clip": true,
+              "width": 0,
+              "height": 0,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "lbl-perfil",
+                  "x": 0,
+                  "y": 0,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "central",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "lbl-central",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "nav",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "nav-home",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "nav-tarefas",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "nav-perfil",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "home-gen",
+      "x": 380,
+      "y": 300,
+      "name": "Home Gate to Launcher",
+      "clip": true,
+      "width": 340,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "home-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "home-desc",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "home-content",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "home-content-label",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "login",
+      "x": 0,
+      "y": 120,
+      "name": "Entrada por codigo",
+      "clip": true,
+      "width": 320,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "login-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "login-desc",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "login-area",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "login-placeholder",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "selecao-local",
+      "x": 0,
+      "y": 230,
+      "name": "Selecao de Local",
+      "clip": true,
+      "width": 320,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "local-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "local-desc",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "local-list",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "local-placeholder",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "perfil",
+      "x": 760,
+      "y": 640,
+      "name": "Perfil StaffProfilePage",
+      "clip": true,
+      "width": 340,
+      "height": 100,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "perfil-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "perfil-tabs",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "tab-dados",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "tab-papel",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "tab-historico",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "tab-sessao",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "perfil-content",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "perfil-placeholder",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "owner-home",
+      "x": 1140,
+      "y": 770,
+      "clip": true,
+      "width": 280,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "owner-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "owner-desc",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "owner-links",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "owner-saude",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "owner-alertas",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "owner-dispositivos",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "manager-home",
+      "x": 1140,
+      "y": 880,
+      "clip": true,
+      "width": 280,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "manager-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "manager-desc",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "manager-links",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "manager-turno",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "manager-equipe",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "manager-dispositivos",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "waiter-home",
+      "x": 1140,
+      "y": 990,
+      "clip": true,
+      "width": 280,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "waiter-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "waiter-desc",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "waiter-links",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "waiter-tasks",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "waiter-mesas",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "waiter-checklists",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "kitchen-home",
+      "x": 1140,
+      "y": 1100,
+      "clip": true,
+      "width": 280,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "kitchen-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "kitchen-desc",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "kitchen-content",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "kitchen-placeholder",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "cleaning-home",
+      "x": 1140,
+      "y": 1210,
+      "clip": true,
+      "width": 280,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "cleaning-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "cleaning-desc",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "cleaning-content",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "cleaning-placeholder",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "tarefas-lista",
+      "x": 1480,
+      "y": 0,
+      "clip": true,
+      "width": 280,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "tarefas-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "tarefas-desc",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "tarefas-list-area",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "tarefas-placeholder",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "tarefas-detalhe",
+      "x": 1480,
+      "y": 110,
+      "clip": true,
+      "width": 280,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "detalhe-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "detalhe-content",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "detalhe-placeholder",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "turno-atual",
+      "x": 1480,
+      "y": 220,
+      "clip": true,
+      "width": 280,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "turno-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "turno-desc",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "turno-content",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "turno-placeholder",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "dispositivos",
+      "x": 1480,
+      "y": 330,
+      "clip": true,
+      "width": 280,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "disp-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "disp-content",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "disp-placeholder",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "alertas",
+      "x": 1480,
+      "y": 440,
+      "clip": true,
+      "width": 280,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "alertas-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "alertas-content",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "alertas-placeholder",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "saude",
+      "x": 1480,
+      "y": 550,
+      "clip": true,
+      "width": 280,
+      "height": 90,
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "saude-title",
+          "x": 0,
+          "y": 0,
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "saude-content",
+          "x": 0,
+          "y": 0,
+          "clip": true,
+          "width": 0,
+          "height": 0,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "saude-placeholder",
+              "x": 0,
+              "y": 0,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "3PefB",
+      "x": 0,
+      "y": 0,
+      "name": "/app/staff — AppStaffWrapper / StaffModule",
+      "width": 340,
+      "height": 100
+    },
+    {
+      "type": "frame",
+      "id": "jpys2",
+      "x": 380,
+      "y": 0,
+      "name": "StaffAppGate",
+      "width": 340,
+      "height": 120
+    },
+    {
+      "type": "frame",
+      "id": "CyZO1",
+      "x": 760,
+      "y": 0,
+      "name": "NoLocationsView",
+      "width": 320,
+      "height": 100
+    },
+    {
+      "type": "frame",
+      "id": "rndCd",
+      "x": 760,
+      "y": 120,
+      "name": "LocationSelectView",
+      "width": 320,
+      "height": 100
+    },
+    {
+      "type": "frame",
+      "id": "jI6wh",
+      "x": 760,
+      "y": 240,
+      "name": "AppStaffLanding",
+      "width": 320,
+      "height": 100
+    },
+    {
+      "type": "frame",
+      "id": "BiwGS",
+      "x": 760,
+      "y": 360,
+      "name": "WorkerCheckInView",
+      "width": 320,
+      "height": 120
+    },
+    {
+      "type": "frame",
+      "id": "bmtTV",
+      "x": 760,
+      "y": 500,
+      "name": "/app/staff/home — StaffLauncherPage, AppStaffHome (AppRootSurface — sem dashboard, sem texto explicativo)",
+      "width": 340,
+      "height": 120
+    },
+    {
+      "type": "frame",
+      "id": "mwssQ",
+      "x": 1140,
+      "y": 0,
+      "name": "/app/staff/mode/operation — OperationModePage, ManagerDashboard, OwnerDashboard (variant=app)",
+      "width": 300,
+      "height": 90
+    },
+    {
+      "type": "frame",
+      "id": "lBAfc",
+      "x": 1140,
+      "y": 110,
+      "name": "/app/staff/mode/turn — ManagerTurnoPage",
+      "width": 300,
+      "height": 90
+    },
+    {
+      "type": "frame",
+      "id": "L4rf2",
+      "x": 1140,
+      "y": 220,
+      "name": "ManagerEquipePage",
+      "width": 300,
+      "height": 90
+    },
+    {
+      "type": "frame",
+      "id": "bDdLT",
+      "x": 1140,
+      "y": 330,
+      "name": "/app/staff/mode/tpv — StaffTpvPage, MiniPOS",
+      "width": 300,
+      "height": 90
+    },
+    {
+      "type": "frame",
+      "id": "CcmO1",
+      "x": 1140,
+      "y": 440,
+      "name": "/app/staff/mode/kds — KitchenDisplay",
+      "width": 300,
+      "height": 90
+    },
+    {
+      "type": "frame",
+      "id": "LSoW5",
+      "x": 1140,
+      "y": 550,
+      "name": "/app/staff/mode/tasks — ManagerTarefasPage, WorkerTaskFocus",
+      "width": 300,
+      "height": 90
+    },
+    {
+      "type": "frame",
+      "id": "85RWD",
+      "x": 1140,
+      "y": 660,
+      "name": "/app/staff/mode/alerts — ManagerExcecoesPage",
+      "width": 300,
+      "height": 90
+    },
+    {
+      "type": "frame",
+      "id": "3h6ik",
+      "x": 760,
+      "y": 640,
+      "name": "StaffProfilePage",
+      "width": 340,
+      "height": 100
+    },
+    {
+      "type": "frame",
+      "id": "notifications",
+      "x": 1140,
+      "y": 770,
+      "name": "StaffNotificationsPage",
+      "width": 280,
+      "height": 80
+    },
+    {
+      "type": "frame",
+      "id": "help",
+      "x": 1140,
+      "y": 860,
+      "name": "StaffHelpPage",
+      "width": 280,
+      "height": 80
+    },
+    {
+      "type": "frame",
+      "id": "history",
+      "x": 1140,
+      "y": 950,
+      "name": "StaffHistoryPage",
+      "width": 280,
+      "height": 80
+    },
+    {
+      "type": "frame",
+      "id": "owner-pessoas",
+      "x": 1780,
+      "y": 770,
+      "name": "Owner Pessoas e papeis",
+      "width": 260,
+      "height": 80
+    },
+    {
+      "type": "frame",
+      "id": "owner-relatorios",
+      "x": 1780,
+      "y": 860,
+      "name": "Owner Relatorios",
+      "width": 260,
+      "height": 80
+    },
+    {
+      "type": "frame",
+      "id": "waiter-checklists",
+      "x": 1780,
+      "y": 990,
+      "name": "StaffWaiterChecklistsPage",
+      "width": 260,
+      "height": 80
+    },
+    {
+      "type": "frame",
+      "id": "waiter-chamados",
+      "x": 1780,
+      "y": 1080,
+      "name": "Waiter Chamados",
+      "width": 260,
+      "height": 80
+    },
+    {
+      "type": "frame",
+      "id": "kitchen-preparacao",
+      "x": 1780,
+      "y": 1170,
+      "name": "Kitchen Preparacao",
+      "width": 260,
+      "height": 80
+    },
+    {
+      "type": "frame",
+      "id": "kitchen-alerts",
+      "x": 1780,
+      "y": 1260,
+      "name": "Kitchen Alertas",
+      "width": 260,
+      "height": 80
+    },
+    {
+      "type": "frame",
+      "id": "cleaning-checklists",
+      "x": 1780,
+      "y": 1350,
+      "name": "StaffCleaningPage Checklists",
+      "width": 260,
+      "height": 80
+    },
+    {
+      "type": "frame",
+      "id": "cleaning-alerts",
+      "x": 1780,
+      "y": 1440,
+      "name": "Cleaning Alertas",
+      "width": 260,
+      "height": 80
+    },
+    {
+      "id": "tkjAX",
+      "type": "connection",
+      "x": 0,
+      "y": 0,
+      "source": {
+        "path": "3PefB",
+        "anchor": "right"
+      },
+      "target": {
+        "path": "jpys2",
+        "anchor": "left"
+      }
+    },
+    {
+      "id": "dQE5D",
+      "type": "connection",
+      "x": 0,
+      "y": 0,
+      "source": {
+        "path": "appshell",
+        "anchor": "right"
+      },
+      "target": {
+        "path": "bmtTV",
+        "anchor": "left"
+      }
+    },
+    {"id": "connGateNoLoc", "type": "connection", "x": 0, "y": 0, "source": {"path": "jpys2", "anchor": "right"}, "target": {"path": "CyZO1", "anchor": "left"}},
+    {"id": "connGateLocSel", "type": "connection", "x": 0, "y": 0, "source": {"path": "jpys2", "anchor": "right"}, "target": {"path": "rndCd", "anchor": "left"}},
+    {"id": "connGateLanding", "type": "connection", "x": 0, "y": 0, "source": {"path": "jpys2", "anchor": "right"}, "target": {"path": "jI6wh", "anchor": "left"}},
+    {"id": "connGateWorker", "type": "connection", "x": 0, "y": 0, "source": {"path": "jpys2", "anchor": "right"}, "target": {"path": "BiwGS", "anchor": "left"}},
+    {"id": "connGateShell", "type": "connection", "x": 0, "y": 0, "source": {"path": "jpys2", "anchor": "right"}, "target": {"path": "appshell", "anchor": "left"}},
+    {"id": "connShellOp", "type": "connection", "x": 0, "y": 0, "source": {"path": "appshell", "anchor": "right"}, "target": {"path": "mwssQ", "anchor": "left"}},
+    {"id": "connShellTurn", "type": "connection", "x": 0, "y": 0, "source": {"path": "appshell", "anchor": "right"}, "target": {"path": "lBAfc", "anchor": "left"}},
+    {"id": "connShellTeam", "type": "connection", "x": 0, "y": 0, "source": {"path": "appshell", "anchor": "right"}, "target": {"path": "L4rf2", "anchor": "left"}},
+    {"id": "connShellTpv", "type": "connection", "x": 0, "y": 0, "source": {"path": "appshell", "anchor": "right"}, "target": {"path": "bDdLT", "anchor": "left"}},
+    {"id": "connShellKds", "type": "connection", "x": 0, "y": 0, "source": {"path": "appshell", "anchor": "right"}, "target": {"path": "CcmO1", "anchor": "left"}},
+    {"id": "connShellTasks", "type": "connection", "x": 0, "y": 0, "source": {"path": "appshell", "anchor": "right"}, "target": {"path": "LSoW5", "anchor": "left"}},
+    {"id": "connShellAlerts", "type": "connection", "x": 0, "y": 0, "source": {"path": "appshell", "anchor": "right"}, "target": {"path": "85RWD", "anchor": "left"}},
+    {"id": "connShellProfile", "type": "connection", "x": 0, "y": 0, "source": {"path": "appshell", "anchor": "right"}, "target": {"path": "3h6ik", "anchor": "left"}},
+    {"id": "connWorkerLauncher", "type": "connection", "x": 0, "y": 0, "source": {"path": "BiwGS", "anchor": "bottom"}, "target": {"path": "bmtTV", "anchor": "top"}},
+    {"id": "connLauncherOwner", "type": "connection", "x": 0, "y": 0, "source": {"path": "bmtTV", "anchor": "right"}, "target": {"path": "owner-home", "anchor": "left"}},
+    {"id": "connLauncherManager", "type": "connection", "x": 0, "y": 0, "source": {"path": "bmtTV", "anchor": "right"}, "target": {"path": "manager-home", "anchor": "left"}},
+    {"id": "connLauncherWaiter", "type": "connection", "x": 0, "y": 0, "source": {"path": "bmtTV", "anchor": "right"}, "target": {"path": "waiter-home", "anchor": "left"}},
+    {"id": "connManagerTurno", "type": "connection", "x": 0, "y": 0, "source": {"path": "manager-home", "anchor": "right"}, "target": {"path": "turno-atual", "anchor": "left"}},
+    {"id": "connManagerDisp", "type": "connection", "x": 0, "y": 0, "source": {"path": "manager-home", "anchor": "right"}, "target": {"path": "dispositivos", "anchor": "left"}},
+    {"id": "connWaiterTarefas", "type": "connection", "x": 0, "y": 0, "source": {"path": "waiter-home", "anchor": "right"}, "target": {"path": "tarefas-lista", "anchor": "left"}},
+    {"id": "connTarefasDetalhe", "type": "connection", "x": 0, "y": 0, "source": {"path": "tarefas-lista", "anchor": "right"}, "target": {"path": "tarefas-detalhe", "anchor": "left"}},
+    {"id": "connOwnerSaude", "type": "connection", "x": 0, "y": 0, "source": {"path": "owner-home", "anchor": "right"}, "target": {"path": "saude", "anchor": "left"}},
+    {"id": "connOwnerAlertas", "type": "connection", "x": 0, "y": 0, "source": {"path": "owner-home", "anchor": "right"}, "target": {"path": "alertas", "anchor": "left"}},
+    {"id": "connLoginLocal", "type": "connection", "x": 0, "y": 0, "source": {"path": "login", "anchor": "right"}, "target": {"path": "selecao-local", "anchor": "left"}},
+    {"id": "connLocalHome", "type": "connection", "x": 0, "y": 0, "source": {"path": "selecao-local", "anchor": "right"}, "target": {"path": "home-gen", "anchor": "left"}},
+    {"id": "connShellNotif", "type": "connection", "x": 0, "y": 0, "source": {"path": "appshell", "anchor": "right"}, "target": {"path": "notifications", "anchor": "left"}},
+    {"id": "connShellHelp", "type": "connection", "x": 0, "y": 0, "source": {"path": "appshell", "anchor": "right"}, "target": {"path": "help", "anchor": "left"}},
+    {"id": "connShellHistory", "type": "connection", "x": 0, "y": 0, "source": {"path": "appshell", "anchor": "right"}, "target": {"path": "history", "anchor": "left"}},
+    {"id": "connOwnerPessoas", "type": "connection", "x": 0, "y": 0, "source": {"path": "owner-home", "anchor": "right"}, "target": {"path": "owner-pessoas", "anchor": "left"}},
+    {"id": "connOwnerRelatorios", "type": "connection", "x": 0, "y": 0, "source": {"path": "owner-home", "anchor": "right"}, "target": {"path": "owner-relatorios", "anchor": "left"}},
+    {"id": "connWaiterChecklists", "type": "connection", "x": 0, "y": 0, "source": {"path": "waiter-home", "anchor": "right"}, "target": {"path": "waiter-checklists", "anchor": "left"}},
+    {"id": "connWaiterChamados", "type": "connection", "x": 0, "y": 0, "source": {"path": "waiter-home", "anchor": "right"}, "target": {"path": "waiter-chamados", "anchor": "left"}},
+    {"id": "connKitchenPreparacao", "type": "connection", "x": 0, "y": 0, "source": {"path": "kitchen-home", "anchor": "right"}, "target": {"path": "kitchen-preparacao", "anchor": "left"}},
+    {"id": "connKitchenAlerts", "type": "connection", "x": 0, "y": 0, "source": {"path": "kitchen-home", "anchor": "right"}, "target": {"path": "kitchen-alerts", "anchor": "left"}},
+    {"id": "connCleaningChecklists", "type": "connection", "x": 0, "y": 0, "source": {"path": "cleaning-home", "anchor": "right"}, "target": {"path": "cleaning-checklists", "anchor": "left"}},
+    {"id": "connCleaningAlerts", "type": "connection", "x": 0, "y": 0, "source": {"path": "cleaning-home", "anchor": "right"}, "target": {"path": "cleaning-alerts", "anchor": "left"}},
+    {"id": "connProjCore", "type": "connection", "x": 0, "y": 0, "source": {"path": "project-root", "anchor": "right"}, "target": {"path": "docker-core", "anchor": "left"}},
+    {"id": "connProjPortal", "type": "connection", "x": 0, "y": 0, "source": {"path": "project-root", "anchor": "right"}, "target": {"path": "merchant-portal-container", "anchor": "left"}},
+    {"id": "connProjMobile", "type": "connection", "x": 0, "y": 0, "source": {"path": "project-root", "anchor": "right"}, "target": {"path": "mobile-app", "anchor": "left"}},
+    {"id": "connProjDocs", "type": "connection", "x": 0, "y": 0, "source": {"path": "project-root", "anchor": "right"}, "target": {"path": "docs", "anchor": "left"}},
+    {"id": "connCorePortal", "type": "connection", "x": 0, "y": 0, "source": {"path": "docker-core", "anchor": "right"}, "target": {"path": "merchant-portal-container", "anchor": "left"}},
+    {"id": "connPortalAuth", "type": "connection", "x": 0, "y": 0, "source": {"path": "merchant-portal-container", "anchor": "bottom"}, "target": {"path": "auth", "anchor": "top"}},
+    {"id": "connPortalBootstrap", "type": "connection", "x": 0, "y": 0, "source": {"path": "merchant-portal-container", "anchor": "bottom"}, "target": {"path": "bootstrap", "anchor": "top"}},
+    {"id": "connPortalConfig", "type": "connection", "x": 0, "y": 0, "source": {"path": "merchant-portal-container", "anchor": "bottom"}, "target": {"path": "config", "anchor": "top"}},
+    {"id": "connPortalConfigPeople", "type": "connection", "x": 0, "y": 0, "source": {"path": "merchant-portal-container", "anchor": "bottom"}, "target": {"path": "config-people", "anchor": "top"}},
+    {"id": "connConfigPeopleWorker", "type": "connection", "x": 0, "y": 0, "source": {"path": "config-people", "anchor": "right"}, "target": {"path": "BiwGS", "anchor": "left"}},
+    {"id": "connPortalDashboard", "type": "connection", "x": 0, "y": 0, "source": {"path": "merchant-portal-container", "anchor": "bottom"}, "target": {"path": "dashboard", "anchor": "top"}},
+    {"id": "connPortalAppStaff", "type": "connection", "x": 0, "y": 0, "source": {"path": "merchant-portal-container", "anchor": "bottom"}, "target": {"path": "3PefB", "anchor": "top"}},
+    {"id": "connPortalTpv", "type": "connection", "x": 0, "y": 0, "source": {"path": "merchant-portal-container", "anchor": "bottom"}, "target": {"path": "tpv-portal", "anchor": "top"}},
+    {"id": "connPortalKds", "type": "connection", "x": 0, "y": 0, "source": {"path": "merchant-portal-container", "anchor": "bottom"}, "target": {"path": "kds-portal", "anchor": "top"}},
+    {"id": "connPortalAdmin", "type": "connection", "x": 0, "y": 0, "source": {"path": "merchant-portal-container", "anchor": "bottom"}, "target": {"path": "admin", "anchor": "top"}},
+    {"id": "connPortalSetup", "type": "connection", "x": 0, "y": 0, "source": {"path": "merchant-portal-container", "anchor": "bottom"}, "target": {"path": "setup", "anchor": "top"}},
+    {"id": "connPortalOwnerCentral", "type": "connection", "x": 0, "y": 0, "source": {"path": "merchant-portal-container", "anchor": "bottom"}, "target": {"path": "owner-central", "anchor": "top"}}
+  ]
+}

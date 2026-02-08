@@ -108,8 +108,8 @@ export async function applyPaymentToOrder(
   }
 }
 
-// [HARDENING] Atomic Item Persistence
-import { supabase } from '../../merchant-portal/src/core/supabase';
+// [HARDENING] Atomic Item Persistence — Core (Docker) only
+import { supabase } from '../supabase';
 
 export async function persistOrderItem(context: EffectContext): Promise<void> {
   const { repo, entityId, entity, item } = context;
@@ -121,13 +121,14 @@ export async function persistOrderItem(context: EffectContext): Promise<void> {
   // Atomic RPC
   const { error } = await supabase.rpc('add_order_item_atomic', {
     p_order_id: entityId,
-    p_restaurant_id: order.restaurant_id,
+    p_restaurant_id: order.restaurant_id ?? '',
     p_item_data: item, // Should match JSONB structure
     p_expected_version: (order as any).version || 1 // Assuming version on order
   });
 
   if (error) {
-    throw new Error(`PERSIST_ITEM_FAILED: ${error.message} (${error.code})`);
+    const e = error as { message?: string; code?: string };
+    throw new Error(`PERSIST_ITEM_FAILED: ${e.message ?? 'Unknown'} (${e.code ?? 'unknown'})`);
   }
 }
 
@@ -138,13 +139,14 @@ export async function persistRemoveItem(context: EffectContext): Promise<void> {
 
   const { error } = await supabase.rpc('remove_order_item_atomic', {
     p_order_id: entityId,
-    p_restaurant_id: order.restaurant_id,
+    p_restaurant_id: order.restaurant_id ?? '',
     p_item_id: itemId,
     p_expected_version: (order as any).version || 1
   });
 
   if (error) {
-    throw new Error(`PERSIST_REMOVE_ITEM_FAILED: ${error.message}`);
+    const e = error as { message?: string };
+    throw new Error(`PERSIST_REMOVE_ITEM_FAILED: ${e.message ?? 'Unknown'}`);
   }
 }
 
@@ -155,7 +157,7 @@ export async function persistUpdateItemQty(context: EffectContext): Promise<void
 
   const { error } = await supabase.rpc('update_order_item_qty_atomic', {
     p_order_id: entityId,
-    p_restaurant_id: order.restaurant_id,
+    p_restaurant_id: order.restaurant_id ?? '',
     p_item_id: itemId,
     p_quantity: quantity,
     p_total_price: totalPrice,
@@ -163,7 +165,8 @@ export async function persistUpdateItemQty(context: EffectContext): Promise<void
   });
 
   if (error) {
-    throw new Error(`PERSIST_UPDATE_QTY_FAILED: ${error.message}`);
+    const e = error as { message?: string };
+    throw new Error(`PERSIST_UPDATE_QTY_FAILED: ${e.message ?? 'Unknown'}`);
   }
 }
 

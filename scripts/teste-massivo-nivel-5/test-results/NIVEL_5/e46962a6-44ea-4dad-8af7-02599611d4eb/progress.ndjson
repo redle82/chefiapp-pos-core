@@ -1,0 +1,10 @@
+{"__PROGRESS__":true,"phase":"BOOT","step":"init","op":"INFO","message":"Progress Bus iniciado (run_id=e46962a6-44ea-4dad-8af7-02599611d4eb)","timestamp":1769464775228}
+{"__PROGRESS__":true,"phase":"FASE 0","step":"run_id","op":"INFO","message":"run_id=e46962a6-44ea-4dad-8af7-02599611d4eb","timestamp":1769464775229}
+{"__PROGRESS__":true,"phase":"FASE 0","step":"results_dir","op":"INFO","message":"/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/scripts/teste-massivo-nivel-5/test-results/NIVEL_5/e46962a6-44ea-4dad-8af7-02599611d4eb","resource":"/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/scripts/teste-massivo-nivel-5/test-results/NIVEL_5/e46962a6-44ea-4dad-8af7-02599611d4eb","timestamp":1769464775229}
+{"__PROGRESS__":true,"phase":"FASE 0","step":"complete","op":"INFO","message":"COMPLETA (15ms)","timestamp":1769464775230}
+{"__PROGRESS__":true,"phase":"FASE 0: Preflight","step":"complete","op":"INFO","message":"COMPLETA (15ms)","timestamp":1769464775231}
+{"__PROGRESS__":true,"phase":"FASE 1: Setup Massivo","step":"start","op":"EXEC","message":"Iniciando fase","timestamp":1769464775232}
+{"__PROGRESS__":true,"phase":"FASE 1: Setup Massivo","step":"Perfil 1/4","current":1,"total":4,"message":"Processando perfil: Ambulante/Micro","op":"EXEC","timestamp":1769464775234}
+{"__PROGRESS__":true,"phase":"FASE 1: Setup Massivo","step":"failed","op":"ERROR","message":"FALHOU","timestamp":1769464775309}
+{"__PROGRESS__":true,"phase":"FASE 1: Setup Massivo","step":"abort","op":"ERROR","message":"Erro crítico: abortando","timestamp":1769464775309}
+{"__PROGRESS__":true,"phase":"FINAL","step":"done","op":"INFO","message":"Duração total: 95ms","timestamp":1769464775310}

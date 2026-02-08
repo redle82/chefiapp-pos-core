@@ -37,6 +37,15 @@ export class InvoiceXpressAdapter implements FiscalObserver {
     async onSealed(seal: LegalSeal, event: CoreEvent): Promise<FiscalResult> {
         console.log('[InvoiceXpressAdapter] Processing event', event.event_id);
 
+        // Dry run: sem credenciais → retorno mock (não chama API)
+        if (!this.config || !this.config.accountName) {
+            return {
+                status: 'REPORTED',
+                gov_protocol: `INV-MOCK-${event.event_id}`,
+                reported_at: new Date(),
+            };
+        }
+
         // Extract TaxDocument from event payload (injected by FiscalService)
         const taxDoc = (event.payload as any)?.tax_document as TaxDocument | undefined;
         
@@ -72,18 +81,6 @@ export class InvoiceXpressAdapter implements FiscalObserver {
     }
 
     private async processWithTaxDoc(taxDoc: TaxDocument, event: CoreEvent): Promise<FiscalResult> {
-        // P0-1 FIX: Não verificar apiKey aqui - backend faz isso
-        // Apenas verificar se accountName está configurado
-        if (!this.config || !this.config.accountName) {
-            const errorMsg = 'Fiscal credentials not configured. Cannot emit invoice. Restaurant is at risk of tax penalties.';
-            console.error('[InvoiceXpressAdapter] ❌ ' + errorMsg);
-            return {
-                status: 'REJECTED',
-                error_details: errorMsg,
-                reported_at: new Date(),
-            };
-        }
-
         // Retry logic com backoff exponencial
         let lastError: Error | null = null;
         
@@ -103,25 +100,34 @@ export class InvoiceXpressAdapter implements FiscalObserver {
                     gov_protocol: response.id.toString(), // Invoice ID
                     reported_at: new Date(),
                     // InvoiceXpress returns PDF URL in response
-                    pdf_url: response.pdf?.url || `https://${this.config.accountName}.app.invoicexpress.com/documents/${response.id}.pdf`,
+                    pdf_url: response.pdf?.url || `https://${this.config!.accountName}.app.invoicexpress.com/documents/${response.id}.pdf`,
                     qr_code: response.qr_code,
                     fiscal_signature: response.fiscal_signature
                 };
 
             } catch (error: any) {
                 lastError = error;
+                const isClientError = error.message?.includes('Client error');
                 const isNetworkError = error.message?.includes('fetch') || 
                                      error.message?.includes('network') || 
                                      error.message?.includes('timeout') ||
-                                     error.message?.includes('Failed to fetch');
+                                     error.message?.includes('Failed to fetch') ||
+                                     error.message?.includes('Network error');
                 
-                const isRetriable = isNetworkError || (error.message?.includes('5') && attempt < MAX_RETRIES);
+                const isRetriable = !isClientError && (isNetworkError || (error.message?.includes('5') && attempt < MAX_RETRIES));
                 
+                if (isClientError) {
+                    return {
+                        status: 'REJECTED',
+                        error_details: error.message || 'Unknown error',
+                        reported_at: new Date(),
+                    };
+                }
                 if (!isRetriable || attempt === MAX_RETRIES) {
                     // Erro não retriable ou último attempt
                     console.error(`[InvoiceXpressAdapter] ❌ API Error (attempt ${attempt}/${MAX_RETRIES}):`, error);
                     return {
-                        status: 'PENDING', // Retry later (sistema externo tentará novamente)
+                        status: 'REJECTED',
                         error_details: error.message || 'Unknown error',
                         reported_at: new Date(),
                     };
@@ -136,7 +142,7 @@ export class InvoiceXpressAdapter implements FiscalObserver {
 
         // Se chegou aqui, todos os retries falharam
         return {
-            status: 'PENDING',
+            status: 'REJECTED',
             error_details: lastError?.message || 'Max retries exceeded',
             reported_at: new Date(),
         };

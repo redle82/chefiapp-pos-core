@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { invokeRpc, getTableClient } from '../infra/coreRpc';
 import type { EffectContext } from '../../../../core-engine/effects';
 import { Logger } from '../logger';
 import { DbWriteGate } from '../governance/DbWriteGate';
@@ -19,8 +19,8 @@ export async function persistOpenCashRegister(context: EffectContext): Promise<v
 
     Logger.info('[Sovereignty] Projecting Cash Register Open...', { entityId });
 
-    // Call Atomic RPC
-    const { data: result, error } = await supabase.rpc('open_cash_register_atomic', {
+    // Call Atomic RPC — Core quando Docker (FINANCIAL_CORE_VIOLATION_AUDIT)
+    const { data: result, error } = await invokeRpc('open_cash_register_atomic', {
         p_restaurant_id: restaurantId,
         p_name: name || 'Caixa Principal',
         p_opened_by: opened_by,
@@ -62,13 +62,9 @@ export async function persistCloseCashRegister(context: EffectContext): Promise<
     // We use "CashRegisterEngine" tag effectively, OR we could use "SovereignKernel" tag if we added it.
     // Since we are migrating, we can assume this projection acts AS the Engine in the new world.
 
-    // Direct Supabase Update because DbWriteGate might block "CashRegisterEngine" in PURE mode?
-    // Actually, DbWriteGate allows "CashRegisterEngine" currently in Hybrid.
-    // But in Pure mode, we want ONLY Kernel.
-    // So we should bypass Gate OR add "Kernel" to whitelist.
-    // For now, let's use supabase directly (Sovereign Privilege).
-
-    const { data, error } = await supabase
+    // Core quando Docker — Fase 4 (FINANCIAL_CORE_VIOLATION_AUDIT)
+    const client = await getTableClient();
+    const { data, error } = await client
         .from('gm_cash_registers')
         .update({
             status: 'closed',

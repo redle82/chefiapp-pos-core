@@ -20,7 +20,7 @@ cp .env.example .env.local
 
 # 3. Start dev server
 npm run dev
-# Open http://localhost:5173
+# Open http://localhost:5175
 ```
 
 ## Supabase Setup

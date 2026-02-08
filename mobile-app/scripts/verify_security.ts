@@ -1,5 +1,4 @@
 
-import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -7,24 +6,12 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Resolve from current directory (.env locally)
 const envPath = path.resolve(process.cwd(), '.env');
-console.log("Loading .env from:", envPath);
 dotenv.config({ path: envPath });
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-    console.error("Missing Supabase Env Vars");
-    process.exit(1);
-}
-
-// Client 1: Anonymous (No Auth)
-const supabaseAnon = createClient(supabaseUrl, supabaseKey);
-
-// Client 2: Valid User (Authenticated)
-const supabaseAuth = createClient(supabaseUrl, supabaseKey);
+// Docker Core client (single client; auth is mock/no-op in Core)
+const { coreClient: supabaseAnon } = await import('../services/coreClient');
+const supabaseAuth = supabaseAnon;
 
 async function verifySecurity() {
     console.log("🛡️ Starting Phase 44 Verification: Security & RLS Lockdown...");

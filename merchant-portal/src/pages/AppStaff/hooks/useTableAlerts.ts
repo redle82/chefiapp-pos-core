@@ -7,9 +7,9 @@
  * - Mesa precisa de atenção
  */
 
-import { useEffect, useState } from 'react';
-import { useTables } from '../../TPV/context/TableContext';
-import { useOrders } from '../../TPV/context/OrderContextReal';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAppStaffTables } from './useAppStaffTables';
+import { useAppStaffOrders } from './useAppStaffOrders';
 import { useStaff } from '../context/StaffContext';
 import type { Task } from '../context/StaffCoreTypes';
 
@@ -26,16 +26,42 @@ const NO_ORDER_THRESHOLD_MS = 20 * 60 * 1000; // 20 minutos
 const LONG_WAIT_THRESHOLD_MS = 45 * 60 * 1000; // 45 minutos
 
 export function useTableAlerts() {
-    const { tables } = useTables();
-    const { orders } = useOrders();
-    const { createTask, tasks } = useStaff();
+    const { createTask, tasks, coreRestaurantId, operationalContract } = useStaff();
+    const createTaskRef = useRef(createTask);
+    const tasksRef = useRef(tasks);
+    createTaskRef.current = createTask;
+    tasksRef.current = tasks;
+
+    // FASE 3.3: Core API usa UUID (coreRestaurantId quando contrato é local)
+    const restaurantIdForCore = coreRestaurantId ?? operationalContract?.id ?? null;
+    const { tables: appStaffTables } = useAppStaffTables(restaurantIdForCore);
+    const { orders: appStaffOrders } = useAppStaffOrders(restaurantIdForCore);
+
+    // Estabilizar referências para evitar loop no useEffect (tables/orders .map() novos a cada render)
+    const tables = useMemo(() => appStaffTables.map(table => ({
+      id: table.id,
+      number: table.number,
+      status: table.status,
+      lastOrderAt: null as any,
+      occupiedAt: null as any,
+    })), [appStaffTables]);
+    const orders = useMemo(() => appStaffOrders.map(order => ({
+      id: order.id,
+      tableId: order.table_id || undefined,
+      status: (order.status === 'OPEN' ? 'new' : 
+               order.status === 'IN_PREP' ? 'preparing' : 
+               order.status === 'READY' ? 'ready' : 
+               order.status === 'PAID' ? 'paid' : 
+               order.status === 'CANCELLED' ? 'cancelled' : 'new') as 'new' | 'preparing' | 'ready' | 'served' | 'paid' | 'partially_paid' | 'cancelled',
+      created_at: order.created_at,
+    })), [appStaffOrders]);
+
     const [alerts, setAlerts] = useState<TableAlert[]>([]);
 
     useEffect(() => {
-        if (!tables || !orders) return;
-
         const newAlerts: TableAlert[] = [];
         const now = Date.now();
+        const currentTasks = tasksRef.current;
 
         // Verificar cada mesa
         for (const table of tables) {
@@ -97,18 +123,17 @@ export function useTableAlerts() {
 
         setAlerts(newAlerts);
 
-        // Criar tarefas para alertas críticos
+        // Criar tarefas para alertas críticos (usar refs para não re-executar o effect quando tasks/createTask mudam)
         for (const alert of newAlerts) {
             if (alert.severity === 'error') {
-                // Verificar se já existe tarefa para esta mesa
-                const existingTask = tasks.find(
-                    t => t.metadata?.tableId === alert.tableId && 
-                         t.metadata?.alertType === alert.type &&
+                const existingTask = currentTasks.find(
+                    (t: Task) => (t as Task & { metadata?: { tableId?: string; alertType?: string } }).metadata?.tableId === alert.tableId &&
+                         (t as Task & { metadata?: { alertType?: string } }).metadata?.alertType === alert.type &&
                          t.status !== 'done'
                 );
 
                 if (!existingTask) {
-                    createTask({
+                    createTaskRef.current({
                         title: alert.message,
                         description: `Atenção necessária na mesa ${alert.tableNumber}`,
                         priority: 'critical',
@@ -123,7 +148,7 @@ export function useTableAlerts() {
                 }
             }
         }
-    }, [tables, orders, createTask, tasks]);
+    }, [tables, orders]);
 
     return { alerts };
 }

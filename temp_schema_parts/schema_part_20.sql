@@ -1,0 +1,476 @@
+-- Migration: 20260117000001_rls_orders.sql
+-- CRITICAL: Row Level Security for Orders & Related Tables
+-- Without this, restaurants can see each other's data
+
+-- ==============================================================================
+-- PART 1: Enable RLS on Critical Tables
+-- ==============================================================================
+
+ALTER TABLE public.gm_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.gm_order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.gm_tables ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.gm_cash_registers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.gm_payments ENABLE ROW LEVEL SECURITY;
+
+-- ==============================================================================
+-- PART 2: Helper Function - Get User's Restaurant IDs
+-- ==============================================================================
+
+CREATE OR REPLACE FUNCTION public.user_restaurant_ids()
+RETURNS SETOF UUID
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+    -- Support both table names for compatibility
+    SELECT restaurant_id FROM public.gm_restaurant_members WHERE user_id = auth.uid()
+$$;
+
+-- ==============================================================================
+-- PART 3: RLS Policies for gm_orders
+-- ==============================================================================
+
+-- Drop existing policies (if any) to avoid conflicts
+DROP POLICY IF EXISTS "Only restaurant members can access their orders" ON public.gm_orders;
+DROP POLICY IF EXISTS "Enable read access for internal users" ON public.gm_orders;
+DROP POLICY IF EXISTS "Enable insert access for internal users" ON public.gm_orders;
+DROP POLICY IF EXISTS "Enable update access for internal users" ON public.gm_orders;
+DROP POLICY IF EXISTS "users_select_own_restaurant_orders" ON public.gm_orders;
+DROP POLICY IF EXISTS "users_insert_own_restaurant_orders" ON public.gm_orders;
+DROP POLICY IF EXISTS "users_update_own_restaurant_orders" ON public.gm_orders;
+DROP POLICY IF EXISTS "users_delete_own_restaurant_orders" ON public.gm_orders;
+
+-- Policy: Users can SELECT orders from their restaurants
+CREATE POLICY "users_select_own_restaurant_orders"
+    ON public.gm_orders
+    FOR SELECT
+    USING (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    );
+
+-- Policy: Users can INSERT orders for their restaurants
+CREATE POLICY "users_insert_own_restaurant_orders"
+    ON public.gm_orders
+    FOR INSERT
+    WITH CHECK (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    );
+
+-- Policy: Users can UPDATE orders from their restaurants
+CREATE POLICY "users_update_own_restaurant_orders"
+    ON public.gm_orders
+    FOR UPDATE
+    USING (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    )
+    WITH CHECK (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    );
+
+-- Policy: Users can DELETE orders from their restaurants (soft delete via status)
+-- Note: Hard delete not recommended, but policy exists for completeness
+CREATE POLICY "users_delete_own_restaurant_orders"
+    ON public.gm_orders
+    FOR DELETE
+    USING (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    );
+
+-- ==============================================================================
+-- PART 4: RLS Policies for gm_order_items
+-- ==============================================================================
+
+-- Drop existing policies (if any) to avoid conflicts
+DROP POLICY IF EXISTS "Only restaurant members can access their order items" ON public.gm_order_items;
+DROP POLICY IF EXISTS "Enable read access for internal users" ON public.gm_order_items;
+DROP POLICY IF EXISTS "users_select_own_restaurant_order_items" ON public.gm_order_items;
+DROP POLICY IF EXISTS "users_insert_own_restaurant_order_items" ON public.gm_order_items;
+DROP POLICY IF EXISTS "users_update_own_restaurant_order_items" ON public.gm_order_items;
+DROP POLICY IF EXISTS "users_delete_own_restaurant_order_items" ON public.gm_order_items;
+
+-- Policy: Users can SELECT items from orders in their restaurants
+CREATE POLICY "users_select_own_restaurant_order_items"
+    ON public.gm_order_items
+    FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1
+            FROM public.gm_orders o
+            WHERE o.id = gm_order_items.order_id
+                AND o.restaurant_id IN (
+                    SELECT public.user_restaurant_ids()
+                )
+        )
+    );
+
+-- Policy: Users can INSERT items into orders from their restaurants
+CREATE POLICY "users_insert_own_restaurant_order_items"
+    ON public.gm_order_items
+    FOR INSERT
+    WITH CHECK (
+        EXISTS (
+            SELECT 1
+            FROM public.gm_orders o
+            WHERE o.id = gm_order_items.order_id
+                AND o.restaurant_id IN (
+                    SELECT public.user_restaurant_ids()
+                )
+        )
+    );
+
+-- Policy: Users can UPDATE items from orders in their restaurants
+CREATE POLICY "users_update_own_restaurant_order_items"
+    ON public.gm_order_items
+    FOR UPDATE
+    USING (
+        EXISTS (
+            SELECT 1
+            FROM public.gm_orders o
+            WHERE o.id = gm_order_items.order_id
+                AND o.restaurant_id IN (
+                    SELECT public.user_restaurant_ids()
+                )
+        )
+    )
+    WITH CHECK (
+        EXISTS (
+            SELECT 1
+            FROM public.gm_orders o
+            WHERE o.id = gm_order_items.order_id
+                AND o.restaurant_id IN (
+                    SELECT public.user_restaurant_ids()
+                )
+        )
+    );
+
+-- Policy: Users can DELETE items from orders in their restaurants
+CREATE POLICY "users_delete_own_restaurant_order_items"
+    ON public.gm_order_items
+    FOR DELETE
+    USING (
+        EXISTS (
+            SELECT 1
+            FROM public.gm_orders o
+            WHERE o.id = gm_order_items.order_id
+                AND o.restaurant_id IN (
+                    SELECT public.user_restaurant_ids()
+                )
+        )
+    );
+
+-- ==============================================================================
+-- PART 5: RLS Policies for gm_tables
+-- ==============================================================================
+
+-- Drop existing policies (if any) to avoid conflicts
+DROP POLICY IF EXISTS "Only restaurant members can access their tables" ON public.gm_tables;
+DROP POLICY IF EXISTS "users_select_own_restaurant_tables" ON public.gm_tables;
+DROP POLICY IF EXISTS "users_insert_own_restaurant_tables" ON public.gm_tables;
+DROP POLICY IF EXISTS "users_update_own_restaurant_tables" ON public.gm_tables;
+DROP POLICY IF EXISTS "users_delete_own_restaurant_tables" ON public.gm_tables;
+
+-- Policy: Users can SELECT tables from their restaurants
+CREATE POLICY "users_select_own_restaurant_tables"
+    ON public.gm_tables
+    FOR SELECT
+    USING (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    );
+
+-- Policy: Users can INSERT tables for their restaurants
+CREATE POLICY "users_insert_own_restaurant_tables"
+    ON public.gm_tables
+    FOR INSERT
+    WITH CHECK (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    );
+
+-- Policy: Users can UPDATE tables from their restaurants
+CREATE POLICY "users_update_own_restaurant_tables"
+    ON public.gm_tables
+    FOR UPDATE
+    USING (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    )
+    WITH CHECK (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    );
+
+-- Policy: Users can DELETE tables from their restaurants
+CREATE POLICY "users_delete_own_restaurant_tables"
+    ON public.gm_tables
+    FOR DELETE
+    USING (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    );
+
+-- ==============================================================================
+-- PART 6: RLS Policies for gm_cash_registers
+-- ==============================================================================
+
+-- Drop existing policies (if any) to avoid conflicts
+DROP POLICY IF EXISTS "Only restaurant members can access their cash registers" ON public.gm_cash_registers;
+DROP POLICY IF EXISTS "users_select_own_restaurant_cash_registers" ON public.gm_cash_registers;
+DROP POLICY IF EXISTS "users_insert_own_restaurant_cash_registers" ON public.gm_cash_registers;
+DROP POLICY IF EXISTS "users_update_own_restaurant_cash_registers" ON public.gm_cash_registers;
+
+-- Policy: Users can SELECT cash registers from their restaurants
+CREATE POLICY "users_select_own_restaurant_cash_registers"
+    ON public.gm_cash_registers
+    FOR SELECT
+    USING (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    );
+
+-- Policy: Users can INSERT cash registers for their restaurants
+CREATE POLICY "users_insert_own_restaurant_cash_registers"
+    ON public.gm_cash_registers
+    FOR INSERT
+    WITH CHECK (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    );
+
+-- Policy: Users can UPDATE cash registers from their restaurants
+CREATE POLICY "users_update_own_restaurant_cash_registers"
+    ON public.gm_cash_registers
+    FOR UPDATE
+    USING (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    )
+    WITH CHECK (
+        restaurant_id IN (
+            SELECT public.user_restaurant_ids()
+        )
+    );
+
+-- ==============================================================================
+-- PART 7: RLS Policies for gm_payments
+-- ==============================================================================
+
+-- Drop existing policies (if any) to avoid conflicts
+DROP POLICY IF EXISTS "Only restaurant members can access their payments" ON public.gm_payments;
+DROP POLICY IF EXISTS "users_select_own_restaurant_payments" ON public.gm_payments;
+DROP POLICY IF EXISTS "users_insert_own_restaurant_payments" ON public.gm_payments;
+DROP POLICY IF EXISTS "users_update_own_restaurant_payments" ON public.gm_payments;
+
+-- Policy: Users can SELECT payments from orders in their restaurants
+CREATE POLICY "users_select_own_restaurant_payments"
+    ON public.gm_payments
+    FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1
+            FROM public.gm_orders o
+            WHERE o.id = gm_payments.order_id
+                AND o.restaurant_id IN (
+                    SELECT public.user_restaurant_ids()
+                )
+        )
+    );
+
+-- Policy: Users can INSERT payments for orders in their restaurants
+CREATE POLICY "users_insert_own_restaurant_payments"
+    ON public.gm_payments
+    FOR INSERT
+    WITH CHECK (
+        EXISTS (
+            SELECT 1
+            FROM public.gm_orders o
+            WHERE o.id = gm_payments.order_id
+                AND o.restaurant_id IN (
+                    SELECT public.user_restaurant_ids()
+                )
+        )
+    );
+
+-- Policy: Users can UPDATE payments from orders in their restaurants
+CREATE POLICY "users_update_own_restaurant_payments"
+    ON public.gm_payments
+    FOR UPDATE
+    USING (
+        EXISTS (
+            SELECT 1
+            FROM public.gm_orders o
+            WHERE o.id = gm_payments.order_id
+                AND o.restaurant_id IN (
+                    SELECT public.user_restaurant_ids()
+                )
+        )
+    )
+    WITH CHECK (
+        EXISTS (
+            SELECT 1
+            FROM public.gm_orders o
+            WHERE o.id = gm_payments.order_id
+                AND o.restaurant_id IN (
+                    SELECT public.user_restaurant_ids()
+                )
+        )
+    );
+
+-- ==============================================================================
+-- PART 8: Performance Indexes for RLS Queries
+-- ==============================================================================
+
+-- Index to speed up RLS policy checks on gm_orders
+CREATE INDEX IF NOT EXISTS idx_gm_orders_restaurant_id_status
+    ON public.gm_orders(restaurant_id, status)
+    WHERE status IN ('OPEN', 'IN_PREP', 'READY');
+
+-- Index to speed up RLS policy checks on gm_order_items
+CREATE INDEX IF NOT EXISTS idx_gm_order_items_order_id
+    ON public.gm_order_items(order_id);
+
+-- Index to speed up RLS policy checks on gm_tables
+CREATE INDEX IF NOT EXISTS idx_gm_tables_restaurant_id
+    ON public.gm_tables(restaurant_id);
+
+-- Index to speed up RLS policy checks on gm_cash_registers
+CREATE INDEX IF NOT EXISTS idx_gm_cash_registers_restaurant_id
+    ON public.gm_cash_registers(restaurant_id);
+
+-- Index to speed up RLS policy checks on gm_payments
+CREATE INDEX IF NOT EXISTS idx_gm_payments_order_id
+    ON public.gm_payments(order_id);
+
+CREATE INDEX IF NOT EXISTS idx_gm_restaurant_members_user_id
+    ON public.gm_restaurant_members(user_id);
+;
+-- Migration: 20260117000002_prevent_race_conditions.sql
+-- CRITICAL: Prevent race conditions in concurrent operations
+
+-- ==============================================================================
+-- PART 1: Prevent Multiple Active Orders on Same Table
+-- ==============================================================================
+
+-- Drop existing index if it exists (idempotent)
+DROP INDEX IF EXISTS idx_gm_orders_active_table;
+
+-- Create partial unique index: Only one active order per table
+CREATE UNIQUE INDEX idx_gm_orders_active_table
+  ON public.gm_orders(restaurant_id, table_id)
+  WHERE status IN ('OPEN', 'IN_PREP', 'READY')
+    AND table_id IS NOT NULL;
+
+-- Rationale:
+-- - Prevents two waiters from creating separate orders for the same table
+-- - Only applies to active orders (not PAID or CANCELLED)
+-- - Only applies when table_id is set (counter orders don't have table)
+
+-- ==============================================================================
+-- PART 2: Prevent Multiple Open Cash Registers per Restaurant
+-- ==============================================================================
+
+-- Drop existing index if it exists (idempotent)
+DROP INDEX IF EXISTS idx_gm_cash_registers_one_open;
+
+-- Create partial unique index: Only one open cash register per restaurant
+CREATE UNIQUE INDEX idx_gm_cash_registers_one_open
+  ON public.gm_cash_registers(restaurant_id)
+  WHERE status = 'OPEN';
+
+-- Rationale:
+-- - Prevents multiple cash registers from being open simultaneously
+-- - Critical for financial accuracy
+-- - Only applies to OPEN status (closed registers don't conflict)
+
+-- ==============================================================================
+-- PART 3: Prevent Duplicate Payment Processing (Idempotency)
+-- ==============================================================================
+
+-- Drop existing index if it exists (idempotent)
+DROP INDEX IF EXISTS idx_gm_payments_idempotency;
+
+-- Create unique index on idempotency key (if column exists)
+-- Note: This assumes gm_payments has an idempotency_key column
+-- If not, this will be a no-op and should be added to the schema first
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+            AND table_name = 'gm_payments'
+            AND column_name = 'idempotency_key'
+    ) THEN
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_gm_payments_idempotency
+            ON public.gm_payments(idempotency_key)
+            WHERE idempotency_key IS NOT NULL;
+    END IF;
+END $$;
+
+-- ==============================================================================
+-- PART 4: Performance Indexes for Hot Paths
+-- ==============================================================================
+
+-- Index for fetching active orders by restaurant (KDS, TPV)
+CREATE INDEX IF NOT EXISTS idx_gm_orders_restaurant_active
+    ON public.gm_orders(restaurant_id, status, created_at DESC)
+    WHERE status IN ('OPEN', 'IN_PREP', 'READY');
+
+-- Index for fetching order items by order (common query)
+CREATE INDEX IF NOT EXISTS idx_gm_order_items_order_status
+    ON public.gm_order_items(order_id, created_at);
+
+
+-- Index for daily totals calculation (cash register reports)
+CREATE INDEX IF NOT EXISTS idx_gm_orders_restaurant_date_status
+    ON public.gm_orders(restaurant_id, created_at, status)
+    WHERE status = 'PAID';
+
+-- Index for payment history queries
+CREATE INDEX IF NOT EXISTS idx_gm_payments_order_created
+    ON public.gm_payments(order_id, created_at DESC);
+
+-- ==============================================================================
+-- PART 5: Add Comments for Documentation
+-- ==============================================================================
+
+COMMENT ON INDEX idx_gm_orders_active_table IS
+    'Prevents race condition: only one active order per table at a time';
+
+COMMENT ON INDEX idx_gm_cash_registers_one_open IS
+    'Prevents race condition: only one open cash register per restaurant at a time';
+
+COMMENT ON INDEX idx_gm_orders_restaurant_active IS
+    'Hot path: fetching active orders for KDS/TPV display';
+
+COMMENT ON INDEX idx_gm_order_items_order_status IS
+    'Hot path: fetching order items for order display';
+;
+-- Add Fiscal Configuration to Restaurants
+-- Purpose: Enable selection of fiscal providers (InvoiceXpress, Moloni) and storage of credentials.
+ALTER TABLE public.gm_restaurants
+ADD COLUMN IF NOT EXISTS fiscal_provider VARCHAR(50) DEFAULT 'mock',
+    ADD COLUMN IF NOT EXISTS fiscal_config JSONB DEFAULT '{}'::jsonb;
+-- Comment on columns
+COMMENT ON COLUMN public.gm_restaurants.fiscal_provider IS 'Provider used for fiscal documents: mock, invoice_xpress, moloni, saft_pt, ticketbai';
+COMMENT ON COLUMN public.gm_restaurants.fiscal_config IS 'Encrypted/Secure configuration for the provider (API Keys, etc)';
+-- Add to Legal Profiles (optional, for default country rules)
+-- NOT needed yet, gm_restaurants is enough.;

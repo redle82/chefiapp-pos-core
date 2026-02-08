@@ -1,90 +1,103 @@
 # ⚖️ ENGINEERING CONSTITUTION — ChefIApp
 
-> **O Sistema Operacional da Engenharia ChefIApp.**
+> **The Operating System of ChefIApp Engineering.**
 > Effective immediately. **Mandatory. Non-negotiable.**
 
 ---
 
-## PREÂMBULO
+## PREAMBLE
 
-Este documento define as regras absolutas que governam o desenvolvimento do ChefIApp.
+This document defines the absolute rules that govern ChefIApp development.
 
-**Violação = Incidente Crítico.**
+**Violation = Critical Incident.**
 
-Não são guidelines. São leis.
+These are not guidelines. These are laws.
 
 ---
 
-## PARTE I — PRINCÍPIOS FUNDAMENTAIS
+## PART I — FUNDAMENTAL PRINCIPLES
 
-### Art. 1. Hierarquia de Autoridade
+### Art. 1. Authority Hierarchy
 
 ```
 DATABASE > BACKEND > FRONTEND > UI
 ```
 
-1. **DATABASE_AUTHORITY**: O banco de dados é a única fonte da verdade final.
-2. **Backend valida**: Toda regra de negócio é enforced no backend.
-3. **Frontend projeta**: A UI é uma projeção do estado, não a autoridade.
-4. **Client nunca decide**: Permissões, preços e estados finais vêm do servidor.
+1. **DATABASE_AUTHORITY**: The database is the sole source of final truth.
+2. **Backend validates**: All business rules are enforced in the backend.
+3. **Frontend projects**: The UI is a projection of state, not the authority.
+4. **Client never decides**: Permissions, prices, and final states come from the server.
 
-### Art. 2. Definição de "Feito"
+### Art. 2. Definition of "Done"
 
-Um trabalho só está **FEITO** quando:
+Work is only **DONE** when:
 
-- [x] Código commitado (`git status` limpo)
-- [x] Build passa sem erros
-- [x] Deployed ou com justificativa explícita
-- [x] Documentação atualizada se necessário
+- [x] Code committed (`git status` clean)
+- [x] Build passes without errors
+- [x] Deployed or with explicit justification
+- [x] Documentation updated if necessary
 
-**"Quase pronto" = "Não feito"**
+**"Almost ready" = "Not done"**
 
-### Art. 3. Reversibilidade Absoluta
+### Art. 3. Absolute Reversibility
 
-Nada entra no sistema que não possa ser revertido.
+Nothing enters the system that cannot be reverted.
 
-- Migrações têm rollback
-- Features têm feature flags
-- Deploys têm rollback imediato
+- Migrations have rollback
+- Features have feature flags
+- Deploys have immediate rollback
 
----
+## 📑 Architectural Contracts
 
-## PARTE II — INVARIANTES ABSOLUTAS
+To maintain the project's integrity, I have formalized the **[OPERATIONAL_PULSE_CONTRACT](file:///Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/OPERATIONAL_PULSE_CONTRACT.md)**.
+This document defines:
 
-> **Regras que NUNCA podem ser violadas, independente do contexto.**
-
-### Art. 4. Invariantes de Pedidos
-
-| ID      | Invariante                                   |
-| ------- | -------------------------------------------- |
-| ORD-001 | Pedido não existe sem `restaurant_id` válido |
-| ORD-003 | Pedido fechado é **IMUTÁVEL**                |
-| ORD-005 | `idempotency_key` garante criação única      |
-
-### Art. 5. Invariantes Financeiras
-
-| ID      | Invariante                                          |
-| ------- | --------------------------------------------------- |
-| PAY-001 | Pagamento não pode ser aplicado duas vezes          |
-| PAY-002 | Soma de pagamentos ≤ total do pedido                |
-| FIN-001 | Fechamento de caixa é **IRREVERSÍVEL**              |
-| FIN-003 | **Offline NUNCA altera financeiro já sincronizado** |
-
-### Art. 6. Invariantes de Sincronização
-
-| ID      | Invariante                                 |
-| ------- | ------------------------------------------ |
-| SYN-001 | Backend é SEMPRE a fonte final             |
-| SYN-003 | Conflito nunca resulta em perda silenciosa |
-| SYN-004 | Replay respeita ordem cronológica          |
-
-**📚 Referência completa**: [BUSINESS_INVARIANTS.md](docs/BUSINESS_INVARIANTS.md)
+- **Heartbeat Interval**: 30s.
+- **Thresholds**: Online (<1m), Offline (>1m).
+- **Data Integrity**: Immutable terminal IDs stored in `localStorage`.
 
 ---
 
-## PARTE III — CLÁUSULAS DE SEGURANÇA
+**Operation Pulse is now active and governed by law. Operational awareness has been upgraded.** 📡
 
-### Art. 7. RBAC Violation = Incidente Crítico
+---
+
+## PART II — ABSOLUTE INVARIANTS
+
+> **Rules that can NEVER be violated, regardless of context.**
+
+### Art. 4. Order Invariants
+
+| ID      | Invariant                                          |
+| ------- | -------------------------------------------------- |
+| ORD-001 | Order does not exist without valid `restaurant_id` |
+| ORD-003 | Closed order is **IMMUTABLE**                      |
+| ORD-005 | `idempotency_key` guarantees unique creation       |
+
+### Art. 5. Financial Invariants
+
+| ID      | Invariant                                               |
+| ------- | ------------------------------------------------------- |
+| PAY-001 | Payment cannot be applied twice                         |
+| PAY-002 | Sum of payments ≤ order total                           |
+| FIN-001 | Cash register closure is **IRREVERSIBLE**               |
+| FIN-003 | **Offline NEVER alters already synchronized financial** |
+
+### Art. 6. Synchronization Invariants
+
+| ID      | Invariant                             |
+| ------- | ------------------------------------- |
+| SYN-001 | Backend is ALWAYS the final source    |
+| SYN-003 | Conflict never results in silent loss |
+| SYN-004 | Replay respects chronological order   |
+
+**📚 Complete reference**: [BUSINESS_INVARIANTS.md](docs/BUSINESS_INVARIANTS.md)
+
+---
+
+## PART III — SECURITY CLAUSES
+
+### Art. 7. RBAC Violation = Critical Incident
 
 ```typescript
 if (rbac_violation_count > 0) {
@@ -93,83 +106,83 @@ if (rbac_violation_count > 0) {
 }
 ```
 
-**Consequências de violação RBAC**:
+**Consequences of RBAC violation**:
 
-1. 🚨 Alerta imediato no Conflict Dashboard
-2. ⛔ Deploy bloqueado até resolução
-3. 📝 Postmortem obrigatório
+1. 🚨 Immediate alert on Conflict Dashboard
+2. ⛔ Deploy blocked until resolution
+3. 📝 Mandatory postmortem
 
-### Art. 8. Conflito Financeiro = Postmortem Obrigatório
+### Art. 8. Financial Conflict = Mandatory Postmortem
 
-Qualquer conflito envolvendo:
+Any conflict involving:
 
-- Pagamentos
-- Fechamento de caixa
-- Totais de pedido
+- Payments
+- Cash register closure
+- Order totals
 
-**Exige**:
+**Requires**:
 
-- Investigação documentada
-- Root cause identificado
-- Correção commitada
+- Documented investigation
+- Root cause identified
+- Correction committed
 
-### Art. 9. Política de Conflitos
+### Art. 9. Conflict Policy
 
-| Cenário                             | Quem Vence                      |
-| ----------------------------------- | ------------------------------- |
-| Dois garçons editam pedido          | Último evento                   |
-| Offline vs Online                   | Online vence                    |
-| Ação offline, pedido fechado online | Offline descartado              |
-| Pagamento duplicado                 | Segundo ignorado (idempotência) |
+| Scenario                            | Who Wins                     |
+| ----------------------------------- | ---------------------------- |
+| Two waiters edit order              | Last event                   |
+| Offline vs Online                   | Online wins                  |
+| Offline action, order closed online | Offline discarded            |
+| Duplicate payment                   | Second ignored (idempotency) |
 
-**📚 Referência completa**: [CONFLICT_POLICY.md](docs/CONFLICT_POLICY.md)
+**📚 Complete reference**: [CONFLICT_POLICY.md](docs/CONFLICT_POLICY.md)
 
 ---
 
-## PARTE IV — GOVERNANÇA DE QUALIDADE
+## PART IV — QUALITY GOVERNANCE
 
-### Art. 10. Teste Universal é Obrigatório
+### Art. 10. Universal Test is Mandatory
 
-**Nenhum cliente entra em produção sem passar FASE 4 (Offline Total).**
+**No client enters production without passing PHASE 4 (Total Offline).**
 
-| Fase     | Obrigatório Para |
-| -------- | ---------------- |
-| FASE 0   | Todo deploy      |
-| FASE 1-2 | Todo deploy      |
-| FASE 3-4 | Cliente novo     |
-| FASE 5-6 | Release major    |
-| FASE 7   | Antes de escalar |
+| Phase     | Mandatory For  |
+| --------- | -------------- |
+| PHASE 0   | Every deploy   |
+| PHASE 1-2 | Every deploy   |
+| PHASE 3-4 | New client     |
+| PHASE 5-6 | Major release  |
+| PHASE 7   | Before scaling |
 
-**📚 Referência**: [UNIVERSAL_TEST_PLAN.md](docs/testing/UNIVERSAL_TEST_PLAN.md)
+**📚 Reference**: [UNIVERSAL_TEST_PLAN.md](docs/testing/UNIVERSAL_TEST_PLAN.md)
 
-### Art. 11. Conflict Dashboard é Fonte de Verdade
+### Art. 11. Conflict Dashboard is Source of Truth
 
-O dashboard de conflitos:
+The conflict dashboard:
 
-- É monitorado continuamente
-- Define health do sistema
-- Gera alertas automáticos
+- Is continuously monitored
+- Defines system health
+- Generates automatic alerts
 
-**Limites de alerta**:
-| Métrica | Limite | Ação |
+**Alert limits**:
+| Metric | Limit | Action |
 |---------|--------|------|
-| RBAC violations | > 0 | CRÍTICO |
+| RBAC violations | > 0 | CRITICAL |
 | Conflict rate | > 5% | DEGRADED |
 | Sync conflicts/24h | > 10 | DEGRADED |
 
 ---
 
-## PARTE V — FLUXO OPERACIONAL
+## PART V — OPERATIONAL FLOW
 
-### Art. 12. Daily Flow Padrão
+### Art. 12. Standard Daily Flow
 
 ```bash
-1. git pull                    # Sync com realidade
-2. Implementar                 # Mudar realidade
-3. npm run typecheck && npm run build  # Verificar
-4. git commit                  # Salvar
-5. Deploy                      # Entregar
-6. Atualizar PROXIMOS_PASSOS.md
+1. git pull                    # Sync with reality
+2. Implement                 # Change reality
+3. npm run typecheck && npm run build  # Verify
+4. git commit                  # Save
+5. Deploy                      # Deliver
+6. Update PROXIMOS_PASSOS.md
 ```
 
 ### Art. 13. Commit Convention
@@ -177,94 +190,98 @@ O dashboard de conflitos:
 ```
 type(scope): description
 
-Tipos: feat, fix, docs, refactor, test, chore
+Types: feat, fix, docs, refactor, test, chore
 ```
 
 ### Art. 14. Clean State Law
 
-**Não pode declarar tarefa terminada com `git status` dirty.**
+**Cannot declare task finished with `git status` dirty.**
 
 ---
 
-## PARTE VI — HIGIENE DE CÓDIGO
+## PART VI — CODE HYGIENE
 
-### Art. 15. Proibições Absolutas
+### Art. 15. Absolute Prohibitions
 
-- ❌ Commit de `*.log` ou debug dumps
-- ❌ Código comentado (Git tem histórico)
-- ❌ `console.log` em produção (use Logger)
-- ❌ Arquivos temporários no repo
-- ❌ Secrets hardcoded
+- ❌ Commit of `*.log` or debug dumps
+- ❌ Commented code (Git has history)
+- ❌ `console.log` in production (use Logger)
+- ❌ Temporary files in repo
+- ❌ Hardcoded secrets
 
-### Art. 16. Padrões Obrigatórios
+### Art. 16. Mandatory Standards
 
 - ✅ TypeScript strict mode
-- ✅ ESLint sem warnings
-- ✅ Imports absolutos organizados
-- ✅ Error boundaries em componentes críticos
+- ✅ ESLint without warnings
+- ✅ Organized absolute imports
+- ✅ Error boundaries in critical components
 
 ---
 
-## PARTE VII — PROTEÇÃO DO SISTEMA
+## PART VII — SYSTEM PROTECTION
 
-### Art. 17. Quem Pode Usar ChefIApp
+### Art. 17. Who Can Use ChefIApp
 
-Critérios mínimos para cliente:
+Minimum criteria for client:
 
-1. Restaurante real com operação física
-2. Disposição para treinar equipe
-3. Aceitar que offline não altera financeiro fechado
-4. Entender que backend é autoridade
+1. Real restaurant with physical operation
+2. Willingness to train team
+3. Accept that offline does not alter closed financial
+4. Understand that backend is authority
 
-**Cliente que não aceita as regras = Cliente que não entra.**
+**Client who does not accept the rules = Client who does not enter.**
 
-### Art. 18. O Que Não Fazemos
+### Art. 18. What We Don't Do
 
-- ❌ Permitir fraude de permissão
-- ❌ Sobrescrever financeiro fechado
-- ❌ Ignorar conflitos silenciosamente
-- ❌ Deploiar sem passar testes mínimos
+- ❌ Allow permission fraud
+- ❌ Overwrite closed financial
+- ❌ Ignore conflicts silently
+- ❌ Deploy without passing minimum tests
 
 ---
 
-## PARTE VIII — ENFORCEMENT
+## PART VIII — ENFORCEMENT
 
-### Art. 19. Violação = Incidente
+### Art. 19. Violation = Incident
 
-| Tipo de Violação    | Severidade | Ação                    |
-| ------------------- | ---------- | ----------------------- |
-| Invariante quebrada | CRÍTICO    | Parar desenvolvimento   |
-| RBAC violation      | CRÍTICO    | Bloquear deploy         |
-| Conflito financeiro | GRAVE      | Postmortem              |
-| Lint/Type error     | MÉDIO      | Corrigir antes de merge |
-| Clean state dirty   | BAIXO      | Não pode declarar done  |
+| Violation Type     | Severity | Action              |
+| ------------------ | -------- | ------------------- |
+| Broken invariant   | CRITICAL | Stop development    |
+| RBAC violation     | CRITICAL | Block deploy        |
+| Financial conflict | GRAVE    | Postmortem          |
+| Lint/Type error    | MÉDIO    | Fix before merge    |
+| Clean state dirty  | LOW      | Cannot declare done |
 
-### Art. 20. Postmortem Obrigatório
+### Art. 20. Mandatory Postmortem
 
-Incidentes críticos exigem:
+Critical incidents require:
 
-1. Timeline do ocorrido
+1. Timeline of what happened
 2. Root cause analysis
-3. Correção implementada
-4. Medidas preventivas
-5. Documento arquivado em `docs/incidents/`
+3. Implemented correction
+4. Preventive measures
+5. Document archived in `docs/incidents/`
 
 ---
 
-## ASSINATURAS
+## SIGNATURES
 
-Este documento é lei.
+This document is law.
 
-Última atualização: **2026-01-23**
+Last updated: **2026-01-23**
 
 ---
 
-## REFERÊNCIAS
+## REFERENCES
 
-| Documento                                                                                      | Propósito                |
-| ---------------------------------------------------------------------------------------------- | ------------------------ |
-| [BUSINESS_INVARIANTS.md](docs/BUSINESS_INVARIANTS.md)                                          | 26 invariantes absolutas |
-| [EVENT_MODEL.md](docs/EVENT_MODEL.md)                                                          | 35+ eventos de domínio   |
-| [CONFLICT_POLICY.md](docs/CONFLICT_POLICY.md)                                                  | Matriz de resolução      |
-| [UNIVERSAL_TEST_PLAN.md](docs/testing/UNIVERSAL_TEST_PLAN.md)                                  | Plano de teste soberano  |
-| [ConflictMetricsDashboard.tsx](merchant-portal/src/pages/Reports/ConflictMetricsDashboard.tsx) | Dashboard de conflitos   |
+| Document                                                                                                 | Purpose                  |
+| -------------------------------------------------------------------------------------------------------- | ------------------------ |
+| [BUSINESS_INVARIANTS.md](docs/BUSINESS_INVARIANTS.md)                                                    | 26 absolute invariants   |
+| [EVENT_MODEL.md](docs/EVENT_MODEL.md)                                                                    | 35+ domain events        |
+| [CONFLICT_POLICY.md](docs/CONFLICT_POLICY.md)                                                            | Resolution matrix        |
+| [UNIVERSAL_TEST_PLAN.md](docs/testing/UNIVERSAL_TEST_PLAN.md)                                            | Sovereign test plan      |
+| [OPERATIONAL_PULSE_CONTRACT.md](OPERATIONAL_PULSE_CONTRACT.md)                                           | Heartbeat & Liveness     |
+| [TERMINAL_IDENTITY_CONTRACT.md](TERMINAL_IDENTITY_CONTRACT.md)                                           | Disposable Identity      |
+| [DATA_VISIBILITY_CONTRACT.md](DATA_VISIBILITY_CONTRACT.md)                                               | Read Access Boundaries   |
+| [TENANT_ISOLATION_SECURITY_MODEL.md](docs/security/TENANT_ISOLATION_SECURITY_MODEL.md)                   | 15 Golden Security Rules |
+| [ConflictMetricsDashboard.tsx](merchant-portal/src/pages/Reports/Conflicts/ConflictMetricsDashboard.tsx) | Audit Interface          |

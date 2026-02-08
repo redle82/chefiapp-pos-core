@@ -193,6 +193,34 @@ Implementar sistema de alertas para detectar incidentes críticos rapidamente (<
 
 ---
 
+## G3 Onda 3 — Regras de alerta conforme ANOMALY_DEFINITION
+
+Regras concretas alinhadas a [ANOMALY_DEFINITION.md](../architecture/ANOMALY_DEFINITION.md) e [SLO_SLI.md](../architecture/SLO_SLI.md). Configurar em Sentry, Grafana ou equivalente.
+
+| Anomalia | Condição (exemplo) | Janela | Severidade | Onde configurar | Ação / runbook |
+|----------|---------------------|--------|------------|------------------|----------------|
+| **login_failure_count** | Contagem de eventos `login_failure` em gm_audit_logs por identifier ou tenant > 10 | 5 min | Warning | Grafana (query gm_audit_logs ou Realtime) ou Sentry (se login falha enviar evento) | [INCIDENT_RESPONSE.md](./INCIDENT_RESPONSE.md) |
+| **heartbeat_missed** | Terminal sem heartbeat > 90 s | 90 s | Warning | Worker/portal que emite heartbeat; alerta se ausência > 90 s | [HEARTBEAT_MINIMAL_CONTRACT](../architecture/HEARTBEAT_MINIMAL_CONTRACT.md) |
+| **API indisponível** | Health check falha ou disponibilidade < 99% | 5 min | Critical | UptimeRobot / probe externo; ou Sentry (erro rate) | [RUNBOOKS.md](./RUNBOOKS.md); escalar engenharia |
+| **Latência P95 > SLO** | api_request_latency_p95 > 500 ms | 5 min | Warning | APM (Sentry, Datadog) ou proxy | [SLO_SLI.md](../architecture/SLO_SLI.md) |
+| **Taxa de erro 5xx** | (5xx / total requests) > 1% | 5 min | Critical ou Warning | Sentry, proxy ou logs | [RUNBOOKS.md](./RUNBOOKS.md) |
+| **user_disabled / session_revoked** | Evento em gm_audit_logs | — | Info (registar) | Dashboard ou log; opcional notificação se em massa | [INCIDENT_PLAYBOOK_STOLEN_DEVICE.md](./INCIDENT_PLAYBOOK_STOLEN_DEVICE.md) |
+
+### Exemplo: alerta login_failure em Grafana
+
+- **Fonte:** Query a `gm_audit_logs` (via get_audit_logs ou datasource Supabase) com filtro `event_type = 'login_failure'`.
+- **Condição:** `count(rows) > 10` na janela de 5 min (por tenant ou global).
+- **Ação:** Notificar Slack/email; ver [INCIDENT_RESPONSE.md](./INCIDENT_RESPONSE.md).
+
+### Exemplo: alerta em Sentry (erros / disponibilidade)
+
+- **High Error Rate:** Event frequency > 10 em 1 min → Critical; notificar #alerts.
+- **Health Check Failed:** UptimeRobot 3 falhas consecutivas → Critical; SMS/email on-call.
+
+*Documento vivo. Ao ativar cada regra em Sentry/Grafana, marcar no checklist abaixo.*
+
+---
+
 ## 📋 CHECKLIST DE CONFIGURAÇÃO
 
 ### Sentry
@@ -245,6 +273,11 @@ Implementar sistema de alertas para detectar incidentes críticos rapidamente (<
 
 ## 📚 REFERÊNCIAS
 
+- [ALERT_THRESHOLDS_CONTRACT.md](./ALERT_THRESHOLDS_CONTRACT.md) — Limiares operacionais (pedido atrasado, mesa sem atendimento) no portal
+- [ALERT_ACTION_CONTRACT.md](./ALERT_ACTION_CONTRACT.md) — Ação imediata para alertas críticos (notificação in-app, link runbook)
+- [ANOMALY_DEFINITION.md](../architecture/ANOMALY_DEFINITION.md) — Definição de anomalias (G3 Onda 3)
+- [SLO_SLI.md](../architecture/SLO_SLI.md) — SLO e janelas
+- [EVENT_PIPELINE.md](./EVENT_PIPELINE.md) — Consumo de gm_audit_logs para alertas
 - **Sentry Alerts:** https://docs.sentry.io/product/alerts/
 - **UptimeRobot:** https://uptimerobot.com
 - **PagerDuty:** https://www.pagerduty.com

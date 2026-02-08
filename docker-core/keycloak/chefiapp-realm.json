@@ -1,0 +1,151 @@
+{
+  "realm": "chefiapp",
+  "enabled": true,
+  "displayName": "ChefIApp POS",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 5,
+  "sslRequired": "external",
+  "defaultSignatureAlgorithm": "RS256",
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      { "name": "owner", "description": "Restaurant owner — full access" },
+      {
+        "name": "manager",
+        "description": "Restaurant manager — operational access"
+      },
+      { "name": "waiter", "description": "Waiter — table/order access" },
+      { "name": "kitchen", "description": "Kitchen staff — KDS access" },
+      { "name": "cleaning", "description": "Cleaning staff — tasks access" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "merchant-portal",
+      "name": "Merchant Portal",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "rootUrl": "http://localhost:5175",
+      "baseUrl": "/",
+      "redirectUris": ["http://localhost:5175/*", "http://localhost:4173/*"],
+      "webOrigins": ["http://localhost:5175", "http://localhost:4173"],
+      "defaultClientScopes": ["openid", "profile", "email"],
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "restaurant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "restaurant_id",
+            "claim.name": "restaurant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "mobile-app",
+      "name": "Staff Mobile App",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "rootUrl": "",
+      "redirectUris": ["chefiapp://callback", "exp://localhost:8081/--/*"],
+      "webOrigins": ["*"]
+    }
+  ],
+  "users": [
+    {
+      "username": "owner@demo.chefiapp.com",
+      "email": "owner@demo.chefiapp.com",
+      "firstName": "Demo",
+      "lastName": "Owner",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["owner"],
+      "attributes": {
+        "tenant_id": ["demo-tenant-001"],
+        "restaurant_id": ["demo-restaurant-001"]
+      }
+    },
+    {
+      "username": "manager@demo.chefiapp.com",
+      "email": "manager@demo.chefiapp.com",
+      "firstName": "Demo",
+      "lastName": "Manager",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["manager"],
+      "attributes": {
+        "tenant_id": ["demo-tenant-001"],
+        "restaurant_id": ["demo-restaurant-001"]
+      }
+    },
+    {
+      "username": "waiter@demo.chefiapp.com",
+      "email": "waiter@demo.chefiapp.com",
+      "firstName": "Demo",
+      "lastName": "Waiter",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["waiter"],
+      "attributes": {
+        "tenant_id": ["demo-tenant-001"],
+        "restaurant_id": ["demo-restaurant-001"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+feat(ui): unificação perceptiva Dias 1–7 — GlobalUIState, componentes globais, sem vazamento técnico
+
+Marco: Portal, TPV e KDS usam a mesma lei de estados (loading, empty, error, blocked, pilot).
+
+- GlobalUIStateContext + GlobalLoadingView, GlobalEmptyView, GlobalErrorView, GlobalPilotBanner, GlobalBlockedView.
+- TPVMinimal: loading/error/empty/blocked/pilot via estado global; carrinho vazio = GlobalEmptyView (nunca erro); fetch produtos sem status/errorText.
+- KDSMinimal: loading/error/empty/pilot via componentes globais; toUserMessage devolve fallback para mensagens técnicas (Failed to read, PGRST).
+- Portal: AuthPage, PaymentGuard (loading + blocked canceled), HealthDashboardPage (loading + empty), MiniTPVMinimal (toUserMessage, sem response.status).
+- toUserMessage (ui/errors.ts): fallback para mensagens técnicas; nunca stack trace nem vermelho técnico na UI.
+- GLOBAL_UI_STATE_MAP.md: Dia 3–5 + copy canónico (Dia 6–7); DESIGN_SYSTEM_PERCEPTUAL_CONTRACT alinhado.
+
+Ref: docs/product/GLOBAL_UI_STATE_MAP.md, docs/architecture/DESIGN_SYSTEM_PERCEPTUAL_CONTRACT.md.

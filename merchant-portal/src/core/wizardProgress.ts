@@ -1,11 +1,9 @@
 /**
  * Wizard Progress Helper
- * 
- * Persists wizard progress to Supabase and marks completion
- * when the publish step is completed.
+ * Persists wizard progress (Core quando Docker — Fase 4) e marca conclusão no publish.
  */
 
-import { supabase } from './supabase';
+import { invokeRpc } from './infra/coreRpc';
 
 export type WizardStep = 'identity' | 'menu' | 'payments' | 'design' | 'publish';
 
@@ -24,11 +22,10 @@ export async function updateWizardProgress(
   data?: Record<string, any>
 ): Promise<void> {
   try {
-    // Call Supabase function to update progress
-    const { error } = await supabase.rpc('update_wizard_progress', {
+    const { error } = await invokeRpc('update_wizard_progress', {
       p_restaurant_id: restaurantId,
       p_step: step,
-      p_data: data ? data : null
+      p_data: data ?? null
     });
 
     if (error) {
@@ -48,7 +45,7 @@ export async function updateWizardProgress(
  */
 export async function markWizardComplete(restaurantId: string): Promise<void> {
   try {
-    const { error } = await supabase.rpc('mark_wizard_complete', {
+    const { error } = await invokeRpc('mark_wizard_complete', {
       p_restaurant_id: restaurantId
     });
 

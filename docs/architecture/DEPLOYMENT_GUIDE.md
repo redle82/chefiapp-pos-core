@@ -27,7 +27,7 @@ npm run preview
 
 | Component | Port (Dev) | Production URL |
 |-----------|-----------|----------------|
-| Merchant Portal | 5173 | `app.chefiapp.com` |
+| Merchant Portal | 5175 | `app.chefiapp.com` |
 | API Server | 4320 | `api.chefiapp.com` |
 | Supabase | - | `*.supabase.co` |
 

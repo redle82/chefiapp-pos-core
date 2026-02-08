@@ -3,7 +3,7 @@ import { Card } from '../../../ui/design-system/primitives/Card';
 import { Text } from '../../../ui/design-system/primitives/Text';
 import { Badge } from '../../../ui/design-system/primitives/Badge';
 import { colors } from '../../../ui/design-system/tokens/colors';
-import { supabase } from '../../../core/supabase';
+// FASE 3.5: Removido import de supabase - agora usa dockerCoreClient via ShiftReader
 
 interface ActiveShift {
     id: string;
@@ -31,54 +31,37 @@ export const LiveRosterWidget: React.FC<LiveRosterWidgetProps> = ({ restaurantId
 
         const fetchActiveShifts = async () => {
             setLoading(true);
-            // Query shift_logs joined with employees to get names
-            const { data, error } = await supabase
-                .from('shift_logs')
-                .select(`
-                    id,
-                    employee_id,
-                    role,
-                    start_time,
-                    employees ( name )
-                `)
-                .eq('restaurant_id', restaurantId)
-                .eq('status', 'active');
+            // FASE 3.5: Usa ShiftReader (dockerCoreClient) em vez de supabase direto
+            try {
+                const { readActiveShifts } = await import('../../../core-boundary/readers/ShiftReader');
+                const shifts = await readActiveShifts(restaurantId);
 
-            if (error) {
+                // Map the joined data
+                const mapped = shifts.map((shift) => ({
+                    id: shift.id,
+                    employee_id: shift.employee_id,
+                    role: shift.role,
+                    start_time: shift.start_time,
+                    employee_name: shift.employees?.name || 'Desconhecido'
+                }));
+
+                setActiveShifts(mapped);
+            } catch (error) {
                 console.error('Failed to fetch active shifts:', error);
+            } finally {
                 setLoading(false);
-                return;
             }
-
-            // Map the joined data
-            const mapped = (data || []).map((shift: any) => ({
-                id: shift.id,
-                employee_id: shift.employee_id,
-                role: shift.role,
-                start_time: shift.start_time,
-                employee_name: shift.employees?.name || 'Desconhecido'
-            }));
-
-            setActiveShifts(mapped);
-            setLoading(false);
         };
 
         fetchActiveShifts();
 
-        // 🔄 REALTIME: Subscribe to changes in shift_logs
-        const channel = supabase
-            .channel('live-roster')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'shift_logs', filter: `restaurant_id=eq.${restaurantId}` },
-                () => {
-                    fetchActiveShifts(); // Refetch on any change
-                }
-            )
-            .subscribe();
-
+        // 🔄 REALTIME DESABILITADO - Problema 431 no WebSocket
+        // Usando apenas polling até resolver JWT no WebSocket
+        // Polling via fetchActiveShifts() já está sendo chamado no useEffect
+        
+        // Não configurar realtime por enquanto
         return () => {
-            supabase.removeChannel(channel);
+            // Cleanup vazio - sem realtime para limpar
         };
     }, [restaurantId]);
 

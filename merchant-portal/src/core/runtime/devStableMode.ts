@@ -19,7 +19,7 @@ export function isDevStableMode(): boolean {
   // Never enable outside DEV builds (non-negotiable: production unaffected)
   if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') return false;
 
-  if (typeof window === 'undefined') return false;
+  if (typeof window === 'undefined' || !window.location) return false;
 
   const qp = new URLSearchParams(window.location.search);
   const flag = qp.get('devStable');
@@ -31,6 +31,7 @@ export function isDevStableMode(): boolean {
   if (flag === '1') return true;
 
   const host = window.location.hostname;
+  if (!host || typeof host.endsWith !== 'function') return false;
   const isLocalhost = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
 
   return isLocalhost;
@@ -38,7 +39,7 @@ export function isDevStableMode(): boolean {
 
 export function devStableReason(): string {
   if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') return 'prod_build';
-  if (typeof window === 'undefined') return 'no_window';
+  if (typeof window === 'undefined' || !window.location) return 'no_window';
 
   const qp = new URLSearchParams(window.location.search);
   const flag = qp.get('devStable');
@@ -47,6 +48,7 @@ export function devStableReason(): string {
   if (flag === '1') return 'forced_on_query';
 
   const host = window.location.hostname;
+  if (!host || typeof host.endsWith !== 'function') return 'no_host';
   const isLocalhost = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
   return isLocalhost ? 'localhost_default_on' : 'non_localhost_default_off';
 }

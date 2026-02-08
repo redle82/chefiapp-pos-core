@@ -8,11 +8,11 @@ describe('CoreExecutor (The Reducer)', () => {
         eventId: 'ev_' + Math.random(),
         type,
         payload,
-        meta: { timestamp: ts, actorId: 'u1' }
+        meta: { timestamp: ts, actorId: 'u1', version: 1 }
     });
 
     it('should Create Order', () => {
-        const state: SystemState = { orders: [] };
+        const state: SystemState = { orders: [], inventory: {} };
         const event = mkEvent('ORDER_CREATED', { id: 'ord_1', totalCents: 1000 });
 
         const next = CoreExecutor.reduce(state, event);
@@ -23,7 +23,8 @@ describe('CoreExecutor (The Reducer)', () => {
 
     it('should Update Status (Send -> Preparing)', () => {
         const state: SystemState = {
-            orders: [{ id: 'ord_1', status: 'new' } as any]
+            orders: [{ id: 'ord_1', status: 'new' } as any],
+            inventory: {}
         };
         const event = mkEvent('ORDER_UPDATED', { orderId: 'ord_1', action: 'send' });
 
@@ -33,7 +34,8 @@ describe('CoreExecutor (The Reducer)', () => {
 
     it('should Handle Payment Explicitly', () => {
         const state: SystemState = {
-            orders: [{ id: 'ord_1', status: 'served' } as any]
+            orders: [{ id: 'ord_1', status: 'served' } as any],
+            inventory: {}
         };
         const event = mkEvent('ORDER_PAID', { orderId: 'ord_1', amountCents: 1000 });
 
@@ -42,7 +44,7 @@ describe('CoreExecutor (The Reducer)', () => {
     });
 
     it('should Ignore Updates for Unknown Orders', () => {
-        const state: SystemState = { orders: [] };
+        const state: SystemState = { orders: [], inventory: {} };
         const event = mkEvent('ORDER_UPDATED', { orderId: 'ghost_1', action: 'send' });
 
         const next = CoreExecutor.reduce(state, event);
@@ -50,7 +52,7 @@ describe('CoreExecutor (The Reducer)', () => {
     });
 
     it('should be Idempotent (Create x2)', () => {
-        const state: SystemState = { orders: [] };
+        const state: SystemState = { orders: [], inventory: {} };
         const event = mkEvent('ORDER_CREATED', { id: 'ord_1' });
 
         const s1 = CoreExecutor.reduce(state, event);

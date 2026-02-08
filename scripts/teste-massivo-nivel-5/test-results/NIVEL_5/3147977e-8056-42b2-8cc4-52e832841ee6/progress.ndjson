@@ -1,0 +1,4 @@
+{"__PROGRESS__":true,"phase":"BOOT","step":"init","op":"INFO","message":"Progress Bus iniciado (run_id=3147977e-8056-42b2-8cc4-52e832841ee6)","timestamp":1769464622207}
+{"__PROGRESS__":true,"phase":"FASE 0","step":"run_id","op":"INFO","message":"run_id=3147977e-8056-42b2-8cc4-52e832841ee6","timestamp":1769464622207}
+{"__PROGRESS__":true,"phase":"FASE 0","step":"results_dir","op":"INFO","message":"/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/scripts/teste-massivo-nivel-5/test-results/NIVEL_5/3147977e-8056-42b2-8cc4-52e832841ee6","resource":"/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/scripts/teste-massivo-nivel-5/test-results/NIVEL_5/3147977e-8056-42b2-8cc4-52e832841ee6","timestamp":1769464622207}
+{"__PROGRESS__":true,"phase":"FASE 0","step":"complete","op":"INFO","message":"COMPLETA (24ms)","timestamp":1769464622208}

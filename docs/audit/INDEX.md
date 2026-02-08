@@ -1,6 +1,6 @@
 # 📚 Índice - Documentação PLANO DE GUERRA
 
-**Data:** 2026-01-30  
+**Data:** 2026-01-30
 **Status:** ✅ 100% Concluído
 
 ---
@@ -14,6 +14,7 @@
 ## 📊 DOCUMENTAÇÃO POR CATEGORIA
 
 ### 🎯 Handoff e Validação
+
 - [`HANDOFF_VALIDATION.md`](./HANDOFF_VALIDATION.md) - **PONTO DE ENTRADA** - Handoff completo
 - [`VALIDATION_GUIDE.md`](./VALIDATION_GUIDE.md) - Guia completo de validação
 - [`VALIDATION_CHECKLIST.md`](./VALIDATION_CHECKLIST.md) - Checklist rápido
@@ -21,6 +22,8 @@
 - [`NEXT_STEPS.md`](./NEXT_STEPS.md) - Próximos passos recomendados
 
 ### 📊 Relatórios Executivos
+
+- [`AUDIT_REPORT_DOCKER_WORLD.md`](./AUDIT_REPORT_DOCKER_WORLD.md) - **Auditoria técnica Docker World** — provas objectivas, matriz de veredito, APROVADO
 - [`EXECUTIVE_SUMMARY.md`](./EXECUTIVE_SUMMARY.md) - Resumo executivo (5 min)
 - [`WAR_PLAN_COMPLETION.md`](./WAR_PLAN_COMPLETION.md) - Relatório completo (10 min)
 - [`FINAL_REPORT.md`](./FINAL_REPORT.md) - Relatório final consolidado
@@ -29,10 +32,12 @@
 - [`COMPLETION_CERTIFICATE.md`](./COMPLETION_CERTIFICATE.md) - Certificado de conclusão
 
 ### 📝 Changelog e Detalhes
+
 - [`CHANGELOG_WAR_PLAN.md`](./CHANGELOG_WAR_PLAN.md) - Changelog detalhado
 - [`GITHUB_ISSUES_WAR_PLAN.md`](./GITHUB_ISSUES_WAR_PLAN.md) - Issues originais (fonte)
 
 ### 📋 Relatórios de Issues
+
 - [`ISSUE_001_COMPLETED.md`](./ISSUE_001_COMPLETED.md) - Pagamento duplo
 - [`ISSUE_002_COMPLETED.md`](./ISSUE_002_COMPLETED.md) - Badge origem pedido
 - [`ISSUE_003_COMPLETED.md`](./ISSUE_003_COMPLETED.md) - Clarificar acknowledge
@@ -44,12 +49,14 @@
 - [`ISSUE_009_COMPLETED.md`](./ISSUE_009_COMPLETED.md) - Explicação do "porquê"
 
 ### 📈 Relatórios de Sprint
+
 - [`SPRINT_48H_COMPLETED.md`](./SPRINT_48H_COMPLETED.md) - Sprint 48h (4 issues)
 - [`PROGRESS_REPORT.md`](./PROGRESS_REPORT.md) - Progresso intermediário
 - [`FINAL_STATUS.md`](./FINAL_STATUS.md) - Status final
 - [`SUMMARY_8_ISSUES.md`](./SUMMARY_8_ISSUES.md) - Resumo de 8 issues
 
 ### 🔍 Documentos Originais (Fonte)
+
 - [`PRODUCT_STRATEGY_AUDIT.md`](./PRODUCT_STRATEGY_AUDIT.md) - Auditoria completa
 - [`GITHUB_ISSUES_WAR_PLAN.md`](./GITHUB_ISSUES_WAR_PLAN.md) - Issues originais
 
@@ -60,19 +67,23 @@
 ### Por Objetivo
 
 **Quero validar o sistema:**
+
 1. [`HANDOFF_VALIDATION.md`](./HANDOFF_VALIDATION.md)
 2. [`TESTING_SCRIPT.md`](./TESTING_SCRIPT.md)
 3. [`VALIDATION_CHECKLIST.md`](./VALIDATION_CHECKLIST.md)
 
 **Quero entender o que foi feito:**
+
 1. [`EXECUTIVE_SUMMARY.md`](./EXECUTIVE_SUMMARY.md)
 2. [`WAR_PLAN_COMPLETION.md`](./WAR_PLAN_COMPLETION.md)
 3. [`CHANGELOG_WAR_PLAN.md`](./CHANGELOG_WAR_PLAN.md)
 
 **Quero ver uma issue específica:**
+
 1. [`ISSUE_XXX_COMPLETED.md`](./ISSUE_XXX_COMPLETED.md) (substituir XXX por número)
 
 **Quero ver o próximo passo:**
+
 1. [`NEXT_STEPS.md`](./NEXT_STEPS.md)
 2. [`HANDOFF_VALIDATION.md`](./HANDOFF_VALIDATION.md)
 
@@ -90,8 +101,8 @@
 
 ## ✅ STATUS
 
-**PLANO DE GUERRA:** ✅ **100% CONCLUÍDO**  
-**Próxima Fase:** Validação Real  
+**PLANO DE GUERRA:** ✅ **100% CONCLUÍDO**
+**Próxima Fase:** Validação Real
 **Ponto de Entrada:** [`HANDOFF_VALIDATION.md`](./HANDOFF_VALIDATION.md)
 
 ---

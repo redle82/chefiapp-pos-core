@@ -1,15 +1,21 @@
 /**
  * NowActionCard - UI única do AppStaff 2.0
- * 
+ *
  * Mostra APENAS UMA COISA POR VEZ
  */
 
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { NowAction } from '@/services/NowEngine';
-import { HapticFeedback } from '@/services/haptics';
-import { useAppStaff } from '@/context/AppStaffContext';
-import { UrgencyColors } from '@/constants/urgencyColors';
+import { UrgencyColors } from "@/constants/urgencyColors";
+import { useAppStaff } from "@/context/AppStaffContext";
+import { NowAction } from "@/services/NowEngine";
+import { HapticFeedback } from "@/services/haptics";
+import React from "react";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface NowActionCardProps {
   action: NowAction | null;
@@ -19,67 +25,72 @@ interface NowActionCardProps {
 }
 
 const ACTION_ICONS: Record<string, string> = {
-  'collect_payment': '💰',
-  'deliver': '🍽️',
-  'check': '👀',
-  'resolve': '⚠️',
-  'acknowledge': '📋',
-  'check_kitchen': '⏱️',
-  'prioritize_drinks': '🔥',
-  'routine_clean': '🧹',
-  'resolve_error': '⚠️',
-  'silent': '✅'
+  collect_payment: "💰",
+  deliver: "🍽️",
+  check: "👀",
+  resolve: "⚠️",
+  acknowledge: "📋",
+  check_kitchen: "⏱️",
+  prioritize_drinks: "🔥",
+  routine_clean: "🧹",
+  resolve_error: "⚠️",
+  silent: "✅",
 };
 
 const ACTION_LABELS: Record<string, string> = {
-  'collect_payment': 'COBRAR',
-  'deliver': 'ENTREGAR',
-  'check': 'VERIFICAR',
-  'resolve': 'RESOLVER',
-  'acknowledge': 'VER PEDIDO', // ERRO-003 Fix: Linguagem humana clara
-  'check_kitchen': 'VERIFICAR',
-  'prioritize_drinks': 'PRIORIZAR',
-  'routine_clean': 'FAZER',
-  'resolve_error': 'RESOLVER'
+  collect_payment: "COBRAR",
+  deliver: "ENTREGAR",
+  check: "VERIFICAR",
+  resolve: "RESOLVER",
+  acknowledge: "VER PEDIDO", // ERRO-003 Fix: Linguagem humana clara
+  check_kitchen: "VERIFICAR",
+  prioritize_drinks: "PRIORIZAR",
+  routine_clean: "FAZER",
+  resolve_error: "RESOLVER",
 };
 
 // ERRO-008 Fix: Usar paleta de cores operacional consistente
 const PRIORITY_COLORS = {
-  'critical': {
+  critical: {
     icon: UrgencyColors.critical.icon,
-    title: '#ffffff',
+    title: "#ffffff",
     message: UrgencyColors.critical.text,
     button: UrgencyColors.critical.primary,
-    background: UrgencyColors.critical.background
+    background: UrgencyColors.critical.background,
   },
-  'urgent': {
+  urgent: {
     icon: UrgencyColors.warning.icon,
-    title: '#ffffff',
+    title: "#ffffff",
     message: UrgencyColors.warning.text,
     button: UrgencyColors.warning.primary,
-    background: UrgencyColors.warning.background
+    background: UrgencyColors.warning.background,
   },
-  'attention': {
+  attention: {
     icon: UrgencyColors.info.icon,
-    title: '#ffffff',
+    title: "#ffffff",
     message: UrgencyColors.info.text,
     button: UrgencyColors.info.primary,
-    background: UrgencyColors.info.background
+    background: UrgencyColors.info.background,
   },
-  'silent': {
-    icon: '#888888',
-    title: '#888888',
+  silent: {
+    icon: "#888888",
+    title: "#888888",
     message: null,
     button: null,
-    background: '#1a1a1a'
-  }
+    background: "#1a1a1a",
+  },
 };
 
-export function NowActionCard({ action, onComplete, loading = false, pendingCount }: NowActionCardProps) {
+export function NowActionCard({
+  action,
+  onComplete,
+  loading = false,
+  pendingCount,
+}: NowActionCardProps) {
   const { roleConfig, shiftStart } = useAppStaff();
 
   const formatDuration = (startTime: number | null) => {
-    if (!startTime) return '0m';
+    if (!startTime) return "0m";
     const diffMs = Date.now() - startTime;
     const mins = Math.floor(diffMs / 60000);
     if (mins < 60) return `${mins}m`;
@@ -88,8 +99,8 @@ export function NowActionCard({ action, onComplete, loading = false, pendingCoun
   };
 
   const handleAction = () => {
-    if (!action || action.type === 'silent') return;
-    
+    if (!action || action.type === "silent") return;
+
     HapticFeedback.success();
     onComplete(action.id);
   };
@@ -112,13 +123,15 @@ export function NowActionCard({ action, onComplete, loading = false, pendingCoun
   }
 
   // Silent state
-  if (!action || action.type === 'silent') {
+  if (!action || action.type === "silent") {
     const colors = PRIORITY_COLORS.silent;
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.content}>
           <Text style={[styles.icon, { color: colors.icon }]}>✅</Text>
-          <Text style={[styles.title, { color: colors.title }]}>Tudo em ordem</Text>
+          <Text style={[styles.title, { color: colors.title }]}>
+            Tudo em ordem
+          </Text>
         </View>
         <View style={styles.footer}>
           <Text style={styles.footerText}>
@@ -131,65 +144,93 @@ export function NowActionCard({ action, onComplete, loading = false, pendingCoun
 
   // Action state
   const colors = PRIORITY_COLORS[action.type];
-  const icon = ACTION_ICONS[action.action || 'silent'] || '⚠️';
-  const label = ACTION_LABELS[action.action || ''] || 'FAZER';
-  
+  const icon = ACTION_ICONS[action.action || "silent"] || "⚠️";
+  const label = ACTION_LABELS[action.action || ""] || "FAZER";
+
   // FASE 3: Destacar ação principal com animação visual sutil
-  const isCritical = action.type === 'critical';
-  const isUrgent = action.type === 'urgent';
-  
+  const isCritical = action.type === "critical";
+  const isUrgent = action.type === "urgent";
+
   // ERRO-002 Fix: Badge de origem do pedido
   const getOriginBadge = () => {
-    const origin = action.orderOrigin || 'GARÇOM';
+    const origin = action.orderOrigin || "GARÇOM";
     switch (origin) {
-      case 'WEB_PUBLIC':
-      case 'web':
-        return { text: '🌐 WEB', color: '#0a84ff', bgColor: '#0a84ff20' };
-      case 'CAIXA':
-      case 'TPV':
-        return { text: '💳 CAIXA', color: '#ffd60a', bgColor: '#ffd60a20' };
-      case 'GARÇOM':
+      case "WEB_PUBLIC":
+      case "web":
+        return { text: "🌐 WEB", color: "#0a84ff", bgColor: "#0a84ff20" };
+      case "CAIXA":
+      case "TPV":
+        return { text: "💳 CAIXA", color: "#ffd60a", bgColor: "#ffd60a20" };
+      case "GARÇOM":
       default:
-        return { text: '👤 GARÇOM', color: '#32d74b', bgColor: '#32d74b20' };
+        return { text: "👤 GARÇOM", color: "#32d74b", bgColor: "#32d74b20" };
     }
   };
   const originBadge = action.orderOrigin ? getOriginBadge() : null;
-  const tableDisplay = action.tableNumber || action.tableId || '?';
+  const tableDisplay = action.tableNumber || action.tableId || "?";
 
   return (
-    <View style={[
-      styles.container, 
-      { backgroundColor: colors.background },
-      // FASE 3: Destaque visual para ações críticas/urgentes
-      isCritical && styles.criticalGlow,
-      isUrgent && styles.urgentGlow
-    ]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.background },
+        // FASE 3: Destaque visual para ações críticas/urgentes
+        isCritical && styles.criticalGlow,
+        isUrgent && styles.urgentGlow,
+      ]}
+    >
       <View style={styles.content}>
-        {/* ERRO-002 Fix: Badge de origem */}
-        {originBadge && (
-          <View style={[styles.originBadge, { backgroundColor: originBadge.bgColor, borderColor: originBadge.color }]}>
-            <Text style={[styles.originBadgeText, { color: originBadge.color }]}>{originBadge.text}</Text>
+        {/* ERRO-002 Fix: Badge de origem e Mesa */}
+        <View style={styles.topRow}>
+          {originBadge && (
+            <View
+              style={[
+                styles.originBadge,
+                {
+                  backgroundColor: originBadge.bgColor,
+                  borderColor: originBadge.color,
+                },
+              ]}
+            >
+              <Text
+                style={[styles.originBadgeText, { color: originBadge.color }]}
+              >
+                {originBadge.text}
+              </Text>
+            </View>
+          )}
+          <View style={styles.tableBadge}>
+            <Text style={styles.tableBadgeText}>MESA {tableDisplay}</Text>
           </View>
-        )}
+        </View>
+
         {/* FASE 3: Ícone maior e mais destacado para ações críticas */}
-        <Text style={[
-          styles.icon, 
-          { color: colors.icon },
-          isCritical && styles.iconCritical,
-          isUrgent && styles.iconUrgent
-        ]}>
+        <Text
+          style={[
+            styles.icon,
+            { color: colors.icon },
+            isCritical && styles.iconCritical,
+            isUrgent && styles.iconUrgent,
+          ]}
+        >
           {icon}
         </Text>
-        <Text style={[
-          styles.title, 
-          { color: colors.title },
-          isCritical && styles.titleCritical,
-          isUrgent && styles.titleUrgent
-        ]} numberOfLines={2}>
+        <Text
+          style={[
+            styles.title,
+            { color: colors.title },
+            isCritical && styles.titleCritical,
+            isUrgent && styles.titleUrgent,
+          ]}
+          numberOfLines={2}
+        >
           {action.title}
         </Text>
         {action.message && (
-          <Text style={[styles.message, { color: colors.message }]} numberOfLines={2}>
+          <Text
+            style={[styles.message, { color: colors.message }]}
+            numberOfLines={2}
+          >
             {action.message}
           </Text>
         )}
@@ -198,18 +239,17 @@ export function NowActionCard({ action, onComplete, loading = false, pendingCoun
         {/* FASE 3: Botão mais destacado para ações críticas/urgentes */}
         <TouchableOpacity
           style={[
-            styles.button, 
+            styles.button,
             { backgroundColor: colors.button },
             isCritical && styles.buttonCritical,
-            isUrgent && styles.buttonUrgent
+            isUrgent && styles.buttonUrgent,
           ]}
           onPress={handleAction}
           activeOpacity={0.8}
         >
-          <Text style={[
-            styles.buttonText,
-            isCritical && styles.buttonTextCritical
-          ]}>
+          <Text
+            style={[styles.buttonText, isCritical && styles.buttonTextCritical]}
+          >
             {label}
           </Text>
         </TouchableOpacity>
@@ -220,12 +260,16 @@ export function NowActionCard({ action, onComplete, loading = false, pendingCoun
         </Text>
         {/* ERRO-008 Fix: Contador discreto de ações pendentes */}
         {pendingCount !== undefined && pendingCount > 0 && (
-          <Text style={[
-            styles.pendingCountText,
-            action?.type === 'critical' && styles.pendingCountTextCritical,
-            pendingCount > 5 && styles.pendingCountTextUrgent
-          ]}>
-            {pendingCount === 1 ? '1 ação pendente' : `${pendingCount} ações pendentes`}
+          <Text
+            style={[
+              styles.pendingCountText,
+              action?.type === "critical" && styles.pendingCountTextCritical,
+              pendingCount > 5 && styles.pendingCountTextUrgent,
+            ]}
+          >
+            {pendingCount === 1
+              ? "1 ação pendente"
+              : `${pendingCount} ações pendentes`}
           </Text>
         )}
       </View>
@@ -236,112 +280,132 @@ export function NowActionCard({ action, onComplete, loading = false, pendingCoun
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: "#1a1a1a",
     padding: 32,
-    justifyContent: 'space-between'
+    justifyContent: "space-between",
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
+    justifyContent: "center",
+    alignItems: "center",
   },
   icon: {
     fontSize: 64,
-    marginBottom: 24
+    marginBottom: 24,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 16,
-    maxWidth: '100%'
+    maxWidth: "100%",
   },
   message: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 16,
-    maxWidth: '100%'
+    maxWidth: "100%",
   },
   // ERRO-003 Fix: Estilo para dica de ação
   actionHint: {
     fontSize: 12,
-    color: '#888',
-    textAlign: 'center',
+    color: "#888",
+    textAlign: "center",
     marginBottom: 24,
     paddingHorizontal: 16,
-    fontStyle: 'italic'
+    fontStyle: "italic",
   },
   // ERRO-009 Fix: Estilo para explicação do "porquê"
   reasonText: {
     fontSize: 13,
-    color: '#aaa',
-    textAlign: 'center',
+    color: "#aaa",
+    textAlign: "center",
     marginBottom: 16,
     paddingHorizontal: 16,
     lineHeight: 18,
-    fontStyle: 'italic'
+    fontStyle: "italic",
   },
   button: {
-    width: '100%',
+    width: "100%",
     height: 56,
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 24
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 24,
   },
   buttonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 18,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 1
+    fontWeight: "bold",
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
   footer: {
     height: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 16
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
   },
   footerText: {
     fontSize: 14,
-    color: '#666666'
+    color: "#666666",
   },
   loadingText: {
     fontSize: 16,
-    color: '#888888',
-    marginTop: 16
+    color: "#888888",
+    marginTop: 16,
   },
   // ERRO-008 Fix: Estilos para contador de ações pendentes
   pendingCountText: {
     fontSize: 12,
-    color: '#666666',
-    marginTop: 4
+    color: "#666666",
+    marginTop: 4,
   },
   pendingCountTextCritical: {
-    color: '#ff4444' // Vermelho se há ação crítica
+    color: "#ff4444", // Vermelho se há ação crítica
   },
   pendingCountTextUrgent: {
-    color: '#ff8800' // Laranja se há muitas ações (> 5)
+    color: "#ff8800", // Laranja se há muitas ações (> 5)
   },
-  // ERRO-002 Fix: Estilos para badge de origem
+  // ERRO-002 Fix: Estilos para badge de origem e mesa
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    position: "absolute",
+    top: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
   originBadge: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
-    borderWidth: 1
+    borderWidth: 1.5,
+  },
+  tableBadge: {
+    backgroundColor: "#fff",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#eee",
+  },
+  tableBadgeText: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#000",
   },
   originBadgeText: {
     fontSize: 12,
-    fontWeight: 'bold'
+    fontWeight: "bold",
   },
   // FASE 3: Estilos para destacar ações críticas/urgentes
   criticalGlow: {
     borderWidth: 2,
-    borderColor: '#ff3b30',
-    shadowColor: '#ff3b30',
+    borderColor: "#ff3b30",
+    shadowColor: "#ff3b30",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 20,
@@ -349,8 +413,8 @@ const styles = StyleSheet.create({
   },
   urgentGlow: {
     borderWidth: 1,
-    borderColor: '#ffd60a',
-    shadowColor: '#ffd60a',
+    borderColor: "#ffd60a",
+    shadowColor: "#ffd60a",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 15,
@@ -366,15 +430,15 @@ const styles = StyleSheet.create({
   },
   titleCritical: {
     fontSize: 28,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   titleUrgent: {
     fontSize: 26,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   buttonCritical: {
     height: 64,
-    shadowColor: '#ff3b30',
+    shadowColor: "#ff3b30",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
@@ -382,7 +446,7 @@ const styles = StyleSheet.create({
   },
   buttonUrgent: {
     height: 60,
-    shadowColor: '#ffd60a',
+    shadowColor: "#ffd60a",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
@@ -391,5 +455,5 @@ const styles = StyleSheet.create({
   buttonTextCritical: {
     fontSize: 20,
     letterSpacing: 2,
-  }
+  },
 });

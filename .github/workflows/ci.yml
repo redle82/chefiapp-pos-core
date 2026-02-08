@@ -18,11 +18,14 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install Dependencies
         run: npm ci
+
+      - name: Fail-fast (typecheck + build)
+        run: make simulate-failfast
 
       - name: Check Formatting
         run: npx prettier --check .
@@ -30,8 +33,55 @@ jobs:
       - name: Lint
         run: npm run -w merchant-portal lint
 
-      - name: Type Check
-        run: npm run typecheck
+      - name: Run tests
+        run: npm test -- --ci --testPathIgnorePatterns="e2e|playwright|massive|offline" --testTimeout=15000 --maxWorkers=2
 
-      - name: Build
-        run: npm run build
+      - name: Sovereignty gate (order creation via Core)
+        run: bash ./scripts/sovereignty-gate.sh
+
+      - name: Check financial domain uses Core only (no supabase.from gm_orders|fiscal|inventory)
+        run: bash ./scripts/check-financial-supabase.sh
+
+  e2e-smoke:
+    name: E2E Smoke Tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: cd merchant-portal && npx playwright install --with-deps chromium
+
+      - name: Build merchant-portal
+        run: npm -w merchant-portal run build
+
+      - name: Run E2E Smoke (3 specs)
+        run: |
+          cd merchant-portal
+          npx playwright test \
+            tests/e2e/fluxo-total.spec.ts \
+            tests/e2e/fase-a-global-tecnico.spec.ts \
+            tests/e2e/sovereign-navigation.spec.ts \
+            --reporter=list
+        env:
+          E2E_NO_WEB_SERVER: "1"
+          E2E_BASE_URL: "http://localhost:4173"
+
+      - name: Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: merchant-portal/test-results/
+          retention-days: 7

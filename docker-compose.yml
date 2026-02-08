@@ -4,7 +4,7 @@
 # Complete stack with all services, database, and networking
 # ==============================================================================
 
-version: '3.8'
+version: "3.8"
 
 services:
   # ============================================================================
@@ -26,12 +26,18 @@ services:
     volumes:
       # Schema initialization
       - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      # Dev seeds (loaded on fresh databases only)
+      - ./docker-core/schema/seeds_dev.sql:/docker-entrypoint-initdb.d/02-seeds-dev.sql:ro
       # Persistent data (comment out for ephemeral testing)
       - postgres_data:/var/lib/postgresql/data
       # Optional: Custom PostgreSQL config
       # - ./postgres.conf:/etc/postgresql/postgresql.conf:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-test_user} -d ${POSTGRES_DB:-chefiapp_core_test}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-test_user} -d ${POSTGRES_DB:-chefiapp_core_test}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -46,6 +52,26 @@ services:
       - DAC_OVERRIDE
       - SETGID
       - SETUID
+
+  # ============================================================================
+  # POSTGREST - API Gateway for the core database (port 3001)
+  # ============================================================================
+  postgrest:
+    image: postgrest/postgrest:v12.0.2
+    container_name: chefiapp-core-postgrest
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      PGRST_DB_URI: postgresql://${POSTGRES_USER:-test_user}:${POSTGRES_PASSWORD:-test_password}@db:5432/${POSTGRES_DB:-chefiapp_core_test}
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: ${POSTGRES_USER:-test_user}
+      PGRST_JWT_SECRET: ${VITE_CORE_ANON_KEY:-chefiapp-core-secret-key-min-32-chars-long}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - chefiapp-network
 
   # ============================================================================
   # WEBHOOK SERVER - Stripe webhook handler (port 3000)
@@ -71,9 +97,17 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: ["node", "dist/server/webhook-server.js"]
+    command: ["node", "dist/_legacy_isolation/server/webhook-server.js"]
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -115,9 +149,17 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: ["node", "dist/server/billing-webhook-server.js"]
+    command: ["node", "dist/_legacy_isolation/server/billing-webhook-server.js"]
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3099/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3099/health",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -158,9 +200,21 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: ["node", "dist/server/subscription-management-server.js"]
+    command:
+      [
+        "node",
+        "dist/_legacy_isolation/server/subscription-management-server.js",
+      ]
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4310/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:4310/health",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -200,9 +254,17 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: ["node", "dist/server/web-module-api-server.js"]
+    command: ["node", "dist/_legacy_isolation/server/web-module-api-server.js"]
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4320/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:4320/health",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -220,6 +282,40 @@ services:
       - no-new-privileges:true
 
   # ============================================================================
+  # KEYCLOAK - Identity & Access Management (port 8080)
+  # ============================================================================
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: chefiapp-keycloak
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:?Set KEYCLOAK_ADMIN in .env}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Set KEYCLOAK_ADMIN_PASSWORD in .env}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-chefiapp_core_test}
+      KC_DB_USERNAME: ${POSTGRES_USER:-test_user}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-test_password}
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY: edge
+      KC_HTTP_ENABLED: "true"
+    command: start-dev --import-realm
+    ports:
+      - "${KEYCLOAK_PORT:-8080}:8080"
+    volumes:
+      - ./docker-core/keycloak/chefiapp-realm.json:/opt/keycloak/data/import/chefiapp-realm.json:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - chefiapp-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ============================================================================
   # OPTIONAL: pgAdmin for database management
   # ============================================================================
   pgadmin:
@@ -229,8 +325,8 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@chefiapp.local}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
     ports:
       - "${PGADMIN_PORT:-5050}:80"
     depends_on:

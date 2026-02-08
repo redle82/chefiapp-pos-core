@@ -1,0 +1,634 @@
+{
+  "simulation": {
+    "id": "ba130d3b-10c0-4e65-bcf8-58f288b65f7c",
+    "mode": "small",
+    "seed": 1769275238876,
+    "real_duration_seconds": 300.218,
+    "simulated_hours": 24,
+    "time_multiplier": 288,
+    "restaurants_count": 5,
+    "offline_enabled": true
+  },
+  "metrics": {
+    "orders_created": 346,
+    "orders_by_source": {
+      "mobile": 134,
+      "pos": 161,
+      "qr_web": 51
+    },
+    "print_jobs": 758,
+    "events": 356,
+    "tasks_created": 70,
+    "tasks_completed": 65,
+    "tasks_escalated": 27,
+    "tasks_failed": 5,
+    "tasks_blocked_shift": 30,
+    "escalations_to_manager": 18,
+    "escalations_to_owner": 9,
+    "shift_blocks": 15,
+    "shift_overrides": 3,
+    "kds_events": 311,
+    "offline_events": 10,
+    "offline_orders_queued": 35,
+    "offline_orders_synced": 35,
+    "offline_orders_failed": 0,
+    "offline_duplicates_prevented": 0,
+    "offline_windows_triggered": 10
+  },
+  "hourly_distribution": {
+    "0": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "1": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "2": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "3": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "4": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "5": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "6": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "7": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "8": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "9": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "10": {
+      "orders": 16,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "11": {
+      "orders": 32,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "12": {
+      "orders": 33,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "13": {
+      "orders": 27,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 16
+    },
+    "14": {
+      "orders": 37,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "15": {
+      "orders": 25,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "16": {
+      "orders": 27,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "17": {
+      "orders": 29,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "18": {
+      "orders": 32,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "19": {
+      "orders": 30,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "20": {
+      "orders": 35,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "21": {
+      "orders": 17,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 19
+    },
+    "22": {
+      "orders": 6,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    },
+    "23": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0,
+      "offline_syncs": 0
+    }
+  },
+  "escalation_log": [
+    {
+      "time": "10:08",
+      "restaurant": "Test Restaurant 1",
+      "task": "Verificar caixa inicial",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:08",
+      "restaurant": "Test Restaurant 1",
+      "task": "Verificar equipamentos",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:08",
+      "restaurant": "Test Restaurant 3",
+      "task": "Verificar caixa inicial",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:08",
+      "restaurant": "Test Restaurant 3",
+      "task": "Verificar equipamentos",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 1",
+      "task": "Verificar estoque crítico",
+      "from": "kitchen (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 4,
+      "hard_blocking": false
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 1",
+      "task": "Verificar caixa inicial",
+      "from": "owner (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 6,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 3",
+      "task": "Verificar estoque crítico",
+      "from": "kitchen (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 4,
+      "hard_blocking": false
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 3",
+      "task": "Verificar caixa inicial",
+      "from": "owner (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 6,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 3",
+      "task": "Verificar equipamentos",
+      "from": "owner (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 6,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 4",
+      "task": "Verificar temperatura das câmaras frias",
+      "from": "kitchen (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 6,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 4",
+      "task": "Verificar estoque crítico",
+      "from": "kitchen (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 4,
+      "hard_blocking": false
+    },
+    {
+      "time": "10:13",
+      "restaurant": "Test Restaurant 4",
+      "task": "Verificar equipamentos",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 6,
+      "hard_blocking": true
+    },
+    {
+      "time": "10:18",
+      "restaurant": "Test Restaurant 1",
+      "task": "Verificar estoque crítico",
+      "from": "manager (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 9,
+      "hard_blocking": false
+    },
+    {
+      "time": "10:18",
+      "restaurant": "Test Restaurant 4",
+      "task": "Verificar temperatura das câmaras frias",
+      "from": "manager (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 11,
+      "hard_blocking": true
+    },
+    {
+      "time": "11:07",
+      "restaurant": "Test Restaurant 2",
+      "task": "Verificar temperatura das câmaras frias",
+      "from": "kitchen (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "11:07",
+      "restaurant": "Test Restaurant 2",
+      "task": "Verificar caixa inicial",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "11:07",
+      "restaurant": "Test Restaurant 2",
+      "task": "Verificar equipamentos",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "11:07",
+      "restaurant": "Test Restaurant 5",
+      "task": "Verificar temperatura das câmaras frias",
+      "from": "kitchen (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "11:07",
+      "restaurant": "Test Restaurant 5",
+      "task": "Verificar equipamentos",
+      "from": "manager (L0)",
+      "to": "owner (L1)",
+      "overdue_minutes": 2,
+      "hard_blocking": true
+    },
+    {
+      "time": "11:12",
+      "restaurant": "Test Restaurant 2",
+      "task": "Verificar estoque crítico",
+      "from": "kitchen (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 4,
+      "hard_blocking": false
+    },
+    {
+      "time": "11:12",
+      "restaurant": "Test Restaurant 2",
+      "task": "Verificar temperatura das câmaras frias",
+      "from": "manager (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 6,
+      "hard_blocking": true
+    },
+    {
+      "time": "11:12",
+      "restaurant": "Test Restaurant 5",
+      "task": "Verificar estoque crítico",
+      "from": "kitchen (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 4,
+      "hard_blocking": false
+    },
+    {
+      "time": "11:12",
+      "restaurant": "Test Restaurant 5",
+      "task": "Verificar temperatura das câmaras frias",
+      "from": "manager (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 6,
+      "hard_blocking": true
+    },
+    {
+      "time": "11:12",
+      "restaurant": "Test Restaurant 5",
+      "task": "Verificar equipamentos",
+      "from": "owner (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 6,
+      "hard_blocking": true
+    },
+    {
+      "time": "11:17",
+      "restaurant": "Test Restaurant 2",
+      "task": "Limpar salão",
+      "from": "cleaning (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 6,
+      "hard_blocking": false
+    },
+    {
+      "time": "11:17",
+      "restaurant": "Test Restaurant 5",
+      "task": "Verificar estoque crítico",
+      "from": "manager (L1)",
+      "to": "owner (L2)",
+      "overdue_minutes": 9,
+      "hard_blocking": false
+    },
+    {
+      "time": "23:17",
+      "restaurant": "Test Restaurant 3",
+      "task": "Desligar equipamentos",
+      "from": "kitchen (L0)",
+      "to": "manager (L1)",
+      "overdue_minutes": 4,
+      "hard_blocking": false
+    }
+  ],
+  "offline_log": [
+    {
+      "time": "13:01",
+      "restaurant": "Test Restaurant 1",
+      "event": "OFFLINE_START",
+      "window": "Lunch peak - queda de rede"
+    },
+    {
+      "time": "13:01",
+      "restaurant": "Test Restaurant 2",
+      "event": "OFFLINE_START",
+      "window": "Lunch peak - queda de rede"
+    },
+    {
+      "time": "13:01",
+      "restaurant": "Test Restaurant 3",
+      "event": "OFFLINE_START",
+      "window": "Lunch peak - queda de rede"
+    },
+    {
+      "time": "13:01",
+      "restaurant": "Test Restaurant 4",
+      "event": "OFFLINE_START",
+      "window": "Lunch peak - queda de rede"
+    },
+    {
+      "time": "13:01",
+      "restaurant": "Test Restaurant 5",
+      "event": "OFFLINE_START",
+      "window": "Lunch peak - queda de rede"
+    },
+    {
+      "time": "13:30",
+      "restaurant": "Test Restaurant 1",
+      "event": "ONLINE_RESTORED",
+      "queued_actions": 4
+    },
+    {
+      "time": "13:30",
+      "restaurant": "Test Restaurant 2",
+      "event": "ONLINE_RESTORED",
+      "queued_actions": 2
+    },
+    {
+      "time": "13:30",
+      "restaurant": "Test Restaurant 3",
+      "event": "ONLINE_RESTORED",
+      "queued_actions": 3
+    },
+    {
+      "time": "13:30",
+      "restaurant": "Test Restaurant 4",
+      "event": "ONLINE_RESTORED",
+      "queued_actions": 3
+    },
+    {
+      "time": "13:30",
+      "restaurant": "Test Restaurant 5",
+      "event": "ONLINE_RESTORED",
+      "queued_actions": 4
+    },
+    {
+      "time": "20:30",
+      "restaurant": "Test Restaurant 1",
+      "event": "OFFLINE_START",
+      "window": "Dinner peak - instabilidade"
+    },
+    {
+      "time": "20:30",
+      "restaurant": "Test Restaurant 3",
+      "event": "OFFLINE_START",
+      "window": "Dinner peak - instabilidade"
+    },
+    {
+      "time": "20:30",
+      "restaurant": "Test Restaurant 4",
+      "event": "OFFLINE_START",
+      "window": "Dinner peak - instabilidade"
+    },
+    {
+      "time": "20:30",
+      "restaurant": "Test Restaurant 5",
+      "event": "OFFLINE_START",
+      "window": "Dinner peak - instabilidade"
+    },
+    {
+      "time": "20:39",
+      "restaurant": "Test Restaurant 2",
+      "event": "OFFLINE_START",
+      "window": "Dinner peak - instabilidade"
+    },
+    {
+      "time": "21:04",
+      "restaurant": "Test Restaurant 1",
+      "event": "ONLINE_RESTORED",
+      "queued_actions": 3
+    },
+    {
+      "time": "21:04",
+      "restaurant": "Test Restaurant 2",
+      "event": "ONLINE_RESTORED",
+      "queued_actions": 3
+    },
+    {
+      "time": "21:04",
+      "restaurant": "Test Restaurant 3",
+      "event": "ONLINE_RESTORED",
+      "queued_actions": 3
+    },
+    {
+      "time": "21:04",
+      "restaurant": "Test Restaurant 4",
+      "event": "ONLINE_RESTORED",
+      "queued_actions": 3
+    },
+    {
+      "time": "21:04",
+      "restaurant": "Test Restaurant 5",
+      "event": "ONLINE_RESTORED",
+      "queued_actions": 7
+    }
+  ],
+  "database_state": {
+    "orders": [
+      {
+        "source": "mobile",
+        "status": "pending",
+        "count": "134"
+      },
+      {
+        "source": "qr_web",
+        "status": "pending",
+        "count": "51"
+      },
+      {
+        "source": "pos",
+        "status": "pending",
+        "count": "161"
+      }
+    ],
+    "prints": [
+      {
+        "station": "table",
+        "status": "printed",
+        "count": "311"
+      },
+      {
+        "station": "bar",
+        "status": "printed",
+        "count": "101"
+      },
+      {
+        "station": "kitchen",
+        "status": "printed",
+        "count": "346"
+      }
+    ],
+    "tasks": [
+      {
+        "status": "failed",
+        "count": "5"
+      },
+      {
+        "status": "completed",
+        "count": "65"
+      }
+    ],
+    "escalations": [
+      {
+        "to_level": 1,
+        "count": "18"
+      },
+      {
+        "to_level": 2,
+        "count": "9"
+      }
+    ],
+    "shift_blocks": [
+      {
+        "was_overridden": false,
+        "count": "6"
+      },
+      {
+        "was_overridden": true,
+        "count": "9"
+      }
+    ],
+    "offline_actions": [
+      {
+        "status": "synced",
+        "count": "35"
+      }
+    ]
+  },
+  "assertions": {
+    "orphan_items": 0,
+    "orders_created": 346,
+    "events_created": 356,
+    "tasks_created": 70,
+    "tasks_completed": 65,
+    "tasks_escalated": 27,
+    "tasks_failed": 5,
+    "offline_duplicates_prevented": 0
+  },
+  "passed": true
+}

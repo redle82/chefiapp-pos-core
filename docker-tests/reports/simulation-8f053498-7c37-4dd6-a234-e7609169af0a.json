@@ -1,0 +1,232 @@
+{
+  "simulation": {
+    "id": "8f053498-7c37-4dd6-a234-e7609169af0a",
+    "mode": "small",
+    "seed": 1769273853037,
+    "real_duration_seconds": 300.375,
+    "simulated_hours": 24,
+    "time_multiplier": 288,
+    "restaurants_count": 5
+  },
+  "metrics": {
+    "orders_created": 324,
+    "orders_by_source": {
+      "mobile": 126,
+      "pos": 143,
+      "qr_web": 55
+    },
+    "print_jobs": 744,
+    "events": 334,
+    "tasks_created": 70,
+    "tasks_completed": 65,
+    "tasks_escalated": 0,
+    "tasks_failed": 5,
+    "tasks_blocked_shift": 30,
+    "escalations_to_manager": 0,
+    "escalations_to_owner": 0,
+    "shift_blocks": 15,
+    "shift_overrides": 5,
+    "kds_events": 324
+  },
+  "hourly_distribution": {
+    "0": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "1": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "2": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "3": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "4": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "5": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "6": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "7": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "8": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "9": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "10": {
+      "orders": 18,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "11": {
+      "orders": 22,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "12": {
+      "orders": 27,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "13": {
+      "orders": 29,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "14": {
+      "orders": 27,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "15": {
+      "orders": 32,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "16": {
+      "orders": 31,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "17": {
+      "orders": 20,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "18": {
+      "orders": 32,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "19": {
+      "orders": 31,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "20": {
+      "orders": 29,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "21": {
+      "orders": 18,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "22": {
+      "orders": 8,
+      "tasks": 0,
+      "escalations": 0
+    },
+    "23": {
+      "orders": 0,
+      "tasks": 0,
+      "escalations": 0
+    }
+  },
+  "escalation_log": [],
+  "database_state": {
+    "orders": [
+      {
+        "source": "pos",
+        "status": "preparing",
+        "count": "130"
+      },
+      {
+        "source": "mobile",
+        "status": "preparing",
+        "count": "115"
+      },
+      {
+        "source": "pos",
+        "status": "ready",
+        "count": "13"
+      },
+      {
+        "source": "mobile",
+        "status": "ready",
+        "count": "11"
+      },
+      {
+        "source": "qr_web",
+        "status": "ready",
+        "count": "6"
+      },
+      {
+        "source": "qr_web",
+        "status": "preparing",
+        "count": "49"
+      }
+    ],
+    "prints": [
+      {
+        "station": "table",
+        "status": "printed",
+        "count": "324"
+      },
+      {
+        "station": "bar",
+        "status": "printed",
+        "count": "96"
+      },
+      {
+        "station": "kitchen",
+        "status": "printed",
+        "count": "324"
+      }
+    ],
+    "tasks": [
+      {
+        "status": "failed",
+        "count": "5"
+      },
+      {
+        "status": "completed",
+        "count": "65"
+      }
+    ],
+    "escalations": [],
+    "shift_blocks": [
+      {
+        "was_overridden": true,
+        "count": "15"
+      }
+    ]
+  },
+  "assertions": {
+    "orphan_items": 0,
+    "orders_created": 324,
+    "events_created": 334,
+    "tasks_created": 70,
+    "tasks_completed": 65,
+    "tasks_escalated": 0,
+    "tasks_failed": 5
+  },
+  "passed": true
+}

@@ -1,24 +1,24 @@
-# Changelog - Sistema Nervoso Operacional
+# Changelog - Operational Nervous System
 
-Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
+All notable changes to this project will be documented in this file.
 
 ---
 
 ## [1.2.0] - 2026-01-24
 
-### 🔧 Polimento Final
+### 🔧 Final Polish
 
-#### Correções
-- **Banner de Pressão:** Adicionado debounce de 1s para evitar piscadas durante transições
-- **Cores de Urgência:** KDSTicket agora tem timer self-updating com intervalo dinâmico
-- **Animações:** Banner de pressão com fade in/out suave (300ms)
+#### Fixes
+- **Pressure Banner:** Added 1s debounce to prevent flickering during transitions
+- **Urgency Colors:** KDSTicket now has self-updating timer with dynamic interval
+- **Animations:** Pressure banner with smooth fade in/out (300ms)
 
-#### Melhorias
-- `useKitchenPressure`: Debounce inteligente (imediato para aumento, 1s para redução)
-- `KDSTicket`: AppState awareness para recálculo ao voltar do background
-- Intervalos dinâmicos baseados em urgência (5s/15s/30s)
+#### Improvements
+- `useKitchenPressure`: Smart debounce (immediate for increase, 1s for decrease)
+- `KDSTicket`: AppState awareness for recalculation when returning from background
+- Dynamic intervals based on urgency (5s/15s/30s)
 
-### 📁 Arquivos Modificados
+### 📁 Modified Files
 - `mobile-app/hooks/useKitchenPressure.ts`
 - `mobile-app/components/KitchenPressureIndicator.tsx`
 - `mobile-app/components/KDSTicket.tsx`
@@ -29,19 +29,19 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ### 🔧 Stability Fixes
 
-#### Correções
-- **Timer Background:** Timer agora recalcula imediatamente ao voltar do background
-- **Waitlist Persistence:** Auto-save robusto com debounce e save on background
+#### Fixes
+- **Background Timer:** Timer now recalculates immediately when returning from background
+- **Waitlist Persistence:** Robust auto-save with debounce and save on background
 
-#### Melhorias
-- `OrderTimer`: AppState awareness para recálculo imediato
-- `OrderTimer`: Intervalo dinâmico (5s/15s/30s) baseado em urgência
-- `WaitlistBoard`: Save imediato em ações críticas (add, seat)
-- `WaitlistBoard`: Save com debounce 500ms em ações menores (cancel)
-- `WaitlistBoard`: Save automático ao ir para background
-- `WaitlistBoard`: Save no unmount do componente
+#### Improvements
+- `OrderTimer`: AppState awareness for immediate recalculation
+- `OrderTimer`: Dynamic interval (5s/15s/30s) based on urgency
+- `WaitlistBoard`: Immediate save on critical actions (add, seat)
+- `WaitlistBoard`: Save with 500ms debounce on minor actions (cancel)
+- `WaitlistBoard`: Automatic save when going to background
+- `WaitlistBoard`: Save on component unmount
 
-### 📁 Arquivos Modificados
+### 📁 Modified Files
 - `mobile-app/components/OrderTimer.tsx`
 - `mobile-app/components/WaitlistBoard.tsx`
 
@@ -51,20 +51,20 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ### 🚀 Observability & Growth
 
-#### Observability (Sentry + Métricas)
-- **Sentry Integration:** Error tracking em merchant-portal, customer-portal, mobile-app
-- **ErrorBoundary:** Componentes de fallback com captura automática de erros
-- **Logger Centralizado:** Service de logging com integração Sentry
-- **Dashboard Métricas:** Widget de métricas operacionais em tempo real
-- **useRealtimeMetrics:** Hook para pedidos/hora, ticket médio, receita
+#### Observability (Sentry + Metrics)
+- **Sentry Integration:** Error tracking in merchant-portal, customer-portal, mobile-app
+- **ErrorBoundary:** Fallback components with automatic error capture
+- **Centralized Logger:** Logging service with Sentry integration
+- **Metrics Dashboard:** Real-time operational metrics widget
+- **useRealtimeMetrics:** Hook for orders/hour, average ticket, revenue
 
 #### Growth & Marketing (SEO + Pixel)
-- **SEO Dinâmico:** Meta tags (title, description, Open Graph, Twitter Cards)
-- **Schema.org:** JSON-LD para Restaurant, Menu, BreadcrumbList
-- **Pixel Tracking:** Meta Pixel + Google Analytics integrados
-- **Eventos Rastreados:** pageView, viewItem, addToCart, initiateCheckout, purchase
+- **Dynamic SEO:** Meta tags (title, description, Open Graph, Twitter Cards)
+- **Schema.org:** JSON-LD for Restaurant, Menu, BreadcrumbList
+- **Pixel Tracking:** Meta Pixel + Google Analytics integrated
+- **Tracked Events:** pageView, viewItem, addToCart, initiateCheckout, purchase
 
-### 📁 Arquivos Criados
+### 📁 Created Files
 - `merchant-portal/src/hooks/useRealtimeMetrics.ts`
 - `merchant-portal/src/components/Dashboard/OperationalMetricsWidget.tsx`
 - `customer-portal/src/lib/logger.ts`
@@ -76,7 +76,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 - `docs/ops/OBSERVABILITY_SETUP.md`
 - `docs/ops/GROWTH_MARKETING_SETUP.md`
 
-### 📁 Arquivos Modificados
+### 📁 Modified Files
 - `merchant-portal/src/core/logger/Logger.ts`
 - `merchant-portal/src/ui/design-system/ErrorBoundary.tsx`
 - `merchant-portal/vite.config.ts`
@@ -90,160 +90,160 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [1.0.0] - 2026-01-24
 
-### 🎉 Lançamento: Sistema Nervoso Operacional
+### 🎉 Launch: Operational Nervous System
 
-Transformação completa do ChefIApp de registrador de vendas para Sistema Nervoso Operacional.
-
----
-
-## [1.0.0] - Semana 1: Fast Pay
-
-### ✨ Adicionado
-- **FastPayButton**: Componente de pagamento rápido em 2 toques
-- Auto-seleção de método de pagamento (cash como padrão)
-- Confirmação única sem modais intermediários
-- Fechamento automático de mesa após pagamento
-- Integração no mapa de mesas e tela de pedidos
-
-### 🎯 Objetivo
-Pagamento em < 5 segundos (36x mais rápido que antes)
-
-### 📁 Arquivos
-- `mobile-app/components/FastPayButton.tsx` (novo)
-- `mobile-app/app/(tabs)/tables.tsx` (modificado)
-- `mobile-app/app/(tabs)/orders.tsx` (modificado)
+Complete transformation of ChefIApp from sales recorder to Operational Nervous System.
 
 ---
 
-## [1.0.0] - Semana 2: Mapa Vivo
+## [1.0.0] - Week 1: Fast Pay
 
-### ✨ Adicionado
-- **Timer por mesa**: Atualizado a cada segundo
-- **Cores de urgência**:
-  - 🟢 Verde: < 15 minutos
-  - 🟡 Amarelo: 15-30 minutos
-  - 🔴 Vermelho: > 30 minutos
-- **Ícone "quer pagar"** (💰): Aparece quando pedido entregue
-- **Ícone "esperando bebida"** (🍷): Aparece para pedidos de bebida
-- Timer baseado no último evento (não apenas criação)
+### ✨ Added
+- **FastPayButton**: Quick payment component in 2 taps
+- Auto-selection of payment method (cash as default)
+- Single confirmation without intermediate modals
+- Automatic table closure after payment
+- Integration in table map and orders screen
 
-### 🎯 Objetivo
-Mapa deixa de ser visual e vira sensor operacional
+### 🎯 Goal
+Payment in < 5 seconds (36x faster than before)
 
-### 📁 Arquivos
-- `mobile-app/app/(tabs)/tables.tsx` (modificado)
-
----
-
-## [1.0.0] - Semana 3: KDS Como Rei
-
-### ✨ Adicionado
-- **useKitchenPressure**: Hook para detectar saturação da cozinha
-- **KitchenPressureIndicator**: Componente visual de pressão
-- **Menu inteligente**: Esconde pratos lentos quando cozinha saturada
-- **Priorização automática**: Bebidas e itens rápidos durante picos
-- Banner de pressão no menu (amarelo/vermelho)
-
-### 🎯 Objetivo
-Cozinha influencia decisões do salão em tempo real
-
-### 📁 Arquivos
-- `mobile-app/hooks/useKitchenPressure.ts` (novo)
-- `mobile-app/components/KitchenPressureIndicator.tsx` (novo)
-- `mobile-app/app/(tabs)/index.tsx` (modificado)
+### 📁 Files
+- `mobile-app/components/FastPayButton.tsx` (new)
+- `mobile-app/app/(tabs)/tables.tsx` (modified)
+- `mobile-app/app/(tabs)/orders.tsx` (modified)
 
 ---
 
-## [1.0.0] - Semana 4: Reservas LITE
+## [1.0.0] - Week 2: Live Map
 
-### ✨ Adicionado
-- **WaitlistBoard**: Componente de lista de espera digital
-- Adicionar entrada por nome + hora
-- Conversão automática: reserva → mesa
-- Persistência local (AsyncStorage)
-- Ordenação por hora
+### ✨ Added
+- **Timer per table**: Updated every second
+- **Urgency colors**:
+  - 🟢 Green: < 15 minutes
+  - 🟡 Yellow: 15-30 minutes
+  - 🔴 Red: > 30 minutes
+- **"Wants to pay" icon** (💰): Appears when order delivered
+- **"Waiting for drink" icon** (🍷): Appears for drink orders
+- Timer based on last event (not just creation)
 
-### 🎯 Objetivo
-Lista de espera simples sem overengineering
+### 🎯 Goal
+Map stops being visual and becomes operational sensor
 
-### 📁 Arquivos
-- `mobile-app/components/WaitlistBoard.tsx` (novo)
-- `mobile-app/services/persistence.ts` (modificado)
-- `mobile-app/app/(tabs)/tables.tsx` (modificado)
+### 📁 Files
+- `mobile-app/app/(tabs)/tables.tsx` (modified)
 
 ---
 
-## [1.0.0] - Otimizações
+## [1.0.0] - Week 3: KDS as King
+
+### ✨ Added
+- **useKitchenPressure**: Hook to detect kitchen saturation
+- **KitchenPressureIndicator**: Visual pressure component
+- **Smart menu**: Hides slow dishes when kitchen saturated
+- **Automatic prioritization**: Drinks and fast items during peaks
+- Pressure banner in menu (yellow/red)
+
+### 🎯 Goal
+Kitchen influences dining room decisions in real-time
+
+### 📁 Files
+- `mobile-app/hooks/useKitchenPressure.ts` (new)
+- `mobile-app/components/KitchenPressureIndicator.tsx` (new)
+- `mobile-app/app/(tabs)/index.tsx` (modified)
+
+---
+
+## [1.0.0] - Week 4: Reservations LITE
+
+### ✨ Added
+- **WaitlistBoard**: Digital waitlist component
+- Add entry by name + time
+- Automatic conversion: reservation → table
+- Local persistence (AsyncStorage)
+- Sorting by time
+
+### 🎯 Goal
+Simple waitlist without overengineering
+
+### 📁 Files
+- `mobile-app/components/WaitlistBoard.tsx` (new)
+- `mobile-app/services/persistence.ts` (modified)
+- `mobile-app/app/(tabs)/tables.tsx` (modified)
+
+---
+
+## [1.0.0] - Optimizations
 
 ### ⚡ Performance
-- Timer otimizado: só atualiza quando mesa ocupada
-- `useMemo` no filtro do menu (evita re-renders)
-- Componente `KitchenPressureIndicator` isolado
+- Optimized timer: only updates when table occupied
+- `useMemo` in menu filter (avoids re-renders)
+- `KitchenPressureIndicator` component isolated
 
-### 💾 Persistência
-- Lista de espera salva automaticamente
-- Carrega ao abrir componente
-- Sobrevive a reinicializações
-
----
-
-## [1.0.0] - Documentação
-
-### 📚 Criado
-- `docs/EXECUCAO_30_DIAS.md` - Documentação técnica completa
-- `docs/VALIDACAO_RAPIDA.md` - Checklist de validação (17 testes)
-- `docs/GUIA_RAPIDO_GARCOM.md` - Guia do garçom (10 minutos)
-- `docs/MANIFESTO_COMERCIAL.md` - Proposta de valor
-- `docs/PLANO_ROLLOUT.md` - Estratégia de lançamento
-- `docs/RESUMO_EXECUTIVO.md` - Visão geral executiva
-- `docs/GITHUB_ISSUES.md` - Issues estruturadas
-- `docs/README.md` - Índice geral
-- `CHANGELOG.md` - Este arquivo
+### 💾 Persistence
+- Waitlist saved automatically
+- Loads when opening component
+- Survives restarts
 
 ---
 
-## [1.0.0] - Métricas Esperadas
+## [1.0.0] - Documentation
 
-### Operacionais
-- ⏱️ Tempo de pagamento: 2-3min → < 5s (**36x mais rápido**)
-- 🗺️ Visibilidade: 0% → 100% (estado em tempo real)
-- 🍽️ Eficiência cozinha: +25% durante picos
-- 📋 Conversão reservas: +15%
-
-### Financeiros
-- 💰 Mais mesas/noite: +2-3 mesas
-- 🍷 Mais vendas bebidas: +25% durante picos
-- ⚡ Menos erros: -30%
-- 📈 Receita adicional: €500-1000/mês por restaurante
-
----
-
-## 🔮 Próximas Versões
-
-### [1.1.0] - Planejado
-- Auto-detecção de método de pagamento (histórico)
-- Persistência waitlist em Supabase
-- Dashboard de métricas operacionais
-
-### [1.2.0] - Planejado
-- Machine Learning para prever saturação
-- Sugestões automáticas de pratos
-- Otimização de turnos
-
-### [2.0.0] - Futuro
-- Integração com delivery (sem complexidade)
-- Analytics preditivo
-- Automação completa
+### 📚 Created
+- `docs/EXECUCAO_30_DIAS.md` - Complete technical documentation
+- `docs/VALIDACAO_RAPIDA.md` - Validation checklist (17 tests)
+- `docs/GUIA_RAPIDO_GARCOM.md` - Waiter guide (10 minutes)
+- `docs/MANIFESTO_COMERCIAL.md` - Value proposition
+- `docs/PLANO_ROLLOUT.md` - Launch strategy
+- `docs/RESUMO_EXECUTIVO.md` - Executive overview
+- `docs/GITHUB_ISSUES.md` - Structured issues
+- `docs/README.md` - General index
+- `CHANGELOG.md` - This file
 
 ---
 
-## 📝 Formato
+## [1.0.0] - Expected Metrics
 
-Este changelog segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
-e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
+### Operational
+- ⏱️ Payment time: 2-3min → < 5s (**36x faster**)
+- 🗺️ Visibility: 0% → 100% (real-time state)
+- 🍽️ Kitchen efficiency: +25% during peaks
+- 📋 Reservation conversion: +15%
+
+### Financial
+- 💰 More tables/night: +2-3 tables
+- 🍷 More drink sales: +25% during peaks
+- ⚡ Fewer errors: -30%
+- 📈 Additional revenue: €500-1000/month per restaurant
 
 ---
 
-**Versão Atual:** 1.0.0  
-**Data de Lançamento:** 2026-01-24  
-**Status:** ✅ Pronto para Validação
+## 🔮 Future Versions
+
+### [1.1.0] - Planned
+- Auto-detection of payment method (history)
+- Waitlist persistence in Supabase
+- Operational metrics dashboard
+
+### [1.2.0] - Planned
+- Machine Learning to predict saturation
+- Automatic dish suggestions
+- Shift optimization
+
+### [2.0.0] - Future
+- Delivery integration (without complexity)
+- Predictive analytics
+- Complete automation
+
+---
+
+## 📝 Format
+
+This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/).
+
+---
+
+**Current Version:** 1.0.0  
+**Launch Date:** 2026-01-24  
+**Status:** ✅ Ready for Validation

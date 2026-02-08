@@ -1,76 +1,28 @@
 {
-  "timestamp": "2025-12-25T15:21:31.053Z",
+  "timestamp": "2026-02-01T12:07:38.231Z",
   "results": [
     {
-      "screen": "TPV",
+      "screen": "CreatingPage",
+      "component": "CreatingState",
+      "action": "navigate",
+      "expected": "Shows creating or success state",
+      "actual": "No state shown",
+      "severity": "P1"
+    },
+    {
+      "screen": "PaymentsPage",
       "component": "PageLoad",
       "action": "navigate",
-      "expected": "TPV page loads",
-      "actual": "Page visible",
-      "severity": "OK"
-    },
-    {
-      "screen": "TPV",
-      "component": "NewOrderButton",
-      "action": "click",
-      "expected": "New order button visible",
-      "actual": "Button visible",
-      "severity": "OK"
-    },
-    {
-      "screen": "TPV",
-      "component": "NewOrderButton",
-      "action": "click",
-      "expected": "New order button enabled",
-      "actual": "Button enabled",
-      "severity": "OK"
-    },
-    {
-      "screen": "TPV",
-      "component": "NewOrderButton",
-      "action": "click",
-      "expected": "Order added to queue",
-      "actual": "Queue updated",
-      "severity": "OK"
-    },
-    {
-      "screen": "TPV",
-      "component": "ObservabilityButton",
-      "action": "click",
-      "expected": "Observability button visible",
-      "actual": "Button visible",
-      "severity": "OK"
-    },
-    {
-      "screen": "TPV",
-      "component": "ObservabilityPanel",
-      "action": "click",
-      "expected": "Observability panel opens",
-      "actual": "Panel visible",
-      "severity": "OK"
-    },
-    {
-      "screen": "TPV",
-      "component": "OrderCards",
-      "action": "navigate",
-      "expected": "Order cards visible on kanban board",
-      "actual": "4 orders visible",
-      "severity": "OK"
-    },
-    {
-      "screen": "TPV",
-      "component": "OrderCard",
-      "action": "click",
-      "expected": "Clicking order card shows detail view",
-      "actual": "Detail view shown",
-      "severity": "OK"
+      "expected": "Page loads with title \"Pagamentos\"",
+      "actual": "Wrong title: UI RESET / CORE ONLY",
+      "severity": "P1"
     }
   ],
   "summary": {
-    "total": 8,
+    "total": 2,
     "P0": 0,
-    "P1": 0,
+    "P1": 2,
     "P2": 0,
-    "OK": 8
+    "OK": 0
   }
 }

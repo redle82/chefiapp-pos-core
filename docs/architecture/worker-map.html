@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChefIApp — Mapa de Trabalhadores por Perfil</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --item: #374151;
+        --border: #334155;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --dim: #64748b;
+        --amber: #f59e0b;
+        --amber-bg: #92400e;
+        --amber-light: #fef3c7;
+        --blue: #3b82f6;
+        --blue-bg: #1e3a5f;
+        --blue-light: #dbeafe;
+        --green: #22c55e;
+        --green-bg: #065f46;
+        --green-light: #dcfce7;
+        --orange: #f97316;
+        --orange-bg: #9a3412;
+        --orange-light: #fed7aa;
+        --purple: #a855f7;
+        --purple-bg: #581c87;
+        --purple-light: #f3e8ff;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: 40px;
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .title-section {
+        text-align: center;
+        margin-bottom: 4px;
+      }
+      .title-section h1 {
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        background: linear-gradient(135deg, #f59e0b, #22c55e, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .title-section p {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+
+      /* System Rule Banner */
+      .system-rule {
+        background: linear-gradient(135deg, #065f46, #064e3b);
+        border: 1px solid #16a34a;
+        border-radius: 10px;
+        padding: 12px 20px;
+        text-align: center;
+      }
+      .system-rule .label {
+        font-size: 9px;
+        color: #86efac;
+        letter-spacing: 1.5px;
+        font-weight: 600;
+      }
+      .system-rule .rule {
+        font-size: 15px;
+        font-weight: 700;
+        color: #dcfce7;
+        margin-top: 4px;
+      }
+
+      /* Workers grid */
+      .workers-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 14px;
+      }
+
+      /* Worker column */
+      .worker {
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .worker-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 10px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+      .worker-header .emoji {
+        font-size: 18px;
+      }
+      .worker-body {
+        background: var(--card);
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      /* Section within worker */
+      .section {
+        background: var(--item);
+        border-radius: 8px;
+        padding: 10px 12px;
+      }
+      .section-title {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .section-title .sec-icon {
+        font-size: 12px;
+      }
+      .section-item {
+        font-size: 11px;
+        color: #cbd5e1;
+        padding: 3px 0;
+        padding-left: 18px;
+        position: relative;
+      }
+      .section-item::before {
+        content: "›";
+        position: absolute;
+        left: 6px;
+        color: var(--dim);
+      }
+
+      /* Shared modes footer */
+      .shared-modes {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
+        text-align: center;
+      }
+      .shared-modes h3 {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+      }
+      .badges {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--item);
+        border-radius: 20px;
+        padding: 6px 14px;
+        font-size: 11px;
+        color: #cbd5e1;
+        transition: transform 0.15s;
+      }
+      .badge:hover {
+        transform: scale(1.05);
+      }
+      .badge .badge-icon {
+        font-size: 14px;
+      }
+
+      .meta-line {
+        text-align: center;
+        font-size: 10px;
+        color: var(--dim);
+        margin-top: 4px;
+      }
+
+      @media (max-width: 900px) {
+        .workers-grid {
+          grid-template-columns: 1fr;
+        }
+        body {
+          padding: 16px;
+        }
+      }
+      @media (min-width: 901px) and (max-width: 1100px) {
+        .workers-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="title-section">
+        <h1>APPSTAFF — MAPA POR TRABALHADOR</h1>
+        <p>Cada perfil tem seu Home, suas Rotas e seus Modos dedicados</p>
+      </div>
+
+      <div class="system-rule">
+        <div class="label">REGRA DO SISTEMA</div>
+        <div class="rule">
+          Perfil ≠ Ferramenta — Cada trabalhador vê SÓ o que precisa
+        </div>
+      </div>
+
+      <div class="workers-grid">
+        <!-- OWNER -->
+        <div class="worker">
+          <div
+            class="worker-header"
+            style="background: var(--amber-bg); color: var(--amber-light)"
+          >
+            <span class="emoji">👑</span> OWNER
+          </div>
+          <div class="worker-body">
+            <div class="section">
+              <div class="section-title" style="color: var(--amber)">
+                <span class="sec-icon">🏠</span> Home
+              </div>
+              <div class="section-item">OwnerHome — visão completa</div>
+              <div class="section-item">Dashboard financeiro</div>
+              <div class="section-item">KPIs & métricas</div>
+            </div>
+            <div class="section">
+              <div class="section-title" style="color: var(--amber)">
+                <span class="sec-icon">🗺️</span> Rotas
+              </div>
+              <div class="section-item">/dashboard — Analytics</div>
+              <div class="section-item">/admin — Gestão completa</div>
+              <div class="section-item">/staff — Equipa</div>
+              <div class="section-item">/settings — Configurações</div>
+              <div class="section-item">/menu — Cardápio</div>
+              <div class="section-item">/orders — Pedidos</div>
+            </div>
+            <div class="section">
+              <div class="section-title" style="color: var(--amber)">
+                <span class="sec-icon">🔀</span> Modos
+              </div>
+              <div class="section-item">Todos os modos disponíveis</div>
+              <div class="section-item">Pode ativar TPV, KDS, etc.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MANAGER -->
+        <div class="worker">
+          <div
+            class="worker-header"
+            style="background: var(--blue-bg); color: var(--blue-light)"
+          >
+            <span class="emoji">📋</span> MANAGER
+          </div>
+          <div class="worker-body">
+            <div class="section">
+              <div class="section-title" style="color: var(--blue)">
+                <span class="sec-icon">🏠</span> Home
+              </div>
+              <div class="section-item">ManagerHome — operacional</div>
+              <div class="section-item">Resumo do turno</div>
+              <div class="section-item">Alertas ativos</div>
+            </div>
+            <div class="section">
+              <div class="section-title" style="color: var(--blue)">
+                <span class="sec-icon">🗺️</span> Rotas
+              </div>
+              <div class="section-item">/dashboard — Visão turno</div>
+              <div class="section-item">/staff — Equipa ativa</div>
+              <div class="section-item">/orders — Pedidos em curso</div>
+              <div class="section-item">/menu — Disponibilidade</div>
+            </div>
+            <div class="section">
+              <div class="section-title" style="color: var(--blue)">
+                <span class="sec-icon">🔀</span> Modos
+              </div>
+              <div class="section-item">TPV, KDS, Supervisão</div>
+              <div class="section-item">Sem acesso: Settings</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WAITER -->
+        <div class="worker">
+          <div
+            class="worker-header"
+            style="background: var(--green-bg); color: var(--green-light)"
+          >
+            <span class="emoji">🍽️</span> WAITER
+          </div>
+          <div class="worker-body">
+            <div class="section">
+              <div class="section-title" style="color: var(--green)">
+                <span class="sec-icon">🏠</span> Home
+              </div>
+              <div class="section-item">WaiterHome — mesas</div>
+              <div class="section-item">Mesas atribuídas</div>
+              <div class="section-item">Pedidos pendentes</div>
+            </div>
+            <div class="section">
+              <div class="section-title" style="color: var(--green)">
+                <span class="sec-icon">🗺️</span> Rotas
+              </div>
+              <div class="section-item">/tables — Mapa de mesas</div>
+              <div class="section-item">/orders/new — Novo pedido</div>
+              <div class="section-item">/orders — Os seus pedidos</div>
+            </div>
+            <div class="section">
+              <div class="section-title" style="color: var(--green)">
+                <span class="sec-icon">🔀</span> Modos
+              </div>
+              <div class="section-item">TPV (simplificado)</div>
+              <div class="section-item">Sem acesso: Admin, KDS</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KITCHEN -->
+        <div class="worker">
+          <div
+            class="worker-header"
+            style="background: var(--orange-bg); color: var(--orange-light)"
+          >
+            <span class="emoji">🔥</span> KITCHEN
+          </div>
+          <div class="worker-body">
+            <div class="section">
+              <div class="section-title" style="color: var(--orange)">
+                <span class="sec-icon">🏠</span> Home
+              </div>
+              <div class="section-item">KitchenHome — fila</div>
+              <div class="section-item">Pedidos por preparar</div>
+              <div class="section-item">Tempo médio</div>
+            </div>
+            <div class="section">
+              <div class="section-title" style="color: var(--orange)">
+                <span class="sec-icon">🗺️</span> Rotas
+              </div>
+              <div class="section-item">/kds — Kitchen Display</div>
+              <div class="section-item">/orders — Fila de pedidos</div>
+            </div>
+            <div class="section">
+              <div class="section-title" style="color: var(--orange)">
+                <span class="sec-icon">🔀</span> Modos
+              </div>
+              <div class="section-item">KDS (dedicado)</div>
+              <div class="section-item">Sem acesso: TPV, Admin</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLEANING -->
+        <div class="worker">
+          <div
+            class="worker-header"
+            style="background: var(--purple-bg); color: var(--purple-light)"
+          >
+            <span class="emoji">🧹</span> CLEANING
+          </div>
+          <div class="worker-body">
+            <div class="section">
+              <div class="section-title" style="color: var(--purple)">
+                <span class="sec-icon">🏠</span> Home
+              </div>
+              <div class="section-item">CleaningHome — tarefas</div>
+              <div class="section-item">Mesas para limpar</div>
+              <div class="section-item">Checklist do turno</div>
+            </div>
+            <div class="section">
+              <div class="section-title" style="color: var(--purple)">
+                <span class="sec-icon">🗺️</span> Rotas
+              </div>
+              <div class="section-item">/tasks — Lista de tarefas</div>
+              <div class="section-item">/tables — Status das mesas</div>
+            </div>
+            <div class="section">
+              <div class="section-title" style="color: var(--purple)">
+                <span class="sec-icon">🔀</span> Modos
+              </div>
+              <div class="section-item">Tasks only</div>
+              <div class="section-item">Sem acesso: TPV, KDS, Admin</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shared Modes -->
+      <div class="shared-modes">
+        <h3>MODOS COMPARTILHADOS (TODOS OS PERFIS)</h3>
+        <div class="badges">
+          <div class="badge">
+            <span class="badge-icon" style="color: #fbbf24">📋</span> Tasks
+          </div>
+          <div class="badge">
+            <span class="badge-icon" style="color: #ef4444">🔔</span> Alerts
+          </div>
+          <div class="badge">
+            <span class="badge-icon" style="color: #60a5fa">⏰</span> Turn
+          </div>
+          <div class="badge">
+            <span class="badge-icon" style="color: #a855f7">👤</span> Profile
+          </div>
+        </div>
+      </div>
+
+      <div class="meta-line">
+        ChefIApp POS Core · AppStaff Worker Map · 5 perfis · Role-based access ·
+        v1.0.0
+      </div>
+    </div>
+  </body>
+</html>

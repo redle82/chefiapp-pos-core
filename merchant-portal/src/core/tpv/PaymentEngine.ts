@@ -4,7 +4,8 @@
  * Gerencia pagamentos de pedidos com métodos reais e persistência.
  */
 
-import { supabase } from '../supabase';
+import { invokeRpc, getTableClient } from '../infra/coreRpc';
+import { BackendType, getBackendType } from '../infra/backendAdapter';
 import type { PaymentMethod, PaymentStatus } from './OrderEngine';
 import { logAuditEvent } from '../audit/logAuditEvent';
 
@@ -38,8 +39,8 @@ export class PaymentEngine {
         // Gerar idempotency key para prevenir replay attacks
         const idempotencyKey = input.idempotencyKey || `${input.orderId}-${Date.now()}-${crypto.randomUUID()}`;
 
-        // Usar função SQL transacional (tudo ou nada)
-        const { data, error } = await supabase.rpc('process_order_payment', {
+        // Usar função SQL transacional — Core quando Docker (FINANCIAL_CORE_VIOLATION_AUDIT)
+        const { data, error } = await invokeRpc<{ success?: boolean; payment_id?: string }>('process_order_payment', {
             p_order_id: input.orderId,
             p_restaurant_id: input.restaurantId,
             p_cash_register_id: input.cashRegisterId,
@@ -60,12 +61,12 @@ export class PaymentEngine {
                 amountCents: input.amountCents,
                 method: input.method,
                 result: 'fail',
-                errorCode: error.code || 'UNKNOWN',
-                errorMessage: error.message,
+                errorCode: error?.code || 'UNKNOWN',
+                errorMessage: error?.message,
                 idempotencyKey,
                 durationMs,
             });
-            throw new Error(`Erro ao processar pagamento: ${error.message || 'Erro desconhecido'}`);
+            throw new Error(`Erro ao processar pagamento: ${error?.message || 'Erro desconhecido'}`);
         }
 
         if (!data || !data.success) {
@@ -119,27 +120,30 @@ export class PaymentEngine {
             console.error('[PaymentEngine] Inventory deduction failed:', err);
         });
 
-        // Buscar pagamento criado para retornar objeto completo
-        const { data: paymentData, error: fetchError } = await supabase
+        // Buscar pagamento criado para retornar objeto completo (Core quando Docker — Fase 4)
+        const paymentId = data?.payment_id;
+        const client = await getTableClient();
+        const { data: paymentData, error: fetchError } = await client
             .from('gm_payments')
             .select('*')
-            .eq('id', data.payment_id)
+            .eq('id', paymentId)
             .single();
 
         if (fetchError || !paymentData) {
-            throw new Error(`Erro ao buscar pagamento criado: ${fetchError?.message || 'Pagamento não encontrado'}`);
+            throw new Error(`Erro ao buscar pagamento criado: ${(fetchError as Error)?.message || 'Pagamento não encontrado'}`);
         }
 
+        const row = paymentData as Record<string, unknown>;
         return {
-            id: paymentData.id,
-            tenantId: paymentData.tenant_id,
-            orderId: paymentData.order_id,
-            amountCents: paymentData.amount_cents,
-            currency: paymentData.currency,
-            method: paymentData.method,
-            status: paymentData.status,
-            createdAt: new Date(paymentData.created_at),
-            metadata: paymentData.metadata,
+            id: row.id as string,
+            tenantId: (row.tenant_id ?? row.restaurant_id) as string,
+            orderId: row.order_id as string,
+            amountCents: row.amount_cents as number,
+            currency: row.currency as string,
+            method: (row.payment_method ?? row.method) as PaymentMethod,
+            status: row.status as PaymentStatus,
+            createdAt: new Date(row.created_at as string),
+            metadata: row.metadata as Record<string, unknown> | undefined,
         };
     }
 
@@ -161,8 +165,8 @@ export class PaymentEngine {
         const startTime = Date.now();
         const idempotencyKey = input.idempotencyKey || `split-${input.orderId}-${Date.now()}-${crypto.randomUUID()}`;
 
-        // Use atomic RPC with row-level locking
-        const { data, error } = await supabase.rpc('process_split_payment_atomic', {
+        // Use atomic RPC — Core quando Docker (FINANCIAL_CORE_VIOLATION_AUDIT)
+        const { data, error } = await invokeRpc<{ success?: boolean; payment_id?: string; remaining_after?: number; is_fully_paid?: boolean }>('process_split_payment_atomic', {
             p_order_id: input.orderId,
             p_restaurant_id: input.restaurantId,
             p_cash_register_id: input.cashRegisterId,
@@ -182,20 +186,20 @@ export class PaymentEngine {
                 amountCents: input.amountCents,
                 method: input.method,
                 result: 'fail',
-                errorCode: error.code || 'UNKNOWN',
-                errorMessage: error.message,
+                errorCode: error?.code || 'UNKNOWN',
+                errorMessage: error?.message,
                 idempotencyKey,
                 durationMs,
             });
 
             // Parse specific errors
-            if (error.message?.includes('OVERPAYMENT')) {
+            if (error?.message?.includes('OVERPAYMENT')) {
                 throw new Error('Valor excede o saldo restante. Atualize e tente novamente.');
             }
-            if (error.message?.includes('ALREADY_PAID')) {
+            if (error?.message?.includes('ALREADY_PAID')) {
                 throw new Error('Pedido já foi pago por outro operador.');
             }
-            throw new Error(`Erro ao processar pagamento: ${error.message}`);
+            throw new Error(`Erro ao processar pagamento: ${error?.message}`);
         }
 
         if (!data?.success) {
@@ -222,86 +226,84 @@ export class PaymentEngine {
             });
         }
 
-        // Fetch the created payment
-        const { data: paymentData, error: fetchError } = await supabase
+        // Fetch the created payment (Core quando Docker — Fase 4)
+        const paymentId = data.payment_id;
+        const client = await getTableClient();
+        const { data: paymentData, error: fetchError } = await client
             .from('gm_payments')
             .select('*')
-            .eq('id', data.payment_id)
+            .eq('id', paymentId)
             .single();
 
         if (fetchError || !paymentData) {
             throw new Error('Pagamento processado mas não encontrado.');
         }
 
+        const row = paymentData as Record<string, unknown>;
         return {
             payment: {
-                id: paymentData.id,
-                tenantId: paymentData.tenant_id,
-                orderId: paymentData.order_id,
-                amountCents: paymentData.amount_cents,
-                currency: paymentData.currency,
-                method: paymentData.method,
-                status: paymentData.status,
-                createdAt: new Date(paymentData.created_at),
-                metadata: paymentData.metadata,
+                id: row.id as string,
+                tenantId: (row.tenant_id ?? row.restaurant_id) as string,
+                orderId: row.order_id as string,
+                amountCents: row.amount_cents as number,
+                currency: row.currency as string,
+                method: (row.payment_method ?? row.method) as PaymentMethod,
+                status: row.status as PaymentStatus,
+                createdAt: new Date(row.created_at as string),
+                metadata: row.metadata as Record<string, unknown> | undefined,
             },
-            remainingAfter: data.remaining_after,
-            isFullyPaid: data.is_fully_paid,
+            remainingAfter: data.remaining_after ?? 0,
+            isFullyPaid: data.is_fully_paid ?? false,
         };
     }
 
     /**
-     * Buscar pagamentos de um pedido
+     * Buscar pagamentos de um pedido (Core quando Docker — Fase 4)
      */
     static async getPaymentsByOrder(orderId: string): Promise<Payment[]> {
-        const { data, error } = await supabase
-            .from('gm_payments')
-            .select('*')
-            .eq('order_id', orderId)
-            .order('created_at', { ascending: false });
+        const client = await getTableClient();
+        const chain = (client as any).from('gm_payments').select('*').eq('order_id', orderId).order('created_at', { ascending: false });
+        const { data, error } = await chain as { data: Record<string, unknown>[] | null; error: unknown };
 
-        if (error) throw new Error(`Failed to fetch payments: ${error.message}`);
+        if (error) throw new Error(`Failed to fetch payments: ${(error as Error).message}`);
 
-        return (data || []).map(p => ({
-            id: p.id,
-            tenantId: p.tenant_id,
-            orderId: p.order_id,
-            amountCents: p.amount_cents,
-            currency: p.currency,
-            method: p.method,
-            status: p.status,
-            createdAt: new Date(p.created_at),
-            metadata: p.metadata,
+        return (data || []).map((p: Record<string, unknown>) => ({
+            id: p.id as string,
+            tenantId: (p.tenant_id ?? p.restaurant_id) as string,
+            orderId: p.order_id as string,
+            amountCents: p.amount_cents as number,
+            currency: p.currency as string,
+            method: (p.payment_method ?? p.method) as PaymentMethod,
+            status: p.status as PaymentStatus,
+            createdAt: new Date(p.created_at as string),
+            metadata: p.metadata as Record<string, unknown> | undefined,
         }));
     }
 
     /**
-     * Buscar pagamentos do dia
+     * Buscar pagamentos do dia (Core quando Docker — Fase 4)
+     * Core usa restaurant_id.
      */
     static async getTodayPayments(restaurantId: string): Promise<Payment[]> {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        const client = await getTableClient();
+        const restaurantCol = getBackendType() === BackendType.docker ? 'restaurant_id' : 'tenant_id';
+        const chain = (client as any).from('gm_payments').select('*').eq(restaurantCol, restaurantId).eq('status', 'paid').gte('created_at', today.toISOString()).order('created_at', { ascending: false });
+        const { data, error } = await chain as { data: Record<string, unknown>[] | null; error: unknown };
 
-        const { data, error } = await supabase
-            .from('gm_payments')
-            .select('*')
-            .eq('tenant_id', restaurantId)
-            .eq('status', 'paid')
-            .gte('created_at', today.toISOString())
-            .order('created_at', { ascending: false });
+        if (error) throw new Error(`Failed to fetch payments: ${(error as Error).message}`);
 
-        if (error) throw new Error(`Failed to fetch payments: ${error.message}`);
-
-        return (data || []).map(p => ({
-            id: p.id,
-            tenantId: p.tenant_id,
-            orderId: p.order_id,
-            amountCents: p.amount_cents,
-            currency: p.currency,
-            method: p.method,
-            status: p.status,
-            createdAt: new Date(p.created_at),
-            metadata: p.metadata,
+        return (data || []).map((p: Record<string, unknown>) => ({
+            id: p.id as string,
+            tenantId: (p.tenant_id ?? p.restaurant_id) as string,
+            orderId: p.order_id as string,
+            amountCents: p.amount_cents as number,
+            currency: p.currency as string,
+            method: (p.payment_method ?? p.method) as PaymentMethod,
+            status: p.status as PaymentStatus,
+            createdAt: new Date(p.created_at as string),
+            metadata: p.metadata as Record<string, unknown> | undefined,
         }));
     }
 
@@ -325,7 +327,7 @@ export class PaymentEngine {
         durationMs?: number;
     }): Promise<void> {
         try {
-            await supabase.rpc('fn_log_payment_attempt', {
+            await invokeRpc('fn_log_payment_attempt', {
                 p_order_id: input.orderId,
                 p_restaurant_id: input.restaurantId,
                 p_operator_id: input.operatorId || null,
@@ -360,7 +362,7 @@ export class PaymentEngine {
         totalProcessedCents: number;
         mostCommonError: string | null;
     }> {
-        const { data, error } = await supabase.rpc('get_payment_health', {
+        const { data, error } = await invokeRpc<Record<string, unknown>>('get_payment_health', {
             p_restaurant_id: restaurantId,
         });
 
@@ -377,14 +379,15 @@ export class PaymentEngine {
             };
         }
 
+        const d = data ?? {};
         return {
-            attempts24h: data?.attempts_24h || 0,
-            success24h: data?.success_24h || 0,
-            fail24h: data?.fail_24h || 0,
-            successRate: data?.success_rate || 100,
-            avgDurationMs: data?.avg_duration_ms || 0,
-            totalProcessedCents: data?.total_processed_cents || 0,
-            mostCommonError: data?.most_common_error || null,
+            attempts24h: (d.attempts_24h as number) ?? 0,
+            success24h: (d.success_24h as number) ?? 0,
+            fail24h: (d.fail_24h as number) ?? 0,
+            successRate: (d.success_rate as number) ?? 100,
+            avgDurationMs: (d.avg_duration_ms as number) ?? 0,
+            totalProcessedCents: (d.total_processed_cents as number) ?? 0,
+            mostCommonError: (d.most_common_error as string) ?? null,
         };
     }
 
@@ -392,10 +395,10 @@ export class PaymentEngine {
      * [INVENTORY] Trigger the inventory deduction RPC
      */
     private static async triggerInventoryDeduction(orderId: string): Promise<void> {
-        const { error } = await supabase.rpc('process_inventory_deduction', {
+        const { error } = await invokeRpc('process_inventory_deduction', {
             p_order_id: orderId
         });
-        if (error) throw error;
+        if (error) throw new Error(error.message);
     }
 }
 

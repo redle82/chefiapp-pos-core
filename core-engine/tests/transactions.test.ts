@@ -64,6 +64,7 @@ describe('TASK-1.1.8: Transaction Rollback on Partial Failure', () => {
     // Step 1: Lock items (FINALIZE transition - has calculateTotal and lockItems effects)
     // This should succeed and commit
     const lockResult = await executor.transition({
+      tenantId: 'test-tenant',
       entity: 'ORDER',
       entityId: 'order-1',
       event: 'FINALIZE',
@@ -359,6 +360,7 @@ describe('CoreExecutor.transition (handles ConcurrencyConflictError)', () => {
 
     // Start transition (this will create a transaction internally)
     const transitionPromise = executor.transition({
+      tenantId: 'test-tenant',
       entity: 'ORDER',
       entityId: 'order-1',
       event: 'FINALIZE',
@@ -433,6 +435,7 @@ describe('CoreExecutor.transition (handles ConcurrencyConflictError)', () => {
 
     // Transition should succeed (no concurrent modification)
     const result = await executor.transition({
+      tenantId: 'test-tenant',
       entity: 'ORDER',
       entityId: 'order-1',
       event: 'FINALIZE',

@@ -1,0 +1,3 @@
+{"__PROGRESS__":true,"phase":"BOOT","step":"init","op":"INFO","message":"Progress Bus iniciado (run_id=9f75c8f9-a76d-4135-aa33-e901ef386f1f)","timestamp":1769505766841}
+{"__PROGRESS__":true,"phase":"RESET_SEMANTICO","step":"start","message":"Iniciando RESET_SEMANTICO","op":"INFO","timestamp":1769505766841}
+{"__PROGRESS__":true,"phase":"RESET_SEMANTICO","step":"error","message":"Falha em RESET_SEMANTICO: new row for relation \"gm_tasks\" violates check constraint \"gm_tasks_status_check\"","op":"ERROR","timestamp":1769505766857}

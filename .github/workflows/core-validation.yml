@@ -1,0 +1,160 @@
+name: Core Validation
+
+on:
+  pull_request:
+    branches: [main, develop, core/frozen-v1]
+    paths:
+      - 'docker-tests/**'
+      - 'merchant-portal/src/core/**'
+      - 'mobile-app/context/**'
+      - 'mobile-app/services/**'
+      - 'legacy_supabase/functions/**'
+      - 'server/**'
+      - 'CORE_MANIFESTO.md'
+  push:
+    branches: [main, develop, core/frozen-v1]
+    paths:
+      - 'docker-tests/**'
+      - 'merchant-portal/src/core/**'
+      - 'mobile-app/context/**'
+      - 'mobile-app/services/**'
+      - 'legacy_supabase/functions/**'
+      - 'server/**'
+      - 'CORE_MANIFESTO.md'
+
+jobs:
+  fail-fast-validation:
+    name: Fail-Fast Validation
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install PostgreSQL Client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Install Dependencies
+        working-directory: docker-tests
+        run: |
+          if [ -f package.json ]; then
+            npm ci
+          fi
+
+      - name: Wait for PostgreSQL
+        env:
+          PGPASSWORD: postgres
+        run: |
+          for i in {1..30}; do
+            if psql -h localhost -p 5432 -U postgres -d postgres -c "SELECT 1;" > /dev/null 2>&1; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            echo "Waiting for PostgreSQL... ($i/30)"
+            sleep 2
+          done
+
+      - name: Setup Database
+        env:
+          PGPASSWORD: postgres
+        run: |
+          # Create database and run migrations if needed
+          psql -h localhost -p 5432 -U postgres -d postgres -c "SELECT 1;" || true
+
+      - name: Run Fail-Fast Validation
+        working-directory: docker-tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+        run: |
+          make simulate-failfast || exit 1
+
+  full-simulation:
+    name: Full 24h Simulation
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.base.ref == 'main' || github.event.pull_request.base.ref == 'core/frozen-v1'
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install PostgreSQL Client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Install Dependencies
+        working-directory: docker-tests
+        run: |
+          if [ -f package.json ]; then
+            npm ci
+          fi
+
+      - name: Wait for PostgreSQL
+        env:
+          PGPASSWORD: postgres
+        run: |
+          for i in {1..30}; do
+            if psql -h localhost -p 5432 -U postgres -d postgres -c "SELECT 1;" > /dev/null 2>&1; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            echo "Waiting for PostgreSQL... ($i/30)"
+            sleep 2
+          done
+
+      - name: Run Full 24h Simulation
+        working-directory: docker-tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+        timeout-minutes: 10
+        run: |
+          make simulate-24h-small || exit 1
+
+      - name: Run Assertions
+        working-directory: docker-tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+        run: |
+          make assertions || exit 1

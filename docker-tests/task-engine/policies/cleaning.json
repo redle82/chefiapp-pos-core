@@ -1,0 +1,67 @@
+{
+  "id": "CLEANING_STANDARD",
+  "name": "Tarefas de Limpeza Contínua",
+  "description": "Tarefas de limpeza durante a operação",
+  "jurisdiction": "ES",
+  "segment": "HYGIENE",
+  "triggers": [
+    {
+      "type": "event",
+      "event": "table.closed",
+      "tasks": ["clean_001"]
+    },
+    {
+      "type": "cron",
+      "schedule": "0 */2 * * *",
+      "description": "A cada 2 horas",
+      "tasks": ["clean_002", "clean_003"]
+    },
+    {
+      "type": "event",
+      "event": "incident.spill",
+      "tasks": ["clean_004"]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "clean_001",
+      "name": "Limpar mesa",
+      "description": "Limpar e higienizar mesa após cliente sair",
+      "role": "cleaning",
+      "sla_minutes": 5,
+      "hard_blocking": false
+    },
+    {
+      "id": "clean_002",
+      "name": "Limpar banheiros",
+      "description": "Verificar e limpar banheiros",
+      "role": "cleaning",
+      "sla_minutes": 15,
+      "hard_blocking": false,
+      "recurring": true
+    },
+    {
+      "id": "clean_003",
+      "name": "Verificar lixeiras",
+      "description": "Esvaziar lixeiras se necessário",
+      "role": "cleaning",
+      "sla_minutes": 10,
+      "hard_blocking": false,
+      "recurring": true
+    },
+    {
+      "id": "clean_004",
+      "name": "Limpar derramamento",
+      "description": "Limpar derramamento imediatamente",
+      "role": "cleaning",
+      "sla_minutes": 3,
+      "hard_blocking": false,
+      "priority": "urgent"
+    }
+  ],
+  "escalation": {
+    "after_sla_exceeded_minutes": 5,
+    "escalate_to": "manager",
+    "notify": []
+  }
+}

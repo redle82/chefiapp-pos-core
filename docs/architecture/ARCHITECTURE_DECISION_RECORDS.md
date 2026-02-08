@@ -1,7 +1,8 @@
 # 📐 Architecture Decision Records (ADR) - ChefIApp Multi-Tenant
 
-**Versão:** 1.0  
+**Versão:** 1.0
 **Data:** 2026-01-24
+**Referência Livro:** Secção 11 — ADRs (T11-1). [CHECKLIST_FECHO_GAPS.md](../CHECKLIST_FECHO_GAPS.md)
 
 ---
 
@@ -11,22 +12,35 @@ Documentar decisões arquiteturais importantes do roadmap multi-tenant para refe
 
 ---
 
+## Como usar
+
+- **ADRs (este documento):** Decisões estruturadas por contexto, alternativas, consequências e validação (ADR-001 a ADR-010 e futuros).
+- **CORE_DECISION_LOG:** [CORE_DECISION_LOG.md](./CORE_DECISION_LOG.md) — Log datado de decisões operacionais e de contratos (quem, quando, impacto). Use para decisões que afectam contratos, topologia ou comportamento do sistema.
+- **Antes de implementar:** Ver se a decisão já está aqui ou no Decision Log.
+- **Depois de decidir:** Adicionar ADR novo (se for decisão arquitectural) ou entrada no CORE_DECISION_LOG (se for decisão operacional/contrato).
+
+---
+
 ## 📋 ADR-001: Single Database com RLS (Row Level Security)
 
-**Data:** 2026-01-24  
-**Status:** ✅ Aprovado  
+**Data:** 2026-01-24
+**Status:** ✅ Aprovado
 **Contexto:** Escalar de 1 para 500 restaurantes
 
 ### Decisão
+
 Usar **Single Database com Row Level Security (RLS)** do Supabase, ao invés de multi-database ou schema-per-tenant.
 
 ### Alternativas Consideradas
+
 1. **Multi-Database** (1 banco por restaurante)
+
    - ❌ Complexidade operacional alta
    - ❌ Custo elevado
    - ❌ Manutenção difícil
 
 2. **Schema-per-Tenant** (1 schema por restaurante)
+
    - ❌ Limite de schemas no PostgreSQL
    - ❌ Migrations complexas
    - ❌ Queries cross-tenant difíceis
@@ -38,7 +52,9 @@ Usar **Single Database com Row Level Security (RLS)** do Supabase, ao invés de 
    - ✅ Escalável até 500+ restaurantes
 
 ### Consequências
+
 - **Positivas:**
+
   - Operação simplificada
   - Custo eficiente
   - Manutenção centralizada
@@ -49,6 +65,7 @@ Usar **Single Database com Row Level Security (RLS)** do Supabase, ao invés de 
   - Escala: Mitigado com otimizações (Fase 4)
 
 ### Validação
+
 - Testes de isolamento automatizados
 - Performance validada com 100 restaurantes (Fase 3)
 - Escalabilidade validada com 500 restaurantes (Fase 4)
@@ -57,15 +74,18 @@ Usar **Single Database com Row Level Security (RLS)** do Supabase, ao invés de 
 
 ## 📋 ADR-002: restaurant_id como Tenant ID
 
-**Data:** 2026-01-24  
-**Status:** ✅ Aprovado  
+**Data:** 2026-01-24
+**Status:** ✅ Aprovado
 **Contexto:** Modelagem de dados multi-tenant
 
 ### Decisão
+
 Usar `restaurant_id` diretamente como tenant_id, **sem criar camada extra** de `tenant_id` ou `saas_tenants`.
 
 ### Alternativas Consideradas
+
 1. **Camada `saas_tenants` separada**
+
    - ❌ Complexidade desnecessária
    - ❌ Join extra em todas as queries
    - ❌ Confusão entre tenant e restaurant
@@ -76,7 +96,9 @@ Usar `restaurant_id` diretamente como tenant_id, **sem criar camada extra** de `
    - ✅ Fácil de entender
 
 ### Consequências
+
 - **Positivas:**
+
   - Modelo simples e claro
   - Queries mais rápidas (menos joins)
   - Fácil de entender e manter
@@ -85,6 +107,7 @@ Usar `restaurant_id` diretamente como tenant_id, **sem criar camada extra** de `
   - Futuro multi-location pode precisar ajuste (mas `restaurant_id` pode referenciar grupo)
 
 ### Validação
+
 - Modelo validado em Fase 1
 - Performance validada em Fase 2-3
 
@@ -92,15 +115,18 @@ Usar `restaurant_id` diretamente como tenant_id, **sem criar camada extra** de `
 
 ## 📋 ADR-003: RLS desde Fase 1 (Não Depois)
 
-**Data:** 2026-01-24  
-**Status:** ✅ Aprovado  
+**Data:** 2026-01-24
+**Status:** ✅ Aprovado
 **Contexto:** Segurança e isolamento
 
 ### Decisão
+
 Implementar **RLS (Row Level Security) desde a Fase 1**, não adiar para fases posteriores.
 
 ### Alternativas Consideradas
+
 1. **RLS depois (Fase 2-3)**
+
    - ❌ Risco de vazamento de dados
    - ❌ Retrabalho massivo
    - ❌ Dificuldade de adicionar depois
@@ -111,7 +137,9 @@ Implementar **RLS (Row Level Security) desde a Fase 1**, não adiar para fases p
    - ✅ Testes de isolamento desde cedo
 
 ### Consequências
+
 - **Positivas:**
+
   - Segurança garantida desde o início
   - Testes de isolamento desde Fase 1
   - Evita retrabalho massivo
@@ -121,6 +149,7 @@ Implementar **RLS (Row Level Security) desde a Fase 1**, não adiar para fases p
   - Requer testes rigorosos
 
 ### Validação
+
 - Testes de isolamento passando desde Fase 1
 - Zero vazamentos de dados em produção
 
@@ -128,15 +157,18 @@ Implementar **RLS (Row Level Security) desde a Fase 1**, não adiar para fases p
 
 ## 📋 ADR-004: Índices em restaurant_id desde o Início
 
-**Data:** 2026-01-24  
-**Status:** ✅ Aprovado  
+**Data:** 2026-01-24
+**Status:** ✅ Aprovado
 **Contexto:** Performance em escala
 
 ### Decisão
+
 Criar **índices em `restaurant_id` desde a Fase 1**, não adiar para quando performance degradar.
 
 ### Alternativas Consideradas
+
 1. **Índices depois (quando necessário)**
+
    - ❌ Performance degradada antes de corrigir
    - ❌ Criar índices em produção pode causar locks
    - ❌ Queries lentas afetam usuários
@@ -147,7 +179,9 @@ Criar **índices em `restaurant_id` desde a Fase 1**, não adiar para quando per
    - ✅ Criar índices em dados pequenos é rápido
 
 ### Consequências
+
 - **Positivas:**
+
   - Performance garantida
   - Evita degradação
   - Criar índices em dados pequenos é rápido
@@ -157,6 +191,7 @@ Criar **índices em `restaurant_id` desde a Fase 1**, não adiar para quando per
   - Write performance ligeiramente menor (aceitável)
 
 ### Validação
+
 - Performance validada em Fase 1-2
 - Queries < 200ms desde Fase 1
 
@@ -164,15 +199,18 @@ Criar **índices em `restaurant_id` desde a Fase 1**, não adiar para quando per
 
 ## 📋 ADR-005: Logging Estruturado desde Fase 0
 
-**Data:** 2026-01-24  
-**Status:** ✅ Aprovado  
+**Data:** 2026-01-24
+**Status:** ✅ Aprovado
 **Contexto:** Observabilidade e debugging
 
 ### Decisão
+
 Implementar **logging estruturado desde a Fase 0**, não adiar.
 
 ### Alternativas Consideradas
+
 1. **Logging depois (Fase 2-3)**
+
    - ❌ Debugging impossível em produção
    - ❌ Perda de contexto de problemas
    - ❌ Difícil adicionar depois
@@ -183,7 +221,9 @@ Implementar **logging estruturado desde a Fase 0**, não adiar.
    - ✅ Fácil de expandir depois
 
 ### Consequências
+
 - **Positivas:**
+
   - Debugging possível desde o início
   - Contexto completo (restaurant_id, user_id, action)
   - Base para observabilidade completa
@@ -193,6 +233,7 @@ Implementar **logging estruturado desde a Fase 0**, não adiar.
   - Overhead de logging (aceitável)
 
 ### Validação
+
 - Logs acessíveis desde Fase 0
 - Debugging de problemas facilitado
 
@@ -200,15 +241,18 @@ Implementar **logging estruturado desde a Fase 0**, não adiar.
 
 ## 📋 ADR-006: Billing desde Fase 2 (Não Adiar)
 
-**Data:** 2026-01-24  
-**Status:** ✅ Aprovado  
+**Data:** 2026-01-24
+**Status:** ✅ Aprovado
 **Contexto:** Receita e sustentabilidade
 
 ### Decisão
+
 Implementar **billing básico desde a Fase 2**, não adiar para Fase 3-4.
 
 ### Alternativas Consideradas
+
 1. **Billing depois (Fase 3-4)**
+
    - ❌ Perda de receita
    - ❌ Dificuldade de cobrar retroativamente
    - ❌ Risco financeiro
@@ -219,7 +263,9 @@ Implementar **billing básico desde a Fase 2**, não adiar para Fase 3-4.
    - ✅ Base para expansão
 
 ### Consequências
+
 - **Positivas:**
+
   - Receita desde cedo
   - Validação de modelo
   - Base para expansão
@@ -229,6 +275,7 @@ Implementar **billing básico desde a Fase 2**, não adiar para Fase 3-4.
   - Requer integração Stripe
 
 ### Validação
+
 - Billing funcionando desde Fase 2
 - Taxa de sucesso > 95%
 
@@ -236,15 +283,18 @@ Implementar **billing básico desde a Fase 2**, não adiar para Fase 3-4.
 
 ## 📋 ADR-007: Observabilidade desde Fase 2 (Não Adiar)
 
-**Data:** 2026-01-24  
-**Status:** ✅ Aprovado  
+**Data:** 2026-01-24
+**Status:** ✅ Aprovado
 **Contexto:** Operação e debugging em escala
 
 ### Decisão
+
 Implementar **observabilidade mínima desde a Fase 2**, expandir para completa na Fase 3.
 
 ### Alternativas Consideradas
+
 1. **Observabilidade depois (Fase 3-4)**
+
    - ❌ Debugging impossível em escala
    - ❌ Problemas não detectados
    - ❌ SLA difícil de manter
@@ -255,7 +305,9 @@ Implementar **observabilidade mínima desde a Fase 2**, expandir para completa n
    - ✅ Base para observabilidade completa
 
 ### Consequências
+
 - **Positivas:**
+
   - Debugging possível em escala
   - Detecção precoce
   - Base para expansão
@@ -265,6 +317,7 @@ Implementar **observabilidade mínima desde a Fase 2**, expandir para completa n
   - Complexidade adicional
 
 ### Validação
+
 - Observabilidade funcionando desde Fase 2
 - Problemas detectados em < 5 min
 
@@ -272,15 +325,18 @@ Implementar **observabilidade mínima desde a Fase 2**, expandir para completa n
 
 ## 📋 ADR-008: Testes de Isolamento desde Fase 1
 
-**Data:** 2026-01-24  
-**Status:** ✅ Aprovado  
+**Data:** 2026-01-24
+**Status:** ✅ Aprovado
 **Contexto:** Segurança e isolamento
 
 ### Decisão
+
 Implementar **testes automatizados de isolamento desde a Fase 1**, executar antes de cada deploy.
 
 ### Alternativas Consideradas
+
 1. **Testes depois ou manuais**
+
    - ❌ Risco de vazamento não detectado
    - ❌ Testes manuais não escalam
    - ❌ Falhas só detectadas em produção
@@ -291,7 +347,9 @@ Implementar **testes automatizados de isolamento desde a Fase 1**, executar ante
    - ✅ Confiança em cada deploy
 
 ### Consequências
+
 - **Positivas:**
+
   - Segurança garantida
   - Confiança em deploys
   - Testes escalam
@@ -301,6 +359,7 @@ Implementar **testes automatizados de isolamento desde a Fase 1**, executar ante
   - Manutenção de testes
 
 ### Validação
+
 - Testes passando desde Fase 1
 - Zero vazamentos em produção
 
@@ -308,15 +367,18 @@ Implementar **testes automatizados de isolamento desde a Fase 1**, executar ante
 
 ## 📋 ADR-009: Automação desde Fase 3 (Não Adiar)
 
-**Data:** 2026-01-24  
-**Status:** ✅ Aprovado  
+**Data:** 2026-01-24
+**Status:** ✅ Aprovado
 **Contexto:** Operação escalável
 
 ### Decisão
+
 Implementar **automação completa desde a Fase 3**, não adiar para Fase 4.
 
 ### Alternativas Consideradas
+
 1. **Automação depois (Fase 4)**
+
    - ❌ Operação manual não escala
    - ❌ Erros humanos
    - ❌ Tempo gasto em tarefas repetitivas
@@ -327,7 +389,9 @@ Implementar **automação completa desde a Fase 3**, não adiar para Fase 4.
    - ✅ Tempo focado em valor
 
 ### Consequências
+
 - **Positivas:**
+
   - Operação escalável
   - Redução de erros
   - Tempo focado em valor
@@ -337,6 +401,7 @@ Implementar **automação completa desde a Fase 3**, não adiar para Fase 4.
   - Requer manutenção
 
 ### Validação
+
 - Automação funcionando desde Fase 3
 - Tempo de operação reduzido em 80%
 
@@ -344,15 +409,18 @@ Implementar **automação completa desde a Fase 3**, não adiar para Fase 4.
 
 ## 📋 ADR-010: Documentação desde o Início
 
-**Data:** 2026-01-24  
-**Status:** ✅ Aprovado  
+**Data:** 2026-01-24
+**Status:** ✅ Aprovado
 **Contexto:** Conhecimento e continuidade
 
 ### Decisão
+
 Manter **documentação completa desde o início**, não adiar.
 
 ### Alternativas Consideradas
+
 1. **Documentação depois**
+
    - ❌ Conhecimento perdido
    - ❌ Onboarding difícil
    - ❌ Decisões esquecidas
@@ -363,7 +431,9 @@ Manter **documentação completa desde o início**, não adiar.
    - ✅ Decisões documentadas
 
 ### Consequências
+
 - **Positivas:**
+
   - Conhecimento preservado
   - Onboarding facilitado
   - Decisões documentadas (ADR)
@@ -373,36 +443,76 @@ Manter **documentação completa desde o início**, não adiar.
   - Manutenção de documentação
 
 ### Validação
+
 - Documentação completa desde Fase 0
 - Onboarding de novos devs facilitado
 
 ---
 
+## 📋 ADR-011: Congelamento conceptual do modelo organismo (ORE, Menu, Músculos)
+
+**Data:** 2026-02-01
+**Status:** ✅ Aprovado
+**Contexto:** Formalização do sistema como organismo (ORE = cérebro, Menu = matéria soberana, terminais = músculos). Evitar regressão de responsabilidades e ambiguidade futura.
+
+### Decisão
+
+**Congelar conceptualmente** a hierarquia e os papéis do modelo organismo a partir desta data:
+
+- **Hierarquia:** Core Financeiro (lei) → Menu Core (matéria soberana) → ORE (cérebro; julga estados) → Músculos (TPV, KDS, QR, Staff, Tasks, Stock, Relatórios).
+- **Fora do corpo:** Manual = pedagogia; Bootstrap = nascimento. Não são órgãos nem têm poder de decisão.
+- **Regra:** Novas features e refatorações devem respeitar este mapa. Alterar a hierarquia ou os papéis exige violação explícita de contrato (documentada).
+
+### Alternativas Consideradas
+
+1. **Manter modelo implícito**
+
+   - ❌ ORE acabava a julgar dados (menu, preço); terminais improvisavam; Menu sem posição clara.
+
+2. **Congelar conceptualmente** ✅
+   - ✅ Discussões futuras são mecânicas ("Isso é decisão de quem?" → organismo).
+   - ✅ ORE protegido de virar "Deus-object"; Menu como órgão; músculos sem "improvisar inteligência".
+
+### Consequências
+
+- **Positivas:** Clareza sustentável; auditorias §7–§13 verificam conformidade; manual humano (ORE_MANUAL_HUMANO.md) explica sem criar regras.
+- **Negativas:** Nenhuma; evolução por implementação continua, sem tocar nos contratos de hierarquia.
+
+### Validação
+
+- [ORE_ORGANISM_AND_MENU.md](./ORE_ORGANISM_AND_MENU.md) — modelo, diagrama, handshake, auditorias §7–§13.
+- [CORE_CONTRACT_INDEX.md](./CORE_CONTRACT_INDEX.md) — referência ao organismo e ao Manual ORE.
+
+---
+
 ## 📊 RESUMO DAS DECISÕES
 
-| ADR | Decisão | Fase | Impacto |
-|-----|---------|------|---------|
-| ADR-001 | Single DB + RLS | F1 | Alto |
-| ADR-002 | restaurant_id como tenant_id | F1 | Médio |
-| ADR-003 | RLS desde Fase 1 | F1 | Crítico |
-| ADR-004 | Índices desde Fase 1 | F1 | Alto |
-| ADR-005 | Logging desde Fase 0 | F0 | Médio |
-| ADR-006 | Billing desde Fase 2 | F2 | Alto |
-| ADR-007 | Observabilidade desde Fase 2 | F2 | Alto |
-| ADR-008 | Testes desde Fase 1 | F1 | Crítico |
-| ADR-009 | Automação desde Fase 3 | F3 | Médio |
-| ADR-010 | Documentação desde início | F0 | Médio |
+| ADR     | Decisão                                                 | Fase | Impacto    |
+| ------- | ------------------------------------------------------- | ---- | ---------- |
+| ADR-001 | Single DB + RLS                                         | F1   | Alto       |
+| ADR-002 | restaurant_id como tenant_id                            | F1   | Médio      |
+| ADR-003 | RLS desde Fase 1                                        | F1   | Crítico    |
+| ADR-004 | Índices desde Fase 1                                    | F1   | Alto       |
+| ADR-005 | Logging desde Fase 0                                    | F0   | Médio      |
+| ADR-006 | Billing desde Fase 2                                    | F2   | Alto       |
+| ADR-007 | Observabilidade desde Fase 2                            | F2   | Alto       |
+| ADR-008 | Testes desde Fase 1                                     | F1   | Crítico    |
+| ADR-009 | Automação desde Fase 3                                  | F3   | Médio      |
+| ADR-010 | Documentação desde início                               | F0   | Médio      |
+| ADR-011 | Congelamento conceptual organismo (ORE, Menu, Músculos) | —    | Estrutural |
 
 ---
 
 ## 🔄 REVISÃO DE DECISÕES
 
 ### Quando Revisar
+
 - A cada fase concluída
 - Quando métricas indicarem problema
 - Quando nova informação disponível
 
 ### Processo de Revisão
+
 1. Avaliar decisão atual
 2. Considerar alternativas
 3. Documentar mudança (se houver)
@@ -410,5 +520,5 @@ Manter **documentação completa desde o início**, não adiar.
 
 ---
 
-**Versão:** 1.0  
+**Versão:** 1.0
 **Data:** 2026-01-24

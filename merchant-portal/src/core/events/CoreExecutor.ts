@@ -1,5 +1,5 @@
 import type { EventEnvelope } from './SealTypes';
-import type { Order } from '../../pages/TPV/context/OrderTypes';
+import type { Order } from '../contracts';
 import type { InventoryItem } from '../inventory/InventoryTypes';
 import { calculateOrderConsumption } from '../inventory/RecipeMapping';
 

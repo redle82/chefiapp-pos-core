@@ -1,58 +1,107 @@
 # 🤝 Contributing Guide - ChefIApp
 
-**Guia para contribuir com o projeto**
+**Guide for contributing to the project**
 
-> ⚠️ **Antes de contribuir, leia o [`ENGINEERING_CONSTITUTION.md`](ENGINEERING_CONSTITUTION.md)**  
-> Este documento define as regras inegociáveis do projeto.
+> ⚠️ **Before contributing, read [`ENGINEERING_CONSTITUTION.md`](ENGINEERING_CONSTITUTION.md)**
+> This document defines the non-negotiable rules of the project.
 
 ---
 
-## 🎯 Como Contribuir
+## 🌍 Language Policy
 
-### 1. Fork e Clone
+> **MANDATORY:** All code, commits, documentation, issues, and PRs must be in **English**.
+> See [`docs/LANGUAGE_POLICY.md`](docs/LANGUAGE_POLICY.md) for complete rules.
+
+**Quick rule:** "If a Stripe / Oracle / SAP engineer opens this, do they understand?"
+
+- **Yes** → English is mandatory
+- **No (personal notes only)** → Portuguese is acceptable
+
+**Examples:**
+
 ```bash
-# Fork o repositório no GitHub
-# Clone seu fork
-git clone https://github.com/seu-usuario/chefiapp-pos-core.git
+# ✅ CORRECT
+git commit -m "feat: add SLA escalation engine"
+git commit -m "fix: prevent duplicate offline orders"
+
+# ❌ FORBIDDEN
+git commit -m "feat: adiciona motor de escalação"
+git commit -m "fix: corrige bug de duplicação"
+```
+
+**Portuguese is allowed ONLY in:**
+
+- `docs/notes/` - Personal notes
+- `docs/sessions/` - Session logs
+- `docs/brain-dump/` - Mental drafts
+
+**Never mix languages in the same file.**
+
+---
+
+## 🎯 How to Contribute
+
+### 1. Fork and Clone
+
+```bash
+# Fork the repository on GitHub
+# Clone your fork
+git clone https://github.com/your-username/chefiapp-pos-core.git
 cd chefiapp-pos-core
 ```
 
-### 2. Branch
-```bash
-# Criar branch para feature
-git checkout -b feature/nova-feature
+### 2. Create Branch
 
-# Ou para bugfix
-git checkout -b fix/corrigir-bug
+```bash
+# Create branch for feature
+git checkout -b feature/new-feature
+
+# Or for bugfix
+git checkout -b fix/fix-bug
 ```
 
-### 3. Desenvolvimento
+### 3. Development
+
 ```bash
-# Instalar dependências
+# Install dependencies
 npm install
 
-# Executar em desenvolvimento
+# Run in development mode
 npm start
 
-# Executar testes
+# Run tests
 npm test
 ```
 
+### 3.1 Validate before PR (fail-fast)
+
+Before pushing, run from repo root (CI runs the same):
+
+```bash
+make simulate-failfast   # typecheck + build
+```
+
+Optional: `npm test -- --ci --testPathIgnorePatterns="e2e|playwright|massive|offline" --testTimeout=15000 --maxWorkers=2` and `bash ./scripts/sovereignty-gate.sh`.
+
 ### 4. Commit
+
 ```bash
-# Commits descritivos
-git commit -m "feat: adiciona nova feature X"
-git commit -m "fix: corrige bug Y"
-git commit -m "docs: atualiza documentação Z"
+# Descriptive commits (MUST be in English)
+git commit -m "feat: add new feature X"
+git commit -m "fix: fix bug Y"
+git commit -m "docs: update documentation Z"
 ```
 
-### 5. Push e PR
-```bash
-# Push para seu fork
-git push origin feature/nova-feature
+### 5. Push and PR
 
-# Criar Pull Request no GitHub
+```bash
+# Push to your fork
+git push origin feature/new-feature
+
+# Create Pull Request on GitHub
 ```
+
+**PR gates (CI):** The branch must pass: `make simulate-failfast` (typecheck + build), Prettier check, Lint, `npm test` (subset), and `scripts/sovereignty-gate.sh`. Run `make simulate-failfast` locally before pushing to avoid failed CI.
 
 ---
 
@@ -60,79 +109,86 @@ git push origin feature/nova-feature
 
 ### Commits (Conventional Commits)
 
+**MANDATORY: All commit messages must be in English.**
+
 ```
-feat: adiciona nova feature
-fix: corrige bug
-docs: atualiza documentação
-style: formatação (não afeta código)
-refactor: refatoração
-test: adiciona testes
-chore: tarefas de manutenção
+feat: add new feature
+fix: fix bug
+docs: update documentation
+style: formatting (doesn't affect code)
+refactor: refactoring
+test: add tests
+chore: maintenance tasks
 ```
 
-**Exemplos:**
+**Examples:**
+
 ```bash
-feat: adiciona integração com iFood
-fix: corrige timer do mapa vivo
-docs: atualiza API reference
-refactor: simplifica FastPayButton
+feat: add iFood integration
+fix: fix live map timer
+docs: update API reference
+refactor: simplify FastPayButton
 ```
 
-### Nomenclatura
+### Naming Conventions
 
-**Componentes:**
+**Components:**
+
 ```typescript
 // PascalCase
-FastPayButton.tsx
-KitchenPressureIndicator.tsx
-WaitlistBoard.tsx
+FastPayButton.tsx;
+KitchenPressureIndicator.tsx;
+WaitlistBoard.tsx;
 ```
 
 **Hooks:**
+
 ```typescript
-// camelCase com "use" prefix
-useKitchenPressure.ts
-useOrder.ts
-useAppStaff.ts
+// camelCase with "use" prefix
+useKitchenPressure.ts;
+useOrder.ts;
+useAppStaff.ts;
 ```
 
 **Services:**
+
 ```typescript
 // PascalCase
-PersistenceService.ts
-InventoryService.ts
-PrinterService.ts
+PersistenceService.ts;
+InventoryService.ts;
+PrinterService.ts;
 ```
 
 **Utils:**
+
 ```typescript
 // camelCase
-getUrgencyColor.ts
-calculateTotal.ts
+getUrgencyColor.ts;
+calculateTotal.ts;
 ```
 
 ---
 
-## 🧪 Testes
+## 🧪 Testing
 
-### Escrever Testes
+### Writing Tests
 
 ```typescript
 // __tests__/components/FastPayButton.test.tsx
-import { render, fireEvent } from '@testing-library/react-native';
-import { FastPayButton } from '@/components/FastPayButton';
+import { render, fireEvent } from "@testing-library/react-native";
+import { FastPayButton } from "@/components/FastPayButton";
 
-describe('FastPayButton', () => {
-  it('deve processar pagamento', async () => {
-    // Teste
+describe("FastPayButton", () => {
+  it("should process payment", async () => {
+    // Test
   });
 });
 ```
 
-### Executar Testes
+### Running Tests
 
 ```bash
-# Todos os testes
+# All tests
 npm test
 
 # Watch mode
@@ -142,39 +198,42 @@ npm run test:watch
 npm run test:coverage
 ```
 
-### Cobertura Mínima
-- **Componentes críticos:** > 90%
+### Minimum Coverage
+
+- **Critical components:** > 90%
 - **Hooks:** > 85%
 - **Services:** > 80%
 - **Utils:** > 95%
 
 ---
 
-## 📚 Documentação
+## 📚 Documentation
 
-### Atualizar Documentação
+### Updating Documentation
 
-Ao adicionar feature:
-1. Atualizar `CHANGELOG.md`
-2. Atualizar `docs/API_REFERENCE.md` (se necessário)
-3. Adicionar exemplo em `docs/CODE_EXAMPLES.md`
-4. Atualizar `QUICK_REFERENCE.md` (se relevante)
+When adding a feature:
 
-### Formato
+1. Update `CHANGELOG.md`
+2. Update `docs/API_REFERENCE.md` (if necessary)
+3. Add example in `docs/CODE_EXAMPLES.md`
+4. Update `QUICK_REFERENCE.md` (if relevant)
+
+### Format
 
 ```markdown
-## Nova Feature
+## New Feature
 
-**Descrição:** Breve descrição
+**Description:** Brief description
 
-**Uso:**
+**Usage:**
 \`\`\`typescript
-// Exemplo de código
+// Code example
 \`\`\`
 
 **Props:**
-- `prop1`: tipo - descrição
-- `prop2`: tipo - descrição
+
+- `prop1`: type - description
+- `prop2`: type - description
 ```
 
 ---
@@ -184,19 +243,19 @@ Ao adicionar feature:
 ### TypeScript
 
 ```typescript
-// ✅ Tipos explícitos
+// ✅ Explicit types
 interface Props {
   orderId: string;
   total: number;
 }
 
-// ✅ Evitar any
+// ✅ Avoid any
 const data: unknown = await fetch();
 if (isValidData(data)) {
-  // usar data tipado
+  // use typed data
 }
 
-// ✅ Nomes descritivos
+// ✅ Descriptive names
 const elapsedMinutes = calculateElapsed(order);
 // ❌ const time = ...
 ```
@@ -204,16 +263,16 @@ const elapsedMinutes = calculateElapsed(order);
 ### React
 
 ```typescript
-// ✅ Componentes funcionais
+// ✅ Functional components
 export function FastPayButton({ orderId, total }: Props) {
   // ...
 }
 
-// ✅ Hooks no topo
+// ✅ Hooks at the top
 const { orders } = useOrder();
 const [state, setState] = useState();
 
-// ✅ useEffect com cleanup
+// ✅ useEffect with cleanup
 useEffect(() => {
   const interval = setInterval(() => {}, 1000);
   return () => clearInterval(interval);
@@ -223,68 +282,71 @@ useEffect(() => {
 ### Imports
 
 ```typescript
-// ✅ Ordem: externos, internos, relativos
-import React from 'react';
-import { View, Text } from 'react-native';
-import { useOrder } from '@/context/OrderContext';
-import { FastPayButton } from '@/components/FastPayButton';
+// ✅ Order: external, internal, relative
+import React from "react";
+import { View, Text } from "react-native";
+import { useOrder } from "@/context/OrderContext";
+import { FastPayButton } from "@/components/FastPayButton";
 ```
 
 ---
 
-## 🐛 Reportar Bugs
+## 🐛 Reporting Bugs
 
 ### Template
 
 ```markdown
-**Descrição:**
-Breve descrição do bug
+**Description:**
+Brief description of the bug
 
-**Passos para Reproduzir:**
-1. Passo 1
-2. Passo 2
-3. Passo 3
+**Steps to Reproduce:**
 
-**Comportamento Esperado:**
-O que deveria acontecer
+1. Step 1
+2. Step 2
+3. Step 3
 
-**Comportamento Atual:**
-O que está acontecendo
+**Expected Behavior:**
+What should happen
 
-**Ambiente:**
+**Actual Behavior:**
+What is happening
+
+**Environment:**
+
 - OS: iOS/Android
-- Versão: 1.0.0
+- Version: 1.0.0
 - Device: iPhone 13 / Pixel 6
 
 **Logs:**
 \`\`\`
-Logs relevantes
+Relevant logs
 \`\`\`
 ```
 
 ---
 
-## 💡 Sugerir Features
+## 💡 Suggesting Features
 
 ### Template
 
 ```markdown
 **Feature:**
-Nome da feature
+Feature name
 
-**Problema:**
-Qual problema resolve
+**Problem:**
+What problem it solves
 
-**Solução Proposta:**
-Como resolveria
+**Proposed Solution:**
+How it would solve it
 
-**Alternativas Consideradas:**
-Outras opções
+**Alternatives Considered:**
+Other options
 
-**Impacto:**
-- Usuários afetados
-- Complexidade
-- Tempo estimado
+**Impact:**
+
+- Affected users
+- Complexity
+- Estimated time
 ```
 
 ---
@@ -294,39 +356,152 @@ Outras opções
 ### Logging
 
 ```typescript
-// ✅ Usar Logger centralizado
-import { Logger } from '@/core/logger';
+// ✅ Use centralized Logger
+import { Logger } from "@/core/logger";
 
-Logger.info('Order created', { orderId, table });
-Logger.error('Payment failed', { orderId, error });
+Logger.info("Order created", { orderId, table });
+Logger.error("Payment failed", { orderId, error });
 
-// ❌ Evitar console.log em produção
-console.log('debug'); // Não fazer isso
+// ❌ Avoid console.log in production
+console.log("debug"); // Don't do this
 ```
 
-### Erros
+### Errors
 
 ```typescript
-// ✅ Capturar exceções com contexto
+// ✅ Capture exceptions with context
 try {
   await processPayment(order);
 } catch (error) {
-  Logger.error('Payment error', { orderId: order.id, error });
-  throw error; // Re-throw se necessário
+  Logger.error("Payment error", { orderId: order.id, error });
+  throw error; // Re-throw if necessary
 }
 
-// ✅ ErrorBoundary em componentes React
+// ✅ ErrorBoundary in React components
 <ErrorBoundary fallback={<ErrorFallback />}>
   <Component />
-</ErrorBoundary>
+</ErrorBoundary>;
 ```
 
-### Métricas
+### Metrics
 
 ```typescript
-// ✅ Usar hooks de métricas quando disponíveis
+// ✅ Use metrics hooks when available
 const { metrics, isLoading } = useRealtimeMetrics();
 ```
+
+---
+
+## 🏛️ Core Development Workflow
+
+> **IMPORTANT:** Changes to the Core require mandatory validation via simulator.
+
+### What is Considered Core
+
+- `docker-tests/simulators/`
+- `docker-tests/task-engine/`
+- `merchant-portal/src/core/`
+- `mobile-app/context/` (OrderContext, AppStaffContext)
+- `mobile-app/services/` (NowEngine, PersistenceService)
+- `supabase/functions/`
+- `server/`
+- `CORE_MANIFESTO.md`
+
+### Core Development Workflow
+
+#### 1. Before Starting
+
+```bash
+# Read CORE_MANIFESTO.md
+# Verify if the change violates any principle
+# Confirm that the simulator can exercise the change
+```
+
+#### 2. During Development
+
+```bash
+cd docker-tests
+
+# Quick validation (1 min) - Use during development
+make simulate-failfast
+
+# If it passes, continue
+# If it fails, fix before continuing
+```
+
+#### 3. Before Commit
+
+```bash
+cd docker-tests
+
+# Complete validation (5 min) - Mandatory before commit
+make simulate-24h-small
+
+# Integrity assertions
+make assertions
+
+# If both pass, you can commit
+# If they fail, DO NOT commit until fixed
+```
+
+#### 4. Pull Request
+
+**Mandatory Requirements:**
+
+- ✅ `make simulate-failfast` must pass (automatically validated in CI)
+- ✅ `make simulate-24h-small` must pass (automatically validated in CI for PRs to `main` or `core/frozen-v1`)
+- ✅ `make assertions` must pass (automatically validated in CI)
+- ✅ CORE_MANIFESTO.md not violated
+- ✅ Documentation updated (if necessary)
+
+**CI/CD will block merge if any validation fails.**
+
+### When to Use Each Validation
+
+| Situation           | Validation                                             | Time     |
+| ------------------- | ------------------------------------------------------ | -------- |
+| During development  | `make simulate-failfast`                               | ~1 min   |
+| Before commit       | `make simulate-24h-small`                              | ~5 min   |
+| Before merge (main) | `make simulate-24h-small` + `make assertions`          | ~5 min   |
+| Complete validation | `make simulate-24h-large` or `make simulate-24h-giant` | ~5-7 min |
+
+### Absolute Rules
+
+1. **No Core changes without validation**
+
+   - If the simulator doesn't exercise it, it's not Core
+   - Untested code = dead code
+
+2. **No violation of CORE_MANIFESTO.md**
+
+   - Any violation is architectural regression
+   - Must be reverted immediately
+
+3. **No critical logic outside Core**
+
+   - Governance lives in Core
+   - Offline lives in Core
+   - SLA lives in Core
+
+4. **UI never governs**
+   - UI consumes Core, doesn't govern
+   - UI can be rewritten, Core remains
+
+### Troubleshooting
+
+**Simulador falha:**
+
+1. Verificar `make assertions`
+2. Revisar mudanças recentes
+3. Consultar `docs/testing/MEGA_OPERATIONAL_SIMULATOR.md`
+4. Verificar logs do simulador
+
+**CI/CD falha:**
+
+1. Executar validações localmente
+2. Verificar se PostgreSQL está rodando (para CI local)
+3. Revisar mudanças que podem ter quebrado o Core
+4. Consultar `HANDOFF.md` para troubleshooting
 
 ---
 
@@ -334,31 +509,51 @@ const { metrics, isLoading } = useRealtimeMetrics();
 
 ### Checklist
 
-**Funcionalidade:**
-- [ ] Código funciona como esperado
-- [ ] Testes passando
-- [ ] Sem regressões
+**Functionality:**
 
-**Código:**
-- [ ] Segue convenções
-- [ ] Bem documentado
-- [ ] Sem código morto
+- [ ] Code works as expected
+- [ ] Tests passing
+- [ ] No regressions
+
+**Core (if applicable):**
+
+- [ ] `make simulate-failfast` passed
+- [ ] `make simulate-24h-small` passed (if PR to main/core/frozen-v1)
+- [ ] `make assertions` passed
+- [ ] CORE_MANIFESTO.md not violated
+- [ ] Simulator exercises the change
+
+**Language:**
+
+- [ ] All code in English
+- [ ] All commits in English
+- [ ] All documentation in English (if canonical)
+- [ ] No language mixing in files
+
+**Code:**
+
+- [ ] Follows conventions
+- [ ] Well documented
+- [ ] No dead code
 - [ ] Performance OK
 
 **Observability:**
-- [ ] Erros capturados com contexto
-- [ ] Logs apropriados (info/warn/error)
-- [ ] Sem console.log em produção
 
-**Segurança:**
-- [ ] Inputs validados
-- [ ] Sem dados sensíveis expostos
-- [ ] Erros tratados
+- [ ] Errors captured with context
+- [ ] Appropriate logs (info/warn/error)
+- [ ] No console.log in production
 
-**Documentação:**
-- [ ] README atualizado (se necessário)
-- [ ] Changelog atualizado
-- [ ] Comentários claros
+**Security:**
+
+- [ ] Inputs validated
+- [ ] No sensitive data exposed
+- [ ] Errors handled
+
+**Documentation:**
+
+- [ ] README updated (if necessary)
+- [ ] Changelog updated
+- [ ] Clear comments
 
 ---
 
@@ -367,23 +562,24 @@ const { metrics, isLoading } = useRealtimeMetrics();
 ### Versão
 
 **Semantic Versioning:**
+
 - `MAJOR.MINOR.PATCH`
 - `1.0.0` → `1.0.1` (patch: bugfix)
 - `1.0.0` → `1.1.0` (minor: feature)
 - `1.0.0` → `2.0.0` (major: breaking)
 
-### Checklist de Release
+### Release Checklist
 
-- [ ] Todos os testes passando
-- [ ] Changelog atualizado
+- [ ] All tests passing
+- [ ] Changelog updated
 - [ ] Version bump
-- [ ] Tag criada
-- [ ] Release notes escritas
-- [ ] Deploy testado
+- [ ] Tag created
+- [ ] Release notes written
+- [ ] Deploy tested
 
 ---
 
-## 📞 Contato
+## 📞 Contact
 
 - **Issues:** GitHub Issues
 - **Discussions:** GitHub Discussions
@@ -391,13 +587,13 @@ const { metrics, isLoading } = useRealtimeMetrics();
 
 ---
 
-## 📜 Licença
+## 📜 License
 
-Ao contribuir, você concorda que suas contribuições serão licenciadas sob a mesma licença do projeto.
+By contributing, you agree that your contributions will be licensed under the same license as the project.
 
 ---
 
-**Obrigado por contribuir! 🎉**
+**Thank you for contributing! 🎉**
 
-**Versão:** 1.0.0  
-**Última atualização:** 2026-01-24
+**Version:** 1.0.0
+**Last updated:** 2026-01-24

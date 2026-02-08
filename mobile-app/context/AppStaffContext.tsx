@@ -558,8 +558,12 @@ export function AppStaffProvider({ children }: { children: React.ReactNode }) {
 
             if (!user) {
                 console.warn('[AppStaff] Cannot start real shift without Auth');
+                // DEV MODE: Set fake shiftId so order submission works
+                const fakeShiftId = `dev-shift-${Date.now()}`;
+                setShiftId(fakeShiftId);
                 setShiftState('active');
                 setShiftStart(Date.now());
+                console.log(`[AppStaff] DEV MODE: Using fake shift ID: ${fakeShiftId}`);
                 return;
             }
 
@@ -586,8 +590,12 @@ export function AppStaffProvider({ children }: { children: React.ReactNode }) {
         } catch (e) {
             console.error('[AppStaff] Failed to start shift', e);
             if (__DEV__) {
+                // DEV MODE: Set fake shiftId so order submission works
+                const fakeShiftId = `dev-shift-fallback-${Date.now()}`;
+                setShiftId(fakeShiftId);
                 setShiftState('active');
                 setShiftStart(Date.now());
+                console.log(`[AppStaff] DEV FALLBACK: Using fake shift ID: ${fakeShiftId}`);
             }
         }
     }, [operationalContext.businessId]);

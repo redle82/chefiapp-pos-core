@@ -13,6 +13,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { isDebugMode } from "../debugMode";
 import { SurfaceRegistry } from "./SurfaceRegistry";
 import { SystemsRegistry } from "./SystemsRegistry";
 import type {
@@ -108,7 +109,7 @@ let _cachedState: SystemState | null = null;
 const VERSION = "1.0.0";
 
 async function initializeKernel(
-  options: BootstrapOptions = {},
+  options: BootstrapOptions = {}
 ): Promise<BootstrapResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -268,14 +269,13 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!_cachedState) {
       setLoading(true);
-      // SOVEREIGN BOOT: Skip health checks in DEV to prevent blocking
-      const skipChecks = import.meta.env.DEV;
+      // Skip health checks só com ?debug=1 (evita bloquear em testes locais)
+      const skipChecks = typeof window !== "undefined" && isDebugMode();
       BootstrapKernel.init({ skipHealthChecks: skipChecks })
         .then((result) => {
           setState(result.state);
           setLoading(false);
 
-          // Log warnings in dev
           if (result.warnings.length && result.state.environment === "dev") {
             console.warn("[BootstrapKernel] Warnings:", result.warnings);
           }

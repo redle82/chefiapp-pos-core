@@ -1,149 +1,192 @@
 /**
  * CORE FLOW LOGIC
- * 
+ *
  * 🔒 ARQUITETURA LOCKED (E2E_FLOW = LOCKED)
- * 
+ *
+ * Implementação da Sequência Canônica v1.0 (8 passos):
+ * docs/contracts/FUNIL_VIDA_CLIENTE.md#sequência-canônica-oficial-v10
+ * Código: core/flow/canonicalFlow.ts
+ *
  * Implementação pura do Contrato de Navegação.
  * Veja FLOW_CORE.md para as regras de negócio.
- * 
+ *
+ * WEB vs OPERAÇÃO: rotas WEB (dashboard, config, billing, onboarding) sempre
+ * ALLOW para hasOrg; rotas OPERAÇÃO (TPV/KDS) bloqueadas em SETUP. Nunca return null na web.
+ * Trial não bloqueia operação (TRIAL_TO_PAID_CONTRACT); billing não é pré-requisito para operar.
+ *
  * SOBERANIA: Este é o ÚNICO lugar que decide fluxo.
- * 
+ *
  * ⚠️ PROTEÇÃO CONTRA REGRESSÃO:
  * - NUNCA criar lógica de fluxo fora daqui
  * - NUNCA depender de dados opcionais (profiles, system_config)
  * - NUNCA permitir múltiplas autoridades de decisão
- * 
+ *
  * Ver: ARCHITECTURE_FLOW_LOCKED.md
  */
 
-export type OnboardingStatus =
-    | 'not_started'
-    | 'identity'
-    | 'authority'
-    | 'topology'
-    | 'flow'
-    | 'cash'
-    | 'team'
-    | 'completed';
-
 export type UserState = {
-    isAuthenticated: boolean;
-    hasOrganization: boolean;
-    onboardingStatus: OnboardingStatus;
-    currentPath: string;
+  isAuthenticated: boolean;
+  hasOrganization: boolean;
+  /**
+   * Identidade primária: ter restaurante criado.
+   * Alias de hasOrganization para manter compatibilidade interna.
+   */
+  hasRestaurant?: boolean;
+  currentPath: string;
+  /** FASE E: estado do sistema; quando SETUP, rotas TPV/KDS redirecionam para o Dashboard/config-first. */
+  systemState?: "SETUP" | "TRIAL" | "ACTIVE" | "SUSPENDED";
 };
 
 export type FlowDecision =
-    | { type: 'ALLOW' }
-    | { type: 'REDIRECT', to: string, reason: string };
+  | { type: "ALLOW" }
+  | { type: "REDIRECT"; to: string; reason: string };
 
 /**
- * resolveNextRoute
- * 
- * Função pura e determinística.
- * Implementa a REGRA DE OURO das 7 Telas Douradas.
+ * Rotas de OPERAÇÃO (TPV/KDS). Em SETUP → redirect; na web nunca aplicar este gate.
  */
+function isOperationalPath(path: string): boolean {
+  return (
+    path.startsWith("/op/tpv") ||
+    path.startsWith("/op/kds") ||
+    path.startsWith("/app/tpv") ||
+    path.startsWith("/app/kds")
+  );
+}
+
+/**
+ * Rotas da WEB DE CONFIGURAÇÃO / OPERAÇÃO. Sempre ALLOW para hasOrg; nunca bloquear por billing/dados.
+ * /app/install é rota operacional (ritual de terminais); alinhado a OPERATIONAL_NAVIGATION_SOVEREIGNTY.
+ */
+export function isWebConfigPath(path: string): boolean {
+  return (
+    path === "/dashboard" ||
+    path === "/app/dashboard" ||
+    path.startsWith("/config") ||
+    path === "/menu-builder" ||
+    path === "/app/install" ||
+    path.startsWith("/app/billing") ||
+    path === "/billing/success"
+  );
+}
+
 export function resolveNextRoute(state: UserState): FlowDecision {
-    const { isAuthenticated, hasOrganization, onboardingStatus, currentPath } = state;
+  const {
+    isAuthenticated,
+    hasOrganization,
+    hasRestaurant,
+    currentPath,
+    systemState,
+  } = state;
 
-    // --- 1. BARREIRA DE AUTENTICAÇÃO ---
-    if (!isAuthenticated) {
-        console.log('[CoreFlow] 🛑 Not Authenticated at:', currentPath);
-        // Public Void Protocol: Allow access to /public/* (The Menu)
-        if (currentPath.startsWith('/public')) return { type: 'ALLOW' };
+  const hasOrg = hasRestaurant ?? hasOrganization;
 
-        // Landing e Auth são públicas
-        if (currentPath === '/' || currentPath === '/auth') return { type: 'ALLOW' };
+  // --- 1. BARREIRA DE AUTENTICAÇÃO ---
+  if (!isAuthenticated) {
+    console.log("[CoreFlow] 🛑 Not Authenticated at:", currentPath);
+    // Public Void Protocol: Allow access to /public/* (The Menu)
+    if (currentPath.startsWith("/public")) return { type: "ALLOW" };
 
-        // Qualquer outra rota requer autenticação
-        return { type: 'REDIRECT', to: '/auth', reason: 'Auth required' };
+    // Landing, Auth (telefone) e demo guiado são públicas
+    if (
+      currentPath === "/" ||
+      currentPath === "/auth" ||
+      currentPath === "/auth/phone" ||
+      currentPath === "/auth/verify" ||
+      currentPath === "/demo-guiado" ||
+      currentPath === "/demo"
+    )
+      return { type: "ALLOW" };
+
+    // Qualquer outra rota requer autenticação
+    return { type: "REDIRECT", to: "/auth/phone", reason: "Auth required" };
+  }
+
+  // Se autenticado e está em /auth ou /, redireciona para o fluxo correto
+  if (currentPath === "/auth" || currentPath === "/") {
+    // O switch abaixo vai pegar o destino
+  }
+
+  // --- 2. BOOTSTRAP GATE (CONTRATO VIDA RESTAURANTE) ---
+  // Sem restaurante: apenas setup mínimo. Nunca /dashboard direto.
+  if (!hasOrg) {
+    if (
+      currentPath === "/bootstrap" ||
+      currentPath === "/setup/restaurant-minimal"
+    )
+      return { type: "ALLOW" };
+    if (
+      currentPath === "/app/select-tenant" ||
+      currentPath === "/app/access-denied"
+    )
+      return { type: "ALLOW" };
+    return {
+      type: "REDIRECT",
+      to: "/setup/restaurant-minimal",
+      reason:
+        "No org → setup mínimo (telefone/identidade) antes do Dashboard",
+    };
+  }
+
+  // --- 2.5 OPERAÇÃO: TPV/KDS bloqueados em SETUP. Web de configuração nunca bloqueada aqui. ---
+  if (systemState === "SETUP" && isOperationalPath(currentPath)) {
+    return {
+      type: "REDIRECT",
+      to: "/dashboard",
+      reason: "Complete o setup no Dashboard para aceder ao TPV/KDS",
+    };
+  }
+  // Web de configuração (dashboard, config, billing, etc.): ALLOW; sem gate por systemState.
+
+  // --- 3. GLORIAFOOD MODEL: GESTÃO SEMPRE ACESSÍVEL ---
+  // Bloqueios apenas na camada operacional (TPV/KDS via RequireOperational).
+
+  // 📱 MOBILE: Portal central, primeiro produto (Onda 4 A3) ou /garcom (operacional)
+  if (isMobileDevice()) {
+    if (
+      currentPath.startsWith("/garcom") ||
+      currentPath.startsWith("/app") ||
+      currentPath === "/onboarding/first-product"
+    ) {
+      return { type: "ALLOW" };
     }
+    return {
+      type: "REDIRECT",
+      to: "/app/dashboard",
+      reason: "Portal central (mobile default)",
+    };
+  }
 
-    // Se autenticado e está em /auth ou /, redireciona para o fluxo correto
-    if (currentPath === '/auth' || currentPath === '/') {
-        // O switch abaixo vai pegar o destino
-    }
+  // 🎯 REDIRECIONAMENTO DE ENTRADA
+  if (
+    currentPath === "/auth" ||
+    currentPath === "/auth/phone" ||
+    currentPath === "/auth/verify" ||
+    currentPath === "/" ||
+    currentPath === "/app"
+  ) {
+    return {
+      type: "REDIRECT",
+      to: hasOrg ? "/dashboard" : "/setup/restaurant-minimal",
+      reason: "Sovereign Entry to Dashboard",
+    };
+  }
 
-    // --- 2. BARREIRA DE ORGANIZAÇÃO (Tela 1 implícita) ---
-    // Se não tem organização, o status deve ser forçado para 'identity' ou 'not_started'
-    // Mas vamos confiar no onboardingStatus vindo do FlowGate
-    if (!hasOrganization && onboardingStatus !== 'identity' && onboardingStatus !== 'not_started') {
-        // Inconsistência grave. Resetar para identity.
-        return { type: 'REDIRECT', to: '/onboarding/identity', reason: 'Organization missing' };
-    }
-
-    // --- 3. A REGRA SUPREMA DAS 7 TELAS DOURADAS ---
-    // Se não está completo, deve estar na tela correta.
-
-    if (onboardingStatus !== 'completed') {
-        // Mapeamento Estado -> Rota Obrigatória
-        // 🔓 UPDATE: Relaxing strictness for Cloud DB Schema Lag.
-        // If we represent a valid partial state (identity..team), allow ANY onboarding step.
-        // The Wizard UI will handle the step progression sequence.
-
-        // 🛡️ SECURITY UPDATE: Relaxing strictness for Onboarding Flow.
-        // If the user is in the onboarding funnel, we delegate control to the Wizard UI.
-        // This prevents CoreFlow from fighting with local React Router logic.
-        // We explicitly ALLOW all /onboarding paths if the user is not completed.
-
-        // Debug Log (Temporary)
-        // console.log(`[CoreFlow] 🚦 Onboarding Check: Status=${onboardingStatus}, Path=${currentPath}`);
-
-        if (currentPath.startsWith('/onboarding')) {
-            return { type: 'ALLOW' };
-        }
-
-        // Strict fallback for 'not_started' or unexpected paths -> Force Decision Gate
-        const targetRoute = '/onboarding/start';
-
-        // Se está em qualquer outro lugar, redireciona impiedosamente.
-        return { type: 'REDIRECT', to: targetRoute, reason: `Strict Protocol: ${onboardingStatus}` };
-    }
-
-    // --- 4. ESTADO SOBERANO (COMPLETED) ---
-    // O sistema nasceu.
-
-    // 📱 SOVEREIGN LAW: MOBILE HANDOFF
-    // Se está no celular, NÃO pode acessar o Dashboard de Operação.
-    // Deve permanecer na Tela de Fundação.
-    if (isMobileDevice()) {
-        if (currentPath === '/onboarding/foundation') {
-            return { type: 'ALLOW' };
-        }
-        // Se tentar ir para qualquer lugar (exceto static public), volta para fundação
-        if (!currentPath.startsWith('/public')) {
-            return { type: 'REDIRECT', to: '/onboarding/foundation', reason: 'Mobile Handoff Required' };
-        }
-    }
-
-    // Bloqueia volta ao onboarding (exceto se explicitamente desejar configurações, 
-    // mas onboarding é criação, não edição. Edição é em /settings)
-    if (currentPath.startsWith('/onboarding')) {
-        // SOVEREIGN UPDATE: Strict Block. Mobile users are handled in the block above.
-        // Desktop users must leave Onboarding immediately if completed.
-        return { type: 'REDIRECT', to: '/app/dashboard', reason: 'System is already active' };
-    }
-
-    // Auth/Root/App Entry -> Dashboard
-    // 🎯 /app é o ponto de entrada único da Landing Page
-    // ⚠️ LOCKED: Nunca remover /app deste check. É o portal de entrada.
-    if (currentPath === '/auth' || currentPath === '/' || currentPath === '/app') {
-        return { type: 'REDIRECT', to: '/app/dashboard', reason: 'Auth & Setup complete' };
-    }
-
-    // Tudo permitido (Dashboard, TPV, etc)
-    return { type: 'ALLOW' };
+  // ALLOW ALL for authenticated desktop users with organizations.
+  // Requirement gates (ManagementAdvisor, RequireOperational) will handle specific blocks.
+  return { type: "ALLOW" };
 }
 
 /**
  * Detects if the device is likely mobile (Phone/Tablet).
  * Crude but effective check for "Compact Environment".
  */
-function isMobileDevice(): boolean {
-    // SOVEREIGN: Phones are Companions (locked to Foundation). Tablets are Operational (allowed).
-    // Removed 'iPad' and 'Android' (generic) to allow tablets. 
-    // Focusing on small screens and explicit phone UAs.
-    const ua = window.navigator.userAgent;
-    const isPhone = /iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || (window.innerWidth < 600);
-    return isPhone;
+export function isMobileDevice(): boolean {
+  // SOVEREIGN: Phones are Companions (locked to Foundation). Tablets are Operational (allowed).
+  // Removed 'iPad' and 'Android' (generic) to allow tablets.
+  // Focusing on small screens and explicit phone UAs.
+  const ua = window.navigator.userAgent;
+  const isPhone =
+    /iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
+    window.innerWidth < 600;
+  return isPhone;
 }

@@ -1,0 +1,14 @@
+{
+  "name": "chefiapp-test-simulators",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "simulate": "node index.js",
+    "simulate:orders": "SIMULATOR_TYPE=orders node index.js",
+    "simulate:kds": "SIMULATOR_TYPE=kds node index.js",
+    "simulate:tasks": "SIMULATOR_TYPE=tasks node index.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  }
+}

@@ -23,7 +23,9 @@ export interface OrderCreatedEvent {
     totalCents: number;
     tableId?: string;
     customerName?: string;
+    customerPhone?: string;
     createdAt: number;
+    metadata?: Record<string, unknown>;
   };
 }
 

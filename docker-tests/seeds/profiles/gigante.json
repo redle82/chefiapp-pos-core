@@ -1,0 +1,77 @@
+{
+  "id": "gigante",
+  "name": "Restaurante Gigante / Resort / Hotel",
+  "description": "Operação massiva com 200-300+ funcionários",
+  "staff_count": 300,
+  "stations": {
+    "kitchen_main": true,
+    "kitchen_cold": true,
+    "kitchen_grill": true,
+    "kitchen_pastry": true,
+    "bar_main": true,
+    "bar_pool": true,
+    "bar_lounge": true,
+    "cleaning": true,
+    "manager_floor": true,
+    "manager_kitchen": true,
+    "manager_bar": true,
+    "cashier": true,
+    "host": true,
+    "valet": true,
+    "room_service": true
+  },
+  "tables_count": 200,
+  "menu_size": 250,
+  "opening_hours": {
+    "open": "06:00",
+    "close": "02:00"
+  },
+  "peak_hours": {
+    "breakfast": { "start": "07:00", "end": "10:00", "intensity": 0.7 },
+    "lunch": { "start": "12:00", "end": "15:00", "intensity": 1.0 },
+    "dinner": { "start": "19:00", "end": "23:00", "intensity": 1.0 }
+  },
+  "order_sources": {
+    "mobile": 0.45,
+    "pos": 0.35,
+    "qr_web": 0.10,
+    "room_service": 0.10
+  },
+  "avg_orders_per_hour": {
+    "calm": 30,
+    "normal": 80,
+    "peak": 200
+  },
+  "avg_items_per_order": 6,
+  "avg_prep_time_seconds": 1500,
+  "policy_packs": [
+    "OPENING_STANDARD",
+    "CLOSING_STANDARD",
+    "CLEANING_STANDARD",
+    "FOOD_SAFETY_STRICT",
+    "MISE_EN_PLACE",
+    "SHIFT_HANDOVER",
+    "INVENTORY_CHECK",
+    "QUALITY_CONTROL",
+    "ALLERGEN_CONTROL",
+    "VIP_SERVICE",
+    "WASTE_MANAGEMENT",
+    "SAFETY_INSPECTION"
+  ],
+  "offline_probability": 0.01,
+  "printer_count": 20,
+  "printer_failure_rate": 0.05,
+  "shifts": [
+    { "name": "breakfast", "start": "06:00", "end": "11:00" },
+    { "name": "lunch", "start": "11:00", "end": "16:00" },
+    { "name": "dinner", "start": "16:00", "end": "22:00" },
+    { "name": "late", "start": "22:00", "end": "02:00" }
+  ],
+  "kds_stations": [
+    "kitchen_hot_1", "kitchen_hot_2", "kitchen_cold", 
+    "kitchen_grill", "kitchen_pastry", "kitchen_expo",
+    "bar_main", "bar_pool", "bar_lounge",
+    "room_service"
+  ],
+  "concurrent_orders_capacity": 150
+}

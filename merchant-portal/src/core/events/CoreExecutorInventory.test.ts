@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { CoreExecutor, INITIAL_STATE, SystemState } from './CoreExecutor';
 import type { EventEnvelope } from './SealTypes';
+import type { InventoryItem } from '../inventory/InventoryTypes';
 import { RECIPE_DATABASE } from '../inventory/RecipeMapping';
 
 describe('CoreExecutor Integration: Inventory Metabolism', () => {
 
-    // Helper to create state with seeded inventory
+    // Helper to create state with seeded inventory (minimal shape for reducer; cast for type)
     const createSeededState = (): SystemState => ({
         orders: [],
         inventory: {
@@ -17,9 +18,9 @@ describe('CoreExecutor Integration: Inventory Metabolism', () => {
                 parLevel: 200,
                 minLevel: 100,
                 restockRule: { type: 'manual' },
-                category: 'dairy',
+                category: 'raw_material',
                 lastUpdated: new Date()
-            },
+            } as unknown as InventoryItem,
             'base-pizza-artesanal': {
                 id: 'base-pizza-artesanal',
                 name: 'Pizza Base',
@@ -28,9 +29,9 @@ describe('CoreExecutor Integration: Inventory Metabolism', () => {
                 parLevel: 20,
                 minLevel: 10,
                 restockRule: { type: 'manual' },
-                category: 'bakery',
+                category: 'consumable',
                 lastUpdated: new Date()
-            }
+            } as unknown as InventoryItem
         }
     });
 
@@ -40,7 +41,7 @@ describe('CoreExecutor Integration: Inventory Metabolism', () => {
         // Product ID from RECIPE_DATABASE: 'pizza-margherita'
         // Uses: 1 base, 100g mozzarella
         const event: EventEnvelope = {
-            id: 'evt-1',
+            eventId: 'evt-1',
             type: 'ORDER_CREATED',
             payload: {
                 id: 'ord-1',
@@ -50,12 +51,7 @@ describe('CoreExecutor Integration: Inventory Metabolism', () => {
                 ],
                 total: 2000
             },
-            meta: {
-                timestamp: Date.now(),
-                actor: 'system',
-                version: 1,
-                hash: 'hash'
-            }
+            meta: { timestamp: Date.now(), actorId: 'system', version: 1 }
         };
 
         const nextState = CoreExecutor.reduce(state, event);
@@ -70,14 +66,14 @@ describe('CoreExecutor Integration: Inventory Metabolism', () => {
     it('should reduce inventory via INVENTORY_CONSUMED', () => {
         const state = createSeededState();
         const event: EventEnvelope = {
-            id: 'evt-2',
+            eventId: 'evt-2',
             type: 'INVENTORY_CONSUMED',
             payload: {
                 itemId: 'fresh-mozzarella',
                 quantity: 50,
                 reason: 'spoilage'
             },
-            meta: { timestamp: Date.now(), actor: 'user', version: 1, hash: 'h' }
+            meta: { timestamp: Date.now(), actorId: 'user', version: 1 }
         };
 
         const nextState = CoreExecutor.reduce(state, event);
@@ -87,13 +83,13 @@ describe('CoreExecutor Integration: Inventory Metabolism', () => {
     it('should increase inventory via INVENTORY_RESTOCKED', () => {
         const state = createSeededState();
         const event: EventEnvelope = {
-            id: 'evt-3',
+            eventId: 'evt-3',
             type: 'INVENTORY_RESTOCKED',
             payload: {
                 itemId: 'fresh-mozzarella',
                 quantity: 500
             },
-            meta: { timestamp: Date.now(), actor: 'user', version: 1, hash: 'h' }
+            meta: { timestamp: Date.now(), actorId: 'user', version: 1 }
         };
 
         const nextState = CoreExecutor.reduce(state, event);
@@ -103,14 +99,14 @@ describe('CoreExecutor Integration: Inventory Metabolism', () => {
     it('should set inventory via INVENTORY_ADJUSTED', () => {
         const state = createSeededState();
         const event: EventEnvelope = {
-            id: 'evt-4',
+            eventId: 'evt-4',
             type: 'INVENTORY_ADJUSTED',
             payload: {
                 itemId: 'fresh-mozzarella',
                 newLevel: 888,
                 reason: 'audit'
             },
-            meta: { timestamp: Date.now(), actor: 'user', version: 1, hash: 'h' }
+            meta: { timestamp: Date.now(), actorId: 'user', version: 1 }
         };
 
         const nextState = CoreExecutor.reduce(state, event);
@@ -123,13 +119,13 @@ describe('CoreExecutor Integration: Inventory Metabolism', () => {
         delete (state.inventory as any)['base-pizza-artesanal'];
 
         const event: EventEnvelope = {
-            id: 'evt-5',
+            eventId: 'evt-5',
             type: 'ORDER_CREATED',
             payload: {
                 id: 'ord-2',
                 items: [{ productId: 'pizza-margherita', quantity: 1 }]
             },
-            meta: { timestamp: Date.now(), actor: 'sys', version: 1, hash: 'h' }
+            meta: { timestamp: Date.now(), actorId: 'sys', version: 1 }
         };
 
         const nextState = CoreExecutor.reduce(state, event);

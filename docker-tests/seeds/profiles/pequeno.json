@@ -1,0 +1,37 @@
+{
+  "id": "pequeno",
+  "name": "Restaurante Pequeno",
+  "description": "Restaurante familiar com 2-5 pessoas",
+  "staff_count": 5,
+  "stations": {
+    "kitchen": true,
+    "bar": true,
+    "cleaning": true
+  },
+  "tables_count": 10,
+  "menu_size": 30,
+  "opening_hours": {
+    "open": "11:00",
+    "close": "23:00"
+  },
+  "peak_hours": {
+    "lunch": { "start": "12:30", "end": "15:00", "intensity": 0.85 },
+    "dinner": { "start": "19:30", "end": "22:30", "intensity": 0.95 }
+  },
+  "order_sources": {
+    "mobile": 0.5,
+    "pos": 0.3,
+    "qr_web": 0.2
+  },
+  "avg_orders_per_hour": {
+    "calm": 3,
+    "normal": 10,
+    "peak": 25
+  },
+  "avg_items_per_order": 3,
+  "avg_prep_time_seconds": 600,
+  "policy_packs": ["OPENING_STANDARD", "CLOSING_STANDARD", "CLEANING_STANDARD", "FOOD_SAFETY_BASIC"],
+  "offline_probability": 0.03,
+  "printer_count": 2,
+  "printer_failure_rate": 0.02
+}

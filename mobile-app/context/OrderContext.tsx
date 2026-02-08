@@ -396,7 +396,10 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             Alert.alert("Turno Fechado", "Você precisa iniciar um turno para enviar pedidos.");
             return;
         }
-        if (!session?.user) {
+        // DEV MODE: Allow orders without auth for local testing
+        const isDev = __DEV__;
+        const userId = session?.user?.id || (isDev ? null : undefined);
+        if (!isDev && !session?.user) {
             Alert.alert("Erro de Auth", "Usuário não autenticado.");
             return;
         }
@@ -416,18 +419,21 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                 //     .eq('status', 'open')
                 //     .single();
 
+                // Check if activeTableId is a valid UUID, otherwise use null
+                const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(activeTableId || '');
+                
                 const { data: newOrder, error } = await supabase
                     .from('gm_orders')
                     .insert({
                         restaurant_id: restaurantId,
-                        table_id: activeTableId,
-                        table_number: parseInt(activeTableId, 10) || 0,
+                        table_id: isValidUUID ? activeTableId : null,
+                        table_number: parseInt(activeTableId || '0', 10) || 0,
                         status: 'pending',
-                        total_amount: 0, // Will be updated by trigger or later
-                        user_id: session.user.id,
-                        shift_id: shiftId, // Use context shiftId
-                        customer_id: activeCustomer?.id, // CRM LINK
-                        origin: 'GARÇOM' // ERRO-002 Fix: Pedidos criados via mobile app são do garçom
+                        total_cents: 0, // Will be updated by trigger or later
+                        operator_id: userId, // Use userId (null in DEV mode)
+                        customer_name: activeCustomer?.name || null, // CRM LINK
+                        origin: 'GARÇOM', // ERRO-002 Fix: Pedidos criados via mobile app são do garçom
+                        source: 'mobile'
                     })
                     .select()
                     .single();
@@ -438,20 +444,19 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                 // If order exists but we just identified customer, update it
                 await supabase
                     .from('gm_orders')
-                    .update({ customer_id: activeCustomer.id })
+                    .update({ customer_name: activeCustomer.name })
                     .eq('id', orderId);
             }
 
-            // 2. Insert Items
+            // 2. Insert Items (using correct column names)
             const itemsToInsert = orderDraft.map(item => ({
                 order_id: orderId,
-                product_name: item.name,
                 product_id: item.productId, // CORRECTED: Use real product ID
-                unit_price: Math.round(item.price * 100),
+                name_snapshot: item.name,
+                price_snapshot: Math.round(item.price * 100),
                 quantity: item.quantity || 1, // CORRECTED: Use draft quantity
-                total_price: Math.round(item.price * 100 * (item.quantity || 1)), // Update total calculation
-                category_name: item.category,
-                notes: item.notes // New: Contextual Note
+                subtotal_cents: Math.round(item.price * 100 * (item.quantity || 1)),
+                notes: item.notes // Contextual Note
             }));
 
             const { error: itemsError } = await supabase
@@ -492,17 +497,19 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             // Construct Payload mirroring the logic above
             // 1. Order Creation (if needed)
             const existingOrder = orders.find(o => o.table === activeTableId && o.status !== 'paid');
+            const isValidUUIDOffline = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(activeTableId || '');
             if (!existingOrder) {
                 const orderPayload = {
                     id: offlineOrderId,
                     restaurant_id: restaurantId,
-                    table_id: activeTableId,
+                    table_id: isValidUUIDOffline ? activeTableId : null,
                     table_number: parseInt(activeTableId || '0', 10) || 0,
                     status: 'pending',
-                    total_amount: 0,
-                    user_id: session.user.id,
-                    shift_id: shiftId,
-                    customer_id: activeCustomer?.id
+                    total_cents: 0,
+                    operator_id: userId, // Use userId (null in DEV mode)
+                    customer_name: activeCustomer?.name || null,
+                    origin: 'GARÇOM',
+                    source: 'mobile'
                 };
                 await OfflineQueueService.enqueue('CREATE_ORDER', orderPayload);
 

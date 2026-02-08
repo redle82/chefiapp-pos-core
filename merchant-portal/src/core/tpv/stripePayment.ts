@@ -1,12 +1,17 @@
 /**
  * Stripe Payment Helper
  * 
- * Funções para criar e processar Payment Intents via Stripe
+ * Funções para criar e processar Payment Intents via Stripe.
+ * ANTI-SUPABASE §4: Payment orchestration ONLY via Core. No supabase.functions.invoke.
  * 
  * @deprecated Use `core/payment/PaymentBroker` instead.
  */
 
-import { supabase } from '../supabase';
+import { BackendType, getBackendType } from '../infra/backendAdapter';
+import { getDockerCoreFetchClient } from '../infra/dockerCoreFetchClient';
+
+const CORE_REQUIRED_MSG =
+  'Payment requires Docker Core. Supabase domain fallback is forbidden.';
 
 export interface CreatePaymentIntentInput {
     orderId: string;
@@ -22,39 +27,33 @@ export interface PaymentIntentResult {
 }
 
 /**
- * Criar Payment Intent no Stripe via API
+ * Criar Payment Intent via Core (RPC stripe-payment ou API).
+ * If not Docker: throw. No Supabase Edge Function.
  */
 export async function createPaymentIntent(input: CreatePaymentIntentInput): Promise<PaymentIntentResult> {
-    // Obter token de sessão do Supabase para autenticação
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-        throw new Error('SESSION_REQUIRED: Faça login para processar pagamentos');
+    if (getBackendType() !== BackendType.docker) {
+        throw new Error(CORE_REQUIRED_MSG);
     }
-
-    // Invocar Edge Function 'stripe-payment'
-    const { data, error } = await supabase.functions.invoke('stripe-payment', {
-        body: {
-            action: 'create-payment-intent',
-            order_id: input.orderId,
-            restaurant_id: input.restaurantId,
-            amount: input.amountCents, // Function expects 'amount' (cents)
-            currency: input.currency || 'EUR',
-        }
+    const core = getDockerCoreFetchClient();
+    const res = await core.rpc('stripe-payment', {
+        action: 'create-payment-intent',
+        order_id: input.orderId,
+        restaurant_id: input.restaurantId,
+        amount: input.amountCents,
+        currency: input.currency || 'EUR',
     });
-
-    if (error) {
-        console.error('[Stripe] Edge Function Error:', error);
-        throw new Error(error.message || 'Erro de conexão com gateway');
+    if (res.error) {
+        console.error('[Stripe] Core RPC Error:', res.error);
+        throw new Error(res.error.message || 'Erro de conexão com gateway');
     }
-
-    if (!data.clientSecret) {
+    const data = res.data as { id?: string; clientSecret?: string } | null;
+    if (!data?.clientSecret) {
         throw new Error('GATEWAY_ERROR: Payment Intent sem client_secret');
     }
-
     return {
-        intent_id: data.id,
+        intent_id: data.id ?? '',
         client_secret: data.clientSecret,
-        status: 'created', // Assumido para intents novos
+        status: 'created',
     };
 }
 

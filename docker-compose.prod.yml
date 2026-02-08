@@ -1,0 +1,106 @@
+# =============================================================================
+# CHEFIAPP CORE — Production Overrides
+# =============================================================================
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Requires .env.production with all secrets set:
+#   POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB,
+#   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PUBLISHABLE_KEY,
+#   KEYCLOAK_ADMIN_PASSWORD, KC_HOSTNAME
+# =============================================================================
+
+services:
+  # --------------------------------------------------------------------------
+  # Database: strong credentials + resource limits
+  # --------------------------------------------------------------------------
+  db:
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+        reservations:
+          memory: 256M
+
+  # --------------------------------------------------------------------------
+  # PostgREST: resource limits
+  # --------------------------------------------------------------------------
+  postgrest:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+
+  # --------------------------------------------------------------------------
+  # Keycloak: PRODUCTION MODE (not start-dev)
+  # --------------------------------------------------------------------------
+  keycloak:
+    command: start --import-realm --optimized
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is required}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:?POSTGRES_DB is required}
+      KC_DB_USERNAME: ${POSTGRES_USER:?POSTGRES_USER is required}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      KC_HOSTNAME: ${KC_HOSTNAME:?KC_HOSTNAME is required (e.g. auth.chefiapp.com)}
+      KC_HOSTNAME_STRICT: "true"
+      KC_PROXY: edge
+      KC_HTTP_ENABLED: "false"
+      KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/conf/tls.crt
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/conf/tls.key
+      KC_LOG_LEVEL: INFO
+    volumes:
+      - ./docker-core/keycloak/chefiapp-realm.json:/opt/keycloak/data/import/chefiapp-realm.json:ro
+      - ${KC_TLS_CERT_PATH:-./certs/tls.crt}:/opt/keycloak/conf/tls.crt:ro
+      - ${KC_TLS_KEY_PATH:-./certs/tls.key}:/opt/keycloak/conf/tls.key:ro
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          cpus: "1.0"
+        reservations:
+          memory: 512M
+
+  # --------------------------------------------------------------------------
+  # Webhook servers: resource limits
+  # --------------------------------------------------------------------------
+  webhook-server:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+
+  billing-webhook-server:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+
+  # --------------------------------------------------------------------------
+  # Subscription UI: resource limits
+  # --------------------------------------------------------------------------
+  subscription-ui:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+
+  # --------------------------------------------------------------------------
+  # Web Module API: resource limits
+  # --------------------------------------------------------------------------
+  web-module-api:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"

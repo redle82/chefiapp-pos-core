@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useStaff } from '../../pages/AppStaff/context/StaffContext';
-import { useOrders } from '../../pages/TPV/context/OrderContext';
+// FASE 3.3: TODO - useNervousPhysics deve receber orders via parâmetro
+// Por enquanto, usando array vazio - será implementado na próxima fase
+// import { useOrders } from '../../pages/TPV/context/OrderContext';
 import { now as getNow } from './Clock';
 
 export type DayPhase = 'morning' | 'peak' | 'lull';
@@ -20,7 +22,9 @@ import { getAdaptiveIdleThreshold } from './AdaptiveIdleEngine';
 export const useNervousPhysics = (): NervousTelemetry => {
     const { lastActivityAt, activeRole, operationalContract, tasks } = useStaff();
     void activeRole;
-    const { orders } = useOrders();
+    // FASE 3.3: TODO - orders deve vir via parâmetro ou hook próprio
+    // Por enquanto, usando array vazio para não quebrar
+    const orders: any[] = []; // TODO: Receber via parâmetro ou criar hook próprio
 
     const telemetry = useMemo(() => {
         const now = getNow();

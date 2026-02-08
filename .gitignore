@@ -18,16 +18,24 @@ public/app/*.map
 public/assets/
 
 # Environment (CRITICAL - never commit)
+# Match .env files in root and all subdirectories
+**/.env
+**/.env.local
+**/.env.*.local
+**/.env.sofia
+**/.env.function
 .env
 .env.local
 .env.*.local
 .env.sofia
+.env.function
 
 # Sensitive files (CRITICAL - never commit)
 key-check.txt
 *.key
 *.pem
 *.p12
+merchant-001-record.json
 testsprite_tests/TEST_CREDENTIALS.md
 **/TEST_CREDENTIALS.md
 
@@ -42,6 +50,9 @@ Thumbs.db
 
 # Test artifacts
 coverage/
+test-results/
+**/test-results/
+playwright-report/
 *.log
 *.log.*
 /tmp/
@@ -66,5 +77,10 @@ audit-reports/*.json
 .env*.local
 merchant-portal/artifacts/
 
-# Agent workspace
-.agent/
+# Agent workspace (ignore internal state, track rules)
+.agent/*
+!.agent/rules/
+
+# Antigravity awesome-skills (external repo, 708+ skills)
+# Update via: cd .agents/skills && git pull
+.agents/skills/

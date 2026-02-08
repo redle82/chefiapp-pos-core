@@ -1,0 +1,56 @@
+{
+  "id": "grande",
+  "name": "Restaurante Grande",
+  "description": "Restaurante com 50-100 funcionários, operação complexa",
+  "staff_count": 75,
+  "stations": {
+    "kitchen": true,
+    "bar": true,
+    "cleaning": true,
+    "manager": true,
+    "cashier": true,
+    "host": true
+  },
+  "tables_count": 80,
+  "menu_size": 120,
+  "opening_hours": {
+    "open": "09:00",
+    "close": "01:00"
+  },
+  "peak_hours": {
+    "lunch": { "start": "12:00", "end": "15:30", "intensity": 0.95 },
+    "dinner": { "start": "19:00", "end": "23:30", "intensity": 1.0 }
+  },
+  "order_sources": {
+    "mobile": 0.55,
+    "pos": 0.30,
+    "qr_web": 0.15
+  },
+  "avg_orders_per_hour": {
+    "calm": 15,
+    "normal": 40,
+    "peak": 100
+  },
+  "avg_items_per_order": 5,
+  "avg_prep_time_seconds": 1200,
+  "policy_packs": [
+    "OPENING_STANDARD",
+    "CLOSING_STANDARD",
+    "CLEANING_STANDARD",
+    "FOOD_SAFETY_STANDARD",
+    "MISE_EN_PLACE",
+    "SHIFT_HANDOVER",
+    "INVENTORY_CHECK",
+    "QUALITY_CONTROL"
+  ],
+  "offline_probability": 0.02,
+  "printer_count": 8,
+  "printer_failure_rate": 0.04,
+  "shifts": [
+    { "name": "morning", "start": "09:00", "end": "15:00" },
+    { "name": "afternoon", "start": "15:00", "end": "21:00" },
+    { "name": "evening", "start": "21:00", "end": "01:00" }
+  ],
+  "kds_stations": ["kitchen_hot", "kitchen_cold", "kitchen_grill", "bar", "dessert"],
+  "concurrent_orders_capacity": 50
+}

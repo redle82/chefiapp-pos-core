@@ -1,5 +1,20 @@
 export type StaffRole = 'manager' | 'waiter' | 'kitchen' | 'cleaning' | 'worker' | 'owner';
 
+// Logical apps por papel (OperatorApp)
+export type OperatorAppId = 'owner' | 'manager' | 'waiter' | 'kitchen' | 'cleaning';
+
+export type ScreenMode = 'single' | 'wall' | 'split';
+
+/** Representa uma sessão viva de um operador em um dispositivo concreto. */
+export interface OperatorSession {
+    operatorId: string | null;
+    role: StaffRole;
+    deviceId?: string | null;
+    activeApp: OperatorAppId;
+    screenMode: ScreenMode;
+    lastSeenAt: number;
+}
+
 export type DominantTool = 'none' | 'order' | 'production' | 'check' | 'hands' | 'tablet' | 'knife' | 'tray';
 
 export type BusinessType = 'restaurant' | 'bar' | 'cafe' | 'retail';

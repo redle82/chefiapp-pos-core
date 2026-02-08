@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { colors } from '@/constants/designTokens';
 import { ShiftGate } from '@/components/ShiftGate';
 import { useOrder } from '@/context/OrderContext';
 import { useAppStaff, StaffRole, RoleGate } from '@/context/AppStaffContext';
@@ -81,8 +82,8 @@ export default function ManagerScreen() {
     
     if (!canAccess('business:view_reports') && activeRole !== 'owner' && activeRole !== 'manager') {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0a0a0a' }}>
-                <Text style={{ color: '#fff', fontSize: 16, textAlign: 'center', padding: 20 }}>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+                <Text style={{ color: colors.textPrimary, fontSize: 16, textAlign: 'center', padding: 20 }}>
                     Você não tem permissão para acessar esta tela.
                 </Text>
             </View>
@@ -286,9 +287,9 @@ export default function ManagerScreen() {
         <RoleGate
             allowed={['manager', 'owner', 'admin', 'supervisor']}
             fallback={
-                <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>Acesso Restrito 🚫</Text>
-                    <Text style={{ color: '#888', marginTop: 8 }}>Apenas gerentes podem acessar esta área.</Text>
+                <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: 'bold' }}>Acesso Restrito 🚫</Text>
+                    <Text style={{ color: colors.textMuted, marginTop: 8 }}>Apenas gerentes podem acessar esta área.</Text>
                 </View>
             }
         >
@@ -337,16 +338,16 @@ export default function ManagerScreen() {
                         <>
                             {/* KPI Grid */}
                             <View style={styles.kpiGrid}>
-                                <View style={[styles.kpiCard, { backgroundColor: '#1c1c1e' }]}>
+                                <View style={[styles.kpiCard, { backgroundColor: colors.surface }]}>
                                     <Text style={styles.kpiLabel}>Receita do Turno</Text>
-                                    <Text style={[styles.kpiValue, { color: '#32d74b' }]}>
+                                    <Text style={[styles.kpiValue, { color: colors.success }]}>
                                         €{totalRevenue.toFixed(2)}
                                     </Text>
                                 </View>
 
-                                <View style={[styles.kpiCard, { backgroundColor: '#1c1c1e' }]}>
+                                <View style={[styles.kpiCard, { backgroundColor: colors.surface }]}>
                                     <Text style={styles.kpiLabel}>Mesas Ativas</Text>
-                                    <Text style={[styles.kpiValue, { color: '#0a84ff' }]}>
+                                    <Text style={[styles.kpiValue, { color: colors.info }]}>
                                         {occupiedTables}
                                     </Text>
                                 </View>
@@ -356,32 +357,32 @@ export default function ManagerScreen() {
                                     <Text style={styles.kpiLabel}>Mix de Vendas</Text>
                                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
                                         <View>
-                                            <Text style={{ color: '#888', fontSize: 12 }}>Comida 🍔</Text>
-                                            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>€{foodRevenue.toFixed(2)}</Text>
+                                            <Text style={{ color: colors.textMuted, fontSize: 12 }}>Comida 🍔</Text>
+                                            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: 'bold' }}>€{foodRevenue.toFixed(2)}</Text>
                                         </View>
                                         <View>
-                                            <Text style={{ color: '#888', fontSize: 12 }}>Bebida 🍹</Text>
-                                            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>€{drinkRevenue.toFixed(2)}</Text>
+                                            <Text style={{ color: colors.textMuted, fontSize: 12 }}>Bebida 🍹</Text>
+                                            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: 'bold' }}>€{drinkRevenue.toFixed(2)}</Text>
                                         </View>
                                         <View>
-                                            <Text style={{ color: '#888', fontSize: 12 }}>Ticket Médio</Text>
-                                            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
+                                            <Text style={{ color: colors.textMuted, fontSize: 12 }}>Ticket Médio</Text>
+                                            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: 'bold' }}>
                                                 €{sessionOrders.length > 0 ? (totalRevenue / sessionOrders.length).toFixed(2) : '0.00'}
                                             </Text>
                                         </View>
                                     </View>
                                 </View>
 
-                                <View style={[styles.kpiCard, { backgroundColor: '#1c1c1e' }]}>
+                                <View style={[styles.kpiCard, { backgroundColor: colors.surface }]}>
                                     <Text style={styles.kpiLabel}>Em Produção</Text>
-                                    <Text style={[styles.kpiValue, { color: '#ff9500' }]}>
+                                    <Text style={[styles.kpiValue, { color: colors.warning }]}>
                                         {activeOrdersCount}
                                     </Text>
                                 </View>
 
-                                <View style={[styles.kpiCard, { backgroundColor: '#1c1c1e' }]}>
+                                <View style={[styles.kpiCard, { backgroundColor: colors.surface }]}>
                                     <Text style={styles.kpiLabel}>Entregues</Text>
-                                    <Text style={[styles.kpiValue, { color: '#fff' }]}>
+                                    <Text style={[styles.kpiValue, { color: colors.textPrimary }]}>
                                         {completedOrdersCount}
                                     </Text>
                                 </View>
@@ -390,9 +391,9 @@ export default function ManagerScreen() {
                             {/* Quick Actions */}
                             <Text style={styles.sectionTitle}>Ações</Text>
                             <View style={styles.actionGrid}>
-                                <ThumbCard style={[styles.actionCard, { backgroundColor: '#3a0000', borderColor: '#ff453a', borderWidth: 1 }]} onPress={() => { setIsCommandModalVisible(true); fetchActiveStaff(); }}>
+                                <ThumbCard style={[styles.actionCard, { backgroundColor: colors.surface, borderColor: colors.error, borderWidth: 1 }]} onPress={() => { setIsCommandModalVisible(true); fetchActiveStaff(); }}>
                                     <Text style={styles.actionIcon}>☎️</Text>
-                                    <Text style={[styles.actionLabel, { color: '#ff453a' }]}>Telefone Vermelho</Text>
+                                    <Text style={[styles.actionLabel, { color: colors.error }]}>Telefone Vermelho</Text>
                                 </ThumbCard>
 
                                 <ThumbCard style={styles.actionCard} onPress={() => setIsNoticeModalVisible(true)}>
@@ -463,7 +464,7 @@ export default function ManagerScreen() {
                             <TextInput
                                 style={styles.input}
                                 placeholder="Título da tarefa..."
-                                placeholderTextColor="#666"
+                                placeholderTextColor={colors.textMuted}
                                 value={taskTitle}
                                 onChangeText={setTaskTitle}
                             />
@@ -492,7 +493,7 @@ export default function ManagerScreen() {
                                     <Text style={[styles.roleChipText, taskPriority === 'attention' && styles.roleChipTextActive]}>NORMAL</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    style={[styles.roleChip, taskPriority === 'urgent' && styles.roleChipActive, taskPriority === 'urgent' && { backgroundColor: '#ff453a' }]}
+                                    style={[styles.roleChip, taskPriority === 'urgent' && styles.roleChipActive, taskPriority === 'urgent' && { backgroundColor: colors.error }]}
                                     onPress={() => setTaskPriority('urgent')}
                                 >
                                     <Text style={[styles.roleChipText, taskPriority === 'urgent' && styles.roleChipTextActive]}>URGENTE</Text>
@@ -516,7 +517,7 @@ export default function ManagerScreen() {
                             <TextInput
                                 style={styles.input}
                                 placeholder="Nome do Produto..."
-                                placeholderTextColor="#666"
+                                placeholderTextColor={colors.textMuted}
                                 value={prodName}
                                 onChangeText={setProdName}
                             />
@@ -524,7 +525,7 @@ export default function ManagerScreen() {
                             <TextInput
                                 style={styles.input}
                                 placeholder="Preço (ex: 12.50)"
-                                placeholderTextColor="#666"
+                                placeholderTextColor={colors.textMuted}
                                 value={prodPrice}
                                 onChangeText={setProdPrice}
                                 keyboardType="numeric"
@@ -563,7 +564,7 @@ export default function ManagerScreen() {
                             <TextInput
                                 style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
                                 placeholder="Escreva o aviso para a equipe..."
-                                placeholderTextColor="#666"
+                                placeholderTextColor={colors.textMuted}
                                 multiline
                                 value={noticeContent}
                                 onChangeText={setNoticeContent}
@@ -578,13 +579,13 @@ export default function ManagerScreen() {
                                     <Text style={[styles.roleChipText, noticeSeverity === 'info' && styles.roleChipTextActive]}>INFO</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    style={[styles.roleChip, noticeSeverity === 'attention' && styles.roleChipActive, noticeSeverity === 'attention' && { backgroundColor: '#FFD700' }]}
+                                    style={[styles.roleChip, noticeSeverity === 'attention' && styles.roleChipActive, noticeSeverity === 'attention' && { backgroundColor: colors.warning }]}
                                     onPress={() => setNoticeSeverity('attention')}
                                 >
-                                    <Text style={[styles.roleChipText, noticeSeverity === 'attention' && { color: '#000' }]}>ATENÇÃO</Text>
+                                    <Text style={[styles.roleChipText, noticeSeverity === 'attention' && { color: colors.textInverse }]}>ATENÇÃO</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    style={[styles.roleChip, noticeSeverity === 'critical' && styles.roleChipActive, noticeSeverity === 'critical' && { backgroundColor: '#ff453a' }]}
+                                    style={[styles.roleChip, noticeSeverity === 'critical' && styles.roleChipActive, noticeSeverity === 'critical' && { backgroundColor: colors.error }]}
                                     onPress={() => setNoticeSeverity('critical')}
                                 >
                                     <Text style={[styles.roleChipText, noticeSeverity === 'critical' && styles.roleChipTextActive]}>CRÍTICO</Text>
@@ -599,22 +600,22 @@ export default function ManagerScreen() {
 
                         <Text style={styles.sectionTitle}>Avisos Ativos</Text>
                         {notices.length === 0 ? (
-                            <Text style={{ color: '#666', fontStyle: 'italic', padding: 20, textAlign: 'center' }}>Nenhum aviso ativo.</Text>
+                            <Text style={{ color: colors.textMuted, fontStyle: 'italic', padding: 20, textAlign: 'center' }}>Nenhum aviso ativo.</Text>
                         ) : (
                             notices.map((notice) => (
-                                <View key={notice.id} style={[styles.feedItem, { borderLeftWidth: 4, borderLeftColor: notice.severity === 'critical' ? 'red' : notice.severity === 'attention' ? 'gold' : 'blue' }]}>
+                                <View key={notice.id} style={[styles.feedItem, { borderLeftWidth: 4, borderLeftColor: notice.severity === 'critical' ? colors.error : notice.severity === 'attention' ? colors.warning : colors.info }]}>
                                     <View style={{ flex: 1 }}>
                                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                                            <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>
+                                            <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: 'bold' }}>
                                                 {notice.severity.toUpperCase()}
                                             </Text>
-                                            <Text style={{ color: '#666', fontSize: 10 }}>
+                                            <Text style={{ color: colors.textMuted, fontSize: 10 }}>
                                                 {new Date(notice.created_at).toLocaleDateString()}
                                             </Text>
                                         </View>
-                                        <Text style={{ color: '#ccc', fontSize: 14 }}>{notice.content}</Text>
+                                        <Text style={{ color: colors.textSecondary, fontSize: 14 }}>{notice.content}</Text>
                                         <View style={{ marginTop: 8 }}>
-                                            <Text style={{ color: '#666', fontSize: 10 }}>
+                                            <Text style={{ color: colors.textMuted, fontSize: 10 }}>
                                                 Visto por: {notice.read_by_me ? 'Mim' : '??'} (TODO: count)
                                             </Text>
                                         </View>
@@ -637,14 +638,14 @@ export default function ManagerScreen() {
                         title="Telefone Vermelho ☎️"
                     >
                         <View style={{ marginBottom: 20 }}>
-                            <Text style={{ color: '#666', marginBottom: 10 }}>
+                            <Text style={{ color: colors.textMuted, marginBottom: 10 }}>
                                 Canal direto de comando. Use apenas para urgências operacionais.
                             </Text>
 
                             <Text style={styles.label}>Para quem?</Text>
                             <ScrollView horizontal style={{ marginBottom: 20 }}>
                                 {activeStaffList.length === 0 ? (
-                                    <Text style={{ color: '#444' }}>Sem staff ativo no momento.</Text>
+                                    <Text style={{ color: colors.textMuted }}>Sem staff ativo no momento.</Text>
                                 ) : (
                                     activeStaffList.map((staff) => (
                                         <TouchableOpacity
@@ -662,9 +663,9 @@ export default function ManagerScreen() {
 
                             <Text style={styles.label}>Comando (Max 140):</Text>
                             <TextInput
-                                style={[styles.input, { height: 80, textAlignVertical: 'top', borderColor: '#ff453a', borderWidth: 1 }]}
+                                style={[styles.input, { height: 80, textAlignVertical: 'top', borderColor: colors.error, borderWidth: 1 }]}
                                 placeholder="Ex: Atenção mesa 5, cliente VIP."
-                                placeholderTextColor="#666"
+                                placeholderTextColor={colors.textMuted}
                                 multiline
                                 maxLength={140}
                                 value={commandContent}
@@ -681,8 +682,8 @@ export default function ManagerScreen() {
                         {sentCommands.map(cmd => (
                             <View key={cmd.id} style={styles.feedItem}>
                                 <View>
-                                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>{cmd.content}</Text>
-                                    <Text style={{ color: '#666', fontSize: 10 }}> Status: {cmd.status.toUpperCase()} {cmd.response ? `| Resp: ${cmd.response}` : ''}</Text>
+                                    <Text style={{ color: colors.textPrimary, fontWeight: 'bold' }}>{cmd.content}</Text>
+                                    <Text style={{ color: colors.textMuted, fontSize: 10 }}> Status: {cmd.status.toUpperCase()} {cmd.response ? `| Resp: ${cmd.response}` : ''}</Text>
                                 </View>
                             </View>
                         ))}
@@ -698,7 +699,7 @@ export default function ManagerScreen() {
                         <View style={{ maxHeight: 400 }}>
                             <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
                                 {historyShifts.length === 0 ? (
-                                    <Text style={{ color: '#666', textAlign: 'center', padding: 20 }}>Nenhum histórico recente.</Text>
+                                    <Text style={{ color: colors.textMuted, textAlign: 'center', padding: 20 }}>Nenhum histórico recente.</Text>
                                 ) : (
                                     historyShifts.map(s => (
                                         <View key={s.id} style={styles.feedItem}>
@@ -744,7 +745,7 @@ export default function ManagerScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#000',
+        backgroundColor: colors.background,
         padding: 16,
     },
     headerRow: {
@@ -756,16 +757,16 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#fff',
+        color: colors.textPrimary,
     },
     settingsBtn: {
         padding: 8,
-        backgroundColor: '#1c1c1e',
+        backgroundColor: colors.surface,
         borderRadius: 20,
     },
     subTitle: {
         fontSize: 14,
-        color: '#666',
+        color: colors.textMuted,
         marginBottom: 20,
         fontWeight: '600',
         letterSpacing: 1,
@@ -784,7 +785,7 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
     },
     kpiLabel: {
-        color: '#888',
+        color: colors.textMuted,
         fontSize: 12,
         fontWeight: '600',
         marginBottom: 8,
@@ -796,7 +797,7 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 20,
-        color: '#fff',
+        color: colors.textPrimary,
         fontWeight: 'bold',
         marginBottom: 12,
         marginTop: 10,
@@ -807,22 +808,19 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     actionCard: {
-        width: '48%', // Approx 2 columns
+        width: '48%',
         alignItems: 'center',
-        paddingVertical: 20, // More padding for thumb
+        paddingVertical: 20,
     },
-    actionIcon: {
-        fontSize: 32,
-        marginBottom: 8,
-    },
+    actionIcon: { fontSize: 32, marginBottom: 8 },
     actionLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#fff',
+        color: colors.textPrimary,
         textAlign: 'center',
     },
     feed: {
-        backgroundColor: '#1c1c1e',
+        backgroundColor: colors.surface,
         borderRadius: 12,
         padding: 4,
         marginBottom: 40,
@@ -830,29 +828,29 @@ const styles = StyleSheet.create({
     feedItem: {
         padding: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#333',
+        borderBottomColor: colors.surface,
         flexDirection: 'row',
         justifyContent: 'space-between',
     },
     feedText: {
-        color: '#ccc',
+        color: colors.textSecondary,
         fontSize: 14,
         flex: 1,
     },
     feedTime: {
-        color: '#666',
+        color: colors.textMuted,
         fontSize: 12,
     },
     input: {
-        backgroundColor: '#333',
+        backgroundColor: colors.surface,
         borderRadius: 8,
         padding: 12,
-        color: '#fff',
+        color: colors.textPrimary,
         fontSize: 16,
         marginBottom: 20,
     },
     label: {
-        color: '#888',
+        color: colors.textMuted,
         fontSize: 14,
         marginBottom: 8,
         fontWeight: '600',
@@ -864,26 +862,25 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     roleChip: {
-        backgroundColor: '#333',
+        backgroundColor: colors.surface,
         paddingHorizontal: 12,
         paddingVertical: 8,
         borderRadius: 20,
     },
     roleChipActive: {
-        backgroundColor: '#0a84ff',
+        backgroundColor: colors.info,
     },
     roleChipText: {
-        color: '#ccc',
+        color: colors.textSecondary,
         fontSize: 12,
         fontWeight: '600',
     },
     roleChipTextActive: {
-        color: '#fff',
+        color: colors.textPrimary,
     },
-    // Segmented Control
     segmentedControl: {
         flexDirection: 'row',
-        backgroundColor: '#2c2c2e',
+        backgroundColor: colors.surfaceOverlay,
         borderRadius: 8,
         padding: 4,
         marginBottom: 20,
@@ -895,14 +892,14 @@ const styles = StyleSheet.create({
         borderRadius: 6,
     },
     segmentBtnActive: {
-        backgroundColor: '#636366',
+        backgroundColor: colors.textMuted,
     },
     segmentText: {
-        color: '#888',
+        color: colors.textMuted,
         fontWeight: '600',
     },
     segmentTextActive: {
-        color: '#fff',
+        color: colors.textPrimary,
         fontWeight: 'bold',
     },
 });

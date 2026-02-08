@@ -21,7 +21,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { OrderProvider } from '../context/OrderContextReal';
-import { KernelProvider } from '../../../core/kernel/KernelContext';
+// DOCKER CORE: Kernel removido - acesso direto ao Core via PostgREST/RPCs
+// import { KernelProvider } from '../../../core/kernel/KernelContext'; // REMOVIDO
 import { OfflineOrderProvider } from '../context/OfflineOrderContext';
 import KitchenDisplay from './KitchenDisplay';
 import { KDSLayout } from './KDSLayout';
@@ -37,16 +38,24 @@ const KDSStandalone = () => {
     const stationParam = searchParams.get('station')?.toUpperCase();
     const initialStation = (stationParam === 'BAR' || stationParam === 'KITCHEN') ? stationParam : 'ALL';
 
+    // === CONTROLE DE VERSÃO: Respeitar kdsVersion e noLegacy ===
+    const kdsVersion = searchParams.get('kdsVersion');
+    const noLegacy = searchParams.get('noLegacy') === 'true';
+    const useNewKDS = kdsVersion === 'new' || noLegacy;
+
     useEffect(() => {
         if (restaurantId) {
             // SEEDING: Inject ID into storage so OrderProvider works naturally
             // This replicates the effect of logging in and selecting a restaurant
             // but scoped just for this session/tab.
             console.log('[KDS Standalone] Seeding Restaurant ID:', restaurantId);
+            if (useNewKDS) {
+                console.log('[KDS Standalone] ✅ Usando KDS NOVO (kdsVersion=new ou noLegacy=true)');
+            }
             setTabIsolated('chefiapp_restaurant_id', restaurantId);
             setReady(true);
         }
-    }, [restaurantId]);
+    }, [restaurantId, useNewKDS]);
 
     if (!restaurantId) {
         return <div style={{ padding: 40, color: 'white' }}>Erro: ID do Restaurante não fornecido na URL.</div>;
@@ -56,12 +65,18 @@ const KDSStandalone = () => {
         return <div style={{ background: '#000', height: '100vh' }} />; // Flash prevention
     }
 
+    // === CONTROLE DE VERSÃO: Forçar KDS novo quando solicitado ===
+    // Se useNewKDS=true, sempre renderizar KitchenDisplay (versão nova)
+    // mesmo em caso de erro/offline, sem fallback para versão antiga
     return (
         <KDSLayout>
             <KernelProvider tenantId={restaurantId}>
                 <OfflineOrderProvider>
                     <OrderProvider restaurantId={restaurantId}>
-                        <KitchenDisplay initialStation={initialStation as any} />
+                        <KitchenDisplay 
+                            initialStation={initialStation as any}
+                            forceNewVersion={useNewKDS}
+                        />
                     </OrderProvider>
                 </OfflineOrderProvider>
             </KernelProvider>

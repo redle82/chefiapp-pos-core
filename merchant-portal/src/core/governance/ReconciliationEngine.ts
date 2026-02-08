@@ -7,9 +7,11 @@
  * 1. Enqueue jobs when Dual-Write occurs (Dirty State).
  * 2. Process jobs to rebuild Projections from Event Store (Truth).
  * 3. Quarantine entities that cannot be reconciled.
+ *
+ * FINANCIAL_CORE_VIOLATION_AUDIT Fase 4: usa getTableClient() e invokeRpc (Core quando Docker).
  */
 
-import { supabase } from '../supabase';
+import { getTableClient, invokeRpc } from '../infra/coreRpc';
 import { Logger } from '../logger';
 import { DbWriteGate } from './DbWriteGate'; // For authorized updates during reconcile
 
@@ -34,7 +36,8 @@ export class ReconciliationEngine {
         severity: 'NORMAL' | 'HIGH' | 'CRITICAL' = 'NORMAL',
         context: any = {}
     ): Promise<void> {
-        const { error } = await supabase
+        const client = await getTableClient();
+        const { error } = await client
             .from('gm_reconciliation_queue')
             .insert({
                 restaurant_id: restaurantId,
@@ -60,18 +63,20 @@ export class ReconciliationEngine {
     static async runOnce(limit: number = 25): Promise<{ processed: number, resolved: number, failed: number }> {
         const stats = { processed: 0, resolved: 0, failed: 0 };
 
-        const { data: jobs, error } = await supabase.rpc('dequeue_reconciliation_jobs', { p_limit: limit });
+        const { data: jobs, error } = await invokeRpc<unknown[]>('dequeue_reconciliation_jobs', { p_limit: limit });
 
         if (error) {
             Logger.error('RECONCILIATION_DEQUEUE_FAILED', error);
             return stats;
         }
 
-        if (!jobs || jobs.length === 0) return stats;
+        const jobList = Array.isArray(jobs) ? jobs : [];
+        if (jobList.length === 0) return stats;
 
-        console.log(`[Reconciler] Processing ${jobs.length} jobs...`);
+        console.log(`[Reconciler] Processing ${jobList.length} jobs...`);
 
-        for (const job of jobs) {
+        type JobRow = { id: string; attempts: number; max_attempts: number; entity_id: string; restaurant_id: string; entity_type: string };
+        for (const job of jobList as JobRow[]) {
             stats.processed++;
             try {
                 await this.processJob(job);
@@ -80,16 +85,11 @@ export class ReconciliationEngine {
                 stats.failed++;
                 Logger.error('RECONCILIATION_JOB_FAILED', err, { jobId: job.id });
 
-                // Update job as FAILED (or DEAD if max attempts reached is handled by caller logic usually, but here we update error)
-                // Note: The RPC increments attempts. We just need to mark FAILED or whatever.
-                // If attempts >= max_attempts (checked in RPC, but we need to check here to mark DEAD?)
-                // The RPC filters `attempts < max_attempts`, so if we are here it was valid.
-                // But since we failed, we should set it to FAILED so it can be retried, OR DEAD if it was last attempt.
-
                 const isDead = job.attempts >= job.max_attempts;
                 const newStatus = isDead ? 'DEAD' : 'FAILED';
 
-                await supabase.from('gm_reconciliation_queue')
+                const client = await getTableClient();
+                await client.from('gm_reconciliation_queue')
                     .update({
                         status: newStatus,
                         last_error: err.message || 'Unknown error',
@@ -122,7 +122,8 @@ export class ReconciliationEngine {
         const streamType = job.restaurant_id;
         const streamIdSuffix = `CASH_REGISTER:${job.entity_id}`;
 
-        const { data: events, error } = await supabase
+        const client = await getTableClient();
+        const { data: events, error } = await client
             .from('event_store')
             .select('*')
             .eq('stream_type', streamType)
@@ -131,28 +132,26 @@ export class ReconciliationEngine {
 
         if (error) throw new Error(`Failed to fetch events: ${error.message}`);
 
-        if (!events || events.length === 0) {
-            // NO EVENTS FOUND -> QUARANTINE
+        const eventsList = Array.isArray(events) ? events : [];
+        if (eventsList.length === 0) {
             Logger.warn('Reconciler: No events found used to rebuild state. Quarantining.', { streamType, streamIdSuffix });
             await this.markQuarantined('gm_cash_registers', job.entity_id, job.restaurant_id, 'NO_EVENT_STREAM');
             throw new Error('NO_EVENT_STREAM: Projection quarantined.');
         }
 
-        // 2. Rebuild State (Reducer)
         let state: any = {
-            status: 'closed', // Default
+            status: 'closed',
             total_sales_cents: 0
-            // ... other fields
         };
         let lastEventId = null;
         let lastVersion = 0;
 
-        for (const event of events) {
+        for (const event of eventsList) {
             lastEventId = event.event_id; // Check column name in PostgresEventStore (event_id)
             lastVersion = event.stream_version;
-            const payload = event.payload || {}; // Payload is JSONB, might come as object directly from Supabase client
+            const payload = event.payload || {}; // Payload is JSONB, might come as object from Core
 
-            // Parse payload if string (Supabase client might auto-parse, but be safe)
+            // Parse payload if string (Core client might auto-parse, but be safe)
             const data = (typeof payload === 'string') ? JSON.parse(payload) : payload;
 
             const type = event.event_type || event.type; // Column event_type
@@ -179,7 +178,8 @@ export class ReconciliationEngine {
         // Actually, we should update the DB row directly here to set CLEAN.
         // DbWriteGate might interfere if we use it. We should use logic that sets shadow status CLEAN.
 
-        const { error: updateError } = await supabase
+        const updateClient = await getTableClient();
+        const { error: updateError } = await updateClient
             .from('gm_cash_registers')
             .update({
                 status: state.status,
@@ -190,7 +190,7 @@ export class ReconciliationEngine {
                 closed_at: state.closed_at,
                 closed_by: state.closed_by,
                 closing_balance_cents: state.closing_balance_cents,
-                // Shadow Fields
+                // Shadow Fields (Core may not have these columns yet; optional migration)
                 kernel_shadow_status: 'CLEAN',
                 kernel_last_event_id: lastEventId,
                 kernel_last_event_version: lastVersion
@@ -201,15 +201,16 @@ export class ReconciliationEngine {
         if (updateError) throw updateError;
 
         // 4. Mark Job Resolved
-        await supabase.from('gm_reconciliation_queue')
+        await updateClient.from('gm_reconciliation_queue')
             .update({ status: 'RESOLVED', updated_at: new Date().toISOString() })
             .eq('id', job.id);
 
         console.log(`[Reconciler] Repaired CashRegister ${job.entity_id}`);
     }
 
-    private static async markQuarantined(table: string, id: string, tenantId: string, reason: string) {
-        await supabase
+    private static async markQuarantined(table: string, id: string, tenantId: string, _reason: string) {
+        const client = await getTableClient();
+        await client
             .from(table)
             .update({ kernel_shadow_status: 'QUARANTINED' })
             .eq('id', id)

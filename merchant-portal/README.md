@@ -29,7 +29,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`.
+Open `http://localhost:5157` (porta oficial do portal; não mudar).
 
 ## Notes
 

@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-02-01T12:07:38.233Z",
+  "summary": {
+    "total": 1,
+    "P0": 1,
+    "P1": 0,
+    "P2": 0,
+    "OK": 0
+  },
+  "byScreen": [
+    {
+      "screen": "TPV",
+      "total": 1,
+      "OK": 0,
+      "issues": 1
+    }
+  ],
+  "results": [
+    {
+      "screen": "TPV",
+      "component": "PageLoad",
+      "action": "navigate",
+      "expected": "TPV page loads",
+      "actual": "Page not loaded",
+      "severity": "P0"
+    }
+  ]
+}

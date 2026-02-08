@@ -335,3 +335,58 @@ pre.error {
     grid-template-columns: 1fr;
   }
 }
+
+/* AppStaff — full-screen real (scroll só dentro do conteúdo) */
+html.staff-app-fullscreen,
+body.staff-app-fullscreen {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+body.staff-app-fullscreen #root {
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+/* AppStaff — transição entre modos: "entrei noutro espaço" (app-like) */
+@keyframes staffModeFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.staff-mode-transition {
+  animation: staffModeFade 0.32s ease-out;
+  will-change: opacity, transform;
+}
+
+/* AppStaff launcher — cards com feedback táctil */
+.staff-launcher-card {
+  -webkit-tap-highlight-color: transparent;
+}
+.staff-launcher-card:active {
+  transform: scale(0.98) translateY(1px);
+}
+
+/* AppStaff bottom nav — app nativo: alvo táctil 56–64px, estado ativo claro; não encolhe */
+.staff-bottom-nav-link {
+  -webkit-tap-highlight-color: transparent;
+  min-height: 56px;
+  min-width: 56px;
+  flex-shrink: 0;
+  transition: transform 0.12s ease-out, background-color 0.12s ease-out,
+    box-shadow 0.12s ease-out, color 0.12s ease-out;
+}
+.staff-bottom-nav-link:active {
+  transform: scale(0.94) translateY(1px);
+}
+/* Estado ativo aplicado inline (cor de destaque + fundo); contraste e feedback táctil */
+.staff-bottom-nav-link:focus-visible {
+  outline: 2px solid var(--color-primary, currentColor);
+  outline-offset: 2px;
+}

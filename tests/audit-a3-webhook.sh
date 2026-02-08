@@ -38,7 +38,7 @@ echo "✅ Stripe authenticated"
 echo ""
 
 # Export keys
-export STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY:-sk_test_51SgVOwEOB1Od9eibRT57fi9vamvl3Wa2zDcdwSmvUtWwe48vfF8qRjLPyw0vNekfGXPc52IdMOI6fANtWZ6HKJra00Uq5STAfU}"
+export STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY:?Set STRIPE_SECRET_KEY env var before running this audit}"
 
 echo "Starting test sequence..."
 echo ""
@@ -54,10 +54,10 @@ run_test() {
     local test_id=$1
     local test_name=$2
     local trigger=$3
-    
+
     echo "📋 TEST $test_id: $test_name"
     echo -n "   Triggering $trigger... "
-    
+
     if stripe trigger $trigger --api-key $STRIPE_SECRET_KEY 2>&1 | grep -q "Trigger succeeded"; then
         echo "✅ PASS"
         echo "✅ $test_id: $test_name - PASS" >> $RESULTS_FILE

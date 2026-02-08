@@ -1,226 +1,421 @@
 /**
- * AuthPage - Autenticação Pura
- * 
- * 🔒 ARQUITETURA SOBERANA
- * 
- * REGRA DE OURO: Auth apenas autentica. Não decide fluxo.
- * FlowGate é a única autoridade que decide o próximo passo.
- * 
- * ⚠️ PROTEÇÃO CONTRA REGRESSÃO:
- * - NUNCA redirecionar após OAuth (OAuth já redireciona para /app)
- * - NUNCA decidir onboarding
- * - NUNCA usar flags técnicas (isLocal, technicalLogin, etc)
- * - NUNCA criar múltiplos pontos de decisão
- * 
- * Ver: CONSTITUTION.md
+ * AuthPage — Login e Registo (CAMINHO_DO_CLIENTE)
+ *
+ * /auth = login (já tenho conta)
+ * /signup = registo (entrar em operação)
+ * Sem Runtime/Core. Após sucesso → /app/dashboard.
+ * Backend único: Docker Core (Keycloak + mock). Demo/pilot: link ou mensagem.
  */
-import React, { useState } from 'react';
-import { supabase } from '../core/supabase';
-import { InlineAlert } from '../ui/design-system';
-import { Button } from '../ui/design-system/Button';
-import { Card } from '../ui/design-system/Card';
-import { GlobalFooter } from '../components/GlobalFooter';
-import { OSFrame } from '../ui/design-system/sovereign/OSFrame';
-import { OSCopy } from '../ui/design-system/sovereign/OSCopy';
-import { Logger } from '../core/logger';
 
-export const AuthPage = () => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { getAuthActions } from "../core/auth/authAdapter";
+import { useAuth } from "../core/auth/useAuth";
+import {
+  BackendType,
+  getBackendConfigured,
+  getBackendType,
+} from "../core/infra/backendAdapter";
+import { GlobalLoadingView } from "../ui/design-system/components";
+import { OSCopy } from "../ui/design-system/sovereign/OSCopy";
 
-    const handleOAuth = async (provider: 'google' | 'apple') => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            // 🔒 ARQUITETURA SOBERANA: OAuth sempre redireciona para /app
-            // FlowGate é a única autoridade que decide o próximo passo.
-            const baseUrl = window.location.origin;
-            const redirectUrl = `${baseUrl}/app`;
-
-            const { data, error: authErr } = await supabase.auth.signInWithOAuth({
-                provider,
-                options: {
-                    redirectTo: redirectUrl,
-                    scopes: 'openid email profile',
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent',
-                    }
-                }
-            });
-
-            if (authErr) {
-                console.error('[AuthPage] OAuth error:', authErr);
-                Logger.error('Auth: OAuth login failed', authErr as Error, {
-                    provider,
-                    redirectUrl
-                });
-                throw authErr;
-            }
-
-            // OAuth redirects automatically
-            console.log('[AuthPage] OAuth initiated, redirecting to:', redirectUrl);
-            Logger.info('Auth: OAuth login initiated', {
-                provider,
-                redirectUrl
-            });
-        } catch (err: any) {
-            console.error('[AuthPage] OAuth exception:', err);
-            Logger.error('Auth: OAuth exception', err as Error, {
-                provider,
-                redirectUrl
-            });
-            setError(err.message || 'Erro ao iniciar autenticação. Verifique se o OAuth está configurado no Supabase.');
-            setLoading(false);
-        }
-    };
-
-    return (
-        <OSFrame context="auth" className="auth-page-frame">
-            <div style={{
-                minHeight: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#f5f5f7',
-                padding: '20px'
-            }}>
-                <Card elevated padding="lg" style={{ maxWidth: '400px', width: '100%' }}>
-                    <div className="text-center mb-8" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '8px' }}>
-                            {OSCopy.auth.loginTitle}
-                        </h1>
-                        <p style={{ opacity: 0.6, fontSize: '14px' }}>
-                            {OSCopy.auth.loginSubtitle}
-                        </p>
-                    </div>
-
-                    {error && (
-                        <InlineAlert variant="error" style={{ marginBottom: '16px' }}>
-                            {error}
-                        </InlineAlert>
-                    )}
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <Button
-                            onClick={() => handleOAuth('google')}
-                            disabled={loading}
-                            variant="primary"
-                            size="lg"
-                            style={{ width: '100%' }}
-                        >
-                            🌍 Entrar com Google
-                        </Button>
-                        <p style={{ fontSize: '12px', opacity: 0.6, textAlign: 'center', marginTop: '8px' }}>
-                            {OSCopy.auth.privacyNote}
-                        </p>
-                    </div>
-
-                    {/* 🛠️ DEV LOGIN SECTION (TEMPORARY FOR E2E) */}
-                    <div style={{ marginTop: 32, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 24 }}>
-                        <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-500 mb-4 text-center">Development Access</h3>
-                        <div className="flex flex-col gap-3">
-                            <input
-                                id="dev-email"
-                                type="email"
-                                placeholder="test@chefiapp.com"
-                                className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-amber-500/50 outline-none transition-colors"
-                            />
-                            <input
-                                id="dev-password"
-                                type="password"
-                                placeholder="password"
-                                className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-amber-500/50 outline-none transition-colors"
-                            />
-                            <Button
-                                onClick={async () => {
-                                    // ANTI-429 GUARD
-                                    if (loading) return;
-
-                                    // Check cooldown
-                                    const cooldown = localStorage.getItem('auth_cooldown_until');
-                                    if (cooldown && parseInt(cooldown) > Date.now()) {
-                                        const secondsLeft = Math.ceil((parseInt(cooldown) - Date.now()) / 1000);
-                                        setError(`Muitas tentativas. Aguarde ${secondsLeft}s.`);
-                                        return;
-                                    }
-
-                                    let email = '';
-                                    try {
-                                        setLoading(true);
-                                        email = (document.getElementById('dev-email') as HTMLInputElement).value;
-                                        const password = (document.getElementById('dev-password') as HTMLInputElement).value;
-
-                                        if (!email || !password) throw new Error('Credenciais faltando');
-
-                                        // Try Login
-                                        const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
-
-                                        if (loginErr) {
-                                            // 🛡️ ANTI-429 BACKOFF
-                                            if (loginErr.status === 429 || loginErr.message?.includes('Too many requests')) {
-                                                console.warn('[AuthPage] 429 Hit - Engaging CoolDown');
-                                                const cooldownUntil = Date.now() + 60000; // 60s
-                                                localStorage.setItem('auth_cooldown_until', cooldownUntil.toString());
-                                                throw new Error('Muitas tentativas (429). Sistema entrou em modo de proteção por 60s.');
-                                            }
-
-                                            // Handle "Invalid login credentials" by trying SignUp (Dev Mode lazy creation)
-                                            console.log('Login failed, trying signup...', loginErr.message);
-                                            Logger.warn('Auth: Dev login failed, attempting signup', {
-                                                email,
-                                                error: loginErr.message
-                                            });
-                                            const { error: signUpErr } = await supabase.auth.signUp({
-                                                email,
-                                                password,
-                                                options: { data: { name: 'Dev Tester' } },
-                                                // Disable auto-confirm if possible or handle flow
-                                            });
-
-                                            if (signUpErr) {
-                                                // 🛡️ ANTI-429 BACKOFF (SignUp Path)
-                                                if (signUpErr.status === 429 || signUpErr.message?.includes('Too many requests')) {
-                                                    console.warn('[AuthPage] 429 Hit (SignUp) - Engaging CoolDown');
-                                                    const cooldownUntil = Date.now() + 60000; // 60s
-                                                    localStorage.setItem('auth_cooldown_until', cooldownUntil.toString());
-                                                    throw new Error('Muitas tentativas (429). Sistema entrou em modo de proteção por 60s.');
-                                                }
-
-                                                Logger.error('Auth: Dev signup failed', signUpErr as Error, { email });
-                                                throw signUpErr;
-                                            }
-                                            Logger.info('Auth: Dev account created', { email });
-                                            alert('Conta criada! Verifique email ou se auto-confirmou.');
-                                        } else {
-                                            Logger.info('Auth: Dev login successful', { email });
-                                            // Clear backoff on success
-                                            localStorage.removeItem('auth_cooldown_until');
-                                        }
-
-                                        // 🔒 ARQUITETURA SOBERANA: Redirecionar para /app após auth
-                                        window.location.href = '/app';
-                                    } catch (err: any) {
-                                        Logger.error('Auth: Dev login exception', err as Error, { email: email || 'unknown' });
-                                        setError(err.message);
-                                        setLoading(false);
-                                    }
-                                }}
-                                variant="secondary"
-                                size="sm"
-                                disabled={loading}
-                                style={{ width: '100%', borderColor: 'rgba(245, 158, 11, 0.3)', color: '#f59e0b', opacity: loading ? 0.5 : 1 }}
-                            >
-                                {loading ? '⏳ Processando...' : '⚡ Entrar (Dev Mode)'}
-                            </Button>
-                        </div>
-                    </div>
-                </Card>
-
-                <GlobalFooter />
-            </div>
-        </OSFrame>
-    );
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background:
+      "linear-gradient(to bottom, #0a0a0a 0%, #171717 50%, #1c1917 100%)",
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    fontFamily: "Inter, system-ui, sans-serif",
+    color: "#fafafa",
+  },
+  card: {
+    width: "100%",
+    maxWidth: 400,
+    padding: 32,
+    borderRadius: 12,
+    border: "1px solid #262626",
+    backgroundColor: "rgba(23, 23, 23, 0.9)",
+    boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+  },
+  title: { fontSize: 22, fontWeight: 700, marginBottom: 8, color: "#fafafa" },
+  subtitle: { fontSize: 14, color: "#a3a3a3", marginBottom: 24 },
+  label: {
+    display: "block",
+    fontSize: 13,
+    fontWeight: 500,
+    color: "#a3a3a3",
+    marginBottom: 6,
+  },
+  input: {
+    width: "100%",
+    boxSizing: "border-box" as const,
+    padding: "12px 14px",
+    fontSize: 15,
+    border: "1px solid #404040",
+    borderRadius: 8,
+    backgroundColor: "#171717",
+    color: "#fafafa",
+    marginBottom: 16,
+  },
+  button: {
+    width: "100%",
+    minHeight: 44,
+    padding: "14px 20px",
+    fontSize: 15,
+    fontWeight: 600,
+    border: "none",
+    borderRadius: 8,
+    cursor: "pointer",
+    marginTop: 8,
+  },
+  buttonPrimary: { backgroundColor: "#eab308", color: "#0a0a0a" },
+  buttonSecondary: {
+    backgroundColor: "transparent",
+    color: "#a3a3a3",
+    border: "1px solid #404040",
+  },
+  error: { fontSize: 13, color: "#f87171", marginBottom: 12 },
+  link: { color: "#eab308", textDecoration: "none", fontWeight: 500 },
+  tabs: { display: "flex", gap: 8, marginBottom: 24 },
+  tab: {
+    padding: "8px 16px",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontSize: 14,
+    fontWeight: 500,
+  },
+  tabActive: { backgroundColor: "#262626", color: "#fafafa" },
+  tabInactive: { color: "#737373" },
+  demoBox: {
+    marginTop: 24,
+    padding: 16,
+    borderRadius: 8,
+    border: "1px solid #404040",
+    backgroundColor: "#171717",
+    fontSize: 14,
+    color: "#a3a3a3",
+  },
 };
+
+export function AuthPage() {
+  const [searchParams] = useSearchParams();
+  const modeFromUrl =
+    searchParams.get("mode") === "signup" ? "signup" : "login";
+  const [mode, setMode] = useState<"login" | "signup">(modeFromUrl);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { session, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  // Backend único: Docker Core (Keycloak + mock). Sem Supabase.
+  const hasCore = getBackendType() === BackendType.docker;
+
+  const getLastRoute = (): string => {
+    try {
+      const stored = sessionStorage.getItem("chefiapp_lastRoute");
+      const allowed = [
+        "/dashboard",
+        "/app/dashboard",
+        "/op/tpv",
+        "/op/kds",
+        "/op/cash",
+      ];
+      if (stored && allowed.includes(stored)) return stored;
+    } catch {
+      // ignore
+    }
+    return "/app/dashboard";
+  };
+
+  useEffect(() => {
+    setMode(modeFromUrl);
+  }, [modeFromUrl]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (session) {
+      navigate(getLastRoute(), { replace: true });
+    }
+  }, [session, authLoading, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (mode === "signup" && password !== confirmPassword) {
+      setError("As palavras-passe não coincidem.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("A palavra-passe deve ter pelo menos 6 caracteres.");
+      return;
+    }
+    setLoading(true);
+    try {
+      // Docker Core only: Keycloak redirect or mock; no Supabase auth.
+      if (hasCore) {
+        getAuthActions().signIn();
+        return;
+      }
+      setError(
+        "Backend não configurado. Defina VITE_CORE_URL e VITE_CORE_ANON_KEY.",
+      );
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Erro ao iniciar sessão ou criar conta.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!getBackendConfigured()) {
+    return (
+      <div style={styles.page}>
+        <div style={styles.card}>
+          <h1 style={styles.title}>Backend não configurado</h1>
+          <p style={{ ...styles.subtitle, marginBottom: 16 }}>
+            Em produção é preciso definir as variáveis de ambiente{" "}
+            <code style={{ fontSize: 12, color: "#a3a3a3" }}>
+              VITE_CORE_URL
+            </code>{" "}
+            e{" "}
+            <code style={{ fontSize: 12, color: "#a3a3a3" }}>
+              VITE_CORE_ANON_KEY
+            </code>{" "}
+            (Docker Core). Ver{" "}
+            <code style={{ fontSize: 12, color: "#a3a3a3" }}>
+              docs/DEPLOY_VERCEL.md
+            </code>
+            .
+          </p>
+          <Link to="/" style={styles.link}>
+            ← Voltar à landing
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (authLoading) {
+    return (
+      <GlobalLoadingView
+        message="A verificar sessão..."
+        layout="operational"
+        variant="fullscreen"
+      />
+    );
+  }
+
+  if (session) {
+    return (
+      <GlobalLoadingView
+        message="A redirecionar..."
+        layout="operational"
+        variant="fullscreen"
+      />
+    );
+  }
+
+  return (
+    <div style={styles.page}>
+      <div style={styles.card}>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <img
+            src="/Logo Chefiapp.png"
+            alt="ChefIApp"
+            style={{
+              width: 48,
+              height: 48,
+              objectFit: "contain",
+              borderRadius: 12,
+            }}
+          />
+          <h1 style={{ ...styles.title, marginTop: 12 }}>ChefIApp</h1>
+          <p style={styles.subtitle}>TPV que pensa antes do humano</p>
+        </div>
+
+        {hasCore ? (
+          <div style={styles.demoBox}>
+            <p style={{ margin: "0 0 12px 0" }}>
+              Em modo local não há registo na web. Para criar conta e comprar o
+              produto, use a aplicação em produção (URL real).
+            </p>
+            <p style={{ margin: 0 }}>
+              Pode continuar com{" "}
+              <Link to="/auth" style={styles.link}>
+                Ver demonstração (3 min)
+              </Link>
+              .
+            </p>
+            <button
+              onClick={() => {
+                localStorage.setItem("chefiapp_pilot_mode", "true");
+                navigate("/bootstrap");
+              }}
+              style={{
+                ...styles.button,
+                ...styles.buttonSecondary,
+                marginTop: 16,
+                backgroundColor: "rgba(50, 215, 75, 0.1)",
+                borderColor: "#32d74b",
+                color: "#32d74b",
+              }}
+            >
+              Simular Registo (Piloto)
+            </button>
+            <Link
+              to="/"
+              style={{ ...styles.link, display: "inline-block", marginTop: 12 }}
+            >
+              ← Voltar à landing
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div style={styles.tabs}>
+              <button
+                type="button"
+                style={{
+                  ...styles.tab,
+                  ...(mode === "login" ? styles.tabActive : styles.tabInactive),
+                }}
+                onClick={() => setMode("login")}
+              >
+                Entrar
+              </button>
+              <button
+                type="button"
+                style={{
+                  ...styles.tab,
+                  ...(mode === "signup"
+                    ? styles.tabActive
+                    : styles.tabInactive),
+                }}
+                onClick={() => setMode("signup")}
+              >
+                Criar conta
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+              {error && <p style={styles.error}>{error}</p>}
+              <label style={styles.label}>Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                required
+                style={styles.input}
+                autoComplete="email"
+              />
+              <label style={styles.label}>Palavra-passe</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                style={styles.input}
+                autoComplete={
+                  mode === "signup" ? "new-password" : "current-password"
+                }
+              />
+              {mode === "signup" && (
+                <>
+                  <label style={styles.label}>Confirmar palavra-passe</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    style={styles.input}
+                    autoComplete="new-password"
+                  />
+                </>
+              )}
+              <button
+                type="submit"
+                disabled={loading}
+                style={{ ...styles.button, ...styles.buttonPrimary }}
+              >
+                {loading
+                  ? "A processar..."
+                  : mode === "signup"
+                  ? "Criar conta"
+                  : "Entrar"}
+              </button>
+            </form>
+
+            <p
+              style={{
+                fontSize: 13,
+                color: "#737373",
+                marginTop: 20,
+                textAlign: "center",
+              }}
+            >
+              {mode === "login" ? (
+                <>
+                  Ainda não tem conta?{" "}
+                  <Link
+                    to="/signup"
+                    style={styles.link}
+                    onClick={() => setMode("signup")}
+                  >
+                    Criar conta
+                  </Link>
+                </>
+              ) : (
+                <>
+                  Já tem conta?{" "}
+                  <Link
+                    to="/auth"
+                    style={styles.link}
+                    onClick={() => setMode("login")}
+                  >
+                    Entrar
+                  </Link>
+                </>
+              )}
+            </p>
+            <p
+              style={{
+                fontSize: 13,
+                color: "#737373",
+                marginTop: 12,
+                textAlign: "center",
+              }}
+            >
+              <Link to="/auth" style={styles.link}>
+                {OSCopy.landing.ctaVerSistema3Min}
+              </Link>
+            </p>
+          </>
+        )}
+
+        <Link
+          to="/"
+          style={{
+            ...styles.link,
+            display: "block",
+            marginTop: 24,
+            textAlign: "center",
+            fontSize: 13,
+          }}
+        >
+          ← Voltar à landing
+        </Link>
+      </div>
+    </div>
+  );
+}

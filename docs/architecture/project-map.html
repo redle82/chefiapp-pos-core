@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChefIApp POS Core — Project Map</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --item: #374151;
+        --border: #334155;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --dim: #64748b;
+        --subtle: #475569;
+        --red: #dc2626;
+        --red-bg: #7f1d1d;
+        --red-light: #fecaca;
+        --blue: #2563eb;
+        --blue-bg: #1e3a5f;
+        --blue-light: #bfdbfe;
+        --green: #16a34a;
+        --green-bg: #065f46;
+        --green-light: #d1fae5;
+        --purple: #7c3aed;
+        --purple-bg: #4c1d95;
+        --purple-light: #ddd6fe;
+        --amber: #d97706;
+        --amber-bg: #92400e;
+        --amber-light: #fde68a;
+        --pink: #ec4899;
+        --cyan: #06b6d4;
+        --orange: #f97316;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: 40px;
+        min-height: 100vh;
+      }
+      .map-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .map-title {
+        text-align: center;
+        margin-bottom: 8px;
+      }
+      .map-title h1 {
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .map-title p {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+
+      /* Row layouts */
+      .row {
+        display: grid;
+        gap: 16px;
+      }
+      .row-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .row-2 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      /* Column card */
+      .col {
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--card);
+      }
+      .col-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+      .col-header .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .col-body {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 12px 14px;
+      }
+
+      /* Item row */
+      .item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: var(--item);
+        border-radius: 8px;
+        font-size: 12px;
+        color: #cbd5e1;
+        transition: transform 0.15s, box-shadow 0.15s;
+      }
+      .item:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+      .item .icon {
+        font-size: 14px;
+        flex-shrink: 0;
+        width: 18px;
+        text-align: center;
+      }
+
+      /* Context sub-card */
+      .ctx-card {
+        background: var(--item);
+        border-radius: 8px;
+        padding: 10px 14px;
+      }
+      .ctx-card h4 {
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .ctx-card p {
+        font-size: 10px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      /* Footer */
+      .footer {
+        background: #0c1425;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px 24px;
+        text-align: center;
+      }
+      .footer-title {
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        color: var(--text);
+        margin-bottom: 12px;
+      }
+      .footer-title span {
+        color: #60a5fa;
+      }
+      .footer hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 12px 0;
+      }
+      .stats-row {
+        display: flex;
+        justify-content: center;
+        gap: 36px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .stat {
+        text-align: center;
+      }
+      .stat-value {
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .stat-value.ok {
+        color: #34d399;
+      }
+      .stat-value.warn {
+        color: #fbbf24;
+      }
+      .stat-value.info {
+        color: #60a5fa;
+      }
+      .stat-label {
+        font-size: 9px;
+        color: var(--dim);
+        letter-spacing: 1px;
+        margin-top: 2px;
+      }
+      .footer-tech {
+        font-size: 11px;
+        color: var(--subtle);
+        margin-top: 8px;
+      }
+      .footer-branch {
+        font-size: 10px;
+        color: var(--subtle);
+        margin-top: 4px;
+      }
+
+      /* Responsive */
+      @media (max-width: 900px) {
+        .row-3 {
+          grid-template-columns: 1fr;
+        }
+        .row-2 {
+          grid-template-columns: 1fr;
+        }
+        body {
+          padding: 16px;
+        }
+      }
+      @media (min-width: 901px) and (max-width: 1200px) {
+        .row-3 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="map-container">
+      <!-- Title -->
+      <div class="map-title">
+        <h1>CHEFIAPP POS CORE</h1>
+        <p>Mapa Completo do Projeto — Arquitetura, Módulos & Superfícies</p>
+      </div>
+
+      <!-- Row 1: Core/Infra, Merchant Portal, AppStaff -->
+      <div class="row row-3">
+        <!-- 1. CORE / INFRA -->
+        <div class="col">
+          <div
+            class="col-header"
+            style="background: var(--red-bg); color: var(--red-light)"
+          >
+            <div class="dot" style="background: var(--red)"></div>
+            1. CORE / INFRA
+          </div>
+          <div class="col-body">
+            <div class="item">
+              <span class="icon" style="color: #60a5fa">🐳</span> Docker Compose
+              — 12 containers
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #34d399">📋</span> schema.sql —
+              Event-Sourced DDL
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #c084fc">📊</span> 81 migrations
+              (000→080)
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #fbbf24">🔐</span> Auth — JWT +
+              RLS policies
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #f97316">⚡</span> PostgREST v12
+              + Realtime
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. MERCHANT PORTAL -->
+        <div class="col">
+          <div
+            class="col-header"
+            style="background: var(--blue-bg); color: var(--blue-light)"
+          >
+            <div class="dot" style="background: var(--blue)"></div>
+            2. MERCHANT PORTAL
+          </div>
+          <div class="col-body">
+            <div class="item">
+              <span class="icon" style="color: #60a5fa">🔑</span> Auth — Login →
+              OTP → Session
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #34d399">🔄</span> Bootstrap —
+              tenant resolve chain
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #c084fc">⚙️</span> Config —
+              Environment + Feature flags
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #fbbf24">📊</span> Dashboard —
+              Analytics + KPIs
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #f472b6">👤</span> Admin — Roles
+              + Staff management
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #f97316">📱</span> TPV/KDS — POS
+              terminal + Kitchen
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #06b6d4">🧙</span> Setup Wizard —
+              7 onboarding steps
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #94a3b8">📄</span> Pages: Login,
+              Setup, Dashboard, Menu, Orders, Staff, Settings
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. APPSTAFF -->
+        <div class="col">
+          <div
+            class="col-header"
+            style="background: var(--green-bg); color: var(--green-light)"
+          >
+            <div class="dot" style="background: var(--green)"></div>
+            3. APPSTAFF
+          </div>
+          <div class="col-body">
+            <div class="item">
+              <span class="icon" style="color: #fbbf24">🚪</span> Entry —
+              LoginGate → TenantGate → RoleGate
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #60a5fa">🛡️</span> Gates —
+              shift-check + role-check + device-check
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #c084fc">🐚</span> Shell —
+              AppShell (sidebar + header + body)
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #34d399">🔀</span> Modes — TPV,
+              KDS, Waiter, Manager, Cleaning
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #f97316">🏠</span> Homes —
+              OwnerHome, ManagerHome, WaiterHome, KitchenHome, CleaningHome
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Core Engine, Surfaces & Contexts -->
+      <div class="row row-2">
+        <!-- 4. CORE ENGINE -->
+        <div class="col">
+          <div
+            class="col-header"
+            style="background: var(--purple-bg); color: var(--purple-light)"
+          >
+            <div class="dot" style="background: var(--purple)"></div>
+            4. CORE ENGINE
+          </div>
+          <div class="col-body">
+            <div class="item">
+              <span class="icon" style="color: #c084fc">🧠</span> Kernel — event
+              bus, command dispatch, state machine
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #60a5fa">📦</span> Domains —
+              Order, Menu, Table, Payment, Session
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #34d399">💾</span> Infra —
+              persistence, repo, effects, storage
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. SURFACES & CONTEXTS -->
+        <div class="col">
+          <div
+            class="col-header"
+            style="background: var(--amber-bg); color: var(--amber-light)"
+          >
+            <div class="dot" style="background: var(--amber)"></div>
+            5. SUPERFÍCIES & CONTEXTOS
+          </div>
+          <div class="col-body">
+            <div class="item">
+              <span class="icon" style="color: #c084fc">🧠</span> Kernel —
+              core-engine/kernel/*
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #60a5fa">📊</span> Admin Panel —
+              /admin, /config, /staff
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #f97316">🛒</span> TPV —
+              /app/tpv, /op/tpv (Orders + Payments)
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #ef4444">🔥</span> KDS —
+              /app/kds, /op/kds (Kitchen Display)
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #34d399">👥</span> Staff App —
+              /app/staff/* (Mobile-First)
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #38bdf8">🌐</span> Web Pública —
+              /public/* (Landing, QR menu)
+            </div>
+            <div class="ctx-card">
+              <h4 style="color: #fbbf24">Contextos React</h4>
+              <p>
+                RestaurantRuntimeContext · ShiftContext · TenantContext ·
+                OnboardingContext · GlobalUIStateContext · ContextEngine (TPV) ·
+                StaffProvider · OperatorSessionProvider
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Testing & Quality, Docs & Governance -->
+      <div class="row row-2">
+        <!-- 6. TESTING & QUALITY -->
+        <div class="col">
+          <div
+            class="col-header"
+            style="background: var(--green-bg); color: var(--green-light)"
+          >
+            <div class="dot" style="background: #10b981"></div>
+            6. TESTING & QUALITY
+          </div>
+          <div class="col-body">
+            <div class="item">
+              <span class="icon" style="color: #34d399">✅</span> E2E
+              (Playwright) — 37/37 pass ✓
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #60a5fa">🛡️</span> Governance
+              Gate — baseline + go/no-go
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #c084fc">📝</span> TypeScript — 0
+              errors (was 1185)
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #fbbf24">📏</span> Constitution
+              Validator — schema.sql lint
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #f97316">📦</span> Bundle — 465KB
+              (was 1276KB) ▼63%
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. DOCS & GOVERNANCE -->
+        <div class="col">
+          <div
+            class="col-header"
+            style="background: var(--blue-bg); color: var(--blue-light)"
+          >
+            <div class="dot" style="background: #3b82f6"></div>
+            7. DOCS & GOVERNANCE
+          </div>
+          <div class="col-body">
+            <div class="item">
+              <span class="icon" style="color: #60a5fa">📄</span> 200+
+              Architecture Docs (docs/architecture/)
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #fbbf24">🗺️</span> Sovereignty
+              Maps — backend, frontend, database
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #c084fc">📜</span> Constitution —
+              ENGINEERING_CONSTITUTION.md
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #34d399">🛡️</span> Manifesto —
+              CORE_MANIFESTO.md
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #f97316">👁️</span> Visibility
+              Contract — DATA_VISIBILITY_CONTRACT.md
+            </div>
+            <div class="item">
+              <span class="icon" style="color: #f472b6">🌿</span> Audit Reports
+              — audit-reports/ + baselines/
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <div class="footer-title">
+          <span>ℹ️</span> CHEFIAPP POS CORE — PROJECT OVERVIEW
+        </div>
+        <hr />
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-value ok">v1.0.0</div>
+            <div class="stat-label">VERSION</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value ok">37/37</div>
+            <div class="stat-label">E2E TESTS</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value ok">0</div>
+            <div class="stat-label">TS ERRORS</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value warn">465KB</div>
+            <div class="stat-label">BUNDLE</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value info">12</div>
+            <div class="stat-label">CONTAINERS</div>
+          </div>
+        </div>
+        <div class="footer-tech">
+          React 19 · Vite 7 · TypeScript · PostgreSQL · PostgREST · Docker ·
+          Event-Sourced · Playwright
+        </div>
+        <div class="footer-branch">
+          Branch: core/frozen-v1 · PR #5 → main · Last audit: 4.9 →
+          production-ready
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

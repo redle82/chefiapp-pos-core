@@ -17,7 +17,7 @@ export const AppLayout = () => {
     const location = useLocation();
 
     // Keep Guardian hook running (safe for all routes)
-    const { systemState } = useSystemGuardian();
+    const { systemState: _systemState } = useSystemGuardian();
 
     /**
      * 🔒 TENANT GATE EXEMPTION

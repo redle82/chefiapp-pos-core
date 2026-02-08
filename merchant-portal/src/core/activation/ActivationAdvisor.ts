@@ -14,7 +14,7 @@
  */
 
 import type { SystemBlueprint } from '../blueprint/SystemBlueprint';
-import type { SystemState } from '../state/SystemStateProvider';
+import type { SystemState } from '../kernel/types';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES

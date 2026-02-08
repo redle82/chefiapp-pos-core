@@ -21,6 +21,7 @@ export interface Order {
   id: string;
   table_id?: string;
   session_id: string;
+  restaurant_id?: string; // Optional in core; required when persisting to Supabase
   state: "OPEN" | "LOCKED" | "PAID" | "CLOSED" | "CANCELED";
   total_cents?: number; // Set when LOCKED, immutable after. In CENTS.
   version: number; // Optimistic concurrency

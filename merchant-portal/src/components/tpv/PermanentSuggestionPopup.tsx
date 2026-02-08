@@ -1,10 +1,15 @@
 import React from 'react';
 import { Button } from '../../ui/design-system/Button';
-import type { Product } from '../../cinematic/context/ProductContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
+/** Minimal product shape for suggestion popup (name + usage count). */
+interface SuggestionProduct {
+  name: string;
+  usageCount: number;
+}
+
 interface PermanentSuggestionPopupProps {
-    product: Product;
+    product: SuggestionProduct;
     onPromote: () => void;
     onDismiss: () => void;
 }

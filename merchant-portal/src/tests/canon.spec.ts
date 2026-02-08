@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 // It does NOT test pixels. It tests physics.
 // ------------------------------------------------------------------
 
-const BASE_URL = 'http://localhost:5173/app/staff';
+const BASE_URL = 'http://localhost:5175/app/staff';
 
 // 🕰️ TIME TRAVELLER TOOL
 const advanceTime = async (page: any, ms: number) => {

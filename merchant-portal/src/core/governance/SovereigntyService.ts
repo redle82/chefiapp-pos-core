@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { getTableClient } from '../infra/coreRpc';
 
 export interface SovereigntyMetrics {
     dirtyCount: number;
@@ -30,33 +30,36 @@ export interface ReconciliationJob {
 export class SovereigntyService {
 
     /**
-     * Get High-Level Health Metrics
+     * Get High-Level Health Metrics (Core quando Docker — Fase 4)
+     * Core pode não ter kernel_shadow_status em gm_cash_registers; em erro retorna 0.
      */
     static async getMetrics(restaurantId: string): Promise<SovereigntyMetrics> {
-        // 1. Dirty/Quarantined Count (Cash Registers)
-        // Note: In a larger system we'd aggregate multiple tables. 
-        // For now, CashRegister is the only one with law 2.5 enforcement.
-        const { count: dirtyCount, error: dirtyError } = await supabase
-            .from('gm_cash_registers')
-            .select('*', { count: 'exact', head: true })
-            .eq('restaurant_id', restaurantId)
-            .eq('kernel_shadow_status', 'DIRTY');
+        const client = await getTableClient();
+        let dirtyCount = 0;
+        let quarantinedCount = 0;
 
-        const { count: quarantinedCount } = await supabase
-            .from('gm_cash_registers')
-            .select('*', { count: 'exact', head: true })
-            .eq('restaurant_id', restaurantId)
-            .eq('kernel_shadow_status', 'QUARANTINED');
+        try {
+            const { data: dirtyRows, error: dirtyErr } = await client
+                .from('gm_cash_registers')
+                .select('id')
+                .eq('restaurant_id', restaurantId)
+                .eq('kernel_shadow_status', 'DIRTY');
+            dirtyCount = dirtyErr ? 0 : (Array.isArray(dirtyRows) ? dirtyRows.length : 0);
+        } catch {
+            dirtyCount = 0;
+        }
+        try {
+            const { data: quarantinedRows, error: quarantinedErr } = await client
+                .from('gm_cash_registers')
+                .select('id')
+                .eq('restaurant_id', restaurantId)
+                .eq('kernel_shadow_status', 'QUARANTINED');
+            quarantinedCount = quarantinedErr ? 0 : (Array.isArray(quarantinedRows) ? quarantinedRows.length : 0);
+        } catch {
+            quarantinedCount = 0;
+        }
 
-        // 2. Queue Stats
-        // We can use a group by query via RPC if performance needed, but for dashboard simple select is fine or multiple counts.
-        // Or fetch all jobs if list is small. 
-        // Let's do a simple count per status query is cleaner but 5 queries.
-        // Optimization: Fetch all active jobs (non-resolved) + count resolved via head.
-
-        // Actually, let's fetch 'not resolved' for the list, and just count resolved.
-
-        const { data: queueStats, error: queueError } = await supabase
+        const { data: queueStats } = await client
             .from('gm_reconciliation_queue')
             .select('status')
             .eq('restaurant_id', restaurantId);
@@ -94,13 +97,14 @@ export class SovereigntyService {
     }
 
     /**
-     * Get Reconciliation Queue (Paginated)
+     * Get Reconciliation Queue (Paginated) — Core quando Docker (Fase 4)
      */
     static async getQueue(restaurantId: string, page: number = 0, pageSize: number = 50): Promise<ReconciliationJob[]> {
         const from = page * pageSize;
         const to = from + pageSize - 1;
 
-        const { data, error } = await supabase
+        const client = await getTableClient();
+        const { data, error } = await client
             .from('gm_reconciliation_queue')
             .select('*')
             .eq('restaurant_id', restaurantId)
@@ -108,17 +112,23 @@ export class SovereigntyService {
             .range(from, to);
 
         if (error) throw error;
-        return data as ReconciliationJob[];
+        return (Array.isArray(data) ? data : []) as ReconciliationJob[];
     }
 
     /**
-     * Trigger Manual Reconciliation (Edge Function)
+     * Trigger Manual Reconciliation — Core only.
+     * Reconciliation: Core (Docker) only. If not Docker, throw.
      */
     static async triggerHealer(): Promise<any> {
-        const { data, error } = await supabase.functions.invoke('reconcile', {
-            method: 'POST',
-        });
-        if (error) throw error;
-        return data;
+        const { BackendType, getBackendType } = await import('../infra/backendAdapter');
+        if (getBackendType() !== BackendType.docker) {
+            throw new Error(
+                'Reconciliation requires Docker Core. Backend not configured or not Docker.'
+            );
+        }
+        const core = (await import('../infra/dockerCoreFetchClient')).getDockerCoreFetchClient();
+        const res = await core.rpc('reconcile', {});
+        if (res.error) throw res.error;
+        return res.data;
     }
 }

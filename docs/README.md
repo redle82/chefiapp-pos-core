@@ -12,101 +12,46 @@ Este diretório contém toda a documentação do projeto de transformação do C
 
 ---
 
-## 📖 Documentos Principais
+## ⚠️ Documentação histórica
 
-### 🚀 Para Começar
-1. **[RESUMO_EXECUTIVO.md](./RESUMO_EXECUTIVO.md)**
-   - Visão geral completa
-   - O que foi feito
-   - Resultados esperados
-   - Status atual
+Documentos em `audit/`, `archive/`, `pilots/` e outros runbooks antigos podem referir a porta **5173**. Essa porta foi usada em fases iniciais do projeto.
 
-### 💼 Comercial
-2. **[MANIFESTO_COMERCIAL.md](./MANIFESTO_COMERCIAL.md)**
-   - Proposta de valor
-   - Diferenciação competitiva
-   - Narrativa de venda
-   - ROI e métricas
+👉 **Porta oficial do portal:** **5157** ([CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md)).
+👉 **Nota completa:** [HISTORICAL_NOTES.md](./HISTORICAL_NOTES.md).
 
-3. **[PLANO_ROLLOUT.md](./PLANO_ROLLOUT.md)**
-   - Estratégia de lançamento
-   - Timeline
-   - Métricas de sucesso
-   - Riscos e mitigações
+👉 **Índice de todos os MDs:** [INDICE_MDS.md](./INDICE_MDS.md) — entradas canónicas (README, architecture, contracts, auditoria).
 
-### 🔧 Técnico
-4. **[EXECUCAO_30_DIAS.md](./EXECUCAO_30_DIAS.md)**
-   - Implementação detalhada
-   - Arquitetura
-   - Decisões técnicas
-   - Melhorias futuras
+---
 
-5. **[VALIDACAO_RAPIDA.md](./VALIDACAO_RAPIDA.md)**
-   - Checklist de testes
-   - 17 testes específicos
-   - Métricas a coletar
-   - Critérios de aprovação
+## 📖 Documentos Canónicos (fonte de verdade)
 
-### 👥 Usuário
-6. **[GUIA_RAPIDO_GARCOM.md](./GUIA_RAPIDO_GARCOM.md)**
-   - Início rápido (2 minutos)
-   - Como usar cada funcionalidade
-   - Dicas de produtividade
-   - Fluxo recomendado
+> Regra do projeto: **este README não referencia ficheiros inexistentes**.
+> O índice canónico de documentação vive em **[INDICE_MDS.md](./INDICE_MDS.md)**.
 
-### 🔧 Suporte
-7. **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)**
-   - Problemas comuns e soluções
-   - Debug e diagnóstico
-   - Erros conhecidos
-   - Checklist de diagnóstico
+### Entradas canónicas
+- **[INDICE_MDS.md](./INDICE_MDS.md)** — índice único (o que existe e o que é canónico)
+- **[Architecture README](./architecture/README.md)** — entrada canónica de arquitetura
+- **[Contracts README](./contracts/README.md)** — entrada canónica de contratos
+- **[CAMINHO_DO_CLIENTE.md](./architecture/CAMINHO_DO_CLIENTE.md)** — visão produto: fluxo do cliente (Landing → Signup → Portal → Billing → Operação)
+- **[CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md)** — runtime/rotas/porta oficial do portal (5157)
 
-### 🏗️ Arquitetura
-8. **[ARQUITETURA_VISUAL.md](./ARQUITETURA_VISUAL.md)**
-   - Diagramas de fluxo
-   - Visão geral do sistema
-   - Estados e decisões
-   - Integrações
+### Documentos “principais” (planeados / em evolução)
+Os itens abaixo fazem parte do roadmap documental, mas **podem ainda não existir**. O acesso deve ser feito via **INDICE_MDS** (que só lista o que existe).
 
-### 🚀 Setup e Deploy
-9. **[SETUP_DEPLOY.md](./SETUP_DEPLOY.md)**
-   - Setup inicial
-   - Build e deploy
-   - Configuração de segurança
-   - Checklist de deploy
-
-### 📚 Índice Completo
-10. **[INDICE_COMPLETO.md](./INDICE_COMPLETO.md)**
-    - Todos os documentos organizados
-    - Navegação por persona
-    - Navegação por objetivo
-    - Mapa de navegação
-
-### 📊 Métricas e Manutenção
-11. **[METRICAS_KPIS.md](./METRICAS_KPIS.md)**
-    - KPIs principais e secundários
-    - Como coletar métricas
-    - Dashboard sugerido
-    - Template de relatório
-
-12. **[MANUTENCAO_CONTINUA.md](./MANUTENCAO_CONTINUA.md)**
-    - Rotina de manutenção
-    - Processo de atualizações
-    - Monitoramento de problemas
-    - Processo de release
-
-### 🤝 Transição e Melhorias
-13. **[HANDOFF_EQUIPE.md](./HANDOFF_EQUIPE.md)**
-    - Documento de transição completo
-    - Próximos passos imediatos
-    - Estrutura do código
-    - Checklist de handoff
-
-14. **[QUICK_WINS.md](./QUICK_WINS.md)**
-    - Melhorias de alto impacto e baixo esforço
-    - Matriz de priorização
-    - Recomendação de ordem
-    - Como implementar
+- RESUMO_EXECUTIVO.md
+- MANIFESTO_COMERCIAL.md
+- PLANO_ROLLOUT.md
+- EXECUCAO_30_DIAS.md
+- VALIDACAO_RAPIDA.md
+- GUIA_RAPIDO_GARCOM.md
+- TROUBLESHOOTING.md
+- ARQUITETURA_VISUAL.md
+- SETUP_DEPLOY.md
+- INDICE_COMPLETO.md
+- METRICAS_KPIS.md
+- MANUTENCAO_CONTINUA.md
+- HANDOFF_EQUIPE.md
+- QUICK_WINS.md
 
 ---
 
@@ -134,50 +79,25 @@ Este diretório contém toda a documentação do projeto de transformação do C
 
 ## 🎯 Funcionalidades Implementadas
 
-### ✅ SEMANA 1: FAST PAY
-- Pagamento em 2 toques
-- Auto-seleção de método
-- < 5 segundos
-
-### ✅ SEMANA 2: MAPA VIVO
-- Timer por mesa
-- Cores de urgência
-- Ícones contextuais
-
-### ✅ SEMANA 3: KDS COMO REI
-- Detecção de saturação
-- Menu adapta automaticamente
-- Prioriza bebidas
-
-### ✅ SEMANA 4: RESERVAS LITE
-- Lista de espera digital
-- Conversão automática
-- Persistência local
+> Nota: esta secção é um **placeholder** e deve refletir apenas o que está comprovado no código e/ou contratos canónicos.
+> Até validação final, consulte **INDICE_MDS.md** e **docs/architecture/** para status real.
 
 ---
 
 ## 📊 Métricas e KPIs
 
-### Operacionais
-- Tempo de pagamento: < 5s
-- Redução mesas > 30min: 40%
-- Aumento vendas bebidas: 25%
-- Conversão reservas: +15%
-
-### Financeiros
-- Receita adicional: €500-1000/mês
-- ROI positivo: < 30 dias
-- Mais mesas/noite: +2-3
+> Nota: KPIs e metas aqui devem ser mantidos apenas quando existirem medições reais e referência a um documento canónico.
+> Até lá, usar o índice canónico: **[INDICE_MDS.md](./INDICE_MDS.md)**.
 
 ---
 
 ## 🚀 Próximos Passos
 
-1. **Validar Estrutura** → Executar `scripts/validate-system.sh`
-2. **Validação Manual** → Usar `VALIDACAO_RAPIDA.md`
-3. **Setup** → Seguir `SETUP_DEPLOY.md`
-4. **Beta Fechado** → Seguir `PLANO_ROLLOUT.md`
-5. **Lançamento** → Executar estratégia comercial
+1. **Abrir o Portal (porta canónica 5175)** → http://localhost:5175
+2. **Validar contratos e rotas** → `docs/architecture/CORE_CONTRACT_INDEX.md`
+3. **Auditar referências de docs** → `./scripts/audit-md-references.sh`
+4. **Auditar contratos referenciados** → `./scripts/audit-contracts-referenced.sh`
+5. **Setup/Deploy** → seguir a entrada canónica em `docs/architecture/README.md`
 
 ## 🛠️ Scripts Úteis
 
@@ -191,23 +111,23 @@ Valida estrutura de arquivos, imports e documentação.
 
 ## 📞 Contato e Suporte
 
-**Documentação técnica:** Ver `EXECUCAO_30_DIAS.md`  
-**Dúvidas comerciais:** Ver `MANIFESTO_COMERCIAL.md`  
-**Treinamento:** Ver `GUIA_RAPIDO_GARCOM.md`  
-**Problemas técnicos:** Ver `TROUBLESHOOTING.md`  
-**Arquitetura:** Ver `ARQUITETURA_VISUAL.md`  
-**Setup/Deploy:** Ver `SETUP_DEPLOY.md`  
+**Documentação técnica:** Ver `EXECUCAO_30_DIAS.md`
+**Dúvidas comerciais:** Ver `MANIFESTO_COMERCIAL.md`
+**Treinamento:** Ver `GUIA_RAPIDO_GARCOM.md`
+**Problemas técnicos:** Ver `TROUBLESHOOTING.md`
+**Arquitetura:** Ver `ARQUITETURA_VISUAL.md`
+**Setup/Deploy:** Ver `SETUP_DEPLOY.md`
 **Índice completo:** Ver `INDICE_COMPLETO.md`
 
 ---
 
 ## 🔄 Atualizações
 
-**Última atualização:** 2026-01-24  
-**Versão:** Sistema Nervoso Operacional v1.0  
+**Última atualização:** 2026-01-31
+**Versão:** Sistema Nervoso Operacional v1.0
 **Status:** ✅ Pronto para Validação
 
 ---
 
-**Frase Final:**  
+**Frase Final:**
 *"Last.app organiza o restaurante. ChefIApp deve guiá-lo."*

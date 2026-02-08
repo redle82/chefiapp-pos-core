@@ -1,1234 +1,1285 @@
-import React, { Suspense } from "react";
-import { HelmetProvider } from "react-helmet-async";
-import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
-import "./App.css";
-
-// Pages
-import { ActivationPage } from "./pages/Activation/ActivationPage";
-import { SystemStatusPage } from "./pages/Audit/SystemStatusPage";
-import { AuthPage } from "./pages/AuthPage";
-import { BootstrapPage } from "./pages/BootstrapPage";
-import { ComingSoonPage } from "./pages/ComingSoonPage";
-import { DebugTPV } from "./pages/DebugTPV";
-import { HealthCheckPage } from "./pages/HealthCheckPage";
-import { LandingPage } from "./pages/Landing/LandingPage";
-import { AdvancedSetupPage } from "./pages/Onboarding/AdvancedSetupPage";
-import BillingStep from "./pages/Onboarding/BillingStep";
-import CheckoutStep from "./pages/Onboarding/CheckoutStep";
-import FirstSaleGuide from "./pages/Onboarding/FirstSaleGuide";
-import MenuDemo from "./pages/Onboarding/MenuDemo";
-import OnboardingWizard, {
-  ScreenInviteCode,
-} from "./pages/Onboarding/OnboardingWizard";
-import TrialStart from "./pages/Onboarding/TrialStart";
-import { MigrationWizard } from "./pages/Onboarding/migration/MigrationWizardContainer";
-import PublicPages from "./pages/Public/PublicOrderingPage";
-import { AccessDeniedPage, SelectTenantPage } from "./pages/Tenant";
-import { WizardPage } from "./pages/WizardPage";
-
-// Content Hub
-import { MenuBootstrapPage } from "./pages/Menu/Bootstrap/MenuBootstrapPage";
-import { ArticlePage } from "./pages/Read/ArticlePage";
-import { LibraryPage } from "./pages/Read/LibraryPage";
-import { ReaderLayout } from "./pages/Read/ReaderLayout";
-import { BetaFeedbackWidget } from "./ui/feedback/BetaFeedbackWidget";
-
-// Subgroup A: TPV & Menu
-// Subgroup A: TPV & Menu
-const TPV = React.lazy(() => import("./pages/TPV/TPV"));
-const KDS = React.lazy(() => import("./pages/TPV/KDS/KitchenDisplay"));
-const KDSStandalone = React.lazy(() => import("./pages/TPV/KDS/KDSStandalone"));
-const MenuManager = React.lazy(() =>
-  import("./pages/Menu/MenuManager").then((m) => ({ default: m.MenuManager })),
-);
-
-// Subgroup B: Dashboard & Reports
-const DashboardZero = React.lazy(
-  () => import("./pages/Dashboard/DashboardZero"),
-);
-const PulseList = React.lazy(() =>
-  import("./pages/AppStaff/PulseList").then((m) => ({ default: m.PulseList })),
-);
-const Settings = React.lazy(() =>
-  import("./pages/Settings").then((m) => ({ default: m.Settings })),
-);
-const SovereigntyDashboard = React.lazy(() =>
-  import("./pages/Settings/SovereigntyDashboard").then((m) => ({
-    default: m.SovereigntyDashboard,
-  })),
-);
-const ConnectorSettings = React.lazy(() =>
-  import("./pages/Settings").then((m) => ({ default: m.ConnectorSettings })),
-);
-
-const DailyClosing = React.lazy(() =>
-  import("./pages/Reports/DailyClosing").then((m) => ({
-    default: m.DailyClosing,
-  })),
-);
-const ZReportPrint = React.lazy(() =>
-  import("./pages/Reports/ZReportPrint").then((m) => ({
-    default: m.ZReportPrint,
-  })),
-);
-const FinanceDashboard = React.lazy(() =>
-  import("./pages/Reports/FinanceDashboard").then((m) => ({
-    default: m.FinanceDashboard,
-  })),
-);
-const DeliveryMonitor = React.lazy(() =>
-  import("./modules/delivery/DeliveryMonitor").then((m) => ({
-    default: m.DeliveryMonitor,
-  })),
-);
-const StaffPage = React.lazy(() => import("./pages/Settings/StaffPage"));
-const BillingPage = React.lazy(() => import("./pages/Settings/BillingPage"));
-const ProvisionRestaurantPage = React.lazy(() =>
-  import("./pages/Admin/ProvisionRestaurantPage").then((m) => ({
-    default: m.ProvisionRestaurantPage,
-  })),
-);
-
-const TPVKitsPage = React.lazy(() =>
-  import("./pages/Store/TPVKitsPage").then((m) => ({ default: m.TPVKitsPage })),
-);
-const EvolveHub = React.lazy(() =>
-  import("./pages/Evolve/EvolveHub").then((m) => ({ default: m.EvolveHub })),
-);
-const RestaurantWebPreviewPage = React.lazy(() =>
-  import("./pages/Web/RestaurantWebPreviewPage").then((m) => ({
-    default: m.RestaurantWebPreviewPage,
-  })),
-);
-const LocalBossPage = React.lazy(() =>
-  import("./pages/LocalBoss/LocalBossPage").then((m) => ({
-    default: m.LocalBossPage,
-  })),
-);
-const GovernOverviewPage = React.lazy(() =>
-  import("./pages/Govern/GovernOverviewPage").then((m) => ({
-    default: m.GovernOverviewPage,
-  })),
-);
-const GovernManageDashboard = React.lazy(() =>
-  import("./pages/GovernManage/GovernManageDashboard").then((m) => ({
-    default: m.GovernManageDashboard,
-  })),
-);
-const ReservationsDashboard = React.lazy(() =>
-  import("./pages/Reservations/ReservationsDashboard").then((m) => ({
-    default: m.ReservationsDashboard,
-  })),
-);
-const ReputationHubDashboard = React.lazy(() =>
-  import("./pages/ReputationHub/ReputationHubDashboard").then((m) => ({
-    default: m.ReputationHubDashboard,
-  })),
-);
-const OperationalHubDashboard = React.lazy(() =>
-  import("./pages/OperationalHub/OperationalHubDashboard").then((m) => ({
-    default: m.OperationalHubDashboard,
-  })),
-);
-const PortioningDashboard = React.lazy(() =>
-  import("./pages/Portioning/PortioningDashboard").then((m) => ({
-    default: m.PortioningDashboard,
-  })),
-);
-const RestaurantGroupManager = React.lazy(() =>
-  import("./pages/MultiLocation/RestaurantGroupManager").then((m) => ({
-    default: m.RestaurantGroupManager,
-  })),
-);
-const GroupDashboard = React.lazy(() =>
-  import("./pages/MultiLocation/GroupDashboard").then((m) => ({
-    default: m.GroupDashboard,
-  })),
-);
-const CustomersPage = React.lazy(() =>
-  import("./pages/CRM/CustomersPage").then((m) => ({
-    default: m.CustomersPage,
-  })),
-);
-const LoyaltyPage = React.lazy(() =>
-  import("./pages/Loyalty/LoyaltyPage").then((m) => ({
-    default: m.LoyaltyPage,
-  })),
-);
-const PerformanceDashboard = React.lazy(() =>
-  import("./pages/Performance/PerformanceDashboard").then((m) => ({
-    default: m.PerformanceDashboard,
-  })),
-);
-const SafetyConfig = React.lazy(() => import("./pages/Safety/SafetyConfig"));
-const StrategicCalendar = React.lazy(
-  () => import("./pages/Calendar/StrategicCalendar"),
-);
-const OrganizationDashboard = React.lazy(() =>
-  import("./pages/Organization/OrganizationDashboard").then((m) => ({
-    default: m.OrganizationDashboard,
-  })),
-);
-
-// Components
-import { AppLayout } from "./components/Layout/AppLayout";
-import { ThemeEngine } from "./components/theme/ThemeEngine";
-import { RequireActivation } from "./core/activation";
-import { FlowGate } from "./core/flow/FlowGate";
-import { OperationGate } from "./core/flow/OperationGate"; // Opus 6.0
-import { GuardTool } from "./core/permissions/GuardTool";
-import { SovereignBoundary } from "./ui/components/SovereignBoundary";
-
-// Pages - Operation
-import { OperationStatusPage } from "./pages/Operation/OperationStatusPage"; // Opus 6.0
-import { SystemPausedPage } from "./pages/Operation/SystemPausedPage"; // Opus 6.0
-import { SystemSuspendedPage } from "./pages/Operation/SystemSuspendedPage"; // Opus 6.0
-
-// Providers
-import { AppDomainWrapper } from "./app/AppDomainWrapper"; // 🏛️ Gate → Domain Bridge
-import { FeatureFlagProvider } from "./core/flags/FeatureFlagContext";
-import { SystemGuardianProvider } from "./core/guardian/SystemGuardianContext";
-import { TenantProvider } from "./core/tenant/TenantContext"; // Added Provider
-import { OnboardingProvider } from "./pages/Onboarding/OnboardingState";
-
-// 🛰️ LAZY LOADED SATELLITES
-const StaffModule = React.lazy(() => import("./pages/AppStaff/StaffModule"));
-
-import { isDevStableMode } from "./core/runtime/devStableMode";
-import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
-
 /**
- * E2E NAVIGATION VALIDATION CHECKLIST:
+ * APP.TSX — RESET CONTROLADO
  *
- * 1. Landing → Login: Navigate to `/` → Click CTA → Google OAuth
- * 2. Auth → Onboarding: New user → `/onboarding/identity`
- * 3. Onboarding → Dashboard: Complete wizard → `/app/dashboard`
- * 4. Dashboard → Tools (NEW TAB): Click TPV/KDS/Menu/Orders card → Opens in new browser tab
- * 5. Refresh Safety: Directly load `/app/tpv`, `/app/kds`, `/app/menu`, `/app/orders` → Each renders independently
- *
- * Tab Titles:
- * - /app/dashboard → "ChefIApp POS — Dashboard"
- * - /app/tpv → "ChefIApp POS — TPV"
- * - /app/kds → "ChefIApp POS — KDS"
- * - /app/menu → "ChefIApp POS — Menu"
- * - /app/orders → "ChefIApp POS — Orders"
+ * Esta é a versão limpa após remoção total de UI/UX legada.
  */
-function App() {
-  // ===========================================================================
-  // DEV_STABLE_MODE — Entrada Única (Fase A)
-  // Enquanto estivermos estabilizando, DEV deve montar APENAS /app/*
-  // para evitar competição onboarding ↔ app e estados contraditórios.
-  // Desligue com ?devStable=0
-  // ===========================================================================
-  const devStable = isDevStableMode();
 
-  const DevStableEntryGate = () => {
-    const location = useLocation();
-    // FASE 2: Permitir rotas de tutorial mesmo em devStable
-    const allowedOnboardingRoutes = [
-      "/onboarding/first-sale-guide",
-      "/onboarding/menu-demo",
-    ];
-    const isAllowedRoute = allowedOnboardingRoutes.some(
-      (route) => location.pathname === route,
-    );
+import { useEffect, type ReactNode } from "react";
+import {
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
+import "./App.css";
+import { GlobalUIStateProvider } from "./context/GlobalUIStateContext";
+import { OnboardingProvider } from "./context/OnboardingContext";
+import type { RestaurantRuntime } from "./context/RestaurantRuntimeContext";
+import { RestaurantRuntimeContext } from "./context/RestaurantRuntimeContext";
+import { deriveLifecycle } from "./core/lifecycle/Lifecycle";
+import { ShiftContext } from "./core/shift/ShiftContext";
+import { AppStaffMobileOnlyPage } from "./pages/AppStaff/AppStaffMobileOnlyPage";
+import { AppStaffWrapper } from "./pages/AppStaff/AppStaffWrapper";
+import { ManagerExcecoesPage } from "./pages/AppStaff/apps/alerts";
+import { KitchenDisplay } from "./pages/AppStaff/apps/kds";
+import { StaffProfilePage } from "./pages/AppStaff/apps/profile";
+import { ManagerTarefasPage } from "./pages/AppStaff/apps/tasks";
+import { ManagerEquipePage } from "./pages/AppStaff/apps/team";
+import { StaffTpvPage } from "./pages/AppStaff/apps/tpv";
+import { CleaningHome } from "./pages/AppStaff/homes/CleaningHome";
+import { KitchenHome } from "./pages/AppStaff/homes/KitchenHome";
+import { ManagerHome } from "./pages/AppStaff/homes/ManagerHome";
+import { OwnerHome } from "./pages/AppStaff/homes/OwnerHome";
+import { WaiterHome } from "./pages/AppStaff/homes/WaiterHome";
+import { ManagerTurnoPage } from "./pages/AppStaff/pages/ManagerTurnoPage";
+import { OperationModePage } from "./pages/AppStaff/pages/OperationModePage";
+import { StaffAppGate } from "./pages/AppStaff/routing/StaffAppGate";
+import { StaffAppShellLayout } from "./pages/AppStaff/routing/StaffAppShellLayout";
+import { StaffHomeRedirect } from "./pages/AppStaff/routing/StaffHomeRedirect";
+import { StaffIndexRedirect } from "./pages/AppStaff/routing/StaffIndexRedirect";
+import { BackofficePage } from "./pages/Backoffice/BackofficePage";
+import { BillingPage } from "./pages/Billing/BillingPage";
+import { BillingSuccessPage } from "./pages/Billing/BillingSuccessPage";
+import { BootstrapPage } from "./pages/BootstrapPage";
+import { CoreResetPage } from "./pages/CoreReset/CoreResetPage";
+import { DebugTPV } from "./pages/DebugTPV";
+import { HelpStartLocalPage } from "./pages/HelpStartLocalPage";
+import { InventoryStockMinimal } from "./pages/InventoryStock/InventoryStockMinimal";
+import { KDSMinimal } from "./pages/KDSMinimal/KDSMinimal";
+import { MenuBuilderMinimal } from "./pages/MenuBuilder/MenuBuilderMinimal";
+import { MenuCatalogPage } from "./pages/MenuCatalog/MenuCatalogPage";
+import { MenuCatalogPageV2 } from "./pages/MenuCatalog/MenuCatalogPageV2";
+import { OperacaoMinimal } from "./pages/Operacao/OperacaoMinimal";
+import { CustomerOrderStatusView } from "./pages/Public/CustomerOrderStatusView";
+import { PublicKDS } from "./pages/Public/PublicKDS";
+import { PublicWebPage } from "./pages/PublicWeb/PublicWebPage";
+import { TablePage } from "./pages/PublicWeb/TablePage";
+import { ShoppingListMinimal } from "./pages/ShoppingList/ShoppingListMinimal";
+import { TPVDemoPage } from "./pages/TPVMinimal/TPVDemoPage";
+import { TPVMinimal } from "./pages/TPVMinimal/TPVMinimal";
+import { TaskSystemMinimal } from "./pages/TaskSystem/TaskSystemMinimal";
 
-    if (
-      isDevStableMode() &&
-      location.pathname.startsWith("/onboarding") &&
-      !isAllowedRoute
-    ) {
-      // In DEV_STABLE_MODE, onboarding is intentionally blocked.
-      // Gate + Tenant selection should be tested in isolation first.
-      // Exception: tutorial routes are allowed.
-      return <Navigate to="/app/select-tenant" replace />;
-    }
+import { ManagementAdvisor } from "./components/onboarding/ManagementAdvisor";
+import { OperationalFullscreenWrapper } from "./components/operational/OperationalFullscreenWrapper";
+import { RequireOperational } from "./components/operational/RequireOperational";
+import { ShiftGate } from "./components/operational/ShiftGate";
+import { useGlobalUIState } from "./context/GlobalUIStateContext";
+import { RoleGate } from "./core/roles";
+import { ShiftGuard } from "./core/shift/ShiftGuard";
+import { AlertsDashboardPage } from "./pages/Alerts/AlertsDashboardPage";
+import { OwnerDashboard } from "./pages/AppStaff/OwnerDashboard";
+import { AuthPage } from "./pages/AuthPage";
+import { PhoneLoginPage } from "./pages/AuthPhone/PhoneLoginPage";
+import { VerifyCodePage } from "./pages/AuthPhone/VerifyCodePage";
+import { ConfigGeneralPage } from "./pages/Config/ConfigGeneralPage";
+import { ConfigIdentityPage } from "./pages/Config/ConfigIdentityPage";
+import { ConfigIntegrationsPage } from "./pages/Config/ConfigIntegrationsPage";
+import { ConfigLayout } from "./pages/Config/ConfigLayout";
+import { ConfigLocationPage } from "./pages/Config/ConfigLocationPage";
+import { ConfigModulesPage } from "./pages/Config/ConfigModulesPage";
+import { ConfigPaymentsPage } from "./pages/Config/ConfigPaymentsPage";
+import { ConfigPeoplePage } from "./pages/Config/ConfigPeoplePage";
+import { ConfigPerceptionPage } from "./pages/Config/ConfigPerceptionPage";
+import { ConfigSchedulePage } from "./pages/Config/ConfigSchedulePage";
+import { ConfigStatusPage } from "./pages/Config/ConfigStatusPage";
+import { UbicacionCreatePage } from "./pages/Config/UbicacionCreatePage";
+import { UbicacionEditPage } from "./pages/Config/UbicacionEditPage";
+import { UbicacionesPage } from "./pages/Config/UbicacionesPage";
+import { EmployeeHomePage } from "./pages/Employee/HomePage";
+import { EmployeeKDSIntelligentPage } from "./pages/Employee/KDSIntelligentPage";
+import { EmployeeMentorPage } from "./pages/Employee/MentorPage";
+import { EmployeeOperationPage } from "./pages/Employee/OperationPage";
+import { EmployeeTasksPage } from "./pages/Employee/TasksPage";
+import { FinancialDashboardPage } from "./pages/Financial/FinancialDashboardPage";
+import { GroupsDashboardPage } from "./pages/Groups/GroupsDashboardPage";
+import { HealthDashboardPage } from "./pages/Health/HealthDashboardPage";
+import { InstallPage } from "./pages/InstallPage";
+import { FeaturesPage } from "./pages/Landing/FeaturesPage";
+import { LandingPage } from "./pages/Landing/LandingPage";
+import { PricingPage } from "./pages/Landing/PricingPage";
+import { ProductFirstLandingPage } from "./pages/Landing/ProductFirstLandingPage";
+import { ManagerAnalysisPage } from "./pages/Manager/AnalysisPage";
+import { ManagerCentralPage } from "./pages/Manager/CentralPage";
+import { ManagerDashboardPage } from "./pages/Manager/DashboardPage";
+import { ManagerReservationsPage } from "./pages/Manager/ReservationsPage";
+import { ManagerScheduleCreatePage } from "./pages/Manager/ScheduleCreatePage";
+import { ManagerSchedulePage } from "./pages/Manager/SchedulePage";
+import { MentorDashboardPage } from "./pages/Mentor/MentorDashboardPage";
+import { OwnerPurchasesPage } from "./pages/Owner/PurchasesPage";
+import { OwnerSimulationPage } from "./pages/Owner/SimulationPage";
+import { OwnerStockRealPage } from "./pages/Owner/StockRealPage";
+import { OwnerVisionPage } from "./pages/Owner/VisionPage";
+import { PeopleDashboardPage } from "./pages/People/PeopleDashboardPage";
+import { TimeTrackingPage } from "./pages/People/TimeTrackingPage";
+import { PublishPage } from "./pages/PublishPage";
+import { PurchasesDashboardPage } from "./pages/Purchases/PurchasesDashboardPage";
+import { DailyClosingReportPage } from "./pages/Reports/DailyClosingReportPage";
+import { GamificationImpactReportPage } from "./pages/Reports/GamificationImpactReportPage";
+import { OperationalActivityReportPage } from "./pages/Reports/OperationalActivityReportPage";
+import { SalesByPeriodReportPage } from "./pages/Reports/SalesByPeriodReportPage";
+import { SalesSummaryReportPage } from "./pages/Reports/SalesSummaryReportPage";
+import { ReservationsDashboardPage } from "./pages/Reservations/ReservationsDashboardPage";
+import { RunbookCorePage } from "./pages/RunbookCorePage";
+import { SelectTenantPage } from "./pages/SelectTenantPage";
+import { RestaurantMinimalSetupPage } from "./pages/Setup/RestaurantMinimalSetupPage";
+import { SystemTreePage } from "./pages/SystemTree/SystemTreePage";
+import { RecurringTasksPage } from "./pages/Tasks/RecurringTasksPage";
+import { TaskDashboardPage } from "./pages/Tasks/TaskDashboardPage";
+import { TaskDetailPage } from "./pages/Tasks/TaskDetailPage";
+import { BillingBanner } from "./ui/billing/BillingBanner";
+import { BillingBlockedView } from "./ui/billing/BillingBlockedView";
+import { CoreUnavailableBanner } from "./ui/design-system/CoreUnavailableBanner";
+import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
+import { ModeIndicator } from "./ui/design-system/ModeIndicator";
+import { GlobalBlockedView } from "./ui/design-system/components/GlobalBlockedView";
 
-    return null;
-  };
+import { FlowGate } from "./core/flow/FlowGate";
+import { EventMonitorBootstrap } from "./core/tasks/EventMonitorBootstrap";
+import { CatalogAssignmentsPage } from "./features/admin/catalog/pages/CatalogAssignmentsPage";
+import { CatalogListPage } from "./features/admin/catalog/pages/CatalogListPage";
+import { CombosPage } from "./features/admin/catalog/pages/CombosPage";
+import { ModifiersPage } from "./features/admin/catalog/pages/ModifiersPage";
+import { ProductsPage } from "./features/admin/catalog/pages/ProductsPage";
+import { TranslationsPage } from "./features/admin/catalog/pages/TranslationsPage";
+import { ClosuresPage } from "./features/admin/closures/pages/ClosuresPage";
+import { AdminConfigLayout } from "./features/admin/config/components/AdminConfigLayout";
+import { DeliveryConfigPage } from "./features/admin/config/pages/DeliveryConfigPage";
+import { DispositivosConfigPage } from "./features/admin/config/pages/DispositivosConfigPage";
+import { EmpleadosConfigPage } from "./features/admin/config/pages/EmpleadosConfigPage";
+import { EntidadesLegalesConfigPage } from "./features/admin/config/pages/EntidadesLegalesConfigPage";
+import { GeneralConfigPage } from "./features/admin/config/pages/GeneralConfigPage";
+import { ImpresorasConfigPage } from "./features/admin/config/pages/ImpresorasConfigPage";
+import { IntegracionesConfigPage } from "./features/admin/config/pages/IntegracionesConfigPage";
+import { MarcasConfigPage } from "./features/admin/config/pages/MarcasConfigPage";
+import { ProductosConfigPage } from "./features/admin/config/pages/ProductosConfigPage";
+import { ReservasConfigPage } from "./features/admin/config/pages/ReservasConfigPage";
+import { SoftwareTpvConfigPage } from "./features/admin/config/pages/SoftwareTpvConfigPage";
+import { SuscripcionConfigPage } from "./features/admin/config/pages/SuscripcionConfigPage";
+import { UbicacionesConfigPage } from "./features/admin/config/pages/UbicacionesConfigPage";
+import { UsuariosConfigPage } from "./features/admin/config/pages/UsuariosConfigPage";
+import { CustomerDetailPage } from "./features/admin/customers/pages/CustomerDetailPage";
+import { CustomersPage } from "./features/admin/customers/pages/CustomersPage";
+import { DashboardLayout } from "./features/admin/dashboard/components/DashboardLayout";
+import { AdminPlaceholderPage } from "./features/admin/dashboard/pages/AdminPlaceholderPage";
+import { DashboardHomePage } from "./features/admin/dashboard/pages/DashboardHomePage";
+import { ModulesPage } from "./features/admin/modules/pages/ModulesPage";
+import { PaymentsLayout } from "./features/admin/payments/pages/PaymentsLayout";
+import { PayoutsPage } from "./features/admin/payments/pages/PayoutsPage";
+import { TransactionsPage } from "./features/admin/payments/pages/TransactionsPage";
+import { PromotionsPage } from "./features/admin/promotions/pages/PromotionsPage";
+import { AdminReportsOverview } from "./features/admin/reports/AdminReportsOverview";
 
+/** NAVIGATION_OPERATIONAL_CONTRACT: quando mode=demo, TPV sem RequireOperational; senão app normal. */
+function TPVRouteHandler() {
+  const [searchParams] = useSearchParams();
+  if (searchParams.get("mode") === "demo") {
+    return <TPVDemoPage />;
+  }
+  return <AppOperationalWrapper />;
+}
+
+// =============================================================================
+// PUBLIC TREE (SEM AUTH) — providers mínimos para / e /op/tpv?mode=demo
+// =============================================================================
+const DEMO_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
+const demoRuntime: RestaurantRuntime = {
+  restaurant_id: DEMO_RESTAURANT_ID,
+  mode: "onboarding",
+  productMode: "demo",
+  installed_modules: [],
+  active_modules: [],
+  plan: "basic",
+  status: "onboarding",
+  billing_status: "trial",
+  capabilities: {},
+  setup_status: {},
+  isPublished: false,
+  lifecycle: deriveLifecycle(DEMO_RESTAURANT_ID, false, false),
+  loading: false,
+  error: null,
+  coreReachable: true,
+};
+const demoRuntimeContextValue = {
+  runtime: demoRuntime,
+  refresh: async () => {},
+  updateSetupStatus: async () => {},
+  publishRestaurant: async () => {},
+  installModule: async () => {},
+  setProductMode: () => {},
+};
+const demoShiftValue = {
+  isShiftOpen: true,
+  isChecking: false,
+  lastCheckedAt: new Date(),
+  refreshShiftStatus: async () => {},
+};
+
+function PublicProviders({ children }: { children: ReactNode }) {
   return (
-    <FeatureFlagProvider>
-      <HelmetProvider>
-        <SystemGuardianProvider>
-          <ErrorBoundary context="AppRoot">
-            {devStable ? (
-              <>
-                {/* DEV_STABLE_MODE: onboarding must not mount (no side effects). */}
-                <DevStableEntryGate />
-                <Routes>
-                  {/* 1. PUBLIC */}
-                  <Route
-                    path="/public/*"
-                    element={
-                      <SovereignBoundary>
-                        <Suspense fallback={<div>Carregando Cardápio...</div>}>
-                          <PublicPages />
-                        </Suspense>
-                      </SovereignBoundary>
-                    }
-                  />
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/health" element={<HealthCheckPage />} />
-                  <Route path="/auth" element={<AuthPage />} />
-                  {/* 🐞 DEBUG: Manual TPV Access */}
-                  <Route path="/debug-tpv" element={<DebugTPV />} />
+    <RestaurantRuntimeContext.Provider value={demoRuntimeContextValue}>
+      <ShiftContext.Provider value={demoShiftValue}>
+        <GlobalUIStateProvider>{children}</GlobalUIStateProvider>
+      </ShiftContext.Provider>
+    </RestaurantRuntimeContext.Provider>
+  );
+}
 
-                  {/* Legacy redirects - manter compatibilidade temporária */}
-                  <Route
-                    path="/login"
-                    element={<Navigate to="/auth" replace />}
-                  />
-                  <Route
-                    path="/signup"
-                    element={<Navigate to="/auth" replace />}
-                  />
-                  <Route path="/join" element={<ScreenInviteCode />} />
-                  {/* DEV_STABLE_MODE: onboarding routes blocked (redirect handled by DevStableEntryGate) */}
-                  <Route
-                    path="/start"
-                    element={<Navigate to="/app/select-tenant" replace />}
-                  />
-                  {/* FASE 2: Permitir rotas de tutorial mesmo em devStable */}
-                  <Route
-                    path="/onboarding/first-sale-guide"
-                    element={<FirstSaleGuide />}
-                  />
-                  <Route path="/onboarding/menu-demo" element={<MenuDemo />} />
-                  <Route
-                    path="/onboarding/*"
-                    element={<Navigate to="/app/select-tenant" replace />}
-                  />
+/** /op/tpv: se mode=demo → TPV demo (árvore pública); senão → redirect /auth (árvore de app). */
+function TPVDemoGate() {
+  const [searchParams] = useSearchParams();
+  if (searchParams.get("mode") === "demo") {
+    return (
+      <PublicProviders>
+        <TPVDemoPage />
+      </PublicProviders>
+    );
+  }
+  return <Navigate to="/auth" replace />;
+}
 
-                  <Route
-                    path="/migration/wizard"
-                    element={<MigrationWizard />}
+function App() {
+  return (
+    <ErrorBoundary context="Root">
+      {/* <PublicLifecycleSync /> */}
+      <BillingsPreloader />
+      <Routes>
+        {/* Public / Landing — canónica: / e /landing = mesma Landing Operacional */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/landing" element={<Navigate to="/" replace />} />
+        <Route path="/app/demo-tpv" element={<ProductFirstLandingPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/features" element={<FeaturesPage />} />
+        {/* Demo: redireccionado para auth (demo-guiado removido em refactor pós-freeze). */}
+        <Route path="/demo" element={<Navigate to="/auth" replace />} />
+        <Route path="/demo-guiado" element={<Navigate to="/auth" replace />} />
+
+        {/* Auth / Onboarding Redirects */}
+        <Route path="/login" element={<Navigate to="/auth/phone" replace />} />
+        <Route path="/signup" element={<Navigate to="/auth/phone" replace />} />
+        <Route
+          path="/forgot-password"
+          element={<Navigate to="/auth/email" replace />}
+        />
+        <Route path="/auth" element={<Navigate to="/auth/phone" replace />} />
+        <Route path="/auth/phone" element={<PhoneLoginPage />} />
+        <Route path="/auth/verify" element={<VerifyCodePage />} />
+        <Route path="/auth/email" element={<AuthPage />} />
+        <Route path="/bootstrap" element={<BootstrapPage />} />
+        <Route
+          path="/setup/restaurant-minimal"
+          element={<RestaurantMinimalSetupPage />}
+        />
+
+        {/* Core Operations */}
+        <Route path="/billing/success" element={<BillingSuccessPage />} />
+        <Route path="/help/start-local" element={<HelpStartLocalPage />} />
+
+        {/* Menu: catálogo visual de decisão (spec MENU_CATALOG_VISUAL_SPEC) */}
+        <Route path="/menu" element={<MenuCatalogPage />} />
+        <Route path="/menu-v2" element={<MenuCatalogPageV2 />} />
+
+        {/* App Content (Management/Operational) */}
+        <Route path="/*" element={<AppOperationalWrapper />} />
+      </Routes>
+    </ErrorBoundary>
+  );
+}
+
+function BillingsPreloader() {
+  // Se precisarmos pré-carregar algo globalmente
+  return (
+    <>
+      <ModeIndicator />
+      <CoreUnavailableBanner />
+    </>
+  );
+}
+
+/** APPLICATION_BOOT_CONTRACT: MANAGEMENT/OPERATIONAL — Apenas Guards para rotas que precisam de Core. */
+function AppOperationalWrapper() {
+  return (
+    <FlowGate>
+      <ShiftGuard>
+        <AppContentWithBilling />
+      </ShiftGuard>
+    </FlowGate>
+  );
+}
+
+const LAST_ROUTE_KEY = "chefiapp_lastRoute";
+const LAST_ROUTE_ALLOWED = [
+  "/dashboard",
+  "/app/dashboard",
+  "/config",
+  "/op/tpv",
+  "/op/kds",
+  "/op/cash",
+];
+const CRITICAL_BILLING_ROUTES = ["/op/tpv", "/op/kds", "/op/cash"];
+
+function AppContentWithBilling() {
+  const { isBillingBlocked, billingStatus } = useGlobalUIState();
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = location.pathname;
+    if (LAST_ROUTE_ALLOWED.includes(path)) {
+      try {
+        sessionStorage.setItem(LAST_ROUTE_KEY, path);
+      } catch {
+        // ignore
+      }
+    }
+  }, [location.pathname]);
+
+  const isBillingManagement = location.pathname.startsWith("/app/billing");
+
+  if (isBillingBlocked && !isBillingManagement) {
+    return <BillingBlockedView />;
+  }
+
+  if (
+    billingStatus === "past_due" &&
+    CRITICAL_BILLING_ROUTES.includes(location.pathname) &&
+    !isBillingManagement
+  ) {
+    return (
+      <GlobalBlockedView
+        title="Pagamento pendente"
+        description="Regularize a faturação para continuar a usar o TPV e o KDS."
+        action={{ label: "Ir à Faturação", to: "/app/billing" }}
+      />
+    );
+  }
+
+  const isDashboard =
+    location.pathname === "/dashboard" ||
+    location.pathname === "/app/dashboard";
+  const isOperationalSurface =
+    location.pathname.startsWith("/op/tpv") ||
+    location.pathname.startsWith("/op/kds");
+  const isStaffLauncher =
+    location.pathname === "/app/staff/home" ||
+    location.pathname.startsWith("/app/staff/home/") ||
+    location.pathname === "/app/staff" ||
+    location.pathname === "/app/staff/";
+  return (
+    <>
+      <EventMonitorBootstrap />
+      {!isDashboard && !isOperationalSurface && !isStaffLauncher && (
+        <BillingBanner />
+      )}
+      <ModeIndicator />
+      <CoreUnavailableBanner />
+      <Routes>
+        <Route path="/public/:slug" element={<PublicWebPage />} />
+        <Route path="/public/:slug/mesa/:number" element={<TablePage />} />
+        <Route
+          path="/public/:slug/order/:orderId"
+          element={<CustomerOrderStatusView />}
+        />
+        <Route path="/public/:slug/kds" element={<PublicKDS />} />
+
+        <Route path="/bootstrap" element={<BootstrapPage />} />
+        <Route path="/app/select-tenant" element={<SelectTenantPage />} />
+        {/* App operacional único: /app → home do shell (Home | Operação | TPV | KDS | Mais) */}
+        <Route
+          path="/app"
+          element={<Navigate to="/app/staff/home" replace />}
+        />
+
+        <Route element={<RoleGate />}>
+          <Route
+            path="/op/tpv/*"
+            element={
+              <ErrorBoundary
+                context="TPV"
+                fallback={
+                  <GlobalBlockedView
+                    title="TPV indisponível"
+                    description="O módulo de caixa encontrou um erro. Recarregue a tela para retomar as vendas."
+                    action={{
+                      label: "Recarregar",
+                      onClick: () => window.location.reload(),
+                    }}
                   />
-                  <Route
-                    path="/activation"
-                    element={
-                      <OnboardingProvider>
-                        <ActivationPage />
-                      </OnboardingProvider>
-                    }
+                }
+              >
+                <ShiftGate>
+                  <OperationalFullscreenWrapper>
+                    <TPVMinimal />
+                  </OperationalFullscreenWrapper>
+                </ShiftGate>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/op/kds"
+            element={
+              <ErrorBoundary
+                context="KDS"
+                fallback={
+                  <GlobalBlockedView
+                    title="KDS indisponível"
+                    description="O módulo de cozinha encontrou um erro. Recarregue a tela para continuar o preparo."
+                    action={{
+                      label: "Recarregar",
+                      onClick: () => window.location.reload(),
+                    }}
                   />
+                }
+              >
+                <OperationalFullscreenWrapper>
+                  <KDSMinimal />
+                </OperationalFullscreenWrapper>
+              </ErrorBoundary>
+            }
+          />
+          <Route path="/op/cash" element={<Navigate to="/op/tpv" replace />} />
+          <Route path="/op/staff" element={<AppStaffMobileOnlyPage />} />
+          <Route path="/tpv" element={<Navigate to="/op/tpv" replace />} />
+          <Route
+            path="/kds-minimal"
+            element={<Navigate to="/op/kds" replace />}
+          />
+          <Route path="/kds" element={<Navigate to="/op/kds" replace />} />
+          <Route
+            path="/tpv-minimal"
+            element={<Navigate to="/op/tpv" replace />}
+          />
 
-                  {/* 🍳 KDS STANDALONE — Cozinha Independente (Tablet/TV) */}
-                  {/* ROTA: /kds/:restaurantId - Funciona sem AppLayout, sem FlowGate */}
-                  <Route
-                    path="/kds/:restaurantId"
-                    element={
-                      <Suspense
-                        fallback={
-                          <div
-                            style={{
-                              minHeight: "100vh",
-                              background: "#0a0a0a",
-                              color: "#fff",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <div style={{ textAlign: "center" }}>
-                              <div style={{ fontSize: 48, marginBottom: 16 }}>
-                                🍳
-                              </div>
-                              <p>Carregando KDS...</p>
-                            </div>
-                          </div>
-                        }
-                      >
-                        <KDSStandalone />
-                      </Suspense>
-                    }
+          <Route
+            path="/dashboard"
+            element={<Navigate to="/admin/reports/overview" replace />}
+          />
+          <Route
+            path="/app/dashboard"
+            element={<Navigate to="/admin/reports/overview" replace />}
+          />
+          <Route path="/app/runbook-core" element={<RunbookCorePage />} />
+          <Route path="/menu-builder" element={<MenuBuilderMinimal />} />
+          <Route
+            path="/operacao"
+            element={
+              <ErrorBoundary
+                context="Pedidos"
+                fallback={
+                  <GlobalBlockedView
+                    title="Pedidos indisponíveis"
+                    description="O módulo de pedidos encontrou um erro. Recarregue a tela para continuar o atendimento."
+                    action={{
+                      label: "Recarregar",
+                      onClick: () => window.location.reload(),
+                    }}
                   />
+                }
+              >
+                <RequireOperational>
+                  <OperacaoMinimal />
+                </RequireOperational>
+              </ErrorBoundary>
+            }
+          />
+          <Route path="/inventory-stock" element={<InventoryStockMinimal />} />
+          <Route path="/task-system" element={<TaskSystemMinimal />} />
+          <Route path="/shopping-list" element={<ShoppingListMinimal />} />
+          <Route
+            path="/tpv-test"
+            element={
+              <RequireOperational surface="TPV">
+                <DebugTPV />
+              </RequireOperational>
+            }
+          />
+          <Route path="/garcom" element={<AppStaffMobileOnlyPage />} />
+          <Route
+            path="/garcom/mesa/:tableId"
+            element={<AppStaffMobileOnlyPage />}
+          />
+          <Route
+            path="/app/backoffice"
+            element={
+              <ManagementAdvisor>
+                <BackofficePage />
+              </ManagementAdvisor>
+            }
+          />
+          {/* AppStaff: /app/staff → redirect para /app/staff/home; rotas do shell para evitar cair em /app/dashboard (reports). */}
+          <Route path="/app/staff" element={<AppStaffWrapper />}>
+            <Route index element={<StaffIndexRedirect />} />
+            <Route
+              path="home"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <Outlet />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            >
+              <Route index element={<StaffHomeRedirect />} />
+              <Route path="owner" element={<OwnerHome />} />
+              <Route path="manager" element={<ManagerHome />} />
+              <Route path="waiter" element={<WaiterHome />} />
+              <Route path="kitchen" element={<KitchenHome />} />
+              <Route path="cleaning" element={<CleaningHome />} />
+            </Route>
+            <Route
+              path="mode/operation"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <OperationModePage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="mode/turn"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <ManagerTurnoPage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="mode/team"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <ManagerEquipePage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="mode/tpv"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <StaffTpvPage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="mode/kds"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <KitchenDisplay />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="mode/tasks"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <ManagerTarefasPage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="mode/alerts"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <ManagerExcecoesPage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+            <Route
+              path="profile"
+              element={
+                <StaffAppGate>
+                  <StaffAppShellLayout>
+                    <StaffProfilePage />
+                  </StaffAppShellLayout>
+                </StaffAppGate>
+              }
+            />
+          </Route>
+          {/* Control Room não é app separado: visão dono/gerente vive em Home/Operação */}
+          <Route
+            path="/app/control-room"
+            element={<Navigate to="/app/staff/mode/operation" replace />}
+          />
+          <Route
+            path="/app/setup/menu"
+            element={<Navigate to="/menu-builder" replace />}
+          />
+          {/* /app/menu-builder: destino final direto (sem tela intermédia "Core Conectado"). */}
+          <Route
+            path="/app/menu-builder"
+            element={<Navigate to="/menu-builder" replace />}
+          />
+          <Route
+            path="/app/setup/mesas"
+            element={<Navigate to="/operacao" replace />}
+          />
+          <Route
+            path="/app/setup/equipe"
+            element={<Navigate to="/config/people" replace />}
+          />
+          <Route
+            path="/app/setup/horarios"
+            element={<Navigate to="/config/schedule" replace />}
+          />
+          <Route
+            path="/app/setup/pagamentos"
+            element={<Navigate to="/config/payments" replace />}
+          />
+          <Route
+            path="/app/setup/tpv"
+            element={<Navigate to="/op/tpv" replace />}
+          />
+          <Route
+            path="/app/setup/kds"
+            element={<Navigate to="/op/kds" replace />}
+          />
+          <Route
+            path="/app/setup/estoque"
+            element={<Navigate to="/inventory-stock" replace />}
+          />
+          <Route
+            path="/app/setup/preferencias"
+            element={<Navigate to="/config" replace />}
+          />
+          <Route
+            path="/employee/home"
+            element={
+              <ManagementAdvisor>
+                <EmployeeHomePage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/employee/tasks"
+            element={
+              <ManagementAdvisor>
+                <EmployeeTasksPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/employee/operation"
+            element={
+              <ManagementAdvisor>
+                <EmployeeOperationPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/employee/operation/kitchen"
+            element={
+              <ManagementAdvisor>
+                <EmployeeKDSIntelligentPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/employee/mentor"
+            element={
+              <ManagementAdvisor>
+                <EmployeeMentorPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/manager/dashboard"
+            element={
+              <ManagementAdvisor>
+                <ManagerDashboardPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/manager/central"
+            element={
+              <ManagementAdvisor>
+                <ManagerCentralPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/manager/analysis"
+            element={
+              <ManagementAdvisor>
+                <ManagerAnalysisPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/manager/schedule"
+            element={
+              <ManagementAdvisor>
+                <ManagerSchedulePage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/manager/schedule/create"
+            element={
+              <ManagementAdvisor>
+                <ManagerScheduleCreatePage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/manager/reservations"
+            element={
+              <ManagementAdvisor>
+                <ManagerReservationsPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/owner/dashboard"
+            element={
+              <ManagementAdvisor>
+                <OwnerDashboard />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/owner/vision"
+            element={
+              <ManagementAdvisor>
+                <OwnerVisionPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/owner/stock"
+            element={
+              <ManagementAdvisor>
+                <OwnerStockRealPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/owner/simulation"
+            element={
+              <ManagementAdvisor>
+                <OwnerSimulationPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/owner/purchases"
+            element={
+              <ManagementAdvisor>
+                <OwnerPurchasesPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin"
+            element={<Navigate to="/admin/reports/overview" replace />}
+          />
+          <Route
+            path="/admin/home"
+            element={
+              <ManagementAdvisor>
+                <DashboardHomePage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/clients"
+            element={<Navigate to="/admin/customers" replace />}
+          />
+          <Route
+            path="/admin/customers"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <CustomersPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/customers/:id"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <CustomerDetailPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/closures"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <ClosuresPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/reservations"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <ReservationsDashboardPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/payments/list"
+            element={<Navigate to="/admin/payments/transactions" replace />}
+          />
+          <Route
+            path="/admin/payments/refunds"
+            element={
+              <ManagementAdvisor>
+                <AdminPlaceholderPage
+                  title="Pagos eliminados / Reembolsos"
+                  message="Em breve."
+                />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/payments/pending"
+            element={
+              <ManagementAdvisor>
+                <AdminPlaceholderPage
+                  title="Pagos pendentes"
+                  message="Em breve."
+                />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/payments"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <PaymentsLayout />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          >
+            <Route index element={<Navigate to="transactions" replace />} />
+            <Route path="transactions" element={<TransactionsPage />} />
+            <Route path="payouts" element={<PayoutsPage />} />
+          </Route>
+          <Route
+            path="/admin/promotions"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <PromotionsPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/catalogs"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <CatalogListPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/catalog-assignments"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <CatalogAssignmentsPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/products"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <ProductsPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/modules"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <ModulesPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/catalog/products"
+            element={<Navigate to="/admin/products" replace />}
+          />
+          <Route
+            path="/admin/modifiers"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <ModifiersPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/combos"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <CombosPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/translations"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <TranslationsPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/catalog"
+            element={<Navigate to="/admin/products" replace />}
+          />
+          <Route
+            path="/admin/reports/overview"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <AdminReportsOverview />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/reports/sales"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <SalesByPeriodReportPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/reports/staff"
+            element={
+              <ManagementAdvisor>
+                <AdminPlaceholderPage
+                  title="Reportes — Staff"
+                  message="Em breve."
+                />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/reports/operations"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <OperationalActivityReportPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/reports/human-performance"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <GamificationImpactReportPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/reports"
+            element={<Navigate to="/admin/reports/overview" replace />}
+          />
+          <Route
+            path="/admin/devices"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <InstallPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={<Navigate to="/admin/config" replace />}
+          />
+          <Route
+            path="/admin/config"
+            element={
+              <ManagementAdvisor>
+                <OnboardingProvider>
+                  <DashboardLayout>
+                    <AdminConfigLayout />
+                  </DashboardLayout>
+                </OnboardingProvider>
+              </ManagementAdvisor>
+            }
+          >
+            <Route index element={<Navigate to="general" replace />} />
+            <Route path="general" element={<GeneralConfigPage />} />
+            <Route path="productos" element={<ProductosConfigPage />} />
+            <Route path="suscripcion" element={<SuscripcionConfigPage />} />
+            <Route path="ubicaciones" element={<UbicacionesConfigPage />} />
+            <Route
+              path="ubicaciones/address"
+              element={<UbicacionesConfigPage />}
+            />
+            <Route
+              path="ubicaciones/tables"
+              element={<UbicacionesConfigPage />}
+            />
+            <Route
+              path="entidades-legales"
+              element={<EntidadesLegalesConfigPage />}
+            />
+            <Route path="marcas" element={<MarcasConfigPage />} />
+            <Route path="usuarios" element={<UsuariosConfigPage />} />
+            <Route path="dispositivos" element={<DispositivosConfigPage />} />
+            <Route path="impresoras" element={<ImpresorasConfigPage />} />
+            <Route path="integraciones" element={<IntegracionesConfigPage />} />
+            <Route path="delivery" element={<DeliveryConfigPage />} />
+            <Route
+              path="delivery/plano-mesas"
+              element={<DeliveryConfigPage />}
+            />
+            <Route path="delivery/horarios" element={<DeliveryConfigPage />} />
+            <Route path="delivery/qr" element={<DeliveryConfigPage />} />
+            <Route path="empleados" element={<EmpleadosConfigPage />} />
+            <Route
+              path="empleados/employees"
+              element={<EmpleadosConfigPage />}
+            />
+            <Route path="empleados/roles" element={<EmpleadosConfigPage />} />
+            <Route path="software-tpv" element={<SoftwareTpvConfigPage />} />
+            <Route
+              path="software-tpv/config"
+              element={<SoftwareTpvConfigPage />}
+            />
+            <Route
+              path="software-tpv/modo-rapido"
+              element={<SoftwareTpvConfigPage />}
+            />
+            <Route path="reservas" element={<ReservasConfigPage />} />
+            <Route
+              path="reservas/disponibilidad"
+              element={<ReservasConfigPage />}
+            />
+            <Route path="reservas/garantia" element={<ReservasConfigPage />} />
+            <Route path="reservas/turnos" element={<ReservasConfigPage />} />
+            <Route path="reservas/mensajes" element={<ReservasConfigPage />} />
+          </Route>
+          <Route path="/config" element={<ConfigLayout />}>
+            <Route index element={<Navigate to="/config/general" replace />} />
+            <Route path="general" element={<ConfigGeneralPage />} />
+            <Route path="identity" element={<ConfigIdentityPage />} />
+            <Route path="location" element={<ConfigLocationPage />} />
+            <Route path="ubicaciones" element={<UbicacionesPage />} />
+            <Route path="ubicaciones/nova" element={<UbicacionCreatePage />} />
+            <Route path="ubicaciones/:id" element={<UbicacionEditPage />} />
+            <Route path="location/address" element={<ConfigLocationPage />} />
+            <Route path="location/tables" element={<ConfigLocationPage />} />
+            <Route path="schedule" element={<ConfigSchedulePage />} />
+            <Route path="schedule/hours" element={<ConfigSchedulePage />} />
+            <Route path="people" element={<ConfigPeoplePage />} />
+            <Route path="people/employees" element={<ConfigPeoplePage />} />
+            <Route path="people/roles" element={<ConfigPeoplePage />} />
+            <Route path="payments" element={<ConfigPaymentsPage />} />
+            <Route path="integrations" element={<ConfigIntegrationsPage />} />
+            <Route path="modules" element={<ConfigModulesPage />} />
+            <Route path="perception" element={<ConfigPerceptionPage />} />
+            <Route path="status" element={<ConfigStatusPage />} />
+          </Route>
+          <Route path="/system-tree" element={<SystemTreePage />} />
+          <Route
+            path="/tasks"
+            element={
+              <ManagementAdvisor>
+                <TaskDashboardPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/tasks/:taskId"
+            element={
+              <ManagementAdvisor>
+                <TaskDetailPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/tasks/recurring"
+            element={
+              <ManagementAdvisor>
+                <RecurringTasksPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/people"
+            element={
+              <ManagementAdvisor>
+                <PeopleDashboardPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/people/time"
+            element={
+              <ManagementAdvisor>
+                <TimeTrackingPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/health"
+            element={
+              <ManagementAdvisor>
+                <HealthDashboardPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/alerts"
+            element={
+              <ManagementAdvisor>
+                <AlertsDashboardPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/mentor"
+            element={
+              <ManagementAdvisor>
+                <MentorDashboardPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/purchases"
+            element={
+              <ManagementAdvisor>
+                <PurchasesDashboardPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/financial"
+            element={
+              <ManagementAdvisor>
+                <FinancialDashboardPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/reservations"
+            element={
+              <ManagementAdvisor>
+                <ReservationsDashboardPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/groups"
+            element={
+              <ManagementAdvisor>
+                <GroupsDashboardPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/app/billing"
+            element={
+              <ManagementAdvisor>
+                <BillingPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/app/publish"
+            element={
+              <ManagementAdvisor>
+                <PublishPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/app/install"
+            element={
+              <ManagementAdvisor>
+                <InstallPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/app/reports/daily-closing"
+            element={
+              <ManagementAdvisor>
+                <DailyClosingReportPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/app/reports/sales-by-period"
+            element={
+              <ManagementAdvisor>
+                <SalesByPeriodReportPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/app/reports/sales-summary"
+            element={
+              <ManagementAdvisor>
+                <SalesSummaryReportPage />
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/app/reports/finance"
+            element={<Navigate to="/financial" replace />}
+          />
+          {/* Página Web (sidebar) → Dashboard (comando central; em SETUP mostra "Complete o setup"). Não usar /config (onboarding antigo morto). */}
+          <Route
+            path="/app/web/preview"
+            element={<Navigate to="/dashboard" replace />}
+          />
 
-                  {/* AUTH GATE (Session Only) - Redundant with FlowGate but explicit for clarity */}
-                  <Route path="/bootstrap" element={<BootstrapPage />} />
-
-                  {/* CONTENT HUB (Totally different layout) */}
-                  <Route path="/read" element={<ReaderLayout />}>
-                    <Route index element={<LibraryPage />} />
-                    <Route path=":slug" element={<ArticlePage />} />
-                  </Route>
-
-                  <Route
-                    path="/app"
-                    element={
-                      <FlowGate>
-                        <TenantProvider>
-                          <AppDomainWrapper>
-                            <RequireActivation>
-                              <ThemeEngine />
-                              <Outlet />
-                              {/* <AppLayout /> MOVED TO SUB-ROUTE */}
-                            </RequireActivation>
-                          </AppDomainWrapper>
-                        </TenantProvider>
-                      </FlowGate>
-                    }
-                  >
-                    {/* 1. ADMIN PANEL (Dashboard + Management) - Uses Sidebar/Header */}
-                    <Route
-                      element={
-                        <>
-                          <AppLayout />
-                          <BetaFeedbackWidget />
-                        </>
-                      }
-                    >
-                      {/* 🎯 /app sem subrota → Dashboard (FlowGate já validou auth) */}
-                      <Route
-                        index
-                        element={<Navigate to="/app/dashboard" replace />}
-                      />
-
-                      {/* [Phase 2] Multi-Tenant Routes */}
-                      <Route
-                        path="select-tenant"
-                        element={<SelectTenantPage />}
-                      />
-                      <Route
-                        path="access-denied"
-                        element={<AccessDeniedPage />}
-                      />
-
-                      {/* [Opus 6.0] Operation Status Screens */}
-                      <Route path="paused" element={<SystemPausedPage />} />
-                      <Route
-                        path="suspended"
-                        element={<SystemSuspendedPage />}
-                      />
-                      <Route
-                        path="operation-status"
-                        element={<OperationStatusPage />}
-                      />
-
-                      {/* 🛡️ OPERATION GATE: Enforces active/paused/suspended state */}
-                      <Route element={<OperationGate />}>
-                        {/* Command Center */}
-                        <Route
-                          path="dashboard"
-                          element={
-                            <Suspense
-                              fallback={
-                                <div style={{ padding: 40, color: "#32d74b" }}>
-                                  💿 Sincronizando Mapa Soberano...
-                                </div>
-                              }
-                            >
-                              <DashboardZero />
-                            </Suspense>
-                          }
-                        />
-
-                        <Route
-                          path="menu"
-                          element={
-                            <GuardTool tool="menu">
-                              <Suspense fallback={<div>Loading Menu...</div>}>
-                                <MenuManager />
-                              </Suspense>
-                            </GuardTool>
-                          }
-                        />
-                        <Route
-                          path="menu/bootstrap"
-                          element={<MenuBootstrapPage />}
-                        />
-
-                        {/* Settings & Reports */}
-                        <Route
-                          path="settings"
-                          element={
-                            <Suspense fallback={<div>Loading Settings...</div>}>
-                              <Settings />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="settings/billing"
-                          element={
-                            <Suspense fallback={<div>Loading Billing...</div>}>
-                              <BillingPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="settings/sovereignty"
-                          element={
-                            <GuardTool tool="sovereignty">
-                              <Suspense
-                                fallback={<div>Loading Sovereignty...</div>}
-                              >
-                                <SovereigntyDashboard />
-                              </Suspense>
-                            </GuardTool>
-                          }
-                        />
-                        <Route
-                          path="settings/advanced-setup"
-                          element={<AdvancedSetupPage />}
-                        />
-                        <Route
-                          path="settings/connectors"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ConnectorSettings />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/daily-closing"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <DailyClosing />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/z-report/:id"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ZReportPrint />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/finance"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <FinanceDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/delivery"
-                          element={
-                            <Suspense fallback={<div>Loading DLQ...</div>}>
-                              <DeliveryMonitor />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="team"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <StaffPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="store/tpv-kits"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <TPVKitsPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="web/preview"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <RestaurantWebPreviewPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="local-boss"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <LocalBossPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="govern"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <GovernOverviewPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="govern-manage"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <GovernManageDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reservations"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ReservationsDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reputation-hub"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ReputationHubDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="operational-hub"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <OperationalHubDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="portioning"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <PortioningDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="performance"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <PerformanceDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="multi-location"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <RestaurantGroupManager />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="multi-location/:groupId/dashboard"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <GroupDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="organization"
-                          element={
-                            <Suspense
-                              fallback={<div>Loading Enterprise...</div>}
-                            >
-                              <OrganizationDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="crm"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <CustomersPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="loyalty"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <LoyaltyPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route path="audit" element={<SystemStatusPage />} />
-                        <Route
-                          path="evolve"
-                          element={
-                            <Suspense
-                              fallback={<div>Loading Evolve Hub...</div>}
-                            >
-                              <EvolveHub />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="coming-soon"
-                          element={<ComingSoonPage />}
-                        />
-                      </Route>
-                    </Route>
-
-                    {/* 2. DEDICATED TOOLS (TPV, KDS, Orders) - NO AppLayout / Sidebar */}
-                    {/* These run in "Fullscreen" or "App Mode" */}
-                    <Route element={<OperationGate />}>
-                      <Route
-                        path="tpv"
-                        element={
-                          <GuardTool tool="tpv">
-                            <Suspense fallback={<div>Loading TPV...</div>}>
-                              <TPV />
-                            </Suspense>
-                          </GuardTool>
-                        }
-                      />
-                      <Route
-                        path="kds"
-                        element={
-                          <GuardTool tool="kds">
-                            <Suspense fallback={<div>Loading KDS...</div>}>
-                              <KDS />
-                            </Suspense>
-                          </GuardTool>
-                        }
-                      />
-                      <Route
-                        path="orders"
-                        element={
-                          <GuardTool tool="orders">
-                            <Suspense fallback={<div>Loading Orders...</div>}>
-                              <PulseList />
-                            </Suspense>
-                          </GuardTool>
-                        }
-                      />
-                      <Route
-                        path="staff"
-                        element={
-                          <GuardTool tool="staff">
-                            <ErrorBoundary context="AppStaff">
-                              <Suspense
-                                fallback={
-                                  <div style={{ padding: 20 }}>
-                                    📡 Conectando satélite Staff...
-                                  </div>
-                                }
-                              >
-                                <StaffModule />
-                              </Suspense>
-                            </ErrorBoundary>
-                          </GuardTool>
-                        }
-                      />
-                    </Route>
-                  </Route>
-
-                  {/* Legacy redirects: old routes -> new /app/ routes */}
-                  <Route
-                    path="/dashboard"
-                    element={<Navigate to="/app/dashboard" replace />}
-                  />
-                  <Route
-                    path="/tpv"
-                    element={<Navigate to="/app/tpv" replace />}
-                  />
-                  <Route
-                    path="/kds"
-                    element={<Navigate to="/app/kds" replace />}
-                  />
-                  <Route
-                    path="/menu"
-                    element={<Navigate to="/app/menu" replace />}
-                  />
-                  <Route
-                    path="/pulses"
-                    element={<Navigate to="/app/orders" replace />}
-                  />
-
-                  {/* INTERNAL DEV TOOL ROUTE */}
-                  <Route
-                    path="/wizard"
-                    element={<Navigate to="/dev/wizard" replace />}
-                  />
-                  <Route path="/dev/wizard" element={<WizardPage />} />
-                  <Route path="*" element={<Navigate to="/auth" replace />} />
-                </Routes>
-              </>
-            ) : (
-              <OnboardingProvider>
-                {/* OfflineOrderProvider moved to AppDomainWrapper */}
-                <DevStableEntryGate />
-                <Routes>
-                  {/* 1. PUBLIC */}
-                  <Route
-                    path="/public/*"
-                    element={
-                      <SovereignBoundary>
-                        <Suspense fallback={<div>Carregando Cardápio...</div>}>
-                          <PublicPages />
-                        </Suspense>
-                      </SovereignBoundary>
-                    }
-                  />
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/health" element={<HealthCheckPage />} />
-                  <Route path="/auth" element={<AuthPage />} />
-                  {/* 🐞 DEBUG: Manual TPV Access */}
-                  <Route path="/debug-tpv" element={<DebugTPV />} />
-                  {/* Legacy redirects - manter compatibilidade temporária */}
-                  <Route
-                    path="/login"
-                    element={<Navigate to="/auth" replace />}
-                  />
-                  <Route
-                    path="/signup"
-                    element={<Navigate to="/auth" replace />}
-                  />
-                  <Route path="/join" element={<ScreenInviteCode />} />
-                  <Route
-                    path="/start"
-                    element={<Navigate to="/onboarding/start" replace />}
-                  />
-                  {/* FASE 1 - Billing Routes */}
-                  <Route path="/onboarding/billing" element={<BillingStep />} />
-                  <Route
-                    path="/onboarding/checkout"
-                    element={<CheckoutStep />}
-                  />
-                  <Route
-                    path="/onboarding/trial-start"
-                    element={<TrialStart />}
-                  />
-                  {/* FASE 2 - Onboarding com Primeira Venda */}
-                  <Route path="/onboarding/menu-demo" element={<MenuDemo />} />
-                  <Route
-                    path="/onboarding/first-sale-guide"
-                    element={<FirstSaleGuide />}
-                  />
-                  <Route path="/onboarding/*" element={<OnboardingWizard />} />
-
-                  <Route
-                    path="/migration/wizard"
-                    element={<MigrationWizard />}
-                  />
-                  <Route path="/activation" element={<ActivationPage />} />
-
-                  {/* 🍳 KDS STANDALONE — Cozinha Independente (Tablet/TV) */}
-                  {/* ROTA: /kds/:restaurantId - Funciona sem AppLayout, sem FlowGate */}
-                  <Route
-                    path="/kds/:restaurantId"
-                    element={
-                      <Suspense
-                        fallback={
-                          <div
-                            style={{
-                              minHeight: "100vh",
-                              background: "#0a0a0a",
-                              color: "#fff",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <div style={{ textAlign: "center" }}>
-                              <div style={{ fontSize: 48, marginBottom: 16 }}>
-                                🍳
-                              </div>
-                              <p>Carregando KDS...</p>
-                            </div>
-                          </div>
-                        }
-                      >
-                        <KDSStandalone />
-                      </Suspense>
-                    }
-                  />
-
-                  {/* AUTH GATE (Session Only) - Redundant with FlowGate but explicit for clarity */}
-                  <Route path="/bootstrap" element={<BootstrapPage />} />
-
-                  {/* CONTENT HUB (Totally different layout) */}
-                  <Route path="/read" element={<ReaderLayout />}>
-                    <Route index element={<LibraryPage />} />
-                    <Route path=":slug" element={<ArticlePage />} />
-                  </Route>
-
-                  <Route
-                    path="/app"
-                    element={
-                      <FlowGate>
-                        <TenantProvider>
-                          <AppDomainWrapper>
-                            <RequireActivation>
-                              <ThemeEngine />
-                              <Outlet />
-                              {/* <AppLayout /> MOVED TO SUB-ROUTE */}
-                            </RequireActivation>
-                          </AppDomainWrapper>
-                        </TenantProvider>
-                      </FlowGate>
-                    }
-                  >
-                    {/* 1. ADMIN PANEL (Dashboard + Management) - Uses Sidebar/Header */}
-                    <Route
-                      element={
-                        <>
-                          <AppLayout />
-                          <BetaFeedbackWidget />
-                        </>
-                      }
-                    >
-                      {/* 🎯 /app sem subrota → Dashboard (FlowGate já validou auth) */}
-                      <Route
-                        index
-                        element={<Navigate to="/app/dashboard" replace />}
-                      />
-
-                      {/* [Phase 2] Multi-Tenant Routes */}
-                      <Route
-                        path="select-tenant"
-                        element={<SelectTenantPage />}
-                      />
-                      <Route
-                        path="access-denied"
-                        element={<AccessDeniedPage />}
-                      />
-
-                      {/* [Opus 6.0] Operation Status Screens */}
-                      <Route path="paused" element={<SystemPausedPage />} />
-                      <Route
-                        path="suspended"
-                        element={<SystemSuspendedPage />}
-                      />
-                      <Route
-                        path="operation-status"
-                        element={<OperationStatusPage />}
-                      />
-
-                      {/* 🛡️ OPERATION GATE: Enforces active/paused/suspended state */}
-                      <Route element={<OperationGate />}>
-                        {/* Command Center */}
-                        <Route
-                          path="dashboard"
-                          element={
-                            <Suspense
-                              fallback={
-                                <div style={{ padding: 40, color: "#32d74b" }}>
-                                  💿 Sincronizando Mapa Soberano...
-                                </div>
-                              }
-                            >
-                              <DashboardZero />
-                            </Suspense>
-                          }
-                        />
-
-                        <Route
-                          path="menu"
-                          element={
-                            <GuardTool tool="menu">
-                              <Suspense fallback={<div>Loading Menu...</div>}>
-                                <MenuManager />
-                              </Suspense>
-                            </GuardTool>
-                          }
-                        />
-                        <Route
-                          path="menu/bootstrap"
-                          element={<MenuBootstrapPage />}
-                        />
-
-                        {/* Settings & Reports */}
-                        <Route
-                          path="settings"
-                          element={
-                            <Suspense fallback={<div>Loading Settings...</div>}>
-                              <Settings />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="settings/sovereignty"
-                          element={
-                            <GuardTool tool="sovereignty">
-                              <Suspense
-                                fallback={<div>Loading Sovereignty...</div>}
-                              >
-                                <SovereigntyDashboard />
-                              </Suspense>
-                            </GuardTool>
-                          }
-                        />
-                        <Route
-                          path="settings/advanced-setup"
-                          element={<AdvancedSetupPage />}
-                        />
-                        <Route
-                          path="settings/connectors"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ConnectorSettings />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="safety"
-                          element={
-                            <Suspense fallback={<div>Loading Safety...</div>}>
-                              <SafetyConfig />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="calendar"
-                          element={
-                            <Suspense fallback={<div>Loading Calendar...</div>}>
-                              <StrategicCalendar />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/daily-closing"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <DailyClosing />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/finance"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <FinanceDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reports/delivery"
-                          element={
-                            <Suspense fallback={<div>Loading DLQ...</div>}>
-                              <DeliveryMonitor />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="team"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <StaffPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="store/tpv-kits"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <TPVKitsPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="web/preview"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <RestaurantWebPreviewPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="local-boss"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <LocalBossPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="govern"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <GovernOverviewPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="govern-manage"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <GovernManageDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reservations"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ReservationsDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="reputation-hub"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <ReputationHubDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="operational-hub"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <OperationalHubDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="portioning"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <PortioningDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="performance"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <PerformanceDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="multi-location"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <RestaurantGroupManager />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="multi-location/:groupId/dashboard"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <GroupDashboard />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="crm"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <CustomersPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="loyalty"
-                          element={
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <LoyaltyPage />
-                            </Suspense>
-                          }
-                        />
-                        <Route path="audit" element={<SystemStatusPage />} />
-                        <Route
-                          path="evolve"
-                          element={
-                            <Suspense
-                              fallback={<div>Loading Evolve Hub...</div>}
-                            >
-                              <EvolveHub />
-                            </Suspense>
-                          }
-                        />
-                        <Route
-                          path="coming-soon"
-                          element={<ComingSoonPage />}
-                        />
-                      </Route>
-                    </Route>
-
-                    {/* 2. DEDICATED TOOLS (TPV, KDS, Orders) - NO AppLayout / Sidebar */}
-                    {/* These run in "Fullscreen" or "App Mode" */}
-                    <Route element={<OperationGate />}>
-                      <Route
-                        path="tpv"
-                        element={
-                          <GuardTool tool="tpv">
-                            <Suspense fallback={<div>Loading TPV...</div>}>
-                              <TPV />
-                            </Suspense>
-                          </GuardTool>
-                        }
-                      />
-                      <Route
-                        path="kds"
-                        element={
-                          <GuardTool tool="kds">
-                            <Suspense fallback={<div>Loading KDS...</div>}>
-                              <KDS />
-                            </Suspense>
-                          </GuardTool>
-                        }
-                      />
-                      <Route
-                        path="orders"
-                        element={
-                          <GuardTool tool="orders">
-                            <Suspense fallback={<div>Loading Orders...</div>}>
-                              <PulseList />
-                            </Suspense>
-                          </GuardTool>
-                        }
-                      />
-                      <Route
-                        path="staff"
-                        element={
-                          <GuardTool tool="staff">
-                            <ErrorBoundary context="AppStaff">
-                              <Suspense
-                                fallback={
-                                  <div style={{ padding: 20 }}>
-                                    📡 Conectando satélite Staff...
-                                  </div>
-                                }
-                              >
-                                <StaffModule />
-                              </Suspense>
-                            </ErrorBoundary>
-                          </GuardTool>
-                        }
-                      />
-                    </Route>
-                  </Route>
-
-                  {/* Legacy redirects: old routes -> new /app/ routes */}
-                  <Route
-                    path="/dashboard"
-                    element={<Navigate to="/app/dashboard" replace />}
-                  />
-                  <Route
-                    path="/tpv"
-                    element={<Navigate to="/app/tpv" replace />}
-                  />
-                  <Route
-                    path="/kds"
-                    element={<Navigate to="/app/kds" replace />}
-                  />
-                  <Route
-                    path="/menu"
-                    element={<Navigate to="/app/menu" replace />}
-                  />
-                  <Route
-                    path="/pulses"
-                    element={<Navigate to="/app/orders" replace />}
-                  />
-
-                  {/* INTERNAL DEV TOOL ROUTE */}
-                  <Route
-                    path="/wizard"
-                    element={<Navigate to="/dev/wizard" replace />}
-                  />
-                  <Route path="/dev/wizard" element={<WizardPage />} />
-                  <Route path="*" element={<Navigate to="/auth" replace />} />
-                </Routes>
-              </OnboardingProvider>
-            )}
-          </ErrorBoundary>
-        </SystemGuardianProvider>
-      </HelmetProvider>
-    </FeatureFlagProvider>
+          {/* Tela neutra de reset (padrão) */}
+          <Route path="*" element={<CoreResetPage />} />
+        </Route>
+      </Routes>
+    </>
   );
 }
 

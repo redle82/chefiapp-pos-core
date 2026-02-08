@@ -5,5 +5,4 @@ export { SetupLayout } from './SetupLayout'
 export { TPVReadyPage } from './TPVReadyPage'
 
 // Step pages
-export * from './AppStaff/AppStaff';
 export * from './steps';

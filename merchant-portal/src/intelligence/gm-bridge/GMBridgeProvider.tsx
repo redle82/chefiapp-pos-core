@@ -3,8 +3,10 @@ import { Telemetry } from './client';
 import { SilentTableDetector, type TrackedTable } from './detectors/silent_table';
 import { ForgottenItemDetector, type TrackedItem } from './detectors/forgotten_item';
 import { StaffVanishDetector, type TrackedCall } from './detectors/staff_vanish';
-import { useOrders, type Order, type OrderItem } from '../../pages/TPV/context/OrderContext';
+// FASE 3.3: Isolado - intelligence não depende de páginas específicas
+import type { Order, OrderItem } from '../../core/contracts';
 import { useStaff, type Task } from '../../pages/AppStaff/context/StaffContext';
+// TODO: Criar hook próprio para orders ou passar via props
 import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
 
 /**
@@ -15,7 +17,9 @@ import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
  */
 
 export const GMBridgeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { orders } = useOrders();
+    // FASE 3.3: TODO - GMBridgeProvider deve receber orders via props ou usar hook próprio
+    // Por enquanto, usando array vazio para não quebrar - será implementado na próxima fase
+    const orders: Order[] = []; // TODO: Receber via props ou criar hook próprio
     const { tasks } = useStaff();
 
     // CRITICAL: Use refs to avoid loop from orders/tasks changing

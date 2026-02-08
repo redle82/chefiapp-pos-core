@@ -28,7 +28,7 @@ interface FiscalAlertBadgeProps {
 
 export function FiscalAlertBadge({ restaurantId, apiBase = '/api' }: FiscalAlertBadgeProps) {
   const [alertData, setAlertData] = useState<FiscalAlertData | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [_isVisible, _setIsVisible] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const navigate = useNavigate();
   const errorCountRef = useRef(0);

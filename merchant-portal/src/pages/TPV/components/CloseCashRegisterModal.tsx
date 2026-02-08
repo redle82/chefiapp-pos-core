@@ -1,352 +1,294 @@
 /**
- * CloseCashRegisterModal - Modal de Fechamento de Caixa
- * 
- * Permite fechar caixa com saldo final e ver resumo do dia.
+ * CloseCashRegisterModal — FASE 2.3: Fecho de caixa com total esperado vs declarado
+ *
+ * UI real: total esperado (readonly), total declarado (input), diferença (calculada),
+ * observação obrigatória quando diferença ≠ 0. Ref.: docs/plans/FASE_2.3_CAIXA_PAGAMENTOS_FECHO.md
  */
 
-import React, { useState, useEffect } from 'react';
-import { Card } from '../../../ui/design-system/primitives/Card';
-import { Text } from '../../../ui/design-system/primitives/Text';
-import { Button } from '../../../ui/design-system/primitives/Button';
-import { colors } from '../../../ui/design-system/tokens/colors';
-import { spacing } from '../../../ui/design-system/tokens/spacing';
-import { supabase } from '../../../core/supabase';
-import { generateShiftReceiptHtml, type ShiftReceiptData } from '../../../core/reporting/ShiftReceiptGenerator';
+import { useState, useMemo } from "react";
 
-interface CloseCashRegisterModalProps {
-    dailyTotalCents: number;
-    openingBalanceCents: number;
-    restaurantId: string | null;
-    operatorName?: string;
-    terminalId?: string;
-    onClose: (closingBalanceCents: number) => Promise<void>;
-    onCancel: () => void;
-    onDismiss?: () => void; // Called when closing after success
+export interface CloseCashRegisterModalProps {
+  /** Total de vendas do turno (centavos) — usado para calcular esperado */
+  dailyTotalCents: number;
+  /** Saldo de abertura da caixa (centavos) */
+  openingBalanceCents: number;
+  restaurantId: string;
+  operatorName?: string;
+  terminalId?: string;
+  /** Chamado ao confirmar: (total declarado em centavos, observação se houver diferença) */
+  onClose: (closingBalanceCents: number, observation?: string) => Promise<void>;
+  onCancel: () => void;
+  onDismiss: () => void;
 }
 
-export const CloseCashRegisterModal: React.FC<CloseCashRegisterModalProps> = ({
-    dailyTotalCents,
-    openingBalanceCents,
-    restaurantId,
-    operatorName = 'Operador',
-    terminalId = 'TERM-01',
-    onClose,
-    onCancel,
-    onDismiss
-}) => {
-    // Phases: 'input' -> 'success'
-    const [phase, setPhase] = useState<'input' | 'success'>('input');
-    const [closingBalance, setClosingBalance] = useState<string>('');
-    const [processing, setProcessing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [openOrdersCount, setOpenOrdersCount] = useState<number | null>(null);
-    const [checkingOrders, setCheckingOrders] = useState(true);
+function formatCents(cents: number): string {
+  return (cents / 100).toFixed(2) + " €";
+}
 
-    // Receipt Data
-    const [receiptData, setReceiptData] = useState<ShiftReceiptData | null>(null);
+export function CloseCashRegisterModal({
+  dailyTotalCents,
+  openingBalanceCents,
+  onClose,
+  onCancel,
+  onDismiss,
+}: CloseCashRegisterModalProps) {
+  const [declaredInput, setDeclaredInput] = useState("");
+  const [observation, setObservation] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-    // VALIDAÇÃO CRÍTICA: Verificar orders abertos antes de fechar caixa
-    useEffect(() => {
-        if (!restaurantId || phase === 'success') {
-            setCheckingOrders(false);
-            return;
-        }
+  const expectedTotalCents = openingBalanceCents + dailyTotalCents;
+  const declaredCents = useMemo(() => {
+    const parsed = parseFloat(declaredInput.replace(",", "."));
+    return Number.isFinite(parsed) ? Math.round(parsed * 100) : null;
+  }, [declaredInput]);
+  const differenceCents =
+    declaredCents !== null ? declaredCents - expectedTotalCents : null;
+  const hasDifference = differenceCents !== null && differenceCents !== 0;
+  const observationRequired = hasDifference;
+  const canSubmit =
+    declaredCents !== null &&
+    declaredCents >= 0 &&
+    (!observationRequired || observation.trim().length > 0) &&
+    !isSubmitting;
 
-        const checkOpenOrders = async () => {
-            try {
-                const { data: openOrders, error: ordersError } = await supabase
-                    .from('gm_orders')
-                    .select('id, table_number')
-                    .eq('restaurant_id', restaurantId)
-                    .in('status', ['OPEN', 'IN_PREP', 'READY'])
-                    .neq('payment_status', 'PAID');
-
-                if (ordersError) {
-                    console.error('[CloseCashRegisterModal] Error checking orders:', ordersError);
-                    setCheckingOrders(false);
-                    return;
-                }
-
-                setOpenOrdersCount(openOrders?.length || 0);
-            } catch (err) {
-                console.error('[CloseCashRegisterModal] Failed to check orders:', err);
-            } finally {
-                setCheckingOrders(false);
-            }
-        };
-
-        checkOpenOrders();
-    }, [restaurantId, phase]);
-
-    const formatPrice = (cents: number) => {
-        return new Intl.NumberFormat('pt-PT', {
-            style: 'currency',
-            currency: 'EUR'
-        }).format(cents / 100);
-    };
-
-    const expectedBalance = openingBalanceCents + dailyTotalCents;
-    const differenceCents = closingBalance ?
-        (parseFloat(closingBalance.replace(',', '.')) * 100) - expectedBalance : 0;
-
-    const handleClose = async () => {
-        setError(null);
-
-        // VALIDAÇÃO CRÍTICA: Não pode fechar caixa com orders abertos
-        if (openOrdersCount !== null && openOrdersCount > 0) {
-            setError(`Não pode fechar caixa com ${openOrdersCount} pedido(s) aberto(s). Feche ou cancele os pedidos primeiro.`);
-            return;
-        }
-
-        // Validar valor
-        const balance = parseFloat(closingBalance.replace(',', '.'));
-        if (isNaN(balance) || balance < 0) {
-            setError('Valor inválido');
-            return;
-        }
-
-        setProcessing(true);
-        try {
-            const balanceCents = Math.round(balance * 100);
-
-            // Perform Database Close
-            await onClose(balanceCents);
-
-            // Prepare Receipt Data (Snapshot)
-            const data: ShiftReceiptData = {
-                restaurantName: 'GoldMonkey Restaurant', // TODO: Fetch real name
-                terminalId,
-                operatorName,
-                openedAt: new Date(Date.now() - 28800000), // Mock start time or fetch? For now simple mock as prop missing
-                closedAt: new Date(),
-                openingBalanceCents: openingBalanceCents,
-                closingBalanceCents: balanceCents,
-                dailySalesCents: dailyTotalCents,
-                expectedBalanceCents: expectedBalance,
-                differenceCents: differenceCents,
-                paymentMethods: { 'Dinheiro': 0, 'Cartão': dailyTotalCents } // Mock breakdown for MVP
-            };
-            setReceiptData(data);
-
-            // Switch to Success Phase
-            setPhase('success');
-
-        } catch (err: any) {
-            setError(err.message || 'Erro ao fechar caixa');
-        } finally {
-            setProcessing(false);
-        }
-    };
-
-    const handlePrint = () => {
-        if (!receiptData) return;
-        const html = generateShiftReceiptHtml(receiptData);
-
-        // Open print window
-        const printWindow = window.open('', '_blank', 'width=350,height=600');
-        if (printWindow) {
-            printWindow.document.write(html);
-            printWindow.document.close();
-            // printWindow.print() is called via script in html
-        }
-    };
-
-    const handleFinish = () => {
-        if (onDismiss) {
-            onDismiss();
-        } else {
-            onCancel(); // Fallback
-        }
-    };
-
-    if (phase === 'success') {
-        return (
-            <div style={{
-                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 1000
-            }}>
-                <Card surface="layer1" padding="xl" style={{ maxWidth: 400, width: '90%', textAlign: 'center' }}>
-                    <div style={{ fontSize: 48, marginBottom: spacing[4] }}>✅</div>
-                    <Text size="xl" weight="bold" color="success" style={{ marginBottom: spacing[2] }}>
-                        Caixa Fechado
-                    </Text>
-                    <Text size="sm" color="tertiary" style={{ marginBottom: spacing[6] }}>
-                        Sessão encerrada com sucesso.
-                    </Text>
-
-                    <Button
-                        tone="default" variant="outline" size="lg"
-                        onClick={handlePrint}
-                        style={{ width: '100%', marginBottom: spacing[3], display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-                    >
-                        <span>🖨️</span> Imprimir Comprovativo
-                    </Button>
-
-                    <Button
-                        tone="action" size="lg"
-                        onClick={handleFinish}
-                        style={{ width: '100%' }}
-                    >
-                        Concluir e Sair
-                    </Button>
-                </Card>
-            </div>
-        );
+  const handleSubmit = async () => {
+    if (!canSubmit || declaredCents === null) return;
+    setIsSubmitting(true);
+    try {
+      await onClose(declaredCents, observation.trim() || undefined);
+      setSuccess(true);
+      setTimeout(() => onDismiss(), 1500);
+    } catch {
+      setIsSubmitting(false);
     }
+  };
 
+  if (success) {
     return (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1000
-        }}>
-            <Card surface="layer1" padding="xl" style={{ maxWidth: 450, width: '90%' }} data-testid="close-cash-modal">
-                <Text size="xl" weight="bold" color="primary" style={{ marginBottom: spacing[4] }}>
-                    Fechar Caixa
-                </Text>
-
-                {/* Validação de Orders Abertos */}
-                {checkingOrders ? (
-                    <div style={{ marginBottom: spacing[4], padding: spacing[3], backgroundColor: colors.surface.base, borderRadius: 8 }}>
-                        <Text size="sm" color="secondary">Verificando pedidos abertos...</Text>
-                    </div>
-                ) : openOrdersCount !== null && openOrdersCount > 0 && (
-                    <div style={{
-                        marginBottom: spacing[4],
-                        padding: spacing[3],
-                        backgroundColor: `${colors.warning.base}15`,
-                        borderRadius: 8
-                    }}>
-                        <Text size="sm" weight="bold" color="warning">
-                            ⚠️ {openOrdersCount} pedido(s) aberto(s)
-                        </Text>
-                        <Text size="xs" color="secondary" style={{ marginTop: spacing[1] }}>
-                            Feche ou cancele os pedidos antes de fechar o caixa.
-                        </Text>
-                    </div>
-                )}
-
-                {/* Resumo do Dia */}
-                <div style={{
-                    marginBottom: spacing[6],
-                    padding: spacing[4],
-                    backgroundColor: colors.surface.base,
-                    borderRadius: 8
-                }}>
-                    <Text size="sm" weight="bold" color="tertiary" style={{ marginBottom: spacing[3] }}>
-                        RESUMO DO DIA
-                    </Text>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[2] }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Text size="sm" color="secondary">Saldo inicial</Text>
-                            <Text size="sm" weight="bold" color="primary">{formatPrice(openingBalanceCents)}</Text>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Text size="sm" color="secondary">Vendas do dia</Text>
-                            <Text size="sm" weight="bold" color="primary">{formatPrice(dailyTotalCents)}</Text>
-                        </div>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            paddingTop: spacing[2],
-                            borderTop: `1px solid ${colors.border.subtle}`
-                        }}>
-                            <Text size="sm" weight="bold" color="primary">Saldo esperado</Text>
-                            <Text size="lg" weight="bold" color="primary">{formatPrice(expectedBalance)}</Text>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Input Saldo Final */}
-                <div style={{ marginBottom: spacing[6] }}>
-                    <Text size="sm" color="tertiary" style={{ marginBottom: spacing[2] }}>
-                        Saldo final em caixa
-                    </Text>
-                    <input
-                        type="text"
-                        value={closingBalance}
-                        onChange={(e) => {
-                            const value = e.target.value.replace(/[^0-9,.]/g, '');
-                            setClosingBalance(value);
-                        }}
-                        placeholder="0.00"
-                        style={{
-                            fontSize: '1.5rem',
-                            textAlign: 'center',
-                            padding: spacing[3],
-                            backgroundColor: colors.surface.base,
-                            border: `1px solid ${colors.border.subtle}`,
-                            borderRadius: 8,
-                            color: colors.text.primary,
-                            outline: 'none',
-                            width: '100%'
-                        }}
-                        autoFocus
-                    />
-                    <Text size="xs" color="secondary" style={{ marginTop: spacing[1] }}>
-                        Digite o valor em dinheiro que está no caixa agora
-                    </Text>
-
-                    {/* Diferença */}
-                    {closingBalance && !isNaN(parseFloat(closingBalance.replace(',', '.'))) && (
-                        <div style={{
-                            marginTop: spacing[3],
-                            padding: spacing[3],
-                            backgroundColor: differenceCents === 0
-                                ? `${colors.success.base}15`
-                                : `${colors.warning.base}15`,
-                            borderRadius: 8
-                        }}>
-                            <Text size="xs" color="tertiary" style={{ marginBottom: 4 }}>
-                                Diferença
-                            </Text>
-                            <Text
-                                size="sm"
-                                weight="bold"
-                                color={differenceCents === 0 ? 'success' : 'warning'}
-                            >
-                                {differenceCents >= 0 ? '+' : ''}{formatPrice(differenceCents)}
-                            </Text>
-                        </div>
-                    )}
-                </div>
-
-                {error && (
-                    <div style={{
-                        padding: spacing[3],
-                        backgroundColor: `${colors.destructive.base}15`,
-                        borderRadius: 8,
-                        marginBottom: spacing[4]
-                    }}>
-                        <Text size="sm" color="destructive">{error}</Text>
-                    </div>
-                )}
-
-                <div style={{ display: 'flex', gap: spacing[3] }}>
-                    <Button
-                        variant="outline"
-                        size="lg"
-                        onClick={onCancel}
-                        disabled={processing}
-                        style={{ flex: 1 }}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        tone="action"
-                        size="lg"
-                        onClick={handleClose}
-                        disabled={processing || checkingOrders || (openOrdersCount !== null && openOrdersCount > 0)}
-                        style={{ flex: 1 }}
-                    >
-                        {processing ? 'Fechando...' : 'Fechar Caixa'}
-                    </Button>
-                </div>
-            </Card>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="close-cash-title"
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 100,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+          backgroundColor: "rgba(0,0,0,0.5)",
+        }}
+        onClick={(e) => e.target === e.currentTarget && onDismiss()}
+      >
+        <div
+          style={{
+            maxWidth: 420,
+            width: "100%",
+            padding: 24,
+            backgroundColor: "#fff",
+            borderRadius: 12,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+            textAlign: "center",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p style={{ fontSize: 16, color: "#1a1a1a", margin: 0 }}>
+            Caixa fechado com sucesso.
+          </p>
         </div>
+      </div>
     );
-};
+  }
 
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="close-cash-title"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+        backgroundColor: "rgba(0,0,0,0.5)",
+      }}
+      onClick={(e) => e.target === e.currentTarget && onCancel()}
+    >
+      <div
+        style={{
+          maxWidth: 420,
+          width: "100%",
+          padding: 24,
+          backgroundColor: "#fff",
+          borderRadius: 12,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2
+          id="close-cash-title"
+          style={{
+            fontSize: 18,
+            fontWeight: 700,
+            color: "#1a1a1a",
+            margin: 0,
+            marginBottom: 16,
+          }}
+        >
+          Fechar caixa
+        </h2>
+
+        <div style={{ marginBottom: 16 }}>
+          <label
+            style={{
+              display: "block",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#555",
+              marginBottom: 4,
+            }}
+          >
+            Total esperado (abertura + vendas)
+          </label>
+          <div
+            style={{
+              padding: "10px 12px",
+              fontSize: 16,
+              backgroundColor: "#f5f5f5",
+              borderRadius: 8,
+              color: "#1a1a1a",
+            }}
+          >
+            {formatCents(expectedTotalCents)}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label
+            style={{
+              display: "block",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#555",
+              marginBottom: 4,
+            }}
+            htmlFor="close-cash-declared"
+          >
+            Total declarado (contagem em caixa)
+          </label>
+          <input
+            id="close-cash-declared"
+            type="text"
+            inputMode="decimal"
+            placeholder="0,00"
+            value={declaredInput}
+            onChange={(e) => setDeclaredInput(e.target.value)}
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: "10px 12px",
+              fontSize: 16,
+              border: "1px solid #ccc",
+              borderRadius: 8,
+            }}
+          />
+        </div>
+
+        {differenceCents !== null && (
+          <div
+            style={{
+              marginBottom: 16,
+              padding: 10,
+              backgroundColor:
+                differenceCents === 0 ? "#e8f5e9" : "#fff3e0",
+              borderRadius: 8,
+              fontSize: 14,
+              color: differenceCents === 0 ? "#2e7d32" : "#e65100",
+            }}
+          >
+            <strong>Diferença:</strong>{" "}
+            {differenceCents === 0
+              ? "0,00 € (conferido)"
+              : formatCents(Math.abs(differenceCents)) +
+                (differenceCents > 0 ? " a mais" : " a menos")}
+          </div>
+        )}
+
+        {observationRequired && (
+          <div style={{ marginBottom: 16 }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#555",
+                marginBottom: 4,
+              }}
+              htmlFor="close-cash-observation"
+            >
+              Observação (obrigatória quando há diferença)
+            </label>
+            <textarea
+              id="close-cash-observation"
+              rows={3}
+              placeholder="Ex.: troco dado a mais, falta de numerário..."
+              value={observation}
+              onChange={(e) => setObservation(e.target.value)}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "10px 12px",
+                fontSize: 14,
+                border: "1px solid #ccc",
+                borderRadius: 8,
+                resize: "vertical",
+              }}
+            />
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            style={{
+              padding: "10px 18px",
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#444",
+              backgroundColor: "#f0f0f0",
+              border: "none",
+              borderRadius: 8,
+              cursor: isSubmitting ? "not-allowed" : "pointer",
+            }}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            style={{
+              padding: "10px 18px",
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#fff",
+              backgroundColor: canSubmit ? "#1976d2" : "#9e9e9e",
+              border: "none",
+              borderRadius: 8,
+              cursor: canSubmit && !isSubmitting ? "pointer" : "not-allowed",
+            }}
+          >
+            {isSubmitting ? "A fechar…" : "Fechar caixa"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -25,14 +25,6 @@ import { getVisibleOrders } from '@/utils/orderFilters';
 import { withPermission } from '@/utils/permissionWrapper';
 import { canPayOrder } from '@/utils/orderValidation';
 
-const STATUS_COLORS: Record<string, string> = {
-    pending: '#ff9500',
-    preparing: '#5856d6',
-    ready: '#32d74b',
-    delivered: '#666',
-    paid: '#32d74b',
-};
-
 const STATUS_LABELS: Record<string, string> = {
     pending: 'Pendente',
     preparing: 'Preparando',
@@ -43,6 +35,15 @@ const STATUS_LABELS: Record<string, string> = {
 
 import { SplitOrderModal } from '@/components/SplitOrderModal';
 import { TableSelectorModal } from '@/components/TableSelectorModal';
+import { colors, radius, spacing, fontSize, fontWeight } from '@/constants/designTokens';
+
+const STATUS_COLORS_DS: Record<string, string> = {
+    pending: colors.warning,
+    preparing: colors.info,
+    ready: colors.success,
+    delivered: colors.textMuted,
+    paid: colors.success,
+};
 
 export default function OrdersScreen() {
     // Bug #3 Fix: Route guard - todos podem ver pedidos, mas filtrados por role
@@ -235,7 +236,7 @@ export default function OrdersScreen() {
         return (
             <ThumbCard
                 onPress={() => setSelectedOrder(item)}
-                statusColor={STATUS_COLORS[item.status]}
+                statusColor={STATUS_COLORS_DS[item.status]}
                 style={{ marginBottom: 12 }}
             >
                 <View style={styles.orderHeader}>
@@ -260,15 +261,15 @@ export default function OrdersScreen() {
                         </View>
                         <OrderTimer createdAt={item.createdAt} compact />
                     </View>
-                    <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[item.status] || '#666' }]}>
+                    <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS_DS[item.status] || colors.textMuted }]}>
                         <Text style={styles.statusText}>{STATUS_LABELS[item.status] || item.status}</Text>
                     </View>
                 </View>
 
                 <View style={styles.itemsList}>
                     {item.notes && (
-                        <View style={{ marginBottom: 8, padding: 4, backgroundColor: '#333', borderRadius: 4 }}>
-                            <Text style={{ color: '#FFD700', fontSize: 12, fontStyle: 'italic' }}>📝 {item.notes}</Text>
+                        <View style={{ marginBottom: spacing[2], padding: spacing[1], backgroundColor: colors.surface, borderRadius: radius.sm }}>
+                            <Text style={{ color: colors.warning, fontSize: fontSize.xs, fontStyle: 'italic' }}>📝 {item.notes}</Text>
                         </View>
                     )}
                     {grouped.map((line, idx) => (
@@ -277,7 +278,7 @@ export default function OrdersScreen() {
                                 {line.count}x {line.name}
                             </Text>
                             {line.notes && (
-                                <Text style={{ color: '#d4a574', fontSize: 12, marginLeft: 20, marginBottom: 4 }}>
+                                <Text style={{ color: colors.accent, fontSize: fontSize.xs, marginLeft: 20, marginBottom: spacing[1] }}>
                                     ↳ {line.notes}
                                 </Text>
                             )}
@@ -360,7 +361,7 @@ export default function OrdersScreen() {
                                 <Text style={styles.infoText}>Estado: {STATUS_LABELS[selectedOrder.status]}</Text>
                                 <Text style={styles.infoText}>Total: €{selectedOrder.total.toFixed(2)}</Text>
 
-                                <View style={{ marginVertical: 16, width: '100%', borderTopWidth: 1, borderTopColor: '#333', paddingTop: 16 }}>
+                                <View style={{ marginVertical: 16, width: '100%', borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 16 }}>
                                     <Text style={[styles.sectionTitle, { textAlign: 'center' }]}>ITENS (Toque para Ações)</Text>
                                     {selectedOrder.items.map(item => (
                                         <TouchableOpacity
@@ -368,8 +369,8 @@ export default function OrdersScreen() {
                                             style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 }}
                                             onLongPress={() => handleVoidItem(item)}
                                         >
-                                            <Text style={{ color: '#ccc' }}>{item.name}</Text>
-                                            <Text style={{ color: '#888' }}>€{item.price.toFixed(2)}</Text>
+                                            <Text style={{ color: colors.textSecondary }}>{item.name}</Text>
+                                            <Text style={{ color: colors.textSecondary }}>€{item.price.toFixed(2)}</Text>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
@@ -387,7 +388,7 @@ export default function OrdersScreen() {
 
                                     {canAccess('order:transfer') && (
                                         <TouchableOpacity
-                                            style={[styles.actionBtn, { backgroundColor: '#5856d6' }]}
+                                            style={[styles.actionBtn, { backgroundColor: colors.info }]}
                                             onPress={() => setShowTableSelector(true)}
                                         >
                                             <Text style={styles.actionBtnText}>🪑 Transferir</Text>
@@ -401,8 +402,8 @@ export default function OrdersScreen() {
                                     const validation = canPayOrder(selectedOrder);
                                     if (!validation.canPay) {
                                         return (
-                                            <View style={{ marginBottom: 16, padding: 12, backgroundColor: '#ff9500', borderRadius: 8 }}>
-                                                <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '600' }}>
+                                            <View style={{ marginBottom: spacing[4], padding: spacing[3], backgroundColor: colors.warning, borderRadius: radius.md }}>
+                                                <Text style={{ color: colors.textPrimary, textAlign: 'center', fontWeight: fontWeight.semibold }}>
                                                     ⚠️ {validation.reason || 'Pedido não pode ser pago'}
                                                 </Text>
                                             </View>
@@ -480,16 +481,14 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#0a0a0a',
+        backgroundColor: colors.background,
     },
-    list: {
-        padding: 16,
-    },
+    list: { padding: spacing[4] },
     orderCard: {
-        backgroundColor: '#1a1a1a',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        padding: spacing[4],
+        marginBottom: spacing[3],
     },
     orderHeader: {
         flexDirection: 'row',
@@ -503,44 +502,41 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     tableName: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
+        color: colors.textPrimary,
+        fontSize: fontSize.lg,
+        fontWeight: fontWeight.bold,
     },
     statusBadge: {
-        paddingHorizontal: 12,
-        paddingVertical: 4,
-        borderRadius: 12,
+        paddingHorizontal: spacing[3],
+        paddingVertical: spacing[1],
+        borderRadius: radius.lg,
     },
     statusText: {
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: '600',
+        color: colors.textPrimary,
+        fontSize: fontSize.xs,
+        fontWeight: fontWeight.semibold,
     },
     itemsList: {
-        marginBottom: 12,
-        paddingBottom: 12,
+        marginBottom: spacing[3],
+        paddingBottom: spacing[3],
         borderBottomWidth: 1,
-        borderBottomColor: '#333',
+        borderBottomColor: colors.border,
     },
     itemText: {
-        color: '#ccc',
-        fontSize: 14,
-        marginBottom: 4,
+        color: colors.textSecondary,
+        fontSize: fontSize.sm,
+        marginBottom: spacing[1],
     },
     orderFooter: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
     },
-    totalLabel: {
-        color: '#888',
-        fontSize: 14,
-    },
+    totalLabel: { color: colors.textSecondary, fontSize: fontSize.sm },
     totalValue: {
-        color: '#32d74b',
-        fontSize: 20,
-        fontWeight: 'bold',
+        color: colors.success,
+        fontSize: fontSize.xl,
+        fontWeight: fontWeight.bold,
     },
     emptyContainer: {
         flex: 1,
@@ -549,76 +545,71 @@ const styles = StyleSheet.create({
         paddingTop: 100,
     },
     emptyText: {
-        color: '#666',
+        color: colors.textMuted,
         fontSize: 16,
     },
     // Modals
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.8)',
+        backgroundColor: colors.overlayDark,
         justifyContent: 'center',
-        padding: 20,
+        padding: spacing[5],
     },
     modalContent: {
-        backgroundColor: '#1c1c1e',
-        borderRadius: 16,
-        padding: 20,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        padding: spacing[5],
         alignItems: 'center',
     },
-    modalTitle: { // Add if needed by others? actually unused here? Wait, modalInfo uses it? No.
-        color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 20
+    modalTitle: {
+        color: colors.textPrimary,
+        fontSize: fontSize.xl,
+        fontWeight: fontWeight.bold,
+        marginBottom: spacing[5],
     },
-    modalInfo: {
-        marginBottom: 20,
-        alignItems: 'center',
-    },
+    modalInfo: { marginBottom: spacing[5], alignItems: 'center' },
     infoText: {
-        color: '#ccc',
-        fontSize: 16,
-        marginBottom: 8,
+        color: colors.textSecondary,
+        fontSize: fontSize.base,
+        marginBottom: spacing[2],
     },
-    // New Styles for Added Features
     sectionTitle: {
-        color: '#888',
-        fontWeight: 'bold',
-        marginBottom: 8,
-        fontSize: 12,
+        color: colors.textSecondary,
+        fontWeight: fontWeight.bold,
+        marginBottom: spacing[2],
+        fontSize: fontSize.xs,
         textTransform: 'uppercase',
     },
     actionBtn: {
-        paddingHorizontal: 16,
+        paddingHorizontal: spacing[4],
         paddingVertical: 10,
-        borderRadius: 8,
+        borderRadius: radius.md,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    bgOrange: { backgroundColor: '#ff9f0a' },
+    bgOrange: { backgroundColor: colors.warning },
     actionBtnText: {
-        color: '#fff',
-        fontWeight: '600',
-        fontSize: 14,
+        color: colors.textPrimary,
+        fontWeight: fontWeight.semibold,
+        fontSize: fontSize.sm,
     },
-    // ERRO-002 Fix: Estilos para badge de origem
     originBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 8,
+        paddingHorizontal: spacing[2],
+        paddingVertical: spacing[1],
+        borderRadius: radius.md,
         borderWidth: 1,
     },
     originBadgeWeb: {
-        backgroundColor: '#0a84ff20',
-        borderColor: '#0a84ff',
+        backgroundColor: `${colors.info}20`,
+        borderColor: colors.info,
     },
     originBadgeCaixa: {
-        backgroundColor: '#ffd60a20',
-        borderColor: '#ffd60a',
+        backgroundColor: `${colors.warning}20`,
+        borderColor: colors.warning,
     },
     originBadgeGarcom: {
-        backgroundColor: '#32d74b20',
-        borderColor: '#32d74b',
+        backgroundColor: `${colors.success}20`,
+        borderColor: colors.success,
     },
-    originBadgeText: {
-        fontSize: 10,
-        fontWeight: 'bold',
-    },
+    originBadgeText: { fontSize: 10, fontWeight: fontWeight.bold },
 });

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import type { Order } from '../../pages/TPV/context/OrderTypes';
+import type { Order } from '../../core/contracts';
 import { SoundEngine } from './SoundEngine';
 
 // ------------------------------------------------------------------

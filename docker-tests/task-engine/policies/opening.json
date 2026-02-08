@@ -1,0 +1,76 @@
+{
+  "id": "OPENING_STANDARD",
+  "name": "Checklist de Abertura Padrão",
+  "description": "Tarefas obrigatórias antes de abrir o restaurante",
+  "jurisdiction": "ES",
+  "segment": "OPERATIONS",
+  "trigger": {
+    "type": "event",
+    "event": "shift.opened",
+    "conditions": {
+      "shift_type": "first_of_day"
+    }
+  },
+  "tasks": [
+    {
+      "id": "open_001",
+      "name": "Verificar temperatura das câmaras frias",
+      "description": "Registrar temperatura de todas as geladeiras e freezers",
+      "role": "kitchen",
+      "sla_minutes": 3,
+      "hard_blocking": true,
+      "requires_photo": false,
+      "requires_value": true,
+      "value_type": "temperature",
+      "compliance": "FOOD_SAFETY"
+    },
+    {
+      "id": "open_002",
+      "name": "Verificar estoque crítico",
+      "description": "Confirmar disponibilidade de itens essenciais",
+      "role": "kitchen",
+      "sla_minutes": 5,
+      "hard_blocking": false,
+      "requires_checklist": ["pão", "carne", "legumes", "bebidas"]
+    },
+    {
+      "id": "open_003",
+      "name": "Preparar mise en place",
+      "description": "Cortar, porcionar e organizar ingredientes",
+      "role": "kitchen",
+      "sla_minutes": 10,
+      "hard_blocking": false
+    },
+    {
+      "id": "open_004",
+      "name": "Verificar caixa inicial",
+      "description": "Confirmar fundo de caixa e troco disponível",
+      "role": "manager",
+      "sla_minutes": 3,
+      "hard_blocking": true,
+      "requires_value": true,
+      "value_type": "currency"
+    },
+    {
+      "id": "open_005",
+      "name": "Limpar salão",
+      "description": "Varrer, limpar mesas e organizar cadeiras",
+      "role": "cleaning",
+      "sla_minutes": 8,
+      "hard_blocking": false
+    },
+    {
+      "id": "open_006",
+      "name": "Verificar equipamentos",
+      "description": "Testar impressoras, KDS, terminais de pagamento",
+      "role": "manager",
+      "sla_minutes": 3,
+      "hard_blocking": true
+    }
+  ],
+  "escalation": {
+    "after_sla_exceeded_minutes": 5,
+    "escalate_to": "manager",
+    "notify": ["owner"]
+  }
+}

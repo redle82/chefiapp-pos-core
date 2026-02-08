@@ -1,192 +1,245 @@
-# 🧠 ChefIApp - TPV QUE PENSA
+# 🧠 ChefIApp - POS That Thinks
 
-**Posicionamento Oficial:** **TPV QUE PENSA**  
-**O sistema que guia sua operação em tempo real.**
+**Official Positioning:** **POS THAT THINKS**
+**The system that guides your operation in real-time.**
 
 ---
 
-## ⚠️ Status em 30 Segundos
+## ⚠️ Status in 30 Seconds
 
-**Versão:** `1.2.0` — Production Ready  
-**Status:** 🟢 **PRONTO PARA PRODUÇÃO**
+**Version:** `1.2.0` — Production Ready
+**Status:** 🟢 **READY FOR PRODUCTION**
 
-| Componente | Status |
-|------------|--------|
-| 🏪 Merchant Portal | ✅ Operacional |
-| 📱 Mobile App (Staff) | ✅ Operacional |
-| 🌐 Customer Portal | ✅ Operacional |
-| 💳 Billing (Stripe) | ✅ Integrado |
-| 📊 Observability (Sentry) | ✅ Ativo |
-| 📈 Growth (SEO + Pixel) | ✅ Configurado |
+> **🌍 Language:** All code, commits, and canonical documentation are in **English**.
+> See [`docs/LANGUAGE_POLICY.md`](docs/LANGUAGE_POLICY.md) for complete rules.
 
-### 👉 Se você é:
+| Component                 | Status         |
+| ------------------------- | -------------- |
+| 🏪 Merchant Portal        | ✅ Operational |
+| 📱 Mobile App (Staff)     | ✅ Operational |
+| 🌐 Customer Portal        | ✅ Operational |
+| 💳 Billing (Stripe)       | ✅ Integrated  |
+| 📊 Observability (Sentry) | ✅ Active      |
+| 📈 Growth (SEO + Pixel)   | ✅ Configured  |
 
-- **👔 Dono/Gerente** → Leia [`docs/audit/ONE_PAGER.md`](docs/audit/ONE_PAGER.md) (30 seg)
-- **👨‍💼 Garçom/Staff** → Leia [`docs/GUIA_RAPIDO_GARCOM.md`](docs/GUIA_RAPIDO_GARCOM.md) (10 min)
-- **👨‍💻 Desenvolvedor** → Leia [`ONBOARDING.md`](ONBOARDING.md) (15 min)
-- **🔍 Validador/QA** → Leia [`docs/audit/HUMAN_TEST_QUICK_REFERENCE.md`](docs/audit/HUMAN_TEST_QUICK_REFERENCE.md) (5 min)
+### 👉 If you are
 
-### O que há de novo (v1.2.0)
+- **👔 Owner/Manager** → Read [`docs/audit/ONE_PAGER.md`](docs/audit/ONE_PAGER.md) (30 sec)
+- **👨‍💼 Waiter/Staff** → Read [`docs/GUIA_RAPIDO_GARCOM.md`](docs/GUIA_RAPIDO_GARCOM.md) (10 min)
+- **👨‍💻 Developer** → Read [`ONBOARDING.md`](ONBOARDING.md) (15 min)
+- **🏛️ Core Developer** → Read [`CORE_MANIFESTO.md`](CORE_MANIFESTO.md) (30 min) ⭐
+- **🔍 Validator/QA** → Read [`docs/audit/HUMAN_TEST_QUICK_REFERENCE.md`](docs/audit/HUMAN_TEST_QUICK_REFERENCE.md) (5 min)
 
-- ✅ **Sentry** — Error tracking em todos os apps
-- ✅ **Dashboard de Métricas** — Pedidos/hora, ticket médio em tempo real
-- ✅ **SEO** — Meta tags dinâmicas + Schema.org
+### What's New (v1.2.0)
+
+- ✅ **Sentry** — Error tracking in all apps
+- ✅ **Metrics Dashboard** — Orders/hour, average ticket in real-time
+- ✅ **SEO** — Dynamic meta tags + Schema.org
 - ✅ **Pixel Tracking** — Meta + Google Analytics
-- ✅ **Timer Background** — Recálculo imediato ao voltar do app
-- ✅ **Banner Pressão** — Animação suave, sem piscadas
-- ✅ **Cores Urgência** — Atualização dinâmica baseada em prioridade
+- ✅ **Background Timer** — Immediate recalculation when returning to app
+- ✅ **Pressure Banner** — Smooth animation, no flickering
+- ✅ **Urgency Colors** — Dynamic update based on priority
 
 ---
 
-## 🎯 O Que É
+## 🎯 What It Is
 
-ChefIApp não é apenas um TPV. É um **Sistema Nervoso Operacional** que:
+ChefIApp is not just a POS. It is an **Operational Nervous System** that:
 
-- ⚡ **Cobra em 2 toques** (< 5 segundos)
-- 🗺️ **Mostra urgência em tempo real** (mapa vivo)
-- 🍽️ **Adapta o menu** baseado na pressão da cozinha
-- 📋 **Gerencia reservas** de forma simples
+- ⚡ **Charges in 2 taps** (< 5 seconds)
+- 🗺️ **Shows urgency in real-time** (live map)
+- 🍽️ **Adapts the menu** based on kitchen pressure
+- 📋 **Manages reservations** simply
 
-**Filosofia:** *"Last.app organiza o restaurante. ChefIApp guia-o."*
+**Philosophy:** _"Last.app organizes the restaurant. ChefIApp guides it."_
 
-**Posicionamento:** ChefIApp é o único TPV que pensa antes do humano. Enquanto outros sistemas apenas registram vendas, o ChefIApp observa o contexto operacional e sugere a próxima ação mais importante.
+**Positioning:** ChefIApp is the only POS that thinks before the human. While other systems only record sales, ChefIApp observes the operational context and suggests the next most important action.
 
-**📋 Estratégia:** [`docs/strategy/POSITIONING.md`](docs/strategy/POSITIONING.md) | [`docs/strategy/SCOPE_FREEZE.md`](docs/strategy/SCOPE_FREEZE.md) | [`docs/audit/EXECUTABLE_ROADMAP.md`](docs/audit/EXECUTABLE_ROADMAP.md)
+**📋 Strategy:** [`docs/strategy/POSITIONING.md`](docs/strategy/POSITIONING.md) | [`docs/strategy/SCOPE_FREEZE.md`](docs/strategy/SCOPE_FREEZE.md) | [`docs/audit/EXECUTABLE_ROADMAP.md`](docs/audit/EXECUTABLE_ROADMAP.md)
+
+**ChefIApp OS – Como funciona de verdade:** [`docs/strategy/CHEFIAPP_OS_COMO_FUNCIONA.md`](docs/strategy/CHEFIAPP_OS_COMO_FUNCIONA.md) — narrativa (Docker = mundo, Kernel = leis, Core Finance = coração, TPV/KDS = braços, ERO = consciência). **Mapa Vivo do Sistema:** [`docs/CHEFIAPP_SYSTEM_MAP.html`](docs/CHEFIAPP_SYSTEM_MAP.html) — documento único no browser (visão, camadas, papéis, SystemTree, rotas, offline). **Doutrina do produto:** [`docs/CHEFIAPP_PRODUCT_DOCTRINE.md`](docs/CHEFIAPP_PRODUCT_DOCTRINE.md) — princípios imutáveis e contrato com o futuro. **Modo seguro para IA:** [`docs/CHEFIAPP_SYSTEM_SAFE_MODE.md`](docs/CHEFIAPP_SYSTEM_SAFE_MODE.md) — prompt canónico para qualquer IA trabalhar no projeto sem quebrar o sistema. Links: [ERO_CANON](docs/ERO_CANON.md), [BOOTSTRAP_CANON](docs/boot/BOOTSTRAP_CANON.md), [checklist operacional](docs/strategy/CHECKLIST_OPERACIONAL_TPV_KDS_CLIENTE.md), [CLI](docs/strategy/CLI_CHEFIAPP_OS.md).
+
+**📚 Technical Documentation:** Organized in layers — see [`docs/DOC_INDEX.md`](docs/DOC_INDEX.md)
+**📍 Current Status:** See [`docs/ONDE_ESTAMOS_AGORA.md`](docs/ONDE_ESTAMOS_AGORA.md) for where we are now
 
 ---
 
-## 🚀 Início Rápido
+## 🚀 Quick Start
 
-### ⚡ Super Rápido (2 minutos)
-1. Ler **[ONE_PAGER.md](ONE_PAGER.md)** - Tudo em uma página
-2. Seguir **[PRIMEIROS_PASSOS.md](PRIMEIROS_PASSOS.md)** - O que fazer agora
+### ⚡ Super Quick (2 minutes)
 
-### Para Desenvolvedores
+1. Read **[ONE_PAGER.md](ONE_PAGER.md)** - Everything in one page
+2. Follow **[PRIMEIROS_PASSOS.md](PRIMEIROS_PASSOS.md)** - What to do now
+
+### For Developers
+
 ```bash
-# Clonar e instalar
+# Clone and install
 git clone <repo>
 cd chefiapp-pos-core/mobile-app
 npm install
 
-# Configurar .env
+# Configure .env
 cp .env.example .env
 
-# Validar
+# Validate
 ../scripts/validate-system.sh
 
-# Rodar
+# Run
 npm start
 ```
 
-**Leia:** [ONBOARDING.md](ONBOARDING.md) (15 minutos)
+**Read:** [ONBOARDING.md](ONBOARDING.md) (15 minutes)
 
-### Para Usuários
-**Leia:** [docs/GUIA_RAPIDO_GARCOM.md](docs/GUIA_RAPIDO_GARCOM.md) (10 minutos)
+### For Users
 
-### Para Validação
-**Leia:** [docs/VALIDACAO_RAPIDA.md](docs/VALIDACAO_RAPIDA.md) (17 testes)
+**Read:** [docs/GUIA_RAPIDO_GARCOM.md](docs/GUIA_RAPIDO_GARCOM.md) (10 minutes)
+
+### For Validation
+
+**Read:** [docs/VALIDACAO_RAPIDA.md](docs/VALIDACAO_RAPIDA.md) (17 tests)
 
 ---
 
-## 📚 Documentação
+## 📚 Documentation
 
-### 📖 Essencial (Comece Aqui)
-- **[PROJETO_COMPLETO.md](PROJETO_COMPLETO.md)** ⭐ - Visão geral consolidada
-- **[docs/RESUMO_EXECUTIVO.md](docs/RESUMO_EXECUTIVO.md)** - Resumo executivo
-- **[ONBOARDING.md](ONBOARDING.md)** - Para novos desenvolvedores
+### 📖 Essential (Start Here)
 
-### 🏗️ Técnica
-- [docs/EXECUCAO_30_DIAS.md](docs/EXECUCAO_30_DIAS.md) - Implementação detalhada
-- [docs/ARQUITETURA_VISUAL.md](docs/ARQUITETURA_VISUAL.md) - Diagramas e fluxos
-- [docs/SETUP_DEPLOY.md](docs/SETUP_DEPLOY.md) - Setup e deploy
-- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) - Debug e resolução
+- **[PROJETO_COMPLETO.md](PROJETO_COMPLETO.md)** ⭐ - Consolidated overview
+- **[docs/RESUMO_EXECUTIVO.md](docs/RESUMO_EXECUTIVO.md)** - Executive summary
+- **[ONBOARDING.md](ONBOARDING.md)** - For new developers
 
-### 💼 Comercial
-- [docs/MANIFESTO_COMERCIAL.md](docs/MANIFESTO_COMERCIAL.md) - Proposta de valor
-- [docs/PLANO_ROLLOUT.md](docs/PLANO_ROLLOUT.md) - Estratégia de lançamento
+### 🏛️ Core (Operating System)
 
-### 📊 Operacional
-- [docs/METRICAS_KPIS.md](docs/METRICAS_KPIS.md) - Tracking e métricas
-- [docs/MANUTENCAO_CONTINUA.md](docs/MANUTENCAO_CONTINUA.md) - Manutenção
-- [docs/GO_LIVE_CHECKLIST.md](docs/GO_LIVE_CHECKLIST.md) - Checklist de lançamento
+- **[CORE_MANIFESTO.md](CORE_MANIFESTO.md)** ⭐⭐ - System law (read first)
+- **[docs/CORE_OVERVIEW.md](docs/CORE_OVERVIEW.md)** ⭐⭐⭐ - **CORE MENTAL MAP** (what is untouchable)
+- **[START_HERE.md](START_HERE.md)** - Core entry point
+- **[ROADMAP.md](ROADMAP.md)** - Next levels roadmap
+- **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - Core executive summary
+- **[docs/LEVEL_1_IMPLEMENTATION.md](docs/LEVEL_1_IMPLEMENTATION.md)** - Level 1 implemented
+- **[docs/testing/MEGA_OPERATIONAL_SIMULATOR.md](docs/testing/MEGA_OPERATIONAL_SIMULATOR.md)** - Complete simulator
+- **[docs/testing/FAIL_FAST_MODE.md](docs/testing/FAIL_FAST_MODE.md)** - Quick validation
 
-### 🤝 Transição
-- [docs/HANDOFF_EQUIPE.md](docs/HANDOFF_EQUIPE.md) - Handoff completo
-- [docs/QUICK_WINS.md](docs/QUICK_WINS.md) - Próximas melhorias
-- [docs/RETROSPECTIVA.md](docs/RETROSPECTIVA.md) - Lições aprendidas
+**Core Status:** ✅ v1.0-core-sovereign (Validated, Protected, Shielded)
 
-### 🔍 Auditoria e QA
-- **[docs/audit/ONE_PAGER.md](docs/audit/ONE_PAGER.md)** ⭐ - Status em 30 segundos
-- **[docs/audit/FINAL_HANDOFF.md](docs/audit/FINAL_HANDOFF.md)** - Handoff completo
-- **[docs/audit/MASTER_INDEX.md](docs/audit/MASTER_INDEX.md)** - Índice mestre
-- **[docs/audit/HUMAN_TEST_REPORT.md](docs/audit/HUMAN_TEST_REPORT.md)** - Teste humano completo
-- **[docs/audit/ACTION_PLAN_UX_FIXES.md](docs/audit/ACTION_PLAN_UX_FIXES.md)** - Plano de correções UX
+**Detailed Status:**
 
-### 📋 Índices
-- [docs/README.md](docs/README.md) - Índice principal
-- [docs/INDICE_COMPLETO.md](docs/INDICE_COMPLETO.md) - Todos os documentos
-- [docs/audit/README.md](docs/audit/README.md) - Índice de auditorias
+- **[docs/STATUS_TECH.md](docs/STATUS_TECH.md)** - Technical status (stability)
+- **[docs/STATUS_OPERATION.md](docs/STATUS_OPERATION.md)** - Operational status (real-world impact)
+
+### 🏗️ Technical
+
+- [docs/EXECUCAO_30_DIAS.md](docs/EXECUCAO_30_DIAS.md) - Detailed implementation
+- [docs/ARQUITETURA_VISUAL.md](docs/ARQUITETURA_VISUAL.md) - Diagrams and flows
+- [docs/SETUP_DEPLOY.md](docs/SETUP_DEPLOY.md) - Setup and deploy
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) - Debug and resolution
+
+### 💼 Commercial
+
+- [docs/MANIFESTO_COMERCIAL.md](docs/MANIFESTO_COMERCIAL.md) - Value proposition
+- [docs/PLANO_ROLLOUT.md](docs/PLANO_ROLLOUT.md) - Launch strategy
+
+### 📊 Operational
+
+- [docs/METRICAS_KPIS.md](docs/METRICAS_KPIS.md) - Tracking and metrics
+- [docs/MANUTENCAO_CONTINUA.md](docs/MANUTENCAO_CONTINUA.md) - Maintenance
+- [docs/GO_LIVE_CHECKLIST.md](docs/GO_LIVE_CHECKLIST.md) - Launch checklist
+
+### 🤝 Transition
+
+- [docs/HANDOFF_EQUIPE.md](docs/HANDOFF_EQUIPE.md) - Complete handoff
+- [docs/QUICK_WINS.md](docs/QUICK_WINS.md) - Next improvements
+- [docs/RETROSPECTIVA.md](docs/RETROSPECTIVA.md) - Lessons learned
+
+### 🔍 Audit and QA
+
+- **[docs/audit/ONE_PAGER.md](docs/audit/ONE_PAGER.md)** ⭐ - Status in 30 seconds
+- **[docs/audit/FINAL_HANDOFF.md](docs/audit/FINAL_HANDOFF.md)** - Complete handoff
+- **[docs/audit/MASTER_INDEX.md](docs/audit/MASTER_INDEX.md)** - Master index
+- **[docs/audit/HUMAN_TEST_REPORT.md](docs/audit/HUMAN_TEST_REPORT.md)** - Complete human test
+- **[docs/audit/ACTION_PLAN_UX_FIXES.md](docs/audit/ACTION_PLAN_UX_FIXES.md)** - UX fixes plan
+
+### 📋 Indexes
+
+- [docs/README.md](docs/README.md) - Main index
+- [docs/INDICE_COMPLETO.md](docs/INDICE_COMPLETO.md) - All documents
+- [docs/audit/README.md](docs/audit/README.md) - Audit index
 
 ---
 
 ## ✅ Status
 
-**Versão:** 1.2.0 (Production Ready)  
-**Data:** 2026-01-24
+**Version:** 1.2.0 (Production Ready)
+**Date:** 2026-01-24
 
-### Sistema ✅
-- ✅ **Infraestrutura:** DB + Billing + Auth completos
-- ✅ **Mobile App:** KDS, Garçom, Caixa operacionais
-- ✅ **Observability:** Sentry + Métricas realtime
+### 🏛️ Core ✅
+
+- ✅ **Core v1.0-core-sovereign:** Clean, Validated, Protected, Shielded
+- ✅ **Manifesto Ratified:** CORE_MANIFESTO.md
+- ✅ **Automatic Validation:** CI/CD with fail-fast and 24h simulation
+- ✅ **Documentation:** 17 complete documents
+- ✅ **Level 1 Completed:** Protection and Automation implemented
+
+### System ✅
+
+- ✅ **Infrastructure:** DB + Billing + Auth complete
+- ✅ **Mobile App:** KDS, Waiter, Cashier operational
+- ✅ **Observability:** Sentry + Real-time metrics
 - ✅ **Growth:** SEO + Pixel Tracking
 
-### Qualidade ✅
-- ✅ **Bugs Técnicos:** 5/5 issues v1.x resolvidos
-- ✅ **Performance:** fetchOrders otimizado, timers dinâmicos
-- ✅ **Resiliência:** OfflineQueue, auto-save, AppState awareness
+### Quality ✅
 
-### Issues Conhecidos
-- 🟢 3 issues de baixa prioridade (aceitos)
-- 📋 Ver: [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md)
+- ✅ **Technical Bugs:** 5/5 v1.x issues resolved
+- ✅ **Performance:** fetchOrders optimized, dynamic timers
+- ✅ **Resilience:** OfflineQueue, auto-save, AppState awareness
 
-**Ver:** [`docs/audit/ONE_PAGER.md`](./docs/audit/ONE_PAGER.md) - Status em 30 segundos
+### Known Issues
 
----
+- 🟢 3 low-priority issues (accepted)
+- 📋 See: [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md)
 
-## 📊 Funcionalidades
-
-### ⚡ Fast Pay (Semana 1)
-Pagamento em 2 toques, < 5 segundos.
-
-### 🗺️ Mapa Vivo (Semana 2)
-Timer, cores de urgência, ícones contextuais.
-
-### 🍽️ KDS Inteligente (Semana 3)
-Menu adapta baseado na pressão da cozinha.
-
-### 📋 Reservas LITE (Semana 4)
-Lista de espera digital simples.
+**See:** [`docs/audit/ONE_PAGER.md`](./docs/audit/ONE_PAGER.md) - Status in 30 seconds
 
 ---
 
-## 🎯 Resultados Esperados
+## 📊 Features
 
-- ⏱️ **36x mais rápido** no pagamento
-- 🗺️ **100% visibilidade** do salão
-- 🍽️ **+25% eficiência** da cozinha
-- 📋 **+15% conversão** de reservas
+### ⚡ Fast Pay (Week 1)
+
+Payment in 2 taps, < 5 seconds.
+
+### 🗺️ Live Map (Week 2)
+
+Timer, urgency colors, contextual icons.
+
+### 🍽️ Smart KDS (Week 3)
+
+Menu adapts based on kitchen pressure.
+
+### 📋 Reservations LITE (Week 4)
+
+Simple digital waiting list.
 
 ---
 
-## 🛠️ Ferramentas
+## 🎯 Expected Results
 
-- **Validação:** `./scripts/validate-system.sh`
+- ⏱️ **36x faster** payment
+- 🗺️ **100% visibility** of the dining room
+- 🍽️ **+25% efficiency** in the kitchen
+- 📋 **+15% conversion** of reservations
+
+---
+
+## 🛠️ Tools
+
+- **Validation:** `./scripts/validate-system.sh`
 - **Issues:** [docs/GITHUB_ISSUES.md](docs/GITHUB_ISSUES.md)
 - **Changelog:** [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
-## 📞 Suporte
+## 📞 Support
 
 - **Troubleshooting:** [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 - **Onboarding:** [ONBOARDING.md](ONBOARDING.md)
@@ -194,27 +247,29 @@ Lista de espera digital simples.
 
 ---
 
-## 🚀 Próximos Passos
+## 🚀 Next Steps
 
-### Sistema Pronto ✅
+### System Ready ✅
 
-O sistema está **completo e estável** para produção.
+The system is **complete and stable** for production.
 
-### Opções de Ação
+### Action Options
 
-| Ação | Descrição |
-|------|-----------|
-| 🚀 **Deploy** | Publicar em produção |
-| 🧪 **Testes** | Rodar suite E2E completa |
-| 📋 **Commit** | Consolidar alterações |
+| Action        | Description            |
+| ------------- | ---------------------- |
+| 🚀 **Deploy** | Publish to production  |
+| 🧪 **Tests**  | Run complete E2E suite |
+| 📋 **Commit** | Consolidate changes    |
 
-### Monitoramento Pós-Deploy
+### Post-Deploy Monitoring
 
-1. **Sentry Dashboard** — Erros em tempo real
-2. **Métricas Widget** — Pedidos/hora no Dashboard
-3. **Google Analytics** — Tráfego customer portal
+1. **Sentry Dashboard** — Real-time errors
+2. **Metrics Widget** — Orders/hour in Dashboard
+3. **Google Analytics** — Customer portal traffic
 
-### Referências
+### References
+
+- **Next actions (scope & validation):** [docs/strategy/NEXT_ACTIONS.md](docs/strategy/NEXT_ACTIONS.md) — FASE 1–3 validation, FASE 5 polish, FASE 6 print
 - **Observability:** [docs/ops/OBSERVABILITY_SETUP.md](docs/ops/OBSERVABILITY_SETUP.md)
 - **Growth:** [docs/ops/GROWTH_MARKETING_SETUP.md](docs/ops/GROWTH_MARKETING_SETUP.md)
 - **Known Issues:** [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)
@@ -222,41 +277,44 @@ O sistema está **completo e estável** para produção.
 
 ---
 
-## 📈 Estatísticas
+## 📈 Statistics
 
-### Stack Tecnológico
-| Camada | Tecnologia |
-|--------|------------|
-| Mobile | React Native + Expo |
-| Web Portals | React + Vite + TypeScript |
-| Backend | Supabase (Postgres + Auth + Realtime) |
-| Billing | Stripe |
-| Observability | Sentry |
-| Analytics | Google Analytics + Meta Pixel |
+### Technology Stack
 
-### Estrutura do Projeto
+| Layer         | Technology                            |
+| ------------- | ------------------------------------- |
+| Mobile        | React Native + Expo                   |
+| Web Portals   | React + Vite + TypeScript             |
+| Backend       | Supabase (Postgres + Auth + Realtime) |
+| Billing       | Stripe                                |
+| Observability | Sentry                                |
+| Analytics     | Google Analytics + Meta Pixel         |
+
+### Project Structure
+
 ```
 chefiapp-pos-core/
-├── mobile-app/         # App Staff (Garçom, Cozinha, Caixa)
-├── merchant-portal/    # Painel do Dono
-├── customer-portal/    # Cardápio Digital (QR Code)
+├── mobile-app/         # Staff App (Waiter, Kitchen, Cashier)
+├── merchant-portal/    # Owner Dashboard
+├── customer-portal/    # Digital Menu (QR Code)
 ├── supabase/           # Migrations + Edge Functions
-├── docs/               # Documentação
-└── scripts/            # Automação
+├── docs/               # Documentation
+└── scripts/            # Automation
 ```
 
-### Qualidade (v1.2.0)
-- **Issues Resolvidos:** 5 (v1.1.0 + v1.2.0)
-- **Issues Pendentes:** 3 (baixa prioridade)
-- **TypeScript:** 100% tipado
-- **Observability:** Sentry em todos os apps
+### Quality (v1.2.0)
+
+- **Issues Resolved:** 5 (v1.1.0 + v1.2.0)
+- **Pending Issues:** 3 (low priority)
+- **TypeScript:** 100% typed
+- **Observability:** Sentry in all apps
 
 ---
 
-**Versão:** 1.2.0  
-**Data:** 2026-01-24  
+**Version:** 1.2.0
+**Date:** 2026-01-24
 **Status:** 🟢 **PRODUCTION READY**
 
 ---
 
-*"Last.app organiza o restaurante. ChefIApp guia-o."*
+_"Last.app organizes the restaurant. ChefIApp guides it."_

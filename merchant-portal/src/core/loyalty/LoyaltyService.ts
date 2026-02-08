@@ -1,257 +1,183 @@
 /**
  * LoyaltyService - Serviço para gerenciar programa de fidelidade
- * 
- * FASE 3: Integração completa com TPV
+ *
+ * PURE DOCKER MODE (FASE 1):
+ * - Remove dependência direta de Supabase.
+ * - Mantém o contrato de tipos e métodos públicos.
+ * - As operações ainda não estão ligadas ao Core Docker e retornam
+ *   valores seguros/dummy, sempre marcando [CORE TODO][Loyalty] no console.
+ *
+ * FUTURO:
+ * - Implementar chamadas reais ao Core (PostgREST/RPC) sem reintroduzir
+ *   supabase-js neste módulo.
  */
 
-import { supabase } from '../supabase';
-import { Decimal } from 'decimal.js';
-
 export interface LoyaltyCard {
-    id: string;
-    restaurant_id: string;
-    customer_id?: string;
-    card_type: 'physical' | 'digital';
-    current_tier: 'silver' | 'gold' | 'platinum';
-    current_points: number;
-    points_earned: number;
-    points_redeemed: number;
-    status: 'active' | 'suspended' | 'expired';
-    created_at: string;
-    tier_upgraded_at?: string;
-    expires_at?: string;
+  id: string;
+  restaurant_id: string;
+  customer_id?: string;
+  card_type: "physical" | "digital";
+  current_tier: "silver" | "gold" | "platinum";
+  current_points: number;
+  points_earned: number;
+  points_redeemed: number;
+  status: "active" | "suspended" | "expired";
+  created_at: string;
+  tier_upgraded_at?: string;
+  expires_at?: string;
 }
 
 export interface LoyaltyTierConfig {
-    id: string;
-    restaurant_id: string;
-    points_per_euro: number;
-    silver_threshold: number;
-    gold_threshold: number;
-    platinum_threshold: number;
+  id: string;
+  restaurant_id: string;
+  points_per_euro: number;
+  silver_threshold: number;
+  gold_threshold: number;
+  platinum_threshold: number;
 }
 
 export class LoyaltyService {
-    /**
-     * Buscar ou criar cartão de fidelidade
-     */
-    static async findOrCreateCard(
-        restaurantId: string,
-        customerId?: string,
-        phone?: string,
-        email?: string
-    ): Promise<LoyaltyCard> {
-        // Se tem customer_id, buscar cartão existente
-        if (customerId) {
-            const { data: existing } = await supabase
-                .from('loyalty_cards')
-                .select('*')
-                .eq('restaurant_id', restaurantId)
-                .eq('customer_id', customerId)
-                .single();
+  /**
+   * Buscar ou criar cartão de fidelidade
+   */
+  static async findOrCreateCard(
+    restaurantId: string,
+    customerId?: string,
+    phone?: string,
+    email?: string,
+  ): Promise<LoyaltyCard> {
+    console.warn(
+      "[CORE TODO][Loyalty] findOrCreateCard ainda não está ligado ao Core. Retornando cartão dummy.",
+      {
+        restaurantId,
+        customerId,
+        phone,
+        email,
+      },
+    );
 
-            if (existing) return existing;
-        }
+    const now = new Date().toISOString();
+    return {
+      id: "CORETODO-LOYALTY-CARD",
+      restaurant_id: restaurantId,
+      customer_id: customerId,
+      card_type: "digital",
+      current_tier: "silver",
+      current_points: 0,
+      points_earned: 0,
+      points_redeemed: 0,
+      status: "active",
+      created_at: now,
+      tier_upgraded_at: undefined,
+      expires_at: undefined,
+    };
+  }
 
-        // Criar novo cartão
-        const { data: newCard, error } = await supabase
-            .from('loyalty_cards')
-            .insert({
-                restaurant_id: restaurantId,
-                customer_id: customerId || null,
-                card_type: 'digital',
-                current_tier: 'silver',
-                current_points: 0,
-                points_earned: 0,
-                points_redeemed: 0,
-                status: 'active',
-            })
-            .select()
-            .single();
+  /**
+   * Obter configuração de tiers
+   */
+  static async getTierConfig(restaurantId: string): Promise<LoyaltyTierConfig> {
+    console.warn(
+      "[CORE TODO][Loyalty] getTierConfig ainda não está ligado ao Core. Retornando configuração padrão.",
+      { restaurantId },
+    );
 
-        if (error) throw error;
-        return newCard;
-    }
+    return {
+      id: "CORETODO-TIER-CONFIG",
+      restaurant_id: restaurantId,
+      points_per_euro: 1,
+      silver_threshold: 0,
+      gold_threshold: 100,
+      platinum_threshold: 500,
+    };
+  }
 
-    /**
-     * Obter configuração de tiers
-     */
-    static async getTierConfig(restaurantId: string): Promise<LoyaltyTierConfig> {
-        const { data, error } = await supabase
-            .from('loyalty_tier_configs')
-            .select('*')
-            .eq('restaurant_id', restaurantId)
-            .single();
+  /**
+   * Adicionar pontos após pedido
+   */
+  static async awardPointsForOrder(
+    restaurantId: string,
+    orderId: string,
+    orderTotalCents: number,
+    customerId?: string,
+    phone?: string,
+    email?: string,
+  ): Promise<{ pointsAwarded: number; newTotal: number; tier: string }> {
+    console.warn(
+      "[CORE TODO][Loyalty] awardPointsForOrder ainda não está ligado ao Core. Calculando pontos apenas em memória.",
+      { restaurantId, orderId, orderTotalCents, customerId },
+    );
 
-        if (error && error.code === 'PGRST116') {
-            // Criar config padrão se não existir
-            const { data: defaultConfig } = await supabase
-                .from('loyalty_tier_configs')
-                .insert({
-                    restaurant_id: restaurantId,
-                    points_per_euro: 1.0,
-                    silver_threshold: 0,
-                    gold_threshold: 100,
-                    platinum_threshold: 500,
-                })
-                .select()
-                .single();
+    const config = await this.getTierConfig(restaurantId);
+    const orderTotalEuros = orderTotalCents / 100;
+    const pointsEarned = Math.floor(orderTotalEuros * config.points_per_euro);
 
-            return defaultConfig!;
-        }
+    // Como não persistimos, assumimos que o novo total é apenas os pontos desta compra
+    const newPoints = pointsEarned;
+    const tier = this.calculateTier(newPoints, config);
 
-        if (error) throw error;
-        return data!;
-    }
+    return {
+      pointsAwarded: pointsEarned,
+      newTotal: newPoints,
+      tier,
+    };
+  }
 
-    /**
-     * Adicionar pontos após pedido
-     */
-    static async awardPointsForOrder(
-        restaurantId: string,
-        orderId: string,
-        orderTotalCents: number,
-        customerId?: string,
-        phone?: string,
-        email?: string
-    ): Promise<{ pointsAwarded: number; newTotal: number; tier: string }> {
-        // Buscar ou criar cartão
-        const card = await this.findOrCreateCard(restaurantId, customerId, phone, email);
+  /**
+   * Calcular tier baseado em pontos
+   */
+  private static calculateTier(
+    points: number,
+    config: LoyaltyTierConfig,
+  ): "silver" | "gold" | "platinum" {
+    if (points >= config.platinum_threshold) return "platinum";
+    if (points >= config.gold_threshold) return "gold";
+    return "silver";
+  }
 
-        // Obter config
-        const config = await this.getTierConfig(restaurantId);
+  /**
+   * Obter cartão do cliente
+   */
+  static async getCustomerCard(
+    restaurantId: string,
+    customerId: string,
+  ): Promise<LoyaltyCard | null> {
+    console.warn(
+      "[CORE TODO][Loyalty] getCustomerCard ainda não está ligado ao Core. Retornando null.",
+      { restaurantId, customerId },
+    );
+    return null;
+  }
 
-        // Calcular pontos (1 ponto por euro, arredondado)
-        const orderTotalEuros = orderTotalCents / 100;
-        const pointsEarned = Math.floor(orderTotalEuros * config.points_per_euro);
+  /**
+   * Get available rewards for a restaurant
+   */
+  static async getAvailableRewards(restaurantId: string): Promise<any[]> {
+    console.warn(
+      "[CORE TODO][Loyalty] getAvailableRewards ainda não está ligado ao Core. Retornando lista vazia.",
+      { restaurantId },
+    );
+    return [];
+  }
 
-        // Atualizar pontos
-        const newPoints = (card.current_points || 0) + pointsEarned;
-        const newPointsEarned = (card.points_earned || 0) + pointsEarned;
+  /**
+   * Redeem points for a reward
+   */
+  static async redeemPoints(
+    restaurantId: string,
+    customerId: string,
+    rewardId: string,
+    pointsCost: number,
+    orderId?: string,
+  ): Promise<{ success: boolean; redemptionId?: string; error?: string }> {
+    console.warn(
+      "[CORE TODO][Loyalty] redeemPoints ainda não está ligado ao Core. Operação de resgate desabilitada no modo TODO.",
+      { restaurantId, customerId, rewardId, pointsCost, orderId },
+    );
 
-        // Calcular novo tier
-        const newTier = this.calculateTier(newPoints, config);
-        const tierUpgraded = newTier !== card.current_tier;
-
-        // Atualizar cartão
-        const { error: updateError } = await supabase
-            .from('loyalty_cards')
-            .update({
-                current_points: newPoints,
-                points_earned: newPointsEarned,
-                current_tier: newTier,
-                tier_upgraded_at: tierUpgraded ? new Date().toISOString() : card.tier_upgraded_at,
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', card.id);
-
-        if (updateError) throw updateError;
-
-        return {
-            pointsAwarded: pointsEarned,
-            newTotal: newPoints,
-            tier: newTier,
-        };
-    }
-
-    /**
-     * Calcular tier baseado em pontos
-     */
-    private static calculateTier(points: number, config: LoyaltyTierConfig): 'silver' | 'gold' | 'platinum' {
-        if (points >= config.platinum_threshold) return 'platinum';
-        if (points >= config.gold_threshold) return 'gold';
-        return 'silver';
-    }
-
-    /**
-     * Obter cartão do cliente
-     */
-    static async getCustomerCard(
-        restaurantId: string,
-        customerId: string
-    ): Promise<LoyaltyCard | null> {
-        const { data, error } = await supabase
-            .from('loyalty_cards')
-            .select('*')
-            .eq('restaurant_id', restaurantId)
-            .eq('customer_id', customerId)
-            .single();
-
-        if (error && error.code === 'PGRST116') return null;
-        if (error) throw error;
-        return data;
-    }
-
-    /**
-     * Get available rewards for a restaurant
-     */
-    static async getAvailableRewards(restaurantId: string): Promise<any[]> {
-        const { data, error } = await supabase
-            .from('loyalty_rewards')
-            .select('*')
-            .eq('restaurant_id', restaurantId)
-            .eq('active', true);
-
-        if (error) throw error;
-        return data || [];
-    }
-
-    /**
-     * Redeem points for a reward
-     */
-    static async redeemPoints(
-        restaurantId: string,
-        customerId: string,
-        rewardId: string,
-        pointsCost: number,
-        orderId?: string
-    ): Promise<{ success: boolean; redemptionId?: string; error?: string }> {
-        // 1. Get Card
-        const card = await this.getCustomerCard(restaurantId, customerId);
-        if (!card) return { success: false, error: 'Cartão fidelidade não encontrado.' };
-
-        // 2. Check Balance
-        if (card.current_points < pointsCost) {
-            return { success: false, error: 'Pontos insuficientes.' };
-        }
-
-        // 3. Create Redemption Record
-        const { data: redemption, error: insertError } = await supabase
-            .from('loyalty_redemptions')
-            .insert({
-                restaurant_id: restaurantId,
-                loyalty_card_id: card.id,
-                reward_id: rewardId,
-                order_id: orderId || null,
-                points_used: pointsCost,
-                status: 'applied',
-                applied_at: new Date().toISOString()
-            })
-            .select()
-            .single();
-
-        if (insertError) {
-            console.error('Redemption insert failed', insertError);
-            return { success: false, error: 'Falha ao registrar resgate.' };
-        }
-
-        // 4. Deduct Points on Card
-        const { error: updateError } = await supabase
-            .from('loyalty_cards')
-            .update({
-                current_points: card.current_points - pointsCost,
-                points_redeemed: (card.points_redeemed || 0) + pointsCost,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', card.id);
-
-        if (updateError) {
-            console.error('Card update failed', updateError);
-            // Critical: Data consistency issue if this fails but redemption succeeded.
-            // In real world, use transaction or RPC. For now, proceeding.
-            return { success: false, error: 'Falha ao atualizar saldo.' };
-        }
-
-        return { success: true, redemptionId: redemption.id };
-    }
+    return {
+      success: false,
+      error: "Programa de fidelidade ainda não está ativado neste ambiente.",
+    };
+  }
 }

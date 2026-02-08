@@ -1,14 +1,28 @@
-import { useTables } from '../../TPV/context/TableContext';
-import { TablePanel } from '../../Waiter/TablePanel';
-import { TableStatus } from '../../Waiter/types';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Button } from '../../../ui/design-system/primitives/Button';
+import { Card } from '../../../ui/design-system/primitives/Card';
+import { Text } from '../../../ui/design-system/primitives/Text';
+import { StaffLayout } from '../../../ui/design-system/layouts/StaffLayout';
+import { colors } from '../../../ui/design-system/tokens/colors';
+import { radius } from '../../../ui/design-system/tokens/radius';
 import { useKeyboardShortcuts } from '../../../core/hooks/useKeyboardShortcuts';
 import { ScannerService } from '../core/ScannerService';
+import { useStaff } from '../context/StaffContext';
+import { useAppStaffTables } from '../hooks/useAppStaffTables';
+import { TablePanel } from '../../Waiter/TablePanel';
+import type { Task } from '../context/StaffCoreTypes';
+import { MobileBottomNav } from './MobileBottomNav';
 
-// ... (Existing Imports) ...
+export interface MiniPOSProps {
+  tasks: Task[];
+  /** Mesa a preselecionar (ex.: vindo de WaiterHome). Query ?tableId= ou state.tableId. */
+  initialTableId?: string | null;
+}
 
-// Updated TableCard to use Real Status
+// TableCard: feedback tátil (scale 0.97) — app UX, sem hover
 const TableCard = ({ number, status, time, onClick }: { number: number, status: string, time?: string, onClick: () => void }) => {
-    // Mapping Status to UDS props
+    const [pressed, setPressed] = useState(false);
     const borderColor = status === 'occupied' ? colors.action.base :
         status === 'payment' ? colors.success.base :
             colors.border.subtle;
@@ -16,6 +30,9 @@ const TableCard = ({ number, status, time, onClick }: { number: number, status: 
     return (
         <div
             onClick={onClick}
+            onPointerDown={() => setPressed(true)}
+            onPointerUp={() => setPressed(false)}
+            onPointerLeave={() => setPressed(false)}
             style={{
                 position: 'relative',
                 aspectRatio: '1/1',
@@ -27,7 +44,8 @@ const TableCard = ({ number, status, time, onClick }: { number: number, status: 
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                transition: 'transform 0.1s'
+                transition: 'transform 0.08s ease',
+                transform: pressed ? 'scale(0.97)' : 'scale(1)',
             }}>
             <Text size="3xl" weight="black" color={status === 'free' ? 'tertiary' : 'primary'}>{number.toString()}</Text>
             {time && <Text size="xs" color="secondary" style={{ marginTop: 4, fontFamily: 'monospace' }}>{time}</Text>}
@@ -41,13 +59,23 @@ const TableCard = ({ number, status, time, onClick }: { number: number, status: 
     );
 };
 
-export const MiniPOS: React.FC<MiniPOSProps> = ({ tasks }) => {
+export const MiniPOS: React.FC<MiniPOSProps> = ({ tasks, initialTableId = null }) => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { restaurantId } = useStaff();
     const [activeTab, setActiveTab] = useState('tables');
-    const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+    const [selectedTableId, setSelectedTableId] = useState<string | null>(initialTableId ?? null);
 
-    // Real Table Data
-    const { tables, loading } = useTables();
+    useEffect(() => {
+        setSelectedTableId(initialTableId ?? null);
+    }, [initialTableId]);
+
+    const { tables: appStaffTables, loading, error, refetch } = useAppStaffTables(restaurantId);
+    const tables = appStaffTables.map(table => ({
+      id: table.id,
+      number: table.number,
+      status: table.status,
+    }));
 
     // Mapping Keyboard Shortcuts
     useKeyboardShortcuts({
@@ -66,7 +94,12 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({ tasks }) => {
 
     const handleNavigate = (tab: string) => {
         if (tab === 'exit') {
-            navigate('/app/dashboard');
+            // APPSTAFF_LAUNCHER_NAVIGATION_CONTRACT: dentro do staff, "Sair" volta ao launcher (evita loop)
+            if (location.pathname.startsWith('/app/staff')) {
+                navigate('/app/staff/home');
+            } else {
+                navigate('/app/dashboard');
+            }
         } else {
             setActiveTab(tab);
             setSelectedTableId(null); // Reset detail view
@@ -144,24 +177,37 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({ tasks }) => {
                             </Button>
                         </div>
 
-                        {/* Real Table Grid */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                            {tables
-                                .sort((a, b) => a.number - b.number)
-                                .map(t => (
-                                    <TableCard
-                                        key={t.id}
-                                        number={t.number}
-                                        status={t.status}
-                                        time={t.status === 'occupied' ? 'On' : undefined}
-                                        onClick={() => setSelectedTableId(t.id)}
-                                    />
-                                ))}
-                        </div>
+                        {/* Estado erro: mensagem + retry */}
+                        {error && (
+                            <Card surface="layer3" padding="md" style={{ borderLeft: `4px solid ${colors.destructive.base}` }}>
+                                <Text size="sm" color="primary" style={{ marginBottom: 12 }}>
+                                    Não foi possível carregar as mesas. Tente novamente.
+                                </Text>
+                                <Button size="sm" tone="primary" onClick={() => refetch()}>
+                                    Tentar novamente
+                                </Button>
+                            </Card>
+                        )}
 
-                        {/* Empty State */}
-                        {!loading && tables.length === 0 && (
-                            <Text size="sm" color="tertiary">Nenhuma mesa encontrada.</Text>
+                        {!error && (
+                            <>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                                    {tables
+                                        .sort((a, b) => a.number - b.number)
+                                        .map(t => (
+                                            <TableCard
+                                                key={t.id}
+                                                number={t.number}
+                                                status={t.status}
+                                                time={t.status === 'occupied' ? 'On' : undefined}
+                                                onClick={() => setSelectedTableId(t.id)}
+                                            />
+                                        ))}
+                                </div>
+                                {!loading && tables.length === 0 && (
+                                    <Text size="sm" color="tertiary">Nenhuma mesa configurada.</Text>
+                                )}
+                            </>
                         )}
                     </div>
                 )}

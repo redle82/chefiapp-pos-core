@@ -9,7 +9,7 @@ The Metabolic Loop is now closed. Orders placed in the TPV automatically deplete
 ### 1. Setup
 1.  Ensure you have the latest code and dependencies (`npm install`).
 2.  Start the merchant portal: `npm run dev`.
-3.  Navigate to `http://localhost:5173/app/tpv` (or wherever your local TPV runs).
+3.  Navigate to `http://localhost:5175/app/tpv` (or wherever your local TPV runs).
 
 ### 2. Verify Consumption (Order → Consumption)
 1.  **Check Stock:** Go to Inventory (`/app/inventory`) and check the stock of **"Mozzarella Fresca"**. Note the value (e.g., 5000g).

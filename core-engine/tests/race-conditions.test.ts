@@ -74,6 +74,7 @@ describe('TASK-1.4.3: Race Condition Tests (PAYMENT + ORDER)', () => {
     // 2. ORDER:CANCEL (deve travar order, mas order já está travado)
     
     const paymentPromise = executor.transition({
+      tenantId: 'test-tenant',
       entity: 'PAYMENT',
       entityId: 'payment-1',
       event: 'CONFIRM',
@@ -84,6 +85,7 @@ describe('TASK-1.4.3: Race Condition Tests (PAYMENT + ORDER)', () => {
     await new Promise(resolve => setTimeout(resolve, 10));
 
     const cancelPromise = executor.transition({
+      tenantId: 'test-tenant',
       entity: 'ORDER',
       entityId: 'order-1',
       event: 'CANCEL',
@@ -166,6 +168,7 @@ describe('TASK-1.4.3: Race Condition Tests (PAYMENT + ORDER)', () => {
 
     // Confirmar pagamento primeiro
     const paymentResult = await executor.transition({
+      tenantId: 'test-tenant',
       entity: 'PAYMENT',
       entityId: 'payment-1',
       event: 'CONFIRM',
@@ -184,6 +187,7 @@ describe('TASK-1.4.3: Race Condition Tests (PAYMENT + ORDER)', () => {
 
     // Tentar cancelar order (deve falhar)
     const cancelResult = await executor.transition({
+      tenantId: 'test-tenant',
       entity: 'ORDER',
       entityId: 'order-1',
       event: 'CANCEL',
@@ -232,6 +236,7 @@ describe('TASK-1.4.3: Race Condition Tests (PAYMENT + ORDER)', () => {
 
     // Cancelar order primeiro
     const cancelResult = await executor.transition({
+      tenantId: 'test-tenant',
       entity: 'ORDER',
       entityId: 'order-1',
       event: 'CANCEL',
@@ -245,6 +250,7 @@ describe('TASK-1.4.3: Race Condition Tests (PAYMENT + ORDER)', () => {
 
     // Tentar confirmar pagamento (deve falhar)
     const paymentResult = await executor.transition({
+      tenantId: 'test-tenant',
       entity: 'PAYMENT',
       entityId: 'payment-1',
       event: 'CONFIRM',
@@ -294,6 +300,7 @@ describe('TASK-1.4.3: Race Condition Tests (PAYMENT + ORDER)', () => {
     // PAYMENT:CONFIRM deve travar payment-1 e order-1 na ordem determinística
     // (sorted: order-1, payment-1)
     const paymentResult = await executor.transition({
+      tenantId: 'test-tenant',
       entity: 'PAYMENT',
       entityId: 'payment-1',
       event: 'CONFIRM',
