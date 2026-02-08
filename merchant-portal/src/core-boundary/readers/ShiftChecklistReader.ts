@@ -4,7 +4,7 @@
  * FASE 3 Passo 2: Lê templates e conclusões do checklist do turno.
  */
 
-import { CONFIG } from "../../config";
+import { isDockerBackend } from "../../core/infra/backendAdapter";
 import { dockerCoreClient } from "../docker-core/connection";
 
 export interface ShiftChecklistTemplate {
@@ -60,12 +60,7 @@ export async function readShiftChecklistTemplates(
   restaurantId: string,
 ): Promise<ShiftChecklistTemplate[]> {
   // P0 FIX: Em Docker Core, retornar vazio para evitar 404 se a tabela não existir
-  const isDocker =
-    CONFIG.CORE_URL.includes("localhost") ||
-    CONFIG.CORE_URL.includes("127.0.0.1") ||
-    CONFIG.CORE_URL.includes("/rest") ||
-    CONFIG.CORE_URL.includes("3001");
-  if (isDocker) {
+  if (isDockerBackend()) {
     return [];
   }
 
@@ -95,12 +90,7 @@ export async function readShiftChecklistCompletions(
   turnSessionId: string,
 ): Promise<ShiftChecklistCompletion[]> {
   // P0 FIX: Em Docker Core, retornar vazio para evitar 404
-  const isDocker =
-    CONFIG.CORE_URL.includes("localhost") ||
-    CONFIG.CORE_URL.includes("127.0.0.1") ||
-    CONFIG.CORE_URL.includes("/rest") ||
-    CONFIG.CORE_URL.includes("3001");
-  if (isDocker) {
+  if (isDockerBackend()) {
     return [];
   }
 

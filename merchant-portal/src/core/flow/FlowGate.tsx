@@ -105,15 +105,19 @@ export function FlowGate({ children }: { children: ReactNode }) {
         return d;
       };
 
-      // P0: Rotas operacionais / app que não exigem revalidação para landing (dashboard, config, menu-builder, /app/install, /app/staff).
+      // P0: Rotas operacionais / app que não exigem revalidação para landing (dashboard, config, menu-builder, /app/install, /app/staff, /admin/*).
       // Em DEMO/PILOT com restaurant_id válido → nunca bloquear. Sem exceções.
       // /app/staff: STAFF_SESSION_LOCATION_CONTRACT — Staff usa Location (localStorage); não exige Core ativo.
       const isOperationalAppPath =
         pathname === "/dashboard" ||
         pathname.startsWith("/config") ||
+        pathname.startsWith("/admin/") ||
         pathname === "/menu-builder" ||
         pathname === "/app/install" ||
-        pathname === "/app/staff";
+        pathname === "/app/staff" ||
+        pathname.startsWith("/app/staff/") ||
+        pathname === "/operacao" ||
+        pathname.startsWith("/op/");
       const isPilot =
         typeof window !== "undefined" &&
         window.localStorage.getItem("chefiapp_pilot_mode") === "true";

@@ -4,7 +4,7 @@
  * FASE 3 Passo 2: Marcar/desmarcar itens do checklist do turno; templates padrão.
  */
 
-import { CONFIG } from "../../config";
+import { isDockerBackend } from "../../core/infra/backendAdapter";
 import { dockerCoreClient } from "../docker-core/connection";
 
 const DEFAULT_TEMPLATES: {
@@ -49,12 +49,7 @@ export async function ensureDefaultShiftChecklistTemplates(
 ): Promise<void> {
   // P0 FIX: Em Docker Core, não tentar provisionar defaults via Core
   // pois a tabela gm_shift_checklist_templates pode não existir.
-  const isDocker =
-    CONFIG.CORE_URL.includes("localhost") ||
-    CONFIG.CORE_URL.includes("127.0.0.1") ||
-    CONFIG.CORE_URL.includes("/rest") ||
-    CONFIG.CORE_URL.includes("3001");
-  if (isDocker) {
+  if (isDockerBackend()) {
     return;
   }
 

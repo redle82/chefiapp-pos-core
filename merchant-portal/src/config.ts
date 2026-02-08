@@ -12,28 +12,19 @@ export const CONFIG = {
   API_BASE: import.meta.env.VITE_API_BASE || "http://localhost:4320",
 
   // Docker Core (PostgREST). Backend único.
+  // Em DEV (browser): usa empty string → fetch relativo ao origin → passa pelo Vite proxy /rest → localhost:3001.
+  // Em PROD: usa VITE_CORE_URL (URL absoluto do Core) ou empty string.
   CORE_URL: (function () {
-    const raw =
-      import.meta.env.VITE_CORE_URL || (import.meta.env.PROD ? "" : "/rest");
+    const envUrl = import.meta.env.VITE_CORE_URL;
 
-    // Dev + browser: sempre usar proxy (same-origin) para evitar CORS com Core em 3001
-    if (import.meta.env.DEV && typeof window !== "undefined") {
-      return window.location.origin;
-    }
+    // Variável explícita: usar tal como está.
+    if (envUrl) return envUrl;
 
-    if (raw.startsWith("http") && !raw.includes("localhost:3001")) return raw;
+    // DEV (browser): empty string → URLs como "/rest/v1/table" ficam relativos ao origin → Vite proxy.
+    if (import.meta.env.DEV) return "";
 
-    if (raw.includes("localhost:3001")) {
-      return typeof window !== "undefined" ? window.location.origin : "";
-    }
-
-    if (raw === "") return "";
-
-    if (typeof window !== "undefined") {
-      return `${window.location.origin}${raw}`;
-    }
-
-    return `http://localhost:5175${raw}`;
+    // PROD sem envUrl: empty string (mesma origem).
+    return "";
   })(),
   CORE_ANON_KEY: import.meta.env.VITE_CORE_ANON_KEY || "",
 
