@@ -6,7 +6,10 @@
 import { useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
 import { dockerCoreClient } from "../../../../core-boundary/docker-core/connection";
-import { getBackendType, BackendType } from "../../../../core/infra/backendAdapter";
+import {
+  BackendType,
+  getBackendType,
+} from "../../../../core/infra/backendAdapter";
 
 const TYPES = [
   { value: "RESTAURANT", label: "Restaurante" },
@@ -51,7 +54,9 @@ export function GeneralCardIdentity() {
     (async () => {
       const { data: row, error } = await dockerCoreClient
         .from("gm_restaurants")
-        .select("id,name,type,country,address,city,postal_code,state")
+        .select(
+          "id,name,type,country,phone,email,address,city,postal_code,state",
+        )
         .eq("id", restaurantId)
         .maybeSingle();
       if (cancelled || error || !row) {
@@ -88,6 +93,8 @@ export function GeneralCardIdentity() {
         name: form.name.trim(),
         type: form.type,
         country: form.country || null,
+        phone: form.phone.trim() || null,
+        email: form.email.trim() || null,
         address: form.address.trim() || null,
         city: form.city.trim() || null,
         postal_code: form.postalCode.trim() || null,
@@ -113,8 +120,20 @@ export function GeneralCardIdentity() {
     border: "1px solid #e5e7eb",
     padding: 14,
   };
-  const labelStyle = { display: "block" as const, fontSize: 12, fontWeight: 600, marginBottom: 4, color: "#374151" };
-  const inputStyle = { width: "100%", padding: "6px 10px", border: "1px solid #e5e7eb", borderRadius: 6, fontSize: 13 };
+  const labelStyle = {
+    display: "block" as const,
+    fontSize: 12,
+    fontWeight: 600,
+    marginBottom: 4,
+    color: "#374151",
+  };
+  const inputStyle = {
+    width: "100%",
+    padding: "6px 10px",
+    border: "1px solid #e5e7eb",
+    borderRadius: 6,
+    fontSize: 13,
+  };
   const buttonStyle = {
     padding: "6px 14px",
     borderRadius: 6,
@@ -125,11 +144,23 @@ export function GeneralCardIdentity() {
     backgroundColor: "#7c3aed",
     color: "#fff",
   };
-  const gridRow = { display: "grid" as const, gridTemplateColumns: "1fr 1fr", gap: 8 };
+  const gridRow = {
+    display: "grid" as const,
+    gridTemplateColumns: "1fr 1fr",
+    gap: 8,
+  };
 
   return (
     <section style={cardStyle} aria-labelledby="card-identity-title">
-      <h2 id="card-identity-title" style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px 0", color: "#111827" }}>
+      <h2
+        id="card-identity-title"
+        style={{
+          fontSize: 14,
+          fontWeight: 600,
+          margin: "0 0 4px 0",
+          color: "#111827",
+        }}
+      >
         Identidade do Restaurante
       </h2>
       <p style={{ margin: "0 0 8px 0", fontSize: 12, color: "#6b7280" }}>
@@ -145,7 +176,9 @@ export function GeneralCardIdentity() {
               <input
                 type="text"
                 value={form.name}
-                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, name: e.target.value }))
+                }
                 placeholder="Ex: Sofia Gastrobar Ibiza"
                 style={inputStyle}
               />
@@ -154,11 +187,15 @@ export function GeneralCardIdentity() {
               <label style={labelStyle}>Tipo *</label>
               <select
                 value={form.type}
-                onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, type: e.target.value }))
+                }
                 style={inputStyle}
               >
                 {TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -168,12 +205,16 @@ export function GeneralCardIdentity() {
               <label style={labelStyle}>País *</label>
               <select
                 value={form.country}
-                onChange={(e) => setForm((p) => ({ ...p, country: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, country: e.target.value }))
+                }
                 style={inputStyle}
               >
                 <option value="">Seleccione</option>
                 {COUNTRIES.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -182,7 +223,9 @@ export function GeneralCardIdentity() {
               <input
                 type="tel"
                 value={form.phone}
-                onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, phone: e.target.value }))
+                }
                 placeholder="+34 692 054 892"
                 style={inputStyle}
               />
@@ -194,7 +237,9 @@ export function GeneralCardIdentity() {
               <input
                 type="email"
                 value={form.email}
-                onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, email: e.target.value }))
+                }
                 placeholder="contacto@restaurante.com"
                 style={inputStyle}
               />
@@ -204,7 +249,9 @@ export function GeneralCardIdentity() {
               <input
                 type="text"
                 value={form.address}
-                onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, address: e.target.value }))
+                }
                 placeholder="Calle, número"
                 style={inputStyle}
               />
@@ -216,7 +263,9 @@ export function GeneralCardIdentity() {
               <input
                 type="text"
                 value={form.city}
-                onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, city: e.target.value }))
+                }
                 style={inputStyle}
               />
             </div>
@@ -225,7 +274,9 @@ export function GeneralCardIdentity() {
               <input
                 type="text"
                 value={form.postalCode}
-                onChange={(e) => setForm((p) => ({ ...p, postalCode: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, postalCode: e.target.value }))
+                }
                 style={inputStyle}
               />
             </div>
@@ -235,12 +286,19 @@ export function GeneralCardIdentity() {
             <input
               type="text"
               value={form.state}
-              onChange={(e) => setForm((p) => ({ ...p, state: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, state: e.target.value }))
+              }
               style={inputStyle}
             />
           </div>
           <div>
-            <button type="button" onClick={handleSave} disabled={saving} style={buttonStyle}>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              style={buttonStyle}
+            >
               {saving ? "Guardando…" : "Guardar"}
             </button>
           </div>

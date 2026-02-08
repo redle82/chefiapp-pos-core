@@ -1,13 +1,16 @@
 /**
  * Card 3 — Texto fiscal / recibo (Configuración > General).
- * Ref: CONFIG_GENERAL_WIREFRAME.md. Guardar local solo para este card.
- * Persistência: localStorage hasta coluna dedicada (receipt_extra_text) en gm_restaurants.
+ * Ref: CONFIG_GENERAL_WIREFRAME.md.
+ * Persistência: coluna receipt_extra_text em gm_restaurants (DB).
  */
 
 import { useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
-
-const STORAGE_KEY = "chefiapp_general_receipt_extra";
+import { dockerCoreClient } from "../../../../core-boundary/docker-core/connection";
+import {
+  BackendType,
+  getBackendType,
+} from "../../../../core/infra/backendAdapter";
 
 export function GeneralCardReceipt() {
   const { runtime } = useRestaurantRuntime();
@@ -22,20 +25,41 @@ export function GeneralCardReceipt() {
       setLoaded(true);
       return;
     }
-    try {
-      const stored = localStorage.getItem(`${STORAGE_KEY}_${restaurantId}`);
-      if (stored != null) setValue(stored);
-    } catch {
-      // ignore
-    }
-    setLoaded(true);
+    let cancelled = false;
+    (async () => {
+      const { data: row, error } = await dockerCoreClient
+        .from("gm_restaurants")
+        .select("receipt_extra_text")
+        .eq("id", restaurantId)
+        .maybeSingle();
+      if (cancelled || error || !row) {
+        setLoaded(true);
+        return;
+      }
+      const r = row as Record<string, unknown>;
+      setValue((r.receipt_extra_text as string) ?? "");
+      setLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [restaurantId]);
 
-  const handleSave = () => {
-    if (!restaurantId) return;
+  const handleSave = async () => {
+    if (!restaurantId || getBackendType() !== BackendType.docker) {
+      alert("Core indisponível ou restaurante não selecionado.");
+      return;
+    }
     setSaving(true);
     try {
-      localStorage.setItem(`${STORAGE_KEY}_${restaurantId}`, value);
+      const { error } = await dockerCoreClient
+        .from("gm_restaurants")
+        .update({
+          receipt_extra_text: value.trim() || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", restaurantId);
+      if (error) throw new Error(error.message);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Erro ao guardar.";
       alert(msg);
@@ -50,7 +74,13 @@ export function GeneralCardReceipt() {
     border: "1px solid #e5e7eb",
     padding: 14,
   };
-  const labelStyle = { display: "block" as const, fontSize: 12, fontWeight: 600, marginBottom: 4, color: "#374151" };
+  const labelStyle = {
+    display: "block" as const,
+    fontSize: 12,
+    fontWeight: 600,
+    marginBottom: 4,
+    color: "#374151",
+  };
   const textareaStyle = {
     width: "100%",
     minHeight: 52,
@@ -73,11 +103,20 @@ export function GeneralCardReceipt() {
 
   return (
     <section style={cardStyle} aria-labelledby="card-receipt-title">
-      <h2 id="card-receipt-title" style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px 0", color: "#111827" }}>
+      <h2
+        id="card-receipt-title"
+        style={{
+          fontSize: 14,
+          fontWeight: 600,
+          margin: "0 0 4px 0",
+          color: "#111827",
+        }}
+      >
         Texto fiscal / recibo
       </h2>
       <p style={{ margin: "0 0 8px 0", fontSize: 12, color: "#6b7280" }}>
-        Información opcional que aparecerá en los recibos impresos (detalles fiscales, agradecimiento, política de devoluciones).
+        Información opcional que aparecerá en los recibos impresos (detalles
+        fiscales, agradecimiento, política de devoluciones).
       </p>
       {!loaded ? (
         <p style={{ fontSize: 12, color: "#6b7280" }}>Cargando...</p>
@@ -94,7 +133,12 @@ export function GeneralCardReceipt() {
             />
           </div>
           <div>
-            <button type="button" onClick={handleSave} disabled={saving} style={buttonStyle}>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              style={buttonStyle}
+            >
               {saving ? "Guardando…" : "Guardar"}
             </button>
           </div>
