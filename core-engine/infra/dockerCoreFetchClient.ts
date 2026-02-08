@@ -5,7 +5,7 @@
  * API compatível com o que o código usa: .from(), .select(), .eq(), .rpc(), .channel().
  */
 
-const env = typeof process !== "undefined" ? process.env : ({} as NodeJS.ProcessEnv);
+const env = typeof process !== "undefined" ? process.env : ({} as any);
 const BASE_URL =
   env.VITE_CORE_URL || env.VITE_SUPABASE_URL || "http://localhost:3001";
 const ANON_KEY =
@@ -97,10 +97,7 @@ function buildFilterBuilder(table: string): FilterBuilder {
         url.searchParams.set(k, v),
       );
       // PostgREST: on_conflict é query param (não header) para upsert em UNIQUE.
-      if (
-        state.method === "POST" &&
-        state.upsertOpts?.onConflict
-      ) {
+      if (state.method === "POST" && state.upsertOpts?.onConflict) {
         url.searchParams.set("on_conflict", state.upsertOpts.onConflict);
       }
     }
@@ -108,8 +105,15 @@ function buildFilterBuilder(table: string): FilterBuilder {
       method: state.method,
       headers: headers(),
     };
-    if (state.method === "GET" && state.rangeFrom != null && state.rangeTo != null) {
-      (init.headers as Headers).set("Range", `${state.rangeFrom}-${state.rangeTo}`);
+    if (
+      state.method === "GET" &&
+      state.rangeFrom != null &&
+      state.rangeTo != null
+    ) {
+      (init.headers as Headers).set(
+        "Range",
+        `${state.rangeFrom}-${state.rangeTo}`,
+      );
     }
     if (state.method === "POST" && state.body !== undefined) {
       init.body = JSON.stringify(state.body);

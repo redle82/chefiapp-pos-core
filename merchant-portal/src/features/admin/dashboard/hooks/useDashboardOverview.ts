@@ -10,7 +10,7 @@ interface DashboardOverviewState {
 }
 
 export function useDashboardOverview(
-  locationId: string
+  locationId: string | null | undefined
 ): DashboardOverviewState {
   const [data, setData] = useState<DashboardOverview | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -22,6 +22,13 @@ export function useDashboardOverview(
   }, []);
 
   useEffect(() => {
+    if (!locationId || locationId.trim().length === 0) {
+      setData(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -50,4 +57,3 @@ export function useDashboardOverview(
 
   return { data, loading, error, reload };
 }
-

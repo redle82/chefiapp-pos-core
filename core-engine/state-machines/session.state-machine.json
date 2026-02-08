@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "SESSION",
+  "description": "Session state machine - represents active operational context",
+  "initial": "INACTIVE",
+  "states": {
+    "INACTIVE": {
+      "description": "System not operational",
+      "transitions": {
+        "START": {
+          "target": "ACTIVE",
+          "description": "Start session"
+        }
+      }
+    },
+    "ACTIVE": {
+      "description": "System operational, accepting orders",
+      "transitions": {
+        "CLOSE": {
+          "target": "CLOSED",
+          "description": "Close session",
+          "guards": [
+            "noOpenOrders",
+            "noLockedOrders"
+          ]
+        }
+      }
+    },
+    "CLOSED": {
+      "description": "Session terminated (terminal state)",
+      "terminal": true
+    }
+  },
+  "events": {
+    "START": "Start session",
+    "CLOSE": "Close session"
+  },
+  "guards": {
+    "noOpenOrders": {
+      "description": "Cannot close session with OPEN orders",
+      "type": "business-rule"
+    },
+    "noLockedOrders": {
+      "description": "Cannot close session with LOCKED orders",
+      "type": "business-rule"
+    }
+  }
+}
+

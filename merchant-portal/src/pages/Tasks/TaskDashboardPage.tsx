@@ -10,6 +10,8 @@ import { useNavigate } from "react-router-dom";
 import { ShiftChecklistSection } from "../../components/Tasks/ShiftChecklistSection";
 import { TaskCard } from "../../components/Tasks/TaskCard";
 import { TaskSuggestions } from "../../components/Tasks/TaskSuggestions";
+import { TaskSuggestionsMentorEngine } from "../../components/Tasks/TaskSuggestionsMentorEngine";
+import { useMentorshipMessages } from "../../core/intelligence/useMentorshipMessages";
 import { useRestaurantId } from "../../core/hooks/useRestaurantId";
 import {
   taskFiltering,
@@ -41,6 +43,32 @@ export function TaskDashboardPage() {
   const [suggestions, setSuggestions] = useState<TaskSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<UserRole>("employee");
+
+  // Onda 6 — MentorEngine
+  const { messages: mentorshipMessages, addEvent } = useMentorshipMessages();
+        {/* Onda 6 — Simulação de eventos IA (remover em produção) */}
+        <section style={{ marginBottom: VPC.space }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => addEvent({ type: 'SLA_VIOLATED', orderId: '123', timestamp: Date.now() })}
+              style={{ padding: '6px 12px', borderRadius: 6, background: '#fee2e2', border: '1px solid #fca5a5', color: '#991b1b', cursor: 'pointer' }}
+            >
+              Simular SLA violado
+            </button>
+            <button
+              onClick={() => addEvent({ type: 'STOCK_ZEROED', productId: 'tomate', timestamp: Date.now() })}
+              style={{ padding: '6px 12px', borderRadius: 6, background: '#fef9c3', border: '1px solid #fde047', color: '#92400e', cursor: 'pointer' }}
+            >
+              Simular estoque zerado
+            </button>
+            <button
+              onClick={() => addEvent({ type: 'ORDER_DELAYED', orderId: '456', delayMinutes: 12, timestamp: Date.now() })}
+              style={{ padding: '6px 12px', borderRadius: 6, background: '#dbeafe', border: '1px solid #60a5fa', color: '#1e3a8a', cursor: 'pointer' }}
+            >
+              Simular atraso pedido
+            </button>
+          </div>
+        </section>
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -122,6 +150,13 @@ export function TaskDashboardPage() {
               restaurantId={restaurantId}
               variant="compact"
             />
+          </section>
+        )}
+
+        {/* Onda 6 — Sugestões MentorEngine */}
+        {mentorshipMessages.length > 0 && (
+          <section style={{ marginBottom: VPC.spaceLg }}>
+            <TaskSuggestionsMentorEngine messages={mentorshipMessages} />
           </section>
         )}
 

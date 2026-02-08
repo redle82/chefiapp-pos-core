@@ -3,6 +3,9 @@ import type { CoreOrder, CoreTable } from "../../../../core-boundary/docker-core
 import { alertEngine } from "../../../../core/alerts/AlertEngine";
 import type { DashboardOverview } from "../types";
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 const REVENUE_HOUR_LABELS = [
   "03h", "04h", "05h", "06h", "07h", "08h", "09h", "10h", "11h", "12h",
   "13h", "14h", "15h", "16h", "17h", "18h", "19h", "20h", "21h", "22h",
@@ -56,7 +59,12 @@ function buildMockOverview(locationId: string, seatsTotal: number): DashboardOve
 export async function getOverview(
   locationId: string
 ): Promise<DashboardOverview> {
-  const restaurantId = locationId;
+  const restaurantId = locationId.trim();
+
+  // Avoid invalid PostgREST calls such as restaurant_id=eq. during bootstrap races.
+  if (!UUID_REGEX.test(restaurantId)) {
+    return buildMockOverview(restaurantId, 0);
+  }
 
   try {
     const [tablesRes, ordersRes, alerts, tasksRes] = await Promise.all([

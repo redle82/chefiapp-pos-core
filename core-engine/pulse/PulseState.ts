@@ -53,7 +53,8 @@ export interface PulseThresholds {
 
 /** Historical record for analytics */
 export interface PulseHistoryEntry {
-  readonly snapshot: PulseSnapshot;
-  /** Duration in seconds this zone was sustained */
-  readonly durationSec: number;
+  readonly timestamp: string;
+  readonly score: number;
+  readonly zone: PulseZone;
+  readonly components: PulseComponents;
 }
