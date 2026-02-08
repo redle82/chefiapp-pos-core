@@ -7,7 +7,6 @@ import { Button } from "../../../ui/design-system/primitives/Button";
 import { Card } from "../../../ui/design-system/primitives/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { colors } from "../../../ui/design-system/tokens/colors";
-import { radius } from "../../../ui/design-system/tokens/radius";
 import { TablePanel } from "../../Waiter/TablePanel";
 import { useStaff } from "../context/StaffContext";
 import type { Task } from "../context/StaffCoreTypes";
@@ -21,25 +20,38 @@ export interface MiniPOSProps {
   initialTableId?: string | null;
 }
 
-// TableCard: feedback tátil (scale 0.97) — app UX, sem hover
-const TableCard = ({
+// --- Last.app-inspired table status colors ---
+const TABLE_COLORS: Record<string, { bg: string; text: string }> = {
+  free: { bg: "#27272a", text: "#71717a" },
+  occupied: { bg: "#3b82f6", text: "#ffffff" },
+  reserved: { bg: "#f59e0b", text: "#000000" },
+  payment: { bg: "#10b981", text: "#ffffff" },
+  alert: { bg: "#ef4444", text: "#ffffff" },
+};
+
+// --- Room/area configuration ---
+const ROOMS = [
+  { id: "main", label: "Sala Principal" },
+  { id: "terrace", label: "Terraço" },
+  { id: "bar", label: "Bar" },
+];
+
+// TableCircle — Last.app-inspired circular table indicator with press feedback
+const TableCircle = ({
   number,
   status,
+  guests,
   time,
   onClick,
 }: {
   number: number;
   status: string;
+  guests?: number;
   time?: string;
   onClick: () => void;
 }) => {
   const [pressed, setPressed] = useState(false);
-  const borderColor =
-    status === "occupied"
-      ? colors.action.base
-      : status === "payment"
-      ? colors.success.base
-      : colors.border.subtle;
+  const c = TABLE_COLORS[status] || TABLE_COLORS.free;
 
   return (
     <div
@@ -48,41 +60,62 @@ const TableCard = ({
       onPointerUp={() => setPressed(false)}
       onPointerLeave={() => setPressed(false)}
       style={{
-        position: "relative",
+        width: "100%",
         aspectRatio: "1/1",
-        borderRadius: radius.lg,
-        border: `2px solid ${borderColor}`,
-        backgroundColor: status === "free" ? "transparent" : `${borderColor}20`,
+        borderRadius: "50%",
+        backgroundColor: c.bg,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         cursor: "pointer",
-        transition: "transform 0.08s ease",
-        transform: pressed ? "scale(0.97)" : "scale(1)",
+        transition: "transform 0.1s ease, box-shadow 0.1s ease",
+        transform: pressed ? "scale(0.92)" : "scale(1)",
+        boxShadow: status !== "free" ? `0 0 0 3px ${c.bg}33` : "none",
+        position: "relative",
+        userSelect: "none",
       }}
     >
-      <Text
-        size="3xl"
-        weight="black"
-        color={status === "free" ? "tertiary" : "primary"}
+      <span
+        style={{
+          color: c.text,
+          fontSize: 16,
+          fontWeight: 800,
+          letterSpacing: -0.5,
+          lineHeight: 1,
+        }}
       >
-        {number.toString()}
-      </Text>
+        M{number}
+      </span>
+      {guests != null && guests > 0 && (
+        <span
+          style={{
+            color: c.text,
+            fontSize: 10,
+            fontWeight: 600,
+            marginTop: 3,
+            opacity: 0.9,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+          }}
+        >
+          👤 {guests}
+        </span>
+      )}
       {time && (
-        <Text
-          size="xs"
-          color="secondary"
-          style={{ marginTop: 4, fontFamily: "monospace" }}
+        <span
+          style={{
+            color: c.text,
+            fontSize: 9,
+            fontWeight: 500,
+            marginTop: 1,
+            fontFamily: "monospace",
+            opacity: 0.75,
+          }}
         >
           {time}
-        </Text>
-      )}
-
-      {status === "payment" && (
-        <div style={{ position: "absolute", top: 8, right: 8 }}>
-          <Text size="md">💰</Text>
-        </div>
+        </span>
       )}
     </div>
   );
@@ -104,6 +137,7 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({
     setSelectedTableId(initialTableId ?? null);
   }, [initialTableId]);
 
+  const [selectedRoom, setSelectedRoom] = useState("main");
   const {
     tables: appStaffTables,
     loading,
@@ -114,7 +148,9 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({
     id: table.id,
     number: table.number,
     status: table.status,
+    seats: table.seats,
   }));
+  const occupiedCount = tables.filter((t) => t.status === "occupied").length;
 
   // Mapping Keyboard Shortcuts
   useKeyboardShortcuts(
@@ -188,7 +224,7 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({
     <StaffLayout
       title={
         activeTab === "tables"
-          ? "Salão Principal"
+          ? ROOMS.find((r) => r.id === selectedRoom)?.label || "Salão Principal"
           : activeTab === "order"
           ? "Nova Comanda"
           : "Menu Digital"
@@ -263,6 +299,64 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({
         {/* VIEW SWITCHER */}
         {activeTab === "tables" && (
           <div className="animate-fade-in">
+            {/* Room Tabs — Last.app style pill selector */}
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                overflowX: "auto",
+                paddingBottom: 12,
+                marginBottom: 12,
+                scrollbarWidth: "none",
+              }}
+            >
+              {ROOMS.map((room) => {
+                const isActive = selectedRoom === room.id;
+                const count = room.id === "main" ? occupiedCount : 0;
+                return (
+                  <button
+                    key={room.id}
+                    onClick={() => setSelectedRoom(room.id)}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: 20,
+                      border: "none",
+                      background: isActive
+                        ? colors.action.base
+                        : colors.surface.layer2,
+                      color: isActive ? "#fff" : colors.text.secondary,
+                      fontSize: 13,
+                      fontWeight: isActive ? 700 : 500,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      transition: "all 0.15s ease",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    {room.label}
+                    {count > 0 && (
+                      <span
+                        style={{
+                          background: isActive
+                            ? "rgba(255,255,255,0.25)"
+                            : colors.surface.layer3,
+                          borderRadius: 10,
+                          padding: "1px 7px",
+                          fontSize: 11,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Actions Row */}
             <div
               style={{
                 display: "flex",
@@ -277,14 +371,30 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({
                 color="tertiary"
                 style={{ textTransform: "uppercase", letterSpacing: 2 }}
               >
-                Mesas {loading && "(Carregando...)"}
+                Mesas {loading && "(...)"}
               </Text>
-              <Button size="sm" tone="neutral" onClick={handleScan}>
-                📷 Scan QR
-              </Button>
+              <button
+                onClick={handleScan}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
+                  border: `1px solid ${colors.border.subtle}`,
+                  background: colors.surface.layer1,
+                  cursor: "pointer",
+                  fontSize: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: colors.text.secondary,
+                }}
+                title="Scan QR"
+              >
+                📷
+              </button>
             </div>
 
-            {/* Estado erro: mensagem + retry */}
+            {/* Error state */}
             {error && (
               <Card
                 surface="layer3"
@@ -300,32 +410,83 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({
               </Card>
             )}
 
+            {/* Table Grid — 4 columns, circular indicators */}
             {!error && (
               <>
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 16,
+                    gridTemplateColumns: "repeat(4, 1fr)",
+                    gap: 12,
+                    padding: "4px 0",
                   }}
                 >
                   {tables
                     .sort((a, b) => a.number - b.number)
                     .map((t) => (
-                      <TableCard
+                      <TableCircle
                         key={t.id}
                         number={t.number}
                         status={t.status}
+                        guests={
+                          t.status === "occupied" ? t.seats || 2 : undefined
+                        }
                         time={t.status === "occupied" ? "On" : undefined}
                         onClick={() => setSelectedTableId(t.id)}
                       />
                     ))}
                 </div>
                 {!loading && tables.length === 0 && (
-                  <Text size="sm" color="tertiary">
+                  <Text
+                    size="sm"
+                    color="tertiary"
+                    style={{ textAlign: "center", padding: 32 }}
+                  >
                     Nenhuma mesa configurada.
                   </Text>
                 )}
+
+                {/* Status Legend */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 16,
+                    justifyContent: "center",
+                    marginTop: 20,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  {[
+                    { status: "free", label: "Livre" },
+                    { status: "occupied", label: "Ocupada" },
+                    { status: "alert", label: "Alerta" },
+                    { status: "reserved", label: "Reserva" },
+                    { status: "payment", label: "Pagamento" },
+                  ].map((s) => (
+                    <div
+                      key={s.status}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: "50%",
+                          backgroundColor: (
+                            TABLE_COLORS[s.status] || TABLE_COLORS.free
+                          ).bg,
+                        }}
+                      />
+                      <Text size="xs" color="tertiary">
+                        {s.label}
+                      </Text>
+                    </div>
+                  ))}
+                </div>
               </>
             )}
           </div>

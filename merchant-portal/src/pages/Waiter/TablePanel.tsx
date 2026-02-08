@@ -1,6 +1,7 @@
 /**
- * TablePanel — Painel da Mesa (modo Adicionar Pedido)
- * Princípio: Topo fixo, grupos expandem, produtos aparecem, zero navegação profunda.
+ * TablePanel — Last.app-inspired order taking view
+ * Header with status badge → CategoryStrip (pills) → Product photo grid (2 cols)
+ * → Order bar with seat tabs + action buttons (Enviar/Cobrar/Print)
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -10,7 +11,6 @@ import { Text } from "../../ui/design-system/primitives/Text";
 import { BottomNavBar } from "./components/BottomNavBar";
 import type { Table } from "./types";
 import { TableStatus } from "./types";
-// import type { Category } from './components/CategoryStrip';
 import {
   tpvEventBus,
   type DecisionMadePayload,
@@ -21,7 +21,7 @@ import { AlertSystem } from "./components/AlertSystem";
 import { CategoryStrip } from "./components/CategoryStrip";
 import { ExceptionReportModal } from "./components/ExceptionReportModal";
 import { MiniMap } from "./components/MiniMap";
-import type { /* Product, */ ProductComment } from "./components/ProductCard";
+import type { ProductComment } from "./components/ProductCard";
 import { ProductCard } from "./components/ProductCard";
 import { useWaiterCalls } from "./hooks/useWaiterCalls";
 
@@ -30,10 +30,15 @@ import { useMenuItems } from "../../hooks/useMenuItems";
 import { useToast } from "../../ui/design-system";
 import { useOrders } from "../TPV/context/OrderContextReal";
 import { useTables } from "../TPV/context/TableContext";
-// LEGACY / LAB — blocked in Docker mode
 import { db } from "../../core/db";
 
 import { useContextEngine } from "../../core/context";
+
+/** Design tokens — Last.app style */
+const ACCENT = '#6366f1';
+const ACCENT_GREEN = '#10b981';
+const SURFACE = '#18181b';
+const BADGE_BLUE = '#3b82f6';
 
 interface OrderItem {
   id: string;
@@ -42,12 +47,11 @@ interface OrderItem {
   quantity: number;
   comments: string[];
   price: number;
+  seat?: string; // seat assignment for split billing
 }
 
 interface TablePanelProps {
   tableId?: string;
-  /** When provided, TablePanel is embedded (e.g. inside MiniPOS).
-   *  Hides MiniMap and BottomNavBar; uses this callback for the back button. */
   onBack?: () => void;
 }
 
@@ -96,7 +100,9 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [sending, setSending] = useState(false); // Loading state
+  const [sending, setSending] = useState(false);
+  const [activeSeat, setActiveSeat] = useState('shared'); // seat tab: shared, seat-1, seat-2...
+  const [seatCount, setSeatCount] = useState(2); // number of individual seats
 
   // Exception Reporting State
   const [showExceptionModal, setShowExceptionModal] = useState(false);
@@ -229,6 +235,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
       quantity,
       comments,
       price: product.price,
+      seat: activeSeat, // assign to current seat tab
     };
 
     setOrderItems((prev) => [...prev, newItem]);
@@ -347,9 +354,9 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
   return (
     <div
       style={{
-        paddingBottom: 100, // Espaço para barra inferior
+        paddingBottom: 100,
         minHeight: "100vh",
-        background: "#000",
+        background: "#0a0a0a",
         maxWidth: 600,
         margin: "0 auto",
       }}
@@ -361,7 +368,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
         onSnooze={handleSnoozeAlert}
       />
 
-      {/* Mini-Mapa Fixo no Topo - Hide in STANDALONE (Solo Mode) or Embedded Mode (MiniPOS) */}
+      {/* Mini-Mapa — hide in standalone / embedded */}
       {!isStandalone && !isEmbedded && (
         <div
           style={{
@@ -380,173 +387,138 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
         </div>
       )}
 
-      {/* Topo Fixo */}
+      {/* ─── Last.app Header ─── */}
       <div
         style={{
           position: "sticky",
-          top: (isStandalone || isEmbedded) ? 0 : 120, // Adjust top if map is hidden
-          background: colors.surface.base,
-          borderBottom: `1px solid ${colors.border.subtle}`,
+          top: isStandalone || isEmbedded ? 0 : 120,
+          background: "#0a0a0a",
+          borderBottom: `1px solid #27272a`,
           zIndex: 100,
-          padding: spacing[4],
+          padding: "12px 16px",
         }}
       >
         <div
           style={{
             display: "flex",
-            justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: spacing[2],
+            gap: 12,
           }}
         >
+          {/* Back button */}
           <button
             onClick={() => (onBack ? onBack() : navigate("/app/waiter"))}
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: 8,
+              width: 40,
+              height: 40,
+              borderRadius: 10,
               border: "none",
-              background: "transparent",
+              background: SURFACE,
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 24,
-              color: colors.text.primary,
+              fontSize: 18,
+              color: "#e4e4e7",
+              flexShrink: 0,
             }}
           >
             ←
           </button>
-          <div style={{ flex: 1, textAlign: "center" }}>
-            <Text size="xl" weight="bold" color="primary">
+
+          {/* Table name + status badge */}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#ffffff" }}>
               {isStandalone ? "Venda Balcão" : `Mesa ${table.number}`}
-            </Text>
-            {!isStandalone && (
-              <Text size="sm" color="secondary">
-                {table.status === TableStatus.OCCUPIED && seatedMinutes !== null
-                  ? `Ocupada · ${seatedMinutes} min`
-                  : "Livre"}
-              </Text>
-            )}
-          </div>
-          <div style={{ display: "flex", gap: spacing[2] }}>
-            {/* Report Exception Button */}
-            <button
-              onClick={() => setShowExceptionModal(true)}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 8,
-                border: pendingException
-                  ? `2px solid ${colors.warning.base}`
-                  : "none",
-                background: pendingException
-                  ? `${colors.warning.base}30`
-                  : "transparent",
-                cursor: "pointer",
-                fontSize: 20,
-                color: pendingException
-                  ? colors.warning.base
-                  : colors.destructive.base,
-                position: "relative",
-              }}
-              title="Reportar Problema"
-            >
-              ⚠️
-              {pendingException && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: 4,
-                    right: 4,
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: colors.warning.base,
-                  }}
-                />
-              )}
-            </button>
-            {/* CONTEXT ENGINE: Dynamic Action Button */}
-            <Button
-              tone={permissions.canCloseRegister ? "destructive" : "neutral"}
-              onClick={
-                permissions.canCloseRegister
-                  ? handleCloseBill
-                  : handleRequestBill
-              }
-              style={{ height: 44 }}
-            >
-              {permissions.canCloseRegister ? "💰 Fechar" : "✋ Conta"}
-            </Button>
-          </div>
-        </div>
-
-        {/* Resumo do Pedido */}
-        {orderItems.length > 0 && (
-          <div
-            style={{
-              padding: spacing[3],
-              background: colors.surface.layer1,
-              borderRadius: 8,
-              marginTop: spacing[2],
-              border: `1px solid ${colors.action.base}`,
-            }}
-          >
-            <Text
-              size="sm"
-              weight="bold"
-              color="primary"
-              style={{ marginBottom: spacing[2] }}
-            >
-              Novo Pedido ({orderItems.length} itens)
-            </Text>
-            {orderItems.map((item) => (
-              <Text
-                key={item.id}
-                size="xs"
-                color="secondary"
-                style={{ marginBottom: spacing[1] }}
-              >
-                {item.quantity}x {item.productName}
-                {item.comments.length > 0 && ` (${item.comments.join(", ")})`}
-              </Text>
-            ))}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginTop: spacing[3],
-                borderTop: `1px solid ${colors.border.subtle}`,
-                paddingTop: spacing[2],
-              }}
-            >
-              <Text size="lg" weight="bold" color="primary">
-                Total:{" "}
-                {new Intl.NumberFormat("pt-BR", {
-                  style: "currency",
-                  currency: "EUR",
-                }).format(totalAmount / 100)}
-              </Text>
-
-              <Button
-                tone={isStandalone ? "action" : "action"}
-                onClick={handleSendOrder}
-                disabled={sending}
-              >
-                {sending
-                  ? "Processando..."
-                  : isStandalone
-                  ? "💸 Cobrar"
-                  : "Enviar Pedido 🚀"}
-              </Button>
             </div>
           </div>
-        )}
+
+          {!isStandalone && (
+            <div
+              style={{
+                background: table.status === TableStatus.OCCUPIED ? BADGE_BLUE : '#27272a',
+                color: table.status === TableStatus.OCCUPIED ? '#ffffff' : '#a1a1aa',
+                fontSize: 11,
+                fontWeight: 700,
+                padding: "4px 10px",
+                borderRadius: 12,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {table.status === TableStatus.OCCUPIED
+                ? `Ocupada · ${seatedMinutes ?? 0}min`
+                : "Livre"}
+            </div>
+          )}
+
+          {/* Exception report button */}
+          <button
+            onClick={() => setShowExceptionModal(true)}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              border: pendingException
+                ? `2px solid ${colors.warning.base}`
+                : "none",
+              background: pendingException
+                ? `${colors.warning.base}30`
+                : SURFACE,
+              cursor: "pointer",
+              fontSize: 16,
+              color: pendingException
+                ? colors.warning.base
+                : "#f59e0b",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              position: "relative",
+            }}
+            title="Reportar Problema"
+          >
+            ⚠️
+            {pendingException && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: 4,
+                  right: 4,
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: colors.warning.base,
+                }}
+              />
+            )}
+          </button>
+
+          {/* Conta button */}
+          <button
+            onClick={
+              permissions.canCloseRegister
+                ? handleCloseBill
+                : handleRequestBill
+            }
+            style={{
+              height: 40,
+              padding: "0 14px",
+              borderRadius: 10,
+              border: "none",
+              background: ACCENT_GREEN,
+              color: "#ffffff",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            {permissions.canCloseRegister ? "💰 Fechar" : "Conta"}
+          </button>
+        </div>
       </div>
 
-      {/* Grupos/Categorias */}
+      {/* ─── Category Strip (pill chips) ─── */}
       <CategoryStrip
         categories={categories}
         selectedId={selectedCategory || undefined}
@@ -557,14 +529,22 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
         }}
       />
 
-      {/* Produtos da Categoria Selecionada */}
+      {/* ─── Product Grid (2 columns, photo tiles) ─── */}
       {selectedCategory && (
-        <div style={{ padding: spacing[4] }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 1fr)",
+            gap: 12,
+            padding: 16,
+          }}
+        >
           {visibleProducts.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
               comments={visibleComments}
+              variant="tile"
               onAdd={(quantity, commentIds) =>
                 handleAddItem(product.id, quantity, commentIds)
               }
@@ -573,18 +553,207 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
         </div>
       )}
 
-      {/* Estado Vazio: Selecionar Categoria */}
+      {/* Estado Vazio */}
       {!selectedCategory && (
         <div
           style={{
-            padding: spacing[8],
+            padding: 48,
             textAlign: "center",
-            color: colors.text.tertiary,
+            color: "#52525b",
           }}
         >
-          <Text size="lg" color="tertiary">
-            👆 Selecione uma categoria acima
-          </Text>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>👆</div>
+          <div style={{ fontSize: 14 }}>Selecione uma categoria acima</div>
+        </div>
+      )}
+
+      {/* ─── Order Bar (bottom panel) with Seat Tabs + Actions ─── */}
+      {orderItems.length > 0 && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: isEmbedded ? 0 : 56,
+            left: 0,
+            right: 0,
+            maxWidth: 600,
+            margin: "0 auto",
+            background: "#09090b",
+            borderTop: `1px solid #27272a`,
+            padding: "10px 16px 16px",
+            zIndex: 150,
+          }}
+        >
+          {/* Seat tabs */}
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              marginBottom: 10,
+              overflowX: "auto",
+              scrollbarWidth: "none",
+            }}
+          >
+            {[
+              { id: 'shared', label: 'Partilhado' },
+              ...Array.from({ length: seatCount }, (_, i) => ({
+                id: `seat-${i + 1}`,
+                label: `Lugar ${i + 1}`,
+              })),
+            ].map((seat) => {
+              const isActive = activeSeat === seat.id;
+              const seatItems = orderItems.filter((item) => item.seat === seat.id);
+              return (
+                <button
+                  key={seat.id}
+                  onClick={() => setActiveSeat(seat.id)}
+                  style={{
+                    height: 28,
+                    padding: "0 12px",
+                    borderRadius: 14,
+                    border: "none",
+                    background: isActive ? ACCENT : "#27272a",
+                    color: isActive ? "#ffffff" : "#a1a1aa",
+                    fontSize: 11,
+                    fontWeight: isActive ? 700 : 500,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
+                  {seat.label}
+                  {seatItems.length > 0 && (
+                    <span
+                      style={{
+                        background: isActive ? "rgba(255,255,255,0.25)" : "#3f3f46",
+                        borderRadius: 8,
+                        padding: "0 5px",
+                        fontSize: 10,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {seatItems.length}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+            {/* + Lugar button */}
+            <button
+              onClick={() => setSeatCount((c) => c + 1)}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 14,
+                border: `1px dashed #3f3f46`,
+                background: "transparent",
+                color: "#71717a",
+                fontSize: 14,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+              title="Adicionar lugar"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Summary + total */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 10,
+            }}
+          >
+            <div style={{ fontSize: 12, color: "#a1a1aa" }}>
+              {orderItems.length} {orderItems.length === 1 ? 'item' : 'itens'}
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#ffffff" }}>
+              €{" "}
+              {(totalAmount / 100).toFixed(2).replace(".", ",")}
+            </div>
+          </div>
+
+          {/* Action buttons row */}
+          <div style={{ display: "flex", gap: 8 }}>
+            {/* Primary: Enviar Pedido */}
+            <button
+              onClick={handleSendOrder}
+              disabled={sending}
+              style={{
+                flex: 1,
+                height: 48,
+                borderRadius: 12,
+                border: "none",
+                background: ACCENT,
+                color: "#ffffff",
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: sending ? "wait" : "pointer",
+                opacity: sending ? 0.7 : 1,
+              }}
+            >
+              {sending
+                ? "Processando..."
+                : isStandalone
+                ? "💸 Cobrar"
+                : "Enviar Pedido"}
+            </button>
+
+            {/* Secondary: Cobrar */}
+            {!isStandalone && (
+              <button
+                onClick={
+                  permissions.canCloseRegister
+                    ? handleCloseBill
+                    : handleRequestBill
+                }
+                style={{
+                  width: 80,
+                  height: 48,
+                  borderRadius: 12,
+                  border: "none",
+                  background: ACCENT_GREEN,
+                  color: "#ffffff",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              >
+                Cobrar
+              </button>
+            )}
+
+            {/* Print icon */}
+            <button
+              onClick={() => window.print()}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                border: "none",
+                background: "#27272a",
+                color: "#a1a1aa",
+                fontSize: 18,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+              title="Imprimir"
+            >
+              🖨️
+            </button>
+          </div>
         </div>
       )}
 
@@ -593,7 +762,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
         isOpen={showExceptionModal}
         onClose={() => {
           setShowExceptionModal(false);
-          setPendingException(true); // Mark as pending until decision received
+          setPendingException(true);
           warning("Aguardando decisão do operador...");
         }}
         orderId={activeOrder?.id || `table-${tableId}`}

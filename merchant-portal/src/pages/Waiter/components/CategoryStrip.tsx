@@ -1,12 +1,12 @@
 /**
- * CategoryStrip — Grupos/Categorias (primeira camada)
- * Princípio: Botões grandes, expandem na mesma tela, zero navegação.
+ * CategoryStrip — Last.app-inspired pill chip selector
+ * Princípio: Pill chips horizontais, scroll suave, active = roxo (#6366f1).
  */
 
-import React from 'react';
-import { Text } from '../../../ui/design-system/primitives/Text';
-import { colors } from '../../../ui/design-system/tokens/colors';
-import { spacing } from '../../../ui/design-system/tokens/spacing';
+import { colors } from "../../../ui/design-system/tokens/colors";
+
+/** Active accent — purple from Last.app design */
+const ACTIVE_COLOR = "#6366f1";
 
 export interface Category {
   id: string;
@@ -21,74 +21,68 @@ interface CategoryStripProps {
   onSelect: (categoryId: string) => void;
 }
 
-export function CategoryStrip({ categories, selectedId, onSelect }: CategoryStripProps) {
+export function CategoryStrip({
+  categories,
+  selectedId,
+  onSelect,
+}: CategoryStripProps) {
   return (
     <div
       style={{
-        display: 'flex',
-        gap: spacing[2],
-        padding: spacing[3],
-        overflowX: 'auto',
+        display: "flex",
+        gap: 8,
+        padding: "10px 16px",
+        overflowX: "auto",
         background: colors.surface.base,
         borderBottom: `1px solid ${colors.border.subtle}`,
-        // Esconder scrollbar mas manter scroll
-        scrollbarWidth: 'none',
-        msOverflowStyle: 'none',
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
       }}
     >
       {categories.map((category) => {
         const isSelected = selectedId === category.id;
-        
+
         return (
           <button
             key={category.id}
             onClick={() => onSelect(category.id)}
             style={{
-              minWidth: 100,
-              height: 64,
-              padding: `${spacing[2]} ${spacing[3]}`,
-              borderRadius: 12,
-              border: `2px solid ${isSelected ? colors.action.base : colors.border.subtle}`,
-              background: isSelected 
-                ? `${colors.action.base}22` 
-                : colors.surface.layer1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: spacing[1],
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              whiteSpace: 'nowrap',
+              height: 36,
+              padding: "0 16px",
+              borderRadius: 18,
+              border: "none",
+              background: isSelected ? ACTIVE_COLOR : "#27272a",
+              color: isSelected ? "#ffffff" : "#a1a1aa",
+              fontSize: 13,
+              fontWeight: isSelected ? 700 : 500,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+              whiteSpace: "nowrap",
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              flexShrink: 0,
             }}
-            onMouseDown={(e) => {
-              e.currentTarget.style.transform = 'scale(0.95)';
+            onPointerDown={(e) => {
+              e.currentTarget.style.transform = "scale(0.95)";
             }}
-            onMouseUp={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
+            onPointerUp={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
+            onPointerLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
             }}
           >
             {category.icon && (
-              <Text size="lg" style={{ lineHeight: 1 }}>
+              <span style={{ fontSize: 14, lineHeight: 1 }}>
                 {category.icon}
-              </Text>
+              </span>
             )}
-            <Text 
-              size="sm" 
-              weight={isSelected ? 'bold' : 'regular'}
-              style={{ 
-                color: isSelected ? colors.action.base : colors.text.secondary 
-              }}
-            >
-              {category.name}
-            </Text>
+            <span>{category.name}</span>
           </button>
         );
       })}
-      
+
       <style>{`
         div::-webkit-scrollbar {
           display: none;
@@ -97,4 +91,3 @@ export function CategoryStrip({ categories, selectedId, onSelect }: CategoryStri
     </div>
   );
 }
-
