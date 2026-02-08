@@ -46,9 +46,13 @@ interface OrderItem {
 
 interface TablePanelProps {
   tableId?: string;
+  /** When provided, TablePanel is embedded (e.g. inside MiniPOS).
+   *  Hides MiniMap and BottomNavBar; uses this callback for the back button. */
+  onBack?: () => void;
 }
 
-export function TablePanel({ tableId: propTableId }: TablePanelProps) {
+export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
+  const isEmbedded = !!onBack;
   const navigate = useNavigate();
   const params = useParams<{ tableId: string }>();
   // Resolve tableId from Prop or URL
@@ -357,8 +361,8 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
         onSnooze={handleSnoozeAlert}
       />
 
-      {/* Mini-Mapa Fixo no Topo - Hide in STANDALONE (Solo Mode) */}
-      {!isStandalone && (
+      {/* Mini-Mapa Fixo no Topo - Hide in STANDALONE (Solo Mode) or Embedded Mode (MiniPOS) */}
+      {!isStandalone && !isEmbedded && (
         <div
           style={{
             position: "sticky",
@@ -380,7 +384,7 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
       <div
         style={{
           position: "sticky",
-          top: isStandalone ? 0 : 120, // Adjust top if map is hidden
+          top: (isStandalone || isEmbedded) ? 0 : 120, // Adjust top if map is hidden
           background: colors.surface.base,
           borderBottom: `1px solid ${colors.border.subtle}`,
           zIndex: 100,
@@ -396,7 +400,7 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
           }}
         >
           <button
-            onClick={() => navigate("/app/waiter")}
+            onClick={() => (onBack ? onBack() : navigate("/app/waiter"))}
             style={{
               width: 44,
               height: 44,
@@ -599,7 +603,7 @@ export function TablePanel({ tableId: propTableId }: TablePanelProps) {
         }
       />
 
-      <BottomNavBar />
+      {!isEmbedded && <BottomNavBar />}
     </div>
   );
 }
