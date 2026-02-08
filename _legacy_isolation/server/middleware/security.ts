@@ -4,8 +4,8 @@
  * TASK-3.1.2: Criptografia de tokens OAuth
  */
 
-import { IncomingMessage, ServerResponse } from 'http';
-import crypto from 'crypto';
+import crypto from "crypto";
+import { IncomingMessage } from "http";
 
 // ============================================================================
 // RATE LIMITING
@@ -29,11 +29,11 @@ const RATE_LIMIT_REQUESTS = {
  * Get IP from request (handles proxies)
  */
 function getClientIp(req: IncomingMessage): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') {
-    return forwarded.split(',')[0].trim();
+  const forwarded = req.headers["x-forwarded-for"];
+  if (typeof forwarded === "string") {
+    return forwarded.split(",")[0].trim();
   }
-  return req.socket.remoteAddress || 'unknown';
+  return req.socket.remoteAddress || "unknown";
 }
 
 /**
@@ -41,7 +41,7 @@ function getClientIp(req: IncomingMessage): string {
  */
 export function checkRateLimit(
   req: IncomingMessage,
-  endpoint: 'auth' | 'webhook' | 'api' | 'global' = 'global'
+  endpoint: "auth" | "webhook" | "api" | "global" = "global",
 ): { allowed: boolean; remaining: number; resetIn: number } {
   const ip = getClientIp(req);
   const now = Date.now();
@@ -92,10 +92,10 @@ setInterval(cleanupRateLimits, 5 * 60 * 1000);
  */
 export function configurePoolTimeouts(pool: any): void {
   // Idle connection timeout (15 minutos)
-  pool.on('idle', (client: any) => {
+  pool.on("idle", (client: any) => {
     const query = client.query;
     const timeout = setTimeout(() => {
-      console.error('Idle connection timeout, removing from pool');
+      console.error("Idle connection timeout, removing from pool");
       pool.remove(client);
     }, 15 * 60 * 1000);
 
@@ -110,7 +110,7 @@ export function configurePoolTimeouts(pool: any): void {
   pool.query = async function (text: string, values?: any) {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error('QUERY_TIMEOUT: 30s exceeded'));
+        reject(new Error("QUERY_TIMEOUT: 30s exceeded"));
       }, 30 * 1000);
 
       originalQuery(text, values)
@@ -131,7 +131,7 @@ export function configurePoolTimeouts(pool: any): void {
 // ============================================================================
 
 export interface HealthStatus {
-  status: 'ok' | 'degraded' | 'down';
+  status: "ok" | "degraded" | "down";
   timestamp: string;
   version: string;
   uptime: number;
@@ -140,10 +140,10 @@ export interface HealthStatus {
   eventStoreInitialized: boolean;
   coreEngineAvailable: boolean;
   services: {
-    database: 'up' | 'down' | 'slow';
-    api: 'up' | 'down';
-    eventStore: 'up' | 'down';
-    coreEngine: 'up' | 'down';
+    database: "up" | "down" | "slow";
+    api: "up" | "down";
+    eventStore: "up" | "down";
+    coreEngine: "up" | "down";
     memory: {
       usage: number;
       limit: number;
@@ -152,7 +152,13 @@ export interface HealthStatus {
   metrics?: {
     requestsPerSecond: number;
     avgLatencyMs: number;
+    dbLatencyMs?: number;
+    ordersPerMinute?: number;
     errors: number;
+  };
+  alerts?: {
+    openShiftsOver14h?: number;
+    cashDiffOver50?: number;
   };
 }
 
@@ -167,50 +173,98 @@ export async function getHealthStatus(pool: any): Promise<HealthStatus> {
   const timestamp = new Date().toISOString();
   const uptime = Date.now() - startTime;
 
-  let dbStatus: 'up' | 'down' | 'slow' = 'up';
-  let eventStoreStatus: 'up' | 'down' = 'up';
-  let coreEngineStatus: 'up' | 'down' = 'up';
+  let dbStatus: "up" | "down" | "slow" = "up";
+  let eventStoreStatus: "up" | "down" = "up";
+  let coreEngineStatus: "up" | "down" = "up";
+  let dbLatencyMs: number | undefined;
+  let ordersPerMinute: number | undefined;
+  let openShiftsOver14h: number | undefined;
+  let cashDiffOver50: number | undefined;
 
   try {
     const startQuery = Date.now();
-    await pool.query('SELECT 1');
+    await pool.query("SELECT 1");
     const queryTime = Date.now() - startQuery;
+    dbLatencyMs = queryTime;
 
     if (queryTime > 1000) {
-      dbStatus = 'slow';
+      dbStatus = "slow";
     }
 
     // Check event store (fiscal_event_store table exists and is accessible)
     try {
       await pool.query(`
-        SELECT 1 FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public'
         AND table_name = 'fiscal_event_store'
         LIMIT 1
       `);
-      eventStoreStatus = 'up';
+      eventStoreStatus = "up";
     } catch (e) {
       // If table doesn't exist, event store is down
-      eventStoreStatus = 'down';
+      eventStoreStatus = "down";
     }
 
     // Check core engine (event_store table exists and is accessible)
     try {
       await pool.query(`
-        SELECT 1 FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public'
         AND table_name = 'event_store'
         LIMIT 1
       `);
-      coreEngineStatus = 'up';
+      coreEngineStatus = "up";
     } catch (e) {
       // If table doesn't exist, core engine is down
-      coreEngineStatus = 'down';
+      coreEngineStatus = "down";
+    }
+
+    // Orders/min (last 1 minute). Safe guard if table/column missing.
+    try {
+      const ordersResult = await pool.query(
+        `SELECT COUNT(*)::INTEGER AS count
+         FROM public.gm_orders
+         WHERE created_at >= NOW() - interval '1 minute'`,
+      );
+      ordersPerMinute = Number(ordersResult.rows[0]?.count || 0);
+    } catch (_e) {
+      ordersPerMinute = undefined;
+    }
+
+    // Alerts: shifts open > 14h
+    try {
+      const shiftsResult = await pool.query(
+        `SELECT COUNT(*)::INTEGER AS count
+         FROM public.gm_cash_registers
+         WHERE status = 'open'
+           AND opened_at IS NOT NULL
+           AND opened_at <= NOW() - interval '14 hours'`,
+      );
+      openShiftsOver14h = Number(shiftsResult.rows[0]?.count || 0);
+    } catch (_e) {
+      openShiftsOver14h = undefined;
+    }
+
+    // Alerts: cash diff > 50 (cents-based)
+    try {
+      const cashDiffResult = await pool.query(
+        `SELECT COUNT(*)::INTEGER AS count
+         FROM public.gm_cash_registers
+         WHERE status = 'closed'
+           AND closing_balance_cents IS NOT NULL
+           AND ABS(
+             COALESCE(closing_balance_cents, 0)
+             - (COALESCE(opening_balance_cents, 0) + COALESCE(total_sales_cents, 0))
+           ) > 5000`,
+      );
+      cashDiffOver50 = Number(cashDiffResult.rows[0]?.count || 0);
+    } catch (_e) {
+      cashDiffOver50 = undefined;
     }
   } catch (e) {
-    dbStatus = 'down';
-    eventStoreStatus = 'down';
-    coreEngineStatus = 'down';
+    dbStatus = "down";
+    eventStoreStatus = "down";
+    coreEngineStatus = "down";
   }
 
   const memUsage = process.memoryUsage();
@@ -221,20 +275,20 @@ export async function getHealthStatus(pool: any): Promise<HealthStatus> {
       : 0;
 
   const status =
-    dbStatus === 'down' ? 'down' : dbStatus === 'slow' ? 'degraded' : 'ok';
+    dbStatus === "down" ? "down" : dbStatus === "slow" ? "degraded" : "ok";
 
   return {
     status,
     timestamp,
-    version: '1.0.0',
+    version: "1.0.0",
     uptime,
-    systemOperational: status === 'ok' || status === 'degraded',
-    databaseConnected: dbStatus !== 'down',
-    eventStoreInitialized: eventStoreStatus === 'up',
-    coreEngineAvailable: coreEngineStatus === 'up',
+    systemOperational: status === "ok" || status === "degraded",
+    databaseConnected: dbStatus !== "down",
+    eventStoreInitialized: eventStoreStatus === "up",
+    coreEngineAvailable: coreEngineStatus === "up",
     services: {
       database: dbStatus,
-      api: 'up',
+      api: "up",
       eventStore: eventStoreStatus,
       coreEngine: coreEngineStatus,
       memory: {
@@ -245,7 +299,13 @@ export async function getHealthStatus(pool: any): Promise<HealthStatus> {
     metrics: {
       requestsPerSecond: Math.round(rps * 100) / 100,
       avgLatencyMs: Math.round(avgLatency * 100) / 100,
+      dbLatencyMs: dbLatencyMs != null ? Math.round(dbLatencyMs) : undefined,
+      ordersPerMinute,
       errors: metrics.errors,
+    },
+    alerts: {
+      openShiftsOver14h,
+      cashDiffOver50,
     },
   };
 }
@@ -255,7 +315,7 @@ export async function getHealthStatus(pool: any): Promise<HealthStatus> {
  */
 export function trackMetrics(
   startTime: number,
-  hasError: boolean = false
+  hasError: boolean = false,
 ): void {
   const latency = Date.now() - startTime;
   metrics.requests++;
@@ -292,13 +352,16 @@ export interface SafeRequest {
  */
 export function wrapRequest(
   req: IncomingMessage,
-  endpoint: 'auth' | 'webhook' | 'api' | 'global' = 'global'
+  endpoint: "auth" | "webhook" | "api" | "global" = "global",
 ): SafeRequest {
-  const path = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`).pathname;
+  const path = new URL(
+    req.url || "/",
+    `http://${req.headers.host || "localhost"}`,
+  ).pathname;
   const rateLimit = checkRateLimit(req, endpoint);
 
   return {
-    method: req.method || 'UNKNOWN',
+    method: req.method || "UNKNOWN",
     path,
     headers: req.headers,
     ip: getClientIp(req),
@@ -314,24 +377,26 @@ export function wrapRequest(
 export class CircuitBreaker {
   private failureCount = 0;
   private successCount = 0;
-  private state: 'CLOSED' | 'OPEN' | 'HALF_OPEN' = 'CLOSED';
+  private state: "CLOSED" | "OPEN" | "HALF_OPEN" = "CLOSED";
   private nextAttemptTime = 0;
 
   constructor(
     private name: string,
     private failureThreshold = 5,
     private successThreshold = 2,
-    private timeout = 60 * 1000 // 1 minuto
-  ) { }
+    private timeout = 60 * 1000, // 1 minuto
+  ) {}
 
   async execute<T>(fn: () => Promise<T>): Promise<T> {
-    if (this.state === 'OPEN') {
+    if (this.state === "OPEN") {
       if (Date.now() < this.nextAttemptTime) {
         throw new Error(
-          `Circuit breaker OPEN for ${this.name}. Retry after ${Math.ceil((this.nextAttemptTime - Date.now()) / 1000)}s`
+          `Circuit breaker OPEN for ${this.name}. Retry after ${Math.ceil(
+            (this.nextAttemptTime - Date.now()) / 1000,
+          )}s`,
         );
       }
-      this.state = 'HALF_OPEN';
+      this.state = "HALF_OPEN";
     }
 
     try {
@@ -346,10 +411,10 @@ export class CircuitBreaker {
 
   private onSuccess() {
     this.failureCount = 0;
-    if (this.state === 'HALF_OPEN') {
+    if (this.state === "HALF_OPEN") {
       this.successCount++;
       if (this.successCount >= this.successThreshold) {
-        this.state = 'CLOSED';
+        this.state = "CLOSED";
         this.successCount = 0;
         console.log(`✅ Circuit breaker ${this.name} CLOSED`);
       }
@@ -359,10 +424,12 @@ export class CircuitBreaker {
   private onFailure() {
     this.failureCount++;
     if (this.failureCount >= this.failureThreshold) {
-      this.state = 'OPEN';
+      this.state = "OPEN";
       this.nextAttemptTime = Date.now() + this.timeout;
       console.error(
-        `🔴 Circuit breaker ${this.name} OPEN. Retry in ${Math.ceil(this.timeout / 1000)}s`
+        `🔴 Circuit breaker ${this.name} OPEN. Retry in ${Math.ceil(
+          this.timeout / 1000,
+        )}s`,
       );
     }
   }
@@ -388,24 +455,24 @@ export class CircuitBreaker {
 function getEncryptionKeyOrThrow(): Buffer {
   const CREDENTIALS_ENCRYPTION_KEY = process.env.CREDENTIALS_ENCRYPTION_KEY;
   const INTERNAL_API_TOKEN = process.env.INTERNAL_API_TOKEN;
-  
-  const env = String(CREDENTIALS_ENCRYPTION_KEY || '').trim();
+
+  const env = String(CREDENTIALS_ENCRYPTION_KEY || "").trim();
   if (env) {
     // Accept hex (64 chars) or base64.
-    if (/^[0-9a-fA-F]{64}$/.test(env)) return Buffer.from(env, 'hex');
-    const b = Buffer.from(env, 'base64');
+    if (/^[0-9a-fA-F]{64}$/.test(env)) return Buffer.from(env, "hex");
+    const b = Buffer.from(env, "base64");
     if (b.length === 32) return b;
-    throw new Error('CREDENTIALS_ENCRYPTION_KEY_INVALID');
+    throw new Error("CREDENTIALS_ENCRYPTION_KEY_INVALID");
   }
 
   // Fail-closed in production.
-  if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
-    throw new Error('CREDENTIALS_ENCRYPTION_KEY_REQUIRED');
+  if (String(process.env.NODE_ENV || "").toLowerCase() === "production") {
+    throw new Error("CREDENTIALS_ENCRYPTION_KEY_REQUIRED");
   }
 
   // Dev fallback: derive from internal token (or static) to keep demo working.
-  const seed = INTERNAL_API_TOKEN || 'dev-insecure-key';
-  return crypto.createHash('sha256').update(seed).digest();
+  const seed = INTERNAL_API_TOKEN || "dev-insecure-key";
+  return crypto.createHash("sha256").update(seed).digest();
 }
 
 /**
@@ -415,8 +482,11 @@ function getEncryptionKeyOrThrow(): Buffer {
 export function encryptOAuthToken(plaintext: string): Buffer {
   const key = getEncryptionKeyOrThrow();
   const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-  const ciphertext = Buffer.concat([cipher.update(String(plaintext || ''), 'utf8'), cipher.final()]);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const ciphertext = Buffer.concat([
+    cipher.update(String(plaintext || ""), "utf8"),
+    cipher.final(),
+  ]);
   const tag = cipher.getAuthTag();
   // payload = iv(12) + tag(16) + ciphertext
   return Buffer.concat([iv, tag, ciphertext]);
@@ -426,13 +496,16 @@ export function encryptOAuthToken(plaintext: string): Buffer {
  * TASK-3.1.2: Descriptografar token OAuth ao ler do DB
  */
 export function decryptOAuthToken(payload: Buffer | null | undefined): string {
-  if (!payload || payload.length < 12 + 16) return '';
+  if (!payload || payload.length < 12 + 16) return "";
   const key = getEncryptionKeyOrThrow();
   const iv = payload.subarray(0, 12);
   const tag = payload.subarray(12, 28);
   const ciphertext = payload.subarray(28);
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
   decipher.setAuthTag(tag);
-  const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
-  return plaintext.toString('utf8');
+  const plaintext = Buffer.concat([
+    decipher.update(ciphertext),
+    decipher.final(),
+  ]);
+  return plaintext.toString("utf8");
 }

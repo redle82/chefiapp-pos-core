@@ -106,25 +106,25 @@ Criar `merchant-portal/src/core/pulse/`:
 
 ## FRENTE C — Hardening (3 dias)
 
-### C.1 Testes E2E Críticos (1 dia)
+### C.1 Testes E2E Críticos (1 dia) — ✅
 
 - Fluxo completo: login → abrir turno → criar pedido → pagar → fechar turno
 - Smoke test Docker stack (7 serviços healthy)
 - Teste de fallback offline
 
-### C.2 Error Boundaries (4h)
+### C.2 Error Boundaries (4h) — ✅
 
 - `ErrorBoundary` global no App.tsx
 - Fallback UI por módulo (pedidos, cozinha, caixa)
 - Log de erros no EventStore com hash chain
 
-### C.3 Observabilidade (4h)
+### C.3 Observabilidade (4h) — ✅
 
 - Health endpoint consolidado (`/api/health`)
 - Métricas: uptime, latência DB, orders/min
 - Alertas: turno aberto > 14h, caixa diferença > R$50
 
-### C.4 Documentação Operacional (4h)
+### C.4 Documentação Operacional (4h) — ✅
 
 - Runbook de deploy (passo-a-passo)
 - Troubleshooting: 10 problemas mais comuns
@@ -162,3 +162,34 @@ Semana 3 (Dias 7-9):
 | Frente B done       | Pulse visível no header, tasks reagem ao score  |
 | Frente C done       | E2E pass, error boundaries ativos, docs prontas |
 | **Ready for Pilot** | A+B+C concluídos, 1 restaurante testando        |
+
+---
+
+## Pendencias de Prontidao (Auditoria)
+
+### P.1 Secrets no Git (2h)
+
+- Rotacionar credenciais expostas (Stripe + envs)
+- Remover chaves de arquivos versionados e limpar historico
+- Validacao: grep por `sk_test_` e equivalentes retorna 0
+
+### P.2 Deploy Pipeline Real (2-5 dias)
+
+- Substituir `deploy.yml` stub por pipeline real (infra + deploy)
+- Definir target de infra (ex: Docker host, ECS, K8s)
+
+### P.3 Keycloak Producao (1 dia)
+
+- Trocar `start-dev` por `start --optimized`
+- Remover admin/admin e configurar `KC_BOOTSTRAP_ADMIN_*`
+- Configurar proxy/hostname/TLS conforme ambiente
+
+### P.4 Migration Runner (1 dia)
+
+- Criar runner para aplicar migrations sem perder dados
+- Garantir idempotencia e logs de execucao
+
+### P.5 Billing State no DB (4h)
+
+- Migrar `merchant-001-record.json` para persistencia no banco
+- Ajustar leitura/escrita e testes basicos

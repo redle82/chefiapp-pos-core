@@ -22,32 +22,23 @@ import { deriveLifecycle } from "./core/lifecycle/Lifecycle";
 import { ShiftContext } from "./core/shift/ShiftContext";
 import { AppStaffMobileOnlyPage } from "./pages/AppStaff/AppStaffMobileOnlyPage";
 import { AppStaffWrapper } from "./pages/AppStaff/AppStaffWrapper";
+import { ManagerExcecoesPage } from "./pages/AppStaff/apps/alerts";
+import { KitchenDisplay } from "./pages/AppStaff/apps/kds";
+import { StaffProfilePage } from "./pages/AppStaff/apps/profile";
+import { ManagerTarefasPage } from "./pages/AppStaff/apps/tasks";
+import { ManagerEquipePage } from "./pages/AppStaff/apps/team";
+import { StaffTpvPage } from "./pages/AppStaff/apps/tpv";
+import { CleaningHome } from "./pages/AppStaff/homes/CleaningHome";
+import { KitchenHome } from "./pages/AppStaff/homes/KitchenHome";
+import { ManagerHome } from "./pages/AppStaff/homes/ManagerHome";
+import { OwnerHome } from "./pages/AppStaff/homes/OwnerHome";
+import { WaiterHome } from "./pages/AppStaff/homes/WaiterHome";
+import { ManagerTurnoPage } from "./pages/AppStaff/pages/ManagerTurnoPage";
+import { OperationModePage } from "./pages/AppStaff/pages/OperationModePage";
 import { StaffAppGate } from "./pages/AppStaff/routing/StaffAppGate";
 import { StaffAppShellLayout } from "./pages/AppStaff/routing/StaffAppShellLayout";
-import { StaffIndexRedirect } from "./pages/AppStaff/routing/StaffIndexRedirect";
 import { StaffHomeRedirect } from "./pages/AppStaff/routing/StaffHomeRedirect";
-import { OwnerHome } from "./pages/AppStaff/homes/OwnerHome";
-import { ManagerHome } from "./pages/AppStaff/homes/ManagerHome";
-import { WaiterHome } from "./pages/AppStaff/homes/WaiterHome";
-import { KitchenHome } from "./pages/AppStaff/homes/KitchenHome";
-import { CleaningHome } from "./pages/AppStaff/homes/CleaningHome";
-import { StaffProfilePage } from "./pages/AppStaff/apps/profile";
-import { StaffNotificationsPage } from "./pages/AppStaff/pages/StaffNotificationsPage";
-import { StaffHelpPage } from "./pages/AppStaff/pages/StaffHelpPage";
-import { StaffHistoryPage } from "./pages/AppStaff/pages/StaffHistoryPage";
-import { StaffPlaceholderPage } from "./pages/AppStaff/pages/StaffPlaceholderPage";
-import { ManagerTurnoPage } from "./pages/AppStaff/pages/ManagerTurnoPage";
-import { ManagerEquipePage } from "./pages/AppStaff/apps/team";
-import { ManagerTarefasPage } from "./pages/AppStaff/apps/tasks";
-import { ManagerExcecoesPage } from "./pages/AppStaff/apps/alerts";
-import { OperationModePage } from "./pages/AppStaff/pages/OperationModePage";
-import { StaffTpvPage } from "./pages/AppStaff/apps/tpv";
-import { StaffCleaningPage } from "./pages/AppStaff/pages/StaffCleaningPage";
-import { StaffWaiterChecklistsPage } from "./pages/AppStaff/pages/StaffWaiterChecklistsPage";
-import { ManagerDashboard } from "./pages/AppStaff/ManagerDashboard";
-import { WorkerTaskStream } from "./pages/AppStaff/WorkerTaskStream";
-import { CleaningTaskView } from "./pages/AppStaff/views/CleaningTaskView";
-import { KitchenDisplay } from "./pages/AppStaff/apps/kds";
+import { StaffIndexRedirect } from "./pages/AppStaff/routing/StaffIndexRedirect";
 import { BackofficePage } from "./pages/Backoffice/BackofficePage";
 import { BillingPage } from "./pages/Billing/BillingPage";
 import { BillingSuccessPage } from "./pages/Billing/BillingSuccessPage";
@@ -55,11 +46,11 @@ import { BootstrapPage } from "./pages/BootstrapPage";
 import { CoreResetPage } from "./pages/CoreReset/CoreResetPage";
 import { DebugTPV } from "./pages/DebugTPV";
 import { HelpStartLocalPage } from "./pages/HelpStartLocalPage";
-import { MenuCatalogPage } from "./pages/MenuCatalog/MenuCatalogPage";
-import { MenuCatalogPageV2 } from "./pages/MenuCatalog/MenuCatalogPageV2";
 import { InventoryStockMinimal } from "./pages/InventoryStock/InventoryStockMinimal";
 import { KDSMinimal } from "./pages/KDSMinimal/KDSMinimal";
 import { MenuBuilderMinimal } from "./pages/MenuBuilder/MenuBuilderMinimal";
+import { MenuCatalogPage } from "./pages/MenuCatalog/MenuCatalogPage";
+import { MenuCatalogPageV2 } from "./pages/MenuCatalog/MenuCatalogPageV2";
 import { OperacaoMinimal } from "./pages/Operacao/OperacaoMinimal";
 import { CustomerOrderStatusView } from "./pages/Public/CustomerOrderStatusView";
 import { PublicKDS } from "./pages/Public/PublicKDS";
@@ -78,6 +69,7 @@ import { useGlobalUIState } from "./context/GlobalUIStateContext";
 import { RoleGate } from "./core/roles";
 import { ShiftGuard } from "./core/shift/ShiftGuard";
 import { AlertsDashboardPage } from "./pages/Alerts/AlertsDashboardPage";
+import { OwnerDashboard } from "./pages/AppStaff/OwnerDashboard";
 import { AuthPage } from "./pages/AuthPage";
 import { PhoneLoginPage } from "./pages/AuthPhone/PhoneLoginPage";
 import { VerifyCodePage } from "./pages/AuthPhone/VerifyCodePage";
@@ -86,15 +78,15 @@ import { ConfigIdentityPage } from "./pages/Config/ConfigIdentityPage";
 import { ConfigIntegrationsPage } from "./pages/Config/ConfigIntegrationsPage";
 import { ConfigLayout } from "./pages/Config/ConfigLayout";
 import { ConfigLocationPage } from "./pages/Config/ConfigLocationPage";
-import { UbicacionCreatePage } from "./pages/Config/UbicacionCreatePage";
-import { UbicacionEditPage } from "./pages/Config/UbicacionEditPage";
-import { UbicacionesPage } from "./pages/Config/UbicacionesPage";
 import { ConfigModulesPage } from "./pages/Config/ConfigModulesPage";
 import { ConfigPaymentsPage } from "./pages/Config/ConfigPaymentsPage";
 import { ConfigPeoplePage } from "./pages/Config/ConfigPeoplePage";
 import { ConfigPerceptionPage } from "./pages/Config/ConfigPerceptionPage";
 import { ConfigSchedulePage } from "./pages/Config/ConfigSchedulePage";
 import { ConfigStatusPage } from "./pages/Config/ConfigStatusPage";
+import { UbicacionCreatePage } from "./pages/Config/UbicacionCreatePage";
+import { UbicacionEditPage } from "./pages/Config/UbicacionEditPage";
+import { UbicacionesPage } from "./pages/Config/UbicacionesPage";
 import { EmployeeHomePage } from "./pages/Employee/HomePage";
 import { EmployeeKDSIntelligentPage } from "./pages/Employee/KDSIntelligentPage";
 import { EmployeeMentorPage } from "./pages/Employee/MentorPage";
@@ -115,7 +107,6 @@ import { ManagerReservationsPage } from "./pages/Manager/ReservationsPage";
 import { ManagerScheduleCreatePage } from "./pages/Manager/ScheduleCreatePage";
 import { ManagerSchedulePage } from "./pages/Manager/SchedulePage";
 import { MentorDashboardPage } from "./pages/Mentor/MentorDashboardPage";
-import { OwnerDashboard } from "./pages/AppStaff/OwnerDashboard";
 import { OwnerPurchasesPage } from "./pages/Owner/PurchasesPage";
 import { OwnerSimulationPage } from "./pages/Owner/SimulationPage";
 import { OwnerStockRealPage } from "./pages/Owner/StockRealPage";
@@ -125,10 +116,10 @@ import { TimeTrackingPage } from "./pages/People/TimeTrackingPage";
 import { PublishPage } from "./pages/PublishPage";
 import { PurchasesDashboardPage } from "./pages/Purchases/PurchasesDashboardPage";
 import { DailyClosingReportPage } from "./pages/Reports/DailyClosingReportPage";
+import { GamificationImpactReportPage } from "./pages/Reports/GamificationImpactReportPage";
+import { OperationalActivityReportPage } from "./pages/Reports/OperationalActivityReportPage";
 import { SalesByPeriodReportPage } from "./pages/Reports/SalesByPeriodReportPage";
 import { SalesSummaryReportPage } from "./pages/Reports/SalesSummaryReportPage";
-import { OperationalActivityReportPage } from "./pages/Reports/OperationalActivityReportPage";
-import { GamificationImpactReportPage } from "./pages/Reports/GamificationImpactReportPage";
 import { ReservationsDashboardPage } from "./pages/Reservations/ReservationsDashboardPage";
 import { RunbookCorePage } from "./pages/RunbookCorePage";
 import { SelectTenantPage } from "./pages/SelectTenantPage";
@@ -153,8 +144,6 @@ import { ModifiersPage } from "./features/admin/catalog/pages/ModifiersPage";
 import { ProductsPage } from "./features/admin/catalog/pages/ProductsPage";
 import { TranslationsPage } from "./features/admin/catalog/pages/TranslationsPage";
 import { ClosuresPage } from "./features/admin/closures/pages/ClosuresPage";
-import { CustomerDetailPage } from "./features/admin/customers/pages/CustomerDetailPage";
-import { CustomersPage } from "./features/admin/customers/pages/CustomersPage";
 import { AdminConfigLayout } from "./features/admin/config/components/AdminConfigLayout";
 import { DeliveryConfigPage } from "./features/admin/config/pages/DeliveryConfigPage";
 import { DispositivosConfigPage } from "./features/admin/config/pages/DispositivosConfigPage";
@@ -170,15 +159,17 @@ import { SoftwareTpvConfigPage } from "./features/admin/config/pages/SoftwareTpv
 import { SuscripcionConfigPage } from "./features/admin/config/pages/SuscripcionConfigPage";
 import { UbicacionesConfigPage } from "./features/admin/config/pages/UbicacionesConfigPage";
 import { UsuariosConfigPage } from "./features/admin/config/pages/UsuariosConfigPage";
+import { CustomerDetailPage } from "./features/admin/customers/pages/CustomerDetailPage";
+import { CustomersPage } from "./features/admin/customers/pages/CustomersPage";
 import { DashboardLayout } from "./features/admin/dashboard/components/DashboardLayout";
-import { AdminReportsOverview } from "./features/admin/reports/AdminReportsOverview";
 import { AdminPlaceholderPage } from "./features/admin/dashboard/pages/AdminPlaceholderPage";
 import { DashboardHomePage } from "./features/admin/dashboard/pages/DashboardHomePage";
+import { ModulesPage } from "./features/admin/modules/pages/ModulesPage";
 import { PaymentsLayout } from "./features/admin/payments/pages/PaymentsLayout";
 import { PayoutsPage } from "./features/admin/payments/pages/PayoutsPage";
 import { TransactionsPage } from "./features/admin/payments/pages/TransactionsPage";
-import { ModulesPage } from "./features/admin/modules/pages/ModulesPage";
 import { PromotionsPage } from "./features/admin/promotions/pages/PromotionsPage";
+import { AdminReportsOverview } from "./features/admin/reports/AdminReportsOverview";
 
 /** NAVIGATION_OPERATIONAL_CONTRACT: quando mode=demo, TPV sem RequireOperational; senão app normal. */
 function TPVRouteHandler() {
@@ -250,7 +241,7 @@ function TPVDemoGate() {
 
 function App() {
   return (
-    <>
+    <ErrorBoundary context="Root">
       {/* <PublicLifecycleSync /> */}
       <BillingsPreloader />
       <Routes>
@@ -292,7 +283,7 @@ function App() {
         {/* App Content (Management/Operational) */}
         <Route path="/*" element={<AppOperationalWrapper />} />
       </Routes>
-    </>
+    </ErrorBoundary>
   );
 }
 
@@ -377,7 +368,9 @@ function AppContentWithBilling() {
   return (
     <>
       <EventMonitorBootstrap />
-      {!isDashboard && !isOperationalSurface && !isStaffLauncher && <BillingBanner />}
+      {!isDashboard && !isOperationalSurface && !isStaffLauncher && (
+        <BillingBanner />
+      )}
       <ModeIndicator />
       <CoreUnavailableBanner />
       <Routes>
@@ -392,13 +385,28 @@ function AppContentWithBilling() {
         <Route path="/bootstrap" element={<BootstrapPage />} />
         <Route path="/app/select-tenant" element={<SelectTenantPage />} />
         {/* App operacional único: /app → home do shell (Home | Operação | TPV | KDS | Mais) */}
-        <Route path="/app" element={<Navigate to="/app/staff/home" replace />} />
+        <Route
+          path="/app"
+          element={<Navigate to="/app/staff/home" replace />}
+        />
 
         <Route element={<RoleGate />}>
           <Route
             path="/op/tpv/*"
             element={
-              <ErrorBoundary context="TPV">
+              <ErrorBoundary
+                context="TPV"
+                fallback={
+                  <GlobalBlockedView
+                    title="TPV indisponível"
+                    description="O módulo de caixa encontrou um erro. Recarregue a tela para retomar as vendas."
+                    action={{
+                      label: "Recarregar",
+                      onClick: () => window.location.reload(),
+                    }}
+                  />
+                }
+              >
                 <ShiftGate>
                   <OperationalFullscreenWrapper>
                     <TPVMinimal />
@@ -410,7 +418,19 @@ function AppContentWithBilling() {
           <Route
             path="/op/kds"
             element={
-              <ErrorBoundary context="KDS">
+              <ErrorBoundary
+                context="KDS"
+                fallback={
+                  <GlobalBlockedView
+                    title="KDS indisponível"
+                    description="O módulo de cozinha encontrou um erro. Recarregue a tela para continuar o preparo."
+                    action={{
+                      label: "Recarregar",
+                      onClick: () => window.location.reload(),
+                    }}
+                  />
+                }
+              >
                 <OperationalFullscreenWrapper>
                   <KDSMinimal />
                 </OperationalFullscreenWrapper>
@@ -443,9 +463,23 @@ function AppContentWithBilling() {
           <Route
             path="/operacao"
             element={
-              <RequireOperational>
-                <OperacaoMinimal />
-              </RequireOperational>
+              <ErrorBoundary
+                context="Pedidos"
+                fallback={
+                  <GlobalBlockedView
+                    title="Pedidos indisponíveis"
+                    description="O módulo de pedidos encontrou um erro. Recarregue a tela para continuar o atendimento."
+                    action={{
+                      label: "Recarregar",
+                      onClick: () => window.location.reload(),
+                    }}
+                  />
+                }
+              >
+                <RequireOperational>
+                  <OperacaoMinimal />
+                </RequireOperational>
+              </ErrorBoundary>
             }
           />
           <Route path="/inventory-stock" element={<InventoryStockMinimal />} />
@@ -1017,26 +1051,50 @@ function AppContentWithBilling() {
             <Route path="productos" element={<ProductosConfigPage />} />
             <Route path="suscripcion" element={<SuscripcionConfigPage />} />
             <Route path="ubicaciones" element={<UbicacionesConfigPage />} />
-            <Route path="ubicaciones/address" element={<UbicacionesConfigPage />} />
-            <Route path="ubicaciones/tables" element={<UbicacionesConfigPage />} />
-            <Route path="entidades-legales" element={<EntidadesLegalesConfigPage />} />
+            <Route
+              path="ubicaciones/address"
+              element={<UbicacionesConfigPage />}
+            />
+            <Route
+              path="ubicaciones/tables"
+              element={<UbicacionesConfigPage />}
+            />
+            <Route
+              path="entidades-legales"
+              element={<EntidadesLegalesConfigPage />}
+            />
             <Route path="marcas" element={<MarcasConfigPage />} />
             <Route path="usuarios" element={<UsuariosConfigPage />} />
             <Route path="dispositivos" element={<DispositivosConfigPage />} />
             <Route path="impresoras" element={<ImpresorasConfigPage />} />
             <Route path="integraciones" element={<IntegracionesConfigPage />} />
             <Route path="delivery" element={<DeliveryConfigPage />} />
-            <Route path="delivery/plano-mesas" element={<DeliveryConfigPage />} />
+            <Route
+              path="delivery/plano-mesas"
+              element={<DeliveryConfigPage />}
+            />
             <Route path="delivery/horarios" element={<DeliveryConfigPage />} />
             <Route path="delivery/qr" element={<DeliveryConfigPage />} />
             <Route path="empleados" element={<EmpleadosConfigPage />} />
-            <Route path="empleados/employees" element={<EmpleadosConfigPage />} />
+            <Route
+              path="empleados/employees"
+              element={<EmpleadosConfigPage />}
+            />
             <Route path="empleados/roles" element={<EmpleadosConfigPage />} />
             <Route path="software-tpv" element={<SoftwareTpvConfigPage />} />
-            <Route path="software-tpv/config" element={<SoftwareTpvConfigPage />} />
-            <Route path="software-tpv/modo-rapido" element={<SoftwareTpvConfigPage />} />
+            <Route
+              path="software-tpv/config"
+              element={<SoftwareTpvConfigPage />}
+            />
+            <Route
+              path="software-tpv/modo-rapido"
+              element={<SoftwareTpvConfigPage />}
+            />
             <Route path="reservas" element={<ReservasConfigPage />} />
-            <Route path="reservas/disponibilidad" element={<ReservasConfigPage />} />
+            <Route
+              path="reservas/disponibilidad"
+              element={<ReservasConfigPage />}
+            />
             <Route path="reservas/garantia" element={<ReservasConfigPage />} />
             <Route path="reservas/turnos" element={<ReservasConfigPage />} />
             <Route path="reservas/mensajes" element={<ReservasConfigPage />} />
