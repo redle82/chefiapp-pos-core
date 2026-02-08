@@ -158,7 +158,8 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             cd /opt/chefiapp
-            git pull origin main --ff-only
+            git fetch origin --tags
+            git checkout ${{ github.ref_name }}
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
             docker compose ps

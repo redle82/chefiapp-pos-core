@@ -26,6 +26,8 @@ services:
     volumes:
       # Schema initialization
       - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      # Dev seeds (loaded on fresh databases only)
+      - ./docker-core/schema/seeds_dev.sql:/docker-entrypoint-initdb.d/02-seeds-dev.sql:ro
       # Persistent data (comment out for ephemeral testing)
       - postgres_data:/var/lib/postgresql/data
       # Optional: Custom PostgreSQL config
