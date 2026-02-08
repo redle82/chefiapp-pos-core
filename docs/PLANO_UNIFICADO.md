@@ -160,8 +160,8 @@ Semana 3 (Dias 7-9):
 | Frente A done       | 0 secrets no git, Keycloak `start --optimized`  | ✅     |
 | Frente B done       | Pulse visível no header, tasks reagem ao score  | ✅     |
 | Frente C done       | E2E pass, error boundaries ativos, docs prontas | ✅     |
-| Pendências P.1-P.5  | Secrets, pipeline, keycloak, runner, billing DB  | ✅     |
-| **Ready for Pilot** | A+B+C+P concluídos, 1 restaurante testando      | 🟡     |
+| Pendências P.1-P.5  | Secrets, pipeline, keycloak, runner, billing DB | ✅     |
+| **Ready for Pilot** | A+B+C+P concluídos, deploy prep + seed prontos  | ✅     |
 
 ---
 
