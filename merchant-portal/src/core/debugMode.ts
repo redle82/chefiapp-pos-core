@@ -12,7 +12,11 @@
 export function isDebugMode(): boolean {
   if (typeof window === "undefined") return false;
   const params = new URLSearchParams(window.location.search);
-  if (params.get("debug") === "1") return true;
+  if (params.get("debug") === "1") {
+    // Persist debug flag so it survives page refreshes within the same tab
+    try { sessionStorage.setItem("chefiapp_debug", "1"); } catch { /* ignore */ }
+    return true;
+  }
   try {
     if (sessionStorage.getItem("chefiapp_debug") === "1") return true;
   } catch {

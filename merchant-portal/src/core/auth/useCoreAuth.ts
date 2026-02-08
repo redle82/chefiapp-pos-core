@@ -41,13 +41,16 @@ export function useCoreAuth(): CoreAuthState {
       };
     }
 
-    // Mock session: ?debug=1 e ?demo=true ou pilot mode
+    // Mock session: demo/pilot mode (persisted or via URL)
     if (typeof window !== "undefined") {
-      const isDemo =
+      const isDemoUrl =
         new URLSearchParams(window.location.search).get("demo") === "true";
+      const isDemoStored =
+        sessionStorage.getItem("chefiapp_demo_mode") === "true" ||
+        localStorage.getItem("chefiapp_demo_mode") === "true";
       const isPilot = localStorage.getItem("chefiapp_pilot_mode") === "true";
 
-      if (isDebugMode() && (isDemo || isPilot)) {
+      if (isDemoUrl || isDemoStored || (isDebugMode() && isPilot)) {
         const PILOT_USER_UUID = "00000000-0000-0000-0000-000000000002";
         const mockUser: CoreUser = {
           id: PILOT_USER_UUID,
