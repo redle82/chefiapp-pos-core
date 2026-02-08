@@ -14,35 +14,34 @@ import { fontSize, fontWeight, space } from "@chefiapp/core-design-system";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CoreStatusBadge } from "../../../../components/CoreStatusBadge/CoreStatusBadge";
+import { CONFIG } from "../../../../config";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
+import { useDashboardViewModel } from "../../../../core/dashboard/DashboardViewModel";
 import {
   deriveSystemTreeState,
   type NodeId,
 } from "../../../../core/dashboard/systemTreeState";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
 import { useMenuState } from "../../../../core/menu/MenuState";
-import { BlockingScreen, usePreflightOperational } from "../../../../core/readiness";
+import {
+  BlockingScreen,
+  usePreflightOperational,
+} from "../../../../core/readiness";
 import { getDashboardCopy } from "../../../../core/roles";
 import { useRoleOptional } from "../../../../core/roles/RoleContext";
-import { useDashboardViewModel } from "../../../../core/dashboard/DashboardViewModel";
-import { CONFIG } from "../../../../config";
-import { GlobalLoadingView } from "../../../../ui/design-system/components";
 import { OwnerDashboard } from "../../../../pages/AppStaff/OwnerDashboard";
+import { GlobalLoadingView } from "../../../../ui/design-system/components";
 
-function OperacaoCard({
-  onNavigate,
-}: {
-  onNavigate: (path: string) => void;
-}) {
+function OperacaoCard({ onNavigate }: { onNavigate: (path: string) => void }) {
   const preflight = usePreflightOperational({ healthAutoStart: true });
   const hasCoreOffline = preflight.blockers.some(
-    (b) => b.code === "CORE_OFFLINE"
+    (b) => b.code === "CORE_OFFLINE",
   );
   const hasNoPublishedMenu = preflight.blockers.some(
-    (b) => b.code === "NO_PUBLISHED_MENU"
+    (b) => b.code === "NO_PUBLISHED_MENU",
   );
   const hasNoIdentity = preflight.blockers.some(
-    (b) => b.code === "NO_IDENTITY"
+    (b) => b.code === "NO_IDENTITY",
   );
   const abrirTpvEnabled = !hasCoreOffline && preflight.hasPublishedMenu;
   const showRunbookLink = hasCoreOffline;
@@ -183,45 +182,135 @@ const MAPA_SECTIONS = [
     id: "operacao",
     label: "Operação",
     items: [
-      { id: "operacao-tpv", label: "TPV", icon: "🖥️", route: "/op/tpv", moduleId: "tpv" as const },
-      { id: "operacao-turnos", label: "Turnos & Caixa", icon: "🧾", route: "/op/tpv", moduleId: "tpv" as const },
+      {
+        id: "operacao-tpv",
+        label: "TPV",
+        icon: "🖥️",
+        route: "/op/tpv",
+        moduleId: "tpv" as const,
+      },
+      {
+        id: "operacao-turnos",
+        label: "Turnos & Caixa",
+        icon: "🧾",
+        route: "/op/tpv",
+        moduleId: "tpv" as const,
+      },
     ],
   },
   {
     id: "configuracao",
     label: "Configuração",
     items: [
-      { id: "config-identidade", label: "Identidade", icon: "🏪", route: "/config/identity", moduleId: "config" as const },
-      { id: "config-local", label: "Local & Moeda", icon: "📍", route: "/config/location", moduleId: "config" as const },
-      { id: "config-cardapio", label: "Cardápio", icon: "🍽️", route: "/menu-builder", moduleId: "menu" as const },
-      { id: "config-publicacao", label: "Publicação", icon: "🚀", route: "/app/publish", moduleId: "publish" as const },
+      {
+        id: "config-identidade",
+        label: "Identidade",
+        icon: "🏪",
+        route: "/config/identity",
+        moduleId: "config" as const,
+      },
+      {
+        id: "config-local",
+        label: "Local & Moeda",
+        icon: "📍",
+        route: "/config/location",
+        moduleId: "config" as const,
+      },
+      {
+        id: "config-cardapio",
+        label: "Cardápio",
+        icon: "🍽️",
+        route: "/menu-builder",
+        moduleId: "menu" as const,
+      },
+      {
+        id: "config-publicacao",
+        label: "Publicação",
+        icon: "🚀",
+        route: "/app/publish",
+        moduleId: "publish" as const,
+      },
     ],
   },
   {
     id: "equipa",
     label: "Equipa",
     items: [
-      { id: "equipa-pessoas", label: "Pessoas", icon: "👥", route: "/people", moduleId: "people" as const },
-      { id: "equipa-appstaff", label: "AppStaff", icon: "🧑‍🍳", route: "/garcom", moduleId: "appstaff" as const },
-      { id: "equipa-presenca-online", label: "Presença Online", icon: "🌐", route: "/public/demo-restaurant", moduleId: "restaurant-web" as const },
+      {
+        id: "equipa-pessoas",
+        label: "Pessoas",
+        icon: "👥",
+        route: "/people",
+        moduleId: "people" as const,
+      },
+      {
+        id: "equipa-appstaff",
+        label: "AppStaff",
+        icon: "🧑‍🍳",
+        route: "/garcom",
+        moduleId: "appstaff" as const,
+      },
+      {
+        id: "equipa-presenca-online",
+        label: "Presença Online",
+        icon: "🌐",
+        route: "/public/demo-restaurant",
+        moduleId: "restaurant-web" as const,
+      },
     ],
   },
   {
     id: "gestao",
     label: "Gestão",
     items: [
-      { id: "gestao-financeiro", label: "Financeiro", icon: "💰", route: "/financial", moduleId: "financial" as const },
-      { id: "gestao-faturacao", label: "Faturação", icon: "💳", route: "/app/billing", moduleId: "billing" as const },
-      { id: "gestao-percepcao", label: "Percepção Operacional", icon: "📷", route: "/config/perception", moduleId: "perception" as const },
+      {
+        id: "gestao-financeiro",
+        label: "Financeiro",
+        icon: "💰",
+        route: "/financial",
+        moduleId: "financial" as const,
+      },
+      {
+        id: "gestao-faturacao",
+        label: "Faturação",
+        icon: "💳",
+        route: "/app/billing",
+        moduleId: "billing" as const,
+      },
+      {
+        id: "gestao-percepcao",
+        label: "Percepção Operacional",
+        icon: "📷",
+        route: "/config/perception",
+        moduleId: "perception" as const,
+      },
     ],
   },
   {
     id: "sistema",
     label: "Sistema",
     items: [
-      { id: "sistema-saude", label: "Saúde", icon: "💚", route: "/health", moduleId: "health" as const },
-      { id: "sistema-alertas", label: "Alertas", icon: "🚨", route: "/alerts", moduleId: "alerts" as const },
-      { id: "sistema-estado", label: "Estado do Sistema", icon: "🧠", route: "/health", moduleId: "health" as const },
+      {
+        id: "sistema-saude",
+        label: "Saúde",
+        icon: "💚",
+        route: "/health",
+        moduleId: "health" as const,
+      },
+      {
+        id: "sistema-alertas",
+        label: "Alertas",
+        icon: "🚨",
+        route: "/alerts",
+        moduleId: "alerts" as const,
+      },
+      {
+        id: "sistema-estado",
+        label: "Estado do Sistema",
+        icon: "🧠",
+        route: "/health",
+        moduleId: "health" as const,
+      },
     ],
   },
 ] as const;
@@ -247,10 +336,10 @@ export function OwnerDashboardWithMapLayout() {
   const dashboardCopy = getDashboardCopy(role);
   const sidebarTitleOperational =
     isOperationalOS && runtime.restaurant_id
-      ? (identity?.name?.trim() || "Restaurante")
+      ? identity?.name?.trim() || "Restaurante"
       : isOperationalOS && !runtime.restaurant_id
-        ? "Seleccionar restaurante"
-        : null;
+      ? "Seleccionar restaurante"
+      : null;
 
   const getFirstMissingConfigPath = (): string => {
     const candidates: { nodeId: NodeId; path: string }[] = [
@@ -413,29 +502,34 @@ export function OwnerDashboardWithMapLayout() {
             </div>
             <div style={{ fontSize: "12px", color: "#888" }}>
               {isOperationalOS
-                ? (preflight.operationReady ? "Estado: Pronta" : "Estado: Operação bloqueada")
+                ? preflight.operationReady
+                  ? "Estado: Pronta"
+                  : "Estado: Operação bloqueada"
                 : dashboardCopy.sidebarSubtitle}
             </div>
           </div>
 
-          {runtime.installed_modules?.length != null && runtime.installed_modules.length > 0 && (
-            <div
-              style={{
-                padding: "12px",
-                borderRadius: "8px",
-                backgroundColor: "#f5f7ff",
-                border: "1px solid #e0e4ff",
-                marginBottom: "8px",
-              }}
-            >
-              <div style={{ fontSize: "12px", color: "#444" }}>
-                Sistema pronto ✅
+          {runtime.installed_modules?.length != null &&
+            runtime.installed_modules.length > 0 && (
+              <div
+                style={{
+                  padding: "12px",
+                  borderRadius: "8px",
+                  backgroundColor: "#f5f7ff",
+                  border: "1px solid #e0e4ff",
+                  marginBottom: "8px",
+                }}
+              >
+                <div style={{ fontSize: "12px", color: "#444" }}>
+                  Sistema pronto ✅
+                </div>
+                <div
+                  style={{ fontSize: "11px", color: "#777", marginTop: "4px" }}
+                >
+                  {runtime.installed_modules.length} instalado(s)
+                </div>
               </div>
-              <div style={{ fontSize: "11px", color: "#777", marginTop: "4px" }}>
-                {runtime.installed_modules.length} instalado(s)
-              </div>
-            </div>
-          )}
+            )}
 
           <OperacaoCard
             onNavigate={navigate}
@@ -464,7 +558,7 @@ export function OwnerDashboardWithMapLayout() {
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: space[2],
+              gap: space.sm,
               flex: 1,
               overflowY: "auto",
             }}
@@ -476,7 +570,7 @@ export function OwnerDashboardWithMapLayout() {
                 color: "#888",
                 textTransform: "uppercase",
                 letterSpacing: "0.04em",
-                marginBottom: space[1],
+                marginBottom: space.xs,
               }}
             >
               Mapa do sistema
@@ -491,12 +585,14 @@ export function OwnerDashboardWithMapLayout() {
                     textTransform: "uppercase",
                     letterSpacing: "0.04em",
                     marginBottom: 4,
-                    paddingLeft: space[1],
+                    paddingLeft: space.xs,
                   }}
                 >
                   {section.label}
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 2 }}
+                >
                   {section.items.map((item) => {
                     type Status = "red" | "yellow" | "green";
                     const reasons = new Set(operation.blockingReasons);
@@ -515,11 +611,16 @@ export function OwnerDashboardWithMapLayout() {
                         status = reasons.has("Publicação") ? "red" : "green";
                         break;
                       case "operacao-tpv":
-                        status = operation.configStatus === "INCOMPLETE" ? "red" : "green";
+                        status =
+                          operation.configStatus === "INCOMPLETE"
+                            ? "red"
+                            : "green";
                         break;
                       case "operacao-turnos":
-                        if (operation.configStatus === "INCOMPLETE") status = "red";
-                        else if (turn.operationStatus === "TURN_OPEN") status = "green";
+                        if (operation.configStatus === "INCOMPLETE")
+                          status = "red";
+                        else if (turn.operationStatus === "TURN_OPEN")
+                          status = "green";
                         else status = "yellow";
                         break;
                       case "sistema-alertas":
@@ -567,21 +668,29 @@ export function OwnerDashboardWithMapLayout() {
                         style={{
                           width: "100%",
                           textAlign: "left",
-                          padding: `${space[1]}px ${space[2]}px`,
+                          padding: `${space.xs}px ${space.sm}px`,
                           fontSize: fontSize.sm,
                           color: "#111827",
                           backgroundColor:
-                            activeModule === item.moduleId ? "#e8ecf4" : "transparent",
+                            activeModule === item.moduleId
+                              ? "#e8ecf4"
+                              : "transparent",
                           border: "none",
                           borderRadius: 6,
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          gap: space[1],
+                          gap: space.xs,
                         }}
                       >
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: space[1] }}>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: space.xs,
+                          }}
+                        >
                           <span style={{ fontSize: 18 }}>{item.icon}</span>
                           <span>{item.label}</span>
                         </span>
@@ -607,8 +716,8 @@ export function OwnerDashboardWithMapLayout() {
           {role === "owner" && (
             <div
               style={{
-                padding: space[4],
-                margin: space[4],
+                padding: space.md,
+                margin: space.md,
                 marginBottom: 0,
                 borderRadius: 8,
                 backgroundColor: "#fff",
@@ -620,7 +729,7 @@ export function OwnerDashboardWithMapLayout() {
                   fontSize: `${fontSize.sm}px`,
                   fontWeight: fontWeight.semibold,
                   color: "#374151",
-                  marginBottom: space[2],
+                  marginBottom: space.sm,
                 }}
               >
                 Ambientes operacionais
@@ -632,10 +741,10 @@ export function OwnerDashboardWithMapLayout() {
                   margin: 0,
                 }}
               >
-                Cada terminal operacional abre o seu App dedicado (Waiter, Kitchen,
-                Cleaning, Manager) diretamente. Aqui no portal, acompanhe apenas
-                o estado e relatórios — a gestão de dispositivos vive em
-                Configuração &gt; Dispositivos.
+                Cada terminal operacional abre o seu App dedicado (Waiter,
+                Kitchen, Cleaning, Manager) diretamente. Aqui no portal,
+                acompanhe apenas o estado e relatórios — a gestão de
+                dispositivos vive em Configuração &gt; Dispositivos.
               </p>
             </div>
           )}

@@ -228,15 +228,3 @@ export function WelcomeOverlay({ onDismiss }: { onDismiss: () => void }) {
     </div>
   );
 }
-
-/** Check if the welcome overlay should be shown (first-time user). */
-export function shouldShowWelcome(): boolean {
-  try {
-    const seen = localStorage.getItem(WELCOME_KEY);
-    const hasRestaurant = localStorage.getItem("chefiapp_restaurant_id");
-    // Show if: has a restaurant (just created) and hasn't seen welcome yet
-    return !!hasRestaurant && !seen;
-  } catch {
-    return false;
-  }
-}

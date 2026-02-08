@@ -6,10 +6,11 @@
  * "Ser app" = abrir sem browser (PWA instalado). Quando em browser, mostramos como abrir como app.
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, type ReactNode } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useCoreHealth } from "../../../core/health/useCoreHealth";
 import { colors } from "../../../ui/design-system/tokens/colors";
+import { AppStaffBootScreen } from "../AppStaffBootScreen";
 import { useStaff } from "../context/StaffContext";
 import { getOperatorProfile } from "../data/operatorProfiles";
 import {
@@ -17,11 +18,12 @@ import {
   getModeByPath,
   isFullScreenMode,
 } from "./staffModeConfig";
-import { AppStaffBootScreen } from "../AppStaffBootScreen";
 
 const BOOT_SESSION_KEY = "chefiapp_staff_boot_shown";
 
-export function StaffAppShellLayout() {
+export function StaffAppShellLayout({
+  children,
+}: { children?: ReactNode } = {}) {
   const { activeRole, shiftState, activeLocation, specDrifts, tasks } =
     useStaff();
   const { status: coreStatus } = useCoreHealth();
@@ -68,7 +70,10 @@ export function StaffAppShellLayout() {
         (window.navigator as { standalone?: boolean }).standalone === true);
     setIsStandalone(!!standalone);
     try {
-      if (typeof window !== "undefined" && localStorage.getItem("chefiapp_staff_open_as_app_dismissed") === "1") {
+      if (
+        typeof window !== "undefined" &&
+        localStorage.getItem("chefiapp_staff_open_as_app_dismissed") === "1"
+      ) {
         setOpenAsAppDismissed(true);
       }
     } catch {
@@ -76,12 +81,16 @@ export function StaffAppShellLayout() {
     }
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
-      const ev = e as unknown as { prompt(): Promise<void>; userChoice: Promise<{ outcome: string }> };
+      const ev = e as unknown as {
+        prompt(): Promise<void>;
+        userChoice: Promise<{ outcome: string }>;
+      };
       setInstallPrompt(ev);
     };
     if (typeof window !== "undefined") {
       window.addEventListener("beforeinstallprompt", onBeforeInstall);
-      return () => window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      return () =>
+        window.removeEventListener("beforeinstallprompt", onBeforeInstall);
     }
   }, []);
 
@@ -99,8 +108,10 @@ export function StaffAppShellLayout() {
     if (coreStatus !== "UP") return "—";
     if (taskCount === 0 && alertCount === 0) return "OK";
     const parts: string[] = [];
-    if (taskCount > 0) parts.push(`${taskCount} tarefa${taskCount !== 1 ? "s" : ""}`);
-    if (alertCount > 0) parts.push(`${alertCount} alerta${alertCount !== 1 ? "s" : ""}`);
+    if (taskCount > 0)
+      parts.push(`${taskCount} tarefa${taskCount !== 1 ? "s" : ""}`);
+    if (alertCount > 0)
+      parts.push(`${alertCount} alerta${alertCount !== 1 ? "s" : ""}`);
     return parts.join(" · ");
   }, [coreStatus, tasks.length, specDrifts.length]);
 
@@ -109,7 +120,10 @@ export function StaffAppShellLayout() {
     const t = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(t);
   }, []);
-  const timeStr = now.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
+  const timeStr = now.toLocaleTimeString("pt-PT", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
   const dayStr = now.toLocaleDateString("pt-PT", { weekday: "short" });
 
   if (showBoot) {
@@ -200,7 +214,15 @@ export function StaffAppShellLayout() {
           >
             {isLauncher
               ? profile
-                ? `${profile.roleLabel} • ${shiftState === "active" ? "TURNO ATIVO" : shiftState === "closing" ? "A ENCERRAR" : shiftState === "closed" ? "ENCERRADO" : "—"}`
+                ? `${profile.roleLabel} • ${
+                    shiftState === "active"
+                      ? "TURNO ATIVO"
+                      : shiftState === "closing"
+                      ? "A ENCERRAR"
+                      : shiftState === "closed"
+                      ? "ENCERRADO"
+                      : "—"
+                  }`
                 : "ChefIApp"
               : currentMode?.label ?? "Staff"}
           </span>
@@ -461,7 +483,10 @@ export function StaffAppShellLayout() {
               onClick={() => {
                 setOpenAsAppDismissed(true);
                 try {
-                  localStorage.setItem("chefiapp_staff_open_as_app_dismissed", "1");
+                  localStorage.setItem(
+                    "chefiapp_staff_open_as_app_dismissed",
+                    "1",
+                  );
                 } catch {
                   // ignore
                 }
@@ -510,7 +535,7 @@ export function StaffAppShellLayout() {
             padding: fullScreen || isLauncher ? 0 : 16,
           }}
         >
-          <Outlet />
+          {children ?? <Outlet />}
         </div>
       </main>
 
@@ -530,7 +555,9 @@ export function StaffAppShellLayout() {
       >
         {/* Início (Home do papel atual) — sem redirect */}
         <Link
-          to={`/app/staff/home/${activeRole === "worker" ? "waiter" : activeRole ?? "manager"}`}
+          to={`/app/staff/home/${
+            activeRole === "worker" ? "waiter" : activeRole ?? "manager"
+          }`}
           className="staff-bottom-nav-link"
           style={{
             display: "flex",
@@ -711,7 +738,11 @@ export function StaffAppShellLayout() {
               }}
             >
               {/* Ordem: Tasks, Alerts, Team, Profile, Turno (FASE 4) */}
-              {[getModeById("tasks"), getModeById("alerts"), getModeById("team")].map((mode) => (
+              {[
+                getModeById("tasks"),
+                getModeById("alerts"),
+                getModeById("team"),
+              ].map((mode) => (
                 <button
                   key={mode.id}
                   type="button"
@@ -727,7 +758,10 @@ export function StaffAppShellLayout() {
                     padding: "10px 4px",
                     border: "none",
                     background: "none",
-                    color: mode.id === "alerts" && specDrifts.length > 0 ? colors.destructive.base : colors.text.primary,
+                    color:
+                      mode.id === "alerts" && specDrifts.length > 0
+                        ? colors.destructive.base
+                        : colors.text.primary,
                     cursor: "pointer",
                   }}
                 >
@@ -742,10 +776,15 @@ export function StaffAppShellLayout() {
                     <span
                       style={{
                         fontSize: 14,
-                        fontWeight: mode.id === "alerts" && specDrifts.length > 0 ? 600 : 500,
+                        fontWeight:
+                          mode.id === "alerts" && specDrifts.length > 0
+                            ? 600
+                            : 500,
                       }}
                     >
-                      {mode.id === "alerts" && specDrifts.length > 0 ? `${mode.label} (${specDrifts.length})` : mode.label}
+                      {mode.id === "alerts" && specDrifts.length > 0
+                        ? `${mode.label} (${specDrifts.length})`
+                        : mode.label}
                     </span>
                   </div>
                   <span style={{ fontSize: 16, color: colors.text.tertiary }}>

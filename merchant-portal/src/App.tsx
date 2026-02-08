@@ -217,6 +217,7 @@ const demoShiftValue = {
   isChecking: false,
   lastCheckedAt: new Date(),
   refreshShiftStatus: async () => {},
+  markShiftOpen: () => {},
 };
 
 function PublicProviders({ children }: { children: ReactNode }) {

@@ -89,7 +89,7 @@ export class MentorEngine {
 
   private generateMessages(): void {
     const raw = this.events
-      .map((event) => {
+      .map((event): MentorshipMessage | null => {
         if (event.type === "SLA_VIOLATED") {
           return {
             id: `sla-${event.orderId}-${event.timestamp}`,

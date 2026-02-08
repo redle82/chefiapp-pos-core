@@ -90,7 +90,7 @@ function mapRealOrderToLocalOrder(realOrder: RealOrder): Order {
 // Mapear status considerando payment_status (fonte soberana)
 function mapStatusToLocal(
   status: string,
-  paymentStatus?: string
+  paymentStatus?: string,
 ): Order["status"] {
   // PRIORIDADE 1: Se payment_status = 'PAID', order está pago
   if (paymentStatus === "PAID") {
@@ -122,7 +122,7 @@ function mapStatusToLocal(
   }
 }
 
-function mapLocalStatusToReal(status: Order["status"]): RealOrder["status"] {
+function mapLocalStatusToReal(status: Order["status"]): string {
   switch (status) {
     case "new":
       return "OPEN";
@@ -162,7 +162,7 @@ export function OrderProvider({
   }, []);
   // SOVEREIGN: restaurantId comes from Gate layer (TenantContext -> AppDomainWrapper)
   const [restaurantId, setRestaurantId] = useState<string | null>(
-    propRestaurantId || null
+    propRestaurantId || null,
   );
   const [operatorId, setOperatorId] = useState<string | null>(null);
   const [cashRegisterId, setCashRegisterId] = useState<string | null>(null);
@@ -237,7 +237,7 @@ export function OrderProvider({
   // Core Fetch Logic
   const getActiveOrdersInternal = async (
     restId: string,
-    isBackground = false
+    isBackground = false,
   ) => {
     // Only show loading on explicit big actions, not on background syncs
     if (!isBackground) {
@@ -297,7 +297,7 @@ export function OrderProvider({
           fetchDebounceRef.current = setTimeout(() => {
             getActiveOrders(true); // Background fetch
           }, 500);
-        }
+        },
       )
       .subscribe((status) => {
         setRealtimeStatus(status);
@@ -387,36 +387,34 @@ export function OrderProvider({
     const unsubscribeException = tpvEventBus.on<OrderExceptionPayload>(
       "order.exception",
       (event) => {
-        Logger.info(
-          "caught_order_exception",
-          { payload: event.payload },
-          { context: "OrderContext" }
-        );
+        Logger.info("caught_order_exception", {
+          payload: event.payload,
+          context: "OrderContext",
+        });
         setPendingExceptions((prev) => {
           // Check if already exists by eventId or orderId+type
           if (prev.some((e) => e.eventId === event.id)) return prev;
           return [...prev, { ...event.payload, eventId: event.id }];
         });
-      }
+      },
     );
 
     // Listen for decisions to clear exceptions
     const unsubscribeDecision = tpvEventBus.on<DecisionMadePayload>(
       "order.decision_made",
       (event) => {
-        Logger.info(
-          "caught_decision_made",
-          { payload: event.payload },
-          { context: "OrderContext" }
-        );
+        Logger.info("caught_decision_made", {
+          payload: event.payload,
+          context: "OrderContext",
+        });
         setPendingExceptions((prev) =>
           prev.filter(
             (e) =>
               // Remove exception if it matches the decision's orderId
-              e.orderId !== event.payload.orderId
-          )
+              e.orderId !== event.payload.orderId,
+          ),
         );
-      }
+      },
     );
 
     return () => {
@@ -448,7 +446,7 @@ export function OrderProvider({
             context: "OrderContext",
             tenantId: restaurantId,
             status: realtimeStatus,
-          }
+          },
         );
 
         reconnectTimeoutRef.current = setTimeout(() => {
@@ -469,7 +467,7 @@ export function OrderProvider({
           {
             context: "OrderContext",
             tenantId: restaurantId,
-          }
+          },
         );
       }
     }
@@ -499,7 +497,7 @@ export function OrderProvider({
       let cashRegisterId: string | undefined;
       try {
         const openRegister = await CashRegisterEngine.getOpenCashRegister(
-          restaurantId
+          restaurantId,
         );
         cashRegisterId = openRegister?.id;
       } catch (e) {
@@ -510,7 +508,7 @@ export function OrderProvider({
 
       // 2. Create Local Payload (Format for OrderEngine)
       const localId = uuidv4();
-      const now = new Date().toISOString();
+      const now = new Date();
 
       const payload = {
         restaurant_id: restaurantId,
@@ -534,7 +532,7 @@ export function OrderProvider({
       // 4. Optimistic UI Update
       const totalCents = (orderInput.items || []).reduce(
         (sum, i) => sum + i.price * i.quantity,
-        0
+        0,
       );
       const localOrder: Order = {
         id: localId,
@@ -573,7 +571,7 @@ export function OrderProvider({
     // Verificar caixa aberto (gatekeeper)
     if (!cashRegisterId) {
       const openRegister = await CashRegisterEngine.getOpenCashRegister(
-        restaurantId
+        restaurantId,
       );
       if (!openRegister) {
         throw new Error(MSG_CASH_REGISTER_CLOSED_CREATE);
@@ -586,7 +584,7 @@ export function OrderProvider({
       try {
         const existingOrder = await OrderEngine.getActiveOrderByTable(
           restaurantId,
-          orderInput.tableId
+          orderInput.tableId,
         );
         if (existingOrder) {
           const localOrder = mapRealOrderToLocalOrder(existingOrder);
@@ -622,8 +620,8 @@ export function OrderProvider({
     }));
 
     const syncMetadata: any = {
-      origin: orderInput.syncMetadata?.origin || "CAIXA",
-      ...orderInput.syncMetadata,
+      origin: (orderInput as any).syncMetadata?.origin || "CAIXA",
+      ...(orderInput as any).syncMetadata,
     };
 
     if (orderInput.tableId) {
@@ -649,7 +647,7 @@ export function OrderProvider({
       if (error && error.code) {
         // Preserve constraint error codes (e.g., 23505 for idx_one_open_order_per_table)
         const dbError = new Error(
-          error.message || `RPC_EXECUTION_FAILED: ${createError.message}`
+          error.message || `RPC_EXECUTION_FAILED: ${createError.message}`,
         );
         (dbError as any).code = error.code;
         (dbError as any).constraint = error.constraint;
@@ -678,7 +676,7 @@ export function OrderProvider({
         tableNumber: localOrder.tableNumber ?? orderInput.tableNumber ?? null,
       })
       .catch((err) =>
-        console.warn("[OrderContextReal] Tarefa por pedido não criada:", err)
+        console.warn("[OrderContextReal] Tarefa por pedido não criada:", err),
       );
 
     // HARD RULE 4: Persistir pedido ativo (Tab-Isolated)
@@ -694,7 +692,7 @@ export function OrderProvider({
   // Adicionar item
   const addItemToOrder = async (
     orderId: string,
-    item: OrderItemInput
+    item: OrderItemInput,
   ): Promise<void> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
     // FASE 1: Pedido confirmado é imutável. Ver FLUXO_DE_PEDIDO_OPERACIONAL.md
@@ -724,7 +722,7 @@ export function OrderProvider({
             const updatedItems = [...order.items, newItem];
             const newTotal = updatedItems.reduce(
               (sum, i) => sum + i.price * i.quantity,
-              0
+              0,
             );
             return {
               ...order,
@@ -734,7 +732,7 @@ export function OrderProvider({
             };
           }
           return order;
-        })
+        }),
       );
       return;
     }
@@ -777,7 +775,7 @@ export function OrderProvider({
   // Remover item
   const removeItemFromOrder = async (
     orderId: string,
-    itemId: string
+    itemId: string,
   ): Promise<void> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
     // FASE 1: Pedido confirmado é imutável. Ver FLUXO_DE_PEDIDO_OPERACIONAL.md
@@ -798,7 +796,7 @@ export function OrderProvider({
             const updatedItems = order.items.filter((i) => i.id !== itemId);
             const newTotal = updatedItems.reduce(
               (sum, i) => sum + i.price * i.quantity,
-              0
+              0,
             );
             return {
               ...order,
@@ -808,7 +806,7 @@ export function OrderProvider({
             };
           }
           return order;
-        })
+        }),
       );
       return;
     }
@@ -850,7 +848,7 @@ export function OrderProvider({
   const updateItemQuantity = async (
     orderId: string,
     itemId: string,
-    quantity: number
+    quantity: number,
   ): Promise<void> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
     // FASE 1: Pedido confirmado é imutável. Ver FLUXO_DE_PEDIDO_OPERACIONAL.md
@@ -879,7 +877,7 @@ export function OrderProvider({
             });
             const newTotal = updatedItems.reduce(
               (sum, i) => sum + i.price * i.quantity,
-              0
+              0,
             );
             return {
               ...order,
@@ -889,7 +887,7 @@ export function OrderProvider({
             };
           }
           return order;
-        })
+        }),
       );
       return;
     }
@@ -943,7 +941,7 @@ export function OrderProvider({
   // Sprint 12: Attach Customer
   const attachCustomer = async (
     orderId: string,
-    customerId: string
+    customerId: string,
   ): Promise<void> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
 
@@ -960,7 +958,7 @@ export function OrderProvider({
   // Cancelar Pedido
   const cancelOrder = async (
     orderId: string,
-    reason: string
+    reason: string,
   ): Promise<void> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
 
@@ -986,7 +984,7 @@ export function OrderProvider({
   const performOrderAction = async (
     orderId: string,
     action: string,
-    payload?: any
+    payload?: any,
   ): Promise<void> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
 
@@ -1070,7 +1068,7 @@ export function OrderProvider({
                   return o;
                 }
                 return o;
-              })
+              }),
             );
 
             // Remove from active tab if paid fully
@@ -1094,7 +1092,7 @@ export function OrderProvider({
 
           if (itemsError) {
             throw new Error(
-              `Failed to fetch order items: ${itemsError.message} `
+              `Failed to fetch order items: ${itemsError.message} `,
             );
           }
 
@@ -1104,7 +1102,7 @@ export function OrderProvider({
 
           const calculatedTotal = items.reduce(
             (sum, i) => sum + i.price_snapshot * i.quantity,
-            0
+            0,
           );
 
           // 3. Validar que total do DB = total calculado (proteção contra tampering)
@@ -1116,7 +1114,7 @@ export function OrderProvider({
               orderId,
             });
             throw new Error(
-              "Total mismatch - possible tampering detected. Please refresh and try again."
+              "Total mismatch - possible tampering detected. Please refresh and try again.",
             );
           }
 
@@ -1131,7 +1129,7 @@ export function OrderProvider({
           if (!cashRegisterId) {
             // Double check DB
             const openRegister = await CashRegisterEngine.getOpenCashRegister(
-              restaurantId
+              restaurantId,
             );
             if (!openRegister) {
               throw new Error(MSG_CASH_REGISTER_CLOSED_PAY);
@@ -1158,7 +1156,7 @@ export function OrderProvider({
           // Validar que amount não excede o total
           if (amountCents > dbOrder.totalCents) {
             throw new Error(
-              `Valor de pagamento(${amountCents}) excede o total do pedido(${dbOrder.totalCents})`
+              `Valor de pagamento(${amountCents}) excede o total do pedido(${dbOrder.totalCents})`,
             );
           }
 
@@ -1172,12 +1170,12 @@ export function OrderProvider({
           if (method === "loyalty") {
             const orderForCheck = await OrderEngine.getOrder(
               orderId,
-              restaurantId
+              restaurantId,
             );
             const customerId = (orderForCheck as any).customer_id;
             if (!customerId)
               throw new Error(
-                "Cliente precisa ser identificado para pagar com pontos."
+                "Cliente precisa ser identificado para pagar com pontos.",
               );
 
             const { data: customerCheck } = await dockerCoreClient
@@ -1196,7 +1194,7 @@ export function OrderProvider({
               throw new Error(
                 `Saldo insuficiente. Necessário: ${pointsNeeded} pts. Disponível: ${
                   customerCheck.points_balance || 0
-                } pts.`
+                } pts.`,
               );
             }
           }
@@ -1219,7 +1217,7 @@ export function OrderProvider({
 
           if (!payResult || !payResult.success) {
             throw new Error(
-              `PAYMENT_FAILED: ${payResult?.error || "Erro desconhecido"}`
+              `PAYMENT_FAILED: ${payResult?.error || "Erro desconhecido"}`,
             );
           }
 
@@ -1230,7 +1228,7 @@ export function OrderProvider({
           try {
             const orderForCRM = await OrderEngine.getOrder(
               orderId,
-              restaurantId
+              restaurantId,
             );
             if (orderForCRM && (orderForCRM as any).customer_id) {
               const customerId = (orderForCRM as any).customer_id;
@@ -1316,7 +1314,7 @@ export function OrderProvider({
             await InventoryEngine.processOrder(paidOrder);
 
             const totalCost = await InventoryEngine.calculateOrderCost(
-              paidOrder
+              paidOrder,
             );
             const grossMargin = paidOrder.totalCents - totalCost;
 
@@ -1348,7 +1346,7 @@ export function OrderProvider({
           const orderToClose = await OrderEngine.getOrderById(orderId);
           if (orderToClose.paymentStatus !== "PAID") {
             throw new Error(
-              'Pedido deve ser pago antes de fechar. Use "Cobrar" primeiro.'
+              'Pedido deve ser pago antes de fechar. Use "Cobrar" primeiro.',
             );
           }
           // Se já está pago, apenas atualizar status (redundante, mas seguro)
@@ -1369,7 +1367,7 @@ export function OrderProvider({
 
           // Limpar pedido ativo se cancelado
           const currentActiveCancel = getTabIsolated(
-            "chefiapp_active_order_id"
+            "chefiapp_active_order_id",
           );
           if (currentActiveCancel === orderId) {
             removeTabIsolated("chefiapp_active_order_id");
@@ -1397,7 +1395,7 @@ export function OrderProvider({
 
   // Abrir caixa
   const openCashRegister = async (
-    openingBalanceCents: number
+    openingBalanceCents: number,
   ): Promise<void> => {
     // DOCKER CORE: Não usa auth, então operatorId pode ser null
     // Para desenvolvimento, podemos usar um ID fixo ou null
@@ -1431,7 +1429,7 @@ export function OrderProvider({
         if (openError.message.includes("CASH_REGISTER_ALREADY_OPEN")) {
           // Se já está aberto, recuperar o ID
           const existing = await CashRegisterEngine.getOpenCashRegister(
-            restaurantId
+            restaurantId,
           );
           if (existing) {
             setCashRegisterId(existing.id);
@@ -1449,7 +1447,7 @@ export function OrderProvider({
 
       // Verificar que o registro foi criado corretamente
       const verifyRegister = await CashRegisterEngine.getOpenCashRegister(
-        restaurantId
+        restaurantId,
       );
       if (!verifyRegister) {
         throw new Error("Failed to verify cash register after opening");
@@ -1465,7 +1463,7 @@ export function OrderProvider({
           tenantId: restaurantId,
         });
         const existing = await CashRegisterEngine.getOpenCashRegister(
-          restaurantId
+          restaurantId,
         );
         if (existing) {
           setCashRegisterId(existing.id);
@@ -1481,7 +1479,7 @@ export function OrderProvider({
 
   // Fechar caixa
   const closeCashRegister = async (
-    closingBalanceCents: number
+    closingBalanceCents: number,
   ): Promise<void> => {
     if (!restaurantId || !operatorId || !cashRegisterId) {
       const err = new Error("Missing required IDs");
@@ -1547,7 +1545,7 @@ export function OrderProvider({
         addOrder: (order: Order) => setOrders((prev) => [...prev, order]),
         updateOrderStatus: (orderId: string, status: Order["status"]) =>
           setOrders((prev) =>
-            prev.map((o) => (o.id === orderId ? { ...o, status } : o))
+            prev.map((o) => (o.id === orderId ? { ...o, status } : o)),
           ),
         resetOrders: () => setOrders([]),
         addItemToOrder,

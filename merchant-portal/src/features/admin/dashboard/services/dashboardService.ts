@@ -152,9 +152,9 @@ export async function getOverview(
     const orders = (ordersRes.data || []) as CoreOrder[];
     const criticalTasks = (tasksRes.data || []) as { id: string }[];
     const alertsCount = alerts.length;
-    const activeStaffCount = (activeShiftsRes.data || []).length;
-    const deletedProducts = (deletedItemsRes.data || []).length;
-    const deletedPayments = (deletedPaymentsRes.data || []).length;
+    const activeStaffCount = ((activeShiftsRes.data as any[]) || []).length;
+    const deletedProducts = ((deletedItemsRes.data as any[]) || []).length;
+    const deletedPayments = ((deletedPaymentsRes.data as any[]) || []).length;
 
     const totalTables = tables.length;
     const seatsTotal = tables.reduce((s, t) => s + (t.seats ?? 0), 0);

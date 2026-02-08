@@ -50,7 +50,7 @@ interface FilterBuilder {
   insert(body: object | object[]): FilterBuilder;
   upsert(
     body: object | object[],
-    opts?: { onConflict?: string }
+    opts?: { onConflict?: string },
   ): FilterBuilder;
   update(body: object): FilterBuilder;
   delete(): FilterBuilder;
@@ -64,7 +64,7 @@ interface FilterBuilder {
   maybeSingle(): Promise<PostgrestResponse>;
   then<T>(
     onfulfilled?: (value: PostgrestResponse) => T | PromiseLike<T>,
-    onrejected?: (reason: unknown) => never
+    onrejected?: (reason: unknown) => never,
   ): Promise<T>;
 }
 
@@ -109,7 +109,7 @@ function buildFilterBuilder(table: string): FilterBuilder {
     if (state.method === "GET") {
       url.searchParams.set("select", state.selectCols);
       Object.entries(state.params).forEach(([k, v]) =>
-        url.searchParams.set(k, v)
+        url.searchParams.set(k, v),
       );
       if (state.single || state.maybeSingle) url.searchParams.set("limit", "1");
     } else {
@@ -118,7 +118,7 @@ function buildFilterBuilder(table: string): FilterBuilder {
         url.searchParams.set("select", state.selectCols);
       }
       Object.entries(state.params).forEach(([k, v]) =>
-        url.searchParams.set(k, v)
+        url.searchParams.set(k, v),
       );
       // PostgREST: on_conflict é query param (não header) para upsert em UNIQUE.
       if (state.method === "POST" && state.upsertOpts?.onConflict) {
@@ -136,7 +136,7 @@ function buildFilterBuilder(table: string): FilterBuilder {
     ) {
       (init.headers as Headers).set(
         "Range",
-        `${state.rangeFrom}-${state.rangeTo}`
+        `${state.rangeFrom}-${state.rangeTo}`,
       );
     }
     if (state.method === "POST" && state.body !== undefined) {
@@ -305,6 +305,7 @@ export interface DockerCoreClientShape {
   from(table: string): FilterBuilder;
   rpc(fnName: string, params?: object): Promise<PostgrestResponse>;
   channel(_topic: string): RealtimeChannelStub;
+  removeChannel(channel: RealtimeChannelStub): void;
 }
 
 export interface RealtimeChannelStub {
@@ -313,7 +314,7 @@ export interface RealtimeChannelStub {
   on(
     event: string,
     filter: object,
-    callback: (payload: any) => void
+    callback: (payload: any) => void,
   ): RealtimeChannelStub;
 }
 
@@ -388,6 +389,13 @@ export function getDockerCoreFetchClient(): DockerCoreClientShape {
     },
     channel(_topic: string) {
       return noopChannel;
+    },
+    removeChannel(channel: RealtimeChannelStub) {
+      try {
+        channel.unsubscribe();
+      } catch {
+        // no-op: channel may already be removed
+      }
     },
   };
   return clientInstance;

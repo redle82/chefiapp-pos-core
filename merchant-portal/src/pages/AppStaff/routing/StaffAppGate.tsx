@@ -4,7 +4,7 @@
  * Ordem real: 1. location 2. contract 3. worker (gm_restaurant_people/gm_staff).
  */
 
-import React, { useEffect } from "react";
+import React, { useEffect, type ReactNode } from "react";
 import { Outlet } from "react-router-dom";
 import { isDebugMode } from "../../../core/debugMode";
 import { colors } from "../../../ui/design-system/tokens/colors";
@@ -14,7 +14,7 @@ import { useStaff } from "../context/StaffContext";
 import { LocationSelectView } from "../views/LocationSelectView";
 import { NoLocationsView } from "../views/NoLocationsView";
 
-export function StaffAppGate() {
+export function StaffAppGate({ children }: { children?: ReactNode } = {}) {
   const {
     activeLocation,
     activeLocations,
@@ -28,14 +28,13 @@ export function StaffAppGate() {
   const hasLocation = !!activeLocation;
   const hasContract = !!operationalContract;
   const hasWorker = !!activeWorkerId;
-  const gateBlock =
-    !hasLocation
-      ? "location"
-      : !hasContract
-        ? "contract"
-        : !hasWorker
-          ? "worker"
-          : null;
+  const gateBlock = !hasLocation
+    ? "location"
+    : !hasContract
+    ? "contract"
+    : !hasWorker
+    ? "worker"
+    : null;
 
   useEffect(() => {
     if (!isDebugMode()) return;
@@ -50,7 +49,15 @@ export function StaffAppGate() {
     };
     console.log("[StaffAppGate]", state);
     if (gateBlock) console.warn("[StaffAppGate] Bloqueado em:", gateBlock);
-  }, [restaurantId, hasLocation, hasContract, hasWorker, activeRole, roleSource, gateBlock]);
+  }, [
+    restaurantId,
+    hasLocation,
+    hasContract,
+    hasWorker,
+    activeRole,
+    roleSource,
+    gateBlock,
+  ]);
 
   const debugStrip = isDebugMode() ? (
     <div
@@ -74,13 +81,24 @@ export function StaffAppGate() {
       <span>worker:{hasWorker ? "✓" : "✗"}</span>
       <span>role:{activeRole}</span>
       <span>source:{roleSource}</span>
-      {gateBlock && <span style={{ color: colors.warning?.base ?? "#fb923c" }}>bloqueio:{gateBlock}</span>}
+      {gateBlock && (
+        <span style={{ color: colors.warning?.base ?? "#fb923c" }}>
+          bloqueio:{gateBlock}
+        </span>
+      )}
     </div>
   ) : null;
 
   const wrapWithDebug = (content: React.ReactNode) =>
     debugStrip ? (
-      <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
         {debugStrip}
         <div style={{ flex: 1, minHeight: 0 }}>{content}</div>
       </div>
@@ -89,8 +107,10 @@ export function StaffAppGate() {
     );
 
   // Em debug: só bypass quando já há contrato e worker (senão mostrar Landing com entrada rápida).
+  const content = children ?? <Outlet />;
+
   if (isDebugMode() && operationalContract && activeWorkerId) {
-    return wrapWithDebug(<Outlet />);
+    return wrapWithDebug(content);
   }
 
   if (!activeLocation) {
@@ -106,5 +126,5 @@ export function StaffAppGate() {
     return wrapWithDebug(<WorkerCheckInView />);
   }
 
-  return <Outlet />;
+  return <>{content}</>;
 }
