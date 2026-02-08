@@ -57,7 +57,7 @@ export type CoreMode = "offline-intencional" | "online" | "offline-erro";
 
 export function deriveCoreMode(
   coreReachable: boolean,
-  allowLocalMode: boolean
+  allowLocalMode: boolean,
 ): CoreMode {
   if (coreReachable) return "online";
   if (allowLocalMode) return "offline-intencional";
@@ -66,7 +66,7 @@ export function deriveCoreMode(
 
 function allowLocalMode(
   systemState: SystemState,
-  productMode: ProductMode
+  productMode: ProductMode,
 ): boolean {
   if (systemState === "SETUP") return true;
   if (productMode === "demo") return true;
@@ -240,7 +240,7 @@ export function RestaurantRuntimeProvider({
 
   /** Quando backend é Docker: lê estado do Core (gm_restaurants, installed_modules, restaurant_setup_status). */
   async function fetchRuntimeStateFromCore(
-    restaurantId: string
+    restaurantId: string,
   ): Promise<
     Pick<
       RestaurantRuntime,
@@ -281,7 +281,7 @@ export function RestaurantRuntimeProvider({
 
     const installed_modules = installedIds.length > 0 ? installedIds : [];
     const active_modules = installed_modules.filter((id) =>
-      ALL_SAFE_MODULES_DEV.includes(id)
+      ALL_SAFE_MODULES_DEV.includes(id),
     );
     const plan: PlanTier =
       installed_modules.length >= ALL_KNOWN_MODULES.length
@@ -323,7 +323,7 @@ export function RestaurantRuntimeProvider({
 
   /** Fallback quando Core não é Docker ou quando fetch do Core falha. */
   async function fetchRuntimeStateFallback(
-    _restaurantId: string
+    _restaurantId: string,
   ): Promise<
     Pick<
       RestaurantRuntime,
@@ -383,7 +383,7 @@ export function RestaurantRuntimeProvider({
       productMode: resolveProductModeFromEnv(),
       installed_modules: baseInstalled,
       active_modules: baseInstalled.filter((id) =>
-        ALL_SAFE_MODULES_DEV.includes(id)
+        ALL_SAFE_MODULES_DEV.includes(id),
       ),
       plan: "basic",
       status: "active",
@@ -418,7 +418,7 @@ export function RestaurantRuntimeProvider({
     } catch (error) {
       console.error(
         "[RestaurantRuntime] Erro ao carregar/criar restaurante:",
-        error
+        error,
       );
       return null;
     }
@@ -543,7 +543,7 @@ export function RestaurantRuntimeProvider({
     async (section: string, complete: boolean) => {
       if (!runtime.restaurant_id) {
         console.warn(
-          "[RestaurantRuntime] Sem restaurant_id para atualizar setup_status"
+          "[RestaurantRuntime] Sem restaurant_id para atualizar setup_status",
         );
         return;
       }
@@ -557,21 +557,24 @@ export function RestaurantRuntimeProvider({
         if (isDockerCore) {
           const { error } = await persistSetupStatus(
             runtime.restaurant_id,
-            newSetupStatus
+            newSetupStatus,
           );
           if (error) {
-            console.warn("[RestaurantRuntime] persistSetupStatus:", error);
+            const msg = error?.message ?? String(error);
+            if (!msg.includes("aborted")) {
+              console.warn("[RestaurantRuntime] persistSetupStatus:", error);
+            }
           }
         }
         setRuntime((prev) => ({ ...prev, setup_status: newSetupStatus }));
       } catch (error) {
         console.error(
           "[RestaurantRuntime] Erro ao atualizar setup_status:",
-          error
+          error,
         );
       }
     },
-    [runtime.restaurant_id, runtime.setup_status, isDockerCore]
+    [runtime.restaurant_id, runtime.setup_status, isDockerCore],
   );
 
   /**
@@ -605,7 +608,7 @@ export function RestaurantRuntimeProvider({
       if (isDockerCore) {
         const { error: statusErr } = await persistRestaurantStatus(
           runtime.restaurant_id,
-          "active"
+          "active",
         );
         if (statusErr) {
           console.warn("[RestaurantRuntime] setRestaurantStatus:", statusErr);
@@ -614,13 +617,13 @@ export function RestaurantRuntimeProvider({
           await persistInstalledModule(
             runtime.restaurant_id,
             moduleId,
-            moduleId
+            moduleId,
           );
         }
       }
 
       const active_modules = baseModules.filter((id) =>
-        ALL_SAFE_MODULES_DEV.includes(id)
+        ALL_SAFE_MODULES_DEV.includes(id),
       );
 
       const capabilities: Record<string, ModuleCapabilityEntry> = {};
@@ -668,7 +671,7 @@ export function RestaurantRuntimeProvider({
           const { error } = await persistInstalledModule(
             runtime.restaurant_id,
             moduleId,
-            moduleId
+            moduleId,
           );
           if (error) {
             console.warn("[RestaurantRuntime] insertInstalledModule:", error);
@@ -685,7 +688,7 @@ export function RestaurantRuntimeProvider({
         throw error;
       }
     },
-    [runtime.restaurant_id, isDockerCore]
+    [runtime.restaurant_id, isDockerCore],
   );
 
   /** Altera productMode: persiste no Core quando backend é Docker; atualiza estado local. */
@@ -706,7 +709,7 @@ export function RestaurantRuntimeProvider({
         }
       }
     },
-    [isDockerCore, runtime.restaurant_id]
+    [isDockerCore, runtime.restaurant_id],
   );
 
   // Carregar estado inicial - Somente na primeira vez ou quando o restaurantId mudar
@@ -734,7 +737,7 @@ export function RestaurantRuntimeProvider({
       publishRestaurant,
       installModule,
       setProductMode,
-    ]
+    ],
   );
 
   // CONTRATO_TRIAL_REAL: não expor setter de pilot na UI. Bypass apenas em debug (?debug=1) para testes.

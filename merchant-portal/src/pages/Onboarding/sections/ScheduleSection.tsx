@@ -48,7 +48,7 @@ export function ScheduleSection() {
   const updateSchedule = (
     day: number,
     field: "open" | "start" | "end",
-    value: boolean | string
+    value: boolean | string,
   ) => {
     setSchedules((prev) => ({
       ...prev,
@@ -71,9 +71,11 @@ export function ScheduleSection() {
     // Atualizar RestaurantRuntimeContext (persistência real)
     if (runtime.restaurant_id) {
       updateSetupStatus("schedule", isValid).catch((error) => {
+        const msg = error?.message ?? String(error);
+        if (msg.includes("aborted")) return;
         console.error(
           "[ScheduleSection] Erro ao atualizar setup_status:",
-          error
+          error,
         );
       });
     }
@@ -98,7 +100,7 @@ export function ScheduleSection() {
           // ANTI-SUPABASE §4: Schedule write ONLY via Core. Fail explicit if not Docker.
           if (getBackendType() !== BackendType.docker) {
             throw new Error(
-              "Core indisponível. Configure o Docker Core para salvar os horários."
+              "Core indisponível. Configure o Docker Core para salvar os horários.",
             );
           }
           console.log("[ScheduleSection] Salvando no banco (Core)...", {
@@ -118,7 +120,7 @@ export function ScheduleSection() {
               open: schedule.open,
               start_time: schedule.start,
               end_time: schedule.end,
-            })
+            }),
           );
 
           const { error } = await dockerCoreClient
@@ -133,7 +135,7 @@ export function ScheduleSection() {
             updateSetupStatus("schedule", true).catch((err) => {
               console.warn(
                 "[ScheduleSection] Erro ao persistir setup_status:",
-                err
+                err,
               );
             });
           }
@@ -146,7 +148,7 @@ export function ScheduleSection() {
       }, 1500);
     } else if (isValid && !restaurantId) {
       console.warn(
-        "[ScheduleSection] Dados válidos mas sem restaurantId. Aguardando..."
+        "[ScheduleSection] Dados válidos mas sem restaurantId. Aguardando...",
       );
     }
 

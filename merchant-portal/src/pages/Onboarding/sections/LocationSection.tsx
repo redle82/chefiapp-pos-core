@@ -49,7 +49,7 @@ export function LocationSection() {
       // ANTI-SUPABASE §4: Domain read ONLY via Core. Fail if not Docker.
       if (getBackendType() !== BackendType.docker) {
         console.warn(
-          "[LocationSection] Core indisponível. Não é possível carregar localização."
+          "[LocationSection] Core indisponível. Não é possível carregar localização.",
         );
         return;
       }
@@ -63,18 +63,23 @@ export function LocationSection() {
             .maybeSingle();
 
         if (restaurantError) {
-          console.warn(
-            "[LocationSection] Erro ao carregar localização:",
-            restaurantError
-          );
+          if (!cancelled) {
+            console.warn(
+              "[LocationSection] Erro ao carregar localização:",
+              restaurantError,
+            );
+          }
+          return;
         }
+
+        if (cancelled) return;
 
         const { data: zonesData, error: zonesError } = await dockerCoreClient
           .from("restaurant_zones")
           .select("type")
           .eq("restaurant_id", restaurantId);
 
-        if (zonesError) {
+        if (zonesError && !cancelled) {
           console.warn("[LocationSection] Erro ao carregar zonas:", zonesError);
         }
 
@@ -90,10 +95,12 @@ export function LocationSection() {
           }));
         }
       } catch (error) {
-        console.warn(
-          "[LocationSection] Erro inesperado ao carregar localização:",
-          error
-        );
+        if (!cancelled) {
+          console.warn(
+            "[LocationSection] Erro inesperado ao carregar localização:",
+            error,
+          );
+        }
       }
     };
 
@@ -123,9 +130,11 @@ export function LocationSection() {
     // Atualizar RestaurantRuntimeContext (persistência real)
     if (runtime.restaurant_id) {
       updateSetupStatus("location", isValid).catch((error) => {
+        const msg = error?.message ?? String(error);
+        if (msg.includes("aborted")) return;
         console.error(
           "[LocationSection] Erro ao atualizar setup_status:",
-          error
+          error,
         );
       });
     }
@@ -149,7 +158,7 @@ export function LocationSection() {
           // ANTI-SUPABASE §4: Location write ONLY via Core. Fail explicit if not Docker.
           if (getBackendType() !== BackendType.docker) {
             throw new Error(
-              "Core indisponível. Configure o Docker Core para salvar a localização."
+              "Core indisponível. Configure o Docker Core para salvar a localização.",
             );
           }
           console.log("[LocationSection] Salvando no banco (Core)...", {
@@ -173,7 +182,7 @@ export function LocationSection() {
           if (restaurantError) {
             console.error(
               "[LocationSection] Erro ao salvar localização:",
-              restaurantError
+              restaurantError,
             );
             alert(`Erro ao salvar: ${restaurantError.message}`);
             return;
@@ -204,7 +213,7 @@ export function LocationSection() {
           if (tablesError) {
             console.warn(
               "[LocationSection] Erro ao criar mesas (pode não existir a função ainda):",
-              tablesError
+              tablesError,
             );
             const tablesToCreate = Math.ceil(formData.capacity / 4);
             for (let i = 1; i <= tablesToCreate; i++) {
@@ -216,7 +225,7 @@ export function LocationSection() {
                 },
                 {
                   onConflict: "restaurant_id,number",
-                }
+                },
               );
             }
           }
@@ -225,7 +234,7 @@ export function LocationSection() {
           updateSetupStatus("location", true).catch((err) => {
             console.warn(
               "[LocationSection] Erro ao persistir setup_status:",
-              err
+              err,
             );
           });
         } catch (error: any) {
@@ -237,7 +246,7 @@ export function LocationSection() {
       }, 1500);
     } else if (isValid && !restaurantId) {
       console.warn(
-        "[LocationSection] Dados válidos mas sem restaurantId. Aguardando..."
+        "[LocationSection] Dados válidos mas sem restaurantId. Aguardando...",
       );
     }
 
