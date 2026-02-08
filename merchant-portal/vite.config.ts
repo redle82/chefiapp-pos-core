@@ -67,8 +67,9 @@ export default defineConfig(async ({ mode }) => {
       },
     },
     plugins: [
-      // fastRefresh: false evita runtime extra que pode carregar segunda cópia do React (Invalid hook call).
-      react({ fastRefresh: false }),
+      // resolve.dedupe + resolve.alias já garantem cópia única do React;
+      // Fast Refresh re-habilitado para HMR instantâneo (evita full-page reload).
+      react(),
       tailwindcss(),
       ...sentryPlugins,
       VitePWA({
@@ -113,6 +114,24 @@ export default defineConfig(async ({ mode }) => {
       // Porta de desenvolvimento: 5175 (override com PORT se necessário).
       port: parseInt(process.env.PORT || "5175", 10),
       strictPort: !process.env.PORT,
+      // HMR: WebSocket resiliente — reconecta em vez de morrer.
+      hmr: {
+        overlay: true,
+        timeout: 30000,
+      },
+      // Watch: ignorar diretórios pesados para evitar chokidar overload.
+      watch: {
+        ignored: [
+          "**/node_modules/**",
+          "**/dist/**",
+          "**/coverage/**",
+          "**/_legacy_isolation/**",
+          "**/playwright-report/**",
+          "**/test-results/**",
+          "**/logs/**",
+          "**/.git/**",
+        ],
+      },
       proxy: {
         "/internal": {
           target: "http://localhost:4320",
