@@ -53,10 +53,10 @@ Tarefas produto/ops: definição de alvos, abordagem e agendamento. **Preencher 
 
 Métricas e decisão pós-piloto. **Preencher em:** [docs/pilots/ONDA_4_PILOTO_P2.md](./pilots/ONDA_4_PILOTO_P2.md).
 
-- [ ] **10. Métricas de piloto** — Definir métricas a recolher (tempo por pedido, erros, satisfação).
-- [ ] **11. Template report** — Criar template de mini-relatório de piloto (2 semanas).
-- [ ] **12. Checklist 2 semanas** — Checklist de verificação ao fim de 2 semanas de piloto.
-- [ ] **13. Regra de decisão** — Definir regra de decisão: go/no-go para Onda 5 com base nos dados do piloto.
+- [x] **10. Métricas de piloto** — 9 métricas definidas (M1–M9: dias com uso, pedidos, receita, erros, satisfação, NPS, tempo 1ª venda). Ref.: [ONDA_4_PILOTO_P2.md](./pilots/ONDA_4_PILOTO_P2.md) §10.
+- [x] **11. Template report** — Template por restaurante com tabela M1–M9 + feedback qualitativo + veredicto GO/CONDICIONAL/NO-GO. Ref.: §11.
+- [x] **12. Checklist 2 semanas** — Checklist dia-a-dia (semana 1 + semana 2 + consolidação dia 15). Ref.: §12.
+- [x] **13. Regra de decisão** — 6 critérios (C1–C6) com limiares GO/NO-GO/CONDICIONAL definidos. Ref.: §13.
 
 ---
 
@@ -84,9 +84,9 @@ Testes, gates, release, migrações e observabilidade.
 
 Mensagem e preço para o piloto. **Preencher em:** [docs/pilots/ONDA_4_VALOR_E_ONDA_5.md](./pilots/ONDA_4_VALOR_E_ONDA_5.md) (§ Bloco 4).
 
-- [ ] **19. Welcome + 3 passos** — Mensagem de boas-vindas e “3 passos” para o restaurante (onboarding percebido).
-- [ ] **20. Landing / pitch** — Atualizar landing ou pitch (uma página) com proposta de valor e CTA para piloto. Ref.: [PITCH_5_MIN_DONO.md](./PITCH_5_MIN_DONO.md), [LANDING_PAGE_MINIMA.md](./LANDING_PAGE_MINIMA.md).
-- [ ] **21. Preço piloto** — Definir preço (ou grátis) para a fase piloto e como comunicar.
+- [x] **19. Welcome + 3 passos** — WelcomeOverlay pós-signup com 3 passos (registar → produto → venda). Componente: `components/onboarding/WelcomeOverlay.tsx`; integrado em AdminReportsOverview.
+- [x] **20. Landing / pitch** — PricingPage completa: plano único €79/mês, badge 14 dias grátis, features, FAQ, CTA. Substituiu stub "Em breve".
+- [x] **21. Preço piloto** — Copy piloto adicionado ao OSCopy: `pilotPriceCopy`, `pilotCtaPrimary`, `pilotCtaSecondary`. Messaging: "14 dias grátis, sem compromisso".
 
 ---
 
