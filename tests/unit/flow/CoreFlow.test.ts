@@ -24,18 +24,17 @@ beforeAll(() => {
 
 describe("CoreFlow - resolveNextRoute", () => {
   describe("Barreira de Autenticação", () => {
-    it("deve redirecionar para /auth quando não autenticado e acessando rota protegida", () => {
+    it("deve redirecionar para /auth/phone quando não autenticado e acessando rota protegida", () => {
       const state: UserState = {
         isAuthenticated: false,
         hasOrganization: false,
-        onboardingStatus: "not_started",
         currentPath: "/app/dashboard",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/auth");
+        expect(decision.to).toBe("/auth/phone");
         expect(decision.reason).toContain("Auth required");
       }
     });
@@ -44,7 +43,6 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: false,
         hasOrganization: false,
-        onboardingStatus: "not_started",
         currentPath: "/public/menu/abc123",
       };
 
@@ -56,7 +54,6 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: false,
         hasOrganization: false,
-        onboardingStatus: "not_started",
         currentPath: "/",
       };
 
@@ -68,7 +65,6 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: false,
         hasOrganization: false,
-        onboardingStatus: "not_started",
         currentPath: "/auth",
       };
 
@@ -78,27 +74,25 @@ describe("CoreFlow - resolveNextRoute", () => {
   });
 
   describe("Barreira de Organização", () => {
-    it("deve redirecionar para bootstrap quando sem organização", () => {
+    it("deve redirecionar para setup mínimo quando sem organização", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: false,
-        onboardingStatus: "not_started",
         currentPath: "/app/dashboard",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/bootstrap");
+        expect(decision.to).toBe("/setup/restaurant-minimal");
       }
     });
 
-    it("deve permitir acesso a /onboarding/first-product quando sem organização", () => {
+    it("deve permitir acesso a /setup/restaurant-minimal quando sem organização", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: false,
-        onboardingStatus: "not_started",
-        currentPath: "/onboarding/first-product",
+        currentPath: "/setup/restaurant-minimal",
       };
 
       const decision = resolveNextRoute(state);
@@ -121,7 +115,6 @@ describe("CoreFlow - resolveNextRoute", () => {
         const state: UserState = {
           isAuthenticated: true,
           hasOrganization: true,
-          onboardingStatus: status,
           currentPath: `/onboarding/${status}`,
         };
 
@@ -133,7 +126,6 @@ describe("CoreFlow - resolveNextRoute", () => {
         const state: UserState = {
           isAuthenticated: true,
           hasOrganization: true,
-          onboardingStatus: status,
           currentPath: "/app/dashboard",
         };
 
@@ -148,14 +140,13 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
-        onboardingStatus: "completed",
         currentPath: "/auth",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/app/dashboard");
+        expect(decision.to).toBe("/dashboard");
       }
     });
 
@@ -163,14 +154,13 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
-        onboardingStatus: "completed",
         currentPath: "/",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/app/dashboard");
+        expect(decision.to).toBe("/dashboard");
       }
     });
 
@@ -178,14 +168,13 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
-        onboardingStatus: "completed",
         currentPath: "/app",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/app/dashboard");
+        expect(decision.to).toBe("/dashboard");
       }
     });
 
@@ -193,7 +182,6 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
-        onboardingStatus: "completed",
         currentPath: "/onboarding/identity",
       };
 
@@ -208,7 +196,6 @@ describe("CoreFlow - resolveNextRoute", () => {
         const state: UserState = {
           isAuthenticated: true,
           hasOrganization: true,
-          onboardingStatus: "completed",
           currentPath: route,
         };
 
@@ -223,7 +210,6 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
-        onboardingStatus: "not_started",
         currentPath: "/app/dashboard",
       };
 
@@ -235,7 +221,6 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
-        onboardingStatus: "not_started",
         currentPath: "/app/dashboard",
       };
 

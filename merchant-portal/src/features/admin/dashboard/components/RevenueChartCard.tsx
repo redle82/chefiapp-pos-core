@@ -6,7 +6,11 @@ interface RevenueChartCardProps {
   onDetailsClick?: () => void;
 }
 
-export function RevenueChartCard({ loading, data, onDetailsClick }: RevenueChartCardProps) {
+export function RevenueChartCard({
+  loading,
+  data,
+  onDetailsClick,
+}: RevenueChartCardProps) {
   return (
     <div
       style={{
@@ -71,8 +75,7 @@ export function RevenueChartCard({ loading, data, onDetailsClick }: RevenueChart
                 const y = 20 + (idx * 160) / 4;
                 return (
                   <line
-                    // eslint-disable-next-line react/no-array-index-key
-                    key={idx}
+                    key={`grid-${idx}`}
                     x1="40"
                     x2="100%"
                     y1={y}
@@ -90,8 +93,7 @@ export function RevenueChartCard({ loading, data, onDetailsClick }: RevenueChart
                     Math.max(data.length - 1, 1); /* escala aproximada */
                 return (
                   <text
-                    // eslint-disable-next-line react/no-array-index-key
-                    key={idx}
+                    key={`label-${point.hour}-${idx}`}
                     x={x}
                     y={205}
                     fontSize={10}
@@ -137,4 +139,3 @@ function SkeletonRevenue() {
     </div>
   );
 }
-

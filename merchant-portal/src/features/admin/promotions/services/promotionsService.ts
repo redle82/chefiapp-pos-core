@@ -13,9 +13,9 @@ const DEFAULT_LOYALTY_CONFIG: LoyaltyConfig = {
   pointsPerOrder: 0,
 };
 
-let loyaltyConfigByLocation: Record<string, LoyaltyConfig> = {};
-let discountsByLocation: Record<string, Discount[]> = {};
-let autoPromotionsByLocation: Record<string, AutoPromotion[]> = {};
+const loyaltyConfigByLocation: Record<string, LoyaltyConfig> = {};
+const discountsByLocation: Record<string, Discount[]> = {};
+const autoPromotionsByLocation: Record<string, AutoPromotion[]> = {};
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -49,7 +49,7 @@ function getOrInitAutoPromotions(locationId: string): AutoPromotion[] {
 }
 
 export async function getLoyaltyConfig(
-  locationId: string
+  locationId: string,
 ): Promise<LoyaltyConfig> {
   await delay(150);
   return { ...getOrInitLoyaltyConfig(locationId) };
@@ -57,7 +57,7 @@ export async function getLoyaltyConfig(
 
 export async function updateLoyaltyConfig(
   locationId: string,
-  partial: Partial<LoyaltyConfig>
+  partial: Partial<LoyaltyConfig>,
 ): Promise<LoyaltyConfig> {
   await delay(200);
   const current = getOrInitLoyaltyConfig(locationId);
@@ -76,7 +76,7 @@ export async function getDiscounts(locationId: string): Promise<Discount[]> {
 
 export async function createOrUpdateDiscount(
   locationId: string,
-  input: NewDiscountInput
+  input: NewDiscountInput,
 ): Promise<Discount> {
   await delay(250);
   const list = getOrInitDiscounts(locationId);
@@ -95,7 +95,8 @@ export async function createOrUpdateDiscount(
     }
   }
 
-  const id = input.id ?? `disc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const id =
+    input.id ?? `disc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const discount: Discount = {
     id,
     name: input.name,
@@ -111,7 +112,7 @@ export async function createOrUpdateDiscount(
 export async function toggleDiscountActive(
   locationId: string,
   id: string,
-  active: boolean
+  active: boolean,
 ): Promise<void> {
   await delay(150);
   const list = getOrInitDiscounts(locationId);
@@ -122,7 +123,7 @@ export async function toggleDiscountActive(
 }
 
 export async function getAutoPromotions(
-  locationId: string
+  locationId: string,
 ): Promise<AutoPromotion[]> {
   await delay(200);
   return [...getOrInitAutoPromotions(locationId)];
@@ -130,7 +131,7 @@ export async function getAutoPromotions(
 
 export async function updateAutoPromotion(
   locationId: string,
-  input: AutoPromotion
+  input: AutoPromotion,
 ): Promise<AutoPromotion> {
   await delay(200);
   const list = getOrInitAutoPromotions(locationId);
@@ -145,4 +146,3 @@ export async function updateAutoPromotion(
 
   return { ...next };
 }
-

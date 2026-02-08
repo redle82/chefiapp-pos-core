@@ -21,11 +21,12 @@
     "audit:domain": "node scripts/audit-domain.cjs",
     "audit:core-domain": "bash ../scripts/check-financial-supabase.sh",
     "audit:all": "npm run audit:architecture && npm run audit:domain",
-    "mobile:sync": "npm run build && npx cap sync",
+    "mobile:sync": "bash fix-capacitor-paths.sh && npm run build && npx cap sync",
     "mobile:ios": "npx cap open ios",
     "mobile:android": "npx cap open android",
     "mobile:run:ios": "npx cap run ios",
-    "mobile:run:android": "npx cap run android"
+    "mobile:run:android": "npx cap run android",
+    "postinstall": "bash fix-capacitor-paths.sh 2>/dev/null || true"
   },
   "dependencies": {
     "@chefiapp/core-design-system": "file:../core-design-system",

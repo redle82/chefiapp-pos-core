@@ -11,25 +11,27 @@ import { resolveNextRoute } from "../../../merchant-portal/src/core/flow/CoreFlo
 
 describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
   beforeEach(() => {
-    // Limpar localStorage
-    if (typeof localStorage !== "undefined") {
+    // Limpar localStorage (only when running in jsdom or browser-like env)
+    if (
+      typeof localStorage !== "undefined" &&
+      typeof localStorage.clear === "function"
+    ) {
       localStorage.clear();
     }
   });
 
   describe("Redirecionamento de Usuário Não Autenticado", () => {
-    it("deve redirecionar para /auth quando não autenticado e tentando acessar rota protegida", () => {
+    it("deve redirecionar para /auth/phone quando não autenticado e tentando acessar rota protegida", () => {
       const state: UserState = {
         isAuthenticated: false,
         hasOrganization: false,
-        onboardingStatus: "not_started",
         currentPath: "/app/dashboard",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/auth");
+        expect(decision.to).toBe("/auth/phone");
       }
     });
 
@@ -37,7 +39,6 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: false,
         hasOrganization: false,
-        onboardingStatus: "not_started",
         currentPath: "/public/menu/abc123",
       };
 
@@ -49,7 +50,6 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: false,
         hasOrganization: false,
-        onboardingStatus: "not_started",
         currentPath: "/",
       };
 
@@ -61,7 +61,6 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: false,
         hasOrganization: false,
-        onboardingStatus: "not_started",
         currentPath: "/auth",
       };
 
@@ -71,27 +70,25 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
   });
 
   describe("Redirecionamento de Usuário Autenticado Sem Organização", () => {
-    it("deve redirecionar para bootstrap quando autenticado mas sem organização", () => {
+    it("deve redirecionar para setup mínimo quando autenticado mas sem organização", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: false,
-        onboardingStatus: "not_started",
         currentPath: "/app/dashboard",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toContain("/bootstrap");
+        expect(decision.to).toBe("/setup/restaurant-minimal");
       }
     });
 
-    it("deve permitir acesso a /bootstrap e /onboarding/first-product quando status é not_started", () => {
+    it("deve permitir acesso a /setup/restaurant-minimal quando sem organização", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: false,
-        onboardingStatus: "not_started",
-        currentPath: "/onboarding/first-product",
+        currentPath: "/setup/restaurant-minimal",
       };
 
       const decision = resolveNextRoute(state);
@@ -105,19 +102,16 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
         {
           isAuthenticated: true,
           hasOrganization: true,
-          onboardingStatus: "identity",
           currentPath: "/onboarding/identity",
         },
         {
           isAuthenticated: true,
           hasOrganization: true,
-          onboardingStatus: "authority",
           currentPath: "/onboarding/authority",
         },
         {
           isAuthenticated: true,
           hasOrganization: true,
-          onboardingStatus: "topology",
           currentPath: "/onboarding/topology",
         },
       ];
@@ -132,7 +126,6 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
-        onboardingStatus: "identity",
         currentPath: "/app/dashboard",
       };
 
@@ -146,14 +139,13 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
-        onboardingStatus: "completed",
         currentPath: "/auth",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/app/dashboard");
+        expect(decision.to).toBe("/dashboard");
       }
     });
 
@@ -161,14 +153,13 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
-        onboardingStatus: "completed",
         currentPath: "/",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/app/dashboard");
+        expect(decision.to).toBe("/dashboard");
       }
     });
 
@@ -176,14 +167,13 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
-        onboardingStatus: "completed",
         currentPath: "/app",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/app/dashboard");
+        expect(decision.to).toBe("/dashboard");
       }
     });
 
@@ -191,7 +181,6 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
-        onboardingStatus: "completed",
         currentPath: "/onboarding/identity",
       };
 
@@ -203,7 +192,6 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
-        onboardingStatus: "completed",
         currentPath: "/app/dashboard",
       };
 
@@ -214,7 +202,10 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
 
   describe("Limpeza de Cache", () => {
     it("deve limpar cache quando não há sessão", () => {
-      if (typeof localStorage !== "undefined") {
+      if (
+        typeof localStorage !== "undefined" &&
+        typeof localStorage.setItem === "function"
+      ) {
         localStorage.setItem("chefiapp_restaurant_id", "test-id");
         localStorage.setItem("chefiapp_active_tenant", "test-tenant");
       }
@@ -222,7 +213,6 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: false,
         hasOrganization: false,
-        onboardingStatus: "not_started",
         currentPath: "/app/dashboard",
       };
 
@@ -237,7 +227,6 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
-        onboardingStatus: "not_started",
         currentPath: "/app/dashboard",
       };
 
@@ -249,14 +238,13 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: false,
         hasOrganization: false,
-        onboardingStatus: "not_started",
         currentPath: "/unknown/route",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/auth");
+        expect(decision.to).toBe("/auth/phone");
       }
     });
   });

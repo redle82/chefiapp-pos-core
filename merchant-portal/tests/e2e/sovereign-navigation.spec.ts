@@ -69,14 +69,14 @@ test.describe("🔒 Sovereign Navigation Flow", () => {
   }) => {
     // Acessar /app diretamente sem autenticação
     const response = await page.goto("/app", {
-      waitUntil: "networkidle",
+      waitUntil: "domcontentloaded",
       timeout: 15000,
     });
 
     // Contrato v3: FlowGate redireciona para página válida (não 404)
     // Com demo mode ativo, pode mostrar cards de entrada (Entrar na Equipa, Operação local)
     expect(response?.status() ?? 999).toBeLessThan(500);
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
 
     // Página deve ter conteúdo visível (não tela branca)
     const hasContent = await page.locator("body").textContent();

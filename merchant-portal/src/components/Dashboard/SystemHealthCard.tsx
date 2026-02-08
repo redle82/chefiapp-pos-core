@@ -111,7 +111,7 @@ export const SystemHealthCard = ({
         } else if (alerts && alerts.length > 0) {
           const alert = alerts[0];
           // OPERATIONAL_ALERTS_CONTRACT: critical = bloqueio/verdade; só mostrar CRITICAL quando severity === "critical"
-          let status: HealthState["status"] =
+          const status: HealthState["status"] =
             alert.severity === "critical" ? "CRITICAL" : "WARNING";
 
           setHealth({

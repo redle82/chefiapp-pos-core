@@ -10,6 +10,7 @@
     "test": "tests"
   },
   "scripts": {
+    "lint": "npm -w merchant-portal run lint",
     "_test:info": "echo 'Run all tests from repo root with: npm test'",
     "test": "jest",
     "test:unit": "jest tests/unit",
@@ -69,6 +70,10 @@
     "test:e2e:navigation": "cd merchant-portal && npx playwright test tests/e2e/sovereign-navigation.spec.ts",
     "test:appstaff": "cd merchant-portal && npx vitest run ../tests/nervous-system/AppStaff.stress.test.ts || echo 'AppStaff test file not found, skipping...'",
     "test:all": "npm test && npm run test:appstaff"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": "npm -w merchant-portal run lint",
+    "*.{json,md}": "node -e \"process.exit(0)\""
   },
   "keywords": [],
   "author": "Goldmonkey Empire",

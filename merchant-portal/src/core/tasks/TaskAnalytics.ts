@@ -62,7 +62,7 @@ function coreTaskToAnalyticsTask(t: CoreTask): AnalyticsTask {
   };
 }
 
-export interface TaskAnalytics {
+export interface TaskAnalyticsReport {
   totalTasks: number;
   completedTasks: number;
   overdueTasks: number;
@@ -92,7 +92,7 @@ export class TaskAnalytics {
     restaurantId: string,
     startDate?: Date,
     endDate?: Date,
-  ): Promise<TaskAnalytics> {
+  ): Promise<TaskAnalyticsReport> {
     let tasks: AnalyticsTask[] = [];
     if (getBackendType() === BackendType.docker) {
       try {

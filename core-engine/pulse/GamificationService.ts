@@ -57,7 +57,7 @@ export interface Achievement {
 
 // ─── Constants ──────────────────────────────────────────
 
-const ZONE_MULTIPLIERS: Record<PulseZone, number> = {
+export const ZONE_MULTIPLIERS: Record<PulseZone, number> = {
   FLOW_ALTO: 1.5,
   FLOW_PARCIAL: 1.0,
   FLOW_BASE: 0.8,

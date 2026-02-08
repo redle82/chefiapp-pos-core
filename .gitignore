@@ -41,6 +41,7 @@ testsprite_tests/TEST_CREDENTIALS.md
 
 # IDE
 .idea/
+.vscode/tasks.json
 *.swp
 *.swo
 
