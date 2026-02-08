@@ -43,14 +43,15 @@ const ROUTE_ALLOWED_ROLES: Record<string, UserRole[]> = {
   "/groups": ["owner"],
   "/purchases": ["owner", "manager"],
   "/reservations": ["owner", "manager"],
-  // Catálogo (admin)
-  "/admin/catalogs": ["owner", "manager"],
-  "/admin/catalog-assignments": ["owner", "manager"],
-  "/admin/products": ["owner", "manager"],
-  "/admin/modules": ["owner", "manager"],
-  "/admin/modifiers": ["owner", "manager"],
-  "/admin/combos": ["owner", "manager"],
-  "/admin/translations": ["owner", "manager"],
+  // Catálogo (admin) — nested under /admin/catalog/*
+  "/admin/catalog": ["owner", "manager"],
+  "/admin/catalog/list": ["owner", "manager"],
+  "/admin/catalog/assignments": ["owner", "manager"],
+  "/admin/catalog/products": ["owner", "manager"],
+  "/admin/catalog/modules": ["owner", "manager"],
+  "/admin/catalog/modifiers": ["owner", "manager"],
+  "/admin/catalog/combos": ["owner", "manager"],
+  "/admin/catalog/translations": ["owner", "manager"],
   // App tree: backoffice owner/manager; staff só execução (garcom, tpv, etc.)
   "/app/backoffice": ["owner", "manager"],
   "/app": ["owner", "manager", "staff"],

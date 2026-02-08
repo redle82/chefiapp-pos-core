@@ -188,6 +188,7 @@ const demoRuntime: RestaurantRuntime = {
   restaurant_id: DEMO_RESTAURANT_ID,
   mode: "onboarding",
   productMode: "demo",
+  dataMode: "demo",
   installed_modules: [],
   active_modules: [],
   plan: "basic",
@@ -200,6 +201,8 @@ const demoRuntime: RestaurantRuntime = {
   loading: false,
   error: null,
   coreReachable: true,
+  systemState: "TRIAL",
+  coreMode: "online",
 };
 const demoRuntimeContextValue = {
   runtime: demoRuntime,
@@ -207,7 +210,7 @@ const demoRuntimeContextValue = {
   updateSetupStatus: async () => {},
   publishRestaurant: async () => {},
   installModule: async () => {},
-  setProductMode: () => {},
+  setProductMode: (_mode: any) => {},
 };
 const demoShiftValue = {
   isShiftOpen: true,
@@ -887,8 +890,9 @@ function AppContentWithBilling() {
               </ManagementAdvisor>
             }
           />
+          {/* ── Catalog domain (nested under /admin/catalog/*) ── */}
           <Route
-            path="/admin/catalogs"
+            path="/admin/catalog/list"
             element={
               <ManagementAdvisor>
                 <DashboardLayout>
@@ -898,7 +902,7 @@ function AppContentWithBilling() {
             }
           />
           <Route
-            path="/admin/catalog-assignments"
+            path="/admin/catalog/assignments"
             element={
               <ManagementAdvisor>
                 <DashboardLayout>
@@ -908,7 +912,7 @@ function AppContentWithBilling() {
             }
           />
           <Route
-            path="/admin/products"
+            path="/admin/catalog/products"
             element={
               <ManagementAdvisor>
                 <DashboardLayout>
@@ -918,7 +922,7 @@ function AppContentWithBilling() {
             }
           />
           <Route
-            path="/admin/modules"
+            path="/admin/catalog/modules"
             element={
               <ManagementAdvisor>
                 <DashboardLayout>
@@ -928,11 +932,7 @@ function AppContentWithBilling() {
             }
           />
           <Route
-            path="/admin/catalog/products"
-            element={<Navigate to="/admin/products" replace />}
-          />
-          <Route
-            path="/admin/modifiers"
+            path="/admin/catalog/modifiers"
             element={
               <ManagementAdvisor>
                 <DashboardLayout>
@@ -942,7 +942,7 @@ function AppContentWithBilling() {
             }
           />
           <Route
-            path="/admin/combos"
+            path="/admin/catalog/combos"
             element={
               <ManagementAdvisor>
                 <DashboardLayout>
@@ -952,7 +952,7 @@ function AppContentWithBilling() {
             }
           />
           <Route
-            path="/admin/translations"
+            path="/admin/catalog/translations"
             element={
               <ManagementAdvisor>
                 <DashboardLayout>
@@ -961,9 +961,39 @@ function AppContentWithBilling() {
               </ManagementAdvisor>
             }
           />
+          {/* Default: /admin/catalog → /admin/catalog/products */}
           <Route
             path="/admin/catalog"
-            element={<Navigate to="/admin/products" replace />}
+            element={<Navigate to="/admin/catalog/products" replace />}
+          />
+          {/* ── Backward-compat redirects (old flat routes) ── */}
+          <Route
+            path="/admin/catalogs"
+            element={<Navigate to="/admin/catalog/list" replace />}
+          />
+          <Route
+            path="/admin/catalog-assignments"
+            element={<Navigate to="/admin/catalog/assignments" replace />}
+          />
+          <Route
+            path="/admin/products"
+            element={<Navigate to="/admin/catalog/products" replace />}
+          />
+          <Route
+            path="/admin/modules"
+            element={<Navigate to="/admin/catalog/modules" replace />}
+          />
+          <Route
+            path="/admin/modifiers"
+            element={<Navigate to="/admin/catalog/modifiers" replace />}
+          />
+          <Route
+            path="/admin/combos"
+            element={<Navigate to="/admin/catalog/combos" replace />}
+          />
+          <Route
+            path="/admin/translations"
+            element={<Navigate to="/admin/catalog/translations" replace />}
           />
           <Route
             path="/admin/reports/overview"

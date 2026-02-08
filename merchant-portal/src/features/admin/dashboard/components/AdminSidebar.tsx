@@ -30,7 +30,6 @@ const NAV_ITEMS: NavItem[] = [
     section: "top",
   },
   { id: "catalog", label: "Catálogo", to: "/admin/catalog", section: "top" },
-  { id: "modules", label: "Produtos", to: "/admin/modules", section: "top" },
   { id: "reports", label: "Reportes", to: "/admin/reports", section: "top" },
   {
     id: "devices",

@@ -1,12 +1,12 @@
 import { NavLink } from "react-router-dom";
 
 const LINKS = [
-  { to: "/admin/catalogs", label: "Catálogos" },
-  { to: "/admin/catalog-assignments", label: "Atribuições" },
-  { to: "/admin/products", label: "Produtos" },
-  { to: "/admin/modifiers", label: "Modificadores" },
-  { to: "/admin/combos", label: "Combos" },
-  { to: "/admin/translations", label: "Traduções" },
+  { to: "/admin/catalog/list", label: "Catálogos" },
+  { to: "/admin/catalog/assignments", label: "Atribuições" },
+  { to: "/admin/catalog/products", label: "Produtos" },
+  { to: "/admin/catalog/modifiers", label: "Modificadores" },
+  { to: "/admin/catalog/combos", label: "Combos" },
+  { to: "/admin/catalog/translations", label: "Traduções" },
 ];
 
 export function CatalogSubnav() {
