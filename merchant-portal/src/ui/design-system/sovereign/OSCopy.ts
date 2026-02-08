@@ -46,6 +46,10 @@ export const OSCopy = {
     overlayPrice: CANONICAL_MONTHLY_PRICE_OVERLAY,
     trialPriceCopy:
       "O período de teste é gratuito durante 14 dias. Se fizer sentido, escolhes um plano depois. Se não, paras sem compromisso.",
+    pilotPriceCopy:
+      "A fase piloto é gratuita durante 14 dias. Sem cartão, sem compromisso. Se fizer sentido, escolhes um plano depois.",
+    pilotCtaPrimary: "Testar 14 dias no meu restaurante",
+    pilotCtaSecondary: "Agendar demonstração",
     modoDemonstracao: "Modo: Demonstração",
     modoContaAtiva: "Modo: Conta ativa",
     badge: "CHEFIAPP™ OS",

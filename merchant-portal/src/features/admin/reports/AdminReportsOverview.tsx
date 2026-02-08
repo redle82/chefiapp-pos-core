@@ -6,10 +6,15 @@
  * para relatórios. Ref: reports_only_no_dashboard plan.
  */
 
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useRestaurantId } from "../../../core/hooks/useRestaurantId";
 import { useDashboardOverview } from "../dashboard/hooks/useDashboardOverview";
 import { GlobalLoadingView } from "../../../ui/design-system/components";
+import {
+  WelcomeOverlay,
+  shouldShowWelcome,
+} from "../../../components/onboarding/WelcomeOverlay";
 
 const cardStyle: React.CSSProperties = {
   backgroundColor: "#fff",
@@ -41,6 +46,7 @@ function formatEur(value: number): string {
 }
 
 export function AdminReportsOverview() {
+  const [showWelcome, setShowWelcome] = useState(shouldShowWelcome);
   const { restaurantId, loading: loadingRestaurant } = useRestaurantId();
   const { data: overview, loading: loadingOverview } = useDashboardOverview(
     restaurantId ?? ""
@@ -56,6 +62,9 @@ export function AdminReportsOverview() {
 
   return (
     <section aria-label="Relatórios">
+      {showWelcome && (
+        <WelcomeOverlay onDismiss={() => setShowWelcome(false)} />
+      )}
       <header style={{ marginBottom: 24 }}>
         <h1
           style={{
