@@ -30,6 +30,9 @@ const TERMINAL_ORDER_STATUSES = new Set([
 
 const ACTIVE_SET = new Set(ACTIVE_ORDER_STATUSES.map((s) => s));
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 /** Pedido com flag opcional para status desconhecido (KDS mostra com badge). */
 export type ActiveOrderRow = CoreOrder & { _unknownStatus?: boolean };
 
@@ -58,6 +61,12 @@ function logUnknownStatus(orderId: string, rawStatus: unknown): void {
 export async function readActiveOrders(
   restaurantId: string
 ): Promise<ActiveOrderRow[]> {
+  if (!UUID_REGEX.test(restaurantId)) {
+    if (import.meta.env.DEV) {
+      console.debug("[OrderReader] Skipped: restaurantId is not a valid UUID:", restaurantId);
+    }
+    return [];
+  }
   const { data, error } = await dockerCoreClient
     .from("gm_orders")
     .select("*")
@@ -210,6 +219,7 @@ export async function readOrderItems(
 export async function getLastOrderCreatedAt(
   restaurantId: string
 ): Promise<Date | null> {
+  if (!UUID_REGEX.test(restaurantId)) return null;
   const { data, error } = await dockerCoreClient
     .from("gm_orders")
     .select("created_at")

@@ -1,7 +1,36 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
+import { dockerCoreClient } from "../../../../core-boundary/docker-core/connection";
+import { useAuth } from "../../../../core/auth/useAuth";
 
 export function AdminTopbar() {
-  const [location] = useState("SOFIA GASTROBAR IBIZA");
+  const { runtime } = useRestaurantRuntime();
+  const { user } = useAuth();
+  const [locationName, setLocationName] = useState("");
+
+  const restaurantId = runtime.restaurant_id ?? null;
+  const userEmail = user?.email ?? "";
+  const userInitial = userEmail.charAt(0).toUpperCase() || "?";
+
+  useEffect(() => {
+    if (!restaurantId) return;
+    let cancelled = false;
+    (async () => {
+      const { data: row } = await dockerCoreClient
+        .from("gm_restaurants")
+        .select("name")
+        .eq("id", restaurantId)
+        .maybeSingle();
+      if (!cancelled && row) {
+        setLocationName(
+          ((row as Record<string, unknown>).name as string) ?? "",
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [restaurantId]);
 
   return (
     <header
@@ -27,7 +56,7 @@ export function AdminTopbar() {
           ChefIApp OS
         </span>
         <select
-          value={location}
+          value={locationName}
           onChange={() => {}}
           style={{
             fontSize: 13,
@@ -38,7 +67,7 @@ export function AdminTopbar() {
             color: "#374151",
           }}
         >
-          <option value={location}>{location}</option>
+          <option value={locationName}>{locationName || "Cargando…"}</option>
         </select>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -79,12 +108,11 @@ export function AdminTopbar() {
               color: "#5b21b6",
             }}
           >
-            E
+            {userInitial}
           </div>
-          <span>redle82@hotmail.com</span>
+          <span>{userEmail || "—"}</span>
         </div>
       </div>
     </header>
   );
 }
-

@@ -8,7 +8,7 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "home", label: "Inicio", to: "/admin/reports/overview", section: "top" },
+  { id: "home", label: "Inicio", to: "/admin/home", section: "top" },
   { id: "clients", label: "Clientes", to: "/admin/customers", section: "top" },
   {
     id: "closures",
@@ -193,4 +193,3 @@ function AdminSidebarLink({
     </NavLink>
   );
 }
-

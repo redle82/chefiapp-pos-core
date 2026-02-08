@@ -86,7 +86,7 @@ export function useRestaurantIdentity() {
       }
 
       setIdentity({
-        id: "demo-id",
+        id: "00000000-0000-0000-0000-000000000100",
         name: mock?.name || "Restaurante Exemplo (Demo)",
         city: mock?.city || "Modo de Demonstração",
         type: "Bistro",

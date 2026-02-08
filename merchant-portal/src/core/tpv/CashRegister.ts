@@ -215,12 +215,18 @@ export class CashRegisterEngine {
     return this.mapDbRegisterToRegister(data as any);
   }
 
+  private static readonly UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
   /**
    * Buscar caixa aberto do restaurante (Core quando Docker — Fase 4)
    */
   static async getOpenCashRegister(
     restaurantId: string
   ): Promise<CashRegister | null> {
+    if (!CashRegisterEngine.UUID_REGEX.test(restaurantId)) {
+      return null;
+    }
     const client = await getTableClient();
     const { data, error } = await client
       .from("gm_cash_registers")

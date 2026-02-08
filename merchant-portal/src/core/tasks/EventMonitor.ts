@@ -36,10 +36,19 @@ export class EventMonitor {
   private lastCheckedOrders: Set<string> = new Set();
   private lastCheckedTables: Set<number> = new Set();
 
+  private static readonly UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
   /**
    * Iniciar monitoramento contínuo (idempotente: se já a correr para o mesmo restaurantId, não relançar).
    */
   start(restaurantId: string): void {
+    if (!EventMonitor.UUID_REGEX.test(restaurantId)) {
+      if (import.meta.env.DEV) {
+        console.debug("[EventMonitor] Skipped: restaurantId is not a valid UUID:", restaurantId);
+      }
+      return;
+    }
     if (this.intervalId && this.currentRestaurantId === restaurantId) {
       return;
     }

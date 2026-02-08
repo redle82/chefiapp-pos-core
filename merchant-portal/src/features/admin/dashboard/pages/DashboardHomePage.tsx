@@ -1,18 +1,18 @@
 import { useNavigate } from "react-router-dom";
+import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
 import { DashboardLayout } from "../components/DashboardLayout";
-import { useDashboardOverview } from "../hooks/useDashboardOverview";
 import { DonutCard } from "../components/DonutCard";
-import { RevenueChartCard } from "../components/RevenueChartCard";
 import { GeneralStatsCard } from "../components/GeneralStatsCard";
-import { SummaryStatsCard } from "../components/SummaryStatsCard";
 import { OperationStateCard } from "../components/OperationStateCard";
-
-const DEMO_LOCATION_ID = "demo-location-sofia-gastrobar";
+import { RevenueChartCard } from "../components/RevenueChartCard";
+import { SummaryStatsCard } from "../components/SummaryStatsCard";
+import { useDashboardOverview } from "../hooks/useDashboardOverview";
 
 export function DashboardHomePage() {
   const navigate = useNavigate();
-  const { data, loading, error, reload } =
-    useDashboardOverview(DEMO_LOCATION_ID);
+  const { runtime } = useRestaurantRuntime();
+  const locationId = runtime.restaurant_id ?? "";
+  const { data, loading, error, reload } = useDashboardOverview(locationId);
 
   return (
     <DashboardLayout>
@@ -111,7 +111,9 @@ export function DashboardHomePage() {
           <GeneralStatsCard
             loading={loading}
             general={data?.general}
-            onDeletedProductsClick={() => navigate("/admin/catalog/products?filter=deleted")}
+            onDeletedProductsClick={() =>
+              navigate("/admin/catalog/products?filter=deleted")
+            }
             onDeletedPaymentsClick={() => navigate("/admin/payments/refunds")}
             onPendingClick={() => navigate("/admin/payments/pending")}
           />
@@ -134,4 +136,3 @@ export function DashboardHomePage() {
     </DashboardLayout>
   );
 }
-
