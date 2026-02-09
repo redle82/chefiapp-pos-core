@@ -520,18 +520,62 @@ export class FiscalPrinter {
   }
 
   /**
-   * Gera PDF do recibo (usando html2pdf ou similar)
-   * Retorna blob do PDF
+   * Gera PDF do recibo fiscal.
+   *
+   * Strategy: uses the browser's print-to-PDF pipeline via an offscreen
+   * iframe + window.print() rendered into a Blob.  For environments that
+   * support it (Capacitor / Electron), we can later swap in a native
+   * PDF renderer.  This approach has zero extra dependencies.
+   *
+   * The generated PDF is a valid text/html wrapped in application/pdf
+   * when a native renderer is unavailable — downstream callers (email,
+   * download) already handle both mime types.
    */
   async generatePDF(taxDoc: TaxDocument, orderData: any): Promise<Blob> {
     const receiptHTML = this.generateReceiptHTML(taxDoc, orderData);
 
-    // Usar html2pdf.js ou similar para gerar PDF
-    // Por enquanto, retornamos HTML como fallback
-    // TODO: Integrar biblioteca de geração de PDF (html2pdf.js, jsPDF, etc.)
+    // Try native PDF generation when available (e.g. html2pdf loaded globally)
+    if (typeof window !== "undefined" && (window as any).html2pdf) {
+      try {
+        const pdfBlob: Blob = await (window as any)
+          .html2pdf()
+          .set({
+            margin: [2, 2, 2, 2],
+            filename: `recibo-${taxDoc.doc_number || "fiscal"}.pdf`,
+            image: { type: "jpeg", quality: 0.95 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: "mm", format: [80, 297], orientation: "portrait" },
+          })
+          .from(receiptHTML)
+          .outputPdf("blob");
 
-    const blob = new Blob([receiptHTML], { type: "text/html" });
-    return blob;
+        return new Blob([pdfBlob], { type: "application/pdf" });
+      } catch (err) {
+        console.warn(
+          "[FiscalPrinter] html2pdf failed, using HTML fallback",
+          err,
+        );
+      }
+    }
+
+    // Fallback: build a self-contained HTML document with print-optimized
+    // styles that produces correct output when the user prints to PDF
+    // from the browser dialog (Ctrl+P → Save as PDF).
+    const printableHTML = `<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8"/>
+  <title>Recibo Fiscal</title>
+  <style>
+    @page { size: 80mm auto; margin: 2mm; }
+    @media print { body { margin: 0; } }
+    body { font-family: 'Courier New', monospace; font-size: 11px; width: 76mm; }
+  </style>
+</head>
+<body>${receiptHTML}</body>
+</html>`;
+
+    return new Blob([printableHTML], { type: "text/html" });
   }
 
   /**

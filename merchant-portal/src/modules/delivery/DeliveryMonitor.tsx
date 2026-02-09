@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { db } from "../../core/db";
 import { isDevStableMode } from "../../core/runtime/devStableMode";
 import { useTenant } from "../../core/tenant/TenantContext";
+import { currencyService } from "../../core/currency/CurrencyService";
 
 interface IntegrationOrder {
   id: string; // Internal UUID
@@ -94,11 +95,11 @@ export const DeliveryMonitor: React.FC = () => {
     };
   }, [tenantId]);
 
-  const formatCurrency = (cents: number, currency = "EUR") => {
-    return new Intl.NumberFormat("pt-PT", {
-      style: "currency",
-      currency,
-    }).format(cents / 100);
+  const formatCurrency = (cents: number, currency?: string) => {
+    return currencyService.formatAmount(
+      cents,
+      (currency?.toUpperCase() || currencyService.getDefaultCurrency()) as any,
+    );
   };
 
   if (loading)

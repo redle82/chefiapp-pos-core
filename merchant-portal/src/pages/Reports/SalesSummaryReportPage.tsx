@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import { useSalesSummaryReport } from "../../core/reports/hooks/useSalesSummaryReport";
+import { exportCsv, centsToDecimal } from "../../core/reports/csvExport";
+import { currencyService } from "../../core/currency/CurrencyService";
 import type { TimeRange } from "../../core/reports/reportTypes";
 
 function dateRangeToTimeRange(from: Date, to: Date): TimeRange {
@@ -13,10 +15,7 @@ function dateRangeToTimeRange(from: Date, to: Date): TimeRange {
 }
 
 function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat('pt-PT', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format((cents || 0) / 100);
+  return currencyService.formatAmount(cents);
 }
 
 export function SalesSummaryReportPage() {
@@ -48,6 +47,24 @@ export function SalesSummaryReportPage() {
 
   const toInput = (d: Date) => d.toISOString().slice(0, 10);
 
+  const handleExportCsv = useCallback(() => {
+    if (!data) return;
+    const fromStr = toInput(dateFrom);
+    const toStr = toInput(dateTo);
+    exportCsv(
+      ["Vendas Brutas", "Ticket Médio", "Contas Fechadas", "Cancelamentos"],
+      [
+        [
+          centsToDecimal(data.grossTotalCents),
+          centsToDecimal(data.averageTicketCents),
+          data.ordersCount - data.cancelledOrdersCount,
+          data.cancelledOrdersCount,
+        ],
+      ],
+      `resumo-vendas-${fromStr}-${toStr}.csv`,
+    );
+  }, [data, dateFrom, dateTo]);
+
   if (!runtime) {
     return (
       <GlobalLoadingView
@@ -59,14 +76,14 @@ export function SalesSummaryReportPage() {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 960, margin: '0 auto' }}>
+    <div style={{ padding: "24px", maxWidth: 960, margin: "0 auto" }}>
       <DataModeBanner dataMode={runtime.dataMode} />
       <h1
         style={{
-          fontSize: '20px',
+          fontSize: "20px",
           fontWeight: 700,
           marginBottom: 8,
-          color: '#0f172a',
+          color: "#0f172a",
         }}
       >
         Resumo de Vendas
@@ -74,7 +91,7 @@ export function SalesSummaryReportPage() {
       <p
         style={{
           fontSize: 14,
-          color: '#64748b',
+          color: "#64748b",
           marginTop: 0,
           marginBottom: 24,
         }}
@@ -85,20 +102,20 @@ export function SalesSummaryReportPage() {
 
       <div
         style={{
-          display: 'flex',
-          flexWrap: 'wrap',
+          display: "flex",
+          flexWrap: "wrap",
           gap: 12,
-          alignItems: 'center',
+          alignItems: "center",
           marginBottom: 24,
         }}
       >
         <label
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 8,
             fontSize: 14,
-            color: '#475569',
+            color: "#475569",
           }}
         >
           De
@@ -106,36 +123,34 @@ export function SalesSummaryReportPage() {
             type="date"
             value={toInput(dateFrom)}
             onChange={(e) =>
-              setDateFrom(new Date(e.target.value + 'T00:00:00'))
+              setDateFrom(new Date(e.target.value + "T00:00:00"))
             }
             style={{
-              padding: '8px 12px',
+              padding: "8px 12px",
               fontSize: 14,
-              border: '1px solid #e2e8f0',
+              border: "1px solid #e2e8f0",
               borderRadius: 8,
             }}
           />
         </label>
         <label
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 8,
             fontSize: 14,
-            color: '#475569',
+            color: "#475569",
           }}
         >
           Até
           <input
             type="date"
             value={toInput(dateTo)}
-            onChange={(e) =>
-              setDateTo(new Date(e.target.value + 'T23:59:59'))
-            }
+            onChange={(e) => setDateTo(new Date(e.target.value + "T23:59:59"))}
             style={{
-              padding: '8px 12px',
+              padding: "8px 12px",
               fontSize: 14,
-              border: '1px solid #e2e8f0',
+              border: "1px solid #e2e8f0",
               borderRadius: 8,
             }}
           />
@@ -145,22 +160,40 @@ export function SalesSummaryReportPage() {
           onClick={handleApply}
           disabled={loading}
           style={{
-            padding: '8px 16px',
+            padding: "8px 16px",
             fontSize: 14,
             fontWeight: 500,
-            color: '#fff',
-            backgroundColor: '#0f172a',
-            border: 'none',
+            color: "#fff",
+            backgroundColor: "#0f172a",
+            border: "none",
             borderRadius: 8,
-            cursor: loading ? 'not-allowed' : 'pointer',
+            cursor: loading ? "not-allowed" : "pointer",
           }}
         >
-          {loading ? 'A carregar…' : 'Aplicar'}
+          {loading ? "A carregar…" : "Aplicar"}
         </button>
+        {hasData && (
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            style={{
+              padding: "8px 16px",
+              fontSize: 14,
+              fontWeight: 500,
+              color: "#0f172a",
+              backgroundColor: "#f1f5f9",
+              border: "1px solid #e2e8f0",
+              borderRadius: 8,
+              cursor: "pointer",
+            }}
+          >
+            ⬇ Exportar CSV
+          </button>
+        )}
       </div>
 
       {error && (
-        <p style={{ fontSize: 14, color: '#dc2626', marginBottom: 16 }}>
+        <p style={{ fontSize: 14, color: "#dc2626", marginBottom: 16 }}>
           {error}
         </p>
       )}
@@ -168,10 +201,10 @@ export function SalesSummaryReportPage() {
       {!hasData && !loading && !error && (
         <div
           style={{
-            padding: '20px 24px',
+            padding: "20px 24px",
             borderRadius: 14,
-            border: '1px dashed #e2e8f0',
-            backgroundColor: '#f8fafc',
+            border: "1px dashed #e2e8f0",
+            backgroundColor: "#f8fafc",
           }}
         >
           <h2
@@ -180,7 +213,7 @@ export function SalesSummaryReportPage() {
               marginBottom: 8,
               fontSize: 16,
               fontWeight: 600,
-              color: '#0f172a',
+              color: "#0f172a",
             }}
           >
             Ainda não há dados suficientes.
@@ -189,7 +222,7 @@ export function SalesSummaryReportPage() {
             style={{
               margin: 0,
               fontSize: 13,
-              color: '#64748b',
+              color: "#64748b",
               maxWidth: 520,
             }}
           >
@@ -202,19 +235,19 @@ export function SalesSummaryReportPage() {
       {hasData && data && (
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
             gap: 16,
             marginBottom: 24,
           }}
         >
           <div
             style={{
-              padding: '16px 20px',
+              padding: "16px 20px",
               borderRadius: 14,
-              border: '1px solid #e2e8f0',
-              backgroundColor: '#0f172a',
-              color: '#e5e7eb',
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#0f172a",
+              color: "#e5e7eb",
             }}
           >
             <p style={{ margin: 0, fontSize: 12, opacity: 0.8 }}>
@@ -233,13 +266,13 @@ export function SalesSummaryReportPage() {
           </div>
           <div
             style={{
-              padding: '16px 20px',
+              padding: "16px 20px",
               borderRadius: 14,
-              border: '1px solid #e2e8f0',
-              backgroundColor: '#f8fafc',
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#f8fafc",
             }}
           >
-            <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>
+            <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>
               Ticket médio
             </p>
             <p
@@ -248,7 +281,7 @@ export function SalesSummaryReportPage() {
                 marginTop: 8,
                 fontSize: 20,
                 fontWeight: 600,
-                color: '#0f172a',
+                color: "#0f172a",
               }}
             >
               {formatCurrency(data.averageTicketCents)}
@@ -256,13 +289,13 @@ export function SalesSummaryReportPage() {
           </div>
           <div
             style={{
-              padding: '16px 20px',
+              padding: "16px 20px",
               borderRadius: 14,
-              border: '1px solid #e2e8f0',
-              backgroundColor: '#f8fafc',
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#f8fafc",
             }}
           >
-            <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>
+            <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>
               Contas fechadas
             </p>
             <p
@@ -271,7 +304,7 @@ export function SalesSummaryReportPage() {
                 marginTop: 8,
                 fontSize: 20,
                 fontWeight: 600,
-                color: '#0f172a',
+                color: "#0f172a",
               }}
             >
               {data.ordersCount - data.cancelledOrdersCount}
@@ -279,13 +312,13 @@ export function SalesSummaryReportPage() {
           </div>
           <div
             style={{
-              padding: '16px 20px',
+              padding: "16px 20px",
               borderRadius: 14,
-              border: '1px solid #fee2e2',
-              backgroundColor: '#fef2f2',
+              border: "1px solid #fee2e2",
+              backgroundColor: "#fef2f2",
             }}
           >
-            <p style={{ margin: 0, fontSize: 12, color: '#b91c1c' }}>
+            <p style={{ margin: 0, fontSize: 12, color: "#b91c1c" }}>
               Cancelamentos
             </p>
             <p
@@ -294,7 +327,7 @@ export function SalesSummaryReportPage() {
                 marginTop: 8,
                 fontSize: 20,
                 fontWeight: 600,
-                color: '#b91c1c',
+                color: "#b91c1c",
               }}
             >
               {data.cancelledOrdersCount}
@@ -305,4 +338,3 @@ export function SalesSummaryReportPage() {
     </div>
   );
 }
-

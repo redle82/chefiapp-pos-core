@@ -20,7 +20,7 @@ let openTasksCache: { key: string; data: CoreTask[]; ts: number } | null = null;
 function getOpenTasksCacheKey(
   restaurantId: string,
   station?: string,
-  turnSessionId?: string
+  turnSessionId?: string,
 ): string {
   return `open:${restaurantId}:${station ?? "all"}:${turnSessionId ?? "none"}`;
 }
@@ -33,12 +33,12 @@ function getOpenTasksCacheKey(
 export async function readOpenTasks(
   restaurantId: string,
   station?: "BAR" | "KITCHEN" | "SERVICE",
-  turnSessionId?: string | null
+  turnSessionId?: string | null,
 ): Promise<CoreTask[]> {
   const cacheKey = getOpenTasksCacheKey(
     restaurantId,
     station,
-    turnSessionId ?? undefined
+    turnSessionId ?? undefined,
   );
   const now = Date.now();
   if (
@@ -64,7 +64,7 @@ export async function readOpenTasks(
   // FASE 3 Passo 2: no contexto de um turno, mostrar tarefas deste turno ou sem turno atribuído
   if (turnSessionId) {
     query = query.or(
-      `turn_session_id.eq.${turnSessionId},turn_session_id.is.null`
+      `turn_session_id.eq.${turnSessionId},turn_session_id.is.null`,
     );
   }
 
@@ -87,7 +87,7 @@ export async function readOpenTasks(
  * Lê tarefas abertas por restaurante (alias para compatibilidade).
  */
 export async function readOpenTasksByRestaurant(
-  restaurantId: string
+  restaurantId: string,
 ): Promise<CoreTask[]> {
   return readOpenTasks(restaurantId);
 }
@@ -97,7 +97,7 @@ export async function readOpenTasksByRestaurant(
  */
 export async function readOpenTasksByStation(
   restaurantId: string,
-  station: "BAR" | "KITCHEN" | "SERVICE"
+  station: "BAR" | "KITCHEN" | "SERVICE",
 ): Promise<CoreTask[]> {
   return readOpenTasks(restaurantId, station);
 }
@@ -153,7 +153,7 @@ const ANALYTICS_TASKS_LIMIT = 1000;
 export async function readTasksForAnalytics(
   restaurantId: string,
   startDate?: Date,
-  endDate?: Date
+  endDate?: Date,
 ): Promise<CoreTask[]> {
   try {
     const { data, error } = await dockerCoreClient
@@ -189,7 +189,7 @@ export async function readTasksForAnalytics(
  */
 export async function readPendingTasksForAgora(
   restaurantId: string,
-  station?: "BAR" | "KITCHEN" | "SERVICE" | null
+  station?: "BAR" | "KITCHEN" | "SERVICE" | null,
 ): Promise<CoreTask[]> {
   let query = dockerCoreClient
     .from("gm_tasks")
@@ -236,6 +236,67 @@ export async function readTaskById(taskId: string): Promise<CoreTask | null> {
     } as CoreTask;
   } catch (err) {
     if (isBackendUnavailable(err)) return null;
+    throw err;
+  }
+}
+
+/**
+ * Lê histórico de uma tarefa (task_history).
+ * Usado por TaskAnalytics.getTaskHistory.
+ */
+export async function readTaskHistory(taskId: string): Promise<
+  Array<{
+    action: string;
+    actor_id?: string;
+    actor_role?: string;
+    old_status?: string;
+    new_status?: string;
+    metadata?: Record<string, any>;
+    created_at: string;
+  }>
+> {
+  try {
+    const { data, error } = await dockerCoreClient
+      .from("task_history")
+      .select("*")
+      .eq("task_id", taskId)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(`Failed to read task history: ${error.message}`);
+    return (data || []) as any[];
+  } catch (err) {
+    if (isBackendUnavailable(err)) return [];
+    throw err;
+  }
+}
+
+/**
+ * Lê histórico de ações de um funcionário em tarefas (task_history por actor_id).
+ * Usado por TaskAnalytics.getEmployeeHistory.
+ */
+export async function readEmployeeTaskHistory(
+  employeeId: string,
+  limit: number = 100,
+): Promise<
+  Array<{
+    task_id: string;
+    action: string;
+    new_status?: string;
+    created_at: string;
+    metadata?: Record<string, any>;
+  }>
+> {
+  try {
+    const { data, error } = await dockerCoreClient
+      .from("task_history")
+      .select("*")
+      .eq("actor_id", employeeId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error)
+      throw new Error(`Failed to read employee task history: ${error.message}`);
+    return (data || []) as any[];
+  } catch (err) {
+    if (isBackendUnavailable(err)) return [];
     throw err;
   }
 }

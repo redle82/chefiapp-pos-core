@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRestaurantId } from "../../core/hooks/useRestaurantId";
+import { currencyService } from "../../core/currency/CurrencyService";
 import {
   type CashRegister,
   CashRegisterEngine,
@@ -18,10 +19,7 @@ import { GlobalLoadingView } from "../../ui/design-system/components";
 import { ShiftCard } from "../../ui/design-system/ShiftCard";
 
 function formatCents(cents: number): string {
-  return new Intl.NumberFormat("pt-PT", {
-    style: "currency",
-    currency: "EUR",
-  }).format(cents / 100);
+  return currencyService.formatAmount(cents);
 }
 
 function formatDateTime(iso: string | null): string {
@@ -330,18 +328,16 @@ export function ShiftHistorySection() {
                 const opening = row.opening_balance_cents ?? 0;
                 const expectedCents = opening + row.total_sales_cents;
                 const declaredCents = row.closed_at
-                  ? (row.closing_balance_cents ?? 0)
+                  ? row.closing_balance_cents ?? 0
                   : null;
                 const differenceCents =
-                  declaredCents !== null
-                    ? declaredCents - expectedCents
-                    : null;
+                  declaredCents !== null ? declaredCents - expectedCents : null;
                 const salesByMethod = row.sales_by_method ?? {};
                 const methodParts = Object.entries(salesByMethod)
                   .filter(([, c]) => c > 0)
                   .map(
                     ([m, c]) =>
-                      `${METHOD_LABELS[m] ?? m}: ${formatCents(Number(c))}`
+                      `${METHOD_LABELS[m] ?? m}: ${formatCents(Number(c))}`,
                   );
                 return (
                   <tr
@@ -371,9 +367,7 @@ export function ShiftHistorySection() {
                         color: "#475569",
                       }}
                     >
-                      {methodParts.length > 0
-                        ? methodParts.join(" · ")
-                        : "—"}
+                      {methodParts.length > 0 ? methodParts.join(" · ") : "—"}
                     </td>
                     <td
                       style={{
@@ -393,7 +387,9 @@ export function ShiftHistorySection() {
                       }}
                     >
                       {row.closed_at
-                        ? `${formatCents(expectedCents)} / ${formatCents(declaredCents ?? 0)}`
+                        ? `${formatCents(expectedCents)} / ${formatCents(
+                            declaredCents ?? 0,
+                          )}`
                         : "—"}
                     </td>
                     <td
@@ -405,15 +401,17 @@ export function ShiftHistorySection() {
                           differenceCents === null
                             ? "#64748b"
                             : differenceCents === 0
-                              ? "#15803d"
-                              : "#b45309",
+                            ? "#15803d"
+                            : "#b45309",
                       }}
                     >
                       {differenceCents === null
                         ? "—"
                         : differenceCents === 0
-                          ? "0 €"
-                          : `${differenceCents > 0 ? "+" : ""}${formatCents(differenceCents)}`}
+                        ? "0 €"
+                        : `${differenceCents > 0 ? "+" : ""}${formatCents(
+                            differenceCents,
+                          )}`}
                     </td>
                   </tr>
                 );

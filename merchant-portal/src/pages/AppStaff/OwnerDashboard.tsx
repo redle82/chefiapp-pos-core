@@ -6,6 +6,7 @@
  * UI (variant=app): scroll é do Shell; sem duplicar layout.
  */
 
+import { currencyService } from "../../core/currency/CurrencyService";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
@@ -36,10 +37,7 @@ interface FeedEvent {
 }
 
 function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-PT", {
-    style: "currency",
-    currency: "EUR",
-  }).format(cents / 100);
+  return currencyService.formatAmount(cents);
 }
 
 function formatRelativeTime(at: Date): string {

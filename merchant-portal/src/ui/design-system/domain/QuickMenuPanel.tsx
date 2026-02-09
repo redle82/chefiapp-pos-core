@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from "react";
+import React, { memo, useMemo, useState } from "react";
 import { TPVStateDisplay } from "../../../pages/TPV/components/TPVStateDisplay";
 import { Badge } from "../primitives/Badge";
 import { Card } from "../primitives/Card";
@@ -14,6 +14,7 @@ interface MenuItem {
   trackStock?: boolean;
   stockQuantity?: number;
   imageUrl?: string;
+  modifierGroupIds?: string[];
 }
 
 interface QuickMenuPanelProps {
@@ -35,8 +36,17 @@ export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = memo(
     onRetry,
     currentOrderItems = [],
   }) => {
+    const [searchQuery, setSearchQuery] = useState("");
+
+    // Filter items by search query
+    const filteredItems = useMemo(() => {
+      const q = searchQuery.trim().toLowerCase();
+      if (q.length < 2) return items;
+      return items.filter((item) => item.name.toLowerCase().includes(q));
+    }, [items, searchQuery]);
+
     // Group items by category
-    const groupedItems = items.reduce((acc, item) => {
+    const groupedItems = filteredItems.reduce((acc, item) => {
       if (!acc[item.category]) {
         acc[item.category] = [];
       }
@@ -80,6 +90,73 @@ export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = memo(
           >
             MENU RÁPIDO
           </Text>
+        </div>
+
+        {/* Product Search */}
+        <div
+          style={{
+            padding: "8px 16px",
+            borderBottom: `1px solid ${colors.border.subtle}`,
+            backgroundColor: colors.surface.layer2,
+          }}
+        >
+          <div style={{ position: "relative" }}>
+            <input
+              type="text"
+              placeholder="Pesquisar produto..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: "100%",
+                height: 36,
+                borderRadius: 8,
+                border: `1px solid ${colors.border.subtle}`,
+                background: colors.surface.layer3,
+                color: colors.text.primary,
+                fontSize: 13,
+                padding: "0 10px 0 32px",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+            <span
+              style={{
+                position: "absolute",
+                left: 10,
+                top: "50%",
+                transform: "translateY(-50%)",
+                fontSize: 14,
+                color: colors.text.tertiary,
+                pointerEvents: "none",
+              }}
+            >
+              🔍
+            </span>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                style={{
+                  position: "absolute",
+                  right: 6,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 22,
+                  height: 22,
+                  borderRadius: 11,
+                  border: "none",
+                  background: colors.surface.highlight,
+                  color: colors.text.tertiary,
+                  fontSize: 12,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Category Navigation Bar (Sticky) */}
@@ -159,6 +236,13 @@ export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = memo(
               type="empty_search"
               title="Menu Vazio"
               description="Nenhum item configurado ou encontrado para os filtros atuais."
+              compact
+            />
+          ) : filteredItems.length === 0 ? (
+            <TPVStateDisplay
+              type="empty_search"
+              title="Sem Resultados"
+              description={`Nenhum produto encontrado para "${searchQuery}"`}
               compact
             />
           ) : (
@@ -354,5 +438,5 @@ export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = memo(
         nextProps.currentOrderItems?.length &&
       prevProps.items.every((item, idx) => item.id === nextProps.items[idx]?.id)
     );
-  }
+  },
 );

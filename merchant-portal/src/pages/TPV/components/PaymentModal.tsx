@@ -24,7 +24,11 @@ interface PaymentModalProps {
   orderId: string;
   restaurantId: string;
   orderTotal: number;
-  onPay: (method: string, intentId?: string) => Promise<void> | void;
+  onPay: (
+    method: string,
+    intentId?: string,
+    tipCents?: number,
+  ) => Promise<void> | void;
   onCancel: () => void;
   isDemoMode?: boolean;
 }
@@ -90,6 +94,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [mbwayPhone, setMbwayPhone] = useState("");
   const [processing, setProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Tip / Gorjeta
+  const [tipPercent, setTipPercent] = useState<number | null>(null);
+  const [customTip, setCustomTip] = useState("");
+  const tipCents = useMemo(() => {
+    if (tipPercent !== null) return Math.round(orderTotal * (tipPercent / 100));
+    const v = parseFloat(customTip || "0");
+    return Number.isFinite(v) ? Math.round(v * 100) : 0;
+  }, [tipPercent, customTip, orderTotal]);
+  const grandTotal = orderTotal + tipCents;
 
   // Stripe card flow
   type CardStep = "idle" | "creating-intent" | "ready";
@@ -172,13 +186,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setErrorMsg("");
     try {
       const backendMethod = method === "mbway" ? "card" : method;
-      await onPay(backendMethod);
+      await onPay(backendMethod, undefined, tipCents || undefined);
     } catch (err: any) {
       setErrorMsg(err?.message || "Erro ao processar pagamento");
     } finally {
       setProcessing(false);
     }
-  }, [canConfirm, method, onPay]);
+  }, [canConfirm, method, onPay, tipCents]);
 
   // Called when Stripe Elements confirm succeeds
   const handleCardSuccess = useCallback(
@@ -186,14 +200,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       setProcessing(true);
       setErrorMsg("");
       try {
-        await onPay("card", paymentIntentId);
+        await onPay("card", paymentIntentId, tipCents || undefined);
       } catch (err: any) {
         setErrorMsg(err?.message || "Erro ao finalizar pagamento");
       } finally {
         setProcessing(false);
       }
     },
-    [onPay],
+    [onPay, tipCents],
   );
 
   return (
@@ -216,8 +230,73 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         <div style={styles.totalSection}>
           <span style={styles.totalLabel}>TOTAL A PAGAR</span>
-          <span style={styles.totalValue}>{formatAmount(orderTotal)}</span>
+          <span style={styles.totalValue}>{formatAmount(grandTotal)}</span>
+          {tipCents > 0 && (
+            <span style={{ color: "#a1a1aa", fontSize: 13 }}>
+              Subtotal {formatAmount(orderTotal)} + Gorjeta{" "}
+              {formatAmount(tipCents)}
+            </span>
+          )}
           {isDemoMode && <span style={styles.demoBadge}>MODO DEMO</span>}
+        </div>
+
+        {/* Tip / Gorjeta */}
+        <div style={styles.section}>
+          <span style={styles.sectionTitle}>Gorjeta (opcional)</span>
+          <div style={{ display: "flex", gap: 8 }}>
+            {[0, 5, 10, 15].map((pct) => (
+              <button
+                key={pct}
+                onClick={() => {
+                  setTipPercent(pct === 0 ? null : pct);
+                  setCustomTip("");
+                }}
+                style={{
+                  flex: 1,
+                  padding: "10px 0",
+                  background:
+                    tipPercent === pct ||
+                    (pct === 0 && tipPercent === null && !customTip)
+                      ? GREEN
+                      : CARD_BG,
+                  border: "none",
+                  borderRadius: 8,
+                  color: "#d4d4d8",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                {pct === 0 ? "Sem" : `${pct}%`}
+              </button>
+            ))}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 4,
+            }}
+          >
+            <span style={{ color: "#71717a", fontSize: 13 }}>Outro:</span>
+            <div style={{ ...styles.cashInputRow, flex: 1 }}>
+              <span style={styles.cashPrefix}>€</span>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={customTip}
+                onChange={(e) => {
+                  setCustomTip(e.target.value);
+                  setTipPercent(null);
+                }}
+                placeholder="0.00"
+                style={{ ...styles.cashInput, fontSize: 16, padding: "6px 0" }}
+              />
+            </div>
+          </div>
         </div>
 
         <div style={styles.section}>
@@ -395,7 +474,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         >
           {processing
             ? "A processar..."
-            : `Confirmar ${formatAmount(orderTotal)}`}
+            : `Confirmar ${formatAmount(grandTotal)}`}
         </button>
       </div>
     </div>

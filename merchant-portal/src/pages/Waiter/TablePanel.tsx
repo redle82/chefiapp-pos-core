@@ -116,6 +116,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
   );
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [sending, setSending] = useState(false);
   const [activeSeat, setActiveSeat] = useState("shared"); // seat tab: shared, seat-1, seat-2...
@@ -128,6 +129,13 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
   const [showExceptionModal, setShowExceptionModal] = useState(false);
   const [pendingException, setPendingException] = useState(false);
   const { success, warning } = useToast();
+
+  // Timer tick — re-render every 60s so seatedMinutes stays fresh
+  const [, setTimerTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTimerTick((t) => t + 1), 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Resolve Active Order
   const activeOrder = useMemo(
@@ -187,22 +195,45 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
     }));
   }, [menuItems]);
 
-  // Produtos da categoria selecionada
+  // Produtos filtrados por categoria + pesquisa
   const visibleProducts = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+
+    // When searching, show ALL matching products regardless of category
+    if (q.length >= 2) {
+      return menuItems
+        .filter(
+          (i) =>
+            i.name.toLowerCase().includes(q) ||
+            (i.description && i.description.toLowerCase().includes(q)),
+        )
+        .map((i) => ({
+          id: i.id,
+          name: i.name,
+          price: i.priceCents,
+          description: i.description,
+          currency: "EUR",
+          imageUrl: i.photoUrl,
+          trackStock: i.trackStock,
+          stockQuantity: i.stockQuantity,
+        }));
+    }
+
+    // Default: filter by selected category
     if (!selectedCategory) return [];
     return menuItems
       .filter((i) => i.category === selectedCategory)
       .map((i) => ({
         id: i.id,
         name: i.name,
-        price: i.priceCents, // ProductCard expects price in cents (number)
+        price: i.priceCents,
         description: i.description,
         currency: "EUR",
         imageUrl: i.photoUrl,
         trackStock: i.trackStock,
         stockQuantity: i.stockQuantity,
       }));
-  }, [selectedCategory, menuItems]);
+  }, [selectedCategory, menuItems, searchQuery]);
 
   // Comentários da categoria selecionada (Mock for now)
   const visibleComments: ProductComment[] = [];
@@ -231,9 +262,13 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
   }
 
   const seatedMinutes =
-    table.status === "occupied" // Check lowercase if from DB? Type is 'free'|'occupied'
-      ? 0 // TODO: DB doesn't store seatedAt? Table struct here has seats. Check TableContext.
-      : null; // TableContext Table interface: status: 'free' | 'occupied' | 'reserved'.
+    table.status === "occupied" && (table as any).seated_at
+      ? Math.floor(
+          (Date.now() - new Date((table as any).seated_at).getTime()) / 60000,
+        )
+      : table.status === "occupied"
+      ? 0 // occupied but no seated_at yet (legacy rows)
+      : null;
 
   // Helper handling
   const handleAddItem = (
@@ -546,35 +581,119 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
           setSelectedCategory(
             categoryId === selectedCategory ? null : categoryId,
           );
+          setSearchQuery(""); // clear search when picking category
         }}
       />
 
+      {/* ─── Product Search ─── */}
+      <div style={{ padding: "0 16px 8px" }}>
+        <div style={{ position: "relative" }}>
+          <input
+            type="text"
+            placeholder="Pesquisar produto..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              if (e.target.value.trim().length >= 2) {
+                setSelectedCategory(null); // clear category filter when searching
+              }
+            }}
+            style={{
+              width: "100%",
+              height: 40,
+              borderRadius: 10,
+              border: "1px solid #27272a",
+              background: SURFACE,
+              color: "#e4e4e7",
+              fontSize: 14,
+              padding: "0 12px 0 36px",
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+          <span
+            style={{
+              position: "absolute",
+              left: 12,
+              top: "50%",
+              transform: "translateY(-50%)",
+              fontSize: 16,
+              color: "#71717a",
+              pointerEvents: "none",
+            }}
+          >
+            🔍
+          </span>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              style={{
+                position: "absolute",
+                right: 8,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 24,
+                height: 24,
+                borderRadius: 12,
+                border: "none",
+                background: "#3f3f46",
+                color: "#a1a1aa",
+                fontSize: 14,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* ─── Product Grid (2 columns, photo tiles) ─── */}
-      {selectedCategory && (
+      {(selectedCategory || searchQuery.trim().length >= 2) &&
+        visibleProducts.length > 0 && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: 12,
+              padding: 16,
+            }}
+          >
+            {visibleProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                comments={visibleComments}
+                variant="tile"
+                onAdd={(quantity, commentIds) =>
+                  handleAddItem(product.id, quantity, commentIds)
+                }
+              />
+            ))}
+          </div>
+        )}
+
+      {/* Sem resultados de pesquisa */}
+      {searchQuery.trim().length >= 2 && visibleProducts.length === 0 && (
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: 12,
-            padding: 16,
+            padding: 48,
+            textAlign: "center",
+            color: "#52525b",
           }}
         >
-          {visibleProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              comments={visibleComments}
-              variant="tile"
-              onAdd={(quantity, commentIds) =>
-                handleAddItem(product.id, quantity, commentIds)
-              }
-            />
-          ))}
+          <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
+          <div style={{ fontSize: 14 }}>
+            Nenhum produto encontrado para "{searchQuery}"
+          </div>
         </div>
       )}
 
       {/* Estado Vazio */}
-      {!selectedCategory && (
+      {!selectedCategory && searchQuery.trim().length < 2 && (
         <div
           style={{
             padding: 48,
@@ -789,9 +908,11 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
               orderId={order.id}
               restaurantId={order.restaurantId || ""}
               orderTotal={order.total}
-              onPay={async (method) => {
+              onPay={async (method, _intentId, tipCents) => {
                 try {
-                  await performOrderAction(order.id, "pay", { method });
+                  const payload: any = { method };
+                  if (tipCents && tipCents > 0) payload.tip_cents = tipCents;
+                  await performOrderAction(order.id, "pay", payload);
                   await getActiveOrders();
                   success("Pedido pago com sucesso");
                   setPaymentModalOrderId(null);

@@ -724,6 +724,11 @@ export function OrderProvider({
         quantity: item.quantity,
         subtotal_cents:
           (item.priceCents || (item as any).price) * item.quantity,
+        modifiers:
+          item.modifiers && item.modifiers.length > 0
+            ? JSON.stringify(item.modifiers)
+            : "[]",
+        course: item.course ?? 1,
       });
 
     if (addError) throw addError;
@@ -1193,6 +1198,19 @@ export function OrderProvider({
             throw new Error(
               `PAYMENT_FAILED: ${payResult?.error || "Erro desconhecido"}`,
             );
+          }
+
+          // Persist tip_cents and discount_cents on the order row if provided
+          const tipCents = payload?.tip_cents ?? 0;
+          const discountCents = payload?.discount_cents ?? 0;
+          if (tipCents > 0 || discountCents > 0) {
+            const updateFields: Record<string, number> = {};
+            if (tipCents > 0) updateFields.tip_cents = tipCents;
+            if (discountCents > 0) updateFields.discount_cents = discountCents;
+            await dockerCoreClient
+              .from("gm_orders")
+              .update(updateFields)
+              .eq("id", orderId);
           }
 
           // Cleanup key on success (allows new payment if order re-opened later)

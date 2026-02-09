@@ -1,8 +1,12 @@
+import { CONFIG } from "../../config";
+
 export const WhatsAppWidget = () => {
-  // 1. Config
-  const PHONE_NUMBER = "5511999999999"; // TODO: Replace with real number
+  // 1. Config — centralised in CONFIG; falls back to empty to hide widget
+  const PHONE_NUMBER = CONFIG.SUPPORT_WHATSAPP_NUMBER;
   const MESSAGE =
     "Vi o Sistema Nervoso Operacional. Quero entender se serve para minha cozinha.";
+
+  if (!PHONE_NUMBER) return null; // Hide widget when no phone configured
 
   // 2. Link Builder
   const whatsappUrl = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(

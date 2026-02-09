@@ -10,6 +10,7 @@ export interface Table {
   number: number;
   status: "free" | "occupied" | "reserved";
   seats: number;
+  seated_at?: string | null; // ISO timestamp from DB
   x?: number;
   y?: number;
 }
@@ -22,6 +23,7 @@ interface TableContextType {
     tableId: string,
     status: "free" | "occupied" | "reserved",
   ) => Promise<void>;
+  updateTablePosition: (tableId: string, x: number, y: number) => Promise<void>;
 }
 
 const TableContext = createContext<TableContextType | undefined>(undefined);
@@ -65,16 +67,19 @@ export const TableProvider: React.FC<{
     tableId: string,
     status: "free" | "occupied" | "reserved",
   ) => {
+    // Compute seated_at: set NOW on occupied, clear on free/reserved
+    const seated_at = status === "occupied" ? new Date().toISOString() : null;
+
     // Optimistic update
     setTables((prev) =>
-      prev.map((t) => (t.id === tableId ? { ...t, status } : t)),
+      prev.map((t) => (t.id === tableId ? { ...t, status, seated_at } : t)),
     );
 
     try {
-      // DOCKER CORE: Atualizar status da mesa diretamente via PostgREST
+      // DOCKER CORE: Atualizar status + seated_at via PostgREST
       const { error } = await dockerCoreClient
         .from("gm_tables")
-        .update({ status })
+        .update({ status, seated_at })
         .eq("id", tableId)
         .eq("restaurant_id", restaurantId);
 
@@ -86,6 +91,30 @@ export const TableProvider: React.FC<{
     } catch (err) {
       console.error("[TableContext] Update Failed:", err);
       // Revert on error
+      await fetchTables();
+    }
+  };
+
+  const updateTablePosition = async (tableId: string, x: number, y: number) => {
+    // Optimistic update
+    setTables((prev) =>
+      prev.map((t) => (t.id === tableId ? { ...t, x, y } : t)),
+    );
+
+    try {
+      const { error: err } = await dockerCoreClient
+        .from("gm_tables")
+        .update({ pos_x: x, pos_y: y })
+        .eq("id", tableId)
+        .eq("restaurant_id", restaurantId);
+
+      if (err) {
+        throw new Error(`Failed to update table position: ${err.message}`);
+      }
+
+      console.log("[TableContext] Table Position Updated:", tableId, { x, y });
+    } catch (err) {
+      console.error("[TableContext] Position Update Failed:", err);
       await fetchTables();
     }
   };
@@ -122,7 +151,13 @@ export const TableProvider: React.FC<{
 
   return (
     <TableContext.Provider
-      value={{ tables, loading, refreshTables: fetchTables, updateTableStatus }}
+      value={{
+        tables,
+        loading,
+        refreshTables: fetchTables,
+        updateTableStatus,
+        updateTablePosition,
+      }}
     >
       {children}
     </TableContext.Provider>

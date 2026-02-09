@@ -8,7 +8,11 @@
  */
 
 import type { CoreTask } from "../../core-boundary/docker-core/types";
-import { readTasksForAnalytics } from "../../core-boundary/readers/TaskReader";
+import {
+  readTasksForAnalytics,
+  readTaskHistory,
+  readEmployeeTaskHistory,
+} from "../../core-boundary/readers/TaskReader";
 import { BackendType, getBackendType } from "../infra/backendAdapter";
 
 /** Tarefa no shape interno usado pela lógica de analytics (status "completed" | "overdue" etc.). */
@@ -243,16 +247,18 @@ export class TaskAnalytics {
   > {
     if (getBackendType() !== BackendType.docker) {
       console.warn(
-        "[CORE TODO] TaskAnalytics.getTaskHistory ainda não está ligado ao Docker/Core. Retornando histórico vazio.",
+        "[TaskAnalytics] getTaskHistory não disponível fora do Docker mode.",
         { taskId },
       );
+      return [];
     }
-    const data: any[] = [];
 
-    return data.map((row: any) => ({
+    const data = await readTaskHistory(taskId);
+
+    return data.map((row) => ({
       action: row.action,
       actorId: row.actor_id,
-      actorName: row.employees?.name || row.actor_role || "Sistema",
+      actorName: row.actor_role || "Sistema",
       oldStatus: row.old_status,
       newStatus: row.new_status,
       timestamp: new Date(row.created_at),
@@ -277,15 +283,17 @@ export class TaskAnalytics {
   > {
     if (getBackendType() !== BackendType.docker) {
       console.warn(
-        "[CORE TODO] TaskAnalytics.getEmployeeHistory ainda não está ligado ao Docker/Core. Retornando histórico vazio.",
+        "[TaskAnalytics] getEmployeeHistory não disponível fora do Docker mode.",
         { employeeId, limit },
       );
+      return [];
     }
-    const data: any[] = [];
 
-    return data.map((row: any) => ({
+    const data = await readEmployeeTaskHistory(employeeId, limit);
+
+    return data.map((row) => ({
       taskId: row.task_id,
-      taskTitle: row.tasks?.title || "Tarefa",
+      taskTitle: "Tarefa",
       action: row.action,
       timestamp: new Date(row.created_at),
       status: row.new_status,

@@ -82,6 +82,13 @@ export const CONFIG = {
   ALLOW_STAFF_ROLE_QUERY:
     import.meta.env.VITE_ALLOW_STAFF_ROLE_QUERY !== "false" &&
     import.meta.env.VITE_ALLOW_STAFF_ROLE_QUERY !== "0",
+
+  /**
+   * SUPPORT_WHATSAPP_NUMBER — Número WhatsApp para suporte ao utilizador.
+   * Formato internacional sem + (e.g., "351912345678").
+   * Env var: VITE_SUPPORT_WHATSAPP_NUMBER
+   */
+  SUPPORT_WHATSAPP_NUMBER: import.meta.env.VITE_SUPPORT_WHATSAPP_NUMBER || "",
 };
 
 // Runtime Check (Fail Loud in PROD)

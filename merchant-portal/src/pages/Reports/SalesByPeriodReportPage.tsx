@@ -9,6 +9,7 @@ import { useCallback, useMemo, useState } from "react";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { useRestaurantId } from "../../core/hooks/useRestaurantId";
+import { currencyService } from "../../core/currency/CurrencyService";
 import {
   useShiftHistory,
   type ShiftHistoryItem,
@@ -16,10 +17,7 @@ import {
 import { GlobalLoadingView } from "../../ui/design-system/components";
 
 function formatCents(cents: number): string {
-  return new Intl.NumberFormat("pt-PT", {
-    style: "currency",
-    currency: "EUR",
-  }).format(cents / 100);
+  return currencyService.formatAmount(cents);
 }
 
 function formatDateTime(iso: string | null): string {
@@ -215,11 +213,11 @@ export function SalesByPeriodReportPage() {
 
   const totalCents = useMemo(
     () => data.reduce((sum, row) => sum + row.total_sales_cents, 0),
-    [data]
+    [data],
   );
   const totalOrders = useMemo(
     () => data.reduce((sum, row) => sum + row.orders_count, 0),
-    [data]
+    [data],
   );
   const dailyAggregates = useMemo(() => aggregateByDay(data), [data]);
   const monthlyAggregates = useMemo(() => aggregateByMonth(data), [data]);
@@ -239,7 +237,7 @@ export function SalesByPeriodReportPage() {
     const toStr = toDateInputValue(dateTo);
     downloadCsvDaily(
       dailyAggregates,
-      `vendas-resumo-diario-${fromStr}-${toStr}.csv`
+      `vendas-resumo-diario-${fromStr}-${toStr}.csv`,
     );
   }, [dailyAggregates, dateFrom, dateTo]);
 
@@ -248,7 +246,7 @@ export function SalesByPeriodReportPage() {
     const toStr = toDateInputValue(dateTo);
     downloadCsvMonthly(
       monthlyAggregates,
-      `vendas-resumo-mensal-${fromStr}-${toStr}.csv`
+      `vendas-resumo-mensal-${fromStr}-${toStr}.csv`,
     );
   }, [monthlyAggregates, dateFrom, dateTo]);
 
@@ -503,7 +501,7 @@ export function SalesByPeriodReportPage() {
                     <td style={{ padding: "8px 8px 8px 0", color: "#1e293b" }}>
                       {new Date(row.month + "-01T12:00:00").toLocaleDateString(
                         "pt-PT",
-                        { month: "long", year: "numeric" }
+                        { month: "long", year: "numeric" },
                       )}
                     </td>
                     <td
@@ -615,7 +613,7 @@ export function SalesByPeriodReportPage() {
                   >
                     <td style={{ padding: "8px 8px 8px 0", color: "#1e293b" }}>
                       {new Date(row.date + "T12:00:00").toLocaleDateString(
-                        "pt-PT"
+                        "pt-PT",
                       )}
                     </td>
                     <td

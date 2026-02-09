@@ -60,6 +60,7 @@ import { OrderProvider, useOrders } from "./context/OrderContextReal";
 import { TableProvider } from "./context/TableContext";
 
 import { SyncStatusIndicator } from "../../components/SyncStatusIndicator";
+import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
 
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import {
@@ -108,32 +109,32 @@ import { useConsumptionGroups } from "./hooks/useConsumptionGroups";
 const PaymentModal = lazy(() =>
   import("./components/PaymentModal").then((m) => ({
     default: m.PaymentModal,
-  }))
+  })),
 );
 const SplitBillModalWrapper = lazy(() =>
   import("./components/SplitBillModalWrapper").then((m) => ({
     default: m.SplitBillModalWrapper,
-  }))
+  })),
 );
 const OpenCashRegisterModal = lazy(() =>
   import("./components/OpenCashRegisterModal").then((m) => ({
     default: m.OpenCashRegisterModal,
-  }))
+  })),
 );
 const CloseCashRegisterModal = lazy(() =>
   import("./components/CloseCashRegisterModal").then((m) => ({
     default: m.CloseCashRegisterModal,
-  }))
+  })),
 );
 const OrderItemEditor = lazy(() =>
   import("./components/OrderItemEditor").then((m) => ({
     default: m.OrderItemEditor,
-  }))
+  })),
 );
 const CreateGroupModal = lazy(() =>
   import("./components/CreateGroupModal").then((m) => ({
     default: m.CreateGroupModal,
-  }))
+  })),
 );
 
 import { useCurrency } from "../../core/currency/useCurrency"; // P5-5
@@ -143,7 +144,7 @@ import { useCommonTPVShortcuts } from "./hooks/useTPVShortcuts";
 const QuickProductModal = lazy(() =>
   import("./components/QuickProductModal").then((m) => ({
     default: m.QuickProductModal,
-  }))
+  })),
 );
 
 import { useOperationalCortex } from "../../intelligence/nervous-system/OperationalCortex";
@@ -158,6 +159,13 @@ import { useDynamicMenu } from "../../core/menu/DynamicMenu/hooks/useDynamicMenu
 import { OperationalModeIndicator } from "./components/OperationalModeIndicator";
 import { TPVExceptionPanel } from "./components/TPVExceptionPanel";
 import { TPVWarMap } from "./components/TPVWarMap";
+
+import { useCatalogStore } from "../../core/catalog/catalogStore";
+import {
+  ModifierSelectorModal,
+  type SelectedModifier,
+} from "./components/ModifierSelectorModal";
+import { ReceiptShareModal, type ReceiptShareOrder } from "./ReceiptShareModal";
 
 type ContextView =
   | "menu"
@@ -194,7 +202,7 @@ function computeGuards(params: {
 function renderLockedState(props: {
   onUnlock: (
     op: Operator,
-    mode: "command" | "rush" | "training"
+    mode: "command" | "rush" | "training",
   ) => Promise<void>;
 }) {
   return (
@@ -315,7 +323,7 @@ const TPVContent = () => {
   const [dailyTotalCents, setDailyTotalCents] = useState<number>(0);
   const [cashRegisterOpen, setCashRegisterOpen] = useState<boolean>(false);
   const [paymentModalOrderId, setPaymentModalOrderId] = useState<string | null>(
-    null
+    null,
   );
   const [splitBillModalOrderId, setSplitBillModalOrderId] = useState<
     string | null
@@ -363,8 +371,39 @@ const TPVContent = () => {
       price: number;
       quantity: number;
       category?: string;
+      modifiers?: SelectedModifier[];
+      course?: number;
     }>
   >([]);
+
+  // --- Active course (ronda) for new items ---
+  const [activeCourse, setActiveCourse] = useState<number>(1);
+
+  // --- Modifier selector state ---
+  const {
+    products: catalogProducts,
+    modifierGroups: catalogModifierGroups,
+    modifiers: catalogModifiers,
+    loadAll: loadCatalog,
+  } = useCatalogStore();
+
+  const [modifierModalItem, setModifierModalItem] = useState<{
+    id: string;
+    name: string;
+    price: number;
+    category: string;
+    modifierGroupIds: string[];
+    groupId?: string | null;
+  } | null>(null);
+
+  // Gap #8: Receipt share modal state
+  const [receiptShareOrder, setReceiptShareOrder] =
+    useState<ReceiptShareOrder | null>(null);
+
+  // Load catalog (modifier groups) on mount
+  useEffect(() => {
+    loadCatalog().catch(() => {});
+  }, [loadCatalog]);
 
   // P4-6 FIX: Use Dynamic Menu (Intelligence + Sponsorships)
   const {
@@ -389,9 +428,10 @@ const TPVContent = () => {
     if (menu.contextual && menu.contextual.length > 0) {
       console.log(
         "[TPV] Raw Contextual Item 0:",
-        JSON.stringify(menu.contextual[0], null, 2)
+        JSON.stringify(menu.contextual[0], null, 2),
       );
       menu.contextual.forEach((item) => {
+        const catProduct = catalogProducts.find((p) => p.id === item.id);
         items.push({
           id: item.id,
           name: item.name, // Keep existing naming
@@ -399,7 +439,8 @@ const TPVContent = () => {
           category: "✨ Sugestões Inteligentes",
           trackStock: true, // Assuming default true for now or map from item
           stockQuantity: 100, // Mock infinite for now or map
-          // Add extra metadata if needed by updated components
+          modifierGroupIds:
+            catProduct?.modifierGroupIds ?? item.modifierGroupIds ?? [],
         });
       });
     }
@@ -414,6 +455,7 @@ const TPVContent = () => {
 
         const finalPrice = Number(item.price_cents || 0) / 100;
 
+        const catProduct = catalogProducts.find((p) => p.id === item.id);
         items.push({
           id: item.id,
           name: item.name,
@@ -421,14 +463,16 @@ const TPVContent = () => {
           category: cat.name,
           trackStock: true, // Mock
           stockQuantity: 100, // Mock
+          modifierGroupIds:
+            catProduct?.modifierGroupIds ?? item.modifierGroupIds ?? [],
         });
       });
     });
 
     return items;
-  }, [menu]);
+  }, [menu, catalogProducts]);
 
-  const { tables } = useTables();
+  const { tables, updateTablePosition } = useTables();
 
   // RADAR OPERACIONAL: Calculate Table Health
   // This combines static table data with live order data to predict "emotions"
@@ -438,7 +482,7 @@ const TPVContent = () => {
         (o) =>
           o.tableId === table.id &&
           o.status !== "paid" &&
-          o.status !== "cancelled"
+          o.status !== "cancelled",
       );
 
       const lastActivityTime = activeOrder
@@ -456,7 +500,7 @@ const TPVContent = () => {
         table.status as any,
         lastActivityTime,
         lastActivityTime, // seated time roughly same as order creation for now
-        false // No "Call Waiter" signal yet
+        false, // No "Call Waiter" signal yet
       );
 
       // Calculate wait minutes for display
@@ -525,7 +569,7 @@ const TPVContent = () => {
       healthStatus,
       isDemoData,
       isOnline,
-    ]
+    ],
   );
   const { intention, role } = useContextEngine();
 
@@ -583,7 +627,7 @@ const TPVContent = () => {
               })),
               total: itemsToAdd.reduce(
                 (sum, item) => sum + Math.round(item.price * 100),
-                0
+                0,
               ),
               tableNumber: firstTable.number,
               tableId: firstTable.id,
@@ -630,7 +674,7 @@ const TPVContent = () => {
         (o) =>
           o.tableId === tableId &&
           o.status !== "paid" &&
-          o.status !== "cancelled"
+          o.status !== "cancelled",
       ); // Use 'orders' instead of 'activeOrders' if undefined
       if (existingOrder) {
         // Abrir pedido existente automaticamente
@@ -649,7 +693,9 @@ const TPVContent = () => {
 
       if (activeOrderId) {
         if (isOrderConfirmed(activeOrderId)) {
-          error("Pedido já confirmado. Inicie um novo pedido para adicionar itens.");
+          error(
+            "Pedido já confirmado. Inicie um novo pedido para adicionar itens.",
+          );
           return;
         }
         await addItemToOrder(activeOrderId, {
@@ -708,7 +754,7 @@ const TPVContent = () => {
     // HARD RULE: Pedidos pagos são 'preparing' ou 'ready' (ainda ativos na cozinha/tela)
     // Apenas 'delivered' e 'canceled' saem do túnel
     return orders.filter(
-      (o) => o.status !== "paid" && o.status !== "cancelled"
+      (o) => o.status !== "paid" && o.status !== "cancelled",
     );
   }, [orders]);
 
@@ -776,7 +822,7 @@ const TPVContent = () => {
       if (cashRegisterOpen) {
         if (activeOrders.length > 0) {
           error(
-            `Impossível fechar caixa: Existem ${activeOrders.length} pedidos em aberto. Finalize ou cancele-os antes.`
+            `Impossível fechar caixa: Existem ${activeOrders.length} pedidos em aberto. Finalize ou cancele-os antes.`,
           );
           return;
         }
@@ -908,7 +954,7 @@ const TPVContent = () => {
           );
           if (isDemoData || isDevStableMode()) {
             console.log(
-              "[TPV] Demo/DEV_STABLE Mode: Simulating start_turn success"
+              "[TPV] Demo/DEV_STABLE Mode: Simulating start_turn success",
             );
             setActiveOperator(op);
             setIsLocked(false);
@@ -932,7 +978,7 @@ const TPVContent = () => {
             p_device_name: "TPV Browser",
             p_role_at_turn: op.role,
             p_permissions_snapshot: permissionsSnapshot,
-          })
+          }),
         );
 
         if (rpcError) throw new Error(rpcError.message);
@@ -964,7 +1010,7 @@ const TPVContent = () => {
       setActiveOperator,
       setActiveMode,
       setIsLocked,
-    ]
+    ],
   );
 
   // --------------------------------------------------------------------------------
@@ -1047,8 +1093,28 @@ const TPVContent = () => {
     }
   };
 
+  // Handler de desconto inline (chamado pelo TicketCard via StreamTunnel)
+  const handleDiscount = async (orderId: string, discountCents: number) => {
+    if (!orderId || discountCents <= 0) return;
+    try {
+      await dockerCoreClient
+        .from("gm_orders")
+        .update({ discount_cents: discountCents })
+        .eq("id", orderId);
+      await getActiveOrders();
+      success(`Desconto de €${(discountCents / 100).toFixed(2)} aplicado`);
+    } catch (err: any) {
+      console.error("Discount failed:", err);
+      error(err?.message || "Erro ao aplicar desconto");
+    }
+  };
+
   // Handler de pagamento (chamado pelo modal)
-  const handlePayment = async (method: string, intentId?: string) => {
+  const handlePayment = async (
+    method: string,
+    intentId?: string,
+    tipCents?: number,
+  ) => {
     if (!paymentModalOrderId) return;
 
     // FASE 2: Simular pagamento (exploração) — decisão do bootstrap
@@ -1063,7 +1129,7 @@ const TPVContent = () => {
       if (isTutorialMode) {
         setTimeout(() => {
           success(
-            "Parabéns! Você completou sua primeira venda. Agora você pode usar o TPV normalmente."
+            "Parabéns! Você completou sua primeira venda. Agora você pode usar o TPV normalmente.",
           );
           setTimeout(() => {
             navigate("/app/dashboard", {
@@ -1092,7 +1158,7 @@ const TPVContent = () => {
     // Validar que pedido tem itens
     if (!order.items || order.items.length === 0) {
       error(
-        "Não é possível fechar conta sem itens. Adicione itens ao pedido primeiro."
+        "Não é possível fechar conta sem itens. Adicione itens ao pedido primeiro.",
       );
       return;
     }
@@ -1101,7 +1167,7 @@ const TPVContent = () => {
     const totalCents = order.total;
     if (totalCents <= 0) {
       error(
-        "Não é possível fechar conta com total zero. Adicione itens ao pedido primeiro."
+        "Não é possível fechar conta com total zero. Adicione itens ao pedido primeiro.",
       );
       return;
     }
@@ -1124,6 +1190,9 @@ const TPVContent = () => {
       if (method === "card" && intentId) {
         payload.stripe_intent_id = intentId;
       }
+      if (tipCents && tipCents > 0) {
+        payload.tip_cents = tipCents;
+      }
 
       await performOrderAction(paymentModalOrderId, "pay", payload);
 
@@ -1134,7 +1203,7 @@ const TPVContent = () => {
 
       // Verificar se pedido está totalmente pago antes de emitir fiscal
       const updatedOrder = activeOrders.find(
-        (o) => o.id === paymentModalOrderId
+        (o) => o.id === paymentModalOrderId,
       );
       if (updatedOrder && restaurantId) {
         // Buscar pagamentos para calcular total pago
@@ -1143,7 +1212,7 @@ const TPVContent = () => {
             "../../core/tpv/PaymentEngine"
           );
           const payments = await PaymentEngine.getPaymentsByOrder(
-            paymentModalOrderId
+            paymentModalOrderId,
           );
           const totalPaid = payments
             .filter((p) => p.status === "PAID")
@@ -1182,26 +1251,26 @@ const TPVContent = () => {
                 if (errorData.error === "ORDER_NOT_FULLY_PAID") {
                   // Pedido não está totalmente pago ainda (split bill em progresso)
                   console.log(
-                    "[TPV] Fiscal not emitted - order not fully paid yet"
+                    "[TPV] Fiscal not emitted - order not fully paid yet",
                   );
                 } else {
                   console.warn(
                     "[TPV] Fiscal emission failed (non-blocking):",
-                    errorData
+                    errorData,
                   );
                 }
               } else {
                 const fiscalEmitResult = await response.json();
                 console.log(
                   "[TPV] Fiscal emission queued:",
-                  fiscalEmitResult.queue_id
+                  fiscalEmitResult.queue_id,
                 );
               }
             } catch (fiscalError) {
               // Log mas não bloqueia pagamento
               console.warn(
                 "[TPV] Fiscal emission request failed (non-blocking):",
-                fiscalError
+                fiscalError,
               );
             }
           } else {
@@ -1216,12 +1285,30 @@ const TPVContent = () => {
           // Log mas não bloqueia pagamento
           console.warn(
             "[TPV] Fiscal emission check failed (non-blocking):",
-            fiscalError
+            fiscalError,
           );
         }
       }
 
       setPaymentModalOrderId(null);
+
+      // Gap #8: Prepare receipt share data before clearing order
+      const tableForOrder = tables.find((t) => t.id === order.tableId);
+      setReceiptShareOrder({
+        id: order.id,
+        tableNumber: tableForOrder?.number,
+        totalCents: order.total,
+        items: (order.items || []).map((it: any) => ({
+          name: it.name || it.product_name || "Item",
+          quantity: it.quantity ?? 1,
+          priceCents: it.price ?? it.unit_price ?? 0,
+        })),
+        paymentMethod: method,
+        tipCents: tipCents ?? 0,
+        discountCents: (order as any).discount_cents ?? 0,
+        restaurantName: identity?.name || "Restaurante",
+        paidAt: new Date().toISOString(),
+      });
 
       // Limpar pedido ativo após pagamento
       if (activeOrderId === paymentModalOrderId) {
@@ -1247,7 +1334,7 @@ const TPVContent = () => {
   // SEMANA 2 - Tarefa 3.3: Handler de pagamento parcial (split bill)
   const handlePartialPayment = async (
     amountCents: number,
-    method: "cash" | "card" | "pix"
+    method: "cash" | "card" | "pix",
   ) => {
     if (!splitBillModalOrderId) return;
 
@@ -1268,7 +1355,7 @@ const TPVContent = () => {
     try {
       const { PaymentEngine } = await import("../../core/tpv/PaymentEngine");
       const payments = await PaymentEngine.getPaymentsByOrder(
-        splitBillModalOrderId
+        splitBillModalOrderId,
       );
       const paidAmount = payments
         .filter((p) => p.status === "PAID")
@@ -1278,7 +1365,7 @@ const TPVContent = () => {
 
       if (amountCents > remainingAmount) {
         error(
-          `Valor excede o saldo restante de ${formatAmount(remainingAmount)}`
+          `Valor excede o saldo restante de ${formatAmount(remainingAmount)}`,
         );
         return;
       }
@@ -1348,7 +1435,9 @@ const TPVContent = () => {
     // Check if table already has an order
     const existingOrder = orders.find(
       (o) =>
-        o.tableId === tableId && o.status !== "paid" && o.status !== "cancelled"
+        o.tableId === tableId &&
+        o.status !== "paid" &&
+        o.status !== "cancelled",
     );
     if (existingOrder) {
       setActiveOrderId(existingOrder.id);
@@ -1417,16 +1506,43 @@ const TPVContent = () => {
 
   // FLOW: FASE 1 — Rascunho em memória; createOrder só ao clicar Confirmar. Ver FLUXO_DE_PEDIDO_OPERACIONAL.md
   const handleAddItem = async (
-    item: { id: string; name: string; price: number; category: string },
-    groupId?: string | null
+    item: {
+      id: string;
+      name: string;
+      price: number;
+      category: string;
+      modifierGroupIds?: string[];
+    },
+    groupId?: string | null,
+    selectedModifiers?: SelectedModifier[],
   ) => {
     console.log(
       "[TPV] handleAddItem called for:",
       item.name,
       item.id,
       "group:",
-      groupId
+      groupId,
     );
+
+    // --- Modifier interception: if product has modifier groups and none selected yet, show modal ---
+    const mGroupIds = item.modifierGroupIds ?? [];
+    if (mGroupIds.length > 0 && !selectedModifiers) {
+      const linkedGroups = catalogModifierGroups.filter((g) =>
+        mGroupIds.includes(g.id),
+      );
+      if (linkedGroups.length > 0) {
+        setModifierModalItem({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          category: item.category,
+          modifierGroupIds: mGroupIds,
+          groupId,
+        });
+        return; // wait for modal confirmation
+      }
+    }
+
     try {
       // FASE 1: Sem pedido ativo → adicionar ao rascunho (nenhum write no Core)
       if (!activeOrderId) {
@@ -1443,26 +1559,38 @@ const TPVContent = () => {
             price: Math.round(item.price * 100),
             quantity: 1,
             category: item.category,
+            modifiers: selectedModifiers,
+            course: activeCourse,
           },
         ]);
-        success(`${item.name} adicionado ao rascunho`);
+        success(`${item.name} adicionado ao rascunho (Ronda ${activeCourse})`);
         return;
       }
 
       // FASE 1: Pedido já confirmado → imutável
       if (isOrderConfirmed(activeOrderId)) {
-        error("Pedido já confirmado. Inicie um novo pedido para adicionar itens.");
+        error(
+          "Pedido já confirmado. Inicie um novo pedido para adicionar itens.",
+        );
         return;
       }
+
+      // Calculate modifier price delta
+      const modDelta = (selectedModifiers ?? []).reduce(
+        (s, m) => s + m.priceDeltaCents,
+        0,
+      );
 
       // Pedido ativo ainda editável (legacy path, ex.: mapa de mesas)
       await addItemToOrder(activeOrderId, {
         productId: item.id,
         name: item.name,
-        priceCents: Math.round(item.price * 100),
+        priceCents: Math.round(item.price * 100) + modDelta,
         quantity: 1,
         categoryName: item.category,
         consumptionGroupId: groupId || undefined,
+        modifiers: selectedModifiers ?? [],
+        course: activeCourse,
       });
 
       success(`${item.name} adicionado`);
@@ -1497,7 +1625,7 @@ const TPVContent = () => {
         err.message?.includes("TABLE_HAS_ACTIVE_ORDER")
       ) {
         const existingOrder = activeOrders.find(
-          (o) => o.tableId === selectedTableId
+          (o) => o.tableId === selectedTableId,
         );
         if (existingOrder) {
           setActiveOrderId(existingOrder.id);
@@ -1524,6 +1652,8 @@ const TPVContent = () => {
           price: i.price / 100,
           quantity: i.quantity,
           categoryName: i.category,
+          modifiers: i.modifiers ?? [],
+          course: i.course ?? 1,
         })),
         total: draftItems.reduce((s, i) => s + i.price * i.quantity, 0),
         tableNumber: selectedTableId
@@ -1795,7 +1925,7 @@ const TPVContent = () => {
                       (o) =>
                         o.tableId === tableId &&
                         o.status !== "paid" &&
-                        o.status !== "cancelled"
+                        o.status !== "cancelled",
                     );
                     if (order) {
                       setActiveOrderId(order.id);
@@ -1803,6 +1933,7 @@ const TPVContent = () => {
                     }
                   }}
                   onCreateOrder={handleCreateOrderViaMap}
+                  onUpdatePosition={updateTablePosition}
                 />
               )}
 
@@ -1823,6 +1954,7 @@ const TPVContent = () => {
                     <StreamTunnel
                       orders={activeOrders}
                       onAction={handleAction}
+                      onDiscount={handleDiscount}
                       activeOrderId={activeOrderId}
                       loading={ordersLoading}
                       error={ordersError}
@@ -1878,9 +2010,10 @@ const TPVContent = () => {
                     <StreamTunnel
                       orders={activeOrders.filter(
                         (o) =>
-                          (o as any).source && (o as any).source !== "local"
+                          (o as any).source && (o as any).source !== "local",
                       )}
                       onAction={handleAction}
+                      onDiscount={handleDiscount}
                       activeOrderId={activeOrderId}
                     />
                   </div>
@@ -1923,7 +2056,7 @@ const TPVContent = () => {
                   }
                   deliveryQueueCount={
                     activeOrders.filter(
-                      (o) => (o as any).source && (o as any).source !== "local"
+                      (o) => (o as any).source && (o as any).source !== "local",
                     ).length
                   }
                   onSectorClick={(sector: any) => {
@@ -1964,19 +2097,40 @@ const TPVContent = () => {
                         })),
                         total: draftItems.reduce(
                           (s, i) => s + i.price * i.quantity,
-                          0
+                          0,
                         ),
                         createdAt: new Date(),
                         updatedAt: new Date(),
                       }}
                       tableName={
                         selectedTableId
-                          ? tables.find((t) => t.id === selectedTableId)
+                          ? tables
+                              .find((t) => t.id === selectedTableId)
                               ?.number?.toString() || ""
                           : "Rascunho"
                       }
                       customerName={""}
                     />
+                    {/* Course / Ronda selector */}
+                    <div className="flex items-center gap-2 px-1">
+                      <span className="text-xs font-medium text-gray-500">
+                        Ronda:
+                      </span>
+                      {[1, 2, 3, 4].map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                            activeCourse === c
+                              ? "bg-violet-600 text-white"
+                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          }`}
+                          onClick={() => setActiveCourse(c)}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
                     <div style={{ flex: 1, overflow: "hidden" }}>
                       <Suspense
                         fallback={
@@ -1998,24 +2152,24 @@ const TPVContent = () => {
                             })),
                             total: draftItems.reduce(
                               (s, i) => s + i.price * i.quantity,
-                              0
+                              0,
                             ),
                             createdAt: new Date(),
                             updatedAt: new Date(),
                           }}
                           onUpdateQuantity={(
                             itemId: string,
-                            quantity: number
+                            quantity: number,
                           ) => {
                             setDraftItems((prev) =>
                               prev.map((i) =>
-                                i.id === itemId ? { ...i, quantity } : i
-                              )
+                                i.id === itemId ? { ...i, quantity } : i,
+                              ),
                             );
                           }}
                           onRemoveItem={(itemId: string) => {
                             setDraftItems((prev) =>
-                              prev.filter((i) => i.id !== itemId)
+                              prev.filter((i) => i.id !== itemId),
                             );
                           }}
                           onBackToMenu={() => setDraftItems([])}
@@ -2035,7 +2189,7 @@ const TPVContent = () => {
                         })),
                         total: draftItems.reduce(
                           (s, i) => s + i.price * i.quantity,
-                          0
+                          0,
                         ),
                         createdAt: new Date(),
                         updatedAt: new Date(),
@@ -2065,33 +2219,31 @@ const TPVContent = () => {
                       >
                         <OrderItemEditor
                           order={
-                            activeOrders.find(
-                              (o) => o.id === activeOrderId
-                            ) || null
+                            activeOrders.find((o) => o.id === activeOrderId) ||
+                            null
                           }
                           onUpdateQuantity={async (
                             itemId: string,
-                            quantity: number
+                            quantity: number,
                           ) => {
                             if (!activeOrderId) return;
                             try {
                               await updateItemQuantity(
                                 activeOrderId,
                                 itemId,
-                                quantity
+                                quantity,
                               );
                               success("Quantidade atualizada");
                             } catch (err: any) {
-                              error(err.message || "Erro ao atualizar quantidade");
+                              error(
+                                err.message || "Erro ao atualizar quantidade",
+                              );
                             }
                           }}
                           onRemoveItem={async (itemId: string) => {
                             if (!activeOrderId) return;
                             try {
-                              await removeItemFromOrder(
-                                activeOrderId,
-                                itemId
-                              );
+                              await removeItemFromOrder(activeOrderId, itemId);
                               success("Item removido");
                             } catch (err: any) {
                               error(err.message || "Erro ao remover item");
@@ -2107,9 +2259,7 @@ const TPVContent = () => {
                     </div>
                     <OrderSummaryPanel
                       order={
-                        activeOrders.find(
-                          (o) => o.id === activeOrderId
-                        ) || null
+                        activeOrders.find((o) => o.id === activeOrderId) || null
                       }
                       onSplitBill={() => {
                         if (activeOrderId) {
@@ -2118,7 +2268,7 @@ const TPVContent = () => {
                       }}
                       onPay={() => {
                         const order = activeOrders.find(
-                          (o) => o.id === activeOrderId
+                          (o) => o.id === activeOrderId,
                         );
                         if (order && order.status !== "paid") {
                           setPaymentModalOrderId(activeOrderId);
@@ -2140,7 +2290,7 @@ const TPVContent = () => {
                 onCloseCashRegister={() => {
                   if (activeOrders.length > 0) {
                     error(
-                      `Impossível fechar caixa: Existem ${activeOrders.length} pedidos em aberto.`
+                      `Impossível fechar caixa: Existem ${activeOrders.length} pedidos em aberto.`,
                     );
                     return;
                   }
@@ -2165,6 +2315,43 @@ const TPVContent = () => {
               onCreate={handleCreateQuickProduct}
             />
           </Suspense>
+        )}
+
+        {/* Modifier Selector Modal */}
+        {modifierModalItem && (
+          <ModifierSelectorModal
+            productName={modifierModalItem.name}
+            groups={catalogModifierGroups.filter((g) =>
+              modifierModalItem.modifierGroupIds.includes(g.id),
+            )}
+            modifiers={catalogModifiers.filter((m) =>
+              modifierModalItem.modifierGroupIds.includes(m.groupId),
+            )}
+            onConfirm={(selected) => {
+              const item = modifierModalItem;
+              setModifierModalItem(null);
+              handleAddItem(
+                {
+                  id: item.id,
+                  name: item.name,
+                  price: item.price,
+                  category: item.category,
+                  modifierGroupIds: item.modifierGroupIds,
+                },
+                item.groupId,
+                selected,
+              );
+            }}
+            onCancel={() => setModifierModalItem(null)}
+          />
+        )}
+
+        {/* Gap #8: Receipt Share Modal — shown after successful payment */}
+        {receiptShareOrder && (
+          <ReceiptShareModal
+            order={receiptShareOrder}
+            onClose={() => setReceiptShareOrder(null)}
+          />
         )}
 
         {/* Group Selector Modal */}
@@ -2261,7 +2448,7 @@ const TPVContent = () => {
       {splitBillModalOrderId &&
         (() => {
           const order = activeOrders.find(
-            (o) => o.id === splitBillModalOrderId
+            (o) => o.id === splitBillModalOrderId,
           );
           if (!order) return null;
           return (

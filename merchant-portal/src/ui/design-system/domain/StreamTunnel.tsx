@@ -7,6 +7,7 @@ import { TicketCard } from "./TicketCard";
 interface StreamTunnelProps {
   orders: any[]; // Replace 'any' with Order type in real implementation
   onAction: (orderId: string, action: string) => void;
+  onDiscount?: (orderId: string, discountCents: number) => void;
   activeOrderId?: string | null; // Highlight active order being edited
   loading?: boolean;
   error?: Error | null;
@@ -16,6 +17,7 @@ interface StreamTunnelProps {
 export const StreamTunnel: React.FC<StreamTunnelProps> = ({
   orders,
   onAction,
+  onDiscount,
   activeOrderId,
   loading,
   error,
@@ -132,6 +134,11 @@ export const StreamTunnel: React.FC<StreamTunnelProps> = ({
                 key={order.id}
                 order={ticketOrder}
                 onAction={(act) => onAction(order.id, act)}
+                onDiscount={
+                  onDiscount
+                    ? (cents) => onDiscount(order.id, cents)
+                    : undefined
+                }
                 // @ts-ignore
                 compact={false}
                 isActive={activeOrderId === order.id}

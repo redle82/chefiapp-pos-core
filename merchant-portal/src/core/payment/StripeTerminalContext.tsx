@@ -3,6 +3,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import React, { createContext, ReactNode, useContext, useState } from "react";
 import { CONFIG } from "../../config";
 import { PaymentBroker } from "./PaymentBroker";
+import { currencyService } from "../currency/CurrencyService";
 
 // Initialize Stripe Promise (Singleton) — uses centralized config
 const STRIPE_KEY = CONFIG.STRIPE_PUBLIC_KEY || "";
@@ -41,7 +42,7 @@ export const StripeTerminalProvider: React.FC<{ children: ReactNode }> = ({
       const result = await PaymentBroker.createPaymentIntent({
         orderId: params.orderId,
         amount: params.amount,
-        currency: "eur", // TODO: Make dynamic based on restaurant currency
+        currency: currencyService.getDefaultCurrency().toLowerCase(),
         restaurantId: params.restaurantId,
         operatorId: params.operatorId,
         cashRegisterId: params.cashRegisterId,

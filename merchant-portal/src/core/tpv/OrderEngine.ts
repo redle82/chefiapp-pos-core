@@ -42,6 +42,8 @@ export interface OrderItemInput {
   notes?: string;
   categoryName?: string;
   consumptionGroupId?: string | null; // Para divisão de conta
+  /** Ronda / course number (1 = primeira, 2 = segunda, etc.) */
+  course?: number;
 }
 
 export interface OrderInput {
@@ -110,7 +112,7 @@ export class OrderEngine {
     if (!input.items?.length) {
       throw new OrderEngineError(
         "Pedido deve ter pelo menos um item.",
-        "ORDER_NO_ITEMS"
+        "ORDER_NO_ITEMS",
       );
     }
     const rpcItems = input.items.map((item) => ({
@@ -144,13 +146,13 @@ export class OrderEngine {
       });
       throw new OrderEngineError(
         error.message ?? "Falha ao criar pedido.",
-        error.code ?? "ORDER_CREATE_FAILED"
+        error.code ?? "ORDER_CREATE_FAILED",
       );
     }
     if (!data?.id) {
       throw new OrderEngineError(
         "RPC não retornou ID do pedido.",
-        "ORDER_CREATE_FAILED"
+        "ORDER_CREATE_FAILED",
       );
     }
     return this.getOrderById(data.id);
@@ -166,7 +168,7 @@ export class OrderEngine {
         `
                 *,
                 items:gm_order_items(*)
-            `
+            `,
       )
       .eq("id", orderId)
       .single();
@@ -179,18 +181,18 @@ export class OrderEngine {
       Logger.error("ORDER_FETCH_FAILED", error, { orderId });
       throw new OrderEngineError(
         `Pedido não encontrado. Verifique se o ID está correto.`,
-        "ORDER_NOT_FOUND"
+        "ORDER_NOT_FOUND",
       );
     }
     if (!orderData) {
       throw new OrderEngineError(
         "Pedido não encontrado. Ele pode ter sido cancelado ou já finalizado.",
-        "ORDER_NOT_FOUND"
+        "ORDER_NOT_FOUND",
       );
     }
 
     return this.mapDbOrderToOrder(
-      orderData as Parameters<typeof OrderEngine.mapDbOrderToOrder>[0]
+      orderData as Parameters<typeof OrderEngine.mapDbOrderToOrder>[0],
     );
   }
 
@@ -206,7 +208,7 @@ export class OrderEngine {
    */
   static async getActiveOrderByTable(
     restaurantId: string,
-    tableId: string
+    tableId: string,
   ): Promise<Order | null> {
     const chain = (supabase as any)
       .from("gm_orders")
@@ -214,7 +216,7 @@ export class OrderEngine {
         `
                 *,
                 items:gm_order_items(*)
-            `
+            `,
       )
       .eq("restaurant_id", restaurantId)
       .eq("table_id", tableId)
@@ -234,13 +236,13 @@ export class OrderEngine {
       });
       throw new OrderEngineError(
         "Erro ao buscar pedido da mesa. Tente novamente.",
-        "ORDER_FETCH_FAILED"
+        "ORDER_FETCH_FAILED",
       );
     }
     if (!data) return null;
 
     return this.mapDbOrderToOrder(
-      data as Parameters<typeof OrderEngine.mapDbOrderToOrder>[0]
+      data as Parameters<typeof OrderEngine.mapDbOrderToOrder>[0],
     );
   }
 
@@ -254,7 +256,7 @@ export class OrderEngine {
         `
                 *,
                 items:gm_order_items(*)
-            `
+            `,
       )
       .eq("restaurant_id", restaurantId)
       .in("status", ["pending", "preparing", "ready"])
@@ -268,7 +270,7 @@ export class OrderEngine {
       Logger.error("ACTIVE_ORDERS_FETCH_FAILED", error, { restaurantId });
       throw new OrderEngineError(
         "Erro ao buscar pedidos ativos. Tente novamente.",
-        "ORDERS_FETCH_FAILED"
+        "ORDERS_FETCH_FAILED",
       );
     }
 
