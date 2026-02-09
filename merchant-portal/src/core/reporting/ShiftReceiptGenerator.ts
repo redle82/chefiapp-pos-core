@@ -1,47 +1,52 @@
 /**
  * ShiftReceiptGenerator
- * 
+ *
  * Utility to generate HTML receipts for Shift Closure (Fecho de Caixa).
  * Optimized for 80mm/58mm thermal printers.
  */
 
 export interface ShiftReceiptData {
-    restaurantName: string;
-    terminalId: string;
-    operatorName: string;
-    openedAt: Date;
-    closedAt: Date;
-    openingBalanceCents: number;
-    closingBalanceCents: number;
-    dailySalesCents: number;
-    expectedBalanceCents: number;
-    differenceCents: number;
-    paymentMethods?: Record<string, number>; // method -> cents
-    legalFooter?: string;
+  restaurantName: string;
+  terminalId: string;
+  operatorName: string;
+  openedAt: Date;
+  closedAt: Date;
+  openingBalanceCents: number;
+  closingBalanceCents: number;
+  dailySalesCents: number;
+  expectedBalanceCents: number;
+  differenceCents: number;
+  paymentMethods?: Record<string, number>; // method -> cents
+  legalFooter?: string;
 }
 
 export const generateShiftReceiptHtml = (data: ShiftReceiptData): string => {
-    const formatPrice = (cents: number) => {
-        return new Intl.NumberFormat('pt-PT', {
-            style: 'currency',
-            currency: 'EUR'
-        }).format(cents / 100);
-    };
+  const formatPrice = (cents: number) => {
+    return new Intl.NumberFormat("pt-PT", {
+      style: "currency",
+      currency: "EUR",
+    }).format(cents / 100);
+  };
 
-    const formatDate = (date: Date) => {
-        return date.toLocaleString('pt-PT', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        });
-    };
+  const formatDate = (date: Date) => {
+    return date.toLocaleString("pt-PT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
-    // calculate duration
-    const durationMs = data.closedAt.getTime() - data.openedAt.getTime();
-    const durationHrs = Math.floor(durationMs / (1000 * 60 * 60));
-    const durationMins = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+  // calculate duration
+  const durationMs = data.closedAt.getTime() - data.openedAt.getTime();
+  const durationHrs = Math.floor(durationMs / (1000 * 60 * 60));
+  const durationMins = Math.floor(
+    (durationMs % (1000 * 60 * 60)) / (1000 * 60),
+  );
 
-    // Base Styles for Thermal Printing
-    const styles = `
+  // Base Styles for Thermal Printing
+  const styles = `
         <style>
             @page { margin: 0; size: auto; }
             body {
@@ -64,7 +69,7 @@ export const generateShiftReceiptHtml = (data: ShiftReceiptData): string => {
         </style>
     `;
 
-    return `
+  return `
         <!DOCTYPE html>
         <html>
         <head>
@@ -86,7 +91,7 @@ export const generateShiftReceiptHtml = (data: ShiftReceiptData): string => {
                 <span>Operador:</span>
                 <span>${data.operatorName}</span>
             </div>
-            
+
             <div class="divider"></div>
 
             <div class="row">
@@ -111,17 +116,25 @@ export const generateShiftReceiptHtml = (data: ShiftReceiptData): string => {
                 <span>+ Vendas (Sessão):</span>
                 <span>${formatPrice(data.dailySalesCents)}</span>
             </div>
-            
-            ${data.paymentMethods ? `
+
+            ${
+              data.paymentMethods
+                ? `
                 <div style="margin-left: 10px; font-size: 10px; margin-bottom: 5px;">
-                    ${Object.entries(data.paymentMethods).map(([method, amount]) => `
+                    ${Object.entries(data.paymentMethods)
+                      .map(
+                        ([method, amount]) => `
                         <div class="row" style="margin-bottom: 2px;">
                             <span>- ${method}:</span>
                             <span>${formatPrice(amount)}</span>
                         </div>
-                    `).join('')}
+                    `,
+                      )
+                      .join("")}
                 </div>
-            ` : ''}
+            `
+                : ""
+            }
 
             <div class="divider"></div>
 
@@ -138,11 +151,13 @@ export const generateShiftReceiptHtml = (data: ShiftReceiptData): string => {
 
             <div class="row bold">
                 <span>Diferença:</span>
-                <span>${data.differenceCents > 0 ? '+' : ''}${formatPrice(data.differenceCents)}</span>
+                <span>${data.differenceCents > 0 ? "+" : ""}${formatPrice(
+    data.differenceCents,
+  )}</span>
             </div>
 
             <div class="footer">
-                ${data.legalFooter ? `${data.legalFooter}<br>` : ''}
+                ${data.legalFooter ? `${data.legalFooter}<br>` : ""}
                 Emitido em ${formatDate(new Date())}<br>
                 Software: ChefIApp POS
             </div>
