@@ -6,9 +6,9 @@
  */
 
 import React, { useState } from "react";
+import { currencyService } from "../../core/currency/CurrencyService";
 import { colors } from "../../ui/design-system/tokens/colors";
 import { spacing } from "../../ui/design-system/tokens/spacing";
-import { currencyService } from "../../core/currency/CurrencyService";
 
 export interface ReceiptShareOrder {
   id: string;
@@ -243,7 +243,10 @@ export const ReceiptShareModal: React.FC<ReceiptShareModalProps> = ({
             onClick={handleShare}
             style={btnStyle(colors.info.base || "#3B82F6")}
           >
-            📱 {navigator.share ? "Partilhar" : "Copiar Recibo"}
+            📱{" "}
+            {typeof navigator.share === "function"
+              ? "Partilhar"
+              : "Copiar Recibo"}
           </button>
 
           <button
