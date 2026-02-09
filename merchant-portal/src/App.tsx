@@ -92,8 +92,7 @@ import { EmployeeKDSIntelligentPage } from "./pages/Employee/KDSIntelligentPage"
 import { EmployeeMentorPage } from "./pages/Employee/MentorPage";
 import { EmployeeOperationPage } from "./pages/Employee/OperationPage";
 import { EmployeeTasksPage } from "./pages/Employee/TasksPage";
-import { FinancialDashboardPage } from "./pages/Financial/FinancialDashboardPage";
-import { GroupsDashboardPage } from "./pages/Groups/GroupsDashboardPage";
+
 import { HealthDashboardPage } from "./pages/Health/HealthDashboardPage";
 import { InstallPage } from "./pages/InstallPage";
 import { FeaturesPage } from "./pages/Landing/FeaturesPage";
@@ -106,7 +105,7 @@ import { ManagerDashboardPage } from "./pages/Manager/DashboardPage";
 import { ManagerReservationsPage } from "./pages/Manager/ReservationsPage";
 import { ManagerScheduleCreatePage } from "./pages/Manager/ScheduleCreatePage";
 import { ManagerSchedulePage } from "./pages/Manager/SchedulePage";
-import { MentorDashboardPage } from "./pages/Mentor/MentorDashboardPage";
+
 import { OwnerPurchasesPage } from "./pages/Owner/PurchasesPage";
 import { OwnerSimulationPage } from "./pages/Owner/SimulationPage";
 import { OwnerStockRealPage } from "./pages/Owner/StockRealPage";
@@ -120,7 +119,7 @@ import { GamificationImpactReportPage } from "./pages/Reports/GamificationImpact
 import { OperationalActivityReportPage } from "./pages/Reports/OperationalActivityReportPage";
 import { SalesByPeriodReportPage } from "./pages/Reports/SalesByPeriodReportPage";
 import { SalesSummaryReportPage } from "./pages/Reports/SalesSummaryReportPage";
-import { ReservationsDashboardPage } from "./pages/Reservations/ReservationsDashboardPage";
+
 import { RunbookCorePage } from "./pages/RunbookCorePage";
 import { SelectTenantPage } from "./pages/SelectTenantPage";
 import { RestaurantMinimalSetupPage } from "./pages/Setup/RestaurantMinimalSetupPage";
@@ -833,13 +832,7 @@ function AppContentWithBilling() {
           />
           <Route
             path="/admin/reservations"
-            element={
-              <ManagementAdvisor>
-                <DashboardLayout>
-                  <ReservationsDashboardPage />
-                </DashboardLayout>
-              </ManagementAdvisor>
-            }
+            element={<Navigate to="/dashboard" replace />}
           />
           <Route
             path="/admin/payments/list"
@@ -1210,11 +1203,7 @@ function AppContentWithBilling() {
           />
           <Route
             path="/mentor"
-            element={
-              <ManagementAdvisor>
-                <MentorDashboardPage />
-              </ManagementAdvisor>
-            }
+            element={<Navigate to="/dashboard" replace />}
           />
           <Route
             path="/purchases"
@@ -1226,27 +1215,15 @@ function AppContentWithBilling() {
           />
           <Route
             path="/financial"
-            element={
-              <ManagementAdvisor>
-                <FinancialDashboardPage />
-              </ManagementAdvisor>
-            }
+            element={<Navigate to="/dashboard" replace />}
           />
           <Route
             path="/reservations"
-            element={
-              <ManagementAdvisor>
-                <ReservationsDashboardPage />
-              </ManagementAdvisor>
-            }
+            element={<Navigate to="/dashboard" replace />}
           />
           <Route
             path="/groups"
-            element={
-              <ManagementAdvisor>
-                <GroupsDashboardPage />
-              </ManagementAdvisor>
-            }
+            element={<Navigate to="/dashboard" replace />}
           />
           <Route
             path="/app/billing"
@@ -1298,7 +1275,7 @@ function AppContentWithBilling() {
           />
           <Route
             path="/app/reports/finance"
-            element={<Navigate to="/financial" replace />}
+            element={<Navigate to="/dashboard" replace />}
           />
           {/* Página Web (sidebar) → Dashboard (comando central; em SETUP mostra "Complete o setup"). Não usar /config (onboarding antigo morto). */}
           <Route

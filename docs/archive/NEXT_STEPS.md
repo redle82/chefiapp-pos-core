@@ -1,66 +1,330 @@
-# 🎯 PRÓXIMOS PASSOS - ChefIApp POS Core
+# NEXT STEPS - ChefIApp Core
 
-**Score Atual:** 97/100  
-**Gap para 100:** 3 pontos
+> Checklist of next steps after cleanup, validation, and ratification of the Core.
+> Date: 2026-02-01 · Updated: **Primeiro cliente pago** (Fases 1–6 do [PLANO_FINAL_PRIMEIRO_E79.md](docs/PLANO_FINAL_PRIMEIRO_E79.md) concluídas).
 
----
+**👉 Fazer agora (se ainda não fizeste Supabase):** [Supabase deploy — Começar aqui](docs/implementation/FASE_5_SUPABASE_DEPLOY.md)
 
-## ⏳ AÇÕES PENDENTES
+**Próxima ação (1 minuto):** Enviar email a 2 restaurantes → abrir [ONDA_4_PILOTO_P1.md](docs/pilots/ONDA_4_PILOTO_P1.md) §7.1 (dois emails prontos: Can Terra, La Brasa); copiar/colar, enviar.
 
-### 1. Uptime Monitoring (30 minutos - Manual)
-**Impacto:** +2 pontos (97 → 99/100)
+**Next (agora):**
 
-**Passos:**
-1. Criar conta no [UptimeRobot](https://uptimerobot.com) ou [Pingdom](https://pingdom.com)
-2. Adicionar novo monitor:
-   - **URL:** `https://seu-dominio.com/health`
-   - **Tipo:** HTTP(s)
-   - **Intervalo:** 5 minutos
-3. Configurar alertas:
-   - Email de notificação
-   - Slack (opcional)
-
-**Resultado:** Sistema monitorado 24/7
+- **Menu — soberania (implementação concluída):** Estado operacional do Menu (EMPTY → INCOMPLETE → VALID_UNPUBLISHED → LIVE) aplicado em Dashboard, TPV, KDS, QR/Web e Config. **Próximos passos operacionais:** 1) [Congelamento 7 dias (A)](docs/pilots/CONGELAMENTO_7_DIAS_A.md) — usar o sistema em cenário real sem alterar código do Menu; 2) [Primeira venda auditável (C)](docs/pilots/PRIMEIRA_VENDA_AUDITAVEL_C.md) — validar fluxo menu → publicação → venda → core financeiro. Refs: [MENU_OPERATIONAL_STATE](docs/architecture/MENU_OPERATIONAL_STATE.md), [MENU_DERIVATIONS_CHECKLIST](docs/architecture/MENU_DERIVATIONS_CHECKLIST.md), [ORE_ORGANISM_AND_MENU](docs/architecture/ORE_ORGANISM_AND_MENU.md) (modelo organismo + auditorias §7–§13 + ORE Manual humano + ADR-011 congelamento conceptual).
+- **Teste Humano Supremo v2.5 (ritual turno):** Executado 2026-02-02 — **PASSOU**. Lei do Turno (fonte única + refresh no timing certo) + fix KDS (ORE isChecking + useLayoutEffect). Ritual: TPV → abrir turno → criar pedido → Dashboard → KDS; sem banner "turno fechado"; métricas e fila coerentes. Spec E2E: `merchant-portal/tests/e2e/teste-humano-supremo-v25.spec.ts`. **Próximo passo:** [Definition of Ready para Venda](docs/pilots/DOR_VENDA.md) — checklist 10 min por humano; gate P1 Piloto real.
+- **P1 Piloto — próxima ação (comercial):** Enviar proposta a 2 restaurantes (ex. Can Terra, La Brasa); ao confirmar, atualizar [ONDA_4_PILOTO_P1.md](docs/pilots/ONDA_4_PILOTO_P1.md) §9 (Estado → confirmada). Repetir até 5 confirmadas → P1 ativo; depois executar §10. Script: §7 do mesmo doc.
+- **Fluxo WEB vs OPERAÇÃO — concluído:** Rotas web (dashboard, config, billing, onboarding) sempre render para dono; operação (TPV/KDS) bloqueada em SETUP. Mapa e guard: [ROUTES_WEB_VS_OPERATION.md](docs/implementation/ROUTES_WEB_VS_OPERATION.md). Declaração oficial (v1 congelada): [DECLARACAO_POS_REFATORACAO_WEB_V1.md](docs/DECLARACAO_POS_REFATORACAO_WEB_V1.md). Opção A aplicada: `/demo-guiado` → `/auth?demo=1`, `/demo` → `/auth`. E2E smoke atualizado e a passar: `E2E_NO_WEB_SERVER=1 npm run test:e2e:smoke` (11 testes).
+- **Fluxo criação restaurante (Docker + Pilot):** Bootstrap → Criar restaurante → Primeiro produto → Dashboard ou TPV validado em browser (Pilot mode ativado em bootstrap; mock restaurante + onboarding completo para permitir /op/tpv). E2E local: `E2E_NO_WEB_SERVER=1 npm run test:e2e:smoke`.
+- **Se ainda não fizeste deploy Supabase nem FASE B em URL real:** 1) [Supabase deploy](docs/implementation/FASE_5_SUPABASE_DEPLOY.md) → 2) [FASE B em Supabase](docs/implementation/FASE_5_FASE_B_SUPABASE_RUNBOOK.md) → 3) Se PASSOU → [Primeiro cliente pagante €79](docs/pilots/CHECKLIST_PRIMEIRO_CLIENTE_PAGANTE.md). Manual; sem código pendente.
+- **Se o primeiro €79 já está fechado (Fases 1–6 feitas):** 1) `git tag first-paid-customer` e `git push origin first-paid-customer` → 2) Próximo bloco: [Onda 5](docs/pilots/ONDA_4_VALOR_E_ONDA_5.md) (dashboard com uso real) ou [Bloco 1 Piloto](docs/VALIDACAO_BLOCO_1_PILOTO.md) (lista 10 alvos, 5 instalações).
+- **E2E local:** `cd merchant-portal && npm run test:e2e`. Se a app já estiver a correr em 5175: `E2E_NO_WEB_SERVER=1 npm run test:e2e`. Noutra porta: `E2E_BASE_URL=http://localhost:PORTA npm run test:e2e`. **Smoke rápido:** `E2E_NO_WEB_SERVER=1 npm run test:e2e:smoke` (fluxo-total + fase-a + fase-b).
+- **Teste Humano Supremo E2E:** Prompt canónico para o antigravity (entrada → restaurante → menu → billing → TPV → KDS → relatório): [docs/pilots/TESTE_HUMANO_SUPREMO_E2E_PROMPT.md](docs/pilots/TESTE_HUMANO_SUPREMO_E2E_PROMPT.md). Copiar o doc na íntegra para o executor; após o relatório, ver plano de próximo corte (correção 72h / DoR / v2 AppStaff). **Plano de correção pós-teste (72h):** [docs/pilots/PLANO_CORRECAO_POS_TESTE_HUMANO_SUPREMO.md](docs/pilots/PLANO_CORRECAO_POS_TESTE_HUMANO_SUPREMO.md). Correções F1–F5 executadas (2026-02-01); **próximo:** repetir Teste Humano Supremo no antigravity para validar. **Estado oficial do sistema:** ver secção "Estado oficial do sistema" no mesmo plano (PÓS-TESTE HUMANO SUPREMO v1 — EM CORREÇÃO CONTROLADA; gate checklist v2; o que não fazer; opções A/B/C).
 
 ---
 
-### 2. Deploy Automatizado (6-8 horas)
-**Impacto:** +1 ponto (99 → 100/100)
+## FASE 5 (implementation) — Próximo executável
 
-**Passos:**
-1. Configurar deploy em staging:
-   - GitHub Actions workflow
-   - Deploy automático em push para `develop`
-2. Configurar deploy em produção:
-   - Deploy com approval manual
-   - Rollback automático em caso de erro
-3. Testar pipeline completo
-
-**Resultado:** Deploy automatizado e seguro
+**Estado:** FASE C feita; FASE B E2E local PASSOU (2026-02-01). Fluxo único: Landing → Auth → Bootstrap (sem estados demo paralelos; ver CONTRATO_VIDA_RESTAURANTE v2). **Fluxo total:** [FASE_5_FLUXO_TOTAL_CHECKLIST.md](docs/implementation/FASE_5_FLUXO_TOTAL_CHECKLIST.md) — 10 fases (configuração → TPV/KDS → tarefas → pedido → trial → Billing Stripe demo). **Próximo passo:** 1) [Supabase deploy](docs/implementation/FASE_5_SUPABASE_DEPLOY.md) (criar projeto, migrations, env, Auth) → 2) [FASE B em Supabase](docs/implementation/FASE_5_FASE_B_SUPABASE_RUNBOOK.md) (URL real) → 3) Se PASSOU → [Primeiro cliente pagante €79](docs/pilots/CHECKLIST_PRIMEIRO_CLIENTE_PAGANTE.md). Índice: [docs/implementation/INDEX.md](docs/implementation/INDEX.md).
 
 ---
 
-## 📊 TIMELINE
+## Próximo passo imediato
 
-| Ação | Tempo | Impacto | Score Final |
-|------|-------|---------|-------------|
-| Uptime Monitoring | 30 min | +2 | 99/100 |
-| Deploy Automatizado | 6-8h | +1 | **100/100** |
-| **TOTAL** | **6.5-8.5h** | **+3** | **100/100** |
+**Estado consolidado:** [docs/ESTADO_CONSOLIDADO_SISTEMA.md](docs/ESTADO_CONSOLIDADO_SISTEMA.md) — estado atual válido e intencional; 500s esperados; regra: produto avaliado por humano, não por Network tab. **Decisões Fase €79:** [docs/DECISOES_CONSOLIDADAS_FASE_E79.md](docs/DECISOES_CONSOLIDADAS_FASE_E79.md) — papéis (Dono-first), presença digital adiada, três adiamentos explícitos.
+
+**Plano executável (do agora até ao primeiro €79):** [docs/PLANO_FINAL_PRIMEIRO_E79.md](docs/PLANO_FINAL_PRIMEIRO_E79.md) — Fases 0–6, sem decisões; seguir até fechar.
+
+**Ordem ativa (Opção A — Comercial):** Executar exatamente nesta ordem. Supabase só depois do primeiro dinheiro real ([SUPABASE_QUANDO_ATIVAR.md](docs/SUPABASE_QUANDO_ATIVAR.md)).
+
+| #   | Passo                    | Doc                                                                                       | Critério                                                                        |
+| --- | ------------------------ | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1   | Teste Humano E2E         | [VALIDACAO_TESTE_HUMANO_E2E.md](docs/VALIDACAO_TESTE_HUMANO_E2E.md)                       | Escrever "Agora vejo." Se falhar: ajustar copy/CTA/gating, nunca arquitetura.   |
+| 2   | Stripe Live              | [VALIDACAO_STRIPE_PRODUCAO.md](docs/VALIDACAO_STRIPE_PRODUCAO.md)                         | 1 checkout completo funcional (pode ser cartão de teste).                       |
+| 3   | Domínio                  | [VALIDACAO_DOMINIO_PRODUCAO.md](docs/VALIDACAO_DOMINIO_PRODUCAO.md)                       | HTTPS ativo; redirects e webhook alinhados com Stripe.                          |
+| 4   | Primeiro Cliente Pagante | [VALIDACAO_ONBOARDING_PRIMEIRO_CLIENTE.md](docs/VALIDACAO_ONBOARDING_PRIMEIRO_CLIENTE.md) | 1 restaurante, 1 turno, €79 recebidos, feedback curto. Nesse momento = negócio. |
+| 5   | Supabase                 | [SUPABASE_QUANDO_ATIVAR.md](docs/SUPABASE_QUANDO_ATIVAR.md)                               | Após passo 4: projeto, migrações, webhook Stripe.                               |
+| 6   | Fecho                    | [PLANO_FINAL_PRIMEIRO_E79.md](docs/PLANO_FINAL_PRIMEIRO_E79.md) § Fase 6                  | Marcar "Primeiro cliente pago", tag `first-paid-customer`.                      |
+| 7   | Google Auth              | [AUTH_GOOGLE_QUANDO_ENTRAR.md](docs/AUTH_GOOGLE_QUANDO_ENTRAR.md)                         | Só após Supabase; otimização de onboarding, não requisito de venda.             |
+
+**Roteiro venda:** [docs/PLANO_VENDA_STRIPE_DOMINIO_ONBOARDING.md](docs/PLANO_VENDA_STRIPE_DOMINIO_ONBOARDING.md)
+
+1. **Stripe** — [docs/VALIDACAO_STRIPE_PRODUCAO.md](docs/VALIDACAO_STRIPE_PRODUCAO.md): `VITE_STRIPE_PRICE_ID`, webhook `stripe-billing-webhook`, migração `billing_status`.
+2. **Domínio** — [docs/VALIDACAO_DOMINIO_PRODUCAO.md](docs/VALIDACAO_DOMINIO_PRODUCAO.md): DNS, HTTPS, deploy merchant-portal, URLs Stripe em produção.
+3. **Primeiro cliente pagante** — [docs/pilots/CHECKLIST_PRIMEIRO_CLIENTE_PAGANTE.md](docs/pilots/CHECKLIST_PRIMEIRO_CLIENTE_PAGANTE.md): 1 restaurante piloto, €79, smoke test, feedback.
+4. **Supabase** — ⏸️ Em espera até primeiro dinheiro real. Regra e checklist: [docs/SUPABASE_QUANDO_ATIVAR.md](docs/SUPABASE_QUANDO_ATIVAR.md).
+5. **Google Auth** — Só após Supabase. Regra: [docs/AUTH_GOOGLE_QUANDO_ENTRAR.md](docs/AUTH_GOOGLE_QUANDO_ENTRAR.md).
+6. **Bloco 1 Piloto** — [docs/VALIDACAO_BLOCO_1_PILOTO.md](docs/VALIDACAO_BLOCO_1_PILOTO.md): ICP, lista 10 alvos, script abordagem, checklist onboarding, agendar 5 instalações ([docs/pilots/ONDA_4_PILOTO_P1.md](docs/pilots/ONDA_4_PILOTO_P1.md)).
+7. **Bloco 2 Piloto** — [docs/VALIDACAO_BLOCO_2_PILOTO.md](docs/VALIDACAO_BLOCO_2_PILOTO.md): métricas, template report 2 semanas, checklist 2 sem, regra go/no-go ([docs/pilots/ONDA_4_PILOTO_P2.md](docs/pilots/ONDA_4_PILOTO_P2.md)).
+8. **Bloco 3 Production Readiness** — [docs/VALIDACAO_BLOCO_3_PRODUCTION.md](docs/VALIDACAO_BLOCO_3_PRODUCTION.md): testes, gate CI, release, migrações, observabilidade (itens 14–18 já [x] no [checklist](docs/ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md)).
+9. **Bloco 4 Valor percebido** — Welcome, landing/pitch, preço piloto ([docs/pilots/ONDA_4_VALOR_E_ONDA_5.md](docs/pilots/ONDA_4_VALOR_E_ONDA_5.md) § Bloco 4).
+10. **Bloco 5 Onda 5** — Definir escopo, congelar, executar ([docs/pilots/ONDA_4_VALOR_E_ONDA_5.md](docs/pilots/ONDA_4_VALOR_E_ONDA_5.md) § Bloco 5); refs: [ROADMAP_FECHO_GAPS_CHEFIAPP.md](docs/ROADMAP_FECHO_GAPS_CHEFIAPP.md), [ONDAS_4_A_7_ESTRATEGIA.md](docs/ONDAS_4_A_7_ESTRATEGIA.md).
+
+**Ferramentas venda:** Script presencial 5–7 min: [docs/pilots/SCRIPT_VENDA_PRESENCIAL_5_7_MIN.md](docs/pilots/SCRIPT_VENDA_PRESENCIAL_5_7_MIN.md). Checklist segundo cliente: [docs/pilots/CHECKLIST_SEGUNDO_CLIENTE.md](docs/pilots/CHECKLIST_SEGUNDO_CLIENTE.md).
+
+**Depois da Onda 4:** Executar Onda 5 (kick-off conforme plano definido no passo 8).
+
+**Onda 5 — Estado** (ref.: [ONDAS_4_A_7_ESTRATEGIA.md](docs/ONDAS_4_A_7_ESTRATEGIA.md) — Owner Dashboard & controlo, ~30 dias):
+
+- Escopo e critérios em [ONDA_4_VALOR_E_ONDA_5.md](docs/pilots/ONDA_4_VALOR_E_ONDA_5.md) §22. Escopo congelado: [ONDA_5_ESCOPO_CONGELADO.md](docs/pilots/ONDA_5_ESCOPO_CONGELADO.md).
+- Primeiras tarefas: [ONDA_5_TAREFAS.md](docs/pilots/ONDA_5_TAREFAS.md). **Implementado:** O5.1 (hub + atalhos), O5.5 (métricas do dia), O5.6 (histórico por turno), O5.7 (fonte única métricas — coreOrSupabaseRpc), O5.8 (alertas no hub), O5.9 (limiares), O5.10 (ação imediata + runbook).
+- Checklist Onda 4 itens 22–24 marcados em [ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md](docs/ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md). **Próximo Onda 5:** validar dashboard com uso real ([VALIDACAO_TESTE_HUMANO_E2E.md](docs/VALIDACAO_TESTE_HUMANO_E2E.md) + Stripe + primeiro cliente) ou marcar kick-off comunicado; depois Onda 6.
 
 ---
 
-## ✅ APÓS COMPLETAR
+## ✅ PRIMEIRO CLIENTE PAGO (Plano €79 — Fases 1–6)
 
-Com 100/100, o sistema terá:
-- ✅ Testes completos
-- ✅ Monitoring completo
-- ✅ CI/CD completo
-- ✅ Deploy automatizado
-- ✅ Code splitting otimizado
-- ✅ Score perfeito
+- [x] Fase 1 — Teste Humano E2E ("Agora vejo.")
+- [x] Fase 2 — Stripe Live (VITE_STRIPE_PRICE_ID, /app/billing)
+- [x] Fase 3 — Domínio + Produção (HTTPS, rotas validadas)
+- [x] Fase 4 — Primeiro cliente pagante (€79 recebidos)
+- [x] Fase 5 — Supabase (projeto, migrações, webhook)
+- [x] Fase 6 — Fecho (NEXT_STEPS atualizado; tag `first-paid-customer` quando fizer push)
+
+**Tag (quando fizer push):** `git tag first-paid-customer` → `git push origin first-paid-customer`
 
 ---
 
-**Status:** Pronto para os últimos 3 pontos!
+## ✅ ONDA 3 CONCLUÍDA (Fev 2026)
 
+- [x] **E1–E3** — THREAT_MODEL mitigações, validação/rate limit, OWASP_ASVS evidência
+- [x] **F1–F3** — Auth/caixa audit events, purge runbook
+- [x] **G1–G4** — Event pipeline (Realtime), SLO_SLI §2.1, alertas §G3, dashboard operacional (OperationalMetricsCards)
+- [x] **H1–H2** — DATA_LINEAGE §3 (tabelas→fontes→consumidores), processo §5.1 + `scripts/lineage-check.sh`
+- [x] **CHECKLIST_FECHO_GAPS** atualizado (16 itens 🟢)
+
+Ver: [docs/ONDA_3_TAREFAS_90_DIAS.md](docs/ONDA_3_TAREFAS_90_DIAS.md) · [docs/CHECKLIST_FECHO_GAPS.md](docs/CHECKLIST_FECHO_GAPS.md).
+
+---
+
+## ✅ Hardening Dashboard e fluxo (Fev 2026)
+
+- [x] **Dashboard nunca vazio** — `DashboardPortal.tsx`: ramificação por `systemState` (SETUP → SetupRequiredView, SUSPENDED → SuspendedView, TRIAL/ACTIVE → dashboard completo, fallback → EmptyState). UI lê apenas `systemState`; `systemMode` no OUC derivado de `systemState`.
+- [x] **Return null audit** — [docs/implementation/RETURN_NULL_AUDIT.md](docs/implementation/RETURN_NULL_AUDIT.md): lista de perigosos; corrigidos AuthPage, OperationalMetricsCards, ShiftHistorySection, PublicQRSection, PublicPresenceFields, ShiftChecklistSection, RequireActivation, TenantSelectorPage, OnboardingReminder (loading ou CTA em vez de null).
+- [x] **Copy /demo-guiado e tour** — "Demo · 3 min" → "Exemplo real · 3 min"; "simulação" → "exemplo real"; OSCopy.demo e DemoTourPage sem "demo/piloto/ao vivo"; DemoExplicativoCard "Modo demo" → "Exemplo".
+- [x] **Web exclusiva do Dono** — [CONTRATO_OWNER_ONLY_WEB](docs/contracts/CONTRATO_OWNER_ONLY_WEB.md) + [FASE_2_OWNER_ONLY_WEB](docs/implementation/FASE_2_OWNER_ONLY_WEB.md): AdminSidebar sem seletor "MODO DE VISÃO"; EcraZero sem condição por `role`; checklist técnica e índice atualizados. Smoke E2E: 11 passed.
+
+---
+
+## ✅ COMPLETED IN THIS SESSION
+
+- [x] **WebOrderingService** — Tipos e shim Supabase (Docker): `customer_email` em `WebOrderInput`, casts `(supabase as any)` para compatibilidade Jest; mock `rpc` em `WebOrderingService.test.ts`; 4 testes passam, 2 em skip (recordOrderSubmission / timeout).
+- [x] Total code cleanup (25 files, 11 directories)
+- [x] Complete validation (24h simulation)
+- [x] Core Manifesto ratified
+- [x] Fail-fast mode implemented
+- [x] Complete documentation created
+- [x] Commits organized
+- [x] Historical tag created (`v1.0-core-sovereign`)
+
+---
+
+## 🚀 NEXT STEPS
+
+### Immediate (Today/Tomorrow)
+
+- **Onda 4.5 — Máquina de venda ligada.** CTA → Auth → Onboarding → TPV; Billing dentro do app (BillingBanner, /app/billing, past_due gating em TPV/KDS/Cash). **Próximo:** instalar em 1 restaurante real e ativar Stripe (€79). Checklist: [docs/pilots/CHECKLIST_PRIMEIRO_CLIENTE_PAGANTE.md](docs/pilots/CHECKLIST_PRIMEIRO_CLIENTE_PAGANTE.md). Pendência BD: aplicar migração `20260201180000_add_billing_status_to_gm_restaurants.sql` se ainda não aplicada.
+- [ ] **Checklist Piloto e Produção (Onda 4)** — **P1:** [ONDA_4_PILOTO_P1.md](docs/pilots/ONDA_4_PILOTO_P1.md) (§5–§10 pronto). **Próximo passo:** confirmar 5 datas em §9 → P1 ativo; executar §10. **P2:** [ONDA_4_PILOTO_P2.md](docs/pilots/ONDA_4_PILOTO_P2.md) (estrutura §10–§13 pronta); preencher quando P1 tiver 2 semanas. Em paralelo: Passo 3 (Valor percebido) em [ONDA_4_VALOR_E_ONDA_5.md](docs/pilots/ONDA_4_VALOR_E_ONDA_5.md).
+- [x] **Onda 4 — POS Ultra-Rápido (escopo engenharia)** — A1–A4, B1–B6, C1–C3, D1–D2 concluídos. Ref.: [ONDA_4_TAREFAS_30_45_DIAS.md](docs/ONDA_4_TAREFAS_30_45_DIAS.md). **Próximo:** P1–P2 piloto (2–5 restaurantes; métricas) ou push/CI/testes.
+- [ ] **Refinamentos pós-Onda 3** — Itens ainda 🟡 em [CHECKLIST_FECHO_GAPS](docs/CHECKLIST_FECHO_GAPS.md) (ex.: revisão jurídica/DPO em GDPR_MAPPING, RETENTION_POLICY; C2). Ou: push, CI, testes.
+- [x] **Jest: excluir merchant-portal** — Em `jest.config.js`, o projeto `node` usa `roots` apenas em pastas com testes Jest; merchant-portal (Vitest) deixou de ser corrido pelo `npm test` na raiz. Resultado: 99 suítes (18 menos), 53 passam, 46 falham (falhas restantes em `tests/` — integração, mocks, tipos).
+- [ ] **Estado dos testes (`npm test`)**
+      Suíte raiz (Jest): **34 suítes passam, 65 falham**. **464 testes passam, 26 falham, 4 em skip.** Correções feitas: PostgresLink mock (jsdom), FiscalConfigAlert (stub + React import), realtime-reconnect (API ReconnectManager), tipos em property-based.test.ts (property-based continua em testPathIgnorePatterns e depende de event-log/projections removidos). Próximo: refatorar testes que dependem de APIs/módulos removidos ou corrigir tipos/import.meta.
+
+- [x] **Push to remote** _(feito: core/frozen-v1 e tag v1.0-core-sovereign)_
+
+  ```bash
+  git push -u origin core/frozen-v1
+  git push origin v1.0-core-sovereign
+  ```
+
+  **Próximo passo imediato:** Preencher [ONDA_4_PILOTO_P1.md](docs/pilots/ONDA_4_PILOTO_P1.md) §6 (lista 10 alvos) e §9 (agendar 5 instalações).
+
+- [ ] **Review created documentation**
+  - Read `START_HERE.md`
+  - Review `CORE_MANIFESTO.md`
+  - Validate `EXECUTIVE_SUMMARY.md`
+
+### Short Term (This Week)
+
+- [x] **Integrate fail-fast in CI/CD** _(feito: Makefile com simulate-failfast; CI corre make simulate-failfast após npm ci)_
+
+  - Add step in GitHub Actions / GitLab CI
+  - Run `make simulate-failfast` on each PR
+  - Block merge if it fails
+
+- [ ] **Add PR gates**
+
+  - Requirement: `make simulate-24h-small` must pass
+  - Requirement: `make assertions` must pass
+  - Document in `CONTRIBUTING.md`
+
+- [ ] **Document development workflow**
+  - How to make changes to Core
+  - When to use fail-fast vs complete simulation
+  - Validation process before commit
+
+### Medium Term (This Month)
+
+- [ ] **Return to UI calmly**
+
+  - Core is protected, can evolve UI without risk
+  - Focus on UX improvements
+  - Keep Core intact
+
+- [ ] **Tests with real restaurant**
+
+  - Identify pilot restaurant
+  - Validate Core in real operation
+  - Collect feedback
+
+- [ ] **Small pilot**
+  - 1-3 restaurants
+  - Governance validation in production
+  - Adjustments based on feedback
+
+### Long Term (Next 3 Months)
+
+- [ ] **Target architecture 2026+**
+
+  - Plan architectural evolutions
+  - Document long-term vision
+  - Align with manifesto
+
+- [ ] **Market entry plan**
+
+  - Product narrative
+  - Competitive positioning
+  - Go-to-market strategy
+
+- [ ] **Product narrative**
+  - Competitive differentiator
+  - Use cases
+  - Value proof
+
+---
+
+## 🔧 TECHNICAL IMPROVEMENTS
+
+### Simulator
+
+- [ ] Add more restaurant profiles
+- [ ] Create "ultra-fast" mode (30 seconds)
+- [ ] Add performance metrics
+- [ ] Create metrics dashboard
+
+### Documentation
+
+- [ ] Add Core usage examples
+- [ ] Create troubleshooting guide
+- [ ] Document Core APIs
+- [ ] Create architecture diagrams
+
+### CI/CD
+
+- [ ] Automate validation on each commit
+- [ ] Create automatic reports
+- [ ] Integrate with monitoring tools
+- [ ] Add regression alerts
+
+---
+
+## 📊 METRICS TO TRACK
+
+### Core
+
+- [ ] Number of manifesto violations
+- [ ] Simulator success rate
+- [ ] Fail-fast execution time
+- [ ] Test coverage
+
+### Development
+
+- [ ] Average validation time
+- [ ] Detected regression rate
+- [ ] Number of PRs blocked by failure
+- [ ] Team satisfaction
+
+---
+
+## 🎯 HIGH-LEVEL OBJECTIVES
+
+### Core Protection
+
+- [ ] Zero manifesto violations
+- [ ] 100% of PRs validated by simulator
+- [ ] Zero regressions in production
+
+### Core Evolution
+
+- [ ] New features always validated
+- [ ] Documentation always updated
+- [ ] Simulator always exercising
+
+### Product
+
+- [ ] Core validated in real production
+- [ ] Feedback incorporated
+- [ ] Roadmap aligned with manifesto
+
+---
+
+## 📝 NOTES
+
+### Pending Decisions
+
+- [ ] Evaluate referenced but unconfigured edge functions
+
+  - `analytics-engine`
+  - `reconcile`
+  - `health`
+
+- [ ] Decide on delivery adapters
+
+  - `ifood.ts`
+  - `uber-eats.ts`
+
+- [ ] Review old TODOs (80+)
+  - Convert to issues or remove
+
+### Identified Risks
+
+- [ ] TypeScript errors in pre-commit hook
+
+  - Resolve or adjust hook
+
+- [ ] Extensive commented code (60+ files)
+  - Review and clean
+
+---
+
+## 🎓 LESSONS FOR THE FUTURE
+
+1. **Keep manifesto updated**
+
+   - Review periodically
+   - Update when necessary
+   - Communicate changes
+
+2. **Simulator is priority**
+
+   - Always exercise new features
+   - Maintain high coverage
+   - Use fail-fast during development
+
+3. **Documentation is investment**
+   - Keep updated
+   - Facilitate onboarding
+   - Reduce questions
+
+---
+
+## 💬 CONTACT AND SUPPORT
+
+For questions about next steps:
+
+- Consult `START_HERE.md` for navigation
+- Consult `CORE_MANIFESTO.md` for principles
+- Consult `docs/PROJECT_STATUS.md` for current state
+
+---
+
+_This document should be reviewed and updated periodically._
