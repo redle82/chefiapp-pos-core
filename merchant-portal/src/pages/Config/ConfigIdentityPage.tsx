@@ -5,7 +5,6 @@
  * Visual: Restaurant OS Design System (dark default, tokens do core-design-system).
  */
 
-import { colors, space, fontSize, fontWeight, fontFamily } from "@chefiapp/core-design-system";
 import { IdentitySection } from "../Onboarding/sections/IdentitySection";
 import { RestaurantSetupLayout } from "./RestaurantSetupLayout";
 

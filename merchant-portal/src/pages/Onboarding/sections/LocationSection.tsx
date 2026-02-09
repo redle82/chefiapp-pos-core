@@ -64,7 +64,11 @@ export function LocationSection() {
 
         if (restaurantError) {
           const msg = restaurantError?.message ?? String(restaurantError);
-          if (!cancelled && !msg.includes("abort") && !msg.includes("Failed to fetch")) {
+          if (
+            !cancelled &&
+            !msg.includes("abort") &&
+            !msg.includes("Failed to fetch")
+          ) {
             console.warn(
               "[LocationSection] Erro ao carregar localização:",
               restaurantError,
@@ -83,7 +87,10 @@ export function LocationSection() {
         if (zonesError && !cancelled) {
           const zMsg = zonesError?.message ?? String(zonesError);
           if (!zMsg.includes("abort") && !zMsg.includes("Failed to fetch")) {
-            console.warn("[LocationSection] Erro ao carregar zonas:", zonesError);
+            console.warn(
+              "[LocationSection] Erro ao carregar zonas:",
+              zonesError,
+            );
           }
         }
 
@@ -100,7 +107,11 @@ export function LocationSection() {
         }
       } catch (error: any) {
         const msg = error?.message ?? String(error);
-        if (!cancelled && !msg.includes("abort") && !msg.includes("Failed to fetch")) {
+        if (
+          !cancelled &&
+          !msg.includes("abort") &&
+          !msg.includes("Failed to fetch")
+        ) {
           console.warn(
             "[LocationSection] Erro inesperado ao carregar localização:",
             error,
@@ -208,12 +219,14 @@ export function LocationSection() {
           }
 
           // 3. Criar mesas via RPC (Core only)
-          const { data: tablesData, error: tablesError } =
-            await dockerCoreClient.rpc("create_tables_from_capacity", {
+          const { error: tablesError } = await dockerCoreClient.rpc(
+            "create_tables_from_capacity",
+            {
               p_restaurant_id: restaurantId,
               p_capacity: formData.capacity,
               p_tables_per_zone: 5,
-            });
+            },
+          );
 
           if (tablesError) {
             console.warn(

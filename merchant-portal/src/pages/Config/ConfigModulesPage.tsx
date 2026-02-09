@@ -5,7 +5,6 @@
  */
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { useRestaurantId } from "../../core/hooks/useRestaurantId";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
@@ -29,7 +28,6 @@ interface InstalledModule {
 }
 
 export function ConfigModulesPage() {
-  const navigate = useNavigate();
   const {
     runtime,
     installModule: runtimeInstallModule,
@@ -38,7 +36,7 @@ export function ConfigModulesPage() {
   const { restaurantId: runtimeRestaurantId } = useRestaurantId();
   const [modules, setModules] = useState<InstalledModule[]>([]);
   const isDocker = getBackendType() === BackendType.docker;
-  const [availableModules, setAvailableModules] = useState([
+  const [availableModules] = useState([
     {
       id: "tpv",
       name: "TPV (Point of Sale)",

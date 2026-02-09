@@ -22,18 +22,23 @@ import { UbicacionList } from "./UbicacionList";
 
 export function UbicacionesPage() {
   const navigate = useNavigate();
-  const [locations, setLocations] = useState<Location[]>(() => locationsStore.getLocations());
+  const [locations, setLocations] = useState<Location[]>(() =>
+    locationsStore.getLocations(),
+  );
 
   useEffect(() => {
     setLocations(locationsStore.getLocations());
   }, []);
 
-  const refresh = useCallback(() => {
-    setLocations(locationsStore.getLocations());
-  }, []);
-
   return (
-    <div style={{ width: "100%", maxWidth: 960, margin: 0, fontFamily: fontFamily.sans }}>
+    <div
+      style={{
+        width: "100%",
+        maxWidth: 960,
+        margin: 0,
+        fontFamily: fontFamily.sans,
+      }}
+    >
       <header
         style={{
           marginBottom: space.lg,
@@ -55,8 +60,15 @@ export function UbicacionesPage() {
           >
             Ubicaciones
           </h1>
-          <p style={{ margin: 0, fontSize: fontSize.sm, color: colors.textSecondary }}>
-            Locais operacionais. Onde a operação acontece (TPV, Staff, KDS). Sem plano nem pagamento.
+          <p
+            style={{
+              margin: 0,
+              fontSize: fontSize.sm,
+              color: colors.textSecondary,
+            }}
+          >
+            Locais operacionais. Onde a operação acontece (TPV, Staff, KDS). Sem
+            plano nem pagamento.
           </p>
         </div>
         <button

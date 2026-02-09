@@ -48,17 +48,6 @@ type BootstrapState =
 // S0 CONFIG: More tolerant values
 const BOOTSTRAP_TIMEOUT = 15000; // 15s (was 10s) - Give slow backends a chance
 
-// FASE 1 Passo 1: presets por país (nome, tipo, país/moeda, timezone)
-const COUNTRY_PRESETS: Record<
-  string,
-  { timezone: string; currency: string; locale: string }
-> = {
-  BR: { timezone: "America/Sao_Paulo", currency: "BRL", locale: "pt-BR" },
-  ES: { timezone: "Europe/Madrid", currency: "EUR", locale: "es-ES" },
-  PT: { timezone: "Europe/Lisbon", currency: "EUR", locale: "pt-PT" },
-  US: { timezone: "America/New_York", currency: "USD", locale: "en-US" },
-};
-
 const RESTAURANT_TYPES = [
   "Restaurante",
   "Café",
@@ -318,8 +307,6 @@ export function BootstrapPage({
         if (!user) {
           user = { id: self.crypto.randomUUID() };
         }
-
-        const preset = COUNTRY_PRESETS[restaurantCountry] || COUNTRY_PRESETS.PT;
 
         // Insert ONLY via Core (DbWriteGate → Docker PostgREST)
         // Core gm_restaurants: id, tenant_id, name, slug, description, owner_id, status, billing_status, product_mode (sem country/type/timezone/currency/locale)

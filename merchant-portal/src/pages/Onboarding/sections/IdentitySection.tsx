@@ -8,8 +8,8 @@ import React, { useEffect, useRef } from "react";
 import { useOnboardingOptional } from "../../../context/OnboardingContext";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { dockerCoreClient } from "../../../core-boundary/docker-core/connection";
-import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import { useCoreAuth } from "../../../core/auth/useCoreAuth";
+import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import {
   BackendType,
   getBackendType,
@@ -49,7 +49,6 @@ export function IdentitySection() {
   const { user: authUser } = useCoreAuth();
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastIsValidRef = useRef<boolean | null>(null);
-  const [isSaving, setIsSaving] = React.useState(false);
 
   // Standalone Mode: use local state if onboarding context is missing
   const [localForm, setLocalForm] = React.useState({
@@ -88,7 +87,7 @@ export function IdentitySection() {
             });
           }
         });
-      }
+      },
     );
   }, [onboarding, runtime.restaurant_id]);
 
@@ -136,7 +135,7 @@ export function IdentitySection() {
       updateSetupStatus("identity", isValid).catch((error) => {
         console.error(
           "[IdentitySection] Erro ao atualizar setup_status:",
-          error
+          error,
         );
       });
     }
@@ -172,7 +171,7 @@ export function IdentitySection() {
           name: formData.name,
           type: formData.type,
           country: formData.country,
-        }
+        },
       );
 
       // Criar restaurante automaticamente (com debounce para evitar múltiplas tentativas)
@@ -187,7 +186,7 @@ export function IdentitySection() {
           // ANTI-SUPABASE §4: Identity/restaurant write ONLY via Core. Fail explicit if not Docker.
           if (getBackendType() !== BackendType.docker) {
             alert(
-              "Core indisponível. Configure o Docker Core para criar o restaurante."
+              "Core indisponível. Configure o Docker Core para criar o restaurante.",
             );
             window.location.href = "/bootstrap";
             return;
@@ -227,7 +226,7 @@ export function IdentitySection() {
 
           console.log(
             "[IdentitySection] Dados do restaurante:",
-            restaurantData
+            restaurantData,
           );
 
           // Domain write ONLY via Core
@@ -241,12 +240,12 @@ export function IdentitySection() {
           if (createError) {
             console.error(
               "[IdentitySection] Erro ao criar restaurante:",
-              createError
+              createError,
             );
             alert(
               `Erro ao criar restaurante: ${
                 createError.message
-              }\n\nDetalhes: ${JSON.stringify(createError, null, 2)}`
+              }\n\nDetalhes: ${JSON.stringify(createError, null, 2)}`,
             );
             return;
           }
@@ -259,7 +258,7 @@ export function IdentitySection() {
             }
             console.log(
               "[IdentitySection] ✅ Restaurante criado:",
-              newRestaurantId
+              newRestaurantId,
             );
 
             // Atualizar RestaurantRuntimeContext (vai recarregar estado)
@@ -288,7 +287,7 @@ export function IdentitySection() {
           // Identity write ONLY via Core. Fail explicit if not Docker.
           if (getBackendType() !== BackendType.docker) {
             throw new Error(
-              "Core indisponível. Configure o Docker Core para salvar a identidade."
+              "Core indisponível. Configure o Docker Core para salvar a identidade.",
             );
           }
           console.log("[IdentitySection] Salvando no banco (Core)...", {
@@ -312,7 +311,7 @@ export function IdentitySection() {
           if (error) {
             console.error(
               "[IdentitySection] Erro ao salvar identidade:",
-              error
+              error,
             );
             alert(`Erro ao salvar: ${error.message}`);
           } else {
@@ -321,7 +320,7 @@ export function IdentitySection() {
             updateSetupStatus("identity", true).catch((err) => {
               console.warn(
                 "[IdentitySection] Erro ao persistir setup_status:",
-                err
+                err,
               );
             });
           }
@@ -334,7 +333,7 @@ export function IdentitySection() {
       }, 1500);
     } else if (isValid && !restaurantId) {
       console.warn(
-        "[IdentitySection] Dados válidos mas sem restaurantId. Aguardando..."
+        "[IdentitySection] Dados válidos mas sem restaurantId. Aguardando...",
       );
     }
 
