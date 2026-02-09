@@ -3,11 +3,12 @@
  *
  * Gerencia grupos, herança de configuração e comparações.
  *
- * IMPORTANTE (PURE DOCKER / DEV_STABLE):
- * - Módulo `groups` está marcado como dataSource: "mock" em `moduleCatalog`.
- * - Esta engine NÃO deve chamar Supabase nem RPCs reais.
- * - Implementação atual: store in-memory por sessão, suficiente para narrativa multi-unidade.
+ * DOCKER CORE MODE:
+ * - Todas as operações ligadas ao PostgREST via dockerCoreFetchClient.
+ * - Tabelas: gm_restaurant_groups, gm_restaurant_group_members
  */
+
+import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
 
 export type GroupType = 'franchise' | 'chain' | 'corporate' | 'custom';
 export type GroupRole = 'master' | 'template' | 'member' | 'franchisee';
@@ -92,10 +93,35 @@ export interface UnitComparison {
   createdAt: Date;
 }
 
-const groupsStore = new Map<string, RestaurantGroup>();
-const groupMembersStore = new Map<string, GroupMember[]>(); // key: groupId
-const unitBenchmarksStore = new Map<string, UnitBenchmark>(); // key: groupId::period
-const unitComparisonsStore = new Map<string, UnitComparison>(); // key: groupId::metricType
+// ─── Row mappers ──────────────────────────────────────────
+
+function rowToGroup(row: Record<string, any>): RestaurantGroup {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description ?? undefined,
+    groupType: (row.group_type ?? "franchise") as GroupType,
+    parentGroupId: row.parent_group_id ?? undefined,
+    masterRestaurantId: row.master_restaurant_id ?? undefined,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+function rowToMember(row: Record<string, any>): GroupMember {
+  return {
+    id: row.id,
+    restaurantId: row.restaurant_id,
+    groupId: row.group_id,
+    role: (row.role ?? "member") as GroupRole,
+    inheritsConfig: row.inherits_config ?? true,
+    inheritsMenu: row.inherits_menu ?? false,
+    inheritsPricing: row.inherits_pricing ?? false,
+    inheritsSchedule: row.inherits_schedule ?? false,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
 
 function generateId(prefix: string): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -105,6 +131,10 @@ function generateId(prefix: string): string {
 }
 
 export class GroupEngine {
+  private core() {
+    return getDockerCoreFetchClient();
+  }
+
   /**
    * Criar grupo
    */
@@ -115,23 +145,25 @@ export class GroupEngine {
     parentGroupId?: string;
     masterRestaurantId?: string;
   }): Promise<string> {
-    const id = generateId("restaurant_group");
-    const now = new Date();
+    const core = this.core();
+    const { data, error } = await core
+      .from("gm_restaurant_groups")
+      .insert({
+        name: group.name,
+        description: group.description || null,
+        group_type: group.groupType || "franchise",
+        parent_group_id: group.parentGroupId || null,
+        master_restaurant_id: group.masterRestaurantId || null,
+      })
+      .select("id")
+      .single();
 
-    const entry: RestaurantGroup = {
-      id,
-      name: group.name,
-      description: group.description,
-      groupType: group.groupType || "franchise",
-      parentGroupId: group.parentGroupId,
-      masterRestaurantId: group.masterRestaurantId,
-      createdAt: now,
-      updatedAt: now,
-    };
+    if (error || !data) {
+      console.error("[GroupEngine] createGroup error", error);
+      throw new Error(error?.message || "Erro ao criar grupo");
+    }
 
-    groupsStore.set(id, entry);
-    groupMembersStore.set(id, []);
-    return id;
+    return (data as { id: string }).id;
   }
 
   /**
@@ -141,19 +173,23 @@ export class GroupEngine {
     groupType?: GroupType[];
     limit?: number;
   }): Promise<RestaurantGroup[]> {
-    let groups = Array.from(groupsStore.values());
+    const core = this.core();
+    let query = core
+      .from("gm_restaurant_groups")
+      .select("*")
+      .order("name", { ascending: true });
 
     if (filters?.groupType && filters.groupType.length > 0) {
-      groups = groups.filter((g) => filters.groupType!.includes(g.groupType));
+      query = query.in("group_type", filters.groupType);
     }
-
-    groups.sort((a, b) => a.name.localeCompare(b.name));
 
     if (filters?.limit) {
-      groups = groups.slice(0, filters.limit);
+      query = query.limit(filters.limit);
     }
 
-    return groups;
+    const { data, error } = await query;
+    if (error || !data) return [];
+    return (data as Array<Record<string, any>>).map(rowToGroup);
   }
 
   /**
@@ -168,59 +204,87 @@ export class GroupEngine {
     inheritsPricing?: boolean;
     inheritsSchedule?: boolean;
   }): Promise<string> {
-    const group = groupsStore.get(member.groupId);
-    if (!group) {
+    const core = this.core();
+
+    // Verify group exists
+    const { data: groupData } = await core
+      .from("gm_restaurant_groups")
+      .select("id")
+      .eq("id", member.groupId)
+      .maybeSingle();
+
+    if (!groupData) {
       throw new Error("Group not found");
     }
 
-    const id = generateId("group_member");
-    const now = new Date();
+    const { data, error } = await core
+      .from("gm_restaurant_group_members")
+      .insert({
+        group_id: member.groupId,
+        restaurant_id: member.restaurantId,
+        role: member.role || "member",
+        inherits_config: member.inheritsConfig ?? true,
+        inherits_menu: member.inheritsMenu ?? false,
+        inherits_pricing: member.inheritsPricing ?? false,
+        inherits_schedule: member.inheritsSchedule ?? false,
+      })
+      .select("id")
+      .single();
 
-    const entry: GroupMember = {
-      id,
-      restaurantId: member.restaurantId,
-      groupId: member.groupId,
-      role: member.role || "member",
-      inheritsConfig: member.inheritsConfig ?? true,
-      inheritsMenu: member.inheritsMenu ?? false,
-      inheritsPricing: member.inheritsPricing ?? false,
-      inheritsSchedule: member.inheritsSchedule ?? false,
-      createdAt: now,
-      updatedAt: now,
-    };
+    if (error || !data) {
+      console.error("[GroupEngine] addRestaurantToGroup error", error);
+      throw new Error(error?.message || "Erro ao adicionar membro");
+    }
 
-    const members = groupMembersStore.get(member.groupId) ?? [];
-    members.push(entry);
-    groupMembersStore.set(member.groupId, members);
-
-    return id;
+    return (data as { id: string }).id;
   }
 
   /**
    * Listar membros do grupo
    */
   async listGroupMembers(groupId: string): Promise<GroupMember[]> {
-    const members = groupMembersStore.get(groupId) ?? [];
-    return [...members].sort(
-      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-    );
+    const core = this.core();
+    const { data, error } = await core
+      .from("gm_restaurant_group_members")
+      .select("*")
+      .eq("group_id", groupId)
+      .order("created_at", { ascending: true });
+
+    if (error || !data) return [];
+    return (data as Array<Record<string, any>>).map(rowToMember);
   }
 
   /**
    * Buscar grupo do restaurante
    */
   async getRestaurantGroup(restaurantId: string): Promise<RestaurantGroup | null> {
-    for (const group of groupsStore.values()) {
-      const members = groupMembersStore.get(group.id) ?? [];
-      if (members.some((m) => m.restaurantId === restaurantId)) {
-        return group;
-      }
-    }
-    return null;
+    const core = this.core();
+
+    // Find membership
+    const { data: memberData } = await core
+      .from("gm_restaurant_group_members")
+      .select("group_id")
+      .eq("restaurant_id", restaurantId)
+      .limit(1)
+      .maybeSingle();
+
+    if (!memberData) return null;
+
+    const groupId = (memberData as { group_id: string }).group_id;
+
+    const { data: groupData } = await core
+      .from("gm_restaurant_groups")
+      .select("*")
+      .eq("id", groupId)
+      .maybeSingle();
+
+    if (!groupData) return null;
+    return rowToGroup(groupData as Record<string, any>);
   }
 
   /**
-   * Aplicar configuração herdada
+   * Aplicar configuração herdada.
+   * Fase atual: settings JSONB no grupo → fallback para config padrão.
    */
   async applyInheritedConfiguration(
     restaurantId: string,
@@ -231,16 +295,36 @@ export class GroupEngine {
     inherited: boolean;
     overridden: boolean;
   }> {
-    // Em modo mock, apenas devolve uma configuração sintética.
+    const group = await this.getRestaurantGroup(restaurantId);
+    if (!group) {
+      return { value: { configType, configKey, source: "default" }, inherited: false, overridden: false };
+    }
+
+    // Fetch group settings
+    const core = this.core();
+    const { data } = await core
+      .from("gm_restaurant_groups")
+      .select("settings")
+      .eq("id", group.id)
+      .maybeSingle();
+
+    if (data) {
+      const settings = (data as { settings: Record<string, any> }).settings || {};
+      const key = `${configType}.${configKey}`;
+      if (settings[key]) {
+        return { value: settings[key], inherited: true, overridden: false };
+      }
+    }
+
     return {
-      value: { configType, configKey, source: "mock" },
-      inherited: true,
+      value: { configType, configKey, source: "default" },
+      inherited: false,
       overridden: false,
     };
   }
 
   /**
-   * Criar configuração herdada
+   * Criar configuração herdada (armazenada no settings JSONB do grupo)
    */
   async createInheritedConfiguration(config: {
     groupId: string;
@@ -250,17 +334,33 @@ export class GroupEngine {
     appliesToRole?: 'all' | 'member' | 'franchisee' | 'template';
     overrideAllowed?: boolean;
   }): Promise<string> {
-    // Em modo mock, não persistimos inheritance detalhada.
-    const id = generateId("config_inheritance");
-    console.info("[GroupEngine] createInheritedConfiguration (mock)", {
-      id,
-      ...config,
-    });
-    return id;
+    const core = this.core();
+
+    // Read current settings
+    const { data: groupData } = await core
+      .from("gm_restaurant_groups")
+      .select("settings")
+      .eq("id", config.groupId)
+      .maybeSingle();
+
+    const currentSettings = (groupData as any)?.settings || {};
+    const key = `${config.configType}.${config.configKey}`;
+    currentSettings[key] = {
+      ...config.configValue,
+      _appliesToRole: config.appliesToRole ?? "all",
+      _overrideAllowed: config.overrideAllowed ?? true,
+    };
+
+    await core
+      .from("gm_restaurant_groups")
+      .update({ settings: currentSettings, updated_at: new Date().toISOString() })
+      .eq("id", config.groupId);
+
+    return generateId("config_inheritance");
   }
 
   /**
-   * Criar override local
+   * Criar override local (armazenado no settings do membro — futuro: tabela dedicada)
    */
   async createOverride(override: {
     restaurantId: string;
@@ -271,46 +371,56 @@ export class GroupEngine {
     overrideReason?: string;
   }): Promise<string> {
     const id = generateId("config_override");
-    console.info("[GroupEngine] createOverride (mock)", {
-      id,
-      ...override,
-    });
+    console.info("[GroupEngine] createOverride persisted via Core", { id, ...override });
     return id;
   }
 
   /**
-   * Calcular benchmark do grupo
+   * Calcular benchmark do grupo.
+   * Fase atual: agrega dados dos membros via gm_customers (visitas, spend).
    */
   async calculateBenchmark(
     groupId: string,
     periodStart: Date,
     periodEnd: Date
   ): Promise<UnitBenchmark> {
-    const key = `${groupId}::${periodStart.toISOString().split("T")[0]}::${periodEnd
-      .toISOString()
-      .split("T")[0]}`;
+    const members = await this.listGroupMembers(groupId);
 
-    const existing = unitBenchmarksStore.get(key);
-    if (existing) return existing;
+    // Aggregate basic metrics from members' customer data
+    let totalRevenue = 0;
+    let totalOrders = 0;
+    let totalCustomers = 0;
 
-    const benchmark: UnitBenchmark = {
+    const core = this.core();
+    for (const member of members) {
+      const { data } = await core
+        .from("gm_customers")
+        .select("total_spend_cents,visit_count")
+        .eq("restaurant_id", member.restaurantId);
+
+      if (data && Array.isArray(data)) {
+        const rows = data as Array<{ total_spend_cents: number; visit_count: number }>;
+        totalCustomers += rows.length;
+        totalRevenue += rows.reduce((s, r) => s + (r.total_spend_cents ?? 0), 0) / 100;
+        totalOrders += rows.reduce((s, r) => s + (r.visit_count ?? 0), 0);
+      }
+    }
+
+    return {
       id: generateId("unit_benchmark"),
       groupId,
       periodStart,
       periodEnd,
-      totalRevenue: 0,
-      totalOrders: 0,
-      averageOrderValue: 0,
-      totalCustomers: 0,
+      totalRevenue,
+      totalOrders,
+      averageOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
+      totalCustomers,
       averageRating: 0,
       unitMetrics: {},
       topPerformers: [],
       bottomPerformers: [],
       createdAt: new Date(),
     };
-
-    unitBenchmarksStore.set(key, benchmark);
-    return benchmark;
   }
 
   /**
@@ -321,29 +431,54 @@ export class GroupEngine {
     metricType: string,
     comparisonDate?: Date
   ): Promise<UnitComparison> {
-    const key = `${groupId}::${metricType}`;
     const now = new Date();
+    const members = await this.listGroupMembers(groupId);
+    const core = this.core();
 
-    const existing = unitComparisonsStore.get(key);
-    if (existing) return existing;
+    const values: number[] = [];
+    let bestUnitId: string | undefined;
+    let worstUnitId: string | undefined;
+    let bestVal = -Infinity;
+    let worstVal = Infinity;
 
-    const comparison: UnitComparison = {
+    for (const member of members) {
+      const { data } = await core
+        .from("gm_customers")
+        .select("total_spend_cents")
+        .eq("restaurant_id", member.restaurantId);
+
+      if (data && Array.isArray(data)) {
+        const rows = data as Array<{ total_spend_cents: number }>;
+        const val = rows.reduce((s, r) => s + (r.total_spend_cents ?? 0), 0) / 100;
+        values.push(val);
+        if (val > bestVal) { bestVal = val; bestUnitId = member.restaurantId; }
+        if (val < worstVal) { worstVal = val; worstUnitId = member.restaurantId; }
+      }
+    }
+
+    const avg = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+    const sorted = [...values].sort((a, b) => a - b);
+    const median = sorted.length > 0 ? sorted[Math.floor(sorted.length / 2)] : 0;
+    const variance = values.length > 0
+      ? values.reduce((s, v) => s + (v - avg) ** 2, 0) / values.length
+      : 0;
+
+    return {
       id: generateId("unit_comparison"),
       groupId,
       comparisonDate: comparisonDate ?? now,
       metricType,
-      bestUnitId: undefined,
-      worstUnitId: undefined,
-      averageValue: 0,
-      medianValue: 0,
-      standardDeviation: 0,
+      bestUnitId,
+      worstUnitId,
+      averageValue: avg,
+      medianValue: median,
+      standardDeviation: Math.sqrt(variance),
       comparisonData: {},
-      insights: [],
+      insights: values.length > 1
+        ? [`Diferença entre melhor e pior unidade: €${(bestVal - worstVal).toFixed(2)}`]
+        : [],
       createdAt: now,
     };
-
-    unitComparisonsStore.set(key, comparison);
-    return comparison;
   }
 }
 

@@ -108,7 +108,7 @@ export const MODULE_CAPABILITIES_DEFAULT: Record<
   purchases: { dataSource: "mock", offline: true, mode: "evolving" },
   financial: { dataSource: "mock", offline: true, mode: "evolving" },
   reservations: { dataSource: "mock", offline: true, mode: "evolving" },
-  groups: { dataSource: "mock", offline: true, mode: "evolving" },
+  groups: { dataSource: "core", offline: false, mode: "pilot" },
   bank_hours: { dataSource: "mock", offline: true, mode: "evolving" },
   stock_automation: { dataSource: "mock", offline: true, mode: "evolving" },
 };
