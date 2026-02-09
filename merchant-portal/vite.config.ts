@@ -190,42 +190,66 @@ export default defineConfig(async ({ mode }) => {
               return "stripe-vendor";
             }
 
-            // ── Feature chunks (pages split by domain) ──
-            if (id.includes("/pages/AppStaff/")) return "staff";
+            // ── Shared core modules ──
+            if (id.includes("/ui/") || id.includes("/components/"))
+              return "app-ui";
             if (
-              id.includes("/pages/TPV/") ||
-              id.includes("/pages/TPVMinimal/") ||
-              id.includes("/pages/KDSMinimal/")
+              id.includes("/core/") ||
+              id.includes("/context/") ||
+              id.includes("/hooks/") ||
+              id.includes("/features/") ||
+              id.includes("/intelligence/")
             )
-              return "tpv";
+              return "app-runtime";
+
+            // ── Feature chunks (domain-focused, low fragmentation) ──
             if (
-              id.includes("/pages/Config/") ||
-              id.includes("/pages/Backoffice/")
+              id.includes("/pages/Public/") ||
+              id.includes("/pages/PublicWeb/")
             )
-              return "config";
+              return "public";
+
+            if (id.includes("/pages/TPV/") || id.includes("/pages/TPVMinimal/"))
+              return "app-tpv";
+            if (id.includes("/pages/KDSMinimal/")) return "app-tpv";
+            if (id.includes("/pages/AppStaff/")) return "app-staff";
             if (
               id.includes("/pages/Owner/") ||
               id.includes("/pages/Manager/") ||
               id.includes("/pages/Reports/") ||
               id.includes("/pages/Dashboard/")
             )
-              return "admin";
+              return "app-admin";
+            if (
+              id.includes("/pages/Config/") ||
+              id.includes("/pages/Backoffice/")
+            )
+              return "app-admin";
             if (
               id.includes("/pages/Onboarding/") ||
               id.includes("/pages/Setup/") ||
               id.includes("/pages/Landing/")
             )
-              return "onboarding";
+              return "app-onboarding";
             if (
               id.includes("/pages/MenuBuilder/") ||
               id.includes("/pages/MenuCatalog/")
             )
-              return "menu";
+              return "app-menu";
+
             if (
-              id.includes("/pages/Public/") ||
-              id.includes("/pages/PublicWeb/")
+              id.includes("/pages/Operacao/") ||
+              id.includes("/pages/ShoppingList/") ||
+              id.includes("/pages/TaskSystem/") ||
+              id.includes("/pages/People/") ||
+              id.includes("/pages/Health/") ||
+              id.includes("/pages/Financial/") ||
+              id.includes("/pages/Install") ||
+              id.includes("/pages/CoreReset/")
             )
-              return "public";
+              return "app-misc";
+
+            if (id.includes("/pages/")) return "app-core";
 
             // ── Core engine stays in main bundle ──
           },
