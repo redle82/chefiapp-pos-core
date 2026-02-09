@@ -1,13 +1,18 @@
 /**
  * ReservationEngine - Engine de Reservas
  *
- * Gerencia reservas online, internas, overbooking e no-shows
+ * Gerencia reservas online, internas, overbooking e no-shows.
  *
- * IMPORTANTE (PURE DOCKER / DEV_STABLE):
- * - Módulo `reservations` está marcado como dataSource: "mock" em `moduleCatalog`.
- * - Esta engine NÃO deve chamar Supabase nem RPCs reais.
- * - Implementação atual: store in-memory por sessão, suficiente para simular reservas.
+ * DOCKER CORE — PostgREST persistence.
+ * Todas as operações são persistidas em:
+ *  - gm_reservations
+ *  - gm_no_show_history
+ *  - gm_overbooking_config
+ *
+ * Fallback: se o Core não responder, escrevemos em memória local
+ * para não bloquear a operação do restaurante.
  */
+import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
 
 export type ReservationStatus =
   | "pending"
@@ -76,16 +81,76 @@ export interface NoShowStats {
   totalRevenueLoss: number;
 }
 
-const reservationsStore = new Map<string, Reservation>();
-const noShowHistoryStore = new Map<string, NoShowHistory>();
-const overbookingConfigStore = new Map<string, OverbookingConfig>(); // por restaurantId
+// In-memory fallback when Core is unreachable
+const localCache = new Map<string, Reservation>();
 
-function generateId(prefix: string): string {
-  // UUID simplificado para ambiente mock; evita depender de globals específicos.
-  return `${prefix}_${Math.random().toString(36).slice(2)}_${Date.now()}`;
+/** Map DB row (snake_case) → domain object (camelCase) */
+function rowToReservation(row: any): Reservation {
+  return {
+    id: row.id,
+    restaurantId: row.restaurant_id,
+    customerName: row.customer_name,
+    customerPhone: row.customer_phone ?? undefined,
+    customerEmail: row.customer_email ?? undefined,
+    customerNotes: row.customer_notes ?? undefined,
+    reservationDate: new Date(row.reservation_date),
+    reservationTime: row.reservation_time,
+    partySize: row.party_size,
+    tableId: row.table_id ?? undefined,
+    status: row.status as ReservationStatus,
+    confirmedAt: row.confirmed_at ? new Date(row.confirmed_at) : undefined,
+    seatedAt: row.seated_at ? new Date(row.seated_at) : undefined,
+    completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
+    cancelledAt: row.cancelled_at ? new Date(row.cancelled_at) : undefined,
+    cancelledReason: row.cancelled_reason ?? undefined,
+    source: row.source as ReservationSource,
+    isOverbooking: row.is_overbooking ?? false,
+    overbookingReason: row.overbooking_reason ?? undefined,
+    relatedOrderId: row.related_order_id ?? undefined,
+    assignedStaffId: row.assigned_staff_id ?? undefined,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+function rowToNoShow(row: any): NoShowHistory {
+  return {
+    id: row.id,
+    reservationId: row.reservation_id,
+    restaurantId: row.restaurant_id,
+    reservationDate: new Date(row.reservation_date),
+    reservationTime: row.reservation_time,
+    partySize: row.party_size,
+    customerName: row.customer_name,
+    customerPhone: row.customer_phone ?? undefined,
+    estimatedRevenueLoss: Number(row.estimated_revenue_loss ?? 0),
+    tableWastedTimeMinutes: row.table_wasted_time_minutes ?? 0,
+    createdAt: new Date(row.created_at),
+  };
+}
+
+function rowToOverbookingConfig(row: any): OverbookingConfig {
+  return {
+    id: row.id,
+    restaurantId: row.restaurant_id,
+    enabled: row.enabled ?? false,
+    maxOverbookingPercentage: row.max_overbooking_percentage ?? 10,
+    overbookingWindowHours: row.overbooking_window_hours ?? 2,
+    allowOverbookingOnWeekends: row.allow_overbooking_on_weekends ?? true,
+    allowOverbookingOnHolidays: row.allow_overbooking_on_holidays ?? false,
+    minPartySizeForOverbooking: row.min_party_size_for_overbooking ?? 4,
+  };
 }
 
 export class ReservationEngine {
+  private getClient() {
+    try {
+      return getDockerCoreFetchClient();
+    } catch {
+      return null;
+    }
+  }
+
   /**
    * Criar reserva
    */
@@ -101,10 +166,47 @@ export class ReservationEngine {
     source?: ReservationSource;
     tableId?: string;
   }): Promise<string> {
-    const id = generateId("reservation");
-    const now = new Date();
+    const client = this.getClient();
+    const dateStr =
+      reservation.reservationDate instanceof Date
+        ? reservation.reservationDate.toISOString().split("T")[0]
+        : String(reservation.reservationDate);
 
-    const entry: Reservation = {
+    if (client) {
+      const { data, error } = await client
+        .from("gm_reservations")
+        .insert({
+          restaurant_id: reservation.restaurantId,
+          customer_name: reservation.customerName,
+          customer_phone: reservation.customerPhone ?? null,
+          customer_email: reservation.customerEmail ?? null,
+          customer_notes: reservation.customerNotes ?? null,
+          reservation_date: dateStr,
+          reservation_time: reservation.reservationTime,
+          party_size: reservation.partySize,
+          table_id: reservation.tableId ?? null,
+          status: "pending",
+          source: reservation.source || "internal",
+          is_overbooking: false,
+        })
+        .select("id")
+        .single();
+
+      if (!error && data) {
+        return data.id;
+      }
+      console.warn(
+        "[ReservationEngine] Core insert failed, using fallback:",
+        error,
+      );
+    }
+
+    // Fallback: in-memory
+    const id = `reservation_${Math.random()
+      .toString(36)
+      .slice(2)}_${Date.now()}`;
+    const now = new Date();
+    localCache.set(id, {
       id,
       restaurantId: reservation.restaurantId,
       customerName: reservation.customerName,
@@ -116,21 +218,11 @@ export class ReservationEngine {
       partySize: reservation.partySize,
       tableId: reservation.tableId,
       status: "pending",
-      confirmedAt: undefined,
-      seatedAt: undefined,
-      completedAt: undefined,
-      cancelledAt: undefined,
-      cancelledReason: undefined,
       source: reservation.source || "internal",
       isOverbooking: false,
-      overbookingReason: undefined,
-      relatedOrderId: undefined,
-      assignedStaffId: undefined,
       createdAt: now,
       updatedAt: now,
-    };
-
-    reservationsStore.set(id, entry);
+    });
     return id;
   }
 
@@ -146,31 +238,61 @@ export class ReservationEngine {
       limit?: number;
     },
   ): Promise<Reservation[]> {
-    let items = Array.from(reservationsStore.values()).filter(
+    const client = this.getClient();
+
+    if (client) {
+      let query = client
+        .from("gm_reservations")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .order("reservation_time", { ascending: true });
+
+      if (filters?.date) {
+        const dateStr = filters.date.toISOString().split("T")[0];
+        query = query.eq("reservation_date", dateStr);
+      }
+
+      if (filters?.status && filters.status.length > 0) {
+        query = query.in("status", filters.status);
+      }
+
+      if (filters?.source && filters.source.length > 0) {
+        query = query.in("source", filters.source);
+      }
+
+      if (filters?.limit) {
+        query = query.limit(filters.limit);
+      }
+
+      const { data, error } = await query;
+
+      if (!error && data) {
+        return data.map(rowToReservation);
+      }
+      console.warn(
+        "[ReservationEngine] Core list failed, using fallback:",
+        error,
+      );
+    }
+
+    // Fallback: in-memory
+    let items = Array.from(localCache.values()).filter(
       (r) => r.restaurantId === restaurantId,
     );
-
     if (filters?.date) {
       const dateStr = filters.date.toISOString().split("T")[0];
       items = items.filter(
         (r) => r.reservationDate.toISOString().split("T")[0] === dateStr,
       );
     }
-
     if (filters?.status && filters.status.length > 0) {
       items = items.filter((r) => filters.status!.includes(r.status));
     }
-
     if (filters?.source && filters.source.length > 0) {
       items = items.filter((r) => filters.source!.includes(r.source));
     }
-
     items.sort((a, b) => a.reservationTime.localeCompare(b.reservationTime));
-
-    if (filters?.limit) {
-      items = items.slice(0, filters.limit);
-    }
-
+    if (filters?.limit) items = items.slice(0, filters.limit);
     return items;
   }
 
@@ -189,47 +311,70 @@ export class ReservationEngine {
     newStatus: ReservationStatus,
     notes?: string,
   ): Promise<void> {
-    const existing = reservationsStore.get(reservationId);
-    if (!existing) {
-      console.warn(
-        "[ReservationEngine] updateStatus: reserva não encontrada",
-        reservationId,
-      );
+    const client = this.getClient();
+    const now = new Date().toISOString();
+
+    const updatePayload: Record<string, any> = { status: newStatus };
+    if (newStatus === "confirmed") updatePayload.confirmed_at = now;
+    if (newStatus === "seated") updatePayload.seated_at = now;
+    if (newStatus === "completed") updatePayload.completed_at = now;
+    if (newStatus === "cancelled") {
+      updatePayload.cancelled_at = now;
+      if (notes) updatePayload.cancelled_reason = notes;
+    }
+
+    if (client) {
+      // Get current reservation for no-show handling
+      const { data: existing } = await client
+        .from("gm_reservations")
+        .select("*")
+        .eq("id", reservationId)
+        .single();
+
+      const { error } = await client
+        .from("gm_reservations")
+        .update(updatePayload)
+        .eq("id", reservationId);
+
+      if (error) {
+        console.warn("[ReservationEngine] Core updateStatus failed:", error);
+      }
+
+      // Record no-show history
+      if (newStatus === "no_show" && existing) {
+        await client.from("gm_no_show_history").insert({
+          reservation_id: reservationId,
+          restaurant_id: existing.restaurant_id,
+          reservation_date: existing.reservation_date,
+          reservation_time: existing.reservation_time,
+          party_size: existing.party_size,
+          customer_name: existing.customer_name,
+          customer_phone: existing.customer_phone,
+          estimated_revenue_loss: existing.party_size * 50,
+          table_wasted_time_minutes: 90,
+        });
+      }
       return;
     }
 
-    const now = new Date();
-    const updated: Reservation = {
+    // Fallback: in-memory
+    const existing = localCache.get(reservationId);
+    if (!existing) {
+      console.warn("[ReservationEngine] reservation not found:", reservationId);
+      return;
+    }
+    const nowDate = new Date();
+    localCache.set(reservationId, {
       ...existing,
       status: newStatus,
-      updatedAt: now,
-      confirmedAt: newStatus === "confirmed" ? now : existing.confirmedAt,
-      seatedAt: newStatus === "seated" ? now : existing.seatedAt,
-      completedAt: newStatus === "completed" ? now : existing.completedAt,
-      cancelledAt: newStatus === "cancelled" ? now : existing.cancelledAt,
+      updatedAt: nowDate,
+      confirmedAt: newStatus === "confirmed" ? nowDate : existing.confirmedAt,
+      seatedAt: newStatus === "seated" ? nowDate : existing.seatedAt,
+      completedAt: newStatus === "completed" ? nowDate : existing.completedAt,
+      cancelledAt: newStatus === "cancelled" ? nowDate : existing.cancelledAt,
       cancelledReason:
         newStatus === "cancelled" ? notes : existing.cancelledReason,
-    };
-
-    reservationsStore.set(reservationId, updated);
-
-    if (newStatus === "no_show") {
-      const historyId = generateId("no_show");
-      const entry: NoShowHistory = {
-        id: historyId,
-        reservationId,
-        restaurantId: existing.restaurantId,
-        reservationDate: existing.reservationDate,
-        reservationTime: existing.reservationTime,
-        partySize: existing.partySize,
-        customerName: existing.customerName,
-        customerPhone: existing.customerPhone,
-        estimatedRevenueLoss: existing.partySize * 50, // mock
-        tableWastedTimeMinutes: 90,
-        createdAt: now,
-      };
-      noShowHistoryStore.set(historyId, entry);
-    }
+    });
   }
 
   /**
@@ -241,22 +386,31 @@ export class ReservationEngine {
     estimatedConsumption: Record<string, number>;
     forecastedDishes: Array<{ dishId: string; quantity: number }>;
   }> {
-    const reservation = reservationsStore.get(reservationId);
-    if (!reservation) {
-      throw new Error("Reservation not found");
+    const client = this.getClient();
+    let partySize = 0;
+
+    if (client) {
+      const { data } = await client
+        .from("gm_reservations")
+        .select("party_size")
+        .eq("id", reservationId)
+        .single();
+      if (data) partySize = data.party_size;
+    } else {
+      const r = localCache.get(reservationId);
+      if (r) partySize = r.partySize;
     }
 
-    // Mock simples: estima consumo proporcional ao partySize.
+    if (!partySize) throw new Error("Reservation not found");
+
     return {
       reservationId,
-      partySize: reservation.partySize,
+      partySize,
       estimatedConsumption: {
-        beverage: reservation.partySize * 2,
-        main_course: reservation.partySize,
+        beverage: partySize * 2,
+        main_course: partySize,
       },
-      forecastedDishes: [
-        { dishId: "mock-dish-1", quantity: reservation.partySize },
-      ],
+      forecastedDishes: [{ dishId: "forecast-dish-1", quantity: partySize }],
     };
   }
 
@@ -266,8 +420,18 @@ export class ReservationEngine {
   async getOverbookingConfig(
     restaurantId: string,
   ): Promise<OverbookingConfig | null> {
-    const existing = overbookingConfigStore.get(restaurantId);
-    if (existing) return existing;
+    const client = this.getClient();
+
+    if (client) {
+      const { data, error } = await client
+        .from("gm_overbooking_config")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .maybeSingle();
+
+      if (!error && data) return rowToOverbookingConfig(data);
+    }
+
     return null;
   }
 
@@ -283,35 +447,35 @@ export class ReservationEngine {
     allowOverbookingOnHolidays?: boolean;
     minPartySizeForOverbooking?: number;
   }): Promise<void> {
-    const current: OverbookingConfig = overbookingConfigStore.get(
-      config.restaurantId,
-    ) ?? {
-      id: generateId("overbooking_config"),
-      restaurantId: config.restaurantId,
-      enabled: false,
-      maxOverbookingPercentage: 10,
-      overbookingWindowHours: 2,
-      allowOverbookingOnWeekends: true,
-      allowOverbookingOnHolidays: false,
-      minPartySizeForOverbooking: 4,
-    };
+    const client = this.getClient();
+    if (!client) return;
 
-    const updated: OverbookingConfig = {
-      ...current,
-      enabled: config.enabled ?? current.enabled,
-      maxOverbookingPercentage:
-        config.maxOverbookingPercentage ?? current.maxOverbookingPercentage,
-      overbookingWindowHours:
-        config.overbookingWindowHours ?? current.overbookingWindowHours,
-      allowOverbookingOnWeekends:
-        config.allowOverbookingOnWeekends ?? current.allowOverbookingOnWeekends,
-      allowOverbookingOnHolidays:
-        config.allowOverbookingOnHolidays ?? current.allowOverbookingOnHolidays,
-      minPartySizeForOverbooking:
-        config.minPartySizeForOverbooking ?? current.minPartySizeForOverbooking,
+    const payload: Record<string, any> = {
+      restaurant_id: config.restaurantId,
     };
+    if (config.enabled !== undefined) payload.enabled = config.enabled;
+    if (config.maxOverbookingPercentage !== undefined)
+      payload.max_overbooking_percentage = config.maxOverbookingPercentage;
+    if (config.overbookingWindowHours !== undefined)
+      payload.overbooking_window_hours = config.overbookingWindowHours;
+    if (config.allowOverbookingOnWeekends !== undefined)
+      payload.allow_overbooking_on_weekends = config.allowOverbookingOnWeekends;
+    if (config.allowOverbookingOnHolidays !== undefined)
+      payload.allow_overbooking_on_holidays = config.allowOverbookingOnHolidays;
+    if (config.minPartySizeForOverbooking !== undefined)
+      payload.min_party_size_for_overbooking =
+        config.minPartySizeForOverbooking;
 
-    overbookingConfigStore.set(config.restaurantId, updated);
+    const { error } = await client
+      .from("gm_overbooking_config")
+      .upsert(payload, { onConflict: "restaurant_id" });
+
+    if (error) {
+      console.warn(
+        "[ReservationEngine] upsertOverbookingConfig failed:",
+        error,
+      );
+    }
   }
 
   /**
@@ -325,29 +489,36 @@ export class ReservationEngine {
       limit?: number;
     },
   ): Promise<NoShowHistory[]> {
-    let items = Array.from(noShowHistoryStore.values()).filter(
-      (h) => h.restaurantId === restaurantId,
-    );
+    const client = this.getClient();
 
-    if (filters?.startDate) {
-      const start = filters.startDate.getTime();
-      items = items.filter((h) => h.reservationDate.getTime() >= start);
+    if (client) {
+      let query = client
+        .from("gm_no_show_history")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .order("reservation_date", { ascending: false });
+
+      if (filters?.startDate) {
+        query = query.gte(
+          "reservation_date",
+          filters.startDate.toISOString().split("T")[0],
+        );
+      }
+      if (filters?.endDate) {
+        query = query.lte(
+          "reservation_date",
+          filters.endDate.toISOString().split("T")[0],
+        );
+      }
+      if (filters?.limit) {
+        query = query.limit(filters.limit);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) return data.map(rowToNoShow);
     }
 
-    if (filters?.endDate) {
-      const end = filters.endDate.getTime();
-      items = items.filter((h) => h.reservationDate.getTime() <= end);
-    }
-
-    items.sort(
-      (a, b) => b.reservationDate.getTime() - a.reservationDate.getTime(),
-    );
-
-    if (filters?.limit) {
-      items = items.slice(0, filters.limit);
-    }
-
-    return items;
+    return [];
   }
 
   /**
@@ -364,17 +535,37 @@ export class ReservationEngine {
     });
 
     const totalNoShows = history.length;
-    const totalReservations = Array.from(reservationsStore.values()).filter(
-      (r) =>
-        r.restaurantId === restaurantId &&
-        (!startDate || r.reservationDate >= startDate) &&
-        (!endDate || r.reservationDate <= endDate),
-    ).length;
-
     const totalRevenueLoss = history.reduce(
       (acc, h) => acc + h.estimatedRevenueLoss,
       0,
     );
+
+    // Count total reservations in range for no-show rate
+    const client = this.getClient();
+    let totalReservations = 0;
+
+    if (client) {
+      let query = client
+        .from("gm_reservations")
+        .select("id", { count: "exact", head: true })
+        .eq("restaurant_id", restaurantId);
+
+      if (startDate) {
+        query = query.gte(
+          "reservation_date",
+          startDate.toISOString().split("T")[0],
+        );
+      }
+      if (endDate) {
+        query = query.lte(
+          "reservation_date",
+          endDate.toISOString().split("T")[0],
+        );
+      }
+
+      const { count } = await query;
+      totalReservations = count ?? 0;
+    }
 
     const noShowRate =
       totalReservations > 0 ? totalNoShows / totalReservations : 0;

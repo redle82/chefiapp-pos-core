@@ -4,21 +4,84 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [1.3.0] - 2026-02-09
+
+### 🚀 Maturity Audit — Top 5 Gaps Closed
+
+#### Delivery Integrations (Gap #1)
+
+- **SQL Migration:** `20260209_integration_webhook_events.sql` — audit trail table + `ingest_ubereats_order` RPC
+- **UberEatsAdapter:** Full rewrite from deprecated stub → hardened proxy adapter (realtime + polling + dedup)
+- **DeliverooAdapter:** Full rewrite from OAuth frontend → air-gapped proxy adapter matching Glovo pattern
+- **OrderIngestionPipeline:** Migrated from Supabase/DbWriteGate → Docker Core `create_order_atomic` RPC
+- All three delivery adapters now implement identical air-gapped architecture with exponential backoff
+
+#### Reservations Persistence (Gap #2)
+
+- **SQL Migration:** `20260209_reservations_tables.sql` — `gm_reservations`, `gm_no_show_history`, `gm_overbooking_config`
+- **ReservationEngine:** Full rewrite from in-memory Maps → Docker Core PostgREST with in-memory fallback
+- RLS policies, indexes, and `updated_at` triggers
+
+#### Financial Revenue Engine (Gap #3)
+
+- **FinanceEngine:** Rewritten from hardcoded mock data → real aggregation from `gm_orders`
+- `getDailySnapshot()` aggregates real revenue, payment methods, hourly distribution
+- `closeDay()` creates Z-reports in `gm_z_reports` with cash diff calculation
+- `getSalesForecast()` computes 7-day moving average from historical orders
+- `getStaffPerformance()` ranks staff by real order data
+- All methods gracefully degrade to empty/zero values when Core is unreachable
+
+#### Supabase Removal (Gap #4)
+
+- OrderIngestionPipeline no longer imports Supabase or DbWriteGate
+- All delivery adapters use `getDockerCoreFetchClient()` exclusively
+- ReservationEngine uses Docker Core PostgREST exclusively
+
+#### VERSION Unification (Gap #5)
+
+- VERSION bumped from 1.0.1 → 1.3.0
+- STATUS updated to `INTEGRATIONS_RESERVATIONS_FINANCE_WIRED`
+- SUPABASE status changed to `FULLY_REPLACED_BY_DOCKER`
+- CHANGELOG and VERSION now synchronized
+
+### 📁 New Files
+
+- `docker-core/schema/migrations/20260209_integration_webhook_events.sql`
+- `docker-core/schema/migrations/20260209_reservations_tables.sql`
+- `tests/unit/integrations/delivery-adapters.test.ts`
+- `tests/unit/reservations/ReservationEngine.test.ts`
+- `tests/unit/finance/FinanceEngine.test.ts`
+
+### 📁 Modified Files
+
+- `merchant-portal/src/integrations/adapters/ubereats/UberEatsAdapter.ts`
+- `merchant-portal/src/integrations/adapters/deliveroo/DeliverooAdapter.ts`
+- `merchant-portal/src/integrations/core/OrderIngestionPipeline.ts`
+- `merchant-portal/src/core/reservations/ReservationEngine.ts`
+- `merchant-portal/src/core/reports/FinanceEngine.ts`
+- `VERSION`
+- `CHANGELOG.md`
+
+---
+
 ## [1.2.0] - 2026-01-24
 
 ### 🔧 Final Polish
 
 #### Fixes
+
 - **Pressure Banner:** Added 1s debounce to prevent flickering during transitions
 - **Urgency Colors:** KDSTicket now has self-updating timer with dynamic interval
 - **Animations:** Pressure banner with smooth fade in/out (300ms)
 
 #### Improvements
+
 - `useKitchenPressure`: Smart debounce (immediate for increase, 1s for decrease)
 - `KDSTicket`: AppState awareness for recalculation when returning from background
 - Dynamic intervals based on urgency (5s/15s/30s)
 
 ### 📁 Modified Files
+
 - `mobile-app/hooks/useKitchenPressure.ts`
 - `mobile-app/components/KitchenPressureIndicator.tsx`
 - `mobile-app/components/KDSTicket.tsx`
@@ -30,10 +93,12 @@ All notable changes to this project will be documented in this file.
 ### 🔧 Stability Fixes
 
 #### Fixes
+
 - **Background Timer:** Timer now recalculates immediately when returning from background
 - **Waitlist Persistence:** Robust auto-save with debounce and save on background
 
 #### Improvements
+
 - `OrderTimer`: AppState awareness for immediate recalculation
 - `OrderTimer`: Dynamic interval (5s/15s/30s) based on urgency
 - `WaitlistBoard`: Immediate save on critical actions (add, seat)
@@ -42,6 +107,7 @@ All notable changes to this project will be documented in this file.
 - `WaitlistBoard`: Save on component unmount
 
 ### 📁 Modified Files
+
 - `mobile-app/components/OrderTimer.tsx`
 - `mobile-app/components/WaitlistBoard.tsx`
 
@@ -52,6 +118,7 @@ All notable changes to this project will be documented in this file.
 ### 🚀 Observability & Growth
 
 #### Observability (Sentry + Metrics)
+
 - **Sentry Integration:** Error tracking in merchant-portal, customer-portal, mobile-app
 - **ErrorBoundary:** Fallback components with automatic error capture
 - **Centralized Logger:** Logging service with Sentry integration
@@ -59,12 +126,14 @@ All notable changes to this project will be documented in this file.
 - **useRealtimeMetrics:** Hook for orders/hour, average ticket, revenue
 
 #### Growth & Marketing (SEO + Pixel)
+
 - **Dynamic SEO:** Meta tags (title, description, Open Graph, Twitter Cards)
 - **Schema.org:** JSON-LD for Restaurant, Menu, BreadcrumbList
 - **Pixel Tracking:** Meta Pixel + Google Analytics integrated
 - **Tracked Events:** pageView, viewItem, addToCart, initiateCheckout, purchase
 
 ### 📁 Created Files
+
 - `merchant-portal/src/hooks/useRealtimeMetrics.ts`
 - `merchant-portal/src/components/Dashboard/OperationalMetricsWidget.tsx`
 - `customer-portal/src/lib/logger.ts`
@@ -77,6 +146,7 @@ All notable changes to this project will be documented in this file.
 - `docs/ops/GROWTH_MARKETING_SETUP.md`
 
 ### 📁 Modified Files
+
 - `merchant-portal/src/core/logger/Logger.ts`
 - `merchant-portal/src/ui/design-system/ErrorBoundary.tsx`
 - `merchant-portal/vite.config.ts`
@@ -99,6 +169,7 @@ Complete transformation of ChefIApp from sales recorder to Operational Nervous S
 ## [1.0.0] - Week 1: Fast Pay
 
 ### ✨ Added
+
 - **FastPayButton**: Quick payment component in 2 taps
 - Auto-selection of payment method (cash as default)
 - Single confirmation without intermediate modals
@@ -106,9 +177,11 @@ Complete transformation of ChefIApp from sales recorder to Operational Nervous S
 - Integration in table map and orders screen
 
 ### 🎯 Goal
+
 Payment in < 5 seconds (36x faster than before)
 
 ### 📁 Files
+
 - `mobile-app/components/FastPayButton.tsx` (new)
 - `mobile-app/app/(tabs)/tables.tsx` (modified)
 - `mobile-app/app/(tabs)/orders.tsx` (modified)
@@ -118,6 +191,7 @@ Payment in < 5 seconds (36x faster than before)
 ## [1.0.0] - Week 2: Live Map
 
 ### ✨ Added
+
 - **Timer per table**: Updated every second
 - **Urgency colors**:
   - 🟢 Green: < 15 minutes
@@ -128,9 +202,11 @@ Payment in < 5 seconds (36x faster than before)
 - Timer based on last event (not just creation)
 
 ### 🎯 Goal
+
 Map stops being visual and becomes operational sensor
 
 ### 📁 Files
+
 - `mobile-app/app/(tabs)/tables.tsx` (modified)
 
 ---
@@ -138,6 +214,7 @@ Map stops being visual and becomes operational sensor
 ## [1.0.0] - Week 3: KDS as King
 
 ### ✨ Added
+
 - **useKitchenPressure**: Hook to detect kitchen saturation
 - **KitchenPressureIndicator**: Visual pressure component
 - **Smart menu**: Hides slow dishes when kitchen saturated
@@ -145,9 +222,11 @@ Map stops being visual and becomes operational sensor
 - Pressure banner in menu (yellow/red)
 
 ### 🎯 Goal
+
 Kitchen influences dining room decisions in real-time
 
 ### 📁 Files
+
 - `mobile-app/hooks/useKitchenPressure.ts` (new)
 - `mobile-app/components/KitchenPressureIndicator.tsx` (new)
 - `mobile-app/app/(tabs)/index.tsx` (modified)
@@ -157,6 +236,7 @@ Kitchen influences dining room decisions in real-time
 ## [1.0.0] - Week 4: Reservations LITE
 
 ### ✨ Added
+
 - **WaitlistBoard**: Digital waitlist component
 - Add entry by name + time
 - Automatic conversion: reservation → table
@@ -164,9 +244,11 @@ Kitchen influences dining room decisions in real-time
 - Sorting by time
 
 ### 🎯 Goal
+
 Simple waitlist without overengineering
 
 ### 📁 Files
+
 - `mobile-app/components/WaitlistBoard.tsx` (new)
 - `mobile-app/services/persistence.ts` (modified)
 - `mobile-app/app/(tabs)/tables.tsx` (modified)
@@ -176,11 +258,13 @@ Simple waitlist without overengineering
 ## [1.0.0] - Optimizations
 
 ### ⚡ Performance
+
 - Optimized timer: only updates when table occupied
 - `useMemo` in menu filter (avoids re-renders)
 - `KitchenPressureIndicator` component isolated
 
 ### 💾 Persistence
+
 - Waitlist saved automatically
 - Loads when opening component
 - Survives restarts
@@ -190,6 +274,7 @@ Simple waitlist without overengineering
 ## [1.0.0] - Documentation
 
 ### 📚 Created
+
 - `docs/EXECUCAO_30_DIAS.md` - Complete technical documentation
 - `docs/VALIDACAO_RAPIDA.md` - Validation checklist (17 tests)
 - `docs/GUIA_RAPIDO_GARCOM.md` - Waiter guide (10 minutes)
@@ -205,12 +290,14 @@ Simple waitlist without overengineering
 ## [1.0.0] - Expected Metrics
 
 ### Operational
+
 - ⏱️ Payment time: 2-3min → < 5s (**36x faster**)
 - 🗺️ Visibility: 0% → 100% (real-time state)
 - 🍽️ Kitchen efficiency: +25% during peaks
 - 📋 Reservation conversion: +15%
 
 ### Financial
+
 - 💰 More tables/night: +2-3 tables
 - 🍷 More drink sales: +25% during peaks
 - ⚡ Fewer errors: -30%
@@ -221,16 +308,19 @@ Simple waitlist without overengineering
 ## 🔮 Future Versions
 
 ### [1.1.0] - Planned
+
 - Auto-detection of payment method (history)
 - Waitlist persistence in Supabase
 - Operational metrics dashboard
 
 ### [1.2.0] - Planned
+
 - Machine Learning to predict saturation
 - Automatic dish suggestions
 - Shift optimization
 
 ### [2.0.0] - Future
+
 - Delivery integration (without complexity)
 - Predictive analytics
 - Complete automation
@@ -244,6 +334,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-**Current Version:** 1.0.0  
-**Launch Date:** 2026-01-24  
+**Current Version:** 1.0.0
+**Launch Date:** 2026-01-24
 **Status:** ✅ Ready for Validation

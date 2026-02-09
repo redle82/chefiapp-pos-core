@@ -1,99 +1,146 @@
 /**
- * Order Ingestion Pipeline - The "Trojan Horse" Gateway
+ * Order Ingestion Pipeline — Docker Core Gateway
  *
- * Responsável por receber eventos de pedidos externos (GloriaFood, iFood, etc.)
- * e injetá-los no sistema operacional do ChefIApp (POS/KDS).
+ * Responsável por receber eventos de pedidos externos (UberEats, Glovo, Deliveroo, etc.)
+ * e injetá-los no sistema operacional do ChefIApp via Docker Core PostgREST.
  *
  * Flow:
- * 1. Adapter (GloriaFood) Recebe Webhook -> Emite IntegrationEvent (order.created)
+ * 1. Adapter recebe Webhook → Emite IntegrationEvent (order.created)
  * 2. Pipeline Recebe Evento
  * 3. Pipeline Normaliza Dados
- * 4. Pipeline Encontra/Cria Cliente
- * 5. Pipeline Injeta no OrderEngine (Cria Pedido Real no Banco)
- * 6. Pipeline Notifica KDS (via Realtime implícito na criação)
- */
-
-import type { OrderCreatedEvent } from "../types/IntegrationEvent";
-// LEGACY / LAB — blocked in Docker mode
-import { DbWriteGate } from "../../core/governance/DbWriteGate";
-
-/**
- * AIRLOCK PROTOCOL: Public Ingestion
+ * 4. Pipeline Insere em integration_webhook_events (auditoria)
+ * 5. Pipeline Chama create_order_atomic (pedido real no Core)
+ * 6. KDS notificado via Realtime implícito
  *
- * Agora escreve apenas em 'gm_order_requests'.
- * O TPV (Sovereign) deve aprovar para virar 'gm_orders'.
+ * AIRLOCK PROTOCOL: External orders arrive as real gm_orders with source='delivery'.
  */
+
+import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
+import { getDockerCoreFetchClient } from "../../core/infra/dockerCoreFetchClient";
+import type { OrderCreatedEvent } from "../types/IntegrationEvent";
+
 export class OrderIngestionPipeline {
   /**
-   * Ingests a public request into the Airlock.
+   * Ingests an external delivery order into the Core.
+   * 1. Logs webhook event for audit
+   * 2. Calls create_order_atomic to create real order
    */
   async processExternalOrder(
     event: OrderCreatedEvent,
     restaurantId: string,
-  ): Promise<{ success: boolean; requestId?: string; error?: string }> {
+  ): Promise<{ success: boolean; orderId?: string; error?: string }> {
     console.log(
-      `[Airlock] Ingesting request: ${event.payload.orderId} from ${event.payload.source}`,
+      `[Ingestion] Processing: ${event.payload.orderId} from ${event.payload.source}`,
     );
 
+    if (getBackendType() !== BackendType.docker) {
+      return {
+        success: false,
+        error: "Ingestion requires Docker Core backend",
+      };
+    }
+
+    const core = getDockerCoreFetchClient();
+
     try {
-      // 1. Idempotência / Duplicate Check
-      // Check if request already exists in Airlock
-      const { data: existing } = await supabase
-        .from("gm_order_requests")
+      // 1. Idempotency check — look for existing order with same external_id
+      const { data: existing } = await core
+        .from("gm_orders")
         .select("id")
-        .contains("customer_contact", { external_id: event.payload.orderId }) // Using metadata in contact for now or strictly in items/metadata
+        .eq(
+          "source",
+          event.payload.source === "delivery"
+            ? "DELIVERY"
+            : event.payload.source,
+        )
+        .eq("metadata->>external_id", event.payload.orderId)
         .maybeSingle();
 
       if (existing) {
         console.log(
-          `[Airlock] Request ${event.payload.orderId} already in queue as ${existing.id}.`,
+          `[Ingestion] Order ${event.payload.orderId} already exists as ${existing.id}`,
         );
-        return { success: true, requestId: existing.id };
+        return { success: true, orderId: existing.id };
       }
 
-      // 2. Map Items to simple JSONB structure
-      // Note: OrderCreatedEvent.items has: id, name, quantity, priceCents
-      const items = event.payload.items.map((item) => ({
-        product_id: item.id || null, // Use id as product_id (might be null if external)
-        name: item.name,
-        quantity: item.quantity,
-        price_cents: item.priceCents, // Already in cents
-        notes: `External item: ${item.id}`, // Fallback note
+      // 2. Log webhook event for audit trail
+      await core.from("integration_webhook_events").insert({
+        provider: event.payload.metadata?.ubereatsId
+          ? "ubereats"
+          : event.payload.metadata?.glovoId
+          ? "glovo"
+          : event.payload.metadata?.deliverooId
+          ? "deliveroo"
+          : "unknown",
+        event_type: "order.created",
+        payload: event.payload,
+        processed: false,
+      });
+
+      // 3. Prepare items for create_order_atomic format
+      const items = (event.payload.items || []).map((item) => ({
+        product_id: null, // External items may not match internal products
+        name: item.name || "External Item",
+        unit_price: item.priceCents || 0,
+        quantity: item.quantity || 1,
+        created_by_role: "DELIVERY",
       }));
 
-      // 3. Calculate Totals (Trust the source, but verify later)
-      const totalCents = items.reduce(
-        (sum, i) => sum + i.price_cents * i.quantity,
-        0,
-      );
-
-      // 4. Insert into Airlock (Using Gate)
-      const { data: request, error } = await DbWriteGate.insert(
-        "OrderIngestionPipeline",
-        "gm_order_requests",
+      // 4. Create real order via Core RPC
+      const { data: orderResult, error: orderError } = await core.rpc(
+        "create_order_atomic",
         {
-          tenant_id: restaurantId,
-          items: items,
-          total_cents: totalCents,
-          payment_method: "UNKNOWN",
-          status: "PENDING",
-          request_source: event.payload.source,
-          customer_contact: {
-            name: event.payload.customerName || "Cliente Externo",
-            phone: null,
+          p_restaurant_id: restaurantId,
+          p_items: items,
+          p_payment_method: "delivery_platform",
+          p_sync_metadata: {
             external_id: event.payload.orderId,
+            origin: "DELIVERY",
+            source: event.payload.metadata?.ubereatsId
+              ? "ubereats"
+              : event.payload.metadata?.glovoId
+              ? "glovo"
+              : event.payload.metadata?.deliverooId
+              ? "deliveroo"
+              : "external",
+            customer_name: event.payload.customerName,
+            customer_phone: event.payload.customerPhone,
+            delivery_address: event.payload.metadata?.address || "",
           },
         },
-        { tenantId: restaurantId },
       );
 
-      if (error) throw new Error(`Airlock Rejection: ${error.message}`);
+      if (orderError) {
+        throw new Error(
+          `Core order creation failed: ${
+            orderError.message || JSON.stringify(orderError)
+          }`,
+        );
+      }
 
-      console.log(`[Airlock] Request accepted into queue: ${request.id}`);
+      const orderId = orderResult?.id || "unknown";
+      console.log(`[Ingestion] ✅ Order created: ${orderId}`);
 
-      return { success: true, requestId: request.id };
+      // 5. Mark webhook event as processed
+      await core
+        .from("integration_webhook_events")
+        .update({ processed: true, processed_at: new Date().toISOString() })
+        .eq("payload->>orderId", event.payload.orderId);
+
+      return { success: true, orderId };
     } catch (error: any) {
-      console.error("[Airlock] Ingestion Failed:", error);
+      console.error("[Ingestion] ❌ Failed:", error);
+
+      // Mark webhook event as failed
+      try {
+        await core
+          .from("integration_webhook_events")
+          .update({ processing_error: error.message })
+          .eq("payload->>orderId", event.payload.orderId);
+      } catch {
+        /* best-effort */
+      }
+
       return { success: false, error: error.message };
     }
   }
