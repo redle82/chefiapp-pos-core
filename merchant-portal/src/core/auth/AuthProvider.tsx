@@ -5,6 +5,9 @@
  * context instead of each running their own Keycloak session check.
  *
  * Backend: Docker Core (Keycloak + mock demo/pilot). Zero Supabase.
+ *
+ * SECURITY: Mock/demo mode is BLOCKED in production builds.
+ * Only available when import.meta.env.DEV === true (Vite dev server).
  */
 
 import React, {
@@ -47,8 +50,18 @@ interface AuthContextType extends AuthState {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 // ---------------------------------------------------------------------------
-// Mock session helper
+// Mock session helper (DEV only — blocked in production builds)
 // ---------------------------------------------------------------------------
+
+/**
+ * Returns true if mock/demo auth is ALLOWED in this environment.
+ * Production builds (import.meta.env.PROD === true) NEVER allow mock auth.
+ */
+function isMockAuthAllowed(): boolean {
+  // Vite injects import.meta.env.DEV at build time.
+  // In production builds, this is always false — never allow mock.
+  return import.meta.env.DEV === true;
+}
 
 const PILOT_USER_UUID = "00000000-0000-0000-0000-000000000002";
 
@@ -97,8 +110,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    // Demo / Pilot mock
-    if (typeof window !== "undefined") {
+    // Demo / Pilot mock — ONLY in development builds (blocked in production)
+    if (typeof window !== "undefined" && isMockAuthAllowed()) {
       const isDemoUrl =
         new URLSearchParams(window.location.search).get("demo") === "true";
       const isDemoStored =
@@ -107,6 +120,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const isPilot = localStorage.getItem("chefiapp_pilot_mode") === "true";
 
       if (isDemoUrl || isDemoStored || (isDebugMode() && isPilot)) {
+        console.warn(
+          "[AuthProvider] Mock auth activated (DEV only). This is BLOCKED in production builds.",
+        );
         const mock = createMockSession();
         if (mountedRef.current) {
           setSession(mock.session);

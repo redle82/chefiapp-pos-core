@@ -9,7 +9,9 @@
     "moduleResolution": "node",
     "target": "ES2022",
     "paths": {
-      "../merchant-portal/src/core/state/SystemStateProvider": ["../tests/__mocks__/SystemStateProvider"]
+      "../merchant-portal/src/core/state/SystemStateProvider": [
+        "../tests/__mocks__/SystemStateProvider"
+      ]
     }
   },
   "include": [
@@ -17,5 +19,11 @@
     "../tests/**/*.tsx",
     "../tests/**/*.d.ts",
     "../tests/__mocks__/vite-env.d.ts"
+  ],
+  "exclude": [
+    "../node_modules",
+    "../dist",
+    "../coverage",
+    "../tests/node_modules"
   ]
 }
