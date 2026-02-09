@@ -99,6 +99,8 @@ import { FeaturesPage } from "./pages/Landing/FeaturesPage";
 import { LandingPage } from "./pages/Landing/LandingPage";
 import { PricingPage } from "./pages/Landing/PricingPage";
 import { ProductFirstLandingPage } from "./pages/Landing/ProductFirstLandingPage";
+import { LegalPrivacyPage } from "./pages/Legal/LegalPrivacyPage";
+import { LegalTermsPage } from "./pages/Legal/LegalTermsPage";
 import { ManagerAnalysisPage } from "./pages/Manager/AnalysisPage";
 import { ManagerCentralPage } from "./pages/Manager/CentralPage";
 import { ManagerDashboardPage } from "./pages/Manager/DashboardPage";
@@ -256,6 +258,8 @@ function App() {
           <Route path="/app/demo-tpv" element={<ProductFirstLandingPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/legal/terms" element={<LegalTermsPage />} />
+          <Route path="/legal/privacy" element={<LegalPrivacyPage />} />
           {/* Demo: redireccionado para auth (demo-guiado removido em refactor pós-freeze). */}
           <Route path="/demo" element={<Navigate to="/auth" replace />} />
           <Route

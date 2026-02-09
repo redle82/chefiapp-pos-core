@@ -14,6 +14,198 @@ export interface FiscalPrinterConfig {
     paperWidth?: number; // mm (default: 80mm para térmica)
 }
 
+export function buildFiscalReceiptHtml(taxDoc: TaxDocument, orderData: any): string {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('pt-PT', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
+    const timeStr = now.toLocaleTimeString('pt-PT', {
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+
+    const vatRate = taxDoc.doc_type === 'SAF-T' || taxDoc.doc_type === 'MOCK' ? 23 : 21; // Portugal: 23%, Espanha: 21%
+    const vatAmount = taxDoc.taxes.vat || 0;
+    const subtotal = taxDoc.total_amount - vatAmount;
+
+    const pdfUrl = taxDoc.raw_payload?.pdf_url || taxDoc.raw_payload?.invoice?.pdf?.url;
+    const protocol = taxDoc.raw_payload?.gov_protocol;
+    const qrCodeUrl = pdfUrl
+        ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pdfUrl)}`
+        : protocol
+            ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`FISCAL:${protocol}`)}`
+            : null;
+    const legalFooter = orderData.legal_footer || orderData.legalFooter || "";
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Recibo Fiscal</title>
+    <style>
+        @media print {
+            @page {
+                size: 80mm auto;
+                margin: 0;
+            }
+            body {
+                margin: 0;
+                padding: 10mm;
+            }
+        }
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            max-width: 70mm;
+            margin: 0 auto;
+            padding: 10mm;
+            color: #000;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .restaurant-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .document-info {
+            font-size: 10px;
+            margin-top: 5px;
+        }
+        .items {
+            margin: 15px 0;
+        }
+        .item {
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px dotted #ccc;
+        }
+        .item-name {
+            font-weight: bold;
+        }
+        .item-details {
+            font-size: 10px;
+            color: #666;
+            margin-top: 2px;
+        }
+        .totals {
+            margin-top: 15px;
+            border-top: 1px dashed #000;
+            padding-top: 10px;
+        }
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .total-line.final {
+            font-weight: bold;
+            font-size: 14px;
+            border-top: 2px solid #000;
+            padding-top: 5px;
+            margin-top: 5px;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 9px;
+            border-top: 1px dashed #000;
+            padding-top: 10px;
+        }
+        .protocol {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .legal-footer {
+            margin-top: 8px;
+            font-size: 9px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="restaurant-name">${orderData.restaurant_name || 'RESTAURANTE'}</div>
+        <div class="document-info">
+            ${taxDoc.doc_type === 'TICKETBAI' ? 'TICKETBAI' : taxDoc.doc_type === 'SAF-T' ? 'SAF-T' : 'RECIBO FISCAL'}
+        </div>
+        <div class="document-info">
+            Pedido: ${orderData.short_id || orderData.id?.substring(0, 8) || 'N/A'}
+        </div>
+        <div class="document-info">
+            ${dateStr} ${timeStr}
+        </div>
+    </div>
+
+    <div class="items">
+        ${taxDoc.items.map(item => `
+            <div class="item">
+                <div class="item-name">${item.description}</div>
+                <div class="item-details">
+                    ${item.quantity}x ${item.unit_price.toFixed(2)}€ = ${item.total.toFixed(2)}€
+                </div>
+            </div>
+        `).join('')}
+    </div>
+
+    <div class="totals">
+        <div class="total-line">
+            <span>Subtotal:</span>
+            <span>${subtotal.toFixed(2)}€</span>
+        </div>
+        <div class="total-line">
+            <span>IVA (${vatRate}%):</span>
+            <span>${vatAmount.toFixed(2)}€</span>
+        </div>
+        <div class="total-line final">
+            <span>TOTAL:</span>
+            <span>${taxDoc.total_amount.toFixed(2)}€</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div>Método de Pagamento: ${orderData.payment_method || 'N/A'}</div>
+        ${taxDoc.raw_payload?.gov_protocol ? `
+            <div class="protocol">
+                Protocolo: ${taxDoc.raw_payload.gov_protocol}
+            </div>
+        ` : ''}
+        ${qrCodeUrl ? `
+            <div style="margin-top: 10px; text-align: center;">
+                <img src="${qrCodeUrl}" alt="QR Code" style="width: 80px; height: 80px; image-rendering: pixelated;" />
+                <div style="font-size: 8px; margin-top: 5px;">
+                    ${pdfUrl ? 'Escaneie para ver fatura online' : 'Protocolo Fiscal'}
+                </div>
+            </div>
+        ` : ''}
+        ${orderData.restaurant_address ? `
+            <div style="font-size: 9px; margin-top: 10px; text-align: center;">
+                ${orderData.restaurant_address}
+            </div>
+        ` : ''}
+        ${orderData.restaurant_nif ? `
+            <div style="font-size: 9px; margin-top: 5px; text-align: center;">
+                NIF: ${orderData.restaurant_nif}
+            </div>
+        ` : ''}
+        ${legalFooter ? `
+            <div class="legal-footer">${legalFooter}</div>
+        ` : ''}
+        <div style="margin-top: 10px;">
+            Obrigado pela sua visita!
+        </div>
+    </div>
+</body>
+</html>`;
+}
+
 export class FiscalPrinter {
     private config: FiscalPrinterConfig;
 
@@ -265,182 +457,7 @@ export class FiscalPrinter {
      * Gera HTML do recibo fiscal (melhorado para 80mm térmico)
      */
     private generateReceiptHTML(taxDoc: TaxDocument, orderData: any): string {
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('pt-PT', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        });
-        const timeStr = now.toLocaleTimeString('pt-PT', {
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-
-        const vatRate = taxDoc.doc_type === 'SAF-T' || taxDoc.doc_type === 'MOCK' ? 23 : 21; // Portugal: 23%, Espanha: 21%
-        const vatAmount = taxDoc.taxes.vat || 0;
-        const subtotal = taxDoc.total_amount - vatAmount;
-
-        // QR Code URL (se disponível)
-        const qrCodeUrl = this.generateQRCodeUrl(taxDoc, orderData);
-        const pdfUrl = taxDoc.raw_payload?.pdf_url || taxDoc.raw_payload?.invoice?.pdf?.url;
-
-        return `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Recibo Fiscal</title>
-    <style>
-        @media print {
-            @page {
-                size: 80mm auto;
-                margin: 0;
-            }
-            body {
-                margin: 0;
-                padding: 10mm;
-            }
-        }
-        body {
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.4;
-            max-width: 70mm;
-            margin: 0 auto;
-            padding: 10mm;
-            color: #000;
-        }
-        .header {
-            text-align: center;
-            border-bottom: 1px dashed #000;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-        }
-        .restaurant-name {
-            font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-        .document-info {
-            font-size: 10px;
-            margin-top: 5px;
-        }
-        .items {
-            margin: 15px 0;
-        }
-        .item {
-            margin-bottom: 8px;
-            padding-bottom: 5px;
-            border-bottom: 1px dotted #ccc;
-        }
-        .item-name {
-            font-weight: bold;
-        }
-        .item-details {
-            font-size: 10px;
-            color: #666;
-            margin-top: 2px;
-        }
-        .totals {
-            margin-top: 15px;
-            border-top: 1px dashed #000;
-            padding-top: 10px;
-        }
-        .total-line {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-        .total-line.final {
-            font-weight: bold;
-            font-size: 14px;
-            border-top: 2px solid #000;
-            padding-top: 5px;
-            margin-top: 5px;
-        }
-        .footer {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 9px;
-            border-top: 1px dashed #000;
-            padding-top: 10px;
-        }
-        .protocol {
-            font-weight: bold;
-            margin-top: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="restaurant-name">${orderData.restaurant_name || 'RESTAURANTE'}</div>
-        <div class="document-info">
-            ${taxDoc.doc_type === 'TICKETBAI' ? 'TICKETBAI' : taxDoc.doc_type === 'SAF-T' ? 'SAF-T' : 'RECIBO FISCAL'}
-        </div>
-        <div class="document-info">
-            Pedido: ${orderData.short_id || orderData.id?.substring(0, 8) || 'N/A'}
-        </div>
-        <div class="document-info">
-            ${dateStr} ${timeStr}
-        </div>
-    </div>
-
-    <div class="items">
-        ${taxDoc.items.map(item => `
-            <div class="item">
-                <div class="item-name">${item.description}</div>
-                <div class="item-details">
-                    ${item.quantity}x ${item.unit_price.toFixed(2)}€ = ${item.total.toFixed(2)}€
-                </div>
-            </div>
-        `).join('')}
-    </div>
-
-    <div class="totals">
-        <div class="total-line">
-            <span>Subtotal:</span>
-            <span>${subtotal.toFixed(2)}€</span>
-        </div>
-        <div class="total-line">
-            <span>IVA (${vatRate}%):</span>
-            <span>${vatAmount.toFixed(2)}€</span>
-        </div>
-        <div class="total-line final">
-            <span>TOTAL:</span>
-            <span>${taxDoc.total_amount.toFixed(2)}€</span>
-        </div>
-    </div>
-
-    <div class="footer">
-        <div>Método de Pagamento: ${orderData.payment_method || 'N/A'}</div>
-        ${taxDoc.raw_payload?.gov_protocol ? `
-            <div class="protocol">
-                Protocolo: ${taxDoc.raw_payload.gov_protocol}
-            </div>
-        ` : ''}
-        ${qrCodeUrl ? `
-            <div style="margin-top: 10px; text-align: center;">
-                <img src="${qrCodeUrl}" alt="QR Code" style="width: 80px; height: 80px; image-rendering: pixelated;" />
-                <div style="font-size: 8px; margin-top: 5px;">
-                    ${pdfUrl ? 'Escaneie para ver fatura online' : 'Protocolo Fiscal'}
-                </div>
-            </div>
-        ` : ''}
-        ${orderData.restaurant_address ? `
-            <div style="font-size: 9px; margin-top: 10px; text-align: center;">
-                ${orderData.restaurant_address}
-            </div>
-        ` : ''}
-        ${orderData.restaurant_nif ? `
-            <div style="font-size: 9px; margin-top: 5px; text-align: center;">
-                NIF: ${orderData.restaurant_nif}
-            </div>
-        ` : ''}
-        <div style="margin-top: 10px;">
-            Obrigado pela sua visita!
-        </div>
-    </div>
-</body>
-</html>`;
+        return buildFiscalReceiptHtml(taxDoc, orderData);
     }
 
     /**

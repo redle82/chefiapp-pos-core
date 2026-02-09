@@ -17,6 +17,7 @@ export interface ShiftReceiptData {
     expectedBalanceCents: number;
     differenceCents: number;
     paymentMethods?: Record<string, number>; // method -> cents
+    legalFooter?: string;
 }
 
 export const generateShiftReceiptHtml = (data: ShiftReceiptData): string => {
@@ -141,6 +142,7 @@ export const generateShiftReceiptHtml = (data: ShiftReceiptData): string => {
             </div>
 
             <div class="footer">
+                ${data.legalFooter ? `${data.legalFooter}<br>` : ''}
                 Emitido em ${formatDate(new Date())}<br>
                 Software: ChefIApp POS
             </div>

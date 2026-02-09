@@ -101,18 +101,18 @@ export const Footer = () => {
           </div>
 
           <div className="flex gap-8 mt-4 md:mt-0">
-            <a
-              href="#terms"
+            <Link
+              to="/legal/terms"
               className="hover:text-[var(--color-primary)] transition-colors"
             >
               Termos
-            </a>
-            <a
-              href="#privacy"
+            </Link>
+            <Link
+              to="/legal/privacy"
               className="hover:text-[var(--color-primary)] transition-colors"
             >
               Privacidade
-            </a>
+            </Link>
           </div>
         </div>
 

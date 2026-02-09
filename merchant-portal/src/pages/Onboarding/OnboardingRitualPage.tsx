@@ -5,21 +5,23 @@
  * Ref: docs/contracts/ONBOARDING_5MIN_9_TELAS_CONTRACT.md
  */
 
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { OnboardingStepIndicator } from "../../components/onboarding/OnboardingStepIndicator";
 import { ONBOARDING_5MIN_COPY } from "../../copy/onboarding5min";
 import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
+import { recordLegalConsent } from "../../core/audit/legalConsent";
 import { DbWriteGate } from "../../core/governance/DbWriteGate";
-import { getDefaultOpeningCashCents } from "../../core/storage/shiftDefaultsStorage";
-import { setOnboardingJustCompletedFlag } from "../../core/storage/onboardingFlowFlag";
-import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { useShift } from "../../core/shift/ShiftContext";
+import { setOnboardingJustCompletedFlag } from "../../core/storage/onboardingFlowFlag";
+import { getDefaultOpeningCashCents } from "../../core/storage/shiftDefaultsStorage";
+import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { Button, Card, Input } from "../../ui/design-system/primitives";
 import { colors } from "../../ui/design-system/tokens/colors";
 import { spacing } from "../../ui/design-system/tokens/spacing";
 
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function isValidRestaurantId(id: string | null): id is string {
   return !!id && UUID_REGEX.test(id);
 }
@@ -29,11 +31,15 @@ export function OnboardingRitualPage() {
   const shift = useShift();
   const restaurantId =
     getTabIsolated("chefiapp_restaurant_id") ??
-    (typeof window !== "undefined" ? window.localStorage.getItem("chefiapp_restaurant_id") : null);
+    (typeof window !== "undefined"
+      ? window.localStorage.getItem("chefiapp_restaurant_id")
+      : null);
 
   const [opening, setOpening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [caixaEur, setCaixaEur] = useState("0");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const consentLoggedRef = useRef(false);
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -41,7 +47,9 @@ export function OnboardingRitualPage() {
     if (cents !== null) setCaixaEur(String(cents / 100));
   }, [restaurantId]);
 
-  const defaultCents = restaurantId ? getDefaultOpeningCashCents(restaurantId) : null;
+  const defaultCents = restaurantId
+    ? getDefaultOpeningCashCents(restaurantId)
+    : null;
   const defaultEur = defaultCents !== null ? defaultCents / 100 : null;
   const caixaHelp =
     defaultEur !== null &&
@@ -60,7 +68,7 @@ export function OnboardingRitualPage() {
       "gm_restaurants",
       { status: "active", onboarding_completed_at: completedAt },
       { id: restaurantId },
-      { tenantId: restaurantId }
+      { tenantId: restaurantId },
     );
     try {
       const raw =
@@ -77,7 +85,7 @@ export function OnboardingRitualPage() {
           row.billing_status = row.billing_status || "trial";
           window.localStorage.setItem(
             "chefiapp_pilot_mock_restaurant",
-            JSON.stringify(row)
+            JSON.stringify(row),
           );
         }
       }
@@ -90,9 +98,17 @@ export function OnboardingRitualPage() {
   const handleOpenShift = async () => {
     if (!restaurantId) return;
     setError(null);
+    if (!acceptedTerms) {
+      setError("Aceita os Termos e a Politica de Privacidade para continuar.");
+      return;
+    }
+    if (!consentLoggedRef.current) {
+      consentLoggedRef.current = true;
+      recordLegalConsent({ restaurantId, source: "onboarding_ritual" });
+    }
     if (!isValidRestaurantId(restaurantId)) {
       setError(
-        "O identificador do restaurante não é válido. Volte ao passo Identidade e crie o restaurante (nome, tipo, país)."
+        "O identificador do restaurante não é válido. Volte ao passo Identidade e crie o restaurante (nome, tipo, país).",
       );
       return;
     }
@@ -111,11 +127,14 @@ export function OnboardingRitualPage() {
           p_name: "Caixa Principal",
           p_opened_by: "Operador TPV",
           p_opening_balance_cents: openingBalanceCents,
-        }
+        },
       );
       if (rpcError) {
         const raw = rpcError.message ?? "";
-        if (raw.includes("CASH_REGISTER_ALREADY_OPEN") || raw.includes("already open")) {
+        if (
+          raw.includes("CASH_REGISTER_ALREADY_OPEN") ||
+          raw.includes("already open")
+        ) {
           await markOnboardingComplete();
           shift?.refreshShiftStatus?.();
           navigate("/op/tpv", { replace: true });
@@ -137,7 +156,9 @@ export function OnboardingRitualPage() {
       navigate("/op/tpv", { replace: true });
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Erro ao abrir turno. Tente novamente."
+        err instanceof Error
+          ? err.message
+          : "Erro ao abrir turno. Tente novamente.",
       );
     } finally {
       setOpening(false);
@@ -146,6 +167,14 @@ export function OnboardingRitualPage() {
 
   const handleGoToPanel = async () => {
     setError(null);
+    if (!acceptedTerms) {
+      setError("Aceita os Termos e a Politica de Privacidade para continuar.");
+      return;
+    }
+    if (!consentLoggedRef.current) {
+      consentLoggedRef.current = true;
+      recordLegalConsent({ restaurantId, source: "onboarding_ritual" });
+    }
     try {
       await markOnboardingComplete();
       navigate("/dashboard", { replace: true });
@@ -220,7 +249,13 @@ export function OnboardingRitualPage() {
           {ONBOARDING_5MIN_COPY.ritual.message}
         </p>
         <Card padding="lg" style={{ marginBottom: spacing[6] }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: spacing[4] }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: spacing[4],
+            }}
+          >
             <Input
               label={ONBOARDING_5MIN_COPY.ritual.caixaLabel}
               value={caixaEur}
@@ -228,31 +263,94 @@ export function OnboardingRitualPage() {
               placeholder="0"
               disabled={opening}
             />
-            <p style={{ fontSize: 12, color: colors.text.secondary, marginTop: spacing[2] ? `-${spacing[2]}` : "-0.5rem" }}>
+            <p
+              style={{
+                fontSize: 12,
+                color: colors.text.secondary,
+                marginTop: spacing[2] ? `-${spacing[2]}` : "-0.5rem",
+              }}
+            >
               {caixaHelp}
             </p>
             {error && (
-              <p style={{ color: colors.warning?.base ?? "#f59e0b", fontSize: 14 }}>
+              <p
+                style={{
+                  color: colors.warning?.base ?? "#f59e0b",
+                  fontSize: 14,
+                }}
+              >
                 {error}
               </p>
             )}
+            <label
+              htmlFor="onboarding-terms"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: spacing[3],
+                fontSize: 13,
+                color: colors.text.secondary,
+              }}
+            >
+              <input
+                id="onboarding-terms"
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(event) => {
+                  const checked = event.target.checked;
+                  setAcceptedTerms(checked);
+                  if (checked && !consentLoggedRef.current && restaurantId) {
+                    consentLoggedRef.current = true;
+                    recordLegalConsent({
+                      restaurantId,
+                      source: "onboarding_ritual",
+                    });
+                  }
+                }}
+              />
+              <span>
+                Aceito os{" "}
+                <Link
+                  to="/legal/terms"
+                  style={{
+                    color: colors.text.primary,
+                    textDecoration: "underline",
+                  }}
+                >
+                  Termos
+                </Link>{" "}
+                e a{" "}
+                <Link
+                  to="/legal/privacy"
+                  style={{
+                    color: colors.text.primary,
+                    textDecoration: "underline",
+                  }}
+                >
+                  Politica de Privacidade
+                </Link>
+                .
+              </span>
+            </label>
             <Button
               type="button"
               tone="success"
               variant="solid"
               size="lg"
               onClick={handleOpenShift}
-              disabled={opening}
+              disabled={opening || !acceptedTerms}
               style={{ width: "100%" }}
             >
-              {opening ? "A abrir turno..." : ONBOARDING_5MIN_COPY.ritual.ctaOpen}
+              {opening
+                ? "A abrir turno..."
+                : ONBOARDING_5MIN_COPY.ritual.ctaOpen}
             </Button>
             <Button
               type="button"
               tone="neutral"
               variant="outline"
               onClick={handleGoToPanel}
-              disabled={opening}
+              disabled={opening || !acceptedTerms}
               style={{ width: "100%" }}
             >
               {ONBOARDING_5MIN_COPY.ritual.ctaPanel}
