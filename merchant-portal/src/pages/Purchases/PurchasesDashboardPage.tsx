@@ -19,7 +19,6 @@ import { GlobalLoadingView } from "../../ui/design-system/components";
 
 export function PurchasesDashboardPage() {
   const { runtime } = useRestaurantRuntime();
-  const [suggestionsCount, setSuggestionsCount] = useState(0);
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +52,6 @@ export function PurchasesDashboardPage() {
 
     try {
       const count = await purchaseEngine.generateSuggestions(restaurantId);
-      setSuggestionsCount(count);
       alert(`${count} sugestões geradas`);
     } catch (error) {
       console.error("Error generating suggestions:", error);

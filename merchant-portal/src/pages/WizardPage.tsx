@@ -24,11 +24,6 @@ import { Text } from "../ui/design-system/primitives/Text";
 import { colors } from "../ui/design-system/tokens/colors";
 import { spacing } from "../ui/design-system/tokens/spacing";
 
-// Helper for opening sales copy
-function openSalesLandingCopyInNewTab() {
-  window.open("/sales-copy", "_blank");
-}
-
 export function WizardPage() {
   const envInternalToken =
     typeof import.meta.env.VITE_INTERNAL_API_TOKEN === "string"
@@ -62,54 +57,54 @@ export function WizardPage() {
   const initialApiBase = CONFIG.API_BASE;
   const [apiBase, setApiBase] = useState<string>(initialApiBase);
   const [internalToken, setInternalToken] = useState<string>(
-    envInternalToken ?? "dev-token"
+    envInternalToken ?? "dev-token",
   );
   const [restaurantId, setRestaurantId] = useState<string>(
-    envRestaurantId ?? ""
+    envRestaurantId ?? "",
   );
   const [slug, setSlug] = useState<string>(envDefaultSlug ?? "sofia-gastrobar");
 
-  const [identityName, setIdentityName] = useState("Sofia Gastrobar");
-  const [identityTagline, setIdentityTagline] = useState("Menu online");
-  const [identityPhone, setIdentityPhone] = useState("+351000000000");
-  const [identityAddress, setIdentityAddress] = useState("Lisboa");
-  const [identityHours, setIdentityHours] = useState("12h–23h");
-  const [googlePlaceId, setGooglePlaceId] = useState("ChIJ_TEST_PLACE_ID");
-  const [importUrl, setImportUrl] = useState("https://example.com");
+  const [_identityName, _setIdentityName] = useState("Sofia Gastrobar");
+  const [_identityTagline, _setIdentityTagline] = useState("Menu online");
+  const [_identityPhone, _setIdentityPhone] = useState("+351000000000");
+  const [_identityAddress, _setIdentityAddress] = useState("Lisboa");
+  const [_identityHours, _setIdentityHours] = useState("12h–23h");
+  const [_googlePlaceId, _setGooglePlaceId] = useState("ChIJ_TEST_PLACE_ID");
+  const [_importUrl, _setImportUrl] = useState("https://example.com");
 
-  const [menuCategoryName, setMenuCategoryName] = useState("Destaques");
-  const [menuItemName, setMenuItemName] = useState("Hambúrguer da Casa");
-  const [menuItemPriceCents, setMenuItemPriceCents] = useState(1290);
-  const [menuItemCategoryId, setMenuItemCategoryId] = useState("");
+  const [_menuCategoryName, _setMenuCategoryName] = useState("Destaques");
+  const [_menuItemName, _setMenuItemName] = useState("Hambúrguer da Casa");
+  const [_menuItemPriceCents, _setMenuItemPriceCents] = useState(1290);
+  const [_menuItemCategoryId, _setMenuItemCategoryId] = useState("");
 
-  const [stripePk, setStripePk] = useState(
-    import.meta.env.VITE_STRIPE_PK || ""
+  const [_stripePk, _setStripePk] = useState(
+    import.meta.env.VITE_STRIPE_PK || "",
   );
-  const [stripeSk, setStripeSk] = useState(
-    import.meta.env.VITE_STRIPE_SK || ""
+  const [_stripeSk, _setStripeSk] = useState(
+    import.meta.env.VITE_STRIPE_SK || "",
   );
-  const [stripeWhsec, setStripeWhsec] = useState(
-    import.meta.env.VITE_STRIPE_WHSEC || ""
+  const [_stripeWhsec, _setStripeWhsec] = useState(
+    import.meta.env.VITE_STRIPE_WHSEC || "",
   );
 
-  const [designLevel, setDesignLevel] = useState<
+  const [_designLevel, _setDesignLevel] = useState<
     "BASIC" | "PRO" | "EXPERIENCE"
   >("PRO");
-  const [designTheme, setDesignTheme] = useState<"minimal" | "light" | "dark">(
-    "minimal"
-  );
-  const [designSlug, setDesignSlug] = useState(
-    envDefaultSlug ?? "sofia-gastrobar"
+  const [_designTheme, _setDesignTheme] = useState<
+    "minimal" | "light" | "dark"
+  >("minimal");
+  const [designSlug, _setDesignSlug] = useState(
+    envDefaultSlug ?? "sofia-gastrobar",
   );
 
-  const [testMenuItemId, setTestMenuItemId] = useState(envMenuItemId ?? "");
-  const [testQty, setTestQty] = useState<number>(1);
-  const [testOrderJson, setTestOrderJson] = useState<any>(null);
+  const [_testMenuItemId, _setTestMenuItemId] = useState(envMenuItemId ?? "");
+  const [_testQty, _setTestQty] = useState<number>(1);
+  const [_testOrderJson, _setTestOrderJson] = useState<any>(null);
 
   const [stateJson, setStateJson] = useState<any>(null);
-  const [menuJson, setMenuJson] = useState<any>(null);
-  const [stripeStatusJson, setStripeStatusJson] = useState<any>(null);
-  const [publishJson, setPublishJson] = useState<any>(null);
+  const [_menuJson, _setMenuJson] = useState<any>(null);
+  const [_stripeStatusJson, _setStripeStatusJson] = useState<any>(null);
+  const [_publishJson, _setPublishJson] = useState<any>(null);
   const [lastError, setLastError] = useState<any>(null);
   const [busy, setBusy] = useState<string>("");
 
@@ -130,7 +125,7 @@ export function WizardPage() {
     message: stateJson?.gates?.message,
   };
 
-  const showCommercialCtas = useMemo(() => {
+  const _showCommercialCtas = useMemo(() => {
     if (gates.ok === false) return true;
     const errStatus = Number(lastError?.raw?.status || 0);
     const errCode = String(lastError?.raw?.body?.error || "");
@@ -142,7 +137,7 @@ export function WizardPage() {
       (Array.isArray(stateJson?.completed_steps)
         ? stateJson.completed_steps
         : []
-      ).map((n: any) => Number(n))
+      ).map((n: any) => Number(n)),
     );
     const current = Number(stateJson?.current_step || 1);
     const gatesBlocked = gates.ok === false;
@@ -164,7 +159,7 @@ export function WizardPage() {
       (Array.isArray(stateJson?.completed_steps)
         ? stateJson.completed_steps
         : []
-      ).map((n: any) => Number(n))
+      ).map((n: any) => Number(n)),
     );
     const current = Number(stateJson?.current_step || 1);
 
@@ -405,7 +400,7 @@ export function WizardPage() {
                   {
                     method: "GET",
                     headers: internalHeaders(internalToken),
-                  }
+                  },
                 );
                 setStateJson(r);
                 if (r?.profile?.slug) setSlug(String(r.profile.slug));
@@ -571,7 +566,7 @@ export function WizardPage() {
                 timestamp: new Date().toISOString(),
               },
               null,
-              2
+              2,
             )}
           </pre>
         </Card>

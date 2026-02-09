@@ -47,7 +47,7 @@ export function TaskSystemMinimal() {
       "[TaskSystem] Restaurant ID resolved:",
       id,
       "identity.loading:",
-      identity.loading
+      identity.loading,
     );
     setRestaurantId(id);
     setLoadingIdentity(identity.loading);
@@ -88,26 +88,26 @@ export function TaskSystemMinimal() {
             table: "gm_tasks",
             filter: `restaurant_id=eq.${finalRestaurantId}`,
           },
-          (payload) => {
+          (_payload) => {
             // Debounce: recarregar após 500ms
             setTimeout(() => {
               loadTasks();
             }, 500);
-          }
+          },
         )
         .subscribe((status) => {
           if (status === "SUBSCRIBED") {
             console.log("[TaskSystem] Realtime subscription active");
           } else if (status === "CHANNEL_ERROR") {
             console.warn(
-              "[TaskSystem] Realtime subscription failed, using polling fallback"
+              "[TaskSystem] Realtime subscription failed, using polling fallback",
             );
           }
         });
     } catch (err) {
       console.warn(
         "[TaskSystem] Failed to setup Realtime, using polling fallback:",
-        err
+        err,
       );
     }
 
@@ -146,7 +146,7 @@ export function TaskSystemMinimal() {
       setError(null);
       console.log(
         "[TaskSystem] Loading tasks for restaurant:",
-        finalRestaurantId
+        finalRestaurantId,
       );
 
       let tasksData: CoreTask[] = [];
@@ -156,13 +156,13 @@ export function TaskSystemMinimal() {
         tasksData = await readOpenTasks(
           finalRestaurantId,
           stationFilter !== "all" ? stationFilter : undefined,
-          turnSessionId ?? undefined
+          turnSessionId ?? undefined,
         );
         console.log(
           "[TaskSystem] Loaded",
           tasksData.length,
           "open tasks",
-          turnSessionId ? "(turno ativo)" : ""
+          turnSessionId ? "(turno ativo)" : "",
         );
       } else {
         // Para outros status, buscar todas e filtrar
@@ -216,7 +216,7 @@ export function TaskSystemMinimal() {
       await loadTasks();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Erro ao reconhecer tarefa"
+        err instanceof Error ? err.message : "Erro ao reconhecer tarefa",
       );
     }
   };
@@ -667,7 +667,7 @@ export function TaskSystemMinimal() {
                         fontWeight: "bold",
                         color: getStationColor(task.station || undefined),
                         backgroundColor: `${getStationColor(
-                          task.station || undefined
+                          task.station || undefined,
                         )}20`,
                         padding: "2px 8px",
                         borderRadius: "4px",

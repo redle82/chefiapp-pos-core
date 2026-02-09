@@ -50,7 +50,6 @@ import {
 } from "../../core-boundary/writers/MenuWriter";
 import type { MenuItemInput } from "../../core/contracts/Menu";
 import { validateMenuItemInput } from "../../core/contracts/Menu";
-import { useBootstrapState } from "../../hooks/useBootstrapState";
 import {
   GlobalEmptyView,
   GlobalErrorView,
@@ -109,7 +108,7 @@ function mapPilotToWithCategory(
     name: string;
     price_cents: number;
     [key: string]: unknown;
-  }>
+  }>,
 ): CoreProductWithCategory[] {
   return pilot.map((p) => ({
     ...p,
@@ -129,7 +128,6 @@ export function MenuBuilderCore({
 }: MenuBuilderCoreProps) {
   const theme = variant === "panel" ? VPC_PANEL : VPC_PAGE;
   const globalUI = useGlobalUIState();
-  const bootstrap = useBootstrapState();
   const { runtime } = useRestaurantRuntime();
 
   const [products, setProducts] = useState<CoreProductWithCategory[]>([]);
@@ -206,7 +204,7 @@ export function MenuBuilderCore({
       const validation = validateMenuItemInput(payload);
       if (!validation.valid) {
         globalUI.setScreenError(
-          `Validação falhou: ${validation.errors.join(", ")}`
+          `Validação falhou: ${validation.errors.join(", ")}`,
         );
         return;
       }
@@ -254,13 +252,13 @@ export function MenuBuilderCore({
         setPriceInput("");
         globalUI.setScreenError(null);
         setSuccessMessage(
-          "Produto guardado localmente (servidor indisponível)."
+          "Produto guardado localmente (servidor indisponível).",
         );
         setTimeout(() => setSuccessMessage(null), 4000);
         return;
       }
       globalUI.setScreenError(
-        toUserMessage(err, "Não foi possível guardar. Tente novamente.")
+        toUserMessage(err, "Não foi possível guardar. Tente novamente."),
       );
     } finally {
       setCreating(false);
@@ -301,7 +299,7 @@ export function MenuBuilderCore({
       const validation = validateMenuItemInput(payload);
       if (!validation.valid) {
         globalUI.setScreenError(
-          `Validação falhou: ${validation.errors.join(", ")}`
+          `Validação falhou: ${validation.errors.join(", ")}`,
         );
         return;
       }
@@ -309,7 +307,7 @@ export function MenuBuilderCore({
       const productsData = await readProductsByRestaurant(
         restaurantId,
         true,
-        false
+        false,
       );
       setProducts(productsData);
       globalUI.setScreenError(null);
@@ -340,11 +338,11 @@ export function MenuBuilderCore({
                 available: editPayload.available !== false,
                 updated_at: now,
               }
-            : p
+            : p,
         );
         localStorage.setItem(
           pilotMenuKey(restaurantId),
-          JSON.stringify(updated)
+          JSON.stringify(updated),
         );
         setProducts(mapPilotToWithCategory(updated));
         setEditingProduct(null);
@@ -352,12 +350,12 @@ export function MenuBuilderCore({
         setPriceInput("");
         globalUI.setScreenError(null);
         setSuccessMessage(
-          "Item atualizado localmente (servidor indisponível)."
+          "Item atualizado localmente (servidor indisponível).",
         );
         setTimeout(() => setSuccessMessage(null), 3000);
       } else {
         globalUI.setScreenError(
-          toUserMessage(err, "Erro ao atualizar item. Tente novamente.")
+          toUserMessage(err, "Erro ao atualizar item. Tente novamente."),
         );
       }
     } finally {
@@ -369,7 +367,7 @@ export function MenuBuilderCore({
     if (
       products.length > 0 &&
       !confirm(
-        "Já existem itens no menu. Deseja adicionar os itens do preset na mesma?"
+        "Já existem itens no menu. Deseja adicionar os itens do preset na mesma?",
       )
     )
       return;
@@ -402,7 +400,7 @@ export function MenuBuilderCore({
       const productsData = await readProductsByRestaurant(
         restaurantId,
         true,
-        false
+        false,
       );
       setProducts(productsData);
       globalUI.setScreenError(null);
@@ -413,7 +411,7 @@ export function MenuBuilderCore({
         globalUI.setScreenError(null);
       } else {
         globalUI.setScreenError(
-          toUserMessage(err, "Erro ao aplicar preset. Tente novamente.")
+          toUserMessage(err, "Erro ao aplicar preset. Tente novamente."),
         );
       }
     } finally {
@@ -432,14 +430,14 @@ export function MenuBuilderCore({
       if (isBackendUnavailable(err)) {
         setUsedBackendFallback(true);
         const pilot = getPilotProducts(restaurantId).filter(
-          (p) => p.id !== productId
+          (p) => p.id !== productId,
         );
         localStorage.setItem(pilotMenuKey(restaurantId), JSON.stringify(pilot));
         setProducts(mapPilotToWithCategory(pilot));
         globalUI.setScreenError(null);
       } else {
         globalUI.setScreenError(
-          toUserMessage(err, "Erro ao deletar item. Tente novamente.")
+          toUserMessage(err, "Erro ao deletar item. Tente novamente."),
         );
       }
     }
