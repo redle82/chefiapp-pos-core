@@ -6,39 +6,41 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "../../ui/design-system/primitives/Button";
-import { Text } from "../../ui/design-system/primitives/Text";
-import { BottomNavBar } from "./components/BottomNavBar";
-import type { Table } from "./types";
-import { TableStatus } from "./types";
 import {
+  TPVCentralEmitters,
   tpvEventBus,
   type DecisionMadePayload,
 } from "../../core/tpv/TPVCentralEvents";
+import { Button } from "../../ui/design-system/primitives/Button";
+import { Text } from "../../ui/design-system/primitives/Text";
 import { colors } from "../../ui/design-system/tokens/colors";
 import { spacing } from "../../ui/design-system/tokens/spacing";
 import { AlertSystem } from "./components/AlertSystem";
+import { BottomNavBar } from "./components/BottomNavBar";
 import { CategoryStrip } from "./components/CategoryStrip";
 import { ExceptionReportModal } from "./components/ExceptionReportModal";
 import { MiniMap } from "./components/MiniMap";
 import type { ProductComment } from "./components/ProductCard";
 import { ProductCard } from "./components/ProductCard";
 import { useWaiterCalls } from "./hooks/useWaiterCalls";
+import type { Table } from "./types";
+import { TableStatus } from "./types";
 
+import { db } from "../../core/db";
 import { useTenant } from "../../core/tenant/TenantContext";
 import { useMenuItems } from "../../hooks/useMenuItems";
 import { useToast } from "../../ui/design-system";
+import { PaymentModal } from "../TPV/components/PaymentModal";
 import { useOrders } from "../TPV/context/OrderContextReal";
 import { useTables } from "../TPV/context/TableContext";
-import { db } from "../../core/db";
 
 import { useContextEngine } from "../../core/context";
 
 /** Design tokens — Last.app style */
-const ACCENT = '#6366f1';
-const ACCENT_GREEN = '#10b981';
-const SURFACE = '#18181b';
-const BADGE_BLUE = '#3b82f6';
+const ACCENT = "#6366f1";
+const ACCENT_GREEN = "#10b981";
+const SURFACE = "#18181b";
+const BADGE_BLUE = "#3b82f6";
 
 interface OrderItem {
   id: string;
@@ -72,25 +74,40 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
 
   // --- ACTIONS ---
   const handleCloseBill = () => {
-    // STANDALONE MODE: Process payment directly
-    if (
-      confirm("💰 MODO STANDALONE: Processar pagamento e fechar mesa agora?")
-    ) {
-      success("✅ Pagamento Confirmado! Mesa Liberada.");
-      // In real implementation: router.push('/payment/checkout')
+    if (!activeOrder) {
+      warning("Sem pedido ativo para cobrar.");
+      return;
     }
+    setPaymentModalOrderId(activeOrder.id);
   };
 
   const handleRequestBill = () => {
     // EXECUTION MODE: Request bill from Central TPV
+    if (!table) {
+      warning("Mesa nao encontrada.");
+      return;
+    }
+    TPVCentralEmitters.alertTable({
+      tableId: table.id,
+      tableNumber: table.number,
+      alertType: "waiting_payment",
+      severity: "medium",
+      message: `Mesa ${table.number} pediu conta`,
+      timestamp: new Date(),
+    });
     success("Conta solicitada ao Caixa (TPV Central).");
-    // TODO: Emit real event
   };
 
   // Real Hooks
   const { tables, loading: tablesLoading } = useTables();
   const { items: menuItems } = useMenuItems(tenantId);
-  const { orders, createOrder, addItemToOrder } = useOrders(); // Inject Order Context
+  const {
+    orders,
+    createOrder,
+    addItemToOrder,
+    performOrderAction,
+    getActiveOrders,
+  } = useOrders(); // Inject Order Context
 
   // Resolve Table
   const table = useMemo(
@@ -101,8 +118,11 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [sending, setSending] = useState(false);
-  const [activeSeat, setActiveSeat] = useState('shared'); // seat tab: shared, seat-1, seat-2...
+  const [activeSeat, setActiveSeat] = useState("shared"); // seat tab: shared, seat-1, seat-2...
   const [seatCount, setSeatCount] = useState(2); // number of individual seats
+  const [paymentModalOrderId, setPaymentModalOrderId] = useState<string | null>(
+    null,
+  );
 
   // Exception Reporting State
   const [showExceptionModal, setShowExceptionModal] = useState(false);
@@ -436,8 +456,12 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
           {!isStandalone && (
             <div
               style={{
-                background: table.status === TableStatus.OCCUPIED ? BADGE_BLUE : '#27272a',
-                color: table.status === TableStatus.OCCUPIED ? '#ffffff' : '#a1a1aa',
+                background:
+                  table.status === TableStatus.OCCUPIED
+                    ? BADGE_BLUE
+                    : "#27272a",
+                color:
+                  table.status === TableStatus.OCCUPIED ? "#ffffff" : "#a1a1aa",
                 fontSize: 11,
                 fontWeight: 700,
                 padding: "4px 10px",
@@ -466,9 +490,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
                 : SURFACE,
               cursor: "pointer",
               fontSize: 16,
-              color: pendingException
-                ? colors.warning.base
-                : "#f59e0b",
+              color: pendingException ? colors.warning.base : "#f59e0b",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -496,9 +518,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
           {/* Conta button */}
           <button
             onClick={
-              permissions.canCloseRegister
-                ? handleCloseBill
-                : handleRequestBill
+              permissions.canCloseRegister ? handleCloseBill : handleRequestBill
             }
             style={{
               height: 40,
@@ -594,14 +614,16 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
             }}
           >
             {[
-              { id: 'shared', label: 'Partilhado' },
+              { id: "shared", label: "Partilhado" },
               ...Array.from({ length: seatCount }, (_, i) => ({
                 id: `seat-${i + 1}`,
                 label: `Lugar ${i + 1}`,
               })),
             ].map((seat) => {
               const isActive = activeSeat === seat.id;
-              const seatItems = orderItems.filter((item) => item.seat === seat.id);
+              const seatItems = orderItems.filter(
+                (item) => item.seat === seat.id,
+              );
               return (
                 <button
                   key={seat.id}
@@ -627,7 +649,9 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
                   {seatItems.length > 0 && (
                     <span
                       style={{
-                        background: isActive ? "rgba(255,255,255,0.25)" : "#3f3f46",
+                        background: isActive
+                          ? "rgba(255,255,255,0.25)"
+                          : "#3f3f46",
                         borderRadius: 8,
                         padding: "0 5px",
                         fontSize: 10,
@@ -673,11 +697,10 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
             }}
           >
             <div style={{ fontSize: 12, color: "#a1a1aa" }}>
-              {orderItems.length} {orderItems.length === 1 ? 'item' : 'itens'}
+              {orderItems.length} {orderItems.length === 1 ? "item" : "itens"}
             </div>
             <div style={{ fontSize: 18, fontWeight: 800, color: "#ffffff" }}>
-              €{" "}
-              {(totalAmount / 100).toFixed(2).replace(".", ",")}
+              € {(totalAmount / 100).toFixed(2).replace(".", ",")}
             </div>
           </div>
 
@@ -756,6 +779,31 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
           </div>
         </div>
       )}
+
+      {paymentModalOrderId &&
+        (() => {
+          const order = orders.find((o) => o.id === paymentModalOrderId);
+          if (!order) return null;
+          return (
+            <PaymentModal
+              orderId={order.id}
+              restaurantId={order.restaurantId || ""}
+              orderTotal={order.total}
+              onPay={async (method) => {
+                try {
+                  await performOrderAction(order.id, "pay", { method });
+                  await getActiveOrders();
+                  success("Pedido pago com sucesso");
+                  setPaymentModalOrderId(null);
+                } catch (err: any) {
+                  warning(err?.message || "Erro ao processar pagamento");
+                }
+              }}
+              onCancel={() => setPaymentModalOrderId(null)}
+              isDemoMode={false}
+            />
+          );
+        })()}
 
       {/* Exception Report Modal */}
       <ExceptionReportModal
