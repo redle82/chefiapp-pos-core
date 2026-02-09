@@ -1,13 +1,18 @@
-import React from 'react';
-import { cn } from './tokens';
-import './Button.css';
-import type { FireState } from './sovereign/FireSystem';
+import React from "react";
+import "./Button.css";
+import type { FireState } from "./sovereign/FireSystem";
+import { cn } from "./tokens";
 
-interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   // 'outline' is alias for 'secondary'
-  variant?: 'primary' | 'secondary' | 'ghost' | 'critical' | 'constructive' | 'outline';
-  size?: 'sm' | 'md' | 'lg';
+  variant?:
+    | "primary"
+    | "secondary"
+    | "ghost"
+    | "critical"
+    | "constructive"
+    | "outline";
+  size?: "sm" | "md" | "lg";
   fullWidth?: boolean;
   loading?: boolean;
   children: React.ReactNode;
@@ -16,7 +21,7 @@ interface ButtonProps
 
 /**
  * Button: The Sovereign Interaction Primitive
- * 
+ *
  * Variants:
  * - primary: Gold/Brand
  * - secondary (or outline): Neutral/Glass
@@ -27,30 +32,30 @@ interface ButtonProps
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
-      variant = 'primary',
-      size = 'md',
+      variant = "primary",
+      size = "md",
       fullWidth = false,
       loading = false,
       children,
       className,
       disabled,
-      fireContext,
+      fireContext: _fireContext,
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <button
         ref={ref}
         className={cn(
-          'button',
+          "button",
           `button--${variant}`,
           `button--${size}`,
           {
-            'button--full-width': fullWidth,
-            'button--loading': loading,
+            "button--full-width": fullWidth,
+            "button--loading": loading,
           },
-          className
+          className,
         )}
         disabled={disabled || loading}
         aria-busy={loading}
@@ -60,9 +65,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         <span className="button__content">{children}</span>
       </button>
     );
-  }
+  },
 );
 
-Button.displayName = 'Button';
+Button.displayName = "Button";
 
 export default Button;

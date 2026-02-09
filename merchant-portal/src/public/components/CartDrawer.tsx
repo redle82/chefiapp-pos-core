@@ -230,7 +230,7 @@ export const CartDrawer: React.FC = () => {
                               alert(
                                 "Pedido cancelado. Entre em contato com o restaurante se necessário.",
                               );
-                            } catch (e) {
+                            } catch {
                               alert(
                                 "Erro ao cancelar pedido. Entre em contato com o restaurante.",
                               );
