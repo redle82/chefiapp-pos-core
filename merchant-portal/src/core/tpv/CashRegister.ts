@@ -65,11 +65,13 @@ export interface CloseCashRegisterInput {
 }
 
 export class CashRegisterEngine {
+  private static readonly SEED_RESTAURANT_ID =
+    "00000000-0000-0000-0000-000000000100";
   /**
    * Abrir caixa
    */
   static async openCashRegister(
-    input: OpenCashRegisterInput
+    input: OpenCashRegisterInput,
   ): Promise<CashRegister> {
     // [ATOMIC] Use RPC — Core quando Docker (FINANCIAL_CORE_VIOLATION_AUDIT)
     const { data: result, error } = await invokeRpc(
@@ -79,7 +81,7 @@ export class CashRegisterEngine {
         p_name: input.name || "Caixa Principal",
         p_opened_by: input.openedBy,
         p_opening_balance_cents: input.openingBalanceCents,
-      }
+      },
     );
 
     if (error) {
@@ -87,12 +89,12 @@ export class CashRegisterEngine {
       if (error.message?.includes("CASH_REGISTER_ALREADY_OPEN")) {
         throw new CashRegisterError(
           "Já existe um caixa aberto. Feche o caixa atual antes de abrir outro.",
-          "CASH_REGISTER_ALREADY_OPEN"
+          "CASH_REGISTER_ALREADY_OPEN",
         );
       }
       throw new CashRegisterError(
         `Erro ao abrir caixa: ${error.message || "Erro desconhecido"}`,
-        "CASH_REGISTER_OPEN_FAILED"
+        "CASH_REGISTER_OPEN_FAILED",
       );
     }
     // Validation
@@ -101,7 +103,7 @@ export class CashRegisterEngine {
 
     if (!input.kernel && !input.executeSafe) {
       throw new Error(
-        "Sovereign Kernel or executeSafe required for Cash Register operations (Phase 16)"
+        "Sovereign Kernel or executeSafe required for Cash Register operations (Phase 16)",
       );
     }
 
@@ -120,7 +122,7 @@ export class CashRegisterEngine {
       const res = await input.executeSafe(payload);
       if (!res.ok) {
         const err = new Error(
-          getErrorMessage(res.error) || "Erro ao abrir caixa."
+          getErrorMessage(res.error) || "Erro ao abrir caixa.",
         ) as Error & { failureClass?: string };
         err.failureClass = res.failureClass;
         throw err;
@@ -134,7 +136,7 @@ export class CashRegisterEngine {
     const openRegister = await this.getOpenCashRegister(input.restaurantId);
     if (!openRegister) {
       throw new Error(
-        "Failed to open cash register (Sovereignty Verification)"
+        "Failed to open cash register (Sovereignty Verification)",
       );
     }
 
@@ -143,11 +145,11 @@ export class CashRegisterEngine {
 
   // Close a cash register (Sovereign)
   static async closeCashRegister(
-    input: CloseCashRegisterInput
+    input: CloseCashRegisterInput,
   ): Promise<CashRegister> {
     if (!input.kernel && !input.executeSafe) {
       throw new Error(
-        "Sovereign Kernel or executeSafe required for Cash Register operations (Phase 16)"
+        "Sovereign Kernel or executeSafe required for Cash Register operations (Phase 16)",
       );
     }
 
@@ -164,7 +166,7 @@ export class CashRegisterEngine {
       const res = await input.executeSafe(payload);
       if (!res.ok) {
         const err = new Error(
-          getErrorMessage(res.error) || "Erro ao fechar caixa."
+          getErrorMessage(res.error) || "Erro ao fechar caixa.",
         ) as Error & { failureClass?: string };
         err.failureClass = res.failureClass;
         throw err;
@@ -185,7 +187,7 @@ export class CashRegisterEngine {
    */
   static async getCashRegisterById(
     cashRegisterId: string,
-    restaurantId: string
+    restaurantId: string,
   ): Promise<CashRegister> {
     const client = await getTableClient();
     const { data, error } = await client
@@ -202,13 +204,13 @@ export class CashRegisterEngine {
       });
       throw new CashRegisterError(
         `Erro ao buscar caixa: ${error.message || "Erro desconhecido"}`,
-        "CASH_REGISTER_FETCH_FAILED"
+        "CASH_REGISTER_FETCH_FAILED",
       );
     }
     if (!data) {
       throw new CashRegisterError(
         "Caixa não encontrado. Verifique se o ID está correto.",
-        "CASH_REGISTER_NOT_FOUND"
+        "CASH_REGISTER_NOT_FOUND",
       );
     }
 
@@ -222,9 +224,12 @@ export class CashRegisterEngine {
    * Buscar caixa aberto do restaurante (Core quando Docker — Fase 4)
    */
   static async getOpenCashRegister(
-    restaurantId: string
+    restaurantId: string,
   ): Promise<CashRegister | null> {
-    if (!CashRegisterEngine.UUID_REGEX.test(restaurantId)) {
+    if (
+      restaurantId !== CashRegisterEngine.SEED_RESTAURANT_ID &&
+      !CashRegisterEngine.UUID_REGEX.test(restaurantId)
+    ) {
       return null;
     }
     const client = await getTableClient();
@@ -260,14 +265,14 @@ export class CashRegisterEngine {
       if (isAbort) {
         throw new CashRegisterError(
           `Erro ao buscar caixa aberto: ${msg || "Erro desconhecido"}`,
-          "CASH_REGISTER_FETCH_OPEN_FAILED"
+          "CASH_REGISTER_FETCH_OPEN_FAILED",
         );
       }
 
       Logger.error("CASH_REGISTER_FETCH_OPEN_FAILED", error, { restaurantId });
       throw new CashRegisterError(
         `Erro ao buscar caixa aberto: ${msg || "Erro desconhecido"}`,
-        "CASH_REGISTER_FETCH_OPEN_FAILED"
+        "CASH_REGISTER_FETCH_OPEN_FAILED",
       );
     }
 
@@ -297,12 +302,12 @@ export class CashRegisterEngine {
       Logger.error("CASH_REGISTERS_FETCH_FAILED", error, { restaurantId });
       throw new CashRegisterError(
         `Erro ao buscar caixas: ${msg || "Erro desconhecido"}`,
-        "CASH_REGISTERS_FETCH_FAILED"
+        "CASH_REGISTERS_FETCH_FAILED",
       );
     }
 
     return ((data as any[]) || []).map((reg) =>
-      this.mapDbRegisterToRegister(reg)
+      this.mapDbRegisterToRegister(reg),
     );
   }
 

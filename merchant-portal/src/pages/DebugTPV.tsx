@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { dockerCoreClient } from "../core-boundary/docker-core/connection";
+import {
+  getInstalledDevice,
+  setInstalledDevice,
+} from "../core/storage/installedDeviceStorage";
 import { VoiceCommandService } from "../core/voice/VoiceCommandService";
 import { TPVHeader } from "../ui/design-system/domain/TPVHeader";
 
@@ -24,6 +28,15 @@ const SEED_ITEMS = [
 ];
 
 import { useShiftLock } from "../core/shift/useShiftLock";
+
+if (typeof window !== "undefined" && !getInstalledDevice()) {
+  setInstalledDevice({
+    device_id: "debug-tpv",
+    restaurant_id: "00000000-0000-0000-0000-000000000100",
+    module_id: "tpv",
+    device_name: "Debug TPV",
+  });
+}
 
 export const DebugTPV = () => {
   const { isShiftOpen } = useShiftLock();

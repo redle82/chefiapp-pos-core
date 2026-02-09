@@ -84,6 +84,7 @@ describe("OfflineQueueService", () => {
       expect(queue[0].mutationType).toBe("CREATE_ORDER");
       expect(queue[0].payload).toEqual({ foo: 1 });
       expect(queue[0].retryCount).toBe(0);
+      expect(queue[0].status).toBe("pending");
     });
 
     it("preserves FIFO order", async () => {
@@ -128,6 +129,36 @@ describe("OfflineQueueService", () => {
 
   // -- processItem --
   describe("processItem", () => {
+    it("syncs CREATE_ORDER via db.insert", async () => {
+      const item: QueueItem = {
+        id: "q0",
+        mutationType: "CREATE_ORDER",
+        payload: { id: "order-1" },
+        timestamp: Date.now(),
+        retryCount: 0,
+        status: "pending",
+      };
+
+      const result = await OfflineQueueService.processItem(item);
+      expect(result).toBe(true);
+      expect(db.from).toHaveBeenCalledWith("gm_orders");
+    });
+
+    it("syncs ADD_ORDER_ITEMS via db.insert", async () => {
+      const item: QueueItem = {
+        id: "q0b",
+        mutationType: "ADD_ORDER_ITEMS",
+        payload: [{ order_id: "order-1" }],
+        timestamp: Date.now(),
+        retryCount: 0,
+        status: "pending",
+      };
+
+      const result = await OfflineQueueService.processItem(item);
+      expect(result).toBe(true);
+      expect(db.from).toHaveBeenCalledWith("gm_order_items");
+    });
+
     it("syncs UPDATE_ORDER_STATUS via db.update", async () => {
       const item: QueueItem = {
         id: "q1",
@@ -135,6 +166,7 @@ describe("OfflineQueueService", () => {
         payload: { orderId: "o1", status: "PAID" },
         timestamp: Date.now(),
         retryCount: 0,
+        status: "pending",
       };
       const result = await OfflineQueueService.processItem(item);
       expect(result).toBe(true);
@@ -150,6 +182,7 @@ describe("OfflineQueueService", () => {
         payload: { orderId: "o2", status: "PAID" },
         timestamp: Date.now(),
         retryCount: 0,
+        status: "pending",
       };
       const result = await OfflineQueueService.processItem(item);
       expect(result).toBe(false);
@@ -158,16 +191,46 @@ describe("OfflineQueueService", () => {
     it("dequeues unknown mutation types (prevents blocking)", async () => {
       const item: QueueItem = {
         id: "q3",
-        mutationType: "CREATE_ORDER" as any,
+        mutationType: "UNKNOWN" as any,
         payload: {},
         timestamp: Date.now(),
         retryCount: 0,
+        status: "pending",
       };
-      // CREATE_ORDER is handled by a separate switch branch —
-      // if processItem falls through to default, it returns true
+      // Unknown types should not block the queue
       const result = await OfflineQueueService.processItem(item);
-      // syncCreateOrder will be called — result depends on db mock
       expect(typeof result).toBe("boolean");
+    });
+  });
+
+  // -- status helpers --
+  describe("status helpers", () => {
+    it("counts items in the queue", async () => {
+      await OfflineQueueService.enqueue("CREATE_ORDER", { foo: 1 });
+      await OfflineQueueService.enqueue("ADD_PAYMENT", { foo: 2 });
+      const count = await OfflineQueueService.count();
+      expect(count).toBe(2);
+    });
+
+    it("returns only pending items", async () => {
+      const firstId = await OfflineQueueService.enqueue("CREATE_ORDER", {
+        foo: 1,
+      });
+      const secondId = await OfflineQueueService.enqueue("ADD_PAYMENT", {
+        foo: 2,
+      });
+      await OfflineQueueService.updateStatus(secondId!, "failed");
+      const pending = await OfflineQueueService.getPending();
+      expect(pending).toHaveLength(1);
+      expect(pending[0].id).toBe(firstId);
+    });
+
+    it("updates status and increments retryCount on failed", async () => {
+      const id = await OfflineQueueService.enqueue("CREATE_ORDER", { foo: 1 });
+      await OfflineQueueService.updateStatus(id!, "failed");
+      const queue = await OfflineQueueService.getQueue();
+      expect(queue[0].status).toBe("failed");
+      expect(queue[0].retryCount).toBe(1);
     });
   });
 

@@ -1,6 +1,6 @@
 # ✅ Estado Atual Final — ChefIApp
 
-**Data:** 2026-01-26  
+**Data:** 2026-01-26
 **Status:** ✅ PRONTO PARA TASK ENGINE
 
 ---
@@ -33,12 +33,14 @@
 ## 🚗 Analogia do Carro — Estado Definitivo
 
 **Vocês têm hoje:**
+
 - 🏎️ **Carro de competição funcional**
 - 🛠️ **Homologado para pista**
 - 🧠 **Arquitetura pronta para piloto automático**
 - ❌ **Sem piloto automático ainda** (Task Engine)
 
 **Ou seja:**
+
 - ✅ Ele anda
 - ✅ Anda rápido
 - ✅ Anda certo
@@ -50,15 +52,16 @@
 
 **O documento de posicionamento está correto e defensável:**
 
-| Estágio | Valuation | Condição |
-|---------|-----------|----------|
-| **Hoje** | €400k–€800k | Pré-seed técnico |
-| **Task Engine rodando** | €1.5M–€3M | Demonstração de valor |
-| **5–10 restaurantes reais** | €5M–€12M | Prova de produto |
+| Estágio                     | Valuation   | Condição              |
+| --------------------------- | ----------- | --------------------- |
+| **Hoje**                    | €400k–€800k | Pré-seed técnico      |
+| **Task Engine rodando**     | €1.5M–€3M   | Demonstração de valor |
+| **5–10 restaurantes reais** | €5M–€12M    | Prova de produto      |
 
 **Nada inflado. Nada otimista demais.**
 
 **Dá para explicar isso para:**
+
 - Investidor técnico
 - Operador de restaurante
 - Parceiro estratégico
@@ -78,11 +81,13 @@
 **E, junto disso, escolher 1 coisa só:**
 
 ### Perfil Inicial (escolher UM):
+
 1. 🍳 **Cozinha** (recomendado)
 2. 🍺 **Bar**
 3. 👨‍💼 **Gerente**
 
 ### Prazo (realista):
+
 - **Rápido:** 3–4 dias (MVP nervoso)
 - **Conservador:** 1 semana (com ajuste fino)
 
@@ -97,6 +102,7 @@
 **Primeira ação:** Tarefa automática + highlight no KDS
 
 **Isso gera:**
+
 - ✅ Impacto imediato
 - ✅ Efeito "uau"
 - ✅ Prova de valor em 1 turno de restaurante
@@ -126,6 +132,7 @@
 ## 📋 Checklist de Prontidão
 
 ### ✅ Técnico
+
 - [x] Menu como contrato operacional
 - [x] KDS profissional
 - [x] Separação BAR/KITCHEN
@@ -134,18 +141,21 @@
 - [x] Arquitetura limpa
 
 ### ✅ Produto
+
 - [x] MenuBuilder refinado
 - [x] Presets de tempo
 - [x] Linguagem operacional
 - [x] Aviso silencioso
 
 ### ✅ Estratégico
+
 - [x] Posicionamento claro
 - [x] Avaliação de mercado
 - [x] Comparação com players
 - [x] Roadmap definido
 
 ### 🔜 Próximo Passo
+
 - [ ] **Task Engine mínimo** (aguardando decisão)
 
 ---
@@ -157,10 +167,12 @@
 > **"Vamos ligar o Task Engine para a cozinha em X dias"**
 
 **Onde X pode ser:**
+
 - **3-4 dias** → MVP nervoso (recomendado)
 - **1 semana** → Com ajuste fino
 
 **Implementação cirúrgica:**
+
 - Schema `gm_tasks`
 - RPC `generate_tasks_from_orders`
 - `TaskPanel.tsx` no KDS
