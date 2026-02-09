@@ -166,6 +166,7 @@ import {
   type SelectedModifier,
 } from "./components/ModifierSelectorModal";
 import { ReceiptShareModal, type ReceiptShareOrder } from "./ReceiptShareModal";
+import { TableActionsModal } from "./components/TableActionsModal";
 
 type ContextView =
   | "menu"
@@ -344,6 +345,11 @@ const TPVContent = () => {
   const [showQuickProductModal, setShowQuickProductModal] =
     useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
+
+  // Gap #10: Table actions modal (Transfer / Merge / Split)
+  const [tableActionsTargetId, setTableActionsTargetId] = useState<
+    string | null
+  >(null);
 
   const {
     orders,
@@ -1934,6 +1940,7 @@ const TPVContent = () => {
                   }}
                   onCreateOrder={handleCreateOrderViaMap}
                   onUpdatePosition={updateTablePosition}
+                  onTableAction={(tableId) => setTableActionsTargetId(tableId)}
                 />
               )}
 
@@ -2353,6 +2360,24 @@ const TPVContent = () => {
             onClose={() => setReceiptShareOrder(null)}
           />
         )}
+
+        {/* Gap #10: Table Actions Modal — Transfer / Merge / Split */}
+        {tableActionsTargetId &&
+          (() => {
+            const sourceTable = tables.find(
+              (t) => t.id === tableActionsTargetId,
+            );
+            if (!sourceTable) return null;
+            return (
+              <TableActionsModal
+                sourceTable={sourceTable}
+                tables={tables}
+                orders={orders}
+                onComplete={() => getActiveOrders()}
+                onClose={() => setTableActionsTargetId(null)}
+              />
+            );
+          })()}
 
         {/* Group Selector Modal */}
         {showGroupSelector && pendingItem && activeOrderId && (

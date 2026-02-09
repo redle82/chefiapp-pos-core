@@ -37,11 +37,19 @@ interface TableMapPanelProps {
   onCreateOrder?: (tableId: string) => void; // SEMANA 1 - Tarefa 1.1: Ação rápida para criar pedido
   /** Gap #7: callback to persist table position after drag */
   onUpdatePosition?: (tableId: string, x: number, y: number) => void;
+  /** Gap #10: open transfer/merge/split actions for occupied table */
+  onTableAction?: (tableId: string) => void;
 }
 
 // FASE 5: Memoizar componente pesado para melhorar performance
 export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
-  ({ tables, onSelectTable, onCreateOrder, onUpdatePosition }) => {
+  ({
+    tables,
+    onSelectTable,
+    onCreateOrder,
+    onUpdatePosition,
+    onTableAction,
+  }) => {
     // Gap #7: Canvas / Grid toggle + drag state
     const hasPositionedTables = tables.some((t) => t.x != null && t.y != null);
     const [viewMode, setViewMode] = useState<"grid" | "canvas">(
@@ -302,6 +310,36 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
                 </div>
               )}
             </div>
+
+            {/* Gap #10: Action button for occupied tables (Transfer/Merge/Split) */}
+            {!isFree && hasOrder && onTableAction && !editMode && (
+              <div
+                style={{
+                  marginTop: spacing[2],
+                  paddingTop: spacing[2],
+                  borderTop: `1px solid ${colors.border.subtle}`,
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTableAction(table.id);
+                }}
+              >
+                <Text
+                  size="xs"
+                  color="tertiary"
+                  weight="bold"
+                  style={{
+                    cursor: "pointer",
+                    textAlign: "center",
+                    padding: spacing[1],
+                    backgroundColor: `${colors.warning.base}10`,
+                    borderRadius: 4,
+                  }}
+                >
+                  ⚙ Ações
+                </Text>
+              </div>
+            )}
 
             {/* SEMANA 1 - Tarefa 1.1: Botão de ação rápida para mesa livre */}
             {isFree && onCreateOrder && !editMode && (
