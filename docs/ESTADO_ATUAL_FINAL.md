@@ -24,6 +24,7 @@
 - ✅ **Arquitetura limpa e refatorada**
 - ✅ **Posicionamento estratégico claro**
 - ✅ **Avaliação de mercado realista e defensável**
+- ✅ **Stack mobile definida: Expo (managed) para AppStaff**
 
 **Isso já coloca vocês acima de 90% dos players pequenos e alinhados conceitualmente com Toast, sem o peso do legado.**
 

@@ -19,6 +19,12 @@
 - **Expo** (iOS + Android)
 - Entry: `expo-router/entry` → `app/_layout.tsx`
 
+## Decisao tecnica
+
+- **Escolha oficial:** Expo (managed) para AppStaff.
+- **Motivo:** velocidade de iteracao, OTA, e cobertura suficiente para offline + push.
+- **So mudar:** se surgir dependencia nativa que Expo nao cubra via config plugins.
+
 ---
 
 ## Como rodar

@@ -1,7 +1,7 @@
 # 🔍 Auditoria Final de Produto - ChefIApp
 
-**Data:** 2026-01-30  
-**Auditor:** Principal Product Engineer + Product Strategist (POS/TPV Globais)  
+**Data:** 2026-01-30
+**Auditor:** Principal Product Engineer + Product Strategist (POS/TPV Globais)
 **Objetivo:** Avaliar se ChefIApp está pronto para ser um PRODUTO REAL DE MERCADO
 
 ---
@@ -11,11 +11,13 @@
 **Nota Final:** **7.5/10** — Pronto para piloto pago, não para venda comercial ampla
 
 **Status:**
+
 - ✅ **Uso interno:** SIM (com suporte ativo)
 - 🟡 **Piloto pago:** SIM (com acompanhamento próximo)
 - 🔴 **Venda comercial:** NÃO (faltam 3-4 semanas de trabalho)
 
 **3 bloqueadores de mercado:**
+
 1. Billing não está integrado no fluxo principal (código existe, UI não)
 2. Onboarding não garante primeira venda em <10 minutos
 3. Gamificação pendente (implementar ou remover)
@@ -31,6 +33,7 @@
 ### O que está PRONTO ✅
 
 **Backend Core (100%):**
+
 - ✅ `StripeBillingService.ts` — Serviço completo para Stripe
 - ✅ `billing-core/types.ts` — Planos definidos (STARTER €29, PRO €59, ENTERPRISE €149)
 - ✅ `billing-core/state-machine.ts` — Máquina de estados completa
@@ -40,6 +43,7 @@
 - ✅ Edge Functions — `stripe-billing` e `stripe-billing-webhook`
 
 **Funcionalidades Backend:**
+
 - ✅ Criar customer no Stripe
 - ✅ Criar subscription (com trial)
 - ✅ Cancelar subscription
@@ -55,6 +59,7 @@
 ### O que está ACEITÁVEL 🟡
 
 **UI Frontend (40%):**
+
 - 🟡 `BillingPage.tsx` — Existe mas é básico
 - 🟡 Não está integrado no fluxo de onboarding principal
 - 🟡 Não há checkout flow completo no frontend
@@ -68,12 +73,15 @@
 ### O que é BLOQUEADOR DE MERCADO 🔴
 
 **Bloqueadores Críticos:**
+
 1. **Billing não está no fluxo principal** 🔴
+
    - Usuário pode criar restaurante sem escolher plano
    - Trial não é automático no onboarding
    - Não há checkout flow visível
 
 2. **Ativação não bloqueia operação** 🔴
+
    - `RequireActivation` existe mas não está em todas as rotas críticas
    - Usuário pode usar TPV sem subscription ativa
 
@@ -92,6 +100,7 @@
 ### O que está PRONTO ✅
 
 **Fluxos Implementados:**
+
 - ✅ `OnboardingQuick.tsx` — 2 telas, ~2 minutos
 - ✅ `OnboardingWizard.tsx` — 8 telas, ~10 minutos
 - ✅ `BootstrapPage.tsx` — Auto-criação de restaurante para novos usuários
@@ -99,6 +108,7 @@
 - ✅ Auto-provisioning — Categorias base criadas automaticamente
 
 **Funcionalidades:**
+
 - ✅ Criação de restaurante automática (novo usuário)
 - ✅ Seleção de tipo de negócio
 - ✅ Seleção de modelo operacional
@@ -111,6 +121,7 @@
 ### O que está ACEITÁVEL 🟡
 
 **Primeira Venda:**
+
 - 🟡 Onboarding não garante primeira venda em <10 minutos
 - 🟡 Menu não é criado automaticamente (apenas categorias)
 - 🟡 Não há tutorial de primeira venda
@@ -123,7 +134,9 @@
 ### O que é BLOQUEADOR DE MERCADO 🔴
 
 **Bloqueadores Críticos:**
+
 1. **Primeira venda não é garantida** 🔴
+
    - Usuário pode completar onboarding sem fazer primeira venda
    - Não há guia de primeira venda
    - Não há menu de exemplo para testar
@@ -143,6 +156,7 @@
 ### Mobile App (AppStaff)
 
 **O que está PRONTO ✅**
+
 - ✅ Autenticação funcional
 - ✅ Multi-tenant context switching
 - ✅ Now Engine implementado
@@ -151,17 +165,25 @@
 - ✅ Realtime updates
 
 **O que está ACEITÁVEL 🟡**
+
 - 🟡 Role selector parece dev tool
 - 🟡 Algumas telas podem melhorar performance
 - 🟡 Gamificação não está no app (código existe)
 
 **Avaliação:** **8/10** — Muito bom, pequenos ajustes necessários.
 
+**Score vs players:** **6/10**
+
+- **Por quê:** App mobile grande com NowEngine forte e fila offline; ainda há referências legadas ao Supabase.
+- **Evidência:** `NowEngine.ts`, `coreClient.ts`.
+- **Delta vs líderes:** migração total para Core client, push notifications, workflows nativos do dispositivo.
+
 ---
 
 ### Web App (Merchant Portal)
 
 **O que está PRONTO ✅**
+
 - ✅ TPV completo e funcional
 - ✅ KDS completo e funcional
 - ✅ Dashboard básico
@@ -170,6 +192,7 @@
 - ✅ Multi-tenant funcional
 
 **O que está ACEITÁVEL 🟡**
+
 - 🟡 TPV monolítico (12k linhas)
 - 🟡 Performance em mobile pode melhorar
 - 🟡 Algumas páginas podem melhorar organização
@@ -181,12 +204,14 @@
 ### Coerência entre Apps
 
 **O que está PRONTO ✅**
+
 - ✅ Mesmos dados (Supabase)
 - ✅ Realtime sincronizado
 - ✅ Mesmas regras de negócio
 - ✅ Offline mode em ambos
 
 **O que está ACEITÁVEL 🟡**
+
 - 🟡 UX pode ser mais consistente
 - 🟡 Algumas funcionalidades só existem em um app
 
@@ -197,11 +222,14 @@
 ### Onde há Fricção Real
 
 **Fricções Identificadas:**
+
 1. **Role selector no mobile** 🟡
+
    - Parece dev tool
    - Pode confundir usuário final
 
 2. **TPV muito complexo** 🟡
+
    - 12k linhas em um arquivo
    - Pode ser lento em dispositivos móveis
 
@@ -218,12 +246,14 @@
 ### Fluxo Real de Cozinha
 
 **O que está PRONTO ✅**
+
 - ✅ `PrinterService.ts` — Suporte a impressoras térmicas (TCP/IP)
 - ✅ Configuração de IP/porta por tipo (KITCHEN/COUNTER)
 - ✅ Teste de impressão
 - ✅ Formatação ESC/POS
 
 **O que está ACEITÁVEL 🟡**
+
 - 🟡 Configuração via AsyncStorage (não há UI dedicada)
 - 🟡 Não há descoberta automática de impressoras
 - 🟡 Não há suporte a Bluetooth
@@ -235,6 +265,7 @@
 ### Impressão Fiscal
 
 **O que está PRONTO ✅**
+
 - ✅ `FiscalPrinter.ts` — Driver de impressão fiscal
 - ✅ Impressão via browser (fallback universal)
 - ✅ Templates de recibo fiscal (80mm)
@@ -242,6 +273,7 @@
 - ✅ Download PDF
 
 **O que está ACEITÁVEL 🟡**
+
 - 🟡 Impressoras térmicas fiscais (parcial)
 - 🟡 Impressoras fiscais dedicadas (Epson, Star) — não implementado
 
@@ -252,10 +284,12 @@
 ### Multi-Impressoras
 
 **O que está PRONTO ✅**
+
 - ✅ Suporte a múltiplas impressoras (KITCHEN/COUNTER)
 - ✅ Configuração separada por tipo
 
 **O que está ACEITÁVEL 🟡**
+
 - 🟡 Não há UI para configurar múltiplas impressoras
 - 🟡 Não há roteamento automático (cozinha → impressora cozinha)
 
@@ -266,11 +300,13 @@
 ### O que é Aceitável vs Crítico
 
 **Aceitável:**
+
 - ✅ Impressão via browser (funciona em qualquer dispositivo)
 - ✅ Configuração manual de IP/porta
 - ✅ Teste de impressão básico
 
 **Crítico (falta):**
+
 - 🔴 UI dedicada para configuração de impressoras
 - 🔴 Descoberta automática de impressoras na rede
 - 🔴 Suporte a impressoras fiscais dedicadas (Epson, Star)
@@ -288,6 +324,7 @@
 **Cenário:** Garçom inicia turno, atende mesas, processa pagamentos, encerra turno.
 
 **O que funciona ✅**
+
 - ✅ Início de turno com checklist visual
 - ✅ Criação de pedidos (mesa, balcão, take away)
 - ✅ Processamento de pagamentos (cash, card)
@@ -296,6 +333,7 @@
 - ✅ Encerramento de turno com checklist visual
 
 **O que pode melhorar 🟡**
+
 - 🟡 Performance em dispositivos móveis (TPV web)
 - 🟡 Feedback visual em algumas ações
 
@@ -308,6 +346,7 @@
 **Cenário:** Cliente quer pagar, garçom processa pagamento.
 
 **O que funciona ✅**
+
 - ✅ Proteção contra pagamento duplo (implementado)
 - ✅ Idempotência no banco
 - ✅ Confirmação contextual para valores > €100
@@ -323,6 +362,7 @@
 **Cenário:** Garçom clica errado, tenta pagar duas vezes, etc.
 
 **O que funciona ✅**
+
 - ✅ Proteção contra pagamento duplo
 - ✅ Toque duplo no KDS (previne mudanças acidentais)
 - ✅ Confirmações para ações críticas
@@ -337,6 +377,7 @@
 **Cenário:** Internet cai durante operação.
 
 **O que funciona ✅**
+
 - ✅ Offline mode completo
 - ✅ Fila de sincronização (IndexedDB)
 - ✅ Banner persistente mostrando status
@@ -344,6 +385,7 @@
 - ✅ Sincronização automática
 
 **Limitações:**
+
 - ⚠️ Pagamento offline não é permitido (intencional, por segurança)
 
 **Avaliação:** **8.5/10** — Muito bom, limitação intencional é aceitável.
@@ -357,11 +399,13 @@
 ### Onde ChefIApp é Claramente Melhor ✅
 
 1. **Now Engine (IA Operacional)** 🟢
+
    - Last.app: Manual
    - ChefIApp: Gera ações automaticamente + Explicações
    - **Vantagem:** ChefIApp pode ser 10x mais rápido
 
 2. **Menu Dinâmico** 🟢
+
    - Last.app: Menu estático
    - ChefIApp: Menu adapta-se à pressão da cozinha (parcial)
    - **Vantagem:** ChefIApp reduz desperdício
@@ -376,11 +420,13 @@
 ### Onde Empata 🟡
 
 1. **TPV Funcional** 🟡
+
    - Ambos têm TPV completo e funcional
    - ChefIApp: Web (mais flexível)
    - Last.app: Nativo (mais rápido)
 
 2. **KDS Funcional** 🟡
+
    - Ambos têm KDS completo
    - ChefIApp: Mais seguro (toque duplo)
    - Last.app: Mais rápido (toque único)
@@ -395,16 +441,19 @@
 ### Onde Perde Feio 🔴
 
 1. **Mapa Visual de Mesas** 🔴
+
    - Last.app: Mapa visual completo
    - ChefIApp: Grid por zonas (resolve 80%, mas falta layout real)
    - **Gap:** Alto — Garçom não vê layout físico completo
 
 2. **Gamificação** 🔴
+
    - Last.app: Sistema completo de pontos/rankings
    - ChefIApp: Código existe mas não está no app
    - **Gap:** Médio — Motivação da equipe
 
 3. **Reservas com Integrações** 🔴
+
    - Last.app: Integra com OpenTable/TheFork
    - ChefIApp: Sistema básico, sem integrações
    - **Gap:** Médio — Perda de reservas
@@ -419,12 +468,14 @@
 ### É um Problema REAL?
 
 **Não, dado o posicionamento "TPV que pensa":**
+
 - Mapa visual: Grid por zonas resolve 80%, layout real é "nice to have"
 - Gamificação: Não é core do "TPV que pensa", pode ser adicionado depois
 - Reservas: Não é core do "TPV que pensa", pode ser adicionado depois
 - Analytics: Não é core do "TPV que pensa", pode ser adicionado depois
 
 **Sim, se tentar competir em tudo:**
+
 - Tentar igualar Last.app em tudo = perder foco = perder diferencial
 
 **Recomendação:** Focar em "TPV que pensa", não tentar competir em tudo.
@@ -436,6 +487,7 @@
 ### Onde ChefIApp é Claramente Melhor ✅
 
 1. **IA Operacional** 🟢
+
    - Square: Não tem
    - ChefIApp: Now Engine único
    - **Vantagem:** ChefIApp guia operação, Square só registra
@@ -450,6 +502,7 @@
 ### Onde Empata 🟡
 
 1. **TPV Funcional** 🟡
+
    - Ambos têm TPV completo
    - Square: Hardware dedicado (mais rápido)
    - ChefIApp: Web (mais flexível)
@@ -464,6 +517,7 @@
 ### Onde Perde Feio 🔴
 
 1. **Hardware Dedicado** 🔴
+
    - Square: Hardware dedicado (tablet + leitor de cartão)
    - ChefIApp: Software genérico
    - **Gap:** Alto — Square é mais rápido e seguro para pagamentos
@@ -478,6 +532,7 @@
 ### É um Problema REAL?
 
 **Não, dado o posicionamento:**
+
 - Hardware dedicado: Não é necessário para "TPV que pensa"
 - Ecosystem completo: Não é necessário para "TPV que pensa"
 
@@ -490,6 +545,7 @@
 ### Onde ChefIApp é Claramente Melhor ✅
 
 1. **IA Operacional** 🟢
+
    - Toast: Não tem
    - ChefIApp: Now Engine único
    - **Vantagem:** ChefIApp guia operação, Toast só organiza
@@ -513,6 +569,7 @@
 ### Onde Perde Feio 🔴
 
 1. **Features Completas** 🔴
+
    - Toast: Sistema completo (inventory, payroll, marketing)
    - ChefIApp: Focado em operação
    - **Gap:** Alto — Toast é mais completo
@@ -527,6 +584,7 @@
 ### É um Problema REAL?
 
 **Não, dado o posicionamento:**
+
 - Features completas: Não é necessário para "TPV que pensa"
 - Integrações: Não é necessário para "TPV que pensa"
 
@@ -566,6 +624,7 @@
 ### É um Problema REAL?
 
 **Não, dado o posicionamento:**
+
 - Ecosystem completo: Não é necessário para "TPV que pensa"
 
 **Recomendação:** Focar em restaurante, não tentar competir em retail.
@@ -577,6 +636,7 @@
 ### Onde ChefIApp é Claramente Melhor ✅
 
 1. **Modernidade** 🟢
+
    - MICROS: Sistema legado (complexo, difícil de usar)
    - ChefIApp: Moderno, simples
    - **Vantagem:** ChefIApp é mais fácil de usar
@@ -609,6 +669,7 @@
 ### É um Problema REAL?
 
 **Não, dado o posicionamento:**
+
 - Enterprise features: Não é necessário para "TPV que pensa"
 - Foco em restaurantes pequenos/médios, não enterprise
 
@@ -622,6 +683,7 @@
 
 **Definição:**
 Um TPV que pensa é um sistema que:
+
 1. **Observa contexto** (tempo, mesa, KDS, vendas, pressão)
 2. **Calcula próxima ação** (uma coisa por vez)
 3. **Explica o porquê** (garçom entende a sugestão)
@@ -629,6 +691,7 @@ Um TPV que pensa é um sistema que:
 5. **Aprende padrões** (opcional, futuro)
 
 **Exemplos:**
+
 - "Mesa 5 quer pagar há 5 minutos. Prioridade máxima."
 - "Pedido pronto há 3 minutos sem entregar. Ação imediata."
 - "Novo pedido WEB recebido. Toque para ver detalhes."
@@ -639,6 +702,7 @@ Um TPV que pensa é um sistema que:
 
 **Definição:**
 Um sistema operacional é um sistema que:
+
 1. **Orquestra tudo** (equipe, vendas, cozinha, reservas, financeiro)
 2. **Tem visão completa** (mapa visual, dashboards, analytics)
 3. **Gerencia recursos** (equipe, estoque, financeiro)
@@ -646,6 +710,7 @@ Um sistema operacional é um sistema que:
 5. **É o "cérebro" completo** (não só TPV, mas tudo)
 
 **Exemplos:**
+
 - Mapa visual completo do restaurante
 - Analytics profundos (forecasting, otimização)
 - Gestão completa de equipe (escalas, performance)
@@ -658,6 +723,7 @@ Um sistema operacional é um sistema que:
 **Status:** 🟡 **70% TPV que pensa, 30% Sistema Operacional**
 
 **TPV que pensa (70%):**
+
 - ✅ Now Engine implementado
 - ✅ Explicações do porquê
 - ✅ Priorização por urgência
@@ -665,6 +731,7 @@ Um sistema operacional é um sistema que:
 - 🟡 Aprendizado de padrões (não implementado)
 
 **Sistema Operacional (30%):**
+
 - ✅ Rituais de turno (checklist)
 - ✅ Mapa básico (grid por zonas)
 - ✅ Analytics básicos
@@ -677,17 +744,21 @@ Um sistema operacional é um sistema que:
 ## O que seria Necessário para Virar um Sistema Operacional de Verdade
 
 **Requisitos:**
+
 1. **Mapa Visual Completo** (1 mês)
+
    - Layout real do restaurante
    - Visualização de rotas
    - Heatmaps de movimento
 
 2. **Analytics Profundos** (2 meses)
+
    - Forecasting (previsão de vendas)
    - Otimização de menu
    - Análise de performance de equipe
 
 3. **Gestão Completa de Equipe** (1 mês)
+
    - Escalas automáticas
    - Performance tracking
    - Gamificação completa
@@ -706,6 +777,7 @@ Um sistema operacional é um sistema que:
 **Resposta:** **NÃO, não faz sentido AGORA**
 
 **Justificativa:**
+
 1. **Foco:** "TPV que pensa" é diferencial único, "Sistema Operacional" não é
 2. **Recursos:** 4-5 meses de desenvolvimento é muito para MVP
 3. **Mercado:** Restaurantes pequenos/médios não precisam de tudo isso
@@ -720,12 +792,14 @@ Um sistema operacional é um sistema que:
 **Posicionamento Oficial:** **"TPV que pensa"**
 
 **Justificativa:**
+
 1. **Diferencial único:** Now Engine não existe em nenhum competidor
 2. **Fácil de vender:** "O sistema te diz o que fazer" é claro
 3. **Foco claro:** Não precisa competir em tudo
 4. **Escalável:** Pode adicionar features depois
 
 **O que isso significa:**
+
 - ✅ Focar em Now Engine (melhorar, expandir)
 - ✅ Focar em explicações (garçom entende o porquê)
 - ✅ Focar em priorização (crítico > urgente > atenção)
@@ -738,16 +812,19 @@ Um sistema operacional é um sistema que:
 ## Riscos de Escolher Errado
 
 **Risco 1: Tentar Ser Ambos** 🔴 ALTO
+
 - **Problema:** Tentar ser "TPV que pensa" E "Sistema Operacional"
 - **Impacto:** Perda de foco, produto confuso, vendas difíceis
 - **Mitigação:** Escolher UMA identidade e forçar produto a obedecer
 
 **Risco 2: Tentar Competir em Tudo** 🔴 ALTO
+
 - **Problema:** Tentar igualar Last.app, Square, Toast em tudo
 - **Impacto:** Perda de diferencial, produto genérico, vendas difíceis
 - **Mitigação:** Focar em IA operacional, não tentar competir em tudo
 
 **Risco 3: Não Escolher Nada** 🔴 ALTO
+
 - **Problema:** Não escolher identidade oficial
 - **Impacto:** Marketing confuso, vendas difíceis, produto sem direção
 - **Mitigação:** Escolher "TPV que pensa" e forçar produto a obedecer
@@ -761,6 +838,7 @@ Um sistema operacional é um sistema que:
 **Resposta:** **SIM, faz sentido, mas não é crítico**
 
 **Justificativa:**
+
 1. **Motivação:** Gamificação motiva equipe (pontos, rankings, achievements)
 2. **Engajamento:** Equipe mais engajada = melhor serviço
 3. **Diferencial:** Poucos competidores têm gamificação interna forte
@@ -773,11 +851,13 @@ Um sistema operacional é um sistema que:
 ## Nível Mínimo Aceitável para Mercado
 
 **Nível Mínimo:**
+
 1. **Pontos básicos** (completar tarefa = pontos)
 2. **Rankings simples** (top 10 da equipe)
 3. **Achievements básicos** (5-10 achievements)
 
 **Nível Ideal:**
+
 1. **Pontos contextuais** (tarefa crítica = mais pontos)
 2. **Rankings por categoria** (velocidade, qualidade, vendas)
 3. **Achievements diversos** (20+ achievements)
@@ -792,12 +872,14 @@ Um sistema operacional é um sistema que:
 **Status:** 🟡 **INCOMPLETO**
 
 **O que existe:**
+
 - ✅ `GamificationService.ts` — Serviço completo
 - ✅ `SessionXPWidget.tsx` — Widget (não usado)
 - ✅ `GamificationPanel.tsx` — Panel (não usado)
 - ✅ Schema SQL (implícito, não verificado)
 
 **O que falta:**
+
 - 🔴 Integração no mobile app
 - 🔴 UI visível para staff
 - 🔴 Leaderboards visíveis
@@ -812,11 +894,13 @@ Um sistema operacional é um sistema que:
 **Resposta:** 🟡 **INCOMPLETO (não problemático)**
 
 **Justificativa:**
+
 1. **Não bloqueia uso:** Sistema funciona sem gamificação
 2. **Não prometido:** Não foi prometido ao mercado (ainda)
 3. **Pode ser adicionado:** Código existe, só precisa integrar
 
 **Recomendação:**
+
 - **Opção A:** Implementar no mobile app (2 semanas)
 - **Opção B:** Remover código (1 dia) — se não for implementar agora
 
@@ -831,12 +915,14 @@ Um sistema operacional é um sistema que:
 **7.5/10** 🟡
 
 **Breakdown:**
+
 - **Técnico:** 8.5/10 (muito sólido)
 - **UX:** 8.0/10 (melhorou muito)
 - **Produto Real:** 6.5/10 (faltam integrações críticas)
 - **Mercado:** 7.0/10 (pronto para piloto, não para venda ampla)
 
 **Justificativa:**
+
 - ✅ Base técnica muito sólida
 - ✅ UX operacional muito boa
 - ✅ Now Engine é diferencial único
@@ -851,6 +937,7 @@ Um sistema operacional é um sistema que:
 ### Uso Interno? ✅ SIM
 
 **Justificativa:**
+
 - ✅ Sistema funciona muito bem
 - ✅ Bloqueadores críticos resolvidos
 - ✅ UX operacional muito boa
@@ -863,6 +950,7 @@ Um sistema operacional é um sistema que:
 ### Piloto Pago? 🟡 SIM (com acompanhamento próximo)
 
 **Justificativa:**
+
 - ✅ Sistema funciona muito bem
 - ✅ Bloqueadores críticos resolvidos
 - 🟡 Billing não está integrado (pode ser manual)
@@ -875,6 +963,7 @@ Um sistema operacional é um sistema que:
 ### Venda Comercial? 🔴 NÃO
 
 **Justificativa:**
+
 - 🔴 Billing não está integrado no fluxo principal
 - 🔴 Onboarding não garante primeira venda
 - 🟡 Gamificação pendente (decisão necessária)
@@ -889,7 +978,9 @@ Um sistema operacional é um sistema que:
 ### Técnico
 
 **Crítico (Bloqueador de Mercado):**
+
 1. **Billing integrado no fluxo principal** (2 semanas)
+
    - Checkout flow no onboarding
    - Upgrade/downgrade flow
    - Cancelamento flow
@@ -900,10 +991,10 @@ Um sistema operacional é um sistema que:
    - Guia de primeira venda
    - Demo mode para testar
 
-**Alto (Não Bloqueador, mas Importante):**
-3. **Gamificação implementada ou removida** (2 semanas ou 1 dia)
-   - Implementar no mobile app OU
-   - Remover código
+**Alto (Não Bloqueador, mas Importante):** 3. **Gamificação implementada ou removida** (2 semanas ou 1 dia)
+
+- Implementar no mobile app OU
+- Remover código
 
 4. **Refatoração TPV** (3 meses, não urgente)
    - Quebrar 12k linhas em módulos menores
@@ -914,15 +1005,16 @@ Um sistema operacional é um sistema que:
 ### UX
 
 **Crítico (Bloqueador de Mercado):**
+
 1. **Billing flow visível** (2 semanas)
    - Checkout no onboarding
    - Upgrade/downgrade UI
    - Cancelamento UI
 
-**Alto (Não Bloqueador, mas Importante):**
-2. **Role selector menos técnico** (1 semana)
-   - UI mais amigável
-   - Menos "dev tool"
+**Alto (Não Bloqueador, mas Importante):** 2. **Role selector menos técnico** (1 semana)
+
+- UI mais amigável
+- Menos "dev tool"
 
 3. **Mapa visual completo** (1 mês, não urgente)
    - Layout real do restaurante
@@ -933,7 +1025,9 @@ Um sistema operacional é um sistema que:
 ### Negócio
 
 **Crítico (Bloqueador de Mercado):**
+
 1. **Escolher identidade oficial** (1 semana)
+
    - "TPV que pensa" (recomendado)
    - Forçar produto a obedecer
 
@@ -941,11 +1035,11 @@ Um sistema operacional é um sistema que:
    - Implementar OU remover
    - Não deixar pendente
 
-**Alto (Não Bloqueador, mas Importante):**
-3. **Documentação comercial** (1 semana)
-   - Pitch de 3 minutos
-   - Material de venda
-   - Casos de uso
+**Alto (Não Bloqueador, mas Importante):** 3. **Documentação comercial** (1 semana)
+
+- Pitch de 3 minutos
+- Material de venda
+- Casos de uso
 
 ---
 
@@ -954,6 +1048,7 @@ Um sistema operacional é um sistema que:
 **Escolher identidade oficial e integrar billing no fluxo principal**
 
 **Ordem de execução:**
+
 1. **Esta semana:** Escolher "TPV que pensa" como identidade oficial
 2. **Próximas 2 semanas:** Integrar billing no fluxo de onboarding
 3. **Próximas 2 semanas:** Garantir primeira venda no onboarding
@@ -970,6 +1065,7 @@ Um sistema operacional é um sistema que:
 **ChefIApp hoje:** 7.5/10 — Pronto para piloto pago, não para venda comercial ampla
 
 **Principais Conclusões:**
+
 - ✅ Base técnica muito sólida (8.5/10)
 - ✅ UX operacional muito boa (8.0/10)
 - ✅ Now Engine é diferencial único
@@ -978,6 +1074,7 @@ Um sistema operacional é um sistema que:
 - 🟡 Gamificação pendente (decisão necessária)
 
 **Recomendação Estratégica:**
+
 1. Escolher "TPV que pensa" como identidade oficial
 2. Integrar billing no fluxo principal (2 semanas)
 3. Garantir primeira venda no onboarding (1 semana)
