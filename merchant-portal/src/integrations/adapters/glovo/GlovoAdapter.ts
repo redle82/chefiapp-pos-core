@@ -155,7 +155,7 @@ export class GlovoAdapter implements IntegrationAdapter {
   // EVENT HANDLING (outgoing events from system)
   // ───────────────────────────────────────────────────────────
 
-  async onEvent(event: IntegrationEvent): Promise<void> {
+  async onEvent(_event: IntegrationEvent): Promise<void> {
     // Implementar update status via Proxy se necessário
   }
 
@@ -182,14 +182,7 @@ export class GlovoAdapter implements IntegrationAdapter {
 
     console.log(`[Glovo] 📨 Realtime Order Received: ${row.reference}`);
     this.ordersReceived++;
-    this.processedOrderIds.add(externalId);
-
-    // Convert DB Row -> Internal Event
-    // O raw_payload deve conter o objeto Glovo original se disponível
-    let originalOrder: GlovoOrder | null = null;
-    if (row.raw_payload) {
-      originalOrder = row.raw_payload as GlovoOrder;
-    }
+    this.trackProcessedOrderId(externalId);
 
     // Se tiver raw_payload, usa transformItems original
     // Se não, usa colunas da tabela
@@ -329,6 +322,13 @@ export class GlovoAdapter implements IntegrationAdapter {
     }));
   }
 
+  private trackProcessedOrderId(externalId: string): void {
+    if (this.processedOrderIds.size >= MAX_PROCESSED_ORDERS) {
+      this.processedOrderIds.clear();
+    }
+    this.processedOrderIds.add(externalId);
+  }
+
   private emitToSystem(event: IntegrationEvent): void {
     if (this.eventCallback) {
       try {
@@ -367,7 +367,7 @@ export class GlovoAdapter implements IntegrationAdapter {
       return { success: true, orderId: externalId };
     }
     this.ordersReceived++;
-    this.processedOrderIds.add(externalId);
+    this.trackProcessedOrderId(externalId);
 
     const internalEvent: OrderCreatedEvent = {
       type: "order.created",

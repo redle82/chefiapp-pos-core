@@ -1,13 +1,11 @@
 /**
  * UberEatsAdapter - Adapter para integração Uber Eats
- * 
+ *
  * FASE 3: Seguindo padrão Glovo
  */
 
 // import { UberEatsOAuth } from './UberEatsOAuth'; // REMOVED: Security Hardening (Backend Only)
-import type { UberEatsOrder, UberEatsOrderItem } from './UberEatsTypes';
-
-const UBER_EATS_API_BASE = 'https://api.uber.com/v1/eats';
+import type { UberEatsOrder } from './UberEatsTypes';
 
 export interface UberEatsAdapterConfig {
     clientId: string;
@@ -17,7 +15,7 @@ export interface UberEatsAdapterConfig {
 export class UberEatsAdapter {
     // private oauth: UberEatsOAuth;
 
-    constructor(config: UberEatsAdapterConfig) {
+    constructor(_config: UberEatsAdapterConfig) {
         // this.oauth = new UberEatsOAuth(config);
         console.warn('UberEatsAdapter (Frontend) is deprecated. Use Backend Webhooks.');
     }
@@ -89,7 +87,7 @@ export class UberEatsAdapter {
     /**
      * Aceitar pedido
      */
-    async acceptOrder(orderId: string): Promise<void> {
+    async acceptOrder(_orderId: string): Promise<void> {
         /*
         const token = await this.oauth.getAccessToken();
         if (!token) {
