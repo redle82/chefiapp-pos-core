@@ -73,7 +73,7 @@ export const ScannerService = {
   async installGoogleModule(): Promise<void> {
     try {
       await BarcodeScanner.installGoogleBarcodeScannerModule();
-    } catch (error) {
+    } catch {
       // Ignore, might be iOS or already installed
     }
   },

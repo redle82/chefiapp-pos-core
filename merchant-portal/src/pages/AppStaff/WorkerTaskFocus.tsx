@@ -18,7 +18,7 @@ export const WorkerTaskFocus: React.FC<{ task: Task; onBack?: () => void }> = ({
   task,
   onBack,
 }) => {
-  const { completeTask, startTask } = useStaff();
+  const { completeTask } = useStaff();
 
   // P3-4: Task Timer
   const timer = useTaskTimer();

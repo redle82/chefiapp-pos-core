@@ -68,9 +68,6 @@ export const PulseList: React.FC = () => {
       // B) REAL MODE
       try {
         // FASE 3.5: Usa dockerCoreClient em vez de supabase direto
-        const { dockerCoreClient } = await import(
-          "../../../core-boundary/docker-core/connection"
-        );
         const { readRestaurantMemberByUserId, readEmpirePulses } = await import(
           "../../../core-boundary/readers/PulseReader"
         );

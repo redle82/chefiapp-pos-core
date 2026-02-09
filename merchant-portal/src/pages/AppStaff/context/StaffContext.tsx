@@ -348,7 +348,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
   // 5. IMMUNE SYSTEM (Spec Drift)
   const [specDrifts, setSpecDrifts] = useState<SpecDriftAlert[]>([]);
-  const [pressureMode, setPressureMode] = useState<
+  const [pressureMode, _setPressureMode] = useState<
     "idle" | "pressure" | "recovery"
   >("idle");
 

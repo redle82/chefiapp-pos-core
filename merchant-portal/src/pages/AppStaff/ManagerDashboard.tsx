@@ -34,7 +34,6 @@ export const ManagerDashboard: React.FC = () => {
   };
 
   const health = getHealthStatus(currentRiskLevel);
-  const isOwnerLike = activeRole === "owner" || activeRole === "manager";
 
   const criticalTasks = useMemo(
     () =>
