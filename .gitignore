@@ -41,9 +41,18 @@ testsprite_tests/TEST_CREDENTIALS.md
 
 # IDE
 .idea/
-.vscode/tasks.json
+.vscode/
 *.swp
 *.swo
+
+# Logs (diagnostic output)
+logs/
+
+# Android local config
+**/local.properties
+
+# Lockfiles generated per-package (root pnpm-lock.yaml is tracked)
+merchant-portal/pnpm-lock.yaml
 
 # OS
 .DS_Store

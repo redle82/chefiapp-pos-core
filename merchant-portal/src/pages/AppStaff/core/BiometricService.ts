@@ -1,4 +1,27 @@
-import { NativeBiometric } from "@capgo/capacitor-native-biometric";
+const isNativePlatform = (): boolean => {
+  const capacitor = (
+    globalThis as { Capacitor?: { isNativePlatform?: () => boolean } }
+  ).Capacitor;
+  return typeof capacitor?.isNativePlatform === "function"
+    ? capacitor.isNativePlatform()
+    : false;
+};
+
+const BIOMETRIC_MODULE_ID = "@capgo/capacitor-native-biometric";
+
+const loadNativeBiometric = async () => {
+  if (!isNativePlatform()) {
+    return null;
+  }
+  try {
+    return await import(/* @vite-ignore */ BIOMETRIC_MODULE_ID);
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.warn("[BiometricService] Native biometric unavailable:", error);
+    }
+    return null;
+  }
+};
 
 /**
  * 🧬 BiometricService (Staff App)
@@ -12,7 +35,11 @@ export const BiometricService = {
    */
   async checkAvailability(): Promise<boolean> {
     try {
-      const result = await NativeBiometric.isAvailable();
+      const module = await loadNativeBiometric();
+      if (!module) {
+        return false;
+      }
+      const result = await module.NativeBiometric.isAvailable();
       // result also contains biometricType (face, finger, etc.)
       return result.isAvailable;
     } catch (error) {
@@ -27,12 +54,16 @@ export const BiometricService = {
    */
   async registerUser(username: string): Promise<boolean> {
     try {
+      const module = await loadNativeBiometric();
+      if (!module) {
+        return false;
+      }
       // Delete existing first to ensure clean state
-      await NativeBiometric.deleteCredentials({
+      await module.NativeBiometric.deleteCredentials({
         server: "chefiapp.pos",
       }).catch(() => {});
 
-      await NativeBiometric.setCredentials({
+      await module.NativeBiometric.setCredentials({
         username: username,
         password: "biometric-active", // Placeholder token
         server: "chefiapp.pos",
@@ -50,7 +81,11 @@ export const BiometricService = {
    */
   async verifyUser(): Promise<string | null> {
     try {
-      const result = await NativeBiometric.getCredentials({
+      const module = await loadNativeBiometric();
+      if (!module) {
+        return null;
+      }
+      const result = await module.NativeBiometric.getCredentials({
         server: "chefiapp.pos",
       });
       return result.username;
@@ -66,7 +101,11 @@ export const BiometricService = {
    */
   async clearCredentials(): Promise<void> {
     try {
-      await NativeBiometric.deleteCredentials({
+      const module = await loadNativeBiometric();
+      if (!module) {
+        return;
+      }
+      await module.NativeBiometric.deleteCredentials({
         server: "chefiapp.pos",
       });
     } catch {

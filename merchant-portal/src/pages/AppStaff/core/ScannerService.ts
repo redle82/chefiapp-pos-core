@@ -1,4 +1,27 @@
-import { BarcodeScanner } from "@capacitor-mlkit/barcode-scanning";
+const isNativePlatform = (): boolean => {
+  const capacitor = (
+    globalThis as { Capacitor?: { isNativePlatform?: () => boolean } }
+  ).Capacitor;
+  return typeof capacitor?.isNativePlatform === "function"
+    ? capacitor.isNativePlatform()
+    : false;
+};
+
+const BARCODE_SCANNER_MODULE_ID = "@capacitor-mlkit/barcode-scanning";
+
+const loadBarcodeScanner = async () => {
+  if (!isNativePlatform()) {
+    return null;
+  }
+  try {
+    return await import(/* @vite-ignore */ BARCODE_SCANNER_MODULE_ID);
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.warn("[ScannerService] Barcode scanner unavailable:", error);
+    }
+    return null;
+  }
+};
 
 /**
  * 📷 ScannerService (Staff App)
@@ -12,7 +35,11 @@ export const ScannerService = {
    */
   async checkPermission(): Promise<boolean> {
     try {
-      const status = await BarcodeScanner.checkPermissions();
+      const module = await loadBarcodeScanner();
+      if (!module) {
+        return false;
+      }
+      const status = await module.BarcodeScanner.checkPermissions();
       return status.camera === "granted";
     } catch {
       return false;
@@ -24,7 +51,11 @@ export const ScannerService = {
    */
   async requestPermission(): Promise<boolean> {
     try {
-      const status = await BarcodeScanner.requestPermissions();
+      const module = await loadBarcodeScanner();
+      if (!module) {
+        return false;
+      }
+      const status = await module.BarcodeScanner.requestPermissions();
       return status.camera === "granted";
     } catch {
       return false;
@@ -37,6 +68,10 @@ export const ScannerService = {
    */
   async scan(): Promise<string | null> {
     try {
+      const module = await loadBarcodeScanner();
+      if (!module) {
+        return null;
+      }
       const allowed = await this.checkPermission();
       if (!allowed) {
         const granted = await this.requestPermission();
@@ -47,7 +82,7 @@ export const ScannerService = {
       }
 
       // Start scanning
-      const { barcodes } = await BarcodeScanner.scan({
+      const { barcodes } = await module.BarcodeScanner.scan({
         formats: [], // All formats by default
       });
 
@@ -72,7 +107,11 @@ export const ScannerService = {
    */
   async installGoogleModule(): Promise<void> {
     try {
-      await BarcodeScanner.installGoogleBarcodeScannerModule();
+      const module = await loadBarcodeScanner();
+      if (!module) {
+        return;
+      }
+      await module.BarcodeScanner.installGoogleBarcodeScannerModule();
     } catch {
       // Ignore, might be iOS or already installed
     }
