@@ -134,6 +134,7 @@ import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
 import { ModeIndicator } from "./ui/design-system/ModeIndicator";
 import { GlobalBlockedView } from "./ui/design-system/components/GlobalBlockedView";
 
+import { AuthProvider } from "./core/auth/AuthProvider";
 import { FlowGate } from "./core/flow/FlowGate";
 import { EventMonitorBootstrap } from "./core/tasks/EventMonitorBootstrap";
 import { CatalogAssignmentsPage } from "./features/admin/catalog/pages/CatalogAssignmentsPage";
@@ -245,47 +246,58 @@ function TPVDemoGate() {
 function App() {
   return (
     <ErrorBoundary context="Root">
-      {/* <PublicLifecycleSync /> */}
-      <BillingsPreloader />
-      <Routes>
-        {/* Public / Landing — canónica: / e /landing = mesma Landing Operacional */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/landing" element={<Navigate to="/" replace />} />
-        <Route path="/app/demo-tpv" element={<ProductFirstLandingPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/features" element={<FeaturesPage />} />
-        {/* Demo: redireccionado para auth (demo-guiado removido em refactor pós-freeze). */}
-        <Route path="/demo" element={<Navigate to="/auth" replace />} />
-        <Route path="/demo-guiado" element={<Navigate to="/auth" replace />} />
+      <AuthProvider>
+        {/* <PublicLifecycleSync /> */}
+        <BillingsPreloader />
+        <Routes>
+          {/* Public / Landing — canónica: / e /landing = mesma Landing Operacional */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/landing" element={<Navigate to="/" replace />} />
+          <Route path="/app/demo-tpv" element={<ProductFirstLandingPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/features" element={<FeaturesPage />} />
+          {/* Demo: redireccionado para auth (demo-guiado removido em refactor pós-freeze). */}
+          <Route path="/demo" element={<Navigate to="/auth" replace />} />
+          <Route
+            path="/demo-guiado"
+            element={<Navigate to="/auth" replace />}
+          />
 
-        {/* Auth / Onboarding Redirects */}
-        <Route path="/login" element={<Navigate to="/auth/phone" replace />} />
-        <Route path="/signup" element={<Navigate to="/auth/phone" replace />} />
-        <Route
-          path="/forgot-password"
-          element={<Navigate to="/auth/email" replace />}
-        />
-        <Route path="/auth" element={<Navigate to="/auth/phone" replace />} />
-        <Route path="/auth/phone" element={<PhoneLoginPage />} />
-        <Route path="/auth/verify" element={<VerifyCodePage />} />
-        <Route path="/auth/email" element={<AuthPage />} />
-        <Route path="/bootstrap" element={<BootstrapPage />} />
-        <Route
-          path="/setup/restaurant-minimal"
-          element={<RestaurantMinimalSetupPage />}
-        />
+          {/* Auth / Onboarding Redirects */}
+          <Route
+            path="/login"
+            element={<Navigate to="/auth/phone" replace />}
+          />
+          <Route
+            path="/signup"
+            element={<Navigate to="/auth/phone" replace />}
+          />
+          <Route
+            path="/forgot-password"
+            element={<Navigate to="/auth/email" replace />}
+          />
+          <Route path="/auth" element={<Navigate to="/auth/phone" replace />} />
+          <Route path="/auth/phone" element={<PhoneLoginPage />} />
+          <Route path="/auth/verify" element={<VerifyCodePage />} />
+          <Route path="/auth/email" element={<AuthPage />} />
+          <Route path="/bootstrap" element={<BootstrapPage />} />
+          <Route
+            path="/setup/restaurant-minimal"
+            element={<RestaurantMinimalSetupPage />}
+          />
 
-        {/* Core Operations */}
-        <Route path="/billing/success" element={<BillingSuccessPage />} />
-        <Route path="/help/start-local" element={<HelpStartLocalPage />} />
+          {/* Core Operations */}
+          <Route path="/billing/success" element={<BillingSuccessPage />} />
+          <Route path="/help/start-local" element={<HelpStartLocalPage />} />
 
-        {/* Menu: catálogo visual de decisão (spec MENU_CATALOG_VISUAL_SPEC) */}
-        <Route path="/menu" element={<MenuCatalogPage />} />
-        <Route path="/menu-v2" element={<MenuCatalogPageV2 />} />
+          {/* Menu: catálogo visual de decisão (spec MENU_CATALOG_VISUAL_SPEC) */}
+          <Route path="/menu" element={<MenuCatalogPage />} />
+          <Route path="/menu-v2" element={<MenuCatalogPageV2 />} />
 
-        {/* App Content (Management/Operational) */}
-        <Route path="/*" element={<AppOperationalWrapper />} />
-      </Routes>
+          {/* App Content (Management/Operational) */}
+          <Route path="/*" element={<AppOperationalWrapper />} />
+        </Routes>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

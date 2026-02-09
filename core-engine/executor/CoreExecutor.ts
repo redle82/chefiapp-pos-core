@@ -1,6 +1,6 @@
 /**
  * Core Executor
- * 
+ *
  * Executes state transitions with:
  * - State machine validation (from JSON)
  * - Guard execution (business rules)
@@ -9,14 +9,14 @@
  * - Locking (concurrency control)
  */
 
-import sessionMachine from "../../state-machines/session.state-machine.json";
-import orderMachine from "../../state-machines/order.state-machine.json";
-import paymentMachine from "../../state-machines/payment.state-machine.json";
-import cashRegisterMachine from "../../state-machines/cash-register.state-machine.json";
-import { InMemoryRepo } from "../repo/InMemoryRepo";
-import { executeGuard, type GuardContext } from "../guards";
 import { executeEffect, type EffectContext } from "../effects";
+import { executeGuard, type GuardContext } from "../guards";
 import { ConcurrencyConflictError } from "../repo/errors";
+import { InMemoryRepo } from "../repo/InMemoryRepo";
+import cashRegisterMachine from "../state-machines/cash-register.state-machine.json";
+import orderMachine from "../state-machines/order.state-machine.json";
+import paymentMachine from "../state-machines/payment.state-machine.json";
+import sessionMachine from "../state-machines/session.state-machine.json";
 
 const machines = {
   SESSION: sessionMachine as any,
@@ -43,11 +43,9 @@ export interface TransitionResult {
 }
 
 export class CoreExecutor {
-  constructor(private repo: InMemoryRepo) { }
+  constructor(private repo: InMemoryRepo) {}
 
-  async transition(
-    request: TransitionRequest
-  ): Promise<TransitionResult> {
+  async transition(request: TransitionRequest): Promise<TransitionResult> {
     const { entity, entityId, event, context = {} } = request;
 
     // Get state machine
@@ -77,7 +75,9 @@ export class CoreExecutor {
         // Buscar payment para obter order_id
         // Nota: Esta busca não está protegida por lock, mas é apenas leitura
         // e o order_id não muda após criação do payment
-        for (const oid of Array.from((this.repo as any).orders.keys()) as string[]) {
+        for (const oid of Array.from(
+          (this.repo as any).orders.keys(),
+        ) as string[]) {
           const payments = this.repo.getPayments(oid);
           const payment = payments.find((p) => p.id === entityId);
           if (payment) {
@@ -213,7 +213,9 @@ export class CoreExecutor {
         if (entity === "PAYMENT" && transition.target === "CONFIRMED") {
           // Find payment by searching all orders
           let payment: any = null;
-          for (const orderId of Array.from((this.repo as any).orders.keys()) as string[]) {
+          for (const orderId of Array.from(
+            (this.repo as any).orders.keys(),
+          ) as string[]) {
             const payments = this.repo.getPayments(orderId);
             const found = payments.find((p) => p.id === entityId);
             if (found) {
@@ -230,11 +232,11 @@ export class CoreExecutor {
               // The current payment state is still PENDING in repo, but will be CONFIRMED after commit
               // So we need to manually count it
               const confirmedPayments = allPayments.filter(
-                (p) => p.state === "CONFIRMED" || p.id === entityId
+                (p) => p.state === "CONFIRMED" || p.id === entityId,
               );
               const totalPaidCents = confirmedPayments.reduce(
                 (sum, p) => sum + p.amount_cents,
-                0
+                0,
               );
 
               // If total paid >= order total, transition order to PAID atomically
@@ -280,7 +282,7 @@ export class CoreExecutor {
 
   private async getCurrentState(
     entity: string,
-    entityId: string
+    entityId: string,
   ): Promise<string | null> {
     switch (entity) {
       case "SESSION": {
@@ -293,7 +295,9 @@ export class CoreExecutor {
       }
       case "PAYMENT": {
         // Find payment by searching all orders
-        for (const orderId of Array.from((this.repo as any).orders.keys()) as string[]) {
+        for (const orderId of Array.from(
+          (this.repo as any).orders.keys(),
+        ) as string[]) {
           const payments = this.repo.getPayments(orderId);
           const payment = payments.find((p) => p.id === entityId);
           if (payment) {
@@ -315,7 +319,7 @@ export class CoreExecutor {
     entity: string,
     entityId: string,
     newState: string,
-    txId: string
+    txId: string,
   ): Promise<void> {
     switch (entity) {
       case "SESSION": {
@@ -355,7 +359,9 @@ export class CoreExecutor {
       case "PAYMENT": {
         // Find payment by searching all orders
         let payment: any = null;
-        for (const orderId of Array.from((this.repo as any).orders.keys()) as string[]) {
+        for (const orderId of Array.from(
+          (this.repo as any).orders.keys(),
+        ) as string[]) {
           const payments = this.repo.getPayments(orderId);
           const found = payments.find((p) => p.id === entityId);
           if (found) {

@@ -1,3 +1,10 @@
+import {
+  Elements,
+  PaymentElement,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import React, {
   useCallback,
   useEffect,
@@ -5,7 +12,13 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { CONFIG } from "../../../config";
 import { useCurrency } from "../../../core/currency/useCurrency";
+import { PaymentBroker } from "../../../core/payment/PaymentBroker";
+
+// Stripe singleton — loaded once outside component tree
+const STRIPE_KEY = CONFIG.STRIPE_PUBLIC_KEY || null;
+const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
 
 interface PaymentModalProps {
   orderId: string;
@@ -63,6 +76,7 @@ const DANGER = "#ef4444";
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({
   orderId,
+  restaurantId,
   orderTotal,
   onPay,
   onCancel,
@@ -77,11 +91,46 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [processing, setProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Stripe card flow
+  type CardStep = "idle" | "creating-intent" | "ready";
+  const [cardStep, setCardStep] = useState<CardStep>("idle");
+  const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(
+    null,
+  );
+  const intentCreatedRef = useRef(false);
+
   useEffect(() => {
     setCashTendered("");
     setMbwayPhone("");
     setErrorMsg("");
+    setCardStep("idle");
+    setStripeClientSecret(null);
+    intentCreatedRef.current = false;
   }, [method]);
+
+  // Auto-create PaymentIntent when "card" is selected (non-demo)
+  useEffect(() => {
+    if (method !== "card" || isDemoMode || intentCreatedRef.current) return;
+    if (!STRIPE_KEY) return; // no Stripe key configured — will show fallback
+    intentCreatedRef.current = true;
+    setCardStep("creating-intent");
+    setErrorMsg("");
+    PaymentBroker.createPaymentIntent({
+      orderId,
+      amount: orderTotal,
+      currency: "eur",
+      restaurantId,
+    })
+      .then((result) => {
+        setStripeClientSecret(result.clientSecret);
+        setCardStep("ready");
+      })
+      .catch((err: any) => {
+        setErrorMsg(err?.message || "Erro ao preparar pagamento com cartao");
+        setCardStep("idle");
+        intentCreatedRef.current = false;
+      });
+  }, [method, isDemoMode, orderId, orderTotal, restaurantId]);
 
   const cashCents = useMemo(() => {
     const value = parseFloat(cashTendered || "0");
@@ -97,8 +146,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     if (!method || processing) return false;
     if (method === "cash") return cashCents >= orderTotal;
     if (method === "mbway") return /^9\d{8}$/.test(mbwayPhone);
+    // Card handled by Stripe form; hide generic confirm when ready
+    if (method === "card") return isDemoMode === true;
     return true;
-  }, [cashCents, mbwayPhone, method, orderTotal, processing]);
+  }, [cashCents, isDemoMode, mbwayPhone, method, orderTotal, processing]);
 
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
@@ -128,6 +179,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       setProcessing(false);
     }
   }, [canConfirm, method, onPay]);
+
+  // Called when Stripe Elements confirm succeeds
+  const handleCardSuccess = useCallback(
+    async (paymentIntentId: string) => {
+      setProcessing(true);
+      setErrorMsg("");
+      try {
+        await onPay("card", paymentIntentId);
+      } catch (err: any) {
+        setErrorMsg(err?.message || "Erro ao finalizar pagamento");
+      } finally {
+        setProcessing(false);
+      }
+    },
+    [onPay],
+  );
 
   return (
     <div ref={overlayRef} onClick={handleOverlayClick} style={styles.overlay}>
@@ -227,11 +294,52 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         )}
 
         {method === "card" && (
-          <div style={styles.terminalWaiting}>
-            <span style={{ fontSize: 36 }}>💳</span>
-            <span style={{ color: "#a1a1aa", fontSize: 14 }}>
-              Insira ou aproxime o cartao no terminal
-            </span>
+          <div style={styles.section}>
+            {isDemoMode ? (
+              <div style={styles.terminalWaiting}>
+                <span style={{ fontSize: 36 }}>💳</span>
+                <span style={{ color: "#a1a1aa", fontSize: 14 }}>
+                  Demo: pagamento simulado
+                </span>
+              </div>
+            ) : !STRIPE_KEY ? (
+              <div style={styles.terminalWaiting}>
+                <span style={{ fontSize: 36 }}>⚠️</span>
+                <span style={{ color: "#fbbf24", fontSize: 14 }}>
+                  Stripe nao configurado — defina VITE_STRIPE_PUBLISHABLE_KEY
+                </span>
+              </div>
+            ) : cardStep === "creating-intent" ? (
+              <div style={styles.terminalWaiting}>
+                <span style={{ fontSize: 36 }}>⏳</span>
+                <span style={{ color: "#a1a1aa", fontSize: 14 }}>
+                  A preparar pagamento...
+                </span>
+              </div>
+            ) : cardStep === "ready" && stripeClientSecret && stripePromise ? (
+              <Elements
+                stripe={stripePromise}
+                options={{
+                  clientSecret: stripeClientSecret,
+                  appearance: {
+                    theme: "night",
+                    variables: { colorPrimary: GREEN },
+                  },
+                }}
+              >
+                <InlineCardForm
+                  onSuccess={handleCardSuccess}
+                  disabled={processing}
+                />
+              </Elements>
+            ) : (
+              <div style={styles.terminalWaiting}>
+                <span style={{ fontSize: 36 }}>💳</span>
+                <span style={{ color: "#a1a1aa", fontSize: 14 }}>
+                  Selecione cartao para iniciar
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -278,6 +386,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             ...styles.confirmBtn,
             opacity: canConfirm ? 1 : 0.4,
             cursor: canConfirm ? "pointer" : "not-allowed",
+            // Hide when Stripe form is active (it has its own submit)
+            display:
+              method === "card" && !isDemoMode && cardStep === "ready"
+                ? "none"
+                : "flex",
           }}
         >
           {processing
@@ -287,6 +400,93 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       </div>
     </div>
   );
+};
+
+// ── Inline Stripe card form (used inside <Elements>) ──────────────
+const InlineCardForm: React.FC<{
+  onSuccess: (paymentIntentId: string) => void;
+  disabled?: boolean;
+}> = ({ onSuccess, disabled }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements || submitting) return;
+
+    setSubmitting(true);
+    setError(null);
+
+    const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      confirmParams: { return_url: window.location.href },
+      redirect: "if_required",
+    });
+
+    if (confirmError) {
+      setError(confirmError.message || "Erro ao processar cartao");
+      setSubmitting(false);
+    } else if (paymentIntent?.status === "succeeded") {
+      onSuccess(paymentIntent.id);
+    } else {
+      setError(
+        "Estado inesperado: " + (paymentIntent?.status || "desconhecido"),
+      );
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      style={{ display: "flex", flexDirection: "column", gap: 14 }}
+    >
+      <PaymentElement />
+      {error && (
+        <div
+          style={{
+            background: "rgba(239,68,68,0.15)",
+            border: `1px solid ${DANGER}`,
+            color: "#fecaca",
+            padding: "8px 12px",
+            borderRadius: 8,
+            fontSize: 13,
+          }}
+        >
+          {error}
+        </div>
+      )}
+      <button
+        type="submit"
+        disabled={!stripe || submitting || disabled}
+        style={{
+          ...cardFormBtnStyle,
+          opacity: !stripe || submitting || disabled ? 0.4 : 1,
+          cursor: !stripe || submitting || disabled ? "not-allowed" : "pointer",
+        }}
+      >
+        {submitting ? "A processar..." : "Pagar com Cartao"}
+      </button>
+    </form>
+  );
+};
+
+const cardFormBtnStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 10,
+  padding: "14px 0",
+  background: GREEN,
+  border: "none",
+  borderRadius: 12,
+  color: "#fff",
+  fontSize: 16,
+  fontWeight: 700,
+  transition: "opacity 0.15s",
+  marginTop: 4,
 };
 
 const styles: Record<string, React.CSSProperties> = {

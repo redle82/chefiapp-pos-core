@@ -1,14 +1,18 @@
 /**
  * Event Executor
- * 
+ *
  * Integrates CoreExecutor with EventStore.
  * Transitions generate events; state is rebuilt from events.
  */
-import { CoreExecutor, type TransitionRequest, type TransitionResult } from "../core-engine/executor/CoreExecutor";
-import { InMemoryRepo } from "../core-engine/repo/InMemoryRepo";
-import type { EventStore, CoreEvent, StreamId } from "./types";
+import {
+  CoreExecutor,
+  type TransitionRequest,
+  type TransitionResult,
+} from "../executor/CoreExecutor";
+import { ExecutionContext } from "../kernel/ExecutionContext";
 import { rebuildState } from "../projections";
-import { ExecutionContext } from "../core-engine/kernel/ExecutionContext";
+import { InMemoryRepo } from "../repo/InMemoryRepo";
+import type { CoreEvent, EventStore, StreamId } from "./types";
 
 // Robust UUID Generator (Browser + Node)
 const generateUUID = (): string =>
@@ -22,8 +26,8 @@ export class EventExecutor {
   constructor(
     private eventStore: EventStore,
     repo: InMemoryRepo,
-    private boundTenantId: string,   // [FENCE] Structural Binding
-    private boundExecutionId: string // [FENCE] Lifecycle Binding
+    private boundTenantId: string, // [FENCE] Structural Binding
+    private boundExecutionId: string, // [FENCE] Lifecycle Binding
   ) {
     this.repo = repo;
     this.coreExecutor = new CoreExecutor(this.repo);
@@ -39,26 +43,38 @@ export class EventExecutor {
     options?: {
       causation_id?: string;
       idempotency_key?: string;
-    }
+    },
   ): Promise<TransitionResult & { event_id?: string }> {
     // 0. [ECC] Validate Context
     if (context.tenantId !== request.tenantId) {
-      throw new Error(`[EventExecutor] FATAL: Tenant Mismatch. Context: ${context.tenantId} vs Request: ${request.tenantId}`);
+      throw new Error(
+        `[EventExecutor] FATAL: Tenant Mismatch. Context: ${context.tenantId} vs Request: ${request.tenantId}`,
+      );
     }
-    if (context.lifecycle !== 'ACTIVE') {
-      throw new Error(`[EventExecutor] FATAL: Attempted execution on dead Kernel. Lifecycle: ${context.lifecycle}`);
+    if (context.lifecycle !== "ACTIVE") {
+      throw new Error(
+        `[EventExecutor] FATAL: Attempted execution on dead Kernel. Lifecycle: ${context.lifecycle}`,
+      );
     }
 
     // [FENCE] Execution Fence Check
     // Prevents an external caller from using a valid Context on the WRONG Executor instance.
     if (context.tenantId !== this.boundTenantId) {
-      throw new Error(`[EventExecutor] FENCE BREACH: Context Tenant (${context.tenantId}) != Bound Tenant (${this.boundTenantId})`);
+      throw new Error(
+        `[EventExecutor] FENCE BREACH: Context Tenant (${context.tenantId}) != Bound Tenant (${this.boundTenantId})`,
+      );
     }
     if (context.executionId !== this.boundExecutionId) {
-      throw new Error(`[EventExecutor] FENCE BREACH: Context ExecutionID (${context.executionId}) != Bound ID (${this.boundExecutionId})`);
+      throw new Error(
+        `[EventExecutor] FENCE BREACH: Context ExecutionID (${context.executionId}) != Bound ID (${this.boundExecutionId})`,
+      );
     }
     // 1. Get current stream version for optimistic concurrency
-    const streamId = this.getStreamId(request.tenantId, request.entity, request.entityId);
+    const streamId = this.getStreamId(
+      request.tenantId,
+      request.entity,
+      request.entityId,
+    );
     const currentVersion = await this.eventStore.getStreamVersion(streamId);
 
     // 2. Rebuild current state from events (ensures repo is in sync)
@@ -77,7 +93,7 @@ export class EventExecutor {
       result,
       currentVersion + 1,
       context,
-      options
+      options,
     );
 
     // 5. Append event to store (with optimistic concurrency)
@@ -86,7 +102,10 @@ export class EventExecutor {
     } catch (error: any) {
       // If append fails (concurrency), rollback state change
       // In real implementation, this would be part of transaction
-      if (error.message.includes('Concurrency Exception') || error.code === 'CONCURRENCY_CONFLICT') {
+      if (
+        error.message.includes("Concurrency Exception") ||
+        error.code === "CONCURRENCY_CONFLICT"
+      ) {
         return {
           success: false,
           previousState: result.previousState,
@@ -136,10 +155,16 @@ export class EventExecutor {
   /**
    * Create event from transition
    */
-  private getStreamId(tenantId: string, entity: string, entityId: string): StreamId {
+  private getStreamId(
+    tenantId: string,
+    entity: string,
+    entityId: string,
+  ): StreamId {
     // [TENANCY-CONTRACT] StreamId MUST be scoped by TenantId
     if (!tenantId) {
-      throw new Error("CRITICAL: Missing TenantId in StreamId generation. Violation of Tenancy Contract.");
+      throw new Error(
+        "CRITICAL: Missing TenantId in StreamId generation. Violation of Tenancy Contract.",
+      );
     }
 
     // [HARDENING] Normalize Entity (UPPERCASE) and EntityID (Safe)
@@ -157,16 +182,20 @@ export class EventExecutor {
     options?: {
       causation_id?: string;
       idempotency_key?: string;
-    }
+    },
   ): Promise<CoreEvent> {
-    const streamId = this.getStreamId(request.tenantId, request.entity, request.entityId);
+    const streamId = this.getStreamId(
+      request.tenantId,
+      request.entity,
+      request.entityId,
+    );
     const eventType = this.getEventType(request.entity, request.event);
 
     // Get current entity state for payload
     const payload = await this.getEventPayload(
       request.entity,
       request.entityId,
-      result
+      result,
     );
 
     const eventId = generateUUID();
@@ -183,11 +212,10 @@ export class EventExecutor {
         correlation_id: context.correlationRoot, // [ECC] Root Trace
         actor_ref: `kernel:${context.executionId}`, // [ECC] Execution Binding
         idempotency_key: options?.idempotency_key,
-        server_timestamp: new Date().toISOString()
+        server_timestamp: new Date().toISOString(),
       },
     };
   }
-
 
   private getEventType(entity: string, event: string): CoreEvent["type"] {
     const mapping: Record<string, Record<string, CoreEvent["type"]>> = {
@@ -225,7 +253,7 @@ export class EventExecutor {
   private async getEventPayload(
     entity: string,
     entityId: string,
-    result: TransitionResult
+    result: TransitionResult,
   ): Promise<Record<string, any>> {
     // Get current entity state for event payload
     switch (entity) {
