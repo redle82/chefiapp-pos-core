@@ -34,7 +34,7 @@ export function useRealMenu() {
             try {
               const parsed = JSON.parse(stored);
               tenantId = parsed.meta?.tenantId;
-            } catch (e) {
+            } catch {
               /* ignore */
             }
           }

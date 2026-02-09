@@ -29,15 +29,12 @@ export const DebugTPV = () => {
   const { isShiftOpen } = useShiftLock();
   const [isListening, setIsListening] = useState(false);
   const [wakeWord, setWakeWord] = useState("");
-  const [svcInstance, setSvcInstance] = useState<VoiceCommandService | null>(
-    null
-  );
   const [seedStatus, setSeedStatus] = useState<string>("");
 
   const handleSeed = async () => {
     if (
       !confirm(
-        "This will inject ~50 test products into YOUR ACTIVE RESTAURANT. Continue?"
+        "This will inject ~50 test products into YOUR ACTIVE RESTAURANT. Continue?",
       )
     )
       return;
@@ -109,18 +106,16 @@ export const DebugTPV = () => {
         // Use existing singleton or create new for debug
         const svc = new VoiceCommandService();
         svc.setWakeWord(wakeWord || undefined);
-        setSvcInstance(svc);
 
         console.log(
           "[DebugTPV] Service instantiated with Wake Word:",
-          wakeWord || "(none)"
+          wakeWord || "(none)",
         );
       } catch (e) {
         console.error("[DebugTPV] Service error", e);
       }
     } else {
       console.log("[DebugTPV] Mock listening stopped");
-      setSvcInstance(null);
     }
   };
 
@@ -266,7 +261,7 @@ export const DebugTPV = () => {
             <button
               onClick={() => {
                 const isOffline = confirm(
-                  "Sovereign Mode Simulation:\nOK = Force Offline (Cut Wire)\nCancel = Restore Online"
+                  "Sovereign Mode Simulation:\nOK = Force Offline (Cut Wire)\nCancel = Restore Online",
                 );
                 // @ts-ignore - accessing private singleton or we need to cast import
                 // Importing SyncEngine directly to call public method
@@ -275,7 +270,7 @@ export const DebugTPV = () => {
                   alert(
                     `Simulation: ${
                       isOffline ? "OFFLINE (Signal Cut)" : "ONLINE (Restored)"
-                    }`
+                    }`,
                   );
                 });
               }}
@@ -355,9 +350,6 @@ export const DebugTPV = () => {
             </button>
             <button
               onClick={async () => {
-                const { CashRegisterEngine } = await import(
-                  "../core/tpv/CashRegister"
-                );
                 try {
                   // Find open shift
                   const { data: shifts } = await dockerCoreClient

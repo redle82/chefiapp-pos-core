@@ -61,7 +61,6 @@ import { TableProvider } from "./context/TableContext";
 
 import { SyncStatusIndicator } from "../../components/SyncStatusIndicator";
 
-import { useGlobalUIState } from "../../context/GlobalUIStateContext";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import {
   MSG_CASH_ALREADY_CLOSED,
@@ -252,7 +251,6 @@ const TPVContent = () => {
   /* FASE 5: Toast para feedback visual */
   const { success, error, toasts, dismiss } = useToast();
   const navigate = useNavigate();
-  const globalUI = useGlobalUIState();
   const runtimeContext = useRestaurantRuntime();
   const bootstrap = useBootstrapState();
   const shift = useShift();
@@ -1331,7 +1329,7 @@ const TPVContent = () => {
         setShowOpenCashModal(true);
         return;
       }
-    } catch (_err) {
+    } catch {
       error(MSG_VERIFY_CASH_ERROR);
       setShowOpenCashModal(true);
       return;

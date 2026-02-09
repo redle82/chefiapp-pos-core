@@ -122,27 +122,6 @@ function mapStatusToLocal(
   }
 }
 
-function mapLocalStatusToReal(status: Order["status"]): string {
-  switch (status) {
-    case "new":
-      return "OPEN";
-    case "preparing":
-      return "IN_PREP";
-    case "ready":
-      return "READY";
-    case "served":
-      return "READY";
-    case "paid":
-      return "PAID";
-    case "partially_paid":
-      return "OPEN"; // SEMANA 2: Status ainda é OPEN, mas payment_status é PARTIALLY_PAID
-    case "cancelled":
-      return "CANCELLED";
-    default:
-      return "OPEN";
-  }
-}
-
 export function OrderProvider({
   children,
   restaurantId: propRestaurantId,
@@ -156,15 +135,11 @@ export function OrderProvider({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // DOCKER CORE: Sem Kernel, sempre "pronto" para ações diretas
-  const isKernelReady = useCallback(() => {
-    return true; // Docker Core não precisa de Kernel
-  }, []);
   // SOVEREIGN: restaurantId comes from Gate layer (TenantContext -> AppDomainWrapper)
   const [restaurantId, setRestaurantId] = useState<string | null>(
     propRestaurantId || null,
   );
-  const [operatorId, setOperatorId] = useState<string | null>(null);
+  const [operatorId] = useState<string | null>(null);
   const [cashRegisterId, setCashRegisterId] = useState<string | null>(null);
   const [pendingExceptions, setPendingExceptions] = useState<
     (OrderExceptionPayload & { eventId: string })[]
@@ -189,7 +164,7 @@ export function OrderProvider({
     isOffline,
     addToQueue,
     updateOfflineOrder,
-    queue: offlineQueue,
+    queue: _offlineQueue,
   } = useOfflineOrder();
   const isOnline = !isOffline;
 
@@ -371,7 +346,7 @@ export function OrderProvider({
         if (channel) {
           dockerCoreClient.removeChannel(channel);
         }
-      } catch (e) {
+      } catch {
         // no-op: channel may already be removed
       }
       if (pollingRef.current) clearInterval(pollingRef.current);
@@ -593,7 +568,7 @@ export function OrderProvider({
           await getActiveOrders();
           return localOrder;
         }
-      } catch (err) {
+      } catch {
         // Se não encontrar, continua criando novo
       }
     }
@@ -902,7 +877,6 @@ export function OrderProvider({
     const order = orders.find((o) => o.id === orderId);
     const item = order?.items.find((i) => i.id === itemId);
     if (!item) throw new Error("Item não encontrado");
-    const unitPriceCents = item.price; // OrderItem.price is int cents
     // DOCKER CORE: Atualizar quantidade diretamente via PostgREST
 
     const oldSubtotal = item.price * item.quantity;
@@ -958,7 +932,7 @@ export function OrderProvider({
   // Cancelar Pedido
   const cancelOrder = async (
     orderId: string,
-    reason: string,
+    _reason: string,
   ): Promise<void> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
 

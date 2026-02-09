@@ -117,7 +117,6 @@ const TicketCard = ({
   isLoading = false,
 }: TicketCardProps) => {
   const isNew = ticket.status === "new";
-  const isPreparing = ticket.status === "preparing";
 
   // === FASE 1: HIERARQUIA VISUAL — Determinar estado visual ===
   // Calcular tempo decorrido para detectar atraso
@@ -490,7 +489,6 @@ export default function KitchenDisplay({
     isConnected,
     realtimeStatus,
     lastRealtimeEvent,
-    getActiveOrders,
   } = useOrders();
   const { orders } = useKitchenReflex({ orders: rawOrders || [] }); // Safety fallback
 
@@ -504,7 +502,6 @@ export default function KitchenDisplay({
     initAudio,
   } = useNewOrderAlerts(orders);
 
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [actionError, setActionError] = useState<string | null>(null);
   const [loadingOrderId, setLoadingOrderId] = useState<string | null>(null);
 
@@ -530,10 +527,6 @@ export default function KitchenDisplay({
   // MOTIVO: Cozinheiro precisa saber se pode confiar na tela
   const isRealtimeActive = realtimeStatus === "SUBSCRIBED";
   const isKDSEffectivelyOffline = !isConnected || !isRealtimeActive;
-  const isReconnecting =
-    (realtimeStatus === "SUBSCRIBING" || realtimeStatus === "TIMED_OUT") &&
-    isConnected;
-
   // Verificar se último evento foi há mais de 30s (possível problema silencioso)
   const timeSinceLastEvent = lastRealtimeEvent
     ? Date.now() - lastRealtimeEvent.getTime()
@@ -552,11 +545,6 @@ export default function KitchenDisplay({
       document.title = "ChefIApp POS";
     };
   }, [isKDSEffectivelyOffline]);
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   // === KDS HARDENING: Limpar erro após 5 segundos ===
   useEffect(() => {
