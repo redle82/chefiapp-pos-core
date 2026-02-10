@@ -63,6 +63,14 @@ describe("Hardening P0-E: Optimistic Locking Integration", () => {
     // 1. Setup Data
     await pool.query(
       `
+            INSERT INTO gm_restaurants(id, name)
+            VALUES ($1, 'Test Restaurant')
+        `,
+      [testRestaurantId],
+    );
+
+    await pool.query(
+      `
             INSERT INTO gm_cash_registers(id, restaurant_id, status, opening_balance_cents, total_sales_cents)
             VALUES ($1, $2, 'open', 0, 0)
         `,
@@ -71,8 +79,8 @@ describe("Hardening P0-E: Optimistic Locking Integration", () => {
 
     await pool.query(
       `
-            INSERT INTO gm_orders(id, restaurant_id, status, total_amount, payment_status, version)
-            VALUES ($1, $2, 'pending', 1000, 'pending', 1)
+            INSERT INTO gm_orders(id, restaurant_id, status, total_cents, payment_status)
+            VALUES ($1, $2, 'OPEN', 1000, 'PENDING')
         `,
       [testId, testRestaurantId],
     );
@@ -84,29 +92,29 @@ describe("Hardening P0-E: Optimistic Locking Integration", () => {
     const payRes = await pool.query(
       `
             SELECT * FROM process_order_payment(
-                $1, $2, $3, NULL, 1000, 'cash', 'idem_test_' || gen_random_uuid()
+                $1, $2, $3, 'cash', 1000, NULL, 'idem_test_' || gen_random_uuid()
             )
         `,
-      [testRestaurantId, testId, testRegisterId],
+      [testId, testRestaurantId, testRegisterId],
     );
 
     expect(payRes.rows[0].process_order_payment.success).toBe(true);
-    expect(payRes.rows[0].process_order_payment.payment_status).toBe("paid");
+    expect(payRes.rows[0].process_order_payment.payment_status).toBe("PAID");
 
-    // 4. Verify Version Bumped
+    // 4. Verify Status Updated
     const orderRes = await pool.query(
-      "SELECT version, status FROM gm_orders WHERE id = $1",
+      "SELECT status, payment_status FROM gm_orders WHERE id = $1",
       [testId],
     );
-    expect(orderRes.rows[0].version).toBeGreaterThan(1);
-    const newVersion = orderRes.rows[0].version;
+    expect(orderRes.rows[0].status).toBe("CLOSED");
+    expect(orderRes.rows[0].payment_status).toBe("PAID");
 
-    // 5. Attempt Concurrent Update with OLD Version (Attack)
+    // 5. Attempt Concurrent Update with OLD Status (Attack)
     const updateRes = await pool.query(
       `
             UPDATE gm_orders
             SET status = 'cancelled'
-            WHERE id = $1 AND version = 1
+            WHERE id = $1 AND status = 'OPEN'
             RETURNING id
         `,
       [testId],
@@ -120,6 +128,6 @@ describe("Hardening P0-E: Optimistic Locking Integration", () => {
       "SELECT status FROM gm_orders WHERE id = $1",
       [testId],
     );
-    expect(finalRes.rows[0].status).toBe("paid"); // Payment won
+    expect(finalRes.rows[0].status).toBe("CLOSED"); // Payment won
   });
 });

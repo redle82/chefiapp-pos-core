@@ -75,8 +75,16 @@ describe("Hardening P0-D: CDC Triggers Integration", () => {
     // 1. Insert Order
     await pool.query(
       `
-                        INSERT INTO gm_orders(id, restaurant_id, status, total_amount, payment_status, source)
-                        VALUES ($1, $2, 'pending', 1000, 'pending', 'test_cdc')
+                        INSERT INTO gm_restaurants(id, name)
+                        VALUES ($1, 'Test Restaurant')
+                `,
+      [testRestaurantId],
+    );
+
+    await pool.query(
+      `
+                        INSERT INTO gm_orders(id, restaurant_id, status, total_cents, payment_status, source)
+                        VALUES ($1, $2, 'OPEN', 1000, 'PENDING', 'test_cdc')
                 `,
       [testId, testRestaurantId],
     );

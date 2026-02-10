@@ -22,11 +22,15 @@ done
 
 echo "Core is healthy. Running Hardening P0 DB integration tests..."
 
-DATABASE_URL="$CORE_DB_URL" \
-  (cd merchant-portal && npx vitest run \
-    tests/core/HardeningP0.locking.test.ts \
-    tests/core/HardeningP0.triggers.test.ts \
-    --reporter=verbose)
+export DATABASE_URL="$CORE_DB_URL"
+
+(docker exec -i chefiapp-core-postgres psql -U postgres -d chefiapp_core \
+  < "$ROOT_DIR/docker-core/schema/migrations/20260210_cdc_orders_event_store.sql")
+
+(cd merchant-portal && npx vitest run \
+  tests/core/HardeningP0.locking.test.ts \
+  tests/core/HardeningP0.triggers.test.ts \
+  --reporter=verbose)
 
 if [ "${CORE_DOWN_AFTER:-0}" = "1" ]; then
   docker compose -f "$COMPOSE_FILE" down -v
