@@ -36,8 +36,9 @@ export class EventMonitor {
   private lastCheckedOrders: Set<string> = new Set();
   private lastCheckedTables: Set<number> = new Set();
 
+  // Relaxed UUID regex: accepts any UUID-shaped string (incl. seed/nil UUIDs)
   private static readonly UUID_REGEX =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   /**
    * Iniciar monitoramento contínuo (idempotente: se já a correr para o mesmo restaurantId, não relançar).
@@ -45,7 +46,10 @@ export class EventMonitor {
   start(restaurantId: string): void {
     if (!EventMonitor.UUID_REGEX.test(restaurantId)) {
       if (import.meta.env.DEV) {
-        console.debug("[EventMonitor] Skipped: restaurantId is not a valid UUID:", restaurantId);
+        console.debug(
+          "[EventMonitor] Skipped: restaurantId is not a valid UUID:",
+          restaurantId,
+        );
       }
       return;
     }
@@ -95,14 +99,14 @@ export class EventMonitor {
       // 1. Verificar pedidos atrasados
       const delayedEvents = await this.checkDelayedOrders(
         restaurantId,
-        thresholds.order_delayed_minutes
+        thresholds.order_delayed_minutes,
       );
       events.push(...delayedEvents);
 
       // 2. Verificar mesas sem atendimento
       const unattendedEvents = await this.checkUnattendedTables(
         restaurantId,
-        thresholds.table_unattended_minutes
+        thresholds.table_unattended_minutes,
       );
       events.push(...unattendedEvents);
 
@@ -114,7 +118,7 @@ export class EventMonitor {
       for (const event of events) {
         const created = await this.generateTaskFromEventIfNeeded(
           restaurantId,
-          event
+          event,
         );
         if (created) generated++;
       }
@@ -139,7 +143,7 @@ export class EventMonitor {
                 delayMinutes: event.data.delayMinutes,
                 entityType: "order",
                 entityId: event.data.orderId,
-              }
+              },
             );
           }
         } else if (event.type === "table_unattended") {
@@ -156,7 +160,7 @@ export class EventMonitor {
 
       // 5. Salão sobrecarregado: quando 2+ mesas sem atendimento (dining_overloaded)
       const unattendedCount = events.filter(
-        (e) => e.type === "table_unattended"
+        (e) => e.type === "table_unattended",
       ).length;
       if (unattendedCount >= 2) {
         const unattendedTables = events
@@ -171,7 +175,7 @@ export class EventMonitor {
 
       if (events.length > 0) {
         console.log(
-          `[EventMonitor] ✅ ${events.length} evento(s) detectado(s), ${generated} tarefa(s) criada(s) (idempotente)`
+          `[EventMonitor] ✅ ${events.length} evento(s) detectado(s), ${generated} tarefa(s) criada(s) (idempotente)`,
         );
       }
     } catch (error) {
@@ -186,7 +190,7 @@ export class EventMonitor {
    */
   private async checkDelayedOrders(
     restaurantId: string,
-    orderDelayedThresholdMinutes: number
+    orderDelayedThresholdMinutes: number,
   ): Promise<DetectedEvent[]> {
     const events: DetectedEvent[] = [];
 
@@ -233,7 +237,7 @@ export class EventMonitor {
     } catch (error) {
       console.error(
         "[EventMonitor] Erro ao verificar pedidos atrasados:",
-        error
+        error,
       );
     }
 
@@ -245,7 +249,7 @@ export class EventMonitor {
    */
   private async checkUnattendedTables(
     restaurantId: string,
-    tableUnattendedThresholdMinutes: number
+    tableUnattendedThresholdMinutes: number,
   ): Promise<DetectedEvent[]> {
     const events: DetectedEvent[] = [];
 
@@ -329,7 +333,7 @@ export class EventMonitor {
     try {
       // 1. Turno tem de estar aberto
       const register = await CashRegisterEngine.getOpenCashRegister(
-        restaurantId
+        restaurantId,
       );
       if (!register) return;
 
@@ -347,7 +351,7 @@ export class EventMonitor {
 
       // 4. Idempotência: já existe tarefa OPEN restaurant_idle para este restaurante?
       const hasExisting = await this.hasExistingOpenTaskForRestaurantIdle(
-        restaurantId
+        restaurantId,
       );
       if (hasExisting) return;
 
@@ -357,11 +361,11 @@ export class EventMonitor {
         {
           minutesSinceLastOrder: Math.floor(minutesSinceLastOrder),
           shiftOpenAt: register.openedAt?.toISOString?.() ?? undefined,
-        }
+        },
       );
       if (taskId) {
         console.log(
-          `[EventMonitor] ✅ RESTAURANT_IDLE: tarefa ${taskId} criada (modo interno)`
+          `[EventMonitor] ✅ RESTAURANT_IDLE: tarefa ${taskId} criada (modo interno)`,
         );
       }
     } catch (error) {
@@ -373,7 +377,7 @@ export class EventMonitor {
    * Verifica se já existe tarefa OPEN com source_event = restaurant_idle para o restaurante (idempotência).
    */
   private async hasExistingOpenTaskForRestaurantIdle(
-    restaurantId: string
+    restaurantId: string,
   ): Promise<boolean> {
     try {
       const { data, error } = await dockerCoreClient
@@ -398,7 +402,7 @@ export class EventMonitor {
   private async hasExistingOpenTaskForOrder(
     restaurantId: string,
     sourceEvent: string,
-    orderId: string
+    orderId: string,
   ): Promise<boolean> {
     try {
       const { data, error } = await dockerCoreClient
@@ -423,14 +427,14 @@ export class EventMonitor {
    */
   private async generateTaskFromEventIfNeeded(
     restaurantId: string,
-    event: DetectedEvent
+    event: DetectedEvent,
   ): Promise<boolean> {
     const orderId = event.data?.orderId;
     if (orderId) {
       const exists = await this.hasExistingOpenTaskForOrder(
         restaurantId,
         event.type,
-        orderId
+        orderId,
       );
       if (exists) return false;
     }
@@ -439,19 +443,19 @@ export class EventMonitor {
       const taskId = await eventTaskGenerator.generateFromEvent(
         event.restaurantId,
         event.type,
-        event.data
+        event.data,
       );
 
       if (taskId) {
         console.log(
-          `[EventMonitor] ✅ Tarefa gerada: ${taskId} para evento ${event.type}`
+          `[EventMonitor] ✅ Tarefa gerada: ${taskId} para evento ${event.type}`,
         );
         return true;
       }
     } catch (error) {
       console.error(
         `[EventMonitor] Erro ao gerar tarefa para evento ${event.type}:`,
-        error
+        error,
       );
     }
     return false;

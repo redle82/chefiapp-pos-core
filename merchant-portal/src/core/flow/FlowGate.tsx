@@ -117,7 +117,10 @@ export function FlowGate({ children }: { children: ReactNode }) {
         pathname === "/app/staff" ||
         pathname.startsWith("/app/staff/") ||
         pathname === "/operacao" ||
-        pathname.startsWith("/op/");
+        pathname.startsWith("/op/") ||
+        pathname === "/task-system" ||
+        pathname === "/inventory-stock" ||
+        pathname === "/shopping-list";
       const isPilot =
         typeof window !== "undefined" &&
         window.localStorage.getItem("chefiapp_pilot_mode") === "true";

@@ -20,6 +20,7 @@ import {
   generateTasks,
 } from "../../core-boundary/writers/TaskWriter";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
+import { isDockerBackend } from "../../core/infra/backendAdapter";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { deduplicateCoreTasks } from "../../core/tasks/TaskFiltering";
 
@@ -27,15 +28,19 @@ type TaskFilter = "all" | "BAR" | "KITCHEN" | "SERVICE";
 type TaskStatus = "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "DISMISSED";
 type PriorityFilter = "all" | "CRITICA" | "ALTA" | "MEDIA" | "LOW";
 
+/** Seed do Core Docker (06-seed-enterprise). */
+const SEED_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
+
 export function TaskSystemMinimal() {
   const { identity } = useRestaurantIdentity();
   const { runtime } = useRestaurantRuntime();
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [loadingIdentity, setLoadingIdentity] = useState(true);
 
-  // FIXME: Hardcoded restaurant ID - será removido na próxima fase
-  // Usando Restaurante Alpha do teste massivo para validação
-  const DEFAULT_RESTAURANT_ID = "bbce08c7-63c0-473d-b693-ec2997f73a68"; // Restaurante Alpha
+  /** Fallback: Docker → seed restaurant; Supabase → Restaurante Alpha. */
+  const DEFAULT_RESTAURANT_ID = isDockerBackend()
+    ? SEED_RESTAURANT_ID
+    : "bbce08c7-63c0-473d-b693-ec2997f73a68";
 
   useEffect(() => {
     // Obter restaurantId (mesmo padrão do KDSMinimal)

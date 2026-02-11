@@ -7,9 +7,18 @@
 
 import { CONFIG } from "../../config";
 
-const BASE_URL =
+const BASE_URL_RAW =
   CONFIG.CORE_URL ||
   (typeof window !== "undefined" ? window.location.origin : "");
+
+// DEV browser: route through Vite proxy (same-origin) to avoid cross-origin
+// preflight overhead and potential connection timeouts to localhost:3001.
+// In production or SSR, keep the absolute URL as-is.
+const BASE_URL =
+  typeof window !== "undefined" && import.meta.env.DEV
+    ? BASE_URL_RAW.replace(/https?:\/\/(localhost|127\.0\.0\.1):3001/, "")
+    : BASE_URL_RAW;
+
 const ANON_KEY =
   CONFIG.CORE_ANON_KEY || "chefiapp-core-secret-key-min-32-chars-long";
 

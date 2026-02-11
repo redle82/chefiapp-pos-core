@@ -2,11 +2,11 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import React, { createContext, ReactNode, useContext, useState } from "react";
 import { CONFIG } from "../../config";
-import { PaymentBroker } from "./PaymentBroker";
 import { currencyService } from "../currency/CurrencyService";
+import { PaymentBroker } from "./PaymentBroker";
 
 // Initialize Stripe Promise (Singleton) — uses centralized config
-const STRIPE_KEY = CONFIG.STRIPE_PUBLIC_KEY || "";
+const STRIPE_KEY = CONFIG.STRIPE_PUBLIC_KEY || null;
 const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
 
 interface StripeTerminalContextType {

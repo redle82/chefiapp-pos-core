@@ -1,16 +1,23 @@
 /**
- * WaiterHome — Home por papel: Garçom.
- * Foco: Mesas (grid), Pedidos, Chamados (Alertas). Obrigatórios: Tarefas, Turno.
+ * WaiterHome — Home de AÇÃO do Garçom.
+ *
+ * Pergunta-chave: "O que eu faço agora?"
+ *
+ * Mostra:
+ *   • Estado do turno
+ *   • Mesas ativas (grid interativo)
+ *   • Tarefas atribuídas (resumo)
+ *
+ * ❌ NÃO mostra botões de navegação (TPV, Tarefas, Turno — já estão no rodapé).
  */
 
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { colors } from "../../../ui/design-system/tokens/colors";
 import { useStaff } from "../context/StaffContext";
 import { useAppStaffTables } from "../hooks/useAppStaffTables";
 
 export function WaiterHome() {
-  const { restaurantId } = useStaff();
+  const { restaurantId, tasks, shiftState } = useStaff();
   const { tables, loading } = useAppStaffTables(restaurantId);
   const navigate = useNavigate();
 
@@ -19,6 +26,16 @@ export function WaiterHome() {
   };
 
   const sortedTables = [...tables].sort((a, b) => a.number - b.number);
+  const myTasks = tasks.filter(
+    (t) =>
+      t.status !== "done" &&
+      (t.assigneeRole === "waiter" ||
+        t.type === "reactive" ||
+        (!t.assigneeRole && t.context !== "floor")),
+  );
+  const occupiedCount = tables.filter(
+    (t) => t.status === "occupied" || t.status === "reserved",
+  ).length;
 
   return (
     <div
@@ -32,18 +49,37 @@ export function WaiterHome() {
         gap: 12,
       }}
     >
-      <h2
+      {/* ── Estado rápido ── */}
+      <div
         style={{
-          fontSize: 14,
-          fontWeight: 700,
-          margin: 0,
-          color: colors.text.tertiary,
-          letterSpacing: "0.04em",
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          fontSize: 12,
+          color: colors.text.secondary,
         }}
       >
-        GARÇOM
-      </h2>
-      {/* Mesas = grid; toque numa mesa → TPV com essa mesa */}
+        <span>
+          Turno:{" "}
+          <strong style={{ color: colors.text.primary }}>
+            {shiftState === "active" ? "ATIVO" : "—"}
+          </strong>
+        </span>
+        <span>
+          <strong style={{ color: colors.text.primary }}>
+            {occupiedCount}
+          </strong>{" "}
+          mesa{occupiedCount !== 1 ? "s" : ""} ativa
+          {occupiedCount !== 1 ? "s" : ""}
+        </span>
+        {myTasks.length > 0 && (
+          <span style={{ color: "#f59e0b", fontWeight: 600 }}>
+            {myTasks.length} tarefa{myTasks.length !== 1 ? "s" : ""}
+          </span>
+        )}
+      </div>
+
+      {/* ── Mesas (grid) — toque → TPV com essa mesa ── */}
       <div
         style={{
           flex: 1,
@@ -52,13 +88,21 @@ export function WaiterHome() {
           gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
           gap: 10,
           alignContent: "start",
+          overflow: "auto",
         }}
       >
         {loading ? (
-          <span style={{ gridColumn: "1 / -1", color: colors.text.tertiary }}>A carregar...</span>
+          <span style={{ gridColumn: "1 / -1", color: colors.text.tertiary }}>
+            A carregar…
+          </span>
         ) : sortedTables.length === 0 ? (
           Array.from({ length: 12 }, (_, i) => (
-            <TableTile key={i} number={i + 1} status="free" onClick={() => {}} />
+            <TableTile
+              key={i}
+              number={i + 1}
+              status="free"
+              onClick={() => {}}
+            />
           ))
         ) : (
           sortedTables.map((t) => (
@@ -70,98 +114,6 @@ export function WaiterHome() {
             />
           ))
         )}
-      </div>
-      {/* Foco: Mesas, Pedidos, Chamados (Alertas). Obrigatórios: Tarefas, Turno */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        <button
-          type="button"
-          style={{
-            flex: "1 1 0",
-            minWidth: 0,
-            padding: "12px",
-            background: colors.surface.layer2,
-            border: `1px solid ${colors.border.subtle}`,
-            borderRadius: 10,
-            fontWeight: 600,
-            fontSize: 13,
-            color: colors.text.primary,
-            cursor: "default",
-          }}
-        >
-          🍽️ Mesas
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate("/app/staff/mode/tpv")}
-          style={{
-            flex: "1 1 0",
-            minWidth: 0,
-            padding: "12px",
-            background: colors.surface.layer1,
-            border: `1px solid ${colors.border.subtle}`,
-            borderRadius: 10,
-            fontWeight: 600,
-            fontSize: 13,
-            color: colors.text.primary,
-            cursor: "pointer",
-          }}
-        >
-          🧾 Pedidos
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate("/app/staff/mode/alerts")}
-          style={{
-            flex: "1 1 0",
-            minWidth: 0,
-            padding: "12px",
-            background: colors.surface.layer1,
-            border: `1px solid ${colors.border.subtle}`,
-            borderRadius: 10,
-            fontWeight: 600,
-            fontSize: 13,
-            color: colors.text.primary,
-            cursor: "pointer",
-          }}
-        >
-          ⚠️ Chamados
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate("/app/staff/mode/tasks")}
-          style={{
-            flex: "1 1 0",
-            minWidth: 0,
-            padding: "12px",
-            background: colors.surface.layer1,
-            border: `1px solid ${colors.border.subtle}`,
-            borderRadius: 10,
-            fontWeight: 600,
-            fontSize: 13,
-            color: colors.text.primary,
-            cursor: "pointer",
-          }}
-        >
-          🧹 Tarefas
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate("/app/staff/mode/turn")}
-          style={{
-            flex: "1 1 0",
-            minWidth: 0,
-            padding: "12px",
-            background: colors.surface.layer1,
-            border: `1px solid ${colors.border.subtle}`,
-            borderRadius: 10,
-            fontWeight: 600,
-            fontSize: 13,
-            color: colors.text.primary,
-            cursor: "pointer",
-          }}
-        >
-          ⏱️ Turno
-        </button>
       </div>
     </div>
   );

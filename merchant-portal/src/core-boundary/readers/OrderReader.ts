@@ -30,8 +30,9 @@ const TERMINAL_ORDER_STATUSES = new Set([
 
 const ACTIVE_SET = new Set(ACTIVE_ORDER_STATUSES.map((s) => s));
 
+// Relaxed: accepts any UUID-shaped string (including seed UUIDs like 00000000-...).
 const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Pedido com flag opcional para status desconhecido (KDS mostra com badge). */
 export type ActiveOrderRow = CoreOrder & { _unknownStatus?: boolean };
@@ -45,7 +46,7 @@ function normalizeStatus(raw: unknown): string {
 function logUnknownStatus(orderId: string, rawStatus: unknown): void {
   const raw = rawStatus != null ? String(rawStatus) : "";
   console.warn(
-    `[WARN][ORDER_STATUS_CONTRACT]\norder_id=${orderId}\nraw_status=${raw}\nnormalized_status=UNKNOWN\nsource=OrderReader`
+    `[WARN][ORDER_STATUS_CONTRACT]\norder_id=${orderId}\nraw_status=${raw}\nnormalized_status=UNKNOWN\nsource=OrderReader`,
   );
 }
 
@@ -59,11 +60,14 @@ function logUnknownStatus(orderId: string, rawStatus: unknown): void {
  * @returns Lista de pedidos a mostrar no KDS (activos ou desconhecidos)
  */
 export async function readActiveOrders(
-  restaurantId: string
+  restaurantId: string,
 ): Promise<ActiveOrderRow[]> {
   if (!UUID_REGEX.test(restaurantId)) {
     if (import.meta.env.DEV) {
-      console.debug("[OrderReader] Skipped: restaurantId is not a valid UUID:", restaurantId);
+      console.debug(
+        "[OrderReader] Skipped: restaurantId is not a valid UUID:",
+        restaurantId,
+      );
     }
     return [];
   }
@@ -81,7 +85,10 @@ export async function readActiveOrders(
       msg.includes("Backend indisponível");
     if (isDemoFallback) {
       if (import.meta.env.DEV) {
-        console.debug("[OrderReader] gm_orders fallback (demo/local id):", msg.slice(0, 80));
+        console.debug(
+          "[OrderReader] gm_orders fallback (demo/local id):",
+          msg.slice(0, 80),
+        );
       }
       return [];
     }
@@ -118,7 +125,7 @@ export async function readActiveOrders(
     const activeCount = result.filter((r) => !r._unknownStatus).length;
     const unknownCount = result.filter((r) => r._unknownStatus).length;
     console.log(
-      `[OrderReader] gm_orders: ${rows.length} linha(s), ${activeCount} activo(s), ${unknownCount} unknown`
+      `[OrderReader] gm_orders: ${rows.length} linha(s), ${activeCount} activo(s), ${unknownCount} unknown`,
     );
   }
   return result;
@@ -129,7 +136,7 @@ export async function readActiveOrders(
  * Entrega = marcar SERVED via update_order_status.
  */
 export async function readReadyOrders(
-  restaurantId: string
+  restaurantId: string,
 ): Promise<ActiveOrderRow[]> {
   const { data, error } = await dockerCoreClient
     .from("gm_orders")
@@ -146,7 +153,10 @@ export async function readReadyOrders(
       msg.includes("Backend indisponível");
     if (isDemoFallback) {
       if (import.meta.env.DEV) {
-        console.debug("[OrderReader] gm_orders ready fallback (demo/local id):", msg.slice(0, 80));
+        console.debug(
+          "[OrderReader] gm_orders ready fallback (demo/local id):",
+          msg.slice(0, 80),
+        );
       }
       return [];
     }
@@ -167,7 +177,7 @@ export async function readReadyOrders(
  * @returns Pedido ou null se não encontrado
  */
 export async function readOrderById(
-  orderId: string
+  orderId: string,
 ): Promise<CoreOrder | null> {
   const { data, error } = await dockerCoreClient
     .from("gm_orders")
@@ -193,7 +203,7 @@ export async function readOrderById(
  * @returns Lista de itens do pedido
  */
 export async function readOrderItems(
-  orderId: string
+  orderId: string,
 ): Promise<CoreOrderItem[]> {
   const { data, error } = await dockerCoreClient
     .from("gm_order_items")
@@ -217,7 +227,7 @@ export async function readOrderItems(
  * @returns Data do último pedido (created_at) ou null se não houver pedidos
  */
 export async function getLastOrderCreatedAt(
-  restaurantId: string
+  restaurantId: string,
 ): Promise<Date | null> {
   if (!UUID_REGEX.test(restaurantId)) return null;
   const { data, error } = await dockerCoreClient
@@ -248,7 +258,7 @@ const ANALYTICS_ORDERS_LIMIT = 1000;
  */
 export async function readOrdersForAnalytics(
   restaurantId: string,
-  limit: number = ANALYTICS_ORDERS_LIMIT
+  limit: number = ANALYTICS_ORDERS_LIMIT,
 ): Promise<CoreOrder[]> {
   const { data, error } = await dockerCoreClient
     .from("gm_orders")
@@ -271,7 +281,7 @@ export async function readOrdersForAnalytics(
  * @returns Pedido com itens ou null se não encontrado
  */
 export async function readOrderWithItems(
-  orderId: string
+  orderId: string,
 ): Promise<(CoreOrder & { items: CoreOrderItem[] }) | null> {
   const order = await readOrderById(orderId);
   if (!order) {

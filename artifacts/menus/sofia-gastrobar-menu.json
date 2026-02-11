@@ -1,0 +1,79 @@
+[
+    {
+        "id": "6d13d1c5-4add-43d5-b573-9bccb82d4503",
+        "name": "Entradas",
+        "products": [
+            {
+                "id": "ca627025-5703-4fe6-afde-c4ac4144c0c6",
+                "name": "Bruschetta",
+                "available": true,
+                "description": null,
+                "price_cents": 850
+            },
+            {
+                "id": "1aa73167-6e9a-4ee0-b947-39f3ac48524c",
+                "name": "Nachos",
+                "available": true,
+                "description": null,
+                "price_cents": 1200
+            }
+        ],
+        "sort_order": 1
+    },
+    {
+        "id": "1675b27d-b1f7-4e82-b2ef-04c69700d863",
+        "name": "Pratos Principais",
+        "products": [
+            {
+                "id": "5c5afa57-a46a-4adc-8416-e79f7334dffb",
+                "name": "Hambúrguer Artesanal",
+                "available": true,
+                "description": null,
+                "price_cents": 1800
+            },
+            {
+                "id": "7507f03b-9074-4557-8438-1646d57e8fcc",
+                "name": "Pizza Margherita",
+                "available": true,
+                "description": null,
+                "price_cents": 1600
+            }
+        ],
+        "sort_order": 2
+    },
+    {
+        "id": "7ef2d144-8a87-4724-81fc-9367dc897b41",
+        "name": "Bebidas",
+        "products": [
+            {
+                "id": "4749cc80-39c2-4bb3-bd00-cef78b2dd4cc",
+                "name": "Refrigerante",
+                "available": true,
+                "description": null,
+                "price_cents": 350
+            },
+            {
+                "id": "f3750df5-172b-4968-a212-4c2c490a5699",
+                "name": "Água",
+                "available": true,
+                "description": null,
+                "price_cents": 200
+            }
+        ],
+        "sort_order": 3
+    },
+    {
+        "id": "99cb6f6d-2be5-4f95-ad01-0a439f7cd732",
+        "name": "Sobremesas",
+        "products": [
+            {
+                "id": "8ae44c3f-fdb6-4e7b-a0da-d28e128f718f",
+                "name": "Tiramisú",
+                "available": true,
+                "description": null,
+                "price_cents": 800
+            }
+        ],
+        "sort_order": 4
+    }
+]

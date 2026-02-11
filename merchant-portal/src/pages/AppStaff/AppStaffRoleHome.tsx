@@ -3,13 +3,13 @@
  * Renderiza a home específica do activeRole. Contrato: APPSTAFF_ROLE_HOME_REDESIGN.md
  */
 
-import React from "react";
 import { useStaff } from "./context/StaffContext";
 import { CleaningHome } from "./homes/CleaningHome";
 import { KitchenHome } from "./homes/KitchenHome";
 import { ManagerHome } from "./homes/ManagerHome";
 import { OwnerHome } from "./homes/OwnerHome";
 import { WaiterHome } from "./homes/WaiterHome";
+import { WorkerHome } from "./homes/WorkerHome";
 
 export function AppStaffRoleHome() {
   const { activeRole } = useStaff();
@@ -26,7 +26,7 @@ export function AppStaffRoleHome() {
     case "cleaning":
       return <CleaningHome />;
     case "worker":
-      return <WaiterHome />;
+      return <WorkerHome />;
     default:
       return <ManagerHome />;
   }

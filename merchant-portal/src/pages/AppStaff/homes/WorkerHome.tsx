@@ -1,27 +1,26 @@
 /**
- * CleaningHome — Home de AÇÃO da Limpeza.
+ * WorkerHome — Home de AÇÃO do Trabalhador.
  *
- * Pergunta-chave: "O que eu limpo agora?"
- * Mostra tarefas de limpeza atribuídas.
+ * Pergunta-chave: "O que eu faço agora?"
+ * Mostra tarefas atribuídas. Nada mais.
  * ❌ NÃO mostra botões de navegação (já estão no rodapé).
  */
 
 import { colors } from "../../../ui/design-system/tokens/colors";
 import { useStaff } from "../context/StaffContext";
 
-export function CleaningHome() {
+export function WorkerHome() {
   const { tasks } = useStaff();
 
-  const cleaningTasks = tasks.filter(
+  const myTasks = tasks.filter(
     (t) =>
-      t.context === "floor" ||
-      t.type === "maintenance" ||
+      t.assigneeRole === "worker" ||
       t.type === "reactive" ||
-      (t.assigneeRole && ["cleaning", "worker"].includes(t.assigneeRole)),
+      (t.assigneeRole && ["worker", "waiter"].includes(t.assigneeRole)),
   );
-  const pending = cleaningTasks.filter((t) => t.status !== "done");
+  const pending = myTasks.filter((t) => t.status !== "done");
   const statusLabel =
-    pending.length === 0 ? "OK" : `${pending.length} pendente(s)`;
+    pending.length === 0 ? "Tudo em dia" : `${pending.length} pendente(s)`;
 
   return (
     <div
@@ -44,11 +43,13 @@ export function CleaningHome() {
           letterSpacing: "0.04em",
         }}
       >
-        LIMPEZA
+        TRABALHADOR
       </h2>
       <p style={{ fontSize: 13, color: colors.text.secondary, margin: 0 }}>
-        Status geral: {statusLabel}
+        {statusLabel}
       </p>
+
+      {/* Lista de tarefas atribuídas */}
       <ul
         style={{
           listStyle: "none",
@@ -62,20 +63,18 @@ export function CleaningHome() {
           overflow: "auto",
         }}
       >
-        {cleaningTasks.length === 0 ? (
-          <>
-            <li style={{ padding: "8px 0", color: colors.text.secondary }}>
-              ☐ Mesa 3
-            </li>
-            <li style={{ padding: "8px 0", color: colors.text.secondary }}>
-              ☐ WC
-            </li>
-            <li style={{ padding: "8px 0", color: colors.text.secondary }}>
-              ☐ Área externa
-            </li>
-          </>
+        {myTasks.length === 0 ? (
+          <li
+            style={{
+              padding: "12px 0",
+              color: colors.text.secondary,
+              textAlign: "center",
+            }}
+          >
+            Nenhuma tarefa atribuída
+          </li>
         ) : (
-          cleaningTasks.slice(0, 10).map((t) => (
+          myTasks.slice(0, 10).map((t) => (
             <li
               key={t.id}
               style={{

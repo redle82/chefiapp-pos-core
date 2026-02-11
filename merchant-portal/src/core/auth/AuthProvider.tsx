@@ -19,6 +19,7 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
+import { CONFIG } from "../../config";
 import { isDebugMode } from "../debugMode";
 import {
   BackendType,
@@ -112,6 +113,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     // Demo / Pilot mock — ONLY in development builds (blocked in production)
     if (typeof window !== "undefined" && isMockAuthAllowed()) {
+      // AUTO-PILOT: When DEBUG_DIRECT_FLOW + Docker dev → auto-activate pilot mode
+      // so /op/tpv works without manual localStorage setup or ?debug=1
+      if (CONFIG.DEBUG_DIRECT_FLOW && getBackendType() === BackendType.docker) {
+        if (!localStorage.getItem("chefiapp_pilot_mode")) {
+          localStorage.setItem("chefiapp_pilot_mode", "true");
+        }
+        if (!localStorage.getItem("chefiapp_restaurant_id")) {
+          const SEED = "00000000-0000-0000-0000-000000000100";
+          localStorage.setItem("chefiapp_restaurant_id", SEED);
+        }
+        if (!sessionStorage.getItem("chefiapp_debug")) {
+          sessionStorage.setItem("chefiapp_debug", "1");
+        }
+      }
+
       const isDemoUrl =
         new URLSearchParams(window.location.search).get("demo") === "true";
       const isDemoStored =

@@ -14,6 +14,11 @@ import { AppStaffBootScreen } from "../AppStaffBootScreen";
 import { useStaff } from "../context/StaffContext";
 import { getOperatorProfile } from "../data/operatorProfiles";
 import {
+  BOTTOM_NAV_BY_ROLE,
+  canSeeMode,
+} from "../visibility/appStaffVisibility";
+import type { StaffModeId } from "./staffModeConfig";
+import {
   getModeById,
   getModeByPath,
   isFullScreenMode,
@@ -52,9 +57,26 @@ export function StaffAppShellLayout({
   const currentMode = getModeByPath(pathname);
   const fullScreen = isFullScreenMode(pathname);
   const [moreOpen, setMoreOpen] = React.useState(false);
-  const [topMenuOpen, setTopMenuOpen] = React.useState(false);
   const profile = getOperatorProfile(activeRole ?? undefined);
-  const showRelatorios = activeRole === "owner" || activeRole === "manager";
+
+  // Bottom nav: mapa explícito por papel + modos visíveis fora do rodapé ("Mais")
+  const navRole = activeRole ?? "manager";
+  const bottomNavItems = BOTTOM_NAV_BY_ROLE[navRole];
+  const _allModeIds: StaffModeId[] = [
+    "operation",
+    "tpv",
+    "kds",
+    "tasks",
+    "turn",
+    "team",
+    "alerts",
+    "profile",
+  ];
+  const maisItems = _allModeIds.filter(
+    (id) =>
+      canSeeMode(navRole, id) &&
+      !(bottomNavItems as readonly string[]).includes(id),
+  );
 
   const [isStandalone, setIsStandalone] = useState(false);
   const [openAsAppDismissed, setOpenAsAppDismissed] = useState(false);
@@ -214,21 +236,13 @@ export function StaffAppShellLayout({
           >
             {isLauncher
               ? profile
-                ? `${profile.roleLabel} • ${
-                    shiftState === "active"
-                      ? "TURNO ATIVO"
-                      : shiftState === "closing"
-                      ? "A ENCERRAR"
-                      : shiftState === "closed"
-                      ? "ENCERRADO"
-                      : "—"
-                  }`
+                ? profile.roleLabel
                 : "ChefIApp"
               : currentMode?.label ?? "Staff"}
           </span>
         </div>
 
-        {/* Centro: restaurante/local + hora (top bar viva) */}
+        {/* Centro: restaurante + hora */}
         <div
           style={{
             flex: 1,
@@ -244,14 +258,14 @@ export function StaffAppShellLayout({
             style={{
               fontSize: 12,
               color: colors.text.secondary,
-              maxWidth: 140,
+              maxWidth: 180,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               textAlign: "center",
             }}
           >
-            {activeLocation?.name ?? "Staff"} • {dayStr} {timeStr}
+            {activeLocation?.name ?? "ChefIApp"} • {dayStr} {timeStr}
           </span>
         </div>
 
@@ -306,138 +320,6 @@ export function StaffAppShellLayout({
             >
               {operationalLabel}
             </span>
-          )}
-          {/* Dropdown superior (secundário apenas): Turno, Tarefas, Perfil, Relatórios (dono/gerente) */}
-          <button
-            type="button"
-            onClick={() => setTopMenuOpen((o) => !o)}
-            aria-label="Menu"
-            style={{
-              background: "none",
-              border: "none",
-              color: colors.text.secondary,
-              padding: 6,
-              cursor: "pointer",
-              fontSize: 18,
-              lineHeight: 1,
-            }}
-          >
-            ⋯
-          </button>
-          {topMenuOpen && (
-            <>
-              <div
-                style={{ position: "fixed", inset: 0, zIndex: 30 }}
-                onClick={() => setTopMenuOpen(false)}
-                aria-hidden
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  right: 12,
-                  zIndex: 31,
-                  marginTop: 4,
-                  minWidth: 160,
-                  padding: 8,
-                  backgroundColor: colors.surface.layer1,
-                  border: `1px solid ${colors.border.subtle}`,
-                  borderRadius: 10,
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTopMenuOpen(false);
-                    navigate(getModeById("turn").path);
-                  }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: "none",
-                    background: "none",
-                    color: colors.text.primary,
-                    cursor: "pointer",
-                    fontSize: 14,
-                    textAlign: "left",
-                  }}
-                >
-                  ⏱️ Turno
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTopMenuOpen(false);
-                    navigate(getModeById("tasks").path);
-                  }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: "none",
-                    background: "none",
-                    color: colors.text.primary,
-                    cursor: "pointer",
-                    fontSize: 14,
-                    textAlign: "left",
-                  }}
-                >
-                  ✅ Tarefas
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTopMenuOpen(false);
-                    navigate("/app/staff/profile");
-                  }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: "none",
-                    background: "none",
-                    color: colors.text.primary,
-                    cursor: "pointer",
-                    fontSize: 14,
-                    textAlign: "left",
-                  }}
-                >
-                  👤 Perfil
-                </button>
-                {showRelatorios && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTopMenuOpen(false);
-                      navigate("/app/staff/mode/operation");
-                    }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      width: "100%",
-                      padding: "10px 12px",
-                      border: "none",
-                      background: "none",
-                      color: colors.text.primary,
-                      cursor: "pointer",
-                      fontSize: 14,
-                      textAlign: "left",
-                    }}
-                  >
-                    📊 Relatórios
-                  </button>
-                )}
-              </div>
-            </>
           )}
         </div>
       </header>
@@ -539,7 +421,7 @@ export function StaffAppShellLayout({
         </div>
       </main>
 
-      {/* Bottom Bar — app nativo: 56–64px, ícones grandes, estado ativo claro; não some em scroll */}
+      {/* Bottom Bar — painel de ação imediata por papel (BOTTOM_NAV_BY_ROLE) */}
       <nav
         style={{
           flexShrink: 0,
@@ -553,38 +435,44 @@ export function StaffAppShellLayout({
           borderTop: `1px solid ${colors.border.subtle}`,
         }}
       >
-        {/* Início (Home do papel atual) — sem redirect */}
-        <Link
-          to={`/app/staff/home/${
-            activeRole === "worker" ? "waiter" : activeRole ?? "manager"
-          }`}
-          className="staff-bottom-nav-link"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 4,
-            padding: "8px 12px",
-            borderRadius: 10,
-            textDecoration: "none",
-            color: isLauncher ? colors.action.text : colors.text.secondary,
-            backgroundColor: isLauncher ? colors.action.base : "transparent",
-            fontSize: 11,
-            fontWeight: 600,
-          }}
-        >
-          <span style={{ fontSize: 24 }}>🏠</span>
-          Início
-        </Link>
-        {/* Operação */}
-        {(() => {
-          const opMode = getModeById("operation");
+        {bottomNavItems.map((item) => {
+          if (item === "home") {
+            return (
+              <Link
+                key="home"
+                to={`/app/staff/home/${navRole}`}
+                className="staff-bottom-nav-link"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4,
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  textDecoration: "none",
+                  color: isLauncher
+                    ? colors.action.text
+                    : colors.text.secondary,
+                  backgroundColor: isLauncher
+                    ? colors.action.base
+                    : "transparent",
+                  fontSize: 11,
+                  fontWeight: 600,
+                }}
+              >
+                <span style={{ fontSize: 24 }}>🏠</span>
+                Início
+              </Link>
+            );
+          }
+          const mode = getModeById(item);
           const isActive =
-            pathname === opMode.path || pathname.startsWith(opMode.path + "/");
+            pathname === mode.path || pathname.startsWith(mode.path + "/");
           return (
             <Link
-              to={opMode.path}
+              key={item}
+              to={mode.path}
               className="staff-bottom-nav-link"
               style={{
                 display: "flex",
@@ -601,101 +489,40 @@ export function StaffAppShellLayout({
                 fontWeight: 600,
               }}
             >
-              <span style={{ fontSize: 24 }}>{opMode.icon}</span>
-              Operação
+              <span style={{ fontSize: 24 }}>{mode.icon}</span>
+              {mode.shortLabel ?? mode.label}
             </Link>
           );
-        })()}
-
-        {/* TPV */}
-        {(() => {
-          const tpvMode = getModeById("tpv");
-          const isActive =
-            pathname === tpvMode.path ||
-            pathname.startsWith(tpvMode.path + "/");
-          return (
-            <Link
-              to={tpvMode.path}
-              className="staff-bottom-nav-link"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 4,
-                padding: "8px 10px",
-                borderRadius: 10,
-                textDecoration: "none",
-                color: isActive ? colors.action.text : colors.text.secondary,
-                backgroundColor: isActive ? colors.action.base : "transparent",
-                fontSize: 11,
-                fontWeight: 600,
-              }}
-            >
-              <span style={{ fontSize: 24 }}>{tpvMode.icon}</span>
-              TPV
-            </Link>
-          );
-        })()}
-
-        {/* KDS */}
-        {(() => {
-          const kdsMode = getModeById("kds");
-          const isActive =
-            pathname === kdsMode.path ||
-            pathname.startsWith(kdsMode.path + "/");
-          return (
-            <Link
-              to={kdsMode.path}
-              className="staff-bottom-nav-link"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 4,
-                padding: "8px 10px",
-                borderRadius: 10,
-                textDecoration: "none",
-                color: isActive ? colors.action.text : colors.text.secondary,
-                backgroundColor: isActive ? colors.action.base : "transparent",
-                fontSize: 11,
-                fontWeight: 600,
-              }}
-            >
-              <span style={{ fontSize: 24 }}>{kdsMode.icon}</span>
-              KDS
-            </Link>
-          );
-        })()}
-
-        {/* Mais — feedback tátil via CSS :active */}
-        <button
-          type="button"
-          className="staff-bottom-nav-link"
-          onClick={() => setMoreOpen(true)}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 4,
-            padding: "8px 10px",
-            borderRadius: 10,
-            border: "none",
-            backgroundColor: moreOpen ? colors.surface.layer2 : "transparent",
-            color: colors.text.secondary,
-            fontSize: 11,
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          <span style={{ fontSize: 24 }}>⋯</span>
-          Mais
-        </button>
+        })}
+        {/* Mais — só quando há modos visíveis fora do rodapé */}
+        {maisItems.length > 0 && (
+          <button
+            type="button"
+            className="staff-bottom-nav-link"
+            onClick={() => setMoreOpen(true)}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 4,
+              padding: "8px 10px",
+              borderRadius: 10,
+              border: "none",
+              backgroundColor: moreOpen ? colors.surface.layer2 : "transparent",
+              color: colors.text.secondary,
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            <span style={{ fontSize: 24 }}>⋯</span>
+            Mais
+          </button>
+        )}
       </nav>
 
-      {/* Sheet \"Mais\" */}
+      {/* Sheet "Mais" — modos visíveis que não estão no rodapé */}
       {moreOpen && (
         <div
           style={{
@@ -737,112 +564,15 @@ export function StaffAppShellLayout({
                 gap: 8,
               }}
             >
-              {/* Ordem: Tasks, Alerts, Team, Profile, Turno (FASE 4) */}
-              {[
-                getModeById("tasks"),
-                getModeById("alerts"),
-                getModeById("team"),
-              ].map((mode) => (
-                <button
-                  key={mode.id}
-                  type="button"
-                  onClick={() => {
-                    setMoreOpen(false);
-                    navigate(mode.path);
-                  }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    width: "100%",
-                    padding: "10px 4px",
-                    border: "none",
-                    background: "none",
-                    color:
-                      mode.id === "alerts" && specDrifts.length > 0
-                        ? colors.destructive.base
-                        : colors.text.primary,
-                    cursor: "pointer",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                    }}
-                  >
-                    <span style={{ fontSize: 20 }}>{mode.icon}</span>
-                    <span
-                      style={{
-                        fontSize: 14,
-                        fontWeight:
-                          mode.id === "alerts" && specDrifts.length > 0
-                            ? 600
-                            : 500,
-                      }}
-                    >
-                      {mode.id === "alerts" && specDrifts.length > 0
-                        ? `${mode.label} (${specDrifts.length})`
-                        : mode.label}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: 16, color: colors.text.tertiary }}>
-                    →
-                  </span>
-                </button>
-              ))}
-
-              {/* Perfil */}
-              <button
-                type="button"
-                onClick={() => {
-                  setMoreOpen(false);
-                  navigate("/app/staff/profile");
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  width: "100%",
-                  padding: "10px 4px",
-                  border: "none",
-                  background: "none",
-                  color: colors.text.primary,
-                  cursor: "pointer",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                  }}
-                >
-                  <span style={{ fontSize: 20 }}>👤</span>
-                  <span
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                    }}
-                  >
-                    Perfil
-                  </span>
-                </div>
-                <span style={{ fontSize: 16, color: colors.text.tertiary }}>
-                  →
-                </span>
-              </button>
-
-              {/* Turno */}
-              {(() => {
-                const turnMode = getModeById("turn");
+              {maisItems.map((id) => {
+                const mode = getModeById(id);
                 return (
                   <button
+                    key={id}
                     type="button"
                     onClick={() => {
                       setMoreOpen(false);
-                      navigate(turnMode.path);
+                      navigate(mode.path);
                     }}
                     style={{
                       display: "flex",
@@ -852,7 +582,10 @@ export function StaffAppShellLayout({
                       padding: "10px 4px",
                       border: "none",
                       background: "none",
-                      color: colors.text.primary,
+                      color:
+                        id === "alerts" && specDrifts.length > 0
+                          ? colors.destructive.base
+                          : colors.text.primary,
                       cursor: "pointer",
                     }}
                   >
@@ -863,14 +596,19 @@ export function StaffAppShellLayout({
                         gap: 10,
                       }}
                     >
-                      <span style={{ fontSize: 20 }}>{turnMode.icon}</span>
+                      <span style={{ fontSize: 20 }}>{mode.icon}</span>
                       <span
                         style={{
                           fontSize: 14,
-                          fontWeight: 500,
+                          fontWeight:
+                            id === "alerts" && specDrifts.length > 0
+                              ? 600
+                              : 500,
                         }}
                       >
-                        {turnMode.label}
+                        {id === "alerts" && specDrifts.length > 0
+                          ? `${mode.label} (${specDrifts.length})`
+                          : mode.label}
                       </span>
                     </div>
                     <span style={{ fontSize: 16, color: colors.text.tertiary }}>
@@ -878,7 +616,7 @@ export function StaffAppShellLayout({
                     </span>
                   </button>
                 );
-              })()}
+              })}
             </div>
           </div>
         </div>

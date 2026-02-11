@@ -7,7 +7,6 @@
 import React, { useEffect, type ReactNode } from "react";
 import { Outlet } from "react-router-dom";
 import { isDebugMode } from "../../../core/debugMode";
-import { colors } from "../../../ui/design-system/tokens/colors";
 import { AppStaffLanding } from "../AppStaffLanding";
 import { WorkerCheckInView } from "../WorkerCheckInView";
 import { useStaff } from "../context/StaffContext";
@@ -59,35 +58,7 @@ export function StaffAppGate({ children }: { children?: ReactNode } = {}) {
     gateBlock,
   ]);
 
-  const debugStrip = isDebugMode() ? (
-    <div
-      style={{
-        flexShrink: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 12,
-        padding: "4px 8px",
-        fontSize: 10,
-        fontFamily: "monospace",
-        backgroundColor: colors.surface.layer2,
-        color: colors.text.tertiary,
-        borderBottom: `1px solid ${colors.border.subtle}`,
-      }}
-    >
-      <span>restaurant:{restaurantId ? "✓" : "✗"}</span>
-      <span>location:{hasLocation ? "✓" : "✗"}</span>
-      <span>contract:{hasContract ? "✓" : "✗"}</span>
-      <span>worker:{hasWorker ? "✓" : "✗"}</span>
-      <span>role:{activeRole}</span>
-      <span>source:{roleSource}</span>
-      {gateBlock && (
-        <span style={{ color: colors.warning?.base ?? "#fb923c" }}>
-          bloqueio:{gateBlock}
-        </span>
-      )}
-    </div>
-  ) : null;
+  const debugStrip = null;
 
   const wrapWithDebug = (content: React.ReactNode) =>
     debugStrip ? (

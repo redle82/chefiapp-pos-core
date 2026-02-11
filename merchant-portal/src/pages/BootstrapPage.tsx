@@ -179,9 +179,10 @@ export function BootstrapPage({
         setTabIsolated("chefiapp_user_role", member.role);
 
         // WIZARD COMPLETION GATE: Check if wizard is completed (Core only)
+        // Query existing columns; wizard_completed_at/setup_status may not exist yet → fallback to onboarding_completed_at
         const restRes = await core
           .from("gm_restaurants")
-          .select("wizard_completed_at, setup_status")
+          .select("onboarding_completed_at, status")
           .eq("id", member.restaurant_id)
           .single();
         const restaurant = restRes.data;
@@ -206,7 +207,7 @@ export function BootstrapPage({
           if (isSchemaError) {
             // Schema lag - columns don't exist yet, use defaults
             console.log(
-              "[BootstrapPage] Schema lag detected (setup_status missing). Using default state.",
+              "[BootstrapPage] Schema lag detected. Using default state.",
             );
           } else {
             // Other error - log and use defaults
@@ -216,8 +217,10 @@ export function BootstrapPage({
             );
           }
         } else if (restaurant) {
-          wizardCompleted = restaurant.wizard_completed_at !== null;
-          status = (restaurant.setup_status || "not_started") as
+          // Map available columns: onboarding_completed_at → wizardCompleted
+          wizardCompleted =
+            (restaurant as any).onboarding_completed_at !== null;
+          status = ((restaurant as any).setup_status || "not_started") as
             | "not_started"
             | "quick_done"
             | "advanced_in_progress"

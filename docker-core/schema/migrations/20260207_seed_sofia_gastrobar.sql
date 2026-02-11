@@ -149,14 +149,14 @@ FROM (VALUES
 INSERT INTO public.gm_catalog_items (category_id, title, description, price_cents, image_url, allergens, is_available, sort_order, badges)
 SELECT 'c0000003-0000-0000-0000-000000000003', v.title, v.description, v.price_cents, v.image_url, v.allergens::jsonb, true, v.sort_order, '[]'::jsonb
 FROM (VALUES
-  ('Mar y Sol', 'Clásica Margherita con salsa de tomate y mozzarella fundida.', 1450, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]'),
-  ('Fuego Ibiza', 'Salami picante, mezcla de pimientos marinados, jalapeños y mozzarella.', 1600, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]'),
-  ('Luna de Quesos', 'Cuatro quesos: mozzarella, edam, cheddar y queso de cabra sobre salsa de tomate.', 1600, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]'),
-  ('Verde Vida', 'Mezcla de verduras a la parrilla, mozzarella y aceite de oliva.', 1500, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]'),
-  ('Ibiza Royale', 'Jamón york, champiñones frescos, mozzarella y salsa de tomate.', 1600, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]'),
-  ('Pollo Soul', 'Pollo asado, mozzarella y salsa de tomate.', 1550, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]'),
-  ('Sol Latino', 'Jamón york, queso latino, pimientos marinados y mozzarella.', 1650, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]'),
-  ('Cheddar Lovers', 'Mozzarella y doble cheddar fundido sobre salsa de tomate.', 1550, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]')
+  ('Mar y Sol', 'Clásica Margherita con salsa de tomate y mozzarella fundida.', 1450, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]', 0),
+  ('Fuego Ibiza', 'Salami picante, mezcla de pimientos marinados, jalapeños y mozzarella.', 1600, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]', 1),
+  ('Luna de Quesos', 'Cuatro quesos: mozzarella, edam, cheddar y queso de cabra sobre salsa de tomate.', 1600, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]', 2),
+  ('Verde Vida', 'Mezcla de verduras a la parrilla, mozzarella y aceite de oliva.', 1500, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]', 3),
+  ('Ibiza Royale', 'Jamón york, champiñones frescos, mozzarella y salsa de tomate.', 1600, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]', 4),
+  ('Pollo Soul', 'Pollo asado, mozzarella y salsa de tomate.', 1550, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]', 5),
+  ('Sol Latino', 'Jamón york, queso latino, pimientos marinados y mozzarella.', 1650, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]', 6),
+  ('Cheddar Lovers', 'Mozzarella y doble cheddar fundido sobre salsa de tomate.', 1550, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', '[]', 7)
 ) AS v(title, description, price_cents, image_url, allergens, sort_order);
 
 -- 5d. Platos Principales
@@ -174,10 +174,10 @@ FROM (VALUES
 INSERT INTO public.gm_catalog_items (category_id, title, description, price_cents, image_url, allergens, is_available, sort_order, badges)
 SELECT 'c0000005-0000-0000-0000-000000000005', v.title, v.description, v.price_cents, v.image_url, v.allergens::jsonb, true, v.sort_order, '[]'::jsonb
 FROM (VALUES
-  ('Ensalada del Edén', 'Queso de cabra cremoso, frutos vermelhos, cebola crocante, mix de folhas, nozes e molho de mostaza e miel.', 1600, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', '["hot","vegetarian","dairy_free","raw"]'),
-  ('Verde Vital | Green Salad', 'Mezclum, cebolla, pepino, zanahoria, tomate, cebolla frita, frutos secos, aguacate, manzana y tomate cherry.', 1300, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', '["vegetarian","vegan","gluten_free","dairy_free","raw"]'),
-  ('Atlántico Fresco | Tuna Salad', 'Atún, mezclum, cebolla, nueces, pepino, tomate y salsa césar.', 1400, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', '["gluten_free","dairy_free","raw"]'),
-  ('Salmón Zen | Salmon Salad', 'Salmón con mezclum, cebolla frita, aguacate, pepino, tomate, frutos secos, salsa de mostaza y miel y tomate cherry.', 1600, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', '["gluten_free","dairy_free","raw"]')
+  ('Ensalada del Edén', 'Queso de cabra cremoso, frutos vermelhos, cebola crocante, mix de folhas, nozes e molho de mostaza e miel.', 1600, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', '["hot","vegetarian","dairy_free","raw"]', 0),
+  ('Verde Vital | Green Salad', 'Mezclum, cebolla, pepino, zanahoria, tomate, cebolla frita, frutos secos, aguacate, manzana y tomate cherry.', 1300, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', '["vegetarian","vegan","gluten_free","dairy_free","raw"]', 1),
+  ('Atlántico Fresco | Tuna Salad', 'Atún, mezclum, cebolla, nueces, pepino, tomate y salsa césar.', 1400, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', '["gluten_free","dairy_free","raw"]', 2),
+  ('Salmón Zen | Salmon Salad', 'Salmón con mezclum, cebolla frita, aguacate, pepino, tomate, frutos secos, salsa de mostaza y miel y tomate cherry.', 1600, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', '["gluten_free","dairy_free","raw"]', 3)
 ) AS v(title, description, price_cents, image_url, allergens, sort_order);
 
 -- 5f. Zumos & Bowls
@@ -297,22 +297,22 @@ FROM (VALUES
 INSERT INTO public.gm_catalog_items (category_id, title, description, price_cents, image_url, allergens, is_available, sort_order, badges)
 SELECT 'c000000d-0000-0000-0000-00000000000d', v.title, v.description, v.price_cents, 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80', v.allergens::jsonb, true, v.sort_order, '[]'::jsonb
 FROM (VALUES
-  ('Tostada Mediterránea', 'Pan de masa madre tostado con tomate rallado y aceite de oliva.', 400, '["vegetarian","vegan","nut_free","dairy_free","raw"]'),
-  ('Edam Sunset', 'Queso Edam fundido con tomate.', 500, '["nut_free","raw"]'),
-  ('Tostada Clásica York', 'Pan tostado con Jamón York y tomate.', 600, '["nut_free","dairy_free","raw"]'),
-  ('Tostada Nórdica', 'Pan tostado con queso blanco y salmón.', 1000, '["nut_free","raw"]'),
-  ('Tostada Soleil', 'Tortilla francesa con tomate fresco.', 900, '["nut_free","dairy_free","raw"]'),
-  ('Tostada Ibiza Verde', 'Aguacate, huevo y frutos secos sobre pan masa madre.', 900, '["vegetarian","gluten_free","nut_free","dairy_free","raw"]'),
-  ('Dúo Fundido', 'Jamón york y queso fundido con tomate.', 600, '["nut_free","dairy_free","raw"]'),
-  ('Tostada del Mar', 'Pan tostado con atún y tomate.', 800, '["nut_free","dairy_free","raw"]'),
-  ('Campesina con Bacon', 'Bacon crujiente con tomate y pan.', 700, '["nut_free","dairy_free","raw"]'),
-  ('Nórdica Poché', 'Huevo poché, tomate y aceite de oliva.', 900, '["vegetarian","raw"]'),
-  ('Croissant de la Isla', 'Croissant clásico hojaldrado de mantequilla.', 250, '[]'),
-  ('Croissant Cacao Wave', 'Croissant con cacao.', 350, '[]'),
-  ('Croissant Salado Mediterráneo', 'Croissant relleno de jamón york y queso.', 400, '[]'),
-  ('Croissant Ibiza Jam', 'Croissant con mermelada.', 350, '[]'),
-  ('Desayuno Inglés', 'Sausage, pan, huevo, bacon, alubias, tomate cherry y champiñones.', 900, '[]'),
-  ('Desayuno inglés deluxe', '2 Sausage, 2 panes, 2 huevos, 2 bacon, alubias, tomate cherry y champiñones.', 1300, '[]')
+  ('Tostada Mediterránea', 'Pan de masa madre tostado con tomate rallado y aceite de oliva.', 400, '["vegetarian","vegan","nut_free","dairy_free","raw"]', 0),
+  ('Edam Sunset', 'Queso Edam fundido con tomate.', 500, '["nut_free","raw"]', 1),
+  ('Tostada Clásica York', 'Pan tostado con Jamón York y tomate.', 600, '["nut_free","dairy_free","raw"]', 2),
+  ('Tostada Nórdica', 'Pan tostado con queso blanco y salmón.', 1000, '["nut_free","raw"]', 3),
+  ('Tostada Soleil', 'Tortilla francesa con tomate fresco.', 900, '["nut_free","dairy_free","raw"]', 4),
+  ('Tostada Ibiza Verde', 'Aguacate, huevo y frutos secos sobre pan masa madre.', 900, '["vegetarian","gluten_free","nut_free","dairy_free","raw"]', 5),
+  ('Dúo Fundido', 'Jamón york y queso fundido con tomate.', 600, '["nut_free","dairy_free","raw"]', 6),
+  ('Tostada del Mar', 'Pan tostado con atún y tomate.', 800, '["nut_free","dairy_free","raw"]', 7),
+  ('Campesina con Bacon', 'Bacon crujiente con tomate y pan.', 700, '["nut_free","dairy_free","raw"]', 8),
+  ('Nórdica Poché', 'Huevo poché, tomate y aceite de oliva.', 900, '["vegetarian","raw"]', 9),
+  ('Croissant de la Isla', 'Croissant clásico hojaldrado de mantequilla.', 250, '[]', 10),
+  ('Croissant Cacao Wave', 'Croissant con cacao.', 350, '[]', 11),
+  ('Croissant Salado Mediterráneo', 'Croissant relleno de jamón york y queso.', 400, '[]', 12),
+  ('Croissant Ibiza Jam', 'Croissant con mermelada.', 350, '[]', 13),
+  ('Desayuno Inglés', 'Sausage, pan, huevo, bacon, alubias, tomate cherry y champiñones.', 900, '[]', 14),
+  ('Desayuno inglés deluxe', '2 Sausage, 2 panes, 2 huevos, 2 bacon, alubias, tomate cherry y champiñones.', 1300, '[]', 15)
 ) AS v(title, description, price_cents, allergens, sort_order);
 
 -- 5n. Cafés & Infusiones (resumo)

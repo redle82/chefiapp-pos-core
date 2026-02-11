@@ -17,7 +17,9 @@ export interface CoreProduct {
   id: string;
   restaurant_id: string;
   name: string;
+  description?: string | null;
   price_cents: number;
+  photo_url?: string | null;
   available: boolean;
   track_stock?: boolean;
   stock_quantity?: number;
@@ -47,7 +49,7 @@ export interface CoreProductWithCategory extends CoreProduct {
 export async function readProductsByRestaurant(
   restaurantId: string,
   includeCategory: boolean = true,
-  onlyAvailable: boolean = true
+  onlyAvailable: boolean = true,
 ): Promise<CoreProductWithCategory[]> {
   try {
     let query = dockerCoreClient
@@ -92,7 +94,7 @@ export async function readProductsByRestaurant(
  * @returns Produto ou null se não encontrado / backend indisponível
  */
 export async function readProductById(
-  productId: string
+  productId: string,
 ): Promise<CoreProduct | null> {
   try {
     const { data, error } = await dockerCoreClient

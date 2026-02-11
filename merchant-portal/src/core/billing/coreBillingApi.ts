@@ -13,9 +13,12 @@ import { BackendType, getBackendType } from "../infra/backendAdapter";
 const DOCKER_CORE_URL = CONFIG.CORE_URL;
 const CORE_ANON = CONFIG.CORE_ANON_KEY;
 
-const REST = DOCKER_CORE_URL.endsWith("/rest")
-  ? DOCKER_CORE_URL
-  : `${DOCKER_CORE_URL}/rest`;
+const REST = (() => {
+  const base = DOCKER_CORE_URL.replace(/\/+$/, "");
+  if (base.endsWith("/rest/v1")) return base;
+  if (base.endsWith("/rest")) return `${base}/v1`;
+  return `${base}/rest/v1`;
+})();
 
 function coreHeaders(): HeadersInit {
   return {
@@ -29,7 +32,7 @@ function coreHeaders(): HeadersInit {
 function requireCore(): void {
   if (getBackendType() !== BackendType.docker) {
     throw new Error(
-      "[coreBillingApi] Billing requires Core (Docker). Configure backend to Docker."
+      "[coreBillingApi] Billing requires Core (Docker). Configure backend to Docker.",
     );
   }
 }
@@ -43,11 +46,11 @@ export type BillingStatus = "trial" | "active" | "past_due" | "canceled";
  * CORE_FINANCIAL_SOVEREIGNTY_CONTRACT §4: Domain = Core (Docker) only.
  */
 export async function getBillingStatus(
-  restaurantId: string
+  restaurantId: string,
 ): Promise<BillingStatus | null> {
   requireCore();
   const url = `${REST}/gm_restaurants?id=eq.${encodeURIComponent(
-    restaurantId
+    restaurantId,
   )}&select=billing_status&limit=1`;
   const res = await fetch(url, { method: "GET", headers: coreHeaders() });
   if (!res.ok) return null;
@@ -68,6 +71,7 @@ export async function getBillingStatus(
 /** Dados de status do restaurante (onboarding + billing). Fonte = Core quando Docker. */
 export interface RestaurantStatusRow {
   id?: string;
+  status?: string;
   onboarding_completed_at: string | null;
   billing_status: BillingStatus | null;
 }
@@ -79,7 +83,7 @@ export interface RestaurantStatusRow {
  * onboarding_just_completed (core/storage/onboardingFlowFlag.ts) e trata como completed.
  */
 export async function getRestaurantStatus(
-  restaurantId: string
+  restaurantId: string,
 ): Promise<RestaurantStatusRow | null> {
   requireCore();
   // Pilot: restaurante criado por mock no bootstrap — devolver mock para não 404
@@ -113,8 +117,8 @@ export async function getRestaurantStatus(
     }
   }
   const url = `${REST}/gm_restaurants?id=eq.${encodeURIComponent(
-    restaurantId
-  )}&select=id,onboarding_completed_at,billing_status&limit=1`;
+    restaurantId,
+  )}&select=id,status,onboarding_completed_at,billing_status&limit=1`;
   const res = await fetch(url, {
     method: "GET",
     headers: coreHeaders(),
@@ -130,16 +134,17 @@ export async function getRestaurantStatus(
     const data = text ? JSON.parse(text) : [];
     const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
     if (!row) return null;
-    const status = row.billing_status;
+    const billingStatus = row.billing_status;
     const validStatus =
-      status === "trial" ||
-      status === "active" ||
-      status === "past_due" ||
-      status === "canceled";
+      billingStatus === "trial" ||
+      billingStatus === "active" ||
+      billingStatus === "past_due" ||
+      billingStatus === "canceled";
     return {
       id: row.id,
+      status: row.status ?? undefined,
       onboarding_completed_at: row.onboarding_completed_at ?? null,
-      billing_status: validStatus ? status : null,
+      billing_status: validStatus ? billingStatus : null,
     };
   } catch {
     return null;
@@ -163,11 +168,11 @@ export interface BillingConfigRow {
  * Implementação: GET rest/v1/billing_configs?restaurant_id=eq.{id}
  */
 export async function getBillingConfig(
-  restaurantId: string
+  restaurantId: string,
 ): Promise<BillingConfigRow | null> {
   requireCore();
   const url = `${REST}/billing_configs?restaurant_id=eq.${encodeURIComponent(
-    restaurantId
+    restaurantId,
   )}&select=*&limit=1`;
   const res = await fetch(url, { method: "GET", headers: coreHeaders() });
   if (!res.ok) {
@@ -186,7 +191,7 @@ export async function setBillingConfig(
   restaurantId: string,
   config: Omit<BillingConfigRow, "restaurant_id" | "updated_at"> & {
     updated_at?: string;
-  }
+  },
 ): Promise<{ error: string | null }> {
   requireCore();
   const body = {
@@ -253,7 +258,7 @@ export async function createSaasPortalSession(returnUrl: string): Promise<{
 export async function createCheckoutSession(
   priceId: string,
   successUrl: string,
-  cancelUrl: string
+  cancelUrl: string,
 ): Promise<{ url: string; sessionId?: string; error?: string }> {
   requireCore();
   const rpcUrl = `${REST}/rpc/create_checkout_session`;

@@ -28,17 +28,26 @@ import { StaffProfilePage } from "./pages/AppStaff/apps/profile";
 import { ManagerTarefasPage } from "./pages/AppStaff/apps/tasks";
 import { ManagerEquipePage } from "./pages/AppStaff/apps/team";
 import { StaffTpvPage } from "./pages/AppStaff/apps/tpv";
+import {
+  CleaningSectorDashboard,
+  KitchenSectorDashboard,
+  OperationSectorDashboard,
+  TasksSectorDashboard,
+  TeamSectorDashboard,
+} from "./pages/AppStaff/dashboards";
 import { CleaningHome } from "./pages/AppStaff/homes/CleaningHome";
 import { KitchenHome } from "./pages/AppStaff/homes/KitchenHome";
 import { ManagerHome } from "./pages/AppStaff/homes/ManagerHome";
 import { OwnerHome } from "./pages/AppStaff/homes/OwnerHome";
 import { WaiterHome } from "./pages/AppStaff/homes/WaiterHome";
+import { WorkerHome } from "./pages/AppStaff/homes/WorkerHome";
 import { ManagerTurnoPage } from "./pages/AppStaff/pages/ManagerTurnoPage";
 import { OperationModePage } from "./pages/AppStaff/pages/OperationModePage";
 import { StaffAppGate } from "./pages/AppStaff/routing/StaffAppGate";
 import { StaffAppShellLayout } from "./pages/AppStaff/routing/StaffAppShellLayout";
 import { StaffHomeRedirect } from "./pages/AppStaff/routing/StaffHomeRedirect";
 import { StaffIndexRedirect } from "./pages/AppStaff/routing/StaffIndexRedirect";
+import { StaffRoleGuard } from "./pages/AppStaff/routing/StaffRoleGuard";
 import { BackofficePage } from "./pages/Backoffice/BackofficePage";
 import { BillingPage } from "./pages/Billing/BillingPage";
 import { BillingSuccessPage } from "./pages/Billing/BillingSuccessPage";
@@ -544,14 +553,32 @@ function AppContentWithBilling() {
               <Route path="waiter" element={<WaiterHome />} />
               <Route path="kitchen" element={<KitchenHome />} />
               <Route path="cleaning" element={<CleaningHome />} />
+              <Route path="worker" element={<WorkerHome />} />
+              {/* Dashboards de Setor (nível 2): OwnerHome → Sector → Ferramenta */}
+              <Route
+                path="sector/operation"
+                element={<OperationSectorDashboard />}
+              />
+              <Route path="sector/tasks" element={<TasksSectorDashboard />} />
+              <Route path="sector/team" element={<TeamSectorDashboard />} />
+              <Route
+                path="sector/kitchen"
+                element={<KitchenSectorDashboard />}
+              />
+              <Route
+                path="sector/cleaning"
+                element={<CleaningSectorDashboard />}
+              />
             </Route>
             <Route
               path="mode/operation"
               element={
                 <StaffAppGate>
-                  <StaffAppShellLayout>
-                    <OperationModePage />
-                  </StaffAppShellLayout>
+                  <StaffRoleGuard modeId="operation">
+                    <StaffAppShellLayout>
+                      <OperationModePage />
+                    </StaffAppShellLayout>
+                  </StaffRoleGuard>
                 </StaffAppGate>
               }
             />
@@ -559,9 +586,11 @@ function AppContentWithBilling() {
               path="mode/turn"
               element={
                 <StaffAppGate>
-                  <StaffAppShellLayout>
-                    <ManagerTurnoPage />
-                  </StaffAppShellLayout>
+                  <StaffRoleGuard modeId="turn">
+                    <StaffAppShellLayout>
+                      <ManagerTurnoPage />
+                    </StaffAppShellLayout>
+                  </StaffRoleGuard>
                 </StaffAppGate>
               }
             />
@@ -569,9 +598,11 @@ function AppContentWithBilling() {
               path="mode/team"
               element={
                 <StaffAppGate>
-                  <StaffAppShellLayout>
-                    <ManagerEquipePage />
-                  </StaffAppShellLayout>
+                  <StaffRoleGuard modeId="team">
+                    <StaffAppShellLayout>
+                      <ManagerEquipePage />
+                    </StaffAppShellLayout>
+                  </StaffRoleGuard>
                 </StaffAppGate>
               }
             />
@@ -579,9 +610,11 @@ function AppContentWithBilling() {
               path="mode/tpv"
               element={
                 <StaffAppGate>
-                  <StaffAppShellLayout>
-                    <StaffTpvPage />
-                  </StaffAppShellLayout>
+                  <StaffRoleGuard modeId="tpv">
+                    <StaffAppShellLayout>
+                      <StaffTpvPage />
+                    </StaffAppShellLayout>
+                  </StaffRoleGuard>
                 </StaffAppGate>
               }
             />
@@ -589,9 +622,11 @@ function AppContentWithBilling() {
               path="mode/kds"
               element={
                 <StaffAppGate>
-                  <StaffAppShellLayout>
-                    <KitchenDisplay />
-                  </StaffAppShellLayout>
+                  <StaffRoleGuard modeId="kds">
+                    <StaffAppShellLayout>
+                      <KitchenDisplay />
+                    </StaffAppShellLayout>
+                  </StaffRoleGuard>
                 </StaffAppGate>
               }
             />
@@ -599,9 +634,11 @@ function AppContentWithBilling() {
               path="mode/tasks"
               element={
                 <StaffAppGate>
-                  <StaffAppShellLayout>
-                    <ManagerTarefasPage />
-                  </StaffAppShellLayout>
+                  <StaffRoleGuard modeId="tasks">
+                    <StaffAppShellLayout>
+                      <ManagerTarefasPage />
+                    </StaffAppShellLayout>
+                  </StaffRoleGuard>
                 </StaffAppGate>
               }
             />
@@ -609,9 +646,11 @@ function AppContentWithBilling() {
               path="mode/alerts"
               element={
                 <StaffAppGate>
-                  <StaffAppShellLayout>
-                    <ManagerExcecoesPage />
-                  </StaffAppShellLayout>
+                  <StaffRoleGuard modeId="alerts">
+                    <StaffAppShellLayout>
+                      <ManagerExcecoesPage />
+                    </StaffAppShellLayout>
+                  </StaffRoleGuard>
                 </StaffAppGate>
               }
             />
@@ -619,9 +658,11 @@ function AppContentWithBilling() {
               path="profile"
               element={
                 <StaffAppGate>
-                  <StaffAppShellLayout>
-                    <StaffProfilePage />
-                  </StaffAppShellLayout>
+                  <StaffRoleGuard modeId="profile">
+                    <StaffAppShellLayout>
+                      <StaffProfilePage />
+                    </StaffAppShellLayout>
+                  </StaffRoleGuard>
                 </StaffAppGate>
               }
             />

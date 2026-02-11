@@ -29,10 +29,17 @@ export const CONFIG = {
   CORE_ANON_KEY: import.meta.env.VITE_CORE_ANON_KEY || "",
 
   // Stripe (billing: checkout + portal)
-  STRIPE_PUBLIC_KEY:
-    import.meta.env.VITE_STRIPE_PUBLIC_KEY ||
-    import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
-    "",
+  // Guard: reject placeholder keys that would trigger Stripe.js load + CORS errors in dev
+  STRIPE_PUBLIC_KEY: (() => {
+    const raw =
+      import.meta.env.VITE_STRIPE_PUBLIC_KEY ||
+      import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
+      "";
+    if (!raw || raw.includes("placeholder") || raw.includes("forensic")) {
+      return "";
+    }
+    return raw;
+  })(),
   STRIPE_PRICE_ID: import.meta.env.VITE_STRIPE_PRICE_ID || "",
 
   /** LLM Vision (legado). Data de remoção prevista: após confirmação de não uso. */

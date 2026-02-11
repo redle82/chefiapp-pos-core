@@ -2,65 +2,82 @@ import type { StaffRole } from "../context/StaffCoreTypes";
 import type { StaffModeId } from "../routing/staffModeConfig";
 
 // Modos do launcher que participam na grelha da Home.
+// Alinhado com StaffModeId de staffModeConfig.ts (team + profile incluídos).
 export type AppStaffModeId =
   | "operation"
   | "turn"
+  | "team"
   | "tpv"
   | "kds"
   | "tasks"
-  | "alerts";
+  | "alerts"
+  | "profile";
 
-const APPSTAFF_VISIBILITY: Record<StaffRole, Record<AppStaffModeId, boolean>> =
-  {
-    owner: {
-      operation: true,
-      turn: true,
-      tpv: true,
-      kds: true,
-      tasks: true,
-      alerts: true,
-    },
-    manager: {
-      operation: true,
-      turn: true,
-      tpv: true,
-      kds: true,
-      tasks: true,
-      alerts: true,
-    },
-    waiter: {
-      operation: true,
-      turn: true,
-      tpv: true,
-      kds: false,
-      tasks: true,
-      alerts: false,
-    },
-    kitchen: {
-      operation: true,
-      turn: false,
-      tpv: false,
-      kds: true,
-      tasks: true,
-      alerts: false,
-    },
-    cleaning: {
-      operation: false,
-      turn: false,
-      tpv: false,
-      kds: false,
-      tasks: true,
-      alerts: false,
-    },
-    worker: {
-      operation: true,
-      turn: true,
-      tpv: true,
-      kds: false,
-      tasks: true,
-      alerts: false,
-    },
-  };
+const APPSTAFF_VISIBILITY: Record<
+  StaffRole,
+  Record<AppStaffModeId, boolean>
+> = {
+  owner: {
+    operation: true,
+    turn: true,
+    team: true,
+    tpv: true,
+    kds: true,
+    tasks: true,
+    alerts: true,
+    profile: true,
+  },
+  manager: {
+    operation: true,
+    turn: true,
+    team: true,
+    tpv: true,
+    kds: true,
+    tasks: true,
+    alerts: true,
+    profile: true,
+  },
+  waiter: {
+    operation: false,
+    turn: true,
+    team: false,
+    tpv: true,
+    kds: false,
+    tasks: true,
+    alerts: false,
+    profile: true,
+  },
+  kitchen: {
+    operation: false,
+    turn: true,
+    team: false,
+    tpv: false,
+    kds: true,
+    tasks: true,
+    alerts: false,
+    profile: true,
+  },
+  cleaning: {
+    operation: false,
+    turn: true,
+    team: false,
+    tpv: false,
+    kds: false,
+    tasks: true,
+    alerts: false,
+    profile: true,
+  },
+  worker: {
+    operation: true,
+    turn: true,
+    team: false,
+    tpv: true,
+    kds: false,
+    tasks: true,
+    alerts: false,
+    profile: true,
+  },
+};
 
 export function canSeeMode(
   role: StaffRole,
@@ -72,3 +89,18 @@ export function canSeeMode(
   return map[modeId as AppStaffModeId] ?? false;
 }
 
+// ---------------------------------------------------------------------------
+// Rodapé por papel — painel de ação imediata, max 4-5 itens.
+// "home" = link para a home do papel. Os demais são StaffModeId.
+// "Mais" aparece automaticamente se houver modos visíveis fora desta lista.
+// ---------------------------------------------------------------------------
+export type BottomNavItem = StaffModeId | "home";
+
+export const BOTTOM_NAV_BY_ROLE: Record<StaffRole, readonly BottomNavItem[]> = {
+  owner: ["home", "operation", "alerts"],
+  manager: ["home", "operation", "team", "alerts"],
+  waiter: ["home", "tpv", "tasks", "turn"],
+  kitchen: ["kds", "tasks", "turn"],
+  cleaning: ["home", "tasks", "turn", "profile"],
+  worker: ["home", "tpv", "tasks", "turn"],
+};

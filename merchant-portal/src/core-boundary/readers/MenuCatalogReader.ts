@@ -5,8 +5,12 @@
  * Spec: MENU_CATALOG_VISUAL_SPEC.md; Contrato: MENU_VISUAL_RUNTIME_CONTRACT.md
  */
 
+import type {
+  CatalogCategory,
+  CatalogItem,
+  MenuRestaurant,
+} from "../../pages/MenuCatalog/types";
 import { dockerCoreClient } from "../docker-core/connection";
-import type { CatalogCategory, CatalogItem, MenuRestaurant } from "../../pages/MenuCatalog/types";
 
 interface GmRestaurant {
   id: string;
@@ -44,13 +48,16 @@ interface GmCatalogItem {
 }
 
 function parseAllergens(raw: unknown): string[] {
-  if (Array.isArray(raw)) return raw.map((a) => (a != null ? String(a) : "")).filter(Boolean);
-  if (raw != null && typeof raw === "object" && "allergens" in (raw as object)) return parseAllergens((raw as { allergens: unknown }).allergens);
+  if (Array.isArray(raw))
+    return raw.map((a) => (a != null ? String(a) : "")).filter(Boolean);
+  if (raw != null && typeof raw === "object" && "allergens" in (raw as object))
+    return parseAllergens((raw as { allergens: unknown }).allergens);
   return [];
 }
 
 function parseBadges(raw: unknown): string[] {
-  if (Array.isArray(raw)) return raw.map((a) => (a != null ? String(a) : "")).filter(Boolean);
+  if (Array.isArray(raw))
+    return raw.map((a) => (a != null ? String(a) : "")).filter(Boolean);
   return [];
 }
 
@@ -74,9 +81,10 @@ function mapItem(row: GmCatalogItem): CatalogItem {
  * menu_catalog_enabled ainda não existe (migração não aplicada). Retorna null
  * se não existir menu ativo ou erro (tabelas do catálogo em falta).
  */
-export async function readMenuCatalog(
-  restaurantId: string
-): Promise<{ restaurant: MenuRestaurant; categories: CatalogCategory[] } | null> {
+export async function readMenuCatalog(restaurantId: string): Promise<{
+  restaurant: MenuRestaurant;
+  categories: CatalogCategory[];
+} | null> {
   try {
     // Apenas id,name para evitar 400 quando menu_catalog_enabled não existe (migração não aplicada)
     const restaurantRes = await dockerCoreClient
@@ -88,7 +96,9 @@ export async function readMenuCatalog(
     if (restaurantRes.error || !restaurantRes.data) return null;
     const restaurantRow = restaurantRes.data as GmRestaurant;
 
-    const menuRes = await dockerCoreClient
+    // Try ordering by updated_at first; fallback to no ordering if column
+    // doesn't exist yet (migration not applied).
+    let menuRes = await dockerCoreClient
       .from("gm_catalog_menus")
       .select("*")
       .eq("restaurant_id", restaurantId)
@@ -96,6 +106,17 @@ export async function readMenuCatalog(
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    if (menuRes.error?.code === "42703") {
+      // column updated_at does not exist — retry without ordering
+      menuRes = await dockerCoreClient
+        .from("gm_catalog_menus")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+    }
 
     if (menuRes.error || !menuRes.data) return null;
     const menu = menuRes.data as GmCatalogMenu;
@@ -107,7 +128,9 @@ export async function readMenuCatalog(
       .order("sort_order", { ascending: true });
 
     if (categoriesRes.error || !categoriesRes.data) return null;
-    const categoryRows = (categoriesRes.data as GmCatalogCategory[]).filter(Boolean);
+    const categoryRows = (categoriesRes.data as GmCatalogCategory[]).filter(
+      Boolean,
+    );
     if (categoryRows.length === 0) {
       return {
         restaurant: {
@@ -126,7 +149,10 @@ export async function readMenuCatalog(
       .eq("is_available", true)
       .order("sort_order", { ascending: true });
 
-    const itemRows: GmCatalogItem[] = itemsRes.error || !itemsRes.data ? [] : (itemsRes.data as GmCatalogItem[]);
+    const itemRows: GmCatalogItem[] =
+      itemsRes.error || !itemsRes.data
+        ? []
+        : (itemsRes.data as GmCatalogItem[]);
     const itemsByCategory = new Map<string, CatalogItem[]>();
     for (const item of itemRows) {
       const list = itemsByCategory.get(item.category_id) ?? [];

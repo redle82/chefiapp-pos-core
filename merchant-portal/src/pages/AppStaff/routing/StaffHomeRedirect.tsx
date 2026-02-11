@@ -11,7 +11,8 @@ const HOME_BASE = "/app/staff/home";
 
 export function StaffHomeRedirect() {
   const { activeRole } = useStaff();
-  const role = activeRole === "worker" ? "waiter" : activeRole ?? "manager";
+  // worker tem home própria agora (WorkerHome)
+  const role = activeRole ?? "manager";
   const path = `${HOME_BASE}/${role}`;
   return <Navigate to={path} replace />;
 }
