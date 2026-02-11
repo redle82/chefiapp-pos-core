@@ -263,7 +263,7 @@ export function StaffAppShellLayout({
               textAlign: "center",
             }}
           >
-            {activeLocation?.name ?? "ChefIApp"} • {dayStr} {timeStr}
+            {activeLocation?.name ?? "ChefIApp"} • {dayStr} {timeStr}
           </span>
         </div>
 
