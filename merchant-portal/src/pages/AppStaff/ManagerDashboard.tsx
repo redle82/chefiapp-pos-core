@@ -1,17 +1,19 @@
 /**
- * Visão Operacional (/manager/home).
- * Uma tela = uma responsabilidade: leitura rápida da saúde do sistema.
+ * Diagnóstico da Operação (/app/staff/mode/operation).
+ *
+ * Pergunta: "POR QUE a operação está ok / em risco?"
  *
  * Regra de produto:
- * - NÃO abre apps (TPV, KDS, Tarefas) — navegação é exclusiva do Launcher + BottomNav.
- * - Observa, avisa, prioriza.
- * - Opcionalmente oferece um único deep-link contextual de "Ver detalhe".
+ * - Explica CAUSAS, não resultados
+ * - NÃO abre apps (TPV, KDS, Tarefas) — navegação é exclusiva do Shell
+ * - Observa, avisa, prioriza
+ * - Opcionalmente oferece um único deep-link contextual de "Ver detalhe"
  * UI: scroll é do Shell; sem dashboard/portal; sem duplicar layout.
  */
 
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Badge } from "../../ui/design-system/primitives/Badge";
+import { useCoreHealth } from "../../core/health/useCoreHealth";
 import { Card } from "../../ui/design-system/primitives/Card";
 import { Text } from "../../ui/design-system/primitives/Text";
 import { colors } from "../../ui/design-system/tokens/colors";
@@ -19,21 +21,9 @@ import { usePulse } from "../../ui/hooks/usePulse";
 import { useStaff } from "./context/StaffContext";
 
 export const ManagerDashboard: React.FC = () => {
-  const { currentRiskLevel, tasks, shiftState, activeRole, specDrifts } =
-    useStaff();
+  const { tasks, shiftState, specDrifts } = useStaff();
   const { isAlive } = usePulse();
-
-  const getHealthStatus = (
-    risk: number,
-  ): { status: "ready" | "warning" | "error"; label: string; icon: string } => {
-    if (risk < 30)
-      return { status: "ready", label: "Healthy Flow", icon: "🟢" };
-    if (risk < 70)
-      return { status: "warning", label: "High Tension", icon: "🟡" };
-    return { status: "error", label: "Critical Risk", icon: "🔴" };
-  };
-
-  const health = getHealthStatus(currentRiskLevel);
+  const { status: coreStatus } = useCoreHealth();
 
   const criticalTasks = useMemo(
     () =>
@@ -48,19 +38,42 @@ export const ManagerDashboard: React.FC = () => {
   const hasTurnIssue = shiftState !== "active";
   const hasCriticalTasks = criticalTasks.length > 0;
   const hasSpecDrifts = specDrifts.length > 0;
+  const hasCoreIssue = coreStatus !== "UP" || !isAlive;
+
+  const getHealthStatus = (): {
+    status: "ready" | "warning" | "error";
+    label: string;
+    icon: string;
+  } => {
+    if (hasCoreIssue || hasCriticalTasks) {
+      return { status: "error", label: "Operação crítica", icon: "🔴" };
+    }
+    if (hasSpecDrifts || hasTurnIssue) {
+      return { status: "warning", label: "Operação em atenção", icon: "🟡" };
+    }
+    return { status: "ready", label: "Operação estável", icon: "🟢" };
+  };
+
+  const health = getHealthStatus();
 
   const insights: { id: string; label: string }[] = [];
 
-  if (!hasCriticalTasks && !hasTurnIssue && !hasSpecDrifts) {
+  if (!hasCriticalTasks && !hasTurnIssue && !hasSpecDrifts && !hasCoreIssue) {
     insights.push({
       id: "all-good",
-      label: "Nenhuma tarefa crítica, turno estável e sem exceções.",
+      label: "Turno estável, sem exceções e sem tarefas críticas.",
     });
   } else {
+    if (hasCoreIssue) {
+      insights.push({
+        id: "core",
+        label: "Causa: sistema instável ou sem pulso confirmado.",
+      });
+    }
     if (hasCriticalTasks) {
       insights.push({
         id: "critical-tasks",
-        label: `${criticalTasks.length} tarefa(s) crítica(s) em aberto.`,
+        label: `Causa: ${criticalTasks.length} tarefa(s) crítica(s) em aberto.`,
       });
     }
     if (hasTurnIssue) {
@@ -68,16 +81,16 @@ export const ManagerDashboard: React.FC = () => {
         id: "turn",
         label:
           shiftState === "offline"
-            ? "Turno offline."
+            ? "Causa: turno offline."
             : shiftState === "closing"
-            ? "Turno em encerramento"
-            : "Turno fechado",
+            ? "Causa: turno em encerramento."
+            : "Causa: turno fechado.",
       });
     }
     if (hasSpecDrifts) {
       insights.push({
         id: "spec-drifts",
-        label: `${specDrifts.length} exceção(ões) operacional(is) recente(s).`,
+        label: `Causa: ${specDrifts.length} exceção(ões) operacional(is) recente(s).`,
       });
     }
   }
@@ -149,12 +162,6 @@ export const ManagerDashboard: React.FC = () => {
             >
               {health.label}
             </Text>
-            <div style={{ marginTop: 10 }}>
-              <Badge
-                status={health.status}
-                label={`RISK: ${currentRiskLevel.toFixed(1)}%`}
-              />
-            </div>
           </div>
         </Card>
 
@@ -166,7 +173,7 @@ export const ManagerDashboard: React.FC = () => {
             color="tertiary"
             style={{ textTransform: "uppercase", letterSpacing: "0.08em" }}
           >
-            Agora
+            Diagnóstico
           </Text>
           <Card surface="layer1" padding="md">
             <ul

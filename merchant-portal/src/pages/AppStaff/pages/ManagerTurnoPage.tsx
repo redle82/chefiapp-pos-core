@@ -1,10 +1,18 @@
 /**
- * Turno (/manager/turno).
- * Uma tela = gerir o tempo: abrir/fechar turno, linha do tempo, eventos, exportar relatório.
+ * Turno — Ritual de Abertura e Fechamento (/app/staff/mode/turn).
+ *
+ * Esta tela é um RITUAL, não uma configuração.
+ * Cada turno é um ciclo completo: checklist → operação → encerramento → relatório.
+ *
+ * Regras:
+ *   • Menos "configuração", mais "cerimônia operacional"
+ *   • Abertura = checklist antes de começar
+ *   • Fechamento = resumo + PDF
  * UI: scroll é do Shell; sem duplicar layout.
  */
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { dockerCoreClient } from "../../../core-boundary/docker-core/connection";
 import { isBackendUnavailable } from "../../../core-boundary/menuPilotFallback";
 import {
@@ -23,6 +31,7 @@ import { exportShiftReportToPDF } from "../utils/exportToPDF";
 export function ManagerTurnoPage() {
   const { tasks, activeWorkerId, operationalContract, currentRiskLevel } =
     useStaff();
+  const navigate = useNavigate();
   const { info } = useToast();
   const restaurantId = operationalContract?.id ?? null;
   const {
@@ -131,8 +140,43 @@ export function ManagerTurnoPage() {
           color: colors.text.primary,
         }}
       >
-        Turno
+        Ritual do Turno
       </h1>
+
+      {!shift?.isShiftOpen && (
+        <Card surface="layer1" padding="md">
+          <Text
+            size="sm"
+            weight="bold"
+            color="primary"
+            style={{ marginBottom: 8 }}
+          >
+            Turno fechado
+          </Text>
+          <Text size="sm" color="tertiary">
+            Abra o turno para iniciar o registo operacional e o fluxo de caixa.
+          </Text>
+          {restaurantId ? (
+            <Button
+              size="sm"
+              tone="action"
+              style={{ marginTop: 12 }}
+              onClick={() => setShowOpenShiftForm(true)}
+            >
+              Abrir turno
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              tone="neutral"
+              style={{ marginTop: 12 }}
+              onClick={() => navigate("/app/staff/home")}
+            >
+              Voltar ao início
+            </Button>
+          )}
+        </Card>
+      )}
 
       {/* Antes de abrir — ritual */}
       {restaurantId && ritualTasks.length > 0 && (
@@ -147,7 +191,7 @@ export function ManagerTurnoPage() {
             color="primary"
             style={{ marginBottom: 12 }}
           >
-            Antes de abrir
+            Checklist de abertura
           </Text>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {ritualTasks.map((task) => (

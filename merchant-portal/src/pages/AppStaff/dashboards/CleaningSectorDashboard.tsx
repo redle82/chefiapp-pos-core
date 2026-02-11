@@ -63,6 +63,7 @@ export function CleaningSectorDashboard() {
   return (
     <SectorDashboardLayout
       sectorName="LIMPEZA"
+      question="Hoje está sob controle?"
       status={{ level, label }}
       summary={
         <>

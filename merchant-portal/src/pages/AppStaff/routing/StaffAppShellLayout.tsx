@@ -51,7 +51,6 @@ export function StaffAppShellLayout({
 
   const isLauncher =
     pathname === "/app/staff/home" ||
-    pathname.startsWith("/app/staff/home/") ||
     pathname === "/app/staff" ||
     pathname === "/app/staff/";
   const currentMode = getModeByPath(pathname);
@@ -179,7 +178,6 @@ export function StaffAppShellLayout({
         color: colors.text.primary,
         overflow: "hidden",
         paddingTop: "env(safe-area-inset-top)",
-        paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
       {/* TopBar mínima — contextual, não menu */}
@@ -414,7 +412,10 @@ export function StaffAppShellLayout({
             flexDirection: "column",
             backgroundColor: colors.surface.base,
             overflow: isLauncher ? "hidden" : "auto",
-            padding: fullScreen || isLauncher ? 0 : 16,
+            paddingLeft: fullScreen || isLauncher ? 0 : 16,
+            paddingRight: fullScreen || isLauncher ? 0 : 16,
+            paddingTop: fullScreen || isLauncher ? 0 : 16,
+            paddingBottom: fullScreen || isLauncher ? 0 : 96,
           }}
         >
           {children ?? <Outlet />}
@@ -424,13 +425,18 @@ export function StaffAppShellLayout({
       {/* Bottom Bar — painel de ação imediata por papel (BOTTOM_NAV_BY_ROLE) */}
       <nav
         style={{
-          flexShrink: 0,
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 50,
           minHeight: 56,
           height: 64,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-around",
           padding: "0 8px",
+          paddingBottom: "env(safe-area-inset-bottom)",
           backgroundColor: colors.surface.layer1,
           borderTop: `1px solid ${colors.border.subtle}`,
         }}

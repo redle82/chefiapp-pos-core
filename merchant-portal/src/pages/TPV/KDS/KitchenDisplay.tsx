@@ -77,6 +77,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import type { Order } from "../../../core/contracts";
 import { useKitchenReflex } from "../../../intelligence/nervous-system/useKitchenReflex";
 import { EmptyState } from "../../../ui/design-system/EmptyState";
 import {
@@ -86,7 +87,6 @@ import {
   Typography,
 } from "../../../ui/design-system/tokens";
 import { useOrders } from "../context/OrderContextReal";
-import type { Order } from "../../../core/contracts";
 import { OrderTimer } from "./OrderTimer";
 import { ItemTimer } from "./components/ItemTimer";
 import { OriginBadge } from "./components/OriginBadge";
@@ -657,7 +657,7 @@ export default function KitchenDisplay({
     // PROTEÇÃO: Não executar ação se offline
     if (isKDSEffectivelyOffline) {
       console.error("[KDS] ❌ Action blocked - offline");
-      setActionError("Sem conexão. Aguarde reconexão.");
+      setActionError("Sem conexão. Tentando reconectar.");
       return;
     }
 
@@ -717,14 +717,19 @@ export default function KitchenDisplay({
             letterSpacing: "0.1em",
             animation: "pulse-fast 1.5s ease-in-out infinite",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: "12px",
+            gap: "6px",
           }}
         >
-          <span style={{ fontSize: "24px" }}>📡</span>
-          <span>SEM CONEXÃO — PEDIDOS PODEM NÃO APARECER</span>
-          <span style={{ fontSize: "24px" }}>⚠️</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "24px" }}>📡</span>
+            <span>Sem conexão. Tentando reconectar.</span>
+          </div>
+          <span style={{ fontSize: "12px", fontWeight: 500 }}>
+            Última sync: —
+          </span>
         </div>
       )}
 
@@ -796,7 +801,7 @@ export default function KitchenDisplay({
             }}
           >
             {isKDSEffectivelyOffline
-              ? "🚧 OFFLINE — AGUARDANDO CONEXÃO 🚧"
+              ? "Offline — tentando reconectar"
               : hasPressure
               ? "Produção"
               : "Mise en Place"}

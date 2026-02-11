@@ -68,6 +68,7 @@ export function OperationSectorDashboard() {
   return (
     <SectorDashboardLayout
       sectorName="OPERAÇÃO"
+      question="O sistema está saudável agora?"
       status={{ level, label }}
       summary={
         <>

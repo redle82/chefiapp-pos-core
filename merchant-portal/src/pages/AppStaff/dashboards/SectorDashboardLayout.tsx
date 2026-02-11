@@ -3,9 +3,10 @@
  *
  * Dashboard de Setor não executa tarefas.
  * Ele mostra saúde, histórico e exceções daquele setor.
+ * Cada dashboard responde UMA pergunta única (exibida no topo).
  *
  * Estrutura fixa:
- *   1. Header do setor
+ *   1. Header do setor + PERGUNTA ÚNICA
  *   2. Status do setor (veredito — 1 semáforo)
  *   3. Resumo do dia
  *   4. Slot livre (histórico, fila, etc.)
@@ -34,6 +35,8 @@ interface ContextualAction {
 interface SectorDashboardLayoutProps {
   /** Nome do setor (ex: "LIMPEZA", "COZINHA") */
   sectorName: string;
+  /** Pergunta única que esta tela responde (exibida no subtítulo) */
+  question: string;
   /** Status do setor — veredito único */
   status: SectorStatusConfig;
   /** Conteúdo do bloco "Resumo do dia" */
@@ -69,6 +72,7 @@ const LEVEL_MAP: Record<
 
 export function SectorDashboardLayout({
   sectorName,
+  question,
   status,
   summary,
   detail,
@@ -106,12 +110,13 @@ export function SectorDashboardLayout({
         </h1>
         <p
           style={{
-            fontSize: 12,
-            color: colors.text.tertiary,
+            fontSize: 13,
+            color: colors.text.secondary,
             margin: "4px 0 0",
+            fontStyle: "italic",
           }}
         >
-          Resumo operacional do setor
+          {question}
         </p>
       </div>
 

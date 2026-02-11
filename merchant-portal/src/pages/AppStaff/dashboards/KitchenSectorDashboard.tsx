@@ -50,6 +50,7 @@ export function KitchenSectorDashboard() {
   return (
     <SectorDashboardLayout
       sectorName="COZINHA"
+      question="A produção está fluindo?"
       status={{ level, label }}
       summary={
         <>

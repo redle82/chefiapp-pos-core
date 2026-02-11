@@ -5,5 +5,6 @@
 export { CleaningSectorDashboard } from "./CleaningSectorDashboard";
 export { KitchenSectorDashboard } from "./KitchenSectorDashboard";
 export { OperationSectorDashboard } from "./OperationSectorDashboard";
+export { OwnerGlobalDashboard } from "./OwnerGlobalDashboard";
 export { TasksSectorDashboard } from "./TasksSectorDashboard";
 export { TeamSectorDashboard } from "./TeamSectorDashboard";

@@ -303,6 +303,14 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
 
   const handleSendOrder = async () => {
     if (!table || orderItems.length === 0) return;
+
+    const hasMockItems = orderItems.some((item) =>
+      item.productId.startsWith("mock-"),
+    );
+    if (hasMockItems) {
+      warning("Menu mock ativo. Conecte ao Core para enviar pedidos.");
+      return;
+    }
     setSending(true);
 
     try {

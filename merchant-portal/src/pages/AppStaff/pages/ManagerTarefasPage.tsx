@@ -1,10 +1,15 @@
 /**
- * Tarefas (/manager/tarefas).
- * Uma tela = trabalho explícito: tarefas críticas, lista, Nova Tarefa.
+ * Tarefas (/app/staff/mode/tasks) — Execução + Contexto.
+ *
+ * Regras:
+ *   • Execução pura — não explica, não analisa
+ *   • Mensagens de vazio diferenciadas por papel
+ *   • Modal rápido + prioridades visuais + tabs
  * UI: scroll é do Shell; sem duplicar layout.
  */
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { TaskCard } from "../../../ui/design-system/TaskCard";
 import { Button } from "../../../ui/design-system/primitives/Button";
 import { Card } from "../../../ui/design-system/primitives/Card";
@@ -16,7 +21,8 @@ import { useAppStaffHaptics } from "../hooks/useAppStaffHaptics";
 import { useAppStaffPermissions } from "../hooks/useAppStaffPermissions";
 
 export function ManagerTarefasPage() {
-  const { tasks, employees, createTask } = useStaff();
+  const { tasks, employees, createTask, activeRole } = useStaff();
+  const navigate = useNavigate();
   const perms = useAppStaffPermissions();
   const [showQuickTaskModal, setShowQuickTaskModal] = useState(false);
   const { triggerHaptic } = useAppStaffHaptics();
@@ -160,7 +166,11 @@ export function ManagerTarefasPage() {
           <Text size="sm" color="tertiary">
             {activeTab === "concluidas"
               ? "Ainda não há tarefas concluídas neste turno."
-              : "Nada pendente aqui agora. Use o botão abaixo para criar a próxima ação."}
+              : perms.canCreateTask
+              ? activeRole === "owner"
+                ? "Nenhuma tarefa crítica agora. Crie ações para a equipe abaixo."
+                : "Nada pendente. Use o botão abaixo para criar a próxima ação."
+              : "Aguarde instruções. Sem tarefas atribuídas neste momento."}
           </Text>
           {perms.canCreateTask && activeTab !== "concluidas" && (
             <Button
@@ -173,6 +183,22 @@ export function ManagerTarefasPage() {
               }}
             >
               Criar primeira tarefa
+            </Button>
+          )}
+          {!perms.canCreateTask && activeTab !== "concluidas" && (
+            <Button
+              size="sm"
+              tone="neutral"
+              style={{ marginTop: 4 }}
+              onClick={() =>
+                navigate(
+                  activeRole
+                    ? `/app/staff/home/${activeRole}`
+                    : "/app/staff/home",
+                )
+              }
+            >
+              Voltar ao início
             </Button>
           )}
         </Card>

@@ -13,9 +13,6 @@ import {
   useLocation,
   useSearchParams,
 } from "react-router-dom";
-import "./App.css";
-import { GlobalUIStateProvider } from "./context/GlobalUIStateContext";
-import { OnboardingProvider } from "./context/OnboardingContext";
 import type { RestaurantRuntime } from "./context/RestaurantRuntimeContext";
 import { RestaurantRuntimeContext } from "./context/RestaurantRuntimeContext";
 import { deriveLifecycle } from "./core/lifecycle/Lifecycle";
@@ -32,13 +29,13 @@ import {
   CleaningSectorDashboard,
   KitchenSectorDashboard,
   OperationSectorDashboard,
+  OwnerGlobalDashboard,
   TasksSectorDashboard,
   TeamSectorDashboard,
 } from "./pages/AppStaff/dashboards";
 import { CleaningHome } from "./pages/AppStaff/homes/CleaningHome";
 import { KitchenHome } from "./pages/AppStaff/homes/KitchenHome";
 import { ManagerHome } from "./pages/AppStaff/homes/ManagerHome";
-import { OwnerHome } from "./pages/AppStaff/homes/OwnerHome";
 import { WaiterHome } from "./pages/AppStaff/homes/WaiterHome";
 import { WorkerHome } from "./pages/AppStaff/homes/WorkerHome";
 import { ManagerTurnoPage } from "./pages/AppStaff/pages/ManagerTurnoPage";
@@ -74,11 +71,14 @@ import { ManagementAdvisor } from "./components/onboarding/ManagementAdvisor";
 import { OperationalFullscreenWrapper } from "./components/operational/OperationalFullscreenWrapper";
 import { RequireOperational } from "./components/operational/RequireOperational";
 import { ShiftGate } from "./components/operational/ShiftGate";
-import { useGlobalUIState } from "./context/GlobalUIStateContext";
+import {
+  GlobalUIStateProvider,
+  useGlobalUIState,
+} from "./context/GlobalUIStateContext";
+import { OnboardingProvider } from "./context/OnboardingContext";
 import { RoleGate } from "./core/roles";
 import { ShiftGuard } from "./core/shift/ShiftGuard";
 import { AlertsDashboardPage } from "./pages/Alerts/AlertsDashboardPage";
-import { OwnerDashboard } from "./pages/AppStaff/OwnerDashboard";
 import { AuthPage } from "./pages/AuthPage";
 import { PhoneLoginPage } from "./pages/AuthPhone/PhoneLoginPage";
 import { VerifyCodePage } from "./pages/AuthPhone/VerifyCodePage";
@@ -393,10 +393,12 @@ function AppContentWithBilling() {
     location.pathname.startsWith("/app/staff/home/") ||
     location.pathname === "/app/staff" ||
     location.pathname === "/app/staff/";
+  const isStaffMore = location.pathname.startsWith("/app/staff/profile");
+  const shouldShowBillingBanner = isStaffLauncher || isStaffMore;
   return (
     <>
       <EventMonitorBootstrap />
-      {!isDashboard && !isOperationalSurface && !isStaffLauncher && (
+      {!isDashboard && !isOperationalSurface && shouldShowBillingBanner && (
         <BillingBanner />
       )}
       <ModeIndicator />
@@ -548,7 +550,7 @@ function AppContentWithBilling() {
               }
             >
               <Route index element={<StaffHomeRedirect />} />
-              <Route path="owner" element={<OwnerHome />} />
+              <Route path="owner" element={<OwnerGlobalDashboard />} />
               <Route path="manager" element={<ManagerHome />} />
               <Route path="waiter" element={<WaiterHome />} />
               <Route path="kitchen" element={<KitchenHome />} />
@@ -798,14 +800,6 @@ function AppContentWithBilling() {
             element={
               <ManagementAdvisor>
                 <ManagerReservationsPage />
-              </ManagementAdvisor>
-            }
-          />
-          <Route
-            path="/owner/dashboard"
-            element={
-              <ManagementAdvisor>
-                <OwnerDashboard />
               </ManagementAdvisor>
             }
           />

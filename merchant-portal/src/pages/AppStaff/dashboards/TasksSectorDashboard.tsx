@@ -61,6 +61,7 @@ export function TasksSectorDashboard() {
   return (
     <SectorDashboardLayout
       sectorName="TAREFAS"
+      question="Algo importante está atrasado?"
       status={{ level, label }}
       summary={
         <>

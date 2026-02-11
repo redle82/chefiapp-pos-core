@@ -6,9 +6,9 @@
  * UI (variant=app): scroll é do Shell; sem duplicar layout.
  */
 
-import { currencyService } from "../../core/currency/CurrencyService";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { currencyService } from "../../core/currency/CurrencyService";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { usePulseOptional } from "../../core/pulse";
 import {
@@ -65,6 +65,7 @@ interface OwnerDashboardProps {
   variant?: OwnerDashboardVariant;
 }
 
+/** @deprecated Use OwnerGlobalDashboard. This dashboard uses mock-only data. */
 export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
   variant = "web",
 }) => {

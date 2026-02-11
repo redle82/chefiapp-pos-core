@@ -1,10 +1,16 @@
 /**
- * Exceções (/app/staff/mode/alerts).
- * Uma tela = resolver problemas: falhas, dispositivos offline, bloqueios.
- * Estados: loading, vazio, erro (FASE 5); UX app: feedback tátil, sem hover (FASE 6).
+ * Exceções — Sala de Alarme (/app/staff/mode/alerts).
+ *
+ * Pergunta: "Há algo que precisa de ação imediata?"
+ *
+ * Regras:
+ *   • Não é para explorar — é para CONFIRMAR, ENTENDER e VOLTAR
+ *   • Nenhuma navegação profunda
+ *   • Só ações corretivas ou retorno
  */
 
-import React from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "../../../ui/design-system/primitives/Button";
 import { Card } from "../../../ui/design-system/primitives/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { colors } from "../../../ui/design-system/tokens/colors";
@@ -12,6 +18,7 @@ import { useStaff } from "../context/StaffContext";
 
 export function ManagerExcecoesPage() {
   const { specDrifts } = useStaff();
+  const navigate = useNavigate();
   const hasAlerts = specDrifts.length > 0;
 
   return (
@@ -26,25 +33,40 @@ export function ManagerExcecoesPage() {
         paddingBottom: 80,
       }}
     >
-      <h1
-        style={{
-          fontSize: 24,
-          fontWeight: 700,
-          margin: 0,
-          color: colors.text.primary,
-        }}
-      >
-        Exceções
-      </h1>
-
-      <Text size="sm" color="tertiary" style={{ marginBottom: 8 }}>
-        Falhas, dispositivos offline e bloqueios do sistema.
-      </Text>
+      <div>
+        <h1
+          style={{
+            fontSize: 24,
+            fontWeight: 700,
+            margin: 0,
+            color: colors.text.primary,
+          }}
+        >
+          Exceções
+        </h1>
+        <Text
+          size="sm"
+          color="secondary"
+          style={{ marginTop: 4, fontStyle: "italic" }}
+        >
+          Há algo que precisa de ação imediata?
+        </Text>
+      </div>
 
       {hasAlerts ? (
-        <Card surface="layer1" padding="md" style={{ borderLeft: `4px solid ${colors.destructive.base}` }}>
-          <Text size="sm" weight="bold" color="primary" style={{ marginBottom: 8 }}>
-            {specDrifts.length} alerta(s) ativo(s)
+        <Card
+          surface="layer1"
+          padding="md"
+          style={{ borderLeft: `4px solid ${colors.destructive.base}` }}
+        >
+          <Text
+            size="sm"
+            weight="bold"
+            color="primary"
+            style={{ marginBottom: 8 }}
+          >
+            {specDrifts.length} alerta{specDrifts.length !== 1 ? "s" : ""} ativo
+            {specDrifts.length !== 1 ? "s" : ""}
           </Text>
           <Text size="sm" color="tertiary">
             Resolver no fluxo operacional (TPV, KDS, Tarefas).
@@ -53,7 +75,12 @@ export function ManagerExcecoesPage() {
       ) : null}
 
       <Card surface="layer1" padding="md">
-        <Text size="sm" weight="bold" color="primary" style={{ marginBottom: 8 }}>
+        <Text
+          size="sm"
+          weight="bold"
+          color="primary"
+          style={{ marginBottom: 8 }}
+        >
           Falhas
         </Text>
         <Text size="sm" color="tertiary">
@@ -62,7 +89,12 @@ export function ManagerExcecoesPage() {
       </Card>
 
       <Card surface="layer1" padding="md">
-        <Text size="sm" weight="bold" color="primary" style={{ marginBottom: 8 }}>
+        <Text
+          size="sm"
+          weight="bold"
+          color="primary"
+          style={{ marginBottom: 8 }}
+        >
           Dispositivos offline
         </Text>
         <Text size="sm" color="tertiary">
@@ -71,7 +103,12 @@ export function ManagerExcecoesPage() {
       </Card>
 
       <Card surface="layer1" padding="md">
-        <Text size="sm" weight="bold" color="primary" style={{ marginBottom: 8 }}>
+        <Text
+          size="sm"
+          weight="bold"
+          color="primary"
+          style={{ marginBottom: 8 }}
+        >
           Bloqueios
         </Text>
         <Text size="sm" color="tertiary">
@@ -79,7 +116,7 @@ export function ManagerExcecoesPage() {
         </Text>
       </Card>
 
-      {/* Estado vazio explícito + ação dominante: resolver alerta (quando houver) */}
+      {/* Estado vazio — tudo em ordem → ação dominante: VOLTAR */}
       {!hasAlerts && (
         <Card surface="layer2" padding="lg" style={{ textAlign: "center" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
@@ -87,8 +124,16 @@ export function ManagerExcecoesPage() {
             Tudo em ordem
           </Text>
           <Text size="sm" color="tertiary" style={{ marginTop: 4 }}>
-            Sem exceções ativas. Mantenha o foco na operação.
+            Sem exceções ativas. Volte à operação.
           </Text>
+          <Button
+            size="sm"
+            tone="action"
+            style={{ marginTop: 12 }}
+            onClick={() => navigate(-1)}
+          >
+            Voltar
+          </Button>
         </Card>
       )}
     </div>

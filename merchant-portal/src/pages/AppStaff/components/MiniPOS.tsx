@@ -12,7 +12,6 @@ import { useStaff } from "../context/StaffContext";
 import type { Task } from "../context/StaffCoreTypes";
 import { ScannerService } from "../core/ScannerService";
 import { useAppStaffTables } from "../hooks/useAppStaffTables";
-import { MobileBottomNav } from "./MobileBottomNav";
 
 export interface MiniPOSProps {
   tasks: Task[];
@@ -232,9 +231,6 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({
       userName="Waiter"
       role="Waiter"
       status="active"
-      bottomNav={
-        <MobileBottomNav activeTab={activeTab} onNavigate={handleNavigate} />
-      }
     >
       <div
         style={{
@@ -244,6 +240,48 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({
           paddingBottom: 64,
         }}
       >
+        {/* Tabs internas do TPV — mantém bottom nav global do StaffShell */}
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            padding: 4,
+            borderRadius: 999,
+            backgroundColor: colors.surface.layer1,
+            alignSelf: "flex-start",
+          }}
+        >
+          {[
+            { id: "tables", label: "Salão" },
+            { id: "order", label: "Comanda" },
+            { id: "menu", label: "Menu" },
+          ].map((tab) => {
+            const selected = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleNavigate(tab.id)}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: 999,
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  backgroundColor: selected
+                    ? colors.action.base
+                    : "transparent",
+                  color: selected ? colors.action.text : colors.text.secondary,
+                  transition: "transform 0.08s ease",
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
         {/* HEADS UP DISPLAY - ALERTS (Global) */}
         {attentionTasks.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -492,13 +530,16 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({
           </div>
         )}
 
-        {/* Legacy Tabs Placeholder */}
+        {/* Comanda (estado vazio) */}
         {activeTab === "order" && (
           // ... same ...
           <div className="flex flex-col items-center justify-center h-64 animate-fade-in">
             <div className="text-4xl mb-4">📝</div>
             <Text size="lg" weight="bold">
-              Nova Comanda
+              Comanda vazia
+            </Text>
+            <Text size="sm" color="tertiary" style={{ marginTop: 8 }}>
+              Abra uma mesa no Salão para iniciar uma comanda.
             </Text>
             <Button
               style={{ marginTop: 24 }}
@@ -515,6 +556,15 @@ export const MiniPOS: React.FC<MiniPOSProps> = ({
             <Text size="lg" weight="bold">
               Menu Digital
             </Text>
+            <Text size="sm" color="tertiary" style={{ marginTop: 8 }}>
+              Use o Salão para selecionar uma mesa e enviar pedidos.
+            </Text>
+            <Button
+              style={{ marginTop: 24 }}
+              onClick={() => setActiveTab("tables")}
+            >
+              Ir para Mesas
+            </Button>
           </div>
         )}
       </div>

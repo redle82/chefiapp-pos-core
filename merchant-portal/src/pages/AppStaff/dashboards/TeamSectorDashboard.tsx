@@ -57,6 +57,7 @@ export function TeamSectorDashboard() {
   return (
     <SectorDashboardLayout
       sectorName="EQUIPE"
+      question="Tem gente suficiente e certa?"
       status={{ level, label }}
       summary={
         <>

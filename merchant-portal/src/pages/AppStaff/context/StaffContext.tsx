@@ -16,6 +16,7 @@ import { connectByCode } from "../../../features/auth/connectByCode";
 import { db } from "../../../core/db";
 import { locationsStore } from "../../../features/admin/locations/store/locationsStore";
 import type { Location } from "../../../features/admin/locations/types";
+import { useOperationalMetrics } from "../../../hooks/useOperationalMetrics";
 import { findRelevantLesson } from "../../../intelligence/education/MicroLessonEngine";
 import {
   TrainingProvider,
@@ -218,6 +219,10 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   // FASE 3.3: Isolado - AppStaff não depende de TPV/context. Usar restaurantId (prop) para evitar TDZ: operationalContract é declarado mais abaixo.
   const { orders: appStaffOrders, refetch: refetchOrders } = useAppStaffOrders(
     restaurantId ?? null,
+  );
+  const { data: opMetrics } = useOperationalMetrics(
+    restaurantId ?? null,
+    "ACTIVE",
   );
   // Converter CoreOrder para Order (compatibilidade)
   const orders = appStaffOrders.map((order) => ({
@@ -877,10 +882,10 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
         // PHASE B: Shift Intelligence
         shiftStart: activeWorkerId ? lastActivityAt : null,
-        activeStaffCount: 1,
+        activeStaffCount: opMetrics?.active_shifts_count ?? 0,
         shiftMetrics: calculateShiftLoad(
           tasks.filter((t) => t.status !== "done").length,
-          1,
+          opMetrics?.active_shifts_count ?? 1,
         ),
 
         // PHASE D: Forecast
@@ -890,7 +895,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
               (o) =>
                 getNow() - new Date(o.createdAt).getTime() < 15 * 60 * 1000,
             ).length || 0, // Last 15 min
-            1, // Staff (Hardcoded 1 for now)
+            opMetrics?.active_shifts_count ?? 1,
             10, // Avg Prep (Hardcoded 10 min)
           ),
           prediction: getShiftPrediction(new Date(getNow())),
