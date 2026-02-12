@@ -5,18 +5,21 @@
 
 import { isDebugMode } from "../../../core/debugMode";
 import { RUNTIME } from "../../../core/runtime/RuntimeContext";
-import type { OperationalContract, StaffRole } from "../../../pages/AppStaff/context/StaffCoreTypes";
-import { DEMO_CODES } from "../../../pages/AppStaff/data/operatorProfiles";
+import type {
+  OperationalContract,
+  StaffRole,
+} from "../../../pages/AppStaff/context/StaffCoreTypes";
+import { TRIAL_GUIDE_CODES } from "../../../pages/AppStaff/data/operatorProfiles";
 import type { ConnectByCodeContext, ConnectByCodeResult } from "./types";
 
 const allowMocks = () =>
   isDebugMode() ||
   (typeof import.meta !== "undefined" && import.meta.env?.MODE === "test") ||
-  RUNTIME.isDemo;
+  RUNTIME.isTrial;
 
-/** Demo: resolve code to role from mock invite table (code → role). Role never parsed from code text. */
-function getDemoRoleFromInviteTable(code: string): StaffRole | null {
-  const entry = Object.entries(DEMO_CODES).find(([, c]) => c === code);
+/** Trial Guide: resolve code to role from mock invite table (code → role). Role never parsed from code text. */
+function getTrialGuideRoleFromInviteTable(code: string): StaffRole | null {
+  const entry = Object.entries(TRIAL_GUIDE_CODES).find(([, c]) => c === code);
   return entry ? (entry[0] as StaffRole) : null;
 }
 
@@ -26,21 +29,25 @@ function getDemoRoleFromInviteTable(code: string): StaffRole | null {
  */
 export async function connectByCode(
   code: string,
-  ctx?: ConnectByCodeContext
+  ctx?: ConnectByCodeContext,
 ): Promise<ConnectByCodeResult> {
   const restaurantHint = ctx?.restaurantHint ?? null;
 
   try {
-    // A) MOCK PATH (Dev only) — code in DEMO_CODES; role from mock invite table
+    // A) MOCK PATH (Dev only) — code in TRIAL_GUIDE_CODES; role from mock invite table
     if (allowMocks() && code.includes("mock")) {
       await new Promise((r) => setTimeout(r, 800));
       if (code === "FAIL")
-        return { success: false, roleSource: null, message: "Simulação de Falha de Rede." };
-      const resolvedRole = getDemoRoleFromInviteTable(code) ?? "worker";
+        return {
+          success: false,
+          roleSource: null,
+          message: "Simulação de Falha de Rede.",
+        };
+      const resolvedRole = getTrialGuideRoleFromInviteTable(code) ?? "worker";
       const contract: OperationalContract = {
         id: restaurantHint ?? "mock-restaurant-connected",
         type: "restaurant",
-        name: "Restaurante Conectado (Demo)",
+        name: "Restaurante Conectado (Free Trial)",
         mode: "connected",
         permissions: [],
       };
@@ -52,14 +59,14 @@ export async function connectByCode(
       };
     }
 
-    // A') DEMO FALLBACK — any code when demo + restaurantId; role from mock invite table if code matches
+    // A') TRIAL GUIDE FALLBACK — any code when trial + restaurantId; role from mock invite table if code matches
     if (allowMocks() && restaurantHint) {
       await new Promise((r) => setTimeout(r, 400));
-      const resolvedRole = getDemoRoleFromInviteTable(code) ?? "worker";
+      const resolvedRole = getTrialGuideRoleFromInviteTable(code) ?? "worker";
       const contract: OperationalContract = {
         id: restaurantHint,
         type: "restaurant",
-        name: "Seu Restaurante (Demo)",
+        name: "Seu Restaurante (Free Trial)",
         mode: "connected",
         permissions: [],
       };
@@ -89,9 +96,12 @@ export async function connectByCode(
 
     if (error || !data) {
       let message = "Código inválido ou expirado.";
-      if (error?.code === "PGRST116") message = "Código não encontrado. Verifique se digitou corretamente.";
-      else if (error?.code === "22P02") message = "Formato de código inválido. Use o formato CHEF-XXXX-XX.";
-      else if (error?.message?.includes("expired")) message = "Este código expirou. Solicite um novo ao gerente.";
+      if (error?.code === "PGRST116")
+        message = "Código não encontrado. Verifique se digitou corretamente.";
+      else if (error?.code === "22P02")
+        message = "Formato de código inválido. Use o formato CHEF-XXXX-XX.";
+      else if (error?.message?.includes("expired"))
+        message = "Este código expirou. Solicite um novo ao gerente.";
       return { success: false, roleSource: null, message };
     }
 

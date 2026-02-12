@@ -11,7 +11,7 @@
 
 - NÃO usar dados mockados irreais
 - NÃO usar Supabase como domínio
-- NÃO usar "modo demo" especial
+- NÃO usar "modo trial" especial
 - NÃO ignorar falhas (tudo deve aparecer para o humano)
 
 ### SIM
@@ -32,7 +32,7 @@ Executar passo a passo. Documentar tudo.
 
 - [ ] **Docker Core** a correr (ex.: `make up` em `docker-core/`; verificar `docker ps`).
 - [ ] **merchant-portal** a correr em **<http://localhost:5175>** (ex.: `cd merchant-portal && npm run dev`).
-- [ ] **Limpar localStorage** de demo/pilot: DevTools → Application → Local Storage → remover `chefiapp_pilot_mode`, `chefiapp_demo_mode` (e opcionalmente `chefiapp_restaurant_id` se for criar restaurante novo).
+- [ ] **Limpar localStorage** de trial/pilot: DevTools → Application → Local Storage → remover `chefiapp_pilot_mode`, `chefiapp_trial_mode` (e opcionalmente `chefiapp_restaurant_id` se for criar restaurante novo).
 - [ ] **Auth** real (login) ou fluxo de acesso operacional conforme contrato (sem bypass).
 - [ ] **Dispositivos (checklist):** 1 portátil/tablet (TPV), 1 ecrã (KDS), opcional telemóvel (QR). Mínimo 1 pessoa pode alternar janelas.
 

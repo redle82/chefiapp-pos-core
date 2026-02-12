@@ -4,7 +4,11 @@
  */
 
 import { isDebugMode } from "../debugMode";
-import { BackendType, getBackendConfigured, getBackendType } from "../infra/backendAdapter";
+import {
+  BackendType,
+  getBackendConfigured,
+  getBackendType,
+} from "../infra/backendAdapter";
 import { getKeycloakSession } from "./authKeycloak";
 import type { CoreSession, CoreUser } from "./authTypes";
 
@@ -31,15 +35,16 @@ function mockSession(): CoreSession {
 }
 
 /**
- * Devolve sessão Core (mock em demo/pilot, Keycloak em Docker). Sem Supabase.
+ * Devolve sessão Core (mock em trial/pilot, Keycloak em Docker). Sem Supabase.
  */
 export async function getCoreSessionAsync(): Promise<CoreSession | null> {
   if (!getBackendConfigured()) return null;
   if (typeof window === "undefined") return null;
 
-  const isDemo = new URLSearchParams(window.location.search).get("demo") === "true";
+  const isTrial =
+    new URLSearchParams(window.location.search).get("mode") === "trial";
   const isPilot = localStorage.getItem("chefiapp_pilot_mode") === "true";
-  if (isDebugMode() && (isDemo || isPilot)) return mockSession();
+  if (isDebugMode() && (isTrial || isPilot)) return mockSession();
 
   if (getBackendType() === BackendType.docker) {
     const state = await getKeycloakSession();

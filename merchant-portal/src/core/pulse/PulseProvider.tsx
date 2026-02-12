@@ -206,7 +206,7 @@ export function usePulseContext(): PulseContextValue {
 
 /**
  * Safe version that returns null outside of PulseProvider
- * (useful in components that may render in public/demo tree).
+ * (useful in components that may render in public/trial tree).
  */
 export function usePulseOptional(): PulseContextValue | null {
   return useContext(PulseContext);

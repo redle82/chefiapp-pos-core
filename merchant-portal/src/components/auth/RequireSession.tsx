@@ -42,8 +42,8 @@ export function RequireSession({ children }: { children: JSX.Element }) {
   }
 
   // 2. Auth Check
-  const isDemo = getTabIsolated("chefiapp_demo_mode") === "true";
-  if (!session && !isDemo) {
+  const isTrial = getTabIsolated("chefiapp_trial_mode") === "true";
+  if (!session && !isTrial) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

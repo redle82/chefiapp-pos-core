@@ -53,7 +53,8 @@ export function MiniTPVMinimal({
   const [success, setSuccess] = useState<string | null>(null);
   const coreUnreachableRef = useRef(false);
 
-  // Carregar produtos (fail-fast quando Core está em baixo)
+  // Carregar produtos (fail-fast quando Core está em baixo).
+  // CONFIG_RUNTIME_CONTRACT: só produtos com available=true e restaurant_id=X; Config Web é fonte de verdade (docs/contracts/CONFIG_RUNTIME_CONTRACT.md).
   const loadProducts = async () => {
     if (coreUnreachableRef.current) {
       setLoading(false);

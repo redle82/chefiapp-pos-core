@@ -47,8 +47,8 @@
 }
 
 .core-status-banner--info {
-  background-color: var(--status-demo);
-  /* Using demo/info color */
+  background-color: var(--status-trial);
+  /* Using trial/info color */
   color: #fff;
 }
 

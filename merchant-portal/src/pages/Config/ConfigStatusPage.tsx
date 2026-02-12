@@ -15,7 +15,7 @@ export function ConfigStatusPage() {
           Estado do Restaurante
         </h1>
         <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>
-          Visualize o status atual e gerencie a publicação do restaurante.
+          Veja o estado atual e gerencie a publicação do restaurante.
         </p>
       </div>
 

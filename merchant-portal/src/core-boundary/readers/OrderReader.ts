@@ -10,6 +10,7 @@
 
 import { dockerCoreClient } from "../docker-core/connection";
 import type { CoreOrder, CoreOrderItem } from "../docker-core/types";
+import { Logger } from "../../core/logger";
 
 /** Status que o KDS deve mostrar (pedido ainda ativo). Ver ORDER_STATUS_CONTRACT_v1. */
 export const ACTIVE_ORDER_STATUSES = [
@@ -30,6 +31,10 @@ const TERMINAL_ORDER_STATUSES = new Set([
 
 const ACTIVE_SET = new Set(ACTIVE_ORDER_STATUSES.map((s) => s));
 
+/** Throttle canonical log to at most once per 5s per "call" to avoid console spam from polling. */
+const ORDER_READER_LOG_INTERVAL_MS = 5000;
+let _lastOrderReaderLogTime = 0;
+
 // Relaxed: accepts any UUID-shaped string (including seed UUIDs like 00000000-...).
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -42,12 +47,20 @@ function normalizeStatus(raw: unknown): string {
   return String(raw).toUpperCase().trim();
 }
 
-/** Log canónico para status desconhecido (parte do contrato, não opcional). */
-function logUnknownStatus(orderId: string, rawStatus: unknown): void {
+/** Log canónico para status desconhecido (parte do contrato, não opcional). OBSERVABILITY_LOGGING_CONTRACT. */
+function logUnknownStatus(
+  orderId: string,
+  rawStatus: unknown,
+  restaurantId: string,
+): void {
   const raw = rawStatus != null ? String(rawStatus) : "";
-  console.warn(
-    `[WARN][ORDER_STATUS_CONTRACT]\norder_id=${orderId}\nraw_status=${raw}\nnormalized_status=UNKNOWN\nsource=OrderReader`,
-  );
+  Logger.warn("[ORDER_STATUS_CONTRACT] status desconhecido", {
+    restaurant_id: restaurantId,
+    order_id: orderId,
+    raw_status: raw,
+    normalized_status: "UNKNOWN",
+    source: "OrderReader",
+  });
 }
 
 /**
@@ -79,14 +92,14 @@ export async function readActiveOrders(
 
   if (error) {
     const msg = error.message ?? "";
-    const isDemoFallback =
+    const isTrialFallback =
       msg.includes("invalid input syntax for type uuid") ||
       (error as { code?: string }).code === "22P02" ||
       msg.includes("Backend indisponível");
-    if (isDemoFallback) {
+    if (isTrialFallback) {
       if (import.meta.env.DEV) {
         console.debug(
-          "[OrderReader] gm_orders fallback (demo/local id):",
+          "[OrderReader] gm_orders fallback (trial/local id):",
           msg.slice(0, 80),
         );
       }
@@ -104,7 +117,7 @@ export async function readActiveOrders(
 
     if (!s) {
       result.push({ ...o, _unknownStatus: true });
-      logUnknownStatus(o.id, raw);
+      logUnknownStatus(o.id, raw, restaurantId);
       continue;
     }
 
@@ -118,15 +131,22 @@ export async function readActiveOrders(
     }
 
     result.push({ ...o, _unknownStatus: true });
-    logUnknownStatus(o.id, raw);
+    logUnknownStatus(o.id, raw, restaurantId);
   }
 
   if (import.meta.env.DEV && rows.length > 0) {
-    const activeCount = result.filter((r) => !r._unknownStatus).length;
-    const unknownCount = result.filter((r) => r._unknownStatus).length;
-    console.log(
-      `[OrderReader] gm_orders: ${rows.length} linha(s), ${activeCount} activo(s), ${unknownCount} unknown`,
-    );
+    const now = Date.now();
+    if (now - _lastOrderReaderLogTime >= ORDER_READER_LOG_INTERVAL_MS) {
+      _lastOrderReaderLogTime = now;
+      const activeCount = result.filter((r) => !r._unknownStatus).length;
+      const unknownCount = result.filter((r) => r._unknownStatus).length;
+      Logger.debug("[OrderReader] gm_orders summary", {
+        restaurant_id: restaurantId,
+        rows: rows.length,
+        active: activeCount,
+        unknown: unknownCount,
+      });
+    }
   }
   return result;
 }
@@ -147,14 +167,14 @@ export async function readReadyOrders(
 
   if (error) {
     const msg = error.message ?? "";
-    const isDemoFallback =
+    const isTrialFallback =
       msg.includes("invalid input syntax for type uuid") ||
       (error as { code?: string }).code === "22P02" ||
       msg.includes("Backend indisponível");
-    if (isDemoFallback) {
+    if (isTrialFallback) {
       if (import.meta.env.DEV) {
         console.debug(
-          "[OrderReader] gm_orders ready fallback (demo/local id):",
+          "[OrderReader] gm_orders ready fallback (trial/local id):",
           msg.slice(0, 80),
         );
       }

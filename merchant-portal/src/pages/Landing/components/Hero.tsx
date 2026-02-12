@@ -2,11 +2,11 @@
  * Hero Component - Landing Page
  *
  * CTA principal: "Começar agora" → /auth; "Ver o sistema" → /auth; "Já tenho acesso" → /auth (link).
- * Com sessão: "Voltar ao sistema" → /dashboard. FlowGate permanece autoridade; landing reflecte estado.
+ * Com sessão: "Entrar no sistema" → /admin (apenas por clique; landing nunca redireciona sozinha).
  */
-import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../../core/auth/useAuth";
+import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppSignature";
 import { OSCopy } from "../../../ui/design-system/sovereign/OSCopy";
 
 const WHATSAPP_NUMBER =
@@ -16,40 +16,23 @@ const WHATSAPP_NUMBER =
   "351000000000";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, "")}`;
 
-const REDIRECT_WHEN_SESSION_MS = 2500;
-
 export const Hero = () => {
   const { session, loading } = useAuth();
-  const navigate = useNavigate();
   const hasSession = !!session;
 
-  // Redirecionamento silencioso quando já tem sessão (§7)
-  useEffect(() => {
-    if (!hasSession) return;
-    const t = setTimeout(
-      () => navigate("/app/dashboard", { replace: true }),
-      REDIRECT_WHEN_SESSION_MS,
-    );
-    return () => clearTimeout(t);
-  }, [hasSession, navigate]);
-
   return (
-    <div className="min-h-screen bg-transparent text-[var(--text-primary)] flex flex-col relative overflow-hidden">
+    <div
+      className="min-h-screen bg-transparent text-[var(--text-primary)] flex flex-col relative overflow-hidden"
+      data-landing-rev="signature-v2"
+    >
       <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-amber-950/10 pointer-events-none z-0" />
 
       <header className="w-full absolute top-0 left-0 p-6 z-50 flex justify-between items-center">
-        <div className="flex items-center gap-3 font-bold opacity-0 md:opacity-100 transition-opacity">
-          <img
-            src="/Logo Chefiapp.png"
-            alt="ChefIApp"
-            className="w-8 h-8 object-contain rounded-full"
-          />
-          <span className="tracking-tight">
-            Chef<span className="text-amber-500">IA</span>pp™
-          </span>
+        <div className="opacity-0 md:opacity-100 transition-opacity">
+          <ChefIAppSignature variant="full" size="sm" tone="gold" />
         </div>
         <Link
-          to={hasSession ? "/app/dashboard" : "/auth"}
+          to={hasSession ? "/admin" : "/auth"}
           className="px-6 py-2 rounded-full border text-sm font-medium transition-all bg-[var(--surface-elevated)] border-[var(--surface-border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--color-primary)]"
         >
           {hasSession
@@ -75,12 +58,7 @@ export const Hero = () => {
 
         <div className="mb-8 flex flex-col sm:flex-row items-center justify-center gap-3">
           <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-[var(--color-primary)]/30 bg-black/50 backdrop-blur-sm">
-            <span className="text-sm font-bold tracking-widest text-[var(--color-primary)]">
-              CHEFIAPP™
-            </span>
-            <span className="text-sm font-bold tracking-widest text-[var(--color-os-red)]">
-              OS
-            </span>
+            <ChefIAppSignature variant="full" size="sm" tone="gold" />
           </div>
           {/* Indicador de runtime (§7) — visível para confirmar consciência de sessão */}
           <span
@@ -90,7 +68,7 @@ export const Hero = () => {
             {loading
               ? "A verificar sessão…"
               : hasSession
-              ? "Sessão ativa · A redirecionar"
+              ? "Sessão ativa"
               : "Modo visita"}
           </span>
         </div>
@@ -107,29 +85,21 @@ export const Hero = () => {
           {OSCopy.landing.heroDescriptionShort}
         </p>
 
-        <p className="text-[var(--text-secondary)] text-base mb-8 max-w-2xl mx-auto">
+        <p className="text-[var(--text-secondary)] text-base mb-2 max-w-2xl mx-auto">
           {OSCopy.landing.trialPriceCopy}
+        </p>
+        <p className="text-[var(--color-primary)] text-sm font-medium mb-8 max-w-2xl mx-auto">
+          {OSCopy.landing.overlayPrice}
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-4 justify-center w-full max-w-2xl mx-auto flex-wrap">
           {hasSession ? (
-            <>
-              <Link
-                to="/app/dashboard"
-                className="w-full sm:w-auto px-8 py-4 bg-primary hover:opacity-90 text-[var(--text-inverse)] font-extrabold text-lg rounded-xl shadow-[var(--elevation-primary)] transition-all transform hover:-translate-y-1"
-              >
-                {OSCopy.landing.ctaIrAoSistema}
-              </Link>
-              <Link
-                to="/auth"
-                className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--color-primary)] transition-colors"
-              >
-                {OSCopy.landing.ctaVerSistema3Min}
-              </Link>
-              <p className="w-full text-center text-[var(--text-tertiary)] text-sm mt-2">
-                A redirecionar para o comando em instantes…
-              </p>
-            </>
+            <Link
+              to="/admin"
+              className="w-full sm:w-auto px-8 py-4 bg-primary hover:opacity-90 text-[var(--text-inverse)] font-extrabold text-lg rounded-xl shadow-[var(--elevation-primary)] transition-all transform hover:-translate-y-1"
+            >
+              {OSCopy.landing.ctaIrAoSistema}
+            </Link>
           ) : (
             <>
               <Link
@@ -164,6 +134,11 @@ export const Hero = () => {
             </>
           )}
         </div>
+        {!hasSession && (
+          <p className="text-[var(--text-tertiary)] text-xs max-w-xl mx-auto mt-6 leading-relaxed">
+            {OSCopy.landing.whatHappensNext}
+          </p>
+        )}
       </main>
     </div>
   );

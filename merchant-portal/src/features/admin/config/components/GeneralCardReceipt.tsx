@@ -1,5 +1,5 @@
 /**
- * Card 3 — Texto fiscal / recibo (Configuración > General).
+ * Card 3 — Texto fiscal / recibo (Configuração > Geral).
  * Ref: CONFIG_GENERAL_WIREFRAME.md.
  * Persistência: coluna receipt_extra_text em gm_restaurants (DB).
  */
@@ -29,7 +29,7 @@ export function GeneralCardReceipt() {
     (async () => {
       const { data: row, error } = await dockerCoreClient
         .from("gm_restaurants")
-        .select("receipt_extra_text")
+        .select("*")
         .eq("id", restaurantId)
         .maybeSingle();
       if (cancelled || error || !row) {
@@ -115,19 +115,19 @@ export function GeneralCardReceipt() {
         Texto fiscal / recibo
       </h2>
       <p style={{ margin: "0 0 8px 0", fontSize: 12, color: "#6b7280" }}>
-        Información opcional que aparecerá en los recibos impresos (detalles
-        fiscales, agradecimiento, política de devoluciones).
+        Informação opcional que aparecerá nos recibos impressos (dados fiscais,
+        agradecimento, política de devoluções).
       </p>
       {!loaded ? (
-        <p style={{ fontSize: 12, color: "#6b7280" }}>Cargando...</p>
+        <p style={{ fontSize: 12, color: "#6b7280" }}>A carregar...</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div>
-            <label style={labelStyle}>Información adicional</label>
+            <label style={labelStyle}>Informação adicional</label>
             <textarea
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder="Ej.: NIF B-12345678. Gracias por su visita."
+              placeholder="Ex.: NIF B-12345678. Obrigado pela sua visita."
               style={textareaStyle}
               rows={2}
             />
@@ -139,7 +139,7 @@ export function GeneralCardReceipt() {
               disabled={saving}
               style={buttonStyle}
             >
-              {saving ? "Guardando…" : "Guardar"}
+              {saving ? "A guardar…" : "Guardar"}
             </button>
           </div>
         </div>

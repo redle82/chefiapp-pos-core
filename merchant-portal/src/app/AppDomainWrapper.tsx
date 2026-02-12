@@ -105,7 +105,7 @@ export function AppDomainWrapper({ children }: Props) {
 
   // Extract Role for Context Engine
   const currentMembership = memberships.find(
-    (m) => m.restaurant_id === tenantId
+    (m) => m.restaurant_id === tenantId,
   );
 
   // Extract Infrastructure (hasTPV) from Topology
@@ -160,7 +160,7 @@ export function AppDomainWrapper({ children }: Props) {
           sessionStorage.setItem("chefiapp_return_to", location.pathname);
           console.log(
             "[AppDomainWrapper] Saved return route before redirect:",
-            location.pathname
+            location.pathname,
           );
         } catch (_e) {
           // Ignore storage errors
@@ -169,7 +169,7 @@ export function AppDomainWrapper({ children }: Props) {
           "[AppDomainWrapper] No tenantId - redirecting to /app/select-tenant",
           {
             path: location.pathname,
-          }
+          },
         );
         // Use navigate instead of window.location.assign to preserve sessionStorage
         navigate("/app/select-tenant", { replace: true });
@@ -205,7 +205,7 @@ export function AppDomainWrapper({ children }: Props) {
 
         console.error(
           `[P0.2 GUARD] Tenant switch blocked: ${previousTenant} → ${tenantId}. ` +
-            `Reason: ${reason}`
+            `Reason: ${reason}`,
         );
         return;
       }
@@ -275,18 +275,18 @@ export function AppDomainWrapper({ children }: Props) {
     "/app/operation-status",
   ];
   const isExemptRoute = exemptRoutes.some((route) =>
-    location.pathname.startsWith(route)
+    location.pathname.startsWith(route),
   );
 
-  // Bypass loading: TPV/KDS/Waiter com ?debug=1 ou ?demo=true
+  // Bypass loading: TPV/KDS/Waiter com ?debug=1 ou ?mode=trial
   const params = new URLSearchParams(location.search);
-  const isDemo = params.get("demo") === "true";
+  const isTrial = params.get("mode") === "trial";
   const isTPVBypass =
     isDebugMode() &&
     (location.pathname.includes("/tpv") ||
       location.pathname.includes("/kds") ||
       location.pathname.includes("/waiter") ||
-      isDemo);
+      isTrial);
 
   if (isLoading && !isExemptRoute && !isTPVBypass) {
     return (
@@ -323,13 +323,13 @@ export function AppDomainWrapper({ children }: Props) {
 
   // GATE ENFORCEMENT: No tenant = no domain access
   if (!tenantId) {
-    // Bypass: TPV/KDS/Waiter com mock tenantId só com ?debug=1 ou ?demo=true
+    // Bypass: TPV/KDS/Waiter com mock tenantId só com ?debug=1 ou ?mode=trial
     if (
       isDebugMode() &&
       (location.pathname.includes("/tpv") ||
         location.pathname.includes("/kds") ||
         location.pathname.includes("/waiter") ||
-        isDemo)
+        isTrial)
     ) {
       const DEV_TENANT_ID =
         import.meta.env.VITE_DEV_DEFAULT_TENANT ||

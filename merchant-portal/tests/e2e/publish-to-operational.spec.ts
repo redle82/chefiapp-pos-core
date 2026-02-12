@@ -47,7 +47,7 @@ async function loginWithE2ECreds(page: import("@playwright/test").Page) {
       "Auth form not available (phone-based auth, not email/password) — skip env-dependent test",
     );
 
-  // D1: Seletores resilientes; timeout curto — se form não existir (demo/redirect), falha rápida.
+  // D1: Seletores resilientes; timeout curto — se form não existir (trial/redirect), falha rápida.
   // NOTE: Do NOT use getByRole('textbox').first() as fallback — it matches phone inputs.
   const emailInput = page
     .getByLabel("Email")
@@ -58,7 +58,7 @@ async function loginWithE2ECreds(page: import("@playwright/test").Page) {
     .catch(() => false);
   if (!visible)
     throw new Error(
-      "Auth form not available (demo mode or redirect) — skip env-dependent test",
+      "Auth form not available (trial mode or redirect) — skip env-dependent test",
     );
   await emailInput.first().fill(credentials!.email);
   const passwordInput = page

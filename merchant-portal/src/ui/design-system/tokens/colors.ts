@@ -95,6 +95,7 @@ const tpv: ColorTheme = {
 };
 
 // MODE 2: DASHBOARD (Soft Dark - Management)
+// Design Contract v1: dourado como cor de decisão (CTAs, títulos, itens activos).
 const dashboard: ColorTheme = {
     surface: {
         base: palette.zinc[950],       // #09090b (Softer than black)
@@ -111,9 +112,9 @@ const dashboard: ColorTheme = {
         inverse: palette.black,
     },
     action: {
-        base: palette.indigo[600],  // Management Blue
-        hover: palette.indigo[500],
-        text: palette.white,
+        base: palette.amber[600],   // Dourado (DNA da landing)
+        hover: palette.amber[500],
+        text: palette.black,
     },
     warning: {
         base: palette.amber[600],

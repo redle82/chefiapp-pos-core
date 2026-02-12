@@ -1,5 +1,8 @@
 import type { DashboardOverview } from "../types";
+import { colors } from "../../../../ui/design-system/tokens/colors";
 import { KpiCard } from "./KpiCard";
+
+const theme = colors.modes.dashboard;
 
 interface OperationStateCardProps {
   loading: boolean;
@@ -23,9 +26,9 @@ export function OperationStateCard({
   return (
     <div
       style={{
-        backgroundColor: "#ffffff",
+        backgroundColor: theme.surface.layer1,
         borderRadius: 12,
-        border: "1px solid #e5e7eb",
+        border: `1px solid ${theme.border.subtle}`,
         padding: "18px 20px",
       }}
     >
@@ -42,7 +45,7 @@ export function OperationStateCard({
             fontSize: 14,
             fontWeight: 600,
             margin: 0,
-            color: "#111827",
+            color: theme.text.primary,
           }}
         >
           Estado de la operación
@@ -55,7 +58,7 @@ export function OperationStateCard({
                 onClick={onSeeAlerts}
                 style={{
                   fontSize: 12,
-                  color: "#7c3aed",
+                  color: theme.action.base,
                   background: "none",
                   border: "none",
                   cursor: "pointer",
@@ -71,7 +74,7 @@ export function OperationStateCard({
                 onClick={onSeeTasks}
                 style={{
                   fontSize: 12,
-                  color: "#7c3aed",
+                  color: theme.action.base,
                   background: "none",
                   border: "none",
                   cursor: "pointer",

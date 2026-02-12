@@ -8,6 +8,12 @@
  */
 
 export const CONFIG = {
+  // ─── InsForge (Production BaaS) ─────────────────────────────
+  /** InsForge project URL. When set, InsForge is the active backend. */
+  INSFORGE_URL: import.meta.env.VITE_INSFORGE_URL || "",
+  /** InsForge anonymous/public key for client-side access. */
+  INSFORGE_ANON_KEY: import.meta.env.VITE_INSFORGE_ANON_KEY || "",
+
   // API (Web Module)
   API_BASE: import.meta.env.VITE_API_BASE || "http://localhost:4320",
 
@@ -83,7 +89,7 @@ export const CONFIG = {
 
   /**
    * ALLOW_STAFF_ROLE_QUERY — Permite definir role do AppStaff via query ?role= (abas paralelas por papel).
-   * true: DEMO, PILOT, LOCAL; false em produção desativa leitura de ?role= (role só por login/tab).
+   * true: TRIAL, PILOT, LOCAL; false em produção desativa leitura de ?role= (role só por login/tab).
    * Ref: APPSTAFF_RUNTIME_MODEL.md
    */
   ALLOW_STAFF_ROLE_QUERY:

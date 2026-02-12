@@ -19,14 +19,15 @@ export default function StaffModule() {
   const { runtime } = useRestaurantRuntime();
   const [searchParams] = useSearchParams();
 
-  // 🔒 ARQUITETURA LOCKED: Staff-style browser tab title for isolated tool context
-  // Ver: E2E_SOVEREIGN_NAVIGATION_VALIDATION.md
+  // Identity Layer: tab title = restaurante protagonista (docs/design/IDENTITY_LAYER_CONTRACT.md)
   useEffect(() => {
-    document.title = "ChefIApp POS — Staff";
+    document.title = identity.name
+      ? `${identity.name} — Staff`
+      : "ChefIApp POS — Staff";
     return () => {
       document.title = "ChefIApp POS";
     };
-  }, []);
+  }, [identity.name]);
 
   // Full-screen real (APPSTAFF_HOME_LAUNCHER_CONTRACT): scroll só dentro do conteúdo, nunca da página
   useEffect(() => {
@@ -41,9 +42,9 @@ export default function StaffModule() {
 
   const loading = authLoading || identity.loading || runtime.loading;
   const restaurantId = identity.id || getTabIsolated("chefiapp_restaurant_id");
-  // Role EXCLUSIVAMENTE da sessão em fluxo canónico; ?role= em demo ou debug (permite testar visibilidade por papel)
+  // Role EXCLUSIVAMENTE da sessão em fluxo canónico; ?role= em trial ou debug (permite testar visibilidade por papel)
   const roleParam =
-    CONFIG.ALLOW_STAFF_ROLE_QUERY && (isDebugMode() || RUNTIME.isDemo)
+    CONFIG.ALLOW_STAFF_ROLE_QUERY && (isDebugMode() || RUNTIME.isTrial)
       ? searchParams.get("role")
       : null;
   const initialRole: StaffRole | undefined =

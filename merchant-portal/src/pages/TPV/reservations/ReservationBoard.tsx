@@ -298,6 +298,8 @@ export default function ReservationBoard({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  /** True when gm_reservations table does not exist in Core (42P01). */
+  const [tableUnavailable, setTableUnavailable] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -316,8 +318,19 @@ export default function ReservationBoard({
         .order("reservation_time", { ascending: true });
 
       if (error) {
-        console.error("[ReservationBoard] fetch error:", error);
+        const msg = (error.message ?? "").toLowerCase();
+        const isTableMissing =
+          error.code === "42P01" ||
+          /relation.*does not exist|does not exist.*relation/.test(msg);
+        if (isTableMissing) {
+          setTableUnavailable(true);
+          setReservations([]);
+        } else {
+          setTableUnavailable(false);
+          console.error("[ReservationBoard] fetch error:", error);
+        }
       } else {
+        setTableUnavailable(false);
         setReservations((data as ReservationRow[]) || []);
       }
     } catch (err) {
@@ -554,17 +567,21 @@ export default function ReservationBoard({
 
         <button
           onClick={() => {
+            if (tableUnavailable) return;
             setEditingId(null);
             setShowForm((p) => !p);
           }}
+          disabled={tableUnavailable}
           style={{
             padding: "8px 16px",
             fontSize: 13,
             fontWeight: 600,
             border: "none",
             borderRadius: 8,
-            cursor: "pointer",
-            backgroundColor: colors.action.base,
+            cursor: tableUnavailable ? "not-allowed" : "pointer",
+            backgroundColor: tableUnavailable
+              ? colors.border.subtle
+              : colors.action.base,
             color: "#fff",
           }}
         >
@@ -614,6 +631,24 @@ export default function ReservationBoard({
             }}
           >
             Carregando reservas...
+          </div>
+        ) : tableUnavailable ? (
+          <div
+            style={{
+              textAlign: "center",
+              padding: 60,
+              color: colors.text.secondary,
+            }}
+          >
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🔧</div>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
+              Reservas indisponíveis
+            </div>
+            <div style={{ fontSize: 13 }}>
+              A tabela <code>gm_reservations</code> não existe no Core. Aplicar
+              migrations em <code>docker-core/schema/migrations</code> (ex.{" "}
+              <code>20260209_reservations_tables.sql</code>).
+            </div>
           </div>
         ) : reservations.length === 0 ? (
           <div

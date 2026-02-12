@@ -36,7 +36,7 @@
 - ✅ Escopo claro (o que entra, o que não entra)
 - ✅ Pricing realista (R$ 199/mês básico)
 - ✅ Narrativa clara (diferencial técnico)
-- ✅ Materiais prontos (pitch, demo, site)
+- ✅ Materiais prontos (pitch, Demo Guide, site)
 
 ---
 
@@ -92,7 +92,7 @@
 ### Imediato (Até 20 de março)
 
 1. Identificar 5-10 restaurantes potenciais
-2. Agendar demos (30 min)
+2. Agendar Demo Guide (30 min)
 3. Validar pricing (R$ 99/mês early adopters)
 4. Onboarding (1-2 semanas)
 

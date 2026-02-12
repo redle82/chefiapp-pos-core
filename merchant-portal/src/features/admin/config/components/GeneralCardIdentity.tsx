@@ -54,9 +54,7 @@ export function GeneralCardIdentity() {
     (async () => {
       const { data: row, error } = await dockerCoreClient
         .from("gm_restaurants")
-        .select(
-          "id,name,type,country,phone,email,address,city,postal_code,state",
-        )
+        .select("*")
         .eq("id", restaurantId)
         .maybeSingle();
       if (cancelled || error || !row) {
@@ -210,7 +208,7 @@ export function GeneralCardIdentity() {
                 }
                 style={inputStyle}
               >
-                <option value="">Seleccione</option>
+                <option value="">Selecione</option>
                 {COUNTRIES.map((c) => (
                   <option key={c.value} value={c.value}>
                     {c.label}
@@ -219,7 +217,7 @@ export function GeneralCardIdentity() {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Teléfono</label>
+              <label style={labelStyle}>Telefone</label>
               <input
                 type="tel"
                 value={form.phone}
@@ -233,7 +231,7 @@ export function GeneralCardIdentity() {
           </div>
           <div style={gridRow}>
             <div>
-              <label style={labelStyle}>Correo electrónico</label>
+              <label style={labelStyle}>E-mail</label>
               <input
                 type="email"
                 value={form.email}
@@ -245,21 +243,21 @@ export function GeneralCardIdentity() {
               />
             </div>
             <div>
-              <label style={labelStyle}>Dirección</label>
+              <label style={labelStyle}>Morada</label>
               <input
                 type="text"
                 value={form.address}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, address: e.target.value }))
                 }
-                placeholder="Calle, número"
+                placeholder="Rua, número"
                 style={inputStyle}
               />
             </div>
           </div>
           <div style={gridRow}>
             <div>
-              <label style={labelStyle}>Ciudad</label>
+              <label style={labelStyle}>Cidade</label>
               <input
                 type="text"
                 value={form.city}
@@ -282,7 +280,7 @@ export function GeneralCardIdentity() {
             </div>
           </div>
           <div>
-            <label style={labelStyle}>Estado / región</label>
+            <label style={labelStyle}>Região</label>
             <input
               type="text"
               value={form.state}
@@ -299,7 +297,7 @@ export function GeneralCardIdentity() {
               disabled={saving}
               style={buttonStyle}
             >
-              {saving ? "Guardando…" : "Guardar"}
+              {saving ? "A guardar…" : "Guardar"}
             </button>
           </div>
         </div>

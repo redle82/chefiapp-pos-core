@@ -47,12 +47,12 @@ export async function setRestaurantStatus(
 }
 
 /**
- * Atualiza product_mode do restaurante (demo | pilot | live).
+ * Atualiza product_mode do restaurante (trial | pilot | live).
  * Transições são raras e contratuais; persistência no Core para sobreviver a refresh.
  */
 export async function setProductMode(
   restaurantId: string,
-  productMode: "demo" | "pilot" | "live",
+  productMode: "trial" | "pilot" | "live",
 ): Promise<{ error: string | null }> {
   const res = await dockerCoreClient
     .from("gm_restaurants")

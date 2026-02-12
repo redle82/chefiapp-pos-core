@@ -48,14 +48,16 @@ export function useSubscription() {
     try {
       // ANTI-SUPABASE §4: Subscription read ONLY via Core. If not Docker, fail explicit (no Supabase path).
       if (getBackendType() !== BackendType.docker) {
-        setError("Subscription requires Docker Core. Supabase domain fallback is forbidden.");
+        setError(
+          "Subscription requires Docker Core. Supabase domain fallback is forbidden.",
+        );
         setLoading(false);
         return;
       }
 
       // Docker Core: trial mock for Billing page; real subscription when Core exposes subscriptions table/RPC
       const mock: Subscription = {
-        subscription_id: "demo-trial",
+        subscription_id: "trial-access",
         restaurant_id: restaurantId ?? "",
         plan_id: "",
         plan_tier: "standard" as PlanTier,
@@ -80,17 +82,17 @@ export function useSubscription() {
 
   const createSubscription = async (
     planId: string,
-    startTrial: boolean = true
+    startTrial: boolean = true,
   ): Promise<Subscription> => {
     if (!restaurantId) throw new Error("Restaurant ID não encontrado");
     // ANTI-SUPABASE §4: Create subscription ONLY via Core. No Supabase functions.invoke.
     if (getBackendType() !== BackendType.docker) {
       throw new Error(
-        "Create subscription requires Docker Core. Supabase domain fallback is forbidden."
+        "Create subscription requires Docker Core. Supabase domain fallback is forbidden.",
       );
     }
     throw new Error(
-      'Use o botão "Ativar agora" na página de Billing (checkout via Core).'
+      'Use o botão "Ativar agora" na página de Billing (checkout via Core).',
     );
   };
 

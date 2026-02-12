@@ -5,6 +5,13 @@
  */
 
 export { BlockingScreen } from "./BlockingScreen";
+export { DeviceBlockedScreen } from "./DeviceBlockedScreen";
+export {
+  INVALID_OR_SEED_RESTAURANT_IDS,
+  hasOperationalRestaurant,
+  type OperationalRestaurantIdentity,
+  type OperationalRestaurantInput,
+} from "./operationalRestaurant";
 export {
   computePreflight,
   type PreflightBlocker,
@@ -18,11 +25,10 @@ export type {
   UiDirective,
 } from "./types";
 export {
-  hasOperationalRestaurant,
-  INVALID_OR_SEED_RESTAURANT_IDS,
-  type OperationalRestaurantIdentity,
-  type OperationalRestaurantInput,
-} from "./operationalRestaurant";
+  useDeviceGate,
+  type DeviceBlockedReason,
+  type UseDeviceGateResult,
+} from "./useDeviceGate";
 export {
   useOperationalReadiness,
   type UseOperationalReadinessResult,

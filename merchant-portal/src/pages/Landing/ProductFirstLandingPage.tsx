@@ -1,7 +1,7 @@
 /**
  * ProductFirstLandingPage — Landing = produto (Last.app style)
  *
- * "/" mostra o TPV de exemplo com overlay dismissível.
+ * "/" mostra o TPV em Free Trial com overlay dismissível.
  */
 
 import { useMemo, useState } from "react";
@@ -13,12 +13,13 @@ import { deriveLifecycle } from "../../core/lifecycle/Lifecycle";
 import { OSCopy } from "../../ui/design-system/sovereign/OSCopy";
 import { TPVMinimal } from "../TPVMinimal/TPVMinimal";
 
-const DEMO_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
+const TRIAL_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
 
-const demoRuntime: RestaurantRuntime = {
-  restaurant_id: DEMO_RESTAURANT_ID,
+const trialRuntime: RestaurantRuntime = {
+  restaurant_id: TRIAL_RESTAURANT_ID,
   mode: "onboarding",
-  productMode: "demo",
+  productMode: "trial",
+  dataMode: "trial",
   installed_modules: [],
   active_modules: [],
   plan: "basic",
@@ -27,14 +28,16 @@ const demoRuntime: RestaurantRuntime = {
   capabilities: {},
   setup_status: {},
   isPublished: false,
-  lifecycle: deriveLifecycle(DEMO_RESTAURANT_ID, false, false),
+  lifecycle: deriveLifecycle(TRIAL_RESTAURANT_ID, false, false),
   loading: false,
   error: null,
-  coreReachable: false,
+  coreReachable: true,
+  systemState: "TRIAL",
+  coreMode: "online",
 };
 
-const demoContextValue = {
-  runtime: demoRuntime,
+const trialContextValue = {
+  runtime: trialRuntime,
   refresh: async () => {},
   updateSetupStatus: async () => {},
   publishRestaurant: async () => {},
@@ -45,7 +48,7 @@ const demoContextValue = {
 export function ProductFirstLandingPage() {
   const navigate = useNavigate();
   const [overlayVisible, setOverlayVisible] = useState(true);
-  const value = useMemo(() => demoContextValue, []);
+  const value = useMemo(() => trialContextValue, []);
 
   return (
     <RestaurantRuntimeContext.Provider value={value}>
@@ -58,7 +61,7 @@ export function ProductFirstLandingPage() {
           color: "#fafafa",
         }}
       >
-        {/* Barra exemplo */}
+        {/* Barra Free Trial */}
         <div
           style={{
             padding: "12px 16px",
@@ -78,7 +81,7 @@ export function ProductFirstLandingPage() {
               color: "#818cf8",
             }}
           >
-            {OSCopy.demo.modoDemonstracao}
+            {OSCopy.trialGuide.badgeActive}
           </span>
           <div
             style={{
@@ -113,7 +116,7 @@ export function ProductFirstLandingPage() {
                 textDecoration: "none",
               }}
             >
-              {OSCopy.demo.operarRestaurante}
+              {OSCopy.trialGuide.createAccountOperate}
             </Link>
           </div>
         </div>
@@ -214,7 +217,7 @@ export function ProductFirstLandingPage() {
                       cursor: "pointer",
                     }}
                   >
-                    {OSCopy.landing.ctaVerSistema3Min}
+                    {OSCopy.trialGuide.exploreSystem}
                   </button>
                   <button
                     type="button"

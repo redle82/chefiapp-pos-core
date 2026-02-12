@@ -168,6 +168,7 @@ export async function readMenuCategories(
 
 /**
  * Lê produtos de um restaurante. Cache TTL 10s.
+ * CONFIG_RUNTIME_CONTRACT: só produtos com available=true e restaurant_id=X; Config Web é fonte de verdade (docs/contracts/CONFIG_RUNTIME_CONTRACT.md).
  */
 export async function readProducts(
   restaurantId: string,

@@ -22,11 +22,11 @@
 
 - Abrir `/`
 - **Confirmar:**
-  - TPV visível em modo demo
+  - TPV visível em modo trial
   - Overlay visível
   - Preço 79 €/mês
   - Botões "Começar agora" e "Explorar primeiro"
-  - Barra "Modo Demonstração"
+  - Barra "Modo Trial"
 
 ### 2) Explorar primeiro
 
@@ -35,7 +35,7 @@
   - Overlay desaparece
   - TPV continua utilizável
   - Criar 1 pedido simples
-  - Barra "Modo Demonstração" continua visível
+  - Barra "Modo Trial" continua visível
 
 ### 3) Começar agora
 
@@ -67,7 +67,7 @@
 - Abrir nova aba anónima
 - Repetir passos 1 → 3
 - **Confirmar:**
-  - Demo funciona sem sessão
+  - Trial funciona sem sessão
   - CTAs funcionam igual
 
 ---
@@ -76,7 +76,7 @@
 
 - Nenhum erro de useContext null
 - Navegação coerente: `/` → `/auth` → app
-- Demo totalmente utilizável sem login
+- Trial totalmente utilizável sem login
 - CTA leva sempre ao próximo passo correto
 
 ---

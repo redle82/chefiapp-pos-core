@@ -14,17 +14,17 @@ Sistema **ChefIApp POS Core** está em estado **PURE DOCKER** na camada de aplic
 
 ## ✅ O Que Está Funcionando
 
-| Componente          | Status         | Evidência                  |
-| ------------------- | -------------- | -------------------------- |
-| **App Layer**       | ✅ PURE DOCKER | Sem Supabase no runtime    |
-| **System Tree**     | ✅ Íntegro     | Governança explícita       |
+| Componente          | Status         | Evidência                   |
+| ------------------- | -------------- | --------------------------- |
+| **App Layer**       | ✅ PURE DOCKER | Sem Supabase no runtime     |
+| **System Tree**     | ✅ Íntegro     | Governança explícita        |
 | **Dashboard**       | ✅ Modo venda  | Copy e visual transformados |
 | **Landing Page**    | ✅ Criada      | Ponto de entrada comercial  |
-| **TPV v2**          | ✅ PURE DOCKER | Contratos preservados      |
-| **Tasks**           | ✅ Funcional   | Sistema nervoso automático |
-| **Testes Massivos** | ✅ Passando    | 7 suítes, 74 testes        |
-| **Documentação**    | ✅ Organizada  | DOC_INDEX.md criado        |
-| **Contratos**       | ✅ Explícitos  | STATE_PURE_DOCKER marcado  |
+| **TPV v2**          | ✅ PURE DOCKER | Contratos preservados       |
+| **Tasks**           | ✅ Funcional   | Sistema nervoso automático  |
+| **Testes Massivos** | ✅ Passando    | 7 suítes, 74 testes         |
+| **Documentação**    | ✅ Organizada  | DOC_INDEX.md criado         |
+| **Contratos**       | ✅ Explícitos  | STATE_PURE_DOCKER marcado   |
 
 ---
 
@@ -47,8 +47,8 @@ Sistema **ChefIApp POS Core** está em estado **PURE DOCKER** na camada de aplic
 
 ### Roteiros de Demo
 
-- **`docs/DEMO_SCRIPT_5MIN.md`** — Demo rápida (System Tree, Dashboard, TPV v2, Tasks)
-- **`docs/DEMO_SCRIPT_V1.md`** — Demo completa (30 min)
+- **`docs/DEMO_GUIDE_5MIN.md`** — Demo Guide rápida (System Tree, Dashboard, TPV v2, Tasks)
+- **`docs/DEMO_GUIDE_V1.md`** — Demo Guide completa (30 min)
 
 ### Referências
 
@@ -99,7 +99,7 @@ npm run test:massive
 
 ## 🚀 Próximos Passos (Opcional)
 
-1. **Rodar demos** usando `DEMO_SCRIPT_5MIN.md` ou `DEMO_SCRIPT_V1.md`
+1. **Rodar Demo Guides** usando `DEMO_GUIDE_5MIN.md` ou `DEMO_GUIDE_V1.md`
 2. **Testar Landing Page** — Acessar `http://localhost:5173/` e validar fluxo
 3. **Testar Dashboard Modo Venda** — Validar badges e redirecionamentos
 4. **Completar FASE 1 — Billing** (bloqueador) — 2-3 horas para desbloquear vendas

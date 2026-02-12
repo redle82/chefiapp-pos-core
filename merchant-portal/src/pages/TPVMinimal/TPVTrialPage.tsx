@@ -1,7 +1,7 @@
 /**
- * TPVDemoPage — TPV de exemplo (NAVIGATION_OPERATIONAL_CONTRACT Estado 3)
+ * TPVTrialPage — TPV em Free Trial com Demo Guide ativo
  *
- * Acessível por /op/tpv?mode=demo.
+ * Acessível por /op/tpv?mode=trial.
  */
 
 import { useMemo } from "react";
@@ -13,27 +13,31 @@ import { deriveLifecycle } from "../../core/lifecycle/Lifecycle";
 import { OSCopy } from "../../ui/design-system/sovereign/OSCopy";
 import { TPVMinimal } from "./TPVMinimal";
 
-const DEMO_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
+const TRIAL_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
 
-const demoRuntime: RestaurantRuntime = {
-  restaurant_id: DEMO_RESTAURANT_ID,
+const trialRuntime: RestaurantRuntime = {
+  restaurant_id: TRIAL_RESTAURANT_ID,
   mode: "onboarding",
-  productMode: "demo",
+  productMode: "trial",
+  dataMode: "trial",
   installed_modules: [],
   active_modules: [],
   plan: "basic",
   status: "onboarding",
+  billing_status: "trial",
   capabilities: {},
   setup_status: {},
   isPublished: false,
-  lifecycle: deriveLifecycle(DEMO_RESTAURANT_ID, false, false),
+  lifecycle: deriveLifecycle(TRIAL_RESTAURANT_ID, false, false),
   loading: false,
   error: null,
-  coreReachable: false,
+  coreReachable: true,
+  systemState: "TRIAL",
+  coreMode: "online",
 };
 
-const demoContextValue = {
-  runtime: demoRuntime,
+const trialContextValue = {
+  runtime: trialRuntime,
   refresh: async () => {},
   updateSetupStatus: async () => {},
   publishRestaurant: async () => {},
@@ -41,8 +45,8 @@ const demoContextValue = {
   setProductMode: () => {},
 };
 
-export function TPVDemoPage() {
-  const value = useMemo(() => demoContextValue, []);
+export function TPVTrialPage() {
+  const value = useMemo(() => trialContextValue, []);
 
   return (
     <RestaurantRuntimeContext.Provider value={value}>
@@ -74,7 +78,7 @@ export function TPVDemoPage() {
               color: "#818cf8",
             }}
           >
-            {OSCopy.demo.modoDemonstracao}
+            {OSCopy.trialGuide.badgeActive}
           </span>
           <div
             style={{
@@ -93,7 +97,7 @@ export function TPVDemoPage() {
                 textDecoration: "none",
               }}
             >
-              ← Voltar
+              {OSCopy.trialGuide.backToLanding}
             </Link>
             <Link
               to="/auth?mode=signup"
@@ -109,7 +113,7 @@ export function TPVDemoPage() {
                 textDecoration: "none",
               }}
             >
-              {OSCopy.demo.operarRestaurante}
+              {OSCopy.trialGuide.createAccountOperate}
             </Link>
           </div>
         </div>

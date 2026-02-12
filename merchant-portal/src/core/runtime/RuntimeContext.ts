@@ -1,10 +1,10 @@
 /**
- * RuntimeContext - Production vs Demo Mode Detection
+ * RuntimeContext - Production vs Trial Mode Detection
  *
  * Enforces PRODUCTION_READINESS_CONTRACT.md and exposes backend type.
  * - backendType: 'docker' | 'supabase' (SSOT from backendAdapter)
  * - Production mode: Mocks are FORBIDDEN
- * - Demo mode: Mocks are allowed
+ * - Trial mode: Mocks are allowed
  */
 
 import { getBackendType, type BackendType } from "../infra/backendAdapter";
@@ -14,7 +14,7 @@ import { isDevStableMode } from "./devStableMode";
 // TYPES
 // ============================================================================
 
-export type RuntimeMode = "demo" | "production";
+export type RuntimeMode = "trial" | "production";
 
 export type { BackendType };
 
@@ -22,7 +22,7 @@ export interface RuntimeContext {
   mode: RuntimeMode;
   backendType: BackendType;
   isProduction: boolean;
-  isDemo: boolean;
+  isTrial: boolean;
   devStableActive: boolean;
 }
 
@@ -36,21 +36,25 @@ export interface RuntimeContext {
  * Priority:
  * 1. VITE_RUNTIME_MODE env var (explicit)
  * 2. Production builds (NODE_ENV === 'production') → production
- * 3. Default → demo
+ * 3. Default → trial
  */
-function detectRuntimeMode(): RuntimeMode {
-  const env =
-    typeof process !== "undefined" ? process.env : ({} as NodeJS.ProcessEnv);
+export function getRuntimeModeFromEnv(env: NodeJS.ProcessEnv): RuntimeMode {
   // 1. Explicit override via env var
   const explicit = env.VITE_RUNTIME_MODE;
   if (explicit === "production") return "production";
-  if (explicit === "demo") return "demo";
+  if (explicit === "trial") return "trial";
 
   // 2. Production build defaults to production mode
   if (env.NODE_ENV === "production") return "production";
 
-  // 3. Development defaults to demo
-  return "demo";
+  // 3. Development defaults to trial
+  return "trial";
+}
+
+function detectRuntimeMode(): RuntimeMode {
+  const env =
+    typeof process !== "undefined" ? process.env : ({} as NodeJS.ProcessEnv);
+  return getRuntimeModeFromEnv(env);
 }
 
 // ============================================================================
@@ -63,7 +67,7 @@ export const RUNTIME: Readonly<RuntimeContext> = Object.freeze({
   mode: RUNTIME_MODE,
   backendType: getBackendType(),
   isProduction: RUNTIME_MODE === "production",
-  isDemo: RUNTIME_MODE === "demo",
+  isTrial: RUNTIME_MODE === "trial",
   devStableActive: isDevStableMode(),
 });
 
@@ -83,10 +87,10 @@ export const RUNTIME: Readonly<RuntimeContext> = Object.freeze({
  */
 export function assertNoMock(serviceName: string, isMock: boolean): void {
   if (!isMock) return;
-  if (RUNTIME.isDemo) {
-    // Allowed in demo mode, but log for visibility
+  if (RUNTIME.isTrial) {
+    // Allowed in trial mode, but log for visibility
     console.log(
-      `[RUNTIME] ⚠️ Mock active: ${serviceName} (allowed in demo mode)`
+      `[RUNTIME] ⚠️ Mock active: ${serviceName} (allowed in trial mode)`,
     );
     return;
   }
@@ -95,17 +99,17 @@ export function assertNoMock(serviceName: string, isMock: boolean): void {
   const message = `[PRODUCTION_VIOLATION] Mock usage forbidden: ${serviceName}`;
   console.error(`❌ ${message}`);
   console.error(
-    "Service attempted to use mock implementation in production mode."
+    "Service attempted to use mock implementation in production mode.",
   );
   console.error(
-    "This is a critical error that must be fixed before deployment."
+    "This is a critical error that must be fixed before deployment.",
   );
   throw new Error(message);
 }
 
 /**
  * Asserts that the system is running in production mode.
- * Use this for operations that should NEVER run in demo mode.
+ * Use this for operations that should NEVER run in trial mode.
  *
  * @param operationName - Human-readable name of the operation
  * @throws Error if not in production mode
@@ -113,7 +117,7 @@ export function assertNoMock(serviceName: string, isMock: boolean): void {
 export function assertProduction(operationName: string): void {
   if (RUNTIME.isProduction) return;
 
-  const message = `[DEMO_BLOCKED] ${operationName} is disabled in demo mode`;
+  const message = `[TRIAL_BLOCKED] ${operationName} is disabled in trial mode`;
   console.warn(`⚠️ ${message}`);
   throw new Error(message);
 }
@@ -123,7 +127,7 @@ export function assertProduction(operationName: string): void {
  */
 export function logRuntimeStatus(): void {
   const icon = RUNTIME.isProduction ? "🔴" : "🟢";
-  const modeLabel = RUNTIME.isProduction ? "PRODUCTION" : "DEMO";
+  const modeLabel = RUNTIME.isProduction ? "PRODUCTION" : "TRIAL";
   const stable = RUNTIME.devStableActive ? " [STABLE]" : "";
 
   console.log(`${icon} Runtime Mode: ${modeLabel}${stable}`);
@@ -143,5 +147,5 @@ export function logRuntimeStatus(): void {
 // ============================================================================
 
 export const isProduction = RUNTIME.isProduction;
-export const isDemo = RUNTIME.isDemo;
+export const isTrial = RUNTIME.isTrial;
 export const runtimeMode = RUNTIME.mode;

@@ -1,6 +1,6 @@
 # Desenvolvimento local — Core em baixo
 
-**Data:** 2026-02-01  
+**Data:** 2026-02-01
 **Objetivo:** Comportamento do merchant-portal quando o Docker Core não está a correr e como evitar loops/ruído na consola.
 
 ---
@@ -10,9 +10,9 @@
 Quando o **backend é Docker** e o **Core não está disponível** (ex.: não executaste `npm run docker:core:up`):
 
 1. **Banner:** O app mostra **"Core indisponível — na raiz do repo: `npm run docker:core:up`"** e o botão "Tentar novamente".
-2. **Bootstrap:** Em `/bootstrap` (ex.: "Simular Registo (Piloto)" na Auth), **não há loop** para login — o fluxo vai para **`/preview`** (modo demo) em vez de redirecionar para `/login`.
+2. **Bootstrap:** Em `/bootstrap` (ex.: "Simular Registo (Piloto)" na Auth), **não há loop** para login — o fluxo vai para **`/preview`** (modo trial) em vez de redirecionar para `/login`.
 3. **KDS:** O módulo KDS **não faz polling** a `gm_orders` quando o Core está em baixo (`coreReachable === false`), evitando 500 em loop na consola.
-4. **FlowGate:** Após timeout (15 s), o app renderiza na mesma; podes explorar a UI em modo demo.
+4. **FlowGate:** Após timeout (15 s), o app renderiza na mesma; podes explorar a UI em modo trial.
 
 ---
 

@@ -8,16 +8,13 @@
 
 import {
   colors,
-  space,
+  fontFamily,
   fontSize,
   fontWeight,
-  fontFamily,
+  space,
 } from "@chefiapp/core-design-system";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  useMenuState,
-  MENU_STATE_MESSAGES,
-} from "../../core/menu/MenuState";
+import { MENU_STATE_MESSAGES, useMenuState } from "../../core/menu/MenuState";
 import {
   canAccessPath,
   getConfigCopy,
@@ -25,7 +22,11 @@ import {
   useRoleOptional,
 } from "../../core/roles";
 import { ConfigItem } from "./ConfigItem";
-import type { ConfigSection, ConfigSectionConfig } from "./types";
+import type {
+  ConfigSection,
+  ConfigSectionConfig,
+  ConfigSectionGroup,
+} from "./types";
 
 // Re-export types for convenience
 export type { ConfigSection, ConfigSectionConfig };
@@ -35,15 +36,18 @@ const SECTIONS: ConfigSectionConfig[] = [
     id: "general",
     label: "Geral",
     icon: "🏢",
-    description: "Identidade, idioma, recibo, integrações",
+    description:
+      "Visão geral e atalhos para identidade, idioma, recibo e integrações",
     path: "/config/general",
+    group: "Basics",
   },
   {
     id: "ubicaciones",
-    label: "Ubicaciones",
+    label: "Locais",
     icon: "📍",
     description: "Locais operacionais, mesas, zonas",
     path: "/config/ubicaciones",
+    group: "Basics",
   },
   {
     id: "identity",
@@ -51,6 +55,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "🏢",
     description: "Nome, tipo, país",
     path: "/config/identity",
+    group: "Basics",
   },
   {
     id: "location",
@@ -58,6 +63,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "📍",
     description: "Endereço, mesas, zonas",
     path: "/config/location",
+    group: "Basics",
     children: [
       {
         id: "location" as ConfigSection,
@@ -79,6 +85,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "⏰",
     description: "Horários e turnos",
     path: "/config/schedule",
+    group: "Operação",
     children: [
       {
         id: "schedule" as ConfigSection,
@@ -100,6 +107,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "🍽️",
     description: "Produtos e receitas",
     path: "/menu-builder",
+    group: "Operação",
   },
   {
     id: "inventory",
@@ -107,6 +115,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "📦",
     description: "Ingredientes e quantidades",
     path: "/inventory-stock",
+    group: "Operação",
     children: [
       {
         id: "inventory" as ConfigSection,
@@ -128,6 +137,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "👥",
     description: "Funcionários e papéis",
     path: "/config/people",
+    group: "Operação",
     children: [
       {
         id: "people" as ConfigSection,
@@ -155,6 +165,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "💳",
     description: "Métodos de pagamento",
     path: "/config/payments",
+    group: "Comercial",
   },
   {
     id: "billing",
@@ -162,6 +173,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "📋",
     description: "Plano e assinatura",
     path: "/app/billing",
+    group: "Comercial",
   },
   {
     id: "publish",
@@ -169,6 +181,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "🚀",
     description: "Ativar TPV, KDS e presença online",
     path: "/app/publish",
+    group: "Publicação",
   },
   {
     id: "install",
@@ -176,13 +189,15 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "📲",
     description: "Web app instalável (Caixa e Cozinha)",
     path: "/app/install",
+    group: "Publicação",
   },
   {
     id: "integrations",
     label: "Integrações",
     icon: "🔌",
-    description: "TPV, delivery, etc.",
+    description: "Ligue TPV, delivery e outros serviços",
     path: "/config/integrations",
+    group: "Avançado",
   },
   {
     id: "modules",
@@ -190,6 +205,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "🧩",
     description: "Instale e gerencie módulos",
     path: "/config/modules",
+    group: "Avançado",
   },
   {
     id: "perception",
@@ -197,6 +213,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "📷",
     description: "Câmera + análise com IA",
     path: "/config/perception",
+    group: "Avançado",
   },
   {
     id: "status",
@@ -204,6 +221,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "🚀",
     description: "Publicação e status",
     path: "/config/status",
+    group: "Avançado",
   },
   {
     id: "entender-sistema",
@@ -211,6 +229,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     icon: "🧭",
     description: "Como tudo se conecta",
     path: "/auth",
+    group: "Outros",
   },
 ];
 
@@ -245,6 +264,28 @@ const MENU_STATE_ICON: Record<string, string> = {
   INCOMPLETE: "🟠",
   EMPTY: "⚪",
 };
+
+/** Ordem dos grupos na sidebar (CONFIG_WEB_UX). */
+const GROUP_ORDER: ConfigSectionGroup[] = [
+  "Basics",
+  "Operação",
+  "Comercial",
+  "Publicação",
+  "Avançado",
+  "Outros",
+];
+
+function sectionsByGroup(
+  sections: ConfigSectionConfig[],
+): Map<ConfigSectionGroup | "", ConfigSectionConfig[]> {
+  const map = new Map<ConfigSectionGroup | "", ConfigSectionConfig[]>();
+  for (const section of sections) {
+    const g = section.group ?? "";
+    if (!map.has(g)) map.set(g, []);
+    map.get(g)!.push(section);
+  }
+  return map;
+}
 
 export function ConfigSidebar() {
   const navigate = useNavigate();
@@ -287,10 +328,23 @@ export function ConfigSidebar() {
           marginBottom: space[4],
         }}
       >
-        <h2 style={{ margin: 0, fontSize: `${fontSize.xl}px`, fontWeight: fontWeight.bold, color: colors.textPrimary }}>
+        <h2
+          style={{
+            margin: 0,
+            fontSize: `${fontSize.xl}px`,
+            fontWeight: fontWeight.bold,
+            color: colors.textPrimary,
+          }}
+        >
           {configCopy.title}
         </h2>
-        <p style={{ margin: "4px 0 0", fontSize: `${fontSize.sm}px`, color: colors.textSecondary }}>
+        <p
+          style={{
+            margin: "4px 0 0",
+            fontSize: `${fontSize.sm}px`,
+            color: colors.textSecondary,
+          }}
+        >
           {configCopy.subtitle}
         </p>
         {/* MENU_OPERATIONAL_STATE: indicador do menu (ícone + label curto). */}
@@ -306,12 +360,14 @@ export function ConfigSidebar() {
             color: colors.textSecondary,
           }}
         >
-          <span style={{ marginRight: 6 }}>{MENU_STATE_ICON[menuState] ?? "⚪"}</span>
+          <span style={{ marginRight: 6 }}>
+            {MENU_STATE_ICON[menuState] ?? "⚪"}
+          </span>
           {MENU_STATE_MESSAGES[menuState].short}
         </div>
       </div>
 
-      {/* Seções */}
+      {/* Seções agrupadas (CONFIG_WEB_UX) */}
       <div
         style={{
           display: "flex",
@@ -320,33 +376,75 @@ export function ConfigSidebar() {
           padding: `0 ${space[3]}px`,
         }}
       >
-        {sections.map((section) => {
-          const active = isActive(section.path);
-          const hasChildren = section.children && section.children.length > 0;
+        {(() => {
+          const byGroup = sectionsByGroup(sections);
+          const orderedGroups = [
+            ...GROUP_ORDER.filter(
+              (g) => byGroup.has(g) && (byGroup.get(g)?.length ?? 0) > 0,
+            ),
+            ...(byGroup.has("") ? ["" as const] : []),
+          ];
+          return orderedGroups.map((groupKey) => {
+            const groupSections = byGroup.get(groupKey) ?? [];
+            if (groupSections.length === 0) return null;
+            return (
+              <div
+                key={groupKey || "_ungrouped"}
+                style={{ marginBottom: space[3] }}
+              >
+                {groupKey && (
+                  <div
+                    style={{
+                      fontSize: `${fontSize.xs}px`,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.textSecondary,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      padding: `${space[2]}px 0 ${space[1]}px`,
+                      borderBottom: `1px solid ${colors.border}`,
+                      marginBottom: space[2],
+                    }}
+                  >
+                    {groupKey}
+                  </div>
+                )}
+                {groupSections.map((section) => {
+                  const active = isActive(section.path);
+                  const hasChildren =
+                    section.children && section.children.length > 0;
 
-          return (
-            <div key={section.id}>
-              <ConfigItem
-                config={section}
-                isActive={active}
-                onClick={() => handleClick(section)}
-              />
-              {hasChildren && active && (
-                <div style={{ paddingLeft: `${space[5]}px`, marginTop: space[1] }}>
-                  {section.children!.map((child) => (
-                    <ConfigItem
-                      key={child.path}
-                      config={child}
-                      isActive={isActive(child.path)}
-                      onClick={() => handleClick(child)}
-                      isChild
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+                  return (
+                    <div key={section.id}>
+                      <ConfigItem
+                        config={section}
+                        isActive={active}
+                        onClick={() => handleClick(section)}
+                      />
+                      {hasChildren && active && (
+                        <div
+                          style={{
+                            paddingLeft: `${space[5]}px`,
+                            marginTop: space[1],
+                          }}
+                        >
+                          {section.children!.map((child) => (
+                            <ConfigItem
+                              key={child.path}
+                              config={child}
+                              isActive={isActive(child.path)}
+                              onClick={() => handleClick(child)}
+                              isChild
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          });
+        })()}
       </div>
     </div>
   );

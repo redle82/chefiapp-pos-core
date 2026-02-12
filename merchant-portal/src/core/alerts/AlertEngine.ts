@@ -4,7 +4,7 @@
  * IMPORTANTE (PURE DOCKER / DEV_STABLE):
  * - Este módulo está marcado como `dataSource: "mock"` em `moduleCatalog`.
  * - Portanto, NÃO deve chamar Supabase nem RPCs reais.
- * - Implementação atual: store in-memory por sessão, suficiente para demo/UX.
+ * - Implementação atual: store in-memory por sessão, suficiente para trial/UX.
  *
  * OPERATIONAL_ALERTS_CONTRACT: severity "critical" = bloqueio ou perda de verdade;
  * não usar critical para estado normal (ex.: N pedidos activos). Usar info/warn/critical conforme contrato.
@@ -123,10 +123,10 @@ export class AlertEngine {
       severity?: AlertSeverity[];
       category?: AlertCategory[];
       limit?: number;
-    }
+    },
   ): Promise<Alert[]> {
     const all = Array.from(alertsStore.values()).filter(
-      (a) => a.restaurantId === restaurantId
+      (a) => a.restaurantId === restaurantId,
     );
 
     let filtered = all;
@@ -176,13 +176,13 @@ export class AlertEngine {
     alertId: string,
     newStatus: AlertStatus,
     actorId?: string,
-    notes?: string
+    notes?: string,
   ): Promise<void> {
     const existing = alertsStore.get(alertId);
     if (!existing) {
       console.warn(
         "[AlertEngine] updateStatus: alerta não encontrado",
-        alertId
+        alertId,
       );
       return;
     }
@@ -218,7 +218,7 @@ export class AlertEngine {
   async escalate(
     alertId: string,
     escalatedTo: string,
-    reason?: string
+    reason?: string,
   ): Promise<void> {
     const existing = alertsStore.get(alertId);
     if (!existing) {
@@ -271,7 +271,7 @@ export class AlertEngine {
   async createFromEvent(
     restaurantId: string,
     eventType: string,
-    eventData: Record<string, any>
+    eventData: Record<string, any>,
   ): Promise<string | null> {
     const alertMap: Record<
       string,

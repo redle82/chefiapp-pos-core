@@ -3,6 +3,14 @@
     "playwright": {
       "command": "npx",
       "args": ["@playwright/mcp@latest", "--headed"]
+    },
+    "insforge": {
+      "command": "npx",
+      "args": ["-y", "@insforge/mcp@latest"],
+      "env": {
+        "API_KEY": "ik_2296986148e156e83fc16ed4e2652f29",
+        "API_BASE_URL": "https://vv5bwyz6.us-east.insforge.app"
+      }
     }
   }
 }

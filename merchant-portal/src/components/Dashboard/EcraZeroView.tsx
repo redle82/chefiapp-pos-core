@@ -3,7 +3,7 @@
  *
  * Uma frase (juízo), uma causa (opcional), um gesto (botão).
  * Sem números, sem listas, sem escolha. ≤10 segundos para decidir.
- * CONTRATO_TRIAL_REAL: não mostrar "Dados de demonstração" como estado principal.
+ * CONTRATO_TRIAL_REAL: não mostrar "Dados de exemplo" como estado principal.
  */
 
 import type { DataMode } from "../../context/RestaurantRuntimeContext";
@@ -47,7 +47,7 @@ export interface EcraZeroViewProps {
   reason: string | null;
   loading?: boolean;
   onAction: () => void;
-  /** Reservado para fallback; CONTRATO_TRIAL_REAL: não mostrar "Dados de demonstração" como estado principal. */
+  /** Reservado para fallback; CONTRATO_TRIAL_REAL: não mostrar "Dados de exemplo" como estado principal. */
   dataMode?: DataMode;
 }
 

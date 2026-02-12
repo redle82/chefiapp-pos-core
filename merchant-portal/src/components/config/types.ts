@@ -15,11 +15,22 @@ export type ConfigSection =
   | "integrations"
   | "status";
 
+/** Grupos da árvore de config (CONFIG_WEB_UX). */
+export type ConfigSectionGroup =
+  | "Basics"
+  | "Operação"
+  | "Comercial"
+  | "Publicação"
+  | "Avançado"
+  | "Outros";
+
 export interface ConfigSectionConfig {
-  id: ConfigSection;
+  id: ConfigSection | string;
   label: string;
   icon: string;
   description?: string;
   path: string;
+  /** Grupo para separadores na sidebar (docs/contracts/CONFIG_WEB_UX.md). */
+  group?: ConfigSectionGroup;
   children?: ConfigSectionConfig[];
 }

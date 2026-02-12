@@ -63,8 +63,8 @@ import { PublicKDS } from "./pages/Public/PublicKDS";
 import { PublicWebPage } from "./pages/PublicWeb/PublicWebPage";
 import { TablePage } from "./pages/PublicWeb/TablePage";
 import { ShoppingListMinimal } from "./pages/ShoppingList/ShoppingListMinimal";
-import { TPVDemoPage } from "./pages/TPVMinimal/TPVDemoPage";
 import { TPVMinimal } from "./pages/TPVMinimal/TPVMinimal";
+import { TPVTrialPage } from "./pages/TPVMinimal/TPVTrialPage";
 import { TaskSystemMinimal } from "./pages/TaskSystem/TaskSystemMinimal";
 
 import { ManagementAdvisor } from "./components/onboarding/ManagementAdvisor";
@@ -98,7 +98,6 @@ import { UbicacionEditPage } from "./pages/Config/UbicacionEditPage";
 import { UbicacionesPage } from "./pages/Config/UbicacionesPage";
 import { EmployeeHomePage } from "./pages/Employee/HomePage";
 import { EmployeeKDSIntelligentPage } from "./pages/Employee/KDSIntelligentPage";
-import { EmployeeMentorPage } from "./pages/Employee/MentorPage";
 import { EmployeeOperationPage } from "./pages/Employee/OperationPage";
 import { EmployeeTasksPage } from "./pages/Employee/TasksPage";
 
@@ -108,6 +107,7 @@ import { FeaturesPage } from "./pages/Landing/FeaturesPage";
 import { LandingPage } from "./pages/Landing/LandingPage";
 import { PricingPage } from "./pages/Landing/PricingPage";
 import { ProductFirstLandingPage } from "./pages/Landing/ProductFirstLandingPage";
+import { LandingV2Page } from "./pages/LandingV2/LandingV2Page";
 import { LegalPrivacyPage } from "./pages/Legal/LegalPrivacyPage";
 import { LegalTermsPage } from "./pages/Legal/LegalTermsPage";
 import { ManagerAnalysisPage } from "./pages/Manager/AnalysisPage";
@@ -176,30 +176,36 @@ import { DashboardLayout } from "./features/admin/dashboard/components/Dashboard
 import { AdminPlaceholderPage } from "./features/admin/dashboard/pages/AdminPlaceholderPage";
 import { DashboardHomePage } from "./features/admin/dashboard/pages/DashboardHomePage";
 import { ModulesPage } from "./features/admin/modules/pages/ModulesPage";
+import { ObservabilityPage } from "./features/admin/observability/pages/ObservabilityPage";
 import { PaymentsLayout } from "./features/admin/payments/pages/PaymentsLayout";
 import { PayoutsPage } from "./features/admin/payments/pages/PayoutsPage";
 import { TransactionsPage } from "./features/admin/payments/pages/TransactionsPage";
 import { PromotionsPage } from "./features/admin/promotions/pages/PromotionsPage";
 import { AdminReportsOverview } from "./features/admin/reports/AdminReportsOverview";
+import { ReservationsOperationalPage } from "./features/admin/reservas/pages/ReservationsOperationalPage";
 
-/** NAVIGATION_OPERATIONAL_CONTRACT: quando mode=demo, TPV sem RequireOperational; senão app normal. */
+// Mentorship feature
+import { isTrialModeParam } from "./core/routing/TrialMode";
+import { MentorPage } from "./features/mentorship";
+
+/** NAVIGATION_OPERATIONAL_CONTRACT: quando mode=trial, TPV sem RequireOperational; senão app normal. */
 function TPVRouteHandler() {
   const [searchParams] = useSearchParams();
-  if (searchParams.get("mode") === "demo") {
-    return <TPVDemoPage />;
+  if (isTrialModeParam(searchParams)) {
+    return <TPVTrialPage />;
   }
   return <AppOperationalWrapper />;
 }
 
 // =============================================================================
-// PUBLIC TREE (SEM AUTH) — providers mínimos para / e /op/tpv?mode=demo
+// PUBLIC TREE (SEM AUTH) — providers mínimos para / e /op/tpv?mode=trial
 // =============================================================================
-const DEMO_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
-const demoRuntime: RestaurantRuntime = {
-  restaurant_id: DEMO_RESTAURANT_ID,
+const TRIAL_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
+const trialRuntime: RestaurantRuntime = {
+  restaurant_id: TRIAL_RESTAURANT_ID,
   mode: "onboarding",
-  productMode: "demo",
-  dataMode: "demo",
+  productMode: "trial",
+  dataMode: "trial",
   installed_modules: [],
   active_modules: [],
   plan: "basic",
@@ -208,22 +214,22 @@ const demoRuntime: RestaurantRuntime = {
   capabilities: {},
   setup_status: {},
   isPublished: false,
-  lifecycle: deriveLifecycle(DEMO_RESTAURANT_ID, false, false),
+  lifecycle: deriveLifecycle(TRIAL_RESTAURANT_ID, false, false),
   loading: false,
   error: null,
   coreReachable: true,
   systemState: "TRIAL",
   coreMode: "online",
 };
-const demoRuntimeContextValue = {
-  runtime: demoRuntime,
+const trialRuntimeContextValue = {
+  runtime: trialRuntime,
   refresh: async () => {},
   updateSetupStatus: async () => {},
   publishRestaurant: async () => {},
   installModule: async () => {},
   setProductMode: (_mode: any) => {},
 };
-const demoShiftValue = {
+const trialShiftValue = {
   isShiftOpen: true,
   isChecking: false,
   lastCheckedAt: new Date(),
@@ -233,21 +239,21 @@ const demoShiftValue = {
 
 function PublicProviders({ children }: { children: ReactNode }) {
   return (
-    <RestaurantRuntimeContext.Provider value={demoRuntimeContextValue}>
-      <ShiftContext.Provider value={demoShiftValue}>
+    <RestaurantRuntimeContext.Provider value={trialRuntimeContextValue}>
+      <ShiftContext.Provider value={trialShiftValue}>
         <GlobalUIStateProvider>{children}</GlobalUIStateProvider>
       </ShiftContext.Provider>
     </RestaurantRuntimeContext.Provider>
   );
 }
 
-/** /op/tpv: se mode=demo → TPV demo (árvore pública); senão → redirect /auth (árvore de app). */
-function TPVDemoGate() {
+/** /op/tpv: se mode=trial → TPV trial (árvore pública); senão → redirect /auth (árvore de app). */
+function TPVTrialGate() {
   const [searchParams] = useSearchParams();
-  if (searchParams.get("mode") === "demo") {
+  if (isTrialModeParam(searchParams)) {
     return (
       <PublicProviders>
-        <TPVDemoPage />
+        <TPVTrialPage />
       </PublicProviders>
     );
   }
@@ -264,16 +270,20 @@ function App() {
           {/* Public / Landing — canónica: / e /landing = mesma Landing Operacional */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/landing" element={<Navigate to="/" replace />} />
-          <Route path="/app/demo-tpv" element={<ProductFirstLandingPage />} />
+          <Route path="/v2" element={<LandingV2Page />} />
+          <Route path="/app/trial-tpv" element={<ProductFirstLandingPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/legal/terms" element={<LegalTermsPage />} />
           <Route path="/legal/privacy" element={<LegalPrivacyPage />} />
-          {/* Demo: redireccionado para auth (demo-guiado removido em refactor pós-freeze). */}
-          <Route path="/demo" element={<Navigate to="/auth" replace />} />
+          {/* Demo Guide: entrada pública para o TPV em modo Free Trial. */}
           <Route
-            path="/demo-guiado"
-            element={<Navigate to="/auth" replace />}
+            path="/trial"
+            element={<Navigate to="/op/tpv?mode=trial" replace />}
+          />
+          <Route
+            path="/trial-guide"
+            element={<Navigate to="/op/tpv?mode=trial" replace />}
           />
 
           {/* Auth / Onboarding Redirects */}
@@ -306,6 +316,9 @@ function App() {
           {/* Menu: catálogo visual de decisão (spec MENU_CATALOG_VISUAL_SPEC) */}
           <Route path="/menu" element={<MenuCatalogPage />} />
           <Route path="/menu-v2" element={<MenuCatalogPageV2 />} />
+
+          {/* Mentoria — acessível sem auth para dev/teste */}
+          <Route path="/mentor" element={<MentorPage />} />
 
           {/* App Content (Management/Operational) */}
           <Route path="/*" element={<AppOperationalWrapper />} />
@@ -751,7 +764,7 @@ function AppContentWithBilling() {
             path="/employee/mentor"
             element={
               <ManagementAdvisor>
-                <EmployeeMentorPage />
+                {/* <EmployeeMentorPage /> */}
               </ManagementAdvisor>
             }
           />
@@ -883,7 +896,13 @@ function AppContentWithBilling() {
           />
           <Route
             path="/admin/reservations"
-            element={<Navigate to="/dashboard" replace />}
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <ReservationsOperationalPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
           />
           <Route
             path="/admin/payments/list"
@@ -1096,6 +1115,16 @@ function AppContentWithBilling() {
             element={<Navigate to="/admin/reports/overview" replace />}
           />
           <Route
+            path="/admin/observability"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <ObservabilityPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
             path="/admin/devices"
             element={
               <ManagementAdvisor>
@@ -1142,7 +1171,7 @@ function AppContentWithBilling() {
             <Route path="usuarios" element={<UsuariosConfigPage />} />
             <Route path="dispositivos" element={<DispositivosConfigPage />} />
             <Route path="impresoras" element={<ImpresorasConfigPage />} />
-            <Route path="integraciones" element={<IntegracionesConfigPage />} />
+            <Route path="integrations" element={<IntegracionesConfigPage />} />
             <Route path="delivery" element={<DeliveryConfigPage />} />
             <Route
               path="delivery/plano-mesas"
@@ -1251,10 +1280,6 @@ function AppContentWithBilling() {
                 <AlertsDashboardPage />
               </ManagementAdvisor>
             }
-          />
-          <Route
-            path="/mentor"
-            element={<Navigate to="/dashboard" replace />}
           />
           <Route
             path="/purchases"

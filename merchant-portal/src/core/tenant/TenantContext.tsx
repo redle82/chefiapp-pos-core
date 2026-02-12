@@ -143,18 +143,18 @@ export function TenantProvider({ children }: TenantProviderProps) {
         }
 
         if (!session?.user?.id) {
-          // Bypass: mock tenant só com ?debug=1 e rota TPV/KDS ou demo
+          // Bypass: mock tenant só com ?debug=1 e rota TPV/KDS ou trial
           if (isDebugMode()) {
             const path =
               typeof window !== "undefined" ? window.location.pathname : "";
             const search =
               typeof window !== "undefined" ? window.location.search : "";
-            const isDemo = new URLSearchParams(search).get("demo") === "true";
+            const isTrial = new URLSearchParams(search).get("mode") === "trial";
             const targetTenantId = sealedTenantId || "mock-tenant-id";
 
             if (
               (sealed && sealedTenantId) ||
-              isDemo ||
+              isTrial ||
               path.includes("/tpv") ||
               path.includes("/kds")
             ) {

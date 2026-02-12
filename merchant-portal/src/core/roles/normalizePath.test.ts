@@ -2,7 +2,7 @@
  * Testes para normalização de path
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { normalizePath } from "./normalizePath";
 
 describe("normalizePath", () => {
@@ -28,6 +28,6 @@ describe("normalizePath", () => {
   });
 
   it("combina query, hash e trailing slash", () => {
-    expect(normalizePath("/tpv?demo=1#pos/")).toBe("/tpv");
+    expect(normalizePath("/tpv?trial=1#pos/")).toBe("/tpv");
   });
 });

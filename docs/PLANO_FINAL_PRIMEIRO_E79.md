@@ -25,9 +25,9 @@
 **Executar exatamente:**
 
 1. Abrir http://localhost:5175/
-2. Confirmar: TPV demo, Overlay, Preço 79€, CTAs visíveis
+2. Confirmar: TPV trial, Overlay, Preço 79€, CTAs visíveis
 3. Clicar "Explorar primeiro"
-4. Criar 1 pedido demo
+4. Criar 1 pedido trial
 5. Clicar "Começar agora"
 6. Confirmar navegação para /auth
 7. Confirmar sem crash / sem ecrã branco

@@ -25,7 +25,7 @@ export class DashboardService {
   static async getDailyMetrics(_restaurantId: string): Promise<DailyMetrics> {
     // PURE DOCKER / DEV_STABLE:
     // - Módulo `dashboard` está marcado como dataSource: "mock".
-    // - As métricas abaixo são um cenário estático, suficiente para demo/UX.
+    // - As métricas abaixo são um cenário estático, suficiente para trial/UX.
     return {
       totalSalesCents: 1545000, // 15,450.00
       totalOrders: 42,

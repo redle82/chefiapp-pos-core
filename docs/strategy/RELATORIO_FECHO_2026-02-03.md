@@ -45,7 +45,7 @@
 
 ## 5. Próximo passo
 
-**Executar o teste humano "Sábado à Noite"** com 2 restaurantes simulados (ou 1 restaurante fictício "La Última Ola" completo), seguindo [TESTE_HUMANO_SABADO_NOITE.md](./TESTE_HUMANO_SABADO_NOITE.md): Docker Core up, merchant-portal em http://localhost:5175, localStorage sem pilot/demo, dispositivos TPV + KDS + opcional QR; tarefas 1–10 com "onde clicar", "o que esperar", "se falhar anotar"; relatório final (Tarefa 10) com os 8 pontos do template.
+**Executar o teste humano "Sábado à Noite"** com 2 restaurantes simulados (ou 1 restaurante fictício "La Última Ola" completo), seguindo [TESTE_HUMANO_SABADO_NOITE.md](./TESTE_HUMANO_SABADO_NOITE.md): Docker Core up, merchant-portal em http://localhost:5175, localStorage sem pilot/trial, dispositivos TPV + KDS + opcional QR; tarefas 1–10 com "onde clicar", "o que esperar", "se falhar anotar"; relatório final (Tarefa 10) com os 8 pontos do template.
 
 ---
 

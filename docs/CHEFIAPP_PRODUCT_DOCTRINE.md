@@ -1,7 +1,7 @@
 # ChefIApp — Doutrina do Produto
 
-**Status:** CONTRATUAL  
-**Tipo:** Princípios imutáveis e identidade do sistema. Referência máxima acima do código.  
+**Status:** CONTRATUAL
+**Tipo:** Princípios imutáveis e identidade do sistema. Referência máxima acima do código.
 **Subordinado a:** [CHEFIAPP_SYSTEM_MAP.html](CHEFIAPP_SYSTEM_MAP.html) — mapa vivo; [DOC_INDEX.md](DOC_INDEX.md).
 
 ---
@@ -23,13 +23,13 @@ O ChefIApp é um **sistema operacional vivo para restaurantes**.
 
 Estes princípios não se revertem sem quebrar a identidade do sistema.
 
-| Princípio | Regra |
-| --------- | ----- |
-| Dashboard | Observa, não executa. Mostra estado; não é o lugar da execução operacional. |
-| Configuração | É contínua, não fluxo. Sem wizard; sem onboarding teatral. Setup em qualquer ordem. |
-| Operação | Nunca para por causa de backend. Runtime operacional local com persistência temporária. |
-| Core e App | Core valida. App executa. A operação não para. |
-| Tarefa | É pulso, não checklist. Unidade mínima do sistema; coordena preparo, atendimento, limpeza, abertura/fecho, consistência. |
+| Princípio    | Regra                                                                                                                    |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Dashboard    | Observa, não executa. Mostra estado; não é o lugar da execução operacional.                                              |
+| Configuração | É contínua, não fluxo. Sem wizard; sem onboarding teatral. Setup em qualquer ordem.                                      |
+| Operação     | Nunca para por causa de backend. Runtime operacional local com persistência temporária.                                  |
+| Core e App   | Core valida. App executa. A operação não para.                                                                           |
+| Tarefa       | É pulso, não checklist. Unidade mínima do sistema; coordena preparo, atendimento, limpeza, abertura/fecho, consistência. |
 
 **Frase-chave:** O sistema é único no **contrato**, não no runtime. Contrato único (tipos de ação, regras, permissões); runtimes múltiplos (garçom, cozinha, dono) obedecem às mesmas regras sem depender do mesmo pulso.
 
@@ -51,10 +51,10 @@ Qualquer proposta que viole isto não entra.
 
 ## 4. Diferença para outros sistemas
 
-| Sistema | Foco |
-| ------- | ----- |
-| GloriaFood | Pedidos e entrega. |
-| Square | Pagamentos e terminal. |
+| Sistema      | Foco                                                                                                       |
+| ------------ | ---------------------------------------------------------------------------------------------------------- |
+| GloriaFood   | Pedidos e entrega.                                                                                         |
+| Square       | Pagamentos e terminal.                                                                                     |
 | **ChefIApp** | **Disciplina operacional humana.** Tarefas como pulso; ritmo; saúde do restaurante; operação que não para. |
 
 O ChefIApp não compite em “quantas features”. Compete em “o restaurante funciona como organismo”.
@@ -117,9 +117,9 @@ Evolução dentro das leis = permitida. Violação das leis = rejeitada.
 
 Estas specs tratam partes do produto como **produto real** (conceito, arquitetura, decisões críticas), não como “ideia bonita”.
 
-| Especificação | O que define |
-| -------------- | ------------ |
-| **[architecture/MENU_CATALOG_VISUAL_SPEC.md](architecture/MENU_CATALOG_VISUAL_SPEC.md)** | Menu digital = catálogo visual de decisão (Netflix + Apple Store). Conceito funcional, modelo de dados, layout, UX, tablet, editor, anti-patterns. Frase-guia: *O cliente decide com os olhos antes de decidir com a cabeça.* |
+| Especificação                                                                            | O que define                                                                                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[architecture/MENU_CATALOG_VISUAL_SPEC.md](architecture/MENU_CATALOG_VISUAL_SPEC.md)** | Menu digital = catálogo visual de decisão (Netflix + Apple Store). Conceito funcional, modelo de dados, layout, UX, tablet, editor, anti-patterns. Frase-guia: _O cliente decide com os olhos antes de decidir com a cabeça._ |
 
 ---
 
@@ -129,7 +129,7 @@ Estas specs tratam partes do produto como **produto real** (conceito, arquitetur
 - [architecture/TASK_SYSTEM_MATRIX_AND_RITUAL.md](architecture/TASK_SYSTEM_MATRIX_AND_RITUAL.md) — corpo do Task System: matriz por papel, momento do turno, tipos, relação com alertas/saúde, XP.
 - [DOC_INDEX.md](DOC_INDEX.md) — índice da documentação contratual.
 - [ROTAS_E_CONTRATOS.md](architecture/ROTAS_E_CONTRATOS.md) — rota → contrato.
-- [APPSTAFF_RUNTIME_MODEL.md](architecture/APPSTAFF_RUNTIME_MODEL.md) — runtime autónomo; Core opcional em demo/pilot.
+- [APPSTAFF_RUNTIME_MODEL.md](architecture/APPSTAFF_RUNTIME_MODEL.md) — runtime autónomo; Core opcional em trial/pilot.
 - [architecture/MENU_CATALOG_VISUAL_SPEC.md](architecture/MENU_CATALOG_VISUAL_SPEC.md) — menu digital como catálogo visual de decisão (produto real).
 
 **Última atualização:** 2026-02-06

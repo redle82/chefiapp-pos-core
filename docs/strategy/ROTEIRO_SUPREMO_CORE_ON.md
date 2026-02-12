@@ -41,7 +41,7 @@ O sistema não estava desorganizado — estava honesto mas ainda não pedagógic
 ✔️ Health do Core = UP; PostgREST responde; dashboard mostra Core online.
 
 **2. Abrir Landing**
-URL `/`. ✔️ CTA "Testar / Demo", "Ver sistema a funcionar"; nada estranho.
+URL `/`. ✔️ CTA "Testar / Trial", "Ver sistema a funcionar"; nada estranho.
 
 **3. Auth**
 Ir para `/auth` → "Simular Registo (Piloto)". ✔️ Redireciona para `/bootstrap`.
@@ -110,4 +110,4 @@ O teste **PASSA** se:
 - Core é autoridade em tudo (ordens, itens, status).
 - Nenhum redirect parece bug; nenhuma tela parece "quebrada".
 
-Se isso passa, o sistema **está operacional**. Não é demo. Não é conceito. É OS de restaurante.
+Se isso passa, o sistema **está operacional**. Não é trial. Não é conceito. É OS de restaurante.

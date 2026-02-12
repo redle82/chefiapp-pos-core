@@ -18,7 +18,7 @@ export const FAQ = () => {
     },
     {
       q: "Minha equipe não sabe usar computador.",
-      a: "Interface mobile-first. Funciona no celular. A equipa só vê o que precisa fazer — quando precisa fazer. Na demo você decide se é simples o suficiente.",
+      a: "Interface mobile-first. Funciona no celular. A equipa só vê o que precisa fazer — quando precisa fazer. No Free Trial com Demo Guide você decide se é simples o suficiente.",
     },
     {
       q: "Quanto custa depois do período de teste?",

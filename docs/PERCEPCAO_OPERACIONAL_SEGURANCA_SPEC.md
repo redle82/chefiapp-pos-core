@@ -339,5 +339,5 @@ Todas as opções A–D estão documentadas. Esta spec é a referência única d
 - [PERCEPCAO_UI_SPEC.md](PERCEPCAO_UI_SPEC.md) — UI (config + dashboard)
 - [PERCEPCAO_ARQUITETURA_EDGE.md](PERCEPCAO_ARQUITETURA_EDGE.md) — Arquitetura edge-first (Europa-ready)
 - [CHEFIAPP_AI_GATEWAY_SPEC.md](CHEFIAPP_AI_GATEWAY_SPEC.md) — Uma IA, vários papéis (gateway + intents)
-- [MODO_DEMO_EXPLICATIVO_SPEC.md](MODO_DEMO_EXPLICATIVO_SPEC.md) — Copy e integração no Demo
+- [MODO_TRIAL_EXPLICATIVO_SPEC.md](MODO_TRIAL_EXPLICATIVO_SPEC.md) — Copy e integração no Demo Guide
 - [LANCAMENTO_SISTEMA_OPERACIONAL_RESTAURANTES.md](LANCAMENTO_SISTEMA_OPERACIONAL_RESTAURANTES.md) — Contexto de lançamento

@@ -7,8 +7,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useOnboarding } from "../../../context/OnboardingContext";
-import { useBootstrapState } from "../../../hooks/useBootstrapState";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
+import { useBootstrapState } from "../../../hooks/useBootstrapState";
 
 export function PublishSection() {
   const { state, canPublish } = useOnboarding();
@@ -159,9 +159,7 @@ export function PublishSection() {
       <button
         onClick={handlePublish}
         disabled={
-          !canPublish() ||
-          isPublishing ||
-          bootstrap.coreStatus !== "online"
+          !canPublish() || isPublishing || bootstrap.coreStatus !== "online"
         }
         style={{
           width: "100%",
@@ -176,9 +174,7 @@ export function PublishSection() {
           border: "none",
           borderRadius: "8px",
           cursor:
-            canPublish() &&
-            bootstrap.coreStatus === "online" &&
-            !isPublishing
+            canPublish() && bootstrap.coreStatus === "online" && !isPublishing
               ? "pointer"
               : "not-allowed",
           transition: "all 0.2s ease",
@@ -187,10 +183,10 @@ export function PublishSection() {
         {isPublishing
           ? "Publicando..."
           : bootstrap.coreStatus !== "online"
-            ? "Core indisponível — aguarde"
-            : canPublish()
-              ? "🚀 Publicar Restaurante"
-              : "Complete as seções obrigatórias"}
+          ? "Core indisponível — aguarde"
+          : canPublish()
+          ? "🚀 Publicar Restaurante"
+          : "Complete as seções obrigatórias"}
       </button>
 
       {!canPublish() && (
@@ -471,7 +467,7 @@ export function PublishSection() {
             <span>Reservas</span>
           </button>
 
-          {/* Como tudo se conecta (MODO_DEMO_EXPLICATIVO_SPEC) */}
+          {/* Como tudo se conecta (TRIAL_GUIDE_SPEC) */}
           <button
             onClick={() => navigate("/auth")}
             style={{

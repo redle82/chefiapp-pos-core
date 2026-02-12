@@ -78,6 +78,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { Order } from "../../../core/contracts";
+import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import { useKitchenReflex } from "../../../intelligence/nervous-system/useKitchenReflex";
 import { EmptyState } from "../../../ui/design-system/EmptyState";
 import {
@@ -502,6 +503,7 @@ export default function KitchenDisplay({
     initAudio,
   } = useNewOrderAlerts(orders);
 
+  const { identity } = useRestaurantIdentity();
   const [actionError, setActionError] = useState<string | null>(null);
   const [loadingOrderId, setLoadingOrderId] = useState<string | null>(null);
 
@@ -536,15 +538,17 @@ export default function KitchenDisplay({
   // 🔴 RISK: Se ambos network e realtime reportam OK mas pedidos não chegam,
   // o polling de 30s em OrderContextReal é a última linha de defesa.
 
-  // Staff-style browser tab title for isolated tool context
+  // Identity Layer: tab title = restaurante protagonista (offline mantém aviso)
   useEffect(() => {
     document.title = isKDSEffectivelyOffline
       ? "⚠️ OFFLINE — KDS"
-      : "ChefIApp POS — KDS";
+      : identity.name
+        ? `${identity.name} — KDS`
+        : "ChefIApp POS — KDS";
     return () => {
       document.title = "ChefIApp POS";
     };
-  }, [isKDSEffectivelyOffline]);
+  }, [isKDSEffectivelyOffline, identity.name]);
 
   // === KDS HARDENING: Limpar erro após 5 segundos ===
   useEffect(() => {

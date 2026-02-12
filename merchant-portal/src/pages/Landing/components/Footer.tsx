@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../core/auth/useAuth";
+import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppSignature";
 import { OSCopy } from "../../../ui/design-system/sovereign/OSCopy";
 
 const WHATSAPP_NUMBER =
@@ -26,16 +27,19 @@ export const Footer = () => {
             Pronto para testar sua operação <br />
             <span className="text-[var(--color-primary)]">no mundo real?</span>
           </h2>
-          <p className="text-[var(--text-secondary)] text-lg mb-8 max-w-2xl mx-auto space-y-2 leading-relaxed">
+          <p className="text-[var(--text-secondary)] text-lg mb-4 max-w-2xl mx-auto space-y-2 leading-relaxed">
             <span className="block">
               O tempo de montar o menu, ligar o TPV e pôr a equipa a trabalhar é
               o tempo de aquecer a chapa. Enquanto um ovo frita, o menu já está
               online.
             </span>
           </p>
+          <p className="text-[var(--text-tertiary)] text-sm max-w-xl mx-auto mb-8 leading-relaxed">
+            {OSCopy.landing.whatHappensNext}
+          </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center flex-wrap">
             <Link
-              to={hasSession ? "/app/dashboard" : "/auth"}
+              to={hasSession ? "/admin" : "/auth"}
               className="w-full sm:w-auto px-10 py-5 bg-primary hover:opacity-90 text-[var(--text-inverse)] font-extrabold text-lg rounded-xl shadow-[var(--elevation-primary)] transition-all transform hover:-translate-y-1"
             >
               {hasSession
@@ -44,10 +48,10 @@ export const Footer = () => {
             </Link>
             <span className="flex items-center gap-3 text-sm text-[var(--text-tertiary)]">
               <Link
-                to="/op/tpv?mode=demo"
+                to="/op/tpv?mode=trial"
                 className="font-medium hover:text-[var(--color-primary)] transition-colors"
               >
-                {OSCopy.landing.ctaVerDemonstracao}
+                {OSCopy.landing.ctaVerTrialGuide}
               </Link>
               <span className="text-[var(--text-disabled)]">·</span>
               <Link
@@ -74,7 +78,7 @@ export const Footer = () => {
 
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-[var(--text-tertiary)] transition-colors gap-4">
           <div className="flex flex-wrap gap-4 md:gap-8 items-center">
-            <span>© {new Date().getFullYear()} ChefIApp</span>
+            <span>© {new Date().getFullYear()} ChefIApp™</span>
             <span className="hidden md:inline text-[var(--text-disabled)]">
               •
             </span>
@@ -117,16 +121,12 @@ export const Footer = () => {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-center gap-3 text-xs text-[var(--text-tertiary)] font-mono">
-          <div className="flex items-center gap-2">
-            <img
-              src="/Logo Chefiapp.png"
-              alt="ChefIApp"
-              className="w-5 h-5 object-contain rounded-full opacity-70 grayscale hover:grayscale-0 transition-all"
-            />
-            <span className="font-bold tracking-widest text-[var(--text-tertiary)]">
-              CHEF<span className="text-[var(--color-primary)]">IA</span>PP™
-            </span>
-          </div>
+          <ChefIAppSignature
+            variant="full"
+            size="sm"
+            tone="light"
+            className="opacity-70"
+          />
 
           <a
             href="https://goldmonkey.studio"
@@ -134,13 +134,7 @@ export const Footer = () => {
             rel="noreferrer"
             className="group flex items-center gap-2 hover:text-[var(--color-primary)] transition-colors opacity-60 hover:opacity-100"
           >
-            <span>
-              Feito com{" "}
-              <span className="text-[var(--color-primary)] inline-block animate-pulse">
-                ⚡
-              </span>{" "}
-              por
-            </span>
+            <span>Feito por</span>
             <span className="font-bold tracking-tight text-[var(--text-secondary)] group-hover:text-[var(--color-primary)]">
               GOLDMONKEY.STUDIO
             </span>

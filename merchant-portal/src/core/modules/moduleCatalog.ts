@@ -12,7 +12,7 @@
  */
 
 export type DataSource = "mock" | "core";
-export type ModuleCapabilityMode = "demo" | "pilot" | "prod" | "evolving";
+export type ModuleCapabilityMode = "trial" | "pilot" | "prod" | "evolving";
 
 export interface ModuleCapabilityEntry {
   dataSource: DataSource;

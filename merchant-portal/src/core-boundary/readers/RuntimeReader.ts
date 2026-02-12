@@ -13,6 +13,7 @@ import {
   setTabIsolated,
 } from "../../core/storage/TabIsolatedStorage";
 import { dockerCoreClient } from "../docker-core/connection";
+import { Logger } from "../../core/logger";
 
 const RESTAURANT_CACHE_TTL_MS = 10_000; // 10 segundos
 let restaurantCache: {
@@ -26,7 +27,7 @@ let identityCache: {
   ts: number;
 } | null = null;
 
-export type CoreProductMode = "demo" | "pilot" | "live";
+export type CoreProductMode = "trial" | "pilot" | "live";
 
 /** billing_status: trial | active | past_due | canceled (SaaS). Fonte = gm_restaurants. */
 export type CoreBillingStatus = "trial" | "active" | "past_due" | "canceled";
@@ -85,7 +86,7 @@ const INVALID_OR_SEED_RESTAURANT_IDS = new Set([
  * Usado em getOrCreateRestaurantId para validar o ID guardado.
  */
 export async function restaurantExistsInCore(
-  restaurantId: string
+  restaurantId: string,
 ): Promise<boolean> {
   const { data, error } = await dockerCoreClient
     .from("gm_restaurants")
@@ -107,9 +108,9 @@ export async function fetchFirstRestaurantId(): Promise<string | null> {
     .order("created_at", { ascending: true });
 
   if (error) {
-    if (import.meta.env.DEV) {
-      console.warn("[RuntimeReader] fetchFirstRestaurantId:", error.message);
-    }
+    Logger.warn("[RuntimeReader] fetchFirstRestaurantId", {
+      error: error.message,
+    });
     return null;
   }
   const rows = Array.isArray(data) ? data : data ? [data] : [];
@@ -122,7 +123,7 @@ export async function fetchFirstRestaurantId(): Promise<string | null> {
  * Pilot: devolve mock quando restaurante foi criado por bypass (chefiapp_pilot_mock_restaurant).
  */
 export async function fetchRestaurant(
-  restaurantId: string
+  restaurantId: string,
 ): Promise<CoreRestaurantRow | null> {
   const now = Date.now();
   if (
@@ -161,21 +162,18 @@ export async function fetchRestaurant(
   const { data, error } = await dockerCoreClient
     .from("gm_restaurants")
     .select(
-      "id,name,slug,status,tenant_id,product_mode,billing_status,country,timezone,currency,locale,type,created_at,updated_at"
+      "id,name,slug,status,tenant_id,product_mode,billing_status,country,timezone,currency,locale,type,created_at,updated_at",
     )
     .eq("id", restaurantId)
     .maybeSingle();
 
   if (error) {
-    console.warn(
-      "[RuntimeReader] fetchRestaurant FAILED:",
-      error.message,
-      error.details,
-      error.hint
-    );
-    if (import.meta.env.DEV) {
-      console.warn("[RuntimeReader] fetchRestaurant error details:", error);
-    }
+    Logger.warn("[RuntimeReader] fetchRestaurant FAILED", {
+      restaurant_id: restaurantId,
+      error: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
     return null;
   }
   const result = data as CoreRestaurantRow | null;
@@ -189,7 +187,7 @@ export async function fetchRestaurant(
  * Pilot: devolve mock quando chefiapp_pilot_mock_restaurant.
  */
 export async function fetchRestaurantForIdentity(
-  restaurantId: string
+  restaurantId: string,
 ): Promise<CoreRestaurantIdentityRow | null> {
   const now = Date.now();
   if (
@@ -235,18 +233,16 @@ export async function fetchRestaurantForIdentity(
   const { data, error } = await dockerCoreClient
     .from("gm_restaurants")
     .select(
-      "id,name,slug,status,tenant_id,type,city,address,description,created_at,updated_at"
+      "id,name,slug,status,tenant_id,type,city,address,description,created_at,updated_at",
     )
     .eq("id", restaurantId)
     .maybeSingle();
 
   if (error) {
-    if (import.meta.env.DEV) {
-      console.warn(
-        "[RuntimeReader] fetchRestaurantForIdentity:",
-        error.message
-      );
-    }
+    Logger.warn("[RuntimeReader] fetchRestaurantForIdentity", {
+      restaurant_id: restaurantId,
+      error: error.message,
+    });
     return null;
   }
   const result = data as CoreRestaurantIdentityRow | null;
@@ -258,7 +254,7 @@ export async function fetchRestaurantForIdentity(
  * Lista módulos instalados (status = active) para o restaurante.
  */
 export async function fetchInstalledModules(
-  restaurantId: string
+  restaurantId: string,
 ): Promise<string[]> {
   const { data, error } = await dockerCoreClient
     .from("installed_modules")
@@ -267,9 +263,10 @@ export async function fetchInstalledModules(
     .eq("status", "active");
 
   if (error) {
-    if (import.meta.env.DEV) {
-      console.warn("[RuntimeReader] fetchInstalledModules:", error.message);
-    }
+    Logger.warn("[RuntimeReader] fetchInstalledModules", {
+      restaurant_id: restaurantId,
+      error: error.message,
+    });
     return [];
   }
   const rows = Array.isArray(data) ? data : [];
@@ -280,7 +277,7 @@ export async function fetchInstalledModules(
  * Busca status do onboarding (sections) do Core.
  */
 export async function fetchSetupStatus(
-  restaurantId: string
+  restaurantId: string,
 ): Promise<Record<string, boolean>> {
   const { data, error } = await dockerCoreClient
     .from("restaurant_setup_status")
@@ -348,7 +345,7 @@ export async function getOrCreateRestaurantId(): Promise<string | null> {
       // Limpar mock de pilot para este ID; evita que fetchRestaurant volte a devolver mock.
       try {
         const pilotMock = localStorage.getItem(
-          "chefiapp_pilot_mock_restaurant"
+          "chefiapp_pilot_mock_restaurant",
         );
         if (pilotMock) {
           const row = JSON.parse(pilotMock) as { id?: string };

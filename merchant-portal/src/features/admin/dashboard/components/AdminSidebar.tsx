@@ -1,4 +1,10 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
+import { colors } from "../../../../ui/design-system/tokens/colors";
+import { ChefIAppSignature } from "../../../../ui/design-system/sovereign/ChefIAppSignature";
+import { RestaurantHeader } from "../../../../ui/design-system/sovereign/RestaurantHeader";
+
+const theme = colors.modes.dashboard;
 
 type NavItem = {
   id: string;
@@ -32,6 +38,12 @@ const NAV_ITEMS: NavItem[] = [
   { id: "catalog", label: "Catálogo", to: "/admin/catalog", section: "top" },
   { id: "reports", label: "Reportes", to: "/admin/reports", section: "top" },
   {
+    id: "observability",
+    label: "Observabilidade",
+    to: "/admin/observability",
+    section: "top",
+  },
+  {
     id: "devices",
     label: "Tienda de dispositivos",
     to: "/admin/devices",
@@ -64,22 +76,36 @@ const CONFIG_ITEMS: { path: string; label: string }[] = [
 
 export function AdminSidebar() {
   const location = useLocation();
+  const { identity } = useRestaurantIdentity();
   const isConfig = location.pathname.startsWith("/admin/config");
 
   return (
     <aside
       style={{
         width: 248,
-        backgroundColor: "#ffffff",
-        borderRight: "1px solid #e5e7eb",
+        backgroundColor: theme.surface.layer1,
+        borderRight: `1px solid ${theme.border.subtle}`,
         padding: "20px 16px 16px",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "flex-start",
+        justifyContent: "space-between",
         gap: 0,
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1, minHeight: 0 }}>
+        <div
+          style={{
+            marginBottom: 16,
+            paddingLeft: 8,
+            color: theme.text.primary,
+          }}
+        >
+          <RestaurantHeader
+            name={identity.name}
+            logoUrl={identity.logoUrl}
+            size="sm"
+          />
+        </div>
         {isConfig ? (
           <>
             <NavLink
@@ -89,7 +115,7 @@ export function AdminSidebar() {
                 padding: "8px 10px",
                 borderRadius: 8,
                 fontSize: 12,
-                color: "#6b7280",
+                color: theme.text.secondary,
                 fontWeight: 500,
                 textDecoration: "none",
                 marginBottom: 4,
@@ -105,7 +131,7 @@ export function AdminSidebar() {
                 fontWeight: 600,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
-                color: "#9ca3af",
+                color: theme.text.tertiary,
               }}
             >
               Configuración
@@ -127,17 +153,6 @@ export function AdminSidebar() {
           </>
         ) : (
           <>
-            <div
-              style={{
-                marginBottom: 16,
-                paddingLeft: 8,
-                fontSize: 20,
-                fontWeight: 700,
-                letterSpacing: "-0.03em",
-              }}
-            >
-              Last.app-like
-            </div>
             <nav
               aria-label="Admin navigation"
               style={{ display: "flex", flexDirection: "column", gap: 4 }}
@@ -159,6 +174,15 @@ export function AdminSidebar() {
             )}
           </>
         )}
+      </div>
+      <div
+        style={{
+          marginTop: 16,
+          paddingTop: 12,
+          borderTop: `1px solid ${theme.border.subtle}`,
+        }}
+      >
+        <ChefIAppSignature variant="full" size="sm" tone="light" />
       </div>
     </aside>
   );
@@ -182,8 +206,8 @@ function AdminSidebarLink({
         padding: "8px 10px",
         borderRadius: 8,
         fontSize: 13,
-        color: isActive ? "#4c1d95" : "#4b5563",
-        backgroundColor: isActive ? "#ede9fe" : "transparent",
+        color: isActive ? theme.action.base : theme.text.secondary,
+        backgroundColor: isActive ? theme.action.base + "18" : "transparent",
         fontWeight: isActive ? 600 : 500,
         textDecoration: "none",
       })}

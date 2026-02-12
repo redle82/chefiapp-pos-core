@@ -38,8 +38,8 @@ export const OSCopy = {
     ctaEntrarSistema: "Entrar no sistema",
     ctaIrAoSistema: "Ir ao sistema",
     ctaOperar: "Operar meu restaurante",
-    ctaExplorarDemo: "Ver demonstração (3 min)",
-    ctaVerDemonstracao: "Ver demonstração",
+    ctaExplorarTrialGuide: "Ver Demo Guide (3 min)",
+    ctaVerTrialGuide: "Abrir Demo Guide",
     ctaVerSistema3Min: "Ver o sistema a funcionar (3 min)",
     ctaExplorarPrimeiro: "Explorar primeiro",
     ctaJaTenhoAcesso: "Já tenho acesso",
@@ -49,22 +49,48 @@ export const OSCopy = {
     pilotPriceCopy:
       "A fase piloto é gratuita durante 14 dias. Sem cartão, sem compromisso. Se fizer sentido, escolhes um plano depois.",
     pilotCtaPrimary: "Testar 14 dias no meu restaurante",
-    pilotCtaSecondary: "Agendar demonstração",
-    modoDemonstracao: "Modo: Demonstração",
+    pilotCtaSecondary: "Agendar Demo Guide",
+    modoTrial: "Modo: Free Trial",
     modoContaAtiva: "Modo: Conta ativa",
     badge: "CHEFIAPP™ OS",
     problemTitle: "🔥 Se você vive isto todos os dias...",
     problemSubtitle:
       "Você não precisa de mais um app. Você precisa de disciplina operacional.",
+    problemSubtitleHighlight: "Você precisa de disciplina operacional.",
+    /** Lista de dores (única fonte de verdade para Problem.tsx). */
+    problemItems: [
+      { title: "Turnos bagunçados", desc: "Ninguém sabe quem trabalhou quantas horas" },
+      { title: "Stock que some", desc: "Ingrediente acaba no meio do serviço" },
+      { title: "Tarefas esquecidas", desc: '"Esqueci de repor cerveja", "Ninguém limpou a cozinha"' },
+      { title: "Papel e planilha", desc: "Informação perdida, nada automatizado" },
+      { title: "Equipa perdida", desc: "Cada um pergunta o que fazer" },
+    ],
+    /** Porque falar connosco: piloto real, suporte, primeiro caso. */
+    whyContactUs:
+      "Piloto real com primeiro restaurante em produção (Sofia Gastrobar, Ibiza). Suporte directo por WhatsApp. Zero intermediários.",
+    /** O que acontece ao clicar no CTA principal. */
+    whatHappensNext:
+      "Clicas → entras no sistema → 14 dias grátis a operar → no dia 15 decides se ficas (79 €/mês) ou cancelas.",
     cycleTitle: "Um ciclo completo, sem intermediários.",
     audienceTitle: "Para quem é",
     audienceSubtitle: "Feito para quem leva a operação a sério.",
+    /** Prova social: primeiro restaurante em produção. */
+    proofSocialSofia: "Em teste real no Sofia Gastrobar, Ibiza.",
   },
   dashboard: {
     title: "Comando Central",
+    /** Identity Layer: título da página = "{restaurantName} — Comando Central". Fallback quando não há nome. */
+    pageTitle: "ChefIApp OS — Comando Central",
+    comandoCentral: "Comando Central",
     subtitle: "Visão Geral da Operação",
     operation: "Operação Agora",
     priority: "PRIORIDADE IMEDIATA",
+    /** Design Contract v1: copy declarativa. */
+    stateOfRoom: "Estado da sala",
+    stateOfSeats: "Estado dos asientos",
+    pulseOfOperation: "Pulso da operação",
+    errorLoad: "Não foi possível carregar os dados do Comando Central.",
+    retry: "Tentar novamente",
   },
   navigation: {
     dashboard: "Comando Central",
@@ -110,16 +136,17 @@ export const OSCopy = {
     permission: "Acesso Negado pelo Protocolo.",
     actionFailed: "Erro ao executar ação.",
   },
-  demo: {
-    explorarSistema: "Ver o sistema (exemplo 3 min)",
-    explorarTpvDemo: "Explorar TPV (exemplo)",
-    operarRestaurante: "Usar com meu restaurante",
-    modoDemo: "Exemplo",
-    modoDemonstracao: "Exemplo",
-    voltarLanding: "Voltar à landing",
-    voltarDemonstracao: "Voltar ao exemplo",
-    criarContaOperar: "Criar conta e operar de verdade",
-    ctaComecarAgoraTrial: "Começar agora (14 dias grátis)",
+  trialGuide: {
+    badgeActive: "Demo Guide Active",
+    exploreSystem: "Ver o sistema (guia 3 min)",
+    exploreTpv: "Explorar TPV (guia)",
+    startTrial: "Ativar Free Trial",
+    modeTrial: "Free Trial",
+    modeTrialLabel: "Modo: Free Trial",
+    backToLanding: "Voltar à landing",
+    backToGuide: "Voltar ao Demo Guide",
+    createAccountOperate: "Criar conta e operar de verdade",
+    ctaStartTrialNow: "Começar agora (14 dias grátis)",
   },
   research: {
     hubTitle: "RESEARCH HUB",

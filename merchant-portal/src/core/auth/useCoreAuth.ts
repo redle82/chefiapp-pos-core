@@ -1,5 +1,5 @@
 /**
- * Auth hook — Core (Docker) only. Keycloak + mock (demo/pilot). No Supabase.
+ * Auth hook — Core (Docker) only. Keycloak + mock (trial/pilot). No Supabase.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -19,7 +19,7 @@ export interface CoreAuthState {
 }
 
 /**
- * Hook unificado para autenticação. Backend único: Docker Core (Keycloak + mock demo/pilot).
+ * Hook unificado para autenticação. Backend único: Docker Core (Keycloak + mock trial/pilot).
  */
 export function useCoreAuth(): CoreAuthState {
   const [session, setSession] = useState<CoreSession | null>(null);
@@ -41,16 +41,16 @@ export function useCoreAuth(): CoreAuthState {
       };
     }
 
-    // Mock session: demo/pilot mode (persisted or via URL)
+    // Mock session: trial/pilot mode (persisted or via URL)
     if (typeof window !== "undefined") {
-      const isDemoUrl =
-        new URLSearchParams(window.location.search).get("demo") === "true";
-      const isDemoStored =
-        sessionStorage.getItem("chefiapp_demo_mode") === "true" ||
-        localStorage.getItem("chefiapp_demo_mode") === "true";
+      const isTrialUrl =
+        new URLSearchParams(window.location.search).get("mode") === "trial";
+      const isTrialStored =
+        sessionStorage.getItem("chefiapp_trial_mode") === "true" ||
+        localStorage.getItem("chefiapp_trial_mode") === "true";
       const isPilot = localStorage.getItem("chefiapp_pilot_mode") === "true";
 
-      if (isDemoUrl || isDemoStored || (isDebugMode() && isPilot)) {
+      if (isTrialUrl || isTrialStored || (isDebugMode() && isPilot)) {
         const PILOT_USER_UUID = "00000000-0000-0000-0000-000000000002";
         const mockUser: CoreUser = {
           id: PILOT_USER_UUID,

@@ -929,7 +929,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
                 }
               }}
               onCancel={() => setPaymentModalOrderId(null)}
-              isDemoMode={false}
+              isTrialMode={false}
             />
           );
         })()}

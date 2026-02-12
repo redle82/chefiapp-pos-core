@@ -1,6 +1,6 @@
 # Estratégia de Venda v1 — ChefIApp POS Core
 
-**Data:** 2026-01-26  
+**Data:** 2026-01-26
 **Status:** 🎯 DEFININDO
 
 ---
@@ -8,6 +8,7 @@
 ## 🎯 Objetivo
 
 Vender produto vendável (v1) para restaurantes reais, validando:
+
 - Valor percebido
 - Pricing realista
 - Processo de venda
@@ -18,17 +19,20 @@ Vender produto vendável (v1) para restaurantes reais, validando:
 ## 📊 Modelo de Pricing (v1)
 
 ### Plano Básico — R$ 199/mês
+
 - 1 restaurante
 - Até 50 mesas
 - Até 500 pedidos/mês
 - Suporte por email
 
 ### Plano Profissional — R$ 399/mês
+
 - 1 restaurante
 - Sem limites
 - Suporte prioritário
 
 ### Plano Grupo — R$ 299/mês por restaurante
+
 - 2-10 restaurantes
 - Multi-restaurante isolado
 - Suporte dedicado
@@ -44,8 +48,9 @@ Vender produto vendável (v1) para restaurantes reais, validando:
 **Objetivo:** Validar produto e pricing
 
 **Processo:**
+
 1. Identificar 5-10 restaurantes potenciais
-2. Demo focada (30 min)
+2. Demo Guide focado (30 min)
 3. Onboarding completo (1-2 semanas)
 4. Feedback estruturado (semanal)
 
@@ -60,8 +65,9 @@ Vender produto vendável (v1) para restaurantes reais, validando:
 **Objetivo:** Escalar com pricing realista
 
 **Processo:**
+
 1. Marketing focado (produção, não gestão)
-2. Demo padronizada
+2. Demo Guide padronizado
 3. Onboarding estruturado
 4. Suporte contínuo
 
@@ -74,12 +80,14 @@ Vender produto vendável (v1) para restaurantes reais, validando:
 ### O Que Vendemos
 
 **Não vendemos:**
+
 - ❌ Gestão genérica
 - ❌ Relatórios financeiros
 - ❌ Marketing/CRM
 - ❌ Integrações complexas
 
 **Vendemos:**
+
 - ✅ Sistema operacional de produção
 - ✅ Task Engine automático
 - ✅ Estoque conectado à operação
@@ -89,16 +97,19 @@ Vender produto vendável (v1) para restaurantes reais, validando:
 ### Diferencial Técnico
 
 **Task Engine:**
+
 - Gera tarefas automaticamente
 - Fecha tarefas automaticamente
 - Conecta menu + KDS + estoque + operação
 
 **Estoque Conectado:**
+
 - Consumo automático
 - Lista de compras automática
 - Loop fechado (compra → estoque → tarefa)
 
 **Menu como Contrato:**
+
 - Tempo de preparo obrigatório
 - Estação obrigatória
 - Base de tudo (KDS, Task Engine, Cliente)
@@ -110,12 +121,14 @@ Vender produto vendável (v1) para restaurantes reais, validando:
 ### 1. Prospecção
 
 **Canais:**
+
 - Indicações (rede de restaurantes)
 - Eventos do setor
 - Parcerias (fornecedores, consultores)
 - Marketing direto (focado em produção)
 
 **Perfil ideal:**
+
 - Restaurante médio (15-30 mesas)
 - Foco em qualidade (não fast food)
 - Problemas operacionais (atrasos, estoque)
@@ -123,20 +136,24 @@ Vender produto vendável (v1) para restaurantes reais, validando:
 
 ---
 
-### 2. Demo (30 minutos)
+### 2. Demo Guide (30 minutos)
 
 **Foco:**
+
 1. **Task Engine** (5 min)
+
    - Mostrar tarefas automáticas
    - Mostrar fechamento automático
    - Explicar valor operacional
 
 2. **KDS** (10 min)
+
    - Mostrar agrupamento por estação
    - Mostrar timers por item
    - Mostrar alertas de atraso
 
 3. **Estoque + Lista de Compras** (10 min)
+
    - Mostrar estoque conectado
    - Mostrar lista automática
    - Mostrar confirmação de compra
@@ -152,17 +169,20 @@ Vender produto vendável (v1) para restaurantes reais, validando:
 ### 3. Onboarding (1-2 semanas)
 
 **Semana 1: Setup**
+
 - Configurar restaurante
 - Importar/criar menu
 - Configurar estoque inicial
 - Treinar equipe (KDS, Task System)
 
 **Semana 2: Operação Assistida**
+
 - Suporte diário
 - Ajustes rápidos
 - Validação de uso
 
 **Semana 3+: Independência**
+
 - Suporte sob demanda
 - Validação de satisfação
 
@@ -171,11 +191,13 @@ Vender produto vendável (v1) para restaurantes reais, validando:
 ### 4. Suporte
 
 **Níveis:**
+
 - **Email:** Resposta em 24h (Básico)
 - **Prioritário:** Resposta em 4h (Profissional)
 - **Dedicado:** Resposta em 1h (Grupo)
 
 **Canais:**
+
 - Email (suporte@chefiapp.com)
 - Chat (futuro)
 - Telefone (Grupo/Franquia)
@@ -187,12 +209,13 @@ Vender produto vendável (v1) para restaurantes reais, validando:
 ### Cenário Conservador
 
 **Ano 1 (2026):**
+
 - Q1: 3 restaurantes × R$ 99/mês = R$ 297/mês
 - Q2: 10 restaurantes × R$ 199/mês = R$ 1.990/mês
 - Q3: 25 restaurantes × R$ 199/mês = R$ 4.975/mês
 - Q4: 50 restaurantes × R$ 199/mês = R$ 9.950/mês
 
-**Receita anual:** ~R$ 50.000  
+**Receita anual:** ~R$ 50.000
 **MRR (dezembro):** R$ 9.950/mês
 
 ---
@@ -200,12 +223,13 @@ Vender produto vendável (v1) para restaurantes reais, validando:
 ### Cenário Otimista
 
 **Ano 1 (2026):**
+
 - Q1: 5 restaurantes × R$ 99/mês = R$ 495/mês
 - Q2: 20 restaurantes × R$ 199/mês = R$ 3.980/mês
 - Q3: 40 restaurantes × R$ 199/mês = R$ 7.960/mês
 - Q4: 80 restaurantes × R$ 199/mês = R$ 15.920/mês
 
-**Receita anual:** ~R$ 100.000  
+**Receita anual:** ~R$ 100.000
 **MRR (dezembro):** R$ 15.920/mês
 
 ---
@@ -213,12 +237,14 @@ Vender produto vendável (v1) para restaurantes reais, validando:
 ## 🎯 Próximos Passos
 
 ### Imediato (Até 20 de março)
+
 - [ ] Identificar 5-10 restaurantes potenciais
-- [ ] Preparar demo (30 min focada)
+- [ ] Preparar Demo Guide (30 min focado)
 - [ ] Preparar onboarding (1-2 semanas)
 - [ ] Validar pricing (R$ 99/mês especial)
 
 ### Curto Prazo (Q2 2026)
+
 - [ ] Definir pricing oficial (baseado em feedback)
 - [ ] Criar página de pricing
 - [ ] Preparar materiais de venda

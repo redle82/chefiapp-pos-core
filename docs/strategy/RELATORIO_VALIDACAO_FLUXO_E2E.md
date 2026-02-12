@@ -19,7 +19,7 @@
 ### 1. Landing (/)
 
 - **OK.** Mensagem principal visível: "Primeira venda em menos de 5 minutos. Sala, cozinha e caixa a falar a mesma língua."
-- CTAs presentes: "Testar 14 dias no meu restaurante" → `/auth`, "Ver o sistema a funcionar (3 min)" → `/demo-guiado`, "Já tenho acesso" → `/auth`.
+- CTAs presentes: "Testar 14 dias no meu restaurante" → `/auth`, "Ver o sistema a funcionar (3 min)" → `/trial-guide`, "Já tenho acesso" → `/auth`.
 
 ### 2. Auth (/auth)
 
@@ -70,13 +70,13 @@
 
 ## Guards identificados
 
-| Onde      | Guard                      | Comportamento observado                                                           |
-| --------- | -------------------------- | --------------------------------------------------------------------------------- |
-| TPV       | Caixa fechado / turno      | Mensagem clara; botão "Abrir Turno"; sem caixa não há venda.                      |
-| TPV       | Produtos (Core)            | "Nenhum produto disponível" quando Core offline — impede criar pedido.            |
-| TPV       | Ações pay/prepare (Core)   | Não testado; documentação indica bloqueio quando Core indisponível (exceto demo). |
-| Bootstrap | Nenhum bloqueio inesperado | Fluxo segue para primeiro produto/config.                                         |
-| Config    | Nenhum bloqueio inesperado | Identidade, localização, horários acessíveis.                                     |
+| Onde      | Guard                      | Comportamento observado                                                            |
+| --------- | -------------------------- | ---------------------------------------------------------------------------------- |
+| TPV       | Caixa fechado / turno      | Mensagem clara; botão "Abrir Turno"; sem caixa não há venda.                       |
+| TPV       | Produtos (Core)            | "Nenhum produto disponível" quando Core offline — impede criar pedido.             |
+| TPV       | Ações pay/prepare (Core)   | Não testado; documentação indica bloqueio quando Core indisponível (exceto trial). |
+| Bootstrap | Nenhum bloqueio inesperado | Fluxo segue para primeiro produto/config.                                          |
+| Config    | Nenhum bloqueio inesperado | Identidade, localização, horários acessíveis.                                      |
 
 Nenhum erro silencioso foi observado; as mensagens de bloqueio (caixa/turno) são explícitas.
 

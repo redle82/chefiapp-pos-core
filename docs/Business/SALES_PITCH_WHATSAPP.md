@@ -1,7 +1,7 @@
 # 📱 Pitch de Venda — WhatsApp
 
-**Versão**: 1.0 MVP  
-**Uso**: Copiar e colar direto no WhatsApp  
+**Versão**: 1.0 MVP
+**Uso**: Copiar e colar direto no WhatsApp
 **Alvo**: Dono de restaurante ou gerente operacional
 
 ---
@@ -55,7 +55,7 @@ Aqui funciona assim:
 2. 10 min: criamos teu restaurante + menu
 3. Go: tu testa 14 dias com tua equipe
 
-Quando dá pra fazer essa demo?
+Quando dá pra fazer esse Demo Guide?
 (Posso hoje à tarde ou amanhã de manhã)
 ```
 
@@ -63,7 +63,7 @@ Quando dá pra fazer essa demo?
 
 ---
 
-## 📊 Mensagem de Demo (Dia Marcado)
+## 📊 Mensagem de Demo Guide (Dia Marcado)
 
 ```
 [NOME], confirma comigo:
@@ -83,11 +83,11 @@ Só preciso de 3 coisas rápidas:
 Responde até 1h antes pra eu deixar tudo pronto.
 ```
 
-**Quando usar**: 1 dia antes da demo marcada.
+**Quando usar**: 1 dia antes do Demo Guide marcado.
 
 ---
 
-## ✅ Mensagem de Fechamento (Pós-Demo)
+## ✅ Mensagem de Fechamento (Pós-Demo Guide)
 
 ```
 [NOME], curti muito a conversa!
@@ -104,13 +104,14 @@ Qualquer dúvida, me chama aqui no WhatsApp.
 Boa sorte! 🔥
 ```
 
-**Quando usar**: Logo após fechar a demo e deixar o sistema configurado.
+**Quando usar**: Logo após fechar o Demo Guide e deixar o sistema configurado.
 
 ---
 
 ## ❌ Objeções Comuns (Respostas Prontas)
 
 ### **"Já tenho POS"**
+
 ```
 Show! ChefIApp não substitui POS fiscal (ainda).
 Ele complementa: gestão de turno, stock, tarefas automáticas.
@@ -122,6 +123,7 @@ Vale ver? 15 min e tu decide.
 ---
 
 ### **"Não tenho tempo agora"**
+
 ```
 Entendo totalmente.
 
@@ -131,11 +133,12 @@ Se curtir, a gente marca depois.
 [LINK DO VÍDEO]
 ```
 
-*Nota: Precisa gravar um vídeo de 2 min mostrando OperationalHub ao vivo.*
+_Nota: Precisa gravar um vídeo de 2 min mostrando OperationalHub ao vivo._
 
 ---
 
 ### **"Quanto custa?"**
+
 ```
 Piloto de 14 dias: R$ 0 (grátis)
 
@@ -148,6 +151,7 @@ Mas testa primeiro. Só fecha se realmente resolver teu problema.
 ---
 
 ### **"Minha internet é ruim"**
+
 ```
 Boa pergunta.
 
@@ -162,13 +166,14 @@ Vale testar 1 dia pra ver se aguenta?
 ---
 
 ### **"Minha equipe não sabe usar computador"**
+
 ```
 Entendo.
 
 Sistema é mobile-friendly (funciona no celular).
 E a interface é bem simples: 3 botões principais.
 
-Na demo eu mostro. Se tu achar complicado, a gente nem começa.
+No Demo Guide eu mostro. Se tu achar complicado, a gente nem começa.
 Honestidade total.
 ```
 
@@ -194,6 +199,7 @@ Valeu! 🐒
 ## 📞 Script de Ligação (Se Preferir Ligar)
 
 **Abertura**:
+
 ```
 Oi [NOME], aqui é [SEU NOME].
 Tô ligando sobre um sistema de gestão operacional pra restaurante.
@@ -202,10 +208,11 @@ Tu tem 2 minutos pra eu explicar?
 ```
 
 **Se sim**:
+
 ```
 Beleza. Resumo em 30 segundos:
 
-Sistema que rastreia turno, avisa quando stock tá baixo, 
+Sistema que rastreia turno, avisa quando stock tá baixo,
 e cria tarefas automaticamente (sem tu fazer nada).
 
 Testei no Sofia Gastrobar, funcionou.
@@ -215,6 +222,7 @@ Te mostro em 15 minutos. Topa?
 ```
 
 **Se não**:
+
 ```
 Tranquilo! Te mando um WhatsApp com o link.
 Se curtir, me chama. Valeu!
@@ -224,10 +232,10 @@ Se curtir, me chama. Valeu!
 
 ## 🚀 Sequência de Conversão (Ideal)
 
-**Dia 1**: Mensagem inicial → Interesse  
-**Dia 2**: Demo marcada (15 min)  
-**Dia 3**: Demo realizada → Setup completo  
-**Dia 4-17**: Acompanhamento leve (1 msg por semana)  
+**Dia 1**: Mensagem inicial → Interesse
+**Dia 2**: Demo Guide marcado (15 min)
+**Dia 3**: Demo Guide realizado → Setup completo
+**Dia 4-17**: Acompanhamento leve (1 msg por semana)
 **Dia 18**: Conversa de fechamento (continua ou cancela)
 
 ---
@@ -238,7 +246,7 @@ Se curtir, me chama. Valeu!
 - [ ] Sei o nome do dono/gerente
 - [ ] Tenho indicação ou motivo claro pra abordar
 - [ ] Landing page está no ar (link pronto)
-- [ ] Posso fazer demo hoje ou amanhã (disponibilidade real)
+- [ ] Posso fazer Demo Guide hoje ou amanhã (disponibilidade real)
 - [ ] Tenho Sofia Gastrobar como case pronto
 
 ---
@@ -246,9 +254,10 @@ Se curtir, me chama. Valeu!
 ## 🎯 Meta Realista
 
 **Primeira semana**:
+
 - 10 mensagens enviadas
 - 3 respostas positivas
-- 1 demo realizada
+- 1 Demo Guide realizado
 - 1 piloto ativo (além de Sofia)
 
 **Não é escala ainda. É validação.**
@@ -260,6 +269,7 @@ Se curtir, me chama. Valeu!
 **Honestidade > Venda Agressiva**
 
 Se o restaurante não se encaixa, diz logo:
+
 ```
 Olha, [NOME], não acho que ChefIApp serve pra ti agora.
 Teu caso é [X], e o sistema resolve [Y].

@@ -26,7 +26,10 @@ function getRawBaseUrl(): string {
   let url = "";
   if (typeof import.meta !== "undefined" && import.meta.env?.VITE_CORE_URL) {
     url = import.meta.env.VITE_CORE_URL;
-  } else if (typeof import.meta !== "undefined" && import.meta.env?.VITE_SUPABASE_URL) {
+  } else if (
+    typeof import.meta !== "undefined" &&
+    import.meta.env?.VITE_SUPABASE_URL
+  ) {
     url = import.meta.env.VITE_SUPABASE_URL;
   } else if (typeof process !== "undefined" && process.env?.VITE_CORE_URL) {
     url = process.env.VITE_CORE_URL;
@@ -73,7 +76,7 @@ export function getBackendHealthCheckBaseUrl(): string {
 }
 
 /**
- * True when Docker Core is configured; false when VITE_CORE_URL is missing (landing/demo only).
+ * True when Docker Core is configured; false when VITE_CORE_URL is missing (landing/trial only).
  */
 export function getBackendConfigured(): boolean {
   return getUrl() !== "";
@@ -81,7 +84,7 @@ export function getBackendConfigured(): boolean {
 
 /**
  * Retorna o backend ativo. Único backend: Docker Core.
- * URL configurada => docker; sem URL => none (landing/demo).
+ * URL configurada => docker; sem URL => none (landing/trial).
  */
 export function getBackendType(): BackendType {
   const url = getUrl();

@@ -13,12 +13,12 @@ import { RestaurantRuntimeContext } from "../../context/RestaurantRuntimeContext
 import { RequireOperational } from "./RequireOperational";
 
 const createMockRuntime = (
-  overrides: Partial<RestaurantRuntime> = {}
+  overrides: Partial<RestaurantRuntime> = {},
 ): RestaurantRuntime =>
   ({
     restaurant_id: "r1",
     mode: "onboarding",
-    productMode: "demo",
+    productMode: "trial",
     installed_modules: [],
     active_modules: [],
     plan: "basic",
@@ -55,7 +55,7 @@ describe("RequireOperational (e billing TDD)", () => {
         <RequireOperational>
           <div>TPV Content</div>
         </RequireOperational>
-      </RestaurantRuntimeContext.Provider>
+      </RestaurantRuntimeContext.Provider>,
     );
     expect(screen.getByText(/Verificando estado operacional/)).toBeTruthy();
     expect(screen.queryByText("TPV Content")).toBeNull();
@@ -68,7 +68,7 @@ describe("RequireOperational (e billing TDD)", () => {
         <RequireOperational>
           <div>TPV Content</div>
         </RequireOperational>
-      </RestaurantRuntimeContext.Provider>
+      </RestaurantRuntimeContext.Provider>,
     );
     expect(screen.getByText("Sistema não operacional")).toBeTruthy();
     expect(screen.getByText(/Ir para o Portal de Gestão/)).toBeTruthy();
@@ -85,7 +85,7 @@ describe("RequireOperational (e billing TDD)", () => {
         <RequireOperational>
           <div>TPV Content</div>
         </RequireOperational>
-      </RestaurantRuntimeContext.Provider>
+      </RestaurantRuntimeContext.Provider>,
     );
     expect(screen.getByText("TPV Content")).toBeTruthy();
     expect(screen.queryByText("Sistema não operacional")).toBeNull();
@@ -101,7 +101,7 @@ describe("RequireOperational (e billing TDD)", () => {
         <RequireOperational>
           <div>TPV Content</div>
         </RequireOperational>
-      </RestaurantRuntimeContext.Provider>
+      </RestaurantRuntimeContext.Provider>,
     );
     expect(screen.getByText("Assinatura em atraso")).toBeTruthy();
     expect(screen.getByText(/Ir para Faturação/)).toBeTruthy();
@@ -118,7 +118,7 @@ describe("RequireOperational (e billing TDD)", () => {
         <RequireOperational>
           <div>TPV Content</div>
         </RequireOperational>
-      </RestaurantRuntimeContext.Provider>
+      </RestaurantRuntimeContext.Provider>,
     );
     expect(screen.getByText("Assinatura suspensa")).toBeTruthy();
     expect(screen.getByText(/Ir para Faturação/)).toBeTruthy();

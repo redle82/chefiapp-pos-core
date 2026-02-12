@@ -1469,7 +1469,7 @@ export function OrderProvider({
     }
   };
 
-  // Fechar caixa
+  // Fechar caixa (via close_cash_register_atomic RPC — gera Z-Report + CDC)
   const closeCashRegister = async (
     closingBalanceCents: number,
   ): Promise<void> => {
@@ -1482,20 +1482,17 @@ export function OrderProvider({
     }
 
     try {
-      // DOCKER CORE: Fechar caixa diretamente via PostgREST (sem Kernel)
-      const { error: closeError } = await dockerCoreClient
-        .from("gm_cash_registers")
-        .update({
-          status: "closed",
-          closing_balance_cents: closingBalanceCents,
-          closed_at: new Date().toISOString(),
-          closed_by: operatorId || null, // Pode ser null no Docker Core
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", cashRegisterId)
-        .eq("restaurant_id", restaurantId);
+      // DOCKER CORE: Fechar caixa via RPC atômico (Z-Report + CDC event)
+      const { error: rpcError } = await dockerCoreClient.rpc(
+        "close_cash_register_atomic",
+        {
+          p_cash_register_id: cashRegisterId,
+          p_closed_by: operatorId,
+          p_declared_closing_cents: closingBalanceCents,
+        },
+      );
 
-      if (closeError) throw closeError;
+      if (rpcError) throw rpcError;
 
       setCashRegisterId(null);
     } catch (err: any) {

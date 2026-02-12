@@ -2,6 +2,9 @@ import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { colors } from "../../ui/design-system/tokens/colors";
 import { useStaff } from "./context/StaffContext";
+
+/** Design Contract v1: mesma cor de acção (dourado) que o dashboard. */
+const actionAccent = colors.modes.dashboard.action;
 import { useAppStaffHaptics } from "./hooks/useAppStaffHaptics";
 import { getModeById } from "./routing/staffModeConfig";
 import { canSeeMode } from "./visibility/appStaffVisibility";
@@ -145,10 +148,10 @@ export const AppStaffHome: React.FC = () => {
       case "active":
         return {
           bg: colors.surface.layer1,
-          border: `1px solid ${colors.action.base}`,
+          border: `1px solid ${actionAccent.base}`,
           label: "●",
-          badgeBg: "rgba(34, 197, 94, 0.12)",
-          badgeColor: colors.success.base,
+          badgeBg: `${actionAccent.base}20`,
+          badgeColor: actionAccent.base,
           opacity: 1,
         };
       case "idle":
@@ -197,7 +200,7 @@ export const AppStaffHome: React.FC = () => {
           background: visual.bg,
           border:
             isDominant && state === "active"
-              ? `2px solid ${colors.action.base}`
+              ? `2px solid ${actionAccent.base}`
               : visual.border,
           color: state === "disabled" ? colors.text.tertiary : colors.text.primary,
           textAlign: "center",
@@ -208,7 +211,7 @@ export const AppStaffHome: React.FC = () => {
             "transform 0.12s ease-out, box-shadow 0.12s ease-out, border-color 0.12s ease-out, background-color 0.12s ease-out",
           boxShadow:
             state === "active"
-              ? "0 0 0 1px rgba(34, 197, 94, 0.25), 0 10px 20px rgba(0,0,0,0.45)"
+              ? `0 0 0 1px ${actionAccent.base}40, 0 10px 20px rgba(0,0,0,0.45)`
               : isDominant
               ? "0 8px 18px rgba(0,0,0,0.45)"
               : "0 4px 12px rgba(0,0,0,0.35)",

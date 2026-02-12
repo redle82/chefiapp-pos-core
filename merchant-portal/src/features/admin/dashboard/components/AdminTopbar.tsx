@@ -1,36 +1,17 @@
-import { useEffect, useState } from "react";
-import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../../../core-boundary/docker-core/connection";
 import { useAuth } from "../../../../core/auth/useAuth";
+import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
+import { colors } from "../../../../ui/design-system/tokens/colors";
+import { ChefIAppSignature } from "../../../../ui/design-system/sovereign/ChefIAppSignature";
+import { RestaurantHeader } from "../../../../ui/design-system/sovereign/RestaurantHeader";
+
+const theme = colors.modes.dashboard;
 
 export function AdminTopbar() {
-  const { runtime } = useRestaurantRuntime();
+  const { identity } = useRestaurantIdentity();
   const { user } = useAuth();
-  const [locationName, setLocationName] = useState("");
 
-  const restaurantId = runtime.restaurant_id ?? null;
   const userEmail = user?.email ?? "";
   const userInitial = userEmail.charAt(0).toUpperCase() || "?";
-
-  useEffect(() => {
-    if (!restaurantId) return;
-    let cancelled = false;
-    (async () => {
-      const { data: row } = await dockerCoreClient
-        .from("gm_restaurants")
-        .select("name")
-        .eq("id", restaurantId)
-        .maybeSingle();
-      if (!cancelled && row) {
-        setLocationName(
-          ((row as Record<string, unknown>).name as string) ?? "",
-        );
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [restaurantId]);
 
   return (
     <header
@@ -40,47 +21,41 @@ export function AdminTopbar() {
         alignItems: "center",
         justifyContent: "space-between",
         padding: "0 32px",
-        borderBottom: "1px solid #e5e7eb",
-        backgroundColor: "#ffffff",
+        borderBottom: `1px solid ${theme.border.subtle}`,
+        backgroundColor: theme.surface.layer1,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <span
-          style={{
-            fontSize: 18,
-            fontWeight: 700,
-            letterSpacing: "-0.04em",
-            color: "#0f172a",
-          }}
-        >
-          ChefIApp OS
-        </span>
-        <select
-          value={locationName}
-          onChange={() => {}}
-          style={{
-            fontSize: 13,
-            padding: "6px 10px",
-            borderRadius: 999,
-            border: "1px solid #e5e7eb",
-            backgroundColor: "#f9fafb",
-            color: "#374151",
-          }}
-        >
-          <option value={locationName}>{locationName || "Cargando…"}</option>
-        </select>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          color: theme.text.primary,
+        }}
+      >
+        <RestaurantHeader
+          name={identity.name}
+          logoUrl={identity.logoUrl}
+          size="md"
+        />
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <ChefIAppSignature
+          variant="powered"
+          size="sm"
+          tone="light"
+          className=""
+        />
         <button
           type="button"
           style={{
             fontSize: 13,
             padding: "8px 12px",
             borderRadius: 999,
-            border: "1px solid #e5e7eb",
-            backgroundColor: "#ffffff",
+            border: `1px solid ${theme.action.base}`,
+            backgroundColor: theme.action.base + "18",
             cursor: "pointer",
-            color: "#4c1d95",
+            color: theme.action.base,
             fontWeight: 500,
           }}
         >
@@ -92,7 +67,7 @@ export function AdminTopbar() {
             alignItems: "center",
             gap: 8,
             fontSize: 13,
-            color: "#4b5563",
+            color: theme.text.secondary,
           }}
         >
           <div
@@ -100,12 +75,12 @@ export function AdminTopbar() {
               width: 28,
               height: 28,
               borderRadius: "999px",
-              backgroundColor: "#ede9fe",
+              backgroundColor: theme.action.base + "24",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontWeight: 600,
-              color: "#5b21b6",
+              color: theme.action.base,
             }}
           >
             {userInitial}

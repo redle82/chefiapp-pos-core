@@ -6,11 +6,11 @@ import {
 } from "../../core/setup/restaurantSetupSteps";
 
 const GROUP_LABELS: Record<SetupStepGroupId, string> = {
-  BASICS: "Restaurant basics",
-  SERVICES: "Services & opening hours",
-  PAYMENTS: "Payment methods & taxes",
-  MENU: "Menu setup",
-  PUBLISHING: "Publishing",
+  BASICS: "Básicos",
+  SERVICES: "Serviços e horários",
+  PAYMENTS: "Métodos de pagamento e impostos",
+  MENU: "Cardápio",
+  PUBLISHING: "Publicação",
 };
 
 export function RestaurantSetupSidebar() {

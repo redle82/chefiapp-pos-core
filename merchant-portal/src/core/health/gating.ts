@@ -17,7 +17,7 @@ import type { CoreHealthStatus } from "./useCoreHealth";
 export interface GatingResult {
   allowed: boolean;
   reason: string | null;
-  fallbackAction?: "retry" | "demo_consent" | "wait" | "offline_queue";
+  fallbackAction?: "retry" | "trial_consent" | "wait" | "offline_queue";
 }
 
 export interface GatingOptions {
@@ -31,8 +31,8 @@ export interface GatingOptions {
     | "non_critical";
   /** Current health status */
   health: CoreHealthStatus;
-  /** Whether user has explicitly consented to demo mode */
-  demoConsent?: boolean;
+  /** Whether user has explicitly consented to trial exploration */
+  trialConsent?: boolean;
   /** Custom block message */
   customMessage?: string;
 }
@@ -41,7 +41,7 @@ export interface GatingOptions {
  * Core gating function - determines if action should proceed
  */
 export function coreGating(options: GatingOptions): GatingResult {
-  const { action, health, demoConsent = false, customMessage } = options;
+  const { action, health, trialConsent = false, customMessage } = options;
 
   // UP: All actions allowed
   if (health === "UP") {
@@ -75,14 +75,14 @@ export function coreGating(options: GatingOptions): GatingResult {
     };
   }
 
-  // DOWN: Block all critical actions unless demo consent given
-  // action === 'create' with demo consent can proceed to demo mode
+  // DOWN: Block all critical actions unless trial consent given
+  // action === 'create' with trial consent can proceed to trial mode
 
-  if (action === "create" && demoConsent) {
+  if (action === "create" && trialConsent) {
     return {
       allowed: true,
       reason: "Exploração ativa. Dados não serão guardados.",
-      fallbackAction: "demo_consent",
+      fallbackAction: "trial_consent",
     };
   }
 
@@ -102,7 +102,7 @@ export function coreGating(options: GatingOptions): GatingResult {
   return {
     allowed: false,
     reason: customMessage || blockReasons[action] || "Sistema indisponivel.",
-    fallbackAction: action === "create" ? "demo_consent" : "retry",
+    fallbackAction: action === "create" ? "trial_consent" : "retry",
   };
 }
 
@@ -111,7 +111,7 @@ export function coreGating(options: GatingOptions): GatingResult {
  */
 export function isActionAllowed(
   health: CoreHealthStatus,
-  action: GatingOptions["action"]
+  action: GatingOptions["action"],
 ): boolean {
   return coreGating({ health, action }).allowed;
 }
@@ -121,7 +121,7 @@ export function isActionAllowed(
  */
 export function getBlockReason(
   health: CoreHealthStatus,
-  action: GatingOptions["action"]
+  action: GatingOptions["action"],
 ): string | null {
   const result = coreGating({ health, action });
   return result.reason;
@@ -133,7 +133,7 @@ export function getBlockReason(
 export async function withGating<T>(
   options: GatingOptions,
   action: () => Promise<T>,
-  onBlocked?: (result: GatingResult) => void
+  onBlocked?: (result: GatingResult) => void,
 ): Promise<T | null> {
   const gating = coreGating(options);
 

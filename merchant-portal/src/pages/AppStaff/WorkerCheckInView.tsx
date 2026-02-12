@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { isDebugMode } from "../../core/debugMode";
 import { Button } from "../../ui/design-system/primitives/Button";
 import { Text } from "../../ui/design-system/primitives/Text";
 import { colors } from "../../ui/design-system/tokens/colors";
 import { radius } from "../../ui/design-system/tokens/radius";
-import { isDebugMode } from "../../core/debugMode";
 import { useStaff } from "./context/StaffContext";
 import type { Employee, StaffRole } from "./context/StaffCoreTypes";
 import { BiometricService } from "./core/BiometricService"; // Keeping for manual mode compatibility
@@ -170,7 +170,11 @@ export const WorkerCheckInView: React.FC = () => {
           </Button>
         )}
         {employees.length === 0 && (
-          <Text size="xs" color="tertiary" style={{ marginTop: 12, textAlign: "center" }}>
+          <Text
+            size="xs"
+            color="tertiary"
+            style={{ marginTop: 12, textAlign: "center" }}
+          >
             Configuração → Pessoas
           </Text>
         )}
@@ -322,7 +326,7 @@ export const WorkerCheckInView: React.FC = () => {
       }}
     >
       <div style={{ width: "100%", maxWidth: 420 }}>
-        {/* DEV/DEMO: Staff Switcher — entrada rápida por perfil */}
+        {/* DEV/TRIAL: Staff Switcher — entrada rápida por perfil */}
         {isDebugMode() && (
           <div
             style={{
@@ -331,7 +335,12 @@ export const WorkerCheckInView: React.FC = () => {
               borderBottom: `1px solid ${colors.border.subtle}`,
             }}
           >
-            <Text size="sm" weight="bold" color="primary" style={{ marginBottom: 10 }}>
+            <Text
+              size="sm"
+              weight="bold"
+              color="primary"
+              style={{ marginBottom: 10 }}
+            >
               Entrar como:
             </Text>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>

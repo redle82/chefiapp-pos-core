@@ -6,6 +6,7 @@
  */
 
 import { dockerCoreClient } from "../docker-core/connection";
+import { Logger } from "../../core/logger";
 
 export type TerminalEquipmentKind = "TPV" | "KDS";
 
@@ -32,7 +33,10 @@ export async function listEquipmentByRestaurant(
 
   if (error) {
     if (isMissingTableError(error)) return [];
-    console.warn("[EquipmentReader] listEquipmentByRestaurant:", error.message);
+    Logger.warn("[EquipmentReader] listEquipmentByRestaurant", {
+      restaurant_id: restaurantId,
+      error: error.message,
+    });
     return [];
   }
   return (data || []) as TerminalEquipmentRow[];
@@ -70,7 +74,10 @@ export async function listTerminalsHeartbeatsByRestaurant(
 
   if (error) {
     if (isMissingTableError(error)) return [];
-    console.warn("[EquipmentReader] listTerminalsHeartbeatsByRestaurant:", error.message);
+    Logger.warn("[EquipmentReader] listTerminalsHeartbeatsByRestaurant", {
+      restaurant_id: restaurantId,
+      error: error.message,
+    });
     return [];
   }
   return (data || []) as TerminalHeartbeatRow[];

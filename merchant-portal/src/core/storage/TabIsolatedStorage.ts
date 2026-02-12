@@ -32,7 +32,7 @@ function migrateFromLocalStorage(): void {
     "chefiapp_active_tenant",
     "chefiapp_setup_status",
     "chefiapp_system_blueprint_v2",
-    "chefiapp_demo_mode",
+    "chefiapp_trial_mode",
   ];
 
   keysToMigrate.forEach((key) => {

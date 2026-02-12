@@ -16,6 +16,9 @@ import { colors } from "../../../ui/design-system/tokens/colors";
 import { useStaff } from "../context/StaffContext";
 import { useAppStaffTables } from "../hooks/useAppStaffTables";
 
+/** Design Contract v1: mesma cor de acção (dourado) que o dashboard. */
+const actionAccent = colors.modes.dashboard.action;
+
 export function WaiterHome() {
   const { restaurantId, tasks, shiftState } = useStaff();
   const { tables, loading } = useAppStaffTables(restaurantId);
@@ -130,7 +133,7 @@ function TableTile({
 }) {
   const borderColor =
     status === "occupied" || status === "reserved"
-      ? colors.action.base
+      ? actionAccent.base
       : colors.border.subtle;
 
   return (

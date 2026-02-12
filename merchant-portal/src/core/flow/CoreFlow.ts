@@ -86,14 +86,14 @@ export function resolveNextRoute(state: UserState): FlowDecision {
     // Public Void Protocol: Allow access to /public/* (The Menu)
     if (currentPath.startsWith("/public")) return { type: "ALLOW" };
 
-    // Landing, Auth (telefone) e demo guiado são públicas
+    // Landing, Auth (telefone) e trial guide são públicas
     if (
       currentPath === "/" ||
       currentPath === "/auth" ||
       currentPath === "/auth/phone" ||
       currentPath === "/auth/verify" ||
-      currentPath === "/demo-guiado" ||
-      currentPath === "/demo"
+      currentPath === "/trial-guide" ||
+      currentPath === "/trial"
     )
       return { type: "ALLOW" };
 
@@ -122,8 +122,7 @@ export function resolveNextRoute(state: UserState): FlowDecision {
     return {
       type: "REDIRECT",
       to: "/setup/restaurant-minimal",
-      reason:
-        "No org → setup mínimo (telefone/identidade) antes do Dashboard",
+      reason: "No org → setup mínimo (telefone/identidade) antes do Dashboard",
     };
   }
 

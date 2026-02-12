@@ -58,7 +58,10 @@ export const LoyaltyProvider: React.FC<{ children: React.ReactNode }> = ({
         total_spend_cents: row.total_spend_cents ?? 0,
       } as Customer;
     } catch (err) {
-      console.error("[LoyaltyContext] searchCustomerByPhone failed", err);
+      const isTableMissing =
+        err && typeof err === "object" && (err as any).code === "42P01";
+      if (!isTableMissing)
+        console.error("[LoyaltyContext] searchCustomerByPhone failed", err);
       return null;
     }
   };
@@ -84,8 +87,14 @@ export const LoyaltyProvider: React.FC<{ children: React.ReactNode }> = ({
         .single();
 
       if (error || !data) {
-        console.error("[LoyaltyContext] createCustomer error", error);
-        throw new Error(error?.message || "Erro ao criar cliente");
+        const isTableMissing = error?.code === "42P01";
+        if (!isTableMissing)
+          console.error("[LoyaltyContext] createCustomer error", error);
+        throw new Error(
+          isTableMissing
+            ? "Módulo de clientes indisponível (tabela gm_customers não existe no Core)."
+            : error?.message || "Erro ao criar cliente",
+        );
       }
 
       const row = data as Record<string, any>;
@@ -101,7 +110,11 @@ export const LoyaltyProvider: React.FC<{ children: React.ReactNode }> = ({
         total_spend_cents: row.total_spend_cents ?? 0,
       };
     } catch (err) {
-      console.error("[LoyaltyContext] createCustomer failed", err);
+      const isTableMissing =
+        err instanceof Error &&
+        /gm_customers|indisponível|Table unavailable/i.test(err.message);
+      if (!isTableMissing)
+        console.error("[LoyaltyContext] createCustomer failed", err);
       throw err;
     }
   };

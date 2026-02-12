@@ -44,9 +44,9 @@ describe("PaymentModal", () => {
     expect(screen.getByText("Pedido #123456")).toBeTruthy();
   });
 
-  it("shows MODO DEMO badge when isDemoMode is true", () => {
-    render(<PaymentModal {...defaultProps} isDemoMode />);
-    expect(screen.getByText("MODO DEMO")).toBeTruthy();
+  it("shows GUIDED TRIAL badge when isTrialMode is true", () => {
+    render(<PaymentModal {...defaultProps} isTrialMode />);
+    expect(screen.getByText("GUIDED TRIAL")).toBeTruthy();
   });
 
   it("enables cash confirm when cash tendered covers the total", () => {

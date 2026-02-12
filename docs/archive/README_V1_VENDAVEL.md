@@ -1,6 +1,6 @@
 # ChefIApp v1 — Pronto para Venda
 
-**Data:** 2026-01-26  
+**Data:** 2026-01-26
 **Status:** ✅ PRONTO
 
 ---
@@ -24,7 +24,7 @@
 
 ## 💰 Pricing
 
-**Early Adopters (até 20/03):** R$ 99/mês  
+**Early Adopters (até 20/03):** R$ 99/mês
 **Após 20/03:** R$ 199/mês (Básico)
 
 ---
@@ -32,11 +32,13 @@
 ## 🎯 Próximo Passo
 
 **Validar sistema:**
+
 ```bash
 ./scripts/teste-massivo-nivel-4.sh M
 ```
 
 **Depois:**
+
 1. Identificar 5-10 restaurantes
 2. Agendar demos (30 min)
 3. Onboarding (1-2 semanas)
@@ -48,7 +50,7 @@
 - `docs/GUIA_COMPLETO_V1.md` — Guia completo
 - `docs/RESUMO_EXECUTIVO_V1.md` — Resumo executivo
 - `docs/PITCH_CHEFIAPP_V1.md` — Pitches prontos
-- `docs/DEMO_SCRIPT_V1.md` — Demo script
+- `docs/DEMO_GUIDE_V1.md` — Demo Guide script
 - `docs/INDICE_DOCUMENTOS_V1.md` — Índice completo
 
 ---

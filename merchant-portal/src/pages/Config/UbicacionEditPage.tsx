@@ -18,7 +18,9 @@ import { UbicacionForm } from "./UbicacionForm";
 export function UbicacionEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = id ? locationsStore.getLocations().find((l) => l.id === id) : null;
+  const location = id
+    ? locationsStore.getLocations().find((l) => l.id === id)
+    : null;
 
   const handleSubmit = (data: UbicacionFormData) => {
     if (!id) return;
@@ -34,7 +36,7 @@ export function UbicacionEditPage() {
     return (
       <div style={{ fontFamily: fontFamily.sans }}>
         <p style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
-          Ubicación não encontrada.
+          Local não encontrado.
         </p>
         <button
           type="button"
@@ -65,7 +67,14 @@ export function UbicacionEditPage() {
   };
 
   return (
-    <div style={{ width: "100%", maxWidth: 560, margin: 0, fontFamily: fontFamily.sans }}>
+    <div
+      style={{
+        width: "100%",
+        maxWidth: 560,
+        margin: 0,
+        fontFamily: fontFamily.sans,
+      }}
+    >
       <header style={{ marginBottom: space.xl }}>
         <h1
           style={{
@@ -75,9 +84,15 @@ export function UbicacionEditPage() {
             color: colors.textPrimary,
           }}
         >
-          Editar ubicación
+          Editar local
         </h1>
-        <p style={{ margin: 0, fontSize: fontSize.sm, color: colors.textSecondary }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: fontSize.sm,
+            color: colors.textSecondary,
+          }}
+        >
           {location.name}
         </p>
       </header>

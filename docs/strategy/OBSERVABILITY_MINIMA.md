@@ -64,6 +64,8 @@ curl -s -o /dev/null -w "%{http_code}" "http://localhost:3001/gm_restaurants?lim
 
 ## Referências
 
+- **Contrato de logging (app):** [OBSERVABILITY_LOGGING_CONTRACT.md](../architecture/OBSERVABILITY_LOGGING_CONTRACT.md) — Logger central, restaurant_id/device_id em cada log.
+- **Painel interno (admin):** Rota `/admin/observability` — Core status + métricas (pedidos criados hoje, erros 24h, latência). O card **"Erros (últimas 24h)"** vem do store in-memory (esta sessão); evolução futura: tabela `gm_app_logs` no Core + Logger a escrever quando o backend for Docker. O card **"Latência média"** vem do store in-memory (últimas 50 chamadas desta sessão, operação `create_order_atomic`); evolução futura: métricas no Core ou Prometheus. Uso interno.
 - Docker Core README: [docker-core/README.md](../../docker-core/README.md)
 - ERO (consciência do sistema): [ERO_CANON.md](../ERO_CANON.md)
 - Bootstrap 0 (World Boot) — smoke tests: [docs/boot/BOOTSTRAP_0_WORLD.md](../boot/BOOTSTRAP_0_WORLD.md)

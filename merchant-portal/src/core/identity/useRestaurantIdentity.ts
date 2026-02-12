@@ -11,7 +11,7 @@ export interface RestaurantIdentity {
   name: string;
   city: string;
   type: string;
-  isDemo: boolean;
+  isTrial: boolean;
   loading: boolean;
   ownerName?: string;
   logoUrl?: string; // Brand Identity
@@ -41,7 +41,7 @@ async function hydrateIdentityFromSupabasePlaceholder(
     name: prev.name || "Seu Restaurante",
     city: prev.city || "Local desconhecido",
     type: prev.type || "Geral",
-    isDemo: false,
+    isTrial: false,
     loading: false,
     ownerName: prev.ownerName || "Comandante",
   }));
@@ -56,7 +56,7 @@ export function useRestaurantIdentity() {
     name: "",
     city: "",
     type: "",
-    isDemo: false,
+    isTrial: false,
     loading: true,
     ownerName: "",
     logoUrl: undefined,
@@ -68,14 +68,14 @@ export function useRestaurantIdentity() {
     if (!mountedRef.current) return;
     setIdentity((prev) => ({ ...prev, loading: true }));
 
-    // A) DEMO MODE CHECK
+    // A) TRIAL MODE CHECK
     const params = new URLSearchParams(window.location.search);
     const { getTabIsolated } = await import("../storage/TabIsolatedStorage");
-    const isDemo =
-      getTabIsolated("chefiapp_demo_mode") === "true" ||
-      params.get("demo") === "true";
+    const isTrial =
+      getTabIsolated("chefiapp_trial_mode") === "true" ||
+      params.get("mode") === "trial";
 
-    if (isDemo) {
+    if (isTrial) {
       // @ts-ignore
       let mock = window.RestaurantIdentity;
       try {
@@ -87,17 +87,17 @@ export function useRestaurantIdentity() {
 
       setIdentity({
         id: "00000000-0000-0000-0000-000000000100",
-        name: mock?.name || "Restaurante Exemplo (Demo)",
-        city: mock?.city || "Modo de Demonstração",
+        name: mock?.name || "Restaurante Exemplo (Trial)",
+        city: mock?.city || "Trial Ativo",
         type: "Bistro",
-        isDemo: true,
+        isTrial: true,
         loading: false,
         ownerName: "Visitante",
         logoUrl: mock?.logoUrl,
         lastPulse: {
-          type: "DEMO_PULSE",
+          type: "TRIAL_PULSE",
           created_at: new Date().toISOString(),
-          payload: { message: "Sistema em modo de demonstração" },
+          payload: { message: "Sistema em modo de trial" },
         },
       });
       return;
@@ -128,7 +128,7 @@ export function useRestaurantIdentity() {
             name: row.name ?? "Seu Restaurante",
             city: row.city ?? "Local desconhecido",
             type: row.type ?? "Geral",
-            isDemo: false,
+            isTrial: false,
             loading: false,
             ownerName: "Comandante",
             logoUrl: undefined,

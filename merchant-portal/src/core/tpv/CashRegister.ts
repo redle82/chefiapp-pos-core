@@ -251,7 +251,7 @@ export class CashRegisterEngine {
         return null;
       }
 
-      // [OFFLINE RESILIENCE] Skip log spam if backend is simply offline in dev/demo
+      // [OFFLINE RESILIENCE] Skip log spam if backend is simply offline in dev/trial
       const isConnectionError =
         msg.includes("Failed to fetch") ||
         msg.includes("net::ERR_CONNECTION_REFUSED");

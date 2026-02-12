@@ -52,16 +52,18 @@ export const OPERATOR_PROFILES: Record<StaffRole, OperatorProfile> = {
   },
 };
 
-export function getOperatorProfile(role: StaffRole | null | undefined): OperatorProfile | null {
+export function getOperatorProfile(
+  role: StaffRole | null | undefined,
+): OperatorProfile | null {
   if (!role) return null;
   return OPERATOR_PROFILES[role] ?? null;
 }
 
 /**
- * Códigos demo para "Inserir Código" — um por papel.
+ * Códigos do Demo Guide para "Inserir Código" — um por papel.
  * Funcionam com ?debug=1 na URL (modo mock). Formato: CHEF-XXXX-XX.
  */
-export const DEMO_CODES: Record<StaffRole, string> = {
+export const TRIAL_GUIDE_CODES: Record<StaffRole, string> = {
   owner: "CHEF-OWN-MOCK",
   manager: "CHEF-MGR-MOCK",
   waiter: "CHEF-WAIT-MOCK",

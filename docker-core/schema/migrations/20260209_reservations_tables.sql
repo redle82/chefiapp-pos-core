@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS gm_reservations (
     table_id        UUID,
     status          TEXT NOT NULL DEFAULT 'pending'
                         CHECK (status IN ('pending','confirmed','seated','completed','cancelled','no_show')),
+    duration_minutes INT NOT NULL DEFAULT 90,
+    notes           TEXT,
     confirmed_at    TIMESTAMPTZ,
     seated_at       TIMESTAMPTZ,
     completed_at    TIMESTAMPTZ,

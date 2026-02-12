@@ -35,8 +35,8 @@
 
 ### 3. Roteiros de Demo Criados
 
-- **`docs/DEMO_SCRIPT_5MIN.md`** — Demo rápida focada em System Tree, Dashboard, TPV v2, Tasks
-- **`docs/DEMO_SCRIPT_V1.md`** — Demo completa (30 min) já existente
+- **`docs/DEMO_GUIDE_5MIN.md`** — Demo Guide rápida focada em System Tree, Dashboard, TPV v2, Tasks
+- **`docs/DEMO_GUIDE_V1.md`** — Demo Guide completa (30 min) já existente
 
 **Resultado:** Dois níveis de demonstração prontos para uso.
 
@@ -106,8 +106,8 @@
 docs/
 ├── DOC_INDEX.md                    ← Índice central (ponto de entrada)
 ├── STATE_PURE_DOCKER_APP_LAYER.md  ← Contrato ativo (marcado)
-├── DEMO_SCRIPT_5MIN.md             ← Demo rápida (5 min)
-├── DEMO_SCRIPT_V1.md               ← Demo completa (30 min)
+├── DEMO_GUIDE_5MIN.md              ← Demo Guide rápida (5 min)
+├── DEMO_GUIDE_V1.md                ← Demo Guide completa (30 min)
 ├── CANDIDATOS_A_ARCHIVE.md          ← Lista de referência (opcional)
 ├── contracts/                       ← Contratos técnicos
 │   ├── EVENTS_AND_STREAMS.md
@@ -121,7 +121,7 @@ docs/
 
 ## 🚀 Próximos Passos (Opcional)
 
-1. **Rodar demos** usando `DEMO_SCRIPT_5MIN.md` ou `DEMO_SCRIPT_V1.md`
+1. **Rodar Demo Guides** usando `DEMO_GUIDE_5MIN.md` ou `DEMO_GUIDE_V1.md`
 2. **Arquivar MDs históricos** usando `CANDIDATOS_A_ARCHIVE.md` como referência
 3. **Coletar feedback** de demos e ajustar scripts se necessário
 

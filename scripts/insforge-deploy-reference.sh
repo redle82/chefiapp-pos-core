@@ -1,0 +1,101 @@
+#!/bin/bash
+# InsForge Deployment — Quick Commands Reference
+# Use this script as a reference for common commands during deployment
+
+set -e
+
+echo "🚀 InsForge Deployment Helper"
+echo "=============================="
+echo ""
+
+# ─── 1. Local Validation ────────────────────────────────────────────
+echo "📋 1. LOCAL VALIDATION"
+echo "   Run these commands to validate your local setup:"
+echo ""
+echo "   # Test backend switching logic"
+echo "   cd merchant-portal && pnpm vitest run src/core/infra/backendClient.test.ts"
+echo ""
+echo "   # Test validation suite"
+echo "   cd merchant-portal && pnpm vitest run src/core/infra/validateInsforgeSetup.test.ts"
+echo ""
+echo "   # Type check (0 errors expected)"
+echo "   cd merchant-portal && pnpm tsc --noEmit"
+echo ""
+echo "   # Start dev server and test in browser console:"
+echo "   cd merchant-portal && pnpm run dev"
+echo "   # Then open http://localhost:5175 and run: validateInsforge()"
+echo ""
+
+# ─── 2. Test with InsForge Credentials (Optional) ───────────────────
+echo "📋 2. TEST WITH INSFORGE (OPTIONAL)"
+echo "   Create .env.local with InsForge credentials to test locally:"
+echo ""
+echo "   # Create .env.local"
+echo "   cat > merchant-portal/.env.local << EOF"
+echo "VITE_INSFORGE_URL=https://vv5bwyz6.us-east.insforge.app"
+echo "VITE_INSFORGE_ANON_KEY=[YOUR_NEW_ROTATED_KEY]"
+echo "EOF"
+echo ""
+echo "   # Start dev server (will use InsForge instead of Docker Core)"
+echo "   cd merchant-portal && pnpm run dev"
+echo ""
+echo "   # Verify in browser console:"
+echo "   # import.meta.env.VITE_INSFORGE_URL"
+echo "   # Should show: https://vv5bwyz6.us-east.insforge.app"
+echo ""
+
+# ─── 3. Deploy to Vercel ────────────────────────────────────────────
+echo "📋 3. DEPLOY TO VERCEL"
+echo "   ⚠️  CRITICAL: Rotate API key first!"
+echo "   Go to: InsForge Dashboard → Authentication → Regenerate anon key"
+echo ""
+echo "   Then set in Vercel (Dashboard → Project Settings → Environment Variables):"
+echo "   VITE_INSFORGE_URL=https://vv5bwyz6.us-east.insforge.app"
+echo "   VITE_INSFORGE_ANON_KEY=[YOUR_NEW_ROTATED_KEY]"
+echo "   (Apply to: Production + Preview)"
+echo ""
+echo "   Deploy:"
+echo "   git push origin main  # Triggers auto-deploy"
+echo "   # OR manually trigger in Vercel Dashboard"
+echo ""
+
+# ─── 4. Post-Deployment Smoke Test ──────────────────────────────────
+echo "📋 4. POST-DEPLOYMENT SMOKE TEST"
+echo "   # Wait for deployment to complete (~2-3 min)"
+echo ""
+echo "   # Then test in production browser console:"
+echo "   # 1. Open https://your-app.vercel.app"
+echo "   # 2. Open console (F12)"
+echo "   # 3. Check env var:"
+echo "   import.meta.env.VITE_INSFORGE_URL"
+echo "   # Should show: https://vv5bwyz6.us-east.insforge.app"
+echo ""
+echo "   # 4. Run validation (if exposed):"
+echo "   validateInsforge()"
+echo ""
+echo "   # 5. Test critical flows:"
+echo "   # - Login/logout"
+echo "   # - Dashboard loads"
+echo "   # - No console errors"
+echo ""
+
+# ─── 5. Rollback (if needed) ────────────────────────────────────────
+echo "📋 5. ROLLBACK (IF NEEDED)"
+echo "   If deployment fails, remove InsForge env vars in Vercel:"
+echo "   - Delete VITE_INSFORGE_URL"
+echo "   - Delete VITE_INSFORGE_ANON_KEY"
+echo "   - Redeploy"
+echo ""
+echo "   App will automatically fall back to Docker Core."
+echo ""
+
+# ─── 6. Documentation ───────────────────────────────────────────────
+echo "📋 6. DOCUMENTATION"
+echo "   Full guides:"
+echo "   - docs/INSFORGE_DEPLOYMENT_CHECKLIST.md   (step-by-step guide)"
+echo "   - docs/INSFORGE_VALIDATION_REPORT.md      (test results)"
+echo ""
+
+echo "✅ All commands listed above."
+echo ""
+echo "Next step: Rotate API key, configure Vercel, deploy! 🚀"

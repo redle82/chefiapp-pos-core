@@ -20,13 +20,7 @@ export const Problem = () => {
                     {/* Vertical Line */}
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500/50 rounded-full" />
 
-                    {[
-                        { title: "Turnos bagunçados", desc: "Ninguém sabe quem trabalhou quantas horas" },
-                        { title: "Stock que some", desc: "Ingrediente acaba no meio do serviço" },
-                        { title: "Tarefas esquecidas", desc: "\"Esqueci de repor cerveja\", \"Ninguém limpou a cozinha\"" },
-                        { title: "Papel e planilha", desc: "Informação perdida, nada automatizado" },
-                        { title: "Equipa perdida", desc: "Cada um pergunta o que fazer" }
-                    ].map((item, idx) => (
+                    {OSCopy.landing.problemItems.map((item, idx) => (
                         <div key={idx} className="pl-8 py-6 group relative">
                             {/* Marker */}
                             <div className="absolute left-[-5px] top-8 w-3 h-3 rounded-full bg-red-400 group-hover:bg-amber-400 transition-colors shadow-lg shadow-red-500/50" />
@@ -40,7 +34,7 @@ export const Problem = () => {
                 <div className="max-w-4xl mx-auto text-center">
                     <p className="text-2xl md:text-3xl font-semibold text-white leading-relaxed">
                         Você não precisa de mais um app. <br />
-                        <span className="text-amber-400">{OSCopy.landing.problemSubtitle.split('.')[1]}.</span>
+                        <span className="text-amber-400">{OSCopy.landing.problemSubtitleHighlight}</span>
                     </p>
                 </div>
             </div>

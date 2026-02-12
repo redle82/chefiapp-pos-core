@@ -28,7 +28,7 @@ Não foi esquecimento. Foi uma decisão implícita que nunca foi explicitada. De
 ### O que a arquitetura cobria (corretamente)
 
 - Fluxo do produto até "Agora vejo."
-- Separação demo / app / providers
+- Separação trial / app / providers
 - Contrato do Dono (Ecrã Zero)
 - Stripe, domínio, Supabase, piloto
 - Onda 4/5 (operação e controlo)
@@ -75,7 +75,7 @@ flowchart LR
 
 **Objetivo:** Produto não mente, não quebra, humano entende.
 
-- Demo funcional
+- Trial funcional
 - CTA → Auth → App
 - Ecrã Zero definido
 - Arquitetura estável

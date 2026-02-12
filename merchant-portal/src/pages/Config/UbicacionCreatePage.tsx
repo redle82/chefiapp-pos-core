@@ -28,7 +28,14 @@ export function UbicacionCreatePage() {
   };
 
   return (
-    <div style={{ width: "100%", maxWidth: 560, margin: 0, fontFamily: fontFamily.sans }}>
+    <div
+      style={{
+        width: "100%",
+        maxWidth: 560,
+        margin: 0,
+        fontFamily: fontFamily.sans,
+      }}
+    >
       <header style={{ marginBottom: space.xl }}>
         <h1
           style={{
@@ -38,9 +45,15 @@ export function UbicacionCreatePage() {
             color: colors.textPrimary,
           }}
         >
-          Nova ubicación
+          Novo local
         </h1>
-        <p style={{ margin: 0, fontSize: fontSize.sm, color: colors.textSecondary }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: fontSize.sm,
+            color: colors.textSecondary,
+          }}
+        >
           Contexto operacional. Sem plano nem pagamento.
         </p>
       </header>

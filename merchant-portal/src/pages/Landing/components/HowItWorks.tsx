@@ -4,29 +4,22 @@ export const HowItWorks = () => {
   const steps = [
     {
       num: "01",
-      title: "Demo ao vivo",
-      desc: "Mostramos o dashboard com dados reais do Sofia Gastrobar. Você vê exatamente o que vai ter.",
-      action: "15 MINUTOS",
+      title: "Demo e setup",
+      desc: "Vê o sistema a funcionar e criamos o teu restaurante. Adicionas 5 itens ao menu. Pronto, já funciona.",
+      action: "~15 MIN",
       link: "/auth",
     },
     {
       num: "02",
-      title: "Setup inicial",
-      desc: "Criamos seu restaurante, você adiciona 5 itens do menu. Pronto, já funciona.",
-      action: "10 MINUTOS",
-      link: null,
-    },
-    {
-      num: "03",
       title: "Teste real",
-      desc: "Sua equipa usa de verdade. Turnos, stock, tarefas. Zero compromisso, zero custo.",
+      desc: "A tua equipa usa de verdade. Turnos, stock, tarefas. Zero compromisso, zero custo.",
       action: "14 DIAS GRÁTIS",
       link: null,
     },
     {
-      num: "04",
+      num: "03",
       title: "Decisão",
-      desc: "Gostou? Fica. Não gostou? Cancela. Simples assim.",
+      desc: "Gostaste? Ficas. Não gostaste? Cancelas. Simples assim.",
       action: "DIA 15",
       link: null,
     },
@@ -37,15 +30,15 @@ export const HowItWorks = () => {
       <div className="container mx-auto px-6">
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white font-outfit">
-            🚀 Como funciona o período de teste de 14 dias
+            Como funciona em 3 passos
           </h2>
           <p className="text-neutral-400 text-lg max-w-2xl mx-auto">
-            Zero risco. Se em 14 dias você não sentir diferença real no caos do
-            dia a dia, cancela e pronto.
+            Zero risco. Se em 14 dias não sentires diferença real no caos do
+            dia a dia, cancelas e pronto.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 relative">
           {/* Connector Line */}
           <div className="hidden lg:block absolute top-12 left-[12%] right-[12%] h-[1px] bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
 

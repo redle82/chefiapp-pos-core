@@ -52,7 +52,7 @@
 | Resultado           | Definição                                                                                                                                                                                    |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Passou no teste** | Nenhum pedido perdido; operador consegue concluir um serviço completo (entrada → cozinha → pago) mesmo com erros humanos e atrasos; mensagens de erro são compreensíveis (não stack traces). |
-| **Falha aceitável** | Atraso de alguns segundos; impressão atrasada; um refresh manual; mensagem técnica mas com saída clara ("continuar em demonstração" ou equivalente).                                         |
+| **Falha aceitável** | Atraso de alguns segundos; impressão atrasada; um refresh manual; mensagem técnica mas com saída clara ("continuar em trial" ou equivalente).                                                |
 | **Falha crítica**   | Pedido desaparece; total errado sem forma de corrigir; ecrã branco ou silêncio total; bloqueio sem mensagem.                                                                                 |
 
 ### Sinais para humanos (mínimos)

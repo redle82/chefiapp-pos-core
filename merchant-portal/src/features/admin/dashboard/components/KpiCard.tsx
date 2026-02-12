@@ -1,3 +1,7 @@
+import { colors } from "../../../../ui/design-system/tokens/colors";
+
+const theme = colors.modes.dashboard;
+
 interface KpiCardProps {
   label: string;
   value: number;
@@ -39,7 +43,7 @@ export function KpiCard({
           fontSize: 11,
           textTransform: "uppercase",
           letterSpacing: "0.06em",
-          color: "#9ca3af",
+          color: theme.text.secondary,
           marginBottom: 6,
           fontWeight: 600,
         }}
@@ -52,7 +56,7 @@ export function KpiCard({
             width: 64,
             height: 18,
             borderRadius: 999,
-            backgroundColor: "#e5e7eb",
+            backgroundColor: theme.border.subtle,
           }}
         />
       ) : (
@@ -60,7 +64,7 @@ export function KpiCard({
           style={{
             fontSize: 18,
             fontWeight: 600,
-            color: "#111827",
+            color: theme.action.base,
           }}
         >
           {formatted}

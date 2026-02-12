@@ -43,6 +43,7 @@ export class DynamicMenuService {
 
     // 2. Get all products with their dynamics
     // Note: Fetching products without 'category' column (may not exist in schema)
+    // CONFIG_RUNTIME_CONTRACT: só produtos com available=true e restaurant_id=X; Config Web é fonte de verdade (docs/contracts/CONFIG_RUNTIME_CONTRACT.md).
     const { data: products, error: productsError } = await supabase
       .from("gm_products")
       .select(
@@ -297,7 +298,8 @@ export class DynamicMenuService {
   private static async getStaticMenu(
     restaurantId: string
   ): Promise<DynamicMenuResponse> {
-    // Simple alphabetical sort when dynamic is disabled
+    // Simple alphabetical sort when dynamic is disabled.
+    // CONFIG_RUNTIME_CONTRACT: só produtos com available=true e restaurant_id=X (docs/contracts/CONFIG_RUNTIME_CONTRACT.md).
     const { data: products } = await supabase
       .from("gm_products")
       .select("id, name, price_cents, available, category_id")

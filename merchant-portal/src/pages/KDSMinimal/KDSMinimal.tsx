@@ -13,7 +13,7 @@
  *
  * GUARDS CRÍTICOS (ordem de bloqueio)
  * - canOperate = readiness.ready; se false, orders = [] e return.
- * - Bootstrap: se !installedKdsRestaurantId && !DEBUG: coreStatus === "online" e operationMode === "operacao-real" para loadOrders/polling; senão lista vazia ou DemoExplicativoCard / "Complete bootstrap" / "Core online".
+ * - Bootstrap: se !installedKdsRestaurantId && !DEBUG: coreStatus === "online" e operationMode === "operacao-real" para loadOrders/polling; senão lista vazia ou TrialGuideExplicativoCard / "Complete bootstrap" / "Core online".
  * - hasNoIdentity: sem instalado/runtime/storage → "KDS não instalado" + link /app/install.
  * - globalUI: isLoadingCritical → loading; isError → erro + retry; isEmpty → empty_orders.
  *
@@ -26,8 +26,8 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { DevicePairingView } from "../../features/auth/connectByCode/DevicePairingView";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
+import { DevicePairingView } from "../../features/auth/connectByCode/DevicePairingView";
 // FASE 3.5: Migrado para OrderReader (usa dockerCoreClient)
 import { CONFIG } from "../../config";
 import { useGlobalUIState } from "../../context/GlobalUIStateContext";
@@ -46,7 +46,12 @@ import { readOpenTasks } from "../../core-boundary/readers/TaskReader";
 import { markItemReady } from "../../core-boundary/writers/OrderWriter";
 import { isDockerBackend } from "../../core/infra/backendAdapter";
 import { updateOrderStatus as coreUpdateOrderStatus } from "../../core/infra/CoreOrdersApi";
-import { BlockingScreen, useOperationalReadiness } from "../../core/readiness";
+import {
+  BlockingScreen,
+  DeviceBlockedScreen,
+  useDeviceGate,
+  useOperationalReadiness,
+} from "../../core/readiness";
 import { useShift } from "../../core/shift/ShiftContext";
 import {
   getInstalledDevice,
@@ -175,6 +180,9 @@ export function KDSMinimal() {
           DEFAULT_RESTAURANT_ID,
         );
   const canOperate = readiness.ready;
+
+  // CONFIG_RUNTIME_CONTRACT: Device Gate — KDS só opera com dispositivo ativo na Config (docs/contracts/CONFIG_RUNTIME_CONTRACT.md §2.2, §2.3).
+  const deviceGate = useDeviceGate(restaurantId);
 
   const hasNoIdentity =
     !installedKdsRestaurantId && !runtime?.restaurant_id && !storageId;
@@ -384,15 +392,40 @@ export function KDSMinimal() {
     return <Navigate to={readiness.redirectTo} replace />;
   }
 
+  if (deviceGate.loading) {
+    return (
+      <GlobalLoadingView
+        message="A verificar dispositivo..."
+        layout="operational"
+        variant="fullscreen"
+      />
+    );
+  }
+  if (!deviceGate.allowed) {
+    return <DeviceBlockedScreen reason={deviceGate.reason} />;
+  }
+
   // Vincular dispositivo (PIN) ou instalar no portal — CODE_AND_DEVICE_PAIRING_CONTRACT
   if (hasNoIdentity && !CONFIG.DEBUG_DIRECT_FLOW) {
     return (
       <>
         <DevicePairingView deviceType="kds" />
-        <div style={{ position: "absolute", bottom: 24, left: 0, right: 0, textAlign: "center" }}>
+        <div
+          style={{
+            position: "absolute",
+            bottom: 24,
+            left: 0,
+            right: 0,
+            textAlign: "center",
+          }}
+        >
           <Link
             to="/admin/devices"
-            style={{ fontSize: 14, color: VPC.textMuted, textDecoration: "underline" }}
+            style={{
+              fontSize: 14,
+              color: VPC.textMuted,
+              textDecoration: "underline",
+            }}
           >
             Ou instalar KDS no portal
           </Link>

@@ -32,7 +32,7 @@ export function MenuBuilderPage() {
     );
   }
 
-  // Use runtime ID or fallback only if absolutely necessary for demo/dev
+  // Use runtime ID or fallback only if absolutely necessary for trial/dev
   const restaurantId =
     runtime.restaurant_id ?? "bbce08c7-63c0-473d-b693-ec2997f73a68";
 

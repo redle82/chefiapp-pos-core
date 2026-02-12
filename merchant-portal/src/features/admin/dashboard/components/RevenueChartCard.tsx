@@ -1,4 +1,7 @@
 import type { DashboardOverview } from "../types";
+import { colors } from "../../../../ui/design-system/tokens/colors";
+
+const theme = colors.modes.dashboard;
 
 interface RevenueChartCardProps {
   loading: boolean;
@@ -14,9 +17,9 @@ export function RevenueChartCard({
   return (
     <div
       style={{
-        backgroundColor: "#ffffff",
+        backgroundColor: theme.surface.layer1,
         borderRadius: 12,
-        border: "1px solid #e5e7eb",
+        border: `1px solid ${theme.border.subtle}`,
         padding: "18px 20px",
       }}
     >
@@ -37,7 +40,7 @@ export function RevenueChartCard({
                 fontSize: 14,
                 fontWeight: 600,
                 margin: 0,
-                color: "#111827",
+                color: theme.text.primary,
               }}
             >
               Dinero ingresado
@@ -47,7 +50,7 @@ export function RevenueChartCard({
               onClick={onDetailsClick}
               style={{
                 fontSize: 12,
-                color: "#7c3aed",
+                color: theme.action.base,
                 background: "none",
                 border: "none",
                 cursor: "pointer",
@@ -66,8 +69,8 @@ export function RevenueChartCard({
             <svg width="100%" height="100%">
               <defs>
                 <linearGradient id="revArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#c4b5fd" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#ede9fe" stopOpacity="0.1" />
+                  <stop offset="0%" stopColor={theme.action.base} stopOpacity="0.5" />
+                  <stop offset="100%" stopColor={theme.action.base} stopOpacity="0.08" />
                 </linearGradient>
               </defs>
               {/* grade simples */}
@@ -80,7 +83,7 @@ export function RevenueChartCard({
                     x2="100%"
                     y1={y}
                     y2={y}
-                    stroke="#e5e7eb"
+                    stroke={theme.border.subtle}
                     strokeWidth={1}
                   />
                 );
@@ -98,7 +101,7 @@ export function RevenueChartCard({
                     y={205}
                     fontSize={10}
                     textAnchor="middle"
-                    fill="#9ca3af"
+                    fill={theme.text.secondary}
                   >
                     {point.hour}
                   </text>
@@ -126,14 +129,14 @@ function SkeletonRevenue() {
           width: 160,
           height: 14,
           borderRadius: 999,
-          backgroundColor: "#e5e7eb",
+          backgroundColor: theme.border.subtle,
         }}
       />
       <div
         style={{
           height: 200,
           borderRadius: 8,
-          backgroundColor: "#e5e7eb",
+          backgroundColor: theme.border.subtle,
         }}
       />
     </div>

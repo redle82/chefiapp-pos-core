@@ -24,6 +24,8 @@ import type {
 } from "../../core/contracts";
 
 import { CONFIG } from "../../config";
+import { Logger } from "../../core/logger";
+import { addSample as latencyAddSample } from "../../core/observability/latencyStore";
 import { eventTaskGenerator } from "../../core/tasks/EventTaskGenerator";
 
 const DOCKER_CORE_URL = CONFIG.CORE_URL;
@@ -105,8 +107,8 @@ export async function createOrder(
 
   // Guardrail FK (Opção 2 do plano):
   // Antes de chamar create_order_atomic, garantir que todos os product_id existem
-  // em gm_products para este restaurante. Se algum não existir, falhar com erro
-  // amigável em vez de deixar o Postgres lançar 409 (FK violation).
+  // em gm_products para este restaurante e estão available. Se algum não existir ou estiver desativado, falhar com erro amigável.
+  // CONFIG_RUNTIME_CONTRACT: validação exige existência, restaurant_id e available=true; Config governa escrita (docs/contracts/CONFIG_RUNTIME_CONTRACT.md).
   const uniqueProductIds = Array.from(
     new Set(items.map((item) => item.product_id).filter(Boolean))
   );
@@ -118,7 +120,7 @@ export async function createOrder(
   }
 
   const encodedIds = encodeURIComponent(`(${uniqueProductIds.join(",")})`);
-  const validationUrl = `${DOCKER_CORE_URL}/rest/v1/gm_products?id=in.${encodedIds}&restaurant_id=eq.${restaurantId}&select=id`;
+  const validationUrl = `${DOCKER_CORE_URL}/rest/v1/gm_products?id=in.${encodedIds}&restaurant_id=eq.${restaurantId}&available=eq.true&select=id`;
 
   const validationResponse = await fetch(validationUrl, {
     method: "GET",
@@ -153,6 +155,7 @@ export async function createOrder(
     ...(syncMetadata || {}),
   };
 
+  const t0 = Date.now();
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -169,12 +172,14 @@ export async function createOrder(
 
   if (!response.ok) {
     const errorText = await response.text();
+    latencyAddSample(restaurantId, "create_order_atomic", Date.now() - t0);
     throw new Error(
       `Failed to create order: ${response.status} ${response.statusText} - ${errorText}`
     );
   }
 
   const data = await response.json();
+  latencyAddSample(restaurantId, "create_order_atomic", Date.now() - t0);
 
   // Verificar que o RPC retornou dados válidos
   if (!data || !data.id) {
@@ -190,9 +195,13 @@ export async function createOrder(
       orderNumber: data.number ?? data.short_id ?? data.id,
       tableNumber: syncMetadata?.table_number ?? null,
     })
-    .catch((err) =>
-      console.warn("[OrderWriter] Tarefa por pedido não criada:", err)
-    );
+    .catch((err) => {
+      Logger.warn("[OrderWriter] Tarefa por pedido não criada", {
+        restaurant_id: restaurantId,
+        orderId: data.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
 
   return {
     id: data.id,

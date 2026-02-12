@@ -155,13 +155,13 @@ function logTenantEvent(event: string, data: Record<string, unknown>) {
 export async function fetchUserMemberships(
   userId: string,
 ): Promise<TenantMembership[]> {
-  // MOCK: Bypass for demo-user
-  if (userId === "demo-user") {
-    console.info("[TenantResolver] Retrieving mock memberships for demo-user");
+  // MOCK: Bypass for trial-user
+  if (userId === "trial-user") {
+    console.info("[TenantResolver] Retrieving mock memberships for trial-user");
     return [
       {
         restaurant_id: "mock-tenant-id",
-        restaurant_name: "Demo Restaurant (GoldMonkey)",
+        restaurant_name: "Trial Restaurant (GoldMonkey)",
         role: "owner",
       },
     ];

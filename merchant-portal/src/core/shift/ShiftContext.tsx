@@ -19,7 +19,7 @@ interface ShiftContextValue {
   markShiftOpen: () => void;
 }
 
-/** Exported for public/demo tree (minimal providers). */
+/** Exported for public/trial tree (minimal providers). */
 export const ShiftContext = createContext<ShiftContextValue | null>(null);
 
 const INITIAL_INTERVAL = 5000; // 5s initial retry if failed
@@ -49,7 +49,7 @@ export const ShiftProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsChecking(true);
     try {
       const register = await CashRegisterEngine.getOpenCashRegister(
-        restaurantId
+        restaurantId,
       );
       const isOpen = !!register;
 
@@ -79,7 +79,7 @@ export const ShiftProvider: React.FC<{ children: React.ReactNode }> = ({
         backoffRef.current = MAX_INTERVAL;
         console.warn(
           "[ShiftContext] Non-connection error checking shift:",
-          err
+          err,
         );
       }
     } finally {

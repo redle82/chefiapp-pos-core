@@ -16,11 +16,11 @@ import {
 export function RequireAuth({ children }: { children: JSX.Element }) {
   const { session, loading } = useAuth();
 
-  // Demo mode check (legacy support)
+  // Trial mode check
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.get("demo") === "true") {
-      setTabIsolated("chefiapp_demo_mode", "true");
+    if (params.get("mode") === "trial") {
+      setTabIsolated("chefiapp_trial_mode", "true");
     }
   }, []);
 
@@ -59,9 +59,9 @@ export function RequireAuth({ children }: { children: JSX.Element }) {
     );
   }
 
-  const isDemo = getTabIsolated("chefiapp_demo_mode") === "true";
+  const isTrial = getTabIsolated("chefiapp_trial_mode") === "true";
 
-  if (!session && !isDemo) {
+  if (!session && !isTrial) {
     console.warn(
       "🛡️ [AUTH] Access Denied: No session found. Redirecting to /login",
     );

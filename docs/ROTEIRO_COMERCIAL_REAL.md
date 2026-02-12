@@ -1,6 +1,6 @@
 # Roteiro Comercial Real — ChefIApp v1
 
-**Data:** 2026-01-26  
+**Data:** 2026-01-26
 **Status:** ✅ PRONTO PARA USO
 
 ---
@@ -20,6 +20,7 @@ Não é sobre volume. É sobre **validação real** com early adopters.
 #### 1.1 Identificar Restaurantes Potenciais
 
 **Perfil ideal:**
+
 - Restaurante médio (15-30 mesas)
 - Foco em qualidade (não fast food)
 - Problemas operacionais conhecidos:
@@ -30,17 +31,21 @@ Não é sobre volume. É sobre **validação real** com early adopters.
 - Dono/gerente acessível
 
 **Canais de prospecção:**
+
 1. **Rede pessoal**
+
    - Conhece alguém que tem restaurante?
    - Conhece alguém que conhece dono de restaurante?
    - Indicações são ouro
 
 2. **Eventos do setor**
+
    - Feiras de restaurantes
    - Eventos de gastronomia
    - Meetups de tecnologia para restaurantes
 
 3. **LinkedIn**
+
    - Buscar "dono restaurante" + cidade
    - Buscar "gerente restaurante" + cidade
    - Conectar e enviar mensagem personalizada
@@ -83,7 +88,7 @@ Quer ver uma demo de 30 minutos? Sem compromisso.
 ```
 Olá [Nome],
 
-Vi que você gerencia [Nome do Restaurante]. 
+Vi que você gerencia [Nome do Restaurante].
 
 Tenho um sistema que pode ajudar com atrasos na produção e estoque desorganizado. É diferente de Toast/Square — foca em produção, não gestão genérica.
 
@@ -107,20 +112,22 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 #### 2.1 Preparação
 
 **Antes da demo:**
+
 - [ ] Testar sistema (tudo funcionando)
 - [ ] Preparar dados de exemplo (menu, pedidos)
 - [ ] Revisar demo script (30 min)
 - [ ] Testar conexão (internet, navegador)
 - [ ] Preparar perguntas frequentes
 
-**Duração:** 30 minutos  
+**Duração:** 30 minutos
 **Objetivo:** Provar que resolve problema real
 
 ---
 
 #### 2.2 Execução
 
-**Seguir `DEMO_SCRIPT_V1.md`:**
+**Seguir `DEMO_GUIDE_V1.md`:**
+
 1. Introdução (2 min)
 2. Menu Builder (5 min)
 3. KDS (10 min)
@@ -129,6 +136,7 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 6. Fechamento (5 min)
 
 **Foco:**
+
 - Diferencial técnico (Task Engine, Estoque)
 - Valor operacional (reduz atrasos, desperdício)
 - Honestidade (não prometer o que não temos)
@@ -138,12 +146,14 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 #### 2.3 Após Demo
 
 **Coletar feedback:**
+
 - Interesse (escala 1-10)
 - Objeções principais
 - O que mais chamou atenção
 - O que falta (para v2)
 
 **Próximos passos:**
+
 - Se interessado (7+): Agendar onboarding
 - Se médio interesse (4-6): Follow-up em 1 semana
 - Se baixo interesse (1-3): Entender motivo, manter contato
@@ -157,17 +167,20 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 #### 3.1 Oferta Early Adopter
 
 **Pricing:**
+
 - **R$ 99/mês** (primeiros 3 meses)
 - Após 3 meses: R$ 199/mês
 - Onboarding completo incluído
 - Suporte prioritário
 
 **Contrato:**
+
 - Simples (1 página)
 - Sem fidelidade (pode cancelar quando quiser)
 - Feedback estruturado (semanal nos primeiros 30 dias)
 
 **Valor:**
+
 - Reduz atrasos em 50%
 - Reduz desperdício em 30%
 - Aumenta eficiência em 40%
@@ -178,6 +191,7 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 #### 3.2 Processo de Fechamento
 
 **Se interessado (7+):**
+
 1. Confirmar interesse
 2. Explicar oferta early adopter
 3. Enviar contrato simples
@@ -185,6 +199,7 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 5. Definir data de início
 
 **Se objeções:**
+
 - "Muito caro" → Explicar ROI (economia R$ 500-1.000/mês)
 - "Não tenho tempo" → Onboarding completo (1-2 semanas)
 - "Já tenho sistema" → Foco em produção (não gestão)
@@ -199,23 +214,27 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 #### 4.1 Semana 1: Setup
 
 **Dia 1-2: Configuração**
+
 - [ ] Criar restaurante no sistema
 - [ ] Configurar mesas
 - [ ] Configurar locais (Cozinha, Bar, Estoque)
 
 **Dia 3-4: Menu**
+
 - [ ] Importar/criar menu
 - [ ] Definir tempo de preparo (obrigatório)
 - [ ] Definir estação (obrigatório)
 - [ ] Validar que menu está completo
 
 **Dia 5: Estoque**
+
 - [ ] Criar ingredientes
 - [ ] Configurar estoque inicial
 - [ ] Definir mínimos operacionais
 - [ ] Validar que estoque está conectado
 
 **Dia 6-7: Treinamento**
+
 - [ ] Treinar equipe (KDS)
 - [ ] Treinar gerente (Task System)
 - [ ] Treinar compras (Lista de Compras)
@@ -226,16 +245,19 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 #### 4.2 Semana 2: Operação Assistida
 
 **Dia 1-3: Suporte Diário**
+
 - [ ] Resolver dúvidas diárias
 - [ ] Ajustes rápidos (tempos, mínimos)
 - [ ] Validar que sistema está sendo usado
 
 **Dia 4-5: Validação**
+
 - [ ] Validar que pedidos estão sendo criados
 - [ ] Validar que tarefas estão sendo geradas
 - [ ] Validar que estoque está sendo usado
 
 **Dia 6-7: Independência**
+
 - [ ] Reduzir suporte (sob demanda)
 - [ ] Validar que equipe está confiante
 - [ ] Coletar feedback estruturado
@@ -245,11 +267,13 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 #### 4.3 Semana 3+: Independência
 
 **Suporte sob demanda:**
+
 - Email (resposta em 24h)
 - Ajustes rápidos (se necessário)
 - Validação de satisfação (semanal)
 
 **Coletar feedback:**
+
 - O que funciona bem?
 - O que não funciona?
 - O que falta?
@@ -262,18 +286,21 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 #### 5.1 Métricas a Observar
 
 **Uso do sistema:**
+
 - Pedidos criados/dia
 - Tarefas geradas/dia
 - Tarefas resolvidas/dia
 - Itens na lista de compras
 
 **Satisfação:**
+
 - Feedback semanal
 - Problemas encontrados
 - Melhorias sugeridas
 - ROI percebido
 
 **Retenção:**
+
 - Sistema está sendo usado?
 - Equipe confia no sistema?
 - Sistema é necessário ou só útil?
@@ -283,6 +310,7 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 #### 5.2 Ajustes Cirúrgicos
 
 **Baseado em feedback:**
+
 - Ajustar tempos de preparo (se necessário)
 - Ajustar mínimos de estoque (se necessário)
 - Ajustar regras de tarefas (se necessário)
@@ -293,22 +321,27 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 ## 🎯 Objetivos por Fase
 
 ### Fase 1: Prospecção
+
 - **Meta:** 10-15 restaurantes identificados
 - **Meta:** 5-8 demos agendadas
 
 ### Fase 2: Demo
+
 - **Meta:** 5-8 demos executadas
 - **Meta:** 3-5 restaurantes interessados (7+)
 
 ### Fase 3: Fechamento
+
 - **Meta:** 3-5 restaurantes fechados
 - **Meta:** Contratos assinados
 
 ### Fase 4: Onboarding
+
 - **Meta:** 3-5 restaurantes operando
 - **Meta:** Equipes treinadas
 
 ### Fase 5: Observação
+
 - **Meta:** Dados reais coletados
 - **Meta:** Feedback estruturado
 - **Meta:** Ajustes aplicados
@@ -318,16 +351,19 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 ## 📊 Métricas de Sucesso
 
 ### Mínimo (30 dias)
+
 - ✅ 3 restaurantes operando
 - ✅ Sistema estável
 - ✅ Feedback positivo
 
 ### Ideal (60 dias)
+
 - ✅ 5 restaurantes operando
 - ✅ Sistema útil (não só funciona)
 - ✅ ROI percebido
 
 ### Excelente (90 dias)
+
 - ✅ 5 restaurantes retidos
 - ✅ Sistema necessário (não só útil)
 - ✅ Pronto para escalar
@@ -337,6 +373,7 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 ## 🚫 O Que NÃO Fazer
 
 ### ❌ Vender Features Futuras
+
 - Não prometer relatórios financeiros
 - Não prometer integrações
 - Não prometer marketing/CRM
@@ -344,6 +381,7 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 **Razão:** v1 não tem isso. Ser honesto.
 
 ### ❌ Descontar Demais
+
 - Não baixar para R$ 49/mês
 - Não dar desconto excessivo
 - Não competir só por preço
@@ -351,6 +389,7 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 **Razão:** Desvaloriza produto. Foco em valor.
 
 ### ❌ Onboarding Rápido Demais
+
 - Não fazer setup em 1 dia
 - Não pular treinamento
 - Não deixar equipe sozinha
@@ -362,17 +401,20 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 ## ✅ O Que Fazer
 
 ### ✅ Focar em Valor
+
 - Reduz atrasos
 - Reduz desperdício
 - Aumenta eficiência
 - ROI claro
 
 ### ✅ Ser Honesto
+
 - Não prometer o que não temos
 - Focar no que temos
 - Explicar limites claros
 
 ### ✅ Onboarding Completo
+
 - 1-2 semanas
 - Setup completo
 - Treinamento da equipe
@@ -383,12 +425,15 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
 ## 🎯 Próximos Passos (Imediato)
 
 ### Esta Semana
+
 1. **Listar 10-15 restaurantes potenciais**
+
    - Rede pessoal
    - LinkedIn
    - Visita direta
 
 2. **Preparar contato inicial**
+
    - Email template
    - LinkedIn message
    - Script visita direta
@@ -398,11 +443,14 @@ Quer ver uma demo rápida de 30 minutos? Sem compromisso.
    - Semana 2-3
 
 ### Próximas Semanas
+
 1. **Executar demos**
+
    - Seguir demo script
    - Coletar feedback
 
 2. **Fechar primeiras vendas**
+
    - Oferta early adopter
    - Contratos simples
 

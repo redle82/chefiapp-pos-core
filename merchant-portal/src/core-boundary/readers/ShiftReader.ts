@@ -1,8 +1,8 @@
 /**
  * SHIFT READER — Adaptador de Leitura de Shifts (Read-Only)
- * 
+ *
  * FASE 3.5: Padronização de Acesso ao Core
- * 
+ *
  * REGRAS:
  * - Apenas leitura (read-only)
  * - Não cria nada
@@ -10,7 +10,7 @@
  * - Usa core-boundary/docker-core/connection.ts
  */
 
-import { dockerCoreClient } from '../docker-core/connection';
+import { dockerCoreClient } from "../docker-core/connection";
 
 export interface CoreShiftLog {
   id: string;
@@ -19,7 +19,7 @@ export interface CoreShiftLog {
   role: string;
   start_time: string;
   end_time: string | null;
-  status: 'active' | 'completed' | 'cancelled';
+  status: "active" | "completed" | "cancelled";
   created_at: string;
   updated_at: string;
 }
@@ -39,33 +39,40 @@ export interface CoreShiftLogWithEmployee extends CoreShiftLog {
 
 /**
  * Lê shifts ativos de um restaurante.
- * 
+ *
  * @param restaurantId ID do restaurante
  * @returns Lista de shifts ativos com informações do funcionário
  */
-export async function readActiveShifts(restaurantId: string): Promise<CoreShiftLogWithEmployee[]> {
+export async function readActiveShifts(
+  restaurantId: string,
+): Promise<CoreShiftLogWithEmployee[]> {
   const { data, error } = await dockerCoreClient
-    .from('shift_logs')
-    .select(`
+    .from("shift_logs")
+    .select(
+      `
       id,
       employee_id,
       role,
       start_time,
       status,
       gm_staff ( name )
-    `)
-    .eq('restaurant_id', restaurantId)
-    .eq('status', 'active');
+    `,
+    )
+    .eq("restaurant_id", restaurantId)
+    .eq("status", "active");
 
   if (error) {
     const msg = error.message ?? "";
-    const isDemoFallback =
+    const isTrialFallback =
       msg.includes("does not exist") ||
       msg.includes("Backend indisponível") ||
       (error as { code?: string }).code === "42P01";
-    if (isDemoFallback) {
+    if (isTrialFallback) {
       if (import.meta.env.DEV) {
-        console.debug("[ShiftReader] shift_logs fallback (table missing/demo):", msg.slice(0, 80));
+        console.debug(
+          "[ShiftReader] shift_logs fallback (table missing/trial):",
+          msg.slice(0, 80),
+        );
       }
       return [];
     }
@@ -73,7 +80,9 @@ export async function readActiveShifts(restaurantId: string): Promise<CoreShiftL
   }
 
   // Docker Core usa gm_staff; expor como employees para compatibilidade com LiveRosterWidget
-  const rows = (data || []) as Array<CoreShiftLog & { gm_staff?: { name: string } | null }>;
+  const rows = (data || []) as Array<
+    CoreShiftLog & { gm_staff?: { name: string } | null }
+  >;
   return rows.map((row) => ({
     ...row,
     employees: row.gm_staff ? { name: row.gm_staff.name } : null,
@@ -82,19 +91,21 @@ export async function readActiveShifts(restaurantId: string): Promise<CoreShiftL
 
 /**
  * Lê um shift específico por ID.
- * 
+ *
  * @param shiftId ID do shift
  * @returns Shift ou null se não encontrado
  */
-export async function readShiftById(shiftId: string): Promise<CoreShiftLog | null> {
+export async function readShiftById(
+  shiftId: string,
+): Promise<CoreShiftLog | null> {
   const { data, error } = await dockerCoreClient
-    .from('shift_logs')
-    .select('*')
-    .eq('id', shiftId)
+    .from("shift_logs")
+    .select("*")
+    .eq("id", shiftId)
     .single();
 
   if (error) {
-    if (error.code === 'PGRST116') {
+    if (error.code === "PGRST116") {
       // Not found
       return null;
     }

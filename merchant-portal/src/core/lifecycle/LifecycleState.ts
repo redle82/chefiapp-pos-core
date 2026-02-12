@@ -39,8 +39,8 @@ const ROUTES_BY_STATE: Record<RestaurantLifecycleState, string[]> = {
     "/pricing",
     "/features",
     "/auth",
-    "/demo-guiado",
-    "/demo",
+    "/trial-guide",
+    "/trial",
     "/help/start-local",
   ],
   BOOTSTRAP_REQUIRED: BOOTSTRAP_ALLOWED_ROUTES,
@@ -67,7 +67,7 @@ const CANONICAL_DESTINATION: Record<RestaurantLifecycleState, string> = {
  * técnico legado).
  */
 export function deriveLifecycleState(
-  params: LifecycleStateInput
+  params: LifecycleStateInput,
 ): RestaurantLifecycleState {
   const { pathname, isAuthenticated, hasOrganization } = params;
 
@@ -76,10 +76,7 @@ export function deriveLifecycleState(
   }
 
   if (isAuthenticated) {
-    if (
-      pathname === "/bootstrap" ||
-      pathname === "/setup/restaurant-minimal"
-    ) {
+    if (pathname === "/bootstrap" || pathname === "/setup/restaurant-minimal") {
       return "BOOTSTRAP_IN_PROGRESS";
     }
     return "BOOTSTRAP_REQUIRED";
@@ -93,7 +90,7 @@ export function deriveLifecycleState(
  */
 export function isPathAllowedForState(
   pathname: string,
-  state: RestaurantLifecycleState
+  state: RestaurantLifecycleState,
 ): boolean {
   if (state === "READY_TO_OPERATE") {
     return true;
@@ -106,7 +103,7 @@ export function isPathAllowedForState(
  * Retorna o destino canónico para o estado (para redirecionamento).
  */
 export function getCanonicalDestination(
-  state: RestaurantLifecycleState
+  state: RestaurantLifecycleState,
 ): string {
   return CANONICAL_DESTINATION[state];
 }
@@ -126,7 +123,7 @@ export interface SystemStateInput {
 
 /**
  * Deriva o estado do sistema (configuração vs trial vs pago vs suspenso).
- * Fonte única para UI e gates; não confundir com demo/pilot/live (removidos da UI).
+ * Fonte única para UI e gates; não confundir com trial/pilot/live (removidos da UI).
  */
 export function deriveSystemState(params: SystemStateInput): SystemState {
   if (!params.hasOrganization || !params.isBootstrapComplete) return "SETUP";

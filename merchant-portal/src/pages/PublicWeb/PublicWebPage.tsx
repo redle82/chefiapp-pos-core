@@ -8,9 +8,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { BlockingScreen, useOperationalReadiness } from "../../core/readiness";
-import { MENU_NOT_LIVE_WEB_MESSAGE } from "../../core/menu/MenuState";
-import { GlobalBlockedView } from "../../ui/design-system/components";
 import {
   readMenu,
   readRestaurantById,
@@ -23,6 +20,9 @@ import {
   createOrder,
   type OrderItemInput,
 } from "../../core-boundary/writers/OrderWriter";
+import { MENU_NOT_LIVE_WEB_MESSAGE } from "../../core/menu/MenuState";
+import { BlockingScreen, useOperationalReadiness } from "../../core/readiness";
+import { GlobalBlockedView } from "../../ui/design-system/components";
 
 const VPC = {
   bg: "#0a0a0a",
@@ -69,7 +69,11 @@ export function PublicWebPage() {
       />
     );
   }
-  if (!readiness.ready && readiness.uiDirective === "REDIRECT" && readiness.redirectTo) {
+  if (
+    !readiness.ready &&
+    readiness.uiDirective === "REDIRECT" &&
+    readiness.redirectTo
+  ) {
     return <Navigate to={readiness.redirectTo} replace />;
   }
 
@@ -98,8 +102,8 @@ export function PublicWebPage() {
         let restaurantData: CoreRestaurant | null = await readRestaurantBySlug(
           slug,
         );
-        // Fallback: slug "demo-restaurant" — usar restaurante do runtime quando existir
-        if (!restaurantData && slug === "demo-restaurant") {
+        // Fallback: slug "trial-restaurant" — usar restaurante do runtime quando existir
+        if (!restaurantData && slug === "trial-restaurant") {
           if (runtime?.loading) {
             // Ainda a carregar: não mostrar erro, manter loading até o runtime ter restaurant_id
             setLoading(true);

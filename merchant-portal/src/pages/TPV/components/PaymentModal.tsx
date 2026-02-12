@@ -30,7 +30,7 @@ interface PaymentModalProps {
     tipCents?: number,
   ) => Promise<void> | void;
   onCancel: () => void;
-  isDemoMode?: boolean;
+  isTrialMode?: boolean;
 }
 
 type PaymentMethodId = "cash" | "card" | "mbway" | "pix";
@@ -84,7 +84,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   orderTotal,
   onPay,
   onCancel,
-  isDemoMode,
+  isTrialMode,
 }) => {
   const { formatAmount } = useCurrency();
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -122,9 +122,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     intentCreatedRef.current = false;
   }, [method]);
 
-  // Auto-create PaymentIntent when "card" is selected (non-demo)
+  // Auto-create PaymentIntent when "card" is selected (non-trial)
   useEffect(() => {
-    if (method !== "card" || isDemoMode || intentCreatedRef.current) return;
+    if (method !== "card" || isTrialMode || intentCreatedRef.current) return;
     if (!STRIPE_KEY) return; // no Stripe key configured — will show fallback
     intentCreatedRef.current = true;
     setCardStep("creating-intent");
@@ -144,7 +144,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         setCardStep("idle");
         intentCreatedRef.current = false;
       });
-  }, [method, isDemoMode, orderId, orderTotal, restaurantId]);
+  }, [method, isTrialMode, orderId, orderTotal, restaurantId]);
 
   const cashCents = useMemo(() => {
     const value = parseFloat(cashTendered || "0");
@@ -161,9 +161,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     if (method === "cash") return cashCents >= orderTotal;
     if (method === "mbway") return /^9\d{8}$/.test(mbwayPhone);
     // Card handled by Stripe form; hide generic confirm when ready
-    if (method === "card") return isDemoMode === true;
+    if (method === "card") return isTrialMode === true;
     return true;
-  }, [cashCents, isDemoMode, mbwayPhone, method, orderTotal, processing]);
+  }, [cashCents, isTrialMode, mbwayPhone, method, orderTotal, processing]);
 
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
@@ -237,7 +237,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               {formatAmount(tipCents)}
             </span>
           )}
-          {isDemoMode && <span style={styles.demoBadge}>MODO DEMO</span>}
+          {isTrialMode && <span style={styles.trialBadge}>GUIDED TRIAL</span>}
         </div>
 
         {/* Tip / Gorjeta */}
@@ -374,11 +374,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {method === "card" && (
           <div style={styles.section}>
-            {isDemoMode ? (
+            {isTrialMode ? (
               <div style={styles.terminalWaiting}>
                 <span style={{ fontSize: 36 }}>💳</span>
                 <span style={{ color: "#a1a1aa", fontSize: 14 }}>
-                  Demo: pagamento simulado
+                  Simulated Environment (Trial Infrastructure): pagamento
+                  simulado
                 </span>
               </div>
             ) : !STRIPE_KEY ? (
@@ -467,7 +468,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             cursor: canConfirm ? "pointer" : "not-allowed",
             // Hide when Stripe form is active (it has its own submit)
             display:
-              method === "card" && !isDemoMode && cardStep === "ready"
+              method === "card" && !isTrialMode && cardStep === "ready"
                 ? "none"
                 : "flex",
           }}
@@ -640,7 +641,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 800,
     letterSpacing: -1,
   },
-  demoBadge: {
+  trialBadge: {
     background: ACCENT,
     color: "#fff",
     fontSize: 11,

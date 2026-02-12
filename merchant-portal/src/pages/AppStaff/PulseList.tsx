@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { Badge } from "../../ui/design-system/Badge";
 import { Button } from "../../ui/design-system/Button";
 import { Card } from "../../ui/design-system/Card";
@@ -22,25 +23,28 @@ interface Pulse {
 
 export const PulseList: React.FC = () => {
   const navigate = useNavigate();
+  const { identity } = useRestaurantIdentity();
   const [pulses, setPulses] = useState<Pulse[]>([]);
   const [loading, setLoading] = useState(true);
   const [restaurantName, setRestaurantName] = useState("...");
 
-  // Staff-style browser tab title for isolated tool context
+  // Identity Layer: tab title = restaurante protagonista
   useEffect(() => {
-    document.title = "ChefIApp POS — Orders";
+    document.title = identity.name
+      ? `${identity.name} — Orders`
+      : "ChefIApp POS — Orders";
     return () => {
       document.title = "ChefIApp POS";
     };
-  }, []);
+  }, [identity.name]);
 
   useEffect(() => {
     const fetchPulses = async () => {
-      // A) DEMO MODE CHECK
-      const isDemo = getTabIsolated("chefiapp_demo_mode") === "true";
+      // A) TRIAL MODE CHECK
+      const isTrial = getTabIsolated("chefiapp_trial_mode") === "true";
 
-      if (isDemo) {
-        setRestaurantName("Restaurante Demo");
+      if (isTrial) {
+        setRestaurantName("Restaurante Trial");
         setPulses([
           {
             id: "1",
@@ -50,9 +54,9 @@ export const PulseList: React.FC = () => {
           },
           {
             id: "2",
-            type: "DEMO_PULSE",
+            type: "TRIAL_PULSE",
             created_at: new Date(Date.now() - 60000).toISOString(),
-            payload: { message: "Operação Simulada" },
+            payload: { message: "Operação em Trial" },
           },
           {
             id: "3",

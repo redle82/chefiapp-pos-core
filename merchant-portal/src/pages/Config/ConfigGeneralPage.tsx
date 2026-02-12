@@ -39,7 +39,7 @@ export function ConfigGeneralPage() {
             color: colors.textSecondary,
           }}
         >
-          Declarações estáveis do restaurante. Sem métricas nem operação.
+          Visão geral e atalhos para identidade, idioma, recibo e integrações.
         </p>
       </header>
       <div

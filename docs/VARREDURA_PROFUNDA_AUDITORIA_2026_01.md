@@ -8,15 +8,15 @@
 
 ## 1. Resumo executivo
 
-O projeto ChefIApp está num estado de **fase fechada** documentada em `FASE_FECHADA_NEXT.md`: build verde, fluxo Landing → Demo → Dashboard → Backoffice coerente, `product_mode` persistido no Core, billing webhook → live implementado. O perímetro **fechado** cobre: arquitetura PURE DOCKER na app layer, modos demo/pilot/live na UI e no Core, proteção TPV/KDS por ModeGate, e ativação de live via webhook de billing.
+O projeto ChefIApp está num estado de **fase fechada** documentada em `FASE_FECHADA_NEXT.md`: build verde, fluxo Landing → Trial Guide → Dashboard → Backoffice coerente, `product_mode` persistido no Core, billing webhook → live implementado. O perímetro **fechado** cobre: arquitetura PURE DOCKER na app layer, modos trial/pilot/live na UI e no Core, proteção TPV/KDS por ModeGate, e ativação de live via webhook de billing.
 
-**Concluído de fato:** Persistência `product_mode` (migration aplicada, RuntimeReader/Writer, Context); billing webhook (server/core-client + billing-webhook-server ACTIVE → setProductMode); Backoffice Linear (rota, sidebar, redirects /app/setup/\*); Landing, Demo, Dashboard com CTAs e card "Estado do sistema"; ModeIndicator oculto em `/` e `/demo`; ModeGate em TPV e KDS.
+**Concluído de fato:** Persistência `product_mode` (migration aplicada, RuntimeReader/Writer, Context); billing webhook (server/core-client + billing-webhook-server ACTIVE → setProductMode); Backoffice Linear (rota, sidebar, redirects /app/setup/\*); Landing, Trial Guide, Dashboard com CTAs e card "Estado do sistema"; ModeIndicator oculto em `/` e `/trial-guide`; ModeGate em TPV e KDS.
 
 **Pendências reais (não ideias novas):** (1) Narrativa "Sistema operacional" não aplicada na copy da Landing (hero e footer ainda usam "TPV que pensa"); (2) Sandbox TPV em modo piloto só tem contrato, sem implementação; (3) Lint incremental citado como trilho opcional; (4) Documentos ONDE_ESTAMOS_AGORA e ANALISE_ROADMAP desatualizados (Billing ainda descrito como bloqueador/pendente).
 
 **Documentos referenciados mas desatualizados ou em conflito:** ONDE_ESTAMOS_AGORA (Billing como pendente); ANALISE_ROADMAP (FASE 1 Billing bloqueador); audit/EXECUTABLE_ROADMAP (posicionamento "TPV QUE PENSA" e FASE 0 "Remover Sistema Operacional" em conflito com FASE_FECHADA_NEXT que adota "Sistema operacional", TPV enterrado).
 
-**Documentos ausentes:** Nenhum documento listado no DOC_INDEX está ausente; DEMO_SCRIPT_5MIN.md e LANDING_REFINAMENTOS.md existem. Não existe um "guia de operação ao vivo" ou "guia de piloto" operacional dedicado (apenas contrato SANDBOX_TPV_PILOT).
+**Documentos ausentes:** Nenhum documento listado no DOC_INDEX está ausente; DEMO_GUIDE_5MIN.md (Demo Guide 5 min) e LANDING_REFINAMENTOS.md existem. Não existe um "guia de operação ao vivo" ou "guia de piloto" operacional dedicado (apenas contrato SANDBOX_TPV_PILOT).
 
 **Decisões conscientes de adiamento:** Sandbox TPV (contrato sem código); fluxo redirect + "confirmar assinatura" pós-checkout (opcional no contrato Billing); FASE 7 Mapa visual e FASE 8 Analytics (EXECUTABLE_ROADMAP); Lint como trilho opcional.
 
@@ -48,15 +48,15 @@ O projeto ChefIApp está num estado de **fase fechada** documentada em `FASE_FEC
 
 ### 3.1 FASE_FECHADA_NEXT.md
 
-| Item                              | Status          | Evidência                                                                                                                                                                    | Observação                                                          |
-| --------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Persistência product_mode no Core | Concluído       | docker-core/schema/migrations/20260128_product_mode.sql; RuntimeReader.select inclui product_mode; RuntimeWriter.setProductMode; RestaurantRuntimeContext carrega e persiste | Migration aplicável via make migrate-product-mode                   |
-| Billing (webhook → live)          | Concluído       | server/core-client.ts setProductMode; server/billing-webhook-server.ts chama setCoreProductMode quando status ACTIVE e merchant_id                                           | Fluxo redirect + confirmar assinatura marcado como futuro opcional  |
-| Sandbox TPV em modo piloto        | Contrato apenas | docs/SANDBOX_TPV_PILOT_CONTRACT.md                                                                                                                                           | Não implementado; opções (mesa piloto, teto, flag origin) a definir |
-| Lint incremental                  | Não iniciado    | Citado como trilho opcional                                                                                                                                                  | Decisão consciente de fazer por área                                |
-| Build verde, fluxo coerente       | Concluído       | App.tsx rotas /, /demo, /dashboard, /app/backoffice; redirects /app/setup/\*                                                                                                 | —                                                                   |
-| ModeGate TPV/KDS                  | Concluído       | TPVMinimal.tsx e KDSMinimal.tsx usam ModeGate allow={["pilot","live"]}                                                                                                       | —                                                                   |
-| ModeIndicator oculto em / e /demo | Concluído       | ModeIndicator.tsx HIDE_INDICATOR_PATHS = ["/", "/demo"]                                                                                                                      | —                                                                   |
+| Item                                     | Status          | Evidência                                                                                                                                                                    | Observação                                                          |
+| ---------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Persistência product_mode no Core        | Concluído       | docker-core/schema/migrations/20260128_product_mode.sql; RuntimeReader.select inclui product_mode; RuntimeWriter.setProductMode; RestaurantRuntimeContext carrega e persiste | Migration aplicável via make migrate-product-mode                   |
+| Billing (webhook → live)                 | Concluído       | server/core-client.ts setProductMode; server/billing-webhook-server.ts chama setCoreProductMode quando status ACTIVE e merchant_id                                           | Fluxo redirect + confirmar assinatura marcado como futuro opcional  |
+| Sandbox TPV em modo piloto               | Contrato apenas | docs/SANDBOX_TPV_PILOT_CONTRACT.md                                                                                                                                           | Não implementado; opções (mesa piloto, teto, flag origin) a definir |
+| Lint incremental                         | Não iniciado    | Citado como trilho opcional                                                                                                                                                  | Decisão consciente de fazer por área                                |
+| Build verde, fluxo coerente              | Concluído       | App.tsx rotas /, /trial-guide, /dashboard, /app/backoffice; redirects /app/setup/\*                                                                                          | —                                                                   |
+| ModeGate TPV/KDS                         | Concluído       | TPVMinimal.tsx e KDSMinimal.tsx usam ModeGate allow={["pilot","live"]}                                                                                                       | —                                                                   |
+| ModeIndicator oculto em / e /trial-guide | Concluído       | ModeIndicator.tsx HIDE_INDICATOR_PATHS = ["/", "/trial-guide"]                                                                                                               | —                                                                   |
 
 ### 3.2 BILLING_PRODUCT_MODE_CONTRACT.md
 
@@ -109,19 +109,19 @@ O projeto ChefIApp está num estado de **fase fechada** documentada em `FASE_FEC
 
 ## 4. Cruzamento roadmap vs código
 
-| Afirmação em doc                             | No código? | Observação                                                                                        |
-| -------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------- |
-| product_mode em gm_restaurants               | Sim        | Coluna na migration 20260128; RuntimeReader/Writer; Context                                       |
-| Billing ACTIVE → product_mode live           | Sim        | billing-webhook-server.ts + core-client.ts                                                        |
-| Landing → Demo → Dashboard → Backoffice      | Sim        | App.tsx rotas e redirects                                                                         |
-| TPV/KDS bloqueados em demo                   | Sim        | ModeGate allow={["pilot","live"]} em TPVMinimal e KDSMinimal                                      |
-| ModeIndicator oculto em / e /demo            | Sim        | HIDE_INDICATOR_PATHS                                                                              |
-| Card "Estado do sistema" no Dashboard        | Sim        | EstadoDoSistemaCard em DashboardPortal.tsx                                                        |
-| Backoffice com setProductMode                | Sim        | BackofficePage botões Ativar piloto / Ativar ao vivo                                              |
-| Sandbox TPV (mesa piloto, teto, flag)        | Não        | Apenas contrato                                                                                   |
-| Narrativa "Sistema operacional" em toda a UI | Não        | LandingPage.tsx hero: "O único TPV que pensa antes do humano"; footer: "ChefIApp — TPV que pensa" |
-| DEMO_SCRIPT_5MIN.md existe                   | Sim        | docs/DEMO_SCRIPT_5MIN.md                                                                          |
-| LANDING_REFINAMENTOS.md existe               | Sim        | docs/LANDING_REFINAMENTOS.md                                                                      |
+| Afirmação em doc                               | No código? | Observação                                                                                        |
+| ---------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------- |
+| product_mode em gm_restaurants                 | Sim        | Coluna na migration 20260128; RuntimeReader/Writer; Context                                       |
+| Billing ACTIVE → product_mode live             | Sim        | billing-webhook-server.ts + core-client.ts                                                        |
+| Landing → Trial Guide → Dashboard → Backoffice | Sim        | App.tsx rotas e redirects                                                                         |
+| TPV/KDS bloqueados em trial                    | Sim        | ModeGate allow={["pilot","live"]} em TPVMinimal e KDSMinimal                                      |
+| ModeIndicator oculto em / e /trial-guide       | Sim        | HIDE_INDICATOR_PATHS                                                                              |
+| Card "Estado do sistema" no Dashboard          | Sim        | EstadoDoSistemaCard em DashboardPortal.tsx                                                        |
+| Backoffice com setProductMode                  | Sim        | BackofficePage botões Ativar piloto / Ativar ao vivo                                              |
+| Sandbox TPV (mesa piloto, teto, flag)          | Não        | Apenas contrato                                                                                   |
+| Narrativa "Sistema operacional" em toda a UI   | Não        | LandingPage.tsx hero: "O único TPV que pensa antes do humano"; footer: "ChefIApp — TPV que pensa" |
+| DEMO_GUIDE_5MIN.md existe                      | Sim        | docs/DEMO_GUIDE_5MIN.md (Demo Guide 5 min)                                                        |
+| LANDING_REFINAMENTOS.md existe                 | Sim        | docs/LANDING_REFINAMENTOS.md                                                                      |
 
 ---
 
@@ -143,8 +143,8 @@ O projeto ChefIApp está num estado de **fase fechada** documentada em `FASE_FEC
 | LANDING_PAGE_MINIMA.md           | Sim     |
 | LANDING_REFINAMENTOS.md          | Sim     |
 | DASHBOARD_MODO_VENDA.md          | Sim     |
-| DEMO_SCRIPT_5MIN.md              | Sim     |
-| DEMO_SCRIPT_V1.md                | Sim     |
+| DEMO_GUIDE_5MIN.md               | Sim     |
+| DEMO_GUIDE_V1.md                 | Sim     |
 | FASE_FECHADA_NEXT.md             | Sim     |
 | ESTADO_ATUAL_2026_01_28.md       | Sim     |
 
@@ -171,26 +171,26 @@ Nenhum documento listado no DOC_INDEX está ausente.
 
 | Estado crítico                                    | Fechado (implementado) | Só conceitual (contrato/doc) | Observação                                                                                               |
 | ------------------------------------------------- | ---------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------- |
-| product_mode (demo/pilot/live)                    | Sim                    | —                            | Core, Context, UI (Dashboard, Backoffice)                                                                |
+| product_mode (trial/pilot/live)                   | Sim                    | —                            | Core, Context, UI (Dashboard, Backoffice)                                                                |
 | Billing → live                                    | Sim                    | —                            | Webhook server-side; redirect+confirmar opcional                                                         |
 | Piloto (sandbox: mesa/teto/flag)                  | —                      | Sim                          | SANDBOX_TPV_PILOT_CONTRACT apenas                                                                        |
 | Persistência no Core                              | Sim                    | —                            | product_mode, setup_status, módulos                                                                      |
 | Segurança / permissões (quem pode setProductMode) | Parcial                | —                            | UI chama setProductMode sem camada de permissão explícita no Core; webhook usa merchant_id dos metadados |
-| Rollback / reversão de modo                       | Não                    | —                            | Nenhum fluxo documentado ou implementado para voltar de live para pilot/demo                             |
+| Rollback / reversão de modo                       | Não                    | —                            | Nenhum fluxo documentado ou implementado para voltar de live para pilot/trial                            |
 
 ---
 
 ## 7. Consistência narrativa
 
-| Área                                           | Narrativa desejada (FASE_FECHADA_NEXT)             | Estado real no código/docs                                                                       |
-| ---------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Landing hero                                   | Sistema operacional (não TPV como produto)         | LandingPage.tsx: "O único TPV que pensa antes do humano"                                         |
-| Landing footer                                 | —                                                  | "ChefIApp — TPV que pensa"                                                                       |
-| Demo                                           | Sistema operacional, 3 passos Observe/Pense/Sugira | DemoTourPage: "Como o sistema operacional organiza decisões"; sem menção a TPV no copy principal |
-| Dashboard                                      | Estado do sistema, modos, CTAs                     | Copy "Estado do sistema", DEMO/PILOTO/AO VIVO; coerente                                          |
-| Backoffice                                     | Transições raras e contratuais                     | Copy presente; coerente                                                                          |
-| Docs (FASE_FECHADA_NEXT, validação)            | Sistema operacional, TPV enterrado                 | Consistente entre si                                                                             |
-| Docs (EXECUTABLE_ROADMAP, LANDING_PAGE_MINIMA) | TPV que pensa / TPV que diz                        | Conflito com narrativa atual                                                                     |
+| Área                                           | Narrativa desejada (FASE_FECHADA_NEXT)             | Estado real no código/docs                                                                            |
+| ---------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Landing hero                                   | Sistema operacional (não TPV como produto)         | LandingPage.tsx: "O único TPV que pensa antes do humano"                                              |
+| Landing footer                                 | —                                                  | "ChefIApp — TPV que pensa"                                                                            |
+| Trial Guide                                    | Sistema operacional, 3 passos Observe/Pense/Sugira | Rota /trial-guide: "Como o sistema operacional organiza decisões"; sem menção a TPV no copy principal |
+| Dashboard                                      | Estado do sistema, modos, CTAs                     | Copy "Estado do sistema", TRIAL/PILOTO/AO VIVO; coerente                                              |
+| Backoffice                                     | Transições raras e contratuais                     | Copy presente; coerente                                                                               |
+| Docs (FASE_FECHADA_NEXT, validação)            | Sistema operacional, TPV enterrado                 | Consistente entre si                                                                                  |
+| Docs (EXECUTABLE_ROADMAP, LANDING_PAGE_MINIMA) | TPV que pensa / TPV que diz                        | Conflito com narrativa atual                                                                          |
 
 Resquícios de narrativa antiga: "TPV que pensa", "O único TPV que pensa antes do humano" na Landing (código); "TPV QUE PENSA" e "Remover Sistema Operacional" no EXECUTABLE_ROADMAP; LANDING_PAGE_MINIMA descreve headline com "TPV".
 
@@ -198,22 +198,22 @@ Resquícios de narrativa antiga: "TPV que pensa", "O único TPV que pensa antes 
 
 ## 8. Tabela consolidada: Item | Status | Evidência | Observação
 
-| Item                                          | Status       | Evidência                                                             | Observação                     |
-| --------------------------------------------- | ------------ | --------------------------------------------------------------------- | ------------------------------ |
-| Persistência product_mode (Core)              | Concluído    | 20260128_product_mode.sql; RuntimeReader/Writer; Context              | —                              |
-| Billing webhook → live                        | Concluído    | server/core-client.ts; billing-webhook-server ACTIVE → setProductMode | —                              |
-| Fluxo Landing → Demo → Dashboard → Backoffice | Concluído    | App.tsx; DemoTourPage; DashboardPortal; BackofficePage                | —                              |
-| Backoffice Linear (sidebar + redirects)       | Concluído    | BackofficePage; App.tsx /app/setup/\*                                 | —                              |
-| ModeGate TPV/KDS (demo bloqueado)             | Concluído    | TPVMinimal.tsx; KDSMinimal.tsx ModeGate allow pilot/live              | —                              |
-| ModeIndicator oculto em / e /demo             | Concluído    | ModeIndicator.tsx HIDE_INDICATOR_PATHS                                | —                              |
-| Card Estado do sistema no Dashboard           | Concluído    | EstadoDoSistemaCard; setProductMode pilot/live                        | —                              |
-| Sandbox TPV em piloto                         | Não iniciado | SANDBOX_TPV_PILOT_CONTRACT apenas                                     | Contrato; opções a implementar |
-| Narrativa "Sistema operacional" na Landing    | Incompleto   | LandingPage.tsx ainda usa "TPV que pensa" no hero e footer            | Pendência real                 |
-| ONDE_ESTAMOS_AGORA atualizado                 | Incompleto   | Doc ainda cita Billing como bloqueador                                | Desatualizado                  |
-| ANALISE_ROADMAP atualizado                    | Incompleto   | Doc ainda cita FASE 1 Billing como bloqueador                         | Desatualizado                  |
-| Redirect + confirmar assinatura (Billing)     | Adiado       | BILLING_PRODUCT_MODE_CONTRACT "Futuro"                                | Decisão consciente             |
-| Lint incremental                              | Não iniciado | Trilho opcional em FASE_FECHADA_NEXT                                  | Decisão consciente             |
-| Rollback / reversão de modo                   | Não existe   | Nenhum doc nem código                                                 | Não planejado no contrato      |
+| Item                                                 | Status       | Evidência                                                             | Observação                     |
+| ---------------------------------------------------- | ------------ | --------------------------------------------------------------------- | ------------------------------ |
+| Persistência product_mode (Core)                     | Concluído    | 20260128_product_mode.sql; RuntimeReader/Writer; Context              | —                              |
+| Billing webhook → live                               | Concluído    | server/core-client.ts; billing-webhook-server ACTIVE → setProductMode | —                              |
+| Fluxo Landing → Trial Guide → Dashboard → Backoffice | Concluído    | App.tsx; rota /trial-guide; DashboardPortal; BackofficePage           | —                              |
+| Backoffice Linear (sidebar + redirects)              | Concluído    | BackofficePage; App.tsx /app/setup/\*                                 | —                              |
+| ModeGate TPV/KDS (trial bloqueado)                   | Concluído    | TPVMinimal.tsx; KDSMinimal.tsx ModeGate allow pilot/live              | —                              |
+| ModeIndicator oculto em / e /trial-guide             | Concluído    | ModeIndicator.tsx HIDE_INDICATOR_PATHS                                | —                              |
+| Card Estado do sistema no Dashboard                  | Concluído    | EstadoDoSistemaCard; setProductMode pilot/live                        | —                              |
+| Sandbox TPV em piloto                                | Não iniciado | SANDBOX_TPV_PILOT_CONTRACT apenas                                     | Contrato; opções a implementar |
+| Narrativa "Sistema operacional" na Landing           | Incompleto   | LandingPage.tsx ainda usa "TPV que pensa" no hero e footer            | Pendência real                 |
+| ONDE_ESTAMOS_AGORA atualizado                        | Incompleto   | Doc ainda cita Billing como bloqueador                                | Desatualizado                  |
+| ANALISE_ROADMAP atualizado                           | Incompleto   | Doc ainda cita FASE 1 Billing como bloqueador                         | Desatualizado                  |
+| Redirect + confirmar assinatura (Billing)            | Adiado       | BILLING_PRODUCT_MODE_CONTRACT "Futuro"                                | Decisão consciente             |
+| Lint incremental                                     | Não iniciado | Trilho opcional em FASE_FECHADA_NEXT                                  | Decisão consciente             |
+| Rollback / reversão de modo                          | Não existe   | Nenhum doc nem código                                                 | Não planejado no contrato      |
 
 ---
 
@@ -247,9 +247,9 @@ Resquícios de narrativa antiga: "TPV que pensa", "O único TPV que pensa antes 
 **Perímetro fechado:**
 
 - App layer PURE DOCKER (merchant-portal fala com Core via PostgREST; sem Supabase/GoTrue no fluxo de runtime descrito).
-- Fluxo comercial: Landing (`/`) → Demo (`/demo`) → Dashboard (`/dashboard`) → Backoffice (`/app/backoffice`) com rotas e redirects /app/setup/\*.
-- Modos de produto: demo, pilot, live persistidos em `gm_restaurants.product_mode`; lidos e escritos pelo Runtime; exibidos e alteráveis na UI (Dashboard e Backoffice); ativação de live via webhook de billing implementada.
-- Proteção: TPV e KDS bloqueados em modo demo (ModeGate); ModeIndicator oculto em Landing e Demo.
+- Fluxo comercial: Landing (`/`) → Trial Guide (`/trial-guide`) → Dashboard (`/dashboard`) → Backoffice (`/app/backoffice`) com rotas e redirects /app/setup/\*.
+- Modos de produto: trial, pilot, live persistidos em `gm_restaurants.product_mode`; lidos e escritos pelo Runtime; exibidos e alteráveis na UI (Dashboard e Backoffice); ativação de live via webhook de billing implementada.
+- Proteção: TPV e KDS bloqueados em modo trial (ModeGate); ModeIndicator oculto em Landing e Trial Guide.
 - Backoffice Linear: sidebar com itens da spec, estados derivados de setup_status e módulos, transições de modo (piloto/live) por botão.
 - Documentação de fase: FASE_FECHADA_NEXT e contratos BILLING e SANDBOX alinhados ao estado acima; DOC_INDEX e ESTADO_ATUAL_2026_01_28 referenciam o checkpoint.
 

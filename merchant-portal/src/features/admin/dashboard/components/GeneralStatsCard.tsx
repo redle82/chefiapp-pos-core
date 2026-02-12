@@ -1,5 +1,8 @@
 import type { DashboardOverview } from "../types";
+import { colors } from "../../../../ui/design-system/tokens/colors";
 import { KpiCard } from "./KpiCard";
+
+const theme = colors.modes.dashboard;
 
 interface GeneralStatsCardProps {
   loading: boolean;
@@ -19,9 +22,9 @@ export function GeneralStatsCard({
   return (
     <div
       style={{
-        backgroundColor: "#ffffff",
+        backgroundColor: theme.surface.layer1,
         borderRadius: 12,
-        border: "1px solid #e5e7eb",
+        border: `1px solid ${theme.border.subtle}`,
         padding: "18px 20px",
       }}
     >
@@ -30,7 +33,7 @@ export function GeneralStatsCard({
           fontSize: 14,
           fontWeight: 600,
           margin: "0 0 12px 0",
-          color: "#111827",
+          color: theme.text.primary,
         }}
       >
         General

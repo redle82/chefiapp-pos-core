@@ -4,6 +4,7 @@
  * FASE 3 Passo 2: Marcar/desmarcar itens do checklist do turno; templates padrão.
  */
 
+import { Logger } from "../../core/logger";
 import { isDockerBackend } from "../../core/infra/backendAdapter";
 import { dockerCoreClient } from "../docker-core/connection";
 
@@ -79,7 +80,10 @@ export async function ensureDefaultShiftChecklistTemplates(
 
   if (insertError && !isTableUnavailableError(insertError)) {
     const msg = insertError.message ?? "Unknown error";
-    console.warn("[ShiftChecklist] ensureDefaultShiftChecklistTemplates:", msg);
+    Logger.warn("[ShiftChecklist] ensureDefaultShiftChecklistTemplates", {
+      restaurant_id: restaurantId,
+      error: msg,
+    });
   }
 }
 

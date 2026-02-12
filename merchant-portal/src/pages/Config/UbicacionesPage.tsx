@@ -1,5 +1,5 @@
 /**
- * UbicacionesPage — Configuração > Ubicaciones (portal /config).
+ * UbicacionesPage — Configuração > Locais (portal /config).
  *
  * Lista de localizações operacionais. Criar/editar em páginas dedicadas.
  * Sem billing, sem wizard comercial. Ref: CONFIG_LOCATION_VS_CONTRACT.md, ROTAS_E_CONTRATOS.md.
@@ -58,7 +58,7 @@ export function UbicacionesPage() {
               color: colors.textPrimary,
             }}
           >
-            Ubicaciones
+            Locais
           </h1>
           <p
             style={{
@@ -86,7 +86,7 @@ export function UbicacionesPage() {
             cursor: "pointer",
           }}
         >
-          Nova ubicación
+          Adicionar local
         </button>
       </header>
 

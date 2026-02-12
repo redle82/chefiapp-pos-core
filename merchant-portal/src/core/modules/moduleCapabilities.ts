@@ -39,7 +39,10 @@ const MODULE_DEFINITIONS: Record<
   tpv: { primaryRoute: "/op/tpv", phase: "pilot" },
   kds: { primaryRoute: "/op/kds", phase: "pilot" },
   menu: { primaryRoute: "/menu-builder", phase: "pilot" },
-  "restaurant-web": { primaryRoute: "/public/demo-restaurant", phase: "pilot" },
+  "restaurant-web": {
+    primaryRoute: "/public/trial-restaurant",
+    phase: "pilot",
+  },
 
   // Em uso hoje (núcleo já dominado na operação)
   tasks: { primaryRoute: "/tasks", phase: "active" },

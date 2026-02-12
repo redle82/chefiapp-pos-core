@@ -78,11 +78,11 @@ export function BootstrapPage({
   const [restaurantType, setRestaurantType] = useState<string>("Restaurante");
   const [restaurantCountry, setRestaurantCountry] = useState<string>("PT");
 
-  const switchToDemoMode = () => {
-    setTabIsolated("chefiapp_demo_mode", "true");
+  const switchToTrialMode = () => {
+    setTabIsolated("chefiapp_trial_mode", "true");
     // Safety: ensure we have a dummy ID to pass guards
     if (!getTabIsolated("chefiapp_restaurant_id")) {
-      setTabIsolated("chefiapp_restaurant_id", "demo-restaurant-id");
+      setTabIsolated("chefiapp_restaurant_id", "trial-restaurant-id");
     }
     navigate("/dashboard");
   };
@@ -127,17 +127,17 @@ export function BootstrapPage({
       return;
     }
 
-    // DEMO MODE BYPASS
-    const isDemo = getTabIsolated("chefiapp_demo_mode") === "true";
-    if (isDemo || (!session && !authError)) {
-      // If no session and not demo -> Redirect Start
-      if (!isDemo && !session) {
+    // TRIAL MODE BYPASS
+    const isTrial = getTabIsolated("chefiapp_trial_mode") === "true";
+    if (isTrial || (!session && !authError)) {
+      // If no session and not trial -> Redirect Start
+      if (!isTrial && !session) {
         console.log("[Bootstrap] No session found, redirecting to login");
         setState("redirecting");
         setTimeout(() => navigate("/login"), 300);
         return;
       }
-      // If Demo -> Allow pass → Dashboard config-first
+      // If Trial -> Allow pass → Dashboard config-first
       setState("ready");
       setTimeout(() => navigate("/dashboard"), 500);
       return;
@@ -643,7 +643,7 @@ export function BootstrapPage({
                 </button>
                 {bootstrap.coreStatus === "offline-intencional" && (
                   <button
-                    onClick={switchToDemoMode}
+                    onClick={switchToTrialMode}
                     style={{
                       padding: "14px 24px",
                       background: "#32d74b",
@@ -788,11 +788,11 @@ export function BootstrapPage({
                       ? "Pode continuar sem sessão (offline)."
                       : bootstrap.coreStatus === "offline-erro"
                       ? "Inicie o Core para conectar."
-                      : "Você pode continuar em modo offline/demo."}
+                      : "Você pode continuar em modo offline/trial."}
                   </p>
                   {bootstrap.coreStatus === "offline-intencional" && (
                     <button
-                      onClick={switchToDemoMode}
+                      onClick={switchToTrialMode}
                       style={{
                         padding: "14px 24px",
                         background: "#32d74b",
@@ -830,7 +830,7 @@ export function BootstrapPage({
                     bootstrap.coreStatus !== "offline-erro" && (
                       <>
                         <button
-                          onClick={switchToDemoMode}
+                          onClick={switchToTrialMode}
                           style={{
                             padding: "14px 24px",
                             background: "#32d74b",
@@ -843,7 +843,7 @@ export function BootstrapPage({
                             width: "100%",
                           }}
                         >
-                          Entrar Agora (Demo)
+                          Iniciar Free Trial
                         </button>
                         <button
                           onClick={() => {

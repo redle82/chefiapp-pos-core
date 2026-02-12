@@ -1,6 +1,7 @@
 # Roadmap Pós-Fundação — ChefIApp
 
 ## Índice
+
 - [Por que isto não estava na arquitetura](#por-que-istoe-não-estava-na-arquitetura)
 - [Roadmap em fases](#roadmap-em-fases)
 - [Estado de implementação (FASES 1–5)](#estado-de-implementação-fases-15)
@@ -25,6 +26,7 @@ O verdadeiro erro foi não nomear claramente o público-alvo como exclusivo para
 ## Roadmap em fases
 
 ### FASE 0 — Fundamentos (Fechada)
+
 - **Objetivo:** Estabelecer a base técnica e estrutural do produto.
 - **Princípio:** Criar um sistema estável e escalável.
 - **Passos:**
@@ -35,6 +37,7 @@ O verdadeiro erro foi não nomear claramente o público-alvo como exclusivo para
 - **Status:** Fechada. Nada a fazer aqui.
 
 ### FASE 1 — Bootstrap do Restaurante — **Concluída**
+
 - **Objetivo:** Permitir criar e configurar um restaurante completo para operação.
 - **Princípio:** Facilitar o início rápido e sem fricção.
 - **Passos:**
@@ -46,6 +49,7 @@ O verdadeiro erro foi não nomear claramente o público-alvo como exclusivo para
 - **Status:** Implementada. BootstrapPage + IdentitySection; ModuleGate; ConfigPayments; ShiftGate + abertura de turno com caixa inicial.
 
 ### FASE 2 — Menu e Inventário — **Quase completa**
+
 - **Objetivo:** Gerir produtos, categorias e estoque.
 - **Princípio:** Controlar o que é vendido e disponível em tempo real.
 - **Passos:**
@@ -56,6 +60,7 @@ O verdadeiro erro foi não nomear claramente o público-alvo como exclusivo para
 - **Status:** Quase completa. Produtos, ingredientes, BOM e alerta de estoque baixo no Ecrã Zero implementados. Consumo de estoque na venda é responsabilidade futura do Core.
 
 ### FASE 3 — Pessoas e Tarefas — **Concluída**
+
 - **Objetivo:** Gerir equipes, funções e fluxos de trabalho.
 - **Princípio:** Organizar o sistema humano para eficiência.
 - **Passos:**
@@ -63,9 +68,10 @@ O verdadeiro erro foi não nomear claramente o público-alvo como exclusivo para
   2. Sistema de tarefas ligadas a turnos; checklists.
   3. Permissões (Staff executa; Gerente acompanha; Dono vê tudo).
 - **Critério de conclusão:** Equipe operacional com controle de tarefas; "o sistema instrui pessoas sem eu estar lá".
-- **Status:** Implementada. gm_restaurant_people; gm_tasks + turn_session_id; gm_shift_checklist_*; rolePermissions; RolesSummarySection. Gamificação adiada.
+- **Status:** Implementada. gm*restaurant_people; gm_tasks + turn_session_id; gm_shift_checklist*\*; rolePermissions; RolesSummarySection. Gamificação adiada.
 
 ### FASE 4 — Presença Digital — **Concluída**
+
 - **Objetivo:** Página pública, QR e preparação para extensões.
 - **Princípio:** Presença digital não é fundação, é aceleração.
 - **Passos:**
@@ -76,12 +82,13 @@ O verdadeiro erro foi não nomear claramente o público-alvo como exclusivo para
 - **Status:** Implementada. address_text/opening_hours_text; PublicWebPage; PublicPresenceFields; PublicQRSection; FASE_4_EXTENSOES_FUTURAS.md.
 
 ### FASE 5 — Consolidação — **Documentada (pós-€79)**
+
 - **Objetivo:** Unificar dados e processos para visão completa.
 - **Princípio:** Simplificar decisões e operação. **Condição:** Só depois do €79 (patamar de faturação).
 - **Passos:**
-  1. **Supabase ON** — Doc e código prontos (backendAdapter, useSupabaseAuth); deploy operacional quando configurar VITE_SUPABASE_*.
+  1. **Supabase ON** — Doc e código prontos (backendAdapter, useSupabaseAuth); deploy operacional quando configurar VITE*SUPABASE*\*.
   2. **Histórico externo (1.5)** — Contrato e modelo documentados em FASE_5_HISTORICO_EXTERNO.md; ponto de entrada (CSV/API) definido.
-  3. **Dados reais** — dataMode (demo/live) em RestaurantRuntime; indicadores "simulação" em Finanças, relatórios e Alertas.
+  3. **Dados reais** — dataMode (trial/live) em RestaurantRuntime; indicadores "simulação" em Finanças, relatórios e Alertas.
   4. **Alertas avançados** — Filtro por categoria e severidade; catálogo em sync com AlertEngine.createFromEvent.
   5. **Relatórios** — Fecho diário, Vendas por período, export CSV; rotas e permissões owner/manager.
   6. **Hardening** — DataModeBanner em todas as páginas sensíveis + Ecrã Zero.
@@ -92,14 +99,14 @@ O verdadeiro erro foi não nomear claramente o público-alvo como exclusivo para
 
 ## Estado de implementação (FASES 1–5)
 
-| Fase | Nome | Status |
-|------|------|--------|
-| 0 | Fundação | Fechada |
-| 1 | Bootstrap do Restaurante | Concluída |
-| 2 | Menu, Inventário e Estoque | Quase completa |
-| 3 | Pessoas e Tarefas | Concluída |
-| 4 | Presença Digital | Concluída |
-| 5 | Consolidação | Documentada (pós-€79) |
+| Fase | Nome                       | Status                |
+| ---- | -------------------------- | --------------------- |
+| 0    | Fundação                   | Fechada               |
+| 1    | Bootstrap do Restaurante   | Concluída             |
+| 2    | Menu, Inventário e Estoque | Quase completa        |
+| 3    | Pessoas e Tarefas          | Concluída             |
+| 4    | Presença Digital           | Concluída             |
+| 5    | Consolidação               | Documentada (pós-€79) |
 
 **Checklists técnicas:** Todas as fases têm checklists executáveis em `docs/implementation/`. Índice completo: [docs/implementation/INDEX.md](implementation/INDEX.md).
 

@@ -6,7 +6,7 @@
 
 ## Visão geral da Web de Configuração
 
-- **Portal do Dono:** Todas as rotas em `docs/routes/web/*.md` são Web de Configuração. Acesso: utilizador autenticado com `hasOrganization === true` (dono). Não há perfis Gerente/Staff na web como muletas; não há conceito Demo na lógica de produto.
+- **Portal do Dono:** Todas as rotas em `docs/routes/web/*.md` são Web de Configuração. Acesso: utilizador autenticado com `hasOrganization === true` (dono). Não há perfis Gerente/Staff na web como muletas; não há modo trial na lógica de produto (Trial real + Demo Guide).
 - **Relação com CoreFlow:** `resolveNextRoute()` trata primeiro auth e bootstrap; depois aplica redirect operacional só para TPV/KDS em `systemState === "SETUP"`. Rotas web nunca são bloqueadas por `systemState`, billing ou dados. `isWebConfigPath(path)` devolve true para `/dashboard`, `/app/dashboard`, `/config*`, `/menu-builder`, `/onboarding/first-product`, `/app/billing`, `/billing/success`. Outras rotas acedidas após login com hasOrg (ex.: `/purchases`, `/financial`) ficam ALLOW porque o gate operacional só atua em `isOperationalPath`.
 - **Diferença WEB vs OPERAÇÃO:** WEB = configuração, relatórios, billing, pessoas, compras, reservas, etc. — sempre permitida para hasOrg. OPERAÇÃO = TPV, KDS (e App Staff no telemóvel) — em SETUP redireciona para `/onboarding/first-product`. Ref.: [ROUTES_WEB_VS_OPERATION.md](../implementation/ROUTES_WEB_VS_OPERATION.md).
 
@@ -14,21 +14,21 @@
 
 ## Tabela-resumo de todas as rotas
 
-| Rota | Path(s) | Doc | Estado |
-|------|---------|-----|--------|
-| Compras | `/purchases` | [compras.md](web/compras.md) | Parcial |
-| Financeiro | `/financial` | [financeiro.md](web/financeiro.md) | Parcial |
-| Reservas | `/reservations` | [reservas.md](web/reservas.md) | Parcial |
-| Multi-Unidade | `/groups` | [multi-unidade.md](web/multi-unidade.md) | Documentado |
-| QR Mesa | Config: `/config` (Localização); Público: `/public/:slug/mesa/:number` | [qr-mesa.md](web/qr-mesa.md) | Parcial + Público |
-| Painel Pedidos Prontos | `/op/kds` (operacional) | [painel-pedidos-prontos.md](web/painel-pedidos-prontos.md) | Documentado |
-| Pessoas | `/config/people` | [pessoas.md](web/pessoas.md) | Funcional |
-| Mentor IA | `/mentor` | [mentor-ia.md](web/mentor-ia.md) | Parcial |
-| Billing | `/app/billing`, `/billing/success` | [billing.md](web/billing.md) | Funcional |
-| Configuração Operacional | `/config` (identity, location, schedule, people, payments, modules, perception, status) | [configuracao-operacional.md](web/configuracao-operacional.md) | Funcional |
-| Presença Online | `/config` (Identidade/Localização); Público: `/public/:slug` | [presenca-online.md](web/presenca-online.md) | Funcional |
-| Percepção Operacional | `/config/perception` | [percepcao-operacional.md](web/percepcao-operacional.md) | Parcial |
-| AppStaff (visão web) | Dashboard módulo AppStaff (informativo) | [appstaff-web.md](web/appstaff-web.md) | Funcional |
+| Rota                     | Path(s)                                                                                 | Doc                                                            | Estado            |
+| ------------------------ | --------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ----------------- |
+| Compras                  | `/purchases`                                                                            | [compras.md](web/compras.md)                                   | Parcial           |
+| Financeiro               | `/financial`                                                                            | [financeiro.md](web/financeiro.md)                             | Parcial           |
+| Reservas                 | `/reservations`                                                                         | [reservas.md](web/reservas.md)                                 | Parcial           |
+| Multi-Unidade            | `/groups`                                                                               | [multi-unidade.md](web/multi-unidade.md)                       | Documentado       |
+| QR Mesa                  | Config: `/config` (Localização); Público: `/public/:slug/mesa/:number`                  | [qr-mesa.md](web/qr-mesa.md)                                   | Parcial + Público |
+| Painel Pedidos Prontos   | `/op/kds` (operacional)                                                                 | [painel-pedidos-prontos.md](web/painel-pedidos-prontos.md)     | Documentado       |
+| Pessoas                  | `/config/people`                                                                        | [pessoas.md](web/pessoas.md)                                   | Funcional         |
+| Mentor IA                | `/mentor`                                                                               | [mentor-ia.md](web/mentor-ia.md)                               | Parcial           |
+| Billing                  | `/app/billing`, `/billing/success`                                                      | [billing.md](web/billing.md)                                   | Funcional         |
+| Configuração Operacional | `/config` (identity, location, schedule, people, payments, modules, perception, status) | [configuracao-operacional.md](web/configuracao-operacional.md) | Funcional         |
+| Presença Online          | `/config` (Identidade/Localização); Público: `/public/:slug`                            | [presenca-online.md](web/presenca-online.md)                   | Funcional         |
+| Percepção Operacional    | `/config/perception`                                                                    | [percepcao-operacional.md](web/percepcao-operacional.md)       | Parcial           |
+| AppStaff (visão web)     | Dashboard módulo AppStaff (informativo)                                                 | [appstaff-web.md](web/appstaff-web.md)                         | Funcional         |
 
 ---
 

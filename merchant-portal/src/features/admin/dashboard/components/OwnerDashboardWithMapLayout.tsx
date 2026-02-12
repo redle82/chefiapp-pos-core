@@ -254,7 +254,7 @@ const MAPA_SECTIONS = [
         id: "equipa-presenca-online",
         label: "Presença Online",
         icon: "🌐",
-        route: "/public/demo-restaurant",
+        route: "/public/trial-restaurant",
         moduleId: "restaurant-web" as const,
       },
     ],

@@ -63,7 +63,7 @@ Os scripts em `docker-entrypoint-initdb.d/` correm **apenas na primeira criaçã
 4. `04-modules-and-extras.sql` — installed_modules, gm_restaurant_members, event_store, etc.
 5. `05-device-kinds.sql` — device kinds
 6. `05.1-onboarding-persistence.sql` — colunas em gm_restaurants (country, timezone, currency, locale, type), restaurant_schedules, restaurant_setup_status, restaurant_zones
-7. `06-seed-enterprise.sql` — **restaurante ENTERPRISE**: status=active, product_mode=live, caixa aberto, módulos TPV/KDS, setup_status, horários, **membro owner** (user_id fixo para demo)
+7. `06-seed-enterprise.sql` — **restaurante ENTERPRISE**: status=active, product_mode=live, caixa aberto, módulos TPV/KDS, setup_status, horários, **membro owner** (user_id fixo para trial)
 
 ### Tabelas-chave a confirmar
 
@@ -88,7 +88,7 @@ O ficheiro **`schema/06-seed-enterprise.sql`**:
 - **Insere** **módulos instalados** (installed_modules): tpv, kds, tasks, appstaff, health, alerts, config, dashboard, restaurant-web, menu, system-tree.
 - **Insere/atualiza** **restaurant_setup_status** (onboarding completo).
 - **Insere/atualiza** **restaurant_schedules** (Seg–Sáb 09:00–22:00, Domingo fechado).
-- **Insere** **gm_restaurant_members**: um owner com `user_id = 00000000-0000-0000-0000-000000000002` (para demo local: usar auth com este UUID ou criar user com este id no Supabase Auth).
+- **Insere** **gm_restaurant_members**: um owner com `user_id = 00000000-0000-0000-0000-000000000002` (para trial local: usar auth com este UUID ou criar user com este id no Supabase Auth).
 
 Nada é simulado fora do Core; as mesmas tabelas e RPCs que o Bootstrap e o TPV usam.
 
@@ -102,7 +102,7 @@ Após o reset com `06-seed-enterprise.sql`:
 - **Estações** — BAR/KITCHEN nos produtos (coluna `station`).
 - **Caixa aberto** — uma linha em `gm_cash_registers` com `status = 'open'`.
 - **“Turno iniciado”** — neste Core, turno = caixa aberto (get_shift_history devolve gm_cash_registers).
-- **Funcionário mínimo** — o seed **06-seed-enterprise.sql** insere um **gm_restaurant_members** (owner, user_id `00000000-0000-0000-0000-000000000002`). O Bootstrap/FlowGate exigem membership; para demo local, configurar auth para que o utilizador logado tenha este id (ex.: Supabase Auth com user criado com este UUID).
+- **Funcionário mínimo** — o seed **06-seed-enterprise.sql** insere um **gm_restaurant_members** (owner, user_id `00000000-0000-0000-0000-000000000002`). O Bootstrap/FlowGate exigem membership; para trial local, configurar auth para que o utilizador logado tenha este id (ex.: Supabase Auth com user criado com este UUID).
 
 Nada automático fora do fluxo: caixa existe e está aberto no DB; o frontend apenas lê e chama RPCs.
 
@@ -193,4 +193,4 @@ Após `06-seed-enterprise.sql`:
 - Não saltar guards (caixa aberto, menu publicado = restaurante active).
 - Não escrever direto no banco fora do contrato (usar RPCs para ordens, pagamentos, mark_item_ready, update_order_status).
 
-Sistema pronto para **demo, stress e documentação** com Core soberano, consistente e auditável; frontend apenas como cliente do sistema.
+Sistema pronto para **trial, stress e documentação** com Core soberano, consistente e auditável; frontend apenas como cliente do sistema.

@@ -20,6 +20,9 @@ interface OSSignatureProps {
      */
     size?: 'sm' | 'md' | 'lg' | 'xl';
 
+    /** When false, show only "ChefIApp™" (no " OS"). Used for "Powered by ChefIApp™". */
+    showOS?: boolean;
+
     className?: string;
 }
 
@@ -27,6 +30,7 @@ export const OSSignature: React.FC<OSSignatureProps> = ({
     state = 'ember',
     forcedTone,
     size = 'md',
+    showOS = true,
     className = ''
 }) => {
     // 1. Derive logic from System
@@ -59,6 +63,8 @@ export const OSSignature: React.FC<OSSignatureProps> = ({
         }
     };
 
+    const logoSize = size === 'xl' ? 32 : size === 'lg' ? 24 : size === 'md' ? 20 : 16;
+
     return (
         <div
             className={className}
@@ -70,20 +76,20 @@ export const OSSignature: React.FC<OSSignatureProps> = ({
                 userSelect: 'none'
             }}
         >
-            {/* ICON (Abstract Flame/Kernel) */}
-            <svg
-                width={size === 'xl' ? 32 : size === 'lg' ? 24 : 18}
-                height={size === 'xl' ? 32 : size === 'lg' ? 24 : 18}
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-            >
-                <path
-                    d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                    fill={getTextColor()}
-                    fillOpacity={tone === 'ember' ? 0.8 : 1}
-                />
-            </svg>
+            {/* Logo real ChefIApp (nunca estrela/emoji). Ver IDENTITY_LAYER_CONTRACT. */}
+            <img
+                src="/Logo Chefiapp.png"
+                alt=""
+                width={logoSize}
+                height={logoSize}
+                style={{
+                    width: logoSize,
+                    height: logoSize,
+                    objectFit: 'contain',
+                    flexShrink: 0,
+                }}
+                aria-hidden
+            />
 
             {/* WORDMARK */}
             <span style={{
@@ -94,13 +100,15 @@ export const OSSignature: React.FC<OSSignatureProps> = ({
                 textTransform: 'uppercase'
             }}>
                 ChefIApp™
-                <span style={{
-                    color: getOSColor(),
-                    marginLeft: '4px',
-                    fontWeight: 900
-                }}>
-                    OS
-                </span>
+                {showOS && (
+                    <span style={{
+                        color: getOSColor(),
+                        marginLeft: '4px',
+                        fontWeight: 900
+                    }}>
+                        OS
+                    </span>
+                )}
             </span>
         </div>
     );

@@ -18,15 +18,15 @@ This contract is subordinate to [CORE_FINANCIAL_SOVEREIGNTY_CONTRACT.md](./CORE_
 
 ## 1. Rotas públicas (Landing e entrada)
 
-| Rota | Componente / Comportamento | Imutável |
-|------|----------------------------|----------|
-| `/` | LandingPage (Sovereign + Last.app) | Sim |
-| `/auth` | Redireciona para `/onboarding` (único ponto de entrada auth a partir da landing) | Sim |
-| `/demo` | DemoTourPage (tour em 4 passos) | Sim |
-| `/onboarding` | OnboardingLayout | Sim |
-| `/onboarding/:section` | OnboardingLayout | Sim |
-| `/billing/success` | BillingSuccessPage | Sim |
-| `/public/:slug` | PublicWebPage (menu/presença) | Sim |
+| Rota                   | Componente / Comportamento                                                       | Imutável |
+| ---------------------- | -------------------------------------------------------------------------------- | -------- |
+| `/`                    | LandingPage (Sovereign + Last.app)                                               | Sim      |
+| `/auth`                | Redireciona para `/onboarding` (único ponto de entrada auth a partir da landing) | Sim      |
+| `/demo`                | DemoTourPage (tour em 4 passos)                                                  | Sim      |
+| `/onboarding`          | OnboardingLayout                                                                 | Sim      |
+| `/onboarding/:section` | OnboardingLayout                                                                 | Sim      |
+| `/billing/success`     | BillingSuccessPage                                                               | Sim      |
+| `/public/:slug`        | PublicWebPage (menu/presença)                                                    | Sim      |
 
 **Regra:** A landing **nunca** aponta para `/login`, query strings de OAuth, nem para rotas internas (dashboard, config) sem passar por `/auth` ou `/onboarding`. O Core (CoreFlow / FlowGate) decide o fluxo após `/auth`.
 
@@ -36,22 +36,23 @@ This contract is subordinate to [CORE_FINANCIAL_SOVEREIGNTY_CONTRACT.md](./CORE_
 
 ## 2. Mapeamento botões da Landing → destino
 
-| Botão / link | Destino | Ficheiro |
-|--------------|---------|----------|
-| Entrar em operação | `/auth` | Hero.tsx |
-| Ver demonstração | `/demo` | Hero.tsx, Footer.tsx |
-| Fale no WhatsApp | `https://wa.me/{VITE_CONTACT_WHATSAPP}` (externo) | Hero.tsx, Footer.tsx |
-| Já tenho conta | `/auth` | Hero.tsx, Footer.tsx |
-| Começar agora (14 dias grátis) | `/auth` | Footer.tsx |
-| Acesso existente (header) | `/auth` | Hero.tsx |
-| Abrir Portal | `/auth` | Demonstration.tsx |
-| 15 MINUTOS (HowItWorks passo 01) | `/demo` | HowItWorks.tsx |
-| Dúvidas? WhatsApp / email | WHATSAPP_URL, mailto:VITE_CONTACT_EMAIL | Footer.tsx |
-| Termos / Privacidade | `#terms`, `#privacy` (âncora) | Footer.tsx |
-| Ver página pública (Sofia) | `https://sofiagastrobaribiza.com` (externo) | Demonstration.tsx |
-| FAQ contacto | `mailto:comercial@chefiapp.com` ou VITE_CONTACT_EMAIL | FAQ.tsx |
+| Botão / link                     | Destino                                               | Ficheiro                          |
+| -------------------------------- | ----------------------------------------------------- | --------------------------------- |
+| Entrar em operação               | `/auth`                                               | Hero.tsx                          |
+| Ver demonstração                 | `/demo`                                               | Hero.tsx, Footer.tsx              |
+| Fale no WhatsApp                 | `https://wa.me/{VITE_CONTACT_WHATSAPP}` (externo)     | Hero.tsx, Footer.tsx              |
+| Já tenho conta                   | `/auth`                                               | Hero.tsx, Footer.tsx              |
+| Começar agora (14 dias grátis)   | `/auth`                                               | Footer.tsx                        |
+| Acesso existente (header)        | `/auth`                                               | Hero.tsx                          |
+| Abrir Portal                     | `/auth`                                               | Demonstration.tsx                 |
+| 15 MINUTOS (HowItWorks passo 01) | `/demo`                                               | HowItWorks.tsx                    |
+| Dúvidas? WhatsApp / email        | WHATSAPP_URL, mailto:VITE_CONTACT_EMAIL               | Footer.tsx                        |
+| Termos / Privacidade             | `#terms`, `#privacy` (âncora)                         | Footer.tsx                        |
+| Ver página pública (Sofia)       | `https://sofiagastrobaribiza.com` (externo)           | Demonstration.tsx                 |
+| FAQ contacto                     | `mailto:comercial@chefiapp.com` ou VITE_CONTACT_EMAIL | FAQ.tsx                           |
+| Entrar no sistema (com sessão)   | `/admin`                                              | Hero.tsx (header e CTA principal) |
 
-**Nota:** Com sessão válida, Hero e Footer alteram CTA e destinos conforme §7 (ex.: "Voltar ao sistema" → `/dashboard`).
+**Regra de vendas:** A landing (`/`) **nunca** redireciona automaticamente. Com sessão válida, o CTA na landing é "Entrar no sistema" (ou "Ir ao sistema") → `/admin`; o acesso ao sistema é **sempre por clique**, nunca por timeout ou redirect automático.
 
 **Regra:** Nenhum novo botão na landing pode apontar para rota não listada aqui sem actualizar este contrato.
 
@@ -59,10 +60,10 @@ This contract is subordinate to [CORE_FINANCIAL_SOVEREIGNTY_CONTRACT.md](./CORE_
 
 ## 3. Variáveis de ambiente (Landing)
 
-| Variável | Uso | Fallback |
-|----------|-----|----------|
-| `VITE_CONTACT_WHATSAPP` | Número para link WhatsApp | 351000000000 |
-| `VITE_CONTACT_EMAIL` | Email no footer e contacto | contacto@chefiapp.com |
+| Variável                | Uso                        | Fallback              |
+| ----------------------- | -------------------------- | --------------------- |
+| `VITE_CONTACT_WHATSAPP` | Número para link WhatsApp  | 351000000000          |
+| `VITE_CONTACT_EMAIL`    | Email no footer e contacto | contacto@chefiapp.com |
 
 ---
 
@@ -96,26 +97,26 @@ Para alterar um destino de botão ou uma rota pública da landing:
 
 ## 7. Consciência de runtime (opcional)
 
-**Propósito:** A landing pode “sentir” o estado do sistema e adaptar CTA ou redirecionar, sem mentir nem bypassar o Core. Isto é contrato de **percepção** (Landing ↔ Runtime), não de rotas.
+**Propósito:** A landing pode “sentir” o estado do sistema e adaptar CTA, **sem redireccionar automaticamente**, sem mentir nem bypassar o Core. Isto é contrato de **percepção** (Landing ↔ Runtime), não de rotas. **Landing = página de vendas; nunca auto-redirect.**
 
-| Condição | Comportamento permitido | Responsável |
-|----------|-------------------------|-------------|
-| **Sessão válida** (utilizador já autenticado) | CTA principal pode mudar para “Voltar ao sistema” (→ `/dashboard` ou destino decidido pelo Core); ou redirecionamento silencioso após alguns segundos para o destino que o Core definir. | Landing consome estado (ex.: hook/contexto de auth); Core/FlowGate continua a ser a autoridade de “para onde ir”. |
-| **Restaurante ativo** (tenant selado, onboarding completo) | Idem: CTA pode reflectir “Já está dentro” / “Voltar ao comando”; redirecionar para dashboard. | Landing não decide sozinha; usa sinal do Runtime/Core. |
-| **Sem sessão / sem restaurante** | Comportamento actual: “Entrar em operação” → `/auth`; “Ver demonstração” → `/demo`. | Contrato §1 e §2. |
+| Condição                                                   | Comportamento permitido                                                                                                                                                     | Responsável                                                                                   |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| **Sessão válida** (utilizador já autenticado)              | CTA principal “Entrar no sistema” (ou “Ir ao sistema”) → `/admin`; badge discreto “Sessão ativa”. **Nunca** redirecionamento automático (setTimeout, useEffect que navega). | Landing consome estado (ex.: hook/contexto de auth); acesso ao sistema **apenas por clique**. |
+| **Restaurante ativo** (tenant selado, onboarding completo) | Idem: CTA pode reflectir “Entrar no sistema” → `/admin`. Sem auto-redirect.                                                                                                 | Landing não decide sozinha; usa sinal do Runtime/Core.                                        |
+| **Sem sessão / sem restaurante**                           | Comportamento actual: “Entrar em operação” → `/auth`; “Ver demonstração” → `/demo`.                                                                                         | Contrato §1 e §2.                                                                             |
 
 **Regras:**
 
 - A landing **não inventa** estado; consome o que o Runtime/Core expõe (sessão, tenant, onboarding completo).
-- Redirecionamentos “quando já logado” devem ser **silenciosos** ou com CTA explícito (“Voltar ao sistema”); nunca esconder que o utilizador já está dentro.
+- A landing (`/`) **nunca** redirecciona sozinha; a entrada no sistema faz-se **apenas por CTA explícito** (ex.: "Entrar no sistema" → `/admin`).
 - **Copy sugerida (microcopy, não arquitetura):** abaixo do CTA principal, texto tipo “Configuração guiada. 15 minutos.” para reduzir fricção comercial, sem alterar destinos.
 
-**Estado actual:** Consciência de runtime **implementada**. A landing consome sessão (Supabase auth) e adapta CTA/redirecionamento conforme §7.
+**Estado actual:** Consciência de runtime **implementada**. A landing consome sessão (auth) e adapta CTA; **sem** redirecionamento automático.
 
-| Onde | Comportamento |
-|------|----------------|
-| **Hero.tsx** | `useSupabaseAuth()`; header e CTAs: com sessão → "Voltar ao sistema" → `/dashboard`; sem sessão → "Entrar em operação" → `/auth` + microcopy "Configuração guiada. 15 minutos."; redirecionamento silencioso para `/dashboard` após 2,5 s quando há sessão. |
-| **Footer.tsx** | `useSupabaseAuth()`; CTA principal: com sessão → "Voltar ao sistema" → `/dashboard`; sem sessão → "Começar agora (14 dias grátis)" → `/auth`; link secundário "Já tenho conta" / "Voltar ao comando" conforme sessão. |
+| Onde           | Comportamento                                                                                                                                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Hero.tsx**   | useAuth(); header e CTAs: com sessão → "Entrar no sistema" / "Ir ao sistema" → `/admin`; badge "Sessão ativa"; sem sessão → "Entrar em operação" → `/auth`. **Nenhum** setTimeout nem useEffect que navegue. |
+| **Footer.tsx** | useAuth(); CTA principal: com sessão → "Entrar no sistema" → `/admin`; sem sessão → "Começar agora (14 dias grátis)" → `/auth`; link secundário "Já tenho conta" / "Entrar no sistema" conforme sessão.      |
 
 Nenhuma nova obrigação de código além do que já está em Hero e Footer; alterações futuras (ex.: tenant/onboarding completo) devem respeitar as regras acima e actualizar esta tabela.
 

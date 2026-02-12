@@ -37,7 +37,7 @@ export function useBootstrapState(): RestaurantBootstrapState {
       runtime.isPublished ? "publicado" : "nao-publicado";
 
     const operationMode: RestaurantBootstrapState["operationMode"] =
-      runtime.systemState === "SETUP" || runtime.productMode === "demo"
+      runtime.systemState === "SETUP" || runtime.productMode === "trial"
         ? "exploracao"
         : "operacao-real";
 

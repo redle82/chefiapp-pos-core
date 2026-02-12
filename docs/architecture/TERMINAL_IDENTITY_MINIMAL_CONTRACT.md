@@ -31,6 +31,11 @@ Para o piloto, a identidade é um atributo estático confiado:
 
 Para AppStaff, a identidade do dispositivo é secundária à identidade do _humano_ (usuário logado). No entanto, para fins de auditoria técnica, o AppStaff deve enviar um `device_id` estático gerado na instalação do app.
 
+## 5. Device Gate e bloqueio remoto (Fase 1 — 1000-ready)
+
+- **Device Gate obrigatório:** TPV e KDS só iniciam quando o dispositivo instalado está ativo na Config (`gm_equipment`). Quando `TERMINAL_INSTALLATION_TRACK` está ativo, não há entrada sem passar no Device Gate. Ver [CONFIG_RUNTIME_CONTRACT.md](../contracts/CONFIG_RUNTIME_CONTRACT.md) §2.2.
+- **Bloqueio remoto:** Desativar o equipamento na Config (`gm_equipment.is_active = false`) equivale a bloqueio remoto: o Device Gate nega e o ecrã de bloqueio é mostrado. Sem necessidade de ação no dispositivo.
+
 ---
 
 **Conclusão:** Identidade é um crachá fixo. Quem tem o crachá entra. Segurança física e de rede é assumida como controle compensatório para o piloto.

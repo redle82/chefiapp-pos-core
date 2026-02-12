@@ -40,12 +40,12 @@ function now() {
 function ensureSeedData() {
   if (catalogs.length > 0) return;
 
-  const demoCatalogId = uuidv4();
-  const demoCategoryId = uuidv4();
+  const trialCatalogId = uuidv4();
+  const trialCategoryId = uuidv4();
 
   catalogs = [
     {
-      id: demoCatalogId,
+      id: trialCatalogId,
       name: "Catálogo Principal",
       brandId: null,
       destinations: ["LOCAL", "TAKEAWAY", "DELIVERY"],
@@ -57,7 +57,7 @@ function ensureSeedData() {
 
   categories = [
     {
-      id: demoCategoryId,
+      id: trialCategoryId,
       name: "Bebidas",
       sortOrder: 1,
       createdAt: now(),
@@ -68,7 +68,7 @@ function ensureSeedData() {
     {
       id: uuidv4(),
       name: "Café solo",
-      categoryId: demoCategoryId,
+      categoryId: trialCategoryId,
       basePriceCents: 250,
       isActive: true,
       printerId: null,
@@ -79,7 +79,7 @@ function ensureSeedData() {
     {
       id: uuidv4(),
       name: "Agua con gas 33cl",
-      categoryId: demoCategoryId,
+      categoryId: trialCategoryId,
       basePriceCents: 320,
       isActive: true,
       printerId: null,

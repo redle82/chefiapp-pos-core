@@ -11,11 +11,11 @@ type ModeGateProps = {
   fallback?: React.ReactNode;
 };
 
-/** CORREÇÃO 3: modo derivado de systemState (UI não lê productMode). ACTIVE→live, TRIAL→pilot, resto→demo. */
+/** CORREÇÃO 3: modo derivado de systemState (UI não lê productMode). ACTIVE→live, TRIAL→pilot, resto→trial. */
 function modeFromSystemState(systemState: string | undefined): ProductMode {
   if (systemState === "ACTIVE") return "live";
   if (systemState === "TRIAL") return "pilot";
-  return "demo";
+  return "trial";
 }
 
 export function ModeGate({

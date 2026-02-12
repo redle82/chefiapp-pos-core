@@ -160,6 +160,7 @@ export function TPVMinimal({
       return;
     }
     // Guardrail FK: quando Core está reachable, não usar pilot products (IDs podem não existir em gm_products)
+    // CONFIG_RUNTIME_CONTRACT: só produtos com available=true e restaurant_id=X; Config Web é fonte de verdade (docs/contracts/CONFIG_RUNTIME_CONTRACT.md).
     try {
       globalUI.setScreenLoading(true);
       globalUI.setScreenError(null);

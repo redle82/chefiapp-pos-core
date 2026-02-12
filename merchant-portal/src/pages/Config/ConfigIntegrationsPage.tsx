@@ -71,8 +71,7 @@ export function ConfigIntegrationsPage() {
           Integrações
         </h1>
         <p style={{ fontSize: "14px", color: "#666", margin: 0 }}>
-          Cada integração é plugável, ativável e isolada. O Core não conhece
-          Stripe, WhatsApp ou delivery — só eventos e comandos.
+          Ligue TPV, delivery e outros serviços ao seu restaurante.
         </p>
       </div>
 

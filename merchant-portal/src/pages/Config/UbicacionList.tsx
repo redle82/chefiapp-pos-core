@@ -23,7 +23,7 @@ export function UbicacionList({ locations }: UbicacionListProps) {
           fontSize: 14,
         }}
       >
-        Nenhuma ubicación. Adicione a primeira com o botão abaixo.
+        Ainda não tem locais. Use o botão abaixo para adicionar o primeiro.
       </p>
     );
   }

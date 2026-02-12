@@ -249,7 +249,7 @@ export function WizardPage() {
         MENU_ITEM_NOT_FOUND:
           "O item do menu não existe (confere o MENU_ITEM_ID do seed).",
         MIXED_CURRENCY_NOT_SUPPORTED:
-          "O pedido tem moedas diferentes. Usa apenas EUR no demo.",
+          "O pedido tem moedas diferentes. Usa apenas EUR no trial.",
       } as const;
       const hint = (selling as any)[code];
       if (hint) {

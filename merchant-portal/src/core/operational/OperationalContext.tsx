@@ -7,14 +7,14 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 
-export type SystemMode = "demo" | "pilot" | "live";
+export type SystemMode = "trial" | "pilot" | "live";
 export type OperationalRole = "owner" | "manager" | "staff";
 export type UIDensity = "compact" | "standard";
 
 export interface OperationalContextValue {
   /** Módulo ativo na árvore (ex: "tasks", "tpv", "kds"). */
   activeModule: string | null;
-  /** Modo do sistema (demo / piloto / ao vivo). */
+  /** Modo do sistema (trial / piloto / ao vivo). */
   systemMode: SystemMode;
   /** Papel do utilizador. */
   role: OperationalRole | null;
@@ -26,7 +26,7 @@ export interface OperationalContextValue {
 
 const defaultContext: OperationalContextValue = {
   activeModule: null,
-  systemMode: "demo",
+  systemMode: "trial",
   role: null,
   uiDensity: "standard",
   restaurantId: null,

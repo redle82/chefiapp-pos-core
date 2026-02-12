@@ -298,8 +298,8 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   }, []);
 
   // 1. IDENTITY — inicialização síncrona para Owner/Manager (restaurantId+userId) evitam flash de "Inserir Código"
-  // DEMO: nunca AUTO-JOIN como owner; mostrar Launcher de Pessoas (connectByCode por persona)
-  const allowAutoJoin = Boolean(restaurantId && userId && !RUNTIME.isDemo);
+  // TRIAL GUIDE: nunca AUTO-JOIN como owner; mostrar Launcher de Pessoas (connectByCode por persona)
+  const allowAutoJoin = Boolean(restaurantId && userId && !RUNTIME.isTrial);
   const initialContract = allowAutoJoin
     ? ({
         id: restaurantId!,
@@ -338,7 +338,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     setTabIsolated("staff_role", r);
   }, []);
 
-  // 2. SHIFT STATE — activo desde o início quando AUTO-JOIN (restaurantId+userId); DEMO não AUTO-JOIN
+  // 2. SHIFT STATE — activo desde o início quando AUTO-JOIN (restaurantId+userId); TRIAL GUIDE não AUTO-JOIN
   const [shiftState, setShiftState] = useState<
     "offline" | "active" | "closing" | "closed"
   >(() => (allowAutoJoin ? "active" : "offline"));
@@ -398,8 +398,8 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     }
 
     // AUTO-JOIN (Owner Mode / Merchant Portal) — don't override role when opened with ?role=
-    // DEMO: nunca AUTO-JOIN; Launcher de Pessoas (connectByCode) é a única entrada
-    if (restaurantId && userId && !RUNTIME.isDemo) {
+    // TRIAL GUIDE: nunca AUTO-JOIN; Launcher de Pessoas (connectByCode) é a única entrada
+    if (restaurantId && userId && !RUNTIME.isTrial) {
       const contract: OperationalContract = {
         id: restaurantId,
         type: "restaurant",

@@ -1,5 +1,5 @@
 /**
- * Card 4 — Integraciones básicas (Configuración > General).
+ * Card 4 — Integrações básicas (Configuração > Geral).
  * Ref: CONFIG_GENERAL_WIREFRAME.md.
  * Google Place: opcional; persistência em gm_restaurants.google_place_id (DB).
  */
@@ -29,7 +29,7 @@ export function GeneralCardIntegrations() {
     (async () => {
       const { data: row, error } = await dockerCoreClient
         .from("gm_restaurants")
-        .select("google_place_id")
+        .select("*")
         .eq("id", restaurantId)
         .maybeSingle();
       if (cancelled || error || !row) {
@@ -110,25 +110,25 @@ export function GeneralCardIntegrations() {
           color: "#111827",
         }}
       >
-        Conecta tu restaurante con Google
+        Ligue o seu restaurante ao Google
       </h2>
       <p style={{ margin: "0 0 8px 0", fontSize: 12, color: "#6b7280" }}>
-        Añade el Google Place ID de tu restaurante para habilitar funciones como
-        Google Reviews y más. Opcional.
+        Adicione o Google Place ID do seu restaurante para ativar funções como
+        Google Reviews e mais. Opcional.
       </p>
       {!loaded ? (
-        <p style={{ fontSize: 12, color: "#6b7280" }}>Cargando...</p>
+        <p style={{ fontSize: 12, color: "#6b7280" }}>A carregar...</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div>
             <label style={labelStyle}>
-              Busca tu restaurante por nombre o dirección
+              Pesquise o restaurante por nome ou morada
             </label>
             <input
               type="text"
               value={googlePlace}
               onChange={(e) => setGooglePlace(e.target.value)}
-              placeholder="Ej.: SOFIA GASTROBAR IBIZA, Carrer des Caló..."
+              placeholder="Ex.: SOFIA GASTROBAR IBIZA, Carrer des Caló..."
               style={inputStyle}
             />
           </div>
@@ -139,7 +139,7 @@ export function GeneralCardIntegrations() {
               disabled={saving}
               style={buttonStyle}
             >
-              {saving ? "Guardando…" : "Guardar"}
+              {saving ? "A guardar…" : "Guardar"}
             </button>
           </div>
         </div>

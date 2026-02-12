@@ -1,3 +1,4 @@
+import { addEntry as errorsStoreAddEntry } from "../observability/errorsStore";
 import { getTabIsolated } from "../storage/TabIsolatedStorage";
 // LEGACY / LAB — blocked in Docker mode via core/supabase shim
 import { supabase } from "../supabase";
@@ -33,6 +34,10 @@ const Sentry = stub;
 
 export interface LogContext {
   tenantId?: string;
+  /** restaurant_id (alias for tenantId in restaurant context); use in data for per-call scope */
+  restaurant_id?: string;
+  /** device_id when in device context (TPV, KDS, installed device) */
+  deviceId?: string;
   userId?: string;
   sessionId?: string;
   requestId?: string;
@@ -199,6 +204,15 @@ class LoggerService {
       meta: this.sanitize(fullContext),
     };
 
+    // 2. In-memory errors store (observability panel "Erros 24h")
+    if (["warn", "error", "critical"].includes(level)) {
+      const restaurantId =
+        (payload.data as Record<string, unknown>)?.restaurant_id as string | undefined ||
+        fullContext.tenantId ||
+        getTabIsolated("chefiapp_restaurant_id");
+      errorsStoreAddEntry(restaurantId ?? null, level);
+    }
+
     // 2. Local Output (Dev or Console Fallback)
     const consoleMethod =
       level === "critical"
@@ -262,8 +276,11 @@ class LoggerService {
           });
         }
 
+        // OBSERVABILITY_LOGGING_CONTRACT: restaurant_id from call data, context, or tab storage
         const restaurantId =
-          fullContext.tenantId || getTabIsolated("chefiapp_restaurant_id");
+          (payload.data as Record<string, unknown>)?.restaurant_id as string | undefined ||
+          fullContext.tenantId ||
+          getTabIsolated("chefiapp_restaurant_id");
 
         // Validate payload size
         const detailsJson = JSON.stringify({

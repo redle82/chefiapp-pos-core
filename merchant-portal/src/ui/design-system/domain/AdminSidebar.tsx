@@ -34,7 +34,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       Governar: true,
       Conectar: true,
       Evolve: false, // Collapsed by default
-    }
+    },
   );
 
   const toggleGroup = (title: string) => {
@@ -48,7 +48,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     await recordLogout();
     await getAuthActions().signOut();
     removeTabIsolated("chefiapp_restaurant_id");
-    removeTabIsolated("chefiapp_demo_mode");
+    removeTabIsolated("chefiapp_trial_mode");
     navigate("/start");
   };
 
@@ -60,7 +60,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         window.open(
           item.id,
           "ChefIApp_TPV",
-          "width=1024,height=768,menubar=no,toolbar=no,location=no,status=no"
+          "width=1024,height=768,menubar=no,toolbar=no,location=no,status=no",
         );
       } else if (item.id === "/app/kds") {
         // KDS Configuration: Fullscreen feel

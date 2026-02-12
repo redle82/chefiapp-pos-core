@@ -558,7 +558,7 @@ async function buildSystemTree(params: {
               dependencies: ["domain-restaurant-menu"],
               metadata: {
                 publicInterface: true,
-                dockerDemoRoute: "/public/:slug",
+                dockerTrialRoute: "/public/:slug",
                 kind: "public",
                 phase: "pilot",
               },
@@ -578,7 +578,7 @@ async function buildSystemTree(params: {
               ],
               metadata: {
                 publicInterface: true,
-                dockerDemoRoute: "/public/:slug/mesa/:number",
+                dockerTrialRoute: "/public/:slug/mesa/:number",
               },
             },
             {
@@ -593,7 +593,7 @@ async function buildSystemTree(params: {
               dependencies: ["domain-restaurant-orders"],
               metadata: {
                 publicInterface: true,
-                dockerDemoRoute: "/public/:slug/order/:orderId",
+                dockerTrialRoute: "/public/:slug/order/:orderId",
               },
             },
             {
@@ -611,7 +611,7 @@ async function buildSystemTree(params: {
               ],
               metadata: {
                 publicInterface: true,
-                dockerDemoRoute: "/public/:slug/kds",
+                dockerTrialRoute: "/public/:slug/kds",
               },
             },
             {

@@ -1,12 +1,15 @@
 /**
- * Card 2 — Idioma & Localización (Configuración > General).
- * Ref: CONFIG_GENERAL_WIREFRAME.md. Guardar local solo para este card.
+ * Card 2 — Idioma e localização (Configuração > Geral).
+ * Ref: CONFIG_GENERAL_WIREFRAME.md. Guardar local só para este card.
  */
 
 import { useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
 import { dockerCoreClient } from "../../../../core-boundary/docker-core/connection";
-import { getBackendType, BackendType } from "../../../../core/infra/backendAdapter";
+import {
+  BackendType,
+  getBackendType,
+} from "../../../../core/infra/backendAdapter";
 
 const LOCALES = [
   { value: "pt-BR", label: "Português (Brasil)" },
@@ -99,8 +102,20 @@ export function GeneralCardLocale() {
     border: "1px solid #e5e7eb",
     padding: 14,
   };
-  const labelStyle = { display: "block" as const, fontSize: 12, fontWeight: 600, marginBottom: 4, color: "#374151" };
-  const inputStyle = { width: "100%", padding: "6px 10px", border: "1px solid #e5e7eb", borderRadius: 6, fontSize: 13 };
+  const labelStyle = {
+    display: "block" as const,
+    fontSize: 12,
+    fontWeight: 600,
+    marginBottom: 4,
+    color: "#374151",
+  };
+  const inputStyle = {
+    width: "100%",
+    padding: "6px 10px",
+    border: "1px solid #e5e7eb",
+    borderRadius: 6,
+    fontSize: 13,
+  };
   const buttonStyle = {
     padding: "6px 14px",
     borderRadius: 6,
@@ -114,55 +129,80 @@ export function GeneralCardLocale() {
 
   return (
     <section style={cardStyle} aria-labelledby="card-locale-title">
-      <h2 id="card-locale-title" style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px 0", color: "#111827" }}>
-        Idioma y ubicación (operacional)
+      <h2
+        id="card-locale-title"
+        style={{
+          fontSize: 14,
+          fontWeight: 600,
+          margin: "0 0 4px 0",
+          color: "#111827",
+        }}
+      >
+        Idioma e localização (operacional)
       </h2>
       <p style={{ margin: "0 0 8px 0", fontSize: 12, color: "#6b7280" }}>
-        En qué idioma y contexto de tiempo/moneda opera el TPV en esta ubicación.
+        Em que idioma e contexto de tempo/moeda opera o TPV neste local.
       </p>
       {!loaded ? (
-        <p style={{ fontSize: 12, color: "#6b7280" }}>Cargando...</p>
+        <p style={{ fontSize: 12, color: "#6b7280" }}>A carregar...</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div>
-            <label style={labelStyle}>Idioma del TPV *</label>
+            <label style={labelStyle}>Idioma do TPV *</label>
             <select
               value={form.locale}
-              onChange={(e) => setForm((p) => ({ ...p, locale: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, locale: e.target.value }))
+              }
               style={inputStyle}
             >
               {LOCALES.map((l) => (
-                <option key={l.value} value={l.value}>{l.label}</option>
+                <option key={l.value} value={l.value}>
+                  {l.label}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <label style={labelStyle}>Zona horaria *</label>
+            <label style={labelStyle}>Fuso horário *</label>
             <select
               value={form.timezone}
-              onChange={(e) => setForm((p) => ({ ...p, timezone: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, timezone: e.target.value }))
+              }
               style={inputStyle}
             >
               {TIMEZONES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <label style={labelStyle}>Moneda *</label>
+            <label style={labelStyle}>Moeda *</label>
             <select
               value={form.currency}
-              onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, currency: e.target.value }))
+              }
               style={inputStyle}
             >
               {CURRENCIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <button type="button" onClick={handleSave} disabled={saving} style={buttonStyle}>
-              {saving ? "Guardando…" : "Guardar"}
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              style={buttonStyle}
+            >
+              {saving ? "A guardar…" : "Guardar"}
             </button>
           </div>
         </div>

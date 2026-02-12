@@ -8,12 +8,7 @@
  * GlobalUIState lê daqui para expor lifecycleState.
  */
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import {
   deriveLifecycleState,
@@ -61,8 +56,8 @@ const PUBLIC_LIFECYCLE_PATHS = [
   "/pricing",
   "/features",
   "/auth",
-  "/demo-guiado",
-  "/demo",
+  "/trial-guide",
+  "/trial",
   "/login",
   "/signup",
   "/forgot-password",
@@ -71,7 +66,7 @@ const PUBLIC_LIFECYCLE_PATHS = [
 ];
 
 /**
- * Sincroniza o estado da jornada nas rotas públicas (/, /auth, etc.). /demo e /demo-guiado redirecionam para /auth (Opção A).
+ * Sincroniza o estado da jornada nas rotas públicas (/, /auth, etc.). /trial e /trial-guide redirecionam para /auth (Opção A).
  * Nas rotas app (/*), o FlowGate é a fonte de verdade.
  */
 export function PublicLifecycleSync() {

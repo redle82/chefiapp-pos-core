@@ -79,15 +79,15 @@ test.describe("Pedido TPV → KDS/Tarefas", () => {
 
       expect(pageKDS.url()).toMatch(/\/op\/kds/);
       const body = (await pageKDS.locator("body").textContent()) ?? "";
-      // KDS pode mostrar: pedidos, cozinha, tarefas, demo, "não instalado", loading, etc.
+      // KDS pode mostrar: pedidos, cozinha, tarefas, trial, "não instalado", loading, etc.
       const hasAnyContent =
         body.length > 100 &&
-        /pedido|cozinha|kds|tarefa|nenhum|instalar|demo|carregando|loading|device|restaurante/i.test(
-          body
+        /pedido|cozinha|kds|tarefa|nenhum|instalar|trial|carregando|loading|device|restaurante/i.test(
+          body,
         );
       expect(
         hasAnyContent,
-        "KDS deve ter carregado (qualquer UI de KDS ou mensagem)"
+        "KDS deve ter carregado (qualquer UI de KDS ou mensagem)",
       ).toBe(true);
     });
 

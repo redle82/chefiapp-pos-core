@@ -184,7 +184,7 @@ export function SetupSidebar() {
           </span>
         </div>
 
-        {/* Link para "Como tudo se conecta" (MODO_DEMO_EXPLICATIVO_SPEC: System Tree dissolvido no demo) */}
+        {/* Link para "Como tudo se conecta" (TRIAL_GUIDE_SPEC: System Tree dissolvido no trial) */}
         <div
           style={{
             marginTop: "16px",

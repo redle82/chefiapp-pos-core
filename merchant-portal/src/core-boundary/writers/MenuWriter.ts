@@ -13,6 +13,7 @@
 import type { MenuItemInput } from "../../core/contracts/Menu";
 import { validateMenuItemInput } from "../../core/contracts/Menu";
 import { DbWriteGate } from "../../core/governance/DbWriteGate";
+import { Logger } from "../../core/logger";
 
 export interface CreateProductResult {
   id: string;
@@ -53,10 +54,10 @@ export async function createMenuItem(
     ...(item.id ? { id: item.id } : {}),
   };
 
-  console.warn(
-    "[MenuWriter] createMenuItem payload (via DbWriteGate):",
+  Logger.debug("[MenuWriter] createMenuItem payload (via DbWriteGate)", {
+    restaurant_id: restaurantId,
     productData,
-  );
+  });
 
   const { data, error } = await DbWriteGate.insert(
     "MenuAuthority",

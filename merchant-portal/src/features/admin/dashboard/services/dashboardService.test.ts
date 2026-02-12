@@ -35,11 +35,11 @@ describe("dashboardService.getOverview", () => {
   });
 
   it("skips core queries when locationId is not a UUID", async () => {
-    const result = await getOverview("demo-location-sofia-gastrobar");
+    const result = await getOverview("trial-location-sofia-gastrobar");
 
     expect(mockFrom).not.toHaveBeenCalled();
     expect(mockGetActive).not.toHaveBeenCalled();
-    expect(result.locationId).toBe("demo-location-sofia-gastrobar");
+    expect(result.locationId).toBe("trial-location-sofia-gastrobar");
     expect(result.stats.totalBills).toBe(0);
   });
 });

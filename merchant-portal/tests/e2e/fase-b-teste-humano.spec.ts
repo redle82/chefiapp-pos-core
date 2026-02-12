@@ -65,7 +65,7 @@ test.describe("Fase B: Chaos Night Simulation", () => {
       await pageStaff.waitForLoadState("domcontentloaded");
     });
 
-    // 2. CLIENTE: Pedido Via QR (Simulado via acesso público ou demo)
+    // 2. CLIENTE: Pedido Via QR (Simulado via acesso público ou trial)
     // Como o fluxo QR real depende de UUIDs de mesa dinâmicos, vamos simular um pedido "Balcão" no TPV para disparar o KDS
     // ou usar a rota pública se tivermos uma URL estável.
     // Vamos focar na interação TPV -> KDS que é o core do "Rush".

@@ -385,7 +385,7 @@ export function RestaurantPeopleSection() {
               textAlign: "center",
             }}
           >
-            Nenhuma pessoa adicionada. Use o formulário acima para criar.
+            Ainda não há pessoas. Use o formulário acima para adicionar.
           </p>
         ) : (
           people.map((person) => (

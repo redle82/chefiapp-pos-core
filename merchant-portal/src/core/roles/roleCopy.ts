@@ -1,6 +1,9 @@
 /**
  * Copy por papel — textos e labels adaptados ao role (spec secção 10)
  * Dono = estratégia; Gerente = coordenação; Funcionário = acção imediata
+ *
+ * Identity Layer: sidebarTitle ("ChefIApp OS") é usado apenas na assinatura do rodapé da sidebar.
+ * O topo da sidebar mostra o nome do restaurante via RestaurantHeader, não sidebarTitle.
  */
 
 import type { UserRole } from "./rolePermissions";
@@ -43,7 +46,7 @@ const DASHBOARD_COPY: Record<Exclude<UserRole, "staff">, DashboardCopy> = {
 const CONFIG_COPY: Record<Exclude<UserRole, "staff">, ConfigCopy> = {
   owner: {
     title: "Configuração",
-    subtitle: "Gerencie seu restaurante",
+    subtitle: "Configure identidade, local, horários e mais",
   },
   manager: {
     title: "Configuração",

@@ -10,7 +10,7 @@ import {
 
 const mentor = new MentorEngine();
 
-// Default context para modo demo
+// Default context para modo trial
 mentor.setContext(
   { role: "manager", experience: "experienced", shiftsCompleted: 50 },
   {},

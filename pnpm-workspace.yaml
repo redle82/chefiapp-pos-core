@@ -1,0 +1,4 @@
+packages:
+  - "merchant-portal"
+  - "core-design-system"
+  # Adicione outros pacotes do monorepo conforme necessário

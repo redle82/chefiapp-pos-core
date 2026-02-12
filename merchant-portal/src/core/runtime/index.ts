@@ -1,19 +1,23 @@
 /**
  * Runtime Module Exports
- * 
+ *
  * Central export point for all runtime-related functionality.
  */
 
-export { isDevStableMode, devStableReason, isDebugEnabled } from './devStableMode';
+export {
+  devStableReason,
+  isDebugEnabled,
+  isDevStableMode,
+} from "./devStableMode";
 
 export {
-    type RuntimeMode,
-    type RuntimeContext,
-    RUNTIME,
-    assertNoMock,
-    assertProduction,
-    logRuntimeStatus,
-    isProduction,
-    isDemo,
-    runtimeMode,
-} from './RuntimeContext';
+  RUNTIME,
+  assertNoMock,
+  assertProduction,
+  isProduction,
+  isTrial,
+  logRuntimeStatus,
+  runtimeMode,
+  type RuntimeContext,
+  type RuntimeMode,
+} from "./RuntimeContext";

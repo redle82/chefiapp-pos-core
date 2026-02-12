@@ -1,4 +1,4 @@
-# Demo Script 5 Minutos — ChefIApp POS Core
+# Demo Guide 5 Minutos — ChefIApp POS Core
 
 **Data:** 2026-01-28
 **Status:** ✅ PRONTO
@@ -181,13 +181,13 @@
 
 **Próximos passos:**
 
-- Demo completa (30 min) → ver `DEMO_SCRIPT_V1.md`
+- Demo Guide completa (30 min) → ver `DEMO_GUIDE_V1.md`
 - Testes massivos → `npm run test:massive`
 - Documentação técnica → `docs/DOC_INDEX.md`
 
 ---
 
-## ✅ Checklist Pré-Demo
+## ✅ Checklist Pré-Demo Guide
 
 - [ ] Sistema rodando (`npm run dev` em `merchant-portal`)
 - [ ] Navegador aberto em `http://localhost:5175`
@@ -198,11 +198,11 @@
 
 ---
 
-## 🎯 Perguntas Frequentes (Durante Demo)
+## 🎯 Perguntas Frequentes (Durante Demo Guide)
 
 ### "E persistência real?"
 
-**Resposta:** "App layer está em PURE DOCKER (demo). Core financeiro permanece protegido. Implementação real vem quando validarmos arquitetura."
+**Resposta:** "App layer está em PURE DOCKER (trial). Core financeiro permanece protegido. Implementação real vem quando validarmos arquitetura."
 
 ### "E integrações?"
 
@@ -214,4 +214,4 @@
 
 ---
 
-**Conclusão:** Demo de 5 minutos focada em diferencial técnico e arquitetural. Mostra System Tree, Dashboard, TPV v2 e Tasks como prova de conceito de sistema operacional modular.
+**Conclusão:** Demo Guide de 5 minutos focada em diferencial técnico e arquitetural. Mostra System Tree, Dashboard, TPV v2 e Tasks como prova de conceito de sistema operacional modular.

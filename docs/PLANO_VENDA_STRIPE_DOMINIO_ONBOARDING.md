@@ -54,9 +54,9 @@ Seguir na ordem:
 
 ## Contrato produto (inalterado)
 
-- `/` = produto (TPV demo + overlay).
+- `/` = produto (TPV trial + overlay).
 - `/auth` = signup/login.
-- `/op/tpv?mode=demo` = demo direto.
+- `/op/tpv?mode=trial` = trial direto.
 - `/app/billing` = faturação.
 
 Independente da porta em dev ou do domínio em produção.

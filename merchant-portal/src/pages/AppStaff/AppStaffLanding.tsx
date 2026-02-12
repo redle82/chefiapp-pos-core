@@ -12,7 +12,6 @@ import { Text } from "../../ui/design-system/primitives/Text";
 import { colors } from "../../ui/design-system/tokens/colors";
 import { useStaff } from "./context/StaffContext";
 import type { BusinessType, StaffRole } from "./context/StaffCoreTypes";
-import { DEMO_CODES } from "./data/operatorProfiles";
 import { STAFF_LAUNCHER_PATH } from "./routing/staffModeConfig";
 
 const DEV_QUICK_ROLES: { label: string; role: StaffRole; emoji: string }[] = [
@@ -24,7 +23,12 @@ const DEV_QUICK_ROLES: { label: string; role: StaffRole; emoji: string }[] = [
 ];
 
 export const AppStaffLanding: React.FC = () => {
-  const { createLocalContract, restaurantId, joinRemoteOperation, devQuickCheckIn } = useStaff();
+  const {
+    createLocalContract,
+    restaurantId,
+    joinRemoteOperation,
+    devQuickCheckIn,
+  } = useStaff();
   const navigate = useNavigate();
   const [step, setStep] = useState<
     "initial" | "select_type" | "connect_code" | "select_person"
@@ -45,7 +49,9 @@ export const AppStaffLanding: React.FC = () => {
         padding: 16,
       }}
     >
-      <div style={{ width: "100%", maxWidth: 420, margin: "0 auto" }}>{children}</div>
+      <div style={{ width: "100%", maxWidth: 420, margin: "0 auto" }}>
+        {children}
+      </div>
     </div>
   );
 
@@ -85,8 +91,8 @@ export const AppStaffLanding: React.FC = () => {
             </div>
           </Card>
 
-          {/* DEMO: Entrar como funcionário (lista de pessoas → connectByCode) */}
-          {RUNTIME.isDemo && restaurantId && (
+          {/* TRIAL GUIDE: Entrar como funcionário (lista de pessoas → connectByCode) */}
+          {RUNTIME.isTrial && restaurantId && (
             <Card
               surface="layer1"
               padding="lg"
@@ -103,7 +109,7 @@ export const AppStaffLanding: React.FC = () => {
                   Entrar como funcionário
                 </Text>
                 <Text size="xs" color="tertiary" style={{ marginTop: 2 }}>
-                  Escolher pessoa (Demo)
+                  Escolher pessoa (Demo Guide)
                 </Text>
               </div>
             </Card>
@@ -121,7 +127,7 @@ export const AppStaffLanding: React.FC = () => {
             Operação local
           </Button>
 
-          {/* DEV/DEMO: Staff Switcher — entrada rápida por perfil (instrumento de validação) */}
+          {/* DEV/TRIAL: Staff Switcher — entrada rápida por perfil (instrumento de validação) */}
           {isDebugMode() && (
             <div
               style={{
@@ -130,7 +136,12 @@ export const AppStaffLanding: React.FC = () => {
                 borderTop: `1px solid ${colors.border.subtle}`,
               }}
             >
-              <Text size="sm" weight="bold" color="primary" style={{ marginBottom: 10 }}>
+              <Text
+                size="sm"
+                weight="bold"
+                color="primary"
+                style={{ marginBottom: 10 }}
+              >
                 Entrar como:
               </Text>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -165,7 +176,7 @@ export const AppStaffLanding: React.FC = () => {
     );
   }
 
-  // STEP: SELECT PERSON (DEMO — Entrar como funcionário via connectByCode)
+  // STEP: SELECT PERSON (TRIAL GUIDE — Entrar como funcionário via connectByCode)
   if (step === "select_person" && restaurantId) {
     return (
       <Wrapper>
@@ -327,7 +338,7 @@ const ConnectCodeView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             color="secondary"
             style={{ marginBottom: 8, display: "block" }}
           >
-            Códigos demo (com ?debug=1 na URL)
+            Códigos Demo Guide (com ?debug=1 na URL)
           </Text>
           <ul
             style={{
@@ -341,37 +352,37 @@ const ConnectCodeView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <li>
               Dono:{" "}
               <code style={{ fontFamily: "monospace", letterSpacing: 1 }}>
-                {DEMO_CODES.owner}
+                {TRIAL_GUIDE_CODES.owner}
               </code>
             </li>
             <li>
               Gerente:{" "}
               <code style={{ fontFamily: "monospace", letterSpacing: 1 }}>
-                {DEMO_CODES.manager}
+                {TRIAL_GUIDE_CODES.manager}
               </code>
             </li>
             <li>
               Garçom:{" "}
               <code style={{ fontFamily: "monospace", letterSpacing: 1 }}>
-                {DEMO_CODES.waiter}
+                {TRIAL_GUIDE_CODES.waiter}
               </code>
             </li>
             <li>
               Cozinheiro:{" "}
               <code style={{ fontFamily: "monospace", letterSpacing: 1 }}>
-                {DEMO_CODES.kitchen}
+                {TRIAL_GUIDE_CODES.kitchen}
               </code>
             </li>
             <li>
               Limpeza:{" "}
               <code style={{ fontFamily: "monospace", letterSpacing: 1 }}>
-                {DEMO_CODES.cleaning}
+                {TRIAL_GUIDE_CODES.cleaning}
               </code>
             </li>
             <li>
               Staff:{" "}
               <code style={{ fontFamily: "monospace", letterSpacing: 1 }}>
-                {DEMO_CODES.worker}
+                {TRIAL_GUIDE_CODES.worker}
               </code>
             </li>
           </ul>
@@ -387,7 +398,7 @@ const ConnectCodeView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   );
 };
 
-// DEMO: lista de pessoas — Entrar como funcionário (connectByCode por pessoa)
+// TRIAL GUIDE: lista de pessoas — Entrar como funcionário (connectByCode por pessoa)
 const SelectPersonView: React.FC<{
   restaurantId: string;
   onSelect: (

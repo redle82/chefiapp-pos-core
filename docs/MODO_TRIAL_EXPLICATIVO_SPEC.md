@@ -1,10 +1,10 @@
-# Modo Demo Explicativo — Especificação
+# Modo Trial Explicativo — Especificação
 
 **Data:** 2026-01-29
 **Status:** Decisão + especificação + implementado.
-**Objetivo:** Reposicionar o System Tree como modo de leitura/explicação (não tela principal) e definir o Modo Demo como narrativa explicativa (não só bloqueio).
+**Objetivo:** Reposicionar o System Tree como modo de leitura/explicação (não tela principal) e definir o Modo Trial como narrativa explicativa (não só bloqueio).
 
-**Implementado:** Card explicativo (Opção A) em TPV e KDS; passo "Como tudo se conecta" no Demo (Opção C); System Tree removido do Dashboard e NAV; links "Entender o sistema" / "Como tudo se conecta" apontam para /demo; copy na Landing atualizada.
+**Implementado:** Card explicativo (Opção A) em TPV e KDS; passo "Como tudo se conecta" no Demo Guide (Opção C); System Tree removido do Dashboard e NAV; links "Entender o sistema" / "Como tudo se conecta" apontam para /trial-guide; copy na Landing atualizada.
 
 ---
 
@@ -41,29 +41,29 @@ O sistema inteiro já é organizado em árvore lógica; tratar o "System Tree" c
 
 ### Onde reaparece (modo explicativo)
 
-| Contexto         | Como aparece                                                                                                                                                                                                                                                       |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Demo**         | "Como tudo se conecta" — vista ou passo do fluxo demo que mostra a organização do sistema (árvore simples, lista encadeada ou breadcrumb) + texto humano, sem jargão. Pode ser overlay, toggle "Modo explicativo" ou passo do walkthrough após os 3 passos atuais. |
-| **Pilot / Live** | "Entender o sistema" ou "Visão do sistema" — link secundário (footer, menu de ajuda, ou dentro de Config) para dono/gerente. Nunca para garçom. Leva à mesma vista explicativa (não à tela atual do System Tree como feature).                                     |
+| Contexto         | Como aparece                                                                                                                                                                                                                                                                       |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Demo Guide**   | "Como tudo se conecta" — vista ou passo do Demo Guide dentro do trial que mostra a organização do sistema (árvore simples, lista encadeada ou breadcrumb) + texto humano, sem jargão. Pode ser overlay, toggle "Modo explicativo" ou passo do walkthrough após os 3 passos atuais. |
+| **Pilot / Live** | "Entender o sistema" ou "Visão do sistema" — link secundário (footer, menu de ajuda, ou dentro de Config) para dono/gerente. Nunca para garçom. Leva à mesma vista explicativa (não à tela atual do System Tree como feature).                                                     |
 
 ---
 
-## 3. Modo Demo Explicativo — estrutura
+## 3. Modo Trial Explicativo — estrutura
 
-**Demo = Sistema + Narração.**
+**Trial = Sistema + Narração.**
 
-Em modo demo, cada seção do sistema (ou cada bloco que o usuário encontra) tem:
+Em modo trial, cada seção do sistema (ou cada bloco que o usuário encontra) tem:
 
-1. **Estado visual:** cinza / bloqueado / demo (já existe em parte via ModeGate).
+1. **Estado visual:** cinza / bloqueado / trial (já existe em parte via ModeGate).
 2. **Bloco explicativo fixo:** texto curto que explica o que é, por que existe, com o que se conecta e o que acontece quando está ativo.
 
-Não basta "indisponível no modo demo". Tem que explicar: "isso faz X", "existe por Y", "conecta com Z", "quando ativado resolve tal problema".
+Não basta "indisponível no modo trial". Tem que explicar: "isso faz X", "existe por Y", "conecta com Z", "quando ativado resolve tal problema".
 
 ---
 
 ## 4. Lista de seções e texto explicativo (copy)
 
-Cada bloco abaixo é o texto que acompanha a seção em modo demo. Pode ser usado em card, banner ou overlay.
+Cada bloco abaixo é o texto que acompanha a seção em modo trial. Pode ser usado em card, banner ou overlay.
 
 ---
 
@@ -93,13 +93,13 @@ Cada bloco abaixo é o texto que acompanha a seção em modo demo. Pode ser usad
 
 ### Dashboard (Visão geral)
 
-**O que é:** A tela principal depois que o restaurante está publicado. Mostra os módulos disponíveis e o estado do sistema (demo, piloto ou ao vivo).
+**O que é:** A tela principal depois que o restaurante está publicado. Mostra os módulos disponíveis e o estado do sistema (trial, piloto ou ao vivo).
 
 **Por que existe:** O dono ou gerente precisa de um único lugar para ver o que está ativo, o que pode ativar e o que fazer a seguir — sem entrar em cada módulo à toa.
 
-**Como se conecta:** É a porta de entrada para TPV, KDS, tarefas, equipe, etc. O "estado do sistema" (demo/piloto/ao vivo) define o que está bloqueado ou liberado.
+**Como se conecta:** É a porta de entrada para TPV, KDS, tarefas, equipe, etc. O "estado do sistema" (trial/piloto/ao vivo) define o que está bloqueado ou liberado.
 
-**Quando ativado:** Em piloto ou ao vivo, os módulos passam a abrir operação real; em demo, tudo é explicativo e sem impacto financeiro.
+**Quando ativado:** Em piloto ou ao vivo, os módulos passam a abrir operação real; em trial, tudo é explicativo e sem impacto financeiro.
 
 ---
 
@@ -115,13 +115,13 @@ Cada bloco abaixo é o texto que acompanha a seção em modo demo. Pode ser usad
 
 ---
 
-### Sistema de modos (Demo / Piloto / Ao vivo)
+### Sistema de modos (Trial / Piloto / Ao vivo)
 
-**O que é:** Três estados do restaurante: demonstração (sem dados reais), piloto (operação real controlada) e ao vivo (operação oficial).
+**O que é:** Três estados do restaurante: trial (sem dados reais), piloto (operação real controlada) e ao vivo (operação oficial).
 
 **Por que existe:** Permite testar e demonstrar sem risco, depois pilotar com limites e, por fim, operar ao vivo quando o contrato/pagamento estiver ativo.
 
-**Como se conecta:** O modo define o que o TPV e o KDS fazem (bloqueado em demo, liberado em piloto/ao vivo) e como os pedidos são marcados (ex.: piloto = pedidos de teste no Core).
+**Como se conecta:** O modo define o que o TPV e o KDS fazem (bloqueado em trial, liberado em piloto/ao vivo) e como os pedidos são marcados (ex.: piloto = pedidos de teste no Core).
 
 **Quando ativado:** As transições são raras e contratuais (ex.: billing ativa "ao vivo"); o dono vê o estado atual no Dashboard e no Backoffice.
 
@@ -176,26 +176,26 @@ Cada bloco abaixo é o texto que acompanha a seção em modo demo. Pode ser usad
 
 ---
 
-## 5. Comportamento visual do Modo Demo Explicativo
+## 5. Comportamento visual do Modo Trial Explicativo
 
 ### Opção A — Card explicativo por seção (recomendada para primeiro passo)
 
-- Em modo demo, ao entrar numa rota que seria bloqueada (ex.: /tpv, /kds-minimal), em vez de só o fallback "indisponível no modo demo":
+- Em modo trial, ao entrar numa rota que seria bloqueada (ex.: /tpv, /kds-minimal), em vez de só o fallback "indisponível no modo trial":
   - Mostrar um **card ou banner no topo** com o bloco explicativo (TPV, KDS, etc.) em 4 linhas: O que é / Por que existe / Como se conecta / Quando ativado.
 - O restante da área pode continuar cinza ou bloqueado; o foco é o texto.
 
 ### Opção B — Overlay "Modo explicativo"
 
-- Toggle ou botão "Explicar" que, em demo, abre um overlay com a lista de seções e o texto de cada uma (accordion ou lista).
-- O usuário pode fechar e voltar ao fluxo normal (landing → demo → dashboard).
+- Toggle ou botão "Explicar" que, em trial, abre um overlay com a lista de seções e o texto de cada uma (accordion ou lista).
+- O usuário pode fechar e voltar ao fluxo normal (landing → trial guide → dashboard).
 
-### Opção C — Passo extra no Demo (Como tudo se conecta)
+### Opção C — Passo extra no Demo Guide (Como tudo se conecta)
 
 - Após os 3 passos atuais (Observe, Pense, Sugira), um **quarto passo** ou **subpágina**: "Como tudo se conecta".
 - Conteúdo: árvore simples ou lista encadeada (Dashboard → TPV, KDS, Tarefas, Backoffice, Modos) + texto humano por nó, sem jargão.
-- É aqui que o "System Tree" **dissolve**: não é mais uma tela separada chamada "System Tree", é o passo do demo que explica a organização.
+- É aqui que o "System Tree" **dissolve**: não é mais uma tela separada chamada "System Tree", é o passo do Demo Guide que explica a organização.
 
-**Recomendação:** Implementar primeiro a **Opção A** (card explicativo nas rotas bloqueadas em demo) e a **Opção C** (passo "Como tudo se conecta" no fluxo do demo). A Opção B pode vir depois como "Ajuda avançada".
+**Recomendação:** Implementar primeiro a **Opção A** (card explicativo nas rotas bloqueadas em trial) e a **Opção C** (passo "Como tudo se conecta" no fluxo do Demo Guide). A Opção B pode vir depois como "Ajuda avançada".
 
 ---
 
@@ -205,19 +205,19 @@ Cada bloco abaixo é o texto que acompanha a seção em modo demo. Pode ser usad
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | System Tree como tela principal | Removido. Não é card do Dashboard nem item principal de navegação.                                                                         |
 | System Tree como conceito       | Vira "Como tudo se conecta" — modo explicativo, não feature.                                                                               |
-| Onde aparece em Demo            | Como passo ou vista do fluxo demo (ex.: passo 4 ou subpágina após os 3 passos).                                                            |
+| Onde aparece no Demo Guide      | Como passo ou vista do Demo Guide (ex.: passo 4 ou subpágina após os 3 passos).                                                            |
 | Onde aparece em Pilot/Live      | Link secundário "Entender o sistema" ou "Visão do sistema" (ajuda/diagnóstico), para dono/gerente.                                         |
-| Modo Demo                       | Explicativo: cada seção (TPV, KDS, Dashboard, etc.) tem bloco de texto (o quê, por quê, conecta com quê, quando ativado). Não só bloqueio. |
-| Comportamento visual            | Card/banner por seção em demo (Opção A); passo "Como tudo se conecta" no demo (Opção C).                                                   |
+| Modo Trial                      | Explicativo: cada seção (TPV, KDS, Dashboard, etc.) tem bloco de texto (o quê, por quê, conecta com quê, quando ativado). Não só bloqueio. |
+| Comportamento visual            | Card/banner por seção em trial (Opção A); passo "Como tudo se conecta" no Demo Guide (Opção C).                                            |
 
 ---
 
 ## 7. Próximos passos de implementação (fora do escopo desta spec)
 
 1. **Código / UX:** Remover o card "System Tree" do array SYSTEMS no Dashboard; remover ou renomear "System Tree" em NAV_SECTIONS para "Entender o sistema" (e apontar para rota de vista explicativa).
-2. **Demo:** Adicionar passo ou subpágina "Como tudo se conecta" em DemoTourPage (ou nova rota /demo/mapa) com árvore/lista + textos desta spec.
-3. **ModeGate / fallback:** Onde hoje só aparece "indisponível no modo demo", acrescentar o card explicativo correspondente (TPV, KDS, etc.) usando os blocos da secção 4.
-4. **Config / Onboarding:** Trocar links "System Tree" por "Como tudo se conecta" ou "Entender o sistema" e fazer apontar para a nova vista explicativa (ou para /demo#conecta).
+2. **Demo Guide:** Adicionar passo ou subpágina "Como tudo se conecta" na página do Demo Guide (ou nova rota /trial-guide#conecta) com árvore/lista + textos desta spec.
+3. **ModeGate / fallback:** Onde hoje só aparece "indisponível no modo trial", acrescentar o card explicativo correspondente (TPV, KDS, etc.) usando os blocos da secção 4.
+4. **Config / Onboarding:** Trocar links "System Tree" por "Como tudo se conecta" ou "Entender o sistema" e fazer apontar para a nova vista explicativa (ou para /trial-guide#conecta).
 5. **Landing:** Ajustar copy que menciona "System Tree" para "Como tudo se conecta" (sem nome de feature).
 
 Esta spec não implementa código; define a decisão, os textos e o comportamento para implementação posterior.

@@ -7,12 +7,12 @@ import { expect, test } from "@playwright/test";
 test.describe("Immutable Shift Contract Verification", () => {
   test("should enforce shift lock on reload", async ({ page }) => {
     // 1. Initial State: No Shift Open
-    // 0. Inject Authentication Mocks & Demo Mode
+    // 0. Inject Authentication Mocks & Trial Mode
     await page.addInitScript(() => {
       localStorage.clear();
       sessionStorage.clear();
-      localStorage.setItem("chefiapp_demo_mode", "true");
-      localStorage.setItem("chefiapp_restaurant_id", "demo-restaurant-id");
+      localStorage.setItem("chefiapp_trial_mode", "true");
+      localStorage.setItem("chefiapp_restaurant_id", "trial-restaurant-id");
       localStorage.setItem("chefiapp_user_role", "owner");
     });
 

@@ -69,13 +69,13 @@ function allowLocalMode(
   productMode: ProductMode,
 ): boolean {
   if (systemState === "SETUP") return true;
-  if (productMode === "demo") return true;
-  if (getTabIsolated("chefiapp_demo_mode") === "true") return true;
+  if (productMode === "trial") return true;
+  if (getTabIsolated("chefiapp_trial_mode") === "true") return true;
   return false;
 }
 
 export type RestaurantMode = "onboarding" | "active" | "paused";
-export type ProductMode = "demo" | "pilot" | "live";
+export type ProductMode = "trial" | "pilot" | "live";
 
 /**
  * Nós canónicos de setup crítico do restaurante.
@@ -112,27 +112,27 @@ function resolveProductModeFromEnv(): ProductMode {
     typeof localStorage !== "undefined"
       ? localStorage.getItem("chefiapp_product_mode")
       : null;
-  if (persisted === "demo" || persisted === "pilot" || persisted === "live") {
+  if (persisted === "trial" || persisted === "pilot" || persisted === "live") {
     return persisted as ProductMode;
   }
 
   const override = import.meta.env.VITE_FORCE_PRODUCT_MODE as
     | ProductMode
     | undefined;
-  if (override === "demo" || override === "pilot" || override === "live") {
+  if (override === "trial" || override === "pilot" || override === "live") {
     return override;
   }
-  return "demo";
+  return "trial";
 }
 
-/** Verdade dos dados: demo = simulação, live = dados reais. Derivado de productMode. */
-export type DataMode = "demo" | "live";
+/** Verdade dos dados: trial = simulação, live = dados reais. Derivado de productMode. */
+export type DataMode = "trial" | "live";
 
 export interface RestaurantRuntime {
   restaurant_id: string | null;
   mode: RestaurantMode;
   productMode: ProductMode;
-  /** Verdade dos dados: demo = simulação, live = dados reais. Derivado de productMode. */
+  /** Verdade dos dados: trial = simulação, live = dados reais. Derivado de productMode. */
   dataMode: DataMode;
   /** Módulos declarados como instalados (UI e roteamento) */
   installed_modules: string[];
@@ -171,7 +171,7 @@ const INITIAL_RUNTIME: RestaurantRuntime = {
   restaurant_id: null,
   mode: "onboarding",
   productMode: resolveProductModeFromEnv(),
-  dataMode: resolveProductModeFromEnv() === "live" ? "live" : "demo",
+  dataMode: resolveProductModeFromEnv() === "live" ? "live" : "trial",
   installed_modules: [],
   active_modules: [],
   plan: "basic",
@@ -277,7 +277,7 @@ export function RestaurantRuntimeProvider({
       restaurant?.product_mode === "pilot" ||
       restaurant?.product_mode === "live"
         ? restaurant.product_mode
-        : "demo";
+        : "trial";
 
     const installed_modules = installedIds.length > 0 ? installedIds : [];
     const active_modules = installed_modules.filter((id) =>
@@ -310,8 +310,8 @@ export function RestaurantRuntimeProvider({
     };
   }
 
-  /** Setup completo para demo: checklist "Pagamentos configurados" e demais aparecem ok no System Tree. */
-  const DEMO_SETUP_STATUS: SetupStatus = {
+  /** Setup completo para trial: checklist "Pagamentos configurados" e demais aparecem ok no System Tree. */
+  const TRIAL_SETUP_STATUS: SetupStatus = {
     identity: true,
     location: true,
     menu: true,
@@ -349,14 +349,14 @@ export function RestaurantRuntimeProvider({
       }
       return {
         mode: "active", // In Dev stable, we are always active
-        productMode: "demo",
+        productMode: "trial",
         installed_modules: [],
         active_modules: [],
         plan: "basic",
         status: "active",
         billing_status: "trial",
         capabilities: {},
-        setup_status: DEMO_SETUP_STATUS,
+        setup_status: TRIAL_SETUP_STATUS,
         isPublished: true,
         systemState: deriveSystemState({
           hasOrganization: true,
@@ -476,7 +476,7 @@ export function RestaurantRuntimeProvider({
       const mode: RestaurantMode = coreState.mode;
       const rawSetup = coreState.setup_status || {};
       const setup_status: SetupStatus = isDevStableMode()
-        ? DEMO_SETUP_STATUS
+        ? TRIAL_SETUP_STATUS
         : rawSetup;
       const installed_modules: string[] = coreState.installed_modules || [];
       const plan = coreState.plan ?? "basic";
@@ -500,7 +500,7 @@ export function RestaurantRuntimeProvider({
         restaurant_id: restaurantId,
         mode,
         productMode,
-        dataMode: productMode === "live" ? "live" : "demo",
+        dataMode: productMode === "live" ? "live" : "trial",
         installed_modules,
         active_modules: coreState.active_modules ?? installed_modules,
         plan,
@@ -700,7 +700,7 @@ export function RestaurantRuntimeProvider({
       setRuntime((prev) => ({
         ...prev,
         productMode: mode,
-        dataMode: mode === "live" ? "live" : "demo",
+        dataMode: mode === "live" ? "live" : "trial",
       }));
       if (typeof localStorage !== "undefined") {
         localStorage.setItem("chefiapp_product_mode", mode);

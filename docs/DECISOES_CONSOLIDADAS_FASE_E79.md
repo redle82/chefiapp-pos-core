@@ -1,6 +1,6 @@
 # Decisões Consolidadas — Fase €79
 
-**Data:** 2026-02-01  
+**Data:** 2026-02-01
 **Contexto:** Produto validado tecnicamente e humanamente até ao ponto de venda inicial (€79). Este documento regista decisões conscientes para evitar ruído, refatorações prematuras e falsas lacunas.
 
 ---
@@ -47,7 +47,7 @@
 
 - Frontend funcional
 - Arquitetura de providers correta
-- Modo demo / piloto honesto
+- Modo trial / piloto honesto
 - Stripe preparado (sem live antes do dinheiro)
 - Vercel / build / SPA routing
 

@@ -7,6 +7,10 @@
 
 import { CONFIG } from "../../config";
 
+// BASE URL: Em DEV (browser) CORE_URL é "" → URLs relativas (/rest/v1/...) vão
+// para o origin (ex. localhost:5175). O Vite proxy (vite.config: /rest → 3001)
+// encaminha para o Core. O pedido CHEGA ao PostgREST em 3001; 404 = tabela
+// inexistente no schema, não "URL errada". Para usar 3001 direto: VITE_CORE_URL=http://localhost:3001.
 const BASE_URL_RAW =
   CONFIG.CORE_URL ||
   (typeof window !== "undefined" ? window.location.origin : "");
@@ -31,6 +35,29 @@ const REST = REST_BASE.endsWith("/rest/v1")
   : REST_BASE
   ? `${REST_BASE}/rest/v1`
   : "/rest/v1";
+
+/** After first 404 (table does not exist), skip further requests for a short window to avoid console noise.
+ *  TTL = 30 s — allows recovery when migrations are applied while the app is running. */
+const tableUnavailableUntil = new Map<string, number>();
+const TABLE_UNAVAILABLE_TTL_MS = 30_000;
+
+function isTableUnavailable(table: string): boolean {
+  const until = tableUnavailableUntil.get(table);
+  if (until === undefined) return false;
+  if (Date.now() > until) {
+    tableUnavailableUntil.delete(table);
+    return false;
+  }
+  return true;
+}
+
+function markTableUnavailable(table: string): void {
+  tableUnavailableUntil.set(table, Date.now() + TABLE_UNAVAILABLE_TTL_MS);
+}
+
+function markTableAvailable(table: string): void {
+  tableUnavailableUntil.delete(table);
+}
 
 function headers(extra: Record<string, string> = {}): Headers {
   const h = new Headers({
@@ -97,6 +124,13 @@ function buildFilterBuilder(table: string): FilterBuilder {
   };
 
   const run = async (): Promise<PostgrestResponse> => {
+    if (isTableUnavailable(table)) {
+      return {
+        data: null,
+        error: { message: "Table unavailable", code: "42P01" },
+      };
+    }
+
     const baseUrl =
       typeof window !== "undefined"
         ? window.location.origin
@@ -172,6 +206,7 @@ function buildFilterBuilder(table: string): FilterBuilder {
       const ct = res.headers.get("Content-Type")?.toLowerCase() ?? "";
       const isJson = ct.includes("application/json");
       if (text.trim() && !isJson) {
+        if (res.status === 404) markTableUnavailable(table);
         return {
           data: null,
           error: {
@@ -200,9 +235,19 @@ function buildFilterBuilder(table: string): FilterBuilder {
         } catch {
           err = { message: text || res.statusText };
         }
+        if (
+          res.status === 404 &&
+          (err.code === "42P01" ||
+            /does not exist|relation.*does not exist/.test(
+              (err.message ?? "").toLowerCase(),
+            ))
+        ) {
+          markTableUnavailable(table);
+        }
         return { data: null, error: err };
       }
       if (text === "" || state.method === "DELETE") {
+        markTableAvailable(table);
         return { data: state.method === "DELETE" ? null : [], error: null };
       }
       let data: unknown;
@@ -224,14 +269,18 @@ function buildFilterBuilder(table: string): FilterBuilder {
             data: null,
             error: { message: "No rows found for single()" },
           };
+        markTableAvailable(table);
         return { data: data[0], error: null };
       }
       if (state.maybeSingle && Array.isArray(data)) {
+        markTableAvailable(table);
         return { data: data.length ? data[0] : null, error: null };
       }
       if (state.method === "POST" && Array.isArray(data) && data.length === 1) {
+        markTableAvailable(table);
         return { data: data[0], error: null };
       }
+      markTableAvailable(table);
       return { data, error: null };
     } catch (e: any) {
       return {
@@ -338,6 +387,21 @@ const noopChannel: RealtimeChannelStub = {
 };
 
 let clientInstance: DockerCoreClientShape | null = null;
+
+/**
+ * Probes optional tables (gm_reservations, gm_customers). On 404, run() adds
+ * them to tableUnavailable so subsequent requests are short-circuited (1 network 404 per table).
+ * Call before first render to avoid duplicate 404s from Strict Mode double-mount.
+ */
+export async function probeOptionalTables(): Promise<void> {
+  const core = getDockerCoreFetchClient();
+  await Promise.all([
+    core.from("gm_reservations").select("id").limit(0),
+    core.from("gm_customers").select("id").limit(0),
+  ]).catch(() => {
+    // Non-fatal: Core may be down or not reachable
+  });
+}
 
 export function getDockerCoreFetchClient(): DockerCoreClientShape {
   if (clientInstance) return clientInstance;

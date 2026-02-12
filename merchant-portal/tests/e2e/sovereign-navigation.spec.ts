@@ -74,7 +74,7 @@ test.describe("🔒 Sovereign Navigation Flow", () => {
     });
 
     // Contrato v3: FlowGate redireciona para página válida (não 404)
-    // Com demo mode ativo, pode mostrar cards de entrada (Entrar na Equipa, Operação local)
+    // Com trial mode ativo, pode mostrar cards de entrada (Entrar na Equipa, Operação local)
     expect(response?.status() ?? 999).toBeLessThan(500);
     await page.waitForLoadState("domcontentloaded");
 
@@ -83,14 +83,14 @@ test.describe("🔒 Sovereign Navigation Flow", () => {
     expect(hasContent?.length ?? 0).toBeGreaterThan(0);
   });
 
-  test("Auth page: formulário de telefone ou modo demo visível", async ({
+  test("Auth page: formulário de telefone ou modo trial visível", async ({
     page,
   }) => {
     await page.goto("/auth");
     await page.waitForLoadState("domcontentloaded");
 
     // Phone auth: "Entrar com telefone" heading or "Receber código" button
-    // Fallback: demo mode with "Voltar à landing" or "demonstração" links
+    // Fallback: trial mode with "Voltar à landing" or "Demo Guide" links
     const hasPhoneAuth =
       (await page
         .getByRole("heading", { name: /Entrar com telefone/i })
@@ -101,13 +101,13 @@ test.describe("🔒 Sovereign Navigation Flow", () => {
       (await page
         .getByRole("button", { name: /Entrar|Criar conta/i })
         .count()) > 0;
-    const hasDemoBox =
+    const hasTrialBox =
       (await page
         .getByRole("link", {
-          name: /Voltar à landing|demonstração|Ver demonstração/i,
+          name: /Voltar à landing|Demo Guide|Trial/i,
         })
         .count()) > 0;
-    expect(hasPhoneAuth || hasPhoneButton || hasForm || hasDemoBox).toBe(true);
+    expect(hasPhoneAuth || hasPhoneButton || hasForm || hasTrialBox).toBe(true);
   });
 
   test("Landing: sem links diretos para /login", async ({ page }) => {

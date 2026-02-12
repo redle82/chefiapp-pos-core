@@ -1,5 +1,5 @@
 /**
- * Ritual "Antes de abrir" — persistência local (demo/pilot).
+ * Ritual "Antes de abrir" — persistência local (trial/pilot).
  *
  * Chave: chefiapp_ritual_tasks_${restaurantId}.
  * A tarefa "abrir turno" é considerada feita se o turno estiver aberto (evita duplicar lógica).
@@ -49,7 +49,10 @@ const SEED_KEYS = [
   BEFORE_OPEN_TASK_KEYS.ABRIR_TURNO,
 ] as const;
 
-function seedIfEmpty(restaurantId: string, state: StoredRitualState): StoredRitualState {
+function seedIfEmpty(
+  restaurantId: string,
+  state: StoredRitualState,
+): StoredRitualState {
   let changed = false;
   const next = { ...state };
   for (const key of SEED_KEYS) {
@@ -65,9 +68,10 @@ function seedIfEmpty(restaurantId: string, state: StoredRitualState): StoredRitu
 function taskFromKey(
   key: string,
   status: RitualTaskStatus,
-  index: number
+  index: number,
 ): RitualTask {
-  const label = BEFORE_OPEN_TASK_LABELS[key as keyof typeof BEFORE_OPEN_TASK_LABELS] ?? key;
+  const label =
+    BEFORE_OPEN_TASK_LABELS[key as keyof typeof BEFORE_OPEN_TASK_LABELS] ?? key;
   return {
     id: `ritual-before_open-${key}-${index}`,
     role: "manager",
@@ -85,7 +89,7 @@ function taskFromKey(
  */
 export function getBeforeOpenRitualTasks(
   restaurantId: string,
-  isShiftOpen?: boolean
+  isShiftOpen?: boolean,
 ): RitualTask[] {
   if (!restaurantId) return [];
   let state = loadStored(restaurantId);
@@ -104,10 +108,7 @@ export function getBeforeOpenRitualTasks(
 /**
  * Marca uma tarefa do ritual como concluída e persiste.
  */
-export function markRitualTaskDone(
-  restaurantId: string,
-  key: string
-): void {
+export function markRitualTaskDone(restaurantId: string, key: string): void {
   if (!restaurantId || !key) return;
   const state = loadStored(restaurantId);
   state[key] = "done";
@@ -121,7 +122,7 @@ export function markRitualTaskDone(
  */
 export function isBeforeOpenRitualComplete(
   restaurantId: string,
-  isShiftOpen?: boolean
+  isShiftOpen?: boolean,
 ): boolean {
   if (!restaurantId) return false;
   const tasks = getBeforeOpenRitualTasks(restaurantId, isShiftOpen);

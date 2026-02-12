@@ -23,8 +23,8 @@ export function CoreResetPage() {
     if (coreReachable) navigate("/dashboard", { replace: true });
   }, [coreReachable, navigate]);
 
-  const handleDemoStart = () => {
-    navigate("/dashboard?demo=true");
+  const handleTrialStart = () => {
+    navigate("/dashboard?trial=true");
   };
 
   if (coreReachable) return null;
@@ -54,7 +54,7 @@ export function CoreResetPage() {
 
         {/* Call to Action Claro e Seguro */}
         <button
-          onClick={handleDemoStart}
+          onClick={handleTrialStart}
           className="group w-full bg-white text-black hover:bg-neutral-200 active:scale-[0.98] transition-all duration-200 h-14 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
         >
           <PlayCircle className="w-5 h-5 text-neutral-900 group-hover:scale-110 transition-transform" />

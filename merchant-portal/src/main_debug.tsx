@@ -32,7 +32,7 @@ logRuntimeStatus();
 // STABLE_MODE banner (single-line, deterministic) — só em builds não-produção
 if (import.meta.env.DEV) {
   console.info(
-    `[STABLE_MODE] ${isDevStableMode() ? "ON" : "OFF"} (${devStableReason()})`
+    `[STABLE_MODE] ${isDevStableMode() ? "ON" : "OFF"} (${devStableReason()})`,
   );
 }
 
@@ -54,7 +54,7 @@ if (
       }
 
       console.info(
-        "[SW] Cleanup: service workers unregistered and caches cleared"
+        "[SW] Cleanup: service workers unregistered and caches cleared",
       );
     } catch (e) {
       console.warn("[SW] Cleanup failed (non-fatal):", e);
@@ -73,7 +73,7 @@ Logger.info("Application starting", {
 // ============================================================================
 // APPLICATION_BOOT_CONTRACT: Runtime/Shift só para MANAGEMENT e OPERATIONAL
 // ============================================================================
-// MARKETING (/, /demo, /auth, /billing/success) renderiza SEM RestaurantRuntime
+// MARKETING (/, /trial, /auth, /billing/success) renderiza SEM RestaurantRuntime
 // nem ShiftProvider — landing 100% desacoplada do Core (ver App.tsx).
 // Estado do lifecycle no entry evita duas instâncias de React (Invalid hook call).
 // ============================================================================
@@ -105,15 +105,39 @@ function RootWithLifecycle() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <ErrorBoundary context="Root">
-      <BrowserRouter>
-        <RootWithLifecycle />
-      </BrowserRouter>
-    </ErrorBoundary>
-  </StrictMode>
-);
+// Probe optional Core tables (gm_reservations, gm_customers) before first render
+// so at most 1 network 404 per table; avoids duplicate 404s from Strict Mode double-mount.
+(async () => {
+  try {
+    const { probeOptionalTables } = await import(
+      "./core/infra/dockerCoreFetchClient"
+    );
+    await probeOptionalTables();
+  } catch {
+    // Non-fatal: Core may be down or tables may exist
+  }
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <ErrorBoundary context="Root">
+        <BrowserRouter>
+          <RootWithLifecycle />
+        </BrowserRouter>
+      </ErrorBoundary>
+    </StrictMode>,
+  );
+})();
 
 // DOCKER CORE: Kernel init removido - Core gerencia seu próprio estado
 // const initKernel = async () => { ... }; // REMOVIDO
+
+// ─── InsForge Validation (DEV helper) ───────────────────────────────────────
+// Expose validation function to browser console for testing InsForge setup.
+// Usage: Open console and run: await validateInsforge()
+if (import.meta.env.DEV && typeof window !== "undefined") {
+  import("./core/infra/validateInsforgeSetup").then((module) => {
+    (window as any).validateInsforge = module.runValidation;
+    console.info(
+      "💡 InsForge validation available: Type 'validateInsforge()' in console",
+    );
+  });
+}

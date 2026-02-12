@@ -1,6 +1,6 @@
 # Pitch ChefIApp v1 — Versões Prontas para Uso
 
-**Data:** 2026-01-26  
+**Data:** 2026-01-26
 **Status:** ✅ PRONTO
 
 ---
@@ -16,11 +16,13 @@
 **"ChefIApp é o sistema operacional de produção para restaurantes. Vou explicar o que isso significa.**
 
 **Problema:** Restaurantes têm 3 problemas principais:
+
 1. Atrasos na produção (não sabem quando item está atrasado)
 2. Estoque desconectado (não sabem quando comprar)
 3. Menu é catálogo (não define comportamento do sistema)
 
 **Solução:** ChefIApp conecta tudo:
+
 1. **Menu como contrato:** Cada item define tempo de preparo e estação. Sistema usa isso para tudo.
 2. **Task Engine automático:** Detecta atrasos automaticamente. Gera tarefas. Fecha tarefas sozinhas.
 3. **Estoque conectado:** Consome automaticamente. Gera lista de compras. Fecha tarefas quando reposto.
@@ -44,11 +46,13 @@
 Restaurantes têm 3 problemas principais:
 
 1. **Atrasos na produção**
+
    - Não sabem quando item está atrasado
    - Descobrem só quando cliente reclama
    - Sem sistema de alerta automático
 
 2. **Estoque desconectado**
+
    - Não sabem quando comprar
    - Descobrem só quando falta
    - Sem conexão com produção
@@ -64,6 +68,7 @@ Restaurantes têm 3 problemas principais:
 ChefIApp conecta tudo:
 
 1. **Menu como contrato operacional**
+
    - Cada item define tempo de preparo (obrigatório)
    - Cada item define estação (obrigatório)
    - Sistema usa isso para tudo:
@@ -72,6 +77,7 @@ ChefIApp conecta tudo:
      - Cliente vê status preciso
 
 2. **Task Engine automático**
+
    - Detecta atrasos automaticamente (>120% do tempo)
    - Gera tarefas de estoque (quando abaixo do mínimo)
    - Gera tarefas de entrega (quando pedido pronto há 5+ min)
@@ -88,12 +94,14 @@ ChefIApp conecta tudo:
 Não competimos com Toast ou Square por features. Competimos por arquitetura.
 
 **Toast / Square / Lightspeed:**
+
 - Focam em gestão (POS, delivery, marketing)
 - Task Engine não existe ou é genérico
 - Estoque desconectado da operação
 - Menu é catálogo
 
 **ChefIApp:**
+
 - Foca em produção (não gestão genérica)
 - Task Engine automático (único)
 - Estoque conectado à operação (único)
@@ -102,17 +110,19 @@ Não competimos com Toast ou Square por features. Competimos por arquitetura.
 ### Valor
 
 **ROI claro:**
+
 - Reduz atrasos em 50% (Task Engine detecta antes)
 - Reduz desperdício em 30% (Estoque conectado)
 - Aumenta eficiência em 40% (Sistema operacional)
 
-**Economia estimada:** R$ 500-1.000/mês  
-**Custo:** R$ 199/mês  
+**Economia estimada:** R$ 500-1.000/mês
+**Custo:** R$ 199/mês
 **ROI:** 2-5x em 1 mês
 
 ### Pricing
 
 **Plano Básico — R$ 199/mês**
+
 - 1 restaurante
 - Até 50 mesas
 - Até 500 pedidos/mês
@@ -123,6 +133,7 @@ Não competimos com Toast ou Square por features. Competimos por arquitetura.
 ### Onboarding
 
 **1-2 semanas:**
+
 - Semana 1: Setup (menu, estoque, treinamento)
 - Semana 2: Operação assistida (suporte diário)
 - Semana 3+: Independência (suporte sob demanda)
@@ -139,7 +150,7 @@ Não competimos com Toast ou Square por features. Competimos por arquitetura.
 
 ## 🎯 Email Pitch (1 parágrafo)
 
-**"ChefIApp é o sistema operacional de produção para restaurantes. Diferente de Toast ou Square, que focam em gestão, nós focamos em produção. O Task Engine detecta atrasos automaticamente e gera tarefas. O estoque se conecta à operação e gera lista de compras. O menu define comportamento do sistema (tempo + estação). Resultado: menos atrasos, menos desperdício, mais eficiência. R$ 199/mês. Pronto para usar. Quer agendar uma demo de 30 minutos?"**
+**"ChefIApp é o sistema operacional de produção para restaurantes. Diferente de Toast ou Square, que focam em gestão, nós focamos em produção. O Task Engine detecta atrasos automaticamente e gera tarefas. O estoque se conecta à operação e gera lista de compras. O menu define comportamento do sistema (tempo + estação). Resultado: menos atrasos, menos desperdício, mais eficiência. R$ 199/mês. Pronto para usar. Quer agendar um Demo Guide de 30 minutos?"**
 
 ---
 
@@ -149,8 +160,8 @@ Não competimos com Toast ou Square por features. Competimos por arquitetura.
 
 **Diferente de Toast ou Square, que focam em gestão, nós focamos em produção.**
 
-✅ Task Engine detecta atrasos automaticamente  
-✅ Estoque se conecta à operação  
+✅ Task Engine detecta atrasos automaticamente
+✅ Estoque se conecta à operação
 ✅ Menu define comportamento do sistema
 
 **Resultado:** Menos atrasos. Menos desperdício. Mais eficiência.
@@ -166,11 +177,13 @@ Quer saber mais? Comenta aqui ou manda DM."
 **"ChefIApp é o sistema operacional de produção para restaurantes. Vou explicar o que isso significa.**
 
 **Problema:** Restaurantes têm 3 problemas principais:
+
 1. Atrasos na produção (não sabem quando item está atrasado)
 2. Estoque desconectado (não sabem quando comprar)
 3. Menu é catálogo (não define comportamento do sistema)
 
 **Solução:** ChefIApp conecta tudo:
+
 1. **Menu como contrato:** Cada item define tempo de preparo e estação. Sistema usa isso para tudo.
 2. **Task Engine automático:** Detecta atrasos automaticamente. Gera tarefas. Fecha tarefas sozinhas.
 3. **Estoque conectado:** Consome automaticamente. Gera lista de compras. Fecha tarefas quando reposto.
@@ -190,6 +203,7 @@ Quer saber mais? Comenta aqui ou manda DM."
 ## 🎯 Mensagens-Chave (Por Audiência)
 
 ### Para Donos/Gerentes
+
 - "Reduz atrasos em 50%"
 - "Reduz desperdício em 30%"
 - "Aumenta eficiência em 40%"
@@ -197,12 +211,14 @@ Quer saber mais? Comenta aqui ou manda DM."
 - "R$ 199/mês paga sozinho em economia operacional"
 
 ### Para Cozinha/Bar
+
 - "Sistema detecta atrasos antes que virem problema"
 - "Tarefas aparecem automaticamente"
 - "Não precisa ficar checando manualmente"
 - "KDS mostra tempo real por item"
 
 ### Para Compras
+
 - "Lista de compras automática"
 - "Priorização por urgência"
 - "Confirma compra → atualiza estoque → fecha tarefas"
@@ -213,16 +229,18 @@ Quer saber mais? Comenta aqui ou manda DM."
 ## 🎯 Próximos Passos
 
 ### Imediato
+
 - [ ] Usar pitch curto em conversas
-- [ ] Usar pitch médio em demos
+- [ ] Usar pitch médio em Demo Guides
 - [ ] Usar email pitch em prospecção
 - [ ] Postar no LinkedIn (versão curta)
 
 ### Curto Prazo
+
 - [ ] Criar site com narrativa
 - [ ] Criar one-pager
 - [ ] Criar deck de apresentação
-- [ ] Gravar vídeo demo
+- [ ] Gravar vídeo Demo Guide
 
 ---
 

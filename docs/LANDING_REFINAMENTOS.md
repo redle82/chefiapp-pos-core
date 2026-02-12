@@ -65,7 +65,7 @@
 
 **Total de CTAs na página:** 6
 
-- Hero: 2 CTAs (Ver Demo / Começar Grátis)
+- Hero: 2 CTAs (Ver Demo Guide / Começar Grátis)
 - Após "Veja o Sistema": 1 CTA
 - Após "Como Funciona": 1 CTA
 - CTA Final (seção azul): 1 CTA
@@ -81,7 +81,7 @@
 
 1. **"Posso testar sem cartão?"**
 
-   - Resposta: "Sim. A demo é completamente gratuita e não requer cartão de crédito. Você pode explorar todas as funcionalidades sem compromisso."
+   - Resposta: "Sim. O trial é completamente gratuito e não requer cartão de crédito. Você pode explorar todas as funcionalidades sem compromisso."
 
 2. **"Preciso instalar módulos?"**
 
@@ -101,13 +101,13 @@
 ```html
 <meta
   name="description"
-  content="ChefIApp — TPV que SUGERE ações, não só registra. Veja como observa, pensa e sugere chamadas de ação para sua operação de restaurante. Experimente a demo em 5 minutos."
+  content="ChefIApp — TPV que SUGERE ações, não só registra. Veja como observa, pensa e sugere chamadas de ação para sua operação de restaurante. Experimente o trial em 5 minutos."
 />
 <title>ChefIApp — TPV que pensa antes do humano</title>
 <meta property="og:title" content="ChefIApp — TPV que pensa antes do humano" />
 <meta
   property="og:description"
-  content="O único TPV que observa contexto operacional e sugere a próxima ação mais importante. Demo gratuita em 5 minutos."
+  content="O único TPV que observa contexto operacional e sugere a próxima ação mais importante. Trial gratuito em 5 minutos."
 />
 <meta property="og:type" content="website" />
 ```
@@ -144,7 +144,7 @@
 
 ## 🎯 Estrutura Final da Landing
 
-1. **Header** — Logo + navegação (Ver Demo / Começar Agora)
+1. **Header** — Logo + navegação (Ver Demo Guide / Começar Agora)
 2. **Hero Section** — Título + descrição + 2 CTAs
 3. **Value Props** — 3 diferenciais principais
 4. **Veja o Sistema em Ação** — Screenshots + CTA
@@ -170,23 +170,23 @@
 
 2. **Adicionar Depoimentos** (após primeiro piloto)
 
-   - Depoimento curto de alguém que já viu a demo
+   - Depoimento curto de alguém que já viu o Demo Guide
    - Métricas reais (se disponíveis)
 
 3. **Página de Pricing** (placeholder)
    - "Preços sob consulta"
-   - "Demo gratuita"
+   - "Trial gratuito"
    - "Pilot gratuito por 30 dias"
 
 ### Prioridade Baixa
 
 4. **Modal Guided Demo**
 
-   - "Ver Demo" → modal com tour guiado
+   - "Ver Demo Guide" → modal com tour guiado
    - Vídeo explicativo (futuro)
 
 5. **Formulário de Contato**
-   - "Agendar demo" (opcional)
+   - "Agendar Demo Guide" (opcional)
    - Email/telefone
 
 ---

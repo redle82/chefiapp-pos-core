@@ -13,7 +13,7 @@
  * - isLocked: TPVLockScreen até start_turn sucesso (sessão + RPC).
  * - cashRegisterOpen: criar venda exige caixa aberto (handleCreateOrder, handleCreateOrderViaMap, handleAddItem implícito via createOrder).
  * - guards.canCreateOrder: bootstrap.publishStatus === "publicado" (evita 409 em gm_order_items).
- * - guards.actionsEnabled: healthStatus UP/DEGRADED ou isDemoData ou isOnline; bloqueia pay/prepare/ready/cancel se Core down (exceto demo).
+ * - guards.actionsEnabled: healthStatus UP/DEGRADED ou isTrialData ou isOnline; bloqueia pay/prepare/ready/cancel se Core down (exceto trial).
  * - role: fechar/abrir caixa só gerente (useCommonTPVShortcuts).
  *
  * DEPENDÊNCIAS REAIS
@@ -75,7 +75,12 @@ import {
 } from "../../core/guards/GuardMessages";
 import { useCoreHealth } from "../../core/health/useCoreHealth";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity"; // Visual Polish
-import { BlockingScreen, useOperationalReadiness } from "../../core/readiness";
+import {
+  BlockingScreen,
+  DeviceBlockedScreen,
+  useDeviceGate,
+  useOperationalReadiness,
+} from "../../core/readiness";
 import { useShift } from "../../core/shift/ShiftContext";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
 
@@ -121,9 +126,9 @@ const OpenCashRegisterModal = lazy(() =>
     default: m.OpenCashRegisterModal,
   })),
 );
-const CloseCashRegisterModal = lazy(() =>
-  import("./components/CloseCashRegisterModal").then((m) => ({
-    default: m.CloseCashRegisterModal,
+const ShiftCloseReport = lazy(() =>
+  import("../../components/Reports/ShiftCloseReport").then((m) => ({
+    default: m.ShiftCloseReport,
   })),
 );
 const OrderItemEditor = lazy(() =>
@@ -165,8 +170,8 @@ import {
   ModifierSelectorModal,
   type SelectedModifier,
 } from "./components/ModifierSelectorModal";
-import { ReceiptShareModal, type ReceiptShareOrder } from "./ReceiptShareModal";
 import { TableActionsModal } from "./components/TableActionsModal";
+import { ReceiptShareModal, type ReceiptShareOrder } from "./ReceiptShareModal";
 
 type ContextView =
   | "menu"
@@ -182,14 +187,14 @@ function computeGuards(params: {
   cashRegisterOpen: boolean;
   publishStatus: string;
   healthStatus: string;
-  isDemoData: boolean;
+  isTrialData: boolean;
   isOnline: boolean;
 }) {
   const canCreateOrder = params.publishStatus === "publicado";
   const actionsEnabled =
     params.healthStatus === "UP" ||
     params.healthStatus === "DEGRADED" ||
-    params.isDemoData ||
+    params.isTrialData ||
     params.isOnline;
   return {
     isLocked: params.isLocked,
@@ -288,20 +293,20 @@ const TPVContent = () => {
     }
   }, [urlRestaurantId]);
 
-  // FASE 2: Detectar exploração da URL (?demo=)
+  // FASE 2: Detectar exploração da URL (?trial=)
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const isDemoMode =
-    searchParams.get("demo") === "true" || location.state?.demo === true;
+  const isTrialMode =
+    searchParams.get("trial") === "true" || location.state?.trial === true;
 
   // Persistir estado de exploração no localStorage
   useEffect(() => {
-    if (isDemoMode) {
-      setTabIsolated("chefiapp_tpv_demo_mode", "true");
+    if (isTrialMode) {
+      setTabIsolated("chefiapp_tpv_trial_mode", "true");
     } else {
-      removeTabIsolated("chefiapp_tpv_demo_mode");
+      removeTabIsolated("chefiapp_tpv_trial_mode");
     }
-  }, [isDemoMode]);
+  }, [isTrialMode]);
 
   // Visual Polish: Get Restaurant Identity
   const { identity } = useRestaurantIdentity();
@@ -364,6 +369,7 @@ const TPVContent = () => {
     closeCashRegister,
     getActiveOrders,
     isOrderConfirmed,
+    cashRegisterId,
     loading: ordersLoading,
     error: ordersError,
   } = useOrders();
@@ -498,7 +504,7 @@ const TPVContent = () => {
       if (activeOrder && activeOrder.items.length > 0) {
         // Assuming items are roughly ordered or just take current time for interaction
         // Real impl: Use `updated_at` of order or max created_at of items
-        // For demo/prototype without extensive backend changes:
+        // For trial/prototype without extensive backend changes:
         // If status is 'ready' or 'served', activity is recent.
       }
 
@@ -548,14 +554,14 @@ const TPVContent = () => {
   // P1-1 FIX: Determinar se ações devem estar habilitadas
   // Ações offline (criar pedido, adicionar item) sempre permitidas
   // Ações críticas (pagamento) respeitam health status
-  // FASE 2: Detectar exploração da URL (?demo=)
+  // FASE 2: Detectar exploração da URL (?trial=)
   // FASE 2: Detectar se é modo tutorial
   const isTutorialMode =
     location.state?.tutorial === true ||
     searchParams.get("tutorial") === "true";
 
   // Bootstrap: decisão de exploração vem do estado canónico
-  const isDemoData = bootstrap.operationMode === "exploracao";
+  const isTrialData = bootstrap.operationMode === "exploracao";
 
   // Guards operacionais (agrupados por intenção)
   const guards = useMemo(
@@ -565,7 +571,7 @@ const TPVContent = () => {
         cashRegisterOpen,
         publishStatus: bootstrap.publishStatus,
         healthStatus,
-        isDemoData,
+        isTrialData,
         isOnline,
       }),
     [
@@ -573,7 +579,7 @@ const TPVContent = () => {
       cashRegisterOpen,
       bootstrap.publishStatus,
       healthStatus,
-      isDemoData,
+      isTrialData,
       isOnline,
     ],
   );
@@ -602,7 +608,7 @@ const TPVContent = () => {
   // FASE 2: Pré-preencher dados de exemplo (só quando publicado, para evitar 409)
   useEffect(() => {
     if (
-      isDemoData &&
+      isTrialData &&
       guards.canCreateOrder &&
       restaurantId &&
       menuItems.length > 0 &&
@@ -644,7 +650,7 @@ const TPVContent = () => {
                 success("Pedido criado com itens de exemplo");
               })
               .catch((err: any) => {
-                console.error("[TPV] Error creating demo order:", err);
+                console.error("[TPV] Error creating trial order:", err);
                 const errorMsg = getErrorMessage(err, {
                   code: err.code,
                   message: err.message,
@@ -660,7 +666,7 @@ const TPVContent = () => {
       return () => clearTimeout(timer);
     }
   }, [
-    isDemoData,
+    isTrialData,
     guards.canCreateOrder,
     restaurantId,
     menuItems,
@@ -958,13 +964,13 @@ const TPVContent = () => {
           const { isDevStableMode } = await import(
             "../../core/runtime/devStableMode"
           );
-          if (isDemoData || isDevStableMode()) {
+          if (isTrialData || isDevStableMode()) {
             console.log(
-              "[TPV] Demo/DEV_STABLE Mode: Simulating start_turn success",
+              "[TPV] Trial/DEV_STABLE Mode: Simulating start_turn success",
             );
             setActiveOperator(op);
             setIsLocked(false);
-            success(`Comando Assumido (Demo): ${op.name}`);
+            success(`Comando Assumido (Trial): ${op.name}`);
             return;
           }
           throw new Error("SESSION_EXPIRED");
@@ -1010,7 +1016,7 @@ const TPVContent = () => {
     },
     [
       restaurantId,
-      isDemoData,
+      isTrialData,
       error,
       success,
       setActiveOperator,
@@ -1044,12 +1050,12 @@ const TPVContent = () => {
 
   // FLOW: Transições de estado (prepare/ready/serve/pay/cancel) — performOrderAction → Core.
   const handleAction = async (orderId: string, action: string) => {
-    // P1-1 FIX: Bloquear ações críticas se sistema down (exceto demo)
+    // P1-1 FIX: Bloquear ações críticas se sistema down (exceto trial)
     const criticalActions = ["pay", "prepare", "ready", "cancel"];
     if (
       criticalActions.includes(action) &&
       !guards.actionsEnabled &&
-      !isDemoData
+      !isTrialData
     ) {
       error(MSG_SYSTEM_UNAVAILABLE_ACTION);
       return;
@@ -1124,7 +1130,7 @@ const TPVContent = () => {
     if (!paymentModalOrderId) return;
 
     // FASE 2: Simular pagamento (exploração) — decisão do bootstrap
-    if (isDemoData) {
+    if (isTrialData) {
       // Simular sucesso de pagamento
       success("🎉 Pagamento processado com sucesso!");
 
@@ -1148,8 +1154,8 @@ const TPVContent = () => {
       return;
     }
 
-    // P1-1 FIX: Bloquear pagamento se sistema down e não for demo
-    if (!guards.actionsEnabled && !isDemoData) {
+    // P1-1 FIX: Bloquear pagamento se sistema down e não for trial
+    if (!guards.actionsEnabled && !isTrialData) {
       error(MSG_SYSTEM_UNAVAILABLE_PAYMENT);
       return;
     }
@@ -1344,8 +1350,8 @@ const TPVContent = () => {
   ) => {
     if (!splitBillModalOrderId) return;
 
-    // P1-1 FIX: Bloquear pagamento se sistema down e não for demo
-    if (!guards.actionsEnabled && !isDemoData) {
+    // P1-1 FIX: Bloquear pagamento se sistema down e não for trial
+    if (!guards.actionsEnabled && !isTrialData) {
       error(MSG_SYSTEM_UNAVAILABLE_PAYMENT);
       return;
     }
@@ -1861,7 +1867,7 @@ const TPVContent = () => {
                         trackStock: false,
                       },
                       ...safeMenuItems.map((item) => {
-                        // Visual Polish: Inject demo images based on name
+                        // Visual Polish: Inject trial guide images based on name
                         const lowerName = item.name.toLowerCase();
                         let imageUrl = undefined;
 
@@ -2463,7 +2469,7 @@ const TPVContent = () => {
                 orderTotal={order.total}
                 onPay={handlePayment}
                 onCancel={() => setPaymentModalOrderId(null)}
-                isDemoMode={isDemoData}
+                isTrialMode={isTrialData}
               />
             </Suspense>
           );
@@ -2536,46 +2542,30 @@ const TPVContent = () => {
         </Suspense>
       )}
 
-      {/* Close Cash Register Modal */}
-      {showCloseCashModal && (
+      {/* Close Cash Register — Z-Report (ShiftCloseReport) */}
+      {showCloseCashModal && cashRegisterId && (
         <Suspense
           fallback={
             <div style={{ padding: 16, textAlign: "center" }}>
-              Carregando modal de fechamento...
+              Carregando relatório de fecho...
             </div>
           }
         >
-          <CloseCashRegisterModal
-            dailyTotalCents={dailyTotalCents}
-            openingBalanceCents={openingBalanceCents}
+          <ShiftCloseReport
+            cashRegisterId={cashRegisterId}
             restaurantId={restaurantId}
-            operatorName="GOLDMONKEY" // TODO: Get from auth context
-            terminalId="CAIXA-01" // TODO: Get from device settings
-            onClose={async (closingBalanceCents) => {
-              try {
-                await closeCashRegister(closingBalanceCents);
-                // setShowCloseCashModal(false); // CHANGED: Don't close immediately, let modal show success state
-                setCashRegisterOpen(false);
-                success("Caixa fechado com sucesso");
+            operatorName="GOLDMONKEY"
+            onClose={async () => {
+              setShowCloseCashModal(false);
+              setCashRegisterOpen(false);
+              success("Caixa fechado com sucesso — Z-Report gerado");
 
-                // Recarregar dados
-                const totalCents = await getDailyTotal();
-                setDailyTotalCents(totalCents);
-                setDailyTotal(formatAmount(totalCents));
-              } catch (err: any) {
-                const msg = err.message || "Erro ao fechar caixa";
-                const fc = err.failureClass;
-                if (fc === "degradation") {
-                  error("Problema de rede. Tente novamente em instantes.");
-                } else if (fc === "acceptable") {
-                  error(msg + " Pode tentar novamente.");
-                } else {
-                  error(msg);
-                }
-              }
+              // Recarregar dados
+              const totalCents = await getDailyTotal();
+              setDailyTotalCents(totalCents);
+              setDailyTotal(formatAmount(totalCents));
             }}
             onCancel={() => setShowCloseCashModal(false)}
-            onDismiss={() => setShowCloseCashModal(false)}
           />
         </Suspense>
       )}
@@ -2618,14 +2608,7 @@ const TPVContent = () => {
 const TPV = () => {
   const readiness = useOperationalReadiness("TPV");
   const { toasts, dismiss } = useToast();
-
-  // Staff-style browser tab title for isolated tool context
-  useEffect(() => {
-    document.title = "ChefIApp POS — TPV";
-    return () => {
-      document.title = "ChefIApp POS";
-    };
-  }, []);
+  const { identity } = useRestaurantIdentity();
 
   // DOCKER CORE: Restaurant ID fixo para desenvolvimento
   // Em produção, isso viria de autenticação ou seleção
@@ -2634,6 +2617,19 @@ const TPV = () => {
     urlRestaurantId ||
     getTabIsolated("chefiapp_restaurant_id") ||
     "00000000-0000-0000-0000-000000000100";
+
+  // CONFIG_RUNTIME_CONTRACT: Device Gate — dispositivo deve estar ativo na Config (docs/contracts/CONFIG_RUNTIME_CONTRACT.md §2.2, §2.3). Chamado no topo para respeitar Rules of Hooks.
+  const deviceGate = useDeviceGate(restaurantId);
+
+  // Identity Layer: tab title = restaurante protagonista (docs/design/IDENTITY_LAYER_CONTRACT.md)
+  useEffect(() => {
+    document.title = identity.name
+      ? `${identity.name} — TPV`
+      : "ChefIApp POS — TPV";
+    return () => {
+      document.title = "ChefIApp POS";
+    };
+  }, [identity.name]);
 
   if (readiness.loading) {
     return (
@@ -2658,6 +2654,19 @@ const TPV = () => {
     readiness.redirectTo
   ) {
     return <Navigate to={readiness.redirectTo} replace />;
+  }
+
+  if (deviceGate.loading) {
+    return (
+      <GlobalLoadingView
+        message="A verificar dispositivo..."
+        layout="operational"
+        variant="fullscreen"
+      />
+    );
+  }
+  if (!deviceGate.allowed) {
+    return <DeviceBlockedScreen reason={deviceGate.reason} />;
   }
 
   return (

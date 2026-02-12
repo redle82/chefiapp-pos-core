@@ -4,7 +4,7 @@
  * /auth = login (já tenho conta)
  * /signup = registo (entrar em operação)
  * Sem Runtime/Core. Após sucesso → /app/dashboard.
- * Backend único: Docker Core (Keycloak + mock). Demo/pilot: link ou mensagem.
+ * Backend único: Docker Core (Keycloak + mock). Trial/pilot: link ou mensagem.
  */
 
 import { useEffect, useState } from "react";
@@ -90,7 +90,7 @@ const styles = {
   },
   tabActive: { backgroundColor: "#262626", color: "#fafafa" },
   tabInactive: { color: "#737373" },
-  demoBox: {
+  trialGuideBox: {
     marginTop: 24,
     padding: 16,
     borderRadius: 8,
@@ -243,15 +243,15 @@ export function AuthPage() {
         </div>
 
         {hasCore ? (
-          <div style={styles.demoBox}>
+          <div style={styles.trialGuideBox}>
             <p style={{ margin: "0 0 12px 0" }}>
               Em modo local não há registo na web. Para criar conta e comprar o
               produto, use a aplicação em produção (URL real).
             </p>
             <p style={{ margin: 0 }}>
               Pode continuar com{" "}
-              <Link to="/auth" style={styles.link}>
-                Ver demonstração (3 min)
+              <Link to="/op/tpv?mode=trial" style={styles.link}>
+                Ver Demo Guide (3 min)
               </Link>
               .
             </p>

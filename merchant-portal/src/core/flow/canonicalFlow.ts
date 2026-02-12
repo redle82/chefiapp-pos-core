@@ -28,14 +28,65 @@ export interface CanonicalStep {
 
 /** 8 passos oficiais (Sequência Canônica v1.0). */
 export const CANONICAL_STEPS: CanonicalStep[] = [
-  { id: "landing", order: 1, label: "Landing", required: true, description: "CTA: Testar 14 dias; Demo 3 min; Já tenho acesso (login)" },
-  { id: "auth", order: 2, label: "Auth", required: true, description: "Demo 3 min, Simular registo local, Login produção" },
-  { id: "bootstrap", order: 3, label: "Bootstrap obrigatório", required: true, description: "Criar restaurante: nome, tipo, país/moeda, contacto opcional" },
-  { id: "first_product", order: 4, label: "Onboarding essencial", required: false, description: "Criar primeiro produto; opcional: pular (Continuar sem adicionar agora)" },
-  { id: "aha_moment", order: 5, label: "Aha Moment", required: true, description: "Abrir TPV → Criar pedido → Finalizar venda → Feedback Pedido pago" },
-  { id: "trial_silent", order: 6, label: "Trial silencioso", required: false, description: "trial_active; sem bloqueio operacional" },
-  { id: "operation", order: 7, label: "Operação normal", required: false, description: "TPV / KDS / tarefas" },
-  { id: "billing_async", order: 8, label: "Billing assíncrono", required: false, description: "Banner discreto; escolher plano quando fizer sentido" },
+  {
+    id: "landing",
+    order: 1,
+    label: "Landing",
+    required: true,
+    description:
+      "CTA: Testar 14 dias; Demo Guide 3 min; Já tenho acesso (login)",
+  },
+  {
+    id: "auth",
+    order: 2,
+    label: "Auth",
+    required: true,
+    description: "Demo Guide 3 min, Simular registo local, Login produção",
+  },
+  {
+    id: "bootstrap",
+    order: 3,
+    label: "Bootstrap obrigatório",
+    required: true,
+    description: "Criar restaurante: nome, tipo, país/moeda, contacto opcional",
+  },
+  {
+    id: "first_product",
+    order: 4,
+    label: "Onboarding essencial",
+    required: false,
+    description:
+      "Criar primeiro produto; opcional: pular (Continuar sem adicionar agora)",
+  },
+  {
+    id: "aha_moment",
+    order: 5,
+    label: "Aha Moment",
+    required: true,
+    description:
+      "Abrir TPV → Criar pedido → Finalizar venda → Feedback Pedido pago",
+  },
+  {
+    id: "trial_silent",
+    order: 6,
+    label: "Trial silencioso",
+    required: false,
+    description: "trial_active; sem bloqueio operacional",
+  },
+  {
+    id: "operation",
+    order: 7,
+    label: "Operação normal",
+    required: false,
+    description: "TPV / KDS / tarefas",
+  },
+  {
+    id: "billing_async",
+    order: 8,
+    label: "Billing assíncrono",
+    required: false,
+    description: "Banner discreto; escolher plano quando fizer sentido",
+  },
 ];
 
 /** Discurso comercial: uma frase por fase (copy de referência para landing, emails, UI). */

@@ -12,8 +12,8 @@ import { expect, test } from "@playwright/test";
 const ROTAS_PUBLICAS = [
   { path: "/", desc: "Landing" },
   { path: "/auth", desc: "Auth" },
-  { path: "/public/demo-restaurant", desc: "Presença digital" },
-  { path: "/public/demo-restaurant/mesa/1", desc: "QR mesa" },
+  { path: "/public/trial-restaurant", desc: "Presença digital" },
+  { path: "/public/trial-restaurant/mesa/1", desc: "QR mesa" },
 ];
 
 const ROTAS_PROTEGIDAS = [
@@ -47,7 +47,7 @@ test.describe("FASE A — Teste Global Técnico LOCAL", () => {
         res.status() < 500 &&
         (url.includes(path.split("?")[0]) || url.includes("/auth"));
       expect(ok, `${desc} (${path}): status=${res?.status()}, url=${url}`).toBe(
-        true
+        true,
       );
     }
   });
@@ -66,7 +66,7 @@ test.describe("FASE A — Teste Global Técnico LOCAL", () => {
         url.includes("/dashboard");
       expect(
         ok,
-        `Rota ${path} deve redirecionar para auth ou carregar; URL atual: ${url}`
+        `Rota ${path} deve redirecionar para auth ou carregar; URL atual: ${url}`,
       ).toBe(true);
     }
   });

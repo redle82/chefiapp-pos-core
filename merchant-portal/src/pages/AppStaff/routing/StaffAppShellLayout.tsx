@@ -10,6 +10,10 @@ import React, { useEffect, useState, type ReactNode } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useCoreHealth } from "../../../core/health/useCoreHealth";
 import { colors } from "../../../ui/design-system/tokens/colors";
+import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppSignature";
+
+/** Design Contract v1: mesma cor de acção (dourado) que o dashboard para "estou no mesmo sistema". */
+const actionAccent = colors.modes.dashboard.action;
 import { AppStaffBootScreen } from "../AppStaffBootScreen";
 import { useStaff } from "../context/StaffContext";
 import { getOperatorProfile } from "../data/operatorProfiles";
@@ -232,10 +236,9 @@ export function StaffAppShellLayout({
               textOverflow: "ellipsis",
             }}
           >
+            {activeLocation?.name ?? "Restaurante"} —{" "}
             {isLauncher
-              ? profile
-                ? profile.roleLabel
-                : "ChefIApp"
+              ? profile?.roleLabel ?? "Staff"
               : currentMode?.label ?? "Staff"}
           </span>
         </div>
@@ -263,7 +266,7 @@ export function StaffAppShellLayout({
               textAlign: "center",
             }}
           >
-            {activeLocation?.name ?? "ChefIApp"} • {dayStr} {timeStr}
+            {activeLocation?.name ?? "Restaurante"} • {dayStr} {timeStr}
           </span>
         </div>
 
@@ -348,8 +351,8 @@ export function StaffAppShellLayout({
                   padding: "4px 10px",
                   fontSize: 11,
                   fontWeight: 600,
-                  color: "#fff",
-                  backgroundColor: colors.action.base,
+                  color: actionAccent.text,
+                  backgroundColor: actionAccent.base,
                   border: "none",
                   borderRadius: 6,
                   cursor: "pointer",
@@ -458,10 +461,10 @@ export function StaffAppShellLayout({
                   borderRadius: 10,
                   textDecoration: "none",
                   color: isLauncher
-                    ? colors.action.text
+                    ? actionAccent.text
                     : colors.text.secondary,
                   backgroundColor: isLauncher
-                    ? colors.action.base
+                    ? actionAccent.base
                     : "transparent",
                   fontSize: 11,
                   fontWeight: 600,
@@ -489,8 +492,8 @@ export function StaffAppShellLayout({
                 padding: "8px 10px",
                 borderRadius: 10,
                 textDecoration: "none",
-                color: isActive ? colors.action.text : colors.text.secondary,
-                backgroundColor: isActive ? colors.action.base : "transparent",
+                color: isActive ? actionAccent.text : colors.text.secondary,
+                backgroundColor: isActive ? actionAccent.base : "transparent",
                 fontSize: 11,
                 fontWeight: 600,
               }}
@@ -623,6 +626,22 @@ export function StaffAppShellLayout({
                   </button>
                 );
               })}
+            </div>
+            <div
+              style={{
+                marginTop: 16,
+                paddingTop: 12,
+                borderTop: `1px solid ${colors.border.subtle}`,
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <ChefIAppSignature
+                variant="powered"
+                size="sm"
+                tone="light"
+                poweredLabel="Tecnologia"
+              />
             </div>
           </div>
         </div>

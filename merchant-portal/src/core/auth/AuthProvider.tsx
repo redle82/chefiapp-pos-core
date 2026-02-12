@@ -4,9 +4,9 @@
  * Wraps the entire app tree. All consumers use useAuth() which reads from this
  * context instead of each running their own Keycloak session check.
  *
- * Backend: Docker Core (Keycloak + mock demo/pilot). Zero Supabase.
+ * Backend: Docker Core (Keycloak + mock trial/pilot). Zero Supabase.
  *
- * SECURITY: Mock/demo mode is BLOCKED in production builds.
+ * SECURITY: Mock/trial mode is BLOCKED in production builds.
  * Only available when import.meta.env.DEV === true (Vite dev server).
  */
 
@@ -55,7 +55,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 // ---------------------------------------------------------------------------
 
 /**
- * Returns true if mock/demo auth is ALLOWED in this environment.
+ * Returns true if mock/trial auth is ALLOWED in this environment.
  * Production builds (import.meta.env.PROD === true) NEVER allow mock auth.
  */
 function isMockAuthAllowed(): boolean {
@@ -111,7 +111,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    // Demo / Pilot mock — ONLY in development builds (blocked in production)
+    // Trial / Pilot mock — ONLY in development builds (blocked in production)
     if (typeof window !== "undefined" && isMockAuthAllowed()) {
       // AUTO-PILOT: When DEBUG_DIRECT_FLOW + Docker dev → auto-activate pilot mode
       // so /op/tpv works without manual localStorage setup or ?debug=1
@@ -128,14 +128,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         }
       }
 
-      const isDemoUrl =
-        new URLSearchParams(window.location.search).get("demo") === "true";
-      const isDemoStored =
-        sessionStorage.getItem("chefiapp_demo_mode") === "true" ||
-        localStorage.getItem("chefiapp_demo_mode") === "true";
+      const isTrialUrl =
+        new URLSearchParams(window.location.search).get("mode") === "trial";
+      const isTrialStored =
+        sessionStorage.getItem("chefiapp_trial_mode") === "true" ||
+        localStorage.getItem("chefiapp_trial_mode") === "true";
       const isPilot = localStorage.getItem("chefiapp_pilot_mode") === "true";
 
-      if (isDemoUrl || isDemoStored || (isDebugMode() && isPilot)) {
+      if (isTrialUrl || isTrialStored || (isDebugMode() && isPilot)) {
         console.warn(
           "[AuthProvider] Mock auth activated (DEV only). This is BLOCKED in production builds.",
         );

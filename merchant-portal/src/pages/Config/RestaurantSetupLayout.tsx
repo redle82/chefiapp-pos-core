@@ -48,7 +48,7 @@ export function RestaurantSetupLayout({
                 margin: "0 0 6px 0",
               }}
             >
-              Restaurant basics
+              Básicos do restaurante
             </p>
             <h1
               style={{

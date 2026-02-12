@@ -8,11 +8,11 @@
 ## O que está feito
 
 - **Build:** Constitution validado, Vite build OK, PWA gerado.
-- **Fluxo:** Landing (`/`) → Demo (`/demo`) → Dashboard (`/dashboard`) → Backoffice (`/app/backoffice`).
-- **Narrativa:** Sistema operacional (não “TPV” como produto); demo reforça a landing.
-- **Modos:** demo / piloto / ao vivo vividos na UI; card “Estado do sistema” no dashboard; transições raras e contratuais no Backoffice.
-- **Proteção:** TPVMinimal e KDSMinimal protegidos por ModeGate (bloqueados em modo demo).
-- **Landing/Demo:** Sem vazamento de estado técnico (ModeIndicator oculto em `/` e `/demo`).
+- **Fluxo:** Landing (`/`) → Trial Guide (`/trial-guide`) → TPV Trial (`/op/tpv?mode=trial`) → Dashboard (`/dashboard`) → Backoffice (`/app/backoffice`).
+- **Narrativa:** Sistema operacional (não “TPV” como produto); Demo Guide reforça a landing.
+- **Modos:** trial / piloto / ao vivo vividos na UI; card “Estado do sistema” no dashboard; transições raras e contratuais no Backoffice.
+- **Proteção:** TPVMinimal e KDSMinimal protegidos por ModeGate (bloqueados em modo trial).
+- **Landing/Trial Guide:** Sem vazamento de estado técnico (ModeIndicator oculto em `/` e `/trial-guide`).
 
 ---
 
@@ -54,4 +54,4 @@ Todos os passos acima estão **implementados** (1) ou **com contrato** (2–4). 
 - [SANDBOX_TPV_PILOT_CONTRACT.md](SANDBOX_TPV_PILOT_CONTRACT.md) — Contrato sandbox TPV em modo piloto.
 - [BACKOFFICE_LINEAR_SPEC.md](BACKOFFICE_LINEAR_SPEC.md) — Spec do Backoffice Linear.
 - [DASHBOARD_MODO_VENDA.md](DASHBOARD_MODO_VENDA.md) — Dashboard modo venda.
-- [MODO_DEMO_EXPLICATIVO_SPEC.md](MODO_DEMO_EXPLICATIVO_SPEC.md) — Modo Demo Explicativo + reposicionamento do System Tree (modo de leitura, não tela principal).
+- [MODO_TRIAL_EXPLICATIVO_SPEC.md](MODO_TRIAL_EXPLICATIVO_SPEC.md) — Modo Trial Explicativo + reposicionamento do System Tree (modo de leitura, não tela principal).

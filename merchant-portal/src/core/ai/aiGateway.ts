@@ -12,7 +12,7 @@ export type Intent =
   | "perception_explanation"
   | "mentor_advice"
   | "dashboard_summary"
-  | "demo_narration"
+  | "trial_narration"
   | "system_diagnosis";
 
 export interface InferResult {
@@ -81,10 +81,10 @@ function mockInfer(intent: Intent, context: InferContext): InferResult {
           "Resumo do que importa agora: estado operacional e alertas ativos. A IA explica e sugere; o sistema não executa sozinho.",
         meta: { intent },
       };
-    case "demo_narration":
+    case "trial_narration":
       return {
         explanation:
-          "Dados de demonstração. O sistema mostra o que seria observado em operação real, sem executar ações.",
+          "Simulated Environment (Trial Infrastructure): o sistema mostra o que seria observado em operação real, sem executar ações.",
         meta: { intent },
       };
     case "system_diagnosis":
