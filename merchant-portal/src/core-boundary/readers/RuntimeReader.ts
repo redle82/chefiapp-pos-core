@@ -8,12 +8,13 @@
  * para reduzir rajadas de requests gm_restaurants.
  */
 
+import { assertValidRestaurantId } from "../../core/kernel/RuntimeContext";
+import { Logger } from "../../core/logger";
 import {
   removeTabIsolated,
   setTabIsolated,
 } from "../../core/storage/TabIsolatedStorage";
 import { dockerCoreClient } from "../docker-core/connection";
-import { Logger } from "../../core/logger";
 
 const RESTAURANT_CACHE_TTL_MS = 10_000; // 10 segundos
 let restaurantCache: {
@@ -338,7 +339,11 @@ export async function getOrCreateRestaurantId(): Promise<string | null> {
   // Usar restaurantExistsInCore (não fetchRestaurant) para ignorar mock de pilot.
   if (stored) {
     const existsInCore = await restaurantExistsInCore(stored);
-    if (existsInCore) return stored;
+    if (existsInCore) {
+      // Production guard: crash if seed/mock ID is used in production mode
+      assertValidRestaurantId(stored);
+      return stored;
+    }
     if (typeof window !== "undefined") {
       localStorage.removeItem("chefiapp_restaurant_id");
       removeTabIsolated("chefiapp_restaurant_id");
@@ -362,6 +367,8 @@ export async function getOrCreateRestaurantId(): Promise<string | null> {
 
   const firstId = await fetchFirstRestaurantId();
   if (firstId) {
+    // Production guard: ensure the resolved ID is not a seed/mock
+    assertValidRestaurantId(firstId);
     if (typeof window !== "undefined") {
       localStorage.setItem("chefiapp_restaurant_id", firstId);
     }

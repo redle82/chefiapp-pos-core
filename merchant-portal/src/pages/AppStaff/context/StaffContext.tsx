@@ -231,11 +231,11 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     tableId: order.table_id || undefined,
     status: (order.status === "OPEN"
       ? "new"
-      : order.status === "IN_PREP"
+      : order.status === "PREPARING" || order.status === "IN_PREP"
       ? "preparing"
       : order.status === "READY"
       ? "ready"
-      : order.status === "PAID"
+      : order.status === "CLOSED" || order.status === "PAID"
       ? "paid"
       : order.status === "CANCELLED"
       ? "cancelled"

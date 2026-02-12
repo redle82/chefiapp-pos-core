@@ -14,16 +14,36 @@ const SENTRY_DSN =
   typeof import.meta !== "undefined" && (import.meta as any).env
     ? (import.meta as any).env.VITE_SENTRY_DSN
     : typeof process !== "undefined"
-      ? process.env.VITE_SENTRY_DSN
-      : undefined;
+    ? process.env.VITE_SENTRY_DSN
+    : undefined;
 
 const noop = () => {};
+
+/**
+ * Pending tags/context — stored while Sentry is a stub so they're
+ * replayed automatically when @sentry/react is installed.
+ */
+const _pendingTags: Record<string, string> = {};
+
 const stub = {
   init: noop,
-  withScope: (fn: (scope: { setContext: typeof noop; setTag: typeof noop; setUser: typeof noop }) => void) => {
+  withScope: (
+    fn: (scope: {
+      setContext: typeof noop;
+      setTag: typeof noop;
+      setUser: typeof noop;
+    }) => void,
+  ) => {
     fn({ setContext: noop, setTag: noop, setUser: noop });
   },
   setUser: noop,
+  setTag: (key: string, value: string) => {
+    _pendingTags[key] = value;
+  },
+  setContext: noop as (
+    name: string,
+    ctx: Record<string, unknown> | null,
+  ) => void,
   addBreadcrumb: noop,
   captureException: noop,
   captureMessage: noop,
@@ -31,6 +51,32 @@ const stub = {
 
 /** Stub quando @sentry/react não está instalado; substituir por import real quando o pacote existir. */
 const Sentry = stub;
+
+// ---------------------------------------------------------------------------
+// Sentry scope configuration — call once when restaurant identity resolves
+// ---------------------------------------------------------------------------
+/**
+ * Sets Sentry tags for every future error report.
+ * Works with both the stub (queues tags) and real @sentry/react.
+ *
+ * Call this from `useRestaurantIdentity` after hydration or from app bootstrap.
+ */
+export function configureSentryScope(opts: {
+  restaurantId: string;
+  runtimeMode?: string;
+  restaurantName?: string;
+}) {
+  Sentry.setTag("restaurant_id", opts.restaurantId);
+  Sentry.setTag("runtime_mode", opts.runtimeMode ?? "unknown");
+  if (opts.restaurantName) {
+    Sentry.setTag("restaurant_name", opts.restaurantName);
+  }
+}
+
+/** Read pending tags (useful for tests or when migrating to real Sentry). */
+export function _getSentryPendingTags(): Readonly<Record<string, string>> {
+  return { ..._pendingTags };
+}
 
 export interface LogContext {
   tenantId?: string;
@@ -184,7 +230,7 @@ class LoggerService {
   private async emit(
     level: LogLevel,
     message: string,
-    data?: Record<string, any>
+    data?: Record<string, any>,
   ) {
     // 1. Enrich Context
     const fullContext = {
@@ -207,7 +253,9 @@ class LoggerService {
     // 2. In-memory errors store (observability panel "Erros 24h")
     if (["warn", "error", "critical"].includes(level)) {
       const restaurantId =
-        (payload.data as Record<string, unknown>)?.restaurant_id as string | undefined ||
+        ((payload.data as Record<string, unknown>)?.restaurant_id as
+          | string
+          | undefined) ||
         fullContext.tenantId ||
         getTabIsolated("chefiapp_restaurant_id");
       errorsStoreAddEntry(restaurantId ?? null, level);
@@ -238,13 +286,17 @@ class LoggerService {
     if (SENTRY_DSN && Sentry && ["warn", "error", "critical"].includes(level)) {
       Sentry.withScope((scope) => {
         scope.setContext("log_context", fullContext);
-        if (fullContext.tenantId) scope.setTag("tenant_id", fullContext.tenantId);
+        if (fullContext.tenantId)
+          scope.setTag("tenant_id", fullContext.tenantId);
         if (fullContext.userId) scope.setUser({ id: fullContext.userId });
         const sentryLevel = level === "critical" ? "fatal" : level;
         if (data?.error instanceof Error) {
           Sentry.captureException(data.error);
         } else {
-          Sentry.captureMessage(message, sentryLevel as "fatal" | "error" | "warning" | "info" | "debug");
+          Sentry.captureMessage(
+            message,
+            sentryLevel as "fatal" | "error" | "warning" | "info" | "debug",
+          );
         }
       });
     }
@@ -278,7 +330,9 @@ class LoggerService {
 
         // OBSERVABILITY_LOGGING_CONTRACT: restaurant_id from call data, context, or tab storage
         const restaurantId =
-          (payload.data as Record<string, unknown>)?.restaurant_id as string | undefined ||
+          ((payload.data as Record<string, unknown>)?.restaurant_id as
+            | string
+            | undefined) ||
           fullContext.tenantId ||
           getTabIsolated("chefiapp_restaurant_id");
 
@@ -322,7 +376,7 @@ class LoggerService {
               idempotency_key,
             },
           ] as any,
-          { onConflict: "idempotency_key", ignoreDuplicates: true }
+          { onConflict: "idempotency_key", ignoreDuplicates: true },
         );
 
         // Mark as sent AFTER successful attempt
@@ -343,7 +397,7 @@ class LoggerService {
         if (err?.status === 400 || err?.message?.includes("idempotency_key")) {
           this.remoteIngestionDisabled = true;
           console.warn(
-            "[Logger] Remote ingestion disabled (missing idempotency_key)."
+            "[Logger] Remote ingestion disabled (missing idempotency_key).",
           );
           return;
         }
@@ -416,7 +470,7 @@ export function setSentryUser(
   tenantId?: string,
   options?: Partial<
     Pick<SentryContextOptions, "role" | "appVersion" | "device">
-  >
+  >,
 ): void {
   if (SENTRY_DSN && Sentry) {
     Sentry.setUser({
@@ -445,7 +499,7 @@ export function clearSentryUser(): void {
 export function addBreadcrumb(
   message: string,
   category?: string,
-  data?: Record<string, any>
+  data?: Record<string, any>,
 ): void {
   if (SENTRY_DSN && Sentry) {
     Sentry.addBreadcrumb({
@@ -463,7 +517,7 @@ export function addBreadcrumb(
  */
 export function captureException(
   error: Error,
-  context?: Record<string, any>
+  context?: Record<string, any>,
 ): void {
   if (SENTRY_DSN && Sentry) {
     Sentry.withScope((scope) => {

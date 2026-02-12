@@ -1,11 +1,14 @@
 /**
- * Hero V2 — Toast-Level
+ * Hero V2 — Premium-tier landing hero
  *
- * Headline direta com benefício. Subheadline operacional.
- * CTA forte + prova social imediata. Sem mocks — screenshots reais.
+ * Gradient text, ambient glow, scroll-aware navbar,
+ * animated dashboard mockup, strong CTA hierarchy.
  */
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../core/auth/useAuth";
+import { useScrollNavbar } from "../hooks/useFadeIn";
+import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppSignature";
 
 const NAV_LINKS = [
   { label: "O Sistema", href: "#plataforma" },
@@ -17,21 +20,31 @@ const NAV_LINKS = [
 export const HeroV2 = () => {
   const { session } = useAuth();
   const hasSession = !!session;
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { visible, scrolled } = useScrollNavbar();
 
   return (
-    <section className="relative min-h-screen flex flex-col">
-      {/* ── Navbar ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/5">
+    <section className="relative min-h-screen flex flex-col overflow-hidden">
+      {/* ── Ambient background glow ── */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden hidden md:block">
+        <div className="absolute -top-40 left-1/4 w-[600px] h-[600px] bg-amber-500/8 rounded-full blur-[120px] animate-pulse-glow" />
+        <div className="absolute -bottom-20 right-1/4 w-[400px] h-[400px] bg-amber-600/5 rounded-full blur-[100px] animate-pulse-glow" />
+        <div className="absolute top-1/3 right-0 w-[300px] h-[300px] bg-emerald-500/3 rounded-full blur-[80px]" />
+      </div>
+
+      {/* ── Navbar — hides on scroll down, shows on scroll up ── */}
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          visible ? "translate-y-0" : "-translate-y-full"
+        } ${
+          scrolled
+            ? "bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/5 shadow-lg shadow-black/20"
+            : "bg-transparent"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img
-              src="/Logo Chefiapp.png"
-              alt="ChefIApp"
-              className="h-8 w-8 object-contain"
-            />
-            <span className="text-lg font-bold tracking-tight">
-              ChefIApp<span className="text-amber-500">™</span>
-            </span>
+            <ChefIAppSignature variant="full" size="sm" tone="gold" />
           </div>
 
           <div className="hidden md:flex items-center gap-8">
@@ -39,7 +52,7 @@ export const HeroV2 = () => {
               <a
                 key={link.href}
                 href={link.href}
-                className="text-sm text-neutral-400 hover:text-white transition-colors"
+                className="text-sm text-neutral-400 hover:text-white transition-colors duration-200 relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-px after:bg-amber-500 hover:after:w-full after:transition-all after:duration-300"
               >
                 {link.label}
               </a>
@@ -47,31 +60,86 @@ export const HeroV2 = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {hasSession ? (
+              {hasSession ? (
               <Link
                 to="/admin"
-                className="px-5 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-colors"
+                className="px-5 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/20"
               >
                 Ir ao sistema
               </Link>
             ) : (
               <>
                 <Link
-                  to="/auth"
-                  className="hidden sm:inline-flex px-4 py-2 text-sm text-neutral-400 hover:text-white transition-colors"
+                  to="/auth/phone"
+                  className="hidden sm:inline-flex px-4 py-2 text-sm text-neutral-400 hover:text-white transition-colors duration-200"
                 >
                   Entrar
                 </Link>
                 <Link
-                  to="/auth"
-                  className="px-5 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-colors"
+                  to="/auth/phone"
+                  className="hidden sm:inline-flex px-5 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/20"
                 >
                   Testar grátis
                 </Link>
               </>
             )}
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="md:hidden p-2 text-neutral-400 hover:text-white transition-colors"
+              aria-label="Menu"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                {mobileOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                  />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu */}
+        {mobileOpen && (
+          <div className="md:hidden border-t border-white/5 bg-[#0a0a0a]/95 backdrop-blur-xl">
+            <div className="px-6 py-4 space-y-1">
+              {NAV_LINKS.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="block py-3 text-sm text-neutral-300 hover:text-white transition-colors"
+                >
+                  {link.label}
+                </a>
+              ))}
+              {!hasSession && (
+                <Link
+                  to="/auth/phone"
+                  onClick={() => setMobileOpen(false)}
+                  className="block mt-2 py-3 text-center text-sm font-semibold rounded-lg bg-amber-500 text-black"
+                >
+                  Testar grátis
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* ── Hero Content ── */}
@@ -81,23 +149,33 @@ export const HeroV2 = () => {
             {/* Left: Copy */}
             <div className="max-w-xl">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 mb-8">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 mb-8 backdrop-blur-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
                 <span className="text-xs font-medium text-amber-500 tracking-wide uppercase">
                   Em produção real
                 </span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight mb-6">
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-extrabold leading-[1.08] tracking-tight mb-6">
                 O sistema operacional que gere o seu{" "}
-                <span className="text-amber-500">restaurante inteiro.</span>
+                <span className="bg-linear-to-r from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent animate-gradient">
+                  restaurante inteiro.
+                </span>
               </h1>
 
-              <p className="text-lg md:text-xl text-neutral-400 leading-relaxed mb-4 max-w-lg">
-                Sala, cozinha, bar, caixa e equipa a funcionar no mesmo sistema
-                operacional — em tempo real.
+              <p className="text-lg md:text-xl text-neutral-400 leading-relaxed mb-3 max-w-lg">
+                Sala, cozinha, bar, caixa e equipa (ou outlets de hotel) a
+                funcionar no mesmo sistema operacional — em tempo real.
               </p>
 
+              <p className="text-sm text-neutral-500 mb-1 max-w-lg">
+                Um restaurante ou hotel não perde dinheiro num lugar só. Perde
+                em pequenos vazamentos invisíveis — ao longo de cada serviço ou
+                turno de pico.
+              </p>
               <p className="text-sm text-neutral-500 mb-8 max-w-lg">
                 Não é um protótipo. Não é um módulo. É o sistema real que usamos
                 todos os dias num restaurante em Ibiza.
@@ -106,10 +184,23 @@ export const HeroV2 = () => {
               {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Link
-                  to="/auth"
-                  className="inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-xl bg-amber-500 text-black hover:bg-amber-400 transition-all hover:-translate-y-0.5 shadow-lg shadow-amber-500/20"
+                  to="/auth/phone"
+                  className="group relative inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-xl bg-amber-500 text-black hover:bg-amber-400 transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30"
                 >
                   Começar 14 dias grátis
+                  <svg
+                    className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                    />
+                  </svg>
                 </Link>
                 <a
                   href="#plataforma"
@@ -166,21 +257,24 @@ export const HeroV2 = () => {
               </div>
             </div>
 
-            {/* Right: Product visual */}
-            <div className="relative">
-              <div className="absolute -inset-4 bg-linear-to-br from-amber-500/10 via-transparent to-emerald-500/5 rounded-3xl blur-2xl" />
-              <div className="relative rounded-2xl border border-white/10 bg-neutral-900/80 overflow-hidden shadow-2xl shadow-black/50">
+            {/* Right: Product visual — floating dashboard */}
+            <div
+              className="relative animate-float"
+              data-visual-slot="hero-dashboard-runtime"
+            >
+              <div className="absolute -inset-8 bg-linear-to-br from-amber-500/15 via-amber-600/5 to-emerald-500/8 rounded-3xl blur-3xl opacity-60" />
+              <div className="relative rounded-2xl border border-white/10 bg-neutral-900/90 backdrop-blur-sm overflow-hidden shadow-2xl shadow-black/60 ring-1 ring-white/5">
                 {/* Simulated dashboard screenshot */}
                 <div className="p-1">
                   {/* Window chrome */}
-                  <div className="flex items-center gap-2 px-4 py-3 bg-neutral-800/50 rounded-t-xl">
+                  <div className="flex items-center gap-2 px-4 py-3 bg-neutral-800/60 border-b border-white/5">
                     <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-red-500/60" />
-                      <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-                      <div className="w-3 h-3 rounded-full bg-green-500/60" />
+                      <div className="w-3 h-3 rounded-full bg-red-500/70" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
+                      <div className="w-3 h-3 rounded-full bg-green-500/70" />
                     </div>
                     <div className="flex-1 flex justify-center">
-                      <div className="px-16 py-1 rounded-md bg-neutral-700/50 text-xs text-neutral-500">
+                      <div className="px-12 py-1 rounded-md bg-neutral-700/40 text-xs text-neutral-500 border border-white/5">
                         chefiapp.com/admin
                       </div>
                     </div>
@@ -196,9 +290,14 @@ export const HeroV2 = () => {
                           Comando Central
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <span className="text-xs text-emerald-400">Online</span>
+                      <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                        </span>
+                        <span className="text-xs text-emerald-400 font-medium">
+                          Online
+                        </span>
                       </div>
                     </div>
                     {/* Stats grid */}

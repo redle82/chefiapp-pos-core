@@ -6,20 +6,15 @@
  */
 
 import { useEffect, useState } from "react";
-import { useBootstrapState } from "../../../../hooks/useBootstrapState";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
+import { useBootstrapState } from "../../../../hooks/useBootstrapState";
+import { FiscalSyncMonitorSection } from "../components/FiscalSyncMonitorSection";
 import {
   getAverageLatencyMs,
   getErrorsLast24hCount,
   getOrdersCreatedTodayCount,
 } from "../services/observabilityService";
-
-const CARD_STYLE = {
-  padding: 24,
-  border: "1px solid #e5e7eb",
-  borderRadius: 12,
-  backgroundColor: "#fff",
-} as const;
+import styles from "./ObservabilityPage.module.css";
 
 export function ObservabilityPage() {
   const { runtime } = useRestaurantRuntime();
@@ -67,54 +62,50 @@ export function ObservabilityPage() {
   }, [runtime.restaurant_id]);
 
   const coreOnline = bootstrap.coreStatus === "online" && runtime.coreReachable;
-  const coreLabel = coreOnline ? "Online" : bootstrap.coreStatus === "offline-erro" ? "Erro" : "Offline";
+  const coreLabel = coreOnline
+    ? "Online"
+    : bootstrap.coreStatus === "offline-erro"
+    ? "Erro"
+    : "Offline";
+
+  const coreValueClass = coreOnline ? styles.valueOk : styles.valueWarn;
+  const ordersValueClass =
+    ordersToday !== null ? styles.cardValue : styles.valueMuted;
+  const errorsValueClass = runtime.restaurant_id
+    ? styles.cardValue
+    : styles.valueMuted;
+  const latencyValueClass = runtime.restaurant_id
+    ? styles.cardValue
+    : styles.valueMuted;
 
   return (
-    <section style={{ padding: 24 }}>
-      <header style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
-          Observabilidade
-        </h1>
-        <p style={{ margin: 0, fontSize: 14, color: "#6b7280" }}>
+    <section className={styles.page}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Observabilidade</h1>
+        <p className={styles.subtitle}>
           Estado do Core e métricas mínimas (1000-ready). Uso interno.
         </p>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 16 }}>
+      <div className={styles.cardGrid}>
         {/* Core status */}
-        <div style={CARD_STYLE}>
-          <h2 style={{ margin: "0 0 8px 0", fontSize: 14, fontWeight: 600, color: "#374151" }}>
-            Core (PostgREST)
-          </h2>
-          <div
-            style={{
-              fontSize: 28,
-              fontWeight: 700,
-              color: coreOnline ? "#15803d" : "#b45309",
-            }}
-          >
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Core (PostgREST)</h2>
+          <div className={`${styles.cardValue} ${coreValueClass}`}>
             {coreLabel}
           </div>
-          <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "#6b7280" }}>
+          <p className={styles.cardNote}>
             {runtime.coreReachable ? "Ligação ativa" : "Sem ligação ao Core"}
           </p>
         </div>
 
         {/* Pedidos criados hoje (real) */}
-        <div style={CARD_STYLE}>
-          <h2 style={{ margin: "0 0 8px 0", fontSize: 14, fontWeight: 600, color: "#374151" }}>
-            Pedidos criados (hoje)
-          </h2>
-          <div
-            style={{
-              fontSize: 28,
-              fontWeight: 700,
-              color: ordersToday !== null ? "#111827" : "#6b7280",
-            }}
-          >
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Pedidos criados (hoje)</h2>
+          <div className={ordersValueClass}>
             {ordersToday === null ? "—" : ordersToday}
           </div>
-          <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "#6b7280" }}>
+          <p className={styles.cardNote}>
             {runtime.restaurant_id
               ? "Por restaurante (dia local)"
               : "Seleccione un restaurante"}
@@ -122,20 +113,12 @@ export function ObservabilityPage() {
         </div>
 
         {/* Erros (últimas 24h) — in-memory esta sessão */}
-        <div style={CARD_STYLE}>
-          <h2 style={{ margin: "0 0 8px 0", fontSize: 14, fontWeight: 600, color: "#374151" }}>
-            Erros (últimas 24h)
-          </h2>
-          <div
-            style={{
-              fontSize: 28,
-              fontWeight: 700,
-              color: runtime.restaurant_id ? "#111827" : "#6b7280",
-            }}
-          >
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Erros (últimas 24h)</h2>
+          <div className={errorsValueClass}>
             {runtime.restaurant_id ? errors24h : "—"}
           </div>
-          <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "#6b7280" }}>
+          <p className={styles.cardNote}>
             {runtime.restaurant_id
               ? "Esta sessão"
               : "Seleccione un restaurante"}
@@ -143,22 +126,16 @@ export function ObservabilityPage() {
         </div>
 
         {/* Latência média — create_order_atomic, in-memory esta sessão */}
-        <div style={CARD_STYLE}>
-          <h2 style={{ margin: "0 0 8px 0", fontSize: 14, fontWeight: 600, color: "#374151" }}>
-            Latência média
-          </h2>
-          <div
-            style={{
-              fontSize: 28,
-              fontWeight: 700,
-              color: runtime.restaurant_id ? "#111827" : "#6b7280",
-            }}
-          >
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Latência média</h2>
+          <div className={latencyValueClass}>
             {runtime.restaurant_id
-              ? (latencyMs > 0 ? `${Math.round(latencyMs)} ms` : "—")
+              ? latencyMs > 0
+                ? `${Math.round(latencyMs)} ms`
+                : "—"
               : "—"}
           </div>
-          <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "#6b7280" }}>
+          <p className={styles.cardNote}>
             {runtime.restaurant_id
               ? "Esta sessão"
               : "Seleccione un restaurante"}
@@ -166,17 +143,14 @@ export function ObservabilityPage() {
         </div>
       </div>
 
-      <div
-        style={{
-          marginTop: 24,
-          padding: 16,
-          backgroundColor: "#f9fafb",
-          borderRadius: 8,
-          fontSize: 13,
-          color: "#6b7280",
-        }}
-      >
-        <strong style={{ color: "#374151" }}>Referências:</strong> Logger central (core/logger), OBSERVABILITY_LOGGING_CONTRACT, OBSERVABILITY_MINIMA. Logs do Core: stdout dos containers Docker; saúde Postgres/PostgREST: ver docs.
+      {/* Sync fiscal — observabilidade pós-fiscal */}
+      <FiscalSyncMonitorSection restaurantId={runtime.restaurant_id} />
+
+      <div className={styles.footerNote}>
+        <strong className={styles.footerStrong}>Referências:</strong> Logger
+        central (core/logger), OBSERVABILITY_LOGGING_CONTRACT,
+        OBSERVABILITY_MINIMA. Logs do Core: stdout dos containers Docker; saúde
+        Postgres/PostgREST: ver docs.
       </div>
     </section>
   );

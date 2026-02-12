@@ -61,7 +61,7 @@ const DEVICES = [
       </svg>
     ),
     title: "Telemóvel",
-    desc: "Staff App no bolso. Turnos, tarefas e notificações no smartphone.",
+    desc: "Staff App no bolso. Mini-TPV e avisos de turno no smartphone, sem novas apps de tarefas para gerir.",
   },
   {
     icon: (
@@ -86,14 +86,20 @@ const DEVICES = [
 
 export const HardwareV2 = () => {
   return (
-    <section className="py-24 md:py-32 bg-neutral-950">
-      <div className="max-w-7xl mx-auto px-6">
+    <section className="py-24 md:py-32 bg-neutral-950 relative overflow-hidden">
+      {/* Gradient divider */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-amber-500/20 to-transparent" />
+
+      <div className="max-w-7xl mx-auto px-6 relative">
         <div className="text-center mb-16 md:mb-20">
           <p className="text-amber-500 text-sm font-semibold tracking-widest uppercase mb-4">
             Dispositivos
           </p>
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6">
-            Funciona com o que <span className="text-amber-500">já tens.</span>
+            Funciona com o que{" "}
+            <span className="bg-linear-to-r from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
+              já tens.
+            </span>
           </h2>
           <p className="text-neutral-400 text-lg max-w-2xl mx-auto leading-relaxed">
             Sem hardware proprietário. Sem investimento inicial em equipamento.

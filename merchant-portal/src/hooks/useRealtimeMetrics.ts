@@ -95,14 +95,18 @@ export function useRealtimeMetrics() {
       const todayPaid = orders.filter(
         (o) =>
           new Date(o.created_at) >= startOfToday &&
-          (o.status === "PAID" || o.status === "READY"),
+          (o.status === "CLOSED" ||
+            o.status === "READY" ||
+            o.payment_status === "PAID"),
       );
       const yesterdayPaid = orders.filter((o) => {
         const created = new Date(o.created_at);
         return (
           created >= startOfYesterday &&
           created < startOfToday &&
-          (o.status === "PAID" || o.status === "READY")
+          (o.status === "CLOSED" ||
+            o.status === "READY" ||
+            o.payment_status === "PAID")
         );
       });
 

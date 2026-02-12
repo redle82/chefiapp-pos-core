@@ -115,7 +115,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     if (typeof window !== "undefined" && isMockAuthAllowed()) {
       // AUTO-PILOT: When DEBUG_DIRECT_FLOW + Docker dev → auto-activate pilot mode
       // so /op/tpv works without manual localStorage setup or ?debug=1
-      if (CONFIG.DEBUG_DIRECT_FLOW && getBackendType() === BackendType.docker) {
+      // E2E tests can set chefiapp_skip_auto_pilot to prevent auto-activation.
+      const skipAutoPilot =
+        localStorage.getItem("chefiapp_skip_auto_pilot") === "true";
+      if (
+        CONFIG.DEBUG_DIRECT_FLOW &&
+        getBackendType() === BackendType.docker &&
+        !skipAutoPilot
+      ) {
         if (!localStorage.getItem("chefiapp_pilot_mode")) {
           localStorage.setItem("chefiapp_pilot_mode", "true");
         }

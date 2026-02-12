@@ -62,6 +62,59 @@ curl -s -o /dev/null -w "%{http_code}" "http://localhost:3001/gm_restaurants?lim
 
 ---
 
+## SLIs/SLOs mínimos de OS (2026-alvo)
+
+> Não são SLAs contratuais; são metas internas para tornar o ChefIApp™
+> “enterprise-ready”. Devem ser medidos e acompanhados, não apenas
+> declarados.
+
+- **Disponibilidade Core (Postgres+PostgREST)**  
+  - SLI: % de tempo em que o healthcheck Core (PostgREST 200) está verde.  
+  - SLO alvo inicial: ≥ 99,0% mensal em ambientes de produção.
+
+- **Latência de operações críticas (TPV/KDS)**  
+  - Abertura de pedido (`create_order_atomic`)  
+  - Pagamento de pedido (`performOrderAction('pay')`)  
+  - Marcar item pronto (`markItemReady`)  
+  - SLI: p95 da latência observada (do browser até resposta do Core).  
+  - SLO alvo inicial: p95 < 400 ms em redes estáveis.
+
+- **Taxa de erro em sincronizações fiscais**  
+  - SLI: nº de `FISCAL_SYNC_FAILED` / nº total de `FISCAL_SYNC_*` no período.  
+  - SLO alvo inicial: < 0,5% em produção.
+
+- **Taxa de erro em criação de pedidos**  
+  - SLI: nº de falhas em `create_order_atomic` / nº total de tentativas.  
+  - SLO alvo inicial: < 0,1%.
+
+Medições podem ser armazenadas no próprio Core ou num sistema de métricas
+externo; o mínimo viável é ter:
+
+- logs com `restaurant_id`/`device_id` (ver contrato de logging);  
+- contadores agregados por dia/unidade, para análise posterior.
+
+---
+
+## Health real de módulos / terminais
+
+Em modo Docker Core, cada módulo/terminal deve expor pelo menos:
+
+- **Heartbeat** periódico (TPV, KDS, Staff) registado no Core:  
+  - tabela sugerida: `gm_device_heartbeats` com `device_id`, `restaurant_id`,
+    `module_id`, `last_seen_at`, `status`.
+- **Estado agregado por restaurante**:  
+  - view sugerida: `vw_runtime_health_by_restaurant` com:
+    - nº de terminais TPV online/offline;  
+    - nº de ecrãs KDS online/offline.
+
+Essas informações alimentam:
+
+- `HealthDashboardPage` (estado técnico);  
+- cards de KDS/TPV online no dashboard multi‑unidade
+  (`MULTIUNIT_OWNER_DASHBOARD_CONTRACT.md`).
+
+---
+
 ## Referências
 
 - **Contrato de logging (app):** [OBSERVABILITY_LOGGING_CONTRACT.md](../architecture/OBSERVABILITY_LOGGING_CONTRACT.md) — Logger central, restaurant_id/device_id em cada log.

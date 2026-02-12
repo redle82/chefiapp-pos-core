@@ -49,8 +49,14 @@ const SCENARIOS = [
 
 export const OperationalStoriesV2 = () => {
   return (
-    <section className="py-24 md:py-32 bg-neutral-950">
-      <div className="max-w-7xl mx-auto px-6">
+    <section className="py-24 md:py-32 bg-neutral-950 relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-amber-500/3 rounded-full blur-[120px] pointer-events-none" />
+
+      <div
+        className="max-w-7xl mx-auto px-6 relative"
+        data-visual-slot="service-in-motion"
+      >
         {/* Header — left-aligned for variety */}
         <div className="max-w-2xl mb-16 md:mb-20">
           <p className="text-amber-500 text-sm font-semibold tracking-widest uppercase mb-4">
@@ -59,23 +65,29 @@ export const OperationalStoriesV2 = () => {
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6">
             O que acontece na prática.
           </h2>
-          <p className="text-neutral-400 text-lg leading-relaxed">
-            Imagine um serviço real. Sexta-feira. Casa cheia. Este é o sistema
-            operacional a trabalhar por si.
+          <p className="text-neutral-400 text-lg leading-relaxed mb-3">
+            Imagine um serviço real. Sexta-feira. Casa cheia. Ou um hotel a 92%
+            de ocupação: pequeno-almoço lotado, bar cheio, room service ativo.
+            Tudo parece funcionar — até começar a falhar.
+          </p>
+          <p className="text-neutral-500 text-sm leading-relaxed max-w-xl">
+            O cliente ou hóspede espera. A cozinha discute. O gerente pergunta
+            “o que está a acontecer?”. Ninguém tem resposta. É aqui que
+            restaurantes e hotéis começam a sangrar dinheiro.
           </p>
         </div>
 
         {/* Scenario blocks — stacked with timeline connector */}
         <div className="relative">
           {/* Vertical timeline line */}
-          <div className="hidden lg:block absolute left-[60px] top-0 bottom-0 w-px bg-gradient-to-b from-amber-500/40 via-amber-500/20 to-transparent" />
+          <div className="hidden lg:block absolute left-[60px] top-0 bottom-0 w-px bg-linear-to-b from-amber-500/40 via-amber-500/20 to-transparent" />
 
           <div className="space-y-6">
-            {SCENARIOS.map((s, idx) => (
+            {SCENARIOS.map((s) => (
               <div key={s.num} className="group relative lg:pl-32">
                 {/* Timeline number marker */}
-                <div className="hidden lg:flex absolute left-0 top-8 w-[120px] items-center">
-                  <div className="w-12 h-12 rounded-full border-2 border-amber-500/40 bg-[#0a0a0a] flex items-center justify-center group-hover:border-amber-500 transition-colors z-10 relative left-[36px]">
+                <div className="hidden lg:flex absolute left-0 top-8 w-30 items-center">
+                  <div className="w-12 h-12 rounded-full border-2 border-amber-500/40 bg-[#0a0a0a] flex items-center justify-center group-hover:border-amber-500 transition-colors z-10 relative left-9">
                     <span className="text-sm font-bold text-amber-500">
                       {s.num}
                     </span>

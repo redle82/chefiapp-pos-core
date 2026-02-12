@@ -17,6 +17,7 @@ import type { RestaurantRuntime } from "./context/RestaurantRuntimeContext";
 import { RestaurantRuntimeContext } from "./context/RestaurantRuntimeContext";
 import { deriveLifecycle } from "./core/lifecycle/Lifecycle";
 import { ShiftContext } from "./core/shift/ShiftContext";
+import { AppStaffHome } from "./pages/AppStaff/AppStaffHome";
 import { AppStaffMobileOnlyPage } from "./pages/AppStaff/AppStaffMobileOnlyPage";
 import { AppStaffWrapper } from "./pages/AppStaff/AppStaffWrapper";
 import { ManagerExcecoesPage } from "./pages/AppStaff/apps/alerts";
@@ -36,7 +37,6 @@ import {
 import { CleaningHome } from "./pages/AppStaff/homes/CleaningHome";
 import { KitchenHome } from "./pages/AppStaff/homes/KitchenHome";
 import { ManagerHome } from "./pages/AppStaff/homes/ManagerHome";
-import { WaiterHome } from "./pages/AppStaff/homes/WaiterHome";
 import { WorkerHome } from "./pages/AppStaff/homes/WorkerHome";
 import { ManagerTurnoPage } from "./pages/AppStaff/pages/ManagerTurnoPage";
 import { OperationModePage } from "./pages/AppStaff/pages/OperationModePage";
@@ -104,7 +104,6 @@ import { EmployeeTasksPage } from "./pages/Employee/TasksPage";
 import { HealthDashboardPage } from "./pages/Health/HealthDashboardPage";
 import { InstallPage } from "./pages/InstallPage";
 import { FeaturesPage } from "./pages/Landing/FeaturesPage";
-import { LandingPage } from "./pages/Landing/LandingPage";
 import { PricingPage } from "./pages/Landing/PricingPage";
 import { ProductFirstLandingPage } from "./pages/Landing/ProductFirstLandingPage";
 import { LandingV2Page } from "./pages/LandingV2/LandingV2Page";
@@ -117,6 +116,7 @@ import { ManagerReservationsPage } from "./pages/Manager/ReservationsPage";
 import { ManagerScheduleCreatePage } from "./pages/Manager/ScheduleCreatePage";
 import { ManagerSchedulePage } from "./pages/Manager/SchedulePage";
 
+import { MultiUnitOverviewReportPage } from "./features/admin/reports/MultiUnitOverviewReportPage";
 import { OwnerPurchasesPage } from "./pages/Owner/PurchasesPage";
 import { OwnerSimulationPage } from "./pages/Owner/SimulationPage";
 import { OwnerStockRealPage } from "./pages/Owner/StockRealPage";
@@ -267,10 +267,10 @@ function App() {
         {/* <PublicLifecycleSync /> */}
         <BillingsPreloader />
         <Routes>
-          {/* Public / Landing — canónica: / e /landing = mesma Landing Operacional */}
-          <Route path="/" element={<LandingPage />} />
+          {/* Public / Landing — canónica: / usa LandingV2Page; /landing e /v2 redirecionam para / */}
+          <Route path="/" element={<LandingV2Page />} />
           <Route path="/landing" element={<Navigate to="/" replace />} />
-          <Route path="/v2" element={<LandingV2Page />} />
+          <Route path="/v2" element={<Navigate to="/" replace />} />
           <Route path="/app/trial-tpv" element={<ProductFirstLandingPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/features" element={<FeaturesPage />} />
@@ -565,7 +565,7 @@ function AppContentWithBilling() {
               <Route index element={<StaffHomeRedirect />} />
               <Route path="owner" element={<OwnerGlobalDashboard />} />
               <Route path="manager" element={<ManagerHome />} />
-              <Route path="waiter" element={<WaiterHome />} />
+              <Route path="waiter" element={<AppStaffHome />} />
               <Route path="kitchen" element={<KitchenHome />} />
               <Route path="cleaning" element={<CleaningHome />} />
               <Route path="worker" element={<WorkerHome />} />
@@ -1075,6 +1075,16 @@ function AppContentWithBilling() {
               <ManagementAdvisor>
                 <DashboardLayout>
                   <SalesByPeriodReportPage />
+                </DashboardLayout>
+              </ManagementAdvisor>
+            }
+          />
+          <Route
+            path="/admin/reports/multiunit"
+            element={
+              <ManagementAdvisor>
+                <DashboardLayout>
+                  <MultiUnitOverviewReportPage />
                 </DashboardLayout>
               </ManagementAdvisor>
             }

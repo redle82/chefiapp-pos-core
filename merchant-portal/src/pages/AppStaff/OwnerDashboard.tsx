@@ -116,7 +116,10 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
   const activeOrdersCount = useMemo(
     () =>
       appStaffOrders.filter(
-        (o) => o.status !== "PAID" && o.status !== "CANCELLED",
+        (o) =>
+          o.status !== "CLOSED" &&
+          o.status !== "PAID" &&
+          o.status !== "CANCELLED",
       ).length,
     [appStaffOrders],
   );

@@ -1,0 +1,149 @@
+.section {
+  margin-top: 32px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #111827;
+}
+
+.refreshButton {
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #64748b;
+  background-color: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.refreshButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.errorText {
+  font-size: 13px;
+  color: #b91c1c;
+  margin-bottom: 12px;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.card {
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background-color: #fff;
+}
+
+.cardTitle {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.cardValue {
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.valueOk {
+  color: #15803d;
+}
+
+.valueWarn {
+  color: #b45309;
+}
+
+.valueError {
+  color: #b91c1c;
+}
+
+.cardNote {
+  margin: 4px 0 0 0;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.failuresPanel {
+  padding: 16px 20px;
+  background-color: #fef2f2;
+  border-radius: 10px;
+  border: 1px solid #fecaca;
+}
+
+.failuresTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #991b1b;
+  margin: 0 0 12px 0;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.tableHeadRow {
+  border-bottom: 1px solid #fecaca;
+}
+
+.tableRow {
+  border-bottom: 1px solid #fee2e2;
+}
+
+.tableHeaderCell {
+  text-align: left;
+  padding: 6px 8px;
+  color: #991b1b;
+  font-weight: 500;
+}
+
+.tableHeaderCellFirst {
+  padding-left: 0;
+}
+
+.tableCell {
+  padding: 6px 8px;
+  color: #374151;
+}
+
+.tableCellFirst {
+  padding-left: 0;
+  white-space: nowrap;
+}
+
+.tableCellError {
+  max-width: 400px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.emptyState {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}

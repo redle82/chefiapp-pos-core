@@ -27,13 +27,44 @@ export interface StaffMode {
 const BASE = "/app/staff";
 
 export const STAFF_MODES: StaffMode[] = [
-  { id: "operation", path: `${BASE}/mode/operation`, label: "Visão operacional", shortLabel: "Operação", icon: "🎛️" },
+  {
+    id: "operation",
+    path: `${BASE}/mode/operation`,
+    label: "Visão operacional",
+    shortLabel: "Operação",
+    icon: "🎛️",
+  },
   { id: "turn", path: `${BASE}/mode/turn`, label: "Turno", icon: "⏱️" },
   { id: "team", path: `${BASE}/mode/team`, label: "Equipe", icon: "👥" },
-  { id: "tpv", path: `${BASE}/mode/tpv`, label: "TPV", icon: "🧾", fullScreen: true },
-  { id: "kds", path: `${BASE}/mode/kds`, label: "KDS", icon: "🍳", fullScreen: true },
-  { id: "tasks", path: `${BASE}/mode/tasks`, label: "Tarefas", icon: "✅", fullScreen: true },
-  { id: "alerts", path: `${BASE}/mode/alerts`, label: "Exceções", shortLabel: "Exceções", icon: "⚠️" },
+  {
+    id: "tpv",
+    path: `${BASE}/mode/tpv`,
+    label: "Pedidos",
+    shortLabel: "Pedidos",
+    icon: "🧾",
+    fullScreen: true,
+  },
+  {
+    id: "kds",
+    path: `${BASE}/mode/kds`,
+    label: "KDS",
+    icon: "🍳",
+    fullScreen: true,
+  },
+  {
+    id: "tasks",
+    path: `${BASE}/mode/tasks`,
+    label: "Tarefas",
+    icon: "✅",
+    fullScreen: true,
+  },
+  {
+    id: "alerts",
+    path: `${BASE}/mode/alerts`,
+    label: "Chamados",
+    shortLabel: "Chamados",
+    icon: "⚠️",
+  },
   // Perfil é rota de topo: /app/staff/profile
   { id: "profile", path: `${BASE}/profile`, label: "Perfil", icon: "👤" },
 ];
@@ -41,8 +72,14 @@ export const STAFF_MODES: StaffMode[] = [
 // Launcher canónico: /app/staff/home
 export const STAFF_LAUNCHER_PATH = `${BASE}/home`;
 export const getModeByPath = (pathname: string): StaffMode | undefined =>
-  STAFF_MODES.find((m) => pathname === m.path || pathname.startsWith(m.path + "/"));
+  STAFF_MODES.find(
+    (m) => pathname === m.path || pathname.startsWith(m.path + "/"),
+  );
 export const getModeById = (id: StaffModeId): StaffMode =>
   STAFF_MODES.find((m) => m.id === id)!;
 export const isFullScreenMode = (pathname: string): boolean =>
-  STAFF_MODES.some((m) => m.fullScreen && (pathname === m.path || pathname.startsWith(m.path + "/")));
+  STAFF_MODES.some(
+    (m) =>
+      m.fullScreen &&
+      (pathname === m.path || pathname.startsWith(m.path + "/")),
+  );

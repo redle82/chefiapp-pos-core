@@ -87,24 +87,32 @@ const AUDIENCES = [
         />
       </svg>
     ),
-    title: "Operacoes Multi-marca",
-    desc: "Varios conceitos, um sistema operacional. Cardapios distintos com dados consolidados.",
+    title: "Operações Multi-marca",
+    desc: "Vários conceitos, um sistema operacional. Cardápios distintos com dados consolidados.",
     features: ["Multi-restaurante", "Analytics unificado", "Equipa partilhada"],
   },
 ];
 
 export const TargetAudienceV2 = () => {
   return (
-    <section id="para-quem" className="py-24 md:py-32 bg-neutral-950">
-      <div className="max-w-7xl mx-auto px-6">
+    <section
+      id="para-quem"
+      className="py-24 md:py-32 bg-neutral-950 relative overflow-hidden"
+    >
+      {/* Ambient glow */}
+      <div className="absolute top-0 left-1/3 w-[500px] h-[500px] bg-amber-500/3 rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-6 relative">
         <div className="text-center mb-16 md:mb-20">
           <p className="text-amber-500 text-sm font-semibold tracking-widest uppercase mb-4">
-            Para quem e
+            Para quem é
           </p>
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6">
             Feito para quem leva
             <br />
-            <span className="text-amber-500">a operacao a serio.</span>
+            <span className="bg-linear-to-r from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
+              a operação a sério.
+            </span>
           </h2>
         </div>
 
@@ -127,7 +135,7 @@ export const TargetAudienceV2 = () => {
                 {a.features.map((f) => (
                   <span
                     key={f}
-                    className="text-xs px-3 py-1 rounded-full bg-white/5 text-neutral-400 border border-white/5"
+                    className="text-xs px-3 py-1 rounded-full bg-white/5 text-neutral-400 border border-white/5 group-hover:border-amber-500/20 group-hover:text-amber-500/70 transition-all duration-300"
                   >
                     {f}
                   </span>

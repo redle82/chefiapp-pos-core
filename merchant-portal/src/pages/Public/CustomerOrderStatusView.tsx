@@ -73,7 +73,6 @@ function mapOrderStatusToCustomerStatus(
         color: "#22c55e",
       };
     case "CLOSED":
-    case "PAID":
       return {
         status: "delivered",
         message: "Entregue",
@@ -142,7 +141,7 @@ export function CustomerOrderStatusView() {
 
     // Polling a cada 5 segundos se pedido ainda não finalizado
     const interval = setInterval(() => {
-      if (order && order.status !== "CLOSED" && order.status !== "PAID") {
+      if (order && order.status !== "CLOSED" && order.status !== "CANCELLED") {
         loadOrder();
       }
     }, 5000);

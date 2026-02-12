@@ -5,6 +5,8 @@ import {
   getOrCreateRestaurantId,
 } from "../../core-boundary/readers/RuntimeReader";
 import { isDockerBackend } from "../infra/backendAdapter";
+import { RUNTIME_MODE } from "../kernel/RuntimeContext";
+import { configureSentryScope } from "../logger/Logger";
 
 export interface RestaurantIdentity {
   id: string | null;
@@ -50,6 +52,7 @@ async function hydrateIdentityFromSupabasePlaceholder(
 export function useRestaurantIdentity() {
   const runtimeContext = useRestaurantRuntime();
   const runtime = runtimeContext?.runtime ?? null;
+  const sentryConfiguredRef = useRef(false);
 
   const [identity, setIdentity] = useState<RestaurantIdentity>({
     id: null,
@@ -161,6 +164,18 @@ export function useRestaurantIdentity() {
       mountedRef.current = false;
     };
   }, [hydrate]);
+
+  // Configure Sentry scope once when restaurant identity resolves
+  useEffect(() => {
+    if (identity.id && !identity.loading && !sentryConfiguredRef.current) {
+      sentryConfiguredRef.current = true;
+      configureSentryScope({
+        restaurantId: identity.id,
+        runtimeMode: RUNTIME_MODE,
+        restaurantName: identity.name || undefined,
+      });
+    }
+  }, [identity.id, identity.loading, identity.name]);
 
   return { identity, refreshIdentity: hydrate };
 }

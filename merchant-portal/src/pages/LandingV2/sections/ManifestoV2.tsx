@@ -23,7 +23,7 @@ const OS_REASONS = [
   },
   {
     title: "Um evento afecta todo o sistema",
-    desc: "Quando um empregado marca turno, a sala, os pedidos e as tarefas ajustam-se sozinhas.",
+    desc: "Quando um empregado marca turno, sala e pedidos ajustam-se sozinhos — sem listas de tarefas paralelas para manter.",
   },
   {
     title: "Nada precisa ser integrado depois",
@@ -33,13 +33,18 @@ const OS_REASONS = [
 
 export const ManifestoV2 = () => {
   return (
-    <section className="py-24 md:py-32 bg-[#0a0a0a] border-t border-white/5">
-      <div className="max-w-6xl mx-auto px-6">
+    <section className="py-24 md:py-32 bg-[#0a0a0a] relative overflow-hidden">
+      {/* Gradient divider top */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-amber-500/20 to-transparent" />
+
+      <div className="max-w-6xl mx-auto px-6 relative">
         {/* Header — centered */}
         <div className="text-center mb-16 md:mb-20">
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6">
             Por que isto é um{" "}
-            <span className="text-amber-500">Sistema Operacional?</span>
+            <span className="bg-linear-to-r from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
+              Sistema Operacional?
+            </span>
           </h2>
           <p className="text-neutral-400 text-lg max-w-2xl mx-auto leading-relaxed">
             A maioria dos restaurantes cola 5 ferramentas separadas e espera que
@@ -87,7 +92,7 @@ export const ManifestoV2 = () => {
           </div>
 
           {/* After */}
-          <div className="bg-amber-500/[0.03] border-l border-white/5 p-8 md:p-10">
+          <div className="bg-amber-500/3 border-l border-white/5 p-8 md:p-10">
             <div className="flex items-center gap-2 mb-8">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />
               <h3 className="text-xs font-semibold text-emerald-500 uppercase tracking-wider">
@@ -98,7 +103,7 @@ export const ManifestoV2 = () => {
               Tudo isso vira um único cérebro operacional.
             </p>
             <div className="space-y-6">
-              {OS_REASONS.map((r, i) => (
+              {OS_REASONS.map((r) => (
                 <div key={r.title}>
                   <div className="flex items-start gap-3 mb-1">
                     <svg
@@ -131,7 +136,7 @@ export const ManifestoV2 = () => {
 
         {/* Anchor callout */}
         <div className="max-w-3xl mx-auto text-center">
-          <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent py-10 px-8">
+          <div className="rounded-2xl border border-amber-500/20 bg-linear-to-br from-amber-500/5 to-transparent py-10 px-8">
             <p className="text-2xl md:text-3xl font-bold text-white leading-snug mb-3">
               Um restaurante não precisa de 5 sistemas.
             </p>

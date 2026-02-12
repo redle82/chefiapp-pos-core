@@ -1,0 +1,180 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #111827;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.kpiRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.kpiCard {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  min-width: 180px;
+}
+
+.kpiLabel {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.kpiValue {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.unitsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.unitCard {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.unitHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.unitName {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.unitTag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.priorityBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.unitMetricsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.unitMetricBlock {
+  min-width: 80px;
+}
+
+.unitMetricLabel {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.unitMetricValue {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.statusRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusPillsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.statusPill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.statusOk {
+  background-color: #ecfdf5;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.statusWarn {
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fed7aa;
+}
+
+.statusCrit {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.statusDotOk {
+  background-color: #22c55e;
+}
+
+.statusDotWarn {
+  background-color: #f97316;
+}
+
+.statusDotNeutral {
+  background-color: #9ca3af;
+}
+
+.statusDotCrit {
+  background-color: #b91c1c;
+}
+
+.note {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 4px 0 0 0;
+}

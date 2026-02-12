@@ -151,6 +151,9 @@ export function AdminReportsOverview() {
           <Link to="/admin/reports/operations" style={linkStyle}>
             Atividade operacional (histórico)
           </Link>
+          <Link to="/admin/reports/multiunit" style={linkStyle}>
+            Multi‑unidade (olhar de dono)
+          </Link>
           <Link to="/admin/reports/staff" style={linkStyle}>
             Staff
           </Link>

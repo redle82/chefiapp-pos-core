@@ -1,12 +1,16 @@
+/**
+ * @deprecated DORMANT — Event Sourcing Kernel path is NOT used in production.
+ * All order writes go through OrderEngine -> PostgREST RPCs (create_order_atomic, process_order_payment).
+ * See: core-engine/ARCHITECTURE_DECISION.md
+ * Remove after event sourcing is formally decommissioned or revived.
+ */
 import { getErrorMessage } from "../errors/ErrorMessages";
 import { DbWriteGate } from "../governance/DbWriteGate";
 // LEGACY / LAB — blocked in Docker mode
 import { supabase } from "../supabase";
 
 /** CORE_FAILURE_MODEL: caller can pass executeSafe to get failureClass on throw */
-export type ExecuteSafeFn = (
-  req: any
-) => Promise<{
+export type ExecuteSafeFn = (req: any) => Promise<{
   ok: boolean;
   result?: any;
   reason?: string;
@@ -27,13 +31,13 @@ export const OrderProcessingService = {
     requestId: string,
     restaurantId: string,
     kernel: any,
-    executeSafe?: ExecuteSafeFn
+    executeSafe?: ExecuteSafeFn,
   ): Promise<string> {
     console.log("[OrderProcessing] Accepting Request:", requestId);
 
     if (!kernel && !executeSafe) {
       throw new Error(
-        "Sovereignty Violation: Kernel or executeSafe required for Order Processing."
+        "Sovereignty Violation: Kernel or executeSafe required for Order Processing.",
       );
     }
 
@@ -85,7 +89,7 @@ export const OrderProcessingService = {
       const res = await executeSafe(payload);
       if (!res.ok) {
         const err = new Error(
-          getErrorMessage(res.error) || "Erro ao criar pedido soberano."
+          getErrorMessage(res.error) || "Erro ao criar pedido soberano.",
         ) as Error & { failureClass?: string };
         err.failureClass = res.failureClass;
         throw err;
@@ -107,14 +111,14 @@ export const OrderProcessingService = {
         updated_at: new Date().toISOString(),
       },
       { id: requestId },
-      { tenantId: restaurantId }
+      { tenantId: restaurantId },
     );
 
     if (updateError) throw updateError;
 
     console.log(
       "[OrderProcessing] Request Converted to Sovereign Order:",
-      orderId
+      orderId,
     );
     return orderId;
   },
@@ -133,7 +137,7 @@ export const OrderProcessingService = {
         updated_at: new Date().toISOString(),
       },
       { id: requestId },
-      { tenantId: "unknown" } // We might not have tenantId here easily?
+      { tenantId: "unknown" }, // We might not have tenantId here easily?
       // Usually we do, but if not, Gate accepts 'unknown' for logs, or we fetch it.
       // Request usually has tenant_id column. But Gate doesn't fetch, it just logs.
     );

@@ -1,3 +1,9 @@
+/**
+ * @deprecated DORMANT — TenantKernel / Event Sourcing is NOT used in production.
+ * All writes go through PostgREST RPCs. This context exists for backward compatibility
+ * but NO active component calls useKernel().
+ * See: core-engine/ARCHITECTURE_DECISION.md
+ */
 import React, {
   createContext,
   useCallback,
@@ -35,7 +41,7 @@ interface KernelContextType {
   // Aceita campos extras além de TransitionRequest (como restaurantId, items, etc.)
   // failureClass: CORE_FAILURE_MODEL — UI não reclassifica; usa para retry vs bloquear vs alertar
   executeSafe: (
-    request: Omit<TransitionRequest, "tenantId"> & Record<string, any>
+    request: Omit<TransitionRequest, "tenantId"> & Record<string, any>,
   ) => Promise<{
     ok: boolean;
     result?: TransitionResult;
@@ -130,7 +136,7 @@ export function KernelProvider({ tenantId, children }: KernelProviderProps) {
         // 2. Initialize Kernel
         const newKernel = new TenantKernel(
           { tenantId, debugMode: isDebugMode() },
-          eventStore
+          eventStore,
         );
 
         // 3. Boot (Hydrate)
@@ -167,7 +173,7 @@ export function KernelProvider({ tenantId, children }: KernelProviderProps) {
   // Aceita campos extras além de TransitionRequest (como restaurantId, items, etc.)
   const executeSafe = useCallback(
     async (
-      request: Omit<TransitionRequest, "tenantId"> & Record<string, any>
+      request: Omit<TransitionRequest, "tenantId"> & Record<string, any>,
     ) => {
       if (status !== "READY" || !kernel) {
         const reason =
@@ -197,7 +203,7 @@ export function KernelProvider({ tenantId, children }: KernelProviderProps) {
         };
       }
     },
-    [status, kernel]
+    [status, kernel],
   );
 
   // Error Boundary inside Context

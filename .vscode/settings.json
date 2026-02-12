@@ -46,5 +46,6 @@
         "copilot/oswe-vscode-prime"
       ]
     }
-  }
+  },
+  "cmake.sourceDirectory": "/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/node_modules/bare-fs"
 }

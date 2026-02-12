@@ -12,6 +12,7 @@ import { WorkerCheckInView } from "../WorkerCheckInView";
 import { useStaff } from "../context/StaffContext";
 import { LocationSelectView } from "../views/LocationSelectView";
 import { NoLocationsView } from "../views/NoLocationsView";
+import gateStyles from "./StaffAppGate.module.css";
 
 export function StaffAppGate({ children }: { children?: ReactNode } = {}) {
   const {
@@ -58,20 +59,19 @@ export function StaffAppGate({ children }: { children?: ReactNode } = {}) {
     gateBlock,
   ]);
 
-  const debugStrip = null;
+  const debugStrip = isDebugMode() ? (
+    <div className={gateStyles.debugStrip}>
+      {hasLocation && <span>location:✓</span>}
+      {hasContract && <span>contract:✓</span>}
+      {hasWorker && <span>worker:✓</span>}
+    </div>
+  ) : null;
 
   const wrapWithDebug = (content: React.ReactNode) =>
     debugStrip ? (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          flex: 1,
-          minHeight: 0,
-        }}
-      >
+      <div className={gateStyles.wrapColumn}>
         {debugStrip}
-        <div style={{ flex: 1, minHeight: 0 }}>{content}</div>
+        <div className={gateStyles.wrapContent}>{content}</div>
       </div>
     ) : (
       content

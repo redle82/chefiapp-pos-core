@@ -12,7 +12,7 @@ const sessionReflexCache = new Set<string>();
 export const useReflexEngine = (
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>,
   notifyActivity: () => void,
-  restaurantId: string | null
+  restaurantId: string | null,
 ) => {
   // FASE 3.3: Isolado - AppStaff não depende de TPV
   const { orders: appStaffOrders } = useAppStaffOrders(restaurantId);
@@ -25,7 +25,7 @@ export const useReflexEngine = (
       ? "preparing"
       : order.status === "READY"
       ? "ready"
-      : order.status === "PAID"
+      : order.status === "CLOSED"
       ? "paid"
       : order.status === "CANCELLED"
       ? "cancelled"
@@ -68,7 +68,7 @@ export const useReflexEngine = (
         const targetId = order.id;
         const taskId = `${reflexKey}-${order.tableNumber}-${targetId.slice(
           0,
-          4
+          4,
         )}`;
         const cacheKey = `${reflexKey}:${targetId}`;
 

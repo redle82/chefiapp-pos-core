@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { TerminalHeartbeatGuard } from "../components/terminal/TerminalHeartbeatGuard";
+import { ContextEngineProvider } from "../core/context";
 import { isDebugMode } from "../core/debugMode";
+import { FiscalQueue } from "../core/fiscal/FiscalQueueWorker";
 import {
   getOperationalStateBlockReason,
   hasActiveOperationalState,
@@ -10,16 +13,11 @@ import { Logger } from "../core/logger";
 import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
 import { useTenant } from "../core/tenant/TenantContext";
 import { getActiveTenant } from "../core/tenant/TenantResolver";
+import { useShiftLock } from "../hooks/useShiftLock";
+import { OfflineOrderProvider } from "../pages/TPV/context/OfflineOrderContext";
 import { OrderProvider } from "../pages/TPV/context/OrderContextReal";
 import { TableProvider } from "../pages/TPV/context/TableContext";
 import { LoadingState } from "../ui/design-system/components/LoadingState";
-// DOCKER CORE: Kernel removido - acesso direto ao Core via PostgREST/RPCs
-// import { KernelProvider } from '../core/kernel/KernelContext'; // REMOVIDO
-import { TerminalHeartbeatGuard } from "../components/terminal/TerminalHeartbeatGuard";
-import { ContextEngineProvider } from "../core/context";
-import { FiscalQueue } from "../core/fiscal/FiscalQueueWorker";
-import { useShiftLock } from "../hooks/useShiftLock";
-import { OfflineOrderProvider } from "../pages/TPV/context/OfflineOrderContext";
 
 interface Props {
   children: ReactNode;

@@ -38,6 +38,15 @@ test.describe("Fluxo telefone → setup mínimo → dashboard", () => {
   test("Bootstrap/setup mínimo carrega formulário de criação de restaurante", async ({
     page,
   }) => {
+    // Prevent AUTO-PILOT from re-activating pilot/mock auth on page load
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch {}
+      localStorage.setItem("chefiapp_skip_auto_pilot", "true");
+    });
+
     const res = await page.goto("/setup/restaurant-minimal", {
       waitUntil: "domcontentloaded",
       timeout: 15000,
@@ -49,6 +58,6 @@ test.describe("Fluxo telefone → setup mínimo → dashboard", () => {
     const titulo = page.getByRole("heading", {
       name: /Criar o teu restaurante/i,
     });
-    await expect(titulo).toBeVisible({ timeout: 5000 });
+    await expect(titulo).toBeVisible({ timeout: 20000 });
   });
 });

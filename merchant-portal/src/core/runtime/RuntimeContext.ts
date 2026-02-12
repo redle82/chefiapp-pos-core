@@ -143,6 +143,77 @@ export function logRuntimeStatus(): void {
 }
 
 // ============================================================================
+// RESTAURANT ID GUARDS
+// ============================================================================
+
+/** IDs that are ONLY valid in trial/demo mode (hardcoded, seed, or trial) */
+const DEMO_ONLY_RESTAURANT_IDS = new Set([
+  "trial-restaurant-id",
+  "mock-restaurant-id",
+]);
+
+/** UUID prefix pattern for seed/demo data */
+const SEED_UUID_PREFIX = "00000000-0000-0000-0000-";
+
+/**
+ * Assert that a restaurant ID is valid for the current runtime mode.
+ * In production, seed/trial/mock IDs are FORBIDDEN.
+ *
+ * @throws Error if a demo-only restaurant ID is used in production
+ */
+export function assertValidRestaurantId(restaurantId: string): void {
+  if (!RUNTIME.isProduction) return;
+
+  if (DEMO_ONLY_RESTAURANT_IDS.has(restaurantId)) {
+    throw new Error(
+      `[PRODUCTION_VIOLATION] Demo restaurant ID "${restaurantId}" used in production mode. ` +
+        `A real restaurant must be created via onboarding.`,
+    );
+  }
+
+  if (restaurantId.startsWith(SEED_UUID_PREFIX)) {
+    throw new Error(
+      `[PRODUCTION_VIOLATION] Seed restaurant ID "${restaurantId}" used in production mode. ` +
+        `Seed data (00000000-*) is forbidden in production.`,
+    );
+  }
+}
+
+// ============================================================================
+// DEMO FLAGS GUARD
+// ============================================================================
+
+/**
+ * Validate that demo flags are correctly set for the current runtime mode.
+ * Returns an array of violations (empty = all good).
+ */
+export function validateDemoFlags(): string[] {
+  if (!RUNTIME.isProduction) return [];
+
+  const violations: string[] = [];
+
+  // Check for DEMO_PREVIEW (must be false in production)
+  const demoPreview =
+    typeof import.meta !== "undefined"
+      ? import.meta.env?.VITE_DEMO_PREVIEW
+      : undefined;
+  if (demoPreview === "true" || demoPreview === true) {
+    violations.push("DEMO_PREVIEW must be false in production");
+  }
+
+  // Check for MOCK_FISCAL (must be false in production)
+  const mockFiscal =
+    typeof import.meta !== "undefined"
+      ? import.meta.env?.VITE_MOCK_FISCAL
+      : undefined;
+  if (mockFiscal === "true" || mockFiscal === true) {
+    violations.push("MOCK_FISCAL must be false in production");
+  }
+
+  return violations;
+}
+
+// ============================================================================
 // CONVENIENCE EXPORTS
 // ============================================================================
 

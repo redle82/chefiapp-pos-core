@@ -5,7 +5,9 @@
  * Each module = icon + title + short description.
  */
 
-const MODULES: { icon: JSX.Element; title: string; desc: string }[] = [
+import type { ReactElement } from "react";
+
+const MODULES: { icon: ReactElement; title: string; desc: string }[] = [
   {
     icon: (
       <svg
@@ -23,7 +25,7 @@ const MODULES: { icon: JSX.Element; title: string; desc: string }[] = [
       </svg>
     ),
     title: "TPV Operacional",
-    desc: "Onde o serviço começa. Pedidos, pré-contas e pagamento num fluxo contínuo.",
+    desc: "Onde o serviço realmente começa: o pedido nasce certo à primeira, mesmo com equipa nova ou sazonal. Evita pré-contas perdidas, erros de digitação e pedidos lançados só “de cabeça”.",
   },
   {
     icon: (
@@ -47,7 +49,7 @@ const MODULES: { icon: JSX.Element; title: string; desc: string }[] = [
       </svg>
     ),
     title: "KDS — Cozinha em tempo real",
-    desc: "Prioridades automáticas, sem papel. A cozinha vê o que importa — nada mais.",
+    desc: "Prioridades automáticas para pratos e mesas, com tempo a contar à vista de toda a equipa. Evita papel, impressoras térmicas críticas e refações silenciosas que corroem a margem em cada serviço.",
   },
   {
     icon: (
@@ -66,7 +68,7 @@ const MODULES: { icon: JSX.Element; title: string; desc: string }[] = [
       </svg>
     ),
     title: "Menu Builder",
-    desc: "Cria e altera cardápios em minutos. Categorias, preços, modificadores.",
+    desc: "Cria e altera cardápios em minutos, alinhando preços, margens e modificadores antes do turno começar. Evita chamadas para técnico, preços errados a meio do serviço e margem fictícia no Excel.",
   },
   {
     icon: (
@@ -85,7 +87,7 @@ const MODULES: { icon: JSX.Element; title: string; desc: string }[] = [
       </svg>
     ),
     title: "Staff App",
-    desc: "Turnos, tarefas e comunicação no mesmo fluxo. Cada membro vê só o que precisa.",
+    desc: "Mini-TPV e informação de turno no bolso do staff. Evita voltas inúteis até ao balcão, tempo de espera para usar o TPV fixo e pedidos que ficam na memória do empregado.",
   },
   {
     icon: (
@@ -104,7 +106,7 @@ const MODULES: { icon: JSX.Element; title: string; desc: string }[] = [
       </svg>
     ),
     title: "Reservas & Sala",
-    desc: "Check-in, no-show tracking e overbooking inteligente. A sala como parte viva do OS.",
+    desc: "Reservas, walk-ins e no-shows ligados à sala real. Evita mesas vazias em hora de pico, overbooking destrutivo e perda de ticket médio por falta de previsibilidade.",
   },
   {
     icon: (
@@ -123,7 +125,7 @@ const MODULES: { icon: JSX.Element; title: string; desc: string }[] = [
       </svg>
     ),
     title: "Analytics Operacionais",
-    desc: "Dados de serviço real. Faturação, performance da equipa, produtos mais vendidos.",
+    desc: "Dados de serviço real por turno, canal e produto — não apenas relatório do fim do mês. Evita decisões baseadas em feeling e correcções só na próxima época alta.",
   },
   {
     icon: (
@@ -142,7 +144,7 @@ const MODULES: { icon: JSX.Element; title: string; desc: string }[] = [
       </svg>
     ),
     title: "Monitor de Risco",
-    desc: "O sistema avisa antes do problema. Stock baixo, tarefas atrasadas, anomalias.",
+    desc: "Sinais precoces de stock, serviço e equipa fora do normal aparecem antes do cliente reclamar. Evita surpresas operacionais e correções em modo urgência.",
   },
   {
     icon: (
@@ -161,7 +163,7 @@ const MODULES: { icon: JSX.Element; title: string; desc: string }[] = [
       </svg>
     ),
     title: "Página Pública",
-    desc: "O teu restaurante online. Cardápio, horário e localização acessíveis ao cliente.",
+    desc: "A presença online operada pelo próprio restaurante: reservas e pedidos directos sob o mesmo sistema. Evita dependência total de plataformas externas e comissões em cima de cada serviço.",
   },
   {
     icon: (
@@ -180,14 +182,20 @@ const MODULES: { icon: JSX.Element; title: string; desc: string }[] = [
       </svg>
     ),
     title: "Controle de Stock",
-    desc: "Ingredientes, fichas técnicas e alertas de reposição automáticos.",
+    desc: "Ingredientes, fichas técnicas e alertas automáticos ligados aos pedidos reais do turno. Evita desperdício, ruturas inesperadas e decisões de compra no improviso.",
   },
 ];
 
 export const PlatformV2 = () => {
   return (
-    <section id="plataforma" className="py-24 md:py-32 bg-[#0a0a0a]">
-      <div className="max-w-7xl mx-auto px-6">
+    <section
+      id="plataforma"
+      className="py-24 md:py-32 bg-[#0a0a0a] relative overflow-hidden"
+    >
+      {/* Ambient glow */}
+      <div className="absolute top-1/3 right-0 w-[500px] h-[500px] bg-amber-500/3 rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-6 relative">
         {/* Section header */}
         <div className="text-center mb-16 md:mb-20">
           <p className="text-amber-500 text-sm font-semibold tracking-widest uppercase mb-4">
@@ -196,7 +204,7 @@ export const PlatformV2 = () => {
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6">
             Tudo o que o seu restaurante precisa.
             <br />
-            <span className="text-neutral-500">
+            <span className="bg-linear-to-r from-neutral-400 to-neutral-600 bg-clip-text text-transparent">
               Num único sistema operacional.
             </span>
           </h2>

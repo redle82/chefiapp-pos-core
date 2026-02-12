@@ -56,16 +56,15 @@ export function useOnboardingStatus() {
         }
 
         // Verificar primeira venda (contar pedidos pagos/completados em gm_orders)
-        // Buscar pedidos com payment_status='paid' (status PAID não existe no enum order_status)
-        // O enum order_status tem: pending, preparing, ready, delivered, canceled
-        // Para pedidos pagos, usamos payment_status='paid'
+        // Order status: OPEN → PREPARING → IN_PREP → READY → CLOSED (DB state machine)
+        // Payment tracking: payment_status column (PENDING → PAID / PARTIALLY_PAID)
+        // When fully paid, process_order_payment sets status='CLOSED' + payment_status='PAID'
         const { data: paidOrders, error: ordersError } = await supabase
           .from("gm_orders")
           .select("id")
           .eq("restaurant_id", restaurantId)
-          .eq("payment_status", "paid");
+          .eq("payment_status", "PAID");
 
-        // Contar IDs únicos (caso algum pedido tenha ambos status='PAID' e payment_status='paid')
         const uniqueOrderIds = new Set(paidOrders?.map((o) => o.id) || []);
         const ordersCount = uniqueOrderIds.size;
 

@@ -53,8 +53,7 @@ import {
 import { eventTaskGenerator } from "../../../core/tasks/EventTaskGenerator";
 import { useOfflineOrder } from "./OfflineOrderContext";
 import { OrderContext } from "./OrderContextToken"; // FASE 3.4: Token isolado
-// DOCKER CORE: Removida dependência do Kernel - acesso direto ao Core
-// import { useKernel } from '../../../core/kernel/KernelContext'; // REMOVIDO
+// DOCKER CORE: All writes go through PostgREST RPCs (see ARCHITECTURE_DECISION.md)
 import { isDevStableMode } from "../../../core/runtime/devStableMode";
 
 // REMOVE LOCAL CONTEXT CREATION
@@ -63,8 +62,8 @@ import { isDevStableMode } from "../../../core/runtime/devStableMode";
 // Mapear status do OrderEngine para Order local
 // Mapear Order do Engine (backend) para Order local (frontend)
 // CRÍTICO: Alinhar estados frontend ↔ backend
-// Backend usa: status='PAID' OU payment_status='PAID'
-// Frontend usa: status='paid'
+// Backend usa: status='CLOSED' (DB canonical) + payment_status='PAID'
+// Frontend usa: status='paid' (lowercase, via mapStatusToLocal)
 function mapRealOrderToLocalOrder(realOrder: RealOrder): Order {
   return {
     id: realOrder.id,
@@ -102,8 +101,9 @@ function mapStatusToLocal(
     return "partially_paid";
   }
 
-  // PRIORIDADE 2: Se status = 'PAID', order está pago
-  if (status === "PAID") {
+  // PRIORIDADE 2: Se status = 'CLOSED', order está pago (DB canonical)
+  // Backward compat: 'PAID' also maps to 'paid'
+  if (status === "CLOSED" || status === "PAID") {
     return "paid";
   }
 
@@ -111,6 +111,7 @@ function mapStatusToLocal(
   switch (status) {
     case "OPEN":
       return "new";
+    case "PREPARING":
     case "IN_PREP":
       return "preparing";
     case "READY":
@@ -129,8 +130,7 @@ export function OrderProvider({
   children: ReactNode;
   restaurantId?: string;
 }) {
-  // DOCKER CORE: Removida dependência do Kernel - acesso direto ao Core
-  // const { kernel, status, isReady, executeSafe } = useKernel(); // REMOVIDO
+  // Writes go through PostgREST RPCs — no kernel dependency
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);

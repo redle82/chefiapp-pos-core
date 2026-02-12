@@ -1,10 +1,10 @@
 /**
  * FAQ V2 — Strategic objection killer
  *
- * Toast-style: every FAQ kills a purchase objection.
- * Accordion pattern with hover interaction.
+ * Smooth animated accordion with gradient headings,
+ * glass card styling, and ambient glow.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CANONICAL_MONTHLY_PRICE_LABEL } from "../../../core/pricing/canonicalPrice";
 
 const FAQS = [
@@ -26,7 +26,7 @@ const FAQS = [
   },
   {
     q: "Posso usar só o Staff App?",
-    a: "Pode, mas não recomendamos. A força do OS está na integração total: turnos conectados à sala, tarefas ligadas ao stock, pedidos que chegam à cozinha. Usar tudo junto é onde o valor está.",
+    a: "Pode usar só o Staff App, mas o valor real aparece quando tudo está ligado: turnos conectados à sala, pedidos que alimentam o stock e a cozinha a ver o que entra em tempo real. O ChefIApp™ OS foi desenhado para reduzir vazamentos na operação como um todo, não para ser mais uma app de tarefas isolada.",
   },
   {
     q: "Quanto custa depois do período de teste?",
@@ -40,25 +40,32 @@ const FAQS = [
     q: "E se eu precisar de ajuda?",
     a: "Suporte direto por WhatsApp com a equipa fundadora. Sem tickets, sem fila de espera. Respondemos como se fosse o nosso restaurante.",
   },
+  {
+    q: "Funciona para mais do que um restaurante?",
+    a: "Sim. O ChefIApp™ foi desenhado para crescer de um único restaurante para grupos e cadeias. Relatórios consolidados, visão central por unidade e permissões por equipa vivem na mesma infraestrutura operacional.",
+  },
 ];
 
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   return (
     <div
-      className={`border-b border-white/5 transition-colors ${
+      className={`border-b border-white/5 transition-colors duration-300 ${
         open ? "bg-neutral-900/30" : "hover:bg-neutral-900/20"
       }`}
     >
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between py-6 px-6 text-left"
+        className="w-full flex items-center justify-between py-6 px-6 text-left group"
       >
-        <span className="text-base font-semibold text-white pr-4">{q}</span>
+        <span className="text-base font-semibold text-white pr-4 group-hover:text-amber-500/90 transition-colors duration-200">
+          {q}
+        </span>
         <span
-          className={`text-neutral-500 transition-transform duration-200 shrink-0 ${
-            open ? "rotate-45" : ""
+          className={`text-neutral-500 transition-all duration-300 shrink-0 ${
+            open ? "rotate-45 text-amber-500" : ""
           }`}
         >
           <svg
@@ -76,32 +83,47 @@ function FAQItem({ q, a }: { q: string; a: string }) {
           </svg>
         </span>
       </button>
-      {open && (
+      <div
+        ref={contentRef}
+        className="overflow-hidden transition-all duration-300 ease-out"
+        style={{
+          maxHeight: open ? contentRef.current?.scrollHeight ?? 200 : 0,
+          opacity: open ? 1 : 0,
+        }}
+      >
         <div className="px-6 pb-6">
           <p className="text-sm text-neutral-400 leading-relaxed max-w-3xl">
             {a}
           </p>
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
 export const FAQV2 = () => {
   return (
-    <section id="faq" className="py-24 md:py-32 bg-[#0a0a0a]">
-      <div className="max-w-3xl mx-auto px-6">
+    <section
+      id="faq"
+      className="py-24 md:py-32 bg-[#0a0a0a] relative overflow-hidden"
+    >
+      {/* Ambient glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/3 rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="max-w-3xl mx-auto px-6 relative">
         <div className="text-center mb-16 md:mb-20">
           <p className="text-amber-500 text-sm font-semibold tracking-widest uppercase mb-4">
             Perguntas Frequentes
           </p>
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6">
             Perguntas honestas.{" "}
-            <span className="text-amber-500">Respostas directas.</span>
+            <span className="bg-linear-to-r from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
+              Respostas directas.
+            </span>
           </h2>
         </div>
 
-        <div className="rounded-2xl border border-white/5 overflow-hidden">
+        <div className="rounded-2xl border border-white/10 overflow-hidden backdrop-blur-sm shadow-2xl shadow-black/30 ring-1 ring-white/5">
           {FAQS.map((faq) => (
             <FAQItem key={faq.q} q={faq.q} a={faq.a} />
           ))}

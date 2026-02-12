@@ -5,11 +5,57 @@
  */
 
 // LEGACY / LAB — blocked in Docker mode
+import { isDockerBackend } from "../infra/backendAdapter";
 import {
   removeTabIsolated,
   setTabIsolated,
 } from "../storage/TabIsolatedStorage";
 import { supabase } from "../supabase";
+
+// ---------------------------------------------------------------------------
+// Core RPC Health Check (Docker backend)
+// ---------------------------------------------------------------------------
+export interface CoreHealthResult {
+  status: "healthy" | "degraded";
+  timestamp: string;
+  version: string;
+  checks: Record<string, unknown>;
+}
+
+/**
+ * Calls the `health_check` PostgreSQL RPC to verify the full Core stack.
+ * Only works when running against Docker Core backend.
+ * Returns null if the RPC is not available (e.g., migration not applied yet).
+ */
+export async function checkCoreHealth(): Promise<CoreHealthResult | null> {
+  if (!isDockerBackend()) return null;
+
+  try {
+    const { getTableClient } = await import("../infra/coreRpc");
+    const client = await getTableClient();
+    const { data, error } = await client.rpc("health_check");
+
+    if (error) {
+      // RPC not deployed yet — graceful degradation
+      if (error.code === "42883" || error.message?.includes("does not exist")) {
+        console.warn("[HealthCheck] health_check RPC not deployed yet");
+        return null;
+      }
+      console.error("[HealthCheck] RPC error:", error.message);
+      return {
+        status: "degraded",
+        timestamp: new Date().toISOString(),
+        version: "unknown",
+        checks: { error: error.message },
+      };
+    }
+
+    return data as CoreHealthResult;
+  } catch (err) {
+    console.error("[HealthCheck] Failed to call health_check RPC:", err);
+    return null;
+  }
+}
 
 export interface HealthStatus {
   status: "healthy" | "degraded" | "unhealthy";
@@ -90,7 +136,7 @@ export async function checkHealth(): Promise<HealthStatus> {
 
   // Determinar status geral
   const hasErrors = Object.values(checks).some(
-    (check) => check.status === "error"
+    (check) => check.status === "error",
   );
   const hasWarnings = false; // Pode ser expandido
 
@@ -142,7 +188,7 @@ export async function healthCheckHandler(): Promise<Response> {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
   }
 }

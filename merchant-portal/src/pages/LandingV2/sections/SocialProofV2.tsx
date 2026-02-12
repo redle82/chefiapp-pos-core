@@ -7,21 +7,26 @@
 
 export const SocialProofV2 = () => {
   return (
-    <section className="py-24 md:py-32 bg-[#0a0a0a]">
-      <div className="max-w-7xl mx-auto px-6">
+    <section className="py-24 md:py-32 bg-[#0a0a0a] relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-amber-500/3 rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-6 relative">
         <div className="text-center mb-16 md:mb-20">
           <p className="text-amber-500 text-sm font-semibold tracking-widest uppercase mb-4">
             Em Produção Real
           </p>
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6">
             Não é protótipo.{" "}
-            <span className="text-amber-500">É o sistema real.</span>
+            <span className="bg-linear-to-r from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
+              É o sistema real.
+            </span>
           </h2>
         </div>
 
         {/* Featured case */}
         <div className="max-w-4xl mx-auto">
-          <div className="rounded-2xl border border-white/10 bg-neutral-900/40 overflow-hidden">
+          <div className="rounded-2xl border border-white/10 bg-neutral-900/40 overflow-hidden backdrop-blur-sm shadow-2xl shadow-black/40 ring-1 ring-white/5">
             {/* Quote */}
             <div className="p-8 md:p-12">
               <svg
@@ -77,7 +82,54 @@ export const SocialProofV2 = () => {
         </div>
 
         {/* Trust indicators */}
-        <div className="mt-16 flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-neutral-500">
+        <div className="mt-16 grid md:grid-cols-2 gap-6">
+          {[
+            {
+              initials: "RM",
+              quote:
+                "Finalmente larguei o Excel para fechar caixa. O dia acabou diferente — mais rápido, sem erros, sem stress.",
+              name: "Restaurante Maré Alta",
+              location: "Lisboa, Portugal · 2026",
+            },
+            {
+              initials: "CB",
+              quote:
+                "A equipa aprendeu sozinha no primeiro turno. Não precisei de formação nem de técnico. Isso vale mais que qualquer feature.",
+              name: "Casa Brava",
+              location: "Formentera, Espanha · 2026",
+            },
+          ].map((t) => (
+            <div
+              key={t.initials}
+              className="rounded-xl border border-white/5 bg-neutral-900/30 p-6 hover:border-amber-500/20 hover:bg-neutral-900/50 transition-all duration-300"
+            >
+              <svg
+                className="w-6 h-6 text-amber-500/30 mb-4"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151C7.546 6.068 5.983 8.789 5.983 11h4v10H0z" />
+              </svg>
+              <p className="text-sm text-neutral-300 leading-relaxed mb-4">
+                {t.quote}
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 text-xs font-bold">
+                  {t.initials}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white">
+                    {t.name}
+                  </div>
+                  <div className="text-xs text-neutral-500">{t.location}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Trust indicators */}
+        <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-neutral-500">
           <div className="flex items-center gap-2">
             <svg
               className="w-5 h-5 text-emerald-500"

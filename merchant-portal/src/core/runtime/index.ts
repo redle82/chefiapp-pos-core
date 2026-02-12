@@ -14,10 +14,12 @@ export {
   RUNTIME,
   assertNoMock,
   assertProduction,
+  assertValidRestaurantId,
   isProduction,
   isTrial,
   logRuntimeStatus,
   runtimeMode,
+  validateDemoFlags,
   type RuntimeContext,
   type RuntimeMode,
 } from "./RuntimeContext";

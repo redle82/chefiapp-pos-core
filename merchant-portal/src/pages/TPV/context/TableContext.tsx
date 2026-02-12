@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 // DOCKER CORE: Removida dependência do Kernel - acesso direto ao Core
-// import { useKernel } from '../../../core/kernel/KernelContext'; // REMOVIDO
 import { dockerCoreClient } from "../../../core-boundary/docker-core/connection";
 import { isDevStableMode } from "../../../core/runtime/devStableMode";
 

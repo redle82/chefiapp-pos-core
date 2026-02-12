@@ -7,16 +7,24 @@
 
 export const TechValuesV2 = () => {
   return (
-    <section className="py-24 md:py-32 bg-neutral-950 border-t border-white/5">
-      <div className="max-w-6xl mx-auto px-6">
+    <section className="py-24 md:py-32 bg-neutral-950 relative overflow-hidden">
+      {/* Gradient divider */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-amber-500/20 to-transparent" />
+
+      <div className="max-w-6xl mx-auto px-6 relative">
         {/* Header */}
         <div className="max-w-2xl mb-16 md:mb-20">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-            Construído para durar.
+            Construído dentro de um restaurante real.
           </h2>
-          <p className="text-neutral-400 text-lg leading-relaxed">
+          <p className="text-neutral-400 text-lg leading-relaxed mb-3">
             Não vendemos promessas — entregamos um sistema operacional que
-            funciona quando o serviço aperta.
+            funciona quando o serviço aperta, com casa cheia e equipa no limite.
+          </p>
+          <p className="text-neutral-500 text-sm leading-relaxed">
+            O ChefIApp™ corre em paralelo ao POS fiscal: ele fecha vazamentos
+            operacionais, o POS emite a nota. Juntos, mantêm a operação e o
+            fisco alinhados.
           </p>
         </div>
 
@@ -92,7 +100,7 @@ export const TechValuesV2 = () => {
               </svg>
             </div>
             <h3 className="text-xl font-bold text-white mb-3">
-              Sem dependências externas
+              Sem dependências externas frágeis
             </h3>
             <p className="text-neutral-400 text-sm leading-relaxed">
               Zero APIs de terceiros, zero conectores frágeis. Tudo nasce dentro

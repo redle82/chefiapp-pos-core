@@ -2,25 +2,27 @@
  * Cash Register - Sistema de Caixa Real
  *
  * [CLASSIFICATION: INFRASTRUCTURE ADAPTER]
- * [AUTHORITY: HYBRID] (See DOMAIN_WRITE_AUTHORITY_CONTRACT.md)
+ * [AUTHORITY: PostgreSQL RPCs] (open_cash_register_atomic, close_cash_register_atomic)
  *
  * Gerencia abertura e fechamento de caixa com totais reais.
  *
- * [ARCHITECTURE NOTE]
- * This engine operates in HYBRID MODE (Law 2 Exception):
- * 1. Direct Write (Projection): Writes to Core `gm_cash_registers`
- * 2. Kernel Event (Truth): Routes `OPEN/CLOSE` events through `TenantKernel` (Sovereign)
- *
- * WARNING: Does not enforce "truth" if Kernel is missing.
+ * [ARCHITECTURE NOTE — 2026-02-20]
+ * Write authority: PostgreSQL RPCs are the sole write path.
+ * Event Sourcing (TenantKernel) is architecturally dormant — see
+ * core-engine/ARCHITECTURE_DECISION.md. The kernel/executeSafe parameters
+ * on interfaces are kept for backward compat but are NOT used.
  */
 
-import { getErrorMessage } from "../errors/ErrorMessages";
 import { getTableClient, invokeRpc } from "../infra/coreRpc";
 import { Logger } from "../logger";
-import type { ExecuteSafeFn } from "../services/OrderProcessingService";
 
 // TODO: Import from Kernel context when wired
 // import type { TenantKernel } from '../../../../core-engine/kernel/TenantKernel';
+
+/** @deprecated Kept for interface compat — kernel is dormant, RPCs are sole write path */
+type ExecuteSafeFn = (
+  payload: Record<string, unknown>,
+) => Promise<{ ok: boolean; error?: string; failureClass?: string }>;
 
 export class CashRegisterError extends Error {
   constructor(message: string, public code: string) {
@@ -69,11 +71,24 @@ export class CashRegisterEngine {
     "00000000-0000-0000-0000-000000000100";
   /**
    * Abrir caixa
+   *
+   * [WRITE PATH]: PostgreSQL RPC `open_cash_register_atomic` (sole authority).
+   * Kernel/executeSafe parameters are accepted but ignored — the RPC is the
+   * single source of truth for cash register operations (see ADR in
+   * core-engine/ARCHITECTURE_DECISION.md).
    */
   static async openCashRegister(
     input: OpenCashRegisterInput,
   ): Promise<CashRegister> {
-    // [ATOMIC] Use RPC — Core quando Docker (FINANCIAL_CORE_VIOLATION_AUDIT)
+    // Pre-validation (fail fast before hitting the DB)
+    if (!input.restaurantId) {
+      throw new CashRegisterError("Restaurant ID required", "VALIDATION_ERROR");
+    }
+    if (!input.openedBy) {
+      throw new CashRegisterError("Opened By required", "VALIDATION_ERROR");
+    }
+
+    // [ATOMIC] RPC — single write path (FINANCIAL_CORE_VIOLATION_AUDIT)
     const { data: result, error } = await invokeRpc(
       "open_cash_register_atomic",
       {
@@ -97,88 +112,73 @@ export class CashRegisterEngine {
         "CASH_REGISTER_OPEN_FAILED",
       );
     }
-    // Validation
-    if (!input.restaurantId) throw new Error("Restaurant ID required");
-    if (!input.openedBy) throw new Error("Opened By required");
 
-    if (!input.kernel && !input.executeSafe) {
-      throw new Error(
-        "Sovereign Kernel or executeSafe required for Cash Register operations (Phase 16)",
-      );
-    }
-
-    const tempId = crypto.randomUUID();
-    const payload = {
-      entity: "cash_register",
-      entityId: tempId,
-      event: "OPEN",
-      restaurantId: input.restaurantId,
-      opened_by: input.openedBy,
-      opening_balance_cents: input.openingBalanceCents,
-      name: (input.name || "Caixa Principal") as string,
-    };
-
-    if (input.executeSafe) {
-      const res = await input.executeSafe(payload);
-      if (!res.ok) {
-        const err = new Error(
-          getErrorMessage(res.error) || "Erro ao abrir caixa.",
-        ) as Error & { failureClass?: string };
-        err.failureClass = res.failureClass;
-        throw err;
-      }
-    } else {
-      await input.kernel.execute(payload);
-    }
-
-    // After Kernel Execution (and synchronous Effect), the DB is updated.
-    // We fetch the open register.
+    // Fetch the created register to return full object
     const openRegister = await this.getOpenCashRegister(input.restaurantId);
     if (!openRegister) {
-      throw new Error(
-        "Failed to open cash register (Sovereignty Verification)",
+      throw new CashRegisterError(
+        "Cash register created but not found on verification read",
+        "CASH_REGISTER_VERIFICATION_FAILED",
       );
     }
 
     return openRegister;
   }
 
-  // Close a cash register (Sovereign)
+  /**
+   * Close a cash register
+   *
+   * [WRITE PATH]: PostgreSQL RPC `close_cash_register_atomic` (sole authority).
+   * Generates Z-Report atomically with reconciliation (expected vs declared).
+   */
   static async closeCashRegister(
     input: CloseCashRegisterInput,
   ): Promise<CashRegister> {
-    if (!input.kernel && !input.executeSafe) {
-      throw new Error(
-        "Sovereign Kernel or executeSafe required for Cash Register operations (Phase 16)",
+    if (!input.cashRegisterId) {
+      throw new CashRegisterError(
+        "Cash Register ID required",
+        "VALIDATION_ERROR",
+      );
+    }
+    if (!input.restaurantId) {
+      throw new CashRegisterError("Restaurant ID required", "VALIDATION_ERROR");
+    }
+    if (!input.closedBy) {
+      throw new CashRegisterError("Closed By required", "VALIDATION_ERROR");
+    }
+
+    // [ATOMIC] RPC — single write path with Z-Report generation
+    const { data: result, error } = await invokeRpc(
+      "close_cash_register_atomic",
+      {
+        p_cash_register_id: input.cashRegisterId,
+        p_restaurant_id: input.restaurantId,
+        p_closed_by: input.closedBy,
+        p_declared_closing_cents: input.closingBalanceCents,
+      },
+    );
+
+    if (error) {
+      Logger.error("CASH_REGISTER_CLOSE_FAILED", error, { input });
+      if (error.message?.includes("CASH_REGISTER_NOT_OPEN")) {
+        throw new CashRegisterError(
+          "Este caixa já está fechado.",
+          "CASH_REGISTER_NOT_OPEN",
+        );
+      }
+      if (error.message?.includes("CASH_REGISTER_NOT_FOUND")) {
+        throw new CashRegisterError(
+          "Caixa não encontrado.",
+          "CASH_REGISTER_NOT_FOUND",
+        );
+      }
+      throw new CashRegisterError(
+        `Erro ao fechar caixa: ${error.message || "Erro desconhecido"}`,
+        "CASH_REGISTER_CLOSE_FAILED",
       );
     }
 
-    const payload = {
-      entity: "cash_register",
-      entityId: input.cashRegisterId,
-      event: "CLOSE",
-      restaurantId: input.restaurantId,
-      closed_by: input.closedBy,
-      closing_balance_cents: input.closingBalanceCents,
-    };
-
-    if (input.executeSafe) {
-      const res = await input.executeSafe(payload);
-      if (!res.ok) {
-        const err = new Error(
-          getErrorMessage(res.error) || "Erro ao fechar caixa.",
-        ) as Error & { failureClass?: string };
-        err.failureClass = res.failureClass;
-        throw err;
-      }
-    } else {
-      await input.kernel.execute(payload);
-    }
-
-    // Return updated state
-    // Note: getCashRegisterById requires restaurantId in signature?
-    // Checking getCashRegisterById below... it takes (id, restaurantId).
-    // Let's check signature.
+    // Return updated state from DB
     return this.getCashRegisterById(input.cashRegisterId, input.restaurantId);
   }
 

@@ -44,7 +44,7 @@ const APPSTAFF_VISIBILITY: Record<
     tpv: true,
     kds: false,
     tasks: true,
-    alerts: false,
+    alerts: true,
     profile: true,
   },
   kitchen: {
