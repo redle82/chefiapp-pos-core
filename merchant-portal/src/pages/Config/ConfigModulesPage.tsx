@@ -18,6 +18,9 @@ import {
 // Auth only — temporary until Core Auth (session)
 import { db } from "../../core/db";
 
+// LEGACY: Supabase client removed — Docker Core only
+const supabase = null as any;
+
 interface InstalledModule {
   id: string;
   moduleId: string;
@@ -144,7 +147,7 @@ export function ConfigModulesPage() {
         if (error) throw error;
 
         setModules(
-          (installed || []).map((m) => ({
+          (installed || []).map((m: Record<string, any>) => ({
             id: m.id,
             moduleId: m.module_id,
             moduleName: m.module_name,

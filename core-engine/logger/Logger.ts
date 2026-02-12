@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/react";
-import { getTabIsolated } from "../storage/TabIsolatedStorage";
 import { getTableClient } from "../infra/coreRpc";
+import { getTabIsolated } from "../storage/TabIsolatedStorage";
 
 export type LogLevel = "debug" | "info" | "warn" | "error" | "critical";
 
@@ -9,13 +9,18 @@ export type LogLevel = "debug" | "info" | "warn" | "error" | "critical";
 // ============================================================================
 
 // Use process.env only so this file compiles under Jest (no import.meta in CommonJS)
-const SENTRY_DSN = typeof process !== "undefined" ? process.env.VITE_SENTRY_DSN : undefined;
-const isDev = typeof process !== "undefined" && process.env.NODE_ENV === "development";
+const SENTRY_DSN =
+  typeof process !== "undefined" ? process.env.VITE_SENTRY_DSN : undefined;
+const isDev =
+  typeof process !== "undefined" && process.env.NODE_ENV === "development";
 
 if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
-    environment: typeof process !== "undefined" ? (process.env.NODE_ENV ?? "development") : "development",
+    environment:
+      typeof process !== "undefined"
+        ? process.env.NODE_ENV ?? "development"
+        : "development",
     debug: !!isDev,
     tracesSampleRate: isDev ? 1.0 : 0.1,
     replaysSessionSampleRate: 0.1,
@@ -24,7 +29,7 @@ if (SENTRY_DSN) {
       Sentry.browserTracingIntegration(),
       Sentry.replayIntegration(),
     ],
-    beforeSend(event) {
+    beforeSend(event: Sentry.ErrorEvent) {
       if (isDev) {
         // Skip certain errors in dev
       }
@@ -224,7 +229,7 @@ class LoggerService {
 
     // 2.5. Send to Sentry (if configured)
     if (SENTRY_DSN && ["warn", "error", "critical"].includes(level)) {
-      Sentry.withScope((scope) => {
+      Sentry.withScope((scope: Sentry.Scope) => {
         // Set context
         scope.setContext("log_context", fullContext);
 
@@ -460,7 +465,7 @@ export function captureException(
   context?: Record<string, any>,
 ): void {
   if (SENTRY_DSN) {
-    Sentry.withScope((scope) => {
+    Sentry.withScope((scope: Sentry.Scope) => {
       if (context) {
         scope.setContext("error_context", context);
       }

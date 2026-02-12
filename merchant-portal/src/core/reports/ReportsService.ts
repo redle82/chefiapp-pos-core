@@ -1,5 +1,5 @@
+import type { CoreOrder } from "../../core-boundary/docker-core/types";
 import { readOrdersForAnalytics } from "../../core-boundary/readers/OrderReader";
-import type { CoreOrder } from "../../core/docker-core/types";
 import type { IntegrationEvent } from "../../integrations/types/IntegrationEvent";
 import {
   buildCancellationStats,
@@ -11,10 +11,10 @@ import {
   type OperationalActivity,
   type SalesSummary,
   type TimeRange,
-} from './EventAggregator';
+} from "./EventAggregator";
 
 // Re-export de tipos usados pelos hooks para evitar imports circulares confusos
-export type { GamificationImpactInput } from './EventAggregator';
+export type { GamificationImpactInput } from "./EventAggregator";
 
 export interface LoadEventsOptions {
   restaurantId: string;
@@ -41,10 +41,10 @@ function mapOrderToEvents(order: CoreOrder): IntegrationEvent[] {
 
   // order.created
   events.push({
-    type: 'order.created',
+    type: "order.created",
     payload: {
       orderId,
-      source: 'tpv',
+      source: "tpv",
       items: [],
       totalCents: order.total_cents ?? 0,
       tableId: order.table_id ?? undefined,
@@ -57,29 +57,29 @@ function mapOrderToEvents(order: CoreOrder): IntegrationEvent[] {
     },
   });
 
-  const status = (order.status ?? '').toString().toUpperCase();
+  const status = (order.status ?? "").toString().toUpperCase();
   const closedAtMs = toMillis(order.closed_at);
   const updatedAtMs = toMillis(order.updated_at) ?? closedAtMs ?? createdAtMs;
 
-  if (status === 'CANCELLED') {
+  if (status === "CANCELLED") {
     events.push({
-      type: 'order.updated',
+      type: "order.updated",
       payload: {
         orderId,
-        status: 'cancelled',
+        status: "cancelled",
         updatedAt: updatedAtMs,
       },
     });
     return events;
   }
 
-  if (status === 'PAID' || status === 'READY' || status === 'SERVED') {
+  if (status === "PAID" || status === "READY" || status === "SERVED") {
     events.push({
-      type: 'order.completed',
+      type: "order.completed",
       payload: {
         orderId,
         totalCents: order.total_cents ?? 0,
-        paymentMethod: 'card',
+        paymentMethod: "card",
         completedAt: closedAtMs ?? updatedAtMs,
       },
     });
@@ -119,7 +119,7 @@ async function loadEventsForPeriod({
 export async function getSalesSummaryReport(
   restaurantId: string,
   period: TimeRange,
-  currency: string = 'EUR',
+  currency: string = "EUR",
 ): Promise<SalesSummary> {
   const events = await loadEventsForPeriod({ restaurantId, period });
   return buildSalesSummary(events, {
@@ -132,7 +132,7 @@ export async function getSalesSummaryReport(
 export async function getOperationalActivityReport(
   restaurantId: string,
   period: TimeRange,
-  currency: string = 'EUR',
+  currency: string = "EUR",
 ): Promise<OperationalActivity> {
   const events = await loadEventsForPeriod({ restaurantId, period });
   return buildOperationalActivity(events, {
@@ -145,7 +145,7 @@ export async function getOperationalActivityReport(
 export async function getCancellationStatsReport(
   restaurantId: string,
   period: TimeRange,
-  currency: string = 'EUR',
+  currency: string = "EUR",
 ) {
   const events = await loadEventsForPeriod({ restaurantId, period });
   return buildCancellationStats(events, {
@@ -158,7 +158,7 @@ export async function getCancellationStatsReport(
 export async function getGamificationImpactReport(
   restaurantId: string,
   input: GamificationImpactInput,
-  currency: string = 'EUR',
+  currency: string = "EUR",
 ): Promise<GamificationImpact> {
   const events = await loadEventsForPeriod({
     restaurantId,
@@ -172,4 +172,3 @@ export async function getGamificationImpactReport(
     },
   });
 }
-

@@ -87,7 +87,7 @@ export const SystemHealthCard = ({
           .limit(5);
 
         const isRecovery = pulses?.some(
-          (p) => p.type === "SYSTEM_RECOVERY_MODE",
+          (p: Record<string, any>) => p.type === "SYSTEM_RECOVERY_MODE",
         );
 
         // 2. Check for Active Alerts
@@ -100,7 +100,7 @@ export const SystemHealthCard = ({
 
         if (isRecovery) {
           const recoveryPulse = pulses?.find(
-            (p) => p.type === "SYSTEM_RECOVERY_MODE",
+            (p: Record<string, any>) => p.type === "SYSTEM_RECOVERY_MODE",
           );
           setHealth({
             status: "RECOVERY",

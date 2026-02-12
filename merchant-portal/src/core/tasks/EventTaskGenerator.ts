@@ -46,7 +46,7 @@ export class EventTaskGenerator {
       .single();
 
     if (error) throw error;
-    return data.id;
+    return (data as { id: string }).id;
   }
 
   /**
@@ -120,10 +120,11 @@ export class EventTaskGenerator {
         return null;
       }
 
+      const record = data as { id: string };
       console.log(
-        `[EventTaskGenerator] ✅ Tarefa criada: ${data.id} para evento ${eventType}`,
+        `[EventTaskGenerator] ✅ Tarefa criada: ${record.id} para evento ${eventType}`,
       );
-      return data.id;
+      return record.id;
     } catch (error) {
       console.error("[EventTaskGenerator] Erro ao gerar tarefa:", error);
       return null;

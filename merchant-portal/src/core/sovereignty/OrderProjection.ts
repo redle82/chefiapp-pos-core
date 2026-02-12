@@ -58,7 +58,7 @@ export async function persistOrder(context: EffectContext): Promise<void> {
       constraintError.message?.includes("idx_one_open_order_per_table")
     ) {
       const dbError = new Error(
-        `TABLE_HAS_ACTIVE_ORDER: ${constraintError.message}`
+        `TABLE_HAS_ACTIVE_ORDER: ${constraintError.message}`,
       );
       (dbError as any).code = "23505";
       (dbError as any).constraint = "idx_one_open_order_per_table";
@@ -70,6 +70,10 @@ export async function persistOrder(context: EffectContext): Promise<void> {
   }
 
   // Origin is set via sync_metadata in create_order_atomic (Core). No Supabase domain write.
+
+  if (!data) {
+    throw new Error("Projection returned no data");
+  }
 
   // 3. Validation
   if (data.id !== entityId && entityId) {
@@ -139,7 +143,7 @@ export async function persistRemoveItem(context: EffectContext): Promise<void> {
  * Write only via Core Orders API — no Supabase/DbWriteGate.
  */
 export async function persistUpdateItemQty(
-  context: EffectContext
+  context: EffectContext,
 ): Promise<void> {
   const { entityId, itemId, quantity, unitPriceCents } = context;
   const restaurantId = (context as any).restaurantId;
@@ -169,14 +173,14 @@ export async function persistUpdateItemQty(
  * Write only via Core RPC update_order_status — no Supabase/DbWriteGate.
  */
 export async function persistOrderStatus(
-  context: EffectContext
+  context: EffectContext,
 ): Promise<void> {
   const { entityId, targetStatus } = context;
   const restaurantId = (context as any).restaurantId;
 
   if (!targetStatus) {
     throw new Error(
-      "[Sovereignty] Missing targetStatus for Status Persistence"
+      "[Sovereignty] Missing targetStatus for Status Persistence",
     );
   }
 
@@ -217,7 +221,7 @@ export async function persistPayment(context: EffectContext): Promise<void> {
 
   if (!amountCents || !method || !restaurantId || !cashRegisterId) {
     throw new Error(
-      "[Sovereignty] Missing Payment Details for Kernel Transaction"
+      "[Sovereignty] Missing Payment Details for Kernel Transaction",
     );
   }
 

@@ -1,5 +1,8 @@
 // LEGACY / LAB — blocked in Docker mode
+// @ts-expect-error LEGACY: Deno script, not compiled by tsc
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+declare const Deno: any;
 
 // Run with: deno run --allow-net --allow-env verify_recipe_deduction.ts
 

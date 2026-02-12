@@ -1785,7 +1785,7 @@ const TPVContent = () => {
             >
               <TPVNavigation
                 currentView={contextView}
-                onChangeView={(view) => setContextView(view)}
+                onChangeView={(view: ContextView) => setContextView(view)}
                 onSettings={() => setShowSettingsModal(true)}
                 cashStatus={cashRegisterOpen ? "open" : "closed"}
               />
@@ -2414,7 +2414,7 @@ const TPVContent = () => {
               <GroupSelector
                 groups={groups}
                 selectedGroupId={selectedGroupId}
-                onSelect={(groupId) => {
+                onSelect={(groupId: string) => {
                   setSelectedGroupId(groupId);
                   handleAddItem(pendingItem, groupId);
                   setShowGroupSelector(false);
@@ -2512,7 +2512,7 @@ const TPVContent = () => {
           }
         >
           <OpenCashRegisterModal
-            onOpen={async (openingBalanceCents) => {
+            onOpen={async (openingBalanceCents: number) => {
               try {
                 await openCashRegister(openingBalanceCents);
                 setShowOpenCashModal(false);
@@ -2581,7 +2581,7 @@ const TPVContent = () => {
         >
           <CreateGroupModal
             onClose={() => setShowCreateGroupModal(false)}
-            onCreate={async (label, color) => {
+            onCreate={async (label: string, color: string) => {
               await createGroup({
                 order_id: activeOrderId,
                 label,

@@ -188,6 +188,7 @@ export function MenuBuilderCore({
   }, [restaurantId]);
 
   const handleCreate = async () => {
+    let payload: MenuItemInput | undefined;
     try {
       setCreating(true);
       globalUI.setScreenError(null);
@@ -197,7 +198,7 @@ export function MenuBuilderCore({
         globalUI.setScreenError("Preço inválido. Use ex.: 2,50 ou 0,09");
         return;
       }
-      const payload: MenuItemInput = {
+      payload = {
         ...formData,
         price_cents: Math.round(parsed.valueNumber * 100),
       };
@@ -238,11 +239,11 @@ export function MenuBuilderCore({
         addPilotProduct(restaurantId, {
           id,
           restaurant_id: restaurantId,
-          name: payload.name,
-          price_cents: payload.price_cents,
-          available: payload.available !== false,
-          station: payload.station as "BAR" | "KITCHEN",
-          prep_time_seconds: (payload.prep_time_minutes || 5) * 60,
+          name: payload!.name,
+          price_cents: payload!.price_cents,
+          available: payload!.available !== false,
+          station: payload!.station as "BAR" | "KITCHEN",
+          prep_time_seconds: (payload!.prep_time_minutes || 5) * 60,
           created_at: now,
           updated_at: now,
         });

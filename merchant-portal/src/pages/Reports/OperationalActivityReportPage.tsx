@@ -1,10 +1,13 @@
-import { useMemo, useState, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { GlobalLoadingView } from "../../ui/design-system/components";
-import { useOperationalActivityReport } from "../../core/reports/hooks/useOperationalActivityReport";
 import { exportCsv } from "../../core/reports/csvExport";
-import type { TimeRange } from "../../core/reports/reportTypes";
+import { useOperationalActivityReport } from "../../core/reports/hooks/useOperationalActivityReport";
+import type {
+  OperationalActivityBucket,
+  TimeRange,
+} from "../../core/reports/reportTypes";
+import { GlobalLoadingView } from "../../ui/design-system/components";
 
 function dateRangeToTimeRange(from: Date, to: Date): TimeRange {
   return {
@@ -44,7 +47,7 @@ export function OperationalActivityReportPage() {
     if (!data) return;
     exportCsv(
       ["Hora", "Abertas", "Fechadas", "Canceladas", "Duração média (min)"],
-      data.buckets.map((b) => [
+      data.buckets.map((b: OperationalActivityBucket) => [
         b.bucketLabel,
         b.ordersOpened,
         b.ordersClosed,
@@ -302,7 +305,7 @@ export function OperationalActivityReportPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.buckets.map((b) => (
+                {data.buckets.map((b: OperationalActivityBucket) => (
                   <tr
                     key={b.bucketStart}
                     style={{ borderBottom: "1px solid #f1f5f9" }}

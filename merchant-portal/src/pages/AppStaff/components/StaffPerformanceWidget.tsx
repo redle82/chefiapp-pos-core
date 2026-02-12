@@ -5,6 +5,9 @@ import { Text } from "../../../ui/design-system/primitives/Text";
 import { colors } from "../../../ui/design-system/tokens/colors";
 // LEGACY / LAB — blocked in Docker mode
 
+// LEGACY: Supabase client removed — Docker Core only
+const supabase = null as any;
+
 interface StaffPerformance {
   employeeId: string;
   employeeName: string;

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { CoreStatusBadge } from "../../../components/CoreStatusBadge/CoreStatusBadge";
 import { getAuthActions } from "../../../core/auth/authAdapter";
 import { recordLogout } from "../../../core/auth/authAudit";
 import { useContextEngine } from "../../../core/context";
 import { removeTabIsolated } from "../../../core/storage/TabIsolatedStorage";
 import { BillingWarningBadge } from "../../billing/BillingWarningBadge";
-import { CoreStatusBadge } from "../../components/CoreStatusBadge/CoreStatusBadge";
 import { Button } from "../primitives/Button";
 import { Text } from "../primitives/Text";
 import { OSSignature } from "../sovereign/OSSignature";

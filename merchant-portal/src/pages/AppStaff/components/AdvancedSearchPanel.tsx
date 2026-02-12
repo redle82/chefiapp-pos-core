@@ -10,6 +10,7 @@ import { Card } from "../../../ui/design-system/primitives/Card";
 import { Input } from "../../../ui/design-system/primitives/Input";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { colors } from "../../../ui/design-system/tokens/colors";
+import { useStaff } from "../context/StaffContext";
 import { useAdvancedSearch } from "../hooks/useAdvancedSearch";
 
 interface AdvancedSearchPanelProps {

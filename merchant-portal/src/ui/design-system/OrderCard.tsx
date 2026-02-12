@@ -1,6 +1,6 @@
 import React from "react";
-import { cn } from "./tokens";
 import { currencyService } from "../../core/currency/CurrencyService";
+import { cn } from "./tokens";
 
 // 🚫 STOP: No imports from L6 (nervous-system) allowed here.
 // import { usePulse } from '../../intelligence/nervous-system/usePulse';
@@ -74,6 +74,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
   compact = false,
   "data-status": dataStatus,
   pulseState, // Injected Prop
+  ...props
 }) => {
   const statusLabels = {
     new: "Novo",

@@ -52,7 +52,7 @@ export class ShiftComparisonEngine {
             0,
             (comparison.actualStart.getTime() -
               comparison.plannedStart.getTime()) /
-              (1000 * 60)
+              (1000 * 60),
           )
         : 0;
 
@@ -61,7 +61,7 @@ export class ShiftComparisonEngine {
         ? Math.max(
             0,
             (comparison.actualEnd.getTime() - comparison.plannedEnd.getTime()) /
-              (1000 * 60)
+              (1000 * 60),
           )
         : 0;
 
@@ -101,7 +101,7 @@ export class ShiftComparisonEngine {
       .single();
 
     if (error) throw error;
-    return data.id;
+    return (data as { id: string }).id;
   }
 
   /**
@@ -110,7 +110,7 @@ export class ShiftComparisonEngine {
   async listByEmployee(
     employeeId: string,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
   ): Promise<ShiftComparison[]> {
     let query = supabase
       .from("shift_comparisons")
@@ -138,12 +138,12 @@ export class ShiftComparisonEngine {
   async getAverageEfficiency(
     employeeId: string,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
   ): Promise<number> {
     const comparisons = await this.listByEmployee(
       employeeId,
       startDate,
-      endDate
+      endDate,
     );
 
     if (comparisons.length === 0) return 1.0;

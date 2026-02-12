@@ -1080,7 +1080,8 @@ export function OrderProvider({
           }
 
           const calculatedTotal = items.reduce(
-            (sum, i) => sum + i.price_snapshot * i.quantity,
+            (sum: number, i: Record<string, any>) =>
+              sum + i.price_snapshot * i.quantity,
             0,
           );
 

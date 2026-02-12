@@ -22,6 +22,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { OrderProvider } from "../context/OrderContextReal";
 // DOCKER CORE: Kernel removido - acesso direto ao Core via PostgREST/RPCs
+import { KernelProvider } from "../../../core/kernel/KernelContext";
 import { setTabIsolated } from "../../../core/storage/TabIsolatedStorage";
 import { OfflineOrderProvider } from "../context/OfflineOrderContext";
 import { KDSLayout } from "./KDSLayout";

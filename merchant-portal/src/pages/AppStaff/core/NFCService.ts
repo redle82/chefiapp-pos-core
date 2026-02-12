@@ -38,20 +38,23 @@ export const NFCService = {
           await CapacitorNfc.startScan();
 
           // Set up the listener
-          await CapacitorNfc.addListener("nfcTag", (data) => {
-            // Stop scanning after first tag
-            this.stopScan();
+          await CapacitorNfc.addListener(
+            "nfcTag",
+            (data: Record<string, any>) => {
+              // Stop scanning after first tag
+              this.stopScan();
 
-            // Capgo returns data.tag which might have an id array
-            const tagId = data.tag?.id || [];
-            // Convert byte array to hex string
-            const hexId = tagId
-              .map((i: number) => i.toString(16).padStart(2, "0"))
-              .join("")
-              .toUpperCase();
+              // Capgo returns data.tag which might have an id array
+              const tagId = data.tag?.id || [];
+              // Convert byte array to hex string
+              const hexId = tagId
+                .map((i: number) => i.toString(16).padStart(2, "0"))
+                .join("")
+                .toUpperCase();
 
-            resolve(hexId);
-          });
+              resolve(hexId);
+            },
+          );
 
           // Timeout after 15 seconds if no tag found
           setTimeout(() => {

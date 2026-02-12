@@ -249,9 +249,11 @@ class ATIntegrationService {
 
       if (error) throw error;
 
+      const result = data as { status?: string; error?: string };
       return {
-        status: data.status || "pending",
-        error: data.error,
+        status:
+          (result.status as "pending" | "accepted" | "rejected") || "pending",
+        error: result.error,
       };
     } catch (err) {
       Logger.error("Failed to get submission status", err, { atDocumentId });

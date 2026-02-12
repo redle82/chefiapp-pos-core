@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { StaffLayout } from "../../ui/design-system/layouts/StaffLayout";
+import { Badge } from "../../ui/design-system/primitives/Badge";
 import { Card } from "../../ui/design-system/primitives/Card";
 import { Text } from "../../ui/design-system/primitives/Text";
 import { colors } from "../../ui/design-system/tokens/colors";
 import { radius } from "../../ui/design-system/tokens/radius";
 import KDS from "../TPV/KDS/KitchenDisplay"; // The Kitchen Tool
 import { PortioningTaskView } from "./components/PortioningTaskView";
+import { TaskWhyBadge } from "./components/TaskWhyBadge";
 import { useStaff } from "./context/StaffContext";
 import type { Task } from "./context/StaffCoreTypes";
 import { useTaskTimer } from "./hooks/useTaskTimer"; // P3-4

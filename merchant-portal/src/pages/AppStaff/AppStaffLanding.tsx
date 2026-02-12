@@ -12,6 +12,7 @@ import { Text } from "../../ui/design-system/primitives/Text";
 import { colors } from "../../ui/design-system/tokens/colors";
 import { useStaff } from "./context/StaffContext";
 import type { BusinessType, StaffRole } from "./context/StaffCoreTypes";
+import { TRIAL_GUIDE_CODES } from "./data/operatorProfiles";
 import { STAFF_LAUNCHER_PATH } from "./routing/staffModeConfig";
 
 const DEV_QUICK_ROLES: { label: string; role: StaffRole; emoji: string }[] = [

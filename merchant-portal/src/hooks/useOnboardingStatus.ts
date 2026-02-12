@@ -12,6 +12,9 @@
 import { useEffect, useState } from "react";
 import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
 
+// LEGACY: Supabase client removed — Docker Core only
+const supabase = null as any;
+
 export interface OnboardingStatus {
   hasMenu: boolean;
   hasFirstSale: boolean;
@@ -65,7 +68,9 @@ export function useOnboardingStatus() {
           .eq("restaurant_id", restaurantId)
           .eq("payment_status", "PAID");
 
-        const uniqueOrderIds = new Set(paidOrders?.map((o) => o.id) || []);
+        const uniqueOrderIds = new Set(
+          paidOrders?.map((o: Record<string, any>) => o.id) || [],
+        );
         const ordersCount = uniqueOrderIds.size;
 
         if (ordersError) {

@@ -1,13 +1,13 @@
 /**
  * useShifts - Hook para buscar turnos
- * 
+ *
  * TODO: Integrar com Employee Time Engine
  * TODO: Conectar com Supabase
  * TODO: Implementar queries reais
  */
 
-import { useState, useEffect } from 'react';
-import type { Shift } from '../../../../types/schedule';
+import { useEffect, useState } from "react";
+import type { Shift } from "../../../types/schedule";
 
 export function useShiftsByDate(restaurantId: string, date: string) {
   const [shifts, setShifts] = useState<Shift[]>([]);

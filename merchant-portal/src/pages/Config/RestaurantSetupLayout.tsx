@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { RestaurantSetupSidebar } from "../../components/Setup/RestaurantSetupSidebar";
 
 interface RestaurantSetupLayoutProps {
@@ -78,4 +78,3 @@ export function RestaurantSetupLayout({
     </div>
   );
 }
-

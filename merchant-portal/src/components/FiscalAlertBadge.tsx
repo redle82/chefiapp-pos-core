@@ -1,19 +1,19 @@
 /**
  * FiscalAlertBadge - Alerta Visual de External ID Pendente
- * 
+ *
  * Exibe badge vermelho com contagem de pedidos fiscais
  * aguardando External ID ou que falharam.
- * 
+ *
  * Impossível de ignorar:
  * - Badge vermelho sempre visível quando há pendências
  * - Toast persistente (não some automaticamente)
  * - Link direto para lista de pendências
  */
 
-import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AlertCircle, X } from 'lucide-react';
-import { isDevStableMode } from '../core/runtime/devStableMode';
+import { AlertCircle, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { isDevStableMode } from "../core/runtime/devStableMode";
 
 interface FiscalAlertData {
   pending: number;
@@ -26,7 +26,10 @@ interface FiscalAlertBadgeProps {
   apiBase?: string;
 }
 
-export function FiscalAlertBadge({ restaurantId, apiBase = '/api' }: FiscalAlertBadgeProps) {
+export function FiscalAlertBadge({
+  restaurantId,
+  apiBase = "/api",
+}: FiscalAlertBadgeProps) {
   const [alertData, setAlertData] = useState<FiscalAlertData | null>(null);
   const [_isVisible, _setIsVisible] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -53,25 +56,31 @@ export function FiscalAlertBadge({ restaurantId, apiBase = '/api' }: FiscalAlert
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-        const response = await fetch(`${apiBase}/fiscal/pending-external-ids?restaurantId=${restaurantId}`, {
-          headers: {
-            'x-restaurant-id': restaurantId,
+        const response = await fetch(
+          `${apiBase}/fiscal/pending-external-ids?restaurantId=${restaurantId}`,
+          {
+            headers: {
+              "x-restaurant-id": restaurantId,
+            },
+            signal: controller.signal,
           },
-          signal: controller.signal,
-        });
+        );
 
         clearTimeout(timeoutId);
 
         // Se erro 500 ou outro erro, incrementar contador de erros
         if (!response.ok) {
           errorCountRef.current += 1;
-          
+
           // Se muitos erros consecutivos (3+), desabilitar polling para evitar spam
           if (errorCountRef.current >= 3) {
-            console.warn('[FiscalAlertBadge] Too many errors, disabling polling', {
-              errorCount: errorCountRef.current,
-              status: response.status,
-            });
+            console.warn(
+              "[FiscalAlertBadge] Too many errors, disabling polling",
+              {
+                errorCount: errorCountRef.current,
+                status: response.status,
+              },
+            );
             isPollingDisabledRef.current = true;
             return;
           }
@@ -96,24 +105,30 @@ export function FiscalAlertBadge({ restaurantId, apiBase = '/api' }: FiscalAlert
         }
       } catch (error: any) {
         // Ignorar erros de abort (timeout)
-        if (error.name === 'AbortError') {
-          console.warn('[FiscalAlertBadge] Request timeout');
+        if (error.name === "AbortError") {
+          console.warn("[FiscalAlertBadge] Request timeout");
           return;
         }
 
         errorCountRef.current += 1;
-        
+
         // Se muitos erros consecutivos, desabilitar polling
         if (errorCountRef.current >= 3) {
-          console.warn('[FiscalAlertBadge] Too many errors, disabling polling', {
-            errorCount: errorCountRef.current,
-            error: error.message,
-          });
+          console.warn(
+            "[FiscalAlertBadge] Too many errors, disabling polling",
+            {
+              errorCount: errorCountRef.current,
+              error: error.message,
+            },
+          );
           isPollingDisabledRef.current = true;
           return;
         }
 
-        console.error('[FiscalAlertBadge] Error fetching pending external IDs:', error);
+        console.error(
+          "[FiscalAlertBadge] Error fetching pending external IDs:",
+          error,
+        );
       }
     };
 
@@ -133,7 +148,7 @@ export function FiscalAlertBadge({ restaurantId, apiBase = '/api' }: FiscalAlert
   }
 
   const handleClick = () => {
-    navigate('/app/fiscal/pending');
+    navigate("/app/fiscal/pending");
   };
 
   const handleDismissToast = () => {
@@ -158,11 +173,12 @@ export function FiscalAlertBadge({ restaurantId, apiBase = '/api' }: FiscalAlert
         <div className="bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 hover:bg-red-700 transition-colors">
           <AlertCircle className="w-5 h-5" />
           <span className="font-semibold">
-            {totalPending} Fiscal {totalPending === 1 ? 'Pendente' : 'Pendentes'}
+            {totalPending} Fiscal{" "}
+            {totalPending === 1 ? "Pendente" : "Pendentes"}
           </span>
-          {alertData?.failed > 0 && (
+          {(alertData?.failed ?? 0) > 0 && (
             <span className="bg-red-800 px-2 py-1 rounded text-xs">
-              {alertData.failed} Falhou
+              {alertData?.failed} Falhou
             </span>
           )}
         </div>
@@ -179,10 +195,13 @@ export function FiscalAlertBadge({ restaurantId, apiBase = '/api' }: FiscalAlert
                   <h3 className="font-semibold">Atenção: Fiscal Pendente</h3>
                 </div>
                 <p className="text-sm text-red-100">
-                  {totalPending} pedido{totalPending === 1 ? '' : 's'} aguardando External ID do provedor fiscal.
-                  {alertData?.failed > 0 && (
+                  {totalPending} pedido{totalPending === 1 ? "" : "s"}{" "}
+                  aguardando External ID do provedor fiscal.
+                  {(alertData?.failed ?? 0) > 0 && (
                     <span className="block mt-1 font-semibold">
-                      {alertData.failed} pedido{alertData.failed === 1 ? '' : 's'} falhou após múltiplas tentativas.
+                      {alertData?.failed} pedido
+                      {alertData?.failed === 1 ? "" : "s"} falhou após múltiplas
+                      tentativas.
                     </span>
                   )}
                 </p>

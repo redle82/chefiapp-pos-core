@@ -49,6 +49,7 @@ export function IdentitySection() {
   const { user: authUser } = useCoreAuth();
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastIsValidRef = useRef<boolean | null>(null);
+  const [_isSaving, setIsSaving] = React.useState(false);
 
   // Standalone Mode: use local state if onboarding context is missing
   const [localForm, setLocalForm] = React.useState({

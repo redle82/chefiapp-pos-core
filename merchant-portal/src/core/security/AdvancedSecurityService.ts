@@ -52,7 +52,7 @@ class AdvancedSecurityService {
    */
   async detectAnomalies(
     userId: string,
-    action: string
+    action: string,
   ): Promise<{
     isAnomalous: boolean;
     reason?: string;
@@ -74,7 +74,7 @@ class AdvancedSecurityService {
 
       // Check for rapid repeated actions (potential abuse)
       const sameActionCount = recentEvents.filter(
-        (e) => e.action === action
+        (e: Record<string, any>) => e.action === action,
       ).length;
       if (sameActionCount > 50) {
         return {

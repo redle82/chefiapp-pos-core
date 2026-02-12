@@ -73,7 +73,7 @@ export const PulseList: React.FC = () => {
       try {
         // FASE 3.5: Usa dockerCoreClient em vez de supabase direto
         const { readRestaurantMemberByUserId, readEmpirePulses } = await import(
-          "../../../core-boundary/readers/PulseReader"
+          "../../core-boundary/readers/PulseReader"
         );
 
         // 1. Get Restaurant ID via auth

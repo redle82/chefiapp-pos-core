@@ -25,7 +25,7 @@ export class DynamicMenuService {
       contextualLimit?: number;
       currentHour?: number;
       includeInactive?: boolean;
-    } = {}
+    } = {},
   ): Promise<DynamicMenuResponse> {
     const {
       contextualLimit = 12,
@@ -55,7 +55,7 @@ export class DynamicMenuService {
                 price_cents,
                 available,
                 category_id
-            `
+            `,
       )
       .eq("restaurant_id", restaurantId)
       .eq("available", true);
@@ -66,7 +66,9 @@ export class DynamicMenuService {
 
     // 2b. Get categories separately if needed
     const categoryIds = [
-      ...new Set(products.map((p) => p.category_id).filter(Boolean)),
+      ...new Set(
+        products.map((p: Record<string, any>) => p.category_id).filter(Boolean),
+      ),
     ];
     let categoriesMap = new Map();
     if (categoryIds.length > 0) {
@@ -76,7 +78,9 @@ export class DynamicMenuService {
         .in("id", categoryIds);
 
       if (categories) {
-        categoriesMap = new Map(categories.map((c) => [c.id, c.name]));
+        categoriesMap = new Map(
+          categories.map((c: Record<string, any>) => [c.id, c.name]),
+        );
       }
     }
 
@@ -91,46 +95,50 @@ export class DynamicMenuService {
     }
 
     // 4. Create dynamics map
-    const dynamicsMap = new Map((dynamics || []).map((d) => [d.product_id, d]));
+    const dynamicsMap = new Map(
+      (dynamics || []).map((d: Record<string, any>) => [d.product_id, d]),
+    );
 
     // 5. Calculate scores for all products
-    const productsWithScores: ProductWithScore[] = products.map((product) => {
-      const productDynamics = dynamicsMap.get(product.id);
-      // Get category name from map if available, otherwise use category_id as fallback
-      const categoryName =
-        categoriesMap.get(product.category_id) || product.category_id || "";
+    const productsWithScores: ProductWithScore[] = products.map(
+      (product: Record<string, any>) => {
+        const productDynamics = dynamicsMap.get(product.id);
+        // Get category name from map if available, otherwise use category_id as fallback
+        const categoryName =
+          categoriesMap.get(product.category_id) || product.category_id || "";
 
-      let score = 0;
-      if (productDynamics) {
-        const scoreResult = calculateDynamicScore(
-          productDynamics,
-          categoryName,
-          currentHour,
-          settings.score_weights
-        );
-        score = scoreResult.final_score;
-      } else {
-        // No dynamics: use fallback based on category + time
-        const timeSlot = getCurrentTimeSlot(currentHour);
-        score = this.getFallbackScore(categoryName, timeSlot);
-      }
+        let score = 0;
+        if (productDynamics) {
+          const scoreResult = calculateDynamicScore(
+            productDynamics,
+            categoryName,
+            currentHour,
+            settings.score_weights,
+          );
+          score = scoreResult.final_score;
+        } else {
+          // No dynamics: use fallback based on category + time
+          const timeSlot = getCurrentTimeSlot(currentHour);
+          score = this.getFallbackScore(categoryName, timeSlot);
+        }
 
-      return {
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        photo_url: product.photo_url,
-        category: categoryName, // Use category name from map
-        price_cents: product.price_cents,
-        available: product.available,
-        score,
-        is_favorite: productDynamics?.is_favorite || false,
-      };
-    });
+        return {
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          photo_url: product.photo_url,
+          category: categoryName, // Use category name from map
+          price_cents: product.price_cents,
+          available: product.available,
+          score,
+          is_favorite: productDynamics?.is_favorite || false,
+        };
+      },
+    );
 
     // 6. Sort by score (descending)
     const sortedProducts = [...productsWithScores].sort(
-      (a, b) => b.score - a.score
+      (a, b) => b.score - a.score,
     );
 
     // 7. Split into contextual and favorites
@@ -178,7 +186,7 @@ export class DynamicMenuService {
    */
   public static async trackClick(
     restaurantId: string,
-    productId: string
+    productId: string,
   ): Promise<void> {
     const { error } = await supabase.from("product_dynamics").upsert(
       {
@@ -189,7 +197,7 @@ export class DynamicMenuService {
       },
       {
         onConflict: "restaurant_id,product_id",
-      }
+      },
     );
 
     if (error) {
@@ -204,7 +212,7 @@ export class DynamicMenuService {
     restaurantId: string,
     productId: string,
     isFavorite: boolean,
-    order?: number
+    order?: number,
   ): Promise<void> {
     const { error } = await supabase.from("product_dynamics").upsert(
       {
@@ -216,7 +224,7 @@ export class DynamicMenuService {
       },
       {
         onConflict: "restaurant_id,product_id",
-      }
+      },
     );
 
     if (error) {
@@ -229,7 +237,7 @@ export class DynamicMenuService {
    */
   public static async updateSettings(
     restaurantId: string,
-    settings: Partial<MenuSettings>
+    settings: Partial<MenuSettings>,
   ): Promise<void> {
     const { error } = await supabase
       .from("gm_restaurants")
@@ -260,7 +268,7 @@ export class DynamicMenuService {
   // --- Private Helpers ---
 
   private static async getMenuSettings(
-    restaurantId: string
+    restaurantId: string,
   ): Promise<MenuSettings> {
     const { data, error } = await supabase
       .from("gm_restaurants")
@@ -272,7 +280,7 @@ export class DynamicMenuService {
     if (error || !data?.menu_settings) {
       console.warn(
         "[DynamicMenu] menu_settings not found, using defaults:",
-        error?.message
+        error?.message,
       );
       // Return defaults
       return {
@@ -296,7 +304,7 @@ export class DynamicMenuService {
   }
 
   private static async getStaticMenu(
-    restaurantId: string
+    restaurantId: string,
   ): Promise<DynamicMenuResponse> {
     // Simple alphabetical sort when dynamic is disabled.
     // CONFIG_RUNTIME_CONTRACT: só produtos com available=true e restaurant_id=X (docs/contracts/CONFIG_RUNTIME_CONTRACT.md).
@@ -309,7 +317,11 @@ export class DynamicMenuService {
 
     // Get category names if needed
     const categoryIds = [
-      ...new Set((products || []).map((p) => p.category_id).filter(Boolean)),
+      ...new Set(
+        (products || [])
+          .map((p: Record<string, any>) => p.category_id)
+          .filter(Boolean),
+      ),
     ];
     let categoriesMap = new Map();
     if (categoryIds.length > 0) {
@@ -319,12 +331,14 @@ export class DynamicMenuService {
         .in("id", categoryIds);
 
       if (categories) {
-        categoriesMap = new Map(categories.map((c) => [c.id, c.name]));
+        categoriesMap = new Map(
+          categories.map((c: Record<string, any>) => [c.id, c.name]),
+        );
       }
     }
 
     const productsWithScores: ProductWithScore[] = (products || []).map(
-      (p) => ({
+      (p: Record<string, any>) => ({
         id: p.id,
         name: p.name,
         category: categoriesMap.get(p.category_id) || p.category_id || "",
@@ -332,7 +346,7 @@ export class DynamicMenuService {
         available: p.available,
         score: 0,
         is_favorite: false,
-      })
+      }),
     );
 
     return {

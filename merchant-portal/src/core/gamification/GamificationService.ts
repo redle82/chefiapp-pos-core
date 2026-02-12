@@ -84,7 +84,7 @@ class GamificationService {
   async awardPoints(
     userId: string,
     points: number,
-    reason: string
+    reason: string,
   ): Promise<void> {
     try {
       // Get current score
@@ -129,7 +129,7 @@ class GamificationService {
       dailySales?: number;
       colleaguesHelped?: number;
       suggestionsImplemented?: number;
-    }
+    },
   ): Promise<Achievement[]> {
     const newAchievements: Achievement[] = [];
 
@@ -176,7 +176,7 @@ class GamificationService {
           await this.awardPoints(
             userId,
             achievement.points,
-            `Achievement: ${achievement.name}`
+            `Achievement: ${achievement.name}`,
           );
 
           newAchievements.push(achievement);
@@ -211,14 +211,19 @@ class GamificationService {
         .select("user_id, total_points")
         .order("total_points", { ascending: false });
 
-      const rank = (allScores || []).findIndex((s) => s.user_id === userId) + 1;
+      const rank =
+        (allScores || []).findIndex(
+          (s: Record<string, any>) => s.user_id === userId,
+        ) + 1;
 
       return {
         userId: score.user_id,
         userName: score.user_name || "User",
         totalPoints: score.total_points,
         level: score.level,
-        achievements: (achievements || []).map((a) => a.achievement_id),
+        achievements: (achievements || []).map(
+          (a: Record<string, any>) => a.achievement_id,
+        ),
         rank,
       };
     } catch (err) {
@@ -240,7 +245,7 @@ class GamificationService {
 
       if (error) throw error;
 
-      return (data || []).map((score, index) => ({
+      return (data || []).map((score: Record<string, any>, index: number) => ({
         userId: score.user_id,
         userName: score.user_name || "User",
         points: score.total_points,

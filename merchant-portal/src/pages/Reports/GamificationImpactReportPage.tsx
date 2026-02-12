@@ -1,11 +1,14 @@
-import { useMemo, useState, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { GlobalLoadingView } from "../../ui/design-system/components";
-import { useGamificationImpactReport } from "../../core/reports/hooks/useGamificationImpactReport";
-import { exportCsv, centsToDecimal } from "../../core/reports/csvExport";
 import { currencyService } from "../../core/currency/CurrencyService";
-import type { TimeRange } from "../../core/reports/reportTypes";
+import { centsToDecimal, exportCsv } from "../../core/reports/csvExport";
+import { useGamificationImpactReport } from "../../core/reports/hooks/useGamificationImpactReport";
+import type {
+  GamificationImpactPoint,
+  TimeRange,
+} from "../../core/reports/reportTypes";
+import { GlobalLoadingView } from "../../ui/design-system/components";
 
 function dateRangeToTimeRange(from: Date, to: Date): TimeRange {
   return {
@@ -69,7 +72,9 @@ export function GamificationImpactReportPage() {
   );
 
   const toInput = (d: Date) => d.toISOString().slice(0, 10);
-  const hasData = !!data && data.points.some((p) => p.ordersCount > 0);
+  const hasData =
+    !!data &&
+    data.points.some((p: GamificationImpactPoint) => p.ordersCount > 0);
 
   const handleApply = () => {
     reload();
@@ -81,7 +86,7 @@ export function GamificationImpactReportPage() {
     const toStr = toInput(dateTo);
     exportCsv(
       ["Período", "Pedidos", "Ticket Médio"],
-      data.points.map((p) => [
+      data.points.map((p: GamificationImpactPoint) => [
         p.windowLabel,
         p.ordersCount,
         centsToDecimal(p.averageTicketCents),
@@ -266,7 +271,7 @@ export function GamificationImpactReportPage() {
             gap: 16,
           }}
         >
-          {data.points.map((p) => (
+          {data.points.map((p: GamificationImpactPoint) => (
             <div
               key={p.windowLabel}
               style={{

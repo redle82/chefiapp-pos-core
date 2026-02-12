@@ -21,7 +21,7 @@ export class SponsorshipService {
    */
   public static async getActiveSponsorships(
     restaurantId: string,
-    context: MenuContext
+    context: MenuContext,
   ): Promise<Map<string, ProductSponsorship>> {
     const { data, error } = await supabase
       .from("product_sponsorships")
@@ -36,12 +36,17 @@ export class SponsorshipService {
     }
 
     // Filter by visibility rules
-    const visible = (data || []).filter((s) =>
-      this.isVisible(s as ProductSponsorship, context)
+    const visible = (data || []).filter((s: Record<string, any>) =>
+      this.isVisible(s as ProductSponsorship, context),
     );
 
     // Map by product_id for easy lookup
-    return new Map(visible.map((s) => [s.product_id, s as ProductSponsorship]));
+    return new Map(
+      visible.map((s: Record<string, any>) => [
+        s.product_id,
+        s as ProductSponsorship,
+      ]),
+    );
   }
 
   /**
@@ -49,7 +54,7 @@ export class SponsorshipService {
    */
   public static isVisible(
     sponsorship: ProductSponsorship,
-    context: MenuContext
+    context: MenuContext,
   ): boolean {
     const rules: VisibilityRules = sponsorship.visibility_rules;
 
@@ -110,7 +115,7 @@ export class SponsorshipService {
    */
   public static calculateSponsoredPrice(
     originalPrice: number,
-    sponsorship: ProductSponsorship
+    sponsorship: ProductSponsorship,
   ): number {
     const { incentive_type, incentive_value } = sponsorship;
 
@@ -139,7 +144,7 @@ export class SponsorshipService {
       session_id: string;
       order_id?: string;
       revenue_cents?: number;
-    }
+    },
   ): Promise<void> {
     try {
       const { error } = await supabase.from("sponsorship_events").insert({
@@ -154,7 +159,7 @@ export class SponsorshipService {
       if (error) {
         console.warn(
           `[SponsorshipService] Failed to track ${eventType}:`,
-          error
+          error,
         );
       }
     } catch (err) {
@@ -167,7 +172,7 @@ export class SponsorshipService {
    */
   public static async getCampaignMetrics(
     restaurantId: string,
-    campaignId?: string
+    campaignId?: string,
   ): Promise<CampaignMetrics[]> {
     let query = supabase
       .from("product_sponsorships")
@@ -186,7 +191,7 @@ export class SponsorshipService {
     }
 
     // Calculate derived metrics
-    return data.map((s) => ({
+    return data.map((s: Record<string, any>) => ({
       campaign_id: s.campaign_id,
       brand_name: s.brand_name,
       impressions: s.impressions,
@@ -204,7 +209,7 @@ export class SponsorshipService {
    */
   public static async updateApproval(
     sponsorshipId: string,
-    approved: boolean
+    approved: boolean,
   ): Promise<void> {
     const { error } = await supabase
       .from("product_sponsorships")
@@ -224,7 +229,7 @@ export class SponsorshipService {
    */
   public static async toggleActive(
     sponsorshipId: string,
-    active: boolean
+    active: boolean,
   ): Promise<void> {
     const { error } = await supabase
       .from("product_sponsorships")
@@ -252,7 +257,7 @@ export class SponsorshipService {
       | "clicks"
       | "conversions"
       | "revenue_cents"
-    >
+    >,
   ): Promise<ProductSponsorship> {
     const { data, error } = await supabase
       .from("product_sponsorships")

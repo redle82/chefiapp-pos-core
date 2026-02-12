@@ -3,9 +3,17 @@
  * Persists wizard progress (Core quando Docker — Fase 4) e marca conclusão no publish.
  */
 
-import { invokeRpc } from './infra/coreRpc';
+import { invokeRpc } from "./infra/coreRpc";
 
-export type WizardStep = 'identity' | 'menu' | 'payments' | 'design' | 'publish';
+// LEGACY: Supabase client removed — Docker Core only
+const supabase = null as any;
+
+export type WizardStep =
+  | "identity"
+  | "menu"
+  | "payments"
+  | "design"
+  | "publish";
 
 export interface WizardStepData {
   completed: boolean;
@@ -19,23 +27,25 @@ export interface WizardStepData {
 export async function updateWizardProgress(
   restaurantId: string,
   step: WizardStep,
-  data?: Record<string, any>
+  data?: Record<string, any>,
 ): Promise<void> {
   try {
-    const { error } = await invokeRpc('update_wizard_progress', {
+    const { error } = await invokeRpc("update_wizard_progress", {
       p_restaurant_id: restaurantId,
       p_step: step,
-      p_data: data ?? null
+      p_data: data ?? null,
     });
 
     if (error) {
-      console.error('[WizardProgress] Error updating progress:', error);
+      console.error("[WizardProgress] Error updating progress:", error);
       throw error;
     }
 
-    console.log(`[WizardProgress] Step "${step}" marked as complete for restaurant ${restaurantId}`);
+    console.log(
+      `[WizardProgress] Step "${step}" marked as complete for restaurant ${restaurantId}`,
+    );
   } catch (error) {
-    console.error('[WizardProgress] Failed to update progress:', error);
+    console.error("[WizardProgress] Failed to update progress:", error);
     // Don't throw - allow wizard to continue even if progress tracking fails
   }
 }
@@ -45,18 +55,20 @@ export async function updateWizardProgress(
  */
 export async function markWizardComplete(restaurantId: string): Promise<void> {
   try {
-    const { error } = await invokeRpc('mark_wizard_complete', {
-      p_restaurant_id: restaurantId
+    const { error } = await invokeRpc("mark_wizard_complete", {
+      p_restaurant_id: restaurantId,
     });
 
     if (error) {
-      console.error('[WizardProgress] Error marking wizard complete:', error);
+      console.error("[WizardProgress] Error marking wizard complete:", error);
       throw error;
     }
 
-    console.log(`[WizardProgress] Wizard marked as complete for restaurant ${restaurantId}`);
+    console.log(
+      `[WizardProgress] Wizard marked as complete for restaurant ${restaurantId}`,
+    );
   } catch (error) {
-    console.error('[WizardProgress] Failed to mark wizard complete:', error);
+    console.error("[WizardProgress] Failed to mark wizard complete:", error);
     // Don't throw - allow publish to continue even if tracking fails
   }
 }
@@ -66,47 +78,53 @@ export async function markWizardComplete(restaurantId: string): Promise<void> {
  */
 export async function getWizardProgress(restaurantId: string): Promise<{
   wizard_completed_at: string | null;
-  setup_status: 'not_started' | 'quick_done' | 'advanced_in_progress' | 'advanced_done';
+  setup_status:
+    | "not_started"
+    | "quick_done"
+    | "advanced_in_progress"
+    | "advanced_done";
   wizard_progress: Record<string, WizardStepData>;
 } | null> {
   try {
     const { data, error } = await supabase
-      .from('gm_restaurants')
-      .select('wizard_completed_at, setup_status, wizard_progress')
-      .eq('id', restaurantId)
+      .from("gm_restaurants")
+      .select("wizard_completed_at, setup_status, wizard_progress")
+      .eq("id", restaurantId)
       .single();
 
     if (error) {
       // Handle schema errors (columns may not exist yet)
-      const isSchemaError = 
-        error.code === '42703' || 
-        error.code?.startsWith('PGRST') ||
-        error.message?.includes('column') ||
-        error.message?.includes('does not exist') ||
+      const isSchemaError =
+        error.code === "42703" ||
+        error.code?.startsWith("PGRST") ||
+        error.message?.includes("column") ||
+        error.message?.includes("does not exist") ||
         (error as any).status === 400;
-      
+
       if (isSchemaError) {
         // Schema lag - columns don't exist yet, return defaults
-        console.log('[WizardProgress] Schema lag detected (setup_status missing). Using default state.');
+        console.log(
+          "[WizardProgress] Schema lag detected (setup_status missing). Using default state.",
+        );
         return {
           wizard_completed_at: null,
-          setup_status: 'not_started',
-          wizard_progress: {}
+          setup_status: "not_started",
+          wizard_progress: {},
         };
       }
-      
-      console.error('[WizardProgress] Error fetching progress:', error);
+
+      console.error("[WizardProgress] Error fetching progress:", error);
       return null;
     }
 
     return {
       wizard_completed_at: data.wizard_completed_at,
-      setup_status: data.setup_status || 'not_started',
-      wizard_progress: (data.wizard_progress as Record<string, WizardStepData>) || {}
+      setup_status: data.setup_status || "not_started",
+      wizard_progress:
+        (data.wizard_progress as Record<string, WizardStepData>) || {},
     };
   } catch (error) {
-    console.error('[WizardProgress] Failed to fetch progress:', error);
+    console.error("[WizardProgress] Failed to fetch progress:", error);
     return null;
   }
 }
-

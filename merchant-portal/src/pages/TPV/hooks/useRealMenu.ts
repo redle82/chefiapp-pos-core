@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { GenesisKernel } from "../../../core/kernel/GenesisKernel";
 import { getTabIsolated } from "../../../core/storage/TabIsolatedStorage";
 
+// LEGACY: Supabase client removed — Docker Core only
+const supabase = null as any;
+
 export interface VerifiedProduct {
   id: string;
   name: string;

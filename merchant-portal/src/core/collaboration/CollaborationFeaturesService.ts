@@ -37,7 +37,7 @@ class CollaborationFeaturesService {
     restaurantId: string,
     message: string,
     resourceId?: string,
-    resourceType?: string
+    resourceType?: string,
   ): Promise<ChatMessage | null> {
     try {
       const userId =
@@ -94,7 +94,7 @@ class CollaborationFeaturesService {
   async getChatMessages(
     restaurantId: string,
     resourceId?: string,
-    limit: number = 50
+    limit: number = 50,
   ): Promise<ChatMessage[]> {
     try {
       let query = supabase
@@ -113,7 +113,7 @@ class CollaborationFeaturesService {
       if (error) throw error;
 
       return (data || [])
-        .map((msg) => ({
+        .map((msg: Record<string, any>) => ({
           id: msg.id,
           userId: msg.user_id,
           userName: msg.user_name,
@@ -134,7 +134,7 @@ class CollaborationFeaturesService {
    */
   async addTaskComment(
     taskId: string,
-    comment: string
+    comment: string,
   ): Promise<TaskComment | null> {
     try {
       const userId =
@@ -183,7 +183,7 @@ class CollaborationFeaturesService {
 
       if (error) throw error;
 
-      return (data || []).map((comment) => ({
+      return (data || []).map((comment: Record<string, any>) => ({
         id: comment.id,
         taskId: comment.task_id,
         userId: comment.user_id,

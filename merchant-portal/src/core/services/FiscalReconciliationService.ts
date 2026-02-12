@@ -73,11 +73,12 @@ export class FiscalReconciliationService {
         throw new Error(`Falha ao criar snapshot fiscal: ${error.message}`);
       }
 
+      const record = data as { id: string };
       // Emitir evento FISCAL_SYNC_SUCCESS (simplificado)
       await this.emitFiscalSyncEvent({
         restaurantId: input.restaurantId,
         eventType: "FISCAL_SYNC_SUCCESS",
-        snapshotId: data.id,
+        snapshotId: record.id,
         details: {
           posSystem: input.posSystem,
           source: input.source,
@@ -85,7 +86,7 @@ export class FiscalReconciliationService {
         },
       });
 
-      return data.id;
+      return record.id;
     } catch (err) {
       // Emitir evento FISCAL_SYNC_FAILED
       await this.emitFiscalSyncEvent({
@@ -190,8 +191,9 @@ export class FiscalReconciliationService {
       throw new Error(`Falha ao criar reconciliação: ${error.message}`);
     }
 
+    const record = data as { id: string };
     return {
-      id: data.id,
+      id: record.id,
       status,
       differenceCents,
       reasonCode,

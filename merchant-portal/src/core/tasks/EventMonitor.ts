@@ -310,7 +310,9 @@ export class EventMonitor {
       }
 
       // Limpar mesas livres do cache
-      const freeTables = (tables || []).filter((t) => t.status === "free");
+      const freeTables = (tables || []).filter(
+        (t: Record<string, any>) => t.status === "free",
+      );
       for (const table of freeTables) {
         this.lastCheckedTables.delete(table.number);
       }

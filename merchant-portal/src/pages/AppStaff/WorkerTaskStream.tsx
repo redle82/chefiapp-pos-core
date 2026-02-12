@@ -2,7 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useTraining } from "../../intelligence/education/TrainingContext";
 import { DarkModeToggle } from "../../ui/components/DarkModeToggle"; // P3-5
 import { useToast } from "../../ui/design-system";
+import { LessonCard } from "../../ui/design-system/LessonCard";
 import { ShiftForecastWidget } from "../../ui/design-system/ShiftForecastWidget";
+import { ShiftHealthWidget } from "../../ui/design-system/ShiftHealthWidget";
+import { TaskCard } from "../../ui/design-system/TaskCard";
 import { StaffLayout } from "../../ui/design-system/layouts/StaffLayout";
 import { Button } from "../../ui/design-system/primitives/Button";
 import { Input } from "../../ui/design-system/primitives/Input";
@@ -47,19 +50,19 @@ export const WorkerTaskStream: React.FC = () => {
   // Listen for task completion events (dopamine feedback)
   useEffect(() => {
     const handleTaskComplete = (
-      e: CustomEvent<{ message: string; taskTitle?: string }>
+      e: CustomEvent<{ message: string; taskTitle?: string }>,
     ) => {
       success(e.detail.message);
     };
 
     window.addEventListener(
       "staff-task-complete",
-      handleTaskComplete as EventListener
+      handleTaskComplete as EventListener,
     );
     return () =>
       window.removeEventListener(
         "staff-task-complete",
-        handleTaskComplete as EventListener
+        handleTaskComplete as EventListener,
       );
   }, [success]);
 
@@ -99,7 +102,9 @@ export const WorkerTaskStream: React.FC = () => {
       {/* INVENTORY LITE - Alertas de stock (repor X) */}
       {operationalContract?.id && (
         <div style={{ marginBottom: 16 }}>
-          <InventoryLiteSection restaurantId={coreRestaurantId ?? operationalContract.id} />
+          <InventoryLiteSection
+            restaurantId={coreRestaurantId ?? operationalContract.id}
+          />
         </div>
       )}
 
@@ -248,7 +253,7 @@ export const WorkerTaskStream: React.FC = () => {
                 {filterOption === "critical" && "Críticas"}
                 {filterOption === "done" && "Concluídas"}
               </Button>
-            )
+            ),
           )}
         </div>
       </div>
@@ -282,7 +287,7 @@ export const WorkerTaskStream: React.FC = () => {
             status={task.status === "focused" ? "in-progress" : "pending"}
             priority={task.priority}
             assignedAt={new Date(task.createdAt)}
-            onAction={(action) => {
+            onAction={(action: "start" | "complete" | "validate") => {
               if (action === "start") startTask(task.id);
               if (action === "complete") completeTask(task.id);
             }}

@@ -23,6 +23,7 @@ export type PaymentStatus = "PENDING" | "PAID" | "PARTIALLY_PAID" | "REFUNDED";
  * FASE 3.2: Re-exporta do contrato centralizado para manter compatibilidade.
  * O contrato centralizado inclui todos os valores usados no sistema.
  */
+import type { OrderOrigin } from "../../core/contracts";
 export type { OrderOrigin } from "../../core/contracts";
 
 /**

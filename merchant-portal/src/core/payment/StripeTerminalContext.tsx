@@ -1,6 +1,7 @@
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import React, { createContext, ReactNode, useContext, useState } from "react";
+import type { ReactNode } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { CONFIG } from "../../config";
 import { currencyService } from "../currency/CurrencyService";
 import { PaymentBroker } from "./PaymentBroker";

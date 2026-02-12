@@ -23,6 +23,8 @@
  * - ESLint rule "tenant/require-isolation" valida uso
  */
 
+import { isDebugMode } from "../debugMode";
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -72,20 +74,20 @@ type QueryBuilder<T> = {
 export function withTenant<T>(
   query: QueryBuilder<T>,
   tenantId: string | null,
-  column: string = "restaurant_id"
+  column: string = "restaurant_id",
 ): QueryBuilder<T> {
   if (!tenantId) {
     console.error("[withTenant] ❌ CRITICAL: Query attempted without tenantId");
     // Com ?debug=1, falhar alto para detetar violações
     if (isDebugMode()) {
       throw new Error(
-        "[withTenant] Query attempted without tenantId. This is a security violation."
+        "[withTenant] Query attempted without tenantId. This is a security violation.",
       );
     }
     // In production, add impossible filter to return no data
     return query.eq(
       column,
-      "00000000-0000-0000-0000-000000000000"
+      "00000000-0000-0000-0000-000000000000",
     ) as QueryBuilder<T>;
   }
 
@@ -102,15 +104,15 @@ export function withTenant<T>(
 export function withTenantInsert<T extends Record<string, unknown>>(
   data: T | T[],
   tenantId: string | null,
-  column: string = "restaurant_id"
+  column: string = "restaurant_id",
 ): (T & Record<string, string>)[] {
   if (!tenantId) {
     console.error(
-      "[withTenantInsert] ❌ CRITICAL: Insert attempted without tenantId"
+      "[withTenantInsert] ❌ CRITICAL: Insert attempted without tenantId",
     );
     if (isDebugMode()) {
       throw new Error(
-        "[withTenantInsert] Insert attempted without tenantId. This is a security violation."
+        "[withTenantInsert] Insert attempted without tenantId. This is a security violation.",
       );
     }
     return [];
@@ -132,7 +134,7 @@ export function withTenantInsert<T extends Record<string, unknown>>(
  */
 export function assertTenant(
   tenantId: string | null,
-  context: string
+  context: string,
 ): asserts tenantId is string {
   if (!tenantId) {
     throw new Error(`[assertTenant] Missing tenantId in context: ${context}`);

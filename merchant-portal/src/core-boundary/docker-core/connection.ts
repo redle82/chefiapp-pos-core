@@ -10,7 +10,7 @@
  *
  * Decisão: docs/architecture/ADR_HYBRID_BACKEND.md
  */
-import { coreClient } from "../../core/infra/coreClient";
+import { checkCoreHealth, coreClient } from "../../core/infra/coreClient";
 
 /** Cliente canônico para operações críticas (sempre Docker Core). */
 export const dockerCoreClient = coreClient;

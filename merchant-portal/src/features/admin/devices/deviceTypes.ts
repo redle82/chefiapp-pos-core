@@ -7,9 +7,8 @@ export interface AdminDevice {
   type: AdminDeviceType;
   name: string;
   assignedRole?: "waiter" | "kitchen" | "manager" | "owner" | "cleaning";
-  currentApp?: import("../../pages/AppStaff/context/StaffCoreTypes").OperatorAppId;
+  currentApp?: import("../../../pages/AppStaff/context/StaffCoreTypes").OperatorAppId;
   operatorSessionId?: string | null;
   lastHeartbeat?: string | null;
   notes?: string | null;
 }
-

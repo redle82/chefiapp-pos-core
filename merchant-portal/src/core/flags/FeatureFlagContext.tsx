@@ -1,10 +1,5 @@
-import React, {
-  ReactNode,
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import type { ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 // LEGACY / LAB — blocked in Docker mode
 import { DiagnosticEngine } from "../diagnostics/DiagnosticEngine";
 import { isDevStableMode } from "../runtime/devStableMode";
@@ -86,7 +81,7 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({
         "GM-0005-FLAG-FAIL",
         "Failed to load feature flags",
         "warning",
-        { err }
+        { err },
       );
       // Fallback is already set via initial state
     } finally {
@@ -115,16 +110,16 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({
           () => {
             console.log("[GM-FLAGS] Update detected, refreshing...");
             fetchFlags();
-          }
+          },
         )
-        .subscribe((status, err) => {
+        .subscribe((status: string, err: Error | undefined) => {
           if (status === "SUBSCRIBED") {
             console.log("[GM-FLAGS] Realtime subscription active");
           } else if (status === "CHANNEL_ERROR" || err) {
             // Não bloquear o app se Realtime falhar
             console.warn(
               "[GM-FLAGS] Realtime subscription failed (non-critical):",
-              err
+              err,
             );
             // Continuar sem Realtime - flags ainda funcionam via polling manual
           }

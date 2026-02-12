@@ -15,6 +15,9 @@ import {
 } from "../../core-boundary/readers/RestaurantPeopleReader";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 
+// LEGACY: Supabase client removed — Docker Core only
+const supabase = null as any;
+
 type InviteSummary = {
   id: string;
   person_id: string;
@@ -232,13 +235,14 @@ export function RestaurantPeopleSection() {
           }
           throw new Error(insertError.message);
         }
-        setPeople((prev) => [data as CoreRestaurantPerson, ...prev]);
+        const person = data as CoreRestaurantPerson;
+        setPeople((prev) => [person, ...prev]);
         setNewName("");
         setNewRole("staff");
-        setRevealedCodeId(data.id);
-        setShowQRId(data.id);
+        setRevealedCodeId(person.id);
+        setShowQRId(person.id);
         // Criar imediatamente um active_invite para esta pessoa (ponte Empleados → AppStaff).
-        await ensureInviteForPerson(data as CoreRestaurantPerson);
+        await ensureInviteForPerson(person);
         break;
       }
       if (attempts >= maxAttempts) {

@@ -359,8 +359,8 @@ export function OwnerDashboardWithMapLayout() {
 
   const blockedByCaixa =
     !readiness.ready &&
-    (readiness.blockingReason === "NO_OPEN_CASH_REGISTER" ||
-      readiness.blockingReason === "SHIFT_NOT_STARTED");
+    (readiness.blockingReasons?.includes("NO_OPEN_CASH_REGISTER") ||
+      readiness.blockingReasons?.includes("SHIFT_NOT_STARTED"));
   const systemState = runtime.systemState ?? "SETUP";
   const showSetupBanner = systemState === "SETUP";
 
@@ -378,8 +378,8 @@ export function OwnerDashboardWithMapLayout() {
   if (!readiness.ready && readiness.uiDirective === "SHOW_BLOCKING_SCREEN") {
     return (
       <BlockingScreen
-        reason={readiness.blockingReason}
-        redirectTo={readiness.redirectTo}
+        reason={readiness.blockingReasons?.[0] as any}
+        redirectTo={(readiness as any).redirectTo}
       />
     );
   }
