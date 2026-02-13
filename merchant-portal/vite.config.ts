@@ -46,6 +46,7 @@ export default defineConfig(async ({ mode }) => {
     define: {
       // Polyfill global for libraries that expect Node.js global
       global: {},
+      __VITE_ENV__: "import.meta.env",
     },
     resolve: {
       dedupe: ["react", "react-dom", "react-router-dom"],

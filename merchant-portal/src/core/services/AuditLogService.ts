@@ -48,29 +48,35 @@ export class AuditLogService {
     }
 
     try {
-      const result = await invokeRpc("log_audit_event", {
-        p_restaurant_id: event.restaurantId,
-        p_event_type: event.eventType,
-        p_action: event.action,
-        p_actor_id: event.actorId || null,
-        p_actor_type: event.actorType || "user",
-        p_resource_type: event.resourceType || null,
-        p_resource_id: event.resourceId || null,
-        p_result: event.result || "success",
-        p_details: event.details || null,
-        p_error_code: event.errorCode || null,
-        p_error_message: event.errorMessage || null,
-        p_metadata: event.metadata || null,
-      });
+      const result = await invokeRpc<{ audit_id?: string; id?: string }>(
+        "log_audit_event",
+        {
+          p_restaurant_id: event.restaurantId,
+          p_event_type: event.eventType,
+          p_action: event.action,
+          p_actor_id: event.actorId || null,
+          p_actor_type: event.actorType || "user",
+          p_resource_type: event.resourceType || null,
+          p_resource_id: event.resourceId || null,
+          p_result: event.result || "success",
+          p_details: event.details || null,
+          p_error_code: event.errorCode || null,
+          p_error_message: event.errorMessage || null,
+          p_metadata: event.metadata || null,
+        },
+      );
 
-      if (!result || !result.success) {
+      if (result.error || !result.data) {
         console.error("[AuditLog] RPC returned failure:", result);
-        return { success: false, error: result?.error || "Unknown error" };
+        return {
+          success: false,
+          error: result.error?.message || "Unknown error",
+        };
       }
 
       return {
         success: true,
-        auditId: result.audit_id,
+        auditId: result.data.audit_id || result.data.id,
       };
     } catch (err) {
       console.error("[AuditLog] Exception:", err);
@@ -177,18 +183,24 @@ export class AuditLogService {
     }
 
     try {
-      const result = await invokeRpc("record_auth_event", {
-        p_event_type: "login_success",
-        p_restaurant_id: restaurantId,
-        p_metadata: metadata || null,
-      });
+      const result = await invokeRpc<{ audit_id?: string; id?: string }>(
+        "record_auth_event",
+        {
+          p_event_type: "login_success",
+          p_restaurant_id: restaurantId,
+          p_metadata: metadata || null,
+        },
+      );
 
-      if (!result || !result.success) {
+      if (result.error || !result.data) {
         console.error("[AuditLog] Login success log failed:", result);
-        return { success: false, error: result?.error || "Unknown error" };
+        return {
+          success: false,
+          error: result.error?.message || "Unknown error",
+        };
       }
 
-      return { success: true, auditId: result.audit_id };
+      return { success: true, auditId: result.data.audit_id || result.data.id };
     } catch (err) {
       console.error("[AuditLog] Login success exception:", err);
       return { success: false, error: String(err) };
@@ -208,18 +220,24 @@ export class AuditLogService {
     }
 
     try {
-      const result = await invokeRpc("record_auth_event", {
-        p_event_type: "logout",
-        p_restaurant_id: restaurantId || null,
-        p_metadata: metadata || null,
-      });
+      const result = await invokeRpc<{ audit_id?: string; id?: string }>(
+        "record_auth_event",
+        {
+          p_event_type: "logout",
+          p_restaurant_id: restaurantId || null,
+          p_metadata: metadata || null,
+        },
+      );
 
-      if (!result || !result.success) {
+      if (result.error || !result.data) {
         console.error("[AuditLog] Logout log failed:", result);
-        return { success: false, error: result?.error || "Unknown error" };
+        return {
+          success: false,
+          error: result.error?.message || "Unknown error",
+        };
       }
 
-      return { success: true, auditId: result.audit_id };
+      return { success: true, auditId: result.data.audit_id || result.data.id };
     } catch (err) {
       console.error("[AuditLog] Logout exception:", err);
       return { success: false, error: String(err) };
@@ -240,19 +258,25 @@ export class AuditLogService {
     }
 
     try {
-      const result = await invokeRpc("log_login_failure", {
-        p_identifier: identifier,
-        p_reason: reason,
-        p_metadata: metadata || null,
-      });
+      const result = await invokeRpc<{ audit_id?: string; id?: string }>(
+        "log_login_failure",
+        {
+          p_identifier: identifier,
+          p_reason: reason,
+          p_metadata: metadata || null,
+        },
+      );
 
-      if (!result || !result.success) {
+      if (result.error || !result.data) {
         console.warn("[AuditLog] Login failure log returned non-success");
         // Don't throw, just warn
-        return { success: false, error: result?.error || "Unknown error" };
+        return {
+          success: false,
+          error: result.error?.message || "Unknown error",
+        };
       }
 
-      return { success: true, auditId: result.audit_id };
+      return { success: true, auditId: result.data.audit_id || result.data.id };
     } catch (err) {
       console.warn("[AuditLog] Login failure exception:", err);
       return { success: false, error: String(err) };

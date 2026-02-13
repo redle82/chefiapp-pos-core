@@ -102,6 +102,10 @@ export class FiscalReconciliationService {
         throw new Error(`Falha ao criar snapshot fiscal: ${error.message}`);
       }
 
+      if (!data || typeof (data as { id?: string }).id !== "string") {
+        throw new Error("Falha ao criar snapshot fiscal: resposta vazia");
+      }
+
       const record = data as { id: string };
       // Emitir evento FISCAL_SYNC_SUCCESS (simplificado)
       await this.emitFiscalSyncEvent({
@@ -220,6 +224,10 @@ export class FiscalReconciliationService {
         error,
       );
       throw new Error(`Falha ao criar reconciliação: ${error.message}`);
+    }
+
+    if (!data || typeof (data as { id?: string }).id !== "string") {
+      throw new Error("Falha ao criar reconciliação: resposta vazia");
     }
 
     const record = data as { id: string };

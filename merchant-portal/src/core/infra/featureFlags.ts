@@ -102,6 +102,26 @@ export interface FeatureFlags {
   ENABLE_EVENT_BATCHING: boolean;
 }
 
+type EnvLike = {
+  [key: string]: string | boolean | undefined;
+};
+
+declare const __VITE_ENV__: EnvLike | undefined;
+
+const ENV: EnvLike =
+  typeof __VITE_ENV__ !== "undefined"
+    ? __VITE_ENV__
+    : typeof process !== "undefined" && process.env
+    ? (process.env as EnvLike)
+    : {};
+
+const getEnvBool = (key: string, fallback = false): boolean => {
+  const value = ENV[key];
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") return value === "true" || value === "1";
+  return fallback;
+};
+
 // ============================================================================
 // DEFAULT FLAGS (Production Safe)
 // ============================================================================
@@ -129,19 +149,17 @@ const DEFAULT_FLAGS: FeatureFlags = {
 // ============================================================================
 
 function loadFlagsFromEnv(): Partial<FeatureFlags> {
-  const env = import.meta.env;
-
   return {
-    ENABLE_COGNITIVE_LAYER: env.VITE_ENABLE_COGNITIVE_LAYER === "true",
-    ENABLE_EVENT_BUS: env.VITE_ENABLE_EVENT_BUS === "true",
-    ENABLE_AI_SUGGESTIONS: env.VITE_ENABLE_AI_SUGGESTIONS === "true",
-    ENABLE_COGNITIVE_ANALYTICS: env.VITE_ENABLE_COGNITIVE_ANALYTICS === "true",
-    ENABLE_EVENT_RETRY: env.VITE_ENABLE_EVENT_RETRY !== "false", // default true
-    ENABLE_DEAD_LETTER_QUEUE: env.VITE_ENABLE_DEAD_LETTER_QUEUE !== "false",
-    ENABLE_EVENT_LOGGING: env.VITE_ENABLE_EVENT_LOGGING !== "false",
-    ENABLE_EVENT_METRICS: env.VITE_ENABLE_EVENT_METRICS !== "false",
-    ENABLE_REALTIME_EVENTS: env.VITE_ENABLE_REALTIME_EVENTS === "true",
-    ENABLE_EVENT_BATCHING: env.VITE_ENABLE_EVENT_BATCHING === "true",
+    ENABLE_COGNITIVE_LAYER: getEnvBool("VITE_ENABLE_COGNITIVE_LAYER"),
+    ENABLE_EVENT_BUS: getEnvBool("VITE_ENABLE_EVENT_BUS"),
+    ENABLE_AI_SUGGESTIONS: getEnvBool("VITE_ENABLE_AI_SUGGESTIONS"),
+    ENABLE_COGNITIVE_ANALYTICS: getEnvBool("VITE_ENABLE_COGNITIVE_ANALYTICS"),
+    ENABLE_EVENT_RETRY: getEnvBool("VITE_ENABLE_EVENT_RETRY", true),
+    ENABLE_DEAD_LETTER_QUEUE: getEnvBool("VITE_ENABLE_DEAD_LETTER_QUEUE", true),
+    ENABLE_EVENT_LOGGING: getEnvBool("VITE_ENABLE_EVENT_LOGGING", true),
+    ENABLE_EVENT_METRICS: getEnvBool("VITE_ENABLE_EVENT_METRICS", true),
+    ENABLE_REALTIME_EVENTS: getEnvBool("VITE_ENABLE_REALTIME_EVENTS"),
+    ENABLE_EVENT_BATCHING: getEnvBool("VITE_ENABLE_EVENT_BATCHING"),
   };
 }
 

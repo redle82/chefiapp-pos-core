@@ -15,11 +15,22 @@ const BASE_URL_RAW =
   CONFIG.CORE_URL ||
   (typeof window !== "undefined" ? window.location.origin : "");
 
+const META_ENV = (globalThis as any)?.import?.meta?.env;
+const IS_DEV = (() => {
+  if (typeof META_ENV?.DEV !== "undefined") {
+    return Boolean(META_ENV.DEV);
+  }
+  if (typeof process !== "undefined" && process.env) {
+    return process.env.NODE_ENV === "development";
+  }
+  return false;
+})();
+
 // DEV browser: route through Vite proxy (same-origin) to avoid cross-origin
 // preflight overhead and potential connection timeouts to localhost:3001.
 // In production or SSR, keep the absolute URL as-is.
 const BASE_URL =
-  typeof window !== "undefined" && import.meta.env.DEV
+  typeof window !== "undefined" && IS_DEV
     ? BASE_URL_RAW.replace(/https?:\/\/(localhost|127\.0\.0\.1):3001/, "")
     : BASE_URL_RAW;
 
@@ -81,6 +92,7 @@ export type PostgrestError = {
   message: string;
   code?: string;
   details?: string;
+  hint?: string;
 };
 export type PostgrestResponse<T = unknown> = {
   data: T | null;
@@ -99,6 +111,7 @@ interface FilterBuilder {
   update(body: object): FilterBuilder;
   delete(): FilterBuilder;
   eq(column: string, value: unknown): FilterBuilder;
+  gte(column: string, value: unknown): FilterBuilder;
   in(column: string, values: unknown[]): FilterBuilder;
   or(filter: string): FilterBuilder;
   order(column: string, opts?: { ascending?: boolean }): FilterBuilder;
@@ -135,7 +148,7 @@ function buildFilterBuilder(table: string): FilterBuilder {
     if (isTableUnavailable(table)) {
       if (
         typeof window !== "undefined" &&
-        import.meta.env.DEV &&
+        IS_DEV &&
         (OPTIONAL_TABLES as readonly string[]).includes(table) &&
         !optionalTableLoggedThisSession.has(table)
       ) {
@@ -338,6 +351,10 @@ function buildFilterBuilder(table: string): FilterBuilder {
       state.params[column] = `eq.${value}`;
       return chain;
     },
+    gte(column: string, value: unknown) {
+      state.params[column] = `gte.${value}`;
+      return chain;
+    },
     in(column: string, values: unknown[]) {
       state.params[column] = `in.(${values.map((v) => String(v)).join(",")})`;
       return chain;
@@ -417,7 +434,7 @@ let clientInstance: DockerCoreClientShape | null = null;
  * run ./scripts/core/apply-missing-migrations.sh. See docs/architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md.
  */
 export async function probeOptionalTables(): Promise<void> {
-  if (typeof window !== "undefined" && import.meta.env.DEV) {
+  if (typeof window !== "undefined" && IS_DEV) {
     const ttl = OPTIONAL_TABLES_TTL_DEV_MS;
     OPTIONAL_TABLES.forEach((table) =>
       tableUnavailableUntil.set(table, Date.now() + ttl),
@@ -426,9 +443,7 @@ export async function probeOptionalTables(): Promise<void> {
   }
   const core = getDockerCoreFetchClient();
   await Promise.all(
-    OPTIONAL_TABLES.map((table) =>
-      core.from(table).select("id").limit(0),
-    ),
+    OPTIONAL_TABLES.map((table) => core.from(table).select("id").limit(0)),
   ).catch(() => {
     // Non-fatal: Core may be down or not reachable
   });
