@@ -7,7 +7,7 @@ interface OrderItemEditorProps {
   order: any;
   onUpdateQuantity: (itemId: string, quantity: number) => Promise<void>;
   onRemoveItem: (itemId: string) => Promise<void>;
-  onBackToMenu: () => void;
+  onBackToMenu?: () => void;
   loading?: boolean;
 }
 
@@ -43,7 +43,7 @@ export const OrderItemEditor: React.FC<OrderItemEditorProps> = ({
                   {item.name}
                 </Text>
                 <Text size="xs" className="text-zinc-500">
-                  Un: {(item.unit_price / 100).toFixed(2)}€
+                  Un: {((item.price ?? item.unit_price) / 100).toFixed(2)}€
                 </Text>
               </div>
               <div className="flex items-center gap-3">

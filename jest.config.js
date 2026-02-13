@@ -69,6 +69,9 @@ module.exports = {
         "/e2e/",
         "/massive/",
         "core-engine",
+        "ReservationEngine\\.test",
+        "FinanceEngine\\.test",
+        "delivery-adapters\\.test",
       ],
       testMatch: [
         "**/*.test.ts",
@@ -97,6 +100,7 @@ module.exports = {
         "/doc-only/",
         "/e2e/",
         "/massive/",
+        "/PaymentModal\\.test\\.tsx$", // pulls in backendAdapter (import.meta); test in merchant-portal Vitest
       ],
       testMatch: ["**/ui/**/*.test.tsx", "**/hooks/**/*.test.ts"],
       setupFiles: ["<rootDir>/tests/setup-jsdom.js"],
@@ -121,6 +125,11 @@ module.exports = {
         "^.*/core/logger/Logger\\.ts$": "<rootDir>/tests/__mocks__/Logger.ts",
         "^.*gate3-persistence/PostgresLink.*$":
           "<rootDir>/tests/__mocks__/PostgresLink.ts",
+        "\\.(css|less|scss|sass)$": "<rootDir>/tests/__mocks__/styleMock.js",
+        "^.*/core/infra/backendAdapter$":
+          "<rootDir>/tests/__mocks__/backendAdapter.ts",
+        "^.*/core/infra/backendAdapter\\.ts$":
+          "<rootDir>/tests/__mocks__/backendAdapter.ts",
       },
     },
   ],

@@ -14,9 +14,15 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 
-// Mock Logger first to avoid import.meta issues
-// Jest will automatically use merchant-portal/src/core/logger/__mocks__/Logger.ts
 jest.mock('../../../merchant-portal/src/core/logger/Logger');
+jest.mock('../../../merchant-portal/src/core/infra/backendAdapter', () => ({
+  getBackendHealthCheckBaseUrl: () => '',
+  getBackendConfigured: () => false,
+  getBackendType: () => 'none',
+  isDockerBackend: () => false,
+  isBackendNone: () => true,
+  BackendType: { docker: 'docker', none: 'none' },
+}));
 
 // Mock FiscalService to avoid Logger import issues
 jest.mock('../../../merchant-portal/src/core/fiscal/FiscalService', () => ({
@@ -66,7 +72,7 @@ jest.mock('../../../merchant-portal/src/ui/design-system', () => ({
 }));
 
 // Import after mocks
-import { PaymentModal, type PaymentMethod } from '../../../merchant-portal/src/pages/TPV/components/PaymentModal';
+import { PaymentModal } from '../../../merchant-portal/src/pages/TPV/components/PaymentModal';
 import { createPaymentIntent } from '../../../merchant-portal/src/core/tpv/stripePayment';
 import { useOfflineOrder } from '../../../merchant-portal/src/pages/TPV/context/OfflineOrderContext';
 import { useConsumptionGroups } from '../../../merchant-portal/src/pages/TPV/hooks/useConsumptionGroups';

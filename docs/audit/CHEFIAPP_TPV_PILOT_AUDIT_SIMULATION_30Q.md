@@ -440,3 +440,4 @@
 ## Next Step
 
 - Execute the PT checklist and collect evidence in docs/audit/pt/evidence/.
+- Follow the global fiscal roadmap by jurisdiction: [docs/audit/FISCAL_ROADMAP_GLOBAL.md](docs/audit/FISCAL_ROADMAP_GLOBAL.md)

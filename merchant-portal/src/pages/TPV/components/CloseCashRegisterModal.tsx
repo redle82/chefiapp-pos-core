@@ -5,7 +5,7 @@
  * observação obrigatória quando diferença ≠ 0. Ref.: docs/plans/FASE_2.3_CAIXA_PAGAMENTOS_FECHO.md
  */
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 
 export interface CloseCashRegisterModalProps {
   /** Total de vendas do turno (centavos) — usado para calcular esperado */
@@ -82,16 +82,17 @@ export function CloseCashRegisterModal({
         }}
         onClick={(e) => e.target === e.currentTarget && onDismiss()}
       >
-        <div
-          style={{
-            maxWidth: 420,
-            width: "100%",
-            padding: 24,
-            backgroundColor: "#fff",
-            borderRadius: 12,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-            textAlign: "center",
-          }}
+<div
+        data-testid="close-cash-modal"
+        style={{
+          maxWidth: 420,
+          width: "100%",
+          padding: 24,
+          backgroundColor: "#fff",
+          borderRadius: 12,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+          textAlign: "center",
+        }}
           onClick={(e) => e.stopPropagation()}
         >
           <p style={{ fontSize: 16, color: "#1a1a1a", margin: 0 }}>
@@ -120,6 +121,7 @@ export function CloseCashRegisterModal({
       onClick={(e) => e.target === e.currentTarget && onCancel()}
     >
       <div
+        data-testid="close-cash-modal"
         style={{
           maxWidth: 420,
           width: "100%",
