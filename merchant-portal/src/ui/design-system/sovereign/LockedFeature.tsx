@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from '../primitives/Card';
 import { Text } from '../primitives/Text';
-import { Button } from '../primitives/Button';
+import { Button } from '../Button';
 import { colors } from '../tokens/colors';
 
 interface LockedFeatureProps {

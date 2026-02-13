@@ -1,7 +1,7 @@
 import React from 'react';
 import { colors } from '../tokens/colors';
 import { Text } from '../primitives/Text';
-import { Button } from '../primitives/Button';
+import { Button } from '../Button';
 import { Stepper } from '../primitives/Stepper';
 
 interface Step {

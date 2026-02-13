@@ -1,6 +1,7 @@
 import React from "react";
 import type { MicroLesson } from "../../intelligence/education/MicroLessonEngine";
-import { Button } from "./primitives/Button";
+import styles from "./LessonCard.module.css";
+import { Button } from "./Button";
 import { Card } from "./primitives/Card";
 import { Text } from "./primitives/Text";
 import { colors } from "./tokens/colors";
@@ -19,25 +20,16 @@ export const LessonCard: React.FC<LessonCardProps> = ({
     <Card
       surface="layer2"
       padding="md"
-      style={{
-        borderLeft: `4px solid ${colors.primary.base}`,
-        backgroundColor: "#F0F9FF",
-        marginBottom: 12,
-      }}
+      className={styles.card}
+      style={{ "--accent-color": colors.primary?.base } as React.CSSProperties}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
+      <div className={styles.content}>
+        <div className={styles.header}>
           <Text
             size="xs"
             weight="bold"
             color="primary"
-            style={{ textTransform: "uppercase" }}
+            className={styles.label}
           >
             🧠 Micro-Treinamento ({lesson.durationSeconds}s)
           </Text>
@@ -47,13 +39,11 @@ export const LessonCard: React.FC<LessonCardProps> = ({
           {lesson.title}
         </Text>
 
-        <Text size="sm" color="secondary" style={{ fontStyle: "italic" }}>
+        <Text size="sm" color="secondary" className={styles.quote}>
           "{lesson.content}"
         </Text>
 
-        <div
-          style={{ marginTop: 8, display: "flex", justifyContent: "flex-end" }}
-        >
+        <div className={styles.actions}>
           <Button tone="action" size="sm" onClick={onComplete}>
             JÁ SEI / ENTENDI
           </Button>

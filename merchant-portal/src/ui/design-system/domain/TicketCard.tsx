@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Card } from "../primitives/Card";
 import { Text } from "../primitives/Text";
 import { Badge } from "../primitives/Badge";
-import { Button } from "../primitives/Button";
+import { Button } from "../Button";
 import { colors } from "../tokens/colors";
 
 /* Type Logic (Mirrors Backend) */
@@ -30,7 +30,7 @@ interface TicketOrder {
 
 interface TicketCardProps {
   order: TicketOrder;
-  onAction?: (action: "send" | "ready" | "close" | "recover") => void;
+  onAction?: (action: "send" | "ready" | "close" | "recover" | "pay" | "print") => void;
   onDiscount?: (discountCents: number) => void;
   compact?: boolean;
   isActive?: boolean; // Highlight if this is the active order being edited
@@ -230,6 +230,16 @@ export const TicketCard: React.FC<TicketCardProps> = ({
         {/* Action Button (Full Width) */}
         {onAction && (
           <>
+            {(canSend || order.status === "preparing") && (
+              <Button
+                tone="neutral"
+                variant="ghost"
+                size="sm"
+                onClick={() => onAction("print")}
+              >
+                🖨️ Imprimir comanda
+              </Button>
+            )}
             {canSend && (
               <Button tone="warning" size="lg" onClick={() => onAction("send")}>
                 Enviar Cozinha
@@ -244,7 +254,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
               <Button
                 tone="success"
                 size="lg"
-                onClick={() => onAction("pay" as any)}
+                onClick={() => onAction("pay")}
               >
                 💲 Cobrar
               </Button>

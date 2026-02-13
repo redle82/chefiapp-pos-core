@@ -6,11 +6,10 @@ import { recordLogout } from "../../../core/auth/authAudit";
 import { useContextEngine } from "../../../core/context";
 import { removeTabIsolated } from "../../../core/storage/TabIsolatedStorage";
 import { BillingWarningBadge } from "../../billing/BillingWarningBadge";
-import { Button } from "../primitives/Button";
+import { Button } from "../Button";
 import { Text } from "../primitives/Text";
 import { OSSignature } from "../sovereign/OSSignature";
-import { colors } from "../tokens/colors";
-import { spacing } from "../tokens/spacing";
+import styles from "./AdminSidebar.module.css";
 
 interface AdminSidebarProps {
   activePath: string;
@@ -23,7 +22,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const navigate = useNavigate();
   const { role, visibleModules } = useContextEngine();
-  const theme = colors.modes.dashboard;
 
   // Track expanded groups. EVOLVE is collapsed by default (meta-produto + comercial).
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
@@ -265,70 +263,27 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     .filter((g) => g.items.length > 0);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        padding: spacing[4],
-      }}
-    >
+    <div className={styles.container}>
       {/* Brand */}
-      <div
-        style={{
-          marginBottom: spacing[8],
-          paddingLeft: spacing[2],
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
+      <div className={styles.brand}>
         <OSSignature state="ember" size="md" />
         <BillingWarningBadge />
       </div>
 
       {/* Navigation */}
-      <nav
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: spacing[6],
-          overflowY: "auto",
-          flex: 1,
-          paddingRight: spacing[2],
-          marginRight: `-${spacing[2]}`,
-        }}
-      >
+      <nav className={styles.navColumn}>
         {filteredGroups.map((group) => (
-          <div
-            key={group.title}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: spacing[1],
-            }}
-          >
+          <div key={group.title} className={styles.groupContainer}>
             {/* Group Header - Clickable for toggle */}
             <div
               onClick={() => toggleGroup(group.title)}
-              style={{
-                paddingLeft: spacing[4],
-                marginBottom: spacing[1],
-                opacity: expandedGroups[group.title] ? 0.8 : 0.4,
-                textTransform: "uppercase",
-                fontSize: 10,
-                letterSpacing: "0.1em",
-                fontWeight: 700,
-                color: theme.text.secondary,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
+              className={styles.groupHeader}
+              data-expanded={!!expandedGroups[group.title]}
             >
               <span>{group.title}</span>
               {/* Chevron / Indicator */}
               {group.title === "Evolve" && (
-                <span style={{ fontSize: 10 }}>
+                <span className={styles.chevron}>
                   {expandedGroups[group.title] ? "▼" : "▶"}
                 </span>
               )}
@@ -336,13 +291,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
             {/* Items Container - Conditional Render */}
             {expandedGroups[group.title] && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: spacing[1],
-                }}
-              >
+              <div className={styles.groupItems}>
                 {group.items.map((item) => {
                   const isActive =
                     activePath === item.id || activePath.startsWith(item.id);
@@ -350,62 +299,26 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     <div
                       key={item.id}
                       onClick={() => handleItemClick(item)}
-                      style={{
-                        padding: `${spacing[2]} ${spacing[4]}`,
-                        borderRadius: 8,
-                        cursor: "pointer",
-                        backgroundColor: isActive
-                          ? theme.surface.layer2
-                          : "transparent",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: spacing[3],
-                        color: isActive
-                          ? theme.text.primary
-                          : theme.text.secondary,
-                        transition: "all 0.2s",
-                        border: `1px solid ${
-                          isActive ? theme.border.strong : "transparent"
-                        }`,
-                        opacity: item.status === "locked" ? 0.5 : 1,
-                      }}
+                      className={styles.navItem}
+                      data-active={isActive}
+                      data-locked={item.status === "locked"}
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: spacing[3],
-                        }}
-                      >
-                        <span style={{ fontSize: 16 }}>{item.icon}</span>
+                      <div className={styles.navItemLeft}>
+                        <span className={styles.navItemIcon}>{item.icon}</span>
                         <span
-                          style={{
-                            fontWeight: isActive ? 700 : 500,
-                            fontSize: 13,
-                          }}
+                          className={styles.navItemLabel}
+                          data-active={isActive}
                         >
                           {item.label}
                         </span>
                       </div>
                       {item.status && item.status !== "active" && (
                         <div
-                          style={{
-                            fontSize: 8,
-                            padding: "2px 4px",
-                            borderRadius: 4,
-                            background:
-                              item.status === "experimental"
-                                ? "rgba(50, 215, 75, 0.1)"
-                                : "rgba(255, 255, 255, 0.05)",
-                            color:
-                              item.status === "experimental"
-                                ? "#32d74b"
-                                : "inherit",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            textTransform: "uppercase",
-                            fontWeight: 800,
-                          }}
+                          className={
+                            item.status === "experimental"
+                              ? styles.statusBadgeExperimental
+                              : styles.statusBadgeOther
+                          }
                         >
                           {item.status === "experimental"
                             ? "BETA"
@@ -424,20 +337,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </nav>
 
       {/* Footer */}
-      <div
-        style={{
-          marginTop: "auto",
-          padding: spacing[4],
-          borderTop: `1px solid ${theme.border.subtle}`,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: spacing[3],
-          }}
-        >
+      <div className={styles.footer}>
+        <div className={styles.coreStatusRow}>
           <CoreStatusBadge />
         </div>
         <Button
@@ -446,9 +347,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           onClick={() => navigate("/app/select-tenant")}
           style={{
             width: "100%",
-            marginBottom: spacing[2],
+            marginBottom: "0.5rem",
             justifyContent: "flex-start",
-            color: theme.text.secondary,
+            color: "#a1a1aa",
           }}
         >
           🏢 Trocar Restaurante
@@ -459,7 +360,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           onClick={handleLogout}
           style={{
             width: "100%",
-            marginBottom: spacing[3],
+            marginBottom: "0.75rem",
             justifyContent: "flex-start",
           }}
         >
@@ -467,7 +368,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         </Button>
 
         {/* CONTRATO_OWNER_ONLY_WEB: sem seletor de papel; web = Dono apenas. */}
-        <Text size="xs" color="tertiary" style={{ marginTop: spacing[3] }}>
+        <Text size="xs" color="tertiary" style={{ marginTop: "0.75rem" }}>
           {role.toUpperCase()} • v2.2 (Context Engine)
         </Text>
       </div>
