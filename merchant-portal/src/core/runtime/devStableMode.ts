@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 /**
  * DEV_STABLE_MODE (SSOT)
  *
