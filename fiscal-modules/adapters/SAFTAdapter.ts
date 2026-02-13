@@ -11,6 +11,12 @@ import type { CoreEvent } from "../../event-log/types";
 import type { LegalSeal } from "../../legal-boundary/types";
 import { Logger } from "../../merchant-portal/src/core/logger/Logger";
 import type { FiscalObserver } from "../FiscalObserver";
+import {
+  buildAtcud,
+  buildInvoiceNumber,
+  computeHashChain,
+} from "../pt/saft/saftUtils";
+import { generateSaftXml } from "../pt/saft/saftXml";
 import type { FiscalResult, TaxDocument } from "../types";
 
 export class SAFTAdapter implements FiscalObserver {
@@ -27,7 +33,7 @@ export class SAFTAdapter implements FiscalObserver {
       const taxDoc = this.mapToTaxDocument(seal, event);
 
       // 2. Gerar XML SAF-T
-      const xml = this.generateSAFTXML(taxDoc);
+      const xml = generateSaftXml(taxDoc);
 
       // 3. Transmitir para governo (MVP: simulação)
       // Em produção, isso faria POST para API do governo português
@@ -63,6 +69,19 @@ export class SAFTAdapter implements FiscalObserver {
     const subtotal = totalAmount - vatAmount;
     const vatAmountCents = Math.round(vatAmount * 100); // TASK-2.3.1: Valor absoluto em centavos
 
+    const invoiceSeries = payload.invoice_series || payload.series || "FT-2026";
+    const invoiceSequence = Number(
+      payload.invoice_sequence ?? payload.sequence_id ?? 1,
+    );
+    const invoiceNumber = buildInvoiceNumber(invoiceSeries, invoiceSequence);
+    const atcud = buildAtcud(invoiceSeries, invoiceSequence);
+    const issuedAt = payload.issued_at || new Date().toISOString();
+    const prevHash = payload.hash_chain_prev || "GENESIS";
+    const hashChain = computeHashChain(
+      prevHash,
+      `${invoiceNumber}|${totalAmount.toFixed(2)}|${issuedAt}|${seal.seal_id}`,
+    );
+
     // Mapear items do payload
     const items = (payload.items || []).map((item: any) => ({
       code: item.product_id || item.code || "N/A",
@@ -97,133 +116,21 @@ export class SAFTAdapter implements FiscalObserver {
         subtotal: subtotal,
         items: items,
         generated_at: new Date().toISOString(),
+        issued_at: issuedAt,
+        invoice_series: invoiceSeries,
+        invoice_sequence: invoiceSequence,
+        invoice_number: invoiceNumber,
+        atcud,
+        hash_chain_prev: prevHash,
+        hash_chain: hashChain,
+        seal_hash: seal.hash,
+        restaurant_name: payload.restaurant_name,
+        tax_registration_number: payload.tax_registration_number,
+        address: payload.address,
+        city: payload.city,
+        postal_code: payload.postal_code,
       },
     };
-  }
-
-  private generateSAFTXML(taxDoc: TaxDocument): string {
-    // MVP: XML básico conforme estrutura SAF-T
-    // Em produção, usar biblioteca XML ou template engine
-    const now = new Date();
-    const nowISO = now.toISOString();
-    const dateStr = now.toISOString().split("T")[0];
-    const protocol = `SAFT-${Date.now()}`;
-
-    // Gerar todas as linhas de itens
-    const linesXML = taxDoc.items
-      .map(
-        (item, index) => `
-                <Line>
-                    <LineNumber>${index + 1}</LineNumber>
-                    <ProductCode>${this.escapeXML(
-                      item.code || "N/A",
-                    )}</ProductCode>
-                    <ProductDescription>${this.escapeXML(
-                      item.description || "Item",
-                    )}</ProductDescription>
-                    <Quantity>${item.quantity || 1}</Quantity>
-                    <UnitPrice>${item.unit_price.toFixed(2)}</UnitPrice>
-                    <CreditAmount>${item.total.toFixed(2)}</CreditAmount>
-                    <Tax>
-                        <TaxType>IVA</TaxType>
-                        <TaxCountryRegion>PT</TaxCountryRegion>
-                        <TaxCode>NOR</TaxCode>
-                        <TaxPercentage>23.00</TaxPercentage>
-                    </Tax>
-                </Line>`,
-      )
-      .join("");
-
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<AuditFile xmlns="urn:OECD:StandardAuditFile-Tax:PT_1.04_01">
-    <Header>
-        <AuditFileVersion>1.04_01</AuditFileVersion>
-        <CompanyID>${this.escapeXML(
-          taxDoc.raw_payload?.restaurant_id?.toString().substring(0, 20) ||
-            "RESTAURANTE",
-        )}</CompanyID>
-        <TaxRegistrationNumber>${this.escapeXML(
-          taxDoc.raw_payload?.tax_registration_number || "999999999",
-        )}</TaxRegistrationNumber>
-        <TaxAccountingBasis>N</TaxAccountingBasis>
-        <CompanyName>${this.escapeXML(
-          taxDoc.raw_payload?.restaurant_name || "Restaurante",
-        )}</CompanyName>
-        <CompanyAddress>
-            <AddressDetail>${this.escapeXML(
-              taxDoc.raw_payload?.address || "N/A",
-            )}</AddressDetail>
-            <City>${this.escapeXML(taxDoc.raw_payload?.city || "N/A")}</City>
-            <PostalCode>${this.escapeXML(
-              taxDoc.raw_payload?.postal_code || "0000-000",
-            )}</PostalCode>
-            <Country>PT</Country>
-        </CompanyAddress>
-        <FiscalYear>${now.getFullYear()}</FiscalYear>
-        <StartDate>${dateStr}</StartDate>
-        <EndDate>${dateStr}</EndDate>
-        <CurrencyCode>EUR</CurrencyCode>
-        <DateCreated>${nowISO}</DateCreated>
-        <TaxEntity>N/A</TaxEntity>
-        <ProductCompanyTaxID>N/A</ProductCompanyTaxID>
-        <SoftwareCertificateNumber>0</SoftwareCertificateNumber>
-        <ProductID>ChefIApp</ProductID>
-        <ProductVersion>1.0</ProductVersion>
-    </Header>
-    <MasterFiles>
-        <TaxTable>
-            <TaxTableEntry>
-                <TaxType>IVA</TaxType>
-                <TaxCountryRegion>PT</TaxCountryRegion>
-                <TaxCode>NOR</TaxCode>
-                <Description>IVA Normal</Description>
-                <TaxPercentage>23.00</TaxPercentage>
-            </TaxTableEntry>
-        </TaxTable>
-    </MasterFiles>
-    <SourceDocuments>
-        <SalesInvoices>
-            <Invoice>
-                <InvoiceNo>${this.escapeXML(
-                  taxDoc.ref_event_id?.substring(0, 60) || "INV-" + Date.now(),
-                )}</InvoiceNo>
-                <DocumentStatus>
-                    <InvoiceStatus>N</InvoiceStatus>
-                </DocumentStatus>
-                <Hash>${this.escapeXML(
-                  taxDoc.ref_seal_id?.substring(0, 172) || "HASH",
-                )}</Hash>
-                <HashControl>1</HashControl>
-                <Period>${String(now.getMonth() + 1).padStart(2, "0")}</Period>
-                <InvoiceDate>${dateStr}</InvoiceDate>
-                <InvoiceType>FT</InvoiceType>
-                <SourceID>TPV</SourceID>
-                <SystemEntryDate>${nowISO}</SystemEntryDate>
-                <CustomerID>CLIENTE</CustomerID>
-                ${linesXML}
-                <DocumentTotals>
-                    <TaxPayable>${(taxDoc.taxes.vat || 0).toFixed(
-                      2,
-                    )}</TaxPayable>
-                    <NetTotal>${(
-                      taxDoc.total_amount - (taxDoc.taxes.vat || 0)
-                    ).toFixed(2)}</NetTotal>
-                    <GrossTotal>${taxDoc.total_amount.toFixed(2)}</GrossTotal>
-                </DocumentTotals>
-            </Invoice>
-        </SalesInvoices>
-    </SourceDocuments>
-</AuditFile>`;
-  }
-
-  private escapeXML(str: string): string {
-    if (!str) return "";
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&apos;");
   }
 
   private async transmitToGovernment(

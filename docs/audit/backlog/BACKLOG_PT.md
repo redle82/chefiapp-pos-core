@@ -24,13 +24,13 @@ Status: Active
 
 | #       | Task                                         | Priority | Status  | Notes                                                  |
 | ------- | -------------------------------------------- | -------- | ------- | ------------------------------------------------------ |
-| PT-1-01 | Implement SAF-T PT XML generator             | P0       | 🔲 Todo | Module: `fiscal-modules/pt/saft/`                      |
-| PT-1-02 | ATCUD generation and sequential numbering    | P0       | 🔲 Todo | Must follow Portaria 195/2020                          |
-| PT-1-03 | Hash chain implementation (SHA-256)          | P0       | 🔲 Todo | Each doc references previous hash                      |
+| PT-1-01 | Implement SAF-T PT XML generator             | P0       | ✅ Done | Module: `fiscal-modules/pt/saft/`                      |
+| PT-1-02 | ATCUD generation and sequential numbering    | P0       | ✅ Done | Must follow Portaria 195/2020                          |
+| PT-1-03 | Hash chain implementation (SHA-256)          | P0       | ✅ Done | Each doc references previous hash                      |
 | PT-1-04 | VAT calculation engine (IVA PT rates)        | P0       | 🔲 Todo | 23% standard, 13% intermediate, 6% reduced             |
 | PT-1-05 | Rounding rules per AT specification          | P1       | 🔲 Todo | Line-level vs document-level                           |
-| PT-1-06 | Unit tests for SAF-T XML output              | P0       | 🔲 Todo | Use AT XSD for validation                              |
-| PT-1-07 | Unit tests for hash chain integrity          | P0       | 🔲 Todo | Verify sequential, tamper-detection                    |
+| PT-1-06 | Unit tests for SAF-T XML output              | P0       | ✅ Done | Use AT XSD for validation                              |
+| PT-1-07 | Unit tests for hash chain integrity          | P0       | ✅ Done | Verify sequential, tamper-detection                    |
 | PT-1-08 | Sample SAF-T XML validated against AT schema | P0       | 🔲 Todo | Artifact: `evidence/engineering/saft_sample_valid.xml` |
 | PT-1-09 | Tax calculation test matrix                  | P1       | 🔲 Todo | Cover all VAT rates + exemptions                       |
 
@@ -77,11 +77,11 @@ Status: Active
 
 ## Summary
 
-| Phase     | Total  | Done  | Remaining |
-| --------- | ------ | ----- | --------- |
-| 0         | 6      | 6     | 0         |
-| 1         | 9      | 0     | 9         |
-| 2         | 8      | 0     | 8         |
-| 3         | 5      | 0     | 5         |
-| 4         | 5      | 0     | 5         |
-| **Total** | **33** | **6** | **27**    |
+| Phase     | Total  | Done   | Remaining |
+| --------- | ------ | ------ | --------- |
+| 0         | 6      | 6      | 0         |
+| 1         | 9      | 5      | 4         |
+| 2         | 8      | 0      | 8         |
+| 3         | 5      | 0      | 5         |
+| 4         | 5      | 0      | 5         |
+| **Total** | **33** | **11** | **22**    |
