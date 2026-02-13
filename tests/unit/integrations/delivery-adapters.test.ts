@@ -440,7 +440,7 @@ describe("OrderIngestionPipeline", () => {
       type: "order.created" as const,
       payload: {
         orderId: "ext-001",
-        source: "delivery",
+        source: "delivery" as const,
         customerName: "Miguel Ferreira",
         customerPhone: "+351966666666",
         totalCents: 1500,
@@ -502,7 +502,7 @@ describe("OrderIngestionPipeline", () => {
       type: "order.created" as const,
       payload: {
         orderId: "ext-audit-001",
-        source: "delivery",
+        source: "delivery" as const,
         customerName: "Audit Test",
         totalCents: 1000,
         items: [{ id: "a1", name: "Item", quantity: 1, priceCents: 1000 }],

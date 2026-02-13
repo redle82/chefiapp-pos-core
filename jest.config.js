@@ -72,6 +72,7 @@ module.exports = {
         "ReservationEngine\\.test",
         "FinanceEngine\\.test",
         "delivery-adapters\\.test",
+        "PaymentEngine\\.test",
       ],
       testMatch: [
         "**/*.test.ts",
