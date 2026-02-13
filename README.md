@@ -30,8 +30,10 @@
 - **🏛️ Core Developer** → Read [`CORE_MANIFESTO.md`](CORE_MANIFESTO.md) (30 min) ⭐
 - **🔍 Validator/QA** → Read [`docs/audit/HUMAN_TEST_QUICK_REFERENCE.md`](docs/audit/HUMAN_TEST_QUICK_REFERENCE.md) (5 min)
 
-### What's New (v1.2.0)
+### What's New (v1.4.x / 2026-02)
 
+- ✅ **Deploy só marketing** — Build `build:marketing` e output `dist-marketing` para subir na Vercel apenas landing, blog, pricing (sem app/config/TPV). Ver [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md).
+- ✅ **Estado atual documentado** — [docs/ESTADO_ATUAL_2026_02.md](docs/ESTADO_ATUAL_2026_02.md) reflete a estrutura e os dois caminhos de deploy.
 - ✅ **Sentry** — Error tracking in all apps
 - ✅ **Metrics Dashboard** — Orders/hour, average ticket in real-time
 - ✅ **SEO** — Dynamic meta tags + Schema.org
@@ -60,7 +62,7 @@ ChefIApp is not just a POS. It is an **Operational Nervous System** that:
 **ChefIApp OS – Como funciona de verdade:** [`docs/strategy/CHEFIAPP_OS_COMO_FUNCIONA.md`](docs/strategy/CHEFIAPP_OS_COMO_FUNCIONA.md) — narrativa (Docker = mundo, Kernel = leis, Core Finance = coração, TPV/KDS = braços, ERO = consciência). **Mapa Vivo do Sistema:** [`docs/CHEFIAPP_SYSTEM_MAP.html`](docs/CHEFIAPP_SYSTEM_MAP.html) — documento único no browser (visão, camadas, papéis, SystemTree, rotas, offline). **Doutrina do produto:** [`docs/CHEFIAPP_PRODUCT_DOCTRINE.md`](docs/CHEFIAPP_PRODUCT_DOCTRINE.md) — princípios imutáveis e contrato com o futuro. **Modo seguro para IA:** [`docs/CHEFIAPP_SYSTEM_SAFE_MODE.md`](docs/CHEFIAPP_SYSTEM_SAFE_MODE.md) — prompt canónico para qualquer IA trabalhar no projeto sem quebrar o sistema. Links: [ERO_CANON](docs/ERO_CANON.md), [BOOTSTRAP_CANON](docs/boot/BOOTSTRAP_CANON.md), [checklist operacional](docs/strategy/CHECKLIST_OPERACIONAL_TPV_KDS_CLIENTE.md), [CLI](docs/strategy/CLI_CHEFIAPP_OS.md).
 
 **📚 Technical Documentation:** Organized in layers — see [`docs/DOC_INDEX.md`](docs/DOC_INDEX.md)
-**📍 Current Status:** See [`docs/ONDE_ESTAMOS_AGORA.md`](docs/ONDE_ESTAMOS_AGORA.md) for where we are now
+**📍 Current Status:** See [`docs/ONDE_ESTAMOS_AGORA.md`](docs/ONDE_ESTAMOS_AGORA.md) and [`docs/ESTADO_ATUAL_2026_02.md`](docs/ESTADO_ATUAL_2026_02.md) for the current state of the project. **Deploy (marketing-only or full):** [`docs/DEPLOY_VERCEL.md`](docs/DEPLOY_VERCEL.md).
 
 ---
 
@@ -294,13 +296,19 @@ The system is **complete and stable** for production.
 
 ```
 chefiapp-pos-core/
-├── mobile-app/         # Staff App (Waiter, Kitchen, Cashier)
-├── merchant-portal/    # Owner Dashboard
+├── merchant-portal/    # Web app: marketing (LandingV2, blog, pricing) + operational (TPV, KDS, Staff, Config)
+│   ├── src/main_debug.tsx      # Full app entry
+│   ├── src/main-marketing.tsx  # Marketing-only entry (landing, blog, pricing, changelog, security, status, legal)
+│   ├── dist/                   # Full build output
+│   ├── dist-marketing/         # Marketing-only build output (npm run build:marketing)
+│   └── vercel.json             # SPA rewrites for deploy
+├── docker-core/        # Core stack (Postgres, PostgREST, etc.)
 ├── customer-portal/    # Digital Menu (QR Code)
-├── supabase/           # Migrations + Edge Functions
-├── docs/               # Documentation
+├── docs/               # Documentation (DOC_INDEX, DEPLOY_VERCEL, ESTADO_ATUAL_2026_02)
 └── scripts/            # Automation
 ```
+
+**Deploy:** Marketing-only → Root `merchant-portal`, Build `npm run build:marketing`, Output `dist-marketing`. Full app → Root empty, Build `npm run build`, Output `public/app`. See [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md).
 
 ### Quality (v1.2.0)
 
@@ -311,9 +319,9 @@ chefiapp-pos-core/
 
 ---
 
-**Version:** 1.2.0
-**Date:** 2026-01-24
-**Status:** 🟢 **PRODUCTION READY**
+**Version:** 1.4.x
+**Date:** 2026-02
+**Status:** 🟢 **PRODUCTION READY** — Repo state: marketing build separate ([docs/ESTADO_ATUAL_2026_02.md](docs/ESTADO_ATUAL_2026_02.md))
 
 ---
 

@@ -2,47 +2,72 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.2] - 2026-02
+
+### 📚 Repositório alinhado com a cara atual do projeto
+
+- **Estado atual:** Novo [docs/ESTADO_ATUAL_2026_02.md](docs/ESTADO_ATUAL_2026_02.md) — estrutura (merchant-portal, dois entry points, dois builds), deploy Vercel (só marketing vs completo), rotas de marketing e app.
+- **ONDE_ESTAMOS_AGORA.md:** Atualizado para 2026-02; referência a ESTADO_ATUAL_2026_02 e DEPLOY_VERCEL; secção "Onde está cada coisa" com deploy só marketing.
+- **README.md:** Project structure atualizada (merchant-portal com main-marketing, dist-marketing, build:marketing); link para DEPLOY_VERCEL e ESTADO_ATUAL_2026_02; versão/data 2026-02.
+- **DOC_INDEX.md:** Referências a ESTADO_ATUAL_2026_02 e DEPLOY_VERCEL no resumo executivo e no topo.
+- **Root package.json:** Script `build:marketing` — executa `npm -w merchant-portal run build:marketing` a partir da raiz.
+
+Objetivo: o próximo push deixa o repositório com a cara atual do processo do projeto (marketing separável, deploy documentado, estado consolidado).
+
 ---
+
+## [1.4.1] - 2026-02-13
+
+### 🎯 UI Surface Consolidation
+
+- Removed legacy Button/Card/Input shims from `ui/design-system/primitives`
+- Deleted legacy wrappers in `ui/components/Button` and `components/ui/Card`
+- Enforced direct imports from `ui/design-system/*` in merchant-portal
 
 ## [1.4.0] - 2026-02-12
 
 ### 🔒 Production Readiness Hardening (5-Block Plan)
 
 #### Block 1 — RLS & Tenant Isolation
+
 - **SQL Migration:** `20260210_rls_hardening.sql` — `has_restaurant_access()` guard function enforcing tenant isolation across all tables
 - Row-Level Security policies on `gm_orders`, `gm_order_items`, `gm_payments`, `gm_sessions`, `gm_cash_registers`, `gm_z_reports`
 - `event_store` + `legal_seals` tenant hardening via `20260220_event_store_tenant_hardening.sql`
 
 #### Block 2 — State Machine & Status Mapping
+
 - **SQL Migration:** `20260210_order_state_machine.sql` — `transition_order_status` RPC with valid-transition enforcement
 - Status mapping alignment: DB uppercase ↔ frontend lowercase via `mapStatusToLocal()` in OrderContextReal
 - CashRegister state machine: `open_cash_register` / `close_cash_register` RPCs with `gm_cash_register_movements` audit trail
 
 #### Block 3 — RuntimeContext & Sentry
+
 - RuntimeContext unification: `core/runtime/RuntimeContext.ts` is canonical; `core/kernel/` is thin re-export barrel
 - Sentry scope tags (`rt.env`, `rt.restaurant_id`, `rt.mode`) via `applySentryScope()`
 - `assertNoMock()`, `assertProduction()`, `assertValidRestaurantId()`, `validateDemoFlags()` guards
 
 #### Block 4 — Event Sourcing & Health Check
+
 - Event sourcing ADR (DORMANT status documented)
 - `check_core_health` RPC returning table counts, PostgREST version, RLS status
 - CDC `updated_at` triggers on all core tables
 
 #### Block 5 — Dead Code & Architecture Docs
+
 - Dead code cleanup: removed unused imports, unreachable branches, legacy stubs
 - Architecture contracts: `docs/contracts/`, `docs/runbooks/`, `docs/architecture/`
 - LandingV2 page and fiscal reconciliation UI
 
 ### 🛠 TypeScript Error Reduction Campaign (655 → 518, -21%)
 
-| Category | Errors Fixed | Description |
-|----------|-------------|-------------|
-| TS1484 | 25 | `import type` violations (`verbatimModuleSyntax`) |
-| TS2551 | 5 | Property name typos (`blockingReason` → `blockingReasons`) |
-| TS7006 | 41 | Implicit `any` parameter annotations |
-| TS2304 | 47 | Missing names (imports, declarations, stubs) |
-| TS2307 | 34 | Module resolution (path fixes + 14 stub files) |
-| TS18046-48 | 22 | Null/undefined/unknown guards (optional chaining, assertions) |
+| Category   | Errors Fixed | Description                                                   |
+| ---------- | ------------ | ------------------------------------------------------------- |
+| TS1484     | 25           | `import type` violations (`verbatimModuleSyntax`)             |
+| TS2551     | 5            | Property name typos (`blockingReason` → `blockingReasons`)    |
+| TS7006     | 41           | Implicit `any` parameter annotations                          |
+| TS2304     | 47           | Missing names (imports, declarations, stubs)                  |
+| TS2307     | 34           | Module resolution (path fixes + 14 stub files)                |
+| TS18046-48 | 22           | Null/undefined/unknown guards (optional chaining, assertions) |
 
 ### 📁 New Files
 

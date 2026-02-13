@@ -26,6 +26,7 @@
     "audit:stress": "WORLD_STRESS=true jest tests/massive/global.end_to_end.audit.test.ts --runInBand --testTimeout=600000",
     "audit:pilot": "jest tests/massive/global.end_to_end.audit.test.ts --runInBand --testTimeout=60000",
     "build": "npm run -s build:core && npm -w merchant-portal run -s build && npm run -s export:portal",
+    "build:marketing": "npm -w merchant-portal run -s build:marketing",
     "build:core": "tsc -p tsconfig.json",
     "build:server": "tsc -p tsconfig.server.json",
     "export:portal": "rm -rf public/app && mkdir -p public/app && cp -R merchant-portal/dist/. public/app/",

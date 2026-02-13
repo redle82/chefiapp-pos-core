@@ -1,21 +1,18 @@
 # Onde Estamos Agora — ChefIApp
 
-**Data:** 2026-01-28
-**Status:** ✅ **PRONTO PARA DEMO**
+**Data:** 2026-02
+**Status:** ✅ **REPOSITÓRIO ALINHADO COM A CARA ATUAL DO PROJETO**
+
+> **Estado detalhado:** Ver **[ESTADO_ATUAL_2026_02.md](ESTADO_ATUAL_2026_02.md)** — estrutura, builds (marketing vs completo), deploy Vercel.
 
 ---
 
 ## ⚡ Em 30 Segundos
 
-Sistema ChefIApp está **transformado de técnico para produto vendável**:
-
-- ✅ Dashboard em modo venda (não comunica mais "incompleto")
-- ✅ Landing page criada (ponto de entrada comercial)
-- ✅ Testes todos passando (74 testes)
-- ✅ Documentação organizada (3 camadas)
-- ✅ Roadmap analisado (próximos passos claros)
-
-**Billing (webhook → live):** Implementado — assinatura ACTIVE no Stripe atualiza `product_mode` no Core via `server/billing-webhook-server.ts` e `server/core-client.ts`.
+- **Merchant-portal** = app web única: **marketing** (LandingV2, blog, pricing, changelog, security, status, legal) **+ app operacional** (TPV, KDS, Staff, Config).
+- **Deploy só marketing:** Build `build:marketing` → output `dist-marketing` — sobe na Vercel **apenas** a área de vendas (sem app/config/TPV). Ver [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md).
+- **Deploy completo:** `npm run build` (raiz) → `public/app` — app inteiro.
+- Dashboard em modo venda, LandingV2, testes e documentação organizados. **Billing (webhook → live)** implementado.
 
 ---
 
@@ -41,21 +38,21 @@ Sistema ChefIApp está **transformado de técnico para produto vendável**:
 
 ### Para Visitantes (Marketing)
 
-- **Landing Page:** `http://localhost:5175/`
-- **O que faz:** Explica produto, diferenciais, CTAs
-- **Para onde vai:** `/dashboard` (via CTAs)
+- **Landing / Marketing:** `http://localhost:5175/` (ou deploy Vercel só marketing)
+- **Rotas:** `/`, `/v2`, `/pricing`, `/blog`, `/changelog`, `/security`, `/status`, `/legal/*`, `/app/trial-tpv`
+- **Deploy só marketing:** Vercel com Root=`merchant-portal`, Build=`npm run build:marketing`, Output=`dist-marketing` — ver [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md)
 
 ### Para Usuários (Produto)
 
-- **Dashboard:** `http://localhost:5175/dashboard`
-- **O que faz:** Mostra módulos disponíveis para ativação
-- **Estado:** Modo venda (copy positivo, visual convidativo)
+- **App / Dashboard:** `http://localhost:5175/app/staff/home` (e rotas `/config`, `/op/tpv`, etc.)
+- **Estado:** Modo venda; app operacional (TPV, KDS, Staff) funcional com Core ligado
 
 ### Para Desenvolvedores (Técnico)
 
-- **Documentação:** `docs/DOC_INDEX.md`
-- **Estado atual:** `docs/ESTADO_ATUAL_2026_01_28.md`
-- **Roadmap:** `docs/ANALISE_ROADMAP.md`
+- **Estado atual (cara do projeto):** [ESTADO_ATUAL_2026_02.md](ESTADO_ATUAL_2026_02.md)
+- **Documentação:** [DOC_INDEX.md](DOC_INDEX.md)
+- **Deploy:** [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md)
+- **Roadmap:** [ANALISE_ROADMAP.md](ANALISE_ROADMAP.md)
 
 ---
 
@@ -156,5 +153,5 @@ Sistema ChefIApp está **transformado de técnico para produto vendável**:
 
 ---
 
-**Última atualização:** 2026-01-29
-**Status:** ✅ Pronto para demo — Billing webhook implementado
+**Última atualização:** 2026-02
+**Status:** ✅ Repositório com cara atual — build só marketing, deploy Vercel documentado, estado em ESTADO_ATUAL_2026_02.md

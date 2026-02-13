@@ -1,9 +1,10 @@
 # Índice da documentação — o que é válido hoje
 
-**Última revisão:** 2026-01-28
+**Última revisão:** 2026-02
 **Objetivo:** Classificar docs em contrato ativo, operacional ou histórico. Nada é apagado; o que não é atual fica arquivado ou referenciado.
 
-**👉 Para entender onde estamos agora:** Ver **[ONDE_ESTAMOS_AGORA.md](ONDE_ESTAMOS_AGORA.md)**  
+**👉 Para entender onde estamos agora:** Ver **[ONDE_ESTAMOS_AGORA.md](ONDE_ESTAMOS_AGORA.md)** e **[ESTADO_ATUAL_2026_02.md](ESTADO_ATUAL_2026_02.md)** (estrutura, builds marketing vs completo, deploy Vercel).  
+**👉 Deploy (só marketing ou completo):** Ver **[DEPLOY_VERCEL.md](DEPLOY_VERCEL.md)**.  
 **👉 O que é v1 (declaração oficial):** Ver **[CHEFIAPP_OS_V1_OFFICIAL.md](CHEFIAPP_OS_V1_OFFICIAL.md)**
 
 ---
@@ -102,8 +103,11 @@ Exemplos de candidatos a arquivar (se ainda estiverem na raiz de `docs/`): notas
 
 ## 5. Resumo executivo
 
-- **Fase fechada + next:** [FASE_FECHADA_NEXT.md](FASE_FECHADA_NEXT.md) — O que está feito (build verde, fluxo coerente) e próximos passos (persistência productMode, billing, sandbox TPV).
-- **Estado atual consolidado:** [ESTADO_ATUAL_2026_01_28.md](ESTADO_ATUAL_2026_01_28.md) — Checkpoint completo do projeto
+- **Estado atual (cara do projeto):** [ESTADO_ATUAL_2026_02.md](ESTADO_ATUAL_2026_02.md) — Estrutura, build só marketing vs completo, deploy Vercel (marketing-only e full).
+- **Deploy Vercel:** [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md) — Passo a passo para deploy só marketing (Root=merchant-portal, build:marketing, dist-marketing) e build completo.
+- **Onde estamos:** [ONDE_ESTAMOS_AGORA.md](ONDE_ESTAMOS_AGORA.md) — Resumo e links para estado e deploy.
+- **Fase fechada + next:** [FASE_FECHADA_NEXT.md](FASE_FECHADA_NEXT.md) — O que está feito e próximos passos.
+- **Estado histórico (jan 2026):** [ESTADO_ATUAL_2026_01_28.md](ESTADO_ATUAL_2026_01_28.md) — Checkpoint anterior
 - **Transformação produto:** [TRANSFORMACAO_PRODUTO_COMPLETA.md](TRANSFORMACAO_PRODUTO_COMPLETA.md) — Resumo da transformação de técnico para produto
 - **Sessão completa:** [SESSAO_TRANSFORMACAO_PRODUTO.md](SESSAO_TRANSFORMACAO_PRODUTO.md) — Resumo executivo desta sessão
 - **Contrato ativo:** [STATE_PURE_DOCKER_APP_LAYER.md](STATE_PURE_DOCKER_APP_LAYER.md) + [contracts/](contracts/) + SYSTEM_TREE e GUIA_VALIDACAO_RUNTIME quando aplicável.
