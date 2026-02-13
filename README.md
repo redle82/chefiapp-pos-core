@@ -61,8 +61,9 @@ ChefIApp is not just a POS. It is an **Operational Nervous System** that:
 
 **ChefIApp OS – Como funciona de verdade:** [`docs/strategy/CHEFIAPP_OS_COMO_FUNCIONA.md`](docs/strategy/CHEFIAPP_OS_COMO_FUNCIONA.md) — narrativa (Docker = mundo, Kernel = leis, Core Finance = coração, TPV/KDS = braços, ERO = consciência). **Mapa Vivo do Sistema:** [`docs/CHEFIAPP_SYSTEM_MAP.html`](docs/CHEFIAPP_SYSTEM_MAP.html) — documento único no browser (visão, camadas, papéis, SystemTree, rotas, offline). **Doutrina do produto:** [`docs/CHEFIAPP_PRODUCT_DOCTRINE.md`](docs/CHEFIAPP_PRODUCT_DOCTRINE.md) — princípios imutáveis e contrato com o futuro. **Modo seguro para IA:** [`docs/CHEFIAPP_SYSTEM_SAFE_MODE.md`](docs/CHEFIAPP_SYSTEM_SAFE_MODE.md) — prompt canónico para qualquer IA trabalhar no projeto sem quebrar o sistema. Links: [ERO_CANON](docs/ERO_CANON.md), [BOOTSTRAP_CANON](docs/boot/BOOTSTRAP_CANON.md), [checklist operacional](docs/strategy/CHECKLIST_OPERACIONAL_TPV_KDS_CLIENTE.md), [CLI](docs/strategy/CLI_CHEFIAPP_OS.md).
 
-**📚 Technical Documentation:** Organized in layers — see [`docs/DOC_INDEX.md`](docs/DOC_INDEX.md)
-**📍 Current Status:** See [`docs/ONDE_ESTAMOS_AGORA.md`](docs/ONDE_ESTAMOS_AGORA.md) and [`docs/ESTADO_ATUAL_2026_02.md`](docs/ESTADO_ATUAL_2026_02.md) for the current state of the project. **Deploy (marketing-only or full):** [`docs/DEPLOY_VERCEL.md`](docs/DEPLOY_VERCEL.md).
+**📚 Technical Documentation:** Organized in layers — see [`docs/DOC_INDEX.md`](docs/DOC_INDEX.md)  
+**🏢 Project Areas (Enterprise):** All areas explicit — see [`docs/ESTRUTURA_PROJETO_ENTERPRISE.md`](docs/ESTRUTURA_PROJETO_ENTERPRISE.md)  
+**📍 Current Status:** See [`docs/ONDE_ESTAMOS_AGORA.md`](docs/ONDE_ESTAMOS_AGORA.md) and [`docs/ESTADO_ATUAL_2026_02.md`](docs/ESTADO_ATUAL_2026_02.md). **Deploy (marketing-only or full):** [`docs/DEPLOY_VERCEL.md`](docs/DEPLOY_VERCEL.md).
 
 ---
 
@@ -292,20 +293,22 @@ The system is **complete and stable** for production.
 | Observability | Sentry                                |
 | Analytics     | Google Analytics + Meta Pixel         |
 
-### Project Structure
+### Project Structure (Enterprise)
+
+**All areas of the project are explicit.** See **[docs/ESTRUTURA_PROJETO_ENTERPRISE.md](docs/ESTRUTURA_PROJETO_ENTERPRISE.md)** for the canonical map (Product & GTM, Engineering — Merchant Portal, Customer Portal, Core, Operations, Documentation, Quality, Observability, Compliance, Audit & Governance).
 
 ```
 chefiapp-pos-core/
-├── merchant-portal/    # Web app: marketing (LandingV2, blog, pricing) + operational (TPV, KDS, Staff, Config)
+├── merchant-portal/    # Product & GTM + Full App (TPV, KDS, Staff, Config)
 │   ├── src/main_debug.tsx      # Full app entry
 │   ├── src/main-marketing.tsx  # Marketing-only entry (landing, blog, pricing, changelog, security, status, legal)
 │   ├── dist/                   # Full build output
 │   ├── dist-marketing/         # Marketing-only build output (npm run build:marketing)
 │   └── vercel.json             # SPA rewrites for deploy
-├── docker-core/        # Core stack (Postgres, PostgREST, etc.)
-├── customer-portal/    # Digital Menu (QR Code)
-├── docs/               # Documentation (DOC_INDEX, DEPLOY_VERCEL, ESTADO_ATUAL_2026_02)
-└── scripts/            # Automation
+├── docker-core/        # Core backend (Postgres, PostgREST)
+├── customer-portal/    # Customer Portal (Digital Menu / QR)
+├── docs/               # Documentation (DOC_INDEX, ESTADO_ATUAL, ESTRUTURA_PROJETO_ENTERPRISE)
+└── scripts/            # Automation, health, flows
 ```
 
 **Deploy:** Marketing-only → Root `merchant-portal`, Build `npm run build:marketing`, Output `dist-marketing`. Full app → Root empty, Build `npm run build`, Output `public/app`. See [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md).

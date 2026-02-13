@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.3] - 2026-02
+
+### 🏢 Estrutura Enterprise — todas as áreas explícitas
+
+- **ESTRUTURA_PROJETO_ENTERPRISE.md:** Novo documento canónico — separação explícita de 10 áreas (Product & GTM, Engineering — Merchant Portal, Customer Portal, Core, Operations & DevOps, Documentation, Quality & Testing, Observability & Growth, Compliance & Legal, Audit & Governance). Propósito, código e docs por área; estrutura de pastas; single source of truth.
+- **README.md:** Secção "Project Structure (Enterprise)" com link para ESTRUTURA_PROJETO_ENTERPRISE; linha "Project Areas (Enterprise)" no bloco de documentação.
+- **DOC_INDEX.md:** Referência a ESTRUTURA_PROJETO_ENTERPRISE no topo e nova secção "5. Estrutura Enterprise (todas as áreas)"; resumo executivo com link para estrutura.
+- **ONDE_ESTAMOS_AGORA.md:** Referência a ESTRUTURA_PROJETO_ENTERPRISE no topo e em "Para Desenvolvedores".
+
+Objetivo: alinhar o projeto a nível Enterprise (Silicon Valley style), deixar explícita cada área e atualizar o GitHub com a estrutura atualizada.
+
+---
+
 ## [1.4.2] - 2026-02
 
 ### 📚 Repositório alinhado com a cara atual do projeto

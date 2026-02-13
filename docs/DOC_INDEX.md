@@ -4,6 +4,7 @@
 **Objetivo:** Classificar docs em contrato ativo, operacional ou histórico. Nada é apagado; o que não é atual fica arquivado ou referenciado.
 
 **👉 Para entender onde estamos agora:** Ver **[ONDE_ESTAMOS_AGORA.md](ONDE_ESTAMOS_AGORA.md)** e **[ESTADO_ATUAL_2026_02.md](ESTADO_ATUAL_2026_02.md)** (estrutura, builds marketing vs completo, deploy Vercel).  
+**👉 Estrutura Enterprise (todas as áreas explícitas):** Ver **[ESTRUTURA_PROJETO_ENTERPRISE.md](ESTRUTURA_PROJETO_ENTERPRISE.md)**.  
 **👉 Deploy (só marketing ou completo):** Ver **[DEPLOY_VERCEL.md](DEPLOY_VERCEL.md)**.  
 **👉 O que é v1 (declaração oficial):** Ver **[CHEFIAPP_OS_V1_OFFICIAL.md](CHEFIAPP_OS_V1_OFFICIAL.md)**
 
@@ -101,9 +102,16 @@ Exemplos de candidatos a arquivar (se ainda estiverem na raiz de `docs/`): notas
 
 ---
 
-## 5. Resumo executivo
+## 5. Estrutura Enterprise (todas as áreas)
+
+- **Estrutura do projeto (Enterprise):** [ESTRUTURA_PROJETO_ENTERPRISE.md](ESTRUTURA_PROJETO_ENTERPRISE.md) — Separação explícita de todas as áreas (Product & GTM, Engineering — Merchant Portal, Customer Portal, Core, Operations, Documentation, Quality, Observability, Compliance, Audit & Governance). Único ponto de entrada para "onde está o quê".
+
+---
+
+## 6. Resumo executivo
 
 - **Estado atual (cara do projeto):** [ESTADO_ATUAL_2026_02.md](ESTADO_ATUAL_2026_02.md) — Estrutura, build só marketing vs completo, deploy Vercel (marketing-only e full).
+- **Estrutura Enterprise:** [ESTRUTURA_PROJETO_ENTERPRISE.md](ESTRUTURA_PROJETO_ENTERPRISE.md) — Todas as áreas explícitas.
 - **Deploy Vercel:** [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md) — Passo a passo para deploy só marketing (Root=merchant-portal, build:marketing, dist-marketing) e build completo.
 - **Onde estamos:** [ONDE_ESTAMOS_AGORA.md](ONDE_ESTAMOS_AGORA.md) — Resumo e links para estado e deploy.
 - **Fase fechada + next:** [FASE_FECHADA_NEXT.md](FASE_FECHADA_NEXT.md) — O que está feito e próximos passos.

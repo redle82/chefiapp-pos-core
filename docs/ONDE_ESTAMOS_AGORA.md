@@ -3,7 +3,8 @@
 **Data:** 2026-02
 **Status:** ✅ **REPOSITÓRIO ALINHADO COM A CARA ATUAL DO PROJETO**
 
-> **Estado detalhado:** Ver **[ESTADO_ATUAL_2026_02.md](ESTADO_ATUAL_2026_02.md)** — estrutura, builds (marketing vs completo), deploy Vercel.
+> **Estado detalhado:** Ver **[ESTADO_ATUAL_2026_02.md](ESTADO_ATUAL_2026_02.md)** — estrutura, builds (marketing vs completo), deploy Vercel.  
+> **Estrutura Enterprise (todas as áreas explícitas):** Ver **[ESTRUTURA_PROJETO_ENTERPRISE.md](ESTRUTURA_PROJETO_ENTERPRISE.md)**.
 
 ---
 
@@ -50,6 +51,7 @@
 ### Para Desenvolvedores (Técnico)
 
 - **Estado atual (cara do projeto):** [ESTADO_ATUAL_2026_02.md](ESTADO_ATUAL_2026_02.md)
+- **Estrutura Enterprise (todas as áreas):** [ESTRUTURA_PROJETO_ENTERPRISE.md](ESTRUTURA_PROJETO_ENTERPRISE.md)
 - **Documentação:** [DOC_INDEX.md](DOC_INDEX.md)
 - **Deploy:** [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md)
 - **Roadmap:** [ANALISE_ROADMAP.md](ANALISE_ROADMAP.md)
