@@ -12,14 +12,13 @@ import {
   getTabIsolated,
   setTabIsolated,
 } from "../core/storage/TabIsolatedStorage";
+import styles from "./BootstrapPage.module.css";
 // TEMPORARY: Supabase auth only (quarantine). Domain reads/writes removed — Core only.
 import { db } from "../core/db";
 import { setActiveTenant } from "../core/tenant/TenantResolver";
 import { useBootstrapState } from "../hooks/useBootstrapState";
-import { InlineAlert } from "../ui/design-system";
-import { Button, Card, Input, Select } from "../ui/design-system/primitives";
-import { colors } from "../ui/design-system/tokens/colors";
-import { spacing } from "../ui/design-system/tokens/spacing";
+import { Button, Card, InlineAlert, Input } from "../ui/design-system";
+import { Select } from "../ui/design-system/primitives";
 
 /**
  * BootstrapPage — System Initialization
@@ -402,69 +401,21 @@ export function BootstrapPage({
   }, [runBootstrap]);
 
   return (
-    <div
-      style={{
-        background: colors.surface.base,
-        minHeight: "100vh",
-        color: colors.text.primary,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-          padding: `0 ${spacing[5]}`,
-          paddingBottom: "env(safe-area-inset-bottom)",
-        }}
-      >
+    <div className={styles.pageRoot}>
+      <div className={styles.pageContainer}>
         <BootstrapStepIndicator step={3} total={8} />
-        <main
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-            maxWidth: 420,
-            margin: "0 auto",
-            width: "100%",
-          }}
-        >
+        <main className={styles.mainContent}>
           {/* Onda 4 A2: form criar restaurante (nome + contacto) */}
           {state === "create_form" && (
             <>
-              <h1
-                className="h1"
-                style={{
-                  fontSize: 22,
-                  color: colors.text.primary,
-                  marginBottom: spacing[2],
-                }}
-              >
+              <h1 className={`h1 ${styles.heading}`}>
                 Criar o teu restaurante
               </h1>
-              <p
-                className="muted"
-                style={{
-                  marginBottom: spacing[6],
-                  fontSize: 14,
-                  color: colors.text.secondary,
-                }}
-              >
+              <p className={`muted ${styles.subtitle}`}>
                 Nome e contacto para começar.
               </p>
-              <Card padding="lg" style={{ width: "100%", maxWidth: 320 }}>
-                <form
-                  onSubmit={handleCreateRestaurant}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: spacing[4],
-                    textAlign: "left",
-                  }}
-                >
+              <Card padding="lg" className={styles.formCard}>
+                <form onSubmit={handleCreateRestaurant} className={styles.form}>
                   <Input
                     id="restaurant-name"
                     label="Nome do restaurante *"
@@ -525,25 +476,12 @@ export function BootstrapPage({
           {/* CREATING STATE (Onda 4 A2) */}
           {state === "creating" && (
             <>
-              <div
-                style={{
-                  width: 60,
-                  height: 60,
-                  border: "3px solid rgba(50, 215, 75, 0.2)",
-                  borderTopColor: "#32d74b",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                  marginBottom: 24,
-                }}
-              />
-              <h1 className="h1" style={{ fontSize: 22, color: "#fff" }}>
+              <div className={styles.spinner} />
+              <h1 className={`h1 ${styles.headingWhite}`}>
                 Criando o teu restaurante
               </h1>
               {progressStep && (
-                <p
-                  className="muted"
-                  style={{ marginTop: 10, color: "#32d74b" }}
-                >
+                <p className={`muted ${styles.progressSuccess}`}>
                   {progressStep}
                 </p>
               )}
@@ -555,36 +493,17 @@ export function BootstrapPage({
             state === "checking_restaurant" ||
             state === "checking_health") && (
             <>
-              <div
-                style={{
-                  width: 60,
-                  height: 60,
-                  border: "3px solid rgba(50, 215, 75, 0.2)",
-                  borderTopColor: "#32d74b",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                  marginBottom: 24,
-                  boxShadow: "0 0 20px rgba(50, 215, 75, 0.1)",
-                }}
-              />
-              <h1 className="h1" style={{ fontSize: 22, color: "#fff" }}>
+              <div className={styles.spinnerGlow} />
+              <h1 className={`h1 ${styles.headingWhite}`}>
                 Conectando ao Sistema Nervoso
               </h1>
               {showProgress && progressStep && (
-                <p
-                  className="muted"
-                  style={{
-                    marginTop: 10,
-                    fontSize: 15,
-                    fontWeight: 500,
-                    color: "#32d74b",
-                  }}
-                >
+                <p className={`muted ${styles.progressSuccessLarge}`}>
                   {progressStep}
                 </p>
               )}
               {!showProgress && (
-                <p className="muted" style={{ marginTop: 10, opacity: 0.6 }}>
+                <p className={`muted ${styles.progressMuted}`}>
                   Validando credenciais operacionais...
                 </p>
               )}
@@ -594,67 +513,22 @@ export function BootstrapPage({
           {/* TIMEOUT STATE - S0 GUARD */}
           {state === "timeout" && (
             <>
-              <div
-                style={{
-                  width: 60,
-                  height: 60,
-                  background: "rgba(255, 59, 48, 0.1)",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 28,
-                  marginBottom: 24,
-                  border: "1px solid rgba(255, 59, 48, 0.3)",
-                }}
-              >
-                ⏱
-              </div>
-              <h1 className="h1" style={{ fontSize: 22 }}>
-                Latência na Rede
-              </h1>
-              <p className="muted" style={{ marginTop: 10, marginBottom: 24 }}>
+              <div className={styles.iconTimeout}>⏱</div>
+              <h1 className={`h1 ${styles.heading22}`}>Latência na Rede</h1>
+              <p className={`muted ${styles.textSpaced}`}>
                 A conexão segura está demorando.
               </p>
-              <div
-                style={{
-                  width: "100%",
-                  maxWidth: 320,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 12,
-                }}
-              >
+              <div className={styles.buttonContainer}>
                 <button
                   onClick={runBootstrap}
-                  style={{
-                    padding: "14px 24px",
-                    background: "transparent",
-                    border: "1px solid #32d74b",
-                    borderRadius: 10,
-                    color: "#32d74b",
-                    fontSize: 15,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    width: "100%",
-                  }}
+                  className={styles.buttonOutlineGreen}
                 >
                   Tentar conectar novamente
                 </button>
                 {bootstrap.coreStatus === "offline-intencional" && (
                   <button
                     onClick={switchToTrialMode}
-                    style={{
-                      padding: "14px 24px",
-                      background: "#32d74b",
-                      border: "none",
-                      borderRadius: 10,
-                      color: "#000",
-                      fontSize: 15,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      width: "100%",
-                    }}
+                    className={styles.buttonSolidGreen}
                   >
                     Continuar sem sessão (offline)
                   </button>
@@ -662,17 +536,7 @@ export function BootstrapPage({
                 {bootstrap.coreStatus === "offline-erro" && (
                   <button
                     onClick={bootstrap}
-                    style={{
-                      padding: "14px 24px",
-                      background: "#32d74b",
-                      border: "none",
-                      borderRadius: 10,
-                      color: "#000",
-                      fontSize: 15,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      width: "100%",
-                    }}
+                    className={styles.buttonSolidGreen}
                   >
                     Iniciar Core
                   </button>
@@ -684,34 +548,11 @@ export function BootstrapPage({
           {/* READY STATE */}
           {state === "ready" && (
             <>
-              <div
-                style={{
-                  width: 60,
-                  height: 60,
-                  background: "rgba(50, 215, 75, 0.1)",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 28,
-                  marginBottom: 24,
-                  border: "1px solid #32d74b",
-                  boxShadow: "0 0 30px rgba(50, 215, 75, 0.2)",
-                }}
-              >
-                <div
-                  style={{
-                    width: "12px",
-                    height: "12px",
-                    background: "#32d74b",
-                    borderRadius: "50%",
-                  }}
-                ></div>
+              <div className={styles.iconSuccess}>
+                <div className={styles.iconSuccessDot}></div>
               </div>
-              <h1 className="h1" style={{ fontSize: 22, color: "#fff" }}>
-                Acesso Autorizado
-              </h1>
-              <p className="muted" style={{ marginTop: 10, color: "#32d74b" }}>
+              <h1 className={`h1 ${styles.headingWhite}`}>Acesso Autorizado</h1>
+              <p className={`muted ${styles.progressSuccess}`}>
                 Iniciando protocolos...
               </p>
             </>
@@ -720,21 +561,9 @@ export function BootstrapPage({
           {/* REDIRECTING STATE */}
           {state === "redirecting" && (
             <>
-              <div
-                style={{
-                  width: 60,
-                  height: 60,
-                  border: "3px solid rgba(50, 215, 75, 0.2)",
-                  borderTopColor: "#32d74b",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                  marginBottom: 24,
-                }}
-              />
-              <h1 className="h1" style={{ fontSize: 22 }}>
-                Bem-vindo
-              </h1>
-              <p className="muted" style={{ marginTop: 10 }}>
+              <div className={styles.spinner} />
+              <h1 className={`h1 ${styles.heading22}`}>Bem-vindo</h1>
+              <p className={`muted ${styles.progressText}`}>
                 A iniciar configuração inicial...
               </p>
             </>
@@ -743,47 +572,17 @@ export function BootstrapPage({
           {/* ERROR STATE - S0 GUARD */}
           {state === "error" && (
             <>
-              <div
-                style={{
-                  width: 60,
-                  height: 60,
-                  background: "rgba(239, 83, 80, 0.1)",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 28,
-                  marginBottom: 24,
-                }}
-              >
-                ✕
-              </div>
-              <h1 className="h1" style={{ fontSize: 22 }}>
-                Falha na Conexão
-              </h1>
+              <div className={styles.iconError}>✕</div>
+              <h1 className={`h1 ${styles.heading22}`}>Falha na Conexão</h1>
 
-              <div style={{ marginTop: 16, width: "100%", maxWidth: 320 }}>
+              <div className={styles.errorContainer}>
                 <InlineAlert
                   type="error"
                   message={errorMessage || "Erro desconhecido"}
                 />
 
-                <div
-                  style={{
-                    marginTop: 24,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 12,
-                  }}
-                >
-                  <p
-                    className="muted"
-                    style={{
-                      fontSize: 13,
-                      textAlign: "center",
-                      marginBottom: 8,
-                    }}
-                  >
+                <div className={styles.errorActions}>
+                  <p className={`muted ${styles.errorHint}`}>
                     {bootstrap.coreStatus === "offline-intencional"
                       ? "Pode continuar sem sessão (offline)."
                       : bootstrap.coreStatus === "offline-erro"
@@ -793,17 +592,7 @@ export function BootstrapPage({
                   {bootstrap.coreStatus === "offline-intencional" && (
                     <button
                       onClick={switchToTrialMode}
-                      style={{
-                        padding: "14px 24px",
-                        background: "#32d74b",
-                        border: "none",
-                        borderRadius: 10,
-                        color: "#000",
-                        fontSize: 15,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        width: "100%",
-                      }}
+                      className={styles.buttonSolidGreen}
                     >
                       Continuar sem sessão (offline)
                     </button>
@@ -811,17 +600,7 @@ export function BootstrapPage({
                   {bootstrap.coreStatus === "offline-erro" && (
                     <button
                       onClick={bootstrap}
-                      style={{
-                        padding: "14px 24px",
-                        background: "#32d74b",
-                        border: "none",
-                        borderRadius: 10,
-                        color: "#000",
-                        fontSize: 15,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        width: "100%",
-                      }}
+                      className={styles.buttonSolidGreen}
                     >
                       Iniciar Core
                     </button>
@@ -831,17 +610,7 @@ export function BootstrapPage({
                       <>
                         <button
                           onClick={switchToTrialMode}
-                          style={{
-                            padding: "14px 24px",
-                            background: "#32d74b",
-                            border: "none",
-                            borderRadius: 10,
-                            color: "#000",
-                            fontSize: 15,
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            width: "100%",
-                          }}
+                          className={styles.buttonSolidGreen}
                         >
                           Iniciar Free Trial
                         </button>
@@ -854,18 +623,7 @@ export function BootstrapPage({
                             setTabIsolated("chefiapp_user_role", "owner");
                             navigate("/dashboard");
                           }}
-                          style={{
-                            padding: "14px 24px",
-                            background: "rgba(50, 215, 75, 0.1)",
-                            border: "1px solid #32d74b",
-                            borderRadius: 10,
-                            color: "#32d74b",
-                            fontSize: 15,
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            width: "100%",
-                            marginBottom: 8,
-                          }}
+                          className={styles.buttonOutlineGreenWithMargin}
                         >
                           Simular Criação (Offline)
                         </button>
@@ -873,17 +631,7 @@ export function BootstrapPage({
                     )}
                   <button
                     onClick={bootstrap}
-                    style={{
-                      padding: "14px 24px",
-                      background: "transparent",
-                      border: "1px solid #333",
-                      borderRadius: 10,
-                      color: "#888",
-                      fontSize: 14,
-                      fontWeight: 500,
-                      cursor: "pointer",
-                      width: "100%",
-                    }}
+                    className={styles.buttonOutlineDark}
                   >
                     Tentar Reconectar
                   </button>

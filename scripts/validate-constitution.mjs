@@ -47,9 +47,10 @@ const FORBIDDEN_PATTERNS = [
 ];
 
 // AuthPage.tsx removido da lista: fluxo atual é landing → demo → onboarding/dashboard (sem tela de auth dedicada). Ver DOC_INDEX / core frozen.
+// Landing canónica única: LandingV2 (docs/strategy/LANDING_CANON.md). LandingPage.tsx obsoleto.
 const REQUIRED_FILES = [
   "merchant-portal/src/core/flow/FlowGate.tsx",
-  "merchant-portal/src/pages/Landing/LandingPage.tsx",
+  "merchant-portal/src/pages/LandingV2/LandingV2Page.tsx",
 ];
 
 // ============================================================================

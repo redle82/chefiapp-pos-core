@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "validate:constitution": "node ../scripts/validate-constitution.js",
+    "validate:constitution": "node ../scripts/validate-constitution.mjs",
     "prebuild": "npm run validate:constitution",
     "build": "vite build",
     "lint": "eslint .",

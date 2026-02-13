@@ -43,6 +43,11 @@ export { TopBar } from './TopBar';
 export { SideNav } from './SideNav';
 export { MobileNav } from './MobileNav';
 
+// Primitives (Card, Button, Input used by BootstrapPage and others)
+export { Button } from './Button';
+export { Card } from './Card';
+export { Input } from './Input';
+
 // Data Display Components
 export { TruthBadge } from './TruthBadge';
 export { Stepper } from './Stepper';

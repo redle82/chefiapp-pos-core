@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text } from './Text';
-import { Button } from './Button';
+import { Button } from '../Button';
 import { spacing } from '../tokens/spacing';
 
 export interface EmptyStateProps {
