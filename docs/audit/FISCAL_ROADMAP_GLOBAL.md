@@ -214,12 +214,12 @@ Evidence
 
 Detailed task-level backlogs with priorities and status tracking:
 
-| Country | Backlog | Tasks |
-|---------|---------|-------|
-| 🇵🇹 PT | [BACKLOG_PT.md](backlog/BACKLOG_PT.md) | 33 (6 done) |
-| 🇪🇸 ES | [BACKLOG_ES.md](backlog/BACKLOG_ES.md) | 30 (6 done) |
-| 🇧🇷 BR | [BACKLOG_BR.md](backlog/BACKLOG_BR.md) | 43 (6 done) |
-| 🇺🇸 USA | [BACKLOG_USA.md](backlog/BACKLOG_USA.md) | 30 (4 done) |
+| Country | Backlog                                  | Tasks       |
+| ------- | ---------------------------------------- | ----------- |
+| 🇵🇹 PT   | [BACKLOG_PT.md](backlog/BACKLOG_PT.md)   | 33 (6 done) |
+| 🇪🇸 ES   | [BACKLOG_ES.md](backlog/BACKLOG_ES.md)   | 30 (6 done) |
+| 🇧🇷 BR   | [BACKLOG_BR.md](backlog/BACKLOG_BR.md)   | 43 (6 done) |
+| 🇺🇸 USA  | [BACKLOG_USA.md](backlog/BACKLOG_USA.md) | 30 (4 done) |
 
 Full index: [backlog/INDEX.md](backlog/INDEX.md)
 

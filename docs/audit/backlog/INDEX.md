@@ -8,23 +8,23 @@ Roadmap: [FISCAL_ROADMAP_GLOBAL.md](../FISCAL_ROADMAP_GLOBAL.md)
 
 ## Country Backlogs
 
-| Country | Backlog | Total Tasks | Done | Remaining |
-|---------|---------|-------------|------|-----------|
-| 🇵🇹 Portugal | [BACKLOG_PT.md](BACKLOG_PT.md) | 33 | 6 | 27 |
-| 🇪🇸 España | [BACKLOG_ES.md](BACKLOG_ES.md) | 30 | 6 | 24 |
-| 🇧🇷 Brasil | [BACKLOG_BR.md](BACKLOG_BR.md) | 43 | 6 | 37 |
-| 🇺🇸 USA | [BACKLOG_USA.md](BACKLOG_USA.md) | 30 | 4 | 26 |
-| **Global** | — | **136** | **22** | **114** |
+| Country     | Backlog                          | Total Tasks | Done   | Remaining |
+| ----------- | -------------------------------- | ----------- | ------ | --------- |
+| 🇵🇹 Portugal | [BACKLOG_PT.md](BACKLOG_PT.md)   | 33          | 6      | 27        |
+| 🇪🇸 España   | [BACKLOG_ES.md](BACKLOG_ES.md)   | 30          | 6      | 24        |
+| 🇧🇷 Brasil   | [BACKLOG_BR.md](BACKLOG_BR.md)   | 43          | 6      | 37        |
+| 🇺🇸 USA      | [BACKLOG_USA.md](BACKLOG_USA.md) | 30          | 4      | 26        |
+| **Global**  | —                                | **136**     | **22** | **114**   |
 
 ---
 
 ## Priority Legend
 
-| Priority | Meaning |
-|----------|---------|
-| P0 | Must-have for fiscal compliance |
-| P1 | Important for production readiness |
-| P2 | Nice-to-have or expansion-only |
+| Priority | Meaning                            |
+| -------- | ---------------------------------- |
+| P0       | Must-have for fiscal compliance    |
+| P1       | Important for production readiness |
+| P2       | Nice-to-have or expansion-only     |
 
 ---
 
