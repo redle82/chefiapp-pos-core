@@ -81,6 +81,7 @@
 
 - **Runbook produção:** [RUNBOOK_TRIAL_ENDS_AT_PRODUCTION.md](RUNBOOK_TRIAL_ENDS_AT_PRODUCTION.md) — verificar coluna, SQL para aplicar, UPDATE opcional para trial existentes.
 - **Teste PaymentGuard paywall:** `merchant-portal/src/core/billing/PaymentGuard.paywall.test.tsx` — quando `trial_expired`, mostra "Período de trial terminado" e link "Escolher plano"; 1 teste, passa com `pnpm vitest run src/core/billing/`.
+- **Script validação FASE 2:** `bash scripts/flows/validate-fase2.sh` — executa testes billing (4 testes) + fluxo crítico Core; usar como gate antes de release.
 
 ---
 
