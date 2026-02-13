@@ -10,11 +10,11 @@ Roadmap: [FISCAL_ROADMAP_GLOBAL.md](../FISCAL_ROADMAP_GLOBAL.md)
 
 | Country     | Backlog                          | Total Tasks | Done   | Remaining |
 | ----------- | -------------------------------- | ----------- | ------ | --------- |
-| 🇵🇹 Portugal | [BACKLOG_PT.md](BACKLOG_PT.md)   | 33          | 11     | 22        |
+| 🇵🇹 Portugal | [BACKLOG_PT.md](BACKLOG_PT.md)   | 33          | 12     | 21        |
 | 🇪🇸 España   | [BACKLOG_ES.md](BACKLOG_ES.md)   | 30          | 6      | 24        |
 | 🇧🇷 Brasil   | [BACKLOG_BR.md](BACKLOG_BR.md)   | 43          | 6      | 37        |
 | 🇺🇸 USA      | [BACKLOG_USA.md](BACKLOG_USA.md) | 30          | 4      | 26        |
-| **Global**  | —                                | **136**     | **27** | **109**   |
+| **Global**  | —                                | **136**     | **28** | **108**   |
 
 ---
 
