@@ -166,18 +166,15 @@ export default defineConfig(async ({ mode }) => {
         output: {
           manualChunks(id) {
             // ── Vendor chunks ──
+            // React + libs that use React (createContext etc.) in same chunk to avoid "undefined.createContext"
             if (
               id.includes("node_modules/react/") ||
               id.includes("node_modules/react-dom/") ||
-              id.includes("node_modules/react-router")
-            ) {
-              return "react-vendor";
-            }
-            if (
+              id.includes("node_modules/react-router") ||
               id.includes("node_modules/framer-motion") ||
               id.includes("node_modules/lucide-react")
             ) {
-              return "ui-vendor";
+              return "react-vendor";
             }
             if (
               id.includes("node_modules/recharts") ||
