@@ -7,10 +7,10 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShiftChecklistSection } from "../../components/Tasks/ShiftChecklistSection";
-import { TaskCard } from "../../components/Tasks/TaskCard";
-import { TaskSuggestions } from "../../components/Tasks/TaskSuggestions";
-import { TaskSuggestionsMentorEngine } from "../../components/Tasks/TaskSuggestionsMentorEngine";
+import { ShiftChecklistSection } from "../../components/tasks/ShiftChecklistSection";
+import { TaskCard } from "../../components/tasks/TaskCard";
+import { TaskSuggestions } from "../../components/tasks/TaskSuggestions";
+import { TaskSuggestionsMentorEngine } from "../../components/tasks/TaskSuggestionsMentorEngine";
 import { useRestaurantId } from "../../core/hooks/useRestaurantId";
 import { useMentorshipMessages } from "../../core/intelligence/useMentorshipMessages";
 import {

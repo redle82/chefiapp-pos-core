@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { ShiftChecklistSection } from "../../components/Tasks/ShiftChecklistSection";
+import { ShiftChecklistSection } from "../../components/tasks/ShiftChecklistSection";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
 import type { CoreTask } from "../../core-boundary/docker-core/types";
@@ -23,6 +23,7 @@ import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity
 import { isDockerBackend } from "../../core/infra/backendAdapter";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { deduplicateCoreTasks } from "../../core/tasks/TaskFiltering";
+import styles from "./TaskSystemMinimal.module.css";
 
 type TaskFilter = "all" | "BAR" | "KITCHEN" | "SERVICE";
 type TaskStatus = "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "DISMISSED";
@@ -335,7 +336,7 @@ export function TaskSystemMinimal() {
 
   if (loadingIdentity) {
     return (
-      <div style={{ padding: "40px", textAlign: "center" }}>
+      <div className={styles.loadingState}>
         <p>Carregando identidade do restaurante...</p>
       </div>
     );
@@ -343,9 +344,9 @@ export function TaskSystemMinimal() {
 
   if (loading && tasks.length === 0) {
     return (
-      <div style={{ padding: "40px", textAlign: "center" }}>
+      <div className={styles.loadingState}>
         <p>Carregando tarefas...</p>
-        <p style={{ fontSize: "12px", color: "#666", marginTop: "8px" }}>
+        <p className={styles.loadingDetail}>
           Restaurant ID: {finalRestaurantId?.slice(0, 8)}...
         </p>
       </div>
@@ -353,29 +354,13 @@ export function TaskSystemMinimal() {
   }
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
-      <h1
-        style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "24px" }}
-      >
-        📋 Sistema de Tarefas
-      </h1>
+    <div className={styles.container}>
+      <h1 className={styles.title}>📋 Sistema de Tarefas</h1>
 
-      {error && (
-        <div
-          style={{
-            padding: "12px",
-            backgroundColor: "#fee2e2",
-            color: "#991b1b",
-            borderRadius: "8px",
-            marginBottom: "20px",
-          }}
-        >
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorBox}>{error}</div>}
 
       {/* FASE 3 Passo 2: Checklist do turno */}
-      <div style={{ marginBottom: "24px" }}>
+      <div className={styles.checklistSection}>
         <ShiftChecklistSection
           restaurantId={finalRestaurantId}
           variant="full"
@@ -383,37 +368,14 @@ export function TaskSystemMinimal() {
       </div>
 
       {/* Filters */}
-      <div
-        style={{
-          display: "flex",
-          gap: "12px",
-          marginBottom: "24px",
-          flexWrap: "wrap",
-          padding: "16px",
-          backgroundColor: "#f9fafb",
-          borderRadius: "8px",
-        }}
-      >
+      <div className={styles.filtersContainer}>
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "12px",
-              marginBottom: "4px",
-              fontWeight: "bold",
-            }}
-          >
-            Estação
-          </label>
+          <label className={styles.filterLabel}>Estação</label>
           <select
             value={stationFilter}
             onChange={(e) => setStationFilter(e.target.value as TaskFilter)}
-            style={{
-              padding: "8px 12px",
-              border: "1px solid #ccc",
-              borderRadius: "6px",
-              fontSize: "14px",
-            }}
+            className={styles.filterSelect}
+            aria-label="Filtro de estação"
           >
             <option value="all">Todas</option>
             <option value="BAR">Bar</option>
@@ -423,27 +385,14 @@ export function TaskSystemMinimal() {
         </div>
 
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "12px",
-              marginBottom: "4px",
-              fontWeight: "bold",
-            }}
-          >
-            Prioridade
-          </label>
+          <label className={styles.filterLabel}>Prioridade</label>
           <select
             value={priorityFilter}
             onChange={(e) =>
               setPriorityFilter(e.target.value as PriorityFilter)
             }
-            style={{
-              padding: "8px 12px",
-              border: "1px solid #ccc",
-              borderRadius: "6px",
-              fontSize: "14px",
-            }}
+            className={styles.filterSelect}
+            aria-label="Filtro de prioridade"
           >
             <option value="all">Todas</option>
             <option value="CRITICA">Crítica</option>
@@ -454,25 +403,12 @@ export function TaskSystemMinimal() {
         </div>
 
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "12px",
-              marginBottom: "4px",
-              fontWeight: "bold",
-            }}
-          >
-            Status
-          </label>
+          <label className={styles.filterLabel}>Status</label>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as TaskStatus)}
-            style={{
-              padding: "8px 12px",
-              border: "1px solid #ccc",
-              borderRadius: "6px",
-              fontSize: "14px",
-            }}
+            className={styles.filterSelect}
+            aria-label="Filtro de status"
           >
             <option value="OPEN">Abertas</option>
             <option value="ACKNOWLEDGED">Reconhecidas</option>
@@ -481,136 +417,59 @@ export function TaskSystemMinimal() {
           </select>
         </div>
 
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "flex-end",
-            gap: "8px",
-          }}
-        >
+        <div className={styles.buttonContainer}>
           <button
             onClick={handleGenerateTasks}
             disabled={generating}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: generating ? "#9ca3af" : "#10b981",
-              color: "#fff",
-              border: "none",
-              borderRadius: "6px",
-              cursor: generating ? "not-allowed" : "pointer",
-              fontSize: "14px",
-            }}
+            className={styles.generateButton}
+            data-generating={generating ? "true" : "false"}
           >
             {generating ? "⏳ Gerando..." : "✨ Gerar Tarefas"}
           </button>
-          <button
-            onClick={loadTasks}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: "#3b82f6",
-              color: "#fff",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
-          >
+          <button onClick={loadTasks} className={styles.refreshButton}>
             🔄 Atualizar
           </button>
         </div>
       </div>
 
       {/* Stats */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "12px",
-          marginBottom: "24px",
-        }}
-      >
-        <div
-          style={{
-            padding: "16px",
-            backgroundColor: "#fef2f2",
-            borderRadius: "8px",
-            border: "1px solid #fca5a5",
-          }}
-        >
-          <div
-            style={{ fontSize: "24px", fontWeight: "bold", color: "#dc2626" }}
-          >
+      <div className={styles.statsGrid}>
+        <div className={styles.statCard} data-type="critical">
+          <div className={styles.statValue}>
             {tasks.filter((t) => t.priority === "CRITICA").length}
           </div>
-          <div style={{ fontSize: "12px", color: "#666" }}>Críticas</div>
+          <div className={styles.statLabel}>Críticas</div>
         </div>
-        <div
-          style={{
-            padding: "16px",
-            backgroundColor: "#fff7ed",
-            borderRadius: "8px",
-            border: "1px solid #fdba74",
-          }}
-        >
-          <div
-            style={{ fontSize: "24px", fontWeight: "bold", color: "#ea580c" }}
-          >
+        <div className={styles.statCard} data-type="high">
+          <div className={styles.statValue}>
             {tasks.filter((t) => t.priority === "ALTA").length}
           </div>
-          <div style={{ fontSize: "12px", color: "#666" }}>Altas</div>
+          <div className={styles.statLabel}>Altas</div>
         </div>
-        <div
-          style={{
-            padding: "16px",
-            backgroundColor: "#f9fafb",
-            borderRadius: "8px",
-            border: "1px solid #e5e7eb",
-          }}
-        >
-          <div
-            style={{ fontSize: "24px", fontWeight: "bold", color: "#374151" }}
-          >
-            {tasks.length}
-          </div>
-          <div style={{ fontSize: "12px", color: "#666" }}>Total</div>
+        <div className={styles.statCard} data-type="total">
+          <div className={styles.statValue}>{tasks.length}</div>
+          <div className={styles.statLabel}>Total</div>
         </div>
       </div>
 
       {/* Tasks List */}
-      <div style={{ display: "grid", gap: "12px" }}>
+      <div className={styles.tasksList}>
         {tasks.length === 0 ? (
-          <div
-            style={{
-              padding: "40px",
-              textAlign: "center",
-              backgroundColor: "#f9fafb",
-              borderRadius: "8px",
-              color: "#666",
-            }}
-          >
-            <p style={{ fontSize: "18px", marginBottom: "8px" }}>
+          <div className={styles.emptyState}>
+            <p className={styles.emptyTitle}>
               {statusFilter === "OPEN"
                 ? "✅ Nenhuma tarefa aberta"
                 : "Nenhuma tarefa encontrada"}
             </p>
-            <p style={{ fontSize: "14px", marginBottom: "16px" }}>
+            <p className={styles.emptyMessage}>
               {statusFilter === "OPEN"
                 ? "Todas as tarefas foram resolvidas ou não há tarefas geradas ainda."
                 : "Nenhuma tarefa com este status."}
             </p>
             {statusFilter === "OPEN" && (
-              <div
-                style={{ fontSize: "12px", color: "#999", marginTop: "16px" }}
-              >
+              <div className={styles.emptyTip}>
                 <p>💡 Dica: Tarefas são geradas automaticamente quando:</p>
-                <ul
-                  style={{
-                    textAlign: "left",
-                    display: "inline-block",
-                    marginTop: "8px",
-                  }}
-                >
+                <ul className={styles.emptyTipList}>
                   <li>Itens de pedido estão atrasados</li>
                   <li>Estoque fica abaixo do mínimo</li>
                   <li>Há ruptura prevista de ingredientes</li>
@@ -618,16 +477,8 @@ export function TaskSystemMinimal() {
                 <button
                   onClick={handleGenerateTasks}
                   disabled={generating}
-                  style={{
-                    marginTop: "16px",
-                    padding: "8px 16px",
-                    backgroundColor: generating ? "#9ca3af" : "#10b981",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "6px",
-                    cursor: generating ? "not-allowed" : "pointer",
-                    fontSize: "14px",
-                  }}
+                  className={styles.emptyGenerateButton}
+                  data-generating={generating}
                 >
                   {generating ? "⏳ Gerando..." : "✨ Gerar Tarefas de Teste"}
                 </button>
@@ -638,151 +489,63 @@ export function TaskSystemMinimal() {
           tasks.map((task) => (
             <div
               key={task.id}
-              style={{
-                padding: "20px",
-                backgroundColor: "#fff",
-                border: `2px solid ${getPriorityColor(task.priority)}`,
-                borderRadius: "8px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-              }}
+              className={styles.taskCard}
+              data-priority={task.priority.toLowerCase()}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "start",
-                  marginBottom: "12px",
-                }}
-              >
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    <span style={{ fontSize: "20px" }}>
+              <div className={styles.taskHeader}>
+                <div className={styles.taskBody}>
+                  <div className={styles.taskMeta}>
+                    <span className={styles.taskIcon}>
                       {getTaskTypeIcon(task.task_type)}
                     </span>
                     <span
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: "bold",
-                        color: getStationColor(task.station || undefined),
-                        backgroundColor: `${getStationColor(
-                          task.station || undefined,
-                        )}20`,
-                        padding: "2px 8px",
-                        borderRadius: "4px",
-                      }}
+                      className={styles.stationBadge}
+                      data-station={task.station || "default"}
                     >
                       {task.station || "N/A"}
                     </span>
                     <span
-                      style={{
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        color: getPriorityColor(task.priority),
-                        backgroundColor: `${getPriorityColor(task.priority)}20`,
-                        padding: "2px 8px",
-                        borderRadius: "4px",
-                      }}
+                      className={styles.priorityBadge}
+                      data-priority={task.priority || "default"}
                     >
                       {task.priority}
                     </span>
-                    <span style={{ fontSize: "12px", color: "#666" }}>
-                      {task.task_type}
-                    </span>
+                    <span className={styles.taskType}>{task.task_type}</span>
                   </div>
-                  <p
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "bold",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    {task.message}
-                  </p>
+                  <p className={styles.taskMessage}>{task.message}</p>
                   {task.context && Object.keys(task.context).length > 0 && (
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "#666",
-                        backgroundColor: "#f9fafb",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        marginTop: "8px",
-                      }}
-                    >
+                    <div className={styles.taskContext}>
                       <strong>Contexto:</strong>{" "}
                       {JSON.stringify(task.context, null, 2)}
                     </div>
                   )}
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      color: "#666",
-                      marginTop: "8px",
-                    }}
-                  >
+                  <div className={styles.taskTimestamp}>
                     Criada em:{" "}
                     {new Date(task.created_at).toLocaleString("pt-BR")}
                     {task.auto_generated && (
-                      <span style={{ marginLeft: "8px", color: "#3b82f6" }}>
+                      <span className={styles.autoGeneratedBadge}>
                         🤖 Automática
                       </span>
                     )}
                   </div>
                 </div>
                 {statusFilter === "OPEN" && (
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "8px",
-                      flexDirection: "column",
-                    }}
-                  >
+                  <div className={styles.taskActions}>
                     <button
                       onClick={() => handleAcknowledge(task.id)}
-                      style={{
-                        padding: "6px 12px",
-                        backgroundColor: "#3b82f6",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        fontSize: "12px",
-                      }}
+                      className={styles.acknowledgeButton}
                     >
                       ✓ Reconhecer
                     </button>
                     <button
                       onClick={() => handleResolve(task.id)}
-                      style={{
-                        padding: "6px 12px",
-                        backgroundColor: "#10b981",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        fontSize: "12px",
-                      }}
+                      className={styles.resolveButton}
                     >
                       ✅ Resolver
                     </button>
                     <button
                       onClick={() => handleDismiss(task.id)}
-                      style={{
-                        padding: "6px 12px",
-                        backgroundColor: "#6b7280",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        fontSize: "12px",
-                      }}
+                      className={styles.dismissButton}
                     >
                       ✗ Dispensar
                     </button>
