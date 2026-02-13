@@ -8,6 +8,7 @@
     "validate:constitution": "node ../scripts/validate-constitution.mjs",
     "prebuild": "npm run validate:constitution",
     "build": "vite build",
+    "build:marketing": "vite build --config vite.config.marketing.ts",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
