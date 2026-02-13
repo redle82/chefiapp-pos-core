@@ -93,6 +93,8 @@ O projeto tem o **MCP oficial da Vercel** configurado em `.cursor/mcp.json` (`ht
 | **Install Command**  | `npm install`   | Off (default)     |
 | **Node.js Version**  | 24.x (ou 20.x)  | Conforme desejado |
 
+**Se usares Root Directory = merchant-portal:** o build corre só dentro de `merchant-portal` e o output é `dist`. O `merchant-portal/vercel.json` define `outputDirectory: "dist"`; nas definições do projeto na Vercel não uses Output Directory = `app` (causa o erro "No Output Directory named 'app' found") — usa `dist` ou deixa o `vercel.json` prevalecer.
+
 ---
 
 ## O que o build faz
