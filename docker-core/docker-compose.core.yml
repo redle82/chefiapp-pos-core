@@ -40,6 +40,7 @@ services:
       - ./schema/migrations/20260209_reservations_tables.sql:/docker-entrypoint-initdb.d/05.35-reservations-tables.sql:ro
       - ./schema/migrations/20260216_gm_customers.sql:/docker-entrypoint-initdb.d/05.4-gm-customers.sql:ro
       - ./schema/migrations/20260217_query_discipline_indexes.sql:/docker-entrypoint-initdb.d/05.5-query-discipline-indexes.sql:ro
+      - ./schema/print_queue.sql:/docker-entrypoint-initdb.d/05.6-print-queue.sql:ro
       - ./schema/06-seed-enterprise.sql:/docker-entrypoint-initdb.d/06-seed-enterprise.sql:ro
       - ./schema/07-role-anon.sql:/docker-entrypoint-initdb.d/07-role-anon.sql:ro
     networks:

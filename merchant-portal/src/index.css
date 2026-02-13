@@ -6,11 +6,11 @@
  * Import tokens.css for CSS custom properties.
  */
 
-@import './ui/design-system/tokens.css';
+@import "./ui/design-system/tokens.css";
 
 :root {
   /* Core Tokens (Base) */
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -20,7 +20,7 @@
   /* Cinematic Deep Black */
 
   /* Cinematic Palette */
-  --cinematic-bg: #05050A;
+  --cinematic-bg: #05050a;
   --cinematic-accent: #646cff;
   /* Vivid Blue */
   --cinematic-accent-glow: rgba(100, 108, 255, 0.4);
@@ -36,8 +36,8 @@
 /* Glassmorphism Utilities */
 .glass-panel {
   background: var(--cinematic-glass-bg);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   border: 1px solid var(--cinematic-glass-border);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
@@ -47,8 +47,6 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-
-
 
 /* Force Card Override to fix visibility issue */
 .card {

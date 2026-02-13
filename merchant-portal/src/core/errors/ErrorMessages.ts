@@ -2,7 +2,7 @@
  * ErrorMessages - Centralized Error Message Helper
  *
  * Provides specific, actionable error messages for common scenarios.
- * Replaces generic "Erro ao..." messages with context-aware messages.
+ * Voice: MARKETING_SILICON_VALLEY_VOICE — frases curtas, "Tente de novo", "fale connosco".
  * Fase 4: mensagens de guards (caixa, etc.) vêm de GuardMessages para consistência.
  */
 
@@ -73,9 +73,9 @@ export function getErrorMessage(error: any, context?: ErrorContext): string {
       return "Valor insuficiente. Verifique o valor recebido.";
     }
     if (message.includes("gateway") || message.includes("stripe")) {
-      return "Erro no processamento do pagamento. Verifique a conexão e tente novamente.";
+      return "Erro no pagamento. Tente de novo.";
     }
-    return "Erro ao processar pagamento. Verifique os dados e tente novamente.";
+    return "Erro ao processar pagamento. Tente de novo.";
   }
 
   // Config / Backend — evitar vazar "Supabase forbidden" ou "Docker" ao utilizador
@@ -89,7 +89,7 @@ export function getErrorMessage(error: any, context?: ErrorContext): string {
     message.includes("dockerCoreClient") &&
     message.includes("not a function")
   ) {
-    return "Erro ao comunicar com o servidor. Recarregue a página e tente novamente.";
+    return "Sem ligação ao servidor. Recarregue e tente de novo.";
   }
 
   // Network/Connection errors
@@ -98,11 +98,11 @@ export function getErrorMessage(error: any, context?: ErrorContext): string {
     message.includes("fetch") ||
     message.includes("timeout")
   ) {
-    return "Sem conexão com o servidor. Verifique sua internet e tente novamente.";
+    return "Sem ligação ao servidor. Tente de novo.";
   }
 
   if (message.includes("offline") || message.includes("disconnected")) {
-    return "Você está offline. Aguarde a reconexão ou tente novamente.";
+    return "Sem ligação. Aguarde ou tente de novo.";
   }
 
   // Database errors
@@ -111,7 +111,7 @@ export function getErrorMessage(error: any, context?: ErrorContext): string {
   }
 
   if (code === "23505" || message.includes("duplicate key")) {
-    return "Este item já existe. Verifique os dados e tente novamente.";
+    return "Este item já existe. Tente de novo.";
   }
 
   // Permission errors
@@ -120,13 +120,13 @@ export function getErrorMessage(error: any, context?: ErrorContext): string {
     message.includes("permission") ||
     message.includes("unauthorized")
   ) {
-    return "Você não tem permissão para realizar esta ação.";
+    return "Sem permissão para esta ação.";
   }
 
   // Item-specific errors
   if (context?.itemName) {
     if (message.includes("not found") || message.includes("não encontrado")) {
-      return `${context.itemName} não foi encontrado no menu. Atualize o menu e tente novamente.`;
+      return `${context.itemName} não está no menu. Atualize o menu e tente de novo.`;
     }
     if (message.includes("unavailable") || message.includes("indisponível")) {
       return `${context.itemName} está indisponível no momento.`;
@@ -157,10 +157,10 @@ export function getErrorMessage(error: any, context?: ErrorContext): string {
       return message;
     }
     // Otherwise, provide generic but helpful message
-    return "Ocorreu um erro. Tente novamente ou contate o suporte se o problema persistir.";
+    return "Erro. Tente de novo. Se persistir, fale connosco.";
   }
 
-  return "Ocorreu um erro inesperado. Tente novamente.";
+  return "Erro inesperado. Tente de novo.";
 }
 
 /**
@@ -182,7 +182,7 @@ export function getErrorSuggestion(
   }
 
   if (message.includes("network") || message.includes("offline")) {
-    return "Verifique sua conexão com a internet.";
+    return "Verifique a ligação à internet.";
   }
 
   if (code === "EMPTY_ORDER") {

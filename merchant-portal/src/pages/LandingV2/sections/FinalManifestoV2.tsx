@@ -1,29 +1,26 @@
 /**
  * FinalManifestoV2 — fecho narrativo da landing.
  *
- * Eleva de \"mais uma ferramenta\" para \"infraestrutura operacional\".
+ * Copy em i18n/landingV2Copy (finalManifesto). Voz CEO: contraste ferramentas vs sistema operacional.
  */
+import { useLandingLocale } from "../i18n/LandingLocaleContext";
 
 export const FinalManifestoV2 = () => {
+  const { t } = useLandingLocale();
   return (
     <section className="py-20 md:py-24 bg-[#050505] border-t border-white/5">
       <div className="max-w-4xl mx-auto px-6 text-center">
         <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-6">
-          Restaurantes com ferramentas reagem.
+          {t("finalManifesto.headline1")}
           <br />
-          Restaurantes com sistema operacional antecipam.
+          {t("finalManifesto.headline2")}
         </h2>
         <p className="text-neutral-400 text-sm md:text-base leading-relaxed mb-4">
-          A maioria dos restaurantes cola ferramentas desconectadas e tenta
-          controlar o caos no fim do dia. Erros, atrasos e vazamentos de margem
-          aparecem sempre depois do serviço.
+          {t("finalManifesto.body1")}
         </p>
         <p className="text-neutral-400 text-sm md:text-base leading-relaxed">
-          O ChefIApp™ faz o oposto: liga sala, cozinha, stock, equipa e
-          faturação no mesmo cérebro operacional.{" "}
-          <span className="text-neutral-100">
-            Não organizamos o caos — impedimos que ele aconteça.
-          </span>
+          {t("finalManifesto.body2")}{" "}
+          <span className="text-neutral-100">{t("finalManifesto.callout")}</span>
         </p>
       </div>
     </section>

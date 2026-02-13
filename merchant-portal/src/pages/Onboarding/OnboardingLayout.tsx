@@ -13,6 +13,7 @@ import {
   useOnboarding,
   type SetupSection,
 } from "../../context/OnboardingContext";
+import styles from "./OnboardingLayout.module.css";
 import { IdentitySection } from "./sections/IdentitySection";
 import { IntegrationsSection } from "./sections/IntegrationsSection";
 import { InventorySection } from "./sections/InventorySection";
@@ -81,30 +82,16 @@ function OnboardingContent() {
     : null;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        height: "100vh",
-        overflow: "hidden",
-        backgroundColor: "#fff",
-      }}
-    >
+    <div className={styles.layoutRoot}>
       {/* Sidebar Fixa */}
       <SetupSidebar />
 
       {/* Conteúdo Dinâmico */}
-      <div
-        style={{
-          marginLeft: "280px",
-          flex: 1,
-          overflowY: "auto",
-          backgroundColor: "#fff",
-        }}
-      >
+      <div className={styles.contentArea}>
         {CurrentSectionComponent ? (
           <CurrentSectionComponent />
         ) : (
-          <div style={{ padding: "48px", textAlign: "center" }}>
+          <div className={styles.emptyState}>
             <p>Selecione uma seção para começar</p>
           </div>
         )}

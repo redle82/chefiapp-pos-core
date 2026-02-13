@@ -1,5 +1,6 @@
 import React from "react";
 import type { Placement } from "../../types/supplier";
+import styles from "./SupplierBanner.module.css";
 
 interface SupplierBannerProps {
   placement?: Placement;
@@ -19,17 +20,7 @@ export const SupplierBanner: React.FC<SupplierBannerProps> = ({
   const { campaign } = placement;
 
   return (
-    <div
-      style={{
-        width: "100%",
-        marginBottom: "1rem",
-        borderRadius: "8px",
-        overflow: "hidden",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-        position: "relative",
-        backgroundColor: "#f5f5f5", // placeholder
-      }}
-    >
+    <div className={styles.container}>
       {/*
         Ideally this would be an <img> but we might just use text if no image is available yet.
         For now we assume banner_mobile has a URL.
@@ -39,32 +30,12 @@ export const SupplierBanner: React.FC<SupplierBannerProps> = ({
         <img
           src={campaign.assets.banner_mobile!}
           alt={campaign.name}
-          style={{
-            width: "100%",
-            display: "block",
-            objectFit: "cover",
-            maxHeight: "120px",
-          }}
+          className={styles.bannerImage}
         />
       ) : (
-        <div
-          style={{
-            padding: "1rem",
-            textAlign: "center",
-            backgroundColor: "#333",
-            color: "#fff",
-          }}
-        >
-          <small
-            style={{
-              opacity: 0.7,
-              textTransform: "uppercase",
-              fontSize: "10px",
-            }}
-          >
-            Parceiro Oficial
-          </small>
-          <h3 style={{ margin: "4px 0 0" }}>{campaign.name}</h3>
+        <div className={styles.placeholder}>
+          <small className={styles.partnerLabel}>Parceiro Oficial</small>
+          <h3 className={styles.campaignName}>{campaign.name}</h3>
         </div>
       )}
 

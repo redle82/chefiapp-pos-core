@@ -4,6 +4,7 @@
  * Used for access-denied, onboarding rituals, and other "moment" screens.
  */
 import React from "react";
+import styles from "./RitualScreen.module.css";
 
 interface RitualAction {
   label: string;
@@ -26,33 +27,14 @@ export const RitualScreen: React.FC<RitualScreenProps> = ({
   children,
 }) => {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "100vh",
-        padding: 32,
-        textAlign: "center",
-      }}
-    >
-      <h1 style={{ fontSize: 28, marginBottom: 8 }}>{title}</h1>
-      {subtitle && (
-        <p style={{ fontSize: 16, opacity: 0.7, marginBottom: 24 }}>
-          {subtitle}
-        </p>
-      )}
+    <div className={styles.root}>
+      <h1 className={styles.title}>{title}</h1>
+      {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
       {children}
       {primaryAction && (
         <button
           onClick={primaryAction.onClick}
-          style={{
-            marginTop: 24,
-            padding: "12px 24px",
-            fontSize: 16,
-            cursor: "pointer",
-          }}
+          className={styles.primaryButton}
         >
           {primaryAction.label}
         </button>

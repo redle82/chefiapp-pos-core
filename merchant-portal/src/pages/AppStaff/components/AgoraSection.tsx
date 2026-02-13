@@ -12,8 +12,8 @@ import {
 } from "../../../core-boundary/writers/TaskWriter";
 import { updateOrderStatus } from "../../../core/infra/CoreOrdersApi";
 import { useToast } from "../../../ui/design-system";
-import { Button } from "../../../ui/design-system/primitives/Button";
-import { Card } from "../../../ui/design-system/primitives/Card";
+import { Button } from "../../../ui/design-system/Button";
+import { Card } from "../../../ui/design-system/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { useAgoraData } from "../hooks/useAgoraData";
 import { useAppStaffPermissions } from "../hooks/useAppStaffPermissions";

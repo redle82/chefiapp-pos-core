@@ -23,6 +23,7 @@ import {
 } from "../../core-boundary/readers/InventoryStockReader";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { GlobalLoadingView } from "../../ui/design-system/components";
+import styles from "./InventoryStockMinimal.module.css";
 
 type TabType = "locations" | "equipment" | "ingredients" | "stock" | "recipes";
 
@@ -193,36 +194,13 @@ export function InventoryStockMinimal() {
   }
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
-      <h1
-        style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "24px" }}
-      >
-        📦 Inventário e Estoque
-      </h1>
+    <div className={styles.container}>
+      <h1 className={styles.pageTitle}>📦 Inventário e Estoque</h1>
 
-      {error && (
-        <div
-          style={{
-            padding: "12px",
-            backgroundColor: "#fee2e2",
-            color: "#991b1b",
-            borderRadius: "8px",
-            marginBottom: "20px",
-          }}
-        >
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorBanner}>{error}</div>}
 
       {/* Tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          borderBottom: "2px solid #e5e7eb",
-          marginBottom: "24px",
-        }}
-      >
+      <div className={styles.tabsContainer}>
         {(
           [
             "locations",
@@ -235,19 +213,9 @@ export function InventoryStockMinimal() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            style={{
-              padding: "12px 24px",
-              fontSize: "16px",
-              fontWeight: activeTab === tab ? "bold" : "normal",
-              border: "none",
-              borderBottom:
-                activeTab === tab
-                  ? "2px solid #3b82f6"
-                  : "2px solid transparent",
-              backgroundColor: "transparent",
-              cursor: "pointer",
-              color: activeTab === tab ? "#3b82f6" : "#6b7280",
-            }}
+            className={`${styles.tabButton} ${
+              activeTab === tab ? styles.tabButtonActive : ""
+            }`}
           >
             {tab === "locations" && "📍 Locais"}
             {tab === "equipment" && "🔧 Equipamentos"}
@@ -261,69 +229,28 @@ export function InventoryStockMinimal() {
       {/* Tab Content */}
       {activeTab === "locations" && (
         <div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "20px",
-            }}
-          >
-            <h2 style={{ fontSize: "20px", fontWeight: "bold" }}>Locais</h2>
+          <div className={styles.headerRow}>
+            <h2 className={styles.sectionTitle}>Locais</h2>
             <button
               onClick={handleCreateDefaultLocations}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: "#3b82f6",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "14px",
-              }}
+              className={styles.actionButton}
             >
               + Criar Locais Padrão
             </button>
           </div>
-          <div style={{ display: "grid", gap: "12px" }}>
+          <div className={styles.gridList}>
             {locations.length === 0 ? (
-              <p
-                style={{ color: "#666", padding: "20px", textAlign: "center" }}
-              >
+              <p className={styles.emptyMessage}>
                 Nenhum local criado. Clique em "Criar Locais Padrão" para
                 começar.
               </p>
             ) : (
               locations.map((loc) => (
-                <div
-                  key={loc.id}
-                  style={{
-                    padding: "16px",
-                    backgroundColor: "#f9fafb",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
+                <div key={loc.id} className={styles.card}>
+                  <div className={styles.cardContent}>
                     <div>
-                      <h3
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: "bold",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        {loc.name}
-                      </h3>
-                      <p style={{ fontSize: "12px", color: "#666" }}>
-                        Tipo: {loc.kind}
-                      </p>
+                      <h3 className={styles.cardTitle}>{loc.name}</h3>
+                      <p className={styles.cardMeta}>Tipo: {loc.kind}</p>
                     </div>
                   </div>
                 </div>
@@ -335,64 +262,29 @@ export function InventoryStockMinimal() {
 
       {activeTab === "equipment" && (
         <div>
-          <h2
-            style={{
-              fontSize: "20px",
-              fontWeight: "bold",
-              marginBottom: "20px",
-            }}
-          >
-            Equipamentos
-          </h2>
-          <div style={{ display: "grid", gap: "12px" }}>
+          <h2 className={styles.sectionTitle}>Equipamentos</h2>
+          <div className={styles.gridList}>
             {equipment.length === 0 ? (
-              <p
-                style={{ color: "#666", padding: "20px", textAlign: "center" }}
-              >
+              <p className={styles.emptyMessage}>
                 Nenhum equipamento cadastrado.
               </p>
             ) : (
               equipment.map((eq) => (
                 <div
                   key={eq.id}
-                  style={{
-                    padding: "16px",
-                    backgroundColor: eq.is_active ? "#f9fafb" : "#fee2e2",
-                    border: `1px solid ${eq.is_active ? "#e5e7eb" : "#fca5a5"}`,
-                    borderRadius: "8px",
-                  }}
+                  className={`${styles.card} ${
+                    !eq.is_active ? styles.cardInactive : ""
+                  }`}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
+                  <div className={styles.cardContent}>
                     <div>
-                      <h3
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: "bold",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        {eq.name}
-                      </h3>
-                      <p style={{ fontSize: "12px", color: "#666" }}>
+                      <h3 className={styles.cardTitle}>{eq.name}</h3>
+                      <p className={styles.cardMeta}>
                         Tipo: {eq.kind}{" "}
                         {eq.capacity_note && `• ${eq.capacity_note}`}
                       </p>
                       {!eq.is_active && (
-                        <p
-                          style={{
-                            fontSize: "12px",
-                            color: "#dc2626",
-                            marginTop: "4px",
-                          }}
-                        >
-                          ⚠️ Inativo
-                        </p>
+                        <p className={styles.warningText}>⚠️ Inativo</p>
                       )}
                     </div>
                   </div>
@@ -405,29 +297,12 @@ export function InventoryStockMinimal() {
 
       {activeTab === "ingredients" && (
         <div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "20px",
-            }}
-          >
-            <h2 style={{ fontSize: "20px", fontWeight: "bold" }}>
-              Ingredientes
-            </h2>
+          <div className={styles.headerRow}>
+            <h2 className={styles.sectionTitle}>Ingredientes</h2>
             <button
               type="button"
               onClick={() => setShowNewIngredient((v) => !v)}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: "#3b82f6",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "14px",
-              }}
+              className={styles.actionButton}
             >
               {showNewIngredient ? "Cancelar" : "+ Novo ingrediente"}
             </button>
@@ -435,39 +310,21 @@ export function InventoryStockMinimal() {
           {showNewIngredient && (
             <form
               onSubmit={handleCreateIngredient}
-              style={{
-                padding: "16px",
-                backgroundColor: "#f0f9ff",
-                border: "1px solid #bae6fd",
-                borderRadius: "8px",
-                marginBottom: "20px",
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "12px",
-                alignItems: "flex-end",
-              }}
+              className={styles.newItemForm}
             >
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 4 }}
-              >
-                <span style={{ fontSize: "13px", color: "#666" }}>Nome</span>
+              <label className={styles.formLabel}>
+                <span className={styles.formLabelText}>Nome</span>
                 <input
                   type="text"
                   value={newIngredientName}
                   onChange={(e) => setNewIngredientName(e.target.value)}
                   placeholder="ex: Tomate"
                   required
-                  style={{
-                    padding: "8px 12px",
-                    fontSize: "14px",
-                    minWidth: 160,
-                  }}
+                  className={styles.formInput}
                 />
               </label>
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 4 }}
-              >
-                <span style={{ fontSize: "13px", color: "#666" }}>Unidade</span>
+              <label className={styles.formLabel}>
+                <span className={styles.formLabelText}>Unidade</span>
                 <select
                   value={newIngredientUnit}
                   onChange={(e) =>
@@ -475,7 +332,7 @@ export function InventoryStockMinimal() {
                       e.target.value as CoreIngredient["unit"],
                     )
                   }
-                  style={{ padding: "8px 12px", fontSize: "14px" }}
+                  className={styles.formSelect}
                 >
                   <option value="unit">Unidade</option>
                   <option value="g">g</option>
@@ -487,59 +344,25 @@ export function InventoryStockMinimal() {
               <button
                 type="submit"
                 disabled={savingIngredient}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#059669",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                }}
+                className={styles.submitButton}
               >
                 {savingIngredient ? "A guardar..." : "Guardar"}
               </button>
             </form>
           )}
-          <div style={{ display: "grid", gap: "12px" }}>
+          <div className={styles.gridList}>
             {ingredients.length === 0 ? (
-              <p
-                style={{ color: "#666", padding: "20px", textAlign: "center" }}
-              >
+              <p className={styles.emptyMessage}>
                 Nenhum ingrediente cadastrado. Clique em &quot;Novo
                 ingrediente&quot; para criar.
               </p>
             ) : (
               ingredients.map((ing) => (
-                <div
-                  key={ing.id}
-                  style={{
-                    padding: "16px",
-                    backgroundColor: "#f9fafb",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
+                <div key={ing.id} className={styles.card}>
+                  <div className={styles.cardContent}>
                     <div>
-                      <h3
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: "bold",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        {ing.name}
-                      </h3>
-                      <p style={{ fontSize: "12px", color: "#666" }}>
-                        Unidade: {ing.unit}
-                      </p>
+                      <h3 className={styles.cardTitle}>{ing.name}</h3>
+                      <p className={styles.cardMeta}>Unidade: {ing.unit}</p>
                     </div>
                   </div>
                 </div>
@@ -551,20 +374,10 @@ export function InventoryStockMinimal() {
 
       {activeTab === "stock" && (
         <div>
-          <h2
-            style={{
-              fontSize: "20px",
-              fontWeight: "bold",
-              marginBottom: "20px",
-            }}
-          >
-            Estoque
-          </h2>
-          <div style={{ display: "grid", gap: "12px" }}>
+          <h2 className={styles.sectionTitle}>Estoque</h2>
+          <div className={styles.gridList}>
             {stockLevels.length === 0 ? (
-              <p
-                style={{ color: "#666", padding: "20px", textAlign: "center" }}
-              >
+              <p className={styles.emptyMessage}>
                 Nenhum nível de estoque cadastrado.
               </p>
             ) : (
@@ -573,53 +386,24 @@ export function InventoryStockMinimal() {
                 return (
                   <div
                     key={stock.id}
-                    style={{
-                      padding: "16px",
-                      backgroundColor: isLow ? "#fef2f2" : "#f9fafb",
-                      border: `2px solid ${isLow ? "#dc2626" : "#e5e7eb"}`,
-                      borderRadius: "8px",
-                    }}
+                    className={`${styles.stockCard} ${
+                      isLow ? styles.stockCardLow : ""
+                    }`}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <div style={{ flex: 1 }}>
-                        <h3
-                          style={{
-                            fontSize: "16px",
-                            fontWeight: "bold",
-                            marginBottom: "4px",
-                          }}
-                        >
+                    <div className={styles.cardContent}>
+                      <div className={styles.stockCardBody}>
+                        <h3 className={styles.cardTitle}>
                           {stock.ingredient?.name || "Ingrediente"}
                           {isLow && (
-                            <span
-                              style={{ color: "#dc2626", marginLeft: "8px" }}
-                            >
+                            <span className={styles.lowStockBadge}>
                               ⚠️ BAIXO
                             </span>
                           )}
                         </h3>
-                        <p
-                          style={{
-                            fontSize: "12px",
-                            color: "#666",
-                            marginBottom: "8px",
-                          }}
-                        >
+                        <p className={styles.stockLocation}>
                           Local: {stock.location?.name || "N/A"}
                         </p>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "16px",
-                            fontSize: "14px",
-                          }}
-                        >
+                        <div className={styles.stockStats}>
                           <span>
                             <strong>Atual:</strong> {stock.qty}{" "}
                             {stock.ingredient?.unit || ""}
@@ -628,7 +412,7 @@ export function InventoryStockMinimal() {
                             <strong>Mínimo:</strong> {stock.min_qty}{" "}
                             {stock.ingredient?.unit || ""}
                           </span>
-                          <span style={{ color: isLow ? "#dc2626" : "#666" }}>
+                          <span className={isLow ? styles.statusCritical : ""}>
                             <strong>Status:</strong> {isLow ? "CRÍTICO" : "OK"}
                           </span>
                         </div>
@@ -644,66 +428,30 @@ export function InventoryStockMinimal() {
 
       {activeTab === "recipes" && (
         <div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "20px",
-            }}
-          >
-            <h2 style={{ fontSize: "20px", fontWeight: "bold" }}>
-              Receitas (BOM)
-            </h2>
+          <div className={styles.headerRow}>
+            <h2 className={styles.sectionTitle}>Receitas (BOM)</h2>
             <button
               type="button"
               onClick={() => setShowNewRecipe((v) => !v)}
               disabled={products.length === 0 || ingredients.length === 0}
-              style={{
-                padding: "8px 16px",
-                backgroundColor:
-                  products.length && ingredients.length ? "#3b82f6" : "#9ca3af",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor:
-                  products.length && ingredients.length
-                    ? "pointer"
-                    : "not-allowed",
-                fontSize: "14px",
-              }}
+              className={`${styles.actionButton} ${
+                products.length === 0 || ingredients.length === 0
+                  ? styles.actionButtonDisabled
+                  : ""
+              }`}
             >
               {showNewRecipe ? "Cancelar" : "+ Nova receita"}
             </button>
           </div>
           {showNewRecipe && (
-            <form
-              onSubmit={handleCreateBOM}
-              style={{
-                padding: "16px",
-                backgroundColor: "#f0f9ff",
-                border: "1px solid #bae6fd",
-                borderRadius: "8px",
-                marginBottom: "20px",
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "12px",
-                alignItems: "flex-end",
-              }}
-            >
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 4 }}
-              >
-                <span style={{ fontSize: "13px", color: "#666" }}>Produto</span>
+            <form onSubmit={handleCreateBOM} className={styles.newItemForm}>
+              <label className={styles.formLabel}>
+                <span className={styles.formLabelText}>Produto</span>
                 <select
                   value={newRecipeProductId}
                   onChange={(e) => setNewRecipeProductId(e.target.value)}
                   required
-                  style={{
-                    padding: "8px 12px",
-                    fontSize: "14px",
-                    minWidth: 180,
-                  }}
+                  className={styles.formSelectWide}
                 >
                   <option value="">— Escolher —</option>
                   {products.map((p) => (
@@ -713,21 +461,13 @@ export function InventoryStockMinimal() {
                   ))}
                 </select>
               </label>
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 4 }}
-              >
-                <span style={{ fontSize: "13px", color: "#666" }}>
-                  Ingrediente
-                </span>
+              <label className={styles.formLabel}>
+                <span className={styles.formLabelText}>Ingrediente</span>
                 <select
                   value={newRecipeIngredientId}
                   onChange={(e) => setNewRecipeIngredientId(e.target.value)}
                   required
-                  style={{
-                    padding: "8px 12px",
-                    fontSize: "14px",
-                    minWidth: 180,
-                  }}
+                  className={styles.formSelectWide}
                 >
                   <option value="">— Escolher —</option>
                   {ingredients.map((i) => (
@@ -737,12 +477,8 @@ export function InventoryStockMinimal() {
                   ))}
                 </select>
               </label>
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 4 }}
-              >
-                <span style={{ fontSize: "13px", color: "#666" }}>
-                  Qtd. por unidade
-                </span>
+              <label className={styles.formLabel}>
+                <span className={styles.formLabelText}>Qtd. por unidade</span>
                 <input
                   type="text"
                   inputMode="decimal"
@@ -750,31 +486,21 @@ export function InventoryStockMinimal() {
                   onChange={(e) => setNewRecipeQty(e.target.value)}
                   placeholder="1"
                   required
-                  style={{ padding: "8px 12px", fontSize: "14px", width: 80 }}
+                  className={styles.formInputQty}
                 />
               </label>
               <button
                 type="submit"
                 disabled={savingRecipe}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#059669",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                }}
+                className={styles.submitButton}
               >
                 {savingRecipe ? "A guardar..." : "Guardar"}
               </button>
             </form>
           )}
-          <div style={{ display: "grid", gap: "12px" }}>
+          <div className={styles.gridList}>
             {productBOM.length === 0 ? (
-              <p
-                style={{ color: "#666", padding: "20px", textAlign: "center" }}
-              >
+              <p className={styles.emptyMessage}>
                 Nenhuma receita cadastrada. Crie produtos e ingredientes
                 primeiro, depois &quot;Nova receita&quot;.
               </p>
@@ -787,33 +513,13 @@ export function InventoryStockMinimal() {
                   bom.ingredient?.name || bom.ingredient_id;
                 const unit = bom.ingredient?.unit || "";
                 return (
-                  <div
-                    key={bom.id}
-                    style={{
-                      padding: "16px",
-                      backgroundColor: "#f9fafb",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
+                  <div key={bom.id} className={styles.card}>
+                    <div className={styles.cardContent}>
                       <div>
-                        <h3
-                          style={{
-                            fontSize: "16px",
-                            fontWeight: "bold",
-                            marginBottom: "4px",
-                          }}
-                        >
+                        <h3 className={styles.cardTitle}>
                           {productName} → {ingredientName}
                         </h3>
-                        <p style={{ fontSize: "12px", color: "#666" }}>
+                        <p className={styles.cardMeta}>
                           {bom.qty_per_unit} {unit} por unidade vendida
                         </p>
                       </div>

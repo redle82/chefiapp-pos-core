@@ -11,6 +11,20 @@
  * - Use CSS variables via tokens.css for pure CSS files
  */
 
+import {
+  colors as coreColors,
+  elevation as coreElevation,
+  fontFamily as coreFontFamily,
+  fontSize as coreFontSize,
+  fontWeight as coreFontWeight,
+  lineHeight as coreLineHeight,
+  radius as coreRadius,
+  space as coreSpace,
+  spacing as coreSpacing,
+} from "@chefiapp/core-design-system";
+
+const px = (value: number) => `${value}px`;
+
 // ============================================================================
 // BRAND COLORS
 // ============================================================================
@@ -18,18 +32,18 @@
 export const Brand = {
   // ChefIApp Gold — Primary brand color
   gold: {
-    DEFAULT: '#C9A227',
-    light: '#E8C547',
-    dark: '#B8922A',
-    gradient: 'linear-gradient(135deg, #C9A227 0%, #B8922A 100%)',
-    glow: '0 4px 20px rgba(201, 162, 39, 0.3)',
+    DEFAULT: coreColors.accent,
+    light: coreColors.accent,
+    dark: coreColors.accent,
+    gradient: `linear-gradient(135deg, ${coreColors.accent} 0%, ${coreColors.accent} 100%)`,
+    glow: `0 4px 20px ${coreColors.accent}4D`,
   },
 
   // Stripe Purple — Payment integration
   stripe: {
-    DEFAULT: '#635BFF',
-    light: '#A259FF',
-    gradient: 'linear-gradient(135deg, #635BFF 0%, #A259FF 100%)',
+    DEFAULT: "#635BFF",
+    light: "#A259FF",
+    gradient: "linear-gradient(135deg, #635BFF 0%, #A259FF 100%)",
   },
 } as const;
 
@@ -42,110 +56,110 @@ export const Colors = {
   primary: Brand.gold.DEFAULT,
   primaryLight: Brand.gold.light,
   primaryDark: Brand.gold.dark,
-  secondary: '#1A4D7A', // Blue - Administrative
+  secondary: coreColors.info,
 
   // Legacy green (for backward compat, prefer primary gold)
-  legacyGreen: '#2A9D3E',
+  legacyGreen: coreColors.success,
 
   // Semantic colors
-  success: '#22C55E', // Green - confirmed states
-  warning: '#FBBF24', // Amber - pending/caution
-  error: '#EF4444', // Red - errors, failures
-  info: '#3B82F6', // Blue - informational
+  success: coreColors.success,
+  warning: coreColors.warning,
+  error: coreColors.error,
+  info: coreColors.info,
 
   // Truth States (Product Signature)
-  ghost: '#EF4444', // Red - unpublished state
-  live: '#22C55E', // Green - published/active state
+  ghost: coreColors.error,
+  live: coreColors.success,
 
   // Neutral colors (Dark theme optimized)
   neutral: {
-    0: '#FFFFFF',
-    50: '#FAFAFA',
-    100: '#F5F5F5',
-    200: '#E5E5E5',
-    300: '#D4D4D4',
-    400: '#A3A3A3',
-    500: '#737373',
-    600: '#525252',
-    700: '#404040',
-    800: '#262626',
-    900: '#1A1A1A',
-    950: '#0A0A0A',
+    0: "#FFFFFF",
+    50: "#FAFAFA",
+    100: "#F5F5F5",
+    200: "#E5E5E5",
+    300: "#D4D4D4",
+    400: "#A3A3A3",
+    500: "#737373",
+    600: "#525252",
+    700: "#404040",
+    800: "#262626",
+    900: "#1A1A1A",
+    950: "#0A0A0A",
   },
 
   // Dark theme surface colors
   surface: {
-    base: '#1A1A1A', // Background
-    elevated: 'rgba(255, 255, 255, 0.03)', // Cards, panels
-    overlay: 'rgba(255, 255, 255, 0.04)', // Hover states
-    border: 'rgba(255, 255, 255, 0.08)', // Subtle borders
-    borderHover: 'rgba(255, 255, 255, 0.12)', // Hover borders
-    borderActive: 'rgba(255, 255, 255, 0.15)', // Active borders
+    base: coreColors.background,
+    elevated: coreColors.surfaceElevated,
+    overlay: coreColors.surfaceOverlay,
+    border: coreColors.border,
+    borderHover: coreColors.borderHover,
+    borderActive: coreColors.borderActive,
   },
 
   // Text colors (Dark theme)
   text: {
-    primary: 'rgba(255, 255, 255, 0.87)',
-    secondary: 'rgba(255, 255, 255, 0.60)',
-    tertiary: 'rgba(255, 255, 255, 0.40)',
-    disabled: 'rgba(255, 255, 255, 0.25)',
-    inverse: '#1A1A1A',
+    primary: coreColors.textPrimary,
+    secondary: coreColors.textSecondary,
+    tertiary: coreColors.textMuted,
+    disabled: coreColors.textDisabled,
+    inverse: coreColors.textInverse,
   },
 
   // Risk levels (AppStaff)
   risk: {
-    low: '#22C55E',
-    medium: '#FBBF24',
-    high: '#EF4444',
+    low: coreColors.success,
+    medium: coreColors.warning,
+    high: coreColors.error,
   },
 
   // Status colors with opacity variants
   status: {
     success: {
-      bg: 'rgba(34, 197, 94, 0.12)',
-      border: 'rgba(34, 197, 94, 0.25)',
-      text: '#22C55E',
+      bg: "rgba(34, 197, 94, 0.12)",
+      border: "rgba(34, 197, 94, 0.25)",
+      text: coreColors.success,
     },
     warning: {
-      bg: 'rgba(251, 191, 36, 0.12)',
-      border: 'rgba(251, 191, 36, 0.25)',
-      text: '#FBBF24',
+      bg: "rgba(251, 191, 36, 0.12)",
+      border: "rgba(251, 191, 36, 0.25)",
+      text: coreColors.warning,
     },
     error: {
-      bg: 'rgba(239, 68, 68, 0.12)',
-      border: 'rgba(239, 68, 68, 0.25)',
-      text: '#EF4444',
+      bg: "rgba(239, 68, 68, 0.12)",
+      border: "rgba(239, 68, 68, 0.25)",
+      text: coreColors.error,
     },
     info: {
-      bg: 'rgba(59, 130, 246, 0.12)',
-      border: 'rgba(59, 130, 246, 0.25)',
-      text: '#3B82F6',
+      bg: "rgba(59, 130, 246, 0.12)",
+      border: "rgba(59, 130, 246, 0.25)",
+      text: coreColors.info,
     },
     primary: {
-      bg: 'rgba(201, 162, 39, 0.12)',
-      border: 'rgba(201, 162, 39, 0.25)',
-      text: '#C9A227',
+      bg: "rgba(201, 162, 39, 0.12)",
+      border: "rgba(201, 162, 39, 0.25)",
+      text: Brand.gold.DEFAULT,
     },
   },
 
   // Kitchen Display System (High Contrast / Operational)
   kds: {
-    background: '#050505', // Pure black for OLED/Dark environments
-    surface: '#121212',
-    border: '#262626',
+    background: coreColors.background,
+    surface: coreColors.surface,
+    border: coreColors.border,
     text: {
-      primary: '#FFFFFF',
-      secondary: '#A3A3A3',
-      dim: '#525252',
+      primary: coreColors.textPrimary,
+      secondary: coreColors.textSecondary,
+      dim: coreColors.textMuted,
     },
     ticket: {
-      new: '#102816', // Dark Green bg
-      late: '#2D1212', // Dark Red bg
-      standard: '#121212',
-      borderNew: '#22C55E',
-      borderLate: '#EF4444',
-      borderStandard: '#404040',
-    }
+      new: coreColors.surface,
+      late: coreColors.surface,
+      standard: coreColors.surface,
+      borderNew: coreColors.success,
+      borderLate: coreColors.error,
+      borderStandard: coreColors.border,
+    },
   },
 } as const;
 
@@ -161,7 +175,7 @@ export const Opacity = {
   black: (opacity: number) => `rgba(0, 0, 0, ${opacity})`,
 
   // Primary with opacity
-  primary: (opacity: number) => `rgba(201, 162, 39, ${opacity})`,
+  primary: (opacity: number) => `rgba(34, 197, 94, ${opacity})`,
 
   // Success with opacity
   success: (opacity: number) => `rgba(34, 197, 94, ${opacity})`,
@@ -183,60 +197,75 @@ export const Opacity = {
 export const Typography = {
   // Display/Heading scale
   displayLarge: {
-    fontSize: '32px',
-    fontWeight: 700,
-    lineHeight: '1.2',
-    letterSpacing: '-0.01em',
+    fontSize: px(coreFontSize.display),
+    fontWeight: coreFontWeight.bold,
+    lineHeight: `${coreLineHeight.tight}`,
+    letterSpacing: "-0.01em",
   },
   displayMedium: {
-    fontSize: '24px',
-    fontWeight: 700,
-    lineHeight: '1.3',
-    letterSpacing: '-0.005em',
+    fontSize: px(coreFontSize["2xl"]),
+    fontWeight: coreFontWeight.bold,
+    lineHeight: `${coreLineHeight.normal}`,
+    letterSpacing: "-0.005em",
   },
   displaySmall: {
-    fontSize: '20px',
-    fontWeight: 600,
-    lineHeight: '1.4',
-    letterSpacing: '0',
+    fontSize: px(coreFontSize.xl),
+    fontWeight: coreFontWeight.semibold,
+    lineHeight: `${coreLineHeight.normal}`,
+    letterSpacing: "0",
   },
 
   // Heading scale
-  h1: { fontSize: '28px', fontWeight: 800, lineHeight: '1.15' },
-  h2: { fontSize: '22px', fontWeight: 700, lineHeight: '1.2' },
-  h3: { fontSize: '16px', fontWeight: 700, lineHeight: '1.3' },
-  h4: { fontSize: '14px', fontWeight: 600, lineHeight: '1.4' },
+  h1: {
+    fontSize: px(coreFontSize["2xl"]),
+    fontWeight: coreFontWeight.bold,
+    lineHeight: `${coreLineHeight.tight}`,
+  },
+  h2: {
+    fontSize: px(coreFontSize.xl),
+    fontWeight: coreFontWeight.bold,
+    lineHeight: `${coreLineHeight.normal}`,
+  },
+  h3: {
+    fontSize: px(coreFontSize.base),
+    fontWeight: coreFontWeight.bold,
+    lineHeight: `${coreLineHeight.normal}`,
+  },
+  h4: {
+    fontSize: px(coreFontSize.sm),
+    fontWeight: coreFontWeight.semibold,
+    lineHeight: `${coreLineHeight.normal}`,
+  },
 
   // UI/Body scale
   uiLarge: {
-    fontSize: '16px',
-    fontWeight: 500,
-    lineHeight: '1.5',
-    letterSpacing: '0.3px',
+    fontSize: px(coreFontSize.base),
+    fontWeight: coreFontWeight.medium,
+    lineHeight: `${coreLineHeight.normal}`,
+    letterSpacing: "0.3px",
   },
   uiMedium: {
-    fontSize: '14px',
-    fontWeight: 500,
-    lineHeight: '1.5',
-    letterSpacing: '0.2px',
+    fontSize: px(coreFontSize.sm),
+    fontWeight: coreFontWeight.medium,
+    lineHeight: `${coreLineHeight.normal}`,
+    letterSpacing: "0.2px",
   },
   uiSmall: {
-    fontSize: '12px',
-    fontWeight: 400,
-    lineHeight: '1.4',
-    letterSpacing: '0.1px',
+    fontSize: px(coreFontSize.xs),
+    fontWeight: coreFontWeight.normal,
+    lineHeight: `${coreLineHeight.normal}`,
+    letterSpacing: "0.1px",
   },
   uiTiny: {
-    fontSize: '11px',
-    fontWeight: 600,
-    lineHeight: '1.3',
-    letterSpacing: '0.5px',
-    textTransform: 'uppercase' as const,
+    fontSize: px(coreFontSize.xs),
+    fontWeight: coreFontWeight.semibold,
+    lineHeight: `${coreLineHeight.tight}`,
+    letterSpacing: "0.5px",
+    textTransform: "uppercase" as const,
   },
 
   // Font family fallback
-  fontFamily:
-    '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif',
+  fontFamily: coreFontFamily.sans,
 } as const;
 
 // ============================================================================
@@ -244,18 +273,18 @@ export const Typography = {
 // ============================================================================
 
 export const Spacing = {
-  0: '0px',
-  xs: '4px', // 4px - Micro gaps, icon padding
-  sm: '8px', // 8px - Tight padding, inline gaps
-  '10': '10px', // 10px - Button padding
-  md: '12px', // 12px - Standard padding (inputs, buttons)
-  lg: '16px', // 16px - Card padding, section gaps
-  '18': '18px', // 18px - Card inner padding
-  xl: '24px', // 24px - Major sections
-  '28': '28px', // 28px - Hero padding
-  '2xl': '32px', // 32px - Page margins
-  '3xl': '48px', // 48px - Hero spacing
-  '4xl': '64px', // 64px - Full-width gaps
+  0: "0px",
+  xs: px(coreSpace.xs),
+  sm: px(coreSpace.sm),
+  "10": px(coreSpacing[3]),
+  md: px(coreSpacing[3]),
+  lg: px(coreSpacing[4]),
+  "18": px(coreSpacing[5]),
+  xl: px(coreSpacing[6]),
+  "28": px(coreSpacing[6]),
+  "2xl": px(coreSpacing[8]),
+  "3xl": px(coreSpacing[12]),
+  "4xl": px(coreSpacing[16]),
 } as const;
 
 // ============================================================================
@@ -263,13 +292,13 @@ export const Spacing = {
 // ============================================================================
 
 export const BorderRadius = {
-  none: '0px',
-  xs: '4px', // Inputs, chips
-  sm: '8px', // Cards, buttons
-  '10': '10px', // Button radius
-  md: '12px', // Modals, panels
-  lg: '16px', // Large containers
-  full: '9999px', // Pills, avatars
+  none: "0px",
+  xs: px(coreRadius.sm),
+  sm: px(coreRadius.md),
+  "10": px(coreRadius.md),
+  md: px(coreRadius.lg),
+  lg: px(coreRadius.lg),
+  full: px(coreRadius.full),
 } as const;
 
 // ============================================================================
@@ -277,12 +306,12 @@ export const BorderRadius = {
 // ============================================================================
 
 export const Elevation = {
-  none: 'none',
-  xs: '0 1px 2px rgba(0, 0, 0, 0.05)',
-  sm: '0 2px 4px rgba(0, 0, 0, 0.08)',
-  md: '0 4px 8px rgba(0, 0, 0, 0.12)',
-  lg: '0 8px 16px rgba(0, 0, 0, 0.15)',
-  xl: '0 12px 24px rgba(0, 0, 0, 0.18)',
+  none: coreElevation.none,
+  xs: coreElevation.low,
+  sm: coreElevation.low,
+  md: coreElevation.medium,
+  lg: coreElevation.high,
+  xl: coreElevation.high,
   primary: Brand.gold.glow,
 } as const;
 
@@ -291,13 +320,13 @@ export const Elevation = {
 // ============================================================================
 
 export const Breakpoints = {
-  mobile: '0px',
-  sm: '640px',
-  tablet: '768px',
-  md: '860px', // Legacy breakpoint
-  desktop: '1024px',
-  lg: '1100px', // Max-width
-  wide: '1440px',
+  mobile: "0px",
+  sm: "640px",
+  tablet: "768px",
+  md: "860px", // Legacy breakpoint
+  desktop: "1024px",
+  lg: "1100px", // Max-width
+  wide: "1440px",
 } as const;
 
 // Media query helpers
@@ -316,10 +345,10 @@ export const MediaQueries = {
 // ============================================================================
 
 export const Transitions = {
-  fast: '150ms cubic-bezier(0.4, 0, 0.2, 1)',
-  standard: '200ms cubic-bezier(0.4, 0, 0.2, 1)',
-  slow: '300ms cubic-bezier(0.4, 0, 0.2, 1)',
-  spring: '300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+  fast: "150ms cubic-bezier(0.4, 0, 0.2, 1)",
+  standard: "200ms cubic-bezier(0.4, 0, 0.2, 1)",
+  slow: "300ms cubic-bezier(0.4, 0, 0.2, 1)",
+  spring: "300ms cubic-bezier(0.34, 1.56, 0.64, 1)",
 } as const;
 
 // ============================================================================
@@ -344,24 +373,24 @@ export const ZIndex = {
 export const ComponentTokens = {
   // Input/Form
   input: {
-    height: '44px',
+    height: "44px",
     paddingY: Spacing.sm,
     paddingX: Spacing.md,
-    borderWidth: '1px',
+    borderWidth: "1px",
     borderColor: Colors.surface.border,
     borderColorFocus: Colors.primary,
     borderRadius: BorderRadius.sm,
-    background: 'rgba(0, 0, 0, 0.2)',
+    background: "rgba(0, 0, 0, 0.2)",
   },
 
   // Button
   button: {
-    height: '44px',
-    heightSm: '36px',
-    heightLg: '52px',
-    paddingY: Spacing['10'],
+    height: "44px",
+    heightSm: "36px",
+    heightLg: "52px",
+    paddingY: Spacing["10"],
     paddingX: Spacing.md,
-    borderRadius: BorderRadius['10'],
+    borderRadius: BorderRadius["10"],
     transition: Transitions.fast,
   },
 
@@ -375,38 +404,38 @@ export const ComponentTokens = {
 
   // Badge/Chip
   badge: {
-    paddingY: '6px',
-    paddingX: Spacing['10'],
+    paddingY: "6px",
+    paddingX: Spacing["10"],
     borderRadius: BorderRadius.full,
-    fontSize: '12px',
+    fontSize: "12px",
   },
 
   // Modal/Dialog
   modal: {
-    maxWidth: '600px',
+    maxWidth: "600px",
     borderRadius: BorderRadius.md,
     elevation: Elevation.xl,
   },
 
   // TopBar
   topBar: {
-    height: '56px',
+    height: "56px",
     backgroundColor: Colors.secondary,
     color: Colors.neutral[0],
   },
 
   // BottomNav
   bottomNav: {
-    height: '72px', // With safe area
-    heightBase: '56px',
+    height: "72px", // With safe area
+    heightBase: "56px",
     backgroundColor: Colors.neutral[900],
     borderTop: `1px solid ${Colors.surface.border}`,
   },
 
   // Step indicator
   step: {
-    size: '40px',
-    fontSize: '12px',
+    size: "40px",
+    fontSize: "12px",
     borderRadius: BorderRadius.full,
   },
 } as const;
@@ -417,146 +446,152 @@ export const ComponentTokens = {
 
 export const getCSSVariables = () => ({
   // Brand
-  '--color-brand-gold': Brand.gold.DEFAULT,
-  '--color-brand-gold-light': Brand.gold.light,
-  '--color-brand-gold-dark': Brand.gold.dark,
-  '--gradient-brand': Brand.gold.gradient,
-  '--shadow-brand': Brand.gold.glow,
+  "--color-brand-gold": Brand.gold.DEFAULT,
+  "--color-brand-gold-light": Brand.gold.light,
+  "--color-brand-gold-dark": Brand.gold.dark,
+  "--gradient-brand": Brand.gold.gradient,
+  "--shadow-brand": Brand.gold.glow,
 
   // Primary/Secondary
-  '--color-primary': Colors.primary,
-  '--color-primary-light': Colors.primaryLight,
-  '--color-primary-dark': Colors.primaryDark,
-  '--color-secondary': Colors.secondary,
+  "--color-primary": Colors.primary,
+  "--color-primary-light": Colors.primaryLight,
+  "--color-primary-dark": Colors.primaryDark,
+  "--color-secondary": Colors.secondary,
 
   // TPV Specific (Speed Mode)
   tpv: {
-    buttonHeight: '64px',
+    buttonHeight: "64px",
     productCard: {
-      height: '140px',
+      height: "140px",
       background: Colors.surface.elevated,
     },
     gridGap: Spacing.md,
   },
 
   // Semantic
-  '--color-success': Colors.success,
-  '--color-warning': Colors.warning,
-  '--color-error': Colors.error,
-  '--color-info': Colors.info,
-  '--color-ghost': Colors.ghost,
-  '--color-live': Colors.live,
+  "--color-success": Colors.success,
+  "--color-warning": Colors.warning,
+  "--color-error": Colors.error,
+  "--color-info": Colors.info,
+  "--color-ghost": Colors.ghost,
+  "--color-live": Colors.live,
 
   // Neutrals
-  '--color-neutral-0': Colors.neutral[0],
-  '--color-neutral-50': Colors.neutral[50],
-  '--color-neutral-100': Colors.neutral[100],
-  '--color-neutral-200': Colors.neutral[200],
-  '--color-neutral-300': Colors.neutral[300],
-  '--color-neutral-400': Colors.neutral[400],
-  '--color-neutral-500': Colors.neutral[500],
-  '--color-neutral-600': Colors.neutral[600],
-  '--color-neutral-700': Colors.neutral[700],
-  '--color-neutral-800': Colors.neutral[800],
-  '--color-neutral-900': Colors.neutral[900],
-  '--color-neutral-950': Colors.neutral[950],
+  "--color-neutral-0": Colors.neutral[0],
+  "--color-neutral-50": Colors.neutral[50],
+  "--color-neutral-100": Colors.neutral[100],
+  "--color-neutral-200": Colors.neutral[200],
+  "--color-neutral-300": Colors.neutral[300],
+  "--color-neutral-400": Colors.neutral[400],
+  "--color-neutral-500": Colors.neutral[500],
+  "--color-neutral-600": Colors.neutral[600],
+  "--color-neutral-700": Colors.neutral[700],
+  "--color-neutral-800": Colors.neutral[800],
+  "--color-neutral-900": Colors.neutral[900],
+  "--color-neutral-950": Colors.neutral[950],
 
   // Surfaces
-  '--surface-base': Colors.surface.base,
-  '--surface-elevated': Colors.surface.elevated,
-  '--surface-overlay': Colors.surface.overlay,
-  '--surface-border': Colors.surface.border,
-  '--surface-border-hover': Colors.surface.borderHover,
-  '--surface-border-active': Colors.surface.borderActive,
+  "--surface-base": Colors.surface.base,
+  "--surface-elevated": Colors.surface.elevated,
+  "--surface-overlay": Colors.surface.overlay,
+  "--surface-border": Colors.surface.border,
+  "--surface-border-hover": Colors.surface.borderHover,
+  "--surface-border-active": Colors.surface.borderActive,
 
   // Text
-  '--text-primary': Colors.text.primary,
-  '--text-secondary': Colors.text.secondary,
-  '--text-tertiary': Colors.text.tertiary,
-  '--text-disabled': Colors.text.disabled,
+  "--text-primary": Colors.text.primary,
+  "--text-secondary": Colors.text.secondary,
+  "--text-tertiary": Colors.text.tertiary,
+  "--text-disabled": Colors.text.disabled,
 
   // Status backgrounds
-  '--status-success-bg': Colors.status.success.bg,
-  '--status-success-border': Colors.status.success.border,
-  '--status-success-text': Colors.status.success.text,
-  '--status-warning-bg': Colors.status.warning.bg,
-  '--status-warning-border': Colors.status.warning.border,
-  '--status-warning-text': Colors.status.warning.text,
-  '--status-error-bg': Colors.status.error.bg,
-  '--status-error-border': Colors.status.error.border,
-  '--status-error-text': Colors.status.error.text,
-  '--status-info-bg': Colors.status.info.bg,
-  '--status-info-border': Colors.status.info.border,
-  '--status-info-text': Colors.status.info.text,
+  "--status-success-bg": Colors.status.success.bg,
+  "--status-success-border": Colors.status.success.border,
+  "--status-success-text": Colors.status.success.text,
+  "--status-warning-bg": Colors.status.warning.bg,
+  "--status-warning-border": Colors.status.warning.border,
+  "--status-warning-text": Colors.status.warning.text,
+  "--status-error-bg": Colors.status.error.bg,
+  "--status-error-border": Colors.status.error.border,
+  "--status-error-text": Colors.status.error.text,
+  "--status-info-bg": Colors.status.info.bg,
+  "--status-info-border": Colors.status.info.border,
+  "--status-info-text": Colors.status.info.text,
 
   // Risk levels
-  '--color-risk-low': Colors.risk.low,
-  '--color-risk-medium': Colors.risk.medium,
-  '--color-risk-high': Colors.risk.high,
+  "--color-risk-low": Colors.risk.low,
+  "--color-risk-medium": Colors.risk.medium,
+  "--color-risk-high": Colors.risk.high,
 
   // Spacing
-  '--spacing-0': Spacing[0],
-  '--spacing-xs': Spacing.xs,
-  '--spacing-sm': Spacing.sm,
-  '--spacing-10': Spacing['10'],
-  '--spacing-md': Spacing.md,
-  '--spacing-lg': Spacing.lg,
-  '--spacing-18': Spacing['18'],
-  '--spacing-xl': Spacing.xl,
-  '--spacing-28': Spacing['28'],
-  '--spacing-2xl': Spacing['2xl'],
-  '--spacing-3xl': Spacing['3xl'],
-  '--spacing-4xl': Spacing['4xl'],
+  "--spacing-0": Spacing[0],
+  "--spacing-xs": Spacing.xs,
+  "--spacing-sm": Spacing.sm,
+  "--spacing-10": Spacing["10"],
+  "--spacing-md": Spacing.md,
+  "--spacing-lg": Spacing.lg,
+  "--spacing-18": Spacing["18"],
+  "--spacing-xl": Spacing.xl,
+  "--spacing-28": Spacing["28"],
+  "--spacing-2xl": Spacing["2xl"],
+  "--spacing-3xl": Spacing["3xl"],
+  "--spacing-4xl": Spacing["4xl"],
 
   // Border radius
-  '--radius-none': BorderRadius.none,
-  '--radius-xs': BorderRadius.xs,
-  '--radius-sm': BorderRadius.sm,
-  '--radius-10': BorderRadius['10'],
-  '--radius-md': BorderRadius.md,
-  '--radius-lg': BorderRadius.lg,
-  '--radius-full': BorderRadius.full,
+  "--radius-none": BorderRadius.none,
+  "--radius-xs": BorderRadius.xs,
+  "--radius-sm": BorderRadius.sm,
+  "--radius-10": BorderRadius["10"],
+  "--radius-md": BorderRadius.md,
+  "--radius-lg": BorderRadius.lg,
+  "--radius-full": BorderRadius.full,
 
   // Transitions
-  '--transition-fast': Transitions.fast,
-  '--transition-standard': Transitions.standard,
-  '--transition-slow': Transitions.slow,
-  '--transition-spring': Transitions.spring,
+  "--transition-fast": Transitions.fast,
+  "--transition-standard": Transitions.standard,
+  "--transition-slow": Transitions.slow,
+  "--transition-spring": Transitions.spring,
 
   // Elevation
-  '--elevation-none': Elevation.none,
-  '--elevation-xs': Elevation.xs,
-  '--elevation-sm': Elevation.sm,
-  '--elevation-md': Elevation.md,
-  '--elevation-lg': Elevation.lg,
-  '--elevation-xl': Elevation.xl,
-  '--elevation-primary': Elevation.primary,
+  "--elevation-none": Elevation.none,
+  "--elevation-xs": Elevation.xs,
+  "--elevation-sm": Elevation.sm,
+  "--elevation-md": Elevation.md,
+  "--elevation-lg": Elevation.lg,
+  "--elevation-xl": Elevation.xl,
+  "--elevation-primary": Elevation.primary,
 
   // Typography
-  '--font-family': Typography.fontFamily,
+  "--font-family": Typography.fontFamily,
 
   // Z-index
-  '--z-base': ZIndex.base,
-  '--z-dropdown': ZIndex.dropdown,
-  '--z-sticky': ZIndex.sticky,
-  '--z-fixed': ZIndex.fixed,
-  '--z-modal': ZIndex.modal,
-  '--z-popover': ZIndex.popover,
-  '--z-toast': ZIndex.toast,
+  "--z-base": ZIndex.base,
+  "--z-dropdown": ZIndex.dropdown,
+  "--z-sticky": ZIndex.sticky,
+  "--z-fixed": ZIndex.fixed,
+  "--z-modal": ZIndex.modal,
+  "--z-popover": ZIndex.popover,
+  "--z-toast": ZIndex.toast,
 
   // Breakpoints
-  '--breakpoint-sm': Breakpoints.sm,
-  '--breakpoint-tablet': Breakpoints.tablet,
-  '--breakpoint-md': Breakpoints.md,
-  '--breakpoint-desktop': Breakpoints.desktop,
-  '--breakpoint-wide': Breakpoints.wide,
+  "--breakpoint-sm": Breakpoints.sm,
+  "--breakpoint-tablet": Breakpoints.tablet,
+  "--breakpoint-md": Breakpoints.md,
+  "--breakpoint-desktop": Breakpoints.desktop,
+  "--breakpoint-wide": Breakpoints.wide,
 });
 
 // ============================================================================
 // UTILITY: CLASS NAME HELPERS
 // ============================================================================
 
-type ClassValue = string | number | boolean | undefined | null | Record<string, unknown>;
+type ClassValue =
+  | string
+  | number
+  | boolean
+  | undefined
+  | null
+  | Record<string, unknown>;
 
 export const cn = (...inputs: ClassValue[]): string => {
   const classes: string[] = [];
@@ -564,9 +599,9 @@ export const cn = (...inputs: ClassValue[]): string => {
   inputs.forEach((input) => {
     if (!input) return;
 
-    if (typeof input === 'string' || typeof input === 'number') {
+    if (typeof input === "string" || typeof input === "number") {
       classes.push(String(input));
-    } else if (typeof input === 'object') {
+    } else if (typeof input === "object") {
       Object.keys(input).forEach((key) => {
         if (input[key]) {
           classes.push(key);
@@ -575,7 +610,7 @@ export const cn = (...inputs: ClassValue[]): string => {
     }
   });
 
-  return classes.join(' ');
+  return classes.join(" ");
 };
 
 // ============================================================================
@@ -588,34 +623,34 @@ export const cn = (...inputs: ClassValue[]): string => {
  */
 export const LegacyColorMap = {
   // Old accent colors -> new primary
-  'rgba(100, 108, 255, 0.7)': Colors.primary, // Focus state
-  'rgba(100, 108, 255, 0.55)': 'var(--surface-border-active)',
-  'rgba(100, 108, 255, 0.18)': 'var(--status-info-bg)',
-  'rgba(100, 108, 255, 0.16)': 'var(--status-info-bg)',
-  '#646cff': Colors.primary,
-  '#535bf2': Colors.primaryDark,
+  "rgba(100, 108, 255, 0.7)": Colors.primary, // Focus state
+  "rgba(100, 108, 255, 0.55)": "var(--surface-border-active)",
+  "rgba(100, 108, 255, 0.18)": "var(--status-info-bg)",
+  "rgba(100, 108, 255, 0.16)": "var(--status-info-bg)",
+  "#646cff": Colors.primary,
+  "#535bf2": Colors.primaryDark,
 
   // Success colors
-  'rgba(80, 200, 120, 0.35)': 'var(--status-success-border)',
-  'rgba(80, 200, 120, 0.12)': 'var(--status-success-bg)',
-  'rgba(80, 200, 120, 0.1)': 'var(--status-success-bg)',
+  "rgba(80, 200, 120, 0.35)": "var(--status-success-border)",
+  "rgba(80, 200, 120, 0.12)": "var(--status-success-bg)",
+  "rgba(80, 200, 120, 0.1)": "var(--status-success-bg)",
 
   // Warning colors
-  'rgba(255, 180, 80, 0.35)': 'var(--status-warning-border)',
-  'rgba(255, 180, 80, 0.12)': 'var(--status-warning-bg)',
+  "rgba(255, 180, 80, 0.35)": "var(--status-warning-border)",
+  "rgba(255, 180, 80, 0.12)": "var(--status-warning-bg)",
 
   // Error colors
-  'rgba(255, 80, 80, 0.35)': 'var(--status-error-border)',
-  'rgba(255, 80, 80, 0.1)': 'var(--status-error-bg)',
+  "rgba(255, 80, 80, 0.35)": "var(--status-error-border)",
+  "rgba(255, 80, 80, 0.1)": "var(--status-error-bg)",
 
   // Surface colors
-  'rgba(255, 255, 255, 0.87)': 'var(--text-primary)',
-  'rgba(255, 255, 255, 0.15)': 'var(--surface-border-active)',
-  'rgba(255, 255, 255, 0.14)': 'var(--surface-border-hover)',
-  'rgba(255, 255, 255, 0.12)': 'var(--surface-border)',
-  'rgba(255, 255, 255, 0.08)': 'var(--surface-border)',
-  'rgba(255, 255, 255, 0.06)': 'var(--surface-elevated)',
-  'rgba(255, 255, 255, 0.04)': 'var(--surface-elevated)',
-  'rgba(0, 0, 0, 0.2)': 'var(--surface-base)',
-  'rgba(0, 0, 0, 0.35)': 'var(--surface-base)',
+  "rgba(255, 255, 255, 0.87)": "var(--text-primary)",
+  "rgba(255, 255, 255, 0.15)": "var(--surface-border-active)",
+  "rgba(255, 255, 255, 0.14)": "var(--surface-border-hover)",
+  "rgba(255, 255, 255, 0.12)": "var(--surface-border)",
+  "rgba(255, 255, 255, 0.08)": "var(--surface-border)",
+  "rgba(255, 255, 255, 0.06)": "var(--surface-elevated)",
+  "rgba(255, 255, 255, 0.04)": "var(--surface-elevated)",
+  "rgba(0, 0, 0, 0.2)": "var(--surface-base)",
+  "rgba(0, 0, 0, 0.35)": "var(--surface-base)",
 } as const;

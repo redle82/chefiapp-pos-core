@@ -3,18 +3,38 @@ import "./Button.css";
 import type { FireState } from "./sovereign/FireSystem";
 import { cn } from "./tokens";
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+type ButtonTone =
+  | "action"
+  | "warning"
+  | "destructive"
+  | "neutral"
+  | "info"
+  | "success";
+
+type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "ghost"
+  | "critical"
+  | "constructive"
+  | "outline"
+  | "warning"
+  | "info"
+  | "neutral"
+  | "solid";
+
+type ButtonSize = "sm" | "md" | "lg" | "xl" | "default";
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   // 'outline' is alias for 'secondary'
-  variant?:
-    | "primary"
-    | "secondary"
-    | "ghost"
-    | "critical"
-    | "constructive"
-    | "outline";
-  size?: "sm" | "md" | "lg";
+  variant?: ButtonVariant;
+  tone?: ButtonTone;
+  size?: ButtonSize;
   fullWidth?: boolean;
   loading?: boolean;
+  isLoading?: boolean;
+  icon?: React.ReactNode;
   children: React.ReactNode;
   fireContext?: FireState;
 }
@@ -33,9 +53,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       variant = "primary",
+      tone,
       size = "md",
       fullWidth = false,
-      loading = false,
+      loading,
+      isLoading,
+      icon,
       children,
       className,
       disabled,
@@ -44,24 +67,56 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) => {
+    const resolvedLoading = Boolean(isLoading ?? loading);
+
+    const resolveVariant = (): Exclude<ButtonVariant, "solid"> => {
+      const hasExplicitVariant =
+        variant && variant !== "solid" && variant !== "primary";
+
+      if (hasExplicitVariant) {
+        return variant === "neutral" ? "secondary" : variant;
+      }
+
+      if (tone) {
+        const toneMap: Record<ButtonTone, Exclude<ButtonVariant, "solid">> = {
+          action: "primary",
+          warning: "warning",
+          destructive: "critical",
+          neutral: "secondary",
+          info: "info",
+          success: "constructive",
+        };
+
+        return toneMap[tone];
+      }
+
+      return "primary";
+    };
+
+    const resolvedVariant = resolveVariant();
+    const resolvedSize = size === "default" ? "md" : size;
+
     return (
       <button
         ref={ref}
         className={cn(
           "button",
-          `button--${variant}`,
-          `button--${size}`,
+          `button--${resolvedVariant}`,
+          `button--${resolvedSize}`,
           {
             "button--full-width": fullWidth,
-            "button--loading": loading,
+            "button--loading": resolvedLoading,
           },
           className,
         )}
-        disabled={disabled || loading}
-        aria-busy={loading}
+        disabled={disabled || resolvedLoading}
+        aria-busy={resolvedLoading}
         {...props}
       >
-        {loading && <span className="button__spinner" />}
+        {resolvedLoading && <span className="button__spinner" />}
+        {icon && !resolvedLoading && (
+          <span className="button__icon">{icon}</span>
+        )}
         <span className="button__content">{children}</span>
       </button>
     );

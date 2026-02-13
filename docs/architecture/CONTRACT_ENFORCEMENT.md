@@ -204,9 +204,12 @@ Contrato: [CORE_TASK_SYSTEM_CONTRACT.md](./CORE_TASK_SYSTEM_CONTRACT.md). Subcon
 
 ## 9. Impressão (CORE_PRINT_CONTRACT)
 
-| Regra                     | Onde está aplicada                                                                                        |
-| ------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Quem manda / quem obedece | **Documento criado.** Enforcement em código (driver, fila, API) a implementar quando houver cliente real. |
+| Regra                     | Onde está aplicada                                                                                                                                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Core manda: fila, formato | `docker-core/schema/print_queue.sql`: tabela `gm_print_jobs` (restaurant_id, type, order_id, payload, status); RPC `request_print`, `get_print_job_status`.                                                       |
+| UI pede e mostra estado   | `merchant-portal/src/core/print/CorePrintApi.ts`: `requestPrint`, `getPrintJobStatus`. TPV: `handlePrintComanda` → requestPrint → se status `sent` aciona `FiscalPrinter.printKitchenTicket` (browser).          |
+| Botão Imprimir comanda    | `merchant-portal/src/ui/design-system/domain/TicketCard.tsx`: botão «Imprimir comanda»; `TPV.tsx`: `handleAction("print")` → `handlePrintComanda`. Toast: «Comanda enviada para impressão» / «Em fila» / erro.   |
+| Driver (browser)          | `merchant-portal/src/core/fiscal/FiscalPrinter.ts`: `printKitchenTicket` via `window.print`. Driver térmico/fiscal a integrar quando houver impressora (6.5).                                                       |
 
 ---
 

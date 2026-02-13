@@ -6,16 +6,6 @@
  * Core nunca processa pagamento; credenciais = referência cifrada.
  */
 
-import {
-  colors,
-  fontFamily,
-  fontSize,
-  fontWeight,
-  radius,
-  space,
-  spacing,
-  tapTarget,
-} from "@chefiapp/core-design-system";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
@@ -25,6 +15,7 @@ import {
   type BillingConfigRow,
 } from "../../core/billing/coreBillingApi";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
+import styles from "./BillingConfigPanel.module.css";
 
 const GATEWAYS = [
   { id: "stripe" as const, label: "Stripe", region: "Global" },
@@ -111,110 +102,34 @@ export function BillingConfigPanel() {
   }, [restaurantId, isCore, provider, currency, enabled]);
 
   return (
-    <div
-      data-chefiapp-os="billing-config"
-      style={{
-        fontFamily: fontFamily.sans,
-        color: colors.textPrimary,
-        maxWidth: 560,
-      }}
-    >
-      <h1
-        style={{
-          margin: "0 0 8px 0",
-          fontSize: `${fontSize.xl}px`,
-          fontWeight: fontWeight.bold,
-          color: colors.textPrimary,
-        }}
-      >
-        Billing e Pagamentos
-      </h1>
-      <p
-        style={{
-          margin: "0 0 " + space.lg + "px 0",
-          fontSize: `${fontSize.sm}px`,
-          color: colors.textSecondary,
-        }}
-      >
+    <div data-chefiapp-os="billing-config" className={styles.root}>
+      <h1 className={styles.title}>Billing e Pagamentos</h1>
+      <p className={styles.subtitle}>
         Subscrição ChefIApp (SaaS) e gateways de pagamento do restaurante
         (clientes finais). O Core valida e reconcilia; não processa dinheiro.
       </p>
 
       {/* SaaS: link para /app/billing */}
-      <section
-        style={{
-          marginBottom: space.lg,
-          padding: space.lg,
-          backgroundColor: colors.surface,
-          border: `1px solid ${colors.border}`,
-          borderRadius: radius.md,
-        }}
-      >
-        <h2
-          style={{
-            margin: "0 0 8px 0",
-            fontSize: `${fontSize.base}px`,
-            fontWeight: fontWeight.semibold,
-            color: colors.textPrimary,
-          }}
-        >
-          Subscrição ChefIApp (SaaS)
-        </h2>
-        <p
-          style={{
-            margin: "0 0 " + space.md + "px 0",
-            fontSize: `${fontSize.sm}px`,
-            color: colors.textSecondary,
-          }}
-        >
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Subscrição ChefIApp (SaaS)</h2>
+        <p className={styles.sectionText}>
           Gerir plano, faturação e método de pagamento da sua conta ChefIApp.
         </p>
         <button
           type="button"
           onClick={() => navigate("/app/billing")}
-          style={{
-            padding: "12px 24px",
-            minHeight: tapTarget.min,
-            fontSize: `${fontSize.sm}px`,
-            fontWeight: fontWeight.semibold,
-            color: colors.textInverse,
-            backgroundColor: colors.accent,
-            border: "none",
-            borderRadius: radius.md,
-            cursor: "pointer",
-          }}
+          className={styles.primaryButton}
         >
           Abrir Billing (Stripe)
         </button>
       </section>
 
       {/* Restaurant billing: gateway selection */}
-      <section
-        style={{
-          marginBottom: space.lg,
-          padding: space.lg,
-          backgroundColor: colors.surface,
-          border: `1px solid ${colors.border}`,
-          borderRadius: radius.md,
-        }}
-      >
-        <h2
-          style={{
-            margin: "0 0 8px 0",
-            fontSize: `${fontSize.base}px`,
-            fontWeight: fontWeight.semibold,
-            color: colors.textPrimary,
-          }}
-        >
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>
           Pagamentos do restaurante (clientes finais)
         </h2>
-        <p
-          style={{
-            margin: "0 0 " + space.md + "px 0",
-            fontSize: `${fontSize.sm}px`,
-            color: colors.textSecondary,
-          }}
-        >
+        <p className={styles.sectionText}>
           Gateway inactivo → TPV bloqueia cobrança. O restaurante escolhe; o
           Core valida e reconcilia.
         </p>
@@ -223,44 +138,18 @@ export function BillingConfigPanel() {
           !error &&
           isCore &&
           restaurantId && (
-            <p
-              style={{
-                margin: "0 0 " + space.md + "px 0",
-                fontSize: `${fontSize.sm}px`,
-                color: colors.textMuted,
-                fontStyle: "italic",
-              }}
-            >
+            <p className={styles.emptyConfigText}>
               Configuração de faturação ainda não definida.
             </p>
           )}
 
-        <div style={{ marginBottom: space.md }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: space.xs,
-              fontSize: `${fontSize.sm}px`,
-              fontWeight: fontWeight.medium,
-              color: colors.textSecondary,
-            }}
-          >
-            Gateway
-          </label>
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Gateway</label>
           <select
             value={provider}
             onChange={(e) => setProvider(e.target.value as Provider)}
             disabled={!isCore || loading}
-            style={{
-              width: "100%",
-              maxWidth: 280,
-              padding: "10px 12px",
-              fontSize: `${fontSize.sm}px`,
-              color: colors.textPrimary,
-              backgroundColor: colors.background,
-              border: `1px solid ${colors.border}`,
-              borderRadius: radius.sm,
-            }}
+            className={styles.selectGateway}
             aria-label="Selecionar gateway de pagamento"
           >
             {GATEWAYS.map((g) => (
@@ -271,32 +160,13 @@ export function BillingConfigPanel() {
           </select>
         </div>
 
-        <div style={{ marginBottom: space.md }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: space.xs,
-              fontSize: `${fontSize.sm}px`,
-              fontWeight: fontWeight.medium,
-              color: colors.textSecondary,
-            }}
-          >
-            Moeda
-          </label>
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Moeda</label>
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value as Currency)}
             disabled={!isCore || loading}
-            style={{
-              width: "100%",
-              maxWidth: 120,
-              padding: "10px 12px",
-              fontSize: `${fontSize.sm}px`,
-              color: colors.textPrimary,
-              backgroundColor: colors.background,
-              border: `1px solid ${colors.border}`,
-              borderRadius: radius.sm,
-            }}
+            className={styles.selectCurrency}
             aria-label="Selecionar moeda"
           >
             {CURRENCIES.map((c) => (
@@ -307,44 +177,20 @@ export function BillingConfigPanel() {
           </select>
         </div>
 
-        <div style={{ marginBottom: space.md }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: space.xs,
-              fontSize: `${fontSize.sm}px`,
-              fontWeight: fontWeight.medium,
-              color: colors.textSecondary,
-            }}
-          >
+        <div className={styles.formGroup}>
+          <label className={styles.label}>
             Credenciais (referência cifrada)
           </label>
           <input
             type="password"
             placeholder="Configurado no backend — placeholder"
             readOnly
-            style={{
-              width: "100%",
-              maxWidth: 320,
-              padding: "10px 12px",
-              fontSize: `${fontSize.sm}px`,
-              color: colors.textMuted,
-              backgroundColor: colors.background,
-              border: `1px solid ${colors.border}`,
-              borderRadius: radius.sm,
-            }}
+            className={styles.inputCredentials}
             aria-label="Credenciais (placeholder)"
           />
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: space.sm,
-            marginBottom: space.md,
-          }}
-        >
+        <div className={styles.checkboxRow}>
           <input
             type="checkbox"
             id="billing-enabled"
@@ -353,38 +199,21 @@ export function BillingConfigPanel() {
             disabled={!isCore || loading}
             aria-label="Gateway activo"
           />
-          <label
-            htmlFor="billing-enabled"
-            style={{
-              fontSize: `${fontSize.sm}px`,
-              color: colors.textSecondary,
-            }}
-          >
+          <label htmlFor="billing-enabled" className={styles.checkboxLabel}>
             Gateway activo (TPV permite cobrança)
           </label>
         </div>
         {isCore && restaurantId && (
-          <div
-            style={{ display: "flex", alignItems: "center", gap: spacing[3] }}
-          >
+          <div className={styles.saveRow}>
             <button
               type="button"
               onClick={handleSave}
               disabled={loading || saveStatus === "saving"}
-              style={{
-                padding: "10px 20px",
-                minHeight: tapTarget.min,
-                fontSize: `${fontSize.sm}px`,
-                fontWeight: fontWeight.semibold,
-                color: colors.textInverse,
-                backgroundColor: colors.accent,
-                border: "none",
-                borderRadius: radius.md,
-                cursor:
-                  loading || saveStatus === "saving"
-                    ? "not-allowed"
-                    : "pointer",
-              }}
+              className={`${styles.saveButton} ${
+                loading || saveStatus === "saving"
+                  ? styles.saveButtonDisabled
+                  : ""
+              }`}
             >
               {saveStatus === "saving"
                 ? "A guardar…"
@@ -392,24 +221,12 @@ export function BillingConfigPanel() {
                 ? "Guardado"
                 : "Guardar"}
             </button>
-            {error && (
-              <span
-                style={{ fontSize: `${fontSize.sm}px`, color: colors.error }}
-              >
-                {error}
-              </span>
-            )}
+            {error && <span className={styles.errorText}>{error}</span>}
           </div>
         )}
       </section>
 
-      <p
-        style={{
-          margin: 0,
-          fontSize: `${fontSize.xs}px`,
-          color: colors.textMuted,
-        }}
-      >
+      <p className={styles.footerNote}>
         Contrato: CORE_BILLING_AND_PAYMENTS_CONTRACT. Core nunca guarda dados de
         cartão; pagamento offline proibido.
       </p>

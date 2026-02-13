@@ -14,7 +14,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOnboardingStatus } from '../hooks/useOnboardingStatus';
 import { Button } from '../ui/design-system/Button';
-import { Card } from '../ui/design-system/primitives/Card';
+import { Card } from '../ui/design-system/Card';
 import { Text } from '../ui/design-system/primitives/Text';
 
 export const OnboardingReminder: React.FC = () => {

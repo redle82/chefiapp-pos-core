@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Card } from '../../ui/design-system/primitives/Card';
+import { Card } from '../../ui/design-system/Card';
 import { Text } from '../../ui/design-system/primitives/Text';
 import { colors } from '../../ui/design-system/tokens/colors';
 import { type DailyMetrics } from '../../core/services/DashboardService';

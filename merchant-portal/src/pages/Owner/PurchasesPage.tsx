@@ -2,19 +2,20 @@
  * Owner Purchases - Lista de Compras (Auto)
  */
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Header } from '../../components/navigation/Header';
-import { BottomTabs } from '../../components/navigation/BottomTabs';
-import { EmptyState } from '../../components/ui/EmptyState';
-import type { ShoppingListItem } from '../../types/purchases';
-import { DataModeBanner } from '../../components/DataModeBanner';
-import { useRestaurantRuntime } from '../../context/RestaurantRuntimeContext';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { DataModeBanner } from "../../components/DataModeBanner";
+import { BottomTabs } from "../../components/navigation/BottomTabs";
+import { Header } from "../../components/navigation/Header";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import type { ShoppingListItem } from "../../types/purchases";
+import styles from "./PurchasesPage.module.css";
 
 export function OwnerPurchasesPage() {
   const navigate = useNavigate();
   const { runtime } = useRestaurantRuntime();
-  const [filter, setFilter] = useState<'auto' | 'manual' | 'all'>('auto');
+  const [filter, setFilter] = useState<"auto" | "manual" | "all">("auto");
 
   // TODO: Integrar com generate_shopping_list
   // TODO: Buscar lista de compras
@@ -22,37 +23,29 @@ export function OwnerPurchasesPage() {
   const items: ShoppingListItem[] = []; // Placeholder
 
   return (
-    <div style={{ paddingBottom: '80px' }}>
+    <div className={styles.pageWrapper}>
       <DataModeBanner dataMode={runtime.dataMode} />
       <Header
         title="Compras"
         actions={
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className={styles.filterButtons}>
             <button
-              onClick={() => setFilter('auto')}
-              style={{
-                padding: '4px 8px',
-                backgroundColor: filter === 'auto' ? '#667eea' : '#f0f0f0',
-                color: filter === 'auto' ? '#fff' : '#666',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '12px',
-                cursor: 'pointer',
-              }}
+              onClick={() => setFilter("auto")}
+              className={
+                filter === "auto"
+                  ? styles.filterButtonActive
+                  : styles.filterButton
+              }
             >
               Auto
             </button>
             <button
-              onClick={() => setFilter('all')}
-              style={{
-                padding: '4px 8px',
-                backgroundColor: filter === 'all' ? '#667eea' : '#f0f0f0',
-                color: filter === 'all' ? '#fff' : '#666',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '12px',
-                cursor: 'pointer',
-              }}
+              onClick={() => setFilter("all")}
+              className={
+                filter === "all"
+                  ? styles.filterButtonActive
+                  : styles.filterButton
+              }
             >
               Todas
             </button>
@@ -60,13 +53,13 @@ export function OwnerPurchasesPage() {
         }
       />
 
-      <div style={{ padding: '16px' }}>
+      <div className={styles.content}>
         {items.length === 0 ? (
           <EmptyState
             title="Nenhum item na lista"
             message="A lista automática será gerada quando houver estoque crítico"
             action={{
-              label: 'Gerar lista automática',
+              label: "Gerar lista automática",
               onPress: () => {
                 // TODO: Gerar lista automática
               },
@@ -74,54 +67,49 @@ export function OwnerPurchasesPage() {
           />
         ) : (
           <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+            <div className={styles.itemsList}>
               {items.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    backgroundColor: '#fff',
-                    borderRadius: '12px',
-                    padding: '16px',
-                    border: '1px solid #e0e0e0',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                <div key={item.id} className={styles.itemCard}>
+                  <div className={styles.itemHeader}>
                     <div>
-                      <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                      <h3 className={styles.itemTitle}>
                         {item.ingredient_name}
                       </h3>
-                      <div style={{ fontSize: '14px', color: '#666' }}>
+                      <div className={styles.itemQuantity}>
                         {item.quantity} {item.unit}
                       </div>
                     </div>
-                    <span style={{
-                      fontSize: '12px',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      backgroundColor: item.priority === 'HIGH' ? '#dc3545' : item.priority === 'MEDIUM' ? '#ffc107' : '#28a745',
-                      color: '#fff',
-                    }}>
-                      {item.priority === 'HIGH' ? 'Alta' : item.priority === 'MEDIUM' ? 'Média' : 'Baixa'}
+                    <span
+                      className={`${styles.priorityBadge} ${
+                        item.priority === "HIGH"
+                          ? styles.priorityHigh
+                          : item.priority === "MEDIUM"
+                          ? styles.priorityMedium
+                          : styles.priorityLow
+                      }`}
+                    >
+                      {item.priority === "HIGH"
+                        ? "Alta"
+                        : item.priority === "MEDIUM"
+                        ? "Média"
+                        : "Baixa"}
                     </span>
                   </div>
-                  <div style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>
-                    Motivo: {item.reason === 'STOCK_CRITICAL' ? 'Estoque crítico' :
-                             item.reason === 'DEMAND_FORECAST' ? 'Previsão de demanda' : 'Manual'}
-                    {item.supplier_id && ` • Fornecedor: ${item.supplier_id.substring(0, 8)}`}
+                  <div className={styles.itemDetails}>
+                    Motivo:{" "}
+                    {item.reason === "STOCK_CRITICAL"
+                      ? "Estoque crítico"
+                      : item.reason === "DEMAND_FORECAST"
+                      ? "Previsão de demanda"
+                      : "Manual"}
+                    {item.supplier_id &&
+                      ` • Fornecedor: ${item.supplier_id.substring(0, 8)}`}
                   </div>
                   <button
-                    onClick={() => navigate('/owner/purchases/create', { state: { item } })}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      backgroundColor: '#667eea',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
+                    onClick={() =>
+                      navigate("/owner/purchases/create", { state: { item } })
+                    }
+                    className={styles.createOrderButton}
                   >
                     Criar Pedido
                   </button>
@@ -129,32 +117,16 @@ export function OwnerPurchasesPage() {
               ))}
             </div>
 
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div className={styles.bottomActions}>
               <button
-                onClick={() => navigate('/owner/purchases/suppliers')}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: '#fff',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                }}
+                onClick={() => navigate("/owner/purchases/suppliers")}
+                className={styles.bottomButton}
               >
                 Fornecedores
               </button>
               <button
-                onClick={() => navigate('/owner/purchases/costs')}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: '#fff',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                }}
+                onClick={() => navigate("/owner/purchases/costs")}
+                className={styles.bottomButton}
               >
                 Custos & Margem
               </button>

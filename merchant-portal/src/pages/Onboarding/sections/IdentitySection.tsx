@@ -14,6 +14,7 @@ import {
   BackendType,
   getBackendType,
 } from "../../../core/infra/backendAdapter";
+import styles from "./IdentitySection.module.css";
 // Domain writes ONLY via Core. No Supabase.
 
 // Presets oficiais por país para reduzir atrito no onboarding.
@@ -374,69 +375,36 @@ export function IdentitySection() {
   };
 
   return (
-    <div style={{ padding: "48px", maxWidth: "800px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: 600, marginBottom: "8px" }}>
-        🏢 Identidade do Restaurante
-      </h1>
-      <p style={{ fontSize: "14px", color: "#666", marginBottom: "32px" }}>
+    <div className={styles.container}>
+      <h1 className={styles.title}>🏬 Identidade do Restaurante</h1>
+      <p className={styles.subtitle}>
         Informações básicas sobre seu estabelecimento
       </p>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div className={styles.formFields}>
         {/* Nome */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              fontWeight: 600,
-              marginBottom: "8px",
-            }}
-          >
-            Nome do Restaurante *
-          </label>
+          <label className={styles.fieldLabel}>Nome do Restaurante *</label>
           <input
             type="text"
             value={formData.name}
             onChange={(e) => handleChange("name", e.target.value)}
             placeholder="Ex: Sofia Gastrobar Ibiza"
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.input}
           />
           {formData.name && formData.name.length < 3 && (
-            <p style={{ fontSize: "12px", color: "#dc3545", marginTop: "4px" }}>
-              Mínimo 3 caracteres
-            </p>
+            <p className={styles.error}>Mínimo 3 caracteres</p>
           )}
         </div>
 
         {/* Tipo */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              fontWeight: 600,
-              marginBottom: "8px",
-            }}
-          >
-            Tipo de Estabelecimento *
-          </label>
+          <label className={styles.fieldLabel}>Tipo de Estabelecimento *</label>
           <select
+            aria-label="Tipo de Estabelecimento"
             value={formData.type}
             onChange={(e) => handleChange("type", e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.select}
           >
             <option value="RESTAURANT">Restaurante</option>
             <option value="BAR">Bar</option>
@@ -449,30 +417,16 @@ export function IdentitySection() {
 
         {/* País */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              fontWeight: 600,
-              marginBottom: "8px",
-            }}
-          >
-            País *
-          </label>
+          <label className={styles.fieldLabel}>País *</label>
           <select
+            aria-label="País"
             value={formData.country}
             onChange={(e) => {
               handleChange("country", e.target.value);
               // Auto-preencher timezone e moeda baseado no país
               // TODO: Implementar lógica real
             }}
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.select}
           >
             <option value="">Selecione um país</option>
             <option value="BR">Brasil</option>
@@ -484,26 +438,12 @@ export function IdentitySection() {
 
         {/* Fuso Horário */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              fontWeight: 600,
-              marginBottom: "8px",
-            }}
-          >
-            Fuso Horário *
-          </label>
+          <label className={styles.fieldLabel}>Fuso Horário *</label>
           <select
+            aria-label="Fuso Horário"
             value={formData.timezone}
             onChange={(e) => handleChange("timezone", e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.select}
           >
             <option value="">Selecione um fuso horário</option>
             <option value="America/Sao_Paulo">
@@ -517,26 +457,12 @@ export function IdentitySection() {
 
         {/* Moeda */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              fontWeight: 600,
-              marginBottom: "8px",
-            }}
-          >
-            Moeda *
-          </label>
+          <label className={styles.fieldLabel}>Moeda *</label>
           <select
+            aria-label="Moeda"
             value={formData.currency}
             onChange={(e) => handleChange("currency", e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.select}
           >
             <option value="BRL">BRL (R$)</option>
             <option value="EUR">EUR (€)</option>
@@ -546,26 +472,12 @@ export function IdentitySection() {
 
         {/* Idioma */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              fontWeight: 600,
-              marginBottom: "8px",
-            }}
-          >
-            Idioma *
-          </label>
+          <label className={styles.fieldLabel}>Idioma *</label>
           <select
+            aria-label="Idioma"
             value={formData.locale}
             onChange={(e) => handleChange("locale", e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.select}
           >
             <option value="pt-BR">Português (Brasil)</option>
             <option value="es-ES">Español (España)</option>
@@ -575,20 +487,9 @@ export function IdentitySection() {
       </div>
 
       {/* Checklist Local */}
-      <div
-        style={{
-          marginTop: "32px",
-          padding: "16px",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "8px",
-        }}
-      >
-        <div
-          style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px" }}
-        >
-          Checklist:
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <div className={styles.checklist}>
+        <div className={styles.checklistTitle}>Checklist:</div>
+        <div className={styles.checklistItems}>
           {[
             { label: "Nome do restaurante", done: formData.name.length >= 3 },
             { label: "Tipo de estabelecimento", done: !!formData.type },
@@ -597,18 +498,13 @@ export function IdentitySection() {
             { label: "Moeda", done: !!formData.currency },
             { label: "Idioma", done: !!formData.locale },
           ].map((item) => (
-            <div
-              key={item.label}
-              style={{ display: "flex", alignItems: "center", gap: "8px" }}
-            >
-              <span style={{ fontSize: "16px" }}>
+            <div key={item.label} className={styles.checklistItem}>
+              <span className={styles.checklistIcon}>
                 {item.done ? "✅" : "⏳"}
               </span>
               <span
-                style={{
-                  fontSize: "14px",
-                  color: item.done ? "#28a745" : "#666",
-                }}
+                className={styles.checklistLabel}
+                data-done={item.done ? "true" : "false"}
               >
                 {item.label}
               </span>

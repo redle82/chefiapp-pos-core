@@ -1,3 +1,5 @@
+// LEGACY: secção de testemunho da landing antiga. A prova social principal
+// hoje é reforçada em LandingV2Page e na landing pública Next.js.
 import { OSCopy } from "../../../ui/design-system/sovereign/OSCopy";
 
 export const Testimonial = () => {

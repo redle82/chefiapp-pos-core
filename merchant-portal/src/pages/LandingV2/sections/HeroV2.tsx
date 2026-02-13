@@ -3,25 +3,47 @@
  *
  * Gradient text, ambient glow, scroll-aware navbar,
  * animated dashboard mockup, strong CTA hierarchy.
+ * Copy via useLandingLocale (i18n/landingV2Copy).
  */
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../core/auth/useAuth";
+import { useLandingLocale } from "../i18n/LandingLocaleContext";
 import { useScrollNavbar } from "../hooks/useFadeIn";
 import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppSignature";
+import type { LandingLocale } from "../i18n/landingV2Copy";
 
-const NAV_LINKS = [
-  { label: "O Sistema", href: "#plataforma" },
-  { label: "Para quem", href: "#para-quem" },
-  { label: "Preço", href: "#preco" },
-  { label: "FAQ", href: "#faq" },
+const NAV_ANCHORS = [
+  { key: "navSystem" as const, href: "#plataforma" },
+  { key: "navAudience" as const, href: "#para-quem" },
+  { key: "navPrice" as const, href: "#preco" },
+  { key: "navFaq" as const, href: "#faq" },
+  { key: "navBlog" as const, href: "/blog/tpv-restaurantes" },
 ];
+
+const LOCALE_FLAGS: Record<LandingLocale, string> = {
+  pt: "🇧🇷",
+  en: "🇬🇧",
+  es: "🇪🇸",
+};
+
+const LOCALE_LABELS: Record<LandingLocale, string> = {
+  pt: "Português",
+  en: "English",
+  es: "Español",
+};
 
 export const HeroV2 = () => {
   const { session } = useAuth();
+  const { t, locale, setLocale } = useLandingLocale();
   const hasSession = !!session;
   const [mobileOpen, setMobileOpen] = useState(false);
   const { visible, scrolled } = useScrollNavbar();
+
+  const navLinks = NAV_ANCHORS.map(({ key, href }) => ({
+    label: t(`hero.${key}`),
+    href,
+  }));
 
   return (
     <section className="relative min-h-screen flex flex-col overflow-hidden">
@@ -48,15 +70,44 @@ export const HeroV2 = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-8">
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-sm text-neutral-400 hover:text-white transition-colors duration-200 relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-px after:bg-amber-500 hover:after:w-full after:transition-all after:duration-300"
+            {navLinks.map((link) => {
+              const className = "text-sm text-neutral-400 hover:text-white transition-colors duration-200 relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-px after:bg-amber-500 hover:after:w-full after:transition-all after:duration-300";
+              if (link.href.startsWith("/")) {
+                return (
+                  <Link key={link.href} to={link.href} className={className}>
+                    {link.label}
+                  </Link>
+                );
+              }
+              return (
+                <a key={link.href} href={link.href} className={className}>
+                  {link.label}
+                </a>
+              );
+            })}
+          </div>
+
+          {/* Setor: idioma atual (apenas um) + seletor por bandeira */}
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-neutral-500 uppercase tracking-wide" aria-live="polite">
+              {LOCALE_LABELS[locale]}
+            </span>
+            <div className="flex items-center gap-1 text-xs text-neutral-500">
+            {(["pt", "en", "es"] as LandingLocale[]).map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => setLocale(lang)}
+                title={lang.toUpperCase()}
+                className={`flex items-center gap-1.5 uppercase px-2 py-1.5 rounded transition-colors ${
+                  locale === lang ? "text-amber-500 font-semibold ring-1 ring-amber-500/50" : "hover:text-white text-neutral-400"
+                }`}
               >
-                {link.label}
-              </a>
+                <span className="text-base leading-none" aria-hidden>{LOCALE_FLAGS[lang]}</span>
+                <span>{lang}</span>
+              </button>
             ))}
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -65,7 +116,7 @@ export const HeroV2 = () => {
                 to="/admin"
                 className="px-5 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/20"
               >
-                Ir ao sistema
+                {t("hero.goToSystem")}
               </Link>
             ) : (
               <>
@@ -73,13 +124,13 @@ export const HeroV2 = () => {
                   to="/auth/phone"
                   className="hidden sm:inline-flex px-4 py-2 text-sm text-neutral-400 hover:text-white transition-colors duration-200"
                 >
-                  Entrar
+                  {t("hero.signIn")}
                 </Link>
                 <Link
                   to="/auth/phone"
                   className="hidden sm:inline-flex px-5 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/20"
                 >
-                  Testar grátis
+                  {t("hero.tryFree")}
                 </Link>
               </>
             )}
@@ -118,23 +169,55 @@ export const HeroV2 = () => {
         {mobileOpen && (
           <div className="md:hidden border-t border-white/5 bg-[#0a0a0a]/95 backdrop-blur-xl">
             <div className="px-6 py-4 space-y-1">
-              {NAV_LINKS.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="block py-3 text-sm text-neutral-300 hover:text-white transition-colors"
-                >
-                  {link.label}
-                </a>
-              ))}
+              {navLinks.map((link) => {
+                const className = "block py-3 text-sm text-neutral-300 hover:text-white transition-colors";
+                if (link.href.startsWith("/")) {
+                  return (
+                    <Link
+                      key={link.href}
+                      to={link.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={className}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                }
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={className}
+                  >
+                    {link.label}
+                  </a>
+                );
+              })}
+              <div className="py-2 border-t border-white/5 mt-2 space-y-2">
+                <span className="text-xs text-neutral-500 uppercase tracking-wide block">Idioma: {LOCALE_LABELS[locale]}</span>
+                <div className="flex gap-2">
+                {(["pt", "en", "es"] as LandingLocale[]).map((lang) => (
+                  <button
+                    key={lang}
+                    type="button"
+                    onClick={() => { setLocale(lang); setMobileOpen(false); }}
+                    title={lang.toUpperCase()}
+                    className={`flex items-center gap-1.5 uppercase text-xs px-2 py-1.5 rounded ${locale === lang ? "text-amber-500 font-semibold ring-1 ring-amber-500/50" : "text-neutral-400"}`}
+                  >
+                    <span className="text-base leading-none" aria-hidden>{LOCALE_FLAGS[lang]}</span>
+                    <span>{lang}</span>
+                  </button>
+                ))}
+                </div>
+              </div>
               {!hasSession && (
                 <Link
                   to="/auth/phone"
                   onClick={() => setMobileOpen(false)}
                   className="block mt-2 py-3 text-center text-sm font-semibold rounded-lg bg-amber-500 text-black"
                 >
-                  Testar grátis
+                  {t("hero.tryFree")}
                 </Link>
               )}
             </div>
@@ -155,30 +238,26 @@ export const HeroV2 = () => {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                 </span>
                 <span className="text-xs font-medium text-amber-500 tracking-wide uppercase">
-                  Em produção real
+                  {t("hero.badge")}
                 </span>
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-extrabold leading-[1.08] tracking-tight mb-6">
-                O sistema operacional que gere o seu{" "}
+                {t("hero.headline")}{" "}
                 <span className="bg-linear-to-r from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent animate-gradient">
-                  restaurante inteiro.
+                  {t("hero.headlineAccent")}
                 </span>
               </h1>
 
               <p className="text-lg md:text-xl text-neutral-400 leading-relaxed mb-3 max-w-lg">
-                Sala, cozinha, bar, caixa e equipa (ou outlets de hotel) a
-                funcionar no mesmo sistema operacional — em tempo real.
+                {t("hero.subhead")}
               </p>
 
               <p className="text-sm text-neutral-500 mb-1 max-w-lg">
-                Um restaurante ou hotel não perde dinheiro num lugar só. Perde
-                em pequenos vazamentos invisíveis — ao longo de cada serviço ou
-                turno de pico.
+                {t("hero.subhead2")}
               </p>
               <p className="text-sm text-neutral-500 mb-8 max-w-lg">
-                Não é um protótipo. Não é um módulo. É o sistema real que usamos
-                todos os dias num restaurante em Ibiza.
+                {t("hero.subhead3")}
               </p>
 
               {/* CTAs */}
@@ -187,7 +266,7 @@ export const HeroV2 = () => {
                   to="/auth/phone"
                   className="group relative inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-xl bg-amber-500 text-black hover:bg-amber-400 transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30"
                 >
-                  Começar 14 dias grátis
+                  {t("hero.ctaPrimary")}
                   <svg
                     className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
                     fill="none"
@@ -206,7 +285,7 @@ export const HeroV2 = () => {
                   href="#plataforma"
                   className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold rounded-xl border border-white/10 text-white hover:border-amber-500/30 hover:bg-white/5 transition-all"
                 >
-                  Ver o sistema a operar
+                  {t("hero.ctaSecondary")}
                 </a>
               </div>
 
@@ -224,7 +303,7 @@ export const HeroV2 = () => {
                       clipRule="evenodd"
                     />
                   </svg>
-                  14 dias grátis
+                  {t("hero.trust14")}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <svg
@@ -238,7 +317,7 @@ export const HeroV2 = () => {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Sem cartão
+                  {t("hero.trustNoCard")}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <svg
@@ -252,7 +331,7 @@ export const HeroV2 = () => {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Cancela quando quiser
+                  {t("hero.trustCancel")}
                 </span>
               </div>
             </div>

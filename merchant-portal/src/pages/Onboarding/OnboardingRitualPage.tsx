@@ -17,8 +17,7 @@ import { setOnboardingJustCompletedFlag } from "../../core/storage/onboardingFlo
 import { getDefaultOpeningCashCents } from "../../core/storage/shiftDefaultsStorage";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { Button, Card, Input } from "../../ui/design-system/primitives";
-import { colors } from "../../ui/design-system/tokens/colors";
-import { spacing } from "../../ui/design-system/tokens/spacing";
+import styles from "./OnboardingRitualPage.module.css";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -185,20 +184,14 @@ export function OnboardingRitualPage() {
 
   if (!restaurantId) {
     return (
-      <div
-        style={{
-          padding: spacing[6],
-          textAlign: "center",
-          color: colors.text.secondary,
-        }}
-      >
+      <div className={styles.notFoundContainer}>
         <p>Restaurante não encontrado.</p>
         <Button
           type="button"
           tone="success"
           variant="solid"
           onClick={() => navigate("/onboarding/identity")}
-          style={{ marginTop: spacing[4] }}
+          className={styles.notFoundButton}
         >
           Voltar ao início
         </Button>
@@ -207,55 +200,13 @@ export function OnboardingRitualPage() {
   }
 
   return (
-    <div
-      data-onboarding-step="8"
-      style={{
-        background: colors.surface.base,
-        minHeight: "100vh",
-        color: colors.text.primary,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: `0 ${spacing[6]} ${spacing[6]} ${spacing[6]}`,
-      }}
-    >
+    <div data-onboarding-step="8" className={styles.pageRoot}>
       <OnboardingStepIndicator step={9} total={9} />
-      <div
-        style={{
-          maxWidth: 400,
-          width: "100%",
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: 22,
-            marginBottom: spacing[2],
-            color: colors.text.primary,
-          }}
-        >
-          {ONBOARDING_5MIN_COPY.ritual.headline}
-        </h1>
-        <p
-          style={{
-            color: colors.text.secondary,
-            marginBottom: spacing[6],
-            fontSize: 14,
-          }}
-        >
-          {ONBOARDING_5MIN_COPY.ritual.message}
-        </p>
-        <Card padding="lg" style={{ marginBottom: spacing[6] }}>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: spacing[4],
-            }}
-          >
+      <div className={styles.contentContainer}>
+        <h1 className={styles.title}>{ONBOARDING_5MIN_COPY.ritual.headline}</h1>
+        <p className={styles.subtitle}>{ONBOARDING_5MIN_COPY.ritual.message}</p>
+        <Card padding="lg" className={styles.card}>
+          <div className={styles.formContent}>
             <Input
               label={ONBOARDING_5MIN_COPY.ritual.caixaLabel}
               value={caixaEur}
@@ -263,35 +214,9 @@ export function OnboardingRitualPage() {
               placeholder="0"
               disabled={opening}
             />
-            <p
-              style={{
-                fontSize: 12,
-                color: colors.text.secondary,
-                marginTop: spacing[2] ? `-${spacing[2]}` : "-0.5rem",
-              }}
-            >
-              {caixaHelp}
-            </p>
-            {error && (
-              <p
-                style={{
-                  color: colors.warning?.base ?? "#f59e0b",
-                  fontSize: 14,
-                }}
-              >
-                {error}
-              </p>
-            )}
-            <label
-              htmlFor="onboarding-terms"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: spacing[3],
-                fontSize: 13,
-                color: colors.text.secondary,
-              }}
-            >
+            <p className={styles.helpText}>{caixaHelp}</p>
+            {error && <p className={styles.errorText}>{error}</p>}
+            <label htmlFor="onboarding-terms" className={styles.checkboxLabel}>
               <input
                 id="onboarding-terms"
                 type="checkbox"
@@ -310,23 +235,11 @@ export function OnboardingRitualPage() {
               />
               <span>
                 Aceito os{" "}
-                <Link
-                  to="/legal/terms"
-                  style={{
-                    color: colors.text.primary,
-                    textDecoration: "underline",
-                  }}
-                >
+                <Link to="/legal/terms" className={styles.termsLink}>
                   Termos
                 </Link>{" "}
                 e a{" "}
-                <Link
-                  to="/legal/privacy"
-                  style={{
-                    color: colors.text.primary,
-                    textDecoration: "underline",
-                  }}
-                >
+                <Link to="/legal/privacy" className={styles.termsLink}>
                   Politica de Privacidade
                 </Link>
                 .
@@ -339,7 +252,7 @@ export function OnboardingRitualPage() {
               size="lg"
               onClick={handleOpenShift}
               disabled={opening || !acceptedTerms}
-              style={{ width: "100%" }}
+              className={styles.primaryButton}
             >
               {opening
                 ? "A abrir turno..."
@@ -351,7 +264,7 @@ export function OnboardingRitualPage() {
               variant="outline"
               onClick={handleGoToPanel}
               disabled={opening || !acceptedTerms}
-              style={{ width: "100%" }}
+              className={styles.secondaryButton}
             >
               {ONBOARDING_5MIN_COPY.ritual.ctaPanel}
             </Button>

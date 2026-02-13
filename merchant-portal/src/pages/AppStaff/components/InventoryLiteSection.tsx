@@ -6,8 +6,8 @@
 import React, { useState } from "react";
 import { createTaskRpc } from "../../../core-boundary/writers/TaskWriter";
 import { useToast } from "../../../ui/design-system";
-import { Button } from "../../../ui/design-system/primitives/Button";
-import { Card } from "../../../ui/design-system/primitives/Card";
+import { Button } from "../../../ui/design-system/Button";
+import { Card } from "../../../ui/design-system/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { useAppStaffPermissions } from "../hooks/useAppStaffPermissions";
 import { useStockAlerts } from "../hooks/useStockAlerts";

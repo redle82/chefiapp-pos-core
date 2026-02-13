@@ -1,13 +1,18 @@
-import React from 'react';
-import { cn } from './tokens';
-import './Card.css';
+import React from "react";
+import "./Card.css";
+import { cn } from "./tokens";
 
-interface CardProps {
+type CardSurface = "base" | "layer1" | "layer2" | "layer3";
+type CardPadding = "none" | "sm" | "md" | "lg" | "xl";
+
+export interface CardProps {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
   elevated?: boolean;
-  padding?: 'sm' | 'md' | 'lg';
+  hoverable?: boolean;
+  surface?: CardSurface;
+  padding?: CardPadding;
   style?: React.CSSProperties;
 }
 
@@ -20,21 +25,24 @@ export const Card: React.FC<CardProps> = ({
   className,
   onClick,
   elevated = false,
-  padding = 'md',
+  hoverable = false,
+  surface,
+  padding = "md",
   style,
 }) => {
   return (
     <div
       className={cn(
-        'card',
+        "card",
         `card--padding-${padding}`,
+        surface ? `card--surface-${surface}` : null,
         {
-          'card--elevated': elevated,
-          'card--clickable': onClick,
+          "card--elevated": elevated,
+          "card--clickable": onClick || hoverable,
           // Sovereign: default to a glass-like surface if not overridden
-          'card--glass': !elevated
+          "card--glass": !elevated && !surface,
         },
-        className
+        className,
       )}
       onClick={onClick}
       style={style}

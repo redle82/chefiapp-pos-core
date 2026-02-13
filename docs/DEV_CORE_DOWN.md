@@ -30,6 +30,18 @@ Depois de o Core estar a correr, recarrega a página; o banner desaparece quando
 
 ---
 
+## Tabelas opcionais (gm_customers, gm_reservations)
+
+Em **DEV**, o frontend não faz probe a estas tabelas para evitar 404 na consola quando ainda não existem no Core. Contrato completo: [OPTIONAL_FEATURE_TABLES_CONTRACT.md](architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md). Para ativar clientes/fidelidade ou reservas, aplica as migrations ao Postgres em execução:
+
+```bash
+./scripts/core/apply-missing-migrations.sh
+```
+
+Pré-requisito: Core a correr (`docker compose -f docker-core/docker-compose.core.yml up -d`). Depois de aplicar, recarrega a app; as chamadas a `gm_customers` e `gm_reservations` passam a ser feitas normalmente.
+
+---
+
 ## Referências
 
 - [TPV_MINIMAL_DOCKER_CORE.md](./TPV_MINIMAL_DOCKER_CORE.md) — Conexão TPV ao Docker Core

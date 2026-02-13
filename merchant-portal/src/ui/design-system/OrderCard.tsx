@@ -102,7 +102,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
   return (
     <div
       className={cn(
-        "relative flex flex-col justify-between overflow-hidden rounded-xl transition-all duration-200 group shadow-lg hover:shadow-xl hover:translate-y-[-2px]",
+        "relative flex flex-col justify-between overflow-hidden rounded-xl transition-all duration-200 group shadow-lg hover:shadow-xl hover:-translate-y-0.5",
         // Base Dark Style (Zinc-900)
         "bg-[#18181b] shadow-black/50",
         // Compact mode overrides
@@ -112,7 +112,6 @@ export const OrderCard: React.FC<OrderCardProps> = ({
       )}
       onClick={onClick}
       style={{
-        // Keep status color as a accent bar on the left
         borderLeft: `6px solid ${statusColors[status]}`,
         minHeight: compact ? 100 : 200,
       }}
@@ -173,7 +172,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
 
       {/* Items (Middle) */}
       {!compact && (
-        <div className="flex-1 space-y-2 mb-4 overflow-y-auto max-h-[120px] scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+        <div className="flex-1 space-y-2 mb-4 overflow-y-auto max-h-30 scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
           {items.map((item) => (
             <div
               key={item.id}

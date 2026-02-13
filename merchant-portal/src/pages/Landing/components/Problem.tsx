@@ -1,3 +1,5 @@
+// LEGACY: secção de problema da landing antiga. A formulação atualizada de
+// dores vive em `LandingV2/sections/ProblemSolutionV2.tsx`.
 import { OSCopy } from '../../../ui/design-system/sovereign/OSCopy';
 
 export const Problem = () => {

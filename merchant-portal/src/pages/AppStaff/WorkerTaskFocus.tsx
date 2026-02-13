@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import { StaffLayout } from "../../ui/design-system/layouts/StaffLayout";
 import { Badge } from "../../ui/design-system/primitives/Badge";
-import { Card } from "../../ui/design-system/primitives/Card";
+import { Card } from "../../ui/design-system/Card";
 import { Text } from "../../ui/design-system/primitives/Text";
 import { colors } from "../../ui/design-system/tokens/colors";
-import { radius } from "../../ui/design-system/tokens/radius";
 import KDS from "../TPV/KDS/KitchenDisplay"; // The Kitchen Tool
 import { PortioningTaskView } from "./components/PortioningTaskView";
 import { TaskWhyBadge } from "./components/TaskWhyBadge";
 import { useStaff } from "./context/StaffContext";
 import type { Task } from "./context/StaffCoreTypes";
 import { useTaskTimer } from "./hooks/useTaskTimer"; // P3-4
+import styles from "./WorkerTaskFocus.module.css";
 
 // ------------------------------------------------------------------
 // 🛠️ THE TOOL RENDERER (The Heart of "Task = Tool")
@@ -77,60 +77,17 @@ export const WorkerTaskFocus: React.FC<{ task: Task; onBack?: () => void }> = ({
 
   // Shell manda no scroll; quando dentro do Shell usar flex:1 minHeight:0. Legacy full-page usa 100vh.
   return (
-    <div
-      style={{
-        flex: 1,
-        minHeight: 0,
-        width: "100%",
-        background: colors.surface.base,
-        position: "relative",
-      }}
-    >
+    <div className={styles.container}>
       {/* Escape hatch - botão voltar */}
       {onBack && (
-        <button
-          onClick={handleBack}
-          style={{
-            position: "absolute",
-            top: 16,
-            left: 16,
-            zIndex: 100,
-            background: colors.surface.layer2,
-            border: `1px solid ${colors.border.subtle}`,
-            borderRadius: radius.md,
-            padding: "8px 16px",
-            color: colors.text.secondary,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: 14,
-          }}
-        >
+        <button onClick={handleBack} className={styles.backButton}>
           ← Voltar
         </button>
       )}
 
       {/* P3-4: Task Timer */}
       {task.status === "focused" && (
-        <div
-          style={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            zIndex: 100,
-            background: colors.surface.layer2,
-            border: `1px solid ${colors.border.subtle}`,
-            borderRadius: radius.md,
-            padding: "8px 16px",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: 14,
-            fontWeight: 600,
-            color: colors.text.primary,
-          }}
-        >
+        <div className={styles.timerBadge}>
           <span>⏱️</span>
           <span>{timer.formattedTime}</span>
         </div>
@@ -185,40 +142,22 @@ const LongPressButton: React.FC<{
       onMouseLeave={endPress}
       onTouchStart={startPress}
       onTouchEnd={endPress}
+      className={styles.longPressButton}
       style={{
-        width: "100%",
-        padding: "16px 24px",
-        borderRadius: radius.md,
         background: pressing ? colors.surface.layer3 : colors.surface.layer2,
-        color: colors.text.primary,
-        fontSize: 16,
-        fontWeight: 600,
-        cursor: "pointer",
-        position: "relative",
-        overflow: "hidden",
-        userSelect: "none",
-        touchAction: "none",
         border: `1px solid ${baseColor}`,
-        transition: "all 0.2s ease",
-        height: 64,
       }}
     >
       <div
+        className={styles.progressFill}
         style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          bottom: 0,
           width: `${progress}%`,
           background: baseColor,
-          opacity: 0.2,
-          transition: "width 30ms linear",
         }}
       />
       <span
+        className={styles.buttonLabel}
         style={{
-          position: "relative",
-          zIndex: 10,
           color: pressing && progress < 100 ? baseColor : colors.text.primary,
         }}
       >
@@ -229,19 +168,10 @@ const LongPressButton: React.FC<{
 };
 
 const Header = ({ task, icon }: { task: Task; icon: string }) => (
-  <div
-    style={{ marginBottom: 24, display: "flex", alignItems: "center", gap: 16 }}
-  >
-    <div style={{ fontSize: 32 }}>{icon}</div>
-    <div style={{ flex: 1 }}>
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          alignItems: "center",
-          marginBottom: 8,
-        }}
-      >
+  <div className={styles.headerRow}>
+    <div className={styles.headerIcon}>{icon}</div>
+    <div className={styles.headerContent}>
+      <div className={styles.headerMeta}>
         <Badge
           label={task.context?.toUpperCase() || "TAREFA"}
           size="sm"
@@ -264,34 +194,15 @@ const CheckTool: React.FC<{ task: Task; onComplete: () => void }> = ({
 }) => {
   return (
     <StaffLayout title="Tarefa de Verificação" userName="Staff" status="active">
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-          gap: 24,
-        }}
-      >
+      <div className={styles.toolLayout}>
         <Header task={task} icon="✓" />
 
-        <Card
-          surface="layer1"
-          padding="xl"
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
-            gap: 32,
-          }}
-        >
+        <Card surface="layer1" padding="xl" className={styles.checkCard}>
           <Text size="2xl" weight="bold">
             {task.description}
           </Text>
 
-          <div style={{ width: "100%", maxWidth: 400 }}>
+          <div className={styles.buttonWrapper}>
             <LongPressButton
               onClick={onComplete}
               label="SEGURE PARA CONFIRMAR"
@@ -309,28 +220,10 @@ const CounterTool: React.FC<{ task: Task; onComplete: () => void }> = ({
   onComplete,
 }) => (
   <StaffLayout title="Tarefa de Contagem" userName="Staff" status="active">
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        gap: 24,
-      }}
-    >
+    <div className={styles.toolLayout}>
       <Header task={task} icon="🔢" />
 
-      <Card
-        surface="layer1"
-        padding="xl"
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 24,
-        }}
-      >
+      <Card surface="layer1" padding="xl" className={styles.counterCard}>
         <Text size="sm" color="tertiary">
           CONTAGEM RÁPIDA
         </Text>
@@ -338,12 +231,12 @@ const CounterTool: React.FC<{ task: Task; onComplete: () => void }> = ({
           12
         </Text>
 
-        <div style={{ display: "flex", gap: 24 }}>
+        <div className={styles.counterButtons}>
           <CircularButton label="-" onClick={() => {}} />
           <CircularButton label="+" onClick={() => {}} tone="action" />
         </div>
 
-        <div style={{ width: "100%", marginTop: 32, maxWidth: 400 }}>
+        <div className={styles.counterSubmit}>
           <LongPressButton onClick={onComplete} label="REGISTRAR ESTOQUE" />
         </div>
       </Card>
@@ -356,49 +249,26 @@ const ConfirmTool: React.FC<{ task: Task; onComplete: () => void }> = ({
   onComplete,
 }) => (
   <StaffLayout title="Leitura Obrigatória" userName="Staff" status="active">
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        gap: 24,
-      }}
-    >
+    <div className={styles.toolLayout}>
       <Header task={task} icon="ℹ️" />
 
-      <Card
-        surface="layer1"
-        padding="xl"
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          gap: 24,
-        }}
-      >
+      <Card surface="layer1" padding="xl" className={styles.confirmCard}>
         <Text size="xl" weight="bold" color="primary">
           {task.title}
         </Text>
-        <Text size="md" color="secondary" style={{ lineHeight: 1.6 }}>
+        <Text size="md" color="secondary" className={styles.confirmDescription}>
           {task.description}
         </Text>
 
         {task.reason && (
-          <div
-            style={{
-              padding: 12,
-              background: "rgba(225, 29, 72, 0.1)",
-              borderLeft: `3px solid ${colors.destructive.base}`,
-            }}
-          >
+          <div className={styles.reasonBlock}>
             <Text size="xs" weight="bold" color="destructive">
               MOTIVO: {task.reason}
             </Text>
           </div>
         )}
 
-        <div style={{ marginTop: 24 }}>
+        <div className={styles.confirmSubmit}>
           <LongPressButton onClick={onComplete} label="ESTOU CIENTE" />
         </div>
       </Card>
@@ -415,23 +285,7 @@ const CircularButton = ({
   onClick: () => void;
   tone?: "neutral" | "action";
 }) => (
-  <button
-    style={{
-      width: 64,
-      height: 64,
-      borderRadius: "50%",
-      background:
-        tone === "action" ? colors.action.base : colors.surface.layer3,
-      color: colors.text.primary,
-      border: "none",
-      fontSize: 32,
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    }}
-    onClick={onClick}
-  >
+  <button className={styles.circularButton} data-tone={tone} onClick={onClick}>
     {label}
   </button>
 );

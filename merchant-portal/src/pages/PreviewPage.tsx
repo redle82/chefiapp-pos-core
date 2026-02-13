@@ -4,10 +4,11 @@
  * Placeholder page for preview functionality.
  */
 import React from "react";
+import styles from "./PreviewPage.module.css";
 
 export const PreviewPage: React.FC = () => {
   return (
-    <div style={{ padding: 32 }}>
+    <div className={styles.container}>
       <h1>Preview</h1>
       <p>Preview page — coming soon.</p>
     </div>

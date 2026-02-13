@@ -14,6 +14,7 @@ import {
   type CoreRestaurantPerson,
 } from "../../core-boundary/readers/RestaurantPeopleReader";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
+import styles from "./RestaurantPeopleSection.module.css";
 
 // LEGACY: Supabase client removed — Docker Core only
 const supabase = null as any;
@@ -287,70 +288,37 @@ export function RestaurantPeopleSection() {
 
   if (!restaurantId) {
     return (
-      <p style={{ color: "#666" }}>
+      <p className={styles.noRestaurant}>
         Selecione ou crie um restaurante para gerir pessoas.
       </p>
     );
   }
 
   return (
-    <div style={{ maxWidth: "800px" }}>
-      <p style={{ fontSize: "14px", color: "#666", marginBottom: "24px" }}>
+    <div className={styles.container}>
+      <p className={styles.description}>
         Crie pessoas (funcionários/gerentes) com nome e função. Cada pessoa
         recebe um código e QR para check-in no App Staff.
       </p>
 
-      {error && (
-        <div
-          style={{
-            padding: "12px",
-            marginBottom: "16px",
-            backgroundColor: "#fee",
-            borderRadius: "8px",
-            color: "#c00",
-          }}
-        >
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorBanner}>{error}</div>}
 
       {/* Form: nova pessoa */}
-      <div
-        style={{
-          marginBottom: "24px",
-          padding: "16px",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "8px",
-        }}
-      >
-        <h3 style={{ fontSize: "16px", fontWeight: 600, marginBottom: "12px" }}>
-          Adicionar pessoa
-        </h3>
-        <form
-          onSubmit={handleAdd}
-          style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-        >
+      <div className={styles.formSection}>
+        <h3 className={styles.formTitle}>Adicionar pessoa</h3>
+        <form onSubmit={handleAdd} className={styles.form}>
           <input
             type="text"
             placeholder="Nome"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            style={{
-              padding: "12px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.formInput}
           />
           <select
+            aria-label="Papel do operador"
             value={newRole}
             onChange={(e) => setNewRole(e.target.value as "staff" | "manager")}
-            style={{
-              padding: "12px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.formInput}
           >
             <option value="staff">Funcionário (staff)</option>
             <option value="manager">Gerente</option>
@@ -358,17 +326,8 @@ export function RestaurantPeopleSection() {
           <button
             type="submit"
             disabled={!newName.trim() || saving}
-            style={{
-              padding: "12px",
-              backgroundColor: "#667eea",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: 600,
-              cursor: newName.trim() && !saving ? "pointer" : "not-allowed",
-              opacity: newName.trim() && !saving ? 1 : 0.5,
-            }}
+            className={styles.submitBtn}
+            data-disabled={!newName.trim() || saving}
           >
             {saving ? "A guardar…" : "Adicionar"}
           </button>
@@ -376,61 +335,23 @@ export function RestaurantPeopleSection() {
       </div>
 
       {/* Lista */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <div className={styles.personList}>
         {loading ? (
-          <p style={{ color: "#666" }}>A carregar…</p>
+          <p className={styles.loadingText}>A carregar…</p>
         ) : people.length === 0 ? (
-          <p
-            style={{
-              fontSize: "14px",
-              color: "#999",
-              fontStyle: "italic",
-              padding: "24px",
-              textAlign: "center",
-            }}
-          >
+          <p className={styles.emptyState}>
             Ainda não há pessoas. Use o formulário acima para adicionar.
           </p>
         ) : (
           people.map((person) => (
-            <div
-              key={person.id}
-              style={{
-                padding: "16px",
-                border: "1px solid #e0e0e0",
-                borderRadius: "8px",
-                backgroundColor: "#fff",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  flexWrap: "wrap",
-                  gap: "12px",
-                }}
-              >
+            <div key={person.id} className={styles.personCard}>
+              <div className={styles.personCardInner}>
                 <div>
-                  <div style={{ fontSize: "16px", fontWeight: 600 }}>
-                    {person.name}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      color: "#667eea",
-                      marginTop: "4px",
-                    }}
-                  >
+                  <div className={styles.personName}>{person.name}</div>
+                  <div className={styles.personRole}>
                     {person.role === "manager" ? "Gerente" : "Funcionário"}
                   </div>
-                  <div
-                    style={{
-                      marginTop: "8px",
-                      fontSize: "13px",
-                      color: "#666",
-                    }}
-                  >
+                  <div className={styles.codeRow}>
                     Código:{" "}
                     {revealedCodeId === person.id ? (
                       <strong>{person.staff_code}</strong>
@@ -444,27 +365,12 @@ export function RestaurantPeopleSection() {
                           id === person.id ? null : person.id,
                         )
                       }
-                      style={{
-                        marginLeft: "8px",
-                        padding: "4px 8px",
-                        fontSize: "12px",
-                        border: "1px solid #667eea",
-                        borderRadius: "4px",
-                        background: "transparent",
-                        color: "#667eea",
-                        cursor: "pointer",
-                      }}
+                      className={styles.smallBtn}
                     >
                       {revealedCodeId === person.id ? "Ocultar" : "Mostrar"}
                     </button>
                   </div>
-                  <div
-                    style={{
-                      marginTop: "4px",
-                      fontSize: "12px",
-                      color: "#4b5563",
-                    }}
-                  >
+                  <div className={styles.inviteStatus}>
                     {(() => {
                       const invite = invitesByPersonId[person.id];
                       if (!invite) {
@@ -485,20 +391,11 @@ export function RestaurantPeopleSection() {
                       );
                     })()}
                   </div>
-                  <div style={{ marginTop: "8px" }}>
+                  <div className={styles.actionsRow}>
                     <button
                       type="button"
                       onClick={() => handleGenerateInvite(person)}
-                      style={{
-                        padding: "6px 12px",
-                        fontSize: "12px",
-                        border: "1px solid #667eea",
-                        borderRadius: "4px",
-                        background: "transparent",
-                        color: "#667eea",
-                        cursor: "pointer",
-                        marginRight: "8px",
-                      }}
+                      className={styles.actionBtn}
                     >
                       Gerar / Regenerar código AppStaff
                     </button>
@@ -509,33 +406,19 @@ export function RestaurantPeopleSection() {
                           id === person.id ? null : person.id,
                         )
                       }
-                      style={{
-                        padding: "6px 12px",
-                        fontSize: "12px",
-                        border: "1px solid #667eea",
-                        borderRadius: "4px",
-                        background: "transparent",
-                        color: "#667eea",
-                        cursor: "pointer",
-                      }}
+                      className={styles.actionBtn}
                     >
                       {showQRId === person.id ? "Ocultar QR" : "Ver QR"}
                     </button>
                     {showQRId === person.id && (
-                      <div style={{ marginTop: "12px" }}>
+                      <div className={styles.qrSection}>
                         <QRCodeGenerator
                           url={`chefiapp://staff?c=${encodeURIComponent(
                             person.staff_code,
                           )}&r=${encodeURIComponent(person.restaurant_id)}`}
                           size={140}
                         />
-                        <p
-                          style={{
-                            fontSize: "11px",
-                            color: "#666",
-                            marginTop: "4px",
-                          }}
-                        >
+                        <p className={styles.qrHint}>
                           Use este QR no App Staff para check-in.
                         </p>
                       </div>
@@ -545,15 +428,7 @@ export function RestaurantPeopleSection() {
                 <button
                   type="button"
                   onClick={() => handleDelete(person.id)}
-                  style={{
-                    padding: "8px 16px",
-                    fontSize: "12px",
-                    border: "none",
-                    borderRadius: "4px",
-                    backgroundColor: "#dc3545",
-                    color: "#fff",
-                    cursor: "pointer",
-                  }}
+                  className={styles.deleteBtn}
                 >
                   Remover
                 </button>

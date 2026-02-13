@@ -84,7 +84,7 @@ export function VerifyCodePage() {
           />
           <h1 style={{ ...styles.title, marginTop: 12 }}>Confirmar código</h1>
           <p style={styles.subtitle}>
-            Introduz o código SMS que recebeste para concluir a entrada.
+            Introduz o código que recebeste por SMS.
           </p>
         </div>
 

@@ -1,5 +1,12 @@
 /**
- * Hero Component - Landing Page
+ * Hero Component - Landing Page (LEGACY)
+ *
+ * LEGACY: componente da landing antiga dentro do `merchant-portal`.
+ * Hoje, a narrativa oficial de produto vive em `LandingV2Page` e a
+ * landing pública vive no projeto Next.js `landing/`.
+ *
+ * Não usar este Hero em novas rotas. Mantido apenas por compatibilidade
+ * histórica enquanto existirem referências internas.
  *
  * CTA principal: "Começar agora" → /auth; "Ver o sistema" → /auth; "Já tenho acesso" → /auth (link).
  * Com sessão: "Entrar no sistema" → /admin (apenas por clique; landing nunca redireciona sozinha).

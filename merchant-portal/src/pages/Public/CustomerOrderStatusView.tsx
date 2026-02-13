@@ -24,6 +24,7 @@ import type {
 } from "../../core-boundary/docker-core/types";
 import { readOrderById } from "../../core-boundary/readers/OrderReader";
 import { GlobalLoadingView } from "../../ui/design-system/components";
+import styles from "./CustomerOrderStatusView.module.css";
 
 type CustomerStatus =
   | "received"
@@ -36,7 +37,6 @@ interface CustomerStatusView {
   status: CustomerStatus;
   message: string;
   icon: string;
-  color: string;
 }
 
 // Validação mínima de UUID para evitar chamadas inválidas ao core (ex.: "<orderId>" em DEV)
@@ -55,7 +55,6 @@ function mapOrderStatusToCustomerStatus(
         status: "received",
         message: "Pedido recebido",
         icon: "✅",
-        color: "#22c55e",
       };
     case "PREPARING":
     case "IN_PREP":
@@ -63,29 +62,39 @@ function mapOrderStatusToCustomerStatus(
         status: "preparing",
         message: "Em preparo",
         icon: "🍳",
-        color: "#3b82f6",
       };
     case "READY":
       return {
         status: "ready",
         message: "Pronto",
         icon: "🔔",
-        color: "#22c55e",
       };
     case "CLOSED":
       return {
         status: "delivered",
         message: "Entregue",
         icon: "✅",
-        color: "#6b7280",
       };
     default:
       return {
         status: "preparing",
         message: "Em preparo",
         icon: "🍳",
-        color: "#3b82f6",
       };
+  }
+}
+
+function getStatusClass(status: CustomerStatus): string {
+  switch (status) {
+    case "received":
+    case "ready":
+      return styles.statusOk;
+    case "delivered":
+      return styles.statusNeutral;
+    case "preparing":
+    case "almost_ready":
+    default:
+      return styles.statusInfo;
   }
 }
 
@@ -162,37 +171,17 @@ export function CustomerOrderStatusView() {
   if (error || !order) {
     if (error === "LINK_INVALID") {
       return (
-        <div
-          style={{
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: "#f9fafb",
-          }}
-        >
-          <div style={{ textAlign: "center", padding: "24px" }}>
-            <p
-              style={{
-                color: "#ef4444",
-                fontSize: "18px",
-                marginBottom: "16px",
-              }}
-            >
+        <div className={styles.centeredPage}>
+          <div className={styles.centeredCard}>
+            <p className={styles.errorTitle}>
               Link de desenvolvimento inválido
             </p>
-            <p
-              style={{
-                color: "#6b7280",
-                fontSize: "14px",
-                marginBottom: "8px",
-              }}
-            >
+            <p className={styles.errorText}>
               Este link usa um identificador genérico
               (&quot;&lt;orderId&gt;&quot;). Para ver o status real, crie um
               pedido pela página pública do restaurante ou pela mesa QR.
             </p>
-            <p style={{ color: "#6b7280", fontSize: "13px" }}>
+            <p className={styles.errorNote}>
               Exemplo: acesse <code>/public/&lt;slug&gt;</code> ou{" "}
               <code>/public/&lt;slug&gt;/mesa/1</code>, finalize um pedido e use
               o link gerado automaticamente.
@@ -203,157 +192,60 @@ export function CustomerOrderStatusView() {
     }
 
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#f9fafb",
-        }}
-      >
-        <div style={{ textAlign: "center", padding: "24px" }}>
-          <p
-            style={{ color: "#ef4444", fontSize: "18px", marginBottom: "16px" }}
-          >
+      <div className={styles.centeredPage}>
+        <div className={styles.centeredCard}>
+          <p className={styles.errorTitle}>
             {error || "Pedido não encontrado"}
           </p>
-          <p style={{ color: "#6b7280", fontSize: "14px" }}>
-            Verifique se o link está correto.
-          </p>
+          <p className={styles.errorText}>Verifique se o link está correto.</p>
         </div>
       </div>
     );
   }
 
   const customerStatus = mapOrderStatusToCustomerStatus(order.status);
+  const statusClass = getStatusClass(customerStatus.status);
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#f9fafb",
-        padding: "24px",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "600px",
-          margin: "0 auto",
-          backgroundColor: "#fff",
-          borderRadius: "12px",
-          padding: "32px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-        }}
-      >
+    <div className={styles.page}>
+      <div className={styles.card}>
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <h1
-            style={{
-              fontSize: "24px",
-              fontWeight: "bold",
-              color: "#111827",
-              marginBottom: "8px",
-            }}
-          >
+        <div className={styles.header}>
+          <h1 className={styles.title}>
             Pedido #{order.number || order.short_id || order.id.slice(0, 8)}
           </h1>
           {order.table_number && (
-            <p style={{ color: "#6b7280", fontSize: "14px" }}>
-              Mesa {order.table_number}
-            </p>
+            <p className={styles.subtitle}>Mesa {order.table_number}</p>
           )}
         </div>
 
         {/* Status Card */}
-        <div
-          style={{
-            textAlign: "center",
-            padding: "32px",
-            backgroundColor: "#f9fafb",
-            borderRadius: "8px",
-            marginBottom: "32px",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "64px",
-              marginBottom: "16px",
-            }}
-          >
-            {customerStatus.icon}
-          </div>
-          <h2
-            style={{
-              fontSize: "20px",
-              fontWeight: "bold",
-              color: customerStatus.color,
-              marginBottom: "8px",
-            }}
-          >
+        <div className={styles.statusCard}>
+          <div className={styles.statusIcon}>{customerStatus.icon}</div>
+          <h2 className={`${styles.statusMessage} ${statusClass}`}>
             {customerStatus.message}
           </h2>
           {customerStatus.status === "preparing" && (
-            <p
-              style={{
-                color: "#6b7280",
-                fontSize: "14px",
-                marginTop: "8px",
-              }}
-            >
+            <p className={styles.statusNote}>
               Estamos preparando seu pedido com carinho.
             </p>
           )}
           {customerStatus.status === "almost_ready" && (
-            <p
-              style={{
-                color: "#6b7280",
-                fontSize: "14px",
-                marginTop: "8px",
-              }}
-            >
-              Seu pedido está quase pronto!
-            </p>
+            <p className={styles.statusNote}>Seu pedido está quase pronto!</p>
           )}
         </div>
 
         {/* Items List */}
         {order.items.length > 0 && (
-          <div style={{ marginBottom: "24px" }}>
-            <h3
-              style={{
-                fontSize: "16px",
-                fontWeight: "bold",
-                color: "#111827",
-                marginBottom: "16px",
-              }}
-            >
-              Itens do pedido
-            </h3>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-            >
+          <div className={styles.itemsSection}>
+            <h3 className={styles.itemsTitle}>Itens do pedido</h3>
+            <div className={styles.itemsList}>
               {order.items.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    padding: "12px",
-                    backgroundColor: "#f9fafb",
-                    borderRadius: "6px",
-                  }}
-                >
-                  <span style={{ color: "#111827", fontSize: "14px" }}>
+                <div key={item.id} className={styles.itemRow}>
+                  <span className={styles.itemName}>
                     {item.name_snapshot} x{item.quantity}
                   </span>
-                  <span
-                    style={{
-                      color: "#6b7280",
-                      fontSize: "14px",
-                      fontWeight: "bold",
-                    }}
-                  >
+                  <span className={styles.itemPrice}>
                     € {(item.subtotal_cents / 100).toFixed(2)}
                   </span>
                 </div>
@@ -363,32 +255,13 @@ export function CustomerOrderStatusView() {
         )}
 
         {/* Total */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            paddingTop: "16px",
-            borderTop: "2px solid #e5e7eb",
-          }}
-        >
-          <span
-            style={{ fontSize: "18px", fontWeight: "bold", color: "#111827" }}
-          >
-            Total
-          </span>
-          <span
-            style={{ fontSize: "18px", fontWeight: "bold", color: "#111827" }}
-          >
+        <div className={styles.totalRow}>
+          <span className={styles.totalLabel}>Total</span>
+          <span className={styles.totalValue}>
             € {(order.total_cents / 100).toFixed(2)}
           </span>
         </div>
       </div>
-
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }

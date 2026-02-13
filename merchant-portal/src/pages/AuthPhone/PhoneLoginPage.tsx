@@ -104,7 +104,7 @@ export function PhoneLoginPage() {
       const msg =
         err instanceof Error
           ? err.message
-          : "Erro ao iniciar sessão por telefone.";
+          : "Erro ao entrar. Tente de novo.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -137,7 +137,7 @@ export function PhoneLoginPage() {
           />
           <h1 style={{ ...styles.title, marginTop: 12 }}>Entrar com telefone</h1>
           <p style={styles.subtitle}>
-            Usa o teu número de telefone para aceder ao Dashboard.
+            Introduz o teu número. Enviamos um código por SMS.
           </p>
         </div>
 

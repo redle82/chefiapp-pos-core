@@ -17,6 +17,7 @@ import {
 } from "../../core/storage/modulesConfigStorage";
 // Auth only — temporary until Core Auth (session)
 import { db } from "../../core/db";
+import styles from "./ConfigModulesPage.module.css";
 
 // LEGACY: Supabase client removed — Docker Core only
 const supabase = null as any;
@@ -255,46 +256,20 @@ export function ConfigModulesPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: "24px" }}>
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: 600,
-            margin: 0,
-            marginBottom: "8px",
-          }}
-        >
-          Módulos Instalados
-        </h1>
-        <p style={{ fontSize: "14px", color: "#666", margin: 0 }}>
+      <div className={styles.header}>
+        <h1 className={styles.headerTitle}>Módulos Instalados</h1>
+        <p className={styles.headerSub}>
           Instale e gerencie módulos do sistema
         </p>
       </div>
 
       {/* FASE 1 Passo 2: TPV/KDS ativo (preferência Dono) */}
-      <div
-        style={{
-          marginBottom: "24px",
-          padding: "16px",
-          border: "1px solid #e0e0e0",
-          borderRadius: "8px",
-          backgroundColor: "#fafafa",
-        }}
-      >
-        <h2 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 12px 0" }}>
-          Módulos operacionais
-        </h2>
-        <p style={{ fontSize: "13px", color: "#666", margin: "0 0 12px 0" }}>
+      <div className={styles.operationalSection}>
+        <h2 className={styles.operationalTitle}>Módulos operacionais</h2>
+        <p className={styles.operationalDesc}>
           Ative ou desative o TPV e o KDS para este restaurante.
         </p>
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 8,
-          }}
-        >
+        <label className={styles.checkboxLabel}>
           <input
             type="checkbox"
             checked={modulesEnabled.tpv}
@@ -302,7 +277,7 @@ export function ConfigModulesPage() {
           />
           <span>TPV ativo</span>
         </label>
-        <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <label className={styles.checkboxLabelLast}>
           <input
             type="checkbox"
             checked={modulesEnabled.kds}
@@ -312,62 +287,24 @@ export function ConfigModulesPage() {
         </label>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      <div className={styles.moduleList}>
         {availableModules.map((module) => {
           const installed = isInstalled(module.id);
           const health = getHealthStatus(module.id);
 
           return (
-            <div
-              key={module.id}
-              style={{
-                border: "1px solid #e0e0e0",
-                borderRadius: "8px",
-                padding: "16px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                backgroundColor: "#fff",
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    marginBottom: "8px",
-                  }}
-                >
-                  <span style={{ fontSize: "24px" }}>{module.icon}</span>
+            <div key={module.id} className={styles.moduleCard}>
+              <div className={styles.moduleContent}>
+                <div className={styles.moduleHeader}>
+                  <span className={styles.moduleIcon}>{module.icon}</span>
                   <div>
-                    <h3
-                      style={{ margin: 0, fontSize: "16px", fontWeight: 600 }}
-                    >
-                      {module.name}
-                    </h3>
-                    <p
-                      style={{
-                        margin: "4px 0 0",
-                        fontSize: "14px",
-                        color: "#666",
-                      }}
-                    >
-                      {module.description}
-                    </p>
+                    <h3 className={styles.moduleName}>{module.name}</h3>
+                    <p className={styles.moduleDesc}>{module.description}</p>
                   </div>
                 </div>
 
                 {installed && (
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "12px",
-                      fontSize: "12px",
-                      color: "#666",
-                      marginTop: "8px",
-                    }}
-                  >
+                  <div className={styles.moduleMetaRow}>
                     {modules.find((m) => m.moduleId === module.id) && (
                       <>
                         <span>
@@ -387,14 +324,8 @@ export function ConfigModulesPage() {
                     )}
                     {health && (
                       <span
-                        style={{
-                          color:
-                            health.health === "healthy"
-                              ? "#28a745"
-                              : health.health === "degraded"
-                              ? "#ffc107"
-                              : "#dc3545",
-                        }}
+                        className={styles.healthBadge}
+                        data-health={health.health}
                       >
                         Saúde: {health.health}
                       </span>
@@ -407,15 +338,7 @@ export function ConfigModulesPage() {
                 {installed ? (
                   <button
                     onClick={() => handleUninstall(module.id)}
-                    style={{
-                      padding: "8px 16px",
-                      backgroundColor: "#dc3545",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                    }}
+                    className={styles.uninstallBtn}
                   >
                     Desinstalar
                   </button>
@@ -423,18 +346,8 @@ export function ConfigModulesPage() {
                   <button
                     onClick={() => handleInstall(module.id)}
                     disabled={installing === module.id}
-                    style={{
-                      padding: "8px 16px",
-                      backgroundColor:
-                        installing === module.id ? "#6c757d" : "#28a745",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor:
-                        installing === module.id ? "not-allowed" : "pointer",
-                      fontSize: "14px",
-                      opacity: installing === module.id ? 0.6 : 1,
-                    }}
+                    className={styles.installBtn}
+                    data-installing={installing === module.id}
                   >
                     {installing === module.id ? "Instalando..." : "Instalar"}
                   </button>

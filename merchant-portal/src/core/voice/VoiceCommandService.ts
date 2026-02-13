@@ -5,7 +5,7 @@
  */
 
 // Web Speech API type declarations (browser-only)
-declare var SpeechRecognition: any;
+declare const SpeechRecognition: any;
 declare type SpeechRecognitionEvent = any;
 declare type SpeechRecognitionErrorEvent = any;
 

@@ -169,7 +169,7 @@ export function AuthPage() {
       const msg =
         err instanceof Error
           ? err.message
-          : "Erro ao iniciar sessão ou criar conta.";
+          : "Erro ao entrar. Tente de novo.";
       setError(msg);
     } finally {
       setLoading(false);

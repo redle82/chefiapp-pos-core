@@ -26,7 +26,7 @@ export function StaffHelpPage() {
           conforme o seu papel (Gerente, Garçom, Cozinha, etc.).
         </p>
         <p>
-          Em caso de problema com o turno ou com o dispositivo, contacte o gerente ou o suporte.
+          Problema com o turno ou com o dispositivo? Fale com o gerente ou connosco.
         </p>
       </div>
     </div>

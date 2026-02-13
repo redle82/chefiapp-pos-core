@@ -8,6 +8,7 @@
  */
 
 import { useNavigate } from "react-router-dom";
+import styles from "./ConfigIntegrationsPage.module.css";
 
 const HUB_SECTIONS: Array<{
   id: string;
@@ -59,81 +60,32 @@ export function ConfigIntegrationsPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: "24px" }}>
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: 600,
-            margin: 0,
-            marginBottom: "8px",
-          }}
-        >
-          Integrações
-        </h1>
-        <p style={{ fontSize: "14px", color: "#666", margin: 0 }}>
+      <div className={styles.headerContainer}>
+        <h1 className={styles.title}>Integrações</h1>
+        <p className={styles.subtitle}>
           Ligue TPV, delivery e outros serviços ao seu restaurante.
         </p>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          gap: "20px",
-        }}
-      >
+      <div className={styles.sectionsGrid}>
         {HUB_SECTIONS.map((section) => (
           <div
             key={section.id}
-            style={{
-              padding: "20px",
-              border: "1px solid #e2e8f0",
-              borderRadius: 12,
-              backgroundColor: "#fff",
-              cursor: section.path ? "pointer" : "default",
-            }}
+            className={styles.sectionCard}
+            data-clickable={section.path ? "true" : "false"}
             onClick={() => section.path && navigate(section.path)}
             onKeyDown={(e) =>
               section.path &&
               (e.key === "Enter" || e.key === " ") &&
               navigate(section.path!)
             }
-            role={section.path ? "button" : undefined}
-            tabIndex={section.path ? 0 : undefined}
+            {...(section.path && { role: "button", tabIndex: 0 })}
           >
-            <div style={{ fontSize: "28px", marginBottom: "12px" }}>
-              {section.icon}
-            </div>
-            <div
-              style={{
-                fontSize: "16px",
-                fontWeight: 600,
-                marginBottom: "6px",
-                color: "#1e293b",
-              }}
-            >
-              {section.label}
-            </div>
-            <p
-              style={{
-                fontSize: "13px",
-                color: "#64748b",
-                margin: "0 0 12px 0",
-                lineHeight: 1.4,
-              }}
-            >
-              {section.description}
-            </p>
+            <div className={styles.sectionIcon}>{section.icon}</div>
+            <div className={styles.sectionLabel}>{section.label}</div>
+            <p className={styles.sectionDescription}>{section.description}</p>
             {section.status === "stub" && (
-              <span
-                style={{
-                  fontSize: "12px",
-                  color: "#94a3b8",
-                  fontWeight: 500,
-                }}
-              >
-                Em breve
-              </span>
+              <span className={styles.sectionStatus}>Em breve</span>
             )}
           </div>
         ))}

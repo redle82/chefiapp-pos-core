@@ -1,0 +1,121 @@
+-- =============================================================================
+-- PHASE 3D: PostgREST Configuration & Deployment Notes
+-- =============================================================================
+-- This file documents the required environment changes to activate JWT enforcement.
+-- It is NOT a SQL migration — it's a configuration guide for the Docker Compose stack.
+--
+-- CRITICAL: SQL migrations (3A + 3B) should be applied BEFORE changing these configs.
+-- Changing PGRST_DB_ANON_ROLE before the roles exist will crash PostgREST.
+--
+-- =============================================================================
+-- STEP 1: Update docker-core/docker-compose.core.yml
+-- =============================================================================
+--
+-- BEFORE (current — superuser, no JWT validation):
+--
+--   postgrest:
+--     environment:
+--       PGRST_DB_ANON_ROLE: postgres
+--       PGRST_JWT_SECRET: chefiapp-core-secret-key-min-32-chars-long
+--       PGRST_DB_USE_LEGACY_GUCS: "false"
+--
+-- AFTER (JWT-enforced, RLS-active):
+--
+--   postgrest:
+--     environment:
+--       PGRST_DB_ANON_ROLE: anon
+--       PGRST_JWT_SECRET: "<KEYCLOAK_REALM_PUBLIC_KEY_OR_HMAC_SECRET>"
+--       PGRST_JWT_AUD: "chefiapp-core"
+--       PGRST_JWT_ROLE_CLAIM_KEY: ".realm_access.roles[0]"
+--       PGRST_DB_USE_LEGACY_GUCS: "false"
+--       PGRST_DB_EXTRA_SEARCH_PATH: "auth"
+--
+-- =============================================================================
+-- STEP 2: Keycloak Client Configuration
+-- =============================================================================
+--
+-- In Keycloak admin (http://localhost:8080):
+--   1. Realm: chefiapp
+--   2. Client: chefiapp-core-api
+--      - Access Type: confidential (for backend) / public (for frontend)
+--      - Valid Redirect URIs: http://localhost:5175/*
+--      - Web Origins: http://localhost:5175
+--   3. Client Scope: chefiapp-core
+--      - Protocol Mappers:
+--        a) "restaurant_id" → jwt claim "restaurant_id"
+--           Type: User Attribute → Token Claim
+--        b) "role" → jwt claim "role"
+--           Type: Hardcoded Claim = "authenticated"
+--           (PostgREST uses this to SET ROLE authenticated)
+--        c) "sub" → jwt claim "sub"
+--           Type: User Property (already default)
+--   4. Roles (realm level):
+--      - owner, manager, waiter, kitchen, cleaning
+--
+-- =============================================================================
+-- STEP 3: Migration Sequence (apply in order)
+-- =============================================================================
+--
+-- BEFORE touching PostgREST config:
+--   1. Apply 20260212_auth_roles_jwt.sql       ← creates roles + auth functions
+--   2. Apply 20260212_rls_phase2_tables.sql    ← RLS + role-gated RPCs
+--   3. Restart postgres: docker compose restart postgres
+--   4. Verify roles exist:
+--      docker exec chefiapp-core-postgres psql -U postgres -d chefiapp_core \
+--        -c "SELECT rolname FROM pg_roles WHERE rolname IN ('anon','authenticated','service_role')"
+--   5. Verify auth functions:
+--      docker exec chefiapp-core-postgres psql -U postgres -d chefiapp_core \
+--        -c "SELECT proname FROM pg_proc WHERE pronamespace = 'auth'::regnamespace"
+--
+-- THEN change PostgREST config:
+--   6. Update docker-compose.core.yml with new PGRST_DB_ANON_ROLE=anon
+--   7. docker compose restart postgrest
+--   8. Test anon access: curl http://localhost:3001/rest/v1/gm_restaurants
+--      → Should return restaurants (anon has SELECT)
+--   9. Test blocked access: curl http://localhost:3001/rest/v1/gm_payments
+--      → Should return 401 or empty (anon has NO access to payments)
+--
+-- =============================================================================
+-- STEP 4: Gradual Rollout Strategy
+-- =============================================================================
+--
+-- To avoid breaking the frontend during transition:
+--
+-- OPTION A: Feature flag approach
+--   1. Keep PGRST_DB_ANON_ROLE=postgres temporarily
+--   2. Apply all SQL migrations
+--   3. Update frontend auth layer to send JWT
+--   4. Switch PGRST_DB_ANON_ROLE=anon
+--
+-- OPTION B: Parallel PostgREST instances
+--   1. Keep existing PostgREST on port 3000 (anon_role=postgres)
+--   2. Add second PostgREST on port 3002 (anon_role=anon)
+--   3. Migrate frontend to use port 3002
+--   4. Remove old PostgREST after validation
+--
+-- RECOMMENDED: Option A (simpler, less infrastructure)
+--
+-- =============================================================================
+-- STEP 5: Dev-mode Seed for restaurant_users
+-- =============================================================================
+-- For local development, add a seed entry so the dev user has access.
+-- This should be in seeds_dev.sql or a separate dev-only migration.
+--
+-- Example (after Keycloak user is created):
+--
+-- INSERT INTO public.restaurant_users (user_id, restaurant_id, role)
+-- VALUES (
+--     '<KEYCLOAK_USER_UUID>',
+--     (SELECT id FROM gm_restaurants LIMIT 1),
+--     'owner'
+-- ) ON CONFLICT (user_id, restaurant_id) DO NOTHING;
+--
+-- =============================================================================
+
+-- This file is a documentation-only migration. No SQL to execute.
+-- The actual changes are in:
+--   - 20260212_auth_roles_jwt.sql (SQL migration)
+--   - 20260212_rls_phase2_tables.sql (SQL migration)
+--   - docker-compose.core.yml (config change — manual, after SQL is applied)
+
+SELECT 'Phase 3D: Configuration guide loaded. See comments in this file for deployment steps.' AS info;

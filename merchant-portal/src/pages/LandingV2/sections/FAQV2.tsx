@@ -1,52 +1,19 @@
 /**
- * FAQ V2 — Strategic objection killer
- *
- * Smooth animated accordion with gradient headings,
- * glass card styling, and ambient glow.
+ * FAQ V2 — Strategic objection killer.
+ * Copy via useLandingLocale + getFAQ (i18n/landingV2Copy).
  */
 import { useRef, useState } from "react";
 import { CANONICAL_MONTHLY_PRICE_LABEL } from "../../../core/pricing/canonicalPrice";
+import { getFAQ, type FAQItem } from "../i18n/landingV2Copy";
+import { useLandingLocale } from "../i18n/LandingLocaleContext";
 
-const FAQS = [
-  {
-    q: "Isso substitui o meu POS fiscal?",
-    a: "Não, e isso é intencional. O ChefIApp™ OS é o sistema operacional completo de gestão operacional + pré-conta. O POS fiscal continua responsável pela nota. Certificação fiscal própria está prevista para Q2 2026. Até lá, os dois trabalham em paralelo.",
-  },
-  {
-    q: "Preciso de hardware específico?",
-    a: "Não. O ChefIApp™ OS funciona no browser — qualquer tablet, computador ou telemóvel serve. Para imprimir comandas, suportamos impressoras térmicas ESC/POS padrão. Zero investimento em hardware proprietário.",
-  },
-  {
-    q: "Funciona offline?",
-    a: "Parcialmente. O OS aguenta interrupções curtas (até 5 minutos). Para operações críticas como pagamento e fecho de caixa, precisa de internet ativa. Para o resto da operação, continua funcional.",
-  },
-  {
-    q: "A minha equipa vai conseguir usar?",
-    a: "Sim. Interface mobile-first pensada para quem nunca usou um sistema operacional de restaurante. A equipa só vê o que precisa — quando precisa. Restaurantes reais estão a operar sem formação externa.",
-  },
-  {
-    q: "Posso usar só o Staff App?",
-    a: "Pode usar só o Staff App, mas o valor real aparece quando tudo está ligado: turnos conectados à sala, pedidos que alimentam o stock e a cozinha a ver o que entra em tempo real. O ChefIApp™ OS foi desenhado para reduzir vazamentos na operação como um todo, não para ser mais uma app de tarefas isolada.",
-  },
-  {
-    q: "Quanto custa depois do período de teste?",
-    a: `${CANONICAL_MONTHLY_PRICE_LABEL} com tudo incluído. Sem módulos extras, sem taxas escondidas, sem contrato. Cancela a qualquer momento com 1 clique.`,
-  },
-  {
-    q: "Posso cancelar a qualquer momento?",
-    a: "Sempre. Sem contrato, sem multa, sem período mínimo. Cancela no painel com 1 clique. Exporta todos os dados antes de sair — são seus.",
-  },
-  {
-    q: "E se eu precisar de ajuda?",
-    a: "Suporte direto por WhatsApp com a equipa fundadora. Sem tickets, sem fila de espera. Respondemos como se fosse o nosso restaurante.",
-  },
-  {
-    q: "Funciona para mais do que um restaurante?",
-    a: "Sim. O ChefIApp™ foi desenhado para crescer de um único restaurante para grupos e cadeias. Relatórios consolidados, visão central por unidade e permissões por equipa vivem na mesma infraestrutura operacional.",
-  },
-];
+const PRICE_PLACEHOLDER = "{{price}}";
 
-function FAQItem({ q, a }: { q: string; a: string }) {
+function resolveAnswer(a: string): string {
+  return a.replace(PRICE_PLACEHOLDER, CANONICAL_MONTHLY_PRICE_LABEL);
+}
+
+function FAQItem({ q, a }: FAQItem) {
   const [open, setOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -93,7 +60,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
       >
         <div className="px-6 pb-6">
           <p className="text-sm text-neutral-400 leading-relaxed max-w-3xl">
-            {a}
+            {resolveAnswer(a)}
           </p>
         </div>
       </div>
@@ -102,35 +69,37 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 }
 
 export const FAQV2 = () => {
+  const { locale } = useLandingLocale();
+  const faq = getFAQ(locale);
+
   return (
     <section
       id="faq"
       className="py-24 md:py-32 bg-[#0a0a0a] relative overflow-hidden"
     >
-      {/* Ambient glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/3 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="max-w-3xl mx-auto px-6 relative">
         <div className="text-center mb-16 md:mb-20">
           <p className="text-amber-500 text-sm font-semibold tracking-widest uppercase mb-4">
-            Perguntas Frequentes
+            {faq.sectionLabel}
           </p>
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6">
-            Perguntas honestas.{" "}
+            {faq.headline}{" "}
             <span className="bg-linear-to-r from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
-              Respostas directas.
+              {faq.headlineAccent}
             </span>
           </h2>
         </div>
 
         <div className="rounded-2xl border border-white/10 overflow-hidden backdrop-blur-sm shadow-2xl shadow-black/30 ring-1 ring-white/5">
-          {FAQS.map((faq) => (
-            <FAQItem key={faq.q} q={faq.q} a={faq.a} />
+          {faq.items.map((item) => (
+            <FAQItem key={item.q} q={item.q} a={item.a} />
           ))}
         </div>
 
         <div className="text-center mt-12">
-          <p className="text-neutral-500 text-sm mb-4">Tem outra pergunta?</p>
+          <p className="text-neutral-500 text-sm mb-4">{faq.anotherQuestion}</p>
           <a
             href="mailto:contacto@chefiapp.com"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/10 text-white hover:border-amber-500/30 hover:bg-white/5 transition-all text-sm font-medium"
@@ -148,7 +117,7 @@ export const FAQV2 = () => {
                 d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
               />
             </svg>{" "}
-            Falar connosco
+            {faq.contactUs}
           </a>
         </div>
       </div>

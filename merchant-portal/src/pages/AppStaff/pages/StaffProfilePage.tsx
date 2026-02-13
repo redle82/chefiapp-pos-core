@@ -5,7 +5,7 @@
 import React, { useState } from "react";
 import { useStaff } from "../context/StaffContext";
 import { getOperatorProfile } from "../data/operatorProfiles";
-import { Button } from "../../../ui/design-system/primitives/Button";
+import { Button } from "../../../ui/design-system/Button";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { colors } from "../../../ui/design-system/tokens/colors";
 

@@ -11,8 +11,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TaskCard } from "../../../ui/design-system/TaskCard";
-import { Button } from "../../../ui/design-system/primitives/Button";
-import { Card } from "../../../ui/design-system/primitives/Card";
+import { Button } from "../../../ui/design-system/Button";
+import { Card } from "../../../ui/design-system/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { colors } from "../../../ui/design-system/tokens/colors";
 import { QuickTaskModal } from "../components/QuickTaskModal";

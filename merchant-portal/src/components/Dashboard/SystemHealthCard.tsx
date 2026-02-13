@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { db } from "../../core/db";
 import { FiscalQueue } from "../../core/fiscal/FiscalQueueWorker";
 import { SyncEngine, type SyncEngineState } from "../../core/sync/SyncEngine";
+import styles from "./SystemHealthCard.module.css";
 
 interface HealthState {
   status:
@@ -174,16 +175,7 @@ export const SystemHealthCard = ({
     };
   }, [restaurantId]);
 
-  if (loading)
-    return (
-      <div
-        style={{
-          height: 100,
-          background: "rgba(255,255,255,0.02)",
-          borderRadius: 16,
-        }}
-      />
-    );
+  if (loading) return <div className={styles.loadingSkeleton} />;
 
   const colors = {
     CRITICAL: {
@@ -236,27 +228,13 @@ export const SystemHealthCard = ({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      className={styles.container}
       style={{
         background: config.bg,
         border: `1px solid ${config.border}`,
-        borderRadius: "16px",
-        padding: "24px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: "24px",
-        position: "relative",
-        overflow: "hidden",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "16px",
-          zIndex: 1,
-        }}
-      >
+      <div className={styles.leftContent}>
         <motion.div
           animate={
             health.status === "RECOVERY" || health.status === "SYNCING"
@@ -272,45 +250,22 @@ export const SystemHealthCard = ({
                 ? 1.5
                 : 2,
           }}
+          className={styles.statusDot}
           style={{
-            width: "12px",
-            height: "12px",
-            borderRadius: "50%",
             background: config.dot,
             boxShadow: `0 0 12px ${config.glow}`,
           }}
         />
 
         <div>
-          <h3
-            style={{
-              fontSize: "18px",
-              fontWeight: 600,
-              color: "#fff",
-              marginBottom: "4px",
-            }}
-          >
-            {health.message}
-          </h3>
-          <p style={{ opacity: 0.7, fontSize: "14px", margin: 0 }}>
-            {health.details}
-          </p>
+          <h3 className={styles.title}>{health.message}</h3>
+          <p className={styles.details}>{health.details}</p>
         </div>
       </div>
 
-      <div style={{ textAlign: "right", zIndex: 1 }}>
-        <span
-          style={{
-            fontSize: "10px",
-            opacity: 0.5,
-            display: "block",
-            letterSpacing: 1,
-            fontWeight: 700,
-          }}
-        >
-          ENGINE CORE v1.1
-        </span>
-        <span style={{ fontSize: "14px", fontWeight: 700, color: config.dot }}>
+      <div className={styles.rightContent}>
+        <span className={styles.engineLabel}>ENGINE CORE v1.1</span>
+        <span className={styles.statusLabel} style={{ color: config.dot }}>
           {health.status === "ONLINE"
             ? "ONLINE"
             : health.status === "OFFLINE"
@@ -331,12 +286,8 @@ export const SystemHealthCard = ({
           initial={{ x: "-100%" }}
           animate={{ x: "100%" }}
           transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+          className={styles.scanLine}
           style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: "1px",
             background: `linear-gradient(90deg, transparent, ${config.dot}, transparent)`,
           }}
         />

@@ -2,14 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useTraining } from "../../intelligence/education/TrainingContext";
 import { DarkModeToggle } from "../../ui/components/DarkModeToggle"; // P3-5
 import { useToast } from "../../ui/design-system";
+import { StaffLayout } from "../../ui/design-system/layouts/StaffLayout";
 import { LessonCard } from "../../ui/design-system/LessonCard";
+import { Button } from "../../ui/design-system/Button";
+import { Input } from "../../ui/design-system/Input";
+import { Text } from "../../ui/design-system/primitives/Text";
 import { ShiftForecastWidget } from "../../ui/design-system/ShiftForecastWidget";
 import { ShiftHealthWidget } from "../../ui/design-system/ShiftHealthWidget";
 import { TaskCard } from "../../ui/design-system/TaskCard";
-import { StaffLayout } from "../../ui/design-system/layouts/StaffLayout";
-import { Button } from "../../ui/design-system/primitives/Button";
-import { Input } from "../../ui/design-system/primitives/Input";
-import { Text } from "../../ui/design-system/primitives/Text";
 import { AdvancedSearchPanel } from "./components/AdvancedSearchPanel"; // P4-8
 import { AgoraSection } from "./components/AgoraSection"; // Tela Agora: tarefas pendentes + pedidos READY
 import { GamificationPanel } from "./components/GamificationPanel"; // P6-8
@@ -19,6 +19,7 @@ import { useStaff } from "./context/StaffContext";
 import { useContextualSuggestions } from "./hooks/useContextualSuggestions";
 import { useTableAlerts } from "./hooks/useTableAlerts";
 import { useTaskFilters } from "./hooks/useTaskFilters"; // P3-1 & P3-2
+import styles from "./WorkerTaskStream.module.css";
 
 export const WorkerTaskStream: React.FC = () => {
   // Destructure completeTask here
@@ -76,7 +77,7 @@ export const WorkerTaskStream: React.FC = () => {
       role={activeRole}
       status="active"
       actions={
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className={styles.sidebarActions}>
           <DarkModeToggle />
           <Button
             tone="destructive"
@@ -91,7 +92,7 @@ export const WorkerTaskStream: React.FC = () => {
     >
       {/* AGORA - Tarefas pendentes (Core) + Pedidos READY (Orders Lite) */}
       {operationalContract?.id && (
-        <div style={{ marginBottom: 16 }}>
+        <div className={styles.sectionSpacing}>
           <AgoraSection
             restaurantId={coreRestaurantId ?? operationalContract.id}
             userId={activeWorkerId ?? undefined}
@@ -101,7 +102,7 @@ export const WorkerTaskStream: React.FC = () => {
 
       {/* INVENTORY LITE - Alertas de stock (repor X) */}
       {operationalContract?.id && (
-        <div style={{ marginBottom: 16 }}>
+        <div className={styles.sectionSpacing}>
           <InventoryLiteSection
             restaurantId={coreRestaurantId ?? operationalContract.id}
           />
@@ -109,12 +110,12 @@ export const WorkerTaskStream: React.FC = () => {
       )}
 
       {/* SHIFT HEALTH - PHASE B - Always visible */}
-      <div style={{ marginBottom: 12, display: "flex", gap: 12 }}>
-        <div style={{ flex: 1 }}>
+      <div className={styles.healthRow}>
+        <div className={styles.healthCell}>
           <ShiftHealthWidget metrics={shiftMetrics} />
         </div>
         {/* FORECAST - PHASE D */}
-        <div style={{ flex: 1 }}>
+        <div className={styles.healthCell}>
           <ShiftForecastWidget
             pressure={forecast.pressure}
             prediction={forecast.prediction}
@@ -123,7 +124,7 @@ export const WorkerTaskStream: React.FC = () => {
       </div>
 
       {/* SESSION XP - PHASE 3 GAMIFICATION */}
-      <div style={{ marginBottom: 12 }}>
+      <div className={styles.xpSection}>
         <SessionXPWidget tasks={tasks} shiftStart={shiftStart} />
       </div>
       {/* TRAINING CARD - PHASE C - Contextual */}
@@ -137,20 +138,12 @@ export const WorkerTaskStream: React.FC = () => {
 
       {/* FASE 2: ALERTAS DE MESAS */}
       {alerts.length > 0 && (
-        <div
-          style={{
-            marginBottom: 16,
-            padding: 12,
-            backgroundColor: "#fff3cd",
-            borderRadius: 8,
-            border: "1px solid #ffc107",
-          }}
-        >
-          <Text size="sm" weight="bold" style={{ marginBottom: 8 }}>
+        <div className={styles.alertsSection}>
+          <Text size="sm" weight="bold" className={styles.alertLabel}>
             ⚠️ Alertas de Mesas
           </Text>
           {alerts.map((alert) => (
-            <div key={alert.tableId} style={{ marginBottom: 4 }}>
+            <div key={alert.tableId} className={styles.alertItem}>
               <Text
                 size="xs"
                 color={alert.severity === "error" ? "error" : "warning"}
@@ -164,38 +157,22 @@ export const WorkerTaskStream: React.FC = () => {
 
       {/* FASE 2: SUGESTÕES CONTEXTUAIS */}
       {suggestions.length > 0 && (
-        <div
-          style={{
-            marginBottom: 16,
-            padding: 12,
-            backgroundColor: "#e3f2fd",
-            borderRadius: 8,
-            border: "1px solid #2196f3",
-          }}
-        >
-          <Text size="sm" weight="bold" style={{ marginBottom: 8 }}>
+        <div className={styles.suggestionsSection}>
+          <Text size="sm" weight="bold" className={styles.suggestionLabel}>
             💡 Sugestões
           </Text>
           {suggestions.slice(0, 3).map((suggestion) => (
-            <div
-              key={suggestion.id}
-              style={{
-                marginBottom: 8,
-                padding: 8,
-                backgroundColor: "white",
-                borderRadius: 4,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
+            <div key={suggestion.id} className={styles.suggestionCard}>
+              <div className={styles.suggestionContent}>
                 <Text size="sm">{suggestion.icon || "💡"}</Text>
-                <div style={{ flex: 1 }}>
+                <div className={styles.suggestionBody}>
                   <Text size="sm" weight="bold">
                     {suggestion.title}
                   </Text>
                   <Text
                     size="xs"
                     color="tertiary"
-                    style={{ marginTop: 4, display: "block" }}
+                    className={styles.suggestionDesc}
                   >
                     {suggestion.description}
                   </Text>
@@ -207,21 +184,14 @@ export const WorkerTaskStream: React.FC = () => {
       )}
 
       {/* P3-1 & P3-2: FILTERS AND SEARCH */}
-      <div
-        style={{
-          marginBottom: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
-      >
+      <div className={styles.filtersSection}>
         {/* Search Input */}
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className={styles.searchRow}>
           <Input
             placeholder="🔍 Buscar tarefas..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ flex: 1 }}
+            className={styles.searchInput}
           />
           <Button
             variant="outline"
@@ -238,7 +208,7 @@ export const WorkerTaskStream: React.FC = () => {
         )}
 
         {/* Filter Buttons */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className={styles.filterButtons}>
           {(["all", "pending", "critical", "done"] as const).map(
             (filterOption) => (
               <Button
@@ -260,13 +230,13 @@ export const WorkerTaskStream: React.FC = () => {
 
       {/* EMPTY STATE */}
       {activeTasks.length === 0 && alerts.length === 0 && (
-        <div style={{ padding: 40, textAlign: "center", opacity: 0.5 }}>
+        <div className={styles.emptyState}>
           <Text size="xl">✅</Text>
           <Text
             size="md"
             weight="bold"
             color="primary"
-            style={{ marginTop: 12 }}
+            className={styles.emptyTitle}
           >
             Tudo em dia
           </Text>
@@ -277,7 +247,7 @@ export const WorkerTaskStream: React.FC = () => {
       )}
 
       {/* TASK LIST */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div className={styles.taskList}>
         {activeTasks.map((task) => (
           <TaskCard
             key={task.id}
@@ -296,7 +266,7 @@ export const WorkerTaskStream: React.FC = () => {
       </div>
 
       {/* P6-8: Gamification Panel */}
-      <div style={{ marginTop: 24 }}>
+      <div className={styles.gamificationSection}>
         <GamificationPanel />
       </div>
     </StaffLayout>

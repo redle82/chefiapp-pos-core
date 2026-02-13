@@ -17,6 +17,7 @@ import {
   useSystemTree,
 } from "../../context/SystemTreeContext";
 import { GlobalLoadingView } from "../../ui/design-system/components";
+import styles from "./SystemTreePage.module.css";
 
 function SystemTreeContent() {
   const { loading, viewLevel, selectedNode } = useSystemTree();
@@ -46,38 +47,21 @@ function SystemTreeContent() {
       : "Visão Arquitetural";
 
   return (
-    <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+    <div className={styles.pageContainer}>
       <SystemTreeSidebar />
 
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            padding: "12px 24px",
-            borderBottom: "1px solid #e0e0e0",
-            backgroundColor: "#f8f9fa",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "8px",
-            fontSize: "14px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+      <div className={styles.contentArea}>
+        <div className={styles.header}>
+          <div className={styles.breadcrumb}>
             {getBreadcrumb().map((crumb, index) => (
               <React.Fragment key={index}>
-                {index > 0 && <span style={{ color: "#999" }}>/</span>}
+                {index > 0 && <span className={styles.separator}>/</span>}
                 <span
-                  style={{
-                    color:
-                      index === getBreadcrumb().length - 1 ? "#1a1a1a" : "#666",
-                  }}
+                  className={
+                    index === getBreadcrumb().length - 1
+                      ? styles.crumbActive
+                      : styles.crumbInactive
+                  }
                 >
                   {crumb}
                 </span>
@@ -85,19 +69,7 @@ function SystemTreeContent() {
             ))}
           </div>
 
-          <span
-            style={{
-              fontSize: "11px",
-              padding: "4px 8px",
-              borderRadius: "999px",
-              backgroundColor: "#e5e7eb",
-              color: "#4b5563",
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-            }}
-          >
-            {viewLabel}
-          </span>
+          <span className={styles.viewBadge}>{viewLabel}</span>
         </div>
 
         {showExecutiveSummary ? <ExecutiveSummary /> : <SystemNodeDetails />}

@@ -1,3 +1,6 @@
+// LEGACY: footer da landing antiga no `merchant-portal`. Mantido apenas
+// para compatibilidade; novas experiências de marketing usam LandingV2Page
+// (interna) e o projeto Next.js `landing/` (pública).
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../core/auth/useAuth";
 import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppSignature";

@@ -37,9 +37,17 @@ const REST = REST_BASE.endsWith("/rest/v1")
   : "/rest/v1";
 
 /** After first 404 (table does not exist), skip further requests for a short window to avoid console noise.
- *  TTL = 30 s — allows recovery when migrations are applied while the app is running. */
+ *  TTL = 30 s — allows recovery when migrations are applied while the app is running.
+ *  In DEV we use a long TTL for optional tables so we never probe (no 404 in console). */
 const tableUnavailableUntil = new Map<string, number>();
 const TABLE_UNAVAILABLE_TTL_MS = 30_000;
+/** In DEV, optional tables are marked unavailable for 24h so we never hit the network (no 404). */
+const OPTIONAL_TABLES_TTL_DEV_MS = 24 * 60 * 60 * 1000;
+
+/** Canonical list of optional Core tables; see docs/architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md */
+const OPTIONAL_TABLES = ["gm_reservations", "gm_customers"] as const;
+/** Log once per session when code hits an optional table that is unavailable (DEV only). */
+const optionalTableLoggedThisSession = new Set<string>();
 
 function isTableUnavailable(table: string): boolean {
   const until = tableUnavailableUntil.get(table);
@@ -125,6 +133,17 @@ function buildFilterBuilder(table: string): FilterBuilder {
 
   const run = async (): Promise<PostgrestResponse> => {
     if (isTableUnavailable(table)) {
+      if (
+        typeof window !== "undefined" &&
+        import.meta.env.DEV &&
+        (OPTIONAL_TABLES as readonly string[]).includes(table) &&
+        !optionalTableLoggedThisSession.has(table)
+      ) {
+        optionalTableLoggedThisSession.add(table);
+        console.info(
+          `[DEV] ${table} indisponível — aplica migrations para ativar: ./scripts/core/apply-missing-migrations.sh`,
+        );
+      }
       return {
         data: null,
         error: { message: "Table unavailable", code: "42P01" },
@@ -392,13 +411,25 @@ let clientInstance: DockerCoreClientShape | null = null;
  * Probes optional tables (gm_reservations, gm_customers). On 404, run() adds
  * them to tableUnavailable so subsequent requests are short-circuited (1 network 404 per table).
  * Call before first render to avoid duplicate 404s from Strict Mode double-mount.
+ *
+ * In DEV (browser), skip the probe and mark these tables unavailable so we never hit 404
+ * when the migration was not applied yet; console stays clean. To enable the tables,
+ * run ./scripts/core/apply-missing-migrations.sh. See docs/architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md.
  */
 export async function probeOptionalTables(): Promise<void> {
+  if (typeof window !== "undefined" && import.meta.env.DEV) {
+    const ttl = OPTIONAL_TABLES_TTL_DEV_MS;
+    OPTIONAL_TABLES.forEach((table) =>
+      tableUnavailableUntil.set(table, Date.now() + ttl),
+    );
+    return;
+  }
   const core = getDockerCoreFetchClient();
-  await Promise.all([
-    core.from("gm_reservations").select("id").limit(0),
-    core.from("gm_customers").select("id").limit(0),
-  ]).catch(() => {
+  await Promise.all(
+    OPTIONAL_TABLES.map((table) =>
+      core.from(table).select("id").limit(0),
+    ),
+  ).catch(() => {
     // Non-fatal: Core may be down or not reachable
   });
 }

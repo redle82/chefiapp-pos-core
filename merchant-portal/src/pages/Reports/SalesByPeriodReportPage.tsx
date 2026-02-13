@@ -8,13 +8,14 @@
 import { useCallback, useMemo, useState } from "react";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { useRestaurantId } from "../../core/hooks/useRestaurantId";
 import { currencyService } from "../../core/currency/CurrencyService";
+import { useRestaurantId } from "../../core/hooks/useRestaurantId";
 import {
   useShiftHistory,
   type ShiftHistoryItem,
 } from "../../hooks/useShiftHistory";
 import { GlobalLoadingView } from "../../ui/design-system/components";
+import styles from "./SalesByPeriodReportPage.module.css";
 
 function formatCents(cents: number): string {
   return currencyService.formatAmount(cents);
@@ -261,48 +262,16 @@ export function SalesByPeriodReportPage() {
   }
 
   return (
-    <div style={{ padding: "24px", maxWidth: 900, margin: "0 auto" }}>
+    <div className={styles.pageRoot}>
       <DataModeBanner dataMode={runtime.dataMode} />
-      <h1
-        style={{
-          fontSize: "20px",
-          fontWeight: 700,
-          marginBottom: 16,
-          color: "#0f172a",
-        }}
-      >
-        Vendas por período
-      </h1>
-      <p
-        style={{
-          fontSize: "14px",
-          color: "#64748b",
-          marginBottom: 24,
-          marginTop: 0,
-        }}
-      >
+      <h1 className={styles.title}>Vendas por período</h1>
+      <p className={styles.subtitle}>
         Histórico de turnos no intervalo escolhido. Exporte em CSV para análise
         externa.
       </p>
 
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 12,
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: 14,
-            color: "#475569",
-          }}
-        >
+      <div className={styles.filterRow}>
+        <label className={styles.filterLabel}>
           De
           <input
             type="date"
@@ -310,35 +279,17 @@ export function SalesByPeriodReportPage() {
             onChange={(e) =>
               setDateFrom(new Date(e.target.value + "T00:00:00"))
             }
-            style={{
-              padding: "8px 12px",
-              fontSize: 14,
-              border: "1px solid #e2e8f0",
-              borderRadius: 8,
-            }}
+            className={styles.dateInput}
             aria-label="Data início"
           />
         </label>
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: 14,
-            color: "#475569",
-          }}
-        >
+        <label className={styles.filterLabel}>
           Até
           <input
             type="date"
             value={toDateInputValue(dateTo)}
             onChange={(e) => setDateTo(new Date(e.target.value + "T23:59:59"))}
-            style={{
-              padding: "8px 12px",
-              fontSize: 14,
-              border: "1px solid #e2e8f0",
-              borderRadius: 8,
-            }}
+            className={styles.dateInput}
             aria-label="Data fim"
           />
         </label>
@@ -346,16 +297,9 @@ export function SalesByPeriodReportPage() {
           type="button"
           onClick={handleApply}
           disabled={loading}
-          style={{
-            padding: "8px 16px",
-            fontSize: 14,
-            fontWeight: 500,
-            color: "#fff",
-            backgroundColor: "#0f172a",
-            border: "none",
-            borderRadius: 8,
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
+          className={`${styles.applyButton} ${
+            loading ? styles.buttonDisabled : ""
+          }`}
         >
           {loading ? "A carregar…" : "Aplicar"}
         </button>
@@ -363,16 +307,9 @@ export function SalesByPeriodReportPage() {
           type="button"
           onClick={handleExportCsv}
           disabled={data.length === 0}
-          style={{
-            padding: "8px 16px",
-            fontSize: 14,
-            fontWeight: 500,
-            color: "#0f172a",
-            backgroundColor: "transparent",
-            border: "1px solid #e2e8f0",
-            borderRadius: 8,
-            cursor: data.length === 0 ? "not-allowed" : "pointer",
-          }}
+          className={`${styles.exportButton} ${
+            data.length === 0 ? styles.buttonDisabled : ""
+          }`}
         >
           Exportar CSV (turnos)
         </button>
@@ -380,16 +317,9 @@ export function SalesByPeriodReportPage() {
           type="button"
           onClick={handleExportCsvDaily}
           disabled={dailyAggregates.length === 0}
-          style={{
-            padding: "8px 16px",
-            fontSize: 14,
-            fontWeight: 500,
-            color: "#0f172a",
-            backgroundColor: "transparent",
-            border: "1px solid #e2e8f0",
-            borderRadius: 8,
-            cursor: dailyAggregates.length === 0 ? "not-allowed" : "pointer",
-          }}
+          className={`${styles.exportButton} ${
+            dailyAggregates.length === 0 ? styles.buttonDisabled : ""
+          }`}
         >
           Exportar CSV (resumo por dia)
         </button>
@@ -397,130 +327,45 @@ export function SalesByPeriodReportPage() {
           type="button"
           onClick={handleExportCsvMonthly}
           disabled={monthlyAggregates.length === 0}
-          style={{
-            padding: "8px 16px",
-            fontSize: 14,
-            fontWeight: 500,
-            color: "#0f172a",
-            backgroundColor: "transparent",
-            border: "1px solid #e2e8f0",
-            borderRadius: 8,
-            cursor: monthlyAggregates.length === 0 ? "not-allowed" : "pointer",
-          }}
+          className={`${styles.exportButton} ${
+            monthlyAggregates.length === 0 ? styles.buttonDisabled : ""
+          }`}
         >
           Exportar CSV (resumo por mês)
         </button>
       </div>
 
-      {error && (
-        <p style={{ fontSize: 14, color: "#dc2626", marginBottom: 16 }}>
-          {error}
-        </p>
-      )}
+      {error && <p className={styles.errorText}>{error}</p>}
 
       {monthlyAggregates.length > 0 && (
-        <div
-          style={{
-            marginBottom: 24,
-            padding: "20px 24px",
-            backgroundColor: "#f1f5f9",
-            borderRadius: 14,
-            border: "1px solid #e2e8f0",
-          }}
-        >
-          <h2
-            style={{
-              fontSize: "16px",
-              fontWeight: 600,
-              margin: 0,
-              marginBottom: 12,
-              color: "#0f172a",
-            }}
-          >
-            Resumo por mês
-          </h2>
-          <p
-            style={{
-              fontSize: 13,
-              color: "#64748b",
-              margin: 0,
-              marginBottom: 12,
-            }}
-          >
+        <div className={`${styles.summaryCard} ${styles.summaryCardMuted}`}>
+          <h2 className={styles.sectionTitle}>Resumo por mês</h2>
+          <p className={styles.sectionSubtitle}>
             Agregado mensal (vendas e pedidos por mês). Comparações mensais e
             história longa.
           </p>
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 13,
-              }}
-            >
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
               <thead>
-                <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "8px 8px 8px 0",
-                      color: "#64748b",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Mês
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      padding: 8,
-                      color: "#64748b",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Vendas
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      padding: "8px 0 8px 8px",
-                      color: "#64748b",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Pedidos
-                  </th>
+                <tr className={styles.headerRow}>
+                  <th className={styles.headerCellLeft}>Mês</th>
+                  <th className={styles.headerCellRight}>Vendas</th>
+                  <th className={styles.headerCellRightEdge}>Pedidos</th>
                 </tr>
               </thead>
               <tbody>
                 {monthlyAggregates.map((row) => (
-                  <tr
-                    key={row.month}
-                    style={{ borderBottom: "1px solid #f1f5f9" }}
-                  >
-                    <td style={{ padding: "8px 8px 8px 0", color: "#1e293b" }}>
+                  <tr key={row.month} className={styles.bodyRow}>
+                    <td className={styles.bodyCellLeft}>
                       {new Date(row.month + "-01T12:00:00").toLocaleDateString(
                         "pt-PT",
                         { month: "long", year: "numeric" },
                       )}
                     </td>
-                    <td
-                      style={{
-                        padding: 8,
-                        textAlign: "right",
-                        fontWeight: 500,
-                        color: "#1e293b",
-                      }}
-                    >
+                    <td className={styles.bodyCellRightStrong}>
                       {formatCents(row.total_sales_cents)}
                     </td>
-                    <td
-                      style={{
-                        padding: "8px 0 8px 8px",
-                        textAlign: "right",
-                        color: "#1e293b",
-                      }}
-                    >
+                    <td className={styles.bodyCellRightEdge}>
                       {row.orders_count}
                     </td>
                   </tr>
@@ -532,107 +377,33 @@ export function SalesByPeriodReportPage() {
       )}
 
       {dailyAggregates.length > 0 && (
-        <div
-          style={{
-            marginBottom: 24,
-            padding: "20px 24px",
-            backgroundColor: "#f8fafc",
-            borderRadius: 14,
-            border: "1px solid #e2e8f0",
-          }}
-        >
-          <h2
-            style={{
-              fontSize: "16px",
-              fontWeight: 600,
-              margin: 0,
-              marginBottom: 12,
-              color: "#0f172a",
-            }}
-          >
-            Resumo por dia
-          </h2>
-          <p
-            style={{
-              fontSize: 13,
-              color: "#64748b",
-              margin: 0,
-              marginBottom: 12,
-            }}
-          >
+        <div className={`${styles.summaryCard} ${styles.summaryCardSoft}`}>
+          <h2 className={styles.sectionTitle}>Resumo por dia</h2>
+          <p className={styles.sectionSubtitle}>
             Agregado diário (vendas e pedidos por dia). O dia é a entidade de
             fecho.
           </p>
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 13,
-              }}
-            >
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
               <thead>
-                <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "8px 8px 8px 0",
-                      color: "#64748b",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Dia
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      padding: 8,
-                      color: "#64748b",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Vendas
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      padding: "8px 0 8px 8px",
-                      color: "#64748b",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Pedidos
-                  </th>
+                <tr className={styles.headerRow}>
+                  <th className={styles.headerCellLeft}>Dia</th>
+                  <th className={styles.headerCellRight}>Vendas</th>
+                  <th className={styles.headerCellRightEdge}>Pedidos</th>
                 </tr>
               </thead>
               <tbody>
                 {dailyAggregates.map((row) => (
-                  <tr
-                    key={row.date}
-                    style={{ borderBottom: "1px solid #f1f5f9" }}
-                  >
-                    <td style={{ padding: "8px 8px 8px 0", color: "#1e293b" }}>
+                  <tr key={row.date} className={styles.bodyRow}>
+                    <td className={styles.bodyCellLeft}>
                       {new Date(row.date + "T12:00:00").toLocaleDateString(
                         "pt-PT",
                       )}
                     </td>
-                    <td
-                      style={{
-                        padding: 8,
-                        textAlign: "right",
-                        fontWeight: 500,
-                        color: "#1e293b",
-                      }}
-                    >
+                    <td className={styles.bodyCellRightStrong}>
                       {formatCents(row.total_sales_cents)}
                     </td>
-                    <td
-                      style={{
-                        padding: "8px 0 8px 8px",
-                        textAlign: "right",
-                        color: "#1e293b",
-                      }}
-                    >
+                    <td className={styles.bodyCellRightEdge}>
                       {row.orders_count}
                     </td>
                   </tr>
@@ -650,141 +421,47 @@ export function SalesByPeriodReportPage() {
           variant="inline"
         />
       ) : data.length === 0 ? (
-        <p style={{ fontSize: 14, color: "#64748b" }}>
-          Nenhum turno no período.
-        </p>
+        <p className={styles.emptyText}>Nenhum turno no período.</p>
       ) : (
-        <div
-          style={{
-            padding: "20px 24px",
-            backgroundColor: "#fff",
-            borderRadius: 14,
-            border: "1px solid #e5e7eb",
-          }}
-        >
-          <h2
-            style={{
-              fontSize: "16px",
-              fontWeight: 600,
-              margin: 0,
-              marginBottom: 12,
-              color: "#0f172a",
-            }}
-          >
-            Detalhe por turno
-          </h2>
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 13,
-              }}
-            >
+        <div className={styles.detailCard}>
+          <h2 className={styles.sectionTitle}>Detalhe por turno</h2>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
               <thead>
-                <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "8px 8px 8px 0",
-                      color: "#64748b",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Abertura
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: 8,
-                      color: "#64748b",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Fecho
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      padding: 8,
-                      color: "#64748b",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Vendas
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      padding: "8px 0 8px 8px",
-                      color: "#64748b",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Pedidos
-                  </th>
+                <tr className={styles.headerRow}>
+                  <th className={styles.headerCellLeft}>Abertura</th>
+                  <th className={styles.headerCellLeftPadded}>Fecho</th>
+                  <th className={styles.headerCellRight}>Vendas</th>
+                  <th className={styles.headerCellRightEdge}>Pedidos</th>
                 </tr>
               </thead>
               <tbody>
                 {data.map((row) => (
-                  <tr
-                    key={row.shift_id}
-                    style={{ borderBottom: "1px solid #f1f5f9" }}
-                  >
-                    <td style={{ padding: "8px 8px 8px 0", color: "#1e293b" }}>
+                  <tr key={row.shift_id} className={styles.bodyRow}>
+                    <td className={styles.bodyCellLeft}>
                       {formatDateTime(row.opened_at)}
                     </td>
-                    <td style={{ padding: 8, color: "#1e293b" }}>
+                    <td className={styles.bodyCellLeftPadded}>
                       {formatDateTime(row.closed_at)}
                     </td>
-                    <td
-                      style={{
-                        padding: 8,
-                        textAlign: "right",
-                        fontWeight: 500,
-                        color: "#1e293b",
-                      }}
-                    >
+                    <td className={styles.bodyCellRightStrong}>
                       {formatCents(row.total_sales_cents)}
                     </td>
-                    <td
-                      style={{
-                        padding: "8px 0 8px 8px",
-                        textAlign: "right",
-                        color: "#1e293b",
-                      }}
-                    >
+                    <td className={styles.bodyCellRightEdge}>
                       {row.orders_count}
                     </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr style={{ borderTop: "2px solid #e2e8f0", fontWeight: 600 }}>
-                  <td
-                    style={{ padding: "12px 8px 12px 0", color: "#0f172a" }}
-                    colSpan={2}
-                  >
+                <tr className={styles.totalRow}>
+                  <td className={styles.totalLabel} colSpan={2}>
                     Total
                   </td>
-                  <td
-                    style={{
-                      padding: 12,
-                      textAlign: "right",
-                      color: "#0f172a",
-                    }}
-                  >
+                  <td className={styles.totalValue}>
                     {formatCents(totalCents)}
                   </td>
-                  <td
-                    style={{
-                      padding: "12px 0 12px 8px",
-                      textAlign: "right",
-                      color: "#0f172a",
-                    }}
-                  >
-                    {totalOrders}
-                  </td>
+                  <td className={styles.totalValueEdge}>{totalOrders}</td>
                 </tr>
               </tfoot>
             </table>

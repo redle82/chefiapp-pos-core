@@ -4,7 +4,7 @@ import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity
 import { Badge } from "../../ui/design-system/Badge";
 import { Button } from "../../ui/design-system/Button";
 import { Card } from "../../ui/design-system/Card";
-import { Colors, Spacing, Typography } from "../../ui/design-system/tokens";
+import styles from "./PulseList.module.css";
 // LEGACY / LAB — blocked in Docker mode
 import { db } from "../../core/db";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
@@ -111,47 +111,13 @@ export const PulseList: React.FC = () => {
   }, [navigate]);
 
   return (
-    <div
-      style={{
-        padding: Spacing.xl,
-        flex: 1,
-        minHeight: 0,
-        background: Colors.surface.base,
-        color: Colors.text.primary,
-        fontFamily: Typography.fontFamily,
-      }}
-    >
-      <div style={{ maxWidth: 800, margin: "0 auto" }}>
+    <div className={styles.pageWrapper}>
+      <div className={styles.container}>
         {/* HEADER */}
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: Spacing.xl,
-          }}
-        >
+        <header className={styles.header}>
           <div>
-            <div
-              style={{
-                fontSize: Typography.uiTiny.fontSize,
-                fontWeight: Typography.uiTiny.fontWeight,
-                textTransform: Typography.uiTiny.textTransform,
-                color: Colors.text.secondary,
-                letterSpacing: Typography.uiTiny.letterSpacing,
-                marginBottom: 4,
-              }}
-            >
-              SYSTEM MEMORY // TELEMETRY
-            </div>
-            <h2
-              style={{
-                fontSize: Typography.h3.fontSize,
-                color: Colors.text.primary,
-              }}
-            >
-              {restaurantName}
-            </h2>
+            <div className={styles.headerLabel}>SYSTEM MEMORY // TELEMETRY</div>
+            <h2 className={styles.headerTitle}>{restaurantName}</h2>
           </div>
           <Button variant="secondary" onClick={() => navigate(-1)}>
             Voltar
@@ -161,59 +127,26 @@ export const PulseList: React.FC = () => {
         {/* LIST */}
         <Card padding="lg">
           {loading ? (
-            <div
-              style={{ padding: Spacing.xl, textAlign: "center", opacity: 0.5 }}
-            >
-              Syncing Telemetry...
-            </div>
+            <div className={styles.loadingState}>Syncing Telemetry...</div>
           ) : pulses.length === 0 ? (
-            <div
-              style={{ padding: Spacing.xl, textAlign: "center", opacity: 0.5 }}
-            >
-              No pulses recorded yet.
-            </div>
+            <div className={styles.emptyState}>No pulses recorded yet.</div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            <div className={styles.pulseList}>
               {pulses.map((pulse, index) => (
                 <div
                   key={pulse.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: `${Spacing.md} 0`,
-                    borderBottom:
-                      index < pulses.length - 1
-                        ? `1px solid ${Colors.surface.border}`
-                        : "none",
-                    gap: Spacing.md,
-                  }}
+                  className={styles.pulseItem}
+                  data-has-border={index < pulses.length - 1 ? "true" : "false"}
                 >
-                  <div
-                    style={{
-                      fontFamily: "monospace",
-                      fontSize: Typography.uiTiny.fontSize,
-                      color: Colors.text.tertiary,
-                      minWidth: 80,
-                    }}
-                  >
+                  <div className={styles.timestamp}>
                     {new Date(pulse.created_at).toLocaleTimeString()}
                   </div>
 
-                  <div style={{ minWidth: 150 }}>
+                  <div className={styles.badgeContainer}>
                     <Badge label={pulse.type} variant="secondary" />
                   </div>
 
-                  <div
-                    style={{
-                      fontSize: Typography.uiSmall.fontSize,
-                      color: Colors.text.secondary,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      flex: 1,
-                      fontFamily: "monospace",
-                    }}
-                  >
+                  <div className={styles.payload}>
                     {JSON.stringify(pulse.payload)}
                   </div>
                 </div>
@@ -222,17 +155,7 @@ export const PulseList: React.FC = () => {
           )}
         </Card>
 
-        <div
-          style={{
-            marginTop: Spacing.xl,
-            textAlign: "center",
-            fontSize: Typography.uiTiny.fontSize,
-            color: Colors.text.tertiary,
-            fontFamily: "monospace",
-          }}
-        >
-          LOG_END // LIMIT_50
-        </div>
+        <div className={styles.footer}>LOG_END // LIMIT_50</div>
       </div>
     </div>
   );

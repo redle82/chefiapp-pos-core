@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { Card } from '../../ui/design-system/primitives/Card';
+import { Card } from '../../ui/design-system/Card';
 import { Text } from '../../ui/design-system/primitives/Text';
-import { Input } from '../../ui/design-system/primitives/Input';
-import { Button } from '../../ui/design-system/primitives/Button';
+import { Input } from '../../ui/design-system/Input';
+import { Button } from '../../ui/design-system/Button';
 import { useToast } from '../../ui/design-system';
 import { useStaff } from '../../pages/AppStaff/context/StaffContext';
 import type { StaffRole } from '../../pages/AppStaff/context/StaffCoreTypes';

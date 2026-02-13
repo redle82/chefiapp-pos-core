@@ -2,12 +2,12 @@ import React, { useMemo } from "react";
 import { now as getNow } from "../../../intelligence/nervous-system/Clock";
 import { StaffLayout } from "../../../ui/design-system/layouts/StaffLayout";
 import { Badge } from "../../../ui/design-system/primitives/Badge";
-import { Card } from "../../../ui/design-system/primitives/Card";
+import { Card } from "../../../ui/design-system/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { colors } from "../../../ui/design-system/tokens/colors";
-import { radius } from "../../../ui/design-system/tokens/radius";
 import { useStaff } from "../context/StaffContext";
 import type { LatentObligation } from "../context/StaffCoreTypes";
+import styles from "./ManagerCalendarView.module.css";
 
 // ------------------------------------------------------------------
 // 📅 CÉREBRO EXECUTIVO (Calendar View)
@@ -29,32 +29,17 @@ const CalendarCard: React.FC<{
     <Card
       surface={surface}
       padding="md"
-      style={{
-        borderLeft: `4px solid ${borderColor}`,
-        marginBottom: 12,
-      }}
+      className={styles.card}
+      style={{ borderLeft: `4px solid ${borderColor}` }}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+      <div className={styles.cardContent}>
         <div>
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-              marginBottom: 4,
-            }}
-          >
+          <div className={styles.metaRow}>
             <Text
               size="xs"
               weight="bold"
               color="tertiary"
-              style={{ textTransform: "uppercase" }}
+              className={styles.metaLabel}
             >
               {obligation.type} • {obligation.sourceId}
             </Text>
@@ -66,8 +51,8 @@ const CalendarCard: React.FC<{
             {obligation.description}
           </Text>
         </div>
-        <div style={{ textAlign: "right" }}>
-          <Text size="xs" color="tertiary" style={{ fontFamily: "monospace" }}>
+        <div className={styles.criticalitySection}>
+          <Text size="xs" color="tertiary" className={styles.criticalityLabel}>
             CRITICALITY
           </Text>
           <Badge
@@ -120,24 +105,16 @@ export const ManagerCalendarView: React.FC = () => {
       role={activeRole}
       status="active"
     >
-      <div
-        style={{
-          maxWidth: 800,
-          margin: "0 auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: 32,
-        }}
-      >
+      <div className={styles.page}>
         {/* OVERDUE */}
         {overdue.length > 0 && (
           <div className="animate-pulse">
-            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+            <div className={styles.sectionHeader}>
               <Text
                 size="sm"
                 weight="bold"
                 color="destructive"
-                style={{ textTransform: "uppercase", letterSpacing: 2 }}
+                className={styles.sectionTitle}
               >
                 ⚠️ Attention Needed
               </Text>
@@ -154,24 +131,12 @@ export const ManagerCalendarView: React.FC = () => {
             size="sm"
             weight="bold"
             color="warning"
-            style={{
-              textTransform: "uppercase",
-              letterSpacing: 2,
-              marginBottom: 16,
-            }}
+            className={styles.sectionTitleSpaced}
           >
             Active Window (Now)
           </Text>
           {today.length === 0 ? (
-            <div
-              style={{
-                padding: 24,
-                textAlign: "center",
-                opacity: 0.5,
-                border: `1px dashed ${colors.border.subtle}`,
-                borderRadius: radius.md,
-              }}
-            >
+            <div className={styles.emptyState}>
               <Text size="sm" color="tertiary">
                 No active obligations for today.
               </Text>
@@ -189,11 +154,7 @@ export const ManagerCalendarView: React.FC = () => {
             size="sm"
             weight="bold"
             color="tertiary"
-            style={{
-              textTransform: "uppercase",
-              letterSpacing: 2,
-              marginBottom: 16,
-            }}
+            className={styles.sectionTitleSpaced}
           >
             Horizon
           </Text>

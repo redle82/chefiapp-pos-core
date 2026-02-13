@@ -17,6 +17,7 @@ import { DataModeBanner } from "../../components/DataModeBanner";
 import { BottomTabs } from "../../components/navigation/BottomTabs";
 import { Header } from "../../components/navigation/Header";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import styles from "./StockRealPage.module.css";
 
 export function OwnerStockRealPage() {
   const navigate = useNavigate();
@@ -88,52 +89,40 @@ export function OwnerStockRealPage() {
       : [...criticalItems, ...attentionItems];
 
   return (
-    <div style={{ paddingBottom: "80px" }}>
+    <div className={styles.pageRoot}>
       <DataModeBanner dataMode={runtime.dataMode} />
       <Header
         title="Estoque Real"
         subtitle="O que vai acabar e quando"
         actions={
-          <div style={{ display: "flex", gap: "8px" }}>
+          <div className={styles.filterRow}>
             <button
               onClick={() => setFilter("critical")}
-              style={{
-                padding: "4px 8px",
-                backgroundColor: filter === "critical" ? "#dc3545" : "#f0f0f0",
-                color: filter === "critical" ? "#fff" : "#666",
-                border: "none",
-                borderRadius: "4px",
-                fontSize: "12px",
-                cursor: "pointer",
-              }}
+              className={`${styles.filterButton} ${
+                filter === "critical"
+                  ? styles.filterButtonCritical
+                  : styles.filterButtonInactive
+              }`}
             >
               Crítico
             </button>
             <button
               onClick={() => setFilter("attention")}
-              style={{
-                padding: "4px 8px",
-                backgroundColor: filter === "attention" ? "#ffc107" : "#f0f0f0",
-                color: filter === "attention" ? "#fff" : "#666",
-                border: "none",
-                borderRadius: "4px",
-                fontSize: "12px",
-                cursor: "pointer",
-              }}
+              className={`${styles.filterButton} ${
+                filter === "attention"
+                  ? styles.filterButtonAttention
+                  : styles.filterButtonInactive
+              }`}
             >
               Atenção
             </button>
             <button
               onClick={() => setFilter("all")}
-              style={{
-                padding: "4px 8px",
-                backgroundColor: filter === "all" ? "#667eea" : "#f0f0f0",
-                color: filter === "all" ? "#fff" : "#666",
-                border: "none",
-                borderRadius: "4px",
-                fontSize: "12px",
-                cursor: "pointer",
-              }}
+              className={`${styles.filterButton} ${
+                filter === "all"
+                  ? styles.filterButtonAll
+                  : styles.filterButtonInactive
+              }`}
             >
               Todos
             </button>
@@ -141,17 +130,11 @@ export function OwnerStockRealPage() {
         }
       />
 
-      <div style={{ padding: "16px" }}>
+      <div className={styles.pageContent}>
         {/* Itens Críticos/Atenção */}
         {displayItems.length > 0 && (
-          <div style={{ marginBottom: "24px" }}>
-            <h3
-              style={{
-                fontSize: "16px",
-                fontWeight: 600,
-                marginBottom: "12px",
-              }}
-            >
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>
               {filter === "critical"
                 ? "🔴 CRÍTICO"
                 : filter === "attention"
@@ -159,57 +142,38 @@ export function OwnerStockRealPage() {
                 : "📦 ESTOQUE"}{" "}
               ({displayItems.length})
             </h3>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-            >
+            <div className={styles.itemList}>
               {displayItems.map((item) => (
                 <div
                   key={item.id}
-                  style={{
-                    backgroundColor: "#fff",
-                    borderRadius: "12px",
-                    padding: "16px",
-                    border: `2px solid ${
-                      item.current === 0 ? "#dc3545" : "#ffc107"
-                    }`,
-                  }}
+                  className={`${styles.itemCard} ${
+                    item.current === 0
+                      ? styles.itemCardCritical
+                      : styles.itemCardAttention
+                  }`}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "start",
-                      marginBottom: "8px",
-                    }}
-                  >
+                  <div className={styles.itemHeader}>
                     <div>
-                      <div style={{ fontSize: "16px", fontWeight: 600 }}>
+                      <div className={styles.itemName}>
                         {item.name}: {item.current}
                         {item.unit} / {item.minimum}
                         {item.unit} mínimo
                       </div>
-                      <div style={{ fontSize: "14px", color: "#666" }}>
+                      <div className={styles.itemMeta}>
                         Ruptura: {item.rupture}
                       </div>
-                      <div style={{ fontSize: "14px", color: "#666" }}>
+                      <div className={styles.itemMeta}>
                         Consumo: {item.consumption}
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={() => navigate("/owner/purchases")}
-                    style={{
-                      width: "100%",
-                      padding: "8px",
-                      backgroundColor:
-                        item.current === 0 ? "#dc3545" : "#ffc107",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
+                    className={`${styles.itemActionButton} ${
+                      item.current === 0
+                        ? styles.itemActionButtonCritical
+                        : styles.itemActionButtonAttention
+                    }`}
                   >
                     {item.current === 0 ? "Comprar agora" : "Adicionar à lista"}
                   </button>
@@ -221,49 +185,21 @@ export function OwnerStockRealPage() {
 
         {/* Consumo Real */}
         {consumptionHistory.length > 0 && (
-          <div style={{ marginBottom: "24px" }}>
-            <h3
-              style={{
-                fontSize: "16px",
-                fontWeight: 600,
-                marginBottom: "12px",
-              }}
-            >
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>
               📊 CONSUMO REAL (últimas 24h)
             </h3>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-            >
+            <div className={styles.consumptionList}>
               {consumptionHistory.map((item, index) => (
-                <div
-                  key={index}
-                  style={{
-                    backgroundColor: "#fff",
-                    borderRadius: "12px",
-                    padding: "16px",
-                    border: "1px solid #e0e0e0",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: 600,
-                      marginBottom: "8px",
-                    }}
-                  >
+                <div key={index} className={styles.consumptionCard}>
+                  <div className={styles.consumptionTitle}>
                     {item.name}: {item.consumed}
                     {item.unit} consumidos
                   </div>
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      color: "#666",
-                      marginBottom: "4px",
-                    }}
-                  >
+                  <div className={styles.consumptionMeta}>
                     Média: {item.average}
                   </div>
-                  <div style={{ fontSize: "14px", color: "#666" }}>
+                  <div className={styles.consumptionMeta}>
                     Pico: {item.peak}
                   </div>
                 </div>
@@ -274,38 +210,13 @@ export function OwnerStockRealPage() {
 
         {/* Previsão de Ruptura */}
         {ruptureForecast.length > 0 && (
-          <div style={{ marginBottom: "24px" }}>
-            <h3
-              style={{
-                fontSize: "16px",
-                fontWeight: 600,
-                marginBottom: "12px",
-              }}
-            >
-              📈 PREVISÃO DE RUPTURA
-            </h3>
-            <div
-              style={{
-                backgroundColor: "#fff",
-                borderRadius: "12px",
-                padding: "16px",
-                border: "1px solid #e0e0e0",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  marginBottom: "8px",
-                }}
-              >
-                Próximas 24h:
-              </div>
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: "4px" }}
-              >
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>📈 PREVISÃO DE RUPTURA</h3>
+            <div className={styles.ruptureCard}>
+              <div className={styles.ruptureTitle}>Próximas 24h:</div>
+              <div className={styles.ruptureList}>
                 {ruptureForecast.map((item, index) => (
-                  <div key={index} style={{ fontSize: "14px", color: "#666" }}>
+                  <div key={index} className={styles.ruptureItem}>
                     {item.name}: {item.time}
                   </div>
                 ))}
@@ -316,50 +227,16 @@ export function OwnerStockRealPage() {
 
         {/* Histórico de Falhas */}
         {failureHistory.length > 0 && (
-          <div style={{ marginBottom: "24px" }}>
-            <h3
-              style={{
-                fontSize: "16px",
-                fontWeight: 600,
-                marginBottom: "12px",
-              }}
-            >
-              📋 HISTÓRICO DE FALHAS
-            </h3>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-            >
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>📋 HISTÓRICO DE FALHAS</h3>
+            <div className={styles.failureList}>
               {failureHistory.map((item, index) => (
-                <div
-                  key={index}
-                  style={{
-                    backgroundColor: "#fff",
-                    borderRadius: "12px",
-                    padding: "16px",
-                    border: "1px solid #e0e0e0",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: 600,
-                      marginBottom: "4px",
-                    }}
-                  >
+                <div key={index} className={styles.failureCard}>
+                  <div className={styles.failureTitle}>
                     {item.name}: {item.count}x {item.period}
                   </div>
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      color: "#666",
-                      marginBottom: "4px",
-                    }}
-                  >
-                    Última: {item.last}
-                  </div>
-                  <div style={{ fontSize: "14px", color: "#666" }}>
-                    Causa: {item.cause}
-                  </div>
+                  <div className={styles.failureMeta}>Última: {item.last}</div>
+                  <div className={styles.failureMeta}>Causa: {item.cause}</div>
                 </div>
               ))}
             </div>
@@ -367,34 +244,16 @@ export function OwnerStockRealPage() {
         )}
 
         {/* Acesso Rápido */}
-        <div style={{ display: "flex", gap: "8px" }}>
+        <div className={styles.quickActions}>
           <button
             onClick={() => navigate("/owner/purchases")}
-            style={{
-              flex: 1,
-              padding: "12px",
-              backgroundColor: "#667eea",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
+            className={styles.primaryActionButton}
           >
             Compras
           </button>
           <button
             onClick={() => navigate("/owner/purchases/suppliers")}
-            style={{
-              flex: 1,
-              padding: "12px",
-              backgroundColor: "#fff",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-              cursor: "pointer",
-            }}
+            className={styles.secondaryActionButton}
           >
             Fornecedores
           </button>

@@ -4,6 +4,22 @@
 
 ---
 
+## Runbook (resumo)
+
+**Pré-requisitos:** Core no ar (ex.: `http://localhost:3001/rest/v1/` → 200); merchant-portal a correr (ex.: `pnpm -w merchant-portal run dev`, porta 5175); sessão válida (login feito).
+
+**URLs em ordem:**
+
+| Fase | URL principal | Resumo |
+|------|----------------|--------|
+| 1 | `/app/billing` | Billing: página carrega; variáveis Stripe; "Gerir subscrição" → Stripe; (opcional) pagamento teste. |
+| 2 | `/start/cinematic/1` ou `/onboarding` → depois `/op/tpv` | Onboarding até Scene6Summary; criar menu; TPV: criar pedido, fechar conta, marcar pago; hasFirstSale = true. |
+| 3 | `/op/tpv` | Abrir caixa (modal, valor inicial); criar pedido, itens, pagar; fechar caixa (modal, valor fecho). |
+
+Assinalar cada item nas tabelas abaixo (✅ passou | ❌ falhou). Detalhe completo em cada secção.
+
+---
+
 ## FASE 1 — Billing
 
 | # | Ação | Critério de sucesso |

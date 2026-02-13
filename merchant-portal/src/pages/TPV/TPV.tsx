@@ -61,6 +61,9 @@ import { TableProvider } from "./context/TableContext";
 
 import { SyncStatusIndicator } from "../../components/SyncStatusIndicator";
 import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
+import { FiscalPrinter } from "../../core/fiscal/FiscalPrinter";
+import { requestPrint } from "../../core/print/CorePrintApi";
+import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
 
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import {
@@ -101,8 +104,6 @@ import { TableMapPanel } from "../../ui/design-system/domain/TableMapPanel";
 import { TPVHeader } from "../../ui/design-system/domain/TPVHeader";
 import { TPVLayoutSplit } from "../../ui/design-system/layouts/TPVLayoutSplit";
 import { Text } from "../../ui/design-system/primitives/Text";
-import { colors } from "../../ui/design-system/tokens/colors";
-import { spacing } from "../../ui/design-system/tokens/spacing";
 import { GroupSelector } from "./components/GroupSelector";
 import { IncomingRequests } from "./components/IncomingRequests";
 import { OrderHeader } from "./components/OrderHeader";
@@ -110,6 +111,7 @@ import { OrderSummaryPanel } from "./components/OrderSummaryPanel";
 import { TPVNavigation } from "./components/TPVNavigation";
 import { useTables } from "./context/TableContext";
 import { useConsumptionGroups } from "./hooks/useConsumptionGroups";
+import styles from "./TPV.module.css";
 // FASE 5: Lazy loading de componentes pesados (modais e componentes não sempre visíveis)
 const PaymentModal = lazy(() =>
   import("./components/PaymentModal").then((m) => ({
@@ -240,17 +242,7 @@ class DebugErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          style={{
-            padding: 20,
-            background: "#330000",
-            color: "white",
-            overflow: "auto",
-            height: "100vh",
-            zIndex: 9999,
-            position: "relative",
-          }}
-        >
+        <div className={styles.debugError}>
           <h1>💥 TPV Crashed</h1>
           <pre>{this.state.error?.toString()}</pre>
           <pre>{this.state.errorInfo?.componentStack}</pre>
@@ -1048,8 +1040,58 @@ const TPVContent = () => {
       typeof item.price === "number" && !isNaN(item.price) ? item.price : 0,
   }));
 
+  // FASE 6: Imprimir comanda — UI pede ao Core; mostra estado (enviado, em fila, falha). CORE_PRINT_CONTRACT.
+  const handlePrintComanda = async (orderId: string) => {
+    const order = activeOrders.find((o) => o.id === orderId);
+    if (!order || !restaurantId) {
+      error("Pedido não encontrado.");
+      return;
+    }
+    const orderForPrint = {
+      id: order.id,
+      tableNumber: order.tableNumber ?? "BALCÃO",
+      items: order.items.map((i: any) => ({
+        quantity: i.quantity,
+        name: i.name,
+        notes: i.notes ?? "",
+        modifiers: i.modifiers ?? [],
+      })),
+      deliveryMetadata: (order as any).deliveryMetadata,
+    };
+    const printer = new FiscalPrinter({ printerType: "browser" });
+    try {
+      if (getBackendType() === BackendType.docker) {
+        const { data, error: rpcError } = await requestPrint({
+          restaurantId,
+          type: "kitchen_ticket",
+          orderId,
+          payload: {},
+        });
+        if (rpcError) {
+          error(rpcError.message || "Erro ao pedir impressão. Tente de novo.");
+          return;
+        }
+        if (data?.status === "sent") {
+          await printer.printKitchenTicket(orderForPrint);
+          success("Comanda enviada para impressão.");
+        } else {
+          success("Comanda em fila de impressão.");
+        }
+      } else {
+        await printer.printKitchenTicket(orderForPrint);
+        success("Comanda enviada para impressão.");
+      }
+    } catch (err: any) {
+      error(err?.message || "Erro ao imprimir comanda. Tente de novo.");
+    }
+  };
+
   // FLOW: Transições de estado (prepare/ready/serve/pay/cancel) — performOrderAction → Core.
   const handleAction = async (orderId: string, action: string) => {
+    if (action === "print") {
+      await handlePrintComanda(orderId);
+      return;
+    }
     // P1-1 FIX: Bloquear ações críticas se sistema down (exceto trial)
     const criticalActions = ["pay", "prepare", "ready", "cancel"];
     if (
@@ -1694,25 +1736,10 @@ const TPVContent = () => {
   return (
     <AppShell operationalMode={true}>
       <OfflineBanner />
-      <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div className={styles.tpvShell}>
         {/* Contingency Mode Banner */}
         {bootstrap.coreStatus === "offline-erro" && (
-          <div
-            style={{
-              background: "#262626",
-              color: "#a3a3a3",
-              padding: "12px 24px",
-              textAlign: "center",
-              fontWeight: 500,
-              fontSize: "14px",
-              zIndex: 1000,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "12px",
-              borderBottom: "1px solid #404040",
-            }}
-          >
+          <div className={styles.contingencyBanner}>
             <span>
               {bootstrap.operationMode === "exploracao"
                 ? "Dados ilustrativos. Publique o menu para operar em tempo real."
@@ -1720,15 +1747,7 @@ const TPVContent = () => {
             </span>
             <button
               onClick={() => runtimeContext?.refresh()}
-              style={{
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.3)",
-                color: "white",
-                padding: "4px 12px",
-                borderRadius: "4px",
-                cursor: "pointer",
-                fontSize: "12px",
-              }}
+              className={styles.contingencyButton}
             >
               Tentar novamente
             </button>
@@ -1753,11 +1772,7 @@ const TPVContent = () => {
         {/* FASE 5: Lazy loading de modais */}
         {showSettingsModal && (
           <Suspense
-            fallback={
-              <div style={{ padding: 16, textAlign: "center" }}>
-                Carregando...
-              </div>
-            }
+            fallback={<div className={styles.loadingCenter}>Carregando...</div>}
           >
             <TPVSettingsModal
               operatorName={activeOperator?.name}
@@ -1776,20 +1791,14 @@ const TPVContent = () => {
 
         <TPVLayoutSplit
           navigation={
-            <div
-              style={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
+            <div className={styles.navigationColumn}>
               <TPVNavigation
                 currentView={contextView}
                 onChangeView={(view: ContextView) => setContextView(view)}
                 onSettings={() => setShowSettingsModal(true)}
                 cashStatus={cashRegisterOpen ? "open" : "closed"}
               />
-              <div style={{ padding: spacing[2], marginTop: "auto" }}>
+              <div className={styles.navigationFooter}>
                 <SyncStatusIndicator />
               </div>
             </div>
@@ -1827,7 +1836,7 @@ const TPVContent = () => {
 
               {/* Central Exception Panel - Always Visible */}
               {activeOperator && (
-                <div style={{ marginBottom: spacing[4] }}>
+                <div className={styles.exceptionPanel}>
                   <TPVExceptionPanel
                     operatorId={activeOperator.id || "op-1"}
                     operatorName={activeOperator.name || "Chef"}
@@ -1836,15 +1845,9 @@ const TPVContent = () => {
               )}
 
               {contextView === "menu" && (
-                <div
-                  style={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
+                <div className={styles.contextColumn}>
                   {/* Optional Header inside Workspace given lack of top bar */}
-                  <div style={{ marginBottom: spacing[4] }}>
+                  <div className={styles.contextHeaderSpacer}>
                     <TPVHeader
                       operatorName={activeOperator?.name || "Chef"}
                       terminalId="TERM-01"
@@ -1951,19 +1954,12 @@ const TPVContent = () => {
               )}
 
               {contextView === "orders" && (
-                <div
-                  style={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: spacing[4],
-                  }}
-                >
+                <div className={styles.ordersColumn}>
                   <IncomingRequests
                     restaurantId={restaurantId}
                     onOrderAccepted={() => getActiveOrders()}
                   />
-                  <div style={{ flex: 1, position: "relative" }}>
+                  <div className={styles.ordersStream}>
                     <StreamTunnel
                       orders={activeOrders}
                       onAction={handleAction}
@@ -1978,10 +1974,10 @@ const TPVContent = () => {
               )}
 
               {contextView === "reservations" && (
-                <div style={{ height: "100%", overflow: "hidden" }}>
+                <div className={styles.reservationsWrapper}>
                   <Suspense
                     fallback={
-                      <div style={{ padding: 16, textAlign: "center" }}>
+                      <div className={styles.loadingCenter}>
                         Carregando reservas...
                       </div>
                     }
@@ -1992,20 +1988,8 @@ const TPVContent = () => {
               )}
 
               {contextView === "delivery" && (
-                <div
-                  style={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: spacing[4],
-                  }}
-                >
-                  <div
-                    style={{
-                      padding: spacing[4],
-                      borderBottom: `1px solid ${colors.border.subtle}`,
-                    }}
-                  >
+                <div className={styles.deliveryColumn}>
+                  <div className={styles.deliveryHeader}>
                     <Text size="xl" weight="bold" color="primary">
                       🚚 Central de Delivery
                     </Text>
@@ -2017,9 +2001,7 @@ const TPVContent = () => {
                     restaurantId={restaurantId}
                     onOrderAccepted={() => getActiveOrders()}
                   />
-                  <div
-                    style={{ flex: 1, overflow: "auto", padding: spacing[4] }}
-                  >
+                  <div className={styles.deliveryList}>
                     <StreamTunnel
                       orders={activeOrders.filter(
                         (o) =>
@@ -2087,15 +2069,7 @@ const TPVContent = () => {
               activeOrders.find((o) => o.id === activeOrderId)) ||
             draftItems.length > 0 ? (
               // FASE 1: Mostrar rascunho ou pedido ativo. Rascunho = só em memória até Confirmar.
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  height: "100%",
-                  gap: spacing[3],
-                  padding: spacing[4],
-                }}
-              >
+              <div className={styles.ticketWrapper}>
                 {draftItems.length > 0 && !activeOrderId ? (
                   <>
                     <OrderHeader
@@ -2144,10 +2118,10 @@ const TPVContent = () => {
                         </button>
                       ))}
                     </div>
-                    <div style={{ flex: 1, overflow: "hidden" }}>
+                    <div className={styles.ticketEditor}>
                       <Suspense
                         fallback={
-                          <div style={{ padding: 16, textAlign: "center" }}>
+                          <div className={styles.loadingCenter}>
                             Carregando...
                           </div>
                         }
@@ -2222,10 +2196,10 @@ const TPVContent = () => {
                       }
                       customerName={""}
                     />
-                    <div style={{ flex: 1, overflow: "hidden" }}>
+                    <div className={styles.ticketEditor}>
                       <Suspense
                         fallback={
-                          <div style={{ padding: 16, textAlign: "center" }}>
+                          <div className={styles.loadingCenter}>
                             Carregando editor...
                           </div>
                         }
@@ -2317,11 +2291,7 @@ const TPVContent = () => {
         {/* Quick Product Modal */}
         {showQuickProductModal && (
           <Suspense
-            fallback={
-              <div style={{ padding: 16, textAlign: "center" }}>
-                Carregando...
-              </div>
-            }
+            fallback={<div className={styles.loadingCenter}>Carregando...</div>}
           >
             <QuickProductModal
               onClose={() => setShowQuickProductModal(false)}
@@ -2387,26 +2357,13 @@ const TPVContent = () => {
 
         {/* Group Selector Modal */}
         {showGroupSelector && pendingItem && activeOrderId && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.7)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1000,
-            }}
-          >
-            <Card padding="lg" style={{ maxWidth: 500, width: "90%" }}>
+          <div className={styles.overlay}>
+            <Card padding="lg" className={styles.overlayCard}>
               <Text
                 size="lg"
                 weight="bold"
                 color="primary"
-                style={{ marginBottom: spacing[4] }}
+                className={styles.groupTitle}
               >
                 Adicionar {pendingItem.name} a qual grupo?
               </Text>
@@ -2426,13 +2383,7 @@ const TPVContent = () => {
                 }}
               />
 
-              <div
-                style={{
-                  marginTop: spacing[4],
-                  display: "flex",
-                  gap: spacing[2],
-                }}
-              >
+              <div className={styles.groupActions}>
                 <Button
                   variant="outline"
                   size="lg"
@@ -2440,7 +2391,7 @@ const TPVContent = () => {
                     setShowGroupSelector(false);
                     setPendingItem(null);
                   }}
-                  style={{ flex: 1 }}
+                  className={styles.flexGrow}
                 >
                   Cancelar
                 </Button>
@@ -2458,7 +2409,7 @@ const TPVContent = () => {
           return (
             <Suspense
               fallback={
-                <div style={{ padding: 16, textAlign: "center" }}>
+                <div className={styles.loadingCenter}>
                   Carregando modal de pagamento...
                 </div>
               }
@@ -2485,7 +2436,7 @@ const TPVContent = () => {
           return (
             <Suspense
               fallback={
-                <div style={{ padding: 16, textAlign: "center" }}>
+                <div className={styles.loadingCenter}>
                   Carregando modal de divisão...
                 </div>
               }
@@ -2506,7 +2457,7 @@ const TPVContent = () => {
       {showOpenCashModal && (
         <Suspense
           fallback={
-            <div style={{ padding: 16, textAlign: "center" }}>
+            <div className={styles.loadingCenter}>
               Carregando modal de abertura...
             </div>
           }
@@ -2546,7 +2497,7 @@ const TPVContent = () => {
       {showCloseCashModal && cashRegisterId && (
         <Suspense
           fallback={
-            <div style={{ padding: 16, textAlign: "center" }}>
+            <div className={styles.loadingCenter}>
               Carregando relatório de fecho...
             </div>
           }
@@ -2574,7 +2525,7 @@ const TPVContent = () => {
       {showCreateGroupModal && activeOrderId && (
         <Suspense
           fallback={
-            <div style={{ padding: 16, textAlign: "center" }}>
+            <div className={styles.loadingCenter}>
               Carregando modal de grupo...
             </div>
           }

@@ -14,6 +14,8 @@
  *   }
  */
 
+@import "@chefiapp/core-design-system/tokens.css";
+
 :root {
   /* ========================================================================
    * BRAND COLORS
@@ -323,6 +325,53 @@
 
   /* Step */
   --step-size: 40px;
+}
+
+/* Core adapter: map local tokens to core design system values. */
+:root {
+  --surface-base: var(--ds-background);
+  --surface-elevated: var(--ds-surface-elevated);
+  --surface-overlay: var(--ds-surface-overlay);
+  --surface-border: var(--ds-border);
+  --surface-border-hover: var(--ds-border-hover);
+  --surface-border-active: var(--ds-border-active);
+
+  --text-primary: var(--ds-text-primary);
+  --text-secondary: var(--ds-text-secondary);
+  --text-tertiary: var(--ds-text-muted);
+  --text-disabled: var(--ds-text-disabled);
+  --text-inverse: var(--ds-text-inverse);
+
+  --color-success: var(--ds-success);
+  --color-warning: var(--ds-warning);
+  --color-error: var(--ds-error);
+  --color-info: var(--ds-info);
+
+  --radius-xs: var(--ds-radius-sm);
+  --radius-sm: var(--ds-radius-sm);
+  --radius-md: var(--ds-radius-md);
+  --radius-lg: var(--ds-radius-lg);
+  --radius-full: 9999px;
+
+  --spacing-xs: var(--ds-space-xs);
+  --spacing-sm: var(--ds-space-sm);
+  --spacing-lg: var(--ds-space-md);
+  --spacing-xl: var(--ds-space-lg);
+  --spacing-2xl: var(--ds-space-xl);
+
+  --font-family: var(--ds-font-sans);
+  --font-size-ui-tiny: var(--ds-font-size-xs);
+  --font-size-ui-sm: var(--ds-font-size-sm);
+  --font-size-ui-md: var(--ds-font-size-base);
+  --font-size-ui-lg: var(--ds-font-size-lg);
+  --font-size-display-lg: var(--ds-font-size-display-lg);
+  --font-size-display-md: var(--ds-font-size-display);
+  --font-size-display-sm: var(--ds-font-size-xl);
+
+  --status-success-text: var(--ds-success);
+  --status-warning-text: var(--ds-warning);
+  --status-error-text: var(--ds-error);
+  --status-info-text: var(--ds-info);
 }
 
 /* ============================================================================

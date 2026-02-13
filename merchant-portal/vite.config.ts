@@ -204,9 +204,8 @@ export default defineConfig(async ({ mode }) => {
             )
               return "public";
 
-            if (id.includes("/pages/TPV/") || id.includes("/pages/TPVMinimal/"))
-              return "app-tpv";
-            if (id.includes("/pages/KDSMinimal/")) return "app-tpv";
+            // TPV/KDS: do NOT put in separate chunk — causes "Cannot access 'K' before initialization" (TDZ)
+            // when chunk loads before deps; let Rollup bundle with consuming code (app-runtime/app-core).
             if (id.includes("/pages/AppStaff/")) return "app-staff";
             if (
               id.includes("/pages/Owner/") ||

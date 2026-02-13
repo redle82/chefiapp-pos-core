@@ -11,7 +11,7 @@ import {
   tpvEventBus,
   type DecisionMadePayload,
 } from "../../core/tpv/TPVCentralEvents";
-import { Button } from "../../ui/design-system/primitives/Button";
+import { Button } from "../../ui/design-system/Button";
 import { Text } from "../../ui/design-system/primitives/Text";
 import { colors } from "../../ui/design-system/tokens/colors";
 import { spacing } from "../../ui/design-system/tokens/spacing";

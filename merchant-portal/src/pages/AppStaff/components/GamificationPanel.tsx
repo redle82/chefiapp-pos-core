@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { gamificationService, type UserScore, type LeaderboardEntry } from '../../../core/gamification/GamificationService';
 import { getTabIsolated } from '../../../core/storage/TabIsolatedStorage';
-import { Card } from '../../../ui/design-system/primitives/Card';
+import { Card } from '../../../ui/design-system/Card';
 import { Text } from '../../../ui/design-system/primitives/Text';
 import { Badge } from '../../../ui/design-system/primitives/Badge';
 

@@ -89,6 +89,19 @@ export default defineConfig([
                 "ARCHITECTURAL VIOLATION: Do not import raw Supabase client. Use dockerCoreClient.",
             },
           ],
+          patterns: [
+            {
+              group: [
+                "**/ui/design-system/primitives/Button",
+                "**/ui/design-system/primitives/Card",
+                "**/ui/design-system/primitives/Input",
+                "**/ui/components/Button",
+                "**/components/ui/Card",
+              ],
+              message:
+                "ARCHITECTURAL VIOLATION: Use ui/design-system/* directly. Legacy UI shims are removed.",
+            },
+          ],
         },
       ],
     },

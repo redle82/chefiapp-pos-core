@@ -10,7 +10,6 @@
  * Ref: TWO_DASHBOARDS_REFERENCE.md, COGNITIVE_MODES_OWNER_DASHBOARD.md
  */
 
-import { fontSize, fontWeight, space } from "@chefiapp/core-design-system";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CoreStatusBadge } from "../../../../components/CoreStatusBadge/CoreStatusBadge";
@@ -31,6 +30,7 @@ import { getDashboardCopy } from "../../../../core/roles";
 import { useRoleOptional } from "../../../../core/roles/RoleContext";
 import { OwnerDashboard } from "../../../../pages/AppStaff/OwnerDashboard";
 import { GlobalLoadingView } from "../../../../ui/design-system/components";
+import styles from "./OwnerDashboardWithMapLayout.module.css";
 
 function OperacaoCard({ onNavigate }: { onNavigate: (path: string) => void }) {
   const preflight = usePreflightOperational({ healthAutoStart: true });
@@ -47,53 +47,22 @@ function OperacaoCard({ onNavigate }: { onNavigate: (path: string) => void }) {
   const showRunbookLink = hasCoreOffline;
 
   return (
-    <div
-      style={{
-        padding: "12px",
-        borderRadius: "8px",
-        backgroundColor: preflight.operationReady ? "#ecfdf5" : "#fef2f2",
-        border: `1px solid ${preflight.operationReady ? "#a7f3d0" : "#fecaca"}`,
-        marginBottom: "8px",
-      }}
-    >
+    <div className={styles.opCard} data-ready={preflight.operationReady}>
+      <div className={styles.opCardLabel}>Operação</div>
       <div
-        style={{
-          fontSize: "12px",
-          fontWeight: 600,
-          color: "#444",
-          textTransform: "uppercase",
-          letterSpacing: "0.04em",
-          marginBottom: "6px",
-        }}
-      >
-        Operação
-      </div>
-      <div
-        style={{
-          fontSize: "14px",
-          fontWeight: 600,
-          color: preflight.operationReady ? "#059669" : "#b91c1c",
-          marginBottom: preflight.blockers.length > 0 ? "8px" : 0,
-        }}
+        className={styles.opCardStatus}
+        data-ready={preflight.operationReady}
       >
         {preflight.operationReady ? "Pronto" : "Bloqueado"}
       </div>
       {preflight.blockers.length > 0 && (
-        <ul
-          style={{
-            margin: "0 0 10px 0",
-            paddingLeft: "18px",
-            fontSize: "12px",
-            color: "#555",
-            lineHeight: 1.5,
-          }}
-        >
+        <ul className={styles.opCardBlockerList}>
           {preflight.blockers.map((b) => (
             <li key={b.code}>{b.message}</li>
           ))}
         </ul>
       )}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+      <div className={styles.opCardActions}>
         <button
           type="button"
           disabled={!abrirTpvEnabled}
@@ -102,16 +71,8 @@ function OperacaoCard({ onNavigate }: { onNavigate: (path: string) => void }) {
             // Em Reports, abrimos apenas a visão de operações (leitura), não o TPV.
             onNavigate("/admin/reports/operations");
           }}
-          style={{
-            padding: "8px 12px",
-            fontSize: "12px",
-            fontWeight: 600,
-            color: abrirTpvEnabled ? "#fff" : "#9ca3af",
-            backgroundColor: abrirTpvEnabled ? "#059669" : "#e5e7eb",
-            border: "none",
-            borderRadius: 6,
-            cursor: abrirTpvEnabled ? "pointer" : "not-allowed",
-          }}
+          className={styles.opMainBtn}
+          data-enabled={abrirTpvEnabled}
         >
           Ver detalhe da operação
         </button>
@@ -119,17 +80,7 @@ function OperacaoCard({ onNavigate }: { onNavigate: (path: string) => void }) {
           <button
             type="button"
             onClick={() => onNavigate("/menu-builder")}
-            style={{
-              padding: "6px 12px",
-              fontSize: "11px",
-              fontWeight: 500,
-              color: "#b45309",
-              backgroundColor: "#fff7ed",
-              border: "1px solid #fed7aa",
-              borderRadius: 6,
-              cursor: "pointer",
-              textAlign: "left",
-            }}
+            className={styles.opMenuBtn}
           >
             Menu Builder
           </button>
@@ -138,17 +89,7 @@ function OperacaoCard({ onNavigate }: { onNavigate: (path: string) => void }) {
           <button
             type="button"
             onClick={() => onNavigate("/config/identity")}
-            style={{
-              padding: "6px 12px",
-              fontSize: "11px",
-              fontWeight: 500,
-              color: "#1e40af",
-              backgroundColor: "#eff6ff",
-              border: "1px solid #bfdbfe",
-              borderRadius: 6,
-              cursor: "pointer",
-              textAlign: "left",
-            }}
+            className={styles.opIdentityBtn}
           >
             Configurar identidade
           </button>
@@ -157,17 +98,7 @@ function OperacaoCard({ onNavigate }: { onNavigate: (path: string) => void }) {
           <button
             type="button"
             onClick={() => onNavigate("/app/runbook-core")}
-            style={{
-              padding: "6px 12px",
-              fontSize: "11px",
-              fontWeight: 500,
-              color: "#0d9488",
-              backgroundColor: "#ccfbf1",
-              border: "1px solid #99f6e4",
-              borderRadius: 6,
-              cursor: "pointer",
-              textAlign: "left",
-            }}
+            className={styles.opRunbookBtn}
           >
             Ver instruções (Core offline)
           </button>
@@ -385,58 +316,22 @@ export function OwnerDashboardWithMapLayout() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100%",
-        backgroundColor: "#f3f4f6",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <div className={styles.pageContainer}>
       {showSetupBanner && (
-        <div
-          style={{
-            padding: "10px 16px",
-            background: "linear-gradient(90deg, #fef3c7 0%, #fde68a 100%)",
-            borderBottom: "1px solid #f59e0b",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 8,
-          }}
-        >
-          <span style={{ fontSize: 14, color: "#92400e", fontWeight: 500 }}>
+        <div className={styles.setupBanner}>
+          <span className={styles.setupBannerText}>
             ⚙️ Complete o setup: primeiro produto e cardápio.
           </span>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div className={styles.setupBannerActions}>
             <button
               onClick={() => navigate("/config/identity")}
-              style={{
-                padding: "6px 14px",
-                backgroundColor: "#1a1a1a",
-                color: "#fff",
-                border: "none",
-                borderRadius: 6,
-                cursor: "pointer",
-                fontSize: 13,
-                fontWeight: 600,
-              }}
+              className={styles.setupBtnDark}
             >
               Preparar identidade
             </button>
             <button
               onClick={() => navigate("/menu-builder")}
-              style={{
-                padding: "6px 14px",
-                backgroundColor: "#f59e0b",
-                color: "#fff",
-                border: "none",
-                borderRadius: 6,
-                cursor: "pointer",
-                fontSize: 13,
-                fontWeight: 600,
-              }}
+              className={styles.setupBtnAmber}
             >
               Abrir Cardápio
             </button>
@@ -444,63 +339,29 @@ export function OwnerDashboardWithMapLayout() {
         </div>
       )}
       {blockedByCaixa && (
-        <div
-          style={{
-            padding: "16px 20px",
-            marginBottom: 0,
-            backgroundColor: "#fef2f2",
-            borderBottom: "1px solid #ef4444",
-            color: "#b91c1c",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 12,
-          }}
-        >
-          <div style={{ fontWeight: 500, fontSize: 14 }}>
+        <div className={styles.blockedBanner}>
+          <div className={styles.blockedBannerText}>
             O turno ainda não está aberto. Use o TPV no terminal operacional
             para abrir o turno e poder vender.
           </div>
           <button
             type="button"
             onClick={() => navigate("/admin/reports/operations")}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: "#b91c1c",
-              color: "#fff",
-              border: "none",
-              borderRadius: 6,
-              cursor: "pointer",
-              fontSize: 13,
-              fontWeight: 600,
-            }}
+            className={styles.blockedBannerBtn}
           >
             Ver detalhe
           </button>
         </div>
       )}
-      <div style={{ display: "flex", flex: 1 }}>
-        <aside
-          style={{
-            width: "260px",
-            backgroundColor: "#ffffff",
-            borderRight: "1px solid #e5e7eb",
-            padding: "24px 16px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-          }}
-        >
-          <div style={{ marginBottom: "8px" }}>
-            <div
-              style={{ fontSize: "18px", fontWeight: 700, color: "#1a1a1a" }}
-            >
+      <div className={styles.contentRow}>
+        <aside className={styles.sidebar}>
+          <div className={styles.sidebarTitleBlock}>
+            <div className={styles.sidebarTitle}>
               {isOperationalOS && sidebarTitleOperational != null
                 ? sidebarTitleOperational
                 : dashboardCopy.sidebarTitle}
             </div>
-            <div style={{ fontSize: "12px", color: "#888" }}>
+            <div className={styles.sidebarSubtitle}>
               {isOperationalOS
                 ? preflight.operationReady
                   ? "Estado: Pronta"
@@ -511,21 +372,11 @@ export function OwnerDashboardWithMapLayout() {
 
           {runtime.installed_modules?.length != null &&
             runtime.installed_modules.length > 0 && (
-              <div
-                style={{
-                  padding: "12px",
-                  borderRadius: "8px",
-                  backgroundColor: "#f5f7ff",
-                  border: "1px solid #e0e4ff",
-                  marginBottom: "8px",
-                }}
-              >
-                <div style={{ fontSize: "12px", color: "#444" }}>
+              <div className={styles.modulesReadyCard}>
+                <div className={styles.modulesReadyLabel}>
                   Sistema pronto ✅
                 </div>
-                <div
-                  style={{ fontSize: "11px", color: "#777", marginTop: "4px" }}
-                >
+                <div className={styles.modulesReadyCount}>
                   {runtime.installed_modules.length} instalado(s)
                 </div>
               </div>
@@ -539,60 +390,17 @@ export function OwnerDashboardWithMapLayout() {
           />
 
           {!isOperationalOS && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                marginBottom: "12px",
-                padding: "10px",
-                borderRadius: 8,
-                backgroundColor: "#f0f4f8",
-                border: "1px solid #e0e4e8",
-              }}
-            >
+            <div className={styles.coreStatusBox}>
               <CoreStatusBadge />
             </div>
           )}
 
-          <nav
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: space.sm,
-              flex: 1,
-              overflowY: "auto",
-            }}
-          >
-            <div
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.semibold,
-                color: "#888",
-                textTransform: "uppercase",
-                letterSpacing: "0.04em",
-                marginBottom: space.xs,
-              }}
-            >
-              Mapa do sistema
-            </div>
+          <nav className={styles.nav}>
+            <div className={styles.mapaLabel}>Mapa do sistema</div>
             {MAPA_SECTIONS.map((section) => (
               <div key={section.id}>
-                <div
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.semibold,
-                    color: "#888",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                    marginBottom: 4,
-                    paddingLeft: space.xs,
-                  }}
-                >
-                  {section.label}
-                </div>
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 2 }}
-                >
+                <div className={styles.sectionLabel}>{section.label}</div>
+                <div className={styles.sectionItems}>
                   {section.items.map((item) => {
                     type Status = "red" | "yellow" | "green";
                     const reasons = new Set(operation.blockingReasons);
@@ -633,27 +441,12 @@ export function OwnerDashboardWithMapLayout() {
                     }
                     const badge =
                       status === "red" ? (
-                        <span
-                          style={{
-                            fontSize: fontSize.xs,
-                            fontWeight: fontWeight.semibold,
-                            color: "#b91c1c",
-                            backgroundColor: "#fee2e2",
-                            borderRadius: 999,
-                            padding: "2px 8px",
-                          }}
-                        >
+                        <span className={styles.badgeRed}>
                           🔴 Requer atenção
                         </span>
                       ) : status === "green" ? (
                         <span
-                          style={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: "999px",
-                            backgroundColor: "#22c55e",
-                            display: "inline-block",
-                          }}
+                          className={styles.badgeGreen}
                           aria-label="Pronto"
                         />
                       ) : null;
@@ -665,33 +458,13 @@ export function OwnerDashboardWithMapLayout() {
                           if (item.moduleId) setActiveModule(item.moduleId);
                           navigate(item.route);
                         }}
-                        style={{
-                          width: "100%",
-                          textAlign: "left",
-                          padding: `${space.xs}px ${space.sm}px`,
-                          fontSize: fontSize.sm,
-                          color: "#111827",
-                          backgroundColor:
-                            activeModule === item.moduleId
-                              ? "#e8ecf4"
-                              : "transparent",
-                          border: "none",
-                          borderRadius: 6,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: space.xs,
-                        }}
+                        className={styles.mapItemBtn}
+                        data-active={activeModule === item.moduleId}
                       >
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: space.xs,
-                          }}
-                        >
-                          <span style={{ fontSize: 18 }}>{item.icon}</span>
+                        <span className={styles.mapItemLeft}>
+                          <span className={styles.mapItemIcon}>
+                            {item.icon}
+                          </span>
                           <span>{item.label}</span>
                         </span>
                         {badge}
@@ -704,43 +477,13 @@ export function OwnerDashboardWithMapLayout() {
           </nav>
         </aside>
 
-        <main
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: "auto",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
+        <main className={styles.main}>
           {role === "owner" && (
-            <div
-              style={{
-                padding: space.md,
-                margin: space.md,
-                marginBottom: 0,
-                borderRadius: 8,
-                backgroundColor: "#fff",
-                border: "1px solid #e5e7eb",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: `${fontSize.sm}px`,
-                  fontWeight: fontWeight.semibold,
-                  color: "#374151",
-                  marginBottom: space.sm,
-                }}
-              >
+            <div className={styles.ambientesCard}>
+              <div className={styles.ambientesTitle}>
                 Ambientes operacionais
               </div>
-              <p
-                style={{
-                  fontSize: `${fontSize.xs}px`,
-                  color: "#6b7280",
-                  margin: 0,
-                }}
-              >
+              <p className={styles.ambientesDesc}>
                 Cada terminal operacional abre o seu App dedicado (Waiter,
                 Kitchen, Cleaning, Manager) diretamente. Aqui no portal,
                 acompanhe apenas o estado e relatórios — a gestão de

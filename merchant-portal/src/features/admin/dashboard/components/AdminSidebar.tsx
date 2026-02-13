@@ -1,8 +1,9 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
-import { colors } from "../../../../ui/design-system/tokens/colors";
 import { ChefIAppSignature } from "../../../../ui/design-system/sovereign/ChefIAppSignature";
 import { RestaurantHeader } from "../../../../ui/design-system/sovereign/RestaurantHeader";
+import { colors } from "../../../../ui/design-system/tokens/colors";
+import styles from "./AdminSidebar.module.css";
 
 const theme = colors.modes.dashboard;
 
@@ -80,26 +81,9 @@ export function AdminSidebar() {
   const isConfig = location.pathname.startsWith("/admin/config");
 
   return (
-    <aside
-      style={{
-        width: 248,
-        backgroundColor: theme.surface.layer1,
-        borderRight: `1px solid ${theme.border.subtle}`,
-        padding: "20px 16px 16px",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        gap: 0,
-      }}
-    >
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1, minHeight: 0 }}>
-        <div
-          style={{
-            marginBottom: 16,
-            paddingLeft: 8,
-            color: theme.text.primary,
-          }}
-        >
+    <aside className={styles.sidebar}>
+      <div className={styles.sidebarInner}>
+        <div className={styles.brandSection}>
           <RestaurantHeader
             name={identity.name}
             logoUrl={identity.logoUrl}
@@ -108,38 +92,11 @@ export function AdminSidebar() {
         </div>
         {isConfig ? (
           <>
-            <NavLink
-              to="/admin/home"
-              style={{
-                display: "block",
-                padding: "8px 10px",
-                borderRadius: 8,
-                fontSize: 12,
-                color: theme.text.secondary,
-                fontWeight: 500,
-                textDecoration: "none",
-                marginBottom: 4,
-              }}
-            >
+            <NavLink to="/admin/home" className={styles.backLink}>
               ← Volver al menú
             </NavLink>
-            <div
-              style={{
-                marginBottom: 8,
-                paddingLeft: 8,
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: theme.text.tertiary,
-              }}
-            >
-              Configuración
-            </div>
-            <nav
-              aria-label="Configuración"
-              style={{ display: "flex", flexDirection: "column", gap: 2 }}
-            >
+            <div className={styles.configLabel}>Configuración</div>
+            <nav aria-label="Configuração" className={styles.navColumn}>
               {CONFIG_ITEMS.map(({ path, label }) => (
                 <AdminSidebarLink
                   key={path}
@@ -153,10 +110,7 @@ export function AdminSidebar() {
           </>
         ) : (
           <>
-            <nav
-              aria-label="Admin navigation"
-              style={{ display: "flex", flexDirection: "column", gap: 4 }}
-            >
+            <nav aria-label="Admin navigation" className={styles.navColumnMain}>
               {NAV_ITEMS.filter((i) => i.section !== "bottom").map((item) => (
                 <AdminSidebarLink key={item.id} to={item.to!}>
                   {item.label}
@@ -164,7 +118,7 @@ export function AdminSidebar() {
               ))}
             </nav>
             {NAV_ITEMS.some((i) => i.section === "bottom") && (
-              <div style={{ marginTop: 8 }}>
+              <div className={styles.bottomSection}>
                 {NAV_ITEMS.filter((i) => i.section === "bottom").map((item) => (
                   <AdminSidebarLink key={item.id} to={item.to!}>
                     {item.label}
@@ -175,13 +129,7 @@ export function AdminSidebar() {
           </>
         )}
       </div>
-      <div
-        style={{
-          marginTop: 16,
-          paddingTop: 12,
-          borderTop: `1px solid ${theme.border.subtle}`,
-        }}
-      >
+      <div className={styles.footer}>
         <ChefIAppSignature variant="full" size="sm" tone="light" />
       </div>
     </aside>

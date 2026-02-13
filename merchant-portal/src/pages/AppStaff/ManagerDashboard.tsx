@@ -14,11 +14,11 @@
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useCoreHealth } from "../../core/health/useCoreHealth";
-import { Card } from "../../ui/design-system/primitives/Card";
+import { Card } from "../../ui/design-system/Card";
 import { Text } from "../../ui/design-system/primitives/Text";
-import { colors } from "../../ui/design-system/tokens/colors";
 import { usePulse } from "../../ui/hooks/usePulse";
 import { useStaff } from "./context/StaffContext";
+import styles from "./ManagerDashboard.module.css";
 
 export const ManagerDashboard: React.FC = () => {
   const { tasks, shiftState, specDrifts } = useStaff();
@@ -103,54 +103,16 @@ export const ManagerDashboard: React.FC = () => {
   }
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: "100%",
-        padding: 24,
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 720,
-          display: "flex",
-          flexDirection: "column",
-          gap: 24,
-        }}
-      >
+    <div className={styles.page}>
+      <div className={styles.content}>
         {/* Indicador único de saúde — foco visual dominante */}
         <Card
           surface="layer1"
           padding="xl"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
-            gap: 20,
-            padding: "48px 32px",
-            minHeight: 220,
-            border: isAlive
-              ? `2px solid ${colors.success.base}`
-              : `1px solid ${colors.border.subtle}`,
-            transition: "all 0.5s ease",
-            borderRadius: 16,
-          }}
+          className={styles.healthCard}
+          data-alive={String(isAlive)}
         >
-          <div
-            style={{
-              fontSize: 64,
-              lineHeight: 1,
-              filter: isAlive
-                ? "drop-shadow(0 0 16px rgba(34, 197, 94, 0.4))"
-                : "none",
-            }}
-          >
+          <div className={styles.healthIcon} data-alive={String(isAlive)}>
             {health.icon}
           </div>
           <div>
@@ -158,7 +120,7 @@ export const ManagerDashboard: React.FC = () => {
               size="2xl"
               weight="black"
               color="primary"
-              style={{ letterSpacing: "-0.02em" }}
+              className={styles.healthLabel}
             >
               {health.label}
             </Text>
@@ -166,49 +128,26 @@ export const ManagerDashboard: React.FC = () => {
         </Card>
 
         {/* Insights passivos sobre o estado da operação */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div className={styles.insightsSection}>
           <Text
             size="xs"
             weight="bold"
             color="tertiary"
-            style={{ textTransform: "uppercase", letterSpacing: "0.08em" }}
+            className={styles.insightsTitle}
           >
             Diagnóstico
           </Text>
           <Card surface="layer1" padding="md">
-            <ul
-              style={{
-                listStyle: "none",
-                margin: 0,
-                padding: 0,
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-              }}
-            >
+            <ul className={styles.insightsList}>
               {insights.map((item) => (
-                <li
-                  key={item.id}
-                  style={{
-                    fontSize: 13,
-                    color: colors.text.secondary,
-                  }}
-                >
+                <li key={item.id} className={styles.insightItem}>
                   {item.label}
                 </li>
               ))}
             </ul>
             {detailLink && (
-              <div style={{ marginTop: 12 }}>
-                <Link
-                  to={detailLink}
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: colors.action.base,
-                    textDecoration: "none",
-                  }}
-                >
+              <div className={styles.detailLinkWrapper}>
+                <Link to={detailLink} className={styles.detailLink}>
                   Ver detalhe →
                 </Link>
               </div>

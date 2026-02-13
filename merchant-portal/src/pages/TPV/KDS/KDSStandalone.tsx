@@ -26,6 +26,7 @@ import { KernelProvider } from "../../../core/kernel/KernelContext";
 import { setTabIsolated } from "../../../core/storage/TabIsolatedStorage";
 import { OfflineOrderProvider } from "../context/OfflineOrderContext";
 import { KDSLayout } from "./KDSLayout";
+import styles from "./KDSStandalone.module.css";
 import KitchenDisplay from "./KitchenDisplay";
 
 const KDSStandalone = () => {
@@ -62,14 +63,14 @@ const KDSStandalone = () => {
 
   if (!restaurantId) {
     return (
-      <div style={{ padding: 40, color: "white" }}>
+      <div className={styles.errorMessage}>
         Erro: ID do Restaurante não fornecido na URL.
       </div>
     );
   }
 
   if (!ready) {
-    return <div style={{ background: "#000", height: "100vh" }} />; // Flash prevention
+    return <div className={styles.flashPrevention} />; // Flash prevention
   }
 
   // === CONTROLE DE VERSÃO: Forçar KDS novo quando solicitado ===

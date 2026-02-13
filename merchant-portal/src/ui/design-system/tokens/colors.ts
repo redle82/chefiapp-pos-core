@@ -1,154 +1,133 @@
-import { palette } from './palette';
+import { colors as coreColors } from "@chefiapp/core-design-system";
+import { palette } from "./palette";
 
-// Semantic Color Definition
+// Adapter: preserve existing API shape while sourcing values from core tokens.
 type ColorTheme = {
-    surface: {
-        base: string;
-        layer1: string;
-        layer2: string;
-        layer3: string;
-        highlight: string;
-    };
-    text: {
-        primary: string;
-        secondary: string;
-        tertiary: string;
-        quaternary: string;
-        inverse: string;
-    };
-    action: {
-        base: string;
-        hover: string;
-        text: string;
-    };
-    warning: {
-        base: string;
-        hover: string;
-        text: string;
-    };
-    success: {
-        base: string;
-        hover: string;
-        text: string;
-    };
-    destructive: {
-        base: string;
-        hover: string;
-        text: string;
-    };
-    info: {
-        base: string;
-        hover: string;
-        text: string;
-    };
-    border: {
-        subtle: string;
-        strong: string;
-    };
+  surface: {
+    base: string;
+    layer1: string;
+    layer2: string;
+    layer3: string;
+    highlight: string;
+    border: string;
+    borderHover: string;
+    borderActive: string;
+  };
+  text: {
+    primary: string;
+    secondary: string;
+    tertiary: string;
+    quaternary: string;
+    inverse: string;
+  };
+  action: {
+    base: string;
+    hover: string;
+    text: string;
+    contrastText: string;
+  };
+  warning: {
+    base: string;
+    hover: string;
+    text: string;
+    contrastText: string;
+  };
+  success: {
+    base: string;
+    hover: string;
+    text: string;
+    contrastText: string;
+  };
+  destructive: {
+    base: string;
+    hover: string;
+    text: string;
+    contrastText: string;
+  };
+  info: {
+    base: string;
+    hover: string;
+    text: string;
+    contrastText: string;
+  };
+  border: {
+    subtle: string;
+    strong: string;
+  };
+  feedback: {
+    success: string;
+    warning: string;
+    error: string;
+    info: string;
+  };
 };
 
-// MODE 1: TPV (Dark Cockpit - Operational)
-const tpv: ColorTheme = {
-    surface: {
-        base: palette.black,           // #000000 (Void)
-        layer1: palette.zinc[950],     // #09090b (Tunnel)
-        layer2: palette.zinc[900],     // #18181b (Card)
-        layer3: palette.zinc[800],     // #27272a (Hover)
-        highlight: palette.zinc[700],
-    },
-    text: {
-        primary: palette.white,
-        secondary: palette.zinc[300],
-        tertiary: palette.zinc[500],
-        quaternary: palette.zinc[600],
-        inverse: palette.black,
-    },
-    action: {
-        base: palette.emerald[600], // Money IN
-        hover: palette.emerald[500],
-        text: palette.white,
-    },
-    warning: {
-        base: palette.amber[600],      // Action Required
-        hover: palette.amber[500],
-        text: palette.black,
-    },
-    success: {
-        base: palette.emerald[600],
-        hover: palette.emerald[500],
-        text: palette.white,
-    },
-    destructive: {
-        base: palette.fire[500], // RED OS
-        hover: palette.fire[700],
-        text: palette.white,
-    },
-    info: {
-        base: palette.indigo[600],
-        hover: palette.indigo[500],
-        text: palette.white,
-    },
-    border: {
-        subtle: palette.zinc[800],
-        strong: palette.zinc[700],
-    }
-};
-
-// MODE 2: DASHBOARD (Soft Dark - Management)
-// Design Contract v1: dourado como cor de decisão (CTAs, títulos, itens activos).
-const dashboard: ColorTheme = {
-    surface: {
-        base: palette.zinc[950],       // #09090b (Softer than black)
-        layer1: palette.zinc[900],     // #18181b
-        layer2: palette.zinc[800],     // #27272a
-        layer3: palette.zinc[700],     // #3f3f46
-        highlight: palette.zinc[600],
-    },
-    text: {
-        primary: palette.zinc[50],
-        secondary: palette.zinc[400],
-        tertiary: palette.zinc[500],
-        quaternary: palette.zinc[700],
-        inverse: palette.black,
-    },
-    action: {
-        base: palette.amber[600],   // Dourado (DNA da landing)
-        hover: palette.amber[500],
-        text: palette.black,
-    },
-    warning: {
-        base: palette.amber[600],
-        hover: palette.amber[500],
-        text: palette.black,
-    },
-    success: {
-        base: palette.emerald[600],
-        hover: palette.emerald[500],
-        text: palette.white,
-    },
-    destructive: {
-        base: palette.fire[500],
-        hover: palette.fire[700],
-        text: palette.white,
-    },
-    info: {
-        base: palette.blue[600],
-        hover: palette.blue[500],
-        text: palette.white,
-    },
-    border: {
-        subtle: palette.zinc[800],
-        strong: palette.zinc[700],
-    }
+const baseTheme: ColorTheme = {
+  surface: {
+    base: coreColors.background,
+    layer1: coreColors.surface,
+    layer2: coreColors.surfaceElevated,
+    layer3: coreColors.surfaceOverlay,
+    highlight: coreColors.surfaceOverlay,
+    border: coreColors.border,
+    borderHover: coreColors.borderHover,
+    borderActive: coreColors.borderActive,
+  },
+  text: {
+    primary: coreColors.textPrimary,
+    secondary: coreColors.textSecondary,
+    tertiary: coreColors.textMuted,
+    quaternary: coreColors.textDisabled,
+    inverse: coreColors.textInverse,
+  },
+  action: {
+    base: coreColors.accent,
+    hover: coreColors.accent,
+    text: coreColors.textInverse,
+    contrastText: coreColors.textInverse,
+  },
+  warning: {
+    base: coreColors.warning,
+    hover: coreColors.warning,
+    text: coreColors.textInverse,
+    contrastText: coreColors.textInverse,
+  },
+  success: {
+    base: coreColors.success,
+    hover: coreColors.success,
+    text: coreColors.textInverse,
+    contrastText: coreColors.textInverse,
+  },
+  destructive: {
+    base: coreColors.error,
+    hover: coreColors.error,
+    text: coreColors.textInverse,
+    contrastText: coreColors.textInverse,
+  },
+  info: {
+    base: coreColors.info,
+    hover: coreColors.info,
+    text: coreColors.textInverse,
+    contrastText: coreColors.textInverse,
+  },
+  border: {
+    subtle: coreColors.border,
+    strong: coreColors.borderActive,
+  },
+  feedback: {
+    success: coreColors.success,
+    warning: coreColors.warning,
+    error: coreColors.error,
+    info: coreColors.info,
+  },
 };
 
 export const colors = {
-    palette,
-    modes: {
-        tpv,
-        dashboard,
-        // marketing: (Future)
-    },
-    // Default export helper (defaults to TPV for safety)
-    ...tpv
+  // Legacy palette retained for compatibility; avoid new usage.
+  palette,
+  modes: {
+    tpv: baseTheme,
+    dashboard: baseTheme,
+  },
+  ...baseTheme,
 } as const;

@@ -54,8 +54,23 @@
 
 ---
 
+## Landing e páginas de marketing (fonte oficial)
+
+**Contrato canónico (imutável):** [strategy/LANDING_CANON.md](../strategy/LANDING_CANON.md).
+
+- **Landing (única)**: `merchant-portal/src/pages/LandingV2/LandingV2Page.tsx`. URL em dev: **http://localhost:5175/landing-v2** (ou `/v2`). Não existe outro projeto nem outra landing; toda a evolução de marketing faz-se aqui.
+- **Blog (TPV restaurantes)**: `merchant-portal/src/pages/Blog/BlogTPVRestaurantesPage.tsx`. Rotas públicas **/blog** e **/blog/tpv-restaurantes** (mesmo conteúdo). Conteúdo honesto sobre TPV/POS para restaurantes, SEO (meta, canonical, JSON-LD Article). Link no navbar e footer da landing.
+- **Blog (TPV vs POS fiscal)**: `merchant-portal/src/pages/Blog/BlogTPVVsPOSFiscalPage.tsx`. Rota pública **/blog/tpv-vs-pos-fiscal**. Artigo sobre diferença entre TPV operacional e POS fiscal; ChefIApp em paralelo ao fiscal. Cross-links com o outro artigo e changelog.
+- **Blog (Quando abrir e fechar caixa)**: `merchant-portal/src/pages/Blog/BlogQuandoAbrirFecharCaixaPage.tsx`. Rota pública **/blog/quando-abrir-fechar-caixa**. Artigo sobre abertura/fecho de caixa e turno — só o que existe no código (uma caixa, saldo inicial, fecho declarado, Z-Report). Cross-links com os outros artigos.
+- **Changelog**: `merchant-portal/src/pages/Changelog/ChangelogPage.tsx`. Rota pública **/changelog**. Lista de alterações reais em produção (sem marketing). Link no footer da landing (Empresa).
+- **Segurança e dados**: `merchant-portal/src/pages/Security/SecurityPage.tsx`. Rota pública **/security**. Afirmações verificáveis sobre acesso, dados e privacidade; sem certificações que não existam. Link no footer (Legal).
+- **Estado do sistema**: `merchant-portal/src/pages/Status/StatusPage.tsx`. Rota pública **/status**. Página estática de transparência; sem uptime % até haver endpoint público. Link no footer (Suporte).
+- **Página Web Pública do restaurante**: `merchant-portal/src/pages/PublicWeb/PublicWebPage.tsx`. Presença online do restaurante (menu público, pedidos web), não marketing do produto ChefIApp™.
+
+---
+
 ## Validação paths (2026-02-01)
 
 Paths em `docs/routes/web/*.md` conferidos com `merchant-portal/src/App.tsx`: `/purchases`, `/financial`, `/reservations`, `/groups`, `/mentor`, `/app/billing`, `/billing/success`, `/config` e subpaths existem. `isWebConfigPath` em CoreFlow.ts cobre apenas `/dashboard`, `/app/dashboard`, `/config*`, `/menu-builder`, `/onboarding/first-product`, `/app/billing`, `/billing/success`; `/purchases`, `/financial`, `/reservations`, `/groups`, `/mentor` ficam ALLOW por não serem operacionais (gate só redireciona em SETUP + isOperationalPath). Comportamento documentado está correto.
 
-Última atualização: 2026-02-01.
+Última atualização: 2026-02-12.

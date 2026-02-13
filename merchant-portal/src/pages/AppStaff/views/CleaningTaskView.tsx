@@ -1,7 +1,7 @@
 import React from "react";
 import { StaffLayout } from "../../../ui/design-system/layouts/StaffLayout";
-import { Button } from "../../../ui/design-system/primitives/Button";
-import { Card } from "../../../ui/design-system/primitives/Card";
+import { Button } from "../../../ui/design-system/Button";
+import { Card } from "../../../ui/design-system/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { colors } from "../../../ui/design-system/tokens/colors";
 import type { Task } from "../context/StaffCoreTypes";

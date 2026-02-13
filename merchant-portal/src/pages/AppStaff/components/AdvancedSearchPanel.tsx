@@ -5,13 +5,13 @@
  */
 
 import React, { useState } from "react";
-import { Button } from "../../../ui/design-system/primitives/Button";
-import { Card } from "../../../ui/design-system/primitives/Card";
-import { Input } from "../../../ui/design-system/primitives/Input";
+import { Button } from "../../../ui/design-system/Button";
+import { Card } from "../../../ui/design-system/Card";
+import { Input } from "../../../ui/design-system/Input";
 import { Text } from "../../../ui/design-system/primitives/Text";
-import { colors } from "../../../ui/design-system/tokens/colors";
 import { useStaff } from "../context/StaffContext";
 import { useAdvancedSearch } from "../hooks/useAdvancedSearch";
+import styles from "./AdvancedSearchPanel.module.css";
 
 interface AdvancedSearchPanelProps {
   onClose?: () => void;
@@ -38,19 +38,8 @@ export const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
   const [saveName, setSaveName] = useState("");
 
   return (
-    <Card
-      surface="layer1"
-      padding="lg"
-      style={{ maxWidth: 600, margin: "0 auto" }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
+    <Card surface="layer1" padding="lg" className={styles.wrapper}>
+      <div className={styles.headerRow}>
         <Text size="lg" weight="bold">
           🔍 Busca Avançada
         </Text>
@@ -62,11 +51,11 @@ export const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
       </div>
 
       {/* Logic Selector */}
-      <div style={{ marginBottom: 16 }}>
-        <Text size="sm" weight="bold" style={{ marginBottom: 8 }}>
+      <div className={styles.logicSection}>
+        <Text size="sm" weight="bold" className={styles.logicLabel}>
           Lógica:
         </Text>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className={styles.logicButtons}>
           <Button
             variant={logic === "AND" ? "solid" : "outline"}
             size="sm"
@@ -85,15 +74,8 @@ export const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
       </div>
 
       {/* Filters */}
-      <div style={{ marginBottom: 16 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 8,
-          }}
-        >
+      <div className={styles.filtersSection}>
+        <div className={styles.filtersHeader}>
           <Text size="sm" weight="bold">
             Filtros:
           </Text>
@@ -102,28 +84,14 @@ export const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
           </Button>
         </div>
         {filters.map((filter, index) => (
-          <div
-            key={index}
-            style={{
-              display: "flex",
-              gap: 8,
-              marginBottom: 8,
-              padding: 12,
-              background: colors.surface.layer2,
-              borderRadius: 8,
-            }}
-          >
+          <div key={index} className={styles.filterRow}>
             <select
+              aria-label="Campo de filtro"
               value={filter.field}
               onChange={(e) =>
                 updateFilter(index, { field: e.target.value as any })
               }
-              style={{
-                flex: 1,
-                padding: 8,
-                borderRadius: 4,
-                border: `1px solid ${colors.border.subtle}`,
-              }}
+              className={styles.filterSelect}
             >
               <option value="title">Título</option>
               <option value="description">Descrição</option>
@@ -134,16 +102,12 @@ export const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
               <option value="type">Tipo</option>
             </select>
             <select
+              aria-label="Operador de filtro"
               value={filter.operator}
               onChange={(e) =>
                 updateFilter(index, { operator: e.target.value as any })
               }
-              style={{
-                flex: 1,
-                padding: 8,
-                borderRadius: 4,
-                border: `1px solid ${colors.border.subtle}`,
-              }}
+              className={styles.filterSelect}
             >
               <option value="contains">Contém</option>
               <option value="equals">Igual a</option>
@@ -154,7 +118,7 @@ export const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
               value={filter.value}
               onChange={(e) => updateFilter(index, { value: e.target.value })}
               placeholder="Valor..."
-              style={{ flex: 2 }}
+              className={styles.filterInput}
             />
             <Button
               variant="ghost"
@@ -166,18 +130,14 @@ export const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
           </div>
         ))}
         {filters.length === 0 && (
-          <Text
-            size="sm"
-            color="tertiary"
-            style={{ textAlign: "center", padding: 16 }}
-          >
+          <Text size="sm" color="tertiary" className={styles.emptyMessage}>
             Nenhum filtro adicionado. Clique em "Adicionar" para começar.
           </Text>
         )}
       </div>
 
       {/* Actions */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      <div className={styles.actionsRow}>
         <Button variant="outline" size="sm" onClick={clearFilters}>
           Limpar
         </Button>
@@ -185,23 +145,16 @@ export const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
 
       {/* Save Search */}
       {filters.length > 0 && (
-        <div
-          style={{
-            marginBottom: 16,
-            padding: 12,
-            background: colors.surface.layer2,
-            borderRadius: 8,
-          }}
-        >
-          <Text size="sm" weight="bold" style={{ marginBottom: 8 }}>
+        <div className={styles.saveSection}>
+          <Text size="sm" weight="bold" className={styles.saveLabel}>
             Salvar Busca:
           </Text>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className={styles.saveRow}>
             <Input
               value={saveName}
               onChange={(e) => setSaveName(e.target.value)}
               placeholder="Nome da busca..."
-              style={{ flex: 1 }}
+              className={styles.saveInput}
             />
             <Button
               variant="outline"
@@ -222,24 +175,13 @@ export const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
       {/* Saved Searches */}
       {savedSearches.length > 0 && (
         <div>
-          <Text size="sm" weight="bold" style={{ marginBottom: 8 }}>
+          <Text size="sm" weight="bold" className={styles.savedLabel}>
             Buscas Salvas:
           </Text>
           {savedSearches.map((saved, index) => (
-            <div
-              key={index}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: 8,
-                marginBottom: 4,
-                background: colors.surface.layer3,
-                borderRadius: 4,
-              }}
-            >
+            <div key={index} className={styles.savedRow}>
               <Text size="sm">{saved.name}</Text>
-              <div style={{ display: "flex", gap: 4 }}>
+              <div className={styles.savedActions}>
                 <Button
                   variant="ghost"
                   size="sm"

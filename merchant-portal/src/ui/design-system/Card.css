@@ -40,6 +40,35 @@
   padding: 32px;
 }
 
+.card--padding-none {
+  padding: 0;
+}
+
+.card--padding-xl {
+  padding: 40px;
+}
+
+/* Surface Variants */
+.card--surface-base {
+  background-color: var(--color-surface-base, #ffffff);
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.08));
+}
+
+.card--surface-layer1 {
+  background-color: var(--color-surface-layer1, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.08));
+}
+
+.card--surface-layer2 {
+  background-color: var(--color-surface-layer2, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.card--surface-layer3 {
+  background-color: var(--color-surface-layer3, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.12));
+}
+
 /* Features */
 .card--clickable {
   cursor: pointer;

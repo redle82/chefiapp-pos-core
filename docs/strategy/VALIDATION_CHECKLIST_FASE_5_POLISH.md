@@ -35,6 +35,23 @@
 
 ---
 
+## Auditoria de código (referência)
+
+**Estado das rotas:** `/dashboard` e `/app/dashboard` redirecionam para `/admin/reports/overview`. O layout admin é `DashboardLayout` (minHeight 100vh no root = shell admin; OK). Não existe componente "DashboardPortal" no código; referência no checklist = conteúdo admin (OwnerDashboardWithMapLayout / reports).
+
+**OUC — root `minHeight: 100vh` / `backgroundColor`:**
+
+- **Shell/layout (OK):** StaffAppShellLayout, DashboardLayout, OperationalFullscreenWrapper, ConfigSidebar/SetupSidebar (sidebar fixa), AuthPage, Landing, RequireAuth/RequireSession — são a “página” ou o shell.
+- **Fullscreen por design (OK):** TPVMinimal, KDSMinimal, KitchenDisplay quando usados como rota operacional — o root 100vh é o próprio shell daquele ecrã.
+- **Rotas standalone = shell da rota (OK):** ConfigLayout (`/config`), TaskDashboardPage (`/tasks`), WaiterHomePage (quando rota própria) — são a página inteira para essa rota; 100vh no root é correcto. Não remover sem motivo.
+- **Conteúdo dentro do Shell:** Páginas que renderizam como filhas de StaffAppShellLayout (OwnerGlobalDashboard, ManagerHome, AppStaffHome, WorkerHome, etc.) já usam `flex: 1; minHeight: 0` no content area; WorkerTaskFocus documenta a regra em comentário. Nada a alterar.
+
+**PanelRoot:** Apenas `MenuBuilderPanel` usa `PanelRoot`. Outros painéis (admin/reports, config) não usam; possível melhoria futura para consistência de padding/spacing.
+
+**Ao executar o checklist:** Usar a tabela 5.1–5.9; para cada ponto, verificar visualmente VPC (Inter, modo escuro, botões ≥48px) e OUC (estado dominante visível, sem root 100vh duplicado quando dentro do Shell). Corrigir apenas o que quebrar sensação de controle ou hierarquia.
+
+---
+
 ## Como usar
 
 1. Percorrer cada ponto 5.1–5.9 na aplicação.

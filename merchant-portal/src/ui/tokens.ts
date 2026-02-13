@@ -1,90 +1,112 @@
 /**
- * 🧬 ChefIApp Design System Tokens (Phase 16)
- * "The Visual Genetics of the Organism"
+ * Legacy token adapter — sourced from @chefiapp/core-design-system.
+ *
+ * Keep API shape for existing callsites while converging to the core tokens.
  */
+import {
+  colors as coreColors,
+  fontFamily as coreFontFamily,
+  fontSize as coreFontSize,
+  fontWeight as coreFontWeight,
+  lineHeight as coreLineHeight,
+  radius as coreRadius,
+  space as coreSpace,
+  spacing as coreSpacing,
+  elevation,
+} from "@chefiapp/core-design-system";
+
+const px = (value: number) => `${value}px`;
 
 export const Colors = {
-    // BACKGROUNDS (VOID)
-    void: {
-        deep: '#000000',      // The infinite void
-        base: '#1C1C1E',      // Standard interface background (iOS Gray 6)
-        surface: '#2C2C2E',   // Cards / Elevated elements
-        overlay: 'rgba(0,0,0,0.6)',
-    },
+  // BACKGROUNDS (VOID)
+  void: {
+    deep: coreColors.background,
+    base: coreColors.background,
+    surface: coreColors.surface,
+    overlay: coreColors.surfaceOverlay,
+  },
 
-    // NERVOUS SYSTEM STATES (FUNCTIONAL)
-    state: {
-        flow: '#32D74B',      // Green: Healthy, Operational (iOS Green)
-        tension: '#FFD60A',   // Yellow: Stress, Warning (iOS Yellow)
-        critical: '#FF453A',  // Red: Failure, Immediate Action (iOS Red)
-        neutral: '#8E8E93',   // Gray: Dormant, Inactive
-        intelligence: '#0A84FF', // Blue: Prediction, Brain Activity (iOS Blue)
-    },
+  // NERVOUS SYSTEM STATES (FUNCTIONAL)
+  state: {
+    flow: coreColors.success,
+    tension: coreColors.warning,
+    critical: coreColors.error,
+    neutral: coreColors.textMuted,
+    intelligence: coreColors.info,
+  },
 
-    // BRAND (GOLDMONKEY)
-    brand: {
-        gold: '#FFD700',      // The classic Gold
-        accent: '#0A84FF',
-    },
+  // BRAND (Mapped to core accent during adapter phase)
+  brand: {
+    gold: coreColors.accent,
+    accent: coreColors.accent,
+  },
 
-    // TEXT
-    text: {
-        primary: '#FFFFFF',
-        secondary: 'rgba(235, 235, 245, 0.60)', // Apple Human Interface Guidelines
-        tertiary: 'rgba(235, 235, 245, 0.30)',
-    },
+  // TEXT
+  text: {
+    primary: coreColors.textPrimary,
+    secondary: coreColors.textSecondary,
+    tertiary: coreColors.textMuted,
+  },
 
-    // BORDERS
-    border: {
-        subtle: 'rgba(255, 255, 255, 0.1)',
-        focused: 'rgba(255, 255, 255, 0.2)',
-    }
+  // BORDERS
+  border: {
+    subtle: coreColors.border,
+    focused: coreColors.borderActive,
+  },
 } as const;
 
 export const Typography = {
-    family: {
-        sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-        mono: 'SF Mono, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-    },
-    size: {
-        xs: '11px', // Labels
-        sm: '13px', // Secondary text
-        base: '15px', // Body text
-        lg: '17px', // Headings
-        xl: '20px', // Titles
-        xxl: '28px', // Display
-        giant: '34px' // Hero
-    },
-    weight: {
-        regular: 400,
-        medium: 500,
-        semibold: 600,
-        bold: 700
-    }
+  family: {
+    sans: coreFontFamily.sans,
+    mono: coreFontFamily.mono,
+  },
+  size: {
+    xs: px(coreFontSize.xs),
+    sm: px(coreFontSize.sm),
+    base: px(coreFontSize.base),
+    lg: px(coreFontSize.lg),
+    xl: px(coreFontSize.xl),
+    xxl: px(coreFontSize.display),
+    giant: px(coreFontSize.displayLg),
+  },
+  weight: {
+    regular: coreFontWeight.normal,
+    medium: coreFontWeight.medium,
+    semibold: coreFontWeight.semibold,
+    bold: coreFontWeight.bold,
+  },
+  leading: {
+    tight: coreLineHeight.tight,
+    normal: coreLineHeight.normal,
+    relaxed: coreLineHeight.relaxed,
+  },
 } as const;
 
 export const Spacing = {
-    xs: '4px',
-    sm: '8px',
-    md: '16px',
-    lg: '24px',
-    xl: '32px',
-    xxl: '48px',
+  xs: px(coreSpace.xs),
+  sm: px(coreSpace.sm),
+  md: px(coreSpace.md),
+  lg: px(coreSpace.lg),
+  xl: px(coreSpace.xl),
+  xxl: px(coreSpacing[12]),
 } as const;
 
 export const Radius = {
-    sm: '8px',
-    md: '12px',
-    lg: '16px',
-    full: '9999px',
+  sm: px(coreRadius.sm),
+  md: px(coreRadius.md),
+  lg: px(coreRadius.lg),
+  full: px(coreRadius.full),
 } as const;
 
 export const Effects = {
-    blur: {
-        sm: 'backdrop-filter: blur(10px)',
-        md: 'backdrop-filter: blur(20px)',
-    },
-    shadow: {
-        glow: (color: string) => `0 0 20px ${color}40`, // 40 = 25% opacity
-    }
+  blur: {
+    sm: "backdrop-filter: blur(10px)",
+    md: "backdrop-filter: blur(20px)",
+  },
+  shadow: {
+    glow: (color: string) => `0 0 20px ${color}40`,
+    low: elevation.low,
+    medium: elevation.medium,
+    high: elevation.high,
+  },
 } as const;

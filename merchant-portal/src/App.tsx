@@ -103,10 +103,17 @@ import { EmployeeTasksPage } from "./pages/Employee/TasksPage";
 
 import { HealthDashboardPage } from "./pages/Health/HealthDashboardPage";
 import { InstallPage } from "./pages/InstallPage";
+import { BlogTPVRestaurantesPage } from "./pages/Blog/BlogTPVRestaurantesPage";
+import { BlogQuandoAbrirFecharCaixaPage } from "./pages/Blog/BlogQuandoAbrirFecharCaixaPage";
+import { BlogTPVVsPOSFiscalPage } from "./pages/Blog/BlogTPVVsPOSFiscalPage";
+import { ChangelogPage } from "./pages/Changelog/ChangelogPage";
+import { SecurityPage } from "./pages/Security/SecurityPage";
+import { StatusPage } from "./pages/Status/StatusPage";
 import { FeaturesPage } from "./pages/Landing/FeaturesPage";
 import { PricingPage } from "./pages/Landing/PricingPage";
-import { ProductFirstLandingPage } from "./pages/Landing/ProductFirstLandingPage";
+import { LandingLocaleProvider } from "./pages/LandingV2/i18n/LandingLocaleContext";
 import { LandingV2Page } from "./pages/LandingV2/LandingV2Page";
+import { ProductFirstLandingPage } from "./pages/Landing/ProductFirstLandingPage";
 import { LegalPrivacyPage } from "./pages/Legal/LegalPrivacyPage";
 import { LegalTermsPage } from "./pages/Legal/LegalTermsPage";
 import { ManagerAnalysisPage } from "./pages/Manager/AnalysisPage";
@@ -267,13 +274,21 @@ function App() {
         {/* <PublicLifecycleSync /> */}
         <BillingsPreloader />
         <Routes>
-          {/* Public / Landing — canónica: / usa LandingV2Page; /landing e /v2 redirecionam para / */}
-          <Route path="/" element={<LandingV2Page />} />
-          <Route path="/landing" element={<Navigate to="/" replace />} />
-          <Route path="/v2" element={<Navigate to="/" replace />} />
+          {/* Public / Marketing — /, /v2, /landing-v2 = LandingV2 (marketing na Vercel); /landing → auth */}
+          <Route path="/" element={<LandingLocaleProvider><LandingV2Page /></LandingLocaleProvider>} />
+          <Route path="/landing" element={<Navigate to="/auth/phone" replace />} />
+          <Route path="/v2" element={<LandingLocaleProvider><LandingV2Page /></LandingLocaleProvider>} />
+          <Route path="/landing-v2" element={<LandingLocaleProvider><LandingV2Page /></LandingLocaleProvider>} />
           <Route path="/app/trial-tpv" element={<ProductFirstLandingPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/blog" element={<BlogTPVRestaurantesPage />} />
+          <Route path="/blog/tpv-restaurantes" element={<BlogTPVRestaurantesPage />} />
+          <Route path="/blog/tpv-vs-pos-fiscal" element={<BlogTPVVsPOSFiscalPage />} />
+          <Route path="/blog/quando-abrir-fechar-caixa" element={<BlogQuandoAbrirFecharCaixaPage />} />
+          <Route path="/changelog" element={<ChangelogPage />} />
+          <Route path="/security" element={<SecurityPage />} />
+          <Route path="/status" element={<StatusPage />} />
           <Route path="/legal/terms" element={<LegalTermsPage />} />
           <Route path="/legal/privacy" element={<LegalPrivacyPage />} />
           {/* Demo Guide: entrada pública para o TPV em modo Free Trial. */}

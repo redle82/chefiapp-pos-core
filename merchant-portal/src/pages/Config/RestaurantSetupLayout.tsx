@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { RestaurantSetupSidebar } from "../../components/Setup/RestaurantSetupSidebar";
+import styles from "./RestaurantSetupLayout.module.css";
 
 interface RestaurantSetupLayoutProps {
   title: string;
@@ -13,64 +14,14 @@ export function RestaurantSetupLayout({
   children,
 }: RestaurantSetupLayoutProps) {
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        backgroundColor: "#f6f7fb",
-      }}
-    >
+    <div className={styles.layout}>
       <RestaurantSetupSidebar />
-      <main
-        style={{
-          flex: 1,
-          padding: "32px 32px",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 820,
-            margin: "0 auto",
-            backgroundColor: "#ffffff",
-            borderRadius: 14,
-            boxShadow: "0 12px 30px rgba(15, 23, 42, 0.08)",
-            padding: "24px 28px 28px",
-          }}
-        >
-          <header style={{ marginBottom: 16 }}>
-            <p
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: "#9ca3af",
-                margin: "0 0 6px 0",
-              }}
-            >
-              Básicos do restaurante
-            </p>
-            <h1
-              style={{
-                fontSize: 22,
-                fontWeight: 700,
-                margin: "0 0 4px 0",
-                color: "#111827",
-              }}
-            >
-              {title}
-            </h1>
-            {description && (
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 14,
-                  color: "#6b7280",
-                }}
-              >
-                {description}
-              </p>
-            )}
+      <main className={styles.main}>
+        <div className={styles.card}>
+          <header className={styles.header}>
+            <p className={styles.breadcrumb}>Básicos do restaurante</p>
+            <h1 className={styles.title}>{title}</h1>
+            {description && <p className={styles.description}>{description}</p>}
           </header>
           {children}
         </div>

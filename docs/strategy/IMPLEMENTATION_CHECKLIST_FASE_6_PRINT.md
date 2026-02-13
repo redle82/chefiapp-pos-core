@@ -30,14 +30,15 @@
 |------|--------|
 | CORE_PRINT_CONTRACT | ✅ Definido (quem manda / quem obedece). |
 | FiscalPrinter (browser) | ✅ Existe; impressão via `window.print` para kitchen ticket. |
-| Fila no Core | ❌ A implementar quando houver cliente. |
-| API de pedido de impressão | ❌ A implementar quando houver cliente. |
-| UI pede ao Core e mostra estado | ❌ A implementar quando houver cliente. |
+| Fila no Core | ✅ Implementado: `docker-core/schema/print_queue.sql` — tabela `gm_print_jobs`, RPC `request_print`, `get_print_job_status`. Aplicar schema ao Core (ex.: `psql` ou migração). |
+| API de pedido de impressão | ✅ Implementado: `merchant-portal/src/core/print/CorePrintApi.ts` — `requestPrint`, `getPrintJobStatus` (invocam RPC no Core). |
+| UI pede ao Core e mostra estado | ✅ Implementado: TPV — botão «Imprimir comanda» no TicketCard; `handlePrintComanda` → requestPrint → toast «Comanda enviada para impressão» / «Em fila» / erro; quando status `sent` aciona FiscalPrinter.printKitchenTicket (browser). |
 
 ---
 
 ## Como usar
 
-1. Quando existir cliente real ou ambiente com impressora, executar 6.1–6.6 por ordem.
-2. Garantir que a UI nunca define templates nem fila local; tudo via Core.
-3. Atualizar [CONTRACT_ENFORCEMENT.md](../architecture/CONTRACT_ENFORCEMENT.md) secção 8 quando driver/fila/API estiverem no código.
+1. **Activar fila no Core:** **Core novo** — o schema `print_queue.sql` é aplicado automaticamente no init (docker-compose monta `05.6-print-queue.sql`; ver `docker-core/README.md`). **Core existente** (volume já criado): aplicar manualmente o conteúdo de `docker-core/schema/print_queue.sql` via psql ou cliente SQL.
+2. Quando existir cliente real ou ambiente com impressora, executar 6.1–6.6 por ordem (driver térmico/fiscal em 6.5).
+3. Garantir que a UI nunca define templates nem fila local; tudo via Core.
+4. [CONTRACT_ENFORCEMENT.md](../architecture/CONTRACT_ENFORCEMENT.md) secção 9 (Impressão) actualizada com fila/API/UI.

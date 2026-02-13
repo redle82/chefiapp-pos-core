@@ -5,6 +5,7 @@
 
 import React from "react";
 import { useOnboarding } from "../../../context/OnboardingContext";
+import styles from "./IntegrationsSection.module.css";
 
 export function IntegrationsSection() {
   const { updateSectionStatus } = useOnboarding();
@@ -15,11 +16,9 @@ export function IntegrationsSection() {
   }, [updateSectionStatus]);
 
   return (
-    <div style={{ padding: "48px", maxWidth: "800px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: 600, marginBottom: "8px" }}>
-        🔌 Integrações
-      </h1>
-      <p style={{ fontSize: "14px", color: "#666", marginBottom: "32px" }}>
+    <div className={styles.container}>
+      <h1 className={styles.title}>🔌 Integrações</h1>
+      <p className={styles.subtitle}>
         Configure integrações (funcionalidade não ativa)
       </p>
     </div>

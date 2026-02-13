@@ -39,6 +39,35 @@ export interface ReconciliationResult {
   notes?: string;
 }
 
+type FiscalSnapshotRow = {
+  id: string;
+  total_fiscal_cents: number;
+};
+
+function parseFiscalSnapshotRow(snapshot: unknown): FiscalSnapshotRow | null {
+  if (!snapshot || typeof snapshot !== "object") {
+    return null;
+  }
+
+  const candidate = snapshot as {
+    id?: unknown;
+    total_fiscal_cents?: unknown;
+  };
+
+  if (typeof candidate.id !== "string") {
+    return null;
+  }
+
+  if (typeof candidate.total_fiscal_cents !== "number") {
+    return null;
+  }
+
+  return {
+    id: candidate.id,
+    total_fiscal_cents: candidate.total_fiscal_cents,
+  };
+}
+
 /**
  * Tolerance threshold in cents for OK status.
  * Differences <= this value are considered OK.
@@ -118,9 +147,10 @@ export class FiscalReconciliationService {
         .eq("id", input.fiscalSnapshotId)
         .single();
 
-      if (snapshot) {
-        totalFiscalCents = snapshot.total_fiscal_cents;
-        fiscalSnapshotId = snapshot.id;
+      const snapshotRow = parseFiscalSnapshotRow(snapshot);
+      if (snapshotRow) {
+        totalFiscalCents = snapshotRow.total_fiscal_cents;
+        fiscalSnapshotId = snapshotRow.id;
       }
     } else if (input.shiftId) {
       // Tentar buscar snapshot pelo shift_id
@@ -133,9 +163,10 @@ export class FiscalReconciliationService {
         .limit(1)
         .single();
 
-      if (snapshot) {
-        totalFiscalCents = snapshot.total_fiscal_cents;
-        fiscalSnapshotId = snapshot.id;
+      const snapshotRow = parseFiscalSnapshotRow(snapshot);
+      if (snapshotRow) {
+        totalFiscalCents = snapshotRow.total_fiscal_cents;
+        fiscalSnapshotId = snapshotRow.id;
       }
     }
 

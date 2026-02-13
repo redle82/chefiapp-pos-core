@@ -89,8 +89,8 @@ export const OSCopy = {
     stateOfRoom: "Estado da sala",
     stateOfSeats: "Estado dos asientos",
     pulseOfOperation: "Pulso da operação",
-    errorLoad: "Não foi possível carregar os dados do Comando Central.",
-    retry: "Tentar novamente",
+    errorLoad: "Não foi possível carregar o Comando Central. Tente de novo.",
+    retry: "Tente de novo",
   },
   navigation: {
     dashboard: "Comando Central",

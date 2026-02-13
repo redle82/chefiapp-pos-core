@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { isDebugMode } from "../../core/debugMode";
-import { Button } from "../../ui/design-system/primitives/Button";
+import { Button } from "../../ui/design-system/Button";
 import { Text } from "../../ui/design-system/primitives/Text";
 import { colors } from "../../ui/design-system/tokens/colors";
 import { radius } from "../../ui/design-system/tokens/radius";

@@ -12,8 +12,7 @@ import { DbWriteGate } from "../../core/governance/DbWriteGate";
 import { setOnboardingJustCompletedFlag } from "../../core/storage/onboardingFlowFlag";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { Button, Card, Input } from "../../ui/design-system/primitives";
-import { colors } from "../../ui/design-system/tokens/colors";
-import { spacing } from "../../ui/design-system/tokens/spacing";
+import styles from "./FirstProductPage.module.css";
 
 export function FirstProductPage({
   successNextPath,
@@ -63,20 +62,32 @@ export function FirstProductPage({
         onboarding_completed_at: completedAt,
       },
       { id: restaurantId },
-      { tenantId: restaurantId }
+      { tenantId: restaurantId },
     );
     if (updateError) {
-      console.warn("[FirstProduct] Failed to activate restaurant:", updateError);
+      console.warn(
+        "[FirstProduct] Failed to activate restaurant:",
+        updateError,
+      );
     }
     // Pilot mock: manter em sync para getRestaurantStatus devolver onboarding_completed_at
     try {
-      const raw = typeof window !== "undefined" && window.localStorage.getItem("chefiapp_pilot_mock_restaurant");
+      const raw =
+        typeof window !== "undefined" &&
+        window.localStorage.getItem("chefiapp_pilot_mock_restaurant");
       if (raw) {
-        const row = JSON.parse(raw) as { id?: string; onboarding_completed_at?: string | null; billing_status?: string };
+        const row = JSON.parse(raw) as {
+          id?: string;
+          onboarding_completed_at?: string | null;
+          billing_status?: string;
+        };
         if (row.id === restaurantId) {
           row.onboarding_completed_at = completedAt;
           row.billing_status = row.billing_status || "trial";
-          window.localStorage.setItem("chefiapp_pilot_mock_restaurant", JSON.stringify(row));
+          window.localStorage.setItem(
+            "chefiapp_pilot_mock_restaurant",
+            JSON.stringify(row),
+          );
         }
       }
     } catch {
@@ -134,7 +145,7 @@ export function FirstProductPage({
           station: "KITCHEN",
           prep_time_seconds: 300,
         },
-        { tenantId: restaurantId }
+        { tenantId: restaurantId },
       );
       if (insertError) throw insertError;
       if (!data?.id) throw new Error("Produto não foi criado.");
@@ -149,12 +160,12 @@ export function FirstProductPage({
             onboarding_completed_at: new Date().toISOString(),
           },
           { id: restaurantId },
-          { tenantId: restaurantId }
+          { tenantId: restaurantId },
         );
         if (updateError) {
           console.warn(
             "[FirstProduct] Failed to activate restaurant:",
-            updateError
+            updateError,
           );
         }
       }
@@ -168,15 +179,9 @@ export function FirstProductPage({
 
   if (!restaurantId) {
     return (
-      <div
-        style={{
-          padding: spacing[6],
-          textAlign: "center",
-          color: colors.text.secondary,
-        }}
-      >
+      <div className={styles.notFoundContainer}>
         <p>Restaurante não encontrado.</p>
-        <p style={{ fontSize: 14, marginTop: spacing[2] }}>
+        <p className={styles.notFoundSubtext}>
           Crie o restaurante no ecrã de arranque e volte aqui.
         </p>
         <Button
@@ -184,7 +189,7 @@ export function FirstProductPage({
           tone="success"
           variant="solid"
           onClick={() => navigate("/bootstrap")}
-          style={{ marginTop: spacing[4] }}
+          className={styles.notFoundButton}
         >
           Voltar ao início
         </Button>
@@ -193,27 +198,8 @@ export function FirstProductPage({
   }
 
   return (
-    <div
-      data-canonical-flow="v1.0"
-      data-step="4"
-      style={{
-        background: colors.surface.base,
-        minHeight: "100vh",
-        color: colors.text.primary,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: `0 ${spacing[6]} ${spacing[6]} ${spacing[6]}`,
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          top: spacing[4],
-          right: spacing[6],
-          zIndex: 10,
-        }}
-      >
+    <div data-canonical-flow="v1.0" data-step="4" className={styles.pageRoot}>
+      <div className={styles.settingsButton}>
         <Button
           type="button"
           tone="neutral"
@@ -225,44 +211,14 @@ export function FirstProductPage({
         </Button>
       </div>
       <BootstrapStepIndicator step={4} total={8} />
-      <div
-        style={{
-          maxWidth: 400,
-          width: "100%",
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: 22,
-            marginBottom: spacing[2],
-            color: colors.text.primary,
-          }}
-        >
-          Primeiro produto (opcional)
-        </h1>
-        <p
-          style={{
-            color: colors.text.secondary,
-            marginBottom: spacing[6],
-            fontSize: 14,
-          }}
-        >
-          Pode adicionar um produto ou continuar sem adicionar agora para ir ao TPV e fazer a primeira venda.
+      <div className={styles.contentContainer}>
+        <h1 className={styles.title}>Primeiro produto (opcional)</h1>
+        <p className={styles.subtitle}>
+          Pode adicionar um produto ou continuar sem adicionar agora para ir ao
+          TPV e fazer a primeira venda.
         </p>
-        <Card padding="lg" style={{ marginBottom: spacing[6] }}>
-          <form
-            onSubmit={handleSubmit}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: spacing[4],
-              textAlign: "left",
-            }}
-          >
+        <Card padding="lg" className={styles.formCard}>
+          <form onSubmit={handleSubmit} className={styles.form}>
             <Input
               id="product-name"
               label="Nome do produto *"
@@ -285,11 +241,7 @@ export function FirstProductPage({
               required
               fullWidth
             />
-            {error && (
-              <p style={{ color: colors.destructive.base, fontSize: 13 }}>
-                {error}
-              </p>
-            )}
+            {error && <p className={styles.errorText}>{error}</p>}
             <Button
               type="submit"
               tone="success"
@@ -302,18 +254,7 @@ export function FirstProductPage({
             </Button>
           </form>
         </Card>
-        <div
-          style={{
-            marginTop: spacing[5],
-            fontSize: 13,
-            color: colors.text.tertiary,
-            textAlign: "center",
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            gap: spacing[2],
-          }}
-        >
+        <div className={styles.skipActions}>
           <Button
             type="button"
             tone="neutral"
@@ -322,7 +263,7 @@ export function FirstProductPage({
             onClick={handleSkipToTpv}
             disabled={skipLoading}
             isLoading={skipLoading}
-            style={{ textDecoration: "underline" }}
+            className={styles.skipButton}
           >
             {skipLoading ? "A abrir TPV..." : "Continuar sem adicionar agora"}
           </Button>
@@ -333,7 +274,7 @@ export function FirstProductPage({
             size="sm"
             onClick={handleSkipToDashboard}
             disabled={skipLoading}
-            style={{ textDecoration: "underline" }}
+            className={styles.skipButton}
           >
             Ir à web de configuração
           </Button>

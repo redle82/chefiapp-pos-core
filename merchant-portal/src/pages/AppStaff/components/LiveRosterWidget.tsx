@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card } from '../../../ui/design-system/primitives/Card';
+import { Card } from '../../../ui/design-system/Card';
 import { Text } from '../../../ui/design-system/primitives/Text';
 import { Badge } from '../../../ui/design-system/primitives/Badge';
 import { colors } from '../../../ui/design-system/tokens/colors';

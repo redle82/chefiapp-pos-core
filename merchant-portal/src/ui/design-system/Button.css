@@ -19,12 +19,12 @@
 
 /* GOLD / PRIMARY */
 .button--primary {
-  background-color: var(--color-primary, #C9A227);
+  background-color: var(--color-primary, #c9a227);
   /* Gold default */
   color: #000;
 
   &:hover:not(:disabled) {
-    background-color: #D4AF37;
+    background-color: #d4af37;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(201, 162, 39, 0.2);
   }
@@ -69,13 +69,35 @@
   }
 }
 
+/* WARNING */
+.button--warning {
+  background-color: var(--color-warning, #f59e0b);
+  color: #0b0b0c;
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-warning-hover, #d97706);
+    box-shadow: 0 0 18px rgba(245, 158, 11, 0.3);
+  }
+}
+
+/* INFO */
+.button--info {
+  background-color: var(--color-info, #3b82f6);
+  color: #0b0b0c;
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-info-hover, #2563eb);
+    box-shadow: 0 0 18px rgba(59, 130, 246, 0.3);
+  }
+}
+
 /* CRITICAL (OS Red) - THE LAW */
 .button--critical {
-  background-color: var(--color-os-red, #D9381E);
+  background-color: var(--color-os-red, #d9381e);
   color: #fff;
 
   &:hover:not(:disabled) {
-    background-color: #B91C1C;
+    background-color: #b91c1c;
     /* Darker */
     box-shadow: 0 0 20px rgba(217, 56, 30, 0.3);
     /* Agitation */
@@ -86,7 +108,7 @@
 .button--danger {
   @extend .button--critical;
   /* If post-processor exists, else fallback */
-  background-color: var(--color-os-red, #D9381E);
+  background-color: var(--color-os-red, #d9381e);
   color: #fff;
 }
 
@@ -109,6 +131,12 @@
   height: 52px;
 }
 
+.button--xl {
+  padding: 0 40px;
+  font-size: 18px;
+  height: 64px;
+}
+
 /* Full Width */
 .button--full-width {
   width: 100%;
@@ -121,6 +149,12 @@
 
 .button__content {
   pointer-events: none;
+}
+
+.button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .button__spinner {

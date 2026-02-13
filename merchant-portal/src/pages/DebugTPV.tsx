@@ -28,6 +28,7 @@ const SEED_ITEMS = [
 ];
 
 import { useShiftLock } from "../core/shift/useShiftLock";
+import styles from "./DebugTPV.module.css";
 
 if (typeof window !== "undefined" && !getInstalledDevice()) {
   setInstalledDevice({
@@ -133,37 +134,14 @@ export const DebugTPV = () => {
   };
 
   return (
-    <div
-      style={{
-        padding: 20,
-        background: "#1a1a1a",
-        minHeight: "100vh",
-        color: "white",
-      }}
-    >
+    <div className={styles.page}>
       <h1 id="debug-title">Debug TPV Page Loaded</h1>
       <p>If you see this, routing is working.</p>
-      <div
-        style={{
-          padding: 10,
-          backgroundColor: isShiftOpen ? "#7f1d1d" : "#064e3b",
-          color: "white",
-          fontWeight: "bold",
-          borderRadius: 4,
-          marginBottom: 20,
-        }}
-      >
+      <div className={styles.shiftBanner} data-open={isShiftOpen}>
         SHIFT STATUS: {isShiftOpen ? "OPEN (LOCKED)" : "CLOSED (FREE)"}
       </div>
 
-      <div
-        style={{
-          border: "1px solid #333",
-          padding: 20,
-          marginTop: 20,
-          borderRadius: 8,
-        }}
-      >
+      <div className={styles.section}>
         <h3>Component Preview:</h3>
         <TPVHeader
           operatorName="Dev User"
@@ -178,99 +156,43 @@ export const DebugTPV = () => {
         />
       </div>
 
-      <div
-        style={{
-          border: "1px solid #333",
-          padding: 20,
-          marginTop: 20,
-          borderRadius: 8,
-        }}
-      >
+      <div className={styles.section}>
         <h3>Configuration:</h3>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div className={styles.configRow}>
           <label>Wake Word:</label>
           <input
             type="text"
             value={wakeWord}
             onChange={(e) => setWakeWord(e.target.value)}
             placeholder="e.g. Ok Computer"
-            style={{
-              padding: 8,
-              background: "#333",
-              border: "none",
-              color: "white",
-              borderRadius: 4,
-            }}
+            className={styles.configInput}
           />
-          <span style={{ fontSize: 12, color: "#888" }}>
-            (Empty = No Wake Word)
-          </span>
+          <span className={styles.configHint}>(Empty = No Wake Word)</span>
         </div>
       </div>
 
-      <div style={{ marginTop: 40 }}>
+      <div className={styles.flightSection}>
         <h3>Flight Readiness (Pilot Protocol):</h3>
-        <div
-          style={{
-            border: "1px solid #333",
-            padding: 20,
-            marginTop: 20,
-            borderRadius: 8,
-            background: "#111",
-          }}
-        >
+        <div className={styles.pilotSection}>
           <h4>Sofia Gastrobar Pilot</h4>
-          <p style={{ fontSize: 14, color: "#888", marginBottom: 16 }}>
+          <p className={styles.pilotDesc}>
             Protocol: 1. Deploy iPad | 2. Seed 50 Items | 3. Disconnect | 4.
             Service Simulation | 5. Reconnect
           </p>
-          <button
-            onClick={handleSeed}
-            style={{
-              padding: "8px 16px",
-              background: "#d97706",
-              border: "none",
-              color: "#fff",
-              borderRadius: 4,
-              cursor: "pointer",
-              fontWeight: "bold",
-            }}
-          >
+          <button onClick={handleSeed} className={styles.seedButton}>
             🚀 Seed 50 Config Items
           </button>
-          <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
-            <div
-              style={{
-                background: "#064e3b",
-                padding: "4px 8px",
-                borderRadius: 4,
-                fontSize: 12,
-              }}
-            >
+          <div className={styles.statusRow}>
+            <div className={styles.statusBadgeOnline}>
               Status: {navigator.onLine ? "ONLINE" : "OFFLINE (Sovereign)"}
             </div>
-            <div
-              style={{
-                background: "#333",
-                padding: "4px 8px",
-                borderRadius: 4,
-                fontSize: 12,
-              }}
-            >
+            <div className={styles.statusBadgeReady}>
               {seedStatus || "Ready"}
             </div>
           </div>
 
-          <div
-            style={{
-              marginTop: 10,
-              borderTop: "1px dashed #333",
-              paddingTop: 10,
-            }}
-          >
-            <p style={{ fontSize: 12, color: "#666", marginBottom: 5 }}>
-              Drill Controls:
-            </p>
+          <div className={styles.drillSection}>
+            <p className={styles.drillDesc}>Drill Controls:</p>
             <button
               onClick={() => {
                 const isOffline = confirm(
@@ -287,15 +209,7 @@ export const DebugTPV = () => {
                   );
                 });
               }}
-              style={{
-                padding: "4px 12px",
-                background: "#dc2626",
-                border: "none",
-                color: "#fff",
-                borderRadius: 4,
-                fontSize: 12,
-                cursor: "pointer",
-              }}
+              className={styles.drillButton}
             >
               ✂️ Toggle Connection (Simulate)
             </button>
@@ -320,16 +234,8 @@ export const DebugTPV = () => {
         </ul>
 
         <h3>Shift Management (Immutable Shift Verification):</h3>
-        <div
-          style={{
-            border: "1px solid #333",
-            padding: 20,
-            marginTop: 20,
-            borderRadius: 8,
-            background: "#111",
-          }}
-        >
-          <div style={{ display: "flex", gap: 10 }}>
+        <div className={styles.shiftSection}>
+          <div className={styles.shiftButtons}>
             <button
               onClick={async () => {
                 try {
@@ -350,14 +256,7 @@ export const DebugTPV = () => {
                   alert("Error: " + e.message);
                 }
               }}
-              style={{
-                padding: "8px 16px",
-                background: "#10b981",
-                border: "none",
-                color: "#fff",
-                borderRadius: 4,
-                cursor: "pointer",
-              }}
+              className={styles.openShiftBtn}
             >
               Open Shift
             </button>
@@ -388,14 +287,7 @@ export const DebugTPV = () => {
                   alert("Erro ao fechar caixa: " + e.message);
                 }
               }}
-              style={{
-                padding: "8px 16px",
-                background: "#ef4444",
-                border: "none",
-                color: "#fff",
-                borderRadius: 4,
-                cursor: "pointer",
-              }}
+              className={styles.closeShiftBtn}
             >
               Close Shift
             </button>

@@ -118,8 +118,9 @@ No primeiro `up` (initdb), o Postgres aplica por ordem:
 3. **03-migrations-consolidated.sql** — migrações consolidadas: prep_time, station, ready_at, gm_tasks, gm_cash_registers, gm_payments, billing_configs, product_mode, RPCs `mark_item_ready`, `update_order_status`, `get_operational_metrics`, `get_shift_history`, tipos de tarefa PEDIDO_NOVO/MODO_INTERNO, etc.
 4. **04-modules-and-extras.sql** — tabelas por módulo: gm_restaurant_members (people), installed_modules, module_permissions, event_store, legal_seals, gm_locations, gm_equipment, gm_ingredients, gm_stock_levels, gm_product_bom, gm_stock_ledger (stock/inventory).
 5. **05-device-kinds.sql** — gm_equipment.kind passa a incluir TPV e KDS (dispositivos com identidade fixa).
-6. **06-seed-enterprise.sql** — seeds enterprise.
-7. **07-role-anon.sql** — role `anon` para PostgREST (opcional; actualmente usa `postgres`).
+6. **05.6-print-queue.sql** (FASE 6) — tabela `gm_print_jobs`, RPCs `request_print`, `get_print_job_status`. Ver [CORE_PRINT_CONTRACT.md](../docs/architecture/CORE_PRINT_CONTRACT.md).
+7. **06-seed-enterprise.sql** — seeds enterprise.
+8. **07-role-anon.sql** — role `anon` para PostgREST (opcional; actualmente usa `postgres`).
 
 **Um reset total (`down -v` + `up`) deixa o banco com todas as tabelas e RPCs usados pelo front e back (menu, pedidos, tarefas, caixa, pessoas, módulos, event store, stock).**
 

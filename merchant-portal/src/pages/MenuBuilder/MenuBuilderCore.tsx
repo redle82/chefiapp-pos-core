@@ -56,38 +56,9 @@ import {
   GlobalLoadingView,
 } from "../../ui/design-system/components";
 import { Button, Card, Input, Select } from "../../ui/design-system/primitives";
-import { Spacing } from "../../ui/design-system/tokens";
-import { radius } from "../../ui/design-system/tokens/radius";
 import { toUserMessage } from "../../ui/errors";
+import styles from "./MenuBuilderCore.module.css";
 import { formatMoney, parseMoneyInput } from "./utils/moneyInput";
-
-const VPC_PANEL = {
-  text: "#fafafa",
-  textMuted: "#a3a3a3",
-  surface: "#141414",
-  border: "#262626",
-  errorBg: "#7f1d1d",
-  errorBorder: "#991b1b",
-  inputBg: "#262626",
-  inputBorder: "#404040",
-  accent: "#22c55e",
-  primary: "#3b82f6",
-  radius: 8,
-} as const;
-
-const VPC_PAGE = {
-  text: "#111827",
-  textMuted: "#6b7280",
-  surface: "#f9fafb",
-  border: "#e5e7eb",
-  errorBg: "#fee2e2",
-  errorBorder: "#dc2626",
-  inputBg: "#fff",
-  inputBorder: "#d1d5db",
-  accent: "#22c55e",
-  primary: "#3b82f6",
-  radius: 8,
-} as const;
 
 /** Estado inicial do form criar/editar item (evita duplicação). */
 const EMPTY_MENU_ITEM_FORM: MenuItemInput = {
@@ -126,7 +97,6 @@ export function MenuBuilderCore({
   restaurantId,
   variant,
 }: MenuBuilderCoreProps) {
-  const theme = variant === "panel" ? VPC_PANEL : VPC_PAGE;
   const globalUI = useGlobalUIState();
   const { runtime } = useRestaurantRuntime();
 
@@ -461,66 +431,29 @@ export function MenuBuilderCore({
   const isEmpty = globalUI.isEmpty;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+    <div className={styles.container} data-variant={variant}>
       <div>
-        <h1
-          style={{
-            margin: "0 0 8px 0",
-            fontSize: 20,
-            fontWeight: 700,
-            color: theme.text,
-          }}
-        >
-          Menu Builder — Contrato Operacional
-        </h1>
-        <p
-          style={{ color: theme.textMuted, margin: "0 0 16px 0", fontSize: 14 }}
-        >
+        <h1 className={styles.title}>Menu Builder — Contrato Operacional</h1>
+        <p className={styles.subtitle}>
           Menu não é só catálogo. É contrato operacional. Criar menu completo: ≤
           20 minutos.
         </p>
 
         {usedBackendFallback && runtime.coreMode === "offline-erro" && (
-          <p
-            style={{
-              margin: "0 0 16px 0",
-              fontSize: 13,
-              color: theme.textMuted,
-              backgroundColor:
-                variant === "panel" ? "rgba(234,179,8,0.1)" : "#fef9c3",
-              padding: "8px 12px",
-              borderRadius: 6,
-              border: `1px solid ${
-                variant === "panel" ? "#854d0e" : "#eab308"
-              }`,
-            }}
-          >
+          <p className={styles.fallbackWarn}>
             Core não responde na porta 3001. Inicie o Docker Core para guardar
             no servidor.
           </p>
         )}
         {usedBackendFallback && runtime.coreMode === "offline-intencional" && (
-          <p
-            style={{
-              margin: "0 0 16px 0",
-              fontSize: 13,
-              color: theme.textMuted,
-              backgroundColor:
-                variant === "panel" ? "rgba(59,130,246,0.1)" : "#eff6ff",
-              padding: "8px 12px",
-              borderRadius: 6,
-              border: `1px solid ${
-                variant === "panel" ? "#1e40af" : "#93c5fd"
-              }`,
-            }}
-          >
+          <p className={styles.fallbackInfo}>
             A editar menu localmente. Os dados serão sincronizados quando o Core
             estiver ativo.
           </p>
         )}
 
         {isEmpty && (
-          <div style={{ marginBottom: 24 }}>
+          <div className={styles.emptyWrap}>
             <GlobalEmptyView
               title="Ainda não há itens no menu."
               description="Use o preset ou crie itens manualmente na tab Manual para começar."
@@ -536,7 +469,7 @@ export function MenuBuilderCore({
         )}
 
         {!isEmpty && (
-          <div style={{ marginBottom: Spacing.lg }}>
+          <div className={styles.presetWrap}>
             <Button
               tone="success"
               variant="outline"
@@ -550,7 +483,7 @@ export function MenuBuilderCore({
         )}
 
         {globalUI.isError && globalUI.errorMessage && (
-          <div style={{ marginBottom: 16 }}>
+          <div className={styles.errorWrap}>
             <GlobalErrorView
               message={globalUI.errorMessage}
               title="Erro"
@@ -561,29 +494,11 @@ export function MenuBuilderCore({
         )}
 
         {successMessage && (
-          <div
-            style={{
-              padding: 12,
-              backgroundColor: variant === "panel" ? "#14532d" : "#dcfce7",
-              color: variant === "panel" ? "#86efac" : "#166534",
-              borderRadius: 4,
-              marginBottom: 16,
-              border: `1px solid ${theme.accent}`,
-            }}
-          >
-            {successMessage}
-          </div>
+          <div className={styles.successMessage}>{successMessage}</div>
         )}
 
         {/* Tabs: Manual, Foto, PDF, Link, IA (FASE 3 — 5 formas de criar menu) */}
-        <div
-          style={{
-            display: "flex",
-            gap: 4,
-            marginBottom: 24,
-            flexWrap: "wrap",
-          }}
-        >
+        <div className={styles.tabsRow}>
           {(
             [
               { id: "manual" as const, label: "Manual" },
@@ -597,17 +512,8 @@ export function MenuBuilderCore({
               key={id}
               type="button"
               onClick={() => setActiveTab(id)}
-              style={{
-                padding: "10px 16px",
-                fontSize: 14,
-                fontWeight: 600,
-                color: activeTab === id ? "#fff" : theme.text,
-                backgroundColor:
-                  activeTab === id ? theme.primary : theme.surface,
-                border: `1px solid ${theme.border}`,
-                borderRadius: radius.lg,
-                cursor: "pointer",
-              }}
+              data-active={activeTab === id}
+              className={styles.tabBtn}
             >
               {label}
             </button>
@@ -618,34 +524,12 @@ export function MenuBuilderCore({
           <>
             {/* Preset: dentro da tab Manual */}
             <Card padding="lg" style={{ marginBottom: 24 }}>
-              <h2
-                style={{
-                  marginBottom: Spacing.lg,
-                  fontSize: 16,
-                  fontWeight: 600,
-                  color: theme.text,
-                }}
-              >
-                Qual tipo de negócio?
-              </h2>
-              <p
-                style={{
-                  marginBottom: Spacing.lg,
-                  color: theme.textMuted,
-                  fontSize: 14,
-                }}
-              >
+              <h2 className={styles.presetTitle}></h2>
+              <p className={styles.presetDesc}>
                 Escolha o tipo para aplicar um menu base com preços sugeridos.
                 Tudo é editável e apagável.
               </p>
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 8,
-                  marginBottom: Spacing.lg,
-                }}
-              >
+              <div className={styles.chipsRow}>
                 {(
                   [
                     "cafe_bar",
@@ -661,17 +545,8 @@ export function MenuBuilderCore({
                     key={type}
                     type="button"
                     onClick={() => setBusinessType(type)}
-                    style={{
-                      padding: "8px 14px",
-                      fontSize: 13,
-                      fontWeight: businessType === type ? 600 : 500,
-                      color: businessType === type ? "#fff" : theme.text,
-                      backgroundColor:
-                        businessType === type ? theme.primary : theme.surface,
-                      border: `1px solid ${theme.border}`,
-                      borderRadius: radius.lg,
-                      cursor: "pointer",
-                    }}
+                    data-active={businessType === type}
+                    className={styles.chipBtn}
                   >
                     {BUSINESS_TYPE_LABELS[type]}
                   </button>
@@ -690,25 +565,11 @@ export function MenuBuilderCore({
 
             {/* Formulário criar/editar item */}
             <Card padding="lg" style={{ marginBottom: 24 }}>
-              <h2
-                style={{
-                  marginBottom: Spacing.lg,
-                  fontSize: 16,
-                  fontWeight: 600,
-                  color: theme.text,
-                }}
-              >
+              <h2 className={styles.formTitle}>
                 {editingProduct ? "Editar Item" : "Criar Novo Item"}
               </h2>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: Spacing.lg,
-                  marginBottom: Spacing.lg,
-                }}
-              >
+              <div className={styles.formGrid}>
                 <Input
                   label="Nome *"
                   type="text"
@@ -732,14 +593,7 @@ export function MenuBuilderCore({
                 />
               </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: Spacing.lg,
-                  marginBottom: Spacing.lg,
-                }}
-              >
+              <div className={styles.formGrid}>
                 <Select
                   label="Estação *"
                   value={formData.station}
@@ -756,25 +610,8 @@ export function MenuBuilderCore({
                   fullWidth
                 />
                 <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: 4,
-                      fontWeight: 600,
-                      color: theme.text,
-                      fontSize: 14,
-                    }}
-                  >
-                    Tempo (min) *
-                  </label>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 8,
-                      marginBottom: 8,
-                      flexWrap: "wrap",
-                    }}
-                  >
+                  <label className={styles.fieldLabel}>Tempo (min) *</label>
+                  <div className={styles.timeChipsRow}>
                     {[2, 3, 5, 8, 12].map((mins) => (
                       <button
                         key={mins}
@@ -782,23 +619,8 @@ export function MenuBuilderCore({
                         onClick={() =>
                           setFormData({ ...formData, prep_time_minutes: mins })
                         }
-                        style={{
-                          padding: "6px 12px",
-                          fontSize: 12,
-                          backgroundColor:
-                            formData.prep_time_minutes === mins
-                              ? theme.primary
-                              : variant === "panel"
-                              ? theme.surface
-                              : "#f3f4f6",
-                          color:
-                            formData.prep_time_minutes === mins
-                              ? "#fff"
-                              : theme.text,
-                          border: `1px solid ${theme.border}`,
-                          borderRadius: 4,
-                          cursor: "pointer",
-                        }}
+                        data-active={formData.prep_time_minutes === mins}
+                        className={styles.timeChipBtn}
                       >
                         {mins} min
                       </button>
@@ -822,14 +644,7 @@ export function MenuBuilderCore({
                 </div>
               </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: Spacing.lg,
-                  marginBottom: Spacing.lg,
-                }}
-              >
+              <div className={styles.formGrid}>
                 <Select
                   label="Categoria"
                   value={formData.category_id || ""}
@@ -871,15 +686,8 @@ export function MenuBuilderCore({
                 />
               </div>
 
-              <div style={{ marginBottom: 16 }}>
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    color: theme.text,
-                  }}
-                >
+              <div className={styles.checkboxRow}>
+                <label className={styles.availableLabel}>
                   <input
                     type="checkbox"
                     checked={formData.available}
@@ -891,7 +699,7 @@ export function MenuBuilderCore({
                 </label>
               </div>
 
-              <div style={{ display: "flex", gap: Spacing.sm }}>
+              <div className={styles.actionRow}>
                 {editingProduct ? (
                   <>
                     <Button
@@ -936,20 +744,14 @@ export function MenuBuilderCore({
           activeTab === "link" ||
           activeTab === "ia") && (
           <Card padding="lg" style={{ marginBottom: 24 }}>
-            <p style={{ margin: 0, color: theme.textMuted, fontSize: 14 }}>
+            <p className={styles.inactiveDesc}>
               {activeTab === "foto" && "Envie uma foto do seu menu (PNG/JPG)."}
               {activeTab === "pdf" && "Envie um PDF do seu menu."}
               {activeTab === "link" && "Cole o link do seu menu."}
               {activeTab === "ia" &&
                 "Descreva o seu menu e deixe a IA sugerir itens."}
             </p>
-            <p
-              style={{
-                margin: "8px 0 0 0",
-                fontSize: 13,
-                color: theme.textMuted,
-              }}
-            >
+            <p className={styles.inactiveHint}>
               Funcionalidade não ativa. Use a tab Manual para criar ou editar
               itens.
             </p>
@@ -958,82 +760,37 @@ export function MenuBuilderCore({
 
         {/* Lista */}
         <div>
-          <h2
-            style={{
-              marginBottom: 16,
-              fontSize: 16,
-              fontWeight: 600,
-              color: theme.text,
-            }}
-          >
+          <h2 className={styles.listTitle}>
             Itens do Menu ({products.length})
           </h2>
           {products.length === 0 ? (
-            <p style={{ color: theme.textMuted, fontSize: 14 }}>
+            <p className={styles.emptyText}>
               Nenhum item no menu. Crie o primeiro item acima.
             </p>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className={styles.productList}>
               {products.map((product) => (
-                <div
-                  key={product.id}
-                  style={{
-                    border: `1px solid ${theme.border}`,
-                    borderRadius: radius.lg,
-                    padding: 16,
-                    backgroundColor: theme.surface,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "start",
-                    }}
-                  >
-                    <div style={{ flex: 1 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          marginBottom: 8,
-                        }}
-                      >
-                        <h3
-                          style={{ margin: 0, fontSize: 16, color: theme.text }}
-                        >
-                          {product.name}
-                        </h3>
+                <div key={product.id} className={styles.productCard}>
+                  <div className={styles.productHeader}>
+                    <div className={styles.productInfo}>
+                      <div className={styles.productNameRow}>
+                        <h3 className={styles.productName}>{product.name}</h3>
                         <span
-                          style={{
-                            fontSize: 12,
-                            padding: "2px 8px",
-                            borderRadius: 4,
-                            backgroundColor:
-                              product.station === "BAR" ? "#1e40af" : "#7c2d12",
-                            color: "#fff",
-                            fontWeight: 600,
-                          }}
+                          className={styles.stationBadge}
+                          data-station={product.station}
                         >
                           {product.station === "BAR" ? "🍺 BAR" : "🍳 COZ"}
                         </span>
                         {!product.available && (
-                          <span style={{ fontSize: 12, color: "#ef4444" }}>
+                          <span className={styles.unavailableTag}>
                             (Indisponível)
                           </span>
                         )}
                       </div>
-                      <div
-                        style={{
-                          fontSize: 14,
-                          color: theme.textMuted,
-                          marginBottom: 4,
-                        }}
-                      >
+                      <div className={styles.productPrice}>
                         € {(product.price_cents / 100).toFixed(2)}
                       </div>
-                      <div style={{ fontSize: 12, color: theme.textMuted }}>
+                      <div className={styles.productMeta}>
                         ⏱️{" "}
                         {product.prep_time_seconds
                           ? Math.round(product.prep_time_seconds / 60)
@@ -1042,7 +799,7 @@ export function MenuBuilderCore({
                         {product.prep_category && ` • ${product.prep_category}`}
                       </div>
                     </div>
-                    <div style={{ display: "flex", gap: Spacing.sm }}>
+                    <div className={styles.productActions}>
                       <Button
                         size="sm"
                         tone="action"

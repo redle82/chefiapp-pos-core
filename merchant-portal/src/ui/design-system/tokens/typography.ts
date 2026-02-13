@@ -1,35 +1,44 @@
+import {
+  fontFamily,
+  fontSize,
+  fontWeight,
+  lineHeight,
+} from "@chefiapp/core-design-system";
+
+const px = (value: number) => `${value}px`;
+
 export const typography = {
-    family: {
-        sans: 'Inter, system-ui, -apple-system, sans-serif',
-        mono: 'JetBrains Mono, Menlo, monospace',
-    },
+  family: {
+    sans: fontFamily.sans,
+    mono: fontFamily.mono,
+  },
 
-    // Font Sizes (Operational Scale)
-    size: {
-        xs: '0.75rem',    // 12px (Metadata only)
-        sm: '0.875rem',   // 14px (Min Readable)
-        base: '1rem',     // 16px (Standard)
-        md: '1rem',       // 16px (Alias for base - backward compat)
-        lg: '1.125rem',   // 18px (Button/Action)
-        xl: '1.25rem',    // 20px (Section Header)
-        '2xl': '1.5rem',  // 24px (Card ID / Title)
-        '3xl': '1.875rem',// 30px (Hero)
-        '4xl': '2.25rem', // 36px (Total Value)
-    },
+  // Font Sizes (Operational Scale)
+  size: {
+    xs: px(fontSize.xs),
+    sm: px(fontSize.sm),
+    base: px(fontSize.base),
+    md: px(fontSize.base),
+    lg: px(fontSize.lg),
+    xl: px(fontSize.xl),
+    "2xl": px(fontSize["2xl"]),
+    "3xl": px(fontSize.display),
+    "4xl": px(fontSize.displayLg),
+  },
 
-    // Font Weights (Heavy Scanning)
-    weight: {
-        regular: 400,
-        medium: 500,
-        bold: 700,
-        black: 900, // IDs and Totals
-    },
+  // Font Weights (Heavy Scanning)
+  weight: {
+    regular: fontWeight.normal,
+    medium: fontWeight.medium,
+    bold: fontWeight.bold,
+    black: fontWeight.bold,
+  },
 
-    // Line Heights (Tight for density)
-    leading: {
-        none: 1,
-        tight: 1.25,
-        snug: 1.375,
-        normal: 1.5,
-    }
+  // Line Heights (Tight for density)
+  leading: {
+    none: lineHeight.tight,
+    tight: lineHeight.tight,
+    snug: lineHeight.normal,
+    normal: lineHeight.normal,
+  },
 } as const;

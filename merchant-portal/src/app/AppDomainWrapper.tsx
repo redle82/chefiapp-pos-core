@@ -18,6 +18,7 @@ import { OfflineOrderProvider } from "../pages/TPV/context/OfflineOrderContext";
 import { OrderProvider } from "../pages/TPV/context/OrderContextReal";
 import { TableProvider } from "../pages/TPV/context/TableContext";
 import { LoadingState } from "../ui/design-system/components/LoadingState";
+import styles from "./AppDomainWrapper.module.css";
 
 interface Props {
   children: ReactNode;
@@ -40,25 +41,12 @@ class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          style={{
-            padding: 20,
-            color: "red",
-            background: "white",
-            zIndex: 9999,
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            overflow: "auto",
-          }}
-        >
+        <div className={styles.errorBoundary}>
           <h1>💥 Critical Render Error</h1>
-          <pre style={{ whiteSpace: "pre-wrap" }}>
+          <pre className={styles.errorMessage}>
             {this.state.error?.toString()}
           </pre>
-          <pre style={{ fontSize: 12 }}>{this.state.error?.stack}</pre>
+          <pre className={styles.errorStack}>{this.state.error?.stack}</pre>
         </div>
       );
     }
@@ -224,36 +212,18 @@ export function AppDomainWrapper({ children }: Props) {
   // P0.2: Block render if tenant switch was blocked
   if (tenantSwitchBlocked) {
     return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#0b0b0c",
-          color: "#ff4444",
-        }}
-      >
-        <div style={{ textAlign: "center", maxWidth: "400px" }}>
-          <p style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>
+      <div className={styles.blockedScreen}>
+        <div className={styles.blockedContent}>
+          <p className={styles.blockedTitle}>
             ⚠️ Troca de restaurante bloqueada
           </p>
-          <p
-            style={{ fontSize: "0.9rem", color: "#999", marginBottom: "1rem" }}
-          >
+          <p className={styles.blockedMessage}>
             Existe um pedido ativo ou operações pendentes. Finalize ou cancele
             antes de trocar.
           </p>
           <button
             onClick={() => window.location.reload()}
-            style={{
-              background: "#333",
-              color: "#fff",
-              border: "none",
-              padding: "12px 24px",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
+            className={styles.reloadButton}
           >
             Recarregar Página
           </button>
@@ -288,15 +258,7 @@ export function AppDomainWrapper({ children }: Props) {
 
   if (isLoading && !isExemptRoute && !isTPVBypass) {
     return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#0b0b0c",
-        }}
-      >
+      <div className={styles.loadingScreen}>
         <LoadingState
           variant="spinner"
           spinnerSize="lg"
@@ -357,19 +319,10 @@ export function AppDomainWrapper({ children }: Props) {
     // No-tenant warning is logged via useEffect above to comply with React 19
 
     return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#0b0b0c",
-          color: "#ff4444",
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
+      <div className={styles.errorScreen}>
+        <div className={styles.errorContent}>
           <p>⚠️ Contexto operacional não disponível</p>
-          <p style={{ fontSize: "0.8rem", color: "#666" }}>
+          <p className={styles.errorHint}>
             Tente recarregar a página ou selecionar um restaurante.
           </p>
         </div>

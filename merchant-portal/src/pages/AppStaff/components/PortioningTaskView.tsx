@@ -8,8 +8,8 @@ import { useState } from "react";
 import { CONFIG } from "../../../config";
 import { useToast } from "../../../ui/design-system";
 import { StaffLayout } from "../../../ui/design-system/layouts/StaffLayout";
-import { Button } from "../../../ui/design-system/primitives/Button";
-import { Card } from "../../../ui/design-system/primitives/Card";
+import { Button } from "../../../ui/design-system/Button";
+import { Card } from "../../../ui/design-system/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import type { Task } from "../context/StaffCoreTypes";
 

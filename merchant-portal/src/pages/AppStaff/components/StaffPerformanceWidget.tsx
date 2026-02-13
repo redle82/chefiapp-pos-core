@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Badge } from "../../../ui/design-system/primitives/Badge";
-import { Card } from "../../../ui/design-system/primitives/Card";
+import { Card } from "../../../ui/design-system/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
-import { colors } from "../../../ui/design-system/tokens/colors";
+import styles from "./StaffPerformanceWidget.module.css";
 // LEGACY / LAB — blocked in Docker mode
 
 // LEGACY: Supabase client removed — Docker Core only
@@ -157,14 +157,7 @@ export const StaffPerformanceWidget: React.FC<StaffPerformanceWidgetProps> = ({
 
   return (
     <Card surface="layer1" padding="lg">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
+      <div className={styles.headerRow}>
         <Text size="lg" weight="bold" color="primary">
           👥 Performance da Equipa
         </Text>
@@ -172,35 +165,24 @@ export const StaffPerformanceWidget: React.FC<StaffPerformanceWidgetProps> = ({
       </div>
 
       {performance.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 24 }}>
+        <div className={styles.emptyState}>
           <Text size="2xl">📊</Text>
-          <Text size="sm" color="tertiary" style={{ marginTop: 8 }}>
+          <Text size="sm" color="tertiary" className={styles.emptyText}>
             Sem dados de turnos completados.
           </Text>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div className={styles.list}>
           {performance.map((emp, idx) => {
             const badge = getPerformanceBadge(emp.avgActionsPerHour);
             return (
               <div
                 key={emp.employeeId}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: 12,
-                  backgroundColor:
-                    idx === 0
-                      ? `${colors.success.base}15`
-                      : colors.surface.layer2,
-                  borderRadius: 8,
-                  border:
-                    idx === 0 ? `1px solid ${colors.success.base}40` : "none",
-                }}
+                className={styles.employeeRow}
+                data-top={String(idx === 0)}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span style={{ fontSize: 24 }}>
+                <div className={styles.employeeInfo}>
+                  <span className={styles.employeeEmoji}>
                     {idx === 0 ? "🏆" : getRoleEmoji(emp.role)}
                   </span>
                   <div>
@@ -213,7 +195,7 @@ export const StaffPerformanceWidget: React.FC<StaffPerformanceWidgetProps> = ({
                     </Text>
                   </div>
                 </div>
-                <div style={{ textAlign: "right" }}>
+                <div className={styles.metricsSection}>
                   <Text size="lg" weight="black" color="action">
                     {emp.avgActionsPerHour}
                   </Text>

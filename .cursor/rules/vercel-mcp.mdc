@@ -1,0 +1,29 @@
+---
+description: Usar o MCP Vercel para deploy, logs e gestão do projeto na Vercel
+alwaysApply: false
+globs: 
+---
+
+# Vercel MCP — ativo
+
+O projeto tem o **MCP oficial da Vercel** configurado em `.cursor/mcp.json` (`https://mcp.vercel.com`).
+
+## Quando usar
+
+- O utilizador pede **deploy na Vercel**, ver **deploys**, **logs de build**, estado do projeto, ou informações da Vercel.
+- Preferir as **ferramentas do servidor MCP Vercel** em vez de apenas CLI ou documentação:
+  - **list_teams** / **list_projects** — listar equipas e projetos
+  - **list_deployments** / **get_deployment** — ver deploys e detalhes
+  - **get_deployment_build_logs** — ver logs de build (diagnóstico de falhas)
+  - **deploy_to_vercel** — fazer deploy do projeto
+  - **search_documentation** — pesquisar docs Vercel
+
+## Primeira utilização
+
+Se as ferramentas Vercel devolverem erro de autenticação, indicar ao utilizador:
+1. Recarregar a janela do Cursor (Cmd+Shift+P → "Developer: Reload Window").
+2. Repetir o pedido; quando aparecer "Needs login", clicar e autorizar com OAuth na Vercel no browser.
+
+## Não fazer
+
+- Não colocar tokens Vercel (`vcp_*`) em ficheiros do repositório. O MCP usa OAuth.

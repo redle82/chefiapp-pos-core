@@ -1,7 +1,11 @@
 /**
  * ProductFirstLandingPage — Landing = produto (Last.app style)
  *
- * "/" mostra o TPV em Free Trial com overlay dismissível.
+ * LEGACY: não utilizar em novas rotas de marketing. Mantido apenas como
+ * entrada específica para /app/trial-tpv (demo guiada do TPV trial).
+ *
+ * Histórico: originalmente pensada como landing principal de produto; hoje
+ * LandingV2Page e a landing Next.js externa são as fontes oficiais.
  */
 
 import { useMemo, useState } from "react";

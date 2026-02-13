@@ -15,6 +15,7 @@ import { TPVMinimal } from "../TPVMinimal/TPVMinimal";
 import { Button, Card } from "../../ui/design-system/primitives";
 import { colors } from "../../ui/design-system/tokens/colors";
 import { spacing } from "../../ui/design-system/tokens/spacing";
+import styles from "./OnboardingTpvPreviewPage.module.css";
 
 interface TableRow {
   id: string;
@@ -81,75 +82,39 @@ export function OnboardingTpvPreviewPage() {
   return (
     <div
       data-onboarding-step="6"
-      style={{
-        background: colors.surface.base,
-        minHeight: "100vh",
-        color: colors.text.primary,
-        display: "flex",
-        flexDirection: "column",
-      }}
+      className={styles.pageRoot}
     >
       <OnboardingStepIndicator step={7} total={9} />
-      <div
-        style={{
-          padding: spacing[4],
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
-        }}
-      >
-        <h1 style={{ fontSize: 20, marginBottom: spacing[2], color: colors.text.primary }}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>
           {ONBOARDING_5MIN_COPY.tpvPreview.headline}
         </h1>
-        <p style={{ color: colors.text.secondary, fontSize: 14, marginBottom: spacing[4] }}>
+        <p className={styles.subtitle}>
           {ONBOARDING_5MIN_COPY.tpvPreview.message}
         </p>
 
         {!loading && (
-          <Card padding="lg" style={{ marginBottom: spacing[4] }}>
-            <h2 style={{ fontSize: 18, marginBottom: spacing[3], color: colors.text.primary }}>
+          <Card padding="lg" className={styles.previewCard}>
+            <h2 className={styles.restaurantName}>
               {restaurantName}
             </h2>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: spacing[4], marginBottom: spacing[4], fontSize: 14, color: colors.text.secondary }}>
+            <div className={styles.restaurantInfo}>
               {restaurantCity && <span>{restaurantCity}</span>}
               {restaurantType && <span>{restaurantType}</span>}
             </div>
-            <div style={{ marginBottom: spacing[2], fontSize: 13, color: colors.text.tertiary ?? colors.text.secondary }}>
+            <div className={styles.summaryText}>
               Resumo do que configuraste: identidade, local e perfil do dia. Aqui em baixo vês o mapa das mesas e o TPV em preview.
             </div>
-            <div style={{ marginTop: spacing[4] }}>
-              <div style={{ fontSize: 14, marginBottom: spacing[2], color: colors.text.secondary }}>Mapa das mesas</div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(5, 1fr)",
-                  gap: spacing[2],
-                  maxWidth: 360,
-                }}
-              >
-                <div
-                  style={{
-                    padding: spacing[3],
-                    borderRadius: 8,
-                    background: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    textAlign: "center",
-                    fontSize: 13,
-                    fontWeight: 600,
-                  }}
-                >
+            <div className={styles.tableMapSection}>
+              <div className={styles.tableMapLabel}>Mapa das mesas</div>
+              <div className={styles.tableGrid}>
+                <div className={styles.tableItem}>
                   Balcão
                 </div>
                 {displayTables.slice(0, 9).map((t) => (
                   <div
                     key={t.id}
-                    style={{
-                      padding: spacing[3],
-                      borderRadius: 8,
-                      background: "rgba(255,255,255,0.08)",
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      textAlign: "center",
-                      fontSize: 13,
-                      fontWeight: 600,
-                    }}
+                    className={styles.tableItem}
                   >
                     Mesa {t.number}
                   </div>
@@ -159,7 +124,7 @@ export function OnboardingTpvPreviewPage() {
           </Card>
         )}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: spacing[3], alignItems: "flex-start" }}>
+        <div className={styles.actions}>
           <Button
             type="button"
             tone="success"
@@ -170,35 +135,17 @@ export function OnboardingTpvPreviewPage() {
           </Button>
           <Link
             to="/onboarding/ritual"
-            style={{
-              fontSize: 14,
-              color: colors.action?.base ?? "#22c55e",
-              textDecoration: "underline",
-            }}
+            className={styles.ritualLink}
           >
             {ONBOARDING_5MIN_COPY.tpvPreview.linkRitual}
           </Link>
         </div>
       </div>
-      <div style={{ flex: 1, minHeight: 400 }}>
+      <div className={styles.tpvContainer}>
         <TPVMinimal mode="preview" />
       </div>
       {/* CTA fixo em baixo: sempre visível para avançar (Tela 7 ou 8) */}
-      <div
-        style={{
-          position: "sticky",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: spacing[4],
-          background: colors.surface.base,
-          borderTop: "1px solid rgba(255,255,255,0.1)",
-          display: "flex",
-          flexDirection: "column",
-          gap: spacing[3],
-          alignItems: "center",
-        }}
-      >
+      <div className={styles.fixedCta}>
         <Button
           type="button"
           tone="success"
@@ -209,11 +156,7 @@ export function OnboardingTpvPreviewPage() {
         </Button>
         <Link
           to="/onboarding/ritual"
-          style={{
-            fontSize: 14,
-            color: colors.action?.base ?? "#22c55e",
-            textDecoration: "underline",
-          }}
+          className={styles.ritualLink}
         >
           {ONBOARDING_5MIN_COPY.tpvPreview.linkRitual}
         </Link>

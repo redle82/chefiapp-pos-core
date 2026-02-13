@@ -18,43 +18,51 @@ This contract is subordinate to [CORE_FINANCIAL_SOVEREIGNTY_CONTRACT.md](./CORE_
 
 ## 1. Rotas públicas (Landing e entrada)
 
-| Rota                   | Componente / Comportamento                                                       | Imutável |
-| ---------------------- | -------------------------------------------------------------------------------- | -------- |
-| `/`                    | LandingPage (Sovereign + Last.app)                                               | Sim      |
-| `/auth`                | Redireciona para `/onboarding` (único ponto de entrada auth a partir da landing) | Sim      |
-| `/demo`                | DemoTourPage (tour em 4 passos)                                                  | Sim      |
-| `/onboarding`          | OnboardingLayout                                                                 | Sim      |
-| `/onboarding/:section` | OnboardingLayout                                                                 | Sim      |
-| `/billing/success`     | BillingSuccessPage                                                               | Sim      |
-| `/public/:slug`        | PublicWebPage (menu/presença)                                                    | Sim      |
+**Landing canónica:** [LANDING_CANON.md](../strategy/LANDING_CANON.md) — uma única landing = **LandingV2** em `/landing-v2` e `/v2`. Código: `merchant-portal/src/pages/LandingV2/`.
+
+| Rota                     | Componente / Comportamento                                                       | Imutável |
+| ------------------------ | -------------------------------------------------------------------------------- | -------- |
+| `/`                      | Redireciona para `/auth/phone` (App.tsx)                                         | Sim      |
+| `/landing`               | Redireciona para `/auth/phone` (App.tsx)                                         | Sim      |
+| `/landing-v2`, `/v2`     | **LandingV2Page** (landing canónica de marketing)                                | Sim      |
+| `/blog`, `/blog/tpv-restaurantes` | **BlogTPVRestaurantesPage** (artigo TPV/restaurantes, SEO; link na navbar e footer) | Sim  |
+| `/changelog`             | **ChangelogPage** (o que mudou; só itens em produção; link no footer)             | Sim  |
+| `/security`             | **SecurityPage** (segurança e dados; afirmações verificáveis; link no footer Legal) | Sim  |
+| `/status`               | **StatusPage** (estado do sistema; página estática; link no footer Suporte)       | Sim  |
+| `/auth`, `/auth/phone`   | Entrada de autenticação; ponto de entrada a partir da landing                     | Sim      |
+| `/onboarding`            | OnboardingLayout                                                                 | Sim      |
+| `/onboarding/:section`   | OnboardingLayout                                                                 | Sim      |
+| `/billing/success`       | BillingSuccessPage                                                               | Sim      |
+| `/pricing`, `/features`  | PricingPage, FeaturesPage (páginas públicas)                                    | Sim      |
+| `/legal/terms`, `/legal/privacy` | LegalTermsPage, LegalPrivacyPage                                          | Sim      |
+| `/public/:slug`          | PublicWebPage (menu/presença do restaurante)                                     | Sim      |
 
 **Regra:** A landing **nunca** aponta para `/login`, query strings de OAuth, nem para rotas internas (dashboard, config) sem passar por `/auth` ou `/onboarding`. O Core (CoreFlow / FlowGate) decide o fluxo após `/auth`.
 
-**Boot:** A landing (/, /demo, /auth, /billing/success) é renderizada em modo **MARKETING** — sem RestaurantRuntimeProvider nem ShiftProvider; nenhuma chamada ao Core. Ver [APPLICATION_BOOT_CONTRACT.md](./APPLICATION_BOOT_CONTRACT.md). A landing tem de funcionar com backend desligado.
+**Boot:** As rotas de marketing (/landing-v2, /v2, /blog, /pricing, /features, /legal/*) são renderizadas em modo **MARKETING** — sem RestaurantRuntimeProvider nem ShiftProvider; nenhuma chamada ao Core. Ver [APPLICATION_BOOT_CONTRACT.md](./APPLICATION_BOOT_CONTRACT.md). A landing tem de funcionar com backend desligado.
 
 ---
 
 ## 2. Mapeamento botões da Landing → destino
 
+**Landing canónica = LandingV2** (HeroV2, FooterV2 e secções em `LandingV2/sections/`). Copy e i18n em `LandingV2/i18n/landingV2Copy.ts`.
+
 | Botão / link                     | Destino                                               | Ficheiro                          |
 | -------------------------------- | ----------------------------------------------------- | --------------------------------- |
-| Entrar em operação               | `/auth`                                               | Hero.tsx                          |
-| Ver demonstração                 | `/demo`                                               | Hero.tsx, Footer.tsx              |
-| Fale no WhatsApp                 | `https://wa.me/{VITE_CONTACT_WHATSAPP}` (externo)     | Hero.tsx, Footer.tsx              |
-| Já tenho conta                   | `/auth`                                               | Hero.tsx, Footer.tsx              |
-| Começar agora (14 dias grátis)   | `/auth`                                               | Footer.tsx                        |
-| Acesso existente (header)        | `/auth`                                               | Hero.tsx                          |
-| Abrir Portal                     | `/auth`                                               | Demonstration.tsx                 |
-| 15 MINUTOS (HowItWorks passo 01) | `/demo`                                               | HowItWorks.tsx                    |
-| Dúvidas? WhatsApp / email        | WHATSAPP_URL, mailto:VITE_CONTACT_EMAIL               | Footer.tsx                        |
-| Termos / Privacidade             | `#terms`, `#privacy` (âncora)                         | Footer.tsx                        |
-| Ver página pública (Sofia)       | `https://sofiagastrobaribiza.com` (externo)           | Demonstration.tsx                 |
-| FAQ contacto                     | `mailto:comercial@chefiapp.com` ou VITE_CONTACT_EMAIL | FAQ.tsx                           |
-| Entrar no sistema (com sessão)   | `/admin`                                              | Hero.tsx (header e CTA principal) |
+| O Sistema / Para quem / Preço / FAQ | `#plataforma`, `#para-quem`, `#preco`, `#faq` (âncoras) | HeroV2.tsx (navbar)        |
+| Blog                             | `/blog/tpv-restaurantes`                              | HeroV2.tsx (navbar), FooterV2.tsx  |
+| Changelog                        | `/changelog`                                          | FooterV2.tsx (Empresa)             |
+| Entrar / Testar grátis           | `/auth/phone`                                         | HeroV2.tsx                        |
+| Ir ao sistema (com sessão)       | `/admin`                                              | HeroV2.tsx (header e CTA)         |
+| Começar 14 dias grátis           | `/auth/phone`                                         | FooterV2.tsx, CTABanner, etc.     |
+| WhatsApp                         | `https://wa.me/{VITE_CONTACT_WHATSAPP}` (externo)     | FooterV2.tsx                       |
+| Termos / Privacidade / Segurança  | `/legal/terms`, `/legal/privacy`, `/security`         | FooterV2.tsx                       |
+| Estado do sistema (Suporte)      | `/status`                                             | FooterV2.tsx                       |
+| Seletor de idioma (PT/EN/ES)      | Âncora na mesma página; locale por `?lang=pt|en|es`    | HeroV2.tsx                         |
 
-**Regra de vendas:** A landing (`/`) **nunca** redireciona automaticamente. Com sessão válida, o CTA na landing é "Entrar no sistema" (ou "Ir ao sistema") → `/admin`; o acesso ao sistema é **sempre por clique**, nunca por timeout ou redirect automático.
+**Regra de vendas:** A landing (**/landing-v2**, **/v2**) **nunca** redireciona automaticamente. Com sessão válida, o CTA é "Ir ao sistema" → `/admin`; o acesso ao sistema é **sempre por clique**, nunca por timeout ou redirect automático.
 
-**Regra:** Nenhum novo botão na landing pode apontar para rota não listada aqui sem actualizar este contrato.
+**Regra:** Nenhum novo botão na landing pode apontar para rota não listada em §1 ou aqui sem actualizar este contrato.
 
 ---
 
@@ -77,8 +85,8 @@ This contract is subordinate to [CORE_FINANCIAL_SOVEREIGNTY_CONTRACT.md](./CORE_
 
 ## 5. Enforcement
 
-- **App.tsx:** Rotas `/`, `/auth`, `/demo`, `/onboarding` e públicas listadas em §1 existem e não são removidas sem alterar este contrato.
-- **Landing (Hero, Footer, Demonstration, HowItWorks, FAQ):** Links e botões respeitam o mapeamento §2.
+- **App.tsx:** Rotas listadas em §1 existem e não são removidas sem alterar este contrato. Landing canónica = `/landing-v2` e `/v2` (LandingV2Page).
+- **LandingV2 (HeroV2, FooterV2, secções):** Links e botões respeitam o mapeamento §2. Blog em `/blog` e `/blog/tpv-restaurantes` (BlogTPVRestaurantesPage).
 - **CoreFlow / FlowGate:** Continuam a tratar `/auth` e `/` como pontos de decisão; redirecionamento pós-auth não é responsabilidade da landing.
 
 ---
@@ -115,9 +123,9 @@ Para alterar um destino de botão ou uma rota pública da landing:
 
 | Onde           | Comportamento                                                                                                                                                                                                |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Hero.tsx**   | useAuth(); header e CTAs: com sessão → "Entrar no sistema" / "Ir ao sistema" → `/admin`; badge "Sessão ativa"; sem sessão → "Entrar em operação" → `/auth`. **Nenhum** setTimeout nem useEffect que navegue. |
-| **Footer.tsx** | useAuth(); CTA principal: com sessão → "Entrar no sistema" → `/admin`; sem sessão → "Começar agora (14 dias grátis)" → `/auth`; link secundário "Já tenho conta" / "Entrar no sistema" conforme sessão.      |
+| **HeroV2.tsx**   | useAuth(); header e CTAs: com sessão → "Ir ao sistema" → `/admin`; sem sessão → "Entrar" / "Testar grátis" → `/auth/phone`. Nav: âncoras (#plataforma, #para-quem, #preco, #faq) e Blog → `/blog/tpv-restaurantes`. **Nenhum** setTimeout nem useEffect que navegue. |
+| **FooterV2.tsx** | useAuth(); CTA principal: "Começar 14 dias grátis" → `/auth/phone`; link Blog → `/blog/tpv-restaurantes`; WhatsApp externo; Termos/Privacidade → `/legal/*`. Conforme sessão, CTAs podem reflectir "Ir ao sistema" → `/admin`. |
 
-Nenhuma nova obrigação de código além do que já está em Hero e Footer; alterações futuras (ex.: tenant/onboarding completo) devem respeitar as regras acima e actualizar esta tabela.
+Nenhuma nova obrigação de código além do que já está em HeroV2 e FooterV2; alterações futuras (ex.: tenant/onboarding completo) devem respeitar as regras acima e actualizar esta tabela.
 
 **Referência:** CORE_STATE (estado do núcleo); CoreFlow/FlowGate (decisão pós-auth). A landing não substitui o Core; **reflecte** estado quando o Core expõe (sessão).

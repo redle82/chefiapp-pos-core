@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { Badge } from '../../../ui/design-system/Badge';
 import { Text } from '../../../ui/design-system/primitives/Text';
-import { Card } from '../../../ui/design-system/primitives/Card';
+import { Card } from '../../../ui/design-system/Card';
 import { CONFIG } from '../../../config';
 
 interface TaskWhyInfo {

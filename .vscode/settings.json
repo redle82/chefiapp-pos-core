@@ -13,6 +13,9 @@
   },
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
+  "files.associations": {
+    "*.sql": "postgresql"
+  },
   "typescript.tsdk": "node_modules/typescript/lib",
   "vitest.disableWorkspaceWarning": true,
   "java.configuration.updateBuildConfiguration": "automatic",

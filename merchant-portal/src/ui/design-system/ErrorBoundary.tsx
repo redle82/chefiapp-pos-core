@@ -4,6 +4,7 @@ import { SealGenerator } from "../../core/events/SealGenerator";
 import type { EventEnvelope } from "../../core/events/SealTypes";
 import { Logger, Sentry } from "../../core/logger";
 import { Button } from "./Button";
+import styles from "./ErrorBoundary.module.css";
 
 interface Props {
   children: ReactNode;
@@ -102,46 +103,20 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <div
-          style={{
-            padding: 40,
-            textAlign: "center",
-            fontFamily: "system-ui",
-            color: "#F87171", // Red-400
-            background: "#1F2937", // Gray-800
-            minHeight: "100vh",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 16,
-          }}
-        >
-          <h2 style={{ margin: 0, fontSize: 24, color: "#FFF" }}>
-            Ocorreu um erro
-          </h2>
-          <p style={{ opacity: 0.8, maxWidth: 400 }}>
+        <div className={styles.root}>
+          <h2 className={styles.title}>Algo correu mal</h2>
+          <p className={styles.message}>
             {this.props.context
-              ? `Problema no módulo ${this.props.context}`
-              : "O sistema encontrou um problema inesperado."}
+              ? `Problema em ${this.props.context}`
+              : "Aconteceu um problema inesperado."}
           </p>
 
-          <div
-            style={{
-              background: "rgba(0,0,0,0.3)",
-              padding: 12,
-              borderRadius: 8,
-              fontFamily: "monospace",
-              fontSize: 12,
-              maxWidth: "90%",
-              overflow: "auto",
-            }}
-          >
+          <div className={styles.stack}>
             {this.state.error?.message || "Erro desconhecido"}
           </div>
 
           <Button variant="primary" onClick={this.handleReload}>
-            Tentar Novamente
+            Tentar de novo
           </Button>
         </div>
       );

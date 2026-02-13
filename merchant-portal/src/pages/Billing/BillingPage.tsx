@@ -15,6 +15,7 @@ import { CONFIG } from "../../config";
 import { BillingBroker } from "../../core/billing/BillingBroker";
 import { useSubscription } from "../../hooks/useSubscription";
 import { GlobalLoadingView } from "../../ui/design-system/components";
+import styles from "./BillingPage.module.css";
 
 const STATUS_LABELS: Record<string, string> = {
   TRIAL: "Período de teste",
@@ -60,7 +61,7 @@ export function BillingPage() {
   useEffect(() => {
     if (searchParams.get("billing") === "cancel") {
       setActionError(
-        "Checkout cancelado. Pode tentar novamente quando quiser.",
+        "Checkout cancelado. Tente de novo quando quiser.",
       );
       window.history.replaceState({}, "", "/app/billing");
     }
@@ -109,100 +110,31 @@ export function BillingPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: VPC.bg,
-        fontFamily: "Inter, system-ui, sans-serif",
-        color: VPC.text,
-        lineHeight: VPC.lineHeight,
-        padding: VPC.spaceLg,
-      }}
-    >
-      <div style={{ maxWidth: 560, margin: "0 auto" }}>
+    <div className={styles.pageWrapper}>
+      <div className={styles.container}>
         {/* Título e descrição */}
-        <header style={{ marginBottom: VPC.spaceLg }}>
-          <h1
-            style={{
-              fontSize: VPC.fontSizeLarge,
-              fontWeight: 700,
-              color: VPC.text,
-              marginBottom: 8,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Faturação
-          </h1>
-          <p
-            style={{
-              fontSize: VPC.fontSizeBase,
-              color: VPC.textMuted,
-              margin: 0,
-            }}
-          >
+        <header className={styles.header}>
+          <h1 className={styles.title}>Faturação</h1>
+          <p className={styles.subtitle}>
             Gerir a sua assinatura e método de pagamento.
           </p>
         </header>
 
         {/* Erros */}
         {(error || actionError) && (
-          <div
-            style={{
-              padding: VPC.space,
-              marginBottom: VPC.space,
-              borderRadius: VPC.radius,
-              backgroundColor: "rgba(185, 28, 28, 0.12)",
-              border: `1px solid ${VPC.border}`,
-              color: "#f87171",
-              fontSize: VPC.fontSizeBase,
-            }}
-          >
-            {actionError ?? error}
-          </div>
+          <div className={styles.errorBox}>{actionError ?? error}</div>
         )}
 
         {/* Card principal */}
-        <section
-          style={{
-            padding: VPC.spaceLg,
-            borderRadius: VPC.radius,
-            border: `1px solid ${VPC.border}`,
-            backgroundColor: VPC.surface,
-            marginBottom: VPC.spaceLg,
-          }}
-        >
+        <section className={styles.mainCard}>
           {subscription ? (
             <>
-              <div style={{ marginBottom: VPC.spaceLg }}>
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: VPC.textMuted,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                  }}
-                >
-                  Estado
-                </span>
-                <p
-                  style={{
-                    fontSize: VPC.fontSizeLarge,
-                    fontWeight: 600,
-                    color: VPC.text,
-                    marginTop: 8,
-                    marginBottom: 4,
-                  }}
-                >
+              <div className={styles.statusSection}>
+                <span className={styles.statusLabel}>Estado</span>
+                <p className={styles.statusValue}>
                   {STATUS_LABELS[subscription.status] ?? subscription.status}
                 </p>
-                <p
-                  style={{
-                    fontSize: VPC.fontSizeBase,
-                    color: VPC.textMuted,
-                    margin: 0,
-                  }}
-                >
+                <p className={styles.statusDetails}>
                   Plano: {subscription.plan_tier} · Próximo pagamento:{" "}
                   {subscription.next_payment_at
                     ? new Date(subscription.next_payment_at).toLocaleDateString(
@@ -212,23 +144,13 @@ export function BillingPage() {
                 </p>
               </div>
 
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+              <div className={styles.buttonGroup}>
                 {!isActive && (
                   <button
                     type="button"
                     onClick={handleStartSubscription}
                     disabled={!!actionLoading || !priceId}
-                    style={{
-                      minHeight: VPC.btnMinHeight,
-                      padding: VPC.btnPadding,
-                      fontSize: VPC.fontSizeBase,
-                      fontWeight: 600,
-                      color: "#fff",
-                      backgroundColor: VPC.accent,
-                      border: "none",
-                      borderRadius: VPC.radius,
-                      cursor: actionLoading ? "wait" : "pointer",
-                    }}
+                    className={styles.buttonPrimary}
                   >
                     {actionLoading === "checkout"
                       ? "A redirecionar..."
@@ -239,17 +161,7 @@ export function BillingPage() {
                   type="button"
                   onClick={handleOpenPortal}
                   disabled={!!actionLoading}
-                  style={{
-                    minHeight: VPC.btnMinHeight,
-                    padding: VPC.btnPadding,
-                    fontSize: VPC.fontSizeBase,
-                    fontWeight: 600,
-                    color: VPC.text,
-                    backgroundColor: "transparent",
-                    border: `1px solid ${VPC.border}`,
-                    borderRadius: VPC.radius,
-                    cursor: actionLoading ? "wait" : "pointer",
-                  }}
+                  className={styles.buttonSecondary}
                 >
                   {actionLoading === "portal"
                     ? "A abrir..."
@@ -259,59 +171,25 @@ export function BillingPage() {
             </>
           ) : (
             <>
-              <p
-                style={{
-                  fontSize: VPC.fontSizeBase,
-                  color: VPC.textMuted,
-                  marginBottom: priceId ? 8 : VPC.spaceLg,
-                  marginTop: 0,
-                }}
-              >
+              <p className={styles.noSubscriptionText}>
                 Ainda não tem uma assinatura ativa. Assine um plano para passar
                 a plano ativo (operação ao vivo).
               </p>
               {priceId && (
-                <p
-                  style={{
-                    fontSize: VPC.fontSizeBase,
-                    fontWeight: 600,
-                    color: VPC.text,
-                    marginBottom: VPC.spaceLg,
-                    marginTop: 0,
-                  }}
-                >
-                  Plano — {PLAN_PRICE_LABEL}
-                </p>
+                <p className={styles.pricingText}>Plano — {PLAN_PRICE_LABEL}</p>
               )}
               <button
                 type="button"
                 onClick={handleStartSubscription}
                 disabled={!!actionLoading || !priceId}
-                style={{
-                  minHeight: VPC.btnMinHeight,
-                  padding: VPC.btnPadding,
-                  fontSize: VPC.fontSizeBase,
-                  fontWeight: 600,
-                  color: "#fff",
-                  backgroundColor: VPC.accent,
-                  border: "none",
-                  borderRadius: VPC.radius,
-                  cursor: actionLoading ? "wait" : "pointer",
-                }}
+                className={styles.buttonPrimary}
               >
                 {actionLoading === "checkout"
                   ? "A redirecionar..."
                   : "Ativar agora"}
               </button>
               {!priceId && (
-                <p
-                  style={{
-                    fontSize: 14,
-                    color: VPC.textMuted,
-                    marginTop: 12,
-                    marginBottom: 0,
-                  }}
-                >
+                <p className={styles.configMessage}>
                   Configure VITE_STRIPE_PRICE_ID no ambiente para ativar o
                   checkout.
                 </p>
@@ -324,14 +202,7 @@ export function BillingPage() {
         <button
           type="button"
           onClick={() => navigate("/dashboard")}
-          style={{
-            padding: "12px 0",
-            fontSize: VPC.fontSizeBase,
-            color: VPC.textMuted,
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-          }}
+          className={styles.backButton}
         >
           ← Voltar ao Dashboard
         </button>
