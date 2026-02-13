@@ -11,6 +11,7 @@
 - **Estado:** Processo em paralelo (2–3 meses com a AT).
 - **Técnico:** Recibo com QR AT e SAF-T já implementados; ajustes finos conforme feedback da AT.
 - **Ação:** Iniciar processo de certificação; manter documentação do formato usado (referência AT) em `fiscal-modules/pt/` e Help.
+- **Primeiro passo executável:** Consultar [Portal das Finanças — Faturação Eletrónica](https://www.portaldasfinancas.gov.pt/at/html/index.html) e documentação de certificação de software de faturação; reunir requisitos (ex.: formato QR AT, SAF-T) e comparar com implementação em `fiscal-modules/pt/atQrUrl.ts` e `fiscal-modules/pt/saft/`.
 
 ---
 
