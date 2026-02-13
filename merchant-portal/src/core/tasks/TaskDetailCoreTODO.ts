@@ -1,10 +1,10 @@
 import { BackendType, getBackendType } from "../infra/backendAdapter";
-import { readTaskById } from "../../core-boundary/readers/TaskReader";
+import { readTaskById } from "../../infra/readers/TaskReader";
 import {
   acknowledgeTask,
   resolveTask,
   dismissTask,
-} from "../../core-boundary/writers/TaskWriter";
+} from "../../infra/writers/TaskWriter";
 import { mapCoreTaskToTask } from "./TaskFiltering";
 import type { Task } from "./TaskFiltering";
 

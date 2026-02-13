@@ -96,23 +96,32 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const resolvedVariant = resolveVariant();
     const resolvedSize = size === "default" ? "md" : size;
 
-    return (
-      <button
-        ref={ref}
-        className={cn(
-          "button",
-          `button--${resolvedVariant}`,
-          `button--${resolvedSize}`,
-          {
-            "button--full-width": fullWidth,
-            "button--loading": resolvedLoading,
-          },
-          className,
+    const buttonProps = {
+      ref,
+      className: cn(
+        "button",
+        `button--${resolvedVariant}`,
+        `button--${resolvedSize}`,
+        {
+          "button--full-width": fullWidth,
+          "button--loading": resolvedLoading,
+        },
+        className,
+      ),
+      disabled: disabled || resolvedLoading,
+      ...props,
+    };
+
+    return resolvedLoading ? (
+      <button {...buttonProps} aria-busy="true">
+        {resolvedLoading && <span className="button__spinner" />}
+        {icon && !resolvedLoading && (
+          <span className="button__icon">{icon}</span>
         )}
-        disabled={disabled || resolvedLoading}
-        aria-busy={resolvedLoading}
-        {...props}
-      >
+        <span className="button__content">{children}</span>
+      </button>
+    ) : (
+      <button {...buttonProps} aria-busy="false">
         {resolvedLoading && <span className="button__spinner" />}
         {icon && !resolvedLoading && (
           <span className="button__icon">{icon}</span>

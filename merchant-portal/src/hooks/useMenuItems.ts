@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import {
   readMenuCategories,
   readProducts,
-} from "../core-boundary/readers/RestaurantReader";
+} from "../infra/readers/RestaurantReader";
 import { isDebugMode } from "../core/debugMode";
 import { BackendType, getBackendType } from "../core/infra/backendAdapter";
 

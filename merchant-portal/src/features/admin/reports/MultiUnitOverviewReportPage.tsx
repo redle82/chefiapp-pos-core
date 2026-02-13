@@ -1,4 +1,4 @@
-import { useRestaurantId } from "../../../core/hooks/useRestaurantId";
+import { useRestaurantId } from "../../../ui/hooks/useRestaurantId";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import styles from "./MultiUnitOverviewReportPage.module.css";
 

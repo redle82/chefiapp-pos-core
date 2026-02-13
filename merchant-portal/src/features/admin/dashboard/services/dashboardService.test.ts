@@ -5,7 +5,7 @@ const { mockFrom, mockGetActive } = vi.hoisted(() => ({
   mockGetActive: vi.fn(),
 }));
 
-vi.mock("../../../../core-boundary/docker-core/connection", () => ({
+vi.mock("../../../../infra/docker-core/connection", () => ({
   dockerCoreClient: {
     from: mockFrom,
   },

@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { readProductsByRestaurant } from "../../core-boundary/readers/ProductReader";
+import { readProductsByRestaurant } from "../../infra/readers/ProductReader";
 
 /** Seed restaurant ID (Docker Core). Slug → restaurant_id resolver can be added later. */
 const DEFAULT_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";

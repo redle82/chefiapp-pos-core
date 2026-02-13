@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { recurringTaskEngine, type RecurringTask } from '../../core/tasks/RecurringTaskEngine';
-import { useRestaurantId } from '../../core/hooks/useRestaurantId';
+import { useRestaurantId } from '../../ui/hooks/useRestaurantId';
 
 export function RecurringTasksPage() {
   const { restaurantId, loading: loadingRestaurantId } = useRestaurantId();

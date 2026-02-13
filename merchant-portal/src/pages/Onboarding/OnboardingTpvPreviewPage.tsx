@@ -7,8 +7,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { OnboardingStepIndicator } from "../../components/onboarding/OnboardingStepIndicator";
-import { fetchRestaurantForIdentity } from "../../core-boundary/readers/RuntimeReader";
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
+import { fetchRestaurantForIdentity } from "../../infra/readers/RuntimeReader";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { ONBOARDING_5MIN_COPY } from "../../copy/onboarding5min";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { TPVMinimal } from "../TPVMinimal/TPVMinimal";

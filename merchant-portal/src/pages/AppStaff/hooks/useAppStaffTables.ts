@@ -8,8 +8,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { dockerCoreClient } from '../../../core-boundary/docker-core/connection';
-import type { CoreTable } from '../../../core-boundary/docker-core/types';
+import { dockerCoreClient } from '../../../infra/docker-core/connection';
+import type { CoreTable } from '../../../infra/docker-core/types';
 
 interface UseAppStaffTablesResult {
   tables: CoreTable[];

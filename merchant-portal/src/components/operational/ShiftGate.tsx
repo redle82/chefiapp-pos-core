@@ -8,8 +8,8 @@
 import React, { useState } from "react";
 import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
-import { isBackendUnavailable } from "../../core-boundary/menuPilotFallback";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
+import { isBackendUnavailable } from "../../infra/menuPilotFallback";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
 import { useShift } from "../../core/shift/ShiftContext";
 import { getTpvRestaurantId } from "../../core/storage/installedDeviceStorage";

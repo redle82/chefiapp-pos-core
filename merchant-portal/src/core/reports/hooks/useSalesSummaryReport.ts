@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useRestaurantId } from "../../hooks/useRestaurantId";
+import { useRestaurantId } from "../../../ui/hooks/useRestaurantId";
 import type { TimeRange } from "../reportTypes";
 import { getSalesSummaryReport } from "../ReportsService";
 

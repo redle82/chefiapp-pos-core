@@ -25,13 +25,13 @@ import {
   fetchRestaurant,
   fetchSetupStatus,
   getOrCreateRestaurantId,
-} from "../core-boundary/readers/RuntimeReader";
+} from "../infra/readers/RuntimeReader";
 import {
   insertInstalledModule as persistInstalledModule,
   setProductMode as persistProductMode,
   setRestaurantStatus as persistRestaurantStatus,
   upsertSetupStatus as persistSetupStatus,
-} from "../core-boundary/writers/RuntimeWriter";
+} from "../infra/writers/RuntimeWriter";
 import { isDebugMode } from "../core/debugMode";
 import { isDockerBackend } from "../core/infra/backendAdapter";
 import {
@@ -143,6 +143,8 @@ export interface RestaurantRuntime {
   status: string;
   /** Estado de faturação SaaS (gm_restaurants.billing_status): trial | active | past_due | canceled */
   billing_status?: string | null;
+  /** Fim do período de trial (14 dias). Para countdown e paywall. */
+  trial_ends_at?: string | null;
   /** Por módulo: dataSource (mock|core), offline */
   capabilities: Record<string, ModuleCapabilityEntry>;
   setup_status: SetupStatus;
@@ -177,6 +179,7 @@ const INITIAL_RUNTIME: RestaurantRuntime = {
   plan: "basic",
   status: "onboarding",
   billing_status: null,
+  trial_ends_at: null,
   capabilities: {},
   setup_status: {},
   isPublished: false,
@@ -251,6 +254,7 @@ export function RestaurantRuntimeProvider({
       | "plan"
       | "status"
       | "billing_status"
+      | "trial_ends_at"
       | "capabilities"
       | "setup_status"
       | "isPublished"
@@ -289,6 +293,7 @@ export function RestaurantRuntimeProvider({
         : "basic";
     const status: string = restaurant?.status ?? "onboarding";
     const billing_status: string | null = restaurant?.billing_status ?? null;
+    const trial_ends_at: string | null = restaurant?.trial_ends_at ?? null;
     const capabilities: Record<string, ModuleCapabilityEntry> = {};
     for (const id of installed_modules.length > 0
       ? installed_modules
@@ -304,6 +309,7 @@ export function RestaurantRuntimeProvider({
       plan,
       status,
       billing_status,
+      trial_ends_at,
       capabilities,
       setup_status: setupSections,
       isPublished: mode === "active",
@@ -334,6 +340,7 @@ export function RestaurantRuntimeProvider({
       | "plan"
       | "status"
       | "billing_status"
+      | "trial_ends_at"
       | "capabilities"
       | "setup_status"
       | "isPublished"
@@ -355,6 +362,7 @@ export function RestaurantRuntimeProvider({
         plan: "basic",
         status: "active",
         billing_status: "trial",
+        trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
         capabilities: {},
         setup_status: TRIAL_SETUP_STATUS,
         isPublished: true,
@@ -388,6 +396,7 @@ export function RestaurantRuntimeProvider({
       plan: "basic",
       status: "active",
       billing_status: "trial",
+      trial_ends_at: null,
       capabilities,
       setup_status: {},
       isPublished: true,
@@ -482,6 +491,7 @@ export function RestaurantRuntimeProvider({
       const plan = coreState.plan ?? "basic";
       const status = coreState.status ?? "active";
       const billing_status = coreState.billing_status ?? null;
+      const trial_ends_at = (coreState as { trial_ends_at?: string | null }).trial_ends_at ?? null;
       const capabilities = coreState.capabilities ?? {};
       const productMode: ProductMode =
         coreState.productMode ?? resolveProductModeFromEnv();
@@ -506,6 +516,7 @@ export function RestaurantRuntimeProvider({
         plan,
         status,
         billing_status,
+        trial_ends_at,
         capabilities,
         setup_status,
         isPublished,

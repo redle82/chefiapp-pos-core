@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   readRestaurantPeople,
   type CoreRestaurantPerson,
-} from "../../core-boundary/readers/RestaurantPeopleReader";
+} from "../../infra/readers/RestaurantPeopleReader";
 import { isDebugMode } from "../../core/debugMode";
 import { RUNTIME } from "../../core/runtime/RuntimeContext";
 import { Button } from "../../ui/design-system/Button";

@@ -10,8 +10,8 @@
  * - Este módulo faz o mapeamento e filtros em memória para o portal.
  */
 
-import type { CoreTask } from "../../core-boundary/docker-core/types";
-import { readOpenTasksByRestaurant } from "../../core-boundary/readers/TaskReader";
+import type { CoreTask } from "../../infra/docker-core/types";
+import { readOpenTasksByRestaurant } from "../../infra/readers/TaskReader";
 
 export type UserRole = "owner" | "manager" | "employee" | "cashier" | "kitchen";
 

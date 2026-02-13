@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { useAuth } from "../../core/auth/useAuth";
 import { useTenant } from "../../core/tenant/TenantContext";
 import "./BetaFeedbackWidget.css";

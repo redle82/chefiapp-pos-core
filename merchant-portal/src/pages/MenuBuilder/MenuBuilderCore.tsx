@@ -30,24 +30,24 @@ import {
   getPilotProducts,
   isBackendUnavailable,
   pilotMenuKey,
-} from "../../core-boundary/menuPilotFallback";
+} from "../../infra/menuPilotFallback";
 import {
   BUSINESS_TYPE_LABELS,
   getMenuPresetByBusinessType,
   type BusinessType,
-} from "../../core-boundary/readers/MenuPresetReader";
+} from "../../infra/readers/MenuPresetReader";
 import type {
   CoreProduct,
   CoreProductWithCategory,
-} from "../../core-boundary/readers/ProductReader";
-import { readProductsByRestaurant } from "../../core-boundary/readers/ProductReader";
-import type { CoreMenuCategory } from "../../core-boundary/readers/RestaurantReader";
-import { readMenuCategories } from "../../core-boundary/readers/RestaurantReader";
+} from "../../infra/readers/ProductReader";
+import { readProductsByRestaurant } from "../../infra/readers/ProductReader";
+import type { CoreMenuCategory } from "../../infra/readers/RestaurantReader";
+import { readMenuCategories } from "../../infra/readers/RestaurantReader";
 import {
   createMenuItem,
   deleteMenuItem,
   updateMenuItem,
-} from "../../core-boundary/writers/MenuWriter";
+} from "../../infra/writers/MenuWriter";
 import type { MenuItemInput } from "../../core/contracts/Menu";
 import { validateMenuItemInput } from "../../core/contracts/Menu";
 import {

@@ -1,9 +1,11 @@
 /**
  * Rotas públicas / marketing (Landing, blog, pricing, auth, menu, mentor).
  * Desfragmentação: extraídas de App.tsx para fronteira explícita.
- * Uso: <Routes><MarketingRoutes /><Route path="/*" element={<AppOperationalWrapper />} /></Routes>
+ * Exporta Fragment para usar como filho direto de <Routes> (React Router v6 exige Route ou Fragment).
+ * Uso: <Routes>{MarketingRoutesFragment}<Route path="/*" element={...} /></Routes>
  */
 
+import { Fragment } from "react";
 import { Navigate, Route } from "react-router-dom";
 import { LandingLocaleProvider } from "../pages/LandingV2/i18n/LandingLocaleContext";
 import { LandingV2Page } from "../pages/LandingV2/LandingV2Page";
@@ -29,11 +31,11 @@ import { MenuCatalogPage } from "../pages/MenuCatalog/MenuCatalogPage";
 import { MenuCatalogPageV2 } from "../pages/MenuCatalog/MenuCatalogPageV2";
 import { MentorPage } from "../features/mentorship";
 
-export function MarketingRoutes() {
-  return (
-    <>
-      {/* Public / Marketing — /, /v2, /landing-v2 = LandingV2; /landing → auth */}
-      <Route path="/" element={<LandingLocaleProvider><LandingV2Page /></LandingLocaleProvider>} />
+/** Fragment com todas as rotas de marketing — usar como filho direto de <Routes>. */
+export const MarketingRoutesFragment = (
+  <Fragment>
+    {/* Public / Marketing — /, /v2, /landing-v2 = LandingV2; /landing → auth */}
+    <Route path="/" element={<LandingLocaleProvider><LandingV2Page /></LandingLocaleProvider>} />
       <Route path="/landing" element={<Navigate to="/auth/phone" replace />} />
       <Route path="/v2" element={<LandingLocaleProvider><LandingV2Page /></LandingLocaleProvider>} />
       <Route path="/landing-v2" element={<LandingLocaleProvider><LandingV2Page /></LandingLocaleProvider>} />
@@ -70,6 +72,5 @@ export function MarketingRoutes() {
       <Route path="/menu-v2" element={<MenuCatalogPageV2 />} />
       {/* Mentoria — acessível sem auth para dev/teste */}
       <Route path="/mentor" element={<MentorPage />} />
-    </>
-  );
-}
+  </Fragment>
+);

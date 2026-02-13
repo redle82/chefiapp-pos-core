@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   readActiveOrders,
   readOrdersForAnalytics,
-} from "../core-boundary/readers/OrderReader";
+} from "../infra/readers/OrderReader";
 import { BackendType, getBackendType } from "../core/infra/backendAdapter";
 import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
 

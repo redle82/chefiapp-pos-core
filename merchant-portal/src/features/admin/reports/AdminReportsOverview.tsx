@@ -10,7 +10,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { WelcomeOverlay } from "../../../components/onboarding/WelcomeOverlay";
 import { shouldShowWelcome } from "../../../components/onboarding/welcomeUtils";
-import { useRestaurantId } from "../../../core/hooks/useRestaurantId";
+import { useRestaurantId } from "../../../ui/hooks/useRestaurantId";
 import { GlobalLoadingView } from "../../../ui/design-system/components";
 import { useDashboardOverview } from "../dashboard/hooks/useDashboardOverview";
 

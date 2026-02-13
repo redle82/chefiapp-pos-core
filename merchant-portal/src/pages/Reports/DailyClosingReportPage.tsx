@@ -10,7 +10,7 @@ import { useCallback, useState } from "react";
 import { ShiftHistorySection } from "../../components/Dashboard/ShiftHistorySection";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { useRestaurantId } from "../../core/hooks/useRestaurantId";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import { centsToDecimal, exportCsv } from "../../core/reports/csvExport";
 import FiscalReconciliationService from "../../core/services/FiscalReconciliationService";
 import {

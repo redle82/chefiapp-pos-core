@@ -6,11 +6,11 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import type { TerminalEquipmentRow } from "../../core-boundary/readers/EquipmentReader";
+import type { TerminalEquipmentRow } from "../../infra/readers/EquipmentReader";
 import {
   listEquipmentByRestaurant,
   listTerminalsHeartbeatsByRestaurant,
-} from "../../core-boundary/readers/EquipmentReader";
+} from "../../infra/readers/EquipmentReader";
 import { CONFIG } from "../../config";
 import { getInstalledDevice } from "../storage/installedDeviceStorage";
 

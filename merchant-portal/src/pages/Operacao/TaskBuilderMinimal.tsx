@@ -6,15 +6,15 @@
  */
 
 import { useEffect, useState } from "react";
-import type { CoreTaskPack } from "../../core-boundary/docker-core/types";
+import type { CoreTaskPack } from "../../infra/docker-core/types";
 import {
   readActivatedPacks,
   readPacksByContext,
-} from "../../core-boundary/readers/TaskPackReader";
+} from "../../infra/readers/TaskPackReader";
 import {
   activatePack,
   deactivatePack,
-} from "../../core-boundary/writers/TaskPackWriter";
+} from "../../infra/writers/TaskPackWriter";
 
 interface TaskBuilderMinimalProps {
   restaurantId: string;

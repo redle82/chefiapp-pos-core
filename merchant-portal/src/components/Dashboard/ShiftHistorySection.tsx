@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { currencyService } from "../../core/currency/CurrencyService";
-import { useRestaurantId } from "../../core/hooks/useRestaurantId";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import {
   type CashRegister,
   CashRegisterEngine,

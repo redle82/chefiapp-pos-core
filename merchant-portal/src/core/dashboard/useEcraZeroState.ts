@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { readStockLevels } from "../../core-boundary/readers/InventoryStockReader";
+import { readStockLevels } from "../../infra/readers/InventoryStockReader";
 import { alertEngine } from "../alerts/AlertEngine";
 
 export type EcraZeroState = "verde" | "amarelo" | "vermelho";

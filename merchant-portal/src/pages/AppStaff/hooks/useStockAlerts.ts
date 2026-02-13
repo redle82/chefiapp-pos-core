@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   readStockAlerts,
   type StockAlertRow,
-} from "../../../core-boundary/readers/InventoryStockReader";
+} from "../../../infra/readers/InventoryStockReader";
 
 export interface StockAlertsData {
   alerts: StockAlertRow[];

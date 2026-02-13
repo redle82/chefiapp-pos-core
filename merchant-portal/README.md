@@ -15,11 +15,12 @@ cd merchant-portal && npm run dev
 
 2) Configure env:
 
-- Copy `.env.example` to `.env.local`
-- Fill at least:
-  - `VITE_API_BASE`
-  - `VITE_INTERNAL_API_TOKEN`
-  - `VITE_RESTAURANT_ID`
+- Copy `.env.local.example` to `.env.local` (app principal) ou `.env.example` para o wizard.
+- **App principal (TPV, Admin, Staff):** preencha no mínimo:
+  - `VITE_CORE_URL` — URL do Core (ex.: `http://localhost:3001` em dev)
+  - `VITE_CORE_ANON_KEY` — chave anónima do Core (ex.: `chefiapp-core-secret-key-min-32-chars-long` em dev)
+- Para o wizard: `VITE_API_BASE`, `VITE_INTERNAL_API_TOKEN`, `VITE_RESTAURANT_ID`.
+- **Importante:** Em **desenvolvimento** use `npm run dev` (o Vite lê `.env.local`). Em **build de produção** as variáveis `VITE_*` são embutidas no build — defina-as antes de `npm run build` (ex.: `VITE_CORE_URL=... VITE_CORE_ANON_KEY=... npm run build`).
 
 3) Start the portal:
 

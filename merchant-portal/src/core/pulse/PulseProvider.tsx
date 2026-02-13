@@ -24,7 +24,7 @@ import type {
   PulseZone,
 } from "../../../../core-engine/pulse";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { readActiveOrders } from "../../core-boundary/readers/OrderReader";
+import { readActiveOrders } from "../../infra/readers/OrderReader";
 import { SystemEvents } from "../events/SystemEvents";
 import { useShift } from "../shift/ShiftContext";
 import type { UsePulseOptions } from "./usePulse";

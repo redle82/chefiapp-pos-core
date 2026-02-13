@@ -1,3 +1,4 @@
+import "./config"; // Load first so CONFIG is ready before any chunk (avoids "Cannot access before initialization")
 import "@chefiapp/core-design-system/tokens.css";
 import { StrictMode, useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -105,8 +106,22 @@ function RootWithLifecycle() {
   );
 }
 
-// Probe optional Core tables (gm_reservations, gm_customers) before first render
-// so at most 1 network 404 per table; avoids duplicate 404s from Strict Mode double-mount.
+// Render imediato — a página deve carregar mesmo sem Core (landing-only).
+// O probe de tabelas opcionais corre em background para não bloquear nem causar tela branca.
+const rootEl = document.getElementById("root");
+if (rootEl) {
+  createRoot(rootEl).render(
+    <StrictMode>
+      <ErrorBoundary context="Root">
+        <BrowserRouter>
+          <RootWithLifecycle />
+        </BrowserRouter>
+      </ErrorBoundary>
+    </StrictMode>,
+  );
+}
+
+// Probe optional Core tables (gm_reservations, gm_customers) em background.
 (async () => {
   try {
     const { probeOptionalTables } = await import(
@@ -116,15 +131,6 @@ function RootWithLifecycle() {
   } catch {
     // Non-fatal: Core may be down or tables may exist
   }
-  createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-      <ErrorBoundary context="Root">
-        <BrowserRouter>
-          <RootWithLifecycle />
-        </BrowserRouter>
-      </ErrorBoundary>
-    </StrictMode>,
-  );
 })();
 
 // DOCKER CORE: Kernel init removido - Core gerencia seu próprio estado

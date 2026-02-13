@@ -6,10 +6,10 @@
  */
 
 import { useState, useEffect } from "react";
-import { generateShoppingList } from "../../core-boundary/readers/ShoppingListReader";
+import { generateShoppingList } from "../../infra/readers/ShoppingListReader";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { confirmPurchase } from "../../core-boundary/writers/StockWriter";
-import type { ShoppingListItem } from "../../core-boundary/readers/ShoppingListReader";
+import { confirmPurchase } from "../../infra/writers/StockWriter";
+import type { ShoppingListItem } from "../../infra/readers/ShoppingListReader";
 
 export function ShoppingListMinimal() {
   const { runtime } = useRestaurantRuntime();

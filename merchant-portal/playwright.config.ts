@@ -6,7 +6,9 @@ const startServer = !process.env.E2E_BASE_URL && !process.env.E2E_NO_WEB_SERVER;
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  timeout: 300_000, // 5 minutes for strict ritual
+  timeout: 300_000,
+  fullyParallel: true,
+  workers: process.env.CI ? 3 : undefined,
   use: {
     headless: true, // 👈 Reverted to true (Env limitation)
     slowMo: 800, // 👈 Ritmo humano (ms entre ações)

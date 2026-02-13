@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { useRestaurantId } from "../../core/hooks/useRestaurantId";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
 import { tpvInstaller } from "../../core/modules/tpv/TPVInstaller";
 import type { HealthStatus } from "../../core/modules/types";

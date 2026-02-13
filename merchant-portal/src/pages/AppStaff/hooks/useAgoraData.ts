@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import type { CoreTask } from "../../../core-boundary/docker-core/types";
-import type { ActiveOrderRow } from "../../../core-boundary/readers/OrderReader";
-import { readReadyOrders } from "../../../core-boundary/readers/OrderReader";
-import { readPendingTasksForAgora } from "../../../core-boundary/readers/TaskReader";
+import type { CoreTask } from "../../../infra/docker-core/types";
+import type { ActiveOrderRow } from "../../../infra/readers/OrderReader";
+import { readReadyOrders } from "../../../infra/readers/OrderReader";
+import { readPendingTasksForAgora } from "../../../infra/readers/TaskReader";
 
 export interface AgoraData {
   pendingTasks: CoreTask[];

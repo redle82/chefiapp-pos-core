@@ -8,7 +8,7 @@
  * delay_ratio = delay_seconds / expected_ready_at
  */
 
-import type { CoreOrder, CoreOrderItem } from '../../core-boundary/docker-core/types';
+import type { CoreOrder, CoreOrderItem } from '../../infra/docker-core/types';
 
 export type OrderStatusState = 'normal' | 'attention' | 'delay';
 

@@ -12,11 +12,11 @@ import {
   readShiftChecklistTemplates,
   type ShiftChecklistCompletion,
   type ShiftChecklistTemplate,
-} from "../../core-boundary/readers/ShiftChecklistReader";
+} from "../../infra/readers/ShiftChecklistReader";
 import {
   completeShiftChecklistItem,
   uncompleteShiftChecklistItem,
-} from "../../core-boundary/writers/ShiftChecklistWriter";
+} from "../../infra/writers/ShiftChecklistWriter";
 
 interface ShiftChecklistSectionProps {
   restaurantId: string;

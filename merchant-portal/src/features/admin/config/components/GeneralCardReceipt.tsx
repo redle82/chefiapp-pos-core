@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../../../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../../../../infra/docker-core/connection";
 import {
   BackendType,
   getBackendType,

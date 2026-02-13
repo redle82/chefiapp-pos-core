@@ -9,7 +9,7 @@ import {
   completeTaskRpc,
   rejectTaskRpc,
   startTaskRpc,
-} from "../../../core-boundary/writers/TaskWriter";
+} from "../../../infra/writers/TaskWriter";
 import { updateOrderStatus } from "../../../core/infra/CoreOrdersApi";
 import { useToast } from "../../../ui/design-system";
 import { Button } from "../../../ui/design-system/Button";

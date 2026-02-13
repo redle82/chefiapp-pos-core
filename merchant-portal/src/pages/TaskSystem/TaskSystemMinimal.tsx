@@ -11,14 +11,14 @@
 import { useEffect, useState } from "react";
 import { ShiftChecklistSection } from "../../components/tasks/ShiftChecklistSection";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
-import type { CoreTask } from "../../core-boundary/docker-core/types";
-import { getActiveTurnSessionIdFromStorage } from "../../core-boundary/readers/ShiftChecklistReader";
-import { readOpenTasks } from "../../core-boundary/readers/TaskReader";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
+import type { CoreTask } from "../../infra/docker-core/types";
+import { getActiveTurnSessionIdFromStorage } from "../../infra/readers/ShiftChecklistReader";
+import { readOpenTasks } from "../../infra/readers/TaskReader";
 import {
   generateScheduledTasks,
   generateTasks,
-} from "../../core-boundary/writers/TaskWriter";
+} from "../../infra/writers/TaskWriter";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { isDockerBackend } from "../../core/infra/backendAdapter";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";

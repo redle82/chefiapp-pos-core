@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../App.css";
 import { BootstrapStepIndicator } from "../components/bootstrap/BootstrapStepIndicator";
-import { upsertSetupStatus } from "../core-boundary/writers/RuntimeWriter";
+import { upsertSetupStatus } from "../infra/writers/RuntimeWriter";
 import { DbWriteGate } from "../core/governance/DbWriteGate";
 import { useCoreHealth } from "../core/health";
 import { BackendType, getBackendType } from "../core/infra/backendAdapter";
@@ -314,11 +314,16 @@ export function BootstrapPage({
         // Core gm_restaurants: id, tenant_id, name, slug, description, owner_id, status, billing_status, product_mode (sem country/type/timezone/currency/locale)
         const timestamp = Date.now().toString(36).slice(-6).toLowerCase();
         const slug = `rest-${timestamp}`;
+        const trialEndsAt = new Date(
+          Date.now() + 14 * 24 * 60 * 60 * 1000,
+        ).toISOString();
         const restaurantPayload: Record<string, unknown> = {
           name,
           slug,
           owner_id: user.id,
           status: "active",
+          billing_status: "trial",
+          trial_ends_at: trialEndsAt,
         };
         const { data: restData, error: restError } = await DbWriteGate.insert(
           "BootstrapPage",
@@ -372,6 +377,7 @@ export function BootstrapPage({
                 restaurantName?.trim() || restData.name || "Meu Restaurante",
               onboarding_completed_at: null,
               billing_status: "trial",
+              trial_ends_at: trialEndsAt,
             }),
           );
         }

@@ -13,8 +13,8 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { dockerCoreClient } from "../../../core-boundary/docker-core/connection";
-import { isBackendUnavailable } from "../../../core-boundary/menuPilotFallback";
+import { dockerCoreClient } from "../../../infra/docker-core/connection";
+import { isBackendUnavailable } from "../../../infra/menuPilotFallback";
 import {
   BEFORE_OPEN_TASK_KEYS,
   useBeforeOpenRitual,

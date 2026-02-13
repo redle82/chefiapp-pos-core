@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { OnboardingStepIndicator } from "../../components/onboarding/OnboardingStepIndicator";
 import { ONBOARDING_5MIN_COPY } from "../../copy/onboarding5min";
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { recordLegalConsent } from "../../core/audit/legalConsent";
 import { DbWriteGate } from "../../core/governance/DbWriteGate";
 import { useShift } from "../../core/shift/ShiftContext";

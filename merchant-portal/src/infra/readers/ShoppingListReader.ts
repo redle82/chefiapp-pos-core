@@ -1,0 +1,31 @@
+/**
+ * ShoppingListReader — Lista de compras baseada em estoque abaixo do mínimo.
+ */
+
+import { readStockAlerts } from "./InventoryStockReader";
+
+export interface ShoppingListItem {
+  ingredient_id: string;
+  location_id: string;
+  ingredient_name?: string;
+  location_name?: string;
+  qty: number;
+  min_qty: number;
+  suggested_qty?: number;
+  unit?: string;
+}
+
+export async function generateShoppingList(
+  restaurantId: string
+): Promise<ShoppingListItem[]> {
+  const alerts = await readStockAlerts(restaurantId);
+  return alerts.map((a) => ({
+    ingredient_id: a.ingredient_id,
+    location_id: a.location_id,
+    ingredient_name: a.ingredient_name,
+    location_name: a.location_name,
+    qty: Number(a.qty),
+    min_qty: Number(a.min_qty),
+    suggested_qty: Math.max(0, Number(a.min_qty) - Number(a.qty)),
+  }));
+}

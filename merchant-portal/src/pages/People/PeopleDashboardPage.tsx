@@ -12,7 +12,7 @@ import {
   employeeProfileEngine,
   type EmployeeProfile,
 } from "../../core/people/EmployeeProfileEngine";
-import { useRestaurantId } from "../../core/hooks/useRestaurantId";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 
 const VPC = {

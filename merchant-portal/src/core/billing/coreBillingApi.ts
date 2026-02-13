@@ -48,24 +48,47 @@ export type BillingStatus = "trial" | "active" | "past_due" | "canceled";
 export async function getBillingStatus(
   restaurantId: string,
 ): Promise<BillingStatus | null> {
+  const withTrial = await getBillingStatusWithTrial(restaurantId);
+  if (!withTrial) return null;
+  if (withTrial.trial_expired) return "past_due";
+  return withTrial.status;
+}
+
+/**
+ * Obter billing_status + trial_ends_at para paywall e countdown.
+ * trial_expired = true quando billing_status === 'trial' e now > trial_ends_at.
+ */
+export async function getBillingStatusWithTrial(
+  restaurantId: string,
+): Promise<BillingStatusWithTrial | null> {
   requireCore();
   const url = `${REST}/gm_restaurants?id=eq.${encodeURIComponent(
     restaurantId,
-  )}&select=billing_status&limit=1`;
+  )}&select=billing_status,trial_ends_at&limit=1`;
   const res = await fetch(url, { method: "GET", headers: coreHeaders() });
   if (!res.ok) return null;
   const data = await res.json();
   const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
   const status = row?.billing_status;
+  const trial_ends_at = row?.trial_ends_at ?? null;
   if (
-    status === "trial" ||
-    status === "active" ||
-    status === "past_due" ||
-    status === "canceled"
+    status !== "trial" &&
+    status !== "active" &&
+    status !== "past_due" &&
+    status !== "canceled"
   ) {
-    return status;
+    return null;
   }
-  return null;
+  const now = new Date();
+  const trial_expired =
+    status === "trial" &&
+    trial_ends_at != null &&
+    now > new Date(trial_ends_at);
+  return {
+    status,
+    trial_ends_at,
+    trial_expired,
+  };
 }
 
 /** Dados de status do restaurante (onboarding + billing). Fonte = Core quando Docker. */
@@ -74,6 +97,15 @@ export interface RestaurantStatusRow {
   status?: string;
   onboarding_completed_at: string | null;
   billing_status: BillingStatus | null;
+  trial_ends_at: string | null;
+}
+
+/** Resultado de getBillingStatus com trial_ends_at para paywall/countdown. */
+export interface BillingStatusWithTrial {
+  status: BillingStatus;
+  trial_ends_at: string | null;
+  /** true quando billing_status === 'trial' e now > trial_ends_at */
+  trial_expired: boolean;
 }
 
 /**
@@ -95,6 +127,7 @@ export async function getRestaurantStatus(
           id: string;
           onboarding_completed_at: string | null;
           billing_status: string;
+          trial_ends_at?: string | null;
         };
         if (row.id === restaurantId) {
           const completedAt =
@@ -109,6 +142,7 @@ export async function getRestaurantStatus(
               row.billing_status === "canceled"
                 ? row.billing_status
                 : "trial",
+            trial_ends_at: row.trial_ends_at ?? null,
           };
         }
       } catch {
@@ -118,7 +152,7 @@ export async function getRestaurantStatus(
   }
   const url = `${REST}/gm_restaurants?id=eq.${encodeURIComponent(
     restaurantId,
-  )}&select=id,status,onboarding_completed_at,billing_status&limit=1`;
+  )}&select=id,status,onboarding_completed_at,billing_status,trial_ends_at&limit=1`;
   const res = await fetch(url, {
     method: "GET",
     headers: coreHeaders(),
@@ -145,6 +179,7 @@ export async function getRestaurantStatus(
       status: row.status ?? undefined,
       onboarding_completed_at: row.onboarding_completed_at ?? null,
       billing_status: validStatus ? billingStatus : null,
+      trial_ends_at: row.trial_ends_at ?? null,
     };
   } catch {
     return null;

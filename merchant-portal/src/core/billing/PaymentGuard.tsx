@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { GlobalBlockedView, GlobalLoadingView } from "../../ui/design-system/components";
 import { getTabIsolated } from "../storage/TabIsolatedStorage";
-import { getBillingStatus, type BillingStatus } from "./coreBillingApi";
+import { getBillingStatusWithTrial, type BillingStatus } from "./coreBillingApi";
 
 interface PaymentGuardProps {
   children: React.ReactNode;
@@ -10,30 +10,35 @@ interface PaymentGuardProps {
 
 export const PaymentGuard: React.FC<PaymentGuardProps> = ({ children }) => {
   const [status, setStatus] = useState<BillingStatus | "loading">("loading");
+  const [trialExpired, setTrialExpired] = useState(false);
   const location = useLocation();
 
   const checkBilling = async () => {
     try {
       const rId = getTabIsolated("chefiapp_restaurant_id");
       if (!rId) {
-        setStatus("active"); // Setup mode
+        setStatus("active");
+        setTrialExpired(false);
         return;
       }
 
-      const billingStatus = await getBillingStatus(rId);
+      const withTrial = await getBillingStatusWithTrial(rId);
 
-      if (billingStatus == null) {
+      if (withTrial == null) {
         console.warn(
           "[PaymentGuard] Failed to check status, defaulting to safe (trial).",
         );
-        setStatus("trial"); // Fail Open / Safe
+        setStatus("trial");
+        setTrialExpired(false);
         return;
       }
 
-      setStatus(billingStatus);
+      setStatus(withTrial.trial_expired ? "past_due" : withTrial.status);
+      setTrialExpired(withTrial.trial_expired);
     } catch (err) {
       console.error("[PaymentGuard] Critical Check Error:", err);
-      setStatus("active"); // Fail Open (Economic Law #4)
+      setStatus("active");
+      setTrialExpired(false);
     }
   };
 
@@ -76,6 +81,16 @@ export const PaymentGuard: React.FC<PaymentGuardProps> = ({ children }) => {
         title="Subscrição necessária"
         description="A tua subscrição foi cancelada. Para continuar a usar o ChefIApp Pro, reativa o plano na página de faturação."
         action={{ label: "Reativar plano", to: "/app/billing" }}
+      />
+    );
+  }
+
+  if (status === "past_due" && trialExpired) {
+    return (
+      <GlobalBlockedView
+        title="Período de trial terminado"
+        description="O teu período de trial terminou. Ativa o plano para continuar a usar o ChefIApp."
+        action={{ label: "Escolher plano", to: "/app/billing" }}
       />
     );
   }

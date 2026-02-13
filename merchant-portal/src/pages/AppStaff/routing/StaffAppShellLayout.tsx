@@ -14,6 +14,7 @@ import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppS
 
 /** Design Contract v1: mesma cor de acção (dourado) que o dashboard para "estou no mesmo sistema". */
 const actionAccent = colors.modes.dashboard.action;
+import { OfflineIndicator } from "../../../ui/OfflineIndicator";
 import { AppStaffBootScreen } from "../AppStaffBootScreen";
 import { useStaff } from "../context/StaffContext";
 import { getOperatorProfile } from "../data/operatorProfiles";
@@ -325,6 +326,8 @@ export function StaffAppShellLayout({
         </div>
       </header>
 
+      <OfflineIndicator />
+
       {/* Só no browser: indica como abrir como app (sem barra de URL/abas). Instalado = standalone = não mostra. */}
       {isLauncher && !isStandalone && !openAsAppDismissed && (
         <div
@@ -633,9 +636,22 @@ export function StaffAppShellLayout({
                 paddingTop: 12,
                 borderTop: `1px solid ${colors.border.subtle}`,
                 display: "flex",
-                justifyContent: "center",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 12,
               }}
             >
+              <Link
+                to="/app/help"
+                onClick={() => setMoreOpen(false)}
+                style={{
+                  fontSize: 14,
+                  color: colors.text.secondary,
+                  textDecoration: "none",
+                }}
+              >
+                Ajuda
+              </Link>
               <ChefIAppSignature
                 variant="powered"
                 size="sm"

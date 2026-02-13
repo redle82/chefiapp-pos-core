@@ -21,11 +21,11 @@ import { useParams } from "react-router-dom";
 import type {
   CoreOrder,
   CoreOrderItem,
-} from "../../core-boundary/docker-core/types";
+} from "../../infra/docker-core/types";
 import {
   readActiveOrders,
   readOrderItems,
-} from "../../core-boundary/readers/OrderReader";
+} from "../../infra/readers/OrderReader";
 import styles from "./PublicKDS.module.css";
 
 export function PublicKDS() {
@@ -47,7 +47,7 @@ export function PublicKDS() {
       try {
         // Buscar restaurante por slug primeiro
         const { readRestaurantBySlug } = await import(
-          "../../core-boundary/readers/RestaurantReader"
+          "../../infra/readers/RestaurantReader"
         );
         const restaurant = await readRestaurantBySlug(slug);
 

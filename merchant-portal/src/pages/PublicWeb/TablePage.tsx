@@ -18,11 +18,11 @@ import {
   type CoreProduct,
   type CoreRestaurant,
   type CoreTable,
-} from "../../core-boundary/readers/RestaurantReader";
+} from "../../infra/readers/RestaurantReader";
 import {
   createOrder,
   type OrderItemInput,
-} from "../../core-boundary/writers/OrderWriter";
+} from "../../infra/writers/OrderWriter";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 
 /* VPC — valores locais (QR/Menu = vitrine do cliente) */

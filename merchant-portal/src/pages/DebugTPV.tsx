@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { dockerCoreClient } from "../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../infra/docker-core/connection";
 import {
   getInstalledDevice,
   setInstalledDevice,

@@ -1,5 +1,5 @@
-import type { CoreOrder } from "../../core-boundary/docker-core/types";
-import { readOrdersForAnalytics } from "../../core-boundary/readers/OrderReader";
+import type { CoreOrder } from "../../infra/docker-core/types";
+import { readOrdersForAnalytics } from "../../infra/readers/OrderReader";
 import type { IntegrationEvent } from "../../integrations/types/IntegrationEvent";
 import {
   buildCancellationStats,

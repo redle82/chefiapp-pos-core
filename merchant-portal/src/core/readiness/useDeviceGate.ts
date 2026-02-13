@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from "react";
 import { CONFIG } from "../../config";
-import { listEquipmentByRestaurant } from "../../core-boundary/readers/EquipmentReader";
+import { listEquipmentByRestaurant } from "../../infra/readers/EquipmentReader";
 import { getInstalledDevice } from "../storage/installedDeviceStorage";
 
 export type DeviceBlockedReason =

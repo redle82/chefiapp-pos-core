@@ -5,9 +5,11 @@
  * - Impressão via browser (window.print) - Fallback universal
  * - Impressoras térmicas (80mm) - Futuro
  * - Templates de recibo fiscal
+ * - PT: QR code AT (Portal das Finanças) + ATCUD + número sequencial
  */
 
 import type { TaxDocument } from "../../../../fiscal-modules/types";
+import { buildAtQrUrl } from "../../../../fiscal-modules/pt/atQrUrl";
 
 export interface FiscalPrinterConfig {
   printerType?: "browser" | "thermal" | "fiscal";
@@ -34,18 +36,40 @@ export function buildFiscalReceiptHtml(
   const vatAmount = taxDoc.taxes.vat || 0;
   const subtotal = taxDoc.total_amount - vatAmount;
 
-  const pdfUrl =
-    taxDoc.raw_payload?.pdf_url || taxDoc.raw_payload?.invoice?.pdf?.url;
-  const protocol = taxDoc.raw_payload?.gov_protocol;
-  const qrCodeUrl = pdfUrl
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-        pdfUrl,
-      )}`
-    : protocol
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-        `FISCAL:${protocol}`,
-      )}`
-    : null;
+  const isPt = taxDoc.doc_type === "SAF-T" || taxDoc.doc_type === "MOCK";
+  const nif =
+    orderData.restaurant_nif ||
+    taxDoc.raw_payload?.tax_registration_number ||
+    "";
+  const atcud = taxDoc.raw_payload?.atcud || "";
+  const invoiceNumber =
+    taxDoc.raw_payload?.invoice_number || taxDoc.doc_number || "";
+  const issuedAt =
+    taxDoc.raw_payload?.issued_at || new Date().toISOString();
+  const documentDate = issuedAt.slice(0, 10);
+
+  let qrCodeUrl: string | null = null;
+  if (isPt && nif && atcud) {
+    const atUrl = buildAtQrUrl({
+      nif,
+      atcud,
+      documentDate,
+      total: taxDoc.total_amount,
+      hash: taxDoc.raw_payload?.hash_chain,
+    });
+    qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(atUrl)}`;
+  }
+  if (!qrCodeUrl) {
+    const pdfUrl =
+      taxDoc.raw_payload?.pdf_url || taxDoc.raw_payload?.invoice?.pdf?.url;
+    const protocol = taxDoc.raw_payload?.gov_protocol;
+    if (pdfUrl) {
+      qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pdfUrl)}`;
+    } else if (protocol) {
+      qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`FISCAL:${protocol}`)}`;
+    }
+  }
+
   const legalFooter = orderData.legal_footer || orderData.legalFooter || "";
 
   return `<!DOCTYPE html>
@@ -158,6 +182,21 @@ export function buildFiscalReceiptHtml(
               orderData.short_id || orderData.id?.substring(0, 8) || "N/A"
             }
         </div>
+        ${
+          invoiceNumber
+            ? `<div class="document-info">Nº documento: ${invoiceNumber}</div>`
+            : ""
+        }
+        ${
+          atcud
+            ? `<div class="document-info">ATCUD: ${atcud}</div>`
+            : ""
+        }
+        ${
+          nif
+            ? `<div class="document-info">NIF: ${nif}</div>`
+            : ""
+        }
         <div class="document-info">
             ${dateStr} ${timeStr}
         </div>
@@ -579,27 +618,38 @@ export class FiscalPrinter {
   }
 
   /**
-   * Gera URL de QR Code para o recibo
-   * Inclui link para visualizar fatura online (se disponível)
+   * Gera URL de QR Code para o recibo.
+   * PT (SAF-T/MOCK): usa URL de validação AT (Portal das Finanças).
+   * Outros: PDF ou protocolo fiscal.
    */
   public generateQRCodeUrl(taxDoc: TaxDocument, orderData: any): string | null {
-    // Se tiver PDF URL do InvoiceXpress, usar isso
+    const isPt = taxDoc.doc_type === "SAF-T" || taxDoc.doc_type === "MOCK";
+    const nif =
+      orderData.restaurant_nif || taxDoc.raw_payload?.tax_registration_number || "";
+    const atcud = taxDoc.raw_payload?.atcud || "";
+    const issuedAt = taxDoc.raw_payload?.issued_at || new Date().toISOString();
+    const documentDate = issuedAt.slice(0, 10);
+
+    if (isPt && nif && atcud) {
+      const atUrl = buildAtQrUrl({
+        nif,
+        atcud,
+        documentDate,
+        total: taxDoc.total_amount,
+        hash: taxDoc.raw_payload?.hash_chain,
+      });
+      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(atUrl)}`;
+    }
+
     const pdfUrl =
       taxDoc.raw_payload?.pdf_url || taxDoc.raw_payload?.invoice?.pdf?.url;
     if (pdfUrl) {
-      // Gerar QR Code usando API pública (ex: qr-server.com)
-      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-        pdfUrl,
-      )}`;
+      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pdfUrl)}`;
     }
 
-    // Fallback: QR Code com protocolo fiscal
     const protocol = taxDoc.raw_payload?.gov_protocol;
     if (protocol) {
-      const qrData = `FISCAL:${protocol}`;
-      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-        qrData,
-      )}`;
+      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`FISCAL:${protocol}`)}`;
     }
 
     return null;

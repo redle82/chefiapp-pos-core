@@ -8,14 +8,14 @@ import { useEffect, useState } from "react";
 import type {
   CoreRestaurantTable,
   CoreRestaurantZone,
-} from "../../core-boundary/docker-core/types";
-import { readTables, readZones } from "../../core-boundary/readers/MapReader";
+} from "../../infra/docker-core/types";
+import { readTables, readZones } from "../../infra/readers/MapReader";
 import {
   deactivateTable,
   deactivateZone,
   upsertTable,
   upsertZone,
-} from "../../core-boundary/writers/MapWriter";
+} from "../../infra/writers/MapWriter";
 
 interface MapBuilderMinimalProps {
   restaurantId: string;

@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { readMenuCatalog } from "../../core-boundary/readers/MenuCatalogReader";
+import { readMenuCatalog } from "../../infra/readers/MenuCatalogReader";
 import type { CatalogCategory, MenuRestaurant } from "./types";
 
 export interface UseMenuCatalogResult {

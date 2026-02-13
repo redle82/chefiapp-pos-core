@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useOnboarding } from "../../../context/OnboardingContext";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import {
   BackendType,

@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
 import {
   readEquipment,
   readIngredients,
@@ -20,7 +20,7 @@ import {
   type CoreEquipment,
   type CoreIngredient,
   type CoreLocation,
-} from "../../core-boundary/readers/InventoryStockReader";
+} from "../../infra/readers/InventoryStockReader";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import styles from "./InventoryStockMinimal.module.css";

@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from "react";
-import { createTaskRpc } from "../../../core-boundary/writers/TaskWriter";
+import { createTaskRpc } from "../../../infra/writers/TaskWriter";
 import { useToast } from "../../../ui/design-system";
 import { Button } from "../../../ui/design-system/Button";
 import { Card } from "../../../ui/design-system/Card";

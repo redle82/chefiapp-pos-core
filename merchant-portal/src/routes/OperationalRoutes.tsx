@@ -1,7 +1,9 @@
 /**
  * Rotas operacionais (public/:slug, RoleGate, op/, app/staff/, admin/, config/).
- * Desfragmentação: extraídas de App.tsx. Uso: <Routes><OperationalRoutes /></Routes>
+ * Exporta Fragment para usar como filho direto de <Routes> (React Router v6).
+ * Uso: <Routes>{OperationalRoutesFragment}</Routes>
  */
+import { Fragment } from "react";
 import { Navigate, Outlet, Route } from "react-router-dom";
 import { ManagementAdvisor } from "../components/onboarding/ManagementAdvisor";
 import { OperationalFullscreenWrapper } from "../components/operational/OperationalFullscreenWrapper";
@@ -97,6 +99,7 @@ import { EmployeeHomePage } from "../pages/Employee/HomePage";
 import { EmployeeKDSIntelligentPage } from "../pages/Employee/KDSIntelligentPage";
 import { EmployeeOperationPage } from "../pages/Employee/OperationPage";
 import { EmployeeTasksPage } from "../pages/Employee/TasksPage";
+import { HelpPage } from "../pages/Help/HelpPage";
 import { HealthDashboardPage } from "../pages/Health/HealthDashboardPage";
 import { InstallPage } from "../pages/InstallPage";
 import { InventoryStockMinimal } from "../pages/InventoryStock/InventoryStockMinimal";
@@ -122,6 +125,7 @@ import { TablePage } from "../pages/PublicWeb/TablePage";
 import { PublishPage } from "../pages/PublishPage";
 import { PurchasesDashboardPage } from "../pages/Purchases/PurchasesDashboardPage";
 import { DailyClosingReportPage } from "../pages/Reports/DailyClosingReportPage";
+import { SaftExportPage } from "../pages/Reports/SaftExportPage";
 import { GamificationImpactReportPage } from "../pages/Reports/GamificationImpactReportPage";
 import { OperationalActivityReportPage } from "../pages/Reports/OperationalActivityReportPage";
 import { SalesByPeriodReportPage } from "../pages/Reports/SalesByPeriodReportPage";
@@ -137,10 +141,9 @@ import { TaskDashboardPage } from "../pages/Tasks/TaskDashboardPage";
 import { TaskDetailPage } from "../pages/Tasks/TaskDetailPage";
 import { ErrorBoundary } from "../ui/design-system/ErrorBoundary";
 import { GlobalBlockedView } from "../ui/design-system/components/GlobalBlockedView";
-export function OperationalRoutes() {
-  return (
-    <>
-      <Route path="/public/:slug" element={<PublicWebPage />} />
+export const OperationalRoutesFragment = (
+  <Fragment>
+    <Route path="/public/:slug" element={<PublicWebPage />} />
       <Route path="/public/:slug/mesa/:number" element={<TablePage />} />
       <Route
         path="/public/:slug/order/:orderId"
@@ -1044,10 +1047,26 @@ export function OperationalRoutes() {
           }
         />
         <Route
+          path="/app/help"
+          element={
+            <ManagementAdvisor>
+              <HelpPage />
+            </ManagementAdvisor>
+          }
+        />
+        <Route
           path="/app/reports/daily-closing"
           element={
             <ManagementAdvisor>
               <DailyClosingReportPage />
+            </ManagementAdvisor>
+          }
+        />
+        <Route
+          path="/app/reports/saft-export"
+          element={
+            <ManagementAdvisor>
+              <SaftExportPage />
             </ManagementAdvisor>
           }
         />
@@ -1080,6 +1099,5 @@ export function OperationalRoutes() {
         {/* Tela neutra de reset (padrão) */}
         <Route path="*" element={<CoreResetPage />} />
       </Route>
-    </>
-  );
-}
+  </Fragment>
+);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ContextEngineProvider } from "../../../core/context";
-import { useKeyboardShortcuts } from "../../../core/hooks/useKeyboardShortcuts";
+import { useKeyboardShortcuts } from "../../../ui/hooks/useKeyboardShortcuts";
 import { StaffLayout } from "../../../ui/design-system/layouts/StaffLayout";
 import { Button } from "../../../ui/design-system/Button";
 import { Card } from "../../../ui/design-system/Card";

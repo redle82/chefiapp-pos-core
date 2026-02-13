@@ -9,7 +9,8 @@ import { useCallback, useEffect, useState } from "react";
 import {
   getPilotProducts,
   type PilotProductStored,
-} from "../../../../core-boundary/menuPilotFallback";
+} from "../../../../infra/menuPilotFallback";
+import { MenuCache } from "../../../sync/MenuCache";
 import { DynamicMenuService } from "../DynamicMenuService";
 import type {
   CategoryWithProducts,
@@ -58,9 +59,18 @@ export function useDynamicMenu(
       setLoading(true);
       setError(null);
 
-      // B1 Fallback: If core is unreachable, use pilot products
-      if (coreReachable === false) {
-        console.warn("[useDynamicMenu] Core unreachable, using B1 fallback");
+      // Offline / Core unreachable: try menu cache first, then pilot
+      const isOffline =
+        typeof navigator !== "undefined" && !navigator.onLine;
+      if (coreReachable === false || isOffline) {
+        const cached = await MenuCache.get(restaurantId);
+        if (cached && typeof cached === "object" && "fullCatalog" in cached) {
+          setMenu(cached as DynamicMenuResponse);
+          return;
+        }
+        console.warn(
+          "[useDynamicMenu] Core unreachable or offline, using pilot fallback",
+        );
         const pilot = getPilotProducts(restaurantId);
         const mapped: ProductWithScore[] = pilot.map(
           (p: PilotProductStored) => ({
@@ -97,9 +107,21 @@ export function useDynamicMenu(
       });
 
       setMenu(result);
+      try {
+        await MenuCache.put(restaurantId, result);
+      } catch (e) {
+        console.warn("[useDynamicMenu] Menu cache write failed:", e);
+      }
     } catch (err) {
       setError(err as Error);
       console.error("[useDynamicMenu] Load failed:", err);
+
+      // Try menu cache on network failure
+      const cached = await MenuCache.get(restaurantId).catch(() => null);
+      if (cached && typeof cached === "object" && "fullCatalog" in cached) {
+        setMenu(cached as DynamicMenuResponse);
+        return;
+      }
 
       // Guardrail FK: só usar pilot products quando Core está unreachable (evitar 409)
       if (coreReachable === false) {

@@ -39,7 +39,7 @@ describe("backendClient", () => {
   it("aliases dockerCoreClient to backendClient", async () => {
     const mod = await setup("");
     const connection = await import(
-      "../../core-boundary/docker-core/connection"
+      "../../infra/docker-core/connection"
     );
     expect(connection.dockerCoreClient).toBe(mod.backendClient);
   });

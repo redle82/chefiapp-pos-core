@@ -11,7 +11,7 @@ import { ShiftChecklistSection } from "../../components/tasks/ShiftChecklistSect
 import { TaskCard } from "../../components/tasks/TaskCard";
 import { TaskSuggestions } from "../../components/tasks/TaskSuggestions";
 import { TaskSuggestionsMentorEngine } from "../../components/tasks/TaskSuggestionsMentorEngine";
-import { useRestaurantId } from "../../core/hooks/useRestaurantId";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import { useMentorshipMessages } from "../../core/intelligence/useMentorshipMessages";
 import {
   taskFiltering,

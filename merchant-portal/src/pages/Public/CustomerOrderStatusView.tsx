@@ -21,8 +21,8 @@ import { useParams } from "react-router-dom";
 import type {
   CoreOrder,
   CoreOrderItem,
-} from "../../core-boundary/docker-core/types";
-import { readOrderById } from "../../core-boundary/readers/OrderReader";
+} from "../../infra/docker-core/types";
+import { readOrderById } from "../../infra/readers/OrderReader";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import styles from "./CustomerOrderStatusView.module.css";
 
@@ -130,7 +130,7 @@ export function CustomerOrderStatusView() {
         }
 
         const items = await import(
-          "../../core-boundary/readers/OrderReader"
+          "../../infra/readers/OrderReader"
         ).then((m) => m.readOrderItems(orderId));
 
         setOrder({

@@ -6,7 +6,7 @@
  */
 
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { useRestaurantId } from "../../core/hooks/useRestaurantId";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import { useOperationalMetrics } from "../../hooks/useOperationalMetrics";
 
 function formatCents(cents: number): string {

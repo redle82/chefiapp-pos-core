@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CONFIG } from "../../../config";
-import { createOrder } from "../../../core-boundary/writers/OrderWriter";
+import { createOrder } from "../../../infra/writers/OrderWriter";
 import { toUserMessage } from "../../../ui/errors";
 
 const VPC = {

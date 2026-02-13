@@ -6,8 +6,8 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
-import { isBackendUnavailable } from "../../core-boundary/menuPilotFallback";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
+import { isBackendUnavailable } from "../../infra/menuPilotFallback";
 
 export function PublicPresenceFields() {
   const { identity } = useRestaurantIdentity();

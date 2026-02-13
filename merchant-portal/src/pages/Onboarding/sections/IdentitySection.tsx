@@ -7,7 +7,7 @@
 import React, { useEffect, useRef } from "react";
 import { useOnboardingOptional } from "../../../context/OnboardingContext";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import { useCoreAuth } from "../../../core/auth/useCoreAuth";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import {
@@ -75,7 +75,7 @@ export function IdentitySection() {
     if (onboarding || !runtime.restaurant_id) return;
 
     // Load from DB
-    import("../../../core-boundary/readers/RuntimeReader").then(
+    import("../../../infra/readers/RuntimeReader").then(
       ({ fetchRestaurant }) => {
         fetchRestaurant(runtime.restaurant_id!).then((row) => {
           if (row) {
@@ -209,7 +209,9 @@ export function IdentitySection() {
             type: formData.type,
           });
 
-          // Preparar dados para inserção
+          const trialEndsAt = new Date(
+            Date.now() + 14 * 24 * 60 * 60 * 1000,
+          ).toISOString();
           const restaurantData: any = {
             name: formData.name,
             slug: slug,
@@ -219,6 +221,8 @@ export function IdentitySection() {
             timezone: formData.timezone || "America/Sao_Paulo",
             currency: formData.currency || "BRL",
             locale: formData.locale || "pt-BR",
+            billing_status: "trial",
+            trial_ends_at: trialEndsAt,
           };
 
           // Adicionar owner_id apenas se tiver (Docker Core permite NULL)

@@ -9,7 +9,7 @@ import { useCallback, useMemo, useState } from "react";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { currencyService } from "../../core/currency/CurrencyService";
-import { useRestaurantId } from "../../core/hooks/useRestaurantId";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import {
   useShiftHistory,
   type ShiftHistoryItem,

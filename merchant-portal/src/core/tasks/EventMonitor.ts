@@ -10,11 +10,11 @@
  * - Funciona em DEV_STABLE_MODE com fallbacks seguros
  */
 
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
 import {
   getLastOrderCreatedAt,
   readActiveOrders,
-} from "../../core-boundary/readers/OrderReader";
+} from "../../infra/readers/OrderReader";
 import { alertEngine } from "../alerts/AlertEngine";
 import { getAlertThresholds } from "../alerts/alertThresholds";
 import { CashRegisterEngine } from "../tpv/CashRegister";

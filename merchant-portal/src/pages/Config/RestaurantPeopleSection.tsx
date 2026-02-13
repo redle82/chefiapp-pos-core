@@ -7,12 +7,12 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { QRCodeGenerator } from "../../components/QRCodeGenerator";
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
-import { isBackendUnavailable } from "../../core-boundary/menuPilotFallback";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
+import { isBackendUnavailable } from "../../infra/menuPilotFallback";
 import {
   readRestaurantPeople,
   type CoreRestaurantPerson,
-} from "../../core-boundary/readers/RestaurantPeopleReader";
+} from "../../infra/readers/RestaurantPeopleReader";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import styles from "./RestaurantPeopleSection.module.css";
 

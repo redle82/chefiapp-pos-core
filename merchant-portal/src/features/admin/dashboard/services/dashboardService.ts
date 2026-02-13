@@ -1,8 +1,8 @@
-import { dockerCoreClient } from "../../../../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../../../../infra/docker-core/connection";
 import type {
   CoreOrder,
   CoreTable,
-} from "../../../../core-boundary/docker-core/types";
+} from "../../../../infra/docker-core/types";
 import { alertEngine } from "../../../../core/alerts/AlertEngine";
 import type { DashboardOverview } from "../types";
 

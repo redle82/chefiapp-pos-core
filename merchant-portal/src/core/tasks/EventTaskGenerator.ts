@@ -9,7 +9,7 @@
  */
 
 import type { PulseZone } from "../../../../core-engine/pulse";
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { getAlertThresholds } from "../alerts/alertThresholds";
 
 export interface TaskRule {

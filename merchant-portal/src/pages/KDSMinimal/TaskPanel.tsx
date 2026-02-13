@@ -7,12 +7,12 @@
 
 import { useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import type { CoreTask } from "../../core-boundary/docker-core/types";
-import { readOpenTasks } from "../../core-boundary/readers/TaskReader";
+import type { CoreTask } from "../../infra/docker-core/types";
+import { readOpenTasks } from "../../infra/readers/TaskReader";
 import {
   acknowledgeTask,
   resolveTask,
-} from "../../core-boundary/writers/TaskWriter";
+} from "../../infra/writers/TaskWriter";
 
 interface TaskPanelProps {
   restaurantId: string;

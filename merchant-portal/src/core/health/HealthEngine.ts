@@ -7,7 +7,7 @@
  * PURE DOCKER MODE: Usa TaskReader (dockerCoreClient) em vez de supabase.
  */
 
-import { readOpenTasksByRestaurant } from "../../core-boundary/readers/TaskReader";
+import { readOpenTasksByRestaurant } from "../../infra/readers/TaskReader";
 
 export interface OperationalHealth {
   id: string;

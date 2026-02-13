@@ -18,9 +18,9 @@
  * - globalUI: isLoadingCritical → loading; isError → erro + retry; isEmpty → empty_orders.
  *
  * DEPENDÊNCIAS REAIS
- * - OrderReader (core-boundary): readActiveOrders(restaurantId), readOrderItems(orderId) — Docker Core.
+ * - OrderReader (infra): readActiveOrders(restaurantId), readOrderItems(orderId) — Docker Core.
  * - TaskReader: readOpenTasks(restaurantId).
- * - OrderWriter (core-boundary): updateOrderStatus(orderId, "IN_PREP", restaurantId), markItemReady(itemId, restaurantId).
+ * - OrderWriter (infra): updateOrderStatus(orderId, "IN_PREP", restaurantId), markItemReady(itemId, restaurantId).
  * - useOperationalReadiness("KDS"), useShift, useBootstrapState, useRestaurantRuntime (coreReachable para loadOrders).
  */
 
@@ -35,15 +35,15 @@ import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import type {
   CoreOrderItem,
   CoreTask,
-} from "../../core-boundary/docker-core/types";
-import { isNetworkError } from "../../core-boundary/menuPilotFallback";
+} from "../../infra/docker-core/types";
+import { isNetworkError } from "../../infra/menuPilotFallback";
 import {
   readActiveOrders,
   readOrderItems,
   type ActiveOrderRow,
-} from "../../core-boundary/readers/OrderReader";
-import { readOpenTasks } from "../../core-boundary/readers/TaskReader";
-import { markItemReady } from "../../core-boundary/writers/OrderWriter";
+} from "../../infra/readers/OrderReader";
+import { readOpenTasks } from "../../infra/readers/TaskReader";
+import { markItemReady } from "../../infra/writers/OrderWriter";
 import { isDockerBackend } from "../../core/infra/backendAdapter";
 import { updateOrderStatus as coreUpdateOrderStatus } from "../../core/infra/CoreOrdersApi";
 import {

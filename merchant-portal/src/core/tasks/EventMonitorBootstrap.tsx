@@ -14,7 +14,7 @@
  */
 
 import { useEffect } from "react";
-import { useRestaurantId } from "../hooks/useRestaurantId";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import { eventMonitor } from "./EventMonitor";
 
 /**

@@ -10,8 +10,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useRestaurantRuntime } from "../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../core-boundary/docker-core/connection";
-import { insertInstalledModule } from "../core-boundary/writers/RuntimeWriter";
+import { dockerCoreClient } from "../infra/docker-core/connection";
+import { insertInstalledModule } from "../infra/writers/RuntimeWriter";
 import { BackendType, getBackendType } from "../core/infra/backendAdapter";
 import {
   setInstalledDevice,

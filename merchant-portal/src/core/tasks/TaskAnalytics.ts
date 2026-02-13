@@ -7,12 +7,12 @@
  * SUPABASE/OUTROS: Retorna métricas vazias (shape compatível com a UI).
  */
 
-import type { CoreTask } from "../../core-boundary/docker-core/types";
+import type { CoreTask } from "../../infra/docker-core/types";
 import {
   readTasksForAnalytics,
   readTaskHistory,
   readEmployeeTaskHistory,
-} from "../../core-boundary/readers/TaskReader";
+} from "../../infra/readers/TaskReader";
 import { BackendType, getBackendType } from "../infra/backendAdapter";
 
 /** Tarefa no shape interno usado pela lógica de analytics (status "completed" | "overdue" etc.). */

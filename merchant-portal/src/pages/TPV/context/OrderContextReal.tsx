@@ -27,7 +27,7 @@ import {
 } from "../../../core/tpv/OrderEngine";
 import { PaymentEngine } from "../../../core/tpv/PaymentEngine";
 // DOCKER CORE: Usar dockerCoreClient em vez de supabase genérico
-import { dockerCoreClient } from "../../../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import { updateOrderStatus as coreUpdateOrderStatus } from "../../../core/infra/CoreOrdersApi";
 import {
   tpvEventBus,

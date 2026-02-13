@@ -33,7 +33,7 @@ export const LiveRosterWidget: React.FC<LiveRosterWidgetProps> = ({ restaurantId
             setLoading(true);
             // FASE 3.5: Usa ShiftReader (dockerCoreClient) em vez de supabase direto
             try {
-                const { readActiveShifts } = await import('../../../core-boundary/readers/ShiftReader');
+                const { readActiveShifts } = await import('../../../infra/readers/ShiftReader');
                 const shifts = await readActiveShifts(restaurantId);
 
                 // Map the joined data

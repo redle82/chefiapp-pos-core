@@ -4,8 +4,8 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
-import { readActiveOrders, readOrderItems } from '../../../core-boundary/readers/OrderReader';
-import type { CoreOrder, CoreOrderItem } from '../../../core-boundary/docker-core/types';
+import { readActiveOrders, readOrderItems } from '../../../infra/readers/OrderReader';
+import type { CoreOrder, CoreOrderItem } from '../../../infra/docker-core/types';
 import { OriginBadge } from './OriginBadge';
 import { calculateOrderStatus } from '../../KDSMinimal/OrderStatusCalculator';
 

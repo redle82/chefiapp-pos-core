@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { CoreOrderItem } from '../../core-boundary/docker-core/types';
+import type { CoreOrderItem } from '../../infra/docker-core/types';
 
 interface ItemTimerProps {
   item: CoreOrderItem;

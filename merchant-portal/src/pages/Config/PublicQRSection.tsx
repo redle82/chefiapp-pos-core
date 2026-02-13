@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
-import { readRestaurantById } from "../../core-boundary/readers/RestaurantReader";
+import { readRestaurantById } from "../../infra/readers/RestaurantReader";
 import { QRCodeGenerator, buildTableQRUrl } from "../../components/QRCodeGenerator";
 
 function buildMenuUrl(slug: string, baseUrl?: string): string {

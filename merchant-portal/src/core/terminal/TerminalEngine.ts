@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
 
 export type TerminalType = "TPV" | "KDS" | "WAITER" | "BACKOFFICE" | "ADMIN";
 

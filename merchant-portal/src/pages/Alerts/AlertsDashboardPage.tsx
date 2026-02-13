@@ -15,7 +15,7 @@ import {
   type AlertCategory,
   type AlertSeverity,
 } from "../../core/alerts/AlertEngine";
-import { useRestaurantId } from "../../core/hooks/useRestaurantId";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import styles from "./AlertsDashboardPage.module.css";
 

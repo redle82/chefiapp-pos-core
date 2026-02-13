@@ -12,11 +12,11 @@ import { useEffect, useState } from "react";
 import type {
   CoreOrder,
   CoreOrderItem,
-} from "../../../core-boundary/docker-core/types";
+} from "../../../infra/docker-core/types";
 import {
   readActiveOrders,
   readOrderItems,
-} from "../../../core-boundary/readers/OrderReader";
+} from "../../../infra/readers/OrderReader";
 
 interface UseAppStaffOrdersResult {
   orders: (CoreOrder & { items: CoreOrderItem[] })[];

@@ -15,11 +15,11 @@ import {
   type CoreMenuCategory,
   type CoreProduct,
   type CoreRestaurant,
-} from "../../core-boundary/readers/RestaurantReader";
+} from "../../infra/readers/RestaurantReader";
 import {
   createOrder,
   type OrderItemInput,
-} from "../../core-boundary/writers/OrderWriter";
+} from "../../infra/writers/OrderWriter";
 import { MENU_NOT_LIVE_WEB_MESSAGE } from "../../core/menu/MenuState";
 import { BlockingScreen, useOperationalReadiness } from "../../core/readiness";
 import { GlobalBlockedView } from "../../ui/design-system/components";

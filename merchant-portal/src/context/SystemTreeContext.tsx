@@ -11,7 +11,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { dockerCoreClient } from "../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../infra/docker-core/connection";
 import { useRestaurantIdentity } from "../core/identity/useRestaurantIdentity";
 import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
 import {

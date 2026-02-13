@@ -3,7 +3,7 @@ import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import {
   fetchRestaurantForIdentity,
   getOrCreateRestaurantId,
-} from "../../core-boundary/readers/RuntimeReader";
+} from "../../infra/readers/RuntimeReader";
 import { isDockerBackend } from "../infra/backendAdapter";
 import { RUNTIME_MODE } from "../kernel/RuntimeContext";
 import { configureSentryScope } from "../logger/Logger";

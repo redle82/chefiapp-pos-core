@@ -60,7 +60,7 @@ import { OrderProvider, useOrders } from "./context/OrderContextReal";
 import { TableProvider } from "./context/TableContext";
 
 import { SyncStatusIndicator } from "../../components/SyncStatusIndicator";
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { FiscalPrinter } from "../../core/fiscal/FiscalPrinter";
 import { requestPrint } from "../../core/print/CorePrintApi";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";

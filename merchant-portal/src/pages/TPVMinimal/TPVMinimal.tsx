@@ -18,10 +18,11 @@ import { DevicePairingView } from "../../features/auth/connectByCode/DevicePairi
 import { CONFIG } from "../../config";
 import { useGlobalUIState } from "../../context/GlobalUIStateContext";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../core-boundary/docker-core/connection";
-import { getPilotProducts } from "../../core-boundary/menuPilotFallback";
-import { createMenuItem } from "../../core-boundary/writers/MenuWriter";
-import { createOrder } from "../../core-boundary/writers/OrderWriter";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
+import { MenuCache } from "../../core/sync/MenuCache";
+import { getPilotProducts } from "../../infra/menuPilotFallback";
+import { createMenuItem } from "../../infra/writers/MenuWriter";
+import { createOrder } from "../../infra/writers/OrderWriter";
 import { isDockerBackend } from "../../core/infra/backendAdapter";
 import {
   BlockingScreen,
@@ -150,9 +151,42 @@ export function TPVMinimal({
       bootstrap.publishStatus === "publicado");
 
   // --- HELPER FUNCTIONS ---
-  // Carregar produtos do cardápio via Docker Core; só chamado quando bootstrap.coreStatus === 'online'
+  // Carregar produtos do cardápio via Docker Core; quando offline/unreachable tenta menu em cache (IndexedDB).
   const loadProducts = async (isCoreReachable: boolean | undefined) => {
-    if (!isCoreReachable) {
+    const isOffline =
+      typeof navigator !== "undefined" && !navigator.onLine;
+    if (!isCoreReachable || isOffline) {
+      const cached = await MenuCache.get(effectiveRestaurantId).catch(
+        () => null,
+      );
+      const menuLike = cached as
+        | { fullCatalog?: Array<{ products?: Array<{ id: string; name: string; price_cents: number; available?: boolean }> }> }
+        | null;
+      if (
+        menuLike?.fullCatalog &&
+        Array.isArray(menuLike.fullCatalog) &&
+        menuLike.fullCatalog.length > 0
+      ) {
+        const list: Product[] = [];
+        for (const cat of menuLike.fullCatalog) {
+          for (const p of cat.products ?? []) {
+            list.push({
+              id: p.id,
+              name: p.name,
+              price_cents: p.price_cents,
+              available: p.available ?? true,
+              restaurant_id: effectiveRestaurantId,
+            });
+          }
+        }
+        if (list.length > 0) {
+          setProducts(list);
+          setIsCoreUnreachable(false);
+          globalUI.setScreenEmpty(false);
+          globalUI.setScreenLoading(false);
+          return;
+        }
+      }
       setProducts([]);
       setIsCoreUnreachable(true);
       globalUI.setScreenEmpty(true);
@@ -190,6 +224,38 @@ export function TPVMinimal({
       globalUI.setScreenEmpty(list.length === 0);
       setIsCoreUnreachable(false);
     } catch (err) {
+      const cached = await MenuCache.get(effectiveRestaurantId).catch(
+        () => null,
+      );
+      const menuLike = cached as
+        | { fullCatalog?: Array<{ products?: Array<{ id: string; name: string; price_cents: number; available?: boolean }> }> }
+        | null;
+      if (
+        menuLike?.fullCatalog &&
+        Array.isArray(menuLike.fullCatalog) &&
+        menuLike.fullCatalog.length > 0
+      ) {
+        const list: Product[] = [];
+        for (const cat of menuLike.fullCatalog) {
+          for (const p of cat.products ?? []) {
+            list.push({
+              id: p.id,
+              name: p.name,
+              price_cents: p.price_cents,
+              available: p.available ?? true,
+              restaurant_id: effectiveRestaurantId,
+            });
+          }
+        }
+        if (list.length > 0) {
+          setProducts(list);
+          setIsCoreUnreachable(false);
+          globalUI.setScreenEmpty(false);
+          globalUI.setScreenError(null);
+          globalUI.setScreenLoading(false);
+          return;
+        }
+      }
       setIsCoreUnreachable(true);
       setProducts([]);
       globalUI.setScreenEmpty(true);
@@ -225,9 +291,8 @@ export function TPVMinimal({
     if (shouldLoad) {
       loadProducts(true);
     } else {
-      setProducts([]);
-      globalUI.setScreenEmpty(true);
-      globalUI.setScreenLoading(false);
+      // Offline / Core unreachable: try menu cache (loadProducts(false) tries cache)
+      loadProducts(false);
     }
   }, [effectiveRestaurantId, bootstrap.coreStatus, isPreview]);
 
@@ -385,7 +450,7 @@ export function TPVMinimal({
 
   // TENTEI IMPORTAR createMenuItem mas não está no escopo deste arquivo.
   // Vou usar fetch direto para upsert se necessário, ou melhor:
-  // Como `createMenuItem` é exportado de ../../core-boundary/writers/MenuWriter
+  // Como `createMenuItem` é exportado de ../../infra/writers/MenuWriter
   // precisamos importar no topo do arquivo. Vou adicionar o import via replace separado ou assumir que fiz.
   // Criar pedido via Docker Core RPC; guardrail bootstrap: não disparar sem estado válido
   const handleCreateOrder = async () => {

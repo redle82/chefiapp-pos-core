@@ -5,7 +5,7 @@
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { TerminalEquipmentRow } from "../../core-boundary/readers/EquipmentReader";
+import type { TerminalEquipmentRow } from "../../infra/readers/EquipmentReader";
 import type { InstalledDevice } from "../storage/installedDeviceStorage";
 import { useDeviceGate } from "./useDeviceGate";
 
@@ -16,7 +16,7 @@ vi.mock("../storage/installedDeviceStorage", () => ({
   getInstalledDevice: () => mockGetInstalledDevice(),
 }));
 
-vi.mock("../../core-boundary/readers/EquipmentReader", () => ({
+vi.mock("../../infra/readers/EquipmentReader", () => ({
   listEquipmentByRestaurant: (restaurantId: string) =>
     mockListEquipmentByRestaurant(restaurantId),
 }));

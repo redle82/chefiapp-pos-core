@@ -6,7 +6,7 @@
 
 import { getErrorsLast24hCount as getErrorsLast24hCountFromStore } from "../../../../core/observability/errorsStore";
 import { getAverageLatencyMs as getAverageLatencyMsFromStore } from "../../../../core/observability/latencyStore";
-import { dockerCoreClient } from "../../../../core-boundary/docker-core/connection";
+import { dockerCoreClient } from "../../../../infra/docker-core/connection";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
