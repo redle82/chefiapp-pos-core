@@ -118,6 +118,8 @@ Exemplos de candidatos a arquivar (se ainda estiverem na raiz de `docs/`): notas
 - **Estado histórico (jan 2026):** [ESTADO_ATUAL_2026_01_28.md](ESTADO_ATUAL_2026_01_28.md) — Checkpoint anterior
 - **Transformação produto:** [TRANSFORMACAO_PRODUTO_COMPLETA.md](TRANSFORMACAO_PRODUTO_COMPLETA.md) — Resumo da transformação de técnico para produto
 - **Sessão completa:** [SESSAO_TRANSFORMACAO_PRODUTO.md](SESSAO_TRANSFORMACAO_PRODUTO.md) — Resumo executivo desta sessão
+- **Ciclo refatoração 2026-02:** [audit/REFATORACAO_CICLO_2026_02.md](audit/REFATORACAO_CICLO_2026_02.md) — Checkpoint do que foi feito (rotas, legacy, DORMANT).
+- **Backlog issues:** [audit/BACKLOG_ISSUES_2026_02.md](audit/BACKLOG_ISSUES_2026_02.md) — Títulos e descrições para criar issues no GitHub.
 - **Contrato ativo:** [STATE_PURE_DOCKER_APP_LAYER.md](STATE_PURE_DOCKER_APP_LAYER.md) + [contracts/](contracts/) + SYSTEM_TREE e GUIA_VALIDACAO_RUNTIME quando aplicável.
 - **Uso e Demo Guide:** README na raiz + DEMO_SCRIPT e TROUBLESHOOTING conforme necessário.
 - **Histórico:** tudo que não descreve o estado atual → `docs/archive/` com header ARCHIVED; nada é eliminado.
