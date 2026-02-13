@@ -4,7 +4,7 @@
 # Comandos úteis para gerenciar o Core Docker
 # =============================================================================
 
-.PHONY: up down reset logs ps validate test-rpc migrate-product-mode migrate-onboarding-completed migrate-terminals migrate-staff migrate-restaurant-people help
+.PHONY: up down reset logs ps validate test-rpc migrate-product-mode migrate-onboarding-completed migrate-terminals migrate-staff migrate-restaurant-people migrate-trial-ends-at help
 
 # Default target
 help:
@@ -28,6 +28,7 @@ help:
 	@echo "  make migrate-menu-catalog - Aplicar tabelas gm_catalog_* (menu digital /menu-v2)"
 	@echo "  make migrate-menu-catalog-seed - Seed opcional do catálogo (dados de exemplo)"
 	@echo "  make migrate-restaurant-people - Aplicar tabela gm_restaurant_people (pessoas operacionais / AppStaff)"
+	@echo "  make migrate-trial-ends-at - Aplicar coluna trial_ends_at (gm_restaurants; paywall FASE 1)"
 	@echo "  make test-global            - Teste global: tabelas + TPV + tarefas (script)"
 	@echo ""
 
@@ -168,6 +169,13 @@ migrate-restaurant-people:
 	@echo "📦 Aplicando migration gm_restaurant_people..."
 	@cat schema/migrations/20260207_gm_restaurant_people.sql | docker compose -f docker-compose.core.yml exec -T postgres \
 		psql -U postgres -d chefiapp_core -f - && echo "✅ gm_restaurant_people aplicado" || \
+		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# Aplicar coluna trial_ends_at em gm_restaurants (paywall e countdown FASE 1 Vendável PT)
+migrate-trial-ends-at:
+	@echo "📦 Aplicando migration trial_ends_at (gm_restaurants)..."
+	@cat schema/migrations/20260213_trial_ends_at.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ trial_ends_at aplicado" || \
 		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
 
 # Teste global: Core + todas as tabelas + TPV (turno + pedido) + tarefas (MODO_INTERNO)
