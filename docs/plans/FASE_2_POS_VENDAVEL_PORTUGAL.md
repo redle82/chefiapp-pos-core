@@ -11,7 +11,7 @@
 - **Estado:** Processo em paralelo (2–3 meses com a AT).
 - **Técnico:** Recibo com QR AT e SAF-T já implementados; ajustes finos conforme feedback da AT.
 - **Ação:** Iniciar processo de certificação; manter documentação do formato usado (referência AT) em `fiscal-modules/pt/` e Help.
-- **Primeiro passo executável:** Consultar [Portal das Finanças — Faturação Eletrónica](https://www.portaldasfinancas.gov.pt/at/html/index.html) e documentação de certificação de software de faturação; reunir requisitos (ex.: formato QR AT, SAF-T) e comparar com implementação em `fiscal-modules/pt/atQrUrl.ts` e `fiscal-modules/pt/saft/`.
+- **Primeiro passo executável:** Ver checklist e comparação em [CERTIFICACAO_AT_PRIMEIRO_PASSO.md](CERTIFICACAO_AT_PRIMEIRO_PASSO.md) — consultar Portal das Finanças e documentação AT; reunir requisitos (QR AT, SAF-T) e comparar com `fiscal-modules/pt/atQrUrl.ts` e `fiscal-modules/pt/saft/`.
 
 ---
 
@@ -32,7 +32,7 @@
 
 **Referência:** `docs/audit/EXECUTABLE_ROADMAP.md` § FASE 5.
 
-**Checklist executável (testes manuais):**
+**Checklist executável (testes manuais):** Ver também `bash scripts/flows/validate-fase5-fase6-checklist.sh` (gate automático + checklist impresso).
 - [ ] Abrir merchant-portal em dispositivo móvel (ou DevTools mobile); navegar até TPV; verificar tempo de carregamento e scroll fluido.
 - [ ] Executar ação crítica (ex.: adicionar item ao pedido, processar pagamento); verificar toast/feedback visual.
 - [ ] Confirmar que RoleSelector (se visível) não parece dev tool.
@@ -47,7 +47,7 @@
 
 **Referência:** `docs/audit/EXECUTABLE_ROADMAP.md` § FASE 6.
 
-**Checklist executável (testes manuais):**
+**Checklist executável (testes manuais):** Ver também `bash scripts/flows/validate-fase5-fase6-checklist.sh` (gate automático + checklist impresso).
 - [ ] Processar um pedido no TPV; imprimir recibo (browser print); verificar que o recibo mostra Nº documento, ATCUD, NIF e QR code AT.
 - [ ] Testar impressão em Chrome e Safari (ou Firefox).
 - [ ] Se houver impressoras físicas configuradas, testar impressão térmica.

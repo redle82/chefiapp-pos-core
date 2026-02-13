@@ -51,6 +51,8 @@ export interface GlobalUIState {
   billingStatus: BillingStatus;
   /** Bloqueado por falta de pagamento (suspended) */
   isBillingBlocked: boolean;
+  /** Trial expirado (billing_status=trial e now > trial_ends_at). Paywall "Período de trial terminado". */
+  isTrialExpired: boolean;
   /** Aviso de faturação pendente (past_due) */
   isBillingWarning: boolean;
   /** Estado da jornada do restaurante (Vida do Restaurante). Ref: CONTRATO_VIDA_RESTAURANTE. */
@@ -72,6 +74,7 @@ const defaultState: GlobalUIState = {
   coreReachable: true,
   billingStatus: "trial",
   isBillingBlocked: false,
+  isTrialExpired: false,
   isBillingWarning: false,
   lifecycleState: null,
 };
@@ -125,6 +128,11 @@ export function GlobalUIStateProvider({
       coreReachable: runtime?.coreReachable ?? true,
       billingStatus: (function () {
         const billing = runtime?.billing_status;
+        const trialExpired =
+          billing === "trial" &&
+          runtime?.trial_ends_at != null &&
+          new Date() > new Date(runtime.trial_ends_at);
+        if (trialExpired) return "past_due";
         if (billing === "canceled") return "suspended";
         if (billing === "past_due") return "past_due";
         if (billing === "trial") return "trial";
@@ -138,6 +146,10 @@ export function GlobalUIStateProvider({
       isBillingBlocked:
         runtime?.billing_status === "canceled" ||
         runtime?.status === "suspended",
+      isTrialExpired:
+        runtime?.billing_status === "trial" &&
+        runtime?.trial_ends_at != null &&
+        new Date() > new Date(runtime.trial_ends_at),
       isBillingWarning:
         runtime?.billing_status === "past_due" ||
         runtime?.status === "past_due",

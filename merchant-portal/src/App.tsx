@@ -29,8 +29,8 @@ import { ShiftContext } from "./core/shift/ShiftContext";
 import { ShiftGuard } from "./core/shift/ShiftGuard";
 import { EventMonitorBootstrap } from "./core/tasks/EventMonitorBootstrap";
 import { TPVTrialPage } from "./pages/TPVMinimal/TPVTrialPage";
-import { MarketingRoutes } from "./routes/MarketingRoutes";
-import { OperationalRoutes } from "./routes/OperationalRoutes";
+import { MarketingRoutesFragment } from "./routes/MarketingRoutes";
+import { OperationalRoutesFragment } from "./routes/OperationalRoutes";
 import { BillingBanner } from "./ui/billing/BillingBanner";
 import { BillingBlockedView } from "./ui/billing/BillingBlockedView";
 import { CoreUnavailableBanner } from "./ui/design-system/CoreUnavailableBanner";
@@ -117,7 +117,7 @@ function App() {
         {/* <PublicLifecycleSync /> */}
         <BillingsPreloader />
         <Routes>
-          <MarketingRoutes />
+          {MarketingRoutesFragment}
           {/* App Content (Management/Operational) */}
           <Route path="/*" element={<AppOperationalWrapper />} />
         </Routes>
@@ -159,7 +159,8 @@ const LAST_ROUTE_ALLOWED = [
 const CRITICAL_BILLING_ROUTES = ["/op/tpv", "/op/kds", "/op/cash"];
 
 function AppContentWithBilling() {
-  const { isBillingBlocked, billingStatus } = useGlobalUIState();
+  const { isBillingBlocked, billingStatus, isTrialExpired } =
+    useGlobalUIState();
   const location = useLocation();
 
   useEffect(() => {
@@ -174,6 +175,16 @@ function AppContentWithBilling() {
   }, [location.pathname]);
 
   const isBillingManagement = location.pathname.startsWith("/app/billing");
+
+  if (isTrialExpired && !isBillingManagement) {
+    return (
+      <GlobalBlockedView
+        title="Período de trial terminado"
+        description="O teu período de trial terminou. Ativa o plano para continuar a usar o ChefIApp."
+        action={{ label: "Escolher plano", to: "/app/billing" }}
+      />
+    );
+  }
 
   if (isBillingBlocked && !isBillingManagement) {
     return <BillingBlockedView />;
@@ -215,7 +226,7 @@ function AppContentWithBilling() {
       <ModeIndicator />
       <CoreUnavailableBanner />
       <Routes>
-        <OperationalRoutes />
+        {OperationalRoutesFragment}
       </Routes>
     </>
   );
