@@ -110,7 +110,7 @@
 ### 4.2 Opcional (prioridade baixa)
 
 - Mover componentes LEGACY da landing antiga para `pages/Landing/legacy/` (ou manter como está).
-- **TODOs para converter em issues** (quando houver backlog): IdentitySection (Onboarding) — "Implementar lógica real"; VisionPage/SimulationPage/StockRealPage/PurchasesPage — "Integrar com Core"; TableContext — "Configurar proxy Realtime". Etiquetas sugeridas: `backend`, `core`, `onboarding`.
+- **TODOs para converter em issues** (quando houver backlog): ver [BACKLOG_ISSUES_2026_02.md](BACKLOG_ISSUES_2026_02.md) — títulos e descrições prontos para criar issues (IdentitySection, Owner pages/Core, TableContext, AdminPlaceholderPage).
 - Migrar últimos consumidores de `backendClient` para `coreClient`/`analyticsClient` e remover ou marcar backendClient como wrapper deprecated.
 
 ### 4.3 Não fazer (sem contrato ou ADR)
