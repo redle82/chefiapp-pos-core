@@ -1,0 +1,233 @@
+/**
+ * InventoryStockMinimal styles — Inventory and stock management.
+ */
+
+.container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.pageTitle {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 24px;
+}
+
+.errorBanner {
+  padding: 12px;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.tabsContainer {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 24px;
+}
+
+.tabButton {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: normal;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background-color: transparent;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.tabButton:hover {
+  color: #3b82f6;
+}
+
+.tabButtonActive {
+  font-weight: bold;
+  border-bottom: 2px solid #3b82f6;
+  color: #3b82f6;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.actionButton {
+  padding: 8px 16px;
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.actionButton:hover {
+  background-color: #2563eb;
+}
+
+.actionButtonDisabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.gridList {
+  display: grid;
+  gap: 12px;
+}
+
+.emptyMessage {
+  color: #666;
+  padding: 20px;
+  text-align: center;
+}
+
+.card {
+  padding: 16px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.cardInactive {
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+}
+
+.cardContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.cardMeta {
+  font-size: 12px;
+  color: #666;
+}
+
+.warningText {
+  font-size: 12px;
+  color: #dc2626;
+  margin-top: 4px;
+}
+
+/* Form styles */
+.newItemForm {
+  padding: 16px;
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.formLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.formLabelText {
+  font-size: 13px;
+  color: #666;
+}
+
+.formInput {
+  padding: 8px 12px;
+  font-size: 14px;
+  min-width: 160px;
+}
+
+.formSelect {
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.formSelectWide {
+  padding: 8px 12px;
+  font-size: 14px;
+  min-width: 180px;
+}
+
+.formInputQty {
+  padding: 8px 12px;
+  font-size: 14px;
+  width: 80px;
+}
+
+.submitButton {
+  padding: 8px 16px;
+  background-color: #059669;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.submitButton:hover {
+  background-color: #047857;
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Stock card styles */
+.stockCard {
+  padding: 16px;
+  background-color: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.stockCardLow {
+  background-color: #fef2f2;
+  border: 2px solid #dc2626;
+}
+
+.stockCardBody {
+  flex: 1;
+}
+
+.lowStockBadge {
+  color: #dc2626;
+  margin-left: 8px;
+}
+
+.stockLocation {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.stockStats {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.statusCritical {
+  color: #dc2626;
+}

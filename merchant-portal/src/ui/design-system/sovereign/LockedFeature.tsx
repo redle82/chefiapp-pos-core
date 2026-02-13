@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card } from '../primitives/Card';
+import { Card } from '../Card';
 import { Text } from '../primitives/Text';
 import { Button } from '../Button';
 import { colors } from '../tokens/colors';

@@ -1,0 +1,141 @@
+.page {
+  /* container */
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.headerTitle {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.headerSub {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.operationalSection {
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fafafa;
+}
+
+.operationalTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.operationalDesc {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 12px 0;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.checkboxLabelLast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.moduleList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.moduleCard {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+}
+
+.moduleContent {
+  flex: 1;
+}
+
+.moduleHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.moduleIcon {
+  font-size: 24px;
+}
+
+.moduleName {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.moduleDesc {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.moduleMetaRow {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.uninstallBtn {
+  padding: 8px 16px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.installBtn {
+  padding: 8px 16px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #28a745;
+  cursor: pointer;
+}
+
+.installBtn[data-installing="true"] {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.healthBadge[data-health="healthy"] {
+  color: #28a745;
+}
+
+.healthBadge[data-health="degraded"] {
+  color: #ffc107;
+}
+
+.healthBadge[data-health="unhealthy"] {
+  color: #dc3545;
+}

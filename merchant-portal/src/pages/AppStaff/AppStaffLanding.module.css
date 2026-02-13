@@ -1,0 +1,154 @@
+.wrapper {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  background-color: #000000;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 16px;
+}
+
+.wrapperInner {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.subtitle {
+  margin-top: 4px;
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.clickableCard {
+  cursor: pointer;
+  border: 1px solid #27272a;
+}
+
+.cardFill {
+  width: 100%;
+  height: 100%;
+}
+
+.businessRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.backSection {
+  margin-top: 24px;
+}
+
+.devSection {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #27272a;
+}
+
+.devLabel {
+  margin-bottom: 10px;
+}
+
+.devRoles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.centerButton {
+  justify-content: center;
+}
+
+/* ConnectCodeView */
+.connectFullWidth {
+  width: 100%;
+}
+
+.codeInput {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #3f3f46;
+  font-size: 32px;
+  color: #ffffff;
+  margin-bottom: 24px;
+  text-align: center;
+  letter-spacing: 4px;
+  font-family: monospace;
+  outline: none;
+  padding: 8px;
+}
+
+.errorBlock {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.debugCodesSection {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: #18181b;
+  border-radius: 8px;
+}
+
+.debugLabel {
+  margin-bottom: 8px;
+  display: block;
+}
+
+.debugList {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: #d4d4d8;
+  line-height: 1.8;
+}
+
+.codeText {
+  font-family: monospace;
+  letter-spacing: 1px;
+}
+
+/* SelectPersonView */
+.selectHeader {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.selectSubtitle {
+  margin-top: 8px;
+}
+
+.loadingText {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.personList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.personRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.personRole {
+  margin-top: 2px;
+}

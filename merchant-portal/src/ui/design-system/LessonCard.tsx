@@ -2,7 +2,7 @@ import React from "react";
 import type { MicroLesson } from "../../intelligence/education/MicroLessonEngine";
 import styles from "./LessonCard.module.css";
 import { Button } from "./Button";
-import { Card } from "./primitives/Card";
+import { Card } from "./Card";
 import { Text } from "./primitives/Text";
 import { colors } from "./tokens/colors";
 

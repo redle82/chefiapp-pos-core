@@ -1,0 +1,67 @@
+.sidebar {
+  width: 248px;
+  background-color: #09090b;
+  border-right: 1px solid #27272a;
+  padding: 20px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0;
+}
+
+.sidebarInner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-height: 0;
+}
+
+.brandSection {
+  margin-bottom: 16px;
+  padding-left: 8px;
+  color: #ffffff;
+}
+
+.backLink {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #d4d4d8;
+  font-weight: 500;
+  text-decoration: none;
+  margin-bottom: 4px;
+}
+
+.configLabel {
+  margin-bottom: 8px;
+  padding-left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #71717a;
+}
+
+.navColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navColumnMain {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bottomSection {
+  margin-top: 8px;
+}
+
+.footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #27272a;
+}

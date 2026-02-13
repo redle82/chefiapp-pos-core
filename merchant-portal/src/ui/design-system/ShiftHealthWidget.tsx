@@ -1,7 +1,8 @@
 import React from "react";
 import type { ShiftMetrics } from "../../intelligence/nervous-system/ShiftEngine";
-import { Card } from "./primitives/Card";
+import { Card } from "./Card";
 import { Text } from "./primitives/Text";
+import styles from "./ShiftHealthWidget.module.css";
 import { colors } from "./tokens/colors";
 
 interface ShiftHealthWidgetProps {
@@ -28,37 +29,23 @@ export const ShiftHealthWidget: React.FC<ShiftHealthWidgetProps> = ({
     <Card
       surface="layer1"
       padding="sm"
-      style={{ borderLeft: `4px solid ${toneColor}` }}
+      className={styles.card}
+      style={{ "--tone-color": toneColor } as React.CSSProperties}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+      <div className={styles.content}>
         <div>
           <Text size="xs" color="tertiary">
             CARGA HUMANA
           </Text>
-          <Text size="lg" weight="bold" style={{ color: toneColor }}>
+          <Text size="lg" weight="bold" className={styles.loadValue}>
             {loadIndex}{" "}
-            <span style={{ fontSize: 12, color: colors.text.tertiary }}>
+            <span className={styles.loadDetail}>
               ({activeTasks}/{activeStaff})
             </span>
           </Text>
         </div>
-        <div style={{ textAlign: "right" }}>
-          <div
-            style={{
-              width: 12,
-              height: 12,
-              borderRadius: "50%",
-              backgroundColor: toneColor,
-              display: "inline-block",
-              marginRight: 6,
-            }}
-          />
+        <div className={styles.statusSection}>
+          <div className={styles.statusDot} />
           <Text size="sm" weight="medium">
             {label}
           </Text>

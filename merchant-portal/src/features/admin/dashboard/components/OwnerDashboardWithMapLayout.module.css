@@ -1,0 +1,361 @@
+/* OperacaoCard */
+.opCard {
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.opCard[data-ready="true"] {
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.opCard[data-ready="false"] {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.opCardLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.opCardStatus {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.opCardStatus[data-ready="true"] {
+  color: #059669;
+  margin-bottom: 8px;
+}
+
+.opCardStatus[data-ready="false"] {
+  color: #b91c1c;
+  margin-bottom: 8px;
+}
+
+.opCardStatusNoBlockers {
+  composes: opCardStatus;
+  margin-bottom: 0;
+}
+
+.opCardBlockerList {
+  margin: 0 0 10px 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.opCardActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.opMainBtn {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+}
+
+.opMainBtn[data-enabled="true"] {
+  color: #fff;
+  background-color: #059669;
+  cursor: pointer;
+}
+
+.opMainBtn[data-enabled="false"] {
+  color: #9ca3af;
+  background-color: #e5e7eb;
+  cursor: not-allowed;
+}
+
+.opSecondaryBtn {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.opMenuBtn {
+  composes: opSecondaryBtn;
+  color: #b45309;
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.opIdentityBtn {
+  composes: opSecondaryBtn;
+  color: #1e40af;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.opRunbookBtn {
+  composes: opSecondaryBtn;
+  color: #0d9488;
+  background-color: #ccfbf1;
+  border: 1px solid #99f6e4;
+}
+
+/* Main Layout */
+.pageContainer {
+  min-height: 100%;
+  background-color: #f3f4f6;
+  display: flex;
+  flex-direction: column;
+}
+
+.setupBanner {
+  padding: 10px 16px;
+  background: linear-gradient(90deg, #fef3c7 0%, #fde68a 100%);
+  border-bottom: 1px solid #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.setupBannerText {
+  font-size: 14px;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.setupBannerActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.setupBtnDark {
+  padding: 6px 14px;
+  background-color: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.setupBtnAmber {
+  padding: 6px 14px;
+  background-color: #f59e0b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.blockedBanner {
+  padding: 16px 20px;
+  margin-bottom: 0;
+  background-color: #fef2f2;
+  border-bottom: 1px solid #ef4444;
+  color: #b91c1c;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.blockedBannerText {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.blockedBannerBtn {
+  padding: 8px 16px;
+  background-color: #b91c1c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.contentRow {
+  display: flex;
+  flex: 1;
+}
+
+.sidebar {
+  width: 260px;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sidebarTitleBlock {
+  margin-bottom: 8px;
+}
+
+.sidebarTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.sidebarSubtitle {
+  font-size: 12px;
+  color: #888;
+}
+
+.modulesReadyCard {
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f5f7ff;
+  border: 1px solid #e0e4ff;
+  margin-bottom: 8px;
+}
+
+.modulesReadyLabel {
+  font-size: 12px;
+  color: #444;
+}
+
+.modulesReadyCount {
+  font-size: 11px;
+  color: #777;
+  margin-top: 4px;
+}
+
+.coreStatusBox {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #f0f4f8;
+  border: 1px solid #e0e4e8;
+}
+
+/* Nav — token values: space.xs=4px, space.sm=8px, fontSize.sm=14px, fontWeight.semibold=600 */
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.mapaLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.sectionLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+  padding-left: 4px;
+}
+
+.sectionItems {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.badgeRed {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b91c1c;
+  background-color: #fee2e2;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.badgeGreen {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background-color: #22c55e;
+  display: inline-block;
+}
+
+.mapItemBtn {
+  width: 100%;
+  text-align: left;
+  padding: 4px 8px;
+  font-size: 14px;
+  color: #111827;
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.mapItemBtn[data-active="true"] {
+  background-color: #e8ecf4;
+}
+
+.mapItemLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mapItemIcon {
+  font-size: 18px;
+}
+
+.main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.ambientesCard {
+  padding: 16px;
+  margin: 16px;
+  margin-bottom: 0;
+  border-radius: 8px;
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.ambientesTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.ambientesDesc {
+  font-size: 11px;
+  color: #6b7280;
+  margin: 0;
+}

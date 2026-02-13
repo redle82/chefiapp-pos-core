@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useRef, useState } from "react";
-import { Card } from "../primitives/Card";
+import { Card } from "../Card";
 import { Text } from "../primitives/Text";
 import { Badge } from "../primitives/Badge";
 import { colors } from "../tokens/colors";

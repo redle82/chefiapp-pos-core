@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useState } from "react";
 import { TPVStateDisplay } from "../../../pages/TPV/components/TPVStateDisplay";
 import { Badge } from "../primitives/Badge";
-import { Card } from "../primitives/Card";
+import { Card } from "../Card";
 import { Text } from "../primitives/Text";
 import { colors } from "../tokens/colors";
 import { spacing } from "../tokens/spacing";
