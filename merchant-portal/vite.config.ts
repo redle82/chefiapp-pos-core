@@ -186,9 +186,8 @@ export default defineConfig(async ({ mode }) => {
             ) {
               return "charts-vendor";
             }
-            if (id.includes("node_modules/@stripe")) {
-              return "stripe-vendor";
-            }
+            // Stripe: do NOT put in separate chunk — causes "Cannot access 'u' before initialization"
+            // when chunk loads before deps; let Rollup bundle with consuming code.
 
             // ── Shared core modules ──
             if (id.includes("/ui/") || id.includes("/components/"))
