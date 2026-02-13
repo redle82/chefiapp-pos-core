@@ -19,7 +19,7 @@
 - **Estado:** Migration criada em `migrations/20260213_01_trial_ends_at.sql` e em `docker-core/schema/migrations/20260213_trial_ends_at.sql`. Integrada no init do Core Docker (05.7) e com target `make migrate-trial-ends-at` para volumes existentes.
 - **Core Docker (local ou volume existente):** `cd docker-core && make migrate-trial-ends-at` (Core deve estar up).
 - **Core novo (fresh up):** A migration corre automaticamente no init (05.7-trial-ends-at.sql).
-- **Produção (Supabase/InsForge):** Executar o SQL de `migrations/20260213_01_trial_ends_at.sql` no SQL Editor ou via ferramenta de migrations do provedor.
+- **Produção (Supabase/InsForge):** Ver runbook [RUNBOOK_TRIAL_ENDS_AT_PRODUCTION.md](RUNBOOK_TRIAL_ENDS_AT_PRODUCTION.md) — verificar se coluna existe e executar o SQL.
 
 ---
 
@@ -74,6 +74,13 @@
 3. Checklist FASE 5 (performance móvel) e FASE 6 (impressão) — testes manuais ou scripts.
 4. Iniciar processo de certificação AT em paralelo.
 5. Quando estável: considerar próximo mercado (ES/BR) ou FASE 7 (mapa visual).
+
+---
+
+## Executado (continuação do plano)
+
+- **Runbook produção:** [RUNBOOK_TRIAL_ENDS_AT_PRODUCTION.md](RUNBOOK_TRIAL_ENDS_AT_PRODUCTION.md) — verificar coluna, SQL para aplicar, UPDATE opcional para trial existentes.
+- **Teste PaymentGuard paywall:** `merchant-portal/src/core/billing/PaymentGuard.paywall.test.tsx` — quando `trial_expired`, mostra "Período de trial terminado" e link "Escolher plano"; 1 teste, passa com `pnpm vitest run src/core/billing/`.
 
 ---
 
