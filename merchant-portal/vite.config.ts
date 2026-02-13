@@ -185,10 +185,9 @@ export default defineConfig(async ({ mode }) => {
             }
             // Stripe: do NOT put in separate chunk — causes "Cannot access 'u' before initialization"
             // when chunk loads before deps; let Rollup bundle with consuming code.
+            // app-ui: do NOT split /ui/ and /components/ — causes "Cannot access 'vr' before initialization" (TDZ).
 
             // ── Shared core modules ──
-            if (id.includes("/ui/") || id.includes("/components/"))
-              return "app-ui";
             if (
               id.includes("/core/") ||
               id.includes("/context/") ||
