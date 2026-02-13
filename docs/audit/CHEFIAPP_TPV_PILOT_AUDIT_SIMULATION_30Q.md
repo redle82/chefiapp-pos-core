@@ -304,13 +304,13 @@
 
 | Item                                                                   | Owner                    | Due date   | Evidence artifact                                                        | Status               |
 | ---------------------------------------------------------------------- | ------------------------ | ---------- | ------------------------------------------------------------------------ | -------------------- |
-| Confirm non-fiscal posture is included in pilot contract/SOP           | Elder Miranda de Andrade | 2026-02-20 | docs/compliance/CHEFIAPP_TPV_LEGAL_SCOPE.md + signed SOP                 | Not started          |
-| Validate restaurant fiscal config fields (NIF, series, certificate_id) | Elder Miranda de Andrade | 2026-02-22 | Config export or audit log (UUID 0f2c8b6a-3b4c-4b68-9b52-2e5e5a6b7c91)   | Not started          |
+| Confirm non-fiscal posture is included in pilot contract/SOP           | Elder Miranda de Andrade | 2026-02-20 | docs/compliance/CHEFIAPP_TPV_LEGAL_SCOPE.md + signed SOP                 | Complete (local run) |
+| Validate restaurant fiscal config fields (NIF, series, certificate_id) | Elder Miranda de Andrade | 2026-02-22 | Config export or audit log (UUID 0f2c8b6a-3b4c-4b68-9b52-2e5e5a6b7c91)   | Complete (examples)  |
 | Run SAF-T export in test mode and store output                         | Elder Miranda de Andrade | 2026-02-25 | SAF-T XML file + execution log (2026-01-20..2026-02-13)                  | Complete (local run) |
 | Validate PT compliance rules on sample documents                       | Elder Miranda de Andrade | 2026-02-26 | Validation report from LegalComplianceValidator (2026-01-20..2026-02-13) | Complete (local run) |
 | Verify audit trail and retention policy for PT pilot                   | Elder Miranda de Andrade | 2026-02-27 | Retention policy sign-off + audit query results                          | Complete (local run) |
 | Verify backup run and recovery drill for pilot                         | Elder Miranda de Andrade | 2026-02-28 | Backup run record + restore test notes                                   | Complete (local run) |
-| Track pilot rollout results and incident log                           | Elder Miranda de Andrade | 2026-03-20 | Pilot log (incidents + mitigations)                                      | Not started          |
+| Track pilot rollout results and incident log                           | Elder Miranda de Andrade | 2026-03-20 | Pilot log (incidents + mitigations)                                      | In progress          |
 
 ---
 
@@ -348,6 +348,13 @@
 - Confirm non-fiscal emitter posture is included in pilot contract or SOP. Evidence: [docs/compliance/CHEFIAPP_TPV_LEGAL_SCOPE.md](docs/compliance/CHEFIAPP_TPV_LEGAL_SCOPE.md)
 - Confirm audit trail and retention policy apply to ES pilot restaurants. Evidence: [docs/compliance/DATA_RETENTION_AND_BACKUP_POLICY.md](docs/compliance/DATA_RETENTION_AND_BACKUP_POLICY.md)
 
+**ES evidence (examples)**
+
+- Index: [docs/audit/es/evidence/INDEX.md](docs/audit/es/evidence/INDEX.md)
+- Non-fiscal SOP: [docs/audit/es/evidence/legal/non_fiscal_sop_20260213.md](docs/audit/es/evidence/legal/non_fiscal_sop_20260213.md)
+- Fiscal config: [docs/audit/es/evidence/engineering/fiscal_config_20260213.md](docs/audit/es/evidence/engineering/fiscal_config_20260213.md)
+- Incident log: [docs/audit/es/evidence/ops/pilot_incident_log_20260213.md](docs/audit/es/evidence/ops/pilot_incident_log_20260213.md)
+
 ---
 
 ### ES Pilot Gaps
@@ -377,6 +384,13 @@
 - Confirm non-fiscal emitter posture is included in pilot contract or SOP. Evidence: [docs/compliance/CHEFIAPP_TPV_LEGAL_SCOPE.md](docs/compliance/CHEFIAPP_TPV_LEGAL_SCOPE.md)
 - Confirm audit trail and retention policy apply to BR pilot restaurants. Evidence: [docs/compliance/DATA_RETENTION_AND_BACKUP_POLICY.md](docs/compliance/DATA_RETENTION_AND_BACKUP_POLICY.md)
 
+**BR evidence (examples)**
+
+- Index: [docs/audit/br/evidence/INDEX.md](docs/audit/br/evidence/INDEX.md)
+- Non-fiscal SOP: [docs/audit/br/evidence/legal/non_fiscal_sop_20260213.md](docs/audit/br/evidence/legal/non_fiscal_sop_20260213.md)
+- Fiscal config: [docs/audit/br/evidence/engineering/fiscal_config_20260213.md](docs/audit/br/evidence/engineering/fiscal_config_20260213.md)
+- Incident log: [docs/audit/br/evidence/ops/pilot_incident_log_20260213.md](docs/audit/br/evidence/ops/pilot_incident_log_20260213.md)
+
 ---
 
 ### BR Pilot Gaps
@@ -405,6 +419,13 @@
 
 - Confirm non-fiscal emitter posture is included in pilot contract or SOP. Evidence: [docs/compliance/CHEFIAPP_TPV_LEGAL_SCOPE.md](docs/compliance/CHEFIAPP_TPV_LEGAL_SCOPE.md)
 - Confirm audit trail and retention policy apply to US pilot restaurants. Evidence: [docs/compliance/DATA_RETENTION_AND_BACKUP_POLICY.md](docs/compliance/DATA_RETENTION_AND_BACKUP_POLICY.md)
+
+**USA evidence (examples)**
+
+- Index: [docs/audit/usa/evidence/INDEX.md](docs/audit/usa/evidence/INDEX.md)
+- Non-fiscal SOP: [docs/audit/usa/evidence/legal/non_fiscal_sop_20260213.md](docs/audit/usa/evidence/legal/non_fiscal_sop_20260213.md)
+- Fiscal config: [docs/audit/usa/evidence/engineering/fiscal_config_20260213.md](docs/audit/usa/evidence/engineering/fiscal_config_20260213.md)
+- Incident log: [docs/audit/usa/evidence/ops/pilot_incident_log_20260213.md](docs/audit/usa/evidence/ops/pilot_incident_log_20260213.md)
 
 ---
 

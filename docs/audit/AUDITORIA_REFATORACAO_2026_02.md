@@ -6,14 +6,23 @@
 
 ---
 
+## 0. Feito após esta auditoria (2026-02)
+
+| Ação | Estado |
+|------|--------|
+| **Extrair rotas do App.tsx** | ✅ Feito. Rotas em `merchant-portal/src/routes/MarketingRoutes.tsx` (público/marketing) e `OperationalRoutes.tsx` (operacional, RoleGate, op/, app/staff/, admin/, config/). |
+| **App.tsx** | Reduzido para ~218 linhas; ~24 imports. Mantém shell, billing, FlowGate, ShiftGuard e os dois `<Routes>` que montam MarketingRoutes e OperationalRoutes. |
+
+---
+
 ## 1. Resumo executivo
 
 | Pergunta | Resposta |
 |----------|----------|
-| **Precisamos de refatoração?** | Não obrigatória. Sim para **melhorar manutenção** (rotas, DORMANT, TODOs). |
+| **Precisamos de refatoração?** | Não obrigatória. Sim para **melhorar manutenção** (DORMANT, TODOs, placeholders). |
 | **Há dívida técnica crítica?** | Não. Há legado **marcado** (LEGACY, @deprecated) e blacklist que impede reintrodução. |
 | **Há duplicação perigosa?** | Não. TenantResolver tem `resolve` + `resolveTenant` (async vs puro) por desenho; auth está concentrada em useCoreAuth/AuthProvider. |
-| **Próximo passo recomendado** | Opcional: extrair rotas do App.tsx; limpar ou arquivar módulos DORMANT; converter TODOs prioritários em issues. |
+| **Próximo passo recomendado** | Opcional: limpar ou arquivar módulos DORMANT; converter TODOs prioritários em issues; substituir AdminPlaceholderPage quando houver páginas reais. |
 
 ---
 
@@ -36,7 +45,7 @@
 | **OrderProcessingService.ts** | @deprecated DORMANT — writes via OrderEngine/RPCs | Idem |
 | **backendClient.ts** | DEPRECATED — usar coreClient/analyticsClient | Migrar imports restantes e depois remover ou marcar como deprecated wrapper |
 | **OwnerDashboardWithMapLayout.tsx** | @deprecated — não usar em Reports | Já documentado; manter se ainda usado em alguma rota |
-| **AppStaff.tsx** | LEGADO — não utilizado em rotas; entry real é AppStaffWrapper | Remover do bundle (não importar) ou mover para `archive/` |
+| **AppStaff.tsx** | LEGADO — não utilizado em rotas; entry real é AppStaffWrapper | ✅ Movido para `pages/AppStaff/legacy/AppStaff.legacy.tsx` (2026-02) |
 | **Landing antiga** (Problem, Solution, Hero, Footer, etc.) | LEGACY — canónica é LandingV2 | Manter como está (referência) ou mover para `pages/Landing/legacy/` |
 
 **Conclusão:** Nada exige refatoração imediata. LEGACY_CODE_BLACKLIST já impede reintrodução de Supabase e outros padrões proibidos.
@@ -89,20 +98,19 @@
 
 ### 4.1 Fazer (prioridade média — quando houver tempo)
 
-1. **Extrair rotas do App.tsx**  
-   Criar `routes/` (ou equivalente) e mover blocos de `<Route>` para ficheiros por domínio (public, app, config, etc.). App.tsx fica com `<Routes>` + imports. Reduz tamanho e facilita revisão.
+1. ~~**Extrair rotas do App.tsx**~~  
+   ✅ Feito: `routes/MarketingRoutes.tsx` e `routes/OperationalRoutes.tsx`; App.tsx com dois `<Routes>` que os montam.
 
-2. **Decidir sobre módulos DORMANT**  
-   - Opção A: Mover KernelContext e OrderProcessingService para `archive/` ou `core-engine/dormant/` e deixar de importar em produção.  
-   - Opção B: Manter no sítio com @deprecated e documentar "manter até descomissionamento formal" num ADR.
+2. ~~**Decidir sobre módulos DORMANT**~~  
+   **Decisão (2026-02): Opção B** — Manter no sítio com @deprecated. **KernelContext** ainda é usado por `pages/TPV/KDS/KDSStandalone.tsx` (KernelProvider). **OrderProcessingService** exporta o tipo `ExecuteSafeFn` usado por `core/menu/MenuBootstrapService.ts`. Descomissionar quando esses consumidores forem migrados; até lá não mover para archive.
 
 3. **Substituir AdminPlaceholderPage**  
-   Quando existirem páginas reais para essas 3 rotas, trocar no App.tsx e remover o placeholder.
+   Quando existirem páginas reais para essas 3 rotas, trocar em `routes/OperationalRoutes.tsx` e remover o placeholder.
 
 ### 4.2 Opcional (prioridade baixa)
 
 - Mover componentes LEGACY da landing antiga para `pages/Landing/legacy/` (ou manter como está).
-- Converter TODOs "Integrar com Core" em issues com etiqueta `backend` / `core`.
+- **TODOs para converter em issues** (quando houver backlog): IdentitySection (Onboarding) — "Implementar lógica real"; VisionPage/SimulationPage/StockRealPage/PurchasesPage — "Integrar com Core"; TableContext — "Configurar proxy Realtime". Etiquetas sugeridas: `backend`, `core`, `onboarding`.
 - Migrar últimos consumidores de `backendClient` para `coreClient`/`analyticsClient` e remover ou marcar backendClient como wrapper deprecated.
 
 ### 4.3 Não fazer (sem contrato ou ADR)
@@ -123,4 +131,5 @@
 ---
 
 **Data:** 2026-02  
-**Próxima revisão:** Após conclusão do deploy só marketing ou quando houver sprint de dívida técnica.
+**Atualizado:** 2026-02 — Rotas extraídas; AppStaff→legacy; decisão DORMANT (Opção B); TODOs→issues em 4.2.  
+**Próxima revisão:** Quando houver sprint de dívida técnica ou migração de consumidores de KernelContext/OrderProcessingService.

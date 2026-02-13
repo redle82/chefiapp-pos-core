@@ -2,7 +2,7 @@
 
 **Objetivo:** Medir o quão fragmentado está o projeto (estrutura, rotas, contextos, domínios, documentação) e identificar focos de dispersão.
 
-**Resumo:** Fragmentação **média-alta** em **páginas e domínios**, **alta** em **contextos/providers** e **documentação**. **Baixa** em entry points e monorepo. O ponto mais concentrado (e por isso frágil) é **App.tsx**, que segura dezenas de rotas e imports num único ficheiro.
+**Resumo:** Fragmentação **média-alta** em **páginas e domínios**, **alta** em **contextos/providers** e **documentação**. **Baixa** em entry points e monorepo. **Atualização 2026-02:** Rotas foram extraídas para `routes/MarketingRoutes.tsx` e `routes/OperationalRoutes.tsx`; App.tsx ficou ~218 linhas (concentração reduzida).
 
 ---
 
@@ -12,8 +12,8 @@
 |----------|---------|-----------|
 | **Monorepo** | 2 workspaces (merchant-portal, customer-portal) | Baixa fragmentação |
 | **Entry points** | 2 (main_debug.tsx, main-marketing.tsx) | Baixa — separação intencional |
-| **Rotas** | ~93 `<Route>` num único ficheiro (App.tsx) | Concentração alta (risco de espargimento futuro) |
-| **Imports em App.tsx** | ~163 | Muito concentrado |
+| **Rotas** | Em `routes/MarketingRoutes.tsx` + `routes/OperationalRoutes.tsx`; App.tsx monta ambos | ✅ Desfragmentado (2026-02) |
+| **App.tsx** | ~218 linhas, ~24 imports | Concentração reduzida |
 | **Domínios de páginas** | 40+ pastas em `pages/` + `features/admin/*` | Fragmentação média-alta |
 | **Contextos/Providers** | 25+ (Auth, Tenant, Shift, Runtime, Order, Table, Staff, etc.) | Fragmentação alta |
 | **Documentação** | 200+ ficheiros em docs/ (várias pastas) | Fragmentação alta |
@@ -25,11 +25,10 @@
 
 ### 2.1 Rotas e App.tsx
 
-- **Todas as rotas** estão em **App.tsx** (~93 `Route`, ~163 imports).
-- Não há ficheiros separados por domínio (ex.: `routes/Public.tsx`, `routes/Config.tsx`).
-- **Consequência:** Um único ficheiro muito grande; qualquer alteração de rota passa por App.tsx. Não é “fragmentação” de ficheiros, mas **concentração excessiva** — o oposto também gera risco (difícil ver o mapa completo).
+- **Atual (após 2026-02):** Rotas em `routes/MarketingRoutes.tsx` (público/marketing) e `routes/OperationalRoutes.tsx` (operacional); App.tsx ~218 linhas monta ambos.
+- **Consequência:** Menor concentração; alterações por domínio (marketing vs operacional) nos ficheiros correspondentes.
 
-**Fragmentação:** Baixa (tudo num sítio). **Risco:** Manutenção e conflitos em Git.
+**Fragmentação:** Reduzida. **Risco:** Mais baixo que antes.
 
 ---
 
