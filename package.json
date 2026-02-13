@@ -1,6 +1,7 @@
 {
   "name": "chefiapp-pos-core",
   "version": "1.0.1",
+  "packageManager": "pnpm@9.15.0",
   "main": "index.js",
   "workspaces": [
     "merchant-portal",

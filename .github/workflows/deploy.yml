@@ -161,8 +161,9 @@ jobs:
             git fetch origin --tags
             git checkout ${{ github.ref_name }}
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans --wait --wait-timeout 120
             docker compose ps
+            docker compose exec -T db pg_isready -U postgres || (echo "DB not ready" && exit 1)
             echo "Deploy complete: ${{ github.ref_name }}"
 
   # ==========================================================================

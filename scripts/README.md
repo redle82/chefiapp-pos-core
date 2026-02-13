@@ -392,3 +392,17 @@ Automate detection and logging of invalid states in the database.
   - `check_invalid_states()`: returns rows with problems (e.g., orphaned records).
   - `log_alerts_from_invalid_states()`: logs alerts for each detected problem.
 - The script triggers this logic and prints results.
+
+---
+
+## Quick Reference by Category
+
+| Category | Key Scripts |
+|----------|-------------|
+| **Setup** | `chef-world-up.sh`, `preflight.sh`, `connect-db.sh` |
+| **Migrations** | `migrate.ts`, `apply-migration-cli.ts`, `backup_restore.sh` |
+| **Testing** | `stress-orders-massive.ts`, `chaos-test-massive.ts`, `load-test.js` |
+| **Audit** | `audit-360.sh`, `audit-writes.ts`, `sovereignty-gate.sh` |
+| **CI/CD** | `sovereignty-gate.sh`, `contract-gate.sh`, `check-phase-guardian.sh` |
+| **Demo** | `demo-one-command.sh`, `create-orders-all-origins.sh` |
+| **Debug** | `debug_connectivity.ts`, `diag-db.js`, `assess_reality.ts` |

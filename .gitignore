@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 dist/
+.next/
 *.js
 *.d.ts
 *.js.map
@@ -94,3 +95,4 @@ merchant-portal/artifacts/
 # Antigravity awesome-skills (external repo, 708+ skills)
 # Update via: cd .agents/skills && git pull
 .agents/skills/
+.turbo

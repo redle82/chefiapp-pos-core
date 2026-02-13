@@ -4,6 +4,13 @@
 
 Configuração para o Build and Deployment na Vercel servir o **merchant-portal** (SPA) na raiz do domínio — domínio típico: **app.chefiapp.com**. **Todo o marketing** está no mesmo build: raiz `/` = LandingV2 (narrativa), blog, pricing, changelog, security, status, legal. Contrato canónico: [strategy/LANDING_CANON.md](strategy/LANDING_CANON.md).
 
+## Dois projetos Vercel (separação de domínios)
+
+- **Um projeto Vercel = merchant-portal** (raiz do repo ou Root = `merchant-portal`; SPA; domínio: **app.chefiapp.com**). Este documento descreve este projeto.
+- **Outro projeto Vercel = landing** (Root Directory = **`landing`**; Next.js; marketing; domínios: **chefiapp.com**, **www.chefiapp.com**). Ver [DEPLOY_VERCEL_LANDING.md](DEPLOY_VERCEL_LANDING.md).
+
+Não misturar: a landing não serve o app; o app não serve a landing.
+
 ---
 
 ## Deploy SOMENTE marketing (landing, blog, pricing — sem app/config/TPV)
@@ -85,15 +92,30 @@ O projeto tem o **MCP oficial da Vercel** configurado em `.cursor/mcp.json` (`ht
 
 ## Build and Deployment (Settings)
 
-| Campo                | Valor           | Override          |
-| -------------------- | --------------- | ----------------- |
-| **Root Directory**   | _(vazio)_       | —                 |
-| **Build Command**    | `npm run build` | ✅ On             |
-| **Output Directory** | `public/app`    | ✅ On             |
-| **Install Command**  | `npm install`   | Off (default)     |
-| **Node.js Version**  | 24.x (ou 20.x)  | Conforme desejado |
+| Campo                | Valor             | Override          |
+| -------------------- | ----------------- | ----------------- |
+| **Root Directory**   | _(vazio)_         | —                 |
+| **Build Command**    | `npm run build`   | ✅ On             |
+| **Output Directory** | `public/app`      | ✅ On             |
+| **Install Command**  | `pnpm install`    | ✅ On (recomendado) — o repo tem `pnpm-lock.yaml` e `packageManager` no root; se estiver `npm install`, a Vercel pode ignorar o lockfile e gerar mais avisos deprecated. |
+| **Node.js Version**  | 24.x (ou 20.x)    | Conforme desejado |
+
+**Nota:** Os avisos `npm warn deprecated` no log (sourcemap-codec, glob, rimraf, etc.) vêm de dependências transitivas e **não falham o build**. Para os reduzir a longo prazo, actualizar dependências directas; para o deploy, podes ignorar.
 
 **Se usares Root Directory = merchant-portal:** o build corre só dentro de `merchant-portal` e o output é `dist`. O `merchant-portal/vercel.json` define `outputDirectory: "dist"`; nas definições do projeto na Vercel não uses Output Directory = `app` (causa o erro "No Output Directory named 'app' found") — usa `dist` ou deixa o `vercel.json` prevalecer.
+
+**Alterar Output Directory via CLI/API:** se a UI não deixar editar os Production Overrides, podes definir o output via script (requer token ou sessão Vercel):
+
+```bash
+# Opção 1: depois de vercel login
+./scripts/vercel-set-output-directory.sh
+
+# Opção 2: com token (Settings → Tokens na Vercel)
+VERCEL_TOKEN=xxx ./scripts/vercel-set-output-directory.sh
+
+# Se o projeto estiver numa equipa:
+VERCEL_SCOPE=goldmonkeys-projects ./scripts/vercel-set-output-directory.sh
+```
 
 ---
 
@@ -110,19 +132,29 @@ O projeto tem o **MCP oficial da Vercel** configurado em `.cursor/mcp.json` (`ht
 
 ## Variáveis de ambiente (produção)
 
-Definir em **Settings → Environment Variables** para **Production** (e Preview se usares).
+Definir em **Settings → Environment Variables** para **Production** (e Preview). **Importante:** o Vite insere `import.meta.env` em **build time** — as variáveis têm de estar definidas na Vercel **antes** do build. Se o site (ex. chefiapp.com) mostrar erros "CRITICAL: Missing VITE_CORE_URL" ou "Cannot access 'jt' before initialization", é porque o último deploy foi feito **sem** estas variáveis; define-as e faz **Redeploy**.
 
 ### Comportamento conforme variáveis
 
-- **Sem** `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`: apenas a **landing** (`/`) e o **trial** (`/op/tpv?mode=trial`) funcionam; `/auth` e rotas de app mostram a mensagem "Backend não configurado" (sem crash).
-- **Com** estas variáveis definidas (Supabase cloud ou Core em produção): fluxo completo (auth, app, billing) funciona.
+- **Sem** `VITE_CORE_URL` e `VITE_CORE_ANON_KEY`: em builds antigos pode aparecer erro na consola; o código actual só faz `console.warn` (landing-only). Para o site carregar sem erros, **define sempre** estas duas variáveis na Vercel (mesmo que o Core ainda não esteja em produção — podes usar um placeholder; a chave deve ter ≥32 caracteres).
+- **Com** `VITE_CORE_URL` e `VITE_CORE_ANON_KEY` definidos (e Core em produção): fluxo completo (auth, app, billing) funciona.
 
-### Para auth, app e primeiro cliente (obrigatórias)
+### Para auth, app e primeiro cliente (obrigatórias para chefiapp.com)
 
-| Variável                 | Valor                               | Onde obter                                                |
-| ------------------------ | ----------------------------------- | --------------------------------------------------------- |
-| `VITE_SUPABASE_URL`      | `https://<teu-projeto>.supabase.co` | Supabase Dashboard → Project Settings → API → Project URL |
-| `VITE_SUPABASE_ANON_KEY` | `eyJ...` (chave longa)              | Supabase Dashboard → Project Settings → API → anon public |
+| Variável                 | Valor                                                                 | Nota                                                                 |
+| ------------------------ | --------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `VITE_CORE_URL`          | URL absoluta do Core (ex. `https://core.chefiapp.com` ou placeholder) | Definir na Vercel → Environment Variables → Production (e Preview). |
+| `VITE_CORE_ANON_KEY`     | Chave anon (mín. 32 caracteres)                                       | Placeholder: `chefiapp-core-secret-key-min-32-chars-long` se não tiveres Core. |
+
+Legado (se usares Supabase em vez de Docker Core): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+
+**Depois de adicionar ou alterar variáveis:** faz **Redeploy** do projeto (Deployments → ⋮ no último deploy → Redeploy). O build anterior foi gerado sem essas variáveis; um novo build é necessário para as incluir no bundle.
+
+### Site não carrega / tela branca / "Cannot access … before initialization"
+
+1. Em **Vercel → Settings → Environment Variables** define **VITE_CORE_URL** e **VITE_CORE_ANON_KEY** para **Production** e **Preview** (pode usar placeholder: URL = `https://core.chefiapp.com`, Key = `chefiapp-core-secret-key-min-32-chars-long`).
+2. **Redeploy:** Deployments → menu (⋮) no último deploy → **Redeploy** (sem alterar código).
+3. Espera o build terminar e abre de novo o URL do site. O bundle é gerado em build time; sem estas variáveis o site pode falhar ao carregar.
 
 ### Opcionais (billing)
 
