@@ -1,14 +1,13 @@
 import { Elements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
+import type { Stripe } from "@stripe/stripe-js";
 import type { ReactNode } from "react";
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { CONFIG } from "../../config";
 import { currencyService } from "../currency/CurrencyService";
+import { getStripePromise } from "./loadStripeLazy";
 import { PaymentBroker } from "./PaymentBroker";
 
-// Initialize Stripe Promise (Singleton) — uses centralized config
 const STRIPE_KEY = CONFIG.STRIPE_PUBLIC_KEY || null;
-const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
 
 interface StripeTerminalContextType {
   isReady: boolean;
@@ -31,6 +30,11 @@ export const StripeTerminalProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [stripeInstance, setStripeInstance] = useState<Stripe | null>(null);
+
+  useEffect(() => {
+    getStripePromise(STRIPE_KEY).then(setStripeInstance);
+  }, []);
 
   const initializePayment = async (params: {
     orderId: string;
@@ -63,15 +67,15 @@ export const StripeTerminalProvider: React.FC<{ children: ReactNode }> = ({
   return (
     <StripeTerminalContext.Provider
       value={{
-        isReady: !!stripePromise,
+        isReady: !!stripeInstance,
         initializePayment,
         clientSecret,
         clearSession,
       }}
     >
-      {clientSecret && stripePromise ? (
+      {clientSecret && stripeInstance ? (
         <Elements
-          stripe={stripePromise}
+          stripe={Promise.resolve(stripeInstance)}
           options={{ clientSecret, appearance: { theme: "stripe" } }}
         >
           {children}

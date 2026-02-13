@@ -4,7 +4,7 @@ import {
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
+import type { Stripe } from "@stripe/stripe-js";
 import React, {
   useCallback,
   useEffect,
@@ -14,11 +14,10 @@ import React, {
 } from "react";
 import { CONFIG } from "../../../config";
 import { useCurrency } from "../../../core/currency/useCurrency";
+import { getStripePromise } from "../../../core/payment/loadStripeLazy";
 import { PaymentBroker } from "../../../core/payment/PaymentBroker";
 
-// Stripe singleton — loaded once outside component tree
 const STRIPE_KEY = CONFIG.STRIPE_PUBLIC_KEY || null;
-const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
 
 interface PaymentModalProps {
   orderId: string;
@@ -105,13 +104,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   }, [tipPercent, customTip, orderTotal]);
   const grandTotal = orderTotal + tipCents;
 
-  // Stripe card flow
+  // Stripe card flow — load Stripe only when modal is open (avoids TDZ at page load)
   type CardStep = "idle" | "creating-intent" | "ready";
   const [cardStep, setCardStep] = useState<CardStep>("idle");
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(
     null,
   );
+  const [stripeInstance, setStripeInstance] = useState<Stripe | null>(null);
   const intentCreatedRef = useRef(false);
+
+  useEffect(() => {
+    getStripePromise(STRIPE_KEY).then(setStripeInstance);
+  }, []);
 
   useEffect(() => {
     setCashTendered("");
@@ -396,9 +400,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   A preparar pagamento...
                 </span>
               </div>
-            ) : cardStep === "ready" && stripeClientSecret && stripePromise ? (
+            ) : cardStep === "ready" && stripeClientSecret && stripeInstance ? (
               <Elements
-                stripe={stripePromise}
+                stripe={Promise.resolve(stripeInstance)}
                 options={{
                   clientSecret: stripeClientSecret,
                   appearance: {

@@ -4,16 +4,14 @@ import {
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
-import React, { useState } from "react";
+import type { Stripe } from "@stripe/stripe-js";
+import React, { useEffect, useState } from "react";
 import styles from "./StripePaymentModal.module.css";
 
 import { CONFIG } from "../../config";
+import { getStripePromise } from "../../core/payment/loadStripeLazy";
 
-// Initialize Stripe outside component to avoid re-initializing
-// Centralized config handles both VITE_STRIPE_PUBLIC_KEY and PUBLISHABLE_KEY
 const STRIPE_KEY = CONFIG.STRIPE_PUBLIC_KEY || null;
-const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
 
 interface StripePaymentModalProps {
   clientSecret: string;
@@ -93,6 +91,12 @@ export const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
   onSuccess,
   onCancel,
 }) => {
+  const [stripeInstance, setStripeInstance] = useState<Stripe | null | undefined>(undefined);
+
+  useEffect(() => {
+    getStripePromise(STRIPE_KEY).then(setStripeInstance);
+  }, []);
+
   const options = {
     clientSecret,
     appearance: {
@@ -100,7 +104,7 @@ export const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
     },
   };
 
-  if (!stripePromise) {
+  if (!STRIPE_KEY) {
     return (
       <div className={styles.overlay}>
         <div className={styles.modal}>
@@ -127,6 +131,37 @@ export const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
     );
   }
 
+  if (stripeInstance === undefined) {
+    return (
+      <div className={styles.overlay}>
+        <div className={styles.modal}>
+          <div className={styles.header}>
+            <h2>Finalizar Pagamento</h2>
+            <p>A carregar...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stripeInstance) {
+    return (
+      <div className={styles.overlay}>
+        <div className={styles.modal}>
+          <div className={styles.header}>
+            <h2>Erro</h2>
+            <p>Não foi possível carregar o Stripe.</p>
+          </div>
+          <div className={styles.actions}>
+            <button type="button" onClick={onCancel} className={styles.cancelBtn}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.overlay}>
       <div className={styles.modal}>
@@ -134,7 +169,7 @@ export const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
           <h2>Finalizar Pagamento</h2>
           <p>Total: € {total.toFixed(2)}</p>
         </div>
-        <Elements stripe={stripePromise} options={options}>
+        <Elements stripe={Promise.resolve(stripeInstance)} options={options}>
           <CheckoutForm onSuccess={onSuccess} onCancel={onCancel} />
         </Elements>
       </div>
