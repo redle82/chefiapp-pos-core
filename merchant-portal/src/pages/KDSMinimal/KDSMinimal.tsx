@@ -83,12 +83,17 @@ const DEFAULT_RESTAURANT_ID = isDockerBackend()
   : "bbce08c7-63c0-473d-b693-ec2997f73a68";
 
 const VPC = {
-  bg: "#0a0a0a",
-  surface: "#141414",
-  border: "#262626",
+  bg: "#111",
+  surface: "#171717",
+  surfaceAlt: "#1e1e1e",
+  surfaceDim: "#141414",
+  border: "rgba(255,255,255,0.06)",
+  borderSolid: "#262626",
   text: "#fafafa",
-  textMuted: "#a3a3a3",
-  accent: "#22c55e",
+  textMuted: "#8a8a8a",
+  textDim: "#737373",
+  accent: "#f97316",
+  accentSoft: "rgba(249,115,22,0.15)",
   radius: 8,
   space: 24,
   btnMinHeight: 48,
@@ -881,10 +886,10 @@ export function KDSMinimal() {
                           style={{
                             fontSize: "12px",
                             fontWeight: "bold",
-                            color: "#6b7280",
+                            color: VPC.textMuted,
                             marginBottom: "8px",
                             paddingBottom: "4px",
-                            borderBottom: "1px solid #e5e7eb",
+                            borderBottom: `1px solid ${VPC.border}`,
                           }}
                         >
                           🍳 COZINHA ({kitchenItems.length} item
@@ -966,16 +971,16 @@ export function KDSMinimal() {
                                   marginBottom: "8px",
                                   padding: "12px",
                                   backgroundColor: isItemReady
-                                    ? "#f0fdf4"
+                                    ? "rgba(34,197,94,0.1)"
                                     : hasTask
-                                    ? "#fef2f2"
-                                    : "#f9fafb",
+                                    ? "rgba(220,38,38,0.1)"
+                                    : VPC.surface,
                                   borderRadius: "4px",
                                   border: isItemReady
                                     ? "1px solid #22c55e"
                                     : hasTask
                                     ? "2px solid #dc2626"
-                                    : "1px solid #e5e7eb",
+                                    : `1px solid ${VPC.border}`,
                                   boxShadow: hasTask
                                     ? "0 0 0 2px rgba(220, 38, 38, 0.2)"
                                     : "none",
@@ -1009,7 +1014,7 @@ export function KDSMinimal() {
                                         fontSize: "12px",
                                         fontWeight: "bold",
                                         color: "#dc2626",
-                                        backgroundColor: "#fee2e2",
+                                        backgroundColor: "rgba(220,38,38,0.15)",
                                         padding: "2px 6px",
                                         borderRadius: "4px",
                                       }}
@@ -1040,7 +1045,7 @@ export function KDSMinimal() {
                                   <div
                                     style={{
                                       fontSize: "11px",
-                                      color: "#6b7280",
+                                      color: VPC.textDim,
                                       marginTop: "4px",
                                     }}
                                   >
@@ -1118,10 +1123,10 @@ export function KDSMinimal() {
                           style={{
                             fontSize: "12px",
                             fontWeight: "bold",
-                            color: "#6b7280",
+                            color: VPC.textMuted,
                             marginBottom: "8px",
                             paddingBottom: "4px",
-                            borderBottom: "1px solid #e5e7eb",
+                            borderBottom: `1px solid ${VPC.border}`,
                           }}
                         >
                           🍺 BAR ({barItems.length} item
@@ -1189,16 +1194,16 @@ export function KDSMinimal() {
                                   marginBottom: "8px",
                                   padding: "12px",
                                   backgroundColor: isItemReady
-                                    ? "#f0fdf4"
+                                    ? "rgba(34,197,94,0.1)"
                                     : hasTask
-                                    ? "#fef2f2"
-                                    : "#f9fafb",
+                                    ? "rgba(220,38,38,0.1)"
+                                    : VPC.surface,
                                   borderRadius: "4px",
                                   border: isItemReady
                                     ? "1px solid #22c55e"
                                     : hasTask
                                     ? "2px solid #dc2626"
-                                    : "1px solid #e5e7eb",
+                                    : `1px solid ${VPC.border}`,
                                   boxShadow: hasTask
                                     ? "0 0 0 2px rgba(220, 38, 38, 0.2)"
                                     : "none",
@@ -1232,7 +1237,7 @@ export function KDSMinimal() {
                                         fontSize: "12px",
                                         fontWeight: "bold",
                                         color: "#dc2626",
-                                        backgroundColor: "#fee2e2",
+                                        backgroundColor: "rgba(220,38,38,0.15)",
                                         padding: "2px 6px",
                                         borderRadius: "4px",
                                       }}
@@ -1260,7 +1265,7 @@ export function KDSMinimal() {
                                   <div
                                     style={{
                                       fontSize: "11px",
-                                      color: "#6b7280",
+                                      color: VPC.textDim,
                                       marginTop: "4px",
                                     }}
                                   >

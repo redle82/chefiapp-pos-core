@@ -1,20 +1,17 @@
 /**
- * TPVKitchenPage — Mini-KDS embebido no TPV HUB.
+ * TPVKitchenPage — KDS/Command Center embebido no TPV HUB.
  *
- * Mostra pedidos ativos da cozinha/bar com:
- * - Filtro de estação (Todas / Cozinha / Bar)
- * - Cards compactos com items, timers, status
- * - Ações rápidas: Iniciar preparo, Marcar item como pronto
- * - Polling automático (5s)
- *
- * Reutiliza: OrderReader, OrderWriter, ItemTimer, OrderStatusCalculator, OriginBadge.
+ * Layout em 3 colunas:
+ * - Fila (esquerda): pedidos por origem + seleção
+ * - Detalhes (centro): itens e ações do pedido selecionado
+ * - Info (direita): contexto do pedido e cliente
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { updateOrderStatus as coreUpdateOrderStatus } from "../../core/infra/CoreOrdersApi";
-import type { CoreOrderItem } from "../../infra/docker-core/types";
+import type { CoreOrder, CoreOrderItem } from "../../infra/docker-core/types";
 import {
   readActiveOrders,
   readOrderItems,
@@ -34,13 +31,14 @@ import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 // ---------------------------------------------------------------------------
 
 type StationFilter = "ALL" | "KITCHEN" | "BAR";
+type OriginFilter = "ALL" | "TPV" | "WEB" | "GARCOM" | "QR_MESA" | "APP";
 
 /**
  * KDS Expiration Policy — orders older than this are auto-archived.
- * Prevents stale 8,995+ minute tickets from cluttering the display.
+ * Prevents stale tickets from cluttering the display.
  */
 const KDS_MAX_AGE_MINUTES = 4 * 60; // 4 hours
-const KDS_WARNING_AGE_MINUTES = 2 * 60; // 2 hours → yellow warning
+const KDS_WARNING_AGE_MINUTES = 2 * 60; // 2 hours → warning
 
 interface OrderWithItems {
   order: ActiveOrderRow;
@@ -53,53 +51,151 @@ interface OrderWithItems {
 }
 
 // ---------------------------------------------------------------------------
-// Styles
+// Styling
 // ---------------------------------------------------------------------------
 
+const TPV_COLORS = {
+  bg: "#111",
+  panel: "#171717",
+  panelAlt: "#1e1e1e",
+  panelDim: "#141414",
+  text: "#fafafa",
+  textMuted: "#8a8a8a",
+  textDim: "#737373",
+  accent: "#f97316",
+  accentSoft: "rgba(249,115,22,0.15)",
+  border: "rgba(255,255,255,0.06)",
+};
+
 const FILTER_BTN = (active: boolean): React.CSSProperties => ({
-  padding: "6px 16px",
-  borderRadius: 8,
-  border: "none",
-  fontSize: 13,
+  padding: "6px 12px",
+  borderRadius: 10,
+  border: `1px solid ${active ? "transparent" : TPV_COLORS.border}`,
+  fontSize: 12,
   fontWeight: active ? 700 : 500,
   cursor: "pointer",
-  backgroundColor: active
-    ? "var(--color-primary, #c9a227)"
-    : "var(--surface-elevated, #262626)",
-  color: active ? "#000" : "var(--text-secondary, #a3a3a3)",
+  backgroundColor: active ? TPV_COLORS.accent : TPV_COLORS.panelAlt,
+  color: active ? "#111" : TPV_COLORS.textMuted,
   transition: "all 0.15s ease",
 });
 
-const ORDER_CARD: React.CSSProperties = {
-  backgroundColor: "var(--surface-elevated, #1a1a1a)",
-  borderRadius: 12,
+const ORIGIN_BTN = (active: boolean): React.CSSProperties => ({
+  padding: "4px 10px",
+  borderRadius: 999,
+  border: `1px solid ${active ? "transparent" : TPV_COLORS.border}`,
+  fontSize: 11,
+  fontWeight: 600,
+  cursor: "pointer",
+  backgroundColor: active ? TPV_COLORS.accentSoft : TPV_COLORS.panelAlt,
+  color: active ? TPV_COLORS.accent : TPV_COLORS.textMuted,
+  transition: "all 0.15s ease",
+});
+
+const PANEL: React.CSSProperties = {
+  backgroundColor: TPV_COLORS.panel,
+  borderRadius: 16,
+  border: `1px solid ${TPV_COLORS.border}`,
   padding: 16,
   display: "flex",
   flexDirection: "column",
-  gap: 10,
+  minHeight: 0,
 };
 
 const ITEM_ROW: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  padding: "6px 8px",
-  borderRadius: 8,
-  backgroundColor: "var(--surface-base, #0d0d0d)",
+  padding: "8px 10px",
+  borderRadius: 10,
+  backgroundColor: TPV_COLORS.panelAlt,
+  border: `1px solid ${TPV_COLORS.border}`,
   fontSize: 13,
 };
 
-const ACTION_BTN = (variant: "primary" | "success"): React.CSSProperties => ({
-  padding: "4px 12px",
-  borderRadius: 6,
-  border: "none",
+const ACTION_BTN = (
+  variant: "primary" | "ghost" | "success",
+): React.CSSProperties => ({
+  padding: "8px 12px",
+  borderRadius: 10,
+  border:
+    variant === "ghost"
+      ? `1px solid ${TPV_COLORS.border}`
+      : "1px solid transparent",
   fontSize: 12,
-  fontWeight: 600,
+  fontWeight: 700,
   cursor: "pointer",
   backgroundColor:
-    variant === "primary" ? "var(--color-primary, #c9a227)" : "#22c55e",
-  color: variant === "primary" ? "#000" : "#fff",
+    variant === "primary"
+      ? TPV_COLORS.accent
+      : variant === "success"
+      ? "#22c55e"
+      : TPV_COLORS.panelAlt,
+  color: variant === "ghost" ? TPV_COLORS.text : "#111",
 });
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const formatCents = (value?: number | null) => {
+  if (value == null || Number.isNaN(value)) return "—";
+  return `€${(value / 100).toFixed(2)}`;
+};
+
+const getOrderLabel = (order: CoreOrder) =>
+  order.number ?? order.short_id ?? order.id.slice(0, 6);
+
+const getOrderStatus = (status: string) => {
+  switch (status) {
+    case "OPEN":
+      return { label: "Novo", color: "#eab308", bg: "rgba(234,179,8,0.15)" };
+    case "IN_PREP":
+      return {
+        label: "Preparando",
+        color: "#3b82f6",
+        bg: "rgba(59,130,246,0.15)",
+      };
+    case "READY":
+      return { label: "Pronto", color: "#22c55e", bg: "rgba(34,197,94,0.15)" };
+    default:
+      return {
+        label: status,
+        color: TPV_COLORS.textMuted,
+        bg: TPV_COLORS.panelAlt,
+      };
+  }
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : null;
+
+const readString = (value: unknown): string | null => {
+  if (value == null) return null;
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
+  return null;
+};
+
+const getOriginKey = (order: CoreOrder) =>
+  (order.origin ?? order.source ?? "TPV")
+    .toString()
+    .toUpperCase()
+    .replace(/\s/g, "");
+
+const matchesOriginFilter = (order: CoreOrder, filter: OriginFilter) => {
+  if (filter === "ALL") return true;
+  const key = getOriginKey(order);
+  if (filter === "TPV") return ["TPV", "CAIXA"].includes(key);
+  if (filter === "WEB") return ["WEB", "WEB_PUBLIC"].includes(key);
+  if (filter === "GARCOM")
+    return ["GARCOM", "GARÇOM", "WAITER", "MOBILE"].includes(key);
+  if (filter === "QR_MESA") return ["QR_MESA", "QRMESA"].includes(key);
+  if (filter === "APP") return ["APPSTAFF", "MANAGER", "OWNER"].includes(key);
+  return key === filter;
+};
 
 // ---------------------------------------------------------------------------
 // Component
@@ -119,6 +215,8 @@ export function TPVKitchenPage() {
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [loading, setLoading] = useState(true);
   const [stationFilter, setStationFilter] = useState<StationFilter>("ALL");
+  const [originFilter, setOriginFilter] = useState<OriginFilter>("ALL");
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [acting, setActing] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
@@ -238,10 +336,13 @@ export function TPVKitchenPage() {
     [restaurantId, loadOrders],
   );
 
-  // ---- Filter orders by station ----
+  // ---- Filter orders ----
   const filteredOrders = useMemo(() => {
-    if (stationFilter === "ALL") return orders;
-    return orders
+    const originFiltered = orders.filter((o) =>
+      matchesOriginFilter(o.order, originFilter),
+    );
+    if (stationFilter === "ALL") return originFiltered;
+    return originFiltered
       .map((o) => ({
         ...o,
         items: o.items.filter(
@@ -249,7 +350,22 @@ export function TPVKitchenPage() {
         ),
       }))
       .filter((o) => o.items.length > 0);
-  }, [orders, stationFilter]);
+  }, [orders, originFilter, stationFilter]);
+
+  const selectedOrder = useMemo(
+    () => filteredOrders.find((o) => o.order.id === selectedOrderId) ?? null,
+    [filteredOrders, selectedOrderId],
+  );
+
+  useEffect(() => {
+    if (filteredOrders.length === 0) {
+      setSelectedOrderId(null);
+      return;
+    }
+    if (!selectedOrder) {
+      setSelectedOrderId(filteredOrders[0].order.id);
+    }
+  }, [filteredOrders, selectedOrder]);
 
   // ---- Count stats ----
   const stats = useMemo(() => {
@@ -270,7 +386,7 @@ export function TPVKitchenPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "var(--text-tertiary, #737373)",
+          color: TPV_COLORS.textDim,
           fontSize: 14,
         }}
       >
@@ -287,7 +403,8 @@ export function TPVKitchenPage() {
         flexDirection: "column",
         gap: 16,
         padding: 16,
-        overflow: "auto",
+        backgroundColor: TPV_COLORS.bg,
+        overflow: "hidden",
       }}
     >
       {/* Header bar */}
@@ -306,20 +423,19 @@ export function TPVKitchenPage() {
               margin: 0,
               fontSize: 18,
               fontWeight: 700,
-              color: "var(--text-primary, #fafafa)",
+              color: TPV_COLORS.text,
             }}
           >
-            🍳 Cozinha
+            🍳 Cozinha · KDS
           </h2>
-          {/* Stats badges */}
           <span
             style={{
               padding: "2px 10px",
-              borderRadius: 20,
+              borderRadius: 999,
               fontSize: 12,
               fontWeight: 600,
-              backgroundColor: "var(--surface-elevated, #262626)",
-              color: "var(--text-secondary, #a3a3a3)",
+              backgroundColor: TPV_COLORS.panelAlt,
+              color: TPV_COLORS.textMuted,
             }}
           >
             {stats.total} pedido{stats.total !== 1 ? "s" : ""}
@@ -328,7 +444,7 @@ export function TPVKitchenPage() {
             <span
               style={{
                 padding: "2px 10px",
-                borderRadius: 20,
+                borderRadius: 999,
                 fontSize: 12,
                 fontWeight: 600,
                 backgroundColor: "rgba(239,68,68,0.15)",
@@ -342,7 +458,7 @@ export function TPVKitchenPage() {
             <span
               style={{
                 padding: "2px 10px",
-                borderRadius: 20,
+                borderRadius: 999,
                 fontSize: 12,
                 fontWeight: 600,
                 backgroundColor: "rgba(234,179,8,0.15)",
@@ -354,7 +470,6 @@ export function TPVKitchenPage() {
           )}
         </div>
 
-        {/* Station filter */}
         <div style={{ display: "flex", gap: 6 }}>
           {(["ALL", "KITCHEN", "BAR"] as const).map((f) => (
             <button
@@ -368,133 +483,301 @@ export function TPVKitchenPage() {
         </div>
       </div>
 
-      {/* Orders grid */}
-      {filteredOrders.length === 0 ? (
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            color: "var(--text-tertiary, #737373)",
-          }}
-        >
-          <span style={{ fontSize: 40 }}>✅</span>
-          <span style={{ fontSize: 14 }}>
-            Sem pedidos ativos
-            {stationFilter !== "ALL"
-              ? ` para ${stationFilter === "KITCHEN" ? "cozinha" : "bar"}`
-              : ""}
-          </span>
-        </div>
-      ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-            gap: 12,
-          }}
-        >
-          {filteredOrders.map(({ order, items, status, ageMinutes }) => (
-            <div
-              key={order.id}
+      {/* Main columns */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "320px minmax(0, 1fr) 300px",
+          gap: 16,
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
+        {/* Left panel: Order list */}
+        <section style={PANEL}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 8,
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: 15, color: TPV_COLORS.text }}>
+              Fila
+            </h3>
+            <span
               style={{
-                ...ORDER_CARD,
-                borderLeft: `4px solid ${status.borderColor}`,
-                ...(ageMinutes >= KDS_WARNING_AGE_MINUTES
-                  ? { opacity: 0.7, borderTop: "2px solid #ef4444" }
-                  : {}),
+                fontSize: 12,
+                color: TPV_COLORS.textMuted,
               }}
             >
-              {/* Order header */}
+              {filteredOrders.length} pedidos
+            </span>
+          </div>
+
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {(
+              [
+                { key: "ALL", label: "Todos" },
+                { key: "TPV", label: "TPV" },
+                { key: "WEB", label: "Web" },
+                { key: "GARCOM", label: "Garcom" },
+                { key: "QR_MESA", label: "QR" },
+                { key: "APP", label: "App" },
+              ] as const
+            ).map((filter) => (
+              <button
+                key={filter.key}
+                onClick={() => setOriginFilter(filter.key)}
+                style={ORIGIN_BTN(originFilter === filter.key)}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              overflow: "auto",
+              marginTop: 12,
+              paddingRight: 4,
+            }}
+          >
+            {filteredOrders.length === 0 ? (
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  color: TPV_COLORS.textDim,
+                }}
+              >
+                <span style={{ fontSize: 28 }}>✅</span>
+                <span style={{ fontSize: 13 }}>Sem pedidos ativos</span>
+              </div>
+            ) : (
+              filteredOrders.map(({ order, items, status, ageMinutes }) => {
+                const statusInfo = getOrderStatus(order.status);
+                const isSelected = order.id === selectedOrderId;
+                const totalCents =
+                  order.total_cents ??
+                  items.reduce(
+                    (sum, item) => sum + (item.subtotal_cents ?? 0),
+                    0,
+                  );
+
+                return (
+                  <button
+                    key={order.id}
+                    data-testid={`order-row-${order.id}`}
+                    onClick={() => setSelectedOrderId(order.id)}
+                    style={{
+                      textAlign: "left",
+                      padding: 12,
+                      borderRadius: 12,
+                      border: `1px solid ${
+                        isSelected ? TPV_COLORS.accent : TPV_COLORS.border
+                      }`,
+                      backgroundColor: isSelected
+                        ? "rgba(249,115,22,0.12)"
+                        : TPV_COLORS.panelAlt,
+                      color: TPV_COLORS.text,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                      cursor: "pointer",
+                      boxShadow: isSelected
+                        ? "0 0 0 1px rgba(249,115,22,0.35)"
+                        : "none",
+                      opacity: ageMinutes >= KDS_WARNING_AGE_MINUTES ? 0.7 : 1,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 8,
+                      }}
+                    >
+                      <span style={{ fontSize: 14, fontWeight: 700 }}>
+                        #{getOrderLabel(order)}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          padding: "2px 8px",
+                          borderRadius: 999,
+                          backgroundColor: statusInfo.bg,
+                          color: statusInfo.color,
+                        }}
+                      >
+                        {statusInfo.label}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 8,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <OriginBadge
+                        origin={order.origin}
+                        createdByRole={order.source}
+                        tableNumber={order.table_number}
+                      />
+                      <span
+                        style={{ fontSize: 12, color: TPV_COLORS.textMuted }}
+                      >
+                        {items.length} item{items.length !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 8,
+                      }}
+                    >
+                      <span style={{ fontSize: 12, color: TPV_COLORS.textDim }}>
+                        {ageMinutes} min
+                      </span>
+                      <span style={{ fontSize: 13, fontWeight: 700 }}>
+                        {formatCents(totalCents)}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </section>
+
+        {/* Center panel: Order details */}
+        <section style={PANEL}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 12,
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: 15, color: TPV_COLORS.text }}>
+              Detalhes
+            </h3>
+            {selectedOrder ? (
+              <span
+                style={{
+                  fontSize: 12,
+                  color: TPV_COLORS.textMuted,
+                }}
+              >
+                Pedido #{getOrderLabel(selectedOrder.order)}
+              </span>
+            ) : null}
+          </div>
+
+          {!selectedOrder ? (
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                color: TPV_COLORS.textDim,
+              }}
+            >
+              <span style={{ fontSize: 28 }}>📭</span>
+              <span style={{ fontSize: 13 }}>Selecione um pedido</span>
+            </div>
+          ) : (
+            <>
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
+                  gap: 12,
+                  marginBottom: 12,
                 }}
               >
                 <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
+                  style={{ display: "flex", flexDirection: "column", gap: 4 }}
                 >
-                  <span
-                    style={{
-                      fontSize: 15,
-                      fontWeight: 700,
-                      color: "var(--text-primary, #fafafa)",
-                    }}
-                  >
-                    #{order.number ?? order.short_id ?? order.id.slice(0, 6)}
+                  <span style={{ fontSize: 16, fontWeight: 700 }}>
+                    Pedido #{getOrderLabel(selectedOrder.order)}
                   </span>
-                  <OriginBadge
-                    origin={order.origin}
-                    createdByRole={order.source}
-                    tableNumber={order.table_number}
-                  />
+                  <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
+                    Mesa {selectedOrder.order.table_number ?? "—"}
+                  </span>
                 </div>
                 <span
                   style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: "2px 8px",
-                    borderRadius: 6,
-                    backgroundColor:
-                      order.status === "IN_PREP"
-                        ? "rgba(59,130,246,0.15)"
-                        : order.status === "READY"
-                        ? "rgba(34,197,94,0.15)"
-                        : "var(--surface-base, #0d0d0d)",
-                    color:
-                      order.status === "IN_PREP"
-                        ? "#3b82f6"
-                        : order.status === "READY"
-                        ? "#22c55e"
-                        : "var(--text-secondary, #a3a3a3)",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    padding: "4px 10px",
+                    borderRadius: 999,
+                    backgroundColor: getOrderStatus(selectedOrder.order.status)
+                      .bg,
+                    color: getOrderStatus(selectedOrder.order.status).color,
                   }}
                 >
-                  {order.status === "OPEN"
-                    ? "Novo"
-                    : order.status === "IN_PREP"
-                    ? "Preparando"
-                    : order.status === "READY"
-                    ? "Pronto"
-                    : order.status}
+                  {getOrderStatus(selectedOrder.order.status).label}
                 </span>
               </div>
 
-              {/* Items */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {items.map((item) => (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  overflow: "auto",
+                  paddingRight: 4,
+                }}
+              >
+                {selectedOrder.items.map((item) => (
                   <div key={item.id} style={ITEM_ROW}>
                     <div
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 6,
+                        gap: 8,
                         flex: 1,
                         minWidth: 0,
                       }}
                     >
                       <span
                         style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: "var(--text-tertiary, #737373)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: TPV_COLORS.textMuted,
                           minWidth: 20,
                         }}
                       >
-                        {item.quantity}×
+                        {item.quantity}x
                       </span>
                       <span
                         style={{
-                          color: "var(--text-primary, #fafafa)",
-                          fontSize: 13,
+                          color: TPV_COLORS.text,
+                          fontSize: 14,
+                          fontWeight: 600,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -506,10 +789,10 @@ export function TPVKitchenPage() {
                       {item.station && (
                         <span
                           style={{
-                            fontSize: 9,
-                            padding: "1px 5px",
-                            borderRadius: 4,
-                            fontWeight: 600,
+                            fontSize: 10,
+                            padding: "2px 6px",
+                            borderRadius: 6,
+                            fontWeight: 700,
                             backgroundColor:
                               item.station === "BAR"
                                 ? "rgba(168,85,247,0.15)"
@@ -526,7 +809,7 @@ export function TPVKitchenPage() {
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 6,
+                        gap: 8,
                       }}
                     >
                       <ItemTimer item={item} />
@@ -545,25 +828,232 @@ export function TPVKitchenPage() {
                 ))}
               </div>
 
-              {/* Order actions */}
-              {order.status === "OPEN" && (
-                <button
-                  onClick={() => handleStartPrep(order.id)}
-                  disabled={acting === order.id}
+              <div
+                style={{
+                  marginTop: 12,
+                  paddingTop: 12,
+                  borderTop: `1px solid ${TPV_COLORS.border}`,
+                  display: "grid",
+                  gap: 6,
+                }}
+              >
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
+                  <span style={{ color: TPV_COLORS.textMuted }}>Subtotal</span>
+                  <span style={{ fontWeight: 600 }}>
+                    {formatCents(selectedOrder.order.subtotal_cents)}
+                  </span>
+                </div>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
+                  <span style={{ color: TPV_COLORS.textMuted }}>Taxas</span>
+                  <span style={{ fontWeight: 600 }}>
+                    {formatCents(selectedOrder.order.tax_cents)}
+                  </span>
+                </div>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
+                  <span style={{ color: TPV_COLORS.textMuted }}>Desconto</span>
+                  <span style={{ fontWeight: 600 }}>
+                    {formatCents(selectedOrder.order.discount_cents)}
+                  </span>
+                </div>
+                <div
                   style={{
-                    ...ACTION_BTN("primary"),
-                    width: "100%",
-                    padding: "8px 0",
-                    fontSize: 13,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 15,
+                    fontWeight: 700,
                   }}
                 >
-                  {acting === order.id ? "A iniciar…" : "▶ Iniciar preparo"}
+                  <span>Total</span>
+                  <span>{formatCents(selectedOrder.order.total_cents)}</span>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  marginTop: 12,
+                  display: "flex",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
+              >
+                {selectedOrder.order.status === "OPEN" && (
+                  <button
+                    onClick={() => handleStartPrep(selectedOrder.order.id)}
+                    disabled={acting === selectedOrder.order.id}
+                    style={ACTION_BTN("primary")}
+                  >
+                    {acting === selectedOrder.order.id
+                      ? "A iniciar…"
+                      : "Iniciar preparo"}
+                  </button>
+                )}
+                <button type="button" style={ACTION_BTN("ghost")}>
+                  Cobrar
                 </button>
-              )}
+                <button type="button" style={ACTION_BTN("ghost")}>
+                  Comandar
+                </button>
+                <button type="button" style={ACTION_BTN("ghost")}>
+                  Imprimir
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+
+        {/* Right panel: Order info */}
+        <section style={PANEL}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 12,
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: 15, color: TPV_COLORS.text }}>
+              Info
+            </h3>
+            {selectedOrder ? (
+              <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
+                #{getOrderLabel(selectedOrder.order)}
+              </span>
+            ) : null}
+          </div>
+
+          {!selectedOrder ? (
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                color: TPV_COLORS.textDim,
+              }}
+            >
+              <span style={{ fontSize: 28 }}>🧭</span>
+              <span style={{ fontSize: 13 }}>Aguardando seleção</span>
             </div>
-          ))}
-        </div>
-      )}
+          ) : (
+            (() => {
+              const metadata = asRecord(selectedOrder.order.metadata) ?? {};
+              const customer = asRecord(metadata.customer) ?? {};
+              const delivery = asRecord(metadata.delivery) ?? {};
+
+              const customerName =
+                readString(customer.name) ?? readString(metadata.customer_name);
+              const customerPhone =
+                readString(customer.phone) ??
+                readString(metadata.customer_phone);
+              const customerEmail =
+                readString(customer.email) ??
+                readString(metadata.customer_email);
+
+              const deliveryAddress =
+                readString(delivery.address) ??
+                readString(metadata.delivery_address);
+
+              return (
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 16 }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      padding: 12,
+                      borderRadius: 12,
+                      backgroundColor: TPV_COLORS.panelAlt,
+                      border: `1px solid ${TPV_COLORS.border}`,
+                    }}
+                  >
+                    <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
+                      Pedido
+                    </span>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>
+                      Origem: {getOriginKey(selectedOrder.order)}
+                    </span>
+                    <span style={{ fontSize: 13, color: TPV_COLORS.textMuted }}>
+                      Mesa {selectedOrder.order.table_number ?? "—"}
+                    </span>
+                    <span style={{ fontSize: 13, color: TPV_COLORS.textMuted }}>
+                      Status pagamento:{" "}
+                      {selectedOrder.order.payment_status ?? "—"}
+                    </span>
+                    <span style={{ fontSize: 13, color: TPV_COLORS.textMuted }}>
+                      Criado:{" "}
+                      {new Date(
+                        selectedOrder.order.created_at,
+                      ).toLocaleTimeString("pt-PT", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      padding: 12,
+                      borderRadius: 12,
+                      backgroundColor: TPV_COLORS.panelAlt,
+                      border: `1px solid ${TPV_COLORS.border}`,
+                    }}
+                  >
+                    <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
+                      Cliente
+                    </span>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>
+                      {customerName ?? "—"}
+                    </span>
+                    <span style={{ fontSize: 13, color: TPV_COLORS.textMuted }}>
+                      {customerPhone ?? "—"}
+                    </span>
+                    <span style={{ fontSize: 13, color: TPV_COLORS.textMuted }}>
+                      {customerEmail ?? "—"}
+                    </span>
+                    {deliveryAddress && (
+                      <span style={{ fontSize: 12, color: TPV_COLORS.textDim }}>
+                        {deliveryAddress}
+                      </span>
+                    )}
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      padding: 12,
+                      borderRadius: 12,
+                      backgroundColor: TPV_COLORS.panelAlt,
+                      border: `1px solid ${TPV_COLORS.border}`,
+                    }}
+                  >
+                    <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
+                      Notas
+                    </span>
+                    <span style={{ fontSize: 13, color: TPV_COLORS.text }}>
+                      {selectedOrder.order.notes ?? "Sem notas"}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()
+          )}
+        </section>
+      </div>
     </div>
   );
 }
