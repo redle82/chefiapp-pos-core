@@ -46,8 +46,8 @@ export function TPVLayout() {
         display: "flex",
         flex: 1,
         minHeight: "100%",
-        backgroundColor: "var(--surface-base, #0a0a0a)",
-        color: "var(--text-primary, #fafafa)",
+        backgroundColor: "#111",
+        color: "#fafafa",
       }}
     >
       <TPVSidebar />

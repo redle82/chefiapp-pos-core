@@ -1,105 +1,156 @@
 /**
- * TPVHeader — Cabeçalho do TPV conforme exemplo: menu icon, identidade staff (avatar, nome, ID), pesquisa, filtro.
+ * TPVHeader — Cabeçalho do TPV: avatar+nome staff (esquerda), pesquisa (centro), filtro orange (direita).
+ * Ref: POS reference layout.
  */
+
+/* ── Accent orange ─────────────────────────────────────────────── */
+const ACCENT = "#f97316";
+
+/** Ícone lupa SVG */
+function SearchIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      stroke="#737373"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    >
+      <circle cx="8" cy="8" r="5.5" />
+      <line x1="12" y1="12" x2="16" y2="16" />
+    </svg>
+  );
+}
+
+/** Ícone filtro SVG */
+function FilterIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    >
+      <circle cx="4" cy="4" r="1.5" />
+      <circle cx="12" cy="4" r="1.5" />
+      <circle cx="4" cy="12" r="1.5" />
+      <circle cx="12" cy="12" r="1.5" />
+      <line x1="4" y1="5.5" x2="4" y2="10.5" />
+      <line x1="12" y1="5.5" x2="12" y2="10.5" />
+      <line x1="5.5" y1="4" x2="10.5" y2="4" />
+      <line x1="5.5" y1="12" x2="10.5" y2="12" />
+    </svg>
+  );
+}
 
 interface TPVHeaderProps {
   searchQuery?: string;
   onSearchChange?: (value: string) => void;
   onFilterClick?: () => void;
+  staffName?: string;
+  staffId?: string;
+  staffAvatarUrl?: string | null;
 }
-
-/** Nome/ID do operador (quando houver auth de staff; por agora placeholder). */
-const STAFF_PLACEHOLDER = { name: "Operador", id: "—" };
 
 export function TPVHeader({
   searchQuery = "",
   onSearchChange,
   onFilterClick,
+  staffName = "Operador",
+  staffId = "—",
+  staffAvatarUrl = null,
 }: TPVHeaderProps) {
-  const staffName = STAFF_PLACEHOLDER.name;
-  const staffId = STAFF_PLACEHOLDER.id;
-
   return (
     <header
       style={{
-        height: 56,
-        minHeight: 56,
-        backgroundColor: "var(--surface-elevated, #262626)",
-        borderBottom: "1px solid var(--surface-border, rgba(255,255,255,0.08))",
+        height: 64,
+        minHeight: 64,
+        backgroundColor: "#1a1a1a",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
         display: "flex",
         alignItems: "center",
         gap: 16,
-        paddingLeft: 16,
-        paddingRight: 16,
+        paddingLeft: 20,
+        paddingRight: 20,
       }}
     >
-      {/* Ícone menu principal (grid 9 pontos) */}
-      <button
-        type="button"
-        title="Menu"
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 8,
-          border: "none",
-          backgroundColor: "transparent",
-          color: "var(--text-secondary, #a3a3a3)",
-          cursor: "pointer",
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 2,
-          padding: 6,
-        }}
-      >
-        {Array.from({ length: 9 }).map((_, i) => (
-          <span key={i} style={{ width: 4, height: 4, borderRadius: 1, backgroundColor: "currentColor" }} />
-        ))}
-      </button>
-      {/* Identidade staff: avatar + nome + ID */}
+      {/* Staff identity: avatar + name + ID */}
       <div
         style={{
-          width: 36,
-          height: 36,
-          borderRadius: "50%",
-          backgroundColor: "var(--surface-elevated, #404040)",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          color: "var(--text-primary, #fafafa)",
-          fontSize: 14,
-          fontWeight: 600,
+          gap: 12,
+          minWidth: 160,
         }}
       >
-        {staffName.slice(0, 1)}
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            backgroundColor: "#2a2a2a",
+            border: "2px solid rgba(255,255,255,0.1)",
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          {staffAvatarUrl ? (
+            <img
+              src={staffAvatarUrl}
+              alt=""
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            <span style={{ color: "#fafafa", fontSize: 16, fontWeight: 600 }}>
+              {staffName.slice(0, 1).toUpperCase()}
+            </span>
+          )}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <span
+            style={{
+              color: "#fafafa",
+              fontWeight: 600,
+              fontSize: 14,
+              lineHeight: 1.3,
+            }}
+          >
+            {staffName}
+          </span>
+          <span style={{ color: "#737373", fontSize: 12 }}>{staffId}</span>
+        </div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-        <span style={{ color: "var(--text-primary, #fafafa)", fontWeight: 600, fontSize: 14, lineHeight: 1.2 }}>
-          {staffName}
-        </span>
-        <span style={{ color: "var(--text-tertiary, #a3a3a3)", fontSize: 11 }}>
-          {staffId}
-        </span>
-      </div>
-      {/* Barra de pesquisa: placeholder "Search product by name, categories or SKU" */}
+
+      {/* Search bar (center, flexible) */}
       <div
         style={{
           flex: 1,
-          maxWidth: 420,
+          maxWidth: 520,
           position: "relative",
           display: "flex",
           alignItems: "center",
+          marginLeft: "auto",
+          marginRight: "auto",
         }}
       >
         <span
           style={{
             position: "absolute",
-            left: 12,
-            color: "var(--text-tertiary, #737373)",
-            fontSize: 16,
+            left: 14,
+            display: "flex",
+            alignItems: "center",
             pointerEvents: "none",
           }}
         >
-          🔍
+          <SearchIcon />
         </span>
         <input
           type="search"
@@ -108,14 +159,15 @@ export function TPVHeader({
           onChange={(e) => onSearchChange?.(e.target.value)}
           style={{
             width: "100%",
-            height: 40,
-            paddingLeft: 40,
-            paddingRight: 36,
-            borderRadius: 8,
-            border: "1px solid var(--surface-border, #404040)",
-            backgroundColor: "var(--surface-base, #171717)",
-            color: "var(--text-primary, #fafafa)",
+            height: 42,
+            paddingLeft: 42,
+            paddingRight: 16,
+            borderRadius: 21,
+            border: "1px solid rgba(255,255,255,0.1)",
+            backgroundColor: "#141414",
+            color: "#fafafa",
             fontSize: 14,
+            outline: "none",
           }}
         />
         {searchQuery && (
@@ -125,58 +177,49 @@ export function TPVHeader({
             title="Limpar"
             style={{
               position: "absolute",
-              right: 8,
+              right: 10,
               width: 24,
               height: 24,
-              borderRadius: 4,
+              borderRadius: 12,
               border: "none",
-              backgroundColor: "transparent",
-              color: "var(--text-tertiary, #737373)",
+              backgroundColor: "rgba(255,255,255,0.1)",
+              color: "#a3a3a3",
               cursor: "pointer",
-              fontSize: 14,
+              fontSize: 12,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             ×
           </button>
         )}
       </div>
+
+      {/* Orange Filter button */}
       <button
         type="button"
         onClick={onFilterClick}
         style={{
-          height: 40,
-          paddingLeft: 16,
-          paddingRight: 16,
-          borderRadius: 8,
+          height: 42,
+          paddingLeft: 18,
+          paddingRight: 18,
+          borderRadius: 21,
           border: "none",
-          backgroundColor: "var(--color-primary, #c9a227)",
-          color: "var(--text-inverse, #1a1a1a)",
+          backgroundColor: ACCENT,
+          color: "#fff",
           fontWeight: 600,
           fontSize: 14,
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
           gap: 8,
+          flexShrink: 0,
+          transition: "opacity 0.15s ease",
         }}
       >
-        <span style={{ fontSize: 16 }}>⌃</span>
-        Filtro
-      </button>
-      <button
-        type="button"
-        title="Fechar"
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 8,
-          border: "none",
-          backgroundColor: "transparent",
-          color: "var(--text-secondary, #a3a3a3)",
-          cursor: "pointer",
-          fontSize: 18,
-        }}
-      >
-        ×
+        <FilterIcon />
+        Filter
       </button>
     </header>
   );

@@ -1,181 +1,223 @@
 /**
- * TPVSidebar — Barra lateral esquerda do TPV: perfil do operador no topo, navegação (POS, Pedidos, Definições), sair.
- * Design: tema escuro, accent dourado (--color-primary) no item ativo.
+ * TPVSidebar — Barra lateral esquerda do TPV (icon-only).
+ * Design: dark theme, accent orange no item ativo, SVG icons.
+ * Ref: POS reference layout com brand logo no topo + 6 nav icons + exit.
  */
 
 import React from "react";
 import { NavLink } from "react-router-dom";
 
-/** Nome e ID do operador (quando houver auth de staff; por agora placeholder). */
-const STAFF_PLACEHOLDER = { name: "Operador", id: "—" };
+/* ── Accent orange (reference design) ──────────────────────────── */
+const ACCENT = "#f97316";
+const ACCENT_BG = "rgba(249,115,22,0.12)";
 
-const SIDEBAR_LINKS = [
-  { to: "/op/tpv", label: "POS", icon: "grid" },
-  { to: "/op/tpv/orders", label: "Pedidos", icon: "doc" },
-  { to: "/op/tpv/kitchen", label: "Cozinha", icon: "kitchen" },
-  { to: "/op/tpv/tasks", label: "Tarefas", icon: "tasks" },
-  { to: "/op/tpv/reservations", label: "Reservas", icon: "calendar" },
-  { to: "/op/tpv/settings", label: "Definições", icon: "gear" },
-] as const;
+/* ── SVG inline icons (20×20) ──────────────────────────────────── */
 
-function IconGrid() {
+/** Brand logo — 4 dots (2×2) matching ChefIApp identity */
+function BrandLogo() {
   return (
-    <div
-      style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}
-    >
-      {Array.from({ length: 9 }).map((_, i) => (
-        <span
-          key={i}
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: 1,
-            backgroundColor: "currentColor",
-          }}
-        />
-      ))}
-    </div>
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <circle cx="10" cy="10" r="5" fill={ACCENT} />
+      <circle cx="22" cy="10" r="5" fill={ACCENT} />
+      <circle cx="10" cy="22" r="5" fill={ACCENT} />
+      <circle cx="22" cy="22" r="3.5" fill={ACCENT} opacity="0.5" />
+    </svg>
   );
 }
 
-function IconDoc() {
-  return <span style={{ fontSize: 18 }}>📄</span>;
+function IconGrid() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    >
+      <rect x="3" y="3" width="5.5" height="5.5" rx="1.5" />
+      <rect x="11.5" y="3" width="5.5" height="5.5" rx="1.5" />
+      <rect x="3" y="11.5" width="5.5" height="5.5" rx="1.5" />
+      <rect x="11.5" y="11.5" width="5.5" height="5.5" rx="1.5" />
+    </svg>
+  );
+}
+
+function IconReceipt() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M5 2h10a1 1 0 011 1v14l-2-1.5L12 17l-2-1.5L8 17l-2-1.5L4 17V3a1 1 0 011-1z" />
+      <line x1="7" y1="6" x2="13" y2="6" />
+      <line x1="7" y1="9" x2="13" y2="9" />
+      <line x1="7" y1="12" x2="10" y2="12" />
+    </svg>
+  );
+}
+
+function IconKitchen() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 11h14a1 1 0 011 1v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2a1 1 0 011-1z" />
+      <path d="M5 11V8a5 5 0 0110 0v3" />
+      <line x1="10" y1="16" x2="10" y2="18" />
+      <line x1="6" y1="18" x2="14" y2="18" />
+    </svg>
+  );
+}
+
+function IconTasks() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="3" width="14" height="14" rx="2" />
+      <path d="M7 10l2 2 4-4" />
+    </svg>
+  );
+}
+
+function IconCalendar() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="4" width="14" height="13" rx="2" />
+      <line x1="3" y1="8" x2="17" y2="8" />
+      <line x1="7" y1="2" x2="7" y2="5" />
+      <line x1="13" y1="2" x2="13" y2="5" />
+    </svg>
+  );
 }
 
 function IconGear() {
-  return <span style={{ fontSize: 18 }}>⚙</span>;
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="10" cy="10" r="3" />
+      <path d="M10 1.5v2M10 16.5v2M3.3 3.3l1.4 1.4M15.3 15.3l1.4 1.4M1.5 10h2M16.5 10h2M3.3 16.7l1.4-1.4M15.3 4.7l1.4-1.4" />
+    </svg>
+  );
 }
 
-/** Ícone de cozinha (panela simplificada) */
-function IconKitchen() {
-  return <span style={{ fontSize: 18 }}>🍳</span>;
+function IconExit() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 3H5a2 2 0 00-2 2v10a2 2 0 002 2h7" />
+      <path d="M8 10h9M14 7l3 3-3 3" />
+    </svg>
+  );
 }
 
-/** Ícone de tarefas (checklist) */
-function IconTasks() {
-  return <span style={{ fontSize: 18 }}>✅</span>;
-}
+type IconKey = "grid" | "receipt" | "kitchen" | "tasks" | "calendar" | "gear";
 
-/** Ícone de reservas (calendário) */
-function IconCalendar() {
-  return <span style={{ fontSize: 18 }}>📅</span>;
-}
-
-function iconFor(
-  k: "grid" | "doc" | "gear" | "kitchen" | "tasks" | "calendar",
-) {
+function iconFor(k: IconKey) {
   switch (k) {
     case "grid":
       return <IconGrid />;
-    case "doc":
-      return <IconDoc />;
-    case "gear":
-      return <IconGear />;
+    case "receipt":
+      return <IconReceipt />;
     case "kitchen":
       return <IconKitchen />;
     case "tasks":
       return <IconTasks />;
     case "calendar":
       return <IconCalendar />;
+    case "gear":
+      return <IconGear />;
   }
 }
 
-export function TPVSidebar() {
-  const staffName = STAFF_PLACEHOLDER.name;
-  const staffId = STAFF_PLACEHOLDER.id;
+const SIDEBAR_LINKS: { to: string; label: string; icon: IconKey }[] = [
+  { to: "/op/tpv", label: "POS", icon: "grid" },
+  { to: "/op/tpv/orders", label: "Pedidos", icon: "receipt" },
+  { to: "/op/tpv/kitchen", label: "Cozinha", icon: "kitchen" },
+  { to: "/op/tpv/tasks", label: "Tarefas", icon: "tasks" },
+  { to: "/op/tpv/reservations", label: "Reservas", icon: "calendar" },
+  { to: "/op/tpv/settings", label: "Definições", icon: "gear" },
+];
 
+export function TPVSidebar() {
   return (
     <aside
       style={{
-        width: 80,
-        minWidth: 80,
-        backgroundColor: "var(--surface-base, #171717)",
-        borderRight: "1px solid var(--surface-border, rgba(255,255,255,0.08))",
+        width: 72,
+        minWidth: 72,
+        backgroundColor: "#141414",
+        borderRight: "1px solid rgba(255,255,255,0.06)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        paddingTop: 12,
-        gap: 8,
+        paddingTop: 16,
+        paddingBottom: 16,
+        gap: 4,
       }}
     >
-      {/* Perfil do operador: avatar + nome + ID */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 4,
-          paddingBottom: 12,
-          borderBottom:
-            "1px solid var(--surface-border, rgba(255,255,255,0.08))",
-          width: "100%",
-        }}
-      >
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: "50%",
-            backgroundColor: "var(--surface-elevated, #262626)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "var(--text-primary, #fafafa)",
-            fontSize: 16,
-            fontWeight: 600,
-          }}
-        >
-          {staffName.slice(0, 1)}
-        </div>
-        <span
-          style={{
-            color: "var(--text-primary, #fafafa)",
-            fontWeight: 600,
-            fontSize: 11,
-            lineHeight: 1.2,
-            textAlign: "center",
-            maxWidth: "100%",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {staffName}
-        </span>
-        <span
-          style={{
-            color: "var(--text-tertiary, #737373)",
-            fontSize: 10,
-            lineHeight: 1.2,
-          }}
-        >
-          {staffId}
-        </span>
+      {/* Brand logo (4 orange dots) */}
+      <div style={{ marginBottom: 20 }}>
+        <BrandLogo />
       </div>
 
+      {/* Navigation icons */}
       {SIDEBAR_LINKS.map(({ to, icon, label }, idx) => (
         <React.Fragment key={to}>
-          {/* Separator before hub modules (after Pedidos) */}
-          {idx === 2 && (
+          {/* Separators */}
+          {(idx === 2 || idx === 5) && (
             <div
               style={{
-                width: "60%",
+                width: 32,
                 height: 1,
-                backgroundColor:
-                  "var(--surface-border, rgba(255,255,255,0.08))",
-                margin: "4px 0",
-              }}
-            />
-          )}
-          {/* Separator before settings (after Reservas) */}
-          {idx === 5 && (
-            <div
-              style={{
-                width: "60%",
-                height: 1,
-                backgroundColor:
-                  "var(--surface-border, rgba(255,255,255,0.08))",
-                margin: "4px 0",
+                backgroundColor: "rgba(255,255,255,0.06)",
+                margin: "6px 0",
               }}
             />
           )}
@@ -188,30 +230,25 @@ export function TPVSidebar() {
               height: 44,
               borderRadius: 12,
               display: "flex",
-              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              gap: 2,
-              color: isActive
-                ? "var(--color-primary, #c9a227)"
-                : "var(--text-secondary, #a3a3a3)",
-              backgroundColor: isActive
-                ? "var(--status-primary-bg, rgba(201,162,39,0.12))"
-                : "transparent",
+              color: isActive ? ACCENT : "#737373",
+              backgroundColor: isActive ? ACCENT_BG : "transparent",
               textDecoration: "none",
-              fontSize: 9,
-              lineHeight: 1,
-              fontWeight: isActive ? 600 : 400,
+              transition: "all 0.15s ease",
             })}
           >
             {iconFor(icon)}
           </NavLink>
         </React.Fragment>
       ))}
+
       <div style={{ flex: 1 }} />
+
+      {/* Exit */}
       <a
         href="/app/staff/home"
-        title="Sair"
+        title="Sair do TPV"
         style={{
           width: 44,
           height: 44,
@@ -219,12 +256,12 @@ export function TPVSidebar() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 18,
-          color: "var(--text-secondary, #a3a3a3)",
+          color: "#737373",
           textDecoration: "none",
+          transition: "color 0.15s ease",
         }}
       >
-        →
+        <IconExit />
       </a>
     </aside>
   );

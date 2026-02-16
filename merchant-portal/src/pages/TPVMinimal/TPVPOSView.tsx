@@ -1,16 +1,17 @@
 /**
- * TPVPOSView — Vista principal do POS: modo, categorias, grelha de produtos, painel do pedido.
- * Usa a mesma lógica de dados que TPVMinimal (produtos, carrinho, createOrder).
+ * TPVPOSView — Main POS view: categories, product grid, order panel.
  *
- * Integração Operacional (Fase 2 — Backend Real):
- * - OrderStatusPanel: status do pedido, ações (enviar cozinha, segurar, dividir).
- * - createOrderLifecycle: orquestra estado operacional + backend Docker Core.
+ * Ref: POS reference layout — product grid left, order panel right (with mode tabs inside).
  *
- * Fluxo:
+ * ChefIApp additions:
+ * - OrderStatusPanel: order status, actions (send kitchen, hold, split).
+ * - createOrderLifecycle: operational state + Docker Core backend.
+ *
+ * Flow:
  *   1. addToCart → lifecycle.startOrder(local) + lifecycle.addItem(local stock)
- *   2. "Enviar Cozinha" → lifecycle.sendToKitchen (cria pedido no backend, KDS vê)
- *   3. "Pagar/Confirmar" → lifecycle.finalizeOrder (fecha pedido no backend)
- *   Atalho takeaway: "Confirmar" → lifecycle.confirmAndPay (cria + fecha atomicamente)
+ *   2. "Send Kitchen" → lifecycle.sendToKitchen (creates order in backend, KDS sees it)
+ *   3. "Pay/Confirm" → lifecycle.finalizeOrder (closes order in backend)
+ *   Takeaway shortcut: "Confirm" → lifecycle.confirmAndPay (create + close atomically)
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -26,10 +27,7 @@ import type { CoreProduct } from "../../infra/readers/RestaurantReader";
 import { readMenuCategories } from "../../infra/readers/RestaurantReader";
 import { ToastContainer, useToast } from "../../ui/design-system/Toast";
 import { isPlaceholderPhoto } from "../../utils/isPlaceholderPhoto";
-import {
-  OrderModeSelector,
-  type OrderMode,
-} from "./components/OrderModeSelector";
+import type { OrderMode } from "./components/OrderModeSelector";
 import {
   OrderSummaryPanel,
   type OrderSummaryItem,
@@ -259,14 +257,14 @@ export function TPVPOSView() {
         minHeight: 0,
       }}
     >
+      {/* Left: categories + product grid */}
       <div
         style={{
           flex: 1,
           overflow: "auto",
-          padding: 16,
+          padding: "12px 16px",
         }}
       >
-        <OrderModeSelector value={orderMode} onChange={setOrderMode} />
         <ProductCategoryFilter
           categories={categories}
           selectedId={selectedCategoryId}
@@ -275,8 +273,8 @@ export function TPVPOSView() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-            gap: 16,
+            gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
+            gap: 14,
           }}
         >
           {filteredProducts.map((product) => {
@@ -310,12 +308,12 @@ export function TPVPOSView() {
           })}
         </div>
       </div>
-      {/* Sidebar direita: pedido + painel operacional */}
+      {/* Right: order panel + operational status */}
       <div
         style={{
           display: "flex",
           flexDirection: "column",
-          minWidth: 320,
+          minWidth: 340,
           maxWidth: 360,
         }}
       >
@@ -329,6 +327,8 @@ export function TPVPOSView() {
           onPrintReceipt={() => toast.info("Impressão de recibo em breve.")}
           onProceed={handleProceed}
           proceedDisabled={(cart.length === 0 && !isSentToKitchen) || sending}
+          orderMode={orderMode}
+          onOrderModeChange={setOrderMode}
         />
         <OrderStatusPanel
           onSendToKitchen={handleSendToKitchen}

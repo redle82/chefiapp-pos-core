@@ -1,14 +1,35 @@
 /**
- * TPVProductCard — Card de produto na grelha (imagem, nome, descrição, preço, adicionar).
- * Usa photo_url; se falhar ou estiver vazio, usa fallbackPhotoUrl (foto de comida por categoria).
+ * TPVProductCard — Product card in the POS grid.
+ * Ref: POS reference layout with large photo, name, description, price, cart button.
  *
- * Integração Operacional:
- * - useStockSignals: exibe badges "Estoque Crítico" / "Indisponível" e margem.
- * - Produto indisponível desabilita botão de adicionar.
+ * ChefIApp additions:
+ * - useStockSignals: stock badges (Indisponível / Estoque Crítico) + margin indicator.
  */
 
 import { useState } from "react";
 import { useStockSignals } from "../../../core/operational/hooks/useStockSignals";
+
+const ACCENT = "#f97316";
+
+/** SVG cart icon */
+function CartIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M1 1h2l1.5 9h9L15 4H5" />
+      <circle cx="6.5" cy="14" r="1.5" />
+      <circle cx="12.5" cy="14" r="1.5" />
+    </svg>
+  );
+}
 
 export interface TPVProductCardProduct {
   id: string;
@@ -22,7 +43,6 @@ export interface TPVProductCardProduct {
 
 interface TPVProductCardProps {
   product: TPVProductCardProduct;
-  /** URL de foto de comida por categoria (quando photo_url falha ou está vazio) */
   fallbackPhotoUrl?: string | null;
   onAdd: () => void;
 }
@@ -37,7 +57,6 @@ export function TPVProductCard({
   const [primaryError, setPrimaryError] = useState(false);
   const [fallbackError, setFallbackError] = useState(false);
 
-  // Sinais de estoque operacional
   const { isCritical, isUnavailable, marginPct } = useStockSignals(product.id);
 
   const primaryUrl =
@@ -52,38 +71,37 @@ export function TPVProductCard({
     ? (product.original_price_cents / 100).toFixed(2)
     : null;
 
-  // Borda reativa: vermelha se indisponível, amarela se estoque crítico
-  const borderColor = isUnavailable
-    ? "rgba(239, 68, 68, 0.5)"
-    : isCritical
-    ? "rgba(234, 179, 8, 0.5)"
-    : "var(--surface-border, rgba(255,255,255,0.08))";
-
   return (
     <div
       style={{
-        backgroundColor: "var(--card-bg-on-dark, #262626)",
-        borderRadius: 12,
-        border: `1px solid ${borderColor}`,
+        backgroundColor: "#1e1e1e",
+        borderRadius: 16,
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        minHeight: 0,
-        opacity: isUnavailable ? 0.5 : 1,
-        transition: "border-color 0.3s ease, opacity 0.3s ease",
+        opacity: isUnavailable ? 0.45 : 1,
+        transition: "transform 0.15s ease, opacity 0.2s ease",
         position: "relative",
+        cursor: isUnavailable ? "default" : "pointer",
+      }}
+      onClick={isUnavailable ? undefined : onAdd}
+      role={isUnavailable ? undefined : "button"}
+      tabIndex={isUnavailable ? undefined : 0}
+      onKeyDown={(e) => {
+        if (!isUnavailable && (e.key === "Enter" || e.key === " ")) onAdd();
       }}
     >
-      {/* Imagem rectangular no topo (aspecto 4/3) */}
+      {/* Image (16:10 aspect) */}
       <div
         style={{
           width: "100%",
-          aspectRatio: "4/3",
-          backgroundColor: "var(--surface-elevated, #404040)",
+          aspectRatio: "16/10",
+          backgroundColor: "#2a2a2a",
           overflow: "hidden",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          position: "relative",
         }}
       >
         {displayUrl ? (
@@ -101,71 +119,50 @@ export function TPVProductCard({
         ) : (
           <span style={{ fontSize: 40 }}>{PLACEHOLDER_EMOJI}</span>
         )}
+
+        {/* Stock badges (ChefIApp addition) */}
+        {(isUnavailable || isCritical) && (
+          <div style={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}>
+            <span
+              style={{
+                display: "inline-block",
+                padding: "3px 8px",
+                borderRadius: 6,
+                backgroundColor: isUnavailable
+                  ? "rgba(239,68,68,0.9)"
+                  : "rgba(234,179,8,0.9)",
+                color: isUnavailable ? "#fff" : "#1a1a1a",
+                fontSize: 10,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
+                backdropFilter: "blur(4px)",
+              }}
+            >
+              {isUnavailable ? "Indisponível" : "Estoque crítico"}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Badges de estoque operacional */}
-      {(isUnavailable || isCritical) && (
-        <div
-          style={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            zIndex: 2,
-          }}
-        >
-          {isUnavailable ? (
-            <span
-              style={{
-                display: "inline-block",
-                padding: "3px 8px",
-                borderRadius: 4,
-                backgroundColor: "rgba(239, 68, 68, 0.85)",
-                color: "#fff",
-                fontSize: 10,
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: 0.5,
-              }}
-            >
-              Indisponível
-            </span>
-          ) : (
-            <span
-              style={{
-                display: "inline-block",
-                padding: "3px 8px",
-                borderRadius: 4,
-                backgroundColor: "rgba(234, 179, 8, 0.85)",
-                color: "#1a1a1a",
-                fontSize: 10,
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: 0.5,
-              }}
-            >
-              Estoque crítico
-            </span>
-          )}
-        </div>
-      )}
+      {/* Content */}
       <div
         style={{
-          padding: 12,
+          padding: "12px 14px 14px",
           display: "flex",
           flexDirection: "column",
-          gap: 6,
+          gap: 4,
           flex: 1,
-          minHeight: 0,
         }}
       >
         <span
           style={{
-            color: "var(--text-primary, #fafafa)",
+            color: "#fafafa",
             fontWeight: 600,
             fontSize: 14,
-            lineHeight: 1.25,
+            lineHeight: 1.3,
             display: "-webkit-box",
-            WebkitLineClamp: 2,
+            WebkitLineClamp: 1,
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
           }}
@@ -175,9 +172,9 @@ export function TPVProductCard({
         {product.description && (
           <span
             style={{
-              color: "var(--text-secondary, #a3a3a3)",
+              color: "#8a8a8a",
               fontSize: 12,
-              lineHeight: 1.3,
+              lineHeight: 1.4,
               display: "-webkit-box",
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
@@ -192,29 +189,23 @@ export function TPVProductCard({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 8,
             marginTop: "auto",
+            paddingTop: 6,
           }}
         >
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span
-              style={{
-                color: "var(--text-primary, #fafafa)",
-                fontWeight: 700,
-                fontSize: 16,
-              }}
-            >
+            <span style={{ color: "#fafafa", fontWeight: 700, fontSize: 16 }}>
               €{price}
             </span>
             {originalPrice && (
               <span
                 style={{
-                  color: "var(--text-tertiary, #737373)",
+                  color: "#666",
                   fontSize: 13,
                   textDecoration: "line-through",
                 }}
               >
-                €{originalPrice}
+                {originalPrice}
               </span>
             )}
             {marginPct != null && (
@@ -236,7 +227,10 @@ export function TPVProductCard({
           </div>
           <button
             type="button"
-            onClick={onAdd}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isUnavailable) onAdd();
+            }}
             disabled={isUnavailable}
             title={
               isUnavailable ? "Produto indisponível" : "Adicionar ao pedido"
@@ -244,23 +238,19 @@ export function TPVProductCard({
             style={{
               width: 36,
               height: 36,
-              borderRadius: 8,
+              borderRadius: 10,
               border: "none",
-              backgroundColor: isUnavailable
-                ? "var(--surface-elevated, #404040)"
-                : "var(--color-primary, #c9a227)",
-              color: isUnavailable
-                ? "var(--text-tertiary, #737373)"
-                : "var(--text-inverse, #1a1a1a)",
-              fontSize: 18,
+              backgroundColor: isUnavailable ? "#333" : "#2a2a2a",
+              color: isUnavailable ? "#555" : "#a3a3a3",
               cursor: isUnavailable ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
+              transition: "background-color 0.15s ease",
             }}
           >
-            🛒
+            <CartIcon />
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 /**
- * OrderModeSelector — Modo do pedido: Take away, Dine in, Delivery.
+ * OrderModeSelector — Segmented tab bar: Take away / Dine in / Delivery.
+ * Ref: white pill on selected, border outline on unselected.
  */
 
 export type OrderMode = "take_away" | "dine_in" | "delivery";
@@ -20,29 +21,36 @@ export function OrderModeSelector({ value, onChange }: OrderModeSelectorProps) {
     <div
       style={{
         display: "flex",
-        gap: 8,
-        marginBottom: 16,
+        gap: 6,
+        padding: 3,
+        borderRadius: 12,
+        backgroundColor: "#1a1a1a",
       }}
     >
-      {MODES.map(({ id, label }) => (
-        <button
-          key={id}
-          type="button"
-          onClick={() => onChange(id)}
-          style={{
-            padding: "10px 20px",
-            borderRadius: 8,
-            border: "none",
-            backgroundColor: value === id ? "var(--color-primary, #c9a227)" : "var(--surface-elevated, #262626)",
-            color: value === id ? "var(--text-inverse, #1a1a1a)" : "var(--text-secondary, #a3a3a3)",
-            fontWeight: value === id ? 600 : 400,
-            fontSize: 14,
-            cursor: "pointer",
-          }}
-        >
-          {label}
-        </button>
-      ))}
+      {MODES.map(({ id, label }) => {
+        const active = value === id;
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onChange(id)}
+            style={{
+              flex: 1,
+              padding: "9px 0",
+              borderRadius: 10,
+              border: active ? "none" : "1px solid rgba(255,255,255,0.08)",
+              backgroundColor: active ? "#fff" : "transparent",
+              color: active ? "#111" : "#737373",
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+          >
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 }
