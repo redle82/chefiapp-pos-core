@@ -179,7 +179,7 @@ const SIDEBAR_LINKS: { to: string; label: string; icon: IconKey }[] = [
 ];
 
 export function TPVSidebar() {
-  const identity = useRestaurantIdentity();
+  const { identity } = useRestaurantIdentity();
 
   return (
     <aside

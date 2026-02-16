@@ -69,7 +69,7 @@ export function TPVHeader({
   staffId = "—",
   staffAvatarUrl = null,
 }: TPVHeaderProps) {
-  const identity = useRestaurantIdentity();
+  const { identity } = useRestaurantIdentity();
 
   return (
     <header
@@ -99,7 +99,10 @@ export function TPVHeader({
           logoUrl={identity.logoUrl}
           name={identity.name || "R"}
           size={32}
-          style={{ borderRadius: "50%", border: "1.5px solid rgba(255,255,255,0.12)" }}
+          style={{
+            borderRadius: "50%",
+            border: "1.5px solid rgba(255,255,255,0.12)",
+          }}
         />
         <span
           style={{
