@@ -7,17 +7,23 @@
  */
 
 import { useState } from "react";
-import {
-  OrderModeSelector,
-  type OrderMode,
-} from "./OrderModeSelector";
+import { OrderModeSelector, type OrderMode } from "./OrderModeSelector";
 
 const ACCENT = "#f97316";
 
 /** SVG printer icon */
 function PrinterIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M4 6V1h8v5" />
       <path d="M4 12H2V7h12v5h-2" />
       <rect x="4" y="10" width="8" height="5" />
@@ -28,7 +34,16 @@ function PrinterIcon() {
 /** SVG arrow-right icon */
 function ArrowRightIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M3 8h10M9 4l4 4-4 4" />
     </svg>
   );
@@ -181,7 +196,11 @@ export function OrderSummaryPanel({
                   <img
                     src={item.image_url}
                     alt=""
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
                     onError={() => markImageFailed(item.product_id)}
                   />
                 ) : (
@@ -202,7 +221,14 @@ export function OrderSummaryPanel({
 
               {/* Details */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: "#fafafa", fontWeight: 600, fontSize: 13, lineHeight: 1.3 }}>
+                <div
+                  style={{
+                    color: "#fafafa",
+                    fontWeight: 600,
+                    fontSize: 13,
+                    lineHeight: 1.3,
+                  }}
+                >
                   {item.name}
                 </div>
                 {item.subtitle && (
@@ -219,15 +245,22 @@ export function OrderSummaryPanel({
                   }}
                 >
                   {/* Price */}
-                  <span style={{ color: "#fafafa", fontWeight: 700, fontSize: 14 }}>
+                  <span
+                    style={{ color: "#fafafa", fontWeight: 700, fontSize: 14 }}
+                  >
                     €{((item.unit_price * item.quantity) / 100).toFixed(2)}
                   </span>
                   {/* Qty controls */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 4 }}
+                  >
                     <button
                       type="button"
                       onClick={() =>
-                        onUpdateQuantity(item.product_id, Math.max(0, item.quantity - 1))
+                        onUpdateQuantity(
+                          item.product_id,
+                          Math.max(0, item.quantity - 1),
+                        )
                       }
                       style={{
                         width: 26,
