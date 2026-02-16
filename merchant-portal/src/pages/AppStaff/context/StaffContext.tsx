@@ -420,19 +420,35 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     }
   }, [userId, restaurantId, initialRoleProp]);
 
-  // FETCH EMPLOYEES
+  // FETCH EMPLOYEES — Core Docker usa gm_staff (não existe tabela "employees")
   useEffect(() => {
     if (!operationalContract?.id || operationalContract.mode === "local")
       return;
 
     const fetchEmployees = async () => {
-      const { data } = await db
-        .from("employees")
-        .select("*")
-        .eq("restaurant_id", operationalContract.id)
-        .eq("active", true);
+      try {
+        const { data } = await db
+          .from("gm_staff")
+          .select("id, restaurant_id, name, role, active")
+          .eq("restaurant_id", operationalContract.id)
+          .eq("active", true);
 
-      if (data) setEmployees(data as Employee[]);
+        if (data && Array.isArray(data)) {
+          const mapped: Employee[] = (data as { id: string; restaurant_id: string; name: string; role: string; active: boolean }[]).map(
+            (row) => ({
+              id: row.id,
+              restaurant_id: row.restaurant_id,
+              name: row.name,
+              role: (row.role === "waiter" || row.role === "kitchen" || row.role === "manager" ? row.role : "waiter") as Employee["role"],
+              position: (row.role === "waiter" ? "waiter" : row.role === "kitchen" ? "kitchen" : "manager") as Employee["position"],
+              active: row.active,
+            }),
+          );
+          setEmployees(mapped);
+        }
+      } catch {
+        setEmployees([]);
+      }
     };
 
     fetchEmployees();

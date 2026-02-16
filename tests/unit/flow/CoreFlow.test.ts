@@ -84,7 +84,7 @@ describe("CoreFlow - resolveNextRoute", () => {
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/setup/restaurant-minimal");
+        expect(decision.to).toBe("/welcome");
       }
     });
 
@@ -126,6 +126,7 @@ describe("CoreFlow - resolveNextRoute", () => {
         const state: UserState = {
           isAuthenticated: true,
           hasOrganization: true,
+          activated: true,
           currentPath: "/app/dashboard",
         };
 
@@ -140,13 +141,14 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
+        activated: true,
         currentPath: "/auth",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/dashboard");
+        expect(decision.to).toBe("/app/dashboard");
       }
     });
 
@@ -154,13 +156,14 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
+        activated: true,
         currentPath: "/",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/dashboard");
+        expect(decision.to).toBe("/app/dashboard");
       }
     });
 
@@ -168,13 +171,14 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
+        activated: true,
         currentPath: "/app",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/dashboard");
+        expect(decision.to).toBe("/app/dashboard");
       }
     });
 
@@ -182,6 +186,7 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
+        activated: true,
         currentPath: "/onboarding/identity",
       };
 
@@ -196,6 +201,7 @@ describe("CoreFlow - resolveNextRoute", () => {
         const state: UserState = {
           isAuthenticated: true,
           hasOrganization: true,
+          activated: true,
           currentPath: route,
         };
 
@@ -210,6 +216,7 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
+        activated: true,
         currentPath: "/app/dashboard",
       };
 
@@ -221,7 +228,45 @@ describe("CoreFlow - resolveNextRoute", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
+        activated: true,
         currentPath: "/app/dashboard",
+      };
+
+      const decision = resolveNextRoute(state);
+      expect(decision.type).toBe("ALLOW");
+    });
+  });
+
+  describe("Public Void Protocol", () => {
+    it("permite /public/* quando autenticado e NÃO ativado (dono testa página pública)", () => {
+      const state: UserState = {
+        isAuthenticated: true,
+        hasOrganization: true,
+        activated: false,
+        currentPath: "/public/meu-restaurante",
+      };
+
+      const decision = resolveNextRoute(state);
+      expect(decision.type).toBe("ALLOW");
+    });
+
+    it("permite /public/* quando autenticado e ativado", () => {
+      const state: UserState = {
+        isAuthenticated: true,
+        hasOrganization: true,
+        activated: true,
+        currentPath: "/public/meu-restaurante",
+      };
+
+      const decision = resolveNextRoute(state);
+      expect(decision.type).toBe("ALLOW");
+    });
+
+    it("permite /public/slug/mesa/1 quando não autenticado (cliente no restaurante)", () => {
+      const state: UserState = {
+        isAuthenticated: false,
+        hasOrganization: false,
+        currentPath: "/public/meu-restaurante/mesa/1",
       };
 
       const decision = resolveNextRoute(state);

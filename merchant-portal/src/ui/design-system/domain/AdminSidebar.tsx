@@ -222,6 +222,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           status: "locked",
           show: visibleModules.settings,
         },
+        {
+          label: "Centro de Ajuda",
+          id: "/app/help",
+          icon: "❓",
+          show: true,
+        },
       ],
     },
     {

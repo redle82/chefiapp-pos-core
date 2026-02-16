@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { currencyService } from "../../core/currency/CurrencyService";
 import { colors } from "../../ui/design-system/tokens/colors";
 import { spacing } from "../../ui/design-system/tokens/spacing";
@@ -35,21 +36,25 @@ interface ReceiptShareModalProps {
 /**
  * Build a plain-text receipt suitable for email body or share text.
  */
-function buildPlainTextReceipt(order: ReceiptShareOrder): string {
+function buildPlainTextReceipt(
+  order: ReceiptShareOrder,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+  locale: string,
+): string {
   const lines: string[] = [];
   const fmt = (c: number) => currencyService.formatAmount(c);
   const now = order.paidAt ? new Date(order.paidAt) : new Date();
 
-  lines.push(order.restaurantName || "Restaurante");
+  lines.push(order.restaurantName || t("defaultRestaurant"));
   lines.push("=".repeat(32));
   lines.push(
-    `Data: ${now.toLocaleDateString("pt-PT")} ${now.toLocaleTimeString(
-      "pt-PT",
+    `${t("date")} ${now.toLocaleDateString(locale)} ${now.toLocaleTimeString(
+      locale,
       { hour: "2-digit", minute: "2-digit" },
     )}`,
   );
-  if (order.tableNumber) lines.push(`Mesa: ${order.tableNumber}`);
-  lines.push(`Pedido: #${order.id.slice(0, 8)}`);
+  if (order.tableNumber) lines.push(`${t("table")} ${order.tableNumber}`);
+  lines.push(`${t("order")} #${order.id.slice(0, 8)}`);
   lines.push("-".repeat(32));
 
   for (const item of order.items) {
@@ -60,16 +65,16 @@ function buildPlainTextReceipt(order: ReceiptShareOrder): string {
   lines.push("-".repeat(32));
 
   if (order.discountCents && order.discountCents > 0) {
-    lines.push(`Desconto:  -${fmt(order.discountCents)}`);
+    lines.push(`${t("discount")}  -${fmt(order.discountCents)}`);
   }
   if (order.tipCents && order.tipCents > 0) {
-    lines.push(`Gorjeta:    ${fmt(order.tipCents)}`);
+    lines.push(`${t("tip")}    ${fmt(order.tipCents)}`);
   }
 
-  lines.push(`TOTAL:      ${fmt(order.totalCents)}`);
-  lines.push(`Pagamento:  ${order.paymentMethod.toUpperCase()}`);
+  lines.push(`${t("total")}      ${fmt(order.totalCents)}`);
+  lines.push(`${t("paymentMethod")}  ${order.paymentMethod.toUpperCase()}`);
   lines.push("");
-  lines.push("Obrigado pela sua visita!");
+  lines.push(t("thankYou"));
 
   return lines.join("\n");
 }
@@ -78,17 +83,17 @@ export const ReceiptShareModal: React.FC<ReceiptShareModalProps> = ({
   order,
   onClose,
 }) => {
+  const { t, i18n } = useTranslation("receipt");
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
 
-  const receiptText = buildPlainTextReceipt(order);
+  const receiptText = buildPlainTextReceipt(order, t, i18n.language);
 
   const handleEmail = () => {
     const subject = encodeURIComponent(
-      `Recibo — ${order.restaurantName || "Restaurante"} — #${order.id.slice(
-        0,
-        8,
-      )}`,
+      t("emailSubject", {
+        restaurant: order.restaurantName || t("defaultRestaurant"),
+      }) + ` — #${order.id.slice(0, 8)}`,
     );
     const body = encodeURIComponent(receiptText);
 
@@ -104,7 +109,7 @@ export const ReceiptShareModal: React.FC<ReceiptShareModalProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Recibo #${order.id.slice(0, 8)}`,
+          title: t("shareTitle", { id: order.id.slice(0, 8) }),
           text: receiptText,
         });
         setSent(true);
@@ -122,7 +127,7 @@ export const ReceiptShareModal: React.FC<ReceiptShareModalProps> = ({
     const printWindow = window.open("", "_blank", "width=400,height=600");
     if (!printWindow) return;
     printWindow.document.write(`
-      <html><head><title>Recibo</title>
+      <html><head><title>${t("printTitle")}</title>
       <style>
         body { font-family: 'Courier New', monospace; font-size: 13px; padding: 20px; white-space: pre-wrap; }
         @media print { @page { size: 80mm auto; margin: 0; } body { padding: 10mm; } }
@@ -185,7 +190,7 @@ export const ReceiptShareModal: React.FC<ReceiptShareModalProps> = ({
               color: colors.text.primary,
             }}
           >
-            Enviar Recibo
+            {t("sendReceipt")}
           </div>
           <div
             style={{
@@ -194,8 +199,10 @@ export const ReceiptShareModal: React.FC<ReceiptShareModalProps> = ({
               marginTop: 4,
             }}
           >
-            Pedido #{order.id.slice(0, 8)} —{" "}
-            {currencyService.formatAmount(order.totalCents)}
+            {t("orderSummary", {
+              id: order.id.slice(0, 8),
+              total: currencyService.formatAmount(order.totalCents),
+            })}
           </div>
         </div>
 
@@ -210,7 +217,7 @@ export const ReceiptShareModal: React.FC<ReceiptShareModalProps> = ({
               marginBottom: 4,
             }}
           >
-            Email do cliente (opcional)
+            {t("emailLabel")}
           </label>
           <input
             type="email"
@@ -236,7 +243,7 @@ export const ReceiptShareModal: React.FC<ReceiptShareModalProps> = ({
           style={{ display: "flex", flexDirection: "column", gap: spacing[2] }}
         >
           <button onClick={handleEmail} style={btnStyle(colors.action.base)}>
-            📧 Enviar por Email
+            📧 {t("sendByEmail")}
           </button>
 
           <button
@@ -245,15 +252,15 @@ export const ReceiptShareModal: React.FC<ReceiptShareModalProps> = ({
           >
             📱{" "}
             {typeof navigator.share === "function"
-              ? "Partilhar"
-              : "Copiar Recibo"}
+              ? t("share")
+              : t("copyReceipt")}
           </button>
 
           <button
             onClick={handlePrint}
             style={btnStyle(colors.text.secondary || "#6B7280")}
           >
-            🖨️ Imprimir
+            🖨️ {t("print")}
           </button>
         </div>
 
@@ -267,7 +274,7 @@ export const ReceiptShareModal: React.FC<ReceiptShareModalProps> = ({
               color: colors.success.base,
             }}
           >
-            ✓ Recibo enviado!
+            {t("sent")}
           </div>
         )}
 
@@ -287,7 +294,7 @@ export const ReceiptShareModal: React.FC<ReceiptShareModalProps> = ({
             width: "100%",
           }}
         >
-          Saltar
+          {t("skip")}
         </button>
       </div>
     </div>

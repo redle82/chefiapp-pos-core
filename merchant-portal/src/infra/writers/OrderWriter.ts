@@ -20,6 +20,8 @@ export interface CreateOrderResult {
 
 /**
  * Cria pedido atómico no Core (RPC create_order_atomic).
+ * O Core persiste sync_metadata.origin; KDS/AppStaff exibem badge "WEB" quando origin === "WEB_PUBLIC".
+ * Contrato: PUBLIC_WEB_ORDER_FLOW_CONTRACT.md
  */
 export async function createOrder(
   restaurantId: string,
@@ -28,6 +30,7 @@ export async function createOrder(
   paymentMethod: string = "cash",
   syncMetadata?: Record<string, unknown>
 ): Promise<CreateOrderResult> {
+  const sync = { ...(syncMetadata ?? {}), origin };
   const params = {
     p_restaurant_id: restaurantId,
     p_items: items.map((i) => ({
@@ -37,7 +40,7 @@ export async function createOrder(
       unit_price: i.unit_price,
     })),
     p_payment_method: paymentMethod,
-    p_sync_metadata: syncMetadata ?? null,
+    p_sync_metadata: sync,
   };
   const { data, error } = await createOrderAtomic(params);
   if (error) throw new Error(error.message ?? "Falha ao criar pedido");

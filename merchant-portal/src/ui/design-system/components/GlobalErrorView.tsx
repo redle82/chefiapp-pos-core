@@ -27,6 +27,8 @@ const OPERATIONAL = {
   bg: "#0a0a0a",
   text: "#fafafa",
   textMuted: "#a3a3a3",
+  errorBg: "#1f1111",
+  errorBorder: "#dc2626",
   fontFamily: "Inter, system-ui, sans-serif",
   fontSize: 16,
   space: 24,
@@ -56,7 +58,12 @@ export const GlobalErrorView: React.FC<GlobalErrorViewProps> = ({
   const content = (
     <>
       <p style={{ margin: 0, fontWeight: 600, color: theme.text }}>{title}</p>
-      <p style={{ margin: "8px 0 0", color: variant === "fullscreen" ? theme.textMuted : theme.text }}>
+      <p
+        style={{
+          margin: "8px 0 0",
+          color: variant === "fullscreen" ? theme.textMuted : theme.text,
+        }}
+      >
         {message}
       </p>
       {action && (

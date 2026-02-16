@@ -8,6 +8,7 @@
  */
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../../../ui/design-system/Button";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { colors } from "../../../ui/design-system/tokens/colors";
@@ -54,6 +55,7 @@ export function ProductCard({
   const [showComments, setShowComments] = useState(false);
   const [selectedComments, setSelectedComments] = useState<string[]>([]);
   const [pressed, setPressed] = useState(false);
+  const { t, i18n } = useTranslation("waiter");
 
   const isOutOfStock =
     product.trackStock &&
@@ -73,7 +75,7 @@ export function ProductCard({
       product.stockQuantity !== undefined &&
       qty > product.stockQuantity
     ) {
-      alert(`Apenas ${product.stockQuantity} unidades disponíveis.`);
+      alert(t("productCard.stockLimitAlert", { count: product.stockQuantity }));
       setSelectedQuantity(product.stockQuantity);
     } else {
       setSelectedQuantity(qty);
@@ -105,7 +107,7 @@ export function ProductCard({
     }
   };
 
-  const priceFormatted = new Intl.NumberFormat("pt-PT", {
+  const priceFormatted = new Intl.NumberFormat(i18n.language, {
     style: "currency",
     currency: product.currency || "EUR",
     minimumFractionDigits: 2,
@@ -185,7 +187,7 @@ export function ProductCard({
                     textTransform: "uppercase",
                   }}
                 >
-                  Esgotado
+                  {t("productCard.outOfStock")}
                 </div>
               )}
             </div>
@@ -227,7 +229,7 @@ export function ProductCard({
               color="primary"
               style={{ marginBottom: 8 }}
             >
-              Quantidade
+              {t("productCard.quantity")}
             </Text>
             <QuantityPicker
               max={6}
@@ -246,7 +248,7 @@ export function ProductCard({
               color="primary"
               style={{ marginBottom: 8 }}
             >
-              Observações
+              {t("productCard.comments")}
             </Text>
             {comments.length > 0 && (
               <CommentChips
@@ -270,7 +272,7 @@ export function ProductCard({
                 cursor: "pointer",
               }}
             >
-              Adicionar {selectedQuantity}×
+              {t("productCard.addTile", { count: selectedQuantity })}
             </button>
           </div>
         )}
@@ -342,7 +344,7 @@ export function ProductCard({
                     fontWeight: "bold",
                   }}
                 >
-                  ESGOTADO
+                  {t("productCard.outOfStockUpper")}
                 </div>
               ) : (
                 <Text size="lg" weight="bold" color="primary">
@@ -376,7 +378,7 @@ export function ProductCard({
             color="primary"
             style={{ marginBottom: spacing[3] }}
           >
-            Quantidade
+            {t("productCard.quantity")}
           </Text>
           <QuantityPicker
             max={6}
@@ -394,7 +396,7 @@ export function ProductCard({
             color="primary"
             style={{ marginBottom: spacing[3] }}
           >
-            Observações
+            {t("productCard.comments")}
           </Text>
           {comments.length > 0 ? (
             <>
@@ -415,7 +417,7 @@ export function ProductCard({
                   fontWeight: "bold",
                 }}
               >
-                Adicionar {selectedQuantity}x à Mesa
+                {t("productCard.addToTable", { count: selectedQuantity })}
               </Button>
             </>
           ) : (
@@ -431,7 +433,7 @@ export function ProductCard({
                 fontWeight: "bold",
               }}
             >
-              Adicionar {selectedQuantity}x à Mesa
+              {t("productCard.addToTable", { count: selectedQuantity })}
             </Button>
           )}
         </div>

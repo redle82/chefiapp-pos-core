@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   TPVCentralEmitters,
@@ -65,6 +66,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
   const tableId = propTableId || params.tableId;
 
   const { tenantId } = useTenant(); // Needed for hooks
+  const { t } = useTranslation("waiter");
   console.log("[TablePanel] Rendering. Tenant:", tenantId);
   const { permissions, role } = useContextEngine(); // 🧠 CONTEXT ENGINE
   console.log("[TablePanel] Context Role:", role);
@@ -75,7 +77,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
   // --- ACTIONS ---
   const handleCloseBill = () => {
     if (!activeOrder) {
-      warning("Sem pedido ativo para cobrar.");
+      warning(t("toast.noActiveOrder"));
       return;
     }
     setPaymentModalOrderId(activeOrder.id);
@@ -84,7 +86,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
   const handleRequestBill = () => {
     // EXECUTION MODE: Request bill from Central TPV
     if (!table) {
-      warning("Mesa nao encontrada.");
+      warning(t("toast.tableNotFound"));
       return;
     }
     TPVCentralEmitters.alertTable({
@@ -92,10 +94,10 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
       tableNumber: table.number,
       alertType: "waiting_payment",
       severity: "medium",
-      message: `Mesa ${table.number} pediu conta`,
+      message: t("toast.billRequestedToTable", { number: table.number }),
       timestamp: new Date(),
     });
-    success("Conta solicitada ao Caixa (TPV Central).");
+    success(t("toast.billRequested"));
   };
 
   // Real Hooks
@@ -157,7 +159,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
         // Decision received for this table
         setPendingException(false);
         success(
-          `✅ Decisão: ${decision.action}${
+          `✅ ${t("toast.decision", { action: decision.action })}${
             decision.message ? ` - ${decision.message}` : ""
           }`,
         );
@@ -242,20 +244,20 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
     if (tablesLoading) {
       return (
         <div style={{ padding: spacing[6], color: "white" }}>
-          Carregando mesa...
+          {t("tablePanel.loadingTable")}
         </div>
       );
     }
     return (
       <div style={{ padding: spacing[6] }}>
         <Text size="lg" color="destructive">
-          Mesa não encontrada
+          {t("tablePanel.tableNotFound")}
         </Text>
         <Button
           onClick={() => navigate("/app/waiter")}
           style={{ marginTop: spacing[4] }}
         >
-          Voltar ao Mapa
+          {t("tablePanel.backToMap")}
         </Button>
       </div>
     );
@@ -308,7 +310,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
       item.productId.startsWith("mock-"),
     );
     if (hasMockItems) {
-      warning("Menu mock ativo. Conecte ao Core para enviar pedidos.");
+      warning(t("toast.mockMenuActive"));
       return;
     }
     setSending(true);
@@ -390,14 +392,14 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
       // FEEDBACK BASED ON MODE
       if (isStandalone) {
         // In Solo Mode, "Send" implies "Charge" (Direct Sale)
-        success("💸 Venda Registrada! (Pagamento Confirmado)");
+        success(`💸 ${t("toast.saleRegistered")}`);
         // Future: Open Payment Selection Modal here
       } else {
-        success("Pedido enviado para a cozinha! 👨‍🍳");
+        success(`${t("toast.orderSentToKitchen")} 👨‍🍳`);
       }
     } catch (error) {
       console.error("Failed to send order:", error);
-      warning("Erro ao enviar pedido. Tente novamente.");
+      warning(t("toast.errorSendOrder"));
     } finally {
       setSending(false);
     }
@@ -492,7 +494,9 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
           {/* Table name + status badge */}
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: "#ffffff" }}>
-              {isStandalone ? "Venda Balcão" : `Mesa ${table.number}`}
+              {isStandalone
+                ? t("tablePanel.counterSale")
+                : t("tablePanel.tableNumber", { number: table.number })}
             </div>
           </div>
 
@@ -513,8 +517,8 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
               }}
             >
               {table.status === TableStatus.OCCUPIED
-                ? `Ocupada · ${seatedMinutes ?? 0}min`
-                : "Livre"}
+                ? t("tablePanel.occupied", { minutes: seatedMinutes ?? 0 })
+                : t("tablePanel.free")}
             </div>
           )}
 
@@ -540,7 +544,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
               flexShrink: 0,
               position: "relative",
             }}
-            title="Reportar Problema"
+            title={t("tablePanel.reportProblem")}
           >
             ⚠️
             {pendingException && (
@@ -576,7 +580,9 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
               flexShrink: 0,
             }}
           >
-            {permissions.canCloseRegister ? "💰 Fechar" : "Conta"}
+            {permissions.canCloseRegister
+              ? `💰 ${t("tablePanel.closeBill")}`
+              : t("tablePanel.requestBill")}
           </button>
         </div>
       </div>
@@ -598,7 +604,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
         <div style={{ position: "relative" }}>
           <input
             type="text"
-            placeholder="Pesquisar produto..."
+            placeholder={t("tablePanel.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -695,7 +701,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
         >
           <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
           <div style={{ fontSize: 14 }}>
-            Nenhum produto encontrado para "{searchQuery}"
+            {t("tablePanel.noProductsFound", { query: searchQuery })}
           </div>
         </div>
       )}
@@ -710,7 +716,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
           }}
         >
           <div style={{ fontSize: 32, marginBottom: 12 }}>👆</div>
-          <div style={{ fontSize: 14 }}>Selecione uma categoria acima</div>
+          <div style={{ fontSize: 14 }}>{t("tablePanel.selectCategory")}</div>
         </div>
       )}
 
@@ -741,10 +747,10 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
             }}
           >
             {[
-              { id: "shared", label: "Partilhado" },
+              { id: "shared", label: t("tablePanel.shared") },
               ...Array.from({ length: seatCount }, (_, i) => ({
                 id: `seat-${i + 1}`,
-                label: `Lugar ${i + 1}`,
+                label: t("tablePanel.seat", { number: i + 1 }),
               })),
             ].map((seat) => {
               const isActive = activeSeat === seat.id;
@@ -808,7 +814,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
                 justifyContent: "center",
                 flexShrink: 0,
               }}
-              title="Adicionar lugar"
+              title={t("tablePanel.addSeat")}
             >
               +
             </button>
@@ -824,7 +830,10 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
             }}
           >
             <div style={{ fontSize: 12, color: "#a1a1aa" }}>
-              {orderItems.length} {orderItems.length === 1 ? "item" : "itens"}
+              {orderItems.length}{" "}
+              {orderItems.length === 1
+                ? t("tablePanel.itemCount_one", { count: 1 })
+                : t("tablePanel.itemCount_other", { count: orderItems.length })}
             </div>
             <div style={{ fontSize: 18, fontWeight: 800, color: "#ffffff" }}>
               € {(totalAmount / 100).toFixed(2).replace(".", ",")}
@@ -851,10 +860,10 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
               }}
             >
               {sending
-                ? "Processando..."
+                ? t("tablePanel.processing")
                 : isStandalone
-                ? "💸 Cobrar"
-                : "Enviar Pedido"}
+                ? `💸 ${t("tablePanel.chargeButton")}`
+                : t("tablePanel.sendOrder")}
             </button>
 
             {/* Secondary: Cobrar */}
@@ -878,7 +887,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
                   flexShrink: 0,
                 }}
               >
-                Cobrar
+                {t("tablePanel.chargeButton")}
               </button>
             )}
 
@@ -899,7 +908,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
                 justifyContent: "center",
                 flexShrink: 0,
               }}
-              title="Imprimir"
+              title={t("tablePanel.print")}
             >
               🖨️
             </button>
@@ -914,7 +923,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
           return (
             <PaymentModal
               orderId={order.id}
-              restaurantId={order.restaurantId || ""}
+              restaurantId={tenantId || ""}
               orderTotal={order.total}
               onPay={async (method, _intentId, tipCents) => {
                 try {
@@ -922,10 +931,10 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
                   if (tipCents && tipCents > 0) payload.tip_cents = tipCents;
                   await performOrderAction(order.id, "pay", payload);
                   await getActiveOrders();
-                  success("Pedido pago com sucesso");
+                  success(t("toast.orderPaidSuccess"));
                   setPaymentModalOrderId(null);
                 } catch (err: any) {
-                  warning(err?.message || "Erro ao processar pagamento");
+                  warning(err?.message || t("toast.errorPayment"));
                 }
               }}
               onCancel={() => setPaymentModalOrderId(null)}
@@ -940,7 +949,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
         onClose={() => {
           setShowExceptionModal(false);
           setPendingException(true);
-          warning("Aguardando decisão do operador...");
+          warning(t("toast.awaitingDecision"));
         }}
         orderId={activeOrder?.id || `table-${tableId}`}
         tableNumber={table?.number || 0}

@@ -63,7 +63,7 @@ export function GroupModal({
     >
       <div
         style={{
-          backgroundColor: "#fff",
+          backgroundColor: "var(--card-bg-on-dark)",
           borderRadius: 12,
           maxWidth: 420,
           width: "100%",
@@ -74,13 +74,13 @@ export function GroupModal({
         onClick={(e) => e.stopPropagation()}
       >
         <form onSubmit={handleSubmit}>
-          <div style={{ padding: 24, borderBottom: "1px solid #e5e7eb" }}>
+          <div style={{ padding: 24, borderBottom: "1px solid var(--surface-border)" }}>
             <h2
               style={{
                 margin: 0,
                 fontSize: 18,
                 fontWeight: 700,
-                color: "#111827",
+                color: "var(--text-primary)",
               }}
             >
               {isEdit ? "Editar grupo" : "Nuevo grupo de ubicaciones"}
@@ -88,7 +88,7 @@ export function GroupModal({
           </div>
           <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
             <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
                 Nombre del grupo
               </span>
               <input
@@ -100,18 +100,18 @@ export function GroupModal({
                 style={{
                   padding: "8px 12px",
                   fontSize: 14,
-                  border: "1px solid #d1d5db",
+                  border: "1px solid var(--surface-border)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
               />
             </label>
             <div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", display: "block", marginBottom: 8 }}>
                 Ubicaciones
               </span>
               {locations.length === 0 ? (
-                <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
+                <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
                   Crea primero al menos una ubicación.
                 </p>
               ) : (
@@ -124,7 +124,7 @@ export function GroupModal({
                         alignItems: "center",
                         gap: 8,
                         fontSize: 13,
-                        color: "#374151",
+                        color: "var(--text-primary)",
                         cursor: "pointer",
                       }}
                     >
@@ -143,7 +143,7 @@ export function GroupModal({
           <div
             style={{
               padding: 24,
-              borderTop: "1px solid #e5e7eb",
+              borderTop: "1px solid var(--surface-border)",
               display: "flex",
               gap: 8,
               justifyContent: "flex-end",
@@ -155,11 +155,11 @@ export function GroupModal({
               style={{
                 padding: "8px 14px",
                 fontSize: 13,
-                color: "#6b7280",
-                border: "1px solid #d1d5db",
+                color: "var(--text-secondary)",
+                border: "1px solid var(--surface-border)",
                 borderRadius: 8,
                 cursor: "pointer",
-                backgroundColor: "#fff",
+                backgroundColor: "transparent",
               }}
             >
               Cancelar
@@ -171,8 +171,8 @@ export function GroupModal({
                 padding: "8px 14px",
                 fontSize: 13,
                 fontWeight: 600,
-                color: "#fff",
-                backgroundColor: "#7c3aed",
+                color: "var(--text-inverse)",
+                backgroundColor: "var(--color-primary)",
                 border: "none",
                 borderRadius: 8,
                 cursor: locations.length === 0 ? "not-allowed" : "pointer",

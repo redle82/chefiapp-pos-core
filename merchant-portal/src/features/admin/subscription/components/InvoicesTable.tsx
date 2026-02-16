@@ -76,10 +76,10 @@ export function InvoicesTable({
   return (
     <div
       style={{
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--surface-border)",
         borderRadius: 12,
         padding: 16,
-        backgroundColor: "#fff",
+        backgroundColor: "var(--card-bg-on-dark)",
       }}
     >
       <h3
@@ -87,7 +87,7 @@ export function InvoicesTable({
           margin: "0 0 12px 0",
           fontSize: 16,
           fontWeight: 700,
-          color: "#111827",
+          color: "var(--text-primary)",
         }}
       >
         Historial de facturación
@@ -107,7 +107,7 @@ export function InvoicesTable({
           style={{
             padding: "8px 12px",
             fontSize: 13,
-            border: "1px solid #d1d5db",
+            border: "1px solid var(--surface-border)",
             borderRadius: 8,
             minWidth: 160,
           }}
@@ -125,7 +125,7 @@ export function InvoicesTable({
           style={{
             padding: "8px 12px",
             fontSize: 13,
-            border: "1px solid #d1d5db",
+            border: "1px solid var(--surface-border)",
             borderRadius: 8,
             minWidth: 80,
           }}
@@ -142,8 +142,8 @@ export function InvoicesTable({
             padding: "8px 14px",
             fontSize: 13,
             fontWeight: 600,
-            color: "#fff",
-            backgroundColor: "#7c3aed",
+            color: "var(--text-inverse)",
+            backgroundColor: "var(--color-primary)",
             border: "none",
             borderRadius: 8,
             cursor: "pointer",
@@ -158,7 +158,7 @@ export function InvoicesTable({
           style={{
             textAlign: "center",
             padding: "40px 20px",
-            color: "#6b7280",
+            color: "var(--text-secondary)",
             fontSize: 14,
           }}
         >
@@ -169,17 +169,17 @@ export function InvoicesTable({
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid #e5e7eb", textAlign: "left" }}>
-                <th style={{ padding: "8px 0", color: "#6b7280", fontWeight: 600 }}>
+              <tr style={{ borderBottom: "1px solid var(--surface-border)", textAlign: "left" }}>
+                <th style={{ padding: "8px 0", color: "var(--text-secondary)", fontWeight: 600 }}>
                   Fecha
                 </th>
-                <th style={{ padding: "8px 0", color: "#6b7280", fontWeight: 600 }}>
+                <th style={{ padding: "8px 0", color: "var(--text-secondary)", fontWeight: 600 }}>
                   Importe
                 </th>
-                <th style={{ padding: "8px 0", color: "#6b7280", fontWeight: 600 }}>
+                <th style={{ padding: "8px 0", color: "var(--text-secondary)", fontWeight: 600 }}>
                   Estado
                 </th>
-                <th style={{ padding: "8px 0", color: "#6b7280", fontWeight: 600 }}>
+                <th style={{ padding: "8px 0", color: "var(--text-secondary)", fontWeight: 600 }}>
                   Acción
                 </th>
               </tr>
@@ -188,12 +188,12 @@ export function InvoicesTable({
               {invoices.map((inv) => (
                 <tr
                   key={inv.id}
-                  style={{ borderBottom: "1px solid #f3f4f6" }}
+                  style={{ borderBottom: "1px solid var(--surface-border)" }}
                 >
-                  <td style={{ padding: "10px 0", color: "#374151" }}>
+                  <td style={{ padding: "10px 0", color: "var(--text-primary)" }}>
                     {formatDate(inv.date)}
                   </td>
-                  <td style={{ padding: "10px 0", color: "#374151" }}>
+                  <td style={{ padding: "10px 0", color: "var(--text-primary)" }}>
                     {formatEur(inv.amountEur)}
                   </td>
                   <td style={{ padding: "10px 0" }}>
@@ -203,10 +203,10 @@ export function InvoicesTable({
                         fontWeight: 500,
                         color:
                           inv.status === "paid"
-                            ? "#059669"
+                            ? "var(--color-success)"
                             : inv.status === "failed"
-                              ? "#dc2626"
-                              : "#6b7280",
+                              ? "var(--color-error)"
+                              : "var(--text-secondary)",
                       }}
                     >
                       {statusLabel(inv.status)}
@@ -220,7 +220,7 @@ export function InvoicesTable({
                         rel="noopener noreferrer"
                         style={{
                           fontSize: 13,
-                          color: "#7c3aed",
+                          color: "var(--color-primary)",
                           fontWeight: 500,
                         }}
                       >
@@ -233,7 +233,7 @@ export function InvoicesTable({
                         onClick={() => onDownloadPdf(inv.id)}
                         style={{
                           fontSize: 13,
-                          color: "#7c3aed",
+                          color: "var(--color-primary)",
                           fontWeight: 500,
                           background: "none",
                           border: "none",

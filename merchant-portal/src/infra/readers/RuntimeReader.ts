@@ -50,6 +50,8 @@ export interface CoreRestaurantRow {
   currency?: string | null;
   locale?: string | null;
   type?: string | null;
+  /** URL do logo do restaurante. Ver RESTAURANT_LOGO_IDENTITY_CONTRACT.md */
+  logo_url?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -60,6 +62,7 @@ export interface CoreRestaurantIdentityRow extends CoreRestaurantRow {
   city?: string | null;
   address?: string | null;
   description?: string | null;
+  logo_url?: string | null;
 }
 
 export interface CoreInstalledModuleRow {
@@ -169,7 +172,7 @@ export async function fetchRestaurant(
   const { data, error } = await dockerCoreClient
     .from("gm_restaurants")
     .select(
-      "id,name,slug,status,tenant_id,product_mode,billing_status,trial_ends_at,country,timezone,currency,locale,type,created_at,updated_at",
+      "id,name,slug,status,tenant_id,product_mode,billing_status,trial_ends_at,country,timezone,currency,locale,type,logo_url,created_at,updated_at",
     )
     .eq("id", restaurantId)
     .maybeSingle();
@@ -240,7 +243,7 @@ export async function fetchRestaurantForIdentity(
   const { data, error } = await dockerCoreClient
     .from("gm_restaurants")
     .select(
-      "id,name,slug,status,tenant_id,type,city,address,description,created_at,updated_at",
+      "id,name,slug,status,tenant_id,type,city,address,description,logo_url,created_at,updated_at",
     )
     .eq("id", restaurantId)
     .maybeSingle();

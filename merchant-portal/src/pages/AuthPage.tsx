@@ -140,6 +140,12 @@ export function AuthPage() {
   useEffect(() => {
     if (authLoading) return;
     if (session) {
+      // Signup intent redirect is handled globally (SignupIntentRedirect in App.tsx)
+      try {
+        if (sessionStorage.getItem("chefiapp_signup_intent") === "1") return;
+      } catch {
+        // ignore
+      }
       navigate(getLastRoute(), { replace: true });
     }
   }, [session, authLoading, navigate]);
@@ -159,6 +165,13 @@ export function AuthPage() {
     try {
       // Docker Core only: Keycloak redirect or mock; no Supabase auth.
       if (hasCore) {
+        if (mode === "signup") {
+          try {
+            sessionStorage.setItem("chefiapp_signup_intent", "1");
+          } catch {
+            // ignore
+          }
+        }
         getAuthActions().signIn();
         return;
       }

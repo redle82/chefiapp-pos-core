@@ -102,7 +102,7 @@ INSERT INTO public.gm_catalog_categories (id, menu_id, title, sort_order) VALUES
 INSERT INTO public.gm_catalog_items (category_id, title, description, price_cents, image_url, allergens, is_available, sort_order, badges)
 SELECT 'c0000001-0000-0000-0000-000000000001', v.title, v.description, v.price_cents, v.image_url, v.allergens::jsonb, v.is_available, v.sort_order, v.badges::jsonb
 FROM (VALUES
-  ('Coração Crocante do Brasil | Coxinha', 'Croquetas doradas de pollo desmenuzado, al estilo brasileño, con toque de perejil.', 700, 'https://images.unsplash.com/photo-1541529086526-db283c563270?w=800&q=80', '["hot","nut_free","dairy_free"]', true, 0, '["chef"]'),
+  ('Coração Crocante do Brasil | Coxinha', 'Croquetas doradas de pollo desmenuzado, al estilo brasileño, con toque de perejil.', 700, 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&q=80', '["hot","nut_free","dairy_free"]', true, 0, '["chef"]'),
   ('Patatas Fritas / French Fries', 'Papas doradas, crujientes, el acompañamiento perfecto.', 800, 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&q=80', '["vegetarian","vegan","gluten_free","nut_free"]', true, 1, '[]'),
   ('Boniato Frito / Fried Sweet Potato', 'Rodajas dulces y crujientes de boniato.', 900, 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&q=80', '[]', true, 2, '[]'),
   ('Bravas Ibicencas | Patatas Bravas', 'Patatas caseras con salsa picante.', 900, 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&q=80', '["hot","vegetarian","nut_free"]', true, 3, '[]'),
@@ -112,15 +112,15 @@ FROM (VALUES
   ('Nachos del Pecado | Bacon and beef nachos', 'Del Toro con bacon crocante.', 1600, 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800&q=80', '["hot","gluten_free","dairy_free","raw"]', true, 7, '[]'),
   ('Nachos del Caribe | Chicken Nachos', 'Frango desfiado, cheddar, guacamole, pico de gallo, jalapeño.', 1500, 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800&q=80', '["hot","gluten_free","nut_free","dairy_free","raw"]', true, 8, '[]'),
   ('Nachos del Crimen Perfecto | Chicken and Bacon', 'Frango + bacon + cheddar derretido.', 1600, 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800&q=80', '[]', true, 9, '[]'),
-  ('Olivas', 'Olivas.', 200, 'https://images.unsplash.com/photo-1541529086526-db283c563270?w=800&q=80', '[]', true, 10, '[]'),
-  ('Salsa Mostaza Y miel', 'Mustard & honey sauce.', 150, 'https://images.unsplash.com/photo-1541529086526-db283c563270?w=800&q=80', '[]', true, 11, '[]'),
-  ('Salsa Alioli Negro', 'Garlic sauce made with black garlic.', 150, 'https://images.unsplash.com/photo-1541529086526-db283c563270?w=800&q=80', '[]', true, 12, '[]'),
-  ('Salsa Agridulce', 'Sweet & spicy sauce.', 150, 'https://images.unsplash.com/photo-1541529086526-db283c563270?w=800&q=80', '[]', true, 13, '[]'),
-  ('Salsa Brava', 'Spicy sauce.', 150, 'https://images.unsplash.com/photo-1541529086526-db283c563270?w=800&q=80', '[]', true, 14, '[]'),
-  ('Salsa de Mango', 'Mango sauce.', 0, 'https://images.unsplash.com/photo-1541529086526-db283c563270?w=800&q=80', '[]', false, 15, '[]'),
+  ('Olivas', 'Olivas.', 200, 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&q=80', '[]', true, 10, '[]'),
+  ('Salsa Mostaza Y miel', 'Mustard & honey sauce.', 150, 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&q=80', '[]', true, 11, '[]'),
+  ('Salsa Alioli Negro', 'Garlic sauce made with black garlic.', 150, 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&q=80', '[]', true, 12, '[]'),
+  ('Salsa Agridulce', 'Sweet & spicy sauce.', 150, 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&q=80', '[]', true, 13, '[]'),
+  ('Salsa Brava', 'Spicy sauce.', 150, 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&q=80', '[]', true, 14, '[]'),
+  ('Salsa de Mango', 'Mango sauce.', 0, 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&q=80', '[]', false, 15, '[]'),
   ('Brocheta de carne 100g', 'Brocheta de carne.', 500, 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80', '[]', true, 16, '[]'),
   ('Brocheta de pollo 100g', 'Brocheta de pollo.', 500, 'https://images.unsplash.com/photo-1562967916-eb82221dfb92?w=800&q=80', '[]', true, 17, '[]'),
-  ('Carpaccio de ternera | beef carpaccio', 'Carpaccio con salsa de mostaza, lechuga mezclum, parmesano, alcaparras y pan.', 0, 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=800&q=80', '[]', false, 18, '[]'),
+  ('Carpaccio de ternera | beef carpaccio', 'Carpaccio con salsa de mostaza, lechuga mezclum, parmesano, alcaparras y pan.', 0, 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80', '[]', false, 18, '[]'),
   ('Brocheta de pollo y bacon 100g', 'Brocheta de pollo y bacon.', 500, 'https://images.unsplash.com/photo-1562967916-eb82221dfb92?w=800&q=80', '[]', true, 19, '[]')
 ) AS v(title, description, price_cents, image_url, allergens, is_available, sort_order, badges);
 
@@ -163,7 +163,7 @@ FROM (VALUES
 INSERT INTO public.gm_catalog_items (category_id, title, description, price_cents, image_url, allergens, is_available, sort_order, badges)
 SELECT 'c0000004-0000-0000-0000-000000000004', v.title, v.description, v.price_cents, v.image_url, v.allergens::jsonb, true, v.sort_order, v.badges::jsonb
 FROM (VALUES
-  ('Salmón Boreal', 'Rodaja de salmón salvaje de Noruega a la plancha, con patatas y ensalada fresca.', 2600, 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80', '["hot","gluten_free","nut_free","dairy_free","raw"]', 0, '["chef"]'),
+  ('Salmón Boreal', 'Rodaja de salmón salvaje de Noruega a la plancha, con patatas y ensalada fresca.', 2600, 'https://images.unsplash.com/photo-1559847844-5315695dadae?w=800&q=80', '["hot","gluten_free","nut_free","dairy_free","raw"]', 0, '["chef"]'),
   ('Vaca Brava', 'Chuletón de vaca (300g) a la parrilla con pimientos asados y patatas rústicas.', 2400, 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80', '[]', 1, '[]'),
   ('Tentáculos del Mar', 'Patas de pulpo a la plancha con ensalada fresca y aceite de oliva virgen extra.', 2800, 'https://images.unsplash.com/photo-1559847844-5315695dadae?w=800&q=80', '[]', 2, '[]'),
   ('Feijoada Negra del Sol', 'Plato típico brasileño con frijoles negros, carne seca, costilla, chorizo y bacon. Con arroz, farofa y naranja.', 1600, 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&q=80', '[]', 3, '["mais_pedido"]'),
@@ -210,20 +210,20 @@ FROM (VALUES
 INSERT INTO public.gm_catalog_items (category_id, title, description, price_cents, image_url, allergens, is_available, sort_order, badges)
 SELECT 'c0000008-0000-0000-0000-000000000008', v.title, v.description, v.price_cents, v.image_url, '[]'::jsonb, true, v.sort_order, v.badges::jsonb
 FROM (VALUES
-  ('Red Sunset', 'Sangría clásica de vino tinto con frutas frescas, canela y toque cítrico.', 2600, 'https://images.unsplash.com/photo-1536935338788-423bbd787aeb?w=800&q=80', 0, '["mais_pedido"]'),
-  ('White Breeze', 'Sangría de vino blanco, frutas tropicales y menta.', 2600, 'https://images.unsplash.com/photo-1536935338788-423bbd787aeb?w=800&q=80', 1, '[]'),
-  ('Golden Bubbles', 'Sangría de cava con frutas naturales.', 2900, 'https://images.unsplash.com/photo-1536935338788-423bbd787aeb?w=800&q=80', 2, '[]'),
-  ('Caipirinha Brasilera', 'Lima fresca, azúcar de caña, hielo y cachaça.', 1100, 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80', 3, '[]'),
-  ('Piña Colada Tropical', 'Piña natural, licor de coco, ron blanco, zumo de piña y leche de coco.', 1100, 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80', 4, '[]'),
-  ('Daiquiri de Frutas', 'Elegí entre fresa, mango, plátano o frutos rojos. Ron y hielo picado.', 1100, 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80', 5, '[]'),
-  ('Mojito Clásico', 'Lima, hierbabuena, azúcar moreno, ron blanco, hielo y soda.', 1100, 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80', 6, '[]'),
-  ('Aperol Spritz', 'Aperol, cava, hielo y soda.', 900, 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80', 7, '[]'),
-  ('2x1 en mojitos', 'Dos mojitos al precio de uno.', 1000, 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80', 8, '[]')
+  ('Red Sunset', 'Sangría clásica de vino tinto con frutas frescas, canela y toque cítrico.', 2600, 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80', 0, '["mais_pedido"]'),
+  ('White Breeze', 'Sangría de vino blanco, frutas tropicales y menta.', 2600, 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80', 1, '[]'),
+  ('Golden Bubbles', 'Sangría de cava con frutas naturales.', 2900, 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80', 2, '[]'),
+  ('Caipirinha Brasilera', 'Lima fresca, azúcar de caña, hielo y cachaça.', 1100, 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80', 3, '[]'),
+  ('Piña Colada Tropical', 'Piña natural, licor de coco, ron blanco, zumo de piña y leche de coco.', 1100, 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80', 4, '[]'),
+  ('Daiquiri de Frutas', 'Elegí entre fresa, mango, plátano o frutos rojos. Ron y hielo picado.', 1100, 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80', 5, '[]'),
+  ('Mojito Clásico', 'Lima, hierbabuena, azúcar moreno, ron blanco, hielo y soda.', 1100, 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80', 6, '[]'),
+  ('Aperol Spritz', 'Aperol, cava, hielo y soda.', 900, 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80', 7, '[]'),
+  ('2x1 en mojitos', 'Dos mojitos al precio de uno.', 1000, 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80', 8, '[]')
 ) AS v(title, description, price_cents, image_url, sort_order, badges);
 
 -- 5i. Copas y Chupitos (resumo)
 INSERT INTO public.gm_catalog_items (category_id, title, description, price_cents, image_url, allergens, is_available, sort_order, badges)
-SELECT 'c0000009-0000-0000-0000-000000000009', v.title, v.description, v.price_cents, 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80', '[]'::jsonb, v.is_available, v.sort_order, '[]'::jsonb
+SELECT 'c0000009-0000-0000-0000-000000000009', v.title, v.description, v.price_cents, 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80', '[]'::jsonb, v.is_available, v.sort_order, '[]'::jsonb
 FROM (VALUES
   ('Chupito', 'Chupito.', 250, true, 0),
   ('Fireball', 'Fireball.', 0, false, 1),
@@ -241,7 +241,7 @@ FROM (VALUES
 
 -- 5j. Licores (resumo)
 INSERT INTO public.gm_catalog_items (category_id, title, description, price_cents, image_url, allergens, is_available, sort_order, badges)
-SELECT 'c000000a-0000-0000-0000-00000000000a', v.title, v.description, v.price_cents, 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80', '[]'::jsonb, v.is_available, v.sort_order, '[]'::jsonb
+SELECT 'c000000a-0000-0000-0000-00000000000a', v.title, v.description, v.price_cents, 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80', '[]'::jsonb, v.is_available, v.sort_order, '[]'::jsonb
 FROM (VALUES
   ('Johnnie Walker Red', 'Johnnie Walker Red.', 3900, true, 0),
   ('Johnnie Walker Black Label', 'Johnnie Walker Black Label.', 5500, true, 1),
@@ -370,15 +370,16 @@ INSERT INTO public.gm_menu_categories (id, restaurant_id, name, sort_order) VALU
   ('d000000e-0000-0000-0000-00000000000e', '00000000-0000-0000-0000-000000000100', 'Cafés & Infusiones', 13),
   ('d000000f-0000-0000-0000-00000000000f', '00000000-0000-0000-0000-000000000100', 'VIP Party Packs', 14);
 
--- Produtos TPV: copiar do catálogo (por título de categoria)
-INSERT INTO public.gm_products (restaurant_id, category_id, name, description, price_cents, available)
+-- Produtos TPV: copiar do catálogo (por título de categoria), incluindo photo_url para imagens de comida
+INSERT INTO public.gm_products (restaurant_id, category_id, name, description, price_cents, available, photo_url)
 SELECT
   '00000000-0000-0000-0000-000000000100',
   mc.id,
   ci.title,
   ci.description,
   ci.price_cents,
-  ci.is_available
+  ci.is_available,
+  ci.image_url
 FROM public.gm_catalog_items ci
 JOIN public.gm_catalog_categories cc ON cc.id = ci.category_id
 JOIN public.gm_catalog_menus cm ON cm.id = cc.menu_id AND cm.restaurant_id = '00000000-0000-0000-0000-000000000100'

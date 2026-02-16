@@ -3,12 +3,12 @@
  * Princípio: 1 dedo, botões gigantes, zero pensamento.
  */
 
-import React from 'react';
-import type { Table } from '../types';
-import { TableStatus } from '../types';
-import { Text } from '../../../ui/design-system/primitives/Text';
-import { colors } from '../../../ui/design-system/tokens/colors';
-import { spacing } from '../../../ui/design-system/tokens/spacing';
+import { useTranslation } from "react-i18next";
+import { Text } from "../../../ui/design-system/primitives/Text";
+import { colors } from "../../../ui/design-system/tokens/colors";
+import { spacing } from "../../../ui/design-system/tokens/spacing";
+import type { Table } from "../types";
+import { TableStatus } from "../types";
 
 interface FloorMapProps {
   tables: Table[];
@@ -20,42 +20,48 @@ interface FloorMapProps {
 const getStatusColor = (status: TableStatus): string => {
   switch (status) {
     case TableStatus.FREE:
-      return '#32d74b'; // Verde
+      return "#32d74b"; // Verde
     case TableStatus.OCCUPIED:
-      return '#ff453a'; // Vermelho
+      return "#ff453a"; // Vermelho
     case TableStatus.CALLING:
-      return '#ffd60a'; // Amarelo (piscante)
+      return "#ffd60a"; // Amarelo (piscante)
     case TableStatus.BILL_REQUESTED:
-      return '#ff9500'; // Laranja
+      return "#ff9500"; // Laranja
     case TableStatus.KITCHEN_READY:
-      return '#0a84ff'; // Azul
+      return "#0a84ff"; // Azul
     case TableStatus.CLEANING:
-      return '#8e8e93'; // Cinza
+      return "#8e8e93"; // Cinza
     default:
-      return '#8e8e93';
+      return "#8e8e93";
   }
 };
 
-const getStatusLabel = (status: TableStatus): string => {
+const getStatusLabelKey = (status: TableStatus): string => {
   switch (status) {
     case TableStatus.FREE:
-      return 'Livre';
+      return "floorMap.free";
     case TableStatus.OCCUPIED:
-      return 'Ocupada';
+      return "floorMap.occupied";
     case TableStatus.CALLING:
-      return 'Chamando';
+      return "floorMap.calling";
     case TableStatus.BILL_REQUESTED:
-      return 'Conta';
+      return "floorMap.bill";
     case TableStatus.KITCHEN_READY:
-      return 'Cozinha';
+      return "floorMap.kitchen";
     case TableStatus.CLEANING:
-      return 'Limpeza';
+      return "floorMap.cleaning";
     default:
-      return '?';
+      return "?";
   }
 };
 
-export function FloorMap({ tables, area, onTableClick, onTableLongPress }: FloorMapProps) {
+export function FloorMap({
+  tables,
+  area,
+  onTableClick,
+  onTableLongPress,
+}: FloorMapProps) {
+  const { t } = useTranslation("waiter");
   // Grid responsivo: 3 colunas em mobile, 4 em tablet+
   const gridColumns = 3;
   const tableSize = 80; // px (touch target grande)
@@ -74,26 +80,28 @@ export function FloorMap({ tables, area, onTableClick, onTableLongPress }: Floor
   return (
     <div style={{ padding: spacing[4] }}>
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: spacing[6]
-      }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: spacing[6],
+        }}
+      >
         <Text size="xl" weight="bold" color="primary">
-          {area || 'Restaurante Inteiro'}
+          {area || t("floorMap.wholeRestaurant")}
         </Text>
         <button
           style={{
             width: 44,
             height: 44,
             borderRadius: 8,
-            border: 'none',
-            background: 'transparent',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           ⚙️
@@ -103,16 +111,19 @@ export function FloorMap({ tables, area, onTableClick, onTableLongPress }: Floor
       {/* Grid de Mesas */}
       <div
         style={{
-          display: 'grid',
+          display: "grid",
           gridTemplateColumns: `repeat(${gridColumns}, 1fr)`,
           gap: gap,
           maxWidth: 600,
-          margin: '0 auto',
+          margin: "0 auto",
         }}
       >
         {tables.map((table) => {
           const statusColor = getStatusColor(table.status);
-          const statusLabel = getStatusLabel(table.status);
+          const statusLabel =
+            getStatusLabelKey(table.status) === "?"
+              ? "?"
+              : t(getStatusLabelKey(table.status));
           const isCalling = table.status === TableStatus.CALLING;
 
           return (
@@ -124,54 +135,56 @@ export function FloorMap({ tables, area, onTableClick, onTableLongPress }: Floor
                 handleTableLongPress(table);
               }}
               style={{
-                width: '100%',
-                aspectRatio: '1',
+                width: "100%",
+                aspectRatio: "1",
                 minHeight: tableSize,
                 minWidth: tableSize,
                 borderRadius: 12,
                 border: `2px solid ${statusColor}`,
-                background: isCalling 
+                background: isCalling
                   ? `linear-gradient(135deg, ${statusColor}22, ${statusColor}44)`
                   : `${statusColor}22`,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                position: 'relative',
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                position: "relative",
                 // Animação piscante para "chamando"
-                animation: isCalling ? 'pulse 1.5s ease-in-out infinite' : 'none',
+                animation: isCalling
+                  ? "pulse 1.5s ease-in-out infinite"
+                  : "none",
               }}
               onMouseDown={(e) => {
                 // Feedback tátil simulado (visual)
-                e.currentTarget.style.transform = 'scale(0.95)';
+                e.currentTarget.style.transform = "scale(0.95)";
               }}
               onMouseUp={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.transform = "scale(1)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.transform = "scale(1)";
               }}
             >
               {/* Número da Mesa */}
-              <Text 
-                size="lg" 
-                weight="bold" 
-                style={{ 
+              <Text
+                size="lg"
+                weight="bold"
+                style={{
                   color: statusColor,
-                  marginBottom: spacing[1]
+                  marginBottom: spacing[1],
                 }}
               >
-                Mesa {table.number}
+                {t("floorMap.tableNumber", { number: table.number })}
               </Text>
 
               {/* Status */}
-              <Text 
-                size="sm" 
-                style={{ 
+              <Text
+                size="sm"
+                style={{
                   color: statusColor,
-                  opacity: 0.8
+                  opacity: 0.8,
                 }}
               >
                 {statusLabel}
@@ -181,19 +194,19 @@ export function FloorMap({ tables, area, onTableClick, onTableLongPress }: Floor
               {table.callCount && table.callCount >= 3 && (
                 <div
                   style={{
-                    position: 'absolute',
+                    position: "absolute",
                     top: 4,
                     right: 4,
-                    background: '#ff453a',
-                    color: 'white',
-                    borderRadius: '50%',
+                    background: "#ff453a",
+                    color: "white",
+                    borderRadius: "50%",
                     width: 24,
                     height: 24,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     fontSize: 12,
-                    fontWeight: 'bold',
+                    fontWeight: "bold",
                   }}
                 >
                   {table.callCount}
@@ -202,14 +215,18 @@ export function FloorMap({ tables, area, onTableClick, onTableLongPress }: Floor
 
               {/* Timer (se ocupada) */}
               {table.seatedAt && (
-                <Text 
-                  size="xs" 
-                  style={{ 
+                <Text
+                  size="xs"
+                  style={{
                     color: colors.text.tertiary,
-                    marginTop: spacing[1]
+                    marginTop: spacing[1],
                   }}
                 >
-                  {Math.floor((Date.now() - table.seatedAt.getTime()) / 60000)} min
+                  {t("floorMap.minutesAgo", {
+                    minutes: Math.floor(
+                      (Date.now() - table.seatedAt.getTime()) / 60000,
+                    ),
+                  })}
                 </Text>
               )}
             </button>
@@ -227,4 +244,3 @@ export function FloorMap({ tables, area, onTableClick, onTableLongPress }: Floor
     </div>
   );
 }
-

@@ -298,15 +298,15 @@ export function LocationSection() {
 
   return (
     <div style={{ padding: "48px", maxWidth: "800px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: 600, marginBottom: "8px" }}>
+      <h1 style={{ fontSize: "24px", fontWeight: 600, marginBottom: "8px", color: "var(--text-primary)" }}>
         📍 Localização{" "}
         {isSaving && (
-          <span style={{ fontSize: "14px", color: "#667eea" }}>
+          <span style={{ fontSize: "14px", color: "var(--color-primary)" }}>
             (Salvando...)
           </span>
         )}
       </h1>
-      <p style={{ fontSize: "14px", color: "#666", marginBottom: "32px" }}>
+      <p style={{ fontSize: "14px", color: "var(--text-secondary)", marginBottom: "32px" }}>
         Onde está localizado seu restaurante?
       </p>
 
@@ -319,6 +319,7 @@ export function LocationSection() {
               fontSize: "14px",
               fontWeight: 600,
               marginBottom: "8px",
+              color: "var(--text-primary)",
             }}
           >
             Endereço Completo *
@@ -331,7 +332,7 @@ export function LocationSection() {
             style={{
               width: "100%",
               padding: "12px",
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--surface-border)",
               borderRadius: "8px",
               fontSize: "14px",
             }}
@@ -346,6 +347,7 @@ export function LocationSection() {
               fontSize: "14px",
               fontWeight: 600,
               marginBottom: "8px",
+              color: "var(--text-primary)",
             }}
           >
             Cidade *
@@ -358,7 +360,7 @@ export function LocationSection() {
             style={{
               width: "100%",
               padding: "12px",
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--surface-border)",
               borderRadius: "8px",
               fontSize: "14px",
             }}
@@ -373,6 +375,7 @@ export function LocationSection() {
               fontSize: "14px",
               fontWeight: 600,
               marginBottom: "8px",
+              color: "var(--text-primary)",
             }}
           >
             CEP *
@@ -385,7 +388,7 @@ export function LocationSection() {
             style={{
               width: "100%",
               padding: "12px",
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--surface-border)",
               borderRadius: "8px",
               fontSize: "14px",
             }}
@@ -400,6 +403,7 @@ export function LocationSection() {
               fontSize: "14px",
               fontWeight: 600,
               marginBottom: "8px",
+              color: "var(--text-primary)",
             }}
           >
             Capacidade (pessoas) *
@@ -415,12 +419,12 @@ export function LocationSection() {
             style={{
               width: "100%",
               padding: "12px",
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--surface-border)",
               borderRadius: "8px",
               fontSize: "14px",
             }}
           />
-          <p style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
+          <p style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
             Baseado na capacidade, {Math.ceil(formData.capacity / 2.5)} mesas
             serão criadas automaticamente
           </p>
@@ -434,6 +438,7 @@ export function LocationSection() {
               fontSize: "14px",
               fontWeight: 600,
               marginBottom: "8px",
+              color: "var(--text-primary)",
             }}
           >
             Zonas do Restaurante * (selecione pelo menos 1)
@@ -447,12 +452,12 @@ export function LocationSection() {
                   alignItems: "center",
                   gap: "12px",
                   padding: "12px",
-                  border: "1px solid #e0e0e0",
+                  border: "1px solid var(--surface-border)",
                   borderRadius: "8px",
                   cursor: "pointer",
                   backgroundColor: formData.zones.includes(zone)
-                    ? "#e7f0ff"
-                    : "#fff",
+                    ? "var(--status-primary-bg)"
+                    : "var(--card-bg-on-dark)",
                 }}
               >
                 <input
@@ -461,7 +466,7 @@ export function LocationSection() {
                   onChange={() => toggleZone(zone)}
                   style={{ width: "18px", height: "18px", cursor: "pointer" }}
                 />
-                <span style={{ fontSize: "14px" }}>{zone}</span>
+                <span style={{ fontSize: "14px", color: "var(--text-primary)" }}>{zone}</span>
               </label>
             ))}
           </div>
@@ -473,12 +478,13 @@ export function LocationSection() {
         style={{
           marginTop: "32px",
           padding: "16px",
-          backgroundColor: "#f8f9fa",
+          backgroundColor: "var(--card-bg-on-dark)",
           borderRadius: "8px",
+          border: "1px solid var(--surface-border)",
         }}
       >
         <div
-          style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px" }}
+          style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px", color: "var(--text-primary)" }}
         >
           Checklist:
         </div>
@@ -503,7 +509,7 @@ export function LocationSection() {
               <span
                 style={{
                   fontSize: "14px",
-                  color: item.done ? "#28a745" : "#666",
+                  color: item.done ? "var(--color-success)" : "var(--text-secondary)",
                 }}
               >
                 {item.label}

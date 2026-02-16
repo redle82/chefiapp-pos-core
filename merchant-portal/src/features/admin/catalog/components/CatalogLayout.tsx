@@ -1,4 +1,8 @@
+import { useEffect } from "react";
 import type { ReactNode } from "react";
+import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
+import { useCatalogStore } from "../../../../core/catalog/catalogStore";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 import { CatalogSubnav } from "./CatalogSubnav";
 
 interface CatalogLayoutProps {
@@ -12,18 +16,26 @@ export function CatalogLayout({
   description,
   children,
 }: CatalogLayoutProps) {
+  const { runtime } = useRestaurantRuntime();
+  const setRestaurantId = useCatalogStore((s) => s.setRestaurantId);
+
+  useEffect(() => {
+    setRestaurantId(runtime?.restaurant_id ?? null);
+  }, [runtime?.restaurant_id, setRestaurantId]);
+
   return (
     <div className="space-y-6">
-      <header className="space-y-2">
-        <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
-        {description ? (
-          <p className="text-sm text-gray-600">{description}</p>
-        ) : null}
-      </header>
+      <AdminPageHeader title={title} subtitle={description} />
 
       <CatalogSubnav />
 
-      <section className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+      <section
+        className="rounded-xl border p-4 shadow-sm"
+        style={{
+          backgroundColor: "var(--card-bg-on-dark, var(--surface-elevated))",
+          borderColor: "var(--surface-border)",
+        }}
+      >
         {children}
       </section>
     </div>

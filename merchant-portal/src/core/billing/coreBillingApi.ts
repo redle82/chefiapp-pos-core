@@ -9,6 +9,7 @@
 
 import { CONFIG } from "../../config";
 import { BackendType, getBackendType } from "../infra/backendAdapter";
+import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
 
 const DOCKER_CORE_URL = CONFIG.CORE_URL;
 const CORE_ANON = CONFIG.CORE_ANON_KEY;
@@ -252,6 +253,116 @@ export async function setBillingConfig(
 
 // --- SaaS (ChefIApp → Stripe: portal e checkout) ---
 
+// --- Merchant Subscription (real data from merchant_subscriptions table) ---
+
+export interface MerchantSubscriptionRow {
+  id: string;
+  restaurant_id: string;
+  plan_id: string;
+  status: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  current_period_start: string;
+  current_period_end: string;
+  trial_end: string | null;
+  cancel_at: string | null;
+  canceled_at: string | null;
+  addons: unknown[];
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * GET /rest/v1/merchant_subscriptions — Fetch subscription for a restaurant.
+ * Returns null if no subscription exists or table is optional/unavailable (pre-migration).
+ */
+export async function getSubscription(
+  restaurantId: string,
+): Promise<MerchantSubscriptionRow | null> {
+  requireCore();
+  const client = getDockerCoreFetchClient();
+  const { data, error } = await client
+    .from("merchant_subscriptions")
+    .select("*")
+    .eq("restaurant_id", restaurantId)
+    .limit(1);
+  if (error) return null;
+  return Array.isArray(data) && data.length > 0 ? (data[0] as MerchantSubscriptionRow) : null;
+}
+
+export interface BillingPlanRow {
+  id: string;
+  name: string;
+  tier: string;
+  price_cents: number;
+  currency: string;
+  interval: string;
+  features: string[];
+  max_devices: number;
+  max_integrations: number;
+  max_delivery_orders: number;
+  sort_order: number;
+  active: boolean;
+}
+
+/**
+ * GET /rest/v1/billing_plans — Fetch available billing plans.
+ * Returns empty array if table doesn't exist yet.
+ */
+export async function getBillingPlans(): Promise<BillingPlanRow[]> {
+  requireCore();
+  const url = `${REST}/billing_plans?active=eq.true&order=sort_order.asc&select=*`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: coreHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) return [];
+  try {
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+export interface BillingInvoiceRow {
+  id: string;
+  restaurant_id: string;
+  subscription_id: string | null;
+  stripe_invoice_id: string | null;
+  amount_cents: number;
+  currency: string;
+  status: string;
+  invoice_date: string;
+  pdf_url: string | null;
+  created_at: string;
+}
+
+/**
+ * GET /rest/v1/billing_invoices — Fetch invoice history for a restaurant.
+ */
+export async function getBillingInvoices(
+  restaurantId: string,
+): Promise<BillingInvoiceRow[]> {
+  requireCore();
+  const url = `${REST}/billing_invoices?restaurant_id=eq.${encodeURIComponent(
+    restaurantId,
+  )}&order=invoice_date.desc&select=*&limit=50`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: coreHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) return [];
+  try {
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
 /**
  * POST /core/billing/saas/portal — Criar sessão Stripe Customer Portal.
  * Core (Docker) only.
@@ -308,10 +419,19 @@ export async function createCheckoutSession(
   });
   const text = await res.text();
   if (!res.ok) {
-    return {
-      url: "",
-      error: text || `Core RPC create_checkout_session: ${res.status}`,
-    };
+    let errorMessage = text || `Core RPC create_checkout_session: ${res.status}`;
+    if (res.status === 404) {
+      try {
+        const j = JSON.parse(text) as { code?: string; message?: string };
+        if (j?.code === "PGRST202" || (j?.message && j.message.includes("create_checkout_session"))) {
+          errorMessage =
+            "Checkout em breve. A migração de faturação ainda não foi aplicada no Core. Ver docker-core/MIGRATIONS.md.";
+        }
+      } catch {
+        // keep errorMessage as text
+      }
+    }
+    return { url: "", error: errorMessage };
   }
   let data: { url?: string; session_id?: string } = {};
   try {

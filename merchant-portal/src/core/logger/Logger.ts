@@ -27,6 +27,8 @@ export interface LogContext {
   userId?: string;
   sessionId?: string;
   requestId?: string;
+  /** idempotency_key: evita 409 em app_logs quando a mesma operação é reenviada (retry). */
+  idempotency_key?: string;
   url?: string;
   userAgent?: string;
   [key: string]: any;

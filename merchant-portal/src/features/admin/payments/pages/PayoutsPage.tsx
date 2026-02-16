@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 import { getPayouts } from "../services/paymentsService";
 import type { Payout, PayoutsFilters as PayoutsFiltersType } from "../types";
 import { PayoutsFilters } from "../components/PayoutsFilters";
@@ -37,12 +38,10 @@ export function PayoutsPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-xl font-semibold text-gray-900">Payouts</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Transferências agrupadas para a conta bancária do restaurante.
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Payouts"
+        subtitle="Transferências agrupadas para a conta bancária do restaurante."
+      />
 
       <PayoutsFilters onApply={handleApplyFilters} loading={loading} />
 

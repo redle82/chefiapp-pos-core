@@ -45,6 +45,7 @@ test.describe("Fluxo telefone → setup mínimo → dashboard", () => {
         sessionStorage.clear();
       } catch {}
       localStorage.setItem("chefiapp_skip_auto_pilot", "true");
+      localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
     });
 
     const res = await page.goto("/setup/restaurant-minimal", {

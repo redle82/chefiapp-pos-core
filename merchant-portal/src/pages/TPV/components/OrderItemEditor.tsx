@@ -5,8 +5,8 @@ import { Text } from "../../../ui/design-system/primitives/Text";
 
 interface OrderItemEditorProps {
   order: any;
-  onUpdateQuantity: (itemId: string, quantity: number) => Promise<void>;
-  onRemoveItem: (itemId: string) => Promise<void>;
+  onUpdateQuantity: (itemId: string, quantity: number) => void | Promise<void>;
+  onRemoveItem: (itemId: string) => void | Promise<void>;
   onBackToMenu?: () => void;
   loading?: boolean;
 }

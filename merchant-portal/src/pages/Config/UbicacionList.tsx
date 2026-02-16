@@ -19,7 +19,7 @@ export function UbicacionList({ locations }: UbicacionListProps) {
           margin: 0,
           padding: 24,
           textAlign: "center",
-          color: "#6b7280",
+          color: "var(--text-secondary)",
           fontSize: 14,
         }}
       >

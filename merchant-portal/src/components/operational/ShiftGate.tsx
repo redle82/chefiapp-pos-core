@@ -6,13 +6,14 @@
  */
 
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../infra/docker-core/connection";
-import { isBackendUnavailable } from "../../infra/menuPilotFallback";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
 import { useShift } from "../../core/shift/ShiftContext";
 import { getTpvRestaurantId } from "../../core/storage/installedDeviceStorage";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
+import { isBackendUnavailable } from "../../infra/menuPilotFallback";
 import {
   GlobalBlockedView,
   GlobalLoadingView,
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function ShiftGate({ children }: Props) {
+  const { t } = useTranslation("shift");
   const shift = useShift();
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? getTpvRestaurantId() ?? null;
@@ -40,7 +42,7 @@ export function ShiftGate({ children }: Props) {
   if (shift.isChecking && !shift.isShiftOpen) {
     return (
       <GlobalLoadingView
-        message="A verificar turno..."
+        message={t("gate.checking")}
         layout="operational"
         variant="fullscreen"
       />
@@ -55,9 +57,9 @@ export function ShiftGate({ children }: Props) {
   if (!isDocker || !restaurantId) {
     return (
       <GlobalBlockedView
-        title="Abrir turno"
-        description="Para começar a vender, abra o turno com caixa inicial no Dashboard."
-        action={{ label: "Ir para o Dashboard", to: "/dashboard" }}
+        title={t("gate.openTitle")}
+        description={t("gate.openDescription")}
+        action={{ label: t("gate.goToDashboard"), to: "/dashboard" }}
       />
     );
   }
@@ -91,6 +93,7 @@ function ShiftOpenForm({
   onErrorChange,
   onSuccess,
 }: ShiftOpenFormProps) {
+  const { t } = useTranslation("shift");
   const [caixaEur, setCaixaEur] = useState("0");
   const [openedSuccess, setOpenedSuccess] = useState(false);
 
@@ -99,7 +102,7 @@ function ShiftOpenForm({
     onErrorChange(null);
     const eur = parseFloat(caixaEur.replace(",", "."));
     if (Number.isNaN(eur) || eur < 0) {
-      onErrorChange("Valor de caixa inicial inválido.");
+      onErrorChange(t("error.invalidInitialCash"));
       return;
     }
     const openingBalanceCents = Math.round(eur * 100);
@@ -111,20 +114,18 @@ function ShiftOpenForm({
         "open_cash_register_atomic",
         {
           p_restaurant_id: restaurantId,
-          p_name: "Caixa Principal",
-          p_opened_by: "Operador TPV",
+          p_name: t("gate.defaultRegisterName", "Caixa Principal"),
+          p_opened_by: t("gate.defaultOperatorName", "Operador TPV"),
           p_opening_balance_cents: openingBalanceCents,
-        }
+        },
       );
 
       if (rpcError) {
-        onErrorChange(
-          "Não foi possível abrir o turno. Verifique a ligação ao servidor e tente novamente."
-        );
+        onErrorChange(t("error.openFailed"));
         return;
       }
       if (!data?.id) {
-        onErrorChange("Não foi possível abrir o turno. Tente novamente.");
+        onErrorChange(t("error.openRetry"));
         return;
       }
       onOpeningChange(false);
@@ -134,8 +135,8 @@ function ShiftOpenForm({
       }, 1500);
     } catch (err) {
       const msg = isBackendUnavailable(err)
-        ? "Servidor indisponível. Verifique a ligação e tente novamente."
-        : "Não foi possível abrir o turno. Tente novamente.";
+        ? t("error.serverUnavailable")
+        : t("error.openRetry");
       onErrorChange(msg);
     } finally {
       onOpeningChange(false);
@@ -164,9 +165,9 @@ function ShiftOpenForm({
             marginBottom: 8,
           }}
         >
-          Turno aberto
+          {t("gate.opened")}
         </p>
-        <p style={{ fontSize: 14, color: "#a3a3a3" }}>A carregar o TPV...</p>
+        <p style={{ fontSize: 14, color: "#a3a3a3" }}>{t("gate.loadingTPV")}</p>
       </div>
     );
   }
@@ -184,10 +185,11 @@ function ShiftOpenForm({
         color: "#f5f5f7",
       }}
     >
-      <h1 style={{ fontSize: 22, marginBottom: 8 }}>Começar a vender</h1>
+      <h1 style={{ fontSize: 22, marginBottom: 8 }}>
+        {t("gate.startSelling")}
+      </h1>
       <p style={{ fontSize: 14, color: "#a3a3a3", marginBottom: 24 }}>
-        Um passo só: defina o valor de caixa inicial e clique no botão para
-        abrir o turno e usar o TPV.
+        {t("gate.instructions")}
       </p>
       <form
         onSubmit={handleSubmit}
@@ -201,7 +203,7 @@ function ShiftOpenForm({
       >
         <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ fontSize: 13, color: "#a3a3a3" }}>
-            Caixa inicial (€)
+            {t("gate.initialCashLabel")}
           </span>
           <input
             type="text"
@@ -237,12 +239,12 @@ function ShiftOpenForm({
             color: "#000",
           }}
         >
-          {opening ? "A abrir..." : "Clique aqui para começar a vender AGORA"}
+          {opening ? t("gate.opening") : t("gate.startNow")}
         </button>
       </form>
       <p style={{ fontSize: 13, color: "#666", marginTop: 24 }}>
         <a href="/dashboard" style={{ color: "#32d74b" }}>
-          Ir para o Dashboard
+          {t("gate.goToDashboard")}
         </a>
       </p>
     </div>

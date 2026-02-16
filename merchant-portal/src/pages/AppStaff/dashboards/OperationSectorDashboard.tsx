@@ -45,7 +45,8 @@ export function OperationSectorDashboard() {
 
   // Exceções
   const exceptions: string[] = [];
-  if (coreStatus !== "UP") exceptions.push("Sistema instável");
+  if (coreStatus !== "UP")
+    exceptions.push("Core indisponível — verifique a ligação ao servidor");
   if (criticalAlerts.length > 0)
     exceptions.push(
       `${criticalAlerts.length} alerta${

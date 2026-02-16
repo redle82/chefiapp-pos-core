@@ -132,6 +132,36 @@ Mas deve ser claro que:
 - integrações específicas dependem de projeto, escopo e desenvolvimento adicional;
 - não há hoje “lista de integrações plug-and-play” ampla.
 
+### 3.4. Enterprise / multi-unidade / hotelaria
+
+Para material enterprise, grupos e F&B de hotelaria:
+
+**Pode ser formulado:**
+
+- O ChefIApp™ OS está **preparado para** visão consolidada de múltiplas unidades (dashboard “olho de dono”) com faturação, tasks críticas, stock em risco e estado de turno por restaurante.
+- A arquitetura suporta **multi-tenant** com isolamento por `restaurant_id` e roles (group_owner, ops_director, local_owner, local_manager) conforme `MULTI_TENANT_ROLES_CONTRACT.md`.
+- Para hotelaria: posicionar como **F&B operacional** (restaurantes, bares, room service), não PMS nem gestão de quartos.
+
+**Evitar:**
+
+- “Dashboard corporativo completo para cadeias globais já disponível.”
+- “Gestão centralizada de todas as operações do grupo em tempo real” (sem qualificar que é leitura/relatórios, não comando em tempo real).
+
+### 3.5. POS-adjacent / pós-fiscal
+
+Para linguagem sobre reconciliação e POS fiscal:
+
+**Pode ser formulado:**
+
+- O ChefIApp™ atua como **camada de verdade operacional** e permite **reconciliação de turno** (totais ChefIApp vs totais do POS fiscal), com suporte a input manual, upload ou API quando implementado.
+- “Preparado para integrar com POS fiscal” (quando a integração específica estiver em projeto).
+- “Reconciliação ChefIApp vs POS fiscal” como funcionalidade de relatório/fecho de caixa, não como “substituição” do POS.
+
+**Evitar:**
+
+- “Sistema fiscal completo” ou “emissão fiscal integrada” (o POS fiscal continua a ser o emissor).
+- “Conformidade fiscal garantida em todos os países” (depende do POS e do enquadramento local).
+
 ---
 
 ## 4. Lista vermelha — o que NÃO devemos prometer

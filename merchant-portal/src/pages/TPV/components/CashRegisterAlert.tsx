@@ -1,5 +1,8 @@
-import React from "react";
+interface CashRegisterAlertProps {
+  isOpen: boolean;
+  onOpenCash: () => void;
+}
 
-export const CashRegisterAlert = () => (
+export const CashRegisterAlert = (_props: CashRegisterAlertProps) => (
   <div className="hidden">CashRegisterAlert</div>
 );

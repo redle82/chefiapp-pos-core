@@ -29,6 +29,8 @@ export interface UseFiscalSyncMonitorResult {
   recentFailures: FiscalSyncFailure[];
   loading: boolean;
   error: string | null;
+  /** true quando a tabela gm_audit_logs não existe (migração opcional) — mostrar nota, não erro */
+  tableUnavailable: boolean;
   refresh: () => Promise<void>;
 }
 
@@ -48,6 +50,7 @@ export function useFiscalSyncMonitor(
   const [recentFailures, setRecentFailures] = useState<FiscalSyncFailure[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tableUnavailable, setTableUnavailable] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!restaurantId) {
@@ -58,6 +61,7 @@ export function useFiscalSyncMonitor(
 
     setLoading(true);
     setError(null);
+    setTableUnavailable(false);
 
     try {
       const now = new Date();
@@ -76,8 +80,20 @@ export function useFiscalSyncMonitor(
       if (dbError) {
         const msg = dbError.message ?? "Erro ao carregar eventos fiscais";
         const lower = msg.toLowerCase();
+        const code = dbError.code ?? "";
         if (lower.includes("failed to fetch") || lower.includes("network")) {
-          // Core offline — degrade gracefully
+          setError(null);
+          return;
+        }
+        // Tabela gm_audit_logs opcional: migração 20260211_core_audit_logs pode não estar aplicada
+        const tableNotAvailable =
+          code === "42P01" ||
+          code === "PGRST202" ||
+          lower.includes("relation") ||
+          lower.includes("does not exist") ||
+          lower.includes("table unavailable");
+        if (tableNotAvailable) {
+          setTableUnavailable(true);
           setError(null);
         } else {
           setError(msg);
@@ -137,5 +153,12 @@ export function useFiscalSyncMonitor(
     fetchData();
   }, [fetchData]);
 
-  return { summary, recentFailures, loading, error, refresh: fetchData };
+  return {
+    summary,
+    recentFailures,
+    loading,
+    error,
+    tableUnavailable,
+    refresh: fetchData,
+  };
 }

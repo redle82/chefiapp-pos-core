@@ -1,1 +1,5 @@
-export const InsightTicker = () => <div />;
+interface InsightTickerProps {
+  insight: unknown;
+}
+
+export const InsightTicker = (_props: InsightTickerProps) => <div />;

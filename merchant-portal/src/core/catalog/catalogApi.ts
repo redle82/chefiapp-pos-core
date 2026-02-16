@@ -1,4 +1,15 @@
 import { v4 as uuidv4 } from "uuid";
+import { BackendType, getBackendType } from "../infra/backendAdapter";
+import {
+  readMenuCategories,
+  readProducts,
+  type CoreMenuCategory,
+  type CoreProduct,
+} from "../../infra/readers/RestaurantReader";
+import {
+  createMenuItem,
+  updateMenuItem,
+} from "../../infra/writers/MenuWriter";
 import {
   type CatalogAssignment,
   type CatalogContext,
@@ -15,8 +26,9 @@ import {
 /**
  * API de Catálogo (camada de boundary para o Admin).
  *
- * Implementação inicial: in-memory mock, pronta para ser trocada
- * por chamadas reais ao Core / Supabase quando o backend estiver pronto.
+ * Quando restaurantId é passado e backend é Docker: produtos e categorias
+ * vêm do Core (gm_products, gm_menu_categories) — mesma fonte que Menu Builder,
+ * web do restaurante e TPV. Sem restaurantId ou backend não-Docker: fallback mock.
  */
 
 // ---------------------------------------------------------------------------
@@ -206,22 +218,101 @@ export async function upsertCatalogAssignment(params: {
 }
 
 // ---------------------------------------------------------------------------
-// Categorias & Produtos
+// Categorias & Produtos (Core = gm_products + gm_menu_categories quando restaurantId + Docker)
 // ---------------------------------------------------------------------------
 
-export async function listCategories(): Promise<ProductCategory[]> {
+function mapCoreCategoryToProductCategory(c: CoreMenuCategory): ProductCategory {
+  return {
+    id: c.id,
+    name: c.name,
+    sortOrder: (c as { sort_order?: number }).sort_order ?? 0,
+    createdAt: (c as { created_at?: string }).created_at ?? now(),
+  };
+}
+
+function mapCoreProductToCatalogProduct(p: CoreProduct): CatalogProduct {
+  return {
+    id: p.id,
+    name: p.name,
+    categoryId: p.category_id ?? null,
+    basePriceCents: p.price_cents,
+    isActive: p.available ?? true,
+    station: p.station === "BAR" ? "BAR" : "KITCHEN",
+    printerId: null,
+    modifierGroupIds: [],
+    createdAt: (p as { created_at?: string }).created_at ?? now(),
+    updatedAt: (p as { updated_at?: string }).updated_at ?? now(),
+  };
+}
+
+export async function listCategories(
+  restaurantId?: string | null,
+): Promise<ProductCategory[]> {
+  if (restaurantId && getBackendType() === BackendType.docker) {
+    const coreCats = await readMenuCategories(restaurantId);
+    return coreCats.map(mapCoreCategoryToProductCategory);
+  }
   ensureSeedData();
   return categories;
 }
 
-export async function listProducts(): Promise<CatalogProduct[]> {
+export async function listProducts(
+  restaurantId?: string | null,
+): Promise<CatalogProduct[]> {
+  if (restaurantId && getBackendType() === BackendType.docker) {
+    const coreProducts = await readProducts(restaurantId);
+    return coreProducts.map(mapCoreProductToCatalogProduct);
+  }
   ensureSeedData();
   return products;
 }
 
 export async function saveProduct(
   input: Omit<CatalogProduct, "createdAt" | "updatedAt"> & { id?: string },
+  restaurantId?: string | null,
 ): Promise<CatalogProduct> {
+  if (restaurantId && getBackendType() === BackendType.docker) {
+    const id = input.id;
+    const station =
+      input.station === "BAR" || input.station === "KITCHEN"
+        ? input.station
+        : "KITCHEN";
+    let payload = {
+      category_id: input.categoryId ?? null,
+      name: input.name,
+      description: null as string | null,
+      price_cents: input.basePriceCents,
+      available: input.isActive ?? true,
+      station: station as "BAR" | "KITCHEN",
+      prep_time_minutes: 5,
+      prep_category: "main" as const,
+    };
+    if (id) {
+      const existing = await listProducts(restaurantId).then((list) =>
+        list.find((p) => p.id === id),
+      );
+      payload = {
+        ...payload,
+        station: (input.station ?? existing?.station ?? "KITCHEN") as "BAR" | "KITCHEN",
+      };
+      await updateMenuItem(id, restaurantId, payload);
+      return {
+        ...input,
+        station: payload.station,
+        id,
+        createdAt: (input as CatalogProduct).createdAt ?? now(),
+        updatedAt: now(),
+      };
+    }
+    const { id: newId } = await createMenuItem(restaurantId, payload);
+    return {
+      ...input,
+      station: payload.station,
+      id: newId,
+      createdAt: now(),
+      updatedAt: now(),
+    };
+  }
   ensureSeedData();
   const id = input.id ?? uuidv4();
   const existing = products.find((p) => p.id === id);
@@ -249,7 +340,25 @@ export async function saveProduct(
 export async function toggleProductActive(
   productId: string,
   isActive: boolean,
+  restaurantId?: string | null,
 ): Promise<void> {
+  if (restaurantId && getBackendType() === BackendType.docker) {
+    const all = await readProducts(restaurantId);
+    const p = all.find((x) => x.id === productId);
+    if (!p) return;
+    const core = p as CoreProduct & { station?: string; prep_category?: string };
+    await updateMenuItem(productId, restaurantId, {
+      name: p.name,
+      description: p.description ?? null,
+      price_cents: p.price_cents,
+      category_id: p.category_id ?? null,
+      available: isActive,
+      station: (core.station === "BAR" ? "BAR" : "KITCHEN") as "BAR" | "KITCHEN",
+      prep_time_minutes: 5,
+      prep_category: (core.prep_category as "drink" | "starter" | "main" | "dessert") ?? "main",
+    });
+    return;
+  }
   products = products.map((p) =>
     p.id === productId ? { ...p, isActive, updatedAt: now() } : p,
   );

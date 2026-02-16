@@ -80,7 +80,7 @@ export function LocationModal({
     >
       <div
         style={{
-          backgroundColor: "#fff",
+          backgroundColor: "var(--card-bg-on-dark)",
           borderRadius: 12,
           maxWidth: 480,
           width: "100%",
@@ -91,13 +91,13 @@ export function LocationModal({
         onClick={(e) => e.stopPropagation()}
       >
         <form onSubmit={handleSubmit}>
-          <div style={{ padding: 24, borderBottom: "1px solid #e5e7eb" }}>
+          <div style={{ padding: 24, borderBottom: "1px solid var(--surface-border)" }}>
             <h2
               style={{
                 margin: 0,
                 fontSize: 18,
                 fontWeight: 700,
-                color: "#111827",
+                color: "var(--text-primary)",
               }}
             >
               {isEdit ? "Editar ubicación" : "Nueva ubicación"}
@@ -105,7 +105,7 @@ export function LocationModal({
           </div>
           <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
             <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
                 Nombre
               </span>
               <input
@@ -117,14 +117,14 @@ export function LocationModal({
                 style={{
                   padding: "8px 12px",
                   fontSize: 14,
-                  border: "1px solid #d1d5db",
+                  border: "1px solid var(--surface-border)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
               />
             </label>
             <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
                 Dirección
               </span>
               <input
@@ -135,7 +135,7 @@ export function LocationModal({
                 style={{
                   padding: "8px 12px",
                   fontSize: 14,
-                  border: "1px solid #d1d5db",
+                  border: "1px solid var(--surface-border)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
@@ -143,7 +143,7 @@ export function LocationModal({
             </label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
                   Ciudad
                 </span>
                 <input
@@ -153,14 +153,14 @@ export function LocationModal({
                   style={{
                     padding: "8px 12px",
                     fontSize: 14,
-                    border: "1px solid #d1d5db",
+                    border: "1px solid var(--surface-border)",
                     borderRadius: 8,
                     boxSizing: "border-box",
                   }}
                 />
               </label>
               <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
                   Código postal
                 </span>
                 <input
@@ -170,7 +170,7 @@ export function LocationModal({
                   style={{
                     padding: "8px 12px",
                     fontSize: 14,
-                    border: "1px solid #d1d5db",
+                    border: "1px solid var(--surface-border)",
                     borderRadius: 8,
                     boxSizing: "border-box",
                   }}
@@ -179,7 +179,7 @@ export function LocationModal({
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
                   País (código)
                 </span>
                 <input
@@ -191,14 +191,14 @@ export function LocationModal({
                   style={{
                     padding: "8px 12px",
                     fontSize: 14,
-                    border: "1px solid #d1d5db",
+                    border: "1px solid var(--surface-border)",
                     borderRadius: 8,
                     boxSizing: "border-box",
                   }}
                 />
               </label>
               <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
                   Moneda
                 </span>
                 <select
@@ -207,7 +207,7 @@ export function LocationModal({
                   style={{
                     padding: "8px 12px",
                     fontSize: 14,
-                    border: "1px solid #d1d5db",
+                    border: "1px solid var(--surface-border)",
                     borderRadius: 8,
                     boxSizing: "border-box",
                   }}
@@ -221,7 +221,7 @@ export function LocationModal({
               </label>
             </div>
             <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
                 Zona horaria (IANA)
               </span>
               <select
@@ -230,7 +230,7 @@ export function LocationModal({
                 style={{
                   padding: "8px 12px",
                   fontSize: 14,
-                  border: "1px solid #d1d5db",
+                  border: "1px solid var(--surface-border)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
@@ -249,7 +249,7 @@ export function LocationModal({
                   checked={form.isActive}
                   onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
                 />
-                <span style={{ fontSize: 13, color: "#374151" }}>Activo</span>
+                <span style={{ fontSize: 13, color: "var(--text-primary)" }}>Activo</span>
               </label>
               <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
                 <input
@@ -257,14 +257,14 @@ export function LocationModal({
                   checked={form.isPrimary ?? false}
                   onChange={(e) => setForm((f) => ({ ...f, isPrimary: e.target.checked }))}
                 />
-                <span style={{ fontSize: 13, color: "#374151" }}>Principal</span>
+                <span style={{ fontSize: 13, color: "var(--text-primary)" }}>Principal</span>
               </label>
             </div>
           </div>
           <div
             style={{
               padding: 24,
-              borderTop: "1px solid #e5e7eb",
+              borderTop: "1px solid var(--surface-border)",
               display: "flex",
               gap: 8,
               justifyContent: "flex-end",
@@ -276,11 +276,11 @@ export function LocationModal({
               style={{
                 padding: "8px 14px",
                 fontSize: 13,
-                color: "#6b7280",
-                border: "1px solid #d1d5db",
+                color: "var(--text-secondary)",
+                border: "1px solid var(--surface-border)",
                 borderRadius: 8,
                 cursor: "pointer",
-                backgroundColor: "#fff",
+                backgroundColor: "var(--card-bg-on-dark)",
               }}
             >
               Cancelar
@@ -291,8 +291,8 @@ export function LocationModal({
                 padding: "8px 14px",
                 fontSize: 13,
                 fontWeight: 600,
-                color: "#fff",
-                backgroundColor: "#7c3aed",
+                color: "var(--text-inverse)",
+                backgroundColor: "var(--color-primary)",
                 border: "none",
                 borderRadius: 8,
                 cursor: "pointer",

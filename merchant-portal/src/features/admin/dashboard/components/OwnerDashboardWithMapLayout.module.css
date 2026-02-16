@@ -6,19 +6,19 @@
 }
 
 .opCard[data-ready="true"] {
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
+  background-color: var(--status-success-bg);
+  border: 1px solid var(--status-success-border);
 }
 
 .opCard[data-ready="false"] {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  background-color: var(--status-error-bg);
+  border: 1px solid var(--status-error-border);
 }
 
 .opCardLabel {
   font-size: 12px;
   font-weight: 600;
-  color: #444;
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 6px;
@@ -30,12 +30,12 @@
 }
 
 .opCardStatus[data-ready="true"] {
-  color: #059669;
+  color: var(--color-success);
   margin-bottom: 8px;
 }
 
 .opCardStatus[data-ready="false"] {
-  color: #b91c1c;
+  color: var(--color-error);
   margin-bottom: 8px;
 }
 
@@ -48,7 +48,7 @@
   margin: 0 0 10px 0;
   padding-left: 18px;
   font-size: 12px;
-  color: #555;
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
@@ -67,14 +67,14 @@
 }
 
 .opMainBtn[data-enabled="true"] {
-  color: #fff;
-  background-color: #059669;
+  color: var(--text-inverse);
+  background-color: var(--color-success);
   cursor: pointer;
 }
 
 .opMainBtn[data-enabled="false"] {
-  color: #9ca3af;
-  background-color: #e5e7eb;
+  color: var(--text-tertiary);
+  background-color: var(--surface-border);
   cursor: not-allowed;
 }
 
@@ -89,37 +89,37 @@
 
 .opMenuBtn {
   composes: opSecondaryBtn;
-  color: #b45309;
-  background-color: #fff7ed;
-  border: 1px solid #fed7aa;
+  color: var(--status-warning-text);
+  background-color: var(--status-warning-bg);
+  border: 1px solid var(--status-warning-border);
 }
 
 .opIdentityBtn {
   composes: opSecondaryBtn;
-  color: #1e40af;
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
+  color: var(--status-info-text);
+  background-color: var(--status-info-bg);
+  border: 1px solid var(--status-info-border);
 }
 
 .opRunbookBtn {
   composes: opSecondaryBtn;
-  color: #0d9488;
-  background-color: #ccfbf1;
-  border: 1px solid #99f6e4;
+  color: var(--status-info-text);
+  background-color: var(--status-info-bg);
+  border: 1px solid var(--status-info-border);
 }
 
 /* Main Layout */
 .pageContainer {
   min-height: 100%;
-  background-color: #f3f4f6;
+  background-color: var(--surface-base);
   display: flex;
   flex-direction: column;
 }
 
 .setupBanner {
   padding: 10px 16px;
-  background: linear-gradient(90deg, #fef3c7 0%, #fde68a 100%);
-  border-bottom: 1px solid #f59e0b;
+  background: var(--status-warning-bg);
+  border-bottom: 1px solid var(--color-warning);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -129,7 +129,7 @@
 
 .setupBannerText {
   font-size: 14px;
-  color: #92400e;
+  color: var(--status-warning-text);
   font-weight: 500;
 }
 
@@ -141,8 +141,8 @@
 
 .setupBtnDark {
   padding: 6px 14px;
-  background-color: #1a1a1a;
-  color: #fff;
+  background-color: var(--surface-elevated);
+  color: var(--text-primary);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -152,8 +152,8 @@
 
 .setupBtnAmber {
   padding: 6px 14px;
-  background-color: #f59e0b;
-  color: #fff;
+  background-color: var(--color-warning);
+  color: var(--text-inverse);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -164,9 +164,9 @@
 .blockedBanner {
   padding: 16px 20px;
   margin-bottom: 0;
-  background-color: #fef2f2;
-  border-bottom: 1px solid #ef4444;
-  color: #b91c1c;
+  background-color: var(--status-error-bg);
+  border-bottom: 1px solid var(--color-error);
+  color: var(--color-error);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -181,8 +181,8 @@
 
 .blockedBannerBtn {
   padding: 8px 16px;
-  background-color: #b91c1c;
-  color: #fff;
+  background-color: var(--color-error);
+  color: var(--text-inverse);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -197,8 +197,8 @@
 
 .sidebar {
   width: 260px;
-  background-color: #ffffff;
-  border-right: 1px solid #e5e7eb;
+  background-color: var(--card-bg-on-dark);
+  border-right: 1px solid var(--surface-border);
   padding: 24px 16px;
   display: flex;
   flex-direction: column;
@@ -212,30 +212,30 @@
 .sidebarTitle {
   font-size: 18px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .sidebarSubtitle {
   font-size: 12px;
-  color: #888;
+  color: var(--text-secondary);
 }
 
 .modulesReadyCard {
   padding: 12px;
   border-radius: 8px;
-  background-color: #f5f7ff;
-  border: 1px solid #e0e4ff;
+  background-color: var(--status-primary-bg);
+  border: 1px solid var(--status-primary-border);
   margin-bottom: 8px;
 }
 
 .modulesReadyLabel {
   font-size: 12px;
-  color: #444;
+  color: var(--text-primary);
 }
 
 .modulesReadyCount {
   font-size: 11px;
-  color: #777;
+  color: var(--text-secondary);
   margin-top: 4px;
 }
 
@@ -245,8 +245,8 @@
   margin-bottom: 12px;
   padding: 10px;
   border-radius: 8px;
-  background-color: #f0f4f8;
-  border: 1px solid #e0e4e8;
+  background-color: var(--card-bg-on-dark);
+  border: 1px solid var(--surface-border);
 }
 
 /* Nav — token values: space.xs=4px, space.sm=8px, fontSize.sm=14px, fontWeight.semibold=600 */
@@ -261,7 +261,7 @@
 .mapaLabel {
   font-size: 14px;
   font-weight: 600;
-  color: #888;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 4px;
@@ -270,7 +270,7 @@
 .sectionLabel {
   font-size: 14px;
   font-weight: 600;
-  color: #888;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 4px;
@@ -286,8 +286,8 @@
 .badgeRed {
   font-size: 11px;
   font-weight: 600;
-  color: #b91c1c;
-  background-color: #fee2e2;
+  color: var(--color-error);
+  background-color: var(--status-error-bg);
   border-radius: 999px;
   padding: 2px 8px;
 }
@@ -296,7 +296,7 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background-color: #22c55e;
+  background-color: var(--color-success);
   display: inline-block;
 }
 
@@ -305,7 +305,7 @@
   text-align: left;
   padding: 4px 8px;
   font-size: 14px;
-  color: #111827;
+  color: var(--text-primary);
   background-color: transparent;
   border: none;
   border-radius: 6px;
@@ -317,7 +317,7 @@
 }
 
 .mapItemBtn[data-active="true"] {
-  background-color: #e8ecf4;
+  background-color: var(--status-primary-bg);
 }
 
 .mapItemLeft {
@@ -343,19 +343,19 @@
   margin: 16px;
   margin-bottom: 0;
   border-radius: 8px;
-  background-color: #fff;
-  border: 1px solid #e5e7eb;
+  background-color: var(--card-bg-on-dark);
+  border: 1px solid var(--surface-border);
 }
 
 .ambientesTitle {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .ambientesDesc {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--text-secondary);
   margin: 0;
 }

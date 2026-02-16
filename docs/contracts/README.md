@@ -47,6 +47,8 @@ Contratos técnicos que vivem em `docs/contracts/` (referência e autoridade de 
 | [CONTRATO_DE_ATIVIDADE_OPERACIONAL.md](./CONTRATO_DE_ATIVIDADE_OPERACIONAL.md) | Estados IDLE/SERVING/CLOSING derivados do Core; liga Turno e Tarefas; evento RESTAURANT_IDLE para modo interno.                                                                                                                   |
 | [TASKS_CONTRACT_v1.md](./TASKS_CONTRACT_v1.md)                                 | Contrato canónico de tarefas: tipos, ciclo de vida, onde aparecem, pessoas, Menu↔Estoque↔Tarefas; scope agora.                                                                                                                    |
 | **Inventory Lite (AppStaff)**                                                  | Alertas de stock (qty ≤ min_qty) e tarefas «repor X» (ESTOQUE_CRITICO). Extensão de TASKS_CONTRACT_v1 e [ERROS_CANON](../strategy/ERROS_CANON.md) E56–E60. Implementação: readStockAlerts, InventoryLiteSection, create_task RPC. |
+| [KDS_LAYOUT_UX_CONTRACT.md](./KDS_LAYOUT_UX_CONTRACT.md)                       | KDS: layout flex, um único scroll na lista, sem barra preta no rodapé; tabs Todas/Cozinha/Bar; filtro activeOnly.                                                                                                                |
+| [KDS_BAR_COZINHA_STATION_CONTRACT.md](./KDS_BAR_COZINHA_STATION_CONTRACT.md)   | KDS: Bar vs Cozinha — station em produtos e itens; migração 20260224; fallback na leitura de itens; filtro e secções COZINHA/BAR.                                                                                                 |
 
 ---
 

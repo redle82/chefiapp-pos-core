@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 import { CustomersKPIBar } from "../components/CustomersKPIBar";
 import { CustomersTable } from "../components/CustomersTable";
 import { getCustomers, getCustomersKPIs } from "../services/customersService";
@@ -56,12 +57,10 @@ export function CustomersPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Veja quem são seus clientes, quanto consomem e como se comportam.
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Clientes"
+        subtitle="Veja quem são seus clientes, quanto consomem e como se comportam."
+      />
 
       <CustomersKPIBar kpis={kpis} loading={loading} />
 

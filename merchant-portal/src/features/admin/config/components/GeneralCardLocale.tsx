@@ -97,9 +97,9 @@ export function GeneralCardLocale() {
   };
 
   const cardStyle = {
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--card-bg-on-dark)",
     borderRadius: 10,
-    border: "1px solid #e5e7eb",
+    border: "1px solid var(--surface-border)",
     padding: 14,
   };
   const labelStyle = {
@@ -107,12 +107,12 @@ export function GeneralCardLocale() {
     fontSize: 12,
     fontWeight: 600,
     marginBottom: 4,
-    color: "#374151",
+    color: "var(--text-secondary)",
   };
   const inputStyle = {
     width: "100%",
     padding: "6px 10px",
-    border: "1px solid #e5e7eb",
+    border: "1px solid var(--surface-border)",
     borderRadius: 6,
     fontSize: 13,
   };
@@ -123,8 +123,8 @@ export function GeneralCardLocale() {
     fontSize: 13,
     fontWeight: 600,
     cursor: "pointer",
-    backgroundColor: "#7c3aed",
-    color: "#fff",
+    backgroundColor: "var(--color-primary)",
+    color: "var(--text-inverse)",
   };
 
   return (
@@ -135,16 +135,16 @@ export function GeneralCardLocale() {
           fontSize: 14,
           fontWeight: 600,
           margin: "0 0 4px 0",
-          color: "#111827",
+          color: "var(--text-primary)",
         }}
       >
         Idioma e localização (operacional)
       </h2>
-      <p style={{ margin: "0 0 8px 0", fontSize: 12, color: "#6b7280" }}>
+      <p style={{ margin: "0 0 8px 0", fontSize: 12, color: "var(--text-secondary)" }}>
         Em que idioma e contexto de tempo/moeda opera o TPV neste local.
       </p>
       {!loaded ? (
-        <p style={{ fontSize: 12, color: "#6b7280" }}>A carregar...</p>
+        <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>A carregar...</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div>

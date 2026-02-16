@@ -98,11 +98,11 @@ export const EXCEPTION_REGISTRY: Record<CallerTag, ExceptionGrant> =
       allowedOperations: ["INSERT", "UPDATE"],
     },
 
-    // === LEGACY (To Be Migrated to Kernels) ===
+    // === ARCHIVED (DORMANT — kept for registry compatibility) ===
     OrderProcessingService: {
-      reason: "Order Processing Service",
-      allowedTables: ["gm_order_requests"], // Only update status
-      allowedOperations: ["UPDATE"], // No CREATE/DELETE
+      reason: "Archived — was Order Processing Service (DORMANT); write path is Core RPCs",
+      allowedTables: ["gm_order_requests"],
+      allowedOperations: ["UPDATE"],
     },
   });
 

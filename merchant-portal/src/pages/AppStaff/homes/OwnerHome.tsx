@@ -153,6 +153,12 @@ export function OwnerHome() {
 
   const cards: RadarCard[] = [
     {
+      sector: "Resumo financeiro",
+      verdict: "ok",
+      phrase: "Ver métricas do dia",
+      to: "/app/staff/home/owner",
+    },
+    {
       sector: "Operação",
       verdict: opVerdict,
       phrase:
@@ -211,7 +217,8 @@ export function OwnerHome() {
 
   /* ── Exceções (máx. 3, só quando algo está errado) ── */
   const exceptions: string[] = [];
-  if (coreStatus !== "UP") exceptions.push("Sistema instável");
+  if (coreStatus !== "UP")
+    exceptions.push("Core indisponível — verifique a ligação ao servidor");
   if (criticalTasks.length > 0)
     exceptions.push(`${criticalTasks.length} tarefa(s) crítica(s)`);
   if (shiftState !== "active" && shiftState !== "closing")

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { getTrustedPhotoUrl } from "../../utils/isPlaceholderPhoto";
 import { CartDrawer } from "../components/CartDrawer";
 import { CartFloatingButton } from "../components/CartFloatingButton";
 import { CartProvider, useCart } from "../context/CartContext";
@@ -123,9 +124,9 @@ const StoreLayout = () => {
               </div>
             </div>
             {/* Product image or fallback placeholder */}
-            {product.photo_url ? (
+            {getTrustedPhotoUrl(product.photo_url) ? (
               <img
-                src={product.photo_url}
+                src={getTrustedPhotoUrl(product.photo_url)!}
                 alt={product.name}
                 className="ml-4 w-20 h-20 rounded-lg object-cover flex-shrink-0"
                 loading="lazy"

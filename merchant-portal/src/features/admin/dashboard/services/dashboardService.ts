@@ -61,7 +61,8 @@ function hourToSeriesIndex(utcHour: number): number {
   return shifted;
 }
 
-function buildMockOverview(
+/** Empty overview when Core is unreachable or restaurant_id invalid. */
+function buildEmptyOverview(
   locationId: string,
   seatsTotal: number,
 ): DashboardOverview {
@@ -98,7 +99,7 @@ export async function getOverview(
 
   // Avoid invalid PostgREST calls such as restaurant_id=eq. during bootstrap races.
   if (!UUID_REGEX.test(restaurantId)) {
-    return buildMockOverview(restaurantId, 0);
+    return buildEmptyOverview(restaurantId, 0);
   }
 
   try {
@@ -234,11 +235,9 @@ export async function getOverview(
     };
   } catch (err) {
     console.warn(
-      "[dashboardService] getOverview real data failed, using mock",
+      "[dashboardService] getOverview real data failed, returning empty overview",
       err,
     );
-    const mock = buildMockOverview(restaurantId, 0);
-    await new Promise((r) => setTimeout(r, 400));
-    return mock;
+    return buildEmptyOverview(restaurantId, 0);
   }
 }

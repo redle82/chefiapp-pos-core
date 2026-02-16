@@ -1,56 +1,315 @@
 /**
  * SoftwareTpvPage — Configuración e Modo rápido do TPV.
+ * Abrir TPV em janela dedicada (sem redundância com Módulos / Tienda de dispositivos).
+ * Cards Configuración e Modo rápido ativos (locale/currency/cierre + quick mode).
  */
 
+import { useEffect, useState } from "react";
+import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
+import { dockerCoreClient } from "../../../../infra/docker-core/connection";
+import {
+  BackendType,
+  getBackendType,
+} from "../../../../core/infra/backendAdapter";
+import { openTpvInNewWindow } from "../../../../core/operational/openOperationalWindow";
+import { getTpvPreferences, setTpvPreferences } from "../tpvPreferencesStorage";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
+
+const LOCALES = [
+  { value: "pt-BR", label: "Português (Brasil)" },
+  { value: "es-ES", label: "Español (España)" },
+  { value: "en-US", label: "English (US)" },
+  { value: "pt-PT", label: "Português (Portugal)" },
+] as const;
+
+const TIMEZONES = [
+  { value: "America/Sao_Paulo", label: "America/Sao_Paulo (Brasil)" },
+  { value: "Europe/Madrid", label: "Europe/Madrid (España)" },
+  { value: "Europe/Lisbon", label: "Europe/Lisbon (Portugal)" },
+  { value: "America/New_York", label: "America/New_York (EUA)" },
+] as const;
+
+const CURRENCIES = [
+  { value: "BRL", label: "BRL (R$)" },
+  { value: "EUR", label: "EUR (€)" },
+  { value: "USD", label: "USD ($)" },
+] as const;
+
+const ATAJOS = [
+  "Enter: enviar pedido",
+  "Esc: cancelar / cerrar modal",
+  "Números: cantidad rápida",
+  "F1–F4: categorías rápidas (en breve)",
+];
+
+
+const cardStyle = {
+  border: "1px solid var(--surface-border)",
+  borderRadius: 12,
+  padding: 16,
+  backgroundColor: "var(--card-bg-on-dark)",
+} as const;
+
+const labelStyle = {
+  display: "block" as const,
+  fontSize: 12,
+  fontWeight: 600,
+  marginBottom: 4,
+  color: "var(--text-secondary)",
+};
+
+const inputStyle = {
+  width: "100%",
+  padding: "6px 10px",
+  border: "1px solid var(--surface-border)",
+  borderRadius: 6,
+  fontSize: 13,
+};
+
+const buttonStyle = {
+  padding: "6px 14px",
+  borderRadius: 6,
+  border: "none",
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: "pointer",
+  backgroundColor: "var(--color-primary)",
+  color: "var(--text-inverse)",
+};
+
 export function SoftwareTpvPage() {
+  const { runtime } = useRestaurantRuntime();
+  const restaurantId = runtime.restaurant_id ?? null;
+
+  const [configForm, setConfigForm] = useState({
+    locale: "pt-BR",
+    timezone: "America/Sao_Paulo",
+    currency: "BRL",
+    confirmOnClose: true,
+  });
+  const [configLoaded, setConfigLoaded] = useState(false);
+  const [configSaving, setConfigSaving] = useState(false);
+
+  const [quickMode, setQuickMode] = useState(false);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!restaurantId) {
+      setConfigLoaded(true);
+      setPrefsLoaded(true);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data: row, error } = await dockerCoreClient
+        .from("gm_restaurants")
+        .select("locale,timezone,currency")
+        .eq("id", restaurantId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (!error && row) {
+        const r = row as Record<string, unknown>;
+        setConfigForm((prev) => ({
+          ...prev,
+          locale: (r.locale as string) ?? "pt-BR",
+          timezone: (r.timezone as string) ?? "America/Sao_Paulo",
+          currency: (r.currency as string) ?? "BRL",
+        }));
+      }
+      setConfigLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [restaurantId]);
+
+  useEffect(() => {
+    const prefs = getTpvPreferences(restaurantId);
+    setConfigForm((prev) => ({ ...prev, confirmOnClose: prefs.confirmOnClose }));
+    setQuickMode(prefs.quickMode);
+    setPrefsLoaded(true);
+  }, [restaurantId]);
+
+  const handleSaveConfig = async () => {
+    if (!restaurantId || getBackendType() !== BackendType.docker) {
+      alert("Core indisponível o restaurante no seleccionado.");
+      return;
+    }
+    setConfigSaving(true);
+    try {
+      const { error } = await dockerCoreClient
+        .from("gm_restaurants")
+        .update({
+          locale: configForm.locale,
+          timezone: configForm.timezone,
+          currency: configForm.currency,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", restaurantId);
+      if (error) throw new Error(error.message);
+      setTpvPreferences(restaurantId, { confirmOnClose: configForm.confirmOnClose });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Error al guardar.";
+      alert(msg);
+    } finally {
+      setConfigSaving(false);
+    }
+  };
+
+  const handleToggleQuickMode = () => {
+    const next = !quickMode;
+    setQuickMode(next);
+    setTpvPreferences(restaurantId, { quickMode: next });
+  };
+
   return (
     <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
-      <header style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
-          Software TPV
-        </h1>
-        <p style={{ margin: 0, fontSize: 14, color: "#6b7280" }}>
-          Configuración general y modo rápido del punto de venta.
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Software TPV"
+        subtitle="Configuración general y modo rápido del punto de venta."
+        actions={
+          <button
+            type="button"
+            onClick={openTpvInNewWindow}
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: "var(--color-primary)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            Abrir TPV en nueva ventana →
+          </button>
+        }
+      />
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
-        <div
-          style={{
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
-            padding: 16,
-            backgroundColor: "#fff",
-          }}
-        >
-          <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "#111827" }}>
+        {/* Card Configuración */}
+        <section style={cardStyle} aria-labelledby="tpv-config-title">
+          <h3
+            id="tpv-config-title"
+            style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}
+          >
             Configuración
           </h3>
-          <p style={{ margin: "0 0 16px 0", fontSize: 13, color: "#6b7280" }}>
-            Preferencias del TPV: idioma, moneda, comportamiento de cierre, etc.
+          <p style={{ margin: "0 0 16px 0", fontSize: 13, color: "var(--text-secondary)" }}>
+            Preferencias del TPV: idioma, moneda, comportamiento de cierre.
           </p>
-          <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>
-            En breve: opciones guardables por ubicación.
-          </p>
-        </div>
-        <div
-          style={{
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
-            padding: 16,
-            backgroundColor: "#fff",
-          }}
-        >
-          <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "#111827" }}>
+          {!configLoaded ? (
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text-tertiary)" }}>Cargando…</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div>
+                <label style={labelStyle}>Idioma *</label>
+                <select
+                  value={configForm.locale}
+                  onChange={(e) =>
+                    setConfigForm((p) => ({ ...p, locale: e.target.value }))
+                  }
+                  style={inputStyle}
+                >
+                  {LOCALES.map((l) => (
+                    <option key={l.value} value={l.value}>
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Zona horaria *</label>
+                <select
+                  value={configForm.timezone}
+                  onChange={(e) =>
+                    setConfigForm((p) => ({ ...p, timezone: e.target.value }))
+                  }
+                  style={inputStyle}
+                >
+                  {TIMEZONES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Moneda *</label>
+                <select
+                  value={configForm.currency}
+                  onChange={(e) =>
+                    setConfigForm((p) => ({ ...p, currency: e.target.value }))
+                  }
+                  style={inputStyle}
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    checked={configForm.confirmOnClose}
+                    onChange={(e) =>
+                      setConfigForm((p) => ({ ...p, confirmOnClose: e.target.checked }))
+                    }
+                  />
+                  Pedir confirmación al cerrar turno
+                </label>
+              </div>
+              <button
+                type="button"
+                onClick={handleSaveConfig}
+                disabled={configSaving}
+                style={buttonStyle}
+              >
+                {configSaving ? "Guardando…" : "Guardar"}
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* Card Modo rápido */}
+        <section style={cardStyle} aria-labelledby="tpv-quick-title">
+          <h3
+            id="tpv-quick-title"
+            style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}
+          >
             Modo rápido
           </h3>
-          <p style={{ margin: "0 0 16px 0", fontSize: 13, color: "#6b7280" }}>
+          <p style={{ margin: "0 0 16px 0", fontSize: 13, color: "var(--text-secondary)" }}>
             Atajos y flujo rápido para servicio en pico (barra, terraza).
           </p>
-          <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>
-            En breve: activar modo rápido y personalizar atajos.
-          </p>
-        </div>
+          {!prefsLoaded ? (
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text-tertiary)" }}>Cargando…</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600 }}>
+                <input
+                  type="checkbox"
+                  checked={quickMode}
+                  onChange={handleToggleQuickMode}
+                />
+                Activar modo rápido
+              </label>
+              <div>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)" }}>
+                  Atajos disponibles:
+                </span>
+                <ul style={{ margin: "6px 0 0 0", paddingLeft: 20, fontSize: 13, color: "var(--text-secondary)" }}>
+                  {ATAJOS.map((a) => (
+                    <li key={a}>{a}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

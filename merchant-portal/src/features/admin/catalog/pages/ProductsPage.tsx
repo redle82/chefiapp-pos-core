@@ -1,17 +1,30 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
+import type { CatalogProduct } from "../../../../core/catalog/catalogTypes";
 import { useCatalogStore } from "../../../../core/catalog/catalogStore";
 import { useCurrency } from "../../../../core/currency/useCurrency";
 import { CatalogLayout } from "../components/CatalogLayout";
+import { ProductModal } from "../components/ProductModal";
 
 export function ProductsPage() {
-  const { products, categories, loadAll, toggleProductActive } =
-    useCatalogStore();
+  const { runtime } = useRestaurantRuntime();
+  const restaurantId = runtime?.restaurant_id ?? null;
+  const {
+    products,
+    categories,
+    loadAll,
+    toggleProductActive,
+    upsertProduct,
+    reloadProducts,
+  } = useCatalogStore();
   const { formatAmount } = useCurrency();
   const [query, setQuery] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<CatalogProduct | null>(null);
 
   useEffect(() => {
-    loadAll().catch(() => {});
-  }, [loadAll]);
+    loadAll(restaurantId).catch(() => {});
+  }, [loadAll, restaurantId]);
 
   const categoryById = useMemo(() => {
     const map = new Map<string, string>();
@@ -44,11 +57,29 @@ export function ProductsPage() {
         />
         <button
           type="button"
-          className="inline-flex items-center rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-700"
+          onClick={() => {
+            setEditing(null);
+            setModalOpen(true);
+          }}
+          className="inline-flex items-center rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
         >
           Criar produto
         </button>
       </div>
+
+      <ProductModal
+        open={modalOpen}
+        initial={editing}
+        categories={categories}
+        onClose={() => {
+          setModalOpen(false);
+          setEditing(null);
+        }}
+        onSave={async (input) => {
+          await upsertProduct(input, restaurantId);
+          await reloadProducts(restaurantId);
+        }}
+      />
 
       <div className="overflow-auto rounded-lg border border-gray-200 bg-white">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -70,8 +101,19 @@ export function ProductsPage() {
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
             {filtered.map((product) => (
-              <tr key={product.id}>
-                <td className="px-4 py-2 text-gray-900">{product.name}</td>
+              <tr key={product.id} className="hover:bg-gray-50">
+                <td className="px-4 py-2 text-gray-900">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditing(product);
+                      setModalOpen(true);
+                    }}
+                    className="text-left font-medium text-violet-600 hover:underline focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-1 rounded"
+                  >
+                    {product.name}
+                  </button>
+                </td>
                 <td className="px-4 py-2 text-gray-600">
                   {product.categoryId
                     ? categoryById.get(product.categoryId) ?? "—"
@@ -86,7 +128,11 @@ export function ProductsPage() {
                       type="checkbox"
                       checked={product.isActive}
                       onChange={(e) =>
-                        toggleProductActive(product.id, e.target.checked)
+                        toggleProductActive(
+                          product.id,
+                          e.target.checked,
+                          restaurantId,
+                        )
                       }
                       className="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                     />

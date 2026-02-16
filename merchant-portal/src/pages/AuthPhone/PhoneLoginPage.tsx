@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { getAuthActions } from "../../core/auth/authAdapter";
 import {
   BackendType,
@@ -66,11 +66,24 @@ const styles = {
   error: { fontSize: 13, color: "#f87171", marginBottom: 12 },
 };
 
+const SIGNUP_INTENT_KEY = "chefiapp_signup_intent";
+
 export function PhoneLoginPage() {
+  const [searchParams] = useSearchParams();
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (searchParams.get("mode") === "signup") {
+      try {
+        sessionStorage.setItem(SIGNUP_INTENT_KEY, "1");
+      } catch {
+        // ignore
+      }
+    }
+  }, [searchParams]);
 
   const hasBackend = getBackendConfigured();
   const isDocker = getBackendType() === BackendType.docker;
@@ -113,16 +126,18 @@ export function PhoneLoginPage() {
 
   if (!hasBackend) {
     return (
-      <GlobalLoadingView
-        message="Backend não configurado. Define VITE_CORE_URL e VITE_CORE_ANON_KEY."
-        layout="operational"
-        variant="fullscreen"
-      />
+      <div data-testid="auth-backend-missing">
+        <GlobalLoadingView
+          message="Backend não configurado. Define VITE_CORE_URL e VITE_CORE_ANON_KEY."
+          layout="operational"
+          variant="fullscreen"
+        />
+      </div>
     );
   }
 
   return (
-    <div style={styles.page}>
+    <div style={styles.page} data-testid="auth-phone-form">
       <div style={styles.card}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <img
@@ -151,6 +166,7 @@ export function PhoneLoginPage() {
             placeholder="+351 912 345 678"
             required
             style={styles.input}
+            data-testid="auth-phone-input"
           />
           <button
             type="submit"

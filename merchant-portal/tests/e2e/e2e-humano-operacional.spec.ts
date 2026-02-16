@@ -23,6 +23,7 @@ test.describe("E2E humano operacional", () => {
       window.localStorage.setItem("chefiapp_pilot_mode", "true");
       window.localStorage.setItem("chefiapp_bypass_health", "true");
       window.localStorage.setItem("chefiapp_restaurant_id", id);
+      window.localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
       window.sessionStorage.setItem(
         "chefiapp_keycloak_session",
         JSON.stringify({
@@ -164,6 +165,12 @@ test.describe("E2E humano operacional", () => {
 
     await test.step("AppStaff: validar chamados, tarefas e abrir TPV", async () => {
       await page.goto("/app/staff", { waitUntil: "domcontentloaded" });
+
+      // Dismiss cookie/terms banner if it intercepts (e.g. first visit)
+      const cookieBanner = page.getByRole("dialog", { name: /cookies|termos/i });
+      if (await cookieBanner.isVisible().catch(() => false)) {
+        await page.getByRole("button", { name: /Aceitar|Accept|Rejeitar|Reject/i }).first().click().catch(() => {});
+      }
 
       // StaffModule blocks on runtime/identity/auth loading — allow generous timeout
       const quickRole = page.getByRole("button", { name: /Gar[çc]om/i });

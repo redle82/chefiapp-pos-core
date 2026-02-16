@@ -15,8 +15,10 @@ import {
   isPathAllowedForState,
 } from "../lifecycle/LifecycleState";
 import {
-  hasOperationalRestaurant,
   INVALID_OR_SEED_RESTAURANT_IDS,
+  SOFIA_RESTAURANT_ID,
+  TRIAL_RESTAURANT_ID,
+  hasOperationalRestaurant,
 } from "../readiness/operationalRestaurant";
 import { isTrial } from "../runtime";
 import { isDebugEnabled, isDevStableMode } from "../runtime/devStableMode";
@@ -97,6 +99,15 @@ export function FlowGate({ children }: { children: ReactNode }) {
         navigate(to, { replace: true });
       };
 
+      // Public Void Protocol: /public/* is customer-facing — never block or redirect.
+      if (pathname.startsWith("/public")) {
+        if (mounted) {
+          clearLoadingTimeout();
+          setIsChecking(false);
+        }
+        return;
+      }
+
       // OPERATIONAL_NAVIGATION_SOVEREIGNTY: em OPERATIONAL_OS nunca redirect para "/"; destino canónico é /app/dashboard.
       const resolveDestination = (state: RestaurantLifecycleState): string => {
         const d = getCanonicalDestination(state);
@@ -110,7 +121,6 @@ export function FlowGate({ children }: { children: ReactNode }) {
       // /app/staff: STAFF_SESSION_LOCATION_CONTRACT — Staff usa Location (localStorage); não exige Core ativo.
       const isOperationalAppPath =
         pathname === "/dashboard" ||
-        pathname.startsWith("/config") ||
         pathname.startsWith("/admin/") ||
         pathname === "/menu-builder" ||
         pathname === "/app/install" ||
@@ -247,20 +257,20 @@ export function FlowGate({ children }: { children: ReactNode }) {
         let restaurantId: string | null = null;
         let currentBillingStatus: string | null = null;
         let isBootstrapComplete = false;
+        let activated = false;
 
         if (isDocker) {
-          const SEED_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
           const sealedTenantId = getActiveTenant();
           let localRestaurantId: string | null =
             typeof window !== "undefined"
               ? getTabIsolated("chefiapp_restaurant_id") ||
                 window.localStorage.getItem("chefiapp_restaurant_id")
               : null;
-          // Em Docker o seed existe no Core (06-seed-enterprise); não limpar para permitir Dashboard carregar
+          // Em Docker: Sofia (100) e trial (099) existem no Core; não limpar
           if (
             localRestaurantId &&
             INVALID_OR_SEED_RESTAURANT_IDS.has(localRestaurantId) &&
-            localRestaurantId !== SEED_RESTAURANT_ID
+            localRestaurantId !== SOFIA_RESTAURANT_ID
           ) {
             clearActiveTenant();
             localRestaurantId = null;
@@ -294,20 +304,26 @@ export function FlowGate({ children }: { children: ReactNode }) {
               localRestaurantId = null;
             }
           }
-          // Docker + trial/pilot sem tenant: usar restaurante de seed para o Dashboard carregar
+          // Docker + trial/pilot sem tenant: trial → "Seu restaurante" (099), senão → Sofia (100)
           if (
             !sealedTenantId &&
             !localRestaurantId &&
             isTrialOrPilot &&
             typeof window !== "undefined"
           ) {
-            setTabIsolated("chefiapp_restaurant_id", SEED_RESTAURANT_ID);
+            const isTrial =
+              getTabIsolated("chefiapp_trial_mode") === "true" ||
+              window.localStorage?.getItem("chefiapp_trial_mode") === "true";
+            const defaultRestaurantId = isTrial
+              ? TRIAL_RESTAURANT_ID
+              : SOFIA_RESTAURANT_ID;
+            setTabIsolated("chefiapp_restaurant_id", defaultRestaurantId);
             window.localStorage.setItem(
               "chefiapp_restaurant_id",
-              SEED_RESTAURANT_ID,
+              defaultRestaurantId,
             );
-            setActiveTenant(SEED_RESTAURANT_ID);
-            localRestaurantId = SEED_RESTAURANT_ID;
+            setActiveTenant(defaultRestaurantId);
+            localRestaurantId = defaultRestaurantId;
           }
           hasOrg = !!sealedTenantId || !!localRestaurantId;
           restaurantId = sealedTenantId || localRestaurantId;
@@ -374,6 +390,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
               // Consideramos bootstrap completo quando o restaurante está ativo
               // ou publicado no Core (sem depender de onboarding_completed_at).
               isBootstrapComplete = restaurant.status === "active";
+              activated = !!restaurant.onboarding_completed_at;
             } else {
               // 404 ou restaurante inexistente: limpar id inválido para evitar loop e 404 repetidos
               if (isDocker && typeof window !== "undefined") {
@@ -429,12 +446,26 @@ export function FlowGate({ children }: { children: ReactNode }) {
           billingStatus: currentBillingStatus,
           isBootstrapComplete,
         });
+        let lastRoute: string | null = null;
+        try {
+          if (typeof window !== "undefined") {
+            const stored =
+              sessionStorage.getItem("chefiapp_lastRoute") ||
+              window.localStorage.getItem("chefiapp_lastRoute");
+            if (stored) lastRoute = stored;
+          }
+        } catch {
+          // ignore
+        }
         const state: UserState = {
           isAuthenticated: !!session,
           hasOrganization: hasOrg,
           hasRestaurant: hasOrg,
           currentPath: pathname,
           systemState,
+          activated,
+          lastRoute,
+          currentSearch: location.search,
         };
 
         const decision = resolveNextRoute(state);

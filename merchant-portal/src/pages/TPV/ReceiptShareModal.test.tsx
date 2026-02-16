@@ -8,6 +8,40 @@ vi.mock("../../core/currency/CurrencyService", () => ({
   },
 }));
 
+// Mock i18n so UI shows Portuguese strings (receipt namespace)
+const receiptT = (key: string, opts?: Record<string, unknown>) => {
+  const map: Record<string, string> = {
+    sendReceipt: "Enviar Recibo",
+    orderSummary: `Pedido #${opts?.id ?? ""} — ${opts?.total ?? ""}`,
+    emailLabel: "Email do cliente (opcional)",
+    sendByEmail: "Enviar por Email",
+    share: "Partilhar",
+    copyReceipt: "Copiar Recibo",
+    print: "Imprimir",
+    sent: "✓ Recibo enviado!",
+    skip: "Saltar",
+    thankYou: "Obrigado pela sua visita!",
+    date: "Data:",
+    table: "Mesa:",
+    order: "Pedido:",
+    discount: "Desconto:",
+    tip: "Gorjeta:",
+    total: "TOTAL:",
+    paymentMethod: "Pagamento:",
+    defaultRestaurant: "Restaurante",
+    emailSubject: "Recibo",
+    printTitle: "Recibo",
+    shareTitle: "Recibo",
+  };
+  return map[key] ?? key;
+};
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: receiptT,
+    i18n: { language: "pt-PT" },
+  }),
+}));
+
 const sampleOrder: ReceiptShareOrder = {
   id: "abc12345-6789-0000-1111-222233334444",
   tableNumber: 5,

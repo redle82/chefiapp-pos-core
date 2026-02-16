@@ -4,7 +4,7 @@ import { colors, radius, spacing } from '@/constants/designTokens';
 import { ShiftGate } from '@/components/ShiftGate';
 import { useOrder, Order } from '@/context/OrderContext';
 import { HapticFeedback } from '@/services/haptics';
-import { Audio } from 'expo-av';
+import { useAudioPlayer } from 'expo-audio';
 import { useAppStaff } from '@/context/AppStaffContext';
 import { Ionicons } from '@expo/vector-icons';
 import { ProductionBoard, SafetyCurtain } from '@/components/kitchen';
@@ -19,6 +19,7 @@ export default function KitchenScreen() {
     const [now, setNow] = useState(new Date());
     const prevOrderCount = useRef(0);
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
+    const newOrderPlayer = useAudioPlayer(require('@/assets/sounds/new-order.mp3'));
     // ERRO-007 Fix: Flash visual para novos pedidos
     const [flashNewOrder, setFlashNewOrder] = useState<string | null>(null);
     const flashAnim = useRef(new Animated.Value(0)).current;
@@ -56,21 +57,15 @@ export default function KitchenScreen() {
     // Sound Logic: Play 'Ding' when activeOrders increase (only new ones)
     const newOrdersCount = kitchenOrders.filter(o => o.status === 'pending').length;
 
-    // ERRO-007 Fix: Detectar novos pedidos e ativar flash visual
+    // ERRO-007 Fix: Detectar novos pedidos e ativar flash visual (expo-audio; expo-av deprecated SDK 54)
     useEffect(() => {
-        const playSound = async () => {
-            try {
-                const { sound } = await Audio.Sound.createAsync(
-                    require('@/assets/sounds/new-order.mp3')
-                );
-                await sound.playAsync();
-            } catch (error) {
-                console.log('Error playing sound', error);
-            }
-        };
-
         if (newOrdersCount > prevOrderCount.current) {
-            playSound();
+            try {
+                newOrderPlayer.seekTo(0);
+                newOrderPlayer.play();
+            } catch (e) {
+                if (__DEV__) console.log('Kitchen new-order sound error', e);
+            }
             HapticFeedback.medium(); // ERRO-007 Fix: Vibração
 
             // ERRO-007 Fix: Flash visual para novos pedidos
@@ -101,7 +96,7 @@ export default function KitchenScreen() {
             }
         }
         prevOrderCount.current = newOrdersCount;
-    }, [newOrdersCount, kitchenOrders]);
+    }, [newOrdersCount, kitchenOrders, newOrderPlayer]);
 
     // SIMPLIFICADO: 1 toque muda status (toque duplo era frágil em cozinha movimentada)
     const handleBump = (orderId: string, currentStatus: Order['status']) => {

@@ -142,11 +142,17 @@
    * TEXT COLORS (Dark Theme)
    * ======================================================================== */
 
-  --text-primary: rgba(255, 255, 255, 0.87);
-  --text-secondary: rgba(255, 255, 255, 0.6);
-  --text-tertiary: rgba(255, 255, 255, 0.4);
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-tertiary: rgba(255, 255, 255, 0.5);
   --text-disabled: rgba(255, 255, 255, 0.25);
   --text-inverse: #1a1a1a;
+
+  /* Page/section headings — always high contrast on dark (Design System §2) */
+  --heading-page: var(--text-primary);
+  --heading-section: var(--text-primary);
+  /* Cards on dark background — use elevated surface, not pure white */
+  --card-bg-on-dark: var(--surface-elevated);
 
   /* ========================================================================
    * STATUS COLORS (with opacity variants)
@@ -643,4 +649,127 @@
 
 .transition-slow {
   transition: all var(--transition-slow);
+}
+
+/* ============================================================================
+ * DASHBOARD LAYOUT — Dark theme for admin (sidebar + content)
+ * Ensures sidebar and all admin content use dark tokens.
+ * ============================================================================ */
+
+.dashboard-layout {
+  --surface-base: #111827;
+  --surface-elevated: #1f2937;
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-tertiary: rgba(255, 255, 255, 0.5);
+}
+
+/* ============================================================================
+ * ADMIN CONTENT — Dark theme enforcement (Design System §4.2, §7.1)
+ * Force dark surface/card tokens inside admin so cards are never pure white.
+ * ============================================================================ */
+
+.admin-content {
+  --card-bg-on-dark: #1f2937;
+  --surface-elevated: #1f2937;
+  --surface-base: #111827;
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-tertiary: rgba(255, 255, 255, 0.5);
+}
+
+/* ============================================================================
+ * ADMIN CONTENT — Typography override (Design System §2, §7)
+ * Applied to main content inside DashboardLayout so page titles and text
+ * use high-contrast tokens on dark background (no gray-900 on dark).
+ * ============================================================================ */
+
+.admin-content h1,
+.admin-content h2,
+.admin-content .text-2xl,
+.admin-content .text-xl {
+  color: var(--heading-page, var(--text-primary));
+}
+
+.admin-content p.text-sm,
+.admin-content .text-gray-600,
+.admin-content .text-gray-500 {
+  color: var(--text-secondary);
+}
+
+.admin-content .text-gray-900 {
+  color: var(--text-primary);
+}
+
+/* ============================================================================
+ * ADMIN CONTENT — Cards and surfaces (Design System §4.2)
+ * Cards on dark background use elevated surface, not pure white.
+ * ============================================================================ */
+
+.admin-content .bg-white {
+  background-color: var(--card-bg-on-dark) !important;
+}
+
+.admin-content .border-gray-200,
+.admin-content .border-gray-300 {
+  border-color: var(--surface-border) !important;
+}
+
+.admin-content .divide-gray-100 > * + * {
+  border-color: var(--surface-border) !important;
+}
+
+.admin-content .text-gray-700 {
+  color: var(--text-secondary) !important;
+}
+
+.admin-content .text-gray-400,
+.admin-content .placeholder-gray-400::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+/* Inputs inside admin cards: dark-friendly border and bg */
+.admin-content input[type="text"],
+.admin-content input[type="search"],
+.admin-content input[type="email"],
+.admin-content select {
+  background-color: var(--surface-base) !important;
+  border-color: var(--surface-border) !important;
+  color: var(--text-primary) !important;
+}
+
+.admin-content input::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+/* Focus ring on inputs: use primary instead of violet */
+.admin-content input:focus,
+.admin-content select:focus {
+  border-color: var(--color-primary) !important;
+  outline: none;
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+/* Table header row (often bg-gray-50) */
+.admin-content .bg-gray-50 {
+  background-color: var(--surface-overlay) !important;
+}
+
+/* Skeleton / placeholder (bg-gray-200) */
+.admin-content .bg-gray-200 {
+  background-color: var(--surface-border) !important;
+}
+
+/* Pagination / active state: violet → primary */
+.admin-content .bg-violet-100 {
+  background-color: var(--status-primary-bg) !important;
+}
+.admin-content .text-violet-800 {
+  color: var(--color-primary) !important;
+}
+.admin-content .hover\:bg-gray-50:hover,
+.admin-content .hover\:bg-gray-100:hover {
+  background-color: var(--surface-overlay) !important;
 }

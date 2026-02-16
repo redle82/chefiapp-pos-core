@@ -5,11 +5,11 @@
  * Conectado ao sistema de estoque (gm_stock_levels).
  */
 
-import { useState, useEffect } from "react";
-import { generateShoppingList } from "../../infra/readers/ShoppingListReader";
+import { useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { confirmPurchase } from "../../infra/writers/StockWriter";
 import type { ShoppingListItem } from "../../infra/readers/ShoppingListReader";
+import { generateShoppingList } from "../../infra/readers/ShoppingListReader";
+import { confirmPurchase } from "../../infra/writers/StockWriter";
 
 export function ShoppingListMinimal() {
   const { runtime } = useRestaurantRuntime();
@@ -54,7 +54,8 @@ export function ShoppingListMinimal() {
       setConfirming(item.ingredient_id);
       setError(null);
 
-      const qtyToConfirm = confirmQty > 0 ? confirmQty : item.suggested_qty;
+      const qtyToConfirm =
+        confirmQty > 0 ? confirmQty : item.suggested_qty ?? 0;
 
       const result = await confirmPurchase(
         finalRestaurantId,
@@ -81,7 +82,7 @@ export function ShoppingListMinimal() {
     }
   };
 
-  const getUrgencyColor = (urgency: string) => {
+  const getUrgencyColor = (urgency: string | undefined) => {
     switch (urgency) {
       case "CRITICAL":
         return "#dc2626";
@@ -94,7 +95,7 @@ export function ShoppingListMinimal() {
     }
   };
 
-  const getUrgencyLabel = (urgency: string) => {
+  const getUrgencyLabel = (urgency: string | undefined) => {
     switch (urgency) {
       case "CRITICAL":
         return "🔴 Crítico";
@@ -309,7 +310,7 @@ export function ShoppingListMinimal() {
                     <div>
                       📊 Atual:{" "}
                       <strong>
-                        {item.current_qty} {item.unit}
+                        {item.current_qty ?? item.qty} {item.unit}
                       </strong>
                     </div>
                     <div>
@@ -321,7 +322,8 @@ export function ShoppingListMinimal() {
                     <div>
                       📦 Déficit:{" "}
                       <strong>
-                        {item.deficit} {item.unit}
+                        {item.deficit ?? Math.max(0, item.min_qty - item.qty)}{" "}
+                        {item.unit}
                       </strong>
                     </div>
                   </div>
@@ -346,7 +348,7 @@ export function ShoppingListMinimal() {
 
                   <button
                     onClick={() => {
-                      setConfirmQty(item.suggested_qty);
+                      setConfirmQty(item.suggested_qty ?? 0);
                       setShowConfirmModal(item.ingredient_id);
                     }}
                     disabled={confirming === item.ingredient_id}

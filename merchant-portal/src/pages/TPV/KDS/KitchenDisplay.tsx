@@ -76,10 +76,12 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { Order } from "../../../core/contracts";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import { useKitchenReflex } from "../../../intelligence/nervous-system/useKitchenReflex";
+import { RestaurantLogo } from "../../../ui/RestaurantLogo";
 import { EmptyState } from "../../../ui/design-system/EmptyState";
 import {
   BorderRadius,
@@ -117,6 +119,7 @@ const TicketCard = ({
   id,
   isLoading = false,
 }: TicketCardProps) => {
+  const { t } = useTranslation("kds");
   const isNew = ticket.status === "new";
 
   // === FASE 1: HIERARQUIA VISUAL — Determinar estado visual ===
@@ -246,7 +249,7 @@ const TicketCard = ({
               zIndex: 10,
             }}
           >
-            {isNew ? "NOVO" : "ATRASADO"}
+            {isNew ? t("badge.new") : t("badge.late")}
           </div>
         )}
 
@@ -396,10 +399,10 @@ const TicketCard = ({
                                 100% { transform: rotate(360deg); }
                             }
                         `}</style>
-              <span>PROCESSANDO...</span>
+              <span>{t("processing")}</span>
             </>
           ) : (
-            <span>{isNew ? "INICIAR PREPARO" : "MARCAR PRONTO"}</span>
+            <span>{isNew ? t("startPrep") : t("markReady")}</span>
           )}
         </button>
       </motion.div>
@@ -412,13 +415,14 @@ const TicketCard = ({
 // ------------------------------------------------------------------
 
 const MiseEnPlaceMode = () => {
+  const { t } = useTranslation("kds");
   const location = useLocation();
   const navigate = useNavigate();
   const isAppStaff = location.pathname.startsWith("/app/staff");
 
   const action = isAppStaff
-    ? { label: "Voltar ao início", onClick: () => navigate("/app/staff/home") }
-    : { label: "Atualizar", onClick: () => window.location.reload() };
+    ? { label: t("backToHome"), onClick: () => navigate("/app/staff/home") }
+    : { label: t("refresh"), onClick: () => window.location.reload() };
 
   return (
     <motion.div
@@ -435,8 +439,8 @@ const MiseEnPlaceMode = () => {
     >
       <EmptyState
         icon={<div style={{ fontSize: 64 }}>🔪</div>}
-        title="Bancada Limpa"
-        description="Sem pedidos ativos. Mantenha o foco."
+        title={t("emptyTitle")}
+        description={t("emptyDescription")}
         action={action}
       />
     </motion.div>
@@ -484,6 +488,7 @@ export default function KitchenDisplay({
   forceNewVersion?: boolean;
 }) {
   // === KDS HARDENING: Obter todos os estados de conexão ===
+  const { t } = useTranslation("kds");
   const {
     orders: rawOrders,
     performOrderAction,
@@ -543,8 +548,8 @@ export default function KitchenDisplay({
     document.title = isKDSEffectivelyOffline
       ? "⚠️ OFFLINE — KDS"
       : identity.name
-        ? `${identity.name} — KDS`
-        : "ChefIApp POS — KDS";
+      ? `${identity.name} — KDS`
+      : "ChefIApp POS — KDS";
     return () => {
       document.title = "ChefIApp POS";
     };
@@ -661,7 +666,7 @@ export default function KitchenDisplay({
     // PROTEÇÃO: Não executar ação se offline
     if (isKDSEffectivelyOffline) {
       console.error("[KDS] ❌ Action blocked - offline");
-      setActionError("Sem conexão. Tentando reconectar.");
+      setActionError(t("noConnection"));
       return;
     }
 
@@ -681,7 +686,7 @@ export default function KitchenDisplay({
     } catch (err: any) {
       // === HARDENING: Log visível de erro ===
       console.error("[KDS] ❌ Action failed:", err);
-      setActionError(err.message || "Erro ao atualizar pedido");
+      setActionError(err.message || t("errorUpdateOrder"));
       setLoadingOrderId(null); // Remove loading em caso de erro
     }
   };
@@ -773,6 +778,18 @@ export default function KitchenDisplay({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: Spacing.lg }}>
+          <RestaurantLogo logoUrl={identity.logoUrl} name={identity.name || "Restaurante"} size={40} />
+          {identity.name ? (
+            <span
+              style={{
+                fontSize: Typography.h3.fontSize,
+                fontWeight: "bold",
+                color: Colors.kds.text.primary,
+              }}
+            >
+              {identity.name}
+            </span>
+          ) : null}
           <div
             style={{
               width: "12px",
@@ -805,10 +822,10 @@ export default function KitchenDisplay({
             }}
           >
             {isKDSEffectivelyOffline
-              ? "Offline — tentando reconectar"
+              ? t("offlineReconnecting")
               : hasPressure
-              ? "Produção"
-              : "Mise en Place"}
+              ? t("modeProduction")
+              : t("modeIdle")}
           </h1>
           {/* === UNSEEN ORDERS BADGE === */}
           {unseenOrderIds.size > 0 && (
@@ -847,10 +864,13 @@ export default function KitchenDisplay({
             {/* Dynamic Station Buttons */}
             {["ALL", "KITCHEN", "BAR", ...activeDynamicStations].map((s) => {
               let label = s;
-              if (s === "ALL") label = "TODOS";
-              else if (s === "KITCHEN") label = "COZINHA";
-              else if (s === "BAR") label = "BAR";
-              else label = `STATION ${s.substring(0, 4).toUpperCase()}`;
+              if (s === "ALL") label = t("station.all");
+              else if (s === "KITCHEN") label = t("station.kitchen");
+              else if (s === "BAR") label = t("station.bar");
+              else
+                label = t("station.custom", {
+                  name: s.substring(0, 4).toUpperCase(),
+                });
 
               return (
                 <button
@@ -886,7 +906,7 @@ export default function KitchenDisplay({
               initAudio(); // Initialize audio on first interaction
               toggleSound();
             }}
-            title={soundEnabled ? "Desativar som" : "Ativar som"}
+            title={soundEnabled ? t("soundOff") : t("soundOn")}
             style={{
               background: soundEnabled ? "#22c55e" : "#6b7280",
               color: "#fff",
@@ -987,7 +1007,7 @@ export default function KitchenDisplay({
                     justifyContent: "space-between",
                   }}
                 >
-                  Novos Pedidos <span>{newOrders.length}</span>
+                  {t("lane.newOrders")} <span>{newOrders.length}</span>
                 </h2>
                 <div
                   style={{
@@ -1021,7 +1041,7 @@ export default function KitchenDisplay({
                         fontStyle: "italic",
                       }}
                     >
-                      A aguardar entrada...
+                      {t("lane.waitingForOrders")}
                     </div>
                   )}
                 </div>
@@ -1049,7 +1069,7 @@ export default function KitchenDisplay({
                     justifyContent: "space-between",
                   }}
                 >
-                  Em Preparação <span>{preparingOrders.length}</span>
+                  {t("lane.preparing")} <span>{preparingOrders.length}</span>
                 </h2>
                 <div
                   style={{
@@ -1079,7 +1099,7 @@ export default function KitchenDisplay({
                         fontStyle: "italic",
                       }}
                     >
-                      Bancada livre.
+                      {t("lane.stationFree")}
                     </div>
                   )}
                 </div>

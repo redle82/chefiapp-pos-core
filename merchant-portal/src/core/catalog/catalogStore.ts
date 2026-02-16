@@ -16,9 +16,9 @@ import {
   saveModifierGroup,
   saveProduct,
   saveTranslation,
-  setCatalogActive,
-  toggleComboActive,
-  toggleProductActive,
+  setCatalogActive as apiSetCatalogActive,
+  toggleComboActive as apiToggleComboActive,
+  toggleProductActive as apiToggleProductActive,
   upsertCatalogAssignment,
 } from "./catalogApi";
 import {
@@ -35,6 +35,8 @@ import {
 interface CatalogState {
   loading: boolean;
   error: string | null;
+  /** Quando definido e backend Docker: produtos/categorias vêm do Core (gm_products). */
+  restaurantId: string | null;
 
   catalogs: CatalogContext[];
   assignments: CatalogAssignment[];
@@ -45,10 +47,11 @@ interface CatalogState {
   combos: Combo[];
   translations: TranslationItem[];
 
-  // Loaders
-  loadAll: () => Promise<void>;
+  // Loaders (restaurantId = Core; sem restaurantId = mock)
+  loadAll: (restaurantId?: string | null) => Promise<void>;
   reloadCatalogs: () => Promise<void>;
-  reloadProducts: () => Promise<void>;
+  reloadProducts: (restaurantId?: string | null) => Promise<void>;
+  setRestaurantId: (id: string | null) => void;
 
   // Catalog actions
   upsertCatalog: (
@@ -66,11 +69,16 @@ interface CatalogState {
     catalogId: string | null;
   }) => Promise<CatalogAssignment>;
 
-  // Product actions
+  // Product actions (restaurantId para persistir no Core)
   upsertProduct: (
     input: Omit<CatalogProduct, "createdAt" | "updatedAt"> & { id?: string },
+    restaurantId?: string | null,
   ) => Promise<CatalogProduct>;
-  toggleProductActive: (productId: string, isActive: boolean) => Promise<void>;
+  toggleProductActive: (
+    productId: string,
+    isActive: boolean,
+    restaurantId?: string | null,
+  ) => Promise<void>;
 
   // Modifier actions
   upsertModifierGroup: (
@@ -95,6 +103,7 @@ interface CatalogState {
 export const useCatalogStore = create<CatalogState>((set, get) => ({
   loading: false,
   error: null,
+  restaurantId: null,
 
   catalogs: [],
   assignments: [],
@@ -105,7 +114,13 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
   combos: [],
   translations: [],
 
-  async loadAll() {
+  setRestaurantId(id) {
+    set({ restaurantId: id });
+  },
+
+  async loadAll(restaurantId) {
+    const rid = restaurantId ?? get().restaurantId;
+    if (rid) set({ restaurantId: rid });
     try {
       set({ loading: true, error: null });
       const [
@@ -120,8 +135,8 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       ] = await Promise.all([
         listCatalogs(),
         listCatalogAssignments(),
-        listCategories(),
-        listProducts(),
+        listCategories(rid ?? undefined),
+        listProducts(rid ?? undefined),
         listModifierGroups(),
         listModifiers(),
         listCombos(),
@@ -161,11 +176,12 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     }
   },
 
-  async reloadProducts() {
+  async reloadProducts(restaurantId) {
+    const rid = restaurantId ?? get().restaurantId;
     try {
       const [productsData, categoriesData] = await Promise.all([
-        listProducts(),
-        listCategories(),
+        listProducts(rid ?? undefined),
+        listCategories(rid ?? undefined),
       ]);
       set({ products: productsData, categories: categoriesData });
     } catch (e) {
@@ -192,7 +208,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
   },
 
   async setCatalogActive(catalogId, isActive) {
-    await setCatalogActive(catalogId, isActive);
+    await apiSetCatalogActive(catalogId, isActive);
     const catalogsData = await listCatalogs();
     set({ catalogs: catalogsData });
   },
@@ -204,16 +220,18 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     return saved;
   },
 
-  async upsertProduct(input) {
-    const saved = await saveProduct(input);
-    const productsData = await listProducts();
+  async upsertProduct(input, restaurantId) {
+    const rid = restaurantId ?? get().restaurantId;
+    const saved = await saveProduct(input, rid ?? undefined);
+    const productsData = await listProducts(rid ?? undefined);
     set({ products: productsData });
     return saved;
   },
 
-  async toggleProductActive(productId, isActive) {
-    await toggleProductActive(productId, isActive);
-    const productsData = await listProducts();
+  async toggleProductActive(productId, isActive, restaurantId) {
+    const rid = restaurantId ?? get().restaurantId;
+    await apiToggleProductActive(productId, isActive, rid ?? undefined);
+    const productsData = await listProducts(rid ?? undefined);
     set({ products: productsData });
   },
 
@@ -239,7 +257,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
   },
 
   async toggleComboActive(comboId, isActive) {
-    await toggleComboActive(comboId, isActive);
+    await apiToggleComboActive(comboId, isActive);
     const combosData = await listCombos();
     set({ combos: combosData });
   },

@@ -112,3 +112,11 @@ export default defineConfig([
   },
 ])
 ```
+
+## Internacionalização (i18n)
+
+O portal usa `react-i18next` com configuração em `src/i18n.ts`. Locales suportados: `pt-PT` (predefinido), `pt-BR`, `en`, `es`. Namespaces: `common`, `billing`, `tpv`, `onboarding`, `help`.
+
+- **Adicionar chaves:** Editar `src/i18n.ts` e adicionar a chave no objeto `resources[locale][namespace]`. Em componentes: `const { t } = useTranslation('billing'); t('chave')`.
+- **Adicionar locale:** Copiar um bloco `resources["pt-PT"]` (ou outro), alterar a chave para o novo código de idioma e preencher as traduções.
+- **Plurais:** Usar sufixos `_one` e `_other` (ex.: `trialEndsIn_one`, `trialEndsIn_other`) e chamar `t('trialEndsIn', { count: n })`.

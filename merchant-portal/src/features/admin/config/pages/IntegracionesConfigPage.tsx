@@ -4,26 +4,16 @@
  */
 
 import { ConfigIntegrationsPage } from "../../../../pages/Config/ConfigIntegrationsPage";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 
 export function IntegracionesConfigPage() {
   return (
     <div style={{ maxWidth: 820 }}>
-      <header style={{ marginBottom: 24 }}>
-        <h1
-          style={{
-            fontSize: 22,
-            fontWeight: 700,
-            margin: "0 0 4px 0",
-            color: "#111827",
-          }}
-        >
-          Integraciones
-        </h1>
-        <p style={{ margin: 0, fontSize: 14, color: "#6b7280" }}>
-          Pagamentos, delivery, APIs externas.
-        </p>
-      </header>
-      <ConfigIntegrationsPage />
+      <AdminPageHeader
+        title="Integraciones"
+        subtitle="Pagamentos, delivery, APIs externas."
+      />
+      <ConfigIntegrationsPage hideHeader />
     </div>
   );
 }

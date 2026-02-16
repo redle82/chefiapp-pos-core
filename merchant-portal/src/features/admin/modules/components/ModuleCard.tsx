@@ -1,5 +1,5 @@
 /**
- * ModuleCard — Card reutilizável para a página "Mis productos".
+ * ModuleCard — Card reutilizável para o Hub Módulos.
  * Ref: plano página_mis_productos_módulos. Ícone, nome, descrição, badge, botões.
  */
 
@@ -9,9 +9,21 @@ const BADGE_STYLES: Record<
   ModuleStatus,
   { bg: string; color: string; label: string } | null
 > = {
-  active: { bg: "#dcfce7", color: "#166534", label: "Activo" },
-  needs_setup: { bg: "#fef3c7", color: "#92400e", label: "Configurar" },
-  locked: { bg: "#f3f4f6", color: "#6b7280", label: "Indisponible" },
+  active: {
+    bg: "var(--status-success-bg)",
+    color: "var(--status-success-text)",
+    label: "Activo",
+  },
+  needs_setup: {
+    bg: "var(--status-warning-bg)",
+    color: "var(--status-warning-text)",
+    label: "Configurar",
+  },
+  locked: {
+    bg: "var(--surface-overlay)",
+    color: "var(--text-secondary)",
+    label: "Indisponible",
+  },
   inactive: null,
 };
 
@@ -26,12 +38,15 @@ interface ModuleCardProps {
   module: Module;
   onPrimaryAction?: (id: string) => void;
   onSecondaryAction?: (id: string) => void;
+  /** Override da label do botão secundário (ex: "Instalar dispositivo" em vez de "Desactivar") */
+  secondaryLabel?: string;
 }
 
 export function ModuleCard({
   module,
   onPrimaryAction,
   onSecondaryAction,
+  secondaryLabel,
 }: ModuleCardProps) {
   const badge = BADGE_STYLES[module.status];
   const primaryLabel =
@@ -41,9 +56,9 @@ export function ModuleCard({
     (module.status === "active" || module.status === "needs_setup");
 
   const cardStyle = {
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--card-bg-on-dark)",
     borderRadius: 10,
-    border: "1px solid #e5e7eb",
+    border: "1px solid var(--surface-border)",
     padding: 14,
     display: "flex",
     flexDirection: "column" as const,
@@ -66,13 +81,13 @@ export function ModuleCard({
   const descStyle = {
     margin: 0,
     fontSize: 12,
-    color: "#6b7280",
+    color: "var(--text-secondary)",
     lineHeight: 1.4,
   };
   const depsStyle = {
     margin: 0,
     fontSize: 11,
-    color: "#9ca3af",
+    color: "var(--text-tertiary)",
   };
   const actionsStyle = {
     display: "flex" as const,
@@ -87,22 +102,22 @@ export function ModuleCard({
     fontSize: 13,
     fontWeight: 600,
     cursor: "pointer",
-    backgroundColor: "#7c3aed",
-    color: "#fff",
+    backgroundColor: "var(--color-primary)",
+    color: "var(--text-inverse)",
   };
   const btnSecondaryStyle = {
     padding: "6px 12px",
     borderRadius: 6,
-    border: "1px solid #e5e7eb",
+    border: "1px solid var(--surface-border)",
     fontSize: 12,
     fontWeight: 500,
     cursor: "pointer",
-    backgroundColor: "#fff",
-    color: "#6b7280",
+    backgroundColor: "transparent",
+    color: "var(--text-secondary)",
   };
   const btnLockedStyle = {
     ...btnPrimaryStyle,
-    backgroundColor: "#9ca3af",
+    backgroundColor: "var(--text-tertiary)",
     cursor: "default",
   };
 
@@ -123,7 +138,7 @@ export function ModuleCard({
               fontSize: 14,
               fontWeight: 600,
               margin: 0,
-              color: "#111827",
+              color: "var(--text-primary)",
             }}
           >
             {module.name}
@@ -147,17 +162,13 @@ export function ModuleCard({
       </div>
       <p style={descStyle}>{module.description}</p>
       {module.dependencies && module.dependencies.length > 0 && (
-        <p style={depsStyle}>
-          Requiere: {module.dependencies.join(", ")}
-        </p>
+        <p style={depsStyle}>Requiere: {module.dependencies.join(", ")}</p>
       )}
       <div style={actionsStyle}>
         <button
           type="button"
           onClick={() => onPrimaryAction?.(module.id)}
-          style={
-            module.status === "locked" ? btnLockedStyle : btnPrimaryStyle
-          }
+          style={module.status === "locked" ? btnLockedStyle : btnPrimaryStyle}
           disabled={module.status === "locked"}
         >
           {primaryLabel}
@@ -168,7 +179,7 @@ export function ModuleCard({
             onClick={() => onSecondaryAction?.(module.id)}
             style={btnSecondaryStyle}
           >
-            Desactivar
+            {secondaryLabel ?? "Desactivar"}
           </button>
         )}
       </div>

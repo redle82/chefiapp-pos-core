@@ -8,6 +8,7 @@
 
 - `gm_customers` — clientes por restaurante (fidelidade: pontos, visitas, spend). Usado por LoyaltyService, customersService (admin), GroupEngine, OrderContextReal.
 - `gm_reservations` — reservas (e tabelas relacionadas). Usado por fluxos de reserva e calendário.
+- `gm_terminals` — terminais/dispositivos (heartbeat). Usado por TerminalEngine; em DEV evita 404 na consola quando a migração ainda não está aplicada.
 
 Tabelas futuras “satélite” (ex.: stock avançado, loyalty logs) devem seguir o mesmo padrão: incluídas no probe opcional e na lista em `dockerCoreFetchClient.ts` (`OPTIONAL_TABLES`).
 
@@ -17,7 +18,7 @@ Tabelas futuras “satélite” (ex.: stock avançado, loyalty logs) devem segui
 
 ### Em DEV (browser, `import.meta.env.DEV`)
 
-1. **Probe:** O frontend **não** faz GET a `gm_customers` nem `gm_reservations` no arranque. Evita 404 na consola quando as migrations ainda não foram aplicadas.
+1. **Probe:** O frontend **não** faz GET a `gm_customers`, `gm_reservations` nem `gm_terminals` no arranque. Evita 404 na consola quando as migrations ainda não foram aplicadas.
 2. **Marcação:** Essas tabelas são marcadas como indisponíveis por **24h** (TTL em memória). Qualquer acesso posterior devolve `{ data: null, error: { message: "Table unavailable", code: "42P01" } }` **sem novo pedido de rede**.
 3. **Log único:** Na primeira vez que o código tenta usar uma tabela opcional indisponível, o cliente emite **uma vez por sessão** (por tabela) um `console.info` com o texto:  
    `[DEV] <table> indisponível — aplica migrations para ativar: ./scripts/core/apply-missing-migrations.sh`
@@ -33,7 +34,7 @@ Tabelas futuras “satélite” (ex.: stock avançado, loyalty logs) devem segui
 
 1. Core a correr: `docker compose -f docker-core/docker-compose.core.yml up -d`
 2. Aplicar migrations: `./scripts/core/apply-missing-migrations.sh`
-3. Recarregar a app; as chamadas a `gm_customers` e `gm_reservations` passam a ser feitas normalmente.
+3. Recarregar a app; as chamadas a `gm_customers`, `gm_reservations` e `gm_terminals` passam a ser feitas normalmente.
 
 Ver também: [DEV_CORE_DOWN.md](../DEV_CORE_DOWN.md) — secção “Tabelas opcionais”.
 

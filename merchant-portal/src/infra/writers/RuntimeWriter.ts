@@ -27,6 +27,28 @@ export async function upsertSetupStatus(
 }
 
 /**
+ * Atualiza perfil base do restaurante (nome, país, tipo). Usado pelo Onboarding assistente.
+ */
+export async function updateRestaurantProfile(
+  restaurantId: string,
+  profile: { name?: string; country?: string; type?: string },
+): Promise<{ error: string | null }> {
+  const payload: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+  if (profile.name != null) payload.name = profile.name;
+  if (profile.country != null) payload.country = profile.country;
+  if (profile.type != null) payload.type = profile.type;
+  if (Object.keys(payload).length <= 1) return { error: null };
+  const res = await dockerCoreClient
+    .from("gm_restaurants")
+    .update(payload)
+    .eq("id", restaurantId)
+    .then((r) => r);
+  return { error: res.error?.message ?? null };
+}
+
+/**
  * Atualiza status do restaurante (draft | active | paused).
  */
 export async function setRestaurantStatus(

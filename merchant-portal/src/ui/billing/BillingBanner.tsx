@@ -1,9 +1,8 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { useGlobalUIState } from "../../context/GlobalUIStateContext";
 import styles from "./BillingBanner.module.css";
-
-const CTA_ESCOLHER_PLANO = "Escolher plano";
 
 function daysUntil(endAt: string | null | undefined): number | null {
   if (!endAt) return null;
@@ -15,6 +14,7 @@ function daysUntil(endAt: string | null | undefined): number | null {
 }
 
 export function BillingBanner() {
+  const { t } = useTranslation("billing");
   const { billingStatus, isBillingBlocked } = useGlobalUIState();
   const { runtime } = useRestaurantRuntime();
   const trialEndsAt = runtime.trial_ends_at;
@@ -22,17 +22,18 @@ export function BillingBanner() {
 
   if (isBillingBlocked) return null;
 
+  const trialMessage =
+    daysLeft != null && daysLeft > 0
+      ? t("trialEndsIn", { count: daysLeft })
+      : t("trialActive");
+
   const config = {
     past_due: {
-      message:
-        "Pagamento pendente. Regularize para evitar a suspensão do serviço.",
+      message: t("paymentPending"),
       className: styles.bannerPastDue,
     },
     trial: {
-      message:
-        daysLeft != null && daysLeft > 0
-          ? `Trial termina em ${daysLeft} dia${daysLeft !== 1 ? "s" : ""}. Escolha o seu plano para continuar.`
-          : "Trial ativo. Escolha o seu plano para continuar após o período de teste.",
+      message: trialMessage,
       className: styles.bannerTrial,
     },
   };
@@ -44,7 +45,7 @@ export function BillingBanner() {
     <div className={`${styles.banner} ${current.className}`}>
       <span className={styles.message}>{current.message}</span>
       <Link to="/app/billing" className={styles.ctaLink}>
-        {CTA_ESCOLHER_PLANO}
+        {t("choosePlan")}
       </Link>
     </div>
   );

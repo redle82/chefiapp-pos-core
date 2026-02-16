@@ -120,7 +120,7 @@ O script:
 
 ## 7. Go-Live Checklist
 
-Resumo; checklist completo em [GO_LIVE_CHECKLIST.md](./GO_LIVE_CHECKLIST.md).
+Resumo; checklist completo em [GO_LIVE_CHECKLIST.md](./GO_LIVE_CHECKLIST.md). **Checklist obrigatório antes de cada deploy para produção:** [PRE_PROD_CHECKLIST.md](./PRE_PROD_CHECKLIST.md).
 
 - [ ] Infra: Supabase (prod), RLS verificado, backup configurado, DNS
 - [ ] Ambiente: `VITE_RUNTIME_MODE=production`, URLs de prod, service role onde aplicável

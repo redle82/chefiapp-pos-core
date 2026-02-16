@@ -118,11 +118,15 @@ class IntegrationRegistryImpl {
 
   /**
    * Dispatch de evento para todos os adapters habilitados
-   * 
+   *
    * IMPORTANTE: Erros são capturados e logados individualmente.
    * Uma falha em um adapter NÃO afeta os outros.
    */
   async dispatch(event: IntegrationEvent): Promise<void> {
+    if (!event?.payload) {
+      console.warn('[IntegrationRegistry] Ignoring event without payload:', event?.type ?? event);
+      return;
+    }
     const promises: Promise<void>[] = [];
 
     for (const adapter of this.adapters.values()) {

@@ -14,15 +14,10 @@
 
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { DevicePairingView } from "../../features/auth/connectByCode/DevicePairingView";
 import { CONFIG } from "../../config";
 import { useGlobalUIState } from "../../context/GlobalUIStateContext";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../infra/docker-core/connection";
-import { MenuCache } from "../../core/sync/MenuCache";
-import { getPilotProducts } from "../../infra/menuPilotFallback";
-import { createMenuItem } from "../../infra/writers/MenuWriter";
-import { createOrder } from "../../infra/writers/OrderWriter";
+import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { isDockerBackend } from "../../core/infra/backendAdapter";
 import {
   BlockingScreen,
@@ -30,12 +25,19 @@ import {
   usePreflightOperational,
 } from "../../core/readiness";
 import { useShift } from "../../core/shift/ShiftContext";
-import { TerminalEngine } from "../../core/terminal/TerminalEngine";
 import {
   getInstalledDevice,
   getTpvRestaurantId,
 } from "../../core/storage/installedDeviceStorage";
+import { MenuCache } from "../../core/sync/MenuCache";
+import { TerminalEngine } from "../../core/terminal/TerminalEngine";
+import { DevicePairingView } from "../../features/auth/connectByCode/DevicePairingView";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
+import { getPilotProducts } from "../../infra/menuPilotFallback";
+import { createMenuItem } from "../../infra/writers/MenuWriter";
+import { createOrder } from "../../infra/writers/OrderWriter";
+import { RestaurantLogo } from "../../ui/RestaurantLogo";
 import { ToastContainer, useToast } from "../../ui/design-system/Toast";
 import {
   GlobalEmptyView,
@@ -71,8 +73,20 @@ const STORAGE_KEY = "chefiapp_tpv_draft_v1";
 /** Preview onboarding: lista de exemplo fixa (moeda €) quando não há produtos do Core. */
 function getPreviewExampleProducts(restaurantId: string): Product[] {
   return [
-    { id: "preview-cafe", name: "Café", price_cents: 250, available: true, restaurant_id: restaurantId },
-    { id: "preview-agua", name: "Água", price_cents: 100, available: true, restaurant_id: restaurantId },
+    {
+      id: "preview-cafe",
+      name: "Café",
+      price_cents: 250,
+      available: true,
+      restaurant_id: restaurantId,
+    },
+    {
+      id: "preview-agua",
+      name: "Água",
+      price_cents: 100,
+      available: true,
+      restaurant_id: restaurantId,
+    },
   ];
 }
 
@@ -102,6 +116,7 @@ export function TPVMinimal({
 
   // --- HOOKS ---
   const readiness = useOperationalReadiness("TPV");
+  const { identity } = useRestaurantIdentity();
   const runtimeContext = useRestaurantRuntime();
   const runtime = runtimeContext?.runtime;
   const bootstrap = useBootstrapState();
@@ -113,20 +128,20 @@ export function TPVMinimal({
   // State initialization with Persistence
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>(
-    () => loadDraftState()?.cart || []
+    () => loadDraftState()?.cart || [],
   );
   const [creating, setCreating] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
   /** B1: mesa ou balcão — default Balcão (uma escolha; sem configuração). */
   const [saleContext, setSaleContext] = useState<SaleContext>(
-    () => loadDraftState()?.saleContext || "balcao"
+    () => loadDraftState()?.saleContext || "balcao",
   );
   const [tables, setTables] = useState<{ id: string; number: number }[]>([]);
 
   /** B5 Onda 4: método de pagamento — 1 ação; método escolhido. */
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "other">(
-    () => loadDraftState()?.paymentMethod || "cash"
+    () => loadDraftState()?.paymentMethod || "cash",
   );
 
   /** Evita rajada de pedidos quando o Core está em baixo (fail-fast). */
@@ -153,15 +168,21 @@ export function TPVMinimal({
   // --- HELPER FUNCTIONS ---
   // Carregar produtos do cardápio via Docker Core; quando offline/unreachable tenta menu em cache (IndexedDB).
   const loadProducts = async (isCoreReachable: boolean | undefined) => {
-    const isOffline =
-      typeof navigator !== "undefined" && !navigator.onLine;
+    const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
     if (!isCoreReachable || isOffline) {
       const cached = await MenuCache.get(effectiveRestaurantId).catch(
         () => null,
       );
-      const menuLike = cached as
-        | { fullCatalog?: Array<{ products?: Array<{ id: string; name: string; price_cents: number; available?: boolean }> }> }
-        | null;
+      const menuLike = cached as {
+        fullCatalog?: Array<{
+          products?: Array<{
+            id: string;
+            name: string;
+            price_cents: number;
+            available?: boolean;
+          }>;
+        }>;
+      } | null;
       if (
         menuLike?.fullCatalog &&
         Array.isArray(menuLike.fullCatalog) &&
@@ -227,9 +248,16 @@ export function TPVMinimal({
       const cached = await MenuCache.get(effectiveRestaurantId).catch(
         () => null,
       );
-      const menuLike = cached as
-        | { fullCatalog?: Array<{ products?: Array<{ id: string; name: string; price_cents: number; available?: boolean }> }> }
-        | null;
+      const menuLike = cached as {
+        fullCatalog?: Array<{
+          products?: Array<{
+            id: string;
+            name: string;
+            price_cents: number;
+            available?: boolean;
+          }>;
+        }>;
+      } | null;
       if (
         menuLike?.fullCatalog &&
         Array.isArray(menuLike.fullCatalog) &&
@@ -276,7 +304,7 @@ export function TPVMinimal({
               id: p.id,
               name: p.name,
               price_cents: p.price_cents,
-              available: p.available,
+              available: p.available ?? true,
               restaurant_id: p.restaurant_id ?? effectiveRestaurantId,
             }))
           : getPreviewExampleProducts(effectiveRestaurantId);
@@ -350,10 +378,22 @@ export function TPVMinimal({
     return (
       <>
         <DevicePairingView deviceType="tpv" />
-        <div style={{ position: "absolute", bottom: 24, left: 0, right: 0, textAlign: "center" }}>
+        <div
+          style={{
+            position: "absolute",
+            bottom: 24,
+            left: 0,
+            right: 0,
+            textAlign: "center",
+          }}
+        >
           <Link
-            to="/admin/devices"
-            style={{ fontSize: 14, color: "#a3a3a3", textDecoration: "underline" }}
+            to="/admin/modules"
+            style={{
+              fontSize: 14,
+              color: "#a3a3a3",
+              textDecoration: "underline",
+            }}
           >
             Ou instalar TPV no portal
           </Link>
@@ -406,8 +446,8 @@ export function TPVMinimal({
         cart.map((item) =>
           item.product_id === product.id
             ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
+            : item,
+        ),
       );
     } else {
       // Adicionar novo item
@@ -437,15 +477,15 @@ export function TPVMinimal({
 
     setCart(
       cart.map((item) =>
-        item.product_id === productId ? { ...item, quantity } : item
-      )
+        item.product_id === productId ? { ...item, quantity } : item,
+      ),
     );
   };
 
   // Calcular total do carrinho
   const cartTotal = cart.reduce(
     (sum, item) => sum + item.unit_price * item.quantity,
-    0
+    0,
   );
 
   // TENTEI IMPORTAR createMenuItem mas não está no escopo deste arquivo.
@@ -515,11 +555,11 @@ export function TPVMinimal({
                 station: (localDef.station as "BAR" | "KITCHEN") || "KITCHEN",
                 prep_time_minutes: (localDef.prep_time_seconds || 300) / 60,
                 prep_category: (localDef.prep_category as any) || "main",
-                available: localDef.available,
+                available: localDef.available ?? true,
                 category_id: localDef.category_id || undefined,
               });
               console.log(
-                `[TPV] JIT Sync: Produto ${localDef.name} sincronizado com sucesso.`
+                `[TPV] JIT Sync: Produto ${localDef.name} sincronizado com sucesso.`,
               );
             } catch (syncErr: any) {
               // Se erro for conflito (já existe), tudo bem.
@@ -535,7 +575,7 @@ export function TPVMinimal({
               } else {
                 console.warn(
                   `[TPV] Falha no JIT Sync do produto ${pid}:`,
-                  syncErr
+                  syncErr,
                 );
                 // Não bloqueamos a venda por falha de sync, tentamos a sorte.
                 // Se falhar mesmo, o createOrder vai estourar e o usuário vê o erro.
@@ -565,7 +605,7 @@ export function TPVMinimal({
         items,
         "WEB",
         paymentMethod,
-        tableId ? { table_id: tableId } : undefined
+        tableId ? { table_id: tableId } : undefined,
       );
 
       // SUCESSO!
@@ -606,30 +646,30 @@ export function TPVMinimal({
               p_method: paymentMethod,
               p_idempotency_key: `${result.id}-${Date.now()}`,
             }),
-          }
+          },
         );
         const payData = payRes.ok ? await payRes.json() : null;
         if (payData?.success) {
           setSuccess(
             `Pedido #${result.id.slice(
               0,
-              8
+              8,
             )} pago (${paymentMethod}). Total: € ${(
               result.total_cents / 100
-            ).toFixed(2)}`
+            ).toFixed(2)}`,
           );
         } else {
           setSuccess(
             `Pedido #${result.id.slice(0, 8)} criado. Total: € ${(
               result.total_cents / 100
-            ).toFixed(2)} (caixa fechado: pagar no TPV)`
+            ).toFixed(2)} (caixa fechado: pagar no TPV)`,
           );
         }
       } else {
         setSuccess(
           `Pedido #${result.id.slice(0, 8)} criado. Total: € ${(
             result.total_cents / 100
-          ).toFixed(2)} (abrir caixa para registar pagamento)`
+          ).toFixed(2)} (abrir caixa para registar pagamento)`,
         );
       }
       setCart([]);
@@ -642,8 +682,8 @@ export function TPVMinimal({
           err,
           `Não foi possível registar o pedido: ${
             err instanceof Error ? err.message : String(err)
-          }`
-        )
+          }`,
+        ),
       );
     } finally {
       setCreating(false);
@@ -779,7 +819,7 @@ export function TPVMinimal({
                 preflight.coreStatus !== "DEGRADED"
               ) {
                 toast.warning(
-                  "Core offline — não é possível abrir turno agora."
+                  "Core offline — não é possível abrir turno agora.",
                 );
                 return;
               }
@@ -796,7 +836,7 @@ export function TPVMinimal({
                     p_name: "Caixa Principal",
                     p_opened_by: "Operador TPV",
                     p_opening_balance_cents: 0,
-                  }
+                  },
                 );
                 if (rpcError) {
                   if (
@@ -808,12 +848,11 @@ export function TPVMinimal({
                     toast.success("Caixa já estava aberto. Pode vender.");
                     return;
                   }
-                  toast.error(
-                    rpcError.message || "Erro ao abrir turno."
-                  );
+                  toast.error(rpcError.message || "Erro ao abrir turno.");
                   return;
                 }
-                if (data?.id) {
+                const rpcData = data as { id?: string } | null;
+                if (rpcData?.id) {
                   await shift?.refreshShiftStatus?.();
                   toast.success("Turno aberto. Pode vender.");
                 } else {
@@ -841,14 +880,27 @@ export function TPVMinimal({
           </button>
         </div>
       )}
-      <h1 style={{ margin: "0 0 8px 0", color: "#fafafa" }}>
-        TPV Mínimo - Criar Pedido
-      </h1>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 8,
+        }}
+      >
+        <RestaurantLogo
+          logoUrl={identity.logoUrl}
+          name={identity.name || "Restaurante"}
+          size={44}
+        />
+        <h1 style={{ margin: 0, color: "#fafafa" }}>
+          TPV Mínimo — {identity.name || "Criar Pedido"}
+        </h1>
+      </div>
       <div
         style={{ fontSize: "0.9rem", color: "#a3a3a3", marginBottom: "20px" }}
       >
-        Ligação:{" "}
-        {import.meta.env.VITE_CORE_URL ? "Ativa" : "Não configurada"}
+        Ligação: {import.meta.env.VITE_CORE_URL ? "Ativa" : "Não configurada"}
       </div>
 
       {!isPreview && globalUI.isError && globalUI.errorMessage && (
@@ -1197,9 +1249,7 @@ export function TPVMinimal({
                   border: "none",
                   borderRadius: "4px",
                   cursor:
-                    creating || cart.length === 0
-                      ? "not-allowed"
-                      : "pointer",
+                    creating || cart.length === 0 ? "not-allowed" : "pointer",
                   fontSize: "16px",
                   fontWeight: "bold",
                 }}

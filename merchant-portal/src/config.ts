@@ -80,6 +80,11 @@ export const CONFIG = {
     return raw;
   })(),
   STRIPE_PRICE_ID: getEnvString("VITE_STRIPE_PRICE_ID"),
+  /** true quando a chave pública começa por pk_test_ (modo demo/teste Stripe) */
+  get STRIPE_IS_TEST(): boolean {
+    const key = CONFIG.STRIPE_PUBLIC_KEY;
+    return typeof key === "string" && key.startsWith("pk_test_");
+  },
 
   /** LLM Vision (legado). Data de remoção prevista: após confirmação de não uso. */
   LLM_VISION_ENDPOINT: getEnvString("VITE_LLM_VISION_ENDPOINT"),

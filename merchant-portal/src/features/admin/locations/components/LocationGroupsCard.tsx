@@ -34,9 +34,9 @@ export function LocationGroupsCard({
     <>
       <div
         style={{
-          border: "1px solid #e5e7eb",
+          border: "1px solid var(--surface-border)",
           borderRadius: 12,
-          backgroundColor: "#fff",
+          backgroundColor: "var(--card-bg-on-dark)",
           overflow: "hidden",
         }}
       >
@@ -46,7 +46,7 @@ export function LocationGroupsCard({
             alignItems: "center",
             justifyContent: "space-between",
             padding: "16px 16px 12px",
-            borderBottom: "1px solid #f3f4f6",
+            borderBottom: "1px solid var(--surface-border)",
           }}
         >
           <h3
@@ -54,7 +54,7 @@ export function LocationGroupsCard({
               margin: 0,
               fontSize: 16,
               fontWeight: 700,
-              color: "#111827",
+              color: "var(--text-primary)",
             }}
           >
             Grupos de ubicaciones
@@ -70,8 +70,8 @@ export function LocationGroupsCard({
               justifyContent: "center",
               border: "none",
               borderRadius: 8,
-              backgroundColor: "#7c3aed",
-              color: "#fff",
+              backgroundColor: "var(--color-primary)",
+              color: "var(--text-inverse)",
               fontSize: 18,
               cursor: "pointer",
             }}
@@ -83,14 +83,14 @@ export function LocationGroupsCard({
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid #e5e7eb", textAlign: "left" }}>
-                <th style={{ padding: "12px 16px", color: "#6b7280", fontWeight: 600 }}>
+              <tr style={{ borderBottom: "1px solid var(--surface-border)", textAlign: "left" }}>
+                <th style={{ padding: "12px 16px", color: "var(--text-secondary)", fontWeight: 600 }}>
                   Nombre
                 </th>
-                <th style={{ padding: "12px 16px", color: "#6b7280", fontWeight: 600 }}>
+                <th style={{ padding: "12px 16px", color: "var(--text-secondary)", fontWeight: 600 }}>
                   Ubicaciones
                 </th>
-                <th style={{ padding: "12px 16px", color: "#6b7280", fontWeight: 600, width: 80 }}>
+                <th style={{ padding: "12px 16px", color: "var(--text-secondary)", fontWeight: 600, width: 80 }}>
                   Acciones
                 </th>
               </tr>
@@ -103,7 +103,7 @@ export function LocationGroupsCard({
                     style={{
                       padding: 24,
                       textAlign: "center",
-                      color: "#6b7280",
+                      color: "var(--text-secondary)",
                       fontSize: 14,
                     }}
                   >
@@ -112,11 +112,11 @@ export function LocationGroupsCard({
                 </tr>
               ) : (
                 groups.map((grp) => (
-                  <tr key={grp.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                    <td style={{ padding: "12px 16px", color: "#111827", fontWeight: 500 }}>
+                  <tr key={grp.id} style={{ borderBottom: "1px solid var(--surface-border)" }}>
+                    <td style={{ padding: "12px 16px", color: "var(--text-primary)", fontWeight: 500 }}>
                       {grp.name}
                     </td>
-                    <td style={{ padding: "12px 16px", color: "#6b7280" }}>
+                    <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>
                       {grp.locationIds.length} ubicaciones
                     </td>
                     <td style={{ padding: "12px 16px" }}>
@@ -128,7 +128,7 @@ export function LocationGroupsCard({
                           border: "none",
                           background: "none",
                           cursor: "pointer",
-                          color: "#6b7280",
+                          color: "var(--text-secondary)",
                           borderRadius: 4,
                           fontSize: 14,
                         }}

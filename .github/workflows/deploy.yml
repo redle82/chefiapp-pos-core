@@ -29,6 +29,9 @@ jobs:
       - name: TypeScript check
         run: npm run typecheck
 
+      - name: TypeScript error count gate
+        run: bash scripts/ci/ts-error-gate.sh
+
       - name: Unit tests
         run: npm run test:ci
 

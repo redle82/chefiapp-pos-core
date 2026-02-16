@@ -9,8 +9,12 @@ export interface CoreRestaurant {
   name: string;
   slug?: string | null;
   description?: string | null;
+  opening_hours_text?: string | null;
+  address_text?: string | null;
   owner_id?: string | null;
   tenant_id?: string | null;
+  /** URL do logo do restaurante. Ver RESTAURANT_LOGO_IDENTITY_CONTRACT.md */
+  logo_url?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -32,6 +36,10 @@ export interface CoreProduct {
   price_cents: number;
   photo_url?: string | null;
   available?: boolean;
+  /** Estação de preparo: BAR ou KITCHEN — usado no KDS e Menu Builder */
+  station?: "BAR" | "KITCHEN" | null;
+  prep_category?: string | null;
+  prep_time_seconds?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -45,7 +53,9 @@ export interface CoreTable {
   created_at?: string;
 }
 
-export async function readRestaurantBySlug(slug: string): Promise<CoreRestaurant | null> {
+export async function readRestaurantBySlug(
+  slug: string,
+): Promise<CoreRestaurant | null> {
   const { data, error } = await dockerCoreClient
     .from("gm_restaurants")
     .select("*")
@@ -55,7 +65,9 @@ export async function readRestaurantBySlug(slug: string): Promise<CoreRestaurant
   return data as CoreRestaurant;
 }
 
-export async function readRestaurantById(id: string): Promise<CoreRestaurant | null> {
+export async function readRestaurantById(
+  id: string,
+): Promise<CoreRestaurant | null> {
   const { data, error } = await dockerCoreClient
     .from("gm_restaurants")
     .select("*")
@@ -65,7 +77,9 @@ export async function readRestaurantById(id: string): Promise<CoreRestaurant | n
   return data as CoreRestaurant;
 }
 
-export async function readMenuCategories(restaurantId: string): Promise<CoreMenuCategory[]> {
+export async function readMenuCategories(
+  restaurantId: string,
+): Promise<CoreMenuCategory[]> {
   const { data, error } = await dockerCoreClient
     .from("gm_menu_categories")
     .select("*")
@@ -75,7 +89,9 @@ export async function readMenuCategories(restaurantId: string): Promise<CoreMenu
   return (data ?? []) as CoreMenuCategory[];
 }
 
-export async function readProducts(restaurantId: string): Promise<CoreProduct[]> {
+export async function readProducts(
+  restaurantId: string,
+): Promise<CoreProduct[]> {
   const { data, error } = await dockerCoreClient
     .from("gm_products")
     .select("*")
@@ -87,7 +103,7 @@ export async function readProducts(restaurantId: string): Promise<CoreProduct[]>
 
 export async function readTableByNumber(
   restaurantId: string,
-  tableNumber: number
+  tableNumber: number,
 ): Promise<CoreTable | null> {
   const { data, error } = await dockerCoreClient
     .from("gm_tables")

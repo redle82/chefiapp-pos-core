@@ -1,14 +1,27 @@
 /**
  * Tipos para a página Assinatura / Billing Center (Last.app style).
  * Ref: Tu suscripción — plano, uso, cobrança, pagamento, faturas.
+ *
+ * Plan tiers aligned with billing-core/types.ts and DB:
+ *   free | trial | starter | pro | enterprise
  */
 
-export type PlanId = "basic" | "pro" | "growth";
+import type { PlanTier } from "../../../../../../billing-core/types";
+
+/** @deprecated Use PlanTier from billing-core/types instead */
+export type PlanId = "basic" | "pro" | "growth" | "starter" | "enterprise";
 
 export interface Plan {
-  id: PlanId;
+  id: string;
   name: string;
+  tier: PlanTier;
+  priceCents: number;
+  currency: string;
+  interval: "month" | "year";
   features: string[];
+  maxDevices: number;
+  maxIntegrations: number;
+  maxDeliveryOrders: number;
   /** Plano atual do restaurante */
   isCurrent?: boolean;
   /** Trial: termina nesta data */

@@ -155,7 +155,7 @@ export const RequireActivation = ({ children }: { children: JSX.Element }) => {
       console.log(
         "[RequireActivation] 🛑 Access Denied: Operation Mode undefined in DB. Redirecting to Ritual."
       );
-      navigate("/activation", { replace: true });
+      navigate("/app/activation", { replace: true });
     };
 
     checkActivation();

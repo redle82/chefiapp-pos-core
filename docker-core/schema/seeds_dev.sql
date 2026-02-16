@@ -7,19 +7,19 @@
 
 -- 1. Tenant de Teste
 INSERT INTO public.saas_tenants (id, name, slug)
-VALUES 
+VALUES
     ('00000000-0000-0000-0000-000000000001', 'Tenant Dev', 'tenant-dev')
 ON CONFLICT (slug) DO NOTHING;
 
--- 2. Restaurante Piloto
+-- 2. Restaurante piloto real: Sofia Gastrobar (ver docs/architecture/SOFIA_GASTROBAR_REAL_PILOT.md)
 INSERT INTO public.gm_restaurants (id, tenant_id, name, slug)
-VALUES 
-    ('00000000-0000-0000-0000-000000000100', '00000000-0000-0000-0000-000000000001', 'Restaurante Piloto', 'restaurante-piloto')
+VALUES
+    ('00000000-0000-0000-0000-000000000100', '00000000-0000-0000-0000-000000000001', 'Sofia Gastrobar', 'sofia-gastrobar')
 ON CONFLICT (slug) DO NOTHING;
 
 -- 3. Categorias de Menu
 INSERT INTO public.gm_menu_categories (id, restaurant_id, name, sort_order)
-SELECT 
+SELECT
     gen_random_uuid(),
     '00000000-0000-0000-0000-000000000100',
     name,
@@ -34,7 +34,7 @@ ON CONFLICT DO NOTHING;
 
 -- 4. Produtos (exemplo mínimo)
 INSERT INTO public.gm_products (id, restaurant_id, category_id, name, price_cents, available)
-SELECT 
+SELECT
     gen_random_uuid(),
     '00000000-0000-0000-0000-000000000100',
     (SELECT id FROM public.gm_menu_categories WHERE restaurant_id = '00000000-0000-0000-0000-000000000100' AND name = category_name LIMIT 1),
@@ -54,10 +54,11 @@ ON CONFLICT DO NOTHING;
 
 -- 5. Mesas (10 mesas)
 INSERT INTO public.gm_tables (id, restaurant_id, number, status)
-SELECT 
+SELECT
     gen_random_uuid(),
     '00000000-0000-0000-0000-000000000100',
     number,
     'closed'
 FROM generate_series(1, 10) AS number
 ON CONFLICT (restaurant_id, number) DO NOTHING;
+

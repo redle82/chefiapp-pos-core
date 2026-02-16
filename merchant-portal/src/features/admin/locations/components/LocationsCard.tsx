@@ -30,9 +30,9 @@ export function LocationsCard({ locations, onRefresh }: LocationsCardProps) {
     <>
       <div
         style={{
-          border: "1px solid #e5e7eb",
+          border: "1px solid var(--surface-border)",
           borderRadius: 12,
-          backgroundColor: "#fff",
+          backgroundColor: "var(--card-bg-on-dark)",
           overflow: "hidden",
         }}
       >
@@ -42,7 +42,7 @@ export function LocationsCard({ locations, onRefresh }: LocationsCardProps) {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "16px 16px 12px",
-            borderBottom: "1px solid #f3f4f6",
+            borderBottom: "1px solid var(--surface-border)",
           }}
         >
           <h3
@@ -50,7 +50,7 @@ export function LocationsCard({ locations, onRefresh }: LocationsCardProps) {
               margin: 0,
               fontSize: 16,
               fontWeight: 700,
-              color: "#111827",
+              color: "var(--text-primary)",
             }}
           >
             Ubicaciones
@@ -66,8 +66,8 @@ export function LocationsCard({ locations, onRefresh }: LocationsCardProps) {
               justifyContent: "center",
               border: "none",
               borderRadius: 8,
-              backgroundColor: "#7c3aed",
-              color: "#fff",
+              backgroundColor: "var(--color-primary)",
+              color: "var(--text-inverse)",
               fontSize: 18,
               cursor: "pointer",
             }}
@@ -79,17 +79,17 @@ export function LocationsCard({ locations, onRefresh }: LocationsCardProps) {
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid #e5e7eb", textAlign: "left" }}>
-                <th style={{ padding: "12px 16px", color: "#6b7280", fontWeight: 600 }}>
+              <tr style={{ borderBottom: "1px solid var(--surface-border)", textAlign: "left" }}>
+                <th style={{ padding: "12px 16px", color: "var(--text-secondary)", fontWeight: 600 }}>
                   Nombre
                 </th>
-                <th style={{ padding: "12px 16px", color: "#6b7280", fontWeight: 600 }}>
+                <th style={{ padding: "12px 16px", color: "var(--text-secondary)", fontWeight: 600 }}>
                   Dirección
                 </th>
-                <th style={{ padding: "12px 16px", color: "#6b7280", fontWeight: 600, width: 80 }}>
+                <th style={{ padding: "12px 16px", color: "var(--text-secondary)", fontWeight: 600, width: 80 }}>
                   Estado
                 </th>
-                <th style={{ padding: "12px 16px", color: "#6b7280", fontWeight: 600, width: 80 }}>
+                <th style={{ padding: "12px 16px", color: "var(--text-secondary)", fontWeight: 600, width: 80 }}>
                   Acciones
                 </th>
               </tr>
@@ -102,7 +102,7 @@ export function LocationsCard({ locations, onRefresh }: LocationsCardProps) {
                     style={{
                       padding: 24,
                       textAlign: "center",
-                      color: "#6b7280",
+                      color: "var(--text-secondary)",
                       fontSize: 14,
                     }}
                   >
@@ -111,8 +111,8 @@ export function LocationsCard({ locations, onRefresh }: LocationsCardProps) {
                 </tr>
               ) : (
                 locations.map((loc) => (
-                  <tr key={loc.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                    <td style={{ padding: "12px 16px", color: "#111827" }}>
+                  <tr key={loc.id} style={{ borderBottom: "1px solid var(--surface-border)" }}>
+                    <td style={{ padding: "12px 16px", color: "var(--text-primary)" }}>
                       <span style={{ fontWeight: 500 }}>{loc.name}</span>
                       {loc.isPrimary && (
                         <span
@@ -120,8 +120,8 @@ export function LocationsCard({ locations, onRefresh }: LocationsCardProps) {
                             marginLeft: 8,
                             fontSize: 11,
                             fontWeight: 600,
-                            color: "#7c3aed",
-                            backgroundColor: "#f3e8ff",
+                            color: "var(--status-primary-text)",
+                            backgroundColor: "var(--status-primary-bg)",
                             padding: "2px 6px",
                             borderRadius: 4,
                           }}
@@ -130,7 +130,7 @@ export function LocationsCard({ locations, onRefresh }: LocationsCardProps) {
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: "12px 16px", color: "#6b7280" }}>
+                    <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>
                       {loc.address || "—"}
                     </td>
                     <td style={{ padding: "12px 16px" }}>
@@ -138,7 +138,7 @@ export function LocationsCard({ locations, onRefresh }: LocationsCardProps) {
                         style={{
                           fontSize: 12,
                           fontWeight: 500,
-                          color: loc.isActive ? "#059669" : "#6b7280",
+                          color: loc.isActive ? "var(--color-success)" : "var(--text-secondary)",
                         }}
                       >
                         {loc.isActive ? "Activo" : "Inactivo"}

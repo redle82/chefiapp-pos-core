@@ -1,0 +1,59 @@
+# =============================================================================
+# CHEFIAPP CORE — PgBouncer overlay (DEPRECATED)
+# =============================================================================
+# PgBouncer has been MERGED into docker-compose.core.yml as a default service.
+# This file is kept for reference only. No need to use -f flag anymore.
+#
+# Before (two files):
+#   docker compose -f docker-compose.core.yml -f docker-compose.pgbouncer.yml up -d
+# Now (single file):
+#   docker compose -f docker-compose.core.yml up -d
+# =============================================================================
+
+name: chefiapp-core
+
+services:
+  # ---------------------------------------------------------------------------
+  # PgBouncer — pool de conexões entre PostgREST e PostgreSQL
+  # ---------------------------------------------------------------------------
+  pgbouncer:
+    image: edoburu/pgbouncer:1.21.0
+    container_name: chefiapp-core-pgbouncer
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Backend: ligação real ao PostgreSQL (a imagem gera userlist a partir da URL)
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/chefiapp_core
+      # Pool: modo transaction (recomendado para PostgREST)
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+    expose:
+      - "5432" # Imagem edoburu usa 5432 por default
+    ports:
+      - "6432:5432" # Host 6432 para não conflituar com postgres (54320)
+    networks:
+      - chefiapp-core-net
+    healthcheck:
+      test:
+        ["CMD", "pg_isready", "-h", "127.0.0.1", "-p", "5432", "-U", "postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # PostgREST — passa a ligar-se ao PgBouncer em vez do Postgres diretamente
+  # ---------------------------------------------------------------------------
+  postgrest:
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@pgbouncer:5432/chefiapp_core
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: postgres
+      PGRST_JWT_SECRET: chefiapp-core-secret-key-min-32-chars-long
+      PGRST_DB_USE_LEGACY_GUCS: "false"

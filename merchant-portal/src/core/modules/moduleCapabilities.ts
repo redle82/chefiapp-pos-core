@@ -50,7 +50,7 @@ const MODULE_DEFINITIONS: Record<
   health: { primaryRoute: "/health", phase: "active" },
   alerts: { primaryRoute: "/alerts", phase: "active" },
   "system-tree": { primaryRoute: "/system-tree", phase: "active" },
-  config: { primaryRoute: "/config", phase: "active" },
+  config: { primaryRoute: "/admin/config", phase: "active" },
 
   // Em evolução (visível, mas ainda roadmap)
   people: { primaryRoute: "/people", phase: "evolving" },

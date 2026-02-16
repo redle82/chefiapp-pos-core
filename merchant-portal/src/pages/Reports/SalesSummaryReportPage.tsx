@@ -20,6 +20,7 @@ function formatCurrency(cents: number): string {
 }
 
 export function SalesSummaryReportPage() {
+  const { t } = useTranslation("operational");
   const { runtime } = useRestaurantRuntime();
   const now = useMemo(() => new Date(), []);
   const start = useMemo(() => {
@@ -53,7 +54,12 @@ export function SalesSummaryReportPage() {
     const fromStr = toInput(dateFrom);
     const toStr = toInput(dateTo);
     exportCsv(
-      ["Vendas Brutas", "Ticket Médio", "Contas Fechadas", "Cancelamentos"],
+      [
+        t("salesSummary.csv.grossSales"),
+        t("salesSummary.csv.averageTicket"),
+        t("salesSummary.csv.closedBills"),
+        t("salesSummary.csv.cancellations"),
+      ],
       [
         [
           centsToDecimal(data.grossTotalCents),
@@ -69,7 +75,7 @@ export function SalesSummaryReportPage() {
   if (!runtime) {
     return (
       <GlobalLoadingView
-        message="A carregar..."
+        message={t("salesSummary.loading")}
         layout="portal"
         variant="fullscreen"
       />
@@ -79,15 +85,12 @@ export function SalesSummaryReportPage() {
   return (
     <div className={styles.pageRoot}>
       <DataModeBanner dataMode={runtime.dataMode} />
-      <h1 className={styles.title}>Resumo de Vendas</h1>
-      <p className={styles.subtitle}>
-        Visão rápida de faturação por período: total de vendas, cancelamentos e
-        ticket médio. Ideal para responder “como foi o dia?” em segundos.
-      </p>
+      <h1 className={styles.title}>{t("salesSummary.title")}</h1>
+      <p className={styles.subtitle}>{t("salesSummary.subtitle")}</p>
 
       <div className={styles.filterRow}>
         <label className={styles.filterLabel}>
-          De
+          {t("salesSummary.filterFrom")}
           <input
             type="date"
             value={toInput(dateFrom)}
@@ -98,7 +101,7 @@ export function SalesSummaryReportPage() {
           />
         </label>
         <label className={styles.filterLabel}>
-          Até
+          {t("salesSummary.filterTo")}
           <input
             type="date"
             value={toInput(dateTo)}
@@ -114,7 +117,7 @@ export function SalesSummaryReportPage() {
             loading ? styles.buttonDisabled : ""
           }`}
         >
-          {loading ? "A carregar…" : "Aplicar"}
+          {loading ? t("salesSummary.loadingFilter") : t("salesSummary.apply")}
         </button>
         {hasData && (
           <button
@@ -122,7 +125,7 @@ export function SalesSummaryReportPage() {
             onClick={handleExportCsv}
             className={styles.exportButton}
           >
-            ⬇ Exportar CSV
+            {t("salesSummary.exportCsv")}
           </button>
         )}
       </div>
@@ -131,36 +134,41 @@ export function SalesSummaryReportPage() {
 
       {!hasData && !loading && !error && (
         <div className={styles.emptyState}>
-          <h2 className={styles.emptyTitle}>Ainda não há dados suficientes.</h2>
-          <p className={styles.emptyText}>
-            Assim que começar a fechar contas regularmente, este painel mostra o
-            total vendido, cancelamentos e ticket médio do período escolhido.
-          </p>
+          <h2 className={styles.emptyTitle}>{t("salesSummary.emptyTitle")}</h2>
+          <p className={styles.emptyText}>{t("salesSummary.emptyText")}</p>
         </div>
       )}
 
       {hasData && data && (
         <div className={styles.summaryGrid}>
           <div className={styles.summaryCardPrimary}>
-            <p className={styles.summaryLabelPrimary}>Vendas brutas</p>
+            <p className={styles.summaryLabelPrimary}>
+              {t("salesSummary.grossSales")}
+            </p>
             <p className={styles.summaryValuePrimary}>
               {formatCurrency(data.grossTotalCents)}
             </p>
           </div>
           <div className={styles.summaryCardMuted}>
-            <p className={styles.summaryLabel}>Ticket médio</p>
+            <p className={styles.summaryLabel}>
+              {t("salesSummary.averageTicket")}
+            </p>
             <p className={styles.summaryValue}>
               {formatCurrency(data.averageTicketCents)}
             </p>
           </div>
           <div className={styles.summaryCardMuted}>
-            <p className={styles.summaryLabel}>Contas fechadas</p>
+            <p className={styles.summaryLabel}>
+              {t("salesSummary.closedBills")}
+            </p>
             <p className={styles.summaryValue}>
               {data.ordersCount - data.cancelledOrdersCount}
             </p>
           </div>
           <div className={styles.summaryCardAlert}>
-            <p className={styles.summaryLabelAlert}>Cancelamentos</p>
+            <p className={styles.summaryLabelAlert}>
+              {t("salesSummary.cancellations")}
+            </p>
             <p className={styles.summaryValueAlert}>
               {data.cancelledOrdersCount}
             </p>

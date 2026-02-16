@@ -4,7 +4,7 @@ import { useAppStaff } from '@/context/AppStaffContext';
 import { Order, OrderItem, useOrder } from '@/context/OrderContext';
 import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { HapticFeedback } from '@/services/haptics';
-import { Audio } from 'expo-av';
+import { useAudioPlayer } from 'expo-audio';
 import React, { useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
@@ -16,6 +16,7 @@ export default function BarScreen() {
     const { shiftId, stations, getStationForCategory } = useAppStaff();
     const [now, setNow] = useState(new Date());
     const prevOrderCount = useRef(0);
+    const barBeepPlayer = useAudioPlayer('https://www.soundjay.com/buttons/beep-01a.mp3');
     // Identify Bar Station
     const barStation = stations.find(s => s.name === 'Bar');
 
@@ -43,24 +44,18 @@ export default function BarScreen() {
     // Filter orders that actually have drinks (optimization)
     const activeBarOrders = activeOrders.filter(hasBarItems);
 
-    // Sound Logic
+    // Sound Logic (expo-audio; expo-av deprecated in SDK 54)
     useEffect(() => {
-        const playSound = async () => {
-            try {
-                const { sound } = await Audio.Sound.createAsync(
-                    { uri: 'https://www.soundjay.com/buttons/beep-01a.mp3' }
-                );
-                await sound.playAsync();
-            } catch (error) {
-                console.log('Error playing sound', error);
-            }
-        };
-
         if (activeBarOrders.length > prevOrderCount.current) {
-            playSound();
+            try {
+                barBeepPlayer.seekTo(0);
+                barBeepPlayer.play();
+            } catch (e) {
+                if (__DEV__) console.log('Bar beep play error', e);
+            }
         }
         prevOrderCount.current = activeBarOrders.length;
-    }, [activeBarOrders.length]);
+    }, [activeBarOrders.length, barBeepPlayer]);
 
     // SIMPLIFICADO: 1 toque muda status
     const handleBump = (orderId: string) => {

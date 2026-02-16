@@ -45,7 +45,7 @@ export function LocationRowActions({ location, onEdit }: LocationRowActionsProps
           border: "none",
           background: "none",
           cursor: "pointer",
-          color: "#6b7280",
+          color: "var(--text-secondary)",
           borderRadius: 4,
         }}
         aria-label="Más acciones"
@@ -60,7 +60,7 @@ export function LocationRowActions({ location, onEdit }: LocationRowActionsProps
           border: "none",
           background: "none",
           cursor: "pointer",
-          color: "#6b7280",
+          color: "var(--text-secondary)",
           borderRadius: 4,
         }}
         aria-label="Editar"
@@ -75,8 +75,8 @@ export function LocationRowActions({ location, onEdit }: LocationRowActionsProps
             right: 0,
             marginTop: 4,
             minWidth: 180,
-            backgroundColor: "#fff",
-            border: "1px solid #e5e7eb",
+            backgroundColor: "var(--card-bg-on-dark)",
+            border: "1px solid var(--surface-border)",
             borderRadius: 8,
             boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
             zIndex: 10,
@@ -97,7 +97,7 @@ export function LocationRowActions({ location, onEdit }: LocationRowActionsProps
                 padding: "8px 12px",
                 textAlign: "left",
                 fontSize: 13,
-                color: "#374151",
+                color: "var(--text-primary)",
                 border: "none",
                 background: "none",
                 cursor: "pointer",

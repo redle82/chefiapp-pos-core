@@ -4,6 +4,7 @@
  * Sem métricas, sem planos, sem operação. Guardar por card.
  */
 
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 import { LegalEntityMainCard } from "../components/LegalEntityMainCard";
 import { LegalEntityUsageCard } from "../components/LegalEntityUsageCard";
 import { LocationEntityTableCard } from "../components/LocationEntityTableCard";
@@ -12,28 +13,10 @@ import { LegalFiscalExtrasCard } from "../components/LegalFiscalExtrasCard";
 export function LegalEntitiesPage() {
   return (
     <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
-      <header style={{ marginBottom: 20 }}>
-        <h1
-          style={{
-            fontSize: 22,
-            fontWeight: 700,
-            margin: "0 0 4px 0",
-            color: "#111827",
-          }}
-        >
-          Entidades Legales
-        </h1>
-        <p
-          style={{
-            margin: 0,
-            fontSize: 14,
-            color: "#6b7280",
-          }}
-        >
-          Definir quién es la entidad legal responsable del restaurante para
-          efectos fiscales, facturación y conformidad.
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Entidades Legales"
+        subtitle="Definir quién es la entidad legal responsable del restaurante para efectos fiscales, facturación y conformidad."
+      />
 
       <div
         style={{

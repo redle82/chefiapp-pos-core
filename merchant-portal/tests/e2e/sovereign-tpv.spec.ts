@@ -46,9 +46,10 @@ test.describe("Sovereign TPV: Financial Core Verification", () => {
     } else {
       console.log("🔐 Performing Technical Login...");
 
-      // Set bypass before login attempt
+      // Set bypass and cookie consent before login attempt
       await page.evaluate(() => {
         localStorage.setItem("chefiapp_bypass_health", "true");
+        localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
       });
 
       // Look for email input - try multiple selectors

@@ -7,6 +7,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { RestaurantPeopleSection } from "../../../../pages/Config/RestaurantPeopleSection";
 import { RolesSummarySection } from "../../../../pages/Config/RolesSummarySection";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 
 const BASE = "/admin/config/empleados";
 
@@ -19,27 +20,16 @@ export function EmpleadosConfigPage() {
 
   return (
     <div style={{ maxWidth: 820 }}>
-      <header style={{ marginBottom: 24 }}>
-        <h1
-          style={{
-            fontSize: 22,
-            fontWeight: 700,
-            margin: "0 0 4px 0",
-            color: "#111827",
-          }}
-        >
-          Empleados
-        </h1>
-        <p style={{ margin: 0, fontSize: 14, color: "#6b7280" }}>
-          Funcionários, papéis e escalas.
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Empleados"
+        subtitle="Funcionários, papéis e escalas."
+      />
       <div
         style={{
           display: "flex",
           gap: 8,
           marginBottom: 24,
-          borderBottom: "1px solid #e0e0e0",
+          borderBottom: "1px solid var(--surface-border)",
         }}
       >
         <button
@@ -48,11 +38,11 @@ export function EmpleadosConfigPage() {
           style={{
             padding: "12px 16px",
             border: "none",
-            borderBottom: isEmployeesTab ? "2px solid #667eea" : "2px solid transparent",
+            borderBottom: isEmployeesTab ? "2px solid var(--color-primary)" : "2px solid transparent",
             backgroundColor: "transparent",
             cursor: "pointer",
             fontWeight: isEmployeesTab ? 600 : 400,
-            color: isEmployeesTab ? "#667eea" : "#666",
+            color: isEmployeesTab ? "var(--color-primary)" : "var(--text-secondary)",
           }}
         >
           Funcionários
@@ -63,11 +53,11 @@ export function EmpleadosConfigPage() {
           style={{
             padding: "12px 16px",
             border: "none",
-            borderBottom: isRolesTab ? "2px solid #667eea" : "2px solid transparent",
+            borderBottom: isRolesTab ? "2px solid var(--color-primary)" : "2px solid transparent",
             backgroundColor: "transparent",
             cursor: "pointer",
             fontWeight: isRolesTab ? 600 : 400,
-            color: isRolesTab ? "#667eea" : "#666",
+            color: isRolesTab ? "var(--color-primary)" : "var(--text-secondary)",
           }}
         >
           Papéis
@@ -82,7 +72,7 @@ export function EmpleadosConfigPage() {
             backgroundColor: "transparent",
             cursor: "pointer",
             fontWeight: 400,
-            color: "#666",
+            color: "var(--text-secondary)",
           }}
         >
           Escalas →

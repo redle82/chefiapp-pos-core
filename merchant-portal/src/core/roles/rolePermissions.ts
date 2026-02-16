@@ -10,10 +10,18 @@ export type UserRole = "owner" | "manager" | "staff";
 /**
  * Rotas ou prefixos → roles permitidos.
  * FASE 3 Passo 4: Staff só executa; Gerente acompanha; Dono vê tudo.
- * Ordem de match: mais específico primeiro (ex.: /config/integrations antes /config).
+ * Web de configuração canónica: /admin/config (legado /config eliminado).
  */
 const ROUTE_ALLOWED_ROLES: Record<string, UserRole[]> = {
-  // Config: apenas owner/manager (staff não acede a configuração sensível)
+  // Admin config: apenas owner/manager (staff não acede a configuração sensível)
+  "/admin/config/integrations": ["owner"],
+  "/admin/config/modules": ["owner"],
+  "/admin/config/status": ["owner"],
+  "/admin/config/payments": ["owner"],
+  "/admin/config/suscripcion": ["owner"],
+  "/admin/config/perception": ["owner", "manager"],
+  "/admin/config": ["owner", "manager"],
+  // Config sidebar (legacy paths — sem /admin prefix)
   "/config/integrations": ["owner"],
   "/config/modules": ["owner"],
   "/config/status": ["owner"],
@@ -49,12 +57,19 @@ const ROUTE_ALLOWED_ROLES: Record<string, UserRole[]> = {
   "/admin/catalog/assignments": ["owner", "manager"],
   "/admin/catalog/products": ["owner", "manager"],
   "/admin/catalog/modules": ["owner", "manager"],
+  "/admin/modules": ["owner", "manager"],
   "/admin/catalog/modifiers": ["owner", "manager"],
   "/admin/catalog/combos": ["owner", "manager"],
   "/admin/catalog/translations": ["owner", "manager"],
   // App tree: backoffice owner/manager; staff só execução (garcom, tpv, etc.)
   "/app/backoffice": ["owner", "manager"],
+  "/app/waiter": ["owner", "manager", "staff"],
   "/app": ["owner", "manager", "staff"],
+  "/admin/tables": ["owner", "manager"],
+  "/admin/printers": ["owner", "manager"],
+  "/admin/users": ["owner", "manager"],
+  "/admin/integrations": ["owner", "manager"],
+  "/admin/legal": ["owner", "manager"],
   // Perfil: owner-only, manager-only, staff pode employee
   "/owner": ["owner"],
   "/manager": ["owner", "manager"],

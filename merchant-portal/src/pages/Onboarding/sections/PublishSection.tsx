@@ -499,7 +499,7 @@ export function PublishSection() {
 
           {/* Config Tree */}
           <button
-            onClick={() => navigate("/config")}
+            onClick={() => navigate("/admin/config")}
             style={{
               padding: "12px",
               fontSize: "14px",

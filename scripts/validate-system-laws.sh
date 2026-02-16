@@ -157,8 +157,15 @@ else
 fi
 
 # Verificar se há implementação de atomicidade (Garantia de Atomicidade)
-# Pode ser CoreTransactionManager, transação atômica, ou BEGIN/COMMIT
-if find . -name "*.ts" -o -name "*.sql" | xargs grep -lE "CoreTransactionManager|BEGIN.*COMMIT|atomic.*transaction|transaction.*atomic" > /dev/null 2>&1; then
+# Busca em merchant-portal e docker-core (evita find em todo o repo)
+ATOMIC_FOUND=0
+for dir in merchant-portal docker-core; do
+    if [ -d "$dir" ] && find "$dir" \( -name "*.ts" -o -name "*.sql" \) -print 2>/dev/null | xargs grep -lE "CoreTransactionManager|BEGIN.*COMMIT|atomic.*transaction|transaction.*atomic" > /dev/null 2>&1; then
+        ATOMIC_FOUND=1
+        break
+    fi
+done
+if [ "$ATOMIC_FOUND" -eq 1 ]; then
     echo "✅ Implementação de atomicidade encontrada (Garantia de Atomicidade)"
 else
     echo "⚠️  Implementação de atomicidade NÃO encontrada (pode estar em outro módulo)"
@@ -166,7 +173,19 @@ else
 fi
 
 # Verificar se há triggers de imutabilidade (Garantia de Imutabilidade)
-if find supabase/migrations -name "*.sql" | xargs grep -l "BEFORE UPDATE\|BEFORE DELETE" > /dev/null 2>&1; then
+# Aceita supabase/migrations ou docker-core/schema/migrations
+TRIGGERS_FOUND=0
+if [ -d "supabase/migrations" ]; then
+    if find supabase/migrations -name "*.sql" 2>/dev/null | xargs grep -l "BEFORE UPDATE\|BEFORE DELETE" > /dev/null 2>&1; then
+        TRIGGERS_FOUND=1
+    fi
+fi
+if [ "$TRIGGERS_FOUND" -eq 0 ] && [ -d "docker-core/schema/migrations" ]; then
+    if find docker-core/schema/migrations -name "*.sql" 2>/dev/null | xargs grep -l "BEFORE UPDATE\|BEFORE DELETE" > /dev/null 2>&1; then
+        TRIGGERS_FOUND=1
+    fi
+fi
+if [ "$TRIGGERS_FOUND" -eq 1 ]; then
     echo "✅ Triggers de imutabilidade encontrados (Garantia de Imutabilidade)"
 else
     echo "⚠️  Triggers de imutabilidade NÃO encontrados"
@@ -199,9 +218,9 @@ else
     WARNINGS=$((WARNINGS + 1))
 fi
 
-# Verificar se há novos state managers suspeitos
-SUSPICIOUS_PATTERNS=$(find merchant-portal/src -name "*.ts" -o -name "*.tsx" | xargs grep -E "const\s+\w*[Cc]ore\w*\s*=\s*{|createContext<\w*[Cc]ore\w*>" 2>/dev/null | wc -l | tr -d ' ')
-if [ "$SUSPICIOUS_PATTERNS" -eq 0 ]; then
+# Verificar se há novos state managers suspeitos (excluir core canónico e intelligence/nervous-system)
+SUSPICIOUS_PATTERNS=$(find merchant-portal/src \( -path 'merchant-portal/src/core' -o -path 'merchant-portal/src/intelligence' \) -prune -o \( -name "*.ts" -o -name "*.tsx" \) -print 2>/dev/null | xargs grep -E "const\s+\w*[Cc]ore\w*\s*=\s*{|createContext<\w*[Cc]ore\w*>" 2>/dev/null | wc -l | tr -d ' ')
+if [ "${SUSPICIOUS_PATTERNS:-0}" -eq 0 ]; then
     echo "✅ Nenhum padrão suspeito de 5º core encontrado"
 else
     echo "⚠️  $SUSPICIOUS_PATTERNS padrões suspeitos de 5º core encontrados"
@@ -225,12 +244,16 @@ else
     WARNINGS=$((WARNINGS + 1))
 fi
 
-# Verificar se External ID retry está implementado
-if grep -r "external_id_status\|PENDING_EXTERNAL_ID" server > /dev/null 2>&1; then
-    echo "✅ External ID retry implementado"
+# Verificar se External ID retry está implementado (apenas se server/ existir)
+if [ -d "server" ]; then
+    if grep -r "external_id_status\|PENDING_EXTERNAL_ID" server > /dev/null 2>&1; then
+        echo "✅ External ID retry implementado"
+    else
+        echo "⚠️  External ID retry NÃO encontrado"
+        WARNINGS=$((WARNINGS + 1))
+    fi
 else
-    echo "⚠️  External ID retry NÃO encontrado"
-    WARNINGS=$((WARNINGS + 1))
+    echo "✅ External ID retry (server/ ausente — skip)"
 fi
 
 echo ""

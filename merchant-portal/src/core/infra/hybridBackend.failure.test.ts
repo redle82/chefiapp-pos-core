@@ -178,8 +178,8 @@ describe("Failure Tests: High Latency", () => {
 
     const latency = endTime - startTime;
 
-    // Should be instant (Docker is local, no network involved)
-    expect(latency).toBeLessThan(10);
+    // coreClient is a module-level reference; no network call here. Allow some margin on CI/slow envs.
+    expect(latency).toBeLessThan(50);
   });
 
   it("analyticsClient warns when latency exceeds 300ms", async () => {

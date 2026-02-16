@@ -10,31 +10,33 @@
   font-size: 24px;
   font-weight: 600;
   margin: 0 0 8px 0;
+  color: var(--text-primary);
 }
 
 .headerSub {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0;
 }
 
 .operationalSection {
   margin-bottom: 24px;
   padding: 16px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
-  background-color: #fafafa;
+  background-color: var(--card-bg-on-dark);
 }
 
 .operationalTitle {
   font-size: 16px;
   font-weight: 600;
   margin: 0 0 12px 0;
+  color: var(--text-primary);
 }
 
 .operationalDesc {
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0 0 12px 0;
 }
 
@@ -58,13 +60,13 @@
 }
 
 .moduleCard {
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
   padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #fff;
+  background-color: var(--card-bg-on-dark);
 }
 
 .moduleContent {
@@ -86,26 +88,27 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .moduleDesc {
   margin: 4px 0 0;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .moduleMetaRow {
   display: flex;
   gap: 12px;
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
   margin-top: 8px;
 }
 
 .uninstallBtn {
   padding: 8px 16px;
-  background-color: #dc3545;
-  color: white;
+  background-color: var(--color-error);
+  color: var(--text-inverse);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -114,28 +117,28 @@
 
 .installBtn {
   padding: 8px 16px;
-  color: white;
+  color: var(--text-inverse);
   border: none;
   border-radius: 4px;
   font-size: 14px;
-  background-color: #28a745;
+  background-color: var(--color-success);
   cursor: pointer;
 }
 
 .installBtn[data-installing="true"] {
-  background-color: #6c757d;
+  background-color: var(--text-tertiary);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 .healthBadge[data-health="healthy"] {
-  color: #28a745;
+  color: var(--color-success);
 }
 
 .healthBadge[data-health="degraded"] {
-  color: #ffc107;
+  color: var(--status-warning-text);
 }
 
 .healthBadge[data-health="unhealthy"] {
-  color: #dc3545;
+  color: var(--color-error);
 }

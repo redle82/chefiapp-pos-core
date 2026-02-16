@@ -20,7 +20,7 @@ export function ConfigPlaceholderPage({
             fontSize: 22,
             fontWeight: 700,
             margin: "0 0 4px 0",
-            color: "#111827",
+            color: "var(--text-primary)",
           }}
         >
           {title}
@@ -29,7 +29,7 @@ export function ConfigPlaceholderPage({
       <p
         style={{
           fontSize: 15,
-          color: "#6b7280",
+          color: "var(--text-secondary)",
           margin: 0,
         }}
       >

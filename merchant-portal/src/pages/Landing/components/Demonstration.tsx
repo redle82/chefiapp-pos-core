@@ -1,5 +1,5 @@
-// LEGACY: secção de demonstração da landing antiga. Mantida para contexto
-// histórico; novas narrativas de demonstração vivem em LandingV2Page.
+// LEGACY: não utilizar em novas rotas. Mantido apenas por compatibilidade temporária.
+// Secção de demonstração da landing antiga; narrativas em LandingV2Page.
 import { Link } from "react-router-dom";
 import { OSCopy } from "../../../ui/design-system/sovereign/OSCopy";
 

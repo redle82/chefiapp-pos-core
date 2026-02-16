@@ -21,7 +21,7 @@ export const ShiftHealthWidget: React.FC<ShiftHealthWidgetProps> = ({
     toneColor = colors.warning.base;
     label = "Atenção";
   } else if (status === "red") {
-    toneColor = colors.error.base;
+    toneColor = colors.destructive.base;
     label = "Sobrecarga";
   }
 

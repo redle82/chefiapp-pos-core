@@ -17,10 +17,10 @@ export function PaymentMethodCard({
   return (
     <div
       style={{
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--surface-border)",
         borderRadius: 12,
         padding: 16,
-        backgroundColor: "#fff",
+        backgroundColor: "var(--card-bg-on-dark)",
       }}
     >
       <h3
@@ -28,7 +28,7 @@ export function PaymentMethodCard({
           margin: "0 0 8px 0",
           fontSize: 16,
           fontWeight: 700,
-          color: "#111827",
+          color: "var(--text-primary)",
         }}
       >
         Método de pago
@@ -37,7 +37,7 @@ export function PaymentMethodCard({
         style={{
           margin: "0 0 12px 0",
           fontSize: 13,
-          color: "#6b7280",
+          color: "var(--text-secondary)",
         }}
       >
         Se te debitará de esta tarjeta el pago mensual para ChefIApp.
@@ -47,10 +47,10 @@ export function PaymentMethodCard({
           style={{
             marginBottom: 12,
             padding: 10,
-            backgroundColor: "#fef2f2",
+            backgroundColor: "var(--status-error-bg)",
             borderRadius: 8,
             fontSize: 13,
-            color: "#b91c1c",
+            color: "var(--color-error)",
           }}
         >
           El último pago falló. Actualiza el método antes del{" "}
@@ -74,13 +74,13 @@ export function PaymentMethodCard({
           style={{
             fontSize: 14,
             fontWeight: 600,
-            color: "#374151",
+            color: "var(--text-primary)",
           }}
         >
           {method.brand} **** **** **** {method.last4}
         </span>
         {method.expiryMonth != null && method.expiryYear != null && (
-          <span style={{ fontSize: 13, color: "#6b7280" }}>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
             {String(method.expiryMonth).padStart(2, "0")}/{method.expiryYear}
           </span>
         )}
@@ -93,8 +93,8 @@ export function PaymentMethodCard({
             padding: "8px 14px",
             fontSize: 13,
             fontWeight: 600,
-            color: "#fff",
-            backgroundColor: "#7c3aed",
+            color: "var(--text-inverse)",
+            backgroundColor: "var(--color-primary)",
             border: "none",
             borderRadius: 8,
             cursor: "pointer",

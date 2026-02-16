@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  getAutoPromotions,
-  getDiscounts,
-  updateAutoPromotion,
-} from "../services/promotionsService";
+import { getAutoPromotions, updateAutoPromotion } from "../services/promotionsService";
 import type { AutoPromotion, Discount } from "../types";
 
 interface AutoPromotionsSectionProps {
   locationId: string;
+  discounts: Discount[];
+  loadingDiscounts: boolean;
 }
 
 const CHANNEL_LABELS: Record<AutoPromotion["channel"], string> = {
@@ -18,28 +16,25 @@ const CHANNEL_LABELS: Record<AutoPromotion["channel"], string> = {
 
 export function AutoPromotionsSection({
   locationId,
+  discounts,
+  loadingDiscounts,
 }: AutoPromotionsSectionProps) {
   const [autoPromotions, setAutoPromotions] = useState<AutoPromotion[]>([]);
-  const [discounts, setDiscounts] = useState<Discount[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingPromotions, setLoadingPromotions] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const loadPromotions = useCallback(async () => {
+    setLoadingPromotions(true);
     try {
-      const [aps, discountsList] = await Promise.all([
-        getAutoPromotions(locationId),
-        getDiscounts(locationId),
-      ]);
+      const aps = await getAutoPromotions(locationId);
       setAutoPromotions(aps);
-      setDiscounts(discountsList);
     } finally {
-      setLoading(false);
+      setLoadingPromotions(false);
     }
   }, [locationId]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    loadPromotions();
+  }, [loadPromotions]);
 
   const handleChange = async (id: string, discountId: string) => {
     const ap = autoPromotions.find((item) => item.id === id);
@@ -52,8 +47,6 @@ export function AutoPromotionsSection({
       current.map((item) => (item.id === next.id ? next : item))
     );
   };
-
-  const hasDiscounts = discounts.length > 0;
 
   return (
     <section className="space-y-4">
@@ -87,7 +80,7 @@ export function AutoPromotionsSection({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {loading ? (
+              {loadingPromotions || loadingDiscounts ? (
                 <tr>
                   <td className="px-4 py-4 text-sm text-gray-500" colSpan={2}>
                     Carregando promoções automáticas...
@@ -103,24 +96,14 @@ export function AutoPromotionsSection({
                       <select
                         value={ap.discountId}
                         onChange={(e) => handleChange(ap.id, e.target.value)}
-                        disabled={!hasDiscounts}
-                        className="w-full max-w-xs rounded-lg border border-gray-300 py-2 pl-3 pr-8 text-sm text-gray-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:bg-gray-100 disabled:text-gray-400"
+                        className="w-full max-w-xs rounded-lg border border-gray-300 py-2 pl-3 pr-8 text-sm text-gray-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                       >
-                        {!hasDiscounts && (
-                          <option value="">
-                            Nenhum desconto disponível no momento
+                        <option value="">Sem promoção automática</option>
+                        {discounts.map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.name}
                           </option>
-                        )}
-                        {hasDiscounts && (
-                          <>
-                            <option value="">Sem promoção automática</option>
-                            {discounts.map((d) => (
-                              <option key={d.id} value={d.id}>
-                                {d.name}
-                              </option>
-                            ))}
-                          </>
-                        )}
+                        ))}
                       </select>
                     </td>
                   </tr>
@@ -130,6 +113,12 @@ export function AutoPromotionsSection({
           </table>
         </div>
       </div>
+      {discounts.length === 0 && !loadingDiscounts && (
+        <p className="text-xs text-gray-500">
+          Crie descontos na secção «Descuentos» acima para os associar a cada
+          canal.
+        </p>
+      )}
     </section>
   );
 }

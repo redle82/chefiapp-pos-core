@@ -88,7 +88,7 @@ function OperacaoCard({ onNavigate }: { onNavigate: (path: string) => void }) {
         {hasNoIdentity && (
           <button
             type="button"
-            onClick={() => onNavigate("/config/identity")}
+            onClick={() => onNavigate("/admin/config/general")}
             className={styles.opIdentityBtn}
           >
             Configurar identidade
@@ -137,14 +137,14 @@ const MAPA_SECTIONS = [
         id: "config-identidade",
         label: "Identidade",
         icon: "🏪",
-        route: "/config/identity",
+        route: "/admin/config/general",
         moduleId: "config" as const,
       },
       {
         id: "config-local",
         label: "Local & Moeda",
         icon: "📍",
-        route: "/config/location",
+        route: "/admin/config/ubicaciones",
         moduleId: "config" as const,
       },
       {
@@ -212,7 +212,7 @@ const MAPA_SECTIONS = [
         id: "gestao-percepcao",
         label: "Percepção Operacional",
         icon: "📷",
-        route: "/config/perception",
+        route: "/admin/config",
         moduleId: "perception" as const,
       },
     ],
@@ -274,8 +274,8 @@ export function OwnerDashboardWithMapLayout() {
 
   const getFirstMissingConfigPath = (): string => {
     const candidates: { nodeId: NodeId; path: string }[] = [
-      { nodeId: "identity", path: "/config/identity" },
-      { nodeId: "location_currency", path: "/config/location" },
+      { nodeId: "identity", path: "/admin/config/general" },
+      { nodeId: "location_currency", path: "/admin/config/ubicaciones" },
       { nodeId: "menu", path: "/menu-builder" },
     ];
     for (const desired of ["missing", "incomplete"] as const) {
@@ -285,7 +285,7 @@ export function OwnerDashboardWithMapLayout() {
       });
       if (match) return match.path;
     }
-    return "/config/identity";
+    return "/admin/config/general";
   };
 
   const blockedByCaixa =
@@ -324,7 +324,7 @@ export function OwnerDashboardWithMapLayout() {
           </span>
           <div className={styles.setupBannerActions}>
             <button
-              onClick={() => navigate("/config/identity")}
+              onClick={() => navigate("/admin/config/general")}
               className={styles.setupBtnDark}
             >
               Preparar identidade

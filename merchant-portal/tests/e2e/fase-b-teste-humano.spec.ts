@@ -44,6 +44,7 @@ test.describe("Fase B: Chaos Night Simulation", () => {
         await ctx.addInitScript(() => {
           window.sessionStorage.setItem("chefiapp_debug", "1");
           window.localStorage.setItem("chefiapp_pilot_mode", "true");
+          window.localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
           window.sessionStorage.setItem(
             "chefiapp_keycloak_session",
             JSON.stringify({
@@ -136,6 +137,7 @@ test.describe("Fase B: Chaos Night Simulation", () => {
     await context.addInitScript(() => {
       window.sessionStorage.setItem("chefiapp_debug", "1");
       window.localStorage.setItem("chefiapp_pilot_mode", "true");
+      window.localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
     });
 
     // Navigate directly to dashboard (Pilot Mode bypasses auth; /auth now uses phone login)
@@ -196,15 +198,15 @@ test.describe("Fase B: Chaos Night Simulation", () => {
 
       // Voltar net
       await context.setOffline(false);
-      // Re-enviar apenas se não foi bloqueado por Core indisponível
+      // Re-enviar apenas se não foi bloqueado por Core indisponível (e se houver pedido para enviar)
       const btnReenviar = page.getByRole("button", {
         name: /Enviar Cozinha|Enviar/i,
       });
       if (await btnReenviar.isVisible({ timeout: 3000 }).catch(() => false)) {
         await btnReenviar.click();
-        await expect(page.getByText(/Pedido enviado|enviado/i))
-          .toBeVisible({ timeout: 5000 })
-          .catch(() => {});
+        await expect
+          .soft(page.getByText(/Pedido enviado|enviado/i))
+          .toBeVisible({ timeout: 5000 });
       }
     });
 

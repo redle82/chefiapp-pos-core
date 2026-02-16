@@ -74,10 +74,16 @@ async function loginWithE2ECreds(page: import("@playwright/test").Page) {
 
 test.describe("E2E: Publicar → Operar (TPV/KDS)", () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
+    });
     await page.goto("/");
     await page.evaluate(() => {
       localStorage.clear();
       sessionStorage.clear();
+    });
+    await page.addInitScript(() => {
+      localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
     });
   });
 

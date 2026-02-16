@@ -19,6 +19,7 @@ export function ConfigSchedulePage() {
             fontWeight: 600,
             margin: 0,
             marginBottom: "8px",
+            color: "var(--text-primary)",
           }}
         >
           Tempo e Horários
@@ -26,7 +27,7 @@ export function ConfigSchedulePage() {
         <p
           style={{
             fontSize: "14px",
-            color: "#666",
+            color: "var(--text-secondary)",
             margin: 0,
             marginBottom: "8px",
           }}
@@ -36,7 +37,7 @@ export function ConfigSchedulePage() {
         <p
           style={{
             fontSize: "13px",
-            color: "#059669",
+            color: "var(--color-success)",
             margin: 0,
             fontWeight: 500,
           }}
@@ -53,18 +54,19 @@ export function ConfigSchedulePage() {
         style={{
           marginTop: "24px",
           padding: "16px",
-          backgroundColor: "#f0f7ff",
+          backgroundColor: "var(--status-primary-bg)",
           borderRadius: "8px",
+          border: "1px solid var(--surface-border)",
         }}
       >
-        <p style={{ margin: 0, fontSize: "14px", color: "#666" }}>
+        <p style={{ margin: 0, fontSize: "14px", color: "var(--text-secondary)" }}>
           💡 Para gerenciar escalas de funcionários, acesse{" "}
           <button
             onClick={() => navigate("/manager/schedule")}
             style={{
               background: "none",
               border: "none",
-              color: "#667eea",
+              color: "var(--color-primary)",
               textDecoration: "underline",
               cursor: "pointer",
             }}

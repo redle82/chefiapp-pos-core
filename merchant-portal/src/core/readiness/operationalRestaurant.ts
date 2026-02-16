@@ -15,8 +15,14 @@ export const INVALID_OR_SEED_RESTAURANT_IDS = new Set<string>([
   "10000000-0000-0000-0000-000000000000",
 ]);
 
-/** Em Docker o seed 00000000-0000-0000-0000-000000000100 existe no Core (06-seed-enterprise). */
-export const SEED_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
+/** Restaurante real (Sofia Gastrobar). Em Docker existe no Core (06-seed-enterprise, 20260226). */
+export const SOFIA_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
+
+/** @deprecated Use SOFIA_RESTAURANT_ID. Mantido para compatibilidade. */
+export const SEED_RESTAURANT_ID = SOFIA_RESTAURANT_ID;
+
+/** Restaurante de trial "Seu restaurante". Em Docker existe no Core (20260227). */
+export const TRIAL_RESTAURANT_ID = "00000000-0000-0000-0000-000000000099";
 
 export interface OperationalRestaurantInput {
   restaurant_id: string | null;
@@ -40,7 +46,8 @@ export function hasOperationalRestaurant(
   if (runtime.loading) return false;
   const id = runtime.restaurant_id;
   if (!id || typeof id !== "string" || id.trim() === "") return false;
-  if (getBackendType() === BackendType.docker && id === SEED_RESTAURANT_ID)
-    return true;
+  if (getBackendType() === BackendType.docker) {
+    if (id === SOFIA_RESTAURANT_ID || id === TRIAL_RESTAURANT_ID) return true;
+  }
   return !INVALID_OR_SEED_RESTAURANT_IDS.has(id);
 }

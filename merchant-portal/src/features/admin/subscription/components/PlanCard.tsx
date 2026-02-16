@@ -32,10 +32,10 @@ export function PlanCard({
   return (
     <div
       style={{
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--surface-border)",
         borderRadius: 12,
         padding: 16,
-        backgroundColor: "#fff",
+        backgroundColor: "var(--card-bg-on-dark)",
         position: "relative",
         minHeight: 200,
       }}
@@ -48,8 +48,8 @@ export function PlanCard({
             right: 12,
             fontSize: 11,
             fontWeight: 600,
-            color: "#fff",
-            backgroundColor: "#7c3aed",
+            color: "var(--text-inverse)",
+            backgroundColor: "var(--color-primary)",
             padding: "4px 8px",
             borderRadius: 6,
           }}
@@ -65,8 +65,8 @@ export function PlanCard({
             right: plan.isCurrent ? 90 : 12,
             fontSize: 11,
             fontWeight: 600,
-            color: "#92400e",
-            backgroundColor: "#fef3c7",
+            color: "var(--status-warning-text)",
+            backgroundColor: "var(--status-warning-bg)",
             padding: "4px 8px",
             borderRadius: 6,
           }}
@@ -83,7 +83,7 @@ export function PlanCard({
           margin: "0 0 12px 0",
           fontSize: 18,
           fontWeight: 700,
-          color: "#111827",
+          color: "var(--text-primary)",
         }}
       >
         {plan.name}
@@ -93,7 +93,7 @@ export function PlanCard({
           margin: "0 0 16px 0",
           paddingLeft: 20,
           fontSize: 13,
-          color: "#4b5563",
+          color: "var(--text-secondary)",
           lineHeight: 1.6,
         }}
       >
@@ -110,8 +110,8 @@ export function PlanCard({
               padding: "8px 14px",
               fontSize: 13,
               fontWeight: 600,
-              color: "#fff",
-              backgroundColor: "#7c3aed",
+              color: "var(--text-inverse)",
+              backgroundColor: "var(--color-primary)",
               border: "none",
               borderRadius: 8,
               cursor: "pointer",
@@ -128,9 +128,9 @@ export function PlanCard({
               padding: "8px 14px",
               fontSize: 13,
               fontWeight: 600,
-              color: "#7c3aed",
+              color: "var(--color-primary)",
               backgroundColor: "transparent",
-              border: "1px solid #7c3aed",
+              border: "1px solid var(--color-primary)",
               borderRadius: 8,
               cursor: "pointer",
             }}
@@ -145,9 +145,9 @@ export function PlanCard({
             style={{
               padding: "8px 14px",
               fontSize: 13,
-              color: "#6b7280",
+              color: "var(--text-secondary)",
               backgroundColor: "transparent",
-              border: "1px solid #d1d5db",
+              border: "1px solid var(--surface-border)",
               borderRadius: 8,
               cursor: "pointer",
             }}
@@ -171,15 +171,16 @@ export function PlanCard({
         >
           <div
             style={{
-              backgroundColor: "#fff",
+              backgroundColor: "var(--card-bg-on-dark)",
               padding: 24,
               borderRadius: 12,
               maxWidth: 360,
               boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+              border: "1px solid var(--surface-border)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p style={{ margin: "0 0 16px 0", fontSize: 15, color: "#374151" }}>
+            <p style={{ margin: "0 0 16px 0", fontSize: 15, color: "var(--text-primary)" }}>
               ¿Cambiar al plan <strong>{plan.name}</strong>? Se aplicará en la
               próxima facturación.
             </p>
@@ -190,11 +191,11 @@ export function PlanCard({
                 style={{
                   padding: "8px 14px",
                   fontSize: 13,
-                  color: "#6b7280",
-                  border: "1px solid #d1d5db",
+                  color: "var(--text-secondary)",
+                  border: "1px solid var(--surface-border)",
                   borderRadius: 8,
                   cursor: "pointer",
-                  backgroundColor: "#fff",
+                  backgroundColor: "transparent",
                 }}
               >
                 Cancelar
@@ -206,8 +207,8 @@ export function PlanCard({
                   padding: "8px 14px",
                   fontSize: 13,
                   fontWeight: 600,
-                  color: "#fff",
-                  backgroundColor: "#7c3aed",
+                  color: "var(--text-inverse)",
+                  backgroundColor: "var(--color-primary)",
                   border: "none",
                   borderRadius: 8,
                   cursor: "pointer",

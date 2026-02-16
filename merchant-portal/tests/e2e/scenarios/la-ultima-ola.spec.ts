@@ -60,6 +60,7 @@ test.describe.serial("La Última Ola: Saturday Night Simulation", () => {
       } catch {}
       window.sessionStorage.setItem("chefiapp_debug", "1");
       window.localStorage.setItem("chefiapp_pilot_mode", "true");
+      window.localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
       // Fix for Auth Consolidation: Mock Keycloak Session for Docker mode
       window.sessionStorage.setItem(
         "chefiapp_keycloak_session",

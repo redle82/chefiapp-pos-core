@@ -4,7 +4,7 @@ import {
   type QueueItem,
 } from "@/services/OfflineQueueService";
 import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface SyncState {
   isOnline: boolean;
@@ -21,11 +21,15 @@ export function useOfflineSync() {
     lastSyncAt: null,
   });
 
+  // Refs to avoid stale closures in callbacks without re-triggering effects
+  const isSyncingRef = useRef(state.isSyncing);
+  isSyncingRef.current = state.isSyncing;
+
   /**
    * Process all pending actions
    */
   const syncPendingActions = useCallback(async () => {
-    if (state.isSyncing) return;
+    if (isSyncingRef.current) return;
 
     setState((prev) => ({ ...prev, isSyncing: true }));
 
@@ -59,22 +63,26 @@ export function useOfflineSync() {
       console.error("[Sync] Sync failed:", error);
       setState((prev) => ({ ...prev, isSyncing: false }));
     }
-  }, [state.isSyncing]);
+  }, []); // stable — uses ref for isSyncing guard
 
-  // Monitor network status
+  // Monitor network status — subscribe once, never re-subscribe
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((netState: NetInfoState) => {
       const isOnline = netState.isConnected ?? false;
-      setState((prev) => ({ ...prev, isOnline }));
+      setState((prev) => {
+        // Bail out if nothing changed to avoid unnecessary re-renders
+        if (prev.isOnline === isOnline) return prev;
+        return { ...prev, isOnline };
+      });
 
       // Trigger sync when coming online
-      if (isOnline && !state.isSyncing) {
+      if (isOnline && !isSyncingRef.current) {
         syncPendingActions();
       }
     });
 
     return () => unsubscribe();
-  }, [state.isSyncing, syncPendingActions]);
+  }, [syncPendingActions]);
 
   // Update pending count periodically
   useEffect(() => {
@@ -91,33 +99,34 @@ export function useOfflineSync() {
   /**
    * Enqueue an action (handles offline automatically)
    */
-  const enqueue = useCallback(
-    async (type: MutationType, payload: any) => {
-      if (state.isOnline) {
-        // Try to sync immediately
-        try {
-          const immediateItem: QueueItem = {
-            id: "immediate",
-            mutationType: type,
-            payload,
-            timestamp: Date.now(),
-            retryCount: 0,
-            status: "syncing",
-          };
-          const success = await OfflineQueueService.processItem(immediateItem);
-          if (success) return;
-        } catch (error) {
-          console.log("[Sync] Immediate sync failed, queueing for later");
-        }
-      }
+  // Keep a ref so enqueue reads current value without re-creating the callback
+  const isOnlineRef = useRef(state.isOnline);
+  isOnlineRef.current = state.isOnline;
 
-      // Queue for later
-      await OfflineQueueService.enqueue(type, payload);
-      const count = await OfflineQueueService.count();
-      setState((prev) => ({ ...prev, pendingCount: count }));
-    },
-    [state.isOnline],
-  );
+  const enqueue = useCallback(async (type: MutationType, payload: any) => {
+    if (isOnlineRef.current) {
+      // Try to sync immediately
+      try {
+        const immediateItem: QueueItem = {
+          id: "immediate",
+          mutationType: type,
+          payload,
+          timestamp: Date.now(),
+          retryCount: 0,
+          status: "syncing",
+        };
+        const success = await OfflineQueueService.processItem(immediateItem);
+        if (success) return;
+      } catch (error) {
+        console.log("[Sync] Immediate sync failed, queueing for later");
+      }
+    }
+
+    // Queue for later
+    await OfflineQueueService.enqueue(type, payload);
+    const count = await OfflineQueueService.count();
+    setState((prev) => ({ ...prev, pendingCount: count }));
+  }, []);
 
   return {
     ...state,

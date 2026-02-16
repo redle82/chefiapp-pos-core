@@ -8,6 +8,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { LocationSection } from "../../../../pages/Onboarding/sections/LocationSection";
 import { PublicQRSection } from "../../../../pages/Config/PublicQRSection";
 import { ScheduleSection } from "../../../../pages/Onboarding/sections/ScheduleSection";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 
 const BASE = "/admin/config/delivery";
 
@@ -21,27 +22,16 @@ export function DeliveryConfigPage() {
 
   return (
     <div style={{ maxWidth: 820 }}>
-      <header style={{ marginBottom: 24 }}>
-        <h1
-          style={{
-            fontSize: 22,
-            fontWeight: 700,
-            margin: "0 0 4px 0",
-            color: "#111827",
-          }}
-        >
-          Delivery
-        </h1>
-        <p style={{ margin: 0, fontSize: 14, color: "#6b7280" }}>
-          Plano de mesas, horários e QR.
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Delivery"
+        subtitle="Plano de mesas, horários e QR."
+      />
       <div
         style={{
           display: "flex",
           gap: 8,
           marginBottom: 24,
-          borderBottom: "1px solid #e0e0e0",
+          borderBottom: "1px solid var(--surface-border)",
         }}
       >
         <button
@@ -50,11 +40,11 @@ export function DeliveryConfigPage() {
           style={{
             padding: "12px 16px",
             border: "none",
-            borderBottom: isPlanoMesas ? "2px solid #667eea" : "2px solid transparent",
+            borderBottom: isPlanoMesas ? "2px solid var(--color-primary)" : "2px solid transparent",
             backgroundColor: "transparent",
             cursor: "pointer",
             fontWeight: isPlanoMesas ? 600 : 400,
-            color: isPlanoMesas ? "#667eea" : "#666",
+            color: isPlanoMesas ? "var(--color-primary)" : "var(--text-secondary)",
           }}
         >
           Plano de mesas
@@ -65,11 +55,11 @@ export function DeliveryConfigPage() {
           style={{
             padding: "12px 16px",
             border: "none",
-            borderBottom: isHorarios ? "2px solid #667eea" : "2px solid transparent",
+            borderBottom: isHorarios ? "2px solid var(--color-primary)" : "2px solid transparent",
             backgroundColor: "transparent",
             cursor: "pointer",
             fontWeight: isHorarios ? 600 : 400,
-            color: isHorarios ? "#667eea" : "#666",
+            color: isHorarios ? "var(--color-primary)" : "var(--text-secondary)",
           }}
         >
           Horarios
@@ -80,11 +70,11 @@ export function DeliveryConfigPage() {
           style={{
             padding: "12px 16px",
             border: "none",
-            borderBottom: isQR ? "2px solid #667eea" : "2px solid transparent",
+            borderBottom: isQR ? "2px solid var(--color-primary)" : "2px solid transparent",
             backgroundColor: "transparent",
             cursor: "pointer",
             fontWeight: isQR ? 600 : 400,
-            color: isQR ? "#667eea" : "#666",
+            color: isQR ? "var(--color-primary)" : "var(--text-secondary)",
           }}
         >
           QR
@@ -92,7 +82,7 @@ export function DeliveryConfigPage() {
       </div>
       {isPlanoMesas && (
         <>
-          <p style={{ color: "#666", marginBottom: 24 }}>
+          <p style={{ color: "var(--text-secondary)", marginBottom: 24 }}>
             Mesas e zonas. Endereço e presença abaixo.
           </p>
           <LocationSection />

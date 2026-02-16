@@ -53,12 +53,12 @@ export function PublicQRSection() {
         style={{
           marginTop: 24,
           padding: 20,
-          backgroundColor: "#f8fafc",
+          backgroundColor: "var(--card-bg-on-dark)",
           borderRadius: 8,
-          border: "1px solid #e2e8f0",
+          border: "1px solid var(--surface-border)",
         }}
       >
-        <p style={{ margin: 0, fontSize: 14, color: "#64748b" }}>
+        <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
           Complete a configuração do restaurante (Config → Identidade) para gerar QR codes da página pública.
         </p>
       </div>
@@ -67,7 +67,7 @@ export function PublicQRSection() {
 
   if (loading) {
     return (
-      <p style={{ fontSize: 14, color: "#666" }}>A carregar...</p>
+      <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>A carregar...</p>
     );
   }
 
@@ -77,12 +77,12 @@ export function PublicQRSection() {
         style={{
           marginTop: 24,
           padding: 20,
-          backgroundColor: "#fef3c7",
+          backgroundColor: "var(--status-warning-bg)",
           borderRadius: 8,
-          border: "1px solid #f59e0b",
+          border: "1px solid var(--status-warning-border)",
         }}
       >
-        <p style={{ margin: 0, fontSize: 14, color: "#92400e" }}>
+        <p style={{ margin: 0, fontSize: 14, color: "var(--status-warning-text)" }}>
           Configure o <strong>slug</strong> do restaurante em Config → Identidade para gerar QR codes.
           O slug é o identificador da URL (ex: <code>/public/meu-restaurante</code>).
         </p>
@@ -98,25 +98,25 @@ export function PublicQRSection() {
       style={{
         marginTop: 24,
         padding: 20,
-        backgroundColor: "#f0fdf4",
+        backgroundColor: "var(--card-bg-on-dark)",
         borderRadius: 8,
-        border: "1px solid #22c55e",
+        border: "1px solid var(--surface-border)",
       }}
     >
-      <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600 }}>
+      <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>
         QR para página pública
       </h3>
-      <p style={{ margin: "0 0 20px", fontSize: 13, color: "#666" }}>
+      <p style={{ margin: "0 0 20px", fontSize: 13, color: "var(--text-secondary)" }}>
         Imprima ou mostre estes QR codes para os clientes acederem ao menu (ou à mesa). O link do menu abre a página geral; o link da mesa abre o menu já associado à mesa.
       </p>
 
       {/* Menu geral */}
       <div style={{ marginBottom: 24 }}>
-        <h4 style={{ margin: "0 0 8px", fontSize: 14, fontWeight: 600 }}>
+        <h4 style={{ margin: "0 0 8px", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
           Menu geral
         </h4>
-        <p style={{ margin: "0 0 8px", fontSize: 12, color: "#666" }}>
-          <a href={menuUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#667eea" }}>
+        <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--text-secondary)" }}>
+          <a href={menuUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--color-primary)" }}>
             {menuUrl}
           </a>
         </p>
@@ -125,11 +125,11 @@ export function PublicQRSection() {
 
       {/* QR por mesa */}
       <div>
-        <h4 style={{ margin: "0 0 8px", fontSize: 14, fontWeight: 600 }}>
+        <h4 style={{ margin: "0 0 8px", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
           QR por mesa
         </h4>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
-          <label style={{ fontSize: 13 }}>
+          <label style={{ fontSize: 13, color: "var(--text-primary)" }}>
             Número da mesa:
             <input
               type="number"
@@ -141,7 +141,7 @@ export function PublicQRSection() {
                 width: 64,
                 marginLeft: 8,
                 padding: 6,
-                border: "1px solid #e0e0e0",
+                border: "1px solid var(--surface-border)",
                 borderRadius: 6,
                 fontSize: 14,
               }}
@@ -152,8 +152,8 @@ export function PublicQRSection() {
             onClick={() => setShowMesaQR(true)}
             style={{
               padding: "8px 16px",
-              backgroundColor: "#22c55e",
-              color: "#fff",
+              backgroundColor: "var(--color-success)",
+              color: "var(--text-inverse)",
               border: "none",
               borderRadius: 6,
               fontSize: 13,
@@ -166,8 +166,8 @@ export function PublicQRSection() {
         </div>
         {showMesaQR && (
           <div>
-            <p style={{ margin: "0 0 8px", fontSize: 12, color: "#666" }}>
-              <a href={mesaUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#667eea" }}>
+            <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--text-secondary)" }}>
+              <a href={mesaUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--color-primary)" }}>
                 {mesaUrl}
               </a>
             </p>

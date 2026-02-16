@@ -42,6 +42,12 @@ services:
       - ./schema/migrations/20260217_query_discipline_indexes.sql:/docker-entrypoint-initdb.d/05.5-query-discipline-indexes.sql:ro
       - ./schema/print_queue.sql:/docker-entrypoint-initdb.d/05.6-print-queue.sql:ro
       - ./schema/migrations/20260213_trial_ends_at.sql:/docker-entrypoint-initdb.d/05.7-trial-ends-at.sql:ro
+      - ./schema/migrations/20260222_merchant_subscriptions.sql:/docker-entrypoint-initdb.d/05.8-merchant-subscriptions.sql:ro
+      - ./schema/migrations/20260223_kds_open_to_ready_and_task_rpcs.sql:/docker-entrypoint-initdb.d/05.9-kds-open-ready-task-rpcs.sql:ro
+      - ./schema/migrations/20260224_bar_products_by_category.sql:/docker-entrypoint-initdb.d/05.95-bar-products-by-category.sql:ro
+      - ./schema/migrations/20260216_public_presence_fields.sql:/docker-entrypoint-initdb.d/05.96-public-presence-fields.sql:ro
+      - ./schema/migrations/20260228_force_food_photos_by_category.sql:/docker-entrypoint-initdb.d/05.97-force-food-photos.sql:ro
+      - ./schema/migrations/20260228_backfill_product_photo_from_catalog.sql:/docker-entrypoint-initdb.d/05.98-backfill-product-photos.sql:ro
       - ./schema/06-seed-enterprise.sql:/docker-entrypoint-initdb.d/06-seed-enterprise.sql:ro
       - ./schema/07-role-anon.sql:/docker-entrypoint-initdb.d/07-role-anon.sql:ro
     networks:
@@ -51,6 +57,15 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  # ============================================================================
+  # PGBOUNCER (Connection Pooling) — opcional; imagem edoburu/pgbouncer não existe
+  # ============================================================================
+  # Para ativar: usar bitnami/pgbouncer e POSTGRESQL_HOST=postgres, etc.
+  # Por defeito PostgREST liga diretamente ao Postgres (ver postgrest abaixo).
+  # pgbouncer:
+  #   image: bitnami/pgbouncer:latest
+  #   ...
 
   # ============================================================================
   # POSTGREST (REST API for RPCs)

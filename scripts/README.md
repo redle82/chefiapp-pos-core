@@ -2,6 +2,21 @@
 
 Scripts para executar o protocolo completo de caça-falha.
 
+## Critical flow validation
+
+- **Single flow:** `bash scripts/flows/run-critical-flow.sh`
+- **Load (50–100 orders):** `bash scripts/flows/run-critical-flow-load.sh` (use `CRITICAL_FLOW_LOAD_COUNT=100` to override)
+- **Chaos (network failure):** `bash scripts/flows/run-critical-flow-chaos.sh`
+- **Full gate:** `bash scripts/flows/validate-critical-flow-full.sh` (single + load; add `CRITICAL_FLOW_CHAOS=1` to include chaos)
+
+---
+
+## TypeScript baseline gate
+
+- **Baseline:** `scripts/baseline-ts-errors.txt` (current cap for TS error count).
+- **Gate:** `bash scripts/ci/ts-error-gate.sh` — fails if TS errors exceed baseline. Used in CI.
+- **Classification:** `docs/audit/ts-errors-classification.md`.
+
 ## Scripts Disponíveis
 
 ### 1. `preflight.sh` — Pré-Flight Check

@@ -4,12 +4,21 @@ import { useCurrency } from "../../../../core/currency/useCurrency";
 import { CatalogLayout } from "../components/CatalogLayout";
 
 export function CombosPage() {
-  const { combos, loadAll, toggleComboActive } = useCatalogStore();
+  const { combos, loadAll, toggleComboActive, upsertCombo } = useCatalogStore();
   const { formatAmount } = useCurrency();
 
   useEffect(() => {
     loadAll().catch(() => {});
   }, [loadAll]);
+
+  const handleCreateCombo = () => {
+    upsertCombo({
+      name: "Novo combo",
+      priceCents: 0,
+      items: [],
+      isActive: true,
+    }).then(() => loadAll().catch(() => {}));
+  };
 
   return (
     <CatalogLayout
@@ -22,7 +31,8 @@ export function CombosPage() {
         </p>
         <button
           type="button"
-          className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+          onClick={handleCreateCombo}
+          className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
         >
           Criar combo
         </button>

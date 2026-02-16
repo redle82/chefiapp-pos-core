@@ -20,13 +20,14 @@ export function extractMentorshipEvents(): MentorshipEvent[] {
     const events = JSON.parse(raw);
     if (!Array.isArray(events)) return [];
     return events
+      .filter((evt): evt is Record<string, unknown> => evt != null && typeof evt === "object")
       .map((evt: any) => {
         const type = EVENT_MAP[evt.name];
         if (!type) return null;
         return {
           type,
           timestamp: new Date(evt.ts).toISOString(),
-          details: evt.payload || {},
+          details: evt?.payload ?? {},
         } as MentorshipEvent;
       })
       .filter(Boolean);

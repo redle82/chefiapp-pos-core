@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
 import { useBootstrapState } from "../../../../hooks/useBootstrapState";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 import { FiscalSyncMonitorSection } from "../components/FiscalSyncMonitorSection";
 import {
   getAverageLatencyMs,
@@ -80,12 +81,10 @@ export function ObservabilityPage() {
 
   return (
     <section className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Observabilidade</h1>
-        <p className={styles.subtitle}>
-          Estado do Core e métricas mínimas (1000-ready). Uso interno.
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Observabilidade"
+        subtitle="Estado do Core e métricas mínimas (1000-ready). Uso interno."
+      />
 
       <div className={styles.cardGrid}>
         {/* Core status */}

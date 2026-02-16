@@ -154,6 +154,7 @@ Implementação pode ser feita por fases (ex.: primeiro só POST /orders e PATCH
 
 ## Referências
 
+- **[CHEFIAPP_PUBLIC_API_CONTRACT.md](CHEFIAPP_PUBLIC_API_CONTRACT.md)** — Contrato público único para parceiros (base URL, auth, rate limit, eventos, rotas, erros)
 - [CHEFIAPP_INTEGRATIONS_HUB_SPEC.md](CHEFIAPP_INTEGRATIONS_HUB_SPEC.md) — APIs IN (gateway)
 - [CHEFIAPP_EVENT_BUS_WEBHOOKS_SPEC.md](CHEFIAPP_EVENT_BUS_WEBHOOKS_SPEC.md) — Eventos canónicos (order.created, order.updated, etc.)
 - [CHEFIAPP_WHATSAPP_INTEGRATION_SPEC.md](CHEFIAPP_WHATSAPP_INTEGRATION_SPEC.md) — Webhook WhatsApp → evento

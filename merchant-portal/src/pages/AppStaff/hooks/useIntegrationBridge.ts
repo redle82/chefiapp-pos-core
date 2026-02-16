@@ -68,6 +68,10 @@ export const useIntegrationBridge = ({
   // ───────────────────────────────────────────────────────────
   
   const handleIntegrationEvent = useCallback((event: IntegrationEvent) => {
+    if (!event?.payload) {
+      console.warn('[IntegrationBridge] Ignoring event without payload:', event);
+      return;
+    }
     console.log('[IntegrationBridge] 📨 Received:', event.type);
 
     switch (event.type) {

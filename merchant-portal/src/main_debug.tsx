@@ -1,4 +1,5 @@
 import "./config"; // Load first so CONFIG is ready before any chunk (avoids "Cannot access before initialization")
+import "./i18n";
 import "@chefiapp/core-design-system/tokens.css";
 import { StrictMode, useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";

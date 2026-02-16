@@ -35,10 +35,10 @@ export function LegalEntityUsageCard() {
   return (
     <div
       style={{
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--surface-border)",
         borderRadius: 12,
         padding: 16,
-        backgroundColor: "#fff",
+        backgroundColor: "var(--card-bg-on-dark)",
       }}
     >
       <h3
@@ -46,7 +46,7 @@ export function LegalEntityUsageCard() {
           margin: "0 0 8px 0",
           fontSize: 16,
           fontWeight: 700,
-          color: "#111827",
+          color: "var(--text-primary)",
         }}
       >
         Uso de la entidad
@@ -55,7 +55,7 @@ export function LegalEntityUsageCard() {
         style={{
           margin: "0 0 16px 0",
           fontSize: 13,
-          color: "#6b7280",
+          color: "var(--text-secondary)",
         }}
       >
         Dónde se usa esta entidad legal. Una entidad puede usarse en una o más
@@ -70,7 +70,7 @@ export function LegalEntityUsageCard() {
               setUsage((u) => ({ ...u, useForBilling: e.target.checked }))
             }
           />
-          <span style={{ fontSize: 14, color: "#374151" }}>Facturación</span>
+          <span style={{ fontSize: 14, color: "var(--text-primary)" }}>Facturación</span>
         </label>
         <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
           <input
@@ -80,7 +80,7 @@ export function LegalEntityUsageCard() {
               setUsage((u) => ({ ...u, useForReceipts: e.target.checked }))
             }
           />
-          <span style={{ fontSize: 14, color: "#374151" }}>Recibos</span>
+          <span style={{ fontSize: 14, color: "var(--text-primary)" }}>Recibos</span>
         </label>
         <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
           <input
@@ -90,7 +90,7 @@ export function LegalEntityUsageCard() {
               setUsage((u) => ({ ...u, useForFiscalReports: e.target.checked }))
             }
           />
-          <span style={{ fontSize: 14, color: "#374151" }}>
+          <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
             Relatórios fiscais
           </span>
         </label>
@@ -104,8 +104,8 @@ export function LegalEntityUsageCard() {
             padding: "8px 14px",
             fontSize: 13,
             fontWeight: 600,
-            color: "#fff",
-            backgroundColor: "#7c3aed",
+            color: "var(--text-inverse)",
+            backgroundColor: "var(--color-primary)",
             border: "none",
             borderRadius: 8,
             cursor: saving ? "not-allowed" : "pointer",
@@ -114,7 +114,7 @@ export function LegalEntityUsageCard() {
           {saving ? "Guardando…" : "Guardar"}
         </button>
         {saved && (
-          <span style={{ fontSize: 13, color: "#059669" }}>Guardado</span>
+          <span style={{ fontSize: 13, color: "var(--color-success)" }}>Guardado</span>
         )}
       </div>
     </div>

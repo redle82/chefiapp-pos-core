@@ -3,6 +3,7 @@
  * FASE 2 pós-vendável: garantir que "Período de trial terminado" e "Escolher plano" aparecem.
  */
 
+import "../../i18n";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";

@@ -42,6 +42,7 @@ interface FilterBuilder {
   update(body: object): FilterBuilder;
   delete(): FilterBuilder;
   eq(column: string, value: unknown): FilterBuilder;
+  neq(column: string, value: unknown): FilterBuilder;
   gte(column: string, value: unknown): FilterBuilder;
   in(column: string, values: unknown[]): FilterBuilder;
   order(column: string, opts?: { ascending?: boolean }): FilterBuilder;
@@ -169,6 +170,10 @@ function buildFilterBuilder(table: string): FilterBuilder {
     },
     eq(column: string, value: unknown) {
       state.params[column] = `eq.${value}`;
+      return chain;
+    },
+    neq(column: string, value: unknown) {
+      state.params[column] = `neq.${value}`;
       return chain;
     },
     gte(column: string, value: unknown) {

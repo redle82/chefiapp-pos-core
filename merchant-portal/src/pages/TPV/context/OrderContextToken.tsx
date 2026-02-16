@@ -17,11 +17,15 @@ import { createContext } from "react";
 import type { Order } from "../../../core/contracts";
 import type { OrderExceptionPayload } from "../../../core/tpv/TPVCentralEvents";
 
+export type OrderCreateInput = Partial<Order> & {
+  syncMetadata?: Record<string, unknown>;
+};
+
 export interface OrderContextType {
   orders: Order[];
   addOrder: (order: Order) => void;
   updateOrderStatus: (orderId: string, status: Order["status"]) => void;
-  createOrder: (order: Partial<Order>) => Promise<Order>;
+  createOrder: (order: OrderCreateInput) => Promise<Order>;
   addItemToOrder: (orderId: string, item: any) => Promise<void>;
   removeItemFromOrder: (orderId: string, itemId: string) => Promise<void>;
   updateItemQuantity: (
@@ -43,6 +47,8 @@ export interface OrderContextType {
   loading: boolean;
   isConnected: boolean;
   isOffline: boolean;
+  /** Número de pedidos na fila offline (para OfflineIndicator) */
+  pendingSync: number;
   realtimeStatus: string;
   lastRealtimeEvent: Date | null;
   syncNow: () => Promise<void>;

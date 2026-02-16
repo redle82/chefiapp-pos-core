@@ -4,6 +4,10 @@
  * UI mínima para listar pedidos. VPC: escuro, botões grandes, tipografia clara.
  * MENU_DERIVATIONS: KDS consome apenas product_id + nome; zero preço na UI/lógica.
  *
+ * CONTRATOS (anti-regressão): docs/contracts/KDS_LAYOUT_UX_CONTRACT.md, docs/contracts/KDS_BAR_COZINHA_STATION_CONTRACT.md.
+ * Resumo: layout flex column, um único scroll na lista (flex:1 minHeight:0), sem barra preta; activeOnly (sem READY/CLOSED);
+ * tabs Todas/Cozinha/Bar; secções COZINHA e BAR em cada card; OriginBadge com createdByRole/tableNumber; log só quando nº pedidos muda.
+ *
  * FLUXO PRINCIPAL
  * 1. useOperationalReadiness("KDS") → BlockingScreen/Redirect se não pronto; shift.refreshShiftStatus ao montar.
  * 2. restaurantId: instalado (getKdsRestaurantId) > runtime > TabIsolated > DEFAULT.
@@ -14,7 +18,7 @@
  * GUARDS CRÍTICOS (ordem de bloqueio)
  * - canOperate = readiness.ready; se false, orders = [] e return.
  * - Bootstrap: se !installedKdsRestaurantId && !DEBUG: coreStatus === "online" e operationMode === "operacao-real" para loadOrders/polling; senão lista vazia ou TrialGuideExplicativoCard / "Complete bootstrap" / "Core online".
- * - hasNoIdentity: sem instalado/runtime/storage → "KDS não instalado" + link /app/install.
+ * - hasNoIdentity: sem instalado/runtime/storage → "KDS não instalado" + link /admin/devices.
  * - globalUI: isLoadingCritical → loading; isError → erro + retry; isEmpty → empty_orders.
  *
  * DEPENDÊNCIAS REAIS
@@ -32,18 +36,7 @@ import { DevicePairingView } from "../../features/auth/connectByCode/DevicePairi
 import { CONFIG } from "../../config";
 import { useGlobalUIState } from "../../context/GlobalUIStateContext";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import type {
-  CoreOrderItem,
-  CoreTask,
-} from "../../infra/docker-core/types";
-import { isNetworkError } from "../../infra/menuPilotFallback";
-import {
-  readActiveOrders,
-  readOrderItems,
-  type ActiveOrderRow,
-} from "../../infra/readers/OrderReader";
-import { readOpenTasks } from "../../infra/readers/TaskReader";
-import { markItemReady } from "../../infra/writers/OrderWriter";
+import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { isDockerBackend } from "../../core/infra/backendAdapter";
 import { updateOrderStatus as coreUpdateOrderStatus } from "../../core/infra/CoreOrdersApi";
 import {
@@ -59,8 +52,19 @@ import {
 } from "../../core/storage/installedDeviceStorage";
 import { TerminalEngine } from "../../core/terminal/TerminalEngine";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
+import type { CoreOrderItem, CoreTask } from "../../infra/docker-core/types";
+import { isNetworkError } from "../../infra/menuPilotFallback";
+import {
+  readActiveOrders,
+  readOrderItems,
+  type ActiveOrderRow,
+} from "../../infra/readers/OrderReader";
+import { readOpenTasks } from "../../infra/readers/TaskReader";
+import { markItemReady } from "../../infra/writers/OrderWriter";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import { toUserMessage } from "../../ui/errors";
+import { RestaurantLogo } from "../../ui/RestaurantLogo";
+import { TPVInstallPrompt } from "../TPV/components/TPVInstallPrompt";
 import { TPVStateDisplay } from "../TPV/components/TPVStateDisplay";
 import { ItemTimer } from "./ItemTimer";
 import {
@@ -118,7 +122,7 @@ function shouldLoadKdsOrders(
   return false;
 }
 
-/** Pure: filtra pedidos por estação (ALL = todos; BAR/KITCHEN = só itens dessa estação). */
+/** Pure: filtra pedidos por estação (ALL = todos; BAR/KITCHEN = só itens dessa estação). KDS_BAR_COZINHA_STATION_CONTRACT §5 — não remover. */
 function filterOrdersByStation<T extends { items: CoreOrderItem[] }>(
   orders: T[],
   stationFilter: "ALL" | "BAR" | "KITCHEN",
@@ -133,6 +137,7 @@ function filterOrdersByStation<T extends { items: CoreOrderItem[] }>(
 }
 
 export function KDSMinimal() {
+  const { identity } = useRestaurantIdentity();
   const readiness = useOperationalReadiness("KDS");
   const { runtime } = useRestaurantRuntime();
   const globalUI = useGlobalUIState();
@@ -144,6 +149,12 @@ export function KDSMinimal() {
   useLayoutEffect(() => {
     shift?.refreshShiftStatus?.();
   }, []);
+
+  useEffect(() => {
+    document.title = identity.name
+      ? `${identity.name} — KDS`
+      : "KDS — Pedidos ativos";
+  }, [identity.name]);
 
   // Hooks sempre no topo (regra do React): nunca após early return.
   const [orders, setOrders] = useState<
@@ -158,6 +169,7 @@ export function KDSMinimal() {
   const [activeTab, setActiveTab] = useState<"ALL" | "BAR" | "KITCHEN">("ALL");
   const [tasks, setTasks] = useState<CoreTask[]>([]);
   const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const ordersRef = useRef<number>(0);
 
   // Em localhost + Docker: SEMPRE seed (TPV e KDS no mesmo restaurante; evita 1a35f047/cache).
   const installedKdsRestaurantId = getKdsRestaurantId();
@@ -232,12 +244,17 @@ export function KDSMinimal() {
 
       setOrders(ordersWithItems);
       globalUI.setScreenEmpty(ordersWithItems.length === 0);
+      // KDS_LAYOUT_UX_CONTRACT §7: log só quando número de pedidos muda (evitar spam em DEV)
       if (import.meta.env.DEV) {
-        console.log(
-          `[KDS] loadOrders: ${
-            ordersWithItems.length
-          } pedido(s) ativo(s) para restaurante ${restaurantId.slice(0, 8)}…`,
-        );
+        const prevCount = ordersRef.current;
+        ordersRef.current = ordersWithItems.length;
+        if (prevCount !== ordersWithItems.length) {
+          console.log(
+            `[KDS] loadOrders: ${
+              ordersWithItems.length
+            } pedido(s) ativo(s) para restaurante ${restaurantId.slice(0, 8)}…`,
+          );
+        }
       }
       await loadTasks();
     } catch (err) {
@@ -420,7 +437,7 @@ export function KDSMinimal() {
           }}
         >
           <Link
-            to="/admin/devices"
+            to="/admin/modules"
             style={{
               fontSize: 14,
               color: VPC.textMuted,
@@ -552,17 +569,31 @@ export function KDSMinimal() {
 
   const filteredOrders = filterOrdersByStation(orders, stationFilter);
 
+  // KDS_LAYOUT_UX_CONTRACT §4: activeOnly — excluir READY/CLOSED da lista principal (não poluir com concluídos)
+  const activeOnly = filteredOrders.filter(
+    (o) =>
+      String(o.status ?? "").toUpperCase() !== "READY" &&
+      String(o.status ?? "").toUpperCase() !== "CLOSED",
+  );
+
+  // KDS_LAYOUT_UX_CONTRACT §2: root flex column + área lista com flex:1 minHeight:0 — sem barra preta no rodapé
   return (
     <div
       style={{
-        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+        flex: 1,
         backgroundColor: VPC.bg,
         fontFamily: "Inter, system-ui, sans-serif",
         color: VPC.text,
         padding: VPC.space,
+        boxSizing: "border-box",
       }}
     >
-      <div style={{ marginBottom: VPC.space }}>
+      <TPVInstallPrompt variant="kds" />
+      <div style={{ marginBottom: VPC.space, flexShrink: 0 }}>
         <div
           style={{
             display: "flex",
@@ -571,16 +602,25 @@ export function KDSMinimal() {
             marginBottom: VPC.space,
           }}
         >
-          <h1
-            style={{
-              margin: 0,
-              fontSize: VPC.fontSizeLarge,
-              fontWeight: 700,
-              color: VPC.text,
-            }}
-          >
-            KDS — Pedidos ativos
-          </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <RestaurantLogo
+              logoUrl={identity.logoUrl}
+              name={identity.name || "Restaurante"}
+              size={44}
+            />
+            <h1
+              style={{
+                margin: 0,
+                fontSize: VPC.fontSizeLarge,
+                fontWeight: 700,
+                color: VPC.text,
+              }}
+            >
+              {identity.name
+                ? `${identity.name} — KDS`
+                : "KDS — Pedidos ativos"}
+            </h1>
+          </div>
           {/* B4: sem ruído técnico (Docker/Supabase/realtime); mostrar apenas um estado de ligação simples */}
           <div
             style={{
@@ -678,19 +718,40 @@ export function KDSMinimal() {
 
       {/* TASK ENGINE: Painel de Tarefas Automáticas */}
       {activeTab === "KITCHEN" && (
-        <TaskPanel
-          restaurantId={restaurantId}
-          station="KITCHEN"
-          onTaskAcknowledged={(taskId) => {
-            console.log("Tarefa reconhecida:", taskId);
-            // Recarregar pedidos para atualizar highlights
-            loadOrders(true);
-          }}
-        />
+        <div style={{ flexShrink: 0 }}>
+          <TaskPanel
+            restaurantId={restaurantId}
+            station="KITCHEN"
+            onTaskAcknowledged={(taskId) => {
+              console.log("Tarefa reconhecida:", taskId);
+              loadOrders(true);
+            }}
+          />
+        </div>
       )}
 
-      <div>
-        {filteredOrders.map((order) => {
+      {activeOnly.length === 0 && filteredOrders.length > 0 && (
+        <p
+          style={{
+            color: VPC.textMuted,
+            marginBottom: VPC.space,
+            flexShrink: 0,
+          }}
+        >
+          Nenhum pedido em preparação (todos prontos ou fechados).
+        </p>
+      )}
+      {/* KDS_LAYOUT_UX_CONTRACT §2: área lista — flex:1 minHeight:0 overflowY:auto (único scroll; sem barra preta) */}
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          paddingRight: 8,
+          scrollbarGutter: "stable",
+        }}
+      >
+        {activeOnly.map((order) => {
           // NOVA LÓGICA: Calcular status baseado nos itens (não no pedido)
           // O pedido herda o estado do item mais crítico
           const orderStatus: OrderStatusResult = calculateOrderStatus(
@@ -715,7 +776,13 @@ export function KDSMinimal() {
                   Pedido #
                   {order.number || order.short_id || order.id.slice(0, 8)}
                 </strong>
-                <OriginBadge origin={order.sync_metadata?.origin} />
+                <OriginBadge
+                  origin={order.sync_metadata?.origin as string | undefined}
+                  createdByRole={
+                    order.sync_metadata?.created_by_role as string | undefined
+                  }
+                  tableNumber={order.table_number ?? undefined}
+                />
                 {/* Status do pedido baseado no item mais crítico */}
                 {orderStatus.state === "delay" && (
                   <span
@@ -788,24 +855,28 @@ export function KDSMinimal() {
                   </button>
                 </div>
               )}
-              {/* Itens agrupados por estação */}
+              {/* Itens agrupados por estação — sempre mostrar Cozinha e Bar para divisão clara */}
               <div>
                 <strong>Itens:</strong>
 
-                {/* Agrupar itens por estação */}
                 {(() => {
                   const itemsByStation = order.items.reduce((acc, item) => {
-                    const station = item.station || "KITCHEN";
-                    if (!acc[station]) {
-                      acc[station] = [];
-                    }
+                    const station =
+                      (item.station ?? "KITCHEN").toString().toUpperCase() ===
+                      "BAR"
+                        ? "BAR"
+                        : "KITCHEN";
+                    if (!acc[station]) acc[station] = [];
                     acc[station].push(item);
                     return acc;
                   }, {} as Record<string, typeof order.items>);
 
-                  return Object.entries(itemsByStation).map(
-                    ([station, items]) => (
-                      <div key={station} style={{ marginTop: "16px" }}>
+                  const kitchenItems = itemsByStation["KITCHEN"] ?? [];
+                  const barItems = itemsByStation["BAR"] ?? [];
+
+                  return (
+                    <>
+                      <div key="KITCHEN" style={{ marginTop: "16px" }}>
                         <div
                           style={{
                             fontSize: "12px",
@@ -816,11 +887,11 @@ export function KDSMinimal() {
                             borderBottom: "1px solid #e5e7eb",
                           }}
                         >
-                          {station === "BAR" ? "🍺 BAR" : "🍳 COZINHA"} (
-                          {items.length} item{items.length !== 1 ? "s" : ""})
+                          🍳 COZINHA ({kitchenItems.length} item
+                          {kitchenItems.length !== 1 ? "s" : ""})
                         </div>
                         <ul style={{ listStyle: "none", padding: 0 }}>
-                          {items.map((item) => {
+                          {kitchenItems.map((item) => {
                             const itemCreated = new Date(item.created_at);
                             const now = new Date();
                             const prepTimeSeconds =
@@ -987,7 +1058,7 @@ export function KDSMinimal() {
                                   </div>
                                 )}
 
-                                {/* Botão "Item Pronto" */}
+                                {/* Botão "Item Pronto" — só permitido quando o pedido já está IN_PREP/PREPARING (evita OPEN→READY rejeitado pelo Core) */}
                                 {!isItemReady && (
                                   <div style={{ marginTop: "8px" }}>
                                     <button
@@ -997,27 +1068,42 @@ export function KDSMinimal() {
                                           restaurantId,
                                         )
                                       }
-                                      disabled={markingItem === item.id}
+                                      disabled={
+                                        markingItem === item.id ||
+                                        (order.status !== "IN_PREP" &&
+                                          order.status !== "PREPARING")
+                                      }
+                                      title={
+                                        order.status === "OPEN"
+                                          ? "Inicie o preparo primeiro"
+                                          : undefined
+                                      }
                                       style={{
                                         minHeight: 40,
                                         padding: "8px 16px",
                                         fontSize: VPC.fontSizeBase,
                                         fontWeight: 600,
                                         backgroundColor:
-                                          markingItem === item.id
+                                          markingItem === item.id ||
+                                          (order.status !== "IN_PREP" &&
+                                            order.status !== "PREPARING")
                                             ? VPC.textMuted
                                             : VPC.accent,
                                         color: "#fff",
                                         border: "none",
                                         borderRadius: VPC.radius,
                                         cursor:
-                                          markingItem === item.id
+                                          markingItem === item.id ||
+                                          (order.status !== "IN_PREP" &&
+                                            order.status !== "PREPARING")
                                             ? "wait"
                                             : "pointer",
                                       }}
                                     >
                                       {markingItem === item.id
                                         ? "A marcar..."
+                                        : order.status === "OPEN"
+                                        ? "⏳ Inicie o preparo primeiro"
                                         : "✅ Item pronto"}
                                     </button>
                                   </div>
@@ -1027,7 +1113,217 @@ export function KDSMinimal() {
                           })}
                         </ul>
                       </div>
-                    ),
+                      <div key="BAR" style={{ marginTop: "16px" }}>
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            color: "#6b7280",
+                            marginBottom: "8px",
+                            paddingBottom: "4px",
+                            borderBottom: "1px solid #e5e7eb",
+                          }}
+                        >
+                          🍺 BAR ({barItems.length} item
+                          {barItems.length !== 1 ? "s" : ""})
+                        </div>
+                        <ul style={{ listStyle: "none", padding: 0 }}>
+                          {barItems.map((item) => {
+                            const itemCreated = new Date(item.created_at!);
+                            const now = new Date();
+                            const prepTimeSeconds =
+                              item.prep_time_seconds || 300;
+                            const expectedReadyAt = new Date(
+                              itemCreated.getTime() + prepTimeSeconds * 1000,
+                            );
+                            const delaySeconds =
+                              (now.getTime() - expectedReadyAt.getTime()) /
+                              1000;
+                            const delayRatio =
+                              prepTimeSeconds > 0
+                                ? delaySeconds / prepTimeSeconds
+                                : 0;
+                            const isItemReady = item.ready_at !== null;
+                            const actualTimeSeconds =
+                              isItemReady && item.ready_at
+                                ? Math.floor(
+                                    (new Date(item.ready_at).getTime() -
+                                      itemCreated.getTime()) /
+                                      1000,
+                                  )
+                                : Math.floor(
+                                    (now.getTime() - itemCreated.getTime()) /
+                                      1000,
+                                  );
+                            const timeDifference =
+                              actualTimeSeconds - prepTimeSeconds;
+                            const timeDifferenceMinutes = Math.floor(
+                              Math.abs(timeDifference) / 60,
+                            );
+                            let itemStatus:
+                              | "ready"
+                              | "normal"
+                              | "attention"
+                              | "delay" = "normal";
+                            if (isItemReady) itemStatus = "ready";
+                            else if (delayRatio < 0.1) itemStatus = "normal";
+                            else if (delayRatio < 0.25)
+                              itemStatus = "attention";
+                            else itemStatus = "delay";
+                            const itemColors = {
+                              ready: "#6b7280",
+                              normal: "#22c55e",
+                              attention: "#eab308",
+                              delay: "#ef4444",
+                            };
+                            const itemTask = tasks.find(
+                              (t) =>
+                                t.order_item_id === item.id &&
+                                t.status === "OPEN",
+                            );
+                            const hasTask = !!itemTask;
+                            return (
+                              <li
+                                key={item.id}
+                                style={{
+                                  marginBottom: "8px",
+                                  padding: "12px",
+                                  backgroundColor: isItemReady
+                                    ? "#f0fdf4"
+                                    : hasTask
+                                    ? "#fef2f2"
+                                    : "#f9fafb",
+                                  borderRadius: "4px",
+                                  border: isItemReady
+                                    ? "1px solid #22c55e"
+                                    : hasTask
+                                    ? "2px solid #dc2626"
+                                    : "1px solid #e5e7eb",
+                                  boxShadow: hasTask
+                                    ? "0 0 0 2px rgba(220, 38, 38, 0.2)"
+                                    : "none",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                    marginBottom: "4px",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      color: itemColors[itemStatus],
+                                      fontSize: "16px",
+                                    }}
+                                  >
+                                    {isItemReady
+                                      ? "✅"
+                                      : itemStatus === "delay"
+                                      ? "🔴"
+                                      : itemStatus === "attention"
+                                      ? "🟡"
+                                      : "🟢"}
+                                  </span>
+                                  {hasTask && (
+                                    <span
+                                      style={{
+                                        fontSize: "12px",
+                                        fontWeight: "bold",
+                                        color: "#dc2626",
+                                        backgroundColor: "#fee2e2",
+                                        padding: "2px 6px",
+                                        borderRadius: "4px",
+                                      }}
+                                    >
+                                      🧠 TAREFA
+                                    </span>
+                                  )}
+                                  <span style={{ flex: 1, fontWeight: "500" }}>
+                                    {item.name_snapshot} x{item.quantity}
+                                  </span>
+                                  {!isItemReady && <ItemTimer item={item} />}
+                                  {isItemReady && (
+                                    <span
+                                      style={{
+                                        color: "#22c55e",
+                                        fontSize: "12px",
+                                        fontWeight: "bold",
+                                      }}
+                                    >
+                                      ✅ Pronto
+                                    </span>
+                                  )}
+                                </div>
+                                {isItemReady && (
+                                  <div
+                                    style={{
+                                      fontSize: "11px",
+                                      color: "#6b7280",
+                                      marginTop: "4px",
+                                    }}
+                                  >
+                                    {timeDifference >= 0
+                                      ? `⏱️ ${timeDifferenceMinutes} min acima do esperado`
+                                      : `⏱️ ${timeDifferenceMinutes} min abaixo do esperado`}
+                                  </div>
+                                )}
+                                {!isItemReady && (
+                                  <div style={{ marginTop: "8px" }}>
+                                    <button
+                                      onClick={() =>
+                                        handleMarkItemReady(
+                                          item.id,
+                                          restaurantId,
+                                        )
+                                      }
+                                      disabled={
+                                        markingItem === item.id ||
+                                        (order.status !== "IN_PREP" &&
+                                          order.status !== "PREPARING")
+                                      }
+                                      title={
+                                        order.status === "OPEN"
+                                          ? "Inicie o preparo primeiro"
+                                          : undefined
+                                      }
+                                      style={{
+                                        minHeight: 40,
+                                        padding: "8px 16px",
+                                        fontSize: VPC.fontSizeBase,
+                                        fontWeight: 600,
+                                        backgroundColor:
+                                          markingItem === item.id ||
+                                          (order.status !== "IN_PREP" &&
+                                            order.status !== "PREPARING")
+                                            ? VPC.textMuted
+                                            : VPC.accent,
+                                        color: "#fff",
+                                        border: "none",
+                                        borderRadius: VPC.radius,
+                                        cursor:
+                                          markingItem === item.id ||
+                                          (order.status !== "IN_PREP" &&
+                                            order.status !== "PREPARING")
+                                            ? "wait"
+                                            : "pointer",
+                                      }}
+                                    >
+                                      {markingItem === item.id
+                                        ? "A marcar..."
+                                        : order.status === "OPEN"
+                                        ? "⏳ Inicie o preparo primeiro"
+                                        : "✅ Item pronto"}
+                                    </button>
+                                  </div>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    </>
                   );
                 })()}
               </div>

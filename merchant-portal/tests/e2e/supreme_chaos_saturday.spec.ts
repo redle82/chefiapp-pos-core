@@ -112,6 +112,7 @@ class MockCore {
 const injectAuth = async (page: Page, role: string) => {
   await page.addInitScript((r) => {
     localStorage.setItem("chefiapp_user_role", r);
+    localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
   }, role);
 };
 

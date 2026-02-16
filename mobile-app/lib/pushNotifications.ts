@@ -1,19 +1,17 @@
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { supabase } from '@/services/supabase';
 
-// Configure notification behavior
-Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-        shouldShowBanner: true,
-        shouldShowList: true,
-    }),
-});
+// SDK 53+: expo-notifications (remote push) was removed from Expo Go. Only load in dev/build.
+function isExpoGo(): boolean {
+    return Constants.appOwnership === 'expo';
+}
+
+async function getNotifications(): Promise<typeof import('expo-notifications') | null> {
+    if (isExpoGo()) return null;
+    return await import('expo-notifications');
+}
 
 export interface PushToken {
     token: string;
@@ -22,19 +20,33 @@ export interface PushToken {
 
 export const PushNotifications = {
     /**
-     * Request permission and get push token
+     * Request permission and get push token. No-op in Expo Go (SDK 53+).
      */
     async registerForPushNotifications(): Promise<PushToken | null> {
+        const Notifications = await getNotifications();
+        if (!Notifications) {
+            if (__DEV__) console.log('[Push] Skipped in Expo Go (use a development build for push)');
+            return null;
+        }
+
         if (!Device.isDevice) {
             console.log('[Push] Must use physical device for push notifications');
             return null;
         }
 
-        // Check existing permissions
+        Notifications.setNotificationHandler({
+            handleNotification: async () => ({
+                shouldShowAlert: true,
+                shouldPlaySound: true,
+                shouldSetBadge: true,
+                shouldShowBanner: true,
+                shouldShowList: true,
+            }),
+        });
+
         const { status: existingStatus } = await Notifications.getPermissionsAsync();
         let finalStatus = existingStatus;
 
-        // Request if not granted
         if (existingStatus !== 'granted') {
             const { status } = await Notifications.requestPermissionsAsync();
             finalStatus = status;
@@ -45,13 +57,11 @@ export const PushNotifications = {
             return null;
         }
 
-        // Get Expo push token
         const projectId = Constants.expoConfig?.extra?.eas?.projectId;
         const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
 
-        // Android-specific channel
         if (Platform.OS === 'android') {
-            Notifications.setNotificationChannelAsync('default', {
+            await Notifications.setNotificationChannelAsync('default', {
                 name: 'ChefIApp',
                 importance: Notifications.AndroidImportance.MAX,
                 vibrationPattern: [0, 250, 250, 250],
@@ -87,7 +97,7 @@ export const PushNotifications = {
     },
 
     /**
-     * Schedule local notification
+     * Schedule local notification. No-op in Expo Go (SDK 53+).
      */
     async scheduleLocalNotification(
         title: string,
@@ -95,6 +105,8 @@ export const PushNotifications = {
         data?: Record<string, any>,
         seconds = 1
     ): Promise<string> {
+        const Notifications = await getNotifications();
+        if (!Notifications) return '';
         const id = await Notifications.scheduleNotificationAsync({
             content: {
                 title,
@@ -108,9 +120,11 @@ export const PushNotifications = {
     },
 
     /**
-     * Cancel all scheduled notifications
+     * Cancel all scheduled notifications. No-op in Expo Go (SDK 53+).
      */
     async cancelAll(): Promise<void> {
+        const Notifications = await getNotifications();
+        if (!Notifications) return;
         await Notifications.cancelAllScheduledNotificationsAsync();
     },
 };

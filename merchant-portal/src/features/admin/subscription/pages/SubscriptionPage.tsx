@@ -2,48 +2,99 @@
  * SubscriptionPage — Assinatura / Billing Center (Last.app style).
  * Responde: que plano tenho, o que inclui, uso/limites, quanto pago, método de pagamento,
  * e-mail de faturação, histórico de faturas.
- * Ref: Tu suscripción — plano, uso, resumo, pagamento, e-mail, historial.
+ *
+ * Data source: useSubscriptionPage hook (Core DB only; empty when no data).
  */
 
+import { CONFIG } from "../../../../config";
+import { BillingBroker } from "../../../../core/billing/BillingBroker";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
+import { BillingEmailCard } from "../components/BillingEmailCard";
+import { BillingSummaryCard } from "../components/BillingSummaryCard";
+import { InvoicesTable } from "../components/InvoicesTable";
+import { PaymentMethodCard } from "../components/PaymentMethodCard";
 import { PlanCard } from "../components/PlanCard";
 import { UsageMeterRow } from "../components/UsageMeterRow";
-import { BillingSummaryCard } from "../components/BillingSummaryCard";
-import { PaymentMethodCard } from "../components/PaymentMethodCard";
-import { BillingEmailCard } from "../components/BillingEmailCard";
-import { InvoicesTable } from "../components/InvoicesTable";
-import {
-  MOCK_PLANS,
-  MOCK_USAGE,
-  MOCK_BILLING,
-  MOCK_PAYMENT,
-  MOCK_BILLING_EMAIL,
-  MOCK_INVOICES,
-} from "../data/subscriptionMock";
+import { useSubscriptionPage } from "../useSubscriptionPage";
 
 export function SubscriptionPage() {
+  const {
+    plans,
+    usage,
+    billingSummary,
+    paymentMethod,
+    billingEmail,
+    invoices,
+    subscription,
+    loading,
+    error,
+  } = useSubscriptionPage();
+
+  const handleChangePlan = async (planId: string) => {
+    try {
+      const result = await BillingBroker.startSubscription(planId);
+      if (result.url) window.location.href = result.url;
+    } catch (err) {
+      console.error("[SubscriptionPage] Change plan error:", err);
+    }
+  };
+
+  const handleChangeCard = async () => {
+    try {
+      const result = await BillingBroker.openCustomerPortal();
+      if (result.url) window.location.href = result.url;
+    } catch (err) {
+      console.error("[SubscriptionPage] Open portal error:", err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ padding: 32, color: "var(--text-secondary)", fontSize: 14 }}>
+        A carregar dados de faturação…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: 32, color: "var(--color-error)", fontSize: 14 }}>
+        Erro: {error}
+      </div>
+    );
+  }
+
+  const isTrialing = subscription?.status === "trialing";
+
   return (
     <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
-      <header style={{ marginBottom: 20 }}>
-        <h1
-          style={{
-            fontSize: 22,
-            fontWeight: 700,
-            margin: "0 0 4px 0",
-            color: "#111827",
-          }}
-        >
-          Tu suscripción
-        </h1>
-        <p
-          style={{
-            margin: 0,
-            fontSize: 14,
-            color: "#6b7280",
-          }}
-        >
-          Administra tu plan y complementos de ChefIApp.
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Tu suscripción"
+        subtitle="Administra tu plan y complementos de ChefIApp."
+      />
+      {(isTrialing && subscription?.trial_ends_at) || CONFIG.STRIPE_IS_TEST ? (
+        <div style={{ marginTop: -8, marginBottom: 16, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          {isTrialing && subscription?.trial_ends_at && (
+            <span style={{ color: "var(--color-warning)", fontWeight: 600, fontSize: 14 }}>
+              Período de prueba activo
+            </span>
+          )}
+          {CONFIG.STRIPE_IS_TEST && (
+            <span
+              style={{
+                padding: "2px 8px",
+                fontSize: 12,
+                fontWeight: 600,
+                color: "var(--color-info)",
+                background: "var(--status-info-bg)",
+                borderRadius: 4,
+              }}
+            >
+              Stripe em modo demo/teste
+            </span>
+          )}
+        </div>
+      ) : null}
 
       {/* A) Planos */}
       <section style={{ marginBottom: 24 }}>
@@ -51,7 +102,7 @@ export function SubscriptionPage() {
           style={{
             fontSize: 16,
             fontWeight: 600,
-            color: "#374151",
+            color: "var(--text-primary)",
             margin: "0 0 12px 0",
           }}
         >
@@ -64,11 +115,11 @@ export function SubscriptionPage() {
             gap: 12,
           }}
         >
-          {MOCK_PLANS.map((plan) => (
+          {plans.map((plan) => (
             <PlanCard
               key={plan.id}
               plan={plan}
-              onChangePlan={(id) => console.log("Change plan", id)}
+              onChangePlan={handleChangePlan}
               onContactSupport={() => console.log("Contact support")}
             />
           ))}
@@ -81,7 +132,7 @@ export function SubscriptionPage() {
           style={{
             fontSize: 16,
             fontWeight: 600,
-            color: "#374151",
+            color: "var(--text-primary)",
             margin: "0 0 8px 0",
           }}
         >
@@ -91,7 +142,7 @@ export function SubscriptionPage() {
           style={{
             margin: "0 0 12px 0",
             fontSize: 13,
-            color: "#6b7280",
+            color: "var(--text-secondary)",
           }}
         >
           Realiza un seguimiento de los límites de tu plan actual y del uso
@@ -99,19 +150,19 @@ export function SubscriptionPage() {
         </p>
         <div
           style={{
-            border: "1px solid #e5e7eb",
+            border: "1px solid var(--surface-border)",
             borderRadius: 12,
             padding: "0 16px",
-            backgroundColor: "#fff",
+            backgroundColor: "var(--card-bg-on-dark)",
           }}
         >
-          {MOCK_USAGE.map((meter) => (
+          {usage.map((meter) => (
             <UsageMeterRow key={meter.id} meter={meter} />
           ))}
         </div>
       </section>
 
-      {/* C) Resumo + D) Pagamento + E) E-mail — 2 colunas */}
+      {/* C) Resumo + D) Pagamento — 2 colunas */}
       <div
         style={{
           display: "grid",
@@ -121,19 +172,19 @@ export function SubscriptionPage() {
         }}
       >
         <BillingSummaryCard
-          summary={MOCK_BILLING}
+          summary={billingSummary}
           onSwitchToYearly={() => console.log("Switch to yearly")}
           onCancelSubscription={() => console.log("Cancel subscription")}
         />
         <PaymentMethodCard
-          method={MOCK_PAYMENT}
-          onChangeCard={() => console.log("Change card")}
+          method={paymentMethod}
+          onChangeCard={handleChangeCard}
         />
       </div>
 
       <section style={{ marginBottom: 24 }}>
         <BillingEmailCard
-          initialEmail={MOCK_BILLING_EMAIL}
+          initialEmail={billingEmail}
           onSave={async (email) => {
             console.log("Save billing email", email);
           }}
@@ -143,7 +194,7 @@ export function SubscriptionPage() {
       {/* F) Histórico de faturas */}
       <section>
         <InvoicesTable
-          invoices={MOCK_INVOICES}
+          invoices={invoices}
           onApplyFilters={(opts) => console.log("Apply filters", opts)}
           onDownloadPdf={(id) => console.log("Download PDF", id)}
         />

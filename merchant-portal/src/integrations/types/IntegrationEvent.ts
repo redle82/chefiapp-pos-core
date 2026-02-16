@@ -86,15 +86,133 @@ export interface DeliveryStatusEvent {
 }
 
 // ─────────────────────────────────────────────────────────────
-// UNION TYPE
+// EXTENDED ORDER & PAYMENT EVENTS (Event Catalog §1.3)
+// ─────────────────────────────────────────────────────────────
+
+export interface OrderPaidEvent {
+  type: 'order.paid';
+  payload: {
+    orderId: string;
+    totalCents: number;
+    paymentMethod?: string;
+    completedAt: number;
+  };
+}
+
+export interface OrderReadyEvent {
+  type: 'order.ready';
+  payload: {
+    orderId: string;
+    readyAt: number;
+  };
+}
+
+export interface OrderClosedEvent {
+  type: 'order.closed';
+  payload: {
+    orderId: string;
+    closedAt: number;
+  };
+}
+
+export interface PaymentConfirmedEvent {
+  type: 'payment.confirmed';
+  payload: {
+    orderId?: string;
+    subscriptionId?: string;
+    amountCents?: number;
+    confirmedAt: number;
+    metadata?: Record<string, unknown>;
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHIFT EVENTS
+// ─────────────────────────────────────────────────────────────
+
+export interface ShiftStartedEvent {
+  type: 'shift.started';
+  payload: {
+    restaurantId: string;
+    shiftId?: string;
+    startedAt: number;
+  };
+}
+
+export interface ShiftEndedEvent {
+  type: 'shift.ended';
+  payload: {
+    restaurantId: string;
+    shiftId?: string;
+    endedAt: number;
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// ALERT & TASK EVENTS
+// ─────────────────────────────────────────────────────────────
+
+export interface AlertRaisedEvent {
+  type: 'alert.raised';
+  payload: {
+    alertId: string;
+    severity: 'info' | 'warning' | 'critical';
+    message: string;
+    raisedAt: number;
+    metadata?: Record<string, unknown>;
+  };
+}
+
+export interface TaskCreatedEvent {
+  type: 'task.created';
+  payload: {
+    taskId: string;
+    title: string;
+    description?: string;
+    priority?: string;
+    assigneeRole?: string;
+    createdAt: number;
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// UNION TYPE & EVENT TYPE LITERAL
 // ─────────────────────────────────────────────────────────────
 
 export type IntegrationEvent =
   | OrderCreatedEvent
   | OrderUpdatedEvent
   | OrderCompletedEvent
+  | OrderPaidEvent
+  | OrderReadyEvent
+  | OrderClosedEvent
+  | PaymentConfirmedEvent
   | MenuUpdatedEvent
-  | DeliveryStatusEvent;
+  | DeliveryStatusEvent
+  | ShiftStartedEvent
+  | ShiftEndedEvent
+  | AlertRaisedEvent
+  | TaskCreatedEvent;
+
+/** Literal union of event type strings for webhook config and API. */
+export type IntegrationEventType = IntegrationEvent['type'];
+
+/** All canonical event type strings (for UI selectors and validation). */
+export const INTEGRATION_EVENT_TYPES: IntegrationEventType[] = [
+  'order.created',
+  'order.updated',
+  'order.completed',
+  'order.paid',
+  'order.ready',
+  'order.closed',
+  'payment.confirmed',
+  'menu.updated',
+  'delivery.status',
+  'shift.started',
+  'shift.ended',
+  'alert.raised',
+  'task.created',
+];
 
 // ─────────────────────────────────────────────────────────────
 // HELPERS
@@ -118,5 +236,61 @@ export const createOrderCompletedEvent = (
   payload: OrderCompletedEvent['payload']
 ): OrderCompletedEvent => ({
   type: 'order.completed',
+  payload,
+});
+
+export const createOrderPaidEvent = (
+  payload: OrderPaidEvent['payload']
+): OrderPaidEvent => ({
+  type: 'order.paid',
+  payload,
+});
+
+export const createOrderReadyEvent = (
+  payload: OrderReadyEvent['payload']
+): OrderReadyEvent => ({
+  type: 'order.ready',
+  payload,
+});
+
+export const createOrderClosedEvent = (
+  payload: OrderClosedEvent['payload']
+): OrderClosedEvent => ({
+  type: 'order.closed',
+  payload,
+});
+
+export const createPaymentConfirmedEvent = (
+  payload: PaymentConfirmedEvent['payload']
+): PaymentConfirmedEvent => ({
+  type: 'payment.confirmed',
+  payload,
+});
+
+export const createShiftStartedEvent = (
+  payload: ShiftStartedEvent['payload']
+): ShiftStartedEvent => ({
+  type: 'shift.started',
+  payload,
+});
+
+export const createShiftEndedEvent = (
+  payload: ShiftEndedEvent['payload']
+): ShiftEndedEvent => ({
+  type: 'shift.ended',
+  payload,
+});
+
+export const createAlertRaisedEvent = (
+  payload: AlertRaisedEvent['payload']
+): AlertRaisedEvent => ({
+  type: 'alert.raised',
+  payload,
+});
+
+export const createTaskCreatedEvent = (
+  payload: TaskCreatedEvent['payload']
+): TaskCreatedEvent => ({
+  type: 'task.created',
   payload,
 });

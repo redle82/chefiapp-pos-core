@@ -1,0 +1,6 @@
+schema-file: "./schema/dbmate_schema.sql"
+migrations-dir: "./schema/migrations"
+migrations-table: "schema_migrations"
+no-dump-schema: false
+wait: true
+wait-timeout: "30s"

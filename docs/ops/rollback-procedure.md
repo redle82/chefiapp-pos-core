@@ -176,6 +176,16 @@ eas update:rollback --channel production --branch main --message "Rollback to pr
 
 ---
 
+## 🔒 Rollback seguro no fluxo crítico
+
+Em falha de rede ou timeout durante criar pedido / pagamento:
+
+- O cliente **não deve** persistir estado parcial (ex.: pedido criado sem confirmação do Core).
+- Se um pedido foi criado mas o pagamento falhou: **cancelar ou eliminar** esse pedido para evitar inconsistência (ex.: via Core RPC ou DELETE em staging).
+- Scripts de validação: `scripts/flows/run-critical-flow.sh`, `run-critical-flow-load.sh`, `run-critical-flow-chaos.sh`, `validate-critical-flow-full.sh`.
+
+---
+
 ## 📋 TEMPO ESTIMADO
 
 | Ação | Tempo |

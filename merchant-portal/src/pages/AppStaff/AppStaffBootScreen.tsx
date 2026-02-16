@@ -2,10 +2,13 @@
  * AppStaffBootScreen — Ritual de entrada (~300 ms). Overlay fullscreen com logo/texto;
  * sem spinner. Usado no StaffAppShellLayout para "reset psicológico" ao entrar no app.
  * Contrato: docs/plans/app_encapsulamento_psicológico.
+ * Identidade: RESTAURANT_LOGO_IDENTITY_CONTRACT.md — logo do restaurante quando disponível.
  */
 
 import React, { useEffect, useState } from "react";
 import { colors } from "../../ui/design-system/tokens/colors";
+import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
+import { RestaurantLogo } from "../../ui/RestaurantLogo";
 
 const BOOT_VISIBLE_MS = 300;
 const FADEOUT_MS = 150;
@@ -16,6 +19,7 @@ export interface AppStaffBootScreenProps {
 
 export function AppStaffBootScreen({ onDone }: AppStaffBootScreenProps) {
   const [exiting, setExiting] = useState(false);
+  const { identity } = useRestaurantIdentity();
 
   useEffect(() => {
     const showTimer = window.setTimeout(() => setExiting(true), BOOT_VISIBLE_MS);
@@ -49,15 +53,11 @@ export function AppStaffBootScreen({ onDone }: AppStaffBootScreenProps) {
         pointerEvents: exiting ? "none" : "auto",
       }}
     >
-      <img
-        src="/Logo Chefiapp.png"
-        alt=""
-        style={{
-          width: 80,
-          height: 80,
-          objectFit: "contain",
-          marginBottom: 16,
-        }}
+      <RestaurantLogo
+        logoUrl={identity.logoUrl}
+        name={identity.name}
+        size={80}
+        style={{ marginBottom: 16 }}
       />
       <span
         style={{
@@ -68,7 +68,7 @@ export function AppStaffBootScreen({ onDone }: AppStaffBootScreenProps) {
           maxWidth: 260,
         }}
       >
-        Sistema Operacional do Restaurante
+        {identity.name || "Sistema Operacional do Restaurante"}
       </span>
     </div>
   );

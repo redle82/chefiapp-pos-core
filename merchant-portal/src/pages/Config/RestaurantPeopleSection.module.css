@@ -4,29 +4,31 @@
 
 .description {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 24px;
 }
 
 .errorBanner {
   padding: 12px;
   margin-bottom: 16px;
-  background-color: #fee;
+  background-color: var(--status-error-bg);
   border-radius: 8px;
-  color: #c00;
+  color: var(--color-error);
 }
 
 .formSection {
   margin-bottom: 24px;
   padding: 16px;
-  background-color: #f8f9fa;
+  background-color: var(--card-bg-on-dark);
   border-radius: 8px;
+  border: 1px solid var(--surface-border);
 }
 
 .formTitle {
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 12px;
+  color: var(--text-primary);
 }
 
 .form {
@@ -37,15 +39,17 @@
 
 .formInput {
   padding: 12px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
   font-size: 14px;
+  background-color: var(--card-bg-on-dark);
+  color: var(--text-primary);
 }
 
 .submitBtn {
   padding: 12px;
-  background-color: #667eea;
-  color: #fff;
+  background-color: var(--color-primary);
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   font-size: 14px;
@@ -65,12 +69,12 @@
 }
 
 .loadingText {
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .emptyState {
   font-size: 14px;
-  color: #999;
+  color: var(--text-secondary);
   font-style: italic;
   padding: 24px;
   text-align: center;
@@ -78,9 +82,9 @@
 
 .personCard {
   padding: 16px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
-  background-color: #fff;
+  background-color: var(--card-bg-on-dark);
 }
 
 .personCardInner {
@@ -94,35 +98,36 @@
 .personName {
   font-size: 16px;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .personRole {
   font-size: 12px;
-  color: #667eea;
+  color: var(--color-primary);
   margin-top: 4px;
 }
 
 .codeRow {
   margin-top: 8px;
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .smallBtn {
   margin-left: 8px;
   padding: 4px 8px;
   font-size: 12px;
-  border: 1px solid #667eea;
+  border: 1px solid var(--color-primary);
   border-radius: 4px;
   background: transparent;
-  color: #667eea;
+  color: var(--color-primary);
   cursor: pointer;
 }
 
 .inviteStatus {
   margin-top: 4px;
   font-size: 12px;
-  color: #4b5563;
+  color: var(--text-secondary);
 }
 
 .actionsRow {
@@ -132,10 +137,10 @@
 .actionBtn {
   padding: 6px 12px;
   font-size: 12px;
-  border: 1px solid #667eea;
+  border: 1px solid var(--color-primary);
   border-radius: 4px;
   background: transparent;
-  color: #667eea;
+  color: var(--color-primary);
   cursor: pointer;
   margin-right: 8px;
 }
@@ -146,7 +151,7 @@
 
 .qrHint {
   font-size: 11px;
-  color: #666;
+  color: var(--text-secondary);
   margin-top: 4px;
 }
 
@@ -155,11 +160,11 @@
   font-size: 12px;
   border: none;
   border-radius: 4px;
-  background-color: #dc3545;
-  color: #fff;
+  background-color: var(--color-error);
+  color: var(--text-inverse);
   cursor: pointer;
 }
 
 .noRestaurant {
-  color: #666;
+  color: var(--text-secondary);
 }

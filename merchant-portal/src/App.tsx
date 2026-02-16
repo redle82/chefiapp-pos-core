@@ -10,8 +10,10 @@ import {
   Route,
   Routes,
   useLocation,
+  useNavigate,
   useSearchParams,
 } from "react-router-dom";
+import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import {
   GlobalUIStateProvider,
   useGlobalUIState,
@@ -22,15 +24,19 @@ import type {
 } from "./context/RestaurantRuntimeContext";
 import { RestaurantRuntimeContext } from "./context/RestaurantRuntimeContext";
 import { AuthProvider } from "./core/auth/AuthProvider";
+import { useAuth } from "./core/auth/useAuth";
 import { FlowGate } from "./core/flow/FlowGate";
 import { deriveLifecycle } from "./core/lifecycle/Lifecycle";
+import { TRIAL_RESTAURANT_ID } from "./core/readiness/operationalRestaurant";
 import { isTrialModeParam } from "./core/routing/TrialMode";
 import { ShiftContext } from "./core/shift/ShiftContext";
 import { ShiftGuard } from "./core/shift/ShiftGuard";
+import { usePWAStaffHomeToTPVRedirect } from "./core/operational/PWAOpenToTPVRedirect";
 import { EventMonitorBootstrap } from "./core/tasks/EventMonitorBootstrap";
 import { TPVTrialPage } from "./pages/TPVMinimal/TPVTrialPage";
 import { MarketingRoutesFragment } from "./routes/MarketingRoutes";
 import { OperationalRoutesFragment } from "./routes/OperationalRoutes";
+import { OfflineIndicator } from "./ui/OfflineIndicator";
 import { BillingBanner } from "./ui/billing/BillingBanner";
 import { BillingBlockedView } from "./ui/billing/BillingBlockedView";
 import { CoreUnavailableBanner } from "./ui/design-system/CoreUnavailableBanner";
@@ -50,7 +56,6 @@ function TPVRouteHandler() {
 // =============================================================================
 // PUBLIC TREE (SEM AUTH) — providers mínimos para / e /op/tpv?mode=trial
 // =============================================================================
-const TRIAL_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
 const trialRuntime: RestaurantRuntime = {
   restaurant_id: TRIAL_RESTAURANT_ID,
   mode: "onboarding",
@@ -110,10 +115,41 @@ function TPVTrialGate() {
   return <Navigate to="/auth" replace />;
 }
 
+/** Self-service signup: when session is set and signup intent exists, redirect to setup (email + phone flow). */
+function SignupIntentRedirect() {
+  const { session, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (loading || !session) return;
+    try {
+      if (sessionStorage.getItem("chefiapp_signup_intent") !== "1") return;
+      const pathname = location.pathname;
+      if (
+        pathname === "/welcome" ||
+        pathname === "/onboarding" ||
+        pathname === "/app/activation" ||
+        pathname === "/setup/restaurant-minimal" ||
+        pathname === "/bootstrap"
+      )
+        return;
+      sessionStorage.removeItem("chefiapp_signup_intent");
+      navigate("/welcome", { replace: true });
+    } catch {
+      // ignore
+    }
+  }, [session, loading, location.pathname, navigate]);
+
+  return null;
+}
+
 function App() {
   return (
     <ErrorBoundary context="Root">
       <AuthProvider>
+        <SignupIntentRedirect />
+        <CookieConsentBanner />
         {/* <PublicLifecycleSync /> */}
         <BillingsPreloader />
         <Routes>
@@ -151,7 +187,7 @@ const LAST_ROUTE_KEY = "chefiapp_lastRoute";
 const LAST_ROUTE_ALLOWED = [
   "/dashboard",
   "/app/dashboard",
-  "/config",
+  "/admin/config",
   "/op/tpv",
   "/op/kds",
   "/op/cash",
@@ -162,6 +198,8 @@ function AppContentWithBilling() {
   const { isBillingBlocked, billingStatus, isTrialExpired } =
     useGlobalUIState();
   const location = useLocation();
+
+  usePWAStaffHomeToTPVRedirect();
 
   useEffect(() => {
     const path = location.pathname;
@@ -220,14 +258,13 @@ function AppContentWithBilling() {
   return (
     <>
       <EventMonitorBootstrap />
+      <OfflineIndicator />
       {!isDashboard && !isOperationalSurface && shouldShowBillingBanner && (
         <BillingBanner />
       )}
       <ModeIndicator />
       <CoreUnavailableBanner />
-      <Routes>
-        {OperationalRoutesFragment}
-      </Routes>
+      <Routes>{OperationalRoutesFragment}</Routes>
     </>
   );
 }

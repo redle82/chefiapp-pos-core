@@ -2,12 +2,15 @@ import React from "react";
 import { BillingWarningBadge } from "../../billing/BillingWarningBadge";
 import { Text } from "../primitives/Text";
 import { colors } from "../tokens/colors";
+import { RestaurantLogo } from "../../RestaurantLogo";
 
 interface TPVHeaderProps {
   operatorName: string;
   terminalId: string;
   isOnline: boolean;
   restaurantName?: string;
+  /** URL do logo do restaurante. Ver RESTAURANT_LOGO_IDENTITY_CONTRACT.md */
+  logoUrl?: string | null;
   voiceControl?: {
     isListening: boolean;
     isAvailable: boolean;
@@ -20,6 +23,7 @@ export const TPVHeader: React.FC<TPVHeaderProps> = ({
   terminalId,
   isOnline,
   restaurantName = "ChefIApp",
+  logoUrl,
   voiceControl,
 }) => {
   return (
@@ -32,7 +36,8 @@ export const TPVHeader: React.FC<TPVHeaderProps> = ({
       }}
     >
       <div style={{ display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <RestaurantLogo logoUrl={logoUrl} name={restaurantName} size={40} />
           {/* Brand Name - Large & Prominent */}
           <Text
             size="3xl"

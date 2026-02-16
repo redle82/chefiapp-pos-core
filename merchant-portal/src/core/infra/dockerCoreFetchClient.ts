@@ -2,7 +2,7 @@
  * Docker Core client — PostgREST via fetch (ZERO @supabase/supabase-js)
  *
  * Usado quando backendType === 'docker'. Garante nenhuma instância de GoTrueClient.
- * API compatível com o que o código usa: .from(), .select(), .eq(), .rpc(), .channel().
+ * API compatível com o que o código usa: .from(), .select(), .eq(), .is(), .rpc(), .channel().
  */
 
 import { CONFIG } from "../../config";
@@ -55,8 +55,47 @@ const TABLE_UNAVAILABLE_TTL_MS = 30_000;
 /** In DEV, optional tables are marked unavailable for 24h so we never hit the network (no 404). */
 const OPTIONAL_TABLES_TTL_DEV_MS = 24 * 60 * 60 * 1000;
 
-/** Canonical list of optional Core tables; see docs/architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md */
-const OPTIONAL_TABLES = ["gm_reservations", "gm_customers"] as const;
+/** Canonical list of optional Core tables; see docs/architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md.
+ * gm_terminals: heartbeat opcional; em DEV evita 404 quando a migração não está aplicada.
+ * api_keys, webhook_out_*: ver docker-core/schema/migrations/20260301_*.sql
+ * merchant_subscriptions: faturação; ver docker-core/schema/migrations/20260222_merchant_subscriptions.sql
+ * gm_audit_logs: trilha de auditoria e eventos fiscais; ver docker-core/schema/migrations/20260211_core_audit_logs.sql */
+const OPTIONAL_TABLES = [
+  "gm_reservations",
+  "gm_customers",
+  "gm_terminals",
+  "api_keys",
+  "webhook_out_config",
+  "webhook_out_delivery_log",
+  "merchant_subscriptions",
+  "gm_audit_logs",
+] as const;
+
+/** RPCs opcionais: se a migração não estiver aplicada (404), não repetir o pedido durante TTL para evitar ruído na consola.
+ * get_multiunit_overview: ver docker-core/schema/migrations/20260221_multiunit_aggregate_views.sql */
+const OPTIONAL_RPCS = ["get_multiunit_overview"] as const;
+const rpcUnavailableUntil = new Map<string, number>();
+const RPC_UNAVAILABLE_TTL_MS = 30_000;
+const RPC_UNAVAILABLE_TTL_DEV_MS = 24 * 60 * 60 * 1000;
+
+function isRpcUnavailable(fnName: string): boolean {
+  const until = rpcUnavailableUntil.get(fnName);
+  if (until === undefined) return false;
+  if (Date.now() > until) {
+    rpcUnavailableUntil.delete(fnName);
+    return false;
+  }
+  return true;
+}
+
+function markRpcUnavailable(fnName: string): void {
+  const ttl =
+    typeof window !== "undefined" && IS_DEV
+      ? RPC_UNAVAILABLE_TTL_DEV_MS
+      : RPC_UNAVAILABLE_TTL_MS;
+  rpcUnavailableUntil.set(fnName, Date.now() + ttl);
+}
+
 /** Log once per session when code hits an optional table that is unavailable (DEV only). */
 const optionalTableLoggedThisSession = new Set<string>();
 
@@ -111,8 +150,10 @@ interface FilterBuilder {
   update(body: object): FilterBuilder;
   delete(): FilterBuilder;
   eq(column: string, value: unknown): FilterBuilder;
+  is(column: string, value: null | unknown): FilterBuilder;
   gte(column: string, value: unknown): FilterBuilder;
   in(column: string, values: unknown[]): FilterBuilder;
+  not(column: string, op: string, value: string | null | undefined): FilterBuilder;
   or(filter: string): FilterBuilder;
   order(column: string, opts?: { ascending?: boolean }): FilterBuilder;
   limit(n: number): FilterBuilder;
@@ -153,8 +194,14 @@ function buildFilterBuilder(table: string): FilterBuilder {
         !optionalTableLoggedThisSession.has(table)
       ) {
         optionalTableLoggedThisSession.add(table);
-        console.info(
-          `[DEV] ${table} indisponível — aplica migrations para ativar: ./scripts/core/apply-missing-migrations.sh`,
+        const hint =
+            table === "gm_terminals"
+              ? "cd docker-core && make migrate-terminals"
+              : table === "gm_audit_logs"
+              ? "dbmate up ou psql -f schema/migrations/20260211_core_audit_logs.sql"
+              : "ver docker-core/Makefile ou docs/architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md";
+        console.debug(
+          `[DEV] ${table} indisponível (opcional). Para ativar: ${hint}`,
         );
       }
       return {
@@ -351,12 +398,25 @@ function buildFilterBuilder(table: string): FilterBuilder {
       state.params[column] = `eq.${value}`;
       return chain;
     },
+    is(column: string, value: null | unknown) {
+      if (value === null || value === undefined) {
+        state.params[column] = "is.null";
+      } else {
+        state.params[column] = `eq.${value}`;
+      }
+      return chain;
+    },
     gte(column: string, value: unknown) {
       state.params[column] = `gte.${value}`;
       return chain;
     },
     in(column: string, values: unknown[]) {
       state.params[column] = `in.(${values.map((v) => String(v)).join(",")})`;
+      return chain;
+    },
+    not(column: string, op: string, value: string | null | undefined) {
+      const v = value === null || value === undefined ? "null" : String(value);
+      state.params[column] = `not.${op}.${v}`;
       return chain;
     },
     or(filter: string) {
@@ -457,6 +517,18 @@ export function getDockerCoreFetchClient(): DockerCoreClientShape {
     },
     async rpc(fnName: string, params: object = {}) {
       try {
+        if (
+          (OPTIONAL_RPCS as readonly string[]).includes(fnName) &&
+          isRpcUnavailable(fnName)
+        ) {
+          return {
+            data: null,
+            error: {
+              message: "Function not available",
+              code: "FUNCTION_UNAVAILABLE",
+            },
+          };
+        }
         const res = await fetch(`${REST}/rpc/${fnName}`, {
           method: "POST",
           headers: headers(),
@@ -476,6 +548,12 @@ export function getDockerCoreFetchClient(): DockerCoreClientShape {
           };
         }
         if (!res.ok) {
+          if (
+            res.status === 404 &&
+            (OPTIONAL_RPCS as readonly string[]).includes(fnName)
+          ) {
+            markRpcUnavailable(fnName);
+          }
           let err: PostgrestError;
           try {
             const j = JSON.parse(text);

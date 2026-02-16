@@ -26,10 +26,7 @@ export const OrderHeader: React.FC<OrderHeaderProps> = ({
     statusColors[status] || "bg-zinc-800 text-zinc-400 border-zinc-700";
 
   return (
-    <Card
-      variant="glass"
-      className="mb-3 p-4 border-b border-white/5 bg-zinc-900/40 backdrop-blur-md"
-    >
+    <Card className="mb-3 p-4 border-b border-white/5 bg-zinc-900/40 backdrop-blur-md">
       <div className="flex justify-between items-start">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">

@@ -36,8 +36,10 @@ export class BillingBroker {
     );
 
     if (error) {
-      console.error("[BillingBroker] Core checkout error:", error);
-      throw new Error(error);
+      console.warn("[BillingBroker] Core checkout error:", error);
+      throw new Error(
+        typeof error === "string" ? error : "Não foi possível iniciar o checkout. Tente mais tarde.",
+      );
     }
 
     return { url, sessionId };

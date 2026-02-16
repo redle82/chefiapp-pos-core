@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import {
   createOrUpdateDiscount,
-  getDiscounts,
   toggleDiscountActive,
 } from "../services/promotionsService";
 import type { Discount, NewDiscountInput } from "../types";
@@ -10,27 +9,19 @@ import { DiscountsTable } from "./DiscountsTable";
 
 interface DiscountsSectionProps {
   locationId: string;
+  discounts: Discount[];
+  loadingDiscounts: boolean;
+  onDiscountsUpdated: () => void;
 }
 
-export function DiscountsSection({ locationId }: DiscountsSectionProps) {
-  const [discounts, setDiscounts] = useState<Discount[]>([]);
-  const [loading, setLoading] = useState(true);
+export function DiscountsSection({
+  locationId,
+  discounts,
+  loadingDiscounts,
+  onDiscountsUpdated,
+}: DiscountsSectionProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Discount | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const list = await getDiscounts(locationId);
-      setDiscounts(list);
-    } finally {
-      setLoading(false);
-    }
-  }, [locationId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const handleNew = () => {
     setEditing(null);
@@ -43,23 +34,13 @@ export function DiscountsSection({ locationId }: DiscountsSectionProps) {
   };
 
   const handleSave = async (input: NewDiscountInput) => {
-    const saved = await createOrUpdateDiscount(locationId, input);
-    setDiscounts((current) => {
-      const idx = current.findIndex((d) => d.id === saved.id);
-      if (idx >= 0) {
-        const copy = [...current];
-        copy[idx] = saved;
-        return copy;
-      }
-      return [...current, saved];
-    });
+    await createOrUpdateDiscount(locationId, input);
+    onDiscountsUpdated();
   };
 
   const handleToggleActive = async (id: string, active: boolean) => {
     await toggleDiscountActive(locationId, id, active);
-    setDiscounts((current) =>
-      current.map((d) => (d.id === id ? { ...d, active } : d))
-    );
+    onDiscountsUpdated();
   };
 
   return (
@@ -85,7 +66,7 @@ export function DiscountsSection({ locationId }: DiscountsSectionProps) {
 
       <DiscountsTable
         discounts={discounts}
-        loading={loading}
+        loading={loadingDiscounts}
         onToggleActive={handleToggleActive}
         onEdit={handleEdit}
       />

@@ -1,8 +1,8 @@
 /**
  * ProductFirstLandingPage — Landing = produto (Last.app style)
  *
- * LEGACY: não utilizar em novas rotas de marketing. Mantido apenas como
- * entrada específica para /app/trial-tpv (demo guiada do TPV trial).
+ * LEGACY: não utilizar em novas rotas. Mantido apenas por compatibilidade temporária.
+ * Entrada específica para /app/trial-tpv (demo guiada do TPV trial).
  *
  * Histórico: originalmente pensada como landing principal de produto; hoje
  * LandingV2Page e a landing Next.js externa são as fontes oficiais.
@@ -14,10 +14,9 @@ import { OperationalFullscreenWrapper } from "../../components/operational/Opera
 import type { RestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { RestaurantRuntimeContext } from "../../context/RestaurantRuntimeContext";
 import { deriveLifecycle } from "../../core/lifecycle/Lifecycle";
+import { TRIAL_RESTAURANT_ID } from "../../core/readiness/operationalRestaurant";
 import { OSCopy } from "../../ui/design-system/sovereign/OSCopy";
 import { TPVMinimal } from "../TPVMinimal/TPVMinimal";
-
-const TRIAL_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
 
 const trialRuntime: RestaurantRuntime = {
   restaurant_id: TRIAL_RESTAURANT_ID,

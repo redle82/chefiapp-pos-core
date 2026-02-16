@@ -10,6 +10,7 @@
 
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
 import ReservationBoard from "../../../../pages/TPV/reservations/ReservationBoard";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 
 export function ReservationsOperationalPage() {
   const { runtime } = useRestaurantRuntime();
@@ -18,22 +19,18 @@ export function ReservationsOperationalPage() {
   if (!restaurantId) {
     return (
       <section style={{ padding: 24 }}>
-        <header style={{ marginBottom: 16 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
-            Gestor de reservas
-          </h1>
-          <p style={{ margin: 0, fontSize: 14, color: "#6b7280" }}>
-            Lista do dia, status, check-in e cancelamento.
-          </p>
-        </header>
+        <AdminPageHeader
+          title="Gestor de reservas"
+          subtitle="Lista do dia, status, check-in e cancelamento."
+        />
         <div
           style={{
             padding: 32,
             textAlign: "center",
-            backgroundColor: "#fff",
+            backgroundColor: "var(--card-bg-on-dark, var(--surface-elevated))",
             borderRadius: 12,
-            border: "1px solid #e5e7eb",
-            color: "#6b7280",
+            border: "1px solid var(--surface-border)",
+            color: "var(--text-secondary)",
           }}
         >
           Seleccione un restaurante para ver y gestionar las reservas.
@@ -44,14 +41,10 @@ export function ReservationsOperationalPage() {
 
   return (
     <section style={{ display: "flex", flexDirection: "column", minHeight: 400 }}>
-      <header style={{ marginBottom: 16 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
-          Gestor de reservas
-        </h1>
-        <p style={{ margin: 0, fontSize: 14, color: "#6b7280" }}>
-          Lista del día, estado, check-in, cancelación y creación manual.
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Gestor de reservas"
+        subtitle="Lista del día, estado, check-in, cancelación y creación manual."
+      />
       <ReservationBoard restaurantId={restaurantId} />
     </section>
   );

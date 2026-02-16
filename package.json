@@ -5,7 +5,8 @@
   "main": "index.js",
   "workspaces": [
     "merchant-portal",
-    "customer-portal"
+    "customer-portal",
+    "mobile-app"
   ],
   "directories": {
     "test": "tests"
@@ -36,6 +37,7 @@
     "server:billing": "npx ts-node server/billing-webhook-server.ts",
     "server:subscription-ui": "npx ts-node server/subscription-management-server.ts",
     "server:web-module": "npx ts-node server/web-module-api-server.ts",
+    "server:integration-gateway": "npx ts-node server/integration-gateway.ts",
     "seed:web-module": "npx ts-node server/seed-web-module.ts",
     "refresh:amazon": "npx ts-node server/amazon/refresh-catalog-cli.ts",
     "demo:appstaff": "npx ts-node tests/appstaff-demo-mode.ts",
@@ -56,6 +58,7 @@
     "audit:core": "npm run -s typecheck && npm run -s test",
     "audit:laws": "bash scripts/validate-system-laws.sh",
     "audit:release": "npm run -s audit:web-e2e && npm run -s audit:core && npm run -s audit:laws",
+    "audit:release:portal": "npm run -s audit:web-e2e && npm run -s typecheck && npm -w merchant-portal run test -- --run && npm run -s audit:laws",
     "test:truth": "./scripts/test-truth.sh",
     "test:truth:stress": "./scripts/truth-stress.sh",
     "open:apps": "bash scripts/open-all-apps.sh",
@@ -71,7 +74,18 @@
     "ci:gate:tenant": "./scripts/validate-tenant-isolation.sh",
     "test:e2e:navigation": "cd merchant-portal && npx playwright test tests/e2e/sovereign-navigation.spec.ts",
     "test:appstaff": "cd merchant-portal && npx vitest run ../tests/nervous-system/AppStaff.stress.test.ts || echo 'AppStaff test file not found, skipping...'",
-    "test:all": "npm test && npm run test:appstaff"
+    "test:all": "npm test && npm run test:appstaff",
+    "qr:appstaff-ios": "node scripts/qr-appstaff-ios.mjs",
+    "qr:expo-go": "node scripts/qr-expo-go.mjs",
+    "kill:5175": "lsof -ti:5175 | xargs kill -9 2>/dev/null || true",
+    "vite:up": "bash scripts/vite-persistent.sh",
+    "vite:down": "bash scripts/vite-persistent.sh stop",
+    "vite:status": "bash scripts/vite-persistent.sh status",
+    "start:local": "bash scripts/start-local.sh",
+    "expo:go": "cd mobile-app && npx expo start",
+    "expo:ios": "cd mobile-app && npx expo run:ios",
+    "expo:android": "cd mobile-app && npx expo run:android",
+    "start:full": "bash scripts/start-full-stack-with-simulators.sh"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": "npm -w merchant-portal run lint",
@@ -83,10 +97,12 @@
   "description": "CHEFIAPP POS Core - Event-sourced financial core with legal immutability",
   "dependencies": {
     "@types/pg": "^8.16.0",
+    "bootstrap": "^5.3.8",
     "chalk": "^5.6.2",
     "dotenv": "^17.2.3",
     "node-fetch": "^3.3.2",
     "pg": "^8.16.3",
+    "react-bootstrap": "^2.10.10",
     "stripe": "^20.1.0",
     "uuid": "^13.0.0",
     "yaml": "^2.8.2",
@@ -106,6 +122,7 @@
     "jest-environment-jsdom": "^30.2.0",
     "jsdom": "^27.4.0",
     "lint-staged": "^16.2.7",
+    "qrcode-terminal": "^0.12.0",
     "ts-jest": "^29.1.2",
     "typescript": "^5.3.3"
   }

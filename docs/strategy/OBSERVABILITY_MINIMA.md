@@ -100,10 +100,10 @@ externo; o mínimo viável é ter:
 Em modo Docker Core, cada módulo/terminal deve expor pelo menos:
 
 - **Heartbeat** periódico (TPV, KDS, Staff) registado no Core:  
-  - tabela sugerida: `gm_device_heartbeats` com `device_id`, `restaurant_id`,
-    `module_id`, `last_seen_at`, `status`.
+  - tabela: `gm_device_heartbeats` com `device_id`, `restaurant_id`,
+    `module_id`, `last_seen_at`, `status` (migration `20260221_device_heartbeats_and_runtime_views.sql`).
 - **Estado agregado por restaurante**:  
-  - view sugerida: `vw_runtime_health_by_restaurant` com:
+  - view: `vw_runtime_health_by_restaurant` com:
     - nº de terminais TPV online/offline;  
     - nº de ecrãs KDS online/offline.
 

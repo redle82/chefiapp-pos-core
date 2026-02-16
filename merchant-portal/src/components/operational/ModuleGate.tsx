@@ -40,7 +40,7 @@ export function ModuleGate({ moduleId, children }: Props) {
     <GlobalBlockedView
       title={`${LABELS[moduleId]} não ativo`}
       description={`Ative o módulo ${LABELS[moduleId]} em Configuração > Módulos para usar esta ferramenta.`}
-      action={{ label: "Configuração > Módulos", to: "/config/modules" }}
+      action={{ label: "Configuração > Módulos", to: "/admin/modules" }}
     />
   );
 }

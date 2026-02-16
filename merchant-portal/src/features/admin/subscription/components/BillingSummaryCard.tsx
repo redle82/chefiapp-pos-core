@@ -46,10 +46,10 @@ export function BillingSummaryCard({
   return (
     <div
       style={{
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--surface-border)",
         borderRadius: 12,
         padding: 16,
-        backgroundColor: "#fff",
+        backgroundColor: "var(--card-bg-on-dark)",
       }}
     >
       <h3
@@ -57,15 +57,15 @@ export function BillingSummaryCard({
           margin: "0 0 12px 0",
           fontSize: 16,
           fontWeight: 700,
-          color: "#111827",
+          color: "var(--text-primary)",
         }}
       >
         Tu plan ChefIApp
       </h3>
-      <p style={{ margin: "0 0 12px 0", fontSize: 13, color: "#6b7280" }}>
+      <p style={{ margin: "0 0 12px 0", fontSize: 13, color: "var(--text-secondary)" }}>
         {summary.cycle === "monthly" ? "Mensual" : "Anual"} · Facturado
       </p>
-      <p style={{ margin: "0 0 16px 0", fontSize: 14, color: "#374151" }}>
+      <p style={{ margin: "0 0 16px 0", fontSize: 14, color: "var(--text-primary)" }}>
         Próxima renovación: <strong>{formatDate(summary.nextChargeAt)}</strong>
       </p>
       {summary.canSwitchToYearly && onSwitchToYearly && (
@@ -75,7 +75,7 @@ export function BillingSummaryCard({
           style={{
             marginBottom: 16,
             fontSize: 13,
-            color: "#7c3aed",
+            color: "var(--color-primary)",
             fontWeight: 500,
             background: "none",
             border: "none",
@@ -92,7 +92,7 @@ export function BillingSummaryCard({
             display: "flex",
             justifyContent: "space-between",
             fontSize: 13,
-            color: "#6b7280",
+            color: "var(--text-secondary)",
             marginBottom: 4,
           }}
         >
@@ -104,7 +104,7 @@ export function BillingSummaryCard({
             display: "flex",
             justifyContent: "space-between",
             fontSize: 13,
-            color: "#6b7280",
+            color: "var(--text-secondary)",
             marginBottom: 4,
           }}
         >
@@ -117,10 +117,10 @@ export function BillingSummaryCard({
             justifyContent: "space-between",
             fontSize: 15,
             fontWeight: 700,
-            color: "#111827",
+            color: "var(--text-primary)",
             marginTop: 8,
             paddingTop: 8,
-            borderTop: "1px solid #e5e7eb",
+            borderTop: "1px solid var(--surface-border)",
           }}
         >
           <span>Total</span>
@@ -133,7 +133,7 @@ export function BillingSummaryCard({
           onClick={handleCancelClick}
           style={{
             fontSize: 13,
-            color: "#dc2626",
+            color: "var(--color-error)",
             fontWeight: 500,
             background: "none",
             border: "none",
@@ -160,11 +160,12 @@ export function BillingSummaryCard({
         >
           <div
             style={{
-              backgroundColor: "#fff",
+              backgroundColor: "var(--card-bg-on-dark)",
               padding: 24,
               borderRadius: 12,
               maxWidth: 400,
               boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+              border: "1px solid var(--surface-border)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -172,7 +173,7 @@ export function BillingSummaryCard({
               style={{
                 margin: "0 0 16px 0",
                 fontSize: 15,
-                color: "#374151",
+                color: "var(--text-primary)",
               }}
             >
               Al cancelar perderás acceso a los módulos de pago. Los datos se
@@ -191,11 +192,11 @@ export function BillingSummaryCard({
                 style={{
                   padding: "8px 14px",
                   fontSize: 13,
-                  color: "#6b7280",
-                  border: "1px solid #d1d5db",
+                  color: "var(--text-secondary)",
+                  border: "1px solid var(--surface-border)",
                   borderRadius: 8,
                   cursor: "pointer",
-                  backgroundColor: "#fff",
+                  backgroundColor: "transparent",
                 }}
               >
                 No, mantener
@@ -207,8 +208,8 @@ export function BillingSummaryCard({
                   padding: "8px 14px",
                   fontSize: 13,
                   fontWeight: 600,
-                  color: "#fff",
-                  backgroundColor: "#dc2626",
+                  color: "var(--text-inverse)",
+                  backgroundColor: "var(--color-error)",
                   border: "none",
                   borderRadius: 8,
                   cursor: "pointer",
@@ -236,15 +237,16 @@ export function BillingSummaryCard({
         >
           <div
             style={{
-              backgroundColor: "#fff",
+              backgroundColor: "var(--card-bg-on-dark)",
               padding: 24,
               borderRadius: 12,
               maxWidth: 400,
               boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+              border: "1px solid var(--surface-border)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p style={{ margin: "0 0 8px 0", fontSize: 14, fontWeight: 600, color: "#111827" }}>
+            <p style={{ margin: "0 0 8px 0", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
               Motivo (opcional)
             </p>
             <textarea
@@ -256,7 +258,7 @@ export function BillingSummaryCard({
                 width: "100%",
                 padding: 8,
                 fontSize: 13,
-                border: "1px solid #d1d5db",
+                border: "1px solid var(--surface-border)",
                 borderRadius: 8,
                 marginBottom: 16,
                 boxSizing: "border-box",
@@ -269,11 +271,11 @@ export function BillingSummaryCard({
                 style={{
                   padding: "8px 14px",
                   fontSize: 13,
-                  color: "#6b7280",
-                  border: "1px solid #d1d5db",
+                  color: "var(--text-secondary)",
+                  border: "1px solid var(--surface-border)",
                   borderRadius: 8,
                   cursor: "pointer",
-                  backgroundColor: "#fff",
+                  backgroundColor: "transparent",
                 }}
               >
                 Volver
@@ -285,8 +287,8 @@ export function BillingSummaryCard({
                   padding: "8px 14px",
                   fontSize: 13,
                   fontWeight: 600,
-                  color: "#fff",
-                  backgroundColor: "#dc2626",
+                  color: "var(--text-inverse)",
+                  backgroundColor: "var(--color-error)",
                   border: "none",
                   borderRadius: 8,
                   cursor: "pointer",

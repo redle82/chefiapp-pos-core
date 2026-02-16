@@ -161,15 +161,15 @@ export function ScheduleSection() {
 
   return (
     <div style={{ padding: "48px", maxWidth: "800px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: 600, marginBottom: "8px" }}>
+      <h1 style={{ fontSize: "24px", fontWeight: 600, marginBottom: "8px", color: "var(--text-primary)" }}>
         ⏰ Horários{" "}
         {isSaving && (
-          <span style={{ fontSize: "14px", color: "#667eea" }}>
+          <span style={{ fontSize: "14px", color: "var(--color-primary)" }}>
             (Salvando...)
           </span>
         )}
       </h1>
-      <p style={{ fontSize: "14px", color: "#666", marginBottom: "32px" }}>
+      <p style={{ fontSize: "14px", color: "var(--text-secondary)", marginBottom: "32px" }}>
         Configure os horários de funcionamento por dia da semana
       </p>
 
@@ -181,9 +181,9 @@ export function ScheduleSection() {
               key={day.id}
               style={{
                 padding: "16px",
-                border: "1px solid #e0e0e0",
+                border: "1px solid var(--surface-border)",
                 borderRadius: "8px",
-                backgroundColor: schedule.open ? "#fff" : "#f8f9fa",
+                backgroundColor: schedule.open ? "var(--card-bg-on-dark)" : "var(--surface-elevated)",
               }}
             >
               <div
@@ -216,6 +216,7 @@ export function ScheduleSection() {
                       fontSize: "14px",
                       fontWeight: 600,
                       minWidth: "80px",
+                      color: "var(--text-primary)",
                     }}
                   >
                     {day.label}
@@ -238,12 +239,12 @@ export function ScheduleSection() {
                       }
                       style={{
                         padding: "8px",
-                        border: "1px solid #e0e0e0",
+                        border: "1px solid var(--surface-border)",
                         borderRadius: "4px",
                         fontSize: "14px",
                       }}
                     />
-                    <span>até</span>
+                    <span style={{ color: "var(--text-primary)" }}>até</span>
                     <input
                       type="time"
                       value={schedule.end}
@@ -252,7 +253,7 @@ export function ScheduleSection() {
                       }
                       style={{
                         padding: "8px",
-                        border: "1px solid #e0e0e0",
+                        border: "1px solid var(--surface-border)",
                         borderRadius: "4px",
                         fontSize: "14px",
                       }}
@@ -263,7 +264,7 @@ export function ScheduleSection() {
                   <span
                     style={{
                       fontSize: "14px",
-                      color: "#999",
+                      color: "var(--text-tertiary)",
                       fontStyle: "italic",
                     }}
                   >

@@ -89,7 +89,7 @@ export default defineConfig(async ({ mode }) => {
           display: "standalone",
           orientation: "portrait",
           scope: "/",
-          start_url: "/app/staff/home",
+          start_url: "/op/tpv",
           icons: [
             {
               src: "Logo Chefiapp.png",
@@ -108,6 +108,28 @@ export default defineConfig(async ({ mode }) => {
         workbox: {
           globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
           maximumFileSizeToCacheInBytes: 5000000, // 5MB
+          // Offline total: SPA carrega quando offline; GET /rest pode usar cache.
+          navigateFallback: "/index.html",
+          navigateFallbackDenylist: [
+            /^\/rest\//,
+            /^\/api\//,
+            /^\/internal\//,
+            /^\/webhooks\//,
+            /^\/rpc\//,
+          ],
+          runtimeCaching: [
+            {
+              urlPattern: /^https?:\/\/[^/]+\/rest\/v1\/[^?]*/,
+              handler: "NetworkFirst",
+              method: "GET",
+              options: {
+                cacheName: "chefiapp-rest-get",
+                expiration: { maxEntries: 80, maxAgeSeconds: 60 * 5 },
+                cacheableResponse: { statuses: [0, 200] },
+                networkTimeoutSeconds: 10,
+              },
+            },
+          ],
         },
       }),
     ],
@@ -115,6 +137,8 @@ export default defineConfig(async ({ mode }) => {
       // Porta de desenvolvimento: 5175 (override com PORT se necessário).
       port: parseInt(process.env.PORT || "5175", 10),
       strictPort: !process.env.PORT,
+      // Acessível na rede local para o Expo (WebView) no telemóvel poder carregar http://<MAC_IP>:5175/app/staff/home
+      host: true,
       // HMR: WebSocket resiliente — reconecta em vez de morrer.
       hmr: {
         overlay: true,

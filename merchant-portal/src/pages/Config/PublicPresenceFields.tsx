@@ -85,12 +85,12 @@ export function PublicPresenceFields() {
         style={{
           marginTop: 24,
           padding: 20,
-          backgroundColor: "#f8fafc",
+          backgroundColor: "var(--card-bg-on-dark)",
           borderRadius: 8,
-          border: "1px solid #e2e8f0",
+          border: "1px solid var(--surface-border)",
         }}
       >
-        <p style={{ margin: 0, fontSize: 14, color: "#64748b" }}>
+        <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
           Complete a configuração do restaurante para editar a página pública (endereço e horários).
         </p>
       </div>
@@ -99,7 +99,7 @@ export function PublicPresenceFields() {
 
   if (loading) {
     return (
-      <p style={{ fontSize: 14, color: "#666" }}>A carregar...</p>
+      <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>A carregar...</p>
     );
   }
 
@@ -109,12 +109,12 @@ export function PublicPresenceFields() {
         style={{
           marginTop: 24,
           padding: 20,
-          backgroundColor: "#fef2f2",
+          backgroundColor: "var(--status-error-bg)",
           borderRadius: 8,
-          border: "1px solid #fecaca",
+          border: "1px solid var(--status-error-border)",
         }}
       >
-        <p style={{ margin: 0, fontSize: 14, color: "#b91c1c" }}>{loadError}</p>
+        <p style={{ margin: 0, fontSize: 14, color: "var(--color-error)" }}>{loadError}</p>
         <button
           type="button"
           onClick={() => load()}
@@ -122,8 +122,8 @@ export function PublicPresenceFields() {
             marginTop: 12,
             padding: "8px 16px",
             fontSize: 13,
-            backgroundColor: "#667eea",
-            color: "#fff",
+            backgroundColor: "var(--color-primary)",
+            color: "var(--text-inverse)",
             border: "none",
             borderRadius: 6,
             cursor: "pointer",
@@ -140,20 +140,20 @@ export function PublicPresenceFields() {
       style={{
         marginTop: 24,
         padding: 20,
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "var(--card-bg-on-dark)",
         borderRadius: 8,
-        border: "1px solid #e0e0e0",
+        border: "1px solid var(--surface-border)",
       }}
     >
-      <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600 }}>
+      <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>
         Página pública
       </h3>
-      <p style={{ margin: "0 0 16px", fontSize: 13, color: "#666" }}>
+      <p style={{ margin: "0 0 16px", fontSize: 13, color: "var(--text-secondary)" }}>
         Estes campos aparecem em <strong>/public/:slug</strong> (menu online). Preencha para clientes verem localização e horários.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div>
-          <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 4, color: "var(--text-primary)" }}>
             Endereço (uma linha)
           </label>
           <input
@@ -165,14 +165,14 @@ export function PublicPresenceFields() {
               width: "100%",
               maxWidth: 400,
               padding: 10,
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--surface-border)",
               borderRadius: 6,
               fontSize: 14,
             }}
           />
         </div>
         <div>
-          <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 4, color: "var(--text-primary)" }}>
             Horários (texto livre)
           </label>
           <input
@@ -184,7 +184,7 @@ export function PublicPresenceFields() {
               width: "100%",
               maxWidth: 400,
               padding: 10,
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--surface-border)",
               borderRadius: 6,
               fontSize: 14,
             }}
@@ -195,7 +195,7 @@ export function PublicPresenceFields() {
             style={{
               margin: 0,
               fontSize: 13,
-              color: message.type === "ok" ? "#059669" : "#dc2626",
+              color: message.type === "ok" ? "var(--color-success)" : "var(--color-error)",
             }}
           >
             {message.type === "ok" ? "✅ " : "❌ "}
@@ -208,8 +208,8 @@ export function PublicPresenceFields() {
           disabled={saving}
           style={{
             padding: "10px 20px",
-            backgroundColor: "#667eea",
-            color: "#fff",
+            backgroundColor: "var(--color-primary)",
+            color: "var(--text-inverse)",
             border: "none",
             borderRadius: 6,
             fontSize: 14,

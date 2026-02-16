@@ -67,24 +67,28 @@ const ACTIVATION_EVENT_PREFIX = 'activation.';
 // ═══════════════════════════════════════════════════════════════
 
 /**
- * Read analytics events from TabIsolatedStorage
+ * Read analytics events from TabIsolatedStorage (skip null/undefined entries)
  */
 function readAnalyticsQueue(): ActivationEvent[] {
     try {
         const raw = getTabIsolated(ANALYTICS_STORAGE_KEY);
         if (!raw) return [];
         const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter((e): e is ActivationEvent => e != null && typeof e === 'object' && typeof e.name === 'string');
     } catch {
         return [];
     }
 }
 
 /**
- * Filter events to activation events only
+ * Filter events to activation events only (skip null/undefined/malformed entries)
  */
 function filterActivationEvents(events: ActivationEvent[]): ActivationEvent[] {
-    return events.filter(e => e.name.startsWith(ACTIVATION_EVENT_PREFIX));
+    return events.filter(
+        (e): e is ActivationEvent =>
+            e != null && typeof e === 'object' && typeof e.name === 'string' && e.name.startsWith(ACTIVATION_EVENT_PREFIX)
+    );
 }
 
 /**
@@ -113,8 +117,9 @@ export function aggregateActivationMetrics(
     let earliest: number | null = null;
     let latest: number | null = null;
 
-    // Process events
+    // Process events (each event is valid per filterActivationEvents)
     for (const event of activationEvents) {
+        if (event == null || typeof event !== 'object') continue;
         // Update time range
         if (earliest === null || event.ts < earliest) earliest = event.ts;
         if (latest === null || event.ts > latest) latest = event.ts;

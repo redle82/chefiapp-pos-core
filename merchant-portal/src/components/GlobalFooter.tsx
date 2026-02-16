@@ -21,6 +21,12 @@ export const GlobalFooter = () => {
             >
               Privacidade
             </Link>
+            <Link
+              to="/legal/dpa"
+              className="hover:text-white transition-colors"
+            >
+              DPA
+            </Link>
           </div>
 
           <div className="mt-4 md:mt-0 flex items-center gap-2">

@@ -65,19 +65,21 @@ export class TerminalEngine {
       if (error) {
         const err = error as { message?: string; code?: string };
         const msg = String(err?.message ?? "").toLowerCase();
+        const isTableUnavailable =
+          err?.code === "42P01" || msg.includes("table unavailable");
         const isCoreUnavailable =
           msg.includes("not found") ||
           msg.includes("backend indisponível") ||
           err?.code === "BACKEND_UNAVAILABLE";
-        if (isCoreUnavailable) {
+        if (isTableUnavailable || isCoreUnavailable) {
           TerminalEngine._skipHeartbeatCoreUnavailable = true;
           if (!TerminalEngine._loggedCoreUnavailable) {
             TerminalEngine._loggedCoreUnavailable = true;
             console.debug(
-              "[TerminalEngine] Core indisponível (gm_terminals); heartbeats pausados nesta sessão."
+              "[TerminalEngine] gm_terminals indisponível; heartbeats pausados nesta sessão."
             );
           }
-        } else if (!isCoreUnavailable) {
+        } else {
           console.warn("[TerminalEngine] Falha ao enviar heartbeat:", error);
         }
       }

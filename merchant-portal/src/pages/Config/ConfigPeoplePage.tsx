@@ -18,26 +18,26 @@ export function ConfigPeoplePage() {
   return (
     <div>
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 600, margin: 0, marginBottom: '8px' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 600, margin: 0, marginBottom: '8px', color: 'var(--text-primary)' }}>
           Pessoas
         </h1>
-        <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>
           Gerencie funcionários, papéis e escalas.
         </p>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid #e0e0e0' }}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--surface-border)' }}>
         <button
           onClick={() => navigate('/config/people/employees')}
           style={{
             padding: '12px 16px',
             border: 'none',
-            borderBottom: isEmployeesTab ? '2px solid #667eea' : '2px solid transparent',
+            borderBottom: isEmployeesTab ? '2px solid var(--color-primary)' : '2px solid transparent',
             backgroundColor: 'transparent',
             cursor: 'pointer',
             fontWeight: isEmployeesTab ? 600 : 400,
-            color: isEmployeesTab ? '#667eea' : '#666',
+            color: isEmployeesTab ? 'var(--color-primary)' : 'var(--text-secondary)',
           }}
         >
           Funcionários
@@ -47,11 +47,11 @@ export function ConfigPeoplePage() {
           style={{
             padding: '12px 16px',
             border: 'none',
-            borderBottom: isRolesTab ? '2px solid #667eea' : '2px solid transparent',
+            borderBottom: isRolesTab ? '2px solid var(--color-primary)' : '2px solid transparent',
             backgroundColor: 'transparent',
             cursor: 'pointer',
             fontWeight: isRolesTab ? 600 : 400,
-            color: isRolesTab ? '#667eea' : '#666',
+            color: isRolesTab ? 'var(--color-primary)' : 'var(--text-secondary)',
           }}
         >
           Papéis
@@ -65,7 +65,7 @@ export function ConfigPeoplePage() {
             backgroundColor: 'transparent',
             cursor: 'pointer',
             fontWeight: 400,
-            color: '#666',
+            color: 'var(--text-secondary)',
           }}
         >
           Escalas →

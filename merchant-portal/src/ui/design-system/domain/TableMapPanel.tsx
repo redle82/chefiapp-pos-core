@@ -1,10 +1,10 @@
 import React, { memo, useCallback, useRef, useState } from "react";
+import { currencyService } from "../../../core/currency/CurrencyService";
 import { Card } from "../Card";
-import { Text } from "../primitives/Text";
 import { Badge } from "../primitives/Badge";
+import { Text } from "../primitives/Text";
 import { colors } from "../tokens/colors";
 import { spacing } from "../tokens/spacing";
-import { currencyService } from "../../../core/currency/CurrencyService";
 
 // Define Table interface locally or import (ideally import but avoiding huge refactor, redefining for now or importing from logic layer)
 // Importing from context seems cleanest but it's in pages/TPV/context.
@@ -107,7 +107,7 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
       orderInfo?: TableData["orderInfo"],
     ) => {
       // 1. Critical Operational States (Override everything)
-      if (health === "angry") return colors.critical.base;
+      if (health === "angry") return colors.destructive.base;
       if (health === "pulsing") return colors.action.base;
 
       // 2. Order Status
@@ -275,7 +275,7 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
 
                 {/* RADAR: Show Wait Time if relevant */}
                 {((table as any).waitMinutes > 15 || health === "pulsing") && (
-                  <Text size="xs" color="critical" weight="bold">
+                  <Text size="xs" color="destructive" weight="bold">
                     {health === "pulsing"
                       ? "CHAMANDO"
                       : `${Math.floor((table as any).waitMinutes)}m`}
@@ -295,7 +295,7 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
                     borderTop: `1px solid ${colors.border.subtle}`,
                   }}
                 >
-                  <Text size="xs" color="primary" weight="semibold">
+                  <Text size="xs" color="primary" weight="bold">
                     {formatTotal(table.orderInfo.total)}
                   </Text>
                   {table.orderInfo.status === "partially_paid" && (

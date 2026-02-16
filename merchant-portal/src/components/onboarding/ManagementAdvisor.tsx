@@ -48,13 +48,13 @@ export function ManagementAdvisor({ children }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <Link
-            to="/config/identity"
+            to="/admin/config/general"
             className="text-xs font-bold underline hover:no-underline"
           >
             Completar Checklist
           </Link>
           <button
-            onClick={() => (window.location.href = "/config/identity")}
+            onClick={() => (window.location.href = "/admin/config/general")}
             className="bg-black text-white px-3 py-1 rounded text-xs font-bold hover:bg-slate-800 transition-colors"
           >
             Publicar Agora

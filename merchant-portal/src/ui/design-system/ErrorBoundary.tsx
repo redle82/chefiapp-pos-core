@@ -49,14 +49,19 @@ export class ErrorBoundary extends Component<Props, State> {
     void this.persistBoundaryError(error, errorInfo);
 
     // Send to Sentry with full context
-    Sentry.withScope((scope) => {
-      scope.setTag("boundary_context", this.props.context || "Global");
-      scope.setContext("react_error_info", {
-        componentStack: errorInfo.componentStack,
-      });
-      const eventId = Sentry.captureException(error);
-      this.setState({ eventId });
-    });
+    Sentry?.withScope?.(
+      (scope: {
+        setTag: (key: string, value: string) => void;
+        setContext: (key: string, context: Record<string, unknown>) => void;
+      }) => {
+        scope.setTag("boundary_context", this.props.context || "Global");
+        scope.setContext("react_error_info", {
+          componentStack: errorInfo.componentStack,
+        });
+        const eventId = Sentry?.captureException?.(error);
+        if (eventId) this.setState({ eventId });
+      },
+    );
   }
 
   private handleReload = () => {

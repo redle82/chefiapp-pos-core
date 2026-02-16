@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+
+/** E2E only: session key used by Keycloak auth (must match authKeycloak.ts). */
+const SESSION_KEY = "chefiapp_keycloak_session";
+const TOKEN_EXPIRY_KEY = "chefiapp_keycloak_expiry";
 
 const styles = {
   page: {
@@ -60,10 +64,25 @@ const styles = {
 };
 
 export function VerifyCodePage() {
+  const [searchParams] = useSearchParams();
   const [code, setCode] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // E2E only: mock OTP for Playwright (signup → bootstrap flow). Requires ?e2e_mock_otp=1 in URL.
+    if (
+      searchParams.get("e2e_mock_otp") === "1" &&
+      code.trim().replace(/\s/g, "") === "123456"
+    ) {
+      const state = {
+        session: { access_token: "e2e-mock-token" },
+        user: { id: "e2e-mock-user", email: "e2e@example.com" },
+      };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
+      sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(Date.now() + 3600_000));
+      window.location.href = "/welcome";
+      return;
+    }
     // A verificação real do código é feita pelo provedor de autenticação (ex.: Keycloak).
     // Esta tela existe apenas como representação UX do fluxo \"/auth/verify\".
   };

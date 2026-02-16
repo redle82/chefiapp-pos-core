@@ -42,8 +42,9 @@ Evitar:
 
 ## Onde vive a copy
 
-- **Landing (marketing):** `merchant-portal/src/pages/LandingV2/` — secções em `sections/` (HeroV2, ToolsAvoidV2, PricingV2, etc.). Copy vive nos próprios componentes e em textos inline.
+- **Landing (marketing):** `merchant-portal/src/pages/LandingV2/` — secções em `sections/` (HeroV2, ToolsAvoidV2, PricingV2, etc.). Copy traduzível em `i18n/landingV2Copy.ts`.
 - Contrato canónico: [LANDING_CANON.md](LANDING_CANON.md) — uma única landing, LandingV2 no merchant-portal.
+- Alinhamento entre landing pública e LandingV2 (termos-chave, promessa, fluxo): [MARKETING_PAGES_ALIGNMENT.md](MARKETING_PAGES_ALIGNMENT.md).
 
 ---
 

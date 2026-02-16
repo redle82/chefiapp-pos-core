@@ -24,6 +24,7 @@ export const CartDrawer: React.FC = () => {
   const [orderTimestamp, setOrderTimestamp] = React.useState<number | null>(
     null,
   );
+  const [customerName, setCustomerName] = React.useState("");
 
   const handleCheckout = async () => {
     if (items.length === 0) return;
@@ -54,7 +55,7 @@ export const CartDrawer: React.FC = () => {
             price_cents: Math.round(i.price * 100), // Convert to cents
             notes: i.notes,
           })),
-          customer_name: "Cliente Web", // TODO: Add Name Input
+          customer_name: customerName.trim() || "Cliente Web",
           table_number: tableNumber || 0, // ERRO-021 Fix: Usar número da mesa da URL ou 0 (Web/Takeaway)
         },
         (progress) => {
@@ -134,6 +135,22 @@ export const CartDrawer: React.FC = () => {
               >
                 ✕
               </button>
+            </div>
+
+            {/* Nome do cliente (opcional) */}
+            <div className="px-6 pb-4">
+              <label htmlFor="cart-customer-name" className="block text-sm text-white/60 mb-1">
+                Nome para o pedido (opcional)
+              </label>
+              <input
+                id="cart-customer-name"
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Ex: Maria"
+                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-gold-500/50 focus:outline-none"
+                aria-label="Nome para o pedido"
+              />
             </div>
 
             {/* Items List */}
@@ -220,8 +237,7 @@ export const CartDrawer: React.FC = () => {
                             )
                           ) {
                             try {
-                              // TODO: Implementar cancelamento no backend
-                              // Por enquanto, apenas limpar estado local
+                              // Cancelamento: quando o Core expor endpoint (ex. PATCH orders/:id status=cancelled), chamar aqui; até lá apenas limpar estado local.
                               setOrderId(null);
                               setOrderTimestamp(null);
                               setStatus("idle");

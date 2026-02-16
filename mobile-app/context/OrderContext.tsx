@@ -186,12 +186,17 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                 setOrders(formatted);
             }
         } catch (e) {
-            const error = e instanceof Error ? e : new Error(String(e));
-            logError(error, {
-                action: 'fetchOrders',
-                userId: session?.user?.id,
-            });
-            console.error("Error fetching orders:", e);
+            const msg = typeof (e as any)?.message === 'string' ? (e as any).message : (e instanceof Error ? e.message : String(e));
+            const isNetworkFailure = /network request failed|failed to fetch|network error/i.test(msg);
+            const isClientMismatch = /\.?\w* is not a function/i.test(msg);
+            if (isNetworkFailure || isClientMismatch) {
+                setOrders([]);
+                if (__DEV__) console.warn("[OrderContext] Core unreachable or client mismatch, orders empty:", msg);
+            } else {
+                const error = e instanceof Error ? e : new Error(String(e));
+                logError(error, { action: 'fetchOrders', userId: session?.user?.id });
+                console.error("Error fetching orders:", e);
+            }
         } finally {
             setLoading(false);
         }

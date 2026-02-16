@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import { BootstrapPage } from "../BootstrapPage";
 
 /**
@@ -5,12 +6,19 @@ import { BootstrapPage } from "../BootstrapPage";
  *
  * Setup mínimo do restaurante após autenticação (telefone/email).
  * Contém apenas os campos essenciais (nome + país/moeda) e, ao concluir,
- * redireciona sempre para o Dashboard config-first.
+ * redireciona para o destino indicado (default: Dashboard).
  *
- * Nota: reutiliza a lógica existente de BootstrapPage, mas fixa o destino
- * de sucesso em `/dashboard` para alinhar com o modelo telefone → Dashboard.
+ * Quando vindo do Onboarding assistente (location.state.fromOnboarding),
+ * successNextPath é /app/activation (Centro de Ativação).
  */
 export function RestaurantMinimalSetupPage() {
-  return <BootstrapPage successNextPath="/dashboard" />;
+  const location = useLocation();
+  const state = location.state as
+    | { successNextPath?: string; fromOnboarding?: boolean }
+    | undefined;
+  const successNextPath =
+    state?.successNextPath ??
+    (state?.fromOnboarding ? "/app/activation" : "/dashboard");
+  return <BootstrapPage successNextPath={successNextPath} />;
 }
 

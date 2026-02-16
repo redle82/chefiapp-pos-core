@@ -1,9 +1,11 @@
 /**
  * HelpPage — Centro de ajuda mínimo.
- * Secções: Primeiros 30 minutos, Criar ementa, Abrir turno, Receber pedidos, Imprimir recibo, FAQ.
+ * Secções: Como começar, Primeiros 30 minutos, Criar ementa, Abrir turno, Receber pedidos, Imprimir recibo, FAQ.
+ * Acessível em /app/help (Staff: More → Ajuda; Admin: Governar → Centro de Ajuda).
  */
 
 import React from "react";
+import { Link } from "react-router-dom";
 import { colors } from "../../ui/design-system/tokens/colors";
 
 const sectionStyle: React.CSSProperties = {
@@ -71,6 +73,22 @@ export function HelpPage() {
       >
         Centro de Ajuda
       </h1>
+
+      <section style={sectionStyle}>
+        <h2 style={titleStyle}>Como começar</h2>
+        <p style={paraStyle}>
+          Se acabou de criar o restaurante: vá ao <strong>app Staff</strong> (ecrã inicial da operação),
+          abra um turno e use o <strong>TPV</strong> para registar vendas. O <strong>KDS</strong> mostra os pedidos na cozinha.
+        </p>
+        <p style={paraStyle}>
+          <Link
+            to="/app/staff/home"
+            style={{ color: colors.action.base, fontWeight: 600, textDecoration: "none" }}
+          >
+            Ir ao app Staff →
+          </Link>
+        </p>
+      </section>
 
       <section style={sectionStyle}>
         <h2 style={titleStyle}>Primeiros 30 minutos</h2>

@@ -1,5 +1,5 @@
 /**
- * Tipos para a página "Mis productos" / Módulos (Last.app style).
+ * Tipos para o Hub Módulos (ativar/abrir módulos).
  * Ref: plano página_mis_productos_módulos
  */
 

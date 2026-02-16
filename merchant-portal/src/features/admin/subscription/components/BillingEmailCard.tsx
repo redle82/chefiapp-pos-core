@@ -32,10 +32,10 @@ export function BillingEmailCard({
   return (
     <div
       style={{
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--surface-border)",
         borderRadius: 12,
         padding: 16,
-        backgroundColor: "#fff",
+        backgroundColor: "var(--card-bg-on-dark)",
       }}
     >
       <h3
@@ -43,7 +43,7 @@ export function BillingEmailCard({
           margin: "0 0 8px 0",
           fontSize: 16,
           fontWeight: 700,
-          color: "#111827",
+          color: "var(--text-primary)",
         }}
       >
         Correo de facturación
@@ -52,7 +52,7 @@ export function BillingEmailCard({
         style={{
           margin: "0 0 12px 0",
           fontSize: 13,
-          color: "#6b7280",
+          color: "var(--text-secondary)",
         }}
       >
         Enviaremos notificaciones de facturación y facturas a esta dirección.
@@ -68,7 +68,7 @@ export function BillingEmailCard({
             minWidth: 0,
             padding: "8px 12px",
             fontSize: 14,
-            border: "1px solid #d1d5db",
+            border: "1px solid var(--surface-border)",
             borderRadius: 8,
             boxSizing: "border-box",
           }}
@@ -81,8 +81,8 @@ export function BillingEmailCard({
             padding: "8px 14px",
             fontSize: 13,
             fontWeight: 600,
-            color: "#fff",
-            backgroundColor: "#7c3aed",
+            color: "var(--text-inverse)",
+            backgroundColor: "var(--color-primary)",
             border: "none",
             borderRadius: 8,
             cursor: saving ? "not-allowed" : "pointer",
@@ -92,7 +92,7 @@ export function BillingEmailCard({
           {saving ? "Guardando…" : "Guardar"}
         </button>
         {saved && (
-          <span style={{ fontSize: 13, color: "#059669" }}>Guardado</span>
+          <span style={{ fontSize: 13, color: "var(--color-success)" }}>Guardado</span>
         )}
       </div>
     </div>

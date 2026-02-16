@@ -94,19 +94,38 @@ vi.mock("../../core/db", () => ({
   },
 }));
 
+// Mock i18n so tablePanel labels render in Portuguese (e.g. "Fechar")
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const k = key.split(".").pop() ?? key;
+      const map: Record<string, string> = {
+        closeBill: "Fechar",
+        requestBill: "Conta",
+        chargeButton: "Cobrar",
+        sendOrder: "Enviar Pedido",
+        processing: "Processando...",
+        print: "Imprimir",
+      };
+      return map[k] ?? key;
+    },
+    i18n: { language: "pt-PT" },
+  }),
+}));
+
 describe("TablePanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("opens payment modal when Cobrar is clicked in standalone mode", () => {
+  it("opens payment modal when Fechar (close bill) is clicked in standalone mode", () => {
     render(
       <MemoryRouter>
         <TablePanel tableId="table-1" />
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByText("💰 Fechar"));
+    fireEvent.click(screen.getByText(/💰 Fechar/));
 
     expect(screen.getByText("Pagamento")).toBeTruthy();
   });

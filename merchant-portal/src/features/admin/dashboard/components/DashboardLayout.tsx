@@ -32,6 +32,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div
+      className="dashboard-layout"
       style={{
         display: "flex",
         minHeight: "100vh",
@@ -50,6 +51,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       >
         <AdminTopbar />
         <main
+          className="admin-content"
           style={{
             padding: "24px 32px",
           }}

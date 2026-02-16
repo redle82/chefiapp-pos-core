@@ -1,47 +1,75 @@
 /**
  * IntegrationEventBus — Ponto único de emissão de eventos
- * 
+ *
  * Uso:
  * ```ts
  * import { emitIntegrationEvent } from '@/integrations';
- * 
- * emitIntegrationEvent({
- *   type: 'order.created',
- *   payload: { ... }
- * });
+ *
+ * emitIntegrationEvent({ type: 'order.created', payload: { ... } }, { restaurantId: '...' });
  * ```
- * 
- * Princípio: TPV, Staff e outros módulos emitem eventos aqui.
- * Adapters escutam via Registry. Ninguém se chama diretamente.
+ *
+ * Se options.restaurantId for passado, o evento é também enviado ao backend (POST /internal/events)
+ * para entrega a Webhooks OUT configurados. Ref: CHEFIAPP_EVENT_BUS_WEBHOOKS_SPEC.md
  */
 
 import { IntegrationRegistry } from './IntegrationRegistry';
 import type { IntegrationEvent } from '../types/IntegrationEvent';
 
-// ─────────────────────────────────────────────────────────────
-// EVENT EMISSION
-// ─────────────────────────────────────────────────────────────
+const API_BASE =
+  typeof window !== 'undefined' ? '' : (import.meta.env?.VITE_API_BASE ?? 'http://localhost:4320');
+const INTERNAL_TOKEN = import.meta.env?.VITE_INTERNAL_API_TOKEN ?? 'chefiapp-internal-token-dev';
+
+export interface EmitOptions {
+  /** Quando presente, o evento é enviado ao backend para Webhooks OUT. */
+  restaurantId?: string;
+}
 
 /**
- * Emite um evento para todas as integrações registradas
- * 
- * Esta é a API pública principal do sistema de integrações.
- * Pode ser chamada de qualquer lugar do sistema.
+ * Emite um evento para todas as integrações registradas e, se restaurantId for passado,
+ * envia também ao backend (POST /internal/events) para entrega a Webhooks OUT.
  */
-export const emitIntegrationEvent = async (event: IntegrationEvent): Promise<void> => {
+export const emitIntegrationEvent = async (
+  event: IntegrationEvent,
+  options?: EmitOptions
+): Promise<void> => {
+  if (!event?.payload) {
+    console.warn("[EventBus] Ignoring event without payload:", event?.type ?? event);
+    return;
+  }
   if (import.meta.env.DEV) {
     console.log(`[EventBus] 📤 ${event.type}`, event.payload);
   }
 
   await IntegrationRegistry.dispatch(event);
+
+  if (options?.restaurantId) {
+    const url = `${API_BASE}/internal/events`;
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Internal-Token': INTERNAL_TOKEN,
+      },
+      body: JSON.stringify({
+        event: event.type,
+        restaurant_id: options.restaurantId,
+        payload: event.payload,
+      }),
+    }).catch(err => {
+      console.warn('[EventBus] Webhooks OUT delivery request failed:', err);
+    });
+  }
 };
 
 /**
  * Versão fire-and-forget (não aguarda processamento)
  * Use quando não precisa garantir que o evento foi processado
  */
-export const emitIntegrationEventAsync = (event: IntegrationEvent): void => {
-  emitIntegrationEvent(event).catch(err => {
+export const emitIntegrationEventAsync = (
+  event: IntegrationEvent,
+  options?: EmitOptions
+): void => {
+  emitIntegrationEvent(event, options).catch(err => {
     console.error('[EventBus] Async emission failed:', err);
   });
 };

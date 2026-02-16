@@ -57,10 +57,10 @@ export function LegalEntityMainCard() {
   return (
     <div
       style={{
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--surface-border)",
         borderRadius: 12,
         padding: 16,
-        backgroundColor: "#fff",
+        backgroundColor: "var(--card-bg-on-dark)",
       }}
     >
       <h3
@@ -68,7 +68,7 @@ export function LegalEntityMainCard() {
           margin: "0 0 12px 0",
           fontSize: 16,
           fontWeight: 700,
-          color: "#111827",
+          color: "var(--text-primary)",
         }}
       >
         Entidad legal principal
@@ -77,7 +77,7 @@ export function LegalEntityMainCard() {
         style={{
           margin: "0 0 16px 0",
           fontSize: 13,
-          color: "#6b7280",
+          color: "var(--text-secondary)",
         }}
       >
         Quién es la empresa o persona que responde legalmente por facturación y
@@ -86,7 +86,7 @@ export function LegalEntityMainCard() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
             Tipo de entidad
           </span>
           <select
@@ -97,7 +97,7 @@ export function LegalEntityMainCard() {
             style={{
               padding: "8px 12px",
               fontSize: 14,
-              border: "1px solid #d1d5db",
+              border: "1px solid var(--surface-border)",
               borderRadius: 8,
               boxSizing: "border-box",
             }}
@@ -110,7 +110,7 @@ export function LegalEntityMainCard() {
           </select>
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
             Razón social / Nombre legal
           </span>
           <input
@@ -121,14 +121,14 @@ export function LegalEntityMainCard() {
             style={{
               padding: "8px 12px",
               fontSize: 14,
-              border: "1px solid #d1d5db",
+              border: "1px solid var(--surface-border)",
               borderRadius: 8,
               boxSizing: "border-box",
             }}
           />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
             NIF / CIF / VAT ID
           </span>
           <input
@@ -139,14 +139,14 @@ export function LegalEntityMainCard() {
             style={{
               padding: "8px 12px",
               fontSize: 14,
-              border: "1px solid #d1d5db",
+              border: "1px solid var(--surface-border)",
               borderRadius: 8,
               boxSizing: "border-box",
             }}
           />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
             País fiscal
           </span>
           <input
@@ -160,7 +160,7 @@ export function LegalEntityMainCard() {
             style={{
               padding: "8px 12px",
               fontSize: 14,
-              border: "1px solid #d1d5db",
+              border: "1px solid var(--surface-border)",
               borderRadius: 8,
               boxSizing: "border-box",
               maxWidth: 80,
@@ -168,7 +168,7 @@ export function LegalEntityMainCard() {
           />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
             Dirección fiscal completa
           </span>
           <textarea
@@ -181,7 +181,7 @@ export function LegalEntityMainCard() {
             style={{
               padding: "8px 12px",
               fontSize: 14,
-              border: "1px solid #d1d5db",
+              border: "1px solid var(--surface-border)",
               borderRadius: 8,
               boxSizing: "border-box",
               resize: "vertical",
@@ -195,10 +195,10 @@ export function LegalEntityMainCard() {
           style={{
             marginTop: 16,
             padding: 12,
-            backgroundColor: "#fef3c7",
+            backgroundColor: "var(--status-warning-bg)",
             borderRadius: 8,
             fontSize: 13,
-            color: "#92400e",
+            color: "var(--status-warning-text)",
           }}
         >
           Alterar estes dados afeta faturas e relatórios fiscais. Confirma?
@@ -211,8 +211,8 @@ export function LegalEntityMainCard() {
                 padding: "6px 12px",
                 fontSize: 13,
                 fontWeight: 600,
-                color: "#fff",
-                backgroundColor: "#7c3aed",
+                color: "var(--text-inverse)",
+                backgroundColor: "var(--color-primary)",
                 border: "none",
                 borderRadius: 8,
                 cursor: saving ? "not-allowed" : "pointer",
@@ -226,11 +226,11 @@ export function LegalEntityMainCard() {
               style={{
                 padding: "6px 12px",
                 fontSize: 13,
-                color: "#6b7280",
-                border: "1px solid #d1d5db",
+                color: "var(--text-secondary)",
+                border: "1px solid var(--surface-border)",
                 borderRadius: 8,
                 cursor: "pointer",
-                backgroundColor: "#fff",
+                backgroundColor: "var(--card-bg-on-dark)",
               }}
             >
               Cancelar
@@ -248,8 +248,8 @@ export function LegalEntityMainCard() {
               padding: "8px 14px",
               fontSize: 13,
               fontWeight: 600,
-              color: "#fff",
-              backgroundColor: "#7c3aed",
+              color: "var(--text-inverse)",
+              backgroundColor: "var(--color-primary)",
               border: "none",
               borderRadius: 8,
               cursor: "pointer",
@@ -258,7 +258,7 @@ export function LegalEntityMainCard() {
             Guardar
           </button>
           {saved && (
-            <span style={{ fontSize: 13, color: "#059669" }}>Guardado</span>
+            <span style={{ fontSize: 13, color: "var(--color-success)" }}>Guardado</span>
           )}
         </div>
       )}

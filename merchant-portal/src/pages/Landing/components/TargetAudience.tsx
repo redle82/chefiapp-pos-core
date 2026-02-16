@@ -1,5 +1,5 @@
-// LEGACY: secção de público-alvo da landing antiga. A versão canónica vive
-// em `LandingV2/sections/TargetAudienceV2.tsx`.
+// LEGACY: não utilizar em novas rotas. Mantido apenas por compatibilidade temporária.
+// Secção de público-alvo da landing antiga; canónico em LandingV2/sections/TargetAudienceV2.tsx.
 import { OSCopy } from '../../../ui/design-system/sovereign/OSCopy';
 
 export const TargetAudience = () => {

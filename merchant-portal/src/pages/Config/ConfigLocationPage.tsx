@@ -27,7 +27,7 @@ export function ConfigLocationPage() {
           display: "flex",
           gap: "8px",
           marginBottom: "24px",
-          borderBottom: "1px solid #e0e0e0",
+          borderBottom: "1px solid var(--surface-border)",
         }}
       >
         <button
@@ -36,12 +36,12 @@ export function ConfigLocationPage() {
             padding: "12px 16px",
             border: "none",
             borderBottom: isAddressTab
-              ? "2px solid #667eea"
+              ? "2px solid var(--color-primary)"
               : "2px solid transparent",
             backgroundColor: "transparent",
             cursor: "pointer",
             fontWeight: isAddressTab ? 600 : 400,
-            color: isAddressTab ? "#667eea" : "#666",
+            color: isAddressTab ? "var(--color-primary)" : "var(--text-secondary)",
           }}
         >
           Endereço
@@ -52,12 +52,12 @@ export function ConfigLocationPage() {
             padding: "12px 16px",
             border: "none",
             borderBottom: isTablesTab
-              ? "2px solid #667eea"
+              ? "2px solid var(--color-primary)"
               : "2px solid transparent",
             backgroundColor: "transparent",
             cursor: "pointer",
             fontWeight: isTablesTab ? 600 : 400,
-            color: isTablesTab ? "#667eea" : "#666",
+            color: isTablesTab ? "var(--color-primary)" : "var(--text-secondary)",
           }}
         >
           Mesas & Zonas
@@ -73,7 +73,7 @@ export function ConfigLocationPage() {
       )}
       {isTablesTab && (
         <>
-          <p style={{ color: "#666", marginBottom: 24 }}>
+          <p style={{ color: "var(--text-secondary)", marginBottom: 24 }}>
             Gerenciamento de mesas e zonas será implementado aqui. Por enquanto,
             use a rota <code>/operacao</code> para visualizar mesas.
           </p>

@@ -264,6 +264,7 @@ Isso transforma o ChefIApp de **produto fechado** em **plataforma operacional**.
 
 ## Referências
 
+- **[CHEFIAPP_PUBLIC_API_CONTRACT.md](CHEFIAPP_PUBLIC_API_CONTRACT.md)** — Contrato público para parceiros (base URL, auth, rate limit, eventos, Webhooks OUT, rotas API IN)
 - [CHEFIAPP_EVENT_BUS_WEBHOOKS_SPEC.md](CHEFIAPP_EVENT_BUS_WEBHOOKS_SPEC.md) — Event Bus e Webhooks OUT (contrato técnico)
 - [CHEFIAPP_WHATSAPP_INTEGRATION_SPEC.md](CHEFIAPP_WHATSAPP_INTEGRATION_SPEC.md) — WhatsApp como integração (adapter, eventos, capacidades)
 - [CHEFIAPP_PAYMENTS_INTEGRATION_SPEC.md](CHEFIAPP_PAYMENTS_INTEGRATION_SPEC.md) — Pagamentos plugável (Stripe no modelo Integration)

@@ -66,6 +66,7 @@ export function IdentitySection() {
     timezone: "",
     currency: "BRL",
     locale: "pt-BR",
+    logoUrl: "",
   });
 
   const formData = onboarding ? onboarding.state.identityForm : localForm;
@@ -86,6 +87,7 @@ export function IdentitySection() {
               timezone: row.timezone || "",
               currency: row.currency || "BRL",
               locale: row.locale || "pt-BR",
+              logoUrl: row.logo_url ?? "",
             });
           }
         });
@@ -310,6 +312,7 @@ export function IdentitySection() {
               timezone: formData.timezone,
               currency: formData.currency,
               locale: formData.locale,
+              logo_url: formData.logoUrl?.trim() || null,
               updated_at: new Date().toISOString(),
             })
             .eq("id", restaurantId);
@@ -401,6 +404,28 @@ export function IdentitySection() {
           )}
         </div>
 
+        {/* Logo (URL) — Ver RESTAURANT_LOGO_IDENTITY_CONTRACT.md */}
+        <div>
+          <label className={styles.fieldLabel}>URL do logo</label>
+          <input
+            type="url"
+            value={"logoUrl" in formData ? formData.logoUrl : ""}
+            onChange={(e) => updateIdentityForm({ logoUrl: e.target.value } as any)}
+            placeholder="https://… (imagem do logo)"
+            className={styles.input}
+          />
+          {"logoUrl" in formData && formData.logoUrl && (
+            <div style={{ marginTop: 8 }}>
+              <img
+                src={formData.logoUrl}
+                alt="Pré-visualização do logo"
+                style={{ maxWidth: 80, maxHeight: 80, objectFit: "contain", borderRadius: 8 }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+            </div>
+          )}
+        </div>
+
         {/* Tipo */}
         <div>
           <label className={styles.fieldLabel}>Tipo de Estabelecimento *</label>
@@ -425,11 +450,7 @@ export function IdentitySection() {
           <select
             aria-label="País"
             value={formData.country}
-            onChange={(e) => {
-              handleChange("country", e.target.value);
-              // Auto-preencher timezone e moeda baseado no país
-              // TODO: Implementar lógica real
-            }}
+            onChange={(e) => handleChange("country", e.target.value)}
             className={styles.select}
           >
             <option value="">Selecione um país</option>

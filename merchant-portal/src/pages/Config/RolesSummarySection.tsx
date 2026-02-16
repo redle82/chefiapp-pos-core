@@ -69,7 +69,7 @@ const ROLES: RoleSummary[] = [
 export function RolesSummarySection() {
   return (
     <div style={{ maxWidth: 800 }}>
-      <p style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>
+      <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 24 }}>
         Resumo do que cada papel pode fazer. As rotas e ações da aplicação respeitam estes níveis.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -78,29 +78,29 @@ export function RolesSummarySection() {
             key={r.role}
             style={{
               padding: 20,
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--surface-border)",
               borderRadius: 8,
-              backgroundColor: "#fafafa",
+              backgroundColor: "var(--card-bg-on-dark)",
             }}
           >
-            <h3 style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 600, color: "#333" }}>
+            <h3 style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>
               {r.label}
             </h3>
-            <p style={{ margin: "0 0 16px", fontSize: 14, color: "#666" }}>
+            <p style={{ margin: "0 0 16px", fontSize: 14, color: "var(--text-secondary)" }}>
               {r.description}
             </p>
             {r.can.length > 0 && (
               <div style={{ marginBottom: r.cannot.length > 0 ? 12 : 0 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#22c55e" }}>Pode: </span>
-                <span style={{ fontSize: 13, color: "#333" }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-success)" }}>Pode: </span>
+                <span style={{ fontSize: 13, color: "var(--text-primary)" }}>
                   {r.can.join("; ")}
                 </span>
               </div>
             )}
             {r.cannot.length > 0 && (
               <div>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#b91c1c" }}>Não pode: </span>
-                <span style={{ fontSize: 13, color: "#666" }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-error)" }}>Não pode: </span>
+                <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                   {r.cannot.join("; ")}
                 </span>
               </div>

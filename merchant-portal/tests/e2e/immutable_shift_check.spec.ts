@@ -14,6 +14,7 @@ test.describe("Immutable Shift Contract Verification", () => {
       localStorage.setItem("chefiapp_trial_mode", "true");
       localStorage.setItem("chefiapp_restaurant_id", "trial-restaurant-id");
       localStorage.setItem("chefiapp_user_role", "owner");
+      localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
     });
 
     // Hardcoded restaurant ID from the app/debug page

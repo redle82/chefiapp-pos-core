@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../App.css";
 import { BootstrapStepIndicator } from "../components/bootstrap/BootstrapStepIndicator";
-import { upsertSetupStatus } from "../infra/writers/RuntimeWriter";
 import { DbWriteGate } from "../core/governance/DbWriteGate";
 import { useCoreHealth } from "../core/health";
 import { BackendType, getBackendType } from "../core/infra/backendAdapter";
@@ -12,6 +11,7 @@ import {
   getTabIsolated,
   setTabIsolated,
 } from "../core/storage/TabIsolatedStorage";
+import { upsertSetupStatus } from "../infra/writers/RuntimeWriter";
 import styles from "./BootstrapPage.module.css";
 // TEMPORARY: Supabase auth only (quarantine). Domain reads/writes removed — Core only.
 import { db } from "../core/db";
@@ -56,12 +56,16 @@ const RESTAURANT_TYPES = [
 ] as const;
 
 export function BootstrapPage({
-  successNextPath = "/dashboard",
+  successNextPath: successNextPathProp = "/dashboard",
 }: {
   successNextPath?: string;
 } = {}) {
+  const location = useLocation();
   const navigate = useNavigate();
   const bootstrap = useBootstrapState();
+  const successNextPath =
+    (location.state as { successNextPath?: string } | undefined)
+      ?.successNextPath ?? successNextPathProp;
   const { status: _health } = useCoreHealth({
     autoStart: false,
     timeout: BOOTSTRAP_TIMEOUT,
@@ -405,6 +409,28 @@ export function BootstrapPage({
   useEffect(() => {
     runBootstrap();
   }, [runBootstrap]);
+
+  // Pré-preenche o formulário quando vem do Onboarding assistente (camada Ativação).
+  useEffect(() => {
+    const fromOnboarding = (location.state as { fromOnboarding?: boolean })
+      ?.fromOnboarding;
+    if (!fromOnboarding) return;
+    try {
+      const raw = sessionStorage.getItem("chefiapp_onboarding_answers");
+      if (raw) {
+        const data = JSON.parse(raw) as {
+          nome?: string;
+          tipo?: string;
+          pais?: string;
+        };
+        if (data.nome) setRestaurantName(data.nome);
+        if (data.tipo) setRestaurantType(data.tipo);
+        if (data.pais) setRestaurantCountry(data.pais);
+      }
+    } catch {
+      // ignore
+    }
+  }, [location.state]);
 
   return (
     <div className={styles.pageRoot}>

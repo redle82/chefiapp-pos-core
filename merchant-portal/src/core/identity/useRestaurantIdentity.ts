@@ -4,6 +4,7 @@ import {
   fetchRestaurantForIdentity,
   getOrCreateRestaurantId,
 } from "../../infra/readers/RuntimeReader";
+import { TRIAL_RESTAURANT_ID } from "../readiness/operationalRestaurant";
 import { isDockerBackend } from "../infra/backendAdapter";
 import { RUNTIME_MODE } from "../kernel/RuntimeContext";
 import { configureSentryScope } from "../logger/Logger";
@@ -78,39 +79,14 @@ export function useRestaurantIdentity() {
       getTabIsolated("chefiapp_trial_mode") === "true" ||
       params.get("mode") === "trial";
 
-    if (isTrial) {
-      // @ts-ignore
-      let mock = window.RestaurantIdentity;
-      try {
-        const stored = getTabIsolated("chefiapp_restaurant_identity");
-        if (stored) mock = JSON.parse(stored);
-      } catch (e) {
-        console.warn("Invalid mock identity in localStorage");
-      }
-
-      setIdentity({
-        id: "00000000-0000-0000-0000-000000000100",
-        name: mock?.name || "Restaurante Exemplo (Trial)",
-        city: mock?.city || "Trial Ativo",
-        type: "Bistro",
-        isTrial: true,
-        loading: false,
-        ownerName: "Visitante",
-        logoUrl: mock?.logoUrl,
-        lastPulse: {
-          type: "TRIAL_PULSE",
-          created_at: new Date().toISOString(),
-          payload: { message: "Sistema em modo de trial" },
-        },
-      });
-      return;
-    }
-
-    // B) REAL MODE — Docker: identidade do Core; Supabase: placeholder
+    // A) TRIAL ou REAL: identidade do Core para o restaurante atual (nome + logo em KDS/TPV)
     try {
       if (isDockerBackend()) {
+        const storedRestaurantId = getTabIsolated("chefiapp_restaurant_id");
         const restaurantId =
-          runtime?.restaurant_id ?? (await getOrCreateRestaurantId());
+          isTrial
+            ? TRIAL_RESTAURANT_ID
+            : runtime?.restaurant_id ?? storedRestaurantId ?? (await getOrCreateRestaurantId());
         if (!restaurantId) {
           if (mountedRef.current)
             setIdentity((prev) => ({
@@ -128,15 +104,43 @@ export function useRestaurantIdentity() {
         if (row) {
           setIdentity({
             id: row.id,
-            name: row.name ?? "Seu Restaurante",
-            city: row.city ?? "Local desconhecido",
-            type: row.type ?? "Geral",
-            isTrial: false,
+            name: row.name ?? (isTrial ? "Seu restaurante" : "Seu Restaurante"),
+            city: row.city ?? (isTrial ? "Trial" : "Local desconhecido"),
+            type: row.type ?? "Restaurante",
+            isTrial: !!isTrial,
             loading: false,
-            ownerName: "Comandante",
-            logoUrl: undefined,
+            ownerName: isTrial ? "Visitante" : "Comandante",
+            logoUrl: row.logo_url ?? undefined,
+            ...(isTrial && {
+              lastPulse: {
+                type: "TRIAL_PULSE",
+                created_at: new Date().toISOString(),
+                payload: { message: "Sistema em modo de trial" },
+              },
+            }),
           });
-        } else {
+          return;
+        }
+        // Fallback quando Core não devolve linha (ex.: trial sem fetch)
+        if (isTrial) {
+          setIdentity({
+            id: TRIAL_RESTAURANT_ID,
+            name: "Seu restaurante",
+            city: "Trial",
+            type: "Restaurante",
+            isTrial: true,
+            loading: false,
+            ownerName: "Visitante",
+            logoUrl: undefined,
+            lastPulse: {
+              type: "TRIAL_PULSE",
+              created_at: new Date().toISOString(),
+              payload: { message: "Sistema em modo de trial" },
+            },
+          });
+          return;
+        }
+        if (mountedRef.current) {
           setIdentity((prev) => ({
             ...prev,
             id: restaurantId,

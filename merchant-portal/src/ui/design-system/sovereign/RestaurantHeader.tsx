@@ -1,10 +1,11 @@
 /**
- * RestaurantHeader — Nome do restaurante em destaque (Identity Layer).
- * Usado no topbar e no topo da sidebar. No futuro: logoUrl, cores.
- * Ver docs/design/IDENTITY_LAYER_CONTRACT.md.
+ * RestaurantHeader — Nome do restaurante + logo ou iniciais (Identity Layer).
+ * Usado no topbar e no topo da sidebar. Sempre mostra identidade visual: logo quando existe, iniciais em círculo quando não.
+ * Ver docs/design/IDENTITY_LAYER_CONTRACT.md e DESIGN_SYSTEM.md.
  */
 
 import React from "react";
+import { RestaurantLogo } from "../../RestaurantLogo";
 
 interface RestaurantHeaderProps {
   name: string;
@@ -12,6 +13,8 @@ interface RestaurantHeaderProps {
   size?: "sm" | "md";
   className?: string;
 }
+
+const LOGO_SIZE = { sm: 28, md: 36 } as const;
 
 export const RestaurantHeader: React.FC<RestaurantHeaderProps> = ({
   name,
@@ -22,6 +25,7 @@ export const RestaurantHeader: React.FC<RestaurantHeaderProps> = ({
   const fontSize = size === "sm" ? 14 : 18;
   const fontWeight = 700;
   const displayName = name || "Restaurante";
+  const logoPx = LOGO_SIZE[size];
 
   return (
     <div
@@ -31,21 +35,15 @@ export const RestaurantHeader: React.FC<RestaurantHeaderProps> = ({
         alignItems: "center",
         gap: 10,
         minWidth: 0,
+        color: "var(--text-primary, #fff)",
       }}
     >
-      {logoUrl ? (
-        <img
-          src={logoUrl}
-          alt=""
-          style={{
-            width: size === "sm" ? 24 : 32,
-            height: size === "sm" ? 24 : 32,
-            borderRadius: 6,
-            objectFit: "contain",
-            flexShrink: 0,
-          }}
-        />
-      ) : null}
+      <RestaurantLogo
+        logoUrl={logoUrl}
+        name={displayName}
+        size={logoPx}
+        style={{ flexShrink: 0 }}
+      />
       <span
         style={{
           fontSize,

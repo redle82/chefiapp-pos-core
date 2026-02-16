@@ -10,6 +10,8 @@ export {
   type RoleProviderProps,
 } from "./RoleContext";
 export { RoleGate } from "./RoleGate";
+export { RoleRoute } from "./RoleRoute";
+export { ModuleRoute } from "./ModuleRoute";
 export { normalizePath } from "./normalizePath";
 export {
   getConfigCopy,

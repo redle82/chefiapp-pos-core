@@ -12,6 +12,7 @@ import { useOnboardingState } from "../hooks/useOnboardingState";
 import { Badge } from "../ui/design-system/Badge";
 import { Button } from "../ui/design-system/Button";
 import { Card } from "../ui/design-system/Card";
+import styles from "./TPVReadyPage.module.css";
 
 // Router Guard meta — page consumes the system, does not decide
 export const routeMeta = {

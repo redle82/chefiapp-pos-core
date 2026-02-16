@@ -11,19 +11,22 @@
 -- 00000000-0000-0000-0000-000000000100
 
 -- =============================================================================
--- 1. Restaurante ENTERPRISE (status, modo, faturação, identidade)
+-- 1. Restaurante ENTERPRISE (status, modo, faturação)
+--    Identidade (country, timezone, currency, locale, type): só se ainda for
+--    "Restaurante Piloto". Se já for Sofia Gastrobar (slug = sofia-gastrobar),
+--    a identidade vem de 20260226_sofia_gastrobar_real_identity.sql — não sobrescrever.
 -- =============================================================================
 UPDATE public.gm_restaurants
 SET
   status = 'active',
   product_mode = 'live',
   billing_status = 'trial',
-  country = 'Portugal',
-  timezone = 'Europe/Lisbon',
-  currency = 'EUR',
-  locale = 'pt-PT',
-  type = 'Restaurante',
-  updated_at = NOW()
+  updated_at = NOW(),
+  country = CASE WHEN slug = 'sofia-gastrobar' THEN country ELSE 'Portugal' END,
+  timezone = CASE WHEN slug = 'sofia-gastrobar' THEN timezone ELSE 'Europe/Lisbon' END,
+  currency = CASE WHEN slug = 'sofia-gastrobar' THEN currency ELSE 'EUR' END,
+  locale = CASE WHEN slug = 'sofia-gastrobar' THEN locale ELSE 'pt-PT' END,
+  type = CASE WHEN slug = 'sofia-gastrobar' THEN type ELSE 'Restaurante' END
 WHERE id = '00000000-0000-0000-0000-000000000100';
 
 -- =============================================================================

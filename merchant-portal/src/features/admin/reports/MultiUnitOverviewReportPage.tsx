@@ -1,5 +1,5 @@
-import { useRestaurantId } from "../../../ui/hooks/useRestaurantId";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
+import { useMultiUnitOverview } from "../../../hooks/useMultiUnitOverview";
 import styles from "./MultiUnitOverviewReportPage.module.css";
 
 type ShiftStatus = "OPEN" | "CLOSED" | "UNKNOWN";
@@ -16,50 +16,6 @@ export type MultiUnitCard = {
   kdsOnline: boolean;
   tpvOnline: boolean;
 };
-
-// NOTE: Dados estáticos apenas para DEMO. Quando as views agregadas
-// `vw_revenue_by_restaurant_and_period`, `vw_tasks_by_restaurant_and_severity`,
-// `vw_stock_risk_by_restaurant` e `vw_runtime_health_by_restaurant`
-// estiverem disponíveis no Core, este array será substituído por dados reais
-// vindos de um reader em `core/reports/hooks`.
-const MOCK_UNITS: MultiUnitCard[] = [
-  {
-    id: "restaurante-principal",
-    name: "Restaurante Principal",
-    tag: "F&B Hotel · Sala principal",
-    revenueToday: 1840,
-    openOrders: 7,
-    criticalTasks: 1,
-    criticalStockItems: 2,
-    shiftStatus: "OPEN",
-    kdsOnline: true,
-    tpvOnline: true,
-  },
-  {
-    id: "bar-piscina",
-    name: "Bar da Piscina",
-    tag: "F&B Hotel · Pool bar",
-    revenueToday: 920,
-    openOrders: 3,
-    criticalTasks: 0,
-    criticalStockItems: 0,
-    shiftStatus: "OPEN",
-    kdsOnline: true,
-    tpvOnline: true,
-  },
-  {
-    id: "rooftop",
-    name: "Rooftop & Tapas",
-    tag: "Restaurante · Turno noite",
-    revenueToday: 0,
-    openOrders: 0,
-    criticalTasks: 0,
-    criticalStockItems: 1,
-    shiftStatus: "CLOSED",
-    kdsOnline: false,
-    tpvOnline: false,
-  },
-];
 
 function formatCurrencyEur(amount: number): string {
   return new Intl.NumberFormat("pt-PT", {
@@ -97,10 +53,9 @@ function onlineDotClass(online: boolean): string {
 
 export function MultiUnitOverviewReportPage() {
   const { identity } = useRestaurantIdentity();
-  const { restaurantId } = useRestaurantId();
-
-  // FUTURO: substituir MOCK_UNITS por hook real, ex. useMultiUnitOverview(restaurantId)
-  const units = MOCK_UNITS;
+  const { data: units, loading, error, refresh } = useMultiUnitOverview({
+    periodDate: new Date(),
+  });
 
   const totalRevenue = units.reduce((sum, u) => sum + u.revenueToday, 0);
   const totalOpenOrders = units.reduce((sum, u) => sum + u.openOrders, 0);
@@ -114,6 +69,25 @@ export function MultiUnitOverviewReportPage() {
     identity.name && identity.name.trim().length > 0
       ? identity.name
       : "Grupo / Dono";
+
+  if (loading) {
+    return (
+      <section aria-label="Visão multi-unidade" className={styles.page}>
+        <p className={styles.note}>A carregar visão multi-unidade…</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section aria-label="Visão multi-unidade" className={styles.page}>
+        <p className={styles.errorText}>{error}</p>
+        <button type="button" onClick={refresh}>
+          Tentar novamente
+        </button>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -239,15 +213,14 @@ export function MultiUnitOverviewReportPage() {
         })}
       </section>
 
-      <section aria-label="Nota">
-        <p className={styles.note}>
-          Esta vista é um **esqueleto de layout** alinhado com o{" "}
-          "MULTIUNIT_OWNER_DASHBOARD_CONTRACT.md". A ligação real às views
-          agregadas de Core (faturação, tasks, stock, runtime) deve seguir o
-          `QUERY_DISCIPLINE_CONTRACT.md` e será implementada numa iteração
-          seguinte.
-        </p>
-      </section>
+      {units.length === 0 && (
+        <section aria-label="Estado vazio">
+          <p className={styles.note}>
+            Não há unidades acessíveis ou ainda não existem dados para o período
+            selecionado. Verifique as permissões ou tente mais tarde.
+          </p>
+        </section>
+      )}
     </section>
   );
 }

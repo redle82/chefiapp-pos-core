@@ -12,6 +12,7 @@ export type LegalConsentRecord = {
   termsUrl: string;
   privacyUrl: string;
   version: "v1";
+  meta?: Record<string, unknown>;
 };
 
 export async function recordLegalConsent(input: {
@@ -19,6 +20,7 @@ export async function recordLegalConsent(input: {
   source: string;
   termsUrl?: string;
   privacyUrl?: string;
+  meta?: Record<string, unknown>;
 }): Promise<LegalConsentRecord> {
   const record: LegalConsentRecord = {
     acceptedAt: new Date().toISOString(),
@@ -27,6 +29,7 @@ export async function recordLegalConsent(input: {
     termsUrl: input.termsUrl ?? "/legal/terms",
     privacyUrl: input.privacyUrl ?? "/legal/privacy",
     version: "v1",
+    ...(input.meta ? { meta: input.meta } : {}),
   };
 
   try {

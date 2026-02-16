@@ -8,11 +8,44 @@
 
 ---
 
+## Arquitetura de Jornada em 3 Camadas
+
+**Propósito:** Orquestração de entrada clara. Evitar saltar da camada Comercial para a Operacional sem passar pela Ativação.
+
+Existem 3 camadas distintas:
+
+| Camada                       | Conteúdo                                             | Rotas principais                                                                    |
+| ---------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **1. Comercial (Marketing)** | Landing, Criar Conta, Escolher Plano, Auth           | `/`, `/landing`, `/auth`, `/auth/phone`, `/auth/verify`, `/pricing`                 |
+| **2. Ativação**              | Bem-vindo, Onboarding assistente, Centro de Ativação | `/welcome`, `/onboarding`, `/app/activation`                                        |
+| **3. Operacional**           | TPV, KDS, Upper Staff, Dashboard                     | `/app/dashboard`, `/app/staff/*`, `/op/tpv`, `/op/kds`, `/config/*`, `/app/setup/*` |
+
+**Regra de redirecionamento (única fonte: CoreFlow / FlowGate):**
+
+- Após login, se o restaurante estiver **not_activated** (ex.: `onboarding_completed_at == null` ou checklist do Centro de Ativação incompleto): redirecionar para **Centro de Ativação** (`/app/activation`). Nunca enviar para TPV nem dashboard operacional.
+- Se **activated**: redirecionar para **última área usada** (ex.: `chefiapp_lastRoute`); default `/app/dashboard`. Nunca enviar toda a gente para TPV por defeito.
+
+**Primeira tela pós-Marketing:** Não é dashboard nem POS. É a tela **Bem-vindo** (`/welcome`): "Bem-vindo ao seu restaurante digital." com CTA "Começar Configuração Guiada" → Onboarding assistente.
+
+**Onboarding assistente (ponte):** Não é só formulário de restaurante. É um assistente que pergunta: (1) Nome do restaurante, (2) País (ativa fiscal), (3) Tipo (Bar / Restaurante / Café / Fast Casual), (4) Número de mesas, (5) Usa impressora?, (6) Vai usar KDS?, (7) Quantos usuários (estimativa)? Output: estrutura base, roles, config mínima, flags de módulos. Destino após conclusão: **Centro de Ativação** (`/app/activation`).
+
+**Centro de Ativação:** Primeira tela após o onboarding assistente. Checklist de ativação (não POS, não KDS): Criar menu, Configurar mesas, Configurar impressora, Criar usuários, Testar pedido, Ativar plano. Cada item liga a `/app/setup/*` ou fluxo de teste. Quando o checklist estiver completo, o restaurante passa a **activated** para efeitos de redirecionamento (ex.: `onboarding_completed_at != null` no Core).
+
+**Contrato Onboarding Assistente (perguntas, ordem, payload, destino):**
+
+- **Perguntas (ordem fixa):** (1) Nome do restaurante, (2) País (ativa fiscal), (3) Tipo (Bar / Restaurante / Café / Fast Casual / Catering / Outro), (4) Número de mesas (estimativa), (5) Usa impressora?, (6) Vai usar KDS?, (7) Quantos usuários (estimativa).
+- **Payload:** Respostas em `sessionStorage.chefiapp_onboarding_answers` (JSON); se já existir restaurante, persistir no Core via `updateRestaurantProfile` e `upsertSetupStatus` (identity: true).
+- **Destino:** Se já tem restaurante → `/app/activation`. Se ainda não tem → `/bootstrap` com `state: { successNextPath: "/app/activation", fromOnboarding: true }`; após criar restaurante, navegar para `/app/activation`.
+
+**Ref (implementação):** CoreFlow.ts, FlowGate.tsx, LifecycleState.ts. Não adicionar lógica de fluxo fora destes. Contrato detalhado do Onboarding Assistente: [ONBOARDING_ASSISTANT_CONTRACT.md](ONBOARDING_ASSISTANT_CONTRACT.md).
+
+---
+
 ## Bloco 1 — Visão Única (espinha dorsal)
 
 **Frase-mãe do ChefIApp™**
 
-> *"Um restaurante começa a vender em minutos, não em dias — sem instalações, sem técnicos, sem stress."*
+> _"Um restaurante começa a vender em minutos, não em dias — sem instalações, sem técnicos, sem stress."_
 
 Tudo o que existe no sistema serve apenas a isto.
 
@@ -42,29 +75,29 @@ Tudo o que existe no sistema serve apenas a isto.
 
 Os 8 passos oficiais, por ordem:
 
-| # | Passo | Descrição |
-|---|-------|-----------|
-| 1 | **Landing** | CTA: Testar 14 dias; Demo 3 min; Já tenho acesso (login) |
-| 2 | **Auth** | Demo 3 min, Simular registo local, Login produção |
-| 3 | **Bootstrap obrigatório** | Criar restaurante: nome, tipo, país/moeda, contacto opcional |
-| 4 | **Onboarding essencial** | Criar primeiro produto; opcional: pular ("Continuar sem adicionar agora") |
-| 5 | **Aha Moment** | Abrir TPV → Criar pedido → Finalizar venda → Feedback "Pedido pago" |
-| 6 | **Trial silencioso** | trial_active; sem bloqueio operacional |
-| 7 | **Operação normal** | TPV / KDS / tarefas |
-| 8 | **Billing assíncrono** | Banner discreto; escolher plano quando fizer sentido |
+| #   | Passo                     | Descrição                                                                 |
+| --- | ------------------------- | ------------------------------------------------------------------------- |
+| 1   | **Landing**               | CTA: Testar 14 dias; Demo 3 min; Já tenho acesso (login)                  |
+| 2   | **Auth**                  | Demo 3 min, Simular registo local, Login produção                         |
+| 3   | **Bootstrap obrigatório** | Criar restaurante: nome, tipo, país/moeda, contacto opcional              |
+| 4   | **Onboarding essencial**  | Criar primeiro produto; opcional: pular ("Continuar sem adicionar agora") |
+| 5   | **Aha Moment**            | Abrir TPV → Criar pedido → Finalizar venda → Feedback "Pedido pago"       |
+| 6   | **Trial silencioso**      | trial_active; sem bloqueio operacional                                    |
+| 7   | **Operação normal**       | TPV / KDS / tarefas                                                       |
+| 8   | **Billing assíncrono**    | Banner discreto; escolher plano quando fizer sentido                      |
 
 ### Obrigatório vs pulável
 
-| Passo | Obrigatório? | Notas |
-|-------|--------------|-------|
-| 1 Landing | Sim | Entrada única |
-| 2 Auth | Sim | Conta trial criada |
-| 3 Bootstrap | Sim | Restaurante criado (mínimo) |
-| 4 Primeiro produto | Não (pulável) | "Continuar sem adicionar agora"; modo pode ficar implícito na UI |
-| 5 Aha Moment (primeira venda) | Sim | Destrava operacional |
-| 6 Trial em background | — | Automático |
-| 7 Operação | — | Após passo 5 |
-| 8 Billing | Assíncrono | Não bloqueia; banner discreto |
+| Passo                         | Obrigatório?  | Notas                                                            |
+| ----------------------------- | ------------- | ---------------------------------------------------------------- |
+| 1 Landing                     | Sim           | Entrada única                                                    |
+| 2 Auth                        | Sim           | Conta trial criada                                               |
+| 3 Bootstrap                   | Sim           | Restaurante criado (mínimo)                                      |
+| 4 Primeiro produto            | Não (pulável) | "Continuar sem adicionar agora"; modo pode ficar implícito na UI |
+| 5 Aha Moment (primeira venda) | Sim           | Destrava operacional                                             |
+| 6 Trial em background         | —             | Automático                                                       |
+| 7 Operação                    | —             | Após passo 5                                                     |
+| 8 Billing                     | Assíncrono    | Não bloqueia; banner discreto                                    |
 
 ### Diagrama único (fluxo canônico v1.0)
 
@@ -87,15 +120,15 @@ flowchart TD
 
 ### Discurso comercial (uma frase por fase)
 
-| Fase | Frase de referência |
-|------|----------------------|
-| Landing | "Primeira venda em menos de 5 minutos" |
-| Auth | "Testar 14 dias no meu restaurante" |
-| Bootstrap | "Nome e contacto para começar" |
-| Primeiro produto | "Um produto para destravar o TPV" |
-| Aha Moment | "Pedido pago" |
-| Operação | "TPV, KDS e tarefas sem bloqueios" |
-| Billing | "Escolher plano quando fizer sentido" |
+| Fase             | Frase de referência                    |
+| ---------------- | -------------------------------------- |
+| Landing          | "Primeira venda em menos de 5 minutos" |
+| Auth             | "Testar 14 dias no meu restaurante"    |
+| Bootstrap        | "Nome e contacto para começar"         |
+| Primeiro produto | "Um produto para destravar o TPV"      |
+| Aha Moment       | "Pedido pago"                          |
+| Operação         | "TPV, KDS e tarefas sem bloqueios"     |
+| Billing          | "Escolher plano quando fizer sentido"  |
 
 ---
 
@@ -152,12 +185,12 @@ O onboarding é **state-driven**, não device-driven. Funciona igual na web e no
 
 ### Wizard — 4 passos (máximo)
 
-| Passo | Nome | Contrato | Estado após |
-|-------|------|----------|-------------|
-| 1 | Criar o restaurante | [RESTAURANT_BOOTSTRAP_CONTRACT.md](RESTAURANT_BOOTSTRAP_CONTRACT.md) | Restaurant criado, status bootstrap |
-| 2 | Criar o primeiro menu (mínimo) | [MENU_MINIMAL_CONTRACT.md](MENU_MINIMAL_CONTRACT.md) | Menu válido (mínimo) |
-| 3 | Escolher modo de operação | [OPERATION_MODE_CONTRACT.md](OPERATION_MODE_CONTRACT.md) | Modo definido; UI adapta depois |
-| 4 | Primeira venda (ritual) | [FIRST_SALE_RITUAL.md](FIRST_SALE_RITUAL.md) | Trial ativo, Restaurant operacional |
+| Passo | Nome                           | Contrato                                                             | Estado após                         |
+| ----- | ------------------------------ | -------------------------------------------------------------------- | ----------------------------------- |
+| 1     | Criar o restaurante            | [RESTAURANT_BOOTSTRAP_CONTRACT.md](RESTAURANT_BOOTSTRAP_CONTRACT.md) | Restaurant criado, status bootstrap |
+| 2     | Criar o primeiro menu (mínimo) | [MENU_MINIMAL_CONTRACT.md](MENU_MINIMAL_CONTRACT.md)                 | Menu válido (mínimo)                |
+| 3     | Escolher modo de operação      | [OPERATION_MODE_CONTRACT.md](OPERATION_MODE_CONTRACT.md)             | Modo definido; UI adapta depois     |
+| 4     | Primeira venda (ritual)        | [FIRST_SALE_RITUAL.md](FIRST_SALE_RITUAL.md)                         | Trial ativo, Restaurant operacional |
 
 **Passo 1 — Criar restaurante (obrigatório):** Nome do restaurante, país/moeda, tipo de serviço (mesa / balcão / misto).
 
@@ -167,7 +200,7 @@ O onboarding é **state-driven**, não device-driven. Funciona igual na web e no
 
 **Passo 4 — Primeira venda (ritual):** Abrir TPV → criar pedido → marcar como pago. Primeira venda feita.
 
-**Ref:** [CONTRATO_VIDA_RESTAURANTE.md](CONTRATO_VIDA_RESTAURANTE.md) (BOOTSTRAP_*, READY_TO_OPERATE).
+**Ref:** [CONTRATO_VIDA_RESTAURANTE.md](CONTRATO_VIDA_RESTAURANTE.md) (BOOTSTRAP\_\*, READY_TO_OPERATE).
 
 ---
 
@@ -202,14 +235,14 @@ Quando o trial acaba:
 
 ## Tabela de Conexões (quem fala com quem)
 
-| Origem | Destino | Contrato |
-|--------|---------|----------|
-| Landing | Trial Gate | TRIAL_ACCOUNT_CONTRACT |
-| Trial | Onboarding | RESTAURANT_BOOTSTRAP_CONTRACT |
-| Onboarding | TPV | FIRST_SALE_RITUAL |
-| TPV | Core | FLUXO_DE_PEDIDO_OPERACIONAL |
-| Core | Dashboard | RESTAURANT_LIFECYCLE / OPERATIONAL_STATE |
-| Trial | Billing | TRIAL_TO_PAID_CONTRACT |
+| Origem     | Destino    | Contrato                                 |
+| ---------- | ---------- | ---------------------------------------- |
+| Landing    | Trial Gate | TRIAL_ACCOUNT_CONTRACT                   |
+| Trial      | Onboarding | RESTAURANT_BOOTSTRAP_CONTRACT            |
+| Onboarding | TPV        | FIRST_SALE_RITUAL                        |
+| TPV        | Core       | FLUXO_DE_PEDIDO_OPERACIONAL              |
+| Core       | Dashboard  | RESTAURANT_LIFECYCLE / OPERATIONAL_STATE |
+| Trial      | Billing    | TRIAL_TO_PAID_CONTRACT                   |
 
 **Ref (fluxo pedido):** [FLUXO_DE_PEDIDO_OPERACIONAL.md](FLUXO_DE_PEDIDO_OPERACIONAL.md).
 
@@ -221,30 +254,30 @@ Quando o trial acaba:
 
 ### 🟢 Fase Pública (Web)
 
-| # | Tela | Notas |
-|---|------|--------|
-| 1 | **Landing** | CTA: "Testar 14 dias"; "Ver demo"; "Já tenho acesso" |
-| 2 | **Login / Signup** | Cria TRIAL_ACCOUNT |
+| #   | Tela               | Notas                                                |
+| --- | ------------------ | ---------------------------------------------------- |
+| 1   | **Landing**        | CTA: "Testar 14 dias"; "Ver demo"; "Já tenho acesso" |
+| 2   | **Login / Signup** | Cria TRIAL_ACCOUNT                                   |
 
 ### 🟡 Onboarding (Web ou Mobile — igual)
 
 **Estas telas são modais sequenciais, não páginas grandes.**
 
-| # | Tela | Contrato |
-|---|------|----------|
-| 3 | Criar restaurante | RESTAURANT_BOOTSTRAP |
-| 4 | Criar menu mínimo | MENU_MINIMAL |
-| 5 | Escolher modo | OPERATION_MODE |
-| 6 | Primeira venda (guiada) | FIRST_SALE_RITUAL |
+| #   | Tela                    | Contrato             |
+| --- | ----------------------- | -------------------- |
+| 3   | Criar restaurante       | RESTAURANT_BOOTSTRAP |
+| 4   | Criar menu mínimo       | MENU_MINIMAL         |
+| 5   | Escolher modo           | OPERATION_MODE       |
+| 6   | Primeira venda (guiada) | FIRST_SALE_RITUAL    |
 
 ### 🔵 Operação
 
-| # | Tela |
-|---|------|
-| 7 | Dashboard |
-| 8 | TPV |
-| 9 | KDS |
-| 10 | AppStaff (tarefas / equipa) |
+| #   | Tela                        |
+| --- | --------------------------- |
+| 7   | Dashboard                   |
+| 8   | TPV                         |
+| 9   | KDS                         |
+| 10  | AppStaff (tarefas / equipa) |
 
 **Regra:** Menos de 12 telas principais. O resto são **estados**, não páginas.
 
@@ -371,12 +404,12 @@ A partir daqui, **não se escreve mais backend por meses**, a menos que:
 
 ## Próximos passos (engrenagens)
 
-| # | Engrenagem | Descrição |
-|---|------------|-----------|
-| 1 | 🧩 ONBOARDING_FLOW_CONTRACT | Contrato do fluxo onboarding (modais, estados, passagens) |
-| 2 | 🎨 Wireflow visual | Desenho tela a tela (wireflow visual) |
-| 3 | 💳 Billing + planos | Fechar billing e planos (TRIAL_TO_PAID, BILLING_AND_PLAN) |
-| 4 | 📱 Mobile-first real | Adaptar tudo para mobile-first |
+| #   | Engrenagem                  | Descrição                                                 |
+| --- | --------------------------- | --------------------------------------------------------- |
+| 1   | 🧩 ONBOARDING_FLOW_CONTRACT | Contrato do fluxo onboarding (modais, estados, passagens) |
+| 2   | 🎨 Wireflow visual          | Desenho tela a tela (wireflow visual)                     |
+| 3   | 💳 Billing + planos         | Fechar billing e planos (TRIAL_TO_PAID, BILLING_AND_PLAN) |
+| 4   | 📱 Mobile-first real        | Adaptar tudo para mobile-first                            |
 
 ---
 

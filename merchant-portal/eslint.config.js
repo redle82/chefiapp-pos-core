@@ -64,9 +64,9 @@ export default defineConfig([
       "react-hooks/impure-function-during-render": "off",
       "react-hooks/variable-access-before-declaration": "off",
       "react-hooks/dependency-expression-issue": "off",
-      "react-hooks/variable-access-before-declaration": "off",
-      "react-hooks/dependency-expression-issue": "off",
       "react-hooks/react-compiler": "off",
+      // WORKAROUND: Crash in typescript-eslint v8 with ESLint 9 for this specific rule
+      "@typescript-eslint/no-unused-expressions": "off",
       // ARCHITECTURE: THE GOLDEN RULE
       // UI cannot talk to Supabase directly. It must go through Docker Core.
       "no-restricted-imports": [

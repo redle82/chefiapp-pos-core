@@ -67,7 +67,7 @@ export const ManagerDashboard: React.FC = () => {
     if (hasCoreIssue) {
       insights.push({
         id: "core",
-        label: "Causa: sistema instável ou sem pulso confirmado.",
+        label: "Causa: Core indisponível ou sem pulso confirmado.",
       });
     }
     if (hasCriticalTasks) {

@@ -1,5 +1,5 @@
-// LEGACY: secção de solução da landing antiga. Mantida apenas para
-// referência; a enumeração atual dos módulos vive em LandingV2.
+// LEGACY: não utilizar em novas rotas. Mantido apenas por compatibilidade temporária.
+// Secção de solução da landing antiga; enumeração dos módulos em LandingV2.
 import { OSCopy } from '../../../ui/design-system/sovereign/OSCopy';
 
 export const Solution = () => {

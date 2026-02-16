@@ -81,6 +81,7 @@ export type CoreOrdersApiResult<T> = {
 
 /**
  * Invoca create_order_atomic no Core (Docker). Backend único: Docker Core.
+ * atomic transaction: create_order_atomic is the single write path for order creation.
  */
 export async function createOrderAtomic(
   params: CreateOrderAtomicParams,

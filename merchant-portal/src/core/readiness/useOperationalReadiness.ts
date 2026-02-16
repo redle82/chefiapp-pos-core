@@ -13,10 +13,10 @@ import { useContext, useMemo } from "react";
 import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
-import { ShiftContext } from "../shift/ShiftContext";
-import { runtimeToRestaurant } from "../restaurant/runtimeToRestaurant";
 import { deriveRestaurantReadiness } from "../restaurant/deriveRestaurantReadiness";
+import { runtimeToRestaurant } from "../restaurant/runtimeToRestaurant";
 import { isBeforeOpenRitualComplete } from "../ritual/ritualBeforeOpenStorage";
+import { ShiftContext } from "../shift/ShiftContext";
 import {
   getKdsRestaurantId,
   getTpvRestaurantId,
@@ -30,7 +30,7 @@ import type {
 } from "./types";
 
 const DASHBOARD = "/app/dashboard";
-const CONFIG_MODULES = "/config/modules";
+const CONFIG_MODULES = "/admin/modules";
 
 export interface UseOperationalReadinessResult extends OperationalReadiness {
   /** true enquanto runtime ou dependências ainda estão a carregar (mostrar loading). */
@@ -65,7 +65,7 @@ const APPSTAFF_GERENTE = "/garcom";
 
 function redirectFor(
   surface: Surface,
-  reason: BlockingReason
+  reason: BlockingReason,
 ): string | undefined {
   if (reason === "BOOTSTRAP_INCOMPLETE") return DASHBOARD;
   if (reason === "MANDATORY_RITUAL_INCOMPLETE") return APPSTAFF_GERENTE;
@@ -74,13 +74,13 @@ function redirectFor(
     reason === "RESTAURANT_NOT_FOUND" &&
     (surface === "TPV" || surface === "KDS")
   )
-    return "/app/install";
+    return "/admin/modules";
   if (reason === "RESTAURANT_NOT_FOUND") return "/";
   return undefined;
 }
 
 export function useOperationalReadiness(
-  surface: Surface
+  surface: Surface,
 ): UseOperationalReadinessResult {
   const { runtime } = useRestaurantRuntime();
   const shift = useContext(ShiftContext);

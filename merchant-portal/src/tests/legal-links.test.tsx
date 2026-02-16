@@ -1,3 +1,4 @@
+import "../i18n";
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -58,7 +59,7 @@ describe("Legal pages", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /Politica de Privacidade/i }),
+      screen.getByRole("heading", { name: /Pol[ií]tica de Privacidade/i }),
     ).toBeTruthy();
   });
 });

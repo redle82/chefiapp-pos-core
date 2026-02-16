@@ -46,8 +46,8 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     id: "devices",
-    label: "Tienda de dispositivos",
-    to: "/admin/devices",
+    label: "Módulos e dispositivos",
+    to: "/admin/modules",
     section: "top",
   },
   {
@@ -58,9 +58,11 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-const CONFIG_ITEMS: { path: string; label: string }[] = [
+/** Hub de Módulos é canónico em /admin/modules; "Módulos" abre o Hub. Tienda online fica visível na lista. */
+const CONFIG_ITEMS: { path: string; label: string; to?: string }[] = [
   { path: "general", label: "General" },
-  { path: "productos", label: "Productos" },
+  { path: "productos", label: "Módulos", to: "/admin/modules" },
+  { path: "tienda-online", label: "Página web" },
   { path: "suscripcion", label: "Suscripción" },
   { path: "ubicaciones", label: "Ubicaciones" },
   { path: "entidades-legales", label: "Entidades Legales" },
@@ -68,7 +70,11 @@ const CONFIG_ITEMS: { path: string; label: string }[] = [
   { path: "usuarios", label: "Usuarios Administradores" },
   { path: "dispositivos", label: "Gestión de dispositivos" },
   { path: "impresoras", label: "Impresoras" },
-  { path: "integraciones", label: "Integraciones" },
+  {
+    path: "integraciones",
+    label: "Integraciones",
+    to: "/admin/config/integrations",
+  },
   { path: "delivery", label: "Delivery" },
   { path: "empleados", label: "Empleados" },
   { path: "software-tpv", label: "Software TPV" },
@@ -78,7 +84,9 @@ const CONFIG_ITEMS: { path: string; label: string }[] = [
 export function AdminSidebar() {
   const location = useLocation();
   const { identity } = useRestaurantIdentity();
-  const isConfig = location.pathname.startsWith("/admin/config");
+  const isConfig =
+    location.pathname.startsWith("/admin/config") ||
+    location.pathname === "/admin/modules";
 
   return (
     <aside className={styles.sidebar}>
@@ -97,11 +105,11 @@ export function AdminSidebar() {
             </NavLink>
             <div className={styles.configLabel}>Configuración</div>
             <nav aria-label="Configuração" className={styles.navColumn}>
-              {CONFIG_ITEMS.map(({ path, label }) => (
+              {CONFIG_ITEMS.map(({ path, label, to }) => (
                 <AdminSidebarLink
                   key={path}
-                  to={`/admin/config/${path}`}
-                  end={false}
+                  to={to ?? `/admin/config/${path}`}
+                  end={to ? true : false}
                 >
                   {label}
                 </AdminSidebarLink>

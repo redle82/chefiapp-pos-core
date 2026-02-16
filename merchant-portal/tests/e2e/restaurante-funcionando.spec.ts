@@ -1,5 +1,14 @@
 import { expect, test } from "@playwright/test";
 
+/**
+ * E2E fluxo completo com dados: API seed (restaurante, caixa, tarefas) → TPV (criar pedido) → KDS → Sistema de Tarefas.
+ * Requer Core em execução (CORE_REST_URL). Em CI sem Core, o teste é ignorado.
+ * Referência: LANCAMENTO_GAP_ATUALIZADO — Essencial 9 (E2E fluxo completo).
+ */
+
+const skipWithoutCore =
+  process.env.CI === "true" && !process.env.CORE_REST_URL;
+
 test.describe("Restaurante funcionando end-to-end", () => {
   test.use({
     actionTimeout: 15000,
@@ -10,6 +19,8 @@ test.describe("Restaurante funcionando end-to-end", () => {
     browser,
     request,
   }) => {
+    test.skip(skipWithoutCore, "Core não disponível em CI; executar com CORE_REST_URL para validar fluxo completo");
+
     const restaurantId = "00000000-0000-0000-0000-000000000100";
     const coreRestUrl =
       process.env.CORE_REST_URL || "http://localhost:3001/rest/v1";
@@ -33,6 +44,7 @@ test.describe("Restaurante funcionando end-to-end", () => {
         window.localStorage.setItem("chefiapp_pilot_mode", "true");
         window.localStorage.setItem("chefiapp_bypass_health", "true");
         window.localStorage.setItem("chefiapp_restaurant_id", id);
+        window.localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
         window.sessionStorage.setItem(
           "chefiapp_keycloak_session",
           JSON.stringify({

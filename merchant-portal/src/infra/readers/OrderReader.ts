@@ -17,7 +17,7 @@ export async function readActiveOrders(restaurantId: string): Promise<ActiveOrde
     .from("gm_orders")
     .select("*")
     .eq("restaurant_id", restaurantId)
-    .not("status", "in", "('PAID','CANCELLED')")
+    .not("status", "in", "(PAID,CANCELLED)")
     .order("created_at", { ascending: false });
   if (error) return [];
   return (data ?? []) as ActiveOrderRow[];
@@ -25,15 +25,23 @@ export async function readActiveOrders(restaurantId: string): Promise<ActiveOrde
 
 /**
  * Itens de um pedido (gm_order_items).
+ * Station: usa o snapshot do item; se null, usa station do produto (para pedidos antigos ou produtos BAR).
+ * Anti-regressão: docs/contracts/KDS_BAR_COZINHA_STATION_CONTRACT.md §4 — não remover join gm_products nem fallback.
  */
 export async function readOrderItems(orderId: string): Promise<CoreOrderItem[]> {
   const { data, error } = await dockerCoreClient
     .from("gm_order_items")
-    .select("*")
+    .select("*, gm_products(station)")
     .eq("order_id", orderId)
     .order("created_at", { ascending: true });
   if (error) return [];
-  return (data ?? []) as CoreOrderItem[];
+  const rows = (data ?? []) as (CoreOrderItem & { gm_products?: { station?: string | null } | null })[];
+  return rows.map((row) => {
+    const { gm_products: product, ...item } = row;
+    const raw = (item.station ?? product?.station ?? "KITCHEN")?.toString().toUpperCase();
+    const station = raw === "BAR" ? "BAR" : "KITCHEN";
+    return { ...item, station } as CoreOrderItem;
+  });
 }
 
 /**

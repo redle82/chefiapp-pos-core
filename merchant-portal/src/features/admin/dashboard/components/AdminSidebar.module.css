@@ -1,7 +1,7 @@
 .sidebar {
   width: 248px;
-  background-color: #09090b;
-  border-right: 1px solid #27272a;
+  background-color: var(--surface-base);
+  border-right: 1px solid var(--surface-border);
   padding: 20px 16px 16px;
   display: flex;
   flex-direction: column;
@@ -20,7 +20,7 @@
 .brandSection {
   margin-bottom: 16px;
   padding-left: 8px;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .backLink {
@@ -28,7 +28,7 @@
   padding: 8px 10px;
   border-radius: 8px;
   font-size: 12px;
-  color: #d4d4d8;
+  color: var(--text-secondary);
   font-weight: 500;
   text-decoration: none;
   margin-bottom: 4px;
@@ -41,7 +41,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #71717a;
+  color: var(--text-tertiary);
 }
 
 .navColumn {
@@ -63,5 +63,5 @@
 .footer {
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px solid #27272a;
+  border-top: 1px solid var(--surface-border);
 }

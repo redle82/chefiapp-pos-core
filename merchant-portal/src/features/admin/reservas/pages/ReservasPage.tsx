@@ -4,6 +4,7 @@
  */
 
 import { useLocation, useNavigate } from "react-router-dom";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 
 const BASE = "/admin/config";
 
@@ -23,21 +24,17 @@ export function ReservasPage() {
 
   return (
     <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
-      <header style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
-          Reservas
-        </h1>
-        <p style={{ margin: 0, fontSize: 14, color: "#6b7280" }}>
-          Disponibilidad, garantía, turnos, mensajes y recordatorios.
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Reservas"
+        subtitle="Disponibilidad, garantía, turnos, mensajes y recordatorios."
+      />
 
       <div
         style={{
           display: "flex",
           gap: 8,
           marginBottom: 24,
-          borderBottom: "1px solid #e5e7eb",
+          borderBottom: "1px solid var(--surface-border)",
           flexWrap: "wrap",
         }}
       >
@@ -49,11 +46,11 @@ export function ReservasPage() {
             style={{
               padding: "10px 14px",
               border: "none",
-              borderBottom: current.path === s.path ? "2px solid #7c3aed" : "2px solid transparent",
+              borderBottom: current.path === s.path ? "2px solid var(--color-primary)" : "2px solid transparent",
               backgroundColor: "transparent",
               cursor: "pointer",
               fontWeight: current.path === s.path ? 600 : 400,
-              color: current.path === s.path ? "#7c3aed" : "#6b7280",
+              color: current.path === s.path ? "var(--color-primary)" : "var(--text-secondary)",
               fontSize: 13,
             }}
           >
@@ -64,58 +61,58 @@ export function ReservasPage() {
 
       <div
         style={{
-          border: "1px solid #e5e7eb",
+          border: "1px solid var(--surface-border)",
           borderRadius: 12,
           padding: 24,
-          backgroundColor: "#fff",
+          backgroundColor: "var(--card-bg-on-dark)",
         }}
       >
         {current.id === "resumen" && (
           <>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "#111827" }}>
+            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
               Resumen de reservas
             </h3>
-            <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
               Configuración central de reservas. Usa las pestañas para Disponibilidad, Garantía, Turnos y Mensajes.
             </p>
           </>
         )}
         {current.id === "disponibilidad" && (
           <>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "#111827" }}>
+            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
               Disponibilidad
             </h3>
-            <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
               Horarios y capacidad por día y ubicación. En fase 2: calendario y límites.
             </p>
           </>
         )}
         {current.id === "garantia" && (
           <>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "#111827" }}>
+            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
               Garantía y Cancelación
             </h3>
-            <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
               Depósitos, cargos por no presentarse, políticas de cancelación. En fase 2.
             </p>
           </>
         )}
         {current.id === "turnos" && (
           <>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "#111827" }}>
+            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
               Turnos
             </h3>
-            <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
               Duración de turnos y bloques de tiempo. En fase 2.
             </p>
           </>
         )}
         {current.id === "mensajes" && (
           <>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "#111827" }}>
+            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
               Mensajes y recordatorios
             </h3>
-            <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
               Plantillas de correo y SMS para confirmación y recordatorios. En fase 2.
             </p>
           </>

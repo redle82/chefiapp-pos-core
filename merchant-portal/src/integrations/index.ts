@@ -39,6 +39,7 @@ export {
   emitOrderUpdated,
   emitOrderCompleted,
 } from './core/IntegrationEventBus';
+export type { EmitOptions } from './core/IntegrationEventBus';
 
 export {
   hasCapability,
@@ -58,11 +59,20 @@ export type {
 
 export type {
   IntegrationEvent,
+  IntegrationEventType,
   OrderCreatedEvent,
   OrderUpdatedEvent,
   OrderCompletedEvent,
+  OrderPaidEvent,
+  OrderReadyEvent,
+  OrderClosedEvent,
+  PaymentConfirmedEvent,
   MenuUpdatedEvent,
   DeliveryStatusEvent,
+  ShiftStartedEvent,
+  ShiftEndedEvent,
+  AlertRaisedEvent,
+  TaskCreatedEvent,
 } from './types/IntegrationEvent';
 
 export type {
@@ -72,9 +82,18 @@ export type {
 } from './types/IntegrationStatus';
 
 export {
+  INTEGRATION_EVENT_TYPES,
   createOrderCreatedEvent,
   createOrderUpdatedEvent,
   createOrderCompletedEvent,
+  createOrderPaidEvent,
+  createOrderReadyEvent,
+  createOrderClosedEvent,
+  createPaymentConfirmedEvent,
+  createShiftStartedEvent,
+  createShiftEndedEvent,
+  createAlertRaisedEvent,
+  createTaskCreatedEvent,
 } from './types/IntegrationEvent';
 
 export {
@@ -86,6 +105,22 @@ export {
 // ─────────────────────────────────────────────────────────────
 // ADAPTERS
 // ─────────────────────────────────────────────────────────────
+
+// Stripe (Payments)
+export { StripePaymentAdapter, STRIPE_PAYMENT_ADAPTER_ID } from './adapters/stripe/StripePaymentAdapter';
+
+// WhatsApp (Messaging)
+export {
+  WhatsAppAdapter,
+  createWhatsAppAdapter,
+  WHATSAPP_ADAPTER_ID,
+} from './adapters/whatsapp/WhatsAppAdapter';
+export type { WhatsAppAdapterConfig } from './adapters/whatsapp/WhatsAppAdapter';
+export {
+  getActivePaymentAdapter,
+  startCheckout,
+  openCustomerPortal,
+} from './services/PaymentIntegrationService';
 
 // Mock (Dev/Testing)
 export { MockDeliveryAdapter, mockDeliveryAdapter } from './adapters/MockDeliveryAdapter';

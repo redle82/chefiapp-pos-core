@@ -1,7 +1,7 @@
 .layout {
   display: flex;
   min-height: 100vh;
-  background-color: #f6f7fb;
+  background-color: var(--surface-base, #f6f7fb);
 }
 
 .main {
@@ -12,8 +12,9 @@
 .card {
   max-width: 820px;
   margin: 0 auto;
-  background-color: #ffffff;
+  background-color: var(--card-bg-on-dark, #ffffff);
   border-radius: 14px;
+  border: 1px solid var(--surface-border, rgba(0, 0, 0, 0.06));
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
   padding: 24px 28px 28px;
 }
@@ -27,7 +28,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: var(--text-tertiary, #9ca3af);
   margin: 0 0 6px 0;
 }
 
@@ -35,11 +36,11 @@
   font-size: 22px;
   font-weight: 700;
   margin: 0 0 4px 0;
-  color: #111827;
+  color: var(--text-primary, #111827);
 }
 
 .description {
   margin: 0;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text-secondary, #6b7280);
 }

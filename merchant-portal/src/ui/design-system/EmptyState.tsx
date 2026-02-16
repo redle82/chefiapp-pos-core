@@ -1,8 +1,8 @@
-import React from 'react';
-import { cn } from './tokens';
-import './EmptyState.css';
-import { OSCopy } from './sovereign/OSCopy';
-import { Button } from './Button';
+import React from "react";
+import { Button } from "./Button";
+import "./EmptyState.css";
+import { OSCopy } from "./sovereign/OSCopy";
+import { cn } from "./tokens";
 
 export interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -26,7 +26,7 @@ export interface EmptyStateProps {
 
 /**
  * EmptyState: The Void of the System.
- * 
+ *
  * Rules:
  * - If 'mode' is provided, it dictates the copy.
  * - If no title/desc provided, falls back to 'generic' void.
@@ -43,14 +43,21 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   children,
 }) => {
   // 1. Resolve Sovereign Text
-  const systemCopy = mode ? OSCopy.emptyStates[mode] : OSCopy.emptyStates.generic;
+  const systemCopy = mode
+    ? OSCopy.emptyStates[mode]
+    : OSCopy.emptyStates.generic;
+
+  const resolvedTitle =
+    "title" in systemCopy ? systemCopy.title : systemCopy.titulo;
+  const resolvedDescription =
+    "description" in systemCopy ? systemCopy.description : systemCopy.descricao;
 
   // 2. Final Text (Prop overrides system)
-  const finalTitle = title || systemCopy.title;
-  const finalDesc = description || systemCopy.description;
+  const finalTitle = title || resolvedTitle;
+  const finalDesc = description || resolvedDescription;
 
   return (
-    <div className={cn('empty-state', className)}>
+    <div className={cn("empty-state", className)}>
       <div className="empty-state__icon">
         {icon || <span style={{ fontSize: 48, opacity: 0.2 }}>∅</span>}
       </div>

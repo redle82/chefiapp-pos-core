@@ -81,6 +81,8 @@ export const OSCopy = {
     title: "Comando Central",
     /** Identity Layer: título da página = "{restaurantName} — Comando Central". Fallback quando não há nome. */
     pageTitle: "ChefIApp OS — Comando Central",
+    /** Template para construir título: usar com restaurantName. Ex: `${restaurantName} — ${OSCopy.dashboard.comandoCentral}` */
+    pageTitleTemplate: "{restaurantName} — Comando Central",
     comandoCentral: "Comando Central",
     subtitle: "Visão Geral da Operação",
     operation: "Operação Agora",

@@ -16,7 +16,7 @@ interface FiscalSyncMonitorSectionProps {
 export function FiscalSyncMonitorSection({
   restaurantId,
 }: FiscalSyncMonitorSectionProps) {
-  const { summary, recentFailures, loading, error, refresh } =
+  const { summary, recentFailures, loading, error, tableUnavailable, refresh } =
     useFiscalSyncMonitor(restaurantId);
 
   if (!restaurantId) {
@@ -45,6 +45,13 @@ export function FiscalSyncMonitorSection({
       </div>
 
       {error && <p className={styles.errorText}>{error}</p>}
+      {tableUnavailable && (
+        <p className={styles.noteText}>
+          Dados de sync fiscal não disponíveis (tabela de auditoria opcional).
+          Para ativar: aplique a migração 20260211_core_audit_logs (ver
+          docker-core/MIGRATIONS.md).
+        </p>
+      )}
 
       <div className={styles.cardGrid}>
         {/* Syncs com sucesso */}

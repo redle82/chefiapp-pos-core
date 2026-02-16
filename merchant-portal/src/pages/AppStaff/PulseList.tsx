@@ -147,7 +147,7 @@ export const PulseList: React.FC = () => {
                   </div>
 
                   <div className={styles.payload}>
-                    {JSON.stringify(pulse.payload)}
+                    {JSON.stringify(pulse?.payload ?? {})}
                   </div>
                 </div>
               ))}

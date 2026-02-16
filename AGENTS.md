@@ -19,6 +19,15 @@
 
 - Start via `pnpm -w merchant-portal run dev`.
 - Default port is `5175` unless `PORT` is set.
+- **Port 5175 already in use:** outro processo (ex. Vite) já está a usar a porta. Para libertar: `lsof -ti:5175 | xargs kill -9`. Ou usa o servidor que já está a correr.
+
+## AppStaff (web = o que está em uso)
+
+- **AppStaff que o utilizador vê e usa** é o que está em **http://localhost:5175/app/staff/home** (merchant-portal). Ao pedir "AppStaff", "abrir AppStaff" ou "ver AppStaff" (nomeadamente no browser), abrir esta URL. Não confundir com um "app antigo" — este é o AppStaff em uso.
+- Para ter o servidor ativo: `pnpm --filter merchant-portal run dev` (porta 5175). Depois abrir `/app/staff/home`.
+- Existe também o projeto **`mobile-app`** (Expo) para iOS/Android: `pnpm run expo:go` ou `cd mobile-app && npx expo start` → QR → Expo Go. É outro terminal (native); o que está em `/app/staff/home` é o AppStaff web.
+- QR para abrir o AppStaff web no telemóvel (PWA): `pnpm run qr:appstaff-ios` → gera QR que abre o mesmo conteúdo de `/app/staff/home`.
+- QR para Expo Go (abrir o app nativo no iPhone): `pnpm run qr:expo-go` (na raiz) ou, a partir de `mobile-app`, `pnpm run qr:expo-go` (delega para a raiz).
 
 ## Critical flow validation
 
@@ -46,4 +55,5 @@
 
 ## Release readiness
 
-- Run full release audit: `npm run audit:release`.
+- **Gate recomendado (portal estável):** `npm run audit:release:portal` — web-e2e + typecheck + testes merchant-portal (Vitest) + leis. Passa sem DB/Jest raiz.
+- **Auditoria completa:** `npm run audit:release` — inclui Jest na raiz; pode falhar por testes de integração/DB. Ver `docs/audit/RELEASE_AUDIT_STATUS.md`.

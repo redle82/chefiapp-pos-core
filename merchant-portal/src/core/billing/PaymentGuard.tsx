@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { GlobalBlockedView, GlobalLoadingView } from "../../ui/design-system/components";
 import { getTabIsolated } from "../storage/TabIsolatedStorage";
@@ -9,6 +10,7 @@ interface PaymentGuardProps {
 }
 
 export const PaymentGuard: React.FC<PaymentGuardProps> = ({ children }) => {
+  const { t } = useTranslation("billing");
   const [status, setStatus] = useState<BillingStatus | "loading">("loading");
   const [trialExpired, setTrialExpired] = useState(false);
   const location = useLocation();
@@ -57,7 +59,7 @@ export const PaymentGuard: React.FC<PaymentGuardProps> = ({ children }) => {
   if (status === "loading") {
     return (
       <GlobalLoadingView
-        message="A verificar subscrição..."
+        message={t("checkingSubscription")}
         layout="operational"
         variant="fullscreen"
       />
@@ -78,9 +80,9 @@ export const PaymentGuard: React.FC<PaymentGuardProps> = ({ children }) => {
   if (status === "canceled") {
     return (
       <GlobalBlockedView
-        title="Subscrição necessária"
-        description="A tua subscrição foi cancelada. Para continuar a usar o ChefIApp Pro, reativa o plano na página de faturação."
-        action={{ label: "Reativar plano", to: "/app/billing" }}
+        title={t("subscriptionRequired")}
+        description={t("canceledDescription")}
+        action={{ label: t("reactivatePlan"), to: "/app/billing" }}
       />
     );
   }
@@ -88,9 +90,9 @@ export const PaymentGuard: React.FC<PaymentGuardProps> = ({ children }) => {
   if (status === "past_due" && trialExpired) {
     return (
       <GlobalBlockedView
-        title="Período de trial terminado"
-        description="O teu período de trial terminou. Ativa o plano para continuar a usar o ChefIApp."
-        action={{ label: "Escolher plano", to: "/app/billing" }}
+        title={t("trialEndedTitle")}
+        description={t("trialEndedDescription")}
+        action={{ label: t("choosePlan"), to: "/app/billing" }}
       />
     );
   }
@@ -99,12 +101,12 @@ export const PaymentGuard: React.FC<PaymentGuardProps> = ({ children }) => {
     return (
       <>
         <div className="w-full bg-amber-600 text-white text-xs font-bold px-4 py-2 text-center flex items-center justify-center gap-3 flex-wrap">
-          <span>⚠️ Pagamento pendente. Regularize para evitar a suspensão.</span>
+          <span>⚠️ {t("paymentPending")}</span>
           <a
             href="/app/billing"
             className="underline font-semibold hover:opacity-90"
           >
-            Escolher plano
+            {t("choosePlan")}
           </a>
         </div>
         {children}

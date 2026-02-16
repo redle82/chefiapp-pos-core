@@ -12,14 +12,16 @@ import { WelcomeOverlay } from "../../../components/onboarding/WelcomeOverlay";
 import { shouldShowWelcome } from "../../../components/onboarding/welcomeUtils";
 import { useRestaurantId } from "../../../ui/hooks/useRestaurantId";
 import { GlobalLoadingView } from "../../../ui/design-system/components";
+import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
 import { useDashboardOverview } from "../dashboard/hooks/useDashboardOverview";
 
 const cardStyle: React.CSSProperties = {
-  backgroundColor: "#fff",
+  backgroundColor: "var(--card-bg-on-dark, var(--surface-elevated))",
   borderRadius: 8,
   padding: 20,
   marginBottom: 16,
-  boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+  border: "1px solid var(--surface-border, rgba(255,255,255,0.08))",
 };
 
 const linkGridStyle: React.CSSProperties = {
@@ -30,7 +32,7 @@ const linkGridStyle: React.CSSProperties = {
 };
 
 const linkStyle: React.CSSProperties = {
-  color: "#2563eb",
+  color: "var(--color-primary, var(--color-info))",
   textDecoration: "none",
   fontWeight: 500,
   fontSize: 15,
@@ -62,27 +64,10 @@ export function AdminReportsOverview() {
       {showWelcome && (
         <WelcomeOverlay onDismiss={() => setShowWelcome(false)} />
       )}
-      <header style={{ marginBottom: 24 }}>
-        <h1
-          style={{
-            fontSize: 22,
-            fontWeight: 700,
-            margin: "0 0 4px 0",
-            color: "#111827",
-          }}
-        >
-          Relatórios
-        </h1>
-        <p
-          style={{
-            fontSize: 15,
-            color: "#6b7280",
-            margin: 0,
-          }}
-        >
-          Histórico e análise
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Relatórios"
+        subtitle="Histórico e análise. Aceda aos relatórios detalhados por período, equipa e desempenho."
+      />
 
       <div style={cardStyle}>
         <h2
@@ -90,13 +75,13 @@ export function AdminReportsOverview() {
             fontSize: 16,
             fontWeight: 600,
             margin: "0 0 12px 0",
-            color: "#374151",
+            color: "var(--text-primary)",
           }}
         >
           KPIs (snapshot)
         </h2>
         {loadingOverview ? (
-          <p style={{ color: "#6b7280", margin: 0 }}>A carregar…</p>
+          <p style={{ color: "var(--text-secondary)", margin: 0 }}>A carregar…</p>
         ) : (
           <div
             style={{
@@ -106,18 +91,18 @@ export function AdminReportsOverview() {
             }}
           >
             <div>
-              <span style={{ fontSize: 13, color: "#6b7280" }}>
+              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                 Faturado hoje
               </span>
-              <div style={{ fontSize: 18, fontWeight: 600 }}>
+              <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>
                 {formatEur(revenueToday)}
               </div>
             </div>
             <div>
-              <span style={{ fontSize: 13, color: "#6b7280" }}>
+              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                 Pedidos hoje
               </span>
-              <div style={{ fontSize: 18, fontWeight: 600 }}>{billsToday}</div>
+              <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>{billsToday}</div>
             </div>
           </div>
         )}
@@ -129,7 +114,7 @@ export function AdminReportsOverview() {
             fontSize: 16,
             fontWeight: 600,
             margin: "0 0 8px 0",
-            color: "#374151",
+            color: "var(--text-primary)",
           }}
         >
           Relatórios
@@ -137,7 +122,7 @@ export function AdminReportsOverview() {
         <p
           style={{
             fontSize: 14,
-            color: "#6b7280",
+            color: "var(--text-secondary)",
             margin: "0 0 8px 0",
           }}
         >

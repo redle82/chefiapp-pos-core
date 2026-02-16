@@ -11,11 +11,10 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useCoreHealth } from "../../../core/health/useCoreHealth";
 import { colors } from "../../../ui/design-system/tokens/colors";
 import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppSignature";
-
-/** Design Contract v1: mesma cor de acção (dourado) que o dashboard para "estou no mesmo sistema". */
-const actionAccent = colors.modes.dashboard.action;
 import { OfflineIndicator } from "../../../ui/OfflineIndicator";
+import { RestaurantLogo } from "../../../ui/RestaurantLogo";
 import { AppStaffBootScreen } from "../AppStaffBootScreen";
+import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import { useStaff } from "../context/StaffContext";
 import { getOperatorProfile } from "../data/operatorProfiles";
 import {
@@ -29,6 +28,8 @@ import {
   isFullScreenMode,
 } from "./staffModeConfig";
 
+/** Design Contract v1: mesma cor de acção (dourado) que o dashboard para "estou no mesmo sistema". */
+const actionAccent = colors.modes.dashboard.action;
 const BOOT_SESSION_KEY = "chefiapp_staff_boot_shown";
 
 export function StaffAppShellLayout({
@@ -36,6 +37,7 @@ export function StaffAppShellLayout({
 }: { children?: ReactNode } = {}) {
   const { activeRole, shiftState, activeLocation, specDrifts, tasks } =
     useStaff();
+  const { identity } = useRestaurantIdentity();
   const { status: coreStatus } = useCoreHealth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -226,6 +228,7 @@ export function StaffAppShellLayout({
               ←
             </button>
           )}
+          <RestaurantLogo logoUrl={identity.logoUrl} name={(identity.name || activeLocation?.name) ?? "Restaurante"} size={28} />
           <span
             style={{
               fontWeight: 700,

@@ -51,6 +51,8 @@ export interface CatalogProduct {
   /** Preço base em cêntimos (sem regras dinâmicas) */
   basePriceCents: number;
   isActive: boolean;
+  /** Estação de preparo: BAR ou KITCHEN — alinhado com Menu Builder e KDS */
+  station?: "BAR" | "KITCHEN";
   /** Impressora lógica ou fila de saída (quando configurado) */
   printerId?: string | null;
   modifierGroupIds: string[];

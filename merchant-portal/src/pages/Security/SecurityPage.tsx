@@ -144,6 +144,12 @@ export function SecurityPage() {
             Termos de utilização
           </Link>
           <Link
+            to="/legal/dpa"
+            className="text-sm text-neutral-400 hover:text-white transition-colors"
+          >
+            DPA
+          </Link>
+          <Link
             to="/landing-v2"
             className="text-sm text-neutral-400 hover:text-white transition-colors"
           >

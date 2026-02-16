@@ -4,7 +4,7 @@
 # Comandos úteis para gerenciar o Core Docker
 # =============================================================================
 
-.PHONY: up down reset logs ps validate test-rpc migrate-product-mode migrate-onboarding-completed migrate-terminals migrate-staff migrate-restaurant-people migrate-trial-ends-at help
+.PHONY: up down reset logs ps validate test-rpc migrate-product-mode migrate-onboarding-completed migrate-terminals migrate-staff migrate-restaurant-people migrate-trial-ends-at migrate-logo-url migrate-sofia-identity migrate-trial-restaurant migrate-bar-products migrate-task-rpcs help
 
 # Default target
 help:
@@ -29,6 +29,11 @@ help:
 	@echo "  make migrate-menu-catalog-seed - Seed opcional do catálogo (dados de exemplo)"
 	@echo "  make migrate-restaurant-people - Aplicar tabela gm_restaurant_people (pessoas operacionais / AppStaff)"
 	@echo "  make migrate-trial-ends-at - Aplicar coluna trial_ends_at (gm_restaurants; paywall FASE 1)"
+	@echo "  make migrate-logo-url - Aplicar coluna logo_url (gm_restaurants; identidade visual)"
+	@echo "  make migrate-sofia-identity - Aplicar identidade real Sofia Gastrobar (email, city, address, type)"
+	@echo "  make migrate-trial-restaurant - Aplicar restaurante trial 'Seu restaurante' (id 099)"
+	@echo "  make migrate-bar-products - Garantir produtos de bar com station=BAR (KDS secção Bar)"
+	@echo "  make migrate-task-rpcs - Aplicar RPCs start_task, complete_task, reject_task (KDS TaskPanel)"
 	@echo "  make test-global            - Teste global: tabelas + TPV + tarefas (script)"
 	@echo ""
 
@@ -176,6 +181,41 @@ migrate-trial-ends-at:
 	@echo "📦 Aplicando migration trial_ends_at (gm_restaurants)..."
 	@cat schema/migrations/20260213_trial_ends_at.sql | docker compose -f docker-compose.core.yml exec -T postgres \
 		psql -U postgres -d chefiapp_core -f - && echo "✅ trial_ends_at aplicado" || \
+		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# Logo do restaurante (identidade visual). Contrato: docs/architecture/RESTAURANT_LOGO_IDENTITY_CONTRACT.md
+migrate-logo-url:
+	@echo "📦 Aplicando migration logo_url (gm_restaurants)..."
+	@cat schema/migrations/20260225_restaurant_logo_url.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ logo_url aplicado" || \
+		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# Identidade real Sofia Gastrobar (não mock). Contrato: docs/architecture/SOFIA_GASTROBAR_REAL_PILOT.md
+migrate-sofia-identity:
+	@echo "📦 Aplicando identidade real Sofia Gastrobar (gm_restaurants)..."
+	@cat schema/migrations/20260226_sofia_gastrobar_real_identity.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ Sofia Gastrobar identidade aplicada" || \
+		(echo "❌ Migration falhou (confira se o Core está up e seeds/migrations anteriores aplicadas: make up)" && exit 1)
+
+# Restaurante trial "Seu restaurante" (id 099). Modo trial usa este restaurante; real usa Sofia (100).
+migrate-trial-restaurant:
+	@echo "📦 Aplicando restaurante trial 'Seu restaurante' (gm_restaurants)..."
+	@cat schema/migrations/20260227_trial_restaurant_seu_restaurante.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ Restaurante trial aplicado" || \
+		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# Produtos de bar (station=BAR) para aparecerem na secção Bar do KDS (categorias PT/ES + nome do produto).
+migrate-bar-products:
+	@echo "📦 Aplicando station=BAR a produtos de bar (gm_products)..."
+	@cat schema/migrations/20260228_ensure_bar_products_visible.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ Produtos de bar atualizados" || \
+		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# RPCs de tarefas (start_task, complete_task, reject_task) — KDS TaskPanel "Concluir tarefa". PostgREST recarrega schema ao reiniciar.
+migrate-task-rpcs:
+	@echo "📦 Aplicando RPCs start_task, complete_task, reject_task (gm_tasks)..."
+	@cat schema/migrations/20260223_kds_open_to_ready_and_task_rpcs.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ Task RPCs aplicadas. Reinicia o container postgrest para recarregar o schema: docker compose -f docker-compose.core.yml restart postgrest" || \
 		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
 
 # Teste global: Core + todas as tabelas + TPV (turno + pedido) + tarefas (MODO_INTERNO)

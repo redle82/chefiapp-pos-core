@@ -22,6 +22,7 @@ test.describe.serial("Phase 1 Operational Check", () => {
     await ctx.addInitScript(() => {
       window.sessionStorage.setItem("chefiapp_debug", "1");
       window.localStorage.setItem("chefiapp_pilot_mode", "true");
+      window.localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
       window.sessionStorage.setItem(
         "chefiapp_keycloak_session",
         JSON.stringify({

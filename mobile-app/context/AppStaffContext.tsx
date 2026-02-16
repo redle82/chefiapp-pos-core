@@ -509,7 +509,10 @@ export function AppStaffProvider({ children }: { children: React.ReactNode }) {
         const formatted = await fetchActiveTasks(supabase, restaurantId);
         setTasks(formatted);
       } catch (e) {
-        console.error("Fetch tasks error", e);
+        setTasks([]);
+        const msg = typeof (e as any)?.message === "string" ? (e as any).message : (e instanceof Error ? e.message : String(e));
+        const soft = /network request failed|failed to fetch|is not a function/i.test(msg);
+        if (__DEV__) (soft ? console.warn : console.error)("[AppStaff] Fetch tasks:", soft ? msg : e);
       }
     },
     [operationalContext.businessId],
@@ -571,8 +574,8 @@ export function AppStaffProvider({ children }: { children: React.ReactNode }) {
             resolvedBusinessName = resolvedBusinessName || "Restaurante";
           }
         } catch (e) {
-          console.error("[AppStaff] Error loading restaurant:", e);
-          // FALLBACK: Usar dados locais
+          // Rede inacessível (simulador sem Core) ou Core em baixo — fallback local
+          console.warn("[AppStaff] Error loading restaurant (using fallback):", e instanceof Error ? e.message : e);
           resolvedBusinessId = resolvedBusinessId || "fallback-restaurant-id";
           resolvedBusinessName = resolvedBusinessName || "Restaurante";
         }

@@ -1,8 +1,8 @@
 import React from "react";
 import type { MicroLesson } from "../../intelligence/education/MicroLessonEngine";
-import styles from "./LessonCard.module.css";
 import { Button } from "./Button";
 import { Card } from "./Card";
+import styles from "./LessonCard.module.css";
 import { Text } from "./primitives/Text";
 import { colors } from "./tokens/colors";
 
@@ -21,7 +21,7 @@ export const LessonCard: React.FC<LessonCardProps> = ({
       surface="layer2"
       padding="md"
       className={styles.card}
-      style={{ "--accent-color": colors.primary?.base } as React.CSSProperties}
+      style={{ "--accent-color": colors.action.base } as React.CSSProperties}
     >
       <div className={styles.content}>
         <div className={styles.header}>

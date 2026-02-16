@@ -267,23 +267,32 @@ class SyncEngineClass {
             throw new Error('Order has no items');
         }
 
-        const rpcItems = (payload.items || []).map((item: any) => ({
-            product_id: item.product_id ?? item.id ?? null,
-            name: item.name ?? '',
-            quantity: Number(item.quantity) || 1,
-            unit_price: Number(item.unit_price ?? item.price ?? 0)
-        }));
+        const restaurantId = payload.restaurant_id ?? payload.restaurantId;
+        if (!restaurantId) throw new Error('Order payload missing restaurant_id');
+
+        // unit_price in cents: TPV usually sends cents (integer); if small decimal (e.g. 10.5) treat as euros
+        const rpcItems = (payload.items || []).map((item: any) => {
+            const rawPrice = Number(item.unit_price ?? item.price ?? 0);
+            const looksLikeEuros = rawPrice > 0 && rawPrice < 100 && !Number.isInteger(rawPrice);
+            const unitPriceCents = looksLikeEuros ? Math.round(rawPrice * 100) : Math.round(rawPrice);
+            return {
+                product_id: item.product_id ?? item.id ?? null,
+                name: item.name ?? '',
+                quantity: Number(item.quantity) || 1,
+                unit_price: unitPriceCents
+            };
+        });
 
         const { data, error } = await createOrderAtomic({
-            p_restaurant_id: payload.restaurantId,
+            p_restaurant_id: restaurantId,
             p_items: rpcItems,
             p_payment_method: payload.payment_method ?? 'cash',
             p_sync_metadata: {
-                localId: payload.localId,
+                localId: payload.localId ?? payload.id,
                 syncedAt: new Date().toISOString(),
                 origin: payload.source || 'offline_sync',
-                table_number: payload.tableNumber,
-                table_id: payload.tableId
+                table_number: payload.table_number ?? payload.tableNumber,
+                table_id: payload.table_id ?? payload.tableId
             }
         });
 

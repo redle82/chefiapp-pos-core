@@ -421,15 +421,35 @@ export function OwnerGlobalDashboard() {
               marginBottom: 12,
             }}
           >
-            {todayCents > 0 ? CURRENCY.format(todayCents / 100) : "—"}
+            {dailyLoading
+              ? "…"
+              : hasDailyMetrics
+              ? CURRENCY.format(todayCents / 100)
+              : coreRestaurantId
+              ? "—"
+              : "0"}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span style={{ fontSize: 14, color: theme.text.secondary }}>
-              {financialNarrative.vs7dPhrase}
-            </span>
-            <span style={{ fontSize: 14, color: theme.text.secondary }}>
-              {financialNarrative.vsYesterdayPhrase}
-            </span>
+            {!dailyLoading && !hasDailyMetrics && coreRestaurantId && (
+              <span style={{ fontSize: 14, color: theme.text.secondary }}>
+                Conecte ao Core para ver métricas em tempo real.
+              </span>
+            )}
+            {!dailyLoading && hasDailyMetrics && todayCents === 0 && (
+              <span style={{ fontSize: 14, color: theme.text.secondary }}>
+                Nenhuma venda fechada hoje.
+              </span>
+            )}
+            {hasDailyMetrics && todayCents > 0 && (
+              <>
+                <span style={{ fontSize: 14, color: theme.text.secondary }}>
+                  {financialNarrative.vs7dPhrase}
+                </span>
+                <span style={{ fontSize: 14, color: theme.text.secondary }}>
+                  {financialNarrative.vsYesterdayPhrase}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -444,13 +464,29 @@ export function OwnerGlobalDashboard() {
         >
           <MetricCard
             label="Pedidos"
-            value={totalOrders > 0 ? totalOrders.toString() : "—"}
+            value={
+              dailyLoading
+                ? "…"
+                : hasDailyMetrics
+                ? totalOrders.toString()
+                : coreRestaurantId
+                ? "—"
+                : "0"
+            }
             hint="pagos"
           />
           <MetricCard
             label="Ticket medio"
             value={
-              avgTicketCents > 0 ? CURRENCY.format(avgTicketCents / 100) : "—"
+              dailyLoading
+                ? "…"
+                : hasDailyMetrics
+                ? avgTicketCents > 0
+                  ? CURRENCY.format(avgTicketCents / 100)
+                  : "0"
+                : coreRestaurantId
+                ? "—"
+                : "0"
             }
             hint="dia"
           />
@@ -1043,7 +1079,7 @@ function getOperationGaps({
   const gaps: string[] = [];
   if (specDriftsCount > 0) gaps.push("Excecoes operacionais ativas");
   if (shiftLoad === "red") gaps.push("Carga humana elevada");
-  if (coreStatus !== "UP") gaps.push("Sistema instavel");
+  if (coreStatus !== "UP") gaps.push("Core indisponivel");
   if (ordersCount >= 6) gaps.push("Fila de cozinha alta");
   return gaps.slice(0, 3);
 }

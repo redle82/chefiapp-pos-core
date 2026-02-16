@@ -37,19 +37,19 @@ export const SETUP_STEPS: SetupStep[] = [
   {
     id: "identity",
     label: "Nome & identidade",
-    route: "/config/identity",
+    route: "/admin/config/general",
     group: "BASICS",
   },
   {
     id: "location",
     label: "Local & endereço",
-    route: "/config/location",
+    route: "/admin/config/ubicaciones",
     group: "BASICS",
   },
   {
     id: "schedule",
     label: "Serviços & horários",
-    route: "/config/schedule",
+    route: "/admin/config",
     group: "SERVICES",
   },
   {

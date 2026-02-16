@@ -41,7 +41,7 @@ export const OSFrame: React.FC<OSFrameProps> = ({
   // 'landing' remains Ignition.
   const fireState =
     forcedState ||
-    getFireStateForContext(context === "public" ? "void" : context);
+    getFireStateForContext(context === "public" ? "auth" : context);
 
   const thermalRules = FireSystem[fireState];
 

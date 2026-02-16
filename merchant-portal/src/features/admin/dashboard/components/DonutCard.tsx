@@ -23,12 +23,13 @@ export function DonutCard({
   const occupiedPercent = total > 0 ? Math.round((occupied / total) * 100) : 0;
   const emptyPercent = 100 - occupiedPercent;
 
+  const occupiedDeg = (occupiedPercent / 100) * 360;
   return (
     <div
       style={{
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--card-bg-on-dark, var(--surface-elevated))",
         borderRadius: 12,
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--surface-border)",
         padding: "18px 20px",
         minHeight: 168,
         display: "flex",
@@ -53,7 +54,7 @@ export function DonutCard({
                 fontSize: 14,
                 fontWeight: 600,
                 margin: 0,
-                color: "#111827",
+                color: "var(--heading-section, var(--text-primary))",
               }}
             >
               {title}
@@ -64,7 +65,7 @@ export function DonutCard({
                 onClick={onDetailsClick}
                 style={{
                   fontSize: 12,
-                  color: "#7c3aed",
+                  color: "var(--color-primary, #7c3aed)",
                   background: "none",
                   border: "none",
                   cursor: "pointer",
@@ -87,8 +88,7 @@ export function DonutCard({
                 width: 90,
                 height: 90,
                 borderRadius: "50%",
-                background:
-                  "conic-gradient(#4c1d95 0deg, #4c1d95 0deg, #e5e7eb 0deg)",
+                background: `conic-gradient(var(--color-primary, #4c1d95) 0deg, var(--color-primary, #4c1d95) ${occupiedDeg}deg, var(--surface-border) ${occupiedDeg}deg)`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -99,19 +99,19 @@ export function DonutCard({
                   width: 64,
                   height: 64,
                   borderRadius: "50%",
-                  backgroundColor: "#ffffff",
+                  backgroundColor: "var(--card-bg-on-dark, var(--surface-elevated))",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 18,
                   fontWeight: 600,
-                  color: "#4b5563",
+                  color: "var(--text-secondary)",
                 }}
               >
                 {occupiedPercent}%
               </div>
             </div>
-            <div style={{ fontSize: 13, color: "#4b5563" }}>
+            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
               <div style={{ marginBottom: 4 }}>
                 <span
                   style={{
@@ -119,7 +119,7 @@ export function DonutCard({
                     width: 8,
                     height: 8,
                     borderRadius: "50%",
-                    backgroundColor: "#e5e7eb",
+                    backgroundColor: "var(--surface-border)",
                     marginRight: 6,
                   }}
                 />
@@ -132,7 +132,7 @@ export function DonutCard({
                     width: 8,
                     height: 8,
                     borderRadius: "50%",
-                    backgroundColor: "#4c1d95",
+                    backgroundColor: "var(--color-primary, #4c1d95)",
                     marginRight: 6,
                   }}
                 />
@@ -160,7 +160,7 @@ function SkeletonDonut() {
           width: 120,
           height: 14,
           borderRadius: 999,
-          backgroundColor: "#e5e7eb",
+          backgroundColor: "var(--surface-border)",
         }}
       />
       <div
@@ -175,7 +175,7 @@ function SkeletonDonut() {
             width: 90,
             height: 90,
             borderRadius: "50%",
-            backgroundColor: "#e5e7eb",
+            backgroundColor: "var(--surface-border)",
           }}
         />
         <div
@@ -191,7 +191,7 @@ function SkeletonDonut() {
               width: "80%",
               height: 10,
               borderRadius: 999,
-              backgroundColor: "#e5e7eb",
+              backgroundColor: "var(--surface-border)",
             }}
           />
           <div
@@ -199,7 +199,7 @@ function SkeletonDonut() {
               width: "65%",
               height: 10,
               borderRadius: 999,
-              backgroundColor: "#e5e7eb",
+              backgroundColor: "var(--surface-border)",
             }}
           />
         </div>

@@ -18,6 +18,7 @@ export function AdminPlaceholderPage({
               fontSize: 22,
               fontWeight: 700,
               margin: "0 0 4px 0",
+              color: "var(--text-primary)",
             }}
           >
             {title}
@@ -26,7 +27,7 @@ export function AdminPlaceholderPage({
         <p
           style={{
             fontSize: 15,
-            color: "#6b7280",
+            color: "var(--text-secondary)",
             margin: 0,
           }}
         >

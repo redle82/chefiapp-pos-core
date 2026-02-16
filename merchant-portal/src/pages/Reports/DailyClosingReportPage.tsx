@@ -7,10 +7,10 @@
  */
 
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ShiftHistorySection } from "../../components/Dashboard/ShiftHistorySection";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import { centsToDecimal, exportCsv } from "../../core/reports/csvExport";
 import FiscalReconciliationService from "../../core/services/FiscalReconciliationService";
 import {
@@ -18,9 +18,11 @@ import {
   type FiscalReconciliationItem,
 } from "../../hooks/useFiscalReconciliation";
 import { useShiftHistory } from "../../hooks/useShiftHistory";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import styles from "./DailyClosingReportPage.module.css";
 
 export function DailyClosingReportPage() {
+  const { t, i18n } = useTranslation("operational");
   const { runtime } = useRestaurantRuntime();
   const { restaurantId } = useRestaurantId();
   const { data } = useShiftHistory(restaurantId, { daysBack: 7 });
@@ -64,11 +66,19 @@ export function DailyClosingReportPage() {
   const handleExportCsv = useCallback(() => {
     if (!data || data.length === 0) return;
     exportCsv(
-      ["Turno", "Abertura", "Fecho", "Vendas (€)", "Pedidos"],
+      [
+        t("dailyClosing.csv.shift"),
+        t("dailyClosing.csv.opened"),
+        t("dailyClosing.csv.closed"),
+        t("dailyClosing.csv.sales"),
+        t("dailyClosing.csv.orders"),
+      ],
       data.map((s) => [
         s.shift_id.slice(0, 8),
-        s.opened_at ? new Date(s.opened_at).toLocaleString("pt-PT") : "—",
-        s.closed_at ? new Date(s.closed_at).toLocaleString("pt-PT") : "Aberto",
+        s.opened_at ? new Date(s.opened_at).toLocaleString(i18n.language) : "—",
+        s.closed_at
+          ? new Date(s.closed_at).toLocaleString(i18n.language)
+          : t("dailyClosing.csv.open"),
         centsToDecimal(s.total_sales_cents),
         s.orders_count,
       ]),
@@ -106,26 +116,23 @@ export function DailyClosingReportPage() {
     <div className={styles.page}>
       <DataModeBanner dataMode={runtime.dataMode} />
       <div className={styles.headerRow}>
-        <h1 className={styles.title}>Fecho diário</h1>
+        <h1 className={styles.title}>{t("dailyClosing.title")}</h1>
         {data && data.length > 0 && (
           <button
             type="button"
             onClick={handleExportCsv}
             className={styles.exportButton}
           >
-            ⬇ Exportar CSV
+            {t("dailyClosing.exportCsv")}
           </button>
         )}
       </div>
-      <p className={styles.subtitle}>
-        Histórico de turnos (abertura, fecho, vendas e pedidos) dos últimos 7
-        dias.
-      </p>
+      <p className={styles.subtitle}>{t("dailyClosing.subtitle")}</p>
       <ShiftHistorySection />
       <section className={styles.reconciliationSection}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>
-            Reconciliação ChefIApp vs POS fiscal (últimos 7 dias)
+            {t("dailyClosing.reconciliation.title")}
           </h2>
           <button
             type="button"
@@ -133,15 +140,13 @@ export function DailyClosingReportPage() {
             disabled={loadingRecon}
             className={styles.refreshButton}
           >
-            {loadingRecon ? "…" : "Atualizar"}
+            {loadingRecon ? "…" : t("dailyClosing.reconciliation.refresh")}
           </button>
         </div>
         {errorRecon && <p className={styles.errorText}>{errorRecon}</p>}
         {reconciliations.length === 0 ? (
           <p className={styles.emptyText}>
-            Ainda não existem reconciliações registadas. Use o POS fiscal e o
-            ChefIApp em paralelo e configure o fluxo de reconciliação conforme o
-            contrato interno.
+            {t("dailyClosing.reconciliation.empty")}
           </p>
         ) : (
           <div className={styles.tableWrapper}>
@@ -151,7 +156,7 @@ export function DailyClosingReportPage() {
                   <th
                     className={`${styles.tableHeaderCell} ${styles.tableHeaderCellLeft}`}
                   >
-                    Turno
+                    {t("dailyClosing.reconciliation.shift")}
                   </th>
                   <th
                     className={`${styles.tableHeaderCell} ${styles.tableHeaderCellRight}`}
@@ -161,27 +166,27 @@ export function DailyClosingReportPage() {
                   <th
                     className={`${styles.tableHeaderCell} ${styles.tableHeaderCellRight}`}
                   >
-                    POS fiscal
+                    {t("dailyClosing.reconciliation.posFiscal")}
                   </th>
                   <th
                     className={`${styles.tableHeaderCell} ${styles.tableHeaderCellRight}`}
                   >
-                    Diferença
+                    {t("dailyClosing.reconciliation.difference")}
                   </th>
                   <th
                     className={`${styles.tableHeaderCell} ${styles.tableHeaderCellLeft}`}
                   >
-                    Estado
+                    {t("dailyClosing.reconciliation.status")}
                   </th>
                   <th
                     className={`${styles.tableHeaderCell} ${styles.tableHeaderCellLeft}`}
                   >
-                    Notas
+                    {t("dailyClosing.reconciliation.notes")}
                   </th>
                   <th
                     className={`${styles.tableHeaderCell} ${styles.tableHeaderCellCenter}`}
                   >
-                    Acções
+                    {t("dailyClosing.reconciliation.actions")}
                   </th>
                 </tr>
               </thead>
@@ -192,8 +197,8 @@ export function DailyClosingReportPage() {
                     r.status === "OK"
                       ? "OK"
                       : r.status === "PENDING_DATA"
-                      ? "Aguarda dados"
-                      : "Divergente";
+                      ? t("dailyClosing.reconciliation.pendingData")
+                      : t("dailyClosing.reconciliation.divergent");
                   const statusColor =
                     r.status === "OK"
                       ? "#16a34a"
@@ -207,7 +212,9 @@ export function DailyClosingReportPage() {
                       >
                         {r.shift_id
                           ? r.shift_id.slice(0, 8)
-                          : new Date(r.created_at).toLocaleString("pt-PT")}
+                          : new Date(r.created_at).toLocaleString(
+                              i18n.language,
+                            )}
                       </td>
                       <td
                         className={`${styles.tableCell} ${styles.tableCellRight}`}
@@ -253,7 +260,7 @@ export function DailyClosingReportPage() {
                             onClick={() => handleEditReconciliation(r)}
                             className={styles.editButton}
                           >
-                            Editar
+                            {t("dailyClosing.reconciliation.edit")}
                           </button>
                         )}
                       </td>
@@ -277,40 +284,56 @@ export function DailyClosingReportPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className={styles.modalTitle}>
-              Editar Reconciliação Divergente
+              {t("dailyClosing.reconciliation.modalTitle")}
             </h3>
             <p className={styles.modalMeta}>
-              Turno: {editingRecon.shift_id?.slice(0, 8) || "—"} • Diferença: €
-              {centsToDecimal(editingRecon.difference_cents)}
+              {t("dailyClosing.reconciliation.modalMeta", {
+                shiftId: editingRecon.shift_id?.slice(0, 8) || "—",
+                amount: centsToDecimal(editingRecon.difference_cents),
+              })}
             </p>
             <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>Código da Razão</label>
+              <label className={styles.fieldLabel}>
+                {t("dailyClosing.reconciliation.reasonCode")}
+              </label>
               <select
                 value={editReasonCode}
                 onChange={(e) => setEditReasonCode(e.target.value)}
-                title="Código da razão para a divergência"
+                title={t("dailyClosing.reconciliation.reasonCodeTitle")}
                 className={styles.selectField}
               >
-                <option value="">Seleccionar...</option>
-                <option value="DIRECT_POS_SALES">Vendas directas no POS</option>
+                <option value="">
+                  {t("dailyClosing.reconciliation.selectPlaceholder")}
+                </option>
+                <option value="DIRECT_POS_SALES">
+                  {t("dailyClosing.reconciliation.reasonDirectPosSales")}
+                </option>
                 <option value="MISSING_FISCAL_CANCELLATION">
-                  Cancelamento em falta no POS
+                  {t("dailyClosing.reconciliation.reasonMissingCancellation")}
                 </option>
                 <option value="TAX_CONFIG_ERROR">
-                  Erro de configuração fiscal
+                  {t("dailyClosing.reconciliation.reasonTaxConfigError")}
                 </option>
-                <option value="MANUAL_ADJUSTMENT">Ajuste manual</option>
-                <option value="UNDER_INVESTIGATION">Em investigação</option>
-                <option value="RESOLVED">Resolvido</option>
+                <option value="MANUAL_ADJUSTMENT">
+                  {t("dailyClosing.reconciliation.reasonManualAdjustment")}
+                </option>
+                <option value="UNDER_INVESTIGATION">
+                  {t("dailyClosing.reconciliation.reasonUnderInvestigation")}
+                </option>
+                <option value="RESOLVED">
+                  {t("dailyClosing.reconciliation.reasonResolved")}
+                </option>
               </select>
             </div>
             <div className={`${styles.fieldGroup} ${styles.fieldGroupLarge}`}>
-              <label className={styles.fieldLabel}>Notas</label>
+              <label className={styles.fieldLabel}>
+                {t("dailyClosing.reconciliation.notesLabel")}
+              </label>
               <textarea
                 value={editNotes}
                 onChange={(e) => setEditNotes(e.target.value)}
                 rows={4}
-                placeholder="Descreva a causa da divergência e as acções tomadas..."
+                placeholder={t("dailyClosing.reconciliation.notesPlaceholder")}
                 className={styles.textareaField}
               />
             </div>
@@ -321,7 +344,7 @@ export function DailyClosingReportPage() {
                 disabled={saving}
                 className={styles.cancelButton}
               >
-                Cancelar
+                {t("dailyClosing.reconciliation.cancel")}
               </button>
               <button
                 type="button"
@@ -329,7 +352,9 @@ export function DailyClosingReportPage() {
                 disabled={saving}
                 className={styles.saveButton}
               >
-                {saving ? "A guardar..." : "Guardar"}
+                {saving
+                  ? t("dailyClosing.reconciliation.saving")
+                  : t("dailyClosing.reconciliation.save")}
               </button>
             </div>
           </div>

@@ -17,7 +17,7 @@ import {
 import type { BlockingReason } from "./types";
 
 const DASHBOARD = "/app/dashboard";
-const CONFIG_MODULES = "/config/modules";
+const CONFIG_MODULES = "/admin/modules";
 
 interface BlockingScreenProps {
   reason?: BlockingReason;

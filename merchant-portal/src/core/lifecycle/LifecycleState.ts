@@ -29,6 +29,9 @@ const BOOTSTRAP_ALLOWED_ROUTES = [
   "/bootstrap",
   "/auth",
   "/setup/restaurant-minimal",
+  "/welcome",
+  "/onboarding",
+  "/onboarding/assistant",
 ];
 
 /** Rotas permitidas por estado (matriz do contrato v2 + onboarding 9 telas). */
@@ -44,6 +47,8 @@ const ROUTES_BY_STATE: Record<RestaurantLifecycleState, string[]> = {
     "/auth/email",
     "/bootstrap",
     "/setup/restaurant-minimal",
+    "/welcome",
+    "/onboarding",
     "/trial-guide",
     "/trial",
     "/help/start-local",
@@ -53,11 +58,11 @@ const ROUTES_BY_STATE: Record<RestaurantLifecycleState, string[]> = {
   READY_TO_OPERATE: [], // todas permitidas (tratado em isPathAllowedForState)
 };
 
-/** Destino canónico para redirecionamento quando a rota não é permitida. */
+/** Destino canónico para redirecionamento quando a rota não é permitida. NAVIGATION_CONTRACT: sem org → /welcome. */
 const CANONICAL_DESTINATION: Record<RestaurantLifecycleState, string> = {
   VISITOR: "/",
-  BOOTSTRAP_REQUIRED: "/setup/restaurant-minimal",
-  BOOTSTRAP_IN_PROGRESS: "/setup/restaurant-minimal",
+  BOOTSTRAP_REQUIRED: "/welcome",
+  BOOTSTRAP_IN_PROGRESS: "/welcome",
   READY_TO_OPERATE: "/dashboard",
 };
 

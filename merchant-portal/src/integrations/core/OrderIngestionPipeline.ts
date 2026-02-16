@@ -29,6 +29,10 @@ export class OrderIngestionPipeline {
     event: OrderCreatedEvent,
     restaurantId: string,
   ): Promise<{ success: boolean; orderId?: string; error?: string }> {
+    if (!event?.payload) {
+      console.warn("[Ingestion] Ignoring event without payload");
+      return { success: false, error: "Event without payload" };
+    }
     console.log(
       `[Ingestion] Processing: ${event.payload.orderId} from ${event.payload.source}`,
     );

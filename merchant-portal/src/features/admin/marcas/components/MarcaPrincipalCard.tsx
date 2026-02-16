@@ -30,21 +30,21 @@ export function MarcaPrincipalCard() {
   return (
     <div
       style={{
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--surface-border)",
         borderRadius: 12,
         padding: 16,
-        backgroundColor: "#fff",
+        backgroundColor: "var(--card-bg-on-dark)",
       }}
     >
-      <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "#111827" }}>
+      <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
         Marca principal
       </h3>
-      <p style={{ margin: "0 0 16px 0", fontSize: 13, color: "#6b7280" }}>
+      <p style={{ margin: "0 0 16px 0", fontSize: 13, color: "var(--text-secondary)" }}>
         Nombre y descripción de la marca principal del restaurante.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Nombre</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>Nombre</span>
           <input
             type="text"
             value={name}
@@ -53,14 +53,14 @@ export function MarcaPrincipalCard() {
             style={{
               padding: "8px 12px",
               fontSize: 14,
-              border: "1px solid #d1d5db",
+              border: "1px solid var(--surface-border)",
               borderRadius: 8,
               boxSizing: "border-box",
             }}
           />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Descripción</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>Descripción</span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -69,7 +69,7 @@ export function MarcaPrincipalCard() {
             style={{
               padding: "8px 12px",
               fontSize: 14,
-              border: "1px solid #d1d5db",
+              border: "1px solid var(--surface-border)",
               borderRadius: 8,
               boxSizing: "border-box",
               resize: "vertical",
@@ -86,8 +86,8 @@ export function MarcaPrincipalCard() {
             padding: "8px 14px",
             fontSize: 13,
             fontWeight: 600,
-            color: "#fff",
-            backgroundColor: "#7c3aed",
+            color: "var(--text-inverse)",
+            backgroundColor: "var(--color-primary)",
             border: "none",
             borderRadius: 8,
             cursor: saving ? "not-allowed" : "pointer",
@@ -95,7 +95,7 @@ export function MarcaPrincipalCard() {
         >
           {saving ? "Guardando…" : "Guardar"}
         </button>
-        {saved && <span style={{ fontSize: 13, color: "#059669" }}>Guardado</span>}
+        {saved && <span style={{ fontSize: 13, color: "var(--color-success)" }}>Guardado</span>}
       </div>
     </div>
   );

@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "test:hardening": "bash ../scripts/core/run-hardening-tests.sh",
     "test:e2e": "playwright test",
+    "e2e:critical": "playwright test tests/e2e/critical-flow.spec.ts",
     "test:e2e:smoke": "playwright test tests/e2e/fluxo-total.spec.ts tests/e2e/fase-b-teste-humano.spec.ts tests/e2e/fase-a-global-tecnico.spec.ts",
     "type-check": "tsc --noEmit",
     "genesis:prove": "npx tsx scripts/genesis-prove.ts",
@@ -45,12 +46,14 @@
     "buffer": "^6.0.3",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.23.26",
+    "i18next": "^25.8.7",
     "idb": "^8.0.3",
     "lucide-react": "^0.562.0",
     "papaparse": "^5.5.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-helmet-async": "^2.0.5",
+    "react-i18next": "^16.5.4",
     "react-router-dom": "^7.11.0",
     "recharts": "^3.6.0",
     "uuid": "^13.0.0",
@@ -81,6 +84,7 @@
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",
     "vite-plugin-pwa": "^1.2.0",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.16",
+    "workbox-window": "^7.0.0"
   }
 }

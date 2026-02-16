@@ -27,13 +27,13 @@ import {
 } from "../../../core/tpv/OrderEngine";
 import { PaymentEngine } from "../../../core/tpv/PaymentEngine";
 // DOCKER CORE: Usar dockerCoreClient em vez de supabase genérico
-import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import { updateOrderStatus as coreUpdateOrderStatus } from "../../../core/infra/CoreOrdersApi";
 import {
   tpvEventBus,
   type DecisionMadePayload,
   type OrderExceptionPayload,
 } from "../../../core/tpv/TPVCentralEvents";
+import { dockerCoreClient } from "../../../infra/docker-core/connection";
 
 import { v4 as uuidv4 } from "uuid";
 import type { Order, OrderItem } from "../../../core/contracts";
@@ -52,7 +52,7 @@ import {
 } from "../../../core/storage/TabIsolatedStorage";
 import { eventTaskGenerator } from "../../../core/tasks/EventTaskGenerator";
 import { useOfflineOrder } from "./OfflineOrderContext";
-import { OrderContext } from "./OrderContextToken"; // FASE 3.4: Token isolado
+import { OrderContext, type OrderCreateInput } from "./OrderContextToken"; // FASE 3.4: Token isolado
 // DOCKER CORE: All writes go through PostgREST RPCs (see ARCHITECTURE_DECISION.md)
 import { isDevStableMode } from "../../../core/runtime/devStableMode";
 
@@ -165,6 +165,7 @@ export function OrderProvider({
     addToQueue,
     updateOfflineOrder,
     queue: _offlineQueue,
+    pendingCount: pendingSync,
   } = useOfflineOrder();
   const isOnline = !isOffline;
 
@@ -275,7 +276,7 @@ export function OrderProvider({
         },
       )
       .subscribe((status) => {
-        setRealtimeStatus(status);
+        setRealtimeStatus(String(status));
         if (status === "SUBSCRIBED") {
           // Reset reconnect manager on success
           reconnectManagerRef.current.reset();
@@ -458,7 +459,7 @@ export function OrderProvider({
   // -------------------------------------------------------------------------
   // FLOW: Nascimento do pedido (TPV → Core). Autoridade: create_order_atomic.
   // -------------------------------------------------------------------------
-  const createOrder = async (orderInput: Partial<Order>): Promise<Order> => {
+  const createOrder = async (orderInput: OrderCreateInput): Promise<Order> => {
     if (!restaurantId) throw new Error("Restaurant ID not set");
 
     // DOCKER CORE: Verificar apenas offline real (sem status FROZEN do Kernel)
@@ -633,7 +634,8 @@ export function OrderProvider({
       throw createError;
     }
 
-    const orderId = orderResult?.id || uuidv4();
+    const orderData = orderResult as { id?: string } | null;
+    const orderId = orderData?.id || uuidv4();
 
     // Fetch the projected order (Active Record pattern for now)
     // This ensures we get the DB-generated short_id
@@ -1075,11 +1077,12 @@ export function OrderProvider({
             );
           }
 
-          if (!items || items.length === 0) {
+          const itemsList = Array.isArray(items) ? items : [];
+          if (itemsList.length === 0) {
             throw new Error("Order has no items");
           }
 
-          const calculatedTotal = items.reduce(
+          const calculatedTotal = itemsList.reduce(
             (sum: number, i: Record<string, any>) =>
               sum + i.price_snapshot * i.quantity,
             0,
@@ -1148,10 +1151,7 @@ export function OrderProvider({
 
           // PRE-CHECK: Loyalty Balance
           if (method === "loyalty") {
-            const orderForCheck = await OrderEngine.getOrder(
-              orderId,
-              restaurantId,
-            );
+            const orderForCheck = await OrderEngine.getOrderById(orderId);
             const customerId = (orderForCheck as any).customer_id;
             if (!customerId)
               throw new Error(
@@ -1229,21 +1229,27 @@ export function OrderProvider({
               if (method === "loyalty") {
                 // REDIRECCIONAMENTO: QUEIMA DE PONTOS
                 const pointsBurned = Math.ceil(amountCents / 10);
+                type LoyaltyCustomer = {
+                  points_balance?: number;
+                  visit_count?: number;
+                  total_spend_cents?: number;
+                };
                 const { data: customer } = await dockerCoreClient
                   .from("gm_customers")
                   .select("points_balance, visit_count")
                   .eq("id", customerId)
                   .single();
 
-                if (customer) {
+                const customerRow = customer as LoyaltyCustomer | null;
+                if (customerRow) {
                   await dockerCoreClient
                     .from("gm_customers")
                     .update({
                       points_balance:
-                        (customer.points_balance || 0) - pointsBurned,
+                        (customerRow.points_balance || 0) - pointsBurned,
                       // Não incrementa spend nem visits em resgate (decisão de negócio)
                       // Ou incrementa visits? Vamos incrementar visits pois houve transação.
-                      visit_count: (customer.visit_count || 0) + 1,
+                      visit_count: (customerRow.visit_count || 0) + 1,
                       last_visit_at: new Date().toISOString(),
                     })
                     .eq("id", customerId);
@@ -1269,15 +1275,16 @@ export function OrderProvider({
                   .eq("id", customerId)
                   .single();
 
-                if (customer) {
+                const customerRow = customer as LoyaltyCustomer | null;
+                if (customerRow) {
                   await dockerCoreClient
                     .from("gm_customers")
                     .update({
                       points_balance:
-                        (customer.points_balance || 0) + pointsEarned,
+                        (customerRow.points_balance || 0) + pointsEarned,
                       total_spend_cents:
-                        (customer.total_spend_cents || 0) + spendCents,
-                      visit_count: (customer.visit_count || 0) + 1,
+                        (customerRow.total_spend_cents || 0) + spendCents,
+                      visit_count: (customerRow.visit_count || 0) + 1,
                       last_visit_at: new Date().toISOString(),
                     })
                     .eq("id", customerId);
@@ -1304,12 +1311,16 @@ export function OrderProvider({
           // FASE 4: Inventory Auto-Deductions
           try {
             const paidOrder = await OrderEngine.getOrderById(orderId);
-            await InventoryEngine.processOrder(paidOrder);
+            if (!paidOrder) {
+              throw new Error("Paid order not found for inventory processing");
+            }
+            const localPaidOrder = mapRealOrderToLocalOrder(paidOrder);
+            await InventoryEngine.processOrder(localPaidOrder);
 
             const totalCost = await InventoryEngine.calculateOrderCost(
-              paidOrder,
+              localPaidOrder,
             );
-            const grossMargin = paidOrder.totalCents - totalCost;
+            const grossMargin = localPaidOrder.total - totalCost;
 
             await dockerCoreClient
               .from("gm_orders")
@@ -1432,11 +1443,12 @@ export function OrderProvider({
         throw openError;
       }
 
-      if (!registerResult || !registerResult.id) {
+      const registerData = registerResult as { id?: string } | null;
+      if (!registerData?.id) {
         throw new Error("Failed to open cash register: no ID returned");
       }
 
-      setCashRegisterId(registerResult.id);
+      setCashRegisterId(registerData.id);
 
       // Verificar que o registro foi criado corretamente
       const verifyRegister = await CashRegisterEngine.getOpenCashRegister(
@@ -1528,6 +1540,7 @@ export function OrderProvider({
         // === KDS HARDENING: Expor todos os estados de conexão ===
         isConnected: isOnline,
         isOffline,
+        pendingSync, // Offline queue count (for OfflineIndicator)
         realtimeStatus, // 'SUBSCRIBED' | 'CLOSED' | 'CHANNEL_ERROR' | etc
         lastRealtimeEvent, // Timestamp do último evento
 

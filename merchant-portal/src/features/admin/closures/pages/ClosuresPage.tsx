@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 import { ClosuresEmptyState } from "../components/ClosuresEmptyState";
 import { ClosuresList } from "../components/ClosuresList";
 import { CreateClosureModal } from "../components/CreateClosureModal";
@@ -75,14 +76,10 @@ export function ClosuresPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Cierres temporales
-        </h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Pausa los pedidos online, reservas o entregas para fechas específicas.
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Cierres temporales"
+        subtitle="Pausa los pedidos online, reservas o entregas para fechas específicas."
+      />
 
       {closures.length === 0 && !loading ? (
         <ClosuresEmptyState onNewClosure={() => setModalOpen(true)} />

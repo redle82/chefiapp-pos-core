@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 import {
   getTransactions,
   getTransactionSummary,
@@ -47,15 +48,10 @@ export function TransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-xl font-semibold text-gray-900">
-          Transacciones procesadas
-        </h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Pagamentos processados pelos sistemas (Shop, LastPay, Reservas), sem
-          dinheiro externo ou TPV de terceiros.
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Transacciones procesadas"
+        subtitle="Pagamentos processados pelos sistemas (Shop, LastPay, Reservas), sem dinheiro externo ou TPV de terceiros."
+      />
 
       <TransactionsFilters onApply={handleApplyFilters} loading={loading} />
 

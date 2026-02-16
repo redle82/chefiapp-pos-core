@@ -26,6 +26,7 @@
  */
 // Auth only — temporary until Core Auth (getSession for start_turn)
 import {
+  Component,
   lazy,
   Suspense,
   useCallback,
@@ -33,8 +34,8 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import {
-  Navigate,
   useLocation,
   useNavigate,
   useParams,
@@ -60,10 +61,10 @@ import { OrderProvider, useOrders } from "./context/OrderContextReal";
 import { TableProvider } from "./context/TableContext";
 
 import { SyncStatusIndicator } from "../../components/SyncStatusIndicator";
-import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { FiscalPrinter } from "../../core/fiscal/FiscalPrinter";
-import { requestPrint } from "../../core/print/CorePrintApi";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
+import { requestPrint } from "../../core/print/CorePrintApi";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
 
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import {
@@ -104,6 +105,8 @@ import { TableMapPanel } from "../../ui/design-system/domain/TableMapPanel";
 import { TPVHeader } from "../../ui/design-system/domain/TPVHeader";
 import { TPVLayoutSplit } from "../../ui/design-system/layouts/TPVLayoutSplit";
 import { Text } from "../../ui/design-system/primitives/Text";
+import { useOperationalStore } from "../../core/operational/useOperationalStore";
+import { useOperationalMockBootstrap } from "../../core/operational/useOperationalMockBootstrap";
 import { GroupSelector } from "./components/GroupSelector";
 import { IncomingRequests } from "./components/IncomingRequests";
 import { OrderHeader } from "./components/OrderHeader";
@@ -221,7 +224,7 @@ function renderLockedState(props: {
   );
 }
 
-class DebugErrorBoundary extends React.Component<
+class DebugErrorBoundary extends Component<
   { children: React.ReactNode },
   { hasError: boolean; error: any; errorInfo: any }
 > {
@@ -255,6 +258,7 @@ class DebugErrorBoundary extends React.Component<
 
 const TPVContent = () => {
   /* FASE 5: Toast para feedback visual */
+  const { t } = useTranslation("tpv");
   const { success, error, toasts, dismiss } = useToast();
   const navigate = useNavigate();
   const runtimeContext = useRestaurantRuntime();
@@ -404,10 +408,10 @@ const TPVContent = () => {
   const [receiptShareOrder, setReceiptShareOrder] =
     useState<ReceiptShareOrder | null>(null);
 
-  // Load catalog (modifier groups) on mount
+  // Load catalog from Core (gm_products) so TPV and Catálogo admin usam os mesmos itens
   useEffect(() => {
-    loadCatalog().catch(() => {});
-  }, [loadCatalog]);
+    loadCatalog(restaurantId ?? undefined).catch(() => {});
+  }, [loadCatalog, restaurantId]);
 
   // P4-6 FIX: Use Dynamic Menu (Intelligence + Sponsorships)
   const {
@@ -639,7 +643,7 @@ const TPVContent = () => {
               .then((order) => {
                 setActiveOrderId(order.id);
                 setTabIsolated("chefiapp_active_order_id", order.id);
-                success("Pedido criado com itens de exemplo");
+                success(t("toast.orderCreatedTrial"));
               })
               .catch((err: any) => {
                 console.error("[TPV] Error creating trial order:", err);
@@ -684,7 +688,7 @@ const TPVContent = () => {
         // Abrir pedido existente automaticamente
         setActiveOrderId(existingOrder.id);
         setTabIsolated("chefiapp_active_order_id", existingOrder.id);
-        success(`Pedido da mesa ${table.number} aberto`);
+        success(t("toast.tableOrderOpened", { table: table.number }));
       }
     }
   };
@@ -697,9 +701,7 @@ const TPVContent = () => {
 
       if (activeOrderId) {
         if (isOrderConfirmed(activeOrderId)) {
-          error(
-            "Pedido já confirmado. Inicie um novo pedido para adicionar itens.",
-          );
+          error(t("error.orderAlreadyConfirmed"));
           return;
         }
         await addItemToOrder(activeOrderId, {
@@ -709,10 +711,10 @@ const TPVContent = () => {
           quantity: 1,
           categoryName: "⚡ Agile Created",
         });
-        success(`Produto "${name}" adicionado!`);
+        success(t("toast.productAdded", { name }));
       } else {
         if (!guards.canCreateOrder) {
-          error("Publique o menu para criar pedidos reais.");
+          error(t("toast.publishMenuFirst"));
           return;
         }
         setDraftItems((prev) => [
@@ -726,7 +728,7 @@ const TPVContent = () => {
             category: "⚡ Agile Created",
           },
         ]);
-        success(`Produto "${name}" adicionado ao rascunho`);
+        success(t("toast.productAddedDraft", { name }));
       }
     } catch (err: any) {
       console.error("Quick product failed:", err);
@@ -762,6 +764,23 @@ const TPVContent = () => {
     );
   }, [orders]);
 
+  // Bootstrap de mocks operacionais (estoque / hardware) — Fase 1 apenas.
+  useOperationalMockBootstrap();
+
+  // ---------------------------------------------------------------------------
+  // Operational Store wiring (Centro de Comando Operacional - Fase 1)
+  // ---------------------------------------------------------------------------
+  const setOperationalKpis = useOperationalStore((state) => state.setKpis);
+  const setOperationalCurrentOrder = useOperationalStore(
+    (state) => state.setCurrentOrder,
+  );
+  const resetOperationalCurrentOrder = useOperationalStore(
+    (state) => state.resetCurrentOrder,
+  );
+  const setOperationalKitchenMetrics = useOperationalStore(
+    (state) => state.setKitchenMetrics,
+  );
+
   // --------------------------------------------------------------------------------
   // BRAIN: VOICE CONTROL (SUB-CHEF EARS) - Must be before isLocked guard to avoid hooks violation
   // --------------------------------------------------------------------------------
@@ -777,7 +796,7 @@ const TPVContent = () => {
       },
       onOpenPayment: () => {
         if (activeOrderId) setPaymentModalOrderId(activeOrderId);
-        else error("Nenhum pedido ativo para pagar");
+        else error(t("toast.noActiveOrderToPay"));
       },
     });
 
@@ -826,7 +845,7 @@ const TPVContent = () => {
       if (cashRegisterOpen) {
         if (activeOrders.length > 0) {
           error(
-            `Impossível fechar caixa: Existem ${activeOrders.length} pedidos em aberto. Finalize ou cancele-os antes.`,
+            t("toast.cannotCloseOpenOrders", { count: activeOrders.length }),
           );
           return;
         }
@@ -848,20 +867,6 @@ const TPVContent = () => {
       setPaymentModalOrderId(null);
     },
   });
-
-  // BUG-023 FIX: Detect offline/online status - MOVED BEFORE GUARD
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
 
   // DEBUG: TPV State - MOVED BEFORE GUARD
   useEffect(() => {
@@ -917,6 +922,122 @@ const TPVContent = () => {
     activeOrders.length,
   ]);
 
+  // Sincronizar KPIs operacionais (receita diária, nº de pedidos ativos, ticket médio)
+  useEffect(() => {
+    // Evitar divisão por zero; se não soubermos número de pedidos concluídos, assumir mínimo 1.
+    const completedOrdersCount = orders.filter(
+      (o) => o.status === "paid" || o.status === "delivered",
+    ).length;
+    const averageTicketCents =
+      completedOrdersCount > 0
+        ? Math.round(dailyTotalCents / completedOrdersCount)
+        : 0;
+
+    setOperationalKpis({
+      dailyRevenueCents: dailyTotalCents,
+      activeOrdersCount: activeOrders.length,
+      averageTicketCents,
+    });
+  }, [activeOrders.length, dailyTotalCents, orders, setOperationalKpis]);
+
+  // Sincronizar estado do pedido atual (para painel lateral / IA / alertas)
+  useEffect(() => {
+    if (!activeOrderId) {
+      resetOperationalCurrentOrder();
+      return;
+    }
+
+    const order = activeOrders.find((o) => o.id === activeOrderId);
+    if (!order) {
+      resetOperationalCurrentOrder();
+      return;
+    }
+
+    const mapStatus = (status: string | null | undefined) => {
+      switch (status) {
+        case "new":
+          return "NOT_SENT";
+        case "preparing":
+          return "PREPARING";
+        case "ready":
+          return "READY";
+        case "paid":
+          return "PAID";
+        case "cancelled":
+          return "CANCELLED";
+        default:
+          return "DRAFT";
+      }
+    };
+
+    setOperationalCurrentOrder({
+      orderId: order.id,
+      status: mapStatus(order.status as any),
+      startedAt: (order as any).createdAt ?? null,
+      // Fase 1: se não houver timestamps dedicados, deixamos como null
+      sentToKitchenAt: (order as any).sentToKitchenAt ?? null,
+      readyAt: (order as any).readyAt ?? null,
+      paidAt: order.status === "paid" ? ((order as any).updatedAt ?? null) : null,
+      mode: (order as any).mode ?? null,
+      tableNumber:
+        (order as any).tableNumber ??
+        (order as any).tableId ??
+        (order as any).metadata?.tableNumber ??
+        null,
+    });
+  }, [
+    activeOrderId,
+    activeOrders,
+    resetOperationalCurrentOrder,
+    setOperationalCurrentOrder,
+  ]);
+
+  // Sincronizar métricas agregadas de cozinha com base nos pedidos ativos
+  useEffect(() => {
+    if (activeOrders.length === 0) {
+      setOperationalKitchenMetrics({
+        avgPrepTimeSeconds: null,
+        delayedOrdersCount: 0,
+      });
+      return;
+    }
+
+    const now = Date.now();
+    const candidates = activeOrders.filter((o) =>
+      ["new", "preparing"].includes((o.status as any) || ""),
+    );
+
+    const durationsSeconds = candidates
+      .map((o) => {
+        const createdAt = (o as any).createdAt;
+        if (!createdAt) return null;
+        const createdMs = new Date(createdAt).getTime();
+        if (!Number.isFinite(createdMs)) return null;
+        return Math.max(0, (now - createdMs) / 1000);
+      })
+      .filter((v): v is number => v != null && Number.isFinite(v));
+
+    const avgPrepTimeSeconds =
+      durationsSeconds.length > 0
+        ? durationsSeconds.reduce((sum, v) => sum + v, 0) /
+          durationsSeconds.length
+        : null;
+
+    const delayedOrdersCount = candidates.filter((o) => {
+      const createdAt = (o as any).createdAt;
+      if (!createdAt) return false;
+      const createdMs = new Date(createdAt).getTime();
+      if (!Number.isFinite(createdMs)) return false;
+      // Reutilizar o mesmo limiar de atraso que o painel warmap (15 minutos)
+      return now - createdMs > 15 * 60 * 1000;
+    }).length;
+
+    setOperationalKitchenMetrics({
+      avgPrepTimeSeconds,
+      delayedOrdersCount,
+    });
+  }, [activeOrders, setOperationalKitchenMetrics]);
+
   const getDeviceId = () => {
     let deviceId = localStorage.getItem("chefiapp_device_id");
     if (!deviceId) {
@@ -938,7 +1059,7 @@ const TPVContent = () => {
       try {
         if (!restaurantId) {
           console.error("[TPV] Cannot start turn: Missing Restaurant ID");
-          error("Erro crítico: Restaurant ID não identificado.");
+          error(t("toast.criticalNoRestaurantId"));
           return;
         }
 
@@ -962,7 +1083,7 @@ const TPVContent = () => {
             );
             setActiveOperator(op);
             setIsLocked(false);
-            success(`Comando Assumido (Trial): ${op.name}`);
+            success(t("toast.commandTakenTrial", { name: op.name }));
             return;
           }
           throw new Error("SESSION_EXPIRED");
@@ -996,13 +1117,13 @@ const TPVContent = () => {
         if (rpcData?.session_id) {
           localStorage.setItem("chefiapp_turn_session_id", rpcData.session_id);
         }
-        success(`Comando Assumido: ${op.name}`);
+        success(t("toast.commandTaken", { name: op.name }));
       } catch (err: any) {
         console.error("Start Turn Failed:", err);
         const msg =
           err.message === "TOWER_MODE_FORBIDDEN"
-            ? "Acesso Negado: Apenas Gerentes podem acessar a Torre de Controle."
-            : "Erro ao iniciar turno. Verifique conexão.";
+            ? t("toast.towerModeForbidden")
+            : t("toast.errorStartTurn");
         error(msg);
       }
     },
@@ -1044,7 +1165,7 @@ const TPVContent = () => {
   const handlePrintComanda = async (orderId: string) => {
     const order = activeOrders.find((o) => o.id === orderId);
     if (!order || !restaurantId) {
-      error("Pedido não encontrado.");
+      error(t("toast.orderNotFound"));
       return;
     }
     const orderForPrint = {
@@ -1068,21 +1189,21 @@ const TPVContent = () => {
           payload: {},
         });
         if (rpcError) {
-          error(rpcError.message || "Erro ao pedir impressão. Tente de novo.");
+          error(rpcError.message || t("toast.errorPrintRequest"));
           return;
         }
         if (data?.status === "sent") {
           await printer.printKitchenTicket(orderForPrint);
-          success("Comanda enviada para impressão.");
+          success(t("toast.printSent"));
         } else {
-          success("Comanda em fila de impressão.");
+          success(t("toast.printQueued"));
         }
       } else {
         await printer.printKitchenTicket(orderForPrint);
-        success("Comanda enviada para impressão.");
+        success(t("toast.printSent"));
       }
     } catch (err: any) {
-      error(err?.message || "Erro ao imprimir comanda. Tente de novo.");
+      error(err?.message || t("toast.errorPrintComanda"));
     }
   };
 
@@ -1117,7 +1238,7 @@ const TPVContent = () => {
       // Context Guard: Cancel requires manager (unless configured otherwise)
       if (action === "cancel" && role === "waiter") {
         // For now, simpler error. Future: Manager Override Modal
-        error("Cancelamento requer autorização de gerente");
+        error(t("toast.cancelRequiresManager"));
         return;
       }
 
@@ -1156,10 +1277,14 @@ const TPVContent = () => {
         .update({ discount_cents: discountCents })
         .eq("id", orderId);
       await getActiveOrders();
-      success(`Desconto de €${(discountCents / 100).toFixed(2)} aplicado`);
+      success(
+        t("toast.discountApplied", {
+          amount: (discountCents / 100).toFixed(2),
+        }),
+      );
     } catch (err: any) {
       console.error("Discount failed:", err);
-      error(err?.message || "Erro ao aplicar desconto");
+      error(err?.message || t("toast.errorDiscount"));
     }
   };
 
@@ -1174,7 +1299,7 @@ const TPVContent = () => {
     // FASE 2: Simular pagamento (exploração) — decisão do bootstrap
     if (isTrialData) {
       // Simular sucesso de pagamento
-      success("🎉 Pagamento processado com sucesso!");
+      success(t("toast.paymentSuccess"));
 
       // Fechar modal
       setPaymentModalOrderId(null);
@@ -1182,9 +1307,7 @@ const TPVContent = () => {
       // Se for tutorial, redirecionar para dashboard após 2 segundos
       if (isTutorialMode) {
         setTimeout(() => {
-          success(
-            "Parabéns! Você completou sua primeira venda. Agora você pode usar o TPV normalmente.",
-          );
+          success(t("toast.tutorialComplete"));
           setTimeout(() => {
             navigate("/app/dashboard", {
               state: { firstSaleCompleted: true },
@@ -1205,30 +1328,26 @@ const TPVContent = () => {
     // SEMANA 1 - Tarefa 1.3: Validação de saldo antes de fechar conta
     const order = activeOrders.find((o) => o.id === paymentModalOrderId);
     if (!order) {
-      error("Pedido não encontrado");
+      error(t("toast.orderNotFound"));
       return;
     }
 
     // Validar que pedido tem itens
     if (!order.items || order.items.length === 0) {
-      error(
-        "Não é possível fechar conta sem itens. Adicione itens ao pedido primeiro.",
-      );
+      error(t("error.cannotCloseNoItems"));
       return;
     }
 
     // INV-006: UI uses Domain's total, never calculates independently
     const totalCents = order.total;
     if (totalCents <= 0) {
-      error(
-        "Não é possível fechar conta com total zero. Adicione itens ao pedido primeiro.",
-      );
+      error(t("toast.cannotCloseZeroTotal"));
       return;
     }
 
     // Validar que pedido não está totalmente pago
     if (order.status === "paid") {
-      error("Este pedido já foi totalmente pago.");
+      error(t("toast.orderAlreadyPaid"));
       return;
     }
 
@@ -1370,7 +1489,7 @@ const TPVContent = () => {
         removeTabIsolated("chefiapp_active_order_id");
       }
 
-      success("Pedido pago com sucesso");
+      success(t("toast.orderPaidSuccess"));
     } catch (err: any) {
       console.error("Payment failed:", err);
 
@@ -1400,7 +1519,7 @@ const TPVContent = () => {
 
     const order = activeOrders.find((o) => o.id === splitBillModalOrderId);
     if (!order) {
-      error("Pedido não encontrado");
+      error(t("toast.orderNotFound"));
       return;
     }
 
@@ -1435,7 +1554,11 @@ const TPVContent = () => {
       // Atualizar lista de pedidos
       await getActiveOrders();
 
-      success(`Pagamento de ${formatAmount(amountCents)} registrado`);
+      success(
+        t("toast.partialPaymentRegistered", {
+          amount: formatAmount(amountCents),
+        }),
+      );
 
       // Se saldo zerou, fechar modal
       const newPaidAmount = paidAmount + amountCents;
@@ -1449,7 +1572,7 @@ const TPVContent = () => {
       }
     } catch (err: any) {
       console.error("Partial payment failed:", err);
-      error(err.message || "Erro ao processar pagamento parcial");
+      error(err.message || t("toast.errorPartialPayment"));
     }
   };
 
@@ -1481,7 +1604,7 @@ const TPVContent = () => {
     // Este handler só existe para casos especiais (ex: pedido sem mesa)
     // Por enquanto, redireciona para o menu
     setContextView("menu");
-    error("Adicione itens do menu para criar um pedido");
+    error(t("toast.addItemsToOrder"));
   };
 
   // FLOW: Nascimento do pedido (via mapa de mesas) — createOrder vazio; primeiro item vem do menu.
@@ -1508,7 +1631,7 @@ const TPVContent = () => {
 
     // Guardrail FK: criar pedido só com menu publicado
     if (!guards.canCreateOrder) {
-      error("Publique o menu para criar pedidos reais.");
+      error(t("toast.publishMenuFirst"));
       return;
     }
 
@@ -1521,7 +1644,7 @@ const TPVContent = () => {
         setActiveOrderId(newOrder.id);
         setSelectedTableId(tableId);
         setContextView("menu");
-        success(`Pedido criado para mesa ${tableNumber}`);
+        success(t("toast.orderCreatedForTable", { table: tableNumber }));
       }
     } catch (err: any) {
       console.error("Failed to create order:", err);
@@ -1601,7 +1724,7 @@ const TPVContent = () => {
       // FASE 1: Sem pedido ativo → adicionar ao rascunho (nenhum write no Core)
       if (!activeOrderId) {
         if (!guards.canCreateOrder) {
-          error("Publique o menu para criar pedidos reais.");
+          error(t("toast.publishMenuFirst"));
           return;
         }
         setDraftItems((prev) => [
@@ -1617,15 +1740,18 @@ const TPVContent = () => {
             course: activeCourse,
           },
         ]);
-        success(`${item.name} adicionado ao rascunho (Ronda ${activeCourse})`);
+        success(
+          t("toast.itemAddedDraftRound", {
+            name: item.name,
+            round: activeCourse,
+          }),
+        );
         return;
       }
 
       // FASE 1: Pedido já confirmado → imutável
       if (isOrderConfirmed(activeOrderId)) {
-        error(
-          "Pedido já confirmado. Inicie um novo pedido para adicionar itens.",
-        );
+        error(t("error.orderAlreadyConfirmed"));
         return;
       }
 
@@ -1647,7 +1773,7 @@ const TPVContent = () => {
         course: activeCourse,
       });
 
-      success(`${item.name} adicionado`);
+      success(t("toast.itemAdded", { name: item.name }));
     } catch (err: any) {
       console.error("Failed to add item:", err);
 
@@ -1693,7 +1819,7 @@ const TPVContent = () => {
   const handleConfirmDraft = async () => {
     if (draftItems.length === 0) return;
     if (!guards.canCreateOrder) {
-      error("Publique o menu para criar pedidos reais.");
+      error(t("toast.publishMenuFirst"));
       return;
     }
     try {
@@ -1719,7 +1845,7 @@ const TPVContent = () => {
       setTabIsolated("chefiapp_active_order_id", newOrder.id);
       setDraftItems([]);
       setTimeout(() => fetchGroups(), 500);
-      success("Pedido confirmado");
+      success(t("toast.orderConfirmed"));
     } catch (err: any) {
       const errorMsg = getErrorMessage(err, {
         code: err.code,
@@ -1742,14 +1868,14 @@ const TPVContent = () => {
           <div className={styles.contingencyBanner}>
             <span>
               {bootstrap.operationMode === "exploracao"
-                ? "Dados ilustrativos. Publique o menu para operar em tempo real."
-                : "Core indisponível. Pode usar com dados de exemplo."}
+                ? t("toast.illustrativeData")
+                : t("toast.coreUnavailable")}
             </span>
             <button
               onClick={() => runtimeContext?.refresh()}
               className={styles.contingencyButton}
             >
-              Tentar novamente
+              {t("toast.tryAgain")}
             </button>
           </div>
         )}
@@ -1853,6 +1979,7 @@ const TPVContent = () => {
                       terminalId="TERM-01"
                       isOnline={isOnline}
                       restaurantName={identity?.name || "ChefIApp"}
+                      logoUrl={identity?.logoUrl}
                       voiceControl={{
                         isListening,
                         isAvailable,
@@ -1955,10 +2082,12 @@ const TPVContent = () => {
 
               {contextView === "orders" && (
                 <div className={styles.ordersColumn}>
-                  <IncomingRequests
-                    restaurantId={restaurantId}
-                    onOrderAccepted={() => getActiveOrders()}
-                  />
+                  {restaurantId && (
+                    <IncomingRequests
+                      restaurantId={restaurantId}
+                      onOrderAccepted={() => getActiveOrders()}
+                    />
+                  )}
                   <div className={styles.ordersStream}>
                     <StreamTunnel
                       orders={activeOrders}
@@ -1997,10 +2126,12 @@ const TPVContent = () => {
                       Gestão de pedidos Uber Eats, Glovo e Web
                     </Text>
                   </div>
-                  <IncomingRequests
-                    restaurantId={restaurantId}
-                    onOrderAccepted={() => getActiveOrders()}
-                  />
+                  {restaurantId && (
+                    <IncomingRequests
+                      restaurantId={restaurantId}
+                      onOrderAccepted={() => getActiveOrders()}
+                    />
+                  )}
                   <div className={styles.deliveryList}>
                     <StreamTunnel
                       orders={activeOrders.filter(
@@ -2220,10 +2351,10 @@ const TPVContent = () => {
                                 itemId,
                                 quantity,
                               );
-                              success("Quantidade atualizada");
+                              success(t("toast.quantityUpdated"));
                             } catch (err: any) {
                               error(
-                                err.message || "Erro ao atualizar quantidade",
+                                err.message || t("toast.errorUpdateQuantity"),
                               );
                             }
                           }}
@@ -2231,9 +2362,9 @@ const TPVContent = () => {
                             if (!activeOrderId) return;
                             try {
                               await removeItemFromOrder(activeOrderId, itemId);
-                              success("Item removido");
+                              success(t("toast.itemRemoved"));
                             } catch (err: any) {
-                              error(err.message || "Erro ao remover item");
+                              error(err.message || t("toast.errorRemoveItem"));
                             }
                           }}
                           onBackToMenu={() => {
@@ -2277,7 +2408,9 @@ const TPVContent = () => {
                 onCloseCashRegister={() => {
                   if (activeOrders.length > 0) {
                     error(
-                      `Impossível fechar caixa: Existem ${activeOrders.length} pedidos em aberto.`,
+                      t("toast.cannotCloseOpenOrders", {
+                        count: activeOrders.length,
+                      }),
                     );
                     return;
                   }
@@ -2468,7 +2601,7 @@ const TPVContent = () => {
                 await openCashRegister(openingBalanceCents);
                 setShowOpenCashModal(false);
                 setCashRegisterOpen(true);
-                success("Caixa aberto com sucesso");
+                success(t("toast.cashOpened"));
                 // Lei do Turno: notificar fonte única para Dashboard/KDS não mostrarem "turno fechado"
                 await shift?.refreshShiftStatus?.();
 
@@ -2477,12 +2610,12 @@ const TPVContent = () => {
                 setDailyTotalCents(totalCents);
                 setDailyTotal(formatAmount(totalCents));
               } catch (err: any) {
-                const msg = err.message || "Erro ao abrir caixa";
+                const msg = err.message || t("toast.errorOpenCash");
                 const fc = err.failureClass;
                 if (fc === "degradation") {
-                  error("Problema de rede. Tente novamente em instantes.");
+                  error(t("toast.networkError"));
                 } else if (fc === "acceptable") {
-                  error(msg + " Pode tentar novamente.");
+                  error(t("toast.retryAppend", { msg }));
                 } else {
                   error(msg);
                 }
@@ -2494,7 +2627,7 @@ const TPVContent = () => {
       )}
 
       {/* Close Cash Register — Z-Report (ShiftCloseReport) */}
-      {showCloseCashModal && cashRegisterId && (
+      {showCloseCashModal && cashRegisterId && restaurantId && (
         <Suspense
           fallback={
             <div className={styles.loadingCenter}>
@@ -2509,7 +2642,7 @@ const TPVContent = () => {
             onClose={async () => {
               setShowCloseCashModal(false);
               setCashRegisterOpen(false);
-              success("Caixa fechado com sucesso — Z-Report gerado");
+              success(t("toast.cashClosed"));
 
               // Recarregar dados
               const totalCents = await getDailyTotal();
@@ -2557,6 +2690,7 @@ const TPVContent = () => {
 // TPV wrapper
 // DOCKER CORE: Providers agora são adicionados diretamente aqui, já que App.tsx não usa AppDomainWrapper
 const TPV = () => {
+  const { t } = useTranslation("tpv");
   const readiness = useOperationalReadiness("TPV");
   const { toasts, dismiss } = useToast();
   const { identity } = useRestaurantIdentity();
@@ -2585,7 +2719,7 @@ const TPV = () => {
   if (readiness.loading) {
     return (
       <GlobalLoadingView
-        message="Verificando estado operacional..."
+        message={t("toast.checkingOperationalState")}
         layout="operational"
         variant="fullscreen"
       />

@@ -105,7 +105,15 @@ export interface BootstrapContext {
 
 import { getErrorMessage } from "../errors/ErrorMessages";
 import { DbWriteGate } from "../governance/DbWriteGate";
-import type { ExecuteSafeFn } from "../services/OrderProcessingService";
+
+/** CORE_FAILURE_MODEL: pass executeSafe (from useKernel()) to get failureClass on error. Local type; was from archived OrderProcessingService. */
+export type ExecuteSafeFn = (req: any) => Promise<{
+  ok: boolean;
+  result?: any;
+  reason?: string;
+  error?: any;
+  failureClass?: string;
+}>;
 
 export class MenuBootstrapService {
   constructor(private supabase: DockerCoreClientShape) {}

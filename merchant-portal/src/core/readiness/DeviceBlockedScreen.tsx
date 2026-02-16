@@ -9,7 +9,8 @@
 import { GlobalBlockedView } from "../../ui/design-system/components";
 import type { DeviceBlockedReason } from "./useDeviceGate";
 
-const INSTALL_APP = "/app/install";
+/** Rota canónica para instalar TPV/KDS (agora integrado no Hub Módulos). */
+const INSTALL_APP = "/admin/modules";
 
 const COPY: Record<
   DeviceBlockedReason,

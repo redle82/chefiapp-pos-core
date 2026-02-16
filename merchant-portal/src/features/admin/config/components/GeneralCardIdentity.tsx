@@ -39,6 +39,7 @@ export function GeneralCardIdentity() {
     city: "",
     postalCode: "",
     state: "",
+    logoUrl: "",
   });
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -72,6 +73,7 @@ export function GeneralCardIdentity() {
         city: (r.city as string) ?? "",
         postalCode: (r.postal_code as string) ?? "",
         state: (r.state as string) ?? "",
+        logoUrl: (r.logo_url as string) ?? "",
       });
       setLoaded(true);
     })();
@@ -97,6 +99,7 @@ export function GeneralCardIdentity() {
         city: form.city.trim() || null,
         postal_code: form.postalCode.trim() || null,
         state: form.state.trim() || null,
+        logo_url: form.logoUrl.trim() || null,
         updated_at: new Date().toISOString(),
       };
       const { error } = await dockerCoreClient
@@ -113,9 +116,9 @@ export function GeneralCardIdentity() {
   };
 
   const cardStyle = {
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--card-bg-on-dark)",
     borderRadius: 10,
-    border: "1px solid #e5e7eb",
+    border: "1px solid var(--surface-border)",
     padding: 14,
   };
   const labelStyle = {
@@ -123,12 +126,12 @@ export function GeneralCardIdentity() {
     fontSize: 12,
     fontWeight: 600,
     marginBottom: 4,
-    color: "#374151",
+    color: "var(--text-secondary)",
   };
   const inputStyle = {
     width: "100%",
     padding: "6px 10px",
-    border: "1px solid #e5e7eb",
+    border: "1px solid var(--surface-border)",
     borderRadius: 6,
     fontSize: 13,
   };
@@ -139,8 +142,8 @@ export function GeneralCardIdentity() {
     fontSize: 13,
     fontWeight: 600,
     cursor: "pointer",
-    backgroundColor: "#7c3aed",
-    color: "#fff",
+    backgroundColor: "var(--color-primary)",
+    color: "var(--text-inverse)",
   };
   const gridRow = {
     display: "grid" as const,
@@ -156,16 +159,16 @@ export function GeneralCardIdentity() {
           fontSize: 14,
           fontWeight: 600,
           margin: "0 0 4px 0",
-          color: "#111827",
+          color: "var(--text-primary)",
         }}
       >
         Identidade do Restaurante
       </h2>
-      <p style={{ margin: "0 0 8px 0", fontSize: 12, color: "#6b7280" }}>
+      <p style={{ margin: "0 0 8px 0", fontSize: 12, color: "var(--text-secondary)" }}>
         Quem somos e onde nos encontrar.
       </p>
       {!loaded ? (
-        <p style={{ fontSize: 12, color: "#6b7280" }}>A carregar...</p>
+        <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>A carregar...</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div style={gridRow}>
@@ -289,6 +292,35 @@ export function GeneralCardIdentity() {
               }
               style={inputStyle}
             />
+          </div>
+          <div>
+            <label style={labelStyle}>URL do logo</label>
+            <input
+              type="url"
+              value={form.logoUrl}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, logoUrl: e.target.value }))
+              }
+              placeholder="https://… (imagem do logo)"
+              style={inputStyle}
+            />
+            {form.logoUrl && (
+              <div style={{ marginTop: 6 }}>
+                <img
+                  src={form.logoUrl}
+                  alt="Logo"
+                  style={{
+                    maxWidth: 64,
+                    maxHeight: 64,
+                    objectFit: "contain",
+                    borderRadius: 8,
+                  }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </div>
+            )}
           </div>
           <div>
             <button

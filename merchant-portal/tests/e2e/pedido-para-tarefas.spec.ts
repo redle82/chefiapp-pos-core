@@ -31,6 +31,7 @@ test.describe("Pedido TPV → KDS/Tarefas", () => {
       window.localStorage.setItem("chefiapp_debug_mode", "true");
       window.localStorage.setItem("chefiapp_pilot_mode", "true");
       window.localStorage.setItem("chefiapp_bypass_health", "true");
+      window.localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
     });
 
     const pageTPV = await context.newPage();

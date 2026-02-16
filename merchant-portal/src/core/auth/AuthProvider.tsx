@@ -22,6 +22,10 @@ import React, {
 import { CONFIG } from "../../config";
 import { isDebugMode } from "../debugMode";
 import {
+  SOFIA_RESTAURANT_ID,
+  TRIAL_RESTAURANT_ID,
+} from "../readiness/operationalRestaurant";
+import {
   BackendType,
   getBackendConfigured,
   getBackendType,
@@ -127,12 +131,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           localStorage.setItem("chefiapp_pilot_mode", "true");
         }
         if (!localStorage.getItem("chefiapp_restaurant_id")) {
-          const SEED = "00000000-0000-0000-0000-000000000100";
-          localStorage.setItem("chefiapp_restaurant_id", SEED);
+          localStorage.setItem("chefiapp_restaurant_id", SOFIA_RESTAURANT_ID);
         }
         if (!sessionStorage.getItem("chefiapp_debug")) {
           sessionStorage.setItem("chefiapp_debug", "1");
         }
+        // Fechar modo trial: restaurante real = Sofia Gastrobar
+        localStorage.removeItem("chefiapp_trial_mode");
+        sessionStorage.removeItem("chefiapp_trial_mode");
       }
 
       const isTrialUrl =
@@ -141,6 +147,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         sessionStorage.getItem("chefiapp_trial_mode") === "true" ||
         localStorage.getItem("chefiapp_trial_mode") === "true";
       const isPilot = localStorage.getItem("chefiapp_pilot_mode") === "true";
+
+      // Modo trial: restaurante "Seu restaurante" (id 099)
+      if (isTrialUrl) {
+        localStorage.setItem("chefiapp_trial_mode", "true");
+        sessionStorage.setItem("chefiapp_trial_mode", "true");
+        localStorage.setItem("chefiapp_restaurant_id", TRIAL_RESTAURANT_ID);
+      }
+      if (isTrialStored) {
+        localStorage.setItem("chefiapp_restaurant_id", TRIAL_RESTAURANT_ID);
+      }
 
       if (isTrialUrl || isTrialStored || (isDebugMode() && isPilot)) {
         console.warn(

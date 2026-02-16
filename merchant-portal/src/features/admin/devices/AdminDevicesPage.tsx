@@ -11,6 +11,7 @@ import {
   setActivePairingRequest,
   type DeviceListEntry,
 } from "../../auth/connectByCode";
+import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
 import type { AdminDevice, AdminDeviceStatus } from "./deviceTypes";
 
 const PAIRING_VALIDITY_MS = 60_000; // 60s
@@ -121,42 +122,25 @@ export function AdminDevicesPage() {
 
   return (
     <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
-      <header style={{ marginBottom: 16 }}>
-        <h1
-          style={{
-            fontSize: 20,
-            fontWeight: 700,
-            margin: "0 0 2px 0",
-            color: "#111827",
-          }}
-        >
-          Gestión de dispositivos
-        </h1>
-        <p
-          style={{
-            margin: 0,
-            fontSize: 13,
-            color: "#6b7280",
-          }}
-        >
-          Estado e vínculo dos terminais. Vincular dispositivo com PIN (válido 60s).
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Gestión de dispositivos"
+        subtitle="Estado e vínculo dos terminais. Vincular dispositivo com PIN (válido 60s)."
+      />
 
       {/* Vincular dispositivo — Gerar PIN */}
       <section
         style={{
           marginBottom: 24,
           padding: 16,
-          backgroundColor: "#f9fafb",
-          border: "1px solid #e5e7eb",
+          backgroundColor: "var(--card-bg-on-dark)",
+          border: "1px solid var(--surface-border)",
           borderRadius: 8,
         }}
       >
-        <h2 style={{ fontSize: 14, fontWeight: 600, color: "#374151", margin: "0 0 12px 0" }}>
+        <h2 style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 12px 0" }}>
           Vincular dispositivo
         </h2>
-        <p style={{ margin: "0 0 12px 0", fontSize: 13, color: "#6b7280" }}>
+        <p style={{ margin: "0 0 12px 0", fontSize: 13, color: "var(--text-secondary)" }}>
           Gere um PIN e digite-o no TPV ou KDS para vincular o dispositivo. O PIN expira em 60 segundos.
         </p>
         <button
@@ -168,9 +152,9 @@ export function AdminDevicesPage() {
             fontSize: 14,
             fontWeight: 600,
             borderRadius: 6,
-            border: "1px solid #d1d5db",
-            backgroundColor: "#fff",
-            color: restaurantId ? "#111827" : "#9ca3af",
+            border: "1px solid var(--surface-border)",
+            backgroundColor: "var(--card-bg-on-dark)",
+            color: restaurantId ? "var(--text-primary)" : "var(--text-tertiary)",
             cursor: restaurantId ? "pointer" : "not-allowed",
           }}
         >
@@ -178,10 +162,10 @@ export function AdminDevicesPage() {
         </button>
         {pairingPin != null && pairingExpiresAt != null && (
           <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 16 }}>
-            <span style={{ fontFamily: "monospace", fontSize: 24, letterSpacing: 4, color: "#111827" }}>
+            <span style={{ fontFamily: "monospace", fontSize: 24, letterSpacing: 4, color: "var(--text-primary)" }}>
               {pairingPin}
             </span>
-            <span style={{ fontSize: 13, color: "#6b7280" }}>
+            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
               Expira em {Math.max(0, Math.ceil((pairingExpiresAt - Date.now()) / 1000))}s
             </span>
           </div>
@@ -196,7 +180,7 @@ export function AdminDevicesPage() {
           marginBottom: 16,
         }}
       >
-        <span style={{ fontSize: 13, color: "#6b7280" }}>Filtrar:</span>
+        <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Filtrar:</span>
         <select
           value={statusFilter}
           onChange={(e) =>
@@ -205,10 +189,10 @@ export function AdminDevicesPage() {
           style={{
             padding: "6px 10px",
             fontSize: 13,
-            border: "1px solid #d1d5db",
+            border: "1px solid var(--surface-border)",
             borderRadius: 6,
-            backgroundColor: "#fff",
-            color: "#111827",
+            backgroundColor: "var(--card-bg-on-dark)",
+            color: "var(--text-primary)",
           }}
         >
           <option value="all">Todos</option>
@@ -231,10 +215,10 @@ export function AdminDevicesPage() {
               gridColumn: "1 / -1",
               padding: 24,
               textAlign: "center",
-              backgroundColor: "#f9fafb",
-              border: "1px dashed #e5e7eb",
+              backgroundColor: "var(--card-bg-on-dark)",
+              border: "1px dashed var(--surface-border)",
               borderRadius: 8,
-              color: "#6b7280",
+              color: "var(--text-secondary)",
               fontSize: 14,
             }}
           >
@@ -255,8 +239,8 @@ export function AdminDevicesPage() {
                 key={device.id}
                 style={{
                   padding: 16,
-                  backgroundColor: "#fff",
-                  border: "1px solid #e5e7eb",
+                  backgroundColor: "var(--card-bg-on-dark)",
+                  border: "1px solid var(--surface-border)",
                   borderRadius: 8,
                   display: "flex",
                   flexDirection: "column",
@@ -275,7 +259,7 @@ export function AdminDevicesPage() {
                       style={{
                         fontSize: 15,
                         fontWeight: 600,
-                        color: "#111827",
+                        color: "var(--text-primary)",
                       }}
                     >
                       {device.name}
@@ -283,7 +267,7 @@ export function AdminDevicesPage() {
                     <div
                       style={{
                         fontSize: 12,
-                        color: "#6b7280",
+                        color: "var(--text-secondary)",
                         textTransform: "uppercase",
                         letterSpacing: "0.04em",
                       }}
@@ -299,16 +283,16 @@ export function AdminDevicesPage() {
                       borderRadius: 999,
                       backgroundColor:
                         status === "online"
-                          ? "#dcfce7"
+                          ? "var(--status-success-bg)"
                           : status === "offline"
-                            ? "#fee2e2"
-                            : "#f3f4f6",
+                            ? "var(--status-error-bg)"
+                            : "var(--card-bg-on-dark)",
                       color:
                         status === "online"
-                          ? "#166534"
+                          ? "var(--color-success)"
                           : status === "offline"
-                            ? "#991b1b"
-                            : "#6b7280",
+                            ? "var(--color-error)"
+                            : "var(--text-secondary)",
                     }}
                   >
                     {statusLabel(status)}
@@ -325,22 +309,22 @@ export function AdminDevicesPage() {
                 >
                   {device.assignedRole != null && (
                     <>
-                      <dt style={{ color: "#6b7280", margin: 0 }}>Papel</dt>
-                      <dd style={{ margin: "0 0 6px 0", color: "#111827" }}>
+                      <dt style={{ color: "var(--text-secondary)", margin: 0 }}>Papel</dt>
+                      <dd style={{ margin: "0 0 6px 0", color: "var(--text-primary)" }}>
                         {device.assignedRole}
                       </dd>
                     </>
                   )}
                   {device.currentApp != null && (
                     <>
-                      <dt style={{ color: "#6b7280", margin: 0 }}>App actual</dt>
-                      <dd style={{ margin: "0 0 6px 0", color: "#111827" }}>
+                      <dt style={{ color: "var(--text-secondary)", margin: 0 }}>App actual</dt>
+                      <dd style={{ margin: "0 0 6px 0", color: "var(--text-primary)" }}>
                         {device.currentApp}
                       </dd>
                     </>
                   )}
-                  <dt style={{ color: "#6b7280", margin: 0 }}>Último heartbeat</dt>
-                  <dd style={{ margin: 0, color: "#111827" }}>{lastSeen}</dd>
+                  <dt style={{ color: "var(--text-secondary)", margin: 0 }}>Último heartbeat</dt>
+                  <dd style={{ margin: 0, color: "var(--text-primary)" }}>{lastSeen}</dd>
                 </dl>
               </div>
             );

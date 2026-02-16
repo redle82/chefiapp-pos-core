@@ -8,7 +8,6 @@ import {
   readMenuCategories,
   readProducts,
 } from "../infra/readers/RestaurantReader";
-import { isDebugMode } from "../core/debugMode";
 import { BackendType, getBackendType } from "../core/infra/backendAdapter";
 
 export interface MenuItem {
@@ -108,25 +107,7 @@ export function useMenuItems(restaurantId: string | null) {
   }, [restaurantId]);
 
   return {
-    items:
-      items.length === 0 && isDebugMode()
-        ? ([
-            {
-              id: "mock-1",
-              name: "Mock Burger",
-              priceCents: 1200,
-              category: "Burgers",
-              description: "Delicious mock burger",
-            },
-            {
-              id: "mock-2",
-              name: "Mock Cola",
-              priceCents: 300,
-              category: "Drinks",
-              description: "Cold mock cola",
-            },
-          ] as MenuItem[])
-        : items,
+    items,
     loading,
     error,
   };

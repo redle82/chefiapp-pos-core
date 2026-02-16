@@ -10,10 +10,9 @@ import { OperationalFullscreenWrapper } from "../../components/operational/Opera
 import type { RestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { RestaurantRuntimeContext } from "../../context/RestaurantRuntimeContext";
 import { deriveLifecycle } from "../../core/lifecycle/Lifecycle";
+import { TRIAL_RESTAURANT_ID } from "../../core/readiness/operationalRestaurant";
 import { OSCopy } from "../../ui/design-system/sovereign/OSCopy";
 import { TPVMinimal } from "./TPVMinimal";
-
-const TRIAL_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
 
 const trialRuntime: RestaurantRuntime = {
   restaurant_id: TRIAL_RESTAURANT_ID,

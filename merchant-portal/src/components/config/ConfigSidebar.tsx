@@ -188,7 +188,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     label: "Instalar TPV / KDS",
     icon: "📲",
     description: "Web app instalável (Caixa e Cozinha)",
-    path: "/app/install",
+    path: "/admin/modules",
     group: "Publicação",
   },
   {
@@ -222,6 +222,14 @@ const SECTIONS: ConfigSectionConfig[] = [
     description: "Publicação e status",
     path: "/config/status",
     group: "Avançado",
+  },
+  {
+    id: "data-privacy",
+    label: "Dados e privacidade",
+    icon: "🔒",
+    description: "Exportar dados ou eliminar conta (RGPD)",
+    path: "/config/data-privacy",
+    group: "Outros",
   },
   {
     id: "entender-sistema",

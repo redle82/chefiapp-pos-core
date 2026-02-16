@@ -1,6 +1,5 @@
 /**
- * ProductosConfigPage - "Mis productos" (módulos) dentro de Configuración.
- * Igual ao Last.app: Configuración > Productos = ativar/desativar módulos (TPV, QR, Reservas, etc.).
+ * ProductosConfigPage — Configuración > Módulos (redirect ou wrapper).
  * Catálogo de produtos para venda fica em /admin/catalog/products (sidebar Catálogo).
  */
 

@@ -1,5 +1,9 @@
 # Event Log (Event Sourcing Minimum)
 
+**DORMANT / EXPERIMENTAL** — Not used in production. All write paths use PostgreSQL RPCs. See [ARCHITECTURE_DECISION.md](../../ARCHITECTURE_DECISION.md).
+
+---
+
 Append-only event log as the foundation of the POS CORE.
 
 ## Philosophy

@@ -13,7 +13,7 @@
 | Passo | Acção                                                                                                 | Responsável                        |
 | ----- | ----------------------------------------------------------------------------------------------------- | ---------------------------------- |
 | 1     | Cliente acede ao portal de gestão                                                                     | Utilizador                         |
-| 2     | Navega para `/app/install` (a partir do dashboard ou da árvore de configuração)                       | Utilizador / UI                    |
+| 2     | Navega para **`/admin/devices`** (Tienda de dispositivos; `/app/install` redireciona para aqui)       | Utilizador / UI                    |
 | 3     | Lê instruções e escolhe TPV ou KDS                                                                    | Utilizador                         |
 | 4     | Clica em “Abrir TPV” ou “Abrir KDS” → abre `/op/tpv` ou `/op/kds` em nova aba                         | Sistema (link/button)              |
 | 5     | Se os gates permitirem, a página operacional é exibida                                                | Sistema (RequireOperational, etc.) |
@@ -28,7 +28,7 @@ Não existe passo automático de “instalação forçada”; o portal **instrui
 
 | Papel            | Descrição                                                                                                                                                                            |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Instruir**     | A página `/app/install` explica o que é instalar TPV/KDS, mostra os links e as instruções por browser (Chrome/Edge, Safari iOS, Safari macOS).                                       |
+| **Instruir**     | A página **`/admin/devices`** (Tienda de dispositivos) explica o que é instalar TPV/KDS, mostra os links e as instruções por browser. A rota `/app/install` redireciona para `/admin/devices`. |
 | **Nunca forçar** | O portal não executa instalação por script, não bloqueia o uso em tab normal e não exige que o cliente instale para operar (pode usar em tab; instalação é opcional para melhor UX). |
 
 O portal pode mostrar o estado (disponível para instalar vs. bloqueado por billing ou publish) e mensagens de erro canónicas quando o cliente tenta aceder a `/op/tpv` ou `/op/kds` sem condições.
@@ -64,7 +64,7 @@ Todas as telas de bloqueio operacional devem oferecer saída para **portal de ge
 
 | Contrato                              | Relação                                                                                                                                                                                                                                     |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **CAMINHO_DO_CLIENTE**                | O fluxo de instalação ocorre **após** o caminho Landing → Signup → Portal → Billing → Publicar. A página `/app/install` é uma rota do portal (`/app/*`); o cliente só instala TPV/KDS quando já está no portal e com operação desbloqueada. |
+| **CAMINHO_DO_CLIENTE**                | O fluxo de instalação ocorre **após** o caminho Landing → Signup → Portal → Billing → Publicar. A página canónica é **`/admin/devices`** (Tienda de dispositivos); `/app/install` redireciona para aqui. O cliente só instala TPV/KDS quando já está no portal e com operação desbloqueada. |
 | **OPERATIONAL_GATES_CONTRACT**        | Os estados “disponível” vs “bloqueado por publish/billing” são implementados pelos mesmos gates que protegem `/op/tpv` e `/op/kds`; este contrato não altera os gates, apenas descreve o fluxo e as mensagens à luz deles.                  |
 | **OPERATIONAL_INSTALLATION_CONTRACT** | Define o que é “Web App Operacional Instalável” e as regras (uma rota = um app, um computador = um papel); o presente contrato define o **fluxo** e os **estados** dessa instalação.                                                        |
 | **OPERATIONAL_APP_MODE_CONTRACT**     | Define Browser App Mode e requisitos técnicos; o fluxo de instalação pressupõe que as páginas `/op/tpv` e `/op/kds` cumprem esses requisitos.                                                                                               |
@@ -77,5 +77,6 @@ Todas as telas de bloqueio operacional devem oferecer saída para **portal de ge
 - [OPERATIONAL_GATES_CONTRACT.md](./OPERATIONAL_GATES_CONTRACT.md) — gates published / operational
 - [OPERATIONAL_INSTALLATION_CONTRACT.md](./OPERATIONAL_INSTALLATION_CONTRACT.md) — definição e regras de instalação
 - [OPERATIONAL_APP_MODE_CONTRACT.md](./OPERATIONAL_APP_MODE_CONTRACT.md) — Browser App Mode
+- [MODULES_AND_DEVICES_ANTIREGRESSION.md](./MODULES_AND_DEVICES_ANTIREGRESSION.md) — regras anti-regressão (TPV/KDS em nova janela, rota canónica /admin/devices, título Módulos)
 
 **Violação = fluxo ou mensagens fora do descrito acima, ou redirecionamento para landing em contexto operacional bloqueado.**

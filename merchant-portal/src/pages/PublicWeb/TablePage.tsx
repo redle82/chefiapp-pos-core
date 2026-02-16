@@ -24,6 +24,7 @@ import {
   type OrderItemInput,
 } from "../../infra/writers/OrderWriter";
 import { GlobalLoadingView } from "../../ui/design-system/components";
+import { getTrustedPhotoUrl } from "../../utils/isPlaceholderPhoto";
 
 /* VPC — valores locais (QR/Menu = vitrine do cliente) */
 const VPC = {
@@ -279,7 +280,7 @@ export function TablePage() {
   });
 
   const sortedCategories = [...categories].sort(
-    (a, b) => a.sort_order - b.sort_order,
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
   );
 
   return (
@@ -566,9 +567,9 @@ export function TablePage() {
                             backgroundColor: VPC.surface,
                           }}
                         >
-                          {product.photo_url && (
+                          {getTrustedPhotoUrl(product.photo_url) && (
                             <img
-                              src={product.photo_url}
+                              src={getTrustedPhotoUrl(product.photo_url)!}
                               alt={product.name}
                               style={{
                                 width: "100%",
@@ -675,9 +676,9 @@ export function TablePage() {
                           backgroundColor: VPC.surface,
                         }}
                       >
-                        {product.photo_url && (
+                        {getTrustedPhotoUrl(product.photo_url) && (
                           <img
-                            src={product.photo_url}
+                            src={getTrustedPhotoUrl(product.photo_url)!}
                             alt={product.name}
                             style={{
                               width: "100%",

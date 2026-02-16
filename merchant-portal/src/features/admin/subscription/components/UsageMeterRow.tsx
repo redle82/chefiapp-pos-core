@@ -17,11 +17,11 @@ function getStatus(used: number, limit: number): "ok" | "warning" | "over" {
 function getStatusColor(status: "ok" | "warning" | "over") {
   switch (status) {
     case "ok":
-      return "#10b981";
+      return "var(--color-success)";
     case "warning":
-      return "#f59e0b";
+      return "var(--color-warning)";
     case "over":
-      return "#ef4444";
+      return "var(--color-error)";
   }
 }
 
@@ -47,18 +47,18 @@ export function UsageMeterRow({ meter }: UsageMeterRowProps) {
         alignItems: "center",
         gap: 12,
         padding: "12px 0",
-        borderBottom: "1px solid #f3f4f6",
+        borderBottom: "1px solid var(--surface-border)",
       }}
     >
       <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
           {meter.label}
         </div>
         {meter.hint && (
           <div
             style={{
               fontSize: 12,
-              color: "#6b7280",
+              color: "var(--text-secondary)",
               marginTop: 2,
             }}
           >
@@ -74,7 +74,7 @@ export function UsageMeterRow({ meter }: UsageMeterRowProps) {
           flexWrap: "wrap",
         }}
       >
-        <span style={{ fontSize: 14, color: "#374151", whiteSpace: "nowrap" }}>
+        <span style={{ fontSize: 14, color: "var(--text-primary)", whiteSpace: "nowrap" }}>
           {meter.limit > 0
             ? `${meter.used}/${meter.limit}${meter.unit ? ` ${meter.unit}` : ""}`
             : `${meter.used} ${meter.unit ?? ""}`}
@@ -84,7 +84,7 @@ export function UsageMeterRow({ meter }: UsageMeterRowProps) {
             style={{
               width: 80,
               height: 8,
-              backgroundColor: "#e5e7eb",
+              backgroundColor: "var(--surface-border)",
               borderRadius: 4,
               overflow: "hidden",
             }}
@@ -104,7 +104,7 @@ export function UsageMeterRow({ meter }: UsageMeterRowProps) {
             style={{
               fontSize: 11,
               fontWeight: 600,
-              color: "#f59e0b",
+              color: "var(--color-warning)",
             }}
           >
             Atención
@@ -115,7 +115,7 @@ export function UsageMeterRow({ meter }: UsageMeterRowProps) {
             style={{
               fontSize: 11,
               fontWeight: 600,
-              color: "#ef4444",
+              color: "var(--color-error)",
             }}
           >
             Límite superado
@@ -128,7 +128,7 @@ export function UsageMeterRow({ meter }: UsageMeterRowProps) {
           onClick={handleManage}
           style={{
             fontSize: 13,
-            color: "#7c3aed",
+            color: "var(--color-primary)",
             fontWeight: 500,
             background: "none",
             border: "none",

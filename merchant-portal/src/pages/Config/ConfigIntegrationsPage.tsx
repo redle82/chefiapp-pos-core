@@ -10,6 +10,8 @@
 import { useNavigate } from "react-router-dom";
 import styles from "./ConfigIntegrationsPage.module.css";
 
+const INTEGRATIONS_BASE = "/admin/config/integrations";
+
 const HUB_SECTIONS: Array<{
   id: string;
   icon: string;
@@ -24,6 +26,7 @@ const HUB_SECTIONS: Array<{
     label: "Pagamentos",
     description: "Stripe e outros; config, status, logs.",
     status: "stub",
+    path: `${INTEGRATIONS_BASE}/payments`,
   },
   {
     id: "whatsapp",
@@ -31,6 +34,7 @@ const HUB_SECTIONS: Array<{
     label: "WhatsApp",
     description: "Canal de entrada, notificações, automações.",
     status: "stub",
+    path: `${INTEGRATIONS_BASE}/whatsapp`,
   },
   {
     id: "webhooks",
@@ -38,6 +42,7 @@ const HUB_SECTIONS: Array<{
     label: "APIs & Webhooks",
     description: "Webhooks OUT (endpoint, eventos); API IN (chaves, limites).",
     status: "stub",
+    path: `${INTEGRATIONS_BASE}/webhooks`,
   },
   {
     id: "delivery",
@@ -45,6 +50,7 @@ const HUB_SECTIONS: Array<{
     label: "Delivery",
     description: "GloriaFood, Glovo, Uber Eats; ativar/desativar por adapter.",
     status: "stub",
+    path: `${INTEGRATIONS_BASE}/delivery`,
   },
   {
     id: "other",
@@ -52,20 +58,28 @@ const HUB_SECTIONS: Array<{
     label: "Outros sistemas",
     description: "ERP, fiscal, BI, analytics.",
     status: "stub",
+    path: `${INTEGRATIONS_BASE}/other`,
   },
 ];
 
-export function ConfigIntegrationsPage() {
+type ConfigIntegrationsPageProps = {
+  /** Quando true, não mostra o header (ex.: quando o pai já usa AdminPageHeader). */
+  hideHeader?: boolean;
+};
+
+export function ConfigIntegrationsPage({ hideHeader }: ConfigIntegrationsPageProps = {}) {
   const navigate = useNavigate();
 
   return (
     <div>
-      <div className={styles.headerContainer}>
-        <h1 className={styles.title}>Integrações</h1>
-        <p className={styles.subtitle}>
-          Ligue TPV, delivery e outros serviços ao seu restaurante.
-        </p>
-      </div>
+      {!hideHeader && (
+        <div className={styles.headerContainer}>
+          <h1 className={styles.title}>Integrações</h1>
+          <p className={styles.subtitle}>
+            Ligue TPV, delivery e outros serviços ao seu restaurante.
+          </p>
+        </div>
+      )}
 
       <div className={styles.sectionsGrid}>
         {HUB_SECTIONS.map((section) => (
