@@ -6,6 +6,8 @@
 
 import React from "react";
 import { NavLink } from "react-router-dom";
+import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
+import { RestaurantLogo } from "../../../ui/RestaurantLogo";
 
 /* ── Accent orange (reference design) ──────────────────────────── */
 const ACCENT = "#f97316";
@@ -13,17 +15,7 @@ const ACCENT_BG = "rgba(249,115,22,0.12)";
 
 /* ── SVG inline icons (20×20) ──────────────────────────────────── */
 
-/** Brand logo — 4 dots (2×2) matching ChefIApp identity */
-function BrandLogo() {
-  return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-      <circle cx="10" cy="10" r="5" fill={ACCENT} />
-      <circle cx="22" cy="10" r="5" fill={ACCENT} />
-      <circle cx="10" cy="22" r="5" fill={ACCENT} />
-      <circle cx="22" cy="22" r="3.5" fill={ACCENT} opacity="0.5" />
-    </svg>
-  );
-}
+/* BrandLogo removed — sidebar now shows the restaurant's own logo via RestaurantLogo. */
 
 function IconGrid() {
   return (
@@ -187,6 +179,8 @@ const SIDEBAR_LINKS: { to: string; label: string; icon: IconKey }[] = [
 ];
 
 export function TPVSidebar() {
+  const identity = useRestaurantIdentity();
+
   return (
     <aside
       style={{
@@ -202,9 +196,54 @@ export function TPVSidebar() {
         gap: 4,
       }}
     >
-      {/* Brand logo (4 orange dots) */}
-      <div style={{ marginBottom: 20 }}>
-        <BrandLogo />
+      {/* Restaurant logo + abbreviated name */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          marginBottom: 16,
+          gap: 6,
+        }}
+      >
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: "50%",
+            border: `2px solid ${ACCENT}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            flexShrink: 0,
+          }}
+        >
+          <RestaurantLogo
+            logoUrl={identity.logoUrl}
+            name={identity.name || "R"}
+            size={40}
+            style={{ borderRadius: "50%" }}
+          />
+        </div>
+        {identity.name && (
+          <span
+            style={{
+              color: "#a3a3a3",
+              fontSize: 9,
+              fontWeight: 600,
+              textAlign: "center",
+              width: 60,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              letterSpacing: 0.3,
+              textTransform: "uppercase",
+            }}
+          >
+            {identity.name}
+          </span>
+        )}
       </div>
 
       {/* Navigation icons */}

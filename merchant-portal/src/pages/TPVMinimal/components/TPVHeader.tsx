@@ -1,7 +1,11 @@
 /**
- * TPVHeader — Cabeçalho do TPV: avatar+nome staff (esquerda), pesquisa (centro), filtro orange (direita).
+ * TPVHeader — Cabeçalho do TPV: restaurante (esquerda), pesquisa (centro), staff + filtro (direita).
+ * O logo e nome do restaurante aparecem em destaque para que o operador sinta o sistema como seu.
  * Ref: POS reference layout.
  */
+
+import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
+import { RestaurantLogo } from "../../../ui/RestaurantLogo";
 
 /* ── Accent orange ─────────────────────────────────────────────── */
 const ACCENT = "#f97316";
@@ -65,6 +69,8 @@ export function TPVHeader({
   staffId = "—",
   staffAvatarUrl = null,
 }: TPVHeaderProps) {
+  const identity = useRestaurantIdentity();
+
   return (
     <header
       style={{
@@ -79,6 +85,48 @@ export function TPVHeader({
         paddingRight: 20,
       }}
     >
+      {/* Restaurant identity: logo + name */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          minWidth: 0,
+          flexShrink: 0,
+        }}
+      >
+        <RestaurantLogo
+          logoUrl={identity.logoUrl}
+          name={identity.name || "R"}
+          size={32}
+          style={{ borderRadius: "50%", border: "1.5px solid rgba(255,255,255,0.12)" }}
+        />
+        <span
+          style={{
+            color: "#fafafa",
+            fontWeight: 700,
+            fontSize: 15,
+            lineHeight: 1.2,
+            maxWidth: 160,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {identity.name || "Restaurante"}
+        </span>
+      </div>
+
+      {/* Separator */}
+      <div
+        style={{
+          width: 1,
+          height: 28,
+          backgroundColor: "rgba(255,255,255,0.08)",
+          flexShrink: 0,
+        }}
+      />
+
       {/* Staff identity: avatar + name + ID */}
       <div
         style={{
