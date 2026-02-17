@@ -262,7 +262,17 @@ export class EventMonitor {
         .eq("status", "occupied");
 
       if (error) {
-        console.error("[EventMonitor] Erro ao buscar mesas:", error);
+        // Suppress abort/timeout and connection errors — backend is slow or offline
+        const msg = typeof error === "object" && error !== null && "message" in error
+          ? String((error as any).message)
+          : "";
+        const isSilent =
+          msg.includes("aborted") ||
+          msg.includes("Failed to fetch") ||
+          msg.includes("Backend indisponível");
+        if (!isSilent) {
+          console.error("[EventMonitor] Erro ao buscar mesas:", error);
+        }
         return events;
       }
 
@@ -371,7 +381,15 @@ export class EventMonitor {
         );
       }
     } catch (error) {
-      console.error("[EventMonitor] Erro ao verificar ociosidade:", error);
+      // Suppress abort/timeout errors — CashRegister already returns null for these
+      const msg = error instanceof Error ? error.message : String(error);
+      const isSilent =
+        msg.includes("aborted") ||
+        msg.includes("Failed to fetch") ||
+        msg.includes("Backend indisponível");
+      if (!isSilent) {
+        console.error("[EventMonitor] Erro ao verificar ociosidade:", error);
+      }
     }
   }
 

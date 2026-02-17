@@ -273,7 +273,7 @@ function buildFilterBuilder(table: string): FilterBuilder {
       init.body = JSON.stringify(state.body);
     }
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 5000);
+    const id = setTimeout(() => controller.abort("PostgREST request timeout (5s)"), 5000);
     try {
       const res = await fetch(url.toString(), {
         ...init,

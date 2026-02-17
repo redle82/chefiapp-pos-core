@@ -259,14 +259,12 @@ export class CashRegisterEngine {
         return null;
       }
 
+      // [OFFLINE RESILIENCE] Abort = request timeout (5s); treat as backend slow/unavailable
       const isAbort =
         msg.includes("aborted") ||
         (error as { name?: string }).name === "AbortError";
       if (isAbort) {
-        throw new CashRegisterError(
-          `Erro ao buscar caixa aberto: ${msg || "Erro desconhecido"}`,
-          "CASH_REGISTER_FETCH_OPEN_FAILED",
-        );
+        return null;
       }
 
       Logger.error("CASH_REGISTER_FETCH_OPEN_FAILED", error, { restaurantId });
