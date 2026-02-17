@@ -246,15 +246,24 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
+      PORT: 4320
       WEB_MODULE_PORT: 4320
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?STRIPE_SECRET_KEY is required}
       DATABASE_URL: postgresql://${POSTGRES_USER:-test_user}:${POSTGRES_PASSWORD:-test_password}@db:5432/${POSTGRES_DB:-chefiapp_core_test}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-chefiapp-internal-token-dev}
+      CORE_URL: ${CORE_URL:-http://host.docker.internal:3001}
+      CORE_ANON_KEY: ${CORE_ANON_KEY:-chefiapp-core-secret-key-min-32-chars-long}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://host.docker.internal:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin123}
+      MINIO_BUCKET: ${MINIO_BUCKET:-chefiapp-products}
+      MINIO_PUBLIC_BASE: ${MINIO_PUBLIC_BASE:-http://localhost:9000}
     ports:
       - "${WEB_MODULE_PORT:-4320}:4320"
     depends_on:
       db:
         condition: service_healthy
-    command: ["node", "dist/_legacy_isolation/server/web-module-api-server.js"]
+    command: ["node", "dist/server/integration-gateway.js"]
     healthcheck:
       test:
         [

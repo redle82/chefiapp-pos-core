@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { resolveProductImageUrl } from "../../core/products/resolveProductImageUrl";
 import { readProductsByRestaurant } from "../../infra/readers/ProductReader";
 
 /** Seed restaurant ID (Docker Core). Slug → restaurant_id resolver can be added later. */
@@ -50,7 +51,7 @@ export const PublicMenuProvider: React.FC<{
           description: p.description ?? null,
           price_cents: p.price_cents,
           price: p.price_cents / 100,
-          photo_url: p.photo_url ?? null,
+          photo_url: resolveProductImageUrl(p),
           category: p.gm_menu_categories?.name ?? undefined,
         }));
         setProducts(mapped);

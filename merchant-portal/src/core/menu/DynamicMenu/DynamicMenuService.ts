@@ -6,6 +6,7 @@
  */
 
 // LEGACY / LAB — blocked in Docker mode via core/supabase shim
+import { resolveProductImageUrl } from "../../products/resolveProductImageUrl";
 import { supabase } from "../../supabase";
 import { calculateDynamicScore, getCurrentTimeSlot } from "./scoring";
 import type {
@@ -52,9 +53,11 @@ export class DynamicMenuService {
                 name,
                 description,
                 photo_url,
+                custom_image_url,
                 price_cents,
                 available,
-                category_id
+                category_id,
+                gm_product_assets(image_url)
             `,
       )
       .eq("restaurant_id", restaurantId)
@@ -126,7 +129,11 @@ export class DynamicMenuService {
           id: product.id,
           name: product.name,
           description: product.description,
-          photo_url: product.photo_url,
+          photo_url: resolveProductImageUrl({
+            custom_image_url: product.custom_image_url,
+            asset_image_url: product.gm_product_assets?.[0]?.image_url,
+            photo_url: product.photo_url,
+          }),
           category: categoryName, // Use category name from map
           price_cents: product.price_cents,
           available: product.available,
@@ -310,7 +317,9 @@ export class DynamicMenuService {
     // CONFIG_RUNTIME_CONTRACT: só produtos com available=true e restaurant_id=X (docs/contracts/CONFIG_RUNTIME_CONTRACT.md).
     const { data: products } = await supabase
       .from("gm_products")
-      .select("id, name, price_cents, available, category_id")
+      .select(
+        "id, name, price_cents, photo_url, custom_image_url, available, category_id, gm_product_assets(image_url)",
+      )
       .eq("restaurant_id", restaurantId)
       .eq("available", true)
       .order("name");
@@ -341,6 +350,12 @@ export class DynamicMenuService {
       (p: Record<string, any>) => ({
         id: p.id,
         name: p.name,
+        photo_url:
+          resolveProductImageUrl({
+            custom_image_url: p.custom_image_url,
+            asset_image_url: p.gm_product_assets?.[0]?.image_url,
+            photo_url: p.photo_url,
+          }) ?? undefined,
         category: categoriesMap.get(p.category_id) || p.category_id || "",
         price_cents: p.price_cents,
         available: p.available,

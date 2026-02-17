@@ -9,7 +9,7 @@
 # - Development and production profiles
 # ==============================================================================
 
-version: '3.8'
+version: "3.8"
 
 # ==============================================================================
 # SERVICE DEFINITIONS
@@ -22,7 +22,7 @@ services:
     image: postgres:15-alpine
     container_name: chefiapp-db
     restart: unless-stopped
-    
+
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-test_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-test_password}
@@ -30,35 +30,39 @@ services:
       POSTGRES_SHARED_BUFFERS: ${POSTGRES_SHARED_BUFFERS:-256MB}
       POSTGRES_MAX_CONNECTIONS: ${POSTGRES_MAX_CONNECTIONS:-100}
       POSTGRES_WORK_MEM: ${POSTGRES_WORK_MEM:-4MB}
-    
+
     ports:
       - "${DB_PORT:-5432}:5432"
-    
+
     volumes:
       - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - postgres_data:/var/lib/postgresql/data
       - postgres_logs:/var/log/postgresql
-    
+
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-test_user} -d ${POSTGRES_DB:-chefiapp_core_test}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-test_user} -d ${POSTGRES_DB:-chefiapp_core_test}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-    
+
     networks:
       - chefiapp-network
-    
+
     # Resource limits
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
-    
+
     # Security hardening
     cap_drop:
       - ALL
@@ -69,7 +73,7 @@ services:
       - SETUID
     security_opt:
       - no-new-privileges:true
-    
+
     # Logging configuration
     logging:
       driver: "json-file"
@@ -91,11 +95,11 @@ services:
       # Use BuildKit for better caching
       cache_from:
         - ${DOCKER_REGISTRY:-}chefiapp-pos-core:latest
-    
+
     image: ${DOCKER_REGISTRY:-}chefiapp-pos-core:${VERSION:-latest}
     container_name: chefiapp-webhook-server
     restart: unless-stopped
-    
+
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
@@ -103,36 +107,44 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?STRIPE_SECRET_KEY is required}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?STRIPE_WEBHOOK_SECRET is required}
       DATABASE_URL: postgresql://${POSTGRES_USER:-test_user}:${POSTGRES_PASSWORD:-test_password}@db:5432/${POSTGRES_DB:-chefiapp_core_test}
-    
+
     ports:
       - "${WEBHOOK_PORT:-3000}:3000"
-    
+
     depends_on:
       db:
         condition: service_healthy
-    
+
     command: ["node", "dist/server/webhook-server.js"]
-    
+
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 15s
-    
+
     networks:
       - chefiapp-network
-    
+
     # Resource limits
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 128M
-    
+
     # Security hardening
     read_only: true
     tmpfs:
@@ -143,7 +155,7 @@ services:
       - NET_BIND_SERVICE
     security_opt:
       - no-new-privileges:true
-    
+
     # Logging
     logging:
       driver: "json-file"
@@ -158,7 +170,7 @@ services:
     image: ${DOCKER_REGISTRY:-}chefiapp-pos-core:${VERSION:-latest}
     container_name: chefiapp-billing-webhook
     restart: unless-stopped
-    
+
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3099
@@ -166,37 +178,45 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?STRIPE_SECRET_KEY is required}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?STRIPE_WEBHOOK_SECRET is required}
       DATABASE_URL: postgresql://${POSTGRES_USER:-test_user}:${POSTGRES_PASSWORD:-test_password}@db:5432/${POSTGRES_DB:-chefiapp_core_test}
-    
+
     ports:
       - "${BILLING_WEBHOOK_PORT:-3099}:3099"
-    
+
     depends_on:
       db:
         condition: service_healthy
       webhook-server:
         condition: service_healthy
-    
+
     command: ["node", "dist/server/billing-webhook-server.js"]
-    
+
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3099/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3099/health",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 15s
-    
+
     networks:
       - chefiapp-network
-    
+
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 128M
-    
+
     read_only: true
     tmpfs:
       - /tmp:noexec,nosuid,size=64M
@@ -206,7 +226,7 @@ services:
       - NET_BIND_SERVICE
     security_opt:
       - no-new-privileges:true
-    
+
     logging:
       driver: "json-file"
       options:
@@ -220,7 +240,7 @@ services:
     image: ${DOCKER_REGISTRY:-}chefiapp-pos-core:${VERSION:-latest}
     container_name: chefiapp-subscription-ui
     restart: unless-stopped
-    
+
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       SUBSCRIPTION_UI_PORT: 4310
@@ -228,35 +248,43 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?STRIPE_SECRET_KEY is required}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:?STRIPE_PUBLISHABLE_KEY is required}
       DATABASE_URL: postgresql://${POSTGRES_USER:-test_user}:${POSTGRES_PASSWORD:-test_password}@db:5432/${POSTGRES_DB:-chefiapp_core_test}
-    
+
     ports:
       - "${SUBSCRIPTION_UI_PORT:-4310}:4310"
-    
+
     depends_on:
       db:
         condition: service_healthy
-    
+
     command: ["node", "dist/server/subscription-management-server.js"]
-    
+
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4310/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:4310/health",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 15s
-    
+
     networks:
       - chefiapp-network
-    
+
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 128M
-    
+
     read_only: true
     tmpfs:
       - /tmp:noexec,nosuid,size=64M
@@ -266,7 +294,7 @@ services:
       - NET_BIND_SERVICE
     security_opt:
       - no-new-privileges:true
-    
+
     logging:
       driver: "json-file"
       options:
@@ -280,42 +308,59 @@ services:
     image: ${DOCKER_REGISTRY:-}chefiapp-pos-core:${VERSION:-latest}
     container_name: chefiapp-web-module-api
     restart: unless-stopped
-    
+
     environment:
       NODE_ENV: ${NODE_ENV:-production}
+      PORT: 4320
       WEB_MODULE_PORT: 4320
       LOG_LEVEL: ${LOG_LEVEL:-info}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?STRIPE_SECRET_KEY is required}
       DATABASE_URL: postgresql://${POSTGRES_USER:-test_user}:${POSTGRES_PASSWORD:-test_password}@db:5432/${POSTGRES_DB:-chefiapp_core_test}
-    
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-chefiapp-internal-token-dev}
+      CORE_URL: ${CORE_URL:-http://host.docker.internal:3001}
+      CORE_ANON_KEY: ${CORE_ANON_KEY:-chefiapp-core-secret-key-min-32-chars-long}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://host.docker.internal:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin123}
+      MINIO_BUCKET: ${MINIO_BUCKET:-chefiapp-products}
+      MINIO_PUBLIC_BASE: ${MINIO_PUBLIC_BASE:-http://localhost:9000}
+
     ports:
       - "${WEB_MODULE_PORT:-4320}:4320"
-    
+
     depends_on:
       db:
         condition: service_healthy
-    
-    command: ["node", "dist/server/web-module-api-server.js"]
-    
+
+    command: ["node", "dist/server/integration-gateway.js"]
+
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4320/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:4320/health",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 15s
-    
+
     networks:
       - chefiapp-network
-    
+
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 128M
-    
+
     read_only: true
     tmpfs:
       - /tmp:noexec,nosuid,size=64M
@@ -325,7 +370,7 @@ services:
       - NET_BIND_SERVICE
     security_opt:
       - no-new-privileges:true
-    
+
     logging:
       driver: "json-file"
       options:
@@ -339,28 +384,28 @@ services:
     image: dpage/pgadmin4:latest
     container_name: chefiapp-pgadmin
     restart: unless-stopped
-    
+
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@chefiapp.local}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-    
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+
     ports:
       - "${PGADMIN_PORT:-5050}:80"
-    
+
     depends_on:
       - db
-    
+
     volumes:
       - pgadmin_data:/var/lib/pgadmin
-    
+
     networks:
       - chefiapp-network
-    
+
     profiles:
       - tools
-    
+
     logging:
       driver: "json-file"
       options:
@@ -391,9 +436,9 @@ volumes:
       type: none
       o: bind
       device: ${DATA_DIR:-./data}/postgres
-  
+
   postgres_logs:
     driver: local
-  
+
   pgadmin_data:
     driver: local

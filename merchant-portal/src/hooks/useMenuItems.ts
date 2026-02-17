@@ -4,11 +4,12 @@
  */
 
 import { useEffect, useState } from "react";
+import { BackendType, getBackendType } from "../core/infra/backendAdapter";
+import { resolveProductImageUrl } from "../core/products/resolveProductImageUrl";
 import {
   readMenuCategories,
   readProducts,
 } from "../infra/readers/RestaurantReader";
-import { BackendType, getBackendType } from "../core/infra/backendAdapter";
 
 export interface MenuItem {
   id: string;
@@ -42,7 +43,7 @@ export function useMenuItems(restaurantId: string | null) {
         // ANTI-SUPABASE §4: Menu read ONLY via Core. Fail explicit if not Docker.
         if (getBackendType() !== BackendType.docker) {
           throw new Error(
-            "Core indisponível. Configure o Docker Core para carregar o menu."
+            "Core indisponível. Configure o Docker Core para carregar o menu.",
           );
         }
 
@@ -56,7 +57,7 @@ export function useMenuItems(restaurantId: string | null) {
         }
 
         const categoryMap = new Map(
-          (categoriesData || []).map((cat) => [cat.id, cat.name])
+          (categoriesData || []).map((cat) => [cat.id, cat.name]),
         );
 
         const mappedItems: MenuItem[] = (itemsData || []).map((item) => ({
@@ -66,7 +67,7 @@ export function useMenuItems(restaurantId: string | null) {
           priceCents: item.price_cents,
           category:
             (item.category_id && categoryMap.get(item.category_id)) || "Outros",
-          photoUrl: item.photo_url ?? undefined,
+          photoUrl: resolveProductImageUrl(item) ?? undefined,
           trackStock: undefined,
           stockQuantity: undefined,
           visibility: undefined,
