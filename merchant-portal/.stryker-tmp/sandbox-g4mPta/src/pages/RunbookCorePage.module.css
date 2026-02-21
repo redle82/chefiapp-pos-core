@@ -1,0 +1,61 @@
+/* RunbookCorePage.module.css */
+
+.pageRoot {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  font-family: Inter, system-ui, sans-serif;
+  color: #1a1a1a;
+}
+
+.heading {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #555;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.codeBlock {
+  padding: 12px 16px;
+  background-color: #f4f4f5;
+  border-radius: 8px;
+  font-size: 13px;
+  overflow: auto;
+}
+
+.hint {
+  font-size: 13px;
+  color: #555;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.footer {
+  font-size: 12px;
+  color: #888;
+  margin-top: 24px;
+}
+
+.navLinks {
+  margin-top: 24px;
+}
+
+.link {
+  color: #059669;
+  font-weight: 600;
+  text-decoration: underline;
+}

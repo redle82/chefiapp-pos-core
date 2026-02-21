@@ -1,0 +1,68 @@
+{
+  "confirm": "Confirmar e passar para operação real",
+  "dailyClosing": {
+    "title": "Fechamento diário",
+    "subtitle": "Histórico de turnos (abertura, fechamento, vendas e pedidos) dos últimos 7 dias.",
+    "exportCsv": "⬇ Exportar CSV",
+    "reconciliation": {
+      "title": "Reconciliação ChefIApp vs POS fiscal (últimos 7 dias)",
+      "refresh": "Atualizar",
+      "empty": "Ainda não existem reconciliações registradas. Use o POS fiscal e o ChefIApp em paralelo e configure o fluxo de reconciliação conforme o contrato interno.",
+      "shift": "Turno",
+      "posFiscal": "POS fiscal",
+      "difference": "Diferença",
+      "status": "Estado",
+      "notes": "Notas",
+      "actions": "Ações",
+      "pendingData": "Aguardando dados",
+      "divergent": "Divergente",
+      "edit": "Editar",
+      "modalTitle": "Editar Reconciliação Divergente",
+      "modalMeta": "Turno: {{shiftId}} • Diferença: R${{amount}}",
+      "reasonCode": "Código do Motivo",
+      "reasonCodeTitle": "Código do motivo para a divergência",
+      "selectPlaceholder": "Selecionar...",
+      "reasonDirectPosSales": "Vendas diretas no POS",
+      "reasonMissingCancellation": "Cancelamento em falta no POS",
+      "reasonTaxConfigError": "Erro de configuração fiscal",
+      "reasonManualAdjustment": "Ajuste manual",
+      "reasonUnderInvestigation": "Em investigação",
+      "reasonResolved": "Resolvido",
+      "notesLabel": "Notas",
+      "notesPlaceholder": "Descreva a causa da divergência e as ações tomadas...",
+      "cancel": "Cancelar",
+      "saving": "Salvando...",
+      "save": "Salvar"
+    },
+    "csv": {
+      "shift": "Turno",
+      "opened": "Abertura",
+      "closed": "Fechamento",
+      "sales": "Vendas (R$)",
+      "orders": "Pedidos",
+      "open": "Aberto"
+    }
+  },
+  "salesSummary": {
+    "loading": "Carregando...",
+    "title": "Resumo de Vendas",
+    "subtitle": "Visão rápida de faturamento por período: total de vendas, cancelamentos e ticket médio. Ideal para responder \"como foi o dia?\" em segundos.",
+    "filterFrom": "De",
+    "filterTo": "Até",
+    "loadingFilter": "Carregando…",
+    "apply": "Aplicar",
+    "exportCsv": "⬇ Exportar CSV",
+    "emptyTitle": "Ainda não há dados suficientes.",
+    "emptyText": "Assim que começar a fechar contas regularmente, este painel mostra o total vendido, cancelamentos e ticket médio do período escolhido.",
+    "grossSales": "Vendas brutas",
+    "averageTicket": "Ticket médio",
+    "closedBills": "Contas fechadas",
+    "cancellations": "Cancelamentos",
+    "csv": {
+      "grossSales": "Vendas Brutas",
+      "averageTicket": "Ticket Médio",
+      "closedBills": "Contas Fechadas",
+      "cancellations": "Cancelamentos"
+    }
+  }
+}

@@ -842,6 +842,12 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (path === "/favicon.ico" && method === "GET") {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
     if (path === "/health" && method === "GET") {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "ok", service: "integration-gateway" }));

@@ -1,0 +1,361 @@
+/* OperacaoCard */
+.opCard {
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.opCard[data-ready="true"] {
+  background-color: var(--status-success-bg);
+  border: 1px solid var(--status-success-border);
+}
+
+.opCard[data-ready="false"] {
+  background-color: var(--status-error-bg);
+  border: 1px solid var(--status-error-border);
+}
+
+.opCardLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.opCardStatus {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.opCardStatus[data-ready="true"] {
+  color: var(--color-success);
+  margin-bottom: 8px;
+}
+
+.opCardStatus[data-ready="false"] {
+  color: var(--color-error);
+  margin-bottom: 8px;
+}
+
+.opCardStatusNoBlockers {
+  composes: opCardStatus;
+  margin-bottom: 0;
+}
+
+.opCardBlockerList {
+  margin: 0 0 10px 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.opCardActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.opMainBtn {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+}
+
+.opMainBtn[data-enabled="true"] {
+  color: var(--text-inverse);
+  background-color: var(--color-success);
+  cursor: pointer;
+}
+
+.opMainBtn[data-enabled="false"] {
+  color: var(--text-tertiary);
+  background-color: var(--surface-border);
+  cursor: not-allowed;
+}
+
+.opSecondaryBtn {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.opMenuBtn {
+  composes: opSecondaryBtn;
+  color: var(--status-warning-text);
+  background-color: var(--status-warning-bg);
+  border: 1px solid var(--status-warning-border);
+}
+
+.opIdentityBtn {
+  composes: opSecondaryBtn;
+  color: var(--status-info-text);
+  background-color: var(--status-info-bg);
+  border: 1px solid var(--status-info-border);
+}
+
+.opRunbookBtn {
+  composes: opSecondaryBtn;
+  color: var(--status-info-text);
+  background-color: var(--status-info-bg);
+  border: 1px solid var(--status-info-border);
+}
+
+/* Main Layout */
+.pageContainer {
+  min-height: 100%;
+  background-color: var(--surface-base);
+  display: flex;
+  flex-direction: column;
+}
+
+.setupBanner {
+  padding: 10px 16px;
+  background: var(--status-warning-bg);
+  border-bottom: 1px solid var(--color-warning);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.setupBannerText {
+  font-size: 14px;
+  color: var(--status-warning-text);
+  font-weight: 500;
+}
+
+.setupBannerActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.setupBtnDark {
+  padding: 6px 14px;
+  background-color: var(--surface-elevated);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.setupBtnAmber {
+  padding: 6px 14px;
+  background-color: var(--color-warning);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.blockedBanner {
+  padding: 16px 20px;
+  margin-bottom: 0;
+  background-color: var(--status-error-bg);
+  border-bottom: 1px solid var(--color-error);
+  color: var(--color-error);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.blockedBannerText {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.blockedBannerBtn {
+  padding: 8px 16px;
+  background-color: var(--color-error);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.contentRow {
+  display: flex;
+  flex: 1;
+}
+
+.sidebar {
+  width: 260px;
+  background-color: var(--card-bg-on-dark);
+  border-right: 1px solid var(--surface-border);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sidebarTitleBlock {
+  margin-bottom: 8px;
+}
+
+.sidebarTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sidebarSubtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.modulesReadyCard {
+  padding: 12px;
+  border-radius: 8px;
+  background-color: var(--status-primary-bg);
+  border: 1px solid var(--status-primary-border);
+  margin-bottom: 8px;
+}
+
+.modulesReadyLabel {
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.modulesReadyCount {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.coreStatusBox {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: var(--card-bg-on-dark);
+  border: 1px solid var(--surface-border);
+}
+
+/* Nav — token values: space.xs=4px, space.sm=8px, fontSize.sm=14px, fontWeight.semibold=600 */
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.mapaLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.sectionLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+  padding-left: 4px;
+}
+
+.sectionItems {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.badgeRed {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-error);
+  background-color: var(--status-error-bg);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.badgeGreen {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background-color: var(--color-success);
+  display: inline-block;
+}
+
+.mapItemBtn {
+  width: 100%;
+  text-align: left;
+  padding: 4px 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.mapItemBtn[data-active="true"] {
+  background-color: var(--status-primary-bg);
+}
+
+.mapItemLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mapItemIcon {
+  font-size: 18px;
+}
+
+.main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.ambientesCard {
+  padding: 16px;
+  margin: 16px;
+  margin-bottom: 0;
+  border-radius: 8px;
+  background-color: var(--card-bg-on-dark);
+  border: 1px solid var(--surface-border);
+}
+
+.ambientesTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.ambientesDesc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin: 0;
+}

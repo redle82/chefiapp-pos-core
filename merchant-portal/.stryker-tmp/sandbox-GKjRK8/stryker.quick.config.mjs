@@ -1,0 +1,26 @@
+import baseConfig from "./stryker.config.mjs";
+
+/** @type {import('@stryker-mutator/api/core').PartialStrykerOptions} */
+export default {
+  ...baseConfig,
+
+  mutate: [
+    "src/core/flow/CoreFlow.ts:90-150",
+    "src/core/flow/FlowGate.tsx:130-170",
+    "src/core/lifecycle/LifecycleState.ts:72-108",
+  ],
+
+  commandRunner: {
+    ...baseConfig.commandRunner,
+    command:
+      "npx playwright test --project=contracts --project=core --workers=1 --retries=0 --reporter=json",
+    timeout: 480_000,
+  },
+
+  dryRunTimeoutMinutes: 20,
+  thresholds: {
+    high: 75,
+    low: 60,
+    break: 60,
+  },
+};

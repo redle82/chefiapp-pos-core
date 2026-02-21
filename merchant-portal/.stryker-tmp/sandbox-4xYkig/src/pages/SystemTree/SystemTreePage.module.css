@@ -1,0 +1,56 @@
+/* Page container */
+.pageContainer {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Content area */
+.contentArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.header {
+  padding: 12px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.separator {
+  color: #999;
+}
+
+.crumbActive {
+  color: #1a1a1a;
+}
+
+.crumbInactive {
+  color: #666;
+}
+
+/* View badge */
+.viewBadge {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background-color: #e5e7eb;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

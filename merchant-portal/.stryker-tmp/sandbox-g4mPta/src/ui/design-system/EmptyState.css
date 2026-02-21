@@ -1,0 +1,57 @@
+/* EmptyState Styles - Sovereign Design System */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md, 16px);
+  padding: 64px 24px;
+  text-align: center;
+  min-height: 240px;
+  border-radius: 12px;
+
+  /* Void aesthetic: Subtle integration with background */
+  background: transparent;
+}
+
+.empty-state__icon {
+  font-size: 64px;
+  opacity: 0.15;
+  filter: grayscale(100%);
+  transition: all 0.3s ease;
+
+  /* Ember glow on hover assumption */
+  &:hover {
+    opacity: 0.3;
+    filter: grayscale(0%);
+  }
+}
+
+.empty-state__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  /* Sovereign White */
+  letter-spacing: -0.01em;
+}
+
+.empty-state__description {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  /* Secondary Ghost */
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+.empty-state__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.empty-state__action {
+  /* Delegated to Button component */
+}

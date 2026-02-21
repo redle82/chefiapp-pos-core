@@ -1,0 +1,56 @@
+/* OnboardingLocationPage.module.css */
+
+.pageRoot {
+  background: #0d0d0e;
+  min-height: 100vh;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 48px 48px 48px;
+}
+
+.contentContainer {
+  max-width: 400px;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.headline {
+  font-size: 22px;
+  margin-bottom: 16px;
+  color: #ffffff;
+}
+
+.formCard {
+  margin-bottom: 48px;
+}
+
+.fieldSet {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.localeLabel {
+  font-size: 14px;
+  color: #a3a3a3;
+}
+
+.localeSelect {
+  margin-left: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #1c1c1e;
+  color: #ffffff;
+}
+
+.actionRow {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+}
