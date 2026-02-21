@@ -21,6 +21,42 @@ Após push para o GitHub, ligar o repo ao Render via Blueprint e configurar env 
 
 ---
 
+## 0. Configurar Render (integration-gateway) — agora
+
+**Serviço no Render:** ChefIApp-POS-CORE (integration-gateway).  
+**Local:** continuas a usar Docker + Supabase (docker-core) para desenvolvimento.  
+**Produção:** Supabase na nuvem fica para o final; quando estiveres pronto, alteras no Render só `CORE_URL` e `CORE_SERVICE_KEY`.
+
+### Variáveis no Dashboard (Environment)
+
+No Render → teu serviço **ChefIApp-POS-CORE** → **Environment** → **Add Environment Variable**.
+
+| Variável | Obrigatório | Valor agora (Render) | Valor local (Docker) | Valor produção (final) |
+|----------|-------------|----------------------|----------------------|-------------------------|
+| `PORT` | — | Render injeta automaticamente | 4320 | — |
+| `CORE_URL` | Sim (para API v1 e internos) | URL do Core acessível da internet. Por agora podes usar um projeto Supabase de staging ou deixar; sem isto, `/api/v1/*` e webhooks não funcionam. | `http://localhost:3001` (ou host do PostgREST) | `https://<TEU_PROJETO>.supabase.co` (sem `/rest/v1`) |
+| `CORE_SERVICE_KEY` ou `CORE_ANON_KEY` | Sim (com CORE_URL) | Service role key ou anon key do Supabase/Core | A mesma que usas no docker-core / Supabase local | Service role do projeto Supabase produção |
+| `INTERNAL_API_TOKEN` | Sim | Token forte (ex.: `openssl rand -hex 32`) para `POST /internal/events`, `POST /internal/product-images` e `POST /internal/billing/create-checkout-session` | Ex.: `chefiapp-internal-token-dev` em local | Token forte único em produção |
+| `STRIPE_SECRET_KEY` | Para checkout | Chave secreta Stripe (sk_test_ ou sk_live_). Sem ela, o checkout de assinatura devolve 503. | sk_test_... em local | sk_live_... em produção |
+
+**Opcionais (imagens de produtos e WhatsApp):**
+
+| Variável | Quando usar |
+|----------|-------------|
+| `MINIO_ENDPOINT` | S3/MinIO para upload de imagens (POST /internal/product-images). Local: `http://localhost:9000`. Produção: URL do bucket. |
+| `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` | Credenciais do MinIO/S3. |
+| `MINIO_BUCKET` | Nome do bucket (default: `chefiapp-products`). |
+| `MINIO_PUBLIC_BASE` | URL pública para links das imagens (se diferente do endpoint). |
+| `WHATSAPP_APP_SECRET` | Só se usares webhook WhatsApp; validação da assinatura Meta. |
+
+### Resumo
+
+1. **Agora:** No Render, define pelo menos `INTERNAL_API_TOKEN` (valor seguro). Se tiveres um Supabase de staging já na nuvem, define também `CORE_URL` e `CORE_SERVICE_KEY`; senão o gateway fica no ar mas chamadas ao Core falham até configurares.
+2. **Local:** Segue a usar `docker-core`; no teu `.env` ou docker-compose usas `CORE_URL=http://localhost:3001` e a key do Core local.
+3. **Para o final:** Criar (ou usar) projeto Supabase produção → aplicar migrations → no Render, atualizar `CORE_URL` e `CORE_SERVICE_KEY` para esse projeto.
+
+---
+
 ## 1. Visão geral
 
 | Item | Descrição |

@@ -22,6 +22,7 @@ No projeto **chefiapp-pos-core** na Vercel, adiciona:
 | `VITE_CORE_URL` | URL do Core (PostgREST) | Local: `http://localhost:3001`. Produção: `https://<TEU_PROJETO>.supabase.co` (sem `/rest/v1`) |
 | `VITE_CORE_ANON_KEY` | Chave anónima do Core | Supabase: Project Settings → API → anon public |
 | `VITE_API_BASE` | URL do integration-gateway | Produção: `https://chefiapp-pos-core-6qmv.onrender.com` (ou `https://api.chefiapp.com` quando tiveres domínio) |
+| `VITE_INTERNAL_API_TOKEN` | Token para chamadas internas ao gateway | Deve coincidir com `INTERNAL_API_TOKEN` no Render. Local: `chefiapp-internal-token-dev`. Usado para checkout (POST /internal/billing/create-checkout-session). |
 
 ---
 

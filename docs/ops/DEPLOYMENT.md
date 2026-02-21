@@ -145,10 +145,10 @@ Resumo; checklist completo em [GO_LIVE_CHECKLIST.md](./GO_LIVE_CHECKLIST.md). **
 
 O Blueprint `render.yaml` na raiz define dois serviços:
 
-- **chefiapp-backend** — API Node (Docker): integration-gateway (`/api/v1/*`, `/internal/events`, `/health`). Variáveis: `CORE_URL`, `CORE_SERVICE_KEY` ou `CORE_ANON_KEY`, `INTERNAL_API_TOKEN`.
+- **chefiapp-backend** (ou ChefIApp-POS-CORE) — API Node (Docker): integration-gateway (`/api/v1/*`, `/internal/events`, `/health`). Variáveis: `CORE_URL`, `CORE_SERVICE_KEY` ou `CORE_ANON_KEY`, `INTERNAL_API_TOKEN`. **Configurar agora:** [RENDER.md §0](./RENDER.md#0-configurar-render-integration-gateway--agora). Local = Docker Supabase (docker-core); produção Supabase (CORE_URL + key) fica para o final.
 - **chefiapp-merchant-portal** — SPA estático (build pnpm na raiz, output `merchant-portal/dist`).
 
-O Core (Postgres + PostgREST) fica à parte (Render Postgres + imagem PostgREST, ou outro host). Ver [RENDER.md](./RENDER.md).
+O Core (Postgres + PostgREST) fica à parte (local: docker-core; produção: Supabase ou outro host). Ver [RENDER.md](./RENDER.md).
 
 ---
 

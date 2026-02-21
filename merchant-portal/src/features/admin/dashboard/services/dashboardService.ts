@@ -1,9 +1,6 @@
-import { dockerCoreClient } from "../../../../infra/docker-core/connection";
-import type {
-  CoreOrder,
-  CoreTable,
-} from "../../../../infra/docker-core/types";
 import { alertEngine } from "../../../../core/alerts/AlertEngine";
+import { dockerCoreClient } from "../../../../infra/docker-core/connection";
+import type { CoreOrder, CoreTable } from "../../../../infra/docker-core/types";
 import type { DashboardOverview } from "../types";
 
 const UUID_REGEX =
@@ -154,8 +151,12 @@ export async function getOverview(
     const criticalTasks = (tasksRes.data || []) as { id: string }[];
     const alertsCount = alerts.length;
     const activeStaffCount = ((activeShiftsRes.data as any[]) || []).length;
-    const deletedProducts = ((deletedItemsRes.data as any[]) || []).length;
-    const deletedPayments = ((deletedPaymentsRes.data as any[]) || []).length;
+    const deletedProducts = deletedItemsRes.error
+      ? 0
+      : ((deletedItemsRes.data as any[]) || []).length;
+    const deletedPayments = deletedPaymentsRes.error
+      ? 0
+      : ((deletedPaymentsRes.data as any[]) || []).length;
 
     const totalTables = tables.length;
     const seatsTotal = tables.reduce((s, t) => s + (t.seats ?? 0), 0);

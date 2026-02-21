@@ -15,6 +15,12 @@
 - Health check: `http://localhost:3001/rest/v1/` should return 200.
 - Quick Core check: `bash scripts/core/health-check-core.sh`.
 
+## Billing / Checkout (local)
+
+- Para "Cambiar plan" na página de suscripción usar Stripe, o **integration-gateway** tem de estar em execução na porta **4320**.
+- Noutro terminal: `pnpm run dev:gateway` (na raiz; usa `scripts/start-gateway-billing.sh`). Com Stripe: `STRIPE_SECRET_KEY=sk_test_... pnpm run dev:gateway`.
+- Frontend: copiar `merchant-portal/.env.local.example` para `.env.local` — já inclui `VITE_API_BASE=http://localhost:4320` e `VITE_INTERNAL_API_TOKEN=chefiapp-internal-token-dev`. Se o gateway não estiver a correr, a UI mostra mensagem a indicar que se execute o gateway.
+
 ## Frontend dev server
 
 - Start via `pnpm -w merchant-portal run dev`.
