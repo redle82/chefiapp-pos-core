@@ -9,12 +9,12 @@
 import React, { useEffect, useState, type ReactNode } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useCoreHealth } from "../../../core/health/useCoreHealth";
-import { colors } from "../../../ui/design-system/tokens/colors";
+import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppSignature";
+import { colors } from "../../../ui/design-system/tokens/colors";
 import { OfflineIndicator } from "../../../ui/OfflineIndicator";
 import { RestaurantLogo } from "../../../ui/RestaurantLogo";
 import { AppStaffBootScreen } from "../AppStaffBootScreen";
-import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import { useStaff } from "../context/StaffContext";
 import { getOperatorProfile } from "../data/operatorProfiles";
 import {
@@ -84,51 +84,8 @@ export function StaffAppShellLayout({
       !(bottomNavItems as readonly string[]).includes(id),
   );
 
-  const [isStandalone, setIsStandalone] = useState(false);
-  const [openAsAppDismissed, setOpenAsAppDismissed] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<{
-    prompt(): Promise<void>;
-    userChoice: Promise<{ outcome: string }>;
-  } | null>(null);
-
-  useEffect(() => {
-    const standalone =
-      typeof window !== "undefined" &&
-      (window.matchMedia("(display-mode: standalone)").matches ||
-        (window.navigator as { standalone?: boolean }).standalone === true);
-    setIsStandalone(!!standalone);
-    try {
-      if (
-        typeof window !== "undefined" &&
-        localStorage.getItem("chefiapp_staff_open_as_app_dismissed") === "1"
-      ) {
-        setOpenAsAppDismissed(true);
-      }
-    } catch {
-      // ignore
-    }
-    const onBeforeInstall = (e: Event) => {
-      e.preventDefault();
-      const ev = e as unknown as {
-        prompt(): Promise<void>;
-        userChoice: Promise<{ outcome: string }>;
-      };
-      setInstallPrompt(ev);
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("beforeinstallprompt", onBeforeInstall);
-      return () =>
-        window.removeEventListener("beforeinstallprompt", onBeforeInstall);
-    }
-  }, []);
-
-  const handleInstall = async () => {
-    if (!installPrompt) return;
-    installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
-    if (outcome === "accepted") setIsStandalone(true);
-    setInstallPrompt(null);
-  };
+  // PWA standalone detection removed — BrowserBlockGuard enforces device-only access.
+  // See docs/architecture/SYSTEM_RULE_DEVICE_ONLY.md
 
   const operationalLabel = React.useMemo(() => {
     const alertCount = specDrifts.length;
@@ -228,7 +185,11 @@ export function StaffAppShellLayout({
               ←
             </button>
           )}
-          <RestaurantLogo logoUrl={identity.logoUrl} name={(identity.name || activeLocation?.name) ?? "Restaurante"} size={28} />
+          <RestaurantLogo
+            logoUrl={identity.logoUrl}
+            name={(identity.name || activeLocation?.name) ?? "Restaurante"}
+            size={28}
+          />
           <span
             style={{
               fontWeight: 700,
@@ -331,71 +292,7 @@ export function StaffAppShellLayout({
 
       <OfflineIndicator />
 
-      {/* Só no browser: indica como abrir como app (sem barra de URL/abas). Instalado = standalone = não mostra. */}
-      {isLauncher && !isStandalone && !openAsAppDismissed && (
-        <div
-          style={{
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 10,
-            padding: "6px 12px",
-            backgroundColor: colors.surface.layer2,
-            borderBottom: `1px solid ${colors.border.subtle}`,
-          }}
-        >
-          <span style={{ fontSize: 11, color: colors.text.tertiary }}>
-            Para abrir como aplicativo (sem browser): adicione ao ecrã inicial.
-          </span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {installPrompt && (
-              <button
-                type="button"
-                onClick={handleInstall}
-                style={{
-                  padding: "4px 10px",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: actionAccent.text,
-                  backgroundColor: actionAccent.base,
-                  border: "none",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                }}
-              >
-                Adicionar ao ecrã
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                setOpenAsAppDismissed(true);
-                try {
-                  localStorage.setItem(
-                    "chefiapp_staff_open_as_app_dismissed",
-                    "1",
-                  );
-                } catch {
-                  // ignore
-                }
-              }}
-              style={{
-                background: "none",
-                border: "none",
-                color: colors.text.tertiary,
-                cursor: "pointer",
-                padding: 2,
-                fontSize: 14,
-                lineHeight: 1,
-              }}
-              aria-label="Fechar"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Browser access blocked by BrowserBlockGuard — no PWA install banner needed */}
 
       {/* Área central — Shell manda no scroll. Único content scroller. Fundo contínuo (surface.base) em toda a largura para não haver faixa lateral. */}
       <main
@@ -466,9 +363,7 @@ export function StaffAppShellLayout({
                   padding: "8px 12px",
                   borderRadius: 10,
                   textDecoration: "none",
-                  color: isLauncher
-                    ? actionAccent.text
-                    : colors.text.secondary,
+                  color: isLauncher ? actionAccent.text : colors.text.secondary,
                   backgroundColor: isLauncher
                     ? actionAccent.base
                     : "transparent",

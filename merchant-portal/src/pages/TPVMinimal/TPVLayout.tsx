@@ -10,7 +10,6 @@
 import { Component, type ReactNode, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { OperationalHeader } from "../../components/pos/OperationalHeader";
-import { TPVInstallPrompt } from "../TPV/components/TPVInstallPrompt";
 import { TPVHeader } from "./components/TPVHeader";
 import { TPVNotificationBar } from "./components/TPVNotificationBar";
 import { TPVSidebar } from "./components/TPVSidebar";
@@ -59,7 +58,6 @@ export function TPVLayout() {
           minWidth: 0,
         }}
       >
-        <TPVInstallPrompt />
         <TPVHeader
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}

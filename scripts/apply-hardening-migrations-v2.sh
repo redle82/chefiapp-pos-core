@@ -5,6 +5,7 @@ cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core
 
 COMPOSE="docker compose -f docker-core/docker-compose.core.yml"
 PSQL_CMD="psql -v ON_ERROR_STOP=1 -P pager=off -U postgres -d chefiapp_core"
+PSQL_CMD_NO_STOP="psql -v ON_ERROR_STOP=0 -P pager=off -U postgres -d chefiapp_core"
 
 echo "=========================================="
 echo "  ChefIApp Core — Apply All Migrations"
@@ -27,15 +28,45 @@ MIGRATIONS=(
     "20260212_audit_mode.sql"
     "20260212_export_jobs.sql"
     "20260212_fiscal_certifications.sql"
+    "20260216_individual_product_photos.sql"
 )
 
 PASS=0
 FAIL=0
 
+apply_migration() {
+    local file="$1"
+    local output=""
+    local error_lines=""
+    local non_policy_errors=""
+
+    if output=$(cat "docker-core/schema/migrations/$file" | $COMPOSE exec -T postgres $PSQL_CMD 2>&1); then
+        printf "%s\n" "$output"
+        return 0
+    fi
+
+    # Retry without ON_ERROR_STOP and tolerate "policy already exists" errors.
+    output=$(cat "docker-core/schema/migrations/$file" | $COMPOSE exec -T postgres $PSQL_CMD_NO_STOP 2>&1 || true)
+    printf "%s\n" "$output"
+
+    error_lines=$(printf "%s\n" "$output" | grep -E "^ERROR:" || true)
+    if [ -z "$error_lines" ]; then
+        return 0
+    fi
+
+    non_policy_errors=$(printf "%s\n" "$error_lines" | grep -Ev "ERROR:  policy \".*\" for table \".*\" already exists" || true)
+    if [ -z "$non_policy_errors" ]; then
+        echo "    ⚠️  Only policy already exists errors; treating as success"
+        return 0
+    fi
+
+    return 1
+}
+
 for f in "${MIGRATIONS[@]}"; do
     echo ""
     echo ">>> Applying: $f"
-    if cat "docker-core/schema/migrations/$f" | $COMPOSE exec -T postgres $PSQL_CMD 2>&1; then
+    if apply_migration "$f"; then
         echo "    ✅ $f applied successfully"
         PASS=$((PASS+1))
     else

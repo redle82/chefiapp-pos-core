@@ -10,6 +10,7 @@ const PLACEHOLDER_DOMAINS = [
   "via.placeholder",
   "loremflickr.com",
   "dummyimage.com",
+  "source.unsplash.com",
 ];
 
 /**

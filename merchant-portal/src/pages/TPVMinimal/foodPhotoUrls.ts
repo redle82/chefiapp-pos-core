@@ -17,7 +17,7 @@ const FOOD_PHOTOS_BY_CATEGORY: Record<string, string> = {
   platos: `${U}1544025162-d76694265947${Q}`,
   principales: `${U}1544025162-d76694265947${Q}`,
   ensaladas: `${U}1512621776951-a57141f2eefd${Q}`,
-  zumos: `${U}1621506283937-042d5ffd308b${Q}`,
+  zumos: `${U}1535958636474-b021ee887b13${Q}`,
   bowls: `${U}1590301157890-4810ed352733${Q}`,
   postres: `${U}1578985545062-69928b1d9587${Q}`,
   sangrías: `${U}1514362545857-3bc16c4c7d1b${Q}`,

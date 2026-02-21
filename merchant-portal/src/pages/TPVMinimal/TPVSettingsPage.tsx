@@ -3,38 +3,10 @@
  * Navegação: sidebar já resolve (sem botão redundante "Voltar ao POS").
  */
 
-import { Link } from "react-router-dom";
-
 export function TPVSettingsPage() {
   return (
-    <div style={{ padding: 24 }}>
-      {/* Breadcrumb */}
-      <nav
-        style={{
-          fontSize: 13,
-          color: "var(--text-tertiary, #888)",
-          marginBottom: 16,
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-        }}
-      >
-        <Link
-          to="/op/tpv"
-          style={{
-            color: "var(--text-tertiary, #888)",
-            textDecoration: "none",
-          }}
-        >
-          TPV
-        </Link>
-        <span style={{ opacity: 0.5 }}>›</span>
-        <span style={{ color: "var(--text-secondary, #bbb)" }}>
-          Configurações
-        </span>
-      </nav>
-
-      <h1 style={{ color: "var(--text-primary)", marginBottom: 16 }}>
+    <div style={{ padding: 16 }}>
+      <h1 style={{ color: "var(--text-primary)", marginBottom: 12 }}>
         Definições do TPV
       </h1>
 

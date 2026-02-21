@@ -56,14 +56,13 @@ const TABLE_UNAVAILABLE_TTL_MS = 30_000;
 const OPTIONAL_TABLES_TTL_DEV_MS = 24 * 60 * 60 * 1000;
 
 /** Canonical list of optional Core tables; see docs/architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md.
- * gm_terminals: heartbeat opcional; em DEV evita 404 quando a migração não está aplicada.
  * api_keys, webhook_out_*: ver docker-core/schema/migrations/20260301_*.sql
  * merchant_subscriptions: faturação; ver docker-core/schema/migrations/20260222_merchant_subscriptions.sql
  * gm_audit_logs: trilha de auditoria e eventos fiscais; ver docker-core/schema/migrations/20260211_core_audit_logs.sql */
 const OPTIONAL_TABLES = [
   "gm_reservations",
   "gm_customers",
-  "gm_terminals",
+  // gm_terminals removed: table is now deployed and required for device provisioning
   "api_keys",
   "webhook_out_config",
   "webhook_out_delivery_log",
@@ -153,7 +152,11 @@ interface FilterBuilder {
   is(column: string, value: null | unknown): FilterBuilder;
   gte(column: string, value: unknown): FilterBuilder;
   in(column: string, values: unknown[]): FilterBuilder;
-  not(column: string, op: string, value: string | null | undefined): FilterBuilder;
+  not(
+    column: string,
+    op: string,
+    value: string | null | undefined,
+  ): FilterBuilder;
   or(filter: string): FilterBuilder;
   order(column: string, opts?: { ascending?: boolean }): FilterBuilder;
   limit(n: number): FilterBuilder;
@@ -195,11 +198,9 @@ function buildFilterBuilder(table: string): FilterBuilder {
       ) {
         optionalTableLoggedThisSession.add(table);
         const hint =
-            table === "gm_terminals"
-              ? "cd docker-core && make migrate-terminals"
-              : table === "gm_audit_logs"
-              ? "dbmate up ou psql -f schema/migrations/20260211_core_audit_logs.sql"
-              : "ver docker-core/Makefile ou docs/architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md";
+          table === "gm_audit_logs"
+            ? "dbmate up ou psql -f schema/migrations/20260211_core_audit_logs.sql"
+            : "ver docker-core/Makefile ou docs/architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md";
         console.debug(
           `[DEV] ${table} indisponível (opcional). Para ativar: ${hint}`,
         );
@@ -273,7 +274,10 @@ function buildFilterBuilder(table: string): FilterBuilder {
       init.body = JSON.stringify(state.body);
     }
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort("PostgREST request timeout (5s)"), 5000);
+    const id = setTimeout(
+      () => controller.abort("PostgREST request timeout (5s)"),
+      5000,
+    );
     try {
       const res = await fetch(url.toString(), {
         ...init,
@@ -529,12 +533,25 @@ export function getDockerCoreFetchClient(): DockerCoreClientShape {
             },
           };
         }
-        const res = await fetch(`${REST}/rpc/${fnName}`, {
+        const rpcUrl = `${REST}/rpc/${fnName}`;
+        if (IS_DEV) {
+          console.log(`[CoreRPC] POST ${rpcUrl}`, {
+            fnName,
+            paramsKeys: Object.keys(params),
+          });
+        }
+        const res = await fetch(rpcUrl, {
           method: "POST",
           headers: headers(),
           body: JSON.stringify(params),
         });
         const text = await res.text();
+        if (IS_DEV) {
+          console.log(
+            `[CoreRPC] ${fnName} → ${res.status}`,
+            text.substring(0, 200),
+          );
+        }
         // API_ERROR_CONTRACT: se resposta não é JSON, não fazer parse; devolver erro tipado.
         const ct = res.headers.get("Content-Type")?.toLowerCase() ?? "";
         const isJson = ct.includes("application/json");

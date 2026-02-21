@@ -12,20 +12,13 @@ type EnvLike = {
   [key: string]: string | boolean | undefined;
 };
 
-declare const __VITE_ENV__: EnvLike | undefined;
+const ENV: EnvLike = import.meta.env;
 
-const ENV: EnvLike =
-  typeof __VITE_ENV__ !== "undefined"
-    ? __VITE_ENV__
-    : typeof process !== "undefined" && process.env
-    ? (process.env as EnvLike)
-    : {};
-
-const getEnvString = (key: string, fallback = ""): string => {
+const getEnvString = (key: string): string => {
   const value = ENV[key];
   if (typeof value === "string") return value;
   if (typeof value === "boolean") return value ? "true" : "false";
-  return fallback;
+  return "";
 };
 
 const getEnvBool = (key: string, fallback = false): boolean => {
@@ -35,14 +28,30 @@ const getEnvBool = (key: string, fallback = false): boolean => {
   return fallback;
 };
 
-const MODE =
-  (typeof ENV.MODE === "string" && ENV.MODE) ||
-  (typeof process !== "undefined" ? process.env.NODE_ENV : undefined) ||
-  "development";
+const assertEnv = (name: string, value: string): string => {
+  if (!value) {
+    throw new Error(`[CONFIG] Missing ${name}`);
+  }
+  return value;
+};
 
-const IS_DEV = typeof ENV.DEV === "boolean" ? ENV.DEV : MODE === "development";
-const IS_PROD =
-  typeof ENV.PROD === "boolean" ? ENV.PROD : MODE === "production";
+const normalizeUrl = (value: string): string =>
+  value.endsWith("/") ? value.slice(0, -1) : value;
+
+const MODE = assertEnv("VITE_MODE", getEnvString("VITE_MODE"));
+const CORE_URL = normalizeUrl(
+  assertEnv("VITE_CORE_URL", getEnvString("VITE_CORE_URL")),
+);
+const CORE_ANON_KEY = assertEnv(
+  "VITE_CORE_ANON_KEY",
+  getEnvString("VITE_CORE_ANON_KEY"),
+);
+const API_BASE = normalizeUrl(
+  assertEnv("VITE_API_BASE", getEnvString("VITE_API_BASE")),
+);
+
+const IS_DEV = MODE !== "production";
+const IS_PROD = MODE === "production";
 
 export const CONFIG = {
   // ─── InsForge (Production BaaS) ─────────────────────────────
@@ -52,20 +61,12 @@ export const CONFIG = {
   INSFORGE_ANON_KEY: getEnvString("VITE_INSFORGE_ANON_KEY"),
 
   // API (Web Module)
-  API_BASE: getEnvString("VITE_API_BASE", "http://localhost:4320"),
+  API_BASE,
+  INTERNAL_API_TOKEN: getEnvString("VITE_INTERNAL_API_TOKEN"),
 
-  // Docker Core (PostgREST). Backend único.
-  // Em DEV (browser): usa empty string → fetch relativo ao origin → passa pelo Vite proxy /rest → localhost:3001.
-  // Em PROD: usa VITE_CORE_URL (URL absoluto do Core) ou empty string.
-  get CORE_URL(): string {
-    const envUrl = getEnvString("VITE_CORE_URL");
-    if (envUrl) return envUrl;
-    if (IS_DEV) return "";
-    return "";
-  },
-  get CORE_ANON_KEY(): string {
-    return getEnvString("VITE_CORE_ANON_KEY");
-  },
+  // Docker Core (PostgREST). Backend unico.
+  CORE_URL,
+  CORE_ANON_KEY,
 
   // Stripe (billing: checkout + portal)
   // Guard: reject placeholder keys that would trigger Stripe.js load + CORS errors in dev
@@ -112,7 +113,7 @@ export const CONFIG = {
    * OPERATIONAL_OS: Painel de Comando (contrato OPERATIONAL_DASHBOARD_V2); esconde trial, primeira venda, atalhos.
    * default: layout legado. Por defeito usamos OPERATIONAL_OS; para legado: VITE_UI_MODE=default.
    */
-  UI_MODE: getEnvString("VITE_UI_MODE", "OPERATIONAL_OS"),
+  UI_MODE: getEnvString("VITE_UI_MODE") || "OPERATIONAL_OS",
 
   /**
    * TERMINAL_INSTALLATION_TRACK — Trilho de instalação de terminais (gm_terminals, device_id) existe.
@@ -127,8 +128,8 @@ export const CONFIG = {
    * Ref: APPSTAFF_RUNTIME_MODEL.md
    */
   ALLOW_STAFF_ROLE_QUERY:
-    getEnvString("VITE_ALLOW_STAFF_ROLE_QUERY", "true") !== "false" &&
-    getEnvString("VITE_ALLOW_STAFF_ROLE_QUERY", "true") !== "0",
+    getEnvString("VITE_ALLOW_STAFF_ROLE_QUERY") !== "false" &&
+    getEnvString("VITE_ALLOW_STAFF_ROLE_QUERY") !== "0",
 
   /**
    * SUPPORT_WHATSAPP_NUMBER — Número WhatsApp para suporte ao utilizador.
@@ -138,28 +139,8 @@ export const CONFIG = {
   SUPPORT_WHATSAPP_NUMBER: getEnvString("VITE_SUPPORT_WHATSAPP_NUMBER"),
 };
 
-// Runtime Check (PROD: avisar se Core não configurado — permite landing-only)
-if (IS_PROD) {
-  const missingUrl = !CONFIG.CORE_URL || CONFIG.CORE_URL === "/rest";
-  const missingKey = !CONFIG.CORE_ANON_KEY;
-  if (missingUrl || missingKey) {
-    const vars = [
-      missingUrl && "VITE_CORE_URL",
-      missingKey && "VITE_CORE_ANON_KEY",
-    ]
-      .filter(Boolean)
-      .join(", ");
-    console.warn(
-      `[CONFIG] Core não configurado (modo landing-only). Para operação completa, defina antes do build: ${vars}`,
-    );
-  }
-}
-
-// Log config status (apenas em builds não-produção)
-if (IS_DEV) {
-  console.log("[CONFIG] Loaded:", {
-    CORE_URL: CONFIG.CORE_URL,
-    API_BASE: CONFIG.API_BASE,
-    MODE: CONFIG.MODE === "production" ? "production" : "local",
-  });
-}
+console.log("[CONFIG] Loaded", {
+  CORE_URL: CONFIG.CORE_URL,
+  API_BASE: CONFIG.API_BASE,
+  MODE: CONFIG.MODE,
+});

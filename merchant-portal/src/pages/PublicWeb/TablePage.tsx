@@ -10,6 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { resolveProductImageUrl } from "../../core/products/resolveProductImageUrl";
 import {
   readMenu,
   readRestaurantBySlug,
@@ -62,6 +63,8 @@ export function TablePage() {
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const resolveTrustedPhoto = (product: CoreProduct) =>
+    getTrustedPhotoUrl(resolveProductImageUrl(product));
 
   useEffect(() => {
     async function loadData() {
@@ -567,19 +570,23 @@ export function TablePage() {
                             backgroundColor: VPC.surface,
                           }}
                         >
-                          {getTrustedPhotoUrl(product.photo_url) && (
-                            <img
-                              src={getTrustedPhotoUrl(product.photo_url)!}
-                              alt={product.name}
-                              style={{
-                                width: "100%",
-                                height: 180,
-                                objectFit: "cover",
-                                borderRadius: VPC.radius,
-                                marginBottom: 12,
-                              }}
-                            />
-                          )}
+                          {(() => {
+                            const photoUrl = resolveTrustedPhoto(product);
+                            if (!photoUrl) return null;
+                            return (
+                              <img
+                                src={photoUrl}
+                                alt={product.name}
+                                style={{
+                                  width: "100%",
+                                  height: 180,
+                                  objectFit: "cover",
+                                  borderRadius: VPC.radius,
+                                  marginBottom: 12,
+                                }}
+                              />
+                            );
+                          })()}
                           <div
                             style={{
                               fontWeight: 600,
@@ -676,19 +683,23 @@ export function TablePage() {
                           backgroundColor: VPC.surface,
                         }}
                       >
-                        {getTrustedPhotoUrl(product.photo_url) && (
-                          <img
-                            src={getTrustedPhotoUrl(product.photo_url)!}
-                            alt={product.name}
-                            style={{
-                              width: "100%",
-                              height: 180,
-                              objectFit: "cover",
-                              borderRadius: VPC.radius,
-                              marginBottom: 12,
-                            }}
-                          />
-                        )}
+                        {(() => {
+                          const photoUrl = resolveTrustedPhoto(product);
+                          if (!photoUrl) return null;
+                          return (
+                            <img
+                              src={photoUrl}
+                              alt={product.name}
+                              style={{
+                                width: "100%",
+                                height: 180,
+                                objectFit: "cover",
+                                borderRadius: VPC.radius,
+                                marginBottom: 12,
+                              }}
+                            />
+                          );
+                        })()}
                         <div
                           style={{
                             fontWeight: 600,

@@ -1,70 +1,68 @@
-# DESKTOP_DISTRIBUTION_CONTRACT — PWA e Electron (TPV / KDS)
+# DESKTOP_DISTRIBUTION_CONTRACT — Electron (TPV / KDS)
 
 **Status:** CANONICAL
 **Tipo:** Contrato de distribuição — como empacotar TPV e KDS para desktop
 **Local:** docs/architecture/DESKTOP_DISTRIBUTION_CONTRACT.md
-**Hierarquia:** Subordinado a [CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./CORE_RUNTIME_AND_ROUTES_CONTRACT.md) e [CAMINHO_DO_CLIENTE.md](./CAMINHO_DO_CLIENTE.md)
+**Hierarquia:** Subordinado a [SYSTEM_RULE_DEVICE_ONLY.md](./SYSTEM_RULE_DEVICE_ONLY.md) e [CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./CORE_RUNTIME_AND_ROUTES_CONTRACT.md)
 
 ---
 
 ## Princípio
 
-TPV e KDS rodam hoje no browser. Em fase seguinte podem ser distribuídos como **PWA** (instalável) ou **Electron** (app desktop). Este contrato define como empacotar, atualizar e versionar — sem alterar o fluxo de rotas (/op/tpv, /op/kds).
+TPV e KDS **NÃO podem ser acedidos pelo navegador** (regra de sistema imutável). São distribuídos exclusivamente como **Electron** (app desktop). O frontend (merchant-portal) é carregado dentro do Electron shell; a lógica permanece no frontend e no Core.
+
+O `BrowserBlockGuard` impede o acesso a `/op/tpv` e `/op/kds` em navegador de produção.
 
 ---
 
 ## Escopo
 
-| Alvo | Rota canónica | Uso                                  |
-| ---- | ------------- | ------------------------------------ |
-| TPV  | /op/tpv       | Caixa; pode ser PWA ou Electron      |
-| KDS  | /op/kds       | Cozinha; fullscreen; PWA ou Electron |
-
-Landing, portal (/app) e web pública não são obrigatoriamente empacotados; foco em operação.
+| Alvo | Rota canónica | Plataforma | Browser   |
+| ---- | ------------- | ---------- | --------- |
+| TPV  | /op/tpv       | Electron   | Bloqueado |
+| KDS  | /op/kds       | Electron   | Bloqueado |
 
 ---
 
-## PWA (Progressive Web App)
+## Electron
 
-| Aspecto        | Regra                                                                                  |
-| -------------- | -------------------------------------------------------------------------------------- |
-| Manifest       | manifest.json com nome, ícones, start_url = /op/tpv ou /op/kds (ou raiz com redirect). |
-| Service Worker | Em produção; em DEV desativado (ver APPLICATION_BOOT_CONTRACT / dev stable mode).      |
-| Instalação     | Utilizador instala a partir do browser; abre como janela standalone.                   |
-| Atualizações   | Nova versão do frontend = refresh ou prompt de atualização; sem store.                 |
-
-PWA não altera rotas; é a mesma app web acessível por /op/tpv e /op/kds, instalável.
-
----
-
-## Electron (fase seguinte)
-
-| Aspecto      | Regra                                                                                                            |
-| ------------ | ---------------------------------------------------------------------------------------------------------------- |
-| URL interna  | App Electron carrega merchant-portal (localhost ou URL de deploy) nas rotas /op/tpv ou /op/kds.                  |
-| Janela       | TPV: janela redimensionável; KDS: fullscreen, sem barra de título.                                               |
-| Atualizações | Política de versão: auto-update (e.g. electron-updater) ou notificação de nova versão; não quebrar sessão ativa. |
-| Versão       | Versão do app desktop alinhada a versão do frontend (tag, changelog).                                            |
+| Aspecto      | Regra                                                                       |
+| ------------ | --------------------------------------------------------------------------- |
+| URL interna  | App Electron carrega merchant-portal nas rotas /op/tpv ou /op/kds.          |
+| Janela       | TPV: janela redimensionável; KDS: fullscreen, sem barra de título.          |
+| Atualizações | Auto-update ou notificação de nova versão; não quebrar sessão ativa.        |
+| Versão       | Versão do app desktop alinhada a versão do frontend (tag, changelog).       |
+| User-Agent   | Deve incluir "Electron" no user-agent para detecção pelo BrowserBlockGuard. |
 
 Electron é shell; a lógica continua no frontend e no Core. Não duplicar lógica no processo main.
 
 ---
 
-## Política de versão (recomendação)
+## Provisioning
+
+O dispositivo desktop deve ser provisionado via QR (Admin → Dispositivos):
+
+1. Admin gera QR em `/admin/devices`
+2. URL do QR aponta para `/install?token=xxx`
+3. Token é consumido → terminal registado em `gm_terminals`
+4. Electron detecta o terminal_id local e abre a rota correspondente
+
+---
+
+## Política de versão
 
 | Canal            | Uso                                                                               |
 | ---------------- | --------------------------------------------------------------------------------- |
 | Produção         | Versão estável; atualizações com changelog; compatibilidade com Core em produção. |
 | Piloto / staging | Versão de teste; pode exigir versão específica do Core.                           |
 
-Não fazer deploy de frontend que exija Core mais novo sem aviso; documentar compatibilidade Core ↔ frontend.
-
 ---
 
 ## Referências
 
+- [SYSTEM_RULE_DEVICE_ONLY.md](./SYSTEM_RULE_DEVICE_ONLY.md) — regra imutável de acesso
 - [CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./CORE_RUNTIME_AND_ROUTES_CONTRACT.md) — rotas /op/tpv, /op/kds
-- [APPLICATION_BOOT_CONTRACT.md](./APPLICATION_BOOT_CONTRACT.md) — Service Worker em DEV
-- [CAMINHO_DO_CLIENTE.md](./CAMINHO_DO_CLIENTE.md) — Desktop como “fase seguinte”
+- [OPERATIONAL_INSTALLATION_CONTRACT.md](./OPERATIONAL_INSTALLATION_CONTRACT.md) — contrato de instalação
+- `merchant-portal/src/components/operational/BrowserBlockGuard.tsx` — guard de bloqueio
 
 **Violação = alterar rota ou gate de /op/\* no desktop sem atualizar este contrato.**

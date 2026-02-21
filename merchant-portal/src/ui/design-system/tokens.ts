@@ -29,14 +29,19 @@ const px = (value: number) => `${value}px`;
 // BRAND COLORS
 // ============================================================================
 
+/** Canonical ChefIApp Gold — NOT the green accent. */
+const BRAND_GOLD = "#c9a227";
+const BRAND_GOLD_LIGHT = "#e8c547";
+const BRAND_GOLD_DARK = "#b8922a";
+
 export const Brand = {
   // ChefIApp Gold — Primary brand color
   gold: {
-    DEFAULT: coreColors.accent,
-    light: coreColors.accent,
-    dark: coreColors.accent,
-    gradient: `linear-gradient(135deg, ${coreColors.accent} 0%, ${coreColors.accent} 100%)`,
-    glow: `0 4px 20px ${coreColors.accent}4D`,
+    DEFAULT: BRAND_GOLD,
+    light: BRAND_GOLD_LIGHT,
+    dark: BRAND_GOLD_DARK,
+    gradient: `linear-gradient(135deg, ${BRAND_GOLD} 0%, ${BRAND_GOLD_DARK} 100%)`,
+    glow: `0 4px 20px ${BRAND_GOLD}4D`,
   },
 
   // Stripe Purple — Payment integration

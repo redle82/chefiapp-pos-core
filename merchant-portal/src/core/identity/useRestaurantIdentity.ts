@@ -4,10 +4,10 @@ import {
   fetchRestaurantForIdentity,
   getOrCreateRestaurantId,
 } from "../../infra/readers/RuntimeReader";
-import { TRIAL_RESTAURANT_ID } from "../readiness/operationalRestaurant";
 import { isDockerBackend } from "../infra/backendAdapter";
 import { RUNTIME_MODE } from "../kernel/RuntimeContext";
 import { configureSentryScope } from "../logger/Logger";
+import { TRIAL_RESTAURANT_ID } from "../readiness/operationalRestaurant";
 
 export interface RestaurantIdentity {
   id: string | null;
@@ -83,10 +83,11 @@ export function useRestaurantIdentity() {
     try {
       if (isDockerBackend()) {
         const storedRestaurantId = getTabIsolated("chefiapp_restaurant_id");
-        const restaurantId =
-          isTrial
-            ? TRIAL_RESTAURANT_ID
-            : runtime?.restaurant_id ?? storedRestaurantId ?? (await getOrCreateRestaurantId());
+        const restaurantId = isTrial
+          ? TRIAL_RESTAURANT_ID
+          : runtime?.restaurant_id ??
+            storedRestaurantId ??
+            (await getOrCreateRestaurantId());
         if (!restaurantId) {
           if (mountedRef.current)
             setIdentity((prev) => ({
@@ -156,8 +157,16 @@ export function useRestaurantIdentity() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       console.error("Identity: Crash hydration:", msg);
-      if (mountedRef.current)
-        setIdentity((prev) => ({ ...prev, loading: false }));
+      if (mountedRef.current) {
+        setIdentity((prev) => ({
+          ...prev,
+          name: prev.name || "Seu Restaurante",
+          city: prev.city || "Local desconhecido",
+          type: prev.type || "Geral",
+          loading: false,
+          isTrial: prev.isTrial || false,
+        }));
+      }
     }
   }, [runtime?.restaurant_id]);
 

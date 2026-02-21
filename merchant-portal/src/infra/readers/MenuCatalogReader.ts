@@ -2,14 +2,19 @@
  * MenuCatalogReader — Catálogo visual do menu (restaurante + categorias com itens).
  */
 
+import { resolveProductImageUrl } from "../../core/products/resolveProductImageUrl";
+import type {
+  CatalogCategory,
+  CatalogItem,
+  MenuRestaurant,
+} from "../../pages/MenuCatalog/types";
 import {
-  readRestaurantById,
   readMenu,
-  type CoreProduct,
+  readRestaurantById,
   type CoreMenuCategory,
+  type CoreProduct,
   type CoreRestaurant,
 } from "./RestaurantReader";
-import type { CatalogCategory, MenuRestaurant, CatalogItem } from "../../pages/MenuCatalog/types";
 
 export interface MenuCatalogData {
   restaurant: MenuRestaurant | null;
@@ -31,7 +36,7 @@ function mapProductToCatalogItem(p: CoreProduct): CatalogItem {
     title: p.name,
     description: p.description ?? "",
     priceCents: p.price_cents,
-    imageUrl: (p as { photo_url?: string }).photo_url ?? "",
+    imageUrl: resolveProductImageUrl(p) ?? "",
     allergens: [],
   };
 }
@@ -40,19 +45,21 @@ function mapProductToCatalogItem(p: CoreProduct): CatalogItem {
  * Carrega catálogo do menu (restaurante + categorias com itens) do Core.
  */
 export async function readMenuCatalog(
-  restaurantId: string
+  restaurantId: string,
 ): Promise<MenuCatalogData | null> {
   const [restaurant, menu] = await Promise.all([
     readRestaurantById(restaurantId),
     readMenu(restaurantId),
   ]);
-  const categories: CatalogCategory[] = menu.categories.map((cat: CoreMenuCategory) => ({
-    id: cat.id,
-    title: cat.name,
-    items: menu.products
-      .filter((p: CoreProduct) => p.category_id === cat.id)
-      .map(mapProductToCatalogItem),
-  }));
+  const categories: CatalogCategory[] = menu.categories.map(
+    (cat: CoreMenuCategory) => ({
+      id: cat.id,
+      title: cat.name,
+      items: menu.products
+        .filter((p: CoreProduct) => p.category_id === cat.id)
+        .map(mapProductToCatalogItem),
+    }),
+  );
   return {
     restaurant: mapRestaurant(restaurant),
     categories,

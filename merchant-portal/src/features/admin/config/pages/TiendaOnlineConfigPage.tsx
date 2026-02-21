@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
+import { readProductAssets } from "../../../../infra/readers/ProductAssetReader";
 import { readRestaurantById } from "../../../../infra/readers/RestaurantReader";
 import { PublicPresenceFields } from "../../../../pages/Config/PublicPresenceFields";
 import { PublicQRSection } from "../../../../pages/Config/PublicQRSection";
@@ -35,6 +36,15 @@ export function TiendaOnlineConfigPage() {
   const [slug, setSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [assets, setAssets] = useState<
+    Array<{
+      id: string;
+      category: string;
+      label: string;
+      image_url: string;
+    }>
+  >([]);
+  const [assetsLoading, setAssetsLoading] = useState(false);
 
   const loadSlug = useCallback(async () => {
     if (!restaurantId) {
@@ -55,6 +65,22 @@ export function TiendaOnlineConfigPage() {
   useEffect(() => {
     loadSlug();
   }, [loadSlug]);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadAssets = async () => {
+      setAssetsLoading(true);
+      const data = await readProductAssets();
+      if (mounted) {
+        setAssets(data);
+        setAssetsLoading(false);
+      }
+    };
+    loadAssets();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const publicUrl = slug ? buildPublicUrl(slug) : null;
 
@@ -212,7 +238,104 @@ export function TiendaOnlineConfigPage() {
       {/* ── Section 2: Dados públicos (endereço, horários) ── */}
       <PublicPresenceFields />
 
-      {/* ── Section 3: QR Codes ── */}
+      {/* ── Section 3: Biblioteca de Imagens ── */}
+      <div
+        style={{
+          padding: 24,
+          border: "1px solid var(--surface-border)",
+          borderRadius: 12,
+          backgroundColor: "var(--card-bg-on-dark)",
+          marginTop: 24,
+          marginBottom: 24,
+        }}
+      >
+        <h3
+          style={{
+            margin: "0 0 8px",
+            fontSize: 16,
+            fontWeight: 600,
+            color: "var(--text-primary)",
+          }}
+        >
+          Biblioteca de Imagens
+        </h3>
+        <p
+          style={{
+            margin: "0 0 16px",
+            fontSize: 13,
+            color: "var(--text-secondary)",
+          }}
+        >
+          Imagens genericas prontas para acelerar o setup do menu. Pode usar
+          como base e substituir depois por imagens proprias.
+        </p>
+
+        {assetsLoading ? (
+          <p
+            style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}
+          >
+            A carregar biblioteca...
+          </p>
+        ) : assets.length === 0 ? (
+          <p
+            style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}
+          >
+            Nenhum asset disponivel.
+          </p>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+              gap: 12,
+            }}
+          >
+            {assets.map((asset) => (
+              <div
+                key={asset.id}
+                style={{
+                  border: "1px solid var(--surface-border)",
+                  borderRadius: 10,
+                  padding: 12,
+                  backgroundColor: "var(--surface-elevated, #1c2333)",
+                }}
+              >
+                <div
+                  style={{
+                    width: "100%",
+                    aspectRatio: "1",
+                    borderRadius: 8,
+                    overflow: "hidden",
+                    backgroundColor: "var(--surface-muted, #111827)",
+                    marginBottom: 8,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <img
+                    src={asset.image_url}
+                    alt={asset.label}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 600 }}>
+                  {asset.label}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                  {asset.category}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Section 4: QR Codes ── */}
       <PublicQRSection />
     </div>
   );

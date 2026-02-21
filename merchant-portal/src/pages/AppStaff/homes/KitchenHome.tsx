@@ -5,9 +5,11 @@
  *
  * Home = KDS em foco total. Nada mais.
  * ❌ NÃO mostra botões de navegação (KDS, Tarefas, Turno — já estão no rodapé).
+ *
+ * Uses StaffMiniKDS for mobile-responsive layout.
  */
 
-import KitchenDisplay from "../../TPV/KDS/KitchenDisplay";
+import { StaffMiniKDS } from "../components/StaffMiniKDS";
 
 export function KitchenHome() {
   return (
@@ -20,7 +22,7 @@ export function KitchenHome() {
         width: "100%",
       }}
     >
-      <KitchenDisplay />
+      <StaffMiniKDS />
     </div>
   );
 }

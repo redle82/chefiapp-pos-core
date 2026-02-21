@@ -15,26 +15,26 @@
 CREATE TABLE event_store (
     -- Identity
     event_id UUID PRIMARY KEY,
-    
+
     -- Stream organization
     stream_id TEXT NOT NULL,
     stream_version BIGINT NOT NULL,
-    
+
     -- Event metadata
     type TEXT NOT NULL,
     payload JSONB NOT NULL,
     occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
+
     -- Tracing & causality
     causation_id UUID,
     correlation_id UUID,
     actor_ref TEXT,
     idempotency_key TEXT,
-    
+
     -- Anti-tamper chain
     hash_prev TEXT,
     hash TEXT NOT NULL,
-    
+
     -- Constraints
     CONSTRAINT event_store_stream_version_unique UNIQUE (stream_id, stream_version),
     CONSTRAINT event_store_stream_version_positive CHECK (stream_version > 0),
@@ -60,31 +60,31 @@ CREATE TABLE event_store (
 CREATE TABLE legal_seals (
     -- Identity
     seal_id UUID PRIMARY KEY,
-    
+
     -- Entity reference
     entity_type TEXT NOT NULL,
     entity_id TEXT NOT NULL,
-    
+
     -- Event reference (what triggered the seal)
     seal_event_id UUID NOT NULL,
-    
+
     -- Anti-tamper
     stream_hash TEXT NOT NULL,
-    
+
     -- Temporal
     sealed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
+
     -- Sequential ordering (audit trail)
     -- IMPORTANT: BIGSERIAL provides monotonic (strictly increasing) sequence,
     -- but GAPS ARE POSSIBLE due to transaction rollbacks and concurrency.
     -- This is acceptable for legal audit: sequence never decreases, never repeats,
     -- but may have gaps. For gap-free sequence, use alternative implementation.
     sequence BIGSERIAL NOT NULL UNIQUE,
-    
+
     -- State snapshots
     financial_state TEXT NOT NULL,
     legal_state TEXT NOT NULL,
-    
+
     -- Constraints
     CONSTRAINT legal_seals_entity_type_check CHECK (entity_type IN ('ORDER', 'PAYMENT', 'SESSION')),
     CONSTRAINT legal_seals_legal_state_check CHECK (legal_state IN ('PAYMENT_SEALED', 'ORDER_DECLARED', 'ORDER_FINAL')),
@@ -206,7 +206,7 @@ $$;
 CREATE OR REPLACE FUNCTION forbid_mutation()
 RETURNS TRIGGER AS $$
 BEGIN
-    RAISE EXCEPTION 'IMMUTABLE_TABLE: % operations not allowed on %', 
+    RAISE EXCEPTION 'IMMUTABLE_TABLE: % operations not allowed on %',
         TG_OP, TG_TABLE_NAME
     USING ERRCODE = '23514'; -- check_violation (semantically correct)
 END;
@@ -282,7 +282,7 @@ CREATE TABLE projection_order_summary (
     closed_at TIMESTAMPTZ,
     last_event_id UUID NOT NULL,
     last_event_version BIGINT NOT NULL,
-    
+
     CONSTRAINT projection_order_summary_last_event_fk FOREIGN KEY (last_event_id) REFERENCES event_store(event_id)
 );
 
@@ -327,7 +327,7 @@ INSERT INTO schema_metadata (key, value) VALUES ('created_at', NOW()::TEXT);
    - Hash chain: tamper-evident (each event hashes previous)
    - Stream versioning: optimistic concurrency control
    - JSONB payload: flexible schema evolution
-   
+
 2. LEGAL SEALS (legal_seals)
    - Monotonic: sequence strictly increasing (never decreases, never repeats)
    - Gaps allowed: BIGSERIAL may skip numbers on rollback (acceptable for audit)
@@ -335,22 +335,22 @@ INSERT INTO schema_metadata (key, value) VALUES ('created_at', NOW()::TEXT);
    - Entity uniqueness: one seal per (entity_type, entity_id, legal_state)
    - Traceability: FK to event_store
    - Stream hash: proves event stream integrity at seal time
-   
+
 3. INDEXES
    - Read-optimized: event sourcing is read-heavy
    - Partial indexes: space-efficient for sparse columns
    - Descending order: matches temporal query patterns
-   
+
 4. FUNCTIONS
    - get_stream_version: optimistic concurrency
    - is_entity_sealed: mutation guard
    - get_next_seal_sequence: monotonic counter
-   
+
 5. PROJECTIONS (optional)
    - Rebuilable from events
    - Query performance optimization
    - Tracks last processed event version
-   
+
 6. SECURITY
    - No UPDATE/DELETE permissions on immutable tables
    - Check constraints: fail fast on invalid data
@@ -369,6 +369,29 @@ This schema is the foundation for:
 - GATE 4: Scale (distributed systems)
 - GATE 5: Offline-first (optional)
 */
+
+-- ==============================================================================
+-- REFLEX FIRINGS TABLE (Idempotency Log)
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS reflex_firings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    restaurant_id UUID REFERENCES gm_restaurants(id) NOT NULL,
+    reflex_key TEXT NOT NULL, -- "clean-table", "finalize-order", etc.
+    target_id TEXT NOT NULL, -- order_id, table_id, etc.
+    fired_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(restaurant_id, reflex_key, target_id)
+);
+
+ALTER TABLE reflex_firings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Everyone can select reflex_firings" ON reflex_firings FOR SELECT USING (true);
+CREATE POLICY "Everyone can insert reflex_firings" ON reflex_firings FOR INSERT WITH CHECK (true);
+
+CREATE INDEX IF NOT EXISTS idx_reflex_firings_check ON reflex_firings(restaurant_id, reflex_key, target_id);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON reflex_firings TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON reflex_firings TO authenticated;
 
 -- ==============================================================================
 -- END OF SCHEMA

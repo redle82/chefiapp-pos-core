@@ -6,6 +6,7 @@
 import { Fragment } from "react";
 import { Navigate, Outlet, Route } from "react-router-dom";
 import { ManagementAdvisor } from "../components/onboarding/ManagementAdvisor";
+import { BrowserBlockGuard } from "../components/operational/BrowserBlockGuard";
 import { OperationalFullscreenWrapper } from "../components/operational/OperationalFullscreenWrapper";
 import { RequireOperational } from "../components/operational/RequireOperational";
 import { ShiftGate } from "../components/operational/ShiftGate";
@@ -45,6 +46,7 @@ import { CustomerDetailPage } from "../features/admin/customers/pages/CustomerDe
 import { CustomersPage } from "../features/admin/customers/pages/CustomersPage";
 import { DashboardLayout } from "../features/admin/dashboard/components/DashboardLayout";
 import { DashboardHomePage } from "../features/admin/dashboard/pages/DashboardHomePage";
+import { AdminDevicesPage } from "../features/admin/devices/AdminDevicesPage";
 import { ModulesPage } from "../features/admin/modules/pages/ModulesPage";
 import { ObservabilityPage } from "../features/admin/observability/pages/ObservabilityPage";
 import { PaymentsLayout } from "../features/admin/payments/pages/PaymentsLayout";
@@ -54,6 +56,8 @@ import { PromotionsPage } from "../features/admin/promotions/pages/PromotionsPag
 import { AdminReportsOverview } from "../features/admin/reports/AdminReportsOverview";
 import { MultiUnitOverviewReportPage } from "../features/admin/reports/MultiUnitOverviewReportPage";
 import { ReservationsOperationalPage } from "../features/admin/reservas/pages/ReservationsOperationalPage";
+import { KDSMobilePage } from "../features/kds-mobile";
+import { TPVMobilePage } from "../features/pv-mobile";
 import { ActivationCenterPage } from "../pages/Activation/ActivationCenterPage";
 import { AlertsDashboardPage } from "../pages/Alerts/AlertsDashboardPage";
 import { AppStaffHome } from "../pages/AppStaff/AppStaffHome";
@@ -96,6 +100,8 @@ import { EmployeeOperationPage } from "../pages/Employee/OperationPage";
 import { EmployeeTasksPage } from "../pages/Employee/TasksPage";
 import { HealthDashboardPage } from "../pages/Health/HealthDashboardPage";
 import { HelpPage } from "../pages/Help/HelpPage";
+import { InstallAppsPage } from "../pages/InstallAppsPage";
+import { InstallPage } from "../pages/InstallPage";
 import { InventoryStockMinimal } from "../pages/InventoryStock/InventoryStockMinimal";
 import { KDSMinimal } from "../pages/KDSMinimal/KDSMinimal";
 import { ManagerAnalysisPage } from "../pages/Manager/AnalysisPage";
@@ -135,6 +141,8 @@ import { TPVOrdersPage } from "../pages/TPVMinimal/TPVOrdersPage";
 import { TPVPOSView } from "../pages/TPVMinimal/TPVPOSView";
 import { TPVReservationsPage } from "../pages/TPVMinimal/TPVReservationsPage";
 import { TPVSettingsPage } from "../pages/TPVMinimal/TPVSettingsPage";
+import { TPVShiftPage } from "../pages/TPVMinimal/TPVShiftPage";
+import { TPVTablesPage } from "../pages/TPVMinimal/TPVTablesPage";
 import { TPVTasksPage } from "../pages/TPVMinimal/TPVTasksPage";
 import { TaskSystemMinimal } from "../pages/TaskSystem/TaskSystemMinimal";
 import { RecurringTasksPage } from "../pages/Tasks/RecurringTasksPage";
@@ -173,59 +181,75 @@ export const OperationalRoutesFragment = (
     />
 
     <Route element={<RoleGate />}>
+      {/* ── BrowserBlockGuard: TPV (desktop only) ── */}
       <Route
-        path="/op/tpv"
         element={
-          <ErrorBoundary
-            context="TPV"
-            fallback={
-              <GlobalBlockedView
-                title="TPV indisponível"
-                description="O módulo de caixa encontrou um erro. Recarregue a tela para retomar as vendas."
-                action={{
-                  label: "Recarregar",
-                  onClick: () => window.location.reload(),
-                }}
-              />
-            }
-          >
-            <ShiftGate>
-              <OperationalFullscreenWrapper>
-                <TPVLayout />
-              </OperationalFullscreenWrapper>
-            </ShiftGate>
-          </ErrorBoundary>
+          <BrowserBlockGuard requiredPlatform="desktop" moduleLabel="TPV" />
         }
       >
-        <Route index element={<TPVPOSView />} />
-        <Route path="orders" element={<TPVOrdersPage />} />
-        <Route path="kitchen" element={<TPVKitchenPage />} />
-        <Route path="tasks" element={<TPVTasksPage />} />
-        <Route path="reservations" element={<TPVReservationsPage />} />
-        <Route path="settings" element={<TPVSettingsPage />} />
+        <Route
+          path="/op/tpv"
+          element={
+            <ErrorBoundary
+              context="TPV"
+              fallback={
+                <GlobalBlockedView
+                  title="TPV indisponível"
+                  description="O módulo de caixa encontrou um erro. Recarregue a tela para retomar as vendas."
+                  action={{
+                    label: "Recarregar",
+                    onClick: () => window.location.reload(),
+                  }}
+                />
+              }
+            >
+              <ShiftGate>
+                <OperationalFullscreenWrapper>
+                  <TPVLayout />
+                </OperationalFullscreenWrapper>
+              </ShiftGate>
+            </ErrorBoundary>
+          }
+        >
+          <Route index element={<TPVPOSView />} />
+          <Route path="orders" element={<TPVOrdersPage />} />
+          <Route path="tables" element={<TPVTablesPage />} />
+          <Route path="shift" element={<TPVShiftPage />} />
+          <Route path="kitchen" element={<TPVKitchenPage />} />
+          <Route path="tasks" element={<TPVTasksPage />} />
+          <Route path="reservations" element={<TPVReservationsPage />} />
+          <Route path="settings" element={<TPVSettingsPage />} />
+        </Route>
       </Route>
+      {/* ── BrowserBlockGuard: KDS (desktop only) ── */}
       <Route
-        path="/op/kds"
         element={
-          <ErrorBoundary
-            context="KDS"
-            fallback={
-              <GlobalBlockedView
-                title="KDS indisponível"
-                description="O módulo de cozinha encontrou um erro. Recarregue a tela para continuar o preparo."
-                action={{
-                  label: "Recarregar",
-                  onClick: () => window.location.reload(),
-                }}
-              />
-            }
-          >
-            <OperationalFullscreenWrapper>
-              <KDSMinimal />
-            </OperationalFullscreenWrapper>
-          </ErrorBoundary>
+          <BrowserBlockGuard requiredPlatform="desktop" moduleLabel="KDS" />
         }
-      />
+      >
+        <Route
+          path="/op/kds"
+          element={
+            <ErrorBoundary
+              context="KDS"
+              fallback={
+                <GlobalBlockedView
+                  title="KDS indisponível"
+                  description="O módulo de cozinha encontrou um erro. Recarregue a tela para continuar o preparo."
+                  action={{
+                    label: "Recarregar",
+                    onClick: () => window.location.reload(),
+                  }}
+                />
+              }
+            >
+              <OperationalFullscreenWrapper>
+                <KDSMinimal />
+              </OperationalFullscreenWrapper>
+            </ErrorBoundary>
+          }
+        />
+      </Route>
       <Route path="/op/cash" element={<Navigate to="/op/tpv" replace />} />
       <Route path="/op/pos" element={<Navigate to="/op/tpv" replace />} />
       <Route path="/op/pos/*" element={<Navigate to="/op/tpv" replace />} />
@@ -287,25 +311,34 @@ export const OperationalRoutesFragment = (
         path="/garcom/mesa/:tableId"
         element={<AppStaffMobileOnlyPage />}
       />
-      {/* Comandeiro (Waiter): home + mesa */}
-      <Route path="/app/waiter" element={<WaiterHomePage />} />
-      <Route path="/app/waiter/table/:tableId" element={<TablePanel />} />
+      {/* ── BrowserBlockGuard: Waiter (mobile only) ── */}
       <Route
-        path="/app/waiter/calls"
-        element={<Navigate to="/app/waiter" replace />}
-      />
-      <Route
-        path="/app/waiter/orders"
-        element={<Navigate to="/app/waiter" replace />}
-      />
-      <Route
-        path="/app/waiter/chat"
-        element={<Navigate to="/app/waiter" replace />}
-      />
-      <Route
-        path="/app/waiter/profile"
-        element={<Navigate to="/app/staff/profile" replace />}
-      />
+        element={
+          <BrowserBlockGuard
+            requiredPlatform="mobile"
+            moduleLabel="Comandeiro"
+          />
+        }
+      >
+        <Route path="/app/waiter" element={<WaiterHomePage />} />
+        <Route path="/app/waiter/table/:tableId" element={<TablePanel />} />
+        <Route
+          path="/app/waiter/calls"
+          element={<Navigate to="/app/waiter" replace />}
+        />
+        <Route
+          path="/app/waiter/orders"
+          element={<Navigate to="/app/waiter" replace />}
+        />
+        <Route
+          path="/app/waiter/chat"
+          element={<Navigate to="/app/waiter" replace />}
+        />
+        <Route
+          path="/app/waiter/profile"
+          element={<Navigate to="/app/staff/profile" replace />}
+        />
+      </Route>
       <Route
         path="/app/backoffice"
         element={
@@ -314,143 +347,172 @@ export const OperationalRoutesFragment = (
           </ManagementAdvisor>
         }
       />
-      {/* AppStaff: /app/staff → redirect para /app/staff/home; rotas do shell para evitar cair em /app/dashboard (reports). */}
-      <Route path="/app/staff" element={<AppStaffWrapper />}>
-        <Route index element={<StaffIndexRedirect />} />
-        <Route
-          path="home"
-          element={
-            <StaffAppGate>
-              <StaffAppShellLayout>
-                <Outlet />
-              </StaffAppShellLayout>
-            </StaffAppGate>
-          }
-        >
-          <Route index element={<StaffHomeRedirect />} />
-          <Route path="owner" element={<OwnerGlobalDashboard />} />
-          <Route path="manager" element={<ManagerHome />} />
-          <Route path="waiter" element={<AppStaffHome />} />
-          <Route path="kitchen" element={<KitchenHome />} />
-          <Route path="cleaning" element={<CleaningHome />} />
-          <Route path="worker" element={<WorkerHome />} />
-          {/* Dashboards de Setor (nível 2): OwnerHome → Sector → Ferramenta */}
+      {/* ── BrowserBlockGuard: AppStaff (mobile only) ── */}
+      <Route
+        element={
+          <BrowserBlockGuard requiredPlatform="mobile" moduleLabel="AppStaff" />
+        }
+      >
+        <Route path="/app/staff" element={<AppStaffWrapper />}>
+          <Route index element={<StaffIndexRedirect />} />
           <Route
-            path="sector/operation"
-            element={<OperationSectorDashboard />}
+            path="home"
+            element={
+              <StaffAppGate>
+                <StaffAppShellLayout>
+                  <Outlet />
+                </StaffAppShellLayout>
+              </StaffAppGate>
+            }
+          >
+            <Route index element={<StaffHomeRedirect />} />
+            <Route path="owner" element={<OwnerGlobalDashboard />} />
+            <Route path="manager" element={<ManagerHome />} />
+            <Route path="waiter" element={<AppStaffHome />} />
+            <Route path="kitchen" element={<KitchenHome />} />
+            <Route path="cleaning" element={<CleaningHome />} />
+            <Route path="worker" element={<WorkerHome />} />
+            {/* Dashboards de Setor (nível 2): OwnerHome → Sector → Ferramenta */}
+            <Route
+              path="sector/operation"
+              element={<OperationSectorDashboard />}
+            />
+            <Route path="sector/tasks" element={<TasksSectorDashboard />} />
+            <Route path="sector/team" element={<TeamSectorDashboard />} />
+            <Route path="sector/kitchen" element={<KitchenSectorDashboard />} />
+            <Route
+              path="sector/cleaning"
+              element={<CleaningSectorDashboard />}
+            />
+          </Route>
+          <Route
+            path="mode/operation"
+            element={
+              <StaffAppGate>
+                <StaffRoleGuard modeId="operation">
+                  <StaffAppShellLayout>
+                    <OperationModePage />
+                  </StaffAppShellLayout>
+                </StaffRoleGuard>
+              </StaffAppGate>
+            }
           />
-          <Route path="sector/tasks" element={<TasksSectorDashboard />} />
-          <Route path="sector/team" element={<TeamSectorDashboard />} />
-          <Route path="sector/kitchen" element={<KitchenSectorDashboard />} />
-          <Route path="sector/cleaning" element={<CleaningSectorDashboard />} />
+          <Route
+            path="mode/turn"
+            element={
+              <StaffAppGate>
+                <StaffRoleGuard modeId="turn">
+                  <StaffAppShellLayout>
+                    <ManagerTurnoPage />
+                  </StaffAppShellLayout>
+                </StaffRoleGuard>
+              </StaffAppGate>
+            }
+          />
+          <Route
+            path="mode/team"
+            element={
+              <StaffAppGate>
+                <StaffRoleGuard modeId="team">
+                  <StaffAppShellLayout>
+                    <ManagerEquipePage />
+                  </StaffAppShellLayout>
+                </StaffRoleGuard>
+              </StaffAppGate>
+            }
+          />
+          <Route
+            path="mode/tpv"
+            element={
+              <StaffAppGate>
+                <StaffRoleGuard modeId="tpv">
+                  <StaffAppShellLayout>
+                    <StaffTpvPage />
+                  </StaffAppShellLayout>
+                </StaffRoleGuard>
+              </StaffAppGate>
+            }
+          />
+          <Route
+            path="mode/kds"
+            element={
+              <StaffAppGate>
+                <StaffRoleGuard modeId="kds">
+                  <StaffAppShellLayout>
+                    <KitchenDisplay />
+                  </StaffAppShellLayout>
+                </StaffRoleGuard>
+              </StaffAppGate>
+            }
+          />
+          {/* ════════════════════════════════════════════════════════════════
+              PV Mobile & KDS Mobile — 100% mobile-first, no desktop shell
+              Contrato: docs/architecture/APPSTAFF_MOBILE_FIRST_CONTRACT.md
+          ════════════════════════════════════════════════════════════════ */}
+          <Route
+            path="pv"
+            element={
+              <StaffAppGate>
+                <TPVMobilePage />
+              </StaffAppGate>
+            }
+          />
+          <Route
+            path="kds"
+            element={
+              <StaffAppGate>
+                <KDSMobilePage />
+              </StaffAppGate>
+            }
+          />
+          <Route
+            path="mode/tasks"
+            element={
+              <StaffAppGate>
+                <StaffRoleGuard modeId="tasks">
+                  <StaffAppShellLayout>
+                    <ManagerTarefasPage />
+                  </StaffAppShellLayout>
+                </StaffRoleGuard>
+              </StaffAppGate>
+            }
+          />
+          <Route
+            path="mode/alerts"
+            element={
+              <StaffAppGate>
+                <StaffRoleGuard modeId="alerts">
+                  <StaffAppShellLayout>
+                    <ManagerExcecoesPage />
+                  </StaffAppShellLayout>
+                </StaffRoleGuard>
+              </StaffAppGate>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <StaffAppGate>
+                <StaffRoleGuard modeId="profile">
+                  <StaffAppShellLayout>
+                    <StaffProfilePage />
+                  </StaffAppShellLayout>
+                </StaffRoleGuard>
+              </StaffAppGate>
+            }
+          />
+          {/* Separação total: config/admin só no computador — contrato APPSTAFF_CONFIG_SEPARATION_CONTRACT.md */}
+          <Route
+            path="config-desktop-only"
+            element={
+              <StaffAppGate>
+                <StaffAppShellLayout>
+                  <ConfigDesktopOnlyPage />
+                </StaffAppShellLayout>
+              </StaffAppGate>
+            }
+          />
         </Route>
-        <Route
-          path="mode/operation"
-          element={
-            <StaffAppGate>
-              <StaffRoleGuard modeId="operation">
-                <StaffAppShellLayout>
-                  <OperationModePage />
-                </StaffAppShellLayout>
-              </StaffRoleGuard>
-            </StaffAppGate>
-          }
-        />
-        <Route
-          path="mode/turn"
-          element={
-            <StaffAppGate>
-              <StaffRoleGuard modeId="turn">
-                <StaffAppShellLayout>
-                  <ManagerTurnoPage />
-                </StaffAppShellLayout>
-              </StaffRoleGuard>
-            </StaffAppGate>
-          }
-        />
-        <Route
-          path="mode/team"
-          element={
-            <StaffAppGate>
-              <StaffRoleGuard modeId="team">
-                <StaffAppShellLayout>
-                  <ManagerEquipePage />
-                </StaffAppShellLayout>
-              </StaffRoleGuard>
-            </StaffAppGate>
-          }
-        />
-        <Route
-          path="mode/tpv"
-          element={
-            <StaffAppGate>
-              <StaffRoleGuard modeId="tpv">
-                <StaffAppShellLayout>
-                  <StaffTpvPage />
-                </StaffAppShellLayout>
-              </StaffRoleGuard>
-            </StaffAppGate>
-          }
-        />
-        <Route
-          path="mode/kds"
-          element={
-            <StaffAppGate>
-              <StaffRoleGuard modeId="kds">
-                <StaffAppShellLayout>
-                  <KitchenDisplay />
-                </StaffAppShellLayout>
-              </StaffRoleGuard>
-            </StaffAppGate>
-          }
-        />
-        <Route
-          path="mode/tasks"
-          element={
-            <StaffAppGate>
-              <StaffRoleGuard modeId="tasks">
-                <StaffAppShellLayout>
-                  <ManagerTarefasPage />
-                </StaffAppShellLayout>
-              </StaffRoleGuard>
-            </StaffAppGate>
-          }
-        />
-        <Route
-          path="mode/alerts"
-          element={
-            <StaffAppGate>
-              <StaffRoleGuard modeId="alerts">
-                <StaffAppShellLayout>
-                  <ManagerExcecoesPage />
-                </StaffAppShellLayout>
-              </StaffRoleGuard>
-            </StaffAppGate>
-          }
-        />
-        <Route
-          path="profile"
-          element={
-            <StaffAppGate>
-              <StaffRoleGuard modeId="profile">
-                <StaffAppShellLayout>
-                  <StaffProfilePage />
-                </StaffAppShellLayout>
-              </StaffRoleGuard>
-            </StaffAppGate>
-          }
-        />
-        {/* Separação total: config/admin só no computador — contrato APPSTAFF_CONFIG_SEPARATION_CONTRACT.md */}
-        <Route
-          path="config-desktop-only"
-          element={
-            <StaffAppGate>
-              <StaffAppShellLayout>
-                <ConfigDesktopOnlyPage />
-              </StaffAppShellLayout>
-            </StaffAppGate>
-          }
-        />
       </Route>
       {/* Control Room não é app separado: visão dono/gerente vive em Home/Operação */}
       <Route
@@ -877,7 +939,13 @@ export const OperationalRoutesFragment = (
       />
       <Route
         path="/admin/devices"
-        element={<Navigate to="/admin/modules" replace />}
+        element={
+          <ManagementAdvisor>
+            <DashboardLayout>
+              <AdminDevicesPage />
+            </DashboardLayout>
+          </ManagementAdvisor>
+        }
       />
       <Route
         path="/admin/settings"
@@ -1067,10 +1135,9 @@ export const OperationalRoutesFragment = (
           </ManagementAdvisor>
         }
       />
-      <Route
-        path="/app/install"
-        element={<Navigate to="/admin/modules" replace />}
-      />
+      <Route path="/install" element={<InstallPage />} />
+      <Route path="/install/apps" element={<InstallAppsPage />} />
+      <Route path="/app/install" element={<InstallPage />} />
       <Route
         path="/app/help"
         element={

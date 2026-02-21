@@ -64,7 +64,6 @@ import { markItemReady } from "../../infra/writers/OrderWriter";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import { toUserMessage } from "../../ui/errors";
 import { RestaurantLogo } from "../../ui/RestaurantLogo";
-import { TPVInstallPrompt } from "../TPV/components/TPVInstallPrompt";
 import { TPVStateDisplay } from "../TPV/components/TPVStateDisplay";
 import { ItemTimer } from "./ItemTimer";
 import {
@@ -148,6 +147,17 @@ export function KDSMinimal() {
   const globalUI = useGlobalUIState();
   const bootstrap = useBootstrapState();
   const shift = useShift();
+
+  // DEBUG: Log identity loading state and logo
+  useEffect(() => {
+    console.log("[KDS] Identity state:", {
+      id: identity.id,
+      name: identity.name,
+      loading: identity.loading,
+      logoUrl: identity.logoUrl,
+      logoUrlExists: !!identity.logoUrl,
+    });
+  }, [identity]);
 
   // Lei do Turno: ao montar o KDS, ler estado do turno na fonte única (Core) para não mostrar "turno fechado" em cache.
   // useLayoutEffect para disparar o refresh antes do paint e permitir que ORE trate isChecking como loading.
@@ -597,7 +607,6 @@ export function KDSMinimal() {
         boxSizing: "border-box",
       }}
     >
-      <TPVInstallPrompt variant="kds" />
       <div style={{ marginBottom: VPC.space, flexShrink: 0 }}>
         <div
           style={{

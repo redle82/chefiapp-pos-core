@@ -48,6 +48,7 @@ services:
       - ./schema/migrations/20260216_public_presence_fields.sql:/docker-entrypoint-initdb.d/05.96-public-presence-fields.sql:ro
       - ./schema/migrations/20260228_force_food_photos_by_category.sql:/docker-entrypoint-initdb.d/05.97-force-food-photos.sql:ro
       - ./schema/migrations/20260228_backfill_product_photo_from_catalog.sql:/docker-entrypoint-initdb.d/05.98-backfill-product-photos.sql:ro
+      - ./schema/migrations/20260302_gm_product_assets.sql:/docker-entrypoint-initdb.d/05.99-gm-product-assets.sql:ro
       - ./schema/06-seed-enterprise.sql:/docker-entrypoint-initdb.d/06-seed-enterprise.sql:ro
       - ./schema/07-role-anon.sql:/docker-entrypoint-initdb.d/07-role-anon.sql:ro
     networks:
@@ -176,6 +177,21 @@ services:
       - "9001:9001"
     volumes:
       - minio-data:/data
+    networks:
+      - chefiapp-core-net
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: chefiapp-core-minio-init
+    profiles: ["storage", "full"]
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 minioadmin minioadmin123; do sleep 1; done;
+      mc mb -p local/chefiapp-products;
+      mc anonymous set download local/chefiapp-products;
+      "
     networks:
       - chefiapp-core-net
 

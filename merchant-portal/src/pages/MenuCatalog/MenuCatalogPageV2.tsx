@@ -5,12 +5,13 @@
  * Rota: /menu-v2
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { DishModal } from "./components/DishModal";
-import { MenuDishCard } from "./components/MenuDishCard";
 import { MenuCategorySection } from "./components/MenuCategorySection";
 import { MenuHero } from "./components/MenuHero";
+import { MenuRecommendations } from "./components/MenuRecommendations";
+import { MenuSearch, type MenuFilters } from "./components/MenuSearch";
 import type { CatalogCategory, CatalogItem, MenuRestaurant } from "./types";
 import { useMenuCatalog } from "./useMenuCatalog";
 
@@ -101,6 +102,15 @@ const MOCK_CATEGORIES_V2: CatalogCategory[] = [
 
 export function MenuCatalogPageV2() {
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
+  const [searchResults, setSearchResults] = useState<CatalogItem[]>([]);
+  const [filters, setFilters] = useState<MenuFilters>({
+    query: "",
+    vegetarian: false,
+    glutenFree: false,
+    vegan: false,
+    spicy: false,
+  });
+
   const { runtime } = useRestaurantRuntime();
   const { restaurant, categories, loading, fromCore } = useMenuCatalog(
     runtime.restaurant_id ?? null,
@@ -115,13 +125,40 @@ export function MenuCatalogPageV2() {
   const safeCategories =
     displayCategories.length > 0 ? displayCategories : MOCK_CATEGORIES_V2;
 
+  const allItems = safeCategories.flatMap((c) => c.items);
+
+  // Determine which items to display based on search
+  const itemsToDisplay = filters.query.trim() ? searchResults : allItems;
+
   const handleVerPrato = (item: CatalogItem) => setSelectedItem(item);
   const handlePedir = (_item: CatalogItem) => {
     // CTA; integração futura com Core
   };
 
+  const handleSearch = (results: CatalogItem[]) => {
+    setSearchResults(results);
+  };
+
+  const handleFilterChange = (newFilters: MenuFilters) => {
+    setFilters(newFilters);
+  };
+
+  // Filter categories to only include items in search results
+  const displayCategoriesFiltered = useMemo(() => {
+    if (!filters.query.trim()) return safeCategories;
+
+    return safeCategories
+      .map((cat) => ({
+        ...cat,
+        items: cat.items.filter((item) =>
+          searchResults.some((i) => i.id === item.id),
+        ),
+      }))
+      .filter((cat) => cat.items.length > 0);
+  }, [safeCategories, filters.query, searchResults]);
+
   // Segundo ramo do ternário como variável para evitar ambiguidade de parsing (evitar 500 no Vite)
-  const categoryList = safeCategories.map((category) => (
+  const categoryList = displayCategoriesFiltered.map((category) => (
     <MenuCategorySection
       key={category.id}
       id={category.id}
@@ -135,9 +172,17 @@ export function MenuCatalogPageV2() {
   ));
 
   // Recomendações: itens com badges chef, mais_pedido, novidade (máx. 6)
-  const recommendationBadges = new Set(["chef", "mais_pedido", "novidade", "tripadvisor"]);
-  const recommendedItems = safeCategories.flatMap((c) => c.items)
-    .filter((item) => (item.badges ?? []).some((b) => recommendationBadges.has(b)))
+  const recommendationBadges = new Set([
+    "chef",
+    "mais_pedido",
+    "novidade",
+    "tripadvisor",
+  ]);
+  const recommendedItems = safeCategories
+    .flatMap((c) => c.items)
+    .filter((item) =>
+      (item.badges ?? []).some((b) => recommendationBadges.has(b)),
+    )
     .slice(0, 6);
 
   return (
@@ -164,6 +209,15 @@ export function MenuCatalogPageV2() {
         className="menu-content relative z-10 -mt-[30vh] pt-[40vh] bg-neutral-100"
         aria-label="Catálogo do menu"
       >
+        {/* Menu Search — Barra de busca inteligente e filtros */}
+        <div className="sticky top-0 z-20 bg-neutral-100">
+          <MenuSearch
+            items={allItems}
+            onSearch={handleSearch}
+            onFilterChange={handleFilterChange}
+          />
+        </div>
+
         <main className="max-w-2xl mx-auto pb-24 md:max-w-3xl">
           {loading && safeCategories.length === 0 ? (
             <p className="px-4 py-8 text-neutral-500 text-center">
@@ -171,34 +225,41 @@ export function MenuCatalogPageV2() {
             </p>
           ) : (
             <>
-              {recommendedItems.length > 0 && (
-                <section className="px-4 mb-8" aria-label="Recomendações">
-                  <div className="sticky top-0 z-10 py-3 bg-neutral-100">
-                    <h2 className="text-neutral-900 font-bold uppercase tracking-wide text-base md:text-lg">
-                      Recomendações
-                    </h2>
-                    <p className="text-neutral-600 text-sm mt-1">
-                      Chef, mais pedido, novidade
-                    </p>
-                  </div>
-                  <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
-                    {recommendedItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="shrink-0 w-[280px] snap-start"
-                      >
-                        <MenuDishCard
-                          item={item}
-                          onVerPrato={handleVerPrato}
-                          onPedir={handlePedir}
-                          usePremium
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </section>
+              {/* Menu Recommendations — Apenas quando não está fazendo busca */}
+              {!filters.query.trim() && (
+                <MenuRecommendations
+                  items={allItems}
+                  onVerPrato={handleVerPrato}
+                  onPedir={handlePedir}
+                  usePremium
+                />
               )}
-              {categoryList}
+
+              {/* Categories */}
+              {itemsToDisplay.length === 0 ? (
+                <div className="px-4 py-12 text-center">
+                  <p className="text-neutral-500 text-base">
+                    😢 Nenhum prato encontrado com seus filtros
+                  </p>
+                  <button
+                    onClick={() => {
+                      setFilters({
+                        query: "",
+                        vegetarian: false,
+                        glutenFree: false,
+                        vegan: false,
+                        spicy: false,
+                      });
+                      setSearchResults([]);
+                    }}
+                    className="mt-3 text-green-600 hover:text-green-700 font-medium text-sm"
+                  >
+                    Limpar filtros
+                  </button>
+                </div>
+              ) : (
+                categoryList
+              )}
             </>
           )}
         </main>

@@ -21,7 +21,7 @@ COPY package.json package-lock.json ./
 # Install production dependencies only
 # --omit=dev excludes devDependencies
 # --ignore-scripts prevents arbitrary code execution during install
-RUN npm ci --omit=dev --ignore-scripts && \
+RUN npm install --omit=dev --ignore-scripts && \
     npm cache clean --force
 
 # ==============================================================================
@@ -35,7 +35,7 @@ WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
 
 # Install ALL dependencies (including dev) for building
-RUN npm ci --ignore-scripts && \
+RUN npm install --ignore-scripts && \
     npm cache clean --force
 
 # Copy source code — active modules
@@ -44,17 +44,7 @@ COPY fiscal-modules ./fiscal-modules
 COPY migrations ./migrations
 COPY types ./types
 
-# Copy server modules from _legacy_isolation/ (maintaining relative import paths)
-COPY _legacy_isolation/server ./_legacy_isolation/server
-COPY _legacy_isolation/event-log ./_legacy_isolation/event-log
-COPY _legacy_isolation/state-machines ./_legacy_isolation/state-machines
-COPY _legacy_isolation/legal-boundary ./_legacy_isolation/legal-boundary
-COPY _legacy_isolation/gate3-persistence ./_legacy_isolation/gate3-persistence
-COPY _legacy_isolation/gateways ./_legacy_isolation/gateways
-COPY _legacy_isolation/billing-core ./_legacy_isolation/billing-core
-COPY _legacy_isolation/projections ./_legacy_isolation/projections
-COPY _legacy_isolation/sdk ./_legacy_isolation/sdk
-COPY _legacy_isolation/web-module ./_legacy_isolation/web-module
+COPY server ./server
 
 # Copy server tsconfig
 COPY tsconfig.server.json ./
@@ -66,11 +56,8 @@ COPY tsconfig.server.json ./
 RUN npm run build:server || true
 
 # Verify critical server files were emitted
-RUN test -f dist/_legacy_isolation/server/webhook-server.js && \
-    test -f dist/_legacy_isolation/server/billing-webhook-server.js && \
-    test -f dist/_legacy_isolation/server/subscription-management-server.js && \
-    test -f dist/_legacy_isolation/server/web-module-api-server.js && \
-    echo "✓ All 4 server entry points compiled successfully"
+RUN test -f dist/server/integration-gateway.js && \
+    echo "✓ Integration gateway compiled successfully"
 
 # ==============================================================================
 # Stage 3: Runtime (minimal production image)

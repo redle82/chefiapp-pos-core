@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { MENU_NOT_LIVE_WEB_MESSAGE } from "../../core/menu/MenuState";
+import { resolveProductImageUrl } from "../../core/products/resolveProductImageUrl";
 import { BlockingScreen, useOperationalReadiness } from "../../core/readiness";
 import {
   readMenu,
@@ -261,8 +262,11 @@ export function PublicWebPage() {
     return list;
   }, [products, productsByCategory, selectedCategoryId, searchQuery]);
 
+  const resolveTrustedPhoto = (product: CoreProduct) =>
+    getTrustedPhotoUrl(resolveProductImageUrl(product));
+
   const heroImage =
-    products.find((p) => getTrustedPhotoUrl(p.photo_url))?.photo_url ||
+    products.map((product) => resolveTrustedPhoto(product)).find(Boolean) ||
     "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80";
 
   const todayStr = new Date().toLocaleDateString("pt-PT", {
@@ -935,17 +939,21 @@ export function PublicWebPage() {
                     background: THEME.surfaceElevated,
                   }}
                 >
-                  {getTrustedPhotoUrl(product.photo_url) ? (
-                    <img
-                      src={getTrustedPhotoUrl(product.photo_url)!}
-                      alt=""
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
+                  {(() => {
+                    const photoUrl = resolveTrustedPhoto(product);
+                    if (!photoUrl) return null;
+                    return (
+                      <img
+                        src={photoUrl}
+                        alt=""
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    );
+                  })() ?? (
                     <div
                       style={{
                         width: "100%",

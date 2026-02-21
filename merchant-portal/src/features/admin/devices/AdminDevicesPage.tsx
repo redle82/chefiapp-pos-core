@@ -1,336 +1,393 @@
 /**
- * AdminDevicesPage — Lista de dispositivos (gestão) + Vincular dispositivo (Gerar PIN).
- * Rota: /admin/config/dispositivos. CODE_AND_DEVICE_PAIRING_CONTRACT.
- * Ref: DEVICE_TURN_SHIFT_TASK_CONTRACT.md
+ * AdminDevicesPage — Device provisioning + active devices list.
+ *
+ * 3 blocks:
+ *   1. Install QR — generate a one-time token, show platform-specific QR codes (iOS/Android)
+ *   2. Active Devices — live table of gm_terminals
+ *   3. Downloads — links to TPV/KDS desktop apps (future)
+ *
+ * Rota: /admin/devices
+ * Contrato: CORE_INSTALLATION_AND_PROVISIONING_CONTRACT
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
-import {
-  getDevicesList,
-  setActivePairingRequest,
-  type DeviceListEntry,
-} from "../../auth/connectByCode";
 import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
-import type { AdminDevice, AdminDeviceStatus } from "./deviceTypes";
+import styles from "./AdminDevicesPage.module.css";
+import { InstallQRPanel } from "./InstallQRPanel";
+import {
+  createInstallToken,
+  fetchTerminals,
+  revokeTerminal,
+  type InstallToken,
+  type Terminal,
+  type TerminalType,
+} from "./api/devicesApi";
 
-const PAIRING_VALIDITY_MS = 60_000; // 60s
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
 
-function generatePairingPin(): string {
-  const n = 4 + Math.floor(Math.random() * 2); // 4 or 5 digits
-  let s = "";
-  for (let i = 0; i < n; i++) s += Math.floor(Math.random() * 10).toString();
-  return s;
+function timeSince(iso: string | null): string {
+  if (!iso) return "—";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60_000) return "agora";
+  if (ms < 3_600_000) return `${Math.floor(ms / 60_000)}m`;
+  if (ms < 86_400_000) return `${Math.floor(ms / 3_600_000)}h`;
+  return `${Math.floor(ms / 86_400_000)}d`;
 }
 
-function mapToListEntryToAdminDevice(e: DeviceListEntry): AdminDevice {
-  return {
-    id: e.id,
-    type: e.type,
-    name: e.name,
-    assignedRole: e.assignedRole as AdminDevice["assignedRole"],
-    currentApp: undefined,
-    operatorSessionId: null,
-    lastHeartbeat: e.lastHeartbeat ?? null,
-    notes: null,
-  };
+function statusDotClass(terminal: Terminal): string {
+  const ms = terminal.last_heartbeat_at
+    ? Date.now() - new Date(terminal.last_heartbeat_at).getTime()
+    : Infinity;
+  if (ms < 120_000) return styles.statusGreen;
+  if (ms < 600_000) return styles.statusYellow;
+  return styles.statusRed;
 }
 
-// MVP: shared list from devicePairing, or mock when empty
-function useDevicesMock(): AdminDevice[] {
-  return useMemo(
-    () => [
-      {
-        id: "dev-1",
-        type: "tpv",
-        name: "TPV_BALCAO_01",
-        assignedRole: "waiter",
-        currentApp: "waiter",
-        operatorSessionId: null,
-        lastHeartbeat: new Date(Date.now() - 60_000).toISOString(),
-        notes: null,
-      },
-      {
-        id: "dev-2",
-        type: "kds",
-        name: "KDS_COZINHA_01",
-        assignedRole: "kitchen",
-        currentApp: "kitchen",
-        operatorSessionId: null,
-        lastHeartbeat: new Date(Date.now() - 120_000).toISOString(),
-        notes: null,
-      },
-    ],
-    []
-  );
-}
+function buildInstallUrl(token: string): string {
+  // For mobile devices (iPhone/Android), use the local IP address injected by Vite
+  // so the QR code points to an address accessible from the device network
+  const localIp = (globalThis as any).__LOCAL_IP__ as string | undefined;
 
-function statusLabel(s: AdminDeviceStatus): string {
-  switch (s) {
-    case "online":
-      return "Online";
-    case "offline":
-      return "Offline";
-    default:
-      return "Desconhecido";
+  if (localIp && localIp !== "localhost" && localIp !== "127.0.0.1") {
+    // Use local IP detected by Vite instead of localhost
+    const protocol = window.location.protocol; // http: or https:
+    const port = window.location.port;
+    const portStr = port && port !== "80" && port !== "443" ? `:${port}` : "";
+    return `${protocol}//${localIp}${portStr}/install?token=${token}`;
   }
+
+  // Fallback to current origin if IP not available
+  return `${window.location.origin}/install?token=${token}`;
 }
 
-function deriveStatus(device: AdminDevice): AdminDeviceStatus {
-  const last = device.lastHeartbeat ? new Date(device.lastHeartbeat).getTime() : 0;
-  const ago = Date.now() - last;
-  if (ago < 120_000) return "online";
-  if (ago < 600_000) return "offline";
-  return "unknown";
+function getBaseUrl(): string {
+  // Returns base URL without path, for building URLs in child components
+  const localIp = (globalThis as any).__LOCAL_IP__ as string | undefined;
+
+  if (localIp && localIp !== "localhost" && localIp !== "127.0.0.1") {
+    const protocol = window.location.protocol; // http: or https:
+    const port = window.location.port;
+    const portStr = port && port !== "80" && port !== "443" ? `:${port}` : "";
+    return `${protocol}//${localIp}${portStr}`;
+  }
+
+  return window.location.origin;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
 
 export function AdminDevicesPage() {
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? null;
-  const sharedList = useMemo(() => getDevicesList(), []);
-  const mockList = useDevicesMock();
-  const devices = sharedList.length > 0 ? sharedList.map(mapToListEntryToAdminDevice) : mockList;
-  const [statusFilter, setStatusFilter] = useState<AdminDeviceStatus | "all">("all");
-  const [pairingPin, setPairingPin] = useState<string | null>(null);
-  const [pairingExpiresAt, setPairingExpiresAt] = useState<number | null>(null);
 
-  const handleGeneratePin = useCallback(() => {
+  const [terminals, setTerminals] = useState<Terminal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [activeToken, setActiveToken] = useState<InstallToken | null>(null);
+  const [tokenType, setTokenType] = useState<TerminalType>("APPSTAFF");
+  const [tokenName, setTokenName] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+
+  // Fetch terminals
+  const loadTerminals = useCallback(async () => {
     if (!restaurantId) return;
-    const pin = generatePairingPin();
-    const expiresAt = Date.now() + PAIRING_VALIDITY_MS;
-    setActivePairingRequest({ pairingPin: pin, expiresAt, restaurantId });
-    setPairingPin(pin);
-    setPairingExpiresAt(expiresAt);
+    try {
+      const list = await fetchTerminals(restaurantId);
+      setTerminals(list);
+    } catch (err) {
+      console.error("Failed to fetch terminals:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [restaurantId]);
 
   useEffect(() => {
-    if (pairingExpiresAt == null) return;
-    const t = setInterval(() => {
-      if (Date.now() >= pairingExpiresAt) {
-        setPairingPin(null);
-        setPairingExpiresAt(null);
-        clearInterval(t);
-      }
-    }, 1000);
-    return () => clearInterval(t);
-  }, [pairingExpiresAt]);
+    loadTerminals();
+  }, [loadTerminals]);
 
-  const filtered =
-    statusFilter === "all"
-      ? devices
-      : devices.filter((d) => deriveStatus(d) === statusFilter);
+  // Auto-refresh terminals while a QR token is active.
+  // When the device scans the QR, a new terminal appears — this ensures the
+  // admin sees it without manually refreshing.
+  useEffect(() => {
+    if (!activeToken || secondsLeft <= 0) return;
+    const id = setInterval(() => {
+      loadTerminals();
+    }, 5_000);
+    return () => clearInterval(id);
+  }, [activeToken, secondsLeft, loadTerminals]);
+
+  // Token countdown
+  useEffect(() => {
+    if (!activeToken) return;
+    const expires = new Date(activeToken.expires_at).getTime();
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((expires - Date.now()) / 1000));
+      setSecondsLeft(left);
+      if (left <= 0) setActiveToken(null);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [activeToken]);
+
+  // Generate token
+  const handleGenerate = useCallback(async () => {
+    if (!restaurantId) return;
+    setGenerating(true);
+    setTokenError(null);
+    try {
+      const tok = await createInstallToken(
+        restaurantId,
+        tokenType,
+        tokenName.trim() || undefined,
+      );
+      setActiveToken(tok);
+    } catch (err: unknown) {
+      setTokenError(err instanceof Error ? err.message : "Erro ao gerar token");
+    } finally {
+      setGenerating(false);
+    }
+  }, [restaurantId, tokenType, tokenName]);
+
+  // Revoke terminal
+  const handleRevoke = useCallback(async (id: string) => {
+    if (!confirm("Revogar este dispositivo?")) return;
+    try {
+      await revokeTerminal(id);
+      setTerminals((prev) =>
+        prev.map((t) =>
+          t.id === id ? { ...t, status: "revoked" as const } : t,
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to revoke:", err);
+    }
+  }, []);
 
   return (
-    <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
+    <div className={styles.wrapper}>
       <AdminPageHeader
-        title="Gestión de dispositivos"
-        subtitle="Estado e vínculo dos terminais. Vincular dispositivo com PIN (válido 60s)."
+        title="Dispositivos"
+        subtitle="Provisionar terminais, monitorar estado e descarregar software."
       />
 
-      {/* Vincular dispositivo — Gerar PIN */}
-      <section
-        style={{
-          marginBottom: 24,
-          padding: 16,
-          backgroundColor: "var(--card-bg-on-dark)",
-          border: "1px solid var(--surface-border)",
-          borderRadius: 8,
-        }}
-      >
-        <h2 style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 12px 0" }}>
-          Vincular dispositivo
-        </h2>
-        <p style={{ margin: "0 0 12px 0", fontSize: 13, color: "var(--text-secondary)" }}>
-          Gere um PIN e digite-o no TPV ou KDS para vincular o dispositivo. O PIN expira em 60 segundos.
+      {/* ── Block 1: Install QR ── */}
+      <section className={styles.card}>
+        <h2 className={styles.sectionTitle}>Instalar dispositivo</h2>
+        <p className={styles.sectionDesc}>
+          Gere um código QR e digitalize-o no dispositivo para o vincular
+          automaticamente a este restaurante. O código expira em 5 minutos.
         </p>
-        <button
-          type="button"
-          onClick={handleGeneratePin}
-          disabled={!restaurantId}
-          style={{
-            padding: "8px 16px",
-            fontSize: 14,
-            fontWeight: 600,
-            borderRadius: 6,
-            border: "1px solid var(--surface-border)",
-            backgroundColor: "var(--card-bg-on-dark)",
-            color: restaurantId ? "var(--text-primary)" : "var(--text-tertiary)",
-            cursor: restaurantId ? "pointer" : "not-allowed",
-          }}
-        >
-          Gerar PIN
-        </button>
-        {pairingPin != null && pairingExpiresAt != null && (
-          <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 16 }}>
-            <span style={{ fontFamily: "monospace", fontSize: 24, letterSpacing: 4, color: "var(--text-primary)" }}>
-              {pairingPin}
-            </span>
-            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-              Expira em {Math.max(0, Math.ceil((pairingExpiresAt - Date.now()) / 1000))}s
-            </span>
+
+        <div className={styles.formRow}>
+          <label className={styles.fieldLabel}>
+            Tipo
+            <select
+              value={tokenType}
+              onChange={(e) => setTokenType(e.target.value as TerminalType)}
+              className={styles.selectInput}
+            >
+              <option value="APPSTAFF">AppStaff (Mobile)</option>
+              <option value="TPV">TPV</option>
+              <option value="KDS">KDS</option>
+            </select>
+          </label>
+
+          <label className={styles.fieldLabelFlex}>
+            Nome (opcional)
+            <input
+              type="text"
+              placeholder="ex: TPV_BALCAO_01"
+              value={tokenName}
+              onChange={(e) => setTokenName(e.target.value)}
+              className={styles.textInput}
+            />
+          </label>
+
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={!restaurantId || generating}
+            className={styles.btnGenerate}
+          >
+            {generating ? "A gerar…" : "Gerar QR"}
+          </button>
+        </div>
+
+        {tokenError && <div className={styles.tokenError}>{tokenError}</div>}
+        {activeToken && secondsLeft > 0 && (
+          <InstallQRPanel
+            token={activeToken.token}
+            deviceType={activeToken.device_type}
+            secondsLeft={secondsLeft}
+            baseUrl={getBaseUrl()}
+          />
+        )}
+      </section>
+
+      {/* ── Block 2: Active Devices ── */}
+      <section className={styles.card}>
+        <h2 className={styles.sectionTitle}>Dispositivos activos</h2>
+        <p className={styles.sectionDesc}>
+          Terminais registados neste restaurante. O ponto colorido indica a
+          última actividade.
+        </p>
+
+        {loading ? (
+          <div className={styles.loadingState}>A carregar…</div>
+        ) : terminals.length === 0 ? (
+          <div className={styles.emptyState}>
+            Nenhum dispositivo registado. Use o QR acima para vincular o
+            primeiro.
+          </div>
+        ) : (
+          <div className={styles.tableScroll}>
+            <table className={styles.table}>
+              <thead>
+                <tr className={styles.tableHeadRow}>
+                  {[
+                    "Estado",
+                    "Nome",
+                    "Tipo",
+                    "Registado",
+                    "Último sinal",
+                    "",
+                  ].map((h) => (
+                    <th key={h} className={styles.th}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {terminals.map((t) => (
+                  <tr
+                    key={t.id}
+                    className={
+                      t.status === "revoked" ? styles.trRevoked : styles.tr
+                    }
+                  >
+                    <td className={styles.td}>
+                      <span
+                        className={`${styles.statusDot} ${statusDotClass(t)}`}
+                      />
+                      {t.status === "revoked"
+                        ? "Revogado"
+                        : timeSince(t.last_heartbeat_at) === "agora"
+                        ? "Online"
+                        : "Offline"}
+                    </td>
+                    <td className={styles.tdName}>{t.name}</td>
+                    <td className={styles.tdSecondary}>{t.type}</td>
+                    <td className={styles.tdSecondary}>
+                      {new Date(t.registered_at).toLocaleDateString("pt-PT")}
+                    </td>
+                    <td className={styles.tdSecondary}>
+                      {timeSince(t.last_heartbeat_at)}
+                    </td>
+                    <td className={styles.tdRight}>
+                      {t.status !== "revoked" && (
+                        <button
+                          type="button"
+                          onClick={() => handleRevoke(t.id)}
+                          className={styles.btnRevoke}
+                        >
+                          Revogar
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </section>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 16,
-        }}
-      >
-        <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Filtrar:</span>
-        <select
-          value={statusFilter}
-          onChange={(e) =>
-            setStatusFilter(e.target.value as AdminDeviceStatus | "all")
-          }
-          style={{
-            padding: "6px 10px",
-            fontSize: 13,
-            border: "1px solid var(--surface-border)",
-            borderRadius: 6,
-            backgroundColor: "var(--card-bg-on-dark)",
-            color: "var(--text-primary)",
-          }}
-        >
-          <option value="all">Todos</option>
-          <option value="online">Online</option>
-          <option value="offline">Offline</option>
-          <option value="unknown">Desconhecido</option>
-        </select>
-      </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          gap: 12,
-        }}
-      >
-        {filtered.length === 0 ? (
-          <div
-            style={{
-              gridColumn: "1 / -1",
-              padding: 24,
-              textAlign: "center",
-              backgroundColor: "var(--card-bg-on-dark)",
-              border: "1px dashed var(--surface-border)",
-              borderRadius: 8,
-              color: "var(--text-secondary)",
-              fontSize: 14,
-            }}
-          >
-            Nenhum dispositivo corresponde ao filtro.
-          </div>
-        ) : (
-          filtered.map((device) => {
-            const status = deriveStatus(device);
-            const lastSeen = device.lastHeartbeat
-              ? new Date(device.lastHeartbeat).toLocaleString("pt-PT", {
-                  dateStyle: "short",
-                  timeStyle: "short",
-                })
-              : "—";
-
-            return (
-              <div
-                key={device.id}
-                style={{
-                  padding: 16,
-                  backgroundColor: "var(--card-bg-on-dark)",
-                  border: "1px solid var(--surface-border)",
-                  borderRadius: 8,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                }}
+      {/* ── Block 3: Downloads ── */}
+      <section className={styles.card}>
+        <h2 className={styles.sectionTitle}>Descarregar software</h2>
+        <p className={styles.sectionDesc}>
+          Os módulos operacionais (TPV, KDS, AppStaff) só funcionam como
+          aplicação instalada — não são acessíveis pelo navegador. Descarregue a
+          aplicação adequada e vincule com o QR acima.
+        </p>
+        <div className={styles.dlGrid}>
+          {[
+            {
+              label: "ChefIApp TPV",
+              platform: "macOS (Electron)",
+              icon: "🖥",
+              ready: false,
+            },
+            {
+              label: "ChefIApp TPV",
+              platform: "Windows (Electron)",
+              icon: "🖥",
+              ready: false,
+            },
+            {
+              label: "ChefIApp KDS",
+              platform: "macOS (Electron)",
+              icon: "📺",
+              ready: false,
+            },
+            {
+              label: "ChefIApp KDS",
+              platform: "Windows (Electron)",
+              icon: "📺",
+              ready: false,
+            },
+            {
+              label: "ChefIApp Staff",
+              platform: "iOS (App Store)",
+              icon: "📱",
+              ready: false,
+            },
+            {
+              label: "ChefIApp Staff",
+              platform: "Android (Google Play)",
+              icon: "📱",
+              ready: false,
+            },
+          ].map((dl) => (
+            <div
+              key={`${dl.label}-${dl.platform}`}
+              className={`${styles.dlCard} ${
+                dl.ready ? "" : styles.dlCardDisabled
+              }`}
+            >
+              <span className={styles.dlIcon}>{dl.icon}</span>
+              <span className={styles.dlLabel}>{dl.label}</span>
+              <span className={styles.dlPlatform}>{dl.platform}</span>
+              <span
+                className={dl.ready ? styles.dlStatusReady : styles.dlStatus}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        fontSize: 15,
-                        fontWeight: 600,
-                        color: "var(--text-primary)",
-                      }}
-                    >
-                      {device.name}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: "var(--text-secondary)",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                      }}
-                    >
-                      {device.type === "tpv" ? "TPV" : "KDS"}
-                    </div>
-                  </div>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      padding: "2px 8px",
-                      borderRadius: 999,
-                      backgroundColor:
-                        status === "online"
-                          ? "var(--status-success-bg)"
-                          : status === "offline"
-                            ? "var(--status-error-bg)"
-                            : "var(--card-bg-on-dark)",
-                      color:
-                        status === "online"
-                          ? "var(--color-success)"
-                          : status === "offline"
-                            ? "var(--color-error)"
-                            : "var(--text-secondary)",
-                    }}
-                  >
-                    {statusLabel(status)}
-                  </span>
-                </div>
+                {dl.ready ? "Descarregar" : "Em breve"}
+              </span>
+            </div>
+          ))}
+        </div>
 
-                <dl
-                  style={{
-                    margin: 0,
-                    fontSize: 12,
-                    display: "grid",
-                    gap: 4,
-                  }}
-                >
-                  {device.assignedRole != null && (
-                    <>
-                      <dt style={{ color: "var(--text-secondary)", margin: 0 }}>Papel</dt>
-                      <dd style={{ margin: "0 0 6px 0", color: "var(--text-primary)" }}>
-                        {device.assignedRole}
-                      </dd>
-                    </>
-                  )}
-                  {device.currentApp != null && (
-                    <>
-                      <dt style={{ color: "var(--text-secondary)", margin: 0 }}>App actual</dt>
-                      <dd style={{ margin: "0 0 6px 0", color: "var(--text-primary)" }}>
-                        {device.currentApp}
-                      </dd>
-                    </>
-                  )}
-                  <dt style={{ color: "var(--text-secondary)", margin: 0 }}>Último heartbeat</dt>
-                  <dd style={{ margin: 0, color: "var(--text-primary)" }}>{lastSeen}</dd>
-                </dl>
-              </div>
-            );
-          })
-        )}
-      </div>
+        <div className={styles.distributionNote}>
+          <span className={styles.distributionIcon}>🛡️</span>
+          <div>
+            <strong>Política de distribuição</strong>
+            <p className={styles.distributionText}>
+              O painel de administração (este ecrã) é a única parte do ChefIApp
+              acessível pelo navegador. Os módulos operacionais — TPV, KDS e
+              AppStaff — requerem a aplicação dedicada (desktop ou móvel).
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

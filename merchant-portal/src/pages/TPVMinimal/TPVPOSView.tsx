@@ -21,6 +21,7 @@ import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { createOrderLifecycle } from "../../core/operational/processOrderLifecycle";
 import { useOperationalStore } from "../../core/operational/useOperationalStore";
+import { resolveProductImageUrl } from "../../core/products/resolveProductImageUrl";
 import { getTpvRestaurantId } from "../../core/storage/installedDeviceStorage";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
 import type { CoreProduct } from "../../infra/readers/RestaurantReader";
@@ -38,6 +39,7 @@ import {
 } from "./components/ProductCategoryFilter";
 import { TPVProductCard } from "./components/TPVProductCard";
 import { getFoodPhotoUrl } from "./foodPhotoUrls";
+import "./TPVPOSView.css";
 
 const DEFAULT_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
 
@@ -68,6 +70,8 @@ export function TPVPOSView() {
     null,
   );
   const [sending, setSending] = useState(false);
+  // Mobile cart drawer state
+  const [mobileCartOpen, setMobileCartOpen] = useState(false);
 
   // Flag: pedido já enviado para cozinha (tem ID real no backend)
   const isSentToKitchen = currentOrderStatus === "SENT";
@@ -75,17 +79,34 @@ export function TPVPOSView() {
   // Carregar menu (categorias + produtos)
   useEffect(() => {
     if (bootstrap.coreStatus !== "online") return;
-    const urlProducts = `${CONFIG.CORE_URL}/rest/v1/gm_products?select=*&restaurant_id=eq.${restaurantId}&available=eq.true&order=created_at.asc`;
-    fetch(urlProducts, {
-      headers: {
-        apikey: CONFIG.CORE_ANON_KEY,
-        "Content-Type": "application/json",
-      },
-    })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: CoreProduct[]) =>
-        setProducts(Array.isArray(data) ? data : []),
-      )
+    const urlWithAssets = `${CONFIG.CORE_URL}/rest/v1/gm_products?select=*,gm_product_assets(image_url)&restaurant_id=eq.${restaurantId}&available=eq.true&order=created_at.asc`;
+    const urlPlain = `${CONFIG.CORE_URL}/rest/v1/gm_products?select=*&restaurant_id=eq.${restaurantId}&available=eq.true&order=created_at.asc`;
+    const headers = {
+      apikey: CONFIG.CORE_ANON_KEY,
+      "Content-Type": "application/json",
+    };
+
+    const normalizeProducts = (
+      data: Array<
+        CoreProduct & {
+          gm_product_assets?: { image_url?: string | null } | null;
+        }
+      >,
+    ) =>
+      Array.isArray(data)
+        ? data.map(({ gm_product_assets, ...rest }) => ({
+            ...rest,
+            asset_image_url: gm_product_assets?.image_url ?? null,
+          }))
+        : [];
+
+    fetch(urlWithAssets, { headers })
+      .then(async (response) => {
+        if (response.ok) return response.json();
+        const fallback = await fetch(urlPlain, { headers });
+        return fallback.ok ? fallback.json() : [];
+      })
+      .then((data) => setProducts(normalizeProducts(data)))
       .catch(() => setProducts([]));
 
     readMenuCategories(restaurantId).then((cats) =>
@@ -113,8 +134,13 @@ export function TPVPOSView() {
     const categoryName = categories.find(
       (c) => c.id === product.category_id,
     )?.name;
-    // Sempre usar foto de comida por categoria (evita paisagens/placeholders da BD)
-    const imageUrl = getFoodPhotoUrl(product.category_id, categoryName);
+    const resolvedImageUrl = resolveProductImageUrl(product);
+    const trustedImageUrl =
+      resolvedImageUrl && !isPlaceholderPhoto(resolvedImageUrl)
+        ? resolvedImageUrl
+        : null;
+    const imageUrl =
+      trustedImageUrl ?? getFoodPhotoUrl(product.category_id, categoryName);
 
     // Iniciar pedido operacional se for o primeiro item
     if (cart.length === 0) {
@@ -244,39 +270,50 @@ export function TPVPOSView() {
     await lifecycle.cancelOrder(restaurantId);
   };
 
-  // Label do botão principal muda conforme o estado
-  const proceedLabel = isSentToKitchen
-    ? `Pagar €${(totalCents / 100).toFixed(2)}`
-    : `Confirmar €${(totalCents / 100).toFixed(2)}`;
+  // Calculate cart item count for mobile badge
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Shared order panel props
+  const orderPanelProps = {
+    items: cart,
+    subtotalCents,
+    taxCents,
+    discountCents: 0,
+    onClearAll: handleCancelOrder,
+    onUpdateQuantity: updateQuantity,
+    onPrintReceipt: () => toast.info("Impressão de recibo em breve."),
+    onProceed: () => {
+      handleProceed();
+      setMobileCartOpen(false);
+    },
+    proceedDisabled: (cart.length === 0 && !isSentToKitchen) || sending,
+    orderMode,
+    onOrderModeChange: setOrderMode,
+  };
+
+  const statusPanelProps = {
+    onSendToKitchen: async () => {
+      await handleSendToKitchen();
+      setMobileCartOpen(false);
+    },
+    onHoldOrder: () => {
+      lifecycle.holdOrder();
+      toast.info("Pedido em espera.");
+    },
+    onSplitBill: () => toast.info("Divisão de conta em breve."),
+    disabled: cart.length === 0 || sending,
+  };
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: "flex",
-        minHeight: 0,
-      }}
-    >
+    <div className="tpv-container">
       {/* Left: categories + product grid */}
-      <div
-        style={{
-          flex: 1,
-          overflow: "auto",
-          padding: "12px 16px",
-        }}
-      >
+      <div className="tpv-products">
         <ProductCategoryFilter
           categories={categories}
           selectedId={selectedCategoryId}
           onSelect={setSelectedCategoryId}
         />
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
-            gap: 14,
-          }}
-        >
+        <div className="tpv-products-grid">
           {filteredProducts.map((product) => {
             const categoryName = categories.find(
               (c) => c.id === product.category_id,
@@ -285,10 +322,10 @@ export function TPVPOSView() {
               product.category_id,
               categoryName,
             );
-            // Só usar photo_url da BD se NÃO for placeholder (evita paisagens/fotos aleatórias)
+            const resolvedImageUrl = resolveProductImageUrl(product);
             const trustedPhotoUrl =
-              product.photo_url && !isPlaceholderPhoto(product.photo_url)
-                ? product.photo_url
+              resolvedImageUrl && !isPlaceholderPhoto(resolvedImageUrl)
+                ? resolvedImageUrl
                 : null;
             return (
               <TPVProductCard
@@ -308,38 +345,56 @@ export function TPVPOSView() {
           })}
         </div>
       </div>
-      {/* Right: order panel + operational status */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          minWidth: 340,
-          maxWidth: 360,
-        }}
-      >
-        <OrderSummaryPanel
-          items={cart}
-          subtotalCents={subtotalCents}
-          taxCents={taxCents}
-          discountCents={0}
-          onClearAll={handleCancelOrder}
-          onUpdateQuantity={updateQuantity}
-          onPrintReceipt={() => toast.info("Impressão de recibo em breve.")}
-          onProceed={handleProceed}
-          proceedDisabled={(cart.length === 0 && !isSentToKitchen) || sending}
-          orderMode={orderMode}
-          onOrderModeChange={setOrderMode}
-        />
-        <OrderStatusPanel
-          onSendToKitchen={handleSendToKitchen}
-          onHoldOrder={() => {
-            lifecycle.holdOrder();
-            toast.info("Pedido em espera.");
-          }}
-          onSplitBill={() => toast.info("Divisão de conta em breve.")}
-          disabled={cart.length === 0 || sending}
-        />
+
+      {/* Right: order panel + operational status (desktop only via CSS) */}
+      <div className="tpv-order-panel">
+        <OrderSummaryPanel {...orderPanelProps} />
+        <OrderStatusPanel {...statusPanelProps} />
       </div>
+
+      {/* Mobile: Floating cart button */}
+      <button
+        className="tpv-mobile-cart-button"
+        onClick={() => setMobileCartOpen(true)}
+        aria-label="Ver carrinho"
+      >
+        <span className="tpv-mobile-cart-button__content">
+          <span>
+            {cartItemCount > 0
+              ? `Ver Pedido · €${(totalCents / 100).toFixed(2)}`
+              : "Carrinho Vazio"}
+          </span>
+          {cartItemCount > 0 && (
+            <span className="tpv-mobile-cart-button__badge">
+              {cartItemCount}
+            </span>
+          )}
+        </span>
+      </button>
+
+      {/* Mobile: Cart drawer overlay */}
+      <div
+        className={`tpv-mobile-drawer-overlay ${mobileCartOpen ? "open" : ""}`}
+        onClick={() => setMobileCartOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* Mobile: Cart drawer */}
+      <div className={`tpv-mobile-drawer ${mobileCartOpen ? "open" : ""}`}>
+        <div
+          className="tpv-mobile-drawer__handle"
+          onClick={() => setMobileCartOpen(false)}
+          role="button"
+          tabIndex={0}
+          aria-label="Fechar carrinho"
+          onKeyDown={(e) => e.key === "Enter" && setMobileCartOpen(false)}
+        />
+        <div className="tpv-mobile-drawer__content">
+          <OrderSummaryPanel {...orderPanelProps} />
+          <OrderStatusPanel {...statusPanelProps} />
+        </div>
+      </div>
+
       <ToastContainer toasts={toast.toasts} onDismiss={toast.dismiss} />
     </div>
   );

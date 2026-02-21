@@ -6,8 +6,8 @@
 
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
-import { RestaurantLogo } from "../../../ui/RestaurantLogo";
+const APP_LOGO_URL = "/Logo%20Chefiapp%20Transparent.png";
+const APP_NAME = "ChefIApp";
 
 /* ── Accent orange (reference design) ──────────────────────────── */
 const ACCENT = "#f97316";
@@ -52,6 +52,45 @@ function IconReceipt() {
       <line x1="7" y1="6" x2="13" y2="6" />
       <line x1="7" y1="9" x2="13" y2="9" />
       <line x1="7" y1="12" x2="10" y2="12" />
+    </svg>
+  );
+}
+
+function IconCash() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="5" width="14" height="10" rx="2" />
+      <circle cx="10" cy="10" r="3" />
+      <path d="M7 10h0" />
+      <path d="M13 10h0" />
+    </svg>
+  );
+}
+
+function IconTable() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="4" y="6" width="12" height="6" rx="2" />
+      <line x1="6" y1="12" x2="6" y2="16" />
+      <line x1="14" y1="12" x2="14" y2="16" />
     </svg>
   );
 }
@@ -150,7 +189,15 @@ function IconExit() {
   );
 }
 
-type IconKey = "grid" | "receipt" | "kitchen" | "tasks" | "calendar" | "gear";
+type IconKey =
+  | "grid"
+  | "receipt"
+  | "cash"
+  | "table"
+  | "kitchen"
+  | "tasks"
+  | "calendar"
+  | "gear";
 
 function iconFor(k: IconKey) {
   switch (k) {
@@ -158,6 +205,10 @@ function iconFor(k: IconKey) {
       return <IconGrid />;
     case "receipt":
       return <IconReceipt />;
+    case "cash":
+      return <IconCash />;
+    case "table":
+      return <IconTable />;
     case "kitchen":
       return <IconKitchen />;
     case "tasks":
@@ -171,16 +222,16 @@ function iconFor(k: IconKey) {
 
 const SIDEBAR_LINKS: { to: string; label: string; icon: IconKey }[] = [
   { to: "/op/tpv", label: "POS", icon: "grid" },
-  { to: "/op/tpv/orders", label: "Pedidos", icon: "receipt" },
+  { to: "/op/tpv/tables", label: "Mesas", icon: "table" },
+  { to: "/op/tpv/shift", label: "Turno", icon: "cash" },
   { to: "/op/tpv/kitchen", label: "Cozinha", icon: "kitchen" },
   { to: "/op/tpv/tasks", label: "Tarefas", icon: "tasks" },
   { to: "/op/tpv/reservations", label: "Reservas", icon: "calendar" },
+  { to: "/admin/config/tienda-online", label: "Pagina Web", icon: "receipt" },
   { to: "/op/tpv/settings", label: "Definições", icon: "gear" },
 ];
 
 export function TPVSidebar() {
-  const { identity } = useRestaurantIdentity();
-
   return (
     <aside
       style={{
@@ -196,7 +247,7 @@ export function TPVSidebar() {
         gap: 4,
       }}
     >
-      {/* Restaurant logo + abbreviated name */}
+      {/* App logo + brand name */}
       <div
         style={{
           display: "flex",
@@ -219,38 +270,37 @@ export function TPVSidebar() {
             flexShrink: 0,
           }}
         >
-          <RestaurantLogo
-            logoUrl={identity.logoUrl}
-            name={identity.name || "R"}
-            size={40}
-            style={{ borderRadius: "50%" }}
+          <img
+            src={APP_LOGO_URL}
+            alt={APP_NAME}
+            width={40}
+            height={40}
+            style={{ borderRadius: "50%", objectFit: "cover" }}
           />
         </div>
-        {identity.name && (
-          <span
-            style={{
-              color: "#a3a3a3",
-              fontSize: 9,
-              fontWeight: 600,
-              textAlign: "center",
-              width: 60,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              letterSpacing: 0.3,
-              textTransform: "uppercase",
-            }}
-          >
-            {identity.name}
-          </span>
-        )}
+        <span
+          style={{
+            color: "#a3a3a3",
+            fontSize: 9,
+            fontWeight: 600,
+            textAlign: "center",
+            width: 60,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            letterSpacing: 0.3,
+            textTransform: "uppercase",
+          }}
+        >
+          {APP_NAME}
+        </span>
       </div>
 
       {/* Navigation icons */}
       {SIDEBAR_LINKS.map(({ to, icon, label }, idx) => (
         <React.Fragment key={to}>
           {/* Separators */}
-          {(idx === 2 || idx === 5) && (
+          {(idx === 4 || idx === 7) && (
             <div
               style={{
                 width: 32,

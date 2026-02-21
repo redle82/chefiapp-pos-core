@@ -1,10 +1,29 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import { stripSourceMappingUrl } from "./src/utils/stripSourceMappingUrl";
+
+// Detect local IP for mobile devices (QR scanning from iPhone/Android)
+function getLocalIp(): string {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    const iface = interfaces[name];
+    if (!iface) continue;
+    for (const addr of iface) {
+      // Skip internal and non-IPv4 addresses
+      if (addr.family === "IPv4" && !addr.internal) {
+        // Prefer non-loopback addresses for local network access
+        return addr.address;
+      }
+    }
+  }
+  return "localhost";
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const localReact = path.resolve(__dirname, "node_modules", "react");
@@ -18,9 +37,12 @@ const reactDomPath = fs.existsSync(localReactDom)
 
 // https://vite.dev/config/
 export default defineConfig(async ({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "");
-  const useSentry = !!env.SENTRY_AUTH_TOKEN && mode === "production";
+  const env = loadEnv(mode, __dirname, "VITE_");
+  const useSentry = !!env.VITE_SENTRY_AUTH_TOKEN && mode === "production";
   const base = "/";
+
+  // Detect local IP for QR code generation (mobile device provisioning)
+  const localIp = mode === "development" ? getLocalIp() : "localhost";
 
   const sentryPlugins = [];
   if (useSentry) {
@@ -28,9 +50,9 @@ export default defineConfig(async ({ mode }) => {
       const { sentryVitePlugin } = await import("@sentry/vite-plugin");
       sentryPlugins.push(
         sentryVitePlugin({
-          org: env.SENTRY_ORG || "chefiapp",
-          project: env.SENTRY_PROJECT || "merchant-portal",
-          authToken: env.SENTRY_AUTH_TOKEN,
+          org: env.VITE_SENTRY_ORG || "chefiapp",
+          project: env.VITE_SENTRY_PROJECT || "merchant-portal",
+          authToken: env.VITE_SENTRY_AUTH_TOKEN,
           sourcemaps: {
             filesToDeleteAfterUpload: ["**/*.map"],
           },
@@ -47,6 +69,8 @@ export default defineConfig(async ({ mode }) => {
       // Polyfill global for libraries that expect Node.js global
       global: {},
       __VITE_ENV__: "import.meta.env",
+      // Inject local IP for QR code generation in device provisioning
+      __LOCAL_IP__: JSON.stringify(localIp),
     },
     resolve: {
       dedupe: ["react", "react-dom", "react-router-dom"],
@@ -68,6 +92,22 @@ export default defineConfig(async ({ mode }) => {
       },
     },
     plugins: [
+      // Strip sourceMappingURL comments from node_modules so the browser
+      // doesn't flood DevTools with "Could not read source map" warnings.
+      mode !== "production" && {
+        name: "strip-deps-sourcemaps",
+        transform(code: string, id: string) {
+          if (
+            id.includes("node_modules") &&
+            code.includes("sourceMappingURL")
+          ) {
+            return {
+              code: stripSourceMappingUrl(code),
+              map: null,
+            };
+          }
+        },
+      },
       // resolve.dedupe + resolve.alias já garantem cópia única do React;
       // Fast Refresh re-habilitado para HMR instantâneo (evita full-page reload).
       react(),
@@ -80,16 +120,16 @@ export default defineConfig(async ({ mode }) => {
           enabled: false, // CRITICAL: Disable in dev to prevent workbox loop
         },
         manifest: {
-          name: "ChefIApp — Sistema Operacional",
-          short_name: "ChefIApp",
+          name: "AppStaff — ChefIApp",
+          short_name: "AppStaff",
           description:
-            "Sistema operacional para restaurantes. TPV, KDS e App Staff num só lugar.",
+            "Aplicação para a equipa do restaurante. Gestão de turnos, pedidos e operação.",
           theme_color: "#121212",
           background_color: "#121212",
           display: "standalone",
           orientation: "portrait",
           scope: "/",
-          start_url: "/op/tpv",
+          start_url: "/app/staff/home",
           icons: [
             {
               src: "Logo Chefiapp.png",

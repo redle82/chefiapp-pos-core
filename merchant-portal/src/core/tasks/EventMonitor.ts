@@ -263,9 +263,10 @@ export class EventMonitor {
 
       if (error) {
         // Suppress abort/timeout and connection errors — backend is slow or offline
-        const msg = typeof error === "object" && error !== null && "message" in error
-          ? String((error as any).message)
-          : "";
+        const msg =
+          typeof error === "object" && error !== null && "message" in error
+            ? String((error as any).message)
+            : "";
         const isSilent =
           msg.includes("aborted") ||
           msg.includes("Failed to fetch") ||

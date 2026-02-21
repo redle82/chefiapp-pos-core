@@ -94,6 +94,8 @@ import { DeliveryNotificationManager } from "./components/DeliveryNotificationMa
 import { FiscalConfigAlert } from "./components/FiscalConfigAlert";
 
 /* UDS Implementation (Sealed) */
+import { useOperationalMockBootstrap } from "../../core/operational/useOperationalMockBootstrap";
+import { useOperationalStore } from "../../core/operational/useOperationalStore";
 import { ToastContainer, useToast } from "../../ui/design-system";
 import { Button } from "../../ui/design-system/Button";
 import { Card } from "../../ui/design-system/Card";
@@ -105,8 +107,6 @@ import { TableMapPanel } from "../../ui/design-system/domain/TableMapPanel";
 import { TPVHeader } from "../../ui/design-system/domain/TPVHeader";
 import { TPVLayoutSplit } from "../../ui/design-system/layouts/TPVLayoutSplit";
 import { Text } from "../../ui/design-system/primitives/Text";
-import { useOperationalStore } from "../../core/operational/useOperationalStore";
-import { useOperationalMockBootstrap } from "../../core/operational/useOperationalMockBootstrap";
 import { GroupSelector } from "./components/GroupSelector";
 import { IncomingRequests } from "./components/IncomingRequests";
 import { OrderHeader } from "./components/OrderHeader";
@@ -148,7 +148,6 @@ const CreateGroupModal = lazy(() =>
 );
 
 import { useCurrency } from "../../core/currency/useCurrency"; // P5-5
-import { TPVInstallPrompt } from "./components/TPVInstallPrompt"; // Added Install Prompt
 import { useCommonTPVShortcuts } from "./hooks/useTPVShortcuts";
 
 const QuickProductModal = lazy(() =>
@@ -977,7 +976,7 @@ const TPVContent = () => {
       // Fase 1: se não houver timestamps dedicados, deixamos como null
       sentToKitchenAt: (order as any).sentToKitchenAt ?? null,
       readyAt: (order as any).readyAt ?? null,
-      paidAt: order.status === "paid" ? ((order as any).updatedAt ?? null) : null,
+      paidAt: order.status === "paid" ? (order as any).updatedAt ?? null : null,
       mode: (order as any).mode ?? null,
       tableNumber:
         (order as any).tableNumber ??
@@ -1890,8 +1889,6 @@ const TPVContent = () => {
           isOpen={cashRegisterOpen}
           onOpenCash={() => setShowOpenCashModal(true)}
         />
-        <TPVInstallPrompt />
-
         {/* FASE 5: Toast Container para feedback visual */}
         <ToastContainer toasts={toasts} onDismiss={dismiss} />
 

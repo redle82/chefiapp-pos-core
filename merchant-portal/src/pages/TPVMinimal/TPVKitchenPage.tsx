@@ -247,7 +247,10 @@ export function TPVKitchenPage() {
       );
 
       // Auto-archive expired orders (fire & forget, don't block render)
-      const expiredOrders = enriched.filter((e) => e.expired);
+      // Only cancel OPEN/IN_PREP orders; READY orders must go to CLOSED, not CANCELLED
+      const expiredOrders = enriched.filter(
+        (e) => e.expired && ["OPEN", "IN_PREP"].includes(e.order.status),
+      );
       if (expiredOrders.length > 0) {
         for (const exp of expiredOrders) {
           coreUpdateOrderStatus({

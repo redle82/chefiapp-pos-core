@@ -22,15 +22,16 @@ import React, {
 import { CONFIG } from "../../config";
 import { isDebugMode } from "../debugMode";
 import {
-  SOFIA_RESTAURANT_ID,
-  TRIAL_RESTAURANT_ID,
-} from "../readiness/operationalRestaurant";
-import {
   BackendType,
   getBackendConfigured,
   getBackendType,
 } from "../infra/backendAdapter";
+import {
+  SOFIA_RESTAURANT_ID,
+  TRIAL_RESTAURANT_ID,
+} from "../readiness/operationalRestaurant";
 import type { CoreSession, CoreUser } from "./authTypes";
+import { isMockAuthEnabled } from "./mockAuthGate";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -55,18 +56,8 @@ interface AuthContextType extends AuthState {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 // ---------------------------------------------------------------------------
-// Mock session helper (DEV only — blocked in production builds)
+// Mock session helper (DEV only — requires explicit allow flag)
 // ---------------------------------------------------------------------------
-
-/**
- * Returns true if mock/trial auth is ALLOWED in this environment.
- * Production builds (import.meta.env.PROD === true) NEVER allow mock auth.
- */
-function isMockAuthAllowed(): boolean {
-  // Vite injects import.meta.env.DEV at build time.
-  // In production builds, this is always false — never allow mock.
-  return import.meta.env.DEV === true;
-}
 
 const PILOT_USER_UUID = "00000000-0000-0000-0000-000000000002";
 
@@ -115,8 +106,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    // Trial / Pilot mock — ONLY in development builds (blocked in production)
-    if (typeof window !== "undefined" && isMockAuthAllowed()) {
+    // Trial / Pilot mock — ONLY when explicitly allowed in dev
+    if (typeof window !== "undefined" && isMockAuthEnabled(import.meta.env)) {
       // AUTO-PILOT: When DEBUG_DIRECT_FLOW + Docker dev → auto-activate pilot mode
       // so /op/tpv works without manual localStorage setup or ?debug=1
       // E2E tests can set chefiapp_skip_auto_pilot to prevent auto-activation.

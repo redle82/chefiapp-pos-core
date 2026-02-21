@@ -25,6 +25,8 @@
 import { useEffect, useState } from "react";
 import { useGlobalUIState } from "../../context/GlobalUIStateContext";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import type { MenuItemInput } from "../../core/contracts/Menu";
+import { validateMenuItemInput } from "../../core/contracts/Menu";
 import {
   addPilotProduct,
   getPilotProducts,
@@ -48,8 +50,7 @@ import {
   deleteMenuItem,
   updateMenuItem,
 } from "../../infra/writers/MenuWriter";
-import type { MenuItemInput } from "../../core/contracts/Menu";
-import { validateMenuItemInput } from "../../core/contracts/Menu";
+import { uploadProductImage } from "../../services/productImageUpload";
 import {
   GlobalEmptyView,
   GlobalErrorView,
@@ -57,6 +58,7 @@ import {
 } from "../../ui/design-system/components";
 import { Button, Card, Input, Select } from "../../ui/design-system/primitives";
 import { toUserMessage } from "../../ui/errors";
+import { ProductImageDropzone } from "./components/ProductImageDropzone";
 import styles from "./MenuBuilderCore.module.css";
 import { formatMoney, parseMoneyInput } from "./utils/moneyInput";
 
@@ -124,6 +126,10 @@ export function MenuBuilderCore({
   const [businessType, setBusinessType] = useState<BusinessType>("cafe_bar");
   type MenuBuilderTab = "manual" | "foto" | "pdf" | "link" | "ia";
   const [activeTab, setActiveTab] = useState<MenuBuilderTab>("manual");
+  const [photoProductId, setPhotoProductId] = useState<string>("");
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoSuccess, setPhotoSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -417,6 +423,35 @@ export function MenuBuilderCore({
   useEffect(() => {
     globalUI.setScreenEmpty(products.length === 0);
   }, [products.length, globalUI.setScreenEmpty]);
+
+  useEffect(() => {
+    if (activeTab !== "foto") return;
+    if (!photoProductId && products.length > 0) {
+      setPhotoProductId(products[0]?.id || "");
+    }
+  }, [activeTab, photoProductId, products]);
+
+  const handlePhotoUpload = async (file: File) => {
+    if (!photoProductId) return;
+    try {
+      setPhotoUploading(true);
+      setPhotoError(null);
+      setPhotoSuccess(null);
+      await uploadProductImage({
+        restaurantId,
+        productId: photoProductId,
+        file,
+      });
+      const productsData = await readProductsByRestaurant(restaurantId, true);
+      setProducts(productsData);
+      setPhotoSuccess("Imagem atualizada");
+      setTimeout(() => setPhotoSuccess(null), 2500);
+    } catch (err) {
+      setPhotoError(err instanceof Error ? err.message : "Upload falhou");
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
 
   if (globalUI.isLoadingCritical) {
     return (
@@ -739,20 +774,62 @@ export function MenuBuilderCore({
           </>
         )}
 
-        {(activeTab === "foto" ||
-          activeTab === "pdf" ||
+        {activeTab === "foto" && (
+          <Card padding="lg" style={{ marginBottom: 24 }}>
+            <p className={styles.inactiveDesc}>
+              Envie imagens reais dos produtos. O sistema normaliza para 600x600
+              e salva no storage local.
+            </p>
+            <div style={{ display: "grid", gap: 12 }}>
+              <label className={styles.fieldLabel} htmlFor="photo-product">
+                Produto
+              </label>
+              <Select
+                id="photo-product"
+                value={photoProductId}
+                onChange={(event) => setPhotoProductId(event.target.value)}
+                disabled={products.length === 0 || photoUploading}
+              >
+                {products.length === 0 && (
+                  <option value="">Sem produtos</option>
+                )}
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name}
+                  </option>
+                ))}
+              </Select>
+
+              <ProductImageDropzone
+                disabled={!photoProductId || photoUploading}
+                onFileSelected={handlePhotoUpload}
+              />
+
+              {photoUploading && (
+                <div className={styles.inactiveHint}>A enviar imagem...</div>
+              )}
+              {photoError && (
+                <div className={styles.errorMessage}>{photoError}</div>
+              )}
+              {photoSuccess && (
+                <div className={styles.successMessage}>{photoSuccess}</div>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {(activeTab === "pdf" ||
           activeTab === "link" ||
           activeTab === "ia") && (
           <Card padding="lg" style={{ marginBottom: 24 }}>
             <p className={styles.inactiveDesc}>
-              {activeTab === "foto" && "Envie uma foto do seu menu (PNG/JPG)."}
               {activeTab === "pdf" && "Envie um PDF do seu menu."}
               {activeTab === "link" && "Cole o link do seu menu."}
               {activeTab === "ia" &&
                 "Descreva o seu menu e deixe a IA sugerir itens."}
             </p>
             <p className={styles.inactiveHint}>
-              Funcionalidade não ativa. Use a tab Manual para criar ou editar
+              Funcionalidade nao ativa. Use a tab Manual para criar ou editar
               itens.
             </p>
           </Card>

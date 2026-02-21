@@ -35,6 +35,9 @@ export interface CoreProduct {
   description?: string | null;
   price_cents: number;
   photo_url?: string | null;
+  asset_id?: string | null;
+  custom_image_url?: string | null;
+  asset_image_url?: string | null;
   available?: boolean;
   /** Estação de preparo: BAR ou KITCHEN — usado no KDS e Menu Builder */
   station?: "BAR" | "KITCHEN" | null;
@@ -94,11 +97,19 @@ export async function readProducts(
 ): Promise<CoreProduct[]> {
   const { data, error } = await dockerCoreClient
     .from("gm_products")
-    .select("*")
+    .select("*, gm_product_assets(image_url)")
     .eq("restaurant_id", restaurantId)
     .order("name", { ascending: true });
   if (error) return [];
-  return (data ?? []) as CoreProduct[];
+  return (data ?? []).map((product) => {
+    const { gm_product_assets, ...rest } = product as {
+      gm_product_assets?: { image_url?: string | null } | null;
+    } & CoreProduct;
+    return {
+      ...rest,
+      asset_image_url: gm_product_assets?.image_url ?? null,
+    } as CoreProduct;
+  });
 }
 
 export async function readTableByNumber(

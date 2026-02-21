@@ -24,25 +24,20 @@
     "types": ["node"]
   },
   "include": [
-    "_legacy_isolation/server/**/*.ts",
-    "_legacy_isolation/event-log/**/*.ts",
-    "_legacy_isolation/state-machines/**/*.ts",
-    "_legacy_isolation/legal-boundary/**/*.ts",
-    "_legacy_isolation/gate3-persistence/**/*.ts",
-    "_legacy_isolation/gateways/**/*.ts",
-    "_legacy_isolation/billing-core/**/*.ts",
-    "_legacy_isolation/projections/**/*.ts",
-    "_legacy_isolation/sdk/**/*.ts",
-    "_legacy_isolation/sdk/**/*.tsx",
-    "_legacy_isolation/web-module/**/*.ts",
+    "server/**/*.ts",
     "core-engine/**/*.ts",
     "fiscal-modules/**/*.ts",
-    "types/**/*.ts"
+    "types/**/*.ts",
+    "event-log/**/*.ts",
+    "legal-boundary/**/*.ts",
+    "billing-core/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "_legacy_isolation/**/node_modules",
+    "event-log/**/node_modules",
+    "legal-boundary/**/node_modules",
+    "billing-core/**/node_modules",
     "**/__tests__/**",
     "**/*.test.ts",
     "**/*.spec.ts"

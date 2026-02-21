@@ -35,9 +35,9 @@ export const Colors = {
     intelligence: coreColors.info,
   },
 
-  // BRAND (Mapped to core accent during adapter phase)
+  // BRAND — Gold is the canonical brand color (#c9a227), NOT the green accent.
   brand: {
-    gold: coreColors.accent,
+    gold: "#c9a227",
     accent: coreColors.accent,
   },
 

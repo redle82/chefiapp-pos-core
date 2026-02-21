@@ -1,9 +1,9 @@
 {
-  "name": "ChefIApp — Sistema Operacional",
-  "short_name": "ChefIApp",
+  "name": "AppStaff — ChefIApp",
+  "short_name": "AppStaff",
   "start_url": "/app/staff/home",
   "display": "standalone",
-  "orientation": "landscape",
+  "orientation": "portrait",
   "background_color": "#121212",
   "theme_color": "#121212",
   "icons": [
