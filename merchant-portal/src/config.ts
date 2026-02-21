@@ -38,17 +38,11 @@ const assertEnv = (name: string, value: string): string => {
 const normalizeUrl = (value: string): string =>
   value.endsWith("/") ? value.slice(0, -1) : value;
 
-const MODE = assertEnv("VITE_MODE", getEnvString("VITE_MODE"));
-const CORE_URL = normalizeUrl(
-  assertEnv("VITE_CORE_URL", getEnvString("VITE_CORE_URL")),
-);
-const CORE_ANON_KEY = assertEnv(
-  "VITE_CORE_ANON_KEY",
-  getEnvString("VITE_CORE_ANON_KEY"),
-);
-const API_BASE = normalizeUrl(
-  assertEnv("VITE_API_BASE", getEnvString("VITE_API_BASE")),
-);
+// Permitir boot sem Core (trial/landing na Vercel); rotas operacionais exigem env vars.
+const MODE = getEnvString("VITE_MODE") || "trial";
+const CORE_URL = normalizeUrl(getEnvString("VITE_CORE_URL") || "");
+const CORE_ANON_KEY = getEnvString("VITE_CORE_ANON_KEY") || "";
+const API_BASE = normalizeUrl(getEnvString("VITE_API_BASE") || "");
 
 const IS_DEV = MODE !== "production";
 const IS_PROD = MODE === "production";
