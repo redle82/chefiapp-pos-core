@@ -57,6 +57,7 @@ function toUIPlan(
     maxDeliveryOrders: row.max_delivery_orders,
     isCurrent: row.id === currentPlanId,
     trialEndsAt: row.id === currentPlanId ? trialEnd : undefined,
+    stripePriceId: row.stripe_price_id ?? null,
   };
 }
 

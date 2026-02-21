@@ -32,7 +32,10 @@ export function SubscriptionPage() {
 
   const handleChangePlan = async (planId: string) => {
     try {
-      const result = await BillingBroker.startSubscription(planId);
+      // Prefer stripePriceId (Stripe price_xxx) over plan slug for checkout
+      const plan = plans.find((p) => p.id === planId);
+      const priceId = plan?.stripePriceId || planId;
+      const result = await BillingBroker.startSubscription(priceId);
       if (result.url) window.location.href = result.url;
     } catch (err) {
       console.error("[SubscriptionPage] Change plan error:", err);
@@ -50,7 +53,9 @@ export function SubscriptionPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: 32, color: "var(--text-secondary)", fontSize: 14 }}>
+      <div
+        style={{ padding: 32, color: "var(--text-secondary)", fontSize: 14 }}
+      >
         A carregar dados de faturação…
       </div>
     );
@@ -73,9 +78,24 @@ export function SubscriptionPage() {
         subtitle="Administra tu plan y complementos de ChefIApp."
       />
       {(isTrialing && subscription?.trial_ends_at) || CONFIG.STRIPE_IS_TEST ? (
-        <div style={{ marginTop: -8, marginBottom: 16, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+        <div
+          style={{
+            marginTop: -8,
+            marginBottom: 16,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            alignItems: "center",
+          }}
+        >
           {isTrialing && subscription?.trial_ends_at && (
-            <span style={{ color: "var(--color-warning)", fontWeight: 600, fontSize: 14 }}>
+            <span
+              style={{
+                color: "var(--color-warning)",
+                fontWeight: 600,
+                fontSize: 14,
+              }}
+            >
               Período de prueba activo
             </span>
           )}

@@ -16,6 +16,7 @@
 
 import * as crypto from "crypto";
 import * as http from "http";
+import Stripe from "stripe";
 import { processProductImage } from "./imageProcessor";
 import { uploadProductImage } from "./minioStorage";
 
@@ -28,6 +29,38 @@ const CORE_SERVICE_KEY =
   process.env.CORE_SERVICE_KEY || process.env.CORE_ANON_KEY || "";
 const INTERNAL_API_TOKEN =
   process.env.INTERNAL_API_TOKEN || "chefiapp-internal-token-dev";
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5175";
+
+/**
+ * Stripe Price ID mapping: plan slug → Stripe price_xxx.
+ * Reads from env vars STRIPE_PRICE_<PLAN> (uppercased).
+ * When the frontend sends a plan slug (e.g. "pro") instead of a real
+ * Stripe price ID ("price_xxx"), this map resolves it.
+ */
+const STRIPE_PRICE_MAP: Record<string, string> = {};
+for (const key of Object.keys(process.env)) {
+  const match = key.match(/^STRIPE_PRICE_(.+)$/i);
+  if (match && process.env[key]) {
+    STRIPE_PRICE_MAP[match[1].toLowerCase()] = process.env[key]!;
+  }
+}
+
+/** Resolve a price identifier: if it already looks like a Stripe price ID, use it as-is;
+ *  otherwise look up the plan slug in STRIPE_PRICE_MAP. Returns null if not found. */
+function resolveStripePriceId(input: string): string | null {
+  if (input.startsWith("price_")) return input;
+  return STRIPE_PRICE_MAP[input.toLowerCase()] || null;
+}
+
+function corsHeaders(): Record<string, string> {
+  return {
+    "Access-Control-Allow-Origin": CORS_ORIGIN,
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Headers":
+      "Content-Type, X-Internal-Token, Authorization",
+  };
+}
 
 const REST = `${CORE_URL}/rest/v1`;
 const RPC = `${CORE_URL}/rpc`;
@@ -551,11 +584,11 @@ async function handleApiV1(
         source: "online",
         items: pItems.map(
           (it: {
-            product_id: string;
+            product_id?: string;
             quantity: number;
             unit_price: number;
           }) => ({
-            id: it.product_id,
+            id: it.product_id ?? "",
             name: "",
             quantity: it.quantity,
             priceCents: it.unit_price,
@@ -829,6 +862,12 @@ const server = http.createServer(async (req, res) => {
   const method = req.method || "GET";
   const path = req.url?.split("?")[0] ?? "/";
 
+  if (method === "OPTIONS") {
+    res.writeHead(204, { ...corsHeaders(), "Content-Length": "0" });
+    res.end();
+    return;
+  }
+
   try {
     if ((path === "/" || path === "") && method === "GET") {
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -893,6 +932,109 @@ const server = http.createServer(async (req, res) => {
       const { status, json } = await handleProductImageUpload(body);
       res.writeHead(status, { "Content-Type": "application/json" });
       res.end(JSON.stringify(json));
+      return;
+    }
+
+    if (
+      path === "/internal/billing/create-checkout-session" &&
+      method === "POST"
+    ) {
+      const cors = corsHeaders();
+      const token =
+        req.headers["x-internal-token"] ||
+        req.headers["authorization"]?.replace(/^Bearer\s+/i, "");
+      if (token !== INTERNAL_API_TOKEN) {
+        res.writeHead(401, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "unauthorized",
+            message: "Invalid or missing internal token",
+          }),
+        );
+        return;
+      }
+      if (!STRIPE_SECRET_KEY) {
+        res.writeHead(503, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "billing_unavailable",
+            message: "STRIPE_SECRET_KEY not configured",
+          }),
+        );
+        return;
+      }
+      let body: {
+        price_id?: string;
+        success_url?: string;
+        cancel_url?: string;
+      };
+      try {
+        body = JSON.parse((await parseBody(req)) || "{}") as typeof body;
+      } catch {
+        res.writeHead(400, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "validation_error",
+            message: "Invalid JSON body",
+          }),
+        );
+        return;
+      }
+      const rawPriceId = body?.price_id?.trim();
+      const successUrl = body?.success_url?.trim();
+      const cancelUrl = body?.cancel_url?.trim();
+      if (!rawPriceId || !successUrl || !cancelUrl) {
+        res.writeHead(400, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "validation_error",
+            message: "price_id, success_url and cancel_url are required",
+          }),
+        );
+        return;
+      }
+      // Resolve plan slug → Stripe price ID
+      const priceId = resolveStripePriceId(rawPriceId);
+      if (!priceId) {
+        console.error(
+          `[integration-gateway] No such price: '${rawPriceId}'.`,
+          `Set STRIPE_PRICE_${rawPriceId.toUpperCase()} env var or pass a Stripe price_xxx ID.`,
+          `Available mappings: ${JSON.stringify(STRIPE_PRICE_MAP)}`,
+        );
+        res.writeHead(400, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "no_such_price",
+            message: `No such price: '${rawPriceId}'. Set STRIPE_PRICE_${rawPriceId.toUpperCase()} env var or use the billing_plans.stripe_price_id from the DB.`,
+          }),
+        );
+        return;
+      }
+      try {
+        const stripe = new Stripe(STRIPE_SECRET_KEY);
+        const session = await stripe.checkout.sessions.create({
+          mode: "subscription",
+          line_items: [{ price: priceId, quantity: 1 }],
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+        });
+        res.writeHead(200, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            url: session.url || "",
+            session_id: session.id,
+          }),
+        );
+      } catch (e) {
+        console.error("[integration-gateway] create-checkout-session", e);
+        res.writeHead(500, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "stripe_error",
+            message: e instanceof Error ? e.message : "Stripe checkout failed",
+          }),
+        );
+      }
       return;
     }
 

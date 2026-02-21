@@ -26,6 +26,8 @@ export interface Plan {
   isCurrent?: boolean;
   /** Trial: termina nesta data */
   trialEndsAt?: string | null;
+  /** Stripe Price ID (price_xxx). Preferred over plan slug for Checkout. */
+  stripePriceId?: string | null;
 }
 
 export type UsageMeterStatus = "ok" | "warning" | "over";

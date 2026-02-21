@@ -34,6 +34,8 @@
     "export:portal": "rm -rf public/app && mkdir -p public/app && cp -R merchant-portal/dist/. public/app/",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "server:integration-gateway": "npx ts-node server/integration-gateway.ts",
+    "dev:gateway": "bash scripts/start-gateway-billing.sh",
+    "dev:with-billing": "bash scripts/start-dev-with-billing.sh",
     "demo:appstaff": "npx ts-node tests/appstaff-demo-mode.ts",
     "demo:appstaff:one": "bash scripts/demo-one-command.sh",
     "demo:voice": "bash scripts/demo-voice.sh",

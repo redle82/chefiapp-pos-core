@@ -44,6 +44,18 @@ services:
         sync: false
       - key: INTERNAL_API_TOKEN
         sync: false
+      # Stripe billing
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PRICE_STARTER
+        sync: false
+      - key: STRIPE_PRICE_PRO
+        sync: false
+      - key: STRIPE_PRICE_ENTERPRISE
+        sync: false
+      # CORS — must match the merchant-portal production URL
+      - key: CORS_ORIGIN
+        sync: false
 
   # Merchant Portal (SPA Vite) — static site a partir do monorepo
   - type: web

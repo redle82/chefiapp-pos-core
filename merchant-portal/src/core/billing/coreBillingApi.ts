@@ -287,7 +287,9 @@ export async function getSubscription(
     .eq("restaurant_id", restaurantId)
     .limit(1);
   if (error) return null;
-  return Array.isArray(data) && data.length > 0 ? (data[0] as MerchantSubscriptionRow) : null;
+  return Array.isArray(data) && data.length > 0
+    ? (data[0] as MerchantSubscriptionRow)
+    : null;
 }
 
 export interface BillingPlanRow {
@@ -303,6 +305,8 @@ export interface BillingPlanRow {
   max_delivery_orders: number;
   sort_order: number;
   active: boolean;
+  /** Stripe Price ID (price_xxx). When present, used for Checkout instead of plan slug. */
+  stripe_price_id?: string | null;
 }
 
 /**
@@ -399,13 +403,72 @@ export async function createSaasPortalSession(returnUrl: string): Promise<{
 
 /**
  * Criar sessão Stripe Checkout (assinatura).
- * Core (Docker) only.
+ * Preferência: Integration Gateway (API_BASE) se configurado; senão Core RPC (Docker).
  */
 export async function createCheckoutSession(
   priceId: string,
   successUrl: string,
   cancelUrl: string,
 ): Promise<{ url: string; sessionId?: string; error?: string }> {
+  const apiBase = CONFIG.API_BASE?.replace(/\/+$/, "");
+  if (apiBase && CONFIG.INTERNAL_API_TOKEN) {
+    // Em dev com gateway em localhost:4320, usar URL relativa para o proxy do Vite (evita CORS).
+    const isLocalGateway =
+      apiBase === "http://localhost:4320" ||
+      apiBase === "http://127.0.0.1:4320";
+    const gatewayUrl = isLocalGateway
+      ? "/internal/billing/create-checkout-session"
+      : `${apiBase}/internal/billing/create-checkout-session`;
+    let res: Response;
+    try {
+      res = await fetch(gatewayUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Internal-Token": CONFIG.INTERNAL_API_TOKEN,
+        },
+        body: JSON.stringify({
+          price_id: priceId,
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+        }),
+      });
+    } catch (e) {
+      const isNetworkError =
+        e instanceof TypeError &&
+        (e.message === "Failed to fetch" || e.message.includes("fetch"));
+      return {
+        url: "",
+        error: isNetworkError
+          ? "El servidor de checkout no está en ejecución. En otra terminal ejecuta: pnpm run server:integration-gateway (puerto 4320)."
+          : e instanceof Error
+          ? e.message
+          : "Error de conexión con el servidor de checkout.",
+      };
+    }
+    const text = await res.text();
+    if (!res.ok) {
+      let errorMessage = text || `Checkout: ${res.status}`;
+      try {
+        const j = JSON.parse(text) as { message?: string };
+        if (j?.message) errorMessage = j.message;
+      } catch {
+        // keep errorMessage
+      }
+      return { url: "", error: errorMessage };
+    }
+    let data: { url?: string; session_id?: string } = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      return { url: "", error: "Invalid JSON from gateway" };
+    }
+    if (!data?.url) {
+      return { url: "", error: "Gateway did not return checkout URL" };
+    }
+    return { url: data.url, sessionId: data.session_id };
+  }
+
   requireCore();
   const rpcUrl = `${REST}/rpc/create_checkout_session`;
   const res = await fetch(rpcUrl, {
@@ -419,11 +482,15 @@ export async function createCheckoutSession(
   });
   const text = await res.text();
   if (!res.ok) {
-    let errorMessage = text || `Core RPC create_checkout_session: ${res.status}`;
+    let errorMessage =
+      text || `Core RPC create_checkout_session: ${res.status}`;
     if (res.status === 404) {
       try {
         const j = JSON.parse(text) as { code?: string; message?: string };
-        if (j?.code === "PGRST202" || (j?.message && j.message.includes("create_checkout_session"))) {
+        if (
+          j?.code === "PGRST202" ||
+          (j?.message && j.message.includes("create_checkout_session"))
+        ) {
           errorMessage =
             "Checkout em breve. A migração de faturação ainda não foi aplicada no Core. Ver docker-core/MIGRATIONS.md.";
         }
