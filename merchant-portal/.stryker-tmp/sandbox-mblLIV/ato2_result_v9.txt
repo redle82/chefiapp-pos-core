@@ -1,0 +1,7 @@
+
+Running 1 test using 1 worker
+
+SUCESSO: TPV bloqueado imediatamente (Core down na inicialização).
+  ✓  1 [chromium] › tests/e2e/fase-b-teste-humano.spec.ts:112:3 › Fase B: Chaos Night Simulation › Ato 2: O Erro Humano - Rede e Edição (980ms)
+
+  1 passed (1.7s)

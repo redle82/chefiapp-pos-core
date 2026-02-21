@@ -1,0 +1,104 @@
+.upgrade-lock-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+    /* Ensure space for lock card */
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+.upgrade-lock-content.blurred {
+    filter: blur(8px);
+    opacity: 0.4;
+    pointer-events: none;
+    user-select: none;
+    height: 100%;
+    width: 100%;
+}
+
+.upgrade-lock-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.2);
+    /* Slight overlay */
+}
+
+.upgrade-lock-card {
+    background: var(--surface-card, #fff);
+    /* Fallback */
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-subtle, #eee);
+    max-width: 320px;
+    animation: floatUp 0.3s ease-out;
+}
+
+.upgrade-lock-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.upgrade-lock-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary, #000);
+}
+
+.upgrade-lock-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #666);
+    margin-bottom: 1.5rem;
+    line-height: 1.4;
+}
+
+.upgrade-lock-badge {
+    display: inline-block;
+    background: #eef2ff;
+    color: #4f46e5;
+    padding: 0.25rem 0.75rem;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    border: 1px solid #c7d2fe;
+}
+
+.upgrade-lock-btn {
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.upgrade-lock-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+@keyframes floatUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

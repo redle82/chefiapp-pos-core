@@ -1,0 +1,180 @@
+.pageRoot {
+  padding: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #0f172a;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.filterLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.dateInput {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.applyButton {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background-color: #0f172a;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.applyButtonDisabled {
+  cursor: not-allowed;
+}
+
+.exportButton {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.errorText {
+  font-size: 14px;
+  color: #dc2626;
+  margin-bottom: 16px;
+}
+
+.emptyState {
+  padding: 20px 24px;
+  border-radius: 14px;
+  border: 1px dashed #e2e8f0;
+  background-color: #f8fafc;
+}
+
+.emptyTitle {
+  margin: 0;
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  max-width: 520px;
+}
+
+.dataCard {
+  padding: 20px 24px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background-color: #fff;
+}
+
+.sectionTitle {
+  margin: 0;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sectionSubtitle {
+  margin: 0;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.headerRow {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.headerCellLeft {
+  text-align: left;
+  padding: 8px 8px 8px 0;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.headerCellRight {
+  text-align: right;
+  padding: 8px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.headerCellRightEdge {
+  text-align: right;
+  padding: 8px 0 8px 8px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.bodyRow {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.bodyCellLeft {
+  padding: 8px 8px 8px 0;
+  color: #1e293b;
+}
+
+.bodyCellRight {
+  padding: 8px;
+  text-align: right;
+  color: #1e293b;
+}
+
+.bodyCellRightAlert {
+  padding: 8px;
+  text-align: right;
+  color: #b91c1c;
+}
+
+.bodyCellRightEdge {
+  padding: 8px 0 8px 8px;
+  text-align: right;
+  color: #1e293b;
+}

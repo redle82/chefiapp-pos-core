@@ -1,0 +1,82 @@
+/* Card Styles - Sovereign Design System */
+
+.card {
+  background-color: var(--color-surface-base, #ffffff);
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid transparent;
+  transition: all 200ms ease;
+  overflow: hidden;
+  /* Contains children */
+}
+
+/* Glass Surface (Default for layouts) */
+.card--glass {
+  background-color: rgba(255, 255, 255, 0.05);
+  /* Slight tint */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  /* Premium feel */
+}
+
+/* Elevated (Floats above glass) */
+.card--elevated {
+  background-color: #1a1a1c;
+  /* Solid dark base */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  /* Depth */
+}
+
+/* Padding Variants */
+.card--padding-sm {
+  padding: 12px;
+}
+
+.card--padding-md {
+  padding: 24px;
+}
+
+.card--padding-lg {
+  padding: 32px;
+}
+
+.card--padding-none {
+  padding: 0;
+}
+
+.card--padding-xl {
+  padding: 40px;
+}
+
+/* Surface Variants */
+.card--surface-base {
+  background-color: var(--color-surface-base, #ffffff);
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.08));
+}
+
+.card--surface-layer1 {
+  background-color: var(--color-surface-layer1, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.08));
+}
+
+.card--surface-layer2 {
+  background-color: var(--color-surface-layer2, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.card--surface-layer3 {
+  background-color: var(--color-surface-layer3, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.12));
+}
+
+/* Features */
+.card--clickable {
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  }
+}

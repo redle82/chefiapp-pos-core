@@ -1,0 +1,308 @@
+.wrapper {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  background-color: #000000;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 16px;
+}
+
+.wrapperInner {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* ── Fade-in animation ── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Logo: golden glow + fade-in ── */
+.logoImage {
+  width: 174px;
+  height: 174px;
+  object-fit: contain;
+  margin-bottom: 8px;
+  animation: fadeInUp 0.6s ease-out both;
+  filter: drop-shadow(0 0 24px rgba(201, 162, 39, 0.35));
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-top: 8px;
+  padding-bottom: 32px;
+  margin-bottom: 24px;
+  animation: fadeInUp 0.6s ease-out 0.1s both;
+}
+
+/* ── Brand wordmark ── */
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brandGold {
+  color: #c9a227;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.brandRed {
+  color: #d9381e;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tagline {
+  margin-top: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  margin-top: 4px;
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.clickableCard {
+  cursor: pointer;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.clickableCard:active {
+  transform: scale(1.02);
+  border-color: #3f3f46;
+  box-shadow: 0 2px 8px rgba(201, 162, 39, 0.12);
+}
+
+.cardFill {
+  width: 100%;
+  height: 100%;
+}
+
+.businessRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.backSection {
+  margin-top: 24px;
+}
+
+.devSection {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #27272a;
+}
+
+.devLabel {
+  margin-bottom: 10px;
+}
+
+.devRoles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.centerButton {
+  justify-content: center;
+}
+
+/* ── Distribution section ── */
+.distributionSection {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #1c1c1e;
+  animation: fadeInUp 0.6s ease-out 0.35s both;
+}
+
+.distributionTitle {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.storeButtons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.storeButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid #27272a;
+  border-radius: 10px;
+  color: #52525b;
+  font-size: 12px;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.storeIcon {
+  font-size: 16px;
+}
+
+.storeLabel {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.storeBadge {
+  margin-left: auto;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #71717a;
+  background: #18181b;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.qrButton {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px dashed #27272a;
+  border-radius: 10px;
+  color: #a1a1aa;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.qrButton:active {
+  border-color: #c9a227;
+  color: #c9a227;
+}
+
+.qrPanel {
+  margin-top: 12px;
+  padding: 16px;
+  background: #18181b;
+  border-radius: 10px;
+  border: 1px solid #27272a;
+}
+
+.qrText {
+  text-align: center;
+}
+
+/* ConnectCodeView */
+.connectFullWidth {
+  width: 100%;
+}
+
+.codeInput {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #3f3f46;
+  font-size: 32px;
+  color: #ffffff;
+  margin-bottom: 24px;
+  text-align: center;
+  letter-spacing: 4px;
+  font-family: monospace;
+  outline: none;
+  padding: 8px;
+}
+
+.errorBlock {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.debugCodesSection {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: #18181b;
+  border-radius: 8px;
+}
+
+.debugLabel {
+  margin-bottom: 8px;
+  display: block;
+}
+
+.debugList {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: #d4d4d8;
+  line-height: 1.8;
+}
+
+.codeText {
+  font-family: monospace;
+  letter-spacing: 1px;
+}
+
+/* SelectPersonView */
+.selectHeader {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.selectSubtitle {
+  margin-top: 8px;
+}
+
+.loadingText {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.personList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.personRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.personRole {
+  margin-top: 2px;
+}

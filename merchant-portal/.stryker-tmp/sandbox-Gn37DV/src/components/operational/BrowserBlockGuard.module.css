@@ -1,0 +1,117 @@
+/* BrowserBlockGuard — fullscreen block for non-installed access */
+
+.blockScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px;
+  background-color: #000;
+  color: #fafafa;
+  font-family: Inter, system-ui, sans-serif;
+  text-align: center;
+}
+
+.lockIcon {
+  font-size: 56px;
+  opacity: 0.9;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  max-width: 440px;
+  line-height: 1.3;
+}
+
+.subtitle {
+  font-size: 14px;
+  margin: 0;
+  max-width: 440px;
+  color: #a3a3a3;
+  line-height: 1.6;
+}
+
+/* ── Rule badge ── */
+.ruleBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #262626;
+  background-color: #141414;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #737373;
+}
+
+/* ── Instructions card ── */
+.instructionsCard {
+  max-width: 380px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #262626;
+  background-color: #0a0a0a;
+  text-align: left;
+}
+
+.instructionsTitle {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #d4d4d4;
+}
+
+.instructionsList {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: #a3a3a3;
+  line-height: 1.9;
+}
+
+/* ── Back link ── */
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background-color: transparent;
+  color: #d4d4d4;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+
+.backLink:hover {
+  border-color: #555;
+}
+
+/* ── DEV bypass banner ── */
+.devBanner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 99998;
+  padding: 4px 12px;
+  background-color: #c9a227;
+  color: #000;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.02em;
+  font-family: monospace;
+}

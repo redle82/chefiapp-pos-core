@@ -1,0 +1,11 @@
+/**
+ * StaffCleaningPage — Checklists (limpeza); usa useStaff para tasks e role.
+ */
+
+import { useStaff } from "../context/StaffContext";
+import { CleaningTaskView } from "../views/CleaningTaskView";
+
+export function StaffCleaningPage() {
+  const { tasks, activeRole } = useStaff();
+  return <CleaningTaskView tasks={tasks} role={activeRole} />;
+}

@@ -1,0 +1,775 @@
+/**
+ * Design System CSS Variables — Phase 1 Hardening
+ *
+ * ChefIApp unified design tokens as CSS custom properties.
+ * Import this file in your main CSS to use tokens in pure CSS files.
+ *
+ * Usage:
+ *   @import './ui/design-system/tokens.css';
+ *
+ *   .my-component {
+ *     color: var(--text-primary);
+ *     background: var(--surface-elevated);
+ *     padding: var(--spacing-lg);
+ *   }
+ */
+
+@import "@chefiapp/core-design-system/tokens.css";
+
+:root {
+  /* ========================================================================
+   * BRAND COLORS
+   * ======================================================================== */
+
+  /* ChefIApp Gold — Primary brand color */
+  --color-brand-gold: #c9a227;
+  --color-brand-gold-light: #e8c547;
+  --color-brand-gold-dark: #b8922a;
+  --gradient-brand: linear-gradient(135deg, #c9a227 0%, #b8922a 100%);
+  --shadow-brand: 0 4px 20px rgba(201, 162, 39, 0.3);
+
+  /* FIRE SYSTEM PALETTE (New Identity) */
+  /* Red OS — Kernel/Critical (The "Brasa" Identity) */
+  --color-os-red: #d9381e; /* Deep vermilion, not neon */
+  --color-os-red-dark: #b91c1c;
+  --color-os-red-dim: #4a0404; /* Vinho base */
+
+  /* Fire Gradients - Environmental */
+  --fire-vinho: #2d0a0a; /* Top - Deep Wine */
+  --fire-carvao: #121212; /* Middle - Charcoal */
+  --fire-brasa: #d9381e; /* Bottom/Accent - Glowing Ember */
+
+  /* Semantic Gradients */
+  --gradient-fire-ignition: linear-gradient(
+    180deg,
+    var(--fire-vinho) 0%,
+    var(--fire-carvao) 40%,
+    var(--fire-brasa) 100%
+  );
+  --gradient-fire-ritual: linear-gradient(
+    180deg,
+    var(--fire-vinho) 0%,
+    var(--fire-carvao) 70%,
+    #1a0505 100%
+  ); /* Subtler */
+  --gradient-fire-ember: radial-gradient(
+    circle at 50% -20%,
+    #2d0a0a 0%,
+    #050505 100%
+  ); /* Dashboard Background */
+
+  /* Stripe Purple — Payment integration */
+  --color-stripe: #635bff;
+  --color-stripe-light: #a259ff;
+  --gradient-stripe: linear-gradient(135deg, #635bff 0%, #a259ff 100%);
+
+  /* ========================================================================
+   * PRIMARY / SECONDARY
+   * ======================================================================== */
+
+  --color-primary: #c9a227;
+  --color-primary-light: #e8c547;
+  --color-primary-dark: #b8922a;
+  --color-secondary: #1a4d7a;
+
+  /* Legacy green (for backward compat) */
+  --color-legacy-green: #2a9d3e;
+
+  /* ========================================================================
+   * SEMANTIC COLORS
+   * ======================================================================== */
+
+  --color-success: #22c55e;
+  --color-warning: #fbbf24;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Truth States (Connectivity) */
+  --status-up: #10b981;
+  /* Emerald 500 */
+  --status-down: #ef4444;
+  /* Red 500 */
+  --status-degraded: #f59e0b;
+  /* Amber 500 */
+  --status-trial: #3b82f6;
+  /* Blue 500 */
+
+  /* Queue States (Offline Engine) */
+  --queue-pending: #9ca3af;
+  /* Gray 400 */
+  --queue-syncing: #60a5fa;
+  /* Blue 400 */
+  --queue-success: #34d399;
+  /* Emerald 400 */
+  --queue-error: #dc2626;
+  /* Red 600 */
+
+  /* Truth Opacity */
+  --opacity-dim: 0.7;
+  --opacity-offline: 0.9;
+
+  /* ========================================================================
+   * NEUTRAL SCALE
+   * ======================================================================== */
+
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-200: #e5e5e5;
+  --color-neutral-300: #d4d4d4;
+  --color-neutral-400: #a3a3a3;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #1a1a1a;
+  --color-neutral-950: #0a0a0a;
+
+  /* ========================================================================
+   * SURFACE COLORS (Dark Theme)
+   * ======================================================================== */
+
+  --surface-base: #111827;
+  /* Deep Dark */
+  --surface-elevated: #1f2937;
+  /* Elevated Dark */
+  --surface-overlay: rgba(255, 255, 255, 0.04);
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --surface-border-hover: rgba(255, 255, 255, 0.12);
+  --surface-border-active: rgba(255, 255, 255, 0.15);
+
+  /* ========================================================================
+   * TEXT COLORS (Dark Theme)
+   * ======================================================================== */
+
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-tertiary: rgba(255, 255, 255, 0.5);
+  --text-disabled: rgba(255, 255, 255, 0.25);
+  --text-inverse: #1a1a1a;
+
+  /* Page/section headings — always high contrast on dark (Design System §2) */
+  --heading-page: var(--text-primary);
+  --heading-section: var(--text-primary);
+  /* Cards on dark background — use elevated surface, not pure white */
+  --card-bg-on-dark: var(--surface-elevated);
+
+  /* ========================================================================
+   * STATUS COLORS (with opacity variants)
+   * ======================================================================== */
+
+  /* Success */
+  --status-success-bg: rgba(34, 197, 94, 0.12);
+  --status-success-border: rgba(34, 197, 94, 0.25);
+  --status-success-text: #22c55e;
+
+  /* Warning */
+  --status-warning-bg: rgba(251, 191, 36, 0.12);
+  --status-warning-border: rgba(251, 191, 36, 0.25);
+  --status-warning-text: #fbbf24;
+
+  /* Error */
+  --status-error-bg: rgba(239, 68, 68, 0.12);
+  --status-error-border: rgba(239, 68, 68, 0.25);
+  --status-error-text: #ef4444;
+
+  /* Info */
+  --status-info-bg: rgba(59, 130, 246, 0.12);
+  --status-info-border: rgba(59, 130, 246, 0.25);
+  --status-info-text: #3b82f6;
+
+  /* Primary */
+  --status-primary-bg: rgba(201, 162, 39, 0.12);
+  --status-primary-border: rgba(201, 162, 39, 0.25);
+  --status-primary-text: #c9a227;
+
+  /* ========================================================================
+   * RISK LEVELS
+   * ======================================================================== */
+
+  --color-risk-low: #22c55e;
+  --color-risk-medium: #fbbf24;
+  --color-risk-high: #ef4444;
+
+  /* ========================================================================
+   * SPACING SCALE (4px base)
+   * ======================================================================== */
+
+  --spacing-0: 0px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-10: 10px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-18: 18px;
+  --spacing-xl: 24px;
+  --spacing-28: 28px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 48px;
+  --spacing-4xl: 64px;
+
+  /* ========================================================================
+   * BORDER RADIUS
+   * ======================================================================== */
+
+  --radius-none: 0px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-10: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* ========================================================================
+   * TRANSITIONS
+   * ======================================================================== */
+
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-standard: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ========================================================================
+   * ELEVATION (Shadows)
+   * ======================================================================== */
+
+  --elevation-none: none;
+  --elevation-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --elevation-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+  --elevation-md: 0 4px 8px rgba(0, 0, 0, 0.12);
+  --elevation-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+  --elevation-xl: 0 12px 24px rgba(0, 0, 0, 0.18);
+  --elevation-primary: 0 4px 20px rgba(201, 162, 39, 0.3);
+
+  /* ========================================================================
+   * TYPOGRAPHY
+   * ======================================================================== */
+
+  --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Helvetica Neue", sans-serif;
+
+  /* Display sizes */
+  --font-size-display-lg: 32px;
+  --font-size-display-md: 24px;
+  --font-size-display-sm: 20px;
+
+  /* Heading sizes */
+  --font-size-h1: 28px;
+  --font-size-h2: 22px;
+  --font-size-h3: 16px;
+  --font-size-h4: 14px;
+
+  /* UI sizes */
+  --font-size-ui-lg: 16px;
+  --font-size-ui-md: 14px;
+  --font-size-ui-sm: 12px;
+  --font-size-ui-tiny: 11px;
+
+  /* ========================================================================
+   * Z-INDEX SCALE
+   * ======================================================================== */
+
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-fixed: 1200;
+  --z-modal: 1300;
+  --z-popover: 1400;
+  --z-toast: 1500;
+  --z-tooltip: 1600;
+
+  /* ========================================================================
+   * BREAKPOINTS (for reference in CSS calculations)
+   * ======================================================================== */
+
+  --breakpoint-sm: 640px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-md: 860px;
+  --breakpoint-desktop: 1024px;
+  --breakpoint-lg: 1100px;
+  --breakpoint-wide: 1440px;
+
+  /* ========================================================================
+   * COMPONENT TOKENS
+   * ======================================================================== */
+
+  /* Input/Form */
+  --input-height: 44px;
+  --input-padding-y: var(--spacing-sm);
+  --input-padding-x: var(--spacing-md);
+  --input-border-radius: var(--radius-sm);
+  --input-border-color: var(--surface-border);
+  --input-border-color-focus: var(--color-primary);
+  --input-background: rgba(0, 0, 0, 0.2);
+
+  /* Button */
+  --button-height: 44px;
+  --button-height-sm: 36px;
+  --button-height-lg: 52px;
+  --button-padding-y: var(--spacing-10);
+  --button-padding-x: var(--spacing-md);
+  --button-border-radius: var(--radius-10);
+
+  /* Card */
+  --card-padding: var(--spacing-lg);
+  --card-border-radius: var(--radius-md);
+  --card-background: var(--surface-elevated);
+  --card-border: 1px solid var(--surface-border);
+
+  /* Badge */
+  --badge-padding-y: 6px;
+  --badge-padding-x: var(--spacing-10);
+  --badge-border-radius: var(--radius-full);
+  --badge-font-size: 12px;
+
+  /* TopBar */
+  --topbar-height: 56px;
+
+  /* BottomNav */
+  --bottomnav-height: 72px;
+  --bottomnav-height-base: 56px;
+
+  /* Step */
+  --step-size: 40px;
+}
+
+/* Core adapter: map local tokens to core design system values. */
+:root {
+  --surface-base: var(--ds-background);
+  --surface-elevated: var(--ds-surface-elevated);
+  --surface-overlay: var(--ds-surface-overlay);
+  --surface-border: var(--ds-border);
+  --surface-border-hover: var(--ds-border-hover);
+  --surface-border-active: var(--ds-border-active);
+
+  --text-primary: var(--ds-text-primary);
+  --text-secondary: var(--ds-text-secondary);
+  --text-tertiary: var(--ds-text-muted);
+  --text-disabled: var(--ds-text-disabled);
+  --text-inverse: var(--ds-text-inverse);
+
+  --color-success: var(--ds-success);
+  --color-warning: var(--ds-warning);
+  --color-error: var(--ds-error);
+  --color-info: var(--ds-info);
+
+  --radius-xs: var(--ds-radius-sm);
+  --radius-sm: var(--ds-radius-sm);
+  --radius-md: var(--ds-radius-md);
+  --radius-lg: var(--ds-radius-lg);
+  --radius-full: 9999px;
+
+  --spacing-xs: var(--ds-space-xs);
+  --spacing-sm: var(--ds-space-sm);
+  --spacing-lg: var(--ds-space-md);
+  --spacing-xl: var(--ds-space-lg);
+  --spacing-2xl: var(--ds-space-xl);
+
+  --font-family: var(--ds-font-sans);
+  --font-size-ui-tiny: var(--ds-font-size-xs);
+  --font-size-ui-sm: var(--ds-font-size-sm);
+  --font-size-ui-md: var(--ds-font-size-base);
+  --font-size-ui-lg: var(--ds-font-size-lg);
+  --font-size-display-lg: var(--ds-font-size-display-lg);
+  --font-size-display-md: var(--ds-font-size-display);
+  --font-size-display-sm: var(--ds-font-size-xl);
+
+  --status-success-text: var(--ds-success);
+  --status-warning-text: var(--ds-warning);
+  --status-error-text: var(--ds-error);
+  --status-info-text: var(--ds-info);
+}
+
+/* ============================================================================
+ * UTILITY CLASSES
+ * ============================================================================ */
+
+/* Text colors */
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-tertiary {
+  color: var(--text-tertiary);
+}
+
+.text-disabled {
+  color: var(--text-disabled);
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+
+.text-info {
+  color: var(--color-info);
+}
+
+.text-brand {
+  color: var(--color-brand-gold);
+}
+
+/* Background colors */
+.bg-base {
+  background: var(--surface-base);
+}
+
+.bg-elevated {
+  background: var(--surface-elevated);
+}
+
+.bg-overlay {
+  background: var(--surface-overlay);
+}
+
+.bg-success {
+  background: var(--status-success-bg);
+}
+
+.bg-warning {
+  background: var(--status-warning-bg);
+}
+
+.bg-error {
+  background: var(--status-error-bg);
+}
+
+.bg-info {
+  background: var(--status-info-bg);
+}
+
+.bg-primary {
+  background: var(--status-primary-bg);
+}
+
+/* Border colors */
+.border-default {
+  border-color: var(--surface-border);
+}
+
+.border-hover {
+  border-color: var(--surface-border-hover);
+}
+
+.border-active {
+  border-color: var(--surface-border-active);
+}
+
+.border-success {
+  border-color: var(--status-success-border);
+}
+
+.border-warning {
+  border-color: var(--status-warning-border);
+}
+
+.border-error {
+  border-color: var(--status-error-border);
+}
+
+.border-info {
+  border-color: var(--status-info-border);
+}
+
+.border-primary {
+  border-color: var(--status-primary-border);
+}
+
+/* Spacing utilities */
+.p-0 {
+  padding: var(--spacing-0);
+}
+
+.p-xs {
+  padding: var(--spacing-xs);
+}
+
+.p-sm {
+  padding: var(--spacing-sm);
+}
+
+.p-md {
+  padding: var(--spacing-md);
+}
+
+.p-lg {
+  padding: var(--spacing-lg);
+}
+
+.p-xl {
+  padding: var(--spacing-xl);
+}
+
+.p-2xl {
+  padding: var(--spacing-2xl);
+}
+
+.m-0 {
+  margin: var(--spacing-0);
+}
+
+.m-xs {
+  margin: var(--spacing-xs);
+}
+
+.m-sm {
+  margin: var(--spacing-sm);
+}
+
+.m-md {
+  margin: var(--spacing-md);
+}
+
+.m-lg {
+  margin: var(--spacing-lg);
+}
+
+.m-xl {
+  margin: var(--spacing-xl);
+}
+
+.m-2xl {
+  margin: var(--spacing-2xl);
+}
+
+.gap-xs {
+  gap: var(--spacing-xs);
+}
+
+.gap-sm {
+  gap: var(--spacing-sm);
+}
+
+.gap-md {
+  gap: var(--spacing-md);
+}
+
+.gap-lg {
+  gap: var(--spacing-lg);
+}
+
+.gap-xl {
+  gap: var(--spacing-xl);
+}
+
+/* Border radius utilities */
+.rounded-none {
+  border-radius: var(--radius-none);
+}
+
+.rounded-xs {
+  border-radius: var(--radius-xs);
+}
+
+.rounded-sm {
+  border-radius: var(--radius-sm);
+}
+
+.rounded-md {
+  border-radius: var(--radius-md);
+}
+
+.rounded-lg {
+  border-radius: var(--radius-lg);
+}
+
+.rounded-full {
+  border-radius: var(--radius-full);
+}
+
+/* Typography utilities */
+.font-normal {
+  font-weight: 400;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-extrabold {
+  font-weight: 800;
+}
+
+.text-xs {
+  font-size: var(--font-size-ui-tiny);
+}
+
+.text-sm {
+  font-size: var(--font-size-ui-sm);
+}
+
+.text-base {
+  font-size: var(--font-size-ui-md);
+}
+
+.text-lg {
+  font-size: var(--font-size-ui-lg);
+}
+
+.text-xl {
+  font-size: var(--font-size-h3);
+}
+
+.text-2xl {
+  font-size: var(--font-size-h2);
+}
+
+.text-3xl {
+  font-size: var(--font-size-h1);
+}
+
+/* Transition utilities */
+.transition-fast {
+  transition: all var(--transition-fast);
+}
+
+.transition-standard {
+  transition: all var(--transition-standard);
+}
+
+.transition-slow {
+  transition: all var(--transition-slow);
+}
+
+/* ============================================================================
+ * DASHBOARD LAYOUT — Dark theme for admin (sidebar + content)
+ * Ensures sidebar and all admin content use dark tokens.
+ * ============================================================================ */
+
+.dashboard-layout {
+  --surface-base: #111827;
+  --surface-elevated: #1f2937;
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-tertiary: rgba(255, 255, 255, 0.5);
+}
+
+/* ============================================================================
+ * ADMIN CONTENT — Dark theme enforcement (Design System §4.2, §7.1)
+ * Force dark surface/card tokens inside admin so cards are never pure white.
+ * ============================================================================ */
+
+.admin-content {
+  --card-bg-on-dark: #1f2937;
+  --surface-elevated: #1f2937;
+  --surface-base: #111827;
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-tertiary: rgba(255, 255, 255, 0.5);
+}
+
+/* ============================================================================
+ * ADMIN CONTENT — Typography override (Design System §2, §7)
+ * Applied to main content inside DashboardLayout so page titles and text
+ * use high-contrast tokens on dark background (no gray-900 on dark).
+ * ============================================================================ */
+
+.admin-content h1,
+.admin-content h2,
+.admin-content .text-2xl,
+.admin-content .text-xl {
+  color: var(--heading-page, var(--text-primary));
+}
+
+.admin-content p.text-sm,
+.admin-content .text-gray-600,
+.admin-content .text-gray-500 {
+  color: var(--text-secondary);
+}
+
+.admin-content .text-gray-900 {
+  color: var(--text-primary);
+}
+
+/* ============================================================================
+ * ADMIN CONTENT — Cards and surfaces (Design System §4.2)
+ * Cards on dark background use elevated surface, not pure white.
+ * ============================================================================ */
+
+.admin-content .bg-white {
+  background-color: var(--card-bg-on-dark) !important;
+}
+
+.admin-content .border-gray-200,
+.admin-content .border-gray-300 {
+  border-color: var(--surface-border) !important;
+}
+
+.admin-content .divide-gray-100 > * + * {
+  border-color: var(--surface-border) !important;
+}
+
+.admin-content .text-gray-700 {
+  color: var(--text-secondary) !important;
+}
+
+.admin-content .text-gray-400,
+.admin-content .placeholder-gray-400::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+/* Inputs inside admin cards: dark-friendly border and bg */
+.admin-content input[type="text"],
+.admin-content input[type="search"],
+.admin-content input[type="email"],
+.admin-content select {
+  background-color: var(--surface-base) !important;
+  border-color: var(--surface-border) !important;
+  color: var(--text-primary) !important;
+}
+
+.admin-content input::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+/* Focus ring on inputs: use primary instead of violet */
+.admin-content input:focus,
+.admin-content select:focus {
+  border-color: var(--color-primary) !important;
+  outline: none;
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+/* Table header row (often bg-gray-50) */
+.admin-content .bg-gray-50 {
+  background-color: var(--surface-overlay) !important;
+}
+
+/* Skeleton / placeholder (bg-gray-200) */
+.admin-content .bg-gray-200 {
+  background-color: var(--surface-border) !important;
+}
+
+/* Pagination / active state: violet → primary */
+.admin-content .bg-violet-100 {
+  background-color: var(--status-primary-bg) !important;
+}
+.admin-content .text-violet-800 {
+  color: var(--color-primary) !important;
+}
+.admin-content .hover\:bg-gray-50:hover,
+.admin-content .hover\:bg-gray-100:hover {
+  background-color: var(--surface-overlay) !important;
+}

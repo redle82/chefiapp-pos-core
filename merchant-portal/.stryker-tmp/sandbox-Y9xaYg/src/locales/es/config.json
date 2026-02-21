@@ -1,0 +1,36 @@
+{
+  "people": {
+    "addTitle": "Añadir persona",
+    "description": "Cree personas (empleados/gerentes) para operar el restaurante.",
+    "noRestaurant": "Seleccione o cree un restaurante para gestionar personas.",
+    "emptyState": "Aún no hay personas. Use el formulario de arriba para añadir.",
+    "role": { "staff": "Empleado (staff)", "manager": "Gerente" },
+    "error": {
+      "addFailed": "Error al añadir persona",
+      "codeGenFailed": "No se pudo generar un código único. Inténtelo de nuevo.",
+      "removeFailed": "Error al eliminar"
+    }
+  },
+  "publicPage": {
+    "title": "Página pública",
+    "description": "Estos campos aparecen en la página pública del restaurante.",
+    "addressLabel": "Dirección (una línea)",
+    "hoursLabel": "Horarios (texto libre)",
+    "saved": "Guardado. La página pública será actualizada.",
+    "notConfigured": "Complete la configuración del restaurante para editar.",
+    "error": { "saveFailed": "Error al guardar" }
+  },
+  "perception": {
+    "saveLink": "Guardar enlace",
+    "saved": "Guardado.",
+    "hideLive": "Ocultar transmisión",
+    "showLive": "Ver en vivo",
+    "cameraCheck": "Confirmación — ¿Cámara encendida?",
+    "cameraCheckDesc": "Use «Ver en vivo» para confirmar si la cámara está activa."
+  },
+  "locations": {
+    "add": "Añadir local",
+    "backToList": "Volver a la lista",
+    "emptyState": "Aún no tiene locales. Use el botón de abajo para añadir el primero."
+  }
+}

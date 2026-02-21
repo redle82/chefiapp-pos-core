@@ -69,36 +69,9 @@ services:
           memory: 512M
 
   # --------------------------------------------------------------------------
-  # Webhook servers: resource limits
+  # Backend (integration-gateway): resource limits
   # --------------------------------------------------------------------------
-  webhook-server:
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: "0.5"
-
-  billing-webhook-server:
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: "0.5"
-
-  # --------------------------------------------------------------------------
-  # Subscription UI: resource limits
-  # --------------------------------------------------------------------------
-  subscription-ui:
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: "0.5"
-
-  # --------------------------------------------------------------------------
-  # Web Module API: resource limits
-  # --------------------------------------------------------------------------
-  web-module-api:
+  backend:
     deploy:
       resources:
         limits:

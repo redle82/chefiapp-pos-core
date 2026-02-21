@@ -1,0 +1,31 @@
+{
+  "welcome": {
+    "title": "Bem-vindo ao ChefIApp",
+    "subtitle": "Em 3 passos você já está vendendo. Sem instalações complexas.",
+    "startNow": "Começar agora",
+    "trialInfo": "14 dias grátis · Sem compromisso · Cancele quando quiser"
+  },
+  "error": {
+    "acceptTerms": "Aceite os Termos e a Política de Privacidade para continuar.",
+    "invalidRestaurantId": "O identificador do restaurante não é válido."
+  },
+  "product": {
+    "title": "Primeiro produto (opcional)",
+    "subtitle": "Você pode adicionar um produto ou continuar sem adicionar.",
+    "nameLabel": "Nome do produto *",
+    "priceLabel": "Preço (R$) *",
+    "creating": "Criando...",
+    "createAndOpen": "Criar e abrir PDV",
+    "openingTPV": "Abrindo PDV...",
+    "skipToTPV": "Continuar sem adicionar agora",
+    "goToConfig": "Ir para configuração",
+    "noRestaurant": "Restaurante não encontrado. Crie um restaurante na tela inicial e volte.",
+    "error": {
+      "nameRequired": "Nome do produto é obrigatório.",
+      "invalidPrice": "Preço deve ser um número ≥ 0 (ex: 2.50).",
+      "noRestaurant": "Restaurante não encontrado. Volte ao início.",
+      "createFailed": "Produto não foi criado.",
+      "generic": "Erro ao criar produto."
+    }
+  }
+}

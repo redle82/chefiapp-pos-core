@@ -1,0 +1,364 @@
+/* TaskSystemMinimal.module.css */
+
+.loadingState {
+  padding: 40px;
+  text-align: center;
+}
+
+.loadingDetail {
+  font-size: 12px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 24px;
+}
+
+.errorBox {
+  padding: 12px;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.checklistSection {
+  margin-bottom: 24px;
+}
+
+.filtersContainer {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  padding: 16px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.filterLabel {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+.filterSelect {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.buttonContainer {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.generateButton {
+  padding: 8px 16px;
+  background-color: #10b981;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.generateButton[data-generating="true"] {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.refreshButton {
+  padding: 8px 16px;
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.statCard {
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.statCard[data-type="critical"] {
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+}
+
+.statCard[data-type="high"] {
+  background-color: #fff7ed;
+  border: 1px solid #fdba74;
+}
+
+.statCard[data-type="total"] {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.statCard[data-type="critical"] .statValue {
+  color: #dc2626;
+}
+
+.statCard[data-type="high"] .statValue {
+  color: #ea580c;
+}
+
+.statCard[data-type="total"] .statValue {
+  color: #374151;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: #666;
+}
+
+.tasksList {
+  display: grid;
+  gap: 12px;
+}
+
+.emptyState {
+  padding: 40px;
+  text-align: center;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  color: #666;
+}
+
+.emptyTitle {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.emptyMessage {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.emptyTip {
+  font-size: 12px;
+  color: #999;
+  margin-top: 16px;
+}
+
+.emptyTipList {
+  text-align: left;
+  display: inline-block;
+  margin-top: 8px;
+}
+
+.emptyGenerateButton {
+  margin-top: 16px;
+  padding: 8px 16px;
+  background-color: #10b981;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.emptyGenerateButton[data-generating="true"] {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.taskCard {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 2px solid;
+}
+
+.taskCard[data-priority="critica"] {
+  border-color: #dc2626;
+}
+
+.taskCard[data-priority="alta"] {
+  border-color: #ea580c;
+}
+
+.taskCard[data-priority="media"] {
+  border-color: #eab308;
+}
+
+.taskCard[data-priority="low"] {
+  border-color: #6b7280;
+}
+
+.taskHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 12px;
+}
+
+.taskBody {
+  flex: 1;
+}
+
+.taskMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.taskIcon {
+  font-size: 20px;
+}
+
+.stationBadge {
+  font-size: 14px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.stationBadge[data-station="BAR"] {
+  color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+.stationBadge[data-station="KITCHEN"] {
+  color: #ea580c;
+  background-color: rgba(234, 88, 12, 0.2);
+}
+
+.stationBadge[data-station="SERVICE"] {
+  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.2);
+}
+
+.stationBadge[data-station="default"] {
+  color: #6b7280;
+  background-color: rgba(107, 114, 128, 0.2);
+}
+
+.priorityBadge {
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.priorityBadge[data-priority="CRITICA"] {
+  color: #dc2626;
+  background-color: rgba(220, 38, 38, 0.2);
+}
+
+.priorityBadge[data-priority="ALTA"] {
+  color: #ea580c;
+  background-color: rgba(234, 88, 12, 0.2);
+}
+
+.priorityBadge[data-priority="MEDIA"] {
+  color: #ca8a04;
+  background-color: rgba(202, 138, 4, 0.2);
+}
+
+.priorityBadge[data-priority="LOW"] {
+  color: #65a30d;
+  background-color: rgba(101, 163, 13, 0.2);
+}
+
+.priorityBadge[data-priority="default"] {
+  color: #6b7280;
+  background-color: rgba(107, 114, 128, 0.2);
+}
+
+.taskType {
+  font-size: 12px;
+  color: #666;
+}
+
+.taskMessage {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.taskContext {
+  font-size: 12px;
+  color: #666;
+  background-color: #f9fafb;
+  padding: 8px;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.taskTimestamp {
+  font-size: 12px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.autoGeneratedBadge {
+  margin-left: 8px;
+  color: #3b82f6;
+}
+
+.taskActions {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+}
+
+.acknowledgeButton {
+  padding: 6px 12px;
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.resolveButton {
+  padding: 6px 12px;
+  background-color: #10b981;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.dismissButton {
+  padding: 6px 12px;
+  background-color: #6b7280;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}

@@ -1,0 +1,61 @@
+.container {
+  padding: 8px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #1c1c1e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: default;
+  transition: all 0.2s ease;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.pending {
+  border-color: #ff9f0a;
+  color: #ff9f0a;
+}
+
+.offline {
+  border-color: #ff453a;
+  color: #ff453a;
+}
+
+.online {
+  color: #30d158;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dotPending {
+  background-color: #ff9f0a;
+  box-shadow: 0 0 8px rgba(255, 159, 10, 0.5);
+}
+
+.dotOffline {
+  background-color: #ff453a;
+  box-shadow: 0 0 8px rgba(255, 69, 58, 0.5);
+}
+
+.dotOnline {
+  background-color: #30d158;
+  box-shadow: 0 0 8px rgba(48, 209, 88, 0.5);
+}
+
+.syncingIcon {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.onlineText {
+  opacity: 0.8;
+}

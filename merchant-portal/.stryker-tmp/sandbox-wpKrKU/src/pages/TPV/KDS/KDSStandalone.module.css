@@ -1,0 +1,9 @@
+.errorMessage {
+  padding: 40px;
+  color: white;
+}
+
+.flashPrevention {
+  background: #000;
+  height: 100vh;
+}

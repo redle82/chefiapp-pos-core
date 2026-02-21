@@ -1,0 +1,262 @@
+/* BootstrapPage.module.css */
+
+.pageRoot {
+  background: #0d0d0e;
+  min-height: 100vh;
+  color: #ffffff;
+}
+
+.pageContainer {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 0 24px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  max-width: 420px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Create Form State */
+.heading {
+  font-size: 22px;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  margin-bottom: 48px;
+  font-size: 14px;
+  color: #a3a3a3;
+}
+
+.formCard {
+  width: 100%;
+  max-width: 320px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+}
+
+/* Spinner States */
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(50, 215, 75, 0.2);
+  border-top-color: #32d74b;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 24px;
+}
+
+.spinnerGlow {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(50, 215, 75, 0.2);
+  border-top-color: #32d74b;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 24px;
+  box-shadow: 0 0 20px rgba(50, 215, 75, 0.1);
+}
+
+/* Headings */
+.headingWhite {
+  font-size: 22px;
+  color: #fff;
+}
+
+.heading22 {
+  font-size: 22px;
+}
+
+/* Progress Text */
+.progressSuccess {
+  margin-top: 10px;
+  color: #32d74b;
+}
+
+.progressSuccessLarge {
+  margin-top: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #32d74b;
+}
+
+.progressMuted {
+  margin-top: 10px;
+  opacity: 0.6;
+}
+
+.progressText {
+  margin-top: 10px;
+}
+
+.textSpaced {
+  margin-top: 10px;
+  margin-bottom: 24px;
+}
+
+/* Icon States */
+.iconTimeout {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 59, 48, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(255, 59, 48, 0.3);
+}
+
+.iconSuccess {
+  width: 60px;
+  height: 60px;
+  background: rgba(50, 215, 75, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: 24px;
+  border: 1px solid #32d74b;
+  box-shadow: 0 0 30px rgba(50, 215, 75, 0.2);
+}
+
+.iconSuccessDot {
+  width: 12px;
+  height: 12px;
+  background: #32d74b;
+  border-radius: 50%;
+}
+
+.iconError {
+  width: 60px;
+  height: 60px;
+  background: rgba(239, 83, 80, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: 24px;
+}
+
+/* Button Container */
+.buttonContainer {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Buttons */
+.buttonOutlineGreen {
+  padding: 14px 24px;
+  background: transparent;
+  border: 1px solid #32d74b;
+  border-radius: 10px;
+  color: #32d74b;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.buttonOutlineGreen:hover {
+  background: rgba(50, 215, 75, 0.05);
+}
+
+.buttonSolidGreen {
+  padding: 14px 24px;
+  background: #32d74b;
+  border: none;
+  border-radius: 10px;
+  color: #000;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.buttonSolidGreen:hover {
+  background: #2bc042;
+}
+
+.buttonOutlineGreenWithMargin {
+  padding: 14px 24px;
+  background: rgba(50, 215, 75, 0.1);
+  border: 1px solid #32d74b;
+  border-radius: 10px;
+  color: #32d74b;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.buttonOutlineGreenWithMargin:hover {
+  background: rgba(50, 215, 75, 0.15);
+}
+
+.buttonOutlineDark {
+  padding: 14px 24px;
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 10px;
+  color: #888;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+}
+
+.buttonOutlineDark:hover {
+  background: rgba(51, 51, 51, 0.1);
+}
+
+/* Error State */
+.errorContainer {
+  margin-top: 16px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.errorActions {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.errorHint {
+  font-size: 13px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

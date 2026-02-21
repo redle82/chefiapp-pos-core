@@ -1,0 +1,137 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+}
+
+.brand {
+  margin-bottom: 32px;
+  padding-left: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.navColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 8px;
+  margin-right: -8px;
+}
+
+.groupContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.groupHeader {
+  padding-left: 16px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #a1a1aa; /* theme.text.secondary */
+}
+
+.groupHeader[data-expanded="true"] {
+  opacity: 0.8;
+}
+
+.groupHeader[data-expanded="false"] {
+  opacity: 0.4;
+}
+
+.chevron {
+  font-size: 10px;
+}
+
+.groupItems {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItem {
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: all 0.2s;
+  background-color: transparent;
+  color: #a1a1aa; /* theme.text.secondary */
+  border: 1px solid transparent;
+}
+
+.navItem[data-active="true"] {
+  background-color: #27272a; /* theme.surface.layer2 */
+  color: #fafafa; /* theme.text.primary */
+  border-color: #3f3f46; /* theme.border.strong */
+}
+
+.navItem[data-locked="true"] {
+  opacity: 0.5;
+}
+
+.navItemLabel {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.navItemLabel[data-active="true"] {
+  font-weight: 700;
+}
+
+.navItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navItemIcon {
+  font-size: 16px;
+}
+
+.statusBadge {
+  font-size: 8px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.statusBadgeExperimental {
+  composes: statusBadge;
+  background: rgba(50, 215, 75, 0.1);
+  color: #32d74b;
+}
+
+.statusBadgeOther {
+  composes: statusBadge;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+}
+
+.footer {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid #27272a; /* theme.border.subtle */
+}
+
+.coreStatusRow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}

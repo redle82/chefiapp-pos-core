@@ -1,0 +1,109 @@
+/* Stepper Styles */
+
+.stepper {
+  width: 100%;
+  padding: var(--spacing-md, 16px) 0;
+}
+
+.stepper__track {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 4px);
+  margin-bottom: var(--spacing-lg, 24px);
+  padding: 0 var(--spacing-md, 16px);
+}
+
+/* Step circle */
+.stepper__step {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: var(--radius-full, 9999px);
+  border: 2px solid var(--color-neutral-300, #e0e0e0);
+  background-color: var(--color-neutral-0, #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: all 200ms ease;
+  font-weight: 600;
+  color: var(--color-neutral-500, #757575);
+}
+
+.stepper__step--clickable {
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-primary, #2a9d3e);
+    background-color: rgba(42, 157, 62, 0.05);
+  }
+}
+
+.stepper__step--active {
+  border-color: var(--color-primary, #2a9d3e);
+  background-color: var(--color-primary, #2a9d3e);
+  color: var(--color-neutral-0, #ffffff);
+}
+
+.stepper__step--completed {
+  border-color: var(--color-success, #4caf50);
+  background-color: var(--color-success, #4caf50);
+  color: var(--color-neutral-0, #ffffff);
+}
+
+.stepper__number {
+  font-size: 16px;
+}
+
+/* Connection line */
+.stepper__line {
+  flex: 1;
+  height: 2px;
+  background-color: var(--color-neutral-200, #eeeeee);
+  transition: background-color 200ms ease;
+}
+
+.stepper__line--completed {
+  background-color: var(--color-success, #4caf50);
+}
+
+/* Step labels */
+.stepper__labels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: var(--spacing-sm, 8px);
+  padding: 0 var(--spacing-md, 16px);
+}
+
+.stepper__label {
+  text-align: center;
+  opacity: 0.6;
+  transition: opacity 200ms ease;
+}
+
+.stepper__label--active {
+  opacity: 1;
+}
+
+.stepper__label-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-neutral-900, #1a1a1a);
+}
+
+.stepper__label-description {
+  font-size: 11px;
+  color: var(--color-neutral-500, #757575);
+  margin-top: 2px;
+}
+
+/* Mobile responsive */
+@media (max-width: 767px) {
+  .stepper__labels {
+    display: none;
+  }
+
+  .stepper__track {
+    padding: 0;
+  }
+}

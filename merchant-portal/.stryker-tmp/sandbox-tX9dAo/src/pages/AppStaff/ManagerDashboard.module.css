@@ -1,0 +1,86 @@
+.page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 24px;
+}
+
+.content {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.healthCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 20px;
+  padding: 48px 32px;
+  min-height: 220px;
+  transition: all 0.5s ease;
+  border-radius: 16px;
+}
+
+.healthCard[data-alive="true"] {
+  border: 2px solid #059669;
+}
+
+.healthCard[data-alive="false"] {
+  border: 1px solid #27272a;
+}
+
+.healthIcon {
+  font-size: 64px;
+  line-height: 1;
+}
+
+.healthIcon[data-alive="true"] {
+  filter: drop-shadow(0 0 16px rgba(34, 197, 94, 0.4));
+}
+
+.healthLabel {
+  letter-spacing: -0.02em;
+}
+
+.insightsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.insightsTitle {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.insightsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.insightItem {
+  font-size: 13px;
+  color: #d4d4d8;
+}
+
+.detailLinkWrapper {
+  margin-top: 12px;
+}
+
+.detailLink {
+  font-size: 13px;
+  font-weight: 600;
+  color: #059669;
+  text-decoration: none;
+}

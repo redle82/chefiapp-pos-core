@@ -51,13 +51,8 @@
     }
   },
   "cmake.sourceDirectory": "/Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/node_modules/bare-fs",
-  "python.testing.unittestArgs": [
-    "-v",
-    "-s",
-    "./docker-tests",
-    "-p",
-    "*test.py"
-  ],
+  // Python unittest disabled — docker-tests/ contains only JS simulators, not Python tests.
+  // This was causing repeated ImportError spam in the Output panel.
   "python.testing.pytestEnabled": false,
-  "python.testing.unittestEnabled": true
+  "python.testing.unittestEnabled": false
 }

@@ -1,0 +1,93 @@
+@import "tailwindcss";
+/**
+ * ChefIApp Merchant Portal — Global Styles
+ *
+ * Phase 1 DS Hardening: All values now use design tokens.
+ * Import tokens.css for CSS custom properties.
+ */
+
+@import "./ui/design-system/tokens.css";
+
+:root {
+  /* Core Tokens (Base) */
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: var(--text-primary);
+  background-color: var(--surface-base);
+  /* Cinematic Deep Black */
+
+  /* Cinematic Palette */
+  --cinematic-bg: #05050a;
+  --cinematic-accent: #646cff;
+  /* Vivid Blue */
+  --cinematic-accent-glow: rgba(100, 108, 255, 0.4);
+  --cinematic-glass-bg: rgba(255, 255, 255, 0.03);
+  --cinematic-glass-border: rgba(255, 255, 255, 0.08);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--cinematic-glass-bg);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--cinematic-glass-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.text-gradient {
+  background: linear-gradient(to right, #fff, #a5a6f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Force Card Override to fix visibility issue */
+.card {
+  background-color: var(--surface-elevated) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--surface-border) !important;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Selection colors */
+::selection {
+  background: var(--status-primary-bg);
+  color: var(--color-primary);
+}
+
+/* Scrollbar styling (dark theme) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-border-hover);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--surface-border-active);
+}

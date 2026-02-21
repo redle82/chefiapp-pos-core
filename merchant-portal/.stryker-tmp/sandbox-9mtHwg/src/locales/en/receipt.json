@@ -1,0 +1,23 @@
+{
+  "table": "Table:",
+  "order": "Order:",
+  "discount": "Discount:",
+  "tip": "Tip:",
+  "total": "TOTAL:",
+  "paymentMethod": "Payment:",
+  "thankYou": "Thank you for your visit!",
+  "emailSubject": "Receipt — {{restaurant}}",
+  "printTitle": "Receipt",
+  "sendReceipt": "Send Receipt",
+  "emailLabel": "Customer email (optional)",
+  "sendByEmail": "Send by Email",
+  "share": "Share",
+  "copyReceipt": "Copy Receipt",
+  "print": "Print",
+  "sent": "✓ Receipt sent!",
+  "date": "Date:",
+  "defaultRestaurant": "Restaurant",
+  "skip": "Skip",
+  "shareTitle": "Receipt #{{id}}",
+  "orderSummary": "Order #{{id}} — {{total}}"
+}

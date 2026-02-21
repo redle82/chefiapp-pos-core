@@ -1,0 +1,26 @@
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium] › tests/e2e/fase-b-teste-humano.spec.ts:112:3 › Fase B: Chaos Night Simulation › Ato 2: O Erro Humano - Rede e Edição (10.9s)
+
+
+  1) [chromium] › tests/e2e/fase-b-teste-humano.spec.ts:112:3 › Fase B: Chaos Night Simulation › Ato 2: O Erro Humano - Rede e Edição 
+
+    TimeoutError: page.fill: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[type="email"]')[22m
+
+
+      138 |     // Login
+      139 |     await page.goto("/auth");
+    > 140 |     await page.fill('input[type="email"]', "admin@admin.com");
+          |                ^
+      141 |     await page.fill('input[type="password"]', "admin123");
+      142 |     await page.click('button[type="submit"]');
+      143 |     await page.waitForURL("/app/dashboard");
+        at /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/tests/e2e/fase-b-teste-humano.spec.ts:140:16
+
+    Error Context: test-results/fase-b-teste-humano-Fase-B-2d955-Erro-Humano---Rede-e-Edição-chromium/error-context.md
+
+  1 failed
+    [chromium] › tests/e2e/fase-b-teste-humano.spec.ts:112:3 › Fase B: Chaos Night Simulation › Ato 2: O Erro Humano - Rede e Edição 

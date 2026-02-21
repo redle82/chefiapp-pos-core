@@ -1,0 +1,149 @@
+.page {
+  padding: 20px;
+  background: #1a1a1a;
+  min-height: 100vh;
+  color: white;
+}
+
+.shiftBanner {
+  padding: 10px;
+  color: white;
+  font-weight: bold;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.shiftBanner[data-open="true"] {
+  background-color: #7f1d1d;
+}
+
+.shiftBanner[data-open="false"] {
+  background-color: #064e3b;
+}
+
+.flightSection {
+  margin-top: 40px;
+}
+
+.section {
+  border: 1px solid #333;
+  padding: 20px;
+  margin-top: 20px;
+  border-radius: 8px;
+}
+
+.configRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.configInput {
+  padding: 8px;
+  background: #333;
+  border: none;
+  color: white;
+  border-radius: 4px;
+}
+
+.configHint {
+  font-size: 12px;
+  color: #888;
+}
+
+.pilotSection {
+  border: 1px solid #333;
+  padding: 20px;
+  margin-top: 20px;
+  border-radius: 8px;
+  background: #111;
+}
+
+.pilotDesc {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 16px;
+}
+
+.seedButton {
+  padding: 8px 16px;
+  background: #d97706;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.statusRow {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.statusBadgeOnline {
+  background: #064e3b;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.statusBadgeReady {
+  background: #333;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.drillSection {
+  margin-top: 10px;
+  border-top: 1px dashed #333;
+  padding-top: 10px;
+}
+
+.drillDesc {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.drillButton {
+  padding: 4px 12px;
+  background: #dc2626;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.shiftSection {
+  border: 1px solid #333;
+  padding: 20px;
+  margin-top: 20px;
+  border-radius: 8px;
+  background: #111;
+}
+
+.shiftButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.openShiftBtn {
+  padding: 8px 16px;
+  background: #10b981;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.closeShiftBtn {
+  padding: 8px 16px;
+  background: #ef4444;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}

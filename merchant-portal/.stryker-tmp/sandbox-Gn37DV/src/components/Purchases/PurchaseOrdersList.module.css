@@ -1,0 +1,78 @@
+/* PurchaseOrdersList.module.css */
+
+.emptyState {
+  padding: 48px;
+  text-align: center;
+  color: #666;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.ordersList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.orderCard {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #fff;
+}
+
+.cardContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.cardBody {
+  flex: 1;
+}
+
+.orderNumber {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.orderDetails {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.orderTotal {
+  margin: 8px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #28a745;
+}
+
+.statusBadge {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.statusBadge[data-status="received"] {
+  background-color: #28a745;
+}
+
+.statusBadge[data-status="confirmed"] {
+  background-color: #007bff;
+}
+
+.statusBadge[data-status="sent"] {
+  background-color: #ffc107;
+}
+
+.statusBadge[data-status="pending"] {
+  background-color: #6c757d;
+}

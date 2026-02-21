@@ -1,0 +1,27 @@
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium] › tests/e2e/fase-b-teste-humano.spec.ts:112:3 › Fase B: Chaos Night Simulation › Ato 2: O Erro Humano - Rede e Edição (11.0s)
+
+
+  1) [chromium] › tests/e2e/fase-b-teste-humano.spec.ts:112:3 › Fase B: Chaos Night Simulation › Ato 2: O Erro Humano - Rede e Edição › Ato 2.1: Tentativa de envio sem internet 
+
+    TimeoutError: page.click: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Enviar")')[22m
+
+
+      157 |
+      158 |       // Tentar enviar
+    > 159 |       await page.click('button:has-text("Enviar")');
+          |                  ^
+      160 |
+      161 |       // Expectativa: Aviso de erro ou fallback
+      162 |       // Se falhar silenciosamente ou travar, "The Hurt Report" ganha um item.
+        at /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/tests/e2e/fase-b-teste-humano.spec.ts:159:18
+        at /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/merchant-portal/tests/e2e/fase-b-teste-humano.spec.ts:136:5
+
+    Error Context: test-results/fase-b-teste-humano-Fase-B-2d955-Erro-Humano---Rede-e-Edição-chromium/error-context.md
+
+  1 failed
+    [chromium] › tests/e2e/fase-b-teste-humano.spec.ts:112:3 › Fase B: Chaos Night Simulation › Ato 2: O Erro Humano - Rede e Edição 

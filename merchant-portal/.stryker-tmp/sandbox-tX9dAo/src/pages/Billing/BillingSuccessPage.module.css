@@ -1,0 +1,69 @@
+/* BillingSuccessPage.module.css */
+
+.pageWrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: #f0fdf4;
+}
+
+.card {
+  max-width: 420px;
+  text-align: center;
+  padding: 32px 24px;
+  border-radius: 16px;
+  background-color: #fff;
+  border: 1px solid #bbf7d0;
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.12);
+}
+
+.icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #166534;
+  margin-bottom: 8px;
+}
+
+.message {
+  font-size: 15px;
+  color: #15803d;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.buttonPrimary {
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background-color: #22c55e;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.linkButton {
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #166534;
+  background-color: transparent;
+  border: 1px solid #22c55e;
+  border-radius: 10px;
+  text-decoration: none;
+  display: block;
+}

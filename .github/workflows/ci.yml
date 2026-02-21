@@ -5,6 +5,13 @@ on:
     branches: [main, develop]
   push:
     branches: [main, develop]
+  # Allow nightly flakiness runs via workflow_dispatch
+  workflow_dispatch:
+    inputs:
+      flakiness_repeat:
+        description: "Repeat-each count for flakiness analysis (default 10)"
+        default: "10"
+        type: string
 
 jobs:
   validate:
@@ -43,9 +50,83 @@ jobs:
         run: bash ./scripts/check-financial-supabase.sh
 
   e2e-smoke:
-    name: E2E Smoke Tests (Playwright)
+    name: E2E Suite (Playwright — 4 layers)
     runs-on: ubuntu-latest
     needs: validate
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed for --only-changed git diff
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: cd merchant-portal && npx playwright install --with-deps chromium
+
+      # ── Boot Integrity Gate (conflict markers + tsc + vite build) ──
+      - name: Boot integrity gate
+        run: SKIP_HEALTH=1 bash scripts/e2e/boot-integrity-gate.sh
+
+      - name: Start preview server
+        run: |
+          npm -w merchant-portal run build
+          npm -w merchant-portal run preview &
+          for i in $(seq 1 30); do curl -s -o /dev/null -w "%{http_code}" http://localhost:4173/ | grep -q 200 && break; sleep 2; done
+
+      # ── Layer 0-3: setup → smoke → contracts → core ──
+      - name: Run E2E (all layers, fail-on-flaky)
+        run: |
+          cd merchant-portal
+          npx playwright test \
+            --fail-on-flaky-tests \
+            --reporter=list \
+            --reporter=json:artifacts/playwright-results.json \
+            --reporter=html
+        env:
+          CI: "true"
+          E2E_NO_WEB_SERVER: "1"
+          E2E_BASE_URL: "http://localhost:4173"
+
+      # ── Artifacts: always upload reports + traces ──
+      - name: Upload Playwright HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-html-report
+          path: merchant-portal/playwright-report/
+          retention-days: 14
+
+      - name: Upload Playwright JSON Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-json-report
+          path: merchant-portal/artifacts/playwright-results.json
+          retention-days: 14
+
+      - name: Upload Traces & Screenshots (failures only)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: merchant-portal/test-results/
+          retention-days: 14
+
+  # ── Nightly / on-demand flakiness analysis ──
+  flakiness-audit:
+    name: Flakiness Audit (repeat-each × N)
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout Repo
@@ -63,33 +144,35 @@ jobs:
       - name: Install Playwright Browsers
         run: cd merchant-portal && npx playwright install --with-deps chromium
 
-      - name: Build merchant-portal
-        run: npm -w merchant-portal run build
-
       - name: Start preview server
         run: |
+          npm -w merchant-portal run build
           npm -w merchant-portal run preview &
           for i in $(seq 1 30); do curl -s -o /dev/null -w "%{http_code}" http://localhost:4173/ | grep -q 200 && break; sleep 2; done
 
-      - name: Run E2E Smoke (fluxo crítico, primeiro restaurante, fluxo total, fase-a, sovereign)
+      - name: Flakiness hunt (repeat-each=${{ inputs.flakiness_repeat || '10' }})
         run: |
           cd merchant-portal
           npx playwright test \
-            tests/e2e/fluxo-critico.spec.ts \
-            tests/e2e/create-first-restaurant.spec.ts \
-            tests/e2e/fluxo-total.spec.ts \
-            tests/e2e/fase-a-global-tecnico.spec.ts \
-            tests/e2e/sovereign-navigation.spec.ts \
-            tests/e2e/restaurante-funcionando.spec.ts \
-            --reporter=list
+            --project=setup --project=contracts --project=core \
+            --repeat-each=${{ inputs.flakiness_repeat || '10' }} \
+            --retries=0 --workers=1 \
+            --fail-on-flaky-tests \
+            --reporter=list \
+            --reporter=json:artifacts/flakiness-results.json
         env:
+          CI: "true"
           E2E_NO_WEB_SERVER: "1"
           E2E_BASE_URL: "http://localhost:4173"
 
-      - name: Upload Playwright Report
-        if: failure()
+      - name: Parse flakiness report
+        if: always()
+        run: python3 scripts/e2e/parse-flakiness.py < merchant-portal/artifacts/flakiness-results.json
+
+      - name: Upload flakiness report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
-          path: merchant-portal/test-results/
-          retention-days: 7
+          name: flakiness-report
+          path: merchant-portal/artifacts/flakiness-results.json
+          retention-days: 30

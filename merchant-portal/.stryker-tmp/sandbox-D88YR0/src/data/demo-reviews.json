@@ -1,0 +1,318 @@
+[
+  {
+    "source": "google",
+    "review_id": "demo-service-1",
+    "rating": 5,
+    "author": "Maria Silva",
+    "text": "Excelente atendimento! O garçom João foi muito atencioso e prestativo. Recomendo!",
+    "published_at": "2025-01-02T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-service-2",
+    "rating": 2,
+    "author": "Carlos Santos",
+    "text": "Atendimento ruim. O garçom demorou muito e foi mal educado. Não voltarei.",
+    "published_at": "2025-01-01T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-service-3",
+    "rating": 4,
+    "author": "Ana Costa",
+    "text": "Bom atendimento, mas poderia ser mais rápido. A equipe foi educada.",
+    "published_at": "2024-12-31T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-service-4",
+    "rating": 1,
+    "author": "Pedro Lima",
+    "text": "Péssimo! O garçom Maria ignorou nossos pedidos várias vezes. Muito desatento.",
+    "published_at": "2024-12-30T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-service-5",
+    "rating": 5,
+    "author": "Julia Ferreira",
+    "text": "Atendimento impecável! Muito atencioso e eficiente. Parabéns à equipe!",
+    "published_at": "2024-12-29T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-clean-1",
+    "rating": 5,
+    "author": "Roberto Alves",
+    "text": "Restaurante muito limpo e organizado. Higiene impecável!",
+    "published_at": "2024-12-28T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-clean-2",
+    "rating": 2,
+    "author": "Fernanda Rocha",
+    "text": "Mesa suja quando chegamos. Banheiro mal cuidado. Precisa melhorar a limpeza.",
+    "published_at": "2024-12-27T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-clean-3",
+    "rating": 4,
+    "author": "Lucas Martins",
+    "text": "Ambiente limpo e bem cuidado. Bem organizado.",
+    "published_at": "2024-12-26T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-clean-4",
+    "rating": 3,
+    "author": "Patricia Souza",
+    "text": "Limpeza ok, mas poderia ser melhor. Alguns cantos com poeira.",
+    "published_at": "2024-12-25T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-price-1",
+    "rating": 4,
+    "author": "Ricardo Oliveira",
+    "text": "Preço justo para a qualidade. Vale a pena!",
+    "published_at": "2024-12-24T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-price-2",
+    "rating": 2,
+    "author": "Sandra Costa",
+    "text": "Muito caro para o que oferece. Não vale o preço. Complicado de usar o sistema.",
+    "published_at": "2024-12-23T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-price-3",
+    "rating": 5,
+    "author": "Marcos Silva",
+    "text": "Excelente custo-benefício! Preço razoável e comida ótima.",
+    "published_at": "2024-12-22T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-price-4",
+    "rating": 1,
+    "author": "Beatriz Lima",
+    "text": "Caro demais! Muito dinheiro para pouco resultado. Não resolveu minha expectativa.",
+    "published_at": "2024-12-21T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-price-5",
+    "rating": 3,
+    "author": "Thiago Santos",
+    "text": "Preço ok, mas comparado com outros lugares, está um pouco alto.",
+    "published_at": "2024-12-20T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-price-6",
+    "rating": 2,
+    "author": "Camila Rocha",
+    "text": "Sistema confuso e não funciona direito. Por esse preço, esperava mais.",
+    "published_at": "2024-12-19T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-product-1",
+    "rating": 5,
+    "author": "Gabriel Alves",
+    "text": "Comida deliciosa! Saboroso e bem feito. Perfeito!",
+    "published_at": "2024-12-18T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-product-2",
+    "rating": 2,
+    "author": "Isabela Ferreira",
+    "text": "Comida sem sabor. Prato chegou frio. Qualidade ruim.",
+    "published_at": "2024-12-17T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-product-3",
+    "rating": 4,
+    "author": "Rafael Martins",
+    "text": "Bom sabor, comida bem preparada. Recomendo!",
+    "published_at": "2024-12-16T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-product-4",
+    "rating": 1,
+    "author": "Larissa Souza",
+    "text": "Comida queimada e sem qualidade. Péssimo!",
+    "published_at": "2024-12-15T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-product-5",
+    "rating": 5,
+    "author": "Bruno Oliveira",
+    "text": "Excelente comida! Sabor incrível e pratos bem apresentados.",
+    "published_at": "2024-12-14T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-product-6",
+    "rating": 3,
+    "author": "Amanda Costa",
+    "text": "Comida ok, mas nada especial. Esperava mais pelo preço.",
+    "published_at": "2024-12-13T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-ambiance-1",
+    "rating": 5,
+    "author": "Felipe Rocha",
+    "text": "Ambiente agradável e aconchegante. Muito bonito!",
+    "published_at": "2024-12-12T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-ambiance-2",
+    "rating": 2,
+    "author": "Carolina Lima",
+    "text": "Muito barulhento e desconfortável. Ambiente ruim.",
+    "published_at": "2024-12-11T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-ambiance-3",
+    "rating": 4,
+    "author": "Gustavo Silva",
+    "text": "Bom ambiente, confortável e bem decorado.",
+    "published_at": "2024-12-10T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-ambiance-4",
+    "rating": 3,
+    "author": "Renata Alves",
+    "text": "Ambiente ok, mas poderia ser mais aconchegante.",
+    "published_at": "2024-12-09T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-wait-1",
+    "rating": 5,
+    "author": "Daniel Ferreira",
+    "text": "Atendimento rápido! Sem espera. Muito eficiente!",
+    "published_at": "2024-12-08T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-wait-2",
+    "rating": 1,
+    "author": "Vanessa Santos",
+    "text": "Demorou muito! Espera de mais de 1 hora. Muito lento.",
+    "published_at": "2024-12-07T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-wait-3",
+    "rating": 3,
+    "author": "André Martins",
+    "text": "Espera um pouco longa, mas a comida compensa.",
+    "published_at": "2024-12-06T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-wait-4",
+    "rating": 2,
+    "author": "Juliana Rocha",
+    "text": "Muito atraso. Pedido demorou demais para chegar. Péssimo!",
+    "published_at": "2024-12-05T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-wait-5",
+    "rating": 4,
+    "author": "Rodrigo Lima",
+    "text": "Rápido e eficiente. Sem demora no atendimento.",
+    "published_at": "2024-12-04T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-wait-6",
+    "rating": 1,
+    "author": "Tatiana Costa",
+    "text": "Espera muito longa. Muito tempo até o pedido chegar. Não recomendo.",
+    "published_at": "2024-12-03T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-mixed-1",
+    "rating": 4,
+    "author": "Leonardo Souza",
+    "text": "Bom atendimento, comida deliciosa, mas demorou um pouco. Preço justo.",
+    "published_at": "2024-12-02T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-mixed-2",
+    "rating": 2,
+    "author": "Priscila Alves",
+    "text": "Atendimento ruim, comida fria, muito caro e demorou muito. Não voltarei.",
+    "published_at": "2024-12-01T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-mixed-3",
+    "rating": 5,
+    "author": "Eduardo Ferreira",
+    "text": "Excelente! Atendimento rápido, comida deliciosa, ambiente agradável e preço justo.",
+    "published_at": "2024-11-30T12:00:00.000Z",
+    "language": "pt"
+  },
+  {
+    "source": "google",
+    "review_id": "demo-mixed-4",
+    "rating": 3,
+    "author": "Mariana Santos",
+    "text": "Comida boa, mas atendimento lento e ambiente barulhento. Preço ok.",
+    "published_at": "2024-11-29T12:00:00.000Z",
+    "language": "pt"
+  }
+]
+

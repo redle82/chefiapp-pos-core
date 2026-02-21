@@ -1,0 +1,47 @@
+/* RiskChip Styles */
+
+.risk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs, 4px);
+  padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+  border-radius: var(--radius-xs, 4px);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.risk-chip--low {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: #2e7d32;
+  border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.risk-chip--medium {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: #e65100;
+  border: 1px solid rgba(255, 152, 0, 0.2);
+}
+
+.risk-chip--high {
+  background-color: rgba(239, 83, 80, 0.1);
+  color: #c62828;
+  border: 1px solid rgba(239, 83, 80, 0.2);
+}
+
+.risk-chip__icon {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.risk-chip__label {
+  font-weight: 600;
+}
+
+.risk-chip__value {
+  margin-left: var(--spacing-xs, 4px);
+  font-weight: 700;
+  opacity: 0.8;
+}

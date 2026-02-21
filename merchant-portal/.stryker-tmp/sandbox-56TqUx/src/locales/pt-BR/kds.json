@@ -1,0 +1,34 @@
+{
+  "badge": { "new": "NOVO", "late": "ATRASADO" },
+  "processing": "PROCESSANDO…",
+  "startPrep": "INICIAR PREPARO",
+  "markReady": "MARCAR PRONTO",
+  "emptyTitle": "Bancada Limpa",
+  "emptyDescription": "Sem pedidos ativos. Mantenha o foco.",
+  "backToHome": "Voltar ao início",
+  "refresh": "Atualizar",
+  "errorUpdateOrder": "Erro ao atualizar pedido",
+  "noConnection": "Sem conexão. Tentando reconectar.",
+  "offlineReconnecting": "Offline — tentando reconectar",
+  "modeProduction": "Produção",
+  "modeIdle": "Mise en Place",
+  "soundOn": "Ativar som",
+  "soundOff": "Desativar som",
+  "sendToKitchen": "Enviar Cozinha ►",
+  "receiveAndClose": "Receber / Fechar $",
+  "recover": "Recuperar",
+  "station": {
+    "all": "TODOS",
+    "kitchen": "COZINHA",
+    "bar": "BAR",
+    "custom": "ESTAÇÃO {{name}}"
+  },
+  "lane": {
+    "newOrders": "Novos Pedidos",
+    "preparing": "Em Preparação",
+    "waitingForOrders": "Aguardando entrada...",
+    "stationFree": "Bancada livre."
+  },
+  "installTitle": "Instalar KDS",
+  "installDescription": "Instale o Monitor de Cozinha para operar em tela cheia e sem distrações."
+}

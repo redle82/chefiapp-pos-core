@@ -1,0 +1,155 @@
+.section {
+  margin-top: 32px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.refreshButton {
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background-color: transparent;
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.refreshButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.errorText {
+  font-size: 13px;
+  color: var(--color-error);
+  margin-bottom: 12px;
+}
+
+.noteText {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.card {
+  padding: 24px;
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  background-color: var(--card-bg-on-dark);
+}
+
+.cardTitle {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.cardValue {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.valueOk {
+  color: var(--color-success);
+}
+
+.valueWarn {
+  color: var(--status-warning-text);
+}
+
+.valueError {
+  color: var(--color-error);
+}
+
+.cardNote {
+  margin: 4px 0 0 0;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.failuresPanel {
+  padding: 16px 20px;
+  background-color: var(--status-error-bg);
+  border-radius: 10px;
+  border: 1px solid var(--status-error-border);
+}
+
+.failuresTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-error);
+  margin: 0 0 12px 0;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.tableHeadRow {
+  border-bottom: 1px solid var(--status-error-border);
+}
+
+.tableRow {
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.tableHeaderCell {
+  text-align: left;
+  padding: 6px 8px;
+  color: var(--color-error);
+  font-weight: 500;
+}
+
+.tableHeaderCellFirst {
+  padding-left: 0;
+}
+
+.tableCell {
+  padding: 6px 8px;
+  color: var(--text-primary);
+}
+
+.tableCellFirst {
+  padding-left: 0;
+  white-space: nowrap;
+}
+
+.tableCellError {
+  max-width: 400px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.emptyState {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+}

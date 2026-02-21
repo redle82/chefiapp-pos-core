@@ -1,0 +1,13 @@
+{
+  "loading": "Cargando reservas...",
+  "unavailable": "Reservas no disponibles",
+  "emptyDay": "Sin reservas para este día",
+  "emptyHint": "Haga clic en \"+ Nueva Reserva\" para añadir.",
+  "newReservation": "+ Nueva Reserva",
+  "editReservation": "Editar Reserva",
+  "partySize": "Personas *",
+  "duration": "Duración (min)",
+  "specialRequests": "Peticiones especiales",
+  "specialRequestsPlaceholder": "Alergias, preferencias...",
+  "stats": "{{reservations}} reservas · {{guests}} personas"
+}

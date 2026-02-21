@@ -1,0 +1,20 @@
+TPV Mínimo - Criar Pedido
+Ligação: Ativa
+Venda para:
+Balcão
+Produtos Disponíveis
+Café
+€ 1.80
+Água
+€ 1.50
+Água com gás
+€ 1.70
+Refrigerante
+€ 2.50
+Cerveja
+€ 3.00
+Carrinho
+
+Carrinho vazio
+
+Adicione produtos ao carrinho para criar um pedido.

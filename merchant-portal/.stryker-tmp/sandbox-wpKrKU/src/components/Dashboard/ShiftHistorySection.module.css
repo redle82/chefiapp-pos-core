@@ -1,0 +1,166 @@
+.section {
+  margin-top: 24px;
+  padding: 20px 24px;
+  border-radius: 14px;
+}
+
+.sectionMuted {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.sectionLight {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.sectionError {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  padding: 16px 24px;
+}
+
+.heading {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.headingTight {
+  margin-bottom: 8px;
+}
+
+.headingSpaced {
+  margin-bottom: 12px;
+}
+
+.paragraph {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.paragraphSpaced {
+  margin-bottom: 12px;
+}
+
+.retryButton {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background-color: #3b82f6;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.headingInline {
+  margin: 0;
+}
+
+.refreshButton {
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #64748b;
+  background-color: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.refreshButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.activeCard {
+  margin-bottom: 24px;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tableHeadRow {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.headerCell {
+  text-align: left;
+  padding: 8px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.headerCellTightLeft {
+  padding: 8px 8px 8px 0;
+}
+
+.headerCellRight {
+  text-align: right;
+}
+
+.headerCellTightRight {
+  padding: 8px 0 8px 8px;
+  text-align: right;
+}
+
+.bodyRow {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cell {
+  padding: 8px;
+  color: #1e293b;
+}
+
+.cellTightLeft {
+  padding: 8px 8px 8px 0;
+}
+
+.cellRight {
+  text-align: right;
+}
+
+.cellEmphasis {
+  font-weight: 500;
+}
+
+.cellMuted {
+  font-size: 12px;
+  color: #475569;
+}
+
+.differenceCell {
+  padding: 8px 0 8px 8px;
+  text-align: right;
+  font-weight: 500;
+}
+
+.differenceNeutral {
+  color: #64748b;
+}
+
+.differenceOk {
+  color: #15803d;
+}
+
+.differenceWarn {
+  color: #b45309;
+}

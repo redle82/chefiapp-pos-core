@@ -1,0 +1,235 @@
+/* Trigger Button */
+.beta-feedback-trigger {
+    position: fixed;
+    bottom: 32px;
+    left: 32px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: #FF5A1F;
+    /* Brand Orange */
+    border: none;
+    border-radius: 100px;
+    box-shadow: 0 8px 30px rgba(255, 90, 31, 0.4);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-family: 'DM Sans', sans-serif;
+}
+
+.beta-feedback-trigger:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 12px 40px rgba(255, 90, 31, 0.5);
+}
+
+.beta-feedback-icon-pulse {
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
+}
+
+/* Modal Overlay (Optional backdrop, keeping it minimal) */
+.beta-feedback-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal Content */
+.beta-feedback-modal {
+    width: 90%;
+    max-width: 400px;
+    background: #1A1A1A;
+    border: 1px solid #333;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+}
+
+.beta-feedback-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.beta-feedback-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.beta-close-btn {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.beta-close-btn:hover {
+    color: #fff;
+}
+
+/* Form */
+.beta-form-group {
+    margin-bottom: 16px;
+}
+
+.beta-form-group label {
+    display: block;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.beta-type-selector {
+    display: flex;
+    gap: 8px;
+}
+
+.beta-type-selector button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px;
+    background: #252525;
+    border: 1px solid #333;
+    color: #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.beta-type-selector button:hover {
+    background: #333;
+}
+
+.beta-type-selector button.active.bug {
+    background: rgba(255, 87, 87, 0.2);
+    border-color: #FF5757;
+    color: #FF5757;
+}
+
+.beta-type-selector button.active.feature {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: #FFD700;
+    color: #FFD700;
+}
+
+.beta-type-selector button.active.other {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #fff;
+    color: #fff;
+}
+
+.beta-select,
+.beta-textarea {
+    width: 100%;
+    background: #252525;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 12px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.beta-select:focus,
+.beta-textarea:focus {
+    border-color: #666;
+    outline: none;
+}
+
+.beta-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.beta-error-msg {
+    color: #FF5757;
+    font-size: 13px;
+    margin-bottom: 12px;
+    background: rgba(255, 87, 87, 0.1);
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.beta-submit-btn {
+    width: 100%;
+    padding: 12px;
+    background: #fff;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+.beta-submit-btn:hover {
+    background: #ddd;
+}
+
+.beta-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.beta-feedback-success {
+    text-align: center;
+    padding: 40px 0;
+}

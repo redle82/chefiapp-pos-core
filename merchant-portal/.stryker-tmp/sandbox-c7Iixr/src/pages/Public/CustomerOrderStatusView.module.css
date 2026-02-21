@@ -1,0 +1,159 @@
+.page {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  padding: 24px;
+}
+
+.centeredPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9fafb;
+}
+
+.card {
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.centeredCard {
+  text-align: center;
+  padding: 24px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.statusCard {
+  text-align: center;
+  padding: 32px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 32px;
+}
+
+.statusIcon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.statusMessage {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.statusOk {
+  color: #22c55e;
+}
+
+.statusInfo {
+  color: #3b82f6;
+}
+
+.statusNeutral {
+  color: #6b7280;
+}
+
+.statusNote {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.itemsSection {
+  margin-bottom: 24px;
+}
+
+.itemsTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+.itemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+}
+
+.itemName {
+  color: #111827;
+  font-size: 14px;
+}
+
+.itemPrice {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 2px solid #e5e7eb;
+}
+
+.totalLabel {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.totalValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.errorTitle {
+  color: #ef4444;
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+.errorText {
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.errorNote {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

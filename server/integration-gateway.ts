@@ -830,6 +830,18 @@ const server = http.createServer(async (req, res) => {
   const path = req.url?.split("?")[0] ?? "/";
 
   try {
+    if ((path === "/" || path === "") && method === "GET") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          service: "ChefIApp-POS-CORE",
+          gateway: "integration-gateway",
+          health: "/health",
+        }),
+      );
+      return;
+    }
+
     if (path === "/health" && method === "GET") {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "ok", service: "integration-gateway" }));

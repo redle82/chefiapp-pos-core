@@ -1,0 +1,31 @@
+.card {
+  border-left: 4px solid var(--tone-color, #059669);
+}
+
+.content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.loadValue {
+  color: var(--tone-color, #059669);
+}
+
+.loadDetail {
+  font-size: 12px;
+  color: #71717a;
+}
+
+.statusSection {
+  text-align: right;
+}
+
+.statusDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--tone-color, #059669);
+  display: inline-block;
+  margin-right: 6px;
+}

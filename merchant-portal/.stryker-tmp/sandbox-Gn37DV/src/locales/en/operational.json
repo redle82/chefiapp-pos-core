@@ -1,0 +1,68 @@
+{
+  "confirm": "Confirm and go to live operation",
+  "dailyClosing": {
+    "title": "Daily closing",
+    "subtitle": "Shift history (opening, closing, sales and orders) from the last 7 days.",
+    "exportCsv": "⬇ Export CSV",
+    "reconciliation": {
+      "title": "ChefIApp vs fiscal POS reconciliation (last 7 days)",
+      "refresh": "Refresh",
+      "empty": "No reconciliations registered yet. Use the fiscal POS and ChefIApp in parallel and configure the reconciliation flow according to the internal contract.",
+      "shift": "Shift",
+      "posFiscal": "Fiscal POS",
+      "difference": "Difference",
+      "status": "Status",
+      "notes": "Notes",
+      "actions": "Actions",
+      "pendingData": "Awaiting data",
+      "divergent": "Divergent",
+      "edit": "Edit",
+      "modalTitle": "Edit Divergent Reconciliation",
+      "modalMeta": "Shift: {{shiftId}} • Difference: €{{amount}}",
+      "reasonCode": "Reason Code",
+      "reasonCodeTitle": "Reason code for the divergence",
+      "selectPlaceholder": "Select...",
+      "reasonDirectPosSales": "Direct POS sales",
+      "reasonMissingCancellation": "Missing cancellation in POS",
+      "reasonTaxConfigError": "Tax configuration error",
+      "reasonManualAdjustment": "Manual adjustment",
+      "reasonUnderInvestigation": "Under investigation",
+      "reasonResolved": "Resolved",
+      "notesLabel": "Notes",
+      "notesPlaceholder": "Describe the cause of divergence and actions taken...",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "save": "Save"
+    },
+    "csv": {
+      "shift": "Shift",
+      "opened": "Opened",
+      "closed": "Closed",
+      "sales": "Sales (€)",
+      "orders": "Orders",
+      "open": "Open"
+    }
+  },
+  "salesSummary": {
+    "loading": "Loading...",
+    "title": "Sales Summary",
+    "subtitle": "Quick billing overview by period: total sales, cancellations and average ticket. Ideal for answering \"how was the day?\" in seconds.",
+    "filterFrom": "From",
+    "filterTo": "To",
+    "loadingFilter": "Loading…",
+    "apply": "Apply",
+    "exportCsv": "⬇ Export CSV",
+    "emptyTitle": "Not enough data yet.",
+    "emptyText": "Once you start closing bills regularly, this panel shows total sales, cancellations and average ticket for the chosen period.",
+    "grossSales": "Gross sales",
+    "averageTicket": "Average ticket",
+    "closedBills": "Closed bills",
+    "cancellations": "Cancellations",
+    "csv": {
+      "grossSales": "Gross Sales",
+      "averageTicket": "Average Ticket",
+      "closedBills": "Closed Bills",
+      "cancellations": "Cancellations"
+    }
+  }
+}

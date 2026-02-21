@@ -10,8 +10,9 @@
 
 | Componente | Porta (Dev) | Produção |
 |------------|-------------|----------|
-| Merchant Portal | 5175 | app.chefiapp.com (ex.: Vercel) |
-| Core (Docker) | 3001 | api.chefiapp.com ou equivalente |
+| Merchant Portal | 5175 | app.chefiapp.com (Vercel ou Render static) |
+| Backend (API Node) | 4320 | Render: serviço `chefiapp-backend` (integration-gateway) |
+| Core (Docker) | 3001 | api.chefiapp.com ou equivalente (PostgREST + Postgres) |
 | Supabase | — | *.supabase.co |
 
 ---
@@ -140,10 +141,22 @@ Resumo; checklist completo em [GO_LIVE_CHECKLIST.md](./GO_LIVE_CHECKLIST.md). **
 
 ---
 
-## 9. Referências
+## 9. Render (frontend + backend)
+
+O Blueprint `render.yaml` na raiz define dois serviços:
+
+- **chefiapp-backend** — API Node (Docker): integration-gateway (`/api/v1/*`, `/internal/events`, `/health`). Variáveis: `CORE_URL`, `CORE_SERVICE_KEY` ou `CORE_ANON_KEY`, `INTERNAL_API_TOKEN`.
+- **chefiapp-merchant-portal** — SPA estático (build pnpm na raiz, output `merchant-portal/dist`).
+
+O Core (Postgres + PostgREST) fica à parte (Render Postgres + imagem PostgREST, ou outro host). Ver [RENDER.md](./RENDER.md).
+
+---
+
+## 10. Referências
 
 | Documento | Conteúdo |
 |-----------|----------|
+| [RENDER.md](./RENDER.md) | Deploy e sincronização GitHub ↔ Render (Blueprint, backend + frontend, MCP) |
 | [DEPLOYMENT_GUIDE](../architecture/DEPLOYMENT_GUIDE.md) | Guia detalhado (Vercel, env, migrations, monitoring) |
 | [provisioning.md](./provisioning.md) | Provisioning manual de restaurantes |
 | [GO_LIVE_CHECKLIST.md](./GO_LIVE_CHECKLIST.md) | Checklist go-live |

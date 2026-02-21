@@ -1,0 +1,150 @@
+.debugError {
+  padding: 20px;
+  background: #330000;
+  color: #ffffff;
+  overflow: auto;
+  height: 100vh;
+  z-index: 9999;
+  position: relative;
+}
+
+.tpvShell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.contingencyBanner {
+  background: #262626;
+  color: #a3a3a3;
+  padding: 12px 24px;
+  text-align: center;
+  font-weight: 500;
+  font-size: 14px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-bottom: 1px solid #404040;
+}
+
+.contingencyButton {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.loadingCenter {
+  padding: 16px;
+  text-align: center;
+}
+
+.navigationColumn {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.navigationFooter {
+  padding: 0.5rem;
+  margin-top: auto;
+}
+
+.exceptionPanel {
+  margin-bottom: 1rem;
+}
+
+.contextColumn {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.contextHeaderSpacer {
+  margin-bottom: 1rem;
+}
+
+.ordersColumn {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ordersStream {
+  flex: 1;
+  position: relative;
+}
+
+.reservationsWrapper {
+  height: 100%;
+  overflow: hidden;
+}
+
+.deliveryColumn {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.deliveryHeader {
+  padding: 1rem;
+  border-bottom: 1px solid #27272a;
+}
+
+.deliveryList {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.ticketWrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.ticketEditor {
+  flex: 1;
+  overflow: hidden;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.overlayCard {
+  max-width: 500px;
+  width: 90%;
+}
+
+.groupTitle {
+  margin-bottom: 1rem;
+}
+
+.groupActions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.flexGrow {
+  flex: 1;
+}

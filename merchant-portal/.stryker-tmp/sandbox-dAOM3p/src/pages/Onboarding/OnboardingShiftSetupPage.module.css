@@ -1,0 +1,77 @@
+/**
+ * OnboardingShiftSetupPage styles — 5min flow step 4 (shift/cash setup).
+ */
+
+.pageRoot {
+  background: var(--surface-base);
+  min-height: 100vh;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 var(--spacing-6) var(--spacing-6) var(--spacing-6);
+}
+
+.contentContainer {
+  max-width: 400px;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.title {
+  font-size: 22px;
+  margin-bottom: var(--spacing-2);
+  color: var(--text-primary);
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-6);
+  font-size: 14px;
+}
+
+.card {
+  margin-bottom: var(--spacing-6);
+}
+
+.optionsSection {
+  margin-bottom: var(--spacing-4);
+}
+
+.optionsLabel {
+  font-size: 14px;
+  margin-bottom: var(--spacing-2);
+  color: var(--text-secondary);
+}
+
+.optionsContainer {
+  display: flex;
+  gap: var(--spacing-2);
+}
+
+.optionButton {
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--surface-layer1);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.optionButton:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.optionButtonActive {
+  border: 2px solid var(--color-action-base);
+  background: rgba(10, 132, 255, 0.2);
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-4);
+  justify-content: flex-end;
+}
