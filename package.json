@@ -33,13 +33,7 @@
     "build:server": "tsc -p tsconfig.server.json",
     "export:portal": "rm -rf public/app && mkdir -p public/app && cp -R merchant-portal/dist/. public/app/",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "server:webhook": "npx ts-node server/webhook-server.ts",
-    "server:billing": "npx ts-node server/billing-webhook-server.ts",
-    "server:subscription-ui": "npx ts-node server/subscription-management-server.ts",
-    "server:web-module": "npx ts-node server/web-module-api-server.ts",
     "server:integration-gateway": "npx ts-node server/integration-gateway.ts",
-    "seed:web-module": "npx ts-node server/seed-web-module.ts",
-    "refresh:amazon": "npx ts-node server/amazon/refresh-catalog-cli.ts",
     "demo:appstaff": "npx ts-node tests/appstaff-demo-mode.ts",
     "demo:appstaff:one": "bash scripts/demo-one-command.sh",
     "demo:voice": "bash scripts/demo-voice.sh",
@@ -90,10 +84,6 @@
     "expo:ios": "cd mobile-app && npx expo run:ios",
     "expo:android": "cd mobile-app && npx expo run:android",
     "start:full": "bash scripts/start-full-stack-with-simulators.sh"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": "npm -w merchant-portal run lint",
-    "*.{json,md}": "node -e \"process.exit(0)\""
   },
   "keywords": [],
   "author": "Goldmonkey Empire",

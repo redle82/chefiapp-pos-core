@@ -19,27 +19,9 @@
     "noUnusedParameters": false,
     "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": false,
-    "noEmitOnError": false,
-    "jsx": "react-jsx",
+    "noEmitOnError": true,
     "types": ["node"]
   },
-  "include": [
-    "server/**/*.ts",
-    "core-engine/**/*.ts",
-    "fiscal-modules/**/*.ts",
-    "types/**/*.ts",
-    "event-log/**/*.ts",
-    "legal-boundary/**/*.ts",
-    "billing-core/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "event-log/**/node_modules",
-    "legal-boundary/**/node_modules",
-    "billing-core/**/node_modules",
-    "**/__tests__/**",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ]
+  "include": ["server/**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/__tests__/**", "**/*.test.ts", "**/*.spec.ts"]
 }

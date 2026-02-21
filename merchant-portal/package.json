@@ -10,7 +10,7 @@
     "prebuild": "npm run validate:constitution",
     "build": "vite build",
     "build:marketing": "vite build --config vite.config.marketing.ts",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 9999 --no-warn-ignored",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -30,6 +30,10 @@
     "mobile:android": "npx cap open android",
     "mobile:run:ios": "npx cap run ios",
     "mobile:run:android": "npx cap run android",
+    "mutation:test": "npx stryker run && echo '✅ Mutation testing complete'",
+    "mutation:test:quick": "npx stryker run --configFile stryker.quick.config.mjs && echo '✅ Quick scan complete'",
+    "mutation:test:baseline": "npm run mutation:test && cp artifacts/mutation-report.json artifacts/mutation-baseline.json && echo '✅ Baseline saved'",
+    "mutation:test:baseline:quick": "npm run mutation:test:quick && cp artifacts/mutation-report.json artifacts/mutation-baseline.quick.json && echo '✅ Quick baseline saved'",
     "postinstall": "bash fix-capacitor-paths.sh 2>/dev/null || true"
   },
   "dependencies": {
@@ -68,6 +72,8 @@
     "@capacitor/cli": "^8.0.1",
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.57.0",
+    "@stryker-mutator/core": "^9.5.1",
+    "@stryker-mutator/typescript-checker": "^9.5.1",
     "@tailwindcss/vite": "^4.1.18",
     "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",

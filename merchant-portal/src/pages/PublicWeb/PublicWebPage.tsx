@@ -102,32 +102,6 @@ export function PublicWebPage() {
   );
   const [reviewIndex, setReviewIndex] = useState(0);
 
-  if (!readiness.ready && readiness.uiDirective === "SHOW_BLOCKING_SCREEN") {
-    return (
-      <BlockingScreen
-        reason={readiness.blockingReason}
-        redirectTo={readiness.redirectTo}
-      />
-    );
-  }
-  if (
-    !readiness.ready &&
-    readiness.uiDirective === "REDIRECT" &&
-    readiness.redirectTo
-  ) {
-    return <Navigate to={readiness.redirectTo} replace />;
-  }
-
-  if (menuNotLive) {
-    return (
-      <GlobalBlockedView
-        title="Cardápio não disponível"
-        description={MENU_NOT_LIVE_WEB_MESSAGE}
-        action={{ label: "Voltar ao início", to: "/" }}
-      />
-    );
-  }
-
   useEffect(() => {
     async function loadData() {
       if (!slug) {
@@ -264,6 +238,31 @@ export function PublicWebPage() {
 
   const resolveTrustedPhoto = (product: CoreProduct) =>
     getTrustedPhotoUrl(resolveProductImageUrl(product));
+
+  if (!readiness.ready && readiness.uiDirective === "SHOW_BLOCKING_SCREEN") {
+    return (
+      <BlockingScreen
+        reason={readiness.blockingReason}
+        redirectTo={readiness.redirectTo}
+      />
+    );
+  }
+  if (
+    !readiness.ready &&
+    readiness.uiDirective === "REDIRECT" &&
+    readiness.redirectTo
+  ) {
+    return <Navigate to={readiness.redirectTo} replace />;
+  }
+  if (menuNotLive) {
+    return (
+      <GlobalBlockedView
+        title="Cardápio não disponível"
+        description={MENU_NOT_LIVE_WEB_MESSAGE}
+        action={{ label: "Voltar ao início", to: "/" }}
+      />
+    );
+  }
 
   const heroImage =
     products.map((product) => resolveTrustedPhoto(product)).find(Boolean) ||

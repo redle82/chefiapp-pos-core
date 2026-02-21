@@ -57,7 +57,7 @@ COPY tsconfig.server.json ./
 # Build TypeScript (types + server)
 # noEmitOnError:false in tsconfig.server.json emits JS despite type errors.
 # We swallow the exit code so Docker build continues — runtime-critical paths work fine.
-RUN npm run build:server || true
+RUN npm run build:server
 
 # Verify critical server files were emitted
 RUN test -f dist/server/integration-gateway.js && \

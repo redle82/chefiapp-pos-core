@@ -23,7 +23,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         },
         ref
     ) => {
-        const inputId = id || React.useId();
+        // useId is unconditional; rule can false-positive inside forwardRef
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const generatedId = React.useId();
+        const inputId = id ?? generatedId;
 
         return (
             <div

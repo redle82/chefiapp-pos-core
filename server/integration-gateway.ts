@@ -54,9 +54,9 @@ function coreHeaders(): Record<string, string> {
 function apiError(
   error: string,
   message: string,
-  details?: Record<string, unknown>,
+  details?: Record<string, unknown> | string,
 ): object {
-  return { error, message, ...(details ? { details } : {}) };
+  return { error, message, ...(details !== undefined ? { details } : {}) };
 }
 
 function extractBase64Payload(input: string): string {
@@ -921,12 +921,10 @@ const server = http.createServer(async (req, res) => {
         });
         res.end(
           JSON.stringify(
-            apiError(
-              "rate_limit_exceeded",
-              "Too many requests",
-              "Limit 100/min",
-              { retryAfter: rate.retryAfter },
-            ),
+            apiError("rate_limit_exceeded", "Too many requests", {
+              detail: "Limit 100/min",
+              retryAfter: rate.retryAfter,
+            }),
           ),
         );
         return;
