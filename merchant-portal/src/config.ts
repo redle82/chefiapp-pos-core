@@ -47,6 +47,16 @@ const API_BASE = normalizeUrl(getEnvString("VITE_API_BASE") || "");
 const IS_DEV = MODE !== "production";
 const IS_PROD = MODE === "production";
 
+// Stripe key fora do objeto para evitar getter que referencia CONFIG (evita "Cannot access before initialization" em chunks)
+const STRIPE_PUBLIC_KEY_RAW = (() => {
+  const raw =
+    getEnvString("VITE_STRIPE_PUBLIC_KEY") ||
+    getEnvString("VITE_STRIPE_PUBLISHABLE_KEY") ||
+    "";
+  if (!raw || raw.includes("placeholder") || raw.includes("forensic")) return "";
+  return raw;
+})();
+
 export const CONFIG = {
   // ─── InsForge (Production BaaS) ─────────────────────────────
   /** InsForge project URL. When set, InsForge is the active backend. */
@@ -63,22 +73,11 @@ export const CONFIG = {
   CORE_ANON_KEY,
 
   // Stripe (billing: checkout + portal)
-  // Guard: reject placeholder keys that would trigger Stripe.js load + CORS errors in dev
-  STRIPE_PUBLIC_KEY: (() => {
-    const raw =
-      getEnvString("VITE_STRIPE_PUBLIC_KEY") ||
-      getEnvString("VITE_STRIPE_PUBLISHABLE_KEY") ||
-      "";
-    if (!raw || raw.includes("placeholder") || raw.includes("forensic")) {
-      return "";
-    }
-    return raw;
-  })(),
+  STRIPE_PUBLIC_KEY: STRIPE_PUBLIC_KEY_RAW,
   STRIPE_PRICE_ID: getEnvString("VITE_STRIPE_PRICE_ID"),
   /** true quando a chave pública começa por pk_test_ (modo demo/teste Stripe) */
   get STRIPE_IS_TEST(): boolean {
-    const key = CONFIG.STRIPE_PUBLIC_KEY;
-    return typeof key === "string" && key.startsWith("pk_test_");
+    return typeof STRIPE_PUBLIC_KEY_RAW === "string" && STRIPE_PUBLIC_KEY_RAW.startsWith("pk_test_");
   },
 
   /** LLM Vision (legado). Data de remoção prevista: após confirmação de não uso. */
