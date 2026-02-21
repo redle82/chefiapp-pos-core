@@ -1,6 +1,6 @@
 # Render — Sincronização GitHub e deploy
 
-**Propósito:** Ligar o repositório GitHub ao Render para deploy automático e gestão via MCP.
+**Propósito:** Ligar o repositório GitHub ao Render para deploy automático e gestão via MCP.  
 **Referência:** [Blueprint Spec](https://render.com/docs/blueprint-spec) · [Monorepo](https://render.com/docs/monorepo-support) · [Render MCP Server](https://render.com/docs/mcp-server)
 
 ---
