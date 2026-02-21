@@ -12,6 +12,94 @@
 
 import { expect, test } from "@playwright/test";
 
+async function seedAndPublishMenuIfNeeded(
+  page: import("@playwright/test").Page,
+) {
+  const addButtons = page.locator(
+    'button[title="Adicionar ao pedido"]:not([disabled])',
+  );
+
+  if ((await addButtons.count()) > 0) return;
+
+  await page.goto("/menu-builder", { waitUntil: "domcontentloaded" });
+  const presetButton = page
+    .locator("button")
+    .filter({ hasText: /Aplicar preset/i })
+    .first();
+
+  if (await presetButton.isVisible({ timeout: 7000 }).catch(() => false)) {
+    await presetButton.click();
+    await page.waitForTimeout(1500);
+  }
+
+  await page.goto("/app/publish", { waitUntil: "domcontentloaded" });
+  const publishButton = page
+    .locator("button")
+    .filter({ hasText: /Publicar|Publish|Enviar/i })
+    .first();
+
+  if (await publishButton.isVisible({ timeout: 7000 }).catch(() => false)) {
+    await publishButton.click();
+    await page.waitForTimeout(1500);
+  }
+
+  await page.goto("/op/tpv", { waitUntil: "domcontentloaded" });
+
+  for (let attempt = 1; attempt <= 6; attempt += 1) {
+    const firstAddButton = page
+      .locator('button[title="Adicionar ao pedido"]:not([disabled])')
+      .first();
+
+    if (await firstAddButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      return;
+    }
+
+    await page.waitForTimeout(1200);
+    await page.goto("/op/tpv", { waitUntil: "domcontentloaded" });
+  }
+}
+
+async function addProductsToCart(
+  page: import("@playwright/test").Page,
+  quantity = 1,
+) {
+  await seedAndPublishMenuIfNeeded(page);
+
+  for (let i = 0; i < quantity; i += 1) {
+    let added = false;
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const addButton = page
+        .locator('button[title="Adicionar ao pedido"]:not([disabled])')
+        .first();
+
+      try {
+        await expect(addButton).toBeVisible({ timeout: 10000 });
+        await addButton.click({ timeout: 5000 });
+        added = true;
+        break;
+      } catch (error) {
+        lastError = error;
+        if (attempt === 2) {
+          await seedAndPublishMenuIfNeeded(page);
+        }
+        await page.waitForTimeout(200);
+      }
+    }
+
+    if (!added) {
+      throw lastError instanceof Error
+        ? lastError
+        : new Error("Falha ao adicionar produto ao carrinho.");
+    }
+  }
+}
+
+function sendToKitchenButton(page: import("@playwright/test").Page) {
+  return page.getByRole("button", { name: /Enviar para cozinha/i });
+}
+
 test.describe("Fase B: Chaos Night Simulation", () => {
   // Config global para o teste
   test.use({
@@ -44,7 +132,10 @@ test.describe("Fase B: Chaos Night Simulation", () => {
         await ctx.addInitScript(() => {
           window.sessionStorage.setItem("chefiapp_debug", "1");
           window.localStorage.setItem("chefiapp_pilot_mode", "true");
-          window.localStorage.setItem("chefiapp_cookie_consent_accepted", "true");
+          window.localStorage.setItem(
+            "chefiapp_cookie_consent_accepted",
+            "true",
+          );
           window.sessionStorage.setItem(
             "chefiapp_keycloak_session",
             JSON.stringify({
@@ -73,30 +164,17 @@ test.describe("Fase B: Chaos Night Simulation", () => {
 
     await test.step("Ato 1.1: Criar Pedido Rápido (Garçom/TPV)", async () => {
       await pageStaff.goto("/op/tpv");
-      // Adicionar itens
-      // Buscar seletor de produto (depende do menu seedado)
-      // Clicar em "Bebidas" (se existir categoria) ou primeiro item
-      const productBtn = pageStaff
-        .locator('button[data-testid="product-card"]')
-        .first();
-      if ((await productBtn.count()) > 0) {
-        await productBtn.click();
-        await productBtn.click();
-        await productBtn.click(); // 3 Bebidas
-      } else {
-        console.warn("Nenhum produto encontrado para clicar no TPV");
-      }
+      await pageStaff.waitForLoadState("domcontentloaded");
 
-      // Enviar pedido (UI usa "Enviar Cozinha" no StreamTunnel; sem produtos não há botão)
-      const btnEnviar = pageStaff.getByRole("button", {
-        name: /Enviar Cozinha|Enviar/i,
-      });
-      if (await btnEnviar.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await btnEnviar.click();
-        await expect(pageStaff.getByText(/Pedido enviado|enviado/i))
-          .toBeVisible({ timeout: 5000 })
-          .catch(() => {});
-      }
+      await addProductsToCart(pageStaff, 3);
+
+      const btnEnviar = sendToKitchenButton(pageStaff);
+      await expect(btnEnviar).toBeEnabled({ timeout: 10000 });
+      await btnEnviar.click();
+
+      await expect(pageStaff.getByText(/enviado para cozinha|pedido enviado/i))
+        .toBeVisible({ timeout: 7000 })
+        .catch(() => {});
     });
 
     // 3. KDS: Verificação (se há ticket, marcar pronto; senão apenas validar que KDS carregou)
@@ -164,30 +242,23 @@ test.describe("Fase B: Chaos Night Simulation", () => {
       }
 
       // Se backend estava UP, vamos simular a queda agora
-      // Adicionar item
-      const productBtn = page
-        .locator('button[data-testid="product-card"]')
-        .first();
-      if ((await productBtn.count()) > 0) await productBtn.click();
+      // Adicionar item ao carrinho (seletor atual do TPV)
+      await addProductsToCart(page, 1);
 
       // Cortar net
       await context.setOffline(true);
 
       // Tentar enviar (UI usa "Enviar Cozinha" no StreamTunnel)
-      const btnEnviar = page.getByRole("button", {
-        name: /Enviar Cozinha|Enviar/i,
-      });
-      if (await btnEnviar.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await btnEnviar.click();
-      }
+      const btnEnviar = sendToKitchenButton(page);
+      await expect(btnEnviar).toBeEnabled({ timeout: 10000 });
+      await btnEnviar.click();
 
       // Expectativa: Aviso de erro ou fallback
       // Se falhar silenciosamente ou travar, "The Hurt Report" ganha um item.
       // Vamos esperar um toast de erro ou indicador offline
       const errorToast = page
-        .locator("text=Erro de conexão")
-        .or(page.locator("text=Offline"))
-        .or(page.locator("text=Core indisponível"));
+        .getByText(/Erro de conexão|Modo offline|Core indisponível|Offline/i)
+        .first();
 
       // Não vamos falhar o teste se não aparecer, pois queremos LOGAR o resultado no report final.
       if (await errorToast.isVisible()) {
@@ -199,13 +270,11 @@ test.describe("Fase B: Chaos Night Simulation", () => {
       // Voltar net
       await context.setOffline(false);
       // Re-enviar apenas se não foi bloqueado por Core indisponível (e se houver pedido para enviar)
-      const btnReenviar = page.getByRole("button", {
-        name: /Enviar Cozinha|Enviar/i,
-      });
+      const btnReenviar = sendToKitchenButton(page);
       if (await btnReenviar.isVisible({ timeout: 3000 }).catch(() => false)) {
         await btnReenviar.click();
         await expect
-          .soft(page.getByText(/Pedido enviado|enviado/i))
+          .soft(page.getByText(/enviado para cozinha|pedido enviado/i).first())
           .toBeVisible({ timeout: 5000 });
       }
     });

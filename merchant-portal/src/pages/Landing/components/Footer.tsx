@@ -1,8 +1,8 @@
 // LEGACY: não utilizar em novas rotas. Mantido apenas por compatibilidade temporária.
 // Footer da landing antiga no merchant-portal; usam LandingV2Page e projeto Next.js landing/.
 import { Link } from "react-router-dom";
+import { MadeWithLoveFooter } from "../../../components/MadeWithLoveFooter";
 import { useAuth } from "../../../core/auth/useAuth";
-import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppSignature";
 import { OSCopy } from "../../../ui/design-system/sovereign/OSCopy";
 
 const WHATSAPP_NUMBER =
@@ -123,24 +123,7 @@ export const Footer = () => {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-center gap-3 text-xs text-[var(--text-tertiary)] font-mono">
-          <ChefIAppSignature
-            variant="full"
-            size="sm"
-            tone="light"
-            className="opacity-70"
-          />
-
-          <a
-            href="https://goldmonkey.studio"
-            target="_blank"
-            rel="noreferrer"
-            className="group flex items-center gap-2 hover:text-[var(--color-primary)] transition-colors opacity-60 hover:opacity-100"
-          >
-            <span>Feito por</span>
-            <span className="font-bold tracking-tight text-[var(--text-secondary)] group-hover:text-[var(--color-primary)]">
-              GOLDMONKEY.STUDIO
-            </span>
-          </a>
+          <MadeWithLoveFooter variant="inline" />
         </div>
       </div>
     </footer>

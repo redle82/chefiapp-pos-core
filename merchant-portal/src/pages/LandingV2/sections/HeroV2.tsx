@@ -8,9 +8,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../core/auth/useAuth";
-import { useLandingLocale } from "../i18n/LandingLocaleContext";
+// Logo + text replaces old ChefIAppSignature
 import { useScrollNavbar } from "../hooks/useFadeIn";
-import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppSignature";
+import { useLandingLocale } from "../i18n/LandingLocaleContext";
 import type { LandingLocale } from "../i18n/landingV2Copy";
 
 const NAV_ANCHORS = [
@@ -66,12 +66,18 @@ export const HeroV2 = () => {
       >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ChefIAppSignature variant="full" size="sm" tone="gold" />
+            <img
+              src="/logo-chefiapp-clean.png"
+              alt="ChefIApp"
+              className="w-6 h-6 rounded"
+            />
+            <span className="text-sm font-semibold text-white">ChefIApp</span>
           </div>
 
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => {
-              const className = "text-sm text-neutral-400 hover:text-white transition-colors duration-200 relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-px after:bg-amber-500 hover:after:w-full after:transition-all after:duration-300";
+              const className =
+                "text-sm text-neutral-400 hover:text-white transition-colors duration-200 relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-px after:bg-amber-500 hover:after:w-full after:transition-all after:duration-300";
               if (link.href.startsWith("/")) {
                 return (
                   <Link key={link.href} to={link.href} className={className}>
@@ -89,29 +95,36 @@ export const HeroV2 = () => {
 
           {/* Setor: idioma atual (apenas um) + seletor por bandeira */}
           <div className="flex items-center gap-3">
-            <span className="text-xs text-neutral-500 uppercase tracking-wide" aria-live="polite">
+            <span
+              className="text-xs text-neutral-500 uppercase tracking-wide"
+              aria-live="polite"
+            >
               {LOCALE_LABELS[locale]}
             </span>
             <div className="flex items-center gap-1 text-xs text-neutral-500">
-            {(["pt", "en", "es"] as LandingLocale[]).map((lang) => (
-              <button
-                key={lang}
-                type="button"
-                onClick={() => setLocale(lang)}
-                title={lang.toUpperCase()}
-                className={`flex items-center gap-1.5 uppercase px-2 py-1.5 rounded transition-colors ${
-                  locale === lang ? "text-amber-500 font-semibold ring-1 ring-amber-500/50" : "hover:text-white text-neutral-400"
-                }`}
-              >
-                <span className="text-base leading-none" aria-hidden>{LOCALE_FLAGS[lang]}</span>
-                <span>{lang}</span>
-              </button>
-            ))}
+              {(["pt", "en", "es"] as LandingLocale[]).map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => setLocale(lang)}
+                  title={lang.toUpperCase()}
+                  className={`flex items-center gap-1.5 uppercase px-2 py-1.5 rounded transition-colors ${
+                    locale === lang
+                      ? "text-amber-500 font-semibold ring-1 ring-amber-500/50"
+                      : "hover:text-white text-neutral-400"
+                  }`}
+                >
+                  <span className="text-base leading-none" aria-hidden>
+                    {LOCALE_FLAGS[lang]}
+                  </span>
+                  <span>{lang}</span>
+                </button>
+              ))}
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-              {hasSession ? (
+            {hasSession ? (
               <Link
                 to="/admin"
                 className="px-5 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/20"
@@ -127,7 +140,7 @@ export const HeroV2 = () => {
                   {t("hero.signIn")}
                 </Link>
                 <Link
-                  to="/auth/phone?mode=signup"
+                  to="/auth/phone"
                   className="hidden sm:inline-flex px-5 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/20"
                 >
                   {t("hero.tryFree")}
@@ -170,7 +183,8 @@ export const HeroV2 = () => {
           <div className="md:hidden border-t border-white/5 bg-[#0a0a0a]/95 backdrop-blur-xl">
             <div className="px-6 py-4 space-y-1">
               {navLinks.map((link) => {
-                const className = "block py-3 text-sm text-neutral-300 hover:text-white transition-colors";
+                const className =
+                  "block py-3 text-sm text-neutral-300 hover:text-white transition-colors";
                 if (link.href.startsWith("/")) {
                   return (
                     <Link
@@ -195,25 +209,36 @@ export const HeroV2 = () => {
                 );
               })}
               <div className="py-2 border-t border-white/5 mt-2 space-y-2">
-                <span className="text-xs text-neutral-500 uppercase tracking-wide block">Idioma: {LOCALE_LABELS[locale]}</span>
+                <span className="text-xs text-neutral-500 uppercase tracking-wide block">
+                  Idioma: {LOCALE_LABELS[locale]}
+                </span>
                 <div className="flex gap-2">
-                {(["pt", "en", "es"] as LandingLocale[]).map((lang) => (
-                  <button
-                    key={lang}
-                    type="button"
-                    onClick={() => { setLocale(lang); setMobileOpen(false); }}
-                    title={lang.toUpperCase()}
-                    className={`flex items-center gap-1.5 uppercase text-xs px-2 py-1.5 rounded ${locale === lang ? "text-amber-500 font-semibold ring-1 ring-amber-500/50" : "text-neutral-400"}`}
-                  >
-                    <span className="text-base leading-none" aria-hidden>{LOCALE_FLAGS[lang]}</span>
-                    <span>{lang}</span>
-                  </button>
-                ))}
+                  {(["pt", "en", "es"] as LandingLocale[]).map((lang) => (
+                    <button
+                      key={lang}
+                      type="button"
+                      onClick={() => {
+                        setLocale(lang);
+                        setMobileOpen(false);
+                      }}
+                      title={lang.toUpperCase()}
+                      className={`flex items-center gap-1.5 uppercase text-xs px-2 py-1.5 rounded ${
+                        locale === lang
+                          ? "text-amber-500 font-semibold ring-1 ring-amber-500/50"
+                          : "text-neutral-400"
+                      }`}
+                    >
+                      <span className="text-base leading-none" aria-hidden>
+                        {LOCALE_FLAGS[lang]}
+                      </span>
+                      <span>{lang}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
               {!hasSession && (
                 <Link
-                  to="/auth/phone?mode=signup"
+                  to="/auth/phone"
                   onClick={() => setMobileOpen(false)}
                   className="block mt-2 py-3 text-center text-sm font-semibold rounded-lg bg-amber-500 text-black"
                 >
@@ -263,7 +288,7 @@ export const HeroV2 = () => {
               {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Link
-                  to="/auth/phone?mode=signup"
+                  to="/auth/phone"
                   className="group relative inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-xl bg-amber-500 text-black hover:bg-amber-400 transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30"
                 >
                   {t("hero.ctaPrimary")}

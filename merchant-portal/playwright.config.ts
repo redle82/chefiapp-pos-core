@@ -1,6 +1,9 @@
 import { defineConfig } from "@playwright/test";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const baseURL = process.env.E2E_BASE_URL || "http://localhost:5175";
+const configDir = dirname(fileURLToPath(import.meta.url));
 // Não iniciar webServer se: E2E_BASE_URL (app noutra porta) ou E2E_NO_WEB_SERVER (app já a correr na baseURL)
 const startServer = !process.env.E2E_BASE_URL && !process.env.E2E_NO_WEB_SERVER;
 
@@ -18,9 +21,11 @@ export default defineConfig({
   },
   ...(startServer && {
     webServer: {
-      command: "npm run dev",
+      cwd: configDir,
+      command:
+        "bash -lc 'lsof -ti:5175 | xargs kill -9 2>/dev/null || true; npm run dev -- --port 5175'",
       url: baseURL,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 120 * 1000,
       env: {
         ...process.env,

@@ -3,7 +3,7 @@
  * Copy via useLandingLocale (i18n/landingV2Copy).
  */
 import { Link } from "react-router-dom";
-import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppSignature";
+import { MadeWithLoveFooter } from "../../../components/MadeWithLoveFooter";
 import { useLandingLocale } from "../i18n/LandingLocaleContext";
 
 const WHATSAPP_NUMBER =
@@ -33,13 +33,20 @@ export const FooterV2 = () => {
         { label: t("footer.linkAbout"), href: "mailto:contacto@chefiapp.com" },
         { label: t("footer.linkBlog"), href: "/blog/tpv-restaurantes" },
         { label: t("footer.linkChangelog"), href: "/changelog" },
-        { label: t("footer.linkCareers"), href: "mailto:contacto@chefiapp.com" },
+        {
+          label: t("footer.linkCareers"),
+          href: "mailto:contacto@chefiapp.com",
+        },
       ],
     },
     {
       title: t("footer.groupSupport"),
       links: [
-        { label: t("footer.linkWhatsApp"), href: WHATSAPP_URL, external: true as const },
+        {
+          label: t("footer.linkWhatsApp"),
+          href: WHATSAPP_URL,
+          external: true as const,
+        },
         { label: t("footer.linkEmail"), href: "mailto:contacto@chefiapp.com" },
         { label: t("footer.linkStatus"), href: "/status" },
       ],
@@ -107,14 +114,23 @@ export const FooterV2 = () => {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <ChefIAppSignature variant="full" size="sm" tone="gold" />
+                <img
+                  src="/logo-chefiapp-clean.png"
+                  alt="ChefIApp"
+                  className="w-7 h-7 rounded"
+                />
+                <span className="text-sm font-semibold text-white">
+                  ChefIApp
+                </span>
               </div>
               <p className="text-xs text-neutral-600 leading-relaxed">
                 {t("footer.tagline")}
                 <br />
                 {t("footer.taglineBy")}
                 <br />
-                <span className="text-neutral-500">{t("footer.taglineMission")}</span>
+                <span className="text-neutral-500">
+                  {t("footer.taglineMission")}
+                </span>
               </p>
             </div>
 
@@ -135,7 +151,8 @@ export const FooterV2 = () => {
                         >
                           {link.label}
                         </a>
-                      ) : link.href.startsWith("mailto:") || link.href.startsWith("#") ? (
+                      ) : link.href.startsWith("mailto:") ||
+                        link.href.startsWith("#") ? (
                         <a
                           href={link.href}
                           className="text-sm text-neutral-400 hover:text-white transition-colors"
@@ -165,7 +182,7 @@ export const FooterV2 = () => {
           <p className="text-xs text-neutral-600">
             © {year} ChefIApp™. {t("footer.copyright")}
           </p>
-          <p className="text-xs text-neutral-700">{t("footer.madeWith")}</p>
+          <MadeWithLoveFooter variant="inline" />
         </div>
       </div>
     </footer>

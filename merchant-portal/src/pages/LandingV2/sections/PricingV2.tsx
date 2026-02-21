@@ -4,8 +4,8 @@
  */
 import { Link } from "react-router-dom";
 import { CANONICAL_MONTHLY_PRICE_EUR } from "../../../core/pricing/canonicalPrice";
-import { getPricing } from "../i18n/landingV2Copy";
 import { useLandingLocale } from "../i18n/LandingLocaleContext";
+import { getPricing } from "../i18n/landingV2Copy";
 
 export const PricingV2 = () => {
   const { locale } = useLandingLocale();

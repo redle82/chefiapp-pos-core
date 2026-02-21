@@ -6,7 +6,7 @@
  */
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChefIAppSignature } from "../../ui/design-system/sovereign/ChefIAppSignature";
+import { MadeWithLoveFooter } from "../../components/MadeWithLoveFooter";
 
 const META_TITLE =
   "TPV vs POS fiscal | Diferença entre ponto de venda operacional e fiscal";
@@ -33,14 +33,16 @@ export function BlogTPVVsPOSFiscalPage() {
     setMeta("description", META_DESCRIPTION);
     setMeta(
       "keywords",
-      "TPV vs POS fiscal, diferença TPV POS, ponto de venda operacional, POS fiscal restaurante, software TPV fiscal"
+      "TPV vs POS fiscal, diferença TPV POS, ponto de venda operacional, POS fiscal restaurante, software TPV fiscal",
     );
     setMeta("og:title", META_TITLE, true);
     setMeta("og:description", META_DESCRIPTION, true);
     setMeta("og:type", "article", true);
     setMeta("og:url", CANONICAL_URL, true);
 
-    let linkCanonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    let linkCanonical = document.querySelector<HTMLLinkElement>(
+      'link[rel="canonical"]',
+    );
     if (!linkCanonical) {
       linkCanonical = document.createElement("link");
       linkCanonical.rel = "canonical";
@@ -56,7 +58,9 @@ export function BlogTPVVsPOSFiscalPage() {
       url: CANONICAL_URL,
       publisher: { "@type": "Organization", name: "ChefIApp" },
     };
-    let scriptJsonLd = document.getElementById("blog-article-jsonld") as HTMLScriptElement | null;
+    let scriptJsonLd = document.getElementById(
+      "blog-article-jsonld",
+    ) as HTMLScriptElement | null;
     if (!scriptJsonLd) {
       scriptJsonLd = document.createElement("script");
       scriptJsonLd.id = "blog-article-jsonld";
@@ -76,7 +80,12 @@ export function BlogTPVVsPOSFiscalPage() {
       <header className="border-b border-white/5 bg-neutral-950/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/landing-v2" className="flex items-center gap-2">
-            <ChefIAppSignature variant="full" size="sm" tone="gold" />
+            <img
+              src="/logo-chefiapp-clean.png"
+              alt="ChefIApp"
+              className="w-6 h-6 rounded"
+            />
+            <span className="text-sm font-semibold text-white">ChefIApp</span>
           </Link>
           <Link
             to="/auth/phone"
@@ -98,8 +107,8 @@ export function BlogTPVVsPOSFiscalPage() {
           Muitos donos de restaurantes procuram “TPV” ou “POS” e assumem que é
           tudo a mesma coisa. Não é. Este texto explica a diferença entre
           <strong> ponto de venda operacional</strong> e
-          <strong> POS fiscal</strong>, e como o ChefIApp™ OS se posiciona —
-          com transparência total.
+          <strong> POS fiscal</strong>, e como o ChefIApp™ OS se posiciona — com
+          transparência total.
         </p>
 
         <section className="prose prose-invert max-w-none mb-14">
@@ -144,15 +153,15 @@ export function BlogTPVVsPOSFiscalPage() {
             O que faz o ChefIApp™ OS?
           </h2>
           <p className="text-neutral-300 leading-relaxed mb-4">
-            O ChefIApp™ OS é um <strong>sistema operacional para o
-            restaurante</strong>: TPV operacional, KDS, menu, Staff App,
-            reservas, página pública — uma única verdade operacional. Hoje
+            O ChefIApp™ OS é um{" "}
+            <strong>sistema operacional para o restaurante</strong>: TPV
+            operacional, KDS, menu, Staff App, reservas, página pública — uma
+            única verdade operacional. Hoje
             <strong> não substitui o POS fiscal</strong>. Trabalha
             <strong> em paralelo</strong>: o restaurante continua a usar o seu
-            POS fiscal para emitir a factura ou o recibo; o ChefIApp gere
-            mesas, pedidos, caixa e cozinha. Quando o total está pago, a
-            emissão fiscal pode ser feita no POS fiscal (conforme configuração
-            do restaurante).
+            POS fiscal para emitir a factura ou o recibo; o ChefIApp gere mesas,
+            pedidos, caixa e cozinha. Quando o total está pago, a emissão fiscal
+            pode ser feita no POS fiscal (conforme configuração do restaurante).
           </p>
           <p className="text-neutral-400 text-sm italic mb-8">
             Certificação fiscal própria está prevista para mais tarde; até lá,
@@ -160,13 +169,21 @@ export function BlogTPVVsPOSFiscalPage() {
             até que esteja certificado.
           </p>
 
-          <h2 className="text-2xl font-bold text-white mt-12 mb-4">
-            Resumo
-          </h2>
+          <h2 className="text-2xl font-bold text-white mt-12 mb-4">Resumo</h2>
           <ul className="list-disc pl-6 text-neutral-300 space-y-2 mb-6">
-            <li><strong>POS fiscal</strong> = emitir documentos fiscais (certificado, obrigatório por lei).</li>
-            <li><strong>TPV operacional</strong> = gerir mesas, pedidos, pagamentos, caixa, cozinha.</li>
-            <li><strong>ChefIApp™ OS</strong> = TPV operacional + resto do sistema; trabalha em paralelo ao POS fiscal até haver certificação própria.</li>
+            <li>
+              <strong>POS fiscal</strong> = emitir documentos fiscais
+              (certificado, obrigatório por lei).
+            </li>
+            <li>
+              <strong>TPV operacional</strong> = gerir mesas, pedidos,
+              pagamentos, caixa, cozinha.
+            </li>
+            <li>
+              <strong>ChefIApp™ OS</strong> = TPV operacional + resto do
+              sistema; trabalha em paralelo ao POS fiscal até haver certificação
+              própria.
+            </li>
           </ul>
         </section>
 
@@ -209,6 +226,8 @@ export function BlogTPVVsPOSFiscalPage() {
           </Link>
         </nav>
       </article>
+
+      <MadeWithLoveFooter variant="default" />
     </main>
   );
 }

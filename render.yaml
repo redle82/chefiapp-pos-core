@@ -1,0 +1,82 @@
+# Render Blueprint — ChefIApp POS Core
+# Sincronização GitHub ↔ Render: push na branch configurada dispara deploy automático.
+# Build na raiz do monorepo para resolver @chefiapp/core-design-system (workspace).
+# Ver: https://render.com/docs/blueprint-spec | https://render.com/docs/monorepo-support
+
+services:
+  # Backend (Node API) — integration-gateway: /api/v1/*, /internal/events, /health
+  - type: web
+    name: chefiapp-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Comando de arranque (obrigatório: não usar _legacy_isolation/webhook-server)
+    dockerCommand: node dist/server/integration-gateway.js
+    startCommand: node dist/server/integration-gateway.js
+    branch: main
+    buildFilter:
+      paths:
+        - server/**
+        - core-engine/**
+        - fiscal-modules/**
+        - types/**
+        - migrations/**
+        - event-log/**
+        - legal-boundary/**
+        - billing-core/**
+        - package.json
+        - package-lock.json
+        - tsconfig.server.json
+        - Dockerfile
+        - .dockerignore
+      ignoredPaths:
+        - "**/*.md"
+        - "**/.*"
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: CORE_URL
+        sync: false
+      - key: CORE_SERVICE_KEY
+        sync: false
+      - key: CORE_ANON_KEY
+        sync: false
+      - key: INTERNAL_API_TOKEN
+        sync: false
+
+  # Merchant Portal (SPA Vite) — static site a partir do monorepo
+  - type: web
+    name: chefiapp-merchant-portal
+    runtime: static
+    buildCommand: corepack enable && pnpm install && pnpm --filter merchant-portal run build
+    staticPublishPath: merchant-portal/dist
+    branch: main
+    buildFilter:
+      paths:
+        - merchant-portal/**
+        - core-design-system/**
+      ignoredPaths:
+        - "**/*.md"
+        - "**/.*"
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_RUNTIME_MODE
+        value: production
+      - key: VITE_API_BASE
+        sync: false
+      - key: VITE_STRIPE_PUBLIC_KEY
+        sync: false
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: sameorigin
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

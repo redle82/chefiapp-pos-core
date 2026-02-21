@@ -92,7 +92,7 @@ export function VerifyCodePage() {
       <div style={styles.card}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <img
-            src="/Logo Chefiapp.png"
+            src="/logo-chefiapp-clean.png"
             alt="ChefIApp"
             style={{
               width: 48,
@@ -131,4 +131,3 @@ export function VerifyCodePage() {
     </div>
   );
 }
-

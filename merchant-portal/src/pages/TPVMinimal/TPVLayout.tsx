@@ -9,6 +9,7 @@
 
 import { Component, type ReactNode, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { MadeWithLoveFooter } from "../../components/MadeWithLoveFooter";
 import { OperationalHeader } from "../../components/pos/OperationalHeader";
 import { TPVHeader } from "./components/TPVHeader";
 import { TPVNotificationBar } from "./components/TPVNotificationBar";
@@ -81,6 +82,7 @@ export function TPVLayout() {
         >
           <Outlet context={{ searchQuery, emitKitchenPressure }} />
         </main>
+        <MadeWithLoveFooter variant="default" />
       </div>
     </div>
   );

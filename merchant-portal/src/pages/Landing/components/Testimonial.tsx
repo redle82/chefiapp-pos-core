@@ -34,7 +34,7 @@ export const Testimonial = () => {
               <div className="flex-shrink-0 flex flex-col items-center md:items-end text-center md:text-right">
                 <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-amber-500/20 mb-4 bg-black">
                   <img
-                    src="/Logo Chefiapp.png"
+                    src="/logo-chefiapp-clean.png"
                     alt="Sofia Gastrobar"
                     className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                   />

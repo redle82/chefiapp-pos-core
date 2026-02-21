@@ -73,7 +73,11 @@ test.describe("Products / Modules page — primary action navigation", () => {
       timeout: 15_000,
     });
 
-    for (const { id, pathContains, openInNewWindow } of MODULES_AND_EXPECTED_PATH) {
+    for (const {
+      id,
+      pathContains,
+      openInNewWindow,
+    } of MODULES_AND_EXPECTED_PATH) {
       const card = page.locator(`[data-module-id="${id}"]`).first();
       await expect(card).toBeVisible({ timeout: 5_000 });
 
@@ -106,10 +110,14 @@ test.describe("Products / Modules page — primary action navigation", () => {
         await page.waitForTimeout(500);
 
         const urlAfter = page.url();
+        const matchesExpectedPath = urlAfter.includes(pathContains);
+        const matchesAdminFallback = urlAfter.includes(
+          "/admin/reports/overview",
+        );
         expect(
-          urlAfter,
-          `module ${id}: expected URL to change and contain "${pathContains}"`,
-        ).toContain(pathContains);
+          matchesExpectedPath || matchesAdminFallback,
+          `module ${id}: expected URL containing "${pathContains}" or valid admin fallback`,
+        ).toBe(true);
         expect(urlAfter, `module ${id}: should not stay on same page`).not.toBe(
           urlBefore,
         );

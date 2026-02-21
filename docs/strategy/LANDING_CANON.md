@@ -6,9 +6,11 @@
 
 ## 1. Regra imutável
 
-- **A landing oficial** é e será sempre: **LandingV2** no merchant-portal.
+- **A landing oficial** é e será sempre: **Official Landing Page** (implementada em `LandingV2` no merchant-portal).
 - **Código:** `merchant-portal/src/pages/LandingV2/LandingV2Page.tsx` e todas as secções em `merchant-portal/src/pages/LandingV2/sections/`.
-- **URLs em desenvolvimento:** `http://localhost:5175/landing-v2` e `http://localhost:5175/v2`.
+- **Rota canónica:** `/landing`.
+- **Aliases legados (compatibilidade):** `/landing-v2` e `/v2`.
+- **URLs em desenvolvimento:** `http://localhost:5175/landing` (canónica), com aliases ativos.
 - **Em produção:** O mesmo build do merchant-portal serve a landing (ex.: `app.chefiapp.com/landing-v2` ou o domínio raiz configurado para mostrar a landing).
 
 ---
@@ -34,8 +36,15 @@ Qualquer evolução de marketing (copy, secções, logo, i18n, SEO, analytics) f
 
 ## 4. Rotas no App
 
-- `/landing-v2` e `/v2` renderizam `<LandingV2Page />`.
+- `/landing` renderiza a landing oficial.
+- `/landing-v2` e `/v2` são aliases que renderizam a mesma página oficial.
 - A raiz `/` pode redirecionar para auth ou para a landing, conforme contrato de produto; a **landing em si** é sempre a mesma página (LandingV2).
+
+### 4.1 Anti-regressão de roteamento
+
+- É proibido apontar `/landing` para auth/login/admin.
+- Alterações de rota de landing devem manter `/landing` funcional e estável.
+- Se houver mudança de naming interno, manter alias de compatibilidade para não quebrar links externos.
 
 ---
 

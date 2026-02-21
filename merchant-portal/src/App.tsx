@@ -27,11 +27,11 @@ import { AuthProvider } from "./core/auth/AuthProvider";
 import { useAuth } from "./core/auth/useAuth";
 import { FlowGate } from "./core/flow/FlowGate";
 import { deriveLifecycle } from "./core/lifecycle/Lifecycle";
+import { usePWAStaffHomeToTPVRedirect } from "./core/operational/PWAOpenToTPVRedirect";
 import { TRIAL_RESTAURANT_ID } from "./core/readiness/operationalRestaurant";
 import { isTrialModeParam } from "./core/routing/TrialMode";
 import { ShiftContext } from "./core/shift/ShiftContext";
 import { ShiftGuard } from "./core/shift/ShiftGuard";
-import { usePWAStaffHomeToTPVRedirect } from "./core/operational/PWAOpenToTPVRedirect";
 import { EventMonitorBootstrap } from "./core/tasks/EventMonitorBootstrap";
 import { TPVTrialPage } from "./pages/TPVMinimal/TPVTrialPage";
 import { MarketingRoutesFragment } from "./routes/MarketingRoutes";
@@ -250,9 +250,7 @@ function AppContentWithBilling() {
     location.pathname.startsWith("/op/kds");
   const isStaffLauncher =
     location.pathname === "/app/staff/home" ||
-    location.pathname.startsWith("/app/staff/home/") ||
-    location.pathname === "/app/staff" ||
-    location.pathname === "/app/staff/";
+    location.pathname.startsWith("/app/staff/home/");
   const isStaffMore = location.pathname.startsWith("/app/staff/profile");
   const shouldShowBillingBanner = isStaffLauncher || isStaffMore;
   return (

@@ -40,6 +40,7 @@
     "@capgo/capacitor-native-biometric": "^8.3.1",
     "@capgo/capacitor-nfc": "^8.0.6",
     "@chefiapp/core-design-system": "file:../core-design-system",
+    "@emotion/is-prop-valid": "^1.4.0",
     "@insforge/sdk": "^1.1.5",
     "@stripe/react-stripe-js": "^5.4.1",
     "@stripe/stripe-js": "^8.6.0",

@@ -375,7 +375,8 @@ function buildFilterBuilder(table: string): FilterBuilder {
 
   const chain: FilterBuilder = {
     select(columns = "*") {
-      state.selectCols = columns;
+      // PostgREST doesn't accept spaces in select; sanitize "id, name" → "id,name"
+      state.selectCols = columns.replace(/,\s+/g, ",");
       return chain;
     },
     insert(body: object | object[]) {

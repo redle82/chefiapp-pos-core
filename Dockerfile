@@ -1,6 +1,9 @@
 # ==============================================================================
 # CHEFIAPP POS CORE - Production Dockerfile
 # ==============================================================================
+# Build only from existing paths: server/, core-engine/, fiscal-modules/, types/,
+# migrations/. No _legacy_isolation/ (removed from repo).
+# ==============================================================================
 # Multi-stage build following Docker best practices:
 # - Minimal attack surface with Alpine base
 # - Non-root user execution
@@ -38,19 +41,20 @@ COPY package.json package-lock.json tsconfig.json ./
 RUN npm install --ignore-scripts && \
     npm cache clean --force
 
-# Copy source code — active modules
+# Copy source code — active modules (paths in tsconfig.server.json include)
 COPY core-engine ./core-engine
 COPY fiscal-modules ./fiscal-modules
 COPY migrations ./migrations
 COPY types ./types
-
 COPY server ./server
+COPY event-log ./event-log
+COPY legal-boundary ./legal-boundary
+COPY billing-core ./billing-core
 
 # Copy server tsconfig
 COPY tsconfig.server.json ./
 
 # Build TypeScript (types + server)
-# NOTE: Legacy code has broken cross-module imports (_legacy_isolation ↔ root modules).
 # noEmitOnError:false in tsconfig.server.json emits JS despite type errors.
 # We swallow the exit code so Docker build continues — runtime-critical paths work fine.
 RUN npm run build:server || true
@@ -86,9 +90,9 @@ COPY --chown=nodejs:nodejs package.json ./
 # Copy migrations (if needed at runtime)
 COPY --chown=nodejs:nodejs migrations ./migrations
 
-# Set environment variables
+# Set environment variables (PORT overridden by Render/docker-compose)
 ENV NODE_ENV=production \
-    PORT=3000 \
+    PORT=4320 \
     LOG_LEVEL=info
 
 # Expose ports
@@ -101,15 +105,15 @@ EXPOSE 3000 3099 4310 4320
 # Use non-root user
 USER nodejs
 
-# Health check (will be overridden in compose for specific services)
+# Health check — usa PORT (Render injeta em runtime)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+    CMD node -e "const p=process.env.PORT||4320; require('http').get('http://localhost:'+p+'/health', r=>process.exit(r.statusCode===200?0:1))"
 
 # Use tini as PID 1 to handle signals properly
 ENTRYPOINT ["/sbin/tini", "--"]
 
-# Default command (override in docker-compose for specific services)
-CMD ["node", "dist/_legacy_isolation/server/webhook-server.js"]
+# Default command (override in docker-compose for specific services).
+CMD ["node", "dist/server/integration-gateway.js"]
 
 # ==============================================================================
 # Build Arguments & Labels

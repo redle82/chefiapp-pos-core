@@ -3,8 +3,8 @@
  * Copy via useLandingLocale + getInsideSystem (i18n/landingV2Copy).
  */
 import React, { useEffect, useState } from "react";
-import { getInsideSystem } from "../i18n/landingV2Copy";
 import { useLandingLocale } from "../i18n/LandingLocaleContext";
+import { getInsideSystem } from "../i18n/landingV2Copy";
 
 type BrowserFrameProps = {
   url: string;
@@ -13,7 +13,12 @@ type BrowserFrameProps = {
   imageAlt: string;
 };
 
-const BrowserFrame: React.FC<BrowserFrameProps> = ({ url, statusLabel, imageSrc, imageAlt }) => {
+const BrowserFrame: React.FC<BrowserFrameProps> = ({
+  url,
+  statusLabel,
+  imageSrc,
+  imageAlt,
+}) => {
   const [imgError, setImgError] = useState(false);
   return (
     <div className="group relative rounded-2xl border border-white/10 bg-[#050505] overflow-hidden shadow-[0_0_0_1px_rgba(255,255,255,0.02)] hover:border-amber-500/40 transition-all duration-300">
@@ -27,7 +32,10 @@ const BrowserFrame: React.FC<BrowserFrameProps> = ({ url, statusLabel, imageSrc,
           {url}
         </div>
         <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-400">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden />
+          <span
+            className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"
+            aria-hidden
+          />
           {statusLabel}
         </span>
       </div>
@@ -67,8 +75,16 @@ const useCountUp = (target: number, durationMs: number) => {
   return value;
 };
 
-const FRAME_URLS = ["chefiapp.com/admin", "chefiapp.com/tpv", "chefiapp.com/kds"] as const;
-const FRAME_IMAGES = ["/landing/system/dashboard-live.png", "/landing/system/tpv-order.png", "/landing/system/kds-priority.png"] as const;
+const FRAME_URLS = [
+  "chefiapp.com/admin",
+  "chefiapp.com/tpv",
+  "chefiapp.com/kds",
+] as const;
+const FRAME_IMAGES = [
+  "/landing/system/dashboard-live.png",
+  "/landing/system/tpv-order.png",
+  "/landing/system/kds-priority.png",
+] as const;
 
 export const InsideSystemV2: React.FC = () => {
   const { locale } = useLandingLocale();
@@ -121,7 +137,9 @@ export const InsideSystemV2: React.FC = () => {
                 </p>
                 {frame.liveBadge != null && (
                   <div className="inline-flex items-baseline gap-1 rounded-full border border-amber-500/30 bg-amber-500/5 px-2.5 py-1">
-                    <span className="text-[11px] font-semibold text-amber-300">{liveOrders}</span>
+                    <span className="text-[11px] font-semibold text-amber-300">
+                      {liveOrders}
+                    </span>
                     <span className="text-[10px] uppercase tracking-[0.2em] text-amber-400">
                       {frame.liveBadge}
                     </span>
@@ -154,14 +172,29 @@ export const InsideSystemV2: React.FC = () => {
                       <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500 mb-2">
                         {step.numLabel}
                       </div>
-                      <p className="font-semibold text-white mb-1">{step.title}</p>
-                      <p className="text-[11px] text-neutral-400 leading-relaxed">{step.desc}</p>
+                      <p className="font-semibold text-white mb-1">
+                        {step.title}
+                      </p>
+                      <p className="text-[11px] text-neutral-400 leading-relaxed">
+                        {step.desc}
+                      </p>
                     </div>
                   </li>
                   {i < is.steps.length - 1 && (
-                    <li className="hidden md:flex items-center shrink-0 px-1" aria-hidden>
+                    <li
+                      className="hidden md:flex items-center shrink-0 px-1"
+                      aria-hidden
+                    >
                       <span className="h-px w-4 bg-linear-to-r from-amber-400/50 to-amber-400/80 rounded-full" />
-                      <svg className="w-3 h-3 text-amber-400/70 shrink-0 ml-0.5" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        className="w-3 h-3 text-amber-400/70 shrink-0 ml-0.5"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <path d="M5 2l4 4-4 4" />
                       </svg>
                     </li>

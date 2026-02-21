@@ -180,9 +180,7 @@ export function AuthPage() {
       );
     } catch (err: unknown) {
       const msg =
-        err instanceof Error
-          ? err.message
-          : "Erro ao entrar. Tente de novo.";
+        err instanceof Error ? err.message : "Erro ao entrar. Tente de novo.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -242,7 +240,7 @@ export function AuthPage() {
       <div style={styles.card}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <img
-            src="/Logo Chefiapp.png"
+            src="/logo-chefiapp-clean.png"
             alt="ChefIApp"
             style={{
               width: 48,

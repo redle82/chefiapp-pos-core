@@ -5,7 +5,7 @@
  */
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChefIAppSignature } from "../../ui/design-system/sovereign/ChefIAppSignature";
+import { MadeWithLoveFooter } from "../../components/MadeWithLoveFooter";
 
 const META_TITLE = "Segurança e dados | ChefIApp™ OS";
 const META_DESCRIPTION =
@@ -40,7 +40,12 @@ export function SecurityPage() {
       <header className="border-b border-white/5 bg-neutral-950/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/landing-v2" className="flex items-center gap-2">
-            <ChefIAppSignature variant="full" size="sm" tone="gold" />
+            <img
+              src="/logo-chefiapp-clean.png"
+              alt="ChefIApp"
+              className="w-6 h-6 rounded"
+            />
+            <span className="text-sm font-semibold text-white">ChefIApp</span>
           </Link>
           <Link
             to="/auth/phone"
@@ -59,7 +64,8 @@ export function SecurityPage() {
           Como tratamos os seus dados
         </h1>
         <p className="text-neutral-400 text-lg mb-12">
-          Afirmações verificáveis. Sem certificações que não temos. O que fazemos hoje.
+          Afirmações verificáveis. Sem certificações que não temos. O que
+          fazemos hoje.
         </p>
 
         <section className="space-y-10 mb-14">
@@ -94,10 +100,10 @@ export function SecurityPage() {
             </h2>
             <p className="text-neutral-300 leading-relaxed">
               Os dados são tratados em infraestrutura sob controlo do ChefIApp
-              (ou dos nossos fornecedores de hosting, com contratos que
-              garantem confidencialidade e uso exclusivo para o serviço). O
-              núcleo de dados (pedidos, runtime, configuração) vive num Core
-              unificado; não espalhamos dados por sistemas desconectados.
+              (ou dos nossos fornecedores de hosting, com contratos que garantem
+              confidencialidade e uso exclusivo para o serviço). O núcleo de
+              dados (pedidos, runtime, configuração) vive num Core unificado;
+              não espalhamos dados por sistemas desconectados.
             </p>
           </div>
 
@@ -108,13 +114,16 @@ export function SecurityPage() {
             <p className="text-neutral-300 leading-relaxed">
               O tratamento de dados pessoais e operacionais está descrito na
               nossa{" "}
-              <Link to="/legal/privacy" className="text-amber-500 hover:text-amber-400 underline">
+              <Link
+                to="/legal/privacy"
+                className="text-amber-500 hover:text-amber-400 underline"
+              >
                 Política de Privacidade
               </Link>
               . Onde aplicável (ex.: LGPD, GDPR), o restaurante é responsável
               por informar titulares e obter consentimento conforme a lei; nós
-              processamos os dados conforme as instruções do cliente e as
-              nossas obrigações contratuais.
+              processamos os dados conforme as instruções do cliente e as nossas
+              obrigações contratuais.
             </p>
           </div>
 
@@ -123,9 +132,9 @@ export function SecurityPage() {
               O que não afirmamos
             </h2>
             <p className="text-neutral-400 leading-relaxed">
-              Não afirmamos certificações (ex.: ISO 27001, SOC 2) até as
-              termos. Quando as tivermos, serão listadas aqui. Esta página
-              reflecte o estado actual — sem exageros.
+              Não afirmamos certificações (ex.: ISO 27001, SOC 2) até as termos.
+              Quando as tivermos, serão listadas aqui. Esta página reflecte o
+              estado actual — sem exageros.
             </p>
           </div>
         </section>
@@ -157,6 +166,8 @@ export function SecurityPage() {
           </Link>
         </nav>
       </article>
+
+      <MadeWithLoveFooter variant="default" />
     </main>
   );
 }

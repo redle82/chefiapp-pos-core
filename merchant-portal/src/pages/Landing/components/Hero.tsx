@@ -9,7 +9,7 @@
  */
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../core/auth/useAuth";
-import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppSignature";
+// Logo + text replaces old ChefIAppSignature
 import { OSCopy } from "../../../ui/design-system/sovereign/OSCopy";
 
 const WHATSAPP_NUMBER =
@@ -31,8 +31,13 @@ export const Hero = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-amber-950/10 pointer-events-none z-0" />
 
       <header className="w-full absolute top-0 left-0 p-6 z-50 flex justify-between items-center">
-        <div className="opacity-0 md:opacity-100 transition-opacity">
-          <ChefIAppSignature variant="full" size="sm" tone="gold" />
+        <div className="opacity-0 md:opacity-100 transition-opacity flex items-center gap-2">
+          <img
+            src="/logo-chefiapp-clean.png"
+            alt="ChefIApp"
+            className="w-6 h-6 rounded"
+          />
+          <span className="text-sm font-semibold text-white">ChefIApp</span>
         </div>
         <Link
           to={hasSession ? "/admin" : "/auth"}
@@ -48,7 +53,7 @@ export const Hero = () => {
         <div className="mb-12 relative group">
           <div className="absolute inset-0 bg-amber-500/20 blur-[100px] rounded-full opacity-0 group-hover:opacity-50 transition-opacity duration-1000"></div>
           <img
-            src="/Logo Chefiapp.png"
+            src="/logo-chefiapp-clean.png"
             alt="Sovereign Logo"
             className="w-48 h-48 md:w-64 md:h-64 object-contain relative z-10 drop-shadow-[0_0_50px_rgba(245,158,11,0.3)] mix-blend-screen brightness-90 contrast-125"
             style={{
@@ -61,7 +66,12 @@ export const Hero = () => {
 
         <div className="mb-8 flex flex-col sm:flex-row items-center justify-center gap-3">
           <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-[var(--color-primary)]/30 bg-black/50 backdrop-blur-sm">
-            <ChefIAppSignature variant="full" size="sm" tone="gold" />
+            <img
+              src="/logo-chefiapp-clean.png"
+              alt="ChefIApp"
+              className="w-5 h-5 rounded"
+            />
+            <span className="text-sm font-semibold text-white">ChefIApp</span>
           </div>
           {/* Indicador de runtime (§7) — visível para confirmar consciência de sessão */}
           <span

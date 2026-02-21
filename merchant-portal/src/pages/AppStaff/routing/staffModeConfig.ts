@@ -12,6 +12,7 @@ export type StaffModeId =
   | "kds"
   | "tasks"
   | "alerts"
+  | "scanner"
   | "profile";
 
 export interface StaffMode {
@@ -64,6 +65,14 @@ export const STAFF_MODES: StaffMode[] = [
     label: "Chamados",
     shortLabel: "Chamados",
     icon: "⚠️",
+  },
+  {
+    id: "scanner",
+    path: `${BASE}/mode/scanner`,
+    label: "Scanner",
+    shortLabel: "Scanner",
+    icon: "📷",
+    fullScreen: true,
   },
   // Perfil é rota de topo: /app/staff/profile
   { id: "profile", path: `${BASE}/profile`, label: "Perfil", icon: "👤" },

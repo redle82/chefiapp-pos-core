@@ -1,16 +1,18 @@
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { MadeWithLoveFooter } from "../../../../components/MadeWithLoveFooter";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
-import { colors } from "../../../../ui/design-system/tokens/colors";
 import { OSCopy } from "../../../../ui/design-system/sovereign/OSCopy";
+import { colors } from "../../../../ui/design-system/tokens/colors";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopbar } from "./AdminTopbar";
 
 const theme = colors.modes.dashboard;
 
 function getAdminPageSuffix(pathname: string): string {
-  if (pathname === "/admin/home" || pathname === "/admin") return OSCopy.dashboard.comandoCentral;
+  if (pathname === "/admin/home" || pathname === "/admin")
+    return OSCopy.dashboard.comandoCentral;
   if (pathname.startsWith("/admin/config")) return "Configuração";
   return "Comando Central";
 }
@@ -53,13 +55,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <main
           className="admin-content"
           style={{
+            flex: 1,
             padding: "24px 32px",
           }}
         >
           {children}
         </main>
+        <MadeWithLoveFooter variant="default" />
       </div>
     </div>
   );
 }
-

@@ -49,7 +49,9 @@ export const SocialProofV2 = () => {
                       {sp.featuredTestimonial.initials}
                     </div>
                     <div>
-                      <div className="font-bold text-white">{sp.featuredTestimonial.authorName}</div>
+                      <div className="font-bold text-white">
+                        {sp.featuredTestimonial.authorName}
+                      </div>
                       <div className="text-xs text-amber-500/70 font-medium mb-0.5">
                         {sp.featuredTestimonial.authorSubline}
                       </div>
@@ -77,7 +79,9 @@ export const SocialProofV2 = () => {
               </>
             ) : (
               <div className="p-8 md:p-12 text-center">
-                <p className="text-neutral-400 text-lg mb-6">{sp.placeholderCta}</p>
+                <p className="text-neutral-400 text-lg mb-6">
+                  {sp.placeholderCta}
+                </p>
                 <Link
                   to="/auth/phone"
                   className="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-colors"
@@ -103,13 +107,17 @@ export const SocialProofV2 = () => {
                 >
                   <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151C7.546 6.068 5.983 8.789 5.983 11h4v10H0z" />
                 </svg>
-                <p className="text-sm text-neutral-300 leading-relaxed mb-4">{t.quote}</p>
+                <p className="text-sm text-neutral-300 leading-relaxed mb-4">
+                  {t.quote}
+                </p>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 text-xs font-bold">
                     {t.initials}
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-white">{t.name}</div>
+                    <div className="text-sm font-semibold text-white">
+                      {t.name}
+                    </div>
                     <div className="text-xs text-neutral-500">{t.location}</div>
                   </div>
                 </div>

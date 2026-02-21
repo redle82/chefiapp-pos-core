@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { OSSignature } from "../ui/design-system/sovereign/OSSignature";
+import { MadeWithLoveFooter } from "./MadeWithLoveFooter";
 
 export const GlobalFooter = () => {
   return (
@@ -29,20 +29,8 @@ export const GlobalFooter = () => {
             </Link>
           </div>
 
-          <div className="mt-4 md:mt-0 flex items-center gap-2">
-            <OSSignature
-              size="sm"
-              className="opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all"
-            />
-            <a
-              href="https://goldmonkey.studio"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-amber-500 transition-colors"
-            >
-              Feito com <span className="text-red-500">❤</span> por
-              GoldMonkey.studio
-            </a>
+          <div className="mt-4 md:mt-0">
+            <MadeWithLoveFooter variant="inline" />
           </div>
         </div>
       </div>

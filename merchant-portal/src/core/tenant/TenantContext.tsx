@@ -7,6 +7,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type {
+  Organization,
+  OrgMembership,
+  PlanTier,
+} from "../../../../billing-core/types";
 import { useAuth } from "../auth/useAuth";
 import { isDebugMode } from "../debugMode";
 import { BackendType, getBackendType } from "../infra/backendAdapter";
@@ -73,6 +78,17 @@ export interface TenantState {
 
   /** Does user have multiple tenants? */
   isMultiTenant: boolean;
+
+  // ── Organization Layer (SaaS) ──
+
+  /** Organization that owns the active restaurant (null if legacy/unlinked) */
+  organization: Organization | null;
+
+  /** All organizations the user is a member of */
+  orgMemberships: OrgMembership[];
+
+  /** Plan tier of the active organization (derived from organization.plan_tier) */
+  planTier: PlanTier | null;
 }
 
 export interface TenantContextValue extends TenantState {
@@ -107,6 +123,9 @@ export function TenantProvider({ children }: TenantProviderProps) {
     isLoading: true,
     error: null,
     isMultiTenant: false,
+    organization: null,
+    orgMemberships: [],
+    planTier: null,
   });
 
   // STEP 5: In-flight guard - prevent concurrent resolveTenants() calls (StrictMode/remount safety)
@@ -180,6 +199,9 @@ export function TenantProvider({ children }: TenantProviderProps) {
                 isLoading: false,
                 error: null,
                 isMultiTenant: false,
+                organization: null,
+                orgMemberships: [],
+                planTier: "trial",
               });
               return;
             }
@@ -191,6 +213,9 @@ export function TenantProvider({ children }: TenantProviderProps) {
             isLoading: false,
             error: null,
             isMultiTenant: false,
+            organization: null,
+            orgMemberships: [],
+            planTier: null,
           });
           return;
         }
@@ -225,6 +250,9 @@ export function TenantProvider({ children }: TenantProviderProps) {
             isLoading: false,
             error: null,
             isMultiTenant: false,
+            organization: null,
+            orgMemberships: [],
+            planTier: null,
           });
           return;
         }
@@ -317,6 +345,53 @@ export function TenantProvider({ children }: TenantProviderProps) {
           activeRestaurant = fullRestRes.data as Restaurant | null;
         }
 
+        // 6. Fetch organization data if restaurant has org_id
+        let activeOrg: Organization | null = null;
+        let orgMembershipsResult: OrgMembership[] = [];
+        let activePlanTier: PlanTier | null = null;
+
+        const orgId = (activeRestaurant as any)?.org_id as string | undefined;
+        if (orgId) {
+          try {
+            const orgRes = await core
+              .from("gm_organizations")
+              .select("*")
+              .eq("id", orgId)
+              .single();
+            if (!orgRes.error && orgRes.data) {
+              activeOrg = orgRes.data as unknown as Organization;
+              activePlanTier = (activeOrg.plan_tier as PlanTier) ?? null;
+            }
+          } catch {
+            // Organization fetch is non-critical — continue without it
+          }
+        }
+
+        // 7. Fetch all org memberships for the user (for org switcher UI)
+        if (session?.user?.id) {
+          try {
+            const orgMembersRes = await core
+              .from("gm_org_members")
+              .select(
+                "org_id, role, gm_organizations(id, name, slug, plan_tier)",
+              )
+              .eq("user_id", session.user.id);
+            if (!orgMembersRes.error && Array.isArray(orgMembersRes.data)) {
+              orgMembershipsResult = orgMembersRes.data
+                .filter((row: any) => row.gm_organizations)
+                .map((row: any) => ({
+                  org_id: row.org_id,
+                  org_name: row.gm_organizations.name,
+                  org_slug: row.gm_organizations.slug,
+                  role: row.role,
+                  plan_tier: row.gm_organizations.plan_tier,
+                }));
+            }
+          } catch {
+            // Org memberships fetch is non-critical
+          }
+        }
+
         setState({
           tenantId: activeTenantId,
           restaurant: activeRestaurant,
@@ -324,6 +399,9 @@ export function TenantProvider({ children }: TenantProviderProps) {
           isLoading: false,
           error: null,
           isMultiTenant: memberships.length > 1,
+          organization: activeOrg,
+          orgMemberships: orgMembershipsResult,
+          planTier: activePlanTier,
         });
       } catch (error) {
         const devStable = isDevStableMode();

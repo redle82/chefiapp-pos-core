@@ -8,7 +8,7 @@
  */
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChefIAppSignature } from "../../ui/design-system/sovereign/ChefIAppSignature";
+import { MadeWithLoveFooter } from "../../components/MadeWithLoveFooter";
 
 const META_TITLE = "Estado do sistema | ChefIApp™ OS";
 const META_DESCRIPTION =
@@ -43,7 +43,12 @@ export function StatusPage() {
       <header className="border-b border-white/5 bg-neutral-950/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/landing-v2" className="flex items-center gap-2">
-            <ChefIAppSignature variant="full" size="sm" tone="gold" />
+            <img
+              src="/logo-chefiapp-clean.png"
+              alt="ChefIApp"
+              className="w-6 h-6 rounded"
+            />
+            <span className="text-sm font-semibold text-white">ChefIApp</span>
           </Link>
           <Link
             to="/auth/phone"
@@ -78,7 +83,10 @@ export function StatusPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" aria-hidden />
+              <span
+                className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500"
+                aria-hidden
+              />
               <span className="text-sm font-medium text-neutral-300">
                 Operacional
               </span>
@@ -114,6 +122,8 @@ export function StatusPage() {
           </Link>
         </nav>
       </article>
+
+      <MadeWithLoveFooter variant="default" />
     </main>
   );
 }

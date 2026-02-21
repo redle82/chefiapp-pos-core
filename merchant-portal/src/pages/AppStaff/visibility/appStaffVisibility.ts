@@ -11,6 +11,7 @@ export type AppStaffModeId =
   | "kds"
   | "tasks"
   | "alerts"
+  | "scanner"
   | "profile";
 
 const APPSTAFF_VISIBILITY: Record<
@@ -25,6 +26,7 @@ const APPSTAFF_VISIBILITY: Record<
     kds: true,
     tasks: true,
     alerts: true,
+    scanner: true,
     profile: true,
   },
   manager: {
@@ -35,6 +37,7 @@ const APPSTAFF_VISIBILITY: Record<
     kds: true,
     tasks: true,
     alerts: true,
+    scanner: true,
     profile: true,
   },
   waiter: {
@@ -45,6 +48,7 @@ const APPSTAFF_VISIBILITY: Record<
     kds: false,
     tasks: true,
     alerts: true,
+    scanner: false,
     profile: true,
   },
   kitchen: {
@@ -55,6 +59,7 @@ const APPSTAFF_VISIBILITY: Record<
     kds: true,
     tasks: true,
     alerts: false,
+    scanner: false,
     profile: true,
   },
   cleaning: {
@@ -65,6 +70,7 @@ const APPSTAFF_VISIBILITY: Record<
     kds: false,
     tasks: true,
     alerts: false,
+    scanner: false,
     profile: true,
   },
   worker: {
@@ -75,6 +81,7 @@ const APPSTAFF_VISIBILITY: Record<
     kds: false,
     tasks: true,
     alerts: false,
+    scanner: false,
     profile: true,
   },
 };

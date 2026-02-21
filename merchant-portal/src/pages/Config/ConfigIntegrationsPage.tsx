@@ -33,7 +33,7 @@ const HUB_SECTIONS: Array<{
     icon: "📱",
     label: "WhatsApp",
     description: "Canal de entrada, notificações, automações.",
-    status: "stub",
+    status: "available",
     path: `${INTEGRATIONS_BASE}/whatsapp`,
   },
   {
@@ -49,8 +49,24 @@ const HUB_SECTIONS: Array<{
     icon: "🛵",
     label: "Delivery",
     description: "GloriaFood, Glovo, Uber Eats; ativar/desativar por adapter.",
-    status: "stub",
+    status: "available",
     path: `${INTEGRATIONS_BASE}/delivery`,
+  },
+  {
+    id: "google-business",
+    icon: "📍",
+    label: "Google Business",
+    description: "Perfil, avaliações e respostas do Google Business Profile.",
+    status: "available",
+    path: `${INTEGRATIONS_BASE}/google-business`,
+  },
+  {
+    id: "instagram",
+    icon: "📸",
+    label: "Instagram",
+    description: "Publicação automática de pratos e promoções.",
+    status: "available",
+    path: `${INTEGRATIONS_BASE}/instagram`,
   },
   {
     id: "other",
@@ -67,7 +83,9 @@ type ConfigIntegrationsPageProps = {
   hideHeader?: boolean;
 };
 
-export function ConfigIntegrationsPage({ hideHeader }: ConfigIntegrationsPageProps = {}) {
+export function ConfigIntegrationsPage({
+  hideHeader,
+}: ConfigIntegrationsPageProps = {}) {
   const navigate = useNavigate();
 
   return (
@@ -96,11 +114,18 @@ export function ConfigIntegrationsPage({ hideHeader }: ConfigIntegrationsPagePro
             {...(section.path && { role: "button", tabIndex: 0 })}
           >
             <div className={styles.sectionIcon}>{section.icon}</div>
-            <div className={styles.sectionLabel}>{section.label}</div>
+            <div className={styles.sectionHeader}>
+              <div className={styles.sectionLabel}>{section.label}</div>
+              {section.status === "stub" && (
+                <span className={styles.sectionStatus}>Em breve</span>
+              )}
+              {section.status === "available" && (
+                <span className={styles.sectionStatusAvailable}>
+                  Disponível
+                </span>
+              )}
+            </div>
             <p className={styles.sectionDescription}>{section.description}</p>
-            {section.status === "stub" && (
-              <span className={styles.sectionStatus}>Em breve</span>
-            )}
           </div>
         ))}
       </div>

@@ -4,7 +4,7 @@
  * Barra fixa no fundo, dismissível. Não bloqueia conteúdo.
  * TECNICAS_AVANCADAS §3: uma mensagem única, link para /auth/phone, sem insistência.
  */
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 const STORAGE_KEY = "chefiapp_landing_exit_banner_dismissed";
@@ -15,7 +15,11 @@ interface ExitBannerV2Props {
   dismissLabel: string;
 }
 
-export function ExitBannerV2({ message, cta, dismissLabel }: ExitBannerV2Props) {
+export function ExitBannerV2({
+  message,
+  cta,
+  dismissLabel,
+}: ExitBannerV2Props) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {

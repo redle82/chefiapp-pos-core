@@ -163,7 +163,7 @@ export function ProductFirstLandingPage() {
                 }}
               >
                 <img
-                  src="/Logo Chefiapp.png"
+                  src="/logo-chefiapp-clean.png"
                   alt="ChefIApp"
                   style={{
                     width: 64,

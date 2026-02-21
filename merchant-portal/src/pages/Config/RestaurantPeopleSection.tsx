@@ -7,17 +7,14 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { QRCodeGenerator } from "../../components/QRCodeGenerator";
+import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { isBackendUnavailable } from "../../infra/menuPilotFallback";
 import {
   readRestaurantPeople,
   type CoreRestaurantPerson,
 } from "../../infra/readers/RestaurantPeopleReader";
-import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import styles from "./RestaurantPeopleSection.module.css";
-
-// LEGACY: Supabase client removed — Docker Core only
-const supabase = null as any;
 
 type InviteSummary = {
   id: string;
@@ -101,7 +98,7 @@ export function RestaurantPeopleSection() {
       setPeople(list);
       if (list.length > 0) {
         const personIds = list.map((p) => p.id);
-        const { data, error: invitesError } = await supabase
+        const { data, error: invitesError } = await dockerCoreClient
           .from("active_invites")
           .select(
             "id, person_id, status, code, expires_at, max_uses, used_count",
@@ -153,7 +150,7 @@ export function RestaurantPeopleSection() {
           Date.now() + 24 * 60 * 60 * 1000,
         ).toISOString(); // MVP: 24h
 
-        const { data, error } = await supabase
+        const { data, error } = await dockerCoreClient
           .from("active_invites")
           .upsert(
             {

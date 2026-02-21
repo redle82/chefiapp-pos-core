@@ -22,8 +22,8 @@ import {
   expect,
   it,
 } from "@jest/globals";
-import { Pool } from "pg";
 import crypto from "crypto";
+import { Pool } from "pg";
 
 // ---------------------------------------------------------------------------
 // Setup
@@ -63,38 +63,57 @@ async function seedTestData() {
   // Restaurant
   await pool.query(
     `INSERT INTO gm_restaurants (id, name, slug, owner_id)
-     VALUES ($1, 'Test Restaurant', 'test-rest-' || $1::text, $2)
+     VALUES ($1, 'Test Restaurant', $3, $2)
      ON CONFLICT (id) DO NOTHING`,
-    [RESTAURANT_ID, OPERATOR_ID],
+    [RESTAURANT_ID, OPERATOR_ID, `test-rest-${RESTAURANT_ID}`],
   );
 
   // Products
   await pool.query(
-    `INSERT INTO gm_products (id, restaurant_id, name, price, status)
-     VALUES ($1, $2, 'Francesinha', 1250, 'active'),
-            ($3, $2, 'Cerveja', 350, 'active')
+    `INSERT INTO gm_products (id, restaurant_id, name, price_cents, available)
+     VALUES ($1, $2, 'Francesinha', 1250, true),
+            ($3, $2, 'Cerveja', 350, true)
      ON CONFLICT (id) DO NOTHING`,
     [PRODUCT_ID_1, RESTAURANT_ID, PRODUCT_ID_2],
   );
 
   // Table
   await pool.query(
-    `INSERT INTO gm_tables (id, restaurant_id, number, status, seats)
-     VALUES ($1, $2, 1, 'free', 4)
+    `INSERT INTO gm_tables (id, restaurant_id, number, status)
+     VALUES ($1, $2, 1, 'free')
      ON CONFLICT (id) DO NOTHING`,
     [TABLE_ID, RESTAURANT_ID],
   );
 
   // Cash Register (open)
   await pool.query(
-    `INSERT INTO gm_cash_registers (id, restaurant_id, status, opening_balance_cents, total_sales_cents)
-     VALUES ($1, $2, 'open', 0, 0)
+    `INSERT INTO gm_cash_registers (id, restaurant_id, name, status, opening_balance_cents, total_sales_cents)
+     VALUES ($1, $2, 'Test Register', 'open', 0, 0)
      ON CONFLICT (id) DO NOTHING`,
     [CASH_REGISTER_ID, RESTAURANT_ID],
   );
 }
 
 async function cleanupTestData() {
+  await pool.query(
+    `DELETE FROM gm_stock_deduction_events WHERE restaurant_id = $1`,
+    [RESTAURANT_ID],
+  );
+  await pool.query(`DELETE FROM gm_stock_ledger WHERE restaurant_id = $1`, [
+    RESTAURANT_ID,
+  ]);
+  await pool.query(`DELETE FROM gm_stock_levels WHERE restaurant_id = $1`, [
+    RESTAURANT_ID,
+  ]);
+  await pool.query(`DELETE FROM gm_product_bom WHERE restaurant_id = $1`, [
+    RESTAURANT_ID,
+  ]);
+  await pool.query(`DELETE FROM gm_ingredients WHERE restaurant_id = $1`, [
+    RESTAURANT_ID,
+  ]);
+  await pool.query(`DELETE FROM gm_locations WHERE restaurant_id = $1`, [
+    RESTAURANT_ID,
+  ]);
   // Clean in dependency order
   await pool.query(`DELETE FROM gm_payments WHERE restaurant_id = $1`, [
     RESTAURANT_ID,
@@ -121,20 +140,19 @@ async function cleanupTestData() {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("PL/pgSQL Core RPCs", async () => {
-  const reachable = await isDbReachable();
-
-  if (!reachable) {
-    it.skip("Docker Core Postgres not reachable — skipping integration tests", () => {});
-    return;
-  }
+describe("PL/pgSQL Core RPCs", () => {
+  let reachable = false;
 
   beforeAll(async () => {
+    reachable = await isDbReachable();
+    if (!reachable) return;
     await seedTestData();
   });
 
   afterAll(async () => {
-    await cleanupTestData();
+    if (reachable) {
+      await cleanupTestData();
+    }
     await pool.end();
   });
 
@@ -169,14 +187,15 @@ describe("PL/pgSQL Core RPCs", async () => {
       );
 
       const result = res.rows[0].result;
-      expect(result.success).toBe(true);
-      expect(result.order_id).toBeDefined();
+      expect(result.id).toBeDefined();
+      expect(result.total_cents).toBe(2850); // 2*1250 + 1*350
+      expect(result.status).toBe("OPEN");
 
-      createdOrderIds.push(result.order_id);
+      createdOrderIds.push(result.id);
 
       // Verify order in DB
       const order = await pool.query(`SELECT * FROM gm_orders WHERE id = $1`, [
-        result.order_id,
+        result.id,
       ]);
       expect(order.rows).toHaveLength(1);
       expect(order.rows[0].status).toBe("OPEN");
@@ -187,29 +206,21 @@ describe("PL/pgSQL Core RPCs", async () => {
       // Verify items
       const items_db = await pool.query(
         `SELECT * FROM gm_order_items WHERE order_id = $1 ORDER BY created_at`,
-        [result.order_id],
+        [result.id],
       );
       expect(items_db.rows.length).toBe(2);
-      expect(items_db.rows[0].product_name).toBe("Francesinha");
+      expect(items_db.rows[0].name_snapshot).toBe("Francesinha");
       expect(items_db.rows[0].quantity).toBe(2);
-      expect(items_db.rows[1].product_name).toBe("Cerveja");
+      expect(items_db.rows[1].name_snapshot).toBe("Cerveja");
     });
 
     it("should reject empty items array", async () => {
-      const res = await pool.query(
-        `SELECT create_order_atomic($1, '[]'::jsonb) AS result`,
-        [RESTAURANT_ID],
-      );
-
-      const result = res.rows[0].result;
-      // Empty items should either fail or create order with 0 total
-      // (depends on implementation — if it allows, total should be 0)
-      if (result.success) {
-        createdOrderIds.push(result.order_id);
-        expect(result.order_id).toBeDefined();
-      } else {
-        expect(result.error).toBeDefined();
-      }
+      // Function raises exception for < 1 item
+      await expect(
+        pool.query(`SELECT create_order_atomic($1, '[]'::jsonb) AS result`, [
+          RESTAURANT_ID,
+        ]),
+      ).rejects.toThrow();
     });
 
     it("should enforce one open order per table constraint", async () => {
@@ -226,8 +237,8 @@ describe("PL/pgSQL Core RPCs", async () => {
       // Create fresh order on a new table
       const newTableId = crypto.randomUUID();
       await pool.query(
-        `INSERT INTO gm_tables (id, restaurant_id, number, status, seats)
-         VALUES ($1, $2, 99, 'free', 2)
+        `INSERT INTO gm_tables (id, restaurant_id, number, status)
+         VALUES ($1, $2, 99, 'free')
          ON CONFLICT (id) DO NOTHING`,
         [newTableId, RESTAURANT_ID],
       );
@@ -240,8 +251,8 @@ describe("PL/pgSQL Core RPCs", async () => {
           JSON.stringify({ table_id: newTableId, table_number: 99 }),
         ],
       );
-      expect(res1.rows[0].result.success).toBe(true);
-      createdOrderIds.push(res1.rows[0].result.order_id);
+      expect(res1.rows[0].result.id).toBeDefined();
+      createdOrderIds.push(res1.rows[0].result.id);
 
       // Second order on SAME table — should fail (idx_one_open_order_per_table)
       try {
@@ -254,16 +265,16 @@ describe("PL/pgSQL Core RPCs", async () => {
           ],
         );
         // If it returns success=false instead of throwing, that's also acceptable
-        if (res2.rows[0].result.success) {
-          createdOrderIds.push(res2.rows[0].result.order_id);
+        if (res2.rows[0].result.id) {
+          createdOrderIds.push(res2.rows[0].result.id);
           // Constraint might be a partial unique index that allows it — check
           expect(true).toBe(true); // If we get here, constraint isn't enforced at this level
         } else {
           expect(res2.rows[0].result.error).toBeDefined();
         }
       } catch (err: any) {
-        // unique_violation is expected
-        expect(err.code).toBe("23505"); // PostgreSQL unique violation
+        // Function catches unique_violation and re-raises as P0001
+        expect(err.message).toContain("TABLE_HAS_ACTIVE_ORDER");
       }
 
       // Cleanup extra table
@@ -292,15 +303,99 @@ describe("PL/pgSQL Core RPCs", async () => {
       );
 
       const result = res.rows[0].result;
-      expect(result.success).toBe(true);
-      createdOrderIds.push(result.order_id);
+      expect(result.id).toBeDefined();
+      createdOrderIds.push(result.id);
 
-      // Verify sync_metadata persisted
+      // Verify sync_metadata and origin persisted
       const order = await pool.query(
         `SELECT sync_metadata, origin FROM gm_orders WHERE id = $1`,
-        [result.order_id],
+        [result.id],
       );
+      expect(order.rows[0].sync_metadata).toBeDefined();
       expect(order.rows[0].origin).toBe("GARCOM");
+    });
+  });
+
+  // ========================================================================
+  // deduct_stock_by_bom
+  // ========================================================================
+
+  describe("deduct_stock_by_bom", () => {
+    it("should be idempotent for the same order", async () => {
+      const ingredientId = crypto.randomUUID();
+      const locationId = crypto.randomUUID();
+
+      await pool.query(
+        `INSERT INTO gm_ingredients (id, restaurant_id, name, unit)
+         VALUES ($1, $2, 'Queijo', 'g')`,
+        [ingredientId, RESTAURANT_ID],
+      );
+
+      await pool.query(
+        `INSERT INTO gm_locations (id, restaurant_id, name, kind)
+         VALUES ($1, $2, 'Cozinha 1', 'KITCHEN')`,
+        [locationId, RESTAURANT_ID],
+      );
+
+      await pool.query(
+        `INSERT INTO gm_stock_levels (restaurant_id, location_id, ingredient_id, qty, min_qty)
+         VALUES ($1, $2, $3, 10, 0)`,
+        [RESTAURANT_ID, locationId, ingredientId],
+      );
+
+      await pool.query(
+        `INSERT INTO gm_product_bom (restaurant_id, product_id, ingredient_id, qty_per_unit, station, preferred_location_kind)
+         VALUES ($1, $2, $3, 2, 'KITCHEN', 'KITCHEN')`,
+        [RESTAURANT_ID, PRODUCT_ID_1, ingredientId],
+      );
+
+      const items = JSON.stringify([
+        {
+          product_id: PRODUCT_ID_1,
+          name: "Francesinha",
+          quantity: 1,
+          unit_price: 1250,
+        },
+      ]);
+
+      // Create order WITHOUT table_id to avoid conflict with previous tests
+      const res = await pool.query(
+        `SELECT create_order_atomic($1, $2::jsonb) AS result`,
+        [RESTAURANT_ID, items],
+      );
+
+      const orderId = res.rows[0].result.id as string;
+      createdOrderIds.push(orderId);
+
+      await pool.query(`UPDATE gm_orders SET status = 'CLOSED' WHERE id = $1`, [
+        orderId,
+      ]);
+
+      // First deduction: qty should go from 10 to 8 (qty_per_unit=2 * quantity=1)
+      await pool.query(`SELECT deduct_stock_by_bom($1)`, [orderId]);
+
+      const afterFirst = await pool.query(
+        `SELECT qty FROM gm_stock_levels
+         WHERE restaurant_id = $1 AND location_id = $2 AND ingredient_id = $3`,
+        [RESTAURANT_ID, locationId, ingredientId],
+      );
+      expect(Number(afterFirst.rows[0].qty)).toBe(8);
+
+      await pool.query(`SELECT deduct_stock_by_bom($1)`, [orderId]);
+
+      const afterSecond = await pool.query(
+        `SELECT qty FROM gm_stock_levels
+         WHERE restaurant_id = $1 AND location_id = $2 AND ingredient_id = $3`,
+        [RESTAURANT_ID, locationId, ingredientId],
+      );
+      expect(Number(afterSecond.rows[0].qty)).toBe(8);
+
+      const ledger = await pool.query(
+        `SELECT count(*) FROM gm_stock_ledger
+         WHERE order_id = $1 AND ingredient_id = $2 AND action = 'CONSUME'`,
+        [orderId, ingredientId],
+      );
+      expect(Number(ledger.rows[0].count)).toBe(1);
     });
   });
 
@@ -326,7 +421,7 @@ describe("PL/pgSQL Core RPCs", async () => {
         `SELECT create_order_atomic($1, $2::jsonb) AS result`,
         [RESTAURANT_ID, items],
       );
-      payableOrderId = res.rows[0].result.order_id;
+      payableOrderId = res.rows[0].result.id;
       createdOrderIds.push(payableOrderId);
     });
 
@@ -334,8 +429,8 @@ describe("PL/pgSQL Core RPCs", async () => {
       const idemKey = `test-${crypto.randomUUID()}`;
 
       const res = await pool.query(
-        `SELECT process_order_payment($1, $2, $3, 'cash', 1000, $4, $5) AS result`,
-        [payableOrderId, RESTAURANT_ID, CASH_REGISTER_ID, OPERATOR_ID, idemKey],
+        `SELECT process_order_payment($1, $2, $3, $4, 1000, 'cash', $5) AS result`,
+        [RESTAURANT_ID, payableOrderId, CASH_REGISTER_ID, OPERATOR_ID, idemKey],
       );
 
       const result = res.rows[0].result;
@@ -356,8 +451,8 @@ describe("PL/pgSQL Core RPCs", async () => {
       const idemKey = `test-partial-${crypto.randomUUID()}`;
 
       const res = await pool.query(
-        `SELECT process_order_payment($1, $2, $3, 'cash', 500, $4, $5) AS result`,
-        [payableOrderId, RESTAURANT_ID, CASH_REGISTER_ID, OPERATOR_ID, idemKey],
+        `SELECT process_order_payment($1, $2, $3, $4, 500, 'cash', $5) AS result`,
+        [RESTAURANT_ID, payableOrderId, CASH_REGISTER_ID, OPERATOR_ID, idemKey],
       );
 
       const result = res.rows[0].result;
@@ -365,7 +460,7 @@ describe("PL/pgSQL Core RPCs", async () => {
       expect(result.payment_status).toBe("PARTIALLY_PAID");
       expect(result.remaining).toBe(500);
 
-      // Order should remains OPEN
+      // Order should remain OPEN
       const order = await pool.query(
         `SELECT status, payment_status FROM gm_orders WHERE id = $1`,
         [payableOrderId],
@@ -376,10 +471,10 @@ describe("PL/pgSQL Core RPCs", async () => {
 
     it("should reject overpayment", async () => {
       const res = await pool.query(
-        `SELECT process_order_payment($1, $2, $3, 'cash', 9999, $4, $5) AS result`,
+        `SELECT process_order_payment($1, $2, $3, $4, 9999, 'cash', $5) AS result`,
         [
-          payableOrderId,
           RESTAURANT_ID,
+          payableOrderId,
           CASH_REGISTER_ID,
           OPERATOR_ID,
           `test-over-${crypto.randomUUID()}`,
@@ -396,15 +491,15 @@ describe("PL/pgSQL Core RPCs", async () => {
 
       // First payment: 500 cents
       const res1 = await pool.query(
-        `SELECT process_order_payment($1, $2, $3, 'cash', 500, $4, $5) AS result`,
-        [payableOrderId, RESTAURANT_ID, CASH_REGISTER_ID, OPERATOR_ID, idemKey],
+        `SELECT process_order_payment($1, $2, $3, $4, 500, 'cash', $5) AS result`,
+        [RESTAURANT_ID, payableOrderId, CASH_REGISTER_ID, OPERATOR_ID, idemKey],
       );
       expect(res1.rows[0].result.success).toBe(true);
 
       // Second payment with SAME idempotency key — must fail
       const res2 = await pool.query(
-        `SELECT process_order_payment($1, $2, $3, 'cash', 500, $4, $5) AS result`,
-        [payableOrderId, RESTAURANT_ID, CASH_REGISTER_ID, OPERATOR_ID, idemKey],
+        `SELECT process_order_payment($1, $2, $3, $4, 500, 'cash', $5) AS result`,
+        [RESTAURANT_ID, payableOrderId, CASH_REGISTER_ID, OPERATOR_ID, idemKey],
       );
 
       const result2 = res2.rows[0].result;
@@ -415,10 +510,10 @@ describe("PL/pgSQL Core RPCs", async () => {
     it("should reject payment on closed order", async () => {
       // Pay in full first
       await pool.query(
-        `SELECT process_order_payment($1, $2, $3, 'cash', 1000, $4, $5) AS result`,
+        `SELECT process_order_payment($1, $2, $3, $4, 1000, 'cash', $5) AS result`,
         [
-          payableOrderId,
           RESTAURANT_ID,
+          payableOrderId,
           CASH_REGISTER_ID,
           OPERATOR_ID,
           `close-${crypto.randomUUID()}`,
@@ -427,10 +522,10 @@ describe("PL/pgSQL Core RPCs", async () => {
 
       // Attempt another payment on now-closed order
       const res = await pool.query(
-        `SELECT process_order_payment($1, $2, $3, 'cash', 100, $4, $5) AS result`,
+        `SELECT process_order_payment($1, $2, $3, $4, 100, 'cash', $5) AS result`,
         [
-          payableOrderId,
           RESTAURANT_ID,
+          payableOrderId,
           CASH_REGISTER_ID,
           OPERATOR_ID,
           `after-close-${crypto.randomUUID()}`,
@@ -446,16 +541,16 @@ describe("PL/pgSQL Core RPCs", async () => {
       // Close the cash register
       const closedRegisterId = crypto.randomUUID();
       await pool.query(
-        `INSERT INTO gm_cash_registers (id, restaurant_id, status, opening_balance_cents, total_sales_cents)
-         VALUES ($1, $2, 'closed', 0, 0)`,
+        `INSERT INTO gm_cash_registers (id, restaurant_id, name, status, opening_balance_cents, total_sales_cents)
+         VALUES ($1, $2, 'Closed Register', 'closed', 0, 0)`,
         [closedRegisterId, RESTAURANT_ID],
       );
 
       const res = await pool.query(
-        `SELECT process_order_payment($1, $2, $3, 'cash', 1000, $4, $5) AS result`,
+        `SELECT process_order_payment($1, $2, $3, $4, 1000, 'cash', $5) AS result`,
         [
-          payableOrderId,
           RESTAURANT_ID,
+          payableOrderId,
           closedRegisterId,
           OPERATOR_ID,
           `closed-reg-${crypto.randomUUID()}`,
@@ -480,10 +575,10 @@ describe("PL/pgSQL Core RPCs", async () => {
       const beforeTotal = before.rows[0].total_sales_cents;
 
       await pool.query(
-        `SELECT process_order_payment($1, $2, $3, 'cash', 1000, $4, $5) AS result`,
+        `SELECT process_order_payment($1, $2, $3, $4, 1000, 'cash', $5) AS result`,
         [
-          payableOrderId,
           RESTAURANT_ID,
+          payableOrderId,
           CASH_REGISTER_ID,
           OPERATOR_ID,
           `sales-${crypto.randomUUID()}`,
@@ -511,26 +606,26 @@ describe("PL/pgSQL Core RPCs", async () => {
         `SELECT create_order_atomic($1, $2::jsonb) AS result`,
         [RESTAURANT_ID, items],
       );
-      const splitOrderId = res.rows[0].result.order_id;
+      const splitOrderId = res.rows[0].result.id;
       createdOrderIds.push(splitOrderId);
 
       // Two concurrent payments of 1000 each — both should succeed = PAID
       const [pay1, pay2] = await Promise.all([
         pool.query(
-          `SELECT process_order_payment($1, $2, $3, 'cash', 1000, $4, $5) AS result`,
+          `SELECT process_order_payment($1, $2, $3, $4, 1000, 'cash', $5) AS result`,
           [
-            splitOrderId,
             RESTAURANT_ID,
+            splitOrderId,
             CASH_REGISTER_ID,
             OPERATOR_ID,
             `split1-${crypto.randomUUID()}`,
           ],
         ),
         pool.query(
-          `SELECT process_order_payment($1, $2, $3, 'card', 1000, $4, $5) AS result`,
+          `SELECT process_order_payment($1, $2, $3, $4, 1000, 'card', $5) AS result`,
           [
-            splitOrderId,
             RESTAURANT_ID,
+            splitOrderId,
             CASH_REGISTER_ID,
             OPERATOR_ID,
             `split2-${crypto.randomUUID()}`,
@@ -556,10 +651,10 @@ describe("PL/pgSQL Core RPCs", async () => {
     it("should reject payment for nonexistent order", async () => {
       const fakeOrderId = crypto.randomUUID();
       const res = await pool.query(
-        `SELECT process_order_payment($1, $2, $3, 'cash', 100, $4, $5) AS result`,
+        `SELECT process_order_payment($1, $2, $3, $4, 100, 'cash', $5) AS result`,
         [
-          fakeOrderId,
           RESTAURANT_ID,
+          fakeOrderId,
           CASH_REGISTER_ID,
           OPERATOR_ID,
           `fake-${crypto.randomUUID()}`,

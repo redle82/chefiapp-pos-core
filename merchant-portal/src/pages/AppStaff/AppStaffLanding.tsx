@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { isDebugMode } from "../../core/debugMode";
+import { RUNTIME } from "../../core/runtime/RuntimeContext";
 import {
   readRestaurantPeople,
   type CoreRestaurantPerson,
 } from "../../infra/readers/RestaurantPeopleReader";
-import { isDebugMode } from "../../core/debugMode";
-import { RUNTIME } from "../../core/runtime/RuntimeContext";
 import { Button } from "../../ui/design-system/Button";
 import { Card } from "../../ui/design-system/Card";
 import { Text } from "../../ui/design-system/primitives/Text";
@@ -14,6 +14,41 @@ import { useStaff } from "./context/StaffContext";
 import type { BusinessType, StaffRole } from "./context/StaffCoreTypes";
 import { TRIAL_GUIDE_CODES } from "./data/operatorProfiles";
 import { STAFF_LAUNCHER_PATH } from "./routing/staffModeConfig";
+
+/* ── Distribution section (mock placeholders) ── */
+const DistributionSection: React.FC = () => {
+  const [showQR, setShowQR] = useState(false);
+  return (
+    <div className={styles.distributionSection}>
+      <Text size="xs" color="tertiary" className={styles.distributionTitle}>
+        Disponível para sua equipe
+      </Text>
+      <div className={styles.storeButtons}>
+        <button className={styles.storeButton} disabled>
+          <span className={styles.storeIcon}>▶</span>
+          <span className={styles.storeLabel}>Google Play</span>
+          <span className={styles.storeBadge}>Em breve</span>
+        </button>
+        <button className={styles.storeButton} disabled>
+          <span className={styles.storeIcon}></span>
+          <span className={styles.storeLabel}>App Store</span>
+          <span className={styles.storeBadge}>Em breve</span>
+        </button>
+      </div>
+      <button className={styles.qrButton} onClick={() => setShowQR((v) => !v)}>
+        📲 Instalar via QR Direto
+      </button>
+      {showQR && (
+        <div className={styles.qrPanel}>
+          <Text size="xs" color="tertiary" className={styles.qrText}>
+            Abra a câmara do telemóvel e aponte para o QR gerado em Admin →
+            Sistema → Dispositivos.
+          </Text>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const DEV_QUICK_ROLES: { label: string; role: StaffRole; emoji: string }[] = [
   { label: "Dono", role: "owner", emoji: "👑" },
@@ -47,11 +82,18 @@ export const AppStaffLanding: React.FC = () => {
     return (
       <Wrapper>
         <div className={styles.sectionHeader}>
-          <Text size="3xl" weight="black" color="primary">
-            ChefIApp
-          </Text>
-          <Text size="sm" color="secondary" className={styles.subtitle}>
-            Operação
+          {/* Logo canónico — chapéu geométrico dourado. Ver LOGO_IDENTITY_CONTRACT.md */}
+          <img
+            src="/logo-chefiapp-clean.png"
+            alt="ChefIApp"
+            className={styles.logoImage}
+          />
+          <div className={styles.brandRow}>
+            <span className={styles.brandGold}>CHEFIAPP™</span>
+            <span className={styles.brandRed}>OS</span>
+          </div>
+          <Text size="xs" color="tertiary" className={styles.tagline}>
+            Seu Sistema Operacional
           </Text>
         </div>
 
@@ -63,10 +105,10 @@ export const AppStaffLanding: React.FC = () => {
               className={styles.cardFill}
             >
               <Text size="lg" weight="bold" color="primary">
-                Entrar na Equipa
+                Entrar com Código da Equipe
               </Text>
               <Text size="xs" color="tertiary" className={styles.subtitle}>
-                Código ou QR
+                Usar código ou escanear QR do restaurante
               </Text>
             </div>
           </Card>
@@ -83,10 +125,10 @@ export const AppStaffLanding: React.FC = () => {
                 className={styles.cardFill}
               >
                 <Text size="lg" weight="bold" color="primary">
-                  Entrar como funcionário
+                  Entrar como Funcionário
                 </Text>
                 <Text size="xs" color="tertiary" className={styles.subtitle}>
-                  Escolher pessoa (Demo Guide)
+                  Selecionar perfil individual (modo teste)
                 </Text>
               </div>
             </Card>
@@ -105,6 +147,9 @@ export const AppStaffLanding: React.FC = () => {
           </Button>
 
           {/* DEV/TRIAL: Staff Switcher — entrada rápida por perfil (instrumento de validação) */}
+          {/* ── App distribution (mock placeholders) ── */}
+          <DistributionSection />
+
           {isDebugMode() && (
             <div className={styles.devSection}>
               <Text

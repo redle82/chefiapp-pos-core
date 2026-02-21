@@ -99,7 +99,7 @@ export function PhoneLoginPage() {
 
     if (!hasBackend || !isDocker) {
       setError(
-        "Backend não configurado para login por telefone. Verifica a configuração do Core."
+        "Backend não configurado para login por telefone. Verifica a configuração do Core.",
       );
       return;
     }
@@ -115,9 +115,7 @@ export function PhoneLoginPage() {
       navigate("/auth/verify", { replace: true });
     } catch (err: unknown) {
       const msg =
-        err instanceof Error
-          ? err.message
-          : "Erro ao entrar. Tente de novo.";
+        err instanceof Error ? err.message : "Erro ao entrar. Tente de novo.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -141,7 +139,7 @@ export function PhoneLoginPage() {
       <div style={styles.card}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <img
-            src="/Logo Chefiapp.png"
+            src="/logo-chefiapp-clean.png"
             alt="ChefIApp"
             style={{
               width: 48,
@@ -150,7 +148,9 @@ export function PhoneLoginPage() {
               borderRadius: 12,
             }}
           />
-          <h1 style={{ ...styles.title, marginTop: 12 }}>Entrar com telefone</h1>
+          <h1 style={{ ...styles.title, marginTop: 12 }}>
+            Entrar com telefone
+          </h1>
           <p style={styles.subtitle}>
             Introduz o teu número. Enviamos um código por SMS.
           </p>
@@ -199,4 +199,3 @@ export function PhoneLoginPage() {
     </div>
   );
 }
-

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useSearchParams } from "react-router-dom";
 import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
@@ -42,6 +42,36 @@ export default function StaffModule() {
 
   const loading = authLoading || identity.loading || runtime.loading;
   const restaurantId = identity.id || getTabIsolated("chefiapp_restaurant_id");
+
+  // DEBUG: Log loading states to identify blocking state
+  useEffect(() => {
+    console.log("[StaffModule] Loading states:", {
+      authLoading,
+      identityLoading: identity.loading,
+      runtimeLoading: runtime.loading,
+      restaurantId,
+      identityId: identity.id,
+    });
+  }, [
+    authLoading,
+    identity.loading,
+    runtime.loading,
+    restaurantId,
+    identity.id,
+  ]);
+
+  // ESCAPE HATCH: If still loading after 5s, force continue with degraded state
+  const [forceLoad, setForceLoad] = useState(false);
+  useEffect(() => {
+    if (loading && !forceLoad) {
+      const timeout = setTimeout(() => {
+        console.warn("[StaffModule] Loading timeout - forcing continue");
+        setForceLoad(true);
+      }, 5000);
+      return () => clearTimeout(timeout);
+    }
+  }, [loading, forceLoad]);
+
   // Role EXCLUSIVAMENTE da sessão em fluxo canónico; ?role= em trial ou debug (permite testar visibilidade por papel)
   const roleParam =
     CONFIG.ALLOW_STAFF_ROLE_QUERY && (isDebugMode() || RUNTIME.isTrial)
@@ -52,7 +82,7 @@ export default function StaffModule() {
       ? (roleParam as StaffRole)
       : undefined;
 
-  if (loading) {
+  if (loading && !forceLoad) {
     return (
       <div
         style={{
@@ -67,6 +97,11 @@ export default function StaffModule() {
         </Text>
         <Text size="sm" color="tertiary">
           Validando sessão e restaurante.
+        </Text>
+        <Text size="xs" color="tertiary" style={{ marginTop: 16 }}>
+          {authLoading && "• Verificando autenticação..."}
+          {identity.loading && "• Carregando identidade do restaurante..."}
+          {runtime.loading && "• Inicializando runtime..."}
         </Text>
       </div>
     );

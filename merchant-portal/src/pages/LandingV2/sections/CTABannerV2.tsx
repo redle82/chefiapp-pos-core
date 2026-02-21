@@ -36,7 +36,7 @@ export const CTABannerV2 = ({
         </h2>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            to="/auth/phone?mode=signup"
+            to="/auth/phone"
             className="group inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-xl bg-amber-500 text-black hover:bg-amber-400 transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30"
           >
             {cta}

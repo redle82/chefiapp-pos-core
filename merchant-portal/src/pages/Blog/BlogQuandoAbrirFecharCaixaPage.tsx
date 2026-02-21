@@ -6,10 +6,9 @@
  */
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChefIAppSignature } from "../../ui/design-system/sovereign/ChefIAppSignature";
+import { MadeWithLoveFooter } from "../../components/MadeWithLoveFooter";
 
-const META_TITLE =
-  "Quando abrir e fechar caixa no restaurante | Turno e TPV";
+const META_TITLE = "Quando abrir e fechar caixa no restaurante | Turno e TPV";
 const META_DESCRIPTION =
   "Abertura e fecho de caixa no restaurante: quando abrir, quando fechar, saldo inicial e fecho declarado. O que o ChefIApp™ OS faz hoje — uma caixa por restaurante, turno aberto antes de vender, Z-Report no fecho. Sem mentiras.";
 
@@ -33,14 +32,16 @@ export function BlogQuandoAbrirFecharCaixaPage() {
     setMeta("description", META_DESCRIPTION);
     setMeta(
       "keywords",
-      "quando abrir caixa restaurante, quando fechar caixa, turno TPV, abertura fecho caixa, Z-Report restaurante"
+      "quando abrir caixa restaurante, quando fechar caixa, turno TPV, abertura fecho caixa, Z-Report restaurante",
     );
     setMeta("og:title", META_TITLE, true);
     setMeta("og:description", META_DESCRIPTION, true);
     setMeta("og:type", "article", true);
     setMeta("og:url", CANONICAL_URL, true);
 
-    let linkCanonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    let linkCanonical = document.querySelector<HTMLLinkElement>(
+      'link[rel="canonical"]',
+    );
     if (!linkCanonical) {
       linkCanonical = document.createElement("link");
       linkCanonical.rel = "canonical";
@@ -56,7 +57,9 @@ export function BlogQuandoAbrirFecharCaixaPage() {
       url: CANONICAL_URL,
       publisher: { "@type": "Organization", name: "ChefIApp" },
     };
-    let scriptJsonLd = document.getElementById("blog-article-jsonld") as HTMLScriptElement | null;
+    let scriptJsonLd = document.getElementById(
+      "blog-article-jsonld",
+    ) as HTMLScriptElement | null;
     if (!scriptJsonLd) {
       scriptJsonLd = document.createElement("script");
       scriptJsonLd.id = "blog-article-jsonld";
@@ -76,7 +79,12 @@ export function BlogQuandoAbrirFecharCaixaPage() {
       <header className="border-b border-white/5 bg-neutral-950/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/landing-v2" className="flex items-center gap-2">
-            <ChefIAppSignature variant="full" size="sm" tone="gold" />
+            <img
+              src="/logo-chefiapp-clean.png"
+              alt="ChefIApp"
+              className="w-6 h-6 rounded"
+            />
+            <span className="text-sm font-semibold text-white">ChefIApp</span>
           </Link>
           <Link
             to="/auth/phone"
@@ -111,8 +119,8 @@ export function BlogQuandoAbrirFecharCaixaPage() {
             vendas durante o serviço, saldo declarado no fecho. Abrir caixa no
             início do dia (ou do turno) e fechar no fim permite fechar contas
             diárias, comparar o que entrou com o que está no drawer e gerar
-            relatórios de fecho (Z-Report). Sem isso, pedidos e pagamentos
-            ficam soltos; com isso, há um corte claro entre um dia e o outro.
+            relatórios de fecho (Z-Report). Sem isso, pedidos e pagamentos ficam
+            soltos; com isso, há um corte claro entre um dia e o outro.
           </p>
 
           <h2 className="text-2xl font-bold text-white mt-12 mb-4">
@@ -134,12 +142,12 @@ export function BlogQuandoAbrirFecharCaixaPage() {
           </h2>
           <p className="text-neutral-300 leading-relaxed mb-4">
             Fecha-se caixa no fim do dia ou do turno, quando queres “cortar” o
-            período e gerar o relatório de fecho. No fecho, o operador declara
-            o <strong>saldo em caixa</strong> (quanto dinheiro está
-            fisicamente no drawer). O sistema gera o Z-Report (totais de vendas,
-            pagamentos, etc.) e regista o evento de fecho. Depois disso, para
-            voltar a vender é preciso abrir um novo turno. Não há fecho
-            automático por hora — o fecho é manual e intencional.
+            período e gerar o relatório de fecho. No fecho, o operador declara o{" "}
+            <strong>saldo em caixa</strong> (quanto dinheiro está fisicamente no
+            drawer). O sistema gera o Z-Report (totais de vendas, pagamentos,
+            etc.) e regista o evento de fecho. Depois disso, para voltar a
+            vender é preciso abrir um novo turno. Não há fecho automático por
+            hora — o fecho é manual e intencional.
           </p>
 
           <h2 className="text-2xl font-bold text-white mt-12 mb-4">
@@ -147,24 +155,26 @@ export function BlogQuandoAbrirFecharCaixaPage() {
           </h2>
           <p className="text-neutral-300 leading-relaxed mb-4">
             Tudo o que se segue existe no produto e no código. Uma caixa por
-            restaurante; abertura com saldo inicial em cêntimos; fecho com
-            saldo declarado e RPC atómico que gera o evento de fecho e
-            relatório. O TPV e o fluxo operacional bloqueiam até haver caixa
-            aberta. O onboarding sugere um valor de abertura (configurável);
-            o ritual de “abrir turno” é o mesmo que abrir caixa. Nada de
-            “em breve” — é o que está implementado.
+            restaurante; abertura com saldo inicial em cêntimos; fecho com saldo
+            declarado e RPC atómico que gera o evento de fecho e relatório. O
+            TPV e o fluxo operacional bloqueiam até haver caixa aberta. O
+            onboarding sugere um valor de abertura (configurável); o ritual de
+            “abrir turno” é o mesmo que abrir caixa. Nada de “em breve” — é o
+            que está implementado.
           </p>
           <ul className="list-disc pl-6 text-neutral-300 space-y-2 mb-6">
-            <li>Abertura de caixa com saldo inicial (valor em euros/cêntimos).</li>
+            <li>
+              Abertura de caixa com saldo inicial (valor em euros/cêntimos).
+            </li>
             <li>Uma caixa activa por restaurante (“Caixa Principal”).</li>
             <li>TPV e pedidos só funcionam com caixa aberta.</li>
-            <li>Fecho com saldo declarado e geração de Z-Report / evento de fecho.</li>
+            <li>
+              Fecho com saldo declarado e geração de Z-Report / evento de fecho.
+            </li>
             <li>Novo turno = nova abertura de caixa.</li>
           </ul>
 
-          <h2 className="text-2xl font-bold text-white mt-12 mb-4">
-            Resumo
-          </h2>
+          <h2 className="text-2xl font-bold text-white mt-12 mb-4">Resumo</h2>
           <p className="text-neutral-300 leading-relaxed mb-4">
             Abrir caixa = início do período de vendas, com saldo inicial
             registado. Fechar caixa = fim do período, com saldo declarado e
@@ -215,6 +225,8 @@ export function BlogQuandoAbrirFecharCaixaPage() {
           </Link>
         </nav>
       </article>
+
+      <MadeWithLoveFooter variant="default" />
     </main>
   );
 }

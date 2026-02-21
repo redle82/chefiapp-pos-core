@@ -1,4 +1,5 @@
 import React from "react";
+import { MadeWithLoveFooter } from "../../../components/MadeWithLoveFooter";
 import { colors } from "../tokens/colors";
 import { spacing } from "../tokens/spacing";
 
@@ -58,10 +59,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               maxWidth: "1200px",
               width: "100%",
               margin: "0 auto",
+              flex: 1,
             }}
           >
             {content}
           </div>
+          <MadeWithLoveFooter variant="default" />
         </main>
       </div>
     </OSFrame>

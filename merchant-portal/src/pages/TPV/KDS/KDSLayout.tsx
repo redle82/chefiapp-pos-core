@@ -30,6 +30,7 @@ export const KDSLayout: React.FC<KDSLayoutProps> = ({ children }) => {
                We could add global "Flash Messages" specific to kitchen here later.
             */}
       {children}
+      <MadeWithLoveFooter variant="floating" />
       <TPVInstallPrompt
         title={t("installTitle")}
         description={t("installDescription")}

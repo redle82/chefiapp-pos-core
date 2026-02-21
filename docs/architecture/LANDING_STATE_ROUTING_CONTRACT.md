@@ -51,7 +51,9 @@ A landing expõe **três portais** principais. Todo o resto (WhatsApp, configura
 | **Explorar demonstração**  | Demo isolada, sem efeitos colaterais | Demo                                                     |
 | **Já tenho acesso**        | Retomar último contexto              | Resolução de sessão → último modo (Pilot \| Operational) |
 
-**Comportamento da página de vendas:** A landing (`/`) **nunca** redireciona automaticamente; a entrada no sistema faz-se **apenas por CTA explícito** (ex.: "Entrar no sistema" → `/admin`). Landing = página de vendas, não auth gateway.
+**Comportamento da página de vendas:** A landing canónica (`/landing`) **nunca** redireciona automaticamente; a entrada no sistema faz-se **apenas por CTA explícito** (ex.: "Entrar no sistema" → `/admin`). Landing = página de vendas, não auth gateway.
+
+**Compatibilidade:** `/landing-v2` e `/v2` podem existir como aliases técnicos, mas não substituem o contrato canónico de `/landing`.
 
 ---
 

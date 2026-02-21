@@ -222,8 +222,12 @@ export function TPVMinimal({
 
       const DOCKER_CORE_URL = CONFIG.CORE_URL;
       const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
+      // Determine base URL: if CORE_URL already ends with /rest, append /v1; else append /rest/v1
+      const baseUrl = DOCKER_CORE_URL?.endsWith("/rest")
+        ? `${DOCKER_CORE_URL}/v1`
+        : `${DOCKER_CORE_URL || ""}/rest/v1`;
 
-      const url = `${DOCKER_CORE_URL}/rest/v1/gm_products?select=*&restaurant_id=eq.${effectiveRestaurantId}&available=eq.true&order=created_at.asc`;
+      const url = `${baseUrl}/gm_products?select=*&restaurant_id=eq.${effectiveRestaurantId}&available=eq.true&order=created_at.asc`;
 
       const response = await fetch(url, {
         method: "GET",
@@ -342,7 +346,11 @@ export function TPVMinimal({
     }
     const DOCKER_CORE_URL = CONFIG.CORE_URL;
     const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
-    const url = `${DOCKER_CORE_URL}/rest/v1/gm_tables?select=id,number&restaurant_id=eq.${effectiveRestaurantId}&order=number.asc`;
+    // Determine base URL: if CORE_URL already ends with /rest, append /v1; else append /rest/v1
+    const baseUrl = DOCKER_CORE_URL?.endsWith("/rest")
+      ? `${DOCKER_CORE_URL}/v1`
+      : `${DOCKER_CORE_URL || ""}/rest/v1`;
+    const url = `${baseUrl}/gm_tables?select=id,number&restaurant_id=eq.${effectiveRestaurantId}&order=number.asc`;
     fetch(url, {
       method: "GET",
       headers: {
@@ -618,7 +626,15 @@ export function TPVMinimal({
 
       const DOCKER_CORE_URL = CONFIG.CORE_URL;
       const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
-      const regUrl = `${DOCKER_CORE_URL}/rest/v1/gm_cash_registers?restaurant_id=eq.${effectiveRestaurantId}&status=eq.open&limit=1`;
+      // Determine base URL: if CORE_URL already ends with /rest, append /v1; else append /rest/v1
+      const baseUrl = DOCKER_CORE_URL?.endsWith("/rest")
+        ? `${DOCKER_CORE_URL}/v1`
+        : `${DOCKER_CORE_URL || ""}/rest/v1`;
+      // RPC base: if CORE_URL ends with /rest, use parent; else use CORE_URL
+      const rpcBaseUrl = DOCKER_CORE_URL?.endsWith("/rest")
+        ? DOCKER_CORE_URL.slice(0, -5)
+        : DOCKER_CORE_URL || "";
+      const regUrl = `${baseUrl}/gm_cash_registers?restaurant_id=eq.${effectiveRestaurantId}&status=eq.open&limit=1`;
       const regRes = await fetch(regUrl, {
         method: "GET",
         headers: {
@@ -629,25 +645,22 @@ export function TPVMinimal({
       const registers = regRes.ok ? await regRes.json() : [];
       const cashRegisterId = registers?.[0]?.id;
       if (cashRegisterId) {
-        const payRes = await fetch(
-          `${DOCKER_CORE_URL}/rpc/process_order_payment`,
-          {
-            method: "POST",
-            headers: {
-              apikey: DOCKER_CORE_ANON_KEY,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              p_restaurant_id: effectiveRestaurantId,
-              p_order_id: result.id,
-              p_cash_register_id: cashRegisterId,
-              p_operator_id: null,
-              p_amount_cents: result.total_cents,
-              p_method: paymentMethod,
-              p_idempotency_key: `${result.id}-${Date.now()}`,
-            }),
+        const payRes = await fetch(`${rpcBaseUrl}/rpc/process_order_payment`, {
+          method: "POST",
+          headers: {
+            apikey: DOCKER_CORE_ANON_KEY,
+            "Content-Type": "application/json",
           },
-        );
+          body: JSON.stringify({
+            p_restaurant_id: effectiveRestaurantId,
+            p_order_id: result.id,
+            p_cash_register_id: cashRegisterId,
+            p_operator_id: null,
+            p_amount_cents: result.total_cents,
+            p_method: paymentMethod,
+            p_idempotency_key: `${result.id}-${Date.now()}`,
+          }),
+        });
         const payData = payRes.ok ? await payRes.json() : null;
         if (payData?.success) {
           setSuccess(

@@ -32,6 +32,38 @@
       { "name": "cleaning", "description": "Cleaning staff — tasks access" }
     ]
   },
+  "identityProviders": [
+    {
+      "alias": "google",
+      "providerId": "google",
+      "enabled": true,
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "${GOOGLE_CLIENT_ID:-placeholder}",
+        "clientSecret": "${GOOGLE_CLIENT_SECRET:-placeholder}",
+        "defaultScope": "openid profile email",
+        "syncMode": "IMPORT",
+        "guiOrder": "1",
+        "useJwksUrl": "true"
+      },
+      "displayName": "Google"
+    }
+  ],
+  "identityProviderMappers": [
+    {
+      "name": "google-email-idp-mapper",
+      "identityProviderAlias": "google",
+      "identityProviderMapper": "hardcoded-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "attribute": "emailVerified",
+        "attribute.value": "true"
+      }
+    }
+  ],
   "clients": [
     {
       "clientId": "merchant-portal",
