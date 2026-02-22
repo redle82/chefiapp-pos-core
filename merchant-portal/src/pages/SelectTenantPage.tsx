@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useTenant } from "../core/tenant/TenantContext";
 import { TenantSelector } from "../core/tenant/TenantSelector";
 import { GlobalLoadingView } from "../ui/design-system/components";
+import styles from "./SelectTenantPage.module.css";
 
 /**
  * Página de seleção de tenant (/app/select-tenant).
@@ -17,7 +18,8 @@ export function SelectTenantPage() {
 
   // 1 membership: auto-select e redirect (uma vez)
   useEffect(() => {
-    if (isLoading || memberships.length !== 1 || autoSelectDoneRef.current) return;
+    if (isLoading || memberships.length !== 1 || autoSelectDoneRef.current)
+      return;
     autoSelectDoneRef.current = true;
     switchTenant(memberships[0].restaurant_id);
     navigate("/dashboard", { replace: true });
@@ -54,13 +56,7 @@ export function SelectTenantPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0b0b0c",
-        padding: 24,
-      }}
-    >
+    <div className={styles.pageWrapper}>
       <TenantSelector compact={false} />
     </div>
   );

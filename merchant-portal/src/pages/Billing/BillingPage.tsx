@@ -126,6 +126,7 @@ export function BillingPage() {
   // Legacy fallback: if no plans from DB, use single VITE_STRIPE_PRICE_ID
   const legacyPriceId = CONFIG.STRIPE_PRICE_ID;
   const hasPlans = plans.length > 0;
+  const canSellPlatform = CONFIG.canSellPlatform;
 
   return (
     <div className={styles.pageWrapper}>
@@ -139,6 +140,17 @@ export function BillingPage() {
               : "Escolha o plano ideal para o seu restaurante."}
           </p>
         </header>
+
+        {/* Aviso: venda da plataforma só em chefiapp.com */}
+        {!canSellPlatform && (
+          <div className={styles.errorBox} role="alert">
+            A subscrição e alteração de plano estão disponíveis apenas em{" "}
+            <a href="https://www.chefiapp.com" rel="noopener noreferrer">
+              chefiapp.com
+            </a>
+            . Aceda a esse site para subscrever ou alterar o seu plano.
+          </div>
+        )}
 
         {/* Erros */}
         {(error || actionError) && (
@@ -163,7 +175,7 @@ export function BillingPage() {
               </p>
             </div>
             <div className={styles.buttonGroup}>
-              {!isActive && (
+              {!isActive && canSellPlatform && (
                 <button
                   type="button"
                   onClick={() =>
@@ -189,8 +201,8 @@ export function BillingPage() {
           </section>
         )}
 
-        {/* No subscription: show plan cards */}
-        {!subscription && hasPlans && (
+        {/* No subscription: show plan cards (apenas se pode vender) */}
+        {!subscription && hasPlans && canSellPlatform && (
           <div className={styles.plansGrid}>
             {plans.map((plan) => {
               const priceId = resolvePlanPriceId(plan);
@@ -249,20 +261,22 @@ export function BillingPage() {
               Ainda não tem uma assinatura ativa. Assine um plano para passar a
               plano ativo (operação ao vivo).
             </p>
-            {legacyPriceId && (
+            {legacyPriceId && canSellPlatform && (
               <p className={styles.pricingText}>
                 Plano — {formatPrice(7900, "EUR")}/mês
               </p>
             )}
-            <button
-              type="button"
-              onClick={() => handleStartSubscription(legacyPriceId || "pro")}
-              disabled={!!actionLoading}
-              className={styles.buttonPrimary}
-            >
-              {actionLoading ? "A redirecionar..." : "Ativar agora"}
-            </button>
-            {!legacyPriceId && (
+            {canSellPlatform && (
+              <button
+                type="button"
+                onClick={() => handleStartSubscription(legacyPriceId || "pro")}
+                disabled={!!actionLoading}
+                className={styles.buttonPrimary}
+              >
+                {actionLoading ? "A redirecionar..." : "Ativar agora"}
+              </button>
+            )}
+            {!legacyPriceId && canSellPlatform && (
               <p className={styles.configMessage}>
                 Configure VITE_STRIPE_PRICE_ID no ambiente para ativar o
                 checkout.

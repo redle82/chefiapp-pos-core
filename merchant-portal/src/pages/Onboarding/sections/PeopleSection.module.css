@@ -1,0 +1,149 @@
+.container {
+  padding: 48px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.saving {
+  font-size: 14px;
+  color: var(--color-primary);
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+
+.panel {
+  margin-bottom: 32px;
+  padding: 16px;
+  background-color: var(--surface-elevated);
+  border-radius: 8px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.formStack,
+.peopleList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input {
+  padding: 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--surface-base);
+}
+
+.addButton {
+  padding: 12px;
+  background-color: var(--color-primary);
+  color: var(--text-inverse, #fff);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addButtonDisabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.emptyState {
+  font-size: 14px;
+  color: var(--text-tertiary, #999);
+  font-style: italic;
+  text-align: center;
+  padding: 32px;
+}
+
+.personCard {
+  padding: 16px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface-base);
+}
+
+.personName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.personEmail {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.personRole {
+  font-size: 12px;
+  color: var(--color-primary);
+  margin-top: 4px;
+}
+
+.removeButton {
+  padding: 8px 16px;
+  background-color: var(--status-error-text, #dc3545);
+  color: var(--text-inverse, #fff);
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.checklistTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.checklistList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checklistItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checklistIcon {
+  font-size: 16px;
+}
+
+.checklistText {
+  font-size: 14px;
+}
+
+.checklistDone {
+  color: var(--status-success-text);
+}
+
+.checklistPending {
+  color: var(--text-secondary);
+}

@@ -8,6 +8,7 @@ import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
 import { useGhostPreviewProps, useOnboardingState } from "../hooks";
 import { OnboardingContext } from "../hooks/useSetupContext";
 import { OSFrame } from "../ui/design-system/sovereign/OSFrame";
+import styles from "./SetupLayout.module.css";
 
 /**
  * SetupLayout — Wrapper do wizard principal
@@ -29,7 +30,7 @@ export function SetupLayout() {
   const hasIdentity = Boolean(
     steps.identity ||
       getTabIsolated("chefiapp_evt_identity_done") === "1" ||
-      (getTabIsolated("chefiapp_name") && getTabIsolated("chefiapp_slug"))
+      (getTabIsolated("chefiapp_name") && getTabIsolated("chefiapp_slug")),
   );
 
   const navItems: { to: string; label: string; step: 1 | 2 | 3 | 4 | 5 }[] = [
@@ -43,7 +44,7 @@ export function SetupLayout() {
   ];
 
   function getStepIcon(
-    status: "completed" | "current" | "blocked" | "pending"
+    status: "completed" | "current" | "blocked" | "pending",
   ) {
     switch (status) {
       case "completed":
@@ -75,7 +76,7 @@ export function SetupLayout() {
 
   const progressPct = Math.max(
     0,
-    Math.min(100, Math.round((completedCount / 5) * 100))
+    Math.min(100, Math.round((completedCount / 5) * 100)),
   );
 
   const slug = hasIdentity
@@ -120,83 +121,33 @@ export function SetupLayout() {
   return (
     <OnboardingContext.Provider value={onboarding}>
       <OSFrame context="onboarding">
-        <div
-          style={{
-            color: "#f5f5f7",
-            display: "flex",
-            flexDirection: "column",
-            flex: 1,
-          }}
-        >
-          <header
-            style={{
-              padding: "16px 20px 16px 60px", // Extra left padding for OSFrame Logic
-              borderBottom: "1px solid rgba(255,255,255,0.05)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className={styles.root}>
+          <header className={styles.header}>
+            <div className={styles.headerLeft}>
               {/* Sovereign Signature handled by OSFrame */}
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  opacity: 0.6,
-                  paddingLeft: 0,
-                }}
-              >
+              <div className={styles.setupStep}>
                 Setup • Passo {activeStep} de 5
               </div>
             </div>
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: "rgba(255,255,255,0.7)",
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 999,
-                padding: "8px 12px",
-              }}
-            >
+            <span className={styles.progressBadge}>
               {progressPct}% concluído
             </span>
           </header>
-          <div
-            style={{
-              padding: "16px 20px 24px",
-              paddingBottom: "calc(24px + env(safe-area-inset-bottom))",
-            }}
-          >
-            <div
-              style={{
-                maxWidth: 980,
-                margin: "0 auto",
-                display: "grid",
-                gridTemplateColumns: "320px 1fr",
-                gap: 18,
-                alignItems: "start",
-              }}
-              className="setupGrid"
-            >
+          <div className={styles.contentWrap}>
+            <div className={`setupGrid ${styles.grid}`}>
               {/* Sidebar / Progresso + Preview (fica visível no mobile) */}
-              <aside style={{ display: "grid", gap: 12 }}>
-                <div className="card" style={{ margin: 0 }}>
+              <aside className={styles.sidebar}>
+                <div className={`card ${styles.cardReset}`}>
                   {!hasIdentity ? (
                     <>
-                      <div className="h3" style={{ marginBottom: 6 }}>
+                      <div className={`h3 ${styles.titleSpacing}`}>
                         Vamos começar
                       </div>
                       <div className="muted">
                         Cria a identidade do teu restaurante e vê a tua página
                         ganhar vida.
                       </div>
-                      <div
-                        className="banner neutral"
-                        style={{ marginTop: 12, padding: 10 }}
-                      >
+                      <div className={`banner neutral ${styles.bannerCompact}`}>
                         <div className="bannerText">
                           A pré-visualização aparecerá aqui após criares a
                           identidade.
@@ -205,33 +156,22 @@ export function SetupLayout() {
                     </>
                   ) : (
                     <>
-                      <div className="h3" style={{ marginBottom: 6 }}>
+                      <div className={`h3 ${styles.titleSpacing}`}>
                         A construir
                       </div>
-                      <div
-                        style={{
-                          fontWeight: 800,
-                          fontSize: 14,
-                          letterSpacing: "-0.2px",
-                        }}
-                      >
+                      <div className={styles.restaurantName}>
                         {restaurantName}
                       </div>
 
                       {steps.published && publicUrl && (
-                        <div className="muted" style={{ marginTop: 6 }}>
-                          URL: <code>{publicUrl}</code>
+                        <div className="muted">
+                          <span className={styles.urlMuted}>
+                            URL: <code>{publicUrl}</code>
+                          </span>
                         </div>
                       )}
 
-                      <div
-                        style={{
-                          marginTop: 10,
-                          display: "flex",
-                          gap: 8,
-                          flexWrap: "wrap",
-                        }}
-                      >
+                      <div className={styles.actionsRow}>
                         <button
                           className="btn"
                           disabled={loading}
@@ -243,8 +183,7 @@ export function SetupLayout() {
 
                       {!steps.published && (
                         <div
-                          className="banner neutral"
-                          style={{ marginTop: 10, padding: 10 }}
+                          className={`banner neutral ${styles.bannerCompact}`}
                         >
                           <div className="bannerText">
                             A pré-visualização da tua página aparecerá aqui
@@ -254,11 +193,10 @@ export function SetupLayout() {
                       )}
 
                       {steps.published && (
-                        <div style={{ marginTop: 10 }}>
+                        <div className={styles.healthWrap}>
                           {health === "ok" ? (
                             <div
-                              className="banner ok"
-                              style={{ marginTop: 0, padding: 10 }}
+                              className={`banner ok ${styles.bannerCompactNoTop}`}
                             >
                               <div className="bannerText">
                                 ✓ Servidor ligado • preview disponível
@@ -266,8 +204,7 @@ export function SetupLayout() {
                             </div>
                           ) : health === "offline" ? (
                             <div
-                              className="banner neutral"
-                              style={{ marginTop: 0, padding: 10 }}
+                              className={`banner neutral ${styles.bannerCompactNoTop}`}
                             >
                               <div className="bannerText">
                                 Liga o servidor para veres a pré-visualização em
@@ -276,8 +213,7 @@ export function SetupLayout() {
                             </div>
                           ) : (
                             <div
-                              className="banner neutral"
-                              style={{ marginTop: 0, padding: 10 }}
+                              className={`banner neutral ${styles.bannerCompactNoTop}`}
                             >
                               <div className="bannerText">
                                 A verificar ligação ao servidor…
@@ -298,14 +234,7 @@ export function SetupLayout() {
                   )}
                 </div>
 
-                <nav
-                  className="steps"
-                  style={{
-                    display: "flex",
-                    gap: 8,
-                    flexWrap: "wrap",
-                  }}
-                >
+                <nav className={`steps ${styles.stepsNav}`}>
                   {navItems.map(({ to, label, step }) => {
                     const status = stepStatus(step);
                     const isBlocked = status === "blocked";
@@ -316,20 +245,12 @@ export function SetupLayout() {
                         to={to}
                         onClick={(e) => isBlocked && e.preventDefault()}
                         className={
-                          `step ${status}` + (isCurrent ? " current" : "")
+                          `step ${status} ${styles.stepLink}` +
+                          (isCurrent ? " current" : "") +
+                          (isBlocked ? ` ${styles.stepBlocked}` : "")
                         }
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 8,
-                          padding: "10px 12px",
-                          textDecoration: "none",
-                          color: "inherit",
-                          cursor: isBlocked ? "not-allowed" : "pointer",
-                          whiteSpace: "nowrap",
-                        }}
                       >
-                        <span style={{ width: 18, textAlign: "center" }}>
+                        <span className={styles.stepIcon}>
                           {getStepIcon(status)}
                         </span>
                         {label}
@@ -338,7 +259,7 @@ export function SetupLayout() {
                   })}
                 </nav>
 
-                <div style={{ marginTop: "auto", paddingTop: 20 }}>
+                <div className={styles.logoutWrap}>
                   <button
                     onClick={async () => {
                       const { recordLogout } = await import(
@@ -351,40 +272,23 @@ export function SetupLayout() {
                       await getAuthActions().signOut();
                       navigate("/app/auth");
                     }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      padding: "10px 12px",
-                      width: "100%",
-                      background: "none",
-                      border: "none",
-                      color: "var(--color-os-red)",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      borderRadius: 8,
-                      fontSize: 14,
-                    }}
-                    className="hover:bg-red-50 dark:hover:bg-red-900/20"
+                    className={`${styles.logoutButton} hover:bg-red-50 dark:hover:bg-red-900/20`}
                   >
-                    <span style={{ width: 18, textAlign: "center" }}>🚪</span>
+                    <span className={styles.stepIcon}>🚪</span>
                     Sair
                   </button>
                 </div>
 
                 {/* Gate banner */}
                 {gates.ok === false && (
-                  <div
-                    className="banner warn"
-                    style={{ marginTop: 0, padding: 12 }}
-                  >
+                  <div className={`banner warn ${styles.bannerGate}`}>
                     <div className="bannerTitle">💳 Assinatura Pendente</div>
                     <div className="bannerText">
                       {gates.message ||
                         "Ativa o ChefIApp Pro para publicares a tua página."}{" "}
                       <NavLink
                         to="/app/setup/billing"
-                        style={{ textDecoration: "underline", fontWeight: 700 }}
+                        className={styles.gateLink}
                       >
                         Ativar agora
                       </NavLink>
@@ -393,10 +297,7 @@ export function SetupLayout() {
                 )}
 
                 {gates.ok === true && (
-                  <div
-                    className="banner ok"
-                    style={{ marginTop: 0, padding: 12 }}
-                  >
+                  <div className={`banner ok ${styles.bannerGate}`}>
                     <div className="bannerTitle">✓ Plano Ativo</div>
                     <div className="bannerText">
                       ChefIApp Pro • {profile?.web_level || "FULL"}
@@ -407,9 +308,8 @@ export function SetupLayout() {
                 {/* TPV Ready link */}
                 {steps.published && gates.ok && (
                   <button
-                    className="btn primary"
+                    className={`btn primary ${styles.fullWidthButton}`}
                     onClick={() => navigate("/app/tpv-ready")}
-                    style={{ width: "100%" }}
                   >
                     Ver TPV
                   </button>
@@ -417,7 +317,7 @@ export function SetupLayout() {
               </aside>
 
               {/* Main content (wizard step) */}
-              <main className="card" style={{ margin: 0 }}>
+              <main className={`card ${styles.cardReset}`}>
                 <Outlet />
               </main>
             </div>
@@ -464,16 +364,12 @@ function GhostPreviewWrapper(props: {
   const previewState = showIframe && iframeLoaded ? "live" : "ghost";
 
   return (
-    <div style={{ position: "relative", height: 240, marginTop: 12 }}>
+    <div className={styles.previewContainer}>
       {/* Ghost — sempre presente, fade out quando iframe carrega */}
       <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          opacity: previewState === "live" ? 0 : 1,
-          transition: "opacity 260ms ease",
-          pointerEvents: previewState === "live" ? "none" : "auto",
-        }}
+        className={`${styles.previewGhost} ${
+          previewState === "live" ? styles.previewHidden : styles.previewVisible
+        }`}
       >
         <GhostPreview {...ghostProps} />
       </div>
@@ -484,17 +380,11 @@ function GhostPreviewWrapper(props: {
           key={publicUrl}
           src={publicUrl}
           title="Preview"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            borderRadius: 8,
-            border: 0,
-            background: "#fff",
-            opacity: previewState === "live" ? 1 : 0,
-            transition: "opacity 260ms ease",
-          }}
+          className={`${styles.previewIframe} ${
+            previewState === "live"
+              ? styles.previewVisible
+              : styles.previewHidden
+          }`}
           onLoad={() => setIframeLoaded(true)}
         />
       )}

@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { BottomTabs } from "../../components/navigation/BottomTabs";
 import { Header } from "../../components/navigation/Header";
 import { EmptyState } from "../../components/ui/EmptyState";
+import styles from "./OperationPage.module.css";
 
 export function EmployeeOperationPage() {
   const navigate = useNavigate();
@@ -62,52 +63,37 @@ export function EmployeeOperationPage() {
     },
   ];
 
+  const getOrderTimeClassName = (progress: number) =>
+    progress >= 80 ? styles.badgeWarning : styles.badgeSuccess;
+
   return (
-    <div style={{ paddingBottom: "80px" }}>
+    <div className={styles.page}>
       <Header
         title="Operação ao Vivo"
         subtitle="O que está acontecendo agora"
         actions={
-          <div style={{ display: "flex", gap: "8px" }}>
+          <div className={styles.filterActions}>
             <button
               onClick={() => setView("orders")}
-              style={{
-                padding: "4px 8px",
-                backgroundColor: view === "orders" ? "#667eea" : "#f0f0f0",
-                color: view === "orders" ? "#fff" : "#666",
-                border: "none",
-                borderRadius: "4px",
-                fontSize: "12px",
-                cursor: "pointer",
-              }}
+              className={`${styles.filterButton} ${
+                view === "orders" ? styles.filterButtonActive : ""
+              }`}
             >
               Pedidos
             </button>
             <button
               onClick={() => setView("kds")}
-              style={{
-                padding: "4px 8px",
-                backgroundColor: view === "kds" ? "#667eea" : "#f0f0f0",
-                color: view === "kds" ? "#fff" : "#666",
-                border: "none",
-                borderRadius: "4px",
-                fontSize: "12px",
-                cursor: "pointer",
-              }}
+              className={`${styles.filterButton} ${
+                view === "kds" ? styles.filterButtonActive : ""
+              }`}
             >
               KDS
             </button>
             <button
               onClick={() => setView("tables")}
-              style={{
-                padding: "4px 8px",
-                backgroundColor: view === "tables" ? "#667eea" : "#f0f0f0",
-                color: view === "tables" ? "#fff" : "#666",
-                border: "none",
-                borderRadius: "4px",
-                fontSize: "12px",
-                cursor: "pointer",
-              }}
+              className={`${styles.filterButton} ${
+                view === "tables" ? styles.filterButtonActive : ""
+              }`}
             >
               Mesas
             </button>
@@ -115,101 +101,50 @@ export function EmployeeOperationPage() {
         }
       />
 
-      <div style={{ padding: "16px" }}>
+      <div className={styles.content}>
         {view === "orders" && (
           <>
             {/* Pedidos Ativos */}
-            <div style={{ marginBottom: "24px" }}>
-              <h3
-                style={{
-                  fontSize: "16px",
-                  fontWeight: 600,
-                  marginBottom: "12px",
-                }}
-              >
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>
                 📋 PEDIDOS ATIVOS ({activeOrders.length})
               </h3>
               {activeOrders.length === 0 ? (
                 <EmptyState title="Nenhum pedido ativo" />
               ) : (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "12px",
-                  }}
-                >
+                <div className={styles.ordersList}>
                   {activeOrders.map((order) => (
                     <div
                       key={order.id}
                       onClick={() =>
                         navigate(`/employee/operation/order/${order.id}`)
                       }
-                      style={{
-                        backgroundColor: "#fff",
-                        borderRadius: "12px",
-                        padding: "16px",
-                        border: "1px solid #e0e0e0",
-                        cursor: "pointer",
-                      }}
+                      className={styles.orderCard}
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "start",
-                          marginBottom: "8px",
-                        }}
-                      >
+                      <div className={styles.orderHeader}>
                         <div>
-                          <div style={{ fontSize: "16px", fontWeight: 600 }}>
+                          <div className={styles.orderTitle}>
                             {order.table} - Pedido #{order.id}
                           </div>
-                          <div style={{ fontSize: "14px", color: "#666" }}>
+                          <div className={styles.orderMeta}>
                             Status: {order.status}
                           </div>
                         </div>
                         <span
-                          style={{
-                            fontSize: "12px",
-                            padding: "4px 8px",
-                            borderRadius: "4px",
-                            backgroundColor:
-                              order.progress >= 80 ? "#ffc107" : "#28a745",
-                            color: "#fff",
-                          }}
+                          className={`${
+                            styles.timeBadge
+                          } ${getOrderTimeClassName(order.progress)}`}
                         >
                           {order.time}
                         </span>
                       </div>
-                      <div style={{ marginTop: "8px" }}>
-                        <div
-                          style={{
-                            fontSize: "12px",
-                            color: "#666",
-                            marginBottom: "4px",
-                          }}
-                        >
-                          Progresso
-                        </div>
-                        <div
-                          style={{
-                            width: "100%",
-                            height: "8px",
-                            backgroundColor: "#f0f0f0",
-                            borderRadius: "4px",
-                            overflow: "hidden",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: `${order.progress}%`,
-                              height: "100%",
-                              backgroundColor:
-                                order.progress >= 80 ? "#ffc107" : "#28a745",
-                            }}
-                          />
-                        </div>
+                      <div className={styles.progressWrap}>
+                        <div className={styles.progressLabel}>Progresso</div>
+                        <progress
+                          className={styles.progressBar}
+                          value={order.progress}
+                          max={100}
+                        />
                       </div>
                     </div>
                   ))}
@@ -219,29 +154,14 @@ export function EmployeeOperationPage() {
 
             {/* Backlog Visível */}
             {backlog.waiting > 0 && (
-              <div style={{ marginBottom: "24px" }}>
-                <h3
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: 600,
-                    marginBottom: "12px",
-                  }}
-                >
-                  📦 BACKLOG VISÍVEL
-                </h3>
-                <div
-                  style={{
-                    backgroundColor: "#fff",
-                    borderRadius: "12px",
-                    padding: "16px",
-                    border: "1px solid #e0e0e0",
-                  }}
-                >
-                  <div style={{ fontSize: "14px", marginBottom: "4px" }}>
+              <div className={styles.section}>
+                <h3 className={styles.sectionTitle}>📦 BACKLOG VISÍVEL</h3>
+                <div className={styles.infoCard}>
+                  <div className={styles.infoLead}>
                     {backlog.waiting} pedido{backlog.waiting > 1 ? "s" : ""}{" "}
                     aguardando preparo
                   </div>
-                  <div style={{ fontSize: "14px", color: "#666" }}>
+                  <div className={styles.infoText}>
                     Tempo médio de espera: {backlog.avgWaitTime}
                   </div>
                 </div>
@@ -250,64 +170,22 @@ export function EmployeeOperationPage() {
 
             {/* Atrasos Reais */}
             {delays.length > 0 && (
-              <div style={{ marginBottom: "24px" }}>
-                <h3
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: 600,
-                    marginBottom: "12px",
-                  }}
-                >
-                  ⏰ ATRASOS REAIS
-                </h3>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "8px",
-                  }}
-                >
+              <div className={styles.section}>
+                <h3 className={styles.sectionTitle}>⏰ ATRASOS REAIS</h3>
+                <div className={styles.delayList}>
                   {delays.map((delay, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        backgroundColor: "#fff",
-                        borderRadius: "12px",
-                        padding: "12px",
-                        border: "1px solid #ffc107",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "14px",
-                          fontWeight: 600,
-                          marginBottom: "4px",
-                        }}
-                      >
+                    <div key={index} className={styles.delayCard}>
+                      <div className={styles.delayTitle}>
                         {delay.table} - {delay.delay} atrasado
                       </div>
-                      <div
-                        style={{
-                          fontSize: "14px",
-                          color: "#666",
-                          marginBottom: "8px",
-                        }}
-                      >
+                      <div className={styles.delayCause}>
                         Causa: {delay.cause}
                       </div>
                       <button
                         onClick={() =>
                           navigate(`/employee/operation/order/${delay.orderId}`)
                         }
-                        style={{
-                          padding: "6px 12px",
-                          backgroundColor: "#ffc107",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: "6px",
-                          fontSize: "12px",
-                          cursor: "pointer",
-                        }}
+                        className={styles.resolveButton}
                       >
                         Resolver
                       </button>
@@ -321,91 +199,33 @@ export function EmployeeOperationPage() {
 
         {view === "kds" && (
           <div>
-            <h3
-              style={{
-                fontSize: "16px",
-                fontWeight: 600,
-                marginBottom: "12px",
-              }}
-            >
-              🍳 KDS POR ESTAÇÃO
-            </h3>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-            >
-              <div
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: "12px",
-                  padding: "16px",
-                  border: "1px solid #e0e0e0",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: 600,
-                    marginBottom: "8px",
-                  }}
-                >
+            <h3 className={styles.sectionTitle}>🍳 KDS POR ESTAÇÃO</h3>
+            <div className={styles.kdsList}>
+              <div className={styles.kdsCard}>
+                <div className={styles.kdsTitle}>
                   BAR: {kdsByStation.bar.items} itens
                 </div>
                 {kdsByStation.bar.delayed > 0 && (
-                  <div style={{ fontSize: "14px", color: "#ffc107" }}>
+                  <div className={styles.kdsWarning}>
                     ⚠️ {kdsByStation.bar.delayed} atrasado
                     {kdsByStation.bar.delayed > 1 ? "s" : ""}
                   </div>
                 )}
                 <button
                   onClick={() => navigate("/employee/operation/kitchen")}
-                  style={{
-                    marginTop: "12px",
-                    width: "100%",
-                    padding: "8px",
-                    backgroundColor: "#667eea",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                  }}
+                  className={styles.primarySmallButton}
                 >
                   Ver KDS BAR
                 </button>
               </div>
-              <div
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: "12px",
-                  padding: "16px",
-                  border: "1px solid #e0e0e0",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: 600,
-                    marginBottom: "8px",
-                  }}
-                >
+              <div className={styles.kdsCard}>
+                <div className={styles.kdsTitle}>
                   KITCHEN: {kdsByStation.kitchen.items} itens
                 </div>
-                <div style={{ fontSize: "14px", color: "#28a745" }}>
-                  ✅ Todos em tempo
-                </div>
+                <div className={styles.kdsSuccess}>✅ Todos em tempo</div>
                 <button
                   onClick={() => navigate("/employee/operation/kitchen")}
-                  style={{
-                    marginTop: "12px",
-                    width: "100%",
-                    padding: "8px",
-                    backgroundColor: "#667eea",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                  }}
+                  className={styles.primarySmallButton}
                 >
                   Ver KDS KITCHEN
                 </button>
@@ -416,15 +236,7 @@ export function EmployeeOperationPage() {
 
         {view === "tables" && (
           <div>
-            <h3
-              style={{
-                fontSize: "16px",
-                fontWeight: 600,
-                marginBottom: "12px",
-              }}
-            >
-              🪑 MESAS
-            </h3>
+            <h3 className={styles.sectionTitle}>🪑 MESAS</h3>
             <EmptyState
               title="Funcionalidade não ativa"
               message="A visualização de mesas será disponibilizada em breve"
@@ -433,34 +245,16 @@ export function EmployeeOperationPage() {
         )}
 
         {/* Ações Rápidas */}
-        <div style={{ marginTop: "24px", display: "flex", gap: "8px" }}>
+        <div className={styles.quickActions}>
           <button
             onClick={() => navigate("/employee/operation/new-order")}
-            style={{
-              flex: 1,
-              padding: "12px",
-              backgroundColor: "#667eea",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
+            className={styles.primaryActionButton}
           >
             Novo Pedido
           </button>
           <button
             onClick={() => navigate("/employee/operation/kitchen")}
-            style={{
-              flex: 1,
-              padding: "12px",
-              backgroundColor: "#fff",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-              cursor: "pointer",
-            }}
+            className={styles.secondaryActionButton}
           >
             Ver KDS
           </button>

@@ -70,6 +70,7 @@ export function SubscriptionPage() {
   }
 
   const isTrialing = subscription?.status === "trialing";
+  const canSellPlatform = CONFIG.canSellPlatform;
 
   return (
     <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
@@ -77,6 +78,25 @@ export function SubscriptionPage() {
         title="Tu suscripción"
         subtitle="Administra tu plan y complementos de ChefIApp."
       />
+      {!canSellPlatform && (
+        <div
+          role="alert"
+          style={{
+            marginBottom: 16,
+            padding: 12,
+            borderRadius: 8,
+            backgroundColor: "var(--status-warning-bg, #fff3cd)",
+            color: "var(--text-primary)",
+            fontSize: 14,
+          }}
+        >
+          La suscripción y el cambio de plan solo están disponibles en{" "}
+          <a href="https://www.chefiapp.com" rel="noopener noreferrer">
+            chefiapp.com
+          </a>
+          .
+        </div>
+      )}
       {(isTrialing && subscription?.trial_ends_at) || CONFIG.STRIPE_IS_TEST ? (
         <div
           style={{
@@ -139,7 +159,7 @@ export function SubscriptionPage() {
             <PlanCard
               key={plan.id}
               plan={plan}
-              onChangePlan={handleChangePlan}
+              onChangePlan={canSellPlatform ? handleChangePlan : undefined}
               onContactSupport={() => console.log("Contact support")}
             />
           ))}

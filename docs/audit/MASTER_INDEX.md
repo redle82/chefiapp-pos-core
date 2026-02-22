@@ -64,10 +64,19 @@
 
 ---
 
-### 🔧 Correções Técnicas - 4 Documentos
+### ⚠️ Riscos operacionais (POS autónomo)
 
 | Documento | Tempo | Uso |
 |-----------|-------|-----|
+| [`AUTONOMOUS_POS_RISK_REGISTER_AND_BOWTIE.md`](./AUTONOMOUS_POS_RISK_REGISTER_AND_BOWTIE.md) | 15 min | Risk register, Bowtie (latência e autoridade), thresholds e protocolos de teste |
+
+---
+
+### 🔧 Correções Técnicas - 5 Documentos
+
+| Documento | Tempo | Uso |
+|-----------|-------|-----|
+| [`PLANO_CORRECAO_TESTES_JEST.md`](./PLANO_CORRECAO_TESTES_JEST.md) | 15 min | Plano para corrigir as 21 suites Jest que falham (UI, integração, archive, unit) |
 | [`CHEFIAPP_FIX_PLAN.md`](./CHEFIAPP_FIX_PLAN.md) | 20 min | Plano de correções |
 | [`CHEFIAPP_FIXES_APPLIED.md`](./CHEFIAPP_FIXES_APPLIED.md) | 15 min | Correções aplicadas |
 | [`CHEFIAPP_FIXES_EXECUTIVE_SUMMARY.md`](./CHEFIAPP_FIXES_EXECUTIVE_SUMMARY.md) | 3 min | Resumo executivo |
@@ -155,9 +164,10 @@
 ## 📊 ESTATÍSTICAS
 
 ### Documentação
-- **Total de Documentos:** 27
+- **Total de Documentos:** 29
 - **Teste Humano:** 9 documentos
 - **Auditoria Técnica:** 2 documentos
+- **Riscos operacionais (POS autónomo):** 1 documento
 - **Correções Técnicas:** 4 documentos
 - **Deploy/Produção:** 4 documentos
 - **Índices e Handoffs:** 8 documentos

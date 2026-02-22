@@ -1,24 +1,27 @@
 /**
- * Onboarding Assistente — Ponte (camada de Ativação).
+ * Onboarding Assistente — Fluxo de 9 passos ligado ao backend.
  *
- * Não é só formulário de restaurante. Coleta 7 respostas:
- * 1. Nome do restaurante, 2. País, 3. Tipo, 4. Nº mesas,
- * 5. Usa impressora?, 6. Vai usar KDS?, 7. Quantos usuários (estimativa).
- * No final: redireciona para Centro de Ativação (/app/activation).
- * Se ainda não tiver restaurante, envia para /setup/restaurant-minimal
- * com successNextPath=/app/activation.
- *
- * Ref: docs/contracts/FUNIL_VIDA_CLIENTE.md#arquitetura-de-jornada-em-3-camadas
+ * Usa useOnboarding(): create_onboarding_context, update_onboarding_step, get_onboarding_state.
+ * Barra de progresso (progress_percent). No fim redireciona para /app/staff/home.
+ * Ref: IMPLEMENTATION_CHECKLIST.md Day 3, docs/contracts/FUNIL_VIDA_CLIENTE.md
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
-import { fetchSetupStatus } from "../../infra/readers/RuntimeReader";
-import {
-  updateRestaurantProfile,
-  upsertSetupStatus,
-} from "../../infra/writers/RuntimeWriter";
+import { useOnboarding } from "../../hooks/useOnboarding";
+import { getPostOnboardingRedirectUrl } from "../../infra/clients/OnboardingClient";
+
+const STEPS_ORDER = [
+  "welcome",
+  "restaurant_setup",
+  "legal_info",
+  "menu",
+  "staff",
+  "payment",
+  "devices",
+  "verification",
+  "complete",
+] as const;
 
 const styles = {
   page: {
@@ -29,7 +32,7 @@ const styles = {
     fontFamily: "Inter, system-ui, sans-serif",
     color: "#fafafa",
     maxWidth: 480,
-    margin: "0 auto",
+    margin: "0 auto" as const,
   },
   header: { marginBottom: 28, textAlign: "center" as const },
   title: {
@@ -40,6 +43,19 @@ const styles = {
     letterSpacing: "-0.02em",
   },
   subtitle: { fontSize: 14, color: "#a3a3a3", lineHeight: 1.5 },
+  progressBar: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#404040",
+    overflow: "hidden" as const,
+    marginBottom: 24,
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 3,
+    backgroundColor: "#eab308",
+    transition: "width 0.3s ease",
+  },
   form: { display: "flex", flexDirection: "column" as const, gap: 20 },
   label: {
     display: "block",
@@ -70,7 +86,7 @@ const styles = {
   },
   row: { display: "flex", alignItems: "center", gap: 12 },
   checkbox: { width: 20, height: 20, cursor: "pointer" },
-  submit: {
+  button: {
     marginTop: 16,
     minHeight: 48,
     padding: "14px 24px",
@@ -82,188 +98,495 @@ const styles = {
     backgroundColor: "#eab308",
     color: "#0a0a0a",
   },
+  buttonSecondary: {
+    marginTop: 8,
+    minHeight: 44,
+    padding: "12px 20px",
+    fontSize: 14,
+    fontWeight: 500,
+    border: "1px solid #404040",
+    borderRadius: 10,
+    cursor: "pointer",
+    backgroundColor: "transparent",
+    color: "#a3a3a3",
+  },
+  error: { color: "#f87171", fontSize: 13, marginTop: 8 },
 };
-
-const TIPOS = [
-  "Bar",
-  "Restaurante",
-  "Café",
-  "Fast Casual",
-  "Catering",
-  "Outro",
-] as const;
 
 const PAISES = [
   { value: "PT", label: "Portugal" },
   { value: "BR", label: "Brasil" },
   { value: "ES", label: "Espanha" },
   { value: "FR", label: "França" },
-  { value: "DE", label: "Alemanha" },
-  { value: "UK", label: "Reino Unido" },
-  { value: "US", label: "EUA" },
   { value: "OTHER", label: "Outro" },
 ];
 
+const TIPOS = [
+  "Bar",
+  "Restaurante",
+  "Café",
+  "Fast Casual",
+  "Outro",
+] as const;
+
 export function OnboardingAssistantPage() {
   const navigate = useNavigate();
-  const [nome, setNome] = useState("");
-  const [pais, setPais] = useState("PT");
-  const [tipo, setTipo] = useState<string>("Restaurante");
-  const [numMesas, setNumMesas] = useState("");
-  const [usaImpressora, setUsaImpressora] = useState(false);
-  const [usaKDS, setUsaKDS] = useState(false);
-  const [numUsuarios, setNumUsuarios] = useState("");
+  const {
+    state,
+    stateLoading,
+    stateError,
+    initializeOnboarding,
+    completeStep,
+    progressPercent,
+    isOnboarding,
+  } = useOnboarding();
 
-  const hasRestaurantId =
-    !!getTabIsolated("chefiapp_restaurant_id") ||
-    (typeof window !== "undefined" &&
-      !!window.localStorage?.getItem("chefiapp_restaurant_id"));
+  const [restaurantName, setRestaurantName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Form data for multi-step (persisted in step payloads)
+  const [setupData, setSetupData] = useState<Record<string, unknown>>({
+    pais: "PT",
+    tipo: "Restaurante",
+    numMesas: "",
+    usaImpressora: false,
+    usaKDS: false,
+    numUsuarios: "",
+    ownerName: "",
+    ownerEmail: "",
+    menuProducts: "",
+    staffCount: "",
+    paymentMethod: "card",
+  });
+
+  const currentStep = state?.current_step ?? "welcome";
+  const currentIndex = STEPS_ORDER.indexOf(
+    currentStep as (typeof STEPS_ORDER)[number],
+  );
+  const nextStep =
+    currentIndex >= 0 && currentIndex < STEPS_ORDER.length - 1
+      ? STEPS_ORDER[currentIndex + 1]
+      : null;
+
+  // Redirect to app when onboarding is complete (e.g. returning user)
+  useEffect(() => {
+    if (!stateLoading && state?.is_complete) {
+      navigate(getPostOnboardingRedirectUrl(), { replace: true });
+    }
+  }, [state?.is_complete, stateLoading, navigate]);
+
+  // After completing "complete" step, redirect after short delay
+  useEffect(() => {
+    if (currentStep === "complete" && state?.is_complete) {
+      const t = setTimeout(() => {
+        navigate(getPostOnboardingRedirectUrl(), { replace: true });
+      }, 2000);
+      return () => clearTimeout(t);
+    }
+  }, [currentStep, state?.is_complete, navigate]);
+
+  const handleCreateRestaurant = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    const name = restaurantName.trim() || "Meu Restaurante";
+    setSaving(true);
     try {
-      sessionStorage.setItem(
-        "chefiapp_onboarding_answers",
-        JSON.stringify({
-          nome,
-          pais,
-          tipo,
-          numMesas: numMesas ? parseInt(numMesas, 10) : undefined,
-          usaImpressora,
-          usaKDS,
-          numUsuarios: numUsuarios ? parseInt(numUsuarios, 10) : undefined,
-        }),
-      );
-    } catch {
-      // ignore
+      await initializeOnboarding(name);
+      setRestaurantName("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao criar restaurante");
+    } finally {
+      setSaving(false);
     }
-    if (hasRestaurantId) {
-      const restaurantId =
-        getTabIsolated("chefiapp_restaurant_id") ||
-        (typeof window !== "undefined"
-          ? window.localStorage.getItem("chefiapp_restaurant_id")
-          : null);
-      if (restaurantId) {
-        try {
-          const current = await fetchSetupStatus(restaurantId);
-          await upsertSetupStatus(restaurantId, { ...current, identity: true });
-          await updateRestaurantProfile(restaurantId, {
-            name: nome || undefined,
-            country: pais || undefined,
-            type: tipo || undefined,
-          });
-        } catch {
-          // ignore
-        }
-      }
-      navigate("/app/activation", { replace: true });
-      return;
-    }
-    navigate("/bootstrap", {
-      replace: true,
-      state: { successNextPath: "/app/activation", fromOnboarding: true },
-    });
   };
+
+  const handleNextStep = async (
+    step: string,
+    data: Record<string, unknown> = {},
+  ) => {
+    setError(null);
+    setSaving(true);
+    try {
+      await completeStep(step, data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Erro ao guardar este passo",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (stateLoading && !state) {
+    return (
+      <div style={styles.page}>
+        <p style={styles.subtitle}>A carregar...</p>
+      </div>
+    );
+  }
+
+  // No onboarding yet: welcome + create restaurant
+  if (!state) {
+    return (
+      <div style={styles.page}>
+        <header style={styles.header}>
+          <h1 style={styles.title}>Bem-vindo ao ChefIApp</h1>
+          <p style={styles.subtitle}>
+            Cria o teu restaurante para começar. Depois seguimos a configuração
+            em poucos passos.
+          </p>
+        </header>
+        <form style={styles.form} onSubmit={handleCreateRestaurant}>
+          <div>
+            <label style={styles.label}>Nome do restaurante</label>
+            <input
+              type="text"
+              value={restaurantName}
+              onChange={(e) => setRestaurantName(e.target.value)}
+              placeholder="Ex: A Minha Tasca"
+              style={styles.input}
+              required
+            />
+          </div>
+          {error && <p style={styles.error}>{error}</p>}
+          <button type="submit" style={styles.button} disabled={saving}>
+            {saving ? "A criar..." : "Criar restaurante"}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  const progress = Math.max(0, Math.min(100, progressPercent));
 
   return (
     <div style={styles.page}>
+      <div style={styles.progressBar}>
+        <div
+          style={{ ...styles.progressFill, width: `${progress}%` }}
+          role="progressbar"
+          aria-valuenow={progress}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        />
+      </div>
       <header style={styles.header}>
         <h1 style={styles.title}>Configuração guiada</h1>
         <p style={styles.subtitle}>
-          Responde às perguntas abaixo. No fim vais ao Centro de Ativação para
-          completar menu, mesas e primeiro pedido.
+          Passo {currentIndex + 1} de {STEPS_ORDER.length}:{" "}
+          {currentStep.replace(/_/g, " ")}
         </p>
       </header>
-      <form style={styles.form} onSubmit={handleSubmit}>
-        <div>
-          <label style={styles.label}>1. Nome do restaurante</label>
-          <input
-            type="text"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            placeholder="Ex: A Minha Tasca"
-            style={styles.input}
-            required
-          />
-        </div>
-        <div>
-          <label style={styles.label}>2. País (ativa fiscal)</label>
-          <select
-            value={pais}
-            onChange={(e) => setPais(e.target.value)}
-            style={styles.select}
+
+      {currentStep === "welcome" && (
+        <>
+          <p style={styles.subtitle}>
+            O teu restaurante &quot;{state.restaurant_name}&quot; foi criado.
+            Responde às perguntas seguintes para ativar TPV e equipa.
+          </p>
+          {error && <p style={styles.error}>{error}</p>}
+          <button
+            type="button"
+            style={styles.button}
+            disabled={saving}
+            onClick={() => handleNextStep("restaurant_setup", {})}
           >
-            {PAISES.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label style={styles.label}>3. Tipo</label>
-          <select
-            value={tipo}
-            onChange={(e) => setTipo(e.target.value)}
-            style={styles.select}
+            {saving ? "A guardar..." : "Continuar"}
+          </button>
+        </>
+      )}
+
+      {currentStep === "restaurant_setup" && (
+        <form
+          style={styles.form}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleNextStep("legal_info", {
+              pais: setupData.pais,
+              tipo: setupData.tipo,
+              numMesas: setupData.numMesas,
+            });
+          }}
+        >
+          <div>
+            <label style={styles.label}>País</label>
+            <select
+              value={String(setupData.pais)}
+              onChange={(e) =>
+                setSetupData((s) => ({ ...s, pais: e.target.value }))
+              }
+              style={styles.select}
+            >
+              {PAISES.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={styles.label}>Tipo de estabelecimento</label>
+            <select
+              value={String(setupData.tipo)}
+              onChange={(e) =>
+                setSetupData((s) => ({ ...s, tipo: e.target.value }))
+              }
+              style={styles.select}
+            >
+              {TIPOS.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={styles.label}>Número de mesas (estimativa)</label>
+            <input
+              type="number"
+              min={0}
+              value={String(setupData.numMesas)}
+              onChange={(e) =>
+                setSetupData((s) => ({ ...s, numMesas: e.target.value }))
+              }
+              placeholder="Ex: 10"
+              style={styles.input}
+            />
+          </div>
+          {error && <p style={styles.error}>{error}</p>}
+          <button type="submit" style={styles.button} disabled={saving}>
+            {saving ? "A guardar..." : "Continuar"}
+          </button>
+        </form>
+      )}
+
+      {currentStep === "legal_info" && (
+        <form
+          style={styles.form}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleNextStep("menu", {
+              ownerName: setupData.ownerName,
+              ownerEmail: setupData.ownerEmail,
+            });
+          }}
+        >
+          <div>
+            <label style={styles.label}>Nome do responsável (opcional)</label>
+            <input
+              type="text"
+              value={String(setupData.ownerName ?? "")}
+              onChange={(e) =>
+                setSetupData((s) => ({ ...s, ownerName: e.target.value }))
+              }
+              style={styles.input}
+            />
+          </div>
+          <div>
+            <label style={styles.label}>Email (opcional)</label>
+            <input
+              type="email"
+              value={String(setupData.ownerEmail ?? "")}
+              onChange={(e) =>
+                setSetupData((s) => ({ ...s, ownerEmail: e.target.value }))
+              }
+              style={styles.input}
+            />
+          </div>
+          {error && <p style={styles.error}>{error}</p>}
+          <button type="submit" style={styles.button} disabled={saving}>
+            {saving ? "A guardar..." : "Continuar"}
+          </button>
+        </form>
+      )}
+
+      {currentStep === "menu" && (
+        <form
+          style={styles.form}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleNextStep("staff", {
+              menuProducts: setupData.menuProducts,
+            });
+          }}
+        >
+          <div>
+            <label style={styles.label}>
+              Quantos produtos no menu? (estimativa, opcional)
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={String(setupData.menuProducts ?? "")}
+              onChange={(e) =>
+                setSetupData((s) => ({ ...s, menuProducts: e.target.value }))
+              }
+              placeholder="Ex: 20"
+              style={styles.input}
+            />
+          </div>
+          {error && <p style={styles.error}>{error}</p>}
+          <button type="submit" style={styles.button} disabled={saving}>
+            {saving ? "A guardar..." : "Continuar"}
+          </button>
+        </form>
+      )}
+
+      {currentStep === "staff" && (
+        <form
+          style={styles.form}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleNextStep("payment", {
+              staffCount: setupData.numUsuarios,
+            });
+          }}
+        >
+          <div>
+            <label style={styles.label}>
+              Quantos colaboradores? (estimativa)
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={String(setupData.numUsuarios ?? "")}
+              onChange={(e) =>
+                setSetupData((s) => ({ ...s, numUsuarios: e.target.value }))
+              }
+              placeholder="Ex: 3"
+              style={styles.input}
+            />
+          </div>
+          {error && <p style={styles.error}>{error}</p>}
+          <button type="submit" style={styles.button} disabled={saving}>
+            {saving ? "A guardar..." : "Continuar"}
+          </button>
+        </form>
+      )}
+
+      {currentStep === "payment" && (
+        <form
+          style={styles.form}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleNextStep("devices", {
+              paymentMethod: setupData.paymentMethod,
+            });
+          }}
+        >
+          <div>
+            <label style={styles.label}>Método de pagamento principal</label>
+            <select
+              value={String(setupData.paymentMethod ?? "card")}
+              onChange={(e) =>
+                setSetupData((s) => ({ ...s, paymentMethod: e.target.value }))
+              }
+              style={styles.select}
+            >
+              <option value="card">Cartão (TPV)</option>
+              <option value="cash">Numerário</option>
+              <option value="mbway">MB Way</option>
+              <option value="both">Cartão + Numerário</option>
+            </select>
+          </div>
+          {error && <p style={styles.error}>{error}</p>}
+          <button type="submit" style={styles.button} disabled={saving}>
+            {saving ? "A guardar..." : "Continuar"}
+          </button>
+        </form>
+      )}
+
+      {currentStep === "devices" && (
+        <form
+          style={styles.form}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleNextStep("verification", {
+              usaImpressora: setupData.usaImpressora,
+              usaKDS: setupData.usaKDS,
+            });
+          }}
+        >
+          <div style={styles.row}>
+            <input
+              type="checkbox"
+              id="impressora"
+              checked={Boolean(setupData.usaImpressora)}
+              onChange={(e) =>
+                setSetupData((s) => ({
+                  ...s,
+                  usaImpressora: e.target.checked,
+                }))
+              }
+              style={styles.checkbox}
+            />
+            <label style={styles.label} htmlFor="impressora">
+              Usa impressora?
+            </label>
+          </div>
+          <div style={styles.row}>
+            <input
+              type="checkbox"
+              id="kds"
+              checked={Boolean(setupData.usaKDS)}
+              onChange={(e) =>
+                setSetupData((s) => ({ ...s, usaKDS: e.target.checked }))
+              }
+              style={styles.checkbox}
+            />
+            <label style={styles.label} htmlFor="kds">
+              Vai usar KDS (ecrã cozinha)?
+            </label>
+          </div>
+          {error && <p style={styles.error}>{error}</p>}
+          <button type="submit" style={styles.button} disabled={saving}>
+            {saving ? "A guardar..." : "Continuar"}
+          </button>
+        </form>
+      )}
+
+      {currentStep === "verification" && (
+        <>
+          <p style={styles.subtitle}>
+            Confirma os dados e clica em &quot;Concluir&quot; para ativar o teu
+            restaurante.
+          </p>
+          {error && <p style={styles.error}>{error}</p>}
+          <button
+            type="button"
+            style={styles.button}
+            disabled={saving}
+            onClick={() => handleNextStep("complete", {})}
           >
-            {TIPOS.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label style={styles.label}>4. Número de mesas (estimativa)</label>
-          <input
-            type="number"
-            min={0}
-            value={numMesas}
-            onChange={(e) => setNumMesas(e.target.value)}
-            placeholder="Ex: 10"
-            style={styles.input}
-          />
-        </div>
-        <div style={styles.row}>
-          <input
-            type="checkbox"
-            id="impressora"
-            checked={usaImpressora}
-            onChange={(e) => setUsaImpressora(e.target.checked)}
-            style={styles.checkbox}
-          />
-          <label style={styles.label} htmlFor="impressora">
-            5. Usa impressora?
-          </label>
-        </div>
-        <div style={styles.row}>
-          <input
-            type="checkbox"
-            id="kds"
-            checked={usaKDS}
-            onChange={(e) => setUsaKDS(e.target.checked)}
-            style={styles.checkbox}
-          />
-          <label style={styles.label} htmlFor="kds">
-            6. Vai usar KDS (ecrã cozinha)?
-          </label>
-        </div>
-        <div>
-          <label style={styles.label}>7. Quantos usuários (estimativa)?</label>
-          <input
-            type="number"
-            min={1}
-            value={numUsuarios}
-            onChange={(e) => setNumUsuarios(e.target.value)}
-            placeholder="Ex: 3"
-            style={styles.input}
-          />
-        </div>
-        <button type="submit" style={styles.submit}>
-          Continuar para Centro de Ativação
-        </button>
-      </form>
+            {saving ? "A guardar..." : "Concluir configuração"}
+          </button>
+        </>
+      )}
+
+      {currentStep === "complete" && (
+        <>
+          <p style={styles.subtitle}>
+            Parabéns! O teu restaurante está pronto. Redirecionando para o
+            centro de operações...
+          </p>
+          <div style={styles.progressBar}>
+            <div
+              style={{ ...styles.progressFill, width: "100%" }}
+              role="progressbar"
+              aria-valuenow={100}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            />
+          </div>
+        </>
+      )}
+
+      {stateError && (
+        <p style={styles.error}>
+          {stateError.message}
+        </p>
+      )}
     </div>
   );
 }

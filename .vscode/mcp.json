@@ -1,16 +1,48 @@
 {
-  "servers": {
-    "playwright": {
-      "command": "npx",
-      "args": ["@playwright/mcp@latest", "--headed"]
-    },
-    "insforge": {
-      "command": "npx",
-      "args": ["-y", "@insforge/mcp@latest"],
-      "env": {
-        "API_KEY": "ik_2296986148e156e83fc16ed4e2652f29",
-        "API_BASE_URL": "https://vv5bwyz6.us-east.insforge.app"
-      }
-    }
-  }
+	"servers": {
+		"playwright": {
+			"command": "npx",
+			"args": [
+				"@playwright/mcp@latest",
+				"--headed"
+			],
+			"type": "stdio"
+		},
+		"insforge": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@insforge/mcp@latest"
+			],
+			"env": {
+				"API_KEY": "ik_2296986148e156e83fc16ed4e2652f29",
+				"API_BASE_URL": "https://vv5bwyz6.us-east.insforge.app"
+			},
+			"type": "stdio"
+		},
+		"supabase": {
+			"type": "http",
+			"url": "https://mcp.supabase.com/mcp?project_ref=kwgsmbrxfcezuvkwgvuf&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching%2Cstorage"
+		},
+		"io.github.getsentry/sentry-mcp": {
+			"type": "stdio",
+			"command": "npx",
+			"args": [
+				"@sentry/mcp-server@0.25.0"
+			],
+			"env": {
+				"SENTRY_ACCESS_TOKEN": "${input:SENTRY_ACCESS_TOKEN}"
+			},
+			"gallery": "https://api.mcp.github.com",
+			"version": "0.25.0"
+		}
+	},
+	"inputs": [
+		{
+			"id": "SENTRY_ACCESS_TOKEN",
+			"type": "promptString",
+			"description": "Your Sentry user authentication token",
+			"password": true
+		}
+	]
 }

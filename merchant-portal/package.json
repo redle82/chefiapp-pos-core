@@ -46,6 +46,7 @@
     "@chefiapp/core-design-system": "file:../core-design-system",
     "@emotion/is-prop-valid": "^1.4.0",
     "@insforge/sdk": "^1.1.5",
+    "@sentry/react": "^10.39.0",
     "@stripe/react-stripe-js": "^5.4.1",
     "@stripe/stripe-js": "^8.6.0",
     "@types/uuid": "^10.0.0",

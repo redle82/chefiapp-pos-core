@@ -7,12 +7,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useOnboarding } from "../../../context/OnboardingContext";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import {
   BackendType,
   getBackendType,
 } from "../../../core/infra/backendAdapter";
+import { dockerCoreClient } from "../../../infra/docker-core/connection";
+import styles from "./LocationSection.module.css";
 // Domain reads/writes ONLY via Core (Supabase removed — §4). No fallback.
 
 export function LocationSection() {
@@ -297,134 +298,66 @@ export function LocationSection() {
   const availableZones = ["BAR", "SALON", "KITCHEN", "TERRACE"];
 
   return (
-    <div style={{ padding: "48px", maxWidth: "800px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: 600, marginBottom: "8px", color: "var(--text-primary)" }}>
+    <div className={styles.container}>
+      <h1 className={styles.title}>
         📍 Localização{" "}
-        {isSaving && (
-          <span style={{ fontSize: "14px", color: "var(--color-primary)" }}>
-            (Salvando...)
-          </span>
-        )}
+        {isSaving && <span className={styles.saving}>(Salvando...)</span>}
       </h1>
-      <p style={{ fontSize: "14px", color: "var(--text-secondary)", marginBottom: "32px" }}>
-        Onde está localizado seu restaurante?
-      </p>
+      <p className={styles.subtitle}>Onde está localizado seu restaurante?</p>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div className={styles.formFields}>
         {/* Endereço */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              fontWeight: 600,
-              marginBottom: "8px",
-              color: "var(--text-primary)",
-            }}
-          >
-            Endereço Completo *
-          </label>
+          <label className={styles.fieldLabel}>Endereço Completo *</label>
           <input
             type="text"
             value={formData.address}
             onChange={(e) => handleChange("address", e.target.value)}
             placeholder="Ex: Calle des caló, 109"
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid var(--surface-border)",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.input}
           />
         </div>
 
         {/* Cidade */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              fontWeight: 600,
-              marginBottom: "8px",
-              color: "var(--text-primary)",
-            }}
-          >
-            Cidade *
-          </label>
+          <label className={styles.fieldLabel}>Cidade *</label>
           <input
             type="text"
             value={formData.city}
             onChange={(e) => handleChange("city", e.target.value)}
             placeholder="Ex: Sant Josep de sa Talaia"
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid var(--surface-border)",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.input}
           />
         </div>
 
         {/* CEP */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              fontWeight: 600,
-              marginBottom: "8px",
-              color: "var(--text-primary)",
-            }}
-          >
-            CEP *
-          </label>
+          <label className={styles.fieldLabel}>CEP *</label>
           <input
             type="text"
             value={formData.postalCode}
             onChange={(e) => handleChange("postalCode", e.target.value)}
             placeholder="Ex: 07829"
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid var(--surface-border)",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.input}
           />
         </div>
 
         {/* Capacidade */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              fontWeight: 600,
-              marginBottom: "8px",
-              color: "var(--text-primary)",
-            }}
-          >
-            Capacidade (pessoas) *
-          </label>
+          <label className={styles.fieldLabel}>Capacidade (pessoas) *</label>
           <input
             type="number"
+            title="Capacidade em pessoas"
+            aria-label="Capacidade em pessoas"
             min="1"
             max="1000"
             value={formData.capacity}
             onChange={(e) =>
               handleChange("capacity", parseInt(e.target.value) || 1)
             }
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid var(--surface-border)",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.input}
           />
-          <p style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
+          <p className={styles.helperText}>
             Baseado na capacidade, {Math.ceil(formData.capacity / 2.5)} mesas
             serão criadas automaticamente
           </p>
@@ -432,41 +365,26 @@ export function LocationSection() {
 
         {/* Zonas */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              fontWeight: 600,
-              marginBottom: "8px",
-              color: "var(--text-primary)",
-            }}
-          >
+          <label className={styles.fieldLabel}>
             Zonas do Restaurante * (selecione pelo menos 1)
           </label>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div className={styles.zonesList}>
             {availableZones.map((zone) => (
               <label
                 key={zone}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  padding: "12px",
-                  border: "1px solid var(--surface-border)",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  backgroundColor: formData.zones.includes(zone)
-                    ? "var(--status-primary-bg)"
-                    : "var(--card-bg-on-dark)",
-                }}
+                className={`${styles.zoneItem} ${
+                  formData.zones.includes(zone)
+                    ? styles.zoneItemSelected
+                    : styles.zoneItemDefault
+                }`}
               >
                 <input
                   type="checkbox"
                   checked={formData.zones.includes(zone)}
                   onChange={() => toggleZone(zone)}
-                  style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                  className={styles.zoneCheckbox}
                 />
-                <span style={{ fontSize: "14px", color: "var(--text-primary)" }}>{zone}</span>
+                <span className={styles.zoneLabel}>{zone}</span>
               </label>
             ))}
           </div>
@@ -474,21 +392,9 @@ export function LocationSection() {
       </div>
 
       {/* Checklist Local */}
-      <div
-        style={{
-          marginTop: "32px",
-          padding: "16px",
-          backgroundColor: "var(--card-bg-on-dark)",
-          borderRadius: "8px",
-          border: "1px solid var(--surface-border)",
-        }}
-      >
-        <div
-          style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px", color: "var(--text-primary)" }}
-        >
-          Checklist:
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <div className={styles.checklist}>
+        <div className={styles.checklistTitle}>Checklist:</div>
+        <div className={styles.checklistItems}>
           {[
             { label: "Endereço completo", done: formData.address.length >= 5 },
             { label: "Cidade", done: !!formData.city },
@@ -499,18 +405,14 @@ export function LocationSection() {
               done: formData.zones.length >= 1,
             },
           ].map((item) => (
-            <div
-              key={item.label}
-              style={{ display: "flex", alignItems: "center", gap: "8px" }}
-            >
-              <span style={{ fontSize: "16px" }}>
+            <div key={item.label} className={styles.checklistItem}>
+              <span className={styles.checklistIcon}>
                 {item.done ? "✅" : "⏳"}
               </span>
               <span
-                style={{
-                  fontSize: "14px",
-                  color: item.done ? "var(--color-success)" : "var(--text-secondary)",
-                }}
+                className={`${styles.checklistLabel} ${
+                  item.done ? styles.checklistDone : styles.checklistPending
+                }`}
               >
                 {item.label}
               </span>

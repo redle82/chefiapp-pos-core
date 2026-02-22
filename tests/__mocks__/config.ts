@@ -1,10 +1,25 @@
 /**
- * Mock config for tests
+ * Mock for merchant-portal/src/config.ts (uses import.meta.env; not available in Jest/Node).
+ * Used when Jest runs tests that pull in code paths that depend on config.
  */
 export const CONFIG = {
-    SUPABASE_URL: 'https://test.supabase.co',
-    SUPABASE_ANON_KEY: 'test-anon-key',
-    STRIPE_PUBLIC_KEY: 'test-stripe-key',
-    IS_DEV: true,
-    MODE: 'test',
+  INSFORGE_URL: "",
+  INSFORGE_ANON_KEY: "",
+  API_BASE: "http://localhost:4320",
+  INTERNAL_API_TOKEN: "",
+  CORE_URL: "http://localhost:3001",
+  CORE_ANON_KEY: "",
+  STRIPE_PUBLIC_KEY: "",
+  STRIPE_PRICE_ID: "",
+  STRIPE_IS_TEST: false,
+  LLM_VISION_ENDPOINT: "",
+  AI_GATEWAY_ENDPOINT: "",
+  IS_DEV: true,
+  IS_PROD: false,
+  MODE: "test",
+  DEBUG_DIRECT_FLOW: false,
+  UI_MODE: "OPERATIONAL_OS",
+  TERMINAL_INSTALLATION_TRACK: false,
+  ALLOW_STAFF_ROLE_QUERY: false,
+  SUPPORT_WHATSAPP_NUMBER: "",
 };

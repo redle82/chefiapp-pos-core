@@ -4,7 +4,7 @@
  * Esta é a versão limpa após remoção total de UI/UX legada.
  */
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import {
   Navigate,
   Route,
@@ -56,43 +56,51 @@ function TPVRouteHandler() {
 // =============================================================================
 // PUBLIC TREE (SEM AUTH) — providers mínimos para / e /op/tpv?mode=trial
 // =============================================================================
-const trialRuntime: RestaurantRuntime = {
-  restaurant_id: TRIAL_RESTAURANT_ID,
-  mode: "onboarding",
-  productMode: "trial",
-  dataMode: "trial",
-  installed_modules: [],
-  active_modules: [],
-  plan: "basic",
-  status: "onboarding",
-  billing_status: "trial",
-  capabilities: {},
-  setup_status: {},
-  isPublished: false,
-  lifecycle: deriveLifecycle(TRIAL_RESTAURANT_ID, false, false),
-  loading: false,
-  error: null,
-  coreReachable: true,
-  systemState: "TRIAL",
-  coreMode: "online",
-};
-const trialRuntimeContextValue = {
-  runtime: trialRuntime,
-  refresh: async () => {},
-  updateSetupStatus: async () => {},
-  publishRestaurant: async () => {},
-  installModule: async () => {},
-  setProductMode: (_mode: ProductMode) => {},
-};
-const trialShiftValue = {
-  isShiftOpen: true,
-  isChecking: false,
-  lastCheckedAt: new Date(),
-  refreshShiftStatus: async () => {},
-  markShiftOpen: () => {},
-};
 
 function PublicProviders({ children }: { children: ReactNode }) {
+  const trialRuntimeContextValue = useMemo(() => {
+    const trialRuntime: RestaurantRuntime = {
+      restaurant_id: TRIAL_RESTAURANT_ID,
+      mode: "onboarding",
+      productMode: "trial",
+      dataMode: "trial",
+      installed_modules: [],
+      active_modules: [],
+      plan: "basic",
+      status: "onboarding",
+      billing_status: "trial",
+      capabilities: {},
+      setup_status: {},
+      isPublished: false,
+      lifecycle: deriveLifecycle(TRIAL_RESTAURANT_ID, false, false),
+      loading: false,
+      error: null,
+      coreReachable: true,
+      systemState: "TRIAL",
+      coreMode: "online",
+    };
+
+    return {
+      runtime: trialRuntime,
+      refresh: async () => {},
+      updateSetupStatus: async () => {},
+      publishRestaurant: async () => {},
+      installModule: async () => {},
+      setProductMode: (_mode: ProductMode) => {},
+    };
+  }, []);
+
+  const trialShiftValue = useMemo(
+    () => ({
+      isShiftOpen: true,
+      isChecking: false,
+      lastCheckedAt: new Date(),
+      refreshShiftStatus: async () => {},
+      markShiftOpen: () => {},
+    }),
+    [],
+  );
+
   return (
     <RestaurantRuntimeContext.Provider value={trialRuntimeContextValue}>
       <ShiftContext.Provider value={trialShiftValue}>

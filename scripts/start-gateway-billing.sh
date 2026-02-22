@@ -11,15 +11,15 @@ export PORT="${PORT:-4320}"
 export INTERNAL_API_TOKEN="${INTERNAL_API_TOKEN:-chefiapp-internal-token-dev}"
 
 if [ -z "${STRIPE_SECRET_KEY}" ]; then
-  echo "⚠️  STRIPE_SECRET_KEY no definida: el checkout devolverá 503."
-  echo "   Para probar Stripe: STRIPE_SECRET_KEY=sk_test_... $0"
+  echo "ℹ️  STRIPE_SECRET_KEY no definida → billing corre en modo MOCK (local dev)."
+  echo "   Para probar Stripe real: STRIPE_SECRET_KEY=sk_test_... $0"
   echo ""
 fi
 
 # Check Stripe price mappings (needed for plan slug → price_xxx resolution)
 if [ -z "${STRIPE_PRICE_STARTER}" ] && [ -z "${STRIPE_PRICE_PRO}" ] && [ -z "${STRIPE_PRICE_ENTERPRISE}" ]; then
-  echo "⚠️  STRIPE_PRICE_* no definidas: el checkout necesita mapear plan slugs a price IDs."
-  echo "   Ejemplo: STRIPE_PRICE_STARTER=price_xxx STRIPE_PRICE_PRO=price_xxx STRIPE_PRICE_ENTERPRISE=price_xxx $0"
+  echo "ℹ️  STRIPE_PRICE_* no definidas → billing corre en modo MOCK (usa precios falsos)."
+  echo "   Para Stripe real: STRIPE_PRICE_STARTER=price_xxx STRIPE_PRICE_PRO=price_xxx STRIPE_PRICE_ENTERPRISE=price_xxx $0"
   echo ""
 fi
 

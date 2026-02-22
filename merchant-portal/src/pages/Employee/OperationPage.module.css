@@ -1,0 +1,210 @@
+.page {
+  padding-bottom: 80px;
+}
+
+.content {
+  padding: var(--spacing-lg);
+}
+
+.filterActions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.filterButton {
+  padding: 4px 8px;
+  background: var(--surface-overlay);
+  color: var(--text-secondary);
+  border: none;
+  border-radius: var(--radius-xs);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.filterButtonActive {
+  background: var(--status-info-text);
+  color: var(--text-primary);
+}
+
+.section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: var(--spacing-md);
+  color: var(--heading-section);
+}
+
+.ordersList,
+.delayList,
+.kdsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.orderCard,
+.infoCard,
+.kdsCard {
+  background: var(--card-bg-on-dark);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--surface-border);
+}
+
+.orderCard {
+  cursor: pointer;
+}
+
+.orderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-sm);
+}
+
+.orderTitle,
+.kdsTitle,
+.delayTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--heading-section);
+}
+
+.orderMeta,
+.infoText,
+.delayCause,
+.progressLabel {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.timeBadge {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+}
+
+.badgeWarning {
+  background: var(--status-warning-text);
+}
+
+.badgeSuccess {
+  background: var(--status-success-text);
+}
+
+.progressWrap {
+  margin-top: var(--spacing-sm);
+}
+
+.progressLabel {
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.progressBar {
+  width: 100%;
+  height: 8px;
+}
+
+.progressBar::-webkit-progress-bar {
+  background: var(--surface-overlay);
+  border-radius: var(--radius-xs);
+}
+
+.progressBar::-webkit-progress-value {
+  background: var(--status-success-text);
+  border-radius: var(--radius-xs);
+}
+
+.progressBar::-moz-progress-bar {
+  background: var(--status-success-text);
+  border-radius: var(--radius-xs);
+}
+
+.infoLead {
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.delayCard {
+  background: var(--card-bg-on-dark);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--status-warning-text);
+}
+
+.delayTitle {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.delayCause {
+  margin-bottom: var(--spacing-sm);
+}
+
+.resolveButton {
+  padding: 6px 12px;
+  background: var(--status-warning-text);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.kdsWarning {
+  font-size: 14px;
+  color: var(--status-warning-text);
+}
+
+.kdsSuccess {
+  font-size: 14px;
+  color: var(--status-success-text);
+}
+
+.primarySmallButton,
+.primaryActionButton,
+.secondaryActionButton {
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.primarySmallButton {
+  margin-top: var(--spacing-md);
+  width: 100%;
+  padding: var(--spacing-sm);
+  background: var(--status-info-text);
+  color: var(--text-primary);
+  border: none;
+}
+
+.quickActions {
+  margin-top: var(--spacing-xl);
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.primaryActionButton,
+.secondaryActionButton {
+  flex: 1;
+  padding: var(--spacing-md);
+}
+
+.primaryActionButton {
+  background: var(--status-info-text);
+  color: var(--text-primary);
+  border: none;
+  font-weight: 600;
+}
+
+.secondaryActionButton {
+  background: var(--card-bg-on-dark);
+  color: var(--text-primary);
+  border: 1px solid var(--surface-border);
+}

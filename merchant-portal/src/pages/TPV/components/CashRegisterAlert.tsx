@@ -1,3 +1,5 @@
+import React from "react";
+
 interface CashRegisterAlertProps {
   isOpen: boolean;
   onOpenCash: () => void;

@@ -36,7 +36,6 @@ Esta é uma regra **imutável** do sistema.
 - **CSS:** `merchant-portal/src/components/operational/BrowserBlockGuard.module.css`
 - **Tipo:** Layout route (React Router v6) que envolve os grupos de rotas operacionais.
 - **Lógica:**
-  - `import.meta.env.DEV` → bypass com banner de debug (amarelo dourado).
   - `isInstalledApp()` → permite acesso (Electron, standalone PWA, ReactNativeWebView).
   - Caso contrário → ecrã de bloqueio fullscreen com instruções de instalação.
 
@@ -81,7 +80,7 @@ function isInstalledApp(): boolean {
 
 ## Consequências
 
-1. Nenhuma rota operacional pode ser acedida pelo browser em produção.
+1. Nenhuma rota operacional pode ser acedida pelo browser (incluindo ambiente local).
 2. O `InstallPage` mostra instruções de instalação (não links para rotas bloqueadas).
 3. O `AdminDevicesPage` é o ponto central de distribuição e provisioning.
 4. Qualquer novo módulo operacional DEVE ser envolvido pelo `BrowserBlockGuard`.

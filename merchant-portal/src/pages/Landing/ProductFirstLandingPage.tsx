@@ -18,40 +18,40 @@ import { TRIAL_RESTAURANT_ID } from "../../core/readiness/operationalRestaurant"
 import { OSCopy } from "../../ui/design-system/sovereign/OSCopy";
 import { TPVMinimal } from "../TPVMinimal/TPVMinimal";
 
-const trialRuntime: RestaurantRuntime = {
-  restaurant_id: TRIAL_RESTAURANT_ID,
-  mode: "onboarding",
-  productMode: "trial",
-  dataMode: "trial",
-  installed_modules: [],
-  active_modules: [],
-  plan: "basic",
-  status: "onboarding",
-  billing_status: "trial",
-  capabilities: {},
-  setup_status: {},
-  isPublished: false,
-  lifecycle: deriveLifecycle(TRIAL_RESTAURANT_ID, false, false),
-  loading: false,
-  error: null,
-  coreReachable: true,
-  systemState: "TRIAL",
-  coreMode: "online",
-};
-
-const trialContextValue = {
-  runtime: trialRuntime,
-  refresh: async () => {},
-  updateSetupStatus: async () => {},
-  publishRestaurant: async () => {},
-  installModule: async () => {},
-  setProductMode: () => {},
-};
-
 export function ProductFirstLandingPage() {
   const navigate = useNavigate();
   const [overlayVisible, setOverlayVisible] = useState(true);
-  const value = useMemo(() => trialContextValue, []);
+  const value = useMemo(() => {
+    const trialRuntime: RestaurantRuntime = {
+      restaurant_id: TRIAL_RESTAURANT_ID,
+      mode: "onboarding",
+      productMode: "trial",
+      dataMode: "trial",
+      installed_modules: [],
+      active_modules: [],
+      plan: "basic",
+      status: "onboarding",
+      billing_status: "trial",
+      capabilities: {},
+      setup_status: {},
+      isPublished: false,
+      lifecycle: deriveLifecycle(TRIAL_RESTAURANT_ID, false, false),
+      loading: false,
+      error: null,
+      coreReachable: true,
+      systemState: "TRIAL",
+      coreMode: "online",
+    };
+
+    return {
+      runtime: trialRuntime,
+      refresh: async () => {},
+      updateSetupStatus: async () => {},
+      publishRestaurant: async () => {},
+      installModule: async () => {},
+      setProductMode: () => {},
+    };
+  }, []);
 
   return (
     <RestaurantRuntimeContext.Provider value={value}>

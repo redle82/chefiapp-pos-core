@@ -1,0 +1,97 @@
+.container {
+  padding: 48px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.saving {
+  font-size: 14px;
+  color: var(--color-primary);
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+
+.daysList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dayCard {
+  padding: 16px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+}
+
+.dayCardOpen {
+  background-color: var(--card-bg-on-dark);
+}
+
+.dayCardClosed {
+  background-color: var(--surface-elevated);
+}
+
+.dayRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.dayLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.dayCheckbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.dayName {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 80px;
+  color: var(--text-primary);
+}
+
+.timeRange {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.timeInput {
+  padding: 8px;
+  border: 1px solid var(--surface-border);
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--surface-base);
+}
+
+.untilText {
+  color: var(--text-primary);
+}
+
+.closedText {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  font-style: italic;
+}

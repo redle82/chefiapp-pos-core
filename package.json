@@ -36,6 +36,7 @@
     "server:integration-gateway": "npx ts-node server/integration-gateway.ts",
     "dev:gateway": "bash scripts/start-gateway-billing.sh",
     "dev:with-billing": "bash scripts/start-dev-with-billing.sh",
+    "supabase:finalize": "bash scripts/apply-migrations-supabase.sh",
     "demo:appstaff": "npx ts-node tests/appstaff-demo-mode.ts",
     "demo:appstaff:one": "bash scripts/demo-one-command.sh",
     "demo:voice": "bash scripts/demo-voice.sh",
@@ -93,6 +94,8 @@
   "description": "CHEFIAPP POS Core - Event-sourced financial core with legal immutability",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.888.0",
+    "@insforge/react": "^1.1.8",
+    "@insforge/sdk": "^1.1.5",
     "@types/pg": "^8.16.0",
     "bootstrap": "^5.3.8",
     "chalk": "^5.6.2",
@@ -107,9 +110,12 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
     "@commitlint/cli": "^19.8.0",
     "@commitlint/config-conventional": "^19.8.0",
     "@playwright/test": "^1.49.1",
+    "@tailwindcss/postcss": "^4.2.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@types/jest": "^29.5.12",

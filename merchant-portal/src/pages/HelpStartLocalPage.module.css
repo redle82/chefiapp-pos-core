@@ -1,0 +1,62 @@
+.pageWrapper {
+  min-height: 100vh;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 640px;
+}
+
+.title {
+  margin: 0 0 16px;
+  font-size: 1.5rem;
+  color: var(--heading-page);
+}
+
+.text {
+  margin: 0 0 16px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.list {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  color: var(--text-secondary);
+}
+
+.list li {
+  margin-bottom: 8px;
+}
+
+.codeBlock {
+  margin: 0 0 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--surface-overlay);
+  border: 1px solid var(--surface-border);
+  overflow: auto;
+  color: var(--text-primary);
+}
+
+.separator {
+  margin: 0 0 12px;
+  color: var(--text-tertiary);
+}
+
+.docPath {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 0.9rem;
+}
+
+.actions {
+  margin-top: 8px;
+}

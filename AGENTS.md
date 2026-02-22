@@ -45,6 +45,7 @@
 - Find the CI plan in `.github/workflows`.
 - Run `pnpm turbo run test --filter <project_name>` to run every check defined for that package.
 - From the package root you can call `pnpm test`.
+- **Jest na raiz (`npm test`):** Testes em `tests/archive/` não são executados (referência histórica). Os testes de integração `tenant_isolation`, `server_side_idempotency`, `rate_limiting` e `orderLifecycle` usam Vitest e dependem de DB/Core — estão excluídos do Jest; executar com Vitest quando o Core estiver disponível. Os testes `plpgsql-core-rpcs` e `load-test-orders` requerem Core/Postgres e também estão excluídos do `npm test`. Ver `docs/audit/PLANO_CORRECAO_TESTES_JEST.md`.
 - To focus on one step, add the Vitest pattern: `pnpm vitest run -t "<test name>"`.
 - Fix any test or type errors until the whole suite is green.
 - After moving files or changing imports, run `pnpm lint --filter <project_name>`.
@@ -63,3 +64,10 @@
 
 - **Gate recomendado (portal estável):** `npm run audit:release:portal` — web-e2e + typecheck + testes merchant-portal (Vitest) + leis. Passa sem DB/Jest raiz.
 - **Auditoria completa:** `npm run audit:release` — inclui Jest na raiz; pode falhar por testes de integração/DB. Ver `docs/audit/RELEASE_AUDIT_STATUS.md`.
+
+## Production monitoring
+
+- **Rollout plan:** `docs/ops/PRODUCTION_ROLLOUT_MONITORING_PLAN.md` — Phased rollout strategy with monitoring checkpoints (T+0h → T+48h).
+- **Quick reference:** `docs/ops/ROLLOUT_QUICK_REFERENCE.md` — Emergency checklists, thresholds, rollback commands.
+- **Observability:** `docs/ops/OBSERVABILITY_SETUP.md` — Sentry, Logger, ErrorBoundary, analytics setup.
+- **Critical thresholds:** Error rate < 1%, LCP < 2.5s, Core RPC > 99%, Browser-block bypasses = 0.

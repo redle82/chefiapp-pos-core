@@ -1,0 +1,150 @@
+.page {
+  padding-bottom: 80px;
+}
+
+.content {
+  padding: var(--spacing-lg);
+}
+
+.mentorCard {
+  background: var(--card-bg-on-dark);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--surface-border);
+}
+
+.title {
+  margin: 0 0 var(--spacing-sm);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--heading-section);
+}
+
+.message {
+  margin: 0 0 var(--spacing-lg);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.contextBox,
+.actionBox {
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.contextBox {
+  background: var(--surface-overlay);
+}
+
+.actionBox {
+  background: var(--status-info-bg);
+  border: 1px solid var(--status-info-border);
+}
+
+.contextLabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.contextValue,
+.actionLine {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.actionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  color: var(--heading-section);
+}
+
+.actionLine {
+  margin-bottom: 4px;
+}
+
+.actionLine:last-child {
+  margin-bottom: 0;
+}
+
+.primaryActionsRow,
+.feedbackActionsRow {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.feedbackActionsRow {
+  margin-top: var(--spacing-md);
+}
+
+.primaryButton,
+.secondaryButton,
+.usefulButton,
+.notUsefulButton {
+  flex: 1;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.primaryButton,
+.secondaryButton {
+  padding: var(--spacing-md);
+  font-size: 14px;
+}
+
+.usefulButton,
+.notUsefulButton {
+  padding: var(--spacing-sm);
+  font-size: 12px;
+}
+
+.primaryButton {
+  background: var(--status-info-text);
+  font-weight: 600;
+}
+
+.secondaryButton {
+  background: transparent;
+  border: 1px solid var(--surface-border);
+  color: var(--text-primary);
+}
+
+.usefulButton {
+  background: var(--status-success-text);
+}
+
+.notUsefulButton {
+  background: var(--status-error-text);
+}
+
+.quickActionsList {
+  margin-top: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.quickActionButton {
+  padding: var(--spacing-lg);
+  background: var(--card-bg-on-dark);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: pointer;
+}
+
+.quickActionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--heading-section);
+}
+
+.quickActionDescription {
+  font-size: 14px;
+  color: var(--text-secondary);
+}

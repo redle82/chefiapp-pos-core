@@ -144,8 +144,9 @@ describe("WebOrderingService", () => {
   });
 
   it("deve retentar em caso de falha de rede", async () => {
-    // Mock restaurant config - sucesso
+    // 1.ª chamada a .single() (fetch restaurante) falha com rede; 2.ª (retry) devolve restaurante
     mockSupabaseChain.single
+      .mockRejectedValueOnce(new Error("Network error"))
       .mockResolvedValueOnce({
         data: {
           id: mockRestaurantId,
@@ -153,23 +154,14 @@ describe("WebOrderingService", () => {
           web_ordering_enabled: true,
         },
         error: null,
-      })
-      // Primeira tentativa - falha
-      .mockRejectedValueOnce(new Error("Network error"))
-      // Retry - sucesso
-      .mockResolvedValueOnce({
-        data: { id: "order-123" },
-        error: null,
       });
 
-    // Usar submitOrderWithRetry diretamente para testar retry
     const progressCallback = jest.fn();
     const result = await WebOrderingService.submitOrderWithRetry(
       mockOrder,
       progressCallback,
     );
 
-    // O submitOrderWithRetry deve retentar e ter sucesso
     expect(result.success).toBe(true);
     expect(progressCallback).toHaveBeenCalled();
   });

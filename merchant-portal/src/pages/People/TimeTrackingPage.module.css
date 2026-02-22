@@ -1,0 +1,115 @@
+.container {
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  color: var(--text-primary);
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.statusCard {
+  margin-bottom: 24px;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.activeCard {
+  background-color: var(--status-primary-bg);
+}
+
+.idleCard {
+  background-color: var(--surface-elevated);
+}
+
+.statusMeta {
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.lateWarning {
+  color: var(--status-error-text, #dc3545);
+  margin-top: 4px;
+}
+
+.actionButton {
+  padding: 12px 24px;
+  color: var(--text-inverse, white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.clockOutButton {
+  background-color: var(--status-error-text, #dc3545);
+}
+
+.clockInButton {
+  background-color: var(--status-success-text);
+}
+
+.emptyText {
+  color: var(--text-secondary);
+}
+
+.entriesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.entryCard {
+  padding: 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: 4px;
+  background-color: var(--surface-base);
+}
+
+.entryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.entryDate {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.entryTime {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.entryLate {
+  font-size: 12px;
+  color: var(--status-error-text, #dc3545);
+  margin-top: 4px;
+}
+
+.entrySummary {
+  text-align: right;
+}
+
+.entryWorked {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.entryOvertime {
+  font-size: 12px;
+  color: var(--status-warning-text);
+}

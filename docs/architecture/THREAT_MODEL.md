@@ -97,4 +97,6 @@ Cada ameaça está mapeada a mitigações, controles existentes ou em falta, don
 
 ---
 
+**Riscos operacionais (POS autónomo):** Latência e autoridade cognitiva (override, transparência) estão formalizados em [AUTONOMOUS_POS_RISK_REGISTER_AND_BOWTIE.md](../audit/AUTONOMOUS_POS_RISK_REGISTER_AND_BOWTIE.md) — risk register, Bowtie, thresholds e protocolos de teste. Este THREAT_MODEL foca ameaças de segurança; aquele documento complementa para riscos operacionais.
+
 **Referências:** [THREAT_MODEL_MITIGATION_MATRIX.md](./THREAT_MODEL_MITIGATION_MATRIX.md) · [RATE_LIMITING_AND_INPUT_VALIDATION.md](./RATE_LIMITING_AND_INPUT_VALIDATION.md) · [TENANT_ISOLATION_SECURITY_MODEL.md](../security/TENANT_ISOLATION_SECURITY_MODEL.md) · [ACCESS_CONTROL_MATRIX.md](./ACCESS_CONTROL_MATRIX.md) · [AUDIT_LOG_SPEC.md](./AUDIT_LOG_SPEC.md) · [INCIDENT_RESPONSE.md](../ops/INCIDENT_RESPONSE.md) · [CORE_DATA_RETENTION_AND_IMMUTABILITY_CONTRACT.md](./CORE_DATA_RETENTION_AND_IMMUTABILITY_CONTRACT.md) · [ROADMAP_FECHO_GAPS_CHEFIAPP.md](../ROADMAP_FECHO_GAPS_CHEFIAPP.md).

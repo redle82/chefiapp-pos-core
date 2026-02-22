@@ -5,6 +5,7 @@
 
 import React from "react";
 import { useOnboarding } from "../../../context/OnboardingContext";
+import styles from "./PaymentsSection.module.css";
 
 export function PaymentsSection() {
   const { updateSectionStatus } = useOnboarding();
@@ -15,31 +16,15 @@ export function PaymentsSection() {
   }, [updateSectionStatus]);
 
   return (
-    <div
-      style={{
-        padding: "32px",
-        maxWidth: "800px",
-        margin: 0,
-        backgroundColor: "#f8fafc",
-        borderRadius: 12,
-        border: "1px solid #e2e8f0",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 12,
-        }}
-      >
-        <span style={{ fontSize: "1.5rem" }}>💳</span>
-        <span style={{ fontSize: "15px", color: "#64748b", fontWeight: 500 }}>
+    <div className={styles.container}>
+      <div className={styles.headerRow}>
+        <span className={styles.icon}>💳</span>
+        <span className={styles.helperText}>
           Em breve: ativar/desativar métodos (dinheiro, cartão, MB Way) e ligar
           terminais.
         </span>
       </div>
-      <p style={{ fontSize: "14px", color: "#64748b", margin: 0 }}>
+      <p className={styles.description}>
         Não precisa de fazer nada aqui por agora. O TPV continua a aceitar
         pagamentos conforme configurado na operação.
       </p>

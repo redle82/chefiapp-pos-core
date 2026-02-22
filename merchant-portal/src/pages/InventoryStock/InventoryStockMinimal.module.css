@@ -414,6 +414,10 @@
   margin-bottom: 16px;
 }
 
+.mb24 {
+  margin-bottom: 24px;
+}
+
 .cardRowSnug {
   display: flex;
   justify-content: space-between;

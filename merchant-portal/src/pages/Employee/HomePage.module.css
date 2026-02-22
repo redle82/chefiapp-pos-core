@@ -1,0 +1,104 @@
+.page {
+  padding-bottom: 80px;
+}
+
+.content {
+  padding: var(--spacing-lg);
+}
+
+.shiftCard,
+.focusCard {
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.shiftCard {
+  background: var(--surface-overlay);
+}
+
+.focusCard {
+  background: var(--card-bg-on-dark);
+  border: 1px solid var(--surface-border);
+}
+
+.sectionTitle {
+  margin: 0 0 var(--spacing-sm);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--heading-section);
+}
+
+.shiftMeta {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.focusList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.focusItem {
+  padding: var(--spacing-md);
+  background: var(--surface-overlay);
+  border-radius: var(--radius-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.focusItemTitle {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.priorityBadge {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+}
+
+.priorityHigh {
+  background: var(--status-error-text);
+}
+
+.priorityMedium {
+  background: var(--status-warning-text);
+}
+
+.priorityLow {
+  background: var(--status-success-text);
+}
+
+.primaryActionButton {
+  margin-top: var(--spacing-md);
+  width: 100%;
+  padding: var(--spacing-md);
+  background: var(--status-info-text);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.quickActions {
+  margin-top: var(--spacing-lg);
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.secondaryActionButton {
+  flex: 1;
+  padding: var(--spacing-md);
+  background: var(--card-bg-on-dark);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+}

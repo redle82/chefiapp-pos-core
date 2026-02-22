@@ -7,13 +7,13 @@
 import React, { useEffect, useRef } from "react";
 import { useOnboardingOptional } from "../../../context/OnboardingContext";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import { useCoreAuth } from "../../../core/auth/useCoreAuth";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import {
   BackendType,
   getBackendType,
 } from "../../../core/infra/backendAdapter";
+import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import styles from "./IdentitySection.module.css";
 // Domain writes ONLY via Core. No Supabase.
 
@@ -410,17 +410,21 @@ export function IdentitySection() {
           <input
             type="url"
             value={"logoUrl" in formData ? formData.logoUrl : ""}
-            onChange={(e) => updateIdentityForm({ logoUrl: e.target.value } as any)}
+            onChange={(e) =>
+              updateIdentityForm({ logoUrl: e.target.value } as any)
+            }
             placeholder="https://… (imagem do logo)"
             className={styles.input}
           />
           {"logoUrl" in formData && formData.logoUrl && (
-            <div style={{ marginTop: 8 }}>
+            <div className={styles.logoPreviewWrapper}>
               <img
                 src={formData.logoUrl}
                 alt="Pré-visualização do logo"
-                style={{ maxWidth: 80, maxHeight: 80, objectFit: "contain", borderRadius: 8 }}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                className={styles.logoPreview}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
               />
             </div>
           )}

@@ -32,7 +32,7 @@ interface PaymentModalProps {
   isTrialMode?: boolean;
 }
 
-type PaymentMethodId = "cash" | "card" | "mbway" | "pix";
+type PaymentMethodId = "cash" | "card" | "mbway" | "pix" | "sumup_eur";
 
 interface MethodOption {
   id: PaymentMethodId;
@@ -66,6 +66,12 @@ const METHODS: MethodOption[] = [
     icon: "⚡",
     description: "Transferencia instantanea",
   },
+  {
+    id: "sumup_eur",
+    label: "Cartão EUR",
+    icon: "🇪🇺",
+    description: "SumUp (ES/PT/DE)",
+  },
 ];
 
 const QUICK_CASH = [5_00, 10_00, 20_00, 50_00];
@@ -93,6 +99,32 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [mbwayPhone, setMbwayPhone] = useState("");
   const [processing, setProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Pix state
+  type PixStep =
+    | "idle"
+    | "creating"
+    | "qr-ready"
+    | "polling"
+    | "completed"
+    | "expired";
+  const [pixStep, setPixStep] = useState<PixStep>("idle");
+  const [pixCheckoutId, setPixCheckoutId] = useState<string | null>(null);
+  const [pixQrCodeUrl, setPixQrCodeUrl] = useState<string | null>(null);
+  const [pixTimeRemaining, setPixTimeRemaining] = useState<number>(600); // 10 minutes in seconds
+
+  // SumUp EUR state
+  type SumUpStep =
+    | "idle"
+    | "creating"
+    | "redirect"
+    | "polling"
+    | "completed"
+    | "failed";
+  const [sumupStep, setSumUpStep] = useState<SumUpStep>("idle");
+  const [sumupCheckoutId, setSumUpCheckoutId] = useState<string | null>(null);
+  const [sumupCheckoutUrl, setSumUpCheckoutUrl] = useState<string | null>(null);
+  const [sumupTimeRemaining, setSumUpTimeRemaining] = useState<number>(900); // 15 minutes in seconds
 
   // Tip / Gorjeta
   const [tipPercent, setTipPercent] = useState<number | null>(null);
@@ -124,6 +156,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setCardStep("idle");
     setStripeClientSecret(null);
     intentCreatedRef.current = false;
+    // Reset Pix state
+    setPixStep("idle");
+    setPixCheckoutId(null);
+    setPixQrCodeUrl(null);
+    setPixTimeRemaining(600);
+    // Reset SumUp state
+    setSumUpStep("idle");
+    setSumUpCheckoutId(null);
+    setSumUpCheckoutUrl(null);
+    setSumUpTimeRemaining(900);
   }, [method]);
 
   // Auto-create PaymentIntent when "card" is selected (non-trial)
@@ -166,8 +208,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     if (method === "mbway") return /^9\d{8}$/.test(mbwayPhone);
     // Card handled by Stripe form; hide generic confirm when ready
     if (method === "card") return isTrialMode === true;
+    // Pix: can confirm to initiate checkout
+    if (method === "pix") return pixStep === "idle";
+    // SumUp EUR: can confirm to initiate checkout
+    if (method === "sumup_eur")
+      return sumupStep === "idle" || sumupStep === "failed";
     return true;
-  }, [cashCents, isTrialMode, mbwayPhone, method, orderTotal, processing]);
+  }, [
+    cashCents,
+    isTrialMode,
+    mbwayPhone,
+    method,
+    orderTotal,
+    processing,
+    pixStep,
+    sumupStep,
+  ]);
 
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
@@ -189,14 +245,88 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setProcessing(true);
     setErrorMsg("");
     try {
+      // Pix: create checkout and show QR code
+      if (method === "pix") {
+        setPixStep("creating");
+        const pixResult = await PaymentBroker.createPixCheckout({
+          orderId,
+          amount: grandTotal,
+          restaurantId,
+          description: `Pedido ${orderId.slice(-6)} - Total ${formatAmount(
+            grandTotal,
+          )}`,
+        });
+
+        setPixCheckoutId(pixResult.checkout_id);
+        // Generate QR code URL from checkout ID (SumUp provides this in raw.transactions)
+        const qrCodeUrl =
+          pixResult.raw?.transactions?.[0]?.qr_code_url ||
+          `https://api.sumup.com/qr/${pixResult.checkout_id}`;
+        setPixQrCodeUrl(qrCodeUrl);
+        setPixStep("qr-ready");
+        setPixTimeRemaining(600); // Reset to 10 minutes
+        setProcessing(false);
+        return;
+      }
+
+      // SumUp EUR: create checkout and redirect to payment page
+      if (method === "sumup_eur") {
+        setSumUpStep("creating");
+        const sumupResult = await PaymentBroker.createSumUpCheckout({
+          orderId,
+          amount: grandTotal,
+          restaurantId,
+          currency: "EUR",
+          description: `Pedido ${orderId.slice(-6)} - Total ${formatAmount(
+            grandTotal,
+          )}`,
+        });
+
+        if (!sumupResult.success || !sumupResult.checkout) {
+          throw new Error("Falha ao criar checkout SumUp");
+        }
+
+        setSumUpCheckoutId(sumupResult.checkout.id);
+        setSumUpCheckoutUrl(sumupResult.checkout.url);
+        setSumUpStep("redirect");
+        setSumUpTimeRemaining(900); // Reset to 15 minutes
+        setProcessing(false);
+
+        // Open payment page in new tab
+        window.open(sumupResult.checkout.url, "_blank", "noopener,noreferrer");
+
+        // Start polling immediately after redirect
+        setTimeout(() => {
+          if (sumupResult.checkout.id) {
+            setSumUpStep("polling");
+          }
+        }, 1000);
+        return;
+      }
+
       const backendMethod = method === "mbway" ? "card" : method;
       await onPay(backendMethod, undefined, tipCents || undefined);
     } catch (err: any) {
       setErrorMsg(err?.message || "Erro ao processar pagamento");
+      if (method === "pix") {
+        setPixStep("idle");
+      }
+      if (method === "sumup_eur") {
+        setSumUpStep("failed");
+      }
     } finally {
       setProcessing(false);
     }
-  }, [canConfirm, method, onPay, tipCents]);
+  }, [
+    canConfirm,
+    method,
+    onPay,
+    tipCents,
+    orderId,
+    grandTotal,
+    restaurantId,
+    formatAmount,
+  ]);
 
   // Called when Stripe Elements confirm succeeds
   const handleCardSuccess = useCallback(
@@ -213,6 +343,117 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     },
     [onPay, tipCents],
   );
+
+  // Pix countdown timer
+  useEffect(() => {
+    if (pixStep !== "qr-ready" && pixStep !== "polling") return;
+
+    const interval = setInterval(() => {
+      setPixTimeRemaining((prev) => {
+        if (prev <= 1) {
+          setPixStep("expired");
+          setErrorMsg("QR Code expirou. Por favor, tente novamente.");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [pixStep]);
+
+  // Pix status polling
+  useEffect(() => {
+    if (pixStep !== "qr-ready" && pixStep !== "polling") return;
+    if (!pixCheckoutId) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const status = await PaymentBroker.getPixCheckoutStatus(pixCheckoutId);
+        console.log("[PaymentModal] Pix status poll:", status);
+
+        if (status.status === "PAID" || status.status === "COMPLETED") {
+          setPixStep("completed");
+          setProcessing(true);
+          clearInterval(pollInterval);
+          // Notify parent that payment is complete
+          await onPay("pix", pixCheckoutId, tipCents || undefined);
+          setProcessing(false);
+        } else if (status.status === "FAILED" || status.status === "CANCELED") {
+          setPixStep("expired");
+          setErrorMsg(
+            `Pagamento ${
+              status.status === "FAILED" ? "falhou" : "cancelado"
+            }. Tente novamente.`,
+          );
+          clearInterval(pollInterval);
+        }
+      } catch (err: any) {
+        console.warn("[PaymentModal] Pix polling error:", err);
+        // Don't stop polling on transient errors
+      }
+    }, 2000); // Poll every 2 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [pixStep, pixCheckoutId, onPay, tipCents]);
+
+  // SumUp EUR countdown timer
+  useEffect(() => {
+    if (sumupStep !== "redirect" && sumupStep !== "polling") return;
+
+    const interval = setInterval(() => {
+      setSumUpTimeRemaining((prev) => {
+        if (prev <= 1) {
+          setSumUpStep("failed");
+          setErrorMsg("Checkout expirou. Por favor, tente novamente.");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [sumupStep]);
+
+  // SumUp EUR status polling
+  useEffect(() => {
+    if (sumupStep !== "redirect" && sumupStep !== "polling") return;
+    if (!sumupCheckoutId) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const status = await PaymentBroker.getSumUpCheckoutStatus(
+          sumupCheckoutId,
+        );
+        console.log("[PaymentModal] SumUp status poll:", status);
+
+        if (status.success && status.checkout.status === "PAID") {
+          setSumUpStep("completed");
+          setProcessing(true);
+          clearInterval(pollInterval);
+          // Notify parent that payment is complete
+          await onPay("card", sumupCheckoutId, tipCents || undefined);
+          setProcessing(false);
+        } else if (
+          status.checkout.status === "FAILED" ||
+          status.checkout.status === "EXPIRED"
+        ) {
+          setSumUpStep("failed");
+          setErrorMsg(
+            `Pagamento ${
+              status.checkout.status === "FAILED" ? "falhou" : "expirou"
+            }. Tente novamente.`,
+          );
+          clearInterval(pollInterval);
+        }
+      } catch (err: any) {
+        console.warn("[PaymentModal] SumUp polling error:", err);
+        // Don't stop polling on transient errors
+      }
+    }, 3000); // Poll every 3 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [sumupStep, sumupCheckoutId, onPay, tipCents]);
 
   return (
     <div ref={overlayRef} onClick={handleOverlayClick} style={styles.overlay}>
@@ -449,11 +690,234 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         )}
 
         {method === "pix" && (
-          <div style={styles.terminalWaiting}>
-            <span style={{ fontSize: 36 }}>⚡</span>
-            <span style={{ color: "#a1a1aa", fontSize: 14 }}>
-              QR Code sera gerado ao confirmar
-            </span>
+          <div style={styles.section}>
+            {pixStep === "idle" && (
+              <div style={styles.terminalWaiting}>
+                <span style={{ fontSize: 36 }}>⚡</span>
+                <span style={{ color: "#a1a1aa", fontSize: 14 }}>
+                  Clique em Confirmar para gerar QR Code Pix
+                </span>
+              </div>
+            )}
+            {pixStep === "creating" && (
+              <div style={styles.terminalWaiting}>
+                <span style={{ fontSize: 36 }}>⏳</span>
+                <span style={{ color: "#a1a1aa", fontSize: 14 }}>
+                  Gerando QR Code Pix...
+                </span>
+              </div>
+            )}
+            {(pixStep === "qr-ready" || pixStep === "polling") &&
+              pixQrCodeUrl && (
+                <div style={styles.pixQrContainer}>
+                  <div style={styles.pixQrHeader}>
+                    <span
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 600,
+                        color: "#d4d4d8",
+                      }}
+                    >
+                      Escaneie o QR Code com seu app bancário
+                    </span>
+                    <div style={styles.pixTimer}>
+                      <span style={{ fontSize: 20, fontWeight: 700 }}>
+                        {Math.floor(pixTimeRemaining / 60)}:
+                        {String(pixTimeRemaining % 60).padStart(2, "0")}
+                      </span>
+                      <span style={{ fontSize: 12, color: "#71717a" }}>
+                        restantes
+                      </span>
+                    </div>
+                  </div>
+                  <div style={styles.pixQrBox}>
+                    <img
+                      src={pixQrCodeUrl}
+                      alt="QR Code Pix"
+                      style={styles.pixQrImage}
+                      onError={(e) => {
+                        // Fallback: show checkout ID as text if QR image fails
+                        console.error("QR Code image failed to load");
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    {!pixQrCodeUrl.startsWith("http") && (
+                      <div
+                        style={{
+                          marginTop: 16,
+                          padding: 12,
+                          background: CARD_BG,
+                          borderRadius: 8,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 12,
+                            color: "#71717a",
+                            fontFamily: "monospace",
+                          }}
+                        >
+                          Checkout ID: {pixCheckoutId}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div style={styles.pixInstructions}>
+                    <span style={{ fontSize: 13, color: "#a1a1aa" }}>⚡</span>
+                    <span style={{ fontSize: 13, color: "#a1a1aa" }}>
+                      Aguardando confirmação do pagamento...
+                    </span>
+                  </div>
+                </div>
+              )}
+            {pixStep === "completed" && (
+              <div style={styles.terminalWaiting}>
+                <span style={{ fontSize: 36 }}>✅</span>
+                <span style={{ color: GREEN, fontSize: 16, fontWeight: 600 }}>
+                  Pagamento Pix confirmado!
+                </span>
+              </div>
+            )}
+            {pixStep === "expired" && (
+              <div style={styles.terminalWaiting}>
+                <span style={{ fontSize: 36 }}>⏱️</span>
+                <span style={{ color: DANGER, fontSize: 14 }}>
+                  QR Code expirado. Clique em Confirmar para gerar novo código.
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {method === "sumup_eur" && (
+          <div style={styles.section}>
+            {sumupStep === "idle" && (
+              <div style={styles.terminalWaiting}>
+                <span style={{ fontSize: 36 }}>🇪🇺</span>
+                <span style={{ color: "#a1a1aa", fontSize: 14 }}>
+                  Clique em Confirmar para abrir página de pagamento SumUp
+                </span>
+              </div>
+            )}
+            {sumupStep === "creating" && (
+              <div style={styles.terminalWaiting}>
+                <span style={{ fontSize: 36 }}>⏳</span>
+                <span style={{ color: "#a1a1aa", fontSize: 14 }}>
+                  Criando checkout SumUp...
+                </span>
+              </div>
+            )}
+            {(sumupStep === "redirect" || sumupStep === "polling") && (
+              <div style={styles.pixQrContainer}>
+                <div style={styles.pixQrHeader}>
+                  <span
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 600,
+                      color: "#d4d4d8",
+                    }}
+                  >
+                    Complete o pagamento na janela aberta
+                  </span>
+                  <div style={styles.pixTimer}>
+                    <span style={{ fontSize: 20, fontWeight: 700 }}>
+                      {Math.floor(sumupTimeRemaining / 60)}:
+                      {String(sumupTimeRemaining % 60).padStart(2, "0")}
+                    </span>
+                    <span style={{ fontSize: 12, color: "#71717a" }}>
+                      restantes
+                    </span>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 16,
+                    padding: 24,
+                    background: CARD_BG,
+                    borderRadius: 12,
+                  }}
+                >
+                  <span style={{ fontSize: 48 }}>💳</span>
+                  <span
+                    style={{
+                      fontSize: 15,
+                      color: "#d4d4d8",
+                      textAlign: "center",
+                    }}
+                  >
+                    Insira os dados do cartão na página SumUp
+                  </span>
+                  {sumupCheckoutUrl && (
+                    <button
+                      onClick={() =>
+                        window.open(
+                          sumupCheckoutUrl,
+                          "_blank",
+                          "noopener,noreferrer",
+                        )
+                      }
+                      style={{
+                        padding: "10px 20px",
+                        background: ACCENT,
+                        border: "none",
+                        borderRadius: 8,
+                        color: "#fff",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Reabrir Página de Pagamento
+                    </button>
+                  )}
+                  <div
+                    style={{
+                      marginTop: 8,
+                      padding: 12,
+                      background: SURFACE,
+                      borderRadius: 8,
+                      width: "100%",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 12,
+                        color: "#71717a",
+                        fontFamily: "monospace",
+                      }}
+                    >
+                      Checkout ID: {sumupCheckoutId}
+                    </span>
+                  </div>
+                </div>
+                <div style={styles.pixInstructions}>
+                  <span style={{ fontSize: 13, color: "#a1a1aa" }}>⏳</span>
+                  <span style={{ fontSize: 13, color: "#a1a1aa" }}>
+                    Aguardando confirmação do pagamento...
+                  </span>
+                </div>
+              </div>
+            )}
+            {sumupStep === "completed" && (
+              <div style={styles.terminalWaiting}>
+                <span style={{ fontSize: 36 }}>✅</span>
+                <span style={{ color: GREEN, fontSize: 16, fontWeight: 600 }}>
+                  Pagamento SumUp confirmado!
+                </span>
+              </div>
+            )}
+            {sumupStep === "failed" && (
+              <div style={styles.terminalWaiting}>
+                <span style={{ fontSize: 36 }}>❌</span>
+                <span style={{ color: DANGER, fontSize: 14 }}>
+                  Pagamento falhou ou expirou. Clique em Confirmar para tentar
+                  novamente.
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -471,14 +935,27 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             opacity: canConfirm ? 1 : 0.4,
             cursor: canConfirm ? "pointer" : "not-allowed",
             // Hide when Stripe form is active (it has its own submit)
+            // Hide when Pix QR is showing (wait for payment or regenerate)
             display:
-              method === "card" && !isTrialMode && cardStep === "ready"
+              (method === "card" && !isTrialMode && cardStep === "ready") ||
+              (method === "pix" &&
+                (pixStep === "qr-ready" ||
+                  pixStep === "polling" ||
+                  pixStep === "completed")) ||
+              (method === "sumup_eur" &&
+                (sumupStep === "redirect" ||
+                  sumupStep === "polling" ||
+                  sumupStep === "completed"))
                 ? "none"
                 : "flex",
           }}
         >
           {processing
             ? "A processar..."
+            : method === "pix" && pixStep === "expired"
+            ? "Gerar Novo QR Code"
+            : method === "sumup_eur" && sumupStep === "failed"
+            ? "Tentar Novamente"
             : `Confirmar ${formatAmount(grandTotal)}`}
         </button>
       </div>
@@ -778,5 +1255,47 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     transition: "opacity 0.15s",
     marginTop: 4,
+  },
+  pixQrContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 16,
+    padding: 20,
+    background: SURFACE,
+    borderRadius: 14,
+  },
+  pixQrHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  pixTimer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: 2,
+    color: GREEN,
+  },
+  pixQrBox: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+    background: "#fff",
+    borderRadius: 12,
+  },
+  pixQrImage: {
+    width: "100%",
+    maxWidth: 280,
+    height: "auto",
+    display: "block",
+  },
+  pixInstructions: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    padding: "10px 0",
   },
 };

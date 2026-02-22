@@ -4,6 +4,7 @@
     "esbenp.prettier-vscode",
     "editorconfig.editorconfig",
     "bradlc.vscode-tailwindcss",
-    "insforge.insforge"
+    "insforge.insforge",
+    "supabase.vscode-supabase-extension"
   ]
 }

@@ -80,7 +80,7 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/setup/restaurant-minimal");
+        expect(decision.to).toBe("/welcome");
       }
     });
 
@@ -126,6 +126,7 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
+        activated: true,
         currentPath: "/app/dashboard",
       };
 
@@ -139,13 +140,14 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
+        activated: true,
         currentPath: "/auth",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/dashboard");
+        expect(decision.to).toBe("/app/dashboard");
       }
     });
 
@@ -153,13 +155,14 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
+        activated: true,
         currentPath: "/",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/dashboard");
+        expect(decision.to).toBe("/app/dashboard");
       }
     });
 
@@ -167,13 +170,14 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
+        activated: true,
         currentPath: "/app",
       };
 
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/dashboard");
+        expect(decision.to).toBe("/app/dashboard");
       }
     });
 
@@ -181,6 +185,7 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
+        activated: true,
         currentPath: "/onboarding/identity",
       };
 
@@ -192,6 +197,7 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
+        activated: true,
         currentPath: "/app/dashboard",
       };
 
@@ -227,6 +233,7 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const state: UserState = {
         isAuthenticated: true,
         hasOrganization: true,
+        activated: true,
         currentPath: "/app/dashboard",
       };
 

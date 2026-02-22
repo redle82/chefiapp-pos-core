@@ -9,6 +9,7 @@ import {
   type TimeEntry,
 } from "../../core/people/TimeTrackingEngine";
 import { GlobalLoadingView } from "../../ui/design-system/components";
+import styles from "./TimeTrackingPage.module.css";
 
 export function TimeTrackingPage() {
   const { runtime } = useRestaurantRuntime();
@@ -91,73 +92,35 @@ export function TimeTrackingPage() {
   };
 
   return (
-    <div style={{ padding: "24px", maxWidth: "800px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: 600, marginBottom: "24px" }}>
-        Banco de Horas
-      </h1>
+    <div className={styles.container}>
+      <h1 className={styles.title}>Banco de Horas</h1>
 
       {/* Entrada Ativa */}
       {activeEntry ? (
-        <div
-          style={{
-            marginBottom: "24px",
-            padding: "16px",
-            backgroundColor: "#e7f3ff",
-            borderRadius: "8px",
-          }}
-        >
-          <h2
-            style={{ fontSize: "18px", fontWeight: 600, marginBottom: "12px" }}
-          >
-            Entrada Ativa
-          </h2>
-          <div style={{ marginBottom: "12px" }}>
+        <div className={`${styles.statusCard} ${styles.activeCard}`}>
+          <h2 className={styles.sectionTitle}>Entrada Ativa</h2>
+          <div className={styles.statusMeta}>
             <div>
               <strong>Entrada:</strong> {activeEntry.clockIn.toLocaleString()}
             </div>
             {activeEntry.isLate && (
-              <div style={{ color: "#dc3545", marginTop: "4px" }}>
+              <div className={styles.lateWarning}>
                 ⚠️ Atraso: {activeEntry.lateMinutes} minutos
               </div>
             )}
           </div>
           <button
             onClick={handleClockOut}
-            style={{
-              padding: "12px 24px",
-              backgroundColor: "#dc3545",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "16px",
-              fontWeight: 600,
-            }}
+            className={`${styles.actionButton} ${styles.clockOutButton}`}
           >
             Registrar Saída
           </button>
         </div>
       ) : (
-        <div
-          style={{
-            marginBottom: "24px",
-            padding: "16px",
-            backgroundColor: "#f8f9fa",
-            borderRadius: "8px",
-          }}
-        >
+        <div className={`${styles.statusCard} ${styles.idleCard}`}>
           <button
             onClick={handleClockIn}
-            style={{
-              padding: "12px 24px",
-              backgroundColor: "#28a745",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "16px",
-              fontWeight: 600,
-            }}
+            className={`${styles.actionButton} ${styles.clockInButton}`}
           >
             Registrar Entrada
           </button>
@@ -166,56 +129,34 @@ export function TimeTrackingPage() {
 
       {/* Histórico */}
       <div>
-        <h2 style={{ fontSize: "18px", fontWeight: 600, marginBottom: "12px" }}>
-          Histórico (Últimos 7 dias)
-        </h2>
+        <h2 className={styles.sectionTitle}>Histórico (Últimos 7 dias)</h2>
         {entries.length === 0 ? (
-          <p style={{ color: "#666" }}>Nenhuma entrada registrada</p>
+          <p className={styles.emptyText}>Nenhuma entrada registrada</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div className={styles.entriesList}>
             {entries.map((entry) => (
-              <div
-                key={entry.id}
-                style={{
-                  padding: "12px",
-                  border: "1px solid #e0e0e0",
-                  borderRadius: "4px",
-                  backgroundColor: "#fff",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
+              <div key={entry.id} className={styles.entryCard}>
+                <div className={styles.entryRow}>
                   <div>
-                    <div style={{ fontWeight: 600 }}>
+                    <div className={styles.entryDate}>
                       {entry.clockIn.toLocaleDateString()}
                     </div>
-                    <div style={{ fontSize: "14px", color: "#666" }}>
+                    <div className={styles.entryTime}>
                       {entry.clockIn.toLocaleTimeString()} -{" "}
                       {entry.clockOut?.toLocaleTimeString() || "Em andamento"}
                     </div>
                     {entry.isLate && (
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          color: "#dc3545",
-                          marginTop: "4px",
-                        }}
-                      >
+                      <div className={styles.entryLate}>
                         ⚠️ Atraso: {entry.lateMinutes} min
                       </div>
                     )}
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: "16px", fontWeight: 600 }}>
+                  <div className={styles.entrySummary}>
+                    <div className={styles.entryWorked}>
                       {formatDuration(entry.workedMinutes)}
                     </div>
                     {entry.overtimeMinutes > 0 && (
-                      <div style={{ fontSize: "12px", color: "#ff9800" }}>
+                      <div className={styles.entryOvertime}>
                         +{formatDuration(entry.overtimeMinutes)} extras
                       </div>
                     )}

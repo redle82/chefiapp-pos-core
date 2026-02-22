@@ -1,8 +1,8 @@
 /**
  * Employee KDS Intelligent - KDS Inteligente
- * 
+ *
  * Pergunta: "Onde está o gargalo?"
- * 
+ *
  * Componentes:
  * - Itens por estação (BAR / KITCHEN / etc.)
  * - Tempo por item
@@ -11,14 +11,17 @@
  * - Sugestão de ação (IA)
  */
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Header } from '../../components/navigation/Header';
-import { BottomTabs } from '../../components/navigation/BottomTabs';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { BottomTabs } from "../../components/navigation/BottomTabs";
+import { Header } from "../../components/navigation/Header";
+import styles from "./KDSIntelligentPage.module.css";
 
 export function EmployeeKDSIntelligentPage() {
   const navigate = useNavigate();
-  const [selectedStation, setSelectedStation] = useState<'BAR' | 'KITCHEN' | 'DESSERT'>('BAR');
+  const [selectedStation, setSelectedStation] = useState<
+    "BAR" | "KITCHEN" | "DESSERT"
+  >("BAR");
 
   // TODO: Integrar com KDS real
   // TODO: Buscar itens por estação
@@ -28,70 +31,134 @@ export function EmployeeKDSIntelligentPage() {
 
   const items = {
     BAR: [
-      { id: '1', name: 'Caipirinha', table: 'Mesa 5', time: '18min / 10min', status: 'delayed', canGroup: false },
-      { id: '2', name: 'Mojito', table: 'Mesa 12', time: '8min / 10min', status: 'warning', canGroup: false },
-      { id: '3', name: 'Gin Tônica', table: 'Mesa 8', time: '5min / 10min', status: 'ready', canGroup: false },
+      {
+        id: "1",
+        name: "Caipirinha",
+        table: "Mesa 5",
+        time: "18min / 10min",
+        status: "delayed",
+        canGroup: false,
+      },
+      {
+        id: "2",
+        name: "Mojito",
+        table: "Mesa 12",
+        time: "8min / 10min",
+        status: "warning",
+        canGroup: false,
+      },
+      {
+        id: "3",
+        name: "Gin Tônica",
+        table: "Mesa 8",
+        time: "5min / 10min",
+        status: "ready",
+        canGroup: false,
+      },
     ],
     KITCHEN: [
-      { id: '4', name: 'Hambúrguer', table: 'Mesa 3', time: '12min / 15min', status: 'in_progress', canGroup: true },
-      { id: '5', name: 'Hambúrguer', table: 'Mesa 7', time: '10min / 15min', status: 'in_progress', canGroup: true },
+      {
+        id: "4",
+        name: "Hambúrguer",
+        table: "Mesa 3",
+        time: "12min / 15min",
+        status: "in_progress",
+        canGroup: true,
+      },
+      {
+        id: "5",
+        name: "Hambúrguer",
+        table: "Mesa 7",
+        time: "10min / 15min",
+        status: "in_progress",
+        canGroup: true,
+      },
     ],
     DESSERT: [],
   };
 
   const currentItems = items[selectedStation];
-  const delayedItems = currentItems.filter(item => item.status === 'delayed');
-  const groupedItems = currentItems.filter(item => item.canGroup);
+  const delayedItems = currentItems.filter((item) => item.status === "delayed");
+  const groupedItems = currentItems.filter((item) => item.canGroup);
 
-  const aiSuggestion = delayedItems.length > 0 ? {
-    message: `${delayedItems[0].name} atrasado: falta limão. Repor estoque urgente.`,
-    actions: ['Ver estoque', 'Bloquear item'],
-  } : null;
+  const aiSuggestion =
+    delayedItems.length > 0
+      ? {
+          message: `${delayedItems[0].name} atrasado: falta limão. Repor estoque urgente.`,
+          actions: ["Ver estoque", "Bloquear item"],
+        }
+      : null;
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delayed': return '#dc3545';
-      case 'warning': return '#ffc107';
-      case 'ready': return '#28a745';
-      default: return '#667eea';
+      case "delayed":
+        return "#dc3545";
+      case "warning":
+        return "#ffc107";
+      case "ready":
+        return "#28a745";
+      default:
+        return "#667eea";
+    }
+  };
+
+  const getStatusClassName = (status: string) => {
+    switch (status) {
+      case "delayed":
+        return styles.statusDelayed;
+      case "warning":
+        return styles.statusWarning;
+      case "ready":
+        return styles.statusReady;
+      default:
+        return styles.statusDefault;
+    }
+  };
+
+  const getStatusBorderClassName = (status: string) => {
+    switch (status) {
+      case "delayed":
+        return styles.borderDelayed;
+      case "warning":
+        return styles.borderWarning;
+      case "ready":
+        return styles.borderReady;
+      default:
+        return styles.borderDefault;
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'delayed': return 'ATRASADO';
-      case 'warning': return 'Em preparo';
-      case 'ready': return 'Pronto';
-      default: return 'Em preparo';
+      case "delayed":
+        return "ATRASADO";
+      case "warning":
+        return "Em preparo";
+      case "ready":
+        return "Pronto";
+      default:
+        return "Em preparo";
     }
   };
 
   return (
-    <div style={{ paddingBottom: '80px' }}>
+    <div className={styles.page}>
       <Header
         title="KDS Inteligente"
         subtitle="Onde está o gargalo"
-        onBack={() => navigate('/employee/operation')}
+        onBack={() => navigate("/employee/operation")}
       />
 
-      <div style={{ padding: '16px' }}>
+      <div className={styles.content}>
         {/* Seleção de Estação */}
-        <div style={{ marginBottom: '16px', display: 'flex', gap: '8px' }}>
-          {(['BAR', 'KITCHEN', 'DESSERT'] as const).map((station) => (
+        <div className={styles.stationSelector}>
+          {(["BAR", "KITCHEN", "DESSERT"] as const).map((station) => (
             <button
               key={station}
               onClick={() => setSelectedStation(station)}
-              style={{
-                flex: 1,
-                padding: '12px',
-                backgroundColor: selectedStation === station ? '#667eea' : '#f0f0f0',
-                color: selectedStation === station ? '#fff' : '#666',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: selectedStation === station ? 600 : 400,
-                cursor: 'pointer',
-              }}
+              className={`${styles.stationButton} ${
+                selectedStation === station ? styles.stationButtonActive : ""
+              }`}
             >
               {station}
             </button>
@@ -100,40 +167,24 @@ export function EmployeeKDSIntelligentPage() {
 
         {/* Sugestão IA */}
         {aiSuggestion && (
-          <div style={{ marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px' }}>
-              💡 SUGESTÃO (IA)
-            </h3>
-            <div style={{
-              backgroundColor: '#e7f3ff',
-              borderRadius: '12px',
-              padding: '16px',
-              border: '1px solid #667eea',
-            }}>
-              <div style={{ fontSize: '14px', marginBottom: '12px' }}>
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>💡 SUGESTÃO (IA)</h3>
+            <div className={styles.aiSuggestionCard}>
+              <div className={styles.aiSuggestionMessage}>
                 {aiSuggestion.message}
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className={styles.actionsRow}>
                 {aiSuggestion.actions.map((action, index) => (
                   <button
                     key={index}
                     onClick={() => {
-                      if (action === 'Ver estoque') {
-                        navigate('/owner/purchases');
-                      } else if (action === 'Bloquear item') {
+                      if (action === "Ver estoque") {
+                        navigate("/owner/purchases");
+                      } else if (action === "Bloquear item") {
                         // TODO: Bloquear item
                       }
                     }}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      backgroundColor: '#667eea',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      cursor: 'pointer',
-                    }}
+                    className={styles.primarySmallButton}
                   >
                     {action}
                   </button>
@@ -144,52 +195,38 @@ export function EmployeeKDSIntelligentPage() {
         )}
 
         {/* Itens */}
-        <div style={{ marginBottom: '16px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px' }}>
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>
             {selectedStation} ({currentItems.length} itens)
           </h3>
           {currentItems.length === 0 ? (
-            <div style={{
-              backgroundColor: '#fff',
-              borderRadius: '12px',
-              padding: '32px',
-              border: '1px solid #e0e0e0',
-              textAlign: 'center',
-              color: '#666',
-            }}>
-              Nenhum item pendente
-            </div>
+            <div className={styles.emptyItemsCard}>Nenhum item pendente</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className={styles.itemsList}>
               {/* Itens atrasados primeiro */}
               {currentItems
-                .filter(item => item.status === 'delayed')
+                .filter((item) => item.status === "delayed")
                 .map((item) => (
                   <div
                     key={item.id}
-                    style={{
-                      backgroundColor: '#fff',
-                      borderRadius: '12px',
-                      padding: '16px',
-                      border: `2px solid ${getStatusColor(item.status)}`,
-                    }}
+                    className={`${styles.itemCard} ${
+                      styles.itemCardDelayed
+                    } ${getStatusBorderClassName(item.status)}`}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                    <div className={styles.itemHeader}>
                       <div>
-                        <div style={{ fontSize: '16px', fontWeight: 600 }}>
+                        <div className={styles.itemTitle}>
                           ⚠️ {item.name} - {item.table}
                         </div>
-                        <div style={{ fontSize: '14px', color: '#666' }}>
+                        <div className={styles.itemMeta}>
                           Tempo: {item.time}
                         </div>
                       </div>
-                      <span style={{
-                        fontSize: '12px',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        backgroundColor: getStatusColor(item.status),
-                        color: '#fff',
-                      }}>
+                      <span
+                        className={`${styles.statusBadge} ${getStatusClassName(
+                          item.status,
+                        )}`}
+                      >
                         {getStatusLabel(item.status)}
                       </span>
                     </div>
@@ -197,17 +234,9 @@ export function EmployeeKDSIntelligentPage() {
                       onClick={() => {
                         // TODO: Marcar como pronto
                       }}
-                      style={{
-                        width: '100%',
-                        padding: '8px',
-                        backgroundColor: getStatusColor(item.status),
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
+                      className={`${
+                        styles.itemActionButton
+                      } ${getStatusClassName(item.status)}`}
                     >
                       Marcar pronto
                     </button>
@@ -216,57 +245,45 @@ export function EmployeeKDSIntelligentPage() {
 
               {/* Outros itens */}
               {currentItems
-                .filter(item => item.status !== 'delayed')
+                .filter((item) => item.status !== "delayed")
                 .map((item) => (
                   <div
                     key={item.id}
-                    style={{
-                      backgroundColor: '#fff',
-                      borderRadius: '12px',
-                      padding: '16px',
-                      border: `1px solid ${getStatusColor(item.status)}`,
-                    }}
+                    className={`${styles.itemCard} ${getStatusBorderClassName(
+                      item.status,
+                    )}`}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                    <div className={styles.itemHeader}>
                       <div>
-                        <div style={{ fontSize: '16px', fontWeight: 600 }}>
-                          {item.status === 'ready' ? '✅' : '🟡'} {item.name} - {item.table}
+                        <div className={styles.itemTitle}>
+                          {item.status === "ready" ? "✅" : "🟡"} {item.name} -{" "}
+                          {item.table}
                         </div>
-                        <div style={{ fontSize: '14px', color: '#666' }}>
+                        <div className={styles.itemMeta}>
                           Tempo: {item.time}
                         </div>
                       </div>
-                      <span style={{
-                        fontSize: '12px',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        backgroundColor: getStatusColor(item.status),
-                        color: '#fff',
-                      }}>
+                      <span
+                        className={`${styles.statusBadge} ${getStatusClassName(
+                          item.status,
+                        )}`}
+                      >
                         {getStatusLabel(item.status)}
                       </span>
                     </div>
                     <button
                       onClick={() => {
-                        if (item.status === 'ready') {
+                        if (item.status === "ready") {
                           // TODO: Entregar
                         } else {
                           // TODO: Marcar como pronto
                         }
                       }}
-                      style={{
-                        width: '100%',
-                        padding: '8px',
-                        backgroundColor: getStatusColor(item.status),
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
+                      className={`${
+                        styles.itemActionButton
+                      } ${getStatusClassName(item.status)}`}
                     >
-                      {item.status === 'ready' ? 'Entregar' : 'Marcar pronto'}
+                      {item.status === "ready" ? "Entregar" : "Marcar pronto"}
                     </button>
                   </div>
                 ))}
@@ -276,37 +293,19 @@ export function EmployeeKDSIntelligentPage() {
 
         {/* Agrupamento Inteligente */}
         {groupedItems.length > 1 && (
-          <div style={{ marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px' }}>
-              📊 AGRUPAMENTO INTELIGENTE
-            </h3>
-            <div style={{
-              backgroundColor: '#fff',
-              borderRadius: '12px',
-              padding: '16px',
-              border: '1px solid #e0e0e0',
-            }}>
-              <div style={{ fontSize: '14px', marginBottom: '8px' }}>
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>📊 AGRUPAMENTO INTELIGENTE</h3>
+            <div className={styles.groupingCard}>
+              <div className={styles.groupingLead}>
                 {groupedItems.length} {groupedItems[0].name} (mesmas mesas)
               </div>
-              <div style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>
-                Preparar juntas?
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className={styles.groupingText}>Preparar juntas?</div>
+              <div className={styles.actionsRow}>
                 <button
                   onClick={() => {
                     // TODO: Agrupar e preparar
                   }}
-                  style={{
-                    flex: 1,
-                    padding: '8px',
-                    backgroundColor: '#667eea',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                  }}
+                  className={styles.primarySmallButton}
                 >
                   Sim
                 </button>
@@ -314,15 +313,7 @@ export function EmployeeKDSIntelligentPage() {
                   onClick={() => {
                     // TODO: Não agrupar
                   }}
-                  style={{
-                    flex: 1,
-                    padding: '8px',
-                    backgroundColor: '#fff',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                  }}
+                  className={styles.secondarySmallButton}
                 >
                   Não
                 </button>

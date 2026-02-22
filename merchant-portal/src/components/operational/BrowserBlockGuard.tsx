@@ -12,7 +12,6 @@
  *   - Electron: navigator.userAgent includes "Electron"
  *   - Standalone PWA: display-mode: standalone (temporary bridge)
  *   - React Native WebView: window.ReactNativeWebView exists
- *   - DEV mode: always pass-through (import.meta.env.DEV)
  *
  * Ref: docs/architecture/SYSTEM_RULE_DEVICE_ONLY.md
  */
@@ -69,19 +68,7 @@ export function BrowserBlockGuard({
   requiredPlatform,
   moduleLabel,
 }: BrowserBlockGuardProps) {
-  // ── DEV bypass ──
-  if (import.meta.env.DEV) {
-    return (
-      <>
-        <Outlet />
-        <div className={styles.devBanner}>
-          ⚠ DEV — Browser guard "{moduleLabel}" bypassed ({requiredPlatform})
-        </div>
-      </>
-    );
-  }
-
-  // ── Production: allow installed apps ──
+  // ── Allow only installed apps ──
   if (isInstalledApp()) {
     return <Outlet />;
   }

@@ -690,7 +690,7 @@ export function InventoryStockMinimal() {
 
       {/* Error banner */}
       {error && (
-        <Card padding="sm" elevated style={{ marginBottom: 16 }}>
+        <Card padding="sm" elevated className={styles.mb16}>
           <p className={styles.errorText}>{error}</p>
         </Card>
       )}
@@ -864,7 +864,7 @@ export function InventoryStockMinimal() {
 
           {/* ── Equipment create/edit form ── */}
           {showEquipmentForm && (
-            <Card padding="lg" style={{ marginBottom: 24 }}>
+            <Card padding="lg" className={styles.mb24}>
               <h3 className={`${styles.cardTitle} ${styles.formHeader}`}>
                 {editingEquipmentId
                   ? "✏️ Editar Equipamento"
@@ -1016,7 +1016,7 @@ export function InventoryStockMinimal() {
               );
 
               return (
-                <Card padding="lg" elevated style={{ marginBottom: 24 }}>
+                <Card padding="lg" elevated className={styles.mb24}>
                   <div className={`${styles.cardRow} ${styles.detailHeader}`}>
                     <div>
                       <h3 className={styles.cardTitle}>{eq.name}</h3>
@@ -1226,7 +1226,7 @@ export function InventoryStockMinimal() {
                         padding="md"
                         hoverable
                         onClick={() => setSelectedEquipmentId(eq.id)}
-                        style={{ cursor: "pointer" }}
+                        className={styles.locationCardClickable}
                       >
                         <div className={styles.cardRow}>
                           <div className={styles.cardContent}>
@@ -1312,7 +1312,7 @@ export function InventoryStockMinimal() {
 
           {/* Import pack dialog */}
           {availablePacks.length > 0 && (
-            <Card padding="lg" style={{ marginBottom: 24 }}>
+            <Card padding="lg" className={styles.mb24}>
               <h3 className={styles.sectionTitle}>
                 Packs de Ingredientes Pré-configurados
               </h3>
@@ -1350,7 +1350,7 @@ export function InventoryStockMinimal() {
           )}
 
           {showNewIngredient && (
-            <Card padding="lg" style={{ marginBottom: 24 }}>
+            <Card padding="lg" className={styles.mb24}>
               <form onSubmit={handleCreateIngredient} className={styles.form}>
                 <div className={styles.formRow}>
                   <Input
@@ -1656,7 +1656,7 @@ export function InventoryStockMinimal() {
           </div>
 
           {showNewRecipe && (
-            <Card padding="lg" style={{ marginBottom: 24 }}>
+            <Card padding="lg" className={styles.mb24}>
               <form onSubmit={handleCreateBOM} className={styles.form}>
                 <div className={styles.formRow}>
                   <Select
@@ -1772,7 +1772,7 @@ export function InventoryStockMinimal() {
           ) : (
             <>
               {/* Barcode input — captures HID scanner (NETUM C750) */}
-              <Card padding="lg" elevated style={{ marginBottom: 16 }}>
+              <Card padding="lg" elevated className={styles.mb16}>
                 <div className={styles.formRow}>
                   <Input
                     label="Código de barras"
@@ -1810,14 +1810,14 @@ export function InventoryStockMinimal() {
 
               {/* Status message */}
               {scanLastMessage && (
-                <Card padding="sm" style={{ marginBottom: 16 }}>
+                <Card padding="sm" className={styles.mb16}>
                   <p className={styles.cardMeta}>{scanLastMessage}</p>
                 </Card>
               )}
 
               {/* Found — quick IN movement */}
               {scanResult?.found && (
-                <Card padding="lg" style={{ marginBottom: 16 }}>
+                <Card padding="lg" className={styles.mb16}>
                   <h3 className={styles.sectionTitle}>✅ {scanResult.name}</h3>
                   <p className={styles.cardMeta}>
                     {scanResult.unit}
@@ -1856,7 +1856,7 @@ export function InventoryStockMinimal() {
 
               {/* Not found — associate barcode */}
               {scanResult && !scanResult.found && (
-                <Card padding="lg" style={{ marginBottom: 16 }}>
+                <Card padding="lg" className={styles.mb16}>
                   <h3 className={styles.sectionTitle}>Barcode não associado</h3>
                   <p className={`${styles.cardMeta} ${styles.mb12}`}>
                     Selecione um ingrediente para associar este código de

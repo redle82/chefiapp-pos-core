@@ -46,6 +46,17 @@
   margin-top: 4px;
 }
 
+.logoPreviewWrapper {
+  margin-top: 8px;
+}
+
+.logoPreview {
+  max-width: 80px;
+  max-height: 80px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
 .checklist {
   margin-top: 32px;
   padding: 16px;

@@ -1,4 +1,10 @@
-# dbmate - Database Migration Tool
+# Migrações do Core
+
+**Supabase em excelência total:** ver [docs/ops/SUPABASE_EXCELLENCE.md](../../docs/ops/SUPABASE_EXCELLENCE.md) — um comando aplica todas as migrações ao teu projeto Supabase.
+
+---
+
+# dbmate - Database Migration Tool (local Docker)
 
 ## Setup
 ```bash

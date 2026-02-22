@@ -137,6 +137,15 @@ npm start
 - [docs/SETUP_DEPLOY.md](docs/SETUP_DEPLOY.md) - Setup and deploy
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) - Debug and resolution
 
+### 🚀 SaaS Implementation (7-day checklist)
+
+- **[IMPLEMENTATION_CHECKLIST.md](IMPLEMENTATION_CHECKLIST.md)** — Day-by-day plan (infra, RLS, onboarding, webhooks, testing, docs)
+- **Smoke test**: `bash scripts/smoke-test.sh` (integration) or `bash scripts/smoke-test.sh --prod` (frontend)
+- **Runbook**: [DEPLOYMENT_RUNBOOK.md](DEPLOYMENT_RUNBOOK.md) — Deploy order, verification, rollback
+- **Security audit**: [docs/SECURITY_AUDIT_CHECKLIST.md](docs/SECURITY_AUDIT_CHECKLIST.md) — Pre-release checklist
+- **Webhooks**: [docs/WEBHOOK_SPEC.md](docs/WEBHOOK_SPEC.md) — SumUp inbound, events OUT
+- **RLS**: [docs/RLS_POLICIES.md](docs/RLS_POLICIES.md) — Row-level security design
+
 ### 💼 Commercial
 
 - [docs/MANIFESTO_COMERCIAL.md](docs/MANIFESTO_COMERCIAL.md) - Value proposition

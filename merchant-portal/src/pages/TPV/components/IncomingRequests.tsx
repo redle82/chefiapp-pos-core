@@ -1,3 +1,5 @@
+import React from "react";
+
 interface IncomingRequestsProps {
   restaurantId: string;
   onOrderAccepted: () => void | Promise<void>;

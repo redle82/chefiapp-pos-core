@@ -30,7 +30,46 @@ const CORE_SERVICE_KEY =
 const INTERNAL_API_TOKEN =
   process.env.INTERNAL_API_TOKEN || "chefiapp-internal-token-dev";
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
+const SUMUP_WEBHOOK_SECRET = process.env.SUMUP_WEBHOOK_SECRET || "";
+const SUMUP_ACCESS_TOKEN = process.env.SUMUP_ACCESS_TOKEN || "";
+const SUMUP_API_BASE_URL =
+  (process.env.SUMUP_API_BASE_URL || "https://api.sumup.com").replace(/\/$/, "");
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5175";
+
+/** Origens permitidas para criar sessão de checkout (venda da plataforma). Apenas chefiapp.com em produção. */
+const BILLING_ALLOWED_ORIGINS: string[] = (() => {
+  const raw = process.env.BILLING_ALLOWED_ORIGINS?.trim();
+  if (raw) {
+    return raw.split(",").map((o) => o.trim().toLowerCase()).filter(Boolean);
+  }
+  const list = [
+    "https://www.chefiapp.com",
+    "https://chefiapp.com",
+  ];
+  if (process.env.NODE_ENV !== "production") {
+    list.push(
+      "http://localhost:5175",
+      "http://127.0.0.1:5175",
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+    );
+  }
+  return list;
+})();
+
+function getOriginFromUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    return `${u.protocol}//${u.host}`.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function isBillingOriginAllowed(origin: string | null): boolean {
+  if (!origin) return false;
+  return BILLING_ALLOWED_ORIGINS.includes(origin.toLowerCase());
+}
 
 /**
  * Stripe Price ID mapping: plan slug → Stripe price_xxx.
@@ -46,11 +85,34 @@ for (const key of Object.keys(process.env)) {
   }
 }
 
+/** Built-in dev defaults for plan slugs (used when no STRIPE_PRICE_* env vars are set). */
+const DEV_PRICE_DEFAULTS: Record<string, string> = {
+  starter: "price_dev_starter",
+  pro: "price_dev_pro",
+  enterprise: "price_dev_enterprise",
+};
+
+const IS_BILLING_MOCK =
+  !STRIPE_SECRET_KEY || Object.keys(STRIPE_PRICE_MAP).length === 0;
+if (IS_BILLING_MOCK) {
+  const reason = !STRIPE_SECRET_KEY
+    ? "STRIPE_SECRET_KEY not set"
+    : "No STRIPE_PRICE_* env vars mapped";
+  console.log(
+    `[integration-gateway] ⚠️  ${reason} → billing runs in MOCK mode (local dev).`,
+  );
+}
+
 /** Resolve a price identifier: if it already looks like a Stripe price ID, use it as-is;
- *  otherwise look up the plan slug in STRIPE_PRICE_MAP. Returns null if not found. */
+ *  otherwise look up the plan slug in STRIPE_PRICE_MAP (with dev defaults fallback).
+ *  Returns null if not found. */
 function resolveStripePriceId(input: string): string | null {
   if (input.startsWith("price_")) return input;
-  return STRIPE_PRICE_MAP[input.toLowerCase()] || null;
+  return (
+    STRIPE_PRICE_MAP[input.toLowerCase()] ||
+    (IS_BILLING_MOCK ? DEV_PRICE_DEFAULTS[input.toLowerCase()] : null) ||
+    null
+  );
 }
 
 function corsHeaders(): Record<string, string> {
@@ -415,6 +477,201 @@ async function deliverOne(
       await new Promise((r) => setTimeout(r, delay));
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/v1/webhook/sumup — SumUp payment webhook (no API key)
+// ---------------------------------------------------------------------------
+async function handleSumUpWebhook(
+  bodyStr: string,
+  signature: string | undefined,
+): Promise<{ status: number; json: object }> {
+  let payload: Record<string, unknown>;
+  try {
+    payload = JSON.parse(bodyStr || "{}") as Record<string, unknown>;
+  } catch {
+    return {
+      status: 400,
+      json: { error: "invalid_json", message: "Invalid JSON body" },
+    };
+  }
+  if (SUMUP_WEBHOOK_SECRET && signature) {
+    const expected = "sha256=" + hmacSha256Hex(SUMUP_WEBHOOK_SECRET, bodyStr);
+    if (signature !== expected) {
+      return {
+        status: 401,
+        json: apiError("unauthorized", "Invalid webhook signature"),
+      };
+    }
+  }
+  const eventId =
+    (payload.paymentId as string) ||
+    (payload.event_id as string) ||
+    (payload.id as string) ||
+    `sumup_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const eventType =
+    (payload.status as string)
+      ? `payment.${String(payload.status).toLowerCase()}`
+      : (payload.event_type as string) || "payment.notification";
+  if (!CORE_SERVICE_KEY) {
+    return {
+      status: 202,
+      json: {
+        received: true,
+        message: "CORE_SERVICE_KEY not set, event logged only",
+        event_id: eventId,
+      },
+    };
+  }
+  try {
+    const res = await fetch(`${RPC}/process_webhook_event`, {
+      method: "POST",
+      headers: coreHeaders(),
+      body: JSON.stringify({
+        p_provider: "sumup",
+        p_event_type: eventType,
+        p_event_id: eventId,
+        p_payload: payload,
+        p_signature: signature || null,
+      }),
+    });
+    const data = (await res.json()) as { success?: boolean; message?: string }[];
+    const first = Array.isArray(data) ? data[0] : data;
+    if (!res.ok) {
+      return {
+        status: res.status,
+        json: apiError(
+          "webhook_failed",
+          first?.message || (await res.text()) || "RPC failed",
+        ),
+      };
+    }
+    return {
+      status: 202,
+      json: {
+        received: true,
+        success: first?.success ?? true,
+        event_id: eventId,
+        message: first?.message ?? "Webhook event recorded",
+      },
+    };
+  } catch (e) {
+    console.error("[integration-gateway] SumUp webhook", e);
+    return {
+      status: 500,
+      json: apiError(
+        "internal_error",
+        "Failed to process webhook",
+        e instanceof Error ? e.message : String(e),
+      ),
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SumUp Checkout API (payment routes use Bearer INTERNAL_API_TOKEN)
+// ---------------------------------------------------------------------------
+interface SumUpCheckoutPayload {
+  checkout_reference: string;
+  amount: number;
+  currency: string;
+  merchant_code?: string;
+  description?: string;
+  return_url?: string;
+  payment_type?: string;
+  country?: string;
+}
+
+interface SumUpCheckoutResponse {
+  id: string;
+  status: string;
+  amount: number;
+  currency: string;
+  checkout_reference?: string;
+  merchant_code?: string;
+  date?: string;
+  [key: string]: unknown;
+}
+
+function normalizeCheckoutAmount(value: number): number {
+  return Number(Number(value).toFixed(2));
+}
+
+async function createSumUpCheckoutApi(
+  payload: SumUpCheckoutPayload,
+): Promise<SumUpCheckoutResponse> {
+  if (!SUMUP_ACCESS_TOKEN) {
+    throw new Error("SUMUP_ACCESS_TOKEN is not configured");
+  }
+  const body = JSON.stringify({
+    checkout_reference: payload.checkout_reference,
+    amount: normalizeCheckoutAmount(payload.amount),
+    currency: payload.currency,
+    ...(payload.merchant_code && { merchant_code: payload.merchant_code }),
+    ...(payload.description && { description: payload.description }),
+    ...(payload.return_url && { return_url: payload.return_url }),
+    ...(payload.payment_type && { payment_type: payload.payment_type }),
+    ...(payload.country && { country: payload.country }),
+  });
+  const res = await fetch(`${SUMUP_API_BASE_URL}/v0.1/checkouts`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${SUMUP_ACCESS_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body,
+    signal: AbortSignal.timeout(15000),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    let msg: string;
+    try {
+      const j = JSON.parse(text) as { message?: string; error?: string };
+      msg = j.message || j.error || text;
+    } catch {
+      msg = text || res.statusText;
+    }
+    throw new Error(`SumUp API: ${res.status} ${msg}`);
+  }
+  return JSON.parse(text || "{}") as SumUpCheckoutResponse;
+}
+
+async function getSumUpCheckoutApi(
+  checkoutId: string,
+): Promise<SumUpCheckoutResponse> {
+  if (!SUMUP_ACCESS_TOKEN) {
+    throw new Error("SUMUP_ACCESS_TOKEN is not configured");
+  }
+  const res = await fetch(
+    `${SUMUP_API_BASE_URL}/v0.1/checkouts/${encodeURIComponent(checkoutId)}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${SUMUP_ACCESS_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      signal: AbortSignal.timeout(15000),
+    },
+  );
+  const text = await res.text();
+  if (!res.ok) {
+    let msg: string;
+    try {
+      const j = JSON.parse(text) as { message?: string; error?: string };
+      msg = j.message || j.error || text;
+    } catch {
+      msg = text || res.statusText;
+    }
+    throw new Error(`SumUp API: ${res.status} ${msg}`);
+  }
+  return JSON.parse(text || "{}") as SumUpCheckoutResponse;
+}
+
+function verifyPaymentInternalToken(req: http.IncomingMessage): boolean {
+  const token =
+    (req.headers["x-internal-token"] as string) ||
+    (req.headers["authorization"] as string)?.replace(/^Bearer\s+/i, "")?.trim();
+  return !!token && token === INTERNAL_API_TOKEN;
 }
 
 // ---------------------------------------------------------------------------
@@ -953,16 +1210,8 @@ const server = http.createServer(async (req, res) => {
         );
         return;
       }
-      if (!STRIPE_SECRET_KEY) {
-        res.writeHead(503, { ...cors, "Content-Type": "application/json" });
-        res.end(
-          JSON.stringify({
-            error: "billing_unavailable",
-            message: "STRIPE_SECRET_KEY not configured",
-          }),
-        );
-        return;
-      }
+      // In mock mode (no STRIPE_SECRET_KEY), we skip the Stripe call and return a mock URL.
+      // This allows the full billing UI flow to work locally for dev/testing.
       let body: {
         price_id?: string;
         success_url?: string;
@@ -993,6 +1242,22 @@ const server = http.createServer(async (req, res) => {
         );
         return;
       }
+      const successOrigin = getOriginFromUrl(successUrl);
+      const cancelOrigin = getOriginFromUrl(cancelUrl);
+      if (
+        !isBillingOriginAllowed(successOrigin) ||
+        !isBillingOriginAllowed(cancelOrigin)
+      ) {
+        res.writeHead(403, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "billing_not_allowed",
+            message:
+              "A venda da plataforma (checkout) só está disponível em chefiapp.com. Acesso a partir desta origem não permitido.",
+          }),
+        );
+        return;
+      }
       // Resolve plan slug → Stripe price ID
       const priceId = resolveStripePriceId(rawPriceId);
       if (!priceId) {
@@ -1010,28 +1275,346 @@ const server = http.createServer(async (req, res) => {
         );
         return;
       }
-      try {
-        const stripe = new Stripe(STRIPE_SECRET_KEY);
-        const session = await stripe.checkout.sessions.create({
-          mode: "subscription",
-          line_items: [{ price: priceId, quantity: 1 }],
-          success_url: successUrl,
-          cancel_url: cancelUrl,
-        });
+      if (IS_BILLING_MOCK) {
+        // MOCK MODE: return a fake checkout URL that redirects to success page
+        const mockSessionId = `cs_mock_${Date.now()}_${rawPriceId}`;
+        console.log(
+          `[integration-gateway] MOCK checkout session: ${mockSessionId} (plan: ${rawPriceId}, price: ${priceId})`,
+        );
         res.writeHead(200, { ...cors, "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
-            url: session.url || "",
-            session_id: session.id,
+            url: successUrl,
+            session_id: mockSessionId,
+            mock: true,
+          }),
+        );
+      } else {
+        try {
+          const stripe = new Stripe(STRIPE_SECRET_KEY);
+          const session = await stripe.checkout.sessions.create({
+            mode: "subscription",
+            line_items: [{ price: priceId, quantity: 1 }],
+            success_url: successUrl,
+            cancel_url: cancelUrl,
+          });
+          res.writeHead(200, { ...cors, "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              url: session.url || "",
+              session_id: session.id,
+            }),
+          );
+        } catch (e) {
+          console.error("[integration-gateway] create-checkout-session", e);
+          res.writeHead(500, { ...cors, "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              error: "stripe_error",
+              message:
+                e instanceof Error ? e.message : "Stripe checkout failed",
+            }),
+          );
+        }
+      }
+      return;
+    }
+
+    if (path === "/api/v1/webhook/sumup" && method === "POST") {
+      const bodyStr = await parseBody(req);
+      const signature = (req.headers["x-sumup-signature"] as string) || undefined;
+      const { status, json } = await handleSumUpWebhook(bodyStr, signature);
+      res.writeHead(status, {
+        "Content-Type": "application/json",
+        ...corsHeaders(),
+      });
+      res.end(JSON.stringify(json));
+      return;
+    }
+
+    // Payment routes: Bearer INTERNAL_API_TOKEN (before API key /api/v1/*)
+    if (
+      path === "/api/v1/payment/pix/checkout" &&
+      method === "POST"
+    ) {
+      const cors = corsHeaders();
+      if (!verifyPaymentInternalToken(req)) {
+        res.writeHead(401, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "unauthorized",
+            message: "Invalid or missing internal token",
+          }),
+        );
+        return;
+      }
+      if (!SUMUP_ACCESS_TOKEN) {
+        res.writeHead(503, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "service_unavailable",
+            message: "PIX/SumUp not configured (SUMUP_ACCESS_TOKEN)",
+          }),
+        );
+        return;
+      }
+      let body: { order_id?: string; amount?: number; merchant_code?: string; description?: string };
+      try {
+        body = JSON.parse((await parseBody(req)) || "{}") as typeof body;
+      } catch {
+        res.writeHead(400, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "validation_error",
+            message: "Invalid JSON body",
+          }),
+        );
+        return;
+      }
+      const orderId = body?.order_id?.trim();
+      const amount = typeof body?.amount === "number" ? body.amount : NaN;
+      if (!orderId || !Number.isFinite(amount) || amount <= 0) {
+        res.writeHead(400, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "validation_error",
+            message: "order_id (string) and amount (positive number) are required",
+          }),
+        );
+        return;
+      }
+      try {
+        const checkout = await createSumUpCheckoutApi({
+          checkout_reference: orderId,
+          amount,
+          currency: "BRL",
+          payment_type: "pix",
+          country: "BR",
+          merchant_code: body.merchant_code?.trim() || undefined,
+          description: body.description?.trim() || undefined,
+        });
+        res.writeHead(201, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            provider: "sumup",
+            payment_method: "pix",
+            country: "BR",
+            checkout_id: checkout.id,
+            checkout_reference: checkout.checkout_reference || orderId,
+            status: checkout.status,
+            amount: checkout.amount,
+            currency: checkout.currency,
+            raw: checkout,
           }),
         );
       } catch (e) {
-        console.error("[integration-gateway] create-checkout-session", e);
+        console.error("[integration-gateway] PIX checkout error:", e);
         res.writeHead(500, { ...cors, "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
-            error: "stripe_error",
-            message: e instanceof Error ? e.message : "Stripe checkout failed",
+            error: "Failed to create PIX checkout",
+            message: e instanceof Error ? e.message : "Unknown error",
+          }),
+        );
+      }
+      return;
+    }
+
+    const paymentSumupCheckoutIdMatch = path.match(
+      /^\/api\/v1\/payment\/sumup\/checkout\/([^/]+)$/,
+    );
+    if (paymentSumupCheckoutIdMatch && method === "GET") {
+      const cors = corsHeaders();
+      if (!verifyPaymentInternalToken(req)) {
+        res.writeHead(401, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "unauthorized",
+            message: "Invalid or missing internal token",
+          }),
+        );
+        return;
+      }
+      if (!SUMUP_ACCESS_TOKEN) {
+        res.writeHead(503, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "service_unavailable",
+            message: "SumUp not configured (SUMUP_ACCESS_TOKEN)",
+          }),
+        );
+        return;
+      }
+      const checkoutId = paymentSumupCheckoutIdMatch[1];
+      try {
+        const checkout = await getSumUpCheckoutApi(checkoutId);
+        res.writeHead(200, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            provider: "sumup",
+            checkout_id: checkout.id,
+            status: checkout.status,
+            amount: checkout.amount,
+            currency: checkout.currency,
+            raw: checkout,
+          }),
+        );
+      } catch (e) {
+        console.error("[integration-gateway] SumUp checkout status error:", e);
+        res.writeHead(500, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "Failed to fetch checkout status",
+            message: e instanceof Error ? e.message : "Unknown error",
+          }),
+        );
+      }
+      return;
+    }
+
+    if (path === "/api/v1/sumup/checkout" && method === "POST") {
+      const cors = corsHeaders();
+      if (!verifyPaymentInternalToken(req)) {
+        res.writeHead(401, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "unauthorized",
+            message: "Invalid or missing internal token",
+          }),
+        );
+        return;
+      }
+      if (!SUMUP_ACCESS_TOKEN) {
+        res.writeHead(503, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "service_unavailable",
+            message: "SumUp not configured (SUMUP_ACCESS_TOKEN)",
+          }),
+        );
+        return;
+      }
+      let body: {
+        orderId?: string;
+        restaurantId?: string;
+        amount?: number;
+        currency?: string;
+        description?: string;
+        returnUrl?: string;
+      };
+      try {
+        body = JSON.parse((await parseBody(req)) || "{}") as typeof body;
+      } catch {
+        res.writeHead(400, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "validation_error",
+            message: "Invalid JSON body",
+          }),
+        );
+        return;
+      }
+      const orderId = body?.orderId?.trim();
+      const restaurantId = body?.restaurantId?.trim();
+      const amount = typeof body?.amount === "number" ? body.amount : NaN;
+      if (!orderId || !restaurantId || !Number.isFinite(amount) || amount <= 0) {
+        res.writeHead(400, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "validation_error",
+            message: "orderId, restaurantId and amount (positive number) are required",
+          }),
+        );
+        return;
+      }
+      try {
+        const checkout = await createSumUpCheckoutApi({
+          checkout_reference: orderId,
+          amount,
+          currency: (body.currency?.trim() || "EUR").toUpperCase(),
+          description: body.description?.trim() || undefined,
+          return_url: body.returnUrl?.trim() || undefined,
+        });
+        const expiresAt = checkout.date
+          ? new Date(checkout.date).getTime() + 15 * 60 * 1000
+          : Date.now() + 15 * 60 * 1000;
+        res.writeHead(201, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            success: true,
+            checkout: {
+              id: checkout.id,
+              url: `https://pay.sumup.com/checkout/${checkout.id}`,
+              status: checkout.status,
+              amount: checkout.amount,
+              currency: checkout.currency,
+              expiresAt: new Date(expiresAt).toISOString(),
+              reference: checkout.checkout_reference || orderId,
+            },
+            paymentId: undefined,
+          }),
+        );
+      } catch (e) {
+        console.error("[integration-gateway] SumUp checkout error:", e);
+        res.writeHead(500, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "Failed to create SumUp checkout",
+            message: e instanceof Error ? e.message : "Unknown error",
+          }),
+        );
+      }
+      return;
+    }
+
+    const sumupCheckoutIdMatch = path.match(/^\/api\/v1\/sumup\/checkout\/([^/]+)$/);
+    if (sumupCheckoutIdMatch && method === "GET") {
+      const cors = corsHeaders();
+      if (!verifyPaymentInternalToken(req)) {
+        res.writeHead(401, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "unauthorized",
+            message: "Invalid or missing internal token",
+          }),
+        );
+        return;
+      }
+      if (!SUMUP_ACCESS_TOKEN) {
+        res.writeHead(503, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "service_unavailable",
+            message: "SumUp not configured (SUMUP_ACCESS_TOKEN)",
+          }),
+        );
+        return;
+      }
+      const checkoutId = sumupCheckoutIdMatch[1];
+      try {
+        const checkout = await getSumUpCheckoutApi(checkoutId);
+        res.writeHead(200, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            success: true,
+            checkout: {
+              id: checkout.id,
+              status: checkout.status,
+              amount: checkout.amount,
+              currency: checkout.currency,
+              reference: checkout.checkout_reference || checkoutId,
+              transactions: (checkout as SumUpCheckoutResponse & { transactions?: unknown[] }).transactions,
+              validUntil: checkout.date,
+            },
+          }),
+        );
+      } catch (e) {
+        console.error("[integration-gateway] SumUp checkout status error:", e);
+        res.writeHead(500, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "Failed to fetch SumUp checkout status",
+            message: e instanceof Error ? e.message : "Unknown error",
           }),
         );
       }

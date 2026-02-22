@@ -7,64 +7,7 @@ import {
   getBackendType,
 } from "../../core/infra/backendAdapter";
 import { GlobalLoadingView } from "../../ui/design-system/components";
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    background:
-      "linear-gradient(to bottom, #0a0a0a 0%, #171717 50%, #1c1917 100%)",
-    display: "flex",
-    flexDirection: "column" as const,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-    fontFamily: "Inter, system-ui, sans-serif",
-    color: "#fafafa",
-  },
-  card: {
-    width: "100%",
-    maxWidth: 400,
-    padding: 32,
-    borderRadius: 12,
-    border: "1px solid #262626",
-    backgroundColor: "rgba(23, 23, 23, 0.9)",
-    boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
-  },
-  title: { fontSize: 22, fontWeight: 700, marginBottom: 8, color: "#fafafa" },
-  subtitle: { fontSize: 14, color: "#a3a3a3", marginBottom: 24 },
-  label: {
-    display: "block",
-    fontSize: 13,
-    fontWeight: 500,
-    color: "#a3a3a3",
-    marginBottom: 6,
-  },
-  input: {
-    width: "100%",
-    boxSizing: "border-box" as const,
-    padding: "12px 14px",
-    fontSize: 15,
-    border: "1px solid #404040",
-    borderRadius: 8,
-    backgroundColor: "#171717",
-    color: "#fafafa",
-    marginBottom: 16,
-  },
-  button: {
-    width: "100%",
-    minHeight: 44,
-    padding: "14px 20px",
-    fontSize: 15,
-    fontWeight: 600,
-    border: "none",
-    borderRadius: 8,
-    cursor: "pointer",
-    marginTop: 8,
-  },
-  buttonPrimary: { backgroundColor: "#eab308", color: "#0a0a0a" },
-  link: { color: "#eab308", textDecoration: "none", fontWeight: 500 },
-  error: { fontSize: 13, color: "#f87171", marginBottom: 12 },
-};
+import styles from "./AuthPhone.module.css";
 
 const SIGNUP_INTENT_KEY = "chefiapp_signup_intent";
 
@@ -135,64 +78,44 @@ export function PhoneLoginPage() {
   }
 
   return (
-    <div style={styles.page} data-testid="auth-phone-form">
-      <div style={styles.card}>
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
+    <div className={styles.page} data-testid="auth-phone-form">
+      <div className={styles.card}>
+        <div className={styles.header}>
           <img
             src="/logo-chefiapp-clean.png"
             alt="ChefIApp"
-            style={{
-              width: 48,
-              height: 48,
-              objectFit: "contain",
-              borderRadius: 12,
-            }}
+            className={styles.logo}
           />
-          <h1 style={{ ...styles.title, marginTop: 12 }}>
-            Entrar com telefone
-          </h1>
-          <p style={styles.subtitle}>
+          <h1 className={styles.title}>Entrar com telefone</h1>
+          <p className={styles.subtitle}>
             Introduz o teu número. Enviamos um código por SMS.
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
-          {error && <p style={styles.error}>{error}</p>}
-          <label style={styles.label}>Telefone</label>
+          {error && <p className={styles.error}>{error}</p>}
+          <label className={styles.label}>Telefone</label>
           <input
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+351 912 345 678"
             required
-            style={styles.input}
+            className={styles.input}
             data-testid="auth-phone-input"
           />
-          <button
-            type="submit"
-            disabled={loading}
-            style={{ ...styles.button, ...styles.buttonPrimary }}
-          >
+          <button type="submit" disabled={loading} className={styles.button}>
             {loading ? "A enviar..." : "Receber código"}
           </button>
         </form>
 
-        <div style={{ marginTop: 24, fontSize: 13, textAlign: "center" }}>
-          <Link to="/auth/email" style={styles.link}>
+        <div className={styles.centerHint}>
+          <Link to="/auth/email" className={styles.link}>
             Prefiro entrar com email
           </Link>
         </div>
 
-        <Link
-          to="/"
-          style={{
-            ...styles.link,
-            display: "block",
-            marginTop: 24,
-            textAlign: "center",
-            fontSize: 13,
-          }}
-        >
+        <Link to="/" className={styles.backLink}>
           ← Voltar à landing
         </Link>
       </div>

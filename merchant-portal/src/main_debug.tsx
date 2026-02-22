@@ -1,10 +1,10 @@
-import "./config"; // Load first so CONFIG is ready before any chunk (avoids "Cannot access before initialization")
-import "./i18n";
 import "@chefiapp/core-design-system/tokens.css";
+import * as Sentry from "@sentry/react";
 import { StrictMode, useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
+import "./config"; // Load first so CONFIG is ready before any chunk (avoids "Cannot access before initialization")
 import { GlobalUIStateProvider } from "./context/GlobalUIStateContext";
 import {
   LifecycleStateProvider,
@@ -18,9 +18,234 @@ import { logRuntimeStatus } from "./core/runtime/RuntimeContext";
 import { devStableReason, isDevStableMode } from "./core/runtime/devStableMode";
 import { ShiftProvider } from "./core/shift/ShiftContext";
 import { TenantProvider } from "./core/tenant/TenantContext";
+import "./i18n";
 import "./index.css";
 import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
 // import "./ui/design-system/styles/dark-mode.css"; // P3-5: Dark mode styles
+
+Sentry.init({
+  dsn: "https://c507891630be22946aae6f4dc35daa2b@o4509651128942592.ingest.us.sentry.io/4510930062475264",
+  environment:
+    import.meta.env.MODE === "production" ? "production" : "development",
+  release:
+    import.meta.env.VITE_SENTRY_RELEASE ||
+    `merchant-portal@${import.meta.env.MODE}`,
+  sendDefaultPii: true,
+  // Performance Monitoring — captura transações/spans automaticamente
+  tracesSampleRate: import.meta.env.MODE === "production" ? 0.2 : 1.0,
+  // Session Replay — grava sessões para debug visual
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
+  integrations: [
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration(),
+  ],
+});
+
+// ─── Sentry Real-World Metrics ──────────────────────────────────────────────
+// Métricas reais que simulam comportamento de produção com clientes
+// Visíveis em: https://goldmonkeystudio.sentry.io/explore/metrics/
+// Safe wrapper: algumas versões do Sentry não exportam metrics.increment/distribution/gauge.
+const safeMetrics = {
+  increment:
+    typeof Sentry.metrics?.increment === "function"
+      ? Sentry.metrics.increment.bind(Sentry.metrics)
+      : () => {},
+  distribution:
+    typeof Sentry.metrics?.distribution === "function"
+      ? Sentry.metrics.distribution.bind(Sentry.metrics)
+      : () => {},
+  gauge:
+    typeof Sentry.metrics?.gauge === "function"
+      ? Sentry.metrics.gauge.bind(Sentry.metrics)
+      : () => {},
+};
+
+// 1) Boot metric — marca que a app iniciou
+safeMetrics.increment("app.boot", 1, { tags: { entry: "main_debug" } });
+
+// 2) Web Vitals via PerformanceObserver — métricas reais de performance
+if (typeof window !== "undefined" && "PerformanceObserver" in window) {
+  // Track LCP (Largest Contentful Paint)
+  try {
+    const lcpObserver = new PerformanceObserver((list) => {
+      const entries = list.getEntries();
+      const last = entries[entries.length - 1];
+      if (last) {
+        safeMetrics.distribution("web_vital.lcp", last.startTime, {
+          unit: "millisecond",
+          tags: { route: window.location.pathname },
+        });
+      }
+    });
+    lcpObserver.observe({ type: "largest-contentful-paint", buffered: true });
+  } catch {
+    /* browser may not support */
+  }
+
+  // Track FCP (First Contentful Paint)
+  try {
+    const fcpObserver = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.name === "first-contentful-paint") {
+          safeMetrics.distribution("web_vital.fcp", entry.startTime, {
+            unit: "millisecond",
+            tags: { route: window.location.pathname },
+          });
+        }
+      }
+    });
+    fcpObserver.observe({ type: "paint", buffered: true });
+  } catch {
+    /* browser may not support */
+  }
+
+  // Track CLS (Cumulative Layout Shift)
+  try {
+    let clsValue = 0;
+    const clsObserver = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (!(entry as any).hadRecentInput) {
+          clsValue += (entry as any).value;
+        }
+      }
+      safeMetrics.gauge("web_vital.cls", clsValue, {
+        tags: { route: window.location.pathname },
+      });
+    });
+    clsObserver.observe({ type: "layout-shift", buffered: true });
+  } catch {
+    /* browser may not support */
+  }
+
+  // Track navigation timing (page load total)
+  window.addEventListener("load", () => {
+    setTimeout(() => {
+      const nav = performance.getEntriesByType(
+        "navigation",
+      )[0] as PerformanceNavigationTiming;
+      if (nav) {
+        safeMetrics.distribution(
+          "page.load_time",
+          nav.loadEventEnd - nav.startTime,
+          {
+            unit: "millisecond",
+            tags: { route: window.location.pathname },
+          },
+        );
+        safeMetrics.distribution(
+          "page.dom_interactive",
+          nav.domInteractive - nav.startTime,
+          {
+            unit: "millisecond",
+            tags: { route: window.location.pathname },
+          },
+        );
+        safeMetrics.distribution(
+          "page.ttfb",
+          nav.responseStart - nav.requestStart,
+          {
+            unit: "millisecond",
+            tags: { route: window.location.pathname },
+          },
+        );
+      }
+    }, 0);
+  });
+}
+
+// 3) Track client-side navigation (SPA route changes)
+if (typeof window !== "undefined") {
+  let lastPath = window.location.pathname;
+  const origPushState = history.pushState.bind(history);
+  history.pushState = (...args: Parameters<typeof history.pushState>) => {
+    origPushState(...args);
+    const newPath = window.location.pathname;
+    if (newPath !== lastPath) {
+      safeMetrics.increment("navigation.page_view", 1, {
+        tags: { from: lastPath, to: newPath },
+      });
+      lastPath = newPath;
+    }
+  };
+  window.addEventListener("popstate", () => {
+    const newPath = window.location.pathname;
+    if (newPath !== lastPath) {
+      safeMetrics.increment("navigation.page_view", 1, {
+        tags: { from: lastPath, to: newPath },
+      });
+      lastPath = newPath;
+    }
+  });
+}
+
+// 4) Track global clicks (simula button_click real)
+if (typeof window !== "undefined") {
+  document.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement;
+    const tag = target.tagName?.toLowerCase();
+    if (
+      tag === "button" ||
+      tag === "a" ||
+      target.closest("button") ||
+      target.closest("a")
+    ) {
+      const label =
+        target.textContent?.trim().slice(0, 30) ||
+        target.getAttribute("aria-label") ||
+        "unknown";
+      safeMetrics.increment("ui.button_click", 1, {
+        tags: {
+          element: tag,
+          label,
+          route: window.location.pathname,
+        },
+      });
+    }
+  });
+}
+
+// 5) Track fetch/XHR response times (API call metrics reais)
+if (typeof window !== "undefined") {
+  const origFetch = window.fetch.bind(window);
+  window.fetch = async (...args: Parameters<typeof fetch>) => {
+    const start = performance.now();
+    try {
+      const response = await origFetch(...args);
+      const duration = performance.now() - start;
+      const url =
+        typeof args[0] === "string" ? args[0] : (args[0] as Request).url;
+      const path = new URL(url, window.location.origin).pathname;
+      safeMetrics.distribution("http.request_duration", duration, {
+        unit: "millisecond",
+        tags: {
+          method: (args[1]?.method || "GET").toUpperCase(),
+          status: String(response.status),
+          path: path.length > 50 ? path.slice(0, 50) : path,
+        },
+      });
+      if (!response.ok) {
+        safeMetrics.increment("http.error", 1, {
+          tags: { status: String(response.status), path },
+        });
+      }
+      return response;
+    } catch (err) {
+      const duration = performance.now() - start;
+      safeMetrics.distribution("http.request_duration", duration, {
+        unit: "millisecond",
+        tags: {
+          method: (args[1]?.method || "GET").toUpperCase(),
+          status: "network_error",
+        },
+      });
+      safeMetrics.increment("http.error", 1, {
+        tags: { status: "network_error" },
+      });
+      throw err;
+    }
+  };
+}
 
 // Polyfill Buffer for browser (Critical for TPV/Stripe)
 if (typeof window !== "undefined") {

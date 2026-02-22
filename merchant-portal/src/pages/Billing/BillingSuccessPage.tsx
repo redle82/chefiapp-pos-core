@@ -4,7 +4,8 @@
  * Mensagem clara "Assinatura ativa" e links para Dashboard e TPV.
  */
 
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Button, Card } from "../../ui/design-system";
 import styles from "./BillingSuccessPage.module.css";
 
 export function BillingSuccessPage() {
@@ -12,25 +13,25 @@ export function BillingSuccessPage() {
 
   return (
     <div className={styles.pageWrapper}>
-      <div className={styles.card}>
+      <Card className={styles.card} elevated>
         <div className={styles.icon}>✅</div>
         <h1 className={styles.title}>Assinatura ativa</h1>
         <p className={styles.message}>
           O modo ao vivo foi ativado. O seu restaurante está pronto para operar.
         </p>
         <div className={styles.buttonGroup}>
-          <button
-            type="button"
-            onClick={() => navigate("/dashboard")}
-            className={styles.buttonPrimary}
-          >
+          <Button type="button" onClick={() => navigate("/dashboard")}>
             Ir ao Comando Central
-          </button>
-          <Link to="/op/tpv" className={styles.linkButton}>
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => navigate("/op/tpv")}
+          >
             Ir ao TPV
-          </Link>
+          </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

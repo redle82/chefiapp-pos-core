@@ -8,9 +8,14 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { OpenCashRegisterModal } from '../../../merchant-portal/src/pages/TPV/components/OpenCashRegisterModal';
 
+const defaultProps = {
+  onOpen: () => {},
+  onCancel: () => {},
+};
+
 describe('OpenCashRegisterModal', () => {
   it('deve renderizar sem lançar erro', () => {
-    const { container } = render(<OpenCashRegisterModal />);
+    const { container } = render(<OpenCashRegisterModal {...defaultProps} />);
     expect(container).toBeInTheDocument();
   });
 });

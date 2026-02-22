@@ -284,12 +284,14 @@ export default defineConfig(async ({ mode }) => {
               id.includes("/pages/Backoffice/")
             )
               return "app-admin";
-            if (
-              id.includes("/pages/Onboarding/") ||
-              id.includes("/pages/Setup/") ||
-              id.includes("/pages/Landing/")
-            )
-              return "app-onboarding";
+            // Onboarding/Setup/Landing: do NOT put in app-onboarding — causes "Cannot access 'A' before initialization" (TDZ)
+            // due to circular chunk app-runtime -> app-core -> app-onboarding -> app-runtime; bundle with app-core.
+            // if (
+            //   id.includes("/pages/Onboarding/") ||
+            //   id.includes("/pages/Setup/") ||
+            //   id.includes("/pages/Landing/")
+            // )
+            //   return "app-onboarding";
             if (
               id.includes("/pages/MenuBuilder/") ||
               id.includes("/pages/MenuCatalog/")

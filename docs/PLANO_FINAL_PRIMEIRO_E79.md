@@ -43,28 +43,24 @@ Só depois disso avançar para Fase 2.
 
 ---
 
-## FASE 2 — STRIPE LIVE (DINHEIRO PREPARADO)
+## FASE 2 — PAGAMENTOS (DINHEIRO PREPARADO)
 
-**Doc:** [VALIDACAO_STRIPE_PRODUCAO.md](VALIDACAO_STRIPE_PRODUCAO.md)
+**Doc principal:** [FASE_2_PAGAMENTOS.md](FASE_2_PAGAMENTOS.md) (Stripe + SumUp Europa + PIX Brasil)
 
-**Executar:**
+**Por região:**
 
-1. Entrar no Stripe Dashboard
-2. Criar produto:
-   - Nome: ChefIApp Plano Mensal
-   - Tipo: Recurring
-   - Preço: €79
-   - Intervalo: Monthly
-3. Copiar o Price ID (price_xxx)
-4. No projeto: `merchant-portal/.env.local` — adicionar:
-   ```
-   VITE_STRIPE_PRICE_ID=price_xxx
-   ```
-5. Reiniciar dev: `npm run dev`
-6. Abrir /app/billing
-7. Confirmar: preço aparece, botão "Ativar agora" ativo
+- **Stripe** (resto do mundo / assinatura SaaS): [VALIDACAO_STRIPE_PRODUCAO.md](VALIDACAO_STRIPE_PRODUCAO.md) — Price ID, env, /app/billing, webhook quando for cobrar.
+- **SumUp Europa** (cartão EUR): [SUMUP_EUR_INTEGRATION_GUIDE.md](SUMUP_EUR_INTEGRATION_GUIDE.md) — token, gateway 4320, webhook.
+- **PIX Brasil** (BRL): [PIX_ACTIVATION_PLAN.md](PIX_ACTIVATION_PLAN.md) · [PIX_UI_INTEGRATION_COMPLETE.md](PIX_UI_INTEGRATION_COMPLETE.md) — UI PIX + E2E com sandbox quando disponível.
 
-**Nota:** Não ativar webhook ainda se não fores cobrar hoje.
+**Mínimo para avançar:**
+
+1. Entrar no Stripe Dashboard; criar produto (ex.: ChefIApp Plano Mensal, €79, Monthly); copiar Price ID.
+2. No projeto: `merchant-portal/.env.local` — adicionar `VITE_STRIPE_PRICE_ID=price_xxx`.
+3. Reiniciar dev; abrir /app/billing; confirmar: preço aparece, botão "Ativar agora" ativo.
+4. (Se Europa) Configurar SumUp EUR conforme guia; (Se Brasil) Validar fluxo PIX na UI e E2E quando tiver sandbox.
+
+**Nota:** Não ativar webhook Stripe ainda se não fores cobrar hoje.
 
 ---
 

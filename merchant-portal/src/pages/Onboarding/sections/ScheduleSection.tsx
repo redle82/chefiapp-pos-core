@@ -7,12 +7,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useOnboarding } from "../../../context/OnboardingContext";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import {
   BackendType,
   getBackendType,
 } from "../../../core/infra/backendAdapter";
+import { dockerCoreClient } from "../../../infra/docker-core/connection";
+import styles from "./ScheduleSection.module.css";
 // Domain writes ONLY via Core (Supabase removed — §4). No fallback.
 
 const DAYS = [
@@ -160,116 +161,64 @@ export function ScheduleSection() {
   }, [schedules, identity.id, updateSectionStatus]);
 
   return (
-    <div style={{ padding: "48px", maxWidth: "800px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: 600, marginBottom: "8px", color: "var(--text-primary)" }}>
+    <div className={styles.container}>
+      <h1 className={styles.title}>
         ⏰ Horários{" "}
-        {isSaving && (
-          <span style={{ fontSize: "14px", color: "var(--color-primary)" }}>
-            (Salvando...)
-          </span>
-        )}
+        {isSaving && <span className={styles.saving}>(Salvando...)</span>}
       </h1>
-      <p style={{ fontSize: "14px", color: "var(--text-secondary)", marginBottom: "32px" }}>
+      <p className={styles.subtitle}>
         Configure os horários de funcionamento por dia da semana
       </p>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      <div className={styles.daysList}>
         {DAYS.map((day) => {
           const schedule = schedules[day.id];
           return (
             <div
               key={day.id}
-              style={{
-                padding: "16px",
-                border: "1px solid var(--surface-border)",
-                borderRadius: "8px",
-                backgroundColor: schedule.open ? "var(--card-bg-on-dark)" : "var(--surface-elevated)",
-              }}
+              className={`${styles.dayCard} ${
+                schedule.open ? styles.dayCardOpen : styles.dayCardClosed
+              }`}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "16px",
-                  marginBottom: "12px",
-                }}
-              >
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    cursor: "pointer",
-                    flex: 1,
-                  }}
-                >
+              <div className={styles.dayRow}>
+                <label className={styles.dayLabel}>
                   <input
                     type="checkbox"
                     checked={schedule.open}
                     onChange={(e) =>
                       updateSchedule(day.id, "open", e.target.checked)
                     }
-                    style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                    className={styles.dayCheckbox}
                   />
-                  <span
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      minWidth: "80px",
-                      color: "var(--text-primary)",
-                    }}
-                  >
-                    {day.label}
-                  </span>
+                  <span className={styles.dayName}>{day.label}</span>
                 </label>
                 {schedule.open && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      flex: 1,
-                    }}
-                  >
+                  <div className={styles.timeRange}>
                     <input
                       type="time"
+                      title={`Hora de abertura - ${day.label}`}
+                      aria-label={`Hora de abertura - ${day.label}`}
                       value={schedule.start}
                       onChange={(e) =>
                         updateSchedule(day.id, "start", e.target.value)
                       }
-                      style={{
-                        padding: "8px",
-                        border: "1px solid var(--surface-border)",
-                        borderRadius: "4px",
-                        fontSize: "14px",
-                      }}
+                      className={styles.timeInput}
                     />
-                    <span style={{ color: "var(--text-primary)" }}>até</span>
+                    <span className={styles.untilText}>até</span>
                     <input
                       type="time"
+                      title={`Hora de fecho - ${day.label}`}
+                      aria-label={`Hora de fecho - ${day.label}`}
                       value={schedule.end}
                       onChange={(e) =>
                         updateSchedule(day.id, "end", e.target.value)
                       }
-                      style={{
-                        padding: "8px",
-                        border: "1px solid var(--surface-border)",
-                        borderRadius: "4px",
-                        fontSize: "14px",
-                      }}
+                      className={styles.timeInput}
                     />
                   </div>
                 )}
                 {!schedule.open && (
-                  <span
-                    style={{
-                      fontSize: "14px",
-                      color: "var(--text-tertiary)",
-                      fontStyle: "italic",
-                    }}
-                  >
-                    Fechado
-                  </span>
+                  <span className={styles.closedText}>Fechado</span>
                 )}
               </div>
             </div>

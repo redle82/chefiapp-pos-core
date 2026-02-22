@@ -39,9 +39,13 @@ const normalizeUrl = (value: string): string =>
   value.endsWith("/") ? value.slice(0, -1) : value;
 
 // Permitir boot sem Core (trial/landing na Vercel); rotas operacionais exigem env vars.
+// Supabase: quando só VITE_SUPABASE_* estão definidos, usamos como CORE (mesmo PostgREST).
 const MODE = getEnvString("VITE_MODE") || "trial";
-const CORE_URL = normalizeUrl(getEnvString("VITE_CORE_URL") || "");
-const CORE_ANON_KEY = getEnvString("VITE_CORE_ANON_KEY") || "";
+const CORE_URL = normalizeUrl(
+  getEnvString("VITE_CORE_URL") || getEnvString("VITE_SUPABASE_URL") || ""
+);
+const CORE_ANON_KEY =
+  getEnvString("VITE_CORE_ANON_KEY") || getEnvString("VITE_SUPABASE_ANON_KEY") || "";
 const API_BASE = normalizeUrl(getEnvString("VITE_API_BASE") || "");
 
 const IS_DEV = MODE !== "production";
@@ -130,6 +134,30 @@ export const CONFIG = {
    * Env var: VITE_SUPPORT_WHATSAPP_NUMBER
    */
   SUPPORT_WHATSAPP_NUMBER: getEnvString("VITE_SUPPORT_WHATSAPP_NUMBER"),
+
+  /**
+   * Indica se a venda da plataforma (checkout/assinatura) está permitida nesta origem.
+   * Apenas chefiapp.com pode vender; outros domínios (white-label) não mostram/ativam checkout.
+   */
+  get canSellPlatform(): boolean {
+    const list: string[] = [
+      "https://www.chefiapp.com",
+      "https://chefiapp.com",
+    ];
+    if (IS_DEV) {
+      list.push(
+        "http://localhost:5175",
+        "http://127.0.0.1:5175",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+      );
+    }
+    const custom = getEnvString("VITE_PLATFORM_SALE_ORIGINS").split(",")
+      .map((o) => o.trim().toLowerCase())
+      .filter(Boolean);
+    const origins = custom.length > 0 ? custom : list.map((o) => o.toLowerCase());
+    return origins.includes((typeof window !== "undefined" ? window.location.origin : "").toLowerCase());
+  },
 };
 
 console.log("[CONFIG] Loaded", {

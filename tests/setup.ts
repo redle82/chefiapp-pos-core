@@ -39,12 +39,16 @@ console.log(`
 ╚══════════════════════════════════════════════════════════════╝
 `);
 
-// Mock window for Node.js environment
+// Mock window and navigator for Node.js environment (e.g. WebOrderingService uses navigator.userAgent)
+const mockNavigator = {
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+};
+if (typeof global !== 'undefined' && typeof (global as any).navigator === 'undefined') {
+    (global as any).navigator = mockNavigator;
+}
 if (typeof global !== 'undefined' && typeof (global as any).window === 'undefined') {
     (global as any).window = {
-        navigator: {
-            userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-        },
+        navigator: mockNavigator,
         innerWidth: 1920,
         innerHeight: 1080,
         location: {

@@ -8,6 +8,7 @@ import { useOnboarding } from "../../../context/OnboardingContext";
 // LEGACY / LAB — blocked in Docker mode
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
+import styles from "./PeopleSection.module.css";
 
 interface Person {
   id: string;
@@ -44,7 +45,7 @@ export function PeopleSection() {
   useEffect(() => {
     // Verificar se tem pelo menos 1 gerente ou owner
     const hasManager = people.some(
-      (p) => p.role === "manager" || p.role === "owner"
+      (p) => p.role === "manager" || p.role === "owner",
     );
     const isValid = people.length >= 1 && hasManager;
 
@@ -76,7 +77,7 @@ export function PeopleSection() {
           // A implementação real dependeria de um sistema de convites/convites por email
 
           console.log(
-            "✅ Pessoas configuradas (implementação completa requer sistema de convites)"
+            "✅ Pessoas configuradas (implementação completa requer sistema de convites)",
           );
         } catch (error) {
           console.error("Erro ao salvar pessoas:", error);
@@ -94,32 +95,19 @@ export function PeopleSection() {
   }, [people, identity.id, updateSectionStatus]);
 
   return (
-    <div style={{ padding: "48px", maxWidth: "800px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: 600, marginBottom: "8px" }}>
+    <div className={styles.container}>
+      <h1 className={styles.title}>
         👥 Pessoas{" "}
-        {isSaving && (
-          <span style={{ fontSize: "14px", color: "#667eea" }}>
-            (Salvando...)
-          </span>
-        )}
+        {isSaving && <span className={styles.saving}>(Salvando...)</span>}
       </h1>
-      <p style={{ fontSize: "14px", color: "#666", marginBottom: "32px" }}>
+      <p className={styles.subtitle}>
         Adicione gerente e funcionários ao seu restaurante
       </p>
 
       {/* Adicionar Pessoa */}
-      <div
-        style={{
-          marginBottom: "32px",
-          padding: "16px",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "8px",
-        }}
-      >
-        <h3 style={{ fontSize: "16px", fontWeight: 600, marginBottom: "16px" }}>
-          Adicionar Pessoa
-        </h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <div className={styles.panel}>
+        <h3 className={styles.sectionTitle}>Adicionar Pessoa</h3>
+        <div className={styles.formStack}>
           <input
             type="text"
             placeholder="Nome"
@@ -127,12 +115,7 @@ export function PeopleSection() {
             onChange={(e) =>
               setNewPerson({ ...newPerson, name: e.target.value })
             }
-            style={{
-              padding: "12px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.input}
           />
           <input
             type="email"
@@ -141,14 +124,11 @@ export function PeopleSection() {
             onChange={(e) =>
               setNewPerson({ ...newPerson, email: e.target.value })
             }
-            style={{
-              padding: "12px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.input}
           />
           <select
+            title="Função"
+            aria-label="Função"
             value={newPerson.role}
             onChange={(e) =>
               setNewPerson({
@@ -156,12 +136,7 @@ export function PeopleSection() {
                 role: e.target.value as Person["role"],
               })
             }
-            style={{
-              padding: "12px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
+            className={styles.input}
           >
             <option value="staff">Funcionário</option>
             <option value="manager">Gerente</option>
@@ -170,18 +145,11 @@ export function PeopleSection() {
           <button
             onClick={addPerson}
             disabled={!newPerson.name || !newPerson.email}
-            style={{
-              padding: "12px",
-              backgroundColor: "#667eea",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: 600,
-              cursor:
-                newPerson.name && newPerson.email ? "pointer" : "not-allowed",
-              opacity: newPerson.name && newPerson.email ? 1 : 0.5,
-            }}
+            className={`${styles.addButton} ${
+              !newPerson.name || !newPerson.email
+                ? styles.addButtonDisabled
+                : ""
+            }`}
           >
             Adicionar
           </button>
@@ -189,46 +157,16 @@ export function PeopleSection() {
       </div>
 
       {/* Lista de Pessoas */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <div className={styles.peopleList}>
         {people.length === 0 ? (
-          <p
-            style={{
-              fontSize: "14px",
-              color: "#999",
-              fontStyle: "italic",
-              textAlign: "center",
-              padding: "32px",
-            }}
-          >
-            Nenhuma pessoa adicionada ainda
-          </p>
+          <p className={styles.emptyState}>Nenhuma pessoa adicionada ainda</p>
         ) : (
           people.map((person) => (
-            <div
-              key={person.id}
-              style={{
-                padding: "16px",
-                border: "1px solid #e0e0e0",
-                borderRadius: "8px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
+            <div key={person.id} className={styles.personCard}>
               <div>
-                <div style={{ fontSize: "14px", fontWeight: 600 }}>
-                  {person.name}
-                </div>
-                <div style={{ fontSize: "12px", color: "#666" }}>
-                  {person.email}
-                </div>
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: "#667eea",
-                    marginTop: "4px",
-                  }}
-                >
+                <div className={styles.personName}>{person.name}</div>
+                <div className={styles.personEmail}>{person.email}</div>
+                <div className={styles.personRole}>
                   {person.role === "owner"
                     ? "Proprietário"
                     : person.role === "manager"
@@ -238,15 +176,7 @@ export function PeopleSection() {
               </div>
               <button
                 onClick={() => removePerson(person.id)}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#dc3545",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "4px",
-                  fontSize: "12px",
-                  cursor: "pointer",
-                }}
+                className={styles.removeButton}
               >
                 Remover
               </button>
@@ -256,20 +186,9 @@ export function PeopleSection() {
       </div>
 
       {/* Checklist */}
-      <div
-        style={{
-          marginTop: "32px",
-          padding: "16px",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "8px",
-        }}
-      >
-        <div
-          style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px" }}
-        >
-          Checklist:
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <div className={styles.panel}>
+        <div className={styles.checklistTitle}>Checklist:</div>
+        <div className={styles.checklistList}>
           {[
             {
               label: "Pelo menos 1 pessoa adicionada",
@@ -278,22 +197,18 @@ export function PeopleSection() {
             {
               label: "Pelo menos 1 gerente ou proprietário",
               done: people.some(
-                (p) => p.role === "manager" || p.role === "owner"
+                (p) => p.role === "manager" || p.role === "owner",
               ),
             },
           ].map((item) => (
-            <div
-              key={item.label}
-              style={{ display: "flex", alignItems: "center", gap: "8px" }}
-            >
-              <span style={{ fontSize: "16px" }}>
+            <div key={item.label} className={styles.checklistItem}>
+              <span className={styles.checklistIcon}>
                 {item.done ? "✅" : "⏳"}
               </span>
               <span
-                style={{
-                  fontSize: "14px",
-                  color: item.done ? "#28a745" : "#666",
-                }}
+                className={`${styles.checklistText} ${
+                  item.done ? styles.checklistDone : styles.checklistPending
+                }`}
               >
                 {item.label}
               </span>
