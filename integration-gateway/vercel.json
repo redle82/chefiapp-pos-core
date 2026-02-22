@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "name": "integration-gateway",
+  "builds": [
+    {
+      "src": "src/index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/index.ts"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "PORT": "4320",
+    "SUPABASE_URL": "@supabase_url",
+    "SUPABASE_ANON_KEY": "@supabase_anon_key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
+    "SUMUP_ACCESS_TOKEN": "@sumup_access_token",
+    "SUMUP_API_BASE_URL": "https://api.sumup.com",
+    "SUMUP_MERCHANT_CODE": "MNAAKKUV",
+    "SUMUP_PIX_DEFAULT_COUNTRY": "BR",
+    "SUMUP_PIX_DEFAULT_CURRENCY": "BRL",
+    "LOG_LEVEL": "info"
+  }
+}
