@@ -10,11 +10,11 @@
  * 3. Empty states must explain the *operational void*, not just "no data".
  */
 
-import { getCurrencySymbol } from "../../../core/currency/CurrencyService";
+import { SUPPORTED_CURRENCIES } from "../../../core/currency/CurrencyService";
 
-// Inline overlay string to avoid TDZ: OSCopy is loaded early; importing from
-// canonicalPrice can cause "Cannot access 'wi' before initialization" in chunked builds.
-const CANONICAL_OVERLAY = `79 ${getCurrencySymbol()}/mês após 14 dias grátis`;
+// Inline overlay string to avoid TDZ and export compatibility across branches.
+// Uses SUPPORTED_CURRENCIES (always exported) rather than getCurrencySymbol.
+const CANONICAL_OVERLAY = `79 ${SUPPORTED_CURRENCIES.EUR.symbol}/mês após 14 dias grátis`;
 
 export const OSCopy = {
   auth: {
