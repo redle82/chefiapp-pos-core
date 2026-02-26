@@ -10,7 +10,7 @@
  * 3. Empty states must explain the *operational void*, not just "no data".
  */
 
-import { getCurrencySymbol } from "@/core/currency/CurrencyService";
+import { getCurrencySymbol } from "../../../core/currency/CurrencyService";
 
 // Inline overlay string to avoid TDZ: OSCopy is loaded early; importing from
 // canonicalPrice can cause "Cannot access 'wi' before initialization" in chunked builds.
