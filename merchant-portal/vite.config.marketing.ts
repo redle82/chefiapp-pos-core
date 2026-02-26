@@ -55,10 +55,11 @@ export default defineConfig(async ({ mode }) => {
               id.includes("node_modules/react/") ||
               id.includes("node_modules/react-dom/") ||
               id.includes("node_modules/react-router") ||
-              id.includes("node_modules/framer-motion") ||
               id.includes("node_modules/lucide-react")
             )
               return "react-vendor";
+            // framer-motion: bundle with marketing-pages to avoid TDZ (unsupported-easing.mjs)
+            if (id.includes("node_modules/framer-motion")) return "marketing-pages";
             if (id.includes("/pages/")) return "marketing-pages";
           },
         },

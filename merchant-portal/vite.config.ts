@@ -236,10 +236,20 @@ export default defineConfig(async ({ mode }) => {
               id.includes("node_modules/react/") ||
               id.includes("node_modules/react-dom/") ||
               id.includes("node_modules/react-router") ||
-              id.includes("node_modules/framer-motion") ||
               id.includes("node_modules/lucide-react")
             ) {
               return "react-vendor";
+            }
+            // framer-motion + motion ecosystem: MUST be in app-runtime together.
+            // motion-dom/unsupported-easing.mjs imports from motion-utils; if split across chunks
+            // → "Cannot access 'US' before initialization" (TDZ, US = minified export name).
+            if (
+              id.includes("node_modules/framer-motion") ||
+              id.includes("node_modules/motion-dom") ||
+              id.includes("node_modules/motion-utils") ||
+              id.includes("node_modules/motion/")
+            ) {
+              return "app-runtime";
             }
             if (
               id.includes("node_modules/recharts") ||
