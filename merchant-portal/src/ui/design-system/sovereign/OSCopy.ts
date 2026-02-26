@@ -10,7 +10,11 @@
  * 3. Empty states must explain the *operational void*, not just "no data".
  */
 
-import { CANONICAL_MONTHLY_PRICE_OVERLAY } from "../../../core/pricing/canonicalPrice";
+import { getCurrencySymbol } from "@/core/currency/CurrencyService";
+
+// Inline overlay string to avoid TDZ: OSCopy is loaded early; importing from
+// canonicalPrice can cause "Cannot access 'wi' before initialization" in chunked builds.
+const CANONICAL_OVERLAY = `79 ${getCurrencySymbol()}/mês após 14 dias grátis`;
 
 export const OSCopy = {
   auth: {
@@ -43,7 +47,7 @@ export const OSCopy = {
     ctaVerSistema3Min: "Ver o sistema a funcionar (3 min)",
     ctaExplorarPrimeiro: "Explorar primeiro",
     ctaJaTenhoAcesso: "Já tenho acesso",
-    overlayPrice: CANONICAL_MONTHLY_PRICE_OVERLAY,
+    overlayPrice: CANONICAL_OVERLAY,
     trialPriceCopy:
       "O período de teste é gratuito durante 14 dias. Se fizer sentido, escolhes um plano depois. Se não, paras sem compromisso.",
     pilotPriceCopy:

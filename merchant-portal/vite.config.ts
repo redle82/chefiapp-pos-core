@@ -250,15 +250,52 @@ export default defineConfig(async ({ mode }) => {
             }
             // Stripe: do NOT put in separate chunk — causes "Cannot access 'u' before initialization"
             // when chunk loads before deps; let Rollup bundle with consuming code.
-            // app-ui: do NOT split /ui/ and /components/ — causes "Cannot access 'vr' before initialization" (TDZ).
 
-            // ── Shared core modules ──
+            // ── Shared runtime modules ──
+            // ALL shared code (core, hooks, features, ui, components, infra, domain, etc.)
+            // MUST live in a single chunk to prevent TDZ circular dependencies.
+            // Previously only /core/, /context/, /hooks/, /features/, /intelligence/ were here;
+            // /ui/, /components/, /infra/, /domain/ etc. were "floating" (Rollup-assigned),
+            // causing circular chunk dependencies → "Cannot access 'X' before initialization".
+            //
+            // Also includes /pages/TPV/, /pages/Onboarding/, /pages/AppStaff/context/
+            // because they are heavily imported by core/hooks/features/ui modules.
             if (
               id.includes("/core/") ||
               id.includes("/context/") ||
               id.includes("/hooks/") ||
               id.includes("/features/") ||
-              id.includes("/intelligence/")
+              id.includes("/intelligence/") ||
+              id.includes("/ui/") ||
+              id.includes("/components/") ||
+              id.includes("/infra/") ||
+              id.includes("/domain/") ||
+              id.includes("/commercial/") ||
+              id.includes("/integrations/") ||
+              id.includes("/shared/") ||
+              id.includes("/onboarding-core/") ||
+              // Pages heavily cross-referenced by shared code (avoid app-runtime ↔ app-core TDZ)
+              id.includes("/pages/TPV/") ||
+              id.includes("/pages/TPVMinimal/") ||
+              id.includes("/pages/KDSMinimal/") ||
+              id.includes("/pages/Onboarding/") ||
+              id.includes("/pages/AppStaff/context/") ||
+              id.includes("/pages/AppStaff/data/") ||
+              // Marketing/landing pages: imported statically by MarketingRoutes at boot
+              // → must be in app-runtime to avoid "Cannot access 'wi' before initialization" (TDZ)
+              id.includes("/pages/Landing/") ||
+              id.includes("/pages/LandingV2/") ||
+              id.includes("/pages/Billing/") ||
+              id.includes("/pages/Changelog/") ||
+              id.includes("/pages/Legal/") ||
+              id.includes("/pages/Blog/") ||
+              id.includes("/pages/AuthPhone/") ||
+              id.includes("/pages/LoginPage/") ||
+              id.includes("/pages/About/") ||
+              id.includes("/pages/Security/") ||
+              id.includes("/pages/Status/") ||
+              id.includes("/pages/BootstrapPage") ||
+              id.includes("/pages/HelpStartLocalPage")
             )
               return "app-runtime";
 
@@ -269,8 +306,6 @@ export default defineConfig(async ({ mode }) => {
             )
               return "public";
 
-            // TPV/KDS: do NOT put in separate chunk — causes "Cannot access 'K' before initialization" (TDZ)
-            // when chunk loads before deps; let Rollup bundle with consuming code (app-runtime/app-core).
             if (id.includes("/pages/AppStaff/")) return "app-staff";
             if (
               id.includes("/pages/Owner/") ||
@@ -284,14 +319,6 @@ export default defineConfig(async ({ mode }) => {
               id.includes("/pages/Backoffice/")
             )
               return "app-admin";
-            // Onboarding/Setup/Landing: do NOT put in app-onboarding — causes "Cannot access 'A' before initialization" (TDZ)
-            // due to circular chunk app-runtime -> app-core -> app-onboarding -> app-runtime; bundle with app-core.
-            // if (
-            //   id.includes("/pages/Onboarding/") ||
-            //   id.includes("/pages/Setup/") ||
-            //   id.includes("/pages/Landing/")
-            // )
-            //   return "app-onboarding";
             if (
               id.includes("/pages/MenuBuilder/") ||
               id.includes("/pages/MenuCatalog/")
