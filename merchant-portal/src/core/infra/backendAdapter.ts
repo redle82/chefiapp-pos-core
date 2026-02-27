@@ -105,7 +105,8 @@ export function getBackendType(): BackendType {
     return BackendType.docker;
   }
 
-  return url ? BackendType.docker : BackendType.none;
+  // URLs that don't match Docker indicators (e.g. Supabase cloud) are NOT Docker
+  return BackendType.none;
 }
 
 export function isDockerBackend(): boolean {
