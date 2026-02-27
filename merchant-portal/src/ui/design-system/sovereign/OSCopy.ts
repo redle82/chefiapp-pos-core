@@ -63,10 +63,19 @@ export const OSCopy = {
     problemSubtitleHighlight: "Você precisa de disciplina operacional.",
     /** Lista de dores (única fonte de verdade para Problem.tsx). */
     problemItems: [
-      { title: "Turnos bagunçados", desc: "Ninguém sabe quem trabalhou quantas horas" },
+      {
+        title: "Turnos bagunçados",
+        desc: "Ninguém sabe quem trabalhou quantas horas",
+      },
       { title: "Stock que some", desc: "Ingrediente acaba no meio do serviço" },
-      { title: "Tarefas esquecidas", desc: '"Esqueci de repor cerveja", "Ninguém limpou a cozinha"' },
-      { title: "Papel e planilha", desc: "Informação perdida, nada automatizado" },
+      {
+        title: "Tarefas esquecidas",
+        desc: '"Esqueci de repor cerveja", "Ninguém limpou a cozinha"',
+      },
+      {
+        title: "Papel e planilha",
+        desc: "Informação perdida, nada automatizado",
+      },
       { title: "Equipa perdida", desc: "Cada um pergunta o que fazer" },
     ],
     /** Porque falar connosco: piloto real, suporte, primeiro caso. */
