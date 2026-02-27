@@ -6,12 +6,14 @@
  * para relatórios. Ref: reports_only_no_dashboard plan.
  */
 
+import { getFormatLocale } from "@/core/i18n/regionLocaleConfig";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { WelcomeOverlay } from "../../../components/onboarding/WelcomeOverlay";
 import { shouldShowWelcome } from "../../../components/onboarding/welcomeUtils";
-import { useRestaurantId } from "../../../ui/hooks/useRestaurantId";
+import { currencyService } from "../../../core/currency/CurrencyService";
 import { GlobalLoadingView } from "../../../ui/design-system/components";
+import { useRestaurantId } from "../../../ui/hooks/useRestaurantId";
 import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
 import { useDashboardOverview } from "../dashboard/hooks/useDashboardOverview";
 
@@ -38,10 +40,10 @@ const linkStyle: React.CSSProperties = {
   fontSize: 15,
 };
 
-function formatEur(value: number): string {
-  return new Intl.NumberFormat("pt-PT", {
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat(getFormatLocale(), {
     style: "currency",
-    currency: "EUR",
+    currency: currencyService.getDefaultCurrency(),
   }).format(value);
 }
 
@@ -55,6 +57,7 @@ export function AdminReportsOverview() {
     return <GlobalLoadingView />;
   }
 
+  const isLoading = loadingOverview && !overview;
   const revenueToday =
     overview?.revenueByHour?.reduce((s, h) => s + h.amount, 0) ?? 0;
   const billsToday = overview?.stats?.totalBills ?? 0;
@@ -80,8 +83,10 @@ export function AdminReportsOverview() {
         >
           KPIs (snapshot)
         </h2>
-        {loadingOverview ? (
-          <p style={{ color: "var(--text-secondary)", margin: 0 }}>A carregar…</p>
+        {isLoading ? (
+          <p style={{ color: "var(--text-secondary)", margin: 0 }}>
+            A carregar…
+          </p>
         ) : (
           <div
             style={{
@@ -94,15 +99,29 @@ export function AdminReportsOverview() {
               <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                 Faturado hoje
               </span>
-              <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>
-                {formatEur(revenueToday)}
+              <div
+                style={{
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                }}
+              >
+                {formatCurrency(revenueToday)}
               </div>
             </div>
             <div>
               <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                 Pedidos hoje
               </span>
-              <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>{billsToday}</div>
+              <div
+                style={{
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                }}
+              >
+                {billsToday}
+              </div>
             </div>
           </div>
         )}

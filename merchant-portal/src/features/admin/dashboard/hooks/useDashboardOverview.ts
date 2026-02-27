@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { getOverviewSafe } from "../services/dashboardService";
 import type { DashboardOverview } from "../types";
-import { getOverview } from "../services/dashboardService";
 
 interface DashboardOverviewState {
   data: DashboardOverview | null;
@@ -10,7 +10,7 @@ interface DashboardOverviewState {
 }
 
 export function useDashboardOverview(
-  locationId: string | null | undefined
+  locationId: string | null | undefined,
 ): DashboardOverviewState {
   const [data, setData] = useState<DashboardOverview | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -33,7 +33,7 @@ export function useDashboardOverview(
     setLoading(true);
     setError(null);
 
-    getOverview(locationId)
+    getOverviewSafe(locationId)
       .then((result) => {
         if (!cancelled) {
           setData(result);

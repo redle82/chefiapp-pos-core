@@ -3,6 +3,7 @@
  *
  * Centralizes environment variables and defaults.
  * Follows "Fail Loud" for critical missing vars in production.
+ * @version 2026-02-26 — cache-bust for corrected Supabase anon key
  */
 
 type EnvLike = {
@@ -35,17 +36,21 @@ const assertEnv = (name: string, value: string): string => {
   return value;
 };
 
-const normalizeUrl = (value: string): string =>
-  value.endsWith("/") ? value.slice(0, -1) : value;
+const normalizeUrl = (value: string): string => {
+  const trimmed = value.trim();
+  return trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
+};
 
 // Permitir boot sem Core (trial/landing na Vercel); rotas operacionais exigem env vars.
 // Supabase: quando só VITE_SUPABASE_* estão definidos, usamos como CORE (mesmo PostgREST).
 const MODE = getEnvString("VITE_MODE") || "trial";
 const CORE_URL = normalizeUrl(
-  getEnvString("VITE_CORE_URL") || getEnvString("VITE_SUPABASE_URL") || ""
+  getEnvString("VITE_CORE_URL") || getEnvString("VITE_SUPABASE_URL") || "",
 );
 const CORE_ANON_KEY =
-  getEnvString("VITE_CORE_ANON_KEY") || getEnvString("VITE_SUPABASE_ANON_KEY") || "";
+  getEnvString("VITE_CORE_ANON_KEY") ||
+  getEnvString("VITE_SUPABASE_ANON_KEY") ||
+  "";
 const API_BASE = normalizeUrl(getEnvString("VITE_API_BASE") || "");
 
 const IS_DEV = MODE !== "production";
@@ -57,7 +62,8 @@ const STRIPE_PUBLIC_KEY_RAW = (() => {
     getEnvString("VITE_STRIPE_PUBLIC_KEY") ||
     getEnvString("VITE_STRIPE_PUBLISHABLE_KEY") ||
     "";
-  if (!raw || raw.includes("placeholder") || raw.includes("forensic")) return "";
+  if (!raw || raw.includes("placeholder") || raw.includes("forensic"))
+    return "";
   return raw;
 })();
 
@@ -70,6 +76,22 @@ export const CONFIG = {
 
   // API (Web Module)
   API_BASE,
+  /** True when VITE_API_BASE points to Supabase Edge (paths are function names). See docs/ops/MIGRATION_RENDER_TO_EDGE.md */
+  get isEdgeGateway(): boolean {
+    const base = getEnvString("VITE_API_BASE") || "";
+    return base.includes("supabase.co/functions/v1");
+  },
+  /**
+   * True when gateway is configured and reachable (not placeholder).
+   * When false: hide checkout/PIX/SumUp/card; show only cash in TPV; billing shows "em breve".
+   * See docs/ops/PLANO_48H_OPERACAO_SEM_GATEWAY.md
+   */
+  get isGatewayAvailable(): boolean {
+    const base = getEnvString("VITE_API_BASE") || "";
+    if (!base) return false;
+    if (/your-gateway-url|placeholder/i.test(base)) return false;
+    return true;
+  },
   INTERNAL_API_TOKEN: getEnvString("VITE_INTERNAL_API_TOKEN"),
 
   // Docker Core (PostgREST). Backend unico.
@@ -81,7 +103,10 @@ export const CONFIG = {
   STRIPE_PRICE_ID: getEnvString("VITE_STRIPE_PRICE_ID"),
   /** true quando a chave pública começa por pk_test_ (modo demo/teste Stripe) */
   get STRIPE_IS_TEST(): boolean {
-    return typeof STRIPE_PUBLIC_KEY_RAW === "string" && STRIPE_PUBLIC_KEY_RAW.startsWith("pk_test_");
+    return (
+      typeof STRIPE_PUBLIC_KEY_RAW === "string" &&
+      STRIPE_PUBLIC_KEY_RAW.startsWith("pk_test_")
+    );
   },
 
   /** LLM Vision (legado). Data de remoção prevista: após confirmação de não uso. */
@@ -129,6 +154,22 @@ export const CONFIG = {
     getEnvString("VITE_ALLOW_STAFF_ROLE_QUERY") !== "0",
 
   /**
+   * BLOCK_DIRECT_WRITES — Bloqueia writes directos em gm_orders, gm_order_items, gm_payments.
+   * Quando true, lança DirectWriteBlockedError; usar Core RPCs exclusivamente.
+   * Activar apenas em CI/testes para validar ausência de violações. Env: VITE_BLOCK_DIRECT_WRITES ou BLOCK_DIRECT_WRITES (Node).
+   */
+  get BLOCK_DIRECT_WRITES(): boolean {
+    const v = getEnvString("VITE_BLOCK_DIRECT_WRITES");
+    if (v === "true" || v === "1") return true;
+    if (
+      typeof process !== "undefined" &&
+      process.env?.BLOCK_DIRECT_WRITES === "true"
+    )
+      return true;
+    return false;
+  },
+
+  /**
    * SUPPORT_WHATSAPP_NUMBER — Número WhatsApp para suporte ao utilizador.
    * Formato internacional sem + (e.g., "351912345678").
    * Env var: VITE_SUPPORT_WHATSAPP_NUMBER
@@ -136,14 +177,37 @@ export const CONFIG = {
   SUPPORT_WHATSAPP_NUMBER: getEnvString("VITE_SUPPORT_WHATSAPP_NUMBER"),
 
   /**
+   * Enterprise Dashboard — feature flag for safe rollout.
+   * true in dev by default; false in prod unless VITE_ENTERPRISE_DASHBOARD_ENABLED=true.
+   */
+  get ENTERPRISE_DASHBOARD_ENABLED(): boolean {
+    const v = getEnvString("VITE_ENTERPRISE_DASHBOARD_ENABLED");
+    if (v === "true" || v === "1") return true;
+    if (v === "false" || v === "0") return false;
+    return IS_DEV;
+  },
+
+  /**
+   * Offline strategy: heartbeat ao Core para deteção de conectividade fiável.
+   * Quando ativo, após N falhas consecutivas considera "degraded" mesmo com navigator.onLine.
+   * Env: VITE_OFFLINE_HEARTBEAT_ENABLED (default true), VITE_OFFLINE_HEARTBEAT_INTERVAL_MS (default 30000), VITE_OFFLINE_HEARTBEAT_FAILURES (default 2).
+   */
+  OFFLINE_HEARTBEAT_ENABLED: getEnvBool("VITE_OFFLINE_HEARTBEAT_ENABLED", true),
+  OFFLINE_HEARTBEAT_INTERVAL_MS: Math.max(
+    5000,
+    parseInt(getEnvString("VITE_OFFLINE_HEARTBEAT_INTERVAL_MS") || "30000", 10),
+  ),
+  OFFLINE_HEARTBEAT_FAILURES: Math.max(
+    1,
+    parseInt(getEnvString("VITE_OFFLINE_HEARTBEAT_FAILURES") || "2", 10),
+  ),
+
+  /**
    * Indica se a venda da plataforma (checkout/assinatura) está permitida nesta origem.
    * Apenas chefiapp.com pode vender; outros domínios (white-label) não mostram/ativam checkout.
    */
   get canSellPlatform(): boolean {
-    const list: string[] = [
-      "https://www.chefiapp.com",
-      "https://chefiapp.com",
-    ];
+    const list: string[] = ["https://www.chefiapp.com", "https://chefiapp.com"];
     if (IS_DEV) {
       list.push(
         "http://localhost:5175",
@@ -152,11 +216,18 @@ export const CONFIG = {
         "http://127.0.0.1:5173",
       );
     }
-    const custom = getEnvString("VITE_PLATFORM_SALE_ORIGINS").split(",")
+    const custom = getEnvString("VITE_PLATFORM_SALE_ORIGINS")
+      .split(",")
       .map((o) => o.trim().toLowerCase())
       .filter(Boolean);
-    const origins = custom.length > 0 ? custom : list.map((o) => o.toLowerCase());
-    return origins.includes((typeof window !== "undefined" ? window.location.origin : "").toLowerCase());
+    const origins =
+      custom.length > 0 ? custom : list.map((o) => o.toLowerCase());
+    return origins.includes(
+      (typeof window !== "undefined"
+        ? window.location.origin
+        : ""
+      ).toLowerCase(),
+    );
   },
 };
 

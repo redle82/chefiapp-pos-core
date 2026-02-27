@@ -1,7 +1,24 @@
 import { alertEngine } from "../../../../core/alerts/AlertEngine";
+import { Logger } from "../../../../core/logger";
+import { TRIAL_RESTAURANT_ID } from "../../../../core/readiness/operationalRestaurant";
 import { dockerCoreClient } from "../../../../infra/docker-core/connection";
 import type { CoreOrder, CoreTable } from "../../../../infra/docker-core/types";
 import type { DashboardOverview } from "../types";
+
+/** Race a promise against a timeout; returns fallback if the promise doesn't resolve in time. */
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  fallback: T,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => {
+      timer = setTimeout(() => resolve(fallback), ms);
+    }),
+  ]).finally(() => clearTimeout(timer!));
+}
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -96,6 +113,11 @@ export async function getOverview(
 
   // Avoid invalid PostgREST calls such as restaurant_id=eq. during bootstrap races.
   if (!UUID_REGEX.test(restaurantId)) {
+    return buildEmptyOverview(restaurantId, 0);
+  }
+
+  // TRIAL mode: no real data — return empty immediately to avoid hitting remote Supabase.
+  if (restaurantId === TRIAL_RESTAURANT_ID) {
     return buildEmptyOverview(restaurantId, 0);
   }
 
@@ -235,10 +257,21 @@ export async function getOverview(
       },
     };
   } catch (err) {
-    console.warn(
+    Logger.warn(
       "[dashboardService] getOverview real data failed, returning empty overview",
-      err,
+      { error: String(err) },
     );
     return buildEmptyOverview(restaurantId, 0);
   }
+}
+
+/** Wrapped version with an 8s race timeout to prevent infinite loading. */
+export async function getOverviewSafe(
+  locationId: string,
+): Promise<DashboardOverview> {
+  return withTimeout(
+    getOverview(locationId),
+    8000,
+    buildEmptyOverview(locationId, 0),
+  );
 }
