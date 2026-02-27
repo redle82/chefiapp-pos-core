@@ -78,6 +78,7 @@ export default defineConfig(async ({ mode }) => {
       alias: {
         react: reactPath,
         "react-dom": reactDomPath,
+        "@": path.resolve(__dirname, "src"),
       },
     },
     // Uma única instância de React: pre-bundle usa o mesmo alias para evitar Invalid hook call.
