@@ -17,6 +17,7 @@
  */
 
 import { Outlet } from "react-router-dom";
+import { isTrial } from "../../core/runtime/RuntimeContext";
 import styles from "./BrowserBlockGuard.module.css";
 
 /* ------------------------------------------------------------------ */
@@ -68,8 +69,8 @@ export function BrowserBlockGuard({
   requiredPlatform,
   moduleLabel,
 }: BrowserBlockGuardProps) {
-  // ── Allow only installed apps ──
-  if (isInstalledApp()) {
+  // ── Allow installed apps and trial mode (so users can demo TPV in browser) ──
+  if (isInstalledApp() || isTrial) {
     return <Outlet />;
   }
 

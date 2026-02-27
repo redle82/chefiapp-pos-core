@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
+import { isTrial } from "../../core/runtime/RuntimeContext";
 import { useShift } from "../../core/shift/ShiftContext";
 import { getTpvRestaurantId } from "../../core/storage/installedDeviceStorage";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
@@ -35,7 +36,8 @@ export function ShiftGate({ children }: Props) {
   const isDocker = getBackendType() === BackendType.docker;
 
   // DEBUG_DIRECT_FLOW: vertical slice sem turno; TPV e KDS diretos.
-  if (CONFIG.DEBUG_DIRECT_FLOW) {
+  // Trial mode: skip shift requirement so users can demo TPV in browser.
+  if (CONFIG.DEBUG_DIRECT_FLOW || isTrial) {
     return <>{children}</>;
   }
 
