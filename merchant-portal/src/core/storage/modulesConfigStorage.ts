@@ -11,25 +11,29 @@ export interface ModulesEnabled {
   kds: boolean;
 }
 
-const DEFAULT: ModulesEnabled = { tpv: true, kds: true };
-const PREFIX = "chefiapp_modules_";
+// TDZ-safe: function declarations are hoisted, const is not.
+// In a monolithic Rollup chunk, module body order may cause TDZ on const.
+function defaults(): ModulesEnabled {
+  return { tpv: true, kds: true };
+}
 
 function key(restaurantId: string): string {
-  return `${PREFIX}${restaurantId}`;
+  return `chefiapp_modules_${restaurantId}`;
 }
 
 export function getModulesEnabled(restaurantId: string | null): ModulesEnabled {
-  if (!restaurantId || typeof localStorage === "undefined") return DEFAULT;
+  const def = defaults();
+  if (!restaurantId || typeof localStorage === "undefined") return def;
   try {
     const raw = localStorage.getItem(key(restaurantId));
-    if (!raw) return DEFAULT;
+    if (!raw) return def;
     const parsed = JSON.parse(raw) as Partial<ModulesEnabled>;
     return {
-      tpv: parsed.tpv ?? DEFAULT.tpv,
-      kds: parsed.kds ?? DEFAULT.kds,
+      tpv: parsed.tpv ?? def.tpv,
+      kds: parsed.kds ?? def.kds,
     };
   } catch {
-    return DEFAULT;
+    return def;
   }
 }
 

@@ -11,27 +11,30 @@ export interface PaymentMethodsEnabled {
   card: boolean;
 }
 
-const DEFAULT: PaymentMethodsEnabled = { cash: true, card: true };
-const PREFIX = "chefiapp_payment_methods_";
+// TDZ-safe: function declarations are hoisted, const is not.
+function defaults(): PaymentMethodsEnabled {
+  return { cash: true, card: true };
+}
 
 function key(restaurantId: string): string {
-  return `${PREFIX}${restaurantId}`;
+  return `chefiapp_payment_methods_${restaurantId}`;
 }
 
 export function getPaymentMethodsEnabled(
   restaurantId: string | null,
 ): PaymentMethodsEnabled {
-  if (!restaurantId || typeof localStorage === "undefined") return DEFAULT;
+  const def = defaults();
+  if (!restaurantId || typeof localStorage === "undefined") return def;
   try {
     const raw = localStorage.getItem(key(restaurantId));
-    if (!raw) return DEFAULT;
+    if (!raw) return def;
     const parsed = JSON.parse(raw) as Partial<PaymentMethodsEnabled>;
     return {
-      cash: parsed.cash ?? DEFAULT.cash,
-      card: parsed.card ?? DEFAULT.card,
+      cash: parsed.cash ?? def.cash,
+      card: parsed.card ?? def.card,
     };
   } catch {
-    return DEFAULT;
+    return def;
   }
 }
 

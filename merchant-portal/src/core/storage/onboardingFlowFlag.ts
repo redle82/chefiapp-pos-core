@@ -5,3 +5,6 @@
  * em fluxo de onboarding. O estado do sistema deve ser derivado dos
  * dados reais (configuração, publicação, etc.), não de flags de wizard.
  */
+
+/** No-op para manter imports compatíveis. A flag foi removida. */
+export function setOnboardingJustCompletedFlag(): void {}

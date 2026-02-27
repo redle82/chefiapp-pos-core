@@ -6,14 +6,13 @@
  * Valor: cêntimos (number).
  */
 
-const PREFIX = "chefiapp_shift_default_opening_cents_";
-
+// TDZ-safe: function declarations are hoisted, const is not.
 function key(restaurantId: string): string {
-  return `${PREFIX}${restaurantId}`;
+  return `chefiapp_shift_default_opening_cents_${restaurantId}`;
 }
 
 export function getDefaultOpeningCashCents(
-  restaurantId: string | null
+  restaurantId: string | null,
 ): number | null {
   if (!restaurantId || typeof localStorage === "undefined") return null;
   try {
@@ -28,7 +27,7 @@ export function getDefaultOpeningCashCents(
 
 export function setDefaultOpeningCashCents(
   restaurantId: string | null,
-  cents: number
+  cents: number,
 ): void {
   if (!restaurantId || typeof localStorage === "undefined") return;
   try {

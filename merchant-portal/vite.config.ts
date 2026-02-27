@@ -261,15 +261,99 @@ export default defineConfig(async ({ mode }) => {
             // Stripe: do NOT put in separate chunk — causes "Cannot access 'u' before initialization"
             // when chunk loads before deps; let Rollup bundle with consuming code.
 
-            // ── Shared runtime modules ──
+            // ── Page chunks (top-level src/pages/ ONLY) ──
+            // CRITICAL: Use "/src/pages/" (not just "/pages/") so that
+            // features/*/pages/ directories are NOT intercepted here.
+            // They must fall through to the shared-code patterns below
+            // and land in app-runtime. Using "/pages/" alone was the root
+            // cause of circular chunk deps (app-runtime ↔ app-core etc.).
+            if (id.includes("/src/pages/")) {
+              // Pages that MUST live in app-runtime (statically imported at boot,
+              // or heavily cross-referenced by shared modules)
+              if (
+                id.includes("/pages/TPV/") ||
+                id.includes("/pages/TPVMinimal/") ||
+                id.includes("/pages/KDSMinimal/") ||
+                id.includes("/pages/Onboarding/") ||
+                id.includes("/pages/AppStaff/context/") ||
+                id.includes("/pages/AppStaff/data/") ||
+                // Marketing/landing pages: imported statically by MarketingRoutes at boot
+                id.includes("/pages/Landing/") ||
+                id.includes("/pages/LandingV2/") ||
+                id.includes("/pages/Billing/") ||
+                id.includes("/pages/Changelog/") ||
+                id.includes("/pages/Legal/") ||
+                id.includes("/pages/Blog/") ||
+                id.includes("/pages/AuthPhone/") ||
+                id.includes("/pages/LoginPage/") ||
+                id.includes("/pages/About/") ||
+                id.includes("/pages/Security/") ||
+                id.includes("/pages/Status/") ||
+                id.includes("/pages/BootstrapPage") ||
+                id.includes("/pages/HelpStartLocalPage") ||
+                id.includes("/pages/DebugTPV") ||
+                // Config components imported by features/admin/config/pages/
+                // — without this, app-runtime→app-admin circular dep occurs.
+                id.includes("/pages/Config/PublicPresenceFields") ||
+                id.includes("/pages/Config/PublicQRSection") ||
+                id.includes("/pages/Config/RestaurantPeopleSection") ||
+                id.includes("/pages/Config/RolesSummarySection") ||
+                id.includes("/pages/Config/ConfigIntegrationsPage") ||
+                // OwnerDashboard + deps imported by features/admin/dashboard/
+                id.includes("/pages/AppStaff/OwnerDashboard") ||
+                id.includes("/pages/AppStaff/hooks/useAppStaffOrders") ||
+                // ReflexEngine imported by StaffContext (which is in app-runtime)
+                id.includes("/pages/AppStaff/core/ReflexEngine") ||
+                // MenuCatalog types imported by infra/readers/MenuCatalogReader
+                id.includes("/pages/MenuCatalog/types")
+              )
+                return "app-runtime";
+
+              // Feature chunks (domain-focused, low fragmentation)
+              if (
+                id.includes("/pages/Public/") ||
+                id.includes("/pages/PublicWeb/")
+              )
+                return "public";
+
+              if (id.includes("/pages/AppStaff/")) return "app-staff";
+              if (
+                id.includes("/pages/Owner/") ||
+                id.includes("/pages/Manager/") ||
+                id.includes("/pages/Reports/") ||
+                id.includes("/pages/Dashboard/")
+              )
+                return "app-admin";
+              if (
+                id.includes("/pages/Config/") ||
+                id.includes("/pages/Backoffice/")
+              )
+                return "app-admin";
+              if (
+                id.includes("/pages/MenuBuilder/") ||
+                id.includes("/pages/MenuCatalog/")
+              )
+                return "app-menu";
+
+              if (
+                id.includes("/pages/Operacao/") ||
+                id.includes("/pages/ShoppingList/") ||
+                id.includes("/pages/TaskSystem/") ||
+                id.includes("/pages/People/") ||
+                id.includes("/pages/Health/") ||
+                id.includes("/pages/Financial/") ||
+                id.includes("/pages/Install") ||
+                id.includes("/pages/CoreReset/")
+              )
+                return "app-misc";
+
+              // All remaining pages
+              return "app-core";
+            }
+
+            // ── Shared runtime modules (non-page src/ directories only) ──
             // ALL shared code (core, hooks, features, ui, components, infra, domain, etc.)
             // MUST live in a single chunk to prevent TDZ circular dependencies.
-            // Previously only /core/, /context/, /hooks/, /features/, /intelligence/ were here;
-            // /ui/, /components/, /infra/, /domain/ etc. were "floating" (Rollup-assigned),
-            // causing circular chunk dependencies → "Cannot access 'X' before initialization".
-            //
-            // Also includes /pages/TPV/, /pages/Onboarding/, /pages/AppStaff/context/
-            // because they are heavily imported by core/hooks/features/ui modules.
             if (
               id.includes("/core/") ||
               id.includes("/context/") ||
@@ -283,71 +367,9 @@ export default defineConfig(async ({ mode }) => {
               id.includes("/commercial/") ||
               id.includes("/integrations/") ||
               id.includes("/shared/") ||
-              id.includes("/onboarding-core/") ||
-              // Pages heavily cross-referenced by shared code (avoid app-runtime ↔ app-core TDZ)
-              id.includes("/pages/TPV/") ||
-              id.includes("/pages/TPVMinimal/") ||
-              id.includes("/pages/KDSMinimal/") ||
-              id.includes("/pages/Onboarding/") ||
-              id.includes("/pages/AppStaff/context/") ||
-              id.includes("/pages/AppStaff/data/") ||
-              // Marketing/landing pages: imported statically by MarketingRoutes at boot
-              // → must be in app-runtime to avoid "Cannot access 'wi' before initialization" (TDZ)
-              id.includes("/pages/Landing/") ||
-              id.includes("/pages/LandingV2/") ||
-              id.includes("/pages/Billing/") ||
-              id.includes("/pages/Changelog/") ||
-              id.includes("/pages/Legal/") ||
-              id.includes("/pages/Blog/") ||
-              id.includes("/pages/AuthPhone/") ||
-              id.includes("/pages/LoginPage/") ||
-              id.includes("/pages/About/") ||
-              id.includes("/pages/Security/") ||
-              id.includes("/pages/Status/") ||
-              id.includes("/pages/BootstrapPage") ||
-              id.includes("/pages/HelpStartLocalPage")
+              id.includes("/onboarding-core/")
             )
               return "app-runtime";
-
-            // ── Feature chunks (domain-focused, low fragmentation) ──
-            if (
-              id.includes("/pages/Public/") ||
-              id.includes("/pages/PublicWeb/")
-            )
-              return "public";
-
-            if (id.includes("/pages/AppStaff/")) return "app-staff";
-            if (
-              id.includes("/pages/Owner/") ||
-              id.includes("/pages/Manager/") ||
-              id.includes("/pages/Reports/") ||
-              id.includes("/pages/Dashboard/")
-            )
-              return "app-admin";
-            if (
-              id.includes("/pages/Config/") ||
-              id.includes("/pages/Backoffice/")
-            )
-              return "app-admin";
-            if (
-              id.includes("/pages/MenuBuilder/") ||
-              id.includes("/pages/MenuCatalog/")
-            )
-              return "app-menu";
-
-            if (
-              id.includes("/pages/Operacao/") ||
-              id.includes("/pages/ShoppingList/") ||
-              id.includes("/pages/TaskSystem/") ||
-              id.includes("/pages/People/") ||
-              id.includes("/pages/Health/") ||
-              id.includes("/pages/Financial/") ||
-              id.includes("/pages/Install") ||
-              id.includes("/pages/CoreReset/")
-            )
-              return "app-misc";
-
-            if (id.includes("/pages/")) return "app-core";
 
             // ── Core engine stays in main bundle ──
           },

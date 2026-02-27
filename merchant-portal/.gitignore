@@ -13,6 +13,11 @@ dist-marketing
 dist-ssr
 *.local
 
+# Stale build artifacts (only keep assets/products/ and assets/splash.png)
+assets/*.js
+assets/*.js.map
+assets/*.css
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
