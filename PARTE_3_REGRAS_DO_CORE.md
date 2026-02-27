@@ -1,0 +1,1 @@
+docs/archive/PARTE_3_REGRAS_DO_CORE.md

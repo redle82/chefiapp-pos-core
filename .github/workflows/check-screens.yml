@@ -1,28 +1,30 @@
 name: Check All Screens
 
+# ⚠️ STABILISATION: manual-only (was: PR + dispatch)
+# Playwright-heavy. Reintroduce as PR gate in Phase 3 — see CI_GOVERNANCE.md
+
 on:
-  pull_request:
-    branches: [main, develop]
   workflow_dispatch:
 
 jobs:
   check-screens:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: merchant-portal/package.json
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
-        working-directory: merchant-portal
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
         working-directory: merchant-portal

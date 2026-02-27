@@ -10,6 +10,7 @@
  *   - EventTaskGenerator.adjustPriorityForPulse()
  *   - RecurringTaskEngine.shouldSuppressForPulse()
  */
+export {}; // module scope — avoid duplicate-identifier errors across test files
 
 // ── Types (mirrors core-engine/pulse/PulseState.ts) ────────────────────────
 type PulseZone = "FLOW_ALTO" | "FLOW_PARCIAL" | "FLOW_BASE";

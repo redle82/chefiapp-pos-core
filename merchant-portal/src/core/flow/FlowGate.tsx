@@ -108,7 +108,9 @@ export function FlowGate({ children }: { children: ReactNode }) {
         return;
       }
 
-      // OPERATIONAL_NAVIGATION_SOVEREIGNTY: em OPERATIONAL_OS nunca redirect para "/"; destino canónico é /app/dashboard.
+      // SOVEREIGNTY CHECK — OPERATIONAL_NAVIGATION_SOVEREIGNTY:
+      // em OPERATIONAL_OS nunca redirect para "/"; destino canónico é /app/dashboard.
+      // If tenantStatus === 'ACTIVE', tenant is sovereign and should not be re-resolved.
       const resolveDestination = (state: RestaurantLifecycleState): string => {
         const d = getCanonicalDestination(state);
         if (CONFIG.UI_MODE === "OPERATIONAL_OS" && d === "/")
@@ -148,7 +150,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
             pathname,
             isAuthenticated: !!session?.user?.id,
             hasOrganization: true,
-          }),
+          })
         );
         if (mounted) {
           clearLoadingTimeout();
@@ -208,7 +210,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
             pathname,
             isAuthenticated: !!session?.user?.id,
             hasOrganization: true,
-          }),
+          })
         );
         if (mounted) {
           clearLoadingTimeout();
@@ -290,7 +292,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
           ) {
             try {
               const pilotMock = window.localStorage.getItem(
-                "chefiapp_pilot_mock_restaurant",
+                "chefiapp_pilot_mock_restaurant"
               );
               if (pilotMock) {
                 const row = JSON.parse(pilotMock) as { id?: string };
@@ -327,7 +329,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
             setTabIsolated("chefiapp_restaurant_id", defaultRestaurantId);
             window.localStorage.setItem(
               "chefiapp_restaurant_id",
-              defaultRestaurantId,
+              defaultRestaurantId
             );
             setActiveTenant(defaultRestaurantId);
             localRestaurantId = defaultRestaurantId;
@@ -348,7 +350,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
             if (debug)
               console.warn(
                 "[FlowGate] Member check error (fallback):",
-                memberError,
+                memberError
               );
             const fallbackId =
               getActiveTenant() ||
@@ -404,7 +406,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
                 if (debug)
                   console.warn(
                     "[FlowGate] Restaurant not found (404), clearing invalid id:",
-                    restaurantId,
+                    restaurantId
                   );
                 clearActiveTenant();
                 hasOrg = false;
