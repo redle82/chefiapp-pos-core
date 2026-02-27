@@ -71,6 +71,8 @@ export default defineConfig(async ({ mode }) => {
       __VITE_ENV__: "import.meta.env",
       // Inject local IP for QR code generation in device provisioning
       __LOCAL_IP__: JSON.stringify(localIp),
+      // Build timestamp for cache-busting and version identification
+      __BUILD_TIMESTAMP__: JSON.stringify(new Date().toISOString()),
     },
     resolve: {
       dedupe: ["react", "react-dom", "react-router-dom"],
@@ -115,7 +117,7 @@ export default defineConfig(async ({ mode }) => {
       tailwindcss(),
       ...sentryPlugins,
       VitePWA({
-        registerType: "prompt",
+        registerType: "autoUpdate",
         includeAssets: ["favicon.ico", "apple-touch-icon.png", "vite.svg"],
         devOptions: {
           enabled: false, // CRITICAL: Disable in dev to prevent workbox loop
@@ -147,6 +149,8 @@ export default defineConfig(async ({ mode }) => {
           ],
         },
         workbox: {
+          skipWaiting: true,
+          clientsClaim: true,
           globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
           maximumFileSizeToCacheInBytes: 5000000, // 5MB
           // Offline total: SPA carrega quando offline; GET /rest pode usar cache.

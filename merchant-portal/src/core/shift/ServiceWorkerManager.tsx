@@ -23,7 +23,6 @@ export const ServiceWorkerManager = () => {
   const [canUpdate, setCanUpdate] = useState(false);
 
   useEffect(() => {
-    // If update is available...
     if (needRefresh) {
       if (isShiftOpen) {
         // LAW: IMMUTABLE SHIFT - DO NOT UPDATE
@@ -33,14 +32,19 @@ export const ServiceWorkerManager = () => {
         });
         setCanUpdate(false);
       } else {
-        // Shift is closed, we can prompt the user
-        setCanUpdate(true);
+        // No active shift — auto-apply update immediately.
+        // Critical bug fixes must propagate without user interaction.
+        Logger.info("Auto-applying SW update (no active shift)", {
+          context: "ServiceWorkerManager",
+        });
+        updateServiceWorker(true);
       }
     } else {
       setCanUpdate(false);
     }
-  }, [needRefresh, isShiftOpen]);
+  }, [needRefresh, isShiftOpen, updateServiceWorker]);
 
+  // Fallback: if auto-update didn't trigger reload, show manual prompt
   if (!canUpdate) return null;
 
   return (

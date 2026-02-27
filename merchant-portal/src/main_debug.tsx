@@ -23,6 +23,25 @@ import "./index.css";
 import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
 // import "./ui/design-system/styles/dark-mode.css"; // P3-5: Dark mode styles
 
+// ─── Build Version Stamp ────────────────────────────────────────────────────
+// Visible in console to confirm which deploy is active.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare const __BUILD_TIMESTAMP__: string | undefined;
+const BUILD_STAMP = `chefiapp-build:${import.meta.env.MODE}:${
+  __BUILD_TIMESTAMP__ ?? "dev"
+}`;
+console.log(`%c[ChefIApp] ${BUILD_STAMP}`, "color: #f59e0b; font-weight: bold");
+
+// ─── Service Worker Auto-Reload ─────────────────────────────────────────────
+// When a new SW takes control (skipWaiting + clientsClaim), auto-reload so
+// critical fixes propagate immediately without user interaction.
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    console.log("[ChefIApp] New service worker activated — reloading...");
+    window.location.reload();
+  });
+}
+
 Sentry.init({
   dsn: "https://c507891630be22946aae6f4dc35daa2b@o4509651128942592.ingest.us.sentry.io/4510930062475264",
   environment:
