@@ -72,7 +72,11 @@ const OPTIONAL_TABLES = [
 
 /** RPCs opcionais: se a migração não estiver aplicada (404), não repetir o pedido durante TTL para evitar ruído na consola.
  * get_multiunit_overview: ver docker-core/schema/migrations/20260221_multiunit_aggregate_views.sql */
-const OPTIONAL_RPCS = ["get_multiunit_overview"] as const;
+const OPTIONAL_RPCS = [
+  "get_multiunit_overview",
+  "get_reconciliation_report",
+  "get_org_daily_consolidation",
+] as const;
 const rpcUnavailableUntil = new Map<string, number>();
 const RPC_UNAVAILABLE_TTL_MS = 30_000;
 const RPC_UNAVAILABLE_TTL_DEV_MS = 24 * 60 * 60 * 1000;
@@ -499,13 +503,16 @@ let clientInstance: DockerCoreClientShape | null = null;
  * run ./scripts/core/apply-missing-migrations.sh. See docs/architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md.
  */
 export async function probeOptionalTables(): Promise<void> {
-  if (typeof window !== "undefined" && IS_DEV) {
-    const ttl = OPTIONAL_TABLES_TTL_DEV_MS;
+  // In the browser, preseed optional tables as unavailable to avoid 404 console noise.
+  // DEV: 24h TTL (never probe); PROD: 5min TTL (lazy recovery after migration).
+  if (typeof window !== "undefined") {
+    const ttl = IS_DEV ? OPTIONAL_TABLES_TTL_DEV_MS : 5 * 60 * 1000;
     OPTIONAL_TABLES.forEach((table) =>
       tableUnavailableUntil.set(table, Date.now() + ttl),
     );
     return;
   }
+  // SSR / Node: probe to discover which tables exist.
   const core = getDockerCoreFetchClient();
   await Promise.all(
     OPTIONAL_TABLES.map((table) => core.from(table).select("id").limit(0)),
