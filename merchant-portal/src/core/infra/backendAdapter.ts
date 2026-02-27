@@ -43,9 +43,13 @@ function getUrl(): string {
   const url = getRawBaseUrl();
 
   if (!url) {
-    const isProd =
+    // Vite production build (browser): import.meta.env.PROD is true at compile-time
+    const isViteProd =
+      typeof import.meta !== "undefined" && !!import.meta.env?.PROD;
+    // Node.js / Jest: process.env.NODE_ENV === "production"
+    const isNodeProd =
       typeof process !== "undefined" && process.env.NODE_ENV === "production";
-    if (isProd) return "";
+    if (isViteProd || isNodeProd) return "";
     return "/rest";
   }
 

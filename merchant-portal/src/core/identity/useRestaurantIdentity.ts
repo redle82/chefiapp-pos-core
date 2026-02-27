@@ -36,17 +36,18 @@ async function hydrateIdentityFromSupabasePlaceholder(
   if (!identityTodoLoggedOnce) {
     identityTodoLoggedOnce = true;
     console.warn(
-      "[Identity] Backend Supabase: hidratação real não implementada. Usando identidade mínima.",
+      "[Identity] Backend sem Core: usando identidade trial.",
     );
   }
   setIdentity((prev) => ({
     ...prev,
-    name: prev.name || "Seu Restaurante",
-    city: prev.city || "Local desconhecido",
-    type: prev.type || "Geral",
-    isTrial: false,
+    id: prev.id || TRIAL_RESTAURANT_ID,
+    name: prev.name || "Seu restaurante",
+    city: prev.city || "Trial",
+    type: prev.type || "Restaurante",
+    isTrial: true,
     loading: false,
-    ownerName: prev.ownerName || "Comandante",
+    ownerName: prev.ownerName || "Visitante",
   }));
 }
 

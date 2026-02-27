@@ -34,6 +34,7 @@ import {
 } from "../infra/writers/RuntimeWriter";
 import { isDebugMode } from "../core/debugMode";
 import { isDockerBackend } from "../core/infra/backendAdapter";
+import { TRIAL_RESTAURANT_ID } from "../core/readiness/operationalRestaurant";
 import {
   deriveLifecycle,
   type RestaurantLifecycle,
@@ -50,7 +51,6 @@ import {
 } from "../core/modules/moduleCatalog";
 import { isDevStableMode } from "../core/runtime/devStableMode";
 import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
-import { clearActiveTenant } from "../core/tenant/TenantResolver";
 
 /** Estado operacional do Core: avisos só quando coreMode === 'offline-erro'. */
 export type CoreMode = "offline-intencional" | "online" | "offline-erro";
@@ -398,7 +398,7 @@ export function RestaurantRuntimeProvider({
       billing_status: "trial",
       trial_ends_at: null,
       capabilities,
-      setup_status: {},
+      setup_status: TRIAL_SETUP_STATUS,
       isPublished: true,
       systemState: deriveSystemState({
         hasOrganization: true,
@@ -423,7 +423,8 @@ export function RestaurantRuntimeProvider({
         typeof window !== "undefined"
           ? localStorage.getItem("chefiapp_restaurant_id")
           : null;
-      return savedId;
+      // Production without Core (Vercel): use saved ID or fall back to trial
+      return savedId || TRIAL_RESTAURANT_ID;
     } catch (error) {
       console.error(
         "[RestaurantRuntime] Erro ao carregar/criar restaurante:",
@@ -461,17 +462,7 @@ export function RestaurantRuntimeProvider({
           coreReachable = true;
         } catch (err: unknown) {
           coreReachable = false;
-          const msg = err instanceof Error ? err.message : String(err);
-          if (msg === "Restaurant not found in Core") {
-            clearActiveTenant();
-            setRuntime((prev) => ({
-              ...prev,
-              restaurant_id: null,
-              loading: false,
-              error: "Restaurante não encontrado",
-            }));
-            return;
-          }
+          // Core unreachable (Vercel / offline): use fallback data instead of clearing tenant
           coreState = await fetchRuntimeStateFallback(restaurantId);
         }
       } else {
