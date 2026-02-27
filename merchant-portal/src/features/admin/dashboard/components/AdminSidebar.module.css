@@ -191,3 +191,28 @@
   padding-top: 12px;
   border-top: 1px solid var(--surface-border);
 }
+
+.quickLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.quickLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.quickLink:hover {
+  background: var(--surface-hover, #f3f4f6);
+  color: var(--text-primary, #111827);
+}

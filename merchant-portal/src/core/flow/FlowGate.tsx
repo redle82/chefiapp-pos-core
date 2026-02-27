@@ -136,6 +136,13 @@ export function FlowGate({ children }: { children: ReactNode }) {
         window.localStorage.getItem("chefiapp_pilot_mode") === "true";
       const isTrialOrPilot = isDocker || isTrial || isPilot;
       if (isOperationalAppPath && hasLocalOrg && isTrialOrPilot) {
+        // User explicitly re-entered an operational route → clear logout flag
+        if (
+          typeof window !== "undefined" &&
+          window.localStorage.getItem("chefiapp_logged_out") === "true"
+        ) {
+          window.localStorage.removeItem("chefiapp_logged_out");
+        }
         setLifecycleState(
           deriveLifecycleState({
             pathname,

@@ -215,6 +215,14 @@ export function AdminSidebar() {
         )}
       </div>
       <div className={styles.footer}>
+        <nav aria-label="Quick links" className={styles.quickLinks}>
+          <NavLink to="/op/tpv" className={styles.quickLink}>
+            🖥️ Abrir TPV
+          </NavLink>
+          <NavLink to="/app/dashboard" className={styles.quickLink}>
+            🏠 Dashboard
+          </NavLink>
+        </nav>
         <ChefIAppSignature variant="full" size="sm" tone="light" />
       </div>
     </aside>

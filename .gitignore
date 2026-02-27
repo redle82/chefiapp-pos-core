@@ -96,3 +96,4 @@ merchant-portal/artifacts/
 # Update via: cd .agents/skills && git pull
 .agents/skills/
 .turbo
+.env.vercel
