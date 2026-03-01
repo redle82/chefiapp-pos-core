@@ -30,7 +30,6 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { DevicePairingView } from "../../features/auth/connectByCode/DevicePairingView";
 // FASE 3.5: Migrado para OrderReader (usa dockerCoreClient)
 import { CONFIG } from "../../config";
@@ -188,7 +187,7 @@ export function KDSMinimal() {
 
   // Em localhost + Docker: SEMPRE seed (TPV e KDS no mesmo restaurante; evita 1a35f047/cache).
   const installedKdsRestaurantId = getKdsRestaurantId();
-  const storageId = getTabIsolated("chefiapp_restaurant_id");
+  const storageId = readTenantIdWithLegacyFallback();
   const isLocalhost =
     typeof window !== "undefined" &&
     (window.location.hostname === "localhost" ||

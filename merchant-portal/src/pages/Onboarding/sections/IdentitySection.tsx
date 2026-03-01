@@ -13,6 +13,7 @@ import {
   BackendType,
   getBackendType,
 } from "../../../core/infra/backendAdapter";
+import { useTenant } from "../../../core/tenant/TenantContext";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import styles from "./IdentitySection.module.css";
 // Domain writes ONLY via Core. No Supabase.
@@ -48,6 +49,7 @@ export function IdentitySection() {
   const { identity } = useRestaurantIdentity();
   const { runtime, updateSetupStatus } = useRestaurantRuntime();
   const { user: authUser } = useCoreAuth();
+  const { tenantId } = useTenant();
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastIsValidRef = useRef<boolean | null>(null);
   const [_isSaving, setIsSaving] = React.useState(false);
@@ -145,12 +147,7 @@ export function IdentitySection() {
     }
 
     // Usar restaurant_id do RestaurantRuntimeContext (fonte única de verdade)
-    const restaurantId =
-      runtime.restaurant_id ||
-      identity.id ||
-      (typeof window !== "undefined"
-        ? localStorage.getItem("chefiapp_restaurant_id")
-        : null);
+    const restaurantId = runtime.restaurant_id || identity.id || tenantId;
 
     // Log de debug (apenas quando dados mudarem significativamente)
     if (formData.name && formData.name.length >= 3) {
@@ -158,10 +155,7 @@ export function IdentitySection() {
         isValid,
         restaurantId: restaurantId ? "✅ Existe" : "❌ Não existe",
         identityId: identity.id || "null",
-        localStorageId:
-          typeof window !== "undefined"
-            ? localStorage.getItem("chefiapp_restaurant_id") || "null"
-            : "N/A",
+        localStorageId: tenantId || "null",
         formDataName: formData.name,
         willCreate: isValid && !restaurantId && formData.name ? "SIM" : "NÃO",
       });

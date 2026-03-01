@@ -1,5 +1,5 @@
 # Boot Chain Architecture
->
+
 > **The Deterministic Sequence of Life**
 
 This document describes the exact sequence of events that occurs when a user enters the `/app` runtime.
@@ -11,71 +11,58 @@ User hits `/app/*` -> `Routes` (App.tsx) executes the following nesting:
 
 ### 1. FlowGate (`core/flow/FlowGate`)
 
-**Responsibility:** Authentication & Onboarding Router.
+**Responsibility:** Runtime adapter and gate de execução.
 
-- **Check 1:** Is `supabase.auth.session()` valid?
-  - If NO -> Redirect `/auth`.
-- **Check 2:** Is `profile` complete?
-  - If NO -> Redirect `/onboarding`.
-- **Side Effects:** Fetches User Profile.
+- Consome `useBootPipeline()`.
+- Exibe loading/fallback enquanto boot não termina.
+- Executa navegação quando decisão é redirect.
+- Injeta `LaunchContext` quando decisão é allow.
 
-### 2. TenantProvider (`core/tenant/TenantContext`)
+### 2. useBootPipeline (`core/boot/useBootPipeline`)
 
-**Responsibility:** Tenancy Resolution.
+**Responsibility:** Autoridade única de startup (FSM determinística).
 
-- **Action:** Reads `gm_restaurant_members` for the user.
-- **Resolution:**
-  - If LastTenant (localStorage) is valid -> Use it.
-  - Else if 1 membership -> Auto-select.
-  - Else if >1 membership -> Resolve to null (Redirect to `/app/select-tenant`).
-- **Output:** `tenantId` is Locked.
-- **Blocking:** Renders `Loading...` until resolution is complete.
+- Sequência canónica: `BOOT_START` → `AUTH_CHECKING` → `AUTH_RESOLVED` → `TENANT_LOADING` → `TENANT_RESOLVED` → `LIFECYCLE_DERIVED` → `ROUTE_DECIDING` → `BOOT_DONE`.
+- Controla timeouts por etapa e timeout global.
+- Resolve auth, tenant, billing e lifecycle num ponto único.
 
-### 3. AppDomainWrapper (`app/AppDomainWrapper`)
+### 3. BootRuntimeEngine (`core/boot/runtime/BootRuntimeEngine`)
 
-**Responsibility:** Domain Initialization (The "Big Bang").
+**Responsibility:** Helpers puros de runtime.
 
-- **Prerequisite:** `tenantId` MUST be non-null.
-- **Actions:**
-    1. **Hydrate Stores:** Calls `useStore.hydrate(tenantId)`.
-    2. **Connect Realtime:** Establishes `supabase.channel` with `restaurant_id=eq.{tenantId}`.
-    3. **Preload Satellites:** Initializes critical caching layers.
-- **Contract:** If this component mounts, the **Domain is Live** for that specific Tenant.
+- Orçamentos de timeout.
+- Guardas de navegação.
+- Regras de reset por mudança de utilizador.
+- Derivação de `deviceType` para `LaunchContext`.
 
-### 4. RequireActivation (`core/activation`)
+### 4. resolveBootDestination (`core/boot/resolveBootDestination`)
 
-**Responsibility:** Commerce & Billing Gate.
+**Responsibility:** Decisão final de lançamento.
 
-- **Check:** Does `restaurant.subscription` allow access?
-- **Action:** If Trial Expired / Payment Failed -> Redirect `/activation`.
+- Produz `{ type, to, reasonCode }`.
+- Define se runtime permite superfície (`ALLOW`) ou redireciona (`REDIRECT`).
 
-### 5. OperationGate (`core/flow/OperationGate`)
+### 5. UI Surface Mount
 
-**Responsibility:** Operational State Enforcement.
+**State:** Só renderiza após decisão do runtime.
 
-- **Check:** Is `restaurant.operation_status` OK?
-  - `PAUSED` -> Redirect `/app/paused`.
-  - `SUSPENDED` -> Redirect `/app/suspended`.
-- **Override:** Allows access to `Settings` / `Audit` even if suspended (logic dependent).
-
-### 6. The UI (`AppLayout` + Page)
-
-**State:** At this point, the UI renders.
-
-- `useTenant()` is safe.
-- `useStore()` is hydrated.
-- `useAuth()` is valid.
+- Superfícies não recalculam auth/tenant/billing/lifecycle.
+- Superfícies consomem contexto já resolvido.
 
 ## Allowable Side Effects
 
-| Gate | Allowed fetch? | Allowed Subscription? | Rebuild State? |
-|------|----------------|-----------------------|----------------|
-| **FlowGate** | Profile Only | No | No |
-| **TenantProvider** | Memberships | No | No |
-| **AppDomainWrapper** | **YES** (Domain) | **YES** (Global) | **YES** |
-| **Leaf Page** | **YES** (Local) | **YES** (Specific) | No (Consumer) |
+| Gate                | Allowed fetch?             | Allowed Subscription?      | Rebuild State?          |
+| ------------------- | -------------------------- | -------------------------- | ----------------------- |
+| **FlowGate**        | No (adapter only)          | No                         | No                      |
+| **useBootPipeline** | **YES** (boot authority)   | No                         | **YES** (boot snapshot) |
+| **Leaf Page**       | **YES** (surface-specific) | **YES** (surface-specific) | No (consumer)           |
 
-## The "Genesis Lock"
+## Legacy Note
 
-The Domain (`AppDomainWrapper`) **NEVER** mounts if `TenantProvider` is loading or failed.
-This prevents the "Looping" bug where streams are subscribed with stale/null IDs.
+References to chains such as `TenantProvider → AppDomainWrapper → RequireActivation → OperationGate`
+are considered historical and must not be treated as runtime authority.
+
+The canonical authority is documented in:
+
+- `docs/architecture/CHEFIAPP_OS_ARCHITECTURE_V1.md`
+- `docs/architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md`

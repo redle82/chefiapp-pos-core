@@ -20,7 +20,7 @@ docker compose -f docker-compose.core.yml ps
 # - chefiapp-core-realtime: Up
 
 # Verificar Frontend
-lsof -ti:5173
+lsof -ti:5175
 
 # Se não estiver rodando:
 cd merchant-portal
@@ -40,7 +40,7 @@ Validar que o KDS recebe atualizações em tempo real via Realtime.
 1. **Abrir KDS:**
 
    ```
-   http://localhost:5173/app/kds
+   http://localhost:5175/app/kds
    ```
 
 2. **Abrir Console do Navegador (F12):**
@@ -55,7 +55,7 @@ Validar que o KDS recebe atualizações em tempo real via Realtime.
 
 4. **Criar Pedido (em outra aba):**
 
-   - Abrir TPV: `http://localhost:5173/app/tpv`
+   - Abrir TPV: `http://localhost:5175/app/tpv`
    - Criar um pedido simples
    - **NÃO recarregar a página do KDS**
 
@@ -104,7 +104,7 @@ Validar que pedidos criados via QR Mesa aparecem no KDS com origem `QR_MESA`.
 1. **Abrir Página da Mesa:**
 
    ```
-   http://localhost:5173/public/restaurante-piloto/mesa/1
+   http://localhost:5175/public/restaurante-piloto/mesa/1
    ```
 
 2. **Verificar Validação:**
@@ -125,13 +125,13 @@ Validar que pedidos criados via QR Mesa aparecem no KDS com origem `QR_MESA`.
 
 5. **Verificar no KDS:**
 
-   - Abrir KDS: `http://localhost:5173/app/kds`
+   - Abrir KDS: `http://localhost:5175/app/kds`
    - ✅ Pedido deve aparecer
    - ✅ Badge de origem deve ser: **QR MESA 📱** (rosa/magenta)
    - ✅ Número da mesa deve ser: **#1**
 
 6. **Testar Constraint (Um Pedido por Mesa):**
-   - Voltar para página da mesa: `http://localhost:5173/public/restaurante-piloto/mesa/1`
+   - Voltar para página da mesa: `http://localhost:5175/public/restaurante-piloto/mesa/1`
    - Tentar criar outro pedido
    - ✅ Deve mostrar mensagem: "Já existe um pedido ativo para esta mesa"
    - ✅ Não deve permitir criar segundo pedido
@@ -176,7 +176,7 @@ Validar que todas as fases do KDS Perfeito estão funcionando.
 1. **Abrir KDS:**
 
    ```
-   http://localhost:5173/app/kds
+   http://localhost:5175/app/kds
    ```
 
 2. **Verificar Fase 1 - Hierarquia Visual:**
@@ -229,7 +229,7 @@ Validar que a constraint `idx_one_open_order_per_table` funciona corretamente.
 
 1. **Criar Pedido na Mesa 1:**
 
-   - Via QR Mesa: `http://localhost:5173/public/restaurante-piloto/mesa/1`
+   - Via QR Mesa: `http://localhost:5175/public/restaurante-piloto/mesa/1`
    - Ou via TPV (se tiver opção de mesa)
 
 2. **Verificar Pedido Ativo:**
@@ -269,7 +269,7 @@ Validar que a constraint `idx_one_open_order_per_table` funciona corretamente.
 ### Infraestrutura
 
 - [ ] Docker Core rodando (Postgres, PostgREST, Realtime)
-- [ ] Frontend rodando (porta 5173)
+- [ ] Frontend rodando (porta 5175)
 - [ ] Banco tem dados (restaurante, mesas, produtos)
 
 ### Funcionalidades

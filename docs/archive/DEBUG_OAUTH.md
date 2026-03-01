@@ -53,7 +53,7 @@ Se members NÃO existe (novo usuário):
 ## URL do callback esperada:
 
 ```
-http://localhost:5173/bootstrap#access_token=...&token_type=bearer&...
+http://localhost:5175/bootstrap#access_token=...&token_type=bearer&...
 ```
 
 Se não receber essa URL após login Google → problema no Supabase OAuth config.

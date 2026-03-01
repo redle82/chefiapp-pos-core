@@ -3,52 +3,28 @@
  * to operational modules (TPV, KDS, AppStaff).
  *
  * These modules MUST run as installed applications:
- *   - TPV / KDS  → Electron desktop app
+ *   - TPV / KDS  → Electron/Tauri desktop app (NOT PWA standalone)
  *   - AppStaff   → Mobile app (Expo/React Native)
  *
  * Only Admin runs in the browser.
  *
- * Detection:
- *   - Electron: navigator.userAgent includes "Electron"
- *   - Standalone PWA: display-mode: standalone (temporary bridge)
- *   - React Native WebView: window.ReactNativeWebView exists
+ * Lei O1 (OPERATIONAL_DEVICE_ONLY_CONTRACT): PWA standalone is NOT desktop app;
+ * "Open in app" from Chrome opens PWA, which must be blocked for /op/tpv, /op/kds.
  *
- * Ref: docs/architecture/SYSTEM_RULE_DEVICE_ONLY.md
+ * Ref: docs/contracts/OPERATIONAL_DEVICE_ONLY_CONTRACT.md
  */
 
-import { Outlet } from "react-router-dom";
-import { isTrial } from "../../core/runtime/RuntimeContext";
+import { Outlet, useLocation } from "react-router-dom";
+import {
+  isDesktopApp,
+  isInstalledApp,
+  isStandalone,
+} from "../../core/operational/platformDetection";
 import styles from "./BrowserBlockGuard.module.css";
 
 /* ------------------------------------------------------------------ */
-/*  Platform detection                                                 */
+/*  Platform detection — imported from core/operational/platformDetection */
 /* ------------------------------------------------------------------ */
-
-function isElectron(): boolean {
-  return (
-    typeof navigator !== "undefined" && navigator.userAgent.includes("Electron")
-  );
-}
-
-function isStandalone(): boolean {
-  if (typeof window === "undefined") return false;
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    (window.navigator as { standalone?: boolean }).standalone === true
-  );
-}
-
-function isReactNativeWebView(): boolean {
-  return typeof window !== "undefined" && "ReactNativeWebView" in window;
-}
-
-/**
- * Returns true when the app is running inside an installed application
- * (Electron, standalone PWA, React Native WebView) — not a plain browser tab.
- */
-function isInstalledApp(): boolean {
-  return isElectron() || isStandalone() || isReactNativeWebView();
-}
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
@@ -69,29 +45,48 @@ export function BrowserBlockGuard({
   requiredPlatform,
   moduleLabel,
 }: BrowserBlockGuardProps) {
-  // ── Allow installed apps and trial mode (so users can demo TPV in browser) ──
-  if (isInstalledApp() || isTrial) {
+  const location = useLocation();
+  const isDesktop = requiredPlatform === "desktop";
+  const isDesktopRuntime = isDesktopApp();
+  const isPwaStandalone = isStandalone();
+  const isTrialQuery =
+    new URLSearchParams(location.search).get("mode") === "trial";
+  const isAllowed = isDesktop
+    ? isDesktopRuntime || isTrialQuery
+    : isInstalledApp(requiredPlatform);
+
+  // ── Allow only explicit operational runtimes ──
+  if (isAllowed) {
     return <Outlet />;
   }
 
   // ── Block: plain browser ──
-  const isDesktop = requiredPlatform === "desktop";
+  const subtitleDesktop = isPwaStandalone
+    ? `PWA instalado no navegador não é a aplicação Desktop. Use o instalador do painel Admin para descarregar a aplicação ${moduleLabel} real.`
+    : `O módulo ${moduleLabel} requer a aplicação desktop ChefIApp. Instale o software no computador e vincule-o através do painel de administração.`;
+
+  const ruleBadge =
+    isDesktop && isPwaStandalone
+      ? "🛡️ PWA do Chrome ≠ App Desktop ChefIApp — use o instalador Admin"
+      : "🛡️ Regra de sistema — apenas aplicação instalada";
 
   return (
-    <div className={styles.blockScreen} data-chefiapp-os="browser-block">
+    <div
+      className={styles.blockScreen}
+      data-chefiapp-os="browser-block"
+      data-testid="browser-block-guard"
+    >
       <div className={styles.lockIcon}>🔒</div>
       <h1 className={styles.title}>
         {moduleLabel} não pode ser aberto no navegador
       </h1>
       <p className={styles.subtitle}>
         {isDesktop
-          ? `O módulo ${moduleLabel} requer a aplicação desktop ChefIApp. Instale o software no computador e vincule-o através do painel de administração.`
+          ? subtitleDesktop
           : `O módulo ${moduleLabel} requer a aplicação móvel ChefIApp Staff. Instale a app no telemóvel e vincule-a através do painel de administração.`}
       </p>
 
-      <div className={styles.ruleBadge}>
-        🛡️ Regra de sistema — apenas aplicação instalada
-      </div>
+      <div className={styles.ruleBadge}>{ruleBadge}</div>
 
       <div className={styles.instructionsCard}>
         <h2 className={styles.instructionsTitle}>

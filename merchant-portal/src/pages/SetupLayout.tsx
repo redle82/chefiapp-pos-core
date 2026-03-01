@@ -5,6 +5,7 @@ import "../App.css";
 import { GhostPreview } from "../components/GhostPreview";
 import { GlobalFooter } from "../components/GlobalFooter";
 import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
+import { useTenant } from "../core/tenant/TenantContext";
 import { useGhostPreviewProps, useOnboardingState } from "../hooks";
 import { OnboardingContext } from "../hooks/useSetupContext";
 import { OSFrame } from "../ui/design-system/sovereign/OSFrame";
@@ -17,12 +18,13 @@ import styles from "./SetupLayout.module.css";
 export function SetupLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { tenantId } = useTenant();
 
   // Initialize hook with TabIsolatedStorage values if available
   const onboarding = useOnboardingState({
     apiBase: getTabIsolated("chefiapp_api_base") || "",
     internalToken: getTabIsolated("chefiapp_internal_token") || "dev-token",
-    restaurantId: getTabIsolated("chefiapp_restaurant_id") || "",
+    restaurantId: tenantId || "",
   });
 
   const { apiBase, stepStatus, steps, gates, loading, profile } = onboarding;

@@ -146,7 +146,7 @@ if [ $FAILED -eq 0 ]; then
     echo -e "  ${GREEN}🎉 Realtime está configurado corretamente!${NC}"
     echo ""
     echo "  Próximos passos:"
-    echo "  1. Abrir KDS: http://localhost:5173/app/kds"
+    echo "  1. Abrir KDS: http://localhost:5175/app/kds"
     echo "  2. Verificar console do navegador (F12)"
     echo "  3. Procurar por 'SUBSCRIBED' no status do Realtime"
     echo "  4. Criar pedido e verificar atualização automática"

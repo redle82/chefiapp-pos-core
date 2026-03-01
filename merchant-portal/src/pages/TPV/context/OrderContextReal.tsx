@@ -135,7 +135,7 @@ export function OrderProvider({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // SOVEREIGN: restaurantId comes from Gate layer (TenantContext -> AppDomainWrapper)
+  // SOVEREIGN: restaurantId comes from Gate layer (TenantContext)
   const [restaurantId, setRestaurantId] = useState<string | null>(
     propRestaurantId || null,
   );

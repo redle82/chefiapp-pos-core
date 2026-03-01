@@ -62,7 +62,8 @@ const STATUS_LABELS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 export function TPVTasksPage() {
-  const restaurantId = useTPVRestaurantId();
+  // RequireOperational surface="TPV" guarantees restaurant exists when this renders.
+  const restaurantId = useTPVRestaurantId()!;
   const { runtime } = useRestaurantRuntime();
 
   const [tasks, setTasks] = useState<CoreTask[]>([]);

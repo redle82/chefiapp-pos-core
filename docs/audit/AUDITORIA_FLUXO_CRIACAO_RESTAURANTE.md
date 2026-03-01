@@ -1,5 +1,7 @@
 # Auditoria — Fluxo de Criação de Novo Restaurante (ChefIApp)
 
+> ⚠️ **PARTIALLY SUPERSEDED** — Referências a `AppDomainWrapper` e `/app/select-tenant` via AppDomainWrapper são históricas. Componente eliminado em PR-G (refactor/boot-pipeline). Seleção de tenant vive em `TenantContext`.
+
 **Data:** 2026-01-31
 **Escopo:** EXCLUSIVAMENTE o fluxo desde o primeiro acesso até o restaurante pronto para operar.
 **App:** merchant-portal. Arquitetura baseada em contratos. Core separado (docker-core).

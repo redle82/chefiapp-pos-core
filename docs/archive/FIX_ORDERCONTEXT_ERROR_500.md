@@ -16,7 +16,7 @@
 Erro 500 ao carregar `OrderContextReal.tsx`:
 
 ```
-GET http://localhost:5173/src/pages/TPV/context/OrderContextReal.tsx?t=1769382447490
+GET http://localhost:5175/src/pages/TPV/context/OrderContextReal.tsx?t=1769382447490
 net::ERR_ABORTED 500 (Internal Server Error)
 ```
 
@@ -103,7 +103,7 @@ const currentTotal = order?.total || 0;
 
 ## 🧪 Como Testar
 
-1. Abrir o app: `http://localhost:5173`
+1. Abrir o app: `http://localhost:5175`
 2. Verificar que não há erro 500 no console
 3. Acessar `/garcom` ou `/tpv`
 4. Verificar que `OrderContextReal` carrega corretamente

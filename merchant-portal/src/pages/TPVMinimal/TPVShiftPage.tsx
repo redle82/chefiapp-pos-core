@@ -12,7 +12,8 @@ const DEFAULT_REGISTER_NAME = "Caixa Principal";
 const formatCents = (cents: number) => `€${(cents / 100).toFixed(2)}`;
 
 export function TPVShiftPage() {
-  const restaurantId = useTPVRestaurantId();
+  // RequireOperational surface="TPV" guarantees restaurant exists when this renders.
+  const restaurantId = useTPVRestaurantId()!;
   const shift = useShift();
 
   const [loading, setLoading] = useState(true);

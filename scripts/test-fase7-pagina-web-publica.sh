@@ -108,13 +108,13 @@ fi
 # 8. Verificar frontend
 echo ""
 echo "8️⃣ Verificando frontend..."
-FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/ 2>/dev/null || echo "000")
+FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5175/ 2>/dev/null || echo "000")
 
 if [ "$FRONTEND_OK" = "200" ]; then
     echo "✅ Frontend rodando"
     echo ""
     echo "📋 INSTRUÇÕES PARA TESTE MANUAL:"
-    echo "   1. Abra: http://localhost:5173/public/$RESTAURANT_SLUG"
+    echo "   1. Abra: http://localhost:5175/public/$RESTAURANT_SLUG"
     echo "   2. Verifique que:"
     echo "      - Nome do restaurante aparece no topo"
     echo "      - Descrição do restaurante aparece (se existir)"
@@ -128,7 +128,7 @@ if [ "$FRONTEND_OK" = "200" ]; then
     echo "      - Formulários de pedido"
     echo "      - Qualquer ação de escrita"
 else
-    echo "⚠️  AVISO: Frontend não está rodando (porta 5173)"
+    echo "⚠️  AVISO: Frontend não está rodando (porta 5175)"
 fi
 
 # 9. Resumo
@@ -145,7 +145,7 @@ echo "  ✅ Apenas leitura (sem ações de escrita)"
 if [ "$FRONTEND_OK" = "200" ]; then
     echo ""
     echo "  📋 TESTE MANUAL NECESSÁRIO:"
-    echo "     Abra http://localhost:5173/public/$RESTAURANT_SLUG e valide visualmente"
+    echo "     Abra http://localhost:5175/public/$RESTAURANT_SLUG e valide visualmente"
 fi
 echo ""
 echo "Pronto para FASE 8 — Criação de Pedido via Web"

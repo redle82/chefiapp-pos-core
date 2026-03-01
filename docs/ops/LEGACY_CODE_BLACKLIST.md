@@ -42,6 +42,9 @@ _Lista preenchida após refactor pós-freeze (FASE 1)._
 | merchant-portal/src/core/marketing/ (PixelService, SEOHead)            | Não referenciado.                                                                                             |
 | merchant-portal/src/core/archive/ (README)                             | Candidato a remoção; pasta vazia.                                                                             |
 | merchant-portal/src/core/leak-map/ (LeakMapTypes, LeakRegistry)        | Não consumido; apenas import comentado em FinancialExport.                                                    |
+| merchant-portal/src/app/AppDomainWrapper.tsx                           | Dead boot chain; orphan with zero imports. Deleted in PR-G (refactor/boot-pipeline).                          |
+| merchant-portal/src/app/AppDomainWrapper.module.css                    | Stylesheet only imported by AppDomainWrapper. Deleted in PR-G.                                                |
+| merchant-portal/src/app/AppDomainProvider.tsx                          | Dead provider; orphan with zero imports + bypass finding #26. Deleted in PR-G.                                |
 
 ---
 

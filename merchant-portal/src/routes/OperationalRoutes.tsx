@@ -203,11 +203,13 @@ export const OperationalRoutesFragment = (
                 />
               }
             >
-              <ShiftGate>
-                <OperationalFullscreenWrapper>
-                  <TPVLayout />
-                </OperationalFullscreenWrapper>
-              </ShiftGate>
+              <RequireOperational surface="TPV">
+                <ShiftGate>
+                  <OperationalFullscreenWrapper>
+                    <TPVLayout />
+                  </OperationalFullscreenWrapper>
+                </ShiftGate>
+              </RequireOperational>
             </ErrorBoundary>
           }
         >
@@ -353,7 +355,14 @@ export const OperationalRoutesFragment = (
           <BrowserBlockGuard requiredPlatform="mobile" moduleLabel="AppStaff" />
         }
       >
-        <Route path="/app/staff" element={<AppStaffWrapper />}>
+        <Route
+          path="/app/staff"
+          element={
+            <RequireOperational surface="WEB">
+              <AppStaffWrapper />
+            </RequireOperational>
+          }
+        >
           <Route index element={<StaffIndexRedirect />} />
           <Route
             path="home"

@@ -7,12 +7,18 @@
 
 ## Resumo
 
-| Fase | Comando | Estado |
-|------|---------|--------|
-| Web E2E + 12 contratos | `audit:web-e2e` | ✅ Passa |
-| Core (typecheck + Jest raiz) | `audit:core` | ✅ Passa (61 suites, 651 testes; excluídos documentados) |
-| Leis do sistema | `audit:laws` | ✅ Passa |
-| **Release completo** | `audit:release` | ✅ Passa (desde 2026-02) |
+| Fase                         | Comando         | Estado                                                   |
+| ---------------------------- | --------------- | -------------------------------------------------------- |
+| Web E2E + 12 contratos       | `audit:web-e2e` | ✅ Passa                                                 |
+| Core (typecheck + Jest raiz) | `audit:core`    | ✅ Passa (61 suites, 651 testes; excluídos documentados) |
+| Leis do sistema              | `audit:laws`    | ✅ Passa                                                 |
+| **Release completo**         | `audit:release` | ✅ Passa (desde 2026-02)                                 |
+
+## Política vigente de bloqueio (2026-02-27)
+
+- **GO/NO-GO de release bloqueia** se houver qualquer linha `High` em estado diferente de `RESOLVED`/`WAIVED` no [AUDITORIA_SUPREMA_CONTRADICTIONS_LEDGER.md](./AUDITORIA_SUPREMA_CONTRADICTIONS_LEDGER.md).
+- Comando de verificação obrigatório: `npm run audit:ledger:high`.
+- `audit:release` e `audit:release:portal` devem incluir este gate.
 
 ## Gate alternativo (portal apenas)
 

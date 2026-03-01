@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import { WelcomeOverlay } from "../../../components/onboarding/WelcomeOverlay";
 import { shouldShowWelcome } from "../../../components/onboarding/welcomeUtils";
 import { currencyService } from "../../../core/currency/CurrencyService";
+import { useTenant } from "../../../core/tenant/TenantContext";
 import { GlobalLoadingView } from "../../../ui/design-system/components";
 import { useRestaurantId } from "../../../ui/hooks/useRestaurantId";
 import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
@@ -48,7 +49,10 @@ function formatCurrency(value: number): string {
 }
 
 export function AdminReportsOverview() {
-  const [showWelcome, setShowWelcome] = useState(shouldShowWelcome);
+  const { tenantId } = useTenant();
+  const [showWelcome, setShowWelcome] = useState(() =>
+    shouldShowWelcome(tenantId),
+  );
   const { restaurantId, loading: loadingRestaurant } = useRestaurantId();
   const { data: overview, loading: loadingOverview } =
     useDashboardOverview(restaurantId);

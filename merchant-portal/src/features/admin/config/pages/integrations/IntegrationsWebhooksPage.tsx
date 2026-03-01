@@ -5,27 +5,29 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRestaurantRuntime } from "../../../../../context/RestaurantRuntimeContext";
 import { INTEGRATION_EVENT_TYPES } from "../../../../../integrations";
+import { AdminPageHeader } from "../../../dashboard/components/AdminPageHeader";
 import {
-  listWebhookConfigs,
+  createApiKey,
+  deleteApiKey,
+  listApiKeys,
+  type ApiKeyRow,
+} from "../../api/apiKeysApi";
+import {
   createWebhookConfig,
-  updateWebhookConfig,
   deleteWebhookConfig,
-  listDeliveryLogs,
   generateWebhookSecret,
+  listDeliveryLogs,
+  listWebhookConfigs,
+  updateWebhookConfig,
   type WebhookOutConfigRow,
   type WebhookOutDeliveryLogRow,
 } from "../../api/webhookOutApi";
-import {
-  listApiKeys,
-  createApiKey,
-  deleteApiKey,
-  type ApiKeyRow,
-} from "../../api/apiKeysApi";
-import { AdminPageHeader } from "../../../dashboard/components/AdminPageHeader";
 
 export function IntegrationsWebhooksPage() {
+  const { t } = useTranslation("config");
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? null;
 
@@ -34,7 +36,9 @@ export function IntegrationsWebhooksPage() {
   const [apiKeys, setApiKeys] = useState<ApiKeyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newApiKeyRevealed, setNewApiKeyRevealed] = useState<string | null>(null);
+  const [newApiKeyRevealed, setNewApiKeyRevealed] = useState<string | null>(
+    null,
+  );
   const [apiKeyName, setApiKeyName] = useState("");
   const [creatingKey, setCreatingKey] = useState(false);
 
@@ -46,7 +50,9 @@ export function IntegrationsWebhooksPage() {
   const [formEnabled, setFormEnabled] = useState(true);
   const [formDescription, setFormDescription] = useState("");
   const [formSaving, setFormSaving] = useState(false);
-  const [newSecretRevealed, setNewSecretRevealed] = useState<string | null>(null);
+  const [newSecretRevealed, setNewSecretRevealed] = useState<string | null>(
+    null,
+  );
 
   const load = useCallback(async () => {
     if (!restaurantId) {
@@ -118,11 +124,15 @@ export function IntegrationsWebhooksPage() {
           enabled: formEnabled,
           description: formDescription || undefined,
         };
-        if (formSecret && formSecret !== "********") payload.secret = formSecret;
+        if (formSecret && formSecret !== "********")
+          payload.secret = formSecret;
         const { error: err } = await updateWebhookConfig(editingId, payload);
         if (err) throw new Error(err);
       } else {
-        const secret = formSecret && formSecret !== "********" ? formSecret : generateWebhookSecret();
+        const secret =
+          formSecret && formSecret !== "********"
+            ? formSecret
+            : generateWebhookSecret();
         const { id, error: err } = await createWebhookConfig(restaurantId, {
           url: formUrl,
           secret,
@@ -154,20 +164,21 @@ export function IntegrationsWebhooksPage() {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm("Remover este webhook?")) return;
+      if (!window.confirm(t("integrationsWebhooksPage.confirms.removeWebhook")))
+        return;
       const { error: err } = await deleteWebhookConfig(id);
       if (err) setError(err);
       else load();
     },
-    [load]
+    [load, t],
   );
 
   const toggleEvent = useCallback((ev: string) => {
-    setFormEvents(prev => {
+    setFormEvents((prev) => {
       if (prev.length === 0) {
-        return INTEGRATION_EVENT_TYPES.filter(e => e !== ev);
+        return INTEGRATION_EVENT_TYPES.filter((e) => e !== ev);
       }
-      if (prev.includes(ev)) return prev.filter(e => e !== ev);
+      if (prev.includes(ev)) return prev.filter((e) => e !== ev);
       return [...prev, ev];
     });
   }, []);
@@ -177,7 +188,14 @@ export function IntegrationsWebhooksPage() {
     setCreatingKey(true);
     setError(null);
     try {
-      const { id, key, error: err } = await createApiKey(restaurantId, apiKeyName || "Default");
+      const {
+        id,
+        key,
+        error: err,
+      } = await createApiKey(
+        restaurantId,
+        apiKeyName || t("integrationsWebhooksPage.defaultApiKeyName"),
+      );
       if (err) throw new Error(err);
       if (key) setNewApiKeyRevealed(key);
       setApiKeyName("");
@@ -187,26 +205,29 @@ export function IntegrationsWebhooksPage() {
     } finally {
       setCreatingKey(false);
     }
-  }, [restaurantId, apiKeyName, load]);
+  }, [restaurantId, apiKeyName, load, t]);
 
   const handleRevokeApiKey = useCallback(
     async (id: string) => {
-      if (!window.confirm("Revogar esta chave? Chamadas com ela deixarão de funcionar.")) return;
+      if (!window.confirm(t("integrationsWebhooksPage.confirms.revokeApiKey")))
+        return;
       const { error: err } = await deleteApiKey(id);
       if (err) setError(err);
       else load();
     },
-    [load]
+    [load, t],
   );
 
   if (!restaurantId) {
     return (
       <>
         <AdminPageHeader
-          title="APIs & Webhooks"
-          subtitle="Webhooks OUT (endpoint, eventos); API IN (chaves, limites)."
+          title={t("integrationsWebhooksPage.header.title")}
+          subtitle={t("integrationsWebhooksPage.header.subtitle")}
         />
-        <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>Seleccione um restaurante.</p>
+        <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>
+          {t("integrationsWebhooksPage.selectRestaurant")}
+        </p>
       </>
     );
   }
@@ -214,8 +235,8 @@ export function IntegrationsWebhooksPage() {
   return (
     <>
       <AdminPageHeader
-        title="APIs & Webhooks"
-        subtitle="Webhooks OUT (endpoint, eventos); API IN (chaves, limites)."
+        title={t("integrationsWebhooksPage.header.title")}
+        subtitle={t("integrationsWebhooksPage.header.subtitle")}
       />
 
       {error && (
@@ -235,9 +256,23 @@ export function IntegrationsWebhooksPage() {
       )}
 
       <section style={{ marginBottom: 32 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>
-            Webhooks OUT
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 12,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 16,
+              fontWeight: 600,
+              margin: 0,
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("integrationsWebhooksPage.webhooksOut.title")}
           </h2>
           <button
             type="button"
@@ -252,12 +287,14 @@ export function IntegrationsWebhooksPage() {
               cursor: "pointer",
             }}
           >
-            Adicionar webhook
+            {t("integrationsWebhooksPage.webhooksOut.add")}
           </button>
         </div>
 
         {loading ? (
-          <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>A carregar…</p>
+          <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>
+            {t("integrationsWebhooksPage.loading")}
+          </p>
         ) : configs.length === 0 ? (
           <div
             style={{
@@ -269,11 +306,11 @@ export function IntegrationsWebhooksPage() {
               color: "var(--text-secondary)",
             }}
           >
-            Nenhum webhook configurado. Clique em &quot;Adicionar webhook&quot; para enviar eventos (order.created, order.paid, etc.) para um URL com assinatura HMAC.
+            {t("integrationsWebhooksPage.webhooksOut.empty")}
           </div>
         ) : (
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            {configs.map(c => (
+            {configs.map((c) => (
               <li
                 key={c.id}
                 style={{
@@ -289,12 +326,32 @@ export function IntegrationsWebhooksPage() {
                 }}
               >
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text-primary)" }}>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 14,
+                      color: "var(--text-primary)",
+                    }}
+                  >
                     {c.description || c.url}
                   </div>
-                  <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>
-                    {c.url} · {c.events?.length === 0 ? "Todos os eventos" : `${c.events?.length} eventos`} ·{" "}
-                    {c.enabled ? "Ativo" : "Inativo"}
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: "var(--text-secondary)",
+                      marginTop: 4,
+                    }}
+                  >
+                    {c.url} ·{" "}
+                    {c.events?.length === 0
+                      ? t("integrationsWebhooksPage.webhooksOut.allEvents")
+                      : t("integrationsWebhooksPage.webhooksOut.eventsCount", {
+                          count: c.events?.length ?? 0,
+                        })}{" "}
+                    ·{" "}
+                    {c.enabled
+                      ? t("integrationsWebhooksPage.webhooksOut.active")
+                      : t("integrationsWebhooksPage.webhooksOut.inactive")}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
@@ -311,7 +368,7 @@ export function IntegrationsWebhooksPage() {
                       color: "var(--text-primary)",
                     }}
                   >
-                    Editar
+                    {t("integrationsWebhooksPage.actions.edit")}
                   </button>
                   <button
                     type="button"
@@ -326,7 +383,7 @@ export function IntegrationsWebhooksPage() {
                       cursor: "pointer",
                     }}
                   >
-                    Remover
+                    {t("integrationsWebhooksPage.actions.remove")}
                   </button>
                 </div>
               </li>
@@ -336,16 +393,32 @@ export function IntegrationsWebhooksPage() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>
-            API IN (chaves)
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 12,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 16,
+              fontWeight: 600,
+              margin: 0,
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("integrationsWebhooksPage.apiIn.title")}
           </h2>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <input
               type="text"
               value={apiKeyName}
-              onChange={e => setApiKeyName(e.target.value)}
-              placeholder="Nome da chave"
+              onChange={(e) => setApiKeyName(e.target.value)}
+              placeholder={t(
+                "integrationsWebhooksPage.apiIn.keyNamePlaceholder",
+              )}
               style={{
                 padding: "8px 12px",
                 border: "1px solid var(--surface-border)",
@@ -368,20 +441,48 @@ export function IntegrationsWebhooksPage() {
                 cursor: creatingKey ? "wait" : "pointer",
               }}
             >
-              {creatingKey ? "A criar…" : "Criar chave"}
+              {creatingKey
+                ? t("integrationsWebhooksPage.apiIn.creatingKey")
+                : t("integrationsWebhooksPage.apiIn.createKey")}
             </button>
           </div>
         </div>
-        <p style={{ margin: "0 0 12px 0", fontSize: 13, color: "var(--text-secondary)" }}>
-          Use o header <code style={{ background: "var(--status-primary-bg)", padding: "2px 6px", borderRadius: 4 }}>X-API-Key</code> ou{" "}
-          <code style={{ background: "var(--status-primary-bg)", padding: "2px 6px", borderRadius: 4 }}>Authorization: Bearer &lt;key&gt;</code>.
-          Limite: 100 pedidos/minuto.
+        <p
+          style={{
+            margin: "0 0 12px 0",
+            fontSize: 13,
+            color: "var(--text-secondary)",
+          }}
+        >
+          {t("integrationsWebhooksPage.apiIn.usagePrefix")}{" "}
+          <code
+            style={{
+              background: "var(--status-primary-bg)",
+              padding: "2px 6px",
+              borderRadius: 4,
+            }}
+          >
+            X-API-Key
+          </code>{" "}
+          {t("integrationsWebhooksPage.apiIn.usageOr")}{" "}
+          <code
+            style={{
+              background: "var(--status-primary-bg)",
+              padding: "2px 6px",
+              borderRadius: 4,
+            }}
+          >
+            Authorization: Bearer &lt;key&gt;
+          </code>
+          . {t("integrationsWebhooksPage.apiIn.usageLimit")}
         </p>
         {apiKeys.length === 0 ? (
-          <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>Nenhuma chave criada.</p>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+            {t("integrationsWebhooksPage.apiIn.empty")}
+          </p>
         ) : (
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            {apiKeys.map(k => (
+            {apiKeys.map((k) => (
               <li
                 key={k.id}
                 style={{
@@ -396,7 +497,10 @@ export function IntegrationsWebhooksPage() {
               >
                 <span style={{ fontWeight: 500, fontSize: 14 }}>{k.name}</span>
                 <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                  Último uso: {k.last_used_at ? new Date(k.last_used_at).toLocaleString() : "Nunca"}
+                  {t("integrationsWebhooksPage.apiIn.lastUsed")}:{" "}
+                  {k.last_used_at
+                    ? new Date(k.last_used_at).toLocaleString()
+                    : t("integrationsWebhooksPage.apiIn.never")}
                 </span>
                 <button
                   type="button"
@@ -411,7 +515,7 @@ export function IntegrationsWebhooksPage() {
                     cursor: "pointer",
                   }}
                 >
-                  Revogar
+                  {t("integrationsWebhooksPage.actions.revoke")}
                 </button>
               </li>
             ))}
@@ -441,11 +545,19 @@ export function IntegrationsWebhooksPage() {
               width: "90%",
               boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
             }}
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ margin: "0 0 8px 0", fontSize: 18 }}>Chave criada</h3>
-            <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
-              Copie esta chave agora; não voltará a ser mostrada.
+            <h3 style={{ margin: "0 0 8px 0", fontSize: 18 }}>
+              {t("integrationsWebhooksPage.apiIn.keyCreatedTitle")}
+            </h3>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 14,
+                color: "var(--text-secondary)",
+              }}
+            >
+              {t("integrationsWebhooksPage.apiIn.keyCreatedHint")}
             </p>
             <pre
               style={{
@@ -473,7 +585,7 @@ export function IntegrationsWebhooksPage() {
                 cursor: "pointer",
               }}
             >
-              Fechar
+              {t("integrationsWebhooksPage.actions.close")}
             </button>
           </div>
         </div>
@@ -501,21 +613,26 @@ export function IntegrationsWebhooksPage() {
               width: "90%",
               maxHeight: "90vh",
               overflow: "auto",
-              boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
+              boxShadow:
+                "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
             }}
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ margin: "0 0 16px 0", fontSize: 18 }}>
-              {editingId ? "Editar webhook" : "Novo webhook"}
+              {editingId
+                ? t("integrationsWebhooksPage.form.editTitle")
+                : t("integrationsWebhooksPage.form.newTitle")}
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <label style={{ fontSize: 14, fontWeight: 500 }}>
-                URL
+                {t("integrationsWebhooksPage.form.url")}
                 <input
                   type="url"
                   value={formUrl}
-                  onChange={e => setFormUrl(e.target.value)}
-                  placeholder="https://..."
+                  onChange={(e) => setFormUrl(e.target.value)}
+                  placeholder={t(
+                    "integrationsWebhooksPage.form.urlPlaceholder",
+                  )}
                   style={{
                     display: "block",
                     width: "100%",
@@ -527,17 +644,27 @@ export function IntegrationsWebhooksPage() {
                 />
               </label>
               <label style={{ fontSize: 14, fontWeight: 500 }}>
-                Secret (HMAC)
+                {t("integrationsWebhooksPage.form.secret")}
                 {editingId && (
-                  <span style={{ marginLeft: 8, color: "var(--text-secondary)", fontWeight: 400 }}>
-                    Deixe em branco para manter
+                  <span
+                    style={{
+                      marginLeft: 8,
+                      color: "var(--text-secondary)",
+                      fontWeight: 400,
+                    }}
+                  >
+                    {t("integrationsWebhooksPage.form.keepBlank")}
                   </span>
                 )}
                 <input
                   type="text"
                   value={formSecret}
-                  onChange={e => setFormSecret(e.target.value)}
-                  placeholder={editingId ? "********" : "Gerado ao criar"}
+                  onChange={(e) => setFormSecret(e.target.value)}
+                  placeholder={
+                    editingId
+                      ? "********"
+                      : t("integrationsWebhooksPage.form.generatedOnCreate")
+                  }
                   style={{
                     display: "block",
                     width: "100%",
@@ -548,18 +675,26 @@ export function IntegrationsWebhooksPage() {
                   }}
                 />
                 {newSecretRevealed && (
-                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--status-warning-text)" }}>
-                    Guarde este secret; não voltará a ser mostrado. Header: X-ChefIApp-Signature: sha256=&lt;hex&gt;
+                  <p
+                    style={{
+                      margin: "4px 0 0",
+                      fontSize: 12,
+                      color: "var(--status-warning-text)",
+                    }}
+                  >
+                    {t("integrationsWebhooksPage.form.secretHint")}
                   </p>
                 )}
               </label>
               <label style={{ fontSize: 14, fontWeight: 500 }}>
-                Descrição (opcional)
+                {t("integrationsWebhooksPage.form.description")}
                 <input
                   type="text"
                   value={formDescription}
-                  onChange={e => setFormDescription(e.target.value)}
-                  placeholder="ex: ERP, Zapier"
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  placeholder={t(
+                    "integrationsWebhooksPage.form.descriptionPlaceholder",
+                  )}
                   style={{
                     display: "block",
                     width: "100%",
@@ -571,9 +706,17 @@ export function IntegrationsWebhooksPage() {
                 />
               </label>
               <div>
-                <span style={{ fontSize: 14, fontWeight: 500 }}>Eventos</span>
-                <span style={{ marginLeft: 8, color: "var(--text-secondary)", fontSize: 13 }}>
-                  (vazio = todos)
+                <span style={{ fontSize: 14, fontWeight: 500 }}>
+                  {t("integrationsWebhooksPage.form.events")}
+                </span>
+                <span
+                  style={{
+                    marginLeft: 8,
+                    color: "var(--text-secondary)",
+                    fontSize: 13,
+                  }}
+                >
+                  {t("integrationsWebhooksPage.form.eventsHint")}
                 </span>
                 <div
                   style={{
@@ -588,11 +731,21 @@ export function IntegrationsWebhooksPage() {
                     gap: 4,
                   }}
                 >
-                  {INTEGRATION_EVENT_TYPES.map(ev => (
-                    <label key={ev} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+                  {INTEGRATION_EVENT_TYPES.map((ev) => (
+                    <label
+                      key={ev}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        fontSize: 13,
+                      }}
+                    >
                       <input
                         type="checkbox"
-                        checked={formEvents.length === 0 || formEvents.includes(ev)}
+                        checked={
+                          formEvents.length === 0 || formEvents.includes(ev)
+                        }
                         onChange={() => toggleEvent(ev)}
                       />
                       {ev}
@@ -600,16 +753,30 @@ export function IntegrationsWebhooksPage() {
                   ))}
                 </div>
               </div>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontSize: 14,
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={formEnabled}
-                  onChange={e => setFormEnabled(e.target.checked)}
+                  onChange={(e) => setFormEnabled(e.target.checked)}
                 />
-                Ativo
+                {t("integrationsWebhooksPage.form.active")}
               </label>
             </div>
-            <div style={{ marginTop: 20, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <div
+              style={{
+                marginTop: 20,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 8,
+              }}
+            >
               <button
                 type="button"
                 onClick={closeForm}
@@ -622,7 +789,7 @@ export function IntegrationsWebhooksPage() {
                   color: "var(--text-primary)",
                 }}
               >
-                Cancelar
+                {t("integrationsWebhooksPage.actions.cancel")}
               </button>
               <button
                 type="button"
@@ -637,7 +804,11 @@ export function IntegrationsWebhooksPage() {
                   cursor: formSaving ? "wait" : "pointer",
                 }}
               >
-                {formSaving ? "A guardar…" : editingId ? "Guardar" : "Criar"}
+                {formSaving
+                  ? t("integrationsWebhooksPage.form.saving")
+                  : editingId
+                  ? t("integrationsWebhooksPage.actions.save")
+                  : t("integrationsWebhooksPage.actions.create")}
               </button>
             </div>
           </div>
@@ -645,34 +816,89 @@ export function IntegrationsWebhooksPage() {
       )}
 
       <section>
-        <h2 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 12px 0", color: "var(--text-primary)" }}>
-          Últimos envios
+        <h2
+          style={{
+            fontSize: 16,
+            fontWeight: 600,
+            margin: "0 0 12px 0",
+            color: "var(--text-primary)",
+          }}
+        >
+          {t("integrationsWebhooksPage.logs.title")}
         </h2>
         {logs.length === 0 ? (
-          <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>Nenhum envio registado.</p>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+            {t("integrationsWebhooksPage.logs.empty")}
+          </p>
         ) : (
-          <div style={{ overflow: "auto", border: "1px solid var(--surface-border)", borderRadius: 12 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <div
+            style={{
+              overflow: "auto",
+              border: "1px solid var(--surface-border)",
+              borderRadius: 12,
+            }}
+          >
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: 13,
+              }}
+            >
               <thead>
-                <tr style={{ background: "var(--card-bg-on-dark)", borderBottom: "1px solid var(--surface-border)" }}>
-                  <th style={{ textAlign: "left", padding: 10 }}>Evento</th>
-                  <th style={{ textAlign: "left", padding: 10 }}>URL</th>
-                  <th style={{ textAlign: "left", padding: 10 }}>Status</th>
-                  <th style={{ textAlign: "left", padding: 10 }}>Tentativa</th>
-                  <th style={{ textAlign: "left", padding: 10 }}>Data</th>
-                  <th style={{ textAlign: "left", padding: 10 }}>Erro</th>
+                <tr
+                  style={{
+                    background: "var(--card-bg-on-dark)",
+                    borderBottom: "1px solid var(--surface-border)",
+                  }}
+                >
+                  <th style={{ textAlign: "left", padding: 10 }}>
+                    {t("integrationsWebhooksPage.logs.headers.event")}
+                  </th>
+                  <th style={{ textAlign: "left", padding: 10 }}>
+                    {t("integrationsWebhooksPage.logs.headers.url")}
+                  </th>
+                  <th style={{ textAlign: "left", padding: 10 }}>
+                    {t("integrationsWebhooksPage.logs.headers.status")}
+                  </th>
+                  <th style={{ textAlign: "left", padding: 10 }}>
+                    {t("integrationsWebhooksPage.logs.headers.attempt")}
+                  </th>
+                  <th style={{ textAlign: "left", padding: 10 }}>
+                    {t("integrationsWebhooksPage.logs.headers.date")}
+                  </th>
+                  <th style={{ textAlign: "left", padding: 10 }}>
+                    {t("integrationsWebhooksPage.logs.headers.error")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {logs.map(l => (
-                  <tr key={l.id} style={{ borderBottom: "1px solid var(--surface-border)" }}>
+                {logs.map((l) => (
+                  <tr
+                    key={l.id}
+                    style={{ borderBottom: "1px solid var(--surface-border)" }}
+                  >
                     <td style={{ padding: 10 }}>{l.event}</td>
-                    <td style={{ padding: 10, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <td
+                      style={{
+                        padding: 10,
+                        maxWidth: 200,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
                       {l.url}
                     </td>
                     <td style={{ padding: 10 }}>
                       {l.status_code != null ? (
-                        <span style={{ color: l.status_code >= 200 && l.status_code < 300 ? "var(--color-success)" : "var(--color-error)" }}>
+                        <span
+                          style={{
+                            color:
+                              l.status_code >= 200 && l.status_code < 300
+                                ? "var(--color-success)"
+                                : "var(--color-error)",
+                          }}
+                        >
                           {l.status_code}
                         </span>
                       ) : (
@@ -680,8 +906,17 @@ export function IntegrationsWebhooksPage() {
                       )}
                     </td>
                     <td style={{ padding: 10 }}>{l.attempt}</td>
-                    <td style={{ padding: 10 }}>{new Date(l.attempted_at).toLocaleString()}</td>
-                    <td style={{ padding: 10, maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <td style={{ padding: 10 }}>
+                      {new Date(l.attempted_at).toLocaleString()}
+                    </td>
+                    <td
+                      style={{
+                        padding: 10,
+                        maxWidth: 180,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
                       {l.error_message ?? "—"}
                     </td>
                   </tr>
@@ -692,8 +927,10 @@ export function IntegrationsWebhooksPage() {
         )}
       </section>
 
-      <p style={{ marginTop: 24, fontSize: 13, color: "var(--text-secondary)" }}>
-        Contrato completo: docs/CHEFIAPP_PUBLIC_API_CONTRACT.md
+      <p
+        style={{ marginTop: 24, fontSize: 13, color: "var(--text-secondary)" }}
+      >
+        {t("integrationsWebhooksPage.contract")}
       </p>
     </>
   );

@@ -45,7 +45,7 @@ O script mostrará:
 Enquanto o teste roda, abra o KDS no navegador:
 
 ```
-http://localhost:5173/app/kds?demo=true
+http://localhost:5175/app/kds?demo=true
 ```
 
 **O que observar:**

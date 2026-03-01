@@ -1,39 +1,39 @@
 # 📱 URLs de Todas as Telas - ChefIApp
 
-**Servidor:** `http://localhost:5173` (Vite Dev Server)
+**Servidor:** `http://localhost:5175` (Vite Dev Server)
 
 ---
 
 ## 👤 FUNCIONÁRIO (Employee)
 
 ### Telas Principais
-1. **Início** - `http://localhost:5173/employee/home`
-2. **Tarefas** - `http://localhost:5173/employee/tasks`
-3. **Operação** - `http://localhost:5173/employee/operation`
-4. **KDS Inteligente** - `http://localhost:5173/employee/operation/kitchen`
-5. **Mentor IA** - `http://localhost:5173/employee/mentor`
+1. **Início** - `http://localhost:5175/employee/home`
+2. **Tarefas** - `http://localhost:5175/employee/tasks`
+3. **Operação** - `http://localhost:5175/employee/operation`
+4. **KDS Inteligente** - `http://localhost:5175/employee/operation/kitchen`
+5. **Mentor IA** - `http://localhost:5175/employee/mentor`
 
 ---
 
 ## 👔 GERENTE (Manager)
 
 ### Telas Principais
-1. **Dashboard** - `http://localhost:5173/manager/dashboard`
-2. **Central de Comando** - `http://localhost:5173/manager/central`
-3. **Análise & Padrões** - `http://localhost:5173/manager/analysis`
-4. **Escala** - `http://localhost:5173/manager/schedule`
-5. **Criar Turno** - `http://localhost:5173/manager/schedule/create`
-6. **Reservas** - `http://localhost:5173/manager/reservations`
+1. **Dashboard** - `http://localhost:5175/manager/dashboard`
+2. **Central de Comando** - `http://localhost:5175/manager/central`
+3. **Análise & Padrões** - `http://localhost:5175/manager/analysis`
+4. **Escala** - `http://localhost:5175/manager/schedule`
+5. **Criar Turno** - `http://localhost:5175/manager/schedule/create`
+6. **Reservas** - `http://localhost:5175/manager/reservations`
 
 ---
 
 ## 🏠 DONO (Owner)
 
 ### Telas Principais
-1. **Visão** - `http://localhost:5173/owner/vision`
-2. **Estoque Real** - `http://localhost:5173/owner/stock`
-3. **Simulação** - `http://localhost:5173/owner/simulation`
-4. **Compras** - `http://localhost:5173/owner/purchases`
+1. **Visão** - `http://localhost:5175/owner/vision`
+2. **Estoque Real** - `http://localhost:5175/owner/stock`
+3. **Simulação** - `http://localhost:5175/owner/simulation`
+4. **Compras** - `http://localhost:5175/owner/purchases`
 
 ---
 
@@ -52,14 +52,14 @@
 
 ## 📋 OUTRAS TELAS EXISTENTES
 
-1. **KDS Mínimo** - `http://localhost:5173/kds-minimal`
-2. **TPV** - `http://localhost:5173/tpv`
-3. **Menu Builder** - `http://localhost:5173/menu-builder`
-4. **Operação** - `http://localhost:5173/operacao`
-5. **Estoque** - `http://localhost:5173/inventory-stock`
-6. **Task System** - `http://localhost:5173/task-system`
-7. **Shopping List** - `http://localhost:5173/shopping-list`
-8. **Garçom** - `http://localhost:5173/garcom`
+1. **KDS Mínimo** - `http://localhost:5175/kds-minimal`
+2. **TPV** - `http://localhost:5175/tpv`
+3. **Menu Builder** - `http://localhost:5175/menu-builder`
+4. **Operação** - `http://localhost:5175/operacao`
+5. **Estoque** - `http://localhost:5175/inventory-stock`
+6. **Task System** - `http://localhost:5175/task-system`
+7. **Shopping List** - `http://localhost:5175/shopping-list`
+8. **Garçom** - `http://localhost:5175/garcom`
 
 ---
 
@@ -75,7 +75,7 @@
 - ✅ **Screenshots** gerados em `artifacts/screenshots/`
 - ✅ **Relatório completo** em `artifacts/screens_report.md`
 
-**Servidor:** ✅ Rodando em `http://localhost:5173`
+**Servidor:** ✅ Rodando em `http://localhost:5175`
 
 **Script de automação:** `scripts/open_screens.mjs`
 

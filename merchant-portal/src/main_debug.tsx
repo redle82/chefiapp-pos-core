@@ -5,19 +5,14 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./config"; // Load first so CONFIG is ready before any chunk (avoids "Cannot access before initialization")
-import { GlobalUIStateProvider } from "./context/GlobalUIStateContext";
 import {
   LifecycleStateProvider,
   type LifecycleStateContextValue,
 } from "./context/LifecycleStateContext";
-import { RestaurantRuntimeProvider } from "./context/RestaurantRuntimeContext";
 import type { RestaurantLifecycleState } from "./core/lifecycle/LifecycleState";
 import { Logger } from "./core/logger";
-import { RoleProvider } from "./core/roles";
 import { logRuntimeStatus } from "./core/runtime/RuntimeContext";
 import { devStableReason, isDevStableMode } from "./core/runtime/devStableMode";
-import { ShiftProvider } from "./core/shift/ShiftContext";
-import { TenantProvider } from "./core/tenant/TenantContext";
 import "./i18n";
 import "./index.css";
 import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
@@ -321,7 +316,9 @@ Logger.info("Application starting", {
 // ============================================================================
 // MARKETING (/, /trial, /auth, /billing/success) renderiza SEM RestaurantRuntime
 // nem ShiftProvider — landing 100% desacoplada do Core (ver App.tsx).
-// Estado do lifecycle no entry evita duas instâncias de React (Invalid hook call).
+// PR-A: Providers Core-dependentes (RestaurantRuntimeProvider, ShiftProvider,
+// GlobalUIStateProvider, RoleProvider, TenantProvider) movidos para
+// AppOperationalWrapper em App.tsx. Rotas públicas NÃO montam nada do Core.
 // ============================================================================
 
 function RootWithLifecycle() {
@@ -336,17 +333,7 @@ function RootWithLifecycle() {
   };
   return (
     <LifecycleStateProvider value={lifecycleValue}>
-      <RestaurantRuntimeProvider>
-        <ShiftProvider>
-          <GlobalUIStateProvider>
-            <RoleProvider>
-              <TenantProvider>
-                <App />
-              </TenantProvider>
-            </RoleProvider>
-          </GlobalUIStateProvider>
-        </ShiftProvider>
-      </RestaurantRuntimeProvider>
+      <App />
     </LifecycleStateProvider>
   );
 }

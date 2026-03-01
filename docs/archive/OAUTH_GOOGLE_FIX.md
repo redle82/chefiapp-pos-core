@@ -101,7 +101,7 @@ Client Secret: [do Google Cloud Console]
 
 ```
 https://chefiapp.com/auth/callback
-http://localhost:5173/auth/callback
+http://localhost:5175/auth/callback
 ```
 
 **NUNCA expor**:

@@ -268,7 +268,7 @@ async function main() {
     console.log(`   ✅ Origens preservadas corretamente`);
     console.log(`   ✅ Autoria preservada (AppStaff)`);
     console.log('\n🎯 PRÓXIMO PASSO: Verificar visualmente no KDSMinimal');
-    console.log('   URL: http://localhost:5173/kds-minimal\n');
+    console.log('   URL: http://localhost:5175/kds-minimal\n');
 
   } catch (error) {
     console.error('\n❌ ERRO NO TESTE:');

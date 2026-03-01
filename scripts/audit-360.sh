@@ -7,7 +7,7 @@ set -euo pipefail
 # - Optionally runs payments audit (set AUDIT_PAYMENT=1 and AUDIT_STRIPE_PK)
 #
 # Env:
-#   AUDIT_BASE_URL (default http://127.0.0.1:5173)
+#   AUDIT_BASE_URL (default http://127.0.0.1:5175)
 #   AUDIT_ROUTES (csv)
 #   HEADED=1 to see browser
 #   AUDIT_PAYMENT=1 AUDIT_STRIPE_PK=... to enable payments audit
@@ -17,7 +17,7 @@ cd "$ROOT_DIR"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  AUDIT 360 — Surface + UI Click"
-echo "  BASE_URL=${AUDIT_BASE_URL:-http://127.0.0.1:5173}"
+echo "  BASE_URL=${AUDIT_BASE_URL:-http://127.0.0.1:5175}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 node scripts/audit-surface-map.js

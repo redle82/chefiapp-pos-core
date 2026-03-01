@@ -109,7 +109,7 @@ A constraint `idx_one_open_order_per_table` está ativa e bloqueando pedidos dup
 1. **Abrir KDS:**
 
    ```
-   http://localhost:5173/app/kds
+   http://localhost:5175/app/kds
    ```
 
 2. **Verificar que aparecem 3 pedidos:**

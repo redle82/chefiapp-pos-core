@@ -17,9 +17,9 @@
 - ✅ Mostra URLs de acesso
 
 **Resultado:**
-- 📊 Dashboard: http://localhost:5173/app/dashboard
-- 💰 TPV: http://localhost:5173/app/tpv
-- 🍳 KDS: http://localhost:5173/app/kds/{restaurant_id}
+- 📊 Dashboard: http://localhost:5175/app/dashboard
+- 💰 TPV: http://localhost:5175/app/tpv
+- 🍳 KDS: http://localhost:5175/app/kds/{restaurant_id}
 
 ---
 
@@ -92,7 +92,7 @@ Executa cenário único e valida:
 
 Após subir o sistema, acesse:
 
-**URL:** http://localhost:5173/app/dashboard
+**URL:** http://localhost:5175/app/dashboard
 
 **O que mostra:**
 - 🎛️ **Control Tower Widget**: Status de todos os periféricos
@@ -122,9 +122,9 @@ Após subir o sistema, acesse:
 
 ### 2. Abrir Navegador
 Abra 3 abas:
-- Dashboard: http://localhost:5173/app/dashboard
-- TPV: http://localhost:5173/app/tpv
-- KDS: http://localhost:5173/app/kds/{restaurant_id}
+- Dashboard: http://localhost:5175/app/dashboard
+- TPV: http://localhost:5175/app/tpv
+- KDS: http://localhost:5175/app/kds/{restaurant_id}
 
 ### 3. (Opcional) Modo Demo
 ```bash
@@ -155,8 +155,8 @@ supabase stop
 
 ### "Merchant Portal já está rodando"
 ```bash
-# Matar processo na porta 5173
-lsof -ti:5173 | xargs kill -9
+# Matar processo na porta 5175
+lsof -ti:5175 | xargs kill -9
 ```
 
 ### "Restaurante não encontrado"

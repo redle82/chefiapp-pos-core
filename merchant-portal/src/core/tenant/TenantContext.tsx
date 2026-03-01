@@ -477,7 +477,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
         return;
       }
 
-      // Canonical seal (Gate truth). Prevents AppDomainWrapper tenantId=null after selection.
+      // Canonical seal (Gate truth). Prevents stale tenantId after selection.
       setActiveTenant(newTenantId);
 
       // Optimistic switch + Fetch

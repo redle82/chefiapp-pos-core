@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from "react";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
-import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
+import { useTenant } from "../../core/tenant/TenantContext";
 import { MenuBuilderMinimal } from "../MenuBuilder/MenuBuilderMinimal";
 import { MapBuilderMinimal } from "./MapBuilderMinimal";
 import styles from "./OperacaoMinimal.module.css";
@@ -17,6 +17,7 @@ type OperacaoTab = "menu" | "tarefas" | "mapa" | "equipe";
 
 export function OperacaoMinimal() {
   const { identity } = useRestaurantIdentity();
+  const { tenantId } = useTenant();
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<OperacaoTab>("menu");
@@ -24,10 +25,7 @@ export function OperacaoMinimal() {
   const DEFAULT_RESTAURANT_ID = "bbce08c7-63c0-473d-b693-ec2997f73a68";
 
   useEffect(() => {
-    const id =
-      identity.id ||
-      getTabIsolated("chefiapp_restaurant_id") ||
-      DEFAULT_RESTAURANT_ID;
+    const id = identity.id || tenantId || DEFAULT_RESTAURANT_ID;
     setRestaurantId(id);
     setLoading(false);
   }, [identity.id]);

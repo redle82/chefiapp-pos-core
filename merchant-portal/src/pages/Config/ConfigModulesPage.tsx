@@ -6,7 +6,6 @@
 
 import { useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
 import { tpvInstaller } from "../../core/modules/tpv/TPVInstaller";
 import type { HealthStatus } from "../../core/modules/types";
@@ -15,6 +14,8 @@ import {
   setModulesEnabled,
   type ModulesEnabled,
 } from "../../core/storage/modulesConfigStorage";
+import { useTenant } from "../../core/tenant/TenantContext";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 // Auth only — temporary until Core Auth (session)
 import { db } from "../../core/db";
 import styles from "./ConfigModulesPage.module.css";
@@ -38,6 +39,7 @@ export function ConfigModulesPage() {
     refresh,
   } = useRestaurantRuntime();
   const { restaurantId: runtimeRestaurantId } = useRestaurantId();
+  const { tenantId } = useTenant();
   const [modules, setModules] = useState<InstalledModule[]>([]);
   const isDocker = getBackendType() === BackendType.docker;
   const [availableModules] = useState([
@@ -86,12 +88,7 @@ export function ConfigModulesPage() {
   const restaurantIdForFetch =
     runtime?.restaurant_id ?? runtimeRestaurantId ?? "";
   // FASE 1 Passo 2: preferência TPV/KDS ativo (localStorage até haver backend)
-  const ridForModules =
-    restaurantIdForFetch ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem("chefiapp_restaurant_id")
-      : null) ||
-    "";
+  const ridForModules = restaurantIdForFetch || tenantId || "";
   const [modulesEnabled, setModulesEnabledState] = useState<ModulesEnabled>(
     () => getModulesEnabled(ridForModules),
   );
@@ -113,11 +110,7 @@ export function ConfigModulesPage() {
     const fetchData = async () => {
       try {
         if (getBackendType() === BackendType.docker) {
-          const rid =
-            restaurantIdForFetch ||
-            (typeof window !== "undefined"
-              ? localStorage.getItem("chefiapp_restaurant_id")
-              : null);
+          const rid = restaurantIdForFetch || tenantId;
           if (rid) setRestaurantId(rid);
           setModules([]);
           return;

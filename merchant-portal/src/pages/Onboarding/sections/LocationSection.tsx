@@ -12,6 +12,7 @@ import {
   BackendType,
   getBackendType,
 } from "../../../core/infra/backendAdapter";
+import { useTenant } from "../../../core/tenant/TenantContext";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import styles from "./LocationSection.module.css";
 // Domain reads/writes ONLY via Core (Supabase removed — §4). No fallback.
@@ -20,6 +21,7 @@ export function LocationSection() {
   const { updateSectionStatus } = useOnboarding();
   const { identity } = useRestaurantIdentity();
   const { runtime, updateSetupStatus } = useRestaurantRuntime();
+  const { tenantId } = useTenant();
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -38,12 +40,7 @@ export function LocationSection() {
     let cancelled = false;
 
     const loadLocation = async () => {
-      const restaurantId =
-        runtime.restaurant_id ||
-        identity.id ||
-        (typeof window !== "undefined"
-          ? localStorage.getItem("chefiapp_restaurant_id")
-          : null);
+      const restaurantId = runtime.restaurant_id || identity.id || tenantId;
 
       if (!restaurantId) return;
 
@@ -157,12 +154,7 @@ export function LocationSection() {
     }
 
     // Usar restaurant_id do RestaurantRuntimeContext (fonte única de verdade)
-    const restaurantId =
-      runtime.restaurant_id ||
-      identity.id ||
-      (typeof window !== "undefined"
-        ? localStorage.getItem("chefiapp_restaurant_id")
-        : null);
+    const restaurantId = runtime.restaurant_id || identity.id || tenantId;
 
     if (isValid && restaurantId) {
       if (saveTimeoutRef.current) {

@@ -5,7 +5,7 @@
 
   "frontend_routes": {
     "merchant_portal": {
-      "baseUrl": "http://localhost:5173",
+      "baseUrl": "http://localhost:5175",
       "routes": [
         {
           "path": "/",

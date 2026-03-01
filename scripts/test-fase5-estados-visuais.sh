@@ -193,13 +193,13 @@ fi
 # 7. Verificar frontend
 echo ""
 echo "7️⃣ Verificando frontend..."
-FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/ 2>/dev/null || echo "000")
+FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5175/ 2>/dev/null || echo "000")
 
 if [ "$FRONTEND_OK" = "200" ]; then
     echo "✅ Frontend rodando"
     echo ""
     echo "📋 INSTRUÇÕES PARA TESTE MANUAL:"
-    echo "   1. Abra: http://localhost:5173/kds-minimal"
+    echo "   1. Abra: http://localhost:5175/kds-minimal"
     echo "   2. Verifique que aparecem 3 pedidos com bordas coloridas:"
     echo "      - Pedido NORMAL: borda verde (verde claro)"
     echo "      - Pedido ATENÇÃO: borda amarela"
@@ -209,7 +209,7 @@ if [ "$FRONTEND_OK" = "200" ]; then
     echo "      - ATENÇÃO: amarelo"
     echo "      - ATRASO: vermelho (negrito)"
 else
-    echo "⚠️  AVISO: Frontend não está rodando (porta 5173)"
+    echo "⚠️  AVISO: Frontend não está rodando (porta 5175)"
 fi
 
 # 8. Resumo
@@ -226,7 +226,7 @@ echo "  ✅ ATRASO: ~${DELAY_MINUTES} min (borda vermelha)"
 if [ "$FRONTEND_OK" = "200" ]; then
     echo ""
     echo "  📋 TESTE MANUAL NECESSÁRIO:"
-    echo "     Abra http://localhost:5173/kds-minimal e verifique cores das bordas e timer"
+    echo "     Abra http://localhost:5175/kds-minimal e verifique cores das bordas e timer"
 fi
 echo ""
 echo "Pronto para FASE 6 — Ação Única (Mudança de Estado)"

@@ -18,11 +18,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { OrderStatusPanel } from "../../components/pos/OrderStatusPanel";
 import { CONFIG } from "../../config";
-import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { createOrderLifecycle } from "../../core/operational/processOrderLifecycle";
 import { useOperationalStore } from "../../core/operational/useOperationalStore";
 import { resolveProductImageUrl } from "../../core/products/resolveProductImageUrl";
-import { getTpvRestaurantId } from "../../core/storage/installedDeviceStorage";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
 import type { CoreProduct } from "../../infra/readers/RestaurantReader";
 import { readMenuCategories } from "../../infra/readers/RestaurantReader";
@@ -39,13 +37,12 @@ import {
 } from "./components/ProductCategoryFilter";
 import { TPVProductCard } from "./components/TPVProductCard";
 import { getFoodPhotoUrl } from "./foodPhotoUrls";
+import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 import "./TPVPOSView.css";
 
-const DEFAULT_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
-
 export function TPVPOSView() {
-  const runtimeContext = useRestaurantRuntime();
-  const runtime = runtimeContext?.runtime;
+  // RequireOperational surface="TPV" guarantees restaurant exists when this renders.
+  const restaurantId = useTPVRestaurantId()!;
   const bootstrap = useBootstrapState();
   const toast = useToast();
   const outletContext = useOutletContext<{ searchQuery?: string }>();
@@ -56,11 +53,6 @@ export function TPVPOSView() {
 
   // Estado do pedido actual (backend source of truth via store)
   const currentOrderStatus = useOperationalStore((s) => s.currentOrder.status);
-
-  const installedRestaurantId = getTpvRestaurantId();
-  const runtimeRestaurantId = runtime?.restaurant_id ?? null;
-  const restaurantId =
-    installedRestaurantId ?? runtimeRestaurantId ?? DEFAULT_RESTAURANT_ID;
 
   const [products, setProducts] = useState<CoreProduct[]>([]);
   const [categories, setCategories] = useState<TPVCategory[]>([]);
@@ -78,7 +70,7 @@ export function TPVPOSView() {
 
   // Carregar menu (categorias + produtos)
   useEffect(() => {
-    if (bootstrap.coreStatus !== "online") return;
+    if (!restaurantId || bootstrap.coreStatus !== "online") return;
     const urlWithAssets = `${CONFIG.CORE_URL}/rest/v1/gm_products?select=*,gm_product_assets(image_url)&restaurant_id=eq.${restaurantId}&available=eq.true&order=created_at.asc`;
     const urlPlain = `${CONFIG.CORE_URL}/rest/v1/gm_products?select=*&restaurant_id=eq.${restaurantId}&available=eq.true&order=created_at.asc`;
     const headers = {

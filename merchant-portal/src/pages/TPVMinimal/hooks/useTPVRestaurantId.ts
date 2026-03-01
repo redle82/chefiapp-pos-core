@@ -1,26 +1,21 @@
 /**
  * useTPVRestaurantId — Shared hook for resolving the restaurant ID inside TPV context.
  *
- * Priority: installed device > runtime context > Docker Core seed.
+ * Priority: installed device > runtime context.
+ * Returns null when no restaurant can be resolved — RequireOperational surface="TPV"
+ * gate blocks rendering before child components mount.
+ *
  * Used by all TPV HUB tabs (POS, Kitchen, Tasks, Reservations) to avoid duplication.
  */
 
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
-import { isDockerBackend } from "../../../core/infra/backendAdapter";
 import { getTpvRestaurantId } from "../../../core/storage/installedDeviceStorage";
 
-/** Docker Core seed restaurant (06-seed-enterprise). */
-const DOCKER_SEED_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
-
-const DEFAULT_RESTAURANT_ID = isDockerBackend()
-  ? DOCKER_SEED_RESTAURANT_ID
-  : DOCKER_SEED_RESTAURANT_ID;
-
-export function useTPVRestaurantId(): string {
+export function useTPVRestaurantId(): string | null {
   const { runtime } = useRestaurantRuntime();
 
   const installedRestaurantId = getTpvRestaurantId();
   const runtimeRestaurantId = runtime?.restaurant_id ?? null;
 
-  return installedRestaurantId ?? runtimeRestaurantId ?? DEFAULT_RESTAURANT_ID;
+  return installedRestaurantId ?? runtimeRestaurantId ?? null;
 }

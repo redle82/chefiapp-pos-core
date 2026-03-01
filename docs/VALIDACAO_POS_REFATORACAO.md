@@ -125,7 +125,7 @@ Executado via: `scripts/test-validacao-pos-refatoracao.ts`
 - Restaurante de teste: `restaurante-piloto` (ID: `00000000-0000-0000-0000-000000000100`)
 - Mesas disponíveis: 1-10
 - Produtos disponíveis: Bruschetta, Nachos, Hambúrguer, Pizza, Água, Refrigerante, Tiramisú
-- Servidor dev: `http://localhost:5173`
+- Servidor dev: `http://localhost:5175`
 
 ## 🔧 Correções Aplicadas
 
@@ -157,17 +157,17 @@ Executado via: `scripts/test-validacao-pos-refatoracao.ts`
 
 2. **Servidor dev rodando:**
    ```bash
-   # Já está rodando em http://localhost:5173
+   # Já está rodando em http://localhost:5175
    ```
 
 ### Teste 1: QR Mesa
 
-1. Abrir: `http://localhost:5173/public/restaurante-piloto/mesa/1`
+1. Abrir: `http://localhost:5175/public/restaurante-piloto/mesa/1`
 2. Verificar que a página carrega (menu visível)
 3. Adicionar 1-2 produtos ao carrinho
 4. Clicar em "Fazer Pedido"
 5. Verificar mensagem de sucesso
-6. **Abrir nova aba:** `http://localhost:5173/kds-minimal`
+6. **Abrir nova aba:** `http://localhost:5175/kds-minimal`
 7. **Verificar:**
    - Pedido aparece na lista
    - Badge mostra origem `QR_MESA` (rosa, ícone 📱)
@@ -176,7 +176,7 @@ Executado via: `scripts/test-validacao-pos-refatoracao.ts`
 
 ### Teste 2: AppStaff (Waiter)
 
-1. Abrir: `http://localhost:5173/garcom`
+1. Abrir: `http://localhost:5175/garcom`
 2. Aguardar carregamento (pode mostrar tela de login/boot)
 3. Selecionar mesa (ex: mesa 2)
 4. Adicionar itens ao pedido
@@ -190,7 +190,7 @@ Executado via: `scripts/test-validacao-pos-refatoracao.ts`
 
 ### Teste 3: TPVMinimal
 
-1. Abrir: `http://localhost:5173/tpv`
+1. Abrir: `http://localhost:5175/tpv`
 2. Verificar que produtos carregam
 3. Adicionar produtos ao carrinho
 4. Clicar em "Criar Pedido"
@@ -203,7 +203,7 @@ Executado via: `scripts/test-validacao-pos-refatoracao.ts`
 
 ### Validação Final no KDSMinimal
 
-**Abrir:** `http://localhost:5173/kds-minimal`
+**Abrir:** `http://localhost:5175/kds-minimal`
 
 **Verificar:**
 - ✅ Todos os 3 pedidos aparecem na lista

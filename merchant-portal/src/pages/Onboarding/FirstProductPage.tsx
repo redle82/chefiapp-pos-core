@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { BootstrapStepIndicator } from "../../components/bootstrap/BootstrapStepIndicator";
 import { DbWriteGate } from "../../core/governance/DbWriteGate";
 import { setOnboardingJustCompletedFlag } from "../../core/storage/onboardingFlowFlag";
-import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
+import { useTenant } from "../../core/tenant/TenantContext";
 import { Button, Card, Input } from "../../ui/design-system/primitives";
 import styles from "./FirstProductPage.module.css";
 
@@ -21,7 +21,7 @@ export function FirstProductPage({
   successNextPath?: string;
 } = {}) {
   const navigate = useNavigate();
-  const restaurantId = getTabIsolated("chefiapp_restaurant_id");
+  const { tenantId: restaurantId } = useTenant();
   const [name, setName] = useState("");
   const [priceEur, setPriceEur] = useState("");
   const [loading, setLoading] = useState(false);

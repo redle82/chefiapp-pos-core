@@ -45,6 +45,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: BrowserBlockGuard purity gate
+        run: npm run check:browser-guard-purity
+
       - name: Fail-fast (typecheck + build)
         run: make simulate-failfast
 
@@ -62,6 +65,54 @@ jobs:
 
       - name: Contract gate (docs integrity)
         run: bash ./scripts/contract-gate.sh
+
+      - name: Restaurant Canon gate
+        run: npm run check:restaurant-canon
+
+      - name: Operational Device-Only gate
+        run: npm run check:operational-device-only
+
+      - name: Admin General Contract gate
+        run: npm run check:admin-general-contract
+
+      - name: SW-not-in-dev gate
+        run: npm run check:sw-not-in-dev
+
+      - name: VSCode dev-task bypass gate
+        run: npm run check:vscode-dev-tasks
+
+      - name: Script-level dev bypass gate
+        run: npm run check:dev-bypass-scripts
+
+      - name: Contradictions gate (High severity)
+        run: npm run -s audit:ledger:high
+
+      - name: Detect bypass gate scope
+        id: bypass_scope
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
+
+          CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" || true)"
+          printf "%s\n" "$CHANGED_FILES"
+
+          if echo "$CHANGED_FILES" | grep -Eq '^(merchant-portal/src/core/(boot|flow|runtime|tenant|identity|billing|lifecycle)/|merchant-portal/src/(pages|features|routes)/|merchant-portal/eslint\.config\.js|docs/(architecture|audit)/|scripts/audit/)'; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bypass gate (fail on new findings)
+        if: steps.bypass_scope.outputs.should_run == 'true'
+        run: npm run -s audit:bypass:fail-on-new
 
   e2e-smoke:
     name: E2E Suite (Playwright — 4 layers)

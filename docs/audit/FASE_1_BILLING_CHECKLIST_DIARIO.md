@@ -176,7 +176,7 @@ curl -X POST https://[seu-projeto].supabase.co/functions/v1/stripe-billing \
 - [ ] Verificar se `RequireActivation` permite acesso
 
 **Passos:**
-1. Abrir `http://localhost:5173` (ou URL de produção)
+1. Abrir `http://localhost:5175` (ou URL de produção)
 2. Criar conta nova
 3. Completar onboarding
 4. Escolher plano

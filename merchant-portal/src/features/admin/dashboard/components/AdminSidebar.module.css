@@ -216,3 +216,29 @@
   background: var(--surface-hover, #f3f4f6);
   color: var(--text-primary, #111827);
 }
+
+/* quickLink as <button> reset */
+button.quickLink {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.tpvNotice {
+  font-size: 0.75rem;
+  color: var(--color-brand-gold, #c9a227);
+  padding: 6px 12px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

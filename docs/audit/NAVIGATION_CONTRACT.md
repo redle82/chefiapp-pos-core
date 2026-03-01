@@ -1,5 +1,9 @@
 # Contrato de Navegação — 4 Zonas e Hub de Módulos
 
+**Status:** LEGACY (SUPERSEDED)
+**Autoridade vigente:** [../architecture/CHEFIAPP_OS_ARCHITECTURE_V1.md](../architecture/CHEFIAPP_OS_ARCHITECTURE_V1.md) + [../architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md](../architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md)
+**Política:** este artefato é complementar de auditoria histórica; conflitos devem ser resolvidos a favor dos contratos canônicos.
+
 **Objetivo:** Eliminar dispersão entre Marketing, Configuração, Operação e Upper Staff. Rotas canónicas por módulo; nenhum botão morto; Centro de Ativação como ponte.
 
 **Referências:** [CoreFlow.ts](../merchant-portal/src/core/flow/CoreFlow.ts), [ROUTES_MAP_2026.md](./ROUTES_MAP_2026.md), [BUTTONS_AUDIT_REPORT_2026.md](./BUTTONS_AUDIT_REPORT_2026.md).
@@ -8,14 +12,15 @@
 
 ## 1. Quatro zonas do sistema
 
-| Zona | Rotas canónicas | Uso |
-|------|------------------|-----|
-| **PUBLIC (Marketing)** | `/`, `/pricing`, `/auth`, `/auth/phone`, `/auth/verify`, `/login`, `/register`, `/forgot` | Landing, auth, trial. Sem auth. |
-| **APP (Ativação e conta)** | `/app`, `/welcome`, `/onboarding`, `/app/activation`, `/app/setup/*`, `/app/billing` | Onboarding, Centro de Ativação, setup, billing. |
-| **ADMIN CONFIG** | `/admin`, `/admin/config/*`, `/admin/modules`, `/admin/catalog/*`, `/admin/reports/*`, etc. | Configuração do restaurante, Hub de Módulos, catálogo, relatórios. |
-| **OPS (Operação)** | `/op/tpv`, `/op/pos`, `/op/kds`, `/op/staff`, `/app/staff/*` | TPV, POS, KDS, Upper Staff. |
+| Zona                       | Rotas canónicas                                                                             | Uso                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **PUBLIC (Marketing)**     | `/`, `/pricing`, `/auth`, `/auth/phone`, `/auth/verify`, `/login`, `/register`, `/forgot`   | Landing, auth, trial. Sem auth.                                    |
+| **APP (Ativação e conta)** | `/app`, `/welcome`, `/onboarding`, `/app/activation`, `/app/setup/*`, `/app/billing`        | Onboarding, Centro de Ativação, setup, billing.                    |
+| **ADMIN CONFIG**           | `/admin`, `/admin/config/*`, `/admin/modules`, `/admin/catalog/*`, `/admin/reports/*`, etc. | Configuração do restaurante, Hub de Módulos, catálogo, relatórios. |
+| **OPS (Operação)**         | `/op/tpv`, `/op/pos`, `/op/kds`, `/op/staff`, `/app/staff/*`                                | TPV, POS, KDS, Upper Staff.                                        |
 
 **Aliases (compatibilidade):**
+
 - `/admin/config/productos` → redirect para `/admin/modules`
 - `/op/pos` e `/op/pos/*` → redirect para `/op/tpv` e `/op/tpv/*`
 - `/admin/modules` = Hub de Módulos (canónico); `/admin/catalog/modules` também mostra o mesmo conteúdo.
@@ -25,10 +30,12 @@
 ## 2. Estado da conta e redirecionamento
 
 **Tipos (alineados ao CoreFlow):**
+
 - `AccountStatus` conceptual: **NEW** (sem org) → **ONBOARDING** (welcome/onboarding) → **SETUP** (checklist em /app/activation) → **ACTIVE** → **SUSPENDED**.
 - No código: `hasOrganization`, `activated` (onboarding_completed_at), `systemState` (SETUP | TRIAL | ACTIVE | SUSPENDED).
 
 **Regras após login:**
+
 - Sem restaurante → `/welcome` ou `/setup/restaurant-minimal`.
 - Com restaurante e `!activated` → `/app/activation` (Centro de Ativação).
 - Com restaurante e `activated` → `/app/dashboard` (ou última área usada).
@@ -45,6 +52,7 @@
 **Estado por módulo (conceptual):** `{ enabled: boolean; configured: boolean }`. Persistência: Core / runtime quando existir; até lá, UI e redirects sem botão morto.
 
 **Hub de Módulos (tela “Mis productos” / Produtos):**
+
 - Rota canónica: **`/admin/modules`** (também acessível via `/admin/catalog/modules`).
 - Cada card: botão principal (Ativar / Configurar / Abrir) com `navigate()` para rota válida; botão secundário (Desativar) quando aplicável.
 - Mapeamento canónico de ações (ver BUTTONS_AUDIT_REPORT_2026.md):
@@ -66,6 +74,7 @@
 **Roles (existentes):** OWNER, MANAGER, STAFF (waiter), KITCHEN, etc. Definidos em [StaffContext](../merchant-portal/src/pages/AppStaff/context/StaffContext.tsx) e [RoleGate](../merchant-portal/src/core/roles).
 
 **Guardas:**
+
 - Rotas protegidas por auth: [FlowGate](../merchant-portal/src/core/flow/FlowGate.tsx).
 - Rotas operacionais (TPV/KDS) em SETUP: CoreFlow redireciona para `/app/activation`.
 - RoleGate para áreas admin/staff quando aplicável.
@@ -76,14 +85,14 @@
 
 ## 5. Rotas operacionais canónicas
 
-| Módulo | Abrir / principal | Configurar |
-|--------|-------------------|------------|
-| POS/TPV | `/op/tpv` ou `/op/pos` | `/admin/config/software-tpv` |
-| KDS | `/op/kds` | (integrado ou config) |
-| Upper Staff | `/app/staff` | — |
-| Inventário | `/inventory-stock` | — |
-| Reservas | — | `/admin/reservations` ou `/admin/config/reservas` |
-| Delivery/QR | — | `/admin/config/delivery`, `/admin/config/integrations` |
+| Módulo      | Abrir / principal      | Configurar                                             |
+| ----------- | ---------------------- | ------------------------------------------------------ |
+| POS/TPV     | `/op/tpv` ou `/op/pos` | `/admin/config/software-tpv`                           |
+| KDS         | `/op/kds`              | (integrado ou config)                                  |
+| Upper Staff | `/app/staff`           | —                                                      |
+| Inventário  | `/inventory-stock`     | —                                                      |
+| Reservas    | —                      | `/admin/reservations` ou `/admin/config/reservas`      |
+| Delivery/QR | —                      | `/admin/config/delivery`, `/admin/config/integrations` |
 
 ---
 

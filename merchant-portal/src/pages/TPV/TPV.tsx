@@ -86,6 +86,7 @@ import {
   useOperationalReadiness,
 } from "../../core/readiness";
 import { useShift } from "../../core/shift/ShiftContext";
+import { useTenant } from "../../core/tenant/TenantContext";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
 
 import { OfflineBanner } from "../../components/OfflineBanner";
@@ -264,6 +265,9 @@ const TPVContent = () => {
   const bootstrap = useBootstrapState();
   const shift = useShift();
 
+  // Tenant context for restaurant ID resolution
+  const { tenantId } = useTenant();
+
   // RITUAL: Operator Gate State
   // HOOKS REFACTORING COMPLETE - Lock screen now active in all modes
   const [isLocked, setIsLocked] = useState(true);
@@ -276,7 +280,7 @@ const TPVContent = () => {
   // PITCH: Prioritize URL param > LocalStorage
   const { restaurantId: urlRestaurantId } = useParams();
   const [restaurantId, setRestaurantId] = useState<string | null>(() => {
-    return urlRestaurantId || getTabIsolated("chefiapp_restaurant_id");
+    return urlRestaurantId || tenantId;
   });
 
   // Sync Logic: If URL changes, update state and storage
@@ -309,10 +313,10 @@ const TPVContent = () => {
   // Polling check for external changes (Tab Isolation)
   useEffect(() => {
     const checkId = () => {
-      const current = getTabIsolated("chefiapp_restaurant_id");
+      const current = tenantId;
       // Only update if URL param is missing (URL is source of truth)
       if (!urlRestaurantId && current && current !== restaurantId) {
-        console.log("[TPV] Resolved Restaurant ID from Storage:", current);
+        console.log("[TPV] Resolved Restaurant ID from context:", current);
         setRestaurantId(current);
       }
     };
@@ -2685,20 +2689,18 @@ const TPVContent = () => {
 
 // Wrap in TableProvider and OrderProvider
 // TPV wrapper
-// DOCKER CORE: Providers agora são adicionados diretamente aqui, já que App.tsx não usa AppDomainWrapper
 const TPV = () => {
   const { t } = useTranslation("tpv");
   const readiness = useOperationalReadiness("TPV");
   const { toasts, dismiss } = useToast();
   const { identity } = useRestaurantIdentity();
+  const { tenantId } = useTenant();
 
   // DOCKER CORE: Restaurant ID fixo para desenvolvimento
   // Em produção, isso viria de autenticação ou seleção
   const { restaurantId: urlRestaurantId } = useParams();
   const restaurantId =
-    urlRestaurantId ||
-    getTabIsolated("chefiapp_restaurant_id") ||
-    "00000000-0000-0000-0000-000000000100";
+    urlRestaurantId || tenantId || "00000000-0000-0000-0000-000000000100";
 
   // CONFIG_RUNTIME_CONTRACT: Device Gate — dispositivo deve estar ativo na Config (docs/contracts/CONFIG_RUNTIME_CONTRACT.md §2.2, §2.3). Chamado no topo para respeitar Rules of Hooks.
   const deviceGate = useDeviceGate(restaurantId);

@@ -16,8 +16,8 @@ echo "════════════════════════�
 echo ""
 
 # Verificar se frontend está rodando
-if ! lsof -ti:5173 > /dev/null 2>&1; then
-    echo "❌ Frontend não está rodando na porta 5173"
+if ! lsof -ti:5175 > /dev/null 2>&1; then
+    echo "❌ Frontend não está rodando na porta 5175"
     echo "💡 Execute: cd merchant-portal && npm run dev"
     exit 1
 fi
@@ -56,16 +56,16 @@ open_url() {
 
 # Aguardar um pouco entre aberturas
 sleep 1
-open_url "http://localhost:5173/app/kds" "KDS"
+open_url "http://localhost:5175/app/kds" "KDS"
 
 sleep 1
-open_url "http://localhost:5173/app/tpv" "TPV"
+open_url "http://localhost:5175/app/tpv" "TPV"
 
 sleep 1
-open_url "http://localhost:5173/public/$SLUG" "Página Pública"
+open_url "http://localhost:5175/public/$SLUG" "Página Pública"
 
 sleep 1
-open_url "http://localhost:5173/public/$SLUG/mesa/1" "Página da Mesa 1"
+open_url "http://localhost:5175/public/$SLUG/mesa/1" "Página da Mesa 1"
 
 echo ""
 echo "✅ URLs abertas!"

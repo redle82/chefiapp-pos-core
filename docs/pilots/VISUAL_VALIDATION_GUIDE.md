@@ -61,9 +61,9 @@ npm run dev
 ```
 
 **URLs esperadas:**
-- Dashboard: http://localhost:5173/app/dashboard
-- TPV: http://localhost:5173/app/tpv
-- KDS: http://localhost:5173/app/kds/{restaurantId}
+- Dashboard: http://localhost:5175/app/dashboard
+- TPV: http://localhost:5175/app/tpv
+- KDS: http://localhost:5175/app/kds/{restaurantId}
 
 #### 2.2 Mobile App - iOS
 
@@ -112,7 +112,7 @@ Após executar o teste automatizado, verifique **visualmente** em cada ponto:
 
 ### 4.1 TPV (Web)
 
-**URL:** http://localhost:5173/app/tpv
+**URL:** http://localhost:5175/app/tpv
 
 **Verificar:**
 - ✅ Pedido aparece como ativo
@@ -122,7 +122,7 @@ Após executar o teste automatizado, verifique **visualmente** em cada ponto:
 
 ### 4.2 KDS (Web)
 
-**URL:** http://localhost:5173/app/kds/{restaurantId}
+**URL:** http://localhost:5175/app/kds/{restaurantId}
 
 **Verificar:**
 - ✅ Pedido aparece em **< 2 segundos** (Realtime)
@@ -132,7 +132,7 @@ Após executar o teste automatizado, verifique **visualmente** em cada ponto:
 
 ### 4.3 Dashboard
 
-**URL:** http://localhost:5173/app/dashboard
+**URL:** http://localhost:5175/app/dashboard
 
 **Verificar:**
 - ✅ Nenhum erro ativo
@@ -247,7 +247,7 @@ tail -f /tmp/merchant-portal.log
 - [ ] Supabase local rodando
 - [ ] Migrations aplicadas
 - [ ] Restaurante piloto criado
-- [ ] Merchant Portal rodando (porta 5173)
+- [ ] Merchant Portal rodando (porta 5175)
 - [ ] iOS Simulator rodando (opcional)
 - [ ] Android Emulator rodando (opcional)
 

@@ -63,7 +63,7 @@ check_status() {
     fi
 
     # Check if dev server is accessible
-    if curl -s --max-time 2 http://localhost:5173 > /dev/null 2>&1; then
+    if curl -s --max-time 2 http://localhost:5175 > /dev/null 2>&1; then
         echo -e "Dev Server: ${GREEN}RUNNING${NC}"
     else
         echo -e "Dev Server: ${YELLOW}NOT RUNNING${NC}"

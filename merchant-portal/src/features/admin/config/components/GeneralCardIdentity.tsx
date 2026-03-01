@@ -4,31 +4,36 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../../../infra/docker-core/connection";
+import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
 import {
   BackendType,
   getBackendType,
 } from "../../../../core/infra/backendAdapter";
+import { dockerCoreClient } from "../../../../infra/docker-core/connection";
+import { invalidateRestaurantReaderCache } from "../../../../infra/readers/RuntimeReader";
 
 const TYPES = [
-  { value: "RESTAURANT", label: "Restaurante" },
-  { value: "BAR", label: "Bar" },
-  { value: "HOTEL", label: "Hotel" },
-  { value: "BEACH_CLUB", label: "Beach club" },
-  { value: "CAFE", label: "Café" },
-  { value: "OTHER", label: "Outro" },
+  { value: "RESTAURANT" },
+  { value: "BAR" },
+  { value: "HOTEL" },
+  { value: "BEACH_CLUB" },
+  { value: "CAFE" },
+  { value: "OTHER" },
 ] as const;
 
 const COUNTRIES = [
-  { value: "BR", label: "Brasil" },
-  { value: "ES", label: "España" },
-  { value: "PT", label: "Portugal" },
-  { value: "US", label: "Estados Unidos" },
+  { value: "BR" },
+  { value: "ES" },
+  { value: "PT" },
+  { value: "US" },
 ] as const;
 
 export function GeneralCardIdentity() {
-  const { runtime } = useRestaurantRuntime();
+  const { t } = useTranslation("config");
+  const { runtime, refresh } = useRestaurantRuntime();
+  const { refreshIdentity } = useRestaurantIdentity();
   const [form, setForm] = useState({
     name: "",
     type: "RESTAURANT" as string,
@@ -84,7 +89,7 @@ export function GeneralCardIdentity() {
 
   const handleSave = async () => {
     if (!restaurantId || getBackendType() !== BackendType.docker) {
-      alert("Core indisponível ou restaurante não selecionado.");
+      alert(t("generalCardIdentity.errors.coreUnavailable"));
       return;
     }
     setSaving(true);
@@ -107,8 +112,14 @@ export function GeneralCardIdentity() {
         .update(payload)
         .eq("id", restaurantId);
       if (error) throw new Error(error.message);
+
+      invalidateRestaurantReaderCache(restaurantId);
+      await Promise.allSettled([refreshIdentity(), refresh()]);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Erro ao guardar.";
+      const msg =
+        e instanceof Error
+          ? e.message
+          : t("generalCardIdentity.errors.saveFailed");
       alert(msg);
     } finally {
       setSaving(false);
@@ -162,30 +173,44 @@ export function GeneralCardIdentity() {
           color: "var(--text-primary)",
         }}
       >
-        Identidade do Restaurante
+        {t("generalCardIdentity.title")}
       </h2>
-      <p style={{ margin: "0 0 8px 0", fontSize: 12, color: "var(--text-secondary)" }}>
-        Quem somos e onde nos encontrar.
+      <p
+        style={{
+          margin: "0 0 8px 0",
+          fontSize: 12,
+          color: "var(--text-secondary)",
+        }}
+      >
+        {t("generalCardIdentity.subtitle")}
       </p>
       {!loaded ? (
-        <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>A carregar...</p>
+        <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+          {t("generalCardIdentity.loading")}
+        </p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div style={gridRow}>
             <div>
-              <label style={labelStyle}>Nome comercial *</label>
+              <label style={labelStyle}>
+                {t("generalCardIdentity.fields.commercialName")}
+              </label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, name: e.target.value }))
                 }
-                placeholder="Ex: Sofia Gastrobar Ibiza"
+                placeholder={t(
+                  "generalCardIdentity.placeholders.commercialName",
+                )}
                 style={inputStyle}
               />
             </div>
             <div>
-              <label style={labelStyle}>Tipo *</label>
+              <label style={labelStyle}>
+                {t("generalCardIdentity.fields.type")}
+              </label>
               <select
                 value={form.type}
                 onChange={(e) =>
@@ -193,9 +218,9 @@ export function GeneralCardIdentity() {
                 }
                 style={inputStyle}
               >
-                {TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
+                {TYPES.map((typeOption) => (
+                  <option key={typeOption.value} value={typeOption.value}>
+                    {t("generalCardIdentity.types." + typeOption.value)}
                   </option>
                 ))}
               </select>
@@ -203,7 +228,9 @@ export function GeneralCardIdentity() {
           </div>
           <div style={gridRow}>
             <div>
-              <label style={labelStyle}>País *</label>
+              <label style={labelStyle}>
+                {t("generalCardIdentity.fields.country")}
+              </label>
               <select
                 value={form.country}
                 onChange={(e) =>
@@ -211,56 +238,66 @@ export function GeneralCardIdentity() {
                 }
                 style={inputStyle}
               >
-                <option value="">Selecione</option>
+                <option value="">
+                  {t("generalCardIdentity.placeholders.select")}
+                </option>
                 {COUNTRIES.map((c) => (
                   <option key={c.value} value={c.value}>
-                    {c.label}
+                    {t("generalCardIdentity.countries." + c.value)}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Telefone</label>
+              <label style={labelStyle}>
+                {t("generalCardIdentity.fields.phone")}
+              </label>
               <input
                 type="tel"
                 value={form.phone}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, phone: e.target.value }))
                 }
-                placeholder="+34 692 054 892"
+                placeholder={t("generalCardIdentity.placeholders.phone")}
                 style={inputStyle}
               />
             </div>
           </div>
           <div style={gridRow}>
             <div>
-              <label style={labelStyle}>E-mail</label>
+              <label style={labelStyle}>
+                {t("generalCardIdentity.fields.email")}
+              </label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, email: e.target.value }))
                 }
-                placeholder="contacto@restaurante.com"
+                placeholder={t("generalCardIdentity.placeholders.email")}
                 style={inputStyle}
               />
             </div>
             <div>
-              <label style={labelStyle}>Morada</label>
+              <label style={labelStyle}>
+                {t("generalCardIdentity.fields.address")}
+              </label>
               <input
                 type="text"
                 value={form.address}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, address: e.target.value }))
                 }
-                placeholder="Rua, número"
+                placeholder={t("generalCardIdentity.placeholders.address")}
                 style={inputStyle}
               />
             </div>
           </div>
           <div style={gridRow}>
             <div>
-              <label style={labelStyle}>Cidade</label>
+              <label style={labelStyle}>
+                {t("generalCardIdentity.fields.city")}
+              </label>
               <input
                 type="text"
                 value={form.city}
@@ -271,7 +308,9 @@ export function GeneralCardIdentity() {
               />
             </div>
             <div>
-              <label style={labelStyle}>Código postal</label>
+              <label style={labelStyle}>
+                {t("generalCardIdentity.fields.postalCode")}
+              </label>
               <input
                 type="text"
                 value={form.postalCode}
@@ -283,7 +322,9 @@ export function GeneralCardIdentity() {
             </div>
           </div>
           <div>
-            <label style={labelStyle}>Região</label>
+            <label style={labelStyle}>
+              {t("generalCardIdentity.fields.state")}
+            </label>
             <input
               type="text"
               value={form.state}
@@ -294,21 +335,23 @@ export function GeneralCardIdentity() {
             />
           </div>
           <div>
-            <label style={labelStyle}>URL do logo</label>
+            <label style={labelStyle}>
+              {t("generalCardIdentity.fields.logoUrl")}
+            </label>
             <input
               type="url"
               value={form.logoUrl}
               onChange={(e) =>
                 setForm((p) => ({ ...p, logoUrl: e.target.value }))
               }
-              placeholder="https://… (imagem do logo)"
+              placeholder={t("generalCardIdentity.placeholders.logoUrl")}
               style={inputStyle}
             />
             {form.logoUrl && (
               <div style={{ marginTop: 6 }}>
                 <img
                   src={form.logoUrl}
-                  alt="Logo"
+                  alt={t("generalCardIdentity.logoAlt")}
                   style={{
                     maxWidth: 64,
                     maxHeight: 64,
@@ -329,7 +372,9 @@ export function GeneralCardIdentity() {
               disabled={saving}
               style={buttonStyle}
             >
-              {saving ? "A guardar…" : "Guardar"}
+              {saving
+                ? t("generalCardIdentity.saving")
+                : t("generalCardIdentity.save")}
             </button>
           </div>
         </div>

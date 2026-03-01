@@ -15,7 +15,7 @@
 
 ## 🎯 O Que Este Script Faz
 
-1. **Mata processos antigos** na porta 5173
+1. **Mata processos antigos** na porta 5175
 2. **Limpa cache** do Vite e builds anteriores
 3. **Obtém Restaurant ID** (do Docker Core ou usa padrão)
 4. **Inicia servidor** de desenvolvimento limpo
@@ -57,7 +57,7 @@ Enquanto o KDS estiver aberto, observe:
 tail -f /tmp/vite-kds.log
 
 # Verificar porta
-lsof -ti:5173
+lsof -ti:5175
 ```
 
 ### Restaurant ID não encontrado
@@ -73,7 +73,7 @@ cd docker-core
 Se o script não abrir o navegador automaticamente, copie e cole:
 
 ```
-http://localhost:5173/kds/{RESTAURANT_ID}?demo=true&kdsVersion=new&noLegacy=true
+http://localhost:5175/kds/{RESTAURANT_ID}?demo=true&kdsVersion=new&noLegacy=true
 ```
 
 ---

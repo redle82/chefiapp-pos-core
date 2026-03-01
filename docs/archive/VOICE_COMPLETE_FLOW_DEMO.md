@@ -105,7 +105,7 @@ Após executar o script, validar manualmente:
 
 ### 1. GovernManage Dashboard
 
-- Abrir: `http://localhost:5173/app/govern-manage`
+- Abrir: `http://localhost:5175/app/govern-manage`
 - Verificar seção "Voice Operations":
   - ✅ Master toggle ativo
   - ✅ Dispositivo registrado e online
@@ -123,7 +123,7 @@ Após executar o script, validar manualmente:
 
 ### 3. AppStaff
 
-- Abrir: `http://localhost:5173/app/appstaff`
+- Abrir: `http://localhost:5175/app/appstaff`
 - Verificar task criada:
   - ✅ Título: "Lembrete: Verificar temperatura..."
   - ✅ Badge "🎙️ Por quê?" visível

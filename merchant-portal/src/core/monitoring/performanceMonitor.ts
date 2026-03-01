@@ -7,7 +7,7 @@
 import { BackendType, getBackendType } from "../infra/backendAdapter";
 import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
 import { isDevStableMode } from "../runtime/devStableMode";
-import { getTabIsolated } from "../storage/TabIsolatedStorage";
+import { readTenantIdWithLegacyFallback } from "../tenant/TenantResolver";
 // ANTI-SUPABASE §4: app_logs telemetry ONLY via Core. Skip flush when not Docker.
 
 export interface PerformanceMetric {
@@ -159,7 +159,7 @@ class PerformanceMonitor {
 
       // IMPORTANT: avoid 409 storms by using idempotency_key + upsert(ignoreDuplicates).
       // If the DB schema doesn't have idempotency_key yet, fail closed (no crash, no loop).
-      const restaurantId = getTabIsolated("chefiapp_restaurant_id") || null;
+      const restaurantId = readTenantIdWithLegacyFallback() || null;
       const minuteBucket = new Date().toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
       const idempotencyKey = `perf:${restaurantId || "none"}:${minuteBucket}`;
 
@@ -177,7 +177,7 @@ class PerformanceMonitor {
             created_at: new Date().toISOString(),
             idempotency_key: idempotencyKey,
           } as any,
-          { onConflict: "idempotency_key" }
+          { onConflict: "idempotency_key" },
         )
         .then((r) => r);
       const error = result.error;

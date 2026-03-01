@@ -5,14 +5,16 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../../../infra/docker-core/connection";
 import {
   BackendType,
   getBackendType,
 } from "../../../../core/infra/backendAdapter";
+import { dockerCoreClient } from "../../../../infra/docker-core/connection";
 
 export function GeneralCardReceipt() {
+  const { t } = useTranslation("config");
   const { runtime } = useRestaurantRuntime();
   const [value, setValue] = useState("");
   const [saving, setSaving] = useState(false);
@@ -47,7 +49,7 @@ export function GeneralCardReceipt() {
 
   const handleSave = async () => {
     if (!restaurantId || getBackendType() !== BackendType.docker) {
-      alert("Core indisponível ou restaurante não selecionado.");
+      alert(t("generalCardReceipt.errors.coreUnavailable"));
       return;
     }
     setSaving(true);
@@ -61,7 +63,10 @@ export function GeneralCardReceipt() {
         .eq("id", restaurantId);
       if (error) throw new Error(error.message);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Erro ao guardar.";
+      const msg =
+        e instanceof Error
+          ? e.message
+          : t("generalCardReceipt.errors.saveFailed");
       alert(msg);
     } finally {
       setSaving(false);
@@ -112,22 +117,31 @@ export function GeneralCardReceipt() {
           color: "var(--text-primary)",
         }}
       >
-        Texto fiscal / recibo
+        {t("generalCardReceipt.title")}
       </h2>
-      <p style={{ margin: "0 0 8px 0", fontSize: 12, color: "var(--text-secondary)" }}>
-        Informação opcional que aparecerá nos recibos impressos (dados fiscais,
-        agradecimento, política de devoluções).
+      <p
+        style={{
+          margin: "0 0 8px 0",
+          fontSize: 12,
+          color: "var(--text-secondary)",
+        }}
+      >
+        {t("generalCardReceipt.subtitle")}
       </p>
       {!loaded ? (
-        <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>A carregar...</p>
+        <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+          {t("generalCardReceipt.loading")}
+        </p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div>
-            <label style={labelStyle}>Informação adicional</label>
+            <label style={labelStyle}>
+              {t("generalCardReceipt.fields.extraInfo")}
+            </label>
             <textarea
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder="Ex.: NIF B-12345678. Obrigado pela sua visita."
+              placeholder={t("generalCardReceipt.placeholders.extraInfo")}
               style={textareaStyle}
               rows={2}
             />
@@ -139,7 +153,9 @@ export function GeneralCardReceipt() {
               disabled={saving}
               style={buttonStyle}
             >
-              {saving ? "A guardar…" : "Guardar"}
+              {saving
+                ? t("generalCardReceipt.saving")
+                : t("generalCardReceipt.save")}
             </button>
           </div>
         </div>

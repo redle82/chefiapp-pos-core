@@ -14,7 +14,7 @@
 
 ## 📋 O Que Este Comando Faz
 
-1. ✅ Mata processos antigos na porta 5173
+1. ✅ Mata processos antigos na porta 5175
 2. ✅ Limpa cache do Vite
 3. ✅ Obtém Restaurant ID (Docker Core ou padrão)
 4. ✅ Inicia servidor limpo
@@ -65,7 +65,7 @@ cd docker-core
 ### Abrir manualmente
 
 ```
-http://localhost:5173/kds/00000000-0000-0000-0000-000000000100?demo=true&kdsVersion=new&noLegacy=true
+http://localhost:5175/kds/00000000-0000-0000-0000-000000000100?demo=true&kdsVersion=new&noLegacy=true
 ```
 
 ---

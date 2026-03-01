@@ -168,13 +168,13 @@ echo "✅ Total: R$ $(echo "scale=2; $ORDER_TOTAL/100" | bc)"
 # 7. Verificar frontend
 echo ""
 echo "7️⃣ Verificando frontend..."
-FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/ 2>/dev/null || echo "000")
+FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5175/ 2>/dev/null || echo "000")
 
 if [ "$FRONTEND_OK" = "200" ]; then
     echo "✅ Frontend rodando"
     echo ""
     echo "📋 INSTRUÇÕES PARA TESTE MANUAL:"
-    echo "   1. Abra: http://localhost:5173/public/$RESTAURANT_SLUG/mesa/$TABLE_NUMBER"
+    echo "   1. Abra: http://localhost:5175/public/$RESTAURANT_SLUG/mesa/$TABLE_NUMBER"
     echo "   2. Verifique que:"
     echo "      - Página mostra 'Mesa $TABLE_NUMBER'"
     echo "      - Menu completo aparece"
@@ -183,15 +183,15 @@ if [ "$FRONTEND_OK" = "200" ]; then
     echo "   4. Clique em 'Finalizar Pedido'"
     echo "   5. Verifique que:"
     echo "      - Mensagem de sucesso aparece"
-    echo "      - Pedido aparece no KDS (http://localhost:5173/kds-minimal)"
+    echo "      - Pedido aparece no KDS (http://localhost:5175/kds-minimal)"
     echo "      - Origem do pedido é 'QR MESA' (badge rosa) no KDS"
     echo "      - Pedido está associado à mesa $TABLE_NUMBER"
     echo ""
     echo "   📋 Para gerar QR Code:"
-    echo "      URL: http://localhost:5173/public/$RESTAURANT_SLUG/mesa/$TABLE_NUMBER"
+    echo "      URL: http://localhost:5175/public/$RESTAURANT_SLUG/mesa/$TABLE_NUMBER"
     echo "      Use qualquer gerador de QR code online com esta URL"
 else
-    echo "⚠️  AVISO: Frontend não está rodando (porta 5173)"
+    echo "⚠️  AVISO: Frontend não está rodando (porta 5175)"
 fi
 
 # 8. Resumo
@@ -210,7 +210,7 @@ echo "  ✅ Total calculado corretamente"
 if [ "$FRONTEND_OK" = "200" ]; then
     echo ""
     echo "  📋 TESTE MANUAL NECESSÁRIO:"
-    echo "     Abra http://localhost:5173/public/$RESTAURANT_SLUG/mesa/$TABLE_NUMBER e teste criação de pedido"
+    echo "     Abra http://localhost:5175/public/$RESTAURANT_SLUG/mesa/$TABLE_NUMBER e teste criação de pedido"
 fi
 echo ""
 echo "═══════════════════════════════════════════════════════════════"

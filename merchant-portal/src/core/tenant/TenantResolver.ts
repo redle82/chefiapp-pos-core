@@ -470,6 +470,27 @@ export function clearActiveTenant(): void {
 }
 
 /**
+ * Read active tenant ID from canonical store, with legacy fallback.
+ *
+ * Priority:
+ *   1. chefiapp_active_tenant  (canonical — managed by setActiveTenant)
+ *   2. chefiapp_restaurant_id  (TabIsolated — legacy key)
+ *   3. chefiapp_restaurant_id  (localStorage — oldest legacy path)
+ *
+ * Pure read — no side-effects.  Callers that want the value sealed
+ * should call setActiveTenant() explicitly after validation.
+ */
+export function readTenantIdWithLegacyFallback(): string | null {
+  return (
+    getActiveTenant() ||
+    getTabIsolated("chefiapp_restaurant_id") ||
+    (typeof window !== "undefined"
+      ? window.localStorage.getItem("chefiapp_restaurant_id")
+      : null)
+  );
+}
+
+/**
  * Switch to a different tenant
  */
 export async function switchTenant(

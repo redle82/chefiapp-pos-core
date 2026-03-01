@@ -123,9 +123,9 @@
 
 **URLs para teste manual:**
 
-- Página Pública: `http://localhost:5173/public/restaurante-piloto`
-- Página da Mesa: `http://localhost:5173/public/restaurante-piloto/mesa/1`
-- KDS: `http://localhost:5173/app/kds`
+- Página Pública: `http://localhost:5175/public/restaurante-piloto`
+- Página da Mesa: `http://localhost:5175/public/restaurante-piloto/mesa/1`
+- KDS: `http://localhost:5175/app/kds`
 
 ---
 
@@ -174,12 +174,12 @@
 
 1. **Testar Realtime no KDS:**
 
-   - Abrir KDS: `http://localhost:5173/app/kds`
+   - Abrir KDS: `http://localhost:5175/app/kds`
    - Criar pedido via TPV ou Web
    - Verificar atualização automática (sem refresh)
 
 2. **Testar Fluxo Web/QR Mesa:**
-   - Abrir página da mesa: `http://localhost:5173/public/restaurante-piloto/mesa/1`
+   - Abrir página da mesa: `http://localhost:5175/public/restaurante-piloto/mesa/1`
    - Adicionar produtos e criar pedido
    - Verificar origem `QR_MESA` no KDS
    - Testar constraint (tentar criar segundo pedido na mesma mesa)

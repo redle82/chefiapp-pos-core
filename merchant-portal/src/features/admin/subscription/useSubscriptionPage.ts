@@ -18,7 +18,7 @@ import {
   type BillingInvoiceRow,
   type BillingPlanRow,
 } from "../../../core/billing/coreBillingApi";
-import { getTabIsolated } from "../../../core/storage/TabIsolatedStorage";
+import { useTenant } from "../../../core/tenant/TenantContext";
 import {
   useSubscription,
   type Subscription,
@@ -116,7 +116,7 @@ export function useSubscriptionPage(): SubscriptionPageData {
     error: subError,
     refetch: refetchSub,
   } = useSubscription();
-  const restaurantId = getTabIsolated("chefiapp_restaurant_id");
+  const { tenantId: restaurantId } = useTenant();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);

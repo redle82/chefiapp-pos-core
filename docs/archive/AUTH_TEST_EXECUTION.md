@@ -46,7 +46,7 @@ console.log('👤 Usuário:', session?.user?.email)
 
 ### O que fazer
 1. **Fazer logout** (se estiver logado)
-2. Abrir diretamente: `http://localhost:5173/app/dashboard`
+2. Abrir diretamente: `http://localhost:5175/app/dashboard`
 3. Verificar comportamento
 
 ### ✅ Passa se

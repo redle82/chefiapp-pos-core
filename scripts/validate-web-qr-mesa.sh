@@ -127,12 +127,12 @@ echo ""
 echo "5️⃣  Verificando Frontend..."
 echo ""
 
-if lsof -ti:5173 > /dev/null 2>&1; then
-    echo -e "  ${GREEN}✅ Frontend rodando na porta 5173${NC}"
+if lsof -ti:5175 > /dev/null 2>&1; then
+    echo -e "  ${GREEN}✅ Frontend rodando na porta 5175${NC}"
     ((PASSED++))
 
     # Verificar se página pública está acessível
-    if curl -s http://localhost:5173 > /dev/null 2>&1; then
+    if curl -s http://localhost:5175 > /dev/null 2>&1; then
         echo -e "  ${GREEN}✅ Frontend responde${NC}"
         ((PASSED++))
     else
@@ -239,13 +239,13 @@ if [ -n "$SLUG" ] && [ "$TABLE_COUNT" -gt 0 ]; then
     echo -e "  ${BLUE}💡 URLs para Teste Manual:${NC}"
     echo ""
     echo -e "  ${BLUE}1. Página Pública:${NC}"
-    echo -e "     http://localhost:5173/public/$SLUG"
+    echo -e "     http://localhost:5175/public/$SLUG"
     echo ""
     echo -e "  ${BLUE}2. Página da Mesa (exemplo mesa 1):${NC}"
-    echo -e "     http://localhost:5173/public/$SLUG/mesa/1"
+    echo -e "     http://localhost:5175/public/$SLUG/mesa/1"
     echo ""
     echo -e "  ${BLUE}3. KDS (para verificar origem QR_MESA):${NC}"
-    echo -e "     http://localhost:5173/app/kds"
+    echo -e "     http://localhost:5175/app/kds"
     echo ""
 fi
 
@@ -253,7 +253,7 @@ if [ $FAILED -eq 0 ]; then
     echo -e "  ${GREEN}🎉 Fluxo Web/QR Mesa está configurado corretamente!${NC}"
     echo ""
     echo "  Próximos passos para validação manual:"
-    echo "  1. Abrir página da mesa: http://localhost:5173/public/$SLUG/mesa/1"
+    echo "  1. Abrir página da mesa: http://localhost:5175/public/$SLUG/mesa/1"
     echo "  2. Adicionar produtos ao carrinho"
     echo "  3. Criar pedido"
     echo "  4. Verificar no KDS que origem aparece como QR_MESA"

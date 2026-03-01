@@ -8,6 +8,7 @@ import {
   getTabIsolated,
   setTabIsolated,
 } from "../core/storage/TabIsolatedStorage";
+import { useTenant } from "../core/tenant/TenantContext";
 import { useOnboardingState } from "../hooks/useOnboardingState";
 import { Badge } from "../ui/design-system/Badge";
 import { Button } from "../ui/design-system/Button";
@@ -27,7 +28,7 @@ export function TPVReadyPage() {
   const navigate = useNavigate();
   const apiBase = import.meta.env.VITE_API_BASE || CONFIG.API_BASE;
   const internalToken = import.meta.env.VITE_INTERNAL_TOKEN || "dev-internal";
-  const restaurantId = getTabIsolated("chefiapp_restaurant_id");
+  const { tenantId: restaurantId } = useTenant();
   const slug = getTabIsolated("chefiapp_slug") || "sofia-gastrobar";
 
   const {

@@ -1,9 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
-import { GlobalBlockedView, GlobalLoadingView } from "../../ui/design-system/components";
-import { getTabIsolated } from "../storage/TabIsolatedStorage";
-import { getBillingStatusWithTrial, type BillingStatus } from "./coreBillingApi";
+import {
+  GlobalBlockedView,
+  GlobalLoadingView,
+} from "../../ui/design-system/components";
+import { readTenantIdWithLegacyFallback } from "../tenant/TenantResolver";
+import {
+  getBillingStatusWithTrial,
+  type BillingStatus,
+} from "./coreBillingApi";
 
 interface PaymentGuardProps {
   children: React.ReactNode;
@@ -17,7 +23,7 @@ export const PaymentGuard: React.FC<PaymentGuardProps> = ({ children }) => {
 
   const checkBilling = async () => {
     try {
-      const rId = getTabIsolated("chefiapp_restaurant_id");
+      const rId = readTenantIdWithLegacyFallback();
       if (!rId) {
         setStatus("active");
         setTrialExpired(false);

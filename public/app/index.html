@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<meta charset="UTF-8" />
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Hind:wght@600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet" />
+<link rel="icon"
+href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👨‍🍳</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="AppStaff" />
+<meta name="theme-color" content="#121212" />
+<meta name="description"
+content="AppStaff — Aplicação para a equipa do restaurante. Gestão de turnos, pedidos e operação." />
+<title>AppStaff — ChefIApp</title>
+<meta property="og:title" content="ChefIApp — TPV que pensa antes do humano" />
+<meta property="og:description" content="O único TPV que observa contexto operacional e sugere a próxima ação mais importante. Demo gratuita em 5 minutos." />
+<meta property="og:type" content="website" />
+<script>
+window.process = { env: {} };
+</script>
+<!-- Polyfill Buffer for PDFMake/TPV - ESM-compatible -->
+<script>
+// Minimal Buffer polyfill for browser (avoids CommonJS require)
+(function() {
+if (typeof window.Buffer !== 'undefined') return;
+
+// Create a minimal Buffer implementation for PDFMake
+const BufferPolyfill = {
+isBuffer: function(obj) {
+return obj instanceof Uint8Array;
+},
+from: function(data, encoding) {
+if (typeof data === 'string') {
+const encoder = new TextEncoder();
+return encoder.encode(data);
+}
+if (Array.isArray(data)) {
+return new Uint8Array(data);
+}
+return new Uint8Array(data);
+},
+alloc: function(size) {
+return new Uint8Array(size);
+},
+allocUnsafe: function(size) {
+return new Uint8Array(size);
+}
+};
+
+window.Buffer = BufferPolyfill;
+console.log('Buffer polyfilled (inline ESM-compatible)');
+})();
+</script>
+
+<!-- SOVEREIGN DEV SAFETY (pre-bundle): DEV must NEVER run with a PWA/Workbox SW.
+Policy contract lives in src/core/runtime/devStableMode.ts (SSOT).
+DEV_STABLE_MODE: Service Worker is disabled in DEV to eliminate transport noise. -->
+<script>
+(function () {
+try {
+var host = location.hostname;
+var isDev =
+host === 'localhost' ||
+host === '127.0.0.1' ||
+host.endsWith('.local');
+
+if (!isDev) return;
+if (!('serviceWorker' in navigator)) return;
+
+navigator.serviceWorker.getRegistrations().then(function (regs) {
+regs.forEach(function (r) { try { r.unregister(); } catch (e) {} });
+});
+
+if ('caches' in window) {
+caches.keys().then(function (keys) {
+keys.forEach(function (k) { try { caches.delete(k); } catch (e) {} });
+});
+}
+
+// Also ensure we don't keep a "controller" alive
+if (navigator.serviceWorker.controller) {
+try { navigator.serviceWorker.controller.postMessage({ type: 'DEV_SW_DISABLE' }); } catch (e) {}
+}
+
+console.info('[SW] Preflight: unregister + clear caches (before bundle)');
+} catch (e) {
+// non-fatal
+}
+})();
+</script>
+  <!-- Dev entry (build substitui por /assets/index-*.js) -->
+<link rel="manifest" href="/assets/manifest-CN88Lp2b.webmanifest">  <script type="module" crossorigin src="/assets/index-BvuRpkei.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/react-vendor-B2DqUA9u.js">
+  <link rel="modulepreload" crossorigin href="/assets/app-runtime-CDdWde-Z.js">
+  <link rel="modulepreload" crossorigin href="/assets/app-core-DLnbFOT2.js">
+  <link rel="modulepreload" crossorigin href="/assets/app-menu-CZ9L0B2E.js">
+  <link rel="modulepreload" crossorigin href="/assets/charts-vendor-BZyYMtM9.js">
+  <link rel="modulepreload" crossorigin href="/assets/app-staff-BXRCc8iQ.js">
+  <link rel="modulepreload" crossorigin href="/assets/app-admin-CCpGaIZ6.js">
+  <link rel="modulepreload" crossorigin href="/assets/app-misc-xgkKKEIN.js">
+  <link rel="modulepreload" crossorigin href="/assets/public-C_SeNRyn.js">
+  <link rel="stylesheet" crossorigin href="/assets/app-runtime-xMRVnGAz.css">
+  <link rel="stylesheet" crossorigin href="/assets/app-core-DzTxPEUw.css">
+  <link rel="stylesheet" crossorigin href="/assets/app-menu-DjSYF51a.css">
+  <link rel="stylesheet" crossorigin href="/assets/app-staff-C6LEq6MY.css">
+  <link rel="stylesheet" crossorigin href="/assets/app-admin-VKmirMmH.css">
+  <link rel="stylesheet" crossorigin href="/assets/app-misc-Cf59_T_d.css">
+  <link rel="stylesheet" crossorigin href="/assets/public-CRoAycFu.css">
+  <link rel="stylesheet" crossorigin href="/assets/index-B5ELn9pY.css">
+<link rel="manifest" href="/manifest.webmanifest"></head>
+
+<body>
+<div id="root"><p style="margin:2rem;font-family:system-ui;color:#71717a;text-align:center;">Carregando ChefIApp…</p></div>
+</body>
+
+</html>

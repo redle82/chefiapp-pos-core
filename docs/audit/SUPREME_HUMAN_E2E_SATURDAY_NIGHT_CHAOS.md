@@ -212,4 +212,4 @@ _(Resposta curta: Sim / Não / Só se …)_
 
 ---
 
-_Fim do prompt. Executar o teste em ambiente real (localhost:5173 + Docker Core); preencher o relatório com honestidade._
+_Fim do prompt. Executar o teste em ambiente real (localhost:5175 + Docker Core); preencher o relatório com honestidade._

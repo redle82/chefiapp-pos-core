@@ -167,7 +167,7 @@ docker-core/
 
 **Configuração:**
 
-- Acessível via: `http://localhost:5173/app/kds`
+- Acessível via: `http://localhost:5175/app/kds`
 - Atualização em tempo real via Realtime
 - Suporte a múltiplas estações (KITCHEN, BAR, etc.)
 
@@ -258,7 +258,7 @@ docker-core/
 
 **Configuração:**
 
-- Acessível via: `http://localhost:5173/app/kds`
+- Acessível via: `http://localhost:5175/app/kds`
 - Atualização em tempo real via Realtime
 - Suporte a múltiplas estações
 

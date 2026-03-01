@@ -12,7 +12,7 @@
 - ✅ Health check: OK
 
 ### 2. Frontend
-- ✅ Rodando em `localhost:5173`
+- ✅ Rodando em `localhost:5175`
 - ✅ Acessível
 
 ### 3. Endpoints
@@ -54,7 +54,7 @@ Abra o console do navegador e verifique:
 
 ### Passo 1: Abrir Browser
 ```bash
-# Abrir http://localhost:5173
+# Abrir http://localhost:5175
 ```
 
 ### Passo 2: Verificar Console

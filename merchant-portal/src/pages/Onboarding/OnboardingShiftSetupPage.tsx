@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { OnboardingStepIndicator } from "../../components/onboarding/OnboardingStepIndicator";
 import { ONBOARDING_5MIN_COPY } from "../../copy/onboarding5min";
 import { setDefaultOpeningCashCents } from "../../core/storage/shiftDefaultsStorage";
-import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
+import { useTenant } from "../../core/tenant/TenantContext";
 import { Button, Card } from "../../ui/design-system/primitives";
 import styles from "./OnboardingShiftSetupPage.module.css";
 
@@ -16,14 +16,11 @@ const OPENING_OPTIONS = [0, 50, 100] as const;
 
 export function OnboardingShiftSetupPage() {
   const navigate = useNavigate();
+  const { tenantId } = useTenant();
   const [openingEur, setOpeningEur] = useState<number>(0);
 
   const handleNext = () => {
-    const restaurantId =
-      getTabIsolated("chefiapp_restaurant_id") ??
-      (typeof window !== "undefined"
-        ? window.localStorage.getItem("chefiapp_restaurant_id")
-        : null);
+    const restaurantId = tenantId;
     if (restaurantId) {
       setDefaultOpeningCashCents(restaurantId, openingEur * 100);
     }

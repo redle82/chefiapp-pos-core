@@ -141,7 +141,7 @@
 
 1. Subir o Docker Core: `docker-compose -f docker-core/docker-compose.core.yml up -d`
 2. Subir o frontend: `npm run dev`
-3. Acessar `http://localhost:5173`
+3. Acessar `http://localhost:5175`
 4. Deve aparecer apenas a tela "UI RESET / CORE ONLY"
 5. Nenhum erro no console relacionado a rotas antigas
 6. Nenhum redirect automático

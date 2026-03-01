@@ -30,6 +30,10 @@ import {
   SOFIA_RESTAURANT_ID,
   TRIAL_RESTAURANT_ID,
 } from "../readiness/operationalRestaurant";
+import {
+  readTenantIdWithLegacyFallback,
+  setActiveTenant,
+} from "../tenant/TenantResolver";
 import type { CoreSession, CoreUser } from "./authTypes";
 import { isMockAuthEnabled } from "./mockAuthGate";
 
@@ -121,8 +125,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         if (!localStorage.getItem("chefiapp_pilot_mode")) {
           localStorage.setItem("chefiapp_pilot_mode", "true");
         }
-        if (!localStorage.getItem("chefiapp_restaurant_id")) {
-          localStorage.setItem("chefiapp_restaurant_id", SOFIA_RESTAURANT_ID);
+        if (!readTenantIdWithLegacyFallback()) {
+          setActiveTenant(SOFIA_RESTAURANT_ID, "ACTIVE");
         }
         if (!sessionStorage.getItem("chefiapp_debug")) {
           sessionStorage.setItem("chefiapp_debug", "1");

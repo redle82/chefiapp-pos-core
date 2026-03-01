@@ -8,15 +8,15 @@
 
 Este diretório contém toda a documentação do projeto de transformação do ChefIApp em um **Sistema Nervoso Operacional**.
 
-**Filosofia:** *"Last.app organiza o restaurante. ChefIApp deve guiá-lo."*
+**Filosofia:** _"Last.app organiza o restaurante. ChefIApp deve guiá-lo."_
 
 ---
 
 ## ⚠️ Documentação histórica
 
-Documentos em `audit/`, `archive/`, `pilots/` e outros runbooks antigos podem referir a porta **5173**. Essa porta foi usada em fases iniciais do projeto.
+Documentos em `audit/`, `archive/`, `pilots/` e outros runbooks antigos podem referir portas **5157** ou **5173**. Essas portas foram usadas em fases iniciais do projeto.
 
-👉 **Porta oficial do portal:** **5157** ([CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md)).
+👉 **Porta oficial do portal:** **5175** ([CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md)).
 👉 **Nota completa:** [HISTORICAL_NOTES.md](./HISTORICAL_NOTES.md).
 
 👉 **Índice de todos os MDs:** [INDICE_MDS.md](./INDICE_MDS.md) — entradas canónicas (README, architecture, contracts, auditoria).
@@ -29,13 +29,15 @@ Documentos em `audit/`, `archive/`, `pilots/` e outros runbooks antigos podem re
 > O índice canónico de documentação vive em **[INDICE_MDS.md](./INDICE_MDS.md)**.
 
 ### Entradas canónicas
+
 - **[INDICE_MDS.md](./INDICE_MDS.md)** — índice único (o que existe e o que é canónico)
 - **[Architecture README](./architecture/README.md)** — entrada canónica de arquitetura
 - **[Contracts README](./contracts/README.md)** — entrada canónica de contratos
 - **[CAMINHO_DO_CLIENTE.md](./architecture/CAMINHO_DO_CLIENTE.md)** — visão produto: fluxo do cliente (Landing → Signup → Portal → Billing → Operação)
-- **[CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md)** — runtime/rotas/porta oficial do portal (5157)
+- **[CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./architecture/CORE_RUNTIME_AND_ROUTES_CONTRACT.md)** — runtime/rotas/porta oficial do portal (5175)
 
 ### Documentos “principais” (planeados / em evolução)
+
 Os itens abaixo fazem parte do roadmap documental, mas **podem ainda não existir**. O acesso deve ser feito via **INDICE_MDS** (que só lista o que existe).
 
 - RESUMO_EXECUTIVO.md
@@ -58,20 +60,24 @@ Os itens abaixo fazem parte do roadmap documental, mas **podem ainda não existi
 ## 🗂️ Estrutura por Tipo
 
 ### Para Desenvolvedores
+
 - `EXECUCAO_30_DIAS.md` - Implementação técnica
 - `VALIDACAO_RAPIDA.md` - Testes e validação
 - `ARQUITETURA_VISUAL.md` - Diagramas e fluxos
 - `TROUBLESHOOTING.md` - Debug e resolução
 
 ### Para Vendas/Marketing
+
 - `MANIFESTO_COMERCIAL.md` - Proposta de valor
 - `PLANO_ROLLOUT.md` - Estratégia de lançamento
 - `RESUMO_EXECUTIVO.md` - Visão geral executiva
 
 ### Para Usuários Finais
+
 - `GUIA_RAPIDO_GARCOM.md` - Manual do garçom
 
 ### Para Gestão
+
 - `RESUMO_EXECUTIVO.md` - Visão geral
 - `PLANO_ROLLOUT.md` - Planejamento estratégico
 
@@ -102,9 +108,11 @@ Os itens abaixo fazem parte do roadmap documental, mas **podem ainda não existi
 ## 🛠️ Scripts Úteis
 
 ### Validação Automatizada
+
 ```bash
 ./scripts/validate-system.sh
 ```
+
 Valida estrutura de arquivos, imports e documentação.
 
 ---
@@ -130,4 +138,4 @@ Valida estrutura de arquivos, imports e documentação.
 ---
 
 **Frase Final:**
-*"Last.app organiza o restaurante. ChefIApp deve guiá-lo."*
+_"Last.app organiza o restaurante. ChefIApp deve guiá-lo."_

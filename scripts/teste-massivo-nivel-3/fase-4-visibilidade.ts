@@ -141,12 +141,12 @@ export const fase4Visibilidade: PhaseFunction = async (
       const readyOrder = readyOrders.rows.find((r: any) => r.restaurant_id === restaurant.id);
       
       checklist.push(`### ${restaurant.name} (${restaurant.slug})\n`);
-      checklist.push(`- **KDS Interno:** http://localhost:5173/kds-minimal`);
+      checklist.push(`- **KDS Interno:** http://localhost:5175/kds-minimal`);
       checklist.push(`  - ✅ Deve mostrar todos os pedidos ativos (OPEN, IN_PREP, READY)`);
       checklist.push(`  - ✅ Deve mostrar tempos e atrasos`);
       checklist.push(`  - ✅ Deve permitir marcar itens como prontos\n`);
       
-      checklist.push(`- **KDS Público:** http://localhost:5173/public/${restaurant.slug}/kds`);
+      checklist.push(`- **KDS Público:** http://localhost:5175/public/${restaurant.slug}/kds`);
       checklist.push(`  - ✅ Deve mostrar APENAS pedidos READY`);
       checklist.push(`  - ❌ NÃO deve mostrar pedidos em preparo`);
       checklist.push(`  - ❌ NÃO deve mostrar tempos ou atrasos\n`);
@@ -154,14 +154,14 @@ export const fase4Visibilidade: PhaseFunction = async (
       if (readyOrder) {
         const order = context.orders.find(o => o.id === readyOrder.id);
         if (order) {
-          checklist.push(`- **Status do Cliente:** http://localhost:5173/public/${restaurant.slug}/order/${order.id}`);
+          checklist.push(`- **Status do Cliente:** http://localhost:5175/public/${restaurant.slug}/order/${order.id}`);
           checklist.push(`  - ✅ Deve mostrar APENAS este pedido`);
           checklist.push(`  - ❌ NÃO deve mostrar outros pedidos`);
           checklist.push(`  - ❌ NÃO deve mostrar informações de produção\n`);
         }
       }
       
-      checklist.push(`- **Mini KDS (AppStaff):** http://localhost:5173/garcom`);
+      checklist.push(`- **Mini KDS (AppStaff):** http://localhost:5175/garcom`);
       checklist.push(`  - ✅ Deve mostrar pedidos do restaurante correto`);
       checklist.push(`  - ✅ Deve mostrar tarefas relacionadas\n`);
       

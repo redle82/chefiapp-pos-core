@@ -5,16 +5,17 @@
  * Fornece OfflineOrderProvider + OrderProvider + TableProvider para o StaffModule.
  */
 
-import { OrderProvider } from '../TPV/context/OrderContextReal';
-import { OfflineOrderProvider } from '../TPV/context/OfflineOrderContext';
-import { TableProvider } from '../TPV/context/TableContext';
-import { useRestaurantIdentity } from '../../core/identity/useRestaurantIdentity';
-import { getTabIsolated } from '../../core/storage/TabIsolatedStorage';
-import StaffModule from './StaffModule';
+import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
+import { useTenant } from "../../core/tenant/TenantContext";
+import { OfflineOrderProvider } from "../TPV/context/OfflineOrderContext";
+import { OrderProvider } from "../TPV/context/OrderContextReal";
+import { TableProvider } from "../TPV/context/TableContext";
+import StaffModule from "./StaffModule";
 
 export function AppStaffWrapper() {
   const { identity } = useRestaurantIdentity();
-  const restaurantId = identity.id || getTabIsolated('chefiapp_restaurant_id');
+  const { tenantId } = useTenant();
+  const restaurantId = identity.id || tenantId;
 
   // Se não houver restaurantId, StaffModule vai lidar com o loading
   return (

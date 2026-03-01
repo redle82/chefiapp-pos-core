@@ -34,7 +34,7 @@
   - **Arquivo:** `merchant-portal/src/pages/AuthPage.tsx:174`
   - **Causa:** Variável `email` declarada dentro do `try`, inacessível no `catch`
   - **Status:** ✅ **CORRIGIDO** - Variável movida para escopo externo
-- ⚠️ Servidor não está rodando (localhost:5173 recusou conexão)
+- ⚠️ Servidor não está rodando (localhost:5175 recusou conexão)
 
 ### Erros Encontrados
 - 🔴 **CRITICAL:** `ReferenceError: email is not defined` (INCIDENT #001)

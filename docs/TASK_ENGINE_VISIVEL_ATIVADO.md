@@ -90,7 +90,7 @@ docker exec -i chefiapp-core-postgres psql -U postgres -d chefiapp_core < docker
 
 ### Teste Manual
 
-1. **Acessar:** `http://localhost:5173/task-system`
+1. **Acessar:** `http://localhost:5175/task-system`
 2. **Verificar:**
    - ✅ Tarefas carregam automaticamente
    - ✅ Filtros funcionam

@@ -1,4 +1,7 @@
-import { render, screen } from "@testing-library/react";
+/**
+ * @vitest-environment jsdom
+ */
+import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BrowserBlockGuard } from "./BrowserBlockGuard";
@@ -33,6 +36,7 @@ describe("BrowserBlockGuard", () => {
   });
 
   afterEach(() => {
+    cleanup();
     Object.defineProperty(window, "matchMedia", {
       writable: true,
       value: originalMatchMedia,
@@ -61,6 +65,26 @@ describe("BrowserBlockGuard", () => {
     expect(
       screen.getByText("TPV não pode ser aberto no navegador"),
     ).toBeTruthy();
+    expect(screen.getByTestId("browser-block-guard")).toBeTruthy();
     expect(screen.queryByText("TPV content")).toBeNull();
+  });
+
+  it("allows TPV in browser only when mode=trial query is explicit", () => {
+    render(
+      <MemoryRouter initialEntries={["/op/tpv?mode=trial"]}>
+        <Routes>
+          <Route
+            element={
+              <BrowserBlockGuard requiredPlatform="desktop" moduleLabel="TPV" />
+            }
+          >
+            <Route path="/op/tpv" element={<div>TPV content</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByTestId("browser-block-guard")).toBeNull();
+    expect(screen.getByText("TPV content")).toBeTruthy();
   });
 });

@@ -1,5 +1,7 @@
 # Arquitetura de Providers — Merchant Portal
 
+> ⚠️ **PARTIALLY SUPERSEDED** — `AppDomainWrapper` / `AppDomainProvider` references are stale (deleted in PR-G, refactor/boot-pipeline). Provider tree now lives entirely in `App.tsx` → `TenantProvider`.
+
 **Objetivo:** Fonte de verdade para a separação entre árvore pública (demo/marketing) e árvore de app (produto real). Evita o erro "Cannot read properties of null (reading 'useContext')" e garante que rotas que usam hooks de contexto estejam sempre dentro dos providers corretos.
 
 **Código:** [merchant-portal/src/App.tsx](../../merchant-portal/src/App.tsx)
@@ -37,10 +39,10 @@ BrowserRouter (main.tsx)
 
 ## 2. Lista de rotas por árvore
 
-| Árvore   | Rotas                                                                 |
-|----------|-----------------------------------------------------------------------|
-| Pública  | `/`, `/op/tpv` (só com `?mode=demo`)                                  |
-| App      | `/login`, `/auth`, `/signup`, `/forgot-password`, `/billing/success`, `/landing`, `/pricing`, `/features`, `/demo`, `/onboarding/*`, `/op/tpv` (real), `/app/*`, e todas as demais |
+| Árvore  | Rotas                                                                                                                                                                              |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pública | `/`, `/op/tpv` (só com `?mode=demo`)                                                                                                                                               |
+| App     | `/login`, `/auth`, `/signup`, `/forgot-password`, `/billing/success`, `/landing`, `/pricing`, `/features`, `/demo`, `/onboarding/*`, `/op/tpv` (real), `/app/*`, e todas as demais |
 
 ---
 
@@ -60,6 +62,7 @@ Se alguém adicionar uma rota pública que use esses hooks sem estar dentro de `
 Checklist completo (6 passos, ambiente, critérios): [VALIDACAO_TESTE_HUMANO_E2E.md](../VALIDACAO_TESTE_HUMANO_E2E.md).
 
 Resumo rápido:
+
 1. `npm run dev` (merchant-portal).
 2. Abrir `http://localhost:5175/` — landing carrega; TPV demo funciona (fechar overlay se existir).
 3. Clicar "Começar agora" — vai para `/auth`; sem tela de erro.

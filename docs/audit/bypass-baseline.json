@@ -1,0 +1,11 @@
+{
+  "generatedAt": "2026-02-27T21:44:24Z",
+  "findings": [
+    "merchant-portal/src/App.tsx:251:    billingStatus === \"past_due\" &&",
+    "merchant-portal/src/core/dashboard/systemTreeState.ts:179:  if (billingStatus === \"active\") billingNodeState = \"ready\";",
+    "merchant-portal/src/core/dashboard/systemTreeState.ts:180:  else if (billingStatus === \"trial\" || billingStatus === \"past_due\")",
+    "merchant-portal/src/hooks/useSubscription.ts:139:      subscription.status === \"active\" || subscription.status === \"trialing\"",
+    "merchant-portal/src/hooks/useSubscription.ts:146:      subscription.status === \"canceled\" || subscription.status === \"paused\"",
+    "merchant-portal/src/components/operational/RequireOperational.tsx:95:      const reason = billingStatus === \"past_due\" ? \"BILLING_PAST_DUE\" : \"BILLING_SUSPENDED\";"
+  ]
+}

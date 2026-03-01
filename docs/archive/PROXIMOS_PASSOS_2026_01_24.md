@@ -13,7 +13,7 @@ Validar que todas as correções funcionam corretamente e que o sistema opera en
 
 ### Tarefas
 - [ ] **Teste E2E Manual no Browser**
-  - Abrir `http://localhost:5173`
+  - Abrir `http://localhost:5175`
   - Seguir guia: `TESTE_E2E_FLUXO_COMPLETO.md`
   - Validar:
     - ✅ Console sem loops

@@ -13,7 +13,6 @@ import {
   BackendType,
   getBackendType,
 } from "../../../../core/infra/backendAdapter";
-import { openOperationalInNewWindow } from "../../../../core/operational/openOperationalWindow";
 import {
   getInstalledDevice,
   setInstalledDevice,
@@ -147,8 +146,8 @@ export function useDeviceInstall(): UseDeviceInstallReturn {
           window.localStorage.setItem("chefiapp_restaurant_id", restaurantId);
         }
 
-        // Abrir em janela popup (experiência app-like)
-        openOperationalInNewWindow(moduleId);
+        // UXG-002: Do NOT auto-open operational window after install.
+        // The caller (DeviceInstallDialog) handles post-install UX.
         return true;
       } catch (err) {
         setError(

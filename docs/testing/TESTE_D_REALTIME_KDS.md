@@ -83,7 +83,7 @@ Validar que:
    ```bash
    cd merchant-portal
    npm run dev
-   # Abrir http://localhost:5173/app/kds?demo=true
+   # Abrir http://localhost:5175/app/kds?demo=true
    ```
 
 ### Executar Teste

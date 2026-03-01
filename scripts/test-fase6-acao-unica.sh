@@ -156,13 +156,13 @@ fi
 # 10. Verificar frontend
 echo ""
 echo "🔟 Verificando frontend..."
-FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/ 2>/dev/null || echo "000")
+FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5175/ 2>/dev/null || echo "000")
 
 if [ "$FRONTEND_OK" = "200" ]; then
     echo "✅ Frontend rodando"
     echo ""
     echo "📋 INSTRUÇÕES PARA TESTE MANUAL:"
-    echo "   1. Abra: http://localhost:5173/kds-minimal"
+    echo "   1. Abra: http://localhost:5175/kds-minimal"
     echo "   2. Verifique que o pedido aparece com status OPEN"
     echo "   3. Clique no botão 'Iniciar Preparo'"
     echo "   4. Verifique que:"
@@ -171,7 +171,7 @@ if [ "$FRONTEND_OK" = "200" ]; then
     echo "      - Pedido recarrega automaticamente"
     echo "      - Botão desaparece (pedido não está mais OPEN)"
 else
-    echo "⚠️  AVISO: Frontend não está rodando (porta 5173)"
+    echo "⚠️  AVISO: Frontend não está rodando (porta 5175)"
 fi
 
 # 11. Resumo
@@ -188,7 +188,7 @@ echo "  ✅ Estado consistente no Core"
 if [ "$FRONTEND_OK" = "200" ]; then
     echo ""
     echo "  📋 TESTE MANUAL NECESSÁRIO:"
-    echo "     Abra http://localhost:5173/kds-minimal e teste botão 'Iniciar Preparo'"
+    echo "     Abra http://localhost:5175/kds-minimal e teste botão 'Iniciar Preparo'"
 fi
 echo ""
 echo "Pronto para FASE 7 — Página Web Pública (Read-Only)"

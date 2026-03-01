@@ -7,8 +7,9 @@
  * Config view (/admin/config/*) keeps its own flat list.
  */
 import { useCallback, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
+import { isDesktopApp } from "../../../../core/operational/platformDetection";
 import { ChefIAppSignature } from "../../../../ui/design-system/sovereign/ChefIAppSignature";
 import { RestaurantHeader } from "../../../../ui/design-system/sovereign/RestaurantHeader";
 import styles from "./AdminSidebar.module.css";
@@ -216,9 +217,7 @@ export function AdminSidebar() {
       </div>
       <div className={styles.footer}>
         <nav aria-label="Quick links" className={styles.quickLinks}>
-          <NavLink to="/op/tpv" className={styles.quickLink}>
-            🖥️ Abrir TPV
-          </NavLink>
+          <TpvQuickLink />
           <NavLink to="/app/dashboard" className={styles.quickLink}>
             🏠 Dashboard
           </NavLink>
@@ -226,6 +225,45 @@ export function AdminSidebar() {
         <ChefIAppSignature variant="full" size="sm" tone="light" />
       </div>
     </aside>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  TpvQuickLink — context-aware "Abrir TPV"                          */
+/*  Browser → redirects to /admin/devices (no dead-end lock screen)   */
+/*  Desktop runtime → navigates to /op/tpv directly                   */
+/*  Ref: UXG-010                                                       */
+/* ------------------------------------------------------------------ */
+function TpvQuickLink() {
+  const navigate = useNavigate();
+  const [showNotice, setShowNotice] = useState(false);
+
+  const handleClick = () => {
+    if (isDesktopApp()) {
+      navigate("/op/tpv");
+      return;
+    }
+    // Browser: redirect to Devices page with context
+    setShowNotice(true);
+    setTimeout(() => {
+      navigate("/admin/devices", {
+        state: { fromTpvAttempt: true },
+      });
+    }, 1800);
+  };
+
+  return (
+    <>
+      <button type="button" onClick={handleClick} className={styles.quickLink}>
+        🖥️ Abrir TPV
+      </button>
+      {showNotice && (
+        <div className={styles.tpvNotice} role="status">
+          El TPV requiere la aplicación de escritorio. Redirigiendo a
+          Dispositivos…
+        </div>
+      )}
+    </>
   );
 }
 

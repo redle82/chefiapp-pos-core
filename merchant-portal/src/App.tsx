@@ -4,36 +4,24 @@
  * Esta é a versão limpa após remoção total de UI/UX legada.
  */
 
-import { useEffect, useMemo, type ReactNode } from "react";
-import {
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
+import { useEffect } from "react";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
+import { DevBuildBanner } from "./components/DevBuildBanner";
 import {
   GlobalUIStateProvider,
   useGlobalUIState,
 } from "./context/GlobalUIStateContext";
-import type {
-  ProductMode,
-  RestaurantRuntime,
-} from "./context/RestaurantRuntimeContext";
-import { RestaurantRuntimeContext } from "./context/RestaurantRuntimeContext";
+import { RestaurantRuntimeProvider } from "./context/RestaurantRuntimeContext";
 import { AuthProvider } from "./core/auth/AuthProvider";
 import { useAuth } from "./core/auth/useAuth";
 import { FlowGate } from "./core/flow/FlowGate";
-import { deriveLifecycle } from "./core/lifecycle/Lifecycle";
 import { usePWAStaffHomeToTPVRedirect } from "./core/operational/PWAOpenToTPVRedirect";
-import { TRIAL_RESTAURANT_ID } from "./core/readiness/operationalRestaurant";
-import { isTrialModeParam } from "./core/routing/TrialMode";
-import { ShiftContext } from "./core/shift/ShiftContext";
+import { RoleProvider } from "./core/roles";
+import { ShiftProvider } from "./core/shift/ShiftContext";
 import { ShiftGuard } from "./core/shift/ShiftGuard";
 import { EventMonitorBootstrap } from "./core/tasks/EventMonitorBootstrap";
-import { TPVTrialPage } from "./pages/TPVMinimal/TPVTrialPage";
+import { TenantProvider } from "./core/tenant/TenantContext";
 import { MarketingRoutesFragment } from "./routes/MarketingRoutes";
 import { OperationalRoutesFragment } from "./routes/OperationalRoutes";
 import { OfflineIndicator } from "./ui/OfflineIndicator";
@@ -43,85 +31,6 @@ import { CoreUnavailableBanner } from "./ui/design-system/CoreUnavailableBanner"
 import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
 import { ModeIndicator } from "./ui/design-system/ModeIndicator";
 import { GlobalBlockedView } from "./ui/design-system/components/GlobalBlockedView";
-
-/** NAVIGATION_OPERATIONAL_CONTRACT: quando mode=trial, TPV sem RequireOperational; senão app normal. */
-function TPVRouteHandler() {
-  const [searchParams] = useSearchParams();
-  if (isTrialModeParam(searchParams)) {
-    return <TPVTrialPage />;
-  }
-  return <AppOperationalWrapper />;
-}
-
-// =============================================================================
-// PUBLIC TREE (SEM AUTH) — providers mínimos para / e /op/tpv?mode=trial
-// =============================================================================
-
-function PublicProviders({ children }: { children: ReactNode }) {
-  const trialRuntimeContextValue = useMemo(() => {
-    const trialRuntime: RestaurantRuntime = {
-      restaurant_id: TRIAL_RESTAURANT_ID,
-      mode: "onboarding",
-      productMode: "trial",
-      dataMode: "trial",
-      installed_modules: [],
-      active_modules: [],
-      plan: "basic",
-      status: "onboarding",
-      billing_status: "trial",
-      capabilities: {},
-      setup_status: {},
-      isPublished: false,
-      lifecycle: deriveLifecycle(TRIAL_RESTAURANT_ID, false, false),
-      loading: false,
-      error: null,
-      coreReachable: true,
-      systemState: "TRIAL",
-      coreMode: "online",
-    };
-
-    return {
-      runtime: trialRuntime,
-      refresh: async () => {},
-      updateSetupStatus: async () => {},
-      publishRestaurant: async () => {},
-      installModule: async () => {},
-      setProductMode: (_mode: ProductMode) => {},
-    };
-  }, []);
-
-  const trialShiftValue = useMemo(
-    () => ({
-      isShiftOpen: true,
-      isChecking: false,
-      lastCheckedAt: new Date(),
-      refreshShiftStatus: async () => {},
-      markShiftOpen: () => {},
-    }),
-    [],
-  );
-
-  return (
-    <RestaurantRuntimeContext.Provider value={trialRuntimeContextValue}>
-      <ShiftContext.Provider value={trialShiftValue}>
-        <GlobalUIStateProvider>{children}</GlobalUIStateProvider>
-      </ShiftContext.Provider>
-    </RestaurantRuntimeContext.Provider>
-  );
-}
-
-/** /op/tpv: se mode=trial → TPV trial (árvore pública); senão → redirect /auth (árvore de app). */
-function TPVTrialGate() {
-  const [searchParams] = useSearchParams();
-  if (isTrialModeParam(searchParams)) {
-    return (
-      <PublicProviders>
-        <TPVTrialPage />
-      </PublicProviders>
-    );
-  }
-  return <Navigate to="/auth" replace />;
-}
 
 /** Self-service signup: when session is set and signup intent exists, redirect to setup (email + phone flow). */
 function SignupIntentRedirect() {
@@ -156,10 +65,13 @@ function App() {
   return (
     <ErrorBoundary context="Root">
       <AuthProvider>
+        <DevBuildBanner />
         <SignupIntentRedirect />
         <CookieConsentBanner />
         {/* <PublicLifecycleSync /> */}
-        <BillingsPreloader />
+        {/* PR-A: BillingsPreloader removed from global scope.
+         * ModeIndicator + CoreUnavailableBanner moved inside AppContentWithBilling
+         * so marketing routes never probe Core. */}
         <Routes>
           {MarketingRoutesFragment}
           {/* App Content (Management/Operational) */}
@@ -170,24 +82,28 @@ function App() {
   );
 }
 
-function BillingsPreloader() {
-  // Se precisarmos pré-carregar algo globalmente
-  return (
-    <>
-      <ModeIndicator />
-      <CoreUnavailableBanner />
-    </>
-  );
-}
-
-/** APPLICATION_BOOT_CONTRACT: MANAGEMENT/OPERATIONAL — Apenas Guards para rotas que precisam de Core. */
+/**
+ * APPLICATION_BOOT_CONTRACT: MANAGEMENT/OPERATIONAL — Full Core provider tree.
+ * PR-A: Providers moved here from main_debug.tsx so marketing routes stay clean.
+ * Provider order: RestaurantRuntime → Shift → GlobalUIState → Role → Tenant → FlowGate
+ */
 function AppOperationalWrapper() {
   return (
-    <FlowGate>
-      <ShiftGuard>
-        <AppContentWithBilling />
-      </ShiftGuard>
-    </FlowGate>
+    <RestaurantRuntimeProvider>
+      <ShiftProvider>
+        <GlobalUIStateProvider>
+          <RoleProvider>
+            <TenantProvider>
+              <FlowGate>
+                <ShiftGuard>
+                  <AppContentWithBilling />
+                </ShiftGuard>
+              </FlowGate>
+            </TenantProvider>
+          </RoleProvider>
+        </GlobalUIStateProvider>
+      </ShiftProvider>
+    </RestaurantRuntimeProvider>
   );
 }
 

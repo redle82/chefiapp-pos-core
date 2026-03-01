@@ -48,7 +48,7 @@ docker compose -f docker-compose.core.yml ps
 2. Abrir KDS no navegador:
 
    ```
-   http://localhost:5173/app/kds
+   http://localhost:5175/app/kds
    ```
 
 3. Abrir Console do Navegador (F12)
@@ -177,7 +177,7 @@ docker exec chefiapp-core-postgres psql -U postgres -d chefiapp_core -c "CREATE 
 
 **Solução:**
 
-- Verificar se frontend está em `http://localhost:5173`
+- Verificar se frontend está em `http://localhost:5175`
 - Verificar se Realtime está em `ws://localhost:4000`
 - Não deve haver problemas de CORS com WebSocket
 

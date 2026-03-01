@@ -15,8 +15,8 @@
 ## 🐛 ERROS REPORTADOS
 
 ```
-GET http://localhost:5173/src/pages/Mentor/MentorDashboardPage.tsx?t=1769555261839 500 (Internal Server Error)
-GET http://localhost:5173/src/components/SystemTree/SystemTreeSidebar.tsx?t=1769554073882 net::ERR_ABORTED 500 (Internal Server Error)
+GET http://localhost:5175/src/pages/Mentor/MentorDashboardPage.tsx?t=1769555261839 500 (Internal Server Error)
+GET http://localhost:5175/src/components/SystemTree/SystemTreeSidebar.tsx?t=1769554073882 net::ERR_ABORTED 500 (Internal Server Error)
 ```
 
 ---

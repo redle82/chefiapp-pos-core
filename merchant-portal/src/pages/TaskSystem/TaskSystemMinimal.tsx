@@ -13,8 +13,8 @@ import { ShiftChecklistSection } from "../../components/tasks/ShiftChecklistSect
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { isDockerBackend } from "../../core/infra/backendAdapter";
-import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { deduplicateCoreTasks } from "../../core/tasks/TaskFiltering";
+import { useTenant } from "../../core/tenant/TenantContext";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
 import type { CoreTask } from "../../infra/docker-core/types";
 import { getActiveTurnSessionIdFromStorage } from "../../infra/readers/ShiftChecklistReader";
@@ -35,6 +35,7 @@ const SEED_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
 export function TaskSystemMinimal() {
   const { identity } = useRestaurantIdentity();
   const { runtime } = useRestaurantRuntime();
+  const { tenantId } = useTenant();
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [loadingIdentity, setLoadingIdentity] = useState(true);
 
@@ -45,10 +46,7 @@ export function TaskSystemMinimal() {
 
   useEffect(() => {
     // Obter restaurantId (mesmo padrão do KDSMinimal)
-    const id =
-      identity.id ||
-      getTabIsolated("chefiapp_restaurant_id") ||
-      DEFAULT_RESTAURANT_ID;
+    const id = identity.id || tenantId || DEFAULT_RESTAURANT_ID;
     console.log(
       "[TaskSystem] Restaurant ID resolved:",
       id,

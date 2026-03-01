@@ -202,7 +202,8 @@ const matchesOriginFilter = (order: CoreOrder, filter: OriginFilter) => {
 // ---------------------------------------------------------------------------
 
 export function TPVKitchenPage() {
-  const restaurantId = useTPVRestaurantId();
+  // RequireOperational surface="TPV" guarantees restaurant exists when this renders.
+  const restaurantId = useTPVRestaurantId()!;
   const { runtime } = useRestaurantRuntime();
   const outletContext = useOutletContext<{
     emitKitchenPressure?: (stats: {

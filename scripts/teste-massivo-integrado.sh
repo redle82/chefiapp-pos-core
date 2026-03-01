@@ -85,8 +85,8 @@ fi
 
 # Verificar Merchant Portal
 log "Verificando Merchant Portal..."
-if ! curl -s http://localhost:5173 > /dev/null 2>&1; then
-    log_warning "Merchant Portal pode não estar rodando em localhost:5173"
+if ! curl -s http://localhost:5175 > /dev/null 2>&1; then
+    log_warning "Merchant Portal pode não estar rodando em localhost:5175"
     log "Execute: cd merchant-portal && npm run dev"
 else
     log_success "Merchant Portal está respondendo"

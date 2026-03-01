@@ -166,22 +166,22 @@ ${context.phaseResults?.map(r => `- **${r.phase}**: ${Math.round(r.result.durati
 
 ## URLs para Validar (2 minutos)
 
-1. **KDS Minimal:** http://localhost:5173/kds
+1. **KDS Minimal:** http://localhost:5175/kds
    - [ ] Ver pedidos agrupados por estação (Cozinha/Bar)
    - [ ] Ver timers por item
    - [ ] Ver alertas de atraso
 
-2. **Task System:** http://localhost:5173/task-system
+2. **Task System:** http://localhost:5175/task-system
    - [ ] Ver tarefas abertas
    - [ ] Filtrar por estação
    - [ ] Ver prioridades
 
-3. **Shopping List:** http://localhost:5173/shopping-list
+3. **Shopping List:** http://localhost:5175/shopping-list
    - [ ] Ver itens abaixo do mínimo
    - [ ] Ver prioridades (Crítico/Alto/Médio)
    - [ ] Testar botão "Comprei"
 
-4. **Menu Builder:** http://localhost:5173/menu-builder
+4. **Menu Builder:** http://localhost:5175/menu-builder
    - [ ] Ver produtos criados
    - [ ] Verificar tempo + estação em cada produto
 

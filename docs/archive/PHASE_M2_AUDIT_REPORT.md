@@ -3,7 +3,7 @@
 ## PHASE M-2: FULL BROWSER NAVIGATION AUDIT
 
 **Target:** TikTok Mode (Cinematic Onboarding)
-**Start URL:** `http://localhost:5173/start/cinematic/1`
+**Start URL:** `http://localhost:5175/start/cinematic/1`
 **Agent:** Browser Subagent (Human Mode)
 **Result:** **PARTIAL PASS** (Blocked at Scene 2)
 
@@ -43,7 +43,7 @@
 
 ### 🛑 STATUS FINAL
 *   **STATUS:** **FAIL** (Expected - Scene 2 Incomplete)
-*   **ÚLTIMA TELA ALCANÇADA:** `http://localhost:5173/start/cinematic/2`
+*   **ÚLTIMA TELA ALCANÇADA:** `http://localhost:5175/start/cinematic/2`
 *   **CONFIANÇA DE NAVEGAÇÃO (SCENE 1):** **10/10**
 
 ---

@@ -86,7 +86,7 @@ npm run dev
 
 ### 1. Abrir TPV
 
-**URL:** http://localhost:5173/app/tpv
+**URL:** http://localhost:5175/app/tpv
 
 **O que verificar:**
 - ✅ Tela carrega
@@ -106,7 +106,7 @@ npm run dev
 
 ### 3. Abrir KDS
 
-**URL:** http://localhost:5173/app/kds
+**URL:** http://localhost:5175/app/kds
 
 **O que verificar:**
 - ✅ Pedido aparece no KDS (via Realtime)
@@ -114,7 +114,7 @@ npm run dev
 
 ### 4. Abrir Dashboard
 
-**URL:** http://localhost:5173/app/dashboard
+**URL:** http://localhost:5175/app/dashboard
 
 **O que verificar:**
 - ✅ ActiveIssuesWidget mostra estado

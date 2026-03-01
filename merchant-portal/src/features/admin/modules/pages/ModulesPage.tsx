@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
 import { openOperationalInNewWindow } from "../../../../core/operational/openOperationalWindow";
+import { wouldGuardAllow } from "../../../../core/operational/platformDetection";
 import type { InstalledDeviceModule } from "../../../../core/storage/installedDeviceStorage";
 import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 import { ModuleCard } from "../components/ModuleCard";
@@ -59,9 +60,43 @@ function DeviceInstallDialog({
   const { installDevice, installing, error, canInstallPwa, triggerPwaInstall } =
     useDeviceInstall();
   const [deviceName, setDeviceName] = useState("");
+  const [success, setSuccess] = useState(false);
 
   const defaultName = moduleId === "tpv" ? "TPV_BALCAO_01" : "KDS_COZINHA_01";
-  const kindLabel = moduleId === "tpv" ? "TPV (Caixa)" : "KDS (Cozinha)";
+  const kindLabel = moduleId === "tpv" ? "TPV (Caja)" : "KDS (Cocina)";
+
+  // UXG-002: Success state — show next-step guidance instead of auto-opening blocked popup
+  if (success) {
+    return (
+      <div style={overlayStyle} onClick={onClose}>
+        <div style={dialogStyle} onClick={(e) => e.stopPropagation()}>
+          <div style={{ textAlign: "center", padding: "8px 0" }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>\u2705</div>
+            <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600 }}>
+              Dispositivo registrado
+            </h3>
+            <p
+              style={{
+                margin: "0 0 20px",
+                fontSize: 13,
+                color: "var(--text-secondary, #a3a3a3)",
+                lineHeight: 1.5,
+              }}
+            >
+              Abre la aplicaci\u00f3n {kindLabel} en este equipo para empezar a
+              usar el m\u00f3dulo. Si a\u00fan no la tienes, desc\u00e1rgala
+              desde Dispositivos.
+            </p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+              <button type="button" style={btnPrimaryStyle} onClick={onClose}>
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={overlayStyle} onClick={onClose}>
@@ -77,8 +112,9 @@ function DeviceInstallDialog({
             lineHeight: 1.5,
           }}
         >
-          Regista este dispositivo como {kindLabel} deste restaurante. Depois da
-          instalação, o dispositivo não volta a pedir qual é o restaurante.
+          Registra este equipo como {kindLabel} de este restaurante.
+          Despu\u00e9s de la instalaci\u00f3n, el dispositivo no volver\u00e1 a
+          pedir el restaurante.
         </p>
 
         {error && (
@@ -95,7 +131,7 @@ function DeviceInstallDialog({
             color: "var(--text-secondary, #a3a3a3)",
           }}
         >
-          Nome do dispositivo
+          Nombre del dispositivo
         </label>
         <input
           type="text"
@@ -114,12 +150,12 @@ function DeviceInstallDialog({
             style={btnPrimaryStyle}
             onClick={async () => {
               const ok = await installDevice(moduleId, deviceName);
-              if (ok) onClose();
+              if (ok) setSuccess(true);
             }}
             disabled={!!installing}
           >
             {installing
-              ? "A instalar…"
+              ? "Instalando\u2026"
               : `Instalar como ${moduleId.toUpperCase()}`}
           </button>
           <button
@@ -147,14 +183,14 @@ function DeviceInstallDialog({
                 margin: "0 0 8px",
               }}
             >
-              Para ter um ícone no desktop (sem barra do navegador):
+              Para tener un icono en el escritorio (sin barra del navegador):
             </p>
             <button
               type="button"
               style={btnPrimaryStyle}
               onClick={triggerPwaInstall}
             >
-              Instalar no ambiente de trabalho
+              Instalar en el escritorio
             </button>
           </div>
         )}
@@ -218,6 +254,27 @@ const btnSecondaryStyle: React.CSSProperties = {
   color: "var(--text-secondary, #a3a3a3)",
 };
 
+/** UXG-001: Floating notice banner for browser-context module open attempts. */
+const blockNoticeStyle: React.CSSProperties = {
+  position: "fixed",
+  bottom: 24,
+  left: "50%",
+  transform: "translateX(-50%)",
+  background: "var(--card-bg-on-dark, #141414)",
+  border: "1px solid #eab308",
+  borderRadius: 12,
+  padding: "16px 24px",
+  maxWidth: 480,
+  width: "90vw",
+  display: "flex",
+  flexDirection: "column",
+  gap: 12,
+  zIndex: 9999,
+  fontSize: 14,
+  color: "var(--text-primary, #fafafa)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+};
+
 /* ---------- ModulesPage ---------- */
 
 export function ModulesPage() {
@@ -231,6 +288,9 @@ export function ModulesPage() {
   const [installTarget, setInstallTarget] =
     useState<InstalledDeviceModule | null>(null);
 
+  /** UXG-001: informative notice shown when user clicks "Abrir" in browser context */
+  const [blockNotice, setBlockNotice] = useState<string | null>(null);
+
   const handlePrimaryAction = (id: string) => {
     const path = getModulePrimaryPath(id);
     if (
@@ -239,7 +299,15 @@ export function ModulesPage() {
         id as (typeof OPERATIONAL_MODULE_IDS)[number],
       )
     ) {
-      openOperationalInNewWindow(id as "tpv" | "kds" | "appstaff");
+      // UXG-001: Only open popup if the guard would allow it in this runtime
+      if (wouldGuardAllow(id)) {
+        openOperationalInNewWindow(id as "tpv" | "kds" | "appstaff");
+      } else {
+        const label = id === "appstaff" ? "AppStaff" : id.toUpperCase();
+        setBlockNotice(
+          `${label} solo se puede abrir en la aplicaci\u00f3n instalada.`,
+        );
+      }
       return;
     }
     navigate(path);
@@ -342,6 +410,32 @@ export function ModulesPage() {
           moduleId={installTarget}
           onClose={() => setInstallTarget(null)}
         />
+      )}
+
+      {/* UXG-001: Notice when user tries to open operational module in browser */}
+      {blockNotice && (
+        <div style={blockNoticeStyle}>
+          <span style={{ lineHeight: 1.5 }}>🔒 {blockNotice}</span>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              type="button"
+              style={btnPrimaryStyle}
+              onClick={() => {
+                navigate("/admin/devices");
+                setBlockNotice(null);
+              }}
+            >
+              Ir a Dispositivos
+            </button>
+            <button
+              type="button"
+              style={btnSecondaryStyle}
+              onClick={() => setBlockNotice(null)}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -6,10 +6,11 @@
 
 import { useState } from "react";
 import { CONFIG } from "../../../config";
+import { useTenant } from "../../../core/tenant/TenantContext";
 import { useToast } from "../../../ui/design-system";
-import { StaffLayout } from "../../../ui/design-system/layouts/StaffLayout";
 import { Button } from "../../../ui/design-system/Button";
 import { Card } from "../../../ui/design-system/Card";
+import { StaffLayout } from "../../../ui/design-system/layouts/StaffLayout";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import type { Task } from "../context/StaffCoreTypes";
 
@@ -23,6 +24,7 @@ export function PortioningTaskView({
   onComplete,
 }: PortioningTaskViewProps) {
   const { success, error } = useToast();
+  const { tenantId } = useTenant();
   const [selectedVariation, setSelectedVariation] = useState<number | null>(
     null,
   );
@@ -57,10 +59,7 @@ export function PortioningTaskView({
     setLoading(true);
     try {
       const measuredWeight = targetWeight + selectedVariation;
-      const { getTabIsolated } = await import(
-        "../../../core/storage/TabIsolatedStorage"
-      );
-      const restaurantId = getTabIsolated("chefiapp_restaurant_id");
+      const restaurantId = tenantId;
 
       const response = await fetch(
         `${CONFIG.API_BASE}/api/portioning/measurements`,

@@ -105,7 +105,7 @@ pg_isready -h localhost -p 5432 -q \
   || echo "❌ Database: DOWN"
 
 # 3. Terms Page
-curl -s http://localhost:5173/terms | grep -q "Termos de Serviço" \
+curl -s http://localhost:5175/terms | grep -q "Termos de Serviço" \
   && echo "✅ Terms Page: OK" \
   || echo "❌ Terms Page: MISSING"
 

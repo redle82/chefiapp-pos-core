@@ -63,6 +63,8 @@ function hasConsent(): boolean {
 
 export function CookieConsentBanner() {
   const { t } = useTranslation("common");
+  // NOTE: This component renders at App root, OUTSIDE TenantProvider.
+  // Use getTabIsolated for best-effort tenant ID in the audit trail.
   const [visible, setVisible] = useState(false);
   const [showPrefs, setShowPrefs] = useState(false);
   const [analytics, setAnalytics] = useState(false);

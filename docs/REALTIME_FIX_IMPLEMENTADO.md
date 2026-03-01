@@ -81,7 +81,7 @@ location /realtime/ {
 
 ### 2. Testar no Navegador
 
-1. Abra `http://localhost:5173/kds-minimal`
+1. Abra `http://localhost:5175/kds-minimal`
 2. Abra DevTools → Console
 3. Procure por:
    - `[KDSMinimal] Realtime status: SUBSCRIBED` ✅

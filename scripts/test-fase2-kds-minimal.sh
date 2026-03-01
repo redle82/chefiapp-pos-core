@@ -104,10 +104,10 @@ fi
 # 4. Verificar que frontend está rodando
 echo ""
 echo "4️⃣ Verificando frontend..."
-FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/ 2>/dev/null || echo "000")
+FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5175/ 2>/dev/null || echo "000")
 
 if [ "$FRONTEND_OK" != "200" ]; then
-    echo "⚠️  AVISO: Frontend não está rodando (porta 5173)"
+    echo "⚠️  AVISO: Frontend não está rodando (porta 5175)"
     echo "   Execute: cd merchant-portal && npm run dev"
     echo "   Continuando com validação do pedido no banco..."
 else
@@ -116,13 +116,13 @@ else
     # 5. Verificar que KDS Minimal está acessível
     echo ""
     echo "5️⃣ Verificando KDS Minimal..."
-    KDS_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/kds-minimal 2>/dev/null || echo "000")
+    KDS_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5175/kds-minimal 2>/dev/null || echo "000")
     
     if [ "$KDS_OK" = "200" ]; then
-        echo "✅ KDS Minimal acessível em http://localhost:5173/kds-minimal"
+        echo "✅ KDS Minimal acessível em http://localhost:5175/kds-minimal"
         echo ""
         echo "📋 INSTRUÇÕES PARA TESTE MANUAL:"
-        echo "   1. Abra: http://localhost:5173/kds-minimal"
+        echo "   1. Abra: http://localhost:5175/kds-minimal"
         echo "   2. Verifique que o pedido aparece na lista"
         echo "   3. Verifique que mostra: número, status, mesa (se houver), total, itens"
     else
@@ -158,7 +158,7 @@ if [ "$FRONTEND_OK" = "200" ]; then
     echo "  ✅ KDS Minimal acessível"
     echo ""
     echo "  📋 TESTE MANUAL NECESSÁRIO:"
-    echo "     Abra http://localhost:5173/kds-minimal e verifique que o pedido aparece"
+    echo "     Abra http://localhost:5175/kds-minimal e verifique que o pedido aparece"
 fi
 echo ""
 echo "Pronto para FASE 3 — Origem do Pedido"

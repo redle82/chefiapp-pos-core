@@ -11,9 +11,9 @@ bash scripts/sync-sofia-env-to-portal.sh
 cd merchant-portal && npm run dev
 ```
 
-1) Start the core API (web module server) on `http://localhost:4320`.
+1. Start the core API (web module server) on `http://localhost:4320`.
 
-2) Configure env:
+2. Configure env:
 
 - Copy `.env.local.example` to `.env.local` (app principal) ou `.env.example` para o wizard.
 - **App principal (TPV, Admin, Staff):** preencha no mínimo:
@@ -22,7 +22,7 @@ cd merchant-portal && npm run dev
 - Para o wizard: `VITE_API_BASE`, `VITE_INTERNAL_API_TOKEN`, `VITE_RESTAURANT_ID`.
 - **Importante:** Em **desenvolvimento** use `npm run dev` (o Vite lê `.env.local`). Em **build de produção** as variáveis `VITE_*` são embutidas no build — defina-as antes de `npm run build` (ex.: `VITE_CORE_URL=... VITE_CORE_ANON_KEY=... npm run build`).
 
-3) Start the portal:
+3. Start the portal:
 
 ```bash
 cd merchant-portal
@@ -30,7 +30,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5157` (porta oficial do portal; não mudar).
+Open `http://localhost:5175` (porta oficial do portal; não mudar).
 
 ## Notes
 
@@ -58,9 +58,9 @@ If you are developing a production application, we recommend updating the config
 
 ```js
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(["dist"]),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
     extends: [
       // Other configs...
 
@@ -75,42 +75,42 @@ export default defineConfig([
     ],
     languageOptions: {
       parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
         tsconfigRootDir: import.meta.dirname,
       },
       // other options...
     },
   },
-])
+]);
 ```
 
 You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
 ```js
 // eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+import reactX from "eslint-plugin-react-x";
+import reactDom from "eslint-plugin-react-dom";
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(["dist"]),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
     extends: [
       // Other configs...
       // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
+      reactX.configs["recommended-typescript"],
       // Enable lint rules for React DOM
       reactDom.configs.recommended,
     ],
     languageOptions: {
       parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
         tsconfigRootDir: import.meta.dirname,
       },
       // other options...
     },
   },
-])
+]);
 ```
 
 ## Internacionalização (i18n)

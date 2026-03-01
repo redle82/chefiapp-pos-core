@@ -287,6 +287,157 @@
   color: var(--color-brand-gold, #c9a227);
 }
 
+/* ── Desktop Coming Soon Banner (UXG-011) ── */
+.comingSoonBanner {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px dashed var(--surface-border, #333);
+  background-color: var(--card-bg-on-dark, #141414);
+  align-items: flex-start;
+}
+
+.comingSoonIcon {
+  font-size: 28px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.comingSoonBody {
+  flex: 1;
+}
+
+.comingSoonTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #e5e5e5);
+  margin: 0 0 8px 0;
+}
+
+.comingSoonText {
+  font-size: 13px;
+  color: var(--text-secondary, #a3a3a3);
+  line-height: 1.6;
+  margin: 0 0 14px 0;
+}
+
+.comingSoonActions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.comingSoonCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #000;
+  background-color: var(--color-brand-gold, #c9a227);
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.comingSoonCta:hover {
+  opacity: 0.85;
+}
+
+.comingSoonLink {
+  font-size: 13px;
+  color: var(--text-secondary, #a3a3a3);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.comingSoonLink:hover {
+  color: var(--text-primary, #e5e5e5);
+}
+
+/* ── Desktop QR section (UXG-012) ── */
+.qrDesktopSection {
+  padding: 16px 0;
+}
+
+.qrDesktopMain {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.qrDesktopInstructions {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qrDesktopHint {
+  font-size: 13px;
+  color: var(--text-secondary, #a3a3a3);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.qrDesktopNotice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px dashed #665500;
+  background-color: rgba(180, 140, 0, 0.08);
+  font-size: 12px;
+  color: #d4a800;
+}
+
+.qrDesktopNoticeIcon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.qrDesktopCopyRow {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.qrDesktopCode {
+  flex: 1;
+  font-size: 11px;
+  font-family: monospace;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 6px 10px;
+  color: #a3a3a3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+.qrDesktopCopyBtn {
+  background: #262626;
+  border: 1px solid #404040;
+  border-radius: 4px;
+  padding: 6px 14px;
+  color: #e5e5e5;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.qrDesktopCopyBtn:hover {
+  background: #333;
+}
+
 /* ── Distribution note ── */
 .distributionNote {
   display: flex;

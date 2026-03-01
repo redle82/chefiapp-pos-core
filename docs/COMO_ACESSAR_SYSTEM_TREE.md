@@ -18,7 +18,7 @@ A **System Tree** é uma árvore diferente que mostra o sistema operacional comp
 ### Opção 1: Via URL Direta
 Navegue diretamente para:
 ```
-http://localhost:5173/system-tree
+http://localhost:5175/system-tree
 ```
 
 ### Opção 2: Via Link na Sidebar do Onboarding
@@ -59,7 +59,7 @@ Se você ainda não publicou, pode ver a estrutura, mas alguns dados podem não 
 ## 🚀 TESTE RÁPIDO
 
 1. Abra uma nova aba
-2. Navegue para: `http://localhost:5173/system-tree`
+2. Navegue para: `http://localhost:5175/system-tree`
 3. Você verá a System Tree completa!
 
 ---

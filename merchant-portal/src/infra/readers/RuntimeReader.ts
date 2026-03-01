@@ -28,6 +28,20 @@ let identityCache: {
   ts: number;
 } | null = null;
 
+/**
+ * Invalida caches de fetchRestaurant e fetchRestaurantForIdentity para um dado restaurante.
+ * Chamado após update em gm_restaurants para forçar re-fetch imediato.
+ */
+export function invalidateRestaurantReaderCache(restaurantId?: string): void {
+  if (!restaurantId) {
+    restaurantCache = null;
+    identityCache = null;
+    return;
+  }
+  if (restaurantCache?.key === restaurantId) restaurantCache = null;
+  if (identityCache?.key === restaurantId) identityCache = null;
+}
+
 export type CoreProductMode = "trial" | "pilot" | "live";
 
 /** billing_status: trial | active | past_due | canceled (SaaS). Fonte = gm_restaurants. */

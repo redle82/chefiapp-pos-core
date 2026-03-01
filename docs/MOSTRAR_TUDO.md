@@ -12,9 +12,9 @@ Quando tudo estiver rodando simultaneamente:
 
 | Periférico | Função | URL |
 |------------|--------|-----|
-| **TPV** | Criar pedido (com constraints e feedback) | `http://localhost:5173/app/tpv` |
-| **KDS** | Ver pedidos em tempo real | `http://localhost:5173/kds/{restaurantId}` |
-| **Dashboard** | Ver estado do sistema (observabilidade) | `http://localhost:5173/app/dashboard` |
+| **TPV** | Criar pedido (com constraints e feedback) | `http://localhost:5175/app/tpv` |
+| **KDS** | Ver pedidos em tempo real | `http://localhost:5175/kds/{restaurantId}` |
+| **Dashboard** | Ver estado do sistema (observabilidade) | `http://localhost:5175/app/dashboard` |
 | **Mobile** | Mesmo fluxo do TPV (simulado) | Expo Dev Tools |
 
 **Todos ligados ao mesmo banco local. Todos reagindo em tempo real.**
@@ -67,11 +67,11 @@ npm run dev
 ```
   VITE v5.x.x  ready in xxx ms
 
-  ➜  Local:   http://localhost:5173/
+  ➜  Local:   http://localhost:5175/
   ➜  Network: use --host to expose
 ```
 
-**Abra no navegador:** `http://localhost:5173`
+**Abra no navegador:** `http://localhost:5175`
 
 👉 **Aqui você DEVE ver:**
 - ✅ TPV (navegue para `/app/tpv`)
@@ -88,7 +88,7 @@ npm run dev
 **Não precisa subir servidor separado!** O KDS roda no mesmo Merchant Portal.
 
 **Apenas abra em nova aba:**
-- `http://localhost:5173/kds/{restaurantId}`
+- `http://localhost:5175/kds/{restaurantId}`
 
 **Para obter restaurantId:**
 ```bash
@@ -122,7 +122,7 @@ Depois:
 
 ### Teste 1: Criar Pedido no TPV
 
-1. Abra TPV: `http://localhost:5173/app/tpv`
+1. Abra TPV: `http://localhost:5175/app/tpv`
 2. Crie um pedido
 3. **Observe:**
    - ✅ Aparece no KDS (se estiver aberto)

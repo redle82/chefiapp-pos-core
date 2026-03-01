@@ -89,7 +89,7 @@
 
 ### Acessar
 ```
-http://localhost:5173/onboarding
+http://localhost:5175/onboarding
 ```
 
 ### Navegar

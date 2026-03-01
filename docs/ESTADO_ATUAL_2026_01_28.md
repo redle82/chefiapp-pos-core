@@ -100,7 +100,7 @@ npm run test:massive
 ## 🚀 Próximos Passos (Opcional)
 
 1. **Rodar Demo Guides** usando `DEMO_GUIDE_5MIN.md` ou `DEMO_GUIDE_V1.md`
-2. **Testar Landing Page** — Acessar `http://localhost:5173/` e validar fluxo
+2. **Testar Landing Page** — Acessar `http://localhost:5175/` e validar fluxo
 3. **Testar Dashboard Modo Venda** — Validar badges e redirecionamentos
 4. **Completar FASE 1 — Billing** (bloqueador) — 2-3 horas para desbloquear vendas
 

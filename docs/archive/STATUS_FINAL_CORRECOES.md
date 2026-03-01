@@ -67,7 +67,7 @@
 
 **Resultado:**
 - ✅ Servidor rodando (localhost:4320)
-- ✅ Frontend rodando (localhost:5173)
+- ✅ Frontend rodando (localhost:5175)
 - ✅ GET /health → 200
 - ✅ GET /api/fiscal/pending-external-ids → OK (pode precisar auth)
 - ✅ TypeScript sem erros
@@ -120,7 +120,7 @@ Ver: `TESTE_E2E_FLUXO_COMPLETO.md`
 Seguir: `TESTE_E2E_FLUXO_COMPLETO.md`
 
 ### 2. Validar no Browser
-1. Abrir `http://localhost:5173`
+1. Abrir `http://localhost:5175`
 2. Fazer login
 3. Testar fluxo completo
 4. Verificar console e network

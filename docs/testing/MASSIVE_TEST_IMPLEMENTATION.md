@@ -138,7 +138,7 @@ Os scripts usam estas variáveis (com defaults):
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:54320/chefiapp_core
 POSTGREST_URL=http://localhost:3001
-E2E_BASE_URL=http://localhost:5173
+E2E_BASE_URL=http://localhost:5175
 ```
 
 ---

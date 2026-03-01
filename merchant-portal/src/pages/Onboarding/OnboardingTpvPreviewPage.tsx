@@ -7,14 +7,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { OnboardingStepIndicator } from "../../components/onboarding/OnboardingStepIndicator";
-import { fetchRestaurantForIdentity } from "../../infra/readers/RuntimeReader";
-import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { ONBOARDING_5MIN_COPY } from "../../copy/onboarding5min";
-import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
-import { TPVMinimal } from "../TPVMinimal/TPVMinimal";
+import { useTenant } from "../../core/tenant/TenantContext";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
+import { fetchRestaurantForIdentity } from "../../infra/readers/RuntimeReader";
 import { Button, Card } from "../../ui/design-system/primitives";
-import { colors } from "../../ui/design-system/tokens/colors";
-import { spacing } from "../../ui/design-system/tokens/spacing";
+import { TPVMinimal } from "../TPVMinimal/TPVMinimal";
 import styles from "./OnboardingTpvPreviewPage.module.css";
 
 interface TableRow {
@@ -30,9 +28,7 @@ export function OnboardingTpvPreviewPage() {
   const [tables, setTables] = useState<TableRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const restaurantId =
-    getTabIsolated("chefiapp_restaurant_id") ??
-    (typeof window !== "undefined" ? window.localStorage.getItem("chefiapp_restaurant_id") : null);
+  const { tenantId: restaurantId } = useTenant();
 
   useEffect(() => {
     if (!restaurantId) {
@@ -50,10 +46,12 @@ export function OnboardingTpvPreviewPage() {
         .order("number", { ascending: true })
         .then(({ data, error }) => {
           if (error || !data) return [];
-          return (Array.isArray(data) ? data : []).map((r: { id: string; number: number }) => ({
-            id: r.id,
-            number: r.number,
-          }));
+          return (Array.isArray(data) ? data : []).map(
+            (r: { id: string; number: number }) => ({
+              id: r.id,
+              number: r.number,
+            }),
+          );
         })
         .catch(() => []),
     ])
@@ -77,13 +75,16 @@ export function OnboardingTpvPreviewPage() {
     };
   }, [restaurantId]);
 
-  const displayTables = tables.length > 0 ? tables : Array.from({ length: 10 }, (_, i) => ({ id: `fallback-${i + 1}`, number: i + 1 }));
+  const displayTables =
+    tables.length > 0
+      ? tables
+      : Array.from({ length: 10 }, (_, i) => ({
+          id: `fallback-${i + 1}`,
+          number: i + 1,
+        }));
 
   return (
-    <div
-      data-onboarding-step="6"
-      className={styles.pageRoot}
-    >
+    <div data-onboarding-step="6" className={styles.pageRoot}>
       <OnboardingStepIndicator step={7} total={9} />
       <div className={styles.header}>
         <h1 className={styles.title}>
@@ -95,27 +96,21 @@ export function OnboardingTpvPreviewPage() {
 
         {!loading && (
           <Card padding="lg" className={styles.previewCard}>
-            <h2 className={styles.restaurantName}>
-              {restaurantName}
-            </h2>
+            <h2 className={styles.restaurantName}>{restaurantName}</h2>
             <div className={styles.restaurantInfo}>
               {restaurantCity && <span>{restaurantCity}</span>}
               {restaurantType && <span>{restaurantType}</span>}
             </div>
             <div className={styles.summaryText}>
-              Resumo do que configuraste: identidade, local e perfil do dia. Aqui em baixo vês o mapa das mesas e o TPV em preview.
+              Resumo do que configuraste: identidade, local e perfil do dia.
+              Aqui em baixo vês o mapa das mesas e o TPV em preview.
             </div>
             <div className={styles.tableMapSection}>
               <div className={styles.tableMapLabel}>Mapa das mesas</div>
               <div className={styles.tableGrid}>
-                <div className={styles.tableItem}>
-                  Balcão
-                </div>
+                <div className={styles.tableItem}>Balcão</div>
                 {displayTables.slice(0, 9).map((t) => (
-                  <div
-                    key={t.id}
-                    className={styles.tableItem}
-                  >
+                  <div key={t.id} className={styles.tableItem}>
                     Mesa {t.number}
                   </div>
                 ))}
@@ -133,10 +128,7 @@ export function OnboardingTpvPreviewPage() {
           >
             {ONBOARDING_5MIN_COPY.tpvPreview.cta}
           </Button>
-          <Link
-            to="/onboarding/ritual"
-            className={styles.ritualLink}
-          >
+          <Link to="/onboarding/ritual" className={styles.ritualLink}>
             {ONBOARDING_5MIN_COPY.tpvPreview.linkRitual}
           </Link>
         </div>
@@ -154,10 +146,7 @@ export function OnboardingTpvPreviewPage() {
         >
           {ONBOARDING_5MIN_COPY.tpvPreview.cta}
         </Button>
-        <Link
-          to="/onboarding/ritual"
-          className={styles.ritualLink}
-        >
+        <Link to="/onboarding/ritual" className={styles.ritualLink}>
           {ONBOARDING_5MIN_COPY.tpvPreview.linkRitual}
         </Link>
       </div>

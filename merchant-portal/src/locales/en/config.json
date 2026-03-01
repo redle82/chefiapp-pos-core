@@ -1,4 +1,205 @@
 {
+  "home": {
+    "title": "Settings",
+    "subtitle": "Everything that defines your restaurant in one place. Configure identity, team, devices and integrations.",
+    "searchPlaceholder": "Search settings…",
+    "readiness": "Readiness",
+    "done": "Done",
+    "pending": "Pending",
+    "quickAccess": "Quick access",
+    "searchResults": "Results",
+    "noResults": "No results for this search.",
+    "quickCard": {
+      "general": {
+        "label": "General",
+        "description": "Identity, language and receipts."
+      },
+      "legalEntities": {
+        "label": "Legal Entities",
+        "description": "Tax data and legal company details."
+      },
+      "brands": {
+        "label": "Brands",
+        "description": "Brands and sub-concepts."
+      },
+      "locations": {
+        "label": "Locations",
+        "description": "Units and points of sale."
+      },
+      "subscription": {
+        "label": "Subscription",
+        "description": "Plan, billing and payment."
+      },
+      "users": {
+        "label": "Users",
+        "description": "Administrators and permissions."
+      },
+      "team": {
+        "label": "Team",
+        "description": "Employees, roles and shifts."
+      },
+      "webPage": {
+        "label": "Web Page",
+        "description": "Restaurant public website."
+      },
+      "reservations": {
+        "label": "Reservations",
+        "description": "Reservation engine and schedules."
+      },
+      "delivery": {
+        "label": "Delivery",
+        "description": "Zones, fees and partners."
+      },
+      "integrations": {
+        "label": "Integrations",
+        "description": "Stripe, POS, external APIs."
+      },
+      "modules": {
+        "label": "Modules",
+        "description": "Active capabilities."
+      },
+      "devices": {
+        "label": "Devices",
+        "description": "POS, KDS and QR provisioning."
+      },
+      "printers": {
+        "label": "Printers",
+        "description": "Thermal printers and labels."
+      },
+      "softwareTpv": {
+        "label": "POS Software",
+        "description": "Screens, shortcuts and appearance."
+      }
+    },
+    "check": {
+      "identity": "Restaurant identity",
+      "identityDesc": "Name, type, country and contacts.",
+      "location": "Location configured",
+      "locationDesc": "Address and timezone of the unit.",
+      "people": "Team configured",
+      "peopleDesc": "At least one employee registered.",
+      "payments": "Payments configured",
+      "paymentsDesc": "Active payment method."
+    }
+  },
+  "sidebar": {
+    "home": "Home",
+    "workspaceName": "ChefApp OS",
+    "mainHome": "Command Center",
+    "backToMenu": "Back to menu",
+    "title": "Settings",
+    "openTpv": "Open POS",
+    "scope": {
+      "org": "Organization",
+      "unit": "Unit",
+      "station": "Station"
+    },
+    "nav": {
+      "finanzas": "Finance",
+      "transacciones": "Transactions",
+      "cierres": "Closures",
+      "operacion": "Operations",
+      "reservas": "Reservations",
+      "promociones": "Promotions",
+      "clientes": "Customers",
+      "directorio": "Directory",
+      "producto": "Product",
+      "catalogo": "Catalog",
+      "inteligencia": "Intelligence",
+      "reportes": "Reports",
+      "sistema": "System",
+      "configuracion": "Settings",
+      "dispositivos": "Devices",
+      "modulos": "Modules",
+      "observabilidad": "Observability"
+    },
+    "configItems": {
+      "geral": "General",
+      "entidadesLegais": "Legal Entities",
+      "marcas": "Brands",
+      "localizacoes": "Locations",
+      "subscricao": "Subscription",
+      "utilizadores": "Users",
+      "equipa": "Team",
+      "paginaWeb": "Web page",
+      "reservas": "Reservations",
+      "delivery": "Delivery",
+      "integracoes": "Integrations",
+      "dispositivos": "Devices",
+      "impressoras": "Printers",
+      "softwareTpv": "POS Software"
+    }
+  },
+  "saveBar": {
+    "unsavedOne": "1 unsaved change",
+    "unsavedMany": "{{count}} unsaved changes",
+    "saving": "Saving…",
+    "discard": "Discard",
+    "save": "Save",
+    "undo": "Undo"
+  },
+  "general": {
+    "title": "General",
+    "subtitle": "Identity, language and restaurant preferences.",
+    "identity": "Identity",
+    "identityDesc": "Restaurant name, type and logo.",
+    "contact": "Contact",
+    "contactDesc": "Phone, email and address.",
+    "locale": "Language & region",
+    "localeDesc": "Language, currency and timezone.",
+    "field": {
+      "panelLanguage": "Admin panel language",
+      "panelLanguageHint": "This language changes the administrative panel. TPV language is configured below.",
+      "namePlaceholder": "E.g. Sofia Gastrobar Ibiza",
+      "logoUrlPlaceholder": "https://…",
+      "logoAlt": "Logo",
+      "phonePlaceholder": "+34 692 054 892",
+      "emailPlaceholder": "contact@restaurant.com",
+      "addressPlaceholder": "Street, number",
+      "receiptTextPlaceholder": "Thanks for your visit!",
+      "googlePlaceIdPlaceholder": "ChIJ…"
+    },
+    "option": {
+      "type": {
+        "restaurant": "Restaurant",
+        "bar": "Bar",
+        "hotel": "Hotel",
+        "beachClub": "Beach club",
+        "cafe": "Cafe",
+        "other": "Other"
+      },
+      "country": {
+        "br": "Brazil",
+        "es": "Spain",
+        "pt": "Portugal",
+        "us": "United States"
+      },
+      "locale": {
+        "ptBR": "Portuguese (Brazil)",
+        "esES": "Spanish (Spain)",
+        "enUS": "English (US)"
+      },
+      "panelLocale": {
+        "ptBR": "Portuguese (Brazil)",
+        "ptPT": "Portuguese (Portugal)",
+        "en": "English",
+        "es": "Spanish"
+      },
+      "currency": {
+        "brl": "BRL (R$)",
+        "eur": "EUR (€)",
+        "usd": "USD ($)"
+      },
+      "timezone": {
+        "saopaulo": "America/Sao_Paulo",
+        "madrid": "Europe/Madrid",
+        "lisbon": "Europe/Lisbon",
+        "newyork": "America/New_York"
+      }
+    },
+    "receipts": "Receipts",
+    "receiptsDesc": "Receipt and invoice customization."
+  },
   "people": {
     "addTitle": "Add person",
     "description": "Create people (staff/managers) to operate the restaurant.",
@@ -34,8 +235,784 @@
     "cameraCheckDesc": "Use \"Watch live\" to confirm the camera is active."
   },
   "locations": {
+    "title": "Locations",
+    "subtitle": "Add, edit, or group your restaurant locations to keep operations organised.",
     "add": "Add location",
     "backToList": "Back to list",
     "emptyState": "No locations yet. Use the button below to add the first one."
+  },
+  "ubicaciones": {
+    "title": "Locations",
+    "subtitle": "Address, tables and zones of the restaurant.",
+    "addressTab": "Address",
+    "tablesTab": "Tables & Zones",
+    "backToList": "Back to list",
+    "tablesPlaceholder": "Table and zone management will be implemented here. For now, use the /operations route to view tables.",
+    "onlinePresence": "Online presence",
+    "onlinePresenceDesc": "Public address and hours are managed on the Web page.",
+    "editOnWebPage": "Edit on Web page",
+    "qrCodes": "QR Codes",
+    "qrCodesDesc": "Menu and table QR codes are managed on the Web page.",
+    "editQrOnWebPage": "Edit QR on Web page"
+  },
+  "delivery": {
+    "title": "Delivery",
+    "subtitle": "Delivery hours and coverage zones.",
+    "horariosTab": "Hours",
+    "zonasTab": "Delivery zones",
+    "zonasTitle": "Delivery zones",
+    "zonasDesc": "Delivery zone and coverage radius configuration. In phase 2.",
+    "qrLink": "QR codes and online presence → Web page"
+  },
+  "empleados": {
+    "title": "Team",
+    "subtitle": "Employees, roles and schedules.",
+    "employeesTab": "Employees",
+    "rolesTab": "Roles",
+    "schedulesLink": "Schedules"
+  },
+  "integraciones": {
+    "title": "Integrations",
+    "subtitle": "Payments, delivery, external APIs."
+  },
+  "integrations": {
+    "delivery": {
+      "title": "Delivery",
+      "subtitle": "GloriaFood, Glovo, Uber Eats, Deliveroo — enable/disable per adapter.",
+      "status": {
+        "disabled": "Disabled",
+        "configured": "Configured",
+        "active": "Active",
+        "comingSoon": "Coming soon"
+      },
+      "stats": {
+        "activePlatforms": "Active platforms",
+        "ordersToday": "Orders today",
+        "acceptanceRate": "Acceptance rate",
+        "averageTime": "Average time"
+      },
+      "features": "Features:",
+      "featuresPlanned": "Planned features:",
+      "comingSoonMessage": "This integration is under development. It will be available in a future update.",
+      "enablePlatform": "Enable {{platformName}}",
+      "gloria": {
+        "restaurantKey": "Restaurant Key (GloriaFood)",
+        "restaurantKeyPlaceholder": "Paste your restaurant key...",
+        "autoAccept": "Automatic order acceptance",
+        "syncMenu": "Sync menu",
+        "saving": "Saving…",
+        "saved": "✓ Saved",
+        "save": "Save configuration"
+      },
+      "platforms": {
+        "gloriafood": {
+          "description": "Receive GloriaFood orders directly in TPV. Automatically sync your menu.",
+          "features": {
+            "0": "Order intake",
+            "1": "Menu sync",
+            "2": "Automatic acceptance"
+          }
+        },
+        "glovo": {
+          "description": "Glovo integration for order intake and delivery tracking.",
+          "features": {
+            "0": "Order intake",
+            "1": "Delivery tracking",
+            "2": "Availability management"
+          }
+        },
+        "ubereats": {
+          "description": "Receive Uber Eats orders and manage status directly from ChefIApp.",
+          "features": {
+            "0": "Order intake",
+            "1": "Status updates",
+            "2": "Sales reports"
+          }
+        },
+        "deliveroo": {
+          "description": "Deliveroo integration for centralized delivery order management.",
+          "features": {
+            "0": "Order intake",
+            "1": "Menu management",
+            "2": "Performance metrics"
+          }
+        }
+      }
+    },
+    "hub": {
+      "title": "Integrations",
+      "subtitle": "Connect TPV, delivery and other services to your restaurant.",
+      "status": {
+        "comingSoon": "Coming soon",
+        "available": "Available"
+      },
+      "sections": {
+        "payments": {
+          "label": "Payments",
+          "description": "Stripe and others; config, status and logs."
+        },
+        "whatsapp": {
+          "label": "WhatsApp",
+          "description": "Inbound channel, notifications and automations."
+        },
+        "webhooks": {
+          "label": "APIs & Webhooks",
+          "description": "Webhooks OUT (endpoint, events); API IN (keys, limits)."
+        },
+        "delivery": {
+          "label": "Delivery",
+          "description": "GloriaFood, Glovo, Uber Eats; enable/disable per adapter."
+        },
+        "google-business": {
+          "label": "Google Business",
+          "description": "Profile, reviews and replies from Google Business Profile."
+        },
+        "instagram": {
+          "label": "Instagram",
+          "description": "Automatic publishing of dishes and promotions."
+        },
+        "other": {
+          "label": "Other systems",
+          "description": "ERP, fiscal, BI and analytics."
+        }
+      }
+    }
+  },
+  "reservas": {
+    "title": "Reservations",
+    "subtitle": "Availability, guarantee, shifts, messages and reminders.",
+    "tabs": {
+      "disponibilidad": "Availability",
+      "garantia": "Guarantee & Cancellation",
+      "turnos": "Shifts",
+      "mensajes": "Messages & Reminders",
+      "resumen": "Summary"
+    },
+    "resumen": {
+      "title": "Reservations summary",
+      "desc": "Central reservation settings. Use the tabs for Availability, Guarantee, Shifts and Messages."
+    },
+    "disponibilidad": {
+      "title": "Availability",
+      "desc": "Hours and capacity per day and location. Phase 2: calendar and limits."
+    },
+    "garantia": {
+      "title": "Guarantee & Cancellation",
+      "desc": "Deposits, no-show charges, cancellation policies. Phase 2."
+    },
+    "turnos": {
+      "title": "Shifts",
+      "desc": "Shift duration and time blocks. Phase 2."
+    },
+    "mensajes": {
+      "title": "Messages & Reminders",
+      "desc": "Email and SMS templates for confirmation and reminders. Phase 2."
+    }
+  },
+  "webPage": {
+    "title": "Restaurant web page",
+    "subtitle": "Manage online presence: public URL, contact details, QR codes.",
+    "urlTitle": "Public URL",
+    "urlDesc": "This is the restaurant's public web page that customers can visit. Share the link or print the QR code.",
+    "loading": "Loading…",
+    "copied": "Copied!",
+    "copyLink": "Copy link",
+    "openPage": "Open page ↗",
+    "noSlug": "Set the restaurant slug in Config → General to have a public URL.",
+    "slugHint": "The slug is the name in the URL (e.g. /public/my-restaurant)."
+  },
+  "devices": {
+    "title": "Devices",
+    "subtitle": "Provision terminals, monitor status, and download software.",
+    "install": {
+      "title": "Install device",
+      "desc": "Generate a QR code and scan it on the device to link it automatically to this restaurant. The code expires in 5 minutes.",
+      "typeLabel": "Type",
+      "typeAppStaff": "AppStaff (Mobile)",
+      "typeTPV": "TPV",
+      "typeKDS": "KDS",
+      "nameLabel": "Name (optional)",
+      "namePlaceholder": "e.g. TPV_COUNTER_01",
+      "generating": "Generating\u2026",
+      "generateQR": "Generate QR",
+      "tokenError": "Failed to generate token"
+    },
+    "active": {
+      "title": "Active devices",
+      "desc": "Terminals registered in this restaurant. The coloured dot indicates the last activity.",
+      "loading": "Loading\u2026",
+      "empty": "No registered devices. Use the QR above to link the first one.",
+      "thStatus": "Status",
+      "thName": "Name",
+      "thType": "Type",
+      "thRegistered": "Registered",
+      "thLastSignal": "Last signal",
+      "statusRevoked": "Revoked",
+      "statusOnline": "Online",
+      "statusOffline": "Offline",
+      "revokeBtn": "Revoke",
+      "revokeConfirm": "Revoke this device?",
+      "timeSinceNow": "now"
+    },
+    "download": {
+      "title": "Download software",
+      "desc": "Operational modules (TPV, KDS, AppStaff) only work as installed applications \u2014 they are not accessible via browser. Download the appropriate app and link it with the QR above.",
+      "openBtn": "Open",
+      "downloadBtn": "Download",
+      "comingSoon": "Coming soon"
+    },
+    "distribution": {
+      "title": "Distribution policy",
+      "text": "The admin panel (this screen) is the only part of ChefIApp accessible via browser. Operational modules \u2014 TPV, KDS, and AppStaff \u2014 require the dedicated application (desktop or mobile)."
+    }
+  },
+  "installQR": {
+    "qrByPlatform": "QR Code by Platform",
+    "expiresIn": "Expires in",
+    "iosPlatform": "iPhone / iPad",
+    "androidPlatform": "Android",
+    "iosStep1": "Open the Camera app on iPhonePhone",
+    "iosStep2": "Scan this QR code",
+    "iosStep3": "Tap the link that appears",
+    "iosStep4Prefix": "If asked which browser, select",
+    "iosStep4Browser": "Safari",
+    "iosStep5": "Accept the app installation",
+    "iosNote": "If it opens in another browser by mistake, go back and repeat selecting Safari.",
+    "androidBrowser": "Chrome",
+    "androidStep1": "Open Chrome on Android",
+    "androidStep2": "Scan this QR code",
+    "androidStep3": "Accept the app installation",
+    "metaType": "Type",
+    "metaToken": "Token"
+  },
+  "legalEntities": {
+    "title": "Legal Entities",
+    "subtitle": "Define the legal entity responsible for the restaurant for tax, billing, and compliance purposes.",
+    "common": {
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "cancel": "Cancel"
+    },
+    "main": {
+      "title": "Main legal entity",
+      "subtitle": "Who is the company or person legally responsible for billing and tax documents.",
+      "entityTypeLabel": "Entity type",
+      "entityTypeOptions": {
+        "person": "Natural person",
+        "company": "Company"
+      },
+      "legalNameLabel": "Company name / Legal name",
+      "legalNamePlaceholder": "E.g. Sofia Gastrobar LLC",
+      "taxIdLabel": "NIF / CIF / VAT ID",
+      "taxIdPlaceholder": "E.g. B12345678",
+      "fiscalCountryLabel": "Fiscal country",
+      "fiscalCountryPlaceholder": "ES, PT, etc.",
+      "fiscalAddressLabel": "Full fiscal address",
+      "fiscalAddressPlaceholder": "Street, number, postal code, city, country",
+      "warningMessage": "Changing these details affects invoices and tax reports. Confirm?",
+      "warningConfirm": "Yes, save"
+    },
+    "usage": {
+      "title": "Entity usage",
+      "subtitle": "Where this legal entity is used. One entity can be used in one or more locations.",
+      "useForBilling": "Billing",
+      "useForReceipts": "Receipts",
+      "useForFiscalReports": "Tax reports"
+    },
+    "extras": {
+      "title": "Additional tax details",
+      "subtitle": "Optional. Tax footer text on receipts, legal reference (e.g. trade registry). Internal notes do not appear on receipts.",
+      "defaultFiscalFooterLabel": "Default fiscal footer text",
+      "defaultFiscalFooterPlaceholder": "E.g. Registered in Trade Registry...",
+      "legalReferenceLabel": "Legal reference",
+      "legalReferencePlaceholder": "E.g. Madrid trade registry, volume 12345",
+      "internalNotesLabel": "Internal legal notes (not on receipt)",
+      "internalNotesPlaceholder": "Internal use only"
+    },
+    "locationMap": {
+      "title": "Location assignment",
+      "subtitle": "Which legal entity is used in each location. Supports franchises, multi-company, and groups.",
+      "table": {
+        "location": "Location",
+        "entity": "Assigned legal entity"
+      },
+      "empty": "No locations found. Create locations in Settings → Locations.",
+      "noEntityWarning": "Set the main legal entity in the first card so it is associated with locations."
+    }
+  },
+  "closures": {
+    "title": "Temporary closures",
+    "subtitle": "Pause online orders, reservations, or deliveries for specific dates.",
+    "cancelConfirm": "Cancel this temporary closure?",
+    "list": {
+      "newBtn": "New temporary closure",
+      "headers": {
+        "type": "Type",
+        "period": "Period",
+        "scope": "Scope",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "loading": "Loading...",
+      "empty": "No closures."
+    },
+    "create": {
+      "title": "New temporary closure",
+      "typeLabel": "Closure type",
+      "startDateLabel": "Start date",
+      "startTimeLabel": "Start time",
+      "endDateLabel": "End date",
+      "endTimeLabel": "End time",
+      "scopeLabel": "Scope",
+      "scopeReservations": "Reservations",
+      "scopeTPV": "TPV",
+      "scopeDelivery": "Delivery",
+      "scopeQR": "QR",
+      "reasonLabel": "Internal note",
+      "reasonPlaceholder": "E.g.: Closed for holidays",
+      "notifyClients": "Notify customers",
+      "cancelBtn": "Cancel",
+      "saving": "Saving\u2026",
+      "saveBtn": "Save",
+      "errorDateRequired": "Please provide start and end date and time.",
+      "errorEndBeforeStart": "The end date/time must be after the start.",
+      "errorCreateFailed": "Failed to create closure."
+    }
+  },
+  "promotions": {
+    "title": "Promotions & rewards",
+    "subtitle": "Set up discounts, loyalty points, and automatic offers for your customers. Simple for the team, powerful for the business.",
+    "discounts": {
+      "title": "Discounts",
+      "subtitle": "Define manual discounts that can be applied in TPV by operators.",
+      "newBtn": "New discount",
+      "empty": "No discounts configured yet.",
+      "table": {
+        "name": "Name",
+        "description": "Description",
+        "type": "Type",
+        "value": "Value",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    },
+    "discountModal": {
+      "titleNew": "New discount",
+      "titleEdit": "Edit discount",
+      "nameLabel": "Name",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "E.g. 10% on online orders above €30",
+      "typeLabel": "Type",
+      "typePercentage": "Percentage (%)",
+      "typeFixed": "Fixed amount (€)",
+      "valueLabel": "Value",
+      "activeLabel": "Active",
+      "cancelBtn": "Cancel",
+      "saveBtn": "Save",
+      "saving": "Saving...",
+      "errors": {
+        "invalidValue": "Provide a valid discount value.",
+        "percentageMax": "Percentage discounts cannot exceed 100%.",
+        "nameRequired": "Discount name is required.",
+        "saveFailed": "Failed to save discount."
+      }
+    },
+    "pointsPerOrder": {
+      "title": "Points per bill",
+      "subtitle": "Fixed points assigned for each closed bill/table, regardless of amount.",
+      "equivalencePrefix": "1 bill equals:",
+      "equivalenceValue": "N points",
+      "inputLabel": "Points per bill",
+      "saveBtn": "Save",
+      "saving": "Saving...",
+      "saved": "Saved"
+    },
+    "pointsPerEuro": {
+      "title": "Points per spend",
+      "subtitle": "Define how many points the customer earns for each euro spent.",
+      "equivalencePrefix": "€1 equals:",
+      "equivalenceValue": "N points",
+      "inputLabel": "Points per € spent",
+      "saveBtn": "Save",
+      "saving": "Saving...",
+      "saved": "Saved"
+    },
+    "auto": {
+      "title": "Automatic promotions",
+      "subtitle": "Associate discounts to specific channels (web, QR, delivery) so offers are applied automatically.",
+      "table": {
+        "channel": "Channel",
+        "promotion": "Promotion"
+      },
+      "channels": {
+        "web": "Web",
+        "qr": "QR",
+        "delivery": "Delivery"
+      },
+      "loading": "Loading automatic promotions...",
+      "noneOption": "No automatic promotion",
+      "emptyDiscountsHint": "Create discounts in the “Discounts” section above to associate them per channel."
+    }
+  },
+  "marcas": {
+    "title": "Brands",
+    "subtitle": "Main brand and sub-brands of the restaurant.",
+    "common": {
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved"
+    },
+    "main": {
+      "title": "Main brand",
+      "subtitle": "Name and description of the restaurant’s main brand.",
+      "nameLabel": "Name",
+      "namePlaceholder": "E.g. Sofia Gastrobar",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Short brand description"
+    },
+    "sub": {
+      "title": "Sub-brands",
+      "subtitle": "Secondary or virtual brands associated with the restaurant.",
+      "table": {
+        "name": "Name",
+        "description": "Description"
+      },
+      "empty": "No sub-brands yet. Add one using the + button.",
+      "noDescription": "—",
+      "deleteBtn": "Delete",
+      "promptName": "Sub-brand name",
+      "addBtn": "Add sub-brand"
+    }
+  },
+  "locations": {
+    "card": {
+      "title": "Locations",
+      "addAria": "Add location",
+      "headers": {
+        "name": "Name",
+        "address": "Address",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "empty": "No locations. Add the first one with the + button.",
+      "badges": {
+        "primary": "Primary"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "noAddress": "—"
+    },
+    "groupsCard": {
+      "title": "Location groups",
+      "addAria": "Add group",
+      "headers": {
+        "name": "Name",
+        "locations": "Locations",
+        "actions": "Actions"
+      },
+      "empty": "There are no groups yet. Create one to group locations (e.g. Ibiza, Franchises).",
+      "count_one": "{{count}} location",
+      "count_other": "{{count}} locations",
+      "editAria": "Edit group"
+    },
+    "rowActions": {
+      "moreAria": "More actions",
+      "editAria": "Edit",
+      "tables": "Configure tables",
+      "printers": "Configure printers",
+      "schedules": "Configure schedules",
+      "staff": "View staff"
+    },
+    "groupModal": {
+      "titleEdit": "Edit group",
+      "titleNew": "New locations group",
+      "nameLabel": "Group name",
+      "namePlaceholder": "E.g. Ibiza, Franchises, Season 2026",
+      "locationsLabel": "Locations",
+      "emptyLocations": "Create at least one location first.",
+      "cancel": "Cancel",
+      "save": "Save",
+      "create": "Create"
+    },
+    "modal": {
+      "titleEdit": "Edit location",
+      "titleNew": "New location",
+      "nameLabel": "Name",
+      "namePlaceholder": "E.g. Sofia Gastrobar Ibiza",
+      "addressLabel": "Address",
+      "addressPlaceholder": "Street, number, postal code, city, country",
+      "cityLabel": "City",
+      "postalCodeLabel": "Postal code",
+      "countryLabel": "Country (code)",
+      "countryPlaceholder": "ES, PT, BR",
+      "currencyLabel": "Currency",
+      "timezoneLabel": "Timezone (IANA)",
+      "activeLabel": "Active",
+      "primaryLabel": "Primary",
+      "cancel": "Cancel",
+      "save": "Save",
+      "create": "Create"
+    }
+  },
+  "usuarios": {
+    "title": "Admin Users",
+    "subtitle": "Owners, managers, and permissions. Phase 2: invitations and roles per location.",
+    "adminTableTitle": "Administrators",
+    "adminTableDesc": "Users with owner or manager access to the portal.",
+    "thEmail": "Email",
+    "thRole": "Role",
+    "thActions": "Actions",
+    "emptyState": "In phase 2, you will be able to invite administrators and assign roles per location."
+  },
+  "generalCardIdentity": {
+    "title": "Restaurant Identity",
+    "subtitle": "Who we are and where to find us.",
+    "loading": "Loading...",
+    "fields": {
+      "commercialName": "Commercial name *",
+      "type": "Type *",
+      "country": "Country *",
+      "phone": "Phone",
+      "email": "Email",
+      "address": "Address",
+      "city": "City",
+      "postalCode": "Postal code",
+      "state": "State",
+      "logoUrl": "Logo URL"
+    },
+    "placeholders": {
+      "commercialName": "E.g. Sofia Gastrobar Ibiza",
+      "select": "Select",
+      "phone": "+34 692 054 892",
+      "email": "contact@restaurant.com",
+      "address": "Street, number",
+      "logoUrl": "https://… (logo image)"
+    },
+    "types": {
+      "RESTAURANT": "Restaurant",
+      "BAR": "Bar",
+      "HOTEL": "Hotel",
+      "BEACH_CLUB": "Beach club",
+      "CAFE": "Cafe",
+      "OTHER": "Other"
+    },
+    "countries": {
+      "BR": "Brazil",
+      "ES": "Spain",
+      "PT": "Portugal",
+      "US": "United States"
+    },
+    "logoAlt": "Logo",
+    "save": "Save",
+    "saving": "Saving…",
+    "errors": {
+      "coreUnavailable": "Core unavailable or no restaurant selected.",
+      "saveFailed": "Failed to save."
+    }
+  },
+  "generalCardLocale": {
+    "title": "Language and locale (operational)",
+    "subtitle": "Which language and time/currency context the POS uses at this location.",
+    "loading": "Loading...",
+    "fields": {
+      "locale": "POS language *",
+      "timezone": "Time zone *",
+      "currency": "Currency *"
+    },
+    "options": {
+      "locales": {
+        "pt-BR": "Portuguese (Brazil)",
+        "es-ES": "Spanish (Spain)",
+        "en-US": "English (US)"
+      },
+      "timezones": {
+        "America/Sao_Paulo": "America/Sao_Paulo (Brazil)",
+        "Europe/Madrid": "Europe/Madrid (Spain)",
+        "Europe/Lisbon": "Europe/Lisbon (Portugal)",
+        "America/New_York": "America/New_York (US)"
+      },
+      "currencies": {
+        "BRL": "BRL (R$)",
+        "EUR": "EUR (€)",
+        "USD": "USD ($)"
+      }
+    },
+    "save": "Save",
+    "saving": "Saving…",
+    "errors": {
+      "coreUnavailable": "Core unavailable or no restaurant selected.",
+      "saveFailed": "Failed to save."
+    }
+  },
+  "generalCardReceipt": {
+    "title": "Tax / receipt text",
+    "subtitle": "Optional information shown on printed receipts (tax data, thanks note, returns policy).",
+    "loading": "Loading...",
+    "fields": {
+      "extraInfo": "Additional information"
+    },
+    "placeholders": {
+      "extraInfo": "E.g. VAT ID B-12345678. Thank you for your visit."
+    },
+    "save": "Save",
+    "saving": "Saving…",
+    "errors": {
+      "coreUnavailable": "Core unavailable or no restaurant selected.",
+      "saveFailed": "Failed to save."
+    }
+  },
+  "integrationsWebhooksPage": {
+    "defaultApiKeyName": "Default",
+    "confirms": {
+      "removeWebhook": "Remove this webhook?",
+      "revokeApiKey": "Revoke this key? Calls using it will stop working."
+    },
+    "header": {
+      "title": "APIs & Webhooks",
+      "subtitle": "Webhooks OUT (endpoint, events); API IN (keys, limits)."
+    },
+    "selectRestaurant": "Select a restaurant.",
+    "loading": "Loading…",
+    "webhooksOut": {
+      "title": "Webhooks OUT",
+      "add": "Add webhook",
+      "empty": "No webhooks configured. Click \"Add webhook\" to send events (order.created, order.paid, etc.) to a URL with HMAC signature.",
+      "allEvents": "All events",
+      "eventsCount": "{{count}} events",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "actions": {
+      "edit": "Edit",
+      "remove": "Remove",
+      "revoke": "Revoke",
+      "close": "Close",
+      "cancel": "Cancel",
+      "save": "Save",
+      "create": "Create"
+    },
+    "apiIn": {
+      "title": "API IN (keys)",
+      "keyNamePlaceholder": "Key name",
+      "creatingKey": "Creating…",
+      "createKey": "Create key",
+      "usagePrefix": "Use header",
+      "usageOr": "or",
+      "usageLimit": "Limit: 100 requests/minute.",
+      "empty": "No keys created.",
+      "lastUsed": "Last used",
+      "never": "Never",
+      "keyCreatedTitle": "Key created",
+      "keyCreatedHint": "Copy this key now; it will not be shown again."
+    },
+    "form": {
+      "editTitle": "Edit webhook",
+      "newTitle": "New webhook",
+      "url": "URL",
+      "urlPlaceholder": "https://...",
+      "secret": "Secret (HMAC)",
+      "keepBlank": "Leave blank to keep current",
+      "generatedOnCreate": "Generated on create",
+      "secretHint": "Store this secret; it will not be shown again. Header: X-ChefIApp-Signature: sha256=<hex>",
+      "description": "Description (optional)",
+      "descriptionPlaceholder": "e.g. ERP, Zapier",
+      "events": "Events",
+      "eventsHint": "(empty = all)",
+      "active": "Active",
+      "saving": "Saving…"
+    },
+    "logs": {
+      "title": "Latest deliveries",
+      "empty": "No deliveries logged.",
+      "headers": {
+        "event": "Event",
+        "url": "URL",
+        "status": "Status",
+        "attempt": "Attempt",
+        "date": "Date",
+        "error": "Error"
+      }
+    },
+    "contract": "Full contract: docs/CHEFIAPP_PUBLIC_API_CONTRACT.md"
+  },
+  "softwareTpvPage": {
+    "title": "POS Software",
+    "subtitle": "General setup and quick mode for the point of sale.",
+    "openInNewWindow": "Open POS in new window →",
+    "loading": "Loading…",
+    "save": "Save",
+    "saving": "Saving…",
+    "config": {
+      "title": "Configuration",
+      "description": "POS preferences: language, currency, and close behavior.",
+      "locale": "Language *",
+      "timezone": "Time zone *",
+      "currency": "Currency *",
+      "confirmOnClose": "Ask for confirmation when closing shift"
+    },
+    "quick": {
+      "title": "Quick mode",
+      "description": "Shortcuts and fast flow for peak service (bar, terrace).",
+      "activate": "Enable quick mode",
+      "shortcutsTitle": "Available shortcuts:",
+      "shortcuts": {
+        "enter": "Enter: send order",
+        "esc": "Esc: cancel / close modal",
+        "numbers": "Numbers: quick quantity",
+        "fkeys": "F1–F4: quick categories (coming soon)"
+      }
+    },
+    "options": {
+      "locales": {
+        "ptBR": "Portuguese (Brazil)",
+        "esES": "Spanish (Spain)",
+        "enUS": "English (US)",
+        "ptPT": "Portuguese (Portugal)"
+      },
+      "timezones": {
+        "saoPaulo": "America/Sao_Paulo (Brazil)",
+        "madrid": "Europe/Madrid (Spain)",
+        "lisbon": "Europe/Lisbon (Portugal)",
+        "newYork": "America/New_York (US)"
+      },
+      "currencies": {
+        "brl": "BRL (R$)",
+        "eur": "EUR (€)",
+        "usd": "USD ($)"
+      }
+    },
+    "errors": {
+      "coreUnavailable": "Core unavailable or no restaurant selected.",
+      "saveFailed": "Failed to save."
+    }
+  },
+  "printersPage": {
+    "title": "Printers",
+    "subtitle": "Printers and print routes by order type or category.",
+    "addPrinter": "+ Add printer",
+    "delete": "Delete",
+    "prompts": {
+      "printerName": "Printer name"
+    },
+    "table": {
+      "headers": {
+        "name": "Name",
+        "type": "Type",
+        "connection": "Connection"
+      },
+      "empty": "No printers yet. Add one with the + button."
+    },
+    "routes": {
+      "title": "Print routes",
+      "description": "Choose which printer receives each order type or category.",
+      "empty": "No routes yet. Add printers first, then create routes.",
+      "headers": {
+        "route": "Route",
+        "printer": "Printer"
+      }
+    }
   }
 }

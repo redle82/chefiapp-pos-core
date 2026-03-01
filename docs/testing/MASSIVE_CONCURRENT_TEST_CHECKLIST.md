@@ -57,9 +57,9 @@ npx ts-node scripts/massive-concurrent-test.ts --orders=50 --concurrency=10
 ### Setup
 
 1. Abrir 4 abas do navegador:
-   - TPV: `http://localhost:5173/app/tpv?demo=true`
-   - KDS: `http://localhost:5173/app/kds?demo=true`
-   - Dashboard: `http://localhost:5173/app/dashboard?demo=true`
+   - TPV: `http://localhost:5175/app/tpv?demo=true`
+   - KDS: `http://localhost:5175/app/kds?demo=true`
+   - Dashboard: `http://localhost:5175/app/dashboard?demo=true`
    - Mobile (simulado): Expo Dev Tools
 
 ### Teste Simultâneo

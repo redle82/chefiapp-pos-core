@@ -90,11 +90,11 @@ TPVMinimal/
 
 ## 🧪 Como Testar
 
-1. Abrir TPV: `http://localhost:5173/tpv`
+1. Abrir TPV: `http://localhost:5175/tpv`
 2. Verificar que produtos são carregados do Docker Core
 3. Adicionar produtos ao carrinho
 4. Criar pedido
-5. Verificar que pedido aparece no KDS (`http://localhost:5173/kds-minimal`)
+5. Verificar que pedido aparece no KDS (`http://localhost:5175/kds-minimal`)
 
 ---
 

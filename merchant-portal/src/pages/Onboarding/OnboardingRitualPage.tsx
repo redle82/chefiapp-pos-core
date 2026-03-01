@@ -9,13 +9,13 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { OnboardingStepIndicator } from "../../components/onboarding/OnboardingStepIndicator";
 import { ONBOARDING_5MIN_COPY } from "../../copy/onboarding5min";
-import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { recordLegalConsent } from "../../core/audit/legalConsent";
 import { DbWriteGate } from "../../core/governance/DbWriteGate";
 import { useShift } from "../../core/shift/ShiftContext";
 import { setOnboardingJustCompletedFlag } from "../../core/storage/onboardingFlowFlag";
 import { getDefaultOpeningCashCents } from "../../core/storage/shiftDefaultsStorage";
-import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
+import { useTenant } from "../../core/tenant/TenantContext";
+import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { Button, Card, Input } from "../../ui/design-system/primitives";
 import styles from "./OnboardingRitualPage.module.css";
 
@@ -28,11 +28,7 @@ function isValidRestaurantId(id: string | null): id is string {
 export function OnboardingRitualPage() {
   const navigate = useNavigate();
   const shift = useShift();
-  const restaurantId =
-    getTabIsolated("chefiapp_restaurant_id") ??
-    (typeof window !== "undefined"
-      ? window.localStorage.getItem("chefiapp_restaurant_id")
-      : null);
+  const { tenantId: restaurantId } = useTenant();
 
   const [opening, setOpening] = useState(false);
   const [error, setError] = useState<string | null>(null);

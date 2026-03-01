@@ -91,7 +91,7 @@ ShoppingListMinimal UI
 
 ### Teste Manual
 
-1. **Acessar:** `http://localhost:5173/shopping-list`
+1. **Acessar:** `http://localhost:5175/shopping-list`
 2. **Verificar:**
    - ✅ Lista carrega automaticamente
    - ✅ Ingredientes abaixo do mínimo aparecem

@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
 import styles from "./AdminDevicesPage.module.css";
+import { DesktopComingSoonBanner } from "./DesktopComingSoonBanner";
 import { InstallQRPanel } from "./InstallQRPanel";
 import {
   createInstallToken,
@@ -313,68 +314,13 @@ export function AdminDevicesPage() {
 
       {/* ── Block 3: Downloads ── */}
       <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>Descarregar software</h2>
+        <h2 className={styles.sectionTitle}>Descargar software</h2>
         <p className={styles.sectionDesc}>
-          Os módulos operacionais (TPV, KDS, AppStaff) só funcionam como
-          aplicação instalada — não são acessíveis pelo navegador. Descarregue a
-          aplicação adequada e vincule com o QR acima.
+          Los módulos operacionales (TPV, KDS, AppStaff) solo funcionan como
+          aplicación instalada — no son accesibles desde el navegador.
         </p>
-        <div className={styles.dlGrid}>
-          {[
-            {
-              label: "ChefIApp TPV",
-              platform: "macOS (Electron)",
-              icon: "🖥",
-              ready: false,
-            },
-            {
-              label: "ChefIApp TPV",
-              platform: "Windows (Electron)",
-              icon: "🖥",
-              ready: false,
-            },
-            {
-              label: "ChefIApp KDS",
-              platform: "macOS (Electron)",
-              icon: "📺",
-              ready: false,
-            },
-            {
-              label: "ChefIApp KDS",
-              platform: "Windows (Electron)",
-              icon: "📺",
-              ready: false,
-            },
-            {
-              label: "ChefIApp Staff",
-              platform: "iOS (App Store)",
-              icon: "📱",
-              ready: false,
-            },
-            {
-              label: "ChefIApp Staff",
-              platform: "Android (Google Play)",
-              icon: "📱",
-              ready: false,
-            },
-          ].map((dl) => (
-            <div
-              key={`${dl.label}-${dl.platform}`}
-              className={`${styles.dlCard} ${
-                dl.ready ? "" : styles.dlCardDisabled
-              }`}
-            >
-              <span className={styles.dlIcon}>{dl.icon}</span>
-              <span className={styles.dlLabel}>{dl.label}</span>
-              <span className={styles.dlPlatform}>{dl.platform}</span>
-              <span
-                className={dl.ready ? styles.dlStatusReady : styles.dlStatus}
-              >
-                {dl.ready ? "Descarregar" : "Em breve"}
-              </span>
-            </div>
-          ))}
-        </div>
+
+        <DesktopComingSoonBanner />
 
         <div className={styles.distributionNote}>
           <span className={styles.distributionIcon}>🛡️</span>
