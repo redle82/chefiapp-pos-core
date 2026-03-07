@@ -107,7 +107,8 @@ if [[ -f "$ALLOWLIST_FILE" ]]; then
   done < "$ALLOWLIST_FILE"
 fi
 
-findings_count=$(grep -E 'merchant-portal/' "$FILTERED" | wc -l | tr -d ' ')
+# grep returns exit code 1 when no lines match; that is a valid zero-findings case.
+findings_count=$( (grep -E 'merchant-portal/' "$FILTERED" || true) | wc -l | tr -d ' ')
 findings_file="$(mktemp)"
 trap 'rm -f "$TMP_OUT" "$FILTERED" "$findings_file"' EXIT
 grep -E 'merchant-portal/' "$FILTERED" > "$findings_file" || true

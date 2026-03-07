@@ -1,0 +1,1 @@
+ALTER TABLE public.gm_catalog_menus ENABLE ROW LEVEL SECURITY;

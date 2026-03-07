@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS public.gm_order_items (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id uuid NOT NULL,
+  product_id uuid,
+  name_snapshot text NOT NULL,
+  price_snapshot integer NOT NULL,
+  quantity integer NOT NULL DEFAULT 1,
+  subtotal_cents integer NOT NULL,
+  modifiers jsonb DEFAULT '[]'::jsonb,
+  notes text,
+  created_by_user_id uuid,
+  created_by_role text,
+  device_id text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  prep_time_seconds integer,
+  prep_category text,
+  station text,
+  ready_at timestamp with time zone
+);

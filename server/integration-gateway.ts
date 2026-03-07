@@ -19,6 +19,7 @@ import * as http from "http";
 import Stripe from "stripe";
 import { processProductImage } from "./imageProcessor";
 import { uploadProductImage } from "./minioStorage";
+import { handleMobileActivationRoute } from "./mobileActivationGateway";
 
 const PORT = parseInt(process.env.PORT || "4320", 10);
 const CORE_URL = (process.env.CORE_URL || "http://localhost:3001").replace(
@@ -32,20 +33,33 @@ const INTERNAL_API_TOKEN =
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
 const SUMUP_WEBHOOK_SECRET = process.env.SUMUP_WEBHOOK_SECRET || "";
 const SUMUP_ACCESS_TOKEN = process.env.SUMUP_ACCESS_TOKEN || "";
-const SUMUP_API_BASE_URL =
-  (process.env.SUMUP_API_BASE_URL || "https://api.sumup.com").replace(/\/$/, "");
+const SUMUP_API_BASE_URL = (
+  process.env.SUMUP_API_BASE_URL || "https://api.sumup.com"
+).replace(/\/$/, "");
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5175";
+const DESKTOP_LAUNCH_ACK_SECRET =
+  process.env.CHEFIAPP_DESKTOP_LAUNCH_ACK_SECRET?.trim() ||
+  process.env.DESKTOP_LAUNCH_ACK_SECRET?.trim() ||
+  "";
+const INTEGRATION_RUNTIME_AUTHORITY =
+  process.env.INTEGRATION_RUNTIME_AUTHORITY || "integration-gateway";
+const INTEGRATION_COMPAT_DEADLINE =
+  process.env.INTEGRATION_COMPAT_DEADLINE || "2026-03-14T18:00:00+01:00";
+const INTEGRATION_LEGACY_COMPAT_MODE =
+  process.env.INTEGRATION_LEGACY_COMPAT_MODE !== "0";
+const DESKTOP_LAUNCH_ACK_MAX_SKEW_MS = 90_000;
+const ACK_SIGNATURE_HEX_RE = /^[a-f0-9]{64}$/i;
 
 /** Origens permitidas para criar sessão de checkout (venda da plataforma). Apenas chefiapp.com em produção. */
 const BILLING_ALLOWED_ORIGINS: string[] = (() => {
   const raw = process.env.BILLING_ALLOWED_ORIGINS?.trim();
   if (raw) {
-    return raw.split(",").map((o) => o.trim().toLowerCase()).filter(Boolean);
+    return raw
+      .split(",")
+      .map((o) => o.trim().toLowerCase())
+      .filter(Boolean);
   }
-  const list = [
-    "https://www.chefiapp.com",
-    "https://chefiapp.com",
-  ];
+  const list = ["https://www.chefiapp.com", "https://chefiapp.com"];
   if (process.env.NODE_ENV !== "production") {
     list.push(
       "http://localhost:5175",
@@ -154,11 +168,269 @@ function apiError(
   return { error, message, ...(details !== undefined ? { details } : {}) };
 }
 
+function integrationCompatHeaders(route: string): Record<string, string> {
+  return {
+    "x-chefiapp-compat-mode": INTEGRATION_LEGACY_COMPAT_MODE
+      ? "legacy-server"
+      : "disabled",
+    "x-chefiapp-runtime-authority": INTEGRATION_RUNTIME_AUTHORITY,
+    "x-chefiapp-compat-route": route,
+    "x-chefiapp-compat-deadline": INTEGRATION_COMPAT_DEADLINE,
+  };
+}
+
+function integrationCompatDisabledResponse(route: string): {
+  status: number;
+  json: object;
+} {
+  return {
+    status: 410,
+    json: apiError(
+      "compatibility_disabled",
+      "Legacy integration compatibility route is disabled",
+      {
+        route,
+        runtime_authority: INTEGRATION_RUNTIME_AUTHORITY,
+        compat_deadline: INTEGRATION_COMPAT_DEADLINE,
+      },
+    ),
+  };
+}
+
+function safeErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 function extractBase64Payload(input: string): string {
   if (input.includes(",")) {
     return input.split(",").pop() || "";
   }
   return input;
+}
+
+// ---------------------------------------------------------------------------
+// Desktop launch ACK store (chefiapp:// TPV/KDS)
+// ---------------------------------------------------------------------------
+
+type DesktopLaunchAck = {
+  /** Nonce gerado pelo Admin ao emitir o deep link. */
+  nonce: string;
+  /** Módulo operacional que pediu o launch. */
+  moduleId: "tpv" | "kds";
+  /** Terminal pareado no Desktop (id do gm_terminals), se disponível. */
+  deviceId: string | null;
+  /** Restaurante ao qual o terminal pertence, se conhecido. */
+  restaurantId: string | null;
+  /**
+   * Flag enviada pelo Desktop indicando se o app é o binário empacotado
+   * (app.isPackaged === true). Usada pelo Admin como prova "B" de instalação.
+   */
+  isPackaged: boolean;
+  /**
+   * Versão do Desktop (app.getVersion()) no momento do ACK, para debug/QA.
+   */
+  appVersion: string | null;
+  /**
+   * Timestamp ISO enviado pelo Desktop quando o ACK foi emitido
+   * (lado Electron). Campo opcional; usado apenas para diagnóstico.
+   */
+  launchAckSentAt: string | null;
+  /**
+   * Timestamp ISO do último deep link recebido no Desktop, se o shell
+   * tiver essa informação nos diagnostics. Campo opcional.
+   */
+  lastDeepLinkReceivedAt: string | null;
+  /**
+   * Timestamp (epoch ms) em que o gateway recebeu e registou o ACK.
+   * Este campo governa o TTL no in-memory store.
+   */
+  receivedAt: number;
+};
+
+const DESKTOP_LAUNCH_ACK_TTL_MS = 60_000;
+const desktopLaunchAckStore = new Map<string, DesktopLaunchAck>();
+
+function setDesktopLaunchAck(entry: DesktopLaunchAck): void {
+  desktopLaunchAckStore.set(entry.nonce, entry);
+}
+
+function getDesktopLaunchAck(
+  nonce: string,
+): { found: false } | { found: true; ack: DesktopLaunchAck } {
+  const existing = desktopLaunchAckStore.get(nonce);
+  if (!existing) return { found: false };
+  if (Date.now() - existing.receivedAt > DESKTOP_LAUNCH_ACK_TTL_MS) {
+    desktopLaunchAckStore.delete(nonce);
+    return { found: false };
+  }
+  return { found: true, ack: existing };
+}
+
+async function handleDesktopLaunchAckPost(
+  body: string,
+  headers: http.IncomingHttpHeaders,
+): Promise<{ status: number; json: object }> {
+  let parsed: {
+    nonce?: string;
+    moduleId?: string;
+    deviceId?: string | null;
+    restaurantId?: string | null;
+    isPackaged?: boolean;
+    appVersion?: string | null;
+    launchAckSentAt?: string | null;
+    lastDeepLinkReceivedAt?: string | null;
+  };
+  try {
+    parsed = JSON.parse(body || "{}") as typeof parsed;
+  } catch {
+    return {
+      status: 400,
+      json: apiError("invalid_json", "Invalid JSON body"),
+    };
+  }
+
+  const nonce = parsed.nonce?.trim();
+  const moduleId = parsed.moduleId?.trim();
+  if (!nonce || (moduleId !== "tpv" && moduleId !== "kds")) {
+    return {
+      status: 400,
+      json: apiError(
+        "validation_error",
+        "nonce and moduleId(tpv|kds) required",
+      ),
+    };
+  }
+
+  if (DESKTOP_LAUNCH_ACK_SECRET) {
+    const tsHeader = headers["x-chefiapp-ack-ts"];
+    const sigHeader = headers["x-chefiapp-ack-signature"];
+    const tsValue = Array.isArray(tsHeader) ? tsHeader[0] : tsHeader;
+    const sigValue = Array.isArray(sigHeader) ? sigHeader[0] : sigHeader;
+
+    if (!tsValue || !sigValue) {
+      return {
+        status: 401,
+        json: apiError(
+          "ack_signature_required",
+          "Desktop launch ACK signature headers are required",
+        ),
+      };
+    }
+
+    const ackTs = Number.parseInt(String(tsValue), 10);
+    if (!Number.isFinite(ackTs)) {
+      return {
+        status: 401,
+        json: apiError("ack_signature_invalid", "Invalid ACK timestamp"),
+      };
+    }
+
+    const signatureRaw = String(sigValue).trim();
+    if (!ACK_SIGNATURE_HEX_RE.test(signatureRaw)) {
+      return {
+        status: 401,
+        json: apiError("ack_signature_invalid", "Invalid ACK signature"),
+      };
+    }
+
+    const ageMs = Math.abs(Date.now() - ackTs);
+    if (ageMs > DESKTOP_LAUNCH_ACK_MAX_SKEW_MS) {
+      return {
+        status: 401,
+        json: apiError("ack_signature_expired", "ACK timestamp expired"),
+      };
+    }
+
+    const material = `${nonce}.${moduleId}.${ackTs}`;
+    const expectedSig = crypto
+      .createHmac("sha256", DESKTOP_LAUNCH_ACK_SECRET)
+      .update(material, "utf8")
+      .digest("hex");
+
+    const expectedBuf = Buffer.from(expectedSig, "hex");
+    const gotBuf = Buffer.from(signatureRaw, "hex");
+    if (
+      expectedBuf.length !== gotBuf.length ||
+      !crypto.timingSafeEqual(expectedBuf, gotBuf)
+    ) {
+      return {
+        status: 401,
+        json: apiError("ack_signature_invalid", "Invalid ACK signature"),
+      };
+    }
+  }
+
+  const isPackaged =
+    typeof parsed.isPackaged === "boolean" ? parsed.isPackaged : false;
+  const appVersionRaw =
+    typeof parsed.appVersion === "string" ? parsed.appVersion.trim() : "";
+  const launchAckSentAtRaw =
+    typeof parsed.launchAckSentAt === "string"
+      ? parsed.launchAckSentAt.trim()
+      : "";
+  const lastDeepLinkReceivedAtRaw =
+    typeof parsed.lastDeepLinkReceivedAt === "string"
+      ? parsed.lastDeepLinkReceivedAt.trim()
+      : "";
+
+  setDesktopLaunchAck({
+    nonce,
+    moduleId,
+    deviceId: parsed.deviceId?.trim() || null,
+    restaurantId: parsed.restaurantId?.trim() || null,
+    isPackaged,
+    appVersion: appVersionRaw || null,
+    launchAckSentAt: launchAckSentAtRaw || null,
+    lastDeepLinkReceivedAt: lastDeepLinkReceivedAtRaw || null,
+    receivedAt: Date.now(),
+  });
+
+  return {
+    status: 202,
+    json: {
+      recorded: true,
+      nonce,
+      moduleId,
+    },
+  };
+}
+
+function handleDesktopLaunchAckGet(nonce: string): {
+  status: number;
+  json: object;
+} {
+  if (!nonce) {
+    return {
+      status: 400,
+      json: apiError("validation_error", "nonce required"),
+    };
+  }
+  const result = getDesktopLaunchAck(nonce);
+  if (!result.found) {
+    // 200 + found:false (not 404) — avoids red console noise from the
+    // expected polling cycle. The client already checks data.found.
+    return {
+      status: 200,
+      json: { found: false },
+    };
+  }
+
+  const { ack } = result;
+  return {
+    status: 200,
+    json: {
+      found: true,
+      nonce: ack.nonce,
+      moduleId: ack.moduleId,
+      deviceId: ack.deviceId,
+      restaurantId: ack.restaurantId,
+      isPackaged: ack.isPackaged,
+      appVersion: ack.appVersion,
+      launchAckSentAt: ack.launchAckSentAt,
+      lastDeepLinkReceivedAt: ack.lastDeepLinkReceivedAt,
+      receivedAt: ack.receivedAt,
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -509,10 +781,9 @@ async function handleSumUpWebhook(
     (payload.event_id as string) ||
     (payload.id as string) ||
     `sumup_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  const eventType =
-    (payload.status as string)
-      ? `payment.${String(payload.status).toLowerCase()}`
-      : (payload.event_type as string) || "payment.notification";
+  const eventType = (payload.status as string)
+    ? `payment.${String(payload.status).toLowerCase()}`
+    : (payload.event_type as string) || "payment.notification";
   if (!CORE_SERVICE_KEY) {
     return {
       status: 202,
@@ -535,7 +806,10 @@ async function handleSumUpWebhook(
         p_signature: signature || null,
       }),
     });
-    const data = (await res.json()) as { success?: boolean; message?: string }[];
+    const data = (await res.json()) as {
+      success?: boolean;
+      message?: string;
+    }[];
     const first = Array.isArray(data) ? data[0] : data;
     if (!res.ok) {
       return {
@@ -670,7 +944,9 @@ async function getSumUpCheckoutApi(
 function verifyPaymentInternalToken(req: http.IncomingMessage): boolean {
   const token =
     (req.headers["x-internal-token"] as string) ||
-    (req.headers["authorization"] as string)?.replace(/^Bearer\s+/i, "")?.trim();
+    (req.headers["authorization"] as string)
+      ?.replace(/^Bearer\s+/i, "")
+      ?.trim();
   return !!token && token === INTERNAL_API_TOKEN;
 }
 
@@ -1117,7 +1393,12 @@ function parseBody(req: http.IncomingMessage): Promise<string> {
 
 const server = http.createServer(async (req, res) => {
   const method = req.method || "GET";
-  const path = req.url?.split("?")[0] ?? "/";
+  const pathRaw = req.url?.split("?")[0] ?? "/";
+  const path = pathRaw.replace(/\/+/g, "/").replace(/\/$/, "") || "/";
+  const ipAddress =
+    (req.headers["x-forwarded-for"] as string | undefined) ||
+    req.socket.remoteAddress ||
+    "unknown";
 
   if (method === "OPTIONS") {
     res.writeHead(204, { ...corsHeaders(), "Content-Length": "0" });
@@ -1145,8 +1426,87 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (path === "/health" && method === "GET") {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "ok", service: "integration-gateway" }));
+      const compat = integrationCompatHeaders("/health");
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        ...compat,
+      });
+      res.end(
+        JSON.stringify({
+          status: "ok",
+          service: "integration-gateway",
+          compat_mode: INTEGRATION_LEGACY_COMPAT_MODE,
+          runtime_authority: INTEGRATION_RUNTIME_AUTHORITY,
+          compat_deadline: INTEGRATION_COMPAT_DEADLINE,
+        }),
+      );
+      return;
+    }
+
+    // Desktop launch ACKs (chefiapp:// TPV/KDS)
+    if (path === "/desktop/launch-acks" && method === "POST") {
+      const body = await parseBody(req);
+      const { status, json } = await handleDesktopLaunchAckPost(
+        body,
+        req.headers,
+      );
+      res.writeHead(status, {
+        "Content-Type": "application/json",
+        ...corsHeaders(),
+      });
+      res.end(JSON.stringify(json));
+      return;
+    }
+
+    const desktopAckMatch = path.match(/^\/desktop\/launch-acks\/([^/]+)$/);
+    if (desktopAckMatch && method === "GET") {
+      const nonce = desktopAckMatch[1];
+      const { status, json } = handleDesktopLaunchAckGet(nonce);
+      res.writeHead(status, {
+        "Content-Type": "application/json",
+        ...corsHeaders(),
+      });
+      res.end(JSON.stringify(json));
+      return;
+    }
+
+    if (path.startsWith("/mobile/")) {
+      const body = method === "GET" ? "" : await parseBody(req);
+      const pathNorm = path.replace(/\/+$/, "") || path;
+      console.log(
+        `[integration-gateway] /mobile/* ${method} ${pathNorm} (handling...)`,
+      );
+      const mobileResult = await handleMobileActivationRoute({
+        method,
+        path: pathNorm,
+        headers: req.headers,
+        body,
+        ip: ipAddress,
+      });
+
+      if (mobileResult.handled) {
+        console.log(`[integration-gateway] /mobile/* → ${mobileResult.status}`);
+        res.writeHead(mobileResult.status, {
+          "Content-Type": "application/json",
+          ...corsHeaders(),
+        });
+        res.end(JSON.stringify(mobileResult.json));
+        return;
+      }
+      console.log(
+        `[integration-gateway] /mobile/* 404 (no handler for ${method} ${pathNorm})`,
+      );
+      res.writeHead(404, {
+        "Content-Type": "application/json",
+        ...corsHeaders(),
+      });
+      res.end(
+        JSON.stringify({
+          error: "not_found",
+          message: "Mobile route not found",
+          path: pathNorm,
+        }),
+      );
       return;
     }
 
@@ -1306,13 +1666,15 @@ const server = http.createServer(async (req, res) => {
             }),
           );
         } catch (e) {
-          console.error("[integration-gateway] create-checkout-session", e);
+          console.error(
+            "[integration-gateway] create-checkout-session",
+            safeErrorMessage(e),
+          );
           res.writeHead(500, { ...cors, "Content-Type": "application/json" });
           res.end(
             JSON.stringify({
               error: "stripe_error",
-              message:
-                e instanceof Error ? e.message : "Stripe checkout failed",
+              message: safeErrorMessage(e) || "Stripe checkout failed",
             }),
           );
         }
@@ -1321,22 +1683,50 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (path === "/api/v1/webhook/sumup" && method === "POST") {
+      if (!INTEGRATION_LEGACY_COMPAT_MODE) {
+        const compat = integrationCompatHeaders("/api/v1/webhook/sumup");
+        const { status, json } = integrationCompatDisabledResponse(
+          "/api/v1/webhook/sumup",
+        );
+        res.writeHead(status, {
+          "Content-Type": "application/json",
+          ...corsHeaders(),
+          ...compat,
+        });
+        res.end(JSON.stringify(json));
+        return;
+      }
       const bodyStr = await parseBody(req);
-      const signature = (req.headers["x-sumup-signature"] as string) || undefined;
+      const signature =
+        (req.headers["x-sumup-signature"] as string) || undefined;
       const { status, json } = await handleSumUpWebhook(bodyStr, signature);
       res.writeHead(status, {
         "Content-Type": "application/json",
         ...corsHeaders(),
+        ...integrationCompatHeaders("/api/v1/webhook/sumup"),
       });
       res.end(JSON.stringify(json));
       return;
     }
 
     // Payment routes: Bearer INTERNAL_API_TOKEN (before API key /api/v1/*)
+    // Contract compatibility during MRP-001: accept both canonical and legacy PIX paths.
     if (
-      path === "/api/v1/payment/pix/checkout" &&
+      (path === "/api/v1/payment/pix/checkout" ||
+        path === "/api/v1/payment/pix/br/checkout") &&
       method === "POST"
     ) {
+      if (!INTEGRATION_LEGACY_COMPAT_MODE) {
+        const compat = integrationCompatHeaders(path);
+        const { status, json } = integrationCompatDisabledResponse(path);
+        res.writeHead(status, {
+          "Content-Type": "application/json",
+          ...corsHeaders(),
+          ...compat,
+        });
+        res.end(JSON.stringify(json));
+        return;
+      }
       const cors = corsHeaders();
       if (!verifyPaymentInternalToken(req)) {
         res.writeHead(401, { ...cors, "Content-Type": "application/json" });
@@ -1358,7 +1748,12 @@ const server = http.createServer(async (req, res) => {
         );
         return;
       }
-      let body: { order_id?: string; amount?: number; merchant_code?: string; description?: string };
+      let body: {
+        order_id?: string;
+        amount?: number;
+        merchant_code?: string;
+        description?: string;
+      };
       try {
         body = JSON.parse((await parseBody(req)) || "{}") as typeof body;
       } catch {
@@ -1378,7 +1773,8 @@ const server = http.createServer(async (req, res) => {
         res.end(
           JSON.stringify({
             error: "validation_error",
-            message: "order_id (string) and amount (positive number) are required",
+            message:
+              "order_id (string) and amount (positive number) are required",
           }),
         );
         return;
@@ -1408,12 +1804,15 @@ const server = http.createServer(async (req, res) => {
           }),
         );
       } catch (e) {
-        console.error("[integration-gateway] PIX checkout error:", e);
+        console.error(
+          "[integration-gateway] PIX checkout error:",
+          safeErrorMessage(e),
+        );
         res.writeHead(500, { ...cors, "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             error: "Failed to create PIX checkout",
-            message: e instanceof Error ? e.message : "Unknown error",
+            message: safeErrorMessage(e),
           }),
         );
       }
@@ -1460,12 +1859,15 @@ const server = http.createServer(async (req, res) => {
           }),
         );
       } catch (e) {
-        console.error("[integration-gateway] SumUp checkout status error:", e);
+        console.error(
+          "[integration-gateway] SumUp checkout status error:",
+          safeErrorMessage(e),
+        );
         res.writeHead(500, { ...cors, "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             error: "Failed to fetch checkout status",
-            message: e instanceof Error ? e.message : "Unknown error",
+            message: safeErrorMessage(e),
           }),
         );
       }
@@ -1517,12 +1919,18 @@ const server = http.createServer(async (req, res) => {
       const orderId = body?.orderId?.trim();
       const restaurantId = body?.restaurantId?.trim();
       const amount = typeof body?.amount === "number" ? body.amount : NaN;
-      if (!orderId || !restaurantId || !Number.isFinite(amount) || amount <= 0) {
+      if (
+        !orderId ||
+        !restaurantId ||
+        !Number.isFinite(amount) ||
+        amount <= 0
+      ) {
         res.writeHead(400, { ...cors, "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             error: "validation_error",
-            message: "orderId, restaurantId and amount (positive number) are required",
+            message:
+              "orderId, restaurantId and amount (positive number) are required",
           }),
         );
         return;
@@ -1555,19 +1963,24 @@ const server = http.createServer(async (req, res) => {
           }),
         );
       } catch (e) {
-        console.error("[integration-gateway] SumUp checkout error:", e);
+        console.error(
+          "[integration-gateway] SumUp checkout error:",
+          safeErrorMessage(e),
+        );
         res.writeHead(500, { ...cors, "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             error: "Failed to create SumUp checkout",
-            message: e instanceof Error ? e.message : "Unknown error",
+            message: safeErrorMessage(e),
           }),
         );
       }
       return;
     }
 
-    const sumupCheckoutIdMatch = path.match(/^\/api\/v1\/sumup\/checkout\/([^/]+)$/);
+    const sumupCheckoutIdMatch = path.match(
+      /^\/api\/v1\/sumup\/checkout\/([^/]+)$/,
+    );
     if (sumupCheckoutIdMatch && method === "GET") {
       const cors = corsHeaders();
       if (!verifyPaymentInternalToken(req)) {
@@ -1603,18 +2016,23 @@ const server = http.createServer(async (req, res) => {
               amount: checkout.amount,
               currency: checkout.currency,
               reference: checkout.checkout_reference || checkoutId,
-              transactions: (checkout as SumUpCheckoutResponse & { transactions?: unknown[] }).transactions,
+              transactions: (
+                checkout as SumUpCheckoutResponse & { transactions?: unknown[] }
+              ).transactions,
               validUntil: checkout.date,
             },
           }),
         );
       } catch (e) {
-        console.error("[integration-gateway] SumUp checkout status error:", e);
+        console.error(
+          "[integration-gateway] SumUp checkout status error:",
+          safeErrorMessage(e),
+        );
         res.writeHead(500, { ...cors, "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             error: "Failed to fetch SumUp checkout status",
-            message: e instanceof Error ? e.message : "Unknown error",
+            message: safeErrorMessage(e),
           }),
         );
       }

@@ -1,0 +1,1 @@
+ALTER TABLE public.gm_products ENABLE ROW LEVEL SECURITY;

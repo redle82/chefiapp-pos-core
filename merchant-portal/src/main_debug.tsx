@@ -13,6 +13,7 @@ import type { RestaurantLifecycleState } from "./core/lifecycle/LifecycleState";
 import { Logger } from "./core/logger";
 import { logRuntimeStatus } from "./core/runtime/RuntimeContext";
 import { devStableReason, isDevStableMode } from "./core/runtime/devStableMode";
+import { installUnhandledRejectionGuard } from "./core/runtime/unhandledRejectionGuard";
 import "./i18n";
 import "./index.css";
 import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
@@ -26,6 +27,11 @@ const BUILD_STAMP = `chefiapp-build:${import.meta.env.MODE}:${
   __BUILD_TIMESTAMP__ ?? "dev"
 }`;
 console.log(`%c[ChefIApp] ${BUILD_STAMP}`, "color: #f59e0b; font-weight: bold");
+
+installUnhandledRejectionGuard({
+  route: typeof window !== "undefined" ? window.location.pathname : "unknown",
+  mode: import.meta.env.MODE,
+});
 
 // ─── Service Worker Auto-Reload ─────────────────────────────────────────────
 // When a new SW takes control (skipWaiting + clientsClaim), auto-reload so

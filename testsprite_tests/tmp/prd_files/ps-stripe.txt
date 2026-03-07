@@ -1,2 +1,0 @@
-goldmonkey       23666   0.0  0.0 435300256   1152 s002  SN    2:29AM   0:00.01 tail -f /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/stripe-listen-3099.log
-goldmonkey       23518   0.0  0.1 436774752  43040 s002  SN    2:27AM   0:00.20 stripe listen --forward-to localhost:3099/webhooks/billing

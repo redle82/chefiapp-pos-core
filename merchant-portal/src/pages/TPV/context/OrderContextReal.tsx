@@ -36,6 +36,7 @@ import {
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 
 import { v4 as uuidv4 } from "uuid";
+import { useAuth } from "../../../core/auth/useAuth";
 import type { Order, OrderItem } from "../../../core/contracts";
 import { classifyFailure } from "../../../core/errors/FailureClassifier";
 import {
@@ -52,6 +53,7 @@ import {
 } from "../../../core/storage/TabIsolatedStorage";
 import { eventTaskGenerator } from "../../../core/tasks/EventTaskGenerator";
 import { useOfflineOrder } from "./OfflineOrderContext";
+import { resolveOperatorId } from "./operatorIdentity";
 import { OrderContext, type OrderCreateInput } from "./OrderContextToken"; // FASE 3.4: Token isolado
 // DOCKER CORE: All writes go through PostgREST RPCs (see ARCHITECTURE_DECISION.md)
 import { isDevStableMode } from "../../../core/runtime/devStableMode";
@@ -130,6 +132,7 @@ export function OrderProvider({
   children: ReactNode;
   restaurantId?: string;
 }) {
+  const { user } = useAuth();
   // Writes go through PostgREST RPCs — no kernel dependency
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
@@ -139,7 +142,7 @@ export function OrderProvider({
   const [restaurantId, setRestaurantId] = useState<string | null>(
     propRestaurantId || null,
   );
-  const [operatorId] = useState<string | null>(null);
+  const operatorId = resolveOperatorId(user);
   const [cashRegisterId, setCashRegisterId] = useState<string | null>(null);
   const [pendingExceptions, setPendingExceptions] = useState<
     (OrderExceptionPayload & { eventId: string })[]
@@ -363,6 +366,13 @@ export function OrderProvider({
     const unsubscribeException = tpvEventBus.on<OrderExceptionPayload>(
       "order.exception",
       (event) => {
+        if (!event?.payload || typeof event.payload !== "object") {
+          Logger.warn("ignored_invalid_order_exception_event", {
+            context: "OrderContext",
+            eventId: event?.id,
+          });
+          return;
+        }
         Logger.info("caught_order_exception", {
           payload: event.payload,
           context: "OrderContext",
@@ -379,15 +389,35 @@ export function OrderProvider({
     const unsubscribeDecision = tpvEventBus.on<DecisionMadePayload>(
       "order.decision_made",
       (event) => {
+        if (!event?.payload || typeof event.payload !== "object") {
+          Logger.warn("ignored_invalid_decision_made_event", {
+            context: "OrderContext",
+            eventId: event?.id,
+          });
+          return;
+        }
+
+        if (
+          typeof (event.payload as { orderId?: unknown }).orderId !== "string"
+        ) {
+          Logger.warn("ignored_decision_made_event_without_order_id", {
+            context: "OrderContext",
+            eventId: event?.id,
+          });
+          return;
+        }
+
         Logger.info("caught_decision_made", {
           payload: event.payload,
           context: "OrderContext",
         });
+
+        const { orderId } = event.payload as { orderId: string };
         setPendingExceptions((prev) =>
           prev.filter(
             (e) =>
               // Remove exception if it matches the decision's orderId
-              e.orderId !== event.payload.orderId,
+              e.orderId !== orderId,
           ),
         );
       },

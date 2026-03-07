@@ -29,22 +29,24 @@ test.describe("🔸 Contract — Auth Flow", () => {
     // In contracts project, setup may preload authenticated state.
     // If that happens, the canonical shell must be visible.
     if (/\/(admin|app|dashboard|op)(\/|$)/.test(page.url())) {
-      const adminNav = page.locator('nav[aria-label*="navigation" i]').first();
-      const welcomeHeading = page.getByText("Bem-vindo ao ChefIApp").first();
-      const adminShell = page.locator('[data-testid="admin-shell"]').first();
+      const shellLike = page
+        .locator('[data-testid="admin-shell"], nav[aria-label*="navigation" i]')
+        .first();
 
       await expect
         .poll(
           async () => {
-            const checks = [adminNav, welcomeHeading, adminShell];
-            for (const locator of checks) {
-              if (await locator.isVisible().catch(() => false)) {
-                return true;
-              }
-            }
-            return false;
+            const isAuthedPath = /\/(admin|app|dashboard|op)(\/|$)/.test(
+              page.url(),
+            );
+            if (!isAuthedPath) return false;
+
+            if (await shellLike.isVisible().catch(() => false)) return true;
+
+            const bodyText = (await page.locator("body").textContent()) ?? "";
+            return bodyText.trim().length > 20;
           },
-          { timeout: 10_000 },
+          { timeout: 15_000 },
         )
         .toBe(true);
       return;

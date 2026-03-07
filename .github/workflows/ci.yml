@@ -45,8 +45,19 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install ripgrep (rg)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ripgrep
+
       - name: BrowserBlockGuard purity gate
         run: npm run check:browser-guard-purity
+
+      - name: AppStaff official guardrail
+        run: npm run check:appstaff-official
+
+      - name: Merchant Portal type-check
+        run: pnpm --filter merchant-portal run type-check
 
       - name: Fail-fast (typecheck + build)
         run: make simulate-failfast
@@ -113,6 +124,33 @@ jobs:
       - name: Bypass gate (fail on new findings)
         if: steps.bypass_scope.outputs.should_run == 'true'
         run: npm run -s audit:bypass:fail-on-new
+
+      - name: Detect MRP-001 cutover scope
+        id: mrp001_scope
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
+
+          CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" || true)"
+          printf "%s\n" "$CHANGED_FILES"
+
+          if echo "$CHANGED_FILES" | grep -Eq '^(server/integration-gateway\.ts|integration-gateway/src/|scripts/flows/mrp001-cutover-smoke\.sh|docs/audit/MONOREPO_MRP001_)'; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: MRP-001 cutover smoke gate
+        if: steps.mrp001_scope.outputs.should_run == 'true'
+        run: npm run smoke:mrp001-cutover
 
   e2e-smoke:
     name: E2E Suite (Playwright — 4 layers)

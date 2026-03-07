@@ -102,7 +102,9 @@ export function AdminTopbar() {
                 <div className={styles.dropdownHeaderInfo}>
                   <div className={styles.dropdownName}>{userName}</div>
                   <div className={styles.dropdownEmail}>{userEmail || "—"}</div>
-                  <div className={styles.dropdownRole}>{t("topbar.owner")}</div>
+                  <div className={styles.dropdownRole}>
+                    {t("topbar.owner", { defaultValue: "Proprietário" })}
+                  </div>
                 </div>
               </div>
 
@@ -133,7 +135,7 @@ export function AdminTopbar() {
                       strokeLinecap="round"
                     />
                   </svg>
-                  {t("topbar.myAccount")}
+                  {t("topbar.myAccount", { defaultValue: "Minha conta" })}
                 </button>
                 <button
                   type="button"
@@ -205,7 +207,7 @@ export function AdminTopbar() {
                       strokeLinejoin="round"
                     />
                   </svg>
-                  {t("topbar.logout")}
+                  {t("topbar.logout", { defaultValue: "Sair" })}
                 </button>
               </div>
             </div>

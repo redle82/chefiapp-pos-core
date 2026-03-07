@@ -860,9 +860,11 @@ export const OperationalRoutesFragment = (
         path="/admin/modules"
         element={
           <ManagementAdvisor>
-            <DashboardLayout>
-              <ModulesPage />
-            </DashboardLayout>
+            <ErrorBoundary context="AdminModulesRoute">
+              <DashboardLayout>
+                <ModulesPage />
+              </DashboardLayout>
+            </ErrorBoundary>
           </ManagementAdvisor>
         }
       />

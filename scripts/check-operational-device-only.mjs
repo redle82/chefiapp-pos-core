@@ -9,10 +9,10 @@
  * Optional: --doctor prints repo identity and checks duplicate Vite listeners on common ports.
  */
 
+import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
@@ -67,7 +67,10 @@ if (viteContent.includes("VitePWA") && !hasSwDisabledInDev) {
 const mainDebugPath = path.join(repoRoot, "merchant-portal/src/main_debug.tsx");
 const mainContent = readFileSync(mainDebugPath, "utf8");
 
-if (!mainContent.includes("serviceWorker") || !mainContent.includes("unregister")) {
+if (
+  !mainContent.includes("serviceWorker") ||
+  !mainContent.includes("unregister")
+) {
   violations.push(
     "❌ OPERATIONAL_DEVICE_ONLY: main_debug must unregister SW in DEV.",
   );
@@ -85,7 +88,6 @@ const o2Files = [
   "merchant-portal/src/features/admin/modules/pages/ModulesPage.tsx",
   "merchant-portal/src/features/admin/software-tpv/pages/SoftwareTpvPage.tsx",
   "merchant-portal/src/pages/Activation/ActivationCenterPage.tsx",
-  "merchant-portal/src/features/admin/modules/hooks/useDeviceInstall.ts",
 ];
 
 for (const relPath of o2Files) {
@@ -116,7 +118,9 @@ if (isDoctor) {
     const sha = execSync("git rev-parse --short HEAD", { cwd: repoRoot })
       .toString()
       .trim();
-    const branch = execSync("git rev-parse --abbrev-ref HEAD", { cwd: repoRoot })
+    const branch = execSync("git rev-parse --abbrev-ref HEAD", {
+      cwd: repoRoot,
+    })
       .toString()
       .trim();
     console.log(`\n[doctor:dev] repo=${repoRoot}`);
@@ -127,9 +131,7 @@ if (isDoctor) {
   }
 
   // Radiografia: instruções para validar [DEV_BUILD] + SW + localStorage no console
-  console.log(
-    "\n[doctor:dev] App-side fingerprint (DevTools Console):",
-  );
+  console.log("\n[doctor:dev] App-side fingerprint (DevTools Console):");
   console.log(
     "  - Procura por [DEV_BUILD] — deve incluir: sha, surface, origin, path, api, sw, swState",
   );
@@ -139,21 +141,15 @@ if (isDoctor) {
   console.log(
     "\n[doctor:dev] SW check (DEV): DevTools → Application → Service Workers",
   );
-  console.log(
-    "  - Esperado: nenhum SW activated.",
-  );
+  console.log("  - Esperado: nenhum SW activated.");
   console.log(
     "  - Se activated: Unregister + Application → Storage → Clear site data.",
   );
   console.log(
     "\n[doctor:dev] LocalStorage quick-check (DEV): DevTools Console:",
   );
-  console.log(
-    "  - localStorage.getItem('chefiapp_pilot_mode')",
-  );
-  console.log(
-    "  - localStorage.getItem('chefiapp_restaurant_id')",
-  );
+  console.log("  - localStorage.getItem('chefiapp_pilot_mode')");
+  console.log("  - localStorage.getItem('chefiapp_restaurant_id')");
   console.log(
     "  - Se diferirem do esperado, o runtime vai parecer 'outra app'.",
   );

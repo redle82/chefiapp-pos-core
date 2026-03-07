@@ -188,6 +188,7 @@ _Índice mínimo. Expandir conforme repopulação do índice em tarefas futuras.
 | [CASH_REGISTER_LIFECYCLE_CONTRACT.md](./CASH_REGISTER_LIFECYCLE_CONTRACT.md) | Architecture |
 | [CATALOGO_ACOES_CRIACAO_RESTAURANTE.md](./CATALOGO_ACOES_CRIACAO_RESTAURANTE.md) | Architecture |
 | [CHEFIAPP_OS_DELIVERY.md](./CHEFIAPP_OS_DELIVERY.md) | Architecture |
+| [CHEFIAPP_OS_ARCHITECTURE_V1.md](./CHEFIAPP_OS_ARCHITECTURE_V1.md) | Architecture |
 | [CHEFIAPP_PRICING_AND_POSITIONING.md](./CHEFIAPP_PRICING_AND_POSITIONING.md) | Architecture |
 | [CLOSED_PILOT_CONTRACT.md](./CLOSED_PILOT_CONTRACT.md) | Architecture |
 | [CODE_AND_DEVICE_PAIRING_CONTRACT.md](./CODE_AND_DEVICE_PAIRING_CONTRACT.md) | Architecture |
@@ -278,6 +279,7 @@ _Índice mínimo. Expandir conforme repopulação do índice em tarefas futuras.
 | [LANDING_STATE_ROUTING_CONTRACT.md](./LANDING_STATE_ROUTING_CONTRACT.md) | Architecture |
 | [LEGACY_UI_STATUS.md](./LEGACY_UI_STATUS.md) | Architecture |
 | [MANAGEMENT_ADVISOR_CONTRACT.md](./MANAGEMENT_ADVISOR_CONTRACT.md) | Architecture |
+| [MANDATORY_ARCHITECTURE_AND_PUBLICATION_READINESS.md](./MANDATORY_ARCHITECTURE_AND_PUBLICATION_READINESS.md) | Architecture |
 | [MAPS_AUDIT_REPORT.md](./MAPS_AUDIT_REPORT.md) | Architecture |
 | [MENU_BUILDER_CONTRACT_V1.md](./MENU_BUILDER_CONTRACT_V1.md) | Architecture |
 | [MENU_CATALOG_VISUAL_SPEC.md](./MENU_CATALOG_VISUAL_SPEC.md) | Architecture |
@@ -403,6 +405,7 @@ _Índice mínimo. Expandir conforme repopulação do índice em tarefas futuras.
 | [LEI_DO_TURNO.md](../contracts/LEI_DO_TURNO.md) | Contract |
 | [LOGO_IDENTITY_CONTRACT.md](../contracts/LOGO_IDENTITY_CONTRACT.md) | Contract |
 | [MENU_BUILDING_CONTRACT_v1.md](../contracts/MENU_BUILDING_CONTRACT_v1.md) | Contract |
+| [OPERATIONAL_DEVICE_ONLY_CONTRACT.md](../contracts/OPERATIONAL_DEVICE_ONLY_CONTRACT.md) | Contract |
 | [OPERATIONAL_ALERTS_CONTRACT.md](../contracts/OPERATIONAL_ALERTS_CONTRACT.md) | Contract |
 | [ORDER_STATUS_CONTRACT_v1.md](../contracts/ORDER_STATUS_CONTRACT_v1.md) | Contract |
 | [README.md](../contracts/README.md) | Contract |

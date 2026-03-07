@@ -1,0 +1,1 @@
+ALTER TABLE public.gm_stock_ledger ADD CONSTRAINT gm_stock_ledger_action_check CHECK (action = ANY (ARRAY['IN'::text, 'OUT'::text, 'RESERVE'::text, 'RELEASE'::text, 'CONSUME'::text, 'ADJUST'::text]));

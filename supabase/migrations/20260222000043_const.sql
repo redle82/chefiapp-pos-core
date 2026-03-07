@@ -1,0 +1,1 @@
+ALTER TABLE public.gm_equipment ADD CONSTRAINT gm_equipment_kind_check CHECK (kind = ANY (ARRAY['FRIDGE'::text, 'FREEZER'::text, 'OVEN'::text, 'GRILL'::text, 'PLANCHA'::text, 'COFFEE_MACHINE'::text, 'ICE_MACHINE'::text, 'KEG_SYSTEM'::text, 'SHELF'::text, 'OTHER'::text]));

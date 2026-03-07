@@ -1,0 +1,1 @@
+ALTER TABLE public.legal_seals ENABLE ROW LEVEL SECURITY;

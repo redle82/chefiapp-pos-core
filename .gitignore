@@ -103,3 +103,24 @@ merchant-portal/artifacts/
 .agents/skills/
 .turbo
 .env.vercel
+
+# ── Repo hygiene (added 2026-03-07) ──
+
+# Desktop installer binaries — distributed via GitHub Releases, not git
+*.dmg
+*.exe
+*.AppImage
+
+# Android native build caches (reproducible)
+**/android/build/
+**/android/.gradle/
+
+# Desktop packager output (electron-builder)
+desktop-app/out/
+
+# Test sprite archives (historical debug/UI test assets)
+testsprite_uiux/
+testsprite_tests/
+
+# Python virtual environment
+.venv/
