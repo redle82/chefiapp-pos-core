@@ -37,6 +37,8 @@ import { dockerCoreClient } from "../../../merchant-portal/src/infra/docker-core
 import {
   fetchFirstRestaurantId,
   fetchInstalledModules,
+  fetchRestaurant,
+  fetchRestaurantForIdentity,
   fetchSetupStatus,
   restaurantExistsInCore,
 } from "../../../merchant-portal/src/infra/readers/RuntimeReader";
@@ -45,6 +47,14 @@ const chain = (dockerCoreClient as any).__chain;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  Object.defineProperty(globalThis, "localStorage", {
+    value: {
+      getItem: jest.fn(() => null),
+      setItem: jest.fn(),
+      removeItem: jest.fn(),
+    },
+    configurable: true,
+  });
 });
 
 describe("RuntimeReader", () => {
@@ -74,6 +84,70 @@ describe("RuntimeReader", () => {
       chain.order.mockReturnValueOnce({ data: mockData, error: null });
       const result = await fetchFirstRestaurantId();
       expect(result).toBe("first-id");
+    });
+  });
+
+  describe("logo_url backwards compatibility", () => {
+    it("retries fetchRestaurant without logo_url when column does not exist", async () => {
+      chain.maybeSingle
+        .mockResolvedValueOnce({
+          data: null,
+          error: { message: "column gm_restaurants.logo_url does not exist" },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            id: "r-runtime-1",
+            name: "Runtime R1",
+            slug: "runtime-r1",
+            status: "active",
+            tenant_id: null,
+          },
+          error: null,
+        });
+
+      const row = await fetchRestaurant("r-runtime-1");
+
+      expect(row).toBeTruthy();
+      expect(row?.id).toBe("r-runtime-1");
+      expect((row as any)?.logo_url ?? null).toBeNull();
+      expect(chain.maybeSingle).toHaveBeenCalledTimes(2);
+      expect(chain.select).toHaveBeenNthCalledWith(
+        2,
+        "id,name,slug,status,tenant_id,product_mode,billing_status,trial_ends_at,country,timezone,currency,locale,type,created_at,updated_at",
+      );
+    });
+
+    it("retries fetchRestaurantForIdentity without logo_url when column does not exist", async () => {
+      chain.maybeSingle
+        .mockResolvedValueOnce({
+          data: null,
+          error: { message: "column gm_restaurants.logo_url does not exist" },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            id: "r-runtime-2",
+            name: "Runtime R2",
+            slug: "runtime-r2",
+            status: "active",
+            tenant_id: null,
+            type: "Restaurante",
+            city: "Lisboa",
+            address: null,
+            description: null,
+          },
+          error: null,
+        });
+
+      const row = await fetchRestaurantForIdentity("r-runtime-2");
+
+      expect(row).toBeTruthy();
+      expect(row?.id).toBe("r-runtime-2");
+      expect((row as any)?.logo_url ?? null).toBeNull();
+      expect(chain.maybeSingle).toHaveBeenCalledTimes(2);
+      expect(chain.select).toHaveBeenNthCalledWith(
+        2,
+        "id,name,slug,status,tenant_id,type,city,address,description,country,timezone,currency,locale,created_at,updated_at",
+      );
     });
   });
 

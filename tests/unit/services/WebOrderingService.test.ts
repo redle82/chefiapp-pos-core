@@ -28,6 +28,13 @@ jest.mock("../../../merchant-portal/src/core/supabase", () => ({
   },
 }));
 
+// Mock coreClient (used directly for table queries in WebOrderingService)
+jest.mock("../../../merchant-portal/src/core/infra/coreClient", () => ({
+  coreClient: {
+    from: jest.fn(() => mockSupabaseChain),
+  },
+}));
+
 // Mock OrderProtection
 jest.mock("../../../merchant-portal/src/core/services/OrderProtection", () => ({
   checkOrderProtection: jest.fn(),

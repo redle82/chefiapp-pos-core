@@ -49,7 +49,7 @@ npm run audit:all
 npm run dev
 ```
 
-Open: <http://localhost:5175>
+Open: <http://localhost:5173>
 
 ---
 

@@ -136,6 +136,13 @@ async function cleanupTestData() {
   await pool.query(`DELETE FROM gm_restaurants WHERE id = $1`, [RESTAURANT_ID]);
 }
 
+async function hasBillingIncidentsTable(): Promise<boolean> {
+  const res = await pool.query(
+    `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'billing_incidents'`
+  );
+  return res.rowCount !== null && res.rowCount > 0;
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -662,6 +669,91 @@ describe("PL/pgSQL Core RPCs", () => {
       );
       expect(res.rows[0].result.success).toBe(false);
       expect(res.rows[0].result.error).toContain("not found");
+    });
+  });
+
+  // ========================================================================
+  // sync_stripe_subscription_from_event (billing_incidents audit trail)
+  // ========================================================================
+
+  describe("sync_stripe_subscription_from_event", () => {
+    const BILLING_TEST_EVENT_ID = "evt_billing_test_tenant_not_found";
+
+    afterEach(async () => {
+      if (!reachable) return;
+      await pool.query(
+        `DELETE FROM billing_incidents WHERE event_id = $1`,
+        [BILLING_TEST_EVENT_ID],
+      );
+    });
+
+    it("should insert billing_incidents row when tenant_not_found (no restaurant_id)", async () => {
+      if (!reachable) return;
+      const hasTable = await hasBillingIncidentsTable();
+      if (!hasTable) {
+        console.warn("billing_incidents table not present; skip sync_stripe_subscription_from_event test");
+        return;
+      }
+
+      const payload = JSON.stringify({
+        id: BILLING_TEST_EVENT_ID,
+        data: {
+          object: {
+            metadata: {},
+            customer: "cus_nonexistent",
+          },
+        },
+      });
+
+      const res = await pool.query(
+        `SELECT * FROM sync_stripe_subscription_from_event($1, $2::jsonb, NULL::timestamptz)`,
+        ["customer.subscription.updated", payload],
+      );
+
+      expect(res.rows.length).toBeGreaterThanOrEqual(1);
+      const row = res.rows[0];
+      expect(row.updated_restaurant_id).toBeNull();
+      expect(row.message).toMatch(/No restaurant_id|tenant/i);
+
+      const incidents = await pool.query(
+        `SELECT * FROM billing_incidents WHERE event_id = $1 AND reason = 'tenant_not_found'`,
+        [BILLING_TEST_EVENT_ID],
+      );
+      expect(incidents.rows.length).toBe(1);
+      expect(incidents.rows[0].provider).toBe("stripe");
+      expect(incidents.rows[0].event_type).toBe("customer.subscription.updated");
+      expect(incidents.rows[0].restaurant_id).toBeNull();
+    });
+
+    it("should deduplicate incident on same event_id+reason (ON CONFLICT DO NOTHING)", async () => {
+      if (!reachable) return;
+      const hasTable = await hasBillingIncidentsTable();
+      if (!hasTable) return;
+
+      const payload = JSON.stringify({
+        id: BILLING_TEST_EVENT_ID,
+        data: {
+          object: {
+            metadata: {},
+            customer: "cus_other",
+          },
+        },
+      });
+
+      await pool.query(
+        `SELECT * FROM sync_stripe_subscription_from_event($1, $2::jsonb, NULL::timestamptz)`,
+        ["customer.subscription.updated", payload],
+      );
+      await pool.query(
+        `SELECT * FROM sync_stripe_subscription_from_event($1, $2::jsonb, NULL::timestamptz)`,
+        ["customer.subscription.updated", payload],
+      );
+
+      const incidents = await pool.query(
+        `SELECT * FROM billing_incidents WHERE event_id = $1 AND reason = 'tenant_not_found'`,
+        [BILLING_TEST_EVENT_ID],
+      );
+      expect(incidents.rows.length).toBe(1);
     });
   });
 });

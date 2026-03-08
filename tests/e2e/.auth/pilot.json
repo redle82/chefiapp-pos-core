@@ -13,10 +13,6 @@
           "value": "{\"device_id\":\"debug-tpv\",\"restaurant_id\":\"00000000-0000-0000-0000-000000000100\",\"module_id\":\"tpv\",\"device_name\":\"Debug TPV\"}"
         },
         {
-          "name": "chefiapp_restaurant_id",
-          "value": "00000000-0000-0000-0000-000000000100"
-        },
-        {
           "name": "chefiapp_bypass_health",
           "value": "true"
         },

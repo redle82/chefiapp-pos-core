@@ -95,6 +95,7 @@ Validates honesty during real UP/DOWN flips against a flapping mock core:
 
 # Stress loop (parallel + repeat)
 ./scripts/truth-stress.sh
+# Critério de estabilidade ≥85%: ver docs/ops/TRUTH_STRESS_CRITERION.md
 
 # Chaos flapping (spins mock core + headed TPV check) — requires CHAOS_MODE=1
 ./scripts/truth-chaos.sh

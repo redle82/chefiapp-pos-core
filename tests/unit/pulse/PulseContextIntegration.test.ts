@@ -4,7 +4,6 @@
  * Self-contained: pure logic inlined to avoid ts-jest compilation
  * of pre-existing TS errors in unrelated source files.
  */
-export {}; // module scope — avoid duplicate-identifier errors across test files
 
 // ── Inline types (mirrors PulseState.ts + ContextTypes.ts) ─────────
 type PulseZone = "FLOW_ALTO" | "FLOW_PARCIAL" | "FLOW_BASE";

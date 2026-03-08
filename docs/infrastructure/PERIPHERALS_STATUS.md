@@ -86,7 +86,7 @@ Todos os periféricos e serviços estão configurados e rodando no Docker:
 
 **Tipo:** Kitchen Display System
 
-**Acesso:** `http://localhost:5175/app/kds`
+**Acesso:** `http://localhost:5173/app/kds`
 
 **Funcionalidades:**
 

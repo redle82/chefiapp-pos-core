@@ -36,8 +36,8 @@
 - Não acessado diretamente pela UI
 
 **Frontend (Vite):**
-- Porta: `5175` (local, mas conecta ao Docker Core)
-- URLs públicas: `http://localhost:5175/public/{slug}/mesa/{n}`
+- Porta: `5173` (local, mas conecta ao Docker Core)
+- URLs públicas: `http://localhost:5173/public/{slug}/mesa/{n}`
 
 ### 3. Componentes Usam Docker Core
 

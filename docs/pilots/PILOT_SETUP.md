@@ -31,7 +31,7 @@ Isso cria:
 
 ## Passo 2: Configurar no Merchant Portal
 
-1. Acesse `http://localhost:5175/app/dashboard`
+1. Acesse `http://localhost:5173/app/dashboard`
 2. Selecione o restaurante criado (ou configure via localStorage)
 3. Verifique que mesas e produtos aparecem
 
@@ -62,13 +62,13 @@ Isso cria:
 
 ### TPV (Terminal de Vendas)
 - **Dispositivo:** Tablet ou computador
-- **URL:** `http://localhost:5175/app/tpv`
+- **URL:** `http://localhost:5173/app/tpv`
 - **Localização:** Caixa/balcão
 - **Operador:** Gerente ou garçom autorizado
 
 ### KDS (Kitchen Display)
 - **Dispositivo:** Tablet ou TV
-- **URL:** `http://localhost:5175/app/kds/{restaurantId}`
+- **URL:** `http://localhost:5173/app/kds/{restaurantId}`
 - **Localização:** Cozinha
 - **Operador:** Chef/cozinha
 

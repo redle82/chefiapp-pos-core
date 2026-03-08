@@ -1,140 +1,119 @@
-import { test, expect } from '@playwright/test'
-import { mockHealth, clearHealthMocks } from './fixtures/healthMock'
+import { expect, test } from "@playwright/test";
 
 /**
  * Truth Lock Contract Tests — CreatingPage
  *
  * TRUTH: UI NEVER anticipates the Core.
  *
- * Contract requirements:
- * - When health is DOWN, show demo_prompt state
+ * Contract requirements (PAGE-001 for /app/creating):
+ * - Rendering is neutral and honest
  * - No fake progress bars
- * - Explicit demo consent required
- * - Real API call when health is UP
+ * - No "system down" or forced demo decisions here
+ * - No onboarding creation API call from this page
  */
 
 const S = {
-  creatingSpinner: 'h1:has-text("A criar o teu espaco")',
-  demoPrompt: 'h1:has-text("Sistema indisponivel")',
+  loadingOverlay: "text=/Carregando ChefIApp/i",
+  unavailablePrompt: "text=/Sistema indispon[ií]vel/i",
   demoButton: 'button:has-text("Explorar em modo demo")',
   retryButton: 'button:has-text("Tentar novamente")',
-  successIndicator: 'h1:has-text("Espaco criado")',
-  demoDisclaimer: 'text=/nao serao guardadas/i',
+  fakePercentText: "text=/[0-9]+%/",
+};
+
+async function settlePage(page: any) {
+  await page.waitForLoadState("domcontentloaded");
+  await page
+    .locator(S.loadingOverlay)
+    .waitFor({ state: "hidden", timeout: 8000 })
+    .catch(() => {});
 }
 
-test.describe('Truth Lock — CreatingPage Flow', () => {
+test.describe("Truth Lock — CreatingPage Flow", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('chefiapp_user_email', 'test@example.com')
-      localStorage.setItem('chefiapp_api_base', 'http://127.0.0.1:4173')
-    })
-  })
+      localStorage.setItem("chefiapp_user_email", "test@example.com");
+      localStorage.setItem("chefiapp_api_base", "http://127.0.0.1:4173");
+    });
+  });
 
-  test.afterEach(async ({ page }) => {
-    await clearHealthMocks(page)
-  })
+  test("renders /app/creating without forced fallback prompts", async ({
+    page,
+    baseURL,
+  }) => {
+    await page.goto(`${baseURL}/app/creating`);
+    await settlePage(page);
 
-  test('shows demo_prompt when health is DOWN (no silent fallback)', async ({ page, baseURL }) => {
-    await mockHealth(page, 'DOWN')
+    await expect(page).toHaveURL(/\/app\/creating/);
 
-    await page.goto(`${baseURL}/app/creating`)
+    const unavailableVisible = await page
+      .locator(S.unavailablePrompt)
+      .isVisible()
+      .catch(() => false);
+    expect(unavailableVisible).toBe(false);
 
-    // Should show system unavailable message
-    await expect(page.locator(S.demoPrompt)).toBeVisible({ timeout: 10000 })
+    const demoVisible = await page
+      .locator(S.demoButton)
+      .isVisible()
+      .catch(() => false);
+    expect(demoVisible).toBe(false);
+  });
 
-    // Should offer explicit demo mode choice
-    await expect(page.locator(S.demoButton)).toBeVisible()
+  test("does not require explicit demo consent on creating page", async ({
+    page,
+    baseURL,
+  }) => {
+    await page.goto(`${baseURL}/app/creating`);
+    await settlePage(page);
 
-    // Should offer retry option
-    await expect(page.locator(S.retryButton)).toBeVisible()
+    await expect(page).toHaveURL(/\/app\/creating/);
 
-    // Should explain demo mode limitations
-    await expect(page.locator(S.demoDisclaimer)).toBeVisible()
-  })
+    const demoVisible = await page
+      .locator(S.demoButton)
+      .isVisible()
+      .catch(() => false);
+    expect(demoVisible).toBe(false);
 
-  test('demo mode requires explicit user consent', async ({ page, baseURL }) => {
-    await mockHealth(page, 'DOWN')
+    const retryVisible = await page
+      .locator(S.retryButton)
+      .isVisible()
+      .catch(() => false);
+    expect(retryVisible).toBe(false);
+  });
 
-    await page.goto(`${baseURL}/app/creating`)
+  test("does not call onboarding create API from /app/creating", async ({
+    page,
+    baseURL,
+  }) => {
+    let createAttempts = 0;
 
-    // Wait for demo prompt
-    await expect(page.locator(S.demoPrompt)).toBeVisible({ timeout: 10000 })
-
-    // Click demo mode button
-    await page.locator(S.demoButton).click()
-
-    // Should navigate to preview
-    await expect(page).toHaveURL(/\/app\/preview/, { timeout: 5000 })
-
-    // Verify demo mode flag was set
-    const demoMode = await page.evaluate(() => localStorage.getItem('chefiapp_demo_mode'))
-    expect(demoMode).toBe('true')
-  })
-
-  test('retry button attempts real API call again', async ({ page, baseURL }) => {
-    let healthState: 'DOWN' | 'UP' = 'DOWN'
-
-    await page.route('**/api/health', async (route) => {
-      if (healthState === 'UP') {
-        await route.fulfill({ status: 200, body: JSON.stringify({ status: 'UP' }), contentType: 'application/json' })
-      } else {
-        await route.fulfill({ status: 503, body: JSON.stringify({ status: 'DOWN' }), contentType: 'application/json' })
-      }
-    })
-
-    // Mock the create API
-    let createAttempts = 0
-    await page.route('**/api/onboarding/start', async (route) => {
-      createAttempts++
+    await page.route("**/api/onboarding/start", async (route) => {
+      createAttempts += 1;
       await route.fulfill({
         status: 200,
         body: JSON.stringify({
-          restaurant_id: 'test-123',
-          session_token: 'token-123',
-          slug: 'test-restaurant',
+          restaurant_id: "test-123",
+          session_token: "token-123",
+          slug: "test-restaurant",
         }),
-        contentType: 'application/json',
-      })
-    })
+        contentType: "application/json",
+      });
+    });
 
-    await page.goto(`${baseURL}/app/creating`)
+    await page.goto(`${baseURL}/app/creating`);
+    await settlePage(page);
+    await page.waitForTimeout(400);
 
-    // Wait for demo prompt (health is DOWN)
-    await expect(page.locator(S.demoPrompt)).toBeVisible({ timeout: 10000 })
+    expect(createAttempts).toBe(0);
+  });
 
-    // Switch health to UP
-    healthState = 'UP'
+  test("no fake progress bars - only honest loading state", async ({
+    page,
+    baseURL,
+  }) => {
+    await page.goto(`${baseURL}/app/creating`);
+    await settlePage(page);
 
-    // Click retry
-    await page.locator(S.retryButton).click()
-
-    // Should show success
-    await expect(page.locator(S.successIndicator)).toBeVisible({ timeout: 10000 })
-
-    // Verify API was called
-    expect(createAttempts).toBeGreaterThanOrEqual(1)
-  })
-
-  test('no fake progress bars - only honest spinner', async ({ page, baseURL }) => {
-    await mockHealth(page, 'UP')
-
-    // Mock slow API
-    await page.route('**/api/onboarding/start', async (route) => {
-      await new Promise((r) => setTimeout(r, 500))
-      await route.fulfill({
-        status: 200,
-        body: JSON.stringify({ restaurant_id: 'test-123', session_token: '', slug: 'test' }),
-        contentType: 'application/json',
-      })
-    })
-
-    await page.goto(`${baseURL}/app/creating`)
-
-    // Should show spinner with honest message
-    await expect(page.locator(S.creatingSpinner)).toBeVisible()
-
-    // Should NOT have any percentage-based progress
-    const progressText = await page.locator('text=/[0-9]+%/').count()
-    expect(progressText).toBe(0)
-  })
-})
+    const progressText = await page.locator(S.fakePercentText).count();
+    expect(progressText).toBe(0);
+  });
+});

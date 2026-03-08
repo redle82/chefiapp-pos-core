@@ -67,3 +67,7 @@ Depois de reunir os requisitos da AT:
 - Documentar diferenças encontradas (gap analysis) neste ficheiro ou num anexo.
 - Ajustar `atQrUrl.ts` ou `saft/` conforme feedback da AT.
 - Manter referência no Help do produto ao formato usado (QR AT, SAF-T) para transparência com o utilizador e auditoria.
+
+## 6. Checklist operacional (Fase 4)
+
+Ver [FISCAL_COMPLIANCE_PT_CHECKLIST.md](../compliance/FISCAL_COMPLIANCE_PT_CHECKLIST.md) para checklist de hash, imutabilidade, numeração sequencial, trilha de auditoria e export SAF-T testado.
