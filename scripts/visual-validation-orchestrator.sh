@@ -112,9 +112,9 @@ echo ""
 
 echo -e "${BLUE}3️⃣ URLs de Acesso:${NC}"
 echo ""
-echo -e "${GREEN}📊 Dashboard:${NC}     http://localhost:5175/app/dashboard"
-echo -e "${GREEN}💰 TPV:${NC}          http://localhost:5175/app/tpv"
-echo -e "${GREEN}🍳 KDS:${NC}          http://localhost:5175/app/kds/${RESTAURANT_ID}"
+echo -e "${GREEN}📊 Dashboard:${NC}     http://localhost:5173/app/dashboard"
+echo -e "${GREEN}💰 TPV:${NC}          http://localhost:5173/app/tpv"
+echo -e "${GREEN}🍳 KDS:${NC}          http://localhost:5173/app/kds/${RESTAURANT_ID}"
 echo ""
 
 # =============================================================================
@@ -125,8 +125,8 @@ echo -e "${YELLOW}4️⃣ Iniciando Merchant Portal (Web)...${NC}"
 cd "$PROJECT_ROOT/merchant-portal"
 
 # Check if already running
-if lsof -Pi :5175 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-    echo -e "${YELLOW}⚠️  Merchant Portal já está rodando na porta 5175${NC}"
+if lsof -Pi :5173 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    echo -e "${YELLOW}⚠️  Merchant Portal já está rodando na porta 5173${NC}"
 else
     echo -e "${GREEN}   Iniciando servidor de desenvolvimento...${NC}"
     npm run dev > /tmp/merchant-portal.log 2>&1 &
@@ -136,7 +136,7 @@ else
     # Wait for server to start
     echo -e "${YELLOW}   Aguardando servidor iniciar...${NC}"
     for i in {1..30}; do
-        if curl -s http://localhost:5175 > /dev/null 2>&1; then
+        if curl -s http://localhost:5173 > /dev/null 2>&1; then
             echo -e "${GREEN}✅ Merchant Portal rodando (PID: $MERCHANT_PORTAL_PID)${NC}"
             break
         fi
@@ -186,9 +186,9 @@ echo -e "${BLUE}╔════════════════════�
 echo -e "${BLUE}║  ✅ Sistema Pronto para Visualização                      ║${NC}"
 echo -e "${BLUE}╚═══════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "${GREEN}📊 Dashboard:${NC}     http://localhost:5175/app/dashboard"
-echo -e "${GREEN}💰 TPV:${NC}          http://localhost:5175/app/tpv"
-echo -e "${GREEN}🍳 KDS:${NC}          http://localhost:5175/app/kds/${RESTAURANT_ID}"
+echo -e "${GREEN}📊 Dashboard:${NC}     http://localhost:5173/app/dashboard"
+echo -e "${GREEN}💰 TPV:${NC}          http://localhost:5173/app/tpv"
+echo -e "${GREEN}🍳 KDS:${NC}          http://localhost:5173/app/kds/${RESTAURANT_ID}"
 echo ""
 echo -e "${YELLOW}📝 Restaurant ID: ${RESTAURANT_ID}${NC}"
 echo ""

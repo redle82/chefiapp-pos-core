@@ -30,7 +30,7 @@ echo "────────────────────────�
 # Verificar se CoreWebContract.ts existe e valida os 4 cores
 if [ -f "merchant-portal/src/core/CoreWebContract.ts" ]; then
     echo "✅ CoreWebContract.ts encontrado"
-    
+
     # Verificar se validateFourCores existe
     if grep -q "validateFourCores" merchant-portal/src/core/CoreWebContract.ts; then
         echo "✅ Função validateFourCores encontrada"
@@ -38,7 +38,7 @@ if [ -f "merchant-portal/src/core/CoreWebContract.ts" ]; then
         echo "❌ Função validateFourCores NÃO encontrada"
         ERRORS=$((ERRORS + 1))
     fi
-    
+
     # Verificar se detectFifthCoreAttempt existe
     if grep -q "detectFifthCoreAttempt" merchant-portal/src/core/CoreWebContract.ts; then
         echo "✅ Função detectFifthCoreAttempt encontrada"
@@ -54,15 +54,15 @@ fi
 # Verificar se ContractSystem.ts existe e tem os 12 contratos
 if [ -f "merchant-portal/src/core/ContractSystem.ts" ]; then
     echo "✅ ContractSystem.ts encontrado"
-    
+
     # Contar contratos
     ONT_COUNT=$(grep -c "CONTRACT_ENTITY_EXISTS\|CONTRACT_MENU_EXISTS\|CONTRACT_PUBLISHED_EXISTS" merchant-portal/src/core/ContractSystem.ts || echo "0")
     CAP_COUNT=$(grep -c "CONTRACT_CAN_PREVIEW\|CONTRACT_CAN_PUBLISH\|CONTRACT_CAN_RECEIVE_ORDERS\|CONTRACT_CAN_USE_TPV" merchant-portal/src/core/ContractSystem.ts || echo "0")
     PSY_COUNT=$(grep -c "CONTRACT_GHOST_INTEGRITY\|CONTRACT_LIVE_INTEGRITY\|CONTRACT_URL_PROMISE" merchant-portal/src/core/ContractSystem.ts || echo "0")
     PAGE_COUNT=$(grep -c "CONTRACT_PAGE_CONTRACT\|CONTRACT_NAVIGATION_CONTRACT" merchant-portal/src/core/ContractSystem.ts || echo "0")
-    
+
     TOTAL=$((ONT_COUNT + CAP_COUNT + PSY_COUNT + PAGE_COUNT))
-    
+
     if [ "$TOTAL" -ge 10 ]; then
         echo "✅ Contratos encontrados: $TOTAL (esperado: 12)"
     else
@@ -85,7 +85,7 @@ echo "────────────────────────�
 
 if [ -f "merchant-portal/src/core/flow/FlowGate.tsx" ]; then
     echo "✅ FlowGate.tsx encontrado"
-    
+
     # Verificar se FlowGate usa apenas fontes de verdade corretas
     if grep -q "auth.user\|restaurant_members\|onboarding_completed_at" merchant-portal/src/core/flow/FlowGate.tsx; then
         echo "✅ FlowGate usa fontes de verdade corretas"
@@ -93,7 +93,7 @@ if [ -f "merchant-portal/src/core/flow/FlowGate.tsx" ]; then
         echo "⚠️  FlowGate pode estar usando fontes incorretas"
         WARNINGS=$((WARNINGS + 1))
     fi
-    
+
     # Verificar se FlowGate não usa dados opcionais (ignorar comentários)
     if grep -v "^[[:space:]]*//\|^[[:space:]]*\*" merchant-portal/src/core/flow/FlowGate.tsx | grep -q "profiles\|system_config"; then
         echo "⚠️  FlowGate pode estar usando dados opcionais (profiles/system_config)"
@@ -244,16 +244,28 @@ else
     WARNINGS=$((WARNINGS + 1))
 fi
 
-# Verificar se External ID retry está implementado (apenas se server/ existir)
-if [ -d "server" ]; then
-    if grep -r "external_id_status\|PENDING_EXTERNAL_ID" server > /dev/null 2>&1; then
-        echo "✅ External ID retry implementado"
-    else
-        echo "⚠️  External ID retry NÃO encontrado"
-        WARNINGS=$((WARNINGS + 1))
-    fi
+# Verificar se External ID retry está implementado
+# Nota: a implementação canónica está em migrações SQL (supabase/migrations),
+# podendo também existir no backend (server/) e em scripts de validação.
+EXTERNAL_ID_RETRY_FOUND=0
+
+if [ -d "server" ] && grep -r "external_id_status\|PENDING_EXTERNAL_ID" server > /dev/null 2>&1; then
+    EXTERNAL_ID_RETRY_FOUND=1
+fi
+
+if [ "$EXTERNAL_ID_RETRY_FOUND" -eq 0 ] && [ -d "supabase/migrations" ] && grep -r "external_id_status\|PENDING_EXTERNAL_ID\|v_fiscal_pending_external_ids" supabase/migrations > /dev/null 2>&1; then
+    EXTERNAL_ID_RETRY_FOUND=1
+fi
+
+if [ "$EXTERNAL_ID_RETRY_FOUND" -eq 0 ] && [ -d "scripts" ] && grep -r "external_id_status\|PENDING_EXTERNAL_ID\|v_fiscal_pending_external_ids" scripts/test-external-id*.{js,sh} > /dev/null 2>&1; then
+    EXTERNAL_ID_RETRY_FOUND=1
+fi
+
+if [ "$EXTERNAL_ID_RETRY_FOUND" -eq 1 ]; then
+    echo "✅ External ID retry implementado"
 else
-    echo "✅ External ID retry (server/ ausente — skip)"
+    echo "⚠️  External ID retry NÃO encontrado"
+    WARNINGS=$((WARNINGS + 1))
 fi
 
 echo ""

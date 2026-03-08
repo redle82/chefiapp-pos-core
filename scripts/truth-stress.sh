@@ -19,6 +19,7 @@ REPEAT="${REPEAT:-10}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  TRUTH STRESS — Playwright Truth Suite"
 echo "  workers=${WORKERS} repeat-each=${REPEAT} retries=0"
+echo "  excludes=Chaos (run ./scripts/truth-chaos.sh for chaos mode)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 npx playwright test tests/playwright/truth \
@@ -26,6 +27,7 @@ npx playwright test tests/playwright/truth \
   --workers="${WORKERS}" \
   --repeat-each="${REPEAT}" \
   --retries=0 \
+  --grep-invert="Chaos" \
   "$@"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

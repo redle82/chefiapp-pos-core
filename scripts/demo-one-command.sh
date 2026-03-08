@@ -64,8 +64,8 @@ if ! curl -s http://localhost:4320/health > /dev/null 2>&1; then
 fi
 
 # Verificar se frontend está rodando
-if ! curl -s http://localhost:5175 > /dev/null 2>&1; then
-    echo "⚠️  Frontend não está rodando na porta 5175"
+if ! curl -s http://localhost:5173 > /dev/null 2>&1; then
+    echo "⚠️  Frontend não está rodando na porta 5173"
     echo "   Por favor, inicie o frontend em outro terminal:"
     echo "   cd merchant-portal && npm run dev"
     echo ""

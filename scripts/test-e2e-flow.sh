@@ -29,8 +29,8 @@ echo ""
 
 # Verificar se frontend está rodando
 echo -e "${CYAN}📋 Passo 2: Verificar frontend...${NC}"
-if ! curl -s http://localhost:5175 > /dev/null 2>&1; then
-    echo -e "${YELLOW}⚠️  Frontend não está rodando em localhost:5175${NC}"
+if ! curl -s http://localhost:5173 > /dev/null 2>&1; then
+    echo -e "${YELLOW}⚠️  Frontend não está rodando em localhost:5173${NC}"
     echo -e "${YELLOW}   Inicie o frontend: cd merchant-portal && npm run dev${NC}"
     echo -e "${YELLOW}   Continuando com testes de API apenas...${NC}"
     FRONTEND_UP=false
@@ -79,7 +79,7 @@ echo -e "${CYAN}╚════════════════════�
 echo ""
 echo -e "${YELLOW}📋 PRÓXIMOS PASSOS (MANUAIS):${NC}"
 echo ""
-echo "1. Abrir navegador em http://localhost:5175"
+echo "1. Abrir navegador em http://localhost:5173"
 echo "2. Testar fluxo completo:"
 echo "   - Login → Dashboard (verificar se não explode)"
 echo "   - Abrir TPV → Criar pedido"

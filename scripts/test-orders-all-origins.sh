@@ -241,7 +241,7 @@ echo "════════════════════════�
 echo "  📊 Próximos Passos"
 echo "═══════════════════════════════════════════════════════════"
 echo ""
-echo -e "  ${BLUE}1. Abrir KDS:${NC} http://localhost:5175/app/kds"
+echo -e "  ${BLUE}1. Abrir KDS:${NC} http://localhost:5173/app/kds"
 echo -e "  ${BLUE}2. Verificar que pedidos aparecem com origens corretas:${NC}"
 echo -e "     - CAIXA 💰 (verde)"
 echo -e "     - WEB 🌐 (laranja)"

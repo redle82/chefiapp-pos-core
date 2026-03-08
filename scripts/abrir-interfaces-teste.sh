@@ -6,7 +6,7 @@
 
 set -e
 
-BASE_URL="http://localhost:5175"
+BASE_URL="http://localhost:5173"
 
 echo "🚀 Abrindo todas as interfaces para teste massivo..."
 echo ""

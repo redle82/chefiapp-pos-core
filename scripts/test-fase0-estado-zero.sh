@@ -42,10 +42,10 @@ echo "✅ PostgREST: OK (código: $POSTGREST_OK - serviço rodando)"
 # 3. Verificar frontend (se estiver rodando)
 echo ""
 echo "3️⃣ Verificando frontend..."
-FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5175/ 2>/dev/null || echo "000")
+FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/ 2>/dev/null || echo "000")
 
 if [ "$FRONTEND_OK" = "000" ]; then
-    echo "⚠️  AVISO: Frontend não está rodando (porta 5175)"
+    echo "⚠️  AVISO: Frontend não está rodando (porta 5173)"
     echo "   Execute: cd merchant-portal && npm run dev"
     echo "   Continuando com testes do Core..."
 elif [ "$FRONTEND_OK" != "200" ]; then
@@ -54,7 +54,7 @@ else
     echo "✅ Frontend: OK"
     
     # Verificar conteúdo da página
-    PAGE_CONTENT=$(curl -s http://localhost:5175/ 2>/dev/null || echo "")
+    PAGE_CONTENT=$(curl -s http://localhost:5173/ 2>/dev/null || echo "")
     if echo "$PAGE_CONTENT" | grep -q "UI RESET / CORE ONLY"; then
         echo "✅ Página mostra tela de reset (correto)"
     elif echo "$PAGE_CONTENT" | grep -q "CoreResetPage"; then
@@ -69,8 +69,8 @@ echo ""
 echo "4️⃣ Verificando ausência de redirecionamentos..."
 # Se frontend estiver rodando, verificar que não redireciona
 if [ "$FRONTEND_OK" = "200" ]; then
-    REDIRECT=$(curl -s -o /dev/null -w "%{redirect_url}" -L http://localhost:5175/ 2>/dev/null || echo "")
-    if [ -n "$REDIRECT" ] && [ "$REDIRECT" != "http://localhost:5175/" ]; then
+    REDIRECT=$(curl -s -o /dev/null -w "%{redirect_url}" -L http://localhost:5173/ 2>/dev/null || echo "")
+    if [ -n "$REDIRECT" ] && [ "$REDIRECT" != "http://localhost:5173/" ]; then
         echo "❌ ERRO: Frontend está redirecionando para: $REDIRECT"
         exit 1
     fi

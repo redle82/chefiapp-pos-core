@@ -7,7 +7,7 @@
 # 
 # PRÉ-REQUISITOS:
 #   - Docker Core rodando (PostgREST na porta 3001, Realtime na 4000)
-#   - Frontend rodando (Vite na porta 5175)
+#   - Frontend rodando (Vite na porta 5173)
 # 
 # USO:
 #   ./scripts/open-qr-mesa.sh [slug] [mesa]
@@ -19,7 +19,7 @@ set -e
 
 SLUG="${1:-test-restaurant}"
 MESA="${2:-1}"
-PORT="${VITE_PORT:-5175}"
+PORT="${VITE_PORT:-5173}"
 BASE_URL="http://localhost:${PORT}"
 
 echo "📱 Abrindo Página de Mesa (QR Code) — Docker Core..."
@@ -99,6 +99,6 @@ echo "✅ Página aberta!"
 echo ""
 echo "💡 Lembre-se:"
 echo "   - Docker Core deve estar rodando (PostgREST:3001, Realtime:4000)"
-echo "   - Frontend deve estar rodando (Vite:5175)"
+echo "   - Frontend deve estar rodando (Vite:5173)"
 echo "   - Tudo roda dentro do Docker, sem serviços externos"
 echo "   - QR code aponta para: /public/${SLUG}/mesa/${MESA}"

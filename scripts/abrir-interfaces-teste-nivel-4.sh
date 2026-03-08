@@ -3,7 +3,7 @@
 
 set -e
 
-PORT="${PORT:-5175}"
+PORT="${PORT:-5173}"
 BASE_URL="http://localhost:${PORT}"
 
 echo "🌐 Abrindo interfaces do ChefIApp..."

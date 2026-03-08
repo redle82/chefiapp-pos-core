@@ -3,12 +3,12 @@
 # Supreme Stations — Abre estações visuais para observação humana
 # =============================================================================
 # Command Center, TPV, KDS, Web Pública (e opcionalmente AppStaff via Expo).
-# Porta base: PORT=5175 (ou VITE_PORT).
+# Porta base: PORT=5173 (ou VITE_PORT).
 # =============================================================================
 
 set -e
 
-PORT="${PORT:-5175}"
+PORT="${PORT:-5173}"
 BASE_URL="http://localhost:${PORT}"
 
 echo "Supreme Stations — opening UIs at ${BASE_URL}"

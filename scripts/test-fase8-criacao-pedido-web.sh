@@ -147,13 +147,13 @@ echo "✅ Quantidade do item: $ITEM_QUANTITY"
 # 7. Verificar frontend
 echo ""
 echo "7️⃣ Verificando frontend..."
-FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5175/ 2>/dev/null || echo "000")
+FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/ 2>/dev/null || echo "000")
 
 if [ "$FRONTEND_OK" = "200" ]; then
     echo "✅ Frontend rodando"
     echo ""
     echo "📋 INSTRUÇÕES PARA TESTE MANUAL:"
-    echo "   1. Abra: http://localhost:5175/public/$RESTAURANT_SLUG"
+    echo "   1. Abra: http://localhost:5173/public/$RESTAURANT_SLUG"
     echo "   2. Adicione produtos ao carrinho (botão '+ Adicionar')"
     echo "   3. Verifique que:"
     echo "      - Carrinho aparece no topo direito"
@@ -163,10 +163,10 @@ if [ "$FRONTEND_OK" = "200" ]; then
     echo "   5. Verifique que:"
     echo "      - Mensagem de sucesso aparece"
     echo "      - Carrinho é limpo"
-    echo "      - Pedido aparece no KDS (http://localhost:5175/kds-minimal)"
+    echo "      - Pedido aparece no KDS (http://localhost:5173/kds-minimal)"
     echo "      - Origem do pedido é 'WEB_PUBLIC' no KDS"
 else
-    echo "⚠️  AVISO: Frontend não está rodando (porta 5175)"
+    echo "⚠️  AVISO: Frontend não está rodando (porta 5173)"
 fi
 
 # 8. Resumo
@@ -184,7 +184,7 @@ echo "  ✅ Itens do pedido criados corretamente"
 if [ "$FRONTEND_OK" = "200" ]; then
     echo ""
     echo "  📋 TESTE MANUAL NECESSÁRIO:"
-    echo "     Abra http://localhost:5175/public/$RESTAURANT_SLUG e teste criação de pedido"
+    echo "     Abra http://localhost:5173/public/$RESTAURANT_SLUG e teste criação de pedido"
 fi
 echo ""
 echo "Pronto para FASE 9 — QR Mesa"

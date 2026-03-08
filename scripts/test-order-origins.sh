@@ -146,7 +146,7 @@ ORDER BY created_at DESC;
 echo ""
 echo "✅ Teste concluído!"
 echo ""
-echo "💡 Agora abra o KDS em http://localhost:5175/app/kds"
+echo "💡 Agora abra o KDS em http://localhost:5173/app/kds"
 echo "   Você deve ver dois pedidos com badges diferentes:"
 echo "   - 📱 APPSTAFF (roxo)"
 echo "   - 💰 CAIXA (verde)"

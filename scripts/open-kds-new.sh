@@ -25,10 +25,10 @@ echo ""
 # ============================================================================
 echo "📋 Verificando processos antigos..."
 
-# Matar processos na porta 5175 (Vite dev server)
-if lsof -ti:5175 > /dev/null 2>&1; then
-    echo "   ⚠️  Encontrado processo na porta 5175. Encerrando..."
-    lsof -ti:5175 | xargs kill -9 2>/dev/null || true
+# Matar processos na porta 5173 (Vite dev server)
+if lsof -ti:5173 > /dev/null 2>&1; then
+    echo "   ⚠️  Encontrado processo na porta 5173. Encerrando..."
+    lsof -ti:5173 | xargs kill -9 2>/dev/null || true
     sleep 1
     echo "   ✅ Processos antigos encerrados"
 else
@@ -109,7 +109,7 @@ VITE_PID=$!
 # Aguardar servidor iniciar
 echo "   ⏳ Aguardando servidor iniciar..."
 for i in {1..30}; do
-    if curl -s http://localhost:5175 > /dev/null 2>&1; then
+    if curl -s http://localhost:5173 > /dev/null 2>&1; then
         echo "   ✅ Servidor iniciado (PID: $VITE_PID)"
         break
     fi
@@ -129,7 +129,7 @@ echo ""
 echo "🌐 Abrindo KDS no navegador..."
 
 # URL do novo KDS standalone
-KDS_URL="http://localhost:5175/kds/${RESTAURANT_ID}?demo=true&kdsVersion=new&noLegacy=true"
+KDS_URL="http://localhost:5173/kds/${RESTAURANT_ID}?demo=true&kdsVersion=new&noLegacy=true"
 
 echo "   🔗 URL: ${KDS_URL}"
 echo ""

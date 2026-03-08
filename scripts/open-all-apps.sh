@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Script para abrir todos os apps do ChefIApp no navegador
-# Porta padrão: 5175 (merchant-portal)
+# Porta padrão: 5173 (merchant-portal)
 
-PORT=5175
+PORT=5173
 BASE_URL="http://localhost:${PORT}"
 
 # Apps para abrir

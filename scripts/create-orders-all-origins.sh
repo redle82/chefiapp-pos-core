@@ -152,7 +152,7 @@ LIMIT 10;
 echo ""
 echo "✅ Teste concluído!"
 echo ""
-echo "💡 Agora abra o KDS em http://localhost:5175/kds-minimal"
+echo "💡 Agora abra o KDS em http://localhost:5173/kds-minimal"
 echo "   Você deve ver pedidos com badges de todas as origens:"
 echo "   - 💰 CAIXA/TPV (verde)"
 echo "   - 🌐 WEB (laranja)"

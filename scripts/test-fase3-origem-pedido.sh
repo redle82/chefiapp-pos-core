@@ -193,20 +193,20 @@ fi
 # 7. Verificar frontend
 echo ""
 echo "7️⃣ Verificando frontend..."
-FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5175/ 2>/dev/null || echo "000")
+FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/ 2>/dev/null || echo "000")
 
 if [ "$FRONTEND_OK" = "200" ]; then
     echo "✅ Frontend rodando"
     echo ""
     echo "📋 INSTRUÇÕES PARA TESTE MANUAL:"
-    echo "   1. Abra: http://localhost:5175/kds-minimal"
+    echo "   1. Abra: http://localhost:5173/kds-minimal"
     echo "   2. Verifique que aparecem 3 pedidos:"
     echo "      - Pedido CAIXA (badge verde 💰)"
     echo "      - Pedido WEB (badge laranja 🌐)"
     echo "      - Pedido QR_MESA (badge rosa 📋)"
     echo "   3. Verifique que cada badge mostra a origem correta"
 else
-    echo "⚠️  AVISO: Frontend não está rodando (porta 5175)"
+    echo "⚠️  AVISO: Frontend não está rodando (porta 5173)"
 fi
 
 # 8. Resumo
@@ -224,7 +224,7 @@ echo "  ✅ QR_MESA: $QR_ORIGIN"
 if [ "$FRONTEND_OK" = "200" ]; then
     echo ""
     echo "  📋 TESTE MANUAL NECESSÁRIO:"
-    echo "     Abra http://localhost:5175/kds-minimal e verifique badges de origem"
+    echo "     Abra http://localhost:5173/kds-minimal e verifique badges de origem"
 fi
 echo ""
 echo "Pronto para FASE 4 — Timer do Pedido"

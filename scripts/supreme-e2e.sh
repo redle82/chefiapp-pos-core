@@ -87,7 +87,7 @@ echo ""
 echo "[4/7] E2E Playwright..."
 PORT_PID=""
 if [ -f "$PROJECT_ROOT/tests/e2e/playwright.config.ts" ]; then
-  export E2E_BASE_URL="${E2E_BASE_URL:-http://localhost:5175}"
+  export E2E_BASE_URL="${E2E_BASE_URL:-http://localhost:5173}"
   if curl -sS --connect-timeout 2 "$E2E_BASE_URL" > /dev/null 2>&1; then
     echo "  Portal already at $E2E_BASE_URL"
   else

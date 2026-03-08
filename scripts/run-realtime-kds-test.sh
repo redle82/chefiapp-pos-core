@@ -95,7 +95,7 @@ echo ""
 echo -e "${YELLOW}📌 STEP 4: Running Realtime + KDS Test${NC}"
 echo ""
 echo -e "${BLUE}💡 Tip: Open KDS in browser to observe visually:${NC}"
-echo -e "   ${GREEN}http://localhost:5175/app/kds?demo=true${NC}"
+echo -e "   ${GREEN}http://localhost:5173/app/kds?demo=true${NC}"
 echo ""
 echo -e "${YELLOW}Press Enter to start test...${NC}"
 read -r
@@ -113,7 +113,7 @@ else
     echo "Check:"
     echo "  - Realtime logs: docker compose -f docker-core/docker-compose.core.yml logs realtime"
     echo "  - Test results: test-results/realtime-kds-test-*.json"
-    echo "  - KDS visual: http://localhost:5175/app/kds?demo=true"
+    echo "  - KDS visual: http://localhost:5173/app/kds?demo=true"
 fi
 echo ""
 

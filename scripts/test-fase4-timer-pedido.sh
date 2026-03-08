@@ -122,20 +122,20 @@ fi
 # 8. Verificar frontend
 echo ""
 echo "8️⃣ Verificando frontend..."
-FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5175/ 2>/dev/null || echo "000")
+FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/ 2>/dev/null || echo "000")
 
 if [ "$FRONTEND_OK" = "200" ]; then
     echo "✅ Frontend rodando"
     echo ""
     echo "📋 INSTRUÇÕES PARA TESTE MANUAL:"
-    echo "   1. Abra: http://localhost:5175/kds-minimal"
+    echo "   1. Abra: http://localhost:5173/kds-minimal"
     echo "   2. Verifique que o pedido mostra: \"X min\" ao lado do número"
     echo "   3. Aguarde 1 minuto e recarregue a página"
     echo "   4. Verifique que o timer atualizou para \"X+1 min\""
     echo ""
     echo "   ⏱️  Timer esperado: ~$EXPECTED_MINUTES min (pode variar ±1 min)"
 else
-    echo "⚠️  AVISO: Frontend não está rodando (porta 5175)"
+    echo "⚠️  AVISO: Frontend não está rodando (porta 5173)"
 fi
 
 # 9. Resumo
@@ -152,7 +152,7 @@ echo "  ✅ Timer esperado: ~$EXPECTED_MINUTES min"
 if [ "$FRONTEND_OK" = "200" ]; then
     echo ""
     echo "  📋 TESTE MANUAL NECESSÁRIO:"
-    echo "     Abra http://localhost:5175/kds-minimal e verifique timer"
+    echo "     Abra http://localhost:5173/kds-minimal e verifique timer"
     echo "     Aguarde 1 minuto e verifique atualização"
 fi
 echo ""

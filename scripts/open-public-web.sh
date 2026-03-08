@@ -7,7 +7,7 @@
 # 
 # PRÉ-REQUISITOS:
 #   - Docker Core rodando (PostgREST na porta 3001, Realtime na 4000)
-#   - Frontend rodando (Vite na porta 5175)
+#   - Frontend rodando (Vite na porta 5173)
 # 
 # USO:
 #   ./scripts/open-public-web.sh [slug]
@@ -17,7 +17,7 @@
 set -e
 
 SLUG="${1:-test-restaurant}"
-PORT="${VITE_PORT:-5175}"
+PORT="${VITE_PORT:-5173}"
 BASE_URL="http://localhost:${PORT}"
 
 echo "🌐 Abrindo Página Web Pública (Docker Core)..."
@@ -96,5 +96,5 @@ echo "✅ Página aberta!"
 echo ""
 echo "💡 Lembre-se:"
 echo "   - Docker Core deve estar rodando (PostgREST:3001, Realtime:4000)"
-echo "   - Frontend deve estar rodando (Vite:5175)"
+echo "   - Frontend deve estar rodando (Vite:5173)"
 echo "   - Tudo roda dentro do Docker, sem serviços externos"

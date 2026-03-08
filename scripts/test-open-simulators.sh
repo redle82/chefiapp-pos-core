@@ -30,10 +30,10 @@ IOS_DEVICE_3="iPad Pro (12.9-inch) (6th generation)"
 ANDROID_EMULATOR_1="Pixel_7_API_34"
 ANDROID_EMULATOR_2="Pixel_6a_API_33"
 
-WEB_URL_TPV="http://localhost:5175/tpv"
-WEB_URL_KDS="http://localhost:5175/kds"
-WEB_URL_CUSTOMER="http://localhost:5175/order"
-WEB_URL_DASHBOARD="http://localhost:5175/admin"
+WEB_URL_TPV="http://localhost:5173/tpv"
+WEB_URL_KDS="http://localhost:5173/kds"
+WEB_URL_CUSTOMER="http://localhost:5173/order"
+WEB_URL_DASHBOARD="http://localhost:5173/admin"
 
 # -----------------------------------------------------------------------------
 # Helper Functions
@@ -120,8 +120,8 @@ open_web_tabs() {
     echo "🌐 Opening web tabs..."
 
     # Check if dev server is running
-    if ! curl -s http://localhost:5175 > /dev/null 2>&1; then
-        echo "   ⚠️  Dev server not running on localhost:5175"
+    if ! curl -s http://localhost:5173 > /dev/null 2>&1; then
+        echo "   ⚠️  Dev server not running on localhost:5173"
         echo "   Run: cd merchant-portal && npm run dev"
         return 1
     fi
