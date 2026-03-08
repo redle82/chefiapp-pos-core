@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
+import { Logger } from "../logger";
 
 export interface Customer {
   id: string;
@@ -61,7 +62,7 @@ export const LoyaltyProvider: React.FC<{ children: React.ReactNode }> = ({
       const isTableMissing =
         err && typeof err === "object" && (err as any).code === "42P01";
       if (!isTableMissing)
-        console.error("[LoyaltyContext] searchCustomerByPhone failed", err);
+        Logger.error("[LoyaltyContext] searchCustomerByPhone failed", err);
       return null;
     }
   };
@@ -89,7 +90,7 @@ export const LoyaltyProvider: React.FC<{ children: React.ReactNode }> = ({
       if (error || !data) {
         const isTableMissing = error?.code === "42P01";
         if (!isTableMissing)
-          console.error("[LoyaltyContext] createCustomer error", error);
+          Logger.error("[LoyaltyContext] createCustomer error", error);
         throw new Error(
           isTableMissing
             ? "Módulo de clientes indisponível (tabela gm_customers não existe no Core)."
@@ -114,7 +115,7 @@ export const LoyaltyProvider: React.FC<{ children: React.ReactNode }> = ({
         err instanceof Error &&
         /gm_customers|indisponível|Table unavailable/i.test(err.message);
       if (!isTableMissing)
-        console.error("[LoyaltyContext] createCustomer failed", err);
+        Logger.error("[LoyaltyContext] createCustomer failed", err);
       throw err;
     }
   };

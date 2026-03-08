@@ -1,5 +1,6 @@
 // Diagnostics + auth getSession (Core/supabase alias)
 import { getTableClient } from "../infra/coreRpc";
+import { Logger } from "../logger";
 import { getTabIsolated, setTabIsolated } from "../storage/TabIsolatedStorage";
 import type { DiagnosticEvent, DiagnosticReport } from "./types";
 
@@ -36,7 +37,7 @@ class DiagnosticEngineClass {
     title: string,
     metricType: DiagnosticEvent["metricType"],
     technicalDetails?: any,
-    userMessage?: string
+    userMessage?: string,
   ) {
     try {
       // 1. Rate Limit (Anti-Flood) - Max 1 event per code every 2 seconds
@@ -66,7 +67,7 @@ class DiagnosticEngineClass {
       }
     } catch (e) {
       // Failsafe: Logger should never crash the app
-      console.error("DiagnosticEngine Fault", e);
+      Logger.error("DiagnosticEngine Fault", e);
     }
   }
 
@@ -154,7 +155,7 @@ class DiagnosticEngineClass {
         : event.metricType === "warning"
         ? "color: orange"
         : "color: blue";
-    console.debug(`%c[GM] ${event.code}`, style, event.title);
+    Logger.debug(`[GM] ${event.code}: ${event.title}`);
   }
 }
 

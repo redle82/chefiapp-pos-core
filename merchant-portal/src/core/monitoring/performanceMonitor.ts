@@ -6,8 +6,9 @@
 
 import { BackendType, getBackendType } from "../infra/backendAdapter";
 import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
+import { Logger } from "../logger";
 import { isDevStableMode } from "../runtime/devStableMode";
-import { readTenantIdWithLegacyFallback } from "../tenant/TenantResolver";
+import { getTabIsolated } from "../storage/TabIsolatedStorage";
 // ANTI-SUPABASE §4: app_logs telemetry ONLY via Core. Skip flush when not Docker.
 
 export interface PerformanceMetric {
@@ -55,7 +56,9 @@ class PerformanceMonitor {
       vitalsObserver.observe({ entryTypes: ["measure", "navigation"] });
       this.observers.push(vitalsObserver);
     } catch (err) {
-      console.warn("[PerformanceMonitor] Failed to init observers:", err);
+      Logger.warn("[PerformanceMonitor] Failed to init observers", {
+        error: String(err),
+      });
     }
   }
 
@@ -91,7 +94,7 @@ class PerformanceMonitor {
 
     // Debug log locally
     if (import.meta.env.DEV) {
-      console.debug(`[Perf] ${safeName}: ${metric.value}${metric.unit}`);
+      Logger.debug(`[Perf] ${safeName}: ${metric.value}${metric.unit}`);
     }
 
     // Flush if buffer full
@@ -159,7 +162,7 @@ class PerformanceMonitor {
 
       // IMPORTANT: avoid 409 storms by using idempotency_key + upsert(ignoreDuplicates).
       // If the DB schema doesn't have idempotency_key yet, fail closed (no crash, no loop).
-      const restaurantId = readTenantIdWithLegacyFallback() || null;
+      const restaurantId = getTabIsolated("chefiapp_restaurant_id") || null;
       const minuteBucket = new Date().toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
       const idempotencyKey = `perf:${restaurantId || "none"}:${minuteBucket}`;
 
@@ -198,7 +201,7 @@ class PerformanceMonitor {
             this.flushInterval = null;
           }
           // Don't keep retrying every minute; require migration to re-enable.
-          console.warn(
+          Logger.warn(
             "[PerformanceMonitor] Remote flush disabled (app_logs schema mismatch). Apply migration to enable.",
           );
           return;
@@ -206,7 +209,7 @@ class PerformanceMonitor {
 
         // Other non-fatal errors: avoid noise
         if (status === 409) return;
-        console.warn("[PerformanceMonitor] Flush skipped (non-fatal):", msg);
+        Logger.warn(`[PerformanceMonitor] Flush skipped (non-fatal): ${msg}`);
       }
     } catch (err) {
       // Network/Supabase failures can happen (offline). Don't spam; just drop this batch.
@@ -223,15 +226,15 @@ class PerformanceMonitor {
           clearInterval(this.flushInterval);
           this.flushInterval = null;
         }
-        console.warn(
+        Logger.warn(
           "[PerformanceMonitor] Remote flush disabled (app_logs schema mismatch). Apply migration to enable.",
         );
         return;
       }
-      console.warn(
-        "[PerformanceMonitor] Failed to flush (non-fatal):",
-        msg || err,
-      );
+      Logger.warn("[PerformanceMonitor] Failed to flush (non-fatal)", {
+        msg,
+        error: String(err),
+      });
     }
   }
 

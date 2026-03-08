@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { Logger } from "../logger";
 import { usePulseOptional } from "../pulse";
 import { resolveContext } from "./ContextLogic";
 import type { AppContextState, DeviceContext, UserRole } from "./ContextTypes";
@@ -83,7 +84,7 @@ export function ContextEngineProvider({
     (targetRole: UserRole | null) => {
       // Security check: Only Owner (or maybe Manager) can switch views
       if (userRole !== "owner" && userRole !== "manager") {
-        console.warn(
+        Logger.warn(
           "[ContextEngine] Access Denied: Only Owner/Manager can switch views.",
         );
         return;

@@ -1,3 +1,5 @@
+import { Logger } from "../logger";
+
 export interface GoogleBusinessProfile {
   id: string;
   description: string;
@@ -43,11 +45,11 @@ const MOCK_PROFILE: GoogleBusinessProfile = {
 export const GoogleBusinessMock = {
   // Simulate searching and selecting a business
   connect: async (): Promise<GoogleBusinessProfile> => {
-    console.log(
+    Logger.debug(
       "[GoogleBusinessMock] 📡 Connecting to Google Business Profile...",
     );
     await new Promise((resolve) => setTimeout(resolve, 1500)); // Network latency
-    console.log("[GoogleBusinessMock] ✅ Connected to:", MOCK_PROFILE.title);
+    Logger.debug(`[GoogleBusinessMock] ✅ Connected to: ${MOCK_PROFILE.title}`);
     return MOCK_PROFILE;
   },
 };

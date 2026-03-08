@@ -98,7 +98,7 @@ export function KernelProvider({ tenantId, children }: KernelProviderProps) {
             loggedSkipRef.current = true;
             // Log apenas uma vez, silencioso
             if (isDebugMode()) {
-              console.info("[KernelProvider] Kernel FROZEN: DEV_STABLE_MODE");
+              Logger.info("[KernelProvider] Kernel FROZEN: DEV_STABLE_MODE");
             }
           }
           return;
@@ -109,7 +109,7 @@ export function KernelProvider({ tenantId, children }: KernelProviderProps) {
           if (isDevStableMode()) {
             if (!loggedSkipRef.current) {
               loggedSkipRef.current = true;
-              console.info("[KernelProvider] Boot skipped: tenant not sealed");
+              Logger.info("[KernelProvider] Boot skipped: tenant not sealed");
             }
           } else {
             // Non-stable: still fail-closed

@@ -8,8 +8,12 @@
  * - PT: QR code AT (Portal das Finanças) + ATCUD + número sequencial
  */
 
-import type { TaxDocument } from "../../../../fiscal-modules/types";
+import { getCurrencySymbol } from "@/core/currency/CurrencyService";
+import { getFormatLocale } from "@/core/i18n/regionLocaleConfig";
+import i18n from "@/i18n";
 import { buildAtQrUrl } from "../../../../fiscal-modules/pt/atQrUrl";
+import type { TaxDocument } from "../../../../fiscal-modules/types";
+import { Logger } from "../logger";
 
 export interface FiscalPrinterConfig {
   printerType?: "browser" | "thermal" | "fiscal";
@@ -20,13 +24,16 @@ export function buildFiscalReceiptHtml(
   taxDoc: TaxDocument,
   orderData: any,
 ): string {
+  const t = (key: string, options?: Record<string, unknown>) =>
+    i18n.t(key, options);
+
   const now = new Date();
-  const dateStr = now.toLocaleDateString("pt-PT", {
+  const dateStr = now.toLocaleDateString(getFormatLocale(), {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
   });
-  const timeStr = now.toLocaleTimeString("pt-PT", {
+  const timeStr = now.toLocaleTimeString(getFormatLocale(), {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -44,8 +51,7 @@ export function buildFiscalReceiptHtml(
   const atcud = taxDoc.raw_payload?.atcud || "";
   const invoiceNumber =
     taxDoc.raw_payload?.invoice_number || taxDoc.doc_number || "";
-  const issuedAt =
-    taxDoc.raw_payload?.issued_at || new Date().toISOString();
+  const issuedAt = taxDoc.raw_payload?.issued_at || new Date().toISOString();
   const documentDate = issuedAt.slice(0, 10);
 
   let qrCodeUrl: string | null = null;
@@ -57,16 +63,22 @@ export function buildFiscalReceiptHtml(
       total: taxDoc.total_amount,
       hash: taxDoc.raw_payload?.hash_chain,
     });
-    qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(atUrl)}`;
+    qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+      atUrl,
+    )}`;
   }
   if (!qrCodeUrl) {
     const pdfUrl =
       taxDoc.raw_payload?.pdf_url || taxDoc.raw_payload?.invoice?.pdf?.url;
     const protocol = taxDoc.raw_payload?.gov_protocol;
     if (pdfUrl) {
-      qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pdfUrl)}`;
+      qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+        pdfUrl,
+      )}`;
     } else if (protocol) {
-      qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`FISCAL:${protocol}`)}`;
+      qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+        `FISCAL:${protocol}`,
+      )}`;
     }
   }
 
@@ -76,7 +88,7 @@ export function buildFiscalReceiptHtml(
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Recibo Fiscal</title>
+    <title>${t("receipt:fiscalReceipt")}</title>
     <style>
         @media print {
             @page {
@@ -166,7 +178,8 @@ export function buildFiscalReceiptHtml(
 <body>
     <div class="header">
         <div class="restaurant-name">${
-          orderData.restaurant_name || "RESTAURANTE"
+          orderData.restaurant_name ||
+          t("receipt:defaultRestaurant").toUpperCase()
         }</div>
         <div class="document-info">
             ${
@@ -174,29 +187,23 @@ export function buildFiscalReceiptHtml(
                 ? "TICKETBAI"
                 : taxDoc.doc_type === "SAF-T"
                 ? "SAF-T"
-                : "RECIBO FISCAL"
+                : t("receipt:fiscalReceipt").toUpperCase()
             }
         </div>
         <div class="document-info">
-            Pedido: ${
-              orderData.short_id || orderData.id?.substring(0, 8) || "N/A"
-            }
+            ${t("receipt:order")} ${
+    orderData.short_id || orderData.id?.substring(0, 8) || "N/A"
+  }
         </div>
         ${
           invoiceNumber
-            ? `<div class="document-info">Nº documento: ${invoiceNumber}</div>`
+            ? `<div class="document-info">${t(
+                "receipt:documentNumber",
+              )} ${invoiceNumber}</div>`
             : ""
         }
-        ${
-          atcud
-            ? `<div class="document-info">ATCUD: ${atcud}</div>`
-            : ""
-        }
-        ${
-          nif
-            ? `<div class="document-info">NIF: ${nif}</div>`
-            : ""
-        }
+        ${atcud ? `<div class="document-info">ATCUD: ${atcud}</div>` : ""}
+        ${nif ? `<div class="document-info">NIF: ${nif}</div>` : ""}
         <div class="document-info">
             ${dateStr} ${timeStr}
         </div>
@@ -211,7 +218,9 @@ export function buildFiscalReceiptHtml(
                 <div class="item-details">
                     ${item.quantity}x ${item.unit_price.toFixed(
               2,
-            )}€ = ${item.total.toFixed(2)}€
+            )}${getCurrencySymbol()} = ${item.total.toFixed(
+              2,
+            )}${getCurrencySymbol()}
                 </div>
             </div>
         `,
@@ -221,26 +230,30 @@ export function buildFiscalReceiptHtml(
 
     <div class="totals">
         <div class="total-line">
-            <span>Subtotal:</span>
-            <span>${subtotal.toFixed(2)}€</span>
+            <span>${t("receipt:subtotal")}</span>
+            <span>${subtotal.toFixed(2)}${getCurrencySymbol()}</span>
         </div>
         <div class="total-line">
-            <span>IVA (${vatRate}%):</span>
-            <span>${vatAmount.toFixed(2)}€</span>
+            <span>${t("receipt:vatRate", { rate: vatRate })}</span>
+            <span>${vatAmount.toFixed(2)}${getCurrencySymbol()}</span>
         </div>
         <div class="total-line final">
-            <span>TOTAL:</span>
-            <span>${taxDoc.total_amount.toFixed(2)}€</span>
+            <span>${t("receipt:total")}</span>
+            <span>${taxDoc.total_amount.toFixed(2)}${getCurrencySymbol()}</span>
         </div>
     </div>
 
     <div class="footer">
-        <div>Método de Pagamento: ${orderData.payment_method || "N/A"}</div>
+        <div>${t("receipt:paymentMethod")} ${
+    orderData.payment_method || "N/A"
+  }</div>
         ${
           taxDoc.raw_payload?.gov_protocol
             ? `
             <div class="protocol">
-                Protocolo: ${taxDoc.raw_payload.gov_protocol}
+                ${t("receipt:fiscalProtocol")}: ${
+                taxDoc.raw_payload.gov_protocol
+              }
             </div>
         `
             : ""
@@ -253,8 +266,8 @@ export function buildFiscalReceiptHtml(
                 <div style="font-size: 8px; margin-top: 5px;">
                     ${
                       pdfUrl
-                        ? "Escaneie para ver fatura online"
-                        : "Protocolo Fiscal"
+                        ? t("receipt:scanToViewInvoice")
+                        : t("receipt:fiscalProtocol")
                     }
                 </div>
             </div>
@@ -287,7 +300,7 @@ export function buildFiscalReceiptHtml(
             : ""
         }
         <div style="margin-top: 10px;">
-            Obrigado pela sua visita!
+            ${t("receipt:thankYou")}
         </div>
     </div>
 </body>
@@ -352,9 +365,13 @@ export class FiscalPrinter {
     // Standard styles
     const standardHeader = !isDelivery
       ? `
-            <div class="title">COZINHA</div>
-            <div class="meta">Mesa: ${order.tableNumber || "BALCÃO"}</div>
-            <div class="meta">Senha: #${order.id.slice(-4)}</div>
+            <div class="title">${i18n.t("receipt:kitchen")}</div>
+            <div class="meta">${i18n.t("receipt:table")} ${
+          order.tableNumber || i18n.t("receipt:counter")
+        }</div>
+            <div class="meta">${i18n.t("receipt:token")} #${order.id.slice(
+          -4,
+        )}</div>
         `
       : "";
 
@@ -362,7 +379,9 @@ export class FiscalPrinter {
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>COZINHA ${isDelivery ? "- DELIVERY" : ""}</title>
+    <title>${i18n.t("receipt:kitchen")} ${
+      isDelivery ? "- DELIVERY" : ""
+    }</title>
     <style>
         body { font-family: 'Courier New'; max-width: 80mm; margin: 0 auto; padding: 5mm; }
         .header { text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
@@ -384,7 +403,11 @@ export class FiscalPrinter {
 <body>
     <div class="header">
         ${isDelivery ? deliveryHeader : standardHeader}
-        <div class="meta">${now.toLocaleTimeString()}</div>
+        <div class="meta">${now.toLocaleTimeString(getFormatLocale(), {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })}</div>
     </div>
     <div class="items">
         ${order.items
@@ -431,14 +454,14 @@ export class FiscalPrinter {
           break;
         case "thermal":
           // Futuro: Integração com impressoras térmicas
-          console.warn(
+          Logger.warn(
             "[FiscalPrinter] Thermal printing not yet implemented, falling back to browser",
           );
           await this.printViaBrowser(taxDoc, orderData);
           break;
         case "fiscal":
           // Futuro: Integração com impressoras fiscais (Epson, Star, etc.)
-          console.warn(
+          Logger.warn(
             "[FiscalPrinter] Fiscal printer not yet implemented, falling back to browser",
           );
           await this.printViaBrowser(taxDoc, orderData);
@@ -447,7 +470,7 @@ export class FiscalPrinter {
           await this.printViaBrowser(taxDoc, orderData);
       }
     } catch (error) {
-      console.error("[FiscalPrinter] Print failed:", error);
+      Logger.error("[FiscalPrinter] Print failed:", error);
       throw error;
     }
   }
@@ -473,9 +496,7 @@ export class FiscalPrinter {
         typeof printWindow.closed === "undefined"
       ) {
         // FASE 6: Tentar fallback se pop-up foi bloqueado
-        const userConfirmed = window.confirm(
-          "Bloqueador de pop-ups detectado. Deseja abrir o recibo em uma nova aba para impressão?",
-        );
+        const userConfirmed = window.confirm(i18n.t("receipt:popupBlocked"));
         if (userConfirmed) {
           const newWindow = window.open("", "_blank");
           if (newWindow) {
@@ -490,9 +511,7 @@ export class FiscalPrinter {
             return;
           }
         }
-        throw new Error(
-          "Não foi possível abrir janela de impressão. Verifique bloqueador de pop-ups nas configurações do navegador.",
-        );
+        throw new Error(i18n.t("receipt:cannotOpenPrintWindow"));
       }
 
       // 3. Escrever HTML
@@ -502,12 +521,8 @@ export class FiscalPrinter {
       // 4. Aguardar carregamento e imprimir
       return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
-          reject(
-            new Error(
-              "Timeout ao carregar janela de impressão. Tente novamente.",
-            ),
-          );
-        }, 5000); // 5 segundos de timeout
+          reject(new Error(i18n.t("receipt:printTimeout")));
+        }, 5000);
 
         printWindow.onload = () => {
           clearTimeout(timeout);
@@ -520,9 +535,10 @@ export class FiscalPrinter {
             } catch (printError: any) {
               reject(
                 new Error(
-                  `Erro ao imprimir: ${
-                    printError.message || "Erro desconhecido"
-                  }`,
+                  i18n.t("receipt:printError", {
+                    message:
+                      printError.message || i18n.t("receipt:unknownPrintError"),
+                  }),
                 ),
               );
             }
@@ -539,9 +555,10 @@ export class FiscalPrinter {
             } catch (printError: any) {
               reject(
                 new Error(
-                  `Erro ao imprimir: ${
-                    printError.message || "Erro desconhecido"
-                  }`,
+                  i18n.t("receipt:printError", {
+                    message:
+                      printError.message || i18n.t("receipt:unknownPrintError"),
+                  }),
                 ),
               );
             }
@@ -549,11 +566,13 @@ export class FiscalPrinter {
         }
       });
     } catch (error: any) {
-      console.error("[FiscalPrinter] Browser print error:", error);
+      Logger.error("[FiscalPrinter] Browser print error:", error);
       throw error instanceof Error
         ? error
         : new Error(
-            `Erro ao imprimir: ${error?.message || "Erro desconhecido"}`,
+            i18n.t("receipt:printError", {
+              message: error?.message || i18n.t("receipt:unknownPrintError"),
+            }),
           );
     }
   }
@@ -590,10 +609,9 @@ export class FiscalPrinter {
 
         return new Blob([pdfBlob], { type: "application/pdf" });
       } catch (err) {
-        console.warn(
-          "[FiscalPrinter] html2pdf failed, using HTML fallback",
-          err,
-        );
+        Logger.warn("[FiscalPrinter] html2pdf failed, using HTML fallback", {
+          error: String(err),
+        });
       }
     }
 
@@ -601,10 +619,10 @@ export class FiscalPrinter {
     // styles that produces correct output when the user prints to PDF
     // from the browser dialog (Ctrl+P → Save as PDF).
     const printableHTML = `<!DOCTYPE html>
-<html lang="pt">
+<html lang="${i18n.language}">
 <head>
   <meta charset="utf-8"/>
-  <title>Recibo Fiscal</title>
+  <title>${i18n.t("receipt:fiscalReceipt")}</title>
   <style>
     @page { size: 80mm auto; margin: 2mm; }
     @media print { body { margin: 0; } }
@@ -625,7 +643,9 @@ export class FiscalPrinter {
   public generateQRCodeUrl(taxDoc: TaxDocument, orderData: any): string | null {
     const isPt = taxDoc.doc_type === "SAF-T" || taxDoc.doc_type === "MOCK";
     const nif =
-      orderData.restaurant_nif || taxDoc.raw_payload?.tax_registration_number || "";
+      orderData.restaurant_nif ||
+      taxDoc.raw_payload?.tax_registration_number ||
+      "";
     const atcud = taxDoc.raw_payload?.atcud || "";
     const issuedAt = taxDoc.raw_payload?.issued_at || new Date().toISOString();
     const documentDate = issuedAt.slice(0, 10);
@@ -638,18 +658,24 @@ export class FiscalPrinter {
         total: taxDoc.total_amount,
         hash: taxDoc.raw_payload?.hash_chain,
       });
-      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(atUrl)}`;
+      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+        atUrl,
+      )}`;
     }
 
     const pdfUrl =
       taxDoc.raw_payload?.pdf_url || taxDoc.raw_payload?.invoice?.pdf?.url;
     if (pdfUrl) {
-      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pdfUrl)}`;
+      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+        pdfUrl,
+      )}`;
     }
 
     const protocol = taxDoc.raw_payload?.gov_protocol;
     if (protocol) {
-      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`FISCAL:${protocol}`)}`;
+      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+        `FISCAL:${protocol}`,
+      )}`;
     }
 
     return null;

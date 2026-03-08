@@ -14,6 +14,7 @@ import {
   type ReactNode,
 } from "react";
 import { isDebugMode } from "../debugMode";
+import { Logger } from "../logger";
 import { SurfaceRegistry } from "./SurfaceRegistry";
 import { SystemsRegistry } from "./SystemsRegistry";
 import type {
@@ -109,18 +110,18 @@ let _cachedState: SystemState | null = null;
 const VERSION = "1.0.0";
 
 async function initializeKernel(
-  options: BootstrapOptions = {}
+  options: BootstrapOptions = {},
 ): Promise<BootstrapResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
   // 1. Detect environment
-  console.log("Kernel: Detecting environment...");
+  Logger.debug("Kernel: Detecting environment...");
   const environment = options.forceEnvironment ?? detectEnvironment();
-  console.log("Kernel: Environment detected:", environment);
+  Logger.debug(`Kernel: Environment detected: ${environment}`);
 
   // 2. Validate guards
-  console.log("Kernel: Validating guards...");
+  Logger.debug("Kernel: Validating guards...");
   const guards = validateGuards();
 
   if (environment === "prod" && !guards.assertNoMock) {
@@ -165,11 +166,11 @@ async function initializeKernel(
       warnings.push(`Systems check failed: ${e}`);
     }
   } else {
-    console.log("Kernel: SKIPPING Health Checks");
+    Logger.debug("Kernel: SKIPPING Health Checks");
   }
 
   // 5. Check observability
-  console.log("Kernel: Checking Observability...");
+  Logger.debug("Kernel: Checking Observability...");
   const observability = await checkObservability();
 
   if (!observability.monitoring) {
@@ -277,15 +278,19 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
           setLoading(false);
 
           if (result.warnings.length && result.state.environment === "dev") {
-            console.warn("[BootstrapKernel] Warnings:", result.warnings);
+            Logger.warn("[BootstrapKernel] Warnings:", {
+              warnings: result.warnings,
+            });
           }
           if (result.errors.length) {
-            console.error("[BootstrapKernel] Errors:", result.errors);
+            Logger.error("[BootstrapKernel] Errors:", {
+              errors: result.errors,
+            });
           }
         })
         .catch((err) => {
           // NEVER BLOCK — log and continue with degraded state
-          console.error("[BootstrapKernel] Init failed (non-fatal):", err);
+          Logger.error("[BootstrapKernel] Init failed (non-fatal):", err);
           setLoading(false);
         });
     }

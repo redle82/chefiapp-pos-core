@@ -1,5 +1,6 @@
 import { isDebugMode } from "../debugMode";
 // LEGACY / LAB — blocked in Docker mode
+import { Logger } from "../logger";
 import { supabase } from "../supabase";
 import type { RealityVerdict } from "./GenesisRealityCheck";
 
@@ -27,7 +28,7 @@ export class LiveRealityCheck {
       };
     }
 
-    console.log(
+    Logger.info(
       `[LiveRealityCheck] 🌍 Searching for Life Signs for Tenant: ${tenantId}`,
     );
 
@@ -102,7 +103,7 @@ export class LiveRealityCheck {
     const score = (checksPassed / totalChecks) * 100;
     const active = failures.length === 0;
 
-    console.log(
+    Logger.info(
       `[LiveRealityCheck] Verdict: ${active ? "ALIVE" : "DORMANT"} (${score}%)`,
     );
 

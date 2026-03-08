@@ -6,6 +6,7 @@
  */
 
 // LEGACY / LAB — blocked in Docker mode via core/supabase shim
+import { Logger } from "../../logger";
 import { supabase } from "../../supabase";
 import { getCurrentTimeSlot } from "../DynamicMenu/scoring";
 import type {
@@ -31,7 +32,9 @@ export class SponsorshipService {
       .eq("owner_approved", true);
 
     if (error) {
-      console.warn("[SponsorshipService] Failed to load sponsorships:", error);
+      Logger.warn("[SponsorshipService] Failed to load sponsorships:", {
+        error,
+      });
       return new Map();
     }
 
@@ -157,13 +160,12 @@ export class SponsorshipService {
       });
 
       if (error) {
-        console.warn(
-          `[SponsorshipService] Failed to track ${eventType}:`,
+        Logger.warn(`[SponsorshipService] Failed to track ${eventType}:`, {
           error,
-        );
+        });
       }
     } catch (err) {
-      console.error(`[SponsorshipService] Event tracking error:`, err);
+      Logger.error(`[SponsorshipService] Event tracking error:`, err);
     }
   }
 
@@ -186,7 +188,7 @@ export class SponsorshipService {
     const { data, error } = await query;
 
     if (error || !data) {
-      console.warn("[SponsorshipService] Failed to load metrics:", error);
+      Logger.warn("[SponsorshipService] Failed to load metrics:", { error });
       return [];
     }
 

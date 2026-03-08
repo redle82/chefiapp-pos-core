@@ -4,20 +4,19 @@ import {
   fetchRestaurantForIdentity,
   getOrCreateRestaurantId,
 } from "../../infra/readers/RuntimeReader";
+import { resolveLocale } from "../i18n/regionLocaleConfig";
 import { isDockerBackend } from "../infra/backendAdapter";
 import { RUNTIME_MODE } from "../kernel/RuntimeContext";
+import { Logger } from "../logger";
 import { configureSentryScope } from "../logger/Logger";
 import { TRIAL_RESTAURANT_ID } from "../readiness/operationalRestaurant";
+import { setTabIsolated } from "../storage/TabIsolatedStorage";
 
 export interface RestaurantIdentity {
   id: string | null;
   name: string;
   city: string;
   type: string;
-  legalName?: string;
-  slug?: string;
-  isTestLike?: boolean;
-  environmentLabel?: "TEST" | "Sandbox";
   isTrial: boolean;
   loading: boolean;
   ownerName?: string;
@@ -32,61 +31,6 @@ export interface RestaurantIdentity {
 /** Placeholder para modo Supabase (quando backend !== docker). */
 let identityTodoLoggedOnce = false;
 
-function asTrimmedText(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const text = value.trim();
-  return text.length > 0 ? text : null;
-}
-
-function pickFirstText(...values: unknown[]): string | null {
-  for (const value of values) {
-    const text = asTrimmedText(value);
-    if (text) return text;
-  }
-  return null;
-}
-
-function resolveCanonicalRestaurantName(row: Record<string, unknown>): {
-  displayName: string;
-  legalName?: string;
-  slug?: string;
-} {
-  const commercialName = pickFirstText(
-    row.commercial_name,
-    row.display_name,
-    row.name,
-  );
-  const legalName = pickFirstText(row.legal_name);
-  const slug = pickFirstText(row.slug);
-  return {
-    displayName: commercialName || legalName || slug || "Restaurante",
-    legalName: legalName ?? undefined,
-    slug: slug ?? undefined,
-  };
-}
-
-function resolveEnvironmentLabel(
-  row: Record<string, unknown>,
-  opts: { isTrial: boolean; productMode?: string | null },
-): { isTestLike: boolean; environmentLabel?: "TEST" | "Sandbox" } {
-  const slug = asTrimmedText(row.slug) ?? "";
-  const explicitIsTest = row.is_test === true;
-  const byMode =
-    opts.productMode === "trial" ||
-    opts.productMode === "pilot" ||
-    opts.isTrial;
-  const bySlug = /(sandbox|test|trial)/i.test(slug);
-  const isTestLike = explicitIsTest || byMode || bySlug;
-
-  if (!isTestLike) {
-    return { isTestLike: false };
-  }
-  if (opts.productMode === "pilot") {
-    return { isTestLike: true, environmentLabel: "Sandbox" };
-  }
-  return { isTestLike: true, environmentLabel: "TEST" };
-}
-
 async function hydrateIdentityFromSupabasePlaceholder(
   setIdentity: (
     updater: (prev: RestaurantIdentity) => RestaurantIdentity,
@@ -94,17 +38,18 @@ async function hydrateIdentityFromSupabasePlaceholder(
 ) {
   if (!identityTodoLoggedOnce) {
     identityTodoLoggedOnce = true;
-    console.warn("[Identity] Backend sem Core: usando identidade trial.");
+    Logger.warn(
+      "[Identity] Backend Supabase: hidratação real não implementada. Usando identidade mínima.",
+    );
   }
   setIdentity((prev) => ({
     ...prev,
-    id: prev.id || TRIAL_RESTAURANT_ID,
-    name: prev.name || "Seu restaurante",
-    city: prev.city || "Trial",
-    type: prev.type || "Restaurante",
-    isTrial: true,
+    name: prev.name || "Seu Restaurante",
+    city: prev.city || "Local desconhecido",
+    type: prev.type || "Geral",
+    isTrial: false,
     loading: false,
-    ownerName: prev.ownerName || "Visitante",
+    ownerName: prev.ownerName || "Comandante",
   }));
 }
 
@@ -161,20 +106,18 @@ export function useRestaurantIdentity() {
         const row = await fetchRestaurantForIdentity(restaurantId);
         if (!mountedRef.current) return;
         if (row) {
-          const rawRow = row as unknown as Record<string, unknown>;
-          const canonical = resolveCanonicalRestaurantName(rawRow);
-          const env = resolveEnvironmentLabel(rawRow, {
-            isTrial: !!isTrial,
-            productMode: runtime?.productMode,
-          });
-
+          // Persistir país, moeda e idioma para i18n e região de pagamento
+          if (row.country) setTabIsolated("chefiapp_country", row.country);
+          if (row.currency) setTabIsolated("chefiapp_currency", row.currency);
+          const locale =
+            (row.locale as string) || resolveLocale(row.country, row.currency);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("chefiapp_locale", locale);
+            import("../../i18n").then((m) => m.default.changeLanguage(locale));
+          }
           setIdentity({
             id: row.id,
-            name: canonical.displayName,
-            legalName: canonical.legalName,
-            slug: canonical.slug,
-            isTestLike: env.isTestLike,
-            environmentLabel: env.environmentLabel,
+            name: row.name ?? (isTrial ? "Seu restaurante" : "Seu Restaurante"),
             city: row.city ?? (isTrial ? "Trial" : "Local desconhecido"),
             type: row.type ?? "Restaurante",
             isTrial: !!isTrial,
@@ -195,12 +138,10 @@ export function useRestaurantIdentity() {
         if (isTrial) {
           setIdentity({
             id: TRIAL_RESTAURANT_ID,
-            name: "Restaurante",
+            name: "Seu restaurante",
             city: "Trial",
             type: "Restaurante",
             isTrial: true,
-            isTestLike: true,
-            environmentLabel: "TEST",
             loading: false,
             ownerName: "Visitante",
             logoUrl: undefined,
@@ -216,7 +157,7 @@ export function useRestaurantIdentity() {
           setIdentity((prev) => ({
             ...prev,
             id: restaurantId,
-            name: prev.name || "Restaurante",
+            name: prev.name || "Seu Restaurante",
             city: prev.city || "Local desconhecido",
             type: prev.type || "Geral",
             loading: false,
@@ -227,11 +168,11 @@ export function useRestaurantIdentity() {
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
-      console.error("Identity: Crash hydration:", msg);
+      Logger.error("Identity: Crash hydration:", msg);
       if (mountedRef.current) {
         setIdentity((prev) => ({
           ...prev,
-          name: prev.name || "Restaurante",
+          name: prev.name || "Seu Restaurante",
           city: prev.city || "Local desconhecido",
           type: prev.type || "Geral",
           loading: false,

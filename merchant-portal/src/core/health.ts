@@ -3,6 +3,7 @@ import {
   getBackendHealthCheckBaseUrl,
   getBackendType,
 } from "./infra/backendAdapter";
+import { Logger } from "./logger";
 
 export type HealthStatus = "ok" | "down";
 
@@ -14,7 +15,7 @@ const CORE_REQUIRED_MSG =
  * ANTI-SUPABASE §4: No supabase.functions.invoke; if not Docker, throw.
  */
 export async function fetchHealth(
-  basePath: string = ""
+  basePath: string = "",
 ): Promise<HealthStatus> {
   if (getBackendType() !== BackendType.docker) {
     throw new Error(CORE_REQUIRED_MSG);
@@ -26,7 +27,7 @@ export async function fetchHealth(
     base = window.location.origin;
   }
   if (!base) {
-    console.warn("[Health] Docker Core URL not configured");
+    Logger.warn("[Health] Docker Core URL not configured");
     return "down";
   }
   try {
@@ -34,7 +35,7 @@ export async function fetchHealth(
     const res = await fetch(url, { method: "GET", mode: "cors" });
     return res.ok ? "ok" : "down";
   } catch (e) {
-    console.warn("[Health] Docker Core unreachable:", e);
+    Logger.warn("[Health] Docker Core unreachable:", { error: String(e) });
     return "down";
   }
 }

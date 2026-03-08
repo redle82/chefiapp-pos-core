@@ -8,11 +8,19 @@
  * - Tabelas: gm_restaurant_groups, gm_restaurant_group_members
  */
 
+import { getCurrencySymbol } from "@/core/currency/CurrencyService";
 import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
+import { Logger } from "../logger";
 
-export type GroupType = 'franchise' | 'chain' | 'corporate' | 'custom';
-export type GroupRole = 'master' | 'template' | 'member' | 'franchisee';
-export type ConfigType = 'menu' | 'pricing' | 'schedule' | 'staff_roles' | 'inventory' | 'other';
+export type GroupType = "franchise" | "chain" | "corporate" | "custom";
+export type GroupRole = "master" | "template" | "member" | "franchisee";
+export type ConfigType =
+  | "menu"
+  | "pricing"
+  | "schedule"
+  | "staff_roles"
+  | "inventory"
+  | "other";
 
 export interface RestaurantGroup {
   id: string;
@@ -44,7 +52,7 @@ export interface ConfigurationInheritance {
   configType: ConfigType;
   configKey: string;
   configValue: Record<string, any>;
-  appliesToRole: 'all' | 'member' | 'franchisee' | 'template';
+  appliesToRole: "all" | "member" | "franchisee" | "template";
   overrideAllowed: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -74,7 +82,11 @@ export interface UnitBenchmark {
   averageRating: number;
   unitMetrics: Record<string, any>;
   topPerformers: Array<{ restaurantId: string; metric: string; rank: number }>;
-  bottomPerformers: Array<{ restaurantId: string; metric: string; rank: number }>;
+  bottomPerformers: Array<{
+    restaurantId: string;
+    metric: string;
+    rank: number;
+  }>;
   createdAt: Date;
 }
 
@@ -159,7 +171,7 @@ export class GroupEngine {
       .single();
 
     if (error || !data) {
-      console.error("[GroupEngine] createGroup error", error);
+      Logger.error("[GroupEngine] createGroup error", error);
       throw new Error(error?.message || "Erro ao criar grupo");
     }
 
@@ -232,7 +244,7 @@ export class GroupEngine {
       .single();
 
     if (error || !data) {
-      console.error("[GroupEngine] addRestaurantToGroup error", error);
+      Logger.error("[GroupEngine] addRestaurantToGroup error", error);
       throw new Error(error?.message || "Erro ao adicionar membro");
     }
 
@@ -257,7 +269,9 @@ export class GroupEngine {
   /**
    * Buscar grupo do restaurante
    */
-  async getRestaurantGroup(restaurantId: string): Promise<RestaurantGroup | null> {
+  async getRestaurantGroup(
+    restaurantId: string,
+  ): Promise<RestaurantGroup | null> {
     const core = this.core();
 
     // Find membership
@@ -289,7 +303,7 @@ export class GroupEngine {
   async applyInheritedConfiguration(
     restaurantId: string,
     configType: ConfigType,
-    configKey: string
+    configKey: string,
   ): Promise<{
     value: Record<string, any>;
     inherited: boolean;
@@ -297,7 +311,11 @@ export class GroupEngine {
   }> {
     const group = await this.getRestaurantGroup(restaurantId);
     if (!group) {
-      return { value: { configType, configKey, source: "default" }, inherited: false, overridden: false };
+      return {
+        value: { configType, configKey, source: "default" },
+        inherited: false,
+        overridden: false,
+      };
     }
 
     // Fetch group settings
@@ -309,7 +327,8 @@ export class GroupEngine {
       .maybeSingle();
 
     if (data) {
-      const settings = (data as { settings: Record<string, any> }).settings || {};
+      const settings =
+        (data as { settings: Record<string, any> }).settings || {};
       const key = `${configType}.${configKey}`;
       if (settings[key]) {
         return { value: settings[key], inherited: true, overridden: false };
@@ -331,7 +350,7 @@ export class GroupEngine {
     configType: ConfigType;
     configKey: string;
     configValue: Record<string, any>;
-    appliesToRole?: 'all' | 'member' | 'franchisee' | 'template';
+    appliesToRole?: "all" | "member" | "franchisee" | "template";
     overrideAllowed?: boolean;
   }): Promise<string> {
     const core = this.core();
@@ -353,7 +372,10 @@ export class GroupEngine {
 
     await core
       .from("gm_restaurant_groups")
-      .update({ settings: currentSettings, updated_at: new Date().toISOString() })
+      .update({
+        settings: currentSettings,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", config.groupId);
 
     return generateId("config_inheritance");
@@ -371,7 +393,10 @@ export class GroupEngine {
     overrideReason?: string;
   }): Promise<string> {
     const id = generateId("config_override");
-    console.info("[GroupEngine] createOverride persisted via Core", { id, ...override });
+    Logger.info("[GroupEngine] createOverride persisted via Core", {
+      id,
+      ...override,
+    });
     return id;
   }
 
@@ -382,7 +407,7 @@ export class GroupEngine {
   async calculateBenchmark(
     groupId: string,
     periodStart: Date,
-    periodEnd: Date
+    periodEnd: Date,
   ): Promise<UnitBenchmark> {
     const members = await this.listGroupMembers(groupId);
 
@@ -399,9 +424,13 @@ export class GroupEngine {
         .eq("restaurant_id", member.restaurantId);
 
       if (data && Array.isArray(data)) {
-        const rows = data as Array<{ total_spend_cents: number; visit_count: number }>;
+        const rows = data as Array<{
+          total_spend_cents: number;
+          visit_count: number;
+        }>;
         totalCustomers += rows.length;
-        totalRevenue += rows.reduce((s, r) => s + (r.total_spend_cents ?? 0), 0) / 100;
+        totalRevenue +=
+          rows.reduce((s, r) => s + (r.total_spend_cents ?? 0), 0) / 100;
         totalOrders += rows.reduce((s, r) => s + (r.visit_count ?? 0), 0);
       }
     }
@@ -429,7 +458,7 @@ export class GroupEngine {
   async compareUnits(
     groupId: string,
     metricType: string,
-    comparisonDate?: Date
+    comparisonDate?: Date,
   ): Promise<UnitComparison> {
     const now = new Date();
     const members = await this.listGroupMembers(groupId);
@@ -449,19 +478,29 @@ export class GroupEngine {
 
       if (data && Array.isArray(data)) {
         const rows = data as Array<{ total_spend_cents: number }>;
-        const val = rows.reduce((s, r) => s + (r.total_spend_cents ?? 0), 0) / 100;
+        const val =
+          rows.reduce((s, r) => s + (r.total_spend_cents ?? 0), 0) / 100;
         values.push(val);
-        if (val > bestVal) { bestVal = val; bestUnitId = member.restaurantId; }
-        if (val < worstVal) { worstVal = val; worstUnitId = member.restaurantId; }
+        if (val > bestVal) {
+          bestVal = val;
+          bestUnitId = member.restaurantId;
+        }
+        if (val < worstVal) {
+          worstVal = val;
+          worstUnitId = member.restaurantId;
+        }
       }
     }
 
-    const avg = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+    const avg =
+      values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
     const sorted = [...values].sort((a, b) => a - b);
-    const median = sorted.length > 0 ? sorted[Math.floor(sorted.length / 2)] : 0;
-    const variance = values.length > 0
-      ? values.reduce((s, v) => s + (v - avg) ** 2, 0) / values.length
-      : 0;
+    const median =
+      sorted.length > 0 ? sorted[Math.floor(sorted.length / 2)] : 0;
+    const variance =
+      values.length > 0
+        ? values.reduce((s, v) => s + (v - avg) ** 2, 0) / values.length
+        : 0;
 
     return {
       id: generateId("unit_comparison"),
@@ -474,9 +513,14 @@ export class GroupEngine {
       medianValue: median,
       standardDeviation: Math.sqrt(variance),
       comparisonData: {},
-      insights: values.length > 1
-        ? [`Diferença entre melhor e pior unidade: €${(bestVal - worstVal).toFixed(2)}`]
-        : [],
+      insights:
+        values.length > 1
+          ? [
+              `Diferença entre melhor e pior unidade: ${getCurrencySymbol()}${(
+                bestVal - worstVal
+              ).toFixed(2)}`,
+            ]
+          : [],
       createdAt: now,
     };
   }

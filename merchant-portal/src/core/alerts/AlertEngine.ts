@@ -1,3 +1,5 @@
+import { Logger } from "../logger";
+
 /**
  * AlertEngine - Engine de Alertas (mock/offline)
  *
@@ -180,9 +182,8 @@ export class AlertEngine {
   ): Promise<void> {
     const existing = alertsStore.get(alertId);
     if (!existing) {
-      console.warn(
-        "[AlertEngine] updateStatus: alerta não encontrado",
-        alertId,
+      Logger.warn(
+        `[AlertEngine] updateStatus: alerta não encontrado: ${alertId}`,
       );
       return;
     }
@@ -222,7 +223,7 @@ export class AlertEngine {
   ): Promise<void> {
     const existing = alertsStore.get(alertId);
     if (!existing) {
-      console.warn("[AlertEngine] escalate: alerta não encontrado", alertId);
+      Logger.warn(`[AlertEngine] escalate: alerta não encontrado: ${alertId}`);
       return;
     }
 
@@ -379,7 +380,7 @@ export class AlertEngine {
         relatedEntityId: eventData.entityId,
       });
     } catch (error) {
-      console.error("Error creating alert from event (mock):", error);
+      Logger.error("Error creating alert from event (mock):", error);
       return null;
     }
   }

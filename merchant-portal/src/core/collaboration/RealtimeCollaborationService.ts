@@ -38,7 +38,7 @@ class RealtimeCollaborationService {
     restaurantId: string,
     userId: string,
     userName: string,
-    role: string
+    role: string,
   ): Promise<void> {
     // STEP 6: DEV_STABLE_MODE - no realtime subscriptions
     if (isDevStableMode()) return;
@@ -52,14 +52,10 @@ class RealtimeCollaborationService {
           this.updatePresenceUsers(state);
         })
         .on("presence", { event: "join" }, ({ key, newPresences }) => {
-          console.log(
-            "[RealtimeCollaboration] User joined:",
-            key,
-            newPresences
-          );
+          Logger.debug(`[RealtimeCollaboration] User joined: ${key}`);
         })
         .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
-          console.log("[RealtimeCollaboration] User left:", key, leftPresences);
+          Logger.debug(`[RealtimeCollaboration] User left: ${key}`);
         })
         .subscribe(async (status) => {
           if (status === "SUBSCRIBED") {

@@ -8,6 +8,7 @@
  */
 
 import { readOpenTasksByRestaurant } from "../../infra/readers/TaskReader";
+import { Logger } from "../logger";
 
 export interface OperationalHealth {
   id: string;
@@ -87,7 +88,7 @@ export class HealthEngine {
 
     // TODO: Implementar quando tabela operational_health existir no Docker Core
     // Por enquanto, retornar ID sintético em DEV_STABLE_MODE
-    console.warn(
+    Logger.warn(
       "[HealthEngine] recordOperationalHealth não implementado no Docker Core",
     );
     return `op-health-${health.restaurantId}-${Date.now()}`;
@@ -117,7 +118,7 @@ export class HealthEngine {
 
     // TODO: Implementar quando tabela human_health existir no Docker Core
     // Por enquanto, retornar ID sintético em DEV_STABLE_MODE
-    console.warn(
+    Logger.warn(
       "[HealthEngine] recordHumanHealth não implementado no Docker Core",
     );
     return `human-health-${health.restaurantId}-${Date.now()}`;
@@ -148,7 +149,7 @@ export class HealthEngine {
 
     // TODO: Implementar quando tabela financial_health existir no Docker Core
     // Por enquanto, retornar ID sintético em DEV_STABLE_MODE
-    console.warn(
+    Logger.warn(
       "[HealthEngine] recordFinancialHealth não implementado no Docker Core",
     );
     return `financial-health-${health.restaurantId}-${Date.now()}`;
@@ -210,7 +211,7 @@ export class HealthEngine {
         totalOpenTasks,
       };
     } catch (error) {
-      console.error(
+      Logger.error(
         "[HealthEngine] Erro ao calcular health score simples:",
         error,
       );
@@ -271,7 +272,7 @@ export class HealthEngine {
   async getCurrentOperationalHealth(
     restaurantId: string,
   ): Promise<OperationalHealth | null> {
-    console.warn(
+    Logger.warn(
       "[HealthEngine] getCurrentOperationalHealth não implementado no Docker Core",
     );
     return null;
@@ -282,7 +283,7 @@ export class HealthEngine {
    * TODO: Implementar quando tabela human_health existir no Docker Core
    */
   async getCurrentHumanHealth(restaurantId: string): Promise<HumanHealth[]> {
-    console.warn(
+    Logger.warn(
       "[HealthEngine] getCurrentHumanHealth não implementado no Docker Core",
     );
     return [];
@@ -295,7 +296,7 @@ export class HealthEngine {
   async getCurrentFinancialHealth(
     restaurantId: string,
   ): Promise<FinancialHealth | null> {
-    console.warn(
+    Logger.warn(
       "[HealthEngine] getCurrentFinancialHealth não implementado no Docker Core",
     );
     return null;

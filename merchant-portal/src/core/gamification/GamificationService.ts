@@ -4,6 +4,7 @@
  * Serviço para gamificação de staff
  */
 
+import { getCurrencySymbol } from "@/core/currency/CurrencyService";
 import { Logger } from "../logger";
 // LEGACY / LAB — blocked in Docker mode via core/supabase shim
 import { supabase } from "../supabase";
@@ -55,7 +56,7 @@ class GamificationService {
     {
       id: "sales_champion",
       name: "Campeão de Vendas",
-      description: "Vendeu €1000 em um dia",
+      description: `Vendeu ${getCurrencySymbol()}1000 em um dia`,
       icon: "💰",
       points: 200,
       category: "sales",
@@ -145,7 +146,7 @@ class GamificationService {
           earned = (stats.ordersWithoutComplaints || 0) >= 100;
           break;
         case "sales_champion":
-          earned = (stats.dailySales || 0) >= 100000; // €1000 in cents
+          earned = (stats.dailySales || 0) >= 100000; // 1000 in local currency (cents)
           break;
         case "team_player":
           earned = (stats.colleaguesHelped || 0) >= 5;

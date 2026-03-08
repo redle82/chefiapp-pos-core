@@ -1,5 +1,6 @@
 import type { Order } from "../contracts";
 import { getTableClient } from "../infra/coreRpc";
+import { Logger } from "../logger";
 
 /**
  * InventoryEngine — Stock management via Docker Core BOM tables.
@@ -24,7 +25,7 @@ export class InventoryEngine {
   static async processOrder(_order: Order): Promise<void> {
     // Server-side: deduct_stock_by_bom is called automatically
     // when order status transitions to CLOSED via DB trigger.
-    console.info(
+    Logger.info(
       "InventoryEngine.processOrder: No-op. Stock deduction handled by DB trigger.",
     );
   }
@@ -70,7 +71,7 @@ export class InventoryEngine {
     });
 
     if (ledgerError)
-      console.error("InventoryEngine: Failed to log movement", ledgerError);
+      Logger.error("InventoryEngine: Failed to log movement", ledgerError);
   }
 
   /**
@@ -196,10 +197,7 @@ export class InventoryEngine {
       .in("product_id", menuItemIds);
 
     if (error) {
-      console.error(
-        "InventoryEngine: Failed to fetch BOM for cost calc",
-        error,
-      );
+      Logger.error("InventoryEngine: Failed to fetch BOM for cost calc", error);
       return 0;
     }
 

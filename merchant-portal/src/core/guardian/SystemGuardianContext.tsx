@@ -13,6 +13,7 @@ import React, {
 import { supabase } from "../supabase";
 
 import { isDebugMode } from "../debugMode";
+import { Logger } from "../logger";
 import { isDevStableMode } from "../runtime/devStableMode";
 
 // --- TYPES ---
@@ -61,7 +62,7 @@ export const useSystemGuardian = () => {
   const context = useContext(SystemGuardianContext);
   if (!context)
     throw new Error(
-      "useSystemGuardian must be used within SystemGuardianProvider"
+      "useSystemGuardian must be used within SystemGuardianProvider",
     );
   return context;
 };
@@ -79,7 +80,7 @@ export const SystemGuardianProvider = ({
 
   // --- REPORT ERROR ---
   const reportError = useCallback((err: Omit<SystemError, "timestamp">) => {
-    console.error(`[SystemGuardian] Error:`, err);
+    Logger.error(`[SystemGuardian] Error:`, err);
     setErrors((prev) => [...prev, { ...err, timestamp: Date.now() }]);
   }, []);
 

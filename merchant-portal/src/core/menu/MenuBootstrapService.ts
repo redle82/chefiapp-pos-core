@@ -105,6 +105,7 @@ export interface BootstrapContext {
 
 import { getErrorMessage } from "../errors/ErrorMessages";
 import { DbWriteGate } from "../governance/DbWriteGate";
+import { Logger } from "../logger";
 
 /** CORE_FAILURE_MODEL: pass executeSafe (from useKernel()) to get failureClass on error. Local type; was from archived OrderProcessingService. */
 export type ExecuteSafeFn = (req: any) => Promise<{
@@ -124,17 +125,14 @@ export class MenuBootstrapService {
     presetKey: string,
     kernel: any,
     context?: BootstrapContext,
-    executeSafe?: ExecuteSafeFn
+    executeSafe?: ExecuteSafeFn,
   ) {
     if (!PRESETS[presetKey]) {
       throw new Error(`Preset ${presetKey} not found.`);
     }
 
     const preset = PRESETS[presetKey];
-    console.log(
-      `[MBE] Injecting preset: ${presetKey} for ${restaurantId}`,
-      context
-    );
+    Logger.debug(`[MBE] Injecting preset: ${presetKey} for ${restaurantId}`);
 
     // 1. Log Source
     // We combine the Preset Data + The Operational Context into the payload
@@ -153,7 +151,7 @@ export class MenuBootstrapService {
         source_origin: presetKey,
         raw_payload: payload,
       },
-      { tenantId: restaurantId }
+      { tenantId: restaurantId },
     );
 
     if (sourceError) throw sourceError;
@@ -166,7 +164,7 @@ export class MenuBootstrapService {
         source_id: source.id,
         status: "PENDING",
       },
-      { tenantId: restaurantId }
+      { tenantId: restaurantId },
     );
 
     if (runError) throw runError;
@@ -185,7 +183,7 @@ export class MenuBootstrapService {
         // Simple heuristic: check if category name contains "Vinho", "Cerveja", "Cocktail"
         if (context?.sellsAlcohol === false) {
           const isAlcohol = /vinho|cerveja|cocktail|beer|wine|imperial/i.test(
-            cat.name
+            cat.name,
           );
           if (isAlcohol) continue;
         }
@@ -202,7 +200,7 @@ export class MenuBootstrapService {
               is_visible: true,
               order: 0,
             },
-            { tenantId: restaurantId }
+            { tenantId: restaurantId },
           );
 
         if (catError) throw catError;
@@ -214,7 +212,7 @@ export class MenuBootstrapService {
 
         if (!kernel && !executeSafe) {
           throw new Error(
-            "Sovereignty Violation: Kernel or executeSafe required for Menu Bootstrap"
+            "Sovereignty Violation: Kernel or executeSafe required for Menu Bootstrap",
           );
         }
 
@@ -238,7 +236,8 @@ export class MenuBootstrapService {
             const res = await executeSafe(payload);
             if (!res.ok) {
               const err = new Error(
-                getErrorMessage(res.error) || "Erro ao criar produto do preset."
+                getErrorMessage(res.error) ||
+                  "Erro ao criar produto do preset.",
               ) as Error & { failureClass?: string };
               err.failureClass = res.failureClass;
               throw err;
@@ -259,7 +258,7 @@ export class MenuBootstrapService {
           menu_version: 1,
         },
         { id: restaurantId },
-        { tenantId: restaurantId }
+        { tenantId: restaurantId },
       );
 
       // 5. Success Log (Gate)
@@ -272,7 +271,7 @@ export class MenuBootstrapService {
           log: [{ message: "Preset injection successful" }],
         },
         { id: run.id },
-        { tenantId: restaurantId }
+        { tenantId: restaurantId },
       );
 
       // 6. Result Record (Gate)
@@ -285,12 +284,12 @@ export class MenuBootstrapService {
           created_categories_count: categoriesCount,
           normalization_report: { method: "PRESET_DIRECT_MAP" },
         },
-        { tenantId: restaurantId }
+        { tenantId: restaurantId },
       );
 
       return { success: true, itemsCount, categoriesCount };
     } catch (error: any) {
-      console.error("[MBE] Injection Failed:", error);
+      Logger.error("[MBE] Injection Failed:", error);
 
       await DbWriteGate.update(
         "MenuBootstrapService",
@@ -301,7 +300,7 @@ export class MenuBootstrapService {
           log: [{ message: error.message, error }],
         },
         { id: run.id },
-        { tenantId: restaurantId }
+        { tenantId: restaurantId },
       );
 
       throw error;

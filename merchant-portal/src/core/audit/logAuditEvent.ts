@@ -7,6 +7,7 @@
  */
 
 // LEGACY / LAB — blocked in Docker mode via core/supabase shim
+import { Logger } from "../logger";
 import { supabase } from "../supabase";
 
 export interface AuditEventParams {
@@ -45,10 +46,12 @@ export async function logAuditEvent(params: AuditEventParams): Promise<void> {
     });
 
     if (!response.ok) {
-      console.warn("[Audit] Failed to log event:", await response.text());
+      Logger.warn("[Audit] Failed to log event:", {
+        body: await response.text(),
+      });
     }
   } catch (err) {
     // Non-blocking: audit logging should never break the main flow
-    console.error("[Audit] Failed to log event:", err);
+    Logger.error("[Audit] Failed to log event:", err);
   }
 }

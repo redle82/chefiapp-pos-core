@@ -48,7 +48,7 @@ export class DbWriteGate {
     callerTag: CallerTag | string,
     table: AllowedTable | string,
     data: any,
-    context: { tenantId?: string }
+    context: { tenantId?: string },
   ) {
     this.enforce("INSERT", callerTag, table, context);
 
@@ -74,9 +74,9 @@ export class DbWriteGate {
         isDockerBackend(); // FORCE: If Docker, be permissive to allow progress even if localStorage logic flaked
 
       if (finalResult.error) {
-        console.warn(
+        Logger.warn(
           `[DbWriteGate] 🚨 Write Error on ${table} (Pilot=${isPilot})`,
-          finalResult.error
+          { error: finalResult.error },
         );
       }
 
@@ -86,9 +86,9 @@ export class DbWriteGate {
         isPilot &&
         !(isDockerBackend() && table === "gm_restaurants")
       ) {
-        console.warn(
-          `[DbWriteGate] 🚧 Core returned error or unreachable in Pilot/Docker mode. Mocking INSERT on ${table}`,
-          finalResult.error
+        Logger.warn(
+          `[DbWriteGate] 🧱 Core returned error or unreachable in Pilot/Docker mode. Mocking INSERT on ${table}`,
+          { error: finalResult.error },
         );
 
         // UUID tables: use valid UUID so Core/PostgREST never sees invalid syntax when retrying
@@ -115,12 +115,12 @@ export class DbWriteGate {
         // Save to special "pilot pool" for menu reader to pick up
         if (table === "gm_products") {
           const existing = JSON.parse(
-            localStorage.getItem("chefiapp_pilot_mock_products") || "[]"
+            localStorage.getItem("chefiapp_pilot_mock_products") || "[]",
           );
           existing.push(mockData);
           localStorage.setItem(
             "chefiapp_pilot_mock_products",
-            JSON.stringify(existing)
+            JSON.stringify(existing),
           );
         }
         // Pilot: guardar mock de restaurante para getRestaurantStatus não devolver 404
@@ -131,7 +131,7 @@ export class DbWriteGate {
               id: mockData.id,
               onboarding_completed_at: null,
               billing_status: "trial",
-            })
+            }),
           );
         }
 
@@ -155,7 +155,7 @@ export class DbWriteGate {
             entityId,
             `Hybrid Write by ${callerTag}`,
             "NORMAL",
-            { op: "INSERT", caller: callerTag }
+            { op: "INSERT", caller: callerTag },
           );
         }
       } catch (err: any) {
@@ -192,7 +192,7 @@ export class DbWriteGate {
     table: AllowedTable | string,
     data: any,
     match: Record<string, any>,
-    context: { tenantId?: string }
+    context: { tenantId?: string },
   ) {
     this.enforce("UPDATE", callerTag, table, context);
 
@@ -201,7 +201,7 @@ export class DbWriteGate {
     if (!("id" in match)) {
       const error = new ConstitutionalBreachError(
         `Bulk UPDATE forbidden. Must specify 'id' in match criteria.`,
-        { table, callerTag, match }
+        { table, callerTag, match },
       );
       Logger.critical("UNSAFE_DB_OPERATION", error, { table, match });
       throw error;
@@ -243,9 +243,9 @@ export class DbWriteGate {
                 row.id,
                 `Hybrid Update by ${callerTag}`,
                 "NORMAL",
-                { op: "UPDATE", caller: callerTag }
-              )
-            )
+                { op: "UPDATE", caller: callerTag },
+              ),
+            ),
           );
         }
       } catch (err: any) {
@@ -283,7 +283,7 @@ export class DbWriteGate {
     callerTag: CallerTag | string,
     table: AllowedTable | string,
     match: Record<string, any>,
-    context: { tenantId?: string }
+    context: { tenantId?: string },
   ) {
     this.enforce("DELETE", callerTag, table, context);
 
@@ -291,7 +291,7 @@ export class DbWriteGate {
     if (!("id" in match)) {
       const error = new ConstitutionalBreachError(
         `Bulk DELETE forbidden. Must specify 'id' in match criteria.`,
-        { table, callerTag, match }
+        { table, callerTag, match },
       );
       Logger.critical("UNSAFE_DB_OPERATION", error, { table, match });
       throw error;
@@ -314,7 +314,7 @@ export class DbWriteGate {
     callerTag: CallerTag | string,
     table: AllowedTable | string,
     data: any,
-    context: { tenantId?: string }
+    context: { tenantId?: string },
   ) {
     this.enforce("UPSERT", callerTag, table, context);
     return await this.getClient().from(table).upsert(data).select();
@@ -327,7 +327,7 @@ export class DbWriteGate {
     op: AllowedOperation,
     callerTag: CallerTag | string,
     table: string,
-    ctx: { tenantId?: string }
+    ctx: { tenantId?: string },
   ) {
     // 1. PURE MODE CHECK (Law 3 - Kill Switch)
     // [SOVEREIGNTY] SCOPED ENFORCEMENT
@@ -343,7 +343,7 @@ export class DbWriteGate {
     if (KERNEL_WRITE_MODE === "PURE" && OPERATIONAL_TABLES.includes(table)) {
       const error = new ConstitutionalBreachError(
         `Direct DB write attempted in PURE mode by ${callerTag}`,
-        { op, table, tenantId: ctx.tenantId }
+        { op, table, tenantId: ctx.tenantId },
       );
       Logger.error("CRITICAL_CONSTITUTIONAL_BREACH", error, { op, table, ctx });
       throw error;
@@ -353,7 +353,7 @@ export class DbWriteGate {
     if (!isAuthorized(callerTag, table, op)) {
       const error = new ConstitutionalBreachError(
         `Unauthorized Direct DB write by ${callerTag} on ${table}`,
-        { op, table, tenantId: ctx.tenantId }
+        { op, table, tenantId: ctx.tenantId },
       );
       Logger.error("UNAUTHORIZED_DB_WRITE", error, { op, table, ctx });
       throw error;

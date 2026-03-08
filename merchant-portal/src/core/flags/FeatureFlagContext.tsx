@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import React, { createContext, useContext, useEffect, useState } from "react";
 // LEGACY / LAB — blocked in Docker mode
 import { DiagnosticEngine } from "../diagnostics/DiagnosticEngine";
+import { Logger } from "../logger";
 import { isDevStableMode } from "../runtime/devStableMode";
 import { supabase } from "../supabase";
 
@@ -74,7 +75,7 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({
       setFlags(merged);
 
       if (merged.verbose_diagnostics) {
-        console.log("[GM-FLAGS] Loaded:", merged);
+        Logger.debug("[GM-FLAGS] Loaded:", { flags: merged });
       }
     } catch (err) {
       DiagnosticEngine.emit(
@@ -108,25 +109,27 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({
           "postgres_changes",
           { event: "*", schema: "public", table: "system_config" },
           () => {
-            console.log("[GM-FLAGS] Update detected, refreshing...");
+            Logger.debug("[GM-FLAGS] Update detected, refreshing...");
             fetchFlags();
           },
         )
         .subscribe((status: string, err: Error | undefined) => {
           if (status === "SUBSCRIBED") {
-            console.log("[GM-FLAGS] Realtime subscription active");
+            Logger.debug("[GM-FLAGS] Realtime subscription active");
           } else if (status === "CHANNEL_ERROR" || err) {
             // Não bloquear o app se Realtime falhar
-            console.warn(
+            Logger.warn(
               "[GM-FLAGS] Realtime subscription failed (non-critical):",
-              err,
+              { error: String(err) },
             );
             // Continuar sem Realtime - flags ainda funcionam via polling manual
           }
         });
     } catch (err) {
       // Erro não crítico - flags ainda funcionam sem Realtime
-      console.warn("[GM-FLAGS] Failed to setup Realtime (non-critical):", err);
+      Logger.warn("[GM-FLAGS] Failed to setup Realtime (non-critical):", {
+        error: String(err),
+      });
     }
 
     return () => {

@@ -6,6 +6,7 @@
 
 // LEGACY / LAB — blocked in Docker mode
 import { isDockerBackend } from "../infra/backendAdapter";
+import { Logger } from "../logger";
 import {
   removeTabIsolated,
   setTabIsolated,
@@ -38,10 +39,10 @@ export async function checkCoreHealth(): Promise<CoreHealthResult | null> {
     if (error) {
       // RPC not deployed yet — graceful degradation
       if (error.code === "42883" || error.message?.includes("does not exist")) {
-        console.warn("[HealthCheck] health_check RPC not deployed yet");
+        Logger.warn("[HealthCheck] health_check RPC not deployed yet");
         return null;
       }
-      console.error("[HealthCheck] RPC error:", error.message);
+      Logger.error("[HealthCheck] RPC error:", error.message);
       return {
         status: "degraded",
         timestamp: new Date().toISOString(),
@@ -52,7 +53,7 @@ export async function checkCoreHealth(): Promise<CoreHealthResult | null> {
 
     return data as CoreHealthResult;
   } catch (err) {
-    console.error("[HealthCheck] Failed to call health_check RPC:", err);
+    Logger.error("[HealthCheck] Failed to call health_check RPC:", err);
     return null;
   }
 }

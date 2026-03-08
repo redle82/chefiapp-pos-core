@@ -100,7 +100,8 @@ export const EXCEPTION_REGISTRY: Record<CallerTag, ExceptionGrant> =
 
     // === ARCHIVED (DORMANT — kept for registry compatibility) ===
     OrderProcessingService: {
-      reason: "Archived — was Order Processing Service (DORMANT); write path is Core RPCs",
+      reason:
+        "Archived — was Order Processing Service (DORMANT); write path is Core RPCs",
       allowedTables: ["gm_order_requests"],
       allowedOperations: ["UPDATE"],
     },
@@ -114,9 +115,8 @@ export const isAuthorized = (
   const grant = EXCEPTION_REGISTRY[callerTag as CallerTag];
   if (!grant) return false;
 
-  // @ts-ignore - String to type safe check
   return (
-    grant.allowedTables.includes(table) &&
+    (grant.allowedTables as string[]).includes(table) &&
     grant.allowedOperations.includes(operation)
   );
 };

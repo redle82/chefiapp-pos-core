@@ -6,6 +6,7 @@
  */
 
 // LEGACY / LAB — blocked in Docker mode via core/supabase shim
+import { Logger } from "../../logger";
 import { resolveProductImageUrl } from "../../products/resolveProductImageUrl";
 import { supabase } from "../../supabase";
 import { calculateDynamicScore, getCurrentTimeSlot } from "./scoring";
@@ -94,7 +95,9 @@ export class DynamicMenuService {
       .eq("restaurant_id", restaurantId);
 
     if (dynamicsError) {
-      console.warn("[DynamicMenu] Failed to load dynamics:", dynamicsError);
+      Logger.warn("[DynamicMenu] Failed to load dynamics:", {
+        error: dynamicsError,
+      });
     }
 
     // 4. Create dynamics map
@@ -208,7 +211,7 @@ export class DynamicMenuService {
     );
 
     if (error) {
-      console.warn("[DynamicMenu] Failed to track click:", error);
+      Logger.warn("[DynamicMenu] Failed to track click:", { error });
     }
   }
 
@@ -285,9 +288,8 @@ export class DynamicMenuService {
 
     // If column doesn't exist or query fails, return defaults
     if (error || !data?.menu_settings) {
-      console.warn(
-        "[DynamicMenu] menu_settings not found, using defaults:",
-        error?.message,
+      Logger.warn(
+        `[DynamicMenu] menu_settings not found, using defaults: ${error?.message}`,
       );
       // Return defaults
       return {

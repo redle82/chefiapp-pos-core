@@ -1,5 +1,6 @@
 import { isDebugMode } from "../debugMode";
 import { getTableClient } from "../infra/coreRpc";
+import { Logger } from "../logger";
 
 /**
  * GENESIS REALITY CHECK
@@ -22,7 +23,7 @@ export class GenesisRealityCheck {
    */
   public static async judge(
     tenantId: string,
-    options?: { commit?: boolean }
+    options?: { commit?: boolean },
   ): Promise<RealityVerdict> {
     // Bypass: só com ?debug=1 (pedido explícito para testes)
     if (isDebugMode()) {
@@ -46,8 +47,8 @@ export class GenesisRealityCheck {
       return verdict;
     }
 
-    console.log(
-      `[GenesisRealityCheck] ⚖️ Judging Reality for Tenant: ${tenantId}`
+    Logger.info(
+      `[GenesisRealityCheck] ⚖️ Judging Reality for Tenant: ${tenantId}`,
     );
 
     const failures: string[] = [];
@@ -64,7 +65,7 @@ export class GenesisRealityCheck {
 
     if (!tenant || !tenant.onboarding_completed || tenant.status !== "active") {
       failures.push(
-        "Tenant not fully born (onboarding_completed=false or status!=active)"
+        "Tenant not fully born (onboarding_completed=false or status!=active)",
       );
     } else {
       checksPassed++;
@@ -82,7 +83,7 @@ export class GenesisRealityCheck {
 
     if (productCount === 0) {
       failures.push(
-        "Menu is empty (No products found - canon may have failed to inject)"
+        "Menu is empty (No products found - canon may have failed to inject)",
       );
     } else {
       checksPassed++;
@@ -121,10 +122,10 @@ export class GenesisRealityCheck {
       contractVersion: this.CONTRACT_VERSION,
     };
 
-    console.log(
+    Logger.info(
       `[GenesisRealityCheck] Verdict: ${
         ready ? "APPROVED" : "REJECTED"
-      } (${score}%)`
+      } (${score}%)`,
     );
 
     // PERSISTENCE (The Execution)
@@ -133,7 +134,9 @@ export class GenesisRealityCheck {
       // Ideally: If flow verified => LIVE, else READY. But for now PASS => LIVE (Simplified for Phase 2)
 
       if (tenant?.reality_status !== newStatus) {
-        console.log(`[GenesisRealityCheck] 💾 Committing Status: ${newStatus}`);
+        Logger.debug(
+          `[GenesisRealityCheck] 💾 Committing Status: ${newStatus}`,
+        );
         await client
           .from("gm_restaurants")
           .update({

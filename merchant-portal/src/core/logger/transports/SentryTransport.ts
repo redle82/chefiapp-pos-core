@@ -21,7 +21,15 @@ export class SentryTransport implements ILogTransport {
 // Re-exported by Logger — no-op stubs when Sentry SDK not configured
 export const Sentry = typeof window !== "undefined" ? (window as any).Sentry : undefined;
 
-export function configureSentryScope(_options: SentryContextOptions): void {}
+export function configureSentryScope(options: SentryContextOptions): void {
+  if (typeof window === "undefined") return;
+  const S = (window as any).Sentry;
+  if (!S?.setTag) return;
+  try {
+    if (options.restaurantId != null) S.setTag("restaurant_id", String(options.restaurantId));
+    if (options.userId != null) S.setTag("user_id", String(options.userId));
+  } catch (_) {}
+}
 
 export function setSentryUser(_userId: string | null, _attrs?: Record<string, unknown>): void {}
 

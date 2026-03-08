@@ -1,115 +1,165 @@
 /**
  * SAF-T Export Service — Exportação de ficheiro SAF-T XML por período.
- * Fonte: gm_orders no intervalo [from, to]; geração via fiscal-modules.
+ *
+ * Fonte de verdade: gm_fiscal_documents (documentos fiscais com hash_signature,
+ * fiscal_number, items_snapshot e tax_details reais — NUNCA placeholders).
+ *
+ * Antigo: lia gm_orders com HASH-${order.id}/SEAL-${order.id} — ILEGAL.
+ * Refatoração cirúrgica: só documenta o que já tem selo fiscal no Core.
  */
 
-import { getTableClient } from "../infra/coreRpc";
-import type { TaxDocument } from "../../../../fiscal-modules/types";
 import {
   generateSaftXmlExport,
   type SaftExportCompany,
 } from "../../../../fiscal-modules/pt/saft/saftXml";
+import type { TaxDocument } from "../../../../fiscal-modules/types";
+import { getTableClient } from "../infra/coreRpc";
 import { buildAtcud, buildInvoiceNumber } from "./saftExportUtils";
 
 export interface SaftExportParams {
   restaurantId: string;
   from: string; // YYYY-MM-DD
-  to: string;   // YYYY-MM-DD
+  to: string; // YYYY-MM-DD
 }
 
 /**
- * Fetches orders in date range and builds TaxDocument[] for PT (SAF-T).
+ * Converts gm_fiscal_documents rows into TaxDocument[] for the SAF-T XML generator.
+ * All data comes from the fiscal document snapshot — no recalculation needed.
  */
-async function ordersToTaxDocuments(
-  orders: any[],
-  restaurant: { name?: string; address?: string; city?: string; postal_code?: string; tax_registration_number?: string },
-): Promise<TaxDocument[]> {
-  const series = `FT-${orders[0]?.created_at?.slice(0, 7).replace("-", "") || new Date().toISOString().slice(0, 7).replace("-", "")}`;
-  const docs: TaxDocument[] = [];
+function fiscalDocsToTaxDocuments(
+  fiscalDocs: any[],
+  restaurant: {
+    name?: string;
+    address?: string;
+    city?: string;
+    postal_code?: string;
+    tax_registration_number?: string;
+  },
+): TaxDocument[] {
+  return fiscalDocs.map((doc) => {
+    const grossCents = doc.gross_amount_cents ?? 0;
+    const taxCents = doc.tax_amount_cents ?? 0;
+    const totalAmount = grossCents / 100;
 
-  for (let i = 0; i < orders.length; i++) {
-    const order = orders[i];
-    const totalCents = order.total_cents ?? 0;
-    const totalAmount = totalCents / 100;
-    const vatRate = 0.23;
-    const vatAmount = (totalAmount * vatRate) / (1 + vatRate);
-    const seq = i + 1;
-    const invoiceNumber = buildInvoiceNumber(series, seq);
-    const atcud = buildAtcud(series, seq);
-    const issuedAt = order.created_at || new Date().toISOString();
+    // Tax details from snapshot (already computed at document creation time)
+    const taxDetails: Array<{
+      rate: number;
+      base_cents: number;
+      amount_cents: number;
+      name: string;
+    }> = Array.isArray(doc.tax_details) ? doc.tax_details : [];
 
-    const orderItems = order.items || order.gm_order_items || [];
-    const items = orderItems.map((item: any) => ({
-      code: item.product_id || "N/A",
-      description: item.name_snapshot || item.product_name || "Item",
+    const primaryVat = taxDetails.find(
+      (t: any) => t.name === "IVA" || t.rate > 0,
+    );
+    const vatRate = primaryVat?.rate ?? 0.23;
+    const vatAmountCents = primaryVat?.amount_cents ?? taxCents;
+
+    // Items from snapshot (already frozen at document creation time)
+    const itemsSnapshot: Array<{
+      code: string;
+      description: string;
+      quantity: number;
+      unit_price_cents: number;
+      total_cents: number;
+    }> = Array.isArray(doc.items_snapshot) ? doc.items_snapshot : [];
+
+    const items = itemsSnapshot.map((item: any) => ({
+      code: item.code || item.product_id || "N/A",
+      description: item.description || item.name_snapshot || "Item",
       quantity: item.quantity || 1,
-      unit_price: (item.price_snapshot || item.unit_price || 0) / 100,
-      total:
-        ((item.price_snapshot || item.unit_price || 0) * (item.quantity || 1)) /
-        100,
+      unit_price: (item.unit_price_cents ?? item.unit_price ?? 0) / 100,
+      total: (item.total_cents ?? item.total ?? 0) / 100,
     }));
 
-    docs.push({
+    // Build invoice number from real fiscal_series + fiscal_number
+    const series = doc.fiscal_series || "A";
+    const fiscalNumber = doc.fiscal_number ?? 0;
+    const invoiceNumber = buildInvoiceNumber(`FT-${series}`, fiscalNumber);
+    const atcud = buildAtcud(`FT-${series}`, fiscalNumber);
+    const issuedAt = doc.created_at || new Date().toISOString();
+
+    return {
       doc_type: "SAF-T",
-      ref_event_id: order.id,
-      ref_seal_id: `SEAL-${order.id}`,
+      ref_event_id: doc.source_event_id || doc.order_id || doc.id,
+      ref_seal_id: doc.seal_id || doc.id,
       total_amount: totalAmount,
-      taxes: { vat: vatAmount },
+      taxes: { vat: vatAmountCents / 100 },
       vatRate,
-      vatAmount: Math.round(vatAmount * 100),
+      vatAmount: vatAmountCents,
       items,
       raw_payload: {
-        order_id: order.id,
-        restaurant_id: order.restaurant_id,
+        fiscal_document_id: doc.id,
+        order_id: doc.order_id,
+        restaurant_id: doc.restaurant_id,
         restaurant_name: restaurant.name || "Restaurante",
         address: restaurant.address || "N/A",
         city: restaurant.city || "N/A",
         postal_code: restaurant.postal_code || "0000-000",
-        tax_registration_number: restaurant.tax_registration_number || "999999999",
+        tax_registration_number:
+          restaurant.tax_registration_number || "999999999",
         issued_at: issuedAt,
         invoice_number: invoiceNumber,
+        fiscal_number: fiscalNumber,
+        fiscal_series: series,
         atcud,
-        hash_chain: `HASH-${order.id}`,
+        hash_signature: doc.hash_signature, // Real SHA-256 from Core — NEVER a placeholder
+        qr_code_data: doc.qr_code_data,
+        gov_protocol: doc.gov_protocol,
+        status: doc.status,
       },
-    });
-  }
-
-  return docs;
+    };
+  });
 }
 
 /**
  * Exports SAF-T XML for the given restaurant and date range.
  * Returns XML string; caller can trigger download.
+ *
+ * Queries gm_fiscal_documents (the fiscal source of truth) — NOT gm_orders.
+ * Only ACCEPTED or SUBMITTED documents are included; DRAFT/ERROR are excluded.
  */
 export async function exportSaftXml(
   params: SaftExportParams,
-): Promise<{ xml: string; error?: string }> {
+): Promise<{ xml: string; documentCount: number; error?: string }> {
   try {
     const client = await getTableClient();
 
     const fromDate = `${params.from}T00:00:00.000Z`;
     const toDate = `${params.to}T23:59:59.999Z`;
 
-    const { data: orders, error: ordersError } = await client
-      .from("gm_orders")
-      .select("id, restaurant_id, total_cents, created_at, items:gm_order_items(*)")
+    // Query fiscal documents — the legal source of truth
+    const { data: fiscalDocs, error: docsError } = await client
+      .from("gm_fiscal_documents")
+      .select(
+        "id, restaurant_id, order_id, doc_type, fiscal_series, fiscal_number, " +
+          "gross_amount_cents, net_amount_cents, tax_amount_cents, currency, " +
+          "tax_details, items_snapshot, jurisdiction, status, " +
+          "seal_id, source_event_id, hash_signature, qr_code_data, gov_protocol, " +
+          "created_at",
+      )
       .eq("restaurant_id", params.restaurantId)
+      .eq("jurisdiction", "PT")
+      .in("status", ["ACCEPTED", "SUBMITTED", "PENDING"])
+      .in("doc_type", ["INVOICE", "SIMPLIFIED_INVOICE", "CREDIT_NOTE"])
       .gte("created_at", fromDate)
       .lte("created_at", toDate)
-      .order("created_at", { ascending: true });
+      .order("fiscal_number", { ascending: true });
 
-    if (ordersError) {
-      return { xml: "", error: ordersError.message };
+    if (docsError) {
+      return { xml: "", documentCount: 0, error: docsError.message };
     }
 
-    const orderList = Array.isArray(orders) ? orders : [];
-    if (orderList.length === 0) {
+    const docList = Array.isArray(fiscalDocs) ? fiscalDocs : [];
+    if (docList.length === 0) {
       return {
         xml: "",
-        error: "Nenhum pedido encontrado no período selecionado.",
+        documentCount: 0,
+        error: "Nenhum documento fiscal encontrado no período selecionado.",
       };
     }
 
+    // Restaurant info for company header
     const { data: restaurantRow, error: restError } = await client
       .from("gm_restaurants")
       .select("id, name, address, city, postal_code")
@@ -117,7 +167,11 @@ export async function exportSaftXml(
       .single();
 
     if (restError || !restaurantRow) {
-      return { xml: "", error: restError?.message || "Restaurante não encontrado." };
+      return {
+        xml: "",
+        documentCount: 0,
+        error: restError?.message || "Restaurante não encontrado.",
+      };
     }
 
     const restaurant = {
@@ -128,7 +182,7 @@ export async function exportSaftXml(
       tax_registration_number: (restaurantRow as any).tax_registration_number,
     };
 
-    const documents = await ordersToTaxDocuments(orderList, restaurant);
+    const documents = fiscalDocsToTaxDocuments(docList, restaurant);
     const company: SaftExportCompany = {
       companyId: params.restaurantId.slice(0, 20),
       taxRegistrationNumber: restaurant.tax_registration_number || "999999999",
@@ -143,10 +197,11 @@ export async function exportSaftXml(
       endDate: params.to,
     });
 
-    return { xml };
+    return { xml, documentCount: docList.length };
   } catch (err: any) {
     return {
       xml: "",
+      documentCount: 0,
       error: err?.message || "Erro ao gerar SAF-T.",
     };
   }

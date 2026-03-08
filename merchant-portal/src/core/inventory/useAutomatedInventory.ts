@@ -1,52 +1,57 @@
 /**
  * P5-4: Automated Inventory Hook
- * 
+ *
  * Hook para usar gestão automática de estoque
  */
 
-import { useState, useEffect } from 'react';
-import { automatedInventoryService, type InventoryAlert } from './AutomatedInventoryService';
-import { getTabIsolated } from '../storage/TabIsolatedStorage';
+import { useEffect, useState } from "react";
+import { Logger } from "../logger";
+import { getTabIsolated } from "../storage/TabIsolatedStorage";
+import {
+  automatedInventoryService,
+  type InventoryAlert,
+} from "./AutomatedInventoryService";
 
 export function useAutomatedInventory() {
-    const [alerts, setAlerts] = useState<InventoryAlert[]>([]);
-    const [loading, setLoading] = useState(false);
+  const [alerts, setAlerts] = useState<InventoryAlert[]>([]);
+  const [loading, setLoading] = useState(false);
 
-    const checkInventory = async () => {
-        const restaurantId = getTabIsolated('chefiapp_restaurant_id');
-        if (!restaurantId) return;
+  const checkInventory = async () => {
+    const restaurantId = getTabIsolated("chefiapp_restaurant_id");
+    if (!restaurantId) return;
 
-        setLoading(true);
-        try {
-            const inventoryAlerts = await automatedInventoryService.checkInventoryLevels(restaurantId);
-            setAlerts(inventoryAlerts);
-        } catch (err) {
-            console.error('[useAutomatedInventory] Error:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    setLoading(true);
+    try {
+      const inventoryAlerts =
+        await automatedInventoryService.checkInventoryLevels(restaurantId);
+      setAlerts(inventoryAlerts);
+    } catch (err) {
+      Logger.error("[useAutomatedInventory] Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    useEffect(() => {
-        // Check on mount
-        checkInventory();
+  useEffect(() => {
+    // Check on mount
+    checkInventory();
 
-        // Check every 5 minutes
-        const interval = setInterval(checkInventory, 5 * 60 * 1000);
-        return () => clearInterval(interval);
-    }, []);
+    // Check every 5 minutes
+    const interval = setInterval(checkInventory, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-    const getReorderSuggestions = async () => {
-        const restaurantId = getTabIsolated('chefiapp_restaurant_id');
-        if (!restaurantId) return [];
+  const getReorderSuggestions = async () => {
+    const restaurantId = getTabIsolated("chefiapp_restaurant_id");
+    if (!restaurantId) return [];
 
-        return automatedInventoryService.getReorderSuggestions(restaurantId);
-    };
+    return automatedInventoryService.getReorderSuggestions(restaurantId);
+  };
 
-    return {
-        alerts,
-        loading,
-        checkInventory,
-        getReorderSuggestions,
-    };
+  return {
+    alerts,
+    loading,
+    checkInventory,
+    getReorderSuggestions,
+  };
 }

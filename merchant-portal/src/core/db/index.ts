@@ -8,6 +8,7 @@
 
 import { getCoreSessionAsync } from "../auth/getCoreSession";
 import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
+import { Logger } from "../logger";
 
 export type CoreClient = {
   kind: "docker-core";
@@ -117,6 +118,6 @@ export const supabase = db;
 export async function coreNotImplemented<T = unknown>(
   feature: string,
 ): Promise<T> {
-  console.warn(`[CORE] Legacy: ${feature} not implemented. Use Core client.`);
+  Logger.warn(`[CORE] Legacy: ${feature} not implemented. Use Core client.`);
   throw new Error(`CORE: ${feature} not implemented. Use Core client.`);
 }

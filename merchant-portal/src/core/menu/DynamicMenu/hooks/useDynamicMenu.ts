@@ -10,6 +10,7 @@ import {
   getPilotProducts,
   type PilotProductStored,
 } from "../../../../infra/menuPilotFallback";
+import { Logger } from "../../../logger";
 import { MenuCache } from "../../../sync/MenuCache";
 import { DynamicMenuService } from "../DynamicMenuService";
 import type {
@@ -38,7 +39,7 @@ interface UseDynamicMenuReturn {
 }
 
 export function useDynamicMenu(
-  options: UseDynamicMenuOptions
+  options: UseDynamicMenuOptions,
 ): UseDynamicMenuReturn {
   const {
     restaurantId,
@@ -59,16 +60,18 @@ export function useDynamicMenu(
       setLoading(true);
       setError(null);
 
-      // Offline / Core unreachable: try menu cache first, then pilot
-      const isOffline =
-        typeof navigator !== "undefined" && !navigator.onLine;
+      // Offline / Core unreachable: try menu cache first, then pilot (Fase 3: ConnectivityService único)
+      const { ConnectivityService } = await import(
+        "../../../sync/ConnectivityService"
+      );
+      const isOffline = ConnectivityService.getConnectivity() !== "online";
       if (coreReachable === false || isOffline) {
         const cached = await MenuCache.get(restaurantId);
         if (cached && typeof cached === "object" && "fullCatalog" in cached) {
           setMenu(cached as DynamicMenuResponse);
           return;
         }
-        console.warn(
+        Logger.warn(
           "[useDynamicMenu] Core unreachable or offline, using pilot fallback",
         );
         const pilot = getPilotProducts(restaurantId);
@@ -81,7 +84,7 @@ export function useDynamicMenu(
             available: true,
             score: 0,
             is_favorite: false,
-          })
+          }),
         );
 
         const fullCatalog: CategoryWithProducts[] = [
@@ -110,11 +113,13 @@ export function useDynamicMenu(
       try {
         await MenuCache.put(restaurantId, result);
       } catch (e) {
-        console.warn("[useDynamicMenu] Menu cache write failed:", e);
+        Logger.warn("[useDynamicMenu] Menu cache write failed:", {
+          error: String(e),
+        });
       }
     } catch (err) {
       setError(err as Error);
-      console.error("[useDynamicMenu] Load failed:", err);
+      Logger.error("[useDynamicMenu] Load failed:", err);
 
       // Try menu cache on network failure
       const cached = await MenuCache.get(restaurantId).catch(() => null);
@@ -136,7 +141,7 @@ export function useDynamicMenu(
               available: true,
               score: 0,
               is_favorite: false,
-            })
+            }),
           );
           setMenu({
             contextual: mapped,
@@ -180,10 +185,10 @@ export function useDynamicMenu(
         // Refresh after 100ms to get real score
         setTimeout(loadMenu, 100);
       } catch (err) {
-        console.error("[useDynamicMenu] Track click failed:", err);
+        Logger.error("[useDynamicMenu] Track click failed:", err);
       }
     },
-    [restaurantId, loadMenu]
+    [restaurantId, loadMenu],
   );
 
   const toggleFavorite = useCallback(
@@ -192,17 +197,17 @@ export function useDynamicMenu(
         await DynamicMenuService.toggleFavorite(
           restaurantId,
           productId,
-          isFavorite
+          isFavorite,
         );
 
         // Immediately refresh to reflect change
         await loadMenu();
       } catch (err) {
-        console.error("[useDynamicMenu] Toggle favorite failed:", err);
+        Logger.error("[useDynamicMenu] Toggle favorite failed:", err);
         throw err;
       }
     },
-    [restaurantId, loadMenu]
+    [restaurantId, loadMenu],
   );
 
   // Initial load
@@ -215,7 +220,7 @@ export function useDynamicMenu(
     if (!autoRefresh) return;
 
     const interval = setInterval(() => {
-      console.log("[useDynamicMenu] Auto-refreshing menu...");
+      Logger.debug("[useDynamicMenu] Auto-refreshing menu...");
       loadMenu();
     }, 5 * 60 * 1000); // 5 minutes
 

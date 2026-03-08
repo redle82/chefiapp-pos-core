@@ -85,7 +85,7 @@ export class ReconciliationEngine {
     const jobList = Array.isArray(jobs) ? jobs : [];
     if (jobList.length === 0) return stats;
 
-    console.log(`[Reconciler] Processing ${jobList.length} jobs...`);
+    Logger.debug(`[Reconciler] Processing ${jobList.length} jobs...`);
 
     type JobRow = {
       id: string;
@@ -234,7 +234,7 @@ export class ReconciliationEngine {
       .update({ status: "RESOLVED", updated_at: new Date().toISOString() })
       .eq("id", job.id);
 
-    console.log(`[Reconciler] Repaired CashRegister ${job.entity_id}`);
+    Logger.debug(`[Reconciler] Repaired CashRegister ${job.entity_id}`);
   }
 
   private static async markQuarantined(

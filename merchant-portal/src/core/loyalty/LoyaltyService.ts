@@ -8,6 +8,7 @@
  */
 
 import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
+import { Logger } from "../logger";
 
 export interface LoyaltyCard {
   id: string;
@@ -131,7 +132,7 @@ export class LoyaltyService {
         .single();
 
       if (error || !created) {
-        console.error("[LoyaltyService] findOrCreateCard insert error", error);
+        Logger.error("[LoyaltyService] findOrCreateCard insert error", error);
         // Return a safe fallback
         const now = new Date().toISOString();
         return {

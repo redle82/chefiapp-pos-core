@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { Logger } from "../logger";
 import { healthEngine } from "./HealthEngine";
 
 export interface SimpleHealthScore {
@@ -19,7 +20,7 @@ export interface SimpleHealthScore {
 
 export function useHealthScore(restaurantId: string | null) {
   const [healthScore, setHealthScore] = useState<SimpleHealthScore | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(true);
 
@@ -41,11 +42,11 @@ export function useHealthScore(restaurantId: string | null) {
       try {
         setLoading(true);
         const score = await healthEngine.calculateSimpleHealthScore(
-          restaurantId
+          restaurantId,
         );
         setHealthScore(score);
       } catch (error) {
-        console.error("[useHealthScore] Erro ao calcular score:", error);
+        Logger.error("[useHealthScore] Erro ao calcular score:", error);
         // Fallback seguro
         setHealthScore({
           score: 85,
