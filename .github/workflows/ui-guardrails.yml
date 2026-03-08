@@ -1,20 +1,12 @@
 name: UI Guardrails (Anti-Duplication)
 
+# ⚠️ STABILISATION: demoted to nightly + manual (was: push+PR path-filtered)
+# Reintroduce as blocking in Phase 2 — see CI_GOVERNANCE.md
+
 on:
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'merchant-portal/src/ui/**'
-      - 'docs/UI_CANON.md'
-      - 'scripts/check-ui-guardrails.mjs'
-      - '.github/workflows/ui-guardrails.yml'
-  push:
-    branches: [ main ]
-    paths:
-      - 'merchant-portal/src/ui/**'
-      - 'docs/UI_CANON.md'
-      - 'scripts/check-ui-guardrails.mjs'
-      - '.github/workflows/ui-guardrails.yml'
+  schedule:
+    - cron: "0 4 * * 6" # Weekly Saturday 04:00 UTC
+  workflow_dispatch:
 
 jobs:
   guardrails:
@@ -30,7 +22,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Run UI guardrails
         run: node scripts/check-ui-guardrails.mjs
