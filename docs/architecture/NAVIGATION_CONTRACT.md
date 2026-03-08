@@ -1,9 +1,5 @@
 # Contrato de Navegação (fluxo canónico)
 
-**Status:** LEGACY (SUPERSEDED)
-**Autoridade vigente:** [CHEFIAPP_OS_ARCHITECTURE_V1.md](./CHEFIAPP_OS_ARCHITECTURE_V1.md) + [CORE_RUNTIME_AND_ROUTES_CONTRACT.md](./CORE_RUNTIME_AND_ROUTES_CONTRACT.md)
-**Política:** este documento permanece apenas para contexto histórico/operacional e não pode sobrepor contratos canônicos.
-
 **Objetivo:** Fonte única de verdade para a jornada Auth → welcome → activation → dashboard. Nenhum bypass do Centro de Ativação; rotas antigas redirecionam; nenhum botão morto.
 
 **Fonte de verdade (código):** [CoreFlow.ts](../../merchant-portal/src/core/flow/CoreFlow.ts) (`resolveNextRoute`), [FlowGate.tsx](../../merchant-portal/src/core/flow/FlowGate.tsx) (aplica o redirect). Testes: [CoreFlow.test.ts](../../merchant-portal/src/core/flow/CoreFlow.test.ts), [routeGuards.test.ts](../../merchant-portal/src/core/navigation/routeGuards.test.ts). API nomeada: [routeGuards.ts](../../merchant-portal/src/core/navigation/routeGuards.ts). E2E: [navigation-contract.spec.ts](../../merchant-portal/tests/e2e/navigation-contract.spec.ts).

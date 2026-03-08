@@ -1,10 +1,8 @@
 # TENANT_SELECTION_CONTRACT
 
-> ⚠️ **PARTIALLY SUPERSEDED** — References to `AppDomainWrapper` / `FlowGate` as executors of tenant selection are stale. `AppDomainWrapper` was deleted in PR-G (refactor/boot-pipeline). Selection logic lives in `TenantContext`.
-
-**Status:** CANONICAL
-**Tipo:** Contrato NON-CORE — seleção de tenant (restaurante ativo)
-**Local:** docs/architecture/TENANT_SELECTION_CONTRACT.md
+**Status:** CANONICAL  
+**Tipo:** Contrato NON-CORE — seleção de tenant (restaurante ativo)  
+**Local:** docs/architecture/TENANT_SELECTION_CONTRACT.md  
 **Hierarquia:** Subordinado a [APPLICATION_BOOT_CONTRACT.md](./APPLICATION_BOOT_CONTRACT.md) e [CAMINHO_DO_CLIENTE.md](./CAMINHO_DO_CLIENTE.md)
 
 ---
@@ -17,11 +15,11 @@ Definir quando a seleção de tenant acontece, os casos 0 / 1 / N, persistência
 
 ## Rota
 
-| Campo          | Valor                                                                   |
-| -------------- | ----------------------------------------------------------------------- |
-| **URL**        | `/app/select-tenant`                                                    |
-| **Componente** | SelectTenantPage                                                        |
-| **Acessível**  | Utilizador autenticado; não exige tenant selado (rota fora do RoleGate) |
+| Campo | Valor |
+|-------|--------|
+| **URL** | `/app/select-tenant` |
+| **Componente** | SelectTenantPage |
+| **Acessível** | Utilizador autenticado; não exige tenant selado (rota fora do RoleGate) |
 
 ---
 
@@ -37,10 +35,10 @@ A decisão de redirecionar para `/app/select-tenant` (quando não há tenant sel
 
 ## Casos 0 / 1 / N
 
-| Caso               | Comportamento                                                                                                                                                                       |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **0 memberships**  | SelectTenantPage renderiza Navigate to `/bootstrap` (replace).                                                                                                                      |
-| **1 membership**   | SelectTenantPage chama switchTenant(memberships[0].restaurant_id) e navigate("/dashboard", { replace: true }).                                                                      |
+| Caso | Comportamento |
+|------|----------------|
+| **0 memberships** | SelectTenantPage renderiza Navigate to `/bootstrap` (replace). |
+| **1 membership** | SelectTenantPage chama switchTenant(memberships[0].restaurant_id) e navigate("/dashboard", { replace: true }). |
 | **>1 memberships** | SelectTenantPage renderiza TenantSelector (modo full). Após utilizador escolher, TenantSelector chama switchTenant(id); SelectTenantPage reage a tenantId e navigate("/dashboard"). |
 
 ---

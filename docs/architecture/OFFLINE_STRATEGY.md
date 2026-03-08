@@ -80,4 +80,63 @@ Ref.: [OPERATIONAL_UI_RESILIENCE_CONTRACT](./OPERATIONAL_UI_RESILIENCE_CONTRACT.
 
 ---
 
+## 6. Fila offline POS PWA (TPV / Waiter / KDS)
+
+Fluxo consolidado: UI → OrderContext → Fila IndexedDB → SyncEngine → Core.
+
+### 6.1 Diagrama do fluxo
+
+```mermaid
+sequenceDiagram
+  participant UI as TPV/Waiter
+  participant OrderContext as OrderContextReal
+  participant Offline as OfflineOrderContext
+  participant Queue as IndexedDBQueue
+  participant Sync as SyncEngine
+  participant Core as Core RPC
+
+  UI->>OrderContext: createOrder(input) / performOrderAction("pay", payload)
+  OrderContext->>Offline: isOffline
+  alt isOffline
+    OrderContext->>Offline: addToQueue(payload) / updateOfflineOrder(PAY)
+    Offline->>Queue: put(item)
+    Offline->>Sync: processQueue()
+    OrderContext-->>UI: optimistic local order / paid
+  else online
+    OrderContext->>Core: createOrderAtomic / process_order_payment
+    Core-->>OrderContext: orderId / success
+    OrderContext-->>UI: order / paid
+  end
+  Note over Sync,Core: When online (or degraded), SyncEngine processes Queue and calls Core per item
+```
+
+### 6.2 Regras: fila vs chamada direta
+
+| Condição | Comportamento |
+|----------|----------------|
+| **Online** (`connectivity === 'online'`) | Chamada direta ao Core (createOrderAtomic, process_order_payment, etc.). |
+| **Offline** (`connectivity === 'offline'`) | Escrita enfileirada em IndexedDB (ORDER_CREATE, ORDER_PAY, ORDER_UPDATE, etc.); UI otimista. |
+| **Degradado** (`connectivity === 'degraded'`) | SyncEngine continua a tentar processar a fila (heartbeat ao Core falhou mas navegador diz online). |
+
+### 6.3 Conectividade (heartbeat)
+
+- **Sinal rápido:** `navigator.onLine` (offline → não processar fila).
+- **Heartbeat opcional ao Core:** `HEAD CORE_URL/rest/v1/` (configurável: `VITE_OFFLINE_HEARTBEAT_ENABLED`, intervalo, N falhas para considerar "degraded").
+- **Estado composto:** `connectivity: 'online' | 'offline' | 'degraded'`; `isOffline` na UI = offline ou degradado quando se quer mostrar "Modo Offline".
+
+### 6.4 Pagamento em modo offline
+
+- **Permitido offline:** apenas método **dinheiro** (cash/manual). Cartão e PIX exigem rede.
+- **Fluxo:** Utilizador confirma pagamento em dinheiro → `performOrderAction("pay", { method: "cash" })` → se `isOffline`, `updateOfflineOrder(orderId, 'PAY', { amountCents, method, restaurantId, cashRegisterId, ... })` → item ORDER_PAY na fila → quando online, SyncEngine chama `PaymentEngine.processPayment` com o payload.
+
+### 6.5 Impressão em modo offline (spooler)
+
+- **Store:** IndexedDB `chefiapp_print_queue` (jobs com id, type, orderId, restaurantId, payload, status: pending | sent | failed, createdAt, attempts, lastError).
+- **Enfileirar:** Quando a UI pede "imprimir comanda" e `isOffline` é true → `PrintQueue.put(job)` com type `kitchen_ticket` e payload (snapshot do pedido para browser print); toast "Impressão em fila; será enviada quando a ligação voltar."
+- **Enviar:** Quando a rede está disponível, o SyncEngine após processar a fila de pedidos chama `processPrintQueue()`: para cada job pendente, chama `request_print` (RPC Core); se status `sent` e type `kitchen_ticket`, aciona `FiscalPrinter.printKitchenTicket(payload)` (browser print).
+- **Reprint:** "Reimprimir comanda" usa o mesmo fluxo: em offline adiciona novo job à fila.
+- **Integração:** Core `request_print` (p_restaurant_id, p_type, p_order_id, p_payload); UI não chama gateway em offline.
+
+---
+
 *Documento vivo. Alterações em B1/B2/B4 ou em MENU_FALLBACK / OPERATIONAL_UI_RESILIENCE devem ser reflectidas aqui.*

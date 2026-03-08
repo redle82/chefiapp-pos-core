@@ -1,8 +1,6 @@
 # Tenancy Kernel Contract
-
+>
 > **Strict Enforcement of Tenant Sovereignty in Core Engine**
-
-> ⚠️ **PARTIALLY SUPERSEDED** — Section 5 reference to `AppDomainWrapper` waiting for `TenantProvider` is stale. `AppDomainWrapper` was deleted in PR-G (refactor/boot-pipeline). Boot resolution now flows through `TenantContext` directly.
 
 This document establishes the "Kernel Laws" regarding multi-tenancy.
 Violation of these laws defaults to `BLOCK_RELEASE`.
@@ -49,13 +47,12 @@ One Executor instance SHALL NOT serve multiple tenants unless it explicitly swit
 The domain cannot initialize (hydrate state, subscribe to events) until `TenantId` is **resolved** and **stable**.
 
 - **App Loading:** `AppDomainWrapper` waits for `TenantProvider` to signal `resolved`.
-- **Race Conditions:** Any event received _before_ resolution is dropped or buffered, never applied to "null" tenant.
+- **Race Conditions:** Any event received *before* resolution is dropped or buffered, never applied to "null" tenant.
 
 ## 5. Security & Isolation
 
-- **Row Level Security (RLS):** DB policies are the final guard. The application code must behave _as if_ RLS didn't exist (fail-closed logic), but relying on RLS is mandatory for defense-in-depth.
+- **Row Level Security (RLS):** DB policies are the final guard. The application code must behave *as if* RLS didn't exist (fail-closed logic), but relying on RLS is mandatory for defense-in-depth.
 - **Leaked Subscriptions:** `supabase.channel` MUST include `filter: 'restaurant_id=eq.' + tenantId`. Subscriptions without filters are banned.
 
 ---
-
-_Signed: Engineering Audit, Jan 2026_
+*Signed: Engineering Audit, Jan 2026*
