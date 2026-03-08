@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useFormatLocale } from "../../../core/i18n/useFormatLocale";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 
 interface Reservation {
@@ -33,6 +34,7 @@ export function TPVMobileReservationsView({
   restaurantId,
   onSelectReservation,
 }: TPVMobileReservationsViewProps) {
+  const locale = useFormatLocale();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [dayFilter, setDayFilter] = useState<"today" | "tomorrow" | "week">(
@@ -125,7 +127,7 @@ export function TPVMobileReservationsView({
 
   const formatTime = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleTimeString("pt-PT", {
+    return d.toLocaleTimeString(locale, {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -138,7 +140,7 @@ export function TPVMobileReservationsView({
 
     if (d.toDateString() === today.toDateString()) return "Hoje";
     if (d.toDateString() === tomorrow.toDateString()) return "Amanhã";
-    return d.toLocaleDateString("pt-PT", {
+    return d.toLocaleDateString(locale, {
       weekday: "short",
       day: "numeric",
       month: "short",

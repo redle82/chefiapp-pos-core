@@ -20,6 +20,18 @@ import React, {
   useRef,
   useState,
 } from "react";
+import {
+  fetchInstalledModules,
+  fetchRestaurant,
+  fetchSetupStatus,
+  getOrCreateRestaurantId,
+} from "../infra/readers/RuntimeReader";
+import {
+  insertInstalledModule as persistInstalledModule,
+  setProductMode as persistProductMode,
+  setRestaurantStatus as persistRestaurantStatus,
+  upsertSetupStatus as persistSetupStatus,
+} from "../infra/writers/RuntimeWriter";
 import { isDebugMode } from "../core/debugMode";
 import { isDockerBackend } from "../core/infra/backendAdapter";
 import {
@@ -36,21 +48,9 @@ import {
   getModuleCapabilityEntry,
   type ModuleCapabilityEntry,
 } from "../core/modules/moduleCatalog";
-import { TRIAL_RESTAURANT_ID } from "../core/readiness/operationalRestaurant";
 import { isDevStableMode } from "../core/runtime/devStableMode";
 import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
-import {
-  fetchInstalledModules,
-  fetchRestaurant,
-  fetchSetupStatus,
-  getOrCreateRestaurantId,
-} from "../infra/readers/RuntimeReader";
-import {
-  insertInstalledModule as persistInstalledModule,
-  setProductMode as persistProductMode,
-  setRestaurantStatus as persistRestaurantStatus,
-  upsertSetupStatus as persistSetupStatus,
-} from "../infra/writers/RuntimeWriter";
+import { clearActiveTenant } from "../core/tenant/TenantResolver";
 
 /** Estado operacional do Core: avisos só quando coreMode === 'offline-erro'. */
 export type CoreMode = "offline-intencional" | "online" | "offline-erro";
@@ -362,9 +362,7 @@ export function RestaurantRuntimeProvider({
         plan: "basic",
         status: "active",
         billing_status: "trial",
-        trial_ends_at: new Date(
-          Date.now() + 14 * 24 * 60 * 60 * 1000,
-        ).toISOString(),
+        trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
         capabilities: {},
         setup_status: TRIAL_SETUP_STATUS,
         isPublished: true,
@@ -400,7 +398,7 @@ export function RestaurantRuntimeProvider({
       billing_status: "trial",
       trial_ends_at: null,
       capabilities,
-      setup_status: TRIAL_SETUP_STATUS,
+      setup_status: {},
       isPublished: true,
       systemState: deriveSystemState({
         hasOrganization: true,
@@ -425,20 +423,7 @@ export function RestaurantRuntimeProvider({
         typeof window !== "undefined"
           ? localStorage.getItem("chefiapp_restaurant_id")
           : null;
-      // If user explicitly logged out, respect that — don't auto-create trial
-      const didLogout =
-        typeof window !== "undefined" &&
-        localStorage.getItem("chefiapp_logged_out") === "true";
-      if (!savedId && didLogout) {
-        return null;
-      }
-      // Production without Core (Vercel): use saved ID or fall back to trial
-      const id = savedId || TRIAL_RESTAURANT_ID;
-      // Persist so FlowGate's hasLocalOrg fast-path works on next navigation
-      if (!savedId && typeof window !== "undefined") {
-        localStorage.setItem("chefiapp_restaurant_id", id);
-      }
-      return id;
+      return savedId;
     } catch (error) {
       console.error(
         "[RestaurantRuntime] Erro ao carregar/criar restaurante:",
@@ -476,7 +461,17 @@ export function RestaurantRuntimeProvider({
           coreReachable = true;
         } catch (err: unknown) {
           coreReachable = false;
-          // Core unreachable (Vercel / offline): use fallback data instead of clearing tenant
+          const msg = err instanceof Error ? err.message : String(err);
+          if (msg === "Restaurant not found in Core") {
+            clearActiveTenant();
+            setRuntime((prev) => ({
+              ...prev,
+              restaurant_id: null,
+              loading: false,
+              error: "Restaurante não encontrado",
+            }));
+            return;
+          }
           coreState = await fetchRuntimeStateFallback(restaurantId);
         }
       } else {
@@ -496,8 +491,7 @@ export function RestaurantRuntimeProvider({
       const plan = coreState.plan ?? "basic";
       const status = coreState.status ?? "active";
       const billing_status = coreState.billing_status ?? null;
-      const trial_ends_at =
-        (coreState as { trial_ends_at?: string | null }).trial_ends_at ?? null;
+      const trial_ends_at = (coreState as { trial_ends_at?: string | null }).trial_ends_at ?? null;
       const capabilities = coreState.capabilities ?? {};
       const productMode: ProductMode =
         coreState.productMode ?? resolveProductModeFromEnv();

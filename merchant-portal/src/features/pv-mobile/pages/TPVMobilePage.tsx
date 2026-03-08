@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Logger } from "../../../core/logger";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import { useStaff } from "../../../pages/AppStaff/context/StaffContext";
 import {
@@ -123,7 +124,9 @@ export default function TPVMobilePage() {
         .order("sort_order", { ascending: true });
 
       if (catError) {
-        console.warn("[TPVMobilePage] Falha ao carregar categorias:", catError);
+        Logger.warn("[TPVMobilePage] Falha ao carregar categorias:", {
+          error: catError,
+        });
       }
 
       if (catData && Array.isArray(catData)) {
@@ -153,7 +156,9 @@ export default function TPVMobilePage() {
         .eq("available", true);
 
       if (prodError) {
-        console.warn("[TPVMobilePage] Falha ao carregar produtos:", prodError);
+        Logger.warn("[TPVMobilePage] Falha ao carregar produtos:", {
+          error: prodError,
+        });
       }
 
       if (prodData && Array.isArray(prodData)) {
@@ -249,7 +254,7 @@ export default function TPVMobilePage() {
   // Handle order selection
   const handleSelectOrder = useCallback((orderId: string) => {
     // TODO: Open order detail modal or navigate to order
-    console.log("Selected order:", orderId);
+    Logger.debug(`Selected order: ${orderId}`);
   }, []);
 
   if (loading && activeTab === "pos") {

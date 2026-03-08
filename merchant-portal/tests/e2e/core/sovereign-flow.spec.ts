@@ -74,23 +74,12 @@ test.describe("🟢 Core — Sovereign Operational Flow", () => {
       // Operational state: verify meaningful structural content
       const mainContent = page.locator("main, [role='main'], #root");
       await expect(mainContent.first()).toBeVisible({ timeout: 15_000 });
-
-      // Some dashboards render actions asynchronously; require either actions
-      // or substantial body content to avoid false flakes on first paint.
-      await expect
-        .poll(
-          async () => {
-            const actionableCount = await page
-              .locator("button, a[href], [role='button']")
-              .count();
-            if (actionableCount > 0) return true;
-
-            const bodyText = (await page.locator("body").textContent()) ?? "";
-            return bodyText.trim().length > 30;
-          },
-          { timeout: 15_000 },
-        )
-        .toBe(true);
+      // Must have clickable elements (not a blank shell)
+      const actionableElements = page.locator(
+        "button, a[href], [role='button']",
+      );
+      const count = await actionableElements.count();
+      expect(count).toBeGreaterThan(0);
     }
 
     // ── Step 7: Trial TPV is accessible ──

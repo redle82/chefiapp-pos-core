@@ -17,6 +17,12 @@ export default defineConfig({
     alias: {
       react: reactPath,
       "react-dom": reactDomPath,
+      "@domain": path.resolve(__dirname, "src/domain"),
+      "@infra": path.resolve(__dirname, "src/infra"),
+      "@features": path.resolve(__dirname, "src/features"),
+      "@shared": path.resolve(__dirname, "src/shared"),
+      "@core": path.resolve(__dirname, "src/core"),
+      "@": path.resolve(__dirname, "src"),
     },
   },
   test: {
@@ -30,5 +36,10 @@ export default defineConfig({
     environment: "jsdom", // For React Testing Library
     setupFiles: ["./vitest.setup.ts"],
     globals: true,
+    coverage: {
+      provider: "istanbul",
+      reporter: ["json", "text", "text-summary"],
+      reportsDirectory: "coverage",
+    },
   },
 });

@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useCurrency } from "../../../core/currency/useCurrency";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 
 interface ActiveOrder {
@@ -117,8 +118,9 @@ export function TPVMobileOrdersView({
     return `${Math.floor(mins / 60)}h ${mins % 60}min`;
   };
 
+  const { formatAmount } = useCurrency();
   const formatCurrency = (cents: number) => {
-    return `€${(cents / 100).toFixed(2)}`;
+    return formatAmount(cents);
   };
 
   const counts = {

@@ -9,6 +9,7 @@
  * Architecture: "Air Gapped" Frontend (mesma abordagem do GlovoAdapter)
  */
 
+import { currencyService } from "../../../core/currency/CurrencyService";
 import { db } from "../../../core/db";
 import {
   BackendType,
@@ -237,7 +238,7 @@ export class DeliverooAdapter implements IntegrationAdapter {
           deliverooId: externalId,
           address: order.delivery?.address,
           city: order.delivery?.city,
-          currency: order.currency || "EUR",
+          currency: order.currency || currencyService.getDefaultCurrency(),
         },
       },
     };

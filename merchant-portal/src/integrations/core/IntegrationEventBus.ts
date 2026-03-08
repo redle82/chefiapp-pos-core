@@ -12,11 +12,13 @@
  * para entrega a Webhooks OUT configurados. Ref: CHEFIAPP_EVENT_BUS_WEBHOOKS_SPEC.md
  */
 
+import { CONFIG } from '../../config';
 import { IntegrationRegistry } from './IntegrationRegistry';
 import type { IntegrationEvent } from '../types/IntegrationEvent';
 
 const API_BASE =
   typeof window !== 'undefined' ? '' : (import.meta.env?.VITE_API_BASE ?? 'http://localhost:4320');
+const EVENTS_PATH = CONFIG.isEdgeGateway ? 'internal-events' : 'internal/events';
 const INTERNAL_TOKEN = import.meta.env?.VITE_INTERNAL_API_TOKEN ?? 'chefiapp-internal-token-dev';
 
 export interface EmitOptions {
@@ -43,7 +45,7 @@ export const emitIntegrationEvent = async (
   await IntegrationRegistry.dispatch(event);
 
   if (options?.restaurantId) {
-    const url = `${API_BASE}/internal/events`;
+    const url = `${API_BASE}/${EVENTS_PATH}`;
     fetch(url, {
       method: 'POST',
       headers: {

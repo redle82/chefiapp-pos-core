@@ -13,6 +13,7 @@
 
 import { AnimatePresence, motion, useDragControls } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useCurrency } from "../../../core/currency/useCurrency";
 import type { MobileCartItem, MobileCartProduct } from "../hooks/useMobileCart";
 import type { Modifier, ModifierGroup } from "./ModifiersModal";
 import {
@@ -68,6 +69,8 @@ export function CartBottomSheet({
   onUpdateItemModifiers,
   availableProducts = [],
 }: CartBottomSheetProps) {
+  const { formatAmount } = useCurrency();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [animateBadge, setAnimateBadge] = useState(false);
   const [selectedItemForModifiers, setSelectedItemForModifiers] = useState<
@@ -139,7 +142,7 @@ export function CartBottomSheet({
             </span>
           </div>
           <span className="pvm-cart-collapsed__total">
-            €{(total / 100).toFixed(2)}
+            {formatAmount(total)}
           </span>
         </motion.div>
       )}
@@ -232,15 +235,15 @@ export function CartBottomSheet({
           <div className="pvm-sheet__totals">
             <div className="pvm-sheet__row">
               <span>Subtotal</span>
-              <span>€{(subtotal / 100).toFixed(2)}</span>
+              <span>{formatAmount(subtotal)}</span>
             </div>
             <div className="pvm-sheet__row">
               <span>IVA (5%)</span>
-              <span>€{(tax / 100).toFixed(2)}</span>
+              <span>{formatAmount(tax)}</span>
             </div>
             <div className="pvm-sheet__row pvm-sheet__row--total">
               <span>Total</span>
-              <span>€{(total / 100).toFixed(2)}</span>
+              <span>{formatAmount(total)}</span>
             </div>
           </div>
 
@@ -283,6 +286,7 @@ function CartItem({
   onTapModifiers,
   isSelected,
 }: CartItemProps) {
+  const { formatAmount } = useCurrency();
   return (
     <div
       className={`pvm-cart-item ${isSelected ? "pvm-cart-item--selected" : ""}`}
@@ -296,9 +300,7 @@ function CartItem({
       </div>
       <div className="pvm-cart-item__info">
         <p className="pvm-cart-item__name">{item.name}</p>
-        <p className="pvm-cart-item__price">
-          €{(item.unit_price / 100).toFixed(2)}
-        </p>
+        <p className="pvm-cart-item__price">{formatAmount(item.unit_price)}</p>
         {/* Phase 5: Show modifiers */}
         {item.modifiers && item.modifiers.length > 0 && (
           <div className="pvm-cart-item__modifiers">
@@ -365,6 +367,7 @@ function FloatingModifierBar({
   onClose,
   onUpdateModifiers,
 }: FloatingModifierBarProps) {
+  const { formatAmount } = useCurrency();
   const [selectedModifiers, setSelectedModifiers] = useState(
     item.modifiers || [],
   );
@@ -433,7 +436,7 @@ function FloatingModifierBar({
         <button
           className="pvm-floating-modifier-bar__close"
           onClick={onClose}
-          aria-label="Fechar"
+          aria-label={t("common:close")}
         >
           ✕
         </button>
@@ -480,7 +483,7 @@ function FloatingModifierBar({
                       </span>
                       {mod.price_delta_cents && mod.price_delta_cents > 0 && (
                         <span className="pvm-floating-modifier-item__price">
-                          +€{(mod.price_delta_cents / 100).toFixed(2)}
+                          +{formatAmount(mod.price_delta_cents)}
                         </span>
                       )}
                     </button>

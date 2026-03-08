@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { currencyService } from "../../core/currency/CurrencyService";
+import { useFormatLocale } from "../../core/i18n/useFormatLocale";
 import { getTrustedPhotoUrl } from "../../utils/isPlaceholderPhoto";
 import { CartDrawer } from "../components/CartDrawer";
 import { CartFloatingButton } from "../components/CartFloatingButton";
@@ -11,6 +13,7 @@ import {
 } from "../context/PublicMenuContext";
 
 const StoreLayout = () => {
+  const locale = useFormatLocale();
   const { storeName, products, categories } = usePublicMenu();
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [searchParams] = useSearchParams();
@@ -88,9 +91,9 @@ const StoreLayout = () => {
               </p>
               <div className="flex items-center gap-3 mt-2">
                 <span className="font-medium text-neutral-900">
-                  {new Intl.NumberFormat("pt-PT", {
+                  {new Intl.NumberFormat(locale, {
                     style: "currency",
-                    currency: "EUR",
+                    currency: currencyService.getDefaultCurrency(),
                   }).format(product.price)}
                 </span>
                 {/* ERRO-012 Fix: Badge de tempo estimado de preparo */}
@@ -165,7 +168,7 @@ const AddToCartButton = ({ product }: { product: any }) => {
             id: product.id,
             name: product.name,
             price: product.price,
-            currency: "EUR",
+            currency: currencyService.getDefaultCurrency(),
           },
           1,
         )

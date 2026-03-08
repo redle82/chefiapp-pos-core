@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { currencyService } from "../../core/currency/CurrencyService";
 import {
   getTabIsolated,
   removeTabIsolated,
@@ -139,7 +140,7 @@ export function CartProvider({
         productId: product.id,
         name: product.name,
         price: product.price,
-        currency: product.currency || "EUR",
+        currency: product.currency || currencyService.getDefaultCurrency(),
         qty,
         notes,
       };

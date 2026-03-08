@@ -12,6 +12,7 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useCurrency } from "../../../core/currency/useCurrency";
 import {
   ModifiersModal,
   type ModifierGroup,
@@ -37,6 +38,7 @@ export function ProductCardWithLongPress({
   onAdd,
   onLongPress,
 }: ProductCardWithLongPressProps) {
+  const { formatAmount } = useCurrency();
   const [imageError, setImageError] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const [isModifiersOpen, setIsModifiersOpen] = useState(false);
@@ -44,7 +46,7 @@ export function ProductCardWithLongPress({
     null,
   );
 
-  const priceFormatted = `€${(product.price_cents / 100).toFixed(2)}`;
+  const priceFormatted = formatAmount(product.price_cents);
   const hasModifiers = product.modifiers && product.modifiers.length > 0;
 
   const handlePointerDown = () => {

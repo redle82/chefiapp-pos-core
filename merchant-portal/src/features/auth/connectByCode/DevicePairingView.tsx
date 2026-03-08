@@ -7,10 +7,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { setInstalledDevice } from "../../../core/storage/installedDeviceStorage";
-import {
-  pairLocal,
-  startHeartbeatMock,
-} from "./devicePairing";
+import { pairLocal, startHeartbeatMock } from "./devicePairing";
 
 const styles: Record<string, React.CSSProperties> = {
   page: {
@@ -34,7 +31,7 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: "center",
     border: "2px solid #404040",
     borderRadius: 8,
-    background: "#171717",
+    background: "#141414",
     color: "#fafafa",
     width: 200,
     marginBottom: 16,
@@ -77,7 +74,10 @@ export function DevicePairingView({
       device_id: result.deviceId,
       restaurant_id: result.restaurantId,
       module_id: result.deviceType,
-      device_name: `${result.deviceType.toUpperCase()}_${result.deviceId.slice(0, 8)}`,
+      device_name: `${result.deviceType.toUpperCase()}_${result.deviceId.slice(
+        0,
+        8,
+      )}`,
     });
     startHeartbeatMock(result.deviceId);
     const path = result.deviceType === "tpv" ? "/op/tpv" : "/op/kds";
@@ -88,7 +88,8 @@ export function DevicePairingView({
     <div style={styles.page}>
       <h1 style={styles.title}>Vincular dispositivo</h1>
       <p style={styles.subtitle}>
-        Digite o PIN gerado no portal (Gestión de dispositivos). O PIN expira em 60 segundos.
+        Digite o PIN gerado no portal (Gestión de dispositivos). O PIN expira em
+        60 segundos.
       </p>
       <input
         type="text"

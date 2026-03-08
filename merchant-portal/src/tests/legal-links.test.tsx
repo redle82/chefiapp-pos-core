@@ -1,9 +1,9 @@
-import "../i18n";
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { GlobalFooter } from "../components/GlobalFooter";
+import "../i18n";
 import { Footer } from "../pages/Landing/components/Footer";
 import { LegalPrivacyPage } from "../pages/Legal/LegalPrivacyPage";
 import { LegalTermsPage } from "../pages/Legal/LegalTermsPage";
@@ -47,7 +47,7 @@ describe("Legal pages", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /Termos de Uso/i }),
+      screen.getByRole("heading", { name: /Termos de Uso|Terms of Use/i }),
     ).toBeTruthy();
   });
 
@@ -59,7 +59,9 @@ describe("Legal pages", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /Pol[ií]tica de Privacidade/i }),
+      screen.getByRole("heading", {
+        name: /Pol[ií]tica de Privacidade|Privacy Policy/i,
+      }),
     ).toBeTruthy();
   });
 });

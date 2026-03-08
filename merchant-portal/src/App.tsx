@@ -4,23 +4,38 @@
  * Esta é a versão limpa após remoção total de UI/UX legada.
  */
 
-import { useEffect } from "react";
-import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { Suspense, useEffect, useMemo, type ReactNode } from "react";
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import {
   GlobalUIStateProvider,
   useGlobalUIState,
 } from "./context/GlobalUIStateContext";
-import { RestaurantRuntimeProvider } from "./context/RestaurantRuntimeContext";
+import type {
+  ProductMode,
+  RestaurantRuntime,
+} from "./context/RestaurantRuntimeContext";
+import { RestaurantRuntimeContext } from "./context/RestaurantRuntimeContext";
+import { ToastProvider } from "./context/ToastContext";
 import { AuthProvider } from "./core/auth/AuthProvider";
 import { useAuth } from "./core/auth/useAuth";
 import { FlowGate } from "./core/flow/FlowGate";
+import { deriveLifecycle } from "./core/lifecycle/Lifecycle";
 import { usePWAStaffHomeToTPVRedirect } from "./core/operational/PWAOpenToTPVRedirect";
-import { RoleProvider } from "./core/roles";
-import { ShiftProvider } from "./core/shift/ShiftContext";
+import { TRIAL_RESTAURANT_ID } from "./core/readiness/operationalRestaurant";
+import { isTrialModeParam } from "./core/routing/TrialMode";
+import { ShiftContext } from "./core/shift/ShiftContext";
 import { ShiftGuard } from "./core/shift/ShiftGuard";
+import { SyncEngine } from "./core/sync/SyncEngine";
 import { EventMonitorBootstrap } from "./core/tasks/EventMonitorBootstrap";
-import { TenantProvider } from "./core/tenant/TenantContext";
+import { TPVTrialPage } from "./pages/TPVMinimal/TPVTrialPage";
 import { MarketingRoutesFragment } from "./routes/MarketingRoutes";
 import { OperationalRoutesFragment } from "./routes/OperationalRoutes";
 import { OfflineIndicator } from "./ui/OfflineIndicator";
@@ -30,6 +45,86 @@ import { CoreUnavailableBanner } from "./ui/design-system/CoreUnavailableBanner"
 import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
 import { ModeIndicator } from "./ui/design-system/ModeIndicator";
 import { GlobalBlockedView } from "./ui/design-system/components/GlobalBlockedView";
+import { LoadingState } from "./ui/design-system/components/LoadingState";
+
+/** NAVIGATION_OPERATIONAL_CONTRACT: quando mode=trial, TPV sem RequireOperational; senão app normal. */
+function TPVRouteHandler() {
+  const [searchParams] = useSearchParams();
+  if (isTrialModeParam(searchParams)) {
+    return <TPVTrialPage />;
+  }
+  return <AppOperationalWrapper />;
+}
+
+// =============================================================================
+// PUBLIC TREE (SEM AUTH) — providers mínimos para / e /op/tpv?mode=trial
+// =============================================================================
+
+function PublicProviders({ children }: { children: ReactNode }) {
+  const trialRuntimeContextValue = useMemo(() => {
+    const trialRuntime: RestaurantRuntime = {
+      restaurant_id: TRIAL_RESTAURANT_ID,
+      mode: "onboarding",
+      productMode: "trial",
+      dataMode: "trial",
+      installed_modules: [],
+      active_modules: [],
+      plan: "basic",
+      status: "onboarding",
+      billing_status: "trial",
+      capabilities: {},
+      setup_status: {},
+      isPublished: false,
+      lifecycle: deriveLifecycle(TRIAL_RESTAURANT_ID, false, false),
+      loading: false,
+      error: null,
+      coreReachable: true,
+      systemState: "TRIAL",
+      coreMode: "online",
+    };
+
+    return {
+      runtime: trialRuntime,
+      refresh: async () => {},
+      updateSetupStatus: async () => {},
+      publishRestaurant: async () => {},
+      installModule: async () => {},
+      setProductMode: (_mode: ProductMode) => {},
+    };
+  }, []);
+
+  const trialShiftValue = useMemo(
+    () => ({
+      isShiftOpen: true,
+      isChecking: false,
+      lastCheckedAt: new Date(),
+      refreshShiftStatus: async () => {},
+      markShiftOpen: () => {},
+    }),
+    [],
+  );
+
+  return (
+    <RestaurantRuntimeContext.Provider value={trialRuntimeContextValue}>
+      <ShiftContext.Provider value={trialShiftValue}>
+        <GlobalUIStateProvider>{children}</GlobalUIStateProvider>
+      </ShiftContext.Provider>
+    </RestaurantRuntimeContext.Provider>
+  );
+}
+
+/** /op/tpv: se mode=trial → TPV trial (árvore pública); senão → redirect /auth (árvore de app). */
+function TPVTrialGate() {
+  const [searchParams] = useSearchParams();
+  if (isTrialModeParam(searchParams)) {
+    return (
+      <PublicProviders>
+        <TPVTrialPage />
+      </PublicProviders>
+    );
+  }
+  return <Navigate to="/auth" replace />;
+}
 
 /** Self-service signup: when session is set and signup intent exists, redirect to setup (email + phone flow). */
 function SignupIntentRedirect() {
@@ -60,48 +155,68 @@ function SignupIntentRedirect() {
   return null;
 }
 
+/** DoD B4: Sincroniza tags Sentry (route, connectivity) para filtros. */
+function SentryTagsSync() {
+  const location = useLocation();
+  useEffect(() => {
+    const S = typeof window !== "undefined" ? (window as any).Sentry : null;
+    if (S?.setTag) {
+      S.setTag("route", location.pathname || "/");
+    }
+  }, [location.pathname]);
+  useEffect(() => {
+    const S = typeof window !== "undefined" ? (window as any).Sentry : null;
+    if (!S?.setTag) return;
+    const unsub = SyncEngine.subscribe(() => {
+      S.setTag("connectivity", SyncEngine.getConnectivity());
+    });
+    S.setTag("connectivity", SyncEngine.getConnectivity());
+    return unsub;
+  }, []);
+  return null;
+}
+
 function App() {
   return (
-    <ErrorBoundary context="Root">
-      <AuthProvider>
-        <SignupIntentRedirect />
-        <CookieConsentBanner />
-        {/* <PublicLifecycleSync /> */}
-        {/* PR-A: BillingsPreloader removed from global scope.
-         * ModeIndicator + CoreUnavailableBanner moved inside AppContentWithBilling
-         * so marketing routes never probe Core. */}
-        <Routes>
-          {MarketingRoutesFragment}
-          {/* App Content (Management/Operational) */}
-          <Route path="/*" element={<AppOperationalWrapper />} />
-        </Routes>
-      </AuthProvider>
-    </ErrorBoundary>
+    <ToastProvider>
+      <ErrorBoundary context="Root">
+        <AuthProvider>
+          <SentryTagsSync />
+          <SignupIntentRedirect />
+          <CookieConsentBanner />
+          {/* <PublicLifecycleSync /> */}
+          <BillingsPreloader />
+          <Suspense fallback={<LoadingState variant="spinner" />}>
+            <Routes>
+              {MarketingRoutesFragment}
+              {/* App Content (Management/Operational) */}
+              <Route path="/*" element={<AppOperationalWrapper />} />
+            </Routes>
+          </Suspense>
+        </AuthProvider>
+      </ErrorBoundary>
+    </ToastProvider>
   );
 }
 
-/**
- * APPLICATION_BOOT_CONTRACT: MANAGEMENT/OPERATIONAL — Full Core provider tree.
- * PR-A: Providers moved here from main_debug.tsx so marketing routes stay clean.
- * Provider order: RestaurantRuntime → Shift → GlobalUIState → Role → Tenant → FlowGate
- */
+function BillingsPreloader() {
+  // Se precisarmos pré-carregar algo globalmente
+  return (
+    <>
+      <ModeIndicator />
+      <CoreUnavailableBanner />
+    </>
+  );
+}
+
+/** APPLICATION_BOOT_CONTRACT: MANAGEMENT/OPERATIONAL — Apenas Guards para rotas que precisam de Core. */
 function AppOperationalWrapper() {
   return (
-    <RestaurantRuntimeProvider>
-      <ShiftProvider>
-        <GlobalUIStateProvider>
-          <RoleProvider>
-            <TenantProvider>
-              <FlowGate>
-                <ShiftGuard>
-                  <AppContentWithBilling />
-                </ShiftGuard>
-              </FlowGate>
-            </TenantProvider>
-          </RoleProvider>
-        </GlobalUIStateProvider>
-      </ShiftProvider>
-    </RestaurantRuntimeProvider>
+    <FlowGate>
+      <ShiftGuard>
+        <AppContentWithBilling />
+      </ShiftGuard>
+    </FlowGate>
   );
 }
 
@@ -184,7 +299,9 @@ function AppContentWithBilling() {
       )}
       <ModeIndicator />
       <CoreUnavailableBanner />
-      <Routes>{OperationalRoutesFragment}</Routes>
+      <Suspense fallback={<LoadingState variant="minimal" />}>
+        <Routes>{OperationalRoutesFragment}</Routes>
+      </Suspense>
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { getCurrencySymbol } from "../core/currency/CurrencyService";
 import { generatePurchaseDraft } from "../core/inventory/PurchaseReflex";
 import { SOFIA_INVENTORY } from "../core/inventory/SofiaModel";
 
@@ -29,9 +30,9 @@ const runSimulation = () => {
   console.log(`- Resultado: ${tuesdayDraft.items[0].reason}`);
   console.log(`- Witness Required: ${tuesdayDraft.requiresWitness}`);
   console.log(
-    `- Panic Value: €${(tuesdayDraft.panicWastePotentialEur / 100).toFixed(
-      2,
-    )}\n`,
+    `- Panic Value: ${getCurrencySymbol()}${(
+      tuesdayDraft.panicWastePotentialEur / 100
+    ).toFixed(2)}\n`,
   );
 
   // ---------------------------------------------------

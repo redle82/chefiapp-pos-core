@@ -18,8 +18,8 @@ describe('FiscalPrinter: Kitchen Ticket', () => {
 
         const html = printer.generateKitchenTicketHTML(order);
 
-        expect(html).toContain('<div class="title">COZINHA</div>');
-        expect(html).toContain('Mesa: 10');
+        expect(html).toContain('<div class="title">KITCHEN</div>');
+        expect(html).toContain('Table: 10');
         expect(html).not.toContain('class="delivery-provider"');
     });
 
@@ -42,7 +42,7 @@ describe('FiscalPrinter: Kitchen Ticket', () => {
         expect(html).toContain('GLOVO'); // Uppercased via style/logic
         expect(html).toContain('John Doe'); // Customer Name
         expect(html).toContain('#C-123'); // Slice -5
-        expect(html).not.toContain('Mesa:'); // Should hide standard headers
+        expect(html).not.toContain('Table:'); // Should hide standard headers
         expect(html).toContain('delivery-provider'); // CSS Class check
     });
 });

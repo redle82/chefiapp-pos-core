@@ -9,6 +9,7 @@
  * Architecture: "Air Gapped" Frontend
  */
 
+import { currencyService } from "../../../core/currency/CurrencyService";
 import { db } from "../../../core/db";
 import {
   BackendType,
@@ -202,7 +203,7 @@ export class GlovoAdapter implements IntegrationAdapter {
           glovoId: externalId,
           address: row.delivery_address,
           instructions: row.instructions,
-          currency: row.currency || "EUR",
+          currency: row.currency || currencyService.getDefaultCurrency(),
           deliveryType: row.delivery_type,
         },
       },
@@ -388,7 +389,7 @@ export class GlovoAdapter implements IntegrationAdapter {
           glovoId: externalId,
           address: order.delivery?.address?.address,
           instructions: order.delivery?.address?.instructions,
-          currency: order.currency || "EUR",
+          currency: order.currency || currencyService.getDefaultCurrency(),
         },
       },
     };

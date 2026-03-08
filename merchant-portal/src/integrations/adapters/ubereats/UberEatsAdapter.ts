@@ -8,6 +8,7 @@
  *
  * Architecture: "Air Gapped" Frontend (mesma abordagem do GlovoAdapter)
  */
+import { currencyService } from "../../../core/currency/CurrencyService";
 
 import { db } from "../../../core/db";
 import {
@@ -300,7 +301,7 @@ export class UberEatsAdapter implements IntegrationAdapter {
           ubereatsId: externalId,
           address: order.delivery?.address,
           city: order.delivery?.city,
-          currency: order.currency || "EUR",
+          currency: order.currency || currencyService.getDefaultCurrency(),
         },
       },
     };

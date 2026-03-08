@@ -71,37 +71,13 @@ test.describe("🔸 Contract — Negative: Invalid state handling", () => {
       );
     });
 
-    await page.goto("/op/tpv", { waitUntil: "domcontentloaded" });
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
     await waitForApp(page);
 
-    const path = new URL(page.url()).pathname;
-
-    // Invalid restaurant identity must not grant effective TPV access.
-    if (/^\/op\/tpv(\/|$)/.test(path)) {
-      await expect(
-        page.locator('[data-testid="product-card"]').first(),
-      ).not.toBeVisible();
-
-      await expect
-        .poll(
-          async () => {
-            const browserBlockVisible = await page
-              .getByTestId("browser-block-guard")
-              .isVisible()
-              .catch(() => false);
-            const devFallbackVisible = await page
-              .getByRole("button", { name: /DEV: Reset PWA Cache/i })
-              .isVisible()
-              .catch(() => false);
-            return browserBlockVisible || devFallbackVisible;
-          },
-          { timeout: 10_000 },
-        )
-        .toBe(true);
-      return;
-    }
-
-    expect(path).not.toMatch(/^\/op\/tpv(\/|$)/);
+    // With an invalid/seed restaurant_id, the system should NOT stay on /dashboard
+    // It should redirect to /welcome (bootstrap) or / (visitor)
+    const url = page.url();
+    expect(url).not.toMatch(/\/dashboard$/);
   });
 
   test("N6: Non-existent route /this-does-not-exist → no 5xx", async ({

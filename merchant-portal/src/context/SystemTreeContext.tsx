@@ -11,9 +11,9 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { useRestaurantIdentity } from "../core/identity/useRestaurantIdentity";
-import { useTenant } from "../core/tenant/TenantContext";
 import { dockerCoreClient } from "../infra/docker-core/connection";
+import { useRestaurantIdentity } from "../core/identity/useRestaurantIdentity";
+import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
 import {
   RestaurantRuntimeContext,
   type SetupStatus,
@@ -89,7 +89,6 @@ export function SystemTreeProvider({
 }) {
   const runtimeContext = useContext(RestaurantRuntimeContext);
   const { identity } = useRestaurantIdentity();
-  const { tenantId } = useTenant();
   const restaurantIdFromRuntime =
     runtimeContext?.runtime?.restaurant_id ?? null;
   const runtimeLoaded = runtimeContext
@@ -172,7 +171,10 @@ export function SystemTreeProvider({
   const refresh = useCallback(async () => {
     setState((prev) => ({ ...prev, loading: true }));
 
-    const restaurantId = restaurantIdFromRuntime || identity.id || tenantId;
+    const restaurantId =
+      restaurantIdFromRuntime ||
+      identity.id ||
+      getTabIsolated("chefiapp_restaurant_id");
 
     if (!restaurantId) {
       setState((prev) => ({ ...prev, loading: false }));

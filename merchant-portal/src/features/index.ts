@@ -1,15 +1,10 @@
 /**
- * Features Index - Exportações centralizadas
- * 
- * Facilita importações: import { useShiftsByDate } from '@/features'
+ * Features Layer
+ *
+ * Módulos de produto - UI + hooks organizados por domínio.
+ * Cada feature importa de domain/ e infra/, nunca o contrário.
  */
 
-// Schedule
-export { useShiftsByDate, useCurrentShift } from './schedule/hooks/useShifts';
-export * from './schedule/services/scheduleService';
-
-// Tasks
-export { useTasks, useUpdateTaskStatus } from './tasks/hooks/useTasks';
-
-// Operation
-export { useActiveOrders, useKDSByStation } from './operation/hooks/useOperation';
+export * as tpv from "./tpv";
+export * as onboarding from "./onboarding";
+export * as config from "./config";

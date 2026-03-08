@@ -9,6 +9,7 @@
  */
 
 import { useCallback, useMemo, useState } from "react";
+import { Logger } from "../../../core/logger";
 import { createOrderLifecycle } from "../../../core/operational/processOrderLifecycle";
 import { useOperationalStore } from "../../../core/operational/useOperationalStore";
 import type { OrderMode } from "../../../pages/TPVMinimal/components/OrderModeSelector";
@@ -285,7 +286,7 @@ export function useMobileCart(restaurantId: string): UseMobileCartReturn {
         // Phase 6: Store payment method if provided
         if (paymentMethod) {
           // TODO: Attach payment method to order in backend
-          console.log("Payment method selected:", paymentMethod);
+          Logger.debug(`Payment method selected: ${String(paymentMethod)}`);
         }
         return result;
       } finally {

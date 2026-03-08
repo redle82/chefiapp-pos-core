@@ -8,6 +8,7 @@
  */
 
 import { useState } from "react";
+import { useCurrency } from "../../../core/currency/useCurrency";
 
 interface MobileProductCardProps {
   product: {
@@ -25,8 +26,9 @@ export function MobileProductCard({
   fallbackEmoji = "🍽️",
   onAdd,
 }: MobileProductCardProps) {
+  const { formatAmount } = useCurrency();
   const [imageError, setImageError] = useState(false);
-  const priceFormatted = `€${(product.price_cents / 100).toFixed(2)}`;
+  const priceFormatted = formatAmount(product.price_cents);
 
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();

@@ -9,6 +9,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useCurrency } from "../../../core/currency/useCurrency";
 
 export interface ModifierGroup {
   id: string;
@@ -48,6 +50,8 @@ export function ModifiersModal({
   onConfirm,
   onCancel,
 }: ModifiersModalProps) {
+  const { formatAmount, symbol } = useCurrency();
+  const { t } = useTranslation();
   const [selection, setSelection] = useState<Map<string, string[]>>(new Map());
 
   // Handle modifier selection
@@ -152,7 +156,7 @@ export function ModifiersModal({
               <button
                 className="pvm-modifiers-sheet__close"
                 onClick={onCancel}
-                aria-label="Fechar"
+                aria-label={t("common:close")}
               >
                 ✕
               </button>
@@ -175,13 +179,11 @@ export function ModifiersModal({
                         ).includes(modifier.id);
                         const priceLabel =
                           modifier.price_delta_cents > 0
-                            ? `+€${(modifier.price_delta_cents / 100).toFixed(
-                                2,
-                              )}`
+                            ? `+${formatAmount(modifier.price_delta_cents)}`
                             : modifier.price_delta_cents < 0
-                            ? `-€${Math.abs(
-                                modifier.price_delta_cents / 100,
-                              ).toFixed(2)}`
+                            ? `-${formatAmount(
+                                Math.abs(modifier.price_delta_cents),
+                              )}`
                             : null;
 
                         return (
@@ -228,7 +230,7 @@ export function ModifiersModal({
               <div className="pvm-modifiers-sheet__summary">
                 <span className="pvm-modifiers-sheet__price-label">Total:</span>
                 <span className="pvm-modifiers-sheet__price">
-                  €{(totalPrice / 100).toFixed(2)}
+                  {formatAmount(totalPrice)}
                 </span>
               </div>
               <button

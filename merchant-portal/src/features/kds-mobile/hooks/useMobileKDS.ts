@@ -10,6 +10,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CONFIG } from "../../../config";
+import { Logger } from "../../../core/logger";
+import { ConnectivityService } from "../../../core/sync/ConnectivityService";
 import { markItemReady } from "../../../infra/writers/OrderWriter";
 
 export type KDSTicketStatus = "pending" | "preparing" | "ready";
@@ -56,13 +58,22 @@ export function useMobileKDS(restaurantId: string): UseMobileKDSReturn {
   const [allTickets, setAllTickets] = useState<KDSTicket[]>([]);
   const [activeTab, setActiveTab] = useState<KDSTicketStatus>("pending");
   const [isLoading, setIsLoading] = useState(true);
-  const [isOffline, setIsOffline] = useState(false);
+  const [isOffline, setIsOffline] = useState(() =>
+    ConnectivityService.isOffline(),
+  );
+
+  // Fase 3: fonte única de conectividade
+  useEffect(() => {
+    const unsub = ConnectivityService.subscribe((status) => {
+      setIsOffline(status !== "online");
+    });
+    return unsub;
+  }, []);
 
   // Fetch orders from Core
   const fetchOrders = useCallback(async () => {
     try {
       setIsLoading(true);
-      setIsOffline(false);
 
       const url = `${CONFIG.CORE_URL}/rest/v1/gm_orders?restaurant_id=eq.${restaurantId}&status=in.(OPEN,IN_PREP,READY)&select=*,gm_order_items(*)&order=created_at.asc`;
       const headers = {
@@ -123,7 +134,7 @@ export function useMobileKDS(restaurantId: string): UseMobileKDSReturn {
 
       setAllTickets(tickets);
     } catch (error) {
-      console.error("KDS fetch error:", error);
+      Logger.error("KDS fetch error:", error);
       setIsOffline(true);
     } finally {
       setIsLoading(false);
@@ -185,7 +196,7 @@ export function useMobileKDS(restaurantId: string): UseMobileKDSReturn {
           }),
         });
       } catch (error) {
-        console.error("Start preparing error:", error);
+        Logger.error("Start preparing error:", error);
         // Revert on error
         fetchOrders();
       }
@@ -209,7 +220,7 @@ export function useMobileKDS(restaurantId: string): UseMobileKDSReturn {
         // Use existing writer
         await markItemReady(ticketId, restaurantId);
       } catch (error) {
-        console.error("Mark ready error:", error);
+        Logger.error("Mark ready error:", error);
         fetchOrders();
       }
     },

@@ -4,6 +4,7 @@
  */
 
 import { isDebugMode } from "../../../core/debugMode";
+import { Logger } from "../../../core/logger";
 import { RUNTIME } from "../../../core/runtime/RuntimeContext";
 import type {
   OperationalContract,
@@ -120,7 +121,7 @@ export async function connectByCode(
       roleSource: "invite",
     };
   } catch (err) {
-    console.error(err);
+    Logger.error("connectByCode error:", err);
     return { success: false, roleSource: null, message: "Erro de conexão." };
   }
 }

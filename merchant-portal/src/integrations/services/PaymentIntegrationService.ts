@@ -18,14 +18,18 @@ export async function getActivePaymentAdapter() {
 
 /**
  * Inicia sessão de checkout (assinatura). Usa Stripe via BillingBroker quando o adapter ativo é stripe.
+ * restaurant_id é obrigatório para metadata na sessão Stripe (webhook sync).
  */
-export async function startCheckout(priceId: string): Promise<BillingSessionResult> {
+export async function startCheckout(
+  priceId: string,
+  restaurantId: string,
+): Promise<BillingSessionResult> {
   const adapter = await getActivePaymentAdapter();
   if (!adapter || !hasCapability(adapter, "payments.process")) {
     throw new Error("Nenhuma integração de pagamentos ativa (ex.: Stripe).");
   }
   if (adapter.id === "stripe") {
-    return BillingBroker.startSubscription(priceId);
+    return BillingBroker.startSubscription(priceId, restaurantId);
   }
   throw new Error(`Adapter ${adapter.id} não suporta checkout nesta versão.`);
 }

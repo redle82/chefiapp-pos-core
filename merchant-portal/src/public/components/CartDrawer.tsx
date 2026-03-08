@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import React from "react";
+import { useCurrency } from "../../core/currency/useCurrency";
 import { useCart } from "../context/CartContext";
 
 export const CartDrawer: React.FC = () => {
@@ -13,6 +14,7 @@ export const CartDrawer: React.FC = () => {
     slug,
     tableNumber,
   } = useCart();
+  const { formatAmount } = useCurrency();
 
   // Status State
   const [status, setStatus] = React.useState<
@@ -124,7 +126,7 @@ export const CartDrawer: React.FC = () => {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-[70] bg-[#111] rounded-t-3xl border-t border-white/10 max-h-[90vh] flex flex-col"
+            className="fixed bottom-0 left-0 right-0 z-[70] bg-[#0a0a0a] rounded-t-3xl border-t border-white/10 max-h-[90vh] flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/5">
@@ -139,7 +141,10 @@ export const CartDrawer: React.FC = () => {
 
             {/* Nome do cliente (opcional) */}
             <div className="px-6 pb-4">
-              <label htmlFor="cart-customer-name" className="block text-sm text-white/60 mb-1">
+              <label
+                htmlFor="cart-customer-name"
+                className="block text-sm text-white/60 mb-1"
+              >
                 Nome para o pedido (opcional)
               </label>
               <input
@@ -177,7 +182,9 @@ export const CartDrawer: React.FC = () => {
                           </p>
                         )}
                         <p className="text-gold-500 text-sm mt-1">
-                          {(item.price * item.qty).toFixed(2)}€
+                          {formatAmount(
+                            Math.round(item.price * item.qty * 100),
+                          )}
                         </p>
                       </div>
                     </div>
@@ -286,7 +293,7 @@ export const CartDrawer: React.FC = () => {
               <div className="flex justify-between items-center mb-6">
                 <span className="text-white/60">Total</span>
                 <span className="text-2xl font-bold text-gold-500">
-                  {total.toFixed(2)}€
+                  {formatAmount(Math.round(total * 100))}
                 </span>
               </div>
 

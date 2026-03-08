@@ -65,21 +65,27 @@ export default defineConfig(async ({ mode }) => {
 
   return {
     base,
+    appType: "spa", // SPA fallback: GET /admin/devices etc. → index.html (evita 500/404 em dev)
     define: {
       // Polyfill global for libraries that expect Node.js global
       global: {},
       __VITE_ENV__: "import.meta.env",
       // Inject local IP for QR code generation in device provisioning
       __LOCAL_IP__: JSON.stringify(localIp),
-      // Build timestamp for cache-busting and version identification
-      __BUILD_TIMESTAMP__: JSON.stringify(new Date().toISOString()),
     },
     resolve: {
-      dedupe: ["react", "react-dom", "react-router-dom"],
+      dedupe: ["react", "react-dom", "react-router-dom", "vite"],
+      // pnpm + @tailwindcss/vite: evitar resolução para .pnpm dir (Cannot find module)
+      preserveSymlinks: true,
       // Invalid hook call: forçar uma única cópia de React (workspace: local ou raiz).
       alias: {
         react: reactPath,
         "react-dom": reactDomPath,
+        "@domain": path.resolve(__dirname, "src/domain"),
+        "@infra": path.resolve(__dirname, "src/infra"),
+        "@features": path.resolve(__dirname, "src/features"),
+        "@shared": path.resolve(__dirname, "src/shared"),
+        "@core": path.resolve(__dirname, "src/core"),
         "@": path.resolve(__dirname, "src"),
       },
     },
@@ -117,7 +123,7 @@ export default defineConfig(async ({ mode }) => {
       tailwindcss(),
       ...sentryPlugins,
       VitePWA({
-        registerType: "autoUpdate",
+        registerType: "prompt",
         includeAssets: ["favicon.ico", "apple-touch-icon.png", "vite.svg"],
         devOptions: {
           enabled: false, // CRITICAL: Disable in dev to prevent workbox loop
@@ -149,35 +155,28 @@ export default defineConfig(async ({ mode }) => {
           ],
         },
         workbox: {
-          skipWaiting: true,
-          clientsClaim: true,
           globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
           maximumFileSizeToCacheInBytes: 5000000, // 5MB
           // Offline total: SPA carrega quando offline; GET /rest pode usar cache.
           navigateFallback: "/index.html",
           navigateFallbackDenylist: [
             /^\/rest\//,
-            /^\/auth\//,
             /^\/api\//,
             /^\/internal\//,
             /^\/webhooks\//,
             /^\/rpc\//,
           ],
-          // POS safety: API calls are NetworkOnly — stale cached
-          // orders/prices are worse than a network error.  The SPA
-          // shell (HTML/CSS/JS) is still precached via globPatterns.
-          // To add offline reads later, use NetworkFirst for specific
-          // safe endpoints with cacheableResponse: { statuses: [200] }.
           runtimeCaching: [
             {
-              urlPattern: /^https?:\/\/[^/]+\/rest\/v1\/.*/,
-              handler: "NetworkOnly",
+              urlPattern: /^https?:\/\/[^/]+\/rest\/v1\/[^?]*/,
+              handler: "NetworkFirst",
               method: "GET",
-            },
-            {
-              urlPattern: /^https?:\/\/[^/]+\/auth\/.*/,
-              handler: "NetworkOnly",
-              method: "GET",
+              options: {
+                cacheName: "chefiapp-rest-get",
+                expiration: { maxEntries: 80, maxAgeSeconds: 60 * 5 },
+                cacheableResponse: { statuses: [0, 200] },
+                networkTimeoutSeconds: 10,
+              },
             },
           ],
         },

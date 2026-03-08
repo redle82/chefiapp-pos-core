@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useCurrency } from "../../../core/currency/useCurrency";
 
 interface MobileProduct {
   id: string;
@@ -26,6 +27,7 @@ export function SearchModal({
   products,
   onSelectProduct,
 }: SearchModalProps) {
+  const { formatAmount } = useCurrency();
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -95,7 +97,7 @@ export function SearchModal({
             <div className="pvm-cart-item__info">
               <p className="pvm-cart-item__name">{product.name}</p>
               <p className="pvm-cart-item__price">
-                €{(product.price_cents / 100).toFixed(2)}
+                {formatAmount(product.price_cents)}
               </p>
             </div>
             <span
