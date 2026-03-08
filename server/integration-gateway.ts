@@ -43,8 +43,14 @@ const DESKTOP_LAUNCH_ACK_SECRET =
   "";
 const INTEGRATION_RUNTIME_AUTHORITY =
   process.env.INTEGRATION_RUNTIME_AUTHORITY || "integration-gateway";
+const INTEGRATION_RUNTIME_SIGNAL =
+  process.env.INTEGRATION_RUNTIME_SIGNAL || "authoritative";
 const INTEGRATION_COMPAT_DEADLINE =
   process.env.INTEGRATION_COMPAT_DEADLINE || "2026-03-14T18:00:00+01:00";
+const INTEGRATION_COMPAT_OWNER =
+  process.env.INTEGRATION_COMPAT_OWNER || "integration-gateway";
+const INTEGRATION_COMPAT_FLAG = "INTEGRATION_LEGACY_COMPAT_MODE";
+const INTEGRATION_MODERN_ENTRYPOINT = "integration-gateway/src/index.ts";
 const INTEGRATION_LEGACY_COMPAT_MODE =
   process.env.INTEGRATION_LEGACY_COMPAT_MODE !== "0";
 const DESKTOP_LAUNCH_ACK_MAX_SKEW_MS = 90_000;
@@ -170,12 +176,25 @@ function apiError(
 
 function integrationCompatHeaders(route: string): Record<string, string> {
   return {
+    ...runtimeAuthorityHeaders("server/integration-gateway.ts"),
+    "x-chefiapp-compat-owner": INTEGRATION_COMPAT_OWNER,
+    "x-chefiapp-compat-flag": INTEGRATION_COMPAT_FLAG,
+    "x-chefiapp-compat-state": INTEGRATION_LEGACY_COMPAT_MODE
+      ? "enabled"
+      : "disabled",
     "x-chefiapp-compat-mode": INTEGRATION_LEGACY_COMPAT_MODE
       ? "legacy-server"
       : "disabled",
-    "x-chefiapp-runtime-authority": INTEGRATION_RUNTIME_AUTHORITY,
     "x-chefiapp-compat-route": route,
     "x-chefiapp-compat-deadline": INTEGRATION_COMPAT_DEADLINE,
+  };
+}
+
+function runtimeAuthorityHeaders(entrypoint: string): Record<string, string> {
+  return {
+    "x-chefiapp-runtime-authority": INTEGRATION_RUNTIME_AUTHORITY,
+    "x-chefiapp-runtime-entrypoint": entrypoint,
+    "x-chefiapp-runtime-signal": INTEGRATION_RUNTIME_SIGNAL,
   };
 }
 
@@ -183,6 +202,13 @@ function integrationCompatDisabledResponse(route: string): {
   status: number;
   json: object;
 } {
+  return integrationCompatDisabledResponseWithTarget(route);
+}
+
+function integrationCompatDisabledResponseWithTarget(
+  route: string,
+  target?: { replacementRoute?: string; replacementEntrypoint?: string },
+): { status: number; json: object } {
   return {
     status: 410,
     json: apiError(
@@ -191,7 +217,15 @@ function integrationCompatDisabledResponse(route: string): {
       {
         route,
         runtime_authority: INTEGRATION_RUNTIME_AUTHORITY,
+        compat_owner: INTEGRATION_COMPAT_OWNER,
+        compat_flag: INTEGRATION_COMPAT_FLAG,
         compat_deadline: INTEGRATION_COMPAT_DEADLINE,
+        ...(target?.replacementRoute
+          ? { replacement_route: target.replacementRoute }
+          : {}),
+        ...(target?.replacementEntrypoint
+          ? { replacement_entrypoint: target.replacementEntrypoint }
+          : {}),
       },
     ),
   };
@@ -1392,6 +1426,13 @@ function parseBody(req: http.IncomingMessage): Promise<string> {
 }
 
 const server = http.createServer(async (req, res) => {
+  const runtimeHeaders = runtimeAuthorityHeaders(
+    "server/integration-gateway.ts",
+  );
+  for (const [header, value] of Object.entries(runtimeHeaders)) {
+    res.setHeader(header, value);
+  }
+
   const method = req.method || "GET";
   const pathRaw = req.url?.split("?")[0] ?? "/";
   const path = pathRaw.replace(/\/+/g, "/").replace(/\/$/, "") || "/";
@@ -1684,9 +1725,19 @@ const server = http.createServer(async (req, res) => {
 
     if (path === "/api/v1/webhook/sumup" && method === "POST") {
       if (!INTEGRATION_LEGACY_COMPAT_MODE) {
-        const compat = integrationCompatHeaders("/api/v1/webhook/sumup");
-        const { status, json } = integrationCompatDisabledResponse(
-          "/api/v1/webhook/sumup",
+        const compatRoute = "/api/v1/webhook/sumup";
+        const compat = {
+          ...integrationCompatHeaders(compatRoute),
+          "x-chefiapp-compat-replacement-route": compatRoute,
+          "x-chefiapp-compat-replacement-entrypoint":
+            INTEGRATION_MODERN_ENTRYPOINT,
+        };
+        const { status, json } = integrationCompatDisabledResponseWithTarget(
+          compatRoute,
+          {
+            replacementRoute: compatRoute,
+            replacementEntrypoint: INTEGRATION_MODERN_ENTRYPOINT,
+          },
         );
         res.writeHead(status, {
           "Content-Type": "application/json",
@@ -1710,13 +1761,12 @@ const server = http.createServer(async (req, res) => {
     }
 
     // Payment routes: Bearer INTERNAL_API_TOKEN (before API key /api/v1/*)
-    // Contract compatibility during MRP-001: accept both canonical and legacy PIX paths.
-    if (
-      (path === "/api/v1/payment/pix/checkout" ||
-        path === "/api/v1/payment/pix/br/checkout") &&
-      method === "POST"
-    ) {
-      if (!INTEGRATION_LEGACY_COMPAT_MODE) {
+    // Contract compatibility boundary: keep canonical BR path active;
+    // legacy alias remains controlled behind compatibility flag.
+    const isPixBrCanonicalPath = path === "/api/v1/payment/pix/br/checkout";
+    const isPixCompatAliasPath = path === "/api/v1/payment/pix/checkout";
+    if ((isPixCompatAliasPath || isPixBrCanonicalPath) && method === "POST") {
+      if (isPixCompatAliasPath && !INTEGRATION_LEGACY_COMPAT_MODE) {
         const compat = integrationCompatHeaders(path);
         const { status, json } = integrationCompatDisabledResponse(path);
         res.writeHead(status, {

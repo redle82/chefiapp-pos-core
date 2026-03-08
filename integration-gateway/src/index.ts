@@ -30,6 +30,22 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 const app = express();
 app.use(express.json());
 
+const INTEGRATION_RUNTIME_AUTHORITY =
+  process.env.INTEGRATION_RUNTIME_AUTHORITY || "integration-gateway";
+const INTEGRATION_RUNTIME_SIGNAL =
+  process.env.INTEGRATION_RUNTIME_SIGNAL || "authoritative";
+const INTEGRATION_RUNTIME_ENTRYPOINT = "integration-gateway/src/index.ts";
+
+app.use((req: Request, res: Response, next) => {
+  res.setHeader("x-chefiapp-runtime-authority", INTEGRATION_RUNTIME_AUTHORITY);
+  res.setHeader(
+    "x-chefiapp-runtime-entrypoint",
+    INTEGRATION_RUNTIME_ENTRYPOINT,
+  );
+  res.setHeader("x-chefiapp-runtime-signal", INTEGRATION_RUNTIME_SIGNAL);
+  next();
+});
+
 // Supabase client for RPC calls (service_role bypasses RLS for server-side ops)
 const supabaseUrl = process.env.SUPABASE_URL || "http://localhost:3000";
 const supabaseKey =
