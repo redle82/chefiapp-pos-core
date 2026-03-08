@@ -1,3 +1,4 @@
+import { currencyService } from "../../../../core/currency/CurrencyService";
 import type {
   Payout,
   PayoutsFilters,
@@ -12,7 +13,7 @@ const MOCK_TRANSACTIONS: Transaction[] = [
     id: "tx_1",
     orderId: "ord_101",
     amount: 42.5,
-    currency: "EUR",
+    currency: currencyService.getDefaultCurrency(),
     status: "PROCESSED",
     method: "CARD",
     channel: "POS",
@@ -23,7 +24,7 @@ const MOCK_TRANSACTIONS: Transaction[] = [
     id: "tx_2",
     orderId: "ord_102",
     amount: 18.0,
-    currency: "EUR",
+    currency: currencyService.getDefaultCurrency(),
     status: "PROCESSED",
     method: "ONLINE",
     channel: "QR",
@@ -34,7 +35,7 @@ const MOCK_TRANSACTIONS: Transaction[] = [
     id: "tx_3",
     orderId: "ord_103",
     amount: 35.0,
-    currency: "EUR",
+    currency: currencyService.getDefaultCurrency(),
     status: "REFUNDED",
     method: "CARD",
     channel: "POS",
@@ -47,7 +48,7 @@ const MOCK_PAYOUTS: Payout[] = [
   {
     id: "po_1",
     amount: 1250.0,
-    currency: "EUR",
+    currency: currencyService.getDefaultCurrency(),
     periodStart: new Date(Date.now() - 86400000 * 14).toISOString(),
     periodEnd: new Date(Date.now() - 86400000 * 7).toISOString(),
     status: "SENT",
@@ -62,7 +63,7 @@ function delay(ms: number): Promise<void> {
 
 export async function getTransactions(
   _locationId: string,
-  _filters?: TransactionsFilters
+  _filters?: TransactionsFilters,
 ): Promise<Transaction[]> {
   await delay(250);
   // Mock: retornar lista; filtros ignorados até integrar backend.
@@ -71,7 +72,7 @@ export async function getTransactions(
 
 export async function getTransactionSummary(
   _locationId: string,
-  _filters?: TransactionsFilters
+  _filters?: TransactionsFilters,
 ): Promise<TransactionSummary> {
   await delay(200);
   const list = MOCK_TRANSACTIONS;
@@ -90,7 +91,7 @@ export async function getTransactionSummary(
 
 export async function getPayouts(
   _locationId: string,
-  _filters?: PayoutsFilters
+  _filters?: PayoutsFilters,
 ): Promise<Payout[]> {
   await delay(200);
   return [...MOCK_PAYOUTS];

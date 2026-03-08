@@ -1,3 +1,5 @@
+import { getFormatLocale } from "@/core/i18n/regionLocaleConfig";
+import { currencyService } from "../../../core/currency/CurrencyService";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import { useMultiUnitOverview } from "../../../hooks/useMultiUnitOverview";
 import styles from "./MultiUnitOverviewReportPage.module.css";
@@ -17,10 +19,10 @@ export type MultiUnitCard = {
   tpvOnline: boolean;
 };
 
-function formatCurrencyEur(amount: number): string {
-  return new Intl.NumberFormat("pt-PT", {
+function formatCurrencyValue(amount: number): string {
+  return new Intl.NumberFormat(getFormatLocale(), {
     style: "currency",
-    currency: "EUR",
+    currency: currencyService.getDefaultCurrency(),
     maximumFractionDigits: 0,
   }).format(amount);
 }
@@ -53,7 +55,12 @@ function onlineDotClass(online: boolean): string {
 
 export function MultiUnitOverviewReportPage() {
   const { identity } = useRestaurantIdentity();
-  const { data: units, loading, error, refresh } = useMultiUnitOverview({
+  const {
+    data: units,
+    loading,
+    error,
+    refresh,
+  } = useMultiUnitOverview({
     periodDate: new Date(),
   });
 
@@ -108,7 +115,7 @@ export function MultiUnitOverviewReportPage() {
         <div className={styles.kpiCard}>
           <div className={styles.kpiLabel}>Faturação total hoje</div>
           <div className={styles.kpiValue}>
-            {formatCurrencyEur(totalRevenue)}
+            {formatCurrencyValue(totalRevenue)}
           </div>
         </div>
         <div className={styles.kpiCard}>
@@ -145,7 +152,7 @@ export function MultiUnitOverviewReportPage() {
                 <div className={styles.unitMetricBlock}>
                   <div className={styles.unitMetricLabel}>Faturado hoje</div>
                   <div className={styles.unitMetricValue}>
-                    {formatCurrencyEur(unit.revenueToday)}
+                    {formatCurrencyValue(unit.revenueToday)}
                   </div>
                 </div>
                 <div className={styles.unitMetricBlock}>

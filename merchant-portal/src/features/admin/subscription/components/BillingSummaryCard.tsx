@@ -1,8 +1,10 @@
 /**
- * BillingSummaryCard — Resumo de faturação: próxima cobrança, subtotal/IVA/total (€).
+ * BillingSummaryCard — Resumo de faturação: próxima cobrança, subtotal/IVA/total.
  * Cancelar assinatura com fluxo seguro (confirmação dupla).
  */
 
+import { useCurrency } from "@/core/currency/useCurrency";
+import { getFormatLocale } from "@/core/i18n/regionLocaleConfig";
 import { useState } from "react";
 import type { BillingSummary } from "../types";
 
@@ -12,15 +14,8 @@ interface BillingSummaryCardProps {
   onCancelSubscription?: () => void;
 }
 
-function formatEur(n: number) {
-  return new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency: "EUR",
-  }).format(n);
-}
-
 function formatDate(s: string) {
-  return new Date(s).toLocaleDateString("es-ES", {
+  return new Date(s).toLocaleDateString(getFormatLocale(), {
     day: "2-digit",
     month: "long",
     year: "numeric",
@@ -32,7 +27,12 @@ export function BillingSummaryCard({
   onSwitchToYearly,
   onCancelSubscription,
 }: BillingSummaryCardProps) {
-  const [cancelStep, setCancelStep] = useState<"idle" | "confirm" | "reason">("idle");
+  const { formatAmount } = useCurrency();
+  /** Format a currency-unit amount (not cents) using the active currency */
+  const fmtPrice = (n: number) => formatAmount(Math.round(n * 100));
+  const [cancelStep, setCancelStep] = useState<"idle" | "confirm" | "reason">(
+    "idle",
+  );
   const [reason, setReason] = useState("");
 
   const handleCancelClick = () => setCancelStep("confirm");
@@ -60,13 +60,25 @@ export function BillingSummaryCard({
           color: "var(--text-primary)",
         }}
       >
-        Tu plan ChefIApp
+        O teu plano ChefIApp
       </h3>
-      <p style={{ margin: "0 0 12px 0", fontSize: 13, color: "var(--text-secondary)" }}>
-        {summary.cycle === "monthly" ? "Mensual" : "Anual"} · Facturado
+      <p
+        style={{
+          margin: "0 0 12px 0",
+          fontSize: 13,
+          color: "var(--text-secondary)",
+        }}
+      >
+        {summary.cycle === "monthly" ? "Mensal" : "Anual"} · Faturado
       </p>
-      <p style={{ margin: "0 0 16px 0", fontSize: 14, color: "var(--text-primary)" }}>
-        Próxima renovación: <strong>{formatDate(summary.nextChargeAt)}</strong>
+      <p
+        style={{
+          margin: "0 0 16px 0",
+          fontSize: 14,
+          color: "var(--text-primary)",
+        }}
+      >
+        Próxima renovação: <strong>{formatDate(summary.nextChargeAt)}</strong>
       </p>
       {summary.canSwitchToYearly && onSwitchToYearly && (
         <button
@@ -83,7 +95,7 @@ export function BillingSummaryCard({
             padding: 0,
           }}
         >
-          Cambiar a facturación anual
+          Mudar para faturação anual
         </button>
       )}
       <div style={{ marginBottom: 16 }}>
@@ -97,7 +109,7 @@ export function BillingSummaryCard({
           }}
         >
           <span>Subtotal</span>
-          <span>{formatEur(summary.subtotalEur)}</span>
+          <span>{fmtPrice(summary.subtotalEur)}</span>
         </div>
         <div
           style={{
@@ -109,7 +121,7 @@ export function BillingSummaryCard({
           }}
         >
           <span>IVA (21%)</span>
-          <span>{formatEur(summary.taxEur)}</span>
+          <span>{fmtPrice(summary.taxEur)}</span>
         </div>
         <div
           style={{
@@ -124,7 +136,7 @@ export function BillingSummaryCard({
           }}
         >
           <span>Total</span>
-          <span>{formatEur(summary.totalEur)}</span>
+          <span>{fmtPrice(summary.totalEur)}</span>
         </div>
       </div>
       {onCancelSubscription && (
@@ -141,7 +153,7 @@ export function BillingSummaryCard({
             padding: 0,
           }}
         >
-          Cancelar la suscripción
+          Cancelar assinatura
         </button>
       )}
 
@@ -176,8 +188,8 @@ export function BillingSummaryCard({
                 color: "var(--text-primary)",
               }}
             >
-              Al cancelar perderás acceso a los módulos de pago. Los datos se
-              conservan hasta el final del período facturado. ¿Continuar?
+              Ao cancelar perdes acesso aos módulos de pagamento. Os dados
+              mantêm-se até ao fim do período faturado. Continuar?
             </p>
             <div
               style={{
@@ -199,7 +211,7 @@ export function BillingSummaryCard({
                   backgroundColor: "transparent",
                 }}
               >
-                No, mantener
+                Não, manter
               </button>
               <button
                 type="button"
@@ -215,7 +227,7 @@ export function BillingSummaryCard({
                   cursor: "pointer",
                 }}
               >
-                Sí, cancelar
+                Sim, cancelar
               </button>
             </div>
           </div>
@@ -246,13 +258,20 @@ export function BillingSummaryCard({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p style={{ margin: "0 0 8px 0", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
+            <p
+              style={{
+                margin: "0 0 8px 0",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+              }}
+            >
               Motivo (opcional)
             </p>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Ej.: cambio de negocio, precio..."
+              placeholder="Ex.: mudança de negócio, preço..."
               rows={3}
               style={{
                 width: "100%",
@@ -264,7 +283,9 @@ export function BillingSummaryCard({
                 boxSizing: "border-box",
               }}
             />
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <div
+              style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}
+            >
               <button
                 type="button"
                 onClick={() => setCancelStep("idle")}
@@ -278,7 +299,7 @@ export function BillingSummaryCard({
                   backgroundColor: "transparent",
                 }}
               >
-                Volver
+                Voltar
               </button>
               <button
                 type="button"
@@ -294,7 +315,7 @@ export function BillingSummaryCard({
                   cursor: "pointer",
                 }}
               >
-                Confirmar cancelación
+                Confirmar cancelação
               </button>
             </div>
           </div>

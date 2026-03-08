@@ -2,10 +2,12 @@
  * Card Marca principal — nome e descrição.
  */
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { marcasStore } from "../store/marcasStore";
 
 export function MarcaPrincipalCard() {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
@@ -36,15 +38,36 @@ export function MarcaPrincipalCard() {
         backgroundColor: "var(--card-bg-on-dark)",
       }}
     >
-      <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
+      <h3
+        style={{
+          margin: "0 0 12px 0",
+          fontSize: 16,
+          fontWeight: 700,
+          color: "var(--text-primary)",
+        }}
+      >
         Marca principal
       </h3>
-      <p style={{ margin: "0 0 16px 0", fontSize: 13, color: "var(--text-secondary)" }}>
+      <p
+        style={{
+          margin: "0 0 16px 0",
+          fontSize: 13,
+          color: "var(--text-secondary)",
+        }}
+      >
         Nombre y descripción de la marca principal del restaurante.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>Nombre</span>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+            }}
+          >
+            Nombre
+          </span>
           <input
             type="text"
             value={name}
@@ -60,7 +83,15 @@ export function MarcaPrincipalCard() {
           />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>Descripción</span>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+            }}
+          >
+            Descripción
+          </span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -77,7 +108,9 @@ export function MarcaPrincipalCard() {
           />
         </label>
       </div>
-      <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8 }}>
+      <div
+        style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8 }}
+      >
         <button
           type="button"
           onClick={handleSave}
@@ -93,9 +126,13 @@ export function MarcaPrincipalCard() {
             cursor: saving ? "not-allowed" : "pointer",
           }}
         >
-          {saving ? "Guardando…" : "Guardar"}
+          {saving ? t("common:saving") : t("common:save")}
         </button>
-        {saved && <span style={{ fontSize: 13, color: "var(--color-success)" }}>Guardado</span>}
+        {saved && (
+          <span style={{ fontSize: 13, color: "var(--color-success)" }}>
+            Guardado
+          </span>
+        )}
       </div>
     </div>
   );

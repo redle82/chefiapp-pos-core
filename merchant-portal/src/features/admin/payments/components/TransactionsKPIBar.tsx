@@ -1,16 +1,22 @@
+import { currencyService } from "@/core/currency/CurrencyService";
+import { getFormatLocale } from "@/core/i18n/regionLocaleConfig";
 import type { TransactionSummary } from "../types";
 
-const CURRENCY = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
-});
+const formatCurrency = (n: number) =>
+  new Intl.NumberFormat(getFormatLocale(), {
+    style: "currency",
+    currency: currencyService.getDefaultCurrency(),
+  }).format(n);
 
 interface TransactionsKPIBarProps {
   summary: TransactionSummary | null;
   loading?: boolean;
 }
 
-export function TransactionsKPIBar({ summary, loading }: TransactionsKPIBarProps) {
+export function TransactionsKPIBar({
+  summary,
+  loading,
+}: TransactionsKPIBarProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -40,13 +46,13 @@ export function TransactionsKPIBar({ summary, loading }: TransactionsKPIBarProps
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <p className="text-sm font-medium text-gray-600">Total recibido</p>
         <p className="mt-1 text-2xl font-semibold text-green-700">
-          {CURRENCY.format(totalReceived)}
+          {formatCurrency(totalReceived)}
         </p>
       </div>
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <p className="text-sm font-medium text-gray-600">Total reembolsado</p>
         <p className="mt-1 text-2xl font-semibold text-red-700">
-          {CURRENCY.format(totalRefunded)}
+          {formatCurrency(totalRefunded)}
         </p>
       </div>
     </div>

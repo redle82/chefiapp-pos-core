@@ -2,7 +2,7 @@
  * Página operacional de reservas — /admin/reservations
  *
  * Área de execução: lista do dia, status, check-in, cancelamento, criação manual.
- * Não confundir com /admin/config/reservas (configuração: disponibilidade, turnos, política).
+ * Não confundir com /admin/config/reservations (configuração: disponibilidade, turnos, política).
  *
  * Contrato: Gestor de reservas no menu principal → esta página (runtime).
  * Configuração de reservas → Configuración > Reservas (setup).
@@ -40,7 +40,9 @@ export function ReservationsOperationalPage() {
   }
 
   return (
-    <section style={{ display: "flex", flexDirection: "column", minHeight: 400 }}>
+    <section
+      style={{ display: "flex", flexDirection: "column", minHeight: 400 }}
+    >
       <AdminPageHeader
         title="Gestor de reservas"
         subtitle="Lista del día, estado, check-in, cancelación y creación manual."

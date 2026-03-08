@@ -18,7 +18,9 @@ import {
   type BillingInvoiceRow,
   type BillingPlanRow,
 } from "../../../core/billing/coreBillingApi";
-import { useTenant } from "../../../core/tenant/TenantContext";
+import { currencyService } from "../../../core/currency/CurrencyService";
+import { Logger } from "../../../core/logger";
+import { getTabIsolated } from "../../../core/storage/TabIsolatedStorage";
 import {
   useSubscription,
   type Subscription,
@@ -66,7 +68,8 @@ function toUIInvoice(row: BillingInvoiceRow): Invoice {
   return {
     id: row.id,
     date: row.invoice_date,
-    amountEur: row.amount_cents / 100,
+    amountCents: row.amount_cents,
+    currency: row.currency,
     status:
       row.status === "paid" ||
       row.status === "pending" ||
@@ -84,13 +87,14 @@ function deriveBillingSummary(
 ): BillingSummary {
   const priceCents = plan?.priceCents ?? 0;
   const subtotal = priceCents / 100;
-  const tax = Math.round(subtotal * 0.21 * 100) / 100; // 21% IVA
+  // Impostos variam por país/região; MVP: não assumir taxa fixa.
+  const tax: number | null = null;
   return {
     cycle: (plan?.interval ?? "month") as "monthly" | "yearly",
     nextChargeAt: sub?.current_period_end ?? "",
-    subtotalEur: subtotal,
-    taxEur: tax,
-    totalEur: Math.round((subtotal + tax) * 100) / 100,
+    subtotal,
+    tax,
+    total: subtotal,
     planLabel: plan?.name ? `${plan.name} Plan` : "—",
     canSwitchToYearly: true,
   };
@@ -116,7 +120,7 @@ export function useSubscriptionPage(): SubscriptionPageData {
     error: subError,
     refetch: refetchSub,
   } = useSubscription();
-  const { tenantId: restaurantId } = useTenant();
+  const restaurantId = getTabIsolated("chefiapp_restaurant_id");
   const [plans, setPlans] = useState<Plan[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +150,7 @@ export function useSubscriptionPage(): SubscriptionPageData {
               name: "Starter",
               tier: "starter",
               price_cents: 4900,
-              currency: "EUR",
+              currency: currencyService.getDefaultCurrency(),
               interval: "month",
               features: [
                 "Software TPV (1 dispositivo)",
@@ -172,7 +176,7 @@ export function useSubscriptionPage(): SubscriptionPageData {
         setInvoices(invoiceRows.map(toUIInvoice));
       }
     } catch (err: unknown) {
-      console.error("[useSubscriptionPage]", err);
+      Logger.error("[useSubscriptionPage]", err);
       setError(
         err instanceof Error ? err.message : "Failed to load billing data",
       );

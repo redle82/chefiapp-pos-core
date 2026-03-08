@@ -9,7 +9,8 @@ import { getModulePrimaryPath } from "./ModulesPage";
 
 /** Paths permitidos como destino da ação primária (NAVIGATION_CONTRACT). */
 const ALLOWED_PRIMARY_DESTINATIONS = [
-  "/admin/devices",
+  "/op/tpv",
+  "/op/kds",
   "/app/staff",
   "/app/activation",
   "/admin/reports/overview",

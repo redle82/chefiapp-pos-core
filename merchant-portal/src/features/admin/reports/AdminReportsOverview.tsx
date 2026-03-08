@@ -12,7 +12,6 @@ import { Link } from "react-router-dom";
 import { WelcomeOverlay } from "../../../components/onboarding/WelcomeOverlay";
 import { shouldShowWelcome } from "../../../components/onboarding/welcomeUtils";
 import { currencyService } from "../../../core/currency/CurrencyService";
-import { useTenant } from "../../../core/tenant/TenantContext";
 import { GlobalLoadingView } from "../../../ui/design-system/components";
 import { useRestaurantId } from "../../../ui/hooks/useRestaurantId";
 import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
@@ -49,10 +48,7 @@ function formatCurrency(value: number): string {
 }
 
 export function AdminReportsOverview() {
-  const { tenantId } = useTenant();
-  const [showWelcome, setShowWelcome] = useState(() =>
-    shouldShowWelcome(tenantId),
-  );
+  const [showWelcome, setShowWelcome] = useState(shouldShowWelcome);
   const { restaurantId, loading: loadingRestaurant } = useRestaurantId();
   const { data: overview, loading: loadingOverview } =
     useDashboardOverview(restaurantId);
@@ -61,7 +57,6 @@ export function AdminReportsOverview() {
     return <GlobalLoadingView />;
   }
 
-  const isLoading = loadingOverview && !overview;
   const revenueToday =
     overview?.revenueByHour?.reduce((s, h) => s + h.amount, 0) ?? 0;
   const billsToday = overview?.stats?.totalBills ?? 0;
@@ -87,7 +82,7 @@ export function AdminReportsOverview() {
         >
           KPIs (snapshot)
         </h2>
-        {isLoading ? (
+        {loadingOverview ? (
           <p style={{ color: "var(--text-secondary)", margin: 0 }}>
             A carregar…
           </p>

@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
 import {
   BackendType,
@@ -27,13 +27,23 @@ const TIMEZONES = [
   { value: "America/Sao_Paulo", label: "America/Sao_Paulo (Brasil)" },
   { value: "Europe/Madrid", label: "Europe/Madrid (España)" },
   { value: "Europe/Lisbon", label: "Europe/Lisbon (Portugal)" },
-  { value: "America/New_York", label: "America/New_York (EUA)" },
+  { value: "Europe/London", label: "Europe/London (UK)" },
+  { value: "America/New_York", label: "America/New_York (US East)" },
+  { value: "America/Chicago", label: "America/Chicago (US Central)" },
+  { value: "America/Los_Angeles", label: "America/Los_Angeles (US West)" },
+  { value: "America/Mexico_City", label: "America/Mexico_City (México)" },
+  { value: "America/Toronto", label: "America/Toronto (Canada)" },
+  { value: "Australia/Sydney", label: "Australia/Sydney" },
 ] as const;
 
 const CURRENCIES = [
   { value: "BRL", label: "BRL (R$)" },
   { value: "EUR", label: "EUR (€)" },
   { value: "USD", label: "USD ($)" },
+  { value: "GBP", label: "GBP (£)" },
+  { value: "MXN", label: "MXN ($)" },
+  { value: "CAD", label: "CAD ($)" },
+  { value: "AUD", label: "AUD ($)" },
 ] as const;
 
 const ATAJOS = [
@@ -78,7 +88,7 @@ const buttonStyle = {
 };
 
 export function SoftwareTpvPage() {
-  const navigate = useNavigate();
+  const { t } = useTranslation();
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime.restaurant_id ?? null;
 
@@ -176,14 +186,7 @@ export function SoftwareTpvPage() {
         actions={
           <button
             type="button"
-            onClick={() => {
-              openTpvInNewWindow(undefined, {
-                navigate,
-                onBrowserFallback: () => {
-                  navigate("/admin/devices");
-                },
-              });
-            }}
+            onClick={openTpvInNewWindow}
             style={{
               fontSize: 14,
               fontWeight: 600,
@@ -312,7 +315,7 @@ export function SoftwareTpvPage() {
                 disabled={configSaving}
                 style={buttonStyle}
               >
-                {configSaving ? "Guardando…" : "Guardar"}
+                {configSaving ? t("common:saving") : t("common:save")}
               </button>
             </div>
           )}

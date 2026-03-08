@@ -13,6 +13,7 @@ import {
   BackendType,
   getBackendType,
 } from "../../../../core/infra/backendAdapter";
+import { openOperationalInNewWindow } from "../../../../core/operational/openOperationalWindow";
 import {
   getInstalledDevice,
   setInstalledDevice,
@@ -31,8 +32,6 @@ export interface UseDeviceInstallReturn {
   hasLocalDevice: boolean;
   /** Módulo do dispositivo local (se existir) */
   localDeviceModule: InstalledDeviceModule | null;
-  /** Nome do dispositivo local (se existir) */
-  localDeviceName: string | null;
   /** Se o PWA install prompt está disponível */
   canInstallPwa: boolean;
   /** Dispara a instalação PWA no desktop */
@@ -61,7 +60,6 @@ export function useDeviceInstall(): UseDeviceInstallReturn {
   const localDevice = getInstalledDevice();
   const hasLocalDevice = localDevice !== null;
   const localDeviceModule = localDevice?.module_id ?? null;
-  const localDeviceName = localDevice?.device_name ?? null;
 
   // Capturar PWA install prompt
   useEffect(() => {
@@ -149,8 +147,8 @@ export function useDeviceInstall(): UseDeviceInstallReturn {
           window.localStorage.setItem("chefiapp_restaurant_id", restaurantId);
         }
 
-        // UXG-002: Do NOT auto-open operational window after install.
-        // The caller (DeviceInstallDialog) handles post-install UX.
+        // Abrir em janela popup (experiência app-like)
+        openOperationalInNewWindow(moduleId);
         return true;
       } catch (err) {
         setError(
@@ -169,7 +167,6 @@ export function useDeviceInstall(): UseDeviceInstallReturn {
     error,
     hasLocalDevice,
     localDeviceModule,
-    localDeviceName,
     canInstallPwa: installPrompt !== null,
     triggerPwaInstall,
     installDevice,

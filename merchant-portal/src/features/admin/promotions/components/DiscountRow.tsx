@@ -1,3 +1,4 @@
+import { useCurrency } from "@/core/currency/useCurrency";
 import type { Discount, DiscountType } from "../types";
 
 const TYPE_LABELS: Record<DiscountType, string> = {
@@ -21,17 +22,18 @@ export function DiscountRow({
   onToggleActive,
   onEdit,
 }: DiscountRowProps) {
+  const { symbol } = useCurrency();
   return (
     <tr className="border-b border-gray-100 transition-colors hover:bg-gray-50">
-      <td className="py-3 pl-4 pr-2 text-sm text-gray-900">
-        {discount.name}
-      </td>
+      <td className="py-3 pl-4 pr-2 text-sm text-gray-900">{discount.name}</td>
       <td className="py-3 px-2 text-sm text-gray-600">
         {discount.description || "—"}
       </td>
       <td className="py-3 px-2 text-sm">
         <span
-          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${TYPE_BADGE_CLASS[discount.type]}`}
+          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            TYPE_BADGE_CLASS[discount.type]
+          }`}
         >
           {TYPE_LABELS[discount.type]}
         </span>
@@ -39,7 +41,7 @@ export function DiscountRow({
       <td className="py-3 px-2 text-sm text-gray-900">
         {discount.type === "PERCENTAGE"
           ? `${discount.value.toFixed(1)} %`
-          : `${discount.value.toFixed(2)} €`}
+          : `${discount.value.toFixed(2)} ${symbol}`}
       </td>
       <td className="py-3 px-2 text-sm">
         <span
@@ -77,4 +79,3 @@ export function DiscountRow({
     </tr>
   );
 }
-

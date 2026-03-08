@@ -6,6 +6,7 @@
  * Ref: OBSERVABILITY_MINIMA.md, CORE_EVENTS_CONTRACT.md
  */
 
+import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import { useFiscalSyncMonitor } from "../../../../hooks/useFiscalSyncMonitor";
 import styles from "./FiscalSyncMonitorSection.module.css";
 
@@ -16,6 +17,7 @@ interface FiscalSyncMonitorSectionProps {
 export function FiscalSyncMonitorSection({
   restaurantId,
 }: FiscalSyncMonitorSectionProps) {
+  const locale = useFormatLocale();
   const { summary, recentFailures, loading, error, tableUnavailable, refresh } =
     useFiscalSyncMonitor(restaurantId);
 
@@ -108,7 +110,7 @@ export function FiscalSyncMonitorSection({
                     <td
                       className={`${styles.tableCell} ${styles.tableCellFirst}`}
                     >
-                      {new Date(f.created_at).toLocaleString("pt-PT")}
+                      {new Date(f.created_at).toLocaleString(locale)}
                     </td>
                     <td
                       className={`${styles.tableCell} ${styles.tableCellError}`}

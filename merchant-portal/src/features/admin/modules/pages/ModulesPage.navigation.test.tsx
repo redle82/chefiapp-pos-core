@@ -8,10 +8,11 @@ import { describe, expect, it } from "vitest";
 import { MODULES_DEFINITIONS } from "../data/modulesDefinitions";
 import { getModulePrimaryPath } from "./ModulesPage";
 
-/** Paths permitidos para ação primária do Hub (operacionais via hub, admin, activation). */
+/** Paths permitidos para ação primária do Hub (operacionais, admin, activation). */
 const PERMITTED_PRIMARY_PATHS = [
-  "/admin/devices",
+  "/op/tpv",
   "/app/staff",
+  "/app/staff/home",
   "/app/activation",
   "/inventory-stock",
   "/admin/config/integrations",

@@ -3,6 +3,7 @@
  * Mostrar falha de pagamento de forma humana (atualizar até DD/MM).
  */
 
+import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import type { PaymentMethod } from "../types";
 
 interface PaymentMethodCardProps {
@@ -14,6 +15,7 @@ export function PaymentMethodCard({
   method,
   onChangeCard,
 }: PaymentMethodCardProps) {
+  const locale = useFormatLocale();
   return (
     <div
       style={{
@@ -54,7 +56,7 @@ export function PaymentMethodCard({
           }}
         >
           El último pago falló. Actualiza el método antes del{" "}
-          {new Date(method.failureDeadline).toLocaleDateString("es-ES", {
+          {new Date(method.failureDeadline).toLocaleDateString(locale, {
             day: "2-digit",
             month: "short",
             year: "numeric",

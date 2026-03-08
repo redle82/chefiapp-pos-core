@@ -41,19 +41,19 @@ export interface UsageMeter {
   used: number;
   limit: number;
   unit?: string; // "dispositivos", "integrações", "pedidos", "SMS"
-  /** CTA: rota ou ação (ex.: /admin/config/dispositivos) */
+  /** CTA: rota ou ação (ex.: /admin/config/devices) */
   manageHref?: string;
   manageLabel?: string;
-  /** Custo por unidade extra (ex.: 0.04 €/SMS) */
+  /** Custo por unidade extra (ex.: 0.04 currency/SMS) */
   extraCostPerUnit?: number;
 }
 
 export interface BillingSummary {
   cycle: "monthly" | "yearly";
   nextChargeAt: string;
-  subtotalEur: number;
-  taxEur: number;
-  totalEur: number;
+  subtotal: number;
+  tax: number | null;
+  total: number;
   planLabel: string;
   /** Mudar para anual disponível */
   canSwitchToYearly?: boolean;
@@ -71,7 +71,8 @@ export interface PaymentMethod {
 export interface Invoice {
   id: string;
   date: string;
-  amountEur: number;
+  amountCents: number;
+  currency: string;
   status: "paid" | "pending" | "failed";
   downloadUrl?: string | null;
 }

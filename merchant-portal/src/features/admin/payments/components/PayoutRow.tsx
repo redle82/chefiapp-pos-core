@@ -1,15 +1,19 @@
+import { currencyService } from "@/core/currency/CurrencyService";
+import { getFormatLocale } from "@/core/i18n/regionLocaleConfig";
 import type { Payout } from "../types";
 
-const CURRENCY = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
-});
+const formatCurrency = (n: number) =>
+  new Intl.NumberFormat(getFormatLocale(), {
+    style: "currency",
+    currency: currencyService.getDefaultCurrency(),
+  }).format(n);
 
-const DATE = new Intl.DateTimeFormat("es-ES", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-});
+const formatDate = (d: Date) =>
+  new Intl.DateTimeFormat(getFormatLocale(), {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(d);
 
 const STATUS_LABELS: Record<Payout["status"], string> = {
   SENT: "Enviado",
@@ -27,18 +31,22 @@ interface PayoutRowProps {
 }
 
 export function PayoutRow({ payout, onViewDetail }: PayoutRowProps) {
-  const periodStr = `${DATE.format(new Date(payout.periodStart))} — ${DATE.format(new Date(payout.periodEnd))}`;
-  const createdAtStr = DATE.format(new Date(payout.createdAt));
+  const periodStr = `${formatDate(new Date(payout.periodStart))} — ${formatDate(
+    new Date(payout.periodEnd),
+  )}`;
+  const createdAtStr = formatDate(new Date(payout.createdAt));
 
   return (
     <tr className="border-b border-gray-100 transition-colors hover:bg-gray-50">
       <td className="py-3 pl-4 pr-2 text-sm text-gray-600">{periodStr}</td>
       <td className="py-3 px-2 text-sm font-medium text-gray-900">
-        {CURRENCY.format(payout.amount)}
+        {formatCurrency(payout.amount)}
       </td>
       <td className="py-3 px-2">
         <span
-          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[payout.status]}`}
+          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            STATUS_BADGE_CLASS[payout.status]
+          }`}
         >
           {STATUS_LABELS[payout.status]}
         </span>

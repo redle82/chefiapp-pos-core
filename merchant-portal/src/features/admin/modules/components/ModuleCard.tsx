@@ -3,35 +3,37 @@
  * Ref: plano página_mis_productos_módulos. Ícone, nome, descrição, badge, botões.
  */
 
+import { useTranslation } from "react-i18next";
 import type { Module, ModuleStatus } from "../types";
 
+/** Badge style keys — label resolved via i18n at render time */
 const BADGE_STYLES: Record<
   ModuleStatus,
-  { bg: string; color: string; label: string } | null
+  { bg: string; color: string; labelKey: string } | null
 > = {
   active: {
     bg: "var(--status-success-bg)",
     color: "var(--status-success-text)",
-    label: "Activo",
+    labelKey: "modules.badgeActive",
   },
   needs_setup: {
     bg: "var(--status-warning-bg)",
     color: "var(--status-warning-text)",
-    label: "Configurar",
+    labelKey: "modules.badgeConfigure",
   },
   locked: {
     bg: "var(--surface-overlay)",
     color: "var(--text-secondary)",
-    label: "Indisponible",
+    labelKey: "modules.badgeUnavailable",
   },
   inactive: null,
 };
 
-const PRIMARY_LABELS: Record<string, string> = {
-  Activate: "Activar",
-  Configure: "Configurar",
-  Open: "Abrir",
-  Upgrade: "Ver planos",
+const PRIMARY_LABEL_KEYS: Record<string, string> = {
+  Activate: "modules.actionActivate",
+  Configure: "modules.actionConfigure",
+  Open: "modules.actionOpen",
+  Upgrade: "modules.actionUpgrade",
 };
 
 interface ModuleCardProps {
@@ -48,11 +50,11 @@ export function ModuleCard({
   onSecondaryAction,
   secondaryLabel,
 }: ModuleCardProps) {
+  const { t } = useTranslation("sidebar");
   const badge = BADGE_STYLES[module.status];
-  const primaryLabel =
-    module.primaryLabelOverride ??
-    PRIMARY_LABELS[module.primaryAction] ??
-    module.primaryAction;
+  const primaryLabel = t(
+    PRIMARY_LABEL_KEYS[module.primaryAction] ?? module.primaryAction,
+  );
   const showSecondary =
     module.secondaryAction &&
     (module.status === "active" || module.status === "needs_setup");
@@ -90,26 +92,6 @@ export function ModuleCard({
     margin: 0,
     fontSize: 11,
     color: "var(--text-tertiary)",
-  };
-  const deviceStatusStyle = {
-    margin: 0,
-    fontSize: 11,
-    color: "var(--text-tertiary)",
-    lineHeight: 1.4,
-  };
-  const desktopOnlyBadgeStyle = {
-    display: "inline-flex",
-    alignItems: "center",
-    width: "fit-content",
-    fontSize: 10,
-    fontWeight: 600,
-    letterSpacing: "0.02em",
-    textTransform: "uppercase" as const,
-    color: "#60a5fa",
-    backgroundColor: "rgba(59,130,246,0.12)",
-    border: "1px solid rgba(96,165,250,0.35)",
-    borderRadius: 999,
-    padding: "2px 8px",
   };
   const actionsStyle = {
     display: "flex" as const,
@@ -178,19 +160,15 @@ export function ModuleCard({
               flexShrink: 0,
             }}
           >
-            {badge.label}
+            {t(badge.labelKey)}
           </span>
         )}
       </div>
       <p style={descStyle}>{module.description}</p>
-      {module.platform === "desktop" && (
-        <span style={desktopOnlyBadgeStyle}>Desktop only</span>
-      )}
       {module.dependencies && module.dependencies.length > 0 && (
-        <p style={depsStyle}>Requiere: {module.dependencies.join(", ")}</p>
-      )}
-      {module.deviceStatusLabel && (
-        <p style={deviceStatusStyle}>{module.deviceStatusLabel}</p>
+        <p style={depsStyle}>
+          {t("modules.requires", { deps: module.dependencies.join(", ") })}
+        </p>
       )}
       <div style={actionsStyle}>
         <button
@@ -207,7 +185,7 @@ export function ModuleCard({
             onClick={() => onSecondaryAction?.(module.id)}
             style={btnSecondaryStyle}
           >
-            {secondaryLabel ?? "Desactivar"}
+            {secondaryLabel ?? t("modules.actionDeactivate")}
           </button>
         )}
       </div>

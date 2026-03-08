@@ -3,24 +3,13 @@
  * Preparado para integração futura com gm_payments, fechamento de caixa e relatórios.
  */
 
-export type TransactionStatus =
-  | "PROCESSED"
-  | "REFUNDED"
-  | "FAILED"
-  | "PENDING";
+import type { Currency } from "@domain/payment/types";
 
-export type TransactionMethod =
-  | "CASH"
-  | "CARD"
-  | "ONLINE"
-  | "WALLET"
-  | "OTHER";
+export type TransactionStatus = "PROCESSED" | "REFUNDED" | "FAILED" | "PENDING";
 
-export type TransactionChannel =
-  | "POS"
-  | "QR"
-  | "DELIVERY"
-  | "RESERVATION";
+export type TransactionMethod = "CASH" | "CARD" | "ONLINE" | "WALLET" | "OTHER";
+
+export type TransactionChannel = "POS" | "QR" | "DELIVERY" | "RESERVATION";
 
 export type PayoutStatus = "SENT" | "PENDING";
 
@@ -28,7 +17,7 @@ export interface Transaction {
   id: string;
   orderId?: string;
   amount: number;
-  currency: "EUR";
+  currency: Currency;
   status: TransactionStatus;
   method: TransactionMethod;
   channel: TransactionChannel;
@@ -40,7 +29,7 @@ export interface Transaction {
 export interface Payout {
   id: string;
   amount: number;
-  currency: "EUR";
+  currency: Currency;
   periodStart: string;
   periodEnd: string;
   status: PayoutStatus;

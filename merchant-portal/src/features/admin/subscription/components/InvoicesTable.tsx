@@ -3,46 +3,36 @@
  * Ref: Historial de facturación — (futuro) download PDF, export CSV.
  */
 
+import { getFormatLocale } from "@/core/i18n/regionLocaleConfig";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { currencyService } from "../../../../core/currency/CurrencyService";
 import type { Invoice } from "../types";
 
 interface InvoicesTableProps {
   invoices: Invoice[];
-  onApplyFilters?: (opts: { periodStart?: string; periodEnd?: string; limit?: number }) => void;
+  onApplyFilters?: (opts: {
+    periodStart?: string;
+    periodEnd?: string;
+    limit?: number;
+  }) => void;
   onDownloadPdf?: (invoiceId: string) => void;
 }
 
-const PERIOD_PRESETS = [
-  { label: "Últimos 3 meses", months: 3 },
-  { label: "Último año", months: 12 },
-];
-
-function formatEur(n: number) {
-  return new Intl.NumberFormat("es-ES", {
+function formatCurrency(amountCents: number, currency: string) {
+  const value = amountCents / 100;
+  return new Intl.NumberFormat(getFormatLocale(), {
     style: "currency",
-    currency: "EUR",
-  }).format(n);
+    currency: currency.toUpperCase() || currencyService.getDefaultCurrency(),
+  }).format(value);
 }
 
 function formatDate(s: string) {
-  return new Date(s).toLocaleDateString("es-ES", {
+  return new Date(s).toLocaleDateString(getFormatLocale(), {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
-}
-
-function statusLabel(s: Invoice["status"]) {
-  switch (s) {
-    case "paid":
-      return "Pagado";
-    case "pending":
-      return "Pendiente";
-    case "failed":
-      return "Fallido";
-    default:
-      return s;
-  }
 }
 
 export function InvoicesTable({
@@ -50,12 +40,25 @@ export function InvoicesTable({
   onApplyFilters,
   onDownloadPdf,
 }: InvoicesTableProps) {
+  const { t } = useTranslation("billing");
   const [periodPreset, setPeriodPreset] = useState<string>("");
   const [limit, setLimit] = useState(10);
 
+  const periodPresets: { labelKey: "periodPresets.last3Months" | "periodPresets.lastYear"; months: number }[] = [
+    { labelKey: "periodPresets.last3Months", months: 3 },
+    { labelKey: "periodPresets.lastYear", months: 12 },
+  ];
+
+  const statusLabel = (s: Invoice["status"]) => {
+    if (s === "paid") return t("invoiceStatus.paid");
+    if (s === "pending") return t("invoiceStatus.pending");
+    if (s === "failed") return t("invoiceStatus.failed");
+    return s;
+  };
+
   const handleApply = () => {
     if (periodPreset) {
-      const preset = PERIOD_PRESETS.find((p) => p.label === periodPreset);
+      const preset = periodPresets.find((p) => p.labelKey === periodPreset);
       if (preset) {
         const end = new Date();
         const start = new Date();
@@ -112,10 +115,10 @@ export function InvoicesTable({
             minWidth: 160,
           }}
         >
-          <option value="">Período</option>
-          {PERIOD_PRESETS.map((p) => (
-            <option key={p.label} value={p.label}>
-              {p.label}
+          <option value="">{t("periodLabel", "Período")}</option>
+          {periodPresets.map((p) => (
+            <option key={p.labelKey} value={p.labelKey}>
+              {t(p.labelKey)}
             </option>
           ))}
         </select>
@@ -167,19 +170,50 @@ export function InvoicesTable({
         </div>
       ) : (
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <table
+            style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+          >
             <thead>
-              <tr style={{ borderBottom: "1px solid var(--surface-border)", textAlign: "left" }}>
-                <th style={{ padding: "8px 0", color: "var(--text-secondary)", fontWeight: 600 }}>
+              <tr
+                style={{
+                  borderBottom: "1px solid var(--surface-border)",
+                  textAlign: "left",
+                }}
+              >
+                <th
+                  style={{
+                    padding: "8px 0",
+                    color: "var(--text-secondary)",
+                    fontWeight: 600,
+                  }}
+                >
                   Fecha
                 </th>
-                <th style={{ padding: "8px 0", color: "var(--text-secondary)", fontWeight: 600 }}>
+                <th
+                  style={{
+                    padding: "8px 0",
+                    color: "var(--text-secondary)",
+                    fontWeight: 600,
+                  }}
+                >
                   Importe
                 </th>
-                <th style={{ padding: "8px 0", color: "var(--text-secondary)", fontWeight: 600 }}>
+                <th
+                  style={{
+                    padding: "8px 0",
+                    color: "var(--text-secondary)",
+                    fontWeight: 600,
+                  }}
+                >
                   Estado
                 </th>
-                <th style={{ padding: "8px 0", color: "var(--text-secondary)", fontWeight: 600 }}>
+                <th
+                  style={{
+                    padding: "8px 0",
+                    color: "var(--text-secondary)",
+                    fontWeight: 600,
+                  }}
+                >
                   Acción
                 </th>
               </tr>
@@ -190,11 +224,15 @@ export function InvoicesTable({
                   key={inv.id}
                   style={{ borderBottom: "1px solid var(--surface-border)" }}
                 >
-                  <td style={{ padding: "10px 0", color: "var(--text-primary)" }}>
+                  <td
+                    style={{ padding: "10px 0", color: "var(--text-primary)" }}
+                  >
                     {formatDate(inv.date)}
                   </td>
-                  <td style={{ padding: "10px 0", color: "var(--text-primary)" }}>
-                    {formatEur(inv.amountEur)}
+                  <td
+                    style={{ padding: "10px 0", color: "var(--text-primary)" }}
+                  >
+                    {formatCurrency(inv.amountCents, inv.currency)}
                   </td>
                   <td style={{ padding: "10px 0" }}>
                     <span
@@ -205,8 +243,8 @@ export function InvoicesTable({
                           inv.status === "paid"
                             ? "var(--color-success)"
                             : inv.status === "failed"
-                              ? "var(--color-error)"
-                              : "var(--text-secondary)",
+                            ? "var(--color-error)"
+                            : "var(--text-secondary)",
                       }}
                     >
                       {statusLabel(inv.status)}

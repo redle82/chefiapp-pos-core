@@ -1,4 +1,6 @@
+import { useCurrency } from "@/core/currency/useCurrency";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface LoyaltyPointsPerEuroCardProps {
   value: number;
@@ -11,6 +13,8 @@ export function LoyaltyPointsPerEuroCard({
   loading,
   onSave,
 }: LoyaltyPointsPerEuroCardProps) {
+  const { t } = useTranslation();
+  const { symbol } = useCurrency();
   const [inputValue, setInputValue] = useState<string>(String(value ?? 0));
   const [saving, setSaving] = useState(false);
   const [savedAtLeastOnce, setSavedAtLeastOnce] = useState(false);
@@ -43,7 +47,7 @@ export function LoyaltyPointsPerEuroCard({
           Define quantos pontos o cliente ganha por cada euro gasto em compras.
         </p>
         <p className="mt-1 text-[11px] text-gray-500">
-          1 € equivale a:&nbsp;
+          {`1 ${symbol} equivale a:`}&nbsp;
           <span className="font-semibold text-gray-800">N pontos</span>
         </p>
       </header>
@@ -54,7 +58,7 @@ export function LoyaltyPointsPerEuroCard({
             htmlFor="points-per-euro"
             className="text-xs font-medium text-gray-600"
           >
-            Pontos por € gasto
+            {`Pontos por ${symbol} gasto`}
           </label>
           <input
             id="points-per-euro"
@@ -72,7 +76,7 @@ export function LoyaltyPointsPerEuroCard({
           disabled={disabled}
           className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
         >
-          {saving ? "Guardando..." : "Guardar"}
+          {saving ? t("common:saving") : t("common:save")}
         </button>
         {savedAtLeastOnce && (
           <span className="text-xs text-green-600">Guardado</span>
@@ -81,4 +85,3 @@ export function LoyaltyPointsPerEuroCard({
     </section>
   );
 }
-

@@ -1,4 +1,6 @@
+import { useCurrency } from "@/core/currency/useCurrency";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Discount, DiscountType, NewDiscountInput } from "../types";
 
 interface DiscountModalProps {
@@ -16,6 +18,8 @@ export function DiscountModal({
   onClose,
   onSave,
 }: DiscountModalProps) {
+  const { t } = useTranslation();
+  const { symbol } = useCurrency();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<DiscountType>("PERCENTAGE");
@@ -75,7 +79,7 @@ export function DiscountModal({
       onClose();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Erro ao guardar o desconto."
+        err instanceof Error ? err.message : "Erro ao guardar o desconto.",
       );
     } finally {
       setSubmitting(false);
@@ -129,7 +133,7 @@ export function DiscountModal({
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
               className="w-full rounded-lg border border-gray-300 py-2 px-3 text-sm placeholder-gray-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-              placeholder="Ex.: 10% em pedidos online acima de 30 €"
+              placeholder={`Ex.: 10% em pedidos online acima de 30 ${symbol}`}
             />
           </div>
 
@@ -149,7 +153,9 @@ export function DiscountModal({
               >
                 {TYPES.map((t) => (
                   <option key={t} value={t}>
-                    {t === "PERCENTAGE" ? "Percentual (%)" : "Valor fixo (€)"}
+                    {t === "PERCENTAGE"
+                      ? "Percentual (%)"
+                      : `Valor fixo (${symbol})`}
                   </option>
                 ))}
               </select>
@@ -204,7 +210,7 @@ export function DiscountModal({
               disabled={submitting}
               className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              {submitting ? "A guardar..." : "Guardar"}
+              {submitting ? t("common:saving") : t("common:save")}
             </button>
           </div>
         </form>
@@ -212,4 +218,3 @@ export function DiscountModal({
     </div>
   );
 }
-

@@ -10,6 +10,7 @@
  * Rota: /admin/organization
  */
 
+import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import { useCallback, useEffect, useState } from "react";
 import type {
   Organization,
@@ -19,6 +20,7 @@ import {
   getPlanDisplayName,
   getPlanLimits,
 } from "../../../core/billing/featureGating";
+import { Logger } from "../../../core/logger";
 import { useTenant } from "../../../core/tenant/TenantContext";
 import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
 import styles from "./AdminOrganizationPage.module.css";
@@ -116,6 +118,7 @@ function LimitBarFill({ ratio }: { ratio: number }) {
 
 export function AdminOrganizationPage() {
   const { organization: ctxOrg, planTier } = useTenant();
+  const locale = useFormatLocale();
 
   const [org, setOrg] = useState<Organization | null>(ctxOrg);
   const [members, setMembers] = useState<OrgMember[]>([]);
@@ -139,7 +142,7 @@ export function AdminOrganizationPage() {
       setMembers(membersList);
       setRestaurants(restaurantsList as OrgRestaurant[]);
     } catch (err) {
-      console.error("[AdminOrganizationPage] Failed to load org data:", err);
+      Logger.error("[AdminOrganizationPage] Failed to load org data:", err);
     } finally {
       setLoading(false);
     }
@@ -333,7 +336,7 @@ export function AdminOrganizationPage() {
                   </td>
                   <td>
                     {m.created_at
-                      ? new Date(m.created_at).toLocaleDateString("pt-PT")
+                      ? new Date(m.created_at).toLocaleDateString(locale)
                       : "—"}
                   </td>
                 </tr>

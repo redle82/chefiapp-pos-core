@@ -15,6 +15,7 @@ import type {
   PlanTier,
 } from "../../../../../../billing-core/types";
 import { db } from "../../../../core/db";
+import { Logger } from "../../../../core/logger";
 
 // ============================================================================
 // QUERIES
@@ -32,7 +33,7 @@ export async function fetchUserOrganizations(
     .eq("user_id", userId);
 
   if (error) {
-    console.error("[orgApi] fetchUserOrganizations error:", error);
+    Logger.error("[orgApi] fetchUserOrganizations error:", error);
     return [];
   }
 
@@ -74,7 +75,7 @@ export async function fetchOrganization(
     .single();
 
   if (error || !data) {
-    console.error("[orgApi] fetchOrganization error:", error);
+    Logger.error("[orgApi] fetchOrganization error:", error);
     return null;
   }
 
@@ -92,7 +93,7 @@ export async function fetchOrgMembers(orgId: string): Promise<OrgMember[]> {
     .order("created_at", { ascending: true });
 
   if (error) {
-    console.error("[orgApi] fetchOrgMembers error:", error);
+    Logger.error("[orgApi] fetchOrgMembers error:", error);
     return [];
   }
 
@@ -117,7 +118,7 @@ export async function fetchOrgRestaurants(orgId: string): Promise<
     .order("name", { ascending: true });
 
   if (error) {
-    console.error("[orgApi] fetchOrgRestaurants error:", error);
+    Logger.error("[orgApi] fetchOrgRestaurants error:", error);
     return [];
   }
 
@@ -155,7 +156,7 @@ export async function updateOrganization(
     .single();
 
   if (error) {
-    console.error("[orgApi] updateOrganization error:", error);
+    Logger.error("[orgApi] updateOrganization error:", error);
     return null;
   }
 
@@ -177,7 +178,7 @@ export async function addOrgMember(
     .single();
 
   if (error) {
-    console.error("[orgApi] addOrgMember error:", error);
+    Logger.error("[orgApi] addOrgMember error:", error);
     return null;
   }
 
@@ -197,7 +198,7 @@ export async function updateOrgMemberRole(
     .eq("id", memberId);
 
   if (error) {
-    console.error("[orgApi] updateOrgMemberRole error:", error);
+    Logger.error("[orgApi] updateOrgMemberRole error:", error);
     return false;
   }
 
@@ -211,7 +212,7 @@ export async function removeOrgMember(memberId: string): Promise<boolean> {
   const { error } = await db.from("gm_org_members").delete().eq("id", memberId);
 
   if (error) {
-    console.error("[orgApi] removeOrgMember error:", error);
+    Logger.error("[orgApi] removeOrgMember error:", error);
     return false;
   }
 
@@ -244,7 +245,7 @@ export async function createOrganization(input: {
     .single();
 
   if (error) {
-    console.error("[orgApi] createOrganization error:", error);
+    Logger.error("[orgApi] createOrganization error:", error);
     return null;
   }
 

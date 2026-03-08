@@ -4,6 +4,7 @@
  */
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface BillingEmailCardProps {
   initialEmail: string;
@@ -14,6 +15,7 @@ export function BillingEmailCard({
   initialEmail,
   onSave,
 }: BillingEmailCardProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState(initialEmail);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -57,7 +59,14 @@ export function BillingEmailCard({
       >
         Enviaremos notificaciones de facturación y facturas a esta dirección.
       </p>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
         <input
           type="email"
           value={email}
@@ -89,10 +98,12 @@ export function BillingEmailCard({
             opacity: saving ? 0.7 : 1,
           }}
         >
-          {saving ? "Guardando…" : "Guardar"}
+          {saving ? t("common:saving") : t("common:save")}
         </button>
         {saved && (
-          <span style={{ fontSize: 13, color: "var(--color-success)" }}>Guardado</span>
+          <span style={{ fontSize: 13, color: "var(--color-success)" }}>
+            Guardado
+          </span>
         )}
       </div>
     </div>

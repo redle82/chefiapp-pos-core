@@ -3,6 +3,7 @@
  * Badge "Plano actual", CTA "Trocar plano", opcional "Falar com suporte".
  */
 
+import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import { useState } from "react";
 import type { Plan } from "../types";
 
@@ -17,6 +18,7 @@ export function PlanCard({
   onChangePlan,
   onContactSupport,
 }: PlanCardProps) {
+  const locale = useFormatLocale();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleChangeClick = () => {
@@ -54,7 +56,7 @@ export function PlanCard({
             borderRadius: 6,
           }}
         >
-          Plano actual
+          Plano atual
         </span>
       )}
       {plan.trialEndsAt && (
@@ -72,7 +74,7 @@ export function PlanCard({
           }}
         >
           Trial termina em{" "}
-          {new Date(plan.trialEndsAt).toLocaleDateString("es-ES", {
+          {new Date(plan.trialEndsAt).toLocaleDateString(locale, {
             day: "2-digit",
             month: "short",
           })}
@@ -117,7 +119,7 @@ export function PlanCard({
               cursor: "pointer",
             }}
           >
-            Cambiar plan
+            Mudar plano
           </button>
         )}
         {plan.isCurrent && onChangePlan && (
@@ -135,7 +137,7 @@ export function PlanCard({
               cursor: "pointer",
             }}
           >
-            Cambiar plan
+            Mudar plano
           </button>
         )}
         {onContactSupport && (
@@ -152,7 +154,7 @@ export function PlanCard({
               cursor: "pointer",
             }}
           >
-            Hablar con soporte
+            Falar com suporte
           </button>
         )}
       </div>
@@ -180,11 +182,19 @@ export function PlanCard({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p style={{ margin: "0 0 16px 0", fontSize: 15, color: "var(--text-primary)" }}>
-              ¿Cambiar al plan <strong>{plan.name}</strong>? Se aplicará en la
-              próxima facturación.
+            <p
+              style={{
+                margin: "0 0 16px 0",
+                fontSize: 15,
+                color: "var(--text-primary)",
+              }}
+            >
+              Mudar para o plano <strong>{plan.name}</strong>? Será aplicado na
+              próxima faturação.
             </p>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <div
+              style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}
+            >
               <button
                 type="button"
                 onClick={() => setConfirmOpen(false)}

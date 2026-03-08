@@ -1,3 +1,4 @@
+import { useCurrency } from "@/core/currency/useCurrency";
 import { useState } from "react";
 import type { TransactionsFilters as TransactionsFiltersType } from "../types";
 
@@ -12,7 +13,11 @@ interface TransactionsFiltersProps {
   loading?: boolean;
 }
 
-export function TransactionsFilters({ onApply, loading }: TransactionsFiltersProps) {
+export function TransactionsFilters({
+  onApply,
+  loading,
+}: TransactionsFiltersProps) {
+  const { symbol } = useCurrency();
   const [period, setPeriod] = useState<string>(PERIOD_OPTIONS[0].value);
   const [amountMin, setAmountMin] = useState<string>("");
   const [amountMax, setAmountMax] = useState<string>("");
@@ -28,7 +33,10 @@ export function TransactionsFilters({ onApply, loading }: TransactionsFiltersPro
   return (
     <div className="flex flex-wrap items-end gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-1">
-        <label htmlFor="tx-period" className="text-xs font-medium text-gray-600">
+        <label
+          htmlFor="tx-period"
+          className="text-xs font-medium text-gray-600"
+        >
           Período
         </label>
         <select
@@ -46,8 +54,11 @@ export function TransactionsFilters({ onApply, loading }: TransactionsFiltersPro
         </select>
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="tx-amount-min" className="text-xs font-medium text-gray-600">
-          Desde (€)
+        <label
+          htmlFor="tx-amount-min"
+          className="text-xs font-medium text-gray-600"
+        >
+          {`Desde (${symbol})`}
         </label>
         <input
           id="tx-amount-min"
@@ -62,8 +73,11 @@ export function TransactionsFilters({ onApply, loading }: TransactionsFiltersPro
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="tx-amount-max" className="text-xs font-medium text-gray-600">
-          Hasta (€)
+        <label
+          htmlFor="tx-amount-max"
+          className="text-xs font-medium text-gray-600"
+        >
+          {`Hasta (${symbol})`}
         </label>
         <input
           id="tx-amount-max"

@@ -1,3 +1,4 @@
+import { useCurrency } from "@/core/currency/useCurrency";
 import { useState } from "react";
 import type { PayoutsFilters as PayoutsFiltersType } from "../types";
 
@@ -13,6 +14,7 @@ interface PayoutsFiltersProps {
 }
 
 export function PayoutsFilters({ onApply, loading }: PayoutsFiltersProps) {
+  const { symbol } = useCurrency();
   const [period, setPeriod] = useState<string>(PERIOD_OPTIONS[0].value);
   const [amountMin, setAmountMin] = useState<string>("");
   const [amountMax, setAmountMax] = useState<string>("");
@@ -28,7 +30,10 @@ export function PayoutsFilters({ onApply, loading }: PayoutsFiltersProps) {
   return (
     <div className="flex flex-wrap items-end gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-1">
-        <label htmlFor="po-period" className="text-xs font-medium text-gray-600">
+        <label
+          htmlFor="po-period"
+          className="text-xs font-medium text-gray-600"
+        >
           Período
         </label>
         <select
@@ -46,8 +51,11 @@ export function PayoutsFilters({ onApply, loading }: PayoutsFiltersProps) {
         </select>
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="po-amount-min" className="text-xs font-medium text-gray-600">
-          Desde (€)
+        <label
+          htmlFor="po-amount-min"
+          className="text-xs font-medium text-gray-600"
+        >
+          {`Desde (${symbol})`}
         </label>
         <input
           id="po-amount-min"
@@ -62,8 +70,11 @@ export function PayoutsFilters({ onApply, loading }: PayoutsFiltersProps) {
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="po-amount-max" className="text-xs font-medium text-gray-600">
-          Hasta (€)
+        <label
+          htmlFor="po-amount-max"
+          className="text-xs font-medium text-gray-600"
+        >
+          {`Hasta (${symbol})`}
         </label>
         <input
           id="po-amount-max"

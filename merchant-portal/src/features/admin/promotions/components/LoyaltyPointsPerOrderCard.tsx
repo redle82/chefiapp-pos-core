@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface LoyaltyPointsPerOrderCardProps {
   value: number;
@@ -11,6 +12,7 @@ export function LoyaltyPointsPerOrderCard({
   loading,
   onSave,
 }: LoyaltyPointsPerOrderCardProps) {
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState<string>(String(value ?? 0));
   const [saving, setSaving] = useState(false);
   const [savedAtLeastOnce, setSavedAtLeastOnce] = useState(false);
@@ -73,7 +75,7 @@ export function LoyaltyPointsPerOrderCard({
           disabled={disabled}
           className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
         >
-          {saving ? "Guardando..." : "Guardar"}
+          {saving ? t("common:saving") : t("common:save")}
         </button>
         {savedAtLeastOnce && (
           <span className="text-xs text-green-600">Guardado</span>
@@ -82,4 +84,3 @@ export function LoyaltyPointsPerOrderCard({
     </section>
   );
 }
-

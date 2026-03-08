@@ -1,17 +1,21 @@
+import { currencyService } from "@/core/currency/CurrencyService";
+import { getFormatLocale } from "@/core/i18n/regionLocaleConfig";
 import type { Transaction, TransactionStatus } from "../types";
 
-const CURRENCY = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
-});
+const formatCurrency = (n: number) =>
+  new Intl.NumberFormat(getFormatLocale(), {
+    style: "currency",
+    currency: currencyService.getDefaultCurrency(),
+  }).format(n);
 
-const DATETIME = new Intl.DateTimeFormat("es-ES", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
+const formatDateTime = (d: Date) =>
+  new Intl.DateTimeFormat(getFormatLocale(), {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
 
 const METHOD_LABELS: Record<Transaction["method"], string> = {
   CASH: "Efectivo",
@@ -47,8 +51,11 @@ interface TransactionRowProps {
   onViewDetail?: (id: string) => void;
 }
 
-export function TransactionRow({ transaction, onViewDetail }: TransactionRowProps) {
-  const dateStr = DATETIME.format(new Date(transaction.createdAt));
+export function TransactionRow({
+  transaction,
+  onViewDetail,
+}: TransactionRowProps) {
+  const dateStr = formatDateTime(new Date(transaction.createdAt));
 
   return (
     <tr className="border-b border-gray-100 transition-colors hover:bg-gray-50">
@@ -63,11 +70,13 @@ export function TransactionRow({ transaction, onViewDetail }: TransactionRowProp
         {CHANNEL_LABELS[transaction.channel]}
       </td>
       <td className="py-3 px-2 text-sm font-medium text-gray-900">
-        {CURRENCY.format(transaction.amount)}
+        {formatCurrency(transaction.amount)}
       </td>
       <td className="py-3 px-2">
         <span
-          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[transaction.status]}`}
+          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            STATUS_BADGE_CLASS[transaction.status]
+          }`}
         >
           {STATUS_LABELS[transaction.status]}
         </span>

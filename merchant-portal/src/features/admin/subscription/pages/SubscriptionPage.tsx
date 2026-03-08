@@ -6,8 +6,11 @@
  * Data source: useSubscriptionPage hook (Core DB only; empty when no data).
  */
 
+import { useState } from "react";
 import { CONFIG } from "../../../../config";
 import { BillingBroker } from "../../../../core/billing/BillingBroker";
+import { Logger } from "../../../../core/logger";
+import { getTabIsolated } from "../../../../core/storage/TabIsolatedStorage";
 import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 import { BillingEmailCard } from "../components/BillingEmailCard";
 import { BillingSummaryCard } from "../components/BillingSummaryCard";
@@ -30,15 +33,40 @@ export function SubscriptionPage() {
     error,
   } = useSubscriptionPage();
 
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  const restaurantId = getTabIsolated("chefiapp_restaurant_id");
+
   const handleChangePlan = async (planId: string) => {
+    setCheckoutError(null);
+    if (!restaurantId) {
+      setCheckoutError("Selecione um restaurante para alterar o plano.");
+      return;
+    }
     try {
-      // Prefer stripePriceId (Stripe price_xxx) over plan slug for checkout
       const plan = plans.find((p) => p.id === planId);
       const priceId = plan?.stripePriceId || planId;
-      const result = await BillingBroker.startSubscription(priceId);
-      if (result.url) window.location.href = result.url;
+      const result = await BillingBroker.startSubscription(
+        priceId,
+        restaurantId,
+      );
+      if (result.url) {
+        if (result.url.includes("stripe.com")) {
+          window.location.href = result.url;
+        } else {
+          setCheckoutError(
+            "O servidor devolveu um URL inválido. Tenta de novo ou contacta o suporte.",
+          );
+        }
+      } else {
+        setCheckoutError("Não foi possível abrir o checkout. Tenta de novo.");
+      }
     } catch (err) {
-      console.error("[SubscriptionPage] Change plan error:", err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Erro ao iniciar checkout. Tenta de novo.";
+      setCheckoutError(message);
     }
   };
 
@@ -47,7 +75,7 @@ export function SubscriptionPage() {
       const result = await BillingBroker.openCustomerPortal();
       if (result.url) window.location.href = result.url;
     } catch (err) {
-      console.error("[SubscriptionPage] Open portal error:", err);
+      Logger.error("[SubscriptionPage] Open portal error:", err);
     }
   };
 
@@ -75,8 +103,8 @@ export function SubscriptionPage() {
   return (
     <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
       <AdminPageHeader
-        title="Tu suscripción"
-        subtitle="Administra tu plan y complementos de ChefIApp."
+        title="A tua assinatura"
+        subtitle="Gerir plano e complementos ChefIApp."
       />
       {!canSellPlatform && (
         <div
@@ -90,11 +118,33 @@ export function SubscriptionPage() {
             fontSize: 14,
           }}
         >
-          La suscripción y el cambio de plan solo están disponibles en{" "}
+          A assinatura e a mudança de plano estão disponíveis apenas em{" "}
           <a href="https://www.chefiapp.com" rel="noopener noreferrer">
             chefiapp.com
           </a>
           .
+        </div>
+      )}
+      {checkoutError && (
+        <div
+          role="alert"
+          style={{
+            marginBottom: 16,
+            padding: 12,
+            borderRadius: 8,
+            backgroundColor: "var(--status-error-bg, #f8d7da)",
+            color: "var(--text-primary)",
+            fontSize: 14,
+          }}
+        >
+          {checkoutError}
+          {checkoutError.includes("4320") && (
+            <span>
+              {" "}
+              Na raiz do projeto:{" "}
+              <code style={{ fontSize: 12 }}>pnpm run dev:gateway</code>
+            </span>
+          )}
         </div>
       )}
       {(isTrialing && subscription?.trial_ends_at) || CONFIG.STRIPE_IS_TEST ? (
@@ -116,7 +166,7 @@ export function SubscriptionPage() {
                 fontSize: 14,
               }}
             >
-              Período de prueba activo
+              Período de teste ativo
             </span>
           )}
           {CONFIG.STRIPE_IS_TEST && (
@@ -146,7 +196,7 @@ export function SubscriptionPage() {
             margin: "0 0 12px 0",
           }}
         >
-          Planes
+          Planos
         </h2>
         <div
           style={{
@@ -160,7 +210,7 @@ export function SubscriptionPage() {
               key={plan.id}
               plan={plan}
               onChangePlan={canSellPlatform ? handleChangePlan : undefined}
-              onContactSupport={() => console.log("Contact support")}
+              onContactSupport={() => Logger.debug("Contact support")}
             />
           ))}
         </div>
@@ -176,7 +226,7 @@ export function SubscriptionPage() {
             margin: "0 0 8px 0",
           }}
         >
-          Uso del plan
+          Uso do plano
         </h2>
         <p
           style={{
@@ -185,8 +235,7 @@ export function SubscriptionPage() {
             color: "var(--text-secondary)",
           }}
         >
-          Realiza un seguimiento de los límites de tu plan actual y del uso
-          adicional.
+          Acompanha os limites do teu plano atual e o uso adicional.
         </p>
         <div
           style={{
@@ -213,8 +262,8 @@ export function SubscriptionPage() {
       >
         <BillingSummaryCard
           summary={billingSummary}
-          onSwitchToYearly={() => console.log("Switch to yearly")}
-          onCancelSubscription={() => console.log("Cancel subscription")}
+          onSwitchToYearly={() => Logger.debug("Switch to yearly")}
+          onCancelSubscription={() => Logger.debug("Cancel subscription")}
         />
         <PaymentMethodCard
           method={paymentMethod}
@@ -226,7 +275,7 @@ export function SubscriptionPage() {
         <BillingEmailCard
           initialEmail={billingEmail}
           onSave={async (email) => {
-            console.log("Save billing email", email);
+            Logger.info(`Save billing email: ${email}`);
           }}
         />
       </section>
@@ -235,8 +284,8 @@ export function SubscriptionPage() {
       <section>
         <InvoicesTable
           invoices={invoices}
-          onApplyFilters={(opts) => console.log("Apply filters", opts)}
-          onDownloadPdf={(id) => console.log("Download PDF", id)}
+          onApplyFilters={(opts) => Logger.debug("Apply filters", { opts })}
+          onDownloadPdf={(id) => Logger.debug(`Download PDF: ${id}`)}
         />
       </section>
     </div>

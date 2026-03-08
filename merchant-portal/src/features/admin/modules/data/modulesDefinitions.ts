@@ -19,7 +19,6 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     description:
       "Gestiona tu Sala, pedidos de Delivery y Take away en un mismo sitio.",
     icon: "🖥️",
-    platform: "desktop",
     primaryAction: "Open",
     secondaryAction: "Desactivar",
     block: "essenciais",
@@ -31,7 +30,6 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     description:
       "Ecrã de cozinha. Vê os pedidos criados no TPV e gere a preparação.",
     icon: "👨‍🍳",
-    platform: "desktop",
     primaryAction: "Open",
     secondaryAction: "Desactivar",
     block: "essenciais",
@@ -43,7 +41,6 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     description:
       "App para a equipa: fichagem, tarefas, KDS, alertas e gestão de turno — tudo num só lugar.",
     icon: "📋",
-    platform: "mobile",
     primaryAction: "Open",
     secondaryAction: "Desactivar",
     block: "essenciais",
@@ -55,7 +52,6 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     description:
       "Simplifica el control horario de tu equipo. Los empleados pueden fichar entrada y salida en el TPV.",
     icon: "👥",
-    platform: "web",
     primaryAction: "Activate",
     block: "essenciais",
     defaultStatus: "inactive",
@@ -66,7 +62,6 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     description:
       "Gestiona tu inventario. Seguimiento de niveles, notificaciones de stock bajo e informes desde el TPV.",
     icon: "📦",
-    platform: "web",
     primaryAction: "Activate",
     block: "essenciais",
     defaultStatus: "inactive",
@@ -77,7 +72,6 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     description:
       "A página web do restaurante: menu online, pedidos, QR codes e presença pública.",
     icon: "🌐",
-    platform: "web",
     primaryAction: "Configure",
     secondaryAction: "Desactivar",
     block: "canais",
@@ -89,7 +83,6 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     description:
       "Combina lo mejor de la carta digital con toda la tecnología de un e-commerce.",
     icon: "📱",
-    platform: "web",
     primaryAction: "Configure",
     secondaryAction: "Desactivar",
     dependencies: ["Catálogo"],
@@ -102,7 +95,6 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     description:
       "Consigue más reservas a través de tu página web, redes sociales y teléfono.",
     icon: "📅",
-    platform: "web",
     primaryAction: "Configure",
     secondaryAction: "Desactivar",
     block: "canais",
@@ -114,7 +106,6 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     description:
       "Integra tus canales de delivery y recibe todos los pedidos en un mismo lugar.",
     icon: "🚚",
-    platform: "web",
     primaryAction: "Configure",
     secondaryAction: "Desactivar",
     dependencies: ["Integraciones"],
