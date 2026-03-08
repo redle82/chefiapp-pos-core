@@ -1,25 +1,22 @@
 /**
  * Integration Gateway — porta 4320
+ *
+ * DEPRECATED (Stack 2026): Produção deve usar Supabase Edge Functions.
+ * Ver: docs/ops/GATEWAY_DEPRECATED.md, docs/ops/MIGRATION_RENDER_TO_EDGE.md
+ * Uso local (dev) ainda suportado: pnpm run dev:gateway + VITE_API_BASE=http://localhost:4320
+ *
  * Ref: CHEFIAPP_EVENT_BUS_WEBHOOKS_SPEC.md, CHEFIAPP_API_PUBLICA_V1_SPEC.md
- *
- * - POST /internal/events — recebe eventos; entrega a Webhooks OUT (HMAC, retry, log).
- * - GET /health — health check.
- * - /api/v1/* — API pública: auth por API Key, rate limit, rotas orders/payment/whatsapp/tasks.
- *
- * Env: PORT=4320, CORE_URL=http://localhost:3001, CORE_SERVICE_KEY=<jwt>,
- *      INTERNAL_API_TOKEN=<token para POST /internal/events>.
- *
- * Nota: O webhook Stripe (billing/subscription) deve, ao processar checkout.session.completed
- * ou payment_intent.succeeded, enviar POST /internal/events com event=payment.confirmed
- * para acionar Webhooks OUT e adapters.
+ * - POST /internal/events, GET /health, /api/v1/* (orders, payment, whatsapp, tasks).
+ * Env: PORT=4320, CORE_URL, CORE_SERVICE_KEY, INTERNAL_API_TOKEN, STRIPE_SECRET_KEY, SUMUP_*.
  */
 
 import * as crypto from "crypto";
 import * as http from "http";
 import Stripe from "stripe";
 import { processProductImage } from "./imageProcessor";
+import { logger, setSentryCapture } from "./logger";
 import { uploadProductImage } from "./minioStorage";
-import { handleMobileActivationRoute } from "./mobileActivationGateway";
+import { createRateLimiter, type RateLimiter } from "./rate-limiter";
 
 const PORT = parseInt(process.env.PORT || "4320", 10);
 const CORE_URL = (process.env.CORE_URL || "http://localhost:3001").replace(
@@ -37,24 +34,6 @@ const SUMUP_API_BASE_URL = (
   process.env.SUMUP_API_BASE_URL || "https://api.sumup.com"
 ).replace(/\/$/, "");
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5175";
-const DESKTOP_LAUNCH_ACK_SECRET =
-  process.env.CHEFIAPP_DESKTOP_LAUNCH_ACK_SECRET?.trim() ||
-  process.env.DESKTOP_LAUNCH_ACK_SECRET?.trim() ||
-  "";
-const INTEGRATION_RUNTIME_AUTHORITY =
-  process.env.INTEGRATION_RUNTIME_AUTHORITY || "integration-gateway";
-const INTEGRATION_RUNTIME_SIGNAL =
-  process.env.INTEGRATION_RUNTIME_SIGNAL || "authoritative";
-const INTEGRATION_COMPAT_DEADLINE =
-  process.env.INTEGRATION_COMPAT_DEADLINE || "2026-03-14T18:00:00+01:00";
-const INTEGRATION_COMPAT_OWNER =
-  process.env.INTEGRATION_COMPAT_OWNER || "integration-gateway";
-const INTEGRATION_COMPAT_FLAG = "INTEGRATION_LEGACY_COMPAT_MODE";
-const INTEGRATION_MODERN_ENTRYPOINT = "integration-gateway/src/index.ts";
-const INTEGRATION_LEGACY_COMPAT_MODE =
-  process.env.INTEGRATION_LEGACY_COMPAT_MODE !== "0";
-const DESKTOP_LAUNCH_ACK_MAX_SKEW_MS = 90_000;
-const ACK_SIGNATURE_HEX_RE = /^[a-f0-9]{64}$/i;
 
 /** Origens permitidas para criar sessão de checkout (venda da plataforma). Apenas chefiapp.com em produção. */
 const BILLING_ALLOWED_ORIGINS: string[] = (() => {
@@ -92,10 +71,12 @@ function isBillingOriginAllowed(origin: string | null): boolean {
 }
 
 /**
- * Stripe Price ID mapping: plan slug → Stripe price_xxx.
- * Reads from env vars STRIPE_PRICE_<PLAN> (uppercased).
- * When the frontend sends a plan slug (e.g. "pro") instead of a real
- * Stripe price ID ("price_xxx"), this map resolves it.
+ * Stripe Price ID mapping: plan slug (or plan_currency) → Stripe price_xxx.
+ * Reads from env vars STRIPE_PRICE_<KEY> (key lowercased).
+ * - STRIPE_PRICE_pro → single-currency fallback
+ * - STRIPE_PRICE_PRO_EUR, STRIPE_PRICE_PRO_USD → multi-currency (key: "pro_eur", "pro_usd")
+ * Frontend sends resolved price_id (from billing_plan_prices or plan); if it sends a slug
+ * (e.g. "pro") or "pro_eur", this map resolves it. Currency must come from tenant/restaurant, never locale.
  */
 const STRIPE_PRICE_MAP: Record<string, string> = {};
 for (const key of Object.keys(process.env)) {
@@ -118,9 +99,7 @@ if (IS_BILLING_MOCK) {
   const reason = !STRIPE_SECRET_KEY
     ? "STRIPE_SECRET_KEY not set"
     : "No STRIPE_PRICE_* env vars mapped";
-  console.log(
-    `[integration-gateway] ⚠️  ${reason} → billing runs in MOCK mode (local dev).`,
-  );
+  logger.warn("billing runs in MOCK mode", { reason });
 }
 
 /** Resolve a price identifier: if it already looks like a Stripe price ID, use it as-is;
@@ -150,8 +129,45 @@ const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_ATTEMPTS = 4;
 const RETRY_BACKOFF_MS = [1000, 2000, 4000];
 
-const RATE_LIMIT_PER_MIN = 100;
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_PER_MIN = parseInt(
+  process.env.RATE_LIMIT_PER_MIN || "100",
+  10,
+);
+/** Populated at startup by createRateLimiter() (in-memory or Redis). */
+let rateLimiter: RateLimiter | null = null;
+
+/**
+ * JWT secret used to verify Supabase user tokens on privileged routes.
+ * Set SUPABASE_JWT_SECRET in env.  In local Docker Core this is the PGRST_JWT_SECRET.
+ */
+const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET || "";
+
+// ---------------------------------------------------------------------------
+// Optional Sentry initialisation
+// ---------------------------------------------------------------------------
+(function initSentry() {
+  const dsn = process.env.SENTRY_DSN?.trim();
+  if (!dsn) return;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const Sentry = require("@sentry/node") as {
+      init: (opts: { dsn: string; tracesSampleRate?: number }) => void;
+      captureException: (
+        err: Error,
+        opts?: { extra: Record<string, unknown> },
+      ) => void;
+    };
+    Sentry.init({ dsn, tracesSampleRate: 0.1 });
+    setSentryCapture((msg, ctx) =>
+      Sentry.captureException(new Error(msg), { extra: ctx }),
+    );
+    logger.info("sentry initialized", { dsn: dsn.slice(0, 30) + "…" });
+  } catch {
+    logger.warn("sentry init skipped", {
+      reason: "@sentry/node not installed",
+    });
+  }
+})();
 
 function sha256Hex(text: string): string {
   return crypto.createHash("sha256").update(text, "utf8").digest("hex");
@@ -174,297 +190,11 @@ function apiError(
   return { error, message, ...(details !== undefined ? { details } : {}) };
 }
 
-function integrationCompatHeaders(route: string): Record<string, string> {
-  return {
-    ...runtimeAuthorityHeaders("server/integration-gateway.ts"),
-    "x-chefiapp-compat-owner": INTEGRATION_COMPAT_OWNER,
-    "x-chefiapp-compat-flag": INTEGRATION_COMPAT_FLAG,
-    "x-chefiapp-compat-state": INTEGRATION_LEGACY_COMPAT_MODE
-      ? "enabled"
-      : "disabled",
-    "x-chefiapp-compat-mode": INTEGRATION_LEGACY_COMPAT_MODE
-      ? "legacy-server"
-      : "disabled",
-    "x-chefiapp-compat-route": route,
-    "x-chefiapp-compat-deadline": INTEGRATION_COMPAT_DEADLINE,
-  };
-}
-
-function runtimeAuthorityHeaders(entrypoint: string): Record<string, string> {
-  return {
-    "x-chefiapp-runtime-authority": INTEGRATION_RUNTIME_AUTHORITY,
-    "x-chefiapp-runtime-entrypoint": entrypoint,
-    "x-chefiapp-runtime-signal": INTEGRATION_RUNTIME_SIGNAL,
-  };
-}
-
-function integrationCompatDisabledResponse(route: string): {
-  status: number;
-  json: object;
-} {
-  return integrationCompatDisabledResponseWithTarget(route);
-}
-
-function integrationCompatDisabledResponseWithTarget(
-  route: string,
-  target?: { replacementRoute?: string; replacementEntrypoint?: string },
-): { status: number; json: object } {
-  return {
-    status: 410,
-    json: apiError(
-      "compatibility_disabled",
-      "Legacy integration compatibility route is disabled",
-      {
-        route,
-        runtime_authority: INTEGRATION_RUNTIME_AUTHORITY,
-        compat_owner: INTEGRATION_COMPAT_OWNER,
-        compat_flag: INTEGRATION_COMPAT_FLAG,
-        compat_deadline: INTEGRATION_COMPAT_DEADLINE,
-        ...(target?.replacementRoute
-          ? { replacement_route: target.replacementRoute }
-          : {}),
-        ...(target?.replacementEntrypoint
-          ? { replacement_entrypoint: target.replacementEntrypoint }
-          : {}),
-      },
-    ),
-  };
-}
-
-function safeErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
 function extractBase64Payload(input: string): string {
   if (input.includes(",")) {
     return input.split(",").pop() || "";
   }
   return input;
-}
-
-// ---------------------------------------------------------------------------
-// Desktop launch ACK store (chefiapp:// TPV/KDS)
-// ---------------------------------------------------------------------------
-
-type DesktopLaunchAck = {
-  /** Nonce gerado pelo Admin ao emitir o deep link. */
-  nonce: string;
-  /** Módulo operacional que pediu o launch. */
-  moduleId: "tpv" | "kds";
-  /** Terminal pareado no Desktop (id do gm_terminals), se disponível. */
-  deviceId: string | null;
-  /** Restaurante ao qual o terminal pertence, se conhecido. */
-  restaurantId: string | null;
-  /**
-   * Flag enviada pelo Desktop indicando se o app é o binário empacotado
-   * (app.isPackaged === true). Usada pelo Admin como prova "B" de instalação.
-   */
-  isPackaged: boolean;
-  /**
-   * Versão do Desktop (app.getVersion()) no momento do ACK, para debug/QA.
-   */
-  appVersion: string | null;
-  /**
-   * Timestamp ISO enviado pelo Desktop quando o ACK foi emitido
-   * (lado Electron). Campo opcional; usado apenas para diagnóstico.
-   */
-  launchAckSentAt: string | null;
-  /**
-   * Timestamp ISO do último deep link recebido no Desktop, se o shell
-   * tiver essa informação nos diagnostics. Campo opcional.
-   */
-  lastDeepLinkReceivedAt: string | null;
-  /**
-   * Timestamp (epoch ms) em que o gateway recebeu e registou o ACK.
-   * Este campo governa o TTL no in-memory store.
-   */
-  receivedAt: number;
-};
-
-const DESKTOP_LAUNCH_ACK_TTL_MS = 60_000;
-const desktopLaunchAckStore = new Map<string, DesktopLaunchAck>();
-
-function setDesktopLaunchAck(entry: DesktopLaunchAck): void {
-  desktopLaunchAckStore.set(entry.nonce, entry);
-}
-
-function getDesktopLaunchAck(
-  nonce: string,
-): { found: false } | { found: true; ack: DesktopLaunchAck } {
-  const existing = desktopLaunchAckStore.get(nonce);
-  if (!existing) return { found: false };
-  if (Date.now() - existing.receivedAt > DESKTOP_LAUNCH_ACK_TTL_MS) {
-    desktopLaunchAckStore.delete(nonce);
-    return { found: false };
-  }
-  return { found: true, ack: existing };
-}
-
-async function handleDesktopLaunchAckPost(
-  body: string,
-  headers: http.IncomingHttpHeaders,
-): Promise<{ status: number; json: object }> {
-  let parsed: {
-    nonce?: string;
-    moduleId?: string;
-    deviceId?: string | null;
-    restaurantId?: string | null;
-    isPackaged?: boolean;
-    appVersion?: string | null;
-    launchAckSentAt?: string | null;
-    lastDeepLinkReceivedAt?: string | null;
-  };
-  try {
-    parsed = JSON.parse(body || "{}") as typeof parsed;
-  } catch {
-    return {
-      status: 400,
-      json: apiError("invalid_json", "Invalid JSON body"),
-    };
-  }
-
-  const nonce = parsed.nonce?.trim();
-  const moduleId = parsed.moduleId?.trim();
-  if (!nonce || (moduleId !== "tpv" && moduleId !== "kds")) {
-    return {
-      status: 400,
-      json: apiError(
-        "validation_error",
-        "nonce and moduleId(tpv|kds) required",
-      ),
-    };
-  }
-
-  if (DESKTOP_LAUNCH_ACK_SECRET) {
-    const tsHeader = headers["x-chefiapp-ack-ts"];
-    const sigHeader = headers["x-chefiapp-ack-signature"];
-    const tsValue = Array.isArray(tsHeader) ? tsHeader[0] : tsHeader;
-    const sigValue = Array.isArray(sigHeader) ? sigHeader[0] : sigHeader;
-
-    if (!tsValue || !sigValue) {
-      return {
-        status: 401,
-        json: apiError(
-          "ack_signature_required",
-          "Desktop launch ACK signature headers are required",
-        ),
-      };
-    }
-
-    const ackTs = Number.parseInt(String(tsValue), 10);
-    if (!Number.isFinite(ackTs)) {
-      return {
-        status: 401,
-        json: apiError("ack_signature_invalid", "Invalid ACK timestamp"),
-      };
-    }
-
-    const signatureRaw = String(sigValue).trim();
-    if (!ACK_SIGNATURE_HEX_RE.test(signatureRaw)) {
-      return {
-        status: 401,
-        json: apiError("ack_signature_invalid", "Invalid ACK signature"),
-      };
-    }
-
-    const ageMs = Math.abs(Date.now() - ackTs);
-    if (ageMs > DESKTOP_LAUNCH_ACK_MAX_SKEW_MS) {
-      return {
-        status: 401,
-        json: apiError("ack_signature_expired", "ACK timestamp expired"),
-      };
-    }
-
-    const material = `${nonce}.${moduleId}.${ackTs}`;
-    const expectedSig = crypto
-      .createHmac("sha256", DESKTOP_LAUNCH_ACK_SECRET)
-      .update(material, "utf8")
-      .digest("hex");
-
-    const expectedBuf = Buffer.from(expectedSig, "hex");
-    const gotBuf = Buffer.from(signatureRaw, "hex");
-    if (
-      expectedBuf.length !== gotBuf.length ||
-      !crypto.timingSafeEqual(expectedBuf, gotBuf)
-    ) {
-      return {
-        status: 401,
-        json: apiError("ack_signature_invalid", "Invalid ACK signature"),
-      };
-    }
-  }
-
-  const isPackaged =
-    typeof parsed.isPackaged === "boolean" ? parsed.isPackaged : false;
-  const appVersionRaw =
-    typeof parsed.appVersion === "string" ? parsed.appVersion.trim() : "";
-  const launchAckSentAtRaw =
-    typeof parsed.launchAckSentAt === "string"
-      ? parsed.launchAckSentAt.trim()
-      : "";
-  const lastDeepLinkReceivedAtRaw =
-    typeof parsed.lastDeepLinkReceivedAt === "string"
-      ? parsed.lastDeepLinkReceivedAt.trim()
-      : "";
-
-  setDesktopLaunchAck({
-    nonce,
-    moduleId,
-    deviceId: parsed.deviceId?.trim() || null,
-    restaurantId: parsed.restaurantId?.trim() || null,
-    isPackaged,
-    appVersion: appVersionRaw || null,
-    launchAckSentAt: launchAckSentAtRaw || null,
-    lastDeepLinkReceivedAt: lastDeepLinkReceivedAtRaw || null,
-    receivedAt: Date.now(),
-  });
-
-  return {
-    status: 202,
-    json: {
-      recorded: true,
-      nonce,
-      moduleId,
-    },
-  };
-}
-
-function handleDesktopLaunchAckGet(nonce: string): {
-  status: number;
-  json: object;
-} {
-  if (!nonce) {
-    return {
-      status: 400,
-      json: apiError("validation_error", "nonce required"),
-    };
-  }
-  const result = getDesktopLaunchAck(nonce);
-  if (!result.found) {
-    // 200 + found:false (not 404) — avoids red console noise from the
-    // expected polling cycle. The client already checks data.found.
-    return {
-      status: 200,
-      json: { found: false },
-    };
-  }
-
-  const { ack } = result;
-  return {
-    status: 200,
-    json: {
-      found: true,
-      nonce: ack.nonce,
-      moduleId: ack.moduleId,
-      deviceId: ack.deviceId,
-      restaurantId: ack.restaurantId,
-      isPackaged: ack.isPackaged,
-      appVersion: ack.appVersion,
-      launchAckSentAt: ack.launchAckSentAt,
-      lastDeepLinkReceivedAt: ack.lastDeepLinkReceivedAt,
-      receivedAt: ack.receivedAt,
-    },
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -605,12 +335,14 @@ async function fetchWebhookConfigs(restaurantId: string): Promise<
     enabled: boolean;
   }>
 > {
-  if (!CORE_SERVICE_KEY) return [];
+  const coreKey =
+    process.env.CORE_SERVICE_KEY || process.env.CORE_ANON_KEY || "";
+  if (!coreKey) return [];
   const url = `${REST}/webhook_out_config?restaurant_id=eq.${restaurantId}&enabled=eq.true&select=id,url,secret,events,enabled`;
   const res = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${CORE_SERVICE_KEY}`,
-      apikey: CORE_SERVICE_KEY,
+      Authorization: `Bearer ${coreKey}`,
+      apikey: coreKey,
       "Content-Type": "application/json",
     },
   });
@@ -654,11 +386,7 @@ async function insertDeliveryLog(entry: {
     body: JSON.stringify(entry),
   });
   if (!res.ok) {
-    console.error(
-      "[integration-gateway] Failed to insert delivery log:",
-      res.status,
-      await res.text(),
-    );
+    logger.error("failed to insert delivery log", { status: res.status });
   }
 }
 
@@ -690,19 +418,80 @@ async function updateApiKeyLastUsed(id: string): Promise<void> {
   });
 }
 
-function checkRateLimit(keyId: string): { ok: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const windowMs = 60_000;
-  let entry = rateLimitMap.get(keyId);
-  if (!entry || now >= entry.resetAt) {
-    entry = { count: 0, resetAt: now + windowMs };
-    rateLimitMap.set(keyId, entry);
+async function checkRateLimit(
+  keyId: string,
+): Promise<{ ok: boolean; retryAfter?: number }> {
+  if (rateLimiter) {
+    return rateLimiter.check(keyId);
   }
-  entry.count++;
-  if (entry.count > RATE_LIMIT_PER_MIN) {
-    return { ok: false, retryAfter: Math.ceil((entry.resetAt - now) / 1000) };
-  }
+  // Fallback (should not happen after startup, but safe)
   return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Supabase JWT helpers (RBAC for privileged routes)
+// ---------------------------------------------------------------------------
+
+/**
+ * Verify a Supabase HS256 JWT.  Returns the token payload on success, null on
+ * failure (invalid signature, expired, or malformed).
+ */
+function verifySupabaseJwt(
+  token: string,
+  secret: string,
+): Record<string, unknown> | null {
+  if (!secret) return null;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const [headerB64, payloadB64, signatureB64] = parts;
+    const data = `${headerB64}.${payloadB64}`;
+    // Supabase signs with HS256 (HMAC-SHA256)
+    const expected = crypto
+      .createHmac("sha256", secret)
+      .update(data)
+      .digest("base64url");
+    // Pad base64url to same length before timing-safe compare
+    if (expected.length !== signatureB64.length) return null;
+    const match = crypto.timingSafeEqual(
+      Buffer.from(expected),
+      Buffer.from(signatureB64),
+    );
+    if (!match) return null;
+    const payloadJson = Buffer.from(payloadB64, "base64url").toString("utf8");
+    const payload = JSON.parse(payloadJson) as Record<string, unknown>;
+    // Check expiry
+    if (typeof payload.exp === "number") {
+      if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+    }
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Verify that `userId` has owner or admin role in `restaurantId`.
+ * Queries via service role key so RLS is bypassed.
+ */
+async function verifyRestaurantOwner(
+  userId: string,
+  restaurantId: string,
+): Promise<boolean> {
+  try {
+    const url =
+      `${REST}/gm_restaurant_members` +
+      `?user_id=eq.${encodeURIComponent(userId)}` +
+      `&restaurant_id=eq.${encodeURIComponent(restaurantId)}` +
+      `&role=in.(owner,admin)` +
+      `&select=id&limit=1`;
+    const res = await fetch(url, { headers: coreHeaders() });
+    if (!res.ok) return false;
+    const data = (await res.json()) as unknown[];
+    return Array.isArray(data) && data.length > 0;
+  } catch {
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -792,6 +581,9 @@ async function handleSumUpWebhook(
   bodyStr: string,
   signature: string | undefined,
 ): Promise<{ status: number; json: object }> {
+  const coreKey =
+    process.env.CORE_SERVICE_KEY || process.env.CORE_ANON_KEY || "";
+  const sumupSecret = process.env.SUMUP_WEBHOOK_SECRET || "";
   let payload: Record<string, unknown>;
   try {
     payload = JSON.parse(bodyStr || "{}") as Record<string, unknown>;
@@ -801,8 +593,8 @@ async function handleSumUpWebhook(
       json: { error: "invalid_json", message: "Invalid JSON body" },
     };
   }
-  if (SUMUP_WEBHOOK_SECRET && signature) {
-    const expected = "sha256=" + hmacSha256Hex(SUMUP_WEBHOOK_SECRET, bodyStr);
+  if (sumupSecret && signature) {
+    const expected = "sha256=" + hmacSha256Hex(sumupSecret, bodyStr);
     if (signature !== expected) {
       return {
         status: 401,
@@ -818,7 +610,7 @@ async function handleSumUpWebhook(
   const eventType = (payload.status as string)
     ? `payment.${String(payload.status).toLowerCase()}`
     : (payload.event_type as string) || "payment.notification";
-  if (!CORE_SERVICE_KEY) {
+  if (!coreKey) {
     return {
       status: 202,
       json: {
@@ -831,7 +623,12 @@ async function handleSumUpWebhook(
   try {
     const res = await fetch(`${RPC}/process_webhook_event`, {
       method: "POST",
-      headers: coreHeaders(),
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${coreKey}`,
+        apikey: coreKey,
+      },
       body: JSON.stringify({
         p_provider: "sumup",
         p_event_type: eventType,
@@ -864,7 +661,9 @@ async function handleSumUpWebhook(
       },
     };
   } catch (e) {
-    console.error("[integration-gateway] SumUp webhook", e);
+    logger.error("sumup webhook handler failed", {
+      error: e instanceof Error ? e.message : String(e),
+    });
     return {
       status: 500,
       json: apiError(
@@ -1170,7 +969,9 @@ async function handleApiV1(
       });
       return { status: 201, json: { orderId: String(orderId), status: "new" } };
     } catch (e) {
-      console.error("[integration-gateway] create order", e);
+      logger.error("create order failed", {
+        error: e instanceof Error ? e.message : String(e),
+      });
       return {
         status: 500,
         json: apiError("internal_error", "Internal server error", String(e)),
@@ -1234,7 +1035,9 @@ async function handleApiV1(
       });
       return { status: 200, json: { orderId, status } };
     } catch (e) {
-      console.error("[integration-gateway] update order", e);
+      logger.error("update order failed", {
+        error: e instanceof Error ? e.message : String(e),
+      });
       return {
         status: 500,
         json: apiError("internal_error", "Internal server error", String(e)),
@@ -1402,7 +1205,9 @@ async function handleApiV1(
       });
       return { status: 201, json: { taskId: String(id) } };
     } catch (e) {
-      console.error("[integration-gateway] create task", e);
+      logger.error("create task failed", {
+        error: e instanceof Error ? e.message : String(e),
+      });
       return {
         status: 500,
         json: apiError("internal_error", "Internal server error", String(e)),
@@ -1426,20 +1231,8 @@ function parseBody(req: http.IncomingMessage): Promise<string> {
 }
 
 const server = http.createServer(async (req, res) => {
-  const runtimeHeaders = runtimeAuthorityHeaders(
-    "server/integration-gateway.ts",
-  );
-  for (const [header, value] of Object.entries(runtimeHeaders)) {
-    res.setHeader(header, value);
-  }
-
   const method = req.method || "GET";
-  const pathRaw = req.url?.split("?")[0] ?? "/";
-  const path = pathRaw.replace(/\/+/g, "/").replace(/\/$/, "") || "/";
-  const ipAddress =
-    (req.headers["x-forwarded-for"] as string | undefined) ||
-    req.socket.remoteAddress ||
-    "unknown";
+  const path = req.url?.split("?")[0] ?? "/";
 
   if (method === "OPTIONS") {
     res.writeHead(204, { ...corsHeaders(), "Content-Length": "0" });
@@ -1467,87 +1260,8 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (path === "/health" && method === "GET") {
-      const compat = integrationCompatHeaders("/health");
-      res.writeHead(200, {
-        "Content-Type": "application/json",
-        ...compat,
-      });
-      res.end(
-        JSON.stringify({
-          status: "ok",
-          service: "integration-gateway",
-          compat_mode: INTEGRATION_LEGACY_COMPAT_MODE,
-          runtime_authority: INTEGRATION_RUNTIME_AUTHORITY,
-          compat_deadline: INTEGRATION_COMPAT_DEADLINE,
-        }),
-      );
-      return;
-    }
-
-    // Desktop launch ACKs (chefiapp:// TPV/KDS)
-    if (path === "/desktop/launch-acks" && method === "POST") {
-      const body = await parseBody(req);
-      const { status, json } = await handleDesktopLaunchAckPost(
-        body,
-        req.headers,
-      );
-      res.writeHead(status, {
-        "Content-Type": "application/json",
-        ...corsHeaders(),
-      });
-      res.end(JSON.stringify(json));
-      return;
-    }
-
-    const desktopAckMatch = path.match(/^\/desktop\/launch-acks\/([^/]+)$/);
-    if (desktopAckMatch && method === "GET") {
-      const nonce = desktopAckMatch[1];
-      const { status, json } = handleDesktopLaunchAckGet(nonce);
-      res.writeHead(status, {
-        "Content-Type": "application/json",
-        ...corsHeaders(),
-      });
-      res.end(JSON.stringify(json));
-      return;
-    }
-
-    if (path.startsWith("/mobile/")) {
-      const body = method === "GET" ? "" : await parseBody(req);
-      const pathNorm = path.replace(/\/+$/, "") || path;
-      console.log(
-        `[integration-gateway] /mobile/* ${method} ${pathNorm} (handling...)`,
-      );
-      const mobileResult = await handleMobileActivationRoute({
-        method,
-        path: pathNorm,
-        headers: req.headers,
-        body,
-        ip: ipAddress,
-      });
-
-      if (mobileResult.handled) {
-        console.log(`[integration-gateway] /mobile/* → ${mobileResult.status}`);
-        res.writeHead(mobileResult.status, {
-          "Content-Type": "application/json",
-          ...corsHeaders(),
-        });
-        res.end(JSON.stringify(mobileResult.json));
-        return;
-      }
-      console.log(
-        `[integration-gateway] /mobile/* 404 (no handler for ${method} ${pathNorm})`,
-      );
-      res.writeHead(404, {
-        "Content-Type": "application/json",
-        ...corsHeaders(),
-      });
-      res.end(
-        JSON.stringify({
-          error: "not_found",
-          message: "Mobile route not found",
-          path: pathNorm,
-        }),
-      );
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "ok", service: "integration-gateway" }));
       return;
     }
 
@@ -1613,10 +1327,15 @@ const server = http.createServer(async (req, res) => {
       }
       // In mock mode (no STRIPE_SECRET_KEY), we skip the Stripe call and return a mock URL.
       // This allows the full billing UI flow to work locally for dev/testing.
+      // Contract: restaurant_id is required for subscription checkout so webhook sync can resolve tenant.
+      // Accept UUID v1–v5 and nil (00000000-0000-0000-0000-...) for dev/seeds
+      const UUID_REGEX =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       let body: {
         price_id?: string;
         success_url?: string;
         cancel_url?: string;
+        restaurant_id?: string;
       };
       try {
         body = JSON.parse((await parseBody(req)) || "{}") as typeof body;
@@ -1633,6 +1352,7 @@ const server = http.createServer(async (req, res) => {
       const rawPriceId = body?.price_id?.trim();
       const successUrl = body?.success_url?.trim();
       const cancelUrl = body?.cancel_url?.trim();
+      const restaurantId = body?.restaurant_id?.trim();
       if (!rawPriceId || !successUrl || !cancelUrl) {
         res.writeHead(400, { ...cors, "Content-Type": "application/json" });
         res.end(
@@ -1642,6 +1362,60 @@ const server = http.createServer(async (req, res) => {
           }),
         );
         return;
+      }
+      if (!restaurantId || !UUID_REGEX.test(restaurantId)) {
+        res.writeHead(400, { ...cors, "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "validation_error",
+            message:
+              "restaurant_id is required and must be a valid UUID for subscription checkout",
+          }),
+        );
+        return;
+      }
+      // ---------------------------------------------------------------------------
+      // RBAC: if SUPABASE_JWT_SECRET is configured, verify the caller's user identity
+      // and confirm they have owner/admin role for this restaurant.
+      // In local dev (no JWT secret) this block is skipped (mock-compatible).
+      // ---------------------------------------------------------------------------
+      if (SUPABASE_JWT_SECRET) {
+        const userToken =
+          (req.headers["x-supabase-access-token"] as string) ||
+          (req.headers["authorization"] as string)?.replace(/^Bearer\s+/i, "");
+        const jwtPayload = userToken
+          ? verifySupabaseJwt(userToken, SUPABASE_JWT_SECRET)
+          : null;
+        if (!jwtPayload || typeof jwtPayload.sub !== "string") {
+          res.writeHead(401, { ...cors, "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              error: "unauthorized",
+              message:
+                "Valid Supabase user token required (X-Supabase-Access-Token or Authorization: Bearer)",
+            }),
+          );
+          return;
+        }
+        const isOwner = await verifyRestaurantOwner(
+          jwtPayload.sub as string,
+          restaurantId,
+        );
+        if (!isOwner) {
+          logger.warn("billing rbac: user is not owner of restaurant", {
+            user_id: jwtPayload.sub,
+            restaurant_id: restaurantId,
+          });
+          res.writeHead(403, { ...cors, "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              error: "forbidden",
+              message:
+                "Only the restaurant owner or admin can manage subscriptions.",
+            }),
+          );
+          return;
+        }
       }
       const successOrigin = getOriginFromUrl(successUrl);
       const cancelOrigin = getOriginFromUrl(cancelUrl);
@@ -1662,11 +1436,10 @@ const server = http.createServer(async (req, res) => {
       // Resolve plan slug → Stripe price ID
       const priceId = resolveStripePriceId(rawPriceId);
       if (!priceId) {
-        console.error(
-          `[integration-gateway] No such price: '${rawPriceId}'.`,
-          `Set STRIPE_PRICE_${rawPriceId.toUpperCase()} env var or pass a Stripe price_xxx ID.`,
-          `Available mappings: ${JSON.stringify(STRIPE_PRICE_MAP)}`,
-        );
+        logger.error("no such stripe price", {
+          rawPriceId,
+          available: Object.keys(STRIPE_PRICE_MAP),
+        });
         res.writeHead(400, { ...cors, "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
@@ -1679,9 +1452,11 @@ const server = http.createServer(async (req, res) => {
       if (IS_BILLING_MOCK) {
         // MOCK MODE: return a fake checkout URL that redirects to success page
         const mockSessionId = `cs_mock_${Date.now()}_${rawPriceId}`;
-        console.log(
-          `[integration-gateway] MOCK checkout session: ${mockSessionId} (plan: ${rawPriceId}, price: ${priceId})`,
-        );
+        logger.info("mock checkout session created", {
+          session_id: mockSessionId,
+          plan: rawPriceId,
+          price: priceId,
+        });
         res.writeHead(200, { ...cors, "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
@@ -1698,6 +1473,10 @@ const server = http.createServer(async (req, res) => {
             line_items: [{ price: priceId, quantity: 1 }],
             success_url: successUrl,
             cancel_url: cancelUrl,
+            subscription_data: {
+              metadata: { restaurant_id: restaurantId },
+            },
+            metadata: { restaurant_id: restaurantId },
           });
           res.writeHead(200, { ...cors, "Content-Type": "application/json" });
           res.end(
@@ -1707,15 +1486,15 @@ const server = http.createServer(async (req, res) => {
             }),
           );
         } catch (e) {
-          console.error(
-            "[integration-gateway] create-checkout-session",
-            safeErrorMessage(e),
-          );
+          logger.error("create checkout session failed", {
+            error: e instanceof Error ? e.message : String(e),
+          });
           res.writeHead(500, { ...cors, "Content-Type": "application/json" });
           res.end(
             JSON.stringify({
               error: "stripe_error",
-              message: safeErrorMessage(e) || "Stripe checkout failed",
+              message:
+                e instanceof Error ? e.message : "Stripe checkout failed",
             }),
           );
         }
@@ -1724,29 +1503,6 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (path === "/api/v1/webhook/sumup" && method === "POST") {
-      if (!INTEGRATION_LEGACY_COMPAT_MODE) {
-        const compatRoute = "/api/v1/webhook/sumup";
-        const compat = {
-          ...integrationCompatHeaders(compatRoute),
-          "x-chefiapp-compat-replacement-route": compatRoute,
-          "x-chefiapp-compat-replacement-entrypoint":
-            INTEGRATION_MODERN_ENTRYPOINT,
-        };
-        const { status, json } = integrationCompatDisabledResponseWithTarget(
-          compatRoute,
-          {
-            replacementRoute: compatRoute,
-            replacementEntrypoint: INTEGRATION_MODERN_ENTRYPOINT,
-          },
-        );
-        res.writeHead(status, {
-          "Content-Type": "application/json",
-          ...corsHeaders(),
-          ...compat,
-        });
-        res.end(JSON.stringify(json));
-        return;
-      }
       const bodyStr = await parseBody(req);
       const signature =
         (req.headers["x-sumup-signature"] as string) || undefined;
@@ -1754,29 +1510,13 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(status, {
         "Content-Type": "application/json",
         ...corsHeaders(),
-        ...integrationCompatHeaders("/api/v1/webhook/sumup"),
       });
       res.end(JSON.stringify(json));
       return;
     }
 
     // Payment routes: Bearer INTERNAL_API_TOKEN (before API key /api/v1/*)
-    // Contract compatibility boundary: keep canonical BR path active;
-    // legacy alias remains controlled behind compatibility flag.
-    const isPixBrCanonicalPath = path === "/api/v1/payment/pix/br/checkout";
-    const isPixCompatAliasPath = path === "/api/v1/payment/pix/checkout";
-    if ((isPixCompatAliasPath || isPixBrCanonicalPath) && method === "POST") {
-      if (isPixCompatAliasPath && !INTEGRATION_LEGACY_COMPAT_MODE) {
-        const compat = integrationCompatHeaders(path);
-        const { status, json } = integrationCompatDisabledResponse(path);
-        res.writeHead(status, {
-          "Content-Type": "application/json",
-          ...corsHeaders(),
-          ...compat,
-        });
-        res.end(JSON.stringify(json));
-        return;
-      }
+    if (path === "/api/v1/payment/pix/checkout" && method === "POST") {
       const cors = corsHeaders();
       if (!verifyPaymentInternalToken(req)) {
         res.writeHead(401, { ...cors, "Content-Type": "application/json" });
@@ -1854,15 +1594,14 @@ const server = http.createServer(async (req, res) => {
           }),
         );
       } catch (e) {
-        console.error(
-          "[integration-gateway] PIX checkout error:",
-          safeErrorMessage(e),
-        );
+        logger.error("pix checkout failed", {
+          error: e instanceof Error ? e.message : String(e),
+        });
         res.writeHead(500, { ...cors, "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             error: "Failed to create PIX checkout",
-            message: safeErrorMessage(e),
+            message: e instanceof Error ? e.message : "Unknown error",
           }),
         );
       }
@@ -1909,15 +1648,14 @@ const server = http.createServer(async (req, res) => {
           }),
         );
       } catch (e) {
-        console.error(
-          "[integration-gateway] SumUp checkout status error:",
-          safeErrorMessage(e),
-        );
+        logger.error("sumup checkout status failed", {
+          error: e instanceof Error ? e.message : String(e),
+        });
         res.writeHead(500, { ...cors, "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             error: "Failed to fetch checkout status",
-            message: safeErrorMessage(e),
+            message: e instanceof Error ? e.message : "Unknown error",
           }),
         );
       }
@@ -2013,15 +1751,14 @@ const server = http.createServer(async (req, res) => {
           }),
         );
       } catch (e) {
-        console.error(
-          "[integration-gateway] SumUp checkout error:",
-          safeErrorMessage(e),
-        );
+        logger.error("sumup checkout failed", {
+          error: e instanceof Error ? e.message : String(e),
+        });
         res.writeHead(500, { ...cors, "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             error: "Failed to create SumUp checkout",
-            message: safeErrorMessage(e),
+            message: e instanceof Error ? e.message : "Unknown error",
           }),
         );
       }
@@ -2074,15 +1811,14 @@ const server = http.createServer(async (req, res) => {
           }),
         );
       } catch (e) {
-        console.error(
-          "[integration-gateway] SumUp checkout status error:",
-          safeErrorMessage(e),
-        );
+        logger.error("sumup checkout status poll failed", {
+          error: e instanceof Error ? e.message : String(e),
+        });
         res.writeHead(500, { ...cors, "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             error: "Failed to fetch SumUp checkout status",
-            message: safeErrorMessage(e),
+            message: e instanceof Error ? e.message : "Unknown error",
           }),
         );
       }
@@ -2124,7 +1860,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       await updateApiKeyLastUsed(keyRow.id);
-      const rate = checkRateLimit(keyRow.id);
+      const rate = await checkRateLimit(keyRow.id);
       if (!rate.ok) {
         res.writeHead(429, {
           "Content-Type": "application/json",
@@ -2133,7 +1869,7 @@ const server = http.createServer(async (req, res) => {
         res.end(
           JSON.stringify(
             apiError("rate_limit_exceeded", "Too many requests", {
-              detail: "Limit 100/min",
+              detail: `Limit ${RATE_LIMIT_PER_MIN}/min`,
               retryAfter: rate.retryAfter,
             }),
           ),
@@ -2172,7 +1908,9 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "not_found", message: "Not found" }));
   } catch (err) {
-    console.error("[integration-gateway]", err);
+    logger.error("unhandled request error", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     res.writeHead(500, { "Content-Type": "application/json" });
     res.end(
       JSON.stringify({
@@ -2183,8 +1921,47 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(
-    `[integration-gateway] Listening on http://localhost:${PORT} (health=/health, events=POST /internal/events)`,
+/* istanbul ignore next — server.listen not run in test env */
+if (process.env.NODE_ENV !== "test" && !process.env.JEST_WORKER_ID) {
+  // Initialise rate limiter (async, Redis or in-memory) then start server
+  void createRateLimiter({ windowMs: 60_000, max: RATE_LIMIT_PER_MIN }).then(
+    (rl) => {
+      rateLimiter = rl;
+      const backend = process.env.REDIS_URL ? "redis" : "in-memory";
+      logger.info("server started", {
+        port: PORT,
+        health: "/health",
+        events: "POST /internal/events",
+        rate_limiter: backend,
+      });
+    },
   );
-});
+  server.listen(PORT);
+} else {
+  // In test env: use a fast in-memory limiter so rate-limit tests still work
+  void createRateLimiter({ windowMs: 60_000, max: RATE_LIMIT_PER_MIN }).then(
+    (rl) => {
+      rateLimiter = rl;
+    },
+  );
+}
+
+/** For tests: inject a custom rate limiter instead of waiting for async init. */
+export function setRateLimiterForTest(rl: RateLimiter): void {
+  rateLimiter = rl;
+}
+
+// Exported for unit tests (risk reduction — see tests/unit/server/integration-gateway.test.ts)
+export {
+  apiError,
+  getOriginFromUrl,
+  handleApiV1,
+  handleInternalEvents,
+  handleProductImageUpload,
+  handleSumUpWebhook,
+  isBillingOriginAllowed,
+  resolveStripePriceId,
+  server,
+  verifyRestaurantOwner,
+  verifySupabaseJwt,
+};
