@@ -28,6 +28,11 @@ interface DeliveryResult {
   next_retry_at?: string;
 }
 
+interface RpcErrorLike {
+  code?: string;
+  message?: string;
+}
+
 /**
  * OutboundWebhookService
  * Handles sending webhooks to restaurant-configured endpoints
@@ -35,6 +40,22 @@ interface DeliveryResult {
  */
 export class OutboundWebhookService {
   private supabase = createClient(supabaseUrl, supabaseKey);
+
+  private isMissingPendingDeliveriesRpc(error: RpcErrorLike | null | undefined) {
+    if (!error) {
+      return false;
+    }
+
+    if (error.code === "PGRST202") {
+      return true;
+    }
+
+    const message = (error.message || "").toLowerCase();
+    return (
+      message.includes("get_pending_deliveries") &&
+      (message.includes("not found") || message.includes("does not exist"))
+    );
+  }
 
   /**
    * Get all pending webhook deliveries
@@ -50,6 +71,13 @@ export class OutboundWebhookService {
       );
 
       if (error) {
+        if (this.isMissingPendingDeliveriesRpc(error)) {
+          console.warn(
+            "[OutboundWebhook] get_pending_deliveries RPC unavailable (PGRST202). Outbound worker will stay idle until migrations are applied.",
+          );
+          return [];
+        }
+
         console.error(
           "[OutboundWebhook] Error fetching pending deliveries:",
           error,
