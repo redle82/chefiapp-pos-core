@@ -1,0 +1,10 @@
+node_modules/
+dist-electron/
+dist/
+out/
+resources/frontend/
+*.dmg
+*.exe
+*.AppImage
+*.snap
+*.deb

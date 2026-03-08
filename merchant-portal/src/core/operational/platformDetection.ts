@@ -7,9 +7,12 @@
  */
 
 export function isElectron(): boolean {
-  return (
-    typeof navigator !== "undefined" && navigator.userAgent.includes("Electron")
-  );
+  // Consideramos "desktop app" apenas quando o preload expõe electronBridge
+  // via contextBridge. Isso distingue o ChefIApp Desktop empacotado de um
+  // Electron genérico a correr o Vite/Chrome (onde só o userAgent contém
+  // "Electron", mas não existe bridge nem shell oficial).
+  if (typeof window === "undefined") return false;
+  return !!window.electronBridge;
 }
 
 export function isTauri(): boolean {
@@ -28,7 +31,12 @@ export function isStandalone(): boolean {
 }
 
 export function isReactNativeWebView(): boolean {
-  return typeof window !== "undefined" && "ReactNativeWebView" in window;
+  if (typeof window === "undefined") return false;
+  return (
+    "ReactNativeWebView" in window ||
+    !!(window as { __CHEFIAPP_NATIVE_WEBVIEW__?: boolean })
+      .__CHEFIAPP_NATIVE_WEBVIEW__
+  );
 }
 
 /** Desktop app = Electron or Tauri only. PWA standalone is NOT desktop. */
@@ -39,13 +47,13 @@ export function isDesktopApp(): boolean {
 /**
  * Returns true when the app is running inside an installed application.
  * For desktop modules: only Electron/Tauri (not PWA).
- * For mobile: React Native or standalone (mobile PWA).
+ * For mobile AppStaff/Waiter: React Native WebView only (Expo/native app).
  */
 export function isInstalledApp(
   requiredPlatform: "desktop" | "mobile",
 ): boolean {
   if (requiredPlatform === "desktop") return isDesktopApp();
-  return isReactNativeWebView() || isStandalone();
+  return isReactNativeWebView();
 }
 
 /**
@@ -53,12 +61,33 @@ export function isInstalledApp(
  * Use before opening operational windows to avoid showing a blocked popup.
  *
  * - TPV / KDS → require desktop (Electron or Tauri)
- * - AppStaff  → require mobile (React Native WebView or standalone PWA)
+ * - AppStaff / Waiter → require React Native WebView (Expo/native app)
  */
 export function wouldGuardAllow(moduleId: string): boolean {
-  if (moduleId === "appstaff") {
-    return isReactNativeWebView() || isStandalone();
+  if (moduleId === "appstaff" || moduleId === "waiter") {
+    return isReactNativeWebView();
   }
   // TPV / KDS require desktop
   return isDesktopApp();
+}
+
+export function getDesktopOS(): "windows" | "macos" {
+  if (typeof navigator === "undefined") return "macos";
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes("windows") || ua.includes("win64") || ua.includes("win32")) {
+    return "windows";
+  }
+  return "macos";
+}
+
+export function buildDeepLink(
+  moduleId: "tpv" | "kds",
+  params?: { restaurant?: string },
+): string {
+  const query = new URLSearchParams();
+  query.set("app", moduleId);
+  if (params?.restaurant) {
+    query.set("restaurant", params.restaurant);
+  }
+  return `chefiapp-pos://open?${query.toString()}`;
 }
