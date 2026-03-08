@@ -1,1 +1,0 @@
-ALTER TABLE public.gm_stock_levels ADD CONSTRAINT gm_stock_levels_restaurant_id_location_id_ingredient_id_key UNIQUE (restaurant_id, location_id, ingredient_id);

@@ -1,1 +1,0 @@
-ALTER TABLE public.gm_terminals ADD CONSTRAINT gm_terminals_type_check CHECK (type = ANY (ARRAY['TPV'::text, 'KDS'::text, 'APPSTAFF'::text, 'WEB'::text, 'WAITER'::text, 'BACKOFFICE'::text, 'ADMIN'::text]));

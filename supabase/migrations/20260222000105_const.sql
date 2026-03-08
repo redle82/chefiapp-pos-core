@@ -1,1 +1,0 @@
-ALTER TABLE public.installed_modules ADD CONSTRAINT installed_modules_status_check CHECK (status::text = ANY (ARRAY['active'::character varying, 'inactive'::character varying, 'error'::character varying]::text[]));
