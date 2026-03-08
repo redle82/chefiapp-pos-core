@@ -1,6 +1,6 @@
 /**
  * DispositivosConfigPage - Gestión de dispositivos.
- * Rota: /admin/config/dispositivos. Lista de dispositivos (estado + vínculo), só leitura.
+ * Rota: /admin/config/devices. Lista de dispositivos (estado + vínculo), só leitura.
  * Ref: admin_config_vs_reports_layout plan, CONFIGURATION_MAP_V1.md 2.8
  */
 

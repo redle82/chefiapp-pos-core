@@ -2,12 +2,12 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DashboardOverview } from "../types";
 
-const { mockGetOverviewSafe } = vi.hoisted(() => ({
-  mockGetOverviewSafe: vi.fn(),
+const { mockGetOverview } = vi.hoisted(() => ({
+  mockGetOverview: vi.fn(),
 }));
 
 vi.mock("../services/dashboardService", () => ({
-  getOverviewSafe: mockGetOverviewSafe,
+  getOverview: mockGetOverview,
 }));
 
 import { useDashboardOverview } from "./useDashboardOverview";
@@ -51,14 +51,14 @@ describe("useDashboardOverview", () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(mockGetOverviewSafe).not.toHaveBeenCalled();
+    expect(mockGetOverview).not.toHaveBeenCalled();
     expect(result.current.data).toBeNull();
     expect(result.current.error).toBeNull();
   });
 
   it("calls service when locationId is available", async () => {
     const locationId = "0d77adae-8571-412d-bef8-5d033cf0d471";
-    mockGetOverviewSafe.mockResolvedValue(buildOverview(locationId));
+    mockGetOverview.mockResolvedValue(buildOverview(locationId));
 
     const { result } = renderHook(() => useDashboardOverview(locationId));
 
@@ -66,7 +66,7 @@ describe("useDashboardOverview", () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(mockGetOverviewSafe).toHaveBeenCalledWith(locationId);
+    expect(mockGetOverview).toHaveBeenCalledWith(locationId);
     expect(result.current.data?.locationId).toBe(locationId);
   });
 });

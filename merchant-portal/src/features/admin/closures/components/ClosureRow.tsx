@@ -1,13 +1,15 @@
+import { getFormatLocale } from "@/core/i18n/regionLocaleConfig";
 import type { CierreTemporal, CierreType } from "../types";
-import { CIERRE_TYPE_LABELS, CIERRE_STATUS_LABELS } from "../types";
+import { CIERRE_STATUS_LABELS, CIERRE_TYPE_LABELS } from "../types";
 
-const DATE_FORMAT = new Intl.DateTimeFormat("pt-PT", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
+const formatDate = (d: Date) =>
+  new Intl.DateTimeFormat(getFormatLocale(), {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
 
 function scopeLabels(scope: CierreTemporal["scope"]): string[] {
   const out: string[] = [];
@@ -45,15 +47,17 @@ export function ClosureRow({
   onDuplicate,
   onCancel,
 }: ClosureRowProps) {
-  const start = DATE_FORMAT.format(new Date(closure.startAt));
-  const end = DATE_FORMAT.format(new Date(closure.endAt));
+  const start = formatDate(new Date(closure.startAt));
+  const end = formatDate(new Date(closure.endAt));
   const scopeText = scopeLabels(closure.scope).join(", ");
 
   return (
     <tr className="border-b border-gray-100 transition-colors hover:bg-gray-50">
       <td className="py-3 pl-4 pr-2">
         <span
-          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${TYPE_BADGE_CLASS[closure.type]}`}
+          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            TYPE_BADGE_CLASS[closure.type]
+          }`}
         >
           {CIERRE_TYPE_LABELS[closure.type]}
         </span>

@@ -4,9 +4,10 @@
  * Aviso ao alterar: "Alterar estes dados afeta faturas e relatórios fiscais."
  */
 
-import { useState, useEffect } from "react";
-import type { LegalEntity, LegalEntityType } from "../types";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { legalEntitiesStore } from "../store/legalEntitiesStore";
+import type { LegalEntityType } from "../types";
 
 const ENTITY_TYPES: { value: LegalEntityType; label: string }[] = [
   { value: "person", label: "Pessoa física" },
@@ -14,6 +15,7 @@ const ENTITY_TYPES: { value: LegalEntityType; label: string }[] = [
 ];
 
 export function LegalEntityMainCard() {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     type: "company" as LegalEntityType,
     legalName: "",
@@ -86,13 +88,22 @@ export function LegalEntityMainCard() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+            }}
+          >
             Tipo de entidad
           </span>
           <select
             value={form.type}
             onChange={(e) =>
-              setForm((f) => ({ ...f, type: e.target.value as LegalEntityType }))
+              setForm((f) => ({
+                ...f,
+                type: e.target.value as LegalEntityType,
+              }))
             }
             style={{
               padding: "8px 12px",
@@ -110,13 +121,21 @@ export function LegalEntityMainCard() {
           </select>
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+            }}
+          >
             Razón social / Nombre legal
           </span>
           <input
             type="text"
             value={form.legalName}
-            onChange={(e) => setForm((f) => ({ ...f, legalName: e.target.value }))}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, legalName: e.target.value }))
+            }
             placeholder="Ej. Sofia Gastrobar SL"
             style={{
               padding: "8px 12px",
@@ -128,7 +147,13 @@ export function LegalEntityMainCard() {
           />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+            }}
+          >
             NIF / CIF / VAT ID
           </span>
           <input
@@ -146,7 +171,13 @@ export function LegalEntityMainCard() {
           />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+            }}
+          >
             País fiscal
           </span>
           <input
@@ -168,7 +199,13 @@ export function LegalEntityMainCard() {
           />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+            }}
+          >
             Dirección fiscal completa
           </span>
           <textarea
@@ -218,7 +255,7 @@ export function LegalEntityMainCard() {
                 cursor: saving ? "not-allowed" : "pointer",
               }}
             >
-              {saving ? "Guardando…" : "Sí, guardar"}
+              {saving ? t("common:saving") : t("common:yesConfirm")}
             </button>
             <button
               type="button"
@@ -240,7 +277,14 @@ export function LegalEntityMainCard() {
       )}
 
       {!showAviso && (
-        <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8 }}>
+        <div
+          style={{
+            marginTop: 16,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
           <button
             type="button"
             onClick={handleSave}
@@ -255,10 +299,12 @@ export function LegalEntityMainCard() {
               cursor: "pointer",
             }}
           >
-            Guardar
+            {t("common:save")}
           </button>
           {saved && (
-            <span style={{ fontSize: 13, color: "var(--color-success)" }}>Guardado</span>
+            <span style={{ fontSize: 13, color: "var(--color-success)" }}>
+              Guardado
+            </span>
           )}
         </div>
       )}

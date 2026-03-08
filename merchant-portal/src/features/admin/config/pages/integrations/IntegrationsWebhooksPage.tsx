@@ -27,7 +27,7 @@ import {
 } from "../../api/webhookOutApi";
 
 export function IntegrationsWebhooksPage() {
-  const { t } = useTranslation("config");
+  const { t } = useTranslation();
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? null;
 
@@ -164,13 +164,12 @@ export function IntegrationsWebhooksPage() {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm(t("integrationsWebhooksPage.confirms.removeWebhook")))
-        return;
+      if (!window.confirm("Remover este webhook?")) return;
       const { error: err } = await deleteWebhookConfig(id);
       if (err) setError(err);
       else load();
     },
-    [load, t],
+    [load],
   );
 
   const toggleEvent = useCallback((ev: string) => {
@@ -192,10 +191,7 @@ export function IntegrationsWebhooksPage() {
         id,
         key,
         error: err,
-      } = await createApiKey(
-        restaurantId,
-        apiKeyName || t("integrationsWebhooksPage.defaultApiKeyName"),
-      );
+      } = await createApiKey(restaurantId, apiKeyName || "Default");
       if (err) throw new Error(err);
       if (key) setNewApiKeyRevealed(key);
       setApiKeyName("");
@@ -205,28 +201,32 @@ export function IntegrationsWebhooksPage() {
     } finally {
       setCreatingKey(false);
     }
-  }, [restaurantId, apiKeyName, load, t]);
+  }, [restaurantId, apiKeyName, load]);
 
   const handleRevokeApiKey = useCallback(
     async (id: string) => {
-      if (!window.confirm(t("integrationsWebhooksPage.confirms.revokeApiKey")))
+      if (
+        !window.confirm(
+          "Revogar esta chave? Chamadas com ela deixarão de funcionar.",
+        )
+      )
         return;
       const { error: err } = await deleteApiKey(id);
       if (err) setError(err);
       else load();
     },
-    [load, t],
+    [load],
   );
 
   if (!restaurantId) {
     return (
       <>
         <AdminPageHeader
-          title={t("integrationsWebhooksPage.header.title")}
-          subtitle={t("integrationsWebhooksPage.header.subtitle")}
+          title="APIs & Webhooks"
+          subtitle="Webhooks OUT (endpoint, eventos); API IN (chaves, limites)."
         />
         <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>
-          {t("integrationsWebhooksPage.selectRestaurant")}
+          Seleccione um restaurante.
         </p>
       </>
     );
@@ -235,8 +235,8 @@ export function IntegrationsWebhooksPage() {
   return (
     <>
       <AdminPageHeader
-        title={t("integrationsWebhooksPage.header.title")}
-        subtitle={t("integrationsWebhooksPage.header.subtitle")}
+        title="APIs & Webhooks"
+        subtitle="Webhooks OUT (endpoint, eventos); API IN (chaves, limites)."
       />
 
       {error && (
@@ -272,7 +272,7 @@ export function IntegrationsWebhooksPage() {
               color: "var(--text-primary)",
             }}
           >
-            {t("integrationsWebhooksPage.webhooksOut.title")}
+            Webhooks OUT
           </h2>
           <button
             type="button"
@@ -287,13 +287,13 @@ export function IntegrationsWebhooksPage() {
               cursor: "pointer",
             }}
           >
-            {t("integrationsWebhooksPage.webhooksOut.add")}
+            Adicionar webhook
           </button>
         </div>
 
         {loading ? (
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>
-            {t("integrationsWebhooksPage.loading")}
+            A carregar…
           </p>
         ) : configs.length === 0 ? (
           <div
@@ -306,7 +306,9 @@ export function IntegrationsWebhooksPage() {
               color: "var(--text-secondary)",
             }}
           >
-            {t("integrationsWebhooksPage.webhooksOut.empty")}
+            Nenhum webhook configurado. Clique em &quot;Adicionar webhook&quot;
+            para enviar eventos (order.created, order.paid, etc.) para um URL
+            com assinatura HMAC.
           </div>
         ) : (
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
@@ -344,14 +346,9 @@ export function IntegrationsWebhooksPage() {
                   >
                     {c.url} ·{" "}
                     {c.events?.length === 0
-                      ? t("integrationsWebhooksPage.webhooksOut.allEvents")
-                      : t("integrationsWebhooksPage.webhooksOut.eventsCount", {
-                          count: c.events?.length ?? 0,
-                        })}{" "}
-                    ·{" "}
-                    {c.enabled
-                      ? t("integrationsWebhooksPage.webhooksOut.active")
-                      : t("integrationsWebhooksPage.webhooksOut.inactive")}
+                      ? "Todos os eventos"
+                      : `${c.events?.length} eventos`}{" "}
+                    · {c.enabled ? "Ativo" : "Inativo"}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
@@ -368,7 +365,7 @@ export function IntegrationsWebhooksPage() {
                       color: "var(--text-primary)",
                     }}
                   >
-                    {t("integrationsWebhooksPage.actions.edit")}
+                    Editar
                   </button>
                   <button
                     type="button"
@@ -383,7 +380,7 @@ export function IntegrationsWebhooksPage() {
                       cursor: "pointer",
                     }}
                   >
-                    {t("integrationsWebhooksPage.actions.remove")}
+                    Remover
                   </button>
                 </div>
               </li>
@@ -409,16 +406,14 @@ export function IntegrationsWebhooksPage() {
               color: "var(--text-primary)",
             }}
           >
-            {t("integrationsWebhooksPage.apiIn.title")}
+            API IN (chaves)
           </h2>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <input
               type="text"
               value={apiKeyName}
               onChange={(e) => setApiKeyName(e.target.value)}
-              placeholder={t(
-                "integrationsWebhooksPage.apiIn.keyNamePlaceholder",
-              )}
+              placeholder="Nome da chave"
               style={{
                 padding: "8px 12px",
                 border: "1px solid var(--surface-border)",
@@ -441,9 +436,7 @@ export function IntegrationsWebhooksPage() {
                 cursor: creatingKey ? "wait" : "pointer",
               }}
             >
-              {creatingKey
-                ? t("integrationsWebhooksPage.apiIn.creatingKey")
-                : t("integrationsWebhooksPage.apiIn.createKey")}
+              {creatingKey ? "A criar…" : "Criar chave"}
             </button>
           </div>
         </div>
@@ -454,7 +447,7 @@ export function IntegrationsWebhooksPage() {
             color: "var(--text-secondary)",
           }}
         >
-          {t("integrationsWebhooksPage.apiIn.usagePrefix")}{" "}
+          Use o header{" "}
           <code
             style={{
               background: "var(--status-primary-bg)",
@@ -464,7 +457,7 @@ export function IntegrationsWebhooksPage() {
           >
             X-API-Key
           </code>{" "}
-          {t("integrationsWebhooksPage.apiIn.usageOr")}{" "}
+          ou{" "}
           <code
             style={{
               background: "var(--status-primary-bg)",
@@ -474,11 +467,11 @@ export function IntegrationsWebhooksPage() {
           >
             Authorization: Bearer &lt;key&gt;
           </code>
-          . {t("integrationsWebhooksPage.apiIn.usageLimit")}
+          . Limite: 100 pedidos/minuto.
         </p>
         {apiKeys.length === 0 ? (
           <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
-            {t("integrationsWebhooksPage.apiIn.empty")}
+            Nenhuma chave criada.
           </p>
         ) : (
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
@@ -497,10 +490,10 @@ export function IntegrationsWebhooksPage() {
               >
                 <span style={{ fontWeight: 500, fontSize: 14 }}>{k.name}</span>
                 <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                  {t("integrationsWebhooksPage.apiIn.lastUsed")}:{" "}
+                  Último uso:{" "}
                   {k.last_used_at
                     ? new Date(k.last_used_at).toLocaleString()
-                    : t("integrationsWebhooksPage.apiIn.never")}
+                    : "Nunca"}
                 </span>
                 <button
                   type="button"
@@ -515,7 +508,7 @@ export function IntegrationsWebhooksPage() {
                     cursor: "pointer",
                   }}
                 >
-                  {t("integrationsWebhooksPage.actions.revoke")}
+                  Revogar
                 </button>
               </li>
             ))}
@@ -547,9 +540,7 @@ export function IntegrationsWebhooksPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ margin: "0 0 8px 0", fontSize: 18 }}>
-              {t("integrationsWebhooksPage.apiIn.keyCreatedTitle")}
-            </h3>
+            <h3 style={{ margin: "0 0 8px 0", fontSize: 18 }}>Chave criada</h3>
             <p
               style={{
                 margin: 0,
@@ -557,7 +548,7 @@ export function IntegrationsWebhooksPage() {
                 color: "var(--text-secondary)",
               }}
             >
-              {t("integrationsWebhooksPage.apiIn.keyCreatedHint")}
+              Copie esta chave agora; não voltará a ser mostrada.
             </p>
             <pre
               style={{
@@ -585,7 +576,7 @@ export function IntegrationsWebhooksPage() {
                 cursor: "pointer",
               }}
             >
-              {t("integrationsWebhooksPage.actions.close")}
+              Fechar
             </button>
           </div>
         </div>
@@ -619,20 +610,16 @@ export function IntegrationsWebhooksPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ margin: "0 0 16px 0", fontSize: 18 }}>
-              {editingId
-                ? t("integrationsWebhooksPage.form.editTitle")
-                : t("integrationsWebhooksPage.form.newTitle")}
+              {editingId ? "Editar webhook" : "Novo webhook"}
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <label style={{ fontSize: 14, fontWeight: 500 }}>
-                {t("integrationsWebhooksPage.form.url")}
+                URL
                 <input
                   type="url"
                   value={formUrl}
                   onChange={(e) => setFormUrl(e.target.value)}
-                  placeholder={t(
-                    "integrationsWebhooksPage.form.urlPlaceholder",
-                  )}
+                  placeholder="https://..."
                   style={{
                     display: "block",
                     width: "100%",
@@ -644,7 +631,7 @@ export function IntegrationsWebhooksPage() {
                 />
               </label>
               <label style={{ fontSize: 14, fontWeight: 500 }}>
-                {t("integrationsWebhooksPage.form.secret")}
+                Secret (HMAC)
                 {editingId && (
                   <span
                     style={{
@@ -653,18 +640,14 @@ export function IntegrationsWebhooksPage() {
                       fontWeight: 400,
                     }}
                   >
-                    {t("integrationsWebhooksPage.form.keepBlank")}
+                    Deixe em branco para manter
                   </span>
                 )}
                 <input
                   type="text"
                   value={formSecret}
                   onChange={(e) => setFormSecret(e.target.value)}
-                  placeholder={
-                    editingId
-                      ? "********"
-                      : t("integrationsWebhooksPage.form.generatedOnCreate")
-                  }
+                  placeholder={editingId ? "********" : "Gerado ao criar"}
                   style={{
                     display: "block",
                     width: "100%",
@@ -682,19 +665,18 @@ export function IntegrationsWebhooksPage() {
                       color: "var(--status-warning-text)",
                     }}
                   >
-                    {t("integrationsWebhooksPage.form.secretHint")}
+                    Guarde este secret; não voltará a ser mostrado. Header:
+                    X-ChefIApp-Signature: sha256=&lt;hex&gt;
                   </p>
                 )}
               </label>
               <label style={{ fontSize: 14, fontWeight: 500 }}>
-                {t("integrationsWebhooksPage.form.description")}
+                Descrição (opcional)
                 <input
                   type="text"
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder={t(
-                    "integrationsWebhooksPage.form.descriptionPlaceholder",
-                  )}
+                  placeholder="ex: ERP, Zapier"
                   style={{
                     display: "block",
                     width: "100%",
@@ -706,9 +688,7 @@ export function IntegrationsWebhooksPage() {
                 />
               </label>
               <div>
-                <span style={{ fontSize: 14, fontWeight: 500 }}>
-                  {t("integrationsWebhooksPage.form.events")}
-                </span>
+                <span style={{ fontSize: 14, fontWeight: 500 }}>Eventos</span>
                 <span
                   style={{
                     marginLeft: 8,
@@ -716,7 +696,7 @@ export function IntegrationsWebhooksPage() {
                     fontSize: 13,
                   }}
                 >
-                  {t("integrationsWebhooksPage.form.eventsHint")}
+                  (vazio = todos)
                 </span>
                 <div
                   style={{
@@ -766,7 +746,7 @@ export function IntegrationsWebhooksPage() {
                   checked={formEnabled}
                   onChange={(e) => setFormEnabled(e.target.checked)}
                 />
-                {t("integrationsWebhooksPage.form.active")}
+                Ativo
               </label>
             </div>
             <div
@@ -789,7 +769,7 @@ export function IntegrationsWebhooksPage() {
                   color: "var(--text-primary)",
                 }}
               >
-                {t("integrationsWebhooksPage.actions.cancel")}
+                Cancelar
               </button>
               <button
                 type="button"
@@ -805,10 +785,10 @@ export function IntegrationsWebhooksPage() {
                 }}
               >
                 {formSaving
-                  ? t("integrationsWebhooksPage.form.saving")
+                  ? t("common:saving")
                   : editingId
-                  ? t("integrationsWebhooksPage.actions.save")
-                  : t("integrationsWebhooksPage.actions.create")}
+                  ? t("common:save")
+                  : t("common:create")}
               </button>
             </div>
           </div>
@@ -824,11 +804,11 @@ export function IntegrationsWebhooksPage() {
             color: "var(--text-primary)",
           }}
         >
-          {t("integrationsWebhooksPage.logs.title")}
+          Últimos envios
         </h2>
         {logs.length === 0 ? (
           <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
-            {t("integrationsWebhooksPage.logs.empty")}
+            Nenhum envio registado.
           </p>
         ) : (
           <div
@@ -852,24 +832,12 @@ export function IntegrationsWebhooksPage() {
                     borderBottom: "1px solid var(--surface-border)",
                   }}
                 >
-                  <th style={{ textAlign: "left", padding: 10 }}>
-                    {t("integrationsWebhooksPage.logs.headers.event")}
-                  </th>
-                  <th style={{ textAlign: "left", padding: 10 }}>
-                    {t("integrationsWebhooksPage.logs.headers.url")}
-                  </th>
-                  <th style={{ textAlign: "left", padding: 10 }}>
-                    {t("integrationsWebhooksPage.logs.headers.status")}
-                  </th>
-                  <th style={{ textAlign: "left", padding: 10 }}>
-                    {t("integrationsWebhooksPage.logs.headers.attempt")}
-                  </th>
-                  <th style={{ textAlign: "left", padding: 10 }}>
-                    {t("integrationsWebhooksPage.logs.headers.date")}
-                  </th>
-                  <th style={{ textAlign: "left", padding: 10 }}>
-                    {t("integrationsWebhooksPage.logs.headers.error")}
-                  </th>
+                  <th style={{ textAlign: "left", padding: 10 }}>Evento</th>
+                  <th style={{ textAlign: "left", padding: 10 }}>URL</th>
+                  <th style={{ textAlign: "left", padding: 10 }}>Status</th>
+                  <th style={{ textAlign: "left", padding: 10 }}>Tentativa</th>
+                  <th style={{ textAlign: "left", padding: 10 }}>Data</th>
+                  <th style={{ textAlign: "left", padding: 10 }}>Erro</th>
                 </tr>
               </thead>
               <tbody>
@@ -930,7 +898,7 @@ export function IntegrationsWebhooksPage() {
       <p
         style={{ marginTop: 24, fontSize: 13, color: "var(--text-secondary)" }}
       >
-        {t("integrationsWebhooksPage.contract")}
+        Contrato completo: docs/CHEFIAPP_PUBLIC_API_CONTRACT.md
       </p>
     </>
   );

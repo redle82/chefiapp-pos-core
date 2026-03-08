@@ -1,3 +1,4 @@
+import { useCurrency } from "@/core/currency/useCurrency";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getDockerCoreFetchClient } from "../../../../core/infra/dockerCoreFetchClient";
@@ -24,6 +25,7 @@ interface LoyaltyLog {
 export function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { formatAmount } = useCurrency();
   const [customer, setCustomer] = useState<CustomerDetail | null>(null);
   const [logs, setLogs] = useState<LoyaltyLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +87,6 @@ export function CustomerDetailPage() {
     );
   }
 
-  const totalSpent = (customer.total_spend_cents / 100).toFixed(2);
   const tierLabel =
     customer.points_balance >= 500
       ? "Platinum"
@@ -131,7 +132,10 @@ export function CustomerDetailPage() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <KPICard label="Pontos" value={String(customer.points_balance)} />
         <KPICard label="Visitas" value={String(customer.visit_count)} />
-        <KPICard label="Total gasto" value={`€${totalSpent}`} />
+        <KPICard
+          label="Total gasto"
+          value={formatAmount(customer.total_spend_cents)}
+        />
         <KPICard
           label="Última visita"
           value={

@@ -3,11 +3,13 @@
  * Texto padrão de rodapé fiscal, referência legal, observações internas (não no recibo).
  */
 
-import { useState, useEffect } from "react";
-import type { LegalFiscalExtras } from "../types";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { legalEntitiesStore } from "../store/legalEntitiesStore";
+import type { LegalFiscalExtras } from "../types";
 
 export function LegalFiscalExtrasCard() {
+  const { t } = useTranslation();
   const [form, setForm] = useState<LegalFiscalExtras>({
     defaultFiscalFooter: "",
     legalReference: "",
@@ -62,7 +64,13 @@ export function LegalFiscalExtrasCard() {
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+            }}
+          >
             Texto estándar de pie fiscal
           </span>
           <textarea
@@ -83,7 +91,13 @@ export function LegalFiscalExtrasCard() {
           />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+            }}
+          >
             Referencia legal
           </span>
           <input
@@ -103,7 +117,13 @@ export function LegalFiscalExtrasCard() {
           />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+            }}
+          >
             Observaciones legales internas (no en recibo)
           </span>
           <textarea
@@ -124,7 +144,9 @@ export function LegalFiscalExtrasCard() {
           />
         </label>
       </div>
-      <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8 }}>
+      <div
+        style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8 }}
+      >
         <button
           type="button"
           onClick={handleSave}
@@ -140,10 +162,12 @@ export function LegalFiscalExtrasCard() {
             cursor: saving ? "not-allowed" : "pointer",
           }}
         >
-          {saving ? "Guardando…" : "Guardar"}
+          {saving ? t("common:saving") : t("common:save")}
         </button>
         {saved && (
-          <span style={{ fontSize: 13, color: "var(--color-success)" }}>Guardado</span>
+          <span style={{ fontSize: 13, color: "var(--color-success)" }}>
+            Guardado
+          </span>
         )}
       </div>
     </div>

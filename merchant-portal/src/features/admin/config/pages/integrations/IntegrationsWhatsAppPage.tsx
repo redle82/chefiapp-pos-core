@@ -81,6 +81,7 @@ function saveConfig(restaurantId: string | null, config: WhatsAppFormConfig) {
 type SaveStatus = "idle" | "saving" | "saved";
 
 export function IntegrationsWhatsAppPage() {
+  const { t } = useTranslation();
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? null;
   const [config, setConfig] = useState<WhatsAppFormConfig>(() =>
@@ -314,10 +315,10 @@ export function IntegrationsWhatsAppPage() {
               }}
             >
               {saveStatus === "saving"
-                ? "A guardar…"
+                ? t("common:saving")
                 : saveStatus === "saved"
                 ? "✓ Guardado!"
-                : "Guardar configuração"}
+                : t("common:saveConfig")}
             </button>
             <button
               onClick={handleTestMessage}

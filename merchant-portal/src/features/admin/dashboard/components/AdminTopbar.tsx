@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { getAuthActions } from "../../../../core/auth/authAdapter";
 import { useAuth } from "../../../../core/auth/useAuth";
@@ -8,7 +7,6 @@ import { RestaurantHeader } from "../../../../ui/design-system/sovereign/Restaur
 import styles from "./AdminTopbar.module.css";
 
 export function AdminTopbar() {
-  const { t } = useTranslation("dashboard");
   const { user } = useAuth();
   const { identity } = useRestaurantIdentity();
   const navigate = useNavigate();
@@ -19,22 +17,6 @@ export function AdminTopbar() {
   const userName =
     (user?.user_metadata?.name as string) || userEmail.split("@")[0] || "—";
   const userInitial = userName.charAt(0).toUpperCase();
-  const userRole = String(user?.user_metadata?.role ?? "").toLowerCase();
-  const isInternalAdmin =
-    userRole === "internal" ||
-    userRole === "internal_admin" ||
-    userRole === "system_admin";
-  const baseRestaurantName =
-    identity.name?.trim() ||
-    t("topbar.activeRestaurant", { defaultValue: "Restaurante" });
-  const activeRestaurantName = (() => {
-    if (!identity.environmentLabel) return baseRestaurantName;
-    const hasSuffix = /\s\(TEST\)$|\s—\sSandbox$/i.test(baseRestaurantName);
-    if (hasSuffix) return baseRestaurantName;
-    return identity.environmentLabel === "Sandbox"
-      ? `${baseRestaurantName} — Sandbox`
-      : `${baseRestaurantName} (TEST)`;
-  })();
 
   const handleLogout = useCallback(() => {
     const actions = getAuthActions();
@@ -55,7 +37,7 @@ export function AdminTopbar() {
     <header className={styles.topbar}>
       <div className={styles.left}>
         <RestaurantHeader
-          name={activeRestaurantName}
+          name={identity.name}
           logoUrl={identity.logoUrl}
           size="sm"
         />
@@ -67,7 +49,8 @@ export function AdminTopbar() {
           type="button"
           className={styles.profileBtn}
           onClick={() => setMenuOpen((o) => !o)}
-          aria-label={t("topbar.userMenu")}
+          aria-label="Menu do utilizador"
+          aria-expanded={menuOpen}
         >
           <div className={styles.avatar}>{userInitial}</div>
           <svg
@@ -75,7 +58,7 @@ export function AdminTopbar() {
             height="12"
             viewBox="0 0 12 12"
             fill="none"
-            className={styles.profileChevron}
+            style={{ opacity: 0.5 }}
           >
             <path
               d="M3 4.5L6 7.5L9 4.5"
@@ -102,9 +85,7 @@ export function AdminTopbar() {
                 <div className={styles.dropdownHeaderInfo}>
                   <div className={styles.dropdownName}>{userName}</div>
                   <div className={styles.dropdownEmail}>{userEmail || "—"}</div>
-                  <div className={styles.dropdownRole}>
-                    {t("topbar.owner", { defaultValue: "Proprietário" })}
-                  </div>
+                  <div className={styles.dropdownRole}>Proprietário</div>
                 </div>
               </div>
 
@@ -116,7 +97,7 @@ export function AdminTopbar() {
                   type="button"
                   className={styles.dropdownItem}
                   onClick={() => {
-                    navigate("/admin/account");
+                    navigate("/admin/config");
                     setMenuOpen(false);
                   }}
                 >
@@ -135,13 +116,13 @@ export function AdminTopbar() {
                       strokeLinecap="round"
                     />
                   </svg>
-                  {t("topbar.myAccount", { defaultValue: "Minha conta" })}
+                  Minha conta
                 </button>
                 <button
                   type="button"
                   className={styles.dropdownItem}
                   onClick={() => {
-                    navigate("/admin/config/general");
+                    navigate("/admin/config");
                     setMenuOpen(false);
                   }}
                 >
@@ -160,33 +141,8 @@ export function AdminTopbar() {
                       strokeWidth="1.2"
                     />
                   </svg>
-                  {t("topbar.restaurantSettings", {
-                    defaultValue: "Configurações do restaurante",
-                  })}
+                  Configurações
                 </button>
-                {isInternalAdmin && (
-                  <button
-                    type="button"
-                    className={styles.dropdownItem}
-                    onClick={() => {
-                      navigate("/admin/observability");
-                      setMenuOpen(false);
-                    }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path
-                        d="M2.5 12.5h11M4 10V6m4 4V3m4 7V7"
-                        stroke="currentColor"
-                        strokeWidth="1.3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    {t("topbar.systemSettings", {
-                      defaultValue: "Configuração do sistema",
-                    })}
-                  </button>
-                )}
               </div>
 
               <div className={styles.dropdownDivider} />
@@ -207,7 +163,7 @@ export function AdminTopbar() {
                       strokeLinejoin="round"
                     />
                   </svg>
-                  {t("topbar.logout", { defaultValue: "Sair" })}
+                  Terminar sessão
                 </button>
               </div>
             </div>

@@ -7,9 +7,14 @@
 
 import { useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../../../../context/RestaurantRuntimeContext";
-import { IntegrationRegistry, StripePaymentAdapter, openCustomerPortal } from "../../../../../integrations";
-import { getBillingStatus } from "../../../../../core/billing/coreBillingApi";
 import type { BillingStatus } from "../../../../../core/billing/coreBillingApi";
+import { getBillingStatus } from "../../../../../core/billing/coreBillingApi";
+import { Logger } from "../../../../../core/logger";
+import {
+  IntegrationRegistry,
+  StripePaymentAdapter,
+  openCustomerPortal,
+} from "../../../../../integrations";
 import { AdminPageHeader } from "../../../dashboard/components/AdminPageHeader";
 
 type StripeCardStatus = "disabled" | "configured" | "active" | "error";
@@ -25,7 +30,9 @@ function billingToCardStatus(status: BillingStatus | null): StripeCardStatus {
 export function IntegrationsPaymentsPage() {
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? null;
-  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
+  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -50,7 +57,12 @@ export function IntegrationsPaymentsPage() {
   }, [restaurantId]);
 
   const status = billingToCardStatus(billingStatus);
-  const statusLabel = { disabled: "Inativo", configured: "Configurado", active: "Ativo", error: "Erro" }[status];
+  const statusLabel = {
+    disabled: "Inativo",
+    configured: "Configurado",
+    active: "Ativo",
+    error: "Erro",
+  }[status];
 
   const handleConfigure = async () => {
     setActionLoading(true);
@@ -58,7 +70,7 @@ export function IntegrationsPaymentsPage() {
       const { url } = await openCustomerPortal();
       if (url) window.location.href = url;
     } catch (e) {
-      console.error("[IntegrationsPaymentsPage] openCustomerPortal:", e);
+      Logger.error("[IntegrationsPaymentsPage] openCustomerPortal:", e);
     } finally {
       setActionLoading(false);
     }
@@ -72,7 +84,9 @@ export function IntegrationsPaymentsPage() {
       />
 
       {loading ? (
-        <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>A carregar…</p>
+        <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>
+          A carregar…
+        </p>
       ) : (
         <div
           style={{
@@ -83,13 +97,34 @@ export function IntegrationsPaymentsPage() {
             maxWidth: 480,
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 16,
+            }}
+          >
             <div>
-              <h2 style={{ fontSize: 18, fontWeight: 600, margin: "0 0 4px 0", color: "var(--text-primary)" }}>
+              <h2
+                style={{
+                  fontSize: 18,
+                  fontWeight: 600,
+                  margin: "0 0 4px 0",
+                  color: "var(--text-primary)",
+                }}
+              >
                 Stripe
               </h2>
-              <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
-                Assinatura SaaS e customer portal (método de pagamento, faturas).
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 14,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                Assinatura SaaS e customer portal (método de pagamento,
+                faturas).
               </p>
             </div>
             <span
@@ -102,18 +137,18 @@ export function IntegrationsPaymentsPage() {
                   status === "active"
                     ? "var(--status-success-bg)"
                     : status === "error"
-                      ? "var(--status-error-bg)"
-                      : status === "configured"
-                        ? "var(--status-warning-bg)"
-                        : "var(--card-bg-on-dark)",
+                    ? "var(--status-error-bg)"
+                    : status === "configured"
+                    ? "var(--status-warning-bg)"
+                    : "var(--card-bg-on-dark)",
                 color:
                   status === "active"
                     ? "var(--color-success)"
                     : status === "error"
-                      ? "var(--color-error)"
-                      : status === "configured"
-                        ? "var(--color-warning)"
-                        : "var(--text-secondary)",
+                    ? "var(--color-error)"
+                    : status === "configured"
+                    ? "var(--color-warning)"
+                    : "var(--text-secondary)",
               }}
             >
               {statusLabel}
@@ -137,9 +172,22 @@ export function IntegrationsPaymentsPage() {
               {actionLoading ? "A abrir…" : "Configurar / Portal do cliente"}
             </button>
           </div>
-          <p style={{ margin: "16px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
-            Checkout e portal são tratados pelo Stripe; o webhook de pagamento deve emitir{" "}
-            <code style={{ background: "var(--surface-overlay)", padding: "2px 6px", borderRadius: 4 }}>
+          <p
+            style={{
+              margin: "16px 0 0",
+              fontSize: 13,
+              color: "var(--text-secondary)",
+            }}
+          >
+            Checkout e portal são tratados pelo Stripe; o webhook de pagamento
+            deve emitir{" "}
+            <code
+              style={{
+                background: "var(--surface-overlay)",
+                padding: "2px 6px",
+                borderRadius: 4,
+              }}
+            >
               payment.confirmed
             </code>{" "}
             para o Event Bus (Webhooks OUT).

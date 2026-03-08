@@ -40,7 +40,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         minHeight: "100vh",
         backgroundColor: theme.surface.base,
         color: theme.text.primary,
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+        fontFamily:
+          "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
       <AdminSidebar />

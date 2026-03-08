@@ -1,6 +1,6 @@
 /**
  * EmpleadosConfigPage - Configuração de empleados (pessoas).
- * Conteúdo migrado de ConfigPeoplePage; rotas sob /admin/config/empleados.
+ * Conteúdo migrado de ConfigPeoplePage; rotas sob /admin/config/employees.
  * Ref: CONFIGURATION_MAP_V1.md 2.12
  */
 
@@ -9,7 +9,7 @@ import { RestaurantPeopleSection } from "../../../../pages/Config/RestaurantPeop
 import { RolesSummarySection } from "../../../../pages/Config/RolesSummarySection";
 import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 
-const BASE = "/admin/config/empleados";
+const BASE = "/admin/config/employees";
 
 export function EmpleadosConfigPage() {
   const location = useLocation();
@@ -38,11 +38,15 @@ export function EmpleadosConfigPage() {
           style={{
             padding: "12px 16px",
             border: "none",
-            borderBottom: isEmployeesTab ? "2px solid var(--color-primary)" : "2px solid transparent",
+            borderBottom: isEmployeesTab
+              ? "2px solid var(--color-primary)"
+              : "2px solid transparent",
             backgroundColor: "transparent",
             cursor: "pointer",
             fontWeight: isEmployeesTab ? 600 : 400,
-            color: isEmployeesTab ? "var(--color-primary)" : "var(--text-secondary)",
+            color: isEmployeesTab
+              ? "var(--color-primary)"
+              : "var(--text-secondary)",
           }}
         >
           Funcionários
@@ -53,11 +57,15 @@ export function EmpleadosConfigPage() {
           style={{
             padding: "12px 16px",
             border: "none",
-            borderBottom: isRolesTab ? "2px solid var(--color-primary)" : "2px solid transparent",
+            borderBottom: isRolesTab
+              ? "2px solid var(--color-primary)"
+              : "2px solid transparent",
             backgroundColor: "transparent",
             cursor: "pointer",
             fontWeight: isRolesTab ? 600 : 400,
-            color: isRolesTab ? "var(--color-primary)" : "var(--text-secondary)",
+            color: isRolesTab
+              ? "var(--color-primary)"
+              : "var(--text-secondary)",
           }}
         >
           Papéis

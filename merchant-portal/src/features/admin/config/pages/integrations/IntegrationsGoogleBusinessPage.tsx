@@ -5,7 +5,9 @@
  * Connect Google Business Profile, view reviews, sync ratings.
  */
 
+import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import { useCallback, useEffect, useState } from "react";
+import { Logger } from "../../../../../core/logger";
 import { IntegrationRegistry } from "../../../../../integrations";
 import {
   createGoogleBusinessAdapter,
@@ -19,6 +21,7 @@ import { AdminPageHeader } from "../../../dashboard/components/AdminPageHeader";
 type ConnectionStatus = "disconnected" | "connecting" | "connected" | "error";
 
 export function IntegrationsGoogleBusinessPage() {
+  const locale = useFormatLocale();
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
   const [profile, setProfile] = useState<GoogleBusinessProfile | null>(null);
   const [reviews, setReviews] = useState<GoogleBusinessReview[]>([]);
@@ -55,7 +58,7 @@ export function IntegrationsGoogleBusinessPage() {
       setLastSyncAt(new Date());
       setLoadingReviews(false);
     } catch (err) {
-      console.error("[GoogleBusinessPage] connect error:", err);
+      Logger.error("[GoogleBusinessPage] connect error:", err);
       setError(
         "Não foi possível conectar ao Google Business Profile. Tente novamente.",
       );
@@ -83,7 +86,7 @@ export function IntegrationsGoogleBusinessPage() {
       setReviews(r);
       setLastSyncAt(new Date());
     } catch (err) {
-      console.error("[GoogleBusinessPage] sync error:", err);
+      Logger.error("[GoogleBusinessPage] sync error:", err);
     } finally {
       setLoadingReviews(false);
       setSyncing(false);
@@ -263,7 +266,7 @@ export function IntegrationsGoogleBusinessPage() {
               }}
             >
               Última sincronização:{" "}
-              {lastSyncAt ? lastSyncAt.toLocaleString("pt-PT") : "—"}
+              {lastSyncAt ? lastSyncAt.toLocaleString(locale) : "—"}
             </p>
           )}
         </div>
@@ -473,7 +476,7 @@ export function IntegrationsGoogleBusinessPage() {
                     <span
                       style={{ fontSize: 12, color: "var(--text-secondary)" }}
                     >
-                      {new Date(r.createTime).toLocaleDateString("pt-PT")}
+                      {new Date(r.createTime).toLocaleDateString(locale)}
                     </span>
                   </div>
                   <span

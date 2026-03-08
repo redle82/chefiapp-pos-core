@@ -13,26 +13,41 @@ import {
 import { dockerCoreClient } from "../../../../infra/docker-core/connection";
 
 const LOCALES = [
-  { value: "pt-BR" },
-  { value: "es-ES" },
-  { value: "en-US" },
+  { value: "pt-BR", label: "Português (Brasil)" },
+  { value: "es-ES", label: "Español (España)" },
+  { value: "en-US", label: "English (US)" },
+  { value: "en-GB", label: "English (UK)" },
+  { value: "pt-PT", label: "Português (Portugal)" },
+  { value: "es-MX", label: "Español (México)" },
+  { value: "en-CA", label: "English (Canada)" },
+  { value: "en-AU", label: "English (Australia)" },
 ] as const;
 
 const TIMEZONES = [
-  { value: "America/Sao_Paulo" },
-  { value: "Europe/Madrid" },
-  { value: "Europe/Lisbon" },
-  { value: "America/New_York" },
+  { value: "America/Sao_Paulo", label: "America/Sao_Paulo (Brasil)" },
+  { value: "Europe/Madrid", label: "Europe/Madrid (España)" },
+  { value: "Europe/Lisbon", label: "Europe/Lisbon (Portugal)" },
+  { value: "Europe/London", label: "Europe/London (UK)" },
+  { value: "America/New_York", label: "America/New_York (US East)" },
+  { value: "America/Chicago", label: "America/Chicago (US Central)" },
+  { value: "America/Los_Angeles", label: "America/Los_Angeles (US West)" },
+  { value: "America/Mexico_City", label: "America/Mexico_City (México)" },
+  { value: "America/Toronto", label: "America/Toronto (Canada)" },
+  { value: "Australia/Sydney", label: "Australia/Sydney" },
 ] as const;
 
 const CURRENCIES = [
-  { value: "BRL" },
-  { value: "EUR" },
-  { value: "USD" },
+  { value: "BRL", label: "BRL (R$)" },
+  { value: "EUR", label: "EUR (€)" },
+  { value: "USD", label: "USD ($)" },
+  { value: "GBP", label: "GBP (£)" },
+  { value: "MXN", label: "MXN ($)" },
+  { value: "CAD", label: "CAD ($)" },
+  { value: "AUD", label: "AUD ($)" },
 ] as const;
 
 export function GeneralCardLocale() {
-  const { t } = useTranslation("config");
+  const { t } = useTranslation();
   const { runtime } = useRestaurantRuntime();
   const [form, setForm] = useState({
     locale: "pt-BR",
@@ -75,7 +90,7 @@ export function GeneralCardLocale() {
 
   const handleSave = async () => {
     if (!restaurantId || getBackendType() !== BackendType.docker) {
-      alert(t("generalCardLocale.errors.coreUnavailable"));
+      alert("Core indisponível ou restaurante não selecionado.");
       return;
     }
     setSaving(true);
@@ -91,10 +106,7 @@ export function GeneralCardLocale() {
         .eq("id", restaurantId);
       if (error) throw new Error(error.message);
     } catch (e: unknown) {
-      const msg =
-        e instanceof Error
-          ? e.message
-          : t("generalCardLocale.errors.saveFailed");
+      const msg = e instanceof Error ? e.message : "Erro ao guardar.";
       alert(msg);
     } finally {
       setSaving(false);
@@ -143,7 +155,7 @@ export function GeneralCardLocale() {
           color: "var(--text-primary)",
         }}
       >
-        {t("generalCardLocale.title")}
+        Idioma e localização (operacional)
       </h2>
       <p
         style={{
@@ -152,18 +164,16 @@ export function GeneralCardLocale() {
           color: "var(--text-secondary)",
         }}
       >
-        {t("generalCardLocale.subtitle")}
+        Em que idioma e contexto de tempo/moeda opera o TPV neste local.
       </p>
       {!loaded ? (
         <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-          {t("generalCardLocale.loading")}
+          A carregar...
         </p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div>
-            <label style={labelStyle}>
-              {t("generalCardLocale.fields.locale")}
-            </label>
+            <label style={labelStyle}>Idioma do TPV *</label>
             <select
               value={form.locale}
               onChange={(e) =>
@@ -173,15 +183,13 @@ export function GeneralCardLocale() {
             >
               {LOCALES.map((l) => (
                 <option key={l.value} value={l.value}>
-                  {t("generalCardLocale.options.locales." + l.value)}
+                  {l.label}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label style={labelStyle}>
-              {t("generalCardLocale.fields.timezone")}
-            </label>
+            <label style={labelStyle}>Fuso horário *</label>
             <select
               value={form.timezone}
               onChange={(e) =>
@@ -189,20 +197,15 @@ export function GeneralCardLocale() {
               }
               style={inputStyle}
             >
-              {TIMEZONES.map((timezoneOption) => (
-                <option key={timezoneOption.value} value={timezoneOption.value}>
-                  {t(
-                    "generalCardLocale.options.timezones." +
-                      timezoneOption.value,
-                  )}
+              {TIMEZONES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label style={labelStyle}>
-              {t("generalCardLocale.fields.currency")}
-            </label>
+            <label style={labelStyle}>Moeda *</label>
             <select
               value={form.currency}
               onChange={(e) =>
@@ -212,7 +215,7 @@ export function GeneralCardLocale() {
             >
               {CURRENCIES.map((c) => (
                 <option key={c.value} value={c.value}>
-                  {t("generalCardLocale.options.currencies." + c.value)}
+                  {c.label}
                 </option>
               ))}
             </select>
@@ -224,9 +227,7 @@ export function GeneralCardLocale() {
               disabled={saving}
               style={buttonStyle}
             >
-              {saving
-                ? t("generalCardLocale.saving")
-                : t("generalCardLocale.save")}
+              {saving ? t("common:saving") : t("common:save")}
             </button>
           </div>
         </div>

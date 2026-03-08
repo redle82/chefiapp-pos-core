@@ -1,9 +1,6 @@
 import { useState } from "react";
-import type {
-  CierreScope,
-  CierreTemporal,
-  CierreType,
-} from "../types";
+import { useTranslation } from "react-i18next";
+import type { CierreScope, CierreTemporal, CierreType } from "../types";
 import { CIERRE_TYPE_LABELS } from "../types";
 
 const TYPES: CierreType[] = [
@@ -42,6 +39,7 @@ export function CreateClosureModal({
   onCreated,
   createClosure,
 }: CreateClosureModalProps) {
+  const { t } = useTranslation();
   const [type, setType] = useState<CierreType>("TOTAL");
   const [scope, setScope] = useState<CierreScope>({ ...defaultScope });
   const [startDate, setStartDate] = useState("");
@@ -60,7 +58,8 @@ export function CreateClosureModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const startAt = startDate && startTime ? `${startDate}T${startTime}:00` : "";
+    const startAt =
+      startDate && startTime ? `${startDate}T${startTime}:00` : "";
     const endAt = endDate && endTime ? `${endDate}T${endTime}:00` : "";
     if (!startAt || !endAt) {
       setError("Indique data e hora de início e fim.");
@@ -295,7 +294,7 @@ export function CreateClosureModal({
               disabled={submitting}
               className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              {submitting ? "A guardar..." : "Guardar"}
+              {submitting ? t("common:saving") : t("common:save")}
             </button>
           </div>
         </form>

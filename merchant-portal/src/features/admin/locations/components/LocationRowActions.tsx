@@ -3,17 +3,25 @@
  * Atalhos de configuração por location (sem caçar na sidebar).
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Location } from "../types";
 
 const BASE = "/admin/config";
 
 const ACTIONS: { key: string; label: string; path: string }[] = [
-  { key: "mesas", label: "Configurar mesas", path: `${BASE}/ubicaciones/tables` },
-  { key: "impresoras", label: "Configurar impresoras", path: `${BASE}/impresoras` },
-  { key: "horarios", label: "Configurar horarios", path: `${BASE}/delivery/horarios` },
-  { key: "staff", label: "Ver staff", path: "/admin/config/empleados" },
+  { key: "mesas", label: "Configurar mesas", path: `${BASE}/locations/tables` },
+  {
+    key: "impresoras",
+    label: "Configurar impresoras",
+    path: `${BASE}/printers`,
+  },
+  {
+    key: "horarios",
+    label: "Configurar horarios",
+    path: `${BASE}/delivery/schedule`,
+  },
+  { key: "staff", label: "Ver staff", path: "/admin/config/employees" },
 ];
 
 interface LocationRowActionsProps {
@@ -21,7 +29,10 @@ interface LocationRowActionsProps {
   onEdit: () => void;
 }
 
-export function LocationRowActions({ location, onEdit }: LocationRowActionsProps) {
+export function LocationRowActions({
+  location,
+  onEdit,
+}: LocationRowActionsProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -29,14 +40,23 @@ export function LocationRowActions({ location, onEdit }: LocationRowActionsProps
   useEffect(() => {
     if (!open) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
     };
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, [open]);
 
   return (
-    <div ref={ref} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 4 }}>
+    <div
+      ref={ref}
+      style={{
+        position: "relative",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+      }}
+    >
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

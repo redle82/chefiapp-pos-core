@@ -62,6 +62,29 @@
   color: var(--text-tertiary);
 }
 
+/* ---- Config section groups ---- */
+
+.configSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.configSection + .configSection {
+  margin-top: 10px;
+}
+
+.configSectionHeader {
+  padding: 4px 10px 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  opacity: 0.7;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .navColumn {
   display: flex;
   flex-direction: column;
@@ -78,7 +101,9 @@
 
 .navLink {
   position: relative;
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 10px 8px 14px;
   border-radius: 8px;
   font-size: 13px;
@@ -192,53 +217,128 @@
   border-top: 1px solid var(--surface-border);
 }
 
-.quickLinks {
+/* ---- Module status dot (Phase 4) ---- */
+
+.statusDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-left: auto;
+  flex-shrink: 0;
+  vertical-align: middle;
+  transition: background-color 0.2s ease;
+}
+
+.statusDotActive {
+  background-color: #22c55e; /* green-500 */
+}
+
+.statusDotNeedsSetup {
+  background-color: #f59e0b; /* amber-500 */
+}
+
+.statusDotInactive {
+  background-color: var(--text-tertiary, #6b7280);
+  opacity: 0.5;
+}
+
+.statusDotLocked {
+  background-color: #ef4444; /* red-500 */
+  opacity: 0.7;
+}
+
+/* ---- Contextual Banner (Phase 5) ---- */
+
+.contextBanner {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 12px;
-}
-
-.quickLink {
-  display: flex;
-  align-items: center;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.bannerHeadline {
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+}
+
+.bannerBody {
+  font-weight: 400;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.bannerProgress {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.bannerProgressFill {
+  height: 100%;
+  border-radius: 2px;
+  background: currentColor;
+  transition: width 0.4s ease;
+}
+
+.bannerCta {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 4px 10px;
   border-radius: 6px;
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
+  font-size: 11px;
+  font-weight: 600;
   text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease;
+  text-align: center;
+  transition: opacity 0.15s ease;
+}
+.bannerCta:hover {
+  opacity: 0.85;
 }
 
-.quickLink:hover {
-  background: var(--surface-hover, #f3f4f6);
-  color: var(--text-primary, #111827);
+/* Variant: SETUP — amber tones */
+.bannerSetup {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+.bannerSetup .bannerCta {
+  background-color: #f59e0b;
+  color: #fff;
 }
 
-/* quickLink as <button> reset */
-button.quickLink {
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-family: inherit;
-  text-align: left;
-  width: 100%;
+/* Variant: TRIAL — blue tones (urgent = amber) */
+.bannerTrial {
+  background-color: rgba(59, 130, 246, 0.08);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.18);
+}
+.bannerTrial .bannerCta {
+  background-color: #3b82f6;
+  color: #fff;
 }
 
-.tpvNotice {
-  font-size: 0.75rem;
-  color: var(--color-brand-gold, #c9a227);
-  padding: 6px 12px;
-  animation: fadeIn 0.2s ease;
+/* Variant: ACTIVE — green tones, subtle */
+.bannerActive {
+  background-color: rgba(34, 197, 94, 0.06);
+  color: #15803d;
+  border: 1px solid rgba(34, 197, 94, 0.14);
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* Variant: SUSPENDED — red tones, urgent */
+.bannerSuspended {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.22);
+}
+.bannerSuspended .bannerCta {
+  background-color: #ef4444;
+  color: #fff;
 }

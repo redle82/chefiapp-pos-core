@@ -6,7 +6,7 @@
  *  2. Dados públicos (endereço, horários) via PublicPresenceFields
  *  3. QR Codes (menu geral + por mesa) via PublicQRSection
  *
- * Rota: /admin/config/tienda-online
+ * Rota: /admin/config/website
  */
 
 import { useCallback, useEffect, useState } from "react";

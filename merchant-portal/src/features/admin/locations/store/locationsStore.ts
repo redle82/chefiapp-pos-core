@@ -3,6 +3,7 @@
  * Chave: chefiapp_locations / chefiapp_location_groups
  */
 
+import { currencyService } from "../../../../core/currency/CurrencyService";
 import type { Location, LocationGroup } from "../types";
 
 const LOCATIONS_KEY = "chefiapp_locations";
@@ -25,12 +26,13 @@ function getDefaultLocations(): Location[] {
     {
       id: "loc-1",
       name: "Sofia Gastrobar Ibiza",
-      address: "Carrer des Caló, 109, 07829 Sant Josep de sa Talaia, Illes Balears, Spain",
+      address:
+        "Carrer des Caló, 109, 07829 Sant Josep de sa Talaia, Illes Balears, Spain",
       country: "ES",
       city: "Sant Josep de sa Talaia",
       postalCode: "07829",
       timezone: "Europe/Madrid",
-      currency: "EUR",
+      currency: currencyService.getDefaultCurrency(),
       isActive: true,
       isPrimary: true,
       createdAt: now,
@@ -123,13 +125,22 @@ export const locationsStore = {
     const list = loadGroups();
     const now = new Date().toISOString();
     const id = `grp-${Date.now()}`;
-    const newGrp: LocationGroup = { id, name, locationIds, createdAt: now, updatedAt: now };
+    const newGrp: LocationGroup = {
+      id,
+      name,
+      locationIds,
+      createdAt: now,
+      updatedAt: now,
+    };
     list.push(newGrp);
     saveGroups(list);
     return newGrp;
   },
 
-  updateGroup(id: string, patch: { name?: string; locationIds?: string[] }): LocationGroup | null {
+  updateGroup(
+    id: string,
+    patch: { name?: string; locationIds?: string[] },
+  ): LocationGroup | null {
     const list = loadGroups();
     const idx = list.findIndex((g) => g.id === id);
     if (idx === -1) return null;

@@ -3,14 +3,31 @@
  * Campos: nome, endereço, cidade, país, postalCode, timezone, currency (EUR default), ativo, principal.
  */
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { currencyService } from "../../../../core/currency/CurrencyService";
 import type { Location } from "../types";
 
-const CURRENCIES = [{ value: "EUR", label: "EUR" }];
+const CURRENCIES = [
+  { value: "EUR", label: "EUR" },
+  { value: "USD", label: "USD" },
+  { value: "GBP", label: "GBP" },
+  { value: "BRL", label: "BRL" },
+  { value: "MXN", label: "MXN" },
+  { value: "CAD", label: "CAD" },
+  { value: "AUD", label: "AUD" },
+];
 const TIMEZONES = [
   { value: "Europe/Madrid", label: "Europe/Madrid" },
   { value: "Europe/Lisbon", label: "Europe/Lisbon" },
+  { value: "Europe/London", label: "Europe/London" },
   { value: "America/Sao_Paulo", label: "America/Sao_Paulo" },
+  { value: "America/New_York", label: "America/New_York" },
+  { value: "America/Chicago", label: "America/Chicago" },
+  { value: "America/Los_Angeles", label: "America/Los_Angeles" },
+  { value: "America/Mexico_City", label: "America/Mexico_City" },
+  { value: "America/Toronto", label: "America/Toronto" },
+  { value: "Australia/Sydney", label: "Australia/Sydney" },
   { value: "UTC", label: "UTC" },
 ];
 
@@ -27,7 +44,7 @@ const emptyForm = (): Omit<Location, "id" | "createdAt" | "updatedAt"> => ({
   city: "",
   postalCode: "",
   timezone: "Europe/Madrid",
-  currency: "EUR",
+  currency: currencyService.getDefaultCurrency(),
   isActive: true,
   isPrimary: false,
 });
@@ -37,6 +54,7 @@ export function LocationModal({
   onClose,
   onSave,
 }: LocationModalProps) {
+  const { t } = useTranslation();
   const [form, setForm] = useState(emptyForm());
 
   useEffect(() => {
@@ -91,7 +109,12 @@ export function LocationModal({
         onClick={(e) => e.stopPropagation()}
       >
         <form onSubmit={handleSubmit}>
-          <div style={{ padding: 24, borderBottom: "1px solid var(--surface-border)" }}>
+          <div
+            style={{
+              padding: 24,
+              borderBottom: "1px solid var(--surface-border)",
+            }}
+          >
             <h2
               style={{
                 margin: 0,
@@ -103,15 +126,30 @@ export function LocationModal({
               {isEdit ? "Editar ubicación" : "Nueva ubicación"}
             </h2>
           </div>
-          <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+          <div
+            style={{
+              padding: 24,
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+            }}
+          >
             <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                }}
+              >
                 Nombre
               </span>
               <input
                 type="text"
                 value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
                 required
                 placeholder="Ej. Sofia Gastrobar Ibiza"
                 style={{
@@ -124,13 +162,21 @@ export function LocationModal({
               />
             </label>
             <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                }}
+              >
                 Dirección
               </span>
               <input
                 type="text"
                 value={form.address}
-                onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, address: e.target.value }))
+                }
                 placeholder="Calle, número, código postal, ciudad, país"
                 style={{
                   padding: "8px 12px",
@@ -141,15 +187,31 @@ export function LocationModal({
                 }}
               />
             </label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 12,
+              }}
+            >
+              <label
+                style={{ display: "flex", flexDirection: "column", gap: 4 }}
+              >
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--text-primary)",
+                  }}
+                >
                   Ciudad
                 </span>
                 <input
                   type="text"
                   value={form.city}
-                  onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, city: e.target.value }))
+                  }
                   style={{
                     padding: "8px 12px",
                     fontSize: 14,
@@ -159,14 +221,24 @@ export function LocationModal({
                   }}
                 />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+              <label
+                style={{ display: "flex", flexDirection: "column", gap: 4 }}
+              >
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--text-primary)",
+                  }}
+                >
                   Código postal
                 </span>
                 <input
                   type="text"
                   value={form.postalCode}
-                  onChange={(e) => setForm((f) => ({ ...f, postalCode: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, postalCode: e.target.value }))
+                  }
                   style={{
                     padding: "8px 12px",
                     fontSize: 14,
@@ -177,15 +249,31 @@ export function LocationModal({
                 />
               </label>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 12,
+              }}
+            >
+              <label
+                style={{ display: "flex", flexDirection: "column", gap: 4 }}
+              >
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--text-primary)",
+                  }}
+                >
                   País (código)
                 </span>
                 <input
                   type="text"
                   value={form.country}
-                  onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, country: e.target.value }))
+                  }
                   placeholder="ES, PT, BR"
                   maxLength={3}
                   style={{
@@ -197,13 +285,23 @@ export function LocationModal({
                   }}
                 />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+              <label
+                style={{ display: "flex", flexDirection: "column", gap: 4 }}
+              >
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--text-primary)",
+                  }}
+                >
                   Moneda
                 </span>
                 <select
                   value={form.currency}
-                  onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, currency: e.target.value }))
+                  }
                   style={{
                     padding: "8px 12px",
                     fontSize: 14,
@@ -221,12 +319,20 @@ export function LocationModal({
               </label>
             </div>
             <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                }}
+              >
                 Zona horaria (IANA)
               </span>
               <select
                 value={form.timezone}
-                onChange={(e) => setForm((f) => ({ ...f, timezone: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, timezone: e.target.value }))
+                }
                 style={{
                   padding: "8px 12px",
                   fontSize: 14,
@@ -242,22 +348,51 @@ export function LocationModal({
                 ))}
               </select>
             </label>
-            <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 24,
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={form.isActive}
-                  onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, isActive: e.target.checked }))
+                  }
                 />
-                <span style={{ fontSize: 13, color: "var(--text-primary)" }}>Activo</span>
+                <span style={{ fontSize: 13, color: "var(--text-primary)" }}>
+                  Activo
+                </span>
               </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={form.isPrimary ?? false}
-                  onChange={(e) => setForm((f) => ({ ...f, isPrimary: e.target.checked }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, isPrimary: e.target.checked }))
+                  }
                 />
-                <span style={{ fontSize: 13, color: "var(--text-primary)" }}>Principal</span>
+                <span style={{ fontSize: 13, color: "var(--text-primary)" }}>
+                  Principal
+                </span>
               </label>
             </div>
           </div>
@@ -298,7 +433,7 @@ export function LocationModal({
                 cursor: "pointer",
               }}
             >
-              {isEdit ? "Guardar" : "Crear"}
+              {isEdit ? t("common:save") : t("common:create")}
             </button>
           </div>
         </form>

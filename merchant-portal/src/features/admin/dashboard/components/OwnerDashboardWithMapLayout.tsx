@@ -144,7 +144,7 @@ const MAPA_SECTIONS = [
         id: "config-local",
         label: "Local & Moeda",
         icon: "📍",
-        route: "/admin/config/ubicaciones",
+        route: "/admin/config/locations",
         moduleId: "config" as const,
       },
       {
@@ -275,7 +275,7 @@ export function OwnerDashboardWithMapLayout() {
   const getFirstMissingConfigPath = (): string => {
     const candidates: { nodeId: NodeId; path: string }[] = [
       { nodeId: "identity", path: "/admin/config/general" },
-      { nodeId: "location_currency", path: "/admin/config/ubicaciones" },
+      { nodeId: "location_currency", path: "/admin/config/locations" },
       { nodeId: "menu", path: "/menu-builder" },
     ];
     for (const desired of ["missing", "incomplete"] as const) {

@@ -5,7 +5,9 @@
  * Connect Instagram Business, view posts, enable auto-posting.
  */
 
+import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import { useCallback, useEffect, useState } from "react";
+import { Logger } from "../../../../../core/logger";
 import { IntegrationRegistry } from "../../../../../integrations";
 import {
   createInstagramAdapter,
@@ -20,6 +22,7 @@ import { AdminPageHeader } from "../../../dashboard/components/AdminPageHeader";
 type ConnectionStatus = "disconnected" | "connecting" | "connected" | "error";
 
 export function IntegrationsInstagramPage() {
+  const locale = useFormatLocale();
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
   const [profile, setProfile] = useState<InstagramProfile | null>(null);
   const [posts, setPosts] = useState<InstagramPost[]>([]);
@@ -59,7 +62,7 @@ export function IntegrationsInstagramPage() {
       setPosts(r);
       setLoadingPosts(false);
     } catch (err) {
-      console.error("[InstagramPage] connect error:", err);
+      Logger.error("[InstagramPage] connect error:", err);
       setError("Não foi possível conectar ao Instagram. Tente novamente.");
       setStatus("error");
     }
@@ -475,7 +478,7 @@ export function IntegrationsInstagramPage() {
                     <span
                       style={{ fontSize: 12, color: "var(--text-secondary)" }}
                     >
-                      {new Date(p.timestamp).toLocaleDateString("pt-PT")}
+                      {new Date(p.timestamp).toLocaleDateString(locale)}
                     </span>
                   </div>
                   <p

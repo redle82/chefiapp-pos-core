@@ -10,7 +10,7 @@ export function IntegracionesConfigPage() {
   return (
     <div style={{ maxWidth: 820 }}>
       <AdminPageHeader
-        title="Integraciones"
+        title="Integrações"
         subtitle="Pagamentos, delivery, APIs externas."
       />
       <ConfigIntegrationsPage hideHeader />

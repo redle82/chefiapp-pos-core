@@ -5,14 +5,16 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../../../infra/docker-core/connection";
 import {
   BackendType,
   getBackendType,
 } from "../../../../core/infra/backendAdapter";
+import { dockerCoreClient } from "../../../../infra/docker-core/connection";
 
 export function GeneralCardIntegrations() {
+  const { t } = useTranslation();
   const { runtime } = useRestaurantRuntime();
   const [googlePlace, setGooglePlace] = useState("");
   const [saving, setSaving] = useState(false);
@@ -112,12 +114,20 @@ export function GeneralCardIntegrations() {
       >
         Ligue o seu restaurante ao Google
       </h2>
-      <p style={{ margin: "0 0 8px 0", fontSize: 12, color: "var(--text-secondary)" }}>
+      <p
+        style={{
+          margin: "0 0 8px 0",
+          fontSize: 12,
+          color: "var(--text-secondary)",
+        }}
+      >
         Adicione o Google Place ID do seu restaurante para ativar funções como
         Google Reviews e mais. Opcional.
       </p>
       {!loaded ? (
-        <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>A carregar...</p>
+        <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+          A carregar...
+        </p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div>
@@ -139,7 +149,7 @@ export function GeneralCardIntegrations() {
               disabled={saving}
               style={buttonStyle}
             >
-              {saving ? "A guardar…" : "Guardar"}
+              {saving ? t("common:saving") : t("common:save")}
             </button>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { useCurrency } from "@/core/currency/useCurrency";
 import { useEffect, useState } from "react";
 import { useCatalogStore } from "../../../../core/catalog/catalogStore";
 import { CatalogLayout } from "../components/CatalogLayout";
@@ -12,6 +13,7 @@ export function ModifiersPage() {
     upsertModifierGroup,
     upsertModifier,
   } = useCatalogStore();
+  const { formatAmount } = useCurrency();
   const [activeTab, setActiveTab] = useState<Tab>("groups");
 
   useEffect(() => {
@@ -147,7 +149,7 @@ export function ModifiersPage() {
                         {group?.name ?? "—"}
                       </td>
                       <td className="px-4 py-2 text-gray-600">
-                        {(modifier.priceDeltaCents / 100).toFixed(2)} €
+                        {formatAmount(modifier.priceDeltaCents)}
                       </td>
                     </tr>
                   );

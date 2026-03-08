@@ -1,3 +1,5 @@
+import { useFormatLocale } from "@/core/i18n/useFormatLocale";
+import { currencyService } from "../../../../core/currency/CurrencyService";
 import { colors } from "../../../../ui/design-system/tokens/colors";
 
 const theme = colors.modes.dashboard;
@@ -17,11 +19,12 @@ export function KpiCard({
   loading,
   onClick,
 }: KpiCardProps) {
+  const locale = useFormatLocale();
   const formatted =
     variant === "currency"
-      ? new Intl.NumberFormat("es-ES", {
+      ? new Intl.NumberFormat(locale, {
           style: "currency",
-          currency: "EUR",
+          currency: currencyService.getDefaultCurrency(),
           minimumFractionDigits: 2,
         }).format(value)
       : value.toString();
@@ -73,4 +76,3 @@ export function KpiCard({
     </div>
   );
 }
-

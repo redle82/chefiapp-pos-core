@@ -1,5 +1,10 @@
+import { useCurrency } from "@/core/currency/useCurrency";
 import { useEffect, useState } from "react";
-import type { CatalogProduct, ProductCategory } from "../../../../core/catalog/catalogTypes";
+import { useTranslation } from "react-i18next";
+import type {
+  CatalogProduct,
+  ProductCategory,
+} from "../../../../core/catalog/catalogTypes";
 
 interface ProductModalProps {
   open: boolean;
@@ -7,7 +12,7 @@ interface ProductModalProps {
   categories: ProductCategory[];
   onClose: () => void;
   onSave: (
-    input: Omit<CatalogProduct, "createdAt" | "updatedAt"> & { id?: string }
+    input: Omit<CatalogProduct, "createdAt" | "updatedAt"> & { id?: string },
   ) => Promise<void>;
 }
 
@@ -18,6 +23,8 @@ export function ProductModal({
   onClose,
   onSave,
 }: ProductModalProps) {
+  const { t } = useTranslation();
+  const { symbol } = useCurrency();
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState<string>("");
   const [priceEur, setPriceEur] = useState<string>("0");
@@ -70,7 +77,7 @@ export function ProductModal({
       onClose();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Erro ao guardar o produto."
+        err instanceof Error ? err.message : "Erro ao guardar o produto.",
       );
     } finally {
       setSubmitting(false);
@@ -138,7 +145,7 @@ export function ProductModal({
               htmlFor="product-price"
               className="mb-1 block text-sm font-medium text-gray-700"
             >
-              Preço base (€)
+              {`Preço base (${symbol})`}
             </label>
             <input
               id="product-price"
@@ -183,7 +190,7 @@ export function ProductModal({
               disabled={submitting}
               className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              {submitting ? "A guardar…" : "Guardar"}
+              {submitting ? t("common:saving") : t("common:save")}
             </button>
           </div>
         </form>

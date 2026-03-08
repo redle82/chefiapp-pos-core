@@ -14,7 +14,7 @@ import {
 import { dockerCoreClient } from "../../../../infra/docker-core/connection";
 
 export function GeneralCardReceipt() {
-  const { t } = useTranslation("config");
+  const { t } = useTranslation();
   const { runtime } = useRestaurantRuntime();
   const [value, setValue] = useState("");
   const [saving, setSaving] = useState(false);
@@ -49,7 +49,7 @@ export function GeneralCardReceipt() {
 
   const handleSave = async () => {
     if (!restaurantId || getBackendType() !== BackendType.docker) {
-      alert(t("generalCardReceipt.errors.coreUnavailable"));
+      alert("Core indisponível ou restaurante não selecionado.");
       return;
     }
     setSaving(true);
@@ -63,10 +63,7 @@ export function GeneralCardReceipt() {
         .eq("id", restaurantId);
       if (error) throw new Error(error.message);
     } catch (e: unknown) {
-      const msg =
-        e instanceof Error
-          ? e.message
-          : t("generalCardReceipt.errors.saveFailed");
+      const msg = e instanceof Error ? e.message : "Erro ao guardar.";
       alert(msg);
     } finally {
       setSaving(false);
@@ -117,7 +114,7 @@ export function GeneralCardReceipt() {
           color: "var(--text-primary)",
         }}
       >
-        {t("generalCardReceipt.title")}
+        Texto fiscal / recibo
       </h2>
       <p
         style={{
@@ -126,22 +123,21 @@ export function GeneralCardReceipt() {
           color: "var(--text-secondary)",
         }}
       >
-        {t("generalCardReceipt.subtitle")}
+        Informação opcional que aparecerá nos recibos impressos (dados fiscais,
+        agradecimento, política de devoluções).
       </p>
       {!loaded ? (
         <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-          {t("generalCardReceipt.loading")}
+          A carregar...
         </p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div>
-            <label style={labelStyle}>
-              {t("generalCardReceipt.fields.extraInfo")}
-            </label>
+            <label style={labelStyle}>Informação adicional</label>
             <textarea
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder={t("generalCardReceipt.placeholders.extraInfo")}
+              placeholder="Ex.: NIF B-12345678. Obrigado pela sua visita."
               style={textareaStyle}
               rows={2}
             />
@@ -153,9 +149,7 @@ export function GeneralCardReceipt() {
               disabled={saving}
               style={buttonStyle}
             >
-              {saving
-                ? t("generalCardReceipt.saving")
-                : t("generalCardReceipt.save")}
+              {saving ? t("common:saving") : t("common:save")}
             </button>
           </div>
         </div>

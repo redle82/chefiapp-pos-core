@@ -1,21 +1,40 @@
+import { currencyService } from "@/core/currency/CurrencyService";
+import { getFormatLocale } from "@/core/i18n/regionLocaleConfig";
 import type { CustomersKPIs } from "../types";
 
-const CURRENCY_FORMAT = new Intl.NumberFormat("pt-PT", {
-  style: "currency",
-  currency: "EUR",
-  minimumFractionDigits: 2,
-});
+const formatCurrency = (n: number) =>
+  new Intl.NumberFormat(getFormatLocale(), {
+    style: "currency",
+    currency: currencyService.getDefaultCurrency(),
+    minimumFractionDigits: 2,
+  }).format(n);
 
 interface CustomersKPIBarProps {
   kpis: CustomersKPIs | null;
   loading?: boolean;
 }
 
-const KPI_LABELS: { key: keyof CustomersKPIs; label: string; format: "number" | "currency" }[] = [
+const KPI_LABELS: {
+  key: keyof CustomersKPIs;
+  label: string;
+  format: "number" | "currency";
+}[] = [
   { key: "customersCount", label: "Total de clientes", format: "number" },
-  { key: "customersAverageTabs", label: "Média de contas por cliente", format: "number" },
-  { key: "customersAverageAmount", label: "Ticket médio por cliente", format: "currency" },
-  { key: "customersAverageAmountPerTab", label: "Ticket médio por conta", format: "currency" },
+  {
+    key: "customersAverageTabs",
+    label: "Média de contas por cliente",
+    format: "number",
+  },
+  {
+    key: "customersAverageAmount",
+    label: "Ticket médio por cliente",
+    format: "currency",
+  },
+  {
+    key: "customersAverageAmountPerTab",
+    label: "Ticket médio por conta",
+    format: "currency",
+  },
   { key: "customersAverageRating", label: "Avaliação média", format: "number" },
 ];
 
@@ -29,12 +48,13 @@ export function CustomersKPIBar({ kpis, loading }: CustomersKPIBarProps) {
             raw == null
               ? "—"
               : format === "currency"
-                ? CURRENCY_FORMAT.format(raw as number)
-                : typeof raw === "number"
-                  ? key === "customersAverageTabs" || key === "customersAverageRating"
-                    ? raw.toFixed(2)
-                    : String(Math.round(raw))
-                  : String(raw);
+              ? formatCurrency(raw as number)
+              : typeof raw === "number"
+              ? key === "customersAverageTabs" ||
+                key === "customersAverageRating"
+                ? raw.toFixed(2)
+                : String(Math.round(raw))
+              : String(raw);
           return (
             <div
               key={key}

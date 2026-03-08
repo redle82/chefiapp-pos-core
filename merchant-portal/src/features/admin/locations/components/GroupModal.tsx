@@ -2,7 +2,8 @@
  * GroupModal — Criar/editar Grupo de ubicaciones: nombre + multi-select de ubicaciones.
  */
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Location, LocationGroup } from "../types";
 
 interface GroupModalProps {
@@ -18,6 +19,7 @@ export function GroupModal({
   onClose,
   onSave,
 }: GroupModalProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -74,7 +76,12 @@ export function GroupModal({
         onClick={(e) => e.stopPropagation()}
       >
         <form onSubmit={handleSubmit}>
-          <div style={{ padding: 24, borderBottom: "1px solid var(--surface-border)" }}>
+          <div
+            style={{
+              padding: 24,
+              borderBottom: "1px solid var(--surface-border)",
+            }}
+          >
             <h2
               style={{
                 margin: 0,
@@ -86,9 +93,22 @@ export function GroupModal({
               {isEdit ? "Editar grupo" : "Nuevo grupo de ubicaciones"}
             </h2>
           </div>
-          <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+          <div
+            style={{
+              padding: 24,
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+            }}
+          >
             <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                }}
+              >
                 Nombre del grupo
               </span>
               <input
@@ -107,15 +127,37 @@ export function GroupModal({
               />
             </label>
             <div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", display: "block", marginBottom: 8 }}>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                  display: "block",
+                  marginBottom: 8,
+                }}
+              >
                 Ubicaciones
               </span>
               {locations.length === 0 ? (
-                <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 13,
+                    color: "var(--text-secondary)",
+                  }}
+                >
                   Crea primero al menos una ubicación.
                 </p>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 200, overflowY: "auto" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    maxHeight: 200,
+                    overflowY: "auto",
+                  }}
+                >
                   {locations.map((loc) => (
                     <label
                       key={loc.id}
@@ -179,7 +221,7 @@ export function GroupModal({
                 opacity: locations.length === 0 ? 0.6 : 1,
               }}
             >
-              {isEdit ? "Guardar" : "Crear"}
+              {isEdit ? t("common:save") : t("common:create")}
             </button>
           </div>
         </form>

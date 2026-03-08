@@ -4,11 +4,13 @@
  * "Uma entidade pode ser usada por uma ou mais ubicaciones."
  */
 
-import { useState, useEffect } from "react";
-import type { LegalEntityUsage } from "../types";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { legalEntitiesStore } from "../store/legalEntitiesStore";
+import type { LegalEntityUsage } from "../types";
 
 export function LegalEntityUsageCard() {
+  const { t } = useTranslation();
   const [usage, setUsage] = useState<LegalEntityUsage>({
     useForBilling: true,
     useForReceipts: true,
@@ -62,7 +64,14 @@ export function LegalEntityUsageCard() {
         ubicaciones.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            cursor: "pointer",
+          }}
+        >
           <input
             type="checkbox"
             checked={usage.useForBilling}
@@ -70,9 +79,18 @@ export function LegalEntityUsageCard() {
               setUsage((u) => ({ ...u, useForBilling: e.target.checked }))
             }
           />
-          <span style={{ fontSize: 14, color: "var(--text-primary)" }}>Facturación</span>
+          <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
+            Facturación
+          </span>
         </label>
-        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            cursor: "pointer",
+          }}
+        >
           <input
             type="checkbox"
             checked={usage.useForReceipts}
@@ -80,9 +98,18 @@ export function LegalEntityUsageCard() {
               setUsage((u) => ({ ...u, useForReceipts: e.target.checked }))
             }
           />
-          <span style={{ fontSize: 14, color: "var(--text-primary)" }}>Recibos</span>
+          <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
+            Recibos
+          </span>
         </label>
-        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            cursor: "pointer",
+          }}
+        >
           <input
             type="checkbox"
             checked={usage.useForFiscalReports}
@@ -95,7 +122,9 @@ export function LegalEntityUsageCard() {
           </span>
         </label>
       </div>
-      <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8 }}>
+      <div
+        style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8 }}
+      >
         <button
           type="button"
           onClick={handleSave}
@@ -111,10 +140,12 @@ export function LegalEntityUsageCard() {
             cursor: saving ? "not-allowed" : "pointer",
           }}
         >
-          {saving ? "Guardando…" : "Guardar"}
+          {saving ? t("common:saving") : t("common:save")}
         </button>
         {saved && (
-          <span style={{ fontSize: 13, color: "var(--color-success)" }}>Guardado</span>
+          <span style={{ fontSize: 13, color: "var(--color-success)" }}>
+            Guardado
+          </span>
         )}
       </div>
     </div>

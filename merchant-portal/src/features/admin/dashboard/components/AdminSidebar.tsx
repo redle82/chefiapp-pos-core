@@ -8,21 +8,24 @@
  */
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
-import { openTpvInNewWindow } from "../../../../core/operational/openOperationalWindow";
 import { ChefIAppSignature } from "../../../../ui/design-system/sovereign/ChefIAppSignature";
 import { RestaurantHeader } from "../../../../ui/design-system/sovereign/RestaurantHeader";
+import type { ModuleStatus } from "../../modules/types";
+import { useConfigModuleStates } from "../hooks/useConfigModuleStates";
+import { useSidebarBanner } from "../hooks/useSidebarBanner";
 import styles from "./AdminSidebar.module.css";
+import { SidebarContextBanner } from "./SidebarContextBanner";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type SidebarLeaf = { label: string; to: string };
+type SidebarLeaf = { labelKey: string; to: string };
 type SidebarGroup = {
   id: string;
-  title: string;
+  titleKey: string;
   icon: string;
   items: SidebarLeaf[];
 };
@@ -34,75 +37,105 @@ type SidebarGroup = {
 const NAV_GROUPS: SidebarGroup[] = [
   {
     id: "finanzas",
-    title: "Finanzas",
+    titleKey: "groups.financas",
     icon: "💰",
     items: [
-      { label: "Transacciones", to: "/admin/payments" },
-      { label: "Reembolsos", to: "/admin/payments/refunds" },
-      { label: "Cierres", to: "/admin/closures" },
+      { labelKey: "items.transacoes", to: "/admin/payments" },
+      { labelKey: "items.reembolsos", to: "/admin/payments/refunds" },
+      { labelKey: "items.fechamentos", to: "/admin/closures" },
     ],
   },
   {
     id: "operacion",
-    title: "Operación",
+    titleKey: "groups.operacao",
     icon: "🍽",
     items: [
-      { label: "Reservas", to: "/admin/reservations" },
-      { label: "Promociones", to: "/admin/promotions" },
+      { labelKey: "items.reservas", to: "/admin/reservations" },
+      { labelKey: "items.promocoes", to: "/admin/promotions" },
     ],
   },
   {
     id: "clientes",
-    title: "Clientes",
+    titleKey: "groups.clientes",
     icon: "👥",
-    items: [{ label: "Directorio", to: "/admin/customers" }],
+    items: [{ labelKey: "items.diretorio", to: "/admin/customers" }],
   },
   {
     id: "producto",
-    title: "Producto",
+    titleKey: "groups.produto",
     icon: "📦",
-    items: [{ label: "Catálogo", to: "/admin/catalog" }],
+    items: [{ labelKey: "items.catalogo", to: "/admin/catalog" }],
   },
   {
     id: "inteligencia",
-    title: "Inteligencia",
+    titleKey: "groups.inteligencia",
     icon: "📊",
-    items: [{ label: "Reportes", to: "/admin/reports" }],
+    items: [{ labelKey: "items.relatorios", to: "/admin/reports" }],
   },
   {
     id: "sistema",
-    title: "Sistema",
+    titleKey: "groups.sistema",
     icon: "⚙️",
     items: [
-      { label: "Configuración", to: "/admin/config" },
-      { label: "Dispositivos", to: "/admin/devices" },
-      { label: "Módulos", to: "/admin/modules" },
-      { label: "Observabilidad", to: "/admin/observability" },
+      { labelKey: "items.configuracao", to: "/admin/config" },
+      { labelKey: "items.dispositivos", to: "/admin/devices" },
+      { labelKey: "items.modulos", to: "/admin/modules" },
+      { labelKey: "items.observabilidade", to: "/admin/observability" },
     ],
   },
 ];
 
-/** Config sub-page items (flat list, shown when inside /admin/config or /admin/modules) */
-const CONFIG_ITEMS: { path: string; label: string; to?: string }[] = [
-  { path: "general", label: "General" },
-  { path: "productos", label: "Módulos", to: "/admin/modules" },
-  { path: "tienda-online", label: "Página web" },
-  { path: "suscripcion", label: "Suscripción" },
-  { path: "ubicaciones", label: "Ubicaciones" },
-  { path: "entidades-legales", label: "Entidades Legales" },
-  { path: "marcas", label: "Marcas" },
-  { path: "usuarios", label: "Usuarios Administradores" },
-  { path: "dispositivos", label: "Gestión de dispositivos" },
-  { path: "impresoras", label: "Impresoras" },
+/** Config sub-page items grouped by business domain */
+type ConfigItem = { path: string; labelKey: string; to?: string };
+type ConfigSection = { sectionKey: string; items: ConfigItem[] };
+
+const CONFIG_SECTIONS: ConfigSection[] = [
   {
-    path: "integraciones",
-    label: "Integraciones",
-    to: "/admin/config/integrations",
+    sectionKey: "configSections.identity",
+    items: [
+      { path: "general", labelKey: "config.general" },
+      { path: "locations", labelKey: "config.locations" },
+      { path: "legal-entities", labelKey: "config.legalEntities" },
+      { path: "brands", labelKey: "config.brands" },
+    ],
   },
-  { path: "delivery", label: "Delivery" },
-  { path: "empleados", label: "Empleados" },
-  { path: "software-tpv", label: "Software TPV" },
-  { path: "reservas", label: "Reservas" },
+  {
+    sectionKey: "configSections.plan",
+    items: [{ path: "subscription", labelKey: "config.subscription" }],
+  },
+  {
+    sectionKey: "configSections.operations",
+    items: [
+      { path: "website", labelKey: "config.website" },
+      { path: "reservations", labelKey: "config.reservations" },
+      { path: "pos-software", labelKey: "config.posSoftware" },
+    ],
+  },
+  {
+    sectionKey: "configSections.team",
+    items: [
+      { path: "users", labelKey: "config.adminUsers" },
+      { path: "employees", labelKey: "config.employees" },
+    ],
+  },
+  {
+    sectionKey: "configSections.infrastructure",
+    items: [
+      { path: "devices", labelKey: "config.deviceManagement" },
+      { path: "printers", labelKey: "config.printers" },
+    ],
+  },
+  {
+    sectionKey: "configSections.channels",
+    items: [
+      {
+        path: "integraciones",
+        labelKey: "config.integrations",
+        to: "/admin/config/integrations",
+      },
+      { path: "delivery", labelKey: "config.delivery" },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -132,9 +165,11 @@ function deriveOpenSections(pathname: string): Set<string> {
 export function AdminSidebar() {
   const location = useLocation();
   const { identity } = useRestaurantIdentity();
-  const isConfig =
-    location.pathname.startsWith("/admin/config") ||
-    location.pathname === "/admin/modules";
+  const { t } = useTranslation("sidebar");
+  const isConfig = location.pathname.startsWith("/admin/config");
+
+  const moduleStates = useConfigModuleStates();
+  const banner = useSidebarBanner();
 
   const [openSections, setOpenSections] = useState<Set<string>>(() =>
     deriveOpenSections(location.pathname),
@@ -159,28 +194,48 @@ export function AdminSidebar() {
             size="sm"
           />
         </div>
+
+        {/* Phase 5: Contextual banner — state-aware hint */}
+        <SidebarContextBanner banner={banner} />
+
         {isConfig ? (
           <>
             <NavLink to="/admin/home" className={styles.backLink}>
-              ← Volver al menú
+              {t("nav.backToMenu")}
             </NavLink>
-            <div className={styles.configLabel}>Configuración</div>
-            <nav aria-label="Configuración" className={styles.navColumn}>
-              {CONFIG_ITEMS.map(({ path, label, to }) => (
-                <AdminSidebarLink
-                  key={path}
-                  to={to ?? `/admin/config/${path}`}
-                  end={!!to}
-                >
-                  {label}
-                </AdminSidebarLink>
+            <div className={styles.configLabel}>{t("nav.configTitle")}</div>
+            <nav aria-label={t("nav.configTitle")} className={styles.navColumn}>
+              {CONFIG_SECTIONS.map((section) => (
+                <div key={section.sectionKey} className={styles.configSection}>
+                  <div className={styles.configSectionHeader}>
+                    {t(section.sectionKey)}
+                  </div>
+                  {section.items.map(({ path, labelKey, to }) => {
+                    const modState = moduleStates[path];
+                    return (
+                      <AdminSidebarLink
+                        key={path}
+                        to={to ?? `/admin/config/${path}`}
+                        end={!!to}
+                        title={modState ? t(modState.statusKey) : undefined}
+                      >
+                        {t(labelKey)}
+                        {modState && (
+                          <ModuleStatusDot status={modState.status} />
+                        )}
+                      </AdminSidebarLink>
+                    );
+                  })}
+                </div>
               ))}
             </nav>
           </>
         ) : (
           <nav aria-label="Admin navigation" className={styles.navColumnMain}>
             {/* Home — always visible, no group */}
-            <AdminSidebarLink to="/admin/home">Inicio</AdminSidebarLink>
+            <AdminSidebarLink to="/admin/home">
+              {t("nav.home")}
+            </AdminSidebarLink>
 
             <div className={styles.groupsDivider} />
 
@@ -198,14 +253,16 @@ export function AdminSidebar() {
                     data-open={isOpen ? "" : undefined}
                   >
                     <span className={styles.groupIcon}>{group.icon}</span>
-                    <span className={styles.groupTitle}>{group.title}</span>
+                    <span className={styles.groupTitle}>
+                      {t(group.titleKey)}
+                    </span>
                     <span className={styles.groupChevron}>›</span>
                   </button>
                   {isOpen && (
                     <div className={styles.groupItems}>
                       {group.items.map((item) => (
                         <AdminSidebarLink key={item.to} to={item.to}>
-                          {item.label}
+                          {t(item.labelKey)}
                         </AdminSidebarLink>
                       ))}
                     </div>
@@ -217,54 +274,9 @@ export function AdminSidebar() {
         )}
       </div>
       <div className={styles.footer}>
-        <nav aria-label="Quick links" className={styles.quickLinks}>
-          <TpvQuickLink />
-          <NavLink to="/app/dashboard" className={styles.quickLink}>
-            🏠 Dashboard
-          </NavLink>
-        </nav>
         <ChefIAppSignature variant="full" size="sm" tone="light" />
       </div>
     </aside>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  TpvQuickLink — context-aware "Abrir TPV"                          */
-/*  Browser → redirects to /admin/devices (no dead-end lock screen)   */
-/*  Desktop runtime → navigates to /op/tpv directly                   */
-/*  Ref: UXG-010                                                       */
-/* ------------------------------------------------------------------ */
-function TpvQuickLink() {
-  const { t } = useTranslation("devices");
-  const navigate = useNavigate();
-  const [showNotice, setShowNotice] = useState(false);
-
-  const handleClick = () => {
-    openTpvInNewWindow(undefined, {
-      navigate,
-      onBrowserBlocked: () => {
-        setShowNotice(true);
-      },
-      onBrowserFallback: () => {
-        navigate("/admin/devices", {
-          state: { fromTpvAttempt: true },
-        });
-      },
-    });
-  };
-
-  return (
-    <>
-      <button type="button" onClick={handleClick} className={styles.quickLink}>
-        🖥️ Abrir TPV
-      </button>
-      {showNotice && (
-        <div className={styles.tpvNotice} role="status">
-          {t("quickLink.tpvDesktopRequiredRedirectNotice")}
-        </div>
-      )}
-    </>
   );
 }
 
@@ -292,5 +304,25 @@ function AdminSidebarLink({
     >
       {children}
     </NavLink>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  ModuleStatusDot — Subtle indicator for module-linked config items  */
+/* ------------------------------------------------------------------ */
+
+const STATUS_DOT_CLASS: Record<ModuleStatus, string> = {
+  active: styles.statusDotActive,
+  needs_setup: styles.statusDotNeedsSetup,
+  inactive: styles.statusDotInactive,
+  locked: styles.statusDotLocked,
+};
+
+function ModuleStatusDot({ status }: { status: ModuleStatus }) {
+  return (
+    <span
+      className={`${styles.statusDot} ${STATUS_DOT_CLASS[status]}`}
+      aria-hidden="true"
+    />
   );
 }

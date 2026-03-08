@@ -36,11 +36,30 @@ export const impresorasStore = {
   addPrinter(name: string, type: string, connection: string): Printer {
     const list = loadPrinters();
     const now = new Date().toISOString();
-    const id = `prn-${Date.now()}`;
-    const printer: Printer = { id, name, type, connection, isActive: true, createdAt: now, updatedAt: now };
+    const id = `prn-${crypto.randomUUID()}`;
+    const printer: Printer = {
+      id,
+      name,
+      type,
+      connection,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    };
     list.push(printer);
     localStorage.setItem(PRINTERS_KEY, JSON.stringify(list));
     return printer;
+  },
+  updatePrinter(
+    id: string,
+    patch: Partial<
+      Pick<Printer, "name" | "type" | "connection" | "ip" | "port" | "isActive">
+    >,
+  ): void {
+    const list = loadPrinters().map((p) =>
+      p.id === id ? { ...p, ...patch, updatedAt: new Date().toISOString() } : p,
+    );
+    localStorage.setItem(PRINTERS_KEY, JSON.stringify(list));
   },
   deletePrinter(id: string): void {
     const list = loadPrinters().filter((p) => p.id !== id);
@@ -54,8 +73,15 @@ export const impresorasStore = {
   addRoute(name: string, printerId: string, trigger: string): PrintRoute {
     const list = loadRoutes();
     const now = new Date().toISOString();
-    const id = `route-${Date.now()}`;
-    const route: PrintRoute = { id, name, printerId, trigger, createdAt: now, updatedAt: now };
+    const id = `route-${crypto.randomUUID()}`;
+    const route: PrintRoute = {
+      id,
+      name,
+      printerId,
+      trigger,
+      createdAt: now,
+      updatedAt: now,
+    };
     list.push(route);
     localStorage.setItem(ROUTES_KEY, JSON.stringify(list));
     return route;

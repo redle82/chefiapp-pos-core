@@ -87,6 +87,7 @@ const statusColors: Record<string, { color: string; bg: string }> = {
 };
 
 export function IntegrationsDeliveryPage() {
+  const { t } = useTranslation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [platformStates, setPlatformStates] = useState<Record<string, boolean>>(
     {
@@ -448,10 +449,10 @@ export function IntegrationsDeliveryPage() {
                               }}
                             >
                               {gloriaSaveStatus === "saving"
-                                ? "A guardar…"
+                                ? t("common:saving")
                                 : gloriaSaveStatus === "saved"
                                 ? "✓ Guardado"
-                                : "Guardar configuração"}
+                                : t("common:saveConfig")}
                             </button>
                           </div>
                         )}

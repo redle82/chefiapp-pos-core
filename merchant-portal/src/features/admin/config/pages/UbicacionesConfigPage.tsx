@@ -5,12 +5,12 @@
  */
 
 import { useLocation, useNavigate } from "react-router-dom";
-import { LocationsPage } from "../../locations/pages/LocationsPage";
-import { LocationSection } from "../../../../pages/Onboarding/sections/LocationSection";
 import { PublicPresenceFields } from "../../../../pages/Config/PublicPresenceFields";
 import { PublicQRSection } from "../../../../pages/Config/PublicQRSection";
+import { LocationSection } from "../../../../pages/Onboarding/sections/LocationSection";
+import { LocationsPage } from "../../locations/pages/LocationsPage";
 
-const BASE = "/admin/config/ubicaciones";
+const BASE = "/admin/config/locations";
 
 export function UbicacionesConfigPage() {
   const location = useLocation();
@@ -44,11 +44,15 @@ export function UbicacionesConfigPage() {
           style={{
             padding: "12px 16px",
             border: "none",
-            borderBottom: isAddressTab ? "2px solid var(--color-primary)" : "2px solid transparent",
+            borderBottom: isAddressTab
+              ? "2px solid var(--color-primary)"
+              : "2px solid transparent",
             backgroundColor: "transparent",
             cursor: "pointer",
             fontWeight: isAddressTab ? 600 : 400,
-            color: isAddressTab ? "var(--color-primary)" : "var(--text-secondary)",
+            color: isAddressTab
+              ? "var(--color-primary)"
+              : "var(--text-secondary)",
           }}
         >
           Endereço
@@ -59,11 +63,15 @@ export function UbicacionesConfigPage() {
           style={{
             padding: "12px 16px",
             border: "none",
-            borderBottom: isTablesTab ? "2px solid var(--color-primary)" : "2px solid transparent",
+            borderBottom: isTablesTab
+              ? "2px solid var(--color-primary)"
+              : "2px solid transparent",
             backgroundColor: "transparent",
             cursor: "pointer",
             fontWeight: isTablesTab ? 600 : 400,
-            color: isTablesTab ? "var(--color-primary)" : "var(--text-secondary)",
+            color: isTablesTab
+              ? "var(--color-primary)"
+              : "var(--text-secondary)",
           }}
         >
           Mesas & Zonas

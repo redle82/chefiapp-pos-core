@@ -1,19 +1,23 @@
+import { currencyService } from "@/core/currency/CurrencyService";
+import { getFormatLocale } from "@/core/i18n/regionLocaleConfig";
 import { useNavigate } from "react-router-dom";
 import type { Customer } from "../types";
 
-const CURRENCY_FORMAT = new Intl.NumberFormat("pt-PT", {
-  style: "currency",
-  currency: "EUR",
-  minimumFractionDigits: 2,
-});
+const formatCurrency = (n: number) =>
+  new Intl.NumberFormat(getFormatLocale(), {
+    style: "currency",
+    currency: currencyService.getDefaultCurrency(),
+    minimumFractionDigits: 2,
+  }).format(n);
 
-const DATE_FORMAT = new Intl.DateTimeFormat("pt-PT", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-});
+const formatDate = (d: Date) =>
+  new Intl.DateTimeFormat(getFormatLocale(), {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -41,17 +45,19 @@ export function CustomerRow({ customer }: CustomerRowProps) {
   const initials = getInitials(customer.name);
   const bgColor = avatarColor(customer.id);
   const lastOrderFormatted = customer.lastOrderAt
-    ? DATE_FORMAT.format(new Date(customer.lastOrderAt))
+    ? formatDate(new Date(customer.lastOrderAt))
     : "—";
-  const totalSpentFormatted = CURRENCY_FORMAT.format(customer.totalSpent);
-  const averageSpentFormatted = CURRENCY_FORMAT.format(customer.averageSpent);
+  const totalSpentFormatted = formatCurrency(customer.totalSpent);
+  const averageSpentFormatted = formatCurrency(customer.averageSpent);
 
   return (
     <tr
       role="button"
       tabIndex={0}
       onClick={() => navigate(`/admin/customers/${customer.id}`)}
-      onKeyDown={(e) => e.key === "Enter" && navigate(`/admin/customers/${customer.id}`)}
+      onKeyDown={(e) =>
+        e.key === "Enter" && navigate(`/admin/customers/${customer.id}`)
+      }
       className="cursor-pointer border-b border-gray-100 transition-colors hover:bg-gray-50"
     >
       <td className="py-3 pl-4 pr-2">
@@ -73,8 +79,12 @@ export function CustomerRow({ customer }: CustomerRowProps) {
       <td className="py-3 px-2 text-sm text-gray-900">
         {totalSpentFormatted} ({customer.tabsCount} Cuentas)
       </td>
-      <td className="py-3 px-2 text-sm text-gray-900">{averageSpentFormatted}</td>
-      <td className="py-3 pr-4 pl-2 text-sm text-gray-600">{customer.locationName}</td>
+      <td className="py-3 px-2 text-sm text-gray-900">
+        {averageSpentFormatted}
+      </td>
+      <td className="py-3 pr-4 pl-2 text-sm text-gray-600">
+        {customer.locationName}
+      </td>
     </tr>
   );
 }
