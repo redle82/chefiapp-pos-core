@@ -71,7 +71,7 @@
 - Versão direta do OrderReader implementada para evitar problemas com cliente Supabase
 
 **Teste Manual Necessário:**
-- Abrir `http://localhost:5175/kds-minimal`
+- Abrir `http://localhost:5173/kds-minimal`
 - Verificar que pedido aparece na lista
 - Verificar que mostra todos os campos corretamente
 - Verificar que não há mais erros 401 no console
@@ -96,7 +96,7 @@
 **Teste:** `scripts/test-fase3-origem-pedido.sh` — ✅ APROVADO
 
 **Teste Manual Necessário:**
-- Abrir `http://localhost:5175/kds-minimal`
+- Abrir `http://localhost:5173/kds-minimal`
 - Verificar que aparecem 3 pedidos com badges de origem diferentes
 - Verificar que cada badge mostra cor e ícone corretos
 
@@ -121,7 +121,7 @@
 **Teste:** `scripts/test-fase4-timer-pedido.sh` — ✅ APROVADO
 
 **Teste Manual Necessário:**
-- Abrir `http://localhost:5175/kds-minimal`
+- Abrir `http://localhost:5173/kds-minimal`
 - Verificar que pedido mostra "X min" ao lado do número
 - Aguardar 1 minuto e recarregar página
 - Verificar que timer atualizou para "X+1 min"
@@ -150,7 +150,7 @@
 **Teste:** `scripts/test-fase5-estados-visuais.sh` — ✅ APROVADO
 
 **Teste Manual Necessário:**
-- Abrir `http://localhost:5175/kds-minimal`
+- Abrir `http://localhost:5173/kds-minimal`
 - Verificar que aparecem 3 pedidos com bordas coloridas diferentes
 - Verificar que timer também muda de cor conforme estado
 
@@ -181,7 +181,7 @@
 **Teste:** `scripts/test-fase6-acao-unica.sh` — ✅ APROVADO
 
 **Teste Manual Necessário:**
-- Abrir `http://localhost:5175/kds-minimal`
+- Abrir `http://localhost:5173/kds-minimal`
 - Verificar que pedido OPEN mostra botão "Iniciar Preparo"
 - Clicar no botão e verificar que:
   - Botão mostra "Processando..." durante atualização
@@ -218,7 +218,7 @@
 **Teste:** `scripts/test-fase7-pagina-web-publica.sh` — ✅ APROVADO
 
 **Teste Manual Necessário:**
-- Abrir `http://localhost:5175/public/restaurante-piloto`
+- Abrir `http://localhost:5173/public/restaurante-piloto`
 - Verificar que:
   - Nome do restaurante aparece no topo
   - Descrição do restaurante aparece (se existir)
@@ -262,7 +262,7 @@
 **Teste:** `scripts/test-fase8-criacao-pedido-web.sh` — ✅ APROVADO
 
 **Teste Manual Necessário:**
-- Abrir `http://localhost:5175/public/restaurante-piloto`
+- Abrir `http://localhost:5173/public/restaurante-piloto`
 - Adicionar produtos ao carrinho (botão "+ Adicionar")
 - Verificar que:
   - Carrinho aparece no topo direito
@@ -272,7 +272,7 @@
 - Verificar que:
   - Mensagem de sucesso aparece
   - Carrinho é limpo
-  - Pedido aparece no KDS (`http://localhost:5175/kds-minimal`)
+  - Pedido aparece no KDS (`http://localhost:5173/kds-minimal`)
   - Origem do pedido é `WEB_PUBLIC` no KDS
 
 ---
@@ -310,7 +310,7 @@
 - ✅ Teste automatizado: `test-fase9-qr-mesa.sh` — ✅ APROVADO
 
 **Teste Manual Necessário:**
-- Abrir `http://localhost:5175/public/restaurante-piloto/mesa/1`
+- Abrir `http://localhost:5173/public/restaurante-piloto/mesa/1`
 - Verificar que:
   - Página mostra "Mesa 1"
   - Menu completo aparece
@@ -319,12 +319,12 @@
 - Clicar em "Finalizar Pedido"
 - Verificar que:
   - Mensagem de sucesso aparece
-  - Pedido aparece no KDS (`http://localhost:5175/kds-minimal`)
+  - Pedido aparece no KDS (`http://localhost:5173/kds-minimal`)
   - Origem do pedido é "QR MESA" (badge rosa) no KDS
   - Pedido está associado à mesa 1
 
 **Geração de QR Code:**
-- URL: `http://localhost:5175/public/{slug}/mesa/{number}`
+- URL: `http://localhost:5173/public/{slug}/mesa/{number}`
 - Use qualquer gerador de QR code online com esta URL
 
 ---

@@ -106,7 +106,7 @@ Transformar ChefIApp de sistema técnico para **produto vendável comercialmente
 
 ### Imediato (Esta Semana)
 
-1. **Testar Landing Page** — `http://localhost:5175/`
+1. **Testar Landing Page** — `http://localhost:5173/`
 2. **Testar Dashboard Modo Venda** — Validar badges e fluxo
 3. **Completar FASE 1 — Billing** (2-3 horas) — Desbloquear vendas
 

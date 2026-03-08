@@ -10,7 +10,7 @@
 ## ✅ RESULTADO FINAL
 
 ### Status do Servidor
-- ✅ **Servidor Vite:** Rodando em `http://localhost:5175`
+- ✅ **Servidor Vite:** Rodando em `http://localhost:5173`
 - ✅ **Status HTTP:** 200 OK
 - ✅ **Tempo de resposta:** Normal
 

@@ -111,7 +111,7 @@ Todas as rotas principais do ChefIApp estão **protegidas** e requerem onboardin
 localStorage.removeItem('chefiapp_onboarding_state')
 
 # Acessar rota protegida
-http://localhost:5175/owner/vision
+http://localhost:5173/owner/vision
 
 # Resultado esperado: Redireciona para /onboarding
 ```
@@ -122,7 +122,7 @@ http://localhost:5175/owner/vision
 # Clicar "Publicar Restaurante"
 
 # Acessar rota protegida
-http://localhost:5175/owner/vision
+http://localhost:5173/owner/vision
 
 # Resultado esperado: Acesso permitido
 ```

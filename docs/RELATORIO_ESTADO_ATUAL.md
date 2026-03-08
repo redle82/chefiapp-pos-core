@@ -379,9 +379,9 @@ O ChefIApp Core está **oficialmente validado, fechado e pronto para uso operaci
 ```
 
 ### URLs Importantes
-- KDS: `http://localhost:5175/kds-minimal`
-- AppStaff: `http://localhost:5175/garcom`
-- TPV: `http://localhost:5175/tpv`
+- KDS: `http://localhost:5173/kds-minimal`
+- AppStaff: `http://localhost:5173/garcom`
+- TPV: `http://localhost:5173/tpv`
 - PostgREST: `http://localhost:3001`
 
 ### Documentação
