@@ -38,7 +38,7 @@ ORDER BY created_at DESC;
 1. **Abrir KDS:**
 
    ```
-   http://localhost:5175/app/kds
+   http://localhost:5173/app/kds
    ```
 
 2. **Verificar Badges de Origem:**
