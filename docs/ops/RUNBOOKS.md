@@ -66,6 +66,21 @@ Este documento não substitui os runbooks detalhados; agrupa-os por categoria e 
 
 ---
 
+## 6.1. Billing e webhooks
+
+| Documento                                                                 | Conteúdo                                                                                          |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **[BILLING_VALIDATION_RUNBOOK.md](./BILLING_VALIDATION_RUNBOOK.md)**                   | Roteiro operacional ultra-detalhado: pré-requisitos, fluxos manuais (3 moedas), freeze checklist, simulação de falha (currency/price/stale/no_tenant). |
+| **[E2E_BILLING_THREE_CURRENCIES_RUNBOOK.md](./E2E_BILLING_THREE_CURRENCIES_RUNBOOK.md)** | E2E checkout nas 3 moedas (EUR/USD/BRL), webhook + estado, cross-currency guard.                  |
+| **[BILLING_CANCEL_RESUBSCRIBE_CHECKLIST.md](./BILLING_CANCEL_RESUBSCRIBE_CHECKLIST.md)** | Cancelar assinatura e re-subscribe; verificação no DB.                                            |
+| **[BILLING_FLOWS_MANUAL_CHECKLIST.md](./BILLING_FLOWS_MANUAL_CHECKLIST.md)**             | Fluxos reais: criar restaurantes BR/US/EU, upgrade, downgrade, falha, trial → pago.                |
+| **[BILLING_WEBHOOK_EDGE_CASES.md](./BILLING_WEBHOOK_EDGE_CASES.md)**                     | Edge cases: idempotência, evento fora de ordem, assinatura inválida.                             |
+| **[BILLING_FREEZE_PHASE_CHECKLIST.md](./BILLING_FREEZE_PHASE_CHECKLIST.md)**             | Checklist final para fechar a fase "Internacionalização & Billing Freeze".                        |
+
+**Uso:** Validar checkout e webhooks; testar fluxos de billing; em incidentes de billing, consultar `billing_incidents` (quando a migração 20260327 estiver aplicada) e os runbooks acima.
+
+---
+
 ## 7. Backup, restauro e disaster recovery
 
 | Documento                                          | Conteúdo                                                                                  |

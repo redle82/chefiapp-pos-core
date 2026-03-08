@@ -89,6 +89,10 @@ setSentryUser(userId, tenantId);
 addBreadcrumb('User clicked checkout', 'ui.click', { cartTotal });
 ```
 
+**DoD B4 — Tags Sentry (filtros):** O merchant-portal envia as tags `app` (merchant-portal), `restaurant_id` (via configureSentryScope ao resolver identidade), `route` (pathname) e `connectivity` (online/offline/degraded). Ver `SentryTagsSync` em App.tsx e `configureSentryScope` em SentryTransport.
+
+**Painel diagnóstico (Admin → Observabilidade):** Connectivity, filas (order queue + print queue), últimos erros da sessão. Ver `features/admin/observability/pages/ObservabilityPage.tsx`.
+
 ---
 
 ### 3. Customer Portal (React / Vite)
