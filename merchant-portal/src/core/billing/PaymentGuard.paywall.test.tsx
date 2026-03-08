@@ -3,10 +3,10 @@
  * FASE 2 pós-vendável: garantir que "Período de trial terminado" e "Escolher plano" aparecem.
  */
 
-import "../../i18n";
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import "../../i18n";
 import { PaymentGuard } from "./PaymentGuard";
 
 const mockGetBillingStatusWithTrial = vi.fn();
@@ -41,10 +41,14 @@ describe("PaymentGuard — paywall trial expirado", () => {
       </MemoryRouter>,
     );
 
-    const title = await screen.findByText("Período de trial terminado");
+    const title = await screen.findByText(
+      /Período de trial terminado|Trial period ended/i,
+    );
     expect(title).toBeTruthy();
 
-    const action = screen.getByRole("link", { name: /escolher plano/i });
+    const action = screen.getByRole("link", {
+      name: /escolher plano|choose plan/i,
+    });
     expect(action).toBeTruthy();
     expect(action.getAttribute("href")).toContain("/app/billing");
 

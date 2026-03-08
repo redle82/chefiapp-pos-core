@@ -8,9 +8,10 @@
  * que chamam Stripe e devolvem a URL. A UI só redirecciona.
  */
 
+import { Logger } from "../logger";
 import {
-  createSaasPortalSession,
   createCheckoutSession,
+  createSaasPortalSession,
 } from "./coreBillingApi";
 
 export interface BillingSessionResult {
@@ -21,10 +22,11 @@ export interface BillingSessionResult {
 export class BillingBroker {
   /**
    * Inicia sessão Stripe Checkout para assinatura.
-   * Chama Core RPC create_checkout_session; Core retorna URL.
+   * Chama gateway/Core com restaurant_id para metadata na sessão Stripe (webhook sync).
    */
   static async startSubscription(
     priceId: string,
+    restaurantId: string,
   ): Promise<BillingSessionResult> {
     const successUrl = `${window.location.origin}/billing/success`;
     const cancelUrl = `${window.location.origin}/app/billing?billing=cancel`;
@@ -33,12 +35,17 @@ export class BillingBroker {
       priceId,
       successUrl,
       cancelUrl,
+      restaurantId,
     );
 
     if (error) {
-      console.warn("[BillingBroker] Core checkout error:", error);
+      Logger.warn("[BillingBroker] Core checkout error:", {
+        error: String(error),
+      });
       throw new Error(
-        typeof error === "string" ? error : "Não foi possível iniciar o checkout. Tente mais tarde.",
+        typeof error === "string"
+          ? error
+          : "Não foi possível iniciar o checkout. Tente mais tarde.",
       );
     }
 
@@ -55,7 +62,7 @@ export class BillingBroker {
     const { url, error } = await createSaasPortalSession(returnUrl);
 
     if (error) {
-      console.error("[BillingBroker] Core portal error:", error);
+      Logger.error("[BillingBroker] Core portal error:", error);
       throw new Error(error);
     }
 

@@ -1,10 +1,5 @@
 /**
  * Auth hook — Core (Docker) only. Keycloak + mock (trial/pilot). No Supabase.
- *
- * @deprecated Use `useAuth()` from `core/auth/AuthProvider` instead.
- * This hook duplicates AuthProvider logic with its own useEffect cycle.
- * It will be removed in the boot-pipeline-migration PR (PR 2).
- * See: merchant-portal/src/core/boot/useBootPipeline.ts
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -25,9 +20,6 @@ export interface CoreAuthState {
 
 /**
  * Hook unificado para autenticação. Backend único: Docker Core (Keycloak + mock trial/pilot).
- *
- * @deprecated Use `useAuth()` from `core/auth/AuthProvider` instead.
- * Will be removed in boot-pipeline-migration (PR 2).
  */
 export function useCoreAuth(): CoreAuthState {
   const [session, setSession] = useState<CoreSession | null>(null);

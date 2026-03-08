@@ -26,6 +26,7 @@ interface PlanContextValue {
 const PlanContext = createContext<PlanContextValue | undefined>(undefined);
 
 // Auth only — temporary until Core Auth
+import { Logger } from "../logger";
 import { supabase } from "../supabase";
 
 export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -70,7 +71,7 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({
         setPlan(strictPlan);
       }
     } catch (error) {
-      console.error("[PlanContext] Failed to fetch plan:", error);
+      Logger.error("[PlanContext] Failed to fetch plan:", error);
     } finally {
       setLoading(false);
     }
@@ -83,7 +84,7 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({
     CapabilityEngine.requiredPlanFor(capability);
 
   const upgradeTo = async (targetPlan: PlanType) => {
-    console.log(`[PlanContext] Upgrading to ${targetPlan}...`);
+    Logger.info(`[PlanContext] Upgrading to ${targetPlan}...`);
 
     // Optimistic UI Update
     const oldPlan = plan;
@@ -109,7 +110,7 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({
         // Does matcher support owner_id?
         // Let's check DbWriteGate.ts.
         // Assuming it supports typical Supabase match objects.
-        { tenantId: "unknown" }
+        { tenantId: "unknown" },
         // We need tenantId for logging. We don't have it easily here without fetching.
         // PlanContext fetches via owner_id.
         // Let's fetch it first or use 'unknown'.
@@ -117,7 +118,7 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (error) throw error;
     } catch (err) {
-      console.error("Upgrade failed", err);
+      Logger.error("Upgrade failed", err);
       setPlan(oldPlan); // Rollback
       alert("Falha ao atualizar plano. Tente novament.");
     }

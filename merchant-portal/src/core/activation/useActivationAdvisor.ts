@@ -14,6 +14,7 @@
 
 import { useMemo } from "react";
 import { useSystemState } from "../kernel/BootstrapKernel";
+import { Logger } from "../logger";
 import { getTabIsolated } from "../storage/TabIsolatedStorage";
 import {
   ActivationAdvisor,
@@ -91,7 +92,9 @@ export function useActivationAdvisor(): UseActivationAdvisorResult {
 
       return {};
     } catch (e) {
-      console.warn("[useActivationAdvisor] Failed to read answers:", e);
+      Logger.warn("[useActivationAdvisor] Failed to read answers:", {
+        error: String(e),
+      });
       return {};
     }
   }, [systemState?.blueprint]);
@@ -147,7 +150,7 @@ export function useActivationAdvisor(): UseActivationAdvisorResult {
         error: null,
       };
     } catch (e) {
-      console.error(
+      Logger.error(
         "[useActivationAdvisor] Error computing recommendations:",
         e,
       );
@@ -236,7 +239,7 @@ function extractAnswersFromBlueprint(
         blueprint.systemProfiles.workflowProfile.enableTableService !== false;
     }
   } catch (e) {
-    console.warn("[extractAnswersFromBlueprint] Error:", e);
+    Logger.warn("[extractAnswersFromBlueprint] Error:", { error: String(e) });
   }
 
   return answers;

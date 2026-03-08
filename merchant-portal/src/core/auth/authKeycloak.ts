@@ -8,6 +8,8 @@
  * 4. Sessão fica disponível no hook useCoreAuth
  */
 
+import { Logger } from "../logger";
+
 const DEFAULT_KEYCLOAK_BASE = "http://localhost:8080";
 const DEFAULT_REALM = "chefiapp";
 const DEFAULT_CLIENT_ID = "merchant-portal";
@@ -86,7 +88,7 @@ async function exchangeCodeForToken(code: string): Promise<KeycloakAuthState> {
   });
 
   if (!res.ok) {
-    console.error("[Keycloak] Token exchange failed:", res.status);
+    Logger.error("[Keycloak] Token exchange failed:", { status: res.status });
     return { session: null, user: null };
   }
 

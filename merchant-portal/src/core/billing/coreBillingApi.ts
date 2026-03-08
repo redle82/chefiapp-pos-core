@@ -38,6 +38,76 @@ function requireCore(): void {
   }
 }
 
+/** Country (ISO 3166-1 alpha-2) → billing currency. Never derive from locale. */
+const COUNTRY_CURRENCY: Record<string, string> = {
+  BR: "BRL",
+  US: "USD",
+  GB: "GBP",
+  MX: "MXN",
+  PT: "EUR",
+  ES: "EUR",
+  FR: "EUR",
+  DE: "EUR",
+  IT: "EUR",
+  IE: "EUR",
+  NL: "EUR",
+  BE: "EUR",
+  AT: "EUR",
+  AD: "EUR",
+  PL: "EUR",
+  RO: "EUR",
+  GR: "EUR",
+  CZ: "EUR",
+  HU: "EUR",
+  SE: "EUR",
+  FI: "EUR",
+  DK: "EUR",
+  NO: "EUR",
+  CA: "CAD",
+  AU: "AUD",
+};
+
+const BILLING_CURRENCIES = new Set([
+  "EUR",
+  "USD",
+  "GBP",
+  "BRL",
+  "MXN",
+  "CAD",
+  "AUD",
+]);
+
+/**
+ * Get billing currency for a restaurant. Source: restaurant.currency or restaurant.country.
+ * Never derive from locale. Used for multi-currency Stripe checkout.
+ */
+export async function getRestaurantBillingCurrency(
+  restaurantId: string,
+): Promise<string> {
+  requireCore();
+  const url = `${REST}/gm_restaurants?id=eq.${encodeURIComponent(
+    restaurantId,
+  )}&select=country,currency&limit=1`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: coreHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) return "EUR";
+  try {
+    const data = await res.json();
+    const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
+    if (!row) return "EUR";
+    const currency = (row.currency as string)?.toUpperCase?.();
+    if (currency && BILLING_CURRENCIES.has(currency)) return currency;
+    const country = (row.country as string)?.toUpperCase?.();
+    if (country && COUNTRY_CURRENCY[country]) return COUNTRY_CURRENCY[country];
+  } catch {
+    // ignore
+  }
+  return "EUR";
+}
+
 // --- SaaS billing status (trial | active | past_due | canceled) ---
 
 export type BillingStatus = "trial" | "active" | "past_due" | "canceled";
@@ -193,7 +263,7 @@ export interface BillingConfigRow {
   id?: string;
   restaurant_id: string;
   provider: "stripe" | "sumup" | "pix" | "custom";
-  currency: "EUR" | "USD" | "BRL";
+  currency: "EUR" | "USD" | "GBP" | "BRL" | "MXN" | "CAD" | "AUD";
   enabled: boolean;
   credentials_ref?: string | null;
   updated_at?: string;
@@ -310,6 +380,60 @@ export interface BillingPlanRow {
 }
 
 /**
+ * Row from billing_plan_prices — Stripe price per plan and currency.
+ * Currency comes from restaurant.country or tenant billing_country, never from locale.
+ */
+export interface BillingPlanPriceRow {
+  plan_id: string;
+  currency: string;
+  stripe_price_id: string;
+  price_cents: number;
+  interval: string;
+}
+
+/**
+ * GET /rest/v1/billing_plan_prices — Fetch Stripe price for a plan and currency.
+ * Returns null if table or row does not exist. Used for multi-currency checkout.
+ */
+export async function getBillingPlanPrice(
+  planId: string,
+  currency: string,
+): Promise<BillingPlanPriceRow | null> {
+  requireCore();
+  const url = `${REST}/billing_plan_prices?plan_id=eq.${encodeURIComponent(
+    planId,
+  )}&currency=eq.${encodeURIComponent(currency)}&limit=1`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: coreHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  try {
+    const data = await res.json();
+    const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
+    return row as BillingPlanPriceRow | null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolve Stripe price ID for checkout: billing_plan_prices (plan+currency) first,
+ * then plan.stripe_price_id, then plan tier (gateway resolves slug).
+ * Currency must come from restaurant/tenant, never from locale.
+ */
+export function resolveStripePriceId(
+  plan: BillingPlanRow,
+  currency: string,
+  planPriceRow: BillingPlanPriceRow | null,
+): string {
+  if (planPriceRow?.stripe_price_id) return planPriceRow.stripe_price_id;
+  if (plan.stripe_price_id) return plan.stripe_price_id;
+  return plan.tier;
+}
+
+/**
  * GET /rest/v1/billing_plans — Fetch available billing plans.
  * Returns empty array if table doesn't exist yet.
  */
@@ -404,11 +528,13 @@ export async function createSaasPortalSession(returnUrl: string): Promise<{
 /**
  * Criar sessão Stripe Checkout (assinatura).
  * Preferência: Integration Gateway (API_BASE) se configurado; senão Core RPC (Docker).
+ * restaurant_id é obrigatório para o gateway (metadata na sessão Stripe para o webhook resolver o tenant).
  */
 export async function createCheckoutSession(
   priceId: string,
   successUrl: string,
   cancelUrl: string,
+  restaurantId: string,
 ): Promise<{ url: string; sessionId?: string; error?: string }> {
   const apiBase = CONFIG.API_BASE?.replace(/\/+$/, "");
   if (apiBase && CONFIG.INTERNAL_API_TOKEN) {
@@ -416,9 +542,10 @@ export async function createCheckoutSession(
     const isLocalGateway =
       apiBase === "http://localhost:4320" ||
       apiBase === "http://127.0.0.1:4320";
-    const gatewayUrl = isLocalGateway
-      ? "/internal/billing/create-checkout-session"
-      : `${apiBase}/internal/billing/create-checkout-session`;
+    const path = CONFIG.isEdgeGateway
+      ? "billing-create-checkout-session"
+      : "internal/billing/create-checkout-session";
+    const gatewayUrl = isLocalGateway ? `/${path}` : `${apiBase}/${path}`;
     let res: Response;
     try {
       res = await fetch(gatewayUrl, {
@@ -431,6 +558,7 @@ export async function createCheckoutSession(
           price_id: priceId,
           success_url: successUrl,
           cancel_url: cancelUrl,
+          restaurant_id: restaurantId,
         }),
       });
     } catch (e) {
@@ -440,10 +568,10 @@ export async function createCheckoutSession(
       return {
         url: "",
         error: isNetworkError
-          ? "El servidor de checkout no está en ejecución. En otra terminal ejecuta: pnpm run server:integration-gateway (puerto 4320)."
+          ? "O servidor de checkout não está em execução. Noutro terminal: pnpm run dev:gateway (porta 4320)."
           : e instanceof Error
           ? e.message
-          : "Error de conexión con el servidor de checkout.",
+          : "Erro de ligação ao servidor de checkout.",
       };
     }
     const text = await res.text();
@@ -461,10 +589,10 @@ export async function createCheckoutSession(
     try {
       data = text ? JSON.parse(text) : {};
     } catch {
-      return { url: "", error: "Invalid JSON from gateway" };
+      return { url: "", error: "Resposta inválida do gateway." };
     }
     if (!data?.url) {
-      return { url: "", error: "Gateway did not return checkout URL" };
+      return { url: "", error: "O gateway não devolveu o URL de checkout." };
     }
     return { url: data.url, sessionId: data.session_id };
   }
@@ -478,6 +606,7 @@ export async function createCheckoutSession(
       price_id: priceId,
       success_url: successUrl,
       cancel_url: cancelUrl,
+      restaurant_id: restaurantId,
     }),
   });
   const text = await res.text();

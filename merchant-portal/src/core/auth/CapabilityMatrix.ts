@@ -15,7 +15,13 @@
  */
 
 import type { PlanTier } from "../../../../billing-core/types";
-import { hasFeature, type PlanFeature } from "../billing/featureGating";
+import {
+  hasFeatureGated,
+  type FeatureGatingBillingStatus,
+  type PlanFeature,
+} from "../billing/featureGating";
+
+export type { FeatureGatingBillingStatus };
 
 // Re-export canonical types for downstream convenience
 export type { PlanFeature, PlanTier };
@@ -165,14 +171,22 @@ export class CapabilityEngine {
   /**
    * Check if a commercial plan has a given capability.
    * Tries featureGating first (canonical); falls back to local matrix.
+   *
+   * @param billingStatus  Optional billing status — when 'past_due', blocks
+   *                       advanced_reports and api_webhooks even on pro/enterprise.
    */
-  static has(plan: PlanType, capability: Capability): boolean {
+  static has(
+    plan: PlanType,
+    capability: Capability,
+    billingStatus?: FeatureGatingBillingStatus | null,
+  ): boolean {
     const feature = CAPABILITY_TO_FEATURE[capability];
     if (feature) {
       const tier = PLAN_TYPE_TO_TIER[plan];
-      return hasFeature(tier, feature);
+      return hasFeatureGated(tier, feature, billingStatus);
     }
     // Fallback to local matrix for capabilities without PlanFeature mapping
+    // (billing status has no effect here — these are always plan-gated only)
     return this.getCapabilities(plan).includes(capability);
   }
 

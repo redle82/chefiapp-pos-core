@@ -5,7 +5,8 @@ import {
   GlobalBlockedView,
   GlobalLoadingView,
 } from "../../ui/design-system/components";
-import { readTenantIdWithLegacyFallback } from "../tenant/TenantResolver";
+import { Logger } from "../logger";
+import { getTabIsolated } from "../storage/TabIsolatedStorage";
 import {
   getBillingStatusWithTrial,
   type BillingStatus,
@@ -23,7 +24,7 @@ export const PaymentGuard: React.FC<PaymentGuardProps> = ({ children }) => {
 
   const checkBilling = async () => {
     try {
-      const rId = readTenantIdWithLegacyFallback();
+      const rId = getTabIsolated("chefiapp_restaurant_id");
       if (!rId) {
         setStatus("active");
         setTrialExpired(false);
@@ -33,7 +34,7 @@ export const PaymentGuard: React.FC<PaymentGuardProps> = ({ children }) => {
       const withTrial = await getBillingStatusWithTrial(rId);
 
       if (withTrial == null) {
-        console.warn(
+        Logger.warn(
           "[PaymentGuard] Failed to check status, defaulting to safe (trial).",
         );
         setStatus("trial");
@@ -44,7 +45,7 @@ export const PaymentGuard: React.FC<PaymentGuardProps> = ({ children }) => {
       setStatus(withTrial.trial_expired ? "past_due" : withTrial.status);
       setTrialExpired(withTrial.trial_expired);
     } catch (err) {
-      console.error("[PaymentGuard] Critical Check Error:", err);
+      Logger.error("[PaymentGuard] Critical Check Error:", err);
       setStatus("active");
       setTrialExpired(false);
     }

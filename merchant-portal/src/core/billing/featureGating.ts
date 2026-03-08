@@ -18,6 +18,14 @@
 
 import type { PlanTier } from "../../../../billing-core/types";
 
+/** CoreBillingStatus subset — only values relevant for feature gating. */
+export type FeatureGatingBillingStatus =
+  | "trial"
+  | "active"
+  | "past_due"
+  | "suspended"
+  | "canceled";
+
 // ============================================================================
 // FEATURE CATALOG
 // ============================================================================
@@ -166,6 +174,64 @@ export function hasFeature(
   const features = TIER_FEATURES[tier];
   if (!features) return false;
   return features.includes(feature);
+}
+
+// ============================================================================
+// BILLING-STATUS FEATURE GATES
+// ============================================================================
+
+/**
+ * Features that are downgraded/blocked when billing status is PAST_DUE.
+ *
+ * Rationale: analytics and API access are value-added features that require an
+ * up-to-date subscription. Core POS operations (tpv, kds, appstaff) remain
+ * available to avoid disrupting service.
+ */
+export const PAST_DUE_BLOCKED_FEATURES: readonly PlanFeature[] = [
+  "advanced_reports",
+  "api_webhooks",
+] as const;
+
+/**
+ * Billing statuses under which PAST_DUE_BLOCKED_FEATURES are restricted.
+ * - `suspended` / `canceled` block everything (handled separately via isBillingBlocked)
+ * - `past_due` applies the soft-block defined above
+ */
+const BILLING_SOFT_BLOCKED_STATUSES: readonly FeatureGatingBillingStatus[] = [
+  "past_due",
+];
+
+/**
+ * Context-aware feature check that combines plan tier + billing status.
+ *
+ * Use this as the primary feature check wherever billing context is available.
+ *
+ * @param tier            Plan tier from subscription (pro, enterprise, etc.)
+ * @param feature         Feature to check access for
+ * @param billingStatus   Current billing status of the tenant (optional, defaults to 'active')
+ *
+ * @example
+ *   hasFeatureGated(tier, 'advanced_reports', billingStatus) → false when past_due
+ *   hasFeatureGated(tier, 'tpv',              billingStatus) → true  when past_due (not blocked)
+ */
+export function hasFeatureGated(
+  tier: PlanTier | null | undefined,
+  feature: PlanFeature,
+  billingStatus?: FeatureGatingBillingStatus | null,
+): boolean {
+  // Tier check first — fail-closed for unknown tiers
+  if (!hasFeature(tier, feature)) return false;
+
+  // Soft billing restriction for PAST_DUE
+  if (
+    billingStatus &&
+    BILLING_SOFT_BLOCKED_STATUSES.includes(billingStatus) &&
+    (PAST_DUE_BLOCKED_FEATURES as readonly PlanFeature[]).includes(feature)
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 /**

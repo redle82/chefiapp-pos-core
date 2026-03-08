@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import { isDebugMode } from "../debugMode";
 // Auth only — temporary until Core Auth
+import { Logger } from "../logger";
 import { supabase } from "../supabase";
 import { useTenant } from "../tenant/TenantContext";
 
@@ -67,10 +68,9 @@ export const RequireActivation = ({ children }: { children: JSX.Element }) => {
               subscriptionError.code !== "PGRST205" &&
               subscriptionError.code !== "404"
             ) {
-              console.warn(
-                "[RequireActivation] Error checking subscription:",
-                subscriptionError
-              );
+              Logger.warn("[RequireActivation] Error checking subscription:", {
+                error: subscriptionError,
+              });
             }
             subscriptionStatus = null;
           } else {
@@ -99,8 +99,8 @@ export const RequireActivation = ({ children }: { children: JSX.Element }) => {
         subscriptionStatus === "CANCELLED";
 
       if (isBlockedBySubscription) {
-        console.log(
-          "[RequireActivation] 🛑 Access Denied: Subscription is SUSPENDED or CANCELLED"
+        Logger.warn(
+          "[RequireActivation] 🛑 Access Denied: Subscription is SUSPENDED or CANCELLED",
         );
         navigate("/app/billing", {
           replace: true,
@@ -111,8 +111,8 @@ export const RequireActivation = ({ children }: { children: JSX.Element }) => {
 
       if (isActiveInDB || hasValidSubscription) {
         // DB diz que está ativo OU subscription válida - sempre confiar no DB
-        console.log(
-          "[RequireActivation] ✅ DB confirms activation or valid subscription"
+        Logger.info(
+          "[RequireActivation] ✅ DB confirms activation or valid subscription",
         );
         const { setTabIsolated } = await import(
           "../storage/TabIsolatedStorage"
@@ -136,8 +136,8 @@ export const RequireActivation = ({ children }: { children: JSX.Element }) => {
 
       if (localOpMode && restaurant) {
         // Cache existe mas DB não confirma - DB vence (não confiar em cache)
-        console.warn(
-          "[RequireActivation] ⚠️ Cache exists but DB does not confirm activation. DB wins."
+        Logger.warn(
+          "[RequireActivation] ⚠️ Cache exists but DB does not confirm activation. DB wins.",
         );
         // Limpar cache inválido
         const { removeTabIsolated } = await import(
@@ -152,8 +152,8 @@ export const RequireActivation = ({ children }: { children: JSX.Element }) => {
       }
 
       // DB não confirma ativação - negar acesso
-      console.log(
-        "[RequireActivation] 🛑 Access Denied: Operation Mode undefined in DB. Redirecting to Ritual."
+      Logger.warn(
+        "[RequireActivation] 🛑 Access Denied: Operation Mode undefined in DB. Redirecting to Ritual.",
       );
       navigate("/app/activation", { replace: true });
     };
