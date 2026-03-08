@@ -70,6 +70,17 @@ describe("BrowserBlockGuard", () => {
     ).toBeTruthy();
     expect(screen.getByTestId("browser-block-guard")).toBeTruthy();
     expect(screen.queryByText("TPV content")).toBeNull();
+
+    const openDesktopApp = screen.getByRole("button", {
+      name: "Abrir aplicação TPV",
+    });
+    expect(openDesktopApp).toBeTruthy();
+
+    const downloadInstaller = screen.getByRole("link", {
+      name: "Baixar instalador",
+    });
+    expect(downloadInstaller).toBeTruthy();
+    expect(downloadInstaller.getAttribute("href")).toContain("/admin/devices");
   });
 
   it("allows TPV in browser only when mode=trial query is explicit", () => {

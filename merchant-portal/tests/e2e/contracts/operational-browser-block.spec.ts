@@ -60,9 +60,7 @@ test.describe("🔸 Contract — Operational Browser Block", () => {
         );
         await expect(blockTitle).toBeVisible({ timeout: 10_000 });
 
-        const blockBadge = page.getByText(
-          /Regra de sistema|apenas aplicação instalada|PWA do Chrome/i,
-        );
+        const blockBadge = page.getByTestId("browser-block-rule-badge");
         await expect(blockBadge).toBeVisible({ timeout: 5_000 });
 
         const ctaLink = page

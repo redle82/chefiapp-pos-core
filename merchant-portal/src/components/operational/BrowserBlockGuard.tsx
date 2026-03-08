@@ -15,11 +15,11 @@
  */
 
 import * as Sentry from "@sentry/react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import {
-  isElectron,
   isDesktopApp,
+  isElectron,
   isInstalledApp,
   isStandalone,
   isTauri,
@@ -126,6 +126,53 @@ export function BrowserBlockGuard({
 
   const runtime = detectRuntime();
   const decision: OperationalGuardDecision = isAllowed ? "ALLOW" : "BLOCK";
+  const moduleId = moduleLabel.toLowerCase() === "kds" ? "kds" : "tpv";
+
+  const desktopDownloadHref = useMemo(() => {
+    const base = String(
+      import.meta.env.VITE_DESKTOP_DOWNLOAD_BASE ?? "",
+    ).trim();
+    const macFile = String(
+      import.meta.env.VITE_DESKTOP_DOWNLOAD_MAC_FILE ?? "ChefIApp-Desktop.dmg",
+    ).trim();
+    const windowsFile = String(
+      import.meta.env.VITE_DESKTOP_DOWNLOAD_WINDOWS_FILE ??
+        "ChefIApp-Desktop-Setup.exe",
+    ).trim();
+
+    if (!base) return "/admin/devices";
+
+    const osFile = /windows|win64|win32/i.test(navigator.userAgent)
+      ? windowsFile
+      : macFile;
+
+    if (!osFile) return "/admin/devices";
+
+    const cleanBase = base.endsWith("/") ? base.slice(0, -1) : base;
+    const cleanFile = osFile.startsWith("/") ? osFile.slice(1) : osFile;
+    return `${cleanBase}/${cleanFile}`;
+  }, []);
+
+  const handleOpenDesktopApp = () => {
+    if (!isDesktop) return;
+
+    const deepLink = `chefiapp://open?app=${moduleId}`;
+    let didBlur = false;
+
+    const onBlur = () => {
+      didBlur = true;
+    };
+
+    window.addEventListener("blur", onBlur);
+    window.location.assign(deepLink);
+
+    window.setTimeout(() => {
+      window.removeEventListener("blur", onBlur);
+      if (didBlur) {
+        window.close();
+      }
+    }, 2000);
+  };
 
   useEffect(() => {
     emitOperationalGuardTelemetry({
@@ -167,7 +214,9 @@ export function BrowserBlockGuard({
           : `O módulo ${moduleLabel} requer a aplicação móvel ChefIApp Staff. Instale a app no telemóvel e vincule-a através do painel de administração.`}
       </p>
 
-      <div className={styles.ruleBadge}>{ruleBadge}</div>
+      <div className={styles.ruleBadge} data-testid="browser-block-rule-badge">
+        {ruleBadge}
+      </div>
 
       <div className={styles.instructionsCard}>
         <h2 className={styles.instructionsTitle}>
@@ -198,6 +247,30 @@ export function BrowserBlockGuard({
           )}
         </ol>
       </div>
+
+      {isDesktop ? (
+        <div className={styles.actionsRow}>
+          <button
+            type="button"
+            className={styles.primaryButton}
+            onClick={handleOpenDesktopApp}
+          >
+            Abrir aplicação {moduleLabel}
+          </button>
+          <a
+            href={desktopDownloadHref}
+            className={styles.secondaryButton}
+            target={
+              desktopDownloadHref.startsWith("http") ? "_blank" : undefined
+            }
+            rel={
+              desktopDownloadHref.startsWith("http") ? "noreferrer" : undefined
+            }
+          >
+            Baixar instalador
+          </a>
+        </div>
+      ) : null}
 
       <a href="/admin/devices" className={styles.backLink}>
         ← Ir para Dispositivos
