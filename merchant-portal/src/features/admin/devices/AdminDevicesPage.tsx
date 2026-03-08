@@ -11,6 +11,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
 import styles from "./AdminDevicesPage.module.css";
@@ -28,6 +29,15 @@ import {
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
+
+export function resolveInitialTokenType(
+  moduleParam: string | null,
+): TerminalType {
+  const normalized = (moduleParam ?? "").trim().toLowerCase();
+  if (normalized === "tpv") return "TPV";
+  if (normalized === "kds") return "KDS";
+  return "APPSTAFF";
+}
 
 function timeSince(iso: string | null): string {
   if (!iso) return "—";
@@ -83,6 +93,7 @@ function getBaseUrl(): string {
 /* ------------------------------------------------------------------ */
 
 export function AdminDevicesPage() {
+  const location = useLocation();
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? null;
 
@@ -90,7 +101,9 @@ export function AdminDevicesPage() {
   const [loading, setLoading] = useState(true);
 
   const [activeToken, setActiveToken] = useState<InstallToken | null>(null);
-  const [tokenType, setTokenType] = useState<TerminalType>("APPSTAFF");
+  const [tokenType, setTokenType] = useState<TerminalType>(() =>
+    resolveInitialTokenType(new URLSearchParams(location.search).get("module")),
+  );
   const [tokenName, setTokenName] = useState("");
   const [generating, setGenerating] = useState(false);
   const [tokenError, setTokenError] = useState<string | null>(null);
@@ -137,6 +150,14 @@ export function AdminDevicesPage() {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [activeToken]);
+
+  // When /admin/devices?module=tpv|kds is provided, preselect matching device type.
+  useEffect(() => {
+    const next = resolveInitialTokenType(
+      new URLSearchParams(location.search).get("module"),
+    );
+    setTokenType(next);
+  }, [location.search]);
 
   // Generate token
   const handleGenerate = useCallback(async () => {

@@ -20,6 +20,7 @@ import { useDeviceInstall } from "../hooks/useDeviceInstall";
 
 /** Módulos operacionais que abrem em janela dedicada (não na mesma aba da config). */
 const OPERATIONAL_MODULE_IDS = ["tpv", "kds", "appstaff"] as const;
+const INSTALLABLE_DEVICE_MODULE_IDS = ["tpv", "kds"] as const;
 
 /** NAVIGATION_CONTRACT: path canónico da ação primária por módulo; default = /app/activation. Exportado para testes. */
 export function getModulePrimaryPath(id: string): string {
@@ -45,6 +46,10 @@ export function getModulePrimaryPath(id: string): string {
     default:
       return "/app/activation";
   }
+}
+
+export function buildDevicesInstallPath(moduleId: "tpv" | "kds"): string {
+  return `/admin/devices?module=${moduleId}`;
 }
 
 /* ---------- Install Dialog (inline para TPV/KDS) ---------- */
@@ -284,8 +289,7 @@ export function ModulesPage() {
   const modules = buildModulesFromRuntime(installed, active);
   const { hasLocalDevice, localDeviceModule } = useDeviceInstall();
 
-  const [installTarget, setInstallTarget] =
-    useState<InstalledDeviceModule | null>(null);
+  const [installTarget] = useState<InstalledDeviceModule | null>(null);
 
   /** UXG-001: informative notice shown when user clicks "Abrir" in browser context */
   const [blockNotice, setBlockNotice] = useState<string | null>(null);
@@ -318,13 +322,17 @@ export function ModulesPage() {
   };
 
   const handleSecondaryAction = (id: string) => {
-    // Para TPV/KDS: ação secundária = instalar dispositivo
+    // UXG-005: canonical onboarding lives in /admin/devices.
     if (
-      OPERATIONAL_MODULE_IDS.includes(
-        id as (typeof OPERATIONAL_MODULE_IDS)[number],
+      INSTALLABLE_DEVICE_MODULE_IDS.includes(
+        id as (typeof INSTALLABLE_DEVICE_MODULE_IDS)[number],
       )
     ) {
-      setInstallTarget(id as InstalledDeviceModule);
+      navigate(
+        buildDevicesInstallPath(
+          id as (typeof INSTALLABLE_DEVICE_MODULE_IDS)[number],
+        ),
+      );
       return;
     }
     // Outros módulos: desactivar (futuro)
