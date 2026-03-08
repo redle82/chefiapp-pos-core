@@ -27,7 +27,7 @@ npm run server:web-module
 ### 2. Frontend Rodando
 ```bash
 cd merchant-portal && npm run dev
-# Deve estar em http://localhost:5175
+# Deve estar em http://localhost:5173
 ```
 
 ### 3. Banco de Dados
@@ -41,7 +41,7 @@ cd merchant-portal && npm run dev
 ### FASE A: Login & FlowGate ✅
 
 #### 1. Acessar `/app` sem auth
-- **Ação:** Abrir `http://localhost:5175/app`
+- **Ação:** Abrir `http://localhost:5173/app`
 - **Esperado:** Redireciona para `/login`
 - **Validar:**
   - [ ] Não há loop de redirecionamento

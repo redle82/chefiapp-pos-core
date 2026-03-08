@@ -3,7 +3,7 @@
 ## PHASE M-4: FULL BROWSER NAVIGATION AUDIT
 
 **Target:** Cinematic Onboarding (Scenes 1-4)
-**Start URL:** `http://localhost:5175/` (Root)
+**Start URL:** `http://localhost:5173/` (Root)
 **Agent:** Browser Subagent (Human Mode)
 **Result:** **PASS**
 
@@ -40,7 +40,7 @@
 **SIM.** A gamificação da Scene 3 funciona perfeitamente. O usuário declara o nome, o preço, vê o "cartão" ser montado e avança.
 
 *   **STATUS:** **PASS**
-*   **ÚLTIMA TELA ALCANÇADA:** `http://localhost:5175/start/cinematic/4`
+*   **ÚLTIMA TELA ALCANÇADA:** `http://localhost:5173/start/cinematic/4`
 *   **CONFIANÇA DE NAVEGAÇÃO:** **10/10**
 
 ---

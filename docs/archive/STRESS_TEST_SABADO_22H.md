@@ -100,13 +100,13 @@ cd merchant-portal && npm run dev
 supabase start
 
 # Browser 1: KDS
-open http://localhost:5175/kds/{restaurantId}
+open http://localhost:5173/kds/{restaurantId}
 
 # Browser 2: TPV
-open http://localhost:5175/tpv
+open http://localhost:5173/tpv
 
 # Browser 3 (Incognito): Web Ordering
-open http://localhost:5175/public/{slug}
+open http://localhost:5173/public/{slug}
 ```
 
 ### DevTools Network Throttling

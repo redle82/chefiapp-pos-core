@@ -10,7 +10,7 @@
 ### Passo 1: Preparar Ambiente
 
 1. **Abrir TPV no navegador**
-   - URL: `http://localhost:5175` (ou URL de produção)
+   - URL: `http://localhost:5173` (ou URL de produção)
    - Fazer login como restaurante
 
 2. **Abrir DevTools**

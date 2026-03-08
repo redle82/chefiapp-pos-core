@@ -3,7 +3,7 @@
 ## PHASE M-3: FULL BROWSER NAVIGATION AUDIT
 
 **Target:** Cinematic Onboarding (TikTok Mode)
-**Start URL:** `http://localhost:5175/` (Root)
+**Start URL:** `http://localhost:5173/` (Root)
 **Agent:** Browser Subagent (Human Mode)
 **Result:** **PASS**
 
@@ -44,7 +44,7 @@
 **SIM.** A navegação é fluida e intuitiva. O redirecionamento da raiz garante que novos usuários caiam diretamente no fluxo "TikTok".
 
 *   **STATUS:** **PASS**
-*   **ÚLTIMA TELA ALCANÇADA:** `http://localhost:5175/start/cinematic/3`
+*   **ÚLTIMA TELA ALCANÇADA:** `http://localhost:5173/start/cinematic/3`
 *   **CONFIANÇA DE NAVEGAÇÃO:** **10/10**
 
 ---

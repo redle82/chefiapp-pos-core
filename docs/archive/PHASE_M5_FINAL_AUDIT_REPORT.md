@@ -3,7 +3,7 @@
 ## PHASE M-5: FINAL FULL BROWSER NAVIGATION AUDIT
 
 **Target:** Cinematic Onboarding (Scenes 1-5 + TPV Entry)
-**Start URL:** `http://localhost:5175/`
+**Start URL:** `http://localhost:5173/`
 **Agent:** Browser Subagent (Human Mode)
 **Result:** **pass**
 

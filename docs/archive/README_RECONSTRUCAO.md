@@ -22,9 +22,9 @@ npm run dev
 
 ### 2. Acessar
 
-- **KDS:** http://localhost:5175/kds-minimal
-- **Web Pública:** http://localhost:5175/public/restaurante-piloto
-- **QR Mesa:** http://localhost:5175/public/restaurante-piloto/mesa/1
+- **KDS:** http://localhost:5173/kds-minimal
+- **Web Pública:** http://localhost:5173/public/restaurante-piloto
+- **QR Mesa:** http://localhost:5173/public/restaurante-piloto/mesa/1
 
 ---
 
@@ -139,8 +139,8 @@ PostgreSQL (Fonte Única da Verdade)
 
 ### Teste Manual Rápido
 
-1. Abra: http://localhost:5175/kds-minimal
-2. Crie um pedido via: http://localhost:5175/public/restaurante-piloto
+1. Abra: http://localhost:5173/kds-minimal
+2. Crie um pedido via: http://localhost:5173/public/restaurante-piloto
 3. Verifique se aparece no KDS automaticamente (Realtime)
 
 ---

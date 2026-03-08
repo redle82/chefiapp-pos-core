@@ -4,7 +4,7 @@ Follow these steps to verify that the "No Password" architecture is fully operat
 
 ## 🟢 Pre-Requisites
 - [ ] Supabase Dashboard: Google/Apple Providers ENABLED with Client IDs/Secrets.
-- [ ] Supabase Dashboard: Redirect URL configured to `http://localhost:5175/onboarding`.
+- [ ] Supabase Dashboard: Redirect URL configured to `http://localhost:5173/onboarding`.
 
 ## 🧪 Test Case: New Restaurant Signup (The Genesis Ritual)
 1. **Initial Entry**
