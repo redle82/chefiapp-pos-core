@@ -56,8 +56,10 @@ export class MonitoringService {
 
   constructor() {
     this.supabase = createClient(
-      process.env.SUPABASE_URL || "",
-      process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+      process.env.SUPABASE_URL || "http://localhost:3000",
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+        process.env.SUPABASE_ANON_KEY ||
+        "test-key",
     );
   }
 

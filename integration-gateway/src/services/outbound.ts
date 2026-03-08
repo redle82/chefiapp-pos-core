@@ -2,7 +2,10 @@ import { createClient } from "@supabase/supabase-js";
 import axios, { AxiosError } from "axios";
 
 const supabaseUrl = process.env.SUPABASE_URL || "http://localhost:3001";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const supabaseKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  "test-key";
 
 interface WebhookDelivery {
   delivery_id: string;
