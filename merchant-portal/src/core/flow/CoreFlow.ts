@@ -24,6 +24,8 @@
  * Ver: ARCHITECTURE_FLOW_LOCKED.md
  */
 
+import { Logger } from "../logger";
+
 /** Rotas permitidas como "última área" ao reentrar (activated). Nunca TPV por defeito. */
 const ALLOWED_LAST_ROUTES = [
   "/dashboard",
@@ -127,7 +129,7 @@ export function resolveNextRoute(state: UserState): FlowDecision {
 
   // --- 1. BARREIRA DE AUTENTICAÇÃO ---
   if (!isAuthenticated) {
-    console.log("[CoreFlow] 🛑 Not Authenticated at:", currentPath);
+    Logger.debug(`[CoreFlow] 🛑 Not Authenticated at: ${currentPath}`);
 
     // Landing, Auth (telefone) e trial guide são públicas
     if (
