@@ -157,22 +157,27 @@ export default defineConfig(async ({ mode }) => {
           navigateFallback: "/index.html",
           navigateFallbackDenylist: [
             /^\/rest\//,
+            /^\/auth\//,
             /^\/api\//,
             /^\/internal\//,
             /^\/webhooks\//,
             /^\/rpc\//,
           ],
+          // POS safety: API calls are NetworkOnly — stale cached
+          // orders/prices are worse than a network error.  The SPA
+          // shell (HTML/CSS/JS) is still precached via globPatterns.
+          // To add offline reads later, use NetworkFirst for specific
+          // safe endpoints with cacheableResponse: { statuses: [200] }.
           runtimeCaching: [
             {
-              urlPattern: /^https?:\/\/[^/]+\/rest\/v1\/[^?]*/,
-              handler: "NetworkFirst",
+              urlPattern: /^https?:\/\/[^/]+\/rest\/v1\/.*/,
+              handler: "NetworkOnly",
               method: "GET",
-              options: {
-                cacheName: "chefiapp-rest-get",
-                expiration: { maxEntries: 80, maxAgeSeconds: 60 * 5 },
-                cacheableResponse: { statuses: [0, 200] },
-                networkTimeoutSeconds: 10,
-              },
+            },
+            {
+              urlPattern: /^https?:\/\/[^/]+\/auth\/.*/,
+              handler: "NetworkOnly",
+              method: "GET",
             },
           ],
         },

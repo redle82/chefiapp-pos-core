@@ -17,7 +17,7 @@ interface HealthState {
     | "SYNCING";
   message: string;
   details?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export const SystemHealthCard = ({

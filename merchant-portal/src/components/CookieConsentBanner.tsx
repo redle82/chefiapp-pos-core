@@ -47,11 +47,6 @@ function getStoredPreferences(): CookiePreferences | null {
   }
 }
 
-/** Read current cookie consent preferences (null if not yet answered). */
-export function getCookiePreferences(): CookiePreferences | null {
-  return getStoredPreferences();
-}
-
 function hasConsent(): boolean {
   if (typeof window === "undefined") return true;
   if (localStorage.getItem(CONSENT_STORAGE_KEY) === "true") return true;

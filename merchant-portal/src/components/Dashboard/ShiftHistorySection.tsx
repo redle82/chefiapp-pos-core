@@ -9,7 +9,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { currencyService } from "../../core/currency/CurrencyService";
-import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import {
   type CashRegister,
   CashRegisterEngine,
@@ -17,6 +16,7 @@ import {
 import { useShiftHistory } from "../../hooks/useShiftHistory";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import { ShiftCard } from "../../ui/design-system/ShiftCard";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import styles from "./ShiftHistorySection.module.css";
 
 function formatCents(cents: number): string {
@@ -47,7 +47,7 @@ export function ShiftHistorySection() {
     daysBack: 7,
   });
   const [activeShift, setActiveShift] = useState<CashRegister | null>(null);
-  const [loadingActive, setLoadingActive] = useState(false);
+  const [_loadingActive, setLoadingActive] = useState(false);
 
   // Fetch active shift on mount/restaurant change
   useEffect(() => {

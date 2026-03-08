@@ -16,3 +16,9 @@
 
 ### 4. Risk Assessment
 <!-- Does this touch the 'Money' path? (Orders, Payments, Sessions) -->
+
+### 5. E2E Decision (B-B-C-D check)
+<!-- Does this PR touch Boot path / Build-infra / Core gates / Dependencies? -->
+- [ ] I added label `run-e2e` (touches: routes, auth, vite/vercel config, PWA, gates, or deps)
+- [ ] Skipped — surface-only change (UI, styling, tests, docs)
+<!-- One-line reason: -->
