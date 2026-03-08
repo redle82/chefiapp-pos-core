@@ -4,7 +4,7 @@
   "description": "Webhook receiver for payment processors (SumUp, Stripe, custom)",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "pnpm exec ts-node src/index.ts",
+    "dev": "ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "jest",
