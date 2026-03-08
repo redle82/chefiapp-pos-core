@@ -13,41 +13,47 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CONFIG } from "../../config";
 import { BillingBroker } from "../../core/billing/BillingBroker";
 import {
+  getBillingPlanPrice,
   getBillingPlans,
+  getRestaurantBillingCurrency,
+  resolveStripePriceId,
+  type BillingPlanPriceRow,
   type BillingPlanRow,
 } from "../../core/billing/coreBillingApi";
+import {
+  currencyService,
+  SUPPORTED_CURRENCIES,
+  type CurrencyCode,
+} from "../../core/currency/CurrencyService";
+import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { useSubscription } from "../../hooks/useSubscription";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import styles from "./BillingPage.module.css";
 
-const STATUS_LABELS: Record<string, string> = {
-  TRIAL: "Período de teste",
-  ACTIVE: "Assinatura ativa",
-  PAST_DUE: "Pagamento em atraso",
-  SUSPENDED: "Suspensa",
-  CANCELLED: "Cancelada",
-};
-
-/** Format price_cents to a human label, e.g. 4900 → "49 €" */
+/** Format price_cents to a human label, e.g. 4900 → "49" + symbol */
 function formatPrice(priceCents: number, currency: string): string {
   const amount = Math.round(priceCents / 100);
-  const symbol = currency === "EUR" ? "€" : currency;
+  const symbol =
+    SUPPORTED_CURRENCIES[currency as CurrencyCode]?.symbol ?? currency;
   return `${amount} ${symbol}`;
 }
 
-/** Resolve which price ID to send to the gateway for a given plan */
-function resolvePlanPriceId(plan: BillingPlanRow): string {
-  // Best: plan has an explicit Stripe Price ID from DB
-  if (plan.stripe_price_id) return plan.stripe_price_id;
-  // Fallback: use the plan tier/slug — the gateway's resolveStripePriceId() maps it
-  return plan.tier;
+/** Resolve which price ID to send to the gateway. Currency from restaurant/tenant, never locale. */
+function resolvePlanPriceId(
+  plan: BillingPlanRow,
+  currency: string,
+  planPriceRow: BillingPlanPriceRow | null,
+): string {
+  return resolveStripePriceId(plan, currency, planPriceRow);
 }
 
 export function BillingPage() {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { subscription, loading, error, isActive } = useSubscription();
@@ -55,6 +61,13 @@ export function BillingPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [plans, setPlans] = useState<BillingPlanRow[]>([]);
   const [plansLoading, setPlansLoading] = useState(true);
+  const [billingCurrency, setBillingCurrency] = useState<string>(
+    currencyService.getDefaultCurrency(),
+  );
+  const [planPrices, setPlanPrices] = useState<
+    Record<string, BillingPlanPriceRow | null>
+  >({});
+  const restaurantId = getTabIsolated("chefiapp_restaurant_id");
 
   // Fetch available plans from Core DB
   useEffect(() => {
@@ -74,31 +87,72 @@ export function BillingPage() {
     };
   }, []);
 
+  // Billing currency from restaurant (country/currency), never from locale
+  useEffect(() => {
+    if (!restaurantId) return;
+    let cancelled = false;
+    getRestaurantBillingCurrency(restaurantId).then((currency) => {
+      if (!cancelled) setBillingCurrency(currency);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [restaurantId]);
+
+  // Fetch plan prices for billing currency (billing_plan_prices)
+  useEffect(() => {
+    if (plans.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const next: Record<string, BillingPlanPriceRow | null> = {};
+      for (const plan of plans) {
+        const row = await getBillingPlanPrice(plan.id, billingCurrency);
+        if (!cancelled) next[plan.id] = row ?? null;
+      }
+      if (!cancelled) setPlanPrices((prev) => ({ ...prev, ...next }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [plans, billingCurrency]);
+
   useEffect(() => {
     if (searchParams.get("billing") === "cancel") {
-      setActionError("Checkout cancelado. Tente de novo quando quiser.");
+      setActionError(t("common:billing.checkoutCanceled"));
       window.history.replaceState({}, "", "/app/billing");
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
-  const handleStartSubscription = useCallback(async (priceId: string) => {
-    if (!priceId) {
-      setActionError("Preço do plano não configurado.");
-      return;
-    }
-    setActionError(null);
-    setActionLoading(priceId);
-    try {
-      const { url } = await BillingBroker.startSubscription(priceId);
-      if (url) window.location.href = url;
-    } catch (e: unknown) {
-      setActionError(
-        e instanceof Error ? e.message : "Erro ao iniciar checkout.",
-      );
-    } finally {
-      setActionLoading(null);
-    }
-  }, []);
+  const handleStartSubscription = useCallback(
+    async (priceId: string) => {
+      if (!priceId) {
+        setActionError(t("common:billing.priceNotConfigured"));
+        return;
+      }
+      if (!restaurantId) {
+        setActionError(t("common:billing.noRestaurant"));
+        return;
+      }
+      setActionError(null);
+      setActionLoading(priceId);
+      try {
+        const { url } = await BillingBroker.startSubscription(
+          priceId,
+          restaurantId,
+        );
+        if (url) window.location.href = url;
+      } catch (e: unknown) {
+        setActionError(
+          e instanceof Error
+            ? e.message
+            : t("common:billing.errorStartCheckout"),
+        );
+      } finally {
+        setActionLoading(null);
+      }
+    },
+    [t, restaurantId],
+  );
 
   const handleOpenPortal = useCallback(async () => {
     setActionError(null);
@@ -107,16 +161,18 @@ export function BillingPage() {
       const { url } = await BillingBroker.openCustomerPortal();
       if (url) window.location.href = url;
     } catch (e: unknown) {
-      setActionError(e instanceof Error ? e.message : "Erro ao abrir portal.");
+      setActionError(
+        e instanceof Error ? e.message : t("common:billing.errorOpenPortal"),
+      );
     } finally {
       setActionLoading(null);
     }
-  }, []);
+  }, [t]);
 
   if (loading || plansLoading) {
     return (
       <GlobalLoadingView
-        message="A carregar assinatura..."
+        message={t("common:billing.loadingSubscription")}
         layout="operational"
         variant="fullscreen"
       />
@@ -133,22 +189,22 @@ export function BillingPage() {
       <div className={hasPlans ? styles.containerWide : styles.container}>
         {/* Título e descrição */}
         <header className={styles.header}>
-          <h1 className={styles.title}>Faturação</h1>
+          <h1 className={styles.title}>{t("common:billing.title")}</h1>
           <p className={styles.subtitle}>
             {subscription
-              ? "Gerir a sua assinatura e método de pagamento."
-              : "Escolha o plano ideal para o seu restaurante."}
+              ? t("common:billing.subtitle")
+              : t("common:billing.subtitleNoSubscription")}
           </p>
         </header>
 
         {/* Aviso: venda da plataforma só em chefiapp.com */}
         {!canSellPlatform && (
           <div className={styles.errorBox} role="alert">
-            A subscrição e alteração de plano estão disponíveis apenas em{" "}
+            {t("common:billing.sellOnlyChefiapp")}{" "}
             <a href="https://www.chefiapp.com" rel="noopener noreferrer">
               chefiapp.com
             </a>
-            . Aceda a esse site para subscrever ou alterar o seu plano.
+            . {t("common:billing.sellOnlyChefiappCta")}
           </div>
         )}
 
@@ -161,15 +217,20 @@ export function BillingPage() {
         {subscription && (
           <section className={styles.mainCard}>
             <div className={styles.statusSection}>
-              <span className={styles.statusLabel}>Estado</span>
+              <span className={styles.statusLabel}>
+                {t("common:billing.statusLabel")}
+              </span>
               <p className={styles.statusValue}>
-                {STATUS_LABELS[subscription.status] ?? subscription.status}
+                {t(
+                  `common:billing.subscriptionStatus.${subscription.status}`,
+                ) ?? subscription.status}
               </p>
               <p className={styles.statusDetails}>
-                Plano: {subscription.plan_tier} · Próximo pagamento:{" "}
+                {subscription.plan_tier} · {t("common:billing.nextPayment")}:{" "}
                 {subscription.next_payment_at
                   ? new Date(subscription.next_payment_at).toLocaleDateString(
-                      "pt-PT",
+                      undefined,
+                      { dateStyle: "medium" },
                     )
                   : "—"}
               </p>
@@ -185,8 +246,8 @@ export function BillingPage() {
                   className={styles.buttonPrimary}
                 >
                   {actionLoading && actionLoading !== "portal"
-                    ? "A redirecionar..."
-                    : "Ativar agora"}
+                    ? t("common:billing.redirecting")
+                    : t("common:billing.activateNow")}
                 </button>
               )}
               <button
@@ -195,7 +256,9 @@ export function BillingPage() {
                 disabled={!!actionLoading}
                 className={styles.buttonSecondary}
               >
-                {actionLoading === "portal" ? "A abrir..." : "Gerir faturação"}
+                {actionLoading === "portal"
+                  ? t("common:billing.opening")
+                  : t("common:billing.manageBilling")}
               </button>
             </div>
           </section>
@@ -205,7 +268,15 @@ export function BillingPage() {
         {!subscription && hasPlans && canSellPlatform && (
           <div className={styles.plansGrid}>
             {plans.map((plan) => {
-              const priceId = resolvePlanPriceId(plan);
+              const planPriceRow = planPrices[plan.id] ?? null;
+              const priceId = resolvePlanPriceId(
+                plan,
+                billingCurrency,
+                planPriceRow,
+              );
+              const displayCents =
+                planPriceRow?.price_cents ?? plan.price_cents;
+              const displayCurrency = planPriceRow?.currency ?? plan.currency;
               const isRecommended = plan.tier === "pro";
               const features: string[] = Array.isArray(plan.features)
                 ? plan.features
@@ -218,13 +289,18 @@ export function BillingPage() {
                   }`}
                 >
                   {isRecommended && (
-                    <span className={styles.recommendedBadge}>Recomendado</span>
+                    <span className={styles.recommendedBadge}>
+                      {t("common:billing.recommended")}
+                    </span>
                   )}
                   <h2 className={styles.planName}>{plan.name}</h2>
                   <p className={styles.planPrice}>
-                    {formatPrice(plan.price_cents, plan.currency)}
+                    {formatPrice(displayCents, displayCurrency)}
                     <span className={styles.planInterval}>
-                      /{plan.interval === "year" ? "ano" : "mês"}
+                      /
+                      {plan.interval === "year"
+                        ? t("common:billing.perYear")
+                        : t("common:billing.perMonth")}
                     </span>
                   </p>
                   <ul className={styles.featureList}>
@@ -245,8 +321,8 @@ export function BillingPage() {
                     }
                   >
                     {actionLoading === priceId
-                      ? "A redirecionar..."
-                      : "Ativar agora"}
+                      ? t("common:billing.redirecting")
+                      : t("common:billing.activateNow")}
                   </button>
                 </section>
               );
@@ -258,12 +334,13 @@ export function BillingPage() {
         {!subscription && !hasPlans && (
           <section className={styles.mainCard}>
             <p className={styles.noSubscriptionText}>
-              Ainda não tem uma assinatura ativa. Assine um plano para passar a
-              plano ativo (operação ao vivo).
+              {t("common:billing.noSubscription")}
             </p>
             {legacyPriceId && canSellPlatform && (
               <p className={styles.pricingText}>
-                Plano — {formatPrice(7900, "EUR")}/mês
+                {t("common:billing.planPerMonth", {
+                  price: formatPrice(7900, billingCurrency),
+                })}
               </p>
             )}
             {canSellPlatform && (
@@ -273,13 +350,14 @@ export function BillingPage() {
                 disabled={!!actionLoading}
                 className={styles.buttonPrimary}
               >
-                {actionLoading ? "A redirecionar..." : "Ativar agora"}
+                {actionLoading
+                  ? t("common:billing.redirecting")
+                  : t("common:billing.activateNow")}
               </button>
             )}
             {!legacyPriceId && canSellPlatform && (
               <p className={styles.configMessage}>
-                Configure VITE_STRIPE_PRICE_ID no ambiente para ativar o
-                checkout.
+                {t("common:billing.configureStripe")}
               </p>
             )}
           </section>
@@ -291,7 +369,7 @@ export function BillingPage() {
           onClick={() => navigate("/dashboard")}
           className={styles.backButton}
         >
-          ← Voltar ao Dashboard
+          ← {t("common:billing.backToDashboard")}
         </button>
       </div>
     </div>

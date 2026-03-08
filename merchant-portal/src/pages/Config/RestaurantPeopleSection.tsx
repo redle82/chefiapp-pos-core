@@ -6,6 +6,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { QRCodeGenerator } from "../../components/QRCodeGenerator";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
@@ -69,6 +70,7 @@ function generateStaffCode(): string {
 }
 
 export function RestaurantPeopleSection() {
+  const { t } = useTranslation();
   const { identity } = useRestaurantIdentity();
   const restaurantId = identity?.id ?? "";
 
@@ -326,7 +328,7 @@ export function RestaurantPeopleSection() {
             className={styles.submitBtn}
             data-disabled={!newName.trim() || saving}
           >
-            {saving ? "A guardar…" : "Adicionar"}
+            {saving ? t("common:saving") : t("common:add")}
           </button>
         </form>
       </div>

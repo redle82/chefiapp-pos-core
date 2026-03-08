@@ -4,12 +4,14 @@
  * O dono preenche address_text e opening_hours_text; a página /public/:slug exibe quando preenchidos.
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { isBackendUnavailable } from "../../infra/menuPilotFallback";
 
 export function PublicPresenceFields() {
+  const { t } = useTranslation();
   const { identity } = useRestaurantIdentity();
   const restaurantId = identity?.id ?? "";
 
@@ -18,7 +20,10 @@ export function PublicPresenceFields() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "ok" | "error";
+    text: string;
+  } | null>(null);
 
   const load = useCallback(async () => {
     if (!restaurantId) {
@@ -35,13 +40,20 @@ export function PublicPresenceFields() {
         .maybeSingle();
       if (error) throw error;
       if (data != null) {
-        setAddressText((data as { address_text?: string | null }).address_text ?? "");
-        setOpeningHoursText((data as { opening_hours_text?: string | null }).opening_hours_text ?? "");
+        setAddressText(
+          (data as { address_text?: string | null }).address_text ?? "",
+        );
+        setOpeningHoursText(
+          (data as { opening_hours_text?: string | null }).opening_hours_text ??
+            "",
+        );
       }
     } catch (e) {
       const msg = isBackendUnavailable(e)
         ? "Não foi possível carregar. O servidor pode estar indisponível. Tente novamente."
-        : e instanceof Error ? e.message : "Erro ao carregar dados.";
+        : e instanceof Error
+        ? e.message
+        : "Erro ao carregar dados.";
       setLoadError(msg);
       setAddressText("");
       setOpeningHoursText("");
@@ -68,7 +80,10 @@ export function PublicPresenceFields() {
         })
         .eq("id", restaurantId);
       if (error) throw error;
-      setMessage({ type: "ok", text: "Guardado. A página pública será atualizada." });
+      setMessage({
+        type: "ok",
+        text: "Guardado. A página pública será atualizada.",
+      });
     } catch (e) {
       setMessage({
         type: "error",
@@ -91,7 +106,8 @@ export function PublicPresenceFields() {
         }}
       >
         <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
-          Complete a configuração do restaurante para editar a página pública (endereço e horários).
+          Complete a configuração do restaurante para editar a página pública
+          (endereço e horários).
         </p>
       </div>
     );
@@ -99,7 +115,9 @@ export function PublicPresenceFields() {
 
   if (loading) {
     return (
-      <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>A carregar...</p>
+      <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+        A carregar...
+      </p>
     );
   }
 
@@ -114,7 +132,9 @@ export function PublicPresenceFields() {
           border: "1px solid var(--status-error-border)",
         }}
       >
-        <p style={{ margin: 0, fontSize: 14, color: "var(--color-error)" }}>{loadError}</p>
+        <p style={{ margin: 0, fontSize: 14, color: "var(--color-error)" }}>
+          {loadError}
+        </p>
         <button
           type="button"
           onClick={() => load()}
@@ -145,15 +165,37 @@ export function PublicPresenceFields() {
         border: "1px solid var(--surface-border)",
       }}
     >
-      <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>
+      <h3
+        style={{
+          margin: "0 0 12px",
+          fontSize: 16,
+          fontWeight: 600,
+          color: "var(--text-primary)",
+        }}
+      >
         Página pública
       </h3>
-      <p style={{ margin: "0 0 16px", fontSize: 13, color: "var(--text-secondary)" }}>
-        Estes campos aparecem em <strong>/public/:slug</strong> (menu online). Preencha para clientes verem localização e horários.
+      <p
+        style={{
+          margin: "0 0 16px",
+          fontSize: 13,
+          color: "var(--text-secondary)",
+        }}
+      >
+        Estes campos aparecem em <strong>/public/:slug</strong> (menu online).
+        Preencha para clientes verem localização e horários.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div>
-          <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 4, color: "var(--text-primary)" }}>
+          <label
+            style={{
+              display: "block",
+              fontSize: 12,
+              fontWeight: 600,
+              marginBottom: 4,
+              color: "var(--text-primary)",
+            }}
+          >
             Endereço (uma linha)
           </label>
           <input
@@ -172,7 +214,15 @@ export function PublicPresenceFields() {
           />
         </div>
         <div>
-          <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 4, color: "var(--text-primary)" }}>
+          <label
+            style={{
+              display: "block",
+              fontSize: 12,
+              fontWeight: 600,
+              marginBottom: 4,
+              color: "var(--text-primary)",
+            }}
+          >
             Horários (texto livre)
           </label>
           <input
@@ -195,7 +245,10 @@ export function PublicPresenceFields() {
             style={{
               margin: 0,
               fontSize: 13,
-              color: message.type === "ok" ? "var(--color-success)" : "var(--color-error)",
+              color:
+                message.type === "ok"
+                  ? "var(--color-success)"
+                  : "var(--color-error)",
             }}
           >
             {message.type === "ok" ? "✅ " : "❌ "}
@@ -218,7 +271,7 @@ export function PublicPresenceFields() {
             alignSelf: "flex-start",
           }}
         >
-          {saving ? "A guardar…" : "Guardar"}
+          {saving ? t("common:saving") : t("common:save")}
         </button>
       </div>
     </div>

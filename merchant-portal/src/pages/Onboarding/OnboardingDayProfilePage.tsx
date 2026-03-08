@@ -4,21 +4,36 @@
  */
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { OnboardingStepIndicator } from "../../components/onboarding/OnboardingStepIndicator";
-import { ONBOARDING_5MIN_COPY } from "../../copy/onboarding5min";
+import { useCurrency } from "../../core/currency/useCurrency";
 import { Button, Card } from "../../ui/design-system/primitives";
 import styles from "./OnboardingDayProfilePage.module.css";
 
 type ServiceType = "balcao" | "mesas" | "ambos";
-type TicketLevel = "€" | "€€" | "€€€";
+type TicketLevel = "low" | "mid" | "high";
 type PaymentMain = "dinheiro" | "cartao" | "ambos";
 
 export function OnboardingDayProfilePage() {
   const navigate = useNavigate();
+  const { t } = useTranslation(["onboarding", "common"]);
+  const { symbol } = useCurrency();
   const [service, setService] = useState<ServiceType>("ambos");
-  const [ticket, setTicket] = useState<TicketLevel>("€€");
+  const [ticket, setTicket] = useState<TicketLevel>("mid");
   const [payment, setPayment] = useState<PaymentMain>("ambos");
+
+  const serviceLabels: Record<ServiceType, string> = {
+    balcao: t("fiveMin.dayProfile.serviceCounter"),
+    mesas: t("fiveMin.dayProfile.serviceTables"),
+    ambos: t("fiveMin.dayProfile.serviceBoth"),
+  };
+
+  const paymentLabels: Record<PaymentMain, string> = {
+    dinheiro: t("fiveMin.dayProfile.paymentCash"),
+    cartao: t("fiveMin.dayProfile.paymentCard"),
+    ambos: t("fiveMin.dayProfile.paymentBoth"),
+  };
 
   const handleNext = () => {
     navigate("/onboarding/shift-setup");
@@ -28,13 +43,13 @@ export function OnboardingDayProfilePage() {
     <div data-onboarding-step="3" className={styles.pageRoot}>
       <OnboardingStepIndicator step={4} total={9} />
       <div className={styles.contentContainer}>
-        <h1 className={styles.headline}>
-          {ONBOARDING_5MIN_COPY.dayProfile.headline}
-        </h1>
+        <h1 className={styles.headline}>{t("fiveMin.dayProfile.headline")}</h1>
         <Card padding="lg" className={styles.formCard}>
           <div className={styles.fieldSet}>
             <div>
-              <div className={styles.fieldLabel}>Serviço</div>
+              <div className={styles.fieldLabel}>
+                {t("fiveMin.dayProfile.serviceLabel")}
+              </div>
               <div className={styles.buttonGroup}>
                 {(["balcao", "mesas", "ambos"] as const).map((s) => (
                   <button
@@ -47,36 +62,40 @@ export function OnboardingDayProfilePage() {
                         : styles.optionButton
                     }
                   >
-                    {s === "balcao"
-                      ? "Balcão"
-                      : s === "mesas"
-                      ? "Mesas"
-                      : "Ambos"}
+                    {serviceLabels[s]}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <div className={styles.fieldLabel}>Ticket médio</div>
+              <div className={styles.fieldLabel}>
+                {t("fiveMin.dayProfile.ticketLabel")}
+              </div>
               <div className={styles.buttonGroup}>
-                {(["€", "€€", "€€€"] as const).map((t) => (
+                {(["low", "mid", "high"] as const).map((level) => (
                   <button
-                    key={t}
+                    key={level}
                     type="button"
-                    onClick={() => setTicket(t)}
+                    onClick={() => setTicket(level)}
                     className={
-                      ticket === t
+                      ticket === level
                         ? styles.optionButtonActive
                         : styles.optionButton
                     }
                   >
-                    {t}
+                    {level === "low"
+                      ? symbol
+                      : level === "mid"
+                      ? `${symbol}${symbol}`
+                      : `${symbol}${symbol}${symbol}`}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <div className={styles.fieldLabel}>Método principal</div>
+              <div className={styles.fieldLabel}>
+                {t("fiveMin.dayProfile.paymentLabel")}
+              </div>
               <div className={styles.buttonGroup}>
                 {(["dinheiro", "cartao", "ambos"] as const).map((p) => (
                   <button
@@ -89,11 +108,7 @@ export function OnboardingDayProfilePage() {
                         : styles.optionButton
                     }
                   >
-                    {p === "dinheiro"
-                      ? "Dinheiro"
-                      : p === "cartao"
-                      ? "Cartão"
-                      : "Ambos"}
+                    {paymentLabels[p]}
                   </button>
                 ))}
               </div>
@@ -107,7 +122,7 @@ export function OnboardingDayProfilePage() {
             variant="outline"
             onClick={() => navigate("/onboarding/location")}
           >
-            Voltar
+            {t("common:back")}
           </Button>
           <Button
             type="button"
@@ -115,7 +130,7 @@ export function OnboardingDayProfilePage() {
             variant="solid"
             onClick={handleNext}
           >
-            {ONBOARDING_5MIN_COPY.dayProfile.cta}
+            {t("fiveMin.dayProfile.cta")}
           </Button>
         </div>
       </div>

@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useOnboarding } from "../../hooks/useOnboarding";
 import { getPostOnboardingRedirectUrl } from "../../infra/clients/OnboardingClient";
@@ -71,7 +72,7 @@ const styles = {
     fontSize: 15,
     border: "1px solid #404040",
     borderRadius: 8,
-    backgroundColor: "#171717",
+    backgroundColor: "#141414",
     color: "#fafafa",
   },
   select: {
@@ -80,7 +81,7 @@ const styles = {
     fontSize: 15,
     border: "1px solid #404040",
     borderRadius: 8,
-    backgroundColor: "#171717",
+    backgroundColor: "#141414",
     color: "#fafafa",
     cursor: "pointer",
   },
@@ -121,15 +122,10 @@ const PAISES = [
   { value: "OTHER", label: "Outro" },
 ];
 
-const TIPOS = [
-  "Bar",
-  "Restaurante",
-  "Café",
-  "Fast Casual",
-  "Outro",
-] as const;
+const TIPOS = ["Bar", "Restaurante", "Café", "Fast Casual", "Outro"] as const;
 
 export function OnboardingAssistantPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     state,
@@ -195,7 +191,9 @@ export function OnboardingAssistantPage() {
       await initializeOnboarding(name);
       setRestaurantName("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao criar restaurante");
+      setError(
+        err instanceof Error ? err.message : "Erro ao criar restaurante",
+      );
     } finally {
       setSaving(false);
     }
@@ -292,7 +290,7 @@ export function OnboardingAssistantPage() {
             disabled={saving}
             onClick={() => handleNextStep("restaurant_setup", {})}
           >
-            {saving ? "A guardar..." : "Continuar"}
+            {saving ? t("common:saving") : t("common:continue")}
           </button>
         </>
       )}
@@ -356,7 +354,7 @@ export function OnboardingAssistantPage() {
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <button type="submit" style={styles.button} disabled={saving}>
-            {saving ? "A guardar..." : "Continuar"}
+            {saving ? t("common:saving") : t("common:continue")}
           </button>
         </form>
       )}
@@ -396,7 +394,7 @@ export function OnboardingAssistantPage() {
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <button type="submit" style={styles.button} disabled={saving}>
-            {saving ? "A guardar..." : "Continuar"}
+            {saving ? t("common:saving") : t("common:continue")}
           </button>
         </form>
       )}
@@ -428,7 +426,7 @@ export function OnboardingAssistantPage() {
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <button type="submit" style={styles.button} disabled={saving}>
-            {saving ? "A guardar..." : "Continuar"}
+            {saving ? t("common:saving") : t("common:continue")}
           </button>
         </form>
       )}
@@ -460,7 +458,7 @@ export function OnboardingAssistantPage() {
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <button type="submit" style={styles.button} disabled={saving}>
-            {saving ? "A guardar..." : "Continuar"}
+            {saving ? t("common:saving") : t("common:continue")}
           </button>
         </form>
       )}
@@ -492,7 +490,7 @@ export function OnboardingAssistantPage() {
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <button type="submit" style={styles.button} disabled={saving}>
-            {saving ? "A guardar..." : "Continuar"}
+            {saving ? t("common:saving") : t("common:continue")}
           </button>
         </form>
       )}
@@ -541,7 +539,7 @@ export function OnboardingAssistantPage() {
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <button type="submit" style={styles.button} disabled={saving}>
-            {saving ? "A guardar..." : "Continuar"}
+            {saving ? t("common:saving") : t("common:continue")}
           </button>
         </form>
       )}
@@ -559,7 +557,7 @@ export function OnboardingAssistantPage() {
             disabled={saving}
             onClick={() => handleNextStep("complete", {})}
           >
-            {saving ? "A guardar..." : "Concluir configuração"}
+            {saving ? t("common:saving") : t("common:finishSetup")}
           </button>
         </>
       )}
@@ -582,11 +580,7 @@ export function OnboardingAssistantPage() {
         </>
       )}
 
-      {stateError && (
-        <p style={styles.error}>
-          {stateError.message}
-        </p>
-      )}
+      {stateError && <p style={styles.error}>{stateError.message}</p>}
     </div>
   );
 }

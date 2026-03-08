@@ -73,7 +73,7 @@ export function UbicacionesPage() {
         </div>
         <button
           type="button"
-          onClick={() => navigate("/config/ubicaciones/nova")}
+          onClick={() => navigate("/admin/config/locations/nova")}
           style={{
             minHeight: tapTarget.min,
             padding: `0 ${space.lg}`,

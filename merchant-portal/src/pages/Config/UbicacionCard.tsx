@@ -35,8 +35,21 @@ export function UbicacionCard({ location }: UbicacionCardProps) {
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: space.sm, marginBottom: space.xs }}>
-          <span style={{ fontSize: fontSize.base, fontWeight: fontWeight.semibold, color: colors.textPrimary }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: space.sm,
+            marginBottom: space.xs,
+          }}
+        >
+          <span
+            style={{
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.semibold,
+              color: colors.textPrimary,
+            }}
+          >
             {location.name}
           </span>
           {location.isPrimary && (
@@ -80,7 +93,8 @@ export function UbicacionCard({ location }: UbicacionCardProps) {
       </div>
       <button
         type="button"
-        onClick={() => navigate(`/config/ubicaciones/${location.id}`)}
+        aria-label={`Editar local ${location.name}`}
+        onClick={() => navigate(`/admin/config/locations/${location.id}`)}
         style={{
           minHeight: tapTarget.min,
           padding: `0 ${space.md}`,

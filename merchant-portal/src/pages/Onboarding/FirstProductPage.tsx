@@ -8,9 +8,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BootstrapStepIndicator } from "../../components/bootstrap/BootstrapStepIndicator";
+import { useCurrency } from "../../core/currency/useCurrency";
 import { DbWriteGate } from "../../core/governance/DbWriteGate";
 import { setOnboardingJustCompletedFlag } from "../../core/storage/onboardingFlowFlag";
-import { useTenant } from "../../core/tenant/TenantContext";
+import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { Button, Card, Input } from "../../ui/design-system/primitives";
 import styles from "./FirstProductPage.module.css";
 
@@ -21,7 +22,8 @@ export function FirstProductPage({
   successNextPath?: string;
 } = {}) {
   const navigate = useNavigate();
-  const { tenantId: restaurantId } = useTenant();
+  const { symbol: currencySymbol } = useCurrency();
+  const restaurantId = getTabIsolated("chefiapp_restaurant_id");
   const [name, setName] = useState("");
   const [priceEur, setPriceEur] = useState("");
   const [loading, setLoading] = useState(false);
@@ -232,7 +234,7 @@ export function FirstProductPage({
             />
             <Input
               id="product-price"
-              label="Preço (€) *"
+              label={`Preço (${currencySymbol}) *`}
               type="text"
               inputMode="decimal"
               value={priceEur}

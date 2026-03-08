@@ -8,7 +8,7 @@
  * Ref: docs/contracts/FUNIL_VIDA_CLIENTE.md#arquitetura-de-jornada-em-3-camadas
  */
 
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { openTpvInNewWindow } from "../../core/operational/openOperationalWindow";
 
@@ -93,7 +93,6 @@ interface ChecklistItem {
 export function ActivationCenterPage() {
   const { runtime } = useRestaurantRuntime();
   const setupStatus = runtime?.setup_status ?? {};
-  const navigate = useNavigate();
 
   const items: ChecklistItem[] = [
     {
@@ -153,22 +152,10 @@ export function ActivationCenterPage() {
                   role="button"
                   tabIndex={0}
                   style={{ ...styles.item }}
-                  onClick={() =>
-                    openTpvInNewWindow("mode=trial", {
-                      navigate,
-                      onBrowserFallback: () => {
-                        navigate("/admin/devices");
-                      },
-                    })
-                  }
+                  onClick={() => openTpvInNewWindow("mode=trial")}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ")
-                      openTpvInNewWindow("mode=trial", {
-                        navigate,
-                        onBrowserFallback: () => {
-                          navigate("/admin/devices");
-                        },
-                      });
+                      openTpvInNewWindow("mode=trial");
                   }}
                 >
                   <span style={styles.itemLabel}>{item.label}</span>

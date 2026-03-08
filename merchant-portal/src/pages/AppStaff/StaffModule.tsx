@@ -6,7 +6,7 @@ import { useAuth } from "../../core/auth/useAuth";
 import { isDebugMode } from "../../core/debugMode";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { RUNTIME } from "../../core/runtime/RuntimeContext";
-import { useTenant } from "../../core/tenant/TenantContext";
+import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { Text } from "../../ui/design-system/primitives/Text";
 import { OperatorSessionProvider } from "./context/OperatorSessionContext";
 import { isValidStaffRole, StaffProvider } from "./context/StaffContext";
@@ -41,8 +41,7 @@ export default function StaffModule() {
   }, []);
 
   const loading = authLoading || identity.loading || runtime.loading;
-  const { tenantId } = useTenant();
-  const restaurantId = identity.id || tenantId;
+  const restaurantId = identity.id || getTabIsolated("chefiapp_restaurant_id");
 
   // DEBUG: Log loading states to identify blocking state
   useEffect(() => {

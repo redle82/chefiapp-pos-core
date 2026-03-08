@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../core/auth/useAuth";
+import { useCurrency } from "../../../core/currency/useCurrency";
 // Logo + text replaces old ChefIAppSignature
 import { useScrollNavbar } from "../hooks/useFadeIn";
 import { useLandingLocale } from "../i18n/LandingLocaleContext";
@@ -36,6 +37,7 @@ const LOCALE_LABELS: Record<LandingLocale, string> = {
 export const HeroV2 = () => {
   const { session } = useAuth();
   const { t, locale, setLocale } = useLandingLocale();
+  const { symbol } = useCurrency();
   const hasSession = !!session;
   const [mobileOpen, setMobileOpen] = useState(false);
   const { visible, scrolled } = useScrollNavbar();
@@ -414,7 +416,7 @@ export const HeroV2 = () => {
                         },
                         {
                           label: "Faturação",
-                          value: "€2.340",
+                          value: `${symbol}2.340`,
                           color: "text-emerald-500",
                         },
                         {

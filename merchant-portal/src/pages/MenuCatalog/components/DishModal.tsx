@@ -4,10 +4,11 @@
  * V2: mediaFull (vídeo), badges, AllergenIcons.
  */
 
+import { useTranslation } from "react-i18next";
 import type { CatalogItem } from "../types";
 import { formatPrice } from "../types";
-import { Badge } from "./Badge";
 import { AllergenIcons } from "./AllergenIcons";
+import { Badge } from "./Badge";
 
 export interface DishModalProps {
   item: CatalogItem;
@@ -26,6 +27,7 @@ export function DishModal({
   onPedir,
   usePremium = false,
 }: DishModalProps) {
+  const { t } = useTranslation();
   const mediaUrl = item.mediaFull ?? item.imageUrl;
   const isVideo = isVideoUrl(mediaUrl);
   const badges = item.badges ?? [];
@@ -42,7 +44,7 @@ export function DishModal({
           type="button"
           onClick={onClose}
           className="min-h-[44px] min-w-[44px] p-2 -ml-2 rounded-lg hover:bg-neutral-100 font-semibold text-neutral-800"
-          aria-label="Fechar"
+          aria-label={t("common:close")}
         >
           ← Voltar
         </button>

@@ -23,10 +23,12 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useGlobalUIState } from "../../context/GlobalUIStateContext";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import type { MenuItemInput } from "../../core/contracts/Menu";
 import { validateMenuItemInput } from "../../core/contracts/Menu";
+import { useCurrency } from "../../core/currency/useCurrency";
 import {
   addPilotProduct,
   getPilotProducts,
@@ -99,8 +101,10 @@ export function MenuBuilderCore({
   restaurantId,
   variant,
 }: MenuBuilderCoreProps) {
+  const { t } = useTranslation();
   const globalUI = useGlobalUIState();
   const { runtime } = useRestaurantRuntime();
+  const { symbol: currencySymbol } = useCurrency();
 
   const [products, setProducts] = useState<CoreProductWithCategory[]>([]);
   const [categories, setCategories] = useState<CoreMenuCategory[]>([]);
@@ -616,7 +620,7 @@ export function MenuBuilderCore({
                   fullWidth
                 />
                 <Input
-                  label="Preço (€) *"
+                  label={`Preço (${currencySymbol}) *`}
                   type="text"
                   inputMode="decimal"
                   value={priceInput}
@@ -744,7 +748,7 @@ export function MenuBuilderCore({
                       disabled={creating}
                       isLoading={creating}
                     >
-                      {creating ? "A guardar..." : "Guardar"}
+                      {creating ? t("common:saving") : t("common:save")}
                     </Button>
                     <Button
                       tone="neutral"
@@ -755,7 +759,7 @@ export function MenuBuilderCore({
                         setPriceInput("");
                       }}
                     >
-                      Cancelar
+                      {t("common:cancel")}
                     </Button>
                   </>
                 ) : (
@@ -865,7 +869,8 @@ export function MenuBuilderCore({
                         )}
                       </div>
                       <div className={styles.productPrice}>
-                        € {(product.price_cents / 100).toFixed(2)}
+                        {currencySymbol}{" "}
+                        {(product.price_cents / 100).toFixed(2)}
                       </div>
                       <div className={styles.productMeta}>
                         ⏱️{" "}

@@ -6,6 +6,7 @@
  * UI (variant=app): scroll é do Shell; sem duplicar layout.
  */
 
+import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { currencyService } from "../../core/currency/CurrencyService";
@@ -69,6 +70,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
   const shift = useShift();
   const pulseCtx = usePulseOptional();
   const { orders: appStaffOrders } = useAppStaffOrders(identity.id);
+  const locale = useFormatLocale();
 
   const [metrics, setMetrics] = useState<DailyMetrics | null>(null);
   const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
@@ -401,12 +403,12 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
         </div>
         <div className={styles.headerMeta}>
           <Text size="sm" color="tertiary">
-            {currentTime.toLocaleDateString("pt-PT", {
+            {currentTime.toLocaleDateString(locale, {
               day: "numeric",
               month: "short",
               year: "numeric",
             })}{" "}
-            {currentTime.toLocaleTimeString("pt-PT", {
+            {currentTime.toLocaleTimeString(locale, {
               hour: "2-digit",
               minute: "2-digit",
             })}

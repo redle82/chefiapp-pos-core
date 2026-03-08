@@ -3,7 +3,6 @@
  * Campos mínimos operacionais; sem billing, sem fiscal. Ref: CONFIG_LOCATION_VS_CONTRACT.md.
  */
 
-import React from "react";
 import {
   colors,
   fontFamily,
@@ -13,12 +12,18 @@ import {
   space,
   tapTarget,
 } from "@chefiapp/core-design-system";
+import React from "react";
+import { currencyService } from "../../core/currency/CurrencyService";
 import type { Location } from "../../features/admin/locations/types";
 
 const CURRENCIES = [
   { value: "EUR", label: "EUR" },
   { value: "BRL", label: "BRL" },
   { value: "USD", label: "USD" },
+  { value: "GBP", label: "GBP" },
+  { value: "MXN", label: "MXN" },
+  { value: "CAD", label: "CAD" },
+  { value: "AUD", label: "AUD" },
 ];
 const TIMEZONES = [
   { value: "Europe/Madrid", label: "Europe/Madrid" },
@@ -27,7 +32,10 @@ const TIMEZONES = [
   { value: "UTC", label: "UTC" },
 ];
 
-export type UbicacionFormData = Omit<Location, "id" | "createdAt" | "updatedAt">;
+export type UbicacionFormData = Omit<
+  Location,
+  "id" | "createdAt" | "updatedAt"
+>;
 
 const emptyForm = (): UbicacionFormData => ({
   name: "",
@@ -36,7 +44,7 @@ const emptyForm = (): UbicacionFormData => ({
   city: "",
   postalCode: "",
   timezone: "Europe/Madrid",
-  currency: "EUR",
+  currency: currencyService.getDefaultCurrency(),
   isActive: true,
   isPrimary: false,
 });
@@ -69,6 +77,8 @@ interface UbicacionFormProps {
   onSubmit: (data: UbicacionFormData) => void;
   onCancel: () => void;
   submitLabel: string;
+  /** Disable the submit button while a parent is processing the submission. */
+  isSubmitting?: boolean;
 }
 
 export function UbicacionForm({
@@ -76,8 +86,11 @@ export function UbicacionForm({
   onSubmit,
   onCancel,
   submitLabel,
+  isSubmitting = false,
 }: UbicacionFormProps) {
-  const [form, setForm] = React.useState<UbicacionFormData>(() => initial ?? emptyForm());
+  const [form, setForm] = React.useState<UbicacionFormData>(
+    () => initial ?? emptyForm(),
+  );
 
   React.useEffect(() => {
     setForm(initial ?? emptyForm());
@@ -107,12 +120,20 @@ export function UbicacionForm({
           <input
             type="text"
             value={form.address}
-            onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, address: e.target.value }))
+            }
             placeholder="Rua, número, código postal, cidade, país"
             style={inputStyle}
           />
         </label>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: space.md }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: space.md,
+          }}
+        >
           <label style={labelStyle}>
             Cidade
             <input
@@ -127,18 +148,28 @@ export function UbicacionForm({
             <input
               type="text"
               value={form.postalCode}
-              onChange={(e) => setForm((f) => ({ ...f, postalCode: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, postalCode: e.target.value }))
+              }
               style={inputStyle}
             />
           </label>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: space.md }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: space.md,
+          }}
+        >
           <label style={labelStyle}>
             País (código)
             <input
               type="text"
               value={form.country}
-              onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, country: e.target.value }))
+              }
               placeholder="ES, PT, BR"
               maxLength={3}
               style={inputStyle}
@@ -148,7 +179,9 @@ export function UbicacionForm({
             Moeda
             <select
               value={form.currency}
-              onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, currency: e.target.value }))
+              }
               style={inputStyle}
             >
               {CURRENCIES.map((c) => (
@@ -163,7 +196,9 @@ export function UbicacionForm({
           Fuso horário (IANA)
           <select
             value={form.timezone}
-            onChange={(e) => setForm((f) => ({ ...f, timezone: e.target.value }))}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, timezone: e.target.value }))
+            }
             style={inputStyle}
           >
             {TIMEZONES.map((t) => (
@@ -173,20 +208,49 @@ export function UbicacionForm({
             ))}
           </select>
         </label>
-        <div style={{ display: "flex", gap: space.lg, alignItems: "center", flexWrap: "wrap" }}>
-          <label style={{ display: "flex", alignItems: "center", gap: space.sm, cursor: "pointer", fontSize: fontSize.sm, color: colors.textPrimary }}>
+        <div
+          style={{
+            display: "flex",
+            gap: space.lg,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: space.sm,
+              cursor: "pointer",
+              fontSize: fontSize.sm,
+              color: colors.textPrimary,
+            }}
+          >
             <input
               type="checkbox"
               checked={form.isActive}
-              onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, isActive: e.target.checked }))
+              }
             />
             Ativo
           </label>
-          <label style={{ display: "flex", alignItems: "center", gap: space.sm, cursor: "pointer", fontSize: fontSize.sm, color: colors.textPrimary }}>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: space.sm,
+              cursor: "pointer",
+              fontSize: fontSize.sm,
+              color: colors.textPrimary,
+            }}
+          >
             <input
               type="checkbox"
               checked={form.isPrimary ?? false}
-              onChange={(e) => setForm((f) => ({ ...f, isPrimary: e.target.checked }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, isPrimary: e.target.checked }))
+              }
             />
             Principal
           </label>
@@ -221,19 +285,24 @@ export function UbicacionForm({
         </button>
         <button
           type="submit"
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
           style={{
             minHeight: tapTarget.min,
             padding: `0 ${space.lg}`,
             fontSize: fontSize.sm,
             fontWeight: fontWeight.semibold,
             color: colors.textInverse,
-            backgroundColor: colors.accent,
+            backgroundColor: isSubmitting
+              ? colors.textTertiary ?? colors.textSecondary
+              : colors.accent,
             border: "none",
             borderRadius: radius.md,
-            cursor: "pointer",
+            cursor: isSubmitting ? "not-allowed" : "pointer",
+            opacity: isSubmitting ? 0.7 : 1,
           }}
         >
-          {submitLabel}
+          {isSubmitting ? "A guardar\u2026" : submitLabel}
         </button>
       </div>
     </form>

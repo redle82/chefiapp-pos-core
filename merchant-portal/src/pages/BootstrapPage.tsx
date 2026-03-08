@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import "../App.css";
 import { BootstrapStepIndicator } from "../components/bootstrap/BootstrapStepIndicator";
 import { DbWriteGate } from "../core/governance/DbWriteGate";
@@ -47,12 +48,12 @@ type BootstrapState =
 // S0 CONFIG: More tolerant values
 const BOOTSTRAP_TIMEOUT = 15000; // 15s (was 10s) - Give slow backends a chance
 
-const RESTAURANT_TYPES = [
-  "Restaurante",
-  "Café",
-  "Bar",
-  "Snack",
-  "Catering",
+const RESTAURANT_TYPE_KEYS = [
+  "restaurant",
+  "cafe",
+  "bar",
+  "snack",
+  "catering",
 ] as const;
 
 export function BootstrapPage({
@@ -60,6 +61,7 @@ export function BootstrapPage({
 }: {
   successNextPath?: string;
 } = {}) {
+  const { t } = useTranslation("common");
   const location = useLocation();
   const navigate = useNavigate();
   const bootstrap = useBootstrapState();
@@ -78,7 +80,7 @@ export function BootstrapPage({
   // Onda 4 A2 + FASE 1 Passo 1: form nome, tipo, país, contacto
   const [restaurantName, setRestaurantName] = useState("");
   const [restaurantContact, setRestaurantContact] = useState("");
-  const [restaurantType, setRestaurantType] = useState<string>("Restaurante");
+  const [restaurantType, setRestaurantType] = useState<string>("restaurant");
   const [restaurantCountry, setRestaurantCountry] = useState<string>("PT");
 
   const switchToTrialMode = () => {
@@ -100,9 +102,7 @@ export function BootstrapPage({
     // ANTI-SUPABASE §4: Domain only via Core (Docker). No Supabase backend for domain.
     if (getBackendType() !== BackendType.docker) {
       setState("error");
-      setErrorMessage(
-        "Sistema Nervoso (Core) indisponível. Configure o Docker Core para continuar.",
-      );
+      setErrorMessage(t("common:bootstrap.coreUnavailable"));
       return;
     }
 
@@ -147,7 +147,7 @@ export function BootstrapPage({
     }
 
     setState("checking_restaurant");
-    setProgressStep("Verificando identidade...");
+    setProgressStep(t("common:bootstrap.checkingIdentity"));
 
     try {
       // 2. Check Membership (Sovereign Link)
@@ -236,7 +236,7 @@ export function BootstrapPage({
 
         if (advancedDone) {
           setState("ready");
-          setProgressStep(`Bem-vindo de volta!`);
+          setProgressStep(t("common:bootstrap.welcomeBack"));
           const targetPath = member.role === "owner" ? "/dashboard" : "/op/tpv";
           // P2-3 FIX: Navegação imediata após verificação real (sem delay artificial)
           navigate(targetPath);
@@ -246,7 +246,7 @@ export function BootstrapPage({
         const onboardingMode = getTabIsolated("chefiapp_onboarding_mode");
         if (onboardingMode === "migration") {
           setState("ready");
-          setProgressStep("Iniciando migração inteligente...");
+          setProgressStep(t("common:bootstrap.startingMigration"));
           // P2-3 FIX: Navegação imediata após verificação real
           navigate("/migration/wizard");
           return;
@@ -254,14 +254,14 @@ export function BootstrapPage({
 
         if (quickDone) {
           setState("ready");
-          setProgressStep("Configuração rápida concluída");
+          setProgressStep(t("common:bootstrap.quickSetupDone"));
           // P2-3 FIX: Navegação imediata após verificação real
           navigate("/app/dashboard");
           return;
         }
 
         setState("ready");
-        setProgressStep("Completa a configuração inicial...");
+        setProgressStep(t("common:bootstrap.completeInitialSetup"));
         // GloriaFood: Portal central — destino sempre /app/dashboard
         navigate("/app/dashboard");
         return;
@@ -275,9 +275,9 @@ export function BootstrapPage({
     } catch (error: any) {
       console.error("[Bootstrap] Fatal:", error);
       setState("error");
-      setErrorMessage(error.message || "Erro ao conectar ao banco de dados.");
+      setErrorMessage(error.message || t("common:bootstrap.errorConnectDb"));
     }
-  }, [navigate]);
+  }, [navigate, t]);
 
   /** Onda 4 A2: criar restaurante SOMENTE via Core (Docker). No Supabase domain path. */
   const handleCreateRestaurant = useCallback(
@@ -285,20 +285,18 @@ export function BootstrapPage({
       e.preventDefault();
       const name = restaurantName.trim();
       if (!name) {
-        setErrorMessage("Nome do restaurante é obrigatório.");
+        setErrorMessage(t("common:bootstrap.nameRequired"));
         return;
       }
       // ANTI-SUPABASE §4: Create restaurant only via Core. Fail explicit if not Docker.
       if (getBackendType() !== BackendType.docker) {
         setState("error");
-        setErrorMessage(
-          "Core indisponível. Configure o Docker Core para criar o restaurante.",
-        );
+        setErrorMessage(t("common:bootstrap.coreUnavailableCreate"));
         return;
       }
       setState("creating");
       setErrorMessage(null);
-      setProgressStep("Criando o teu restaurante...");
+      setProgressStep(t("common:bootstrap.creatingRestaurant"));
 
       try {
         let user: { id: string } | null = null;
@@ -386,17 +384,18 @@ export function BootstrapPage({
           );
         }
         setState("ready");
-        setProgressStep("Cozinha criada com sucesso!");
+        setProgressStep(t("common:bootstrap.createSuccess"));
         navigate(successNextPath, { replace: true });
       } catch (err: unknown) {
         console.error("[Bootstrap] Create restaurant:", err);
         setState("error");
         setErrorMessage(
-          err instanceof Error ? err.message : "Erro ao criar restaurante.",
+          err instanceof Error ? err.message : t("common:bootstrap.errorCreateRestaurant"),
         );
       }
     },
     [
+      t,
       restaurantName,
       restaurantContact,
       restaurantType,
@@ -441,55 +440,55 @@ export function BootstrapPage({
           {state === "create_form" && (
             <>
               <h1 className={`h1 ${styles.heading}`}>
-                Criar o teu restaurante
+                {t("common:bootstrap.createRestaurant")}
               </h1>
               <p className={`muted ${styles.subtitle}`}>
-                Nome e contacto para começar.
+                {t("common:bootstrap.createSubtitle")}
               </p>
               <Card padding="lg" className={styles.formCard}>
                 <form onSubmit={handleCreateRestaurant} className={styles.form}>
                   <Input
                     id="restaurant-name"
-                    label="Nome do restaurante *"
+                    label={t("common:bootstrap.nameLabel") + " *"}
                     type="text"
                     value={restaurantName}
                     onChange={(e) => setRestaurantName(e.target.value)}
-                    placeholder="ex: Sofia Gastrobar"
+                    placeholder={t("common:bootstrap.namePlaceholder")}
                     required
                     autoFocus
                     fullWidth
                   />
                   <Select
                     id="restaurant-type"
-                    label="Tipo *"
+                    label={t("common:bootstrap.typeLabel") + " *"}
                     value={restaurantType}
                     onChange={(e) => setRestaurantType(e.target.value)}
-                    options={RESTAURANT_TYPES.map((t) => ({
-                      value: t,
-                      label: t,
+                    options={RESTAURANT_TYPE_KEYS.map((key) => ({
+                      value: key,
+                      label: t("common:bootstrap.restaurantTypes." + key),
                     }))}
                     fullWidth
                   />
                   <Select
                     id="restaurant-country"
-                    label="País / Moeda *"
+                    label={t("common:bootstrap.countryLabel") + " / Moeda *"}
                     value={restaurantCountry}
                     onChange={(e) => setRestaurantCountry(e.target.value)}
                     options={[
-                      { value: "PT", label: "Portugal (EUR)" },
-                      { value: "ES", label: "Espanha (EUR)" },
-                      { value: "BR", label: "Brasil (BRL)" },
-                      { value: "US", label: "EUA (USD)" },
+                      { value: "PT", label: t("common:bootstrap.countryPT") },
+                      { value: "ES", label: t("common:bootstrap.countryES") },
+                      { value: "BR", label: t("common:bootstrap.countryBR") },
+                      { value: "US", label: t("common:bootstrap.countryUS") },
                     ]}
                     fullWidth
                   />
                   <Input
                     id="restaurant-contact"
-                    label="Contacto (cidade, email ou telefone)"
+                    label={t("common:bootstrap.contactFullLabel")}
                     type="text"
                     value={restaurantContact}
                     onChange={(e) => setRestaurantContact(e.target.value)}
-                    placeholder="opcional"
+                    placeholder={t("common:bootstrap.contactPlaceholder")}
                     fullWidth
                   />
                   <Button
@@ -498,7 +497,7 @@ export function BootstrapPage({
                     variant="solid"
                     fullWidth
                   >
-                    Criar e continuar
+                    {t("common:bootstrap.createAndContinue")}
                   </Button>
                 </form>
               </Card>
@@ -510,7 +509,7 @@ export function BootstrapPage({
             <>
               <div className={styles.spinner} />
               <h1 className={`h1 ${styles.headingWhite}`}>
-                Criando o teu restaurante
+                {t("common:bootstrap.creatingRestaurant")}
               </h1>
               {progressStep && (
                 <p className={`muted ${styles.progressSuccess}`}>
@@ -527,7 +526,7 @@ export function BootstrapPage({
             <>
               <div className={styles.spinnerGlow} />
               <h1 className={`h1 ${styles.headingWhite}`}>
-                Conectando ao Sistema Nervoso
+                {t("common:bootstrap.connecting")}
               </h1>
               {showProgress && progressStep && (
                 <p className={`muted ${styles.progressSuccessLarge}`}>
@@ -536,7 +535,7 @@ export function BootstrapPage({
               )}
               {!showProgress && (
                 <p className={`muted ${styles.progressMuted}`}>
-                  Validando credenciais operacionais...
+                  {t("common:bootstrap.validatingCredentials")}
                 </p>
               )}
             </>
@@ -583,9 +582,9 @@ export function BootstrapPage({
               <div className={styles.iconSuccess}>
                 <div className={styles.iconSuccessDot}></div>
               </div>
-              <h1 className={`h1 ${styles.headingWhite}`}>Acesso Autorizado</h1>
+              <h1 className={`h1 ${styles.headingWhite}`}>{t("common:bootstrap.accessAuthorized")}</h1>
               <p className={`muted ${styles.progressSuccess}`}>
-                Iniciando protocolos...
+                {t("common:bootstrap.startingProtocols")}
               </p>
             </>
           )}
@@ -594,9 +593,9 @@ export function BootstrapPage({
           {state === "redirecting" && (
             <>
               <div className={styles.spinner} />
-              <h1 className={`h1 ${styles.heading22}`}>Bem-vindo</h1>
+              <h1 className={`h1 ${styles.heading22}`}>{t("common:bootstrap.welcome")}</h1>
               <p className={`muted ${styles.progressText}`}>
-                A iniciar configuração inicial...
+                {t("common:bootstrap.completeInitialSetup")}
               </p>
             </>
           )}
@@ -605,12 +604,12 @@ export function BootstrapPage({
           {state === "error" && (
             <>
               <div className={styles.iconError}>✕</div>
-              <h1 className={`h1 ${styles.heading22}`}>Falha na Conexão</h1>
+              <h1 className={`h1 ${styles.heading22}`}>{t("common:bootstrap.connectionFailed")}</h1>
 
               <div className={styles.errorContainer}>
                 <InlineAlert
                   type="error"
-                  message={errorMessage || "Erro desconhecido"}
+                  message={errorMessage || t("common:bootstrap.unknownError")}
                 />
 
                 <div className={styles.errorActions}>

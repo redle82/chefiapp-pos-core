@@ -6,12 +6,14 @@
  * "Ser app" = abrir sem browser (PWA instalado). Quando em browser, mostramos como abrir como app.
  */
 
+import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import React, { useEffect, useState, type ReactNode } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useCoreHealth } from "../../../core/health/useCoreHealth";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import { ChefIAppSignature } from "../../../ui/design-system/sovereign/ChefIAppSignature";
 import { colors } from "../../../ui/design-system/tokens/colors";
+import { LocaleSwitcher } from "../../../components/LocaleSwitcher";
 import { OfflineIndicator } from "../../../ui/OfflineIndicator";
 import { RestaurantLogo } from "../../../ui/RestaurantLogo";
 import { AppStaffBootScreen } from "../AppStaffBootScreen";
@@ -41,6 +43,7 @@ export function StaffAppShellLayout({
   const { status: coreStatus } = useCoreHealth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const locale = useFormatLocale();
 
   const [showBoot, setShowBoot] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -105,11 +108,11 @@ export function StaffAppShellLayout({
     const t = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(t);
   }, []);
-  const timeStr = now.toLocaleTimeString("pt-PT", {
+  const timeStr = now.toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
   });
-  const dayStr = now.toLocaleDateString("pt-PT", { weekday: "short" });
+  const dayStr = now.toLocaleDateString(locale, { weekday: "short" });
 
   if (showBoot) {
     return (
@@ -235,7 +238,7 @@ export function StaffAppShellLayout({
           </span>
         </div>
 
-        {/* Direita: estado do turno + estado operacional + dropdown ⋯ */}
+        {/* Direita: idioma + estado do turno + estado operacional + dropdown ⋯ */}
         <div
           style={{
             flex: 1,
@@ -248,6 +251,7 @@ export function StaffAppShellLayout({
             position: "relative",
           }}
         >
+          <LocaleSwitcher />
           <span
             style={{
               fontSize: 11,

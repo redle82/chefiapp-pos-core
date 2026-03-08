@@ -5,6 +5,8 @@
  * (Alternativa leve sem dependências externas)
  */
 
+import { getFormatLocale } from "../../../core/i18n/regionLocaleConfig";
+
 export interface ShiftReportData {
     shiftDate: string;
     workerName: string;
@@ -155,7 +157,7 @@ export function exportShiftReportToPDF(data: ShiftReportData): void {
 
     <div class="footer">
         <p>Gerado automaticamente pelo ChefIApp POS Core</p>
-        <p>${new Date().toLocaleString('pt-PT')}</p>
+        <p>${new Date().toLocaleString(getFormatLocale())}</p>
     </div>
 </body>
 </html>

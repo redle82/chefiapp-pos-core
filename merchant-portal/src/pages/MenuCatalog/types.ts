@@ -48,9 +48,13 @@ export interface MenuRestaurant {
   language?: string;
 }
 
+import { currencyService } from "../../core/currency/CurrencyService";
+import { getFormatLocale } from "../../core/i18n/regionLocaleConfig";
+
 export function formatPrice(cents: number): string {
-  return new Intl.NumberFormat("pt-PT", {
+  const currency = currencyService.getDefaultCurrency();
+  return new Intl.NumberFormat(getFormatLocale(), {
     style: "currency",
-    currency: "EUR",
+    currency,
   }).format(cents / 100);
 }

@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { infer } from "../../core/ai/aiGateway";
 
 const VPC = {
@@ -46,6 +47,7 @@ function isIcSeeShareUrl(url: string): boolean {
 type StreamStatus = "idle" | "loading" | "live" | "error";
 
 export function ConfigPerceptionPage() {
+  const { t } = useTranslation();
   const [cameraUrl, setCameraUrl] = useState("");
   const [cameraZone, setCameraZone] = useState("");
   const [saved, setSaved] = useState(false);
@@ -188,7 +190,8 @@ export function ConfigPerceptionPage() {
             margin: "0 0 8px 0",
           }}
         >
-          Link da câmera (stream ou partilha) e análise de cena com IA. Sem identificar pessoas.
+          Link da câmera (stream ou partilha) e análise de cena com IA. Sem
+          identificar pessoas.
         </p>
         <p
           style={{
@@ -198,7 +201,8 @@ export function ConfigPerceptionPage() {
             fontWeight: 500,
           }}
         >
-          Cole o link da câmera abaixo, guarde e use «Analisar com IA» para obter uma descrição da cena.
+          Cole o link da câmera abaixo, guarde e use «Analisar com IA» para
+          obter uma descrição da cena.
         </p>
       </header>
 
@@ -211,7 +215,15 @@ export function ConfigPerceptionPage() {
           border: `1px solid ${VPC.border}`,
         }}
       >
-        <label style={{ display: "block", fontSize: VPC.fontSizeBase, fontWeight: 600, marginBottom: 8, color: VPC.text }}>
+        <label
+          style={{
+            display: "block",
+            fontSize: VPC.fontSizeBase,
+            fontWeight: 600,
+            marginBottom: 8,
+            color: VPC.text,
+          }}
+        >
           Link da câmera
         </label>
         <input
@@ -221,11 +233,20 @@ export function ConfigPerceptionPage() {
           placeholder="https://... (ex.: partilha iCSee d.jfapp.net, ou URL de stream)"
           style={inputStyle}
         />
-        <label style={{ display: "block", fontSize: VPC.fontSizeBase, fontWeight: 600, marginBottom: 8, color: VPC.text }}>
+        <label
+          style={{
+            display: "block",
+            fontSize: VPC.fontSizeBase,
+            fontWeight: 600,
+            marginBottom: 8,
+            color: VPC.text,
+          }}
+        >
           Zona da câmera
         </label>
         <p style={{ fontSize: 12, color: VPC.textMuted, margin: "0 0 8px 0" }}>
-          Onde esta câmera está (cozinha, salão, estoque, etc.). Necessário para interpretar eventos.
+          Onde esta câmera está (cozinha, salão, estoque, etc.). Necessário para
+          interpretar eventos.
         </p>
         <select
           value={cameraZone}
@@ -239,7 +260,14 @@ export function ConfigPerceptionPage() {
             </option>
           ))}
         </select>
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
           <button
             type="button"
             onClick={handleSave}
@@ -255,24 +283,47 @@ export function ConfigPerceptionPage() {
               cursor: "pointer",
             }}
           >
-            Guardar link
+            {t("common:saveLink")}
           </button>
-          {saved && <span style={{ fontSize: VPC.fontSizeBase, color: VPC.accent, fontWeight: 500 }}>Guardado.</span>}
+          {saved && (
+            <span
+              style={{
+                fontSize: VPC.fontSizeBase,
+                color: VPC.accent,
+                fontWeight: 500,
+              }}
+            >
+              Guardado.
+            </span>
+          )}
           <button
             type="button"
             onClick={previewUrl ? handleHideLive : handleShowLive}
             disabled={!!(cameraUrl.trim() && isIcSeeShareUrl(cameraUrl))}
-            title={cameraUrl.trim() && isIcSeeShareUrl(cameraUrl) ? "Para links iCSee use «Abrir câmera noutra janela» na secção abaixo" : undefined}
+            title={
+              cameraUrl.trim() && isIcSeeShareUrl(cameraUrl)
+                ? "Para links iCSee use «Abrir câmera noutra janela» na secção abaixo"
+                : undefined
+            }
             style={{
               minHeight: VPC.btnMinHeight,
               padding: "12px 24px",
               fontSize: VPC.fontSizeBase,
               fontWeight: 600,
-              color: cameraUrl.trim() && isIcSeeShareUrl(cameraUrl) ? VPC.textMuted : VPC.text,
-              backgroundColor: cameraUrl.trim() && isIcSeeShareUrl(cameraUrl) ? "transparent" : VPC.surface,
+              color:
+                cameraUrl.trim() && isIcSeeShareUrl(cameraUrl)
+                  ? VPC.textMuted
+                  : VPC.text,
+              backgroundColor:
+                cameraUrl.trim() && isIcSeeShareUrl(cameraUrl)
+                  ? "transparent"
+                  : VPC.surface,
               border: `1px solid ${VPC.border}`,
               borderRadius: VPC.radius,
-              cursor: cameraUrl.trim() && isIcSeeShareUrl(cameraUrl) ? "not-allowed" : "pointer",
+              cursor:
+                cameraUrl.trim() && isIcSeeShareUrl(cameraUrl)
+                  ? "not-allowed"
+                  : "pointer",
             }}
           >
             {previewUrl ? "Ocultar transmissão" : "Ver ao vivo"}
@@ -291,11 +342,19 @@ export function ConfigPerceptionPage() {
           border: `1px solid ${VPC.border}`,
         }}
       >
-        <h2 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 8px 0", color: VPC.text }}>
+        <h2
+          style={{
+            fontSize: 16,
+            fontWeight: 600,
+            margin: "0 0 8px 0",
+            color: VPC.text,
+          }}
+        >
           Confirmação — Câmera ligada?
         </h2>
         <p style={{ fontSize: 13, color: VPC.textMuted, margin: "0 0 16px 0" }}>
-          Use «Ver ao vivo» para confirmar se a câmera está acesa e a enviar sinal.
+          Use «Ver ao vivo» para confirmar se a câmera está acesa e a enviar
+          sinal.
         </p>
         {cameraUrl.trim() && isIcSeeShareUrl(cameraUrl) && (
           <div
@@ -307,15 +366,31 @@ export function ConfigPerceptionPage() {
               borderRadius: VPC.radius,
             }}
           >
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#93c5fd", marginBottom: 6 }}>
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#93c5fd",
+                marginBottom: 6,
+              }}
+            >
               Link iCSee (partilha)
             </div>
-            <p style={{ fontSize: 13, color: VPC.textMuted, margin: "0 0 12px 0" }}>
-              Este link abre a página da iCSee. Use o botão abaixo para abrir noutra janela.
+            <p
+              style={{
+                fontSize: 13,
+                color: VPC.textMuted,
+                margin: "0 0 12px 0",
+              }}
+            >
+              Este link abre a página da iCSee. Use o botão abaixo para abrir
+              noutra janela.
             </p>
             <button
               type="button"
-              onClick={() => window.open(cameraUrl.trim(), "_blank", "noopener,noreferrer")}
+              onClick={() =>
+                window.open(cameraUrl.trim(), "_blank", "noopener,noreferrer")
+              }
               style={{
                 minHeight: VPC.btnMinHeight,
                 padding: "12px 24px",
@@ -334,7 +409,8 @@ export function ConfigPerceptionPage() {
         )}
         {cameraUrl.trim() && isIcSeeShareUrl(cameraUrl) ? (
           <p style={{ fontSize: 13, color: VPC.textMuted, margin: 0 }}>
-            Para partilhas iCSee use o botão <strong>Abrir câmera noutra janela</strong> acima.
+            Para partilhas iCSee use o botão{" "}
+            <strong>Abrir câmera noutra janela</strong> acima.
           </p>
         ) : !previewUrl ? (
           <p style={{ fontSize: 13, color: VPC.textMuted, margin: 0 }}>
@@ -342,18 +418,51 @@ export function ConfigPerceptionPage() {
           </p>
         ) : (
           <>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              {streamStatus === "loading" && <span style={{ fontSize: 14, color: VPC.accent }}>A carregar…</span>}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 12,
+              }}
+            >
+              {streamStatus === "loading" && (
+                <span style={{ fontSize: 14, color: VPC.accent }}>
+                  A carregar…
+                </span>
+              )}
               {streamStatus === "live" && (
                 <>
-                  <span style={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: VPC.accent }} />
-                  <span style={{ fontSize: 14, color: VPC.accent, fontWeight: 600 }}>Câmera ligada — a receber sinal</span>
+                  <span
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      backgroundColor: VPC.accent,
+                    }}
+                  />
+                  <span
+                    style={{ fontSize: 14, color: VPC.accent, fontWeight: 600 }}
+                  >
+                    Câmera ligada — a receber sinal
+                  </span>
                 </>
               )}
               {streamStatus === "error" && (
                 <>
-                  <span style={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: "#f87171" }} />
-                  <span style={{ fontSize: 14, color: "#f87171", fontWeight: 600 }}>Sem sinal — verifique o link</span>
+                  <span
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      backgroundColor: "#f87171",
+                    }}
+                  />
+                  <span
+                    style={{ fontSize: 14, color: "#f87171", fontWeight: 600 }}
+                  >
+                    Sem sinal — verifique o link
+                  </span>
                 </>
               )}
             </div>
@@ -376,8 +485,16 @@ export function ConfigPerceptionPage() {
                 onError={() => setStreamStatus("error")}
               />
             </div>
-            <p style={{ fontSize: 12, color: VPC.textMuted, marginTop: 8, marginBottom: 0 }}>
-              Se não vir imagem, o link pode ser uma página (ex.: iCSee). Use um link de stream ou snapshot.
+            <p
+              style={{
+                fontSize: 12,
+                color: VPC.textMuted,
+                marginTop: 8,
+                marginBottom: 0,
+              }}
+            >
+              Se não vir imagem, o link pode ser uma página (ex.: iCSee). Use um
+              link de stream ou snapshot.
             </p>
           </>
         )}
@@ -394,11 +511,19 @@ export function ConfigPerceptionPage() {
           border: `1px solid ${VPC.border}`,
         }}
       >
-        <h2 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 8px 0", color: VPC.text }}>
+        <h2
+          style={{
+            fontSize: 16,
+            fontWeight: 600,
+            margin: "0 0 8px 0",
+            color: VPC.text,
+          }}
+        >
           Observação (padrões básicos)
         </h2>
         <p style={{ fontSize: 13, color: VPC.textMuted, margin: "0 0 12px 0" }}>
-          Deteta movimento vs. ausência de movimento, duração por zona. Gera eventos estruturados.
+          Deteta movimento vs. ausência de movimento, duração por zona. Gera
+          eventos estruturados.
         </p>
         <button
           type="button"
@@ -418,7 +543,14 @@ export function ConfigPerceptionPage() {
         >
           Gerar observação
         </button>
-        <p style={{ fontSize: 12, color: VPC.textMuted, marginTop: 8, marginBottom: 0 }}>
+        <p
+          style={{
+            fontSize: 12,
+            color: VPC.textMuted,
+            marginTop: 8,
+            marginBottom: 0,
+          }}
+        >
           Em breve: deteção de padrões por zona.
         </p>
       </div>
@@ -434,11 +566,19 @@ export function ConfigPerceptionPage() {
           border: `1px solid ${VPC.border}`,
         }}
       >
-        <h2 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 8px 0", color: VPC.text }}>
+        <h2
+          style={{
+            fontSize: 16,
+            fontWeight: 600,
+            margin: "0 0 8px 0",
+            color: VPC.text,
+          }}
+        >
           Analisar com LLM
         </h2>
         <p style={{ fontSize: 13, color: VPC.textMuted, marginBottom: 12 }}>
-          Usa o link e a zona guardados. O AI Gateway devolve explicação e sugestão. Opcional: VITE_AI_GATEWAY_ENDPOINT.
+          Usa o link e a zona guardados. O AI Gateway devolve explicação e
+          sugestão. Opcional: VITE_AI_GATEWAY_ENDPOINT.
         </p>
         <button
           type="button"

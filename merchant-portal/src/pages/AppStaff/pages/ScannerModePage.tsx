@@ -10,6 +10,8 @@
  * Visible to: owner, manager (via staffModeConfig "scanner")
  */
 
+import { useCurrency } from "@/core/currency/useCurrency";
+import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import {
@@ -35,6 +37,8 @@ interface LocationRow {
 
 export function ScannerModePage() {
   const { coreRestaurantId } = useStaff();
+  const { symbol } = useCurrency();
+  const locale = useFormatLocale();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -423,7 +427,7 @@ export function ScannerModePage() {
         {
           name: result.name ?? "?",
           qty: q,
-          time: new Date().toLocaleTimeString("pt-PT", {
+          time: new Date().toLocaleTimeString(locale, {
             hour: "2-digit",
             minute: "2-digit",
           }),
@@ -856,7 +860,7 @@ export function ScannerModePage() {
                     {result.unit}
                     {result.category ? ` · ${result.category}` : ""}
                     {(result.cost_per_unit ?? 0) > 0
-                      ? ` · €${(result.cost_per_unit ?? 0).toFixed(2)}`
+                      ? ` · ${symbol}${(result.cost_per_unit ?? 0).toFixed(2)}`
                       : ""}
                   </p>
                 </div>

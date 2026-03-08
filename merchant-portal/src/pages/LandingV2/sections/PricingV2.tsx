@@ -3,12 +3,14 @@
  * Copy via useLandingLocale + getPricing (i18n/landingV2Copy).
  */
 import { Link } from "react-router-dom";
+import { useCurrency } from "../../../core/currency/useCurrency";
 import { CANONICAL_MONTHLY_PRICE_EUR } from "../../../core/pricing/canonicalPrice";
 import { useLandingLocale } from "../i18n/LandingLocaleContext";
 import { getPricing } from "../i18n/landingV2Copy";
 
 export const PricingV2 = () => {
   const { locale } = useLandingLocale();
+  const { symbol } = useCurrency();
   const p = getPricing(locale);
 
   return (
@@ -54,7 +56,8 @@ export const PricingV2 = () => {
               <div className="mb-8">
                 <div className="flex items-baseline gap-1 mb-2">
                   <span className="text-5xl md:text-7xl font-black bg-linear-to-b from-white to-neutral-400 bg-clip-text text-transparent tabular-nums">
-                    {CANONICAL_MONTHLY_PRICE_EUR}€
+                    {CANONICAL_MONTHLY_PRICE_EUR}
+                    {symbol}
                   </span>
                   <span className="text-neutral-500 text-lg">{p.perMonth}</span>
                 </div>

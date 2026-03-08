@@ -1,5 +1,5 @@
 /**
- * UbicacionCreatePage — Página dedicada para criar localização (portal /config/ubicaciones/nova).
+ * UbicacionCreatePage — Página dedicada para criar localização (portal /admin/config/locations/nova).
  * Sem billing, sem wizard comercial. Ref: CONFIG_LOCATION_VS_CONTRACT.md.
  */
 
@@ -10,21 +10,44 @@ import {
   fontWeight,
   space,
 } from "@chefiapp/core-design-system";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { useToastContext } from "../../context/ToastContext";
 import { locationsStore } from "../../features/admin/locations/store/locationsStore";
+import { useAsync } from "../../hooks/useAsync";
+import { Breadcrumb } from "../../ui/design-system/Breadcrumb";
 import type { UbicacionFormData } from "./UbicacionForm";
 import { UbicacionForm } from "./UbicacionForm";
 
 export function UbicacionCreatePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const toast = useToastContext();
+
+  const { execute: submitCreate, loading: isSubmitting } = useAsync(
+    async (data: UbicacionFormData) => {
+      locationsStore.addLocation(data);
+      toast.success(
+        t("locations:created_success", {
+          defaultValue: "Local criado com sucesso.",
+        }),
+      );
+      navigate("/admin/config/locations", { replace: true });
+    },
+  );
 
   const handleSubmit = (data: UbicacionFormData) => {
-    locationsStore.addLocation(data);
-    navigate("/config/ubicaciones", { replace: true });
+    submitCreate(data).catch(() => {
+      toast.error(
+        t("locations:created_error", {
+          defaultValue: "Erro ao criar local. Tenta de novo.",
+        }),
+      );
+    });
   };
 
   const handleCancel = () => {
-    navigate("/config/ubicaciones", { replace: true });
+    navigate("/admin/config/locations", { replace: true });
   };
 
   return (
@@ -36,6 +59,13 @@ export function UbicacionCreatePage() {
         fontFamily: fontFamily.sans,
       }}
     >
+      <Breadcrumb
+        items={[
+          { label: "Configuração", to: "/admin/config/general" },
+          { label: "Localizações", to: "/admin/config/locations" },
+          { label: "Novo local" },
+        ]}
+      />
       <header style={{ marginBottom: space.xl }}>
         <h1
           style={{
@@ -61,7 +91,8 @@ export function UbicacionCreatePage() {
         initial={null}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        submitLabel="Criar"
+        submitLabel={t("common:create")}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

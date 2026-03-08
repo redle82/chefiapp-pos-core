@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ConnectivityService } from "../core/sync/ConnectivityService";
 import { dockerCoreClient } from "../infra/docker-core/connection";
 import {
   getInstalledDevice,
@@ -184,7 +185,7 @@ export const DebugTPV = () => {
           </button>
           <div className={styles.statusRow}>
             <div className={styles.statusBadgeOnline}>
-              Status: {navigator.onLine ? "ONLINE" : "OFFLINE (Sovereign)"}
+              Status: {ConnectivityService.getConnectivity() === "online" ? "ONLINE" : "OFFLINE (Sovereign)"}
             </div>
             <div className={styles.statusBadgeReady}>
               {seedStatus || "Ready"}

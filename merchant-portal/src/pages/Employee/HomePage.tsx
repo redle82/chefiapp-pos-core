@@ -5,20 +5,19 @@
  */
 
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { BottomTabs } from "../../components/navigation/BottomTabs";
 import { Header } from "../../components/navigation/Header";
 import { EmptyState } from "../../components/ui/EmptyState";
 import styles from "./HomePage.module.css";
 
 export function EmployeeHomePage() {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
 
-  // TODO: Integrar com Employee Time Engine
-  // TODO: Buscar turno atual do usuário
-  // TODO: Calcular tempo restante
-  const hasShift = false; // Placeholder
+  const hasShift = false;
   const shiftStatus = {
-    status: "Em turno",
+    status: t("common:employee.onShift"),
     hours: "08:00 - 16:00",
     remaining: "4h 30min",
   };
@@ -30,9 +29,9 @@ export function EmployeeHomePage() {
   ];
 
   const getPriorityLabel = (priority: string) => {
-    if (priority === "high") return "Alta";
-    if (priority === "medium") return "Média";
-    return "Baixa";
+    if (priority === "high") return t("common:employee.priorityHigh");
+    if (priority === "medium") return t("common:employee.priorityMedium");
+    return t("common:employee.priorityLow");
   };
 
   const getPriorityClassName = (priority: string) => {
@@ -43,24 +42,22 @@ export function EmployeeHomePage() {
 
   return (
     <div className={styles.page}>
-      <Header title="Início" subtitle="Status do turno" />
+      <Header title={t("common:employee.home")} subtitle={t("common:employee.shiftStatus")} />
 
       <div className={styles.content}>
         {hasShift ? (
           <>
-            {/* Shift Status Card */}
             <div className={styles.shiftCard}>
-              <h3 className={styles.sectionTitle}>Status do Turno</h3>
+              <h3 className={styles.sectionTitle}>{t("common:employee.shiftStatus")}</h3>
               <div className={styles.shiftMeta}>
                 <div>Status: {shiftStatus.status}</div>
-                <div>Horário: {shiftStatus.hours}</div>
-                <div>Tempo restante: {shiftStatus.remaining}</div>
+                <div>{t("common:employee.schedule")}: {shiftStatus.hours}</div>
+                <div>{t("common:employee.remaining")}: {shiftStatus.remaining}</div>
               </div>
             </div>
 
-            {/* Focus Card */}
             <div className={styles.focusCard}>
-              <h3 className={styles.sectionTitle}>Foco do Dia</h3>
+              <h3 className={styles.sectionTitle}>{t("common:employee.focusOfDay")}</h3>
               <div className={styles.focusList}>
                 {focusItems.map((item) => (
                   <div key={item.id} className={styles.focusItem}>
@@ -79,32 +76,31 @@ export function EmployeeHomePage() {
                 onClick={() => navigate("/employee/tasks")}
                 className={styles.primaryActionButton}
               >
-                Ver todas as tarefas
+                {t("common:employee.viewAllTasks")}
               </button>
             </div>
 
-            {/* Quick Actions */}
             <div className={styles.quickActions}>
               <button
                 onClick={() => navigate("/employee/operation")}
                 className={styles.secondaryActionButton}
               >
-                Ver Operação
+                {t("common:employee.viewOperation")}
               </button>
               <button
                 onClick={() => navigate("/employee/tasks")}
                 className={styles.secondaryActionButton}
               >
-                Ver Tarefas
+                {t("common:employee.viewTasks")}
               </button>
             </div>
           </>
         ) : (
           <EmptyState
-            title="Você não está em turno hoje"
-            message="Verifique seus próximos turnos"
+            title={t("common:employee.noShift")}
+            message={t("common:employee.noShiftDesc")}
             action={{
-              label: "Ver próximos turnos",
+              label: t("common:employee.startShift"),
               onPress: () => navigate("/employee/profile"),
             }}
           />

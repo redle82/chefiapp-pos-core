@@ -11,15 +11,17 @@
  * UI: scroll é do Shell; sem duplicar layout.
  */
 
+import { useCurrency } from "@/core/currency/useCurrency";
+import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { dockerCoreClient } from "../../../infra/docker-core/connection";
-import { isBackendUnavailable } from "../../../infra/menuPilotFallback";
 import {
   BEFORE_OPEN_TASK_KEYS,
   useBeforeOpenRitual,
 } from "../../../core/ritual";
 import { useShift } from "../../../core/shift/ShiftContext";
+import { dockerCoreClient } from "../../../infra/docker-core/connection";
+import { isBackendUnavailable } from "../../../infra/menuPilotFallback";
 import { useToast } from "../../../ui/design-system";
 import { Button } from "../../../ui/design-system/Button";
 import { Card } from "../../../ui/design-system/Card";
@@ -32,6 +34,8 @@ export function ManagerTurnoPage() {
   const { tasks, activeWorkerId, operationalContract, currentRiskLevel } =
     useStaff();
   const navigate = useNavigate();
+  const { symbol } = useCurrency();
+  const locale = useFormatLocale();
   const { info } = useToast();
   const restaurantId = operationalContract?.id ?? null;
   const {
@@ -106,7 +110,7 @@ export function ManagerTurnoPage() {
     const shiftDuration = "8h 30m";
 
     exportShiftReportToPDF({
-      shiftDate: new Date().toLocaleDateString("pt-PT"),
+      shiftDate: new Date().toLocaleDateString(locale),
       workerName: activeWorkerId || "Manager",
       role: "Manager",
       tasksCompleted: completedTasks,
@@ -253,7 +257,7 @@ export function ManagerTurnoPage() {
                                 color: colors.text.tertiary,
                               }}
                             >
-                              Caixa inicial (€)
+                              Caixa inicial ({symbol})
                             </span>
                             <input
                               type="text"

@@ -7,6 +7,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import {
@@ -14,6 +15,7 @@ import {
   setBillingConfig,
   type BillingConfigRow,
 } from "../../core/billing/coreBillingApi";
+import { currencyService } from "../../core/currency/CurrencyService";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
 import styles from "./BillingConfigPanel.module.css";
 
@@ -24,19 +26,22 @@ const GATEWAYS = [
   { id: "custom" as const, label: "Outro", region: "Plugável" },
 ] as const;
 
-const CURRENCIES = ["EUR", "USD", "BRL"] as const;
+const CURRENCIES = ["EUR", "USD", "GBP", "BRL", "MXN", "CAD", "AUD"] as const;
 
 type Provider = BillingConfigRow["provider"];
 type Currency = BillingConfigRow["currency"];
 
 export function BillingConfigPanel() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? null;
   const isCore = getBackendType() === BackendType.docker;
 
   const [provider, setProvider] = useState<Provider>("stripe");
-  const [currency, setCurrency] = useState<Currency>("EUR");
+  const [currency, setCurrency] = useState<Currency>(
+    currencyService.getDefaultCurrency() as Currency,
+  );
   const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -216,10 +221,10 @@ export function BillingConfigPanel() {
               }`}
             >
               {saveStatus === "saving"
-                ? "A guardar…"
+                ? t("common:saving")
                 : saveStatus === "ok"
                 ? "Guardado"
-                : "Guardar"}
+                : t("common:save")}
             </button>
             {error && <span className={styles.errorText}>{error}</span>}
           </div>

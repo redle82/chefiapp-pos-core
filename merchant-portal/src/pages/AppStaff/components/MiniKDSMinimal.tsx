@@ -3,19 +3,26 @@
  * Visual: VPC (escuro, superfície, borda, texto).
  */
 
-import { useEffect, useState, useRef } from 'react';
-import { readActiveOrders, readOrderItems } from '../../../infra/readers/OrderReader';
-import type { CoreOrder, CoreOrderItem } from '../../../infra/docker-core/types';
-import { OriginBadge } from './OriginBadge';
-import { calculateOrderStatus } from '../../KDSMinimal/OrderStatusCalculator';
+import { useCurrency } from "@/core/currency/useCurrency";
+import { useEffect, useRef, useState } from "react";
+import type {
+  CoreOrder,
+  CoreOrderItem,
+} from "../../../infra/docker-core/types";
+import {
+  readActiveOrders,
+  readOrderItems,
+} from "../../../infra/readers/OrderReader";
+import { calculateOrderStatus } from "../../KDSMinimal/OrderStatusCalculator";
+import { OriginBadge } from "./OriginBadge";
 
 const VPC = {
-  bg: '#0a0a0a',
-  surface: '#141414',
-  border: '#262626',
-  text: '#fafafa',
-  textMuted: '#a3a3a3',
-  accent: '#22c55e',
+  bg: "#0a0a0a",
+  surface: "#141414",
+  border: "#262626",
+  text: "#fafafa",
+  textMuted: "#a3a3a3",
+  accent: "#22c55e",
   radius: 8,
   space: 12,
   fontSizeBase: 14,
@@ -27,11 +34,17 @@ interface MiniKDSMinimalProps {
   maxHeight?: string;
 }
 
-export function MiniKDSMinimal({ restaurantId, maxHeight = '400px' }: MiniKDSMinimalProps) {
-  const [orders, setOrders] = useState<(CoreOrder & { items: CoreOrderItem[] })[]>([]);
+export function MiniKDSMinimal({
+  restaurantId,
+  maxHeight = "400px",
+}: MiniKDSMinimalProps) {
+  const { formatAmount } = useCurrency();
+  const [orders, setOrders] = useState<
+    (CoreOrder & { items: CoreOrderItem[] })[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [realtimeStatus, setRealtimeStatus] = useState<string>('DISCONNECTED');
+  const [realtimeStatus, setRealtimeStatus] = useState<string>("DISCONNECTED");
   const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Função para carregar pedidos
@@ -48,12 +61,12 @@ export function MiniKDSMinimal({ restaurantId, maxHeight = '400px' }: MiniKDSMin
         activeOrders.map(async (order) => {
           const items = await readOrderItems(order.id);
           return { ...order, items };
-        })
+        }),
       );
 
       setOrders(ordersWithItems);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      setError(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {
       if (!isBackground) {
         setLoading(false);
@@ -66,7 +79,7 @@ export function MiniKDSMinimal({ restaurantId, maxHeight = '400px' }: MiniKDSMin
 
     // REALTIME DESABILITADO - Problema 431 no WebSocket
     // Usando apenas polling (30s) até resolver JWT no WebSocket
-    setRealtimeStatus('CLOSED');
+    setRealtimeStatus("CLOSED");
 
     // Polling principal (30s)
     const pollingInterval = setInterval(() => {
@@ -86,10 +99,10 @@ export function MiniKDSMinimal({ restaurantId, maxHeight = '400px' }: MiniKDSMin
       <div
         style={{
           padding: VPC.space,
-          textAlign: 'center',
+          textAlign: "center",
           fontSize: VPC.fontSizeBase,
           color: VPC.textMuted,
-          fontFamily: 'Inter, system-ui, sans-serif',
+          fontFamily: "Inter, system-ui, sans-serif",
         }}
       >
         A carregar pedidos...
@@ -103,8 +116,8 @@ export function MiniKDSMinimal({ restaurantId, maxHeight = '400px' }: MiniKDSMin
         style={{
           padding: VPC.space,
           fontSize: VPC.fontSizeBase,
-          color: '#f87171',
-          fontFamily: 'Inter, system-ui, sans-serif',
+          color: "#f87171",
+          fontFamily: "Inter, system-ui, sans-serif",
         }}
       >
         Erro: {error}
@@ -117,12 +130,12 @@ export function MiniKDSMinimal({ restaurantId, maxHeight = '400px' }: MiniKDSMin
       style={{
         border: `1px solid ${VPC.border}`,
         borderRadius: VPC.radius,
-        overflow: 'hidden',
+        overflow: "hidden",
         maxHeight,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         backgroundColor: VPC.surface,
-        fontFamily: 'Inter, system-ui, sans-serif',
+        fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
       <div
@@ -130,14 +143,27 @@ export function MiniKDSMinimal({ restaurantId, maxHeight = '400px' }: MiniKDSMin
           padding: `${VPC.space}px 16px`,
           backgroundColor: VPC.bg,
           borderBottom: `1px solid ${VPC.border}`,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
-        <span style={{ fontSize: VPC.fontSizeBase, fontWeight: 600, color: VPC.text }}>KDS Mínimo</span>
-        <span style={{ fontSize: VPC.fontSizeSmall, color: realtimeStatus === 'SUBSCRIBED' ? VPC.accent : '#f87171' }}>
-          {realtimeStatus === 'SUBSCRIBED' ? '🟢' : '🔴'}
+        <span
+          style={{
+            fontSize: VPC.fontSizeBase,
+            fontWeight: 600,
+            color: VPC.text,
+          }}
+        >
+          KDS Mínimo
+        </span>
+        <span
+          style={{
+            fontSize: VPC.fontSizeSmall,
+            color: realtimeStatus === "SUBSCRIBED" ? VPC.accent : "#f87171",
+          }}
+        >
+          {realtimeStatus === "SUBSCRIBED" ? "🟢" : "🔴"}
         </span>
       </div>
 
@@ -147,7 +173,7 @@ export function MiniKDSMinimal({ restaurantId, maxHeight = '400px' }: MiniKDSMin
           <div
             style={{
               padding: VPC.space * 2,
-              textAlign: 'center',
+              textAlign: "center",
               fontSize: VPC.fontSizeBase,
               color: VPC.textMuted,
             }}
@@ -181,22 +207,62 @@ export function MiniKDSMinimal({ restaurantId, maxHeight = '400px' }: MiniKDSMin
                     color: VPC.text,
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <strong style={{ fontSize: VPC.fontSizeBase }}>#{order.number || order.short_id || order.id.slice(0, 8)}</strong>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 4,
+                    }}
+                  >
+                    <strong style={{ fontSize: VPC.fontSizeBase }}>
+                      #{order.number || order.short_id || order.id.slice(0, 8)}
+                    </strong>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 4 }}
+                    >
                       <OriginBadge origin={order.sync_metadata?.origin} />
-                      <span style={{ color: orderStatus.borderColor, fontSize: 14, fontWeight: orderStatus.state === 'delay' ? 700 : 400 }}>
-                        {orderStatus.state === 'delay' ? '🔴' : orderStatus.state === 'attention' ? '🟡' : '🟢'}
+                      <span
+                        style={{
+                          color: orderStatus.borderColor,
+                          fontSize: 14,
+                          fontWeight: orderStatus.state === "delay" ? 700 : 400,
+                        }}
+                      >
+                        {orderStatus.state === "delay"
+                          ? "🔴"
+                          : orderStatus.state === "attention"
+                          ? "🟡"
+                          : "🟢"}
                       </span>
                     </div>
                   </div>
-                  <div style={{ fontSize: VPC.fontSizeSmall, color: VPC.textMuted, marginBottom: 4 }}>
-                    Mesa: {order.table_number || 'N/A'} | Status: {order.status}
+                  <div
+                    style={{
+                      fontSize: VPC.fontSizeSmall,
+                      color: VPC.textMuted,
+                      marginBottom: 4,
+                    }}
+                  >
+                    Mesa: {order.table_number || "N/A"} | Status: {order.status}
                   </div>
-                  <div style={{ fontSize: VPC.fontSizeBase, fontWeight: 600, marginTop: 4, color: VPC.accent }}>
-                    € {(order.total_cents / 100).toFixed(2)}
+                  <div
+                    style={{
+                      fontSize: VPC.fontSizeBase,
+                      fontWeight: 600,
+                      marginTop: 4,
+                      color: VPC.accent,
+                    }}
+                  >
+                    {formatAmount(order.total_cents)}
                   </div>
-                  <div style={{ fontSize: VPC.fontSizeSmall, color: VPC.textMuted, marginTop: 4 }}>
+                  <div
+                    style={{
+                      fontSize: VPC.fontSizeSmall,
+                      color: VPC.textMuted,
+                      marginTop: 4,
+                    }}
+                  >
                     {order.items.length} item(ns)
                   </div>
                 </div>

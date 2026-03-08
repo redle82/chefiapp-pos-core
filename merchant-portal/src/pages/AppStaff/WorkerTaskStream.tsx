@@ -2,17 +2,19 @@ import React, { useEffect, useState } from "react";
 import { useTraining } from "../../intelligence/education/TrainingContext";
 import { DarkModeToggle } from "../../ui/components/DarkModeToggle"; // P3-5
 import { useToast } from "../../ui/design-system";
-import { Button } from "../../ui/design-system/Button";
-import { Input } from "../../ui/design-system/Input";
 import { StaffLayout } from "../../ui/design-system/layouts/StaffLayout";
 import { LessonCard } from "../../ui/design-system/LessonCard";
+import { Button } from "../../ui/design-system/Button";
+import { Input } from "../../ui/design-system/Input";
 import { Text } from "../../ui/design-system/primitives/Text";
 import { ShiftForecastWidget } from "../../ui/design-system/ShiftForecastWidget";
 import { ShiftHealthWidget } from "../../ui/design-system/ShiftHealthWidget";
 import { TaskCard } from "../../ui/design-system/TaskCard";
 import { AdvancedSearchPanel } from "./components/AdvancedSearchPanel"; // P4-8
 import { AgoraSection } from "./components/AgoraSection"; // Tela Agora: tarefas pendentes + pedidos READY
+import { GamificationPanel } from "./components/GamificationPanel"; // P6-8
 import { InventoryLiteSection } from "./components/InventoryLiteSection"; // Inventory Lite: alertas repor X
+import { SessionXPWidget } from "./components/SessionXPWidget"; // Phase 3: Gamification
 import { useStaff } from "./context/StaffContext";
 import { useContextualSuggestions } from "./hooks/useContextualSuggestions";
 import { useTableAlerts } from "./hooks/useTableAlerts";
@@ -49,19 +51,19 @@ export const WorkerTaskStream: React.FC = () => {
   // Listen for task completion events (dopamine feedback)
   useEffect(() => {
     const handleTaskComplete = (
-      e: CustomEvent<{ message: string; taskTitle?: string }>
+      e: CustomEvent<{ message: string; taskTitle?: string }>,
     ) => {
       success(e.detail.message);
     };
 
     window.addEventListener(
       "staff-task-complete",
-      handleTaskComplete as EventListener
+      handleTaskComplete as EventListener,
     );
     return () =>
       window.removeEventListener(
         "staff-task-complete",
-        handleTaskComplete as EventListener
+        handleTaskComplete as EventListener,
       );
   }, [success]);
 
@@ -121,6 +123,10 @@ export const WorkerTaskStream: React.FC = () => {
         </div>
       </div>
 
+      {/* SESSION XP - PHASE 3 GAMIFICATION */}
+      <div className={styles.xpSection}>
+        <SessionXPWidget tasks={tasks} shiftStart={shiftStart} />
+      </div>
       {/* TRAINING CARD - PHASE C - Contextual */}
       {activeLesson && (
         <LessonCard
@@ -217,7 +223,7 @@ export const WorkerTaskStream: React.FC = () => {
                 {filterOption === "critical" && "Críticas"}
                 {filterOption === "done" && "Concluídas"}
               </Button>
-            )
+            ),
           )}
         </div>
       </div>
@@ -257,6 +263,11 @@ export const WorkerTaskStream: React.FC = () => {
             }}
           />
         ))}
+      </div>
+
+      {/* P6-8: Gamification Panel */}
+      <div className={styles.gamificationSection}>
+        <GamificationPanel />
       </div>
     </StaffLayout>
   );

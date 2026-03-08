@@ -15,6 +15,8 @@ export interface AvailabilityStatus {
   willBeAvailableAt?: string; // "HH:MM" format
 }
 
+import { getFormatLocale } from "../../../core/i18n/regionLocaleConfig";
+
 export interface MenuAvailabilityProps {
   status: AvailabilityStatus;
   displaySize?: "compact" | "full";
@@ -25,7 +27,7 @@ function formatTime(isoString?: string): string {
   if (!isoString) return "";
   try {
     const date = new Date(isoString);
-    return date.toLocaleTimeString("pt-PT", {
+    return date.toLocaleTimeString(getFormatLocale(), {
       hour: "2-digit",
       minute: "2-digit",
     });

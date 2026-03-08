@@ -13,7 +13,9 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { useCurrency } from "../../core/currency/useCurrency";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
 import {
@@ -97,7 +99,9 @@ const UNIT_OPTIONS = [
 ];
 
 export function InventoryStockMinimal() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const { symbol: currencySymbol } = useCurrency();
   const { identity } = useRestaurantIdentity();
   const restaurantId =
     identity?.restaurantId || "00000000-0000-0000-0000-000000000100";
@@ -982,7 +986,7 @@ export function InventoryStockMinimal() {
                     size="sm"
                     onClick={resetEquipmentForm}
                   >
-                    Cancelar
+                    {t("common:cancel")}
                   </Button>
                   <Button
                     variant="constructive"
@@ -991,10 +995,10 @@ export function InventoryStockMinimal() {
                     disabled={savingEquipment || !eqName.trim()}
                   >
                     {savingEquipment
-                      ? "A guardar..."
+                      ? t("common:saving")
                       : editingEquipmentId
                       ? "Atualizar"
-                      : "Criar"}
+                      : t("common:create")}
                   </Button>
                 </div>
               </form>
@@ -1380,7 +1384,7 @@ export function InventoryStockMinimal() {
                     isLoading={savingIngredient}
                     disabled={savingIngredient}
                   >
-                    {savingIngredient ? "A guardar..." : "Guardar"}
+                    {savingIngredient ? t("common:saving") : t("common:save")}
                   </Button>
                 </div>
               </form>
@@ -1436,7 +1440,8 @@ export function InventoryStockMinimal() {
                   </div>
                   {(ing.cost_per_unit ?? 0) > 0 && (
                     <p className={styles.cardMeta}>
-                      Custo: €{(ing.cost_per_unit ?? 0).toFixed(2)} / {ing.unit}
+                      Custo: {currencySymbol}
+                      {(ing.cost_per_unit ?? 0).toFixed(2)} / {ing.unit}
                     </p>
                   )}
                 </Card>
@@ -1613,7 +1618,7 @@ export function InventoryStockMinimal() {
                   />
                   {movementAction === "IN" && (
                     <Input
-                      label="Custo unitário (€)"
+                      label={`Custo unitário (${currencySymbol})`}
                       type="number"
                       min="0"
                       step="0.01"
@@ -1704,7 +1709,7 @@ export function InventoryStockMinimal() {
                     isLoading={savingRecipe}
                     disabled={savingRecipe}
                   >
-                    {savingRecipe ? "A guardar..." : "Guardar"}
+                    {savingRecipe ? t("common:saving") : t("common:save")}
                   </Button>
                 </div>
               </form>
@@ -1829,7 +1834,9 @@ export function InventoryStockMinimal() {
                         }`
                       : ""}
                     {(scanResult.cost_per_unit ?? 0) > 0
-                      ? ` · €${(scanResult.cost_per_unit ?? 0).toFixed(2)}`
+                      ? ` · ${currencySymbol}${(
+                          scanResult.cost_per_unit ?? 0
+                        ).toFixed(2)}`
                       : ""}
                   </p>
                   <div className={`${styles.formRow} ${styles.mt12}`}>

@@ -3,6 +3,7 @@
  * Visual: VPC (escuro, superfície, botão CTA verde).
  */
 
+import { useCurrency } from "@/core/currency/useCurrency";
 import { useEffect, useRef, useState } from "react";
 import { CONFIG } from "../../../config";
 import { createOrder } from "../../../infra/writers/OrderWriter";
@@ -45,6 +46,7 @@ export function MiniTPVMinimal({
   restaurantId,
   maxHeight = "400px",
 }: MiniTPVMinimalProps) {
+  const { formatAmount } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,8 +67,8 @@ export function MiniTPVMinimal({
       setLoading(true);
       setError(null);
 
-const DOCKER_CORE_URL = CONFIG.CORE_URL;
-const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
+      const DOCKER_CORE_URL = CONFIG.CORE_URL;
+      const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
 
       const url = `${DOCKER_CORE_URL}/gm_products?select=*&restaurant_id=eq.${restaurantId}&available=eq.true&limit=10`;
 
@@ -86,7 +88,11 @@ const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
 
       const ct = response.headers.get("Content-Type")?.toLowerCase() ?? "";
       const text = await response.text();
-      if (!text.trim() || !ct.includes("application/json") || text.trimStart().startsWith("<")) {
+      if (
+        !text.trim() ||
+        !ct.includes("application/json") ||
+        text.trimStart().startsWith("<")
+      ) {
         setProducts([]);
         setError(null);
         return;
@@ -312,7 +318,7 @@ const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
                 <div
                   style={{ color: VPC.textMuted, fontSize: VPC.fontSizeSmall }}
                 >
-                  € {((product.price_cents || 0) / 100).toFixed(2)}
+                  {formatAmount(product.price_cents || 0)}
                 </div>
               </div>
             ))}
@@ -355,7 +361,7 @@ const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
                 <div>
                   <div style={{ fontWeight: 600 }}>{item.name}</div>
                   <div style={{ color: VPC.textMuted }}>
-                    € {(item.unit_price / 100).toFixed(2)} x {item.quantity}
+                    {formatAmount(item.unit_price)} x {item.quantity}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
@@ -412,7 +418,7 @@ const DOCKER_CORE_ANON_KEY = CONFIG.CORE_ANON_KEY;
                 color: VPC.accent,
               }}
             >
-              Total: € {(cartTotal / 100).toFixed(2)}
+              Total: {formatAmount(cartTotal)}
             </div>
             <button
               type="button"

@@ -4,15 +4,19 @@
  * Mostra status do restaurante, estado do sistema (Core) e permite republicar/desativar.
  */
 
-import React from "react";
-import { useCoreHealth, getHealthMessage } from "../../core/health/useCoreHealth";
+import {
+  getHealthMessage,
+  useCoreHealth,
+} from "../../core/health/useCoreHealth";
+import { useFormatLocale } from "../../core/i18n/useFormatLocale";
 import { PublishSection } from "../Onboarding/sections/PublishSection";
 
 function SystemHealthBlock() {
+  const locale = useFormatLocale();
   const { status, lastChecked, check } = useCoreHealth();
   const lastCheckStr =
     lastChecked != null
-      ? new Date(lastChecked).toLocaleTimeString("pt-PT", {
+      ? new Date(lastChecked).toLocaleTimeString(locale, {
           hour: "2-digit",
           minute: "2-digit",
           second: "2-digit",

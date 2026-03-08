@@ -50,7 +50,10 @@ export const useReflexEngine = (
       const { getDockerCoreFetchClient } = await import(
         "../../../core/infra/dockerCoreFetchClient"
       );
-      const rId = restaurantId;
+      const { getTabIsolated } = await import(
+        "../../../core/storage/TabIsolatedStorage"
+      );
+      const rId = getTabIsolated("chefiapp_restaurant_id");
       if (!rId) return;
       // ANTI-SUPABASE §4: Reflex domain ONLY via Core. Skip when not Docker.
       if (getBackendType() !== BackendType.docker) return;

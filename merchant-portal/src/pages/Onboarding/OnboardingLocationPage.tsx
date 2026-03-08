@@ -4,14 +4,15 @@
  */
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { OnboardingStepIndicator } from "../../components/onboarding/OnboardingStepIndicator";
-import { ONBOARDING_5MIN_COPY } from "../../copy/onboarding5min";
 import { Button, Card, Input } from "../../ui/design-system/primitives";
 import styles from "./OnboardingLocationPage.module.css";
 
 export function OnboardingLocationPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation(["onboarding", "common"]);
   const [city, setCity] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -25,32 +26,30 @@ export function OnboardingLocationPage() {
     <div data-onboarding-step="2" className={styles.pageRoot}>
       <OnboardingStepIndicator step={3} total={9} />
       <div className={styles.contentContainer}>
-        <h1 className={styles.headline}>
-          {ONBOARDING_5MIN_COPY.location.headline}
-        </h1>
+        <h1 className={styles.headline}>{t("fiveMin.location.headline")}</h1>
         <Card padding="lg" className={styles.formCard}>
           <div className={styles.fieldSet}>
             <Input
-              label="Cidade"
+              label={t("fiveMin.location.cityLabel")}
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              placeholder="Lisboa"
+              placeholder={t("fiveMin.location.cityPlaceholder")}
             />
             <Input
-              label="Email"
+              label={t("fiveMin.location.emailLabel")}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="contacto@restaurante.pt"
+              placeholder={t("fiveMin.location.emailPlaceholder")}
             />
             <Input
-              label="Telefone"
+              label={t("fiveMin.location.phoneLabel")}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+351 912 345 678"
+              placeholder={t("fiveMin.location.phonePlaceholder")}
             />
             <label className={styles.localeLabel}>
-              Idioma
+              {t("fiveMin.location.languageLabel")}
               <select
                 value={locale}
                 onChange={(e) => setLocale(e.target.value)}
@@ -71,7 +70,7 @@ export function OnboardingLocationPage() {
             variant="outline"
             onClick={() => navigate("/onboarding/identity")}
           >
-            Voltar
+            {t("common:back")}
           </Button>
           <Button
             type="button"
@@ -79,7 +78,7 @@ export function OnboardingLocationPage() {
             variant="solid"
             onClick={handleNext}
           >
-            {ONBOARDING_5MIN_COPY.location.cta}
+            {t("fiveMin.location.cta")}
           </Button>
         </div>
       </div>

@@ -10,6 +10,8 @@ import {
   YAxis,
 } from "recharts";
 import { useCoreHealth } from "../../../core/health/useCoreHealth";
+import { getFormatLocale } from "../../../core/i18n/regionLocaleConfig";
+import { useFormatLocale } from "../../../core/i18n/useFormatLocale";
 import { usePulseOptional } from "../../../core/pulse";
 import { useDailyMetrics } from "../../../hooks/useDailyMetrics";
 import { useShiftHistory } from "../../../hooks/useShiftHistory";
@@ -22,11 +24,12 @@ import {
   getLatestShift,
 } from "./ownerGlobalDashboardUtils";
 
-const CURRENCY = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-  maximumFractionDigits: 0,
-});
+const formatCurrency = (n: number) =>
+  new Intl.NumberFormat(getFormatLocale(), {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: 0,
+  }).format(n);
 
 const theme = colors.modes.dashboard;
 
@@ -88,6 +91,7 @@ export function OwnerGlobalDashboard() {
     error: stockError,
   } = useStockAlerts(coreRestaurantId);
   const navigate = useNavigate();
+  const locale = useFormatLocale();
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -127,12 +131,12 @@ export function OwnerGlobalDashboard() {
       ? "Fechando"
       : "Fechado";
 
-  const nowDate = now.toLocaleDateString("pt-BR", {
+  const nowDate = now.toLocaleDateString(locale, {
     weekday: "short",
     day: "2-digit",
     month: "short",
   });
-  const nowTime = now.toLocaleTimeString("pt-BR", {
+  const nowTime = now.toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -272,7 +276,7 @@ export function OwnerGlobalDashboard() {
   const cashHint =
     shiftState === "active"
       ? cashBalanceCents !== null
-        ? `${CURRENCY.format(cashBalanceCents / 100)} (parcial)`
+        ? `${formatCurrency(cashBalanceCents / 100)} (parcial)`
         : "Saldo ao fechar turno"
       : "Fechado";
 
@@ -424,7 +428,7 @@ export function OwnerGlobalDashboard() {
             {dailyLoading
               ? "…"
               : hasDailyMetrics
-              ? CURRENCY.format(todayCents / 100)
+              ? formatCurrency(todayCents / 100)
               : coreRestaurantId
               ? "—"
               : "0"}
@@ -482,7 +486,7 @@ export function OwnerGlobalDashboard() {
                 ? "…"
                 : hasDailyMetrics
                 ? avgTicketCents > 0
-                  ? CURRENCY.format(avgTicketCents / 100)
+                  ? formatCurrency(avgTicketCents / 100)
                   : "0"
                 : coreRestaurantId
                 ? "—"
@@ -494,7 +498,7 @@ export function OwnerGlobalDashboard() {
             label="Media 7 dias"
             value={
               hasShiftHistory
-                ? CURRENCY.format(financialSnapshot.avg7dCents / 100)
+                ? formatCurrency(financialSnapshot.avg7dCents / 100)
                 : "—"
             }
             hint="referencia"
@@ -568,7 +572,7 @@ export function OwnerGlobalDashboard() {
                           <div style={{ fontWeight: 600, marginBottom: 4 }}>
                             {formatHour(data.hour)}
                           </div>
-                          <div>{CURRENCY.format(totalCents / 100)}</div>
+                          <div>{formatCurrency(totalCents / 100)}</div>
                         </div>
                       );
                     }}
@@ -1024,7 +1028,7 @@ function formatLastCleaning(tasks: Array<{ completedAt?: number }>) {
     .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
   if (!completed.length) return "—";
   const last = new Date(completed[0].completedAt as number);
-  return last.toLocaleTimeString("pt-BR", {
+  return last.toLocaleTimeString(getFormatLocale(), {
     hour: "2-digit",
     minute: "2-digit",
   });

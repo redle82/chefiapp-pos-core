@@ -4,6 +4,7 @@
  * Ref: Bloco 4 item 20 — ONDA_4_PILOTO_E_PRODUCAO_CHECKLIST.md
  */
 import { Link } from "react-router-dom";
+import { useCurrency } from "../../core/currency/useCurrency";
 import {
   CANONICAL_MONTHLY_PRICE_EUR,
   CANONICAL_MONTHLY_PRICE_LABEL,
@@ -35,6 +36,7 @@ const FEATURES = [
 ] as const;
 
 export function PricingPage() {
+  const { symbol } = useCurrency();
   return (
     <main
       style={{
@@ -136,7 +138,7 @@ export function PricingPage() {
             {CANONICAL_MONTHLY_PRICE_EUR}
             <span style={{ fontSize: 20, fontWeight: 500, color: P.muted }}>
               {" "}
-              €/mês
+              {symbol}/mês
             </span>
           </div>
           <div style={{ fontSize: 13, color: P.muted }}>
@@ -216,8 +218,7 @@ export function PricingPage() {
             lineHeight: 1.4,
           }}
         >
-          Sem cartão de crédito · Sem compromisso · Cancela a qualquer
-          momento
+          Sem cartão de crédito · Sem compromisso · Cancela a qualquer momento
         </p>
       </div>
 

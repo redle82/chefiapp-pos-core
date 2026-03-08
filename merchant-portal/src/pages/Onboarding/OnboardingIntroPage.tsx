@@ -3,24 +3,31 @@
  * Ref: docs/contracts/ONBOARDING_5MIN_9_TELAS_CONTRACT.md
  */
 
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { OnboardingStepIndicator } from "../../components/onboarding/OnboardingStepIndicator";
-import { ONBOARDING_5MIN_COPY } from "../../copy/onboarding5min";
 import { Button, Card } from "../../ui/design-system/primitives";
 import styles from "./OnboardingIntroPage.module.css";
 
 export function OnboardingIntroPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation("onboarding");
+
+  const bullets = [
+    t("fiveMin.intro.bullet1"),
+    t("fiveMin.intro.bullet2"),
+    t("fiveMin.intro.bullet3"),
+    t("fiveMin.intro.bullet4"),
+    t("fiveMin.intro.bullet5"),
+  ];
 
   return (
     <div data-onboarding-step="0" className={styles.pageRoot}>
       <OnboardingStepIndicator step={1} total={9} />
       <div className={styles.contentContainer}>
-        <h1 className={styles.headline}>
-          {ONBOARDING_5MIN_COPY.intro.headline}
-        </h1>
+        <h1 className={styles.headline}>{t("fiveMin.intro.headline")}</h1>
         <ul className={styles.bulletList}>
-          {ONBOARDING_5MIN_COPY.intro.bullets.map((b, i) => (
+          {bullets.map((b, i) => (
             <li key={i} className={styles.bulletItem}>
               {b}
             </li>
@@ -35,7 +42,7 @@ export function OnboardingIntroPage() {
             onClick={() => navigate("/onboarding/identity")}
             className={styles.ctaButton}
           >
-            {ONBOARDING_5MIN_COPY.intro.cta}
+            {t("fiveMin.intro.cta")}
           </Button>
         </Card>
       </div>
