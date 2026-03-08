@@ -1,27 +1,28 @@
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useRef,
+    useState,
+    type ReactNode,
 } from "react";
 import type {
-  Organization,
-  OrgMembership,
-  PlanTier,
+    Organization,
+    OrgMembership,
+    PlanTier,
 } from "../../../../billing-core/types";
 import { useAuth } from "../auth/useAuth";
 import { isDebugMode } from "../debugMode";
 import { BackendType, getBackendType } from "../infra/backendAdapter";
 import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
+import { Logger } from "../logger";
 import { isDevStableMode } from "../runtime/devStableMode";
 import {
-  getActiveTenant,
-  getTenantStatus,
-  isTenantSealed,
-  setActiveTenant,
+    getActiveTenant,
+    getTenantStatus,
+    isTenantSealed,
+    setActiveTenant,
 } from "./TenantResolver";
 // ANTI-SUPABASE §4: Tenant/members resolution ONLY via Core. No Supabase domain path.
 
@@ -406,7 +407,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
       } catch (error) {
         const devStable = isDevStableMode();
         if (!devStable) {
-          console.error("[TenantContext] ❌ Error resolving tenants:", error);
+          Logger.error("[TenantContext] ❌ Error resolving tenants:", error);
         }
         setState((prev) => ({
           ...prev,
@@ -448,12 +449,12 @@ export function TenantProvider({ children }: TenantProviderProps) {
       // No logs in DEV_STABLE_MODE (only hard-stop logs allowed)
       const devStable = isDevStableMode();
       if (!devStable) {
-        console.log("[TenantContext] 🔄 Refreshed active tenant data");
+        Logger.info("[TenantContext] 🔄 Refreshed active tenant data");
       }
     } catch (err) {
       const devStable = isDevStableMode();
       if (!devStable) {
-        console.error("[TenantContext] Failed to refresh tenant:", err);
+        Logger.error("[TenantContext] Failed to refresh tenant:", err);
       }
     }
   }, [state.tenantId]);
@@ -469,15 +470,14 @@ export function TenantProvider({ children }: TenantProviderProps) {
         // No logs in DEV_STABLE_MODE (only hard-stop logs allowed)
         const devStable = isDevStableMode();
         if (!devStable) {
-          console.error(
-            "[TenantContext] ❌ Cannot switch to unauthorized tenant:",
-            newTenantId,
+          Logger.error(
+            `[TenantContext] ❌ Cannot switch to unauthorized tenant: ${newTenantId}`,
           );
         }
         return;
       }
 
-      // Canonical seal (Gate truth). Prevents stale tenantId after selection.
+      // Canonical seal (Gate truth). Prevents AppDomainWrapper tenantId=null after selection.
       setActiveTenant(newTenantId);
 
       // Optimistic switch + Fetch
@@ -510,12 +510,12 @@ export function TenantProvider({ children }: TenantProviderProps) {
         // No logs in DEV_STABLE_MODE (only hard-stop logs allowed)
         const devStable = isDevStableMode();
         if (!devStable) {
-          console.log("[TenantContext] 🔄 Switched to tenant:", newTenantId);
+          Logger.info(`[TenantContext] 🔄 Switched to tenant: ${newTenantId}`);
         }
       } catch (err) {
         const devStable = isDevStableMode();
         if (!devStable) {
-          console.error("[TenantContext] Error switching tenant details:", err);
+          Logger.error("[TenantContext] Error switching tenant details:", err);
         }
         setState((prev) => ({
           ...prev,

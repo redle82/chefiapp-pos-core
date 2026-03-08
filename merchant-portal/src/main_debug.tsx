@@ -5,43 +5,23 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./config"; // Load first so CONFIG is ready before any chunk (avoids "Cannot access before initialization")
+import { GlobalUIStateProvider } from "./context/GlobalUIStateContext";
 import {
   LifecycleStateProvider,
   type LifecycleStateContextValue,
 } from "./context/LifecycleStateContext";
+import { RestaurantRuntimeProvider } from "./context/RestaurantRuntimeContext";
 import type { RestaurantLifecycleState } from "./core/lifecycle/LifecycleState";
 import { Logger } from "./core/logger";
+import { RoleProvider } from "./core/roles";
 import { logRuntimeStatus } from "./core/runtime/RuntimeContext";
 import { devStableReason, isDevStableMode } from "./core/runtime/devStableMode";
-import { installUnhandledRejectionGuard } from "./core/runtime/unhandledRejectionGuard";
+import { ShiftProvider } from "./core/shift/ShiftContext";
+import { TenantProvider } from "./core/tenant/TenantContext";
 import "./i18n";
 import "./index.css";
 import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
 // import "./ui/design-system/styles/dark-mode.css"; // P3-5: Dark mode styles
-
-// ─── Build Version Stamp ────────────────────────────────────────────────────
-// Visible in console to confirm which deploy is active.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const __BUILD_TIMESTAMP__: string | undefined;
-const BUILD_STAMP = `chefiapp-build:${import.meta.env.MODE}:${
-  __BUILD_TIMESTAMP__ ?? "dev"
-}`;
-console.log(`%c[ChefIApp] ${BUILD_STAMP}`, "color: #f59e0b; font-weight: bold");
-
-installUnhandledRejectionGuard({
-  route: typeof window !== "undefined" ? window.location.pathname : "unknown",
-  mode: import.meta.env.MODE,
-});
-
-// ─── Service Worker Auto-Reload ─────────────────────────────────────────────
-// When a new SW takes control (skipWaiting + clientsClaim), auto-reload so
-// critical fixes propagate immediately without user interaction.
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    console.log("[ChefIApp] New service worker activated — reloading...");
-    window.location.reload();
-  });
-}
 
 Sentry.init({
   dsn: "https://c507891630be22946aae6f4dc35daa2b@o4509651128942592.ingest.us.sentry.io/4510930062475264",
@@ -61,6 +41,9 @@ Sentry.init({
     Sentry.replayIntegration(),
   ],
 });
+// DoD B4: tags para filtros em Sentry; expor para Logger/SentryTransport
+Sentry.setTag("app", "merchant-portal");
+if (typeof window !== "undefined") (window as any).Sentry = Sentry;
 
 // ─── Sentry Real-World Metrics ──────────────────────────────────────────────
 // Métricas reais que simulam comportamento de produção com clientes
@@ -322,9 +305,7 @@ Logger.info("Application starting", {
 // ============================================================================
 // MARKETING (/, /trial, /auth, /billing/success) renderiza SEM RestaurantRuntime
 // nem ShiftProvider — landing 100% desacoplada do Core (ver App.tsx).
-// PR-A: Providers Core-dependentes (RestaurantRuntimeProvider, ShiftProvider,
-// GlobalUIStateProvider, RoleProvider, TenantProvider) movidos para
-// AppOperationalWrapper em App.tsx. Rotas públicas NÃO montam nada do Core.
+// Estado do lifecycle no entry evita duas instâncias de React (Invalid hook call).
 // ============================================================================
 
 function RootWithLifecycle() {
@@ -339,7 +320,17 @@ function RootWithLifecycle() {
   };
   return (
     <LifecycleStateProvider value={lifecycleValue}>
-      <App />
+      <RestaurantRuntimeProvider>
+        <ShiftProvider>
+          <GlobalUIStateProvider>
+            <RoleProvider>
+              <TenantProvider>
+                <App />
+              </TenantProvider>
+            </RoleProvider>
+          </GlobalUIStateProvider>
+        </ShiftProvider>
+      </RestaurantRuntimeProvider>
     </LifecycleStateProvider>
   );
 }

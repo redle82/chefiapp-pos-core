@@ -11,6 +11,7 @@
 import type { PulseZone } from "../../../../core-engine/pulse";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { getAlertThresholds } from "../alerts/alertThresholds";
+import { Logger } from "../logger";
 
 export interface TaskRule {
   id: string;
@@ -116,17 +117,17 @@ export class EventTaskGenerator {
         .single();
 
       if (error) {
-        console.error("[EventTaskGenerator] Erro ao criar tarefa:", error);
+        Logger.error("[EventTaskGenerator] Erro ao criar tarefa:", error);
         return null;
       }
 
       const record = data as { id: string };
-      console.log(
+      Logger.info(
         `[EventTaskGenerator] ✅ Tarefa criada: ${record.id} para evento ${eventType}`,
       );
       return record.id;
     } catch (error) {
-      console.error("[EventTaskGenerator] Erro ao gerar tarefa:", error);
+      Logger.error("[EventTaskGenerator] Erro ao gerar tarefa:", error);
       return null;
     }
   }
@@ -197,7 +198,7 @@ export class EventTaskGenerator {
       try {
         await this.createRule(rule);
       } catch (error) {
-        console.error("Error creating default rule:", error);
+        Logger.error("Error creating default rule:", error);
       }
     }
   }

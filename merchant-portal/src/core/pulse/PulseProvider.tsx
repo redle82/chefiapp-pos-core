@@ -26,6 +26,7 @@ import type {
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { readActiveOrders } from "../../infra/readers/OrderReader";
 import { SystemEvents } from "../events/SystemEvents";
+import { Logger } from "../logger";
 import { useShift } from "../shift/ShiftContext";
 import type { UsePulseOptions } from "./usePulse";
 import { usePulse } from "./usePulse";
@@ -119,7 +120,9 @@ export const PulseProvider: React.FC<PulseProviderProps> = ({
       lastFetchRef.current = now;
     } catch (err) {
       // Non-fatal: pulse will use stale data
-      console.warn("[PulseProvider] Failed to fetch orders:", err);
+      Logger.warn("[PulseProvider] Failed to fetch orders:", {
+        error: String(err),
+      });
     } finally {
       fetchingRef.current = false;
     }

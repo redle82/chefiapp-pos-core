@@ -43,7 +43,7 @@ export const SETUP_STEPS: SetupStep[] = [
   {
     id: "location",
     label: "Local & endereço",
-    route: "/admin/config/ubicaciones",
+    route: "/admin/config/locations",
     group: "BASICS",
   },
   {
@@ -68,7 +68,7 @@ export const SETUP_STEPS: SetupStep[] = [
 
 export function classifyStepState(
   step: SetupStep,
-  readiness: RestaurantReadiness
+  readiness: RestaurantReadiness,
 ): SetupStepState {
   const reasons = new Set(readiness.blockingReasons);
 
@@ -90,7 +90,7 @@ export function classifyStepState(
 }
 
 export function stepsWithState(
-  readiness: RestaurantReadiness
+  readiness: RestaurantReadiness,
 ): SetupStepWithState[] {
   return SETUP_STEPS.map((step) => ({
     ...step,
@@ -122,4 +122,3 @@ export function useRestaurantReadinessForSetup(): RestaurantReadiness {
     return deriveRestaurantReadiness(restaurant);
   }, [runtime]);
 }
-

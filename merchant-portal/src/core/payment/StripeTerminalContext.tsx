@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { CONFIG } from "../../config";
 import { currencyService } from "../currency/CurrencyService";
+import { Logger } from "../logger";
 import { getStripePromise } from "./loadStripeLazy";
 import { PaymentBroker } from "./PaymentBroker";
 
@@ -55,7 +56,7 @@ export const StripeTerminalProvider: React.FC<{ children: ReactNode }> = ({
       setClientSecret(result.clientSecret);
       return result.clientSecret;
     } catch (error) {
-      console.error("[StripeTerminal] Initialization Failed:", error);
+      Logger.error("[StripeTerminal] Initialization Failed:", error);
       return null;
     }
   };

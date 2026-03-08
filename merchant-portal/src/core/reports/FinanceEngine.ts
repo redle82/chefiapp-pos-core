@@ -4,7 +4,9 @@
  * Queries gm_orders, gm_payments, gm_z_reports via PostgREST.
  * Fallback: returns safe defaults if Core is unreachable.
  */
+import { currencyService } from "../currency/CurrencyService";
 import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
+import { Logger } from "../logger";
 
 export interface FinanceSnapshot {
   date: string;
@@ -95,9 +97,9 @@ export const FinanceEngine = {
           };
         }
       } catch (err) {
-        console.warn(
+        Logger.warn(
           "[FinanceEngine] getDailySnapshot Core error, using defaults:",
-          err,
+          { error: String(err) },
         );
       }
     }
@@ -135,7 +137,7 @@ export const FinanceEngine = {
             balance: data.balance ?? {
               available: 0,
               pending: 0,
-              currency: "eur",
+              currency: currencyService.getDefaultCurrency().toLowerCase(),
             },
             payouts: data.payouts ?? [],
           };
@@ -146,7 +148,11 @@ export const FinanceEngine = {
     }
 
     return {
-      balance: { available: 0, pending: 0, currency: "eur" },
+      balance: {
+        available: 0,
+        pending: 0,
+        currency: currencyService.getDefaultCurrency().toLowerCase(),
+      },
       payouts: [],
     };
   },

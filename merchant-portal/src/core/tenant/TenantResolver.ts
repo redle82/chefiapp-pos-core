@@ -16,6 +16,7 @@
  */
 
 import { getTableClient } from "../infra/coreRpc";
+import { Logger } from "../logger";
 import {
   getTabIsolated,
   removeTabIsolated,
@@ -139,7 +140,7 @@ function getPermissionsForRole(role: TenantRole): string[] {
 // ============================================================================
 
 function logTenantEvent(event: string, data: Record<string, unknown>) {
-  console.info(`[TenantResolver] ${event}`, {
+  Logger.info(`[TenantResolver] ${event}`, {
     timestamp: new Date().toISOString(),
     ...data,
   });
@@ -157,7 +158,7 @@ export async function fetchUserMemberships(
 ): Promise<TenantMembership[]> {
   // MOCK: Bypass for trial-user
   if (userId === "trial-user") {
-    console.info("[TenantResolver] Retrieving mock memberships for trial-user");
+    Logger.info("[TenantResolver] Retrieving mock memberships for trial-user");
     return [
       {
         restaurant_id: "mock-tenant-id",
@@ -175,7 +176,7 @@ export async function fetchUserMemberships(
     .eq("user_id", userId);
 
   if (error) {
-    console.error("[TenantResolver] Failed to fetch memberships:", error);
+    Logger.error("[TenantResolver] Failed to fetch memberships:", error);
     return [];
   }
 
@@ -317,9 +318,8 @@ export async function resolve(
     }
 
     // Cached tenant is invalid (user lost access?), clear it
-    console.warn(
-      "[TenantResolver] Active tenant found but user lost access",
-      cachedTenantId,
+    Logger.warn(
+      `[TenantResolver] Active tenant found but user lost access: ${cachedTenantId}`,
     );
     clearActiveTenant();
   }
@@ -449,9 +449,9 @@ export function setActiveTenant(
     // Also sync legacy key for backwards compatibility
     setTabIsolated("chefiapp_restaurant_id", tenantId);
 
-    console.info(`[TenantResolver] 🔒 Tenant Sealed: ${tenantId} [${status}]`);
+    Logger.info(`[TenantResolver] 🔒 Tenant Sealed: ${tenantId} [${status}]`);
   } catch (e) {
-    console.error("[TenantResolver] Failed to set active tenant:", e);
+    Logger.error("[TenantResolver] Failed to set active tenant:", e);
   }
 }
 
@@ -463,31 +463,10 @@ export function clearActiveTenant(): void {
     removeTabIsolated(ACTIVE_TENANT_KEY);
     removeTabIsolated(TENANT_STATUS_KEY);
     removeTabIsolated("chefiapp_restaurant_id");
-    console.info("[TenantResolver] 🔓 Tenant Unsealed");
+    Logger.info("[TenantResolver] 🔓 Tenant Unsealed");
   } catch {
     // Ignore
   }
-}
-
-/**
- * Read active tenant ID from canonical store, with legacy fallback.
- *
- * Priority:
- *   1. chefiapp_active_tenant  (canonical — managed by setActiveTenant)
- *   2. chefiapp_restaurant_id  (TabIsolated — legacy key)
- *   3. chefiapp_restaurant_id  (localStorage — oldest legacy path)
- *
- * Pure read — no side-effects.  Callers that want the value sealed
- * should call setActiveTenant() explicitly after validation.
- */
-export function readTenantIdWithLegacyFallback(): string | null {
-  return (
-    getActiveTenant() ||
-    getTabIsolated("chefiapp_restaurant_id") ||
-    (typeof window !== "undefined"
-      ? window.localStorage.getItem("chefiapp_restaurant_id")
-      : null)
-  );
 }
 
 /**

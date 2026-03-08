@@ -5,6 +5,10 @@
  * Optimized for 80mm/58mm thermal printers.
  */
 
+import { currencyService } from "@/core/currency/CurrencyService";
+import { getFormatLocale } from "@/core/i18n/regionLocaleConfig";
+import i18n from "@/i18n";
+
 export interface ShiftReceiptData {
   restaurantName: string;
   terminalId: string;
@@ -21,15 +25,18 @@ export interface ShiftReceiptData {
 }
 
 export const generateShiftReceiptHtml = (data: ShiftReceiptData): string => {
+  const t = (key: string, options?: Record<string, unknown>) =>
+    i18n.t(key, options);
+
   const formatPrice = (cents: number) => {
-    return new Intl.NumberFormat("pt-PT", {
+    return new Intl.NumberFormat(getFormatLocale(), {
       style: "currency",
-      currency: "EUR",
+      currency: currencyService.getDefaultCurrency(),
     }).format(cents / 100);
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleString("pt-PT", {
+    return date.toLocaleString(getFormatLocale(), {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -74,46 +81,48 @@ export const generateShiftReceiptHtml = (data: ShiftReceiptData): string => {
         <html>
         <head>
             <meta charset="UTF-8">
-            <title>Fecho de Caixa</title>
+            <title>${t("receipt:cashClosure")}</title>
             ${styles}
         </head>
         <body>
             <div class="header">
                 <div class="title">${data.restaurantName}</div>
-                <div>FECHO DE CAIXA</div>
+                <div>${t("receipt:cashClosureTitle")}</div>
             </div>
 
             <div class="row">
-                <span>Terminal:</span>
+                <span>${t("shift:receipt.terminal")}</span>
                 <span>${data.terminalId}</span>
             </div>
             <div class="row">
-                <span>Operador:</span>
+                <span>${t("shift:receipt.operator")}</span>
                 <span>${data.operatorName}</span>
             </div>
 
             <div class="divider"></div>
 
             <div class="row">
-                <span>Abertura:</span>
+                <span>${t("shift:receipt.opening")}</span>
                 <span>${formatDate(data.openedAt)}</span>
             </div>
             <div class="row">
-                <span>Fecho:</span>
+                <span>${t("shift:receipt.closing")}</span>
                 <span>${formatDate(data.closedAt)}</span>
             </div>
             <div class="center" style="margin-bottom: 5px; font-size: 10px;">
-                (Duração: ${durationHrs}h ${durationMins}m)
+                (${t(
+                  "shift:receipt.duration",
+                )} ${durationHrs}h ${durationMins}m)
             </div>
 
             <div class="divider"></div>
 
             <div class="row">
-                <span>Saldo Inicial:</span>
+                <span>${t("shift:receipt.openingBalance")}</span>
                 <span>${formatPrice(data.openingBalanceCents)}</span>
             </div>
             <div class="row bold">
-                <span>+ Vendas (Sessão):</span>
+                <span>${t("shift:receipt.sessionSales")}</span>
                 <span>${formatPrice(data.dailySalesCents)}</span>
             </div>
 
@@ -139,18 +148,18 @@ export const generateShiftReceiptHtml = (data: ShiftReceiptData): string => {
             <div class="divider"></div>
 
             <div class="row">
-                <span>Saldo Esperado:</span>
+                <span>${t("shift:receipt.expectedBalance")}</span>
                 <span>${formatPrice(data.expectedBalanceCents)}</span>
             </div>
             <div class="row bold" style="font-size: 14px; margin-top: 5px;">
-                <span>SALDO FINAL:</span>
+                <span>${t("shift:receipt.finalBalance")}</span>
                 <span>${formatPrice(data.closingBalanceCents)}</span>
             </div>
 
             <div class="divider"></div>
 
             <div class="row bold">
-                <span>Diferença:</span>
+                <span>${t("shift:receipt.difference")}</span>
                 <span>${data.differenceCents > 0 ? "+" : ""}${formatPrice(
     data.differenceCents,
   )}</span>
@@ -158,8 +167,8 @@ export const generateShiftReceiptHtml = (data: ShiftReceiptData): string => {
 
             <div class="footer">
                 ${data.legalFooter ? `${data.legalFooter}<br>` : ""}
-                Emitido em ${formatDate(new Date())}<br>
-                Software: ChefIApp POS
+                ${t("shift:receipt.issuedAt")} ${formatDate(new Date())}<br>
+                ${t("shift:receipt.software")}
             </div>
 
             <script>

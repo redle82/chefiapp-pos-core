@@ -17,6 +17,7 @@ import {
 } from "../../infra/readers/OrderReader";
 import { alertEngine } from "../alerts/AlertEngine";
 import { getAlertThresholds } from "../alerts/alertThresholds";
+import { Logger } from "../logger";
 import { CashRegisterEngine } from "../tpv/CashRegister";
 import { eventTaskGenerator } from "./EventTaskGenerator";
 
@@ -46,9 +47,8 @@ export class EventMonitor {
   start(restaurantId: string): void {
     if (!EventMonitor.UUID_REGEX.test(restaurantId)) {
       if (import.meta.env.DEV) {
-        console.debug(
-          "[EventMonitor] Skipped: restaurantId is not a valid UUID:",
-          restaurantId,
+        Logger.debug(
+          `[EventMonitor] Skipped: restaurantId is not a valid UUID: ${restaurantId}`,
         );
       }
       return;
@@ -66,13 +66,13 @@ export class EventMonitor {
 
     // Primeira verificação imediata
     this.checkEvents(restaurantId).catch((error) => {
-      console.error("[EventMonitor] Erro na verificação inicial:", error);
+      Logger.error("[EventMonitor] Erro na verificação inicial:", error);
     });
 
     // Verificações periódicas
     this.intervalId = setInterval(() => {
       this.checkEvents(restaurantId).catch((error) => {
-        console.error("[EventMonitor] Erro na verificação periódica:", error);
+        Logger.error("[EventMonitor] Erro na verificação periódica:", error);
       });
     }, thresholds.event_check_interval_ms);
   }
@@ -174,12 +174,12 @@ export class EventMonitor {
       }
 
       if (events.length > 0) {
-        console.log(
+        Logger.info(
           `[EventMonitor] ✅ ${events.length} evento(s) detectado(s), ${generated} tarefa(s) criada(s) (idempotente)`,
         );
       }
     } catch (error) {
-      console.error("[EventMonitor] Erro ao verificar eventos:", error);
+      Logger.error("[EventMonitor] Erro ao verificar eventos:", error);
     }
 
     return events;
@@ -235,7 +235,7 @@ export class EventMonitor {
         }
       }
     } catch (error) {
-      console.error(
+      Logger.error(
         "[EventMonitor] Erro ao verificar pedidos atrasados:",
         error,
       );
@@ -272,7 +272,7 @@ export class EventMonitor {
           msg.includes("Failed to fetch") ||
           msg.includes("Backend indisponível");
         if (!isSilent) {
-          console.error("[EventMonitor] Erro ao buscar mesas:", error);
+          Logger.error("[EventMonitor] Erro ao buscar mesas:", error);
         }
         return events;
       }
@@ -328,7 +328,7 @@ export class EventMonitor {
         this.lastCheckedTables.delete(table.number);
       }
     } catch (error) {
-      console.error("[EventMonitor] Erro ao verificar mesas:", error);
+      Logger.error("[EventMonitor] Erro ao verificar mesas:", error);
     }
 
     return events;
@@ -377,7 +377,7 @@ export class EventMonitor {
         },
       );
       if (taskId) {
-        console.log(
+        Logger.info(
           `[EventMonitor] ✅ RESTAURANT_IDLE: tarefa ${taskId} criada (modo interno)`,
         );
       }
@@ -389,7 +389,7 @@ export class EventMonitor {
         msg.includes("Failed to fetch") ||
         msg.includes("Backend indisponível");
       if (!isSilent) {
-        console.error("[EventMonitor] Erro ao verificar ociosidade:", error);
+        Logger.error("[EventMonitor] Erro ao verificar ociosidade:", error);
       }
     }
   }
@@ -468,13 +468,13 @@ export class EventMonitor {
       );
 
       if (taskId) {
-        console.log(
+        Logger.info(
           `[EventMonitor] ✅ Tarefa gerada: ${taskId} para evento ${event.type}`,
         );
         return true;
       }
     } catch (error) {
-      console.error(
+      Logger.error(
         `[EventMonitor] Erro ao gerar tarefa para evento ${event.type}:`,
         error,
       );

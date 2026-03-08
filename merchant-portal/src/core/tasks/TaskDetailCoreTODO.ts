@@ -1,12 +1,13 @@
-import { BackendType, getBackendType } from "../infra/backendAdapter";
 import { readTaskById } from "../../infra/readers/TaskReader";
 import {
   acknowledgeTask,
-  resolveTask,
   dismissTask,
+  resolveTask,
 } from "../../infra/writers/TaskWriter";
-import { mapCoreTaskToTask } from "./TaskFiltering";
+import { BackendType, getBackendType } from "../infra/backendAdapter";
+import { Logger } from "../logger";
 import type { Task } from "./TaskFiltering";
+import { mapCoreTaskToTask } from "./TaskFiltering";
 
 /**
  * DOCKER MODE: Adapters ligados ao Docker Core para a página de detalhes de tarefa.
@@ -21,7 +22,7 @@ export async function fetchTaskByIdFromCoreTODO(
     if (!coreTask) return null;
     return mapCoreTaskToTask(coreTask);
   } catch (error) {
-    console.error("[TaskDetailCoreTODO] fetchTaskByIdFromCoreTODO:", error);
+    Logger.error("[TaskDetailCoreTODO] fetchTaskByIdFromCoreTODO:", error);
     return null;
   }
 }
@@ -43,7 +44,7 @@ export async function updateTaskStatusFromCoreTODO(
     }
     // pending / overdue: não alteramos status no Core (OPEN permanece)
   } catch (error) {
-    console.error("[TaskDetailCoreTODO] updateTaskStatusFromCoreTODO:", error);
+    Logger.error("[TaskDetailCoreTODO] updateTaskStatusFromCoreTODO:", error);
     throw error;
   }
 }

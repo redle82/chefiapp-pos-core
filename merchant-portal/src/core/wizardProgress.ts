@@ -4,6 +4,7 @@
  */
 
 import { invokeRpc } from "./infra/coreRpc";
+import { Logger } from "./logger";
 
 // LEGACY: Supabase client removed — Docker Core only
 const supabase = null as any;
@@ -37,15 +38,15 @@ export async function updateWizardProgress(
     });
 
     if (error) {
-      console.error("[WizardProgress] Error updating progress:", error);
+      Logger.error("[WizardProgress] Error updating progress:", error);
       throw error;
     }
 
-    console.log(
+    Logger.info(
       `[WizardProgress] Step "${step}" marked as complete for restaurant ${restaurantId}`,
     );
   } catch (error) {
-    console.error("[WizardProgress] Failed to update progress:", error);
+    Logger.error("[WizardProgress] Failed to update progress:", error);
     // Don't throw - allow wizard to continue even if progress tracking fails
   }
 }
@@ -60,15 +61,15 @@ export async function markWizardComplete(restaurantId: string): Promise<void> {
     });
 
     if (error) {
-      console.error("[WizardProgress] Error marking wizard complete:", error);
+      Logger.error("[WizardProgress] Error marking wizard complete:", error);
       throw error;
     }
 
-    console.log(
+    Logger.info(
       `[WizardProgress] Wizard marked as complete for restaurant ${restaurantId}`,
     );
   } catch (error) {
-    console.error("[WizardProgress] Failed to mark wizard complete:", error);
+    Logger.error("[WizardProgress] Failed to mark wizard complete:", error);
     // Don't throw - allow publish to continue even if tracking fails
   }
 }
@@ -103,7 +104,7 @@ export async function getWizardProgress(restaurantId: string): Promise<{
 
       if (isSchemaError) {
         // Schema lag - columns don't exist yet, return defaults
-        console.log(
+        Logger.warn(
           "[WizardProgress] Schema lag detected (setup_status missing). Using default state.",
         );
         return {
@@ -113,7 +114,7 @@ export async function getWizardProgress(restaurantId: string): Promise<{
         };
       }
 
-      console.error("[WizardProgress] Error fetching progress:", error);
+      Logger.error("[WizardProgress] Error fetching progress:", error);
       return null;
     }
 
@@ -124,7 +125,7 @@ export async function getWizardProgress(restaurantId: string): Promise<{
         (data.wizard_progress as Record<string, WizardStepData>) || {},
     };
   } catch (error) {
-    console.error("[WizardProgress] Failed to fetch progress:", error);
+    Logger.error("[WizardProgress] Failed to fetch progress:", error);
     return null;
   }
 }

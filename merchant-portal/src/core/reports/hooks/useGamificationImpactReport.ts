@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRestaurantId } from "../../../ui/hooks/useRestaurantId";
-import type { TimeRange } from "../reportTypes";
+import { useCurrency } from "../../currency/useCurrency";
 import {
   getGamificationImpactReport,
   type GamificationImpactInput,
 } from "../ReportsService";
+import type { TimeRange } from "../reportTypes";
 
 export interface UseGamificationImpactState {
   loading: boolean;
@@ -18,10 +19,10 @@ export function useGamificationImpactReport(
   globalPeriod: TimeRange,
 ): UseGamificationImpactState {
   const { restaurantId } = useRestaurantId();
-  const [data, setData] =
-    useState<Awaited<ReturnType<typeof getGamificationImpactReport>> | null>(
-      null,
-    );
+  const { currency } = useCurrency();
+  const [data, setData] = useState<Awaited<
+    ReturnType<typeof getGamificationImpactReport>
+  > | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState(0);
@@ -46,7 +47,7 @@ export function useGamificationImpactReport(
           windows,
           context: {
             restaurantId,
-            currency: 'EUR',
+            currency,
             period: globalPeriod,
           },
         };
@@ -59,7 +60,7 @@ export function useGamificationImpactReport(
           const msg =
             err instanceof Error
               ? err.message
-              : 'Erro ao carregar impacto da gamificação.';
+              : "Erro ao carregar impacto da gamificação.";
           setError(msg);
           setData(null);
         }
@@ -75,8 +76,13 @@ export function useGamificationImpactReport(
     return () => {
       cancelled = true;
     };
-  }, [restaurantId, JSON.stringify(windows), globalPeriod.from, globalPeriod.to, token]);
+  }, [
+    restaurantId,
+    JSON.stringify(windows),
+    globalPeriod.from,
+    globalPeriod.to,
+    token,
+  ]);
 
   return { data, loading, error, reload };
 }
-

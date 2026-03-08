@@ -7,6 +7,7 @@
 import { logAuditEvent } from "../audit/logAuditEvent";
 import { BackendType, getBackendType } from "../infra/backendAdapter";
 import { getTableClient, invokeRpc } from "../infra/coreRpc";
+import { Logger } from "../logger";
 import type { PaymentMethod, PaymentStatus } from "./OrderEngine";
 
 export interface PaymentInput {
@@ -379,7 +380,7 @@ export class PaymentEngine {
       });
     } catch (err) {
       // Log silencioso - não deve falhar o pagamento se o log falhar
-      console.error("[PaymentEngine] Failed to log payment attempt:", err);
+      Logger.error("[PaymentEngine] Failed to log payment attempt:", err);
     }
   }
 
@@ -403,7 +404,7 @@ export class PaymentEngine {
     );
 
     if (error) {
-      console.error("[PaymentEngine] Failed to get payment health:", error);
+      Logger.error("[PaymentEngine] Failed to get payment health:", error);
       return {
         attempts24h: 0,
         success24h: 0,

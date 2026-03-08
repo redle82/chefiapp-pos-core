@@ -10,6 +10,7 @@
 
 import type { PulseZone } from "../../../../core-engine/pulse";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
+import { Logger } from "../logger";
 
 export interface RecurringTask {
   id: string;
@@ -74,9 +75,8 @@ export class RecurringTaskEngine {
     if (pulseZone === "FLOW_ALTO") {
       const suppressed = await this.suppressNonUrgent(restaurantId);
       if (suppressed > 0) {
-        console.log(
-          `[RecurringTaskEngine] ⏸ Suprimidas ${suppressed} tarefas ` +
-            `não-urgentes (FLOW_ALTO)`,
+        Logger.info(
+          `[RecurringTaskEngine] ⏸ Suprimidas ${suppressed} tarefas não-urgentes (FLOW_ALTO)`,
         );
       }
     }

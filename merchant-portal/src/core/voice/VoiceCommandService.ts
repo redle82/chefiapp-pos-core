@@ -9,6 +9,8 @@ declare const SpeechRecognition: any;
 declare type SpeechRecognitionEvent = any;
 declare type SpeechRecognitionErrorEvent = any;
 
+import { Logger } from "../logger";
+
 export type VoiceCommand = {
   pattern: string | RegExp;
   action: (match?: RegExpMatchArray | null) => void | Promise<void>;
@@ -39,12 +41,12 @@ export class VoiceCommandService {
           ][0].transcript
             .toLowerCase()
             .trim();
-          console.log(`[VoiceCommandService] Heard: "${transcript}"`);
+          Logger.debug(`[VoiceCommandService] Heard: "${transcript}"`);
           this.processCommand(transcript);
         };
 
         this.recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-          console.error("[VoiceCommandService] Error:", event.error);
+          Logger.error("[VoiceCommandService] Error:", event.error);
           if (event.error === "not-allowed") {
             this.isListening = false;
           }
@@ -56,7 +58,7 @@ export class VoiceCommandService {
             try {
               this.recognition?.start();
             } catch (e) {
-              console.warn("[VoiceCommandService] Restart failed:", e);
+              Logger.warn(`[VoiceCommandService] Restart failed: ${e instanceof Error ? e.message : String(e)}`);
             }
           }
         };
@@ -83,13 +85,9 @@ export class VoiceCommandService {
       if (transcript.startsWith(wakeWordLower)) {
         // Strip wake word
         commandText = transcript.slice(wakeWordLower.length).trim();
-        console.log(
-          `[VoiceCommandService] Wake Word detected. Command: "${commandText}"`,
-        );
+        Logger.debug(`[VoiceCommandService] Wake Word detected. Command: "${commandText}"`);
       } else {
-        console.log(
-          `[VoiceCommandService] Ignored (No Wake Word): "${transcript}"`,
-        );
+        Logger.debug(`[VoiceCommandService] Ignored (No Wake Word): "${transcript}"`);
         return;
       }
     }
@@ -106,18 +104,16 @@ export class VoiceCommandService {
       }
 
       if (matches) {
-        console.log(
-          `[VoiceCommandService] Matched: "${commandText}" -> ${command.description}`,
-        );
+        Logger.debug(`[VoiceCommandService] Matched: "${commandText}" -> ${command.description}`);
         try {
           const result = command.action(matchResult);
           if (result instanceof Promise) {
             result.catch((err) =>
-              console.error("[VoiceCommandService] Action error:", err),
+              Logger.error("[VoiceCommandService] Action error:", err),
             );
           }
         } catch (err) {
-          console.error("[VoiceCommandService] Action error:", err);
+          Logger.error("[VoiceCommandService] Action error:", err);
         }
         break;
       }
@@ -141,7 +137,7 @@ export class VoiceCommandService {
       this.isListening = true;
       return true;
     } catch (err) {
-      console.error("[VoiceCommandService] Failed to start:", err);
+      Logger.error("[VoiceCommandService] Failed to start:", err);
       return false;
     }
   }
@@ -186,7 +182,7 @@ export class VoiceCommandService {
    */
   setWakeWord(word: string | undefined): void {
     this.wakeWord = word;
-    console.log(`[VoiceCommandService] Wake Word set to: "${word}"`);
+    Logger.debug(`[VoiceCommandService] Wake Word set to: "${word}"`);
   }
 }
 

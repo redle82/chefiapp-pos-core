@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { Logger } from "../logger";
 import { getTpvRestaurantId } from "../storage/installedDeviceStorage";
 import { CashRegisterEngine } from "../tpv/CashRegister";
 
@@ -77,10 +78,9 @@ export const ShiftProvider: React.FC<{ children: React.ReactNode }> = ({
         backoffRef.current = Math.min(backoffRef.current * 2, MAX_INTERVAL);
       } else {
         backoffRef.current = MAX_INTERVAL;
-        console.warn(
-          "[ShiftContext] Non-connection error checking shift:",
-          err,
-        );
+        Logger.warn("[ShiftContext] Non-connection error checking shift:", {
+          error: String(err),
+        });
       }
     } finally {
       setIsChecking(false);

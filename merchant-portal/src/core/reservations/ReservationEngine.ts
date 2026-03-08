@@ -13,6 +13,7 @@
  * para não bloquear a operação do restaurante.
  */
 import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
+import { Logger } from "../logger";
 
 export type ReservationStatus =
   | "pending"
@@ -195,10 +196,9 @@ export class ReservationEngine {
       if (!error && data) {
         return data.id;
       }
-      console.warn(
-        "[ReservationEngine] Core insert failed, using fallback:",
+      Logger.warn("[ReservationEngine] Core insert failed, using fallback:", {
         error,
-      );
+      });
     }
 
     // Fallback: in-memory
@@ -269,10 +269,9 @@ export class ReservationEngine {
       if (!error && data) {
         return data.map(rowToReservation);
       }
-      console.warn(
-        "[ReservationEngine] Core list failed, using fallback:",
+      Logger.warn("[ReservationEngine] Core list failed, using fallback:", {
         error,
-      );
+      });
     }
 
     // Fallback: in-memory
@@ -337,7 +336,7 @@ export class ReservationEngine {
         .eq("id", reservationId);
 
       if (error) {
-        console.warn("[ReservationEngine] Core updateStatus failed:", error);
+        Logger.warn("[ReservationEngine] Core updateStatus failed:", { error });
       }
 
       // Record no-show history
@@ -360,7 +359,9 @@ export class ReservationEngine {
     // Fallback: in-memory
     const existing = localCache.get(reservationId);
     if (!existing) {
-      console.warn("[ReservationEngine] reservation not found:", reservationId);
+      Logger.warn(
+        `[ReservationEngine] reservation not found: ${reservationId}`,
+      );
       return;
     }
     const nowDate = new Date();
@@ -471,10 +472,9 @@ export class ReservationEngine {
       .upsert(payload, { onConflict: "restaurant_id" });
 
     if (error) {
-      console.warn(
-        "[ReservationEngine] upsertOverbookingConfig failed:",
+      Logger.warn("[ReservationEngine] upsertOverbookingConfig failed:", {
         error,
-      );
+      });
     }
   }
 

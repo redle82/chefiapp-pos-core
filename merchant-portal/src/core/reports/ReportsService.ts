@@ -1,6 +1,7 @@
 import type { CoreOrder } from "../../infra/docker-core/types";
 import { readOrdersForAnalytics } from "../../infra/readers/OrderReader";
 import type { IntegrationEvent } from "../../integrations/types/IntegrationEvent";
+import { currencyService } from "../currency/CurrencyService";
 import {
   buildCancellationStats,
   buildGamificationImpact,
@@ -119,7 +120,7 @@ async function loadEventsForPeriod({
 export async function getSalesSummaryReport(
   restaurantId: string,
   period: TimeRange,
-  currency: string = "EUR",
+  currency: string = currencyService.getDefaultCurrency(),
 ): Promise<SalesSummary> {
   const events = await loadEventsForPeriod({ restaurantId, period });
   return buildSalesSummary(events, {
@@ -132,7 +133,7 @@ export async function getSalesSummaryReport(
 export async function getOperationalActivityReport(
   restaurantId: string,
   period: TimeRange,
-  currency: string = "EUR",
+  currency: string = currencyService.getDefaultCurrency(),
 ): Promise<OperationalActivity> {
   const events = await loadEventsForPeriod({ restaurantId, period });
   return buildOperationalActivity(events, {
@@ -145,7 +146,7 @@ export async function getOperationalActivityReport(
 export async function getCancellationStatsReport(
   restaurantId: string,
   period: TimeRange,
-  currency: string = "EUR",
+  currency: string = currencyService.getDefaultCurrency(),
 ) {
   const events = await loadEventsForPeriod({ restaurantId, period });
   return buildCancellationStats(events, {
@@ -158,7 +159,7 @@ export async function getCancellationStatsReport(
 export async function getGamificationImpactReport(
   restaurantId: string,
   input: GamificationImpactInput,
-  currency: string = "EUR",
+  currency: string = currencyService.getDefaultCurrency(),
 ): Promise<GamificationImpact> {
   const events = await loadEventsForPeriod({
     restaurantId,

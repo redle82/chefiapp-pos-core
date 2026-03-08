@@ -8,6 +8,7 @@
  */
 
 import { BackendType, getBackendType } from "../infra/backendAdapter";
+import { Logger } from "../logger";
 
 export interface TaskFeedbackData {
   taskId: string;
@@ -40,9 +41,9 @@ export class TaskFeedback {
    */
   async addFeedback(feedback: TaskFeedbackData): Promise<void> {
     if (getBackendType() !== BackendType.docker) {
-      console.warn(
+      Logger.warn(
         "[CORE TODO] TaskFeedback.addFeedback ainda não persiste no Core. Dados recebidos:",
-        feedback,
+        { feedback },
       );
     }
     return;
@@ -106,7 +107,7 @@ export class TaskFeedback {
    */
   async getFeedback(taskId: string): Promise<TaskFeedbackData | null> {
     if (getBackendType() !== BackendType.docker) {
-      console.warn(
+      Logger.warn(
         "[CORE TODO] TaskFeedback.getFeedback ainda não lê do Core. Retornando null.",
         { taskId },
       );
@@ -122,7 +123,7 @@ export class TaskFeedback {
     limit: number = 50,
   ): Promise<Array<Task & { feedback: TaskFeedbackData }>> {
     if (getBackendType() !== BackendType.docker) {
-      console.warn(
+      Logger.warn(
         "[CORE TODO] TaskFeedback.getTasksWithFeedback ainda não lê do Core. Retornando lista vazia.",
         { restaurantId, limit },
       );

@@ -16,6 +16,7 @@
 
 import { BackendType, getBackendType } from "../infra/backendAdapter";
 import { invokeRpc } from "../infra/coreRpc";
+import { Logger } from "../logger";
 
 export interface AuditLogEvent {
   restaurantId: string;
@@ -43,7 +44,7 @@ export class AuditLogService {
   ): Promise<{ success: boolean; auditId?: string; error?: string }> {
     // Only works with Docker Core backend
     if (getBackendType() !== BackendType.docker) {
-      console.warn("[AuditLog] Not Docker Core backend, skipping audit log");
+      Logger.warn("[AuditLog] Not Docker Core backend, skipping audit log");
       return { success: false, error: "Not Docker Core backend" };
     }
 
@@ -67,7 +68,7 @@ export class AuditLogService {
       );
 
       if (result.error || !result.data) {
-        console.error("[AuditLog] RPC returned failure:", result);
+        Logger.error("[AuditLog] RPC returned failure:", result);
         return {
           success: false,
           error: result.error?.message || "Unknown error",
@@ -79,7 +80,7 @@ export class AuditLogService {
         auditId: result.data.audit_id || result.data.id,
       };
     } catch (err) {
-      console.error("[AuditLog] Exception:", err);
+      Logger.error("[AuditLog] Exception:", err);
       return { success: false, error: String(err) };
     }
   }
@@ -193,7 +194,7 @@ export class AuditLogService {
       );
 
       if (result.error || !result.data) {
-        console.error("[AuditLog] Login success log failed:", result);
+        Logger.error("[AuditLog] Login success log failed:", result);
         return {
           success: false,
           error: result.error?.message || "Unknown error",
@@ -202,7 +203,7 @@ export class AuditLogService {
 
       return { success: true, auditId: result.data.audit_id || result.data.id };
     } catch (err) {
-      console.error("[AuditLog] Login success exception:", err);
+      Logger.error("[AuditLog] Login success exception:", err);
       return { success: false, error: String(err) };
     }
   }
@@ -230,7 +231,7 @@ export class AuditLogService {
       );
 
       if (result.error || !result.data) {
-        console.error("[AuditLog] Logout log failed:", result);
+        Logger.error("[AuditLog] Logout log failed:", result);
         return {
           success: false,
           error: result.error?.message || "Unknown error",
@@ -239,7 +240,7 @@ export class AuditLogService {
 
       return { success: true, auditId: result.data.audit_id || result.data.id };
     } catch (err) {
-      console.error("[AuditLog] Logout exception:", err);
+      Logger.error("[AuditLog] Logout exception:", err);
       return { success: false, error: String(err) };
     }
   }
@@ -268,7 +269,7 @@ export class AuditLogService {
       );
 
       if (result.error || !result.data) {
-        console.warn("[AuditLog] Login failure log returned non-success");
+        Logger.warn("[AuditLog] Login failure log returned non-success");
         // Don't throw, just warn
         return {
           success: false,
@@ -278,7 +279,7 @@ export class AuditLogService {
 
       return { success: true, auditId: result.data.audit_id || result.data.id };
     } catch (err) {
-      console.warn("[AuditLog] Login failure exception:", err);
+      Logger.warn("[AuditLog] Login failure exception", { error: String(err) });
       return { success: false, error: String(err) };
     }
   }
@@ -316,13 +317,13 @@ export class AuditLogService {
       });
 
       if (!result || !Array.isArray(result)) {
-        console.error("[AuditLog] Get logs failed:", result);
+        Logger.error("[AuditLog] Get logs failed:", result);
         return { success: false, error: "Invalid response", logs: [] };
       }
 
       return { success: true, logs: result };
     } catch (err) {
-      console.error("[AuditLog] Get logs exception:", err);
+      Logger.error("[AuditLog] Get logs exception:", err);
       return { success: false, error: String(err), logs: [] };
     }
   }

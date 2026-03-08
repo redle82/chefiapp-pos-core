@@ -18,7 +18,7 @@ const ROUTE_ALLOWED_ROLES: Record<string, UserRole[]> = {
   "/admin/config/modules": ["owner"],
   "/admin/config/status": ["owner"],
   "/admin/config/payments": ["owner"],
-  "/admin/config/suscripcion": ["owner"],
+  "/admin/config/subscription": ["owner"],
   "/admin/config/perception": ["owner", "manager"],
   "/admin/config": ["owner", "manager"],
   // Config sidebar (legacy paths — sem /admin prefix)
@@ -26,7 +26,7 @@ const ROUTE_ALLOWED_ROLES: Record<string, UserRole[]> = {
   "/config/modules": ["owner"],
   "/config/status": ["owner"],
   "/config/payments": ["owner"],
-  "/config/suscripcion": ["owner"],
+  "/config/subscription": ["owner"],
   "/config/perception": ["owner", "manager"],
   "/config": ["owner", "manager"],
   // Dashboard: owner/manager (gerente acompanha; staff só execução em /op, /tasks, etc.)

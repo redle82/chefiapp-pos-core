@@ -9,11 +9,12 @@
 
 import type { CoreTask } from "../../infra/docker-core/types";
 import {
-  readTasksForAnalytics,
-  readTaskHistory,
   readEmployeeTaskHistory,
+  readTaskHistory,
+  readTasksForAnalytics,
 } from "../../infra/readers/TaskReader";
 import { BackendType, getBackendType } from "../infra/backendAdapter";
+import { Logger } from "../logger";
 
 /** Tarefa no shape interno usado pela lógica de analytics (status "completed" | "overdue" etc.). */
 interface AnalyticsTask {
@@ -107,7 +108,9 @@ export class TaskAnalytics {
         );
         tasks = coreTasks.map(coreTaskToAnalyticsTask);
       } catch (e) {
-        console.warn("[TaskAnalytics] Erro ao carregar tarefas do Core:", e);
+        Logger.warn("[TaskAnalytics] Erro ao carregar tarefas do Core:", {
+          error: String(e),
+        });
       }
     }
     const totalTasks = tasks.length;
@@ -246,7 +249,7 @@ export class TaskAnalytics {
     }>
   > {
     if (getBackendType() !== BackendType.docker) {
-      console.warn(
+      Logger.warn(
         "[TaskAnalytics] getTaskHistory não disponível fora do Docker mode.",
         { taskId },
       );
@@ -282,7 +285,7 @@ export class TaskAnalytics {
     }>
   > {
     if (getBackendType() !== BackendType.docker) {
-      console.warn(
+      Logger.warn(
         "[TaskAnalytics] getEmployeeHistory não disponível fora do Docker mode.",
         { employeeId, limit },
       );

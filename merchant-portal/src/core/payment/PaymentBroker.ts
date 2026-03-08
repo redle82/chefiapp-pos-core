@@ -5,8 +5,13 @@
  * ANTI-SUPABASE §4: Payment ONLY via Docker Core. No supabase.functions.invoke.
  */
 
+import { CONFIG } from "../../config";
 import { BackendType, getBackendType } from "../infra/backendAdapter";
 import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
+import { Logger } from "../logger";
+
+const gatewayPath = (legacy: string, edge: string) =>
+  CONFIG.isEdgeGateway ? edge : legacy;
 
 const CORE_REQUIRED_MSG =
   "Payment requires Docker Core. Supabase domain fallback is forbidden.";
@@ -54,7 +59,7 @@ export class PaymentBroker {
   static async createPaymentIntent(
     params: CreatePaymentParams,
   ): Promise<PaymentIntentResult> {
-    console.log("[PaymentBroker] Requesting PaymentIntent:", params);
+    Logger.debug("[PaymentBroker] Requesting PaymentIntent:", { params });
 
     if (getBackendType() !== BackendType.docker) {
       throw new Error(CORE_REQUIRED_MSG);
@@ -72,7 +77,7 @@ export class PaymentBroker {
     });
 
     if (res.error) {
-      console.error("[PaymentBroker] Core RPC Error:", res.error);
+      Logger.error("[PaymentBroker] Core RPC Error:", res.error);
       throw new Error(`Erro ao criar pagamento: ${res.error.message}`);
     }
 
@@ -82,7 +87,7 @@ export class PaymentBroker {
       error?: string;
     } | null;
     if (data?.error) {
-      console.error("[PaymentBroker] Stripe Error:", data.error);
+      Logger.error("[PaymentBroker] Stripe Error:", data.error);
       throw new Error(data.error);
     }
 
@@ -107,13 +112,17 @@ export class PaymentBroker {
     merchantCode?: string;
     description?: string;
   }): Promise<PixCheckoutResult> {
-    console.log("[PaymentBroker] Creating Pix checkout:", params);
+    Logger.debug("[PaymentBroker] Creating Pix checkout:", { params });
 
     const gatewayUrl = import.meta.env.VITE_API_BASE || "http://localhost:4320";
     const internalToken =
       import.meta.env.VITE_INTERNAL_API_TOKEN || "chefiapp-internal-token-dev";
 
-    const response = await fetch(`${gatewayUrl}/api/v1/payment/pix/checkout`, {
+    const path = gatewayPath(
+      "api/v1/payment/pix/checkout",
+      "payment-pix-checkout",
+    );
+    const response = await fetch(`${gatewayUrl}/${path}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -123,7 +132,7 @@ export class PaymentBroker {
         order_id: params.orderId,
         amount: params.amount,
         merchant_code: params.merchantCode,
-        description: params.description || `Pedido ${params.orderId.slice(-6)}`,
+        description: params.description || `Order ${params.orderId.slice(-6)}`,
       }),
     });
 
@@ -149,15 +158,16 @@ export class PaymentBroker {
     const internalToken =
       import.meta.env.VITE_INTERNAL_API_TOKEN || "chefiapp-internal-token-dev";
 
-    const response = await fetch(
-      `${gatewayUrl}/api/v1/payment/sumup/checkout/${checkoutId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${internalToken}`,
-        },
-      },
+    const base = gatewayPath(
+      "api/v1/payment/sumup/checkout",
+      "sumup-get-checkout",
     );
+    const response = await fetch(`${gatewayUrl}/${base}/${checkoutId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${internalToken}`,
+      },
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -179,7 +189,7 @@ export class PaymentBroker {
     orderId: string;
     restaurantId: string;
     amount: number;
-    currency?: string;
+    currency: string;
     description?: string;
     returnUrl?: string;
   }): Promise<{
@@ -195,13 +205,14 @@ export class PaymentBroker {
     };
     paymentId?: string;
   }> {
-    console.log("[PaymentBroker] Creating SumUp checkout:", params);
+    Logger.debug("[PaymentBroker] Creating SumUp checkout:", { params });
 
     const gatewayUrl = import.meta.env.VITE_API_BASE || "http://localhost:4320";
     const internalToken =
       import.meta.env.VITE_INTERNAL_API_TOKEN || "chefiapp-internal-token-dev";
 
-    const response = await fetch(`${gatewayUrl}/api/v1/sumup/checkout`, {
+    const path = gatewayPath("api/v1/sumup/checkout", "sumup-create-checkout");
+    const response = await fetch(`${gatewayUrl}/${path}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -211,8 +222,8 @@ export class PaymentBroker {
         orderId: params.orderId,
         restaurantId: params.restaurantId,
         amount: params.amount,
-        currency: params.currency || "EUR",
-        description: params.description || `Pedido ${params.orderId.slice(-6)}`,
+        currency: params.currency,
+        description: params.description || `Order ${params.orderId.slice(-6)}`,
         returnUrl: params.returnUrl,
       }),
     });
@@ -248,15 +259,13 @@ export class PaymentBroker {
     const internalToken =
       import.meta.env.VITE_INTERNAL_API_TOKEN || "chefiapp-internal-token-dev";
 
-    const response = await fetch(
-      `${gatewayUrl}/api/v1/sumup/checkout/${checkoutId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${internalToken}`,
-        },
+    const base = gatewayPath("api/v1/sumup/checkout", "sumup-get-checkout");
+    const response = await fetch(`${gatewayUrl}/${base}/${checkoutId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${internalToken}`,
       },
-    );
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

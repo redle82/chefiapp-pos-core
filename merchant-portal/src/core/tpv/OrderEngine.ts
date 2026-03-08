@@ -13,9 +13,11 @@
 
 // LEGACY / LAB — order creation via CoreOrdersApi; blocked in Docker mode
 import { createOrderAtomic } from "../infra/CoreOrdersApi";
-import { supabase } from "../supabase";
-
+import { coreClient } from "../infra/coreClient";
 import { Logger } from "../logger";
+
+import type { PaymentMethod } from "@domain/payment/types";
+export type { PaymentMethod };
 
 export type OrderStatus =
   | "pending"
@@ -24,7 +26,6 @@ export type OrderStatus =
   | "delivered"
   | "canceled";
 export type PaymentStatus = "PENDING" | "PARTIALLY_PAID" | "PAID" | "FAILED";
-export type PaymentMethod = "cash" | "card" | "pix" | "loyalty";
 
 export class OrderEngineError extends Error {
   constructor(message: string, public code: string) {
@@ -138,6 +139,7 @@ export class OrderEngine {
       p_items: rpcItems,
       p_payment_method: "cash",
       p_sync_metadata: syncMetadata,
+      table_id: input.tableId ?? null,
     });
 
     if (error) {
@@ -162,7 +164,7 @@ export class OrderEngine {
    * Buscar pedido por ID
    */
   static async getOrderById(orderId: string): Promise<Order> {
-    const chain = (supabase as any)
+    const chain = (coreClient as any)
       .from("gm_orders")
       .select(
         `
@@ -210,7 +212,7 @@ export class OrderEngine {
     restaurantId: string,
     tableId: string,
   ): Promise<Order | null> {
-    const chain = (supabase as any)
+    const chain = (coreClient as any)
       .from("gm_orders")
       .select(
         `
@@ -250,7 +252,7 @@ export class OrderEngine {
    * Buscar pedidos ativos do restaurante
    */
   static async getActiveOrders(restaurantId: string): Promise<Order[]> {
-    const chain = (supabase as any)
+    const chain = (coreClient as any)
       .from("gm_orders")
       .select(
         `

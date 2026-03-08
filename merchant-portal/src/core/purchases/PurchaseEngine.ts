@@ -8,6 +8,8 @@
  * - Esta engine NÃO deve chamar Supabase nem RPCs reais.
  * - Implementação atual: store in-memory por sessão, suficiente para narrativa de compras.
  */
+import { Logger } from "../logger";
+
 export type PurchaseOrderStatus =
   | "draft"
   | "sent"
@@ -206,9 +208,8 @@ export class PurchaseEngine {
   }): Promise<string> {
     const order = purchaseOrdersStore.get(item.orderId);
     if (!order) {
-      console.warn(
-        "[PurchaseEngine] addOrderItem: pedido não encontrado",
-        item.orderId,
+      Logger.warn(
+        `[PurchaseEngine] addOrderItem: pedido não encontrado: ${item.orderId}`,
       );
       throw new Error("Purchase order not found");
     }

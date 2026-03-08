@@ -6,6 +6,7 @@
  */
 import { getErrorMessage } from "../../errors/ErrorMessages";
 import { DbWriteGate } from "../../governance/DbWriteGate";
+import { Logger } from "../../logger";
 import { supabase } from "../../supabase";
 
 /** CORE_FAILURE_MODEL: caller can pass executeSafe to get failureClass on throw */
@@ -28,7 +29,7 @@ export const OrderProcessingService = {
     kernel: any,
     executeSafe?: ExecuteSafeFn,
   ): Promise<string> {
-    console.log("[OrderProcessing] Accepting Request:", requestId);
+    Logger.info(`[OrderProcessing] Accepting Request: ${requestId}`);
 
     if (!kernel && !executeSafe) {
       throw new Error(
@@ -105,15 +106,14 @@ export const OrderProcessingService = {
 
     if (updateError) throw updateError;
 
-    console.log(
-      "[OrderProcessing] Request Converted to Sovereign Order:",
-      orderId,
+    Logger.info(
+      `[OrderProcessing] Request Converted to Sovereign Order: ${orderId}`,
     );
     return orderId;
   },
 
   async rejectRequest(requestId: string): Promise<void> {
-    console.log("[OrderProcessing] Rejecting Request:", requestId);
+    Logger.info(`[OrderProcessing] Rejecting Request: ${requestId}`);
 
     const { error } = await DbWriteGate.update(
       "OrderProcessingService",

@@ -18,7 +18,10 @@
  */
 
 // LEGACY / LAB — order creation via CoreOrdersApi; supabase for protection/airlock when not Docker
+import { currencyService } from "../currency/CurrencyService";
 import { createOrderAtomic } from "../infra/CoreOrdersApi";
+import { coreClient } from "../infra/coreClient";
+import { Logger } from "../logger";
 import { supabase } from "../supabase";
 import { checkOrderProtection, recordOrderSubmission } from "./OrderProtection";
 
@@ -104,14 +107,14 @@ export const WebOrderingService = {
    * Get restaurant web configuration
    */
   async getWebConfig(slug: string): Promise<RestaurantWebConfig | null> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await (coreClient as any)
       .from("gm_restaurants")
       .select("id, name, slug, web_ordering_enabled, auto_accept_web_orders")
       .eq("slug", slug)
       .single();
 
     if (error || !data) {
-      console.error("[WebOrderingService] Config fetch failed:", error);
+      Logger.error("[WebOrderingService] Config fetch failed:", error);
       return null;
     }
 
@@ -140,11 +143,11 @@ export const WebOrderingService = {
     input: WebOrderInput,
     onProgress?: (progress: SubmissionProgress) => void,
     origin: string = "WEB_PUBLIC",
-    tableId?: string
+    tableId?: string,
   ): Promise<WebOrderResult> {
     const notify = (progress: SubmissionProgress) => {
-      console.log(
-        `[WebOrderingService] ${progress.phase}: ${progress.message}`
+      Logger.info(
+        `[WebOrderingService] ${progress.phase}: ${progress.message}`,
       );
       onProgress?.(progress);
     };
@@ -156,11 +159,11 @@ export const WebOrderingService = {
         product_id: i.product_id,
         quantity: i.quantity,
       })),
-      input.table_number
+      input.table_number,
     );
 
     if (!protection.allowed) {
-      console.warn("[WebOrderingService] Order blocked:", protection.reason);
+      Logger.warn(`[WebOrderingService] Order blocked: ${protection.reason}`);
 
       if (protection.reason === "DUPLICATE") {
         notify({
@@ -222,8 +225,8 @@ export const WebOrderingService = {
           new Promise<never>((_, reject) =>
             setTimeout(
               () => reject(new Error("TIMEOUT")),
-              RETRY_CONFIG.TIMEOUT_MS
-            )
+              RETRY_CONFIG.TIMEOUT_MS,
+            ),
           ),
         ]);
 
@@ -241,9 +244,9 @@ export const WebOrderingService = {
         return result;
       } catch (err: any) {
         lastError = err;
-        console.warn(
+        Logger.warn(
           `[WebOrderingService] Attempt ${attempt} failed:`,
-          err.message
+          err.message,
         );
 
         // If not last attempt, wait before retry
@@ -280,7 +283,7 @@ export const WebOrderingService = {
       })),
       input.table_number,
       undefined,
-      undefined
+      undefined,
     );
 
     return {
@@ -298,22 +301,21 @@ export const WebOrderingService = {
   async _submitOrderInternal(
     input: WebOrderInput,
     origin: string = "WEB_PUBLIC",
-    tableId?: string
+    tableId?: string,
   ): Promise<WebOrderResult> {
-    console.log(
-      "[WebOrderingService] _submitOrderInternal:",
-      input.restaurant_id
+    Logger.info(
+      `[WebOrderingService] _submitOrderInternal: ${input.restaurant_id}`,
     );
 
     // 1. Fetch restaurant config
-    const { data: restaurant, error: configError } = await (supabase as any)
+    const { data: restaurant, error: configError } = await (coreClient as any)
       .from("gm_restaurants")
       .select("id, auto_accept_web_orders, web_ordering_enabled")
       .eq("id", input.restaurant_id)
       .single();
 
     if (configError || !restaurant) {
-      console.error("[WebOrderingService] Restaurant not found:", configError);
+      Logger.error("[WebOrderingService] Restaurant not found:", configError);
       return {
         success: false,
         status: "REJECTED",
@@ -333,7 +335,7 @@ export const WebOrderingService = {
     // 3. Calculate totals
     const total_cents = input.items.reduce(
       (sum, item) => sum + item.price_cents * item.quantity,
-      0
+      0,
     );
 
     // 4. Route based on auto_accept setting
@@ -343,14 +345,14 @@ export const WebOrderingService = {
         restaurant.id,
         total_cents,
         origin,
-        tableId
+        tableId,
       ); // Use ID as tenant_id
     } else {
       return this.createAirlockRequest(
         input,
         restaurant.id,
         total_cents,
-        origin
+        origin,
       ); // Use ID as tenant_id
     }
   },
@@ -374,7 +376,7 @@ export const WebOrderingService = {
     tenant_id: string,
     total_cents: number,
     origin: string = "WEB_PUBLIC",
-    tableId?: string
+    tableId?: string,
   ): Promise<WebOrderResult> {
     try {
       // Prepare RPC payload
@@ -386,7 +388,7 @@ export const WebOrderingService = {
       }));
 
       // Prepare sync_metadata with origin and table info
-      const syncMetadata: any = {
+      const syncMetadata: Record<string, unknown> = {
         origin: origin,
         userAgent: navigator.userAgent,
         transaction_id: input.transaction_id,
@@ -406,6 +408,7 @@ export const WebOrderingService = {
         p_items: rpcItems,
         p_payment_method: input.payment_method || "cash",
         p_sync_metadata: syncMetadata,
+        table_id: tableId || null,
       });
 
       if (error) {
@@ -433,9 +436,8 @@ export const WebOrderingService = {
         throw new Error("RPC returned no order ID");
       }
 
-      console.log(
-        "[WebOrderingService] Direct order created via RPC:",
-        orderId
+      Logger.info(
+        `[WebOrderingService] Direct order created via RPC: ${orderId}`,
       );
 
       // 🛡️ Record successful submission for protection
@@ -447,7 +449,7 @@ export const WebOrderingService = {
         })),
         input.table_number,
         orderId,
-        undefined
+        undefined,
       );
 
       return {
@@ -457,7 +459,7 @@ export const WebOrderingService = {
         message: "Pedido recebido! Preparando...",
       };
     } catch (err: any) {
-      console.error("[WebOrderingService] Direct order failed:", err);
+      Logger.error("[WebOrderingService] Direct order failed:", err);
 
       // Handle constraint violations gracefully
       if (
@@ -488,7 +490,7 @@ export const WebOrderingService = {
     input: WebOrderInput,
     tenant_id: string,
     total_cents: number,
-    origin: string = "WEB_PUBLIC"
+    origin: string = "WEB_PUBLIC",
   ): Promise<WebOrderResult> {
     try {
       const requestId = crypto.randomUUID();
@@ -523,13 +525,13 @@ export const WebOrderingService = {
       // 6. Insert into gm_order_requests
       // BYPASS DBWriteGate.insert because it uses .select() which fails RLS for anon users
       // We generate ID client-side, so we don't need to read it back.
-      const { error } = await (supabase as any)
+      const { error } = await (coreClient as any)
         .from("gm_order_requests")
         .insert(requestPayload);
 
       if (error) throw error;
 
-      console.log("[WebOrderingService] Airlock request created:", requestId);
+      Logger.info(`[WebOrderingService] Airlock request created: ${requestId}`);
 
       // 🛡️ Record successful submission for protection
       recordOrderSubmission(
@@ -540,7 +542,7 @@ export const WebOrderingService = {
         })),
         input.table_number,
         undefined,
-        requestId
+        requestId,
       );
 
       return {
@@ -550,7 +552,7 @@ export const WebOrderingService = {
         message: "Pedido enviado! Aguardando confirmação do restaurante.",
       };
     } catch (err: any) {
-      console.error("[WebOrderingService] Airlock request failed:", err);
+      Logger.error("[WebOrderingService] Airlock request failed:", err);
       return {
         success: false,
         status: "REJECTED",
@@ -564,7 +566,7 @@ export const WebOrderingService = {
    */
   async initiatePublicPayment(
     restaurantId: string,
-    amountCents: number
+    amountCents: number,
   ): Promise<{ clientSecret: string; id: string } | null> {
     try {
       const { data, error } = await (supabase as any).functions.invoke(
@@ -574,19 +576,19 @@ export const WebOrderingService = {
             action: "create-public-payment-intent",
             restaurant_id: restaurantId,
             amount: amountCents,
-            currency: "EUR",
+            currency: currencyService.getDefaultCurrency(),
           },
-        }
+        },
       );
 
       if (error) {
-        console.error("[WebOrderingService] Payment init failed:", error);
+        Logger.error("[WebOrderingService] Payment init failed:", error);
         return null;
       }
 
       return data;
     } catch (err) {
-      console.error("[WebOrderingService] Payment init exception:", err);
+      Logger.error("[WebOrderingService] Payment init exception:", err);
       return null;
     }
   },
@@ -596,13 +598,13 @@ export const WebOrderingService = {
    */
   async checkStatus(
     orderId?: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<{
     status: string;
     message: string;
   }> {
     if (orderId) {
-      const { data } = await (supabase as any)
+      const { data } = await (coreClient as any)
         .from("gm_orders")
         .select("status")
         .eq("id", orderId)
@@ -625,7 +627,7 @@ export const WebOrderingService = {
     }
 
     if (requestId) {
-      const { data } = await (supabase as any)
+      const { data } = await (coreClient as any)
         .from("gm_order_requests")
         .select("status, sovereign_order_id")
         .eq("id", requestId)

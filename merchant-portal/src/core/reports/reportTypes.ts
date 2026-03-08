@@ -5,15 +5,18 @@
  * de extensão para regras específicas de PT/ES quando necessário.
  */
 
-export type CurrencyCode = 'EUR' | 'BRL' | 'USD' | string;
+import type { Currency } from "../../domain/payment/types";
+
+/** @deprecated Use Currency from domain/payment/types directly */
+export type CurrencyCode = Currency | string;
 
 export type PaymentMethod =
-  | 'cash'
-  | 'card'
-  | 'pix'
-  | 'mixed'
-  | 'voucher'
-  | 'other'
+  | "cash"
+  | "card"
+  | "pix"
+  | "mixed"
+  | "voucher"
+  | "other"
   | string;
 
 export interface TimeRange {
@@ -119,4 +122,3 @@ export interface GamificationImpact {
   metricWindow: TimeRange;
   points: GamificationImpactPoint[];
 }
-

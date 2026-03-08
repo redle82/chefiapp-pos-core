@@ -8,6 +8,7 @@
  */
 
 import { getBackendType, type BackendType } from "../infra/backendAdapter";
+import { Logger } from "../logger";
 import { isDevStableMode } from "./devStableMode";
 
 // ============================================================================
@@ -89,7 +90,7 @@ export function assertNoMock(serviceName: string, isMock: boolean): void {
   if (!isMock) return;
   if (RUNTIME.isTrial) {
     // Allowed in trial mode, but log for visibility
-    console.log(
+    Logger.info(
       `[RUNTIME] ⚠️ Mock active: ${serviceName} (allowed in trial mode)`,
     );
     return;
@@ -97,11 +98,11 @@ export function assertNoMock(serviceName: string, isMock: boolean): void {
 
   // CRITICAL: Crash in production
   const message = `[PRODUCTION_VIOLATION] Mock usage forbidden: ${serviceName}`;
-  console.error(`❌ ${message}`);
-  console.error(
+  Logger.error(`❌ ${message}`);
+  Logger.error(
     "Service attempted to use mock implementation in production mode.",
   );
-  console.error(
+  Logger.error(
     "This is a critical error that must be fixed before deployment.",
   );
   throw new Error(message);
@@ -118,7 +119,7 @@ export function assertProduction(operationName: string): void {
   if (RUNTIME.isProduction) return;
 
   const message = `[TRIAL_BLOCKED] ${operationName} is disabled in trial mode`;
-  console.warn(`⚠️ ${message}`);
+  Logger.warn(`⚠️ ${message}`);
   throw new Error(message);
 }
 
@@ -130,15 +131,15 @@ export function logRuntimeStatus(): void {
   const modeLabel = RUNTIME.isProduction ? "PRODUCTION" : "TRIAL";
   const stable = RUNTIME.devStableActive ? " [STABLE]" : "";
 
-  console.log(`${icon} Runtime Mode: ${modeLabel}${stable}`);
-  console.log(`   → Backend: ${RUNTIME.backendType}`);
+  Logger.info(`${icon} Runtime Mode: ${modeLabel}${stable}`);
+  Logger.info(`   → Backend: ${RUNTIME.backendType}`);
 
   if (RUNTIME.isProduction) {
-    console.log("   → Mocks are FORBIDDEN");
-    console.log("   → All operations are REAL");
+    Logger.info("   → Mocks are FORBIDDEN");
+    Logger.info("   → All operations are REAL");
   } else {
-    console.log("   → Mocks are ALLOWED");
-    console.log("   → Data may be ephemeral");
+    Logger.info("   → Mocks are ALLOWED");
+    Logger.info("   → Data may be ephemeral");
   }
 }
 

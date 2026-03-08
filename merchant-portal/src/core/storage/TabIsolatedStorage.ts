@@ -34,6 +34,8 @@ function migrateFromLocalStorage(): void {
     "chefiapp_setup_status",
     "chefiapp_system_blueprint_v2",
     "chefiapp_trial_mode",
+    "chefiapp_country",
+    "chefiapp_currency",
   ];
 
   keysToMigrate.forEach((key) => {

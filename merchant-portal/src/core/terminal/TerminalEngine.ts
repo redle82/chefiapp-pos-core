@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
+import { Logger } from "../logger";
 
 export type TerminalType = "TPV" | "KDS" | "WAITER" | "BACKOFFICE" | "ADMIN";
 
@@ -75,16 +76,16 @@ export class TerminalEngine {
           TerminalEngine._skipHeartbeatCoreUnavailable = true;
           if (!TerminalEngine._loggedCoreUnavailable) {
             TerminalEngine._loggedCoreUnavailable = true;
-            console.debug(
-              "[TerminalEngine] gm_terminals indisponível; heartbeats pausados nesta sessão."
+            Logger.debug(
+              "[TerminalEngine] gm_terminals indisponível; heartbeats pausados nesta sessão.",
             );
           }
         } else {
-          console.warn("[TerminalEngine] Falha ao enviar heartbeat:", error);
+          Logger.warn("[TerminalEngine] Falha ao enviar heartbeat:", { error });
         }
       }
     } catch (err) {
-      console.error("[TerminalEngine] Erro crítico no heartbeat:", err);
+      Logger.error("[TerminalEngine] Erro crítico no heartbeat:", err);
     }
   }
 }

@@ -8,6 +8,8 @@
  * - Esta engine NÃO deve chamar Supabase nem RPCs reais.
  * - Implementação atual: store in-memory por sessão, suficiente para simular banco de horas.
  */
+import { Logger } from "../logger";
+
 export interface TimeEntry {
   id: string;
   employeeId: string;
@@ -76,9 +78,8 @@ export class TimeTrackingEngine {
   ): Promise<void> {
     const existing = timeEntriesStore.get(entryId);
     if (!existing) {
-      console.warn(
-        "[TimeTrackingEngine] clockOut: entrada não encontrada",
-        entryId,
+      Logger.warn(
+        `[TimeTrackingEngine] clockOut: entrada não encontrada: ${entryId}`,
       );
       return;
     }

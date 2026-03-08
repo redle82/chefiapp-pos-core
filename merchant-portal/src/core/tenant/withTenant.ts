@@ -24,6 +24,7 @@
  */
 
 import { isDebugMode } from "../debugMode";
+import { Logger } from "../logger";
 
 // ============================================================================
 // TYPES
@@ -77,7 +78,7 @@ export function withTenant<T>(
   column: string = "restaurant_id",
 ): QueryBuilder<T> {
   if (!tenantId) {
-    console.error("[withTenant] ❌ CRITICAL: Query attempted without tenantId");
+    Logger.error("[withTenant] ❌ CRITICAL: Query attempted without tenantId");
     // Com ?debug=1, falhar alto para detetar violações
     if (isDebugMode()) {
       throw new Error(
@@ -107,7 +108,7 @@ export function withTenantInsert<T extends Record<string, unknown>>(
   column: string = "restaurant_id",
 ): (T & Record<string, string>)[] {
   if (!tenantId) {
-    console.error(
+    Logger.error(
       "[withTenantInsert] ❌ CRITICAL: Insert attempted without tenantId",
     );
     if (isDebugMode()) {

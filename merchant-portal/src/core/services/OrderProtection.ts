@@ -13,6 +13,7 @@
  * - Or API Gateway (e.g., Cloudflare, Kong)
  */
 
+import { Logger } from "../logger";
 import { getTabIsolated, setTabIsolated } from "../storage/TabIsolatedStorage";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -110,7 +111,7 @@ export function recordIdempotency(
 
     setTabIsolated(IDEMPOTENCY_STORAGE_KEY, JSON.stringify(records));
   } catch {
-    console.warn("[OrderProtection] Failed to record idempotency");
+    Logger.warn("[OrderProtection] Failed to record idempotency");
   }
 }
 
@@ -198,7 +199,7 @@ export function recordRateLimit(restaurantId: string): void {
 
     setTabIsolated(key, JSON.stringify(record));
   } catch {
-    console.warn("[OrderProtection] Failed to record rate limit");
+    Logger.warn("[OrderProtection] Failed to record rate limit");
   }
 }
 
@@ -385,7 +386,7 @@ export async function retryWithServerRateLimit<T>(
     // Check if server rate limit is active
     const serverBlockedSeconds = checkServerRateLimit(endpoint);
     if (serverBlockedSeconds > 0) {
-      console.warn(
+      Logger.warn(
         `[OrderProtection] Server rate limit active: retry after ${serverBlockedSeconds}s`,
       );
       // Wait for server's guidance
@@ -401,7 +402,7 @@ export async function retryWithServerRateLimit<T>(
         const { retryAfterSeconds } = handleServerRateLimit429(error, endpoint);
 
         if (attempt < maxRetries - 1) {
-          console.warn(
+          Logger.warn(
             `[OrderProtection] 429 Rate Limited: retry ${
               attempt + 1
             }/${maxRetries} after ${retryAfterSeconds}s`,

@@ -7,7 +7,9 @@
  * Ref: FISCAL_RECONCILIATION_CONTRACT.md
  */
 
+import { formatCents } from "@/core/currency/CurrencyService";
 import { db } from "../db";
+import { Logger } from "../logger";
 
 export type FiscalSnapshotSource = "API" | "UPLOAD" | "MANUAL";
 
@@ -72,7 +74,7 @@ function parseFiscalSnapshotRow(snapshot: unknown): FiscalSnapshotRow | null {
  * Tolerance threshold in cents for OK status.
  * Differences <= this value are considered OK.
  */
-const TOLERANCE_CENTS = 10; // €0.10
+const TOLERANCE_CENTS = 10; // 0.10 in local currency
 
 export class FiscalReconciliationService {
   /**
@@ -98,7 +100,7 @@ export class FiscalReconciliationService {
         .single();
 
       if (error) {
-        console.error("[FiscalReconciliation] Erro ao criar snapshot:", error);
+        Logger.error("[FiscalReconciliation] Erro ao criar snapshot:", error);
         throw new Error(`Falha ao criar snapshot fiscal: ${error.message}`);
       }
 
@@ -189,14 +191,14 @@ export class FiscalReconciliationService {
       notes = "Aguardando snapshot do POS fiscal para este turno";
     } else if (absDiff <= TOLERANCE_CENTS) {
       status = "OK";
-      notes = `Reconciliação automática - diferença de €${(
-        absDiff / 100
-      ).toFixed(2)} dentro da tolerância`;
+      notes = `Reconciliação automática - diferença de ${formatCents(
+        absDiff,
+      )} dentro da tolerância`;
     } else {
       status = "DIVERGENT";
       reasonCode = "MANUAL_REVIEW_REQUIRED";
-      notes = `Divergência de €${(absDiff / 100).toFixed(
-        2,
+      notes = `Divergência de ${formatCents(
+        absDiff,
       )} detectada - requer investigação`;
     }
 
@@ -219,7 +221,7 @@ export class FiscalReconciliationService {
       .single();
 
     if (error) {
-      console.error(
+      Logger.error(
         "[FiscalReconciliation] Erro ao criar reconciliação:",
         error,
       );
@@ -284,7 +286,9 @@ export class FiscalReconciliationService {
           params.eventType === "FISCAL_SYNC_SUCCESS" ? "SUCCESS" : "FAILURE",
       });
     } catch (err) {
-      console.warn("[FiscalReconciliation] Falha ao emitir evento:", err);
+      Logger.warn("[FiscalReconciliation] Falha ao emitir evento:", {
+        error: String(err),
+      });
       // Não lançar erro - continuar mesmo se audit log falhar
     }
   }
