@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "check:env": "tsx scripts/check-env.ts",
-    "dev": "pnpm run check:env && vite",
+    "dev": "pnpm run check:env && NODE_OPTIONS='--preserve-symlinks' vite",
     "validate:constitution": "node ../scripts/validate-constitution.mjs",
     "prebuild": "npm run validate:constitution",
     "build": "vite build",
@@ -13,6 +13,7 @@
     "lint": "eslint . --max-warnings 9999 --no-warn-ignored",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:hardening": "bash ../scripts/core/run-hardening-tests.sh",
     "test:e2e": "playwright test",
@@ -66,6 +67,7 @@
     "recharts": "^3.6.0",
     "sileo": "^0.1.0",
     "uuid": "^13.0.0",
+    "zod": "^3.25.76",
     "zustand": "^5.0.10"
   },
   "devDependencies": {
@@ -95,6 +97,7 @@
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",
     "vite-plugin-pwa": "^1.2.0",
+    "@vitest/coverage-istanbul": "^4.0.16",
     "vitest": "^4.0.16",
     "workbox-window": "^7.0.0"
   }

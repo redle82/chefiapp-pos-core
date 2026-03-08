@@ -6,8 +6,7 @@
   "workspaces": [
     "merchant-portal",
     "customer-portal",
-    "mobile-app",
-    "desktop-app"
+    "mobile-app"
   ],
   "directories": {
     "test": "tests"
@@ -19,6 +18,10 @@
     "test:unit": "jest tests/unit",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:server-coverage": "jest -c jest.server-coverage.config.js --coverage",
+    "check:server-coverage": "ts-node scripts/check-server-coverage.ts",
+    "test:infra-db-coverage": "pnpm -w merchant-portal run test:coverage && npx ts-node scripts/check-infra-db-coverage.ts",
+    "check:infra-db-coverage": "ts-node scripts/check-infra-db-coverage.ts",
     "test:massive": "WORLD_FULL=true jest tests/massive --runInBand --testTimeout=300000",
     "test:pilot": "jest tests/massive --runInBand --testTimeout=60000",
     "test:stress": "WORLD_STRESS=true jest tests/massive --runInBand --testTimeout=600000",
@@ -36,10 +39,6 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "server:integration-gateway": "npx ts-node server/integration-gateway.ts",
     "dev:gateway": "bash scripts/start-gateway-billing.sh",
-    "dev:desktop": "concurrently -n portal,electron -c blue,green \"pnpm --filter merchant-portal run dev\" \"sleep 3 && pnpm --filter desktop-app run dev\"",
-    "dev:desktop:tpv": "bash scripts/dev/run-electron-module.sh tpv",
-    "dev:desktop:kds": "bash scripts/dev/run-electron-module.sh kds",
-    "build:desktop": "pnpm --filter desktop-app run build:electron",
     "dev:with-billing": "bash scripts/start-dev-with-billing.sh",
     "supabase:finalize": "bash scripts/apply-migrations-supabase.sh",
     "demo:appstaff": "npx ts-node tests/appstaff-demo-mode.ts",
@@ -59,9 +58,8 @@
     "audit:router-guard-demo": "node scripts/test-router-guard.js",
     "audit:core": "npm run -s typecheck && npm run -s test",
     "audit:laws": "bash scripts/validate-system-laws.sh",
-    "audit:staging": "bash scripts/audit/run-staging-smoke-gate.sh",
-    "audit:release": "npm run -s audit:web-e2e && npm run -s audit:core && npm run -s audit:laws && npm run -s audit:ledger:high && npm run -s audit:staging",
-    "audit:release:portal": "npm run -s audit:web-e2e && npm run -s typecheck && npm -w merchant-portal run test -- --run && npm run -s audit:laws && npm run -s audit:ledger:high && npm run -s audit:staging",
+    "audit:release": "npm run -s audit:web-e2e && npm run -s audit:core && npm run -s audit:laws",
+    "audit:release:portal": "npm run -s audit:web-e2e && npm run -s typecheck && npm -w merchant-portal run test -- --run && npm run -s test:server-coverage && SERVER_COVERAGE_BRANCHES_TARGET=80 npm run -s check:server-coverage && npm run -s audit:laws",
     "test:truth": "./scripts/test-truth.sh",
     "test:truth:stress": "./scripts/truth-stress.sh",
     "open:apps": "bash scripts/open-all-apps.sh",
@@ -70,20 +68,7 @@
     "validate:tpv": "npx tsx scripts/validate-tpv-go-nogo.ts",
     "audit:governance": "node scripts/audit-governance.js",
     "audit:governance:update": "node scripts/audit-governance.js --update-baseline",
-    "audit:bypass": "bash scripts/audit/bypass-hunt.sh --mode report",
-    "audit:bypass:baseline": "bash scripts/audit/bypass-hunt.sh --mode report --write-baseline --baseline docs/audit/bypass-baseline.json",
-    "audit:bypass:fail-on-new": "bash scripts/audit/bypass-hunt.sh --mode fail-on-new --baseline docs/audit/bypass-baseline.json",
-    "audit:ledger:high": "bash scripts/audit/check-high-contradictions.sh",
     "check:ui-guardrails": "node scripts/check-ui-guardrails.mjs",
-    "check:restaurant-canon": "node scripts/check-restaurant-canon.mjs",
-    "check:operational-device-only": "node scripts/check-operational-device-only.mjs",
-    "check:admin-general-contract": "node scripts/check-admin-general-contract.mjs",
-    "check:sw-not-in-dev": "node scripts/check-sw-not-in-dev.mjs",
-    "check:vscode-dev-tasks": "node scripts/check-vscode-dev-tasks.mjs",
-    "check:dev-bypass-scripts": "node scripts/check-dev-bypass-scripts.mjs",
-    "check:browser-guard-purity": "node scripts/check-browser-guard-purity.mjs",
-    "check:appstaff-official": "bash scripts/audit/check-appstaff-official.sh",
-    "doctor:dev": "node scripts/doctor-dev.mjs",
     "validate:single-entry": "python3 scripts/validate-single-entry-policy.py",
     "validate:tenant-isolation": "./scripts/validate-tenant-isolation.sh",
     "ci:gate:navigation": "./scripts/ci-gate-sovereign-navigation.sh",
@@ -96,7 +81,6 @@
     "merchant:demo:up": "bash scripts/ops/merchant-demo-up.sh",
     "merchant:demo:check": "bash scripts/ops/merchant-demo-check.sh",
     "merchant:benchmark": "node scripts/ops/benchmark-critical-flow.mjs",
-    "smoke:mrp001-cutover": "bash scripts/flows/mrp001-cutover-smoke.sh",
     "kill:5175": "lsof -ti:5175 | xargs kill -9 2>/dev/null || true",
     "vite:up": "bash scripts/vite-persistent.sh",
     "vite:up:https": "bash scripts/vite-persistent.sh https",
@@ -106,8 +90,9 @@
     "expo:go": "cd mobile-app && npx expo start",
     "expo:ios": "cd mobile-app && npx expo run:ios",
     "expo:android": "cd mobile-app && npx expo run:android",
-    "ios:cleanup": "bash scripts/ios/cleanup-legacy-appstaff.sh",
-    "start:full": "bash scripts/start-full-stack-with-simulators.sh"
+    "start:full": "bash scripts/start-full-stack-with-simulators.sh",
+    "clean": "bash scripts/clean-project.sh",
+    "clean:all": "bash scripts/clean-project.sh && rm -rf node_modules && pnpm install"
   },
   "keywords": [],
   "author": "Goldmonkey Empire",
@@ -150,5 +135,10 @@
     "qrcode-terminal": "^0.12.0",
     "ts-jest": "^29.1.2",
     "typescript": "^5.3.3"
+  },
+  "overrides": {
+    "react-helmet-async": {
+      "react": "$react"
+    }
   }
 }

@@ -26,17 +26,14 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
+          cache: "npm"
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Fail-fast (typecheck + build)
         run: make simulate-failfast
@@ -80,7 +77,6 @@ jobs:
     name: E2E Suite (Playwright — 4 layers)
     runs-on: ubuntu-latest
     needs: validate
-    if: github.event_name != 'pull_request'
 
     steps:
       - name: Checkout Repo
@@ -88,17 +84,14 @@ jobs:
         with:
           fetch-depth: 0 # needed for --only-changed git diff
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
+          cache: "npm"
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Install Playwright Browsers
         run: cd merchant-portal && npx playwright install --with-deps chromium
@@ -163,25 +156,22 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
+          cache: "npm"
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Install Playwright Browsers
         run: cd merchant-portal && npx playwright install --with-deps chromium
 
       - name: Start preview server
         run: |
-          pnpm -w merchant-portal run build
-          pnpm -w merchant-portal run preview &
+          npm -w merchant-portal run build
+          npm -w merchant-portal run preview &
           for i in $(seq 1 30); do curl -s -o /dev/null -w "%{http_code}" http://localhost:4173/ | grep -q 200 && break; sleep 2; done
 
       - name: Flakiness hunt (repeat-each=${{ inputs.flakiness_repeat || '10' }})
