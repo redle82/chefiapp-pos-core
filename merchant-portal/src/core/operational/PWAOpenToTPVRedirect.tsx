@@ -9,6 +9,7 @@
 
 import { useEffect } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Logger } from "../logger";
 import { getInstalledDevice } from "../storage/installedDeviceStorage";
 
 export function isStandalone(): boolean {
@@ -32,10 +33,8 @@ function isMobileDevice(): boolean {
   // 1. Verificar terminal provisionado via InstallPage
   const terminalType = localStorage.getItem("chefiapp_terminal_type");
   if (terminalType === "APPSTAFF" || terminalType === "WAITER") {
-    console.log(
-      "[PWA-Guard] isMobileDevice=true (terminalType:",
-      terminalType,
-      ")",
+    Logger.debug(
+      `[PWA-Guard] isMobileDevice=true (terminalType: ${terminalType})`,
     );
     return true;
   }
@@ -44,20 +43,17 @@ function isMobileDevice(): boolean {
   const ua = navigator.userAgent;
   const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
   if (isMobileUA) {
-    console.log(
-      "[PWA-Guard] isMobileDevice=true (UA mobile:",
-      ua.slice(0, 60),
-      ")",
+    Logger.debug(
+      `[PWA-Guard] isMobileDevice=true (UA mobile: ${ua.slice(0, 60)})`,
     );
     return true;
   }
 
-  console.log(
-    "[PWA-Guard] isMobileDevice=false (terminalType:",
-    terminalType,
-    ", UA:",
-    ua.slice(0, 60),
-    ")",
+  Logger.debug(
+    `[PWA-Guard] isMobileDevice=false (terminalType: ${terminalType}, UA: ${ua.slice(
+      0,
+      60,
+    )})`,
   );
   return false;
 }
@@ -81,9 +77,8 @@ export function PWAOpenToTPVRedirect({
   }
   // Dispositivos móveis (APPSTAFF/WAITER ou user agent mobile) nunca vão para TPV/KDS
   if (isMobileDevice()) {
-    console.log(
-      "[PWA-Guard] PWAOpenToTPVRedirect: mobile device → skipping redirect, staying at",
-      pathname,
+    Logger.debug(
+      `[PWA-Guard] PWAOpenToTPVRedirect: mobile device → skipping redirect, staying at ${pathname}`,
     );
     return <>{children}</>;
   }
@@ -93,11 +88,8 @@ export function PWAOpenToTPVRedirect({
     return <>{children}</>;
   }
   const to = OPERATIONAL_ROUTE[device.module_id];
-  console.log(
-    "[PWA-Guard] PWAOpenToTPVRedirect: REDIRECTING from",
-    pathname,
-    "to",
-    to,
+  Logger.debug(
+    `[PWA-Guard] PWAOpenToTPVRedirect: REDIRECTING from ${pathname} to ${to}`,
   );
   // Raiz: sempre ir para TPV/KDS quando instalado (browser ou PWA).
   if (pathname === "/") {
@@ -123,7 +115,7 @@ export function usePWAStaffHomeToTPVRedirect() {
     if (!standalone) return;
     // Dispositivos móveis (APPSTAFF/WAITER ou user agent mobile) nunca vão para TPV/KDS
     if (isMobileDevice()) {
-      console.log(
+      Logger.debug(
         "[PWA-Guard] usePWAStaffHomeToTPVRedirect: mobile device → skipping redirect",
       );
       return;
@@ -132,7 +124,9 @@ export function usePWAStaffHomeToTPVRedirect() {
     if (!device || (device.module_id !== "tpv" && device.module_id !== "kds"))
       return;
     const to = OPERATIONAL_ROUTE[device.module_id];
-    console.log("[PWA-Guard] usePWAStaffHomeToTPVRedirect: REDIRECTING to", to);
+    Logger.debug(
+      `[PWA-Guard] usePWAStaffHomeToTPVRedirect: REDIRECTING to ${to}`,
+    );
     navigate(to, { replace: true });
   }, [location.pathname, navigate]);
 }

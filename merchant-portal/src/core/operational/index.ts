@@ -12,3 +12,4 @@ export {
   type OperationalShellProps,
 } from "./OperationalShell";
 export { PanelRoot, type PanelRootProps } from "./PanelRoot";
+export { VPC_TOKENS, type VPCTokenKey } from "./vpcTokens";

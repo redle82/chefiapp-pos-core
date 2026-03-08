@@ -1,14 +1,13 @@
 /**
- * InstallQRPanel — Mobile-only QR codes for device provisioning (AppStaff).
+ * InstallQRPanel — Platform-specific QR codes for device provisioning
  *
- * Shows iOS/Android column layout with platform-specific instructions.
- * Desktop types (TPV, KDS) are handled by DesktopPairingSection instead.
- *
- * Ref: UXG-012 / Issue #20, DESKTOP_DISTRIBUTION_CONTRACT
+ * Shows separate QRs for iOS (Safari) and Android (Chrome) with platform-specific instructions.
+ * iOS: Standard HTTP URL - user opens with camera, system asks which browser, user selects Safari
+ * Android: uses intent:// URL that auto-launches in Chrome
  *
  * Props:
  *   - token: Install token string
- *   - deviceType: Terminal type (APPSTAFF only — desktop types return null)
+ *   - deviceType: Terminal type (APPSTAFF, TPV, KDS)
  *   - secondsLeft: TTL countdown
  *   - baseUrl: Base URL for QR (ex: http://192.168.1.x:5175)
  */
@@ -23,21 +22,23 @@ export interface InstallQRPanelProps {
   baseUrl: string;
 }
 
-/** Desktop types are now handled by DesktopPairingSection — QR panel is mobile-only. */
-const DESKTOP_TYPES = ["TPV", "KDS"];
-
 export function InstallQRPanel({
   token,
   deviceType,
   secondsLeft,
   baseUrl,
 }: InstallQRPanelProps) {
-  // Desktop types handled by DesktopPairingSection — don't render QR for them
-  if (DESKTOP_TYPES.includes(deviceType.toUpperCase())) {
-    return null;
-  }
-
+  // iOS & Android: use standard HTTP URL (works with camera QR reader)
+  // iOS will open with default browser - user should select Safari
+  // Android: use intent:// to auto-open Chrome
   const standardUrl = `${baseUrl}/install?token=${token}`;
+
+  // Android: use intent:// to auto-open in Chrome
+  const androidIntentUrl = `intent://${baseUrl.replace(
+    /^https?:\/\//,
+    "",
+  )}/install?token=${token}#Intent;package=com.android.chrome;scheme=http;end`;
+
   const isCritical = secondsLeft < 60;
 
   return (
@@ -48,15 +49,68 @@ export function InstallQRPanel({
         <div
           className={isCritical ? styles.expiryCritical : styles.expiryNormal}
         >
-          Expira en <strong>{secondsLeft}s</strong>
+          Expira em <strong>{secondsLeft}s</strong>
         </div>
       </div>
 
-      <MobileQRSection
-        standardUrl={standardUrl}
-        baseUrl={baseUrl}
-        token={token}
-      />
+      {/* Two column layout: iOS | Android */}
+      <div className={styles.qrPlatformRow}>
+        {/* iOS Column */}
+        <div className={styles.qrPlatformCol}>
+          <div className={styles.qrPlatformHeader}>
+            <div className={styles.qrPlatformIcon}>🍎</div>
+            <div className={styles.qrPlatformName}>iPhone / iPad</div>
+            <div className={styles.qrPlatformBrowser}>Safari</div>
+          </div>
+
+          <div className={styles.qrBox}>
+            <QRCode value={standardUrl} size={150} level="H" />
+          </div>
+
+          <div className={styles.qrPlatformInstructions}>
+            <ol>
+              <li>Abra a aplicação Câmara no iPhone</li>
+              <li>Digitalize este código QR</li>
+              <li>Toque no link que aparece</li>
+              <li>
+                Se perguntar qual browser, selecione <strong>Safari</strong>
+              </li>
+              <li>Aceite a instalação da app</li>
+            </ol>
+          </div>
+
+          <code className={styles.qrUrlSmall}>{standardUrl}</code>
+          <div className={styles.iosNote}>
+            ℹ️ Se abrir noutro browser por erro, volte atrás e repita
+            selecionando Safari.
+          </div>
+        </div>
+
+        {/* Android Column */}
+        <div className={styles.qrPlatformCol}>
+          <div className={styles.qrPlatformHeader}>
+            <div className={styles.qrPlatformIcon}>🤖</div>
+            <div className={styles.qrPlatformName}>Android</div>
+            <div className={styles.qrPlatformBrowser}>Chrome</div>
+          </div>
+
+          <div className={styles.qrBox}>
+            <QRCode value={androidIntentUrl} size={150} level="H" />
+          </div>
+
+          <div className={styles.qrPlatformInstructions}>
+            <ol>
+              <li>Abra Chrome no Android</li>
+              <li>Digitalize este código QR</li>
+              <li>Aceite a instalação da app</li>
+            </ol>
+          </div>
+
+          <code className={styles.qrUrlSmall}>
+            {androidIntentUrl.substring(0, 40)}...
+          </code>
+        </div>
+      </div>
 
       {/* Metadata */}
       <div className={styles.qrMetadata}>
@@ -66,84 +120,6 @@ export function InstallQRPanel({
         <div>
           Token: <strong>{token.substring(0, 12)}...</strong>
         </div>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Mobile QR — original iOS / Android two-column layout              */
-/* ------------------------------------------------------------------ */
-function MobileQRSection({
-  standardUrl,
-  baseUrl,
-  token,
-}: {
-  standardUrl: string;
-  baseUrl: string;
-  token: string;
-}) {
-  const androidIntentUrl = `intent://${baseUrl.replace(
-    /^https?:\/\//,
-    "",
-  )}/install?token=${token}#Intent;package=com.android.chrome;scheme=http;end`;
-
-  return (
-    <div className={styles.qrPlatformRow}>
-      {/* iOS Column */}
-      <div className={styles.qrPlatformCol}>
-        <div className={styles.qrPlatformHeader}>
-          <div className={styles.qrPlatformIcon}>🍎</div>
-          <div className={styles.qrPlatformName}>iPhone / iPad</div>
-          <div className={styles.qrPlatformBrowser}>Safari</div>
-        </div>
-
-        <div className={styles.qrBox}>
-          <QRCode value={standardUrl} size={150} level="H" />
-        </div>
-
-        <div className={styles.qrPlatformInstructions}>
-          <ol>
-            <li>Abra la app Cámara en el iPhone</li>
-            <li>Escanee este código QR</li>
-            <li>Toque el enlace que aparece</li>
-            <li>
-              Si pregunta qué navegador, seleccione <strong>Safari</strong>
-            </li>
-            <li>Acepte la instalación de la app</li>
-          </ol>
-        </div>
-
-        <code className={styles.qrUrlSmall}>{standardUrl}</code>
-        <div className={styles.iosNote}>
-          ℹ️ Si se abre en otro navegador por error, vuelva atrás y repita
-          seleccionando Safari.
-        </div>
-      </div>
-
-      {/* Android Column */}
-      <div className={styles.qrPlatformCol}>
-        <div className={styles.qrPlatformHeader}>
-          <div className={styles.qrPlatformIcon}>🤖</div>
-          <div className={styles.qrPlatformName}>Android</div>
-          <div className={styles.qrPlatformBrowser}>Chrome</div>
-        </div>
-
-        <div className={styles.qrBox}>
-          <QRCode value={androidIntentUrl} size={150} level="H" />
-        </div>
-
-        <div className={styles.qrPlatformInstructions}>
-          <ol>
-            <li>Abra Chrome en Android</li>
-            <li>Escanee este código QR</li>
-            <li>Acepte la instalación de la app</li>
-          </ol>
-        </div>
-
-        <code className={styles.qrUrlSmall}>
-          {androidIntentUrl.substring(0, 40)}...
-        </code>
       </div>
     </div>
   );

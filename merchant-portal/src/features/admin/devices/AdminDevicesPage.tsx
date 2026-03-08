@@ -10,13 +10,12 @@
  * Contrato: CORE_INSTALLATION_AND_PROVISIONING_CONTRACT
  */
 
+import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import { useCallback, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
+import { Logger } from "../../../core/logger";
 import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
 import styles from "./AdminDevicesPage.module.css";
-import { DesktopDownloadSection } from "./DesktopDownloadSection";
-import { DesktopPairingSection } from "./DesktopPairingSection";
 import { InstallQRPanel } from "./InstallQRPanel";
 import {
   createInstallToken,
@@ -30,15 +29,6 @@ import {
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
-
-export function resolveInitialTokenType(
-  moduleParam: string | null,
-): TerminalType {
-  const normalized = (moduleParam ?? "").trim().toLowerCase();
-  if (normalized === "tpv") return "TPV";
-  if (normalized === "kds") return "KDS";
-  return "APPSTAFF";
-}
 
 function timeSince(iso: string | null): string {
   if (!iso) return "—";
@@ -94,7 +84,7 @@ function getBaseUrl(): string {
 /* ------------------------------------------------------------------ */
 
 export function AdminDevicesPage() {
-  const location = useLocation();
+  const locale = useFormatLocale();
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? null;
 
@@ -102,9 +92,7 @@ export function AdminDevicesPage() {
   const [loading, setLoading] = useState(true);
 
   const [activeToken, setActiveToken] = useState<InstallToken | null>(null);
-  const [tokenType, setTokenType] = useState<TerminalType>(() =>
-    resolveInitialTokenType(new URLSearchParams(location.search).get("module")),
-  );
+  const [tokenType, setTokenType] = useState<TerminalType>("APPSTAFF");
   const [tokenName, setTokenName] = useState("");
   const [generating, setGenerating] = useState(false);
   const [tokenError, setTokenError] = useState<string | null>(null);
@@ -117,7 +105,7 @@ export function AdminDevicesPage() {
       const list = await fetchTerminals(restaurantId);
       setTerminals(list);
     } catch (err) {
-      console.error("Failed to fetch terminals:", err);
+      Logger.error("Failed to fetch terminals:", err);
     } finally {
       setLoading(false);
     }
@@ -152,14 +140,6 @@ export function AdminDevicesPage() {
     return () => clearInterval(id);
   }, [activeToken]);
 
-  // When /admin/devices?module=tpv|kds is provided, preselect matching device type.
-  useEffect(() => {
-    const next = resolveInitialTokenType(
-      new URLSearchParams(location.search).get("module"),
-    );
-    setTokenType(next);
-  }, [location.search]);
-
   // Generate token
   const handleGenerate = useCallback(async () => {
     if (!restaurantId) return;
@@ -190,7 +170,7 @@ export function AdminDevicesPage() {
         ),
       );
     } catch (err) {
-      console.error("Failed to revoke:", err);
+      Logger.error("Failed to revoke:", err);
     }
   }, []);
 
@@ -201,12 +181,12 @@ export function AdminDevicesPage() {
         subtitle="Provisionar terminais, monitorar estado e descarregar software."
       />
 
-      {/* ── Block 1A: Mobile QR Install ── */}
+      {/* ── Block 1: Install QR ── */}
       <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>Instalar dispositivo móvil</h2>
+        <h2 className={styles.sectionTitle}>Instalar dispositivo</h2>
         <p className={styles.sectionDesc}>
-          Gere um código QR e digitalize-o no telemóvel para vincular o AppStaff
-          a este restaurante. O código expira em 5 minutos.
+          Gere um código QR e digitalize-o no dispositivo para o vincular
+          automaticamente a este restaurante. O código expira em 5 minutos.
         </p>
 
         <div className={styles.formRow}>
@@ -218,6 +198,8 @@ export function AdminDevicesPage() {
               className={styles.selectInput}
             >
               <option value="APPSTAFF">AppStaff (Mobile)</option>
+              <option value="TPV">TPV</option>
+              <option value="KDS">KDS</option>
             </select>
           </label>
 
@@ -225,7 +207,7 @@ export function AdminDevicesPage() {
             Nome (opcional)
             <input
               type="text"
-              placeholder="ex: APPSTAFF_01"
+              placeholder="ex: TPV_BALCAO_01"
               value={tokenName}
               onChange={(e) => setTokenName(e.target.value)}
               className={styles.textInput}
@@ -251,16 +233,6 @@ export function AdminDevicesPage() {
             baseUrl={getBaseUrl()}
           />
         )}
-      </section>
-
-      {/* ── Block 1B: Desktop Pairing ── */}
-      <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>Vincular escritorio (TPV / KDS)</h2>
-        <p className={styles.sectionDesc}>
-          Genera un código de vinculación e introdúcelo en la aplicación de
-          escritorio ChefIApp al iniciarla por primera vez.
-        </p>
-        <DesktopPairingSection onCodeGenerated={loadTerminals} />
       </section>
 
       {/* ── Block 2: Active Devices ── */}
@@ -318,7 +290,7 @@ export function AdminDevicesPage() {
                     <td className={styles.tdName}>{t.name}</td>
                     <td className={styles.tdSecondary}>{t.type}</td>
                     <td className={styles.tdSecondary}>
-                      {new Date(t.registered_at).toLocaleDateString("pt-PT")}
+                      {new Date(t.registered_at).toLocaleDateString(locale)}
                     </td>
                     <td className={styles.tdSecondary}>
                       {timeSince(t.last_heartbeat_at)}
@@ -344,13 +316,68 @@ export function AdminDevicesPage() {
 
       {/* ── Block 3: Downloads ── */}
       <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>Descargar software</h2>
+        <h2 className={styles.sectionTitle}>Descarregar software</h2>
         <p className={styles.sectionDesc}>
-          Los módulos operacionales (TPV, KDS, AppStaff) solo funcionan como
-          aplicación instalada — no son accesibles desde el navegador.
+          Os módulos operacionais (TPV, KDS, AppStaff) só funcionam como
+          aplicação instalada — não são acessíveis pelo navegador. Descarregue a
+          aplicação adequada e vincule com o QR acima.
         </p>
-
-        <DesktopDownloadSection />
+        <div className={styles.dlGrid}>
+          {[
+            {
+              label: "ChefIApp TPV",
+              platform: "macOS (Electron)",
+              icon: "🖥",
+              ready: false,
+            },
+            {
+              label: "ChefIApp TPV",
+              platform: "Windows (Electron)",
+              icon: "🖥",
+              ready: false,
+            },
+            {
+              label: "ChefIApp KDS",
+              platform: "macOS (Electron)",
+              icon: "📺",
+              ready: false,
+            },
+            {
+              label: "ChefIApp KDS",
+              platform: "Windows (Electron)",
+              icon: "📺",
+              ready: false,
+            },
+            {
+              label: "ChefIApp Staff",
+              platform: "iOS (App Store)",
+              icon: "📱",
+              ready: false,
+            },
+            {
+              label: "ChefIApp Staff",
+              platform: "Android (Google Play)",
+              icon: "📱",
+              ready: false,
+            },
+          ].map((dl) => (
+            <div
+              key={`${dl.label}-${dl.platform}`}
+              className={`${styles.dlCard} ${
+                dl.ready ? "" : styles.dlCardDisabled
+              }`}
+            >
+              <span className={styles.dlIcon}>{dl.icon}</span>
+              <span className={styles.dlLabel}>{dl.label}</span>
+              <span className={styles.dlPlatform}>{dl.platform}</span>
+              <span
+                className={dl.ready ? styles.dlStatusReady : styles.dlStatus}
+              >
+                {dl.ready ? "Descarregar" : "Em breve"}
+              </span>
+            </div>
+          ))}
+        </div>
 
         <div className={styles.distributionNote}>
           <span className={styles.distributionIcon}>🛡️</span>

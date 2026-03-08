@@ -13,20 +13,9 @@ import {
   OperationalContextProvider,
   type OperationalContextValue,
 } from "./OperationalContext";
+import { VPC_TOKENS } from "./vpcTokens";
 
-const VPC = {
-  bg: "#0a0a0a",
-  surface: "#141414",
-  border: "#262626",
-  text: "#fafafa",
-  textMuted: "#a3a3a3",
-  accent: "#22c55e",
-  radius: 8,
-  space: 24,
-  font: "Inter, system-ui, sans-serif",
-  fontSizeBase: 16,
-  fontSizeLarge: 20,
-} as const;
+const VPC = VPC_TOKENS;
 
 export interface OperationalShellProps {
   /** Contexto operacional (activeModule, systemMode, role, restaurantId). */

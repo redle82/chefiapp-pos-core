@@ -26,7 +26,7 @@ import { useOperationalStore } from "./useOperationalStore";
 let orderCounter = 0;
 
 function logFlow(step: string, data?: unknown) {
-  console.log(`[OrderLifecycle] ${step}`, data ?? "");
+  Logger.debug(`[OrderLifecycle] ${step}: ${JSON.stringify(data ?? "")}`);
 }
 
 export interface LifecycleProduct {

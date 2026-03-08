@@ -5,7 +5,8 @@
  * All calls go through Docker Core PostgREST.
  */
 
-import { db } from "../../../../core/db";
+import { coreClient } from "../../../../core/infra/coreClient";
+import { Logger } from "../../../../core/logger";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -53,8 +54,7 @@ export interface InstallToken {
 export async function fetchTerminals(
   restaurantId: string,
 ): Promise<Terminal[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (db as any)
+  const { data, error } = await coreClient
     .from("gm_terminals")
     .select("*")
     .eq("restaurant_id", restaurantId)
@@ -68,8 +68,7 @@ export async function fetchTerminals(
 export async function fetchPendingTokens(
   restaurantId: string,
 ): Promise<InstallToken[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (db as any)
+  const { data, error } = await coreClient
     .from("gm_device_install_tokens")
     .select("*")
     .eq("restaurant_id", restaurantId)
@@ -111,7 +110,7 @@ export async function consumeInstallToken(
   token: string,
   meta: Record<string, unknown> = {},
 ): Promise<Terminal> {
-  console.log("[devicesApi] Consuming token:", {
+  Logger.debug("[devicesApi] Consuming token:", {
     token: token.substring(0, 12) + "...",
     meta,
   });
@@ -121,10 +120,10 @@ export async function consumeInstallToken(
     p_device_meta: meta,
   });
 
-  console.log("[devicesApi] RPC Response:", { data, error });
+  Logger.debug("[devicesApi] RPC Response:", { data, error });
 
   if (error) {
-    console.error("[devicesApi] RPC Error Details:", {
+    Logger.error("[devicesApi] RPC Error Details:", {
       message: error.message,
       code: error.code,
       details: error.details,
@@ -135,11 +134,11 @@ export async function consumeInstallToken(
 
   const row = Array.isArray(data) ? data[0] : data;
   if (!row) {
-    console.error("[devicesApi] Empty result from RPC");
+    Logger.error("[devicesApi] Empty result from RPC");
     throw new Error("consumeInstallToken: empty result");
   }
 
-  console.log("[devicesApi] Terminal created:", {
+  Logger.debug("[devicesApi] Terminal created:", {
     id: row.id,
     restaurant_id: row.restaurant_id,
     type: row.type,
@@ -166,44 +165,4 @@ export async function revokeTerminal(terminalId: string): Promise<void> {
     p_terminal_id: terminalId,
   });
   if (error) throw new Error(`revokeTerminal: ${error.message}`);
-}
-
-/* ------------------------------------------------------------------ */
-/*  Desktop Pairing Codes                                              */
-/* ------------------------------------------------------------------ */
-
-/** Create a short pairing code for desktop device provisioning (XXXX-XX). */
-export async function createDevicePairingCode(
-  restaurantId: string,
-  deviceType: TerminalType = "TPV",
-  deviceName?: string,
-  ttlMinutes = 5,
-): Promise<InstallToken> {
-  const { data, error } = await db.rpc("create_device_pairing_code", {
-    p_restaurant_id: restaurantId,
-    p_device_type: deviceType,
-    p_device_name: deviceName ?? null,
-    p_ttl_minutes: ttlMinutes,
-  });
-
-  if (error) throw new Error(`createDevicePairingCode: ${error.message}`);
-  const row = Array.isArray(data) ? data[0] : data;
-  if (!row) throw new Error("createDevicePairingCode: empty result");
-  return row as InstallToken;
-}
-
-/** Consume a pairing code from the desktop app side. */
-export async function consumeDevicePairingCode(
-  code: string,
-  meta: Record<string, unknown> = {},
-): Promise<Terminal> {
-  const { data, error } = await db.rpc("consume_device_pairing_code", {
-    p_code: code,
-    p_device_meta: meta,
-  });
-
-  if (error) throw new Error(`consumeDevicePairingCode: ${error.message}`);
-  const row = Array.isArray(data) ? data[0] : data;
-  if (!row) throw new Error("consumeDevicePairingCode: empty result");
-  return row as Terminal;
 }
