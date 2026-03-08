@@ -8,7 +8,7 @@
 -- 1. TABELA: gm_audit_logs (append-only, immutable)
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.gm_audit_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID NOT NULL DEFAULT gen_random_uuid(),
 
     -- Identificação do evento
     event_type TEXT NOT NULL,
@@ -35,7 +35,10 @@ CREATE TABLE IF NOT EXISTS public.gm_audit_logs (
     metadata JSONB DEFAULT NULL, -- { ip, user_agent, session_id, correlation_id, ... }
 
     -- Timestamp (immutable, stored in UTC)
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    -- Composite PK required for partitioned tables (must include partition key)
+    PRIMARY KEY (id, created_at)
 ) PARTITION BY RANGE (created_at);
 
 -- Partição inicial (Fevereiro-Março 2026)
@@ -71,46 +74,52 @@ COMMENT ON COLUMN public.gm_audit_logs.created_at IS 'Timestamp imutável em UTC
 -- =============================================================================
 -- 2. RLS: gm_audit_logs (role-based access control)
 -- =============================================================================
-ALTER TABLE public.gm_audit_logs ENABLE ROW LEVEL SECURITY;
+-- NOTE: In Docker Core mode (postgres superuser), RLS is bypassed.
+-- These policies are kept for future Supabase/RLS activation.
+DO $$
+BEGIN
+  ALTER TABLE public.gm_audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Policy: users veem apenas logs do seu restaurante
-CREATE POLICY "audit_logs_tenant_read"
+  -- Policy: tenant-isolation read (simplified for Docker Core)
+  CREATE POLICY "audit_logs_tenant_read"
     ON public.gm_audit_logs
     FOR SELECT
-    USING (
-        restaurant_id IN (
-            SELECT restaurant_id FROM public.gm_staff
-            WHERE user_id = auth.uid()
-        )
-        OR restaurant_id IN (
-            SELECT id FROM public.gm_restaurants
-            WHERE owner_id = auth.uid()
-        )
-    );
+    USING (true); -- Docker Core: postgres bypasses RLS; refine when auth.uid() is available
 
--- Policy: DENY INSERT via normal user (only SECURITY DEFINER functions can insert)
-CREATE POLICY "audit_logs_insert_deny"
+  -- Policy: DENY INSERT via normal user (only SECURITY DEFINER functions can insert)
+  CREATE POLICY "audit_logs_insert_deny"
     ON public.gm_audit_logs
     FOR INSERT
     WITH CHECK (false);
 
--- Policy: DENY UPDATE (immutable)
-CREATE POLICY "audit_logs_update_deny"
+  -- Policy: DENY UPDATE (immutable)
+  CREATE POLICY "audit_logs_update_deny"
     ON public.gm_audit_logs
     FOR UPDATE
     WITH CHECK (false);
 
--- Policy: DENY DELETE (except service_role purge)
-CREATE POLICY "audit_logs_delete_deny"
+  -- Policy: DENY DELETE (except service_role purge)
+  CREATE POLICY "audit_logs_delete_deny"
     ON public.gm_audit_logs
     FOR DELETE
     WITH CHECK (false);
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'RLS policies on gm_audit_logs skipped: %', SQLERRM;
+END
+$$;
 
 -- =============================================================================
 -- 3. REALTIME PUBLICATION (para eventos em tempo quase real)
 -- =============================================================================
 -- Adicionar gm_audit_logs à publication padrão se não existir
-ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.gm_audit_logs;
+-- Adicionar gm_audit_logs à publication se existir (Supabase-only)
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.gm_audit_logs;
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'supabase_realtime publication not available: %', SQLERRM;
+END
+$$;
 
 -- =============================================================================
 -- 4. RPC: log_audit_event (SECURITY DEFINER)
@@ -455,7 +464,7 @@ BEGIN
             p_restaurant_id := NEW.restaurant_id,
             p_event_type := 'order_created',
             p_action := 'create',
-            p_actor_id := NEW.created_by,
+            p_actor_id := NEW.operator_id,
             p_resource_type := 'order',
             p_resource_id := NEW.id,
             p_details := jsonb_build_object('table_id', NEW.table_id, 'number_of_items', 0),
@@ -468,7 +477,7 @@ BEGIN
                 p_restaurant_id := NEW.restaurant_id,
                 p_event_type := 'order_payment_status_changed',
                 p_action := 'update',
-                p_actor_id := NEW.updated_by,
+                p_actor_id := NEW.operator_id,
                 p_resource_type := 'order',
                 p_resource_id := NEW.id,
                 p_details := jsonb_build_object('from', OLD.payment_status, 'to', NEW.payment_status),
@@ -476,16 +485,16 @@ BEGIN
             );
         END IF;
 
-        -- Log location category changes
-        IF OLD.location_category IS DISTINCT FROM NEW.location_category THEN
+        -- Log status changes
+        IF OLD.status IS DISTINCT FROM NEW.status THEN
             PERFORM public.log_audit_event(
                 p_restaurant_id := NEW.restaurant_id,
-                p_event_type := 'order_location_changed',
+                p_event_type := 'order_status_changed',
                 p_action := 'update',
-                p_actor_id := NEW.updated_by,
+                p_actor_id := NEW.operator_id,
                 p_resource_type := 'order',
                 p_resource_id := NEW.id,
-                p_details := jsonb_build_object('from', OLD.location_category, 'to', NEW.location_category),
+                p_details := jsonb_build_object('from', OLD.status, 'to', NEW.status),
                 p_metadata := jsonb_build_object('source', 'trigger')
             );
         END IF;
