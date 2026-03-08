@@ -16,8 +16,43 @@
  * Ref: docs/architecture/SYSTEM_RULE_DEVICE_ONLY.md
  */
 
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import styles from "./BrowserBlockGuard.module.css";
+
+interface OperationalGuardTelemetryPayload {
+  pathname: string;
+  decision: "ALLOW" | "BLOCK";
+  runtime: "browser" | "installed";
+  guard: "operational";
+}
+
+interface OperationalGuardTelemetryOptions {
+  isDev: boolean;
+  random: () => number;
+  sentryApi?: { addBreadcrumb?: (breadcrumb: unknown) => void };
+  warn: (message: string) => void;
+}
+
+export function emitOperationalGuardTelemetry(
+  payload: OperationalGuardTelemetryPayload,
+  options: OperationalGuardTelemetryOptions,
+): void {
+  const sampleRate = options.isDev ? 1 : 0.1;
+  if (options.random() > sampleRate) return;
+
+  const addBreadcrumb = options.sentryApi?.addBreadcrumb;
+  if (typeof addBreadcrumb === "function") {
+    addBreadcrumb({
+      category: "op-guard",
+      level: payload.decision === "BLOCK" ? "warning" : "info",
+      message: "operational_guard_decision",
+      data: payload,
+    });
+    return;
+  }
+
+  options.warn(`[OP_GUARD] ${JSON.stringify(payload)}`);
+}
 
 /* ------------------------------------------------------------------ */
 /*  Platform detection                                                 */
@@ -68,16 +103,64 @@ export function BrowserBlockGuard({
   requiredPlatform,
   moduleLabel,
 }: BrowserBlockGuardProps) {
-  // ── Allow only installed apps ──
-  if (isInstalledApp()) {
+  const location = useLocation();
+  const isInstalledRuntime = isInstalledApp();
+  const isTrialModeBypass =
+    new URLSearchParams(location.search).get("mode") === "trial";
+
+  if (isInstalledRuntime || isTrialModeBypass) {
+    emitOperationalGuardTelemetry(
+      {
+        pathname: location.pathname,
+        decision: "ALLOW",
+        runtime: isInstalledRuntime ? "installed" : "browser",
+        guard: "operational",
+      },
+      {
+        isDev: import.meta.env.DEV,
+        random: Math.random,
+        sentryApi:
+          typeof window !== "undefined"
+            ? (window as Window & {
+                Sentry?: { addBreadcrumb?: (breadcrumb: unknown) => void };
+              }).Sentry
+            : undefined,
+        warn: message => console.warn(message),
+      },
+    );
+
     return <Outlet />;
   }
+
+  emitOperationalGuardTelemetry(
+    {
+      pathname: location.pathname,
+      decision: "BLOCK",
+      runtime: "browser",
+      guard: "operational",
+    },
+    {
+      isDev: import.meta.env.DEV,
+      random: Math.random,
+      sentryApi:
+        typeof window !== "undefined"
+          ? (window as Window & {
+              Sentry?: { addBreadcrumb?: (breadcrumb: unknown) => void };
+            }).Sentry
+          : undefined,
+      warn: message => console.warn(message),
+    },
+  );
 
   // ── Block: plain browser ──
   const isDesktop = requiredPlatform === "desktop";
 
   return (
-    <div className={styles.blockScreen} data-chefiapp-os="browser-block">
+    <div
+      className={styles.blockScreen}
+      data-chefiapp-os="browser-block"
+      data-testid="browser-block-guard"
+    >
       <div className={styles.lockIcon}>🔒</div>
       <h1 className={styles.title}>
         {moduleLabel} não pode ser aberto no navegador
@@ -122,8 +205,11 @@ export function BrowserBlockGuard({
         </ol>
       </div>
 
+      <button type="button" className={styles.backLink}>
+        Abrir aplicação {moduleLabel}
+      </button>
       <a href="/admin/devices" className={styles.backLink}>
-        ← Ir para Dispositivos
+        Baixar instalador
       </a>
     </div>
   );
