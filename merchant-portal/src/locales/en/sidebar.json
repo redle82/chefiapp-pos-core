@@ -1,0 +1,113 @@
+{
+  "nav": {
+    "home": "Home",
+    "backToMenu": "← Back to menu",
+    "configTitle": "Settings"
+  },
+  "groups": {
+    "financas": "Finance",
+    "operacao": "Operations",
+    "clientes": "Customers",
+    "produto": "Product",
+    "inteligencia": "Intelligence",
+    "sistema": "System"
+  },
+  "items": {
+    "transacoes": "Transactions",
+    "reembolsos": "Refunds",
+    "fechamentos": "Closures",
+    "reservas": "Reservations",
+    "promocoes": "Promotions",
+    "diretorio": "Directory",
+    "catalogo": "Catalog",
+    "relatorios": "Reports",
+    "configuracao": "Settings",
+    "dispositivos": "Devices",
+    "modulos": "Modules",
+    "observabilidade": "Observability"
+  },
+  "configSections": {
+    "identity": "Identity",
+    "plan": "Plan",
+    "operations": "Operations",
+    "team": "Team",
+    "infrastructure": "Infrastructure",
+    "channels": "Channels & Integrations",
+    "modules": "Modules"
+  },
+  "config": {
+    "general": "General",
+    "modules": "Modules",
+    "website": "Website",
+    "subscription": "Subscription",
+    "locations": "Locations",
+    "legalEntities": "Legal Entities",
+    "brands": "Brands",
+    "adminUsers": "Admin Users",
+    "deviceManagement": "Device Management",
+    "printers": "Printers",
+    "integrations": "Integrations",
+    "delivery": "Delivery",
+    "employees": "Employees",
+    "posSoftware": "POS Software",
+    "reservations": "Reservations"
+  },
+  "advisor": {
+    "title": "Setup Mode:",
+    "description": "POS, KDS and Online Presence are disabled until you publish.",
+    "completeChecklist": "Complete Checklist",
+    "publishNow": "Publish Now"
+  },
+  "moduleStatus": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "needsSetup": "Needs setup",
+    "locked": "Locked"
+  },
+  "banner": {
+    "setup": {
+      "headline": "Setup in progress",
+      "body": "{{done}} of {{total}} critical steps completed.",
+      "cta": "Continue setup"
+    },
+    "trial": {
+      "headline": "Free trial",
+      "headlineUrgent": "Trial ending soon!",
+      "body": "{{days}} days remaining.",
+      "cta": "Choose a plan"
+    },
+    "active": {
+      "headline": "Plan active",
+      "body": "Your {{plan}} plan is active."
+    },
+    "suspended": {
+      "headline": "Account suspended",
+      "body": "Update your payment to restore access.",
+      "cta": "Update billing"
+    }
+  },
+  "modules": {
+    "pageTitle": "Modules",
+    "pageSubtitle": "Activate, configure or install the modules you want to use.",
+    "blockEssentials": "Day-to-day essentials",
+    "blockChannels": "Channels & growth",
+    "badgeActive": "Active",
+    "badgeConfigure": "Setup",
+    "badgeUnavailable": "Unavailable",
+    "actionActivate": "Activate",
+    "actionConfigure": "Configure",
+    "actionOpen": "Open",
+    "actionUpgrade": "View plans",
+    "actionDeactivate": "Deactivate",
+    "actionInstallDevice": "Install device",
+    "requires": "Requires: {{deps}}",
+    "installTitle": "Install {{kind}}",
+    "installDescription": "Register this device as {{kind}} for this restaurant. After installation, the device won't ask which restaurant again.",
+    "installDeviceName": "Device name",
+    "installInProgress": "Installing…",
+    "installAs": "Install as {{id}}",
+    "installCancel": "Cancel",
+    "installDesktopHint": "To get a desktop icon (no browser bar):",
+    "installDesktop": "Install on desktop"
+  }
+}

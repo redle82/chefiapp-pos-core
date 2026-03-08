@@ -1,5 +1,13 @@
 {
   "forecast": {
     "noPeaks": "No peaks expected soon"
+  },
+  "metricsWidget": {
+    "title": "📊 Day Metrics",
+    "subtitle": "Real-time updates",
+    "noData": "No data",
+    "errorLoading": "Error loading metrics: {{error}}",
+    "lastUpdated": "Last updated: {{time}}",
+    "viewAnalytics": "View Full Analytics →"
   }
 }

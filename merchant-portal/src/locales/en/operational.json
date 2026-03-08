@@ -18,7 +18,7 @@
       "divergent": "Divergent",
       "edit": "Edit",
       "modalTitle": "Edit Divergent Reconciliation",
-      "modalMeta": "Shift: {{shiftId}} • Difference: €{{amount}}",
+      "modalMeta": "Shift: {{shiftId}} • Difference: {{currency}}{{amount}}",
       "reasonCode": "Reason Code",
       "reasonCodeTitle": "Reason code for the divergence",
       "selectPlaceholder": "Select...",
@@ -38,7 +38,7 @@
       "shift": "Shift",
       "opened": "Opened",
       "closed": "Closed",
-      "sales": "Sales (€)",
+      "sales": "Sales ({{currency}})",
       "orders": "Orders",
       "open": "Open"
     }
@@ -64,5 +64,30 @@
       "closedBills": "Closed Bills",
       "cancellations": "Cancellations"
     }
+  },
+  "roles": {
+    "owner": "Owner",
+    "manager": "Manager",
+    "operator": "Operator"
+  },
+  "kitchen": {
+    "statusOk": "Kitchen OK",
+    "statusSlow": "Kitchen slow",
+    "statusCritical": "Kitchen critical"
+  },
+  "metrics": {
+    "revenue": "Revenue",
+    "revenueToday": "Revenue Today",
+    "orders": "Orders",
+    "averageTicket": "Avg. Ticket",
+    "ordersPerHour": "Orders/Hour",
+    "vsYesterday": "vs. yesterday",
+    "openNow": "{{count}} open now",
+    "ordersByHour": "Orders by Hour"
+  },
+  "goLive": {
+    "title": "Go live",
+    "body": "From this moment, everything here becomes real money. There is no going back. Values and actions count as live operation.",
+    "confirm": "Confirm and go live"
   }
 }

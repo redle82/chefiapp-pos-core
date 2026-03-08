@@ -1,6 +1,6 @@
 /**
  * i18n — Internacionalização com react-i18next.
- * Locales: pt-PT (default), pt-BR, en, es.
+ * Locales: pt-BR (default), pt-PT, en, es.
  * Namespaces: common, legal, billing, tpv, onboarding, help, kds, shift, receipt,
  *             reservations, config, pwa, dashboard, operational.
  *
@@ -35,14 +35,14 @@ import ptPTDashboard from "./locales/pt-PT/dashboard.json";
 // Operational
 import ptPTOperational from "./locales/pt-PT/operational.json";
 // Waiter
-import ptPTDevices from "./locales/pt-PT/devices.json";
 import ptPTWaiter from "./locales/pt-PT/waiter.json";
+// Sidebar
+import ptPTSidebar from "./locales/pt-PT/sidebar.json";
 
 // ── pt-BR ───────────────────────────────────────────────────────────────────
 import ptBRCommon from "./locales/pt-BR/common.json";
 import ptBRConfig from "./locales/pt-BR/config.json";
 import ptBRDashboard from "./locales/pt-BR/dashboard.json";
-import ptBRDevices from "./locales/pt-BR/devices.json";
 import ptBRKds from "./locales/pt-BR/kds.json";
 import ptBROnboarding from "./locales/pt-BR/onboarding.json";
 import ptBROperational from "./locales/pt-BR/operational.json";
@@ -50,6 +50,7 @@ import ptBRPwa from "./locales/pt-BR/pwa.json";
 import ptBRReceipt from "./locales/pt-BR/receipt.json";
 import ptBRReservations from "./locales/pt-BR/reservations.json";
 import ptBRShift from "./locales/pt-BR/shift.json";
+import ptBRSidebar from "./locales/pt-BR/sidebar.json";
 import ptBRTpv from "./locales/pt-BR/tpv.json";
 import ptBRWaiter from "./locales/pt-BR/waiter.json";
 
@@ -57,7 +58,6 @@ import ptBRWaiter from "./locales/pt-BR/waiter.json";
 import enCommon from "./locales/en/common.json";
 import enConfig from "./locales/en/config.json";
 import enDashboard from "./locales/en/dashboard.json";
-import enDevices from "./locales/en/devices.json";
 import enKds from "./locales/en/kds.json";
 import enOnboarding from "./locales/en/onboarding.json";
 import enOperational from "./locales/en/operational.json";
@@ -65,14 +65,18 @@ import enPwa from "./locales/en/pwa.json";
 import enReceipt from "./locales/en/receipt.json";
 import enReservations from "./locales/en/reservations.json";
 import enShift from "./locales/en/shift.json";
+import enSidebar from "./locales/en/sidebar.json";
 import enTpv from "./locales/en/tpv.json";
 import enWaiter from "./locales/en/waiter.json";
 
 // ── es ──────────────────────────────────────────────────────────────────────
+import {
+  getLocaleFromBrowser,
+  resolveLocale,
+} from "./core/i18n/regionLocaleConfig";
 import esCommon from "./locales/es/common.json";
 import esConfig from "./locales/es/config.json";
 import esDashboard from "./locales/es/dashboard.json";
-import esDevices from "./locales/es/devices.json";
 import esKds from "./locales/es/kds.json";
 import esOnboarding from "./locales/es/onboarding.json";
 import esOperational from "./locales/es/operational.json";
@@ -80,10 +84,11 @@ import esPwa from "./locales/es/pwa.json";
 import esReceipt from "./locales/es/receipt.json";
 import esReservations from "./locales/es/reservations.json";
 import esShift from "./locales/es/shift.json";
+import esSidebar from "./locales/es/sidebar.json";
 import esTpv from "./locales/es/tpv.json";
 import esWaiter from "./locales/es/waiter.json";
 
-const DEFAULT_LANG = "pt-PT";
+const DEFAULT_LANG = "pt-BR";
 
 const ALL_NS = [
   "common",
@@ -101,23 +106,43 @@ const ALL_NS = [
   "dashboard",
   "operational",
   "waiter",
-  "devices",
+  "sidebar",
 ] as const;
 
-// Respect stored locale choice (set by LocaleSwitcher)
+// Respect stored locale (LocaleSwitcher) ou derivar de país/região ou browser.
+// Ordem: chefiapp_locale > país/currency (resolveLocale) > browser language > default.
 const storedLang =
   typeof window !== "undefined"
     ? localStorage.getItem("chefiapp_locale")
     : null;
+const country =
+  typeof window !== "undefined"
+    ? sessionStorage.getItem("chefiapp_country") ??
+      localStorage.getItem("chefiapp_country")
+    : null;
+const currency =
+  typeof window !== "undefined"
+    ? sessionStorage.getItem("chefiapp_currency") ??
+      localStorage.getItem("chefiapp_currency")
+    : null;
+const resolvedFromRegion =
+  typeof window !== "undefined" && !storedLang
+    ? resolveLocale(country, currency)
+    : null;
+const fromBrowser =
+  typeof window !== "undefined" && !storedLang && !resolvedFromRegion
+    ? getLocaleFromBrowser()
+    : null;
 
 void i18n.use(initReactI18next).init({
-  lng: storedLang ?? DEFAULT_LANG,
-  fallbackLng: DEFAULT_LANG,
+  lng: storedLang ?? resolvedFromRegion ?? fromBrowser ?? DEFAULT_LANG,
+  fallbackLng: [DEFAULT_LANG, "en"],
   defaultNS: "common",
   ns: [...ALL_NS],
   interpolation: {
     escapeValue: false,
   },
+  // Missing key in current locale → try pt-BR, then en (evita texto vazio)
   resources: {
     "pt-PT": {
       common: ptPTCommon,
@@ -132,7 +157,7 @@ void i18n.use(initReactI18next).init({
       dashboard: ptPTDashboard,
       operational: ptPTOperational,
       waiter: ptPTWaiter,
-      devices: ptPTDevices,
+      sidebar: ptPTSidebar,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Dados e privacidade",
@@ -221,6 +246,9 @@ void i18n.use(initReactI18next).init({
         canceledDescription:
           "A tua subscrição foi cancelada. Para continuar a usar o ChefIApp Pro, reativa o plano na página de faturação.",
         reactivatePlan: "Reativar plano",
+        invoiceStatus: { paid: "Pago", pending: "Pendente", failed: "Falhado" },
+        periodPresets: { last3Months: "Últimos 3 meses", lastYear: "Último ano" },
+        periodLabel: "Período",
       },
     },
 
@@ -238,7 +266,7 @@ void i18n.use(initReactI18next).init({
       dashboard: ptBRDashboard,
       operational: ptBROperational,
       waiter: ptBRWaiter,
-      devices: ptBRDevices,
+      sidebar: ptBRSidebar,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Dados e privacidade",
@@ -327,6 +355,9 @@ void i18n.use(initReactI18next).init({
         canceledDescription:
           "Sua assinatura foi cancelada. Para continuar a usar o ChefIApp Pro, reative o plano na página de faturação.",
         reactivatePlan: "Reativar plano",
+        invoiceStatus: { paid: "Pago", pending: "Pendente", failed: "Falhado" },
+        periodPresets: { last3Months: "Últimos 3 meses", lastYear: "Último ano" },
+        periodLabel: "Período",
       },
     },
 
@@ -344,7 +375,7 @@ void i18n.use(initReactI18next).init({
       dashboard: enDashboard,
       operational: enOperational,
       waiter: enWaiter,
-      devices: enDevices,
+      sidebar: enSidebar,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Data and privacy",
@@ -430,6 +461,9 @@ void i18n.use(initReactI18next).init({
         canceledDescription:
           "Your subscription was canceled. To continue using ChefIApp Pro, reactivate your plan on the billing page.",
         reactivatePlan: "Reactivate plan",
+        invoiceStatus: { paid: "Paid", pending: "Pending", failed: "Failed" },
+        periodPresets: { last3Months: "Last 3 months", lastYear: "Last year" },
+        periodLabel: "Period",
       },
     },
 
@@ -447,7 +481,7 @@ void i18n.use(initReactI18next).init({
       dashboard: esDashboard,
       operational: esOperational,
       waiter: esWaiter,
-      devices: esDevices,
+      sidebar: esSidebar,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Datos y privacidad",
@@ -535,6 +569,9 @@ void i18n.use(initReactI18next).init({
         canceledDescription:
           "Tu suscripción fue cancelada. Para seguir usando ChefIApp Pro, reactiva el plan en la página de facturación.",
         reactivatePlan: "Reactivar plan",
+        invoiceStatus: { paid: "Pagado", pending: "Pendiente", failed: "Fallido" },
+        periodPresets: { last3Months: "Últimos 3 meses", lastYear: "Último año" },
+        periodLabel: "Período",
       },
     },
   },

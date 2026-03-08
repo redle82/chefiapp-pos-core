@@ -8,7 +8,7 @@
     "loadingTPV": "A carregar o TPV...",
     "startSelling": "Começar a vender",
     "instructions": "Um passo só: defina o valor de caixa inicial para abrir o turno.",
-    "initialCashLabel": "Caixa inicial (€)",
+    "initialCashLabel": "Caixa inicial ({{currency}})",
     "opening": "A abrir...",
     "startNow": "Clique aqui para começar a vender AGORA",
     "defaultRegisterName": "Caixa Principal",
@@ -17,7 +17,7 @@
   "close": {
     "title": "Fechar Turno",
     "description": "Conte o dinheiro na gaveta e insira o valor declarado.",
-    "declaredLabel": "Valor declarado na gaveta (€)",
+    "declaredLabel": "Valor declarado na gaveta ({{currency}})",
     "declaredHint": "Inclui fundo de caixa + vendas em dinheiro",
     "confirmTitle": "Confirmar Fecho de Turno",
     "irreversibleWarning": "Esta ação é irreversível. O caixa será fechado e o relatório Z gerado.",
@@ -63,7 +63,23 @@
     "card": "Cartão",
     "mbway": "MB WAY",
     "multibanco": "Multibanco",
-    "transfer": "Transferência"
+    "transfer": "Transferência",
+    "other": "Outro"
+  },
+  "history": {
+    "title": "Histórico por turno",
+    "titleWithDays": "Histórico por turno (últimos 7 dias)",
+    "configNeeded": "Configure o restaurante para ver o histórico por turno.",
+    "noShiftsYet": "Ainda não há turnos. Abra um turno no TPV para começar a vender.",
+    "loadError": "Não foi possível carregar o histórico de turnos. Verifique a ligação e tente novamente.",
+    "opening": "Abertura",
+    "closing": "Fecho",
+    "sales": "Vendas",
+    "byMethod": "Por método",
+    "orders": "Pedidos",
+    "expectedDeclared": "Esperado / Declarado",
+    "difference": "Diferença",
+    "closeInTpv": "Fechar no TPV"
   },
   "error": {
     "closeFailed": "Erro ao fechar turno",
@@ -75,5 +91,19 @@
     "openRetry": "Não foi possível abrir o turno. Tente novamente.",
     "openGeneric": "Erro ao abrir turno. Tente novamente.",
     "serverUnavailable": "Servidor indisponível. Verifique a ligação e tente novamente."
+  },
+  "receipt": {
+    "terminal": "Terminal:",
+    "operator": "Operador:",
+    "opening": "Abertura:",
+    "closing": "Fecho:",
+    "duration": "Duração:",
+    "openingBalance": "Saldo Inicial:",
+    "sessionSales": "+ Vendas (Sessão):",
+    "expectedBalance": "Saldo Esperado:",
+    "finalBalance": "SALDO FINAL:",
+    "difference": "Diferença:",
+    "issuedAt": "Emitido em",
+    "software": "Software: ChefIApp POS"
   }
 }

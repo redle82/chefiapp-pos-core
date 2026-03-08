@@ -64,5 +64,30 @@
       "closedBills": "Contas Fechadas",
       "cancellations": "Cancelamentos"
     }
+  },
+  "roles": {
+    "owner": "Dono",
+    "manager": "Gerente",
+    "operator": "Operador"
+  },
+  "kitchen": {
+    "statusOk": "Cozinha OK",
+    "statusSlow": "Cozinha lenta",
+    "statusCritical": "Cozinha crítica"
+  },
+  "metrics": {
+    "revenue": "Receita",
+    "revenueToday": "Receita Hoje",
+    "orders": "Pedidos",
+    "averageTicket": "Ticket Médio",
+    "ordersPerHour": "Pedidos/Hora",
+    "vsYesterday": "vs. ontem",
+    "openNow": "{{count}} abertos agora",
+    "ordersByHour": "Pedidos por Hora"
+  },
+  "goLive": {
+    "title": "Passar a operação real",
+    "body": "A partir deste momento, tudo aqui passa a ser dinheiro real. Daqui não se volta. Os valores e ações passam a contar como operação real.",
+    "confirm": "Confirmar e passar para operação real"
   }
 }

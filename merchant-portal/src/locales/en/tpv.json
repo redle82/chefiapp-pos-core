@@ -21,8 +21,16 @@
     "phoneNumber": "Phone Number",
     "pixQrHint": "QR Code will be generated on confirmation",
     "method": {
+      "cashLabel": "Cash",
       "cashDesc": "Cash payment",
-      "mbwayDesc": "Mobile payment"
+      "cardLabel": "Card",
+      "cardDesc": "MB / Visa / MC terminal",
+      "mbwayLabel": "MB WAY",
+      "mbwayDesc": "Mobile payment",
+      "pixLabel": "PIX",
+      "pixDesc": "Instant transfer",
+      "sumup_eurLabel": "Card EUR",
+      "sumup_eurDesc": "SumUp (ES/PT/DE)"
     },
     "error": {
       "cardPrepare": "Error preparing card payment",
@@ -95,7 +103,7 @@
     "printQueued": "Ticket queued for printing.",
     "errorPrintComanda": "Error printing ticket. Try again.",
     "cancelRequiresManager": "Cancellation requires manager authorization",
-    "discountApplied": "Discount of €{{amount}} applied",
+    "discountApplied": "Discount of {{currency}}{{amount}} applied",
     "errorDiscount": "Error applying discount",
     "paymentSuccess": "🎉 Payment processed successfully!",
     "tutorialComplete": "Congratulations! You completed your first sale. You can now use the POS normally.",
@@ -123,5 +131,16 @@
     "tryAgain": "Try again",
     "errorUpdateQuantity": "Error updating quantity",
     "checkingOperationalState": "Checking operational state..."
+  },
+  "orderPanel": {
+    "status": "Status",
+    "time": "Time",
+    "inKitchen": "In kitchen",
+    "printer": "Printer",
+    "sendToKitchen": "🔥 Send to kitchen",
+    "holdOrder": "⏸ Hold order",
+    "splitBill": "✂️ Split bill",
+    "kitchenCritical": "⚠️ Kitchen in critical state — consider holding orders",
+    "printerOffline": "🖨️ Printer offline — check connection"
   }
 }

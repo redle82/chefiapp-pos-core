@@ -21,8 +21,16 @@
     "phoneNumber": "Número de Celular",
     "pixQrHint": "QR Code será gerado ao confirmar",
     "method": {
+      "cashLabel": "Dinheiro",
       "cashDesc": "Pagamento em dinheiro",
-      "mbwayDesc": "Pagamento por celular"
+      "cardLabel": "Cartão",
+      "cardDesc": "Terminal MB / Visa / MC",
+      "mbwayLabel": "MB WAY",
+      "mbwayDesc": "Pagamento por celular",
+      "pixLabel": "PIX",
+      "pixDesc": "Transferência instantânea",
+      "sumup_eurLabel": "Cartão EUR",
+      "sumup_eurDesc": "SumUp (ES/PT/DE)"
     },
     "error": {
       "cardPrepare": "Erro ao preparar pagamento com cartão",
@@ -93,7 +101,7 @@
     "printQueued": "Comanda em fila de impressão.",
     "errorPrintComanda": "Erro ao imprimir comanda. Tente de novo.",
     "cancelRequiresManager": "Cancelamento requer autorização de gerente",
-    "discountApplied": "Desconto de €{{amount}} aplicado",
+    "discountApplied": "Desconto de {{currency}}{{amount}} aplicado",
     "errorDiscount": "Erro ao aplicar desconto",
     "paymentSuccess": "🎉 Pagamento processado com sucesso!",
     "tutorialComplete": "Parabéns! Você completou sua primeira venda. Agora você pode usar o TPV normalmente.",
@@ -121,5 +129,16 @@
     "tryAgain": "Tentar novamente",
     "errorUpdateQuantity": "Erro ao atualizar quantidade",
     "checkingOperationalState": "Verificando estado operacional..."
+  },
+  "orderPanel": {
+    "status": "Status",
+    "time": "Tempo",
+    "inKitchen": "Na cozinha",
+    "printer": "Impressora",
+    "sendToKitchen": "🔥 Enviar para cozinha",
+    "holdOrder": "⏸ Segurar pedido",
+    "splitBill": "✂️ Dividir conta",
+    "kitchenCritical": "⚠️ Cozinha em estado crítico — considere segurar pedidos",
+    "printerOffline": "🖨️ Impressora offline — verifique conexão"
   }
 }

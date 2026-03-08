@@ -8,7 +8,7 @@
     "loadingTPV": "Loading POS...",
     "startSelling": "Start selling",
     "instructions": "One step: set the initial cash to open the shift.",
-    "initialCashLabel": "Initial cash (€)",
+    "initialCashLabel": "Initial cash ({{currency}})",
     "opening": "Opening...",
     "startNow": "Click here to start selling NOW",
     "defaultRegisterName": "Main Register",
@@ -17,7 +17,7 @@
   "close": {
     "title": "Close Shift",
     "description": "Count the cash in the drawer and enter the declared amount.",
-    "declaredLabel": "Declared cash in drawer (€)",
+    "declaredLabel": "Declared cash in drawer ({{currency}})",
     "declaredHint": "Includes opening float + cash sales",
     "confirmTitle": "Confirm Shift Close",
     "irreversibleWarning": "This action is irreversible. The register will be closed and the Z report generated.",
@@ -63,7 +63,23 @@
     "card": "Card",
     "mbway": "MB WAY",
     "multibanco": "Multibanco",
-    "transfer": "Transfer"
+    "transfer": "Transfer",
+    "other": "Other"
+  },
+  "history": {
+    "title": "Shift history",
+    "titleWithDays": "Shift history (last 7 days)",
+    "configNeeded": "Configure the restaurant to see shift history.",
+    "noShiftsYet": "No shifts yet. Open a shift in the POS to start selling.",
+    "loadError": "Could not load shift history. Check the connection and try again.",
+    "opening": "Opening",
+    "closing": "Closing",
+    "sales": "Sales",
+    "byMethod": "By method",
+    "orders": "Orders",
+    "expectedDeclared": "Expected / Declared",
+    "difference": "Difference",
+    "closeInTpv": "Close in POS"
   },
   "error": {
     "closeFailed": "Error closing shift",
@@ -75,5 +91,19 @@
     "openRetry": "Could not open shift. Try again.",
     "openGeneric": "Error opening shift. Try again.",
     "serverUnavailable": "Server unavailable. Check your connection and try again."
+  },
+  "receipt": {
+    "terminal": "Terminal:",
+    "operator": "Operator:",
+    "opening": "Opening:",
+    "closing": "Closing:",
+    "duration": "Duration:",
+    "openingBalance": "Opening Balance:",
+    "sessionSales": "+ Sales (Session):",
+    "expectedBalance": "Expected Balance:",
+    "finalBalance": "FINAL BALANCE:",
+    "difference": "Difference:",
+    "issuedAt": "Issued on",
+    "software": "Software: ChefIApp POS"
   }
 }

@@ -19,5 +19,21 @@
   "defaultRestaurant": "Restaurant",
   "skip": "Skip",
   "shareTitle": "Receipt #{{id}}",
-  "orderSummary": "Order #{{id}} — {{total}}"
+  "orderSummary": "Order #{{id}} — {{total}}",
+  "fiscalReceipt": "Fiscal Receipt",
+  "subtotal": "Subtotal:",
+  "vatRate": "VAT ({{rate}}%):",
+  "documentNumber": "Document No.:",
+  "scanToViewInvoice": "Scan to view invoice online",
+  "fiscalProtocol": "Fiscal Protocol",
+  "kitchen": "KITCHEN",
+  "counter": "COUNTER",
+  "token": "Token:",
+  "cashClosure": "Cash Closure",
+  "cashClosureTitle": "CASH CLOSURE",
+  "popupBlocked": "Pop-up blocker detected. Would you like to open the receipt in a new tab for printing?",
+  "cannotOpenPrintWindow": "Could not open the print window. Check pop-up blocker settings in your browser.",
+  "printTimeout": "Timeout loading the print window. Please try again.",
+  "printError": "Print error: {{message}}",
+  "unknownPrintError": "Unknown error"
 }

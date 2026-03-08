@@ -63,7 +63,23 @@
     "card": "Cartão",
     "mbway": "MB WAY",
     "multibanco": "Multibanco",
-    "transfer": "Transferência"
+    "transfer": "Transferência",
+    "other": "Outro"
+  },
+  "history": {
+    "title": "Histórico por turno",
+    "titleWithDays": "Histórico por turno (últimos 7 dias)",
+    "configNeeded": "Configure o restaurante para ver o histórico por turno.",
+    "noShiftsYet": "Ainda não há turnos. Abra um turno no TPV para começar a vender.",
+    "loadError": "Não foi possível carregar o histórico de turnos. Verifique a conexão e tente novamente.",
+    "opening": "Abertura",
+    "closing": "Fechamento",
+    "sales": "Vendas",
+    "byMethod": "Por método",
+    "orders": "Pedidos",
+    "expectedDeclared": "Esperado / Declarado",
+    "difference": "Diferença",
+    "closeInTpv": "Fechar no TPV"
   },
   "error": {
     "closeFailed": "Erro ao fechar turno",
@@ -75,5 +91,19 @@
     "openRetry": "Não foi possível abrir o turno. Tente novamente.",
     "openGeneric": "Erro ao abrir turno. Tente novamente.",
     "serverUnavailable": "Servidor indisponível. Verifique a conexão e tente novamente."
+  },
+  "receipt": {
+    "terminal": "Terminal:",
+    "operator": "Operador:",
+    "opening": "Abertura:",
+    "closing": "Fechamento:",
+    "duration": "Duração:",
+    "openingBalance": "Saldo Inicial:",
+    "sessionSales": "+ Vendas (Sessão):",
+    "expectedBalance": "Saldo Esperado:",
+    "finalBalance": "SALDO FINAL:",
+    "difference": "Diferença:",
+    "issuedAt": "Emitido em",
+    "software": "Software: ChefIApp POS"
   }
 }

@@ -18,7 +18,7 @@
       "divergent": "Divergente",
       "edit": "Editar",
       "modalTitle": "Editar Reconciliação Divergente",
-      "modalMeta": "Turno: {{shiftId}} • Diferença: €{{amount}}",
+      "modalMeta": "Turno: {{shiftId}} • Diferença: {{currency}}{{amount}}",
       "reasonCode": "Código da Razão",
       "reasonCodeTitle": "Código da razão para a divergência",
       "selectPlaceholder": "Seleccionar...",
@@ -38,7 +38,7 @@
       "shift": "Turno",
       "opened": "Abertura",
       "closed": "Fecho",
-      "sales": "Vendas (€)",
+      "sales": "Vendas ({{currency}})",
       "orders": "Pedidos",
       "open": "Aberto"
     }
@@ -64,5 +64,30 @@
       "closedBills": "Contas Fechadas",
       "cancellations": "Cancelamentos"
     }
+  },
+  "roles": {
+    "owner": "Dono",
+    "manager": "Gerente",
+    "operator": "Operador"
+  },
+  "kitchen": {
+    "statusOk": "Cozinha OK",
+    "statusSlow": "Cozinha lenta",
+    "statusCritical": "Cozinha crítica"
+  },
+  "metrics": {
+    "revenue": "Receita",
+    "revenueToday": "Receita Hoje",
+    "orders": "Pedidos",
+    "averageTicket": "Ticket Médio",
+    "ordersPerHour": "Pedidos/Hora",
+    "vsYesterday": "vs. ontem",
+    "openNow": "{{count}} abertos agora",
+    "ordersByHour": "Pedidos por Hora"
+  },
+  "goLive": {
+    "title": "Passar a operação real",
+    "body": "A partir deste momento, tudo aqui passa a ser dinheiro real. Daqui não se volta. Os valores e ações passam a contar como operação real.",
+    "confirm": "Confirmar e passar a operação real"
   }
 }

@@ -1,0 +1,113 @@
+{
+  "nav": {
+    "home": "Início",
+    "backToMenu": "← Voltar ao menu",
+    "configTitle": "Configuração"
+  },
+  "groups": {
+    "financas": "Finanças",
+    "operacao": "Operação",
+    "clientes": "Clientes",
+    "produto": "Produto",
+    "inteligencia": "Inteligência",
+    "sistema": "Sistema"
+  },
+  "items": {
+    "transacoes": "Transações",
+    "reembolsos": "Reembolsos",
+    "fechamentos": "Fechos",
+    "reservas": "Reservas",
+    "promocoes": "Promoções",
+    "diretorio": "Diretório",
+    "catalogo": "Catálogo",
+    "relatorios": "Relatórios",
+    "configuracao": "Configuração",
+    "dispositivos": "Dispositivos",
+    "modulos": "Módulos",
+    "observabilidade": "Observabilidade"
+  },
+  "configSections": {
+    "identity": "Identidade",
+    "plan": "Plano",
+    "operations": "Operação",
+    "team": "Equipa",
+    "infrastructure": "Infraestrutura",
+    "channels": "Canais & Integrações",
+    "modules": "Módulos"
+  },
+  "config": {
+    "general": "Geral",
+    "modules": "Módulos",
+    "website": "Website",
+    "subscription": "Assinatura",
+    "locations": "Localizações",
+    "legalEntities": "Entidades Legais",
+    "brands": "Marcas",
+    "adminUsers": "Administradores",
+    "deviceManagement": "Gestão de dispositivos",
+    "printers": "Impressoras",
+    "integrations": "Integrações",
+    "delivery": "Delivery",
+    "employees": "Funcionários",
+    "posSoftware": "Software TPV",
+    "reservations": "Reservas"
+  },
+  "advisor": {
+    "title": "Modo Configuração:",
+    "description": "TPV, KDS e Presença Online estão desativados até publicar.",
+    "completeChecklist": "Completar Checklist",
+    "publishNow": "Publicar Agora"
+  },
+  "moduleStatus": {
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "needsSetup": "Precisa de configuração",
+    "locked": "Bloqueado"
+  },
+  "banner": {
+    "setup": {
+      "headline": "Configuração em curso",
+      "body": "{{done}} de {{total}} passos críticos concluídos.",
+      "cta": "Continuar configuração"
+    },
+    "trial": {
+      "headline": "Período de teste",
+      "headlineUrgent": "Teste prestes a terminar!",
+      "body": "{{days}} dias restantes.",
+      "cta": "Escolher um plano"
+    },
+    "active": {
+      "headline": "Plano ativo",
+      "body": "O seu plano {{plan}} está ativo."
+    },
+    "suspended": {
+      "headline": "Conta suspensa",
+      "body": "Atualize o pagamento para restaurar o acesso.",
+      "cta": "Atualizar faturação"
+    }
+  },
+  "modules": {
+    "pageTitle": "Módulos",
+    "pageSubtitle": "Ative, configure ou instale os módulos que pretende usar.",
+    "blockEssentials": "Essenciais do dia a dia",
+    "blockChannels": "Canais e crescimento",
+    "badgeActive": "Ativo",
+    "badgeConfigure": "Configurar",
+    "badgeUnavailable": "Indisponível",
+    "actionActivate": "Ativar",
+    "actionConfigure": "Configurar",
+    "actionOpen": "Abrir",
+    "actionUpgrade": "Ver planos",
+    "actionDeactivate": "Desativar",
+    "actionInstallDevice": "Instalar dispositivo",
+    "requires": "Requer: {{deps}}",
+    "installTitle": "Instalar {{kind}}",
+    "installDescription": "Regista este dispositivo como {{kind}} deste restaurante. Após a instalação, o dispositivo não volta a pedir qual é o restaurante.",
+    "installDeviceName": "Nome do dispositivo",
+    "installInProgress": "A instalar…",
+    "installAs": "Instalar como {{id}}",
+    "installCancel": "Cancelar",
+    "installDesktopHint": "Para ter um ícone no ambiente de trabalho (sem barra do navegador):",
+    "installDesktop": "Instalar no ambiente de trabalho"
+  }
+}

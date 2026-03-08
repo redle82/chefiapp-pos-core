@@ -1,5 +1,13 @@
 {
   "forecast": {
     "noPeaks": "Sem picos previstos para breve"
+  },
+  "metricsWidget": {
+    "title": "📊 Métricas do Dia",
+    "subtitle": "Atualização em tempo real",
+    "noData": "Sem dados",
+    "errorLoading": "Erro ao carregar métricas: {{error}}",
+    "lastUpdated": "Última atualização: {{time}}",
+    "viewAnalytics": "Ver Analytics Completo →"
   }
 }

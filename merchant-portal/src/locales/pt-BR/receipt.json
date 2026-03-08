@@ -19,5 +19,21 @@
   "defaultRestaurant": "Restaurante",
   "skip": "Pular",
   "shareTitle": "Recibo #{{id}}",
-  "orderSummary": "Pedido #{{id}} — {{total}}"
+  "orderSummary": "Pedido #{{id}} — {{total}}",
+  "fiscalReceipt": "Recibo Fiscal",
+  "subtotal": "Subtotal:",
+  "vatRate": "IVA ({{rate}}%):",
+  "documentNumber": "Nº documento:",
+  "scanToViewInvoice": "Escaneie para ver fatura online",
+  "fiscalProtocol": "Protocolo Fiscal",
+  "kitchen": "COZINHA",
+  "counter": "BALCÃO",
+  "token": "Senha:",
+  "cashClosure": "Fechamento de Caixa",
+  "cashClosureTitle": "FECHAMENTO DE CAIXA",
+  "popupBlocked": "Bloqueador de pop-ups detectado. Deseja abrir o recibo em uma nova aba para impressão?",
+  "cannotOpenPrintWindow": "Não foi possível abrir janela de impressão. Verifique as configurações de bloqueador de pop-ups no navegador.",
+  "printTimeout": "Tempo limite ao carregar janela de impressão. Tente novamente.",
+  "printError": "Erro ao imprimir: {{message}}",
+  "unknownPrintError": "Erro desconhecido"
 }
