@@ -7,7 +7,7 @@ const { mockGetOverview } = vi.hoisted(() => ({
 }));
 
 vi.mock("../services/dashboardService", () => ({
-  getOverview: mockGetOverview,
+  getOverviewSafe: mockGetOverview,
 }));
 
 import { useDashboardOverview } from "./useDashboardOverview";
