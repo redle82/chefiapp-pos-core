@@ -23,6 +23,16 @@ vi.mock("../../components/operational/RequireOperational", () => ({
   ),
 }));
 
+vi.mock("../../core/sync/SyncEngine", () => ({
+  SyncEngine: {
+    subscribe: vi.fn(() => () => {}),
+    processQueue: vi.fn(),
+    forceSync: vi.fn(),
+    getConnectivity: vi.fn(() => "online"),
+    getNetworkStatus: vi.fn(() => "online"),
+  },
+}));
+
 vi.mock("../../pages/AppStaff/AppStaffWrapper", () => ({
   AppStaffWrapper: () => <Outlet />,
 }));
