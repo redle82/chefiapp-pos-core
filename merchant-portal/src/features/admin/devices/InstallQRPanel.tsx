@@ -15,6 +15,7 @@
  */
 
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import QRCode from "react-qr-code";
 import styles from "./AdminDevicesPage.module.css";
 
@@ -33,6 +34,7 @@ export function InstallQRPanel({
   secondsLeft,
   baseUrl,
 }: InstallQRPanelProps) {
+  const { t } = useTranslation("devices");
   const standardUrl = `${baseUrl}/install?token=${token}`;
   const isCritical = secondsLeft < 60;
   const isDesktopType = DESKTOP_TYPES.includes(deviceType.toUpperCase());
@@ -42,9 +44,7 @@ export function InstallQRPanel({
       {/* Header */}
       <div className={styles.qrPanelHeader}>
         <div className={styles.qrHeaderTitle}>
-          {isDesktopType
-            ? "Código de vinculación — Escritorio"
-            : "Código QR por Plataforma"}
+          {isDesktopType ? t("qr.desktopLinkTitle") : t("qr.mobileLinkTitle")}
         </div>
         <div
           className={isCritical ? styles.expiryCritical : styles.expiryNormal}
@@ -86,6 +86,7 @@ function DesktopQRSection({
   url: string;
   deviceType: string;
 }) {
+  const { t } = useTranslation("devices");
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(() => {
@@ -103,12 +104,11 @@ function DesktopQRSection({
         </div>
         <div className={styles.qrDesktopInstructions}>
           <p className={styles.qrDesktopHint}>
-            Escanee este código en el dispositivo donde tiene instalada la
-            aplicación <strong>{deviceType}</strong> de escritorio.
+            {t("qr.desktopHint", { deviceType })}
           </p>
           <div className={styles.qrDesktopNotice}>
             <span className={styles.qrDesktopNoticeIcon}>🚧</span>
-            App de escritorio en desarrollo — disponible próximamente.
+            {t("qr.desktopComingSoon")}
           </div>
           <div className={styles.qrDesktopCopyRow}>
             <code className={styles.qrDesktopCode}>{url}</code>
@@ -117,7 +117,7 @@ function DesktopQRSection({
               onClick={handleCopy}
               className={styles.qrDesktopCopyBtn}
             >
-              {copied ? "✓ Copiado" : "Copiar"}
+              {copied ? `✓ ${t("qr.copied")}` : t("qr.copyUrl")}
             </button>
           </div>
         </div>

@@ -56,7 +56,7 @@ test.describe("🔸 Contract — Operational Browser Block", () => {
 
         // Lei O1: must see block screen, not TPV
         const blockTitle = page.getByText(
-          /TPV não pode ser aberto no navegador/i,
+          /TPV\s+n(?:ão|ao|o)\s+pode\s+ser\s+aberto\s+no\s+navegador|TPV\s+no\s+puede\s+abrirse\s+en\s+el\s+navegador/i,
         );
         await expect(blockTitle).toBeVisible({ timeout: 10_000 });
 

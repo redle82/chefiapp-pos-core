@@ -35,12 +35,14 @@ import ptPTDashboard from "./locales/pt-PT/dashboard.json";
 // Operational
 import ptPTOperational from "./locales/pt-PT/operational.json";
 // Waiter
+import ptPTDevices from "./locales/pt-PT/devices.json";
 import ptPTWaiter from "./locales/pt-PT/waiter.json";
 
 // ── pt-BR ───────────────────────────────────────────────────────────────────
 import ptBRCommon from "./locales/pt-BR/common.json";
 import ptBRConfig from "./locales/pt-BR/config.json";
 import ptBRDashboard from "./locales/pt-BR/dashboard.json";
+import ptBRDevices from "./locales/pt-BR/devices.json";
 import ptBRKds from "./locales/pt-BR/kds.json";
 import ptBROnboarding from "./locales/pt-BR/onboarding.json";
 import ptBROperational from "./locales/pt-BR/operational.json";
@@ -55,6 +57,7 @@ import ptBRWaiter from "./locales/pt-BR/waiter.json";
 import enCommon from "./locales/en/common.json";
 import enConfig from "./locales/en/config.json";
 import enDashboard from "./locales/en/dashboard.json";
+import enDevices from "./locales/en/devices.json";
 import enKds from "./locales/en/kds.json";
 import enOnboarding from "./locales/en/onboarding.json";
 import enOperational from "./locales/en/operational.json";
@@ -69,6 +72,7 @@ import enWaiter from "./locales/en/waiter.json";
 import esCommon from "./locales/es/common.json";
 import esConfig from "./locales/es/config.json";
 import esDashboard from "./locales/es/dashboard.json";
+import esDevices from "./locales/es/devices.json";
 import esKds from "./locales/es/kds.json";
 import esOnboarding from "./locales/es/onboarding.json";
 import esOperational from "./locales/es/operational.json";
@@ -97,6 +101,7 @@ const ALL_NS = [
   "dashboard",
   "operational",
   "waiter",
+  "devices",
 ] as const;
 
 // Respect stored locale choice (set by LocaleSwitcher)
@@ -127,6 +132,7 @@ void i18n.use(initReactI18next).init({
       dashboard: ptPTDashboard,
       operational: ptPTOperational,
       waiter: ptPTWaiter,
+      devices: ptPTDevices,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Dados e privacidade",
@@ -232,6 +238,7 @@ void i18n.use(initReactI18next).init({
       dashboard: ptBRDashboard,
       operational: ptBROperational,
       waiter: ptBRWaiter,
+      devices: ptBRDevices,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Dados e privacidade",
@@ -337,6 +344,7 @@ void i18n.use(initReactI18next).init({
       dashboard: enDashboard,
       operational: enOperational,
       waiter: enWaiter,
+      devices: enDevices,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Data and privacy",
@@ -439,6 +447,7 @@ void i18n.use(initReactI18next).init({
       dashboard: esDashboard,
       operational: esOperational,
       waiter: esWaiter,
+      devices: esDevices,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Datos y privacidad",

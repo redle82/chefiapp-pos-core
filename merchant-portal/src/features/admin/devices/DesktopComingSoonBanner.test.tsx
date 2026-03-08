@@ -5,8 +5,23 @@
  * Validates UXG-011: honest "coming soon" banner replaces dead download cards.
  */
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { DesktopComingSoonBanner } from "./DesktopComingSoonBanner";
+
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const dictionary: Record<string, string> = {
+        "comingSoon.title": "Software de escritorio en desarrollo",
+        "comingSoon.body":
+          "Los módulos TPV y KDS requieren una aplicación de escritorio dedicada que estamos preparando. Mientras tanto, puede vincular dispositivos móviles (AppStaff) usando el código QR de arriba.",
+        "comingSoon.requestEarlyAccess": "Solicitar acceso anticipado",
+        "comingSoon.learnMore": "Saber más",
+      };
+      return dictionary[key] ?? key;
+    },
+  }),
+}));
 
 describe("DesktopComingSoonBanner", () => {
   afterEach(() => cleanup());

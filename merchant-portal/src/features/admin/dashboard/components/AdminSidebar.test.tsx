@@ -9,6 +9,18 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const dictionary: Record<string, string> = {
+        "quickLink.tpvDesktopRequiredRedirectNotice":
+          "El TPV requiere la aplicación de escritorio. Redirigiendo a Dispositivos…",
+      };
+      return dictionary[key] ?? key;
+    },
+  }),
+}));
+
 // Mock platformDetection
 const mockIsDesktopApp = vi.fn(() => false);
 vi.mock("../../../../core/operational/platformDetection", () => ({

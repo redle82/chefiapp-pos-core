@@ -6,8 +6,29 @@
  * mobile types (APPSTAFF) keep the two-column iOS/Android layout.
  */
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { InstallQRPanel } from "./InstallQRPanel";
+
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: { deviceType?: string }) => {
+      if (key === "qr.desktopHint") {
+        return `Escanee este código en el dispositivo donde tiene instalada la aplicación ${options?.deviceType ?? ""} de escritorio.`;
+      }
+
+      const dictionary: Record<string, string> = {
+        "qr.desktopLinkTitle": "Código de vinculación — Escritorio",
+        "qr.mobileLinkTitle": "Código de vinculación — Móvil",
+        "qr.desktopComingSoon":
+          "App de escritorio en desarrollo — disponible próximamente.",
+        "qr.copyUrl": "Copiar URL",
+        "qr.copied": "Copiado",
+      };
+
+      return dictionary[key] ?? key;
+    },
+  }),
+}));
 
 const BASE_PROPS = {
   token: "abc123def456ghi789",
@@ -42,7 +63,7 @@ describe("InstallQRPanel", () => {
 
     it("renders a copy button", () => {
       render(<InstallQRPanel {...BASE_PROPS} deviceType="TPV" />);
-      expect(screen.getByText("Copiar")).toBeTruthy();
+      expect(screen.getByText("Copiar URL")).toBeTruthy();
     });
 
     it("shows device type in metadata", () => {
@@ -74,7 +95,7 @@ describe("InstallQRPanel", () => {
   describe("mobile type (APPSTAFF)", () => {
     it("shows platform header 'Código QR por Plataforma'", () => {
       render(<InstallQRPanel {...BASE_PROPS} deviceType="APPSTAFF" />);
-      expect(screen.getByText("Código QR por Plataforma")).toBeTruthy();
+      expect(screen.getByText("Código de vinculación — Móvil")).toBeTruthy();
     });
 
     it("shows iOS and Android columns", () => {
@@ -92,7 +113,7 @@ describe("InstallQRPanel", () => {
 
     it("does NOT show copy button", () => {
       render(<InstallQRPanel {...BASE_PROPS} deviceType="APPSTAFF" />);
-      expect(screen.queryByText("Copiar")).toBeNull();
+      expect(screen.queryByText("Copiar URL")).toBeNull();
     });
   });
 

@@ -1,0 +1,19 @@
+{
+  "comingSoon": {
+    "title": "Software de escritorio en desarrollo",
+    "body": "Los módulos TPV y KDS requieren una aplicación de escritorio dedicada que estamos preparando. Mientras tanto, puede vincular dispositivos móviles (AppStaff) usando el código QR de arriba.",
+    "requestEarlyAccess": "Solicitar acceso anticipado",
+    "learnMore": "Saber más"
+  },
+  "qr": {
+    "desktopLinkTitle": "Código de vinculación — Escritorio",
+    "mobileLinkTitle": "Código de vinculación — Móvil",
+    "desktopHint": "Escanee este código en el dispositivo donde tiene instalada la aplicación {{deviceType}} de escritorio.",
+    "desktopComingSoon": "App de escritorio en desarrollo — disponible próximamente.",
+    "copyUrl": "Copiar URL",
+    "copied": "Copiado"
+  },
+  "quickLink": {
+    "tpvDesktopRequiredRedirectNotice": "El TPV requiere la aplicación de escritorio. Redirigiendo a Dispositivos…"
+  }
+}

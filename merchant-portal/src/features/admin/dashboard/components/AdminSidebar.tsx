@@ -7,6 +7,7 @@
  * Config view (/admin/config/*) keeps its own flat list.
  */
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
 import { isDesktopApp } from "../../../../core/operational/platformDetection";
@@ -235,6 +236,7 @@ export function AdminSidebar() {
 /*  Ref: UXG-010                                                       */
 /* ------------------------------------------------------------------ */
 function TpvQuickLink() {
+  const { t } = useTranslation("devices");
   const navigate = useNavigate();
   const [showNotice, setShowNotice] = useState(false);
 
@@ -259,8 +261,7 @@ function TpvQuickLink() {
       </button>
       {showNotice && (
         <div className={styles.tpvNotice} role="status">
-          El TPV requiere la aplicación de escritorio. Redirigiendo a
-          Dispositivos…
+          {t("quickLink.tpvDesktopRequiredRedirectNotice")}
         </div>
       )}
     </>
