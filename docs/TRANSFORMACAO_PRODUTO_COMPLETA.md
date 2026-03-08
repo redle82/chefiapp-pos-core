@@ -128,12 +128,12 @@ Sistema operacional — Módulos ativáveis
 ### Imediato (Esta Semana)
 
 1. **Testar Landing Page**
-   - Acessar `http://localhost:5175/`
+   - Acessar `http://localhost:5173/`
    - Verificar CTAs funcionando
    - Validar copy e visual
 
 2. **Testar Dashboard Modo Venda**
-   - Acessar `http://localhost:5175/dashboard`
+   - Acessar `http://localhost:5173/dashboard`
    - Verificar badges "Disponível para ativação"
    - Validar redirecionamento para System Tree
 

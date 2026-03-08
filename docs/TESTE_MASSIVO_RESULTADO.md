@@ -191,7 +191,7 @@
 
 ### Frontend
 
-- ✅ **Merchant Portal:** Respondendo em localhost:5175
+- ✅ **Merchant Portal:** Respondendo em localhost:5173
 - ✅ **Interfaces:** Todas acessíveis
 - ✅ **Origens:** Todas funcionando
 

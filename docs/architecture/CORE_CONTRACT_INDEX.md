@@ -140,6 +140,10 @@ _Índice mínimo. Expandir conforme repopulação do índice em tarefas futuras.
 | --- | --- |
 | [ACCESS_CONTROL_MATRIX.md](./ACCESS_CONTROL_MATRIX.md) | Architecture |
 | [ADR_HYBRID_BACKEND.md](./ADR_HYBRID_BACKEND.md) | Architecture |
+| [ADMIN_CONFIG_MODE_UX.md](./ADMIN_CONFIG_MODE_UX.md) | Architecture |
+| [ADMIN_DOMAINS_CONTRACT.md](./ADMIN_DOMAINS_CONTRACT.md) | Architecture |
+| [ADMIN_GLOSSARY.md](./ADMIN_GLOSSARY.md) | Architecture |
+| [ADMIN_NAVIGATION_MAP.md](./ADMIN_NAVIGATION_MAP.md) | Architecture |
 | [ANOMALY_DEFINITION.md](./ANOMALY_DEFINITION.md) | Architecture |
 | [ANTI_SUPABASE_CHECKLIST.md](./ANTI_SUPABASE_CHECKLIST.md) | Architecture |
 | [APPLICATION_BOOT_CONTRACT.md](./APPLICATION_BOOT_CONTRACT.md) | Architecture |

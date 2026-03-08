@@ -15,7 +15,7 @@
 ### 2. Rota do TPV Adicionada
 - **Arquivo:** `merchant-portal/src/App.tsx`
 - **Mudança:** Adicionada rota `/tpv` para o componente `TPV`
-- **URL:** `http://localhost:5175/tpv`
+- **URL:** `http://localhost:5173/tpv`
 
 ### 3. Origem CAIXA Configurada
 - **Arquivo:** `merchant-portal/src/pages/TPV/context/OrderContextReal.tsx` (linha ~490)
@@ -51,7 +51,7 @@ npm run dev
 
 ### 3. Abrir o TPV
 ```
-http://localhost:5175/tpv
+http://localhost:5173/tpv
 ```
 
 ### 4. Criar um Pedido no TPV
@@ -62,7 +62,7 @@ http://localhost:5175/tpv
 5. Verificar que o pedido foi criado com origem `CAIXA`
 
 ### 5. Verificar no KDS
-1. Abrir o KDS: `http://localhost:5175/kds-minimal`
+1. Abrir o KDS: `http://localhost:5173/kds-minimal`
 2. Verificar que o pedido aparece com badge "💰 CAIXA"
 3. Verificar que o pedido aparece automaticamente (Realtime)
 
