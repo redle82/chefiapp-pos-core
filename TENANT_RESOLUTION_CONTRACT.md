@@ -1,1 +1,0 @@
-docs/archive/TENANT_RESOLUTION_CONTRACT.md

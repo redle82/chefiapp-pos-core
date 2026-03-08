@@ -2,6 +2,62 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-02-24
+
+### 🚀 Stack 2026 — Fases 1-7 Completas (PR #6)
+
+#### FASE 1 — Billing & Subscription
+
+- `FlowGate.tsx` — blocks unauthenticated/unsubscribed access with contextual CTAs
+- `SubscriptionPage.tsx` — plan picker, trial countdown, upgrade/downgrade flow
+- `BillingService.ts` — Stripe checkout session creation via integration-gateway
+- `SystemState` lifecycle: `SETUP → TRIAL → ACTIVE → SUSPENDED`
+
+#### FASE 2 — Onboarding & Primeira Venda
+
+- `MenuDemo.tsx` — interactive menu demo component with example menu items
+- `FirstSaleGuide.tsx` — step-by-step first-sale tutorial component
+- `exampleMenus.ts` — seeded demo menu data (café, restaurant, bar profiles)
+- TPV demo mode: `isDemoMode` flag, demo-safe order flow, demo banner
+- Onboarding routes wired: `/admin/onboarding/*` → `FlowGate` → demo → real
+
+#### FASE 3 — Now Engine (mobile; N/A web)
+
+- Now Engine is mobile-only (`mobile-app`); web items marked N/A
+
+#### FASE 4 — Gamificação Mínima
+
+- `awardPoints` / `checkAchievements` RPCs wired into order lifecycle
+- Achievement unlock notifications (toast + confetti)
+- `GamificationBadge` component showing XP progress
+
+#### FASE 5 — Polimento Admin Panel
+
+- `useSidebarBanner` hook — context-aware banner (SETUP/TRIAL/ACTIVE/SUSPENDED)
+- `SidebarContextBanner.tsx` — renders setup progress, trial days, plan badge
+- `AdminSidebar` restructured with role-based nav sections
+- Haptic feedback (`HapticService`) wired into critical user actions
+- Lazy loading + code splitting across heavy admin views
+
+#### FASE 6 — Impressão
+
+- Browser print improved: print stylesheet, receipt layout, A4/receipt toggle
+- Thermal print simulation in demo mode
+- `PrintConfigPage.tsx` — printer model selector, test print, layout preview
+
+#### FASE 7 — Mapa de Mesas (Opção A)
+
+- `TableMapPanel.tsx`: stats bar with livres/ocupadas/reservadas color chips
+- Zone grouping: grid renders per-zone section headers with free/total counts
+- Elapsed-time display: ⏱ Xm badge, color-coded green (<15m) / amber (<30m) / red (≥30m)
+- `TPVTablesPage.tsx`: forwards `seatedAt` + `zone` from DB to panel
+
+#### Quality
+
+- 593/595 tests passing (100 test files)
+- TypeScript strict: zero errors
+- Release gate: `npm run audit:release:portal` → ✅ SISTEMA CONFORME
+
 ## [1.4.3] - 2026-02
 
 ### 🏢 Estrutura Enterprise — todas as áreas explícitas

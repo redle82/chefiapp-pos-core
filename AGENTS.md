@@ -26,6 +26,7 @@
 - Start via `pnpm -w merchant-portal run dev`.
 - Default port is `5175` unless `PORT` is set.
 - **Port 5175 already in use:** outro processo (ex. Vite) já está a usar a porta. Para libertar: `lsof -ti:5175 | xargs kill -9`. Ou usa o servidor que já está a correr.
+- **GET /admin/devices 500 e GET /@vite/client 404:** acontecem quando a app **não** está a ser servida pelo Vite (ex.: outro processo na 5175, ou `serve dist`). Solução: garantir que só corre o dev do Vite na 5175 — `cd merchant-portal && pnpm run dev` ou `pnpm --filter merchant-portal run dev`; libertar a porta com `npm run kill:5175` se necessário. O Vite faz SPA fallback (todas as rotas → index.html) e serve `/@vite/client` em dev.
 
 ## AppStaff (web = o que está em uso)
 
@@ -62,7 +63,7 @@
 
 ## Release readiness
 
-- **Gate recomendado (portal estável):** `npm run audit:release:portal` — web-e2e + typecheck + testes merchant-portal (Vitest) + leis. Passa sem DB/Jest raiz.
+- **Gate recomendado (portal estável):** `npm run audit:release:portal` — web-e2e + typecheck + testes merchant-portal (Vitest) + server coverage (target **80%** branches no portal gate; 84% quando corre `check:server-coverage` sozinho) + leis. Passa sem DB/Jest raiz. Ver `docs/audit/RELEASE_AUDIT_STATUS.md`.
 - **Auditoria completa:** `npm run audit:release` — inclui Jest na raiz; pode falhar por testes de integração/DB. Ver `docs/audit/RELEASE_AUDIT_STATUS.md`.
 
 ## Production monitoring

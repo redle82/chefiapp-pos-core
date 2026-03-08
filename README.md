@@ -282,6 +282,7 @@ The system is **complete and stable** for production.
 ### References
 
 - **Next actions (scope & validation):** [docs/strategy/NEXT_ACTIONS.md](docs/strategy/NEXT_ACTIONS.md) — FASE 1–3 validation, FASE 5 polish, FASE 6 print
+- **Billing, PIX, SumUp:** [docs/BILLING_PIX_SUMUP_INDEX.md](docs/BILLING_PIX_SUMUP_INDEX.md) — índice e scripts; validação: `./scripts/run-billing-pix-sumup-validation.sh` (gateway em 4320).
 - **Observability:** [docs/ops/OBSERVABILITY_SETUP.md](docs/ops/OBSERVABILITY_SETUP.md)
 - **Growth:** [docs/ops/GROWTH_MARKETING_SETUP.md](docs/ops/GROWTH_MARKETING_SETUP.md)
 - **Known Issues:** [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)
