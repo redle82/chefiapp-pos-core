@@ -144,6 +144,8 @@ _Índice mínimo. Expandir conforme repopulação do índice em tarefas futuras.
 | [ADMIN_DOMAINS_CONTRACT.md](./ADMIN_DOMAINS_CONTRACT.md) | Architecture |
 | [ADMIN_GLOSSARY.md](./ADMIN_GLOSSARY.md) | Architecture |
 | [ADMIN_NAVIGATION_MAP.md](./ADMIN_NAVIGATION_MAP.md) | Architecture |
+| [ADMIN_OBSERVABILITY_HOOKS.md](./ADMIN_OBSERVABILITY_HOOKS.md) | Architecture |
+| [ADMIN_QA_UX_CHECKLIST.md](./ADMIN_QA_UX_CHECKLIST.md) | Architecture |
 | [ANOMALY_DEFINITION.md](./ANOMALY_DEFINITION.md) | Architecture |
 | [ANTI_SUPABASE_CHECKLIST.md](./ANTI_SUPABASE_CHECKLIST.md) | Architecture |
 | [APPLICATION_BOOT_CONTRACT.md](./APPLICATION_BOOT_CONTRACT.md) | Architecture |
@@ -168,6 +170,7 @@ _Índice mínimo. Expandir conforme repopulação do índice em tarefas futuras.
 | [ARCHITECTURE_CANON.md](./ARCHITECTURE_CANON.md) | Architecture |
 | [ARCHITECTURE_DECISION_RECORDS.md](./ARCHITECTURE_DECISION_RECORDS.md) | Architecture |
 | [ARCHITECTURE_GUARD.md](./ARCHITECTURE_GUARD.md) | Architecture |
+| [ARCHITECTURE_OFFICIAL_2026.md](./ARCHITECTURE_OFFICIAL_2026.md) | Architecture |
 | [ARCHITECTURE_OVERVIEW.md](./ARCHITECTURE_OVERVIEW.md) | Architecture |
 | [ARQUITETURA_E_APPSTAFF_COMPLETO.md](./ARQUITETURA_E_APPSTAFF_COMPLETO.md) | Architecture |
 | [ARQUITETURA_GERAL_CHEFIAPP_AS_IS.md](./ARQUITETURA_GERAL_CHEFIAPP_AS_IS.md) | Architecture |
@@ -192,7 +195,6 @@ _Índice mínimo. Expandir conforme repopulação do índice em tarefas futuras.
 | [CASH_REGISTER_LIFECYCLE_CONTRACT.md](./CASH_REGISTER_LIFECYCLE_CONTRACT.md) | Architecture |
 | [CATALOGO_ACOES_CRIACAO_RESTAURANTE.md](./CATALOGO_ACOES_CRIACAO_RESTAURANTE.md) | Architecture |
 | [CHEFIAPP_OS_DELIVERY.md](./CHEFIAPP_OS_DELIVERY.md) | Architecture |
-| [CHEFIAPP_OS_ARCHITECTURE_V1.md](./CHEFIAPP_OS_ARCHITECTURE_V1.md) | Architecture |
 | [CHEFIAPP_PRICING_AND_POSITIONING.md](./CHEFIAPP_PRICING_AND_POSITIONING.md) | Architecture |
 | [CLOSED_PILOT_CONTRACT.md](./CLOSED_PILOT_CONTRACT.md) | Architecture |
 | [CODE_AND_DEVICE_PAIRING_CONTRACT.md](./CODE_AND_DEVICE_PAIRING_CONTRACT.md) | Architecture |
@@ -256,6 +258,7 @@ _Índice mínimo. Expandir conforme repopulação do índice em tarefas futuras.
 | [DATA_LINEAGE.md](./DATA_LINEAGE.md) | Architecture |
 | [DATA_SUBJECT_REQUESTS.md](./DATA_SUBJECT_REQUESTS.md) | Architecture |
 | [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | Architecture |
+| [DESIGN_SYSTEM_ALIGNMENT.md](./DESIGN_SYSTEM_ALIGNMENT.md) | Architecture |
 | [DESIGN_SYSTEM_COVERAGE.md](./DESIGN_SYSTEM_COVERAGE.md) | Architecture |
 | [DESIGN_SYSTEM_ENFORCEMENT_LOOP.md](./DESIGN_SYSTEM_ENFORCEMENT_LOOP.md) | Architecture |
 | [DESIGN_SYSTEM_PERCEPTUAL_CONTRACT.md](./DESIGN_SYSTEM_PERCEPTUAL_CONTRACT.md) | Architecture |
@@ -283,7 +286,6 @@ _Índice mínimo. Expandir conforme repopulação do índice em tarefas futuras.
 | [LANDING_STATE_ROUTING_CONTRACT.md](./LANDING_STATE_ROUTING_CONTRACT.md) | Architecture |
 | [LEGACY_UI_STATUS.md](./LEGACY_UI_STATUS.md) | Architecture |
 | [MANAGEMENT_ADVISOR_CONTRACT.md](./MANAGEMENT_ADVISOR_CONTRACT.md) | Architecture |
-| [MANDATORY_ARCHITECTURE_AND_PUBLICATION_READINESS.md](./MANDATORY_ARCHITECTURE_AND_PUBLICATION_READINESS.md) | Architecture |
 | [MAPS_AUDIT_REPORT.md](./MAPS_AUDIT_REPORT.md) | Architecture |
 | [MENU_BUILDER_CONTRACT_V1.md](./MENU_BUILDER_CONTRACT_V1.md) | Architecture |
 | [MENU_CATALOG_VISUAL_SPEC.md](./MENU_CATALOG_VISUAL_SPEC.md) | Architecture |

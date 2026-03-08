@@ -154,8 +154,41 @@ Implementação no Core: PostgREST (tabela `billing_configs`) + RPC ou serviço 
 
 ---
 
-## 9. Referências
+## 9. Stripe subscription lifecycle (Fase 3 Billing Real)
 
+**Fonte de verdade:** `gm_restaurants.billing_status` e `gm_restaurants.trial_ends_at` (Core). Opcional: `merchant_subscriptions` (status, stripe_subscription_id, trial_end, canceled_at).
+
+**Eventos Stripe tratados (webhook → RPC `sync_stripe_subscription_from_event`):**
+
+| Evento Stripe | Acção no Core |
+|---------------|----------------|
+| `customer.subscription.created` | Atualiza `gm_restaurants.billing_status` e `merchant_subscriptions`; mapeia `trialing` → trial, `active` → active. |
+| `customer.subscription.updated` | Idem; reflecte mudança de estado (trial → active, past_due, canceled). |
+| `customer.subscription.deleted` | `billing_status` = canceled. |
+| `invoice.payment_failed` | `billing_status` = past_due (dunning). |
+| `invoice.paid` | `billing_status` = active. |
+
+**Estados de billing (UI + PaymentGuard):** `trial` | `active` | `past_due` | `canceled`.
+
+**Quem bloqueia o quê:**
+
+| Estado | PaymentGuard | Safe Harbor (sempre permitido) |
+|--------|--------------|-------------------------------|
+| trial, active | Passa | `/app/billing`, `/app/console`, `/app/setup` |
+| past_due | Banner + CTA "Escolher plano" → `/app/billing`; trial expirado = bloqueio total com paywall. | Idem |
+| canceled | Bloqueio total (GlobalBlockedView); CTA "Reactivar plano" → `/app/billing`. | Idem |
+
+**Dunning:** Banner `paymentPending` + link para `/app/billing` quando `past_due`. PaymentGuard mostra barra superior e permite uso com aviso; trial expirado bloqueia.
+
+**Implementação:** Edge Function `webhook-stripe` chama `process_webhook_event` (idempotente) e depois `sync_stripe_subscription_from_event` para os eventos acima. Core: RPC em `docker-core/schema/migrations/20260324_stripe_subscription_sync.sql` e equivalente em `supabase/migrations/20260222140000_stripe_subscription_sync.sql`.
+
+---
+
+## 10. Referências
+
+- [PAYMENT_AND_POSITIONING.md](../legal/PAYMENT_AND_POSITIONING.md) — Posicionamento jurídico e técnico: o que o ChefIApp é/não é; separação pagamento SaaS vs transação; exigências evitadas.
+- [PAYMENT_LAYER.md](./PAYMENT_LAYER.md) — Arquitetura do módulo de pagamento (providers plugáveis).
+- [PAYMENT_CREDENTIALS_AND_WEBHOOKS.md](../security/PAYMENT_CREDENTIALS_AND_WEBHOOKS.md) — Segurança de credenciais por restaurante e webhooks; separação SaaS vs transação.
 - [CORE_TPV_BEHAVIOUR_CONTRACT.md](./CORE_TPV_BEHAVIOUR_CONTRACT.md) — TPV executa; Core manda.
 - [CORE_WEB_COMMAND_CENTER_CONTRACT.md](./CORE_WEB_COMMAND_CENTER_CONTRACT.md) — SystemTree inclui nó Billing.
 - [CORE_OFFLINE_CONTRACT.md](./CORE_OFFLINE_CONTRACT.md) — Offline: fila de sync; pagamento offline proibido.
