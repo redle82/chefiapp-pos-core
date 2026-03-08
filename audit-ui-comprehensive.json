@@ -1,15 +1,39 @@
 {
-  "timestamp": "2026-02-01T12:07:38.233Z",
+  "timestamp": "2026-02-23T18:02:31.308Z",
   "summary": {
-    "total": 1,
-    "P0": 1,
-    "P1": 0,
+    "total": 9,
+    "P0": 4,
+    "P1": 5,
     "P2": 0,
     "OK": 0
   },
   "byScreen": [
     {
-      "screen": "TPV",
+      "screen": "ActivationCenter",
+      "total": 2,
+      "OK": 0,
+      "issues": 2
+    },
+    {
+      "screen": "PublishPage",
+      "total": 2,
+      "OK": 0,
+      "issues": 2
+    },
+    {
+      "screen": "PaymentsPage",
+      "total": 2,
+      "OK": 0,
+      "issues": 2
+    },
+    {
+      "screen": "TPVReady",
+      "total": 2,
+      "OK": 0,
+      "issues": 2
+    },
+    {
+      "screen": "TPVTrial",
       "total": 1,
       "OK": 0,
       "issues": 1
@@ -17,12 +41,76 @@
   ],
   "results": [
     {
-      "screen": "TPV",
+      "screen": "ActivationCenter",
       "component": "PageLoad",
       "action": "navigate",
-      "expected": "TPV page loads",
-      "actual": "Page not loaded",
+      "expected": "Page loads with visible title",
+      "actual": "Title missing",
       "severity": "P0"
+    },
+    {
+      "screen": "ActivationCenter",
+      "component": "ChecklistLinks",
+      "action": "navigate",
+      "expected": "Checklist links visible",
+      "actual": "Missing links",
+      "severity": "P1"
+    },
+    {
+      "screen": "PublishPage",
+      "component": "PageLoad",
+      "action": "navigate",
+      "expected": "Page loads with visible title",
+      "actual": "Title missing",
+      "severity": "P0"
+    },
+    {
+      "screen": "PublishPage",
+      "component": "PublishButton",
+      "action": "navigate",
+      "expected": "Publish action visible",
+      "actual": "Button missing",
+      "severity": "P1"
+    },
+    {
+      "screen": "PaymentsPage",
+      "component": "PageLoad",
+      "action": "navigate",
+      "expected": "Page loads with visible title",
+      "actual": "Title missing",
+      "severity": "P0"
+    },
+    {
+      "screen": "PaymentsPage",
+      "component": "StripeCard",
+      "action": "navigate",
+      "expected": "Stripe integration card visible",
+      "actual": "Card missing",
+      "severity": "P1"
+    },
+    {
+      "screen": "TPVReady",
+      "component": "PageLoad",
+      "action": "navigate",
+      "expected": "Ready heading visible",
+      "actual": "Ready missing",
+      "severity": "P0"
+    },
+    {
+      "screen": "TPVReady",
+      "component": "OpenTPVAction",
+      "action": "navigate",
+      "expected": "Action to proceed to TPV is visible",
+      "actual": "Action missing",
+      "severity": "P1"
+    },
+    {
+      "screen": "TPVTrial",
+      "component": "TrialBadge",
+      "action": "navigate",
+      "expected": "Demo guide badge visible",
+      "actual": "Badge missing",
+      "severity": "P1"
     }
   ]
 }
