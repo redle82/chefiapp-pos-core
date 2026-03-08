@@ -34,7 +34,7 @@ export function buildModuleDeepLink(
   searchParams?: string,
 ): string {
   const path = buildModulePath(moduleId, searchParams);
-  return `chefiapp://open?app=${moduleId}&path=${encodeURIComponent(path)}`;
+  return `chefiapp-pos://open?app=${moduleId}&path=${encodeURIComponent(path)}`;
 }
 
 /**

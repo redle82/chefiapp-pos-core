@@ -27,7 +27,7 @@ describe("navigateToModule", () => {
 
   it("builds deep links with encoded path", () => {
     expect(buildModuleDeepLink("tpv", "mode=trial")).toBe(
-      "chefiapp://open?app=tpv&path=%2Fop%2Ftpv%3Fmode%3Dtrial",
+      "chefiapp-pos://open?app=tpv&path=%2Fop%2Ftpv%3Fmode%3Dtrial",
     );
   });
 
@@ -61,7 +61,7 @@ describe("navigateToModule", () => {
 
     expect(onBrowserBlocked).toHaveBeenCalledTimes(1);
     expect(openExternalUrl).toHaveBeenCalledWith(
-      "chefiapp://open?app=tpv&path=%2Fop%2Ftpv%3Fmode%3Dtrial",
+      "chefiapp-pos://open?app=tpv&path=%2Fop%2Ftpv%3Fmode%3Dtrial",
     );
 
     vi.advanceTimersByTime(1499);
