@@ -1,9 +1,7 @@
 /**
  * DesktopInstallModal — Shown when a deep link attempt fails (desktop app not installed).
  *
- * Provides download buttons, retry link, and navigation to /admin/desktop.
- * DEV mode: shows local-build instructions.
- * PROD mode: shows download link or "configure installer" CTA.
+ * Provides download buttons, retry link, and navigation to /admin/devices.
  *
  * Ref: DESKTOP_DISTRIBUTION_CONTRACT, UXG-001.
  */
@@ -20,27 +18,12 @@ interface DesktopInstallModalProps {
   onDismiss: () => void;
 }
 
-/**
- * Lazy env reader — avoids module-level constants that break on HMR.
- * Reads at render time so Vite hot-reload always picks up current values.
- */
-function getEnv() {
-  const MODE = import.meta.env.MODE ?? "development";
-  const IS_DEV_LIKE = /^(development|dev|local)$/i.test(MODE);
-  const INSTALL_URL_MACOS =
-    import.meta.env.VITE_DESKTOP_INSTALL_URL_MACOS?.trim() ?? "";
-  const INSTALL_URL_WINDOWS =
-    import.meta.env.VITE_DESKTOP_INSTALL_URL_WINDOWS?.trim() ?? "";
-  const DESKTOP_INSTALL_DOC_URL_MACOS =
-    import.meta.env.VITE_DESKTOP_INSTALL_DOC_MACOS_URL?.trim() ?? "";
-  return {
-    MODE,
-    IS_DEV_LIKE,
-    INSTALL_URL_MACOS,
-    INSTALL_URL_WINDOWS,
-    DESKTOP_INSTALL_DOC_URL_MACOS,
-  };
-}
+const DOWNLOAD_BASE =
+  import.meta.env.VITE_DESKTOP_DOWNLOAD_BASE ??
+  "https://github.com/goldmonkey777/ChefIApp-POS-CORE/releases/latest/download";
+
+/** Whether actual desktop releases are available (flip to true when P1 ships). */
+export const RELEASES_AVAILABLE = false;
 
 export function DesktopInstallModal({
   moduleId,
@@ -48,37 +31,25 @@ export function DesktopInstallModal({
   onDismiss,
 }: DesktopInstallModalProps) {
   const navigate = useNavigate();
-  const env = getEnv();
   const label = moduleId === "tpv" ? "TPV" : "KDS";
   const adminOS = getDesktopOS();
 
   const handleRetry = () => {
-    // Usa iframe em vez de window.location.href para não navegar
-    // fora da página. A mesma técnica que launchDesktopWithHandshake.
+    if (!RELEASES_AVAILABLE) return; // No app to launch yet
     const url = buildDeepLink(moduleId, { restaurant: restaurantId });
-    try {
-      const iframe = document.createElement("iframe");
-      iframe.style.display = "none";
-      iframe.src = url;
-      document.body.appendChild(iframe);
-      window.setTimeout(() => {
-        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-      }, 5000);
-    } catch {
-      window.location.href = url;
-    }
-    onDismiss();
+    window.location.href = url;
   };
 
-  const handleGoToDesktop = () => {
+  const handleGoToDevices = () => {
     onDismiss();
-    navigate("/admin/desktop");
+    navigate("/admin/devices");
   };
 
-  const installLabel = adminOS === "windows" ? "Windows" : "macOS";
-  const installUrl =
-    adminOS === "windows" ? env.INSTALL_URL_WINDOWS : env.INSTALL_URL_MACOS;
-  const hasInstallerUrl = installUrl.length > 0;
+  const downloadFile =
+    adminOS === "windows"
+      ? "ChefIApp-Desktop-Setup.exe"
+      : "ChefIApp-Desktop.dmg";
+  const downloadLabel = adminOS === "windows" ? "Windows" : "macOS";
 
   return (
     <div style={overlayStyle} onClick={onDismiss}>
@@ -91,95 +62,43 @@ export function DesktopInstallModal({
 
         <p style={descStyle}>
           Para abrir el módulo <strong>{label}</strong>, necesitas la aplicación
-          de escritorio ChefIApp instalada en este equipo y registrada como
-          manejador oficial del protocolo <code>chefiapp-pos://</code>.
+          de escritorio ChefIApp instalada en este equipo.
         </p>
 
-        {/* ---------- DEV mode: local build instructions ---------- */}
-        {env.IS_DEV_LIKE && !hasInstallerUrl && (
-          <>
-            <div style={devBannerStyle}>
-              <span style={{ fontSize: 14 }}>🛠</span>
-              <span style={{ fontWeight: 600, fontSize: 12 }}>
-                Modo DEV — build local
-              </span>
-            </div>
-            <div style={devInstructionsStyle}>
-              <p style={{ margin: "0 0 6px", fontSize: 12, color: "#93c5fd" }}>
-                Para gerar o instalador localmente:
-              </p>
-              <code style={codeBlockStyle}>
-                cd desktop-app && pnpm install && pnpm build && pnpm dist:mac
-              </code>
-              <p style={{ margin: "6px 0 0", fontSize: 11, color: "#8a8a8a" }}>
-                Depois instala o <strong>.dmg</strong> gerado em{" "}
-                <code>/Applications</code> e clica em Reintentar.
-              </p>
-            </div>
-          </>
-        )}
-
-        {/* ---------- PROD mode: no installer configured ---------- */}
-        {!env.IS_DEV_LIKE && !hasInstallerUrl && (
-          <p style={descSecondaryStyle}>
-            Nenhum instalador publicado para {installLabel}. Configure as
-            variáveis de ambiente <code>VITE_DESKTOP_INSTALL_URL_MACOS</code> /{" "}
-            <code>VITE_DESKTOP_INSTALL_URL_WINDOWS</code> no deploy.
-          </p>
-        )}
-
-        {/* ---------- Protocol handler tip ---------- */}
-        <p style={descSecondaryStyle}>
-          Si al intentar abrir ves una ventana genérica chamada{" "}
-          <strong>Electron</strong> (e não o TPV/KDS), significa que tu macOS
-          está a enviar o protocolo para o binário errado. Nesse caso, reinstala
-          o ChefIApp Desktop a partir do instalador oficial e volta a testar.
-        </p>
-
-        {env.DESKTOP_INSTALL_DOC_URL_MACOS && (
-          <p style={docLinkWrapperStyle}>
-            <a
-              href={env.DESKTOP_INSTALL_DOC_URL_MACOS}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={docLinkStyle}
-            >
-              Ver guia de instalação detalhada para macOS
-            </a>
-          </p>
-        )}
-
-        {/* Install button */}
-        {hasInstallerUrl ? (
+        {/* Download button */}
+        {RELEASES_AVAILABLE ? (
           <a
-            href={installUrl}
+            href={`${DOWNLOAD_BASE}/${downloadFile}`}
             style={downloadBtnStyle}
             target="_blank"
             rel="noopener noreferrer"
           >
-            Instalar en {installLabel}
+            Descargar para {downloadLabel}
           </a>
-        ) : !env.IS_DEV_LIKE ? (
-          <button
-            type="button"
-            style={downloadBtnStyle}
-            onClick={handleGoToDesktop}
-          >
-            Configurar instalador para {installLabel}
-          </button>
-        ) : null}
+        ) : (
+          <div style={pendingNoticeStyle}>
+            🚧 La aplicación de escritorio está en desarrollo.
+            <br />
+            <a
+              href="mailto:soporte@chefiapp.com?subject=Acceso%20anticipado%20TPV/KDS%20desktop"
+              style={mailtoStyle}
+            >
+              Solicitar acceso anticipado
+            </a>
+          </div>
+        )}
 
         {/* Actions */}
         <div style={actionsStyle}>
           <button type="button" style={btnPrimaryStyle} onClick={handleRetry}>
-            🔄 Reintentar deep link
+            🔄 Ya la tengo — reintentar
           </button>
           <button
             type="button"
             style={btnSecondaryStyle}
-            onClick={handleGoToDesktop}
+            onClick={handleGoToDevices}
           >
-            Ir a Desktop
+            Ir a Dispositivos
           </button>
           <button type="button" style={btnDismissStyle} onClick={onDismiss}>
             Cerrar
@@ -230,13 +149,6 @@ const descStyle: React.CSSProperties = {
   margin: "0 0 20px",
 };
 
-const descSecondaryStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: "var(--text-tertiary, #8a8a8a)",
-  lineHeight: 1.5,
-  margin: "-8px 0 18px",
-};
-
 const downloadBtnStyle: React.CSSProperties = {
   display: "inline-block",
   padding: "10px 24px",
@@ -246,51 +158,24 @@ const downloadBtnStyle: React.CSSProperties = {
   backgroundColor: "#eab308",
   color: "#0a0a0a",
   textDecoration: "none",
-  border: "none",
-  cursor: "pointer",
   marginBottom: 20,
 };
 
-const devBannerStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 6,
-  backgroundColor: "rgba(59, 130, 246, 0.12)",
-  border: "1px solid rgba(59, 130, 246, 0.3)",
+const pendingNoticeStyle: React.CSSProperties = {
+  fontSize: 13,
+  color: "#d4a800",
+  border: "1px dashed #665500",
   borderRadius: 8,
-  padding: "6px 12px",
-  marginBottom: 10,
-  color: "#93c5fd",
+  padding: "12px 16px",
+  backgroundColor: "rgba(180, 140, 0, 0.08)",
+  marginBottom: 20,
+  lineHeight: 1.6,
 };
 
-const devInstructionsStyle: React.CSSProperties = {
-  backgroundColor: "rgba(0,0,0,0.3)",
-  borderRadius: 8,
-  padding: "10px 14px",
-  marginBottom: 16,
-  textAlign: "left",
-};
-
-const codeBlockStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: 11,
-  fontFamily: "ui-monospace, monospace",
-  color: "#e5e7eb",
-  backgroundColor: "rgba(0,0,0,0.4)",
-  borderRadius: 4,
-  padding: "6px 10px",
-  overflowX: "auto",
-  whiteSpace: "nowrap",
-};
-
-const docLinkWrapperStyle: React.CSSProperties = {
-  margin: "-4px 0 16px",
-};
-
-const docLinkStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: "#93c5fd",
+const mailtoStyle: React.CSSProperties = {
+  color: "#eab308",
   textDecoration: "underline",
+  textUnderlineOffset: 2,
 };
 
 const actionsStyle: React.CSSProperties = {

@@ -15,7 +15,8 @@ import { useLocation } from "react-router-dom";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
 import styles from "./AdminDevicesPage.module.css";
-import { DesktopComingSoonBanner } from "./DesktopComingSoonBanner";
+import { DesktopDownloadSection } from "./DesktopDownloadSection";
+import { DesktopPairingSection } from "./DesktopPairingSection";
 import { InstallQRPanel } from "./InstallQRPanel";
 import {
   createInstallToken,
@@ -200,12 +201,12 @@ export function AdminDevicesPage() {
         subtitle="Provisionar terminais, monitorar estado e descarregar software."
       />
 
-      {/* ── Block 1: Install QR ── */}
+      {/* ── Block 1A: Mobile QR Install ── */}
       <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>Instalar dispositivo</h2>
+        <h2 className={styles.sectionTitle}>Instalar dispositivo móvil</h2>
         <p className={styles.sectionDesc}>
-          Gere um código QR e digitalize-o no dispositivo para o vincular
-          automaticamente a este restaurante. O código expira em 5 minutos.
+          Gere um código QR e digitalize-o no telemóvel para vincular o AppStaff
+          a este restaurante. O código expira em 5 minutos.
         </p>
 
         <div className={styles.formRow}>
@@ -217,8 +218,6 @@ export function AdminDevicesPage() {
               className={styles.selectInput}
             >
               <option value="APPSTAFF">AppStaff (Mobile)</option>
-              <option value="TPV">TPV</option>
-              <option value="KDS">KDS</option>
             </select>
           </label>
 
@@ -226,7 +225,7 @@ export function AdminDevicesPage() {
             Nome (opcional)
             <input
               type="text"
-              placeholder="ex: TPV_BALCAO_01"
+              placeholder="ex: APPSTAFF_01"
               value={tokenName}
               onChange={(e) => setTokenName(e.target.value)}
               className={styles.textInput}
@@ -252,6 +251,16 @@ export function AdminDevicesPage() {
             baseUrl={getBaseUrl()}
           />
         )}
+      </section>
+
+      {/* ── Block 1B: Desktop Pairing ── */}
+      <section className={styles.card}>
+        <h2 className={styles.sectionTitle}>Vincular escritorio (TPV / KDS)</h2>
+        <p className={styles.sectionDesc}>
+          Genera un código de vinculación e introdúcelo en la aplicación de
+          escritorio ChefIApp al iniciarla por primera vez.
+        </p>
+        <DesktopPairingSection onCodeGenerated={loadTerminals} />
       </section>
 
       {/* ── Block 2: Active Devices ── */}
@@ -341,7 +350,7 @@ export function AdminDevicesPage() {
           aplicación instalada — no son accesibles desde el navegador.
         </p>
 
-        <DesktopComingSoonBanner />
+        <DesktopDownloadSection />
 
         <div className={styles.distributionNote}>
           <span className={styles.distributionIcon}>🛡️</span>

@@ -1,41 +1,42 @@
-import {
-  navigateToModule,
-  type NavigateToModuleOptions,
-  type OperationalModuleId,
-} from "./navigateToModule";
+/**
+ * openOperationalWindow — DEPRECATED (Fase 1 refactor).
+ *
+ * Estas funções abriam TPV/KDS/AppStaff em popup do browser via window.open().
+ * A partir da Fase 1, todos os módulos operacionais são instalados/abertos
+ * via o Hub de Dispositivos (/admin/devices) — nunca pop-up.
+ *
+ * As funções são mantidas como no-ops para não quebrar callers legados.
+ * Serão removidas quando todos os callers migrarem.
+ *
+ * @deprecated Use navigate("/admin/devices") instead.
+ */
 
-export const TPV_WINDOW_NAME = "ChefIApp_TPV";
-export const KDS_WINDOW_NAME = "ChefIApp_KDS";
-export const APPSTAFF_WINDOW_NAME = "ChefIApp_AppStaff";
-
-export type OpenOperationalOptions = Omit<
-  NavigateToModuleOptions,
-  "searchParams"
->;
-
-export function openTpvInNewWindow(
-  searchParams?: string,
-  options: OpenOperationalOptions = {},
-): void {
-  navigateToModule("tpv", {
-    ...options,
-    searchParams,
-  });
+/** @deprecated No-op. Use navigate("/admin/devices"). */
+export function openTpvInNewWindow(_searchParams?: string): void {
+  console.warn(
+    "[DEPRECATED] openTpvInNewWindow is a no-op. Navigate to /admin/devices instead.",
+  );
 }
 
-export function openKdsInNewWindow(options: OpenOperationalOptions = {}): void {
-  navigateToModule("kds", options);
+/** @deprecated No-op. Use navigate("/admin/devices"). */
+export function openKdsInNewWindow(): void {
+  console.warn(
+    "[DEPRECATED] openKdsInNewWindow is a no-op. Navigate to /admin/devices instead.",
+  );
 }
 
-export function openAppStaffInNewWindow(
-  options: OpenOperationalOptions = {},
-): void {
-  navigateToModule("appstaff", options);
+/** @deprecated No-op. Use navigate("/admin/devices"). */
+export function openAppStaffInNewWindow(): void {
+  console.warn(
+    "[DEPRECATED] openAppStaffInNewWindow is a no-op. Navigate to /admin/devices instead.",
+  );
 }
 
+/** @deprecated No-op. Use navigate("/admin/devices"). */
 export function openOperationalInNewWindow(
-  moduleId: OperationalModuleId,
-  options: OpenOperationalOptions = {},
+  _moduleId: "tpv" | "kds" | "appstaff",
 ): void {
-  navigateToModule(moduleId, options);
+  console.warn(
+    "[DEPRECATED] openOperationalInNewWindow is a no-op. Navigate to /admin/devices instead.",
+  );
 }

@@ -7,7 +7,6 @@
 import { useEffect } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
-import { DevBuildBanner } from "./components/DevBuildBanner";
 import {
   GlobalUIStateProvider,
   useGlobalUIState,
@@ -65,7 +64,6 @@ function App() {
   return (
     <ErrorBoundary context="Root">
       <AuthProvider>
-        <DevBuildBanner />
         <SignupIntentRedirect />
         <CookieConsentBanner />
         {/* <PublicLifecycleSync /> */}

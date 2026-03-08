@@ -143,9 +143,9 @@ export function PublishSection() {
         </p>
 
         <div className={styles.systemsGrid}>
-          {/* TPV */}
+          {/* TPV / Dispositivos */}
           <button
-            onClick={() => navigate("/tpv")}
+            onClick={() => navigate("/admin/devices")}
             className={styles.systemButton}
           >
             <span>🖥️</span>

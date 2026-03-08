@@ -7,12 +7,9 @@
  */
 
 export function isElectron(): boolean {
-  // Consideramos "desktop app" apenas quando o preload expõe electronBridge
-  // via contextBridge. Isso distingue o ChefIApp Desktop empacotado de um
-  // Electron genérico a correr o Vite/Chrome (onde só o userAgent contém
-  // "Electron", mas não existe bridge nem shell oficial).
-  if (typeof window === "undefined") return false;
-  return !!window.electronBridge;
+  return (
+    typeof navigator !== "undefined" && navigator.userAgent.includes("Electron")
+  );
 }
 
 export function isTauri(): boolean {
@@ -31,12 +28,7 @@ export function isStandalone(): boolean {
 }
 
 export function isReactNativeWebView(): boolean {
-  if (typeof window === "undefined") return false;
-  return (
-    "ReactNativeWebView" in window ||
-    !!(window as { __CHEFIAPP_NATIVE_WEBVIEW__?: boolean })
-      .__CHEFIAPP_NATIVE_WEBVIEW__
-  );
+  return typeof window !== "undefined" && "ReactNativeWebView" in window;
 }
 
 /** Desktop app = Electron or Tauri only. PWA standalone is NOT desktop. */
@@ -47,13 +39,13 @@ export function isDesktopApp(): boolean {
 /**
  * Returns true when the app is running inside an installed application.
  * For desktop modules: only Electron/Tauri (not PWA).
- * For mobile AppStaff/Waiter: React Native WebView only (Expo/native app).
+ * For mobile: React Native or standalone (mobile PWA).
  */
 export function isInstalledApp(
   requiredPlatform: "desktop" | "mobile",
 ): boolean {
   if (requiredPlatform === "desktop") return isDesktopApp();
-  return isReactNativeWebView();
+  return isReactNativeWebView() || isStandalone();
 }
 
 /**
@@ -61,33 +53,54 @@ export function isInstalledApp(
  * Use before opening operational windows to avoid showing a blocked popup.
  *
  * - TPV / KDS → require desktop (Electron or Tauri)
- * - AppStaff / Waiter → require React Native WebView (Expo/native app)
+ * - AppStaff  → require mobile (React Native WebView or standalone PWA)
  */
 export function wouldGuardAllow(moduleId: string): boolean {
-  if (moduleId === "appstaff" || moduleId === "waiter") {
-    return isReactNativeWebView();
+  if (moduleId === "appstaff") {
+    return isReactNativeWebView() || isStandalone();
   }
   // TPV / KDS require desktop
   return isDesktopApp();
 }
 
-export function getDesktopOS(): "windows" | "macos" {
-  if (typeof navigator === "undefined") return "macos";
+/* ------------------------------------------------------------------ */
+/*  OS detection — used for download button highlighting              */
+/* ------------------------------------------------------------------ */
+
+export type DesktopOS = "macos" | "windows" | "linux" | "unknown";
+
+/** Detect the admin's desktop OS for smart download-button ordering. */
+export function getDesktopOS(): DesktopOS {
+  if (typeof navigator === "undefined") return "unknown";
   const ua = navigator.userAgent.toLowerCase();
-  if (ua.includes("windows") || ua.includes("win64") || ua.includes("win32")) {
-    return "windows";
-  }
-  return "macos";
+  const platform = (
+    (navigator as { userAgentData?: { platform?: string } }).userAgentData
+      ?.platform ?? navigator.platform
+  ).toLowerCase();
+
+  if (platform.includes("mac") || ua.includes("macintosh")) return "macos";
+  if (platform.includes("win") || ua.includes("windows")) return "windows";
+  if (platform.includes("linux") || ua.includes("linux")) return "linux";
+  return "unknown";
 }
 
+/* ------------------------------------------------------------------ */
+/*  Deep link builder                                                  */
+/* ------------------------------------------------------------------ */
+
+const DEEP_LINK_SCHEME = "chefiapp";
+
+/**
+ * Build a `chefiapp://` deep link URL.
+ *
+ * Examples:
+ *   buildDeepLink("tpv", { restaurant: "abc-123" })
+ *   → "chefiapp://open?app=tpv&restaurant=abc-123"
+ */
 export function buildDeepLink(
-  moduleId: "tpv" | "kds",
-  params?: { restaurant?: string },
+  app: "tpv" | "kds",
+  params: Record<string, string> = {},
 ): string {
-  const query = new URLSearchParams();
-  query.set("app", moduleId);
-  if (params?.restaurant) {
-    query.set("restaurant", params.restaurant);
-  }
-  return `chefiapp-pos://open?${query.toString()}`;
+  const qs = new URLSearchParams({ app, ...params }).toString();
+  return `${DEEP_LINK_SCHEME}://open?${qs}`;
 }

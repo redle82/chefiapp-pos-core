@@ -132,7 +132,7 @@ export function OnboardingRitualPage() {
         ) {
           await markOnboardingComplete();
           shift?.refreshShiftStatus?.();
-          navigate("/op/tpv", { replace: true });
+          navigate("/admin/devices", { replace: true });
           return;
         }
         const msg =
@@ -148,7 +148,7 @@ export function OnboardingRitualPage() {
       }
       await markOnboardingComplete();
       shift?.refreshShiftStatus?.();
-      navigate("/op/tpv", { replace: true });
+      navigate("/admin/devices", { replace: true });
     } catch (err) {
       setError(
         err instanceof Error

@@ -9,6 +9,14 @@ vi.mock("../../core/audit/legalConsent", () => ({
   recordLegalConsent: vi.fn().mockResolvedValue({}),
 }));
 
+vi.mock("../../core/tenant/TenantContext", () => ({
+  useTenant: () => ({ tenantId: "11111111-1111-1111-1111-111111111111" }),
+}));
+
+vi.mock("../../infra/docker-core/connection", () => ({
+  dockerCoreClient: { rpc: vi.fn().mockResolvedValue({ data: null, error: null }) },
+}));
+
 import { OnboardingRitualPage } from "./OnboardingRitualPage";
 
 const RESTAURANT_ID = "11111111-1111-1111-1111-111111111111";

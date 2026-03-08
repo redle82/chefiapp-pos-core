@@ -26,9 +26,9 @@ export function BillingSuccessPage() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => navigate("/op/tpv")}
+            onClick={() => navigate("/admin/devices")}
           >
-            Ir ao TPV
+            Ir aos Dispositivos
           </Button>
         </div>
       </Card>

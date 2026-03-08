@@ -51,32 +51,15 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   };
 
   const handleItemClick = (item: SidebarItem) => {
-    if (item.type === "launcher") {
-      // TPV Installation Contract: Launch in isolated context
-      if (item.id === "/app/tpv") {
-        // TPV Configuration: Standalone window feel
-        window.open(
-          item.id,
-          "ChefIApp_TPV",
-          "width=1024,height=768,menubar=no,toolbar=no,location=no,status=no",
-        );
-      } else if (item.id === "/app/kds") {
-        // KDS Configuration: Fullscreen feel
-        window.open(item.id, "ChefIApp_KDS");
-      } else {
-        window.open(item.id, "_blank");
-      }
-    } else {
-      // Standard SPA Navigation
-      onNavigate(item.id);
-    }
+    // All items navigate via SPA — no window.open() for operational modules.
+    // TPV/KDS/AppStaff installation goes through /admin/devices hub.
+    onNavigate(item.id);
   };
 
   interface SidebarItem {
     label: string;
     id: string;
     icon: string;
-    type?: "launcher";
     status?: "experimental" | "locked" | "planned" | "active";
     show?: boolean;
   }
@@ -102,12 +85,11 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       title: "Operar",
       visible: true, // Always visible, but items filtered
       items: [
-        { label: "TPV (Caixa)", id: "/app/tpv", icon: "🖥️", show: true }, // Always visible, SPA nav
+        { label: "TPV (Caixa)", id: "/admin/devices", icon: "🖥️", show: true },
         {
           label: "KDS (Cozinha)",
-          id: "/app/kds",
+          id: "/admin/devices",
           icon: "👨‍🍳",
-          type: "launcher",
           show: visibleModules.kitchen,
         },
         {
