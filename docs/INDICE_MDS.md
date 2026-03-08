@@ -47,7 +47,7 @@
 - **Caminho do cliente (visão produto):** [CAMINHO_DO_CLIENTE.md](./architecture/CAMINHO_DO_CLIENTE.md) — Landing → Signup → Portal → Billing → Publicar → Operação.
 - **Rotas e contratos:** [ROTAS_E_CONTRATOS.md](./architecture/ROTAS_E_CONTRATOS.md) — índice canónico: cada rota → contrato MD.
 - **Instalação operacional (TPV/KDS):** [OPERATIONAL_INSTALLATION_CONTRACT.md](./architecture/OPERATIONAL_INSTALLATION_CONTRACT.md), [OPERATIONAL_APP_MODE_CONTRACT.md](./architecture/OPERATIONAL_APP_MODE_CONTRACT.md), [OPERATIONAL_INSTALL_FLOW_CONTRACT.md](./architecture/OPERATIONAL_INSTALL_FLOW_CONTRACT.md) — Web App Instalável, Browser App Mode, fluxo (NON-CORE).
-- Documentos antigos podem referir 5157/5173; ver [HISTORICAL_NOTES.md](./HISTORICAL_NOTES.md).
+- Documentos antigos podem referir 5173; ver [HISTORICAL_NOTES.md](./HISTORICAL_NOTES.md).
 
 ---
 

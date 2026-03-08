@@ -39,7 +39,7 @@
 ### O Que Mostrar
 
 - Abrir navegador
-- Mostrar URL: `http://localhost:5175`
+- Mostrar URL: `http://localhost:5173`
 - Explicar que é sistema completo (não trial)
 
 ---
@@ -54,7 +54,7 @@
 
 1. **Abrir Menu Builder**
 
-   - URL: `http://localhost:5175/menu-builder`
+   - URL: `http://localhost:5173/menu-builder`
    - Mostrar lista de produtos
 
 2. **Criar Produto**
@@ -97,7 +97,7 @@
 
 1. **Abrir KDS**
 
-   - URL: `http://localhost:5175/kds`
+   - URL: `http://localhost:5173/kds`
    - Mostrar agrupamento por estação (Cozinha/Bar)
 
 2. **Mostrar Pedido**
@@ -142,7 +142,7 @@
 
 1. **Abrir Task System**
 
-   - URL: `http://localhost:5175/task-system`
+   - URL: `http://localhost:5173/task-system`
    - Mostrar lista de tarefas abertas
 
 2. **Explicar Geração Automática**
@@ -200,7 +200,7 @@
 
 1. **Abrir Lista de Compras**
 
-   - URL: `http://localhost:5175/shopping-list`
+   - URL: `http://localhost:5173/shopping-list`
    - Mostrar lista automática
 
 2. **Explicar Geração Automática**

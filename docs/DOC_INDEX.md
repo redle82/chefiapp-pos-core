@@ -3,9 +3,9 @@
 **Última revisão:** 2026-02
 **Objetivo:** Classificar docs em contrato ativo, operacional ou histórico. Nada é apagado; o que não é atual fica arquivado ou referenciado.
 
-**👉 Para entender onde estamos agora:** Ver **[ONDE_ESTAMOS_AGORA.md](ONDE_ESTAMOS_AGORA.md)** e **[ESTADO_ATUAL_2026_02.md](ESTADO_ATUAL_2026_02.md)** (estrutura, builds marketing vs completo, deploy Vercel).
-**👉 Estrutura Enterprise (todas as áreas explícitas):** Ver **[ESTRUTURA_PROJETO_ENTERPRISE.md](ESTRUTURA_PROJETO_ENTERPRISE.md)**.
-**👉 Deploy (só marketing ou completo):** Ver **[DEPLOY_VERCEL.md](DEPLOY_VERCEL.md)**.
+**👉 Para entender onde estamos agora:** Ver **[ONDE_ESTAMOS_AGORA.md](ONDE_ESTAMOS_AGORA.md)** e **[ESTADO_ATUAL_2026_02.md](ESTADO_ATUAL_2026_02.md)** (estrutura, builds marketing vs completo, deploy Vercel).  
+**👉 Estrutura Enterprise (todas as áreas explícitas):** Ver **[ESTRUTURA_PROJETO_ENTERPRISE.md](ESTRUTURA_PROJETO_ENTERPRISE.md)**.  
+**👉 Deploy (só marketing ou completo):** Ver **[DEPLOY_VERCEL.md](DEPLOY_VERCEL.md)**.  
 **👉 O que é v1 (declaração oficial):** Ver **[CHEFIAPP_OS_V1_OFFICIAL.md](CHEFIAPP_OS_V1_OFFICIAL.md)**
 
 ---
@@ -26,8 +26,7 @@ Estes documentos definem o contrato técnico e de produto. **Não são repetiç�
 
 | Documento                                                                                                  | Descrição                                                                                                                                                                                                                                                                                           |
 | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **[architecture/CHEFIAPP_OS_ARCHITECTURE_V1.md](architecture/CHEFIAPP_OS_ARCHITECTURE_V1.md)**             | Manifesto técnico da plataforma: ChefIApp OS como Restaurant Operating System (`Identity → Runtime → Context → Surface`). Define camadas macro, Boot Runtime Engine e fluxo oficial de execução. **CONTRATO ATIVO.**                                                                                |
-| **[CHEFIAPP_OS_V1_OFFICIAL.md](CHEFIAPP_OS_V1_OFFICIAL.md)**                                               | Declaração oficial do produto v1 (freeze): dois cérebros (Config vs Runtime), escopo, fronteira. Baseline para Fase 1 (1000-ready). **CONTRATO ATIVO.**                                                                                                                                             |
+| **[CHEFIAPP_OS_V1_OFFICIAL.md](CHEFIAPP_OS_V1_OFFICIAL.md)**                                               | Declaração oficial do produto v1 (freeze): dois cérebros (Config vs Runtime), escopo, fronteira. Baseline para Fase 1 (1000-ready). **CONTRATO ATIVO.**                                                                                                                                              |
 | **[STATE_PURE_DOCKER_APP_LAYER.md](STATE_PURE_DOCKER_APP_LAYER.md)**                                       | Estado PURE DOCKER da app layer; onde Supabase ainda existe e por quê. **CONTRATO ATIVO.**                                                                                                                                                                                                          |
 | **[SUPABASE_EM_MODO_DOCKER.md](SUPABASE_EM_MODO_DOCKER.md)**                                               | Por que ainda aparece Supabase em Docker (shim, migração gradual, o que já foi ajustado).                                                                                                                                                                                                           |
 | **[SETUP_LINEAR_VS_SYSTEM_TREE.md](SETUP_LINEAR_VS_SYSTEM_TREE.md)**                                       | Decisão: System Tree = mapa/audit; Setup Linear = outra UX (GloriaFood-style). Mapas vs estrada.                                                                                                                                                                                                    |
@@ -69,6 +68,7 @@ Onde está o “como usar” e “como demonstrar”. O **README principal** fic
 | Demo Guide rápida (5 min) — System Tree, Dashboard, TPV v2, Tasks | **[DEMO_GUIDE_5MIN.md](DEMO_GUIDE_5MIN.md)**           |
 | Demo Guide completa (30 min) — Menu Builder, KDS, Tasks, Estoque  | **[DEMO_GUIDE_V1.md](DEMO_GUIDE_V1.md)**               |
 | Como rodar testes massivos / auditoria                            | `npm run test:massive`; ver **[testing/](testing/)**   |
+| **Billing, PIX e SumUp** — índices, guias e próximos passos       | **[BILLING_PIX_SUMUP_INDEX.md](BILLING_PIX_SUMUP_INDEX.md)** |
 | Troubleshooting, fixes conhecidos                                 | **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**           |
 
 Documentos operacionais redundantes com o README devem **apontar para o README** no topo, por exemplo:
@@ -120,10 +120,6 @@ Exemplos de candidatos a arquivar (se ainda estiverem na raiz de `docs/`): notas
 - **Transformação produto:** [TRANSFORMACAO_PRODUTO_COMPLETA.md](TRANSFORMACAO_PRODUTO_COMPLETA.md) — Resumo da transformação de técnico para produto
 - **Sessão completa:** [SESSAO_TRANSFORMACAO_PRODUTO.md](SESSAO_TRANSFORMACAO_PRODUTO.md) — Resumo executivo desta sessão
 - **Ciclo refatoração 2026-02:** [audit/REFATORACAO_CICLO_2026_02.md](audit/REFATORACAO_CICLO_2026_02.md) — Checkpoint do que foi feito (rotas, legacy, DORMANT).
-- **Pacote executável Auditoria Suprema:** [audit/AUDITORIA_SUPREMA_EXECUTION_PACKAGE.md](audit/AUDITORIA_SUPREMA_EXECUTION_PACKAGE.md) — Plano de execução por waves + links de governança.
-- **Matriz de evidências (arquitetura):** [audit/AUDITORIA_SUPREMA_EVIDENCE_MATRIX.md](audit/AUDITORIA_SUPREMA_EVIDENCE_MATRIX.md) — Claim ↔ evidência ↔ status (`ALIGNED/PARTIAL/CONFLICT`).
-- **Ledger de contradições:** [audit/AUDITORIA_SUPREMA_CONTRADICTIONS_LEDGER.md](audit/AUDITORIA_SUPREMA_CONTRADICTIONS_LEDGER.md) — Conflitos, decisão, owner, prazo e estado.
-- **Gate de PR arquitetural:** [audit/AUDITORIA_SUPREMA_PR_GATE.md](audit/AUDITORIA_SUPREMA_PR_GATE.md) — Checklist obrigatório para mudanças de runtime/boot/surfaces.
 - **Backlog issues:** [audit/BACKLOG_ISSUES_2026_02.md](audit/BACKLOG_ISSUES_2026_02.md) — Títulos e descrições para criar issues no GitHub.
 - **Contrato ativo:** [STATE_PURE_DOCKER_APP_LAYER.md](STATE_PURE_DOCKER_APP_LAYER.md) + [contracts/](contracts/) + SYSTEM_TREE e GUIA_VALIDACAO_RUNTIME quando aplicável.
 - **Uso e Demo Guide:** README na raiz + DEMO_SCRIPT e TROUBLESHOOTING conforme necessário.

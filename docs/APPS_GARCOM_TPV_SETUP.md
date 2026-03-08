@@ -10,7 +10,7 @@
 ### 1. App de Testes/Gerenciamento do TPV
 - **Rota:** `/tpv-test`
 - **Componente:** `DebugTPV.tsx`
-- **URL:** `http://localhost:5175/tpv-test`
+- **URL:** `http://localhost:5173/tpv-test`
 - **Funcionalidades:**
   - Seed de produtos para testes
   - Simulação de offline/online
@@ -20,7 +20,7 @@
 ### 2. App do Garçom (Pedidos)
 - **Rota:** `/garcom`
 - **Componente:** `AppStaff.tsx`
-- **URL:** `http://localhost:5175/garcom`
+- **URL:** `http://localhost:5173/garcom`
 - **Funcionalidades:**
   - MiniPOS para garçons
   - Gerenciamento de tarefas
@@ -30,7 +30,7 @@
 ### 3. Painel de Mesa do Garçom
 - **Rota:** `/garcom/mesa/:tableId`
 - **Componente:** `TablePanel.tsx`
-- **URL:** `http://localhost:5175/garcom/mesa/{tableId}`
+- **URL:** `http://localhost:5173/garcom/mesa/{tableId}`
 - **Funcionalidades:**
   - Adicionar pedidos à mesa
   - Visualizar pedido ativo
@@ -62,7 +62,7 @@
 
 ```bash
 # Abrir no navegador
-http://localhost:5175/tpv-test
+http://localhost:5173/tpv-test
 ```
 
 **Funcionalidades para testar:**
@@ -82,7 +82,7 @@ http://localhost:5175/tpv-test
 
 ```bash
 # Abrir no navegador
-http://localhost:5175/garcom
+http://localhost:5173/garcom
 ```
 
 **Funcionalidades para testar:**
