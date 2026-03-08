@@ -6,6 +6,7 @@ import {
 } from "@stripe/react-stripe-js";
 import type { Stripe } from "@stripe/stripe-js";
 import React, { useEffect, useState } from "react";
+import { useCurrency } from "../../core/currency/useCurrency";
 import styles from "./StripePaymentModal.module.css";
 
 import { CONFIG } from "../../config";
@@ -91,7 +92,10 @@ export const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  const [stripeInstance, setStripeInstance] = useState<Stripe | null | undefined>(undefined);
+  const { symbol } = useCurrency();
+  const [stripeInstance, setStripeInstance] = useState<
+    Stripe | null | undefined
+  >(undefined);
 
   useEffect(() => {
     getStripePromise(STRIPE_KEY).then(setStripeInstance);
@@ -153,7 +157,11 @@ export const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
             <p>Não foi possível carregar o Stripe.</p>
           </div>
           <div className={styles.actions}>
-            <button type="button" onClick={onCancel} className={styles.cancelBtn}>
+            <button
+              type="button"
+              onClick={onCancel}
+              className={styles.cancelBtn}
+            >
               Fechar
             </button>
           </div>
@@ -167,7 +175,9 @@ export const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
       <div className={styles.modal}>
         <div className={styles.header}>
           <h2>Finalizar Pagamento</h2>
-          <p>Total: € {total.toFixed(2)}</p>
+          <p>
+            Total: {symbol} {total.toFixed(2)}
+          </p>
         </div>
         <Elements stripe={Promise.resolve(stripeInstance)} options={options}>
           <CheckoutForm onSuccess={onSuccess} onCancel={onCancel} />

@@ -6,13 +6,15 @@
  */
 
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
+import { currencyService } from "../../core/currency/CurrencyService";
+import { getFormatLocale } from "../../core/i18n/regionLocaleConfig";
 import { useOperationalMetrics } from "../../hooks/useOperationalMetrics";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 
 function formatCents(cents: number): string {
-  return new Intl.NumberFormat("pt-PT", {
+  return new Intl.NumberFormat(getFormatLocale(), {
     style: "currency",
-    currency: "EUR",
+    currency: currencyService.getDefaultCurrency(),
   }).format(cents / 100);
 }
 
@@ -22,7 +24,7 @@ export function OperationalMetricsCards() {
   const systemState = runtime.systemState ?? "SETUP";
   const { data, loading, error, refresh } = useOperationalMetrics(
     restaurantId,
-    systemState
+    systemState,
   );
 
   if (loadingRestaurant || !restaurantId) {
@@ -80,7 +82,11 @@ export function OperationalMetricsCards() {
     );
   }
 
-  if ((systemState === "TRIAL" || systemState === "ACTIVE") && !data && !loading) {
+  if (
+    (systemState === "TRIAL" || systemState === "ACTIVE") &&
+    !data &&
+    !loading
+  ) {
     return (
       <section
         style={{
@@ -92,7 +98,8 @@ export function OperationalMetricsCards() {
         }}
       >
         <p style={{ fontSize: "14px", color: "#166534", margin: 0 }}>
-          Ainda sem vendas hoje. Abra um turno e use o TPV para a primeira venda.
+          Ainda sem vendas hoje. Abra um turno e use o TPV para a primeira
+          venda.
         </p>
       </section>
     );
@@ -110,7 +117,8 @@ export function OperationalMetricsCards() {
         }}
       >
         <p style={{ fontSize: "14px", color: "#991b1b", marginBottom: "8px" }}>
-          Não foi possível carregar as métricas do dia. Verifique a ligação ao servidor e tente novamente.
+          Não foi possível carregar as métricas do dia. Verifique a ligação ao
+          servidor e tente novamente.
         </p>
         <button
           type="button"
@@ -247,7 +255,8 @@ export function OperationalMetricsCards() {
             color: "#64748b",
           }}
         >
-          Ainda sem vendas hoje. As métricas preenchem-se após a primeira venda no TPV.
+          Ainda sem vendas hoje. As métricas preenchem-se após a primeira venda
+          no TPV.
         </p>
       )}
     </section>

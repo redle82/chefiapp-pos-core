@@ -10,7 +10,7 @@
 
 // LEGACY / LAB — blocked in Docker mode
 import { useEffect, useState } from "react";
-import { useTenantId } from "../core/runtime/tenantAccess";
+import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
 
 // LEGACY: Supabase client removed — Docker Core only
 const supabase = null as any;
@@ -34,7 +34,7 @@ export function useOnboardingStatus() {
     error: null,
   });
 
-  const restaurantId = useTenantId();
+  const restaurantId = getTabIsolated("chefiapp_restaurant_id");
 
   useEffect(() => {
     if (!restaurantId) {

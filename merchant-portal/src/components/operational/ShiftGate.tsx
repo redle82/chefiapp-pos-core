@@ -10,7 +10,6 @@ import { useTranslation } from "react-i18next";
 import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
-import { isTrial } from "../../core/runtime/RuntimeContext";
 import { useShift } from "../../core/shift/ShiftContext";
 import { getTpvRestaurantId } from "../../core/storage/installedDeviceStorage";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
@@ -36,8 +35,7 @@ export function ShiftGate({ children }: Props) {
   const isDocker = getBackendType() === BackendType.docker;
 
   // DEBUG_DIRECT_FLOW: vertical slice sem turno; TPV e KDS diretos.
-  // Trial mode: skip shift requirement so users can demo TPV in browser.
-  if (CONFIG.DEBUG_DIRECT_FLOW || isTrial) {
+  if (CONFIG.DEBUG_DIRECT_FLOW) {
     return <>{children}</>;
   }
 
@@ -205,7 +203,7 @@ function ShiftOpenForm({
       >
         <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ fontSize: 13, color: "#a3a3a3" }}>
-            {t("gate.initialCashLabel")}
+            {t("gate.initialCashLabel", { currency: symbol })}
           </span>
           <input
             type="text"
@@ -219,7 +217,7 @@ function ShiftOpenForm({
               fontSize: 15,
               border: "1px solid #404040",
               borderRadius: 8,
-              background: "#171717",
+              background: "#141414",
               color: "#fafafa",
             }}
           />

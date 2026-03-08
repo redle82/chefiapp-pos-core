@@ -1,9 +1,10 @@
 /* Use Strict Primitives */
 import React, { useState } from "react";
-import { Card } from "../Card";
-import { Text } from "../primitives/Text";
-import { Badge } from "../primitives/Badge";
+import { useCurrency } from "../../../core/currency/useCurrency";
 import { Button } from "../Button";
+import { Card } from "../Card";
+import { Badge } from "../primitives/Badge";
+import { Text } from "../primitives/Text";
 import { colors } from "../tokens/colors";
 
 /* Type Logic (Mirrors Backend) */
@@ -30,7 +31,9 @@ interface TicketOrder {
 
 interface TicketCardProps {
   order: TicketOrder;
-  onAction?: (action: "send" | "ready" | "close" | "recover" | "pay" | "print") => void;
+  onAction?: (
+    action: "send" | "ready" | "close" | "recover" | "pay" | "print",
+  ) => void;
   onDiscount?: (discountCents: number) => void;
   compact?: boolean;
   isActive?: boolean; // Highlight if this is the active order being edited
@@ -45,6 +48,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
   isActive = false,
   syncStatus = "synced",
 }) => {
+  const { symbol } = useCurrency();
   const [showDiscount, setShowDiscount] = useState(false);
   const [discountInput, setDiscountInput] = useState("");
   const [discountMode, setDiscountMode] = useState<"percent" | "fixed">(
@@ -187,7 +191,8 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                 </Text>
                 {itemTotal !== null && (
                   <Text size="sm" color="tertiary" weight="bold">
-                    €{itemTotal.toFixed(2)}
+                    {symbol}
+                    {itemTotal.toFixed(2)}
                   </Text>
                 )}
               </div>
@@ -223,21 +228,27 @@ export const TicketCard: React.FC<TicketCardProps> = ({
             TOTAL
           </Text>
           <Text size="xl" color="primary" weight="black">
-            € {order.total.toFixed(2)}
+            {symbol} {order.total.toFixed(2)}
           </Text>
         </div>
 
         {/* Action Button (Full Width) */}
         {onAction && (
           <>
-            {(canSend || order.status === "preparing") && (
+            {(canSend ||
+              order.status === "preparing" ||
+              order.status === "ready" ||
+              order.status === "served") && (
               <Button
                 tone="neutral"
                 variant="ghost"
                 size="sm"
                 onClick={() => onAction("print")}
               >
-                🖨️ Imprimir comanda
+                🖨️{" "}
+                {order.status === "new" || canSend
+                  ? "Imprimir comanda"
+                  : "Reimprimir"}
               </Button>
             )}
             {canSend && (
@@ -251,11 +262,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
               </Button>
             )}
             {canPay && (
-              <Button
-                tone="success"
-                size="lg"
-                onClick={() => onAction("pay")}
-              >
+              <Button tone="success" size="lg" onClick={() => onAction("pay")}>
                 💲 Cobrar
               </Button>
             )}
@@ -335,7 +342,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                           }}
                         >
                           <option value="percent">%</option>
-                          <option value="fixed">€</option>
+                          <option value="fixed">{symbol}</option>
                         </select>
                         <input
                           type="number"

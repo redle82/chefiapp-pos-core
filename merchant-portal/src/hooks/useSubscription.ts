@@ -14,7 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { PlanTier, SubscriptionStatus } from "../../../billing-core/types";
 import { getSubscription as fetchCoreSubscription } from "../core/billing/coreBillingApi";
 import { BackendType, getBackendType } from "../core/infra/backendAdapter";
-import { useTenantId } from "../core/runtime/tenantAccess";
+import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
 
 export interface Subscription {
   subscription_id: string;
@@ -63,7 +63,7 @@ export function useSubscription() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const restaurantId = useTenantId();
+  const restaurantId = getTabIsolated("chefiapp_restaurant_id");
 
   const fetchSubscription = useCallback(async () => {
     if (!restaurantId) {

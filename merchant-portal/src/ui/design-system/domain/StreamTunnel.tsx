@@ -139,7 +139,6 @@ export const StreamTunnel: React.FC<StreamTunnelProps> = ({
                     ? (cents) => onDiscount(order.id, cents)
                     : undefined
                 }
-                // @ts-ignore
                 compact={false}
                 isActive={activeOrderId === order.id}
                 syncStatus={syncStatus}

@@ -8,6 +8,8 @@
  * Não define fundo de página — segue o contrato OUC (Shell impõe layout).
  */
 
+import { useTranslation } from "react-i18next";
+import { useCurrency } from "../../core/currency/useCurrency";
 import { useHardwareStatus } from "../../core/operational/hooks/useHardwareStatus";
 import { useOperationalKpis } from "../../core/operational/hooks/useOperationalKpis";
 import { useOperationalContext } from "../../core/operational/OperationalContext";
@@ -18,30 +20,29 @@ const KITCHEN_STATUS_COLORS: Record<string, string> = {
   RED: "#ef4444",
 };
 
-const KITCHEN_STATUS_LABELS: Record<string, string> = {
-  GREEN: "Cozinha OK",
-  YELLOW: "Cozinha lenta",
-  RED: "Cozinha crítica",
-};
-
-function formatCurrency(cents: number): string {
-  return `€${(cents / 100).toFixed(2)}`;
-}
+const KITCHEN_STATUS_LABELS: Record<string, string> = {};
 
 export function OperationalHeader() {
+  const { t } = useTranslation();
+  const { formatAmount } = useCurrency();
   const kpis = useOperationalKpis();
   const { hasAnyPrinterOffline } = useHardwareStatus();
   const ctx = useOperationalContext();
 
   const kitchenColor = KITCHEN_STATUS_COLORS[kpis.kitchenStatus] ?? "#a3a3a3";
-  const kitchenLabel = KITCHEN_STATUS_LABELS[kpis.kitchenStatus] ?? "—";
+  const kitchenLabelMap: Record<string, string> = {
+    GREEN: t("operational:kitchen.statusOk"),
+    YELLOW: t("operational:kitchen.statusSlow"),
+    RED: t("operational:kitchen.statusCritical"),
+  };
+  const kitchenLabel = kitchenLabelMap[kpis.kitchenStatus] ?? "—";
 
   const roleLabel =
     ctx.role === "owner"
-      ? "Dono"
+      ? t("operational:roles.owner")
       : ctx.role === "manager"
-      ? "Gerente"
-      : "Operador";
+      ? t("operational:roles.manager")
+      : t("operational:roles.operator");
 
   return (
     <div
@@ -59,17 +60,20 @@ export function OperationalHeader() {
     >
       {/* Receita do dia */}
       <KpiPill
-        label="Receita Hoje"
-        value={formatCurrency(kpis.dailyRevenueCents)}
+        label={t("operational:metrics.revenueToday")}
+        value={formatAmount(kpis.dailyRevenueCents)}
       />
 
       {/* Pedidos ativos */}
-      <KpiPill label="Pedidos" value={String(kpis.activeOrdersCount)} />
+      <KpiPill
+        label={t("operational:metrics.orders")}
+        value={String(kpis.activeOrdersCount)}
+      />
 
       {/* Ticket médio */}
       <KpiPill
-        label="Ticket Médio"
-        value={formatCurrency(kpis.averageTicketCents)}
+        label={t("operational:metrics.averageTicket")}
+        value={formatAmount(kpis.averageTicketCents)}
       />
 
       {/* Semáforo cozinha */}
@@ -102,7 +106,7 @@ export function OperationalHeader() {
           }}
         >
           <span style={{ fontSize: 14 }}>🖨️</span>
-          Impressora offline
+          {t("tpv:orderPanel.printerOffline")}
         </div>
       )}
 

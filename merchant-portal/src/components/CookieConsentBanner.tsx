@@ -47,6 +47,11 @@ function getStoredPreferences(): CookiePreferences | null {
   }
 }
 
+/** Read current cookie consent preferences (null if not yet answered). */
+export function getCookiePreferences(): CookiePreferences | null {
+  return getStoredPreferences();
+}
+
 function hasConsent(): boolean {
   if (typeof window === "undefined") return true;
   if (localStorage.getItem(CONSENT_STORAGE_KEY) === "true") return true;
@@ -58,8 +63,6 @@ function hasConsent(): boolean {
 
 export function CookieConsentBanner() {
   const { t } = useTranslation("common");
-  // NOTE: This component renders at App root, OUTSIDE TenantProvider.
-  // Use getTabIsolated for best-effort tenant ID in the audit trail.
   const [visible, setVisible] = useState(false);
   const [showPrefs, setShowPrefs] = useState(false);
   const [analytics, setAnalytics] = useState(false);

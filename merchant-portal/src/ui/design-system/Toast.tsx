@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { cn } from './tokens';
-import './Toast.css';
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import "./Toast.css";
+import { cn } from "./tokens";
 
 export interface ToastProps {
   id?: string;
   message: string;
-  type?: 'success' | 'error' | 'warning' | 'info';
+  type?: "success" | "error" | "warning" | "info";
   duration?: number;
   onClose?: () => void;
   action?: {
@@ -23,11 +24,12 @@ export interface ToastProps {
  */
 export const Toast: React.FC<ToastProps> = ({
   message,
-  type = 'info',
+  type = "info",
   duration = 4000,
   onClose,
   action,
 }) => {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
 
@@ -51,19 +53,15 @@ export const Toast: React.FC<ToastProps> = ({
   if (!isVisible) return null;
 
   const icons = {
-    success: '✓',
-    error: '✕',
-    warning: '⚠',
-    info: 'ℹ',
+    success: "✓",
+    error: "✕",
+    warning: "⚠",
+    info: "ℹ",
   };
 
   return (
     <div
-      className={cn(
-        'toast',
-        `toast--${type}`,
-        isLeaving && 'toast--leaving'
-      )}
+      className={cn("toast", `toast--${type}`, isLeaving && "toast--leaving")}
       role="alert"
     >
       <span className="toast__icon">{icons[type]}</span>
@@ -82,7 +80,7 @@ export const Toast: React.FC<ToastProps> = ({
       <button
         className="toast__close"
         onClick={handleClose}
-        aria-label="Fechar"
+        aria-label={t("common:close")}
       >
         ✕
       </button>
@@ -100,7 +98,7 @@ interface ToastItem extends ToastProps {
 export const useToast = () => {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const show = (props: Omit<ToastProps, 'id'>) => {
+  const show = (props: Omit<ToastProps, "id">) => {
     const id = `toast-${Date.now()}`;
     setToasts((prev) => [...prev, { ...props, id }]);
     return id;
@@ -110,26 +108,22 @@ export const useToast = () => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const success = (message: string) => show({ message, type: 'success' });
-  const error = (message: string) => show({ message, type: 'error' });
-  const warning = (message: string) => show({ message, type: 'warning' });
-  const info = (message: string) => show({ message, type: 'info' });
+  const success = (message: string) => show({ message, type: "success" });
+  const error = (message: string) => show({ message, type: "error" });
+  const warning = (message: string) => show({ message, type: "warning" });
+  const info = (message: string) => show({ message, type: "info" });
 
   return { toasts, show, dismiss, success, error, warning, info };
 };
 
-export const ToastContainer: React.FC<{ toasts: ToastItem[]; onDismiss: (id: string) => void }> = ({
-  toasts,
-  onDismiss,
-}) => {
+export const ToastContainer: React.FC<{
+  toasts: ToastItem[];
+  onDismiss: (id: string) => void;
+}> = ({ toasts, onDismiss }) => {
   return (
     <div className="toast-container">
       {toasts.map((toast) => (
-        <Toast
-          key={toast.id}
-          {...toast}
-          onClose={() => onDismiss(toast.id)}
-        />
+        <Toast key={toast.id} {...toast} onClose={() => onDismiss(toast.id)} />
       ))}
     </div>
   );

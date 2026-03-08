@@ -1,7 +1,8 @@
 import React, { memo, useMemo, useState } from "react";
+import { useCurrency } from "../../../core/currency/useCurrency";
 import { TPVStateDisplay } from "../../../pages/TPV/components/TPVStateDisplay";
-import { Badge } from "../primitives/Badge";
 import { Card } from "../Card";
+import { Badge } from "../primitives/Badge";
 import { Text } from "../primitives/Text";
 import { colors } from "../tokens/colors";
 import { spacing } from "../tokens/spacing";
@@ -36,6 +37,7 @@ export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = memo(
     onRetry,
     currentOrderItems = [],
   }) => {
+    const { symbol } = useCurrency();
     const [searchQuery, setSearchQuery] = useState("");
 
     // Filter items by search query
@@ -412,7 +414,8 @@ export const QuickMenuPanel: React.FC<QuickMenuPanelProps> = memo(
                                 </Text>
                               ) : (
                                 <Text size="sm" color="secondary" weight="bold">
-                                  €{item.price.toFixed(2)}
+                                  {symbol}
+                                  {item.price.toFixed(2)}
                                 </Text>
                               )}
                             </div>

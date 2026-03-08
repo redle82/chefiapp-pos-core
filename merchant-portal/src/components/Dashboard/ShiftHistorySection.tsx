@@ -7,8 +7,10 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { currencyService } from "../../core/currency/CurrencyService";
+import { getFormatLocale } from "../../core/i18n/regionLocaleConfig";
 import {
   type CashRegister,
   CashRegisterEngine,
@@ -26,7 +28,7 @@ function formatCents(cents: number): string {
 function formatDateTime(iso: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
-  return d.toLocaleString("pt-PT", {
+  return d.toLocaleString(getFormatLocale(), {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
@@ -34,20 +36,17 @@ function formatDateTime(iso: string | null): string {
   });
 }
 
-const METHOD_LABELS: Record<string, string> = {
-  cash: "Dinheiro",
-  card: "Cartão",
-  other: "Outro",
-};
+const METHOD_LABELS: Record<string, string> = {};
 
 export function ShiftHistorySection() {
+  const { t } = useTranslation();
   const { restaurantId, loading: loadingRestaurant } = useRestaurantId();
 
   const { data, loading, error, refresh } = useShiftHistory(restaurantId, {
     daysBack: 7,
   });
   const [activeShift, setActiveShift] = useState<CashRegister | null>(null);
-  const [_loadingActive, setLoadingActive] = useState(false);
+  const [loadingActive, setLoadingActive] = useState(false);
 
   // Fetch active shift on mount/restaurant change
   useEffect(() => {
@@ -67,11 +66,9 @@ export function ShiftHistorySection() {
     return (
       <section className={`${styles.section} ${styles.sectionMuted}`}>
         <h2 className={`${styles.heading} ${styles.headingTight}`}>
-          Histórico por turno
+          {t("shift:history.title")}
         </h2>
-        <p className={styles.paragraph}>
-          Configure o restaurante para ver o histórico por turno.
-        </p>
+        <p className={styles.paragraph}>{t("shift:history.configNeeded")}</p>
       </section>
     );
   }
@@ -80,10 +77,10 @@ export function ShiftHistorySection() {
     return (
       <section className={`${styles.section} ${styles.sectionLight}`}>
         <h2 className={`${styles.heading} ${styles.headingSpaced}`}>
-          Histórico por turno
+          {t("shift:history.title")}
         </h2>
         <GlobalLoadingView
-          message="A carregar..."
+          message={t("common:loading")}
           layout="portal"
           variant="inline"
         />
@@ -95,14 +92,13 @@ export function ShiftHistorySection() {
     return (
       <section className={`${styles.section} ${styles.sectionError}`}>
         <h2 className={`${styles.heading} ${styles.headingTight}`}>
-          Histórico por turno
+          {t("shift:history.title")}
         </h2>
         <p className={`${styles.paragraph} ${styles.paragraphSpaced}`}>
-          Não foi possível carregar o histórico de turnos. Verifique a ligação e
-          tente novamente.
+          {t("shift:history.loadError")}
         </p>
         <button type="button" onClick={refresh} className={styles.retryButton}>
-          Tentar novamente
+          {t("common:tryAgain")}
         </button>
       </section>
     );
@@ -112,7 +108,7 @@ export function ShiftHistorySection() {
     <section className={`${styles.section} ${styles.sectionLight}`}>
       <div className={styles.headerRow}>
         <h2 className={`${styles.heading} ${styles.headingInline}`}>
-          Histórico por turno (últimos 7 dias)
+          {t("shift:history.titleWithDays", { days: 7 })}
         </h2>
         <button
           type="button"
@@ -120,7 +116,7 @@ export function ShiftHistorySection() {
           disabled={loading}
           className={styles.refreshButton}
         >
-          {loading ? "…" : "Atualizar"}
+          {loading ? "…" : t("common:refresh")}
         </button>
       </div>
 
@@ -129,8 +125,8 @@ export function ShiftHistorySection() {
         <div className={styles.activeCard}>
           <ShiftCard
             shiftId={activeShift.id}
-            workerName={activeShift.openedBy || "Operador"}
-            role="gerente"
+            workerName={activeShift.openedBy || t("operational:roles.operator")}
+            role={t("operational:roles.manager").toLowerCase()}
             status="active"
             startTime={activeShift.openedAt || new Date()}
             activeTaskCount={0}
@@ -142,9 +138,7 @@ export function ShiftHistorySection() {
       )}
 
       {data.length === 0 ? (
-        <p className={styles.paragraph}>
-          Ainda não há turnos. Abra um turno no TPV para começar a vender.
-        </p>
+        <p className={styles.paragraph}>{t("shift:history.noShiftsYet")}</p>
       ) : (
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
@@ -153,29 +147,33 @@ export function ShiftHistorySection() {
                 <th
                   className={`${styles.headerCell} ${styles.headerCellTightLeft}`}
                 >
-                  Abertura
+                  {t("shift:history.opening")}
                 </th>
-                <th className={styles.headerCell}>Fecho</th>
-                <th
-                  className={`${styles.headerCell} ${styles.headerCellRight}`}
-                >
-                  Vendas
-                </th>
-                <th className={styles.headerCell}>Por método</th>
-                <th
-                  className={`${styles.headerCell} ${styles.headerCellRight}`}
-                >
-                  Pedidos
+                <th className={styles.headerCell}>
+                  {t("shift:history.closing")}
                 </th>
                 <th
                   className={`${styles.headerCell} ${styles.headerCellRight}`}
                 >
-                  Esperado / Declarado
+                  {t("shift:history.sales")}
+                </th>
+                <th className={styles.headerCell}>
+                  {t("shift:history.byMethod")}
+                </th>
+                <th
+                  className={`${styles.headerCell} ${styles.headerCellRight}`}
+                >
+                  {t("shift:history.orders")}
+                </th>
+                <th
+                  className={`${styles.headerCell} ${styles.headerCellRight}`}
+                >
+                  {t("shift:history.expectedDeclared")}
                 </th>
                 <th
                   className={`${styles.headerCell} ${styles.headerCellTightRight}`}
                 >
-                  Diferença
+                  {t("shift:history.difference")}
                 </th>
               </tr>
             </thead>
@@ -189,11 +187,16 @@ export function ShiftHistorySection() {
                 const differenceCents =
                   declaredCents !== null ? declaredCents - expectedCents : null;
                 const salesByMethod = row.sales_by_method ?? {};
+                const methodLabels: Record<string, string> = {
+                  cash: t("shift:paymentMethod.cash"),
+                  card: t("shift:paymentMethod.card"),
+                  other: t("shift:paymentMethod.other"),
+                };
                 const methodParts = Object.entries(salesByMethod)
                   .filter(([, c]) => c > 0)
                   .map(
                     ([m, c]) =>
-                      `${METHOD_LABELS[m] ?? m}: ${formatCents(Number(c))}`,
+                      `${methodLabels[m] ?? m}: ${formatCents(Number(c))}`,
                   );
                 const differenceClass =
                   differenceCents === null
@@ -235,7 +238,7 @@ export function ShiftHistorySection() {
                       {differenceCents === null
                         ? "—"
                         : differenceCents === 0
-                        ? "0 €"
+                        ? formatCents(0)
                         : `${differenceCents > 0 ? "+" : ""}${formatCents(
                             differenceCents,
                           )}`}

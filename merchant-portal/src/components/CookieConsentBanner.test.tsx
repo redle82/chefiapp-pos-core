@@ -3,11 +3,11 @@
  * Garante que o banner existe, mostra links para termos/privacidade e botão Aceitar.
  */
 
-import "../i18n";
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import "../i18n";
 import { CookieConsentBanner } from "./CookieConsentBanner";
 
 const mockRecordLegalConsent = vi.fn();
@@ -39,19 +39,21 @@ describe("CookieConsentBanner", () => {
     );
 
     const dialog = screen.getByRole("dialog", {
-      name: /aviso de cookies e termos/i,
+      name: /aviso de cookies e termos|cookie and terms notice/i,
     });
     expect(dialog).toBeTruthy();
 
-    const termsLink = screen.getByRole("link", { name: /termos de uso/i });
+    const termsLink = screen.getByRole("link", {
+      name: /termos de uso|terms of use/i,
+    });
     expect(termsLink.getAttribute("href")).toBe("/legal/terms");
 
     const privacyLink = screen.getByRole("link", {
-      name: /política de privacidade/i,
+      name: /pol[ií]tica de privacidade|privacy policy/i,
     });
     expect(privacyLink.getAttribute("href")).toBe("/legal/privacy");
 
-    const acceptBtn = screen.getByRole("button", { name: /aceitar/i });
+    const acceptBtn = screen.getByRole("button", { name: /aceitar|accept/i });
     expect(acceptBtn).toBeTruthy();
   });
 
@@ -66,7 +68,7 @@ describe("CookieConsentBanner", () => {
       </MemoryRouter>,
     );
 
-    const acceptBtn = screen.getByRole("button", { name: /aceitar/i });
+    const acceptBtn = screen.getByRole("button", { name: /aceitar|accept/i });
     await user.click(acceptBtn);
 
     expect(mockRecordLegalConsent).toHaveBeenCalledWith(
@@ -76,9 +78,9 @@ describe("CookieConsentBanner", () => {
         privacyUrl: "/legal/privacy",
       }),
     );
-    expect(window.localStorage.getItem("chefiapp_cookie_consent_accepted")).toBe(
-      "true",
-    );
+    expect(
+      window.localStorage.getItem("chefiapp_cookie_consent_accepted"),
+    ).toBe("true");
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

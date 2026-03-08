@@ -1,7 +1,13 @@
-import React, { memo, useCallback, useRef, useState } from "react";
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { currencyService } from "../../../core/currency/CurrencyService";
 import { Card } from "../Card";
-import { Badge } from "../primitives/Badge";
 import { Text } from "../primitives/Text";
 import { colors } from "../tokens/colors";
 import { spacing } from "../tokens/spacing";
@@ -16,6 +22,10 @@ export interface TableData {
   seats: number;
   x?: number;
   y?: number;
+  /** Zone label (e.g. "Salão", "Esplanada") — used for grid grouping */
+  zone?: string;
+  /** ISO timestamp when table was occupied — used for elapsed-time display */
+  seatedAt?: string | null;
   // SEMANA 1 - Tarefa 1.1: Informações do pedido ativo
   orderInfo?: {
     id: string;
@@ -69,6 +79,37 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
     const [dragPositions, setDragPositions] = useState<
       Record<string, { x: number; y: number }>
     >({});
+
+    // Phase 7: live clock for elapsed-time display (tick every 60s)
+    const [nowMs, setNowMs] = useState(Date.now());
+    useEffect(() => {
+      const id = setInterval(() => setNowMs(Date.now()), 60_000);
+      return () => clearInterval(id);
+    }, []);
+
+    // Phase 7: aggregate stats
+    const stats = useMemo(() => {
+      const free = tables.filter((t) => t.status === "free").length;
+      const occupied = tables.filter((t) => t.status === "occupied").length;
+      const reserved = tables.filter((t) => t.status === "reserved").length;
+      return { free, occupied, reserved, total: tables.length };
+    }, [tables]);
+
+    // Phase 7: zone groups for grid mode
+    const zoneGroups = useMemo(() => {
+      const hasZones = tables.some((t) => t.zone);
+      if (!hasZones) return [{ zone: null as string | null, tables }];
+      const map = new Map<string, TableData[]>();
+      for (const t of tables) {
+        const z = t.zone ?? "Sem zona";
+        if (!map.has(z)) map.set(z, []);
+        map.get(z)!.push(t);
+      }
+      return Array.from(map.entries()).map(([zone, tables]) => ({
+        zone,
+        tables,
+      }));
+    }, [tables]);
 
     const getStatusLabel = (
       status: string,
@@ -281,6 +322,26 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
                       : `${Math.floor((table as any).waitMinutes)}m`}
                   </Text>
                 )}
+                {/* Phase 7: elapsed time since seating */}
+                {!isFree &&
+                  table.seatedAt &&
+                  (() => {
+                    const elapsed = Math.floor(
+                      (nowMs - new Date(table.seatedAt).getTime()) / 60_000,
+                    );
+                    if (elapsed < 1) return null;
+                    const elColor =
+                      elapsed < 15
+                        ? colors.success.base
+                        : elapsed < 30
+                        ? colors.warning.base
+                        : colors.destructive.base;
+                    return (
+                      <Text size="xs" weight="bold" style={{ color: elColor }}>
+                        ⏱ {elapsed}m
+                      </Text>
+                    );
+                  })()}
               </div>
               <Text size="xs" color="tertiary">
                 {table.seats} Lugares
@@ -458,13 +519,42 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
               </button>
             )}
 
-            <Badge
-              status="ready"
-              label={`${
-                tables.filter((t) => t.status === "free").length
-              } Livres`}
-              variant="outline"
-            />
+            {/* Phase 7: stats chips */}
+            <div style={{ display: "flex", gap: spacing[2], flexWrap: "wrap" }}>
+              {(
+                [
+                  { key: "free", color: colors.success.base, label: "Livres" },
+                  {
+                    key: "occupied",
+                    color: colors.action.base,
+                    label: "Ocupadas",
+                  },
+                  {
+                    key: "reserved",
+                    color: colors.info.base,
+                    label: "Reservadas",
+                  },
+                ] as const
+              ).map(({ key, color, label }) =>
+                stats[key] > 0 ? (
+                  <span
+                    key={key}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "2px 8px",
+                      borderRadius: 20,
+                      background: `${color}18`,
+                      color,
+                      border: `1px solid ${color}40`,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {stats[key]} {label}
+                  </span>
+                ) : null,
+              )}
+            </div>
           </div>
         </div>
 
@@ -484,16 +574,63 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
 
         {/* ----- GRID VIEW ----- */}
         {viewMode === "grid" && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-              gap: spacing[4],
-              overflowY: "auto",
-              paddingBottom: spacing[4],
-            }}
-          >
-            {tables.map((table) => renderTableCard(table, false))}
+          <div style={{ overflowY: "auto", paddingBottom: spacing[4] }}>
+            {zoneGroups.map(({ zone, tables: zoneTables }) => (
+              <div key={zone ?? "all"} style={{ marginBottom: spacing[6] }}>
+                {/* Zone header (only when zones exist) */}
+                {zone !== null && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: spacing[2],
+                      marginBottom: spacing[3],
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        color: colors.text.tertiary,
+                      }}
+                    >
+                      {zone}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        color: colors.text.tertiary,
+                        background: colors.surface.layer2,
+                        borderRadius: 10,
+                        padding: "1px 7px",
+                      }}
+                    >
+                      {zoneTables.filter((t) => t.status === "free").length}/
+                      {zoneTables.length} livres
+                    </span>
+                    <div
+                      style={{
+                        flex: 1,
+                        height: 1,
+                        background: colors.border.subtle,
+                      }}
+                    />
+                  </div>
+                )}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(140px, 1fr))",
+                    gap: spacing[4],
+                  }}
+                >
+                  {zoneTables.map((table) => renderTableCard(table, false))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

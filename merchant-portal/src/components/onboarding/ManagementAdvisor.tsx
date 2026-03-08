@@ -7,6 +7,7 @@
  */
 
 import React, { useContext } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { OnboardingProvider } from "../../context/OnboardingContext";
 import { RestaurantRuntimeContext } from "../../context/RestaurantRuntimeContext";
@@ -18,6 +19,7 @@ interface Props {
 export function ManagementAdvisor({ children }: Props) {
   const context = useContext(RestaurantRuntimeContext);
   const runtime = context?.runtime;
+  const { t } = useTranslation("sidebar");
 
   // Don't show anything during initial load or if already published
   if (!runtime || runtime.loading || runtime.isPublished) {
@@ -42,8 +44,7 @@ export function ManagementAdvisor({ children }: Props) {
             />
           </svg>
           <span>
-            <strong>Modo Configuração:</strong> TPV, KDS e Presença Online estão
-            desativados até que você publique.
+            <strong>{t("advisor.title")}</strong> {t("advisor.description")}
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -51,13 +52,13 @@ export function ManagementAdvisor({ children }: Props) {
             to="/admin/config/general"
             className="text-xs font-bold underline hover:no-underline"
           >
-            Completar Checklist
+            {t("advisor.completeChecklist")}
           </Link>
           <button
             onClick={() => (window.location.href = "/admin/config/general")}
             className="bg-black text-white px-3 py-1 rounded text-xs font-bold hover:bg-slate-800 transition-colors"
           >
-            Publicar Agora
+            {t("advisor.publishNow")}
           </button>
         </div>
       </div>

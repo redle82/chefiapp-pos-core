@@ -1,6 +1,6 @@
 /**
  * Menu cache (IndexedDB) — snapshot do menu por restaurante para uso offline.
- * Quando online: ao carregar menu, gravar cópia. Quando offline: ler do cache.
+ * Fase 3: Formato canónico = { categories, products }. Escrita sempre normalizada; leitura aceita legado fullCatalog (deprecar).
  */
 
 const DB_NAME = "chefiapp_menu_cache";
@@ -11,6 +11,48 @@ export interface MenuCacheEntry {
   restaurant_id: string;
   snapshot: unknown;
   updated_at: number;
+}
+
+export interface NormalizedMenuSnapshot {
+  categories: Array<{ id: string; name?: string; [k: string]: unknown }>;
+  products: Array<{ id: string; name?: string; category_id?: string; price_cents?: number; [k: string]: unknown }>;
+}
+
+/**
+ * Normaliza snapshot para formato canónico { categories, products }.
+ * Aceita formato legado fullCatalog (array de categorias com produtos); mantido com TODO para remoção.
+ */
+export function normalizeMenuCache(snapshot: unknown): NormalizedMenuSnapshot {
+  if (snapshot && typeof snapshot === "object") {
+    const o = snapshot as Record<string, unknown>;
+    if (Array.isArray(o.categories) && Array.isArray(o.products)) {
+      return {
+        categories: o.categories as NormalizedMenuSnapshot["categories"],
+        products: o.products as NormalizedMenuSnapshot["products"],
+      };
+    }
+    // TODO(2026-06): remover fallback fullCatalog quando todos os consumidores usarem { categories, products }
+    if (Array.isArray(o.fullCatalog)) {
+      const categories: NormalizedMenuSnapshot["categories"] = [];
+      const products: NormalizedMenuSnapshot["products"] = [];
+      for (const cat of o.fullCatalog as Array<{ id?: string; name?: string; products?: unknown[] }>) {
+        if (cat?.id) {
+          categories.push({ id: cat.id, name: cat.name });
+          const prods = Array.isArray(cat.products) ? cat.products : [];
+          for (const p of prods) {
+            if (p && typeof p === "object" && "id" in p) {
+              products.push({
+                ...(p as Record<string, unknown>),
+                category_id: cat.id,
+              } as NormalizedMenuSnapshot["products"][0]);
+            }
+          }
+        }
+      }
+      return { categories, products };
+    }
+  }
+  return { categories: [], products: [] };
 }
 
 export const MenuCache = {
@@ -32,13 +74,14 @@ export const MenuCache = {
   },
 
   async put(restaurantId: string, snapshot: unknown): Promise<void> {
+    const normalized = normalizeMenuCache(snapshot);
     const db = await this.open();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, "readwrite");
       const store = tx.objectStore(STORE_NAME);
       const entry: MenuCacheEntry = {
         restaurant_id: restaurantId,
-        snapshot,
+        snapshot: normalized,
         updated_at: Date.now(),
       };
       const request = store.put(entry);

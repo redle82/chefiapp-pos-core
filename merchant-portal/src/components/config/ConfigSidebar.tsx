@@ -46,7 +46,7 @@ const SECTIONS: ConfigSectionConfig[] = [
     label: "Locais",
     icon: "📍",
     description: "Locais operacionais, mesas, zonas",
-    path: "/config/ubicaciones",
+    path: "/admin/config/locations",
     group: "Basics",
   },
   {

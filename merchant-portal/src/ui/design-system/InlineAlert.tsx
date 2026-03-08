@@ -1,9 +1,10 @@
-import React from 'react';
-import { cn } from './tokens';
-import './InlineAlert.css';
+import React from "react";
+import { useTranslation } from "react-i18next";
+import "./InlineAlert.css";
+import { cn } from "./tokens";
 
 interface InlineAlertProps {
-  type?: 'success' | 'error' | 'warning' | 'info';
+  type?: "success" | "error" | "warning" | "info";
   title?: string;
   message: string;
   action?: {
@@ -22,23 +23,24 @@ interface InlineAlertProps {
  * - Use for form errors, page notices
  */
 export const InlineAlert: React.FC<InlineAlertProps> = ({
-  type = 'info',
+  type = "info",
   title,
   message,
   action,
   onDismiss,
   className,
 }) => {
+  const { t } = useTranslation();
   const icons = {
-    success: '✓',
-    error: '✕',
-    warning: '⚠',
-    info: 'ℹ',
+    success: "✓",
+    error: "✕",
+    warning: "⚠",
+    info: "ℹ",
   };
 
   return (
     <div
-      className={cn('inline-alert', `inline-alert--${type}`, className)}
+      className={cn("inline-alert", `inline-alert--${type}`, className)}
       role="alert"
     >
       <span className="inline-alert__icon">{icons[type]}</span>
@@ -58,7 +60,7 @@ export const InlineAlert: React.FC<InlineAlertProps> = ({
         <button
           className="inline-alert__dismiss"
           onClick={onDismiss}
-          aria-label="Fechar"
+          aria-label={t("common:close")}
         >
           ✕
         </button>

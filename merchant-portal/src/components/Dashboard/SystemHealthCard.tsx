@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { db } from "../../core/db";
 import { FiscalQueue } from "../../core/fiscal/FiscalQueueWorker";
+import { ConnectivityService } from "../../core/sync/ConnectivityService";
 import { SyncEngine, type SyncEngineState } from "../../core/sync/SyncEngine";
 import styles from "./SystemHealthCard.module.css";
 
@@ -17,7 +18,7 @@ interface HealthState {
     | "SYNCING";
   message: string;
   details?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: any;
 }
 
 export const SystemHealthCard = ({
@@ -34,10 +35,10 @@ export const SystemHealthCard = ({
   useEffect(() => {
     if (!restaurantId) return;
 
-    // Local State Trackers
+    // Local State Trackers (ConnectivityService = fonte única para networkStatus)
     let syncState: SyncEngineState = {
       isProcessing: false,
-      networkStatus: navigator.onLine ? "online" : "offline",
+      networkStatus: ConnectivityService.getConnectivity() === "online" ? "online" : "offline",
       pendingCount: 0,
     };
     let fiscalPending = 0;

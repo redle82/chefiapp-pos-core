@@ -1,17 +1,18 @@
 /**
- * FiscalAlertBadge - Alerta Visual de External ID Pendente
+ * FiscalAlertBadge - Visual Alert for Pending External ID
  *
- * Exibe badge vermelho com contagem de pedidos fiscais
- * aguardando External ID ou que falharam.
+ * Shows red badge with count of fiscal orders
+ * awaiting External ID or that have failed.
  *
- * Impossível de ignorar:
- * - Badge vermelho sempre visível quando há pendências
- * - Toast persistente (não some automaticamente)
- * - Link direto para lista de pendências
+ * Impossible to ignore:
+ * - Red badge always visible when there are pending items
+ * - Persistent toast (does not auto-dismiss)
+ * - Direct link to pending list
  */
 
 import { AlertCircle, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { isDevStableMode } from "../core/runtime/devStableMode";
 
@@ -34,6 +35,7 @@ export function FiscalAlertBadge({
   const [_isVisible, _setIsVisible] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const errorCountRef = useRef(0);
   const isPollingDisabledRef = useRef(false);
 
@@ -168,17 +170,18 @@ export function FiscalAlertBadge({
         className="fixed top-4 right-4 z-50 cursor-pointer"
         onClick={handleClick}
         role="button"
-        aria-label={`${totalPending} pedidos fiscais pendentes`}
+        aria-label={t("common:fiscal.pendingAriaLabel", {
+          count: totalPending,
+        })}
       >
         <div className="bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 hover:bg-red-700 transition-colors">
           <AlertCircle className="w-5 h-5" />
           <span className="font-semibold">
-            {totalPending} Fiscal{" "}
-            {totalPending === 1 ? "Pendente" : "Pendentes"}
+            {t("common:fiscal.pendingBadge", { count: totalPending })}
           </span>
           {(alertData?.failed ?? 0) > 0 && (
             <span className="bg-red-800 px-2 py-1 rounded text-xs">
-              {alertData?.failed} Falhou
+              {t("common:fiscal.failedCount", { count: alertData?.failed })}
             </span>
           )}
         </div>
@@ -192,16 +195,17 @@ export function FiscalAlertBadge({
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <AlertCircle className="w-5 h-5" />
-                  <h3 className="font-semibold">Atenção: Fiscal Pendente</h3>
+                  <h3 className="font-semibold">
+                    {t("common:fiscal.toastTitle")}
+                  </h3>
                 </div>
                 <p className="text-sm text-red-100">
-                  {totalPending} pedido{totalPending === 1 ? "" : "s"}{" "}
-                  aguardando External ID do provedor fiscal.
+                  {t("common:fiscal.toastBody", { count: totalPending })}
                   {(alertData?.failed ?? 0) > 0 && (
                     <span className="block mt-1 font-semibold">
-                      {alertData?.failed} pedido
-                      {alertData?.failed === 1 ? "" : "s"} falhou após múltiplas
-                      tentativas.
+                      {t("common:fiscal.toastFailed", {
+                        count: alertData?.failed,
+                      })}
                     </span>
                   )}
                 </p>
@@ -209,13 +213,13 @@ export function FiscalAlertBadge({
                   onClick={handleClick}
                   className="mt-3 bg-red-800 hover:bg-red-900 px-4 py-2 rounded text-sm font-medium transition-colors"
                 >
-                  Ver Detalhes
+                  {t("common:fiscal.viewDetails")}
                 </button>
               </div>
               <button
                 onClick={handleDismissToast}
                 className="text-red-200 hover:text-white transition-colors"
-                aria-label="Fechar alerta"
+                aria-label={t("common:fiscal.closeAlert")}
               >
                 <X className="w-5 h-5" />
               </button>

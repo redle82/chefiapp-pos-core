@@ -12,6 +12,7 @@
  * Borda reativa: amarela se cozinha lenta, vermelha se crítica.
  */
 
+import { useTranslation } from "react-i18next";
 import { useCurrentOrderOperational } from "../../core/operational/hooks/useCurrentOrderOperational";
 import { useHardwareStatus } from "../../core/operational/hooks/useHardwareStatus";
 import { useOperationalKpis } from "../../core/operational/hooks/useOperationalKpis";
@@ -27,16 +28,21 @@ function formatElapsed(ms: number | null): string {
   )}`;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  IDLE: "Sem pedido",
-  DRAFT: "Rascunho",
-  NOT_SENT: "Não enviado",
-  SENT: "Enviado",
-  PREPARING: "Em preparo",
-  READY: "Pronto",
-  PAID: "Pago",
-  CANCELLED: "Cancelado",
-};
+const STATUS_LABELS: Record<string, string> = {};
+
+function getStatusLabel(status: string, t: (key: string) => string): string {
+  const map: Record<string, string> = {
+    IDLE: t("common:status.idle"),
+    DRAFT: t("common:status.draft"),
+    NOT_SENT: t("common:status.notSent"),
+    SENT: t("common:status.sent"),
+    PREPARING: t("common:status.preparing"),
+    READY: t("common:status.ready"),
+    PAID: t("common:status.paid"),
+    CANCELLED: t("common:status.cancelled"),
+  };
+  return map[status] ?? status;
+}
 
 const STATUS_COLORS: Record<string, string> = {
   IDLE: "#737373",
@@ -62,12 +68,13 @@ export function OrderStatusPanel({
   onSplitBill,
   disabled = false,
 }: OrderStatusPanelProps) {
+  const { t } = useTranslation();
   const { currentOrder, elapsedSinceStartMs, elapsedSinceSentMs, isSlow } =
     useCurrentOrderOperational();
   const kpis = useOperationalKpis();
   const { hasAnyPrinterOffline, printerStatusByStation } = useHardwareStatus();
 
-  const statusLabel = STATUS_LABELS[currentOrder.status] ?? currentOrder.status;
+  const statusLabel = getStatusLabel(currentOrder.status, t);
   const statusColor = STATUS_COLORS[currentOrder.status] ?? "#a3a3a3";
 
   // Borda reativa baseada no estado da cozinha
@@ -99,7 +106,7 @@ export function OrderStatusPanel({
         padding: 16,
         borderRadius: 8,
         border: `2px solid ${borderColor}`,
-        backgroundColor: "var(--surface-base, #171717)",
+        backgroundColor: "var(--surface-base, #141414)",
         transition: "border-color 0.3s ease",
       }}
     >
@@ -119,7 +126,7 @@ export function OrderStatusPanel({
             fontWeight: 600,
           }}
         >
-          Status
+          {t("tpv:orderPanel.status")}
         </span>
         <span
           style={{
@@ -151,7 +158,7 @@ export function OrderStatusPanel({
             fontWeight: 600,
           }}
         >
-          Tempo
+          {t("tpv:orderPanel.time")}
         </span>
         <span
           style={{
@@ -182,7 +189,7 @@ export function OrderStatusPanel({
               fontWeight: 600,
             }}
           >
-            Na cozinha
+            {t("tpv:orderPanel.inKitchen")}
           </span>
           <span
             style={{
@@ -213,7 +220,7 @@ export function OrderStatusPanel({
             fontWeight: 600,
           }}
         >
-          Impressora
+          {t("tpv:orderPanel.printer")}
         </span>
         <span
           style={{
@@ -243,19 +250,19 @@ export function OrderStatusPanel({
       {/* Botões de ação */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <ActionButton
-          label="🔥 Enviar para cozinha"
+          label={t("tpv:orderPanel.sendToKitchen")}
           onClick={onSendToKitchen}
           disabled={!canSend}
           variant="primary"
         />
         <ActionButton
-          label="⏸ Segurar pedido"
+          label={t("tpv:orderPanel.holdOrder")}
           onClick={onHoldOrder}
           disabled={!canHold}
           variant="secondary"
         />
         <ActionButton
-          label="✂️ Dividir conta"
+          label={t("tpv:orderPanel.splitBill")}
           onClick={onSplitBill}
           disabled={disabled}
           variant="secondary"
@@ -276,7 +283,7 @@ export function OrderStatusPanel({
             textAlign: "center",
           }}
         >
-          ⚠️ Cozinha em estado crítico — considere segurar pedidos
+          {t("tpv:orderPanel.kitchenCritical")}
         </div>
       )}
 
@@ -294,7 +301,7 @@ export function OrderStatusPanel({
             textAlign: "center",
           }}
         >
-          🖨️ Impressora offline — verifique conexão
+          {t("tpv:orderPanel.printerOffline")}
         </div>
       )}
     </div>

@@ -5,7 +5,7 @@
  * Ver docs/architecture/RESTAURANT_LOGO_IDENTITY_CONTRACT.md
  */
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export interface RestaurantLogoProps {
   /** URL do logo (gm_restaurants.logo_url). */
@@ -65,6 +65,18 @@ export function RestaurantLogo({
   const [imgError, setImgError] = useState(false);
   const s = size;
   const showImg = logoUrl && logoUrl.trim() && !imgError;
+
+  // DEBUG: Log image loading issues
+  useEffect(() => {
+    console.log("[RestaurantLogo] Render:", {
+      logoUrl,
+      showImg,
+      imgError,
+      name,
+      willShowImg: !!showImg,
+      willShowFallback: !showImg,
+    });
+  }, [logoUrl, showImg, imgError, name]);
 
   if (showImg) {
     return (

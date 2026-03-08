@@ -82,8 +82,7 @@ export const OSCopy = {
     whyContactUs:
       "Piloto real com primeiro restaurante em produção (Sofia Gastrobar, Ibiza). Suporte directo por WhatsApp. Zero intermediários.",
     /** O que acontece ao clicar no CTA principal. */
-    whatHappensNext:
-      "Clicas → entras no sistema → 14 dias grátis a operar → no dia 15 decides se ficas (79 €/mês) ou cancelas.",
+    whatHappensNext: `Clicas → entras no sistema → 14 dias grátis a operar → no dia 15 decides se ficas (79 ${getCurrencySymbol()}/mês) ou cancelas.`,
     cycleTitle: "Um ciclo completo, sem intermediários.",
     audienceTitle: "Para quem é",
     audienceSubtitle: "Feito para quem leva a operação a sério.",
@@ -276,7 +275,7 @@ export const OSCopy = {
     labels: {
       catName: "NOME DA CATEGORIA",
       prodName: "NOME DO PRODUTO",
-      price: "PREÇO (€)",
+      price: `PREÇO (${getCurrencySymbol()})` as string,
       category: "CATEGORIA",
       catPlaceholder: "Ex: Bebidas...",
       prodPlaceholder: "Ex: Burger...",

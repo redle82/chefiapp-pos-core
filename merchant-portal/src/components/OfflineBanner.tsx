@@ -1,10 +1,29 @@
 import React from 'react';
-import { useOfflineOrder } from '../pages/TPV/context/OfflineOrderContext';
+import { useOfflineOrderOptional } from '../pages/TPV/context/OfflineOrderContext';
 import { colors } from '../ui/design-system/tokens/colors';
 import { Text } from '../ui/design-system/primitives/Text';
 
-export const OfflineBanner: React.FC = () => {
-    const { isOffline, pendingCount, forceSync, isSyncing } = useOfflineOrder();
+const EXPECTED_OFFLINE_ROUTES = ['/tpv', '/app/staff', '/waiter', '/kds'];
+
+function isExpectedOfflineRoute(pathname: string): boolean {
+    const p = pathname.toLowerCase();
+    return EXPECTED_OFFLINE_ROUTES.some((r) => p.startsWith(r) || p.includes(r));
+}
+
+export interface OfflineBannerProps {
+    /** Se true, em DEV loga warning quando renderiza sem provider em rotas esperadas. Não altera comportamento (safe fora do provider). */
+    requireProvider?: boolean;
+}
+
+export const OfflineBanner: React.FC<OfflineBannerProps> = ({ requireProvider: _requireProvider }) => {
+    const ctx = useOfflineOrderOptional();
+    if (!ctx) {
+        if (typeof import.meta !== 'undefined' && import.meta.env?.DEV && isExpectedOfflineRoute(typeof window !== 'undefined' ? window.location.pathname : '')) {
+            console.warn('[OfflineBanner] Renderizado sem OfflineOrderProvider em rota que tipicamente usa offline (TPV/Staff/Waiter/KDS). Envolva a árvore com OfflineOrderProvider se precisar do banner.');
+        }
+        return null;
+    }
+    const { isOffline, pendingCount, forceSync, isSyncing } = ctx;
 
     if (!isOffline && pendingCount === 0) return null;
 

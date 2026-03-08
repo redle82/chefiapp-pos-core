@@ -6,12 +6,12 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { BackendType, getBackendType } from "../core/infra/backendAdapter";
-import { useTenantId } from "../core/runtime/tenantAccess";
 import {
   readActiveOrders,
   readOrdersForAnalytics,
 } from "../infra/readers/OrderReader";
+import { BackendType, getBackendType } from "../core/infra/backendAdapter";
+import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
 
 export interface RealtimeMetrics {
   // KPIs principais
@@ -56,11 +56,11 @@ export function useRealtimeMetrics() {
   const [metrics, setMetrics] = useState<RealtimeMetrics>(INITIAL_METRICS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const restaurantId = useTenantId();
 
   // Calcula métricas a partir dos pedidos
   const calculateMetrics = useCallback(async () => {
     try {
+      const restaurantId = getTabIsolated("chefiapp_restaurant_id");
       if (!restaurantId) {
         setError("Restaurant ID not found");
         setLoading(false);
@@ -174,10 +174,11 @@ export function useRealtimeMetrics() {
       setError(err.message || "Failed to fetch metrics");
       setLoading(false);
     }
-  }, [restaurantId]);
+  }, []);
 
   // Setup realtime subscription
   useEffect(() => {
+    const restaurantId = getTabIsolated("chefiapp_restaurant_id");
     if (!restaurantId) return;
 
     // Initial fetch
@@ -189,7 +190,7 @@ export function useRealtimeMetrics() {
     return () => {
       clearInterval(interval);
     };
-  }, [calculateMetrics, restaurantId]);
+  }, [calculateMetrics]);
 
   // Manual refresh
   const refresh = useCallback(() => {

@@ -1,35 +1,18 @@
 /**
  * Barra de aviso quando o dispositivo está offline ou o Core não está acessível.
  * Mostra: "Modo offline — as alterações serão sincronizadas quando a ligação voltar."
- * Usa navigator.onLine e, quando disponível, useCoreHealth (Core DOWN/UNKNOWN = mostrar barra).
+ * Fonte única: ConnectivityService (offline + degraded = Core inacessível).
  */
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
-import { useCoreHealth } from "../core/health/useCoreHealth";
+import { useConnectivity } from "../core/sync/useConnectivity";
 import { colors } from "./design-system/tokens/colors";
 
 export function OfflineIndicator() {
   const { t } = useTranslation("common");
-  const [isNetworkOffline, setIsNetworkOffline] = useState(
-    typeof navigator !== "undefined" && !navigator.onLine,
-  );
-  const { status: coreStatus } = useCoreHealth();
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const onOnline = () => setIsNetworkOffline(false);
-    const onOffline = () => setIsNetworkOffline(true);
-    window.addEventListener("online", onOnline);
-    window.addEventListener("offline", onOffline);
-    return () => {
-      window.removeEventListener("online", onOnline);
-      window.removeEventListener("offline", onOffline);
-    };
-  }, []);
-
-  const coreUnreachable = coreStatus === "DOWN";
-  const showBar = isNetworkOffline || coreUnreachable;
+  const connectivity = useConnectivity();
+  const showBar = connectivity !== "online";
 
   if (!showBar) return null;
 

@@ -3,17 +3,17 @@
  * Garante que a barra de modo offline existe e mostra a mensagem quando Core está DOWN.
  */
 
-import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import React from "react";
 import { I18nextProvider } from "react-i18next";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "../i18n";
 import { OfflineIndicator } from "./OfflineIndicator";
 
-const mockUseCoreHealth = vi.fn();
+const mockUseConnectivity = vi.fn();
 
-vi.mock("../core/health/useCoreHealth", () => ({
-  useCoreHealth: () => mockUseCoreHealth(),
+vi.mock("../core/sync/useConnectivity", () => ({
+  useConnectivity: () => mockUseConnectivity(),
 }));
 
 function renderWithI18n(ui: React.ReactElement) {
@@ -23,7 +23,7 @@ function renderWithI18n(ui: React.ReactElement) {
 describe("OfflineIndicator", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseCoreHealth.mockReturnValue({ status: "UP" });
+    mockUseConnectivity.mockReturnValue("online");
   });
 
   it("não renderiza nada quando rede online e Core UP", () => {
@@ -32,14 +32,16 @@ describe("OfflineIndicator", () => {
   });
 
   it("mostra a barra 'Modo offline' quando Core está DOWN", () => {
-    mockUseCoreHealth.mockReturnValue({ status: "DOWN" });
+    mockUseConnectivity.mockReturnValue("offline");
 
     renderWithI18n(<OfflineIndicator />);
 
     const status = screen.getByRole("status");
     expect(status).toBeTruthy();
     expect(
-      screen.getByText(/modo offline — as alterações serão sincronizadas/i),
+      screen.getByText(
+        /modo offline — as alterações serão sincronizadas|offline mode — changes will sync/i,
+      ),
     ).toBeTruthy();
   });
 });

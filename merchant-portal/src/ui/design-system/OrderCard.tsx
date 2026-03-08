@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { currencyService } from "../../core/currency/CurrencyService";
 import { cn } from "./tokens";
 
@@ -76,12 +77,13 @@ export const OrderCard: React.FC<OrderCardProps> = ({
   pulseState, // Injected Prop
   ...props
 }) => {
+  const { t } = useTranslation();
   const statusLabels = {
-    new: "Novo",
-    preparing: "Em Preparo",
-    ready: "Pronto",
-    served: "Servido",
-    paid: "Pago",
+    new: t("common:status.new"),
+    preparing: t("common:status.preparing"),
+    ready: t("common:status.ready"),
+    served: t("common:status.served"),
+    paid: t("common:status.paid"),
   };
 
   const statusColors = {

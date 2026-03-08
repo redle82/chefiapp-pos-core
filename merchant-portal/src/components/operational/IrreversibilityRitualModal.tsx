@@ -5,27 +5,24 @@
  * Ref.: docs/implementation/FASE_5_ESTADO_REAL.md
  */
 
+import { useTranslation } from "react-i18next";
+
 export interface IrreversibilityRitualModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  /** Texto do botão principal (default: "Confirmar e passar a operação real") */
+  /** Texto do botão principal (default uses i18n key operational:goLive.confirm) */
   confirmLabel?: string;
 }
-
-const COPY = {
-  title: "Passar a operação real",
-  body: "A partir deste momento, tudo aqui passa a ser dinheiro real. Daqui não se volta. Os valores e ações passam a contar como operação real.",
-  cancel: "Cancelar",
-  confirm: "Confirmar e passar a operação real",
-};
 
 export function IrreversibilityRitualModal({
   open,
   onClose,
   onConfirm,
-  confirmLabel = COPY.confirm,
+  confirmLabel,
 }: IrreversibilityRitualModalProps) {
+  const { t } = useTranslation();
+  const resolvedConfirmLabel = confirmLabel || t("operational:goLive.confirm");
   if (!open) return null;
 
   return (
@@ -66,7 +63,7 @@ export function IrreversibilityRitualModal({
             marginBottom: 12,
           }}
         >
-          {COPY.title}
+          {t("operational:goLive.title")}
         </h2>
         <p
           style={{
@@ -77,7 +74,7 @@ export function IrreversibilityRitualModal({
             marginBottom: 24,
           }}
         >
-          {COPY.body}
+          {t("operational:goLive.body")}
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
           <button
@@ -94,7 +91,7 @@ export function IrreversibilityRitualModal({
               cursor: "pointer",
             }}
           >
-            {COPY.cancel}
+            {t("common:cancel")}
           </button>
           <button
             type="button"
@@ -113,7 +110,7 @@ export function IrreversibilityRitualModal({
               cursor: "pointer",
             }}
           >
-            {confirmLabel}
+            {resolvedConfirmLabel}
           </button>
         </div>
       </div>

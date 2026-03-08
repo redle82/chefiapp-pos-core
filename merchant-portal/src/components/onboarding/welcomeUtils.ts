@@ -1,10 +1,10 @@
 const WELCOME_KEY = "chefiapp_welcome_seen";
 
 /** Check if the welcome overlay should be shown (first-time user). */
-export function shouldShowWelcome(tenantId: string | null): boolean {
+export function shouldShowWelcome(): boolean {
   try {
     const seen = localStorage.getItem(WELCOME_KEY);
-    const hasRestaurant = tenantId;
+    const hasRestaurant = localStorage.getItem("chefiapp_restaurant_id");
     // Show if: has a restaurant (just created) and hasn't seen welcome yet
     return !!hasRestaurant && !seen;
   } catch {

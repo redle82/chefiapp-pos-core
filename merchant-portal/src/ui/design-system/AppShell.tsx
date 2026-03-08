@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useCoreHealth } from '../../core/health';
+import { useConnectivity } from '../../core/sync/useConnectivity';
 import { CoreStatusBanner } from './CoreStatusBanner';
 import { isDevStableMode } from '../../core/runtime/devStableMode';
 
@@ -37,21 +38,9 @@ export const AppShell: React.FC<AppShellProps> = ({
   const devStable = isDevStableMode();
   const shouldMonitorHealth = healthMonitoring && !devStable;
 
-  // BUG-023 FIX: Detect network offline status
-  const [isNetworkOnline, setIsNetworkOnline] = useState(navigator.onLine);
-
-  useEffect(() => {
-    const handleOnline = () => setIsNetworkOnline(true);
-    const handleOffline = () => setIsNetworkOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  // BUG-023 FIX: Conectividade única via ConnectivityService (não navigator.onLine)
+  const connectivity = useConnectivity();
+  const isNetworkOnline = connectivity === 'online';
 
   // 1. Health Logic
   // DEV_STABLE_MODE: Polling mais espaçado quando DOWN para reduzir requisições

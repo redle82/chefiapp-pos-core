@@ -12,6 +12,9 @@
 
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { formatCents } from "../../core/currency/CurrencyService";
+import { useCurrency } from "../../core/currency/useCurrency";
+import { getFormatLocale } from "../../core/i18n/regionLocaleConfig";
 import { invokeRpc } from "../../core/infra/coreRpc";
 import { Logger } from "../../core/logger";
 
@@ -59,18 +62,14 @@ interface ShiftCloseReportProps {
   onCancel?: () => void;
 }
 
-function formatCents(cents: number): string {
-  return `€${(cents / 100).toFixed(2)}`;
-}
-
-function formatTime(iso: string, locale = "pt-PT"): string {
+function formatTime(iso: string, locale = getFormatLocale()): string {
   return new Date(iso).toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
   });
 }
 
-function formatDateTime(iso: string, locale = "pt-PT"): string {
+function formatDateTime(iso: string, locale = getFormatLocale()): string {
   return new Date(iso).toLocaleString(locale, {
     day: "2-digit",
     month: "2-digit",
@@ -96,6 +95,7 @@ export function ShiftCloseReport({
   onCancel,
 }: ShiftCloseReportProps) {
   const { t, i18n } = useTranslation("shift");
+  const { symbol } = useCurrency();
   const [step, setStep] = useState<"input" | "confirm" | "done">("input");
   const [declaredCents, setDeclaredCents] = useState<string>("");
   const [closing, setClosing] = useState(false);
@@ -157,7 +157,7 @@ export function ShiftCloseReport({
             htmlFor="declared-cash"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            {t("close.declaredLabel")}
+            {t("close.declaredLabel", { currency: symbol })}
           </label>
           <input
             id="declared-cash"
@@ -219,7 +219,7 @@ export function ShiftCloseReport({
             <span className="text-gray-600">{t("close.declaredValue")}</span>
             <span className="font-mono font-semibold">
               {declaredCents
-                ? `€${parseFloat(declaredCents).toFixed(2)}`
+                ? `${symbol}${parseFloat(declaredCents).toFixed(2)}`
                 : t("close.notInformed")}
             </span>
           </div>

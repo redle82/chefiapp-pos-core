@@ -1,6 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../core/auth/useAuth";
-import { useTenantId } from "../../core/runtime/tenantAccess";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 
 /**
@@ -26,12 +25,12 @@ export function RequireApp({ children }: { children: JSX.Element }) {
 
   // 2. Auth Check
   const isTrial = getTabIsolated("chefiapp_trial_mode") === "true";
-  const tenantId = useTenantId();
   if (!session && !isTrial) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // 3. Tenant Check
+  const tenantId = getTabIsolated("chefiapp_restaurant_id");
   if (!tenantId) {
     // Se tem sessão mas não tem tenant -> BOOTSTRAP
     return <Navigate to="/bootstrap" replace />;
