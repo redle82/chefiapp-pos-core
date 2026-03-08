@@ -1,7 +1,5 @@
 # Mapa Mental — Estado Atual (AS-IS) ChefIApp
 
-> ⚠️ **PARTIALLY SUPERSEDED** — Referências a `AppDomainWrapper` são históricas. Componente eliminado em PR-G (refactor/boot-pipeline). Lógica de tenant selection vive em `TenantContext`.
-
 **Data:** 2026-01-31
 **Propósito:** Orientação arquitetural e decisão técnica. O que funciona, o que está fragmentado, onde não tocar.
 **Escopo:** merchant-portal + docker-core + contratos + testes. Sem propor novas features. Sem alterar código.

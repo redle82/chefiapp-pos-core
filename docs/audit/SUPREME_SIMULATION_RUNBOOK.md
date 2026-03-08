@@ -75,7 +75,7 @@ Abre em separadores/janelas:
 - Web Pública / QR mesa (web)
 - (Opcional) AppStaff: `npx expo run:ios` e `npx expo run:android` ou `expo start` — manual ou via script conforme disponibilidade.
 
-Porta base do portal: `PORT=5175` (ou `VITE_PORT`).
+Porta base do portal: `PORT=5173` (ou `VITE_PORT`).
 
 ---
 
@@ -107,7 +107,7 @@ Porta base do portal: `PORT=5175` (ou `VITE_PORT`).
 ## 7. Ambiente
 
 - **Core:** Postgres em `localhost:54320`, base `chefiapp_core`. PostgREST em `http://localhost:3001` (REST em `/` e `/rest/v1/`). Realtime em `ws://localhost:4000`.
-- **Merchant Portal:** `http://localhost:5175` (Vite). Deve apontar para o Core (ex.: `VITE_SUPABASE_URL=http://localhost:3001` ou variável equivalente para PostgREST).
+- **Merchant Portal:** `http://localhost:5173` (Vite). Deve apontar para o Core (ex.: `VITE_SUPABASE_URL=http://localhost:3001` ou variável equivalente para PostgREST).
 - **Variáveis:** `DATABASE_URL=postgresql://postgres:postgres@localhost:54320/chefiapp_core` para seed e scripts que falem com o banco.
 
 ---
