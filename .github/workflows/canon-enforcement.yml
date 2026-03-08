@@ -4,13 +4,16 @@ name: Canon Enforcement (Kill Switches)
 # Blocks ANY change that violates the 6 Immutable Laws
 # Status: ACTIVE — Do not disable
 
-# ⚠️ STABILISATION: demoted to nightly + manual (was: push+PR)
-# Reintroduce as blocking in Phase 2 — see CI_GOVERNANCE.md
-
 on:
-  schedule:
-    - cron: "0 4 * * 6" # Weekly Saturday 04:00 UTC
-  workflow_dispatch:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'merchant-portal/src/**'
+      - 'tests/**'
+      - 'CANON.md'
+      - 'KILL_SWITCHES.md'
+  push:
+    branches: [main]
 
 jobs:
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -33,20 +36,13 @@ jobs:
         run: |
           echo "🔍 Scanning for manual task creation..."
 
-          # Search for prohibited patterns (manual task creation by workers).
-          # Excludes: context/ (StaffContext provider), core/ (ReflexEngine),
-          # hooks/ (system alerts/integrations), pages/ (manager-only views),
-          # TaskWriter (system RPC helper), InventoryLiteSection (inventory reflex).
+          # Search for prohibited patterns
           VIOLATIONS=$(grep -r "createTask\|newTask\|addTask" \
             merchant-portal/src/pages/AppStaff \
             merchant-portal/src/components \
             --include="*.tsx" --include="*.ts" \
             --exclude-dir=node_modules \
-            --exclude-dir=context \
-            --exclude-dir=core \
-            --exclude-dir=hooks \
-            --exclude-dir=pages | \
-            grep -v "ReflexEngine\|createTaskRpc\|TaskWriter\|InventoryLite\|Manager\|useTableAlerts\|useIntegration\|CreateTaskModal" || true)
+            --exclude-dir=context || true)
 
           if [ -n "$VIOLATIONS" ]; then
             echo "❌ CANON VIOLATION: Manual task creation detected (Law 2)"
@@ -115,13 +111,7 @@ jobs:
         run: |
           echo "🔍 Scanning for gamification..."
 
-          # Detect unambiguous gamification patterns.
-          # NOTE: "level" / "badge" / "score" are NOT searched because they
-          # appear legitimately in operational code:
-          #   - SectorLevel, OperationLevel, pressure.level  (operational severity)
-          #   - Badge component, FiscalAlertBadge, badgeBg   (UI primitives)
-          #   - pulseScore, snapshot.score                   (pulse monitoring)
-          VIOLATIONS=$(grep -rE "leaderboard|achievement|gamification|sessionXP|GamificationPanel|userScore|XP.*Nível|streak(Count|Bonus)" \
+          VIOLATIONS=$(grep -r "points\|badge\|leaderboard\|score\|achievement\|level" \
             merchant-portal/src/pages/AppStaff \
             merchant-portal/src/components \
             --include="*.tsx" --include="*.ts" \
@@ -172,17 +162,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "pnpm"
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
+        working-directory: merchant-portal
 
       - name: Run Stress Test
         run: |
@@ -238,8 +226,8 @@ jobs:
             exit 1
           fi
 
-          # Verify dominantTool calculation exists (dominantTool = useMemo(...))
-          if ! grep -rE "dominantTool.*useMemo|useMemo.*dominantTool" merchant-portal/src/pages/AppStaff --include="*.tsx" > /dev/null; then
+          # Verify dominantTool calculation exists
+          if ! grep -r "useMemo.*dominantTool" merchant-portal/src/pages/AppStaff --include="*.tsx" > /dev/null; then
             echo "❌ CANON VIOLATION: dominantTool not calculated via useMemo"
             exit 1
           fi
@@ -250,15 +238,15 @@ jobs:
         run: |
           echo "🔍 Verifying System Reflex..."
 
-          # useReflexEngine MUST be invoked in context (replaces checkSystemReflex)
-          if ! grep -rE "useReflexEngine|checkSystemReflex" merchant-portal/src/pages/AppStaff/context --include="*.tsx" > /dev/null; then
-            echo "❌ CANON VIOLATION: System reflex engine not invoked"
+          # checkSystemReflex MUST be called in interval
+          if ! grep -r "checkSystemReflex" merchant-portal/src/pages/AppStaff/context --include="*.tsx" > /dev/null; then
+            echo "❌ CANON VIOLATION: checkSystemReflex not invoked"
             exit 1
           fi
 
-          # Reflex automation MUST exist (useEffect + processReflexes, or setInterval)
-          if ! grep -rE "processReflexes|setInterval.*checkSystemReflex|checkSystemReflex.*setInterval" merchant-portal/src/pages/AppStaff --include="*.tsx" --include="*.ts" > /dev/null; then
-            echo "❌ CANON VIOLATION: System reflex not automated"
+          # Interval MUST exist
+          if ! grep -r "setInterval.*checkSystemReflex\|checkSystemReflex.*setInterval" merchant-portal/src/pages/AppStaff/context --include="*.tsx" > /dev/null; then
+            echo "❌ CANON VIOLATION: System reflex not automated via interval"
             exit 1
           fi
 

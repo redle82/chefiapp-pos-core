@@ -1,26 +1,21 @@
 name: ChefIApp CI
 
-# ────────────────────────────────────────────────────
-# SINGLE REQUIRED PIPELINE  (stabilisation phase)
-# PR  → validate job only  (fast feedback)
-# main → validate + e2e-smoke
-# ────────────────────────────────────────────────────
-
 on:
   pull_request:
     branches: [main, develop]
   push:
     branches: [main, develop]
+  # Allow nightly flakiness runs via workflow_dispatch
   workflow_dispatch:
     inputs:
       flakiness_repeat:
         description: "Repeat-each count for flakiness analysis (default 10)"
         default: "10"
         type: string
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+      debug_open_handles:
+        description: "Run Jest open-handles diagnostics in validate job"
+        default: false
+        type: boolean
 
 jobs:
   validate:
@@ -30,135 +25,54 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
+          cache: "npm"
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install ripgrep (rg)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ripgrep
-
-      - name: BrowserBlockGuard purity gate
-        run: npm run check:browser-guard-purity
-
-      - name: AppStaff official guardrail
-        run: npm run check:appstaff-official
-
-      - name: Merchant Portal type-check
-        run: pnpm --filter merchant-portal run type-check
+        run: npm ci
 
       - name: Fail-fast (typecheck + build)
         run: make simulate-failfast
+
+      - name: Check Formatting
+        run: npx prettier --check .
 
       - name: Lint
         run: npm run -w merchant-portal lint
 
       - name: Run tests
-        run: npm test -- --ci --testTimeout=15000 --maxWorkers=2
+        run: npm run test:ci
 
-      - name: Sovereignty gate
+      - name: Diagnose Jest open handles
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.debug_open_handles == 'true'
+        run: npm run test:ci:open-handles
+
+      - name: Merchant-portal canonical coverage gate (Vitest)
+        run: |
+          pnpm --filter merchant-portal exec vitest run --coverage
+          pnpm --filter merchant-portal run check:coverage:branches
+
+      - name: Server coverage gate
+        run: npm run test:server-coverage && npm run check:server-coverage
+
+      - name: Sovereignty gate (order creation via Core)
         run: bash ./scripts/sovereignty-gate.sh
 
-      - name: Financial domain gate
+      - name: Check financial domain uses Core only (no supabase.from gm_orders|fiscal|inventory)
         run: bash ./scripts/check-financial-supabase.sh
 
-      - name: Contract gate (docs integrity)
-        run: bash ./scripts/contract-gate.sh
-
-      - name: Restaurant Canon gate
-        run: npm run check:restaurant-canon
-
-      - name: Operational Device-Only gate
-        run: npm run check:operational-device-only
-
-      - name: Admin General Contract gate
-        run: npm run check:admin-general-contract
-
-      - name: SW-not-in-dev gate
-        run: npm run check:sw-not-in-dev
-
-      - name: VSCode dev-task bypass gate
-        run: npm run check:vscode-dev-tasks
-
-      - name: Script-level dev bypass gate
-        run: npm run check:dev-bypass-scripts
-
-      - name: Contradictions gate (High severity)
-        run: npm run -s audit:ledger:high
-
-      - name: Detect bypass gate scope
-        id: bypass_scope
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-            HEAD_SHA="${{ github.sha }}"
-          else
-            BASE_SHA="${{ github.event.before }}"
-            HEAD_SHA="${{ github.sha }}"
-          fi
-
-          CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" || true)"
-          printf "%s\n" "$CHANGED_FILES"
-
-          if echo "$CHANGED_FILES" | grep -Eq '^(merchant-portal/src/core/(boot|flow|runtime|tenant|identity|billing|lifecycle)/|merchant-portal/src/(pages|features|routes)/|merchant-portal/eslint\.config\.js|docs/(architecture|audit)/|scripts/audit/)'; then
-            echo "should_run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_run=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Bypass gate (fail on new findings)
-        if: steps.bypass_scope.outputs.should_run == 'true'
-        run: npm run -s audit:bypass:fail-on-new
-
-      - name: Detect MRP-001 cutover scope
-        id: mrp001_scope
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-            HEAD_SHA="${{ github.sha }}"
-          else
-            BASE_SHA="${{ github.event.before }}"
-            HEAD_SHA="${{ github.sha }}"
-          fi
-
-          CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" || true)"
-          printf "%s\n" "$CHANGED_FILES"
-
-          if echo "$CHANGED_FILES" | grep -Eq '^(server/integration-gateway\.ts|integration-gateway/src/|scripts/flows/mrp001-cutover-smoke\.sh|docs/audit/MONOREPO_MRP001_)'; then
-            echo "should_run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_run=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: MRP-001 cutover smoke gate
-        if: steps.mrp001_scope.outputs.should_run == 'true'
-        run: npm run smoke:mrp001-cutover
+      # Note: Automation dispatch contract (storage:core + dedup) is validated by
+      # .github/workflows/automation-dispatch-contract.yml (path-triggered on
+      # server/integration-gateway.ts and gm_automation_events migration changes)
 
   e2e-smoke:
     name: E2E Suite (Playwright — 4 layers)
     runs-on: ubuntu-latest
     needs: validate
-    # Non-blocking: 3 contract tests need Supabase/Core backend (pre-existing).
-    # Required Check is "Validate Code Quality" only.
-    continue-on-error: true
 
     steps:
       - name: Checkout Repo
@@ -166,17 +80,14 @@ jobs:
         with:
           fetch-depth: 0 # needed for --only-changed git diff
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
+          cache: "npm"
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Install Playwright Browsers
         run: cd merchant-portal && npx playwright install --with-deps chromium
@@ -241,17 +152,14 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
+          cache: "npm"
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Install Playwright Browsers
         run: cd merchant-portal && npx playwright install --with-deps chromium

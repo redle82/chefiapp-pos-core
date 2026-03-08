@@ -3,14 +3,11 @@
 
 name: Contract Gate
 
-# ⚠️ STABILISATION: demoted to nightly + manual (was: push+PR)
-# Key checks folded into ci.yml validate job.
-# Reintroduce as blocking in Phase 2 — see CI_GOVERNANCE.md
-
 on:
-  schedule:
-    - cron: "0 4 * * 6" # Weekly Saturday 04:00 UTC
-  workflow_dispatch:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
 
 jobs:
   contract-gate:
