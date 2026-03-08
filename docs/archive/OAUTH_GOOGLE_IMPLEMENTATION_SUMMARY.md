@@ -70,7 +70,7 @@ options: {
 2. Authentication → Providers → Google:
    - Habilitar Google provider
    - Configurar Client ID e Secret (do Google Cloud)
-   - Redirect URLs: `https://chefiapp.com/auth/callback`, `http://localhost:5175/auth/callback`
+   - Redirect URLs: `https://chefiapp.com/auth/callback`, `http://localhost:5173/auth/callback`
 
 ---
 

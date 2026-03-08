@@ -45,7 +45,7 @@
 
 - [ ] **Redirect URLs**
   - [ ] `https://chefiapp.com/auth/callback` adicionado
-  - [ ] `http://localhost:5175/auth/callback` adicionado (dev)
+  - [ ] `http://localhost:5173/auth/callback` adicionado (dev)
   - [ ] URLs do Supabase **NÃO** expostas ao usuário
 
 ---

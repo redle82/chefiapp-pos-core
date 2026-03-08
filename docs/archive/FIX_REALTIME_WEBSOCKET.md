@@ -130,7 +130,7 @@ Manter apenas polling, sem Realtime.
 
 ## 🧪 Como Testar
 
-1. Abrir KDS: `http://localhost:5175/kds-minimal`
+1. Abrir KDS: `http://localhost:5173/kds-minimal`
 2. Verificar que **não há erros** de WebSocket no console
 3. Criar um pedido no TPV ou Web
 4. Verificar que o pedido aparece no KDS (dentro de 30s)

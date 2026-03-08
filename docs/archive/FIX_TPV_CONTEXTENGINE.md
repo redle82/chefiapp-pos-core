@@ -93,7 +93,7 @@ TPV
 
 ## 🧪 Como Testar
 
-1. Abrir TPV: `http://localhost:5175/tpv`
+1. Abrir TPV: `http://localhost:5173/tpv`
 2. Verificar que não há erro de `ContextEngineProvider`
 3. Verificar que o TPV carrega corretamente
 4. Testar criação de pedidos

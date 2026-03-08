@@ -17,7 +17,7 @@ O modo é ativado automaticamente quando:
 ## Verificação (Pass/Fail)
 
 ### Teste 1: Idle Validation
-1. Abra `http://localhost:5175/app/select-tenant`
+1. Abra `http://localhost:5173/app/select-tenant`
 2. Aguarde 2-3 minutos sem interação
 3. Verifique no console do navegador:
 

@@ -162,8 +162,8 @@ Todas as tabelas do Local Boss têm RLS configurado:
    cd merchant-portal && npm run dev
    
    # Acessar páginas
-   # http://localhost:5175/app/web/preview
-   # http://localhost:5175/app/local-boss
+   # http://localhost:5173/app/web/preview
+   # http://localhost:5173/app/local-boss
    ```
 
 4. **Adicionar Payload Demo**

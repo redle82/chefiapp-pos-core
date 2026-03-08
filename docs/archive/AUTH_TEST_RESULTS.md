@@ -1,7 +1,7 @@
 # 🧪 Resultados dos Testes de Autenticação
 
 **Data**: 2025-01-27  
-**Ambiente**: Local (http://localhost:5175)  
+**Ambiente**: Local (http://localhost:5173)  
 **Status**: 🟡 **EM ANDAMENTO**
 
 ---
@@ -67,7 +67,7 @@
 
 ## 📝 Notas
 
-- Servidor rodando na porta 5175 ✅
+- Servidor rodando na porta 5173 ✅
 - Página de login funcional ✅
 - Hook `useSupabaseAuth` criado ✅
 - `RequireAuth` atualizado ✅

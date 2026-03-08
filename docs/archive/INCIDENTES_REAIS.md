@@ -40,7 +40,7 @@ Erro `ReferenceError: email is not defined` ao tentar fazer login no modo de des
 
 ```text
 ReferenceError: email is not defined
-    at onClick (http://localhost:5175/src/pages/AuthPage.tsx:190:68)
+    at onClick (http://localhost:5173/src/pages/AuthPage.tsx:190:68)
 ```
 
 ### Código Problemático
