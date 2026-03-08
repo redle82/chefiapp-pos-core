@@ -121,11 +121,13 @@ export function BrowserBlockGuard({
         random: Math.random,
         sentryApi:
           typeof window !== "undefined"
-            ? (window as Window & {
-                Sentry?: { addBreadcrumb?: (breadcrumb: unknown) => void };
-              }).Sentry
+            ? (
+                window as Window & {
+                  Sentry?: { addBreadcrumb?: (breadcrumb: unknown) => void };
+                }
+              ).Sentry
             : undefined,
-        warn: message => console.warn(message),
+        warn: (message) => console.warn(message),
       },
     );
 
@@ -144,11 +146,13 @@ export function BrowserBlockGuard({
       random: Math.random,
       sentryApi:
         typeof window !== "undefined"
-          ? (window as Window & {
-              Sentry?: { addBreadcrumb?: (breadcrumb: unknown) => void };
-            }).Sentry
+          ? (
+              window as Window & {
+                Sentry?: { addBreadcrumb?: (breadcrumb: unknown) => void };
+              }
+            ).Sentry
           : undefined,
-      warn: message => console.warn(message),
+      warn: (message) => console.warn(message),
     },
   );
 
