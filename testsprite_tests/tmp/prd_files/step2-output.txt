@@ -1,0 +1,107 @@
+[dotenv@17.2.3] injecting env (6) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+
+═══════════════════════════════════════════════════════════════
+  PASSO 2: SUBSCRIPTION → FEATURE GATES
+═══════════════════════════════════════════════════════════════
+
+🏪 Merchant: Sofia Gastrobar
+📧 Email: sofia@gastrobar.pt
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE A: Sincronizar dados do Stripe
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 Dados sincronizados do Stripe:
+   Status: TRIAL (raw: trialing)
+   Tier: PROFESSIONAL
+   Add-ons: RESERVATIONS
+   Trial ends: 2026-01-06T01:55:47.000Z
+
+✅ A1 - Subscription sync
+✅ A2 - Status mapeado: TRIAL
+✅ A3 - Tier identificado: PROFESSIONAL
+✅ A4 - Add-on identificado
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE B: Feature Gates com dados reais
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 Contexto para Feature Gates:
+   {"status":"TRIAL","tier":"PROFESSIONAL","addons":["RESERVATIONS"]}
+
+✅ B1 - CORE_POS (tier)
+✅ B2 - CORE_ORDERS (tier)
+✅ B3 - API_ACCESS (PROFESSIONAL)
+✅ B4 - GATEWAY_STRIPE (tier)
+✅ B5 - RESERVATIONS (add-on)
+✅ B6 - MULTI_VENUE bloqueado
+✅ B7 - WHITE_LABEL bloqueado
+✅ B8 - ANALYTICS_PRO bloqueado
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE C: Simulação de mudanças de status
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ C1 - PAST_DUE: CORE_POS funciona (grace)
+✅ C2 - PAST_DUE: RESERVATIONS funciona (grace)
+✅ C3 - SUSPENDED: CORE_POS bloqueado
+✅ C4 - SUSPENDED: RESERVATIONS bloqueado
+✅ C5 - CANCELLED: CORE_POS bloqueado
+✅ C6 - CANCELLED: features = []
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE D: Mensagens de bloqueio
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ D1 - Mensagem SUSPENDED: ❌ Assinatura SUSPENSA - atualize pagamento
+✅ D2 - Mensagem CANCELLED: ❌ Assinatura CANCELADA - reative para usar
+✅ D3 - Mensagem add-on faltando: 💳 Requer add-on: MULTI_VENUE
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE E: Lista completa de features
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 Features disponíveis (10):
+   ✅ CORE_POS
+   ✅ CORE_ORDERS
+   ✅ CORE_TABLES
+   ✅ CORE_PAYMENTS
+   ✅ CORE_AUDIT
+   ✅ GATEWAY_STRIPE
+   ✅ GATEWAY_SUMUP
+   ✅ GATEWAY_CASH
+   ✅ API_ACCESS
+   ✅ RESERVATIONS
+
+✅ E1 - Tem CORE_POS
+✅ E2 - Tem API_ACCESS
+✅ E3 - Tem RESERVATIONS
+✅ E4 - Total esperado (10): Got 10
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE F: Simulação de chamadas API
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ F1 - API /pos → OK
+✅ F2 - API /reservations → OK
+✅ F3 - API /multi-venue → BLOCKED
+✅ F4 - API /pos (SUSPENDED) → BLOCKED
+
+═══════════════════════════════════════════════════════════════
+  RESULTADO PASSO 2
+═══════════════════════════════════════════════════════════════
+
+  ✅ PASSED:  29
+  ❌ FAILED:  0
+
+  🎉 PASSO 2: APROVADO
+
+  Subscription → Feature Gates funcionando:
+  • Sync com Stripe real ✅
+  • Status mapping correto ✅
+  • Feature blocking por tier ✅
+  • Feature blocking por add-on ✅
+  • Grace period (PAST_DUE) ✅
+  • Hard block (SUSPENDED/CANCELLED) ✅
+
+═══════════════════════════════════════════════════════════════

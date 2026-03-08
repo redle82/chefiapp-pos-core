@@ -1,0 +1,162 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Node.js",
+    "PostgreSQL",
+    "Stripe",
+    "HTTP Server",
+    "Zod",
+    "UUID",
+    "Crypto"
+  ],
+  "features": [
+    {
+      "name": "Health Check Endpoints",
+      "description": "Health check endpoints for monitoring system status, database connectivity, and service availability.",
+      "files": [
+        "server/web-module-api-server.ts"
+      ]
+    },
+    {
+      "name": "Public Web Ordering API",
+      "description": "Public API endpoints for customers to place orders via web interface. Includes menu retrieval, order creation, and order status.",
+      "files": [
+        "server/web-module-api-server.ts"
+      ]
+    },
+    {
+      "name": "Order State Machine",
+      "description": "Order lifecycle management with states: OPEN, LOCKED, CLOSED. Enforces immutability and prevents invalid state transitions.",
+      "files": [
+        "server/web-module-api-server.ts",
+        "web-module/contracts.ts"
+      ]
+    },
+    {
+      "name": "Authentication API",
+      "description": "Magic link authentication system for restaurant staff. Includes request, verify, and session management.",
+      "files": [
+        "server/web-module-api-server.ts",
+        "server/beta-utils.ts"
+      ]
+    },
+    {
+      "name": "Event Store API",
+      "description": "Event sourcing endpoints for appending events, querying event history, and rebuilding state from events.",
+      "files": [
+        "server/web-module-api-server.ts",
+        "event-log/EventStore.ts"
+      ]
+    },
+    {
+      "name": "Payment Webhooks",
+      "description": "Stripe webhook handlers for payment confirmation, failure, and subscription management.",
+      "files": [
+        "server/web-module-api-server.ts",
+        "gateways/WebhookHandlers.ts"
+      ]
+    },
+    {
+      "name": "Subscription Management",
+      "description": "API endpoints for managing Stripe subscriptions, upgrades, downgrades, and addon management.",
+      "files": [
+        "server/web-module-api-server.ts",
+        "billing-core/FeatureGateService.ts"
+      ]
+    },
+    {
+      "name": "Onboarding Wizard API",
+      "description": "Internal API for restaurant onboarding wizard including identity, menu, payments, and design configuration.",
+      "files": [
+        "server/web-module-api-server.ts"
+      ]
+    },
+    {
+      "name": "Web-to-POS Bridge",
+      "description": "Bridge service that converts web orders to POS events and manages session synchronization.",
+      "files": [
+        "server/web-to-pos-bridge.ts"
+      ]
+    },
+    {
+      "name": "Audit Logging",
+      "description": "Audit trail system for tracking all system actions and changes with immutable event logs.",
+      "files": [
+        "server/web-module-api-server.ts",
+        "server/beta-utils.ts"
+      ]
+    },
+    {
+      "name": "Rate Limiting",
+      "description": "Client-side rate limiting middleware to prevent spam and abuse of API endpoints.",
+      "files": [
+        "server/middleware/security.ts"
+      ]
+    },
+    {
+      "name": "Circuit Breaker",
+      "description": "Circuit breaker pattern for external service calls to prevent cascading failures.",
+      "files": [
+        "server/middleware/security.ts"
+      ]
+    },
+    {
+      "name": "Database Connection Pool",
+      "description": "PostgreSQL connection pool with timeout configuration and health monitoring.",
+      "files": [
+        "server/web-module-api-server.ts",
+        "server/middleware/security.ts"
+      ]
+    },
+    {
+      "name": "Public Profile API",
+      "description": "Public restaurant profile endpoints for retrieving restaurant information and settings.",
+      "files": [
+        "server/web-module-api-server.ts"
+      ]
+    },
+    {
+      "name": "Local Boss API",
+      "description": "AI-powered local business insights, review analysis, and operational recommendations.",
+      "files": [
+        "server/web-module-api-server.ts",
+        "server/local-boss/"
+      ]
+    },
+    {
+      "name": "Govern API",
+      "description": "Governance endpoints for system insights, actions, and decision tracking.",
+      "files": [
+        "server/web-module-api-server.ts"
+      ]
+    },
+    {
+      "name": "Reservations API",
+      "description": "Restaurant reservation management endpoints including waitlist and booking management.",
+      "files": [
+        "server/web-module-api-server.ts"
+      ]
+    },
+    {
+      "name": "Reputation Hub API",
+      "description": "Review and reputation management endpoints for multi-location restaurants.",
+      "files": [
+        "server/web-module-api-server.ts"
+      ]
+    },
+    {
+      "name": "Operational Hub API",
+      "description": "Fast mode and operational dashboard endpoints for real-time restaurant operations.",
+      "files": [
+        "server/web-module-api-server.ts"
+      ]
+    },
+    {
+      "name": "Web Page Previews",
+      "description": "Server-side rendering for public restaurant web pages and menu previews.",
+      "files": [
+        "server/web-page-previews.ts"
+      ]
+    }
+  ]
+}

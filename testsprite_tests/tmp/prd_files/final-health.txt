@@ -1,0 +1,1 @@
+{"status":"ok","webhooks":{"received":1,"processed":0,"ignored":0,"failed":1},"recent":[{"time":"2025-12-23T01:28:56.176Z","type":"UNKNOWN","status":"FAIL","details":"Webhook signature verification failed: Error: Unable to extract timestamp and signatures from header"}]}
