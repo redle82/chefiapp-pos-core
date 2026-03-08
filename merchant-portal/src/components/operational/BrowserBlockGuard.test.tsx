@@ -4,7 +4,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { BrowserBlockGuard } from "./BrowserBlockGuard";
+import {
+  BrowserBlockGuard,
+  emitOperationalGuardTelemetry,
+} from "./BrowserBlockGuard";
 
 describe("BrowserBlockGuard", () => {
   const originalMatchMedia = window.matchMedia;
@@ -86,5 +89,61 @@ describe("BrowserBlockGuard", () => {
 
     expect(screen.queryByTestId("browser-block-guard")).toBeNull();
     expect(screen.getByText("TPV content")).toBeTruthy();
+  });
+
+  it("emits Sentry breadcrumb for BLOCK decision when sampled", () => {
+    const addBreadcrumb = vi.fn();
+    const warn = vi.fn();
+
+    emitOperationalGuardTelemetry(
+      {
+        pathname: "/op/tpv",
+        decision: "BLOCK",
+        runtime: "browser",
+        guard: "operational",
+      },
+      {
+        isDev: false,
+        random: () => 0.05,
+        sentryApi: { addBreadcrumb },
+        warn,
+      },
+    );
+
+    expect(addBreadcrumb).toHaveBeenCalledWith({
+      category: "op-guard",
+      level: "warning",
+      message: "operational_guard_decision",
+      data: {
+        pathname: "/op/tpv",
+        decision: "BLOCK",
+        runtime: "browser",
+        guard: "operational",
+      },
+    });
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("falls back to console.warn JSON payload when Sentry breadcrumb is unavailable", () => {
+    const warn = vi.fn();
+
+    emitOperationalGuardTelemetry(
+      {
+        pathname: "/op/tpv",
+        decision: "BLOCK",
+        runtime: "browser",
+        guard: "operational",
+      },
+      {
+        isDev: false,
+        random: () => 0.05,
+        sentryApi: {},
+        warn,
+      },
+    );
+
+    expect(warn).toHaveBeenCalledWith(
+      '[OP_GUARD] {"pathname":"/op/tpv","decision":"BLOCK","runtime":"browser","guard":"operational"}',
+    );
   });
 });

@@ -14,11 +14,15 @@
  * Ref: docs/contracts/OPERATIONAL_DEVICE_ONLY_CONTRACT.md
  */
 
+import * as Sentry from "@sentry/react";
+import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import {
+  isElectron,
   isDesktopApp,
   isInstalledApp,
   isStandalone,
+  isTauri,
 } from "../../core/operational/platformDetection";
 import styles from "./BrowserBlockGuard.module.css";
 
@@ -35,6 +39,71 @@ export interface BrowserBlockGuardProps {
   requiredPlatform: "desktop" | "mobile";
   /** Human-readable module label for the block screen (e.g. "TPV", "KDS", "AppStaff"). */
   moduleLabel: string;
+}
+
+type OperationalGuardRuntime =
+  | "electron"
+  | "tauri"
+  | "standalone-pwa"
+  | "browser";
+
+type OperationalGuardDecision = "ALLOW" | "BLOCK";
+
+type OperationalGuardTelemetryPayload = {
+  pathname: string;
+  decision: OperationalGuardDecision;
+  runtime: OperationalGuardRuntime;
+  guard: "operational";
+};
+
+type TelemetryOptions = {
+  isDev?: boolean;
+  random?: () => number;
+  sentryApi?: { addBreadcrumb?: (crumb: Record<string, unknown>) => void };
+  warn?: (message?: unknown, ...optionalParams: unknown[]) => void;
+  log?: (message?: unknown, ...optionalParams: unknown[]) => void;
+};
+
+function detectRuntime(): OperationalGuardRuntime {
+  if (isElectron()) return "electron";
+  if (isTauri()) return "tauri";
+  if (isStandalone()) return "standalone-pwa";
+  return "browser";
+}
+
+export function emitOperationalGuardTelemetry(
+  payload: OperationalGuardTelemetryPayload,
+  options: TelemetryOptions = {},
+) {
+  const isDev = options.isDev ?? import.meta.env.DEV;
+  const random = options.random ?? Math.random;
+  const sentryApi = options.sentryApi ?? Sentry;
+  const warn = options.warn ?? console.warn;
+  const log = options.log ?? console.log;
+
+  if (isDev) {
+    log("[OP_GUARD][DEV]", payload);
+    return;
+  }
+
+  const shouldEmit =
+    payload.decision === "BLOCK" || payload.runtime === "standalone-pwa";
+
+  if (!shouldEmit) {
+    return;
+  }
+
+  if (typeof sentryApi?.addBreadcrumb === "function" && random() < 0.1) {
+    sentryApi.addBreadcrumb({
+      category: "op-guard",
+      level: "warning",
+      message: "operational_guard_decision",
+      data: payload,
+    });
+    return;
+  }
+
+  warn(`[OP_GUARD] ${JSON.stringify(payload)}`);
 }
 
 /* ------------------------------------------------------------------ */
@@ -54,6 +123,18 @@ export function BrowserBlockGuard({
   const isAllowed = isDesktop
     ? isDesktopRuntime || isTrialQuery
     : isInstalledApp(requiredPlatform);
+
+  const runtime = detectRuntime();
+  const decision: OperationalGuardDecision = isAllowed ? "ALLOW" : "BLOCK";
+
+  useEffect(() => {
+    emitOperationalGuardTelemetry({
+      pathname: location.pathname,
+      decision,
+      runtime,
+      guard: "operational",
+    });
+  }, [decision, location.pathname, runtime]);
 
   // ── Allow only explicit operational runtimes ──
   if (isAllowed) {
