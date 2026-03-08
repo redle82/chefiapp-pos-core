@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { useCurrency } from "../../../core/currency/useCurrency";
 
 interface SplitBillModalWrapperProps {
@@ -36,7 +37,8 @@ export const SplitBillModalWrapper: React.FC<SplitBillModalWrapperProps> = ({
   onCancel,
   loading,
 }) => {
-  const { formatAmount } = useCurrency();
+  const { formatAmount, symbol } = useCurrency();
+  const { t } = useTranslation();
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const [remainingCents, setRemainingCents] = useState(orderTotal);
@@ -159,7 +161,7 @@ export const SplitBillModalWrapper: React.FC<SplitBillModalWrapperProps> = ({
             onClick={onCancel}
             disabled={processing}
             style={styles.closeBtn}
-            aria-label="Fechar"
+            aria-label={t("common:close")}
           >
             ✕
           </button>
@@ -237,7 +239,7 @@ export const SplitBillModalWrapper: React.FC<SplitBillModalWrapperProps> = ({
           <div style={styles.section}>
             <span style={styles.sectionTitle}>Valor</span>
             <div style={styles.cashInputRow}>
-              <span style={styles.cashPrefix}>€</span>
+              <span style={styles.cashPrefix}>{symbol}</span>
               <input
                 type="number"
                 inputMode="decimal"

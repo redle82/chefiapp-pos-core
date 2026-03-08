@@ -67,8 +67,8 @@ docker compose -f docker-compose.core.yml up -d`}
       </p>
 
       <div className={styles.navLinks}>
-        <Link to="/admin/devices" className={styles.link}>
-          Dispositivos
+        <Link to="/op/tpv" className={styles.link}>
+          Voltar ao TPV
         </Link>
         {" · "}
         <Link to="/dashboard" className={styles.link}>

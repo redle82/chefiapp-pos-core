@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
+import { useCurrency } from "../../core/currency/useCurrency";
 import {
   TPVCentralEmitters,
   tpvEventBus,
@@ -27,6 +28,7 @@ import { useWaiterCalls } from "./hooks/useWaiterCalls";
 import type { Table } from "./types";
 import { TableStatus } from "./types";
 
+import { OfflineBanner } from "../../components/OfflineBanner";
 import { db } from "../../core/db";
 import { useTenant } from "../../core/tenant/TenantContext";
 import { useMenuItems } from "../../hooks/useMenuItems";
@@ -67,6 +69,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
 
   const { tenantId } = useTenant(); // Needed for hooks
   const { t } = useTranslation("waiter");
+  const { currency, formatAmount } = useCurrency();
   console.log("[TablePanel] Rendering. Tenant:", tenantId);
   const { permissions, role } = useContextEngine(); // 🧠 CONTEXT ENGINE
   console.log("[TablePanel] Context Role:", role);
@@ -214,7 +217,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
           name: i.name,
           price: i.priceCents,
           description: i.description,
-          currency: "EUR",
+          currency: currency,
           imageUrl: i.photoUrl,
           trackStock: i.trackStock,
           stockQuantity: i.stockQuantity,
@@ -230,7 +233,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
         name: i.name,
         price: i.priceCents,
         description: i.description,
-        currency: "EUR",
+        currency: currency,
         imageUrl: i.photoUrl,
         trackStock: i.trackStock,
         stockQuantity: i.stockQuantity,
@@ -426,6 +429,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
         margin: "0 auto",
       }}
     >
+      <OfflineBanner />
       {/* Sistema de Alertas */}
       <AlertSystem
         alerts={deduplicatedAlerts}
@@ -836,7 +840,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
                 : t("tablePanel.itemCount_other", { count: orderItems.length })}
             </div>
             <div style={{ fontSize: 18, fontWeight: 800, color: "#ffffff" }}>
-              € {(totalAmount / 100).toFixed(2).replace(".", ",")}
+              {formatAmount(totalAmount)}
             </div>
           </div>
 

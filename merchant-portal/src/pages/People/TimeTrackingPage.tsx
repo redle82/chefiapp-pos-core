@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { getFormatLocale } from "../../core/i18n/regionLocaleConfig";
 import {
   timeTrackingEngine,
   type TimeEntry,
@@ -101,7 +102,8 @@ export function TimeTrackingPage() {
           <h2 className={styles.sectionTitle}>Entrada Ativa</h2>
           <div className={styles.statusMeta}>
             <div>
-              <strong>Entrada:</strong> {activeEntry.clockIn.toLocaleString()}
+              <strong>Entrada:</strong>{" "}
+              {activeEntry.clockIn.toLocaleString(getFormatLocale())}
             </div>
             {activeEntry.isLate && (
               <div className={styles.lateWarning}>

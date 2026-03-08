@@ -10,6 +10,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { useCurrency } from "../../core/currency/useCurrency";
+import { useFormatLocale } from "../../core/i18n/useFormatLocale";
 import { updateOrderStatus as coreUpdateOrderStatus } from "../../core/infra/CoreOrdersApi";
 import type { CoreOrder, CoreOrderItem } from "../../infra/docker-core/types";
 import {
@@ -55,8 +57,8 @@ interface OrderWithItems {
 // ---------------------------------------------------------------------------
 
 const TPV_COLORS = {
-  bg: "#111",
-  panel: "#171717",
+  bg: "#0a0a0a",
+  panel: "#141414",
   panelAlt: "#1e1e1e",
   panelDim: "#141414",
   text: "#fafafa",
@@ -75,7 +77,7 @@ const FILTER_BTN = (active: boolean): React.CSSProperties => ({
   fontWeight: active ? 700 : 500,
   cursor: "pointer",
   backgroundColor: active ? TPV_COLORS.accent : TPV_COLORS.panelAlt,
-  color: active ? "#111" : TPV_COLORS.textMuted,
+  color: active ? "#0a0a0a" : TPV_COLORS.textMuted,
   transition: "all 0.15s ease",
 });
 
@@ -130,17 +132,12 @@ const ACTION_BTN = (
       : variant === "success"
       ? "#22c55e"
       : TPV_COLORS.panelAlt,
-  color: variant === "ghost" ? TPV_COLORS.text : "#111",
+  color: variant === "ghost" ? TPV_COLORS.text : "#0a0a0a",
 });
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const formatCents = (value?: number | null) => {
-  if (value == null || Number.isNaN(value)) return "—";
-  return `€${(value / 100).toFixed(2)}`;
-};
 
 const getOrderLabel = (order: CoreOrder) =>
   order.number ?? order.short_id ?? order.id.slice(0, 6);
@@ -202,9 +199,17 @@ const matchesOriginFilter = (order: CoreOrder, filter: OriginFilter) => {
 // ---------------------------------------------------------------------------
 
 export function TPVKitchenPage() {
-  // RequireOperational surface="TPV" guarantees restaurant exists when this renders.
-  const restaurantId = useTPVRestaurantId()!;
+  const restaurantId = useTPVRestaurantId();
   const { runtime } = useRestaurantRuntime();
+  const { formatAmount } = useCurrency();
+  const locale = useFormatLocale();
+
+  /** Null-safe cents formatter using currency-aware formatAmount. */
+  const formatCents = (value?: number | null) => {
+    if (value == null || Number.isNaN(value)) return "—";
+    return formatAmount(value);
+  };
+
   const outletContext = useOutletContext<{
     emitKitchenPressure?: (stats: {
       totalOrders: number;
@@ -997,7 +1002,7 @@ export function TPVKitchenPage() {
                       Criado:{" "}
                       {new Date(
                         selectedOrder.order.created_at,
-                      ).toLocaleTimeString("pt-PT", {
+                      ).toLocaleTimeString(locale, {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}

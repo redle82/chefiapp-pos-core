@@ -5,6 +5,7 @@
  */
 
 import React, { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useOnboardingOptional } from "../../../context/OnboardingContext";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { useCoreAuth } from "../../../core/auth/useCoreAuth";
@@ -13,7 +14,7 @@ import {
   BackendType,
   getBackendType,
 } from "../../../core/infra/backendAdapter";
-import { useTenant } from "../../../core/tenant/TenantContext";
+import { setTabIsolated } from "../../../core/storage/TabIsolatedStorage";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import styles from "./IdentitySection.module.css";
 // Domain writes ONLY via Core. No Supabase.
@@ -35,7 +36,7 @@ const COUNTRY_PRESETS = {
   PT: {
     timezone: "Europe/Lisbon",
     currency: "EUR",
-    locale: "pt-BR",
+    locale: "pt-PT",
   },
   US: {
     timezone: "America/New_York",
@@ -45,11 +46,11 @@ const COUNTRY_PRESETS = {
 } as const;
 
 export function IdentitySection() {
+  const { t } = useTranslation("onboarding");
   const onboarding = useOnboardingOptional();
   const { identity } = useRestaurantIdentity();
   const { runtime, updateSetupStatus } = useRestaurantRuntime();
   const { user: authUser } = useCoreAuth();
-  const { tenantId } = useTenant();
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastIsValidRef = useRef<boolean | null>(null);
   const [_isSaving, setIsSaving] = React.useState(false);
@@ -147,7 +148,12 @@ export function IdentitySection() {
     }
 
     // Usar restaurant_id do RestaurantRuntimeContext (fonte única de verdade)
-    const restaurantId = runtime.restaurant_id || identity.id || tenantId;
+    const restaurantId =
+      runtime.restaurant_id ||
+      identity.id ||
+      (typeof window !== "undefined"
+        ? localStorage.getItem("chefiapp_restaurant_id")
+        : null);
 
     // Log de debug (apenas quando dados mudarem significativamente)
     if (formData.name && formData.name.length >= 3) {
@@ -155,7 +161,10 @@ export function IdentitySection() {
         isValid,
         restaurantId: restaurantId ? "✅ Existe" : "❌ Não existe",
         identityId: identity.id || "null",
-        localStorageId: tenantId || "null",
+        localStorageId:
+          typeof window !== "undefined"
+            ? localStorage.getItem("chefiapp_restaurant_id") || "null"
+            : "N/A",
         formDataName: formData.name,
         willCreate: isValid && !restaurantId && formData.name ? "SIM" : "NÃO",
       });
@@ -319,6 +328,13 @@ export function IdentitySection() {
             alert(`Erro ao salvar: ${error.message}`);
           } else {
             console.log("[IdentitySection] ✅ Identidade salva no banco");
+            // Persistir país, moeda e idioma para i18n e região de pagamento
+            if (formData.country) setTabIsolated("chefiapp_country", formData.country);
+            if (formData.currency) setTabIsolated("chefiapp_currency", formData.currency);
+            if (formData.locale && typeof window !== "undefined") {
+              localStorage.setItem("chefiapp_locale", formData.locale);
+              import("../../../i18n").then((m) => m.default.changeLanguage(formData.locale));
+            }
             // Persistir setup_status.identity no banco para não voltar ao nome ao recarregar
             updateSetupStatus("identity", true).catch((err) => {
               console.warn(
@@ -377,44 +393,42 @@ export function IdentitySection() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>🏬 Identidade do Restaurante</h1>
-      <p className={styles.subtitle}>
-        Informações básicas sobre seu estabelecimento
-      </p>
+      <h1 className={styles.title}>🏬 {t("identity.title")}</h1>
+      <p className={styles.subtitle}>{t("identity.subtitle")}</p>
 
       <div className={styles.formFields}>
         {/* Nome */}
         <div>
-          <label className={styles.fieldLabel}>Nome do Restaurante *</label>
+          <label className={styles.fieldLabel}>{t("identity.nameLabel")}</label>
           <input
             type="text"
             value={formData.name}
             onChange={(e) => handleChange("name", e.target.value)}
-            placeholder="Ex: Sofia Gastrobar Ibiza"
+            placeholder={t("identity.namePlaceholder")}
             className={styles.input}
           />
           {formData.name && formData.name.length < 3 && (
-            <p className={styles.error}>Mínimo 3 caracteres</p>
+            <p className={styles.error}>{t("identity.minChars")}</p>
           )}
         </div>
 
         {/* Logo (URL) — Ver RESTAURANT_LOGO_IDENTITY_CONTRACT.md */}
         <div>
-          <label className={styles.fieldLabel}>URL do logo</label>
+          <label className={styles.fieldLabel}>{t("identity.logoLabel")}</label>
           <input
             type="url"
             value={"logoUrl" in formData ? formData.logoUrl : ""}
             onChange={(e) =>
               updateIdentityForm({ logoUrl: e.target.value } as any)
             }
-            placeholder="https://… (imagem do logo)"
+            placeholder={t("identity.logoPlaceholder")}
             className={styles.input}
           />
           {"logoUrl" in formData && formData.logoUrl && (
             <div className={styles.logoPreviewWrapper}>
               <img
                 src={formData.logoUrl}
-                alt="Pré-visualização do logo"
+                alt={t("identity.logoPreviewAlt")}
                 className={styles.logoPreview}
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
@@ -426,102 +440,101 @@ export function IdentitySection() {
 
         {/* Tipo */}
         <div>
-          <label className={styles.fieldLabel}>Tipo de Estabelecimento *</label>
+          <label className={styles.fieldLabel}>{t("identity.typeLabel")}</label>
           <select
-            aria-label="Tipo de Estabelecimento"
+            aria-label={t("identity.typeLabel")}
             value={formData.type}
             onChange={(e) => handleChange("type", e.target.value)}
             className={styles.select}
           >
-            <option value="RESTAURANT">Restaurante</option>
-            <option value="BAR">Bar</option>
-            <option value="HOTEL">Hotel</option>
-            <option value="BEACH_CLUB">Beach Club</option>
-            <option value="CAFE">Café</option>
-            <option value="OTHER">Outro</option>
+            <option value="RESTAURANT">{t("identity.typeRestaurant")}</option>
+            <option value="BAR">{t("identity.typeBar")}</option>
+            <option value="HOTEL">{t("identity.typeHotel")}</option>
+            <option value="BEACH_CLUB">{t("identity.typeBeachClub")}</option>
+            <option value="CAFE">{t("identity.typeCafe")}</option>
+            <option value="OTHER">{t("identity.typeOther")}</option>
           </select>
         </div>
 
         {/* País */}
         <div>
-          <label className={styles.fieldLabel}>País *</label>
+          <label className={styles.fieldLabel}>{t("identity.countryLabel")}</label>
           <select
-            aria-label="País"
+            aria-label={t("identity.countryLabel")}
             value={formData.country}
             onChange={(e) => handleChange("country", e.target.value)}
             className={styles.select}
           >
-            <option value="">Selecione um país</option>
-            <option value="BR">Brasil</option>
-            <option value="ES">Espanha</option>
-            <option value="PT">Portugal</option>
-            <option value="US">Estados Unidos</option>
+            <option value="">{t("identity.countrySelect")}</option>
+            <option value="BR">{t("identity.countryBR")}</option>
+            <option value="ES">{t("identity.countryES")}</option>
+            <option value="PT">{t("identity.countryPT")}</option>
+            <option value="US">{t("identity.countryUS")}</option>
           </select>
         </div>
 
         {/* Fuso Horário */}
         <div>
-          <label className={styles.fieldLabel}>Fuso Horário *</label>
+          <label className={styles.fieldLabel}>{t("identity.timezoneLabel")}</label>
           <select
-            aria-label="Fuso Horário"
+            aria-label={t("identity.timezoneLabel")}
             value={formData.timezone}
             onChange={(e) => handleChange("timezone", e.target.value)}
             className={styles.select}
           >
-            <option value="">Selecione um fuso horário</option>
-            <option value="America/Sao_Paulo">
-              America/Sao_Paulo (Brasil)
-            </option>
-            <option value="Europe/Madrid">Europe/Madrid (Espanha)</option>
-            <option value="Europe/Lisbon">Europe/Lisbon (Portugal)</option>
-            <option value="America/New_York">America/New_York (EUA)</option>
+            <option value="">{t("identity.timezoneSelect")}</option>
+            <option value="America/Sao_Paulo">{t("identity.timezoneBR")}</option>
+            <option value="Europe/Madrid">{t("identity.timezoneES")}</option>
+            <option value="Europe/Lisbon">{t("identity.timezonePT")}</option>
+            <option value="America/New_York">{t("identity.timezoneUS")}</option>
           </select>
         </div>
 
         {/* Moeda */}
         <div>
-          <label className={styles.fieldLabel}>Moeda *</label>
+          <label className={styles.fieldLabel}>{t("identity.currencyLabel")}</label>
           <select
-            aria-label="Moeda"
+            aria-label={t("identity.currencyLabel")}
             value={formData.currency}
             onChange={(e) => handleChange("currency", e.target.value)}
             className={styles.select}
           >
-            <option value="BRL">BRL (R$)</option>
-            <option value="EUR">EUR (€)</option>
-            <option value="USD">USD ($)</option>
+            <option value="BRL">{t("identity.currencyBRL")}</option>
+            <option value="EUR">{t("identity.currencyEUR")}</option>
+            <option value="USD">{t("identity.currencyUSD")}</option>
           </select>
         </div>
 
         {/* Idioma */}
         <div>
-          <label className={styles.fieldLabel}>Idioma *</label>
+          <label className={styles.fieldLabel}>{t("identity.localeLabel")}</label>
           <select
-            aria-label="Idioma"
+            aria-label={t("identity.localeLabel")}
             value={formData.locale}
             onChange={(e) => handleChange("locale", e.target.value)}
             className={styles.select}
           >
-            <option value="pt-BR">Português (Brasil)</option>
-            <option value="es-ES">Español (España)</option>
-            <option value="en-US">English (US)</option>
+            <option value="pt-BR">{t("identity.localePtBR")}</option>
+            <option value="es-ES">{t("identity.localeEsES")}</option>
+            <option value="en-US">{t("identity.localeEnUS")}</option>
+            <option value="pt-PT">{t("identity.localePtPT")}</option>
           </select>
         </div>
       </div>
 
       {/* Checklist Local */}
       <div className={styles.checklist}>
-        <div className={styles.checklistTitle}>Checklist:</div>
+        <div className={styles.checklistTitle}>{t("identity.checklistTitle")}</div>
         <div className={styles.checklistItems}>
           {[
-            { label: "Nome do restaurante", done: formData.name.length >= 3 },
-            { label: "Tipo de estabelecimento", done: !!formData.type },
-            { label: "País", done: !!formData.country },
-            { label: "Fuso horário", done: !!formData.timezone },
-            { label: "Moeda", done: !!formData.currency },
-            { label: "Idioma", done: !!formData.locale },
+            { key: "name", label: t("identity.checklistName"), done: formData.name.length >= 3 },
+            { key: "type", label: t("identity.checklistType"), done: !!formData.type },
+            { key: "country", label: t("identity.checklistCountry"), done: !!formData.country },
+            { key: "timezone", label: t("identity.checklistTimezone"), done: !!formData.timezone },
+            { key: "currency", label: t("identity.checklistCurrency"), done: !!formData.currency },
+            { key: "locale", label: t("identity.checklistLocale"), done: !!formData.locale },
           ].map((item) => (
-            <div key={item.label} className={styles.checklistItem}>
+            <div key={item.key} className={styles.checklistItem}>
               <span className={styles.checklistIcon}>
                 {item.done ? "✅" : "⏳"}
               </span>

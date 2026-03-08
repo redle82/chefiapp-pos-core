@@ -6,15 +6,15 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { OnboardingStepIndicator } from "../../components/onboarding/OnboardingStepIndicator";
-import { ONBOARDING_5MIN_COPY } from "../../copy/onboarding5min";
 import { recordLegalConsent } from "../../core/audit/legalConsent";
 import { DbWriteGate } from "../../core/governance/DbWriteGate";
 import { useShift } from "../../core/shift/ShiftContext";
 import { setOnboardingJustCompletedFlag } from "../../core/storage/onboardingFlowFlag";
 import { getDefaultOpeningCashCents } from "../../core/storage/shiftDefaultsStorage";
-import { useTenant } from "../../core/tenant/TenantContext";
+import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { Button, Card, Input } from "../../ui/design-system/primitives";
 import styles from "./OnboardingRitualPage.module.css";
@@ -27,8 +27,13 @@ function isValidRestaurantId(id: string | null): id is string {
 
 export function OnboardingRitualPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation("onboarding");
   const shift = useShift();
-  const { tenantId: restaurantId } = useTenant();
+  const restaurantId =
+    getTabIsolated("chefiapp_restaurant_id") ??
+    (typeof window !== "undefined"
+      ? window.localStorage.getItem("chefiapp_restaurant_id")
+      : null);
 
   const [opening, setOpening] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,8 +57,8 @@ export function OnboardingRitualPage() {
       const v = parseFloat(caixaEur.replace(",", "."));
       return !Number.isNaN(v) && Math.abs(v - defaultEur) < 0.01;
     })()
-      ? ONBOARDING_5MIN_COPY.ritual.caixaHelpWithValue(defaultEur)
-      : ONBOARDING_5MIN_COPY.ritual.caixaHelpDefault;
+      ? t("fiveMin.ritual.caixaHelpWithValue", { amount: defaultEur })
+      : t("fiveMin.ritual.caixaHelpDefault");
 
   const markOnboardingComplete = async () => {
     if (!restaurantId) return;
@@ -94,7 +99,7 @@ export function OnboardingRitualPage() {
     if (!restaurantId) return;
     setError(null);
     if (!acceptedTerms) {
-      setError("Aceita os Termos e a Politica de Privacidade para continuar.");
+      setError(t("fiveMin.ritual.errorTerms"));
       return;
     }
     if (!consentLoggedRef.current) {
@@ -102,14 +107,12 @@ export function OnboardingRitualPage() {
       recordLegalConsent({ restaurantId, source: "onboarding_ritual" });
     }
     if (!isValidRestaurantId(restaurantId)) {
-      setError(
-        "O identificador do restaurante não é válido. Volte ao passo Identidade e crie o restaurante (nome, tipo, país).",
-      );
+      setError(t("fiveMin.ritual.errorInvalidId"));
       return;
     }
     const eur = parseFloat(caixaEur.replace(",", "."));
     if (Number.isNaN(eur) || eur < 0) {
-      setError("Valor de caixa inicial inválido.");
+      setError(t("fiveMin.ritual.errorCashInvalid"));
       return;
     }
     const openingBalanceCents = Math.round(eur * 100);
@@ -119,8 +122,8 @@ export function OnboardingRitualPage() {
         "open_cash_register_atomic",
         {
           p_restaurant_id: restaurantId,
-          p_name: "Caixa Principal",
-          p_opened_by: "Operador TPV",
+          p_name: t("fiveMin.ritual.registerName"),
+          p_opened_by: t("fiveMin.ritual.operatorName"),
           p_opening_balance_cents: openingBalanceCents,
         },
       );
@@ -132,28 +135,26 @@ export function OnboardingRitualPage() {
         ) {
           await markOnboardingComplete();
           shift?.refreshShiftStatus?.();
-          navigate("/admin/devices", { replace: true });
+          navigate("/op/tpv", { replace: true });
           return;
         }
         const msg =
           raw && !raw.includes("Backend indisponível")
             ? raw
-            : "Não foi possível abrir o turno. Verifique a ligação ao Core (Docker em 3001) e tente novamente.";
+            : t("fiveMin.ritual.errorCoreUnavailable");
         setError(msg);
         return;
       }
       if (!data?.id) {
-        setError("Não foi possível abrir o turno. Tente novamente.");
+        setError(t("fiveMin.ritual.errorShiftFailed"));
         return;
       }
       await markOnboardingComplete();
       shift?.refreshShiftStatus?.();
-      navigate("/admin/devices", { replace: true });
+      navigate("/op/tpv", { replace: true });
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Erro ao abrir turno. Tente novamente.",
+        err instanceof Error ? err.message : t("fiveMin.ritual.errorGeneric"),
       );
     } finally {
       setOpening(false);
@@ -163,7 +164,7 @@ export function OnboardingRitualPage() {
   const handleGoToPanel = async () => {
     setError(null);
     if (!acceptedTerms) {
-      setError("Aceita os Termos e a Politica de Privacidade para continuar.");
+      setError(t("fiveMin.ritual.errorTerms"));
       return;
     }
     if (!consentLoggedRef.current) {
@@ -174,14 +175,16 @@ export function OnboardingRitualPage() {
       await markOnboardingComplete();
       navigate("/dashboard", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao continuar.");
+      setError(
+        err instanceof Error ? err.message : t("fiveMin.ritual.errorContinue"),
+      );
     }
   };
 
   if (!restaurantId) {
     return (
       <div className={styles.notFoundContainer}>
-        <p>Restaurante não encontrado.</p>
+        <p>{t("fiveMin.ritual.notFound")}</p>
         <Button
           type="button"
           tone="success"
@@ -189,7 +192,7 @@ export function OnboardingRitualPage() {
           onClick={() => navigate("/onboarding/identity")}
           className={styles.notFoundButton}
         >
-          Voltar ao início
+          {t("fiveMin.ritual.backToStart")}
         </Button>
       </div>
     );
@@ -199,12 +202,12 @@ export function OnboardingRitualPage() {
     <div data-onboarding-step="8" className={styles.pageRoot}>
       <OnboardingStepIndicator step={9} total={9} />
       <div className={styles.contentContainer}>
-        <h1 className={styles.title}>{ONBOARDING_5MIN_COPY.ritual.headline}</h1>
-        <p className={styles.subtitle}>{ONBOARDING_5MIN_COPY.ritual.message}</p>
+        <h1 className={styles.title}>{t("fiveMin.ritual.headline")}</h1>
+        <p className={styles.subtitle}>{t("fiveMin.ritual.message")}</p>
         <Card padding="lg" className={styles.card}>
           <div className={styles.formContent}>
             <Input
-              label={ONBOARDING_5MIN_COPY.ritual.caixaLabel}
+              label={t("fiveMin.ritual.caixaLabel")}
               value={caixaEur}
               onChange={(e) => setCaixaEur(e.target.value)}
               placeholder="0"
@@ -230,13 +233,13 @@ export function OnboardingRitualPage() {
                 }}
               />
               <span>
-                Aceito os{" "}
+                {t("fiveMin.ritual.termsPrefix")}{" "}
                 <Link to="/legal/terms" className={styles.termsLink}>
-                  Termos
+                  {t("fiveMin.ritual.terms")}
                 </Link>{" "}
-                e a{" "}
+                {t("fiveMin.ritual.termsAnd")}{" "}
                 <Link to="/legal/privacy" className={styles.termsLink}>
-                  Politica de Privacidade
+                  {t("fiveMin.ritual.privacy")}
                 </Link>
                 .
               </span>
@@ -251,8 +254,8 @@ export function OnboardingRitualPage() {
               className={styles.primaryButton}
             >
               {opening
-                ? "A abrir turno..."
-                : ONBOARDING_5MIN_COPY.ritual.ctaOpen}
+                ? t("fiveMin.ritual.openingShift")
+                : t("fiveMin.ritual.ctaOpen")}
             </Button>
             <Button
               type="button"
@@ -262,7 +265,7 @@ export function OnboardingRitualPage() {
               disabled={opening || !acceptedTerms}
               className={styles.secondaryButton}
             >
-              {ONBOARDING_5MIN_COPY.ritual.ctaPanel}
+              {t("fiveMin.ritual.ctaPanel")}
             </Button>
           </div>
         </Card>

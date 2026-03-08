@@ -9,12 +9,12 @@ import { useCallback, useMemo, useState } from "react";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { currencyService } from "../../core/currency/CurrencyService";
-import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import {
   useShiftHistory,
   type ShiftHistoryItem,
 } from "../../hooks/useShiftHistory";
 import { GlobalLoadingView } from "../../ui/design-system/components";
+import { useRestaurantId } from "../../ui/hooks/useRestaurantId";
 import styles from "./SalesByPeriodReportPage.module.css";
 
 function formatCents(cents: number): string {
@@ -24,7 +24,7 @@ function formatCents(cents: number): string {
 function formatDateTime(iso: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
-  return d.toLocaleString("pt-PT", {
+  return d.toLocaleString(getFormatLocale(), {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
@@ -111,16 +111,16 @@ function buildCsv(data: ShiftHistoryItem[]): string {
     const closed = row.closed_at ? new Date(row.closed_at) : null;
     const salesEur = (row.total_sales_cents / 100).toFixed(2);
     return [
-      opened ? opened.toLocaleDateString("pt-PT") : "—",
+      opened ? opened.toLocaleDateString(getFormatLocale()) : "—",
       opened
-        ? opened.toLocaleTimeString("pt-PT", {
+        ? opened.toLocaleTimeString(getFormatLocale(), {
             hour: "2-digit",
             minute: "2-digit",
           })
         : "—",
-      closed ? closed.toLocaleDateString("pt-PT") : "—",
+      closed ? closed.toLocaleDateString(getFormatLocale()) : "—",
       closed
-        ? closed.toLocaleTimeString("pt-PT", {
+        ? closed.toLocaleTimeString(getFormatLocale(), {
             hour: "2-digit",
             minute: "2-digit",
           })
@@ -139,7 +139,7 @@ function buildCsvDaily(aggregates: DailyAggregate[]): string {
   const rows = aggregates.map((row) => {
     const d = new Date(row.date + "T12:00:00");
     return [
-      d.toLocaleDateString("pt-PT"),
+      d.toLocaleDateString(getFormatLocale()),
       (row.total_sales_cents / 100).toFixed(2),
       String(row.orders_count),
     ]
@@ -153,7 +153,7 @@ function buildCsvMonthly(aggregates: MonthlyAggregate[]): string {
   const headers = ["Mês", "Vendas (EUR)", "N.º pedidos"];
   const rows = aggregates.map((row) => {
     const d = new Date(row.month + "-01T12:00:00");
-    const monthLabel = d.toLocaleDateString("pt-PT", {
+    const monthLabel = d.toLocaleDateString(getFormatLocale(), {
       month: "long",
       year: "numeric",
     });
@@ -203,6 +203,7 @@ function downloadCsvMonthly(aggregates: MonthlyAggregate[], filename: string) {
 
 export function SalesByPeriodReportPage() {
   const { runtime } = useRestaurantRuntime();
+  const locale = useFormatLocale();
   const { restaurantId, loading: loadingRestaurant } = useRestaurantId();
   const now = useMemo(() => new Date(), []);
   const [dateFrom, setDateFrom] = useState<Date>(() => startOfMonth(now));
@@ -358,7 +359,7 @@ export function SalesByPeriodReportPage() {
                   <tr key={row.month} className={styles.bodyRow}>
                     <td className={styles.bodyCellLeft}>
                       {new Date(row.month + "-01T12:00:00").toLocaleDateString(
-                        "pt-PT",
+                        locale,
                         { month: "long", year: "numeric" },
                       )}
                     </td>
@@ -397,7 +398,7 @@ export function SalesByPeriodReportPage() {
                   <tr key={row.date} className={styles.bodyRow}>
                     <td className={styles.bodyCellLeft}>
                       {new Date(row.date + "T12:00:00").toLocaleDateString(
-                        "pt-PT",
+                        locale,
                       )}
                     </td>
                     <td className={styles.bodyCellRightStrong}>

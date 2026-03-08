@@ -9,6 +9,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { currencyService } from "../../../core/currency/CurrencyService";
 import { Button } from "../../../ui/design-system/Button";
 import { Text } from "../../../ui/design-system/primitives/Text";
 import { colors } from "../../../ui/design-system/tokens/colors";
@@ -109,7 +110,7 @@ export function ProductCard({
 
   const priceFormatted = new Intl.NumberFormat(i18n.language, {
     style: "currency",
-    currency: product.currency || "EUR",
+    currency: product.currency || currencyService.getDefaultCurrency(),
     minimumFractionDigits: 2,
   }).format(product.price / 100);
 

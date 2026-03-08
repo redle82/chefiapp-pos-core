@@ -5,7 +5,8 @@
  * observação obrigatória quando diferença ≠ 0. Ref.: docs/plans/FASE_2.3_CAIXA_PAGAMENTOS_FECHO.md
  */
 
-import React, { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useCurrency } from "../../../core/currency/useCurrency";
 
 export interface CloseCashRegisterModalProps {
   /** Total de vendas do turno (centavos) — usado para calcular esperado */
@@ -21,10 +22,6 @@ export interface CloseCashRegisterModalProps {
   onDismiss: () => void;
 }
 
-function formatCents(cents: number): string {
-  return (cents / 100).toFixed(2) + " €";
-}
-
 export function CloseCashRegisterModal({
   dailyTotalCents,
   openingBalanceCents,
@@ -32,6 +29,7 @@ export function CloseCashRegisterModal({
   onCancel,
   onDismiss,
 }: CloseCashRegisterModalProps) {
+  const { formatAmount, symbol } = useCurrency();
   const [declaredInput, setDeclaredInput] = useState("");
   const [observation, setObservation] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,17 +80,17 @@ export function CloseCashRegisterModal({
         }}
         onClick={(e) => e.target === e.currentTarget && onDismiss()}
       >
-<div
-        data-testid="close-cash-modal"
-        style={{
-          maxWidth: 420,
-          width: "100%",
-          padding: 24,
-          backgroundColor: "#fff",
-          borderRadius: 12,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-          textAlign: "center",
-        }}
+        <div
+          data-testid="close-cash-modal"
+          style={{
+            maxWidth: 420,
+            width: "100%",
+            padding: 24,
+            backgroundColor: "#fff",
+            borderRadius: 12,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+            textAlign: "center",
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           <p style={{ fontSize: 16, color: "#1a1a1a", margin: 0 }}>
@@ -166,7 +164,7 @@ export function CloseCashRegisterModal({
               color: "#1a1a1a",
             }}
           >
-            {formatCents(expectedTotalCents)}
+            {formatAmount(expectedTotalCents)}
           </div>
         </div>
 
@@ -206,8 +204,7 @@ export function CloseCashRegisterModal({
             style={{
               marginBottom: 16,
               padding: 10,
-              backgroundColor:
-                differenceCents === 0 ? "#e8f5e9" : "#fff3e0",
+              backgroundColor: differenceCents === 0 ? "#e8f5e9" : "#fff3e0",
               borderRadius: 8,
               fontSize: 14,
               color: differenceCents === 0 ? "#2e7d32" : "#e65100",
@@ -215,8 +212,8 @@ export function CloseCashRegisterModal({
           >
             <strong>Diferença:</strong>{" "}
             {differenceCents === 0
-              ? "0,00 € (conferido)"
-              : formatCents(Math.abs(differenceCents)) +
+              ? `0,00 ${symbol} (conferido)`
+              : formatAmount(Math.abs(differenceCents)) +
                 (differenceCents > 0 ? " a mais" : " a menos")}
           </div>
         )}

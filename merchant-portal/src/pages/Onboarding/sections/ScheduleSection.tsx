@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../../../context/OnboardingContext";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
@@ -12,26 +13,17 @@ import {
   BackendType,
   getBackendType,
 } from "../../../core/infra/backendAdapter";
-import { useTenant } from "../../../core/tenant/TenantContext";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import styles from "./ScheduleSection.module.css";
 // Domain writes ONLY via Core (Supabase removed — §4). No fallback.
 
-const DAYS = [
-  { id: 0, label: "Domingo", short: "Dom" },
-  { id: 1, label: "Segunda", short: "Seg" },
-  { id: 2, label: "Terça", short: "Ter" },
-  { id: 3, label: "Quarta", short: "Qua" },
-  { id: 4, label: "Quinta", short: "Qui" },
-  { id: 5, label: "Sexta", short: "Sex" },
-  { id: 6, label: "Sábado", short: "Sáb" },
-];
+const DAY_IDS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 export function ScheduleSection() {
+  const { t } = useTranslation("onboarding");
   const { updateSectionStatus } = useOnboarding();
   const { identity } = useRestaurantIdentity();
   const { runtime, updateSetupStatus } = useRestaurantRuntime();
-  const { tenantId } = useTenant();
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -85,7 +77,12 @@ export function ScheduleSection() {
 
     // Salvar no banco se válido e tiver restaurantId
     // Usar restaurant_id do RestaurantRuntimeContext (fonte única de verdade)
-    const restaurantId = runtime.restaurant_id || identity.id || tenantId;
+    const restaurantId =
+      runtime.restaurant_id ||
+      identity.id ||
+      (typeof window !== "undefined"
+        ? localStorage.getItem("chefiapp_restaurant_id")
+        : null);
 
     if (isValid && restaurantId) {
       if (saveTimeoutRef.current) {
@@ -160,19 +157,18 @@ export function ScheduleSection() {
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>
-        ⏰ Horários{" "}
-        {isSaving && <span className={styles.saving}>(Salvando...)</span>}
+        ⏰ {t("schedule.title")}{" "}
+        {isSaving && <span className={styles.saving}>({t("schedule.saving")})</span>}
       </h1>
-      <p className={styles.subtitle}>
-        Configure os horários de funcionamento por dia da semana
-      </p>
+      <p className={styles.subtitle}>{t("schedule.subtitle")}</p>
 
       <div className={styles.daysList}>
-        {DAYS.map((day) => {
-          const schedule = schedules[day.id];
+        {DAY_IDS.map((id) => {
+          const schedule = schedules[id];
+          const dayLabel = t(`schedule.day${id}`);
           return (
             <div
-              key={day.id}
+              key={id}
               className={`${styles.dayCard} ${
                 schedule.open ? styles.dayCardOpen : styles.dayCardClosed
               }`}
@@ -183,39 +179,39 @@ export function ScheduleSection() {
                     type="checkbox"
                     checked={schedule.open}
                     onChange={(e) =>
-                      updateSchedule(day.id, "open", e.target.checked)
+                      updateSchedule(id, "open", e.target.checked)
                     }
                     className={styles.dayCheckbox}
                   />
-                  <span className={styles.dayName}>{day.label}</span>
+                  <span className={styles.dayName}>{dayLabel}</span>
                 </label>
                 {schedule.open && (
                   <div className={styles.timeRange}>
                     <input
                       type="time"
-                      title={`Hora de abertura - ${day.label}`}
-                      aria-label={`Hora de abertura - ${day.label}`}
+                      title={t("schedule.openAria", { day: dayLabel })}
+                      aria-label={t("schedule.openAria", { day: dayLabel })}
                       value={schedule.start}
                       onChange={(e) =>
-                        updateSchedule(day.id, "start", e.target.value)
+                        updateSchedule(id, "start", e.target.value)
                       }
                       className={styles.timeInput}
                     />
-                    <span className={styles.untilText}>até</span>
+                    <span className={styles.untilText}>{t("schedule.until")}</span>
                     <input
                       type="time"
-                      title={`Hora de fecho - ${day.label}`}
-                      aria-label={`Hora de fecho - ${day.label}`}
+                      title={t("schedule.closeAria", { day: dayLabel })}
+                      aria-label={t("schedule.closeAria", { day: dayLabel })}
                       value={schedule.end}
                       onChange={(e) =>
-                        updateSchedule(day.id, "end", e.target.value)
+                        updateSchedule(id, "end", e.target.value)
                       }
                       className={styles.timeInput}
                     />
                   </div>
                 )}
                 {!schedule.open && (
-                  <span className={styles.closedText}>Fechado</span>
+                  <span className={styles.closedText}>{t("schedule.closed")}</span>
                 )}
               </div>
             </div>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCurrency } from "../../core/currency/useCurrency";
 import { useShift } from "../../core/shift/ShiftContext";
 import {
   CashRegisterEngine,
@@ -9,12 +10,10 @@ import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 const DEFAULT_OPERATOR = "Operador TPV";
 const DEFAULT_REGISTER_NAME = "Caixa Principal";
 
-const formatCents = (cents: number) => `€${(cents / 100).toFixed(2)}`;
-
 export function TPVShiftPage() {
-  // RequireOperational surface="TPV" guarantees restaurant exists when this renders.
-  const restaurantId = useTPVRestaurantId()!;
+  const restaurantId = useTPVRestaurantId();
   const shift = useShift();
+  const { formatAmount } = useCurrency();
 
   const [loading, setLoading] = useState(true);
   const [register, setRegister] = useState<CashRegister | null>(null);
@@ -185,13 +184,13 @@ export function TPVShiftPage() {
                 Saldo inicial
               </div>
               <div style={{ fontSize: 16, fontWeight: 700 }}>
-                {formatCents(register.openingBalanceCents)}
+                {formatAmount(register.openingBalanceCents)}
               </div>
             </div>
             <div>
               <div style={{ fontSize: 12, color: "#9ca3af" }}>Vendas</div>
               <div style={{ fontSize: 16, fontWeight: 700 }}>
-                {formatCents(register.totalSalesCents)}
+                {formatAmount(register.totalSalesCents)}
               </div>
             </div>
             <div>
@@ -199,7 +198,7 @@ export function TPVShiftPage() {
                 Saldo esperado
               </div>
               <div style={{ fontSize: 16, fontWeight: 700 }}>
-                {formatCents(expectedBalanceCents)}
+                {formatAmount(expectedBalanceCents)}
               </div>
             </div>
           </div>
@@ -223,7 +222,7 @@ export function TPVShiftPage() {
                 value={closingCash}
                 onChange={(e) => setClosingCash(e.target.value)}
                 style={{
-                  background: "#111",
+                  background: "#0a0a0a",
                   border: "1px solid #333",
                   borderRadius: 8,
                   padding: "10px 12px",
@@ -248,7 +247,7 @@ export function TPVShiftPage() {
                 value={closingName}
                 onChange={(e) => setClosingName(e.target.value)}
                 style={{
-                  background: "#111",
+                  background: "#0a0a0a",
                   border: "1px solid #333",
                   borderRadius: 8,
                   padding: "10px 12px",
@@ -306,7 +305,7 @@ export function TPVShiftPage() {
               value={openingCash}
               onChange={(e) => setOpeningCash(e.target.value)}
               style={{
-                background: "#111",
+                background: "#0a0a0a",
                 border: "1px solid #333",
                 borderRadius: 8,
                 padding: "10px 12px",
@@ -323,7 +322,7 @@ export function TPVShiftPage() {
               value={operatorName}
               onChange={(e) => setOperatorName(e.target.value)}
               style={{
-                background: "#111",
+                background: "#0a0a0a",
                 border: "1px solid #333",
                 borderRadius: 8,
                 padding: "10px 12px",

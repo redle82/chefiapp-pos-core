@@ -4,7 +4,7 @@ import { ReceiptShareModal, type ReceiptShareOrder } from "./ReceiptShareModal";
 
 vi.mock("../../core/currency/CurrencyService", () => ({
   currencyService: {
-    formatAmount: (cents: number) => `€${(cents / 100).toFixed(2)}`,
+    formatAmount: (cents: number) => `$${(cents / 100).toFixed(2)}`,
   },
 }));
 
@@ -65,9 +65,9 @@ describe("ReceiptShareModal", () => {
   it("renders order ID and total in header", () => {
     render(<ReceiptShareModal order={sampleOrder} onClose={vi.fn()} />);
 
-    // Header shows "Pedido #abc12345 — €35.00"
+    // Header shows "Pedido #abc12345 — $35.00"
     expect(screen.getByText(/abc12345/)).toBeTruthy();
-    expect(screen.getByText(/€35\.00/)).toBeTruthy();
+    expect(screen.getByText(/\$35\.00/)).toBeTruthy();
     expect(screen.getByText("Enviar Recibo")).toBeTruthy();
   });
 
@@ -87,7 +87,7 @@ describe("ReceiptShareModal", () => {
       expect(text).toContain("Tasca do Ouro");
       expect(text).toContain("Francesinha");
       expect(text).toContain("Super Bock");
-      expect(text).toContain("€35.00");
+      expect(text).toContain("$35.00");
     });
   });
 

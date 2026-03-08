@@ -4,7 +4,7 @@ import { SplitBillModalWrapper } from "./SplitBillModalWrapper";
 
 vi.mock("../../../core/currency/useCurrency", () => ({
   useCurrency: () => ({
-    formatAmount: (cents: number) => `€${(cents / 100).toFixed(2)}`,
+    formatAmount: (cents: number) => `$${(cents / 100).toFixed(2)}`,
   }),
 }));
 
@@ -35,7 +35,7 @@ describe("SplitBillModalWrapper", () => {
     );
 
     expect(screen.getByText("Dividir Conta")).toBeTruthy();
-    expect(screen.getAllByText("€100.00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("$100.00").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByText("Cartao"));
 
@@ -67,18 +67,18 @@ describe("SplitBillModalWrapper", () => {
   it("adjusts per-person amount when split count changes", async () => {
     render(<SplitBillModalWrapper {...defaultProps} />);
 
-    // Default is 2 people → €50.00 each
+    // Default is 2 people → $50.00 each
     await waitFor(() => {
-      expect(screen.getByText("€50.00")).toBeTruthy();
+      expect(screen.getByText("$50.00")).toBeTruthy();
     });
 
     // Click + to increase to 3
     const plusBtn = screen.getByText("+");
     fireEvent.click(plusBtn);
 
-    // 10000 / 3 = 3333 cents → €33.33
+    // 10000 / 3 = 3333 cents → $33.33
     await waitFor(() => {
-      expect(screen.getByText("€33.33")).toBeTruthy();
+      expect(screen.getByText("$33.33")).toBeTruthy();
     });
   });
 
@@ -111,7 +111,7 @@ describe("SplitBillModalWrapper", () => {
 
     render(<SplitBillModalWrapper {...defaultProps} onCancel={onCancel} />);
 
-    fireEvent.click(screen.getByLabelText("Fechar"));
+    fireEvent.click(screen.getByLabelText("Close"));
 
     expect(onCancel).toHaveBeenCalled();
   });

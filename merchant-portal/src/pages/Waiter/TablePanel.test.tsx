@@ -56,7 +56,8 @@ vi.mock("../../ui/design-system", () => ({
 
 vi.mock("../../core/currency/useCurrency", () => ({
   useCurrency: () => ({
-    formatAmount: (cents: number) => `€${(cents / 100).toFixed(2)}`,
+    formatAmount: (cents: number) => `$${(cents / 100).toFixed(2)}`,
+    getCurrency: () => ({ symbol: "$" }),
   }),
 }));
 

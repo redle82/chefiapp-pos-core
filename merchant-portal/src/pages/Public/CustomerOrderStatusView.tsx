@@ -18,10 +18,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import type {
-  CoreOrder,
-  CoreOrderItem,
-} from "../../infra/docker-core/types";
+import { useCurrency } from "../../core/currency/useCurrency";
+import type { CoreOrder, CoreOrderItem } from "../../infra/docker-core/types";
 import { readOrderById } from "../../infra/readers/OrderReader";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import styles from "./CustomerOrderStatusView.module.css";
@@ -100,6 +98,7 @@ function getStatusClass(status: CustomerStatus): string {
 
 export function CustomerOrderStatusView() {
   const { orderId } = useParams<{ orderId: string }>();
+  const { formatAmount } = useCurrency();
   const [order, setOrder] = useState<
     (CoreOrder & { items: CoreOrderItem[] }) | null
   >(null);
@@ -129,9 +128,9 @@ export function CustomerOrderStatusView() {
           return;
         }
 
-        const items = await import(
-          "../../infra/readers/OrderReader"
-        ).then((m) => m.readOrderItems(orderId));
+        const items = await import("../../infra/readers/OrderReader").then(
+          (m) => m.readOrderItems(orderId),
+        );
 
         setOrder({
           ...loadedOrder,
@@ -246,7 +245,7 @@ export function CustomerOrderStatusView() {
                     {item.name_snapshot} x{item.quantity}
                   </span>
                   <span className={styles.itemPrice}>
-                    € {(item.subtotal_cents / 100).toFixed(2)}
+                    {formatAmount(item.subtotal_cents)}
                   </span>
                 </div>
               ))}
@@ -258,7 +257,7 @@ export function CustomerOrderStatusView() {
         <div className={styles.totalRow}>
           <span className={styles.totalLabel}>Total</span>
           <span className={styles.totalValue}>
-            € {(order.total_cents / 100).toFixed(2)}
+            {formatAmount(order.total_cents)}
           </span>
         </div>
       </div>

@@ -227,7 +227,7 @@ const SIDEBAR_LINKS: { to: string; label: string; icon: IconKey }[] = [
   { to: "/op/tpv/kitchen", label: "Cozinha", icon: "kitchen" },
   { to: "/op/tpv/tasks", label: "Tarefas", icon: "tasks" },
   { to: "/op/tpv/reservations", label: "Reservas", icon: "calendar" },
-  { to: "/admin/config/tienda-online", label: "Pagina Web", icon: "receipt" },
+  { to: "/admin/config/website", label: "Pagina Web", icon: "receipt" },
   { to: "/op/tpv/settings", label: "Definições", icon: "gear" },
 ];
 

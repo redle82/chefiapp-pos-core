@@ -64,6 +64,8 @@ import { SyncStatusIndicator } from "../../components/SyncStatusIndicator";
 import { FiscalPrinter } from "../../core/fiscal/FiscalPrinter";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
 import { requestPrint } from "../../core/print/CorePrintApi";
+import { PrintQueue } from "../../core/print/PrintQueue";
+import type { PrintQueueJob } from "../../core/print/PrintQueueTypes";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
 
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
@@ -86,7 +88,6 @@ import {
   useOperationalReadiness,
 } from "../../core/readiness";
 import { useShift } from "../../core/shift/ShiftContext";
-import { useTenant } from "../../core/tenant/TenantContext";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
 
 import { OfflineBanner } from "../../components/OfflineBanner";
@@ -265,9 +266,6 @@ const TPVContent = () => {
   const bootstrap = useBootstrapState();
   const shift = useShift();
 
-  // Tenant context for restaurant ID resolution
-  const { tenantId } = useTenant();
-
   // RITUAL: Operator Gate State
   // HOOKS REFACTORING COMPLETE - Lock screen now active in all modes
   const [isLocked, setIsLocked] = useState(true);
@@ -280,7 +278,7 @@ const TPVContent = () => {
   // PITCH: Prioritize URL param > LocalStorage
   const { restaurantId: urlRestaurantId } = useParams();
   const [restaurantId, setRestaurantId] = useState<string | null>(() => {
-    return urlRestaurantId || tenantId;
+    return urlRestaurantId || getTabIsolated("chefiapp_restaurant_id");
   });
 
   // Sync Logic: If URL changes, update state and storage
@@ -313,10 +311,10 @@ const TPVContent = () => {
   // Polling check for external changes (Tab Isolation)
   useEffect(() => {
     const checkId = () => {
-      const current = tenantId;
+      const current = getTabIsolated("chefiapp_restaurant_id");
       // Only update if URL param is missing (URL is source of truth)
       if (!urlRestaurantId && current && current !== restaurantId) {
-        console.log("[TPV] Resolved Restaurant ID from context:", current);
+        console.log("[TPV] Resolved Restaurant ID from Storage:", current);
         setRestaurantId(current);
       }
     };
@@ -593,14 +591,14 @@ const TPVContent = () => {
     // HARD RULE 4: Recuperar pedido ativo ao carregar (Tab-Isolated)
     return getTabIsolated("chefiapp_active_order_id");
   });
-  const [dailyTotal, setDailyTotal] = useState<string>("€0,00");
+  const [dailyTotal, setDailyTotal] = useState<string>(`${symbol}0,00`);
 
   // SEMANA 2 - Tarefa 3.2: Integrar useConsumptionGroups
   const { groups, fetchGroups, createGroup } =
     useConsumptionGroups(activeOrderId);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
-  const { formatAmount } = useCurrency();
+  const { formatAmount, symbol } = useCurrency();
 
   // FASE 5: Toast removido daqui (já declarado acima)
 
@@ -1165,6 +1163,7 @@ const TPVContent = () => {
   }));
 
   // FASE 6: Imprimir comanda — UI pede ao Core; mostra estado (enviado, em fila, falha). CORE_PRINT_CONTRACT.
+  // Offline: enfileirar na PrintQueue; será enviada quando a ligação voltar (SyncEngine processa print queue).
   const handlePrintComanda = async (orderId: string) => {
     const order = activeOrders.find((o) => o.id === orderId);
     if (!order || !restaurantId) {
@@ -1182,6 +1181,26 @@ const TPVContent = () => {
       })),
       deliveryMetadata: (order as any).deliveryMetadata,
     };
+    if (isOffline) {
+      try {
+        const { v4: uuidv4 } = await import("uuid");
+        const job: PrintQueueJob = {
+          id: uuidv4(),
+          type: "kitchen_ticket",
+          orderId,
+          restaurantId,
+          payload: orderForPrint as Record<string, unknown>,
+          status: "pending",
+          createdAt: Date.now(),
+          attempts: 0,
+        };
+        await PrintQueue.put(job);
+        success("Impressão em fila; será enviada quando a ligação voltar.");
+      } catch (e: any) {
+        error(e?.message || t("toast.errorPrintComanda"));
+      }
+      return;
+    }
     const printer = new FiscalPrinter({ printerType: "browser" });
     try {
       if (getBackendType() === BackendType.docker) {
@@ -1283,6 +1302,7 @@ const TPVContent = () => {
       success(
         t("toast.discountApplied", {
           amount: (discountCents / 100).toFixed(2),
+          currency: symbol,
         }),
       );
     } catch (err: any) {
@@ -2555,6 +2575,7 @@ const TPVContent = () => {
                 onPay={handlePayment}
                 onCancel={() => setPaymentModalOrderId(null)}
                 isTrialMode={isTrialData}
+                isOnline={bootstrap.coreStatus === "online"}
               />
             </Suspense>
           );
@@ -2689,18 +2710,20 @@ const TPVContent = () => {
 
 // Wrap in TableProvider and OrderProvider
 // TPV wrapper
+// DOCKER CORE: Providers agora são adicionados diretamente aqui, já que App.tsx não usa AppDomainWrapper
 const TPV = () => {
   const { t } = useTranslation("tpv");
   const readiness = useOperationalReadiness("TPV");
   const { toasts, dismiss } = useToast();
   const { identity } = useRestaurantIdentity();
-  const { tenantId } = useTenant();
 
   // DOCKER CORE: Restaurant ID fixo para desenvolvimento
   // Em produção, isso viria de autenticação ou seleção
   const { restaurantId: urlRestaurantId } = useParams();
   const restaurantId =
-    urlRestaurantId || tenantId || "00000000-0000-0000-0000-000000000100";
+    urlRestaurantId ||
+    getTabIsolated("chefiapp_restaurant_id") ||
+    "00000000-0000-0000-0000-000000000100";
 
   // CONFIG_RUNTIME_CONTRACT: Device Gate — dispositivo deve estar ativo na Config (docs/contracts/CONFIG_RUNTIME_CONTRACT.md §2.2, §2.3). Chamado no topo para respeitar Rules of Hooks.
   const deviceGate = useDeviceGate(restaurantId);

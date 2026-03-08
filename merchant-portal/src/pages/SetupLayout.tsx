@@ -1,11 +1,12 @@
 // Auth only — temporary until Core Auth (signOut in this layout)
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import "../App.css";
 import { GhostPreview } from "../components/GhostPreview";
 import { GlobalFooter } from "../components/GlobalFooter";
+import { LocaleSwitcher } from "../components/LocaleSwitcher";
 import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
-import { useTenant } from "../core/tenant/TenantContext";
 import { useGhostPreviewProps, useOnboardingState } from "../hooks";
 import { OnboardingContext } from "../hooks/useSetupContext";
 import { OSFrame } from "../ui/design-system/sovereign/OSFrame";
@@ -18,13 +19,12 @@ import styles from "./SetupLayout.module.css";
 export function SetupLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { tenantId } = useTenant();
 
   // Initialize hook with TabIsolatedStorage values if available
   const onboarding = useOnboardingState({
     apiBase: getTabIsolated("chefiapp_api_base") || "",
     internalToken: getTabIsolated("chefiapp_internal_token") || "dev-token",
-    restaurantId: tenantId || "",
+    restaurantId: getTabIsolated("chefiapp_restaurant_id") || "",
   });
 
   const { apiBase, stepStatus, steps, gates, loading, profile } = onboarding;
@@ -35,14 +35,15 @@ export function SetupLayout() {
       (getTabIsolated("chefiapp_name") && getTabIsolated("chefiapp_slug")),
   );
 
-  const navItems: { to: string; label: string; step: 1 | 2 | 3 | 4 | 5 }[] = [
-    { to: "/app/setup/identity", label: "1 • Identidade", step: 1 },
-    { to: "/app/setup/menu", label: "2 • Menu", step: 2 },
-    { to: "/app/setup/payments", label: "3 • Pagamentos", step: 3 },
-    { to: "/app/setup/design", label: "4 • Design", step: 4 },
-    { to: "/app/setup/staff", label: "👥 Equipa", step: 4 },
-    { to: "/app/setup/billing", label: "💳 Assinatura", step: 4 }, // Commercial
-    { to: "/app/setup/publish", label: "5 • Publicar", step: 5 },
+  const { t } = useTranslation("common");
+  const navItems: { to: string; labelKey: string; step: 1 | 2 | 3 | 4 | 5 }[] = [
+    { to: "/app/setup/identity", labelKey: "setup.navIdentity", step: 1 },
+    { to: "/app/setup/menu", labelKey: "setup.navMenu", step: 2 },
+    { to: "/app/setup/payments", labelKey: "setup.navPayments", step: 3 },
+    { to: "/app/setup/design", labelKey: "setup.navDesign", step: 4 },
+    { to: "/app/setup/staff", labelKey: "setup.navTeam", step: 4 },
+    { to: "/app/setup/billing", labelKey: "setup.navSubscription", step: 4 },
+    { to: "/app/setup/publish", labelKey: "setup.navPublish", step: 5 },
   ];
 
   function getStepIcon(
@@ -86,7 +87,7 @@ export function SetupLayout() {
     : "";
   const publicUrl = hasIdentity && slug ? `${apiBase}/public/${slug}` : "";
   const restaurantName = hasIdentity
-    ? profile?.name || getTabIsolated("chefiapp_name") || "O teu restaurante"
+    ? profile?.name || getTabIsolated("chefiapp_name") || t("common:setup.defaultRestaurantName")
     : "";
 
   const [health, setHealth] = useState<"unknown" | "ok" | "offline">("unknown");
@@ -126,14 +127,16 @@ export function SetupLayout() {
         <div className={styles.root}>
           <header className={styles.header}>
             <div className={styles.headerLeft}>
-              {/* Sovereign Signature handled by OSFrame */}
               <div className={styles.setupStep}>
-                Setup • Passo {activeStep} de 5
+                {t("common:setup.stepOf", { current: activeStep })}
               </div>
             </div>
-            <span className={styles.progressBadge}>
-              {progressPct}% concluído
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span className={styles.progressBadge}>
+                {progressPct}{t("common:setup.percentDone")}
+              </span>
+              <LocaleSwitcher />
+            </div>
           </header>
           <div className={styles.contentWrap}>
             <div className={`setupGrid ${styles.grid}`}>
@@ -143,23 +146,21 @@ export function SetupLayout() {
                   {!hasIdentity ? (
                     <>
                       <div className={`h3 ${styles.titleSpacing}`}>
-                        Vamos começar
+                        {t("common:setup.letsStart")}
                       </div>
                       <div className="muted">
-                        Cria a identidade do teu restaurante e vê a tua página
-                        ganhar vida.
+                        {t("common:setup.letsStartDesc")}
                       </div>
                       <div className={`banner neutral ${styles.bannerCompact}`}>
                         <div className="bannerText">
-                          A pré-visualização aparecerá aqui após criares a
-                          identidade.
+                          {t("common:setup.previewPlaceholder")}
                         </div>
                       </div>
                     </>
                   ) : (
                     <>
                       <div className={`h3 ${styles.titleSpacing}`}>
-                        A construir
+                        {t("common:setup.building")}
                       </div>
                       <div className={styles.restaurantName}>
                         {restaurantName}
@@ -179,7 +180,7 @@ export function SetupLayout() {
                           disabled={loading}
                           onClick={() => onboarding.loadState()}
                         >
-                          {loading ? "A carregar…" : "Atualizar"}
+                          {loading ? t("common:setup.loading") : t("common:setup.refresh")}
                         </button>
                       </div>
 
@@ -188,8 +189,7 @@ export function SetupLayout() {
                           className={`banner neutral ${styles.bannerCompact}`}
                         >
                           <div className="bannerText">
-                            A pré-visualização da tua página aparecerá aqui
-                            quando publicares.
+                            {t("common:setup.previewAfterPublish")}
                           </div>
                         </div>
                       )}
@@ -201,7 +201,7 @@ export function SetupLayout() {
                               className={`banner ok ${styles.bannerCompactNoTop}`}
                             >
                               <div className="bannerText">
-                                ✓ Servidor ligado • preview disponível
+                                {t("common:setup.serverOk")}
                               </div>
                             </div>
                           ) : health === "offline" ? (
@@ -209,8 +209,7 @@ export function SetupLayout() {
                               className={`banner neutral ${styles.bannerCompactNoTop}`}
                             >
                               <div className="bannerText">
-                                Liga o servidor para veres a pré-visualização em
-                                tempo real.
+                                {t("common:setup.serverOffline")}
                               </div>
                             </div>
                           ) : (
@@ -218,7 +217,7 @@ export function SetupLayout() {
                               className={`banner neutral ${styles.bannerCompactNoTop}`}
                             >
                               <div className="bannerText">
-                                A verificar ligação ao servidor…
+                                {t("common:setup.checkingServer")}
                               </div>
                             </div>
                           )}
@@ -237,7 +236,7 @@ export function SetupLayout() {
                 </div>
 
                 <nav className={`steps ${styles.stepsNav}`}>
-                  {navItems.map(({ to, label, step }) => {
+                  {navItems.map(({ to, labelKey, step }) => {
                     const status = stepStatus(step);
                     const isBlocked = status === "blocked";
                     const isCurrent = step === activeStep;
@@ -255,7 +254,7 @@ export function SetupLayout() {
                         <span className={styles.stepIcon}>
                           {getStepIcon(status)}
                         </span>
-                        {label}
+                        {t(`common:${labelKey}`)}
                       </NavLink>
                     );
                   })}
@@ -277,22 +276,21 @@ export function SetupLayout() {
                     className={`${styles.logoutButton} hover:bg-red-50 dark:hover:bg-red-900/20`}
                   >
                     <span className={styles.stepIcon}>🚪</span>
-                    Sair
+                    {t("common:setup.logout")}
                   </button>
                 </div>
 
                 {/* Gate banner */}
                 {gates.ok === false && (
                   <div className={`banner warn ${styles.bannerGate}`}>
-                    <div className="bannerTitle">💳 Assinatura Pendente</div>
+                    <div className="bannerTitle">{t("common:setup.subscriptionPending")}</div>
                     <div className="bannerText">
-                      {gates.message ||
-                        "Ativa o ChefIApp Pro para publicares a tua página."}{" "}
+                      {gates.message || t("common:setup.activateToPublish")}{" "}
                       <NavLink
                         to="/app/setup/billing"
                         className={styles.gateLink}
                       >
-                        Ativar agora
+                        {t("common:setup.activateNow")}
                       </NavLink>
                     </div>
                   </div>
@@ -300,20 +298,19 @@ export function SetupLayout() {
 
                 {gates.ok === true && (
                   <div className={`banner ok ${styles.bannerGate}`}>
-                    <div className="bannerTitle">✓ Plano Ativo</div>
+                    <div className="bannerTitle">{t("common:setup.planActive")}</div>
                     <div className="bannerText">
-                      ChefIApp Pro • {profile?.web_level || "FULL"}
+                      {t("common:setup.planActiveDesc", { level: profile?.web_level || "FULL" })}
                     </div>
                   </div>
                 )}
 
-                {/* TPV Ready link */}
                 {steps.published && gates.ok && (
                   <button
                     className={`btn primary ${styles.fullWidthButton}`}
                     onClick={() => navigate("/app/tpv-ready")}
                   >
-                    Ver TPV
+                    {t("common:setup.seeTPV")}
                   </button>
                 )}
               </aside>

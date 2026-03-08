@@ -5,10 +5,10 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { OnboardingStepIndicator } from "../../components/onboarding/OnboardingStepIndicator";
-import { ONBOARDING_5MIN_COPY } from "../../copy/onboarding5min";
-import { useTenant } from "../../core/tenant/TenantContext";
+import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { fetchRestaurantForIdentity } from "../../infra/readers/RuntimeReader";
 import { Button, Card } from "../../ui/design-system/primitives";
@@ -22,13 +22,18 @@ interface TableRow {
 
 export function OnboardingTpvPreviewPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation("onboarding");
   const [restaurantName, setRestaurantName] = useState<string>("");
   const [restaurantCity, setRestaurantCity] = useState<string | null>(null);
   const [restaurantType, setRestaurantType] = useState<string | null>(null);
   const [tables, setTables] = useState<TableRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { tenantId: restaurantId } = useTenant();
+  const restaurantId =
+    getTabIsolated("chefiapp_restaurant_id") ??
+    (typeof window !== "undefined"
+      ? window.localStorage.getItem("chefiapp_restaurant_id")
+      : null);
 
   useEffect(() => {
     if (!restaurantId) {
@@ -58,14 +63,17 @@ export function OnboardingTpvPreviewPage() {
       .then(([identity, tablesList]) => {
         if (!mounted) return;
         if (identity) {
-          setRestaurantName(identity.name ?? "Seu Restaurante");
+          setRestaurantName(
+            identity.name ?? t("fiveMin.tpvPreview.restaurantFallback"),
+          );
           setRestaurantCity(identity.city ?? null);
           setRestaurantType(identity.type ?? null);
         }
         setTables(tablesList);
       })
       .catch(() => {
-        if (mounted) setRestaurantName("Seu Restaurante");
+        if (mounted)
+          setRestaurantName(t("fiveMin.tpvPreview.restaurantFallback"));
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -87,12 +95,8 @@ export function OnboardingTpvPreviewPage() {
     <div data-onboarding-step="6" className={styles.pageRoot}>
       <OnboardingStepIndicator step={7} total={9} />
       <div className={styles.header}>
-        <h1 className={styles.title}>
-          {ONBOARDING_5MIN_COPY.tpvPreview.headline}
-        </h1>
-        <p className={styles.subtitle}>
-          {ONBOARDING_5MIN_COPY.tpvPreview.message}
-        </p>
+        <h1 className={styles.title}>{t("fiveMin.tpvPreview.headline")}</h1>
+        <p className={styles.subtitle}>{t("fiveMin.tpvPreview.message")}</p>
 
         {!loading && (
           <Card padding="lg" className={styles.previewCard}>
@@ -102,16 +106,19 @@ export function OnboardingTpvPreviewPage() {
               {restaurantType && <span>{restaurantType}</span>}
             </div>
             <div className={styles.summaryText}>
-              Resumo do que configuraste: identidade, local e perfil do dia.
-              Aqui em baixo vês o mapa das mesas e o TPV em preview.
+              {t("fiveMin.tpvPreview.summaryText")}
             </div>
             <div className={styles.tableMapSection}>
-              <div className={styles.tableMapLabel}>Mapa das mesas</div>
+              <div className={styles.tableMapLabel}>
+                {t("fiveMin.tpvPreview.tableMapLabel")}
+              </div>
               <div className={styles.tableGrid}>
-                <div className={styles.tableItem}>Balcão</div>
-                {displayTables.slice(0, 9).map((t) => (
-                  <div key={t.id} className={styles.tableItem}>
-                    Mesa {t.number}
+                <div className={styles.tableItem}>
+                  {t("fiveMin.tpvPreview.counter")}
+                </div>
+                {displayTables.slice(0, 9).map((tbl) => (
+                  <div key={tbl.id} className={styles.tableItem}>
+                    {t("fiveMin.tpvPreview.table", { number: tbl.number })}
                   </div>
                 ))}
               </div>
@@ -126,17 +133,17 @@ export function OnboardingTpvPreviewPage() {
             variant="solid"
             onClick={() => navigate("/onboarding/plan-trial")}
           >
-            {ONBOARDING_5MIN_COPY.tpvPreview.cta}
+            {t("fiveMin.tpvPreview.cta")}
           </Button>
           <Link to="/onboarding/ritual" className={styles.ritualLink}>
-            {ONBOARDING_5MIN_COPY.tpvPreview.linkRitual}
+            {t("fiveMin.tpvPreview.linkRitual")}
           </Link>
         </div>
       </div>
       <div className={styles.tpvContainer}>
         <TPVMinimal mode="preview" />
       </div>
-      {/* CTA fixo em baixo: sempre visível para avançar (Tela 7 ou 8) */}
+      {/* Fixed CTA at bottom: always visible to proceed (Step 7 or 8) */}
       <div className={styles.fixedCta}>
         <Button
           type="button"
@@ -144,10 +151,10 @@ export function OnboardingTpvPreviewPage() {
           variant="solid"
           onClick={() => navigate("/onboarding/plan-trial")}
         >
-          {ONBOARDING_5MIN_COPY.tpvPreview.cta}
+          {t("fiveMin.tpvPreview.cta")}
         </Button>
         <Link to="/onboarding/ritual" className={styles.ritualLink}>
-          {ONBOARDING_5MIN_COPY.tpvPreview.linkRitual}
+          {t("fiveMin.tpvPreview.linkRitual")}
         </Link>
       </div>
     </div>

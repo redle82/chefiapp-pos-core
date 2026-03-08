@@ -1,3 +1,4 @@
+import type { PaymentMethod } from "@domain/payment/types";
 import {
   Elements,
   PaymentElement,
@@ -12,10 +13,23 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { CONFIG } from "../../../config";
 import { useCurrency } from "../../../core/currency/useCurrency";
 import { getStripePromise } from "../../../core/payment/loadStripeLazy";
 import { PaymentBroker } from "../../../core/payment/PaymentBroker";
+import {
+  getPaymentMethodIdsForRegion,
+  getPaymentRegion,
+} from "../../../core/payment/paymentRegion";
+import {
+  calculateChange,
+  calculateGrandTotal,
+  calculateTip,
+  isCashSufficient,
+  parseToCents,
+  QUICK_CASH_VALUES,
+} from "../../../domain/payment";
 
 const STRIPE_KEY = CONFIG.STRIPE_PUBLIC_KEY || null;
 
@@ -30,51 +44,50 @@ interface PaymentModalProps {
   ) => Promise<void> | void;
   onCancel: () => void;
   isTrialMode?: boolean;
+  /** When false (offline/degraded), only cash is shown (DoD B3). */
+  isOnline?: boolean;
 }
-
-type PaymentMethodId = "cash" | "card" | "mbway" | "pix" | "sumup_eur";
 
 interface MethodOption {
-  id: PaymentMethodId;
-  label: string;
+  id: PaymentMethod;
+  labelKey: string;
+  descKey: string;
   icon: string;
-  description: string;
 }
-
-const METHODS: MethodOption[] = [
+const METHOD_OPTIONS: MethodOption[] = [
   {
     id: "cash",
-    label: "Dinheiro",
+    labelKey: "payment.method.cashLabel",
+    descKey: "payment.method.cashDesc",
     icon: "💶",
-    description: "Pagamento em especie",
   },
   {
     id: "card",
-    label: "Cartao",
+    labelKey: "payment.method.cardLabel",
+    descKey: "payment.method.cardDesc",
     icon: "💳",
-    description: "Terminal MB / Visa / MC",
   },
   {
     id: "mbway",
-    label: "MB WAY",
+    labelKey: "payment.method.mbwayLabel",
+    descKey: "payment.method.mbwayDesc",
     icon: "📱",
-    description: "Pagamento por telemovel",
   },
   {
     id: "pix",
-    label: "PIX",
+    labelKey: "payment.method.pixLabel",
+    descKey: "payment.method.pixDesc",
     icon: "⚡",
-    description: "Transferencia instantanea",
   },
   {
     id: "sumup_eur",
-    label: "Cartão EUR",
+    labelKey: "payment.method.sumup_eurLabel",
+    descKey: "payment.method.sumup_eurDesc",
     icon: "🇪🇺",
-    description: "SumUp (ES/PT/DE)",
   },
 ];
 
-const QUICK_CASH = [5_00, 10_00, 20_00, 50_00];
+const QUICK_CASH = QUICK_CASH_VALUES;
 
 const ACCENT = "#6366f1";
 const GREEN = "#10b981";
@@ -90,11 +103,29 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onPay,
   onCancel,
   isTrialMode,
+  isOnline = true,
 }) => {
-  const { formatAmount } = useCurrency();
+  const { t } = useTranslation("tpv");
+  const { formatAmount, currency, getCurrency } = useCurrency();
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  const [method, setMethod] = useState<PaymentMethodId | null>(null);
+  const methodsToShow = useMemo(() => {
+    if (!isOnline) {
+      return METHOD_OPTIONS.filter((m) => m.id === "cash").map((m) => ({
+        ...m,
+        label: t(m.labelKey),
+        description: t(m.descKey),
+      }));
+    }
+    const paymentRegion = getPaymentRegion(currency);
+    const allowedMethodIds = getPaymentMethodIdsForRegion(paymentRegion);
+    return METHOD_OPTIONS.filter((m) => allowedMethodIds.includes(m.id)).map(
+      (m) => ({ ...m, label: t(m.labelKey), description: t(m.descKey) }),
+    );
+  }, [currency, t, isOnline]);
+  const currencySymbol = getCurrency(currency).symbol;
+
+  const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [cashTendered, setCashTendered] = useState("");
   const [mbwayPhone, setMbwayPhone] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -126,15 +157,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [sumupCheckoutUrl, setSumUpCheckoutUrl] = useState<string | null>(null);
   const [sumupTimeRemaining, setSumUpTimeRemaining] = useState<number>(900); // 15 minutes in seconds
 
-  // Tip / Gorjeta
+  // Tip / Gorjeta - using domain layer
   const [tipPercent, setTipPercent] = useState<number | null>(null);
   const [customTip, setCustomTip] = useState("");
-  const tipCents = useMemo(() => {
-    if (tipPercent !== null) return Math.round(orderTotal * (tipPercent / 100));
-    const v = parseFloat(customTip || "0");
-    return Number.isFinite(v) ? Math.round(v * 100) : 0;
-  }, [tipPercent, customTip, orderTotal]);
-  const grandTotal = orderTotal + tipCents;
+  const tipCents = useMemo(
+    () => calculateTip(orderTotal, tipPercent, customTip),
+    [tipPercent, customTip, orderTotal],
+  );
+  const grandTotal = useMemo(
+    () => calculateGrandTotal(orderTotal, tipCents),
+    [orderTotal, tipCents],
+  );
 
   // Stripe card flow — load Stripe only when modal is open (avoids TDZ at page load)
   type CardStep = "idle" | "creating-intent" | "ready";
@@ -178,7 +211,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     PaymentBroker.createPaymentIntent({
       orderId,
       amount: orderTotal,
-      currency: "eur",
+      currency: currency.toLowerCase(),
       restaurantId,
     })
       .then((result) => {
@@ -192,19 +225,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       });
   }, [method, isTrialMode, orderId, orderTotal, restaurantId]);
 
-  const cashCents = useMemo(() => {
-    const value = parseFloat(cashTendered || "0");
-    return Number.isFinite(value) ? Math.round(value * 100) : 0;
-  }, [cashTendered]);
+  // Cash calculations - using domain layer
+  const cashCents = useMemo(() => parseToCents(cashTendered), [cashTendered]);
 
   const changeCents = useMemo(
-    () => cashCents - orderTotal,
-    [cashCents, orderTotal],
+    () => calculateChange(cashCents, grandTotal),
+    [cashCents, grandTotal],
   );
 
+  // Validation - using domain layer
   const canConfirm = useMemo(() => {
     if (!method || processing) return false;
-    if (method === "cash") return cashCents >= orderTotal;
+    if (method === "cash") return isCashSufficient(cashCents, grandTotal);
     if (method === "mbway") return /^9\d{8}$/.test(mbwayPhone);
     // Card handled by Stripe form; hide generic confirm when ready
     if (method === "card") return isTrialMode === true;
@@ -276,7 +308,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           orderId,
           amount: grandTotal,
           restaurantId,
-          currency: "EUR",
+          currency,
           description: `Pedido ${orderId.slice(-6)} - Total ${formatAmount(
             grandTotal,
           )}`,
@@ -467,7 +499,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             onClick={onCancel}
             disabled={processing}
             style={styles.closeBtn}
-            aria-label="Fechar"
+            aria-label={t("common:close")}
           >
             ✕
           </button>
@@ -526,7 +558,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           >
             <span style={{ color: "#71717a", fontSize: 13 }}>Outro:</span>
             <div style={{ ...styles.cashInputRow, flex: 1 }}>
-              <span style={styles.cashPrefix}>€</span>
+              <span style={styles.cashPrefix}>{currencySymbol}</span>
               <input
                 type="number"
                 inputMode="decimal"
@@ -547,9 +579,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         <div style={styles.section}>
           <span style={styles.sectionTitle}>Forma de Pagamento</span>
           <div style={styles.methodGrid}>
-            {METHODS.map((m) => (
+            {methodsToShow.map((m) => (
               <button
                 key={m.id}
+                data-testid={`payment-method-${m.id}`}
                 onClick={() => setMethod(m.id)}
                 disabled={processing}
                 style={{
@@ -569,7 +602,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           <div style={styles.section}>
             <span style={styles.sectionTitle}>Valor Entregue</span>
             <div style={styles.cashInputRow}>
-              <span style={styles.cashPrefix}>€</span>
+              <span style={styles.cashPrefix}>{currencySymbol}</span>
               <input
                 type="number"
                 inputMode="decimal"
@@ -595,7 +628,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   onClick={() => setCashTendered((c / 100).toFixed(2))}
                   style={styles.quickCashBtn}
                 >
-                  €{(c / 100).toFixed(0)}
+                  {currencySymbol}
+                  {(c / 100).toFixed(0)}
                 </button>
               ))}
             </div>

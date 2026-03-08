@@ -10,6 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useCurrency } from "../../core/currency/useCurrency";
 import { resolveProductImageUrl } from "../../core/products/resolveProductImageUrl";
 import {
   readMenu,
@@ -54,6 +55,7 @@ interface CartItem {
 export function TablePage() {
   const { slug, number } = useParams<{ slug: string; number: string }>();
   const navigate = useNavigate();
+  const { formatAmount } = useCurrency();
   const [restaurant, setRestaurant] = useState<CoreRestaurant | null>(null);
   const [table, setTable] = useState<CoreTable | null>(null);
   const [categories, setCategories] = useState<CoreMenuCategory[]>([]);
@@ -481,7 +483,7 @@ export function TablePage() {
             >
               <span style={{ color: VPC.textMuted }}>Total</span>
               <span style={{ color: VPC.accent, fontSize: VPC.fontSizeLarge }}>
-                {(cartTotal / 100).toFixed(2)} €
+                {formatAmount(cartTotal)}
               </span>
             </div>
             <button
@@ -624,7 +626,7 @@ export function TablePage() {
                                 color: VPC.accent,
                               }}
                             >
-                              {(product.price_cents / 100).toFixed(2)} €
+                              {formatAmount(product.price_cents)}
                             </span>
                             <button
                               type="button"
@@ -737,7 +739,7 @@ export function TablePage() {
                               color: VPC.accent,
                             }}
                           >
-                            {(product.price_cents / 100).toFixed(2)} €
+                            {formatAmount(product.price_cents)}
                           </span>
                           <button
                             type="button"

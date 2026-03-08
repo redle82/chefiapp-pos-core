@@ -7,6 +7,7 @@
  */
 
 import { useState } from "react";
+import { useCurrency } from "../../../core/currency/useCurrency";
 import { OrderModeSelector, type OrderMode } from "./OrderModeSelector";
 
 const ACCENT = "#f97316";
@@ -89,6 +90,7 @@ export function OrderSummaryPanel({
   onOrderModeChange,
 }: OrderSummaryPanelProps) {
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
+  const { formatAmount } = useCurrency();
   const totalCents = subtotalCents + taxCents - discountCents;
 
   const markImageFailed = (productId: string) => {
@@ -100,7 +102,7 @@ export function OrderSummaryPanel({
       style={{
         width: 340,
         minWidth: 340,
-        backgroundColor: "#171717",
+        backgroundColor: "#141414",
         borderLeft: "1px solid rgba(255,255,255,0.06)",
         display: "flex",
         flexDirection: "column",
@@ -248,7 +250,7 @@ export function OrderSummaryPanel({
                   <span
                     style={{ color: "#fafafa", fontWeight: 700, fontSize: 14 }}
                   >
-                    €{((item.unit_price * item.quantity) / 100).toFixed(2)}
+                    {formatAmount(item.unit_price * item.quantity)}
                   </span>
                   {/* Qty controls */}
                   <div
@@ -348,7 +350,7 @@ export function OrderSummaryPanel({
           }}
         >
           <span>Total</span>
-          <span>€{(totalCents / 100).toFixed(2)}</span>
+          <span>{formatAmount(totalCents)}</span>
         </div>
       </div>
 
@@ -413,6 +415,7 @@ export function OrderSummaryPanel({
 
 function SummaryRow({ label, value }: { label: string; value: number }) {
   const negative = value < 0;
+  const { formatAmount } = useCurrency();
   return (
     <div
       style={{
@@ -424,7 +427,8 @@ function SummaryRow({ label, value }: { label: string; value: number }) {
     >
       <span>{label}</span>
       <span>
-        {negative ? "-" : ""}€{(Math.abs(value) / 100).toFixed(2)}
+        {negative ? "-" : ""}
+        {formatAmount(Math.abs(value))}
       </span>
     </div>
   );

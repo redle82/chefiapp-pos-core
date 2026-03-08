@@ -12,6 +12,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
 import type { CoreTask } from "../../infra/docker-core/types";
@@ -62,8 +63,8 @@ const STATUS_LABELS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 export function TPVTasksPage() {
-  // RequireOperational surface="TPV" guarantees restaurant exists when this renders.
-  const restaurantId = useTPVRestaurantId()!;
+  const { t } = useTranslation();
+  const restaurantId = useTPVRestaurantId();
   const { runtime } = useRestaurantRuntime();
 
   const [tasks, setTasks] = useState<CoreTask[]>([]);
@@ -354,7 +355,7 @@ export function TPVTasksPage() {
                 : "var(--text-tertiary, #737373)",
             }}
           >
-            {actingOn === "creating" ? "…" : "Criar"}
+            {actingOn === "creating" ? "…" : t("common:create")}
           </button>
         </div>
       )}

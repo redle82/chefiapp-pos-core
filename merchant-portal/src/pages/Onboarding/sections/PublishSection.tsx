@@ -6,12 +6,14 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../../../context/OnboardingContext";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { useBootstrapState } from "../../../hooks/useBootstrapState";
 import styles from "./PublishSection.module.css";
 
 export function PublishSection() {
+  const { t } = useTranslation("onboarding");
   const { state, canPublish } = useOnboarding();
   const bootstrap = useBootstrapState();
   const { publishRestaurant: publishRuntime } = useRestaurantRuntime();
@@ -20,46 +22,47 @@ export function PublishSection() {
   const publishEnabled =
     canPublish() && bootstrap.coreStatus === "online" && !isPublishing;
 
-  const requiredSections: Array<{ id: string; label: string }> = [
-    { id: "identity", label: "Identidade" },
-    { id: "location", label: "Localização" },
-    { id: "schedule", label: "Horários" },
-    { id: "menu", label: "Cardápio" },
-    { id: "people", label: "Pessoas" },
+  const requiredSections: Array<{ id: string; labelKey: string }> = [
+    { id: "identity", labelKey: "publish.sectionIdentity" },
+    { id: "location", labelKey: "publish.sectionLocation" },
+    { id: "schedule", labelKey: "publish.sectionSchedule" },
+    { id: "menu", labelKey: "publish.sectionMenu" },
+    { id: "people", labelKey: "publish.sectionPeople" },
   ];
 
   const handlePublish = async () => {
     if (!canPublish()) {
-      alert("Complete todas as seções obrigatórias antes de publicar.");
+      alert(t("publish.completeAllAlert"));
       return;
     }
 
     setIsPublishing(true);
     try {
-      // Usar publishRestaurant do RestaurantRuntimeContext (publicação real)
       await publishRuntime();
-
-      // Redirecionar para Dashboard (portal de sistemas)
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Erro ao publicar:", error);
-      alert(
-        `Erro ao publicar restaurante: ${
-          error?.message || "Erro desconhecido"
-        }`,
-      );
+      alert(t("publish.errorPublish", { message: error?.message || "Erro desconhecido" }));
       setIsPublishing(false);
     }
   };
 
+  const buttonLabel = isPublishing
+    ? t("publish.publishing")
+    : bootstrap.coreStatus !== "online"
+    ? t("publish.coreWait")
+    : canPublish()
+    ? `🚀 ${t("publish.publishButton")}`
+    : t("publish.completeSections");
+
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>🚀 Publicar Restaurante</h1>
-      <p className={styles.subtitle}>Revise tudo e ative seu restaurante</p>
+      <h1 className={styles.title}>🚀 {t("publish.title")}</h1>
+      <p className={styles.subtitle}>{t("publish.subtitle")}</p>
 
       {/* Resumo */}
       <div className={styles.panel}>
-        <h3 className={styles.sectionTitle}>Resumo da Configuração</h3>
+        <h3 className={styles.sectionTitle}>{t("publish.summaryTitle")}</h3>
         <div className={styles.summaryList}>
           {requiredSections.map((section) => {
             const sectionState =
@@ -71,13 +74,13 @@ export function PublishSection() {
                 <span className={styles.summaryIcon}>
                   {isComplete ? "✅" : "❌"}
                 </span>
-                <span className={styles.summaryLabel}>{section.label}</span>
+                <span className={styles.summaryLabel}>{t(section.labelKey)}</span>
                 <span
                   className={`${styles.summaryStatus} ${
                     isComplete ? styles.statusComplete : styles.statusIncomplete
                   }`}
                 >
-                  {isComplete ? "Completo" : "Incompleto"}
+                  {isComplete ? t("publish.complete") : t("publish.incomplete")}
                 </span>
               </div>
             );
@@ -88,24 +91,22 @@ export function PublishSection() {
       {/* O que acontece ao publicar */}
       <div className={`${styles.panel} ${styles.infoPanel}`}>
         <h3 className={styles.sectionTitleCompact}>
-          O que acontece ao publicar:
+          {t("publish.whatHappensTitle")}
         </h3>
         <ul className={styles.infoList}>
-          <li>Restaurante fica ativo e operacional</li>
-          <li>Primeiro pedido de teste é criado automaticamente</li>
-          <li>Pedido aparece no KDS</li>
-          <li>Você será redirecionado para o Dashboard</li>
+          <li>{t("publish.whatHappens1")}</li>
+          <li>{t("publish.whatHappens2")}</li>
+          <li>{t("publish.whatHappens3")}</li>
+          <li>{t("publish.whatHappens4")}</li>
         </ul>
       </div>
 
-      {/* Aviso Core offline: só quando offline-erro */}
       {bootstrap.coreStatus === "offline-erro" && (
         <div className={styles.errorBanner}>
-          Core indisponível. Inicie o Core para publicar.
+          {t("publish.coreOffline")}
         </div>
       )}
 
-      {/* Botão Publicar: desativar quando Core não está online */}
       <button
         onClick={handlePublish}
         disabled={
@@ -117,120 +118,59 @@ export function PublishSection() {
             : styles.publishButtonDisabled
         }`}
       >
-        {isPublishing
-          ? "Publicando..."
-          : bootstrap.coreStatus !== "online"
-          ? "Core indisponível — aguarde"
-          : canPublish()
-          ? "🚀 Publicar Restaurante"
-          : "Complete as seções obrigatórias"}
+        {buttonLabel}
       </button>
 
       {!canPublish() && (
-        <p className={styles.publishHint}>
-          Complete todas as seções obrigatórias antes de publicar
-        </p>
+        <p className={styles.publishHint}>{t("publish.completeSectionsHint")}</p>
       )}
 
-      {/* Acesso Rápido aos Sistemas */}
       <div className={`${styles.panel} ${styles.accessPanel}`}>
         <h3 className={styles.sectionTitle}>
-          🧩 Acesso aos Sistemas do ChefIApp
+          🧩 {t("publish.accessTitle")}
         </h3>
-        <p className={styles.accessDescription}>
-          Estes são os módulos do sistema operacional. Alguns podem estar
-          bloqueados até a publicação.
-        </p>
+        <p className={styles.accessDescription}>{t("publish.accessDescription")}</p>
 
         <div className={styles.systemsGrid}>
-          {/* TPV / Dispositivos */}
-          <button
-            onClick={() => navigate("/admin/devices")}
-            className={styles.systemButton}
-          >
+          <button onClick={() => navigate("/tpv")} className={styles.systemButton}>
             <span>🖥️</span>
-            <span>TPV (Caixa)</span>
+            <span>{t("publish.systemTPV")}</span>
           </button>
-
-          {/* Task System */}
-          <button
-            onClick={() => navigate("/tasks")}
-            className={styles.systemButton}
-          >
+          <button onClick={() => navigate("/tasks")} className={styles.systemButton}>
             <span>✅</span>
-            <span>Tarefas</span>
+            <span>{t("publish.systemTasks")}</span>
           </button>
-
-          {/* People */}
-          <button
-            onClick={() => navigate("/people")}
-            className={styles.systemButton}
-          >
+          <button onClick={() => navigate("/people")} className={styles.systemButton}>
             <span>👥</span>
-            <span>Pessoas</span>
+            <span>{t("publish.systemPeople")}</span>
           </button>
-
-          {/* Health */}
-          <button
-            onClick={() => navigate("/health")}
-            className={styles.systemButton}
-          >
+          <button onClick={() => navigate("/health")} className={styles.systemButton}>
             <span>💚</span>
-            <span>Saúde</span>
+            <span>{t("publish.systemHealth")}</span>
           </button>
-
-          {/* Mentor */}
-          <button
-            onClick={() => navigate("/mentor")}
-            className={styles.systemButton}
-          >
+          <button onClick={() => navigate("/mentor")} className={styles.systemButton}>
             <span>🤖</span>
-            <span>Mentor IA</span>
+            <span>{t("publish.systemMentor")}</span>
           </button>
-
-          {/* Purchases */}
-          <button
-            onClick={() => navigate("/purchases")}
-            className={styles.systemButton}
-          >
+          <button onClick={() => navigate("/purchases")} className={styles.systemButton}>
             <span>🛒</span>
-            <span>Compras</span>
+            <span>{t("publish.systemPurchases")}</span>
           </button>
-
-          {/* Financial */}
-          <button
-            onClick={() => navigate("/financial")}
-            className={styles.systemButton}
-          >
+          <button onClick={() => navigate("/financial")} className={styles.systemButton}>
             <span>💰</span>
-            <span>Financeiro</span>
+            <span>{t("publish.systemFinancial")}</span>
           </button>
-
-          {/* Reservations */}
-          <button
-            onClick={() => navigate("/reservations")}
-            className={styles.systemButton}
-          >
+          <button onClick={() => navigate("/reservations")} className={styles.systemButton}>
             <span>📅</span>
-            <span>Reservas</span>
+            <span>{t("publish.systemReservations")}</span>
           </button>
-
-          {/* Como tudo se conecta (TRIAL_GUIDE_SPEC) */}
-          <button
-            onClick={() => navigate("/auth")}
-            className={styles.systemButton}
-          >
+          <button onClick={() => navigate("/auth")} className={styles.systemButton}>
             <span>🧭</span>
-            <span>Ver como tudo se conecta</span>
+            <span>{t("publish.systemHowItConnects")}</span>
           </button>
-
-          {/* Config Tree */}
-          <button
-            onClick={() => navigate("/admin/config")}
-            className={styles.systemButton}
-          >
+          <button onClick={() => navigate("/admin/config")} className={styles.systemButton}>
             <span>⚙️</span>
-            <span>Config Tree</span>
+            <span>{t("publish.systemConfigTree")}</span>
           </button>
         </div>
       </div>

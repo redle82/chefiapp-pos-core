@@ -20,6 +20,7 @@
  */
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { OfflineBanner } from "../../../components/OfflineBanner";
 import { OrderProvider } from "../context/OrderContextReal";
 // DOCKER CORE: Kernel removido - acesso direto ao Core via PostgREST/RPCs
 import { KernelProvider } from "../../../core/kernel/KernelContext";
@@ -80,6 +81,7 @@ const KDSStandalone = () => {
     <KDSLayout>
       <KernelProvider tenantId={restaurantId}>
         <OfflineOrderProvider>
+          <OfflineBanner />
           <OrderProvider restaurantId={restaurantId}>
             <KitchenDisplay
               initialStation={initialStation as any}

@@ -7,6 +7,7 @@
  */
 
 import { useState } from "react";
+import { useCurrency } from "../../../core/currency/useCurrency";
 import { useStockSignals } from "../../../core/operational/hooks/useStockSignals";
 
 const ACCENT = "#f97316";
@@ -57,6 +58,7 @@ export function TPVProductCard({
   const [primaryError, setPrimaryError] = useState(false);
   const [fallbackError, setFallbackError] = useState(false);
 
+  const { symbol } = useCurrency();
   const { isCritical, isUnavailable, marginPct } = useStockSignals(product.id);
 
   const primaryUrl =
@@ -195,7 +197,8 @@ export function TPVProductCard({
         >
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
             <span style={{ color: "#fafafa", fontWeight: 700, fontSize: 16 }}>
-              €{price}
+              {symbol}
+              {price}
             </span>
             {originalPrice && (
               <span

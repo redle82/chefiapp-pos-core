@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useTenant } from "../core/tenant/TenantContext";
 import { TenantSelector } from "../core/tenant/TenantSelector";
 import { GlobalLoadingView } from "../ui/design-system/components";
@@ -12,6 +13,7 @@ import styles from "./SelectTenantPage.module.css";
  * - >1 memberships → lista (TenantSelector full); após seleção redirect /dashboard
  */
 export function SelectTenantPage() {
+  const { t } = useTranslation("common");
   const { memberships, isLoading, switchTenant, tenantId } = useTenant();
   const navigate = useNavigate();
   const autoSelectDoneRef = useRef(false);
@@ -34,7 +36,7 @@ export function SelectTenantPage() {
   if (isLoading) {
     return (
       <GlobalLoadingView
-        message="A carregar..."
+        message={t("common:selectTenant.loading")}
         layout="operational"
         variant="fullscreen"
       />
@@ -48,7 +50,7 @@ export function SelectTenantPage() {
   if (memberships.length === 1) {
     return (
       <GlobalLoadingView
-        message="A redirecionar..."
+        message={t("common:selectTenant.redirecting")}
         layout="operational"
         variant="fullscreen"
       />

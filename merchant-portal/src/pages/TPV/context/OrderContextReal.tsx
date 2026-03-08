@@ -27,6 +27,7 @@ import {
 } from "../../../core/tpv/OrderEngine";
 import { PaymentEngine } from "../../../core/tpv/PaymentEngine";
 // DOCKER CORE: Usar dockerCoreClient em vez de supabase genérico
+import { formatCents } from "../../../core/currency/CurrencyService";
 import { updateOrderStatus as coreUpdateOrderStatus } from "../../../core/infra/CoreOrdersApi";
 import {
   tpvEventBus,
@@ -36,7 +37,6 @@ import {
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 
 import { v4 as uuidv4 } from "uuid";
-import { useAuth } from "../../../core/auth/useAuth";
 import type { Order, OrderItem } from "../../../core/contracts";
 import { classifyFailure } from "../../../core/errors/FailureClassifier";
 import {
@@ -53,7 +53,6 @@ import {
 } from "../../../core/storage/TabIsolatedStorage";
 import { eventTaskGenerator } from "../../../core/tasks/EventTaskGenerator";
 import { useOfflineOrder } from "./OfflineOrderContext";
-import { resolveOperatorId } from "./operatorIdentity";
 import { OrderContext, type OrderCreateInput } from "./OrderContextToken"; // FASE 3.4: Token isolado
 // DOCKER CORE: All writes go through PostgREST RPCs (see ARCHITECTURE_DECISION.md)
 import { isDevStableMode } from "../../../core/runtime/devStableMode";
@@ -132,17 +131,16 @@ export function OrderProvider({
   children: ReactNode;
   restaurantId?: string;
 }) {
-  const { user } = useAuth();
   // Writes go through PostgREST RPCs — no kernel dependency
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // SOVEREIGN: restaurantId comes from Gate layer (TenantContext)
+  // SOVEREIGN: restaurantId comes from Gate layer (TenantContext -> AppDomainWrapper)
   const [restaurantId, setRestaurantId] = useState<string | null>(
     propRestaurantId || null,
   );
-  const operatorId = resolveOperatorId(user);
+  const [operatorId] = useState<string | null>(null);
   const [cashRegisterId, setCashRegisterId] = useState<string | null>(null);
   const [pendingExceptions, setPendingExceptions] = useState<
     (OrderExceptionPayload & { eventId: string })[]
@@ -366,13 +364,6 @@ export function OrderProvider({
     const unsubscribeException = tpvEventBus.on<OrderExceptionPayload>(
       "order.exception",
       (event) => {
-        if (!event?.payload || typeof event.payload !== "object") {
-          Logger.warn("ignored_invalid_order_exception_event", {
-            context: "OrderContext",
-            eventId: event?.id,
-          });
-          return;
-        }
         Logger.info("caught_order_exception", {
           payload: event.payload,
           context: "OrderContext",
@@ -389,35 +380,15 @@ export function OrderProvider({
     const unsubscribeDecision = tpvEventBus.on<DecisionMadePayload>(
       "order.decision_made",
       (event) => {
-        if (!event?.payload || typeof event.payload !== "object") {
-          Logger.warn("ignored_invalid_decision_made_event", {
-            context: "OrderContext",
-            eventId: event?.id,
-          });
-          return;
-        }
-
-        if (
-          typeof (event.payload as { orderId?: unknown }).orderId !== "string"
-        ) {
-          Logger.warn("ignored_decision_made_event_without_order_id", {
-            context: "OrderContext",
-            eventId: event?.id,
-          });
-          return;
-        }
-
         Logger.info("caught_decision_made", {
           payload: event.payload,
           context: "OrderContext",
         });
-
-        const { orderId } = event.payload as { orderId: string };
         setPendingExceptions((prev) =>
           prev.filter(
             (e) =>
               // Remove exception if it matches the decision's orderId
-              e.orderId !== orderId,
+              e.orderId !== event.payload.orderId,
           ),
         );
       },
@@ -1036,8 +1007,15 @@ export function OrderProvider({
           break;
 
         case "pay":
-          // Offline Support
+          // Offline Support: only cash/manual; card/PIX require network (OFFLINE_STRATEGY)
           if (isOffline) {
+            const method = (payload?.method || "cash") as string;
+            const OFFLINE_ALLOWED_METHODS = ["cash", "manual", "dinheiro"];
+            if (!OFFLINE_ALLOWED_METHODS.includes(method.toLowerCase())) {
+              throw new Error(
+                "Pagamento offline só está disponível para dinheiro. Cartão e PIX exigem ligação à rede.",
+              );
+            }
             Logger.info("Offline Mode: Processing payment locally", {
               orderId,
             });
@@ -1289,9 +1267,9 @@ export function OrderProvider({
                     customer_id: customerId,
                     order_id: orderId,
                     points_amount: -pointsBurned, // Negativo
-                    description: `Resgatou ${pointsBurned} pontos (Desconto de ${(
-                      amountCents / 100
-                    ).toFixed(2)}€)`,
+                    description: `Resgatou ${pointsBurned} pontos (Desconto de ${formatCents(
+                      amountCents,
+                    )})`,
                   });
                 }
               } else {

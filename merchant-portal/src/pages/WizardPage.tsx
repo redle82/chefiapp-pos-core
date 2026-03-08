@@ -11,6 +11,7 @@
 // It's a dev tool, not product code. Lint rules are relaxed here.
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router-dom";
 import { ApiError, fetchJson, internalHeaders } from "../api";
 import { CONFIG } from "../config";
@@ -25,6 +26,7 @@ import { colors } from "../ui/design-system/tokens/colors";
 import { spacing } from "../ui/design-system/tokens/spacing";
 
 export function WizardPage() {
+  const { t } = useTranslation();
   const envInternalToken =
     typeof import.meta.env.VITE_INTERNAL_API_TOKEN === "string"
       ? import.meta.env.VITE_INTERNAL_API_TOKEN
@@ -506,7 +508,7 @@ export function WizardPage() {
             })
           }
         >
-          Guardar
+          {t("common:save")}
         </Button>
       </Card>
 

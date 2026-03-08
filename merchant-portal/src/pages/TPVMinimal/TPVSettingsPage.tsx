@@ -3,7 +3,11 @@
  * Navegação: sidebar já resolve (sem botão redundante "Voltar ao POS").
  */
 
+import { useCurrency } from "../../core/currency/useCurrency";
+
 export function TPVSettingsPage() {
+  const { symbol } = useCurrency();
+
   return (
     <div style={{ padding: 16 }}>
       <h1 style={{ color: "var(--text-primary)", marginBottom: 12 }}>
@@ -58,7 +62,7 @@ export function TPVSettingsPage() {
               opacity: 0.6,
             }}
           >
-            <option>EUR (€)</option>
+            <option>EUR ({symbol})</option>
           </select>
         </section>
 

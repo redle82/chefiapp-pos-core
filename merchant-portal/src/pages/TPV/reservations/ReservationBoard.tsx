@@ -10,6 +10,8 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { getFormatLocale } from "../../../core/i18n/regionLocaleConfig";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import { colors } from "../../../ui/design-system/tokens/colors";
 import { spacing } from "../../../ui/design-system/tokens/spacing";
@@ -59,7 +61,7 @@ function formatDate(d: Date): string {
 }
 
 function formatDateLabel(d: Date): string {
-  return d.toLocaleDateString("pt-PT", {
+  return d.toLocaleDateString(getFormatLocale(), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -103,6 +105,7 @@ function ReservationForm({
   onCancel: () => void;
   saving: boolean;
 }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState<ReservationFormData>(initial);
 
   const set = <K extends keyof ReservationFormData>(
@@ -262,7 +265,7 @@ function ReservationForm({
             opacity: !form.customer_name.trim() ? 0.5 : 1,
           }}
         >
-          {saving ? "A guardar..." : "Guardar"}
+          {saving ? t("common:saving") : t("common:save")}
         </button>
       </div>
     </div>
@@ -295,6 +298,7 @@ function actionBtnStyle(color: string): React.CSSProperties {
 export default function ReservationBoard({
   restaurantId,
 }: ReservationBoardProps) {
+  const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -786,7 +790,7 @@ export default function ReservationBoard({
                         ✗
                       </button>
                       <button
-                        title="Cancelar"
+                        title={t("common:cancel")}
                         onClick={() => handleStatusChange(r.id, "CANCELLED")}
                         style={actionBtnStyle("#ef4444")}
                       >

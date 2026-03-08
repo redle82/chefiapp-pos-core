@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { ShiftHistorySection } from "../../components/Dashboard/ShiftHistorySection";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { useCurrency } from "../../core/currency/useCurrency";
 import { centsToDecimal, exportCsv } from "../../core/reports/csvExport";
 import FiscalReconciliationService from "../../core/services/FiscalReconciliationService";
 import {
@@ -23,6 +24,7 @@ import styles from "./DailyClosingReportPage.module.css";
 
 export function DailyClosingReportPage() {
   const { t, i18n } = useTranslation("operational");
+  const { symbol } = useCurrency();
   const { runtime } = useRestaurantRuntime();
   const { restaurantId } = useRestaurantId();
   const { data } = useShiftHistory(restaurantId, { daysBack: 7 });
@@ -70,7 +72,7 @@ export function DailyClosingReportPage() {
         t("dailyClosing.csv.shift"),
         t("dailyClosing.csv.opened"),
         t("dailyClosing.csv.closed"),
-        t("dailyClosing.csv.sales"),
+        t("dailyClosing.csv.sales", { currency: symbol }),
         t("dailyClosing.csv.orders"),
       ],
       data.map((s) => [
@@ -290,6 +292,7 @@ export function DailyClosingReportPage() {
               {t("dailyClosing.reconciliation.modalMeta", {
                 shiftId: editingRecon.shift_id?.slice(0, 8) || "—",
                 amount: centsToDecimal(editingRecon.difference_cents),
+                currency: symbol,
               })}
             </p>
             <div className={styles.fieldGroup}>

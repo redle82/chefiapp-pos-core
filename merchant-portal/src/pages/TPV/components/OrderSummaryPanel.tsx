@@ -1,4 +1,5 @@
 import React from "react";
+import { useCurrency } from "../../../core/currency/useCurrency";
 import { Button } from "../../../ui/design-system/Button";
 import { Card } from "../../../ui/design-system/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
@@ -19,6 +20,7 @@ export const OrderSummaryPanel: React.FC<OrderSummaryPanelProps> = ({
   onConfirm,
   loading,
 }) => {
+  const { symbol } = useCurrency();
   const items = order?.items || [];
   const total = order?.total ?? order?.total_amount ?? 0;
 
@@ -72,7 +74,9 @@ export const OrderSummaryPanel: React.FC<OrderSummaryPanelProps> = ({
           </Text>
           <Text className="text-3xl text-primary font-bold tracking-tight">
             {(total / 100).toFixed(2)}
-            <span className="text-lg text-zinc-500 ml-1 font-normal">€</span>
+            <span className="text-lg text-zinc-500 ml-1 font-normal">
+              {symbol}
+            </span>
           </Text>
         </div>
         <div className="grid grid-cols-3 gap-3">

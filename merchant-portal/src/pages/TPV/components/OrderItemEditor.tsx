@@ -1,4 +1,5 @@
 import React from "react";
+import { useCurrency } from "../../../core/currency/useCurrency";
 import { Button } from "../../../ui/design-system/Button";
 import { Card } from "../../../ui/design-system/Card";
 import { Text } from "../../../ui/design-system/primitives/Text";
@@ -17,6 +18,7 @@ export const OrderItemEditor: React.FC<OrderItemEditorProps> = ({
   onRemoveItem,
   loading,
 }) => {
+  const { formatAmount } = useCurrency();
   if (loading)
     return <div className="p-8 text-center text-zinc-500">Aguarde...</div>;
   if (!order)
@@ -43,7 +45,7 @@ export const OrderItemEditor: React.FC<OrderItemEditorProps> = ({
                   {item.name}
                 </Text>
                 <Text size="xs" className="text-zinc-500">
-                  Un: {((item.price ?? item.unit_price) / 100).toFixed(2)}€
+                  Un: {formatAmount(item.price ?? item.unit_price)}
                 </Text>
               </div>
               <div className="flex items-center gap-3">

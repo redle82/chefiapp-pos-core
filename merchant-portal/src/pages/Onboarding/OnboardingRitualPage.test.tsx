@@ -9,14 +9,6 @@ vi.mock("../../core/audit/legalConsent", () => ({
   recordLegalConsent: vi.fn().mockResolvedValue({}),
 }));
 
-vi.mock("../../core/tenant/TenantContext", () => ({
-  useTenant: () => ({ tenantId: "11111111-1111-1111-1111-111111111111" }),
-}));
-
-vi.mock("../../infra/docker-core/connection", () => ({
-  dockerCoreClient: { rpc: vi.fn().mockResolvedValue({ data: null, error: null }) },
-}));
-
 import { OnboardingRitualPage } from "./OnboardingRitualPage";
 
 const RESTAURANT_ID = "11111111-1111-1111-1111-111111111111";
@@ -48,13 +40,13 @@ describe("OnboardingRitualPage", () => {
     );
 
     const termsCheckbox = screen.getByRole("checkbox", {
-      name: /Termos.*Privacidade/i,
+      name: /Terms.*Privacy/i,
     });
     const openShiftButton = screen.getByRole("button", {
-      name: /Abrir turno agora/i,
+      name: /Open shift now/i,
     });
     const panelButton = screen.getByRole("button", {
-      name: /Ir para o painel/i,
+      name: /Go to dashboard/i,
     });
 
     expect(openShiftButton.getAttribute("disabled")).not.toBeNull();

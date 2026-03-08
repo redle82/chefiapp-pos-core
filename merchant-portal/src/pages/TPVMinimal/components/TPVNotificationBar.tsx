@@ -10,6 +10,7 @@
  * Integrado via useTPVEventBridge.
  */
 
+import { useTranslation } from "react-i18next";
 import type { TPVAlert } from "../hooks/useTPVEventBridge";
 
 interface TPVNotificationBarProps {
@@ -44,6 +45,8 @@ export function TPVNotificationBar({
   onDismiss,
   onDismissAll,
 }: TPVNotificationBarProps) {
+  const locale = useFormatLocale();
+  const { t } = useTranslation();
   if (alerts.length === 0) return null;
 
   return (
@@ -125,7 +128,7 @@ export function TPVNotificationBar({
                 whiteSpace: "nowrap",
               }}
             >
-              {alert.timestamp.toLocaleTimeString("pt-PT", {
+              {alert.timestamp.toLocaleTimeString(locale, {
                 hour: "2-digit",
                 minute: "2-digit",
               })}
@@ -141,7 +144,7 @@ export function TPVNotificationBar({
                 padding: "0 4px",
                 lineHeight: 1,
               }}
-              title="Fechar"
+              title={t("common:close")}
             >
               ✕
             </button>

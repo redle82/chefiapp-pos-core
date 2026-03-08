@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { ConnectivityService } from '../../../core/sync/ConnectivityService';
 import { IndexedDBQueue } from '../../../core/sync/IndexedDBQueue';
 import { SyncEngine, type SyncEngineState } from '../../../core/sync/SyncEngine';
 import type { OfflineQueueItem } from '../../../core/sync/types';
@@ -31,13 +32,14 @@ const OfflineOrderContext = createContext<OfflineContextType | null>(null);
 
 export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [queue, setQueue] = useState<OfflineOrder[]>([]);
-    const [isOffline, setIsOffline] = useState(SyncEngine.getNetworkStatus() === 'offline');
+    const [isOffline, setIsOffline] = useState(SyncEngine.getConnectivity() !== 'online');
     const [isSyncing, setIsSyncing] = useState(false);
 
     // --- Sync with SyncEngine State ---
     const updateLocalState = useCallback(async (state?: SyncEngineState) => {
         if (state) {
-            setIsOffline(state.networkStatus === 'offline');
+            // isOffline = connectivity !== "online" (inclui degraded)
+            setIsOffline(state.connectivity !== 'online');
             setIsSyncing(state.isProcessing);
         }
 
@@ -83,9 +85,10 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
             id: localId,
             type: 'ORDER_CREATE',
             status: 'queued',
-            payload: { ...orderPayload, localId }, // Ensure localId is in payload for idempotency
+            payload: { ...orderPayload, localId },
             createdAt: now,
-            attempts: 0
+            attempts: 0,
+            idempotency_key: `order-create-${localId}`,
         };
 
         try {
@@ -148,13 +151,19 @@ export const OfflineOrderProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 default: throw new Error(`Unknown action ${action}`);
             }
 
+            const payloadWithIds = { orderId, ...payload, restaurantId: payload.restaurantId };
+            const idempotency_key =
+                type === 'ORDER_PAY'
+                    ? (payload.idempotencyKey as string | undefined) ?? `order-pay-${orderId}-${(payload as { amountCents?: number }).amountCents ?? 0}-${(payload as { method?: string }).method ?? 'unknown'}`
+                    : `order-${type}-${orderId}-${localId}`;
             const queueItem: OfflineQueueItem = {
                 id: localId,
                 type,
                 status: 'queued',
-                payload: { orderId, ...payload, restaurantId: payload.restaurantId }, // Ensure IDs
+                payload: payloadWithIds,
                 createdAt: now,
-                attempts: 0
+                attempts: 0,
+                idempotency_key,
             };
 
             await IndexedDBQueue.put(queueItem);
@@ -206,3 +215,6 @@ export const useOfflineOrder = () => {
     if (!context) throw new Error('useOfflineOrder must be used within OfflineOrderProvider');
     return context;
 };
+
+/** Safe hook for UI that may render outside OfflineOrderProvider (e.g. Waiter route). Returns null when no provider. */
+export const useOfflineOrderOptional = () => useContext(OfflineOrderContext);

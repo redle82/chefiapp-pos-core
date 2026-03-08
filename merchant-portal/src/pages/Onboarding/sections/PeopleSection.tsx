@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../../../context/OnboardingContext";
 // LEGACY / LAB — blocked in Docker mode
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
@@ -18,6 +19,7 @@ interface Person {
 }
 
 export function PeopleSection() {
+  const { t } = useTranslation("onboarding");
   const { updateSectionStatus } = useOnboarding();
   const { identity } = useRestaurantIdentity();
   const { runtime, updateSetupStatus } = useRestaurantRuntime();
@@ -94,23 +96,24 @@ export function PeopleSection() {
     };
   }, [people, identity.id, updateSectionStatus]);
 
+  const roleLabel = (role: Person["role"]) =>
+    role === "owner" ? t("people.owner") : role === "manager" ? t("people.manager") : t("people.staff");
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>
-        👥 Pessoas{" "}
-        {isSaving && <span className={styles.saving}>(Salvando...)</span>}
+        👥 {t("people.title")}{" "}
+        {isSaving && <span className={styles.saving}>({t("people.saving")})</span>}
       </h1>
-      <p className={styles.subtitle}>
-        Adicione gerente e funcionários ao seu restaurante
-      </p>
+      <p className={styles.subtitle}>{t("people.subtitle")}</p>
 
       {/* Adicionar Pessoa */}
       <div className={styles.panel}>
-        <h3 className={styles.sectionTitle}>Adicionar Pessoa</h3>
+        <h3 className={styles.sectionTitle}>{t("people.addPerson")}</h3>
         <div className={styles.formStack}>
           <input
             type="text"
-            placeholder="Nome"
+            placeholder={t("people.namePlaceholder")}
             value={newPerson.name}
             onChange={(e) =>
               setNewPerson({ ...newPerson, name: e.target.value })
@@ -119,7 +122,7 @@ export function PeopleSection() {
           />
           <input
             type="email"
-            placeholder="Email"
+            placeholder={t("people.emailPlaceholder")}
             value={newPerson.email}
             onChange={(e) =>
               setNewPerson({ ...newPerson, email: e.target.value })
@@ -127,8 +130,8 @@ export function PeopleSection() {
             className={styles.input}
           />
           <select
-            title="Função"
-            aria-label="Função"
+            title={t("people.roleLabel")}
+            aria-label={t("people.roleLabel")}
             value={newPerson.role}
             onChange={(e) =>
               setNewPerson({
@@ -138,9 +141,9 @@ export function PeopleSection() {
             }
             className={styles.input}
           >
-            <option value="staff">Funcionário</option>
-            <option value="manager">Gerente</option>
-            <option value="owner">Proprietário</option>
+            <option value="staff">{t("people.staff")}</option>
+            <option value="manager">{t("people.manager")}</option>
+            <option value="owner">{t("people.owner")}</option>
           </select>
           <button
             onClick={addPerson}
@@ -151,7 +154,7 @@ export function PeopleSection() {
                 : ""
             }`}
           >
-            Adicionar
+            {t("people.addButton")}
           </button>
         </div>
       </div>
@@ -159,26 +162,20 @@ export function PeopleSection() {
       {/* Lista de Pessoas */}
       <div className={styles.peopleList}>
         {people.length === 0 ? (
-          <p className={styles.emptyState}>Nenhuma pessoa adicionada ainda</p>
+          <p className={styles.emptyState}>{t("people.emptyState")}</p>
         ) : (
           people.map((person) => (
             <div key={person.id} className={styles.personCard}>
               <div>
                 <div className={styles.personName}>{person.name}</div>
                 <div className={styles.personEmail}>{person.email}</div>
-                <div className={styles.personRole}>
-                  {person.role === "owner"
-                    ? "Proprietário"
-                    : person.role === "manager"
-                    ? "Gerente"
-                    : "Funcionário"}
-                </div>
+                <div className={styles.personRole}>{roleLabel(person.role)}</div>
               </div>
               <button
                 onClick={() => removePerson(person.id)}
                 className={styles.removeButton}
               >
-                Remover
+                {t("people.remove")}
               </button>
             </div>
           ))
@@ -187,21 +184,19 @@ export function PeopleSection() {
 
       {/* Checklist */}
       <div className={styles.panel}>
-        <div className={styles.checklistTitle}>Checklist:</div>
+        <div className={styles.checklistTitle}>{t("people.checklistTitle")}</div>
         <div className={styles.checklistList}>
           {[
+            { key: "one", label: t("people.checklistOnePerson"), done: people.length >= 1 },
             {
-              label: "Pelo menos 1 pessoa adicionada",
-              done: people.length >= 1,
-            },
-            {
-              label: "Pelo menos 1 gerente ou proprietário",
+              key: "manager",
+              label: t("people.checklistOneManager"),
               done: people.some(
                 (p) => p.role === "manager" || p.role === "owner",
               ),
             },
           ].map((item) => (
-            <div key={item.label} className={styles.checklistItem}>
+            <div key={item.key} className={styles.checklistItem}>
               <span className={styles.checklistIcon}>
                 {item.done ? "✅" : "⏳"}
               </span>

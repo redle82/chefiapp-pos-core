@@ -46,7 +46,8 @@ export function TPVLayout() {
         display: "flex",
         flex: 1,
         minHeight: "100%",
-        backgroundColor: "#111",
+        backgroundColor: "#0a0a0a",
+        fontFamily: "Inter, system-ui, sans-serif",
         color: "#fafafa",
       }}
     >

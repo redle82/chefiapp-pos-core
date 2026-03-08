@@ -11,8 +11,9 @@
  */
 
 import React, { useCallback, useMemo, useState } from "react";
-import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import type { Order } from "../../../core/contracts/Order";
+import { useCurrency } from "../../../core/currency/useCurrency";
+import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import { colors } from "../../../ui/design-system/tokens/colors";
 import { spacing } from "../../../ui/design-system/tokens/spacing";
 import type { Table } from "../context/TableContext";
@@ -64,6 +65,7 @@ export const TableActionsModal: React.FC<TableActionsModalProps> = ({
   onComplete,
   onClose,
 }) => {
+  const { formatAmount } = useCurrency();
   const [action, setAction] = useState<TableAction | null>(null);
   const [targetTableId, setTargetTableId] = useState<string | null>(null);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(
@@ -595,7 +597,7 @@ export const TableActionsModal: React.FC<TableActionsModalProps> = ({
                     <span
                       style={{ fontSize: 12, color: colors.text.secondary }}
                     >
-                      {(item.price / 100).toFixed(2)} €
+                      {formatAmount(item.price)}
                     </span>
                   </button>
                 );

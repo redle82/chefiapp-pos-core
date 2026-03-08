@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../../../context/OnboardingContext";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
@@ -12,16 +13,15 @@ import {
   BackendType,
   getBackendType,
 } from "../../../core/infra/backendAdapter";
-import { useTenant } from "../../../core/tenant/TenantContext";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import styles from "./LocationSection.module.css";
 // Domain reads/writes ONLY via Core (Supabase removed — §4). No fallback.
 
 export function LocationSection() {
+  const { t } = useTranslation("onboarding");
   const { updateSectionStatus } = useOnboarding();
   const { identity } = useRestaurantIdentity();
   const { runtime, updateSetupStatus } = useRestaurantRuntime();
-  const { tenantId } = useTenant();
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -40,7 +40,12 @@ export function LocationSection() {
     let cancelled = false;
 
     const loadLocation = async () => {
-      const restaurantId = runtime.restaurant_id || identity.id || tenantId;
+      const restaurantId =
+        runtime.restaurant_id ||
+        identity.id ||
+        (typeof window !== "undefined"
+          ? localStorage.getItem("chefiapp_restaurant_id")
+          : null);
 
       if (!restaurantId) return;
 
@@ -154,7 +159,12 @@ export function LocationSection() {
     }
 
     // Usar restaurant_id do RestaurantRuntimeContext (fonte única de verdade)
-    const restaurantId = runtime.restaurant_id || identity.id || tenantId;
+    const restaurantId =
+      runtime.restaurant_id ||
+      identity.id ||
+      (typeof window !== "undefined"
+        ? localStorage.getItem("chefiapp_restaurant_id")
+        : null);
 
     if (isValid && restaurantId) {
       if (saveTimeoutRef.current) {
@@ -289,58 +299,65 @@ export function LocationSection() {
 
   const availableZones = ["BAR", "SALON", "KITCHEN", "TERRACE"];
 
+  const zoneLabelKey: Record<string, string> = {
+    BAR: "location.zoneBAR",
+    SALON: "location.zoneSALON",
+    KITCHEN: "location.zoneKITCHEN",
+    TERRACE: "location.zoneTERRACE",
+  };
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>
-        📍 Localização{" "}
-        {isSaving && <span className={styles.saving}>(Salvando...)</span>}
+        📍 {t("location.title")}{" "}
+        {isSaving && <span className={styles.saving}>({t("location.saving")})</span>}
       </h1>
-      <p className={styles.subtitle}>Onde está localizado seu restaurante?</p>
+      <p className={styles.subtitle}>{t("location.subtitle")}</p>
 
       <div className={styles.formFields}>
         {/* Endereço */}
         <div>
-          <label className={styles.fieldLabel}>Endereço Completo *</label>
+          <label className={styles.fieldLabel}>{t("location.addressLabel")}</label>
           <input
             type="text"
             value={formData.address}
             onChange={(e) => handleChange("address", e.target.value)}
-            placeholder="Ex: Calle des caló, 109"
+            placeholder={t("location.addressPlaceholder")}
             className={styles.input}
           />
         </div>
 
         {/* Cidade */}
         <div>
-          <label className={styles.fieldLabel}>Cidade *</label>
+          <label className={styles.fieldLabel}>{t("location.cityLabel")}</label>
           <input
             type="text"
             value={formData.city}
             onChange={(e) => handleChange("city", e.target.value)}
-            placeholder="Ex: Sant Josep de sa Talaia"
+            placeholder={t("location.cityPlaceholder")}
             className={styles.input}
           />
         </div>
 
         {/* CEP */}
         <div>
-          <label className={styles.fieldLabel}>CEP *</label>
+          <label className={styles.fieldLabel}>{t("location.postalCodeLabel")}</label>
           <input
             type="text"
             value={formData.postalCode}
             onChange={(e) => handleChange("postalCode", e.target.value)}
-            placeholder="Ex: 07829"
+            placeholder={t("location.postalCodePlaceholder")}
             className={styles.input}
           />
         </div>
 
         {/* Capacidade */}
         <div>
-          <label className={styles.fieldLabel}>Capacidade (pessoas) *</label>
+          <label className={styles.fieldLabel}>{t("location.capacityLabel")}</label>
           <input
             type="number"
-            title="Capacidade em pessoas"
-            aria-label="Capacidade em pessoas"
+            title={t("location.capacityAria")}
+            aria-label={t("location.capacityAria")}
             min="1"
             max="1000"
             value={formData.capacity}
@@ -350,16 +367,13 @@ export function LocationSection() {
             className={styles.input}
           />
           <p className={styles.helperText}>
-            Baseado na capacidade, {Math.ceil(formData.capacity / 2.5)} mesas
-            serão criadas automaticamente
+            {t("location.capacityHelper", { count: Math.ceil(formData.capacity / 2.5) })}
           </p>
         </div>
 
         {/* Zonas */}
         <div>
-          <label className={styles.fieldLabel}>
-            Zonas do Restaurante * (selecione pelo menos 1)
-          </label>
+          <label className={styles.fieldLabel}>{t("location.zonesLabel")}</label>
           <div className={styles.zonesList}>
             {availableZones.map((zone) => (
               <label
@@ -376,7 +390,7 @@ export function LocationSection() {
                   onChange={() => toggleZone(zone)}
                   className={styles.zoneCheckbox}
                 />
-                <span className={styles.zoneLabel}>{zone}</span>
+                <span className={styles.zoneLabel}>{t(zoneLabelKey[zone] ?? zone)}</span>
               </label>
             ))}
           </div>
@@ -385,19 +399,16 @@ export function LocationSection() {
 
       {/* Checklist Local */}
       <div className={styles.checklist}>
-        <div className={styles.checklistTitle}>Checklist:</div>
+        <div className={styles.checklistTitle}>{t("location.checklistTitle")}</div>
         <div className={styles.checklistItems}>
           {[
-            { label: "Endereço completo", done: formData.address.length >= 5 },
-            { label: "Cidade", done: !!formData.city },
-            { label: "CEP", done: !!formData.postalCode },
-            { label: "Capacidade definida", done: formData.capacity >= 1 },
-            {
-              label: "Pelo menos 1 zona selecionada",
-              done: formData.zones.length >= 1,
-            },
+            { key: "address", label: t("location.checklistAddress"), done: formData.address.length >= 5 },
+            { key: "city", label: t("location.checklistCity"), done: !!formData.city },
+            { key: "postalCode", label: t("location.checklistPostalCode"), done: !!formData.postalCode },
+            { key: "capacity", label: t("location.checklistCapacity"), done: formData.capacity >= 1 },
+            { key: "zones", label: t("location.checklistZones"), done: formData.zones.length >= 1 },
           ].map((item) => (
-            <div key={item.label} className={styles.checklistItem}>
+            <div key={item.key} className={styles.checklistItem}>
               <span className={styles.checklistIcon}>
                 {item.done ? "✅" : "⏳"}
               </span>

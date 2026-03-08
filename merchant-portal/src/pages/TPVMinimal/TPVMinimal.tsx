@@ -17,6 +17,7 @@ import { Link, Navigate } from "react-router-dom";
 import { CONFIG } from "../../config";
 import { useGlobalUIState } from "../../context/GlobalUIStateContext";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { useCurrency } from "../../core/currency/useCurrency";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { isDockerBackend } from "../../core/infra/backendAdapter";
 import {
@@ -70,7 +71,7 @@ const DEFAULT_RESTAURANT_ID = isDockerBackend()
   : "bbce08c7-63c0-473d-b693-ec2997f73a68";
 const STORAGE_KEY = "chefiapp_tpv_draft_v1";
 
-/** Preview onboarding: lista de exemplo fixa (moeda €) quando não há produtos do Core. */
+/** Preview onboarding: fixed example product list (uses configured currency) when no Core products exist. */
 function getPreviewExampleProducts(restaurantId: string): Product[] {
   return [
     {
@@ -124,6 +125,7 @@ export function TPVMinimal({
   const preflight = usePreflightOperational({ healthAutoStart: !isPreview });
   const shift = useShift();
   const toast = useToast();
+  const { formatAmount } = useCurrency();
 
   // State initialization with Persistence
   const [products, setProducts] = useState<Product[]>([]);
@@ -167,8 +169,12 @@ export function TPVMinimal({
 
   // --- HELPER FUNCTIONS ---
   // Carregar produtos do cardápio via Docker Core; quando offline/unreachable tenta menu em cache (IndexedDB).
+  // Fase 3: conectividade única via ConnectivityService (não navigator.onLine).
   const loadProducts = async (isCoreReachable: boolean | undefined) => {
-    const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+    const { ConnectivityService } = await import(
+      "../../core/sync/ConnectivityService"
+    );
+    const isOffline = ConnectivityService.getConnectivity() !== "online";
     if (!isCoreReachable || isOffline) {
       const cached = await MenuCache.get(effectiveRestaurantId).catch(
         () => null,
@@ -181,6 +187,12 @@ export function TPVMinimal({
             price_cents: number;
             available?: boolean;
           }>;
+        }>;
+        products?: Array<{
+          id: string;
+          name: string;
+          price_cents: number;
+          available?: boolean;
         }>;
       } | null;
       if (
@@ -207,6 +219,25 @@ export function TPVMinimal({
           globalUI.setScreenLoading(false);
           return;
         }
+      }
+      // Fallback: cache written by useMenuItems (categories + products)
+      if (
+        menuLike?.products &&
+        Array.isArray(menuLike.products) &&
+        menuLike.products.length > 0
+      ) {
+        const list: Product[] = menuLike.products.map((p) => ({
+          id: p.id,
+          name: p.name,
+          price_cents: p.price_cents,
+          available: p.available ?? true,
+          restaurant_id: effectiveRestaurantId,
+        }));
+        setProducts(list);
+        setIsCoreUnreachable(false);
+        globalUI.setScreenEmpty(false);
+        globalUI.setScreenLoading(false);
+        return;
       }
       setProducts([]);
       setIsCoreUnreachable(true);
@@ -261,6 +292,12 @@ export function TPVMinimal({
             available?: boolean;
           }>;
         }>;
+        products?: Array<{
+          id: string;
+          name: string;
+          price_cents: number;
+          available?: boolean;
+        }>;
       } | null;
       if (
         menuLike?.fullCatalog &&
@@ -288,6 +325,25 @@ export function TPVMinimal({
           return;
         }
       }
+      if (
+        menuLike?.products &&
+        Array.isArray(menuLike.products) &&
+        menuLike.products.length > 0
+      ) {
+        const list: Product[] = menuLike.products.map((p) => ({
+          id: p.id,
+          name: p.name,
+          price_cents: p.price_cents,
+          available: p.available ?? true,
+          restaurant_id: effectiveRestaurantId,
+        }));
+        setProducts(list);
+        setIsCoreUnreachable(false);
+        globalUI.setScreenEmpty(false);
+        globalUI.setScreenError(null);
+        globalUI.setScreenLoading(false);
+        return;
+      }
       setIsCoreUnreachable(true);
       setProducts([]);
       globalUI.setScreenEmpty(true);
@@ -300,7 +356,7 @@ export function TPVMinimal({
   // --- EFFECTS ---
   useEffect(() => {
     if (isPreview) {
-      // Preview: nunca mostrar erros de Core; sempre mostrar produtos (reais ou exemplo com moeda €).
+      // Preview: never show Core errors; always show products (real or example with configured currency).
       const pilot = getPilotProducts(effectiveRestaurantId);
       const list =
         pilot.length > 0
@@ -667,22 +723,22 @@ export function TPVMinimal({
             `Pedido #${result.id.slice(
               0,
               8,
-            )} pago (${paymentMethod}). Total: € ${(
-              result.total_cents / 100
-            ).toFixed(2)}`,
+            )} pago (${paymentMethod}). Total: ${formatAmount(
+              result.total_cents,
+            )}`,
           );
         } else {
           setSuccess(
-            `Pedido #${result.id.slice(0, 8)} criado. Total: € ${(
-              result.total_cents / 100
-            ).toFixed(2)} (caixa fechado: pagar no TPV)`,
+            `Pedido #${result.id.slice(0, 8)} criado. Total: ${formatAmount(
+              result.total_cents,
+            )} (caixa fechado: pagar no TPV)`,
           );
         }
       } else {
         setSuccess(
-          `Pedido #${result.id.slice(0, 8)} criado. Total: € ${(
-            result.total_cents / 100
-          ).toFixed(2)} (abrir caixa para registar pagamento)`,
+          `Pedido #${result.id.slice(0, 8)} criado. Total: ${formatAmount(
+            result.total_cents,
+          )} (abrir caixa para registar pagamento)`,
         );
       }
       setCart([]);
@@ -1089,7 +1145,7 @@ export function TPVMinimal({
                 >
                   <div style={{ fontWeight: "bold" }}>{product.name}</div>
                   <div style={{ color: "#a3a3a3", fontSize: "0.9rem" }}>
-                    € {((product.price_cents || 0) / 100).toFixed(2)}
+                    {formatAmount(product.price_cents || 0)}
                   </div>
                 </div>
               ))}
@@ -1128,7 +1184,7 @@ export function TPVMinimal({
                     <div>
                       <div style={{ fontWeight: "bold" }}>{item.name}</div>
                       <div style={{ fontSize: "0.9rem", color: "#a3a3a3" }}>
-                        € {(item.unit_price / 100).toFixed(2)} x {item.quantity}
+                        {formatAmount(item.unit_price)} x {item.quantity}
                       </div>
                     </div>
                     <div>
@@ -1230,7 +1286,7 @@ export function TPVMinimal({
                 }}
               >
                 <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
-                  Total: € {(cartTotal / 100).toFixed(2)}
+                  Total: {formatAmount(cartTotal)}
                 </div>
               </div>
               <button

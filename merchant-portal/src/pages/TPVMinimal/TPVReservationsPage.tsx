@@ -11,8 +11,7 @@ import ReservationBoard from "../TPV/reservations/ReservationBoard";
 import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 
 export function TPVReservationsPage() {
-  // RequireOperational surface="TPV" guarantees restaurant exists when this renders.
-  const restaurantId = useTPVRestaurantId()!;
+  const restaurantId = useTPVRestaurantId();
 
   return (
     <div

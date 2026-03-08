@@ -13,6 +13,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { useCurrency } from "../../core/currency/useCurrency";
+import { useFormatLocale } from "../../core/i18n/useFormatLocale";
 import { MENU_NOT_LIVE_WEB_MESSAGE } from "../../core/menu/MenuState";
 import { resolveProductImageUrl } from "../../core/products/resolveProductImageUrl";
 import { BlockingScreen, useOperationalReadiness } from "../../core/readiness";
@@ -86,6 +88,8 @@ export function PublicWebPage() {
   const readiness = useOperationalReadiness("WEB");
   const { slug } = useParams<{ slug: string }>();
   const { runtime } = useRestaurantRuntime();
+  const locale = useFormatLocale();
+  const { formatAmount } = useCurrency();
   const [restaurant, setRestaurant] = useState<CoreRestaurant | null>(null);
   const [menuNotLive, setMenuNotLive] = useState(false);
   const [categories, setCategories] = useState<CoreMenuCategory[]>([]);
@@ -268,7 +272,7 @@ export function PublicWebPage() {
     products.map((product) => resolveTrustedPhoto(product)).find(Boolean) ||
     "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80";
 
-  const todayStr = new Date().toLocaleDateString("pt-PT", {
+  const todayStr = new Date().toLocaleDateString(locale, {
     weekday: "long",
     day: "numeric",
     month: "short",
@@ -979,7 +983,7 @@ export function PublicWebPage() {
                     marginBottom: 8,
                   }}
                 >
-                  € {(product.price_cents / 100).toFixed(2)}
+                  {formatAmount(product.price_cents)}
                 </div>
                 {product.available === false ? (
                   <span style={{ fontSize: 12, color: THEME.textTertiary }}>
@@ -1346,7 +1350,7 @@ export function PublicWebPage() {
                     <div>
                       <div style={{ fontWeight: 600 }}>{item.product.name}</div>
                       <div style={{ fontSize: 14, color: THEME.textMuted }}>
-                        € {(item.product.price_cents / 100).toFixed(2)} ×{" "}
+                        {formatAmount(item.product.price_cents)} ×{" "}
                         {item.quantity}
                       </div>
                     </div>
@@ -1416,7 +1420,7 @@ export function PublicWebPage() {
                 >
                   <span>Total</span>
                   <span style={{ color: THEME.accent }}>
-                    € {(cartTotal / 100).toFixed(2)}
+                    {formatAmount(cartTotal)}
                   </span>
                 </div>
                 <button

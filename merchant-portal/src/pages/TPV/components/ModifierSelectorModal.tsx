@@ -3,6 +3,7 @@ import type {
   Modifier,
   ModifierGroup,
 } from "../../../core/catalog/catalogTypes";
+import { useCurrency } from "../../../core/currency/useCurrency";
 
 /** Selected modifier snapshot stored with order item */
 export interface SelectedModifier {
@@ -37,6 +38,7 @@ export const ModifierSelectorModal: React.FC<ModifierSelectorModalProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  const { formatAmount } = useCurrency();
   // Track selected modifier ids per group
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -194,7 +196,7 @@ export const ModifierSelectorModal: React.FC<ModifierSelectorModalProps> = ({
                             }`}
                           >
                             {mod.priceDeltaCents > 0 ? "+" : ""}
-                            {(mod.priceDeltaCents / 100).toFixed(2)} €
+                            {formatAmount(mod.priceDeltaCents)}
                           </span>
                         )}
                       </button>
@@ -214,7 +216,7 @@ export const ModifierSelectorModal: React.FC<ModifierSelectorModalProps> = ({
           {totalDelta !== 0 && (
             <p className="mb-2 text-xs text-gray-500">
               Delta: {totalDelta > 0 ? "+" : ""}
-              {(totalDelta / 100).toFixed(2)} €
+              {formatAmount(totalDelta)}
             </p>
           )}
           <div className="flex gap-2">

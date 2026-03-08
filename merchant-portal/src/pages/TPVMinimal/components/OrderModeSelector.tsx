@@ -40,7 +40,7 @@ export function OrderModeSelector({ value, onChange }: OrderModeSelectorProps) {
               borderRadius: 10,
               border: active ? "none" : "1px solid rgba(255,255,255,0.08)",
               backgroundColor: active ? "#fff" : "transparent",
-              color: active ? "#111" : "#737373",
+              color: active ? "#0a0a0a" : "#737373",
               fontWeight: 600,
               fontSize: 13,
               cursor: "pointer",

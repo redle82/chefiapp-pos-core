@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useTenant } from "../../../core/tenant/TenantContext";
 // LEGACY / LAB — blocked in Docker mode
 import { GenesisKernel } from "../../../core/kernel/GenesisKernel";
 import { getTabIsolated } from "../../../core/storage/TabIsolatedStorage";
@@ -16,7 +15,6 @@ export interface VerifiedProduct {
 }
 
 export function useRealMenu() {
-  const { tenantId: contextTenantId } = useTenant();
   const [products, setProducts] = useState<VerifiedProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +46,7 @@ export function useRealMenu() {
         if (!tenantId) {
           tenantId =
             getTabIsolated("chefiapp_active_tenant") ||
-            contextTenantId ||
+            getTabIsolated("chefiapp_restaurant_id") ||
             getTabIsolated("chefiapp_tenant_id") ||
             undefined;
         }

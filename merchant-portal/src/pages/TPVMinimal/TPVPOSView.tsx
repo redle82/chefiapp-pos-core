@@ -15,12 +15,16 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useSearchParams } from "react-router-dom";
 import { OrderStatusPanel } from "../../components/pos/OrderStatusPanel";
 import { CONFIG } from "../../config";
+import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { useCurrency } from "../../core/currency/useCurrency";
 import { createOrderLifecycle } from "../../core/operational/processOrderLifecycle";
 import { useOperationalStore } from "../../core/operational/useOperationalStore";
 import { resolveProductImageUrl } from "../../core/products/resolveProductImageUrl";
+import { getTpvRestaurantId } from "../../core/storage/installedDeviceStorage";
+import { EXAMPLE_MENUS } from "../../features/admin/onboarding/exampleMenus";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
 import type { CoreProduct } from "../../infra/readers/RestaurantReader";
 import { readMenuCategories } from "../../infra/readers/RestaurantReader";
@@ -37,22 +41,31 @@ import {
 } from "./components/ProductCategoryFilter";
 import { TPVProductCard } from "./components/TPVProductCard";
 import { getFoodPhotoUrl } from "./foodPhotoUrls";
-import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 import "./TPVPOSView.css";
 
+const DEFAULT_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
+
 export function TPVPOSView() {
-  // RequireOperational surface="TPV" guarantees restaurant exists when this renders.
-  const restaurantId = useTPVRestaurantId()!;
+  const runtimeContext = useRestaurantRuntime();
+  const runtime = runtimeContext?.runtime;
   const bootstrap = useBootstrapState();
   const toast = useToast();
+  const { formatAmount } = useCurrency();
   const outletContext = useOutletContext<{ searchQuery?: string }>();
   const searchQuery = outletContext?.searchQuery ?? "";
+  const [searchParams] = useSearchParams();
+  const isDemoMode = searchParams.get("demo") === "1";
 
   // Orchestrador operacional: estável por toda a vida do componente
   const lifecycle = useMemo(() => createOrderLifecycle(), []);
 
   // Estado do pedido actual (backend source of truth via store)
   const currentOrderStatus = useOperationalStore((s) => s.currentOrder.status);
+
+  const installedRestaurantId = getTpvRestaurantId();
+  const runtimeRestaurantId = runtime?.restaurant_id ?? null;
+  const restaurantId =
+    installedRestaurantId ?? runtimeRestaurantId ?? DEFAULT_RESTAURANT_ID;
 
   const [products, setProducts] = useState<CoreProduct[]>([]);
   const [categories, setCategories] = useState<TPVCategory[]>([]);
@@ -68,9 +81,26 @@ export function TPVPOSView() {
   // Flag: pedido já enviado para cozinha (tem ID real no backend)
   const isSentToKitchen = currentOrderStatus === "SENT";
 
+  // Demo mode: pre-fill cart with example restaurant items
+  useEffect(() => {
+    if (!isDemoMode) return;
+    const demoCategory = EXAMPLE_MENUS.restaurant.categories[1]; // Pratos Principais
+    const demoItems = demoCategory.items.slice(0, 2);
+    setCart(
+      demoItems.map((item, i) => ({
+        product_id: `demo-${i}`,
+        name: item.name,
+        subtitle: demoCategory.name,
+        quantity: 1,
+        unit_price: item.price,
+        image_url: undefined,
+      })),
+    );
+  }, [isDemoMode]);
+
   // Carregar menu (categorias + produtos)
   useEffect(() => {
-    if (!restaurantId || bootstrap.coreStatus !== "online") return;
+    if (bootstrap.coreStatus !== "online") return;
     const urlWithAssets = `${CONFIG.CORE_URL}/rest/v1/gm_products?select=*,gm_product_assets(image_url)&restaurant_id=eq.${restaurantId}&available=eq.true&order=created_at.asc`;
     const urlPlain = `${CONFIG.CORE_URL}/rest/v1/gm_products?select=*&restaurant_id=eq.${restaurantId}&available=eq.true&order=created_at.asc`;
     const headers = {
@@ -212,6 +242,17 @@ export function TPVPOSView() {
   // ─── Confirmar + Pagar (takeaway ou após enviar cozinha) ────────
   const handleProceed = async () => {
     if (cart.length === 0 && !isSentToKitchen) return;
+
+    // Demo mode: simulate payment without backend
+    if (isDemoMode) {
+      const demoTotal = cart.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+      setCart([]);
+      toast.success(
+        `🎉 Pagamento simulado em modo demo! Total: ${formatAmount(demoTotal)}`,
+      );
+      return;
+    }
+
     if (
       bootstrap.coreStatus !== "online" ||
       bootstrap.publishStatus !== "publicado"
@@ -227,9 +268,9 @@ export function TPVPOSView() {
         if (result.success) {
           setCart([]);
           toast.success(
-            `Pedido #${result.orderId?.slice(0, 8)} pago. Total: €${(
-              totalCents / 100
-            ).toFixed(2)}`,
+            `Pedido #${result.orderId?.slice(0, 8)} pago. Total: ${formatAmount(
+              totalCents,
+            )}`,
           );
         } else {
           toast.error(result.error ?? "Erro ao finalizar pedido.");
@@ -243,7 +284,7 @@ export function TPVPOSView() {
             `Pedido #${result.orderId?.slice(
               0,
               8,
-            )} confirmado e pago. Total: €${(totalCents / 100).toFixed(2)}`,
+            )} confirmado e pago. Total: ${formatAmount(totalCents)}`,
           );
         } else {
           toast.error(result.error ?? "Erro ao criar pedido.");
@@ -298,6 +339,29 @@ export function TPVPOSView() {
 
   return (
     <div className="tpv-container">
+      {/* Demo mode banner */}
+      {isDemoMode && (
+        <div
+          style={{
+            gridColumn: "1 / -1",
+            background: "#fef3c7",
+            color: "#92400e",
+            padding: "8px 16px",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <span>🧪</span>
+          <span>
+            Modo Demo — Nenhum pedido real será criado. Adiciona itens e clica
+            em &quot;Pagar&quot; para simular uma venda.
+          </span>
+        </div>
+      )}
+
       {/* Left: categories + product grid */}
       <div className="tpv-products">
         <ProductCategoryFilter
@@ -353,7 +417,7 @@ export function TPVPOSView() {
         <span className="tpv-mobile-cart-button__content">
           <span>
             {cartItemCount > 0
-              ? `Ver Pedido · €${(totalCents / 100).toFixed(2)}`
+              ? `Ver Pedido · ${formatAmount(totalCents)}`
               : "Carrinho Vazio"}
           </span>
           {cartItemCount > 0 && (
