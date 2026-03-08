@@ -12,7 +12,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
 import { openOperationalInNewWindow } from "../../../../core/operational/openOperationalWindow";
-import { wouldGuardAllow } from "../../../../core/operational/platformDetection";
 import type { InstalledDeviceModule } from "../../../../core/storage/installedDeviceStorage";
 import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 import { ModuleCard } from "../components/ModuleCard";
@@ -299,15 +298,20 @@ export function ModulesPage() {
         id as (typeof OPERATIONAL_MODULE_IDS)[number],
       )
     ) {
-      // UXG-001: Only open popup if the guard would allow it in this runtime
-      if (wouldGuardAllow(id)) {
-        openOperationalInNewWindow(id as "tpv" | "kds" | "appstaff");
-      } else {
-        const label = id === "appstaff" ? "AppStaff" : id.toUpperCase();
-        setBlockNotice(
-          `${label} solo se puede abrir en la aplicaci\u00f3n instalada.`,
-        );
-      }
+      const moduleId = id as "tpv" | "kds" | "appstaff";
+      const label =
+        moduleId === "appstaff" ? "AppStaff" : moduleId.toUpperCase();
+      openOperationalInNewWindow(moduleId, {
+        navigate,
+        onBrowserBlocked: () => {
+          setBlockNotice(
+            `${label} solo se puede abrir en la aplicaci\u00f3n instalada.`,
+          );
+        },
+        onBrowserFallback: () => {
+          navigate("/admin/devices");
+        },
+      });
       return;
     }
     navigate(path);

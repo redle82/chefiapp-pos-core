@@ -5,15 +5,16 @@
  */
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
-import { dockerCoreClient } from "../../../../infra/docker-core/connection";
 import {
   BackendType,
   getBackendType,
 } from "../../../../core/infra/backendAdapter";
 import { openTpvInNewWindow } from "../../../../core/operational/openOperationalWindow";
-import { getTpvPreferences, setTpvPreferences } from "../tpvPreferencesStorage";
+import { dockerCoreClient } from "../../../../infra/docker-core/connection";
 import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
+import { getTpvPreferences, setTpvPreferences } from "../tpvPreferencesStorage";
 
 const LOCALES = [
   { value: "pt-BR", label: "Português (Brasil)" },
@@ -41,7 +42,6 @@ const ATAJOS = [
   "Números: cantidad rápida",
   "F1–F4: categorías rápidas (en breve)",
 ];
-
 
 const cardStyle = {
   border: "1px solid var(--surface-border)",
@@ -78,6 +78,7 @@ const buttonStyle = {
 };
 
 export function SoftwareTpvPage() {
+  const navigate = useNavigate();
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime.restaurant_id ?? null;
 
@@ -125,7 +126,10 @@ export function SoftwareTpvPage() {
 
   useEffect(() => {
     const prefs = getTpvPreferences(restaurantId);
-    setConfigForm((prev) => ({ ...prev, confirmOnClose: prefs.confirmOnClose }));
+    setConfigForm((prev) => ({
+      ...prev,
+      confirmOnClose: prefs.confirmOnClose,
+    }));
     setQuickMode(prefs.quickMode);
     setPrefsLoaded(true);
   }, [restaurantId]);
@@ -147,7 +151,9 @@ export function SoftwareTpvPage() {
         })
         .eq("id", restaurantId);
       if (error) throw new Error(error.message);
-      setTpvPreferences(restaurantId, { confirmOnClose: configForm.confirmOnClose });
+      setTpvPreferences(restaurantId, {
+        confirmOnClose: configForm.confirmOnClose,
+      });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Error al guardar.";
       alert(msg);
@@ -170,7 +176,14 @@ export function SoftwareTpvPage() {
         actions={
           <button
             type="button"
-            onClick={openTpvInNewWindow}
+            onClick={() => {
+              openTpvInNewWindow(undefined, {
+                navigate,
+                onBrowserFallback: () => {
+                  navigate("/admin/devices");
+                },
+              });
+            }}
             style={{
               fontSize: 14,
               fontWeight: 600,
@@ -186,20 +199,41 @@ export function SoftwareTpvPage() {
         }
       />
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+          gap: 16,
+        }}
+      >
         {/* Card Configuración */}
         <section style={cardStyle} aria-labelledby="tpv-config-title">
           <h3
             id="tpv-config-title"
-            style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}
+            style={{
+              margin: "0 0 12px 0",
+              fontSize: 16,
+              fontWeight: 700,
+              color: "var(--text-primary)",
+            }}
           >
             Configuración
           </h3>
-          <p style={{ margin: "0 0 16px 0", fontSize: 13, color: "var(--text-secondary)" }}>
+          <p
+            style={{
+              margin: "0 0 16px 0",
+              fontSize: 13,
+              color: "var(--text-secondary)",
+            }}
+          >
             Preferencias del TPV: idioma, moneda, comportamiento de cierre.
           </p>
           {!configLoaded ? (
-            <p style={{ margin: 0, fontSize: 13, color: "var(--text-tertiary)" }}>Cargando…</p>
+            <p
+              style={{ margin: 0, fontSize: 13, color: "var(--text-tertiary)" }}
+            >
+              Cargando…
+            </p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div>
@@ -251,12 +285,22 @@ export function SoftwareTpvPage() {
                 </select>
               </div>
               <div>
-                <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: 8 }}>
+                <label
+                  style={{
+                    ...labelStyle,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={configForm.confirmOnClose}
                     onChange={(e) =>
-                      setConfigForm((p) => ({ ...p, confirmOnClose: e.target.checked }))
+                      setConfigForm((p) => ({
+                        ...p,
+                        confirmOnClose: e.target.checked,
+                      }))
                     }
                   />
                   Pedir confirmación al cerrar turno
@@ -278,18 +322,41 @@ export function SoftwareTpvPage() {
         <section style={cardStyle} aria-labelledby="tpv-quick-title">
           <h3
             id="tpv-quick-title"
-            style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}
+            style={{
+              margin: "0 0 12px 0",
+              fontSize: 16,
+              fontWeight: 700,
+              color: "var(--text-primary)",
+            }}
           >
             Modo rápido
           </h3>
-          <p style={{ margin: "0 0 16px 0", fontSize: 13, color: "var(--text-secondary)" }}>
+          <p
+            style={{
+              margin: "0 0 16px 0",
+              fontSize: 13,
+              color: "var(--text-secondary)",
+            }}
+          >
             Atajos y flujo rápido para servicio en pico (barra, terraza).
           </p>
           {!prefsLoaded ? (
-            <p style={{ margin: 0, fontSize: 13, color: "var(--text-tertiary)" }}>Cargando…</p>
+            <p
+              style={{ margin: 0, fontSize: 13, color: "var(--text-tertiary)" }}
+            >
+              Cargando…
+            </p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600 }}>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontSize: 14,
+                  fontWeight: 600,
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={quickMode}
@@ -298,10 +365,23 @@ export function SoftwareTpvPage() {
                 Activar modo rápido
               </label>
               <div>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)" }}>
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "var(--text-secondary)",
+                  }}
+                >
                   Atajos disponibles:
                 </span>
-                <ul style={{ margin: "6px 0 0 0", paddingLeft: 20, fontSize: 13, color: "var(--text-secondary)" }}>
+                <ul
+                  style={{
+                    margin: "6px 0 0 0",
+                    paddingLeft: 20,
+                    fontSize: 13,
+                    color: "var(--text-secondary)",
+                  }}
+                >
                   {ATAJOS.map((a) => (
                     <li key={a}>{a}</li>
                   ))}

@@ -10,7 +10,7 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
-import { isDesktopApp } from "../../../../core/operational/platformDetection";
+import { openTpvInNewWindow } from "../../../../core/operational/openOperationalWindow";
 import { ChefIAppSignature } from "../../../../ui/design-system/sovereign/ChefIAppSignature";
 import { RestaurantHeader } from "../../../../ui/design-system/sovereign/RestaurantHeader";
 import styles from "./AdminSidebar.module.css";
@@ -241,17 +241,17 @@ function TpvQuickLink() {
   const [showNotice, setShowNotice] = useState(false);
 
   const handleClick = () => {
-    if (isDesktopApp()) {
-      navigate("/op/tpv");
-      return;
-    }
-    // Browser: redirect to Devices page with context
-    setShowNotice(true);
-    setTimeout(() => {
-      navigate("/admin/devices", {
-        state: { fromTpvAttempt: true },
-      });
-    }, 1800);
+    openTpvInNewWindow(undefined, {
+      navigate,
+      onBrowserBlocked: () => {
+        setShowNotice(true);
+      },
+      onBrowserFallback: () => {
+        navigate("/admin/devices", {
+          state: { fromTpvAttempt: true },
+        });
+      },
+    });
   };
 
   return (
