@@ -11,40 +11,169 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import crypto from "crypto";
 import dotenv from "dotenv";
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import path from "path";
+import { DuplicateWebhookMonitor } from "./services/duplicate-webhook-monitor";
 import MonitoringService from "./services/monitoring";
 import OutboundWebhookService from "./services/outbound";
 import PaymentIntegrationService from "./services/payment-integration";
+import {
+  createSupabaseRestaurantResolutionRepository,
+  resolveRestaurantIdFromPaymentContext,
+} from "./services/restaurant-resolution";
 import {
   createSumUpCheckout,
   createSumUpPixCheckout,
   getSumUpCheckout,
 } from "./services/sumup-checkout";
 import { extractSumUpWebhookFields } from "./services/sumup-payment";
+import {
+  getWebhookProcessRow,
+  isDuplicateWebhookProcessResult,
+} from "./services/webhook-idempotency";
+import {
+  getRawBody,
+  verifyStripeSignature,
+  verifySumUpSignature,
+} from "./services/webhook-signature";
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const app = express();
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (
+      req: Request & { rawBody?: string },
+      _res: Response,
+      buf: Buffer,
+    ) => {
+      req.rawBody = buf.toString("utf8");
+    },
+  }),
+);
 
-const INTEGRATION_RUNTIME_AUTHORITY =
-  process.env.INTEGRATION_RUNTIME_AUTHORITY || "integration-gateway";
-const INTEGRATION_RUNTIME_SIGNAL =
-  process.env.INTEGRATION_RUNTIME_SIGNAL || "authoritative";
-const INTEGRATION_RUNTIME_ENTRYPOINT = "integration-gateway/src/index.ts";
+// =============================================================================
+// Basic In-Memory Rate Limiting (Day 6 Phase 4)
+// =============================================================================
 
-app.use((req: Request, res: Response, next) => {
-  res.setHeader("x-chefiapp-runtime-authority", INTEGRATION_RUNTIME_AUTHORITY);
-  res.setHeader(
-    "x-chefiapp-runtime-entrypoint",
-    INTEGRATION_RUNTIME_ENTRYPOINT,
+type RateBucketKey = string;
+
+interface RateCounter {
+  count: number;
+  resetAt: number;
+}
+
+const restaurantBuckets: Map<RateBucketKey, RateCounter> = new Map();
+const ipBuckets: Map<RateBucketKey, RateCounter> = new Map();
+
+const RESTAURANT_LIMIT_PER_MINUTE =
+  parseInt(process.env.RATE_LIMIT_RESTAURANT_PER_MINUTE || "50", 10) || 50;
+const IP_LIMIT_PER_HOUR =
+  parseInt(process.env.RATE_LIMIT_IP_PER_HOUR || "1000", 10) || 1000;
+
+const ONE_MINUTE_MS = 60_000;
+const ONE_HOUR_MS = 60 * ONE_MINUTE_MS;
+
+const getClientIp = (req: Request): string => {
+  const fwd = (req.headers["x-forwarded-for"] || "") as string;
+  if (fwd) {
+    const first = fwd.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  return (req.ip || req.socket.remoteAddress || "unknown") as string;
+};
+
+const extractRestaurantId = (req: Request): string | null => {
+  const body = (req.body || {}) as Record<string, any>;
+  const params = (req.params || {}) as Record<string, any>;
+  const query = (req.query || {}) as Record<string, any>;
+
+  return (
+    body.restaurantId ||
+    body.restaurant_id ||
+    params.restaurantId ||
+    query.restaurantId ||
+    null
   );
-  res.setHeader("x-chefiapp-runtime-signal", INTEGRATION_RUNTIME_SIGNAL);
-  next();
-});
+};
+
+const checkAndIncrementBucket = (
+  map: Map<RateBucketKey, RateCounter>,
+  key: RateBucketKey,
+  limit: number,
+  windowMs: number,
+): boolean => {
+  const now = Date.now();
+  const current = map.get(key);
+
+  if (!current || current.resetAt <= now) {
+    map.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+
+  if (current.count >= limit) {
+    return false;
+  }
+
+  current.count += 1;
+  return true;
+};
+
+const rateLimitMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  // Allow health checks without any throttling
+  if (req.path === "/health") {
+    return next();
+  }
+
+  const ip = getClientIp(req);
+  const restaurantId = extractRestaurantId(req);
+
+  // Per-restaurant rate limiting (best-effort; only when we can resolve ID)
+  if (restaurantId) {
+    const okRestaurant = checkAndIncrementBucket(
+      restaurantBuckets,
+      `restaurant:${restaurantId}`,
+      RESTAURANT_LIMIT_PER_MINUTE,
+      ONE_MINUTE_MS,
+    );
+
+    if (!okRestaurant) {
+      return res.status(429).json({
+        error: "Rate limit exceeded for restaurant",
+        restaurant_id: restaurantId,
+        limit_per_minute: RESTAURANT_LIMIT_PER_MINUTE,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  // Per-IP rate limiting
+  const okIp = checkAndIncrementBucket(
+    ipBuckets,
+    `ip:${ip}`,
+    IP_LIMIT_PER_HOUR,
+    ONE_HOUR_MS,
+  );
+
+  if (!okIp) {
+    return res.status(429).json({
+      error: "Rate limit exceeded for IP",
+      ip,
+      limit_per_hour: IP_LIMIT_PER_HOUR,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  return next();
+};
+
+// Apply rate limiting to all API routes (excluding health)
+app.use(rateLimitMiddleware);
 
 // Supabase client for RPC calls (service_role bypasses RLS for server-side ops)
 const supabaseUrl = process.env.SUPABASE_URL || "http://localhost:3000";
@@ -60,6 +189,37 @@ const outboundService = new OutboundWebhookService();
 // Initialize monitoring service
 const monitoringService = MonitoringService;
 const paymentIntegrationService = PaymentIntegrationService;
+const restaurantResolutionRepository =
+  createSupabaseRestaurantResolutionRepository(supabase);
+const duplicateWebhookMonitor = new DuplicateWebhookMonitor({
+  threshold: Math.max(
+    1,
+    parseInt(process.env.DUPLICATE_WEBHOOK_ALERT_THRESHOLD || "10", 10),
+  ),
+  windowMs: Math.max(
+    1_000,
+    parseInt(process.env.DUPLICATE_WEBHOOK_ALERT_WINDOW_MS || "300000", 10),
+  ),
+});
+
+const recordDuplicateWebhookAndAlert = (provider: string, eventId: string) => {
+  const duplicateStats = duplicateWebhookMonitor.recordDuplicate(provider);
+
+  if (duplicateStats.shouldAlert) {
+    console.warn("[Gateway] Duplicate webhook burst detected", {
+      provider,
+      eventId,
+      providerCount: duplicateStats.providerCount,
+      totalCount: duplicateStats.totalCount,
+      threshold: duplicateStats.threshold,
+      windowMs: duplicateStats.windowMs,
+      windowStart: duplicateStats.windowStart,
+      windowEnd: duplicateStats.windowEnd,
+    });
+  }
+
+  return duplicateStats;
+};
 
 // Port configuration
 const PORT = process.env.PORT || 4320;
@@ -323,43 +483,36 @@ app.get(
 
 app.post("/api/v1/webhook/sumup", async (req: Request, res: Response) => {
   try {
-    const signature = req.headers["x-sumup-signature"] as string;
-    const rawBody = JSON.stringify(req.body);
+    const signature = req.headers["x-sumup-signature"] as string | undefined;
+    const rawBody = getRawBody(req);
     const parsedWebhook = extractSumUpWebhookFields(req.body || {});
 
     // 1. Verify signature
-    const secretKey = process.env.SUMUP_API_KEY;
+    const secretKey =
+      process.env.SUMUP_WEBHOOK_SECRET || process.env.SUMUP_API_KEY;
     if (!secretKey) {
-      console.warn(
-        "SUMUP_API_KEY not configured, skipping signature verification",
-      );
-    } else if (!signature) {
+      return res.status(503).json({
+        error: "Webhook secret not configured",
+        message: "Set SUMUP_WEBHOOK_SECRET (or SUMUP_API_KEY for legacy mode)",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    if (!signature) {
       return res.status(401).json({
         error: "Missing X-SumUp-Signature header",
         timestamp: new Date().toISOString(),
       });
-    } else {
-      const expectedSignature = crypto
-        .createHmac("sha256", secretKey)
-        .update(rawBody)
-        .digest("hex");
+    }
 
-      const provided = Buffer.from(signature);
-      const expected = Buffer.from(expectedSignature);
-
-      if (
-        provided.length !== expected.length ||
-        !crypto.timingSafeEqual(provided, expected)
-      ) {
-        console.error("Invalid SumUp signature", {
-          signature,
-          expectedSignature,
-        });
-        return res.status(401).json({
-          error: "Invalid signature",
-          timestamp: new Date().toISOString(),
-        });
-      }
+    if (!verifySumUpSignature(rawBody, signature, secretKey)) {
+      console.error("Invalid SumUp signature", {
+        providedSignature: signature,
+      });
+      return res.status(401).json({
+        error: "Invalid signature",
+        timestamp: new Date().toISOString(),
+      });
     }
 
     // 2. Extract event details
@@ -391,6 +544,20 @@ app.post("/api/v1/webhook/sumup", async (req: Request, res: Response) => {
       });
     }
 
+    const processRow = getWebhookProcessRow(data);
+    if (isDuplicateWebhookProcessResult(processRow)) {
+      const duplicateStats = recordDuplicateWebhookAndAlert("sumup", eventId);
+
+      return res.status(202).json({
+        status: "duplicate_ignored",
+        event_id: eventId,
+        message: processRow?.message || "Duplicate webhook ignored",
+        duplicate_window_count: duplicateStats.providerCount,
+        duplicate_total_window_count: duplicateStats.totalCount,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     const { data: webhookEvent, error: webhookReadError } = await supabase
       .from("webhook_events")
       .select("id")
@@ -407,6 +574,16 @@ app.post("/api/v1/webhook/sumup", async (req: Request, res: Response) => {
 
     if (webhookEvent?.id) {
       const webhookPatch: Record<string, string> = {};
+      const resolvedRestaurantId = await resolveRestaurantIdFromPaymentContext(
+        {
+          provider: "sumup",
+          orderId: parsedWebhook.orderId,
+          merchantCode: parsedWebhook.merchantCode,
+          paymentReference: parsedWebhook.paymentReference,
+          eventId,
+        },
+        restaurantResolutionRepository,
+      );
 
       if (parsedWebhook.merchantCode) {
         webhookPatch.merchant_code = parsedWebhook.merchantCode;
@@ -418,6 +595,10 @@ app.post("/api/v1/webhook/sumup", async (req: Request, res: Response) => {
 
       if (parsedWebhook.paymentReference) {
         webhookPatch.payment_reference = parsedWebhook.paymentReference;
+      }
+
+      if (resolvedRestaurantId) {
+        webhookPatch.restaurant_id = resolvedRestaurantId;
       }
 
       if (Object.keys(webhookPatch).length > 0) {
@@ -477,9 +658,35 @@ app.post("/api/v1/webhook/sumup", async (req: Request, res: Response) => {
           resolvedPaymentAmount,
         );
 
+      if (resolvedRestaurantId) {
+        const { data: deliveryResult, error: deliveryError } =
+          await supabase.rpc("trigger_outbound_webhooks_after_payment", {
+            p_event_id: webhookEvent.id,
+            p_restaurant_id: resolvedRestaurantId,
+          });
+
+        if (deliveryError) {
+          console.warn(
+            "Failed to schedule outbound deliveries after SumUp payment",
+            {
+              eventId,
+              restaurantId: resolvedRestaurantId,
+              error: deliveryError.message,
+            },
+          );
+        } else if (deliveryResult?.[0]?.deliveries_scheduled !== undefined) {
+          console.log("Outbound deliveries scheduled after SumUp payment", {
+            eventId,
+            restaurantId: resolvedRestaurantId,
+            deliveriesScheduled: deliveryResult[0].deliveries_scheduled,
+          });
+        }
+      }
+
       if (!paymentSync) {
         console.warn("SumUp payment sync did not update an order", {
           eventId,
+          restaurantId: resolvedRestaurantId,
           merchantCode: parsedWebhook.merchantCode,
           status: parsedWebhook.paymentStatus,
         });
@@ -518,20 +725,33 @@ app.post("/api/v1/webhook/sumup", async (req: Request, res: Response) => {
 
 app.post("/api/v1/webhook/stripe", async (req: Request, res: Response) => {
   try {
-    const signature = req.headers["stripe-signature"] as string;
+    const signature = req.headers["stripe-signature"] as string | undefined;
+    const rawBody = getRawBody(req);
+    const verification = verifyStripeSignature(
+      rawBody,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET,
+    );
 
-    if (!signature) {
-      return res.status(401).json({
-        error: "Missing Stripe-Signature header",
+    if (!verification.ok) {
+      const statusCode = verification.error.includes("STRIPE_WEBHOOK_SECRET")
+        ? 503
+        : 401;
+
+      return res.status(statusCode).json({
+        error: verification.error,
         timestamp: new Date().toISOString(),
       });
     }
 
-    // TODO: Implement Stripe signature verification
-    // Stripe uses different signature format: timestamp.signature
-    // Verify using stripe.webhooks.constructEvent()
-
     const eventId = req.body.id;
+
+    if (!eventId) {
+      return res.status(400).json({
+        error: "Missing Stripe event id",
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     // Call backend RPC
     const { data, error } = await supabase.rpc("process_webhook_event", {
@@ -546,6 +766,20 @@ app.post("/api/v1/webhook/stripe", async (req: Request, res: Response) => {
       console.error("Stripe webhook error:", error);
       return res.status(500).json({
         error: "Failed to process webhook",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const processRow = getWebhookProcessRow(data);
+    if (isDuplicateWebhookProcessResult(processRow)) {
+      const duplicateStats = recordDuplicateWebhookAndAlert("stripe", eventId);
+
+      return res.status(202).json({
+        status: "duplicate_ignored",
+        event_id: eventId,
+        message: processRow?.message || "Duplicate webhook ignored",
+        duplicate_window_count: duplicateStats.providerCount,
+        duplicate_total_window_count: duplicateStats.totalCount,
         timestamp: new Date().toISOString(),
       });
     }
@@ -592,6 +826,20 @@ app.post("/api/v1/webhook/custom", async (req: Request, res: Response) => {
       console.error("Custom webhook error:", error);
       return res.status(500).json({
         error: "Failed to process webhook",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const processRow = getWebhookProcessRow(data);
+    if (isDuplicateWebhookProcessResult(processRow)) {
+      const duplicateStats = recordDuplicateWebhookAndAlert(provider, event_id);
+
+      return res.status(202).json({
+        status: "duplicate_ignored",
+        event_id: event_id,
+        message: processRow?.message || "Duplicate webhook ignored",
+        duplicate_window_count: duplicateStats.providerCount,
+        duplicate_total_window_count: duplicateStats.totalCount,
         timestamp: new Date().toISOString(),
       });
     }
@@ -714,6 +962,27 @@ app.get("/api/v1/monitoring/alerts", async (req: Request, res: Response) => {
   }
 });
 
+// Get duplicate webhook burst metrics (in-memory rolling window)
+app.get(
+  "/api/v1/monitoring/duplicates",
+  async (req: Request, res: Response) => {
+    try {
+      const snapshot = duplicateWebhookMonitor.getSnapshot();
+
+      res.json({
+        timestamp: new Date().toISOString(),
+        duplicates: snapshot,
+      });
+    } catch (error) {
+      console.error("[Gateway] Duplicate monitoring error:", error);
+      res.status(500).json({
+        error: "Failed to fetch duplicate monitoring metrics",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
+);
+
 // Get system-wide performance metrics
 app.get(
   "/api/v1/monitoring/performance",
@@ -788,7 +1057,11 @@ app.get("/api/v1/monitoring/latency", async (req: Request, res: Response) => {
 app.get("/api/v1/monitoring/dashboard", async (req: Request, res: Response) => {
   try {
     const restaurantId = req.query.restaurantId as string | undefined;
-    const dashboard = await monitoringService.getDashboardSummary(restaurantId);
+    const duplicateSnapshot = duplicateWebhookMonitor.getSnapshot();
+    const dashboard = await monitoringService.getDashboardSummary(
+      restaurantId,
+      duplicateSnapshot,
+    );
 
     res.json(dashboard);
   } catch (error) {

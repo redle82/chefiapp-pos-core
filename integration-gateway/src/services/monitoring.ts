@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { createClient } from "@supabase/supabase-js";
+import type { DuplicateWebhookSnapshot } from "./duplicate-webhook-monitor";
 
 interface WebhookMetrics {
   delivery_count: number;
@@ -56,10 +57,8 @@ export class MonitoringService {
 
   constructor() {
     this.supabase = createClient(
-      process.env.SUPABASE_URL || "http://localhost:3000",
-      process.env.SUPABASE_SERVICE_ROLE_KEY ||
-        process.env.SUPABASE_ANON_KEY ||
-        "test-key",
+      process.env.SUPABASE_URL || "",
+      process.env.SUPABASE_SERVICE_ROLE_KEY || "",
     );
   }
 
@@ -183,7 +182,10 @@ export class MonitoringService {
   /**
    * Get comprehensive monitoring dashboard data
    */
-  async getDashboardSummary(restaurantId?: string) {
+  async getDashboardSummary(
+    restaurantId?: string,
+    duplicateWebhookMetrics?: DuplicateWebhookSnapshot,
+  ) {
     const performance = await this.getPerformanceMetrics();
     const alerts = await this.getFailedDeliveries(1);
     const latency = await this.getLatencyMetrics(24);
@@ -199,6 +201,7 @@ export class MonitoringService {
       failed_deliveries: alerts,
       latency_metrics: latency,
       restaurant_metrics: restaurantMetrics,
+      duplicate_webhook_metrics: duplicateWebhookMetrics,
       health_status: this.calculateHealthStatus(performance, alerts, latency),
     };
   }

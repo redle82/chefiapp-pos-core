@@ -1,11 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { Request, Response } from "express";
+import {
+  createSupabaseRestaurantResolutionRepository,
+  resolveRestaurantIdFromPaymentContext,
+} from "./restaurant-resolution";
 
 const supabaseUrl = process.env.SUPABASE_URL || "http://localhost:3001";
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.SUPABASE_ANON_KEY ||
-  "test-key";
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 interface ProcessWebhookParams {
   provider: string;
@@ -22,6 +23,8 @@ interface ProcessWebhookParams {
  */
 export class WebhookEventHandler {
   private supabase = createClient(supabaseUrl, supabaseKey);
+  private restaurantResolutionRepository =
+    createSupabaseRestaurantResolutionRepository(this.supabase);
 
   /**
    * Process incoming webhook event
@@ -220,30 +223,32 @@ export class WebhookEventHandler {
     payload: Record<string, unknown>,
   ): Promise<string | null> {
     try {
-      if (provider === "sumup") {
-        // TODO: Implement mapping from SumUp merchant_code to restaurant_id
-        // For now, log and return null
-        const merchantCode = (payload as Record<string, unknown>).merchant_code;
-        console.log(
-          `[WebhookHandler] TODO: Map SumUp merchant_code ${merchantCode} to restaurant_id`,
-        );
-        return null;
-      }
+      const recordPayload = payload as Record<string, any>;
+      const nestedPayload =
+        (recordPayload.payload as Record<string, any> | undefined) ||
+        (recordPayload.data as Record<string, any> | undefined) ||
+        recordPayload;
 
-      if (provider === "stripe") {
-        // TODO: Implement mapping from Stripe connect account to restaurant_id
-        const chargeData = (payload as Record<string, unknown>).data as Record<
-          string,
-          unknown
-        >;
-        const chargeObj = chargeData.object as Record<string, unknown>;
-        console.log(
-          `[WebhookHandler] TODO: Map Stripe charge ${chargeObj?.id} to restaurant_id`,
-        );
-        return null;
-      }
-
-      return null;
+      return await resolveRestaurantIdFromPaymentContext(
+        {
+          provider,
+          orderId:
+            (nestedPayload.order_id as string | undefined) ||
+            (nestedPayload.metadata?.order_id as string | undefined),
+          merchantCode:
+            (nestedPayload.merchant_code as string | undefined) ||
+            (recordPayload.merchant_code as string | undefined),
+          paymentReference:
+            (nestedPayload.transaction_code as string | undefined) ||
+            (nestedPayload.transaction_id as string | undefined) ||
+            (nestedPayload.payment_reference as string | undefined),
+          eventId:
+            (recordPayload.id as string | undefined) ||
+            (recordPayload.event_id as string | undefined) ||
+            (nestedPayload.id as string | undefined),
+        },
+        this.restaurantResolutionRepository,
+      );
     } catch (error) {
       console.error(
         `[WebhookHandler] Error extracting restaurant ID: ${
