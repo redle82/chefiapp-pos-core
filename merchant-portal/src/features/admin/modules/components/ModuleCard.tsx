@@ -50,7 +50,9 @@ export function ModuleCard({
 }: ModuleCardProps) {
   const badge = BADGE_STYLES[module.status];
   const primaryLabel =
-    PRIMARY_LABELS[module.primaryAction] ?? module.primaryAction;
+    module.primaryLabelOverride ??
+    PRIMARY_LABELS[module.primaryAction] ??
+    module.primaryAction;
   const showSecondary =
     module.secondaryAction &&
     (module.status === "active" || module.status === "needs_setup");
@@ -88,6 +90,26 @@ export function ModuleCard({
     margin: 0,
     fontSize: 11,
     color: "var(--text-tertiary)",
+  };
+  const deviceStatusStyle = {
+    margin: 0,
+    fontSize: 11,
+    color: "var(--text-tertiary)",
+    lineHeight: 1.4,
+  };
+  const desktopOnlyBadgeStyle = {
+    display: "inline-flex",
+    alignItems: "center",
+    width: "fit-content",
+    fontSize: 10,
+    fontWeight: 600,
+    letterSpacing: "0.02em",
+    textTransform: "uppercase" as const,
+    color: "#60a5fa",
+    backgroundColor: "rgba(59,130,246,0.12)",
+    border: "1px solid rgba(96,165,250,0.35)",
+    borderRadius: 999,
+    padding: "2px 8px",
   };
   const actionsStyle = {
     display: "flex" as const,
@@ -161,8 +183,14 @@ export function ModuleCard({
         )}
       </div>
       <p style={descStyle}>{module.description}</p>
+      {module.platform === "desktop" && (
+        <span style={desktopOnlyBadgeStyle}>Desktop only</span>
+      )}
       {module.dependencies && module.dependencies.length > 0 && (
         <p style={depsStyle}>Requiere: {module.dependencies.join(", ")}</p>
+      )}
+      {module.deviceStatusLabel && (
+        <p style={deviceStatusStyle}>{module.deviceStatusLabel}</p>
       )}
       <div style={actionsStyle}>
         <button
