@@ -28,20 +28,6 @@ let identityCache: {
   ts: number;
 } | null = null;
 
-/**
- * Invalida caches de fetchRestaurant e fetchRestaurantForIdentity para um dado restaurante.
- * Chamado após update em gm_restaurants para forçar re-fetch imediato.
- */
-export function invalidateRestaurantReaderCache(restaurantId?: string): void {
-  if (!restaurantId) {
-    restaurantCache = null;
-    identityCache = null;
-    return;
-  }
-  if (restaurantCache?.key === restaurantId) restaurantCache = null;
-  if (identityCache?.key === restaurantId) identityCache = null;
-}
-
 export type CoreProductMode = "trial" | "pilot" | "live";
 
 /** billing_status: trial | active | past_due | canceled (SaaS). Fonte = gm_restaurants. */
@@ -183,13 +169,36 @@ export async function fetchRestaurant(
     }
   }
 
-  const { data, error } = await dockerCoreClient
+  const { data: rawData1, error: error1 } = await dockerCoreClient
     .from("gm_restaurants")
     .select(
       "id,name,slug,status,tenant_id,product_mode,billing_status,trial_ends_at,country,timezone,currency,locale,type,logo_url,created_at,updated_at",
     )
     .eq("id", restaurantId)
     .maybeSingle();
+
+  let rawData = rawData1;
+  let error = error1;
+
+  // Backwards compat: retry without logo_url if the column does not exist yet
+  if (error?.message?.includes("logo_url")) {
+    const { data: rawData2, error: error2 } = await dockerCoreClient
+      .from("gm_restaurants")
+      .select(
+        "id,name,slug,status,tenant_id,product_mode,billing_status,trial_ends_at,country,timezone,currency,locale,type,created_at,updated_at",
+      )
+      .eq("id", restaurantId)
+      .maybeSingle();
+    rawData = rawData2;
+    error = error2;
+  }
+
+  const data = rawData
+    ? ({
+        ...(rawData as Omit<CoreRestaurantRow, "logo_url">),
+        logo_url: null,
+      } as CoreRestaurantRow)
+    : null;
 
   if (error) {
     Logger.warn("[RuntimeReader] fetchRestaurant FAILED", {
@@ -254,13 +263,36 @@ export async function fetchRestaurantForIdentity(
     }
   }
 
-  const { data, error } = await dockerCoreClient
+  const { data: rawData1, error: error1 } = await dockerCoreClient
     .from("gm_restaurants")
     .select(
-      "id,name,slug,status,tenant_id,type,city,address,description,logo_url,created_at,updated_at",
+      "id,name,slug,status,tenant_id,type,city,address,description,logo_url,country,timezone,currency,locale,created_at,updated_at",
     )
     .eq("id", restaurantId)
     .maybeSingle();
+
+  let rawData = rawData1;
+  let error = error1;
+
+  // Backwards compat: retry without logo_url if the column does not exist yet
+  if (error?.message?.includes("logo_url")) {
+    const { data: rawData2, error: error2 } = await dockerCoreClient
+      .from("gm_restaurants")
+      .select(
+        "id,name,slug,status,tenant_id,type,city,address,description,country,timezone,currency,locale,created_at,updated_at",
+      )
+      .eq("id", restaurantId)
+      .maybeSingle();
+    rawData = rawData2;
+    error = error2;
+  }
+
+  const data = rawData
+    ? ({
+        ...(rawData as Omit<CoreRestaurantIdentityRow, "logo_url">),
+        logo_url: null,
+      } as CoreRestaurantIdentityRow)
+    : null;
 
   if (error) {
     Logger.warn("[RuntimeReader] fetchRestaurantForIdentity", {
@@ -349,12 +381,18 @@ export async function getOrCreateRestaurantId(): Promise<string | null> {
           setTabIsolated("chefiapp_restaurant_id", row.id);
           stored = row.id;
         } else {
+          localStorage.removeItem("chefiapp_restaurant_id");
+          removeTabIsolated("chefiapp_restaurant_id");
           stored = null;
         }
       } else {
+        localStorage.removeItem("chefiapp_restaurant_id");
+        removeTabIsolated("chefiapp_restaurant_id");
         stored = null;
       }
     } catch {
+      localStorage.removeItem("chefiapp_restaurant_id");
+      removeTabIsolated("chefiapp_restaurant_id");
       stored = null;
     }
   }

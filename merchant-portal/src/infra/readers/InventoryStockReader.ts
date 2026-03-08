@@ -179,7 +179,7 @@ export interface CoreIngredient {
   barcode?: string | null;
   /** Código do fornecedor */
   supplier_code?: string | null;
-  /** Custo médio ponderado por unit (€) */
+  /** Custo médio ponderado por unit (local currency) */
   cost_per_unit?: number;
   created_at?: string;
   updated_at?: string;
