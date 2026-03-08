@@ -1,10 +1,8 @@
 # CHEFIAPP SUPREME AUDIT REPORT
-
+>
 > **Date:** 2026-01-15
 > **Scope:** Governance, Architecture, and P0/P1 Critical Path
 > **Status:** 🟡 STRUCTURAL (Critical P0s Fixed, Architectural Inversion Incomplete)
-
-> ⚠️ **PARTIALLY SUPERSEDED** — References to `AppDomainWrapper` wiring (Sections 8, 10) are stale. Component deleted in PR-G (refactor/boot-pipeline). Legacy Mode deprecation no longer tied to `AppDomainWrapper`.
 
 ## 🦅 EXECUTIVE SUMMARY
 
@@ -34,7 +32,7 @@ The codebase now respects these definitions in new implementations (`TenantKerne
 **Status:** 🟡 **WARNING**
 
 - **Aggregation:** `Order` and `Payment` are well-defined. `CashRegister` is now an aggregate but relies on a `StateMachine` for logic.
-- **Red Flag:** `CashRegisterEngine` operates as a "Dual Citizen". It writes directly to Supabase (`gm_cash_registers`) AND optionally calls `Kernel.execute()`. This violates the "Kernel Sovereignty" principle where the Kernel should be the _only_ writer.
+- **Red Flag:** `CashRegisterEngine` operates as a "Dual Citizen". It writes directly to Supabase (`gm_cash_registers`) AND optionally calls `Kernel.execute()`. This violates the "Kernel Sovereignty" principle where the Kernel should be the *only* writer.
 - **Risk:** If `Kernel.execute()` fails after Supabase write, the database has state that the Event Log ignores.
 
 ---
@@ -139,4 +137,4 @@ The remaining issues are "Architectural Debt" regarding the complete transition 
 2. **Next Sprint:** Complete the wiring of `TenantKernel` into `AppDomainWrapper` to eliminate Legacy Mode in `CashRegister`.
 
 **Signed,**
-_Antigravity Auditor_
+*Antigravity Auditor*
