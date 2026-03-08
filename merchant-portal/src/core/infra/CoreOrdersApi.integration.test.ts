@@ -15,6 +15,7 @@ import {
   removeOrderItem,
   updateOrderStatus,
 } from "./CoreOrdersApi";
+import { coreClient } from "./coreClient";
 import { eventBus, getEventMetrics } from "./eventBus";
 import { featureFlagManager } from "./featureFlags";
 
@@ -155,6 +156,29 @@ describe("CoreOrdersApi + Event Bus Integration", () => {
       // No events published
       const metrics = getEventMetrics();
       expect(metrics.published).toBe(0);
+    });
+
+    it("forwards p_idempotency_key to Core RPC", async () => {
+      await createOrderAtomic({
+        p_restaurant_id: "rest-1",
+        p_items: [
+          {
+            product_id: "prod-10",
+            name: "Item 10",
+            quantity: 1,
+            unit_price: 90,
+          },
+        ],
+        p_payment_method: "cash",
+        p_idempotency_key: "idem-create-1",
+      });
+
+      expect(coreClient.rpc).toHaveBeenCalledWith(
+        "create_order_atomic",
+        expect.objectContaining({
+          p_idempotency_key: "idem-create-1",
+        }),
+      );
     });
   });
 

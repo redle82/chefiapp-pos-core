@@ -6,6 +6,7 @@
  */
 
 import { CONFIG } from "../../config";
+import { Logger } from "../logger";
 
 // BASE URL: Em DEV (browser) CORE_URL é "" → URLs relativas (/rest/v1/...) vão
 // para o origin (ex. localhost:5175). O Vite proxy (vite.config: /rest → 3001)
@@ -72,11 +73,7 @@ const OPTIONAL_TABLES = [
 
 /** RPCs opcionais: se a migração não estiver aplicada (404), não repetir o pedido durante TTL para evitar ruído na consola.
  * get_multiunit_overview: ver docker-core/schema/migrations/20260221_multiunit_aggregate_views.sql */
-const OPTIONAL_RPCS = [
-  "get_multiunit_overview",
-  "get_reconciliation_report",
-  "get_org_daily_consolidation",
-] as const;
+const OPTIONAL_RPCS = ["get_multiunit_overview"] as const;
 const rpcUnavailableUntil = new Map<string, number>();
 const RPC_UNAVAILABLE_TTL_MS = 30_000;
 const RPC_UNAVAILABLE_TTL_DEV_MS = 24 * 60 * 60 * 1000;
@@ -205,7 +202,7 @@ function buildFilterBuilder(table: string): FilterBuilder {
           table === "gm_audit_logs"
             ? "dbmate up ou psql -f schema/migrations/20260211_core_audit_logs.sql"
             : "ver docker-core/Makefile ou docs/architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md";
-        console.debug(
+        Logger.debug(
           `[DEV] ${table} indisponível (opcional). Para ativar: ${hint}`,
         );
       }
@@ -225,7 +222,7 @@ function buildFilterBuilder(table: string): FilterBuilder {
       // If REST is relative, use current origin as base
       url = new URL(`${REST}/${table}`, baseUrl);
     } catch (e) {
-      console.error("[DockerCore] Critical: Failed to construct URL", {
+      Logger.error("[DockerCore] Critical: Failed to construct URL", null, {
         REST,
         table,
         baseUrl,
@@ -503,16 +500,13 @@ let clientInstance: DockerCoreClientShape | null = null;
  * run ./scripts/core/apply-missing-migrations.sh. See docs/architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md.
  */
 export async function probeOptionalTables(): Promise<void> {
-  // In the browser, preseed optional tables as unavailable to avoid 404 console noise.
-  // DEV: 24h TTL (never probe); PROD: 5min TTL (lazy recovery after migration).
-  if (typeof window !== "undefined") {
-    const ttl = IS_DEV ? OPTIONAL_TABLES_TTL_DEV_MS : 5 * 60 * 1000;
+  if (typeof window !== "undefined" && IS_DEV) {
+    const ttl = OPTIONAL_TABLES_TTL_DEV_MS;
     OPTIONAL_TABLES.forEach((table) =>
       tableUnavailableUntil.set(table, Date.now() + ttl),
     );
     return;
   }
-  // SSR / Node: probe to discover which tables exist.
   const core = getDockerCoreFetchClient();
   await Promise.all(
     OPTIONAL_TABLES.map((table) => core.from(table).select("id").limit(0)),
@@ -543,7 +537,7 @@ export function getDockerCoreFetchClient(): DockerCoreClientShape {
         }
         const rpcUrl = `${REST}/rpc/${fnName}`;
         if (IS_DEV) {
-          console.log(`[CoreRPC] POST ${rpcUrl}`, {
+          Logger.debug(`[CoreRPC] POST ${rpcUrl}`, {
             fnName,
             paramsKeys: Object.keys(params),
           });
@@ -555,10 +549,9 @@ export function getDockerCoreFetchClient(): DockerCoreClientShape {
         });
         const text = await res.text();
         if (IS_DEV) {
-          console.log(
-            `[CoreRPC] ${fnName} → ${res.status}`,
-            text.substring(0, 200),
-          );
+          Logger.debug(`[CoreRPC] ${fnName} → ${res.status}`, {
+            preview: text.substring(0, 200),
+          });
         }
         // API_ERROR_CONTRACT: se resposta não é JSON, não fazer parse; devolver erro tipado.
         const ct = res.headers.get("Content-Type")?.toLowerCase() ?? "";

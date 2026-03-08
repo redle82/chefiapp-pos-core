@@ -1,3 +1,5 @@
+import { Logger } from "../logger";
+
 /**
  * FEATURE FLAGS — GLOBAL CONTROL
  *
@@ -178,7 +180,7 @@ class FeatureFlagManager {
     };
 
     // Log current flags on init
-    console.log("[FEATURE_FLAGS] Initialized:", this.flags);
+    Logger.debug("[FEATURE_FLAGS] Initialized:", { flags: this.flags });
   }
 
   /**
@@ -202,7 +204,9 @@ class FeatureFlagManager {
     const oldValue = this.flags[flag];
     this.flags[flag] = value;
 
-    console.warn(`[FEATURE_FLAGS] Changed ${flag}: ${oldValue} → ${value}`);
+    Logger.warn(
+      `[FEATURE_FLAGS] Changed ${flag}: ${String(oldValue)} → ${String(value)}`,
+    );
 
     // Notify listeners
     this.listeners.forEach((listener) => listener(this.getAll()));
@@ -220,7 +224,7 @@ class FeatureFlagManager {
    * Emergency kill switch for cognitive layer
    */
   disableCognitiveLayer(): void {
-    console.error("[FEATURE_FLAGS] 🚨 EMERGENCY: Disabling cognitive layer");
+    Logger.warn("[FEATURE_FLAGS] 🚨 EMERGENCY: Disabling cognitive layer");
     this.set("ENABLE_COGNITIVE_LAYER", false);
     this.set("ENABLE_EVENT_BUS", false);
     this.set("ENABLE_AI_SUGGESTIONS", false);
@@ -231,7 +235,7 @@ class FeatureFlagManager {
    * Enable cognitive layer (safe activation)
    */
   enableCognitiveLayer(): void {
-    console.log("[FEATURE_FLAGS] ✅ Enabling cognitive layer");
+    Logger.info("[FEATURE_FLAGS] ✅ Enabling cognitive layer");
     this.set("ENABLE_COGNITIVE_LAYER", true);
     this.set("ENABLE_EVENT_BUS", true);
     this.set("ENABLE_AI_SUGGESTIONS", true);

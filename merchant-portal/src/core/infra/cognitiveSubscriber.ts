@@ -13,6 +13,7 @@
  * Core does NOT run this code directly.
  */
 
+import { Logger } from "../logger";
 import type { CoreEvent } from "./eventTypes";
 
 // ============================================================================
@@ -66,7 +67,7 @@ export interface CognitiveSubscriberConfig {
  *     await processEvent(event);
  *     return new Response(JSON.stringify({ success: true }), { status: 200 });
  *   } catch (error) {
- *     console.error('[COGNITIVE_SUBSCRIBER] Error:', error);
+ *     Logger.error('[COGNITIVE_SUBSCRIBER] Error:', error);
  *     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
  *   }
  * });
@@ -89,7 +90,9 @@ export interface CognitiveSubscriberConfig {
 export async function processOrderCreated(
   event: Extract<CoreEvent, { eventType: "order.created" }>,
 ): Promise<void> {
-  console.log("[COGNITIVE] Processing order.created:", event.orderId);
+  Logger.debug("[COGNITIVE] Processing order.created:", {
+    orderId: event.orderId,
+  });
 
   // TODO: Implement AI logic
   // - Update product.popularity_score
@@ -110,7 +113,9 @@ export async function processOrderCreated(
 export async function processOrderPaid(
   event: Extract<CoreEvent, { eventType: "order.paid" }>,
 ): Promise<void> {
-  console.log("[COGNITIVE] Processing order.paid:", event.orderId);
+  Logger.debug("[COGNITIVE] Processing order.paid:", {
+    orderId: event.orderId,
+  });
 
   // TODO: Implement AI logic
   // - Update revenue forecast model
@@ -131,7 +136,9 @@ export async function processOrderPaid(
 export async function processShiftClosed(
   event: Extract<CoreEvent, { eventType: "shift.closed" }>,
 ): Promise<void> {
-  console.log("[COGNITIVE] Processing shift.closed:", event.shiftId);
+  Logger.debug("[COGNITIVE] Processing shift.closed:", {
+    shiftId: event.shiftId,
+  });
 
   // TODO: Implement AI logic
   // - Generate automated shift report
@@ -152,7 +159,7 @@ export async function processShiftClosed(
 export async function processMissionRequested(
   event: Extract<CoreEvent, { eventType: "mission.requested" }>,
 ): Promise<void> {
-  console.log("[COGNITIVE] Processing mission.requested");
+  Logger.debug("[COGNITIVE] Processing mission.requested");
 
   // TODO: Implement AI logic
   // - Analyze restaurant performance
@@ -184,7 +191,7 @@ export async function processEvent(event: CoreEvent): Promise<void> {
   if (processor) {
     await processor(event);
   } else {
-    console.warn(`[COGNITIVE] No processor for event type: ${event.eventType}`);
+    Logger.warn(`[COGNITIVE] No processor for event type: ${event.eventType}`);
   }
 }
 

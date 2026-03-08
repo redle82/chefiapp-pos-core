@@ -43,13 +43,9 @@ function getUrl(): string {
   const url = getRawBaseUrl();
 
   if (!url) {
-    // Vite production build (browser): import.meta.env.PROD is true at compile-time
-    const isViteProd =
-      typeof import.meta !== "undefined" && !!import.meta.env?.PROD;
-    // Node.js / Jest: process.env.NODE_ENV === "production"
-    const isNodeProd =
+    const isProd =
       typeof process !== "undefined" && process.env.NODE_ENV === "production";
-    if (isViteProd || isNodeProd) return "";
+    if (isProd) return "";
     return "/rest";
   }
 
@@ -105,8 +101,7 @@ export function getBackendType(): BackendType {
     return BackendType.docker;
   }
 
-  // URLs that don't match Docker indicators (e.g. Supabase cloud) are NOT Docker
-  return BackendType.none;
+  return url ? BackendType.docker : BackendType.none;
 }
 
 export function isDockerBackend(): boolean {

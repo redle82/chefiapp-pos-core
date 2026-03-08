@@ -18,6 +18,7 @@
  * });
  */
 
+import { Logger } from "../logger";
 import { analyticsClient } from "./analyticsClient";
 import type { CoreEvent } from "./eventTypes";
 import { EVENT_METADATA } from "./eventTypes";
@@ -69,27 +70,25 @@ class EventBus {
     // Check feature flag FIRST
     if (!isCognitiveLayerEnabled()) {
       if (isFeatureEnabled("ENABLE_EVENT_LOGGING")) {
-        console.debug(
-          "[EVENT_BUS] Cognitive layer disabled, skipping event:",
-          event.eventType,
-        );
+        Logger.debug("[EVENT_BUS] Cognitive layer disabled, skipping event:", {
+          eventType: event.eventType,
+        });
       }
       return;
     }
 
     if (!isFeatureEnabled("ENABLE_EVENT_BUS")) {
       if (isFeatureEnabled("ENABLE_EVENT_LOGGING")) {
-        console.debug(
-          "[EVENT_BUS] Event bus disabled, skipping event:",
-          event.eventType,
-        );
+        Logger.debug("[EVENT_BUS] Event bus disabled, skipping event:", {
+          eventType: event.eventType,
+        });
       }
       return;
     }
 
     // Publish asynchronously (don't await, don't block)
     this.publishAsync(event).catch((error) => {
-      console.error("[EVENT_BUS] Async publish failed:", error);
+      Logger.error("[EVENT_BUS] Async publish failed:", error);
     });
   }
 
@@ -112,9 +111,10 @@ class EventBus {
       this.recordSuccess(latency);
 
       if (isFeatureEnabled("ENABLE_EVENT_LOGGING")) {
-        console.log(
-          `[EVENT_BUS] Published ${event.eventType} (${latency.toFixed(2)}ms)`,
-        );
+        Logger.info("[EVENT_BUS] Published", {
+          eventType: event.eventType,
+          latencyMs: latency.toFixed(2),
+        });
       }
 
       return result;
@@ -124,10 +124,12 @@ class EventBus {
 
       // Log error
       if (isFeatureEnabled("ENABLE_EVENT_LOGGING")) {
-        console.warn(
-          `[EVENT_BUS] Failed to publish ${event.eventType} (attempt ${attempt}/${this.MAX_RETRY_ATTEMPTS}):`,
-          error,
-        );
+        Logger.warn("[EVENT_BUS] Failed to publish", {
+          eventType: event.eventType,
+          attempt,
+          maxAttempts: this.MAX_RETRY_ATTEMPTS,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
 
       // Retry logic
@@ -189,14 +191,14 @@ class EventBus {
     this.deadLetterQueue.push(event);
     this.metrics.deadLettered++;
 
-    console.error(
-      `[EVENT_BUS] Event ${event.eventId} added to dead letter queue`,
-    );
+    Logger.error("[EVENT_BUS] Event added to dead letter queue", null, {
+      eventId: event.eventId,
+    });
 
     // Limit queue size (prevent memory leak)
     if (this.deadLetterQueue.length > 1000) {
       this.deadLetterQueue.shift();
-      console.warn("[EVENT_BUS] Dead letter queue full, dropping oldest event");
+      Logger.warn("[EVENT_BUS] Dead letter queue full, dropping oldest event");
     }
   }
 
@@ -204,9 +206,9 @@ class EventBus {
    * Retry all events in dead letter queue
    */
   async retryDeadLetterQueue(): Promise<void> {
-    console.log(
-      `[EVENT_BUS] Retrying ${this.deadLetterQueue.length} dead letter events`,
-    );
+    Logger.info("[EVENT_BUS] Retrying dead letter queue", {
+      count: this.deadLetterQueue.length,
+    });
 
     const events = [...this.deadLetterQueue];
     this.deadLetterQueue = [];
