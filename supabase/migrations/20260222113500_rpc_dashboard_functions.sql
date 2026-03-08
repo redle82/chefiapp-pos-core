@@ -99,22 +99,15 @@ GRANT EXECUTE ON FUNCTION public.get_daily_metrics(UUID, TEXT)
 --    Criada em 20260222113300 (performance_optimizations).
 --    Normalizar grant aqui para consistência de auditoria.
 -- ─────────────────────────────────────────────────────────────────────────────
--- ─────────────────────────────────────────────────────────────────────────────
--- 3. refresh_restaurant_stats — actualiza a materialized view mv_restaurant_daily_stats
---    Criada em 20260222113300 (performance_optimizations).
---    Normalizar grant aqui para consistência de auditoria.
---    NOTE: Comentado pois a função não existe no baseline atual.
--- ─────────────────────────────────────────────────────────────────────────────
--- GRANT EXECUTE ON FUNCTION public.refresh_restaurant_stats()
---     TO service_role;
+GRANT EXECUTE ON FUNCTION public.refresh_restaurant_stats()
+    TO service_role;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 4. Acesso à materialized view mv_restaurant_daily_stats
 --    Apenas service_role — a view agrega dados de todos os restaurantes.
 --    UI nunca lê diretamente: usa get_daily_metrics via backend.
---    NOTE: Comentado pois a view não existe no baseline atual.
 -- ─────────────────────────────────────────────────────────────────────────────
--- GRANT SELECT ON public.mv_restaurant_daily_stats TO service_role;
+GRANT SELECT ON public.mv_restaurant_daily_stats TO service_role;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 5. Agendamento da view (comentário de orientação para operações)
