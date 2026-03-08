@@ -1,16 +1,32 @@
 name: Core Validation
 
-# ⚠️ STABILISATION: demoted to manual-only (was: push+PR path-filtered)
-# Requires Postgres service. Reintroduce in Phase 3 — see CI_GOVERNANCE.md
-
 on:
-  workflow_dispatch:
+  pull_request:
+    branches: [main, develop, core/frozen-v1]
+    paths:
+      - 'docker-tests/**'
+      - 'merchant-portal/src/core/**'
+      - 'mobile-app/context/**'
+      - 'mobile-app/services/**'
+      - 'legacy_supabase/functions/**'
+      - 'server/**'
+      - 'CORE_MANIFESTO.md'
+  push:
+    branches: [main, develop, core/frozen-v1]
+    paths:
+      - 'docker-tests/**'
+      - 'merchant-portal/src/core/**'
+      - 'mobile-app/context/**'
+      - 'mobile-app/services/**'
+      - 'legacy_supabase/functions/**'
+      - 'server/**'
+      - 'CORE_MANIFESTO.md'
 
 jobs:
   fail-fast-validation:
     name: Fail-Fast Validation
     runs-on: ubuntu-latest
-
+    
     services:
       postgres:
         image: postgres:15
@@ -32,7 +48,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install PostgreSQL Client
         run: |
@@ -77,7 +94,7 @@ jobs:
     name: Full 24h Simulation
     runs-on: ubuntu-latest
     if: github.event.pull_request.base.ref == 'main' || github.event.pull_request.base.ref == 'core/frozen-v1'
-
+    
     services:
       postgres:
         image: postgres:15
@@ -99,7 +116,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install PostgreSQL Client
         run: |

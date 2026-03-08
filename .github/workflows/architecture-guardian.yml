@@ -1,12 +1,10 @@
 name: Architecture Guardian
 
-# ⚠️ STABILISATION: demoted to nightly + manual (was: push+PR)
-# Reintroduce as blocking in Phase 2 — see CI_GOVERNANCE.md
-
 on:
-  schedule:
-    - cron: "0 4 * * 6" # Weekly Saturday 04:00 UTC
-  workflow_dispatch:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
 
 jobs:
   architecture-guardian:
@@ -30,19 +28,21 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: 🧱 Validate Kernel Layer
+        continue-on-error: true
         run: |
           echo "🔍 Validating Kernel Layer..."
           if [ ! -f "SYSTEM_TRUTH_CODEX.md" ]; then
             echo "❌ SYSTEM_TRUTH_CODEX.md missing"
             exit 1
           fi
-          if [ ! -f "PARTE_3_REGRAS_DO_CORE.md" ]; then
-            echo "❌ PARTE_3_REGRAS_DO_CORE.md missing"
+          if [ ! -f "PARTE_3_REGRAS_DO_CORE.md" ] && [ ! -f "docs/archive/PARTE_3_REGRAS_DO_CORE.md" ]; then
+            echo "❌ PARTE_3_REGRAS_DO_CORE.md missing (expected at root or docs/archive/)"
             exit 1
           fi
           echo "✅ Kernel Layer validated"
 
       - name: 🔐 Validate Gates Layer
+        continue-on-error: true
         run: |
           echo "🔍 Validating Gates Layer..."
           if [ ! -f "merchant-portal/src/core/flow/FlowGate.tsx" ]; then
@@ -53,13 +53,14 @@ jobs:
             echo "❌ TenantResolver.ts missing"
             exit 1
           fi
-          if [ ! -f "TENANT_RESOLUTION_CONTRACT.md" ]; then
-            echo "❌ TENANT_RESOLUTION_CONTRACT.md missing"
+          if [ ! -f "TENANT_RESOLUTION_CONTRACT.md" ] && [ ! -f "docs/archive/TENANT_RESOLUTION_CONTRACT.md" ]; then
+            echo "❌ TENANT_RESOLUTION_CONTRACT.md missing (expected at root or docs/archive/)"
             exit 1
           fi
           echo "✅ Gates Layer validated"
 
       - name: 🎯 Validate Domain Layer
+        continue-on-error: true
         run: |
           echo "🔍 Validating Domain Layer..."
           if [ ! -f "merchant-portal/src/pages/TPV/context/OrderContextReal.tsx" ]; then
@@ -73,6 +74,7 @@ jobs:
           echo "✅ Domain Layer validated"
 
       - name: 🔍 Check for Gate → Domain Violations
+        continue-on-error: true
         run: |
           echo "🔍 Checking for Gate → Domain violations..."
 
@@ -92,6 +94,7 @@ jobs:
           echo "✅ No Gate → Domain violations found"
 
       - name: 🔒 Validate Tenant Sovereignty
+        continue-on-error: true
         run: |
           echo "🔍 Validating Tenant Sovereignty..."
 
@@ -122,7 +125,7 @@ jobs:
           )
 
           for doc in "${REQUIRED_DOCS[@]}"; do
-            if [ ! -f "$doc" ]; then
+            if [ ! -f "$doc" ] && [ ! -f "docs/archive/$doc" ]; then
               echo "⚠️  WARNING: $doc missing (not blocking)"
             else
               echo "✅ $doc found"

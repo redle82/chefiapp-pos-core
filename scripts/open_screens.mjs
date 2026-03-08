@@ -65,10 +65,10 @@ async function checkServer(url) {
 // Função para iniciar o servidor Vite
 function startServer() {
   console.log("🚀 Iniciando servidor Vite...");
-  const merchantPortalPath = join(__dirname, "..", "merchant-portal");
+  const workspaceRoot = join(__dirname, "..");
 
-  const server = spawn("npm", ["run", "dev"], {
-    cwd: merchantPortalPath,
+  const server = spawn("pnpm", ["-w", "merchant-portal", "run", "dev"], {
+    cwd: workspaceRoot,
     shell: true,
     stdio: "pipe",
   });
@@ -141,9 +141,10 @@ async function main() {
 
   // Iniciar navegador
   console.log("🌐 Iniciando navegador...");
+  const isCI = process.env.CI === "true";
   const browser = await chromium.launch({
-    headless: false, // Abrir navegador visível
-    channel: "chrome", // Usar Chrome
+    headless: isCI,
+    ...(isCI ? {} : { channel: "chrome" }),
   });
 
   const context = await browser.newContext({

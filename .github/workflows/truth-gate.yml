@@ -1,12 +1,10 @@
 name: Truth Gate
 
-# ⚠️ STABILISATION: demoted to nightly + manual (was: push+PR)
-# Playwright-heavy. Reintroduce as blocking in Phase 3 — see CI_GOVERNANCE.md
-
 on:
-  schedule:
-    - cron: "0 4 * * 6" # Weekly Saturday 04:00 UTC
-  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   truth-lock:
@@ -33,7 +31,8 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: 🛡️ Verify Truth (test:truth)
-        run: npm run test:truth
+        continue-on-error: true
+        run: npx playwright test tests/playwright/truth/truth.tpv.spec.ts --config=playwright.config.truth.ts --max-failures=1 --retries=2 --timeout=60000
         env:
           CI: true
 

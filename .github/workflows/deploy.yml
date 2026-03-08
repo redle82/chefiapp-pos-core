@@ -19,14 +19,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
+          cache: "npm"
 
-      - run: pnpm install --frozen-lockfile
+      - run: npm ci
 
       - name: TypeScript check
         run: npm run typecheck
@@ -131,14 +129,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
+          cache: "npm"
 
-      - run: pnpm install --frozen-lockfile
+      - run: npm ci
 
       - name: Run migrations
         run: npx tsx scripts/migrate.ts
