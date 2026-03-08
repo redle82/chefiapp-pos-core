@@ -4,7 +4,7 @@
 # Comandos úteis para gerenciar o Core Docker
 # =============================================================================
 
-.PHONY: up down reset logs ps validate test-rpc migrate-product-mode migrate-onboarding-completed migrate-terminals migrate-staff migrate-restaurant-people migrate-trial-ends-at migrate-logo-url migrate-sofia-identity migrate-trial-restaurant migrate-bar-products migrate-task-rpcs help
+.PHONY: up down reset logs ps validate test-rpc migrate-product-mode migrate-onboarding-completed migrate-terminals migrate-staff migrate-restaurant-people migrate-trial-ends-at migrate-logo-url migrate-sofia-identity migrate-sofia-logo migrate-trial-restaurant migrate-bar-products migrate-task-rpcs help
 
 # Default target
 help:
@@ -31,6 +31,7 @@ help:
 	@echo "  make migrate-trial-ends-at - Aplicar coluna trial_ends_at (gm_restaurants; paywall FASE 1)"
 	@echo "  make migrate-logo-url - Aplicar coluna logo_url (gm_restaurants; identidade visual)"
 	@echo "  make migrate-sofia-identity - Aplicar identidade real Sofia Gastrobar (email, city, address, type)"
+	@echo "  make migrate-sofia-logo - Definir logo_url do Sofia Gastrobar (/logo-sofia-gastrobar.png)"
 	@echo "  make migrate-trial-restaurant - Aplicar restaurante trial 'Seu restaurante' (id 099)"
 	@echo "  make migrate-bar-products - Garantir produtos de bar com station=BAR (KDS secção Bar)"
 	@echo "  make migrate-task-rpcs - Aplicar RPCs start_task, complete_task, reject_task (KDS TaskPanel)"
@@ -196,6 +197,13 @@ migrate-sofia-identity:
 	@cat schema/migrations/20260226_sofia_gastrobar_real_identity.sql | docker compose -f docker-compose.core.yml exec -T postgres \
 		psql -U postgres -d chefiapp_core -f - && echo "✅ Sofia Gastrobar identidade aplicada" || \
 		(echo "❌ Migration falhou (confira se o Core está up e seeds/migrations anteriores aplicadas: make up)" && exit 1)
+
+# Logo Sofia Gastrobar (asset em merchant-portal/public/logo-sofia-gastrobar.png). Requer migrate-logo-url.
+migrate-sofia-logo:
+	@echo "📦 Aplicando logo_url Sofia Gastrobar..."
+	@cat schema/migrations/20260226_sofia_gastrobar_logo.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ Sofia Gastrobar logo_url aplicado" || \
+		(echo "❌ Migration falhou (confira: make up, make migrate-logo-url)" && exit 1)
 
 # Restaurante trial "Seu restaurante" (id 099). Modo trial usa este restaurante; real usa Sofia (100).
 migrate-trial-restaurant:

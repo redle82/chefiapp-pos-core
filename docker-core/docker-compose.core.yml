@@ -33,6 +33,8 @@ services:
       - ./schema/seeds_dev.sql:/docker-entrypoint-initdb.d/02-seeds-dev.sql:ro
       - ./schema/03-migrations-consolidated.sql:/docker-entrypoint-initdb.d/03-migrations-consolidated.sql:ro
       - ./schema/04-modules-and-extras.sql:/docker-entrypoint-initdb.d/04-modules-and-extras.sql:ro
+      - ./schema/07-role-anon.sql:/docker-entrypoint-initdb.d/04.5-role-anon.sql:ro
+      - ./schema/04.6-auth-shims.sql:/docker-entrypoint-initdb.d/04.6-auth-shims.sql:ro
       - ./schema/05-device-kinds.sql:/docker-entrypoint-initdb.d/05-device-kinds.sql:ro
       - ./schema/migrations/20260127_onboarding_persistence.sql:/docker-entrypoint-initdb.d/05.1-onboarding-persistence.sql:ro
       - ./schema/migrations/20260210_cdc_orders_event_store.sql:/docker-entrypoint-initdb.d/05.2-cdc-orders-event-store.sql:ro
@@ -49,7 +51,23 @@ services:
       - ./schema/migrations/20260228_force_food_photos_by_category.sql:/docker-entrypoint-initdb.d/05.97-force-food-photos.sql:ro
       - ./schema/migrations/20260228_backfill_product_photo_from_catalog.sql:/docker-entrypoint-initdb.d/05.98-backfill-product-photos.sql:ro
       - ./schema/migrations/20260302_gm_product_assets.sql:/docker-entrypoint-initdb.d/05.99-gm-product-assets.sql:ro
-      - ./schema/migrations/20260601_device_pairing_codes.sql:/docker-entrypoint-initdb.d/05.995-device-pairing-codes.sql:ro
+      # --- Phase 9: Fiscal + Immutability + Hash Chain migrations ---
+      # Dependency order: audit_logs → hash_chain → tenant_hardening → forbid_mutation → legal_seals → CDC → refunds → fiscal_docs → backfill → export/audit
+      - ./schema/migrations/20260211_core_audit_logs.sql:/docker-entrypoint-initdb.d/05.991-core-audit-logs.sql:ro
+      - ./schema/migrations/20260212_event_store_hash_chain.sql:/docker-entrypoint-initdb.d/05.992-event-store-hash-chain.sql:ro
+      - ./schema/migrations/20260220_event_store_tenant_hardening.sql:/docker-entrypoint-initdb.d/05.993-event-store-tenant-hardening.sql:ro
+      - ./schema/migrations/20260212_cascade_delete_to_restrict.sql:/docker-entrypoint-initdb.d/05.994-cascade-delete-to-restrict.sql:ro
+      - ./schema/migrations/20260212_legal_seals_hardening.sql:/docker-entrypoint-initdb.d/05.995-legal-seals-hardening.sql:ro
+      - ./schema/migrations/20260212_cdc_triggers_phase1.sql:/docker-entrypoint-initdb.d/05.996-cdc-triggers-phase1.sql:ro
+      - ./schema/migrations/20260212_gm_refunds.sql:/docker-entrypoint-initdb.d/05.997-gm-refunds.sql:ro
+      - ./schema/migrations/20260212_gm_fiscal_documents.sql:/docker-entrypoint-initdb.d/05.998-gm-fiscal-documents.sql:ro
+      - ./schema/migrations/20260212_backfill_event_hashes.sql:/docker-entrypoint-initdb.d/05.999-backfill-event-hashes.sql:ro
+      - ./schema/migrations/20260212_export_jobs.sql:/docker-entrypoint-initdb.d/05.9991-export-jobs.sql:ro
+      - ./schema/migrations/20260212_fiscal_certifications.sql:/docker-entrypoint-initdb.d/05.9992-fiscal-certifications.sql:ro
+      - ./schema/migrations/20260212_audit_mode.sql:/docker-entrypoint-initdb.d/05.9993-audit-mode.sql:ro
+      - ./schema/migrations/20260212_refund_rpc.sql:/docker-entrypoint-initdb.d/05.9994-refund-rpc.sql:ro
+      - ./schema/migrations/20260325_create_fiscal_document_for_order.sql:/docker-entrypoint-initdb.d/05.9995-create-fiscal-document-for-order.sql:ro
+      - ./schema/migrations/20260325_gm_orders_version.sql:/docker-entrypoint-initdb.d/05.9996-gm-orders-version.sql:ro
       - ./schema/06-seed-enterprise.sql:/docker-entrypoint-initdb.d/06-seed-enterprise.sql:ro
       - ./schema/07-role-anon.sql:/docker-entrypoint-initdb.d/07-role-anon.sql:ro
     networks:

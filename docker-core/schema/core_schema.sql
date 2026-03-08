@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS public.gm_restaurants (
     -- Status de lifecycle do restaurante, alinhado com RestaurantRuntimeContext
     -- Valores esperados no app: 'draft', 'active', 'paused'
     status TEXT NOT NULL DEFAULT 'draft',
+    logo_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
