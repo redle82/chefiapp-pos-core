@@ -33,6 +33,9 @@ export type CreateOrderAtomicParams = {
   }>;
   p_payment_method?: string;
   p_sync_metadata?: Record<string, unknown>;
+  p_idempotency_key?: string;
+  /** Mesa associada ao pedido — forwarded to cognitive layer event. */
+  table_id?: string | null;
 };
 
 export type CreateOrderAtomicResult = {
@@ -80,6 +83,20 @@ export type CoreOrdersApiResult<T> = {
 };
 
 /**
+ * Verifica se o pedido existe no Core (para dependência da fila de impressão).
+ * Usado pelo PrintQueueProcessor: só processar print job após order sync confirmado.
+ */
+export async function orderExistsInCore(orderId: string): Promise<boolean> {
+  const { data, error } = await coreClient
+    .from("gm_orders")
+    .select("id")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (error) return false;
+  return data != null;
+}
+
+/**
  * Invoca create_order_atomic no Core (Docker). Backend único: Docker Core.
  * atomic transaction: create_order_atomic is the single write path for order creation.
  */
@@ -91,6 +108,7 @@ export async function createOrderAtomic(
     p_items: params.p_items,
     p_payment_method: params.p_payment_method ?? "cash",
     p_sync_metadata: params.p_sync_metadata ?? null,
+    p_idempotency_key: params.p_idempotency_key ?? null,
   };
 
   const t0 = Date.now();
@@ -129,7 +147,7 @@ export async function createOrderAtomic(
       "order.created",
       {
         orderId: data.id,
-        tableId: "unknown", // TODO: pass table_id from params
+        tableId: params.table_id ?? "unknown",
         items: params.p_items.map((item) => ({
           productId: item.product_id ?? "custom",
           quantity: item.quantity,

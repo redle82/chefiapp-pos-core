@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 // LEGACY / LAB — blocked in Docker mode
+import { Logger } from "../logger";
 import { supabase } from "../supabase";
 
 export type NetworkStatus = "online" | "offline" | "checking";
@@ -58,12 +59,12 @@ export function useNetworkStatus(): UseNetworkStatusReturn {
 
     // Listener nativo (como fallback rápido)
     const handleOnline = () => {
-      console.log("[Network] Browser reports online - verifying...");
+      Logger.debug("[Network] Browser reports online - verifying...");
       checkNow();
     };
 
     const handleOffline = () => {
-      console.log("[Network] Browser reports offline");
+      Logger.debug("[Network] Browser reports offline");
       setStatus("offline");
       setLastChecked(new Date());
     };
