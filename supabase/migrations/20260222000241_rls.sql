@@ -1,1 +1,0 @@
-ALTER TABLE public.saas_tenants ENABLE ROW LEVEL SECURITY;

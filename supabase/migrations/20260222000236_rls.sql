@@ -1,1 +1,0 @@
-ALTER TABLE public.gm_tasks ENABLE ROW LEVEL SECURITY;

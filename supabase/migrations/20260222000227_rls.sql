@@ -1,1 +1,0 @@
-ALTER TABLE public.gm_payments ENABLE ROW LEVEL SECURITY;

@@ -1,1 +1,0 @@
-ALTER TABLE public.gm_stock_levels ENABLE ROW LEVEL SECURITY;

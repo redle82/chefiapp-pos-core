@@ -1,1 +1,0 @@
-ALTER TABLE public.gm_staff ENABLE ROW LEVEL SECURITY;

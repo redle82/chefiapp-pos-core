@@ -1,1 +1,0 @@
-ALTER TABLE public.shift_logs ENABLE ROW LEVEL SECURITY;
