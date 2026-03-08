@@ -1,0 +1,59 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #050505;
+  color: #fafafa;
+  padding: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 560px;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  background: #111113;
+  padding: 20px;
+}
+
+.title {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+.description {
+  color: #a1a1aa;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.primaryButton {
+  border: none;
+  background: #eab308;
+  color: #111827;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.secondaryButton {
+  border: 1px solid #3f3f46;
+  background: #18181b;
+  color: #e4e4e7;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.footerText {
+  color: #71717a;
+  font-size: 12px;
+  margin-top: 12px;
+}

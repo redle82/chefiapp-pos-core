@@ -1,0 +1,52 @@
+.layout {
+  width: 100%;
+  display: grid;
+  gap: 24px;
+}
+
+.hero,
+.main,
+.aside,
+.bottom {
+  min-width: 0;
+}
+
+.content {
+  display: grid;
+  gap: 24px;
+  align-items: start;
+}
+
+.config .content,
+.operational .content {
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.95fr);
+}
+
+.main,
+.aside,
+.bottom {
+  display: grid;
+  gap: 24px;
+}
+
+.aside {
+  align-self: start;
+}
+
+@media (min-width: 1180px) {
+  .aside {
+    position: sticky;
+    top: 24px;
+  }
+}
+
+@media (max-width: 1080px) {
+  .config .content,
+  .operational .content {
+    grid-template-columns: 1fr;
+  }
+
+  .aside {
+    position: static;
+  }
+}

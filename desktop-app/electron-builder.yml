@@ -1,0 +1,84 @@
+# electron-builder configuration
+# Ref: https://www.electron.build/configuration
+
+appId: com.chefiapp.desktop
+productName: ChefIApp Desktop
+copyright: Copyright © 2025 ChefIApp
+asar: true
+
+# Explicit version so electron-builder doesn't need to find it
+# in local node_modules (pnpm hoists to workspace root).
+electronVersion: "37.3.1"
+
+directories:
+  buildResources: assets
+  output: out
+
+files:
+  - dist-electron/**/*
+  - resources/frontend/**/*
+  - node_modules/**/*
+  - package.json
+
+# ── macOS ────────────────────────────────────────────────────────
+
+mac:
+  category: public.app-category.business
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
+      arch:
+        - arm64
+        - x64
+  icon: assets/icon.icns
+  # No code signing in P0 — uncomment for production:
+  # identity: "Developer ID Application: ..."
+  # hardenedRuntime: true
+  # entitlements: entitlements.mac.plist
+  # entitlementsInherit: entitlements.mac.plist
+
+dmg:
+  title: "${productName} ${version}"
+  icon: assets/icon.icns
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+# ── Windows (future) ────────────────────────────────────────────
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: assets/icon.ico
+
+nsis:
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+  installerIcon: assets/icon.ico
+  uninstallerIcon: assets/icon.ico
+
+# ── URL Protocol Handler ────────────────────────────────────────
+
+protocols:
+  - name: ChefIApp
+    schemes:
+      - chefiapp-pos
+      - chefiapp
+
+# ── Extra Resources ─────────────────────────────────────────────
+
+extraResources:
+  - from: resources/frontend
+    to: frontend
+    filter:
+      - "**/*"

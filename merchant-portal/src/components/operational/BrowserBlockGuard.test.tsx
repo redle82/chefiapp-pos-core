@@ -1,7 +1,13 @@
-import { render, screen } from "@testing-library/react";
+/**
+ * @vitest-environment jsdom
+ */
+import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { BrowserBlockGuard } from "./BrowserBlockGuard";
+import {
+  BrowserBlockGuard,
+  emitOperationalGuardTelemetry,
+} from "./BrowserBlockGuard";
 
 describe("BrowserBlockGuard", () => {
   const originalMatchMedia = window.matchMedia;
@@ -33,6 +39,7 @@ describe("BrowserBlockGuard", () => {
   });
 
   afterEach(() => {
+    cleanup();
     Object.defineProperty(window, "matchMedia", {
       writable: true,
       value: originalMatchMedia,
@@ -61,6 +68,97 @@ describe("BrowserBlockGuard", () => {
     expect(
       screen.getByText("TPV não pode ser aberto no navegador"),
     ).toBeTruthy();
+    expect(screen.getByTestId("browser-block-guard")).toBeTruthy();
     expect(screen.queryByText("TPV content")).toBeNull();
+
+    const openDesktopApp = screen.getByRole("button", {
+      name: "Abrir aplicação TPV",
+    });
+    expect(openDesktopApp).toBeTruthy();
+
+    const downloadInstaller = screen.getByRole("link", {
+      name: "Baixar instalador",
+    });
+    expect(downloadInstaller).toBeTruthy();
+    const href = downloadInstaller.getAttribute("href") ?? "";
+    expect(href.length > 0).toBe(true);
+    expect(
+      href.includes("/admin/devices") || href.includes("/downloads/"),
+    ).toBe(true);
+  });
+
+  it("allows TPV in browser only when mode=trial query is explicit", () => {
+    render(
+      <MemoryRouter initialEntries={["/op/tpv?mode=trial"]}>
+        <Routes>
+          <Route
+            element={
+              <BrowserBlockGuard requiredPlatform="desktop" moduleLabel="TPV" />
+            }
+          >
+            <Route path="/op/tpv" element={<div>TPV content</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByTestId("browser-block-guard")).toBeNull();
+    expect(screen.getByText("TPV content")).toBeTruthy();
+  });
+
+  it("emits Sentry breadcrumb for BLOCK decision when sampled", () => {
+    const addBreadcrumb = vi.fn();
+    const warn = vi.fn();
+
+    emitOperationalGuardTelemetry(
+      {
+        pathname: "/op/tpv",
+        decision: "BLOCK",
+        runtime: "browser",
+        guard: "operational",
+      },
+      {
+        isDev: false,
+        random: () => 0.05,
+        sentryApi: { addBreadcrumb },
+        warn,
+      },
+    );
+
+    expect(addBreadcrumb).toHaveBeenCalledWith({
+      category: "op-guard",
+      level: "warning",
+      message: "operational_guard_decision",
+      data: {
+        pathname: "/op/tpv",
+        decision: "BLOCK",
+        runtime: "browser",
+        guard: "operational",
+      },
+    });
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("falls back to console.warn JSON payload when Sentry breadcrumb is unavailable", () => {
+    const warn = vi.fn();
+
+    emitOperationalGuardTelemetry(
+      {
+        pathname: "/op/tpv",
+        decision: "BLOCK",
+        runtime: "browser",
+        guard: "operational",
+      },
+      {
+        isDev: false,
+        random: () => 0.05,
+        sentryApi: {},
+        warn,
+      },
+    );
+
+    expect(warn).toHaveBeenCalledWith(
+      '[OP_GUARD] {"pathname":"/op/tpv","decision":"BLOCK","runtime":"browser","guard":"operational"}',
+    );
   });
 });

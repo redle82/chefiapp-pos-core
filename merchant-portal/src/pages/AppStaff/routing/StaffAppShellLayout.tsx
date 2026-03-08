@@ -69,8 +69,12 @@ export function StaffAppShellLayout({
   const profile = getOperatorProfile(activeRole ?? undefined);
 
   // Bottom nav: mapa explícito por papel + modos visíveis fora do rodapé ("Mais")
-  const navRole = activeRole ?? "manager";
-  const bottomNavItems = BOTTOM_NAV_BY_ROLE[navRole];
+  const hasMappedBottomNavRole =
+    typeof activeRole === "string" && activeRole in BOTTOM_NAV_BY_ROLE;
+  const navRole = hasMappedBottomNavRole ? activeRole : "manager";
+  const bottomNavItems =
+    BOTTOM_NAV_BY_ROLE[navRole as keyof typeof BOTTOM_NAV_BY_ROLE] ??
+    BOTTOM_NAV_BY_ROLE.manager;
   const _allModeIds: StaffModeId[] = [
     "operation",
     "tpv",

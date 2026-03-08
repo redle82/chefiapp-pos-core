@@ -6,12 +6,13 @@
  * para relatórios. Ref: reports_only_no_dashboard plan.
  */
 
-import { getFormatLocale } from "@/core/i18n/regionLocaleConfig";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { WelcomeOverlay } from "../../../components/onboarding/WelcomeOverlay";
 import { shouldShowWelcome } from "../../../components/onboarding/welcomeUtils";
 import { currencyService } from "../../../core/currency/CurrencyService";
+import { getFormatLocale } from "../../../core/i18n/regionLocaleConfig";
+import { useTenant } from "../../../core/tenant/TenantContext";
 import { GlobalLoadingView } from "../../../ui/design-system/components";
 import { useRestaurantId } from "../../../ui/hooks/useRestaurantId";
 import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
@@ -48,7 +49,10 @@ function formatCurrency(value: number): string {
 }
 
 export function AdminReportsOverview() {
-  const [showWelcome, setShowWelcome] = useState(shouldShowWelcome);
+  const { tenantId } = useTenant();
+  const [showWelcome, setShowWelcome] = useState(() =>
+    shouldShowWelcome(tenantId),
+  );
   const { restaurantId, loading: loadingRestaurant } = useRestaurantId();
   const { data: overview, loading: loadingOverview } =
     useDashboardOverview(restaurantId);
@@ -57,6 +61,7 @@ export function AdminReportsOverview() {
     return <GlobalLoadingView />;
   }
 
+  const isLoading = loadingOverview && !overview;
   const revenueToday =
     overview?.revenueByHour?.reduce((s, h) => s + h.amount, 0) ?? 0;
   const billsToday = overview?.stats?.totalBills ?? 0;
@@ -82,7 +87,7 @@ export function AdminReportsOverview() {
         >
           KPIs (snapshot)
         </h2>
-        {loadingOverview ? (
+        {isLoading ? (
           <p style={{ color: "var(--text-secondary)", margin: 0 }}>
             A carregar…
           </p>

@@ -1,0 +1,41 @@
+.container {
+  width: 100%;
+  max-width: 980px;
+}
+
+.formCard {
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 16px;
+  background-color: var(--card-bg-on-dark);
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.input {
+  width: 100%;
+}
+
+.actionsRow {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.listCard {
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 16px;
+  background-color: var(--card-bg-on-dark);
+}
+
+.listTitle {
+  margin-top: 0;
+}
+
+.list {
+  margin: 0;
+  padding-left: 18px;
+}

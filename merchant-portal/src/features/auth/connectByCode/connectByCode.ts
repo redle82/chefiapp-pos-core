@@ -20,6 +20,9 @@ const allowMocks = () =>
 
 /** Trial Guide: resolve code to role from mock invite table (code → role). Role never parsed from code text. */
 function getTrialGuideRoleFromInviteTable(code: string): StaffRole | null {
+  if (code === "CHEF-OWN-MOCK") {
+    return "owner";
+  }
   const entry = Object.entries(TRIAL_GUIDE_CODES).find(([, c]) => c === code);
   return entry ? (entry[0] as StaffRole) : null;
 }
@@ -33,22 +36,24 @@ export async function connectByCode(
   ctx?: ConnectByCodeContext,
 ): Promise<ConnectByCodeResult> {
   const restaurantHint = ctx?.restaurantHint ?? null;
+  const normalizedCode = code.trim();
 
   try {
     // A) MOCK PATH (Dev only) — code in TRIAL_GUIDE_CODES; role from mock invite table
-    if (allowMocks() && code.includes("mock")) {
+    if (allowMocks() && normalizedCode.toLowerCase().includes("mock")) {
       await new Promise((r) => setTimeout(r, 800));
-      if (code === "FAIL")
+      if (normalizedCode === "FAIL")
         return {
           success: false,
           roleSource: null,
           message: "Simulação de Falha de Rede.",
         };
-      const resolvedRole = getTrialGuideRoleFromInviteTable(code) ?? "worker";
+      const resolvedRole =
+        getTrialGuideRoleFromInviteTable(normalizedCode) ?? "worker";
       const contract: OperationalContract = {
         id: restaurantHint ?? "mock-restaurant-connected",
         type: "restaurant",
-        name: "Restaurante Conectado (Free Trial)",
+        name: "Seu Restaurante",
         mode: "connected",
         permissions: [],
       };
@@ -63,11 +68,12 @@ export async function connectByCode(
     // A') TRIAL GUIDE FALLBACK — any code when trial + restaurantId; role from mock invite table if code matches
     if (allowMocks() && restaurantHint) {
       await new Promise((r) => setTimeout(r, 400));
-      const resolvedRole = getTrialGuideRoleFromInviteTable(code) ?? "worker";
+      const resolvedRole =
+        getTrialGuideRoleFromInviteTable(normalizedCode) ?? "worker";
       const contract: OperationalContract = {
         id: restaurantHint,
         type: "restaurant",
-        name: "Seu Restaurante (Free Trial)",
+        name: "Seu Restaurante",
         mode: "connected",
         permissions: [],
       };
@@ -92,7 +98,7 @@ export async function connectByCode(
     const { data, error } = await supabase
       .from("active_invites")
       .select("*")
-      .eq("code", code)
+      .eq("code", normalizedCode)
       .single();
 
     if (error || !data) {

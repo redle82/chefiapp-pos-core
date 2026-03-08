@@ -1,0 +1,154 @@
+## ORDEM OPERACIONAL — RELEASE AUDIT
+
+## ATUALIZACAO FINAL (2026-03-08 22:14:41Z)
+
+- `#6` = **CLOSED by replacement**
+- Substituicao formal: faixa `#47` ate `#98`
+- Total de slices da substituicao: `52`
+- Ultima slice da fila: `#98`
+- Merge final em `main`: `cd746102`
+- Frentes `split/pr6` abertas: `0`
+
+Resumo objetivo:
+
+- a macro PR `#6` nao e mais frente ativa;
+- o desmonte foi concluido ponta a ponta com trilha canonica em `docs/audit/runs/pr6-slicing-plan-2026-03-08.md`.
+
+Nota de rastreabilidade:
+
+- na faixa `#47..#98`, o fechamento operacional foi concluido com `51` PRs mergeadas e `#67` fechada;
+- a faixa completa permanece como conjunto formal de substituicao da macro `#6`.
+
+**Status:** NORMA OPERACIONAL ATIVA
+**Escopo:** contínuo, aplicável aos próximos ciclos até fechamento operacional completo
+**Modelo de aprovação:** IA gera + revisão humana obrigatória
+**Escalada:** NO-GO absoluto, sem mecanismo de override
+**Princípio-mãe:** **onde começa, deve terminar**
+
+> Nenhuma frente nova pode ser iniciada enquanto a frente anterior não estiver operacionalmente encerrada.
+> Encerrada significa: código validado, PR aberta ou mergeada, CI resolvida, issue atualizada, branch limpa e worktree removida.
+
+### 1. VERDADE OPERACIONAL
+
+Esta ordem entra em vigor porque o repositório ainda apresenta acúmulo operacional, mesmo permanecendo controlável.
+
+**Fatos operacionais atualizados (fecho do ciclo #6):**
+- PR `#6`: **CLOSED by replacement** (faixa `#47..#98`)
+- Frentes `split/pr6` abertas: **0**
+- Total de slices da substituicao: **52**
+- Ultima slice: **#98** (`cd746102`)
+- PRs abertas atuais no repositorio (fora do trilho #6): **6** (`#2`, `#7`, `#8`, `#9`, `#15`, `#30`)
+
+**Inferências operacionais baseadas na auditoria já registrada nesta release:**
+- existe resíduo operacional relevante;
+- há sinais de frentes paralelas demais no eixo `merchant-portal`;
+- há indício de trabalho local acumulado e difícil de revisar;
+- a disciplina de fechamento foi quebrada por abertura de novas frentes antes do encerramento completo das anteriores.
+
+### 2. QUANTIFICAÇÃO CRÍTICA
+
+| Frente / PR | Estado | Ação mandatória | Observação operacional |
+|---|---|---|---|
+| `#11` CI cleanup / lint / annotations | aberta | **mergear** | PR de higiene; deve sair primeiro para reduzir ruído |
+| `#12` merchant-portal kernel hardening | aberta | **mergear ou dividir** | mergear apenas se o escopo estiver estritamente em hardening |
+| `#15` OP_GUARD structured logging | aberta | **mergear** | manter isolada em observability; sem carregar correções colaterais |
+| `#29` admin/devices centralization | aberta | **mergear ou dividir** | separar UI/UX de pareamento se houver mistura |
+| `#6` Stack 2026 FASES 1-6 | fechada por substituicao | **encerrada** | substituida formalmente por `#47..#98` |
+
+**Mandato quantitativo:**
+- o ciclo atual só é considerado limpo quando as PRs abertas atuais tiverem decisao final;
+- o número oficial de PRs obrigatórias faltantes é **0**;
+- subdivisões adicionais só são autorizadas como **cirurgia de fechamento**, nunca como abertura de nova frente paralela.
+
+### 3. DIAGNÓSTICO
+
+O processo falhou em quatro pontos:
+
+1. **Nova frente foi iniciada antes do fechamento da anterior.**
+2. **O domínio `merchant-portal` concentrou frentes simultâneas demais.**
+3. **Parte do trabalho operacional ficou entre “feito”, “em progresso” e “não encerrado”.**
+4. **O ritual de encerramento não foi tratado como obrigatório.**
+
+Sintoma central: o sistema de trabalho aceitou coexistência prolongada de PR aberta, issue viva, branch ativa, worktree potencialmente residual e mudanças locais relevantes.
+
+### 4. RISCOS
+
+Enquanto esta ordem estiver ativa, os seguintes riscos são considerados materiais:
+
+- merge lento por excesso de contexto por PR;
+- revisão imprecisa por escopo misturado;
+- falsa sensação de progresso com frentes “quase prontas” que nunca fecham;
+- branches e worktrees virando depósito de dívida operacional;
+- issue aberta apesar de entrega já estar no código;
+- reentrada de caos por abrir nova frente antes do saneamento da anterior.
+
+**Qualquer ocorrência acima mantém o estado em NO-GO operacional.**
+
+### 5. REGRAS OBRIGATÓRIAS
+
+1. **Não abrir nova frente sem fechar a anterior.**
+2. **Uma frente = uma issue clara = uma branch limpa = uma PR principal.**
+3. **Se o escopo crescer, dividir antes de continuar.**
+4. **PR com mais de um tema operacional deve ser quebrada.**
+5. **Nenhuma issue pode ficar “feito no código” e “aberta no GitHub”.**
+6. **Toda PR precisa de evidência mínima de validação.**
+7. **Toda branch mergeada deve ser removida.**
+8. **Toda worktree deve ter owner, issue e prazo.**
+9. **Mudança local sem issue e sem branch clara deve ser isolada ou descartada.**
+10. **Umbrella issue não pode esconder subtarefa concluída.**
+11. **Nenhuma PR pode atravessar múltiplos domínios sem justificativa explícita.**
+12. **Fechamento operacional é parte do trabalho, não pós-trabalho.**
+13. **Acúmulo local acima do limite do ciclo dispara limpeza obrigatória.**
+14. **PR grande não é mérito; PR concluível é mérito.**
+15. **Onde começa, deve terminar.**
+
+### 6. SEQUÊNCIA DE AÇÃO
+
+**D0 — hoje**
+- concluir `#11`;
+- revisar `#15` para merge imediato se estiver limpa;
+- revisar `#12` para validar escopo;
+- congelar mudanças locais fora do fechamento imediato;
+- proibir abertura de novas frentes.
+
+**D1 — amanhã**
+- triagem cirúrgica da `#6`;
+- decidir: mergear, dividir em 2, ou dividir em 3;
+- revisar `#29` para separar fluxo funcional de ajustes de interface, se necessário;
+- fechar issues já resolvidas por PRs mergeadas;
+- remover branches e worktrees sem função ativa.
+
+**D2 — consolidação**
+- padronizar checklist de fechamento operacional;
+- formalizar limite de escopo por PR;
+- institucionalizar owner + issue + prazo para worktree;
+- instaurar revisão semanal de higiene operacional.
+
+### 7. DECISÃO GO / NO-GO
+
+**Decisão atual:** **NO-GO OPERACIONAL**
+
+Motivo:
+- ainda existem **5 PRs abertas**;
+- há indício consistente de resíduo operacional relevante;
+- o princípio de encerramento completo por frente ainda não foi restabelecido.
+
+**Condição única para voltar a GO:**
+- todas as PRs abertas terem decisão final;
+- nenhuma frente relevante permanecer sem dono, sem issue ou sem fechamento;
+- branches mergeadas removidas;
+- worktrees residuais removidas;
+- issues sincronizadas com o estado real do código;
+- disciplina de não abrir nova frente antes do fechamento da anterior estar novamente em vigor.
+
+**Não existe exceção, fast-track, tolerância informal ou override político para esta ordem.**
+
+---
+
+### RESUMO EXECUTIVO
+
+O repositório não está crítico, mas ainda está acumulado.
+O problema principal não é falta de código: é falta de encerramento.
+O ciclo atual só termina quando as frentes abertas forem concluídas, sincronizadas e limpas.
+Até lá, a regra é simples e obrigatória: **onde começa, deve terminar**.
+

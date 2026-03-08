@@ -5,7 +5,6 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
-import { VitePWA } from "vite-plugin-pwa";
 import { stripSourceMappingUrl } from "./src/utils/stripSourceMappingUrl";
 
 // Detect local IP for mobile devices (QR scanning from iPhone/Android)
@@ -63,29 +62,93 @@ export default defineConfig(async ({ mode }) => {
     }
   }
 
+  const pwaPlugins = [];
+  try {
+    const { VitePWA } = await import("vite-plugin-pwa");
+    pwaPlugins.push(
+      VitePWA({
+        registerType: "autoUpdate",
+        includeAssets: ["favicon.ico", "apple-touch-icon.png", "vite.svg"],
+        devOptions: {
+          enabled: false, // CRITICAL: Disable in dev to prevent workbox loop
+        },
+        manifest: {
+          name: "AppStaff — ChefIApp",
+          short_name: "AppStaff",
+          description:
+            "Aplicação para a equipa do restaurante. Gestão de turnos, pedidos e operação.",
+          theme_color: "#121212",
+          background_color: "#121212",
+          display: "standalone",
+          orientation: "portrait",
+          scope: "/",
+          start_url: "/app/staff/home",
+          icons: [
+            {
+              src: "Logo Chefiapp.png",
+              sizes: "192x192",
+              type: "image/png",
+              purpose: "any maskable",
+            },
+            {
+              src: "Logo Chefiapp.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "any maskable",
+            },
+          ],
+        },
+        workbox: {
+          skipWaiting: true,
+          clientsClaim: true,
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+          maximumFileSizeToCacheInBytes: 5000000, // 5MB
+          // Offline total: SPA carrega quando offline; GET /rest pode usar cache.
+          navigateFallback: "/index.html",
+          navigateFallbackDenylist: [
+            /^\/rest\//,
+            /^\/api\//,
+            /^\/internal\//,
+            /^\/webhooks\//,
+            /^\/rpc\//,
+          ],
+          runtimeCaching: [
+            {
+              urlPattern: /^https?:\/\/[^/]+\/rest\/v1\/[^?]*/,
+              handler: "NetworkFirst",
+              method: "GET",
+              options: {
+                cacheName: "chefiapp-rest-get",
+                expiration: { maxEntries: 80, maxAgeSeconds: 60 * 5 },
+                cacheableResponse: { statuses: [0, 200] },
+                networkTimeoutSeconds: 10,
+              },
+            },
+          ],
+        },
+      }),
+    );
+  } catch {
+    // vite-plugin-pwa não está instalado no ambiente atual; segue sem plugin.
+  }
+
   return {
     base,
-    appType: "spa", // SPA fallback: GET /admin/devices etc. → index.html (evita 500/404 em dev)
     define: {
       // Polyfill global for libraries that expect Node.js global
       global: {},
       __VITE_ENV__: "import.meta.env",
       // Inject local IP for QR code generation in device provisioning
       __LOCAL_IP__: JSON.stringify(localIp),
+      // Build timestamp for cache-busting and version identification
+      __BUILD_TIMESTAMP__: JSON.stringify(new Date().toISOString()),
     },
     resolve: {
-      dedupe: ["react", "react-dom", "react-router-dom", "vite"],
-      // pnpm + @tailwindcss/vite: evitar resolução para .pnpm dir (Cannot find module)
-      preserveSymlinks: true,
+      dedupe: ["react", "react-dom", "react-router-dom"],
       // Invalid hook call: forçar uma única cópia de React (workspace: local ou raiz).
       alias: {
         react: reactPath,
         "react-dom": reactDomPath,
-        "@domain": path.resolve(__dirname, "src/domain"),
-        "@infra": path.resolve(__dirname, "src/infra"),
-        "@features": path.resolve(__dirname, "src/features"),
-        "@shared": path.resolve(__dirname, "src/shared"),
-        "@core": path.resolve(__dirname, "src/core"),
         "@": path.resolve(__dirname, "src"),
       },
     },
@@ -122,65 +185,7 @@ export default defineConfig(async ({ mode }) => {
       react(),
       tailwindcss(),
       ...sentryPlugins,
-      VitePWA({
-        registerType: "prompt",
-        includeAssets: ["favicon.ico", "apple-touch-icon.png", "vite.svg"],
-        devOptions: {
-          enabled: false, // CRITICAL: Disable in dev to prevent workbox loop
-        },
-        manifest: {
-          name: "AppStaff — ChefIApp",
-          short_name: "AppStaff",
-          description:
-            "Aplicação para a equipa do restaurante. Gestão de turnos, pedidos e operação.",
-          theme_color: "#121212",
-          background_color: "#121212",
-          display: "standalone",
-          orientation: "portrait",
-          scope: "/",
-          start_url: "/app/staff/home",
-          icons: [
-            {
-              src: "Logo Chefiapp.png",
-              sizes: "192x192",
-              type: "image/png",
-              purpose: "any maskable",
-            },
-            {
-              src: "Logo Chefiapp.png",
-              sizes: "512x512",
-              type: "image/png",
-              purpose: "any maskable",
-            },
-          ],
-        },
-        workbox: {
-          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-          maximumFileSizeToCacheInBytes: 5000000, // 5MB
-          // Offline total: SPA carrega quando offline; GET /rest pode usar cache.
-          navigateFallback: "/index.html",
-          navigateFallbackDenylist: [
-            /^\/rest\//,
-            /^\/api\//,
-            /^\/internal\//,
-            /^\/webhooks\//,
-            /^\/rpc\//,
-          ],
-          runtimeCaching: [
-            {
-              urlPattern: /^https?:\/\/[^/]+\/rest\/v1\/[^?]*/,
-              handler: "NetworkFirst",
-              method: "GET",
-              options: {
-                cacheName: "chefiapp-rest-get",
-                expiration: { maxEntries: 80, maxAgeSeconds: 60 * 5 },
-                cacheableResponse: { statuses: [0, 200] },
-                networkTimeoutSeconds: 10,
-              },
-            },
-          ],
-        },
-      }),
+      ...pwaPlugins,
     ],
     server: {
       // Porta de desenvolvimento: 5175 (override com PORT se necessário).

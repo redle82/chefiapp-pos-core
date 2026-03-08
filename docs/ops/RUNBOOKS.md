@@ -131,10 +131,12 @@ Este documento não substitui os runbooks detalhados; agrupa-os por categoria e 
 
 ## 11. Outros
 
-| Documento                                                    | Conteúdo                                      |
-| ------------------------------------------------------------ | --------------------------------------------- |
-| **[bug-reproduction.md](./bug-reproduction.md)**             | Reprodução de bugs (passos, ambiente).        |
-| **[GROWTH_MARKETING_SETUP.md](./GROWTH_MARKETING_SETUP.md)** | SEO, analytics, pixel (customer acquisition). |
+| Documento                                                                              | Conteúdo                                                                                                                        |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **[WORKFLOW_OPERATIONAL_ORDER.md](./WORKFLOW_OPERATIONAL_ORDER.md)**                   | Ordem operacional de fluxo (uma frente por vez, fechamento obrigatorio, politica de worktree/workspace e ritual semanal).       |
+| **[FOUNDATION_SPRINT_7_DAYS_2026-03-08.md](./FOUNDATION_SPRINT_7_DAYS_2026-03-08.md)** | Ordem operacional de 7 dias para isolamento multi-tenant, persistencia duravel, observabilidade e destravamento de fundamentos. |
+| **[bug-reproduction.md](./bug-reproduction.md)**                                       | Reprodução de bugs (passos, ambiente).                                                                                          |
+| **[GROWTH_MARKETING_SETUP.md](./GROWTH_MARKETING_SETUP.md)**                           | SEO, analytics, pixel (customer acquisition).                                                                                   |
 
 ---
 

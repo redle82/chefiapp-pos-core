@@ -37,7 +37,10 @@ export interface UseOperationalReadinessResult extends OperationalReadiness {
   loading?: boolean;
 }
 
-function uiDirectiveFor(surface: Surface, reason: BlockingReason): UiDirective {
+export function uiDirectiveFor(
+  surface: Surface,
+  reason: BlockingReason,
+): UiDirective {
   if (surface === "DASHBOARD") {
     if (reason === "NO_OPEN_CASH_REGISTER" || reason === "SHIFT_NOT_STARTED")
       return "SHOW_INFO_ONLY";
@@ -63,7 +66,7 @@ function uiDirectiveFor(surface: Surface, reason: BlockingReason): UiDirective {
 
 const APPSTAFF_GERENTE = "/garcom";
 
-function redirectFor(
+export function redirectFor(
   surface: Surface,
   reason: BlockingReason,
 ): string | undefined {

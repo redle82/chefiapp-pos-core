@@ -1,0 +1,61 @@
+{
+  "title": "Etiquetas",
+  "subtitle": "Motor de etiquetas para lotes com presets, idiomas e códigos.",
+  "fields": {
+    "productId": "SKU / Produto",
+    "storage": "Conservação",
+    "packageMode": "Modo de venda",
+    "quantity": "Quantidade",
+    "boxSize": "Tamanho da caixa",
+    "producedAt": "Produção",
+    "lotCode": "Lote",
+    "netWeight": "Peso líquido (g)",
+    "profileName": "Nome do preset",
+    "savedProfile": "Preset salvo",
+    "printer": "Impressora destino",
+    "size": "Tamanho da etiqueta",
+    "languagePrimary": "Idioma principal",
+    "languageSecondary": "Segundo idioma",
+    "barcode": "Código de barras",
+    "qr": "QR",
+    "scope": "Salvar como padrão"
+  },
+  "storage": {
+    "frozen": "Congelado",
+    "refrigerated": "Refrigerado"
+  },
+  "package": {
+    "unit": "Unidade",
+    "box": "Caixa"
+  },
+  "scope": {
+    "product": "Este produto",
+    "operator": "Este operador",
+    "tenant": "Este restaurante"
+  },
+  "codes": {
+    "none": "Nenhum",
+    "batch": "Lote"
+  },
+  "buttons": {
+    "print": "Imprimir",
+    "printing": "Imprimindo...",
+    "savePreset": "Salvar configuração",
+    "saving": "Salvando..."
+  },
+  "savedProfiles": {
+    "title": "Presets salvos",
+    "loading": "Carregando presets...",
+    "empty": "Ainda não existem presets para este restaurante."
+  },
+  "messages": {
+    "missingRestaurant": "Não foi possível identificar o restaurante atual.",
+    "loadError": "Não foi possível carregar os presets.",
+    "saveError": "Não foi possível salvar o preset.",
+    "profileRequired": "É necessário salvar um preset antes de imprimir.",
+    "saved": "Preset salvo com sucesso.",
+    "printError": "Não foi possível enviar o trabalho de impressão.",
+    "printRequested": "Trabalho de impressão enviado para o Core.",
+    "confirmSaveAfterPrint": "Salvar esta configuração como padrão para a próxima vez?"
+  }
+}

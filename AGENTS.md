@@ -8,6 +8,11 @@
 - Check the `name` field inside each package's `package.json` to confirm the right name.
 - For workspace scripts, prefer `pnpm -w <workspace> <script>` (ex.: `pnpm -w merchant-portal run dev`).
 
+## Operational flow policy (mandatory)
+
+- Follow `docs/ops/WORKFLOW_OPERATIONAL_ORDER.md` before opening or continuing any implementation front.
+- Hard rule: do not start a new front until the current one is operationally closed (PR/CI/branch/worktree/issue/local-cleanup).
+
 ## Local core stack
 
 - Use `docker-core/docker-compose.core.yml` as the canonical local Core stack.

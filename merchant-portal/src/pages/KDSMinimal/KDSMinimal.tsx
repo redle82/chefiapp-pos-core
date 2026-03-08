@@ -50,6 +50,7 @@ import {
   getInstalledDevice,
   getKdsRestaurantId,
 } from "../../core/storage/installedDeviceStorage";
+import { readTenantIdWithLegacyFallback } from "../../core/tenant/TenantResolver";
 import { TerminalEngine } from "../../core/terminal/TerminalEngine";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
 import type { CoreOrderItem, CoreTask } from "../../infra/docker-core/types";

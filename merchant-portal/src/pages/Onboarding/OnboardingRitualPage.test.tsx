@@ -1,4 +1,3 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -12,6 +11,12 @@ vi.mock("../../core/audit/legalConsent", () => ({
 import { OnboardingRitualPage } from "./OnboardingRitualPage";
 
 const RESTAURANT_ID = "11111111-1111-1111-1111-111111111111";
+
+vi.mock("../../core/tenant/TenantContext", () => ({
+  useTenant: () => ({
+    tenantId: RESTAURANT_ID,
+  }),
+}));
 
 describe("OnboardingRitualPage", () => {
   beforeEach(() => {

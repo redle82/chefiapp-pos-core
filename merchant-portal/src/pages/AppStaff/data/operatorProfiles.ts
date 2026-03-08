@@ -16,7 +16,7 @@ export interface OperatorProfile {
 export const OPERATOR_PROFILES: Record<StaffRole, OperatorProfile> = {
   owner: {
     role: "owner",
-    name: "Maria Santos",
+    name: "Comandante",
     roleLabel: "Dono",
     shortDescription: "Visão global, saúde da operação e tendências.",
   },
@@ -64,7 +64,7 @@ export function getOperatorProfile(
  * Funcionam com ?debug=1 na URL (modo mock). Formato: CHEF-XXXX-XX.
  */
 export const TRIAL_GUIDE_CODES: Record<StaffRole, string> = {
-  owner: "CHEF-OWN-MOCK",
+  owner: "CHEF-CMDT-MOCK",
   manager: "CHEF-MGR-MOCK",
   waiter: "CHEF-WAIT-MOCK",
   kitchen: "CHEF-KIT-MOCK",

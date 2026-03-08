@@ -1,0 +1,41 @@
+/* ModulesPage — hub page layout */
+
+.wrapper {
+  width: 100%;
+  max-width: 960px;
+  margin: 0;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 8px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.desktopHelpLinkRow {
+  margin-top: 10px;
+}
+
+.desktopHelpLinkButton {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}

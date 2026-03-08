@@ -1,0 +1,53 @@
+name: Fragmentation Audit Cycle
+
+on:
+  workflow_dispatch:
+    inputs:
+      strict_runtime_evidence:
+        description: "Fail run when health/gateway/webhook smoke do not all pass (1=true,0=false)"
+        default: "0"
+        type: string
+  schedule:
+    # Every Monday at 06:15 UTC
+    - cron: "15 6 * * 1"
+
+jobs:
+  run-fragmentation-cycle:
+    name: Run Fragmentation Cycle Snapshot
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Generate Cycle Snapshot
+        id: snapshot
+        shell: bash
+        env:
+          STRICT_RUNTIME_EVIDENCE: ${{ github.event.inputs.strict_runtime_evidence || '0' }}
+        run: |
+          set -euo pipefail
+          output="$(bash scripts/run-fragmentation-audit-cycle.sh)"
+          echo "$output"
+
+          snapshot_path="$(echo "$output" | sed -n 's/^Created: //p' | tail -n1)"
+          if [[ -z "$snapshot_path" || ! -f "$snapshot_path" ]]; then
+            echo "Could not resolve snapshot path from script output"
+            exit 1
+          fi
+
+          echo "snapshot_path=$snapshot_path" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Snapshot Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fragmentation-cycle-snapshot-${{ github.run_id }}
+          path: ${{ steps.snapshot.outputs.snapshot_path }}
+          retention-days: 30
+
+      - name: Job Summary
+        shell: bash
+        run: |
+          echo "## Fragmentation Cycle" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Snapshot generated successfully." >> "$GITHUB_STEP_SUMMARY"
+          echo "- File: \`${{ steps.snapshot.outputs.snapshot_path }}\`" >> "$GITHUB_STEP_SUMMARY"

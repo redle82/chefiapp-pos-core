@@ -1,0 +1,61 @@
+{
+  "title": "Labels",
+  "subtitle": "Label engine for production batches with presets, languages, and codes.",
+  "fields": {
+    "productId": "SKU / Product",
+    "storage": "Storage",
+    "packageMode": "Selling mode",
+    "quantity": "Quantity",
+    "boxSize": "Box size",
+    "producedAt": "Production",
+    "lotCode": "Batch code",
+    "netWeight": "Net weight (g)",
+    "profileName": "Preset name",
+    "savedProfile": "Saved preset",
+    "printer": "Printer target",
+    "size": "Label size",
+    "languagePrimary": "Primary language",
+    "languageSecondary": "Second language",
+    "barcode": "Barcode",
+    "qr": "QR",
+    "scope": "Save as default"
+  },
+  "storage": {
+    "frozen": "Frozen",
+    "refrigerated": "Refrigerated"
+  },
+  "package": {
+    "unit": "Unit",
+    "box": "Box"
+  },
+  "scope": {
+    "product": "This product",
+    "operator": "This operator",
+    "tenant": "This restaurant"
+  },
+  "codes": {
+    "none": "None",
+    "batch": "Batch"
+  },
+  "buttons": {
+    "print": "Print",
+    "printing": "Printing...",
+    "savePreset": "Save configuration",
+    "saving": "Saving..."
+  },
+  "savedProfiles": {
+    "title": "Saved presets",
+    "loading": "Loading presets...",
+    "empty": "No presets saved for this restaurant yet."
+  },
+  "messages": {
+    "missingRestaurant": "Unable to resolve current restaurant.",
+    "loadError": "Unable to load presets.",
+    "saveError": "Unable to save preset.",
+    "profileRequired": "A saved preset is required before printing.",
+    "saved": "Preset saved successfully.",
+    "printError": "Unable to request print job.",
+    "printRequested": "Print job sent to Core.",
+    "confirmSaveAfterPrint": "Save this configuration as the default for next time?"
+  }
+}
