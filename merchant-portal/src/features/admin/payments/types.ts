@@ -3,7 +3,7 @@
  * Preparado para integração futura com gm_payments, fechamento de caixa e relatórios.
  */
 
-import type { Currency } from "@domain/payment/types";
+import type { Currency } from "../../../domain/payment/types";
 
 export type TransactionStatus = "PROCESSED" | "REFUNDED" | "FAILED" | "PENDING";
 

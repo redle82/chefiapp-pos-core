@@ -83,10 +83,12 @@ describe("core/db (stub branch)", () => {
   it("coreNotImplemented warns and throws", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     await expect(mod.coreNotImplemented("foo")).rejects.toThrow(
-      "CORE: foo not implemented. Use Core client."
+      "CORE: foo not implemented. Use Core client.",
     );
     expect(warn).toHaveBeenCalledWith(
-      "[CORE] Legacy: foo not implemented. Use Core client."
+      "[warn]",
+      "[CORE] Legacy: foo not implemented. Use Core client.",
+      {},
     );
     warn.mockRestore();
   });

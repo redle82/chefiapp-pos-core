@@ -1,9 +1,11 @@
 /**
- * InstallQRPanel — Platform-specific QR codes for device provisioning
+ * InstallQRPanel — Platform-specific QR codes for device provisioning.
  *
- * Shows separate QRs for iOS (Safari) and Android (Chrome) with platform-specific instructions.
- * iOS: Standard HTTP URL - user opens with camera, system asks which browser, user selects Safari
- * Android: uses intent:// URL that auto-launches in Chrome
+ * APPSTAFF (mobile staff):
+ *   - Two QR codes (iOS + Android) with platform-specific instructions.
+ *
+ * TPV/KDS (desktop-only operational modules):
+ *   - Single desktop QR and a \"Copiar URL\" action, sem instruções mobile.
  *
  * Props:
  *   - token: Install token string
@@ -12,6 +14,7 @@
  *   - baseUrl: Base URL for QR (ex: http://192.168.1.x:5175)
  */
 
+import { useTranslation } from "react-i18next";
 import QRCode from "react-qr-code";
 import styles from "./AdminDevicesPage.module.css";
 
@@ -28,24 +31,75 @@ export function InstallQRPanel({
   secondsLeft,
   baseUrl,
 }: InstallQRPanelProps) {
-  // iOS & Android: use standard HTTP URL (works with camera QR reader)
-  // iOS will open with default browser - user should select Safari
-  // Android: use intent:// to auto-open Chrome
-  const standardUrl = `${baseUrl}/install?token=${token}`;
+  const { t } = useTranslation();
 
-  // Android: use intent:// to auto-open in Chrome
+  const standardUrl = `${baseUrl}/install?token=${token}`;
+  const isCritical = secondsLeft < 60;
+  const isDesktop = deviceType === "TPV" || deviceType === "KDS";
+
+  // Desktop TPV/KDS: single QR + desktop copy URL action, sem instruções mobile.
+  if (isDesktop) {
+    return (
+      <div className={styles.qrPanelContainer}>
+        <div className={styles.qrPanelHeader}>
+          <div className={styles.qrHeaderTitle}>
+            {t("qr.desktopLinkTitle")}
+          </div>
+          <div
+            className={isCritical ? styles.expiryCritical : styles.expiryNormal}
+          >
+            Expira em <strong>{secondsLeft}s</strong>
+          </div>
+        </div>
+
+        <div className={styles.qrPlatformRow}>
+          <div className={styles.qrPlatformCol}>
+            <div className={styles.qrBox}>
+              <QRCode value={standardUrl} size={150} level="H" />
+            </div>
+            <code className={styles.qrUrlSmall}>{standardUrl}</code>
+            <button
+              type="button"
+              className={styles.qrCopyButton}
+              onClick={async () => {
+                try {
+                  if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(standardUrl);
+                  }
+                } catch {
+                  // ignore clipboard errors in this context
+                }
+              }}
+            >
+              Copiar URL
+            </button>
+          </div>
+        </div>
+
+        <div className={styles.qrMetadata}>
+          <div>
+            Tipo: <strong>{deviceType}</strong>
+          </div>
+          <div>
+            Token: <strong>{token.substring(0, 12)}...</strong>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // APPSTAFF/mobile: iOS + Android panels com instruções.
   const androidIntentUrl = `intent://${baseUrl.replace(
     /^https?:\/\//,
     "",
   )}/install?token=${token}#Intent;package=com.android.chrome;scheme=http;end`;
 
-  const isCritical = secondsLeft < 60;
-
   return (
     <div className={styles.qrPanelContainer}>
-      {/* Header */}
       <div className={styles.qrPanelHeader}>
-        <div className={styles.qrHeaderTitle}>Código QR por Plataforma</div>
+        <div className={styles.qrHeaderTitle}>
+          {t("qr.mobileLinkTitle")}
+        </div>
         <div
           className={isCritical ? styles.expiryCritical : styles.expiryNormal}
         >
@@ -53,7 +107,6 @@ export function InstallQRPanel({
         </div>
       </div>
 
-      {/* Two column layout: iOS | Android */}
       <div className={styles.qrPlatformRow}>
         {/* iOS Column */}
         <div className={styles.qrPlatformCol}>
@@ -112,7 +165,6 @@ export function InstallQRPanel({
         </div>
       </div>
 
-      {/* Metadata */}
       <div className={styles.qrMetadata}>
         <div>
           Tipo: <strong>{deviceType}</strong>

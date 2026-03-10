@@ -5,16 +5,24 @@
       "origin": "http://localhost:5175",
       "localStorage": [
         {
+          "name": "chefiapp_currency",
+          "value": "EUR"
+        },
+        {
           "name": "chefiapp_cookie_consent_accepted",
           "value": "true"
         },
         {
-          "name": "chefiapp_installed_device",
-          "value": "{\"device_id\":\"debug-tpv\",\"restaurant_id\":\"00000000-0000-0000-0000-000000000100\",\"module_id\":\"tpv\",\"device_name\":\"Debug TPV\"}"
+          "name": "chefiapp_restaurant_id",
+          "value": "00000000-0000-0000-0000-000000000100"
         },
         {
           "name": "chefiapp_bypass_health",
           "value": "true"
+        },
+        {
+          "name": "chefiapp_locale",
+          "value": "en"
         },
         {
           "name": "chefiapp_pilot_mode",
@@ -22,7 +30,7 @@
         },
         {
           "name": "chefiapp_onboarding_state",
-          "value": "{\"restaurantId\":null,\"sections\":{\"identity\":{\"section\":\"identity\",\"status\":\"NOT_STARTED\"},\"location\":{\"section\":\"location\",\"status\":\"NOT_STARTED\"},\"schedule\":{\"section\":\"schedule\",\"status\":\"NOT_STARTED\"},\"menu\":{\"section\":\"menu\",\"status\":\"NOT_STARTED\"},\"inventory\":{\"section\":\"inventory\",\"status\":\"NOT_STARTED\"},\"people\":{\"section\":\"people\",\"status\":\"NOT_STARTED\"},\"payments\":{\"section\":\"payments\",\"status\":\"NOT_STARTED\"},\"integrations\":{\"section\":\"integrations\",\"status\":\"NOT_STARTED\"},\"publish\":{\"section\":\"publish\",\"status\":\"NOT_STARTED\"}},\"currentSection\":null,\"isPublishing\":false,\"identityForm\":{\"name\":\"\",\"type\":\"RESTAURANT\",\"country\":\"\",\"timezone\":\"\",\"currency\":\"BRL\",\"locale\":\"pt-BR\"}}"
+          "value": "{\"restaurantId\":\"00000000-0000-0000-0000-000000000100\",\"sections\":{\"identity\":{\"section\":\"identity\",\"status\":\"COMPLETE\",\"lastUpdated\":\"2026-03-10T11:25:37.406Z\"},\"location\":{\"section\":\"location\",\"status\":\"COMPLETE\",\"lastUpdated\":\"2026-03-10T11:25:37.406Z\"},\"schedule\":{\"section\":\"schedule\",\"status\":\"COMPLETE\",\"lastUpdated\":\"2026-03-10T11:25:37.406Z\"},\"menu\":{\"section\":\"menu\",\"status\":\"COMPLETE\",\"lastUpdated\":\"2026-03-10T11:25:37.406Z\"},\"inventory\":{\"section\":\"inventory\",\"status\":\"NOT_STARTED\"},\"people\":{\"section\":\"people\",\"status\":\"COMPLETE\",\"lastUpdated\":\"2026-03-10T11:25:37.406Z\"},\"payments\":{\"section\":\"payments\",\"status\":\"COMPLETE\",\"lastUpdated\":\"2026-03-10T11:25:37.406Z\"},\"integrations\":{\"section\":\"integrations\",\"status\":\"NOT_STARTED\"},\"publish\":{\"section\":\"publish\",\"status\":\"COMPLETE\",\"lastUpdated\":\"2026-03-10T11:25:37.406Z\"}},\"currentSection\":null,\"isPublishing\":false,\"identityForm\":{\"name\":\"\",\"type\":\"RESTAURANT\",\"country\":\"\",\"timezone\":\"\",\"currency\":\"BRL\",\"locale\":\"pt-BR\"}}"
         }
       ]
     }

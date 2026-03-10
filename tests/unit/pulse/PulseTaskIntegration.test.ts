@@ -12,7 +12,7 @@
  */
 
 // ── Types (mirrors core-engine/pulse/PulseState.ts) ────────────────────────
-type PulseZone = "FLOW_ALTO" | "FLOW_PARCIAL" | "FLOW_BASE";
+import type { PulseZone } from "./pulseTypes";
 type TaskPriority = "low" | "normal" | "high" | "critical";
 
 // ── Pure logic: mirrors EventTaskGenerator.adjustPriorityForPulse ──────────

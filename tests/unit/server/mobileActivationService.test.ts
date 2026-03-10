@@ -5,7 +5,7 @@ import {
   type ActivationRepository,
   type ActivationRequestRecord,
   type RateLimitResult,
-} from "../../../server/mobileActivationService";
+} from "../../server/mobileActivationService";
 
 class InMemoryActivationRepo implements ActivationRepository {
   public record: ActivationRequestRecord;

@@ -25,17 +25,6 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     defaultStatus: "active",
   },
   {
-    id: "kds",
-    name: "KDS (Cozinha)",
-    description:
-      "Ecrã de cozinha. Vê os pedidos criados no TPV e gere a preparação.",
-    icon: "👨‍🍳",
-    primaryAction: "Open",
-    secondaryAction: "Desactivar",
-    block: "essenciais",
-    defaultStatus: "active",
-  },
-  {
     id: "appstaff",
     name: "AppStaff",
     description:

@@ -26,7 +26,11 @@ import { useOperationalStore } from "./useOperationalStore";
 let orderCounter = 0;
 
 function logFlow(step: string, data?: unknown) {
-  Logger.debug(`[OrderLifecycle] ${step}: ${JSON.stringify(data ?? "")}`);
+  // Em testes ou em ambientes onde o mock de Logger não implementa debug,
+  // evitamos lançar erro só por causa de logging.
+  if (typeof Logger.debug === "function") {
+    Logger.debug(`[OrderLifecycle] ${step}: ${JSON.stringify(data ?? "")}`);
+  }
 }
 
 export interface LifecycleProduct {

@@ -1,4 +1,4 @@
-import type { PaymentMethod } from "@domain/payment/types";
+import type { PaymentMethod } from "../../../domain/payment/types";
 import {
   Elements,
   PaymentElement,

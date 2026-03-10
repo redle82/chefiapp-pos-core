@@ -1,8 +1,12 @@
 /* ============================================================
- * AdminSidebar — OS Console styling
+ * AdminSidebar — Domain sidebar styling
  *
- * Gold accent: --gm-accent  (brand gold #c9a227)
- * 3 states:  default → hover → active  (rail + glow)
+ * Characteristics:
+ *   - Large readable fonts
+ *   - Exclusive accordion groups
+ *   - No icons — clean text only
+ *   - OSSignature brand header
+ *   - Gold accent on active items
  * ============================================================ */
 
 .sidebar {
@@ -12,10 +16,10 @@
   --gm-accent-bg-strong: rgba(201, 162, 39, 0.14);
   --gm-hover-bg: rgba(255, 255, 255, 0.04);
 
-  width: 248px;
-  background-color: var(--surface-base);
-  border-right: 1px solid var(--surface-border);
-  padding: 20px 16px 16px;
+  width: 280px;
+  background-color: var(--surface-base, #09090b);
+  border-right: 1px solid var(--surface-border, #27272a);
+  padding: 24px 20px 20px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -26,128 +30,35 @@
 .sidebarInner {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   flex: 1;
   min-height: 0;
 }
 
+/* ---- Brand ---- */
+
 .brandSection {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   padding-left: 8px;
-  color: var(--text-primary);
 }
 
-.backLink {
-  display: block;
-  padding: 8px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  color: var(--text-secondary);
+.restaurantName {
+  margin-top: 8px;
+  font-size: 13px;
   font-weight: 500;
-  text-decoration: none;
-  margin-bottom: 4px;
-  transition: color 0.15s ease;
-}
-.backLink:hover {
-  color: var(--gm-accent);
+  color: var(--text-secondary, #a1a1aa);
+  letter-spacing: 0.01em;
 }
 
-.configLabel {
-  margin-bottom: 8px;
-  padding-left: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
-/* ---- Config section groups ---- */
-
-.configSection {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.configSection + .configSection {
-  margin-top: 10px;
-}
-
-.configSectionHeader {
-  padding: 4px 10px 2px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  opacity: 0.7;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.navColumn {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+/* ---- Navigation ---- */
 
 .navColumnMain {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-}
-
-/* ---- Nav link: 3 states ---- */
-
-.navLink {
-  position: relative;
-  display: flex;
-  align-items: center;
   gap: 6px;
-  padding: 8px 10px 8px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: color 0.15s ease, background-color 0.15s ease;
 }
 
-/* Hover */
-.navLink:hover {
-  color: var(--gm-accent);
-  background-color: var(--gm-hover-bg);
-}
-
-/* Active — gold glow + rail */
-.navLinkActive {
-  color: #fff;
-  font-weight: 600;
-  background-color: var(--gm-accent-bg-strong);
-  box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.18);
-}
-
-/* Gold rail — vertical bar on the left */
-.navLinkActive::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 20px;
-  border-radius: 0 3px 3px 0;
-  background: var(--gm-accent);
-  box-shadow: 0 0 12px var(--gm-accent-glow);
-}
-
-/* ---- Group-based hierarchy ---- */
-
-.groupsDivider {
-  height: 1px;
-  background: var(--surface-border);
-  margin: 6px 0;
-}
+/* ---- Group ---- */
 
 .sidebarGroup {
   display: flex;
@@ -157,17 +68,17 @@
 .groupHeader {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
+  gap: 8px;
+  padding: 10px 12px;
   border: none;
   background: none;
   cursor: pointer;
-  border-radius: 8px;
-  font-size: 11px;
+  border-radius: 10px;
+  font-size: 18px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--text-tertiary, #71717a);
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 .groupHeader:hover {
@@ -178,19 +89,13 @@
   color: var(--gm-accent);
 }
 
-.groupIcon {
-  font-size: 14px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
 .groupTitle {
   flex: 1;
   text-align: left;
 }
 
 .groupChevron {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
   transition: transform 0.15s ease;
   line-height: 1;
@@ -203,10 +108,75 @@
 .groupItems {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  padding-left: 10px;
-  margin-top: 2px;
-  margin-bottom: 4px;
+  gap: 2px;
+  padding-left: 12px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+/* ---- Nav link ---- */
+
+.navLink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px 10px 18px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-secondary, #a1a1aa);
+  text-decoration: none;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.navLink:hover {
+  color: var(--gm-accent);
+  background-color: var(--gm-hover-bg);
+}
+
+/* Active — gold */
+.navLinkActive {
+  color: #fff;
+  font-weight: 600;
+  background-color: var(--gm-accent-bg-strong);
+  box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.18);
+}
+
+.navLinkActive::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 22px;
+  border-radius: 0 3px 3px 0;
+  background: var(--gm-accent);
+  box-shadow: 0 0 12px var(--gm-accent-glow);
+}
+
+/* ---- Status badges ---- */
+
+.statusBadgeExperimental,
+.statusBadgeOther {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.statusBadgeExperimental {
+  background: rgba(50, 215, 75, 0.1);
+  color: #32d74b;
+}
+
+.statusBadgeOther {
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
 }
 
 /* ---- Footer ---- */
@@ -214,131 +184,12 @@
 .footer {
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px solid var(--surface-border);
+  border-top: 1px solid var(--surface-border, #27272a);
 }
 
-/* ---- Module status dot (Phase 4) ---- */
-
-.statusDot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-left: auto;
-  flex-shrink: 0;
-  vertical-align: middle;
-  transition: background-color 0.2s ease;
-}
-
-.statusDotActive {
-  background-color: #22c55e; /* green-500 */
-}
-
-.statusDotNeedsSetup {
-  background-color: #f59e0b; /* amber-500 */
-}
-
-.statusDotInactive {
-  background-color: var(--text-tertiary, #6b7280);
-  opacity: 0.5;
-}
-
-.statusDotLocked {
-  background-color: #ef4444; /* red-500 */
-  opacity: 0.7;
-}
-
-/* ---- Contextual Banner (Phase 5) ---- */
-
-.contextBanner {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  margin-bottom: 8px;
+.roleLabel {
   font-size: 12px;
-  line-height: 1.4;
-}
-
-.bannerHeadline {
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.01em;
-}
-
-.bannerBody {
-  font-weight: 400;
-  font-size: 11px;
-  opacity: 0.85;
-}
-
-.bannerProgress {
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(0, 0, 0, 0.12);
-  overflow: hidden;
-  margin-top: 2px;
-}
-
-.bannerProgressFill {
-  height: 100%;
-  border-radius: 2px;
-  background: currentColor;
-  transition: width 0.4s ease;
-}
-
-.bannerCta {
-  display: inline-block;
-  margin-top: 4px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  text-decoration: none;
-  text-align: center;
-  transition: opacity 0.15s ease;
-}
-.bannerCta:hover {
-  opacity: 0.85;
-}
-
-/* Variant: SETUP — amber tones */
-.bannerSetup {
-  background-color: rgba(245, 158, 11, 0.1);
-  color: #b45309;
-  border: 1px solid rgba(245, 158, 11, 0.2);
-}
-.bannerSetup .bannerCta {
-  background-color: #f59e0b;
-  color: #fff;
-}
-
-/* Variant: TRIAL — blue tones (urgent = amber) */
-.bannerTrial {
-  background-color: rgba(59, 130, 246, 0.08);
-  color: #1d4ed8;
-  border: 1px solid rgba(59, 130, 246, 0.18);
-}
-.bannerTrial .bannerCta {
-  background-color: #3b82f6;
-  color: #fff;
-}
-
-/* Variant: ACTIVE — green tones, subtle */
-.bannerActive {
-  background-color: rgba(34, 197, 94, 0.06);
-  color: #15803d;
-  border: 1px solid rgba(34, 197, 94, 0.14);
-}
-
-/* Variant: SUSPENDED — red tones, urgent */
-.bannerSuspended {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #b91c1c;
-  border: 1px solid rgba(239, 68, 68, 0.22);
-}
-.bannerSuspended .bannerCta {
-  background-color: #ef4444;
-  color: #fff;
+  font-weight: 500;
+  color: var(--text-tertiary, #71717a);
+  padding: 4px 8px;
 }

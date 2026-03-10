@@ -13,6 +13,16 @@
 - Follow `docs/ops/WORKFLOW_OPERATIONAL_ORDER.md` before opening or continuing any implementation front.
 - Hard rule: do not start a new front until the current one is operationally closed (PR/CI/branch/worktree/issue/local-cleanup).
 
+## Work preservation (mandatory)
+
+- **Before ANY git operation that changes HEAD** (`checkout`, `switch`, `reset`, `merge`, `rebase`, `stash`), run `pnpm save` first.
+- Quick save: `pnpm save` — commits all local changes as WIP with timestamp.
+- Quick save with note: `pnpm save "sidebar accordion fix"` — WIP with description.
+- Undo last WIP: `pnpm unsave` — soft-resets last WIP commit, keeps changes staged.
+- Safe branch switch: `pnpm switch <branch>` — auto-saves before switching.
+- **Never use `git checkout`/`git switch` directly** — always use `pnpm switch` to prevent work loss.
+- **Never use `git reset --hard`** without confirming with the user first.
+
 ## Local core stack
 
 - Use `docker-core/docker-compose.core.yml` as the canonical local Core stack.

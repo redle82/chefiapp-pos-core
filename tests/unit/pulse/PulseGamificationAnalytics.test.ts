@@ -6,7 +6,7 @@
  */
 
 // ── Inline types (mirrors PulseState.ts) ───────────────────────────
-type PulseZone = "FLOW_ALTO" | "FLOW_PARCIAL" | "FLOW_BASE";
+import type { PulseZone } from "./pulseTypes";
 
 type PulseSnapshot = {
   score: number;

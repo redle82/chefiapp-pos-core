@@ -7,7 +7,7 @@
  * Ref: FISCAL_RECONCILIATION_CONTRACT.md
  */
 
-import { formatCents } from "@/core/currency/CurrencyService";
+import { formatCents } from "../currency/CurrencyService";
 import { db } from "../db";
 import { Logger } from "../logger";
 

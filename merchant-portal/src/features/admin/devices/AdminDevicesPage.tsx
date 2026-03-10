@@ -16,6 +16,7 @@ import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext"
 import { Logger } from "../../../core/logger";
 import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
 import styles from "./AdminDevicesPage.module.css";
+import { DesktopPairingSection } from "./DesktopPairingSection";
 import { InstallQRPanel } from "./InstallQRPanel";
 import {
   createInstallToken,
@@ -314,7 +315,10 @@ export function AdminDevicesPage() {
         )}
       </section>
 
-      {/* ── Block 3: Downloads ── */}
+      {/* ── Block 3: Desktop Pairing ── */}
+      <DesktopPairingSection onCodeGenerated={loadTerminals} />
+
+      {/* ── Block 4: Downloads ── */}
       <section className={styles.card}>
         <h2 className={styles.sectionTitle}>Descarregar software</h2>
         <p className={styles.sectionDesc}>

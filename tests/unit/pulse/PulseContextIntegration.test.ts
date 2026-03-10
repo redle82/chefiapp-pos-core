@@ -6,7 +6,7 @@
  */
 
 // ── Inline types (mirrors PulseState.ts + ContextTypes.ts) ─────────
-type PulseZone = "FLOW_ALTO" | "FLOW_PARCIAL" | "FLOW_BASE";
+import type { PulseZone } from "./pulseTypes";
 type OperationalMode = "tower" | "rush" | "training";
 type UserRole = "owner" | "manager" | "waiter" | "kitchen" | "cashier";
 type DeviceContext = "mobile" | "tablet" | "desktop";

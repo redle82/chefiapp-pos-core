@@ -5,7 +5,7 @@
  * - Resto do mundo → Stripe
  */
 
-import type { PaymentMethod } from "@domain/payment/types";
+import type { PaymentMethod } from "../../domain/payment/types";
 import type { CurrencyCode } from "../currency/CurrencyService";
 
 export type PaymentRegion = "br" | "europe" | "rest";

@@ -49,7 +49,9 @@ describe('CoreExecutor Audit Enforcement', () => {
         CoreExecutor.reduce(state, event);
 
         expect(consoleSpy).toHaveBeenCalledWith(
-            expect.stringContaining('Stream Version -5 observed')
+            "[warn]",
+            expect.stringContaining('Stream Version -5 observed'),
+            expect.anything()
         );
 
         consoleSpy.mockRestore();

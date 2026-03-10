@@ -9,7 +9,7 @@ import type {
   Currency,
   PaymentMethod,
   PaymentRegion,
-} from "@domain/payment/types";
+} from "../../domain/payment/types";
 
 /** Parâmetros para criar um pagamento */
 export interface CreatePaymentParams {

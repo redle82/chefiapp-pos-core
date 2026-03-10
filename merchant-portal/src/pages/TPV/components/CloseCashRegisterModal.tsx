@@ -1,3 +1,5 @@
+import React from "react";
+
 /**
  * CloseCashRegisterModal — FASE 2.3: Fecho de caixa com total esperado vs declarado
  *

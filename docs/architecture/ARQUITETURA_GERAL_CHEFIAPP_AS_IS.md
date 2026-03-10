@@ -41,8 +41,8 @@ Hierarquia de poder. A UI nunca governa — só reflete estados.
 |-------|----------------|-----------|--------|
 | **Core (Docker/PostgREST)** | Soberania financeira e operacional. Fonte de verdade para pedidos, totais, estado do restaurante (gm_restaurants, gm_restaurant_members, installed_modules, etc.). | docker-core; boundary: RuntimeReader, RuntimeWriter, DbWriteGate | Nada no frontend sobrepõe o Core. |
 | **Runtime (RestaurantRuntimeContext)** | Espelho do Core no frontend: restaurant_id, isPublished, lifecycle, setup_status. | merchant-portal/context/RestaurantRuntimeContext.tsx | Lê/escreve via boundary; não inventa estado. |
-| **Gates (bloqueiam ou não)** | Decidem quem acede a que rota. | App.tsx (RoleGate, RequireOperational); FlowGate em código mas **não montado** | UI nunca decide sozinha; gates aplicam contratos. |
-| **RequireOperational** | Bloqueia TPV/KDS se `!runtime.isPublished`. | Envolve /op/tpv, /op/kds em App.tsx | Billing ainda não bloqueia (parcial). |
+| **Gates (bloqueiam ou não)** | Decidem quem acede a que rota. | App.tsx (RoleGate, RequireOperational); FlowGate em código mas **não montado** | UI nunca decide sozinha; gates aplicam contratos (incluindo billing quando aplicável). |
+| **RequireOperational** | Bloqueia TPV/KDS se `!runtime.isPublished` **ou** billing_status estiver em estado de bloqueio. | Envolve /op/tpv, /op/kds em App.tsx | Aplica BILLING_SUSPENSION_CONTRACT para `past_due`/`suspended`/`canceled`; mantém portal `/app/*` acessível. |
 | **RoleGate** | Bloqueia por papel (role). Redireciona staff para /garcom, outros para /dashboard. | Envolve todas as rotas de gestão e operação (exceto /bootstrap, /app/select-tenant). | Define quem acede a que path. |
 | **FlowGate** | Conceitual: 0 tenants → select-tenant/bootstrap; 1 → auto-select; N → select-tenant. Hard-stop: /app/* não monta sem tenant selado. | Existe em código (FlowGate.tsx); **não está montado** em App.tsx. Comportamento real hoje: TenantContext + SelectTenantPage. | — |
 | **UI** | Nunca governa. Só reflete estados (runtime, tenant, role). | Todas as páginas | Billing nunca bloqueia portal; só operação (quando implementado). |
@@ -75,7 +75,7 @@ O que acontece se algo não estiver pronto. Gates são primeira classe.
 |------------------|----------------|----------|----------------|
 | **RoleGate** | Acesso a rotas por papel | Papel não permitido para o path | Redireciona (ex.: staff → /garcom, outros → /dashboard). |
 | **RequireOperational** | TPV e KDS | `!runtime.isPublished` | Mostra "Sistema não operacional" + link para /dashboard; filhos não renderizados. |
-| **Billing** | Operação (TPV/KDS) quando past_due ou suspended | — | **Ainda não bloqueia** (🟡 preparado; BILLING_SUSPENSION_CONTRACT parcial). |
+| **Billing** | Operação (TPV/KDS) quando past_due ou suspended | RequireOperational + BlockingScreen | 🟡 Parcial (bloqueio de operação ativo; Core continua a ser fonte de verdade de billing_status). |
 | **Tenant Resolution** | Acesso a /app/* sem tenant selado | 0 tenants → 1 tenant → N tenants | 0 → redirect /bootstrap; 1 → auto-select + /dashboard; N → /app/select-tenant até escolha. |
 | **CoreResetPage** | Rota não reconhecida (catch-all dentro RoleGate) | Path sem rota definida | Fallback de erro estrutural; página neutra de reset. |
 
@@ -122,7 +122,7 @@ Sistema jurídico do software. 🟢 aplicado | 🟡 aplicado parcialmente | 🔴
 | Risco | Por quê | Impacto |
 |-------|---------|--------|
 | FlowGate existe mas não está montado | Lógica de tenant/redirect vive em TenantContext + SelectTenantPage; FlowGate.tsx não está na árvore de App.tsx | Possível inconsistência entre doc (FlowGate) e código (TenantContext); risco de duplicar lógica ao integrar FlowGate. |
-| Billing não bloqueia operação ainda | RequireOperational só verifica isPublished; não lê billingStatus | Cliente com past_due/suspended pode aceder a TPV/KDS até implementação. |
+| Billing não bloqueia operação ainda | (Histórico) RequireOperational só verificava isPublished; hoje lê billingStatus e aplica BILLING_SUSPENSION_CONTRACT para past_due/suspended/canceled | Risco passa a ser consistência de billing_status no Core; TPV/KDS dependem do estado refletido em runtime. |
 | Publish E2E "after publish" em skip | Cenários "após publicar" em publish-to-operational.spec.ts estão em skip | Sem cobertura E2E para fluxo completo publicar → abrir TPV/KDS. |
 | Auth E2E depende de Supabase real | create-first-restaurant.spec.ts usa signup real | Testes E2E exigem backend e credenciais; CI frágil sem fixture. |
 | MANAGEMENT com pouca cobertura de teste | BillingPage, PublishPage, DashboardPortal, Config sem testes dedicados | Regressões em portal menos protegidas. |
@@ -155,10 +155,10 @@ Estados formais do restaurante que governam rotas e gates. Referência: [RESTAUR
 
 ## Estados de billing (governam operação quando aplicado)
 
-| Estado | Significado | Efeito hoje |
-|--------|-------------|-------------|
-| trial / active | Permitido operar | RequireOperational **não** lê billing ainda; só isPublished. |
-| past_due / suspended | Deveria bloquear operação | 🟡 Preparado (BILLING_SUSPENSION_CONTRACT); gate ainda não aplica. |
+| Estado                    | Significado                               | Efeito hoje |
+|---------------------------|-------------------------------------------|-------------|
+| trial / active            | Permitido operar                          | Pode operar se `isPublished = true`; billing não bloqueia (TRIAL_TO_PAID_CONTRACT). |
+| past_due / suspended/canceled | Não deve operar até regularizar billing | RequireOperational lê `billing_status` e mostra BlockingScreen (\"Assinatura em atraso\" / \"Assinatura suspensa\") com CTA para `/app/billing`; TPV/KDS não renderizam. |
 
 ---
 
@@ -221,7 +221,7 @@ O que acontece quando algo falha. Sistemas são definidos pela falha controlada.
 | Runtime falha ou Core lento | runtime.loading = true; RequireOperational mostra "Verificando estado operacional..." | RestaurantRuntimeContext, RequireOperational |
 | Rota não reconhecida (path sem match) | CoreResetPage (catch-all dentro RoleGate); página neutra de reset | App.tsx path="*" → CoreResetPage |
 | Acesso a /op/tpv ou /op/kds sem published | RequireOperational bloqueia; "Sistema não operacional" + link /dashboard | RequireOperational |
-| Billing entra em past_due no meio do turno | Hoje: **não bloqueia** (gate não aplica billing). Futuro: bloquear operação conforme BILLING_SUSPENSION_CONTRACT | RequireOperational (futuro) |
+| Billing entra em past_due no meio do turno | Hoje: **bloqueia operação** (RequireOperational aplica BILLING_SUSPENSION_CONTRACT); TPV/KDS mostram ecrã de bloqueio com CTA para `/app/billing` | RequireOperational + BlockingScreen |
 | Core não responde (rede) | UI usa fallback (menu/TPV/KDS conforme MENU_FALLBACK_CONTRACT e OPERATIONAL_UI_RESILIENCE_CONTRACT); nunca polui Core. | menuPilotFallback, ErrorBoundary, toUserMessage |
 | Crash em componente /op/ | ErrorBoundary mostra fallback neutro (OPERATIONAL_UI_RESILIENCE_CONTRACT). | App.tsx ErrorBoundary em /op/tpv, /op/kds |
 

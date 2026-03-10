@@ -16,7 +16,7 @@ import { createOrderAtomic } from "../infra/CoreOrdersApi";
 import { coreClient } from "../infra/coreClient";
 import { Logger } from "../logger";
 
-import type { PaymentMethod } from "@domain/payment/types";
+import type { PaymentMethod } from "../../domain/payment/types";
 export type { PaymentMethod };
 
 export type OrderStatus =

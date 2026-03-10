@@ -1,139 +1,89 @@
 /**
- * AdminSidebar — Strategic hierarchy for the Admin "Comando Central".
+ * AdminSidebar — Domain sidebar for the Admin "Comando Central".
  *
- * Mental model del dueño de restaurante:
- *   💰 Finanzas  →  🍽 Operación  →  👥 Clientes  →  📦 Producto  →  📊 Inteligencia  →  ⚙️ Sistema
- *
- * Config view (/admin/config/*) keeps its own flat list.
+ * Characteristics:
+ *   - OSSignature brand header (ChefIApp™ OS)
+ *   - Exclusive accordion (only 1 group open at a time)
+ *   - No icons on items — clean text only
+ *   - Large font for readability
+ *   - User role from ContextEngine
  */
-import { useCallback, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { NavLink, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
-import { ChefIAppSignature } from "../../../../ui/design-system/sovereign/ChefIAppSignature";
-import { RestaurantHeader } from "../../../../ui/design-system/sovereign/RestaurantHeader";
-import type { ModuleStatus } from "../../modules/types";
-import { useConfigModuleStates } from "../hooks/useConfigModuleStates";
-import { useSidebarBanner } from "../hooks/useSidebarBanner";
+import { useTenant } from "../../../../core/tenant/TenantContext";
+import { OSSignature } from "../../../../ui/design-system/sovereign/OSSignature";
 import styles from "./AdminSidebar.module.css";
-import { SidebarContextBanner } from "./SidebarContextBanner";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type SidebarLeaf = { labelKey: string; to: string };
-type SidebarGroup = {
+interface SidebarItem {
+  label: string;
+  to: string;
+  status?: "experimental" | "locked" | "planned" | "active";
+}
+
+interface SidebarGroup {
   id: string;
-  titleKey: string;
-  icon: string;
-  items: SidebarLeaf[];
-};
+  title: string;
+  items: SidebarItem[];
+}
 
 /* ------------------------------------------------------------------ */
-/*  Strategic nav tree — what the restaurant owner thinks about        */
+/*  Navigation structure                                               */
 /* ------------------------------------------------------------------ */
 
 const NAV_GROUPS: SidebarGroup[] = [
   {
-    id: "finanzas",
-    titleKey: "groups.financas",
-    icon: "💰",
+    id: "comando",
+    title: "Comando",
     items: [
-      { labelKey: "items.transacoes", to: "/admin/payments" },
-      { labelKey: "items.reembolsos", to: "/admin/payments/refunds" },
-      { labelKey: "items.fechamentos", to: "/admin/closures" },
+      { label: "Comando Central", to: "/admin/home" },
+      { label: "Ajustes do Núcleo", to: "/admin/config" },
     ],
   },
   {
-    id: "operacion",
-    titleKey: "groups.operacao",
-    icon: "🍽",
+    id: "operar",
+    title: "Operar",
     items: [
-      { labelKey: "items.reservas", to: "/admin/reservations" },
-      { labelKey: "items.promocoes", to: "/admin/promotions" },
+      { label: "Cardápio", to: "/admin/catalog" },
+      { label: "Pedidos", to: "/admin/orders" },
+      { label: "Mesas", to: "/admin/tables" },
+      { label: "Reservas", to: "/admin/reservations", status: "planned" },
     ],
   },
   {
-    id: "clientes",
-    titleKey: "groups.clientes",
-    icon: "👥",
-    items: [{ labelKey: "items.diretorio", to: "/admin/customers" }],
-  },
-  {
-    id: "producto",
-    titleKey: "groups.produto",
-    icon: "📦",
-    items: [{ labelKey: "items.catalogo", to: "/admin/catalog" }],
-  },
-  {
-    id: "inteligencia",
-    titleKey: "groups.inteligencia",
-    icon: "📊",
-    items: [{ labelKey: "items.relatorios", to: "/admin/reports" }],
-  },
-  {
-    id: "sistema",
-    titleKey: "groups.sistema",
-    icon: "⚙️",
+    id: "analisar",
+    title: "Analisar",
     items: [
-      { labelKey: "items.configuracao", to: "/admin/config" },
-      { labelKey: "items.dispositivos", to: "/admin/devices" },
-      { labelKey: "items.modulos", to: "/admin/modules" },
-      { labelKey: "items.observabilidade", to: "/admin/observability" },
-    ],
-  },
-];
-
-/** Config sub-page items grouped by business domain */
-type ConfigItem = { path: string; labelKey: string; to?: string };
-type ConfigSection = { sectionKey: string; items: ConfigItem[] };
-
-const CONFIG_SECTIONS: ConfigSection[] = [
-  {
-    sectionKey: "configSections.identity",
-    items: [
-      { path: "general", labelKey: "config.general" },
-      { path: "locations", labelKey: "config.locations" },
-      { path: "legal-entities", labelKey: "config.legalEntities" },
-      { path: "brands", labelKey: "config.brands" },
+      { label: "Transações", to: "/admin/payments" },
+      { label: "Fechamentos", to: "/admin/closures" },
+      { label: "Relatórios", to: "/admin/reports" },
     ],
   },
   {
-    sectionKey: "configSections.plan",
-    items: [{ path: "subscription", labelKey: "config.subscription" }],
-  },
-  {
-    sectionKey: "configSections.operations",
+    id: "governar",
+    title: "Governar",
     items: [
-      { path: "website", labelKey: "config.website" },
-      { path: "reservations", labelKey: "config.reservations" },
-      { path: "pos-software", labelKey: "config.posSoftware" },
+      { label: "Equipa", to: "/admin/config/users" },
+      { label: "Dispositivos", to: "/admin/devices" },
+      { label: "Módulos", to: "/admin/modules" },
+      { label: "Observabilidade", to: "/admin/observability" },
     ],
   },
   {
-    sectionKey: "configSections.team",
+    id: "conectar",
+    title: "Conectar",
     items: [
-      { path: "users", labelKey: "config.adminUsers" },
-      { path: "employees", labelKey: "config.employees" },
-    ],
-  },
-  {
-    sectionKey: "configSections.infrastructure",
-    items: [
-      { path: "devices", labelKey: "config.deviceManagement" },
-      { path: "printers", labelKey: "config.printers" },
-    ],
-  },
-  {
-    sectionKey: "configSections.channels",
-    items: [
+      { label: "Clientes", to: "/admin/customers" },
+      { label: "Promoções", to: "/admin/promotions" },
       {
-        path: "integraciones",
-        labelKey: "config.integrations",
+        label: "Integrações",
         to: "/admin/config/integrations",
+        status: "experimental",
       },
-      { path: "delivery", labelKey: "config.delivery" },
     ],
   },
 ];
@@ -142,20 +92,13 @@ const CONFIG_SECTIONS: ConfigSection[] = [
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
-/** Check if any item in a group matches the current pathname. */
-function isGroupActive(group: SidebarGroup, pathname: string): boolean {
-  return group.items.some((item) => pathname.startsWith(item.to));
-}
-
-/** Derive initially open sections from the current url. */
-function deriveOpenSections(pathname: string): Set<string> {
-  const open = new Set<string>();
+function findActiveGroup(pathname: string): string | null {
   for (const g of NAV_GROUPS) {
-    if (isGroupActive(g, pathname)) {
-      open.add(g.id);
+    if (g.items.some((item) => pathname.startsWith(item.to))) {
+      return g.id;
     }
   }
-  return open;
+  return NAV_GROUPS[0]?.id ?? null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -164,165 +107,97 @@ function deriveOpenSections(pathname: string): Set<string> {
 
 export function AdminSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { identity } = useRestaurantIdentity();
-  const { t } = useTranslation("sidebar");
-  const isConfig = location.pathname.startsWith("/admin/config");
+  const { tenantId, memberships } = useTenant();
+  const currentMembership = memberships.find(
+    (m) => m.restaurant_id === tenantId,
+  );
+  const role = currentMembership?.role ?? "owner";
 
-  const moduleStates = useConfigModuleStates();
-  const banner = useSidebarBanner();
-
-  const [openSections, setOpenSections] = useState<Set<string>>(() =>
-    deriveOpenSections(location.pathname),
+  // Exclusive accordion: only 1 group open at a time
+  const [openGroup, setOpenGroup] = useState<string | null>(() =>
+    findActiveGroup(location.pathname),
   );
 
-  const toggleSection = useCallback((id: string) => {
-    setOpenSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
+  const toggleGroup = (id: string) => {
+    setOpenGroup((prev) => (prev === id ? null : id));
+  };
 
   return (
     <aside className={styles.sidebar}>
       <div className={styles.sidebarInner}>
+        {/* Brand: ChefIApp™ OS */}
         <div className={styles.brandSection}>
-          <RestaurantHeader
-            name={identity.name}
-            logoUrl={identity.logoUrl}
-            size="sm"
-          />
+          <OSSignature state="ember" size="md" />
+          {identity.name && (
+            <div className={styles.restaurantName}>{identity.name}</div>
+          )}
         </div>
 
-        {/* Phase 5: Contextual banner — state-aware hint */}
-        <SidebarContextBanner banner={banner} />
-
-        {isConfig ? (
-          <>
-            <NavLink to="/admin/home" className={styles.backLink}>
-              {t("nav.backToMenu")}
-            </NavLink>
-            <div className={styles.configLabel}>{t("nav.configTitle")}</div>
-            <nav aria-label={t("nav.configTitle")} className={styles.navColumn}>
-              {CONFIG_SECTIONS.map((section) => (
-                <div key={section.sectionKey} className={styles.configSection}>
-                  <div className={styles.configSectionHeader}>
-                    {t(section.sectionKey)}
-                  </div>
-                  {section.items.map(({ path, labelKey, to }) => {
-                    const modState = moduleStates[path];
-                    return (
-                      <AdminSidebarLink
-                        key={path}
-                        to={to ?? `/admin/config/${path}`}
-                        end={!!to}
-                        title={modState ? t(modState.statusKey) : undefined}
+        {/* Navigation groups — exclusive accordion */}
+        <nav aria-label="Admin navigation" className={styles.navColumnMain}>
+          {NAV_GROUPS.map((group) => {
+            const isOpen = openGroup === group.id;
+            const hasActive = group.items.some((item) =>
+              location.pathname.startsWith(item.to),
+            );
+            return (
+              <div key={group.id} className={styles.sidebarGroup}>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.id)}
+                  className={styles.groupHeader}
+                  data-active={hasActive ? "" : undefined}
+                  data-open={isOpen ? "" : undefined}
+                >
+                  <span className={styles.groupTitle}>{group.title}</span>
+                  <span className={styles.groupChevron}>›</span>
+                </button>
+                {isOpen && (
+                  <div className={styles.groupItems}>
+                    {group.items.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        className={({ isActive }) =>
+                          [styles.navLink, isActive && styles.navLinkActive]
+                            .filter(Boolean)
+                            .join(" ")
+                        }
                       >
-                        {t(labelKey)}
-                        {modState && (
-                          <ModuleStatusDot status={modState.status} />
+                        {item.label}
+                        {item.status && item.status !== "active" && (
+                          <span
+                            className={
+                              item.status === "experimental"
+                                ? styles.statusBadgeExperimental
+                                : styles.statusBadgeOther
+                            }
+                          >
+                            {item.status === "experimental"
+                              ? "BETA"
+                              : item.status === "planned"
+                              ? "BREVE"
+                              : "OFF"}
+                          </span>
                         )}
-                      </AdminSidebarLink>
-                    );
-                  })}
-                </div>
-              ))}
-            </nav>
-          </>
-        ) : (
-          <nav aria-label="Admin navigation" className={styles.navColumnMain}>
-            {/* Home — always visible, no group */}
-            <AdminSidebarLink to="/admin/home">
-              {t("nav.home")}
-            </AdminSidebarLink>
-
-            <div className={styles.groupsDivider} />
-
-            {/* Strategic groups */}
-            {NAV_GROUPS.map((group) => {
-              const isOpen = openSections.has(group.id);
-              const hasActive = isGroupActive(group, location.pathname);
-              return (
-                <div key={group.id} className={styles.sidebarGroup}>
-                  <button
-                    type="button"
-                    onClick={() => toggleSection(group.id)}
-                    className={styles.groupHeader}
-                    data-active={hasActive ? "" : undefined}
-                    data-open={isOpen ? "" : undefined}
-                  >
-                    <span className={styles.groupIcon}>{group.icon}</span>
-                    <span className={styles.groupTitle}>
-                      {t(group.titleKey)}
-                    </span>
-                    <span className={styles.groupChevron}>›</span>
-                  </button>
-                  {isOpen && (
-                    <div className={styles.groupItems}>
-                      {group.items.map((item) => (
-                        <AdminSidebarLink key={item.to} to={item.to}>
-                          {t(item.labelKey)}
-                        </AdminSidebarLink>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
-        )}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
       </div>
+
+      {/* Footer */}
       <div className={styles.footer}>
-        <ChefIAppSignature variant="full" size="sm" tone="light" />
+        <div className={styles.roleLabel}>
+          {role.toUpperCase()} • {identity.name || "ChefIApp OS"}
+        </div>
       </div>
     </aside>
-  );
-}
-
-function AdminSidebarLink({
-  to,
-  end,
-  children,
-  title,
-}: {
-  to: string;
-  end?: boolean;
-  children: React.ReactNode;
-  title?: string;
-}) {
-  return (
-    <NavLink
-      to={to}
-      end={end}
-      title={title}
-      className={({ isActive }) =>
-        [styles.navLink, isActive && styles.navLinkActive]
-          .filter(Boolean)
-          .join(" ")
-      }
-    >
-      {children}
-    </NavLink>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  ModuleStatusDot — Subtle indicator for module-linked config items  */
-/* ------------------------------------------------------------------ */
-
-const STATUS_DOT_CLASS: Record<ModuleStatus, string> = {
-  active: styles.statusDotActive,
-  needs_setup: styles.statusDotNeedsSetup,
-  inactive: styles.statusDotInactive,
-  locked: styles.statusDotLocked,
-};
-
-function ModuleStatusDot({ status }: { status: ModuleStatus }) {
-  return (
-    <span
-      className={`${styles.statusDot} ${STATUS_DOT_CLASS[status]}`}
-      aria-hidden="true"
-    />
   );
 }

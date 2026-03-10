@@ -434,16 +434,30 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
           .eq("active", true);
 
         if (data && Array.isArray(data)) {
-          const mapped: Employee[] = (data as { id: string; restaurant_id: string; name: string; role: string; active: boolean }[]).map(
-            (row) => ({
-              id: row.id,
-              restaurant_id: row.restaurant_id,
-              name: row.name,
-              role: (row.role === "waiter" || row.role === "kitchen" || row.role === "manager" ? row.role : "waiter") as Employee["role"],
-              position: (row.role === "waiter" ? "waiter" : row.role === "kitchen" ? "kitchen" : "manager") as Employee["position"],
-              active: row.active,
-            }),
-          );
+          const mapped: Employee[] = (
+            data as {
+              id: string;
+              restaurant_id: string;
+              name: string;
+              role: string;
+              active: boolean;
+            }[]
+          ).map((row) => ({
+            id: row.id,
+            restaurant_id: row.restaurant_id,
+            name: row.name,
+            role: (row.role === "waiter" ||
+            row.role === "kitchen" ||
+            row.role === "manager"
+              ? row.role
+              : "waiter") as Employee["role"],
+            position: (row.role === "waiter"
+              ? "waiter"
+              : row.role === "kitchen"
+              ? "kitchen"
+              : "manager") as Employee["position"],
+            active: row.active,
+          }));
           setEmployees(mapped);
         }
       } catch {
@@ -551,6 +565,9 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   // Dependency on tasks.length is a simple heuristic to re-check when tasks arrive.
 
   // ACTIONS
+  const isLoginBoundUserSession =
+    !!userId && roleSource === "login" && activeWorkerId === userId;
+
   const createLocalContract = (type: BusinessType) => {
     const id = `local-${type}-${Date.now()}`;
     setOpContract({
@@ -590,6 +607,14 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   };
 
   const checkIn = async (workerName: string, employeeId?: string) => {
+    // Keep one user identity across Admin/TPV/AppStaff in login-bound owner sessions.
+    if (isLoginBoundUserSession && userId) {
+      setActiveWorkerId(userId);
+      setShiftState("active");
+      notifyActivity();
+      return;
+    }
+
     const { db: coreDb } = await import("../../../core/db");
 
     setActiveWorkerId(workerName);
@@ -640,6 +665,13 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   /** DEV ONLY: simula check-in por perfil (sem tabela employees/shift_logs). */
   const devQuickCheckIn = useCallback(
     (role: StaffRole) => {
+      if (isLoginBoundUserSession && userId) {
+        setActiveWorkerId(userId);
+        setShiftState("active");
+        notifyActivity();
+        return;
+      }
+
       if (!operationalContract) {
         createLocalContract("restaurant");
       }
@@ -650,7 +682,13 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       setShiftState("active");
       notifyActivity();
     },
-    [operationalContract, createLocalContract, notifyActivity],
+    [
+      isLoginBoundUserSession,
+      userId,
+      operationalContract,
+      createLocalContract,
+      notifyActivity,
+    ],
   );
 
   const checkOut = async () => {
