@@ -29,6 +29,7 @@
 - Avoid mixing `docker-compose.yml` and `docker-core/docker-compose.core.yml` at the same time.
 - Health check: `http://localhost:3001/rest/v1/` should return 200.
 - Quick Core check: `bash scripts/core/health-check-core.sh`.
+- **404 em Admin > TPVs > «Gerar código» (create_device_pairing_code):** o PostgREST não tem a função no schema. Aplicar migrações e reiniciar PostgREST: `bash scripts/core/apply-device-pairing-migrations.sh` (ou `cd docker-core && make migrate-device-and-reload`). Verificar: `bash scripts/core/diagnose-postgrest-schema.sh`.
 
 ## Billing / Checkout (local)
 
@@ -80,6 +81,12 @@
 
 - **Gate recomendado (portal estável):** `npm run audit:release:portal` — web-e2e + typecheck + testes merchant-portal (Vitest) + server coverage (target **80%** branches no portal gate; 84% quando corre `check:server-coverage` sozinho) + leis. Passa sem DB/Jest raiz. Ver `docs/audit/RELEASE_AUDIT_STATUS.md`.
 - **Auditoria completa:** `npm run audit:release` — inclui Jest na raiz; pode falhar por testes de integração/DB. Ver `docs/audit/RELEASE_AUDIT_STATUS.md`.
+- **Gates (F5.2):** **Required before merge:** CI job `validate` inclui `audit:fase3-conformance` (identidade/pairing desktop + portal + mobile); opcionalmente `audit:billing-core` se secret `CORE_BILLING_AUDIT_DATABASE_URL` definido. **Required before deploy:** `npm run audit:release:portal` ou `bash scripts/deploy/pre-flight-check.sh`. **Recommended manual:** `audit:billing-core` local quando não há secret no CI. Tabela e definição explícita: `docs/ops/C44_RELEASE_GATES_AND_ROLLOUT.md` §2 e §6.
+- **Customer-portal (F5.1):** **Removido do workspace** — já não consta de `package.json` workspaces; diretório e código ausentes. Decisão e relatório: `docs/roadmap/C42_CUSTOMER_PORTAL_STATE.md` §8; alinhamento: `docs/roadmap/WORKSPACES_ALIGNMENT.md` §7.
+- **Mobile-app (C4.1):** Evidence pack Fase 3 em `docs/roadmap/C41_MOBILE_PHASE3_EVIDENCE.md`; classificação **ALIGNED** (teste explícito role-from-backend, recovery/reinstall e fluxo ativação automatizados; probe `audit:fase3-conformance` inclui mobile-app). Ver `docs/roadmap/WORKSPACES_ALIGNMENT.md` §8.
+- **Fase 5 (convergência operacional):** `docs/roadmap/FASE_5_CONVERGENCIA_OPERACIONAL.md` — F5.1–F5.4 fechados (F5.4 limpeza executada em F6.2).
+- **Fase 6 (estabilidade):** `docs/roadmap/FASE_6_ESTABILIDADE_PROXIMO_CICLO.md` — F6.2 e F6.3 fechados; próximo ciclo = Fase 7.
+- **Fase 7 (readiness e escala operacional):** `docs/roadmap/FASE_7_READINESS_ESCALA_OPERACIONAL.md` — **Operacionalmente fechada** (F7.1 e F7.2 fechados). Usar checklist + mapa em toda release. **F7.3 em espera consciente.** Avaliação pós-fecho: `docs/roadmap/AVALIACAO_DRIVERS_POS_FASE7.md` — nenhum driver concreto; não abrir nova fase; critérios para reabrir documentados.
 
 ## Production monitoring
 
@@ -87,3 +94,4 @@
 - **Quick reference:** `docs/ops/ROLLOUT_QUICK_REFERENCE.md` — Emergency checklists, thresholds, rollback commands.
 - **Observability:** `docs/ops/OBSERVABILITY_SETUP.md` — Sentry, Logger, ErrorBoundary, analytics setup.
 - **Critical thresholds:** Error rate < 1%, LCP < 2.5s, Core RPC > 99%, Browser-block bypasses = 0.
+- **C4.4 / F5.2 gates and rollout:** `docs/ops/C44_RELEASE_GATES_AND_ROLLOUT.md` — Required before merge (CI: validate + audit:fase3-conformance + optional audit:billing-core); required before deploy (audit:release:portal); recommended manual (audit:billing-core local). Table §3; definition §2 and §6. See `docs/roadmap/WORKSPACES_ALIGNMENT.md` §6 for health signals per workspace.

@@ -65,7 +65,7 @@ export function TPVHeader({
   searchQuery = "",
   onSearchChange,
   onFilterClick,
-  staffName = "Operador",
+  staffName = "Garçom",
   staffId = "—",
   staffAvatarUrl = null,
 }: TPVHeaderProps) {

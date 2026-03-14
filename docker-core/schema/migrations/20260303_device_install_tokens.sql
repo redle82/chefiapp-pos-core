@@ -147,10 +147,13 @@ BEGIN
         RAISE EXCEPTION 'TERMINAL_NOT_FOUND: Terminal % não existe.', p_terminal_id;
     END IF;
 
-    -- Also insert into heartbeats log if table exists
-    INSERT INTO public.gm_device_heartbeats (terminal_id, heartbeat_at)
-    VALUES (p_terminal_id, now())
-    ON CONFLICT DO NOTHING;
+    -- Optional: log to gm_device_heartbeats if table exists and has matching columns
+    BEGIN
+        INSERT INTO public.gm_device_heartbeats (terminal_id, heartbeat_at)
+        VALUES (p_terminal_id, now());
+    EXCEPTION WHEN OTHERS THEN
+        NULL;  -- table missing or different schema (e.g. 20260221)
+    END;
 END;
 $$;
 

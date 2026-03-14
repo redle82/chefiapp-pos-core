@@ -139,6 +139,19 @@ echo "tables_public=${TABLES_PUBLIC:-<unavailable>}"
 echo "search_path=${SEARCH_PATH:-<unavailable>}"
 
 echo
+echo "== RPCs (device pairing, Admin > TPVs) =="
+SQL_RPC="select routine_name from information_schema.routines where routine_schema='public' and routine_name in ('create_device_pairing_code','consume_device_pairing_code','create_device_install_token','consume_device_install_token');"
+RPCS="$(docker exec -e PGPASSWORD="${DB_PASS}" "${PG_CONTAINER}" psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -Atc "${SQL_RPC}" 2>/dev/null || docker exec -e PGPASSWORD="${DB_PASS}" "${PG_CONTAINER}" psql -h 127.0.0.1 -p 5432 -U "${DB_USER}" -d "${DB_NAME}" -Atc "${SQL_RPC}" 2>/dev/null || true)"
+if [[ -n "${RPCS}" ]]; then
+  echo "${RPCS}" | while read -r r; do echo "  - $r"; done
+else
+  echo "  (nenhuma encontrada)"
+fi
+if ! echo "${RPCS}" | grep -q "create_device_pairing_code"; then
+  echo "[fix] Para corrigir 404 em «Gerar código»: ./scripts/core/apply-device-pairing-migrations.sh"
+fi
+
+echo
 echo "== Quick interpretation =="
 if [[ "${TABLES_PUBLIC:-0}" =~ ^[0-9]+$ ]] && [[ "${TABLES_PUBLIC}" -eq 0 ]]; then
   echo "[diagnosis] DB sem tabelas públicas visíveis para esta conexão."

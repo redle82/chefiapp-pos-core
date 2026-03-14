@@ -63,73 +63,76 @@ export default defineConfig(async ({ mode }) => {
   }
 
   const pwaPlugins = [];
-  try {
-    const { VitePWA } = await import("vite-plugin-pwa");
-    pwaPlugins.push(
-      VitePWA({
-        registerType: "autoUpdate",
-        includeAssets: ["favicon.ico", "apple-touch-icon.png", "vite.svg"],
-        devOptions: {
-          enabled: false, // CRITICAL: Disable in dev to prevent workbox loop
-        },
-        manifest: {
-          name: "AppStaff — ChefIApp",
-          short_name: "AppStaff",
-          description:
-            "Aplicação para a equipa do restaurante. Gestão de turnos, pedidos e operação.",
-          theme_color: "#121212",
-          background_color: "#121212",
-          display: "standalone",
-          orientation: "portrait",
-          scope: "/",
-          start_url: "/app/staff/home",
-          icons: [
-            {
-              src: "Logo Chefiapp.png",
-              sizes: "192x192",
-              type: "image/png",
-              purpose: "any maskable",
-            },
-            {
-              src: "Logo Chefiapp.png",
-              sizes: "512x512",
-              type: "image/png",
-              purpose: "any maskable",
-            },
-          ],
-        },
-        workbox: {
-          skipWaiting: true,
-          clientsClaim: true,
-          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-          maximumFileSizeToCacheInBytes: 5000000, // 5MB
-          // Offline total: SPA carrega quando offline; GET /rest pode usar cache.
-          navigateFallback: "/index.html",
-          navigateFallbackDenylist: [
-            /^\/rest\//,
-            /^\/api\//,
-            /^\/internal\//,
-            /^\/webhooks\//,
-            /^\/rpc\//,
-          ],
-          runtimeCaching: [
-            {
-              urlPattern: /^https?:\/\/[^/]+\/rest\/v1\/[^?]*/,
-              handler: "NetworkFirst",
-              method: "GET",
-              options: {
-                cacheName: "chefiapp-rest-get",
-                expiration: { maxEntries: 80, maxAgeSeconds: 60 * 5 },
-                cacheableResponse: { statuses: [0, 200] },
-                networkTimeoutSeconds: 10,
+  const isElectronTarget = env.VITE_BUILD_TARGET === "electron";
+  if (!isElectronTarget) {
+    try {
+      const { VitePWA } = await import("vite-plugin-pwa");
+      pwaPlugins.push(
+        VitePWA({
+          registerType: "autoUpdate",
+          includeAssets: ["favicon.ico", "apple-touch-icon.png", "vite.svg"],
+          devOptions: {
+            enabled: false, // CRITICAL: Disable in dev to prevent workbox loop
+          },
+          manifest: {
+            name: "AppStaff — ChefIApp",
+            short_name: "AppStaff",
+            description:
+              "Aplicação para a equipa do restaurante. Gestão de turnos, pedidos e operação.",
+            theme_color: "#121212",
+            background_color: "#121212",
+            display: "standalone",
+            orientation: "portrait",
+            scope: "/",
+            start_url: "/app/staff/home",
+            icons: [
+              {
+                src: "Logo Chefiapp.png",
+                sizes: "192x192",
+                type: "image/png",
+                purpose: "any maskable",
               },
-            },
-          ],
-        },
-      }),
-    );
-  } catch {
-    // vite-plugin-pwa não está instalado no ambiente atual; segue sem plugin.
+              {
+                src: "Logo Chefiapp.png",
+                sizes: "512x512",
+                type: "image/png",
+                purpose: "any maskable",
+              },
+            ],
+          },
+          workbox: {
+            skipWaiting: true,
+            clientsClaim: true,
+            globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+            maximumFileSizeToCacheInBytes: 5000000, // 5MB
+            // Offline total: SPA carrega quando offline; GET /rest pode usar cache.
+            navigateFallback: "/index.html",
+            navigateFallbackDenylist: [
+              /^\/rest\//,
+              /^\/api\//,
+              /^\/internal\//,
+              /^\/webhooks\//,
+              /^\/rpc\//,
+            ],
+            runtimeCaching: [
+              {
+                urlPattern: /^https?:\/\/[^/]+\/rest\/v1\/[^?]*/,
+                handler: "NetworkFirst",
+                method: "GET",
+                options: {
+                  cacheName: "chefiapp-rest-get",
+                  expiration: { maxEntries: 80, maxAgeSeconds: 60 * 5 },
+                  cacheableResponse: { statuses: [0, 200] },
+                  networkTimeoutSeconds: 10,
+                },
+              },
+            ],
+          },
+        }),
+      );
+    } catch {
+      // vite-plugin-pwa não está instalado no ambiente atual; segue sem plugin.
+    }
   }
 
   return {

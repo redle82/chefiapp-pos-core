@@ -20,7 +20,7 @@ function renderHeader() {
       searchQuery="pizza"
       onSearchChange={onSearchChange}
       onFilterClick={onFilterClick}
-      staffName="Operador"
+      staffName="Garçom"
       staffId="1"
     />,
   );
@@ -33,7 +33,7 @@ describe("TPVHeader", () => {
     renderHeader();
 
     expect(screen.getByText("Restaurante")).toBeTruthy();
-    expect(screen.getByText("Operador")).toBeTruthy();
+    expect(screen.getByText("Garçom")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Filter" })).toBeTruthy();
   });
 

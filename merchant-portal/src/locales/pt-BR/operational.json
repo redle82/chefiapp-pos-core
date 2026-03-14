@@ -68,7 +68,9 @@
   "roles": {
     "owner": "Dono",
     "manager": "Gerente",
-    "operator": "Operador"
+    "cashier": "Caixa",
+    "waiter": "Garçom",
+    "staff": "Equipe"
   },
   "kitchen": {
     "statusOk": "Cozinha OK",

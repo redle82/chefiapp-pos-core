@@ -34,6 +34,7 @@ const PRIMARY_LABEL_KEYS: Record<string, string> = {
   Configure: "modules.actionConfigure",
   Open: "modules.actionOpen",
   Upgrade: "modules.actionUpgrade",
+  ManageDevices: "modules.actionManageDevices",
 };
 
 interface ModuleCardProps {
@@ -42,6 +43,8 @@ interface ModuleCardProps {
   onSecondaryAction?: (id: string) => void;
   /** Override da label do botão secundário (ex: "Instalar dispositivo" em vez de "Desactivar") */
   secondaryLabel?: string;
+  /** Override opcional da label do botão primário (ex.: estados específicos como \"Instalar dispositivo\") */
+  primaryLabelOverride?: string;
 }
 
 export function ModuleCard({
@@ -49,12 +52,13 @@ export function ModuleCard({
   onPrimaryAction,
   onSecondaryAction,
   secondaryLabel,
+  primaryLabelOverride,
 }: ModuleCardProps) {
   const { t } = useTranslation("sidebar");
   const badge = BADGE_STYLES[module.status];
-  const primaryLabel = t(
-    PRIMARY_LABEL_KEYS[module.primaryAction] ?? module.primaryAction,
-  );
+  const primaryLabel =
+    primaryLabelOverride ??
+    t(PRIMARY_LABEL_KEYS[module.primaryAction] ?? module.primaryAction);
   const showSecondary =
     module.secondaryAction &&
     (module.status === "active" || module.status === "needs_setup");

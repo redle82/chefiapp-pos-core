@@ -23,27 +23,30 @@ import "./index.css";
 import { ErrorBoundary } from "./ui/design-system/ErrorBoundary";
 // import "./ui/design-system/styles/dark-mode.css"; // P3-5: Dark mode styles
 
-Sentry.init({
-  dsn: "https://c507891630be22946aae6f4dc35daa2b@o4509651128942592.ingest.us.sentry.io/4510930062475264",
-  environment:
-    import.meta.env.MODE === "production" ? "production" : "development",
-  release:
-    import.meta.env.VITE_SENTRY_RELEASE ||
-    `merchant-portal@${import.meta.env.MODE}`,
-  sendDefaultPii: true,
-  // Performance Monitoring — captura transações/spans automaticamente
-  tracesSampleRate: import.meta.env.MODE === "production" ? 0.2 : 1.0,
-  // Session Replay — grava sessões para debug visual
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1.0,
-  integrations: [
-    Sentry.browserTracingIntegration(),
-    Sentry.replayIntegration(),
-  ],
-});
-// DoD B4: tags para filtros em Sentry; expor para Logger/SentryTransport
-Sentry.setTag("app", "merchant-portal");
-if (typeof window !== "undefined") (window as any).Sentry = Sentry;
+// Evitar múltiplas instâncias de Session Replay (HMR / entradas múltiplas)
+if (!Sentry.getClient()) {
+  const isProd = import.meta.env.MODE === "production";
+  Sentry.init({
+    dsn: "https://c507891630be22946aae6f4dc35daa2b@o4509651128942592.ingest.us.sentry.io/4510930062475264",
+    environment: isProd ? "production" : "development",
+    release:
+      import.meta.env.VITE_SENTRY_RELEASE ||
+      `merchant-portal@${import.meta.env.MODE}`,
+    sendDefaultPii: true,
+    // Performance Monitoring — captura transações/spans automaticamente
+    tracesSampleRate: isProd ? 0.2 : 1.0,
+    // Session Replay apenas em produção para evitar conflitos em HMR
+    replaysSessionSampleRate: isProd ? 0.1 : 0,
+    replaysOnErrorSampleRate: isProd ? 1.0 : 0,
+    integrations: [
+      Sentry.browserTracingIntegration(),
+      ...(isProd ? [Sentry.replayIntegration()] : []),
+    ],
+  });
+  // DoD B4: tags para filtros em Sentry; expor para Logger/SentryTransport
+  Sentry.setTag("app", "merchant-portal");
+  if (typeof window !== "undefined") (window as any).Sentry = Sentry;
+}
 
 // ─── Sentry Real-World Metrics ──────────────────────────────────────────────
 // Métricas reais que simulam comportamento de produção com clientes

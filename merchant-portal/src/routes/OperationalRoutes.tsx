@@ -199,6 +199,11 @@ const AdminDevicesPage = lazy(() =>
     default: m.AdminDevicesPage,
   })),
 );
+const AdminTPVTerminalsPage = lazy(() =>
+  import("../features/admin/devices/AdminTPVTerminalsPage").then((m) => ({
+    default: m.AdminTPVTerminalsPage,
+  })),
+);
 const ModulesPage = lazy(() =>
   import("../features/admin/modules/pages/ModulesPage").then((m) => ({
     default: m.ModulesPage,
@@ -716,8 +721,14 @@ const WelcomePage = lazy(() =>
     default: m.WelcomePage,
   })),
 );
+const ElectronSetupPage = lazy(() =>
+  import("../pages/ElectronSetup/ElectronSetupPage").then((m) => ({
+    default: m.ElectronSetupPage,
+  })),
+);
 export const OperationalRoutesFragment = (
   <Fragment>
+    <Route path="/electron/setup" element={<ElectronSetupPage />} />
     <Route path="/public/:slug" element={<PublicWebPage />} />
     <Route path="/public/:slug/mesa/:number" element={<TablePage />} />
     <Route
@@ -1498,6 +1509,16 @@ export const OperationalRoutesFragment = (
           <ManagementAdvisor>
             <DashboardLayout>
               <ObservabilityPage />
+            </DashboardLayout>
+          </ManagementAdvisor>
+        }
+      />
+      <Route
+        path="/admin/devices/tpv"
+        element={
+          <ManagementAdvisor>
+            <DashboardLayout>
+              <AdminTPVTerminalsPage />
             </DashboardLayout>
           </ManagementAdvisor>
         }

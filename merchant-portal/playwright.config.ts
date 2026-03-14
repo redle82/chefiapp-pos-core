@@ -82,6 +82,12 @@ export default defineConfig({
         storageState: AUTH_STATE_PATH,
       },
     },
+    /* Logout flow: runs without setup (self-contained pilot state in test) */
+    {
+      name: "logout",
+      testMatch: "**/contracts/logout-flow.spec.ts",
+      use: { browserName: "chromium" },
+    },
     /* Layer 3 – Core (the single strong E2E flow) */
     {
       name: "core",

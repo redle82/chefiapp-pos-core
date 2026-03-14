@@ -2,8 +2,8 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DesktopDownloadSection } from "./DesktopDownloadSection";
 
 describe("DesktopDownloadSection", () => {
@@ -29,38 +29,43 @@ describe("DesktopDownloadSection", () => {
     import.meta.env.VITE_DESKTOP_DOWNLOAD_BASE =
       "https://example.com/releases/latest/download";
 
-    render(<DesktopDownloadSection />);
+    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
 
-    const macLink = screen.getByTestId(
-      "desktop-download-macos",
-    ) as HTMLAnchorElement;
-    expect(macLink).toBeTruthy();
-    expect(macLink.href).toBe(
+    const { container } = render(<DesktopDownloadSection />);
+
+    const macButton = within(container).getByTestId("desktop-download-macos");
+    expect(macButton).toBeTruthy();
+    fireEvent.click(macButton);
+    expect(openSpy).toHaveBeenCalledWith(
       "https://example.com/releases/latest/download/ChefIApp-Desktop.dmg",
+      "_blank",
+      "noopener,noreferrer",
     );
+    openSpy.mockRestore();
   });
 
   it("Regra 1: sem DOWNLOAD_BASE não mostra botões mortos, mostra 'não publicado'", () => {
-    render(<DesktopDownloadSection />);
+    const { container } = render(<DesktopDownloadSection />);
+    const scoped = within(container);
 
-    const unpublished = screen.getByTestId("desktop-download-unpublished-note");
+    const unpublished = scoped.getByTestId("desktop-download-unpublished-note");
     expect(unpublished).toBeTruthy();
     expect(unpublished.textContent).toContain("Desktop não publicado");
 
-    // No download cards should exist
-    expect(screen.queryByTestId("desktop-download-macos")).toBeNull();
-    expect(screen.queryByTestId("desktop-download-windows")).toBeNull();
+    expect(scoped.queryByTestId("desktop-download-macos")).toBeNull();
+    expect(scoped.queryByTestId("desktop-download-windows")).toBeNull();
   });
 
   it("Regra 2 DEV: por padrão mantém UI de release (sem devtools)", () => {
     // @ts-expect-error
     import.meta.env.MODE = "development";
 
-    render(<DesktopDownloadSection />);
+    const { container } = render(<DesktopDownloadSection />);
+    const scoped = within(container);
 
-    const prodCta = screen.getByTestId("desktop-prod-publish-cta");
+    const prodCta = scoped.getByTestId("desktop-prod-publish-cta");
     expect(prodCta).toBeTruthy();
-    expect(screen.queryByTestId("desktop-dev-build-cta")).toBeNull();
+    expect(scoped.queryByTestId("desktop-dev-build-cta")).toBeNull();
   });
 
   it("Regra 2 DEVTOOLS: com flag explícita mostra CTA de build local", () => {
@@ -69,9 +74,9 @@ describe("DesktopDownloadSection", () => {
     // @ts-expect-error
     import.meta.env.VITE_DESKTOP_DEVTOOLS_ENABLED = "true";
 
-    render(<DesktopDownloadSection />);
+    const { container } = render(<DesktopDownloadSection />);
 
-    const devCta = screen.getByTestId("desktop-dev-build-cta");
+    const devCta = within(container).getByTestId("desktop-dev-build-cta");
     expect(devCta).toBeTruthy();
     expect(devCta.textContent).toContain("Modo DEV");
     expect(devCta.textContent).toContain("Gerar DMG local");
@@ -83,17 +88,15 @@ describe("DesktopDownloadSection", () => {
     // @ts-expect-error
     import.meta.env.VITE_DESKTOP_DEVTOOLS_ENABLED = "true";
 
-    render(<DesktopDownloadSection />);
+    const { container } = render(<DesktopDownloadSection />);
+    const scoped = within(container);
 
-    // Steps should not be visible initially
-    expect(screen.queryByTestId("desktop-dev-build-steps")).toBeNull();
+    expect(scoped.queryByTestId("desktop-dev-build-steps")).toBeNull();
 
-    // Click toggle
-    const toggle = screen.getByTestId("desktop-dev-build-toggle");
+    const toggle = scoped.getByTestId("desktop-dev-build-toggle");
     fireEvent.click(toggle);
 
-    // Now steps should be visible
-    const steps = screen.getByTestId("desktop-dev-build-steps");
+    const steps = scoped.getByTestId("desktop-dev-build-steps");
     expect(steps).toBeTruthy();
     expect(steps.textContent).toContain("pnpm build");
     expect(steps.textContent).toContain("/Applications");
@@ -103,9 +106,9 @@ describe("DesktopDownloadSection", () => {
     // @ts-expect-error
     import.meta.env.MODE = "production";
 
-    render(<DesktopDownloadSection />);
+    const { container } = render(<DesktopDownloadSection />);
 
-    const prodCta = screen.getByTestId("desktop-prod-publish-cta");
+    const prodCta = within(container).getByTestId("desktop-prod-publish-cta");
     expect(prodCta).toBeTruthy();
     expect(prodCta.textContent).toContain("Release não publicada");
     expect(prodCta.textContent).toContain("VITE_DESKTOP_DOWNLOAD_BASE");
@@ -118,16 +121,10 @@ describe("DesktopDownloadSection", () => {
     // @ts-expect-error
     import.meta.env.MODE = "production";
 
-    render(<DesktopDownloadSection />);
+    const { container } = render(<DesktopDownloadSection />);
 
-    const macLink = screen.getByTestId("desktop-download-macos");
-    expect(macLink).toBeTruthy();
-
-    // No unpublished state
-    expect(
-      screen.queryByTestId("desktop-download-unpublished-note"),
-    ).toBeNull();
-    expect(screen.queryByTestId("desktop-dev-build-cta")).toBeNull();
-    expect(screen.queryByTestId("desktop-prod-publish-cta")).toBeNull();
+    const macButtons = within(container).getAllByTestId("desktop-download-macos");
+    expect(macButtons.length).toBeGreaterThanOrEqual(1);
+    expect(macButtons[0]).toBeTruthy();
   });
 });

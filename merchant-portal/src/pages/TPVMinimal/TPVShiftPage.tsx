@@ -7,7 +7,7 @@ import {
 } from "../../core/tpv/CashRegister";
 import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 
-const DEFAULT_OPERATOR = "Operador TPV";
+const DEFAULT_OPERATOR = "Caixa TPV";
 const DEFAULT_REGISTER_NAME = "Caixa Principal";
 
 export function TPVShiftPage() {
@@ -168,7 +168,7 @@ export function TPVShiftPage() {
               </div>
             </div>
             <div style={{ fontSize: 12, color: "#9ca3af" }}>
-              Operador: {register.openedBy || DEFAULT_OPERATOR}
+              Caixa: {register.openedBy || DEFAULT_OPERATOR}
             </div>
           </div>
 
@@ -239,8 +239,8 @@ export function TPVShiftPage() {
                 minWidth: 200,
               }}
             >
-              <span style={{ fontSize: 12, color: "#9ca3af" }}>
-                Operador de fecho
+            <span style={{ fontSize: 12, color: "#9ca3af" }}>
+                Caixa de fecho
               </span>
               <input
                 type="text"
@@ -316,7 +316,7 @@ export function TPVShiftPage() {
           </label>
 
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span style={{ fontSize: 12, color: "#9ca3af" }}>Operador</span>
+            <span style={{ fontSize: 12, color: "#9ca3af" }}>Caixa</span>
             <input
               type="text"
               value={operatorName}

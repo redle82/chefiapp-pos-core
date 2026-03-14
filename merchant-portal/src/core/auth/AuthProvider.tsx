@@ -32,6 +32,12 @@ import {
   TRIAL_RESTAURANT_ID,
 } from "../readiness/operationalRestaurant";
 import type { CoreSession, CoreUser } from "./authTypes";
+import {
+  clearJustLoggedOut,
+  clearLogoutDone,
+  isJustLoggedOut,
+  isLogoutDone,
+} from "./authKeycloak";
 import { isMockAuthEnabled } from "./mockAuthGate";
 
 // ---------------------------------------------------------------------------
@@ -109,58 +115,64 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     // Trial / Pilot mock — ONLY when explicitly allowed in dev
     if (typeof window !== "undefined" && isMockAuthEnabled(import.meta.env)) {
-      // AUTO-PILOT: When DEBUG_DIRECT_FLOW + Docker dev → auto-activate pilot mode
-      // so /op/tpv works without manual localStorage setup or ?debug=1
-      // E2E tests can set chefiapp_skip_auto_pilot to prevent auto-activation.
-      const skipAutoPilot =
-        localStorage.getItem("chefiapp_skip_auto_pilot") === "true";
-      if (
-        CONFIG.DEBUG_DIRECT_FLOW &&
-        getBackendType() === BackendType.docker &&
-        !skipAutoPilot
-      ) {
-        if (!localStorage.getItem("chefiapp_pilot_mode")) {
-          localStorage.setItem("chefiapp_pilot_mode", "true");
+      // After logout we set chefiapp_just_logged_out (session + local); do not re-seed
+      if (isJustLoggedOut()) {
+        clearJustLoggedOut();
+        // Fall through to Keycloak path — no mock, no re-auth
+      } else {
+        // AUTO-PILOT: When DEBUG_DIRECT_FLOW + Docker dev → auto-activate pilot mode
+        // Do not re-seed after logout (isLogoutDone) until user logs in again.
+        const skipAutoPilot =
+          localStorage.getItem("chefiapp_skip_auto_pilot") === "true" ||
+          isLogoutDone();
+        if (
+          CONFIG.DEBUG_DIRECT_FLOW &&
+          getBackendType() === BackendType.docker &&
+          !skipAutoPilot
+        ) {
+          if (!localStorage.getItem("chefiapp_pilot_mode")) {
+            localStorage.setItem("chefiapp_pilot_mode", "true");
+          }
+          if (!localStorage.getItem("chefiapp_restaurant_id")) {
+            localStorage.setItem("chefiapp_restaurant_id", SOFIA_RESTAURANT_ID);
+          }
+          if (!sessionStorage.getItem("chefiapp_debug")) {
+            sessionStorage.setItem("chefiapp_debug", "1");
+          }
+          // Fechar modo trial: restaurante real = Sofia Gastrobar
+          localStorage.removeItem("chefiapp_trial_mode");
+          sessionStorage.removeItem("chefiapp_trial_mode");
         }
-        if (!localStorage.getItem("chefiapp_restaurant_id")) {
-          localStorage.setItem("chefiapp_restaurant_id", SOFIA_RESTAURANT_ID);
-        }
-        if (!sessionStorage.getItem("chefiapp_debug")) {
-          sessionStorage.setItem("chefiapp_debug", "1");
-        }
-        // Fechar modo trial: restaurante real = Sofia Gastrobar
-        localStorage.removeItem("chefiapp_trial_mode");
-        sessionStorage.removeItem("chefiapp_trial_mode");
-      }
 
-      const isTrialUrl =
-        new URLSearchParams(window.location.search).get("mode") === "trial";
-      const isTrialStored =
-        sessionStorage.getItem("chefiapp_trial_mode") === "true" ||
-        localStorage.getItem("chefiapp_trial_mode") === "true";
-      const isPilot = localStorage.getItem("chefiapp_pilot_mode") === "true";
+        const isTrialUrl =
+          new URLSearchParams(window.location.search).get("mode") === "trial";
+        const isTrialStored =
+          sessionStorage.getItem("chefiapp_trial_mode") === "true" ||
+          localStorage.getItem("chefiapp_trial_mode") === "true";
+        const isPilot = localStorage.getItem("chefiapp_pilot_mode") === "true";
 
-      // Modo trial: restaurante "Seu restaurante" (id 099)
-      if (isTrialUrl) {
-        localStorage.setItem("chefiapp_trial_mode", "true");
-        sessionStorage.setItem("chefiapp_trial_mode", "true");
-        localStorage.setItem("chefiapp_restaurant_id", TRIAL_RESTAURANT_ID);
-      }
-      if (isTrialStored) {
-        localStorage.setItem("chefiapp_restaurant_id", TRIAL_RESTAURANT_ID);
-      }
-
-      if (isTrialUrl || isTrialStored || (isDebugMode() && isPilot)) {
-        Logger.warn(
-          "[AuthProvider] Mock auth activated (DEV only). This is BLOCKED in production builds.",
-        );
-        const mock = createMockSession();
-        if (mountedRef.current) {
-          setSession(mock.session);
-          setUser(mock.user);
-          setLoading(false);
+        // Modo trial: restaurante "Seu restaurante" (id 099)
+        if (isTrialUrl) {
+          localStorage.setItem("chefiapp_trial_mode", "true");
+          sessionStorage.setItem("chefiapp_trial_mode", "true");
+          localStorage.setItem("chefiapp_restaurant_id", TRIAL_RESTAURANT_ID);
         }
-        return;
+        if (isTrialStored) {
+          localStorage.setItem("chefiapp_restaurant_id", TRIAL_RESTAURANT_ID);
+        }
+
+        if (isTrialUrl || isTrialStored || (isDebugMode() && isPilot)) {
+          Logger.warn(
+            "[AuthProvider] Mock auth activated (DEV only). This is BLOCKED in production builds.",
+          );
+          const mock = createMockSession();
+          if (mountedRef.current) {
+            setSession(mock.session);
+            setUser(mock.user);
+            setLoading(false);
+          }
+          return;
+        }
       }
     }
 
@@ -171,6 +183,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         const state = await getKeycloakSession();
         if (!mountedRef.current) return;
         if (state.session && state.user) {
+          clearLogoutDone();
           const userLike = state.user as CoreUser;
           const sessionLike: CoreSession = {
             access_token: state.session.access_token,

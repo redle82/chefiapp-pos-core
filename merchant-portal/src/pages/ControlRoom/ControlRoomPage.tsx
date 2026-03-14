@@ -48,7 +48,7 @@ export const ControlRoomPage: React.FC = () => {
                     <div className={styles.cardHeaderInfo}>
                       <div className={styles.roleLabel}>{roleLabel}</div>
                       <div className={styles.operatorName}>
-                        {s.operatorId ?? "Operador anónimo"}
+                        {s.operatorId ?? "Utilizador anónimo"}
                       </div>
                     </div>
                     <div className={styles.statusBadge} data-status={status}>

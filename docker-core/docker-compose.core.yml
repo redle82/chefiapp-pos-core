@@ -68,6 +68,8 @@ services:
       - ./schema/migrations/20260212_refund_rpc.sql:/docker-entrypoint-initdb.d/05.9994-refund-rpc.sql:ro
       - ./schema/migrations/20260325_create_fiscal_document_for_order.sql:/docker-entrypoint-initdb.d/05.9995-create-fiscal-document-for-order.sql:ro
       - ./schema/migrations/20260325_gm_orders_version.sql:/docker-entrypoint-initdb.d/05.9996-gm-orders-version.sql:ro
+      - ./schema/migrations/20260303_device_install_tokens.sql:/docker-entrypoint-initdb.d/05.9997-device-install-tokens.sql:ro
+      - ./schema/migrations/20260410_device_pairing_code_rpcs.sql:/docker-entrypoint-initdb.d/05.9998-device-pairing-code-rpcs.sql:ro
       - ./schema/06-seed-enterprise.sql:/docker-entrypoint-initdb.d/06-seed-enterprise.sql:ro
       - ./schema/07-role-anon.sql:/docker-entrypoint-initdb.d/07-role-anon.sql:ro
     networks:
@@ -170,10 +172,19 @@ services:
     container_name: chefiapp-core-keycloak
     profiles: ["auth", "full"]
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     command: start-dev
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      # Usar Postgres do Core em vez de H2 embebido (mais estável em Docker)
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_DATABASE: chefiapp_core
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
     ports:
       - "8080:8080"
     networks:

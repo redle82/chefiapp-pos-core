@@ -2,9 +2,16 @@ type AuthUserLike =
   | {
       id?: string | null;
       email?: string | null;
+      /** Name at root level (ex.: Keycloak, generic OIDC adapters). */
+      name?: unknown;
+      /** Role at root level when not using Supabase metadata. */
+      role?: unknown;
       user_metadata?: {
+        /** Supabase-style display name. */
         name?: unknown;
         avatar_url?: unknown;
+        /** Supabase-style role, when present. */
+        role?: unknown;
       } | null;
     }
   | null
@@ -29,10 +36,18 @@ export function resolveOperatorProfile(user: AuthUserLike): {
   avatarUrl: string | null;
 } {
   const email = normalizeText(user?.email);
+  const rootName = normalizeText((user as any)?.name);
   const metadataName = normalizeText(user?.user_metadata?.name);
+
   const name =
-    metadataName ?? (email ? email.split("@")[0] : null) ?? "Operador";
-  const id = email ?? resolveOperatorId(user) ?? "—";
+    rootName ?? metadataName ?? (email ? email.split("@")[0] : null) ?? "Utilizador";
+
+  const idFromMetadata = normalizeText(
+    (user as any)?.user_metadata?.id ??
+      (user as any)?.user_metadata?.user_id,
+  );
+
+  const id = email ?? idFromMetadata ?? resolveOperatorId(user) ?? "—";
   const avatarUrl = normalizeText(user?.user_metadata?.avatar_url);
 
   return {

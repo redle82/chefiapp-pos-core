@@ -19,7 +19,7 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     description:
       "Gestiona tu Sala, pedidos de Delivery y Take away en un mismo sitio.",
     icon: "🖥️",
-    primaryAction: "Open",
+    primaryAction: "ManageDevices",
     secondaryAction: "Desactivar",
     block: "essenciais",
     defaultStatus: "active",
@@ -30,7 +30,7 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     description:
       "App para a equipa: fichagem, tarefas, KDS, alertas e gestão de turno — tudo num só lugar.",
     icon: "📋",
-    primaryAction: "Open",
+    primaryAction: "ManageDevices",
     secondaryAction: "Desactivar",
     block: "essenciais",
     defaultStatus: "active",

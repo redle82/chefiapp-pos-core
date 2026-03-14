@@ -316,7 +316,6 @@ chefiapp-pos-core/
 │   ├── dist-marketing/         # Marketing-only build output (npm run build:marketing)
 │   └── vercel.json             # SPA rewrites for deploy
 ├── docker-core/        # Core backend (Postgres, PostgREST)
-├── customer-portal/    # Customer Portal (Digital Menu / QR)
 ├── docs/               # Documentation (DOC_INDEX, ESTADO_ATUAL, ESTRUTURA_PROJETO_ENTERPRISE)
 └── scripts/            # Automation, health, flows
 ```

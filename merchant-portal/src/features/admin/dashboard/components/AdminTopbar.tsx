@@ -2,28 +2,71 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { getAuthActions } from "../../../../core/auth/authAdapter";
+import { LOGOUT_IN_PROGRESS_KEY } from "../../../../core/auth/authKeycloak";
 import { useAuth } from "../../../../core/auth/useAuth";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
+import { useTenant } from "../../../../core/tenant/TenantContext";
+import {
+  resolveOperatorProfile,
+} from "../../../../pages/TPV/context/operatorIdentity";
 import { RestaurantHeader } from "../../../../ui/design-system/sovereign/RestaurantHeader";
 import styles from "./AdminTopbar.module.css";
 
 export function AdminTopbar() {
   const { t } = useTranslation("dashboard");
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { identity } = useRestaurantIdentity();
+  const { tenantId, memberships } = useTenant();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const userEmail = user?.email ?? "";
-  const userName =
-    (user?.user_metadata?.name as string) || userEmail.split("@")[0] || "—";
-  const userInitial = userName.charAt(0).toUpperCase();
+  const operatorProfile = resolveOperatorProfile(user);
+  const isAnonymousSession =
+    !user && (!operatorProfile.id || operatorProfile.id === "—");
+  /** After logout, auth is loaded and user is null — show session ended, not "owner" */
+  const isLoggedOut = !authLoading && !user;
+
+  const displayName = isLoggedOut
+    ? t("topbar.sessionEnded", { defaultValue: "Sessão encerrada" })
+    : isAnonymousSession
+      ? t("topbar.localOwnerName", {
+          defaultValue: "Dono deste restaurante",
+        })
+      : operatorProfile.name ||
+        userEmail ||
+        t("topbar.fallbackUser", { defaultValue: "Utilizador" });
+  const userInitial = displayName.charAt(0).toUpperCase();
+  const activeMembership =
+    memberships.find((m) => m.restaurant_id === tenantId) ?? memberships[0];
+  const membershipRole = (activeMembership?.role ?? "").toLowerCase();
   const userRole = String(user?.user_metadata?.role ?? "").toLowerCase();
+  const effectiveRole = membershipRole || userRole;
   const isInternalAdmin =
-    userRole === "internal" ||
-    userRole === "internal_admin" ||
-    userRole === "system_admin";
+    effectiveRole === "internal" ||
+    effectiveRole === "internal_admin" ||
+    effectiveRole === "system_admin";
+  const roleLabel =
+    effectiveRole && effectiveRole.length > 0
+      ? effectiveRole === "owner"
+        ? t("topbar.roleOwner", { defaultValue: "Dono" })
+        : effectiveRole === "manager"
+        ? t("topbar.roleManager", { defaultValue: "Gerente" })
+        : effectiveRole === "cashier"
+        ? t("topbar.roleCashier", { defaultValue: "Caixa" })
+        : effectiveRole === "waiter"
+        ? t("topbar.roleWaiter", { defaultValue: "Garçom" })
+        : isInternalAdmin
+        ? t("topbar.roleInternal", { defaultValue: "Equipe ChefiApp" })
+        : effectiveRole
+      : isLoggedOut
+        ? ""
+        : isAnonymousSession
+          ? t("topbar.roleOwner", { defaultValue: "Dono" })
+          : t("topbar.roleStaff", { defaultValue: "Equipa" });
+  const isRoleRedundant =
+    displayName.trim().toLowerCase() === roleLabel.trim().toLowerCase();
   const baseRestaurantName =
     identity.name?.trim() ||
     t("topbar.activeRestaurant", { defaultValue: "Restaurante" });
@@ -37,6 +80,12 @@ export function AdminTopbar() {
   })();
 
   const handleLogout = useCallback(() => {
+    // Set flag before signOut so beforeunload handlers skip "Leave site?" dialog
+    try {
+      sessionStorage.setItem(LOGOUT_IN_PROGRESS_KEY, "1");
+    } catch {
+      // ignore
+    }
     const actions = getAuthActions();
     actions.signOut();
   }, []);
@@ -69,8 +118,16 @@ export function AdminTopbar() {
           onClick={() => setMenuOpen((o) => !o)}
           aria-label={t("topbar.userMenu")}
           aria-expanded={menuOpen}
+          data-testid="topbar-profile"
+          data-authenticated={isLoggedOut ? "false" : "true"}
         >
           <div className={styles.avatar}>{userInitial}</div>
+          <div className={styles.profileInfo}>
+            <span className={styles.profileName}>{displayName}</span>
+            {!isRoleRedundant && (
+              <span className={styles.profileRole}>{roleLabel}</span>
+            )}
+          </div>
           <svg
             width="12"
             height="12"
@@ -102,11 +159,17 @@ export function AdminTopbar() {
               <div className={styles.dropdownHeader}>
                 <div className={styles.avatarLg}>{userInitial}</div>
                 <div className={styles.dropdownHeaderInfo}>
-                  <div className={styles.dropdownName}>{userName}</div>
-                  <div className={styles.dropdownEmail}>{userEmail || "—"}</div>
-                  <div className={styles.dropdownRole}>
-                    {t("topbar.owner", { defaultValue: "Proprietário" })}
-                  </div>
+                  <div className={styles.dropdownName}>{displayName}</div>
+                    <div className={styles.dropdownEmail}>
+                      {isAnonymousSession
+                        ? t("topbar.anonymousEmail", {
+                            defaultValue: "Sem utilizador autenticado",
+                          })
+                        : userEmail || "—"}
+                    </div>
+                  {!isRoleRedundant && (
+                    <div className={styles.dropdownRole}>{roleLabel}</div>
+                  )}
                 </div>
               </div>
 
@@ -199,6 +262,7 @@ export function AdminTopbar() {
                   type="button"
                   className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
                   onClick={handleLogout}
+                  data-testid="topbar-logout"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path

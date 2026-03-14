@@ -12,6 +12,7 @@
 
 import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { Logger } from "../../../core/logger";
 import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
@@ -88,12 +89,33 @@ export function AdminDevicesPage() {
   const locale = useFormatLocale();
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? null;
+  const [searchParams] = useSearchParams();
+
+  const typeParam = (searchParams.get("type") || "").toUpperCase();
+  const moduleParam = (searchParams.get("module") || "").toLowerCase();
+
+  const inferredTypeFromModule: TerminalType | null =
+    moduleParam === "tpv"
+      ? "TPV"
+      : moduleParam === "kds"
+      ? "KDS"
+      : moduleParam === "appstaff"
+      ? "APPSTAFF"
+      : null;
+
+  const initialTokenType: TerminalType =
+    (["APPSTAFF", "TPV", "KDS"] as TerminalType[]).includes(
+      typeParam as TerminalType,
+    )
+      ? (typeParam as TerminalType)
+      : inferredTypeFromModule ?? "APPSTAFF";
 
   const [terminals, setTerminals] = useState<Terminal[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [activeToken, setActiveToken] = useState<InstallToken | null>(null);
-  const [tokenType, setTokenType] = useState<TerminalType>("APPSTAFF");
+  const [tokenType, setTokenType] =
+    useState<TerminalType>(initialTokenType);
   const [tokenName, setTokenName] = useState("");
   const [generating, setGenerating] = useState(false);
   const [tokenError, setTokenError] = useState<string | null>(null);
@@ -175,19 +197,26 @@ export function AdminDevicesPage() {
     }
   }, []);
 
+  const filteredTerminals =
+    (["APPSTAFF", "TPV", "KDS"] as TerminalType[]).includes(
+      initialTokenType,
+    ) && initialTokenType !== "APPSTAFF"
+      ? terminals.filter((t) => t.type === initialTokenType)
+      : terminals;
+
   return (
     <div className={styles.wrapper}>
       <AdminPageHeader
         title="Dispositivos"
-        subtitle="Provisionar terminais, monitorar estado e descarregar software."
+        subtitle="Provisionar dispositivos do restaurante e acompanhar terminais activos."
       />
 
-      {/* ── Block 1: Install QR ── */}
+      {/* ── Block 1: Provisionamento rápido ── */}
       <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>Instalar dispositivo</h2>
+        <h2 className={styles.sectionTitle}>Adicionar dispositivo</h2>
         <p className={styles.sectionDesc}>
-          Gere um código QR e digitalize-o no dispositivo para o vincular
-          automaticamente a este restaurante. O código expira em 5 minutos.
+          Gere um QR de instalação para vincular rapidamente um novo dispositivo
+          (AppStaff móvel, TPV ou KDS) a este restaurante.
         </p>
 
         <div className={styles.formRow}>
@@ -238,7 +267,7 @@ export function AdminDevicesPage() {
 
       {/* ── Block 2: Active Devices ── */}
       <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>Dispositivos activos</h2>
+        <h2 className={styles.sectionTitle}>Dispositivos registados</h2>
         <p className={styles.sectionDesc}>
           Terminais registados neste restaurante. O ponto colorido indica a
           última actividade.
@@ -246,10 +275,10 @@ export function AdminDevicesPage() {
 
         {loading ? (
           <div className={styles.loadingState}>A carregar…</div>
-        ) : terminals.length === 0 ? (
+        ) : filteredTerminals.length === 0 ? (
           <div className={styles.emptyState}>
             Nenhum dispositivo registado. Use o QR acima para vincular o
-            primeiro.
+            primeiro dispositivo TPV, AppStaff ou KDS.
           </div>
         ) : (
           <div className={styles.tableScroll}>
@@ -271,7 +300,7 @@ export function AdminDevicesPage() {
                 </tr>
               </thead>
               <tbody>
-                {terminals.map((t) => (
+                {filteredTerminals.map((t) => (
                   <tr
                     key={t.id}
                     className={

@@ -48,6 +48,7 @@ Este documento não substitui os runbooks detalhados; agrupa-os por categoria e 
 | Documento                                            | Conteúdo                                                                                          |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | **[DEPLOYMENT.md](./DEPLOYMENT.md)**                 | Deploy canónico: local, Vercel, migrações, provisioning; variáveis de ambiente; go-live resumido. |
+| **[C44_RELEASE_GATES_AND_ROLLOUT.md](./C44_RELEASE_GATES_AND_ROLLOUT.md)** | C4.4: tabela de gates (superfície × comando × bloqueia release?), checklist rollout, checklist rollback; quem bloqueia release. |
 | **[rollback-procedure.md](./rollback-procedure.md)** | Procedimento de rollback (deploy e/ou migração).                                                  |
 | **[rollback-checklist.md](./rollback-checklist.md)** | Checklist de rollback.                                                                            |
 
@@ -94,8 +95,9 @@ Este documento não substitui os runbooks detalhados; agrupa-os por categoria e 
 
 ## 8. Observabilidade e monitorização
 
-| Documento                                              | Conteúdo                                                                                                   |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Documento                                                              | Conteúdo                                                                                                   |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **[OBSERVABILITY_AND_RUNBOOKS_MAP.md](./OBSERVABILITY_AND_RUNBOOKS_MAP.md)** | Mapa F7.2: sinais por superfície, runbooks quando usar, gaps com decisão, incidente em produção (§4).     |
 | **[OBSERVABILITY_SETUP.md](./OBSERVABILITY_SETUP.md)** | Configuração de observabilidade (Sentry, logs, métricas).                                                  |
 | **[EVENT_PIPELINE.md](./EVENT_PIPELINE.md)**           | Pipeline de eventos (gm_audit_logs via Realtime + get_audit_logs); consumo por Grafana/Sentry (G1 Onda 3). |
 | **[DASHBOARD_METRICS.md](./DASHBOARD_METRICS.md)**     | Métricas operacionais (get_operational_metrics) e painéis sugeridos.                                       |
@@ -104,6 +106,32 @@ Este documento não substitui os runbooks detalhados; agrupa-os por categoria e 
 | **[apm-setup.md](./apm-setup.md)**                     | APM (se existir).                                                                                          |
 
 **Uso:** Configurar e consultar logs, erros e métricas; consumir eventos de auditoria.
+
+---
+
+## 9. Gates e conformance (Fase 3)
+
+| Comando / gate | Uso | Notas |
+|----------------|-----|-------|
+| `npm run audit:fase3-conformance` | Probe global de conformidade da Fase 3 (desktop-app, merchant-portal, mobile-app). | Corre no CI (`validate`) e deve ser usado localmente para validar identidade/pairing antes de mudanças estruturais. |
+| `npm run audit:pre-release` | Gate de pre-release inter-app (health Core opcional + Fase 3 + billing opcional). | Ver [F53_GOLDEN_PATH_EVIDENCE.md](../roadmap/F53_GOLDEN_PATH_EVIDENCE.md); recomendado antes de releases importantes. |
+
+**Troubleshooting `audit:fase3-conformance` (local):**
+
+- Se falhar com mensagens do tipo `vitest: command not found`, `jest: command not found` ou `spawn ENOENT`:
+  - Garantir setup mínimo local:
+    - `pnpm install`
+    - `pnpm --filter merchant-portal install`
+    - `pnpm --filter mobile-app install`
+  - Confirmar que os binários estão disponíveis via `pnpm`:
+    - `pnpm --filter merchant-portal exec vitest --version`
+    - `pnpm --filter mobile-app exec jest --version`
+  - Se o problema for apenas binário em falta, tratar como **issue de ambiente**, não como falha de conformance.
+- Se o comando roda mas testes falham (Vitest/Jest a vermelho):
+  - Ver `scripts/fase3-conformance-probe.sh` para ver que probes existem (desktop-app, merchant-portal, mobile-app).
+  - Corrigir os testes ou o código de conformance; rodar de novo até `audit:fase3-conformance` devolver sucesso.
+
+**Uso recomendado (F6.1):** Manter `audit:fase3-conformance` verde no CI; não desativar o step. Localmente, usar este runbook para remover atrito de ambiente e tratar falhas reais como bloqueantes.
 
 ---
 

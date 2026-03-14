@@ -903,7 +903,7 @@ export function TPVMinimal({
                   {
                     p_restaurant_id: effectiveRestaurantId,
                     p_name: "Caixa Principal",
-                    p_opened_by: "Operador TPV",
+                    p_opened_by: "Caixa TPV",
                     p_opening_balance_cents: 0,
                   },
                 );

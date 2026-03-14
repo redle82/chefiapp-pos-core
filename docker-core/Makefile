@@ -4,7 +4,7 @@
 # Comandos úteis para gerenciar o Core Docker
 # =============================================================================
 
-.PHONY: up down reset logs ps validate test-rpc migrate-product-mode migrate-onboarding-completed migrate-terminals migrate-staff migrate-restaurant-people migrate-trial-ends-at migrate-logo-url migrate-sofia-identity migrate-sofia-logo migrate-trial-restaurant migrate-bar-products migrate-task-rpcs help
+.PHONY: up down reset logs ps validate test-rpc migrate-product-mode migrate-onboarding-completed migrate-terminals migrate-staff migrate-restaurant-people migrate-trial-ends-at migrate-logo-url migrate-sofia-identity migrate-sofia-logo migrate-trial-restaurant migrate-bar-products migrate-task-rpcs migrate-device-install-tokens migrate-device-pairing-rpcs migrate-device-and-reload help
 
 # Default target
 help:
@@ -24,6 +24,9 @@ help:
 	@echo "  make migrate-operational-rpcs - Aplicar RPCs get_operational_metrics e get_shift_history"
 	@echo "  make migrate-onboarding-completed - Aplicar coluna onboarding_completed_at (gm_restaurants)"
 	@echo "  make migrate-terminals - Aplicar tabela gm_terminals (registro de terminais)"
+	@echo "  make migrate-device-install-tokens - Aplicar gm_device_install_tokens + RPCs create/consume_device_install_token"
+	@echo "  make migrate-device-pairing-rpcs - Aplicar RPCs create_device_pairing_code / consume_device_pairing_code (Admin > TPVs)"
+	@echo "  make migrate-device-and-reload - device tokens + pairing RPCs + restart PostgREST (fix 404 Gerar código)"
 	@echo "  make migrate-staff - Aplicar tabela gm_staff (staff operacional)"
 	@echo "  make migrate-menu-catalog - Aplicar tabelas gm_catalog_* (menu digital /menu-v2)"
 	@echo "  make migrate-menu-catalog-seed - Seed opcional do catálogo (dados de exemplo)"
@@ -141,6 +144,26 @@ migrate-terminals:
 	@cat schema/migrations/20260203_gm_terminals.sql | docker compose -f docker-compose.core.yml exec -T postgres \
 		psql -U postgres -d chefiapp_core -f - && echo "✅ gm_terminals aplicado" || \
 		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# Aplicar gm_device_install_tokens + create/consume_device_install_token + device_heartbeat + revoke_terminal
+migrate-device-install-tokens:
+	@echo "📦 Aplicando migration device_install_tokens..."
+	@cat schema/migrations/20260303_device_install_tokens.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ device_install_tokens aplicado" || \
+		(echo "❌ Migration falhou (confira se o Core está up: make up)" && exit 1)
+
+# Aplicar RPCs create_device_pairing_code / consume_device_pairing_code (aliases para o frontend Admin > TPVs)
+migrate-device-pairing-rpcs:
+	@echo "📦 Aplicando migration device_pairing_code_rpcs..."
+	@cat schema/migrations/20260410_device_pairing_code_rpcs.sql | docker compose -f docker-compose.core.yml exec -T postgres \
+		psql -U postgres -d chefiapp_core -f - && echo "✅ device_pairing_code RPCs aplicados" || \
+		(echo "❌ Migration falhou (aplique antes: make migrate-device-install-tokens)" && exit 1)
+
+# Aplicar device tokens + pairing RPCs e reiniciar PostgREST (fix 404 em Admin > TPVs > Gerar código)
+migrate-device-and-reload:
+	@$(MAKE) migrate-device-install-tokens && $(MAKE) migrate-device-pairing-rpcs && \
+		docker compose -f docker-compose.core.yml restart postgrest && \
+		echo "✅ Migrations aplicadas; PostgREST reiniciado (schema recarregado). Testa novamente «Gerar código»."
 
 # Aplicar tabela gm_staff (staff operacional: sala, cozinha, gerente)
 migrate-staff:

@@ -78,7 +78,7 @@ It defines the 8 Sovereign Blocks that compose the entire application.
     - `Pixel`: Meta Pixel + Google Analytics/Ads integration.
 - **Events Tracked:**
     - Page views, content views, add to cart, initiate checkout, purchases.
-- **Constraint:** Only active in `customer-portal` (public-facing).
+- **Constraint:** Only active in customer-facing portal (public-facing). *Nota: o workspace `customer-portal` foi removido em F5.1; esta restrição aplica-se quando/onde o portal do cliente for implementado (ver C42).*
 - **Docs:** [`docs/ops/GROWTH_MARKETING_SETUP.md`](../ops/GROWTH_MARKETING_SETUP.md)
 
 ## System Topology

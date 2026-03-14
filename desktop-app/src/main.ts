@@ -1744,6 +1744,26 @@ function handleDeepLink(url: string): void {
     const parsed = new URL(url);
     if (!isSupportedProtocol(parsed.protocol)) return;
 
+    // chefiapp-pos://setup — open setup/pairing screen (Admin "Abrir app TPV no desktop")
+    const isSetup =
+      parsed.hostname === "setup" ||
+      parsed.pathname === "/setup" ||
+      parsed.pathname === "setup";
+    if (isSetup && app.isReady()) {
+      const setupRoute = "/electron/setup";
+      const win = getAnyAliveWindow();
+      if (win && !win.isDestroyed()) {
+        if (win.isMinimized()) win.restore();
+        win.focus();
+        if (USE_DEV_SERVER) {
+          void win.loadURL(`${DEV_SERVER_URL}${setupRoute}`);
+        } else {
+          void win.loadFile(resolveUrl("/"), { hash: setupRoute });
+        }
+      }
+      return;
+    }
+
     const appParam = parsed.searchParams.get("app");
     if (appParam === "tpv" || appParam === "kds") {
       const moduleId: OperationalModule = appParam;

@@ -202,7 +202,7 @@ export function TPVHandoffPage() {
                 }}
               >
                 <span style={{ color: "var(--text-secondary, #a3a3a3)" }}>
-                  {item.waiter_name ?? "Operador"}
+                  {item.waiter_name ?? "Garçom"}
                 </span>
                 <strong style={{ color: "var(--text-primary)" }}>
                   {formatMoney(item.total_estimated_cents)}

@@ -11,8 +11,8 @@
     "initialCashLabel": "Caixa inicial (R$)",
     "opening": "Abrindo...",
     "startNow": "Clique aqui para começar a vender AGORA",
-    "defaultRegisterName": "Caixa Principal",
-    "defaultOperatorName": "Operador TPV"
+      "defaultRegisterName": "Caixa Principal",
+      "defaultOperatorName": "Caixa TPV"
   },
   "close": {
     "title": "Fechar Turno",
@@ -23,7 +23,7 @@
     "irreversibleWarning": "Esta ação é irreversível. O caixa será fechado e o relatório Z gerado.",
     "declaredValue": "Valor declarado:",
     "notInformed": "Não informado",
-    "operator": "Operador:",
+    "operator": "Caixa:",
     "closing": "Fechando...",
     "confirmButton": "Fechar Turno Definitivamente",
     "reconciliation": "Reconciliação de Caixa",
@@ -94,7 +94,7 @@
   },
   "receipt": {
     "terminal": "Terminal:",
-    "operator": "Operador:",
+    "operator": "Caixa:",
     "opening": "Abertura:",
     "closing": "Fechamento:",
     "duration": "Duração:",

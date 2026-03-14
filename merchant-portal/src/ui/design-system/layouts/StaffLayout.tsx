@@ -18,7 +18,7 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
     children,
     title,
     userName = 'Staff',
-    role = 'Operador',
+    role = 'Equipa',
     status = 'active',
     actions,
     bottomNav,

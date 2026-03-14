@@ -1,20 +1,19 @@
 import { useEffect, useRef } from "react";
+import { isLogoutInProgress } from "../auth/authKeycloak";
 import { useShift } from "./ShiftContext";
 
 export function useShiftLock() {
   const { isShiftOpen } = useShift();
   const isShiftOpenRef = useRef(isShiftOpen);
 
-  // Sync ref with context state for the beforeunload listener
   useEffect(() => {
     isShiftOpenRef.current = isShiftOpen;
   }, [isShiftOpen]);
 
-  // Listener for Reload / Close
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isLogoutInProgress()) return;
       if (isShiftOpenRef.current) {
-        // Standard message (modern browsers often ignore custom text, but we set it anyway)
         const message =
           "AO VIVO: TURNO ATIVO. REARREGO BLOQUEADO. Feche o turno ou solicite Manager Override.";
         e.preventDefault();

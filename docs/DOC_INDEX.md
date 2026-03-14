@@ -99,7 +99,7 @@ Exemplos de candidatos a arquivar (se ainda estiverem na raiz de `docs/`): notas
 | **architecture/**        | Visões de arquitetura e decisões técnicas.                                                               |
 | **testing/**             | Estratégia de testes, resultados, guias de QA.                                                           |
 | **audit/**               | Auditorias, one-pagers, roadmap executável.                                                              |
-| **roadmap/**             | Roadmaps e planos de produto. Ver **[ANALISE_ROADMAP.md](ANALISE_ROADMAP.md)** para análise consolidada. |
+| **roadmap/**             | Roadmaps e planos de produto. Ver **[ANALISE_ROADMAP.md](ANALISE_ROADMAP.md)** para análise consolidada. **[roadmap/FASE_3_CONFORMANCE_INTER_APP.md](roadmap/FASE_3_CONFORMANCE_INTER_APP.md)** — Épico Fase 3 (conformidade inter-app: merchant-portal, desktop-app, mobile-app). |
 
 ---
 

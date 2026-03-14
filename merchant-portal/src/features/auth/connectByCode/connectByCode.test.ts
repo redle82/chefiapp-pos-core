@@ -32,4 +32,14 @@ describe("connectByCode", () => {
     expect(result.operationalContract?.name).toBe("Seu Restaurante");
     expect(result.operationalContract?.name).not.toMatch(/trial|free/i);
   });
+
+  it("Fase 3 conformance: role always from invite/backend, never parsed from code text", async () => {
+    // CODE_AND_DEVICE_PAIRING_CONTRACT: role comes from contract/invite, never from code string.
+    const result = await connectByCode("CHEF-OWN-MOCK", { restaurantHint: "r1" });
+    expect(result.success).toBe(true);
+    expect(result.roleSource).toBe("invite");
+    expect(result.resolvedRole).toBe("owner");
+    // If we had parsed "OWN" from the code we would be violating the contract;
+    // we use getTrialGuideRoleFromInviteTable(code) / active_invites.role_granted instead.
+  });
 });

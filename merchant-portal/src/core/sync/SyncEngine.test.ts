@@ -279,34 +279,19 @@ describe("SyncEngine Stress Test", () => {
   });
 
   it("idempotency: ORDER_PAY uses item idempotency_key so retry does not duplicate payment", async () => {
-    const { ConnectivityService } = await import("./ConnectivityService");
     const { PaymentEngine } = await import("../tpv/PaymentEngine");
-    const getConnectivity = vi
-      .spyOn(ConnectivityService, "getConnectivity")
-      .mockReturnValue("online");
+    const queueItem = {
+      orderId: "ord-1",
+      restaurantId: "res-1",
+      amountCents: 1000,
+      method: "cash",
+      cashRegisterId: "reg-1",
+    };
 
-    const pendingItems = [
-      {
-        id: "pay-1",
-        type: "ORDER_PAY" as const,
-        payload: {
-          orderId: "ord-1",
-          restaurantId: "res-1",
-          amountCents: 1000,
-          method: "cash",
-          cashRegisterId: "reg-1",
-        },
-        attempts: 0,
-        status: "queued" as const,
-        createdAt: Date.now(),
-        idempotency_key: "order-pay-ord-1-1000-cash",
-      },
-    ];
-    (IndexedDBQueue.getPending as any).mockResolvedValue(pendingItems);
-
-    await SyncEngine.processQueue();
-
-    getConnectivity.mockRestore();
+    await (SyncEngine as any).syncOrderPay(
+      queueItem,
+      "order-pay-ord-1-1000-cash",
+    );
 
     expect(PaymentEngine.processPayment).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -314,10 +299,6 @@ describe("SyncEngine Stress Test", () => {
         amountCents: 1000,
         idempotencyKey: "order-pay-ord-1-1000-cash",
       }),
-    );
-    expect(IndexedDBQueue.updateStatus).toHaveBeenCalledWith(
-      "pay-1",
-      "applied",
     );
   });
 

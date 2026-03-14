@@ -21,7 +21,7 @@ const MODULES_AND_EXPECTED_PATH: {
   { id: "fichaje", pathContains: "/app/staff" },
   { id: "stock", pathContains: "/inventory-stock" },
   { id: "tienda-online", pathContains: "/admin/config" },
-  { id: "qr-ordering", pathContains: "/admin/config" },
+  { id: "qr-ordering", pathContains: "/admin/catalog" },
   { id: "reservas", pathContains: "/admin/reservations" },
   { id: "delivery-integrator", pathContains: "/admin/config" },
 ];

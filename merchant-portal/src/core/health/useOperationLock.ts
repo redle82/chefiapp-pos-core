@@ -1,13 +1,11 @@
 import { useEffect, useRef, useCallback } from 'react'
+import { isLogoutInProgress } from '../auth/authKeycloak'
 
 /**
  * useOperationLock — Prevents navigation during critical operations
  *
  * TRUTH LOCK: User cannot accidentally leave during critical work.
- *
- * Uses:
- * - Beforeunload event for browser close/refresh
- * - Sets a flag that can be checked by navigation guards
+ * Does not show "Leave site?" when logout is in progress.
  */
 
 export interface UseOperationLockOptions {
@@ -21,18 +19,16 @@ export function useOperationLock(options: UseOperationLockOptions) {
   const { isLocked, message = 'Tens uma operacao em curso. Tens a certeza que queres sair?' } = options
   const isLockedRef = useRef(isLocked)
 
-  // Keep ref in sync
   useEffect(() => {
     isLockedRef.current = isLocked
   }, [isLocked])
 
-  // Handle beforeunload
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isLogoutInProgress()) return
       if (!isLockedRef.current) return
 
       e.preventDefault()
-      // Modern browsers ignore custom message, but we set it anyway
       e.returnValue = message
       return message
     }
@@ -93,6 +89,7 @@ export function useBusyLock() {
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isLogoutInProgress()) return
       if (!busyRef.current) return
       e.preventDefault()
       e.returnValue = 'Operacao em curso.'

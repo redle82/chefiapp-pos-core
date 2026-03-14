@@ -9,6 +9,54 @@
  */
 
 import { Logger } from "../logger";
+import { removeTabIsolated } from "../storage/TabIsolatedStorage";
+
+/** Flag para beforeunload: quando em logout, não mostrar "Leave site?" */
+export const LOGOUT_IN_PROGRESS_KEY = "chefiapp_logout_in_progress";
+
+/** Flag para AuthProvider/useCoreAuth: não re-seed AUTO-PILOT após redirect pós-logout. Persistida em session + local para sobreviver ao redirect. */
+export const JUST_LOGGED_OUT_KEY = "chefiapp_just_logged_out";
+
+export function isJustLoggedOut(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    sessionStorage.getItem(JUST_LOGGED_OUT_KEY) === "1" ||
+    localStorage.getItem(JUST_LOGGED_OUT_KEY) === "1"
+  );
+}
+
+/** Session-only flag: logout was done in this tab; do not AUTO-PILOT re-seed until next login. */
+export const LOGOUT_DONE_KEY = "chefiapp_logout_done";
+
+export function clearJustLoggedOut(): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(JUST_LOGGED_OUT_KEY);
+  try {
+    localStorage.removeItem(JUST_LOGGED_OUT_KEY);
+    sessionStorage.setItem(LOGOUT_DONE_KEY, "1");
+  } catch {
+    // ignore
+  }
+}
+
+export function clearLogoutDone(): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(LOGOUT_DONE_KEY);
+}
+
+export function isLogoutDone(): boolean {
+  return typeof window !== "undefined" && sessionStorage.getItem(LOGOUT_DONE_KEY) === "1";
+}
+
+let logoutInProgressMemory = false;
+
+export function isLogoutInProgress(): boolean {
+  return (
+    logoutInProgressMemory ||
+    (typeof window !== "undefined" &&
+      sessionStorage.getItem(LOGOUT_IN_PROGRESS_KEY) === "1")
+  );
+}
 
 const DEFAULT_KEYCLOAK_BASE = "http://localhost:8080";
 const DEFAULT_REALM = "chefiapp";
@@ -197,6 +245,10 @@ export async function getKeycloakSession(): Promise<KeycloakAuthState> {
     return { session: null, user: null };
   }
 
+  sessionStorage.removeItem(LOGOUT_IN_PROGRESS_KEY);
+  // Do NOT clear JUST_LOGGED_OUT_KEY here — AuthProvider/useCoreAuth must read it first
+  // to skip AUTO-PILOT/mock; other callers (e.g. getCoreSessionAsync) must not clear it.
+
   // Step 1: Check for OIDC callback (?code=)
   const params = new URLSearchParams(window.location.search);
   const code = params.get("code");
@@ -247,17 +299,55 @@ export function signInWithKeycloak(): void {
 }
 
 /**
- * Redirecciona para logout Keycloak.
+ * Redirecciona para logout Keycloak (OIDC).
+ * URL deve ser path + ? + query (searchParams); concatenação manual sem ? causa "Route not found" no IdP.
  */
 export function signOutKeycloak(): void {
   if (typeof window === "undefined") return;
+
+  logoutInProgressMemory = true;
+  sessionStorage.setItem(LOGOUT_IN_PROGRESS_KEY, "1");
+  sessionStorage.setItem(JUST_LOGGED_OUT_KEY, "1");
+  try {
+    localStorage.setItem(JUST_LOGGED_OUT_KEY, "1");
+  } catch {
+    // ignore
+  }
+
   sessionStorage.removeItem(SESSION_KEY);
   sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
-  const base = getKeycloakBase();
+
+  removeTabIsolated("chefiapp_restaurant_id");
+  removeTabIsolated("chefiapp_trial_mode");
+  try {
+    sessionStorage.removeItem("chefiapp_pilot_mode");
+    localStorage.removeItem("chefiapp_pilot_mode");
+    sessionStorage.removeItem("chefiapp_trial_mode");
+    localStorage.removeItem("chefiapp_trial_mode");
+  } catch {
+    // ignore
+  }
+
+  const rawBase = getKeycloakBase().replace(/\/$/, "");
+  const origin = /^https?:\/\//i.test(rawBase) ? rawBase : `http://${rawBase}`;
   const realm = getRealm();
-  const redirectUri = encodeURIComponent(getRedirectUri());
-  const url = `${base}/realms/${realm}/protocol/openid-connect/logout?post_logout_redirect_uri=${redirectUri}&client_id=${getClientId()}`;
-  window.location.href = url;
+  const clientId = getClientId();
+  // Redirect to auth area after logout so UX is clear (not /admin/modules).
+  // Keycloak client must allow this URI in Post Logout Redirect URIs.
+  const postLogoutPath = "/auth";
+  const postLogoutRedirect =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${postLogoutPath}`
+      : `http://localhost:5175${postLogoutPath}`;
+
+  const logoutUrl = new URL(
+    `/realms/${realm}/protocol/openid-connect/logout`,
+    `${origin}/`,
+  );
+  logoutUrl.searchParams.set("post_logout_redirect_uri", postLogoutRedirect);
+  logoutUrl.searchParams.set("client_id", clientId);
+
+  window.location.assign(logoutUrl.toString());
 }
 
 export function getKeycloakConfig(): {

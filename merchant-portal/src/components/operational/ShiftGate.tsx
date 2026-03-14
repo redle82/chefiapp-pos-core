@@ -115,7 +115,7 @@ function ShiftOpenForm({
         {
           p_restaurant_id: restaurantId,
           p_name: t("gate.defaultRegisterName", "Caixa Principal"),
-          p_opened_by: t("gate.defaultOperatorName", "Operador TPV"),
+          p_opened_by: t("gate.defaultOperatorName", "Caixa TPV"),
           p_opening_balance_cents: openingBalanceCents,
         },
       );

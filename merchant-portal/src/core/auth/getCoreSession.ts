@@ -9,7 +9,7 @@ import {
   getBackendConfigured,
   getBackendType,
 } from "../infra/backendAdapter";
-import { getKeycloakSession } from "./authKeycloak";
+import { getKeycloakSession, isJustLoggedOut } from "./authKeycloak";
 import type { CoreSession, CoreUser } from "./authTypes";
 
 const PILOT_USER_UUID = "00000000-0000-0000-0000-000000000002";
@@ -40,6 +40,8 @@ function mockSession(): CoreSession {
 export async function getCoreSessionAsync(): Promise<CoreSession | null> {
   if (!getBackendConfigured()) return null;
   if (typeof window === "undefined") return null;
+
+  if (isJustLoggedOut()) return null;
 
   const isTrial =
     new URLSearchParams(window.location.search).get("mode") === "trial";

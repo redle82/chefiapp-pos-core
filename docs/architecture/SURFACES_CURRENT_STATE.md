@@ -339,7 +339,7 @@ chefiapp-pos-core/
 ├── appstaff-core/            # Lógica AppStaff
 ├── server/
 │   └── integrations/         # Delivery
-└── customer-portal/          # (parcial, não usado)
+└── (customer-portal removido do workspace em F5.1 — ver C42)
 ```
 
 ### Estado Ideal

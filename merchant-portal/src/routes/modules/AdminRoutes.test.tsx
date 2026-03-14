@@ -128,6 +128,10 @@ vi.mock("../../features/admin/devices/AdminDevicesPage", () => ({
   AdminDevicesPage: () => <div>admin-devices-page</div>,
 }));
 
+vi.mock("../../features/admin/devices/AdminTPVTerminalsPage", () => ({
+  AdminTPVTerminalsPage: () => <div>admin-tpv-terminals-page</div>,
+}));
+
 vi.mock("../../features/admin/reports/MultiUnitOverviewReportPage", () => ({
   MultiUnitOverviewReportPage: () => <div>multiunit-overview-page</div>,
 }));
@@ -262,5 +266,11 @@ describe("AdminRoutesFragment", () => {
     await renderAdminRoutes(ADMIN_ROUTES.DEVICES);
 
     expect(screen.getByText("admin-devices-page")).toBeTruthy();
+  });
+
+  it("renders TPV terminals management route", async () => {
+    await renderAdminRoutes("/admin/devices/tpv");
+
+    expect(screen.getByText("admin-tpv-terminals-page")).toBeTruthy();
   });
 });

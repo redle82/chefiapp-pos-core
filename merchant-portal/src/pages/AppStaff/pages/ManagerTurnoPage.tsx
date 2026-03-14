@@ -74,7 +74,7 @@ export function ManagerTurnoPage() {
         {
           p_restaurant_id: restaurantId,
           p_name: "Caixa Principal",
-          p_opened_by: "Operador TPV",
+          p_opened_by: "Caixa TPV",
           p_opening_balance_cents: openingBalanceCents,
         },
       );

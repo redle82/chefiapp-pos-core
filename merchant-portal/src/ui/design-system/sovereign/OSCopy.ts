@@ -297,7 +297,7 @@ export const OSCopy = {
       viewMenu: "Consultar Cardápio",
       viewMenuDesc: "Acesso público ao inventário disponível.",
       staffArea: "Acesso Restrito",
-      staffAreaDesc: "Área exclusiva para Operadores autorizados.",
+      staffAreaDesc: "Área exclusiva para equipa autorizada.",
       info: "Informações",
       infoDesc: "Dados de contato e localização.",
     },

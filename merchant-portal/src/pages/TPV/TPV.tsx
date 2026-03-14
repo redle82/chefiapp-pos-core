@@ -2717,12 +2717,18 @@ const TPV = () => {
   const { toasts, dismiss } = useToast();
   const { identity } = useRestaurantIdentity();
 
-  // DOCKER CORE: Restaurant ID fixo para desenvolvimento
-  // Em produção, isso viria de autenticação ou seleção
+  // DOCKER CORE: Restaurant ID can come from:
+  // 1) Explicit URL param (legacy /kds/:restaurantId, deep links)
+  // 2) Canonical identity.id (TenantContext / Admin selection)
+  // 3) Tab-isolated storage fallback (older sessions)
+  // 4) Dev fallback UUID
   const { restaurantId: urlRestaurantId } = useParams();
+  const identityRestaurantId = identity.id || null;
+  const storedRestaurantId = getTabIsolated("chefiapp_restaurant_id");
   const restaurantId =
     urlRestaurantId ||
-    getTabIsolated("chefiapp_restaurant_id") ||
+    identityRestaurantId ||
+    storedRestaurantId ||
     "00000000-0000-0000-0000-000000000100";
 
   // CONFIG_RUNTIME_CONTRACT: Device Gate — dispositivo deve estar ativo na Config (docs/contracts/CONFIG_RUNTIME_CONTRACT.md §2.2, §2.3). Chamado no topo para respeitar Rules of Hooks.

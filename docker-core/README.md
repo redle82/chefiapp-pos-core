@@ -137,6 +137,19 @@ make migrate-menu-catalog-seed   # opcional: dados de exemplo para /menu-v2
 
 Ver: [MENU_VISUAL_RUNTIME_CONTRACT](../docs/architecture/MENU_VISUAL_RUNTIME_CONTRACT.md), [ONDE_VER_NO_NAVEGADOR](../docs/architecture/ONDE_VER_NO_NAVEGADOR.md#3-menu-digital-catálogo-visual).
 
+### Dispositivos / TPVs (Admin > Gerir TPVs, “Gerar código”)
+
+O frontend chama os RPCs `create_device_pairing_code` e `consume_device_pairing_code`. Se aparecer **404** ao clicar em “Gerar código”:
+
+1. **Core já estava no ar antes** de estas migrações existirem (volume antigo): aplicar migrações e reiniciar o PostgREST (para recarregar o schema):
+   ```bash
+   cd docker-core
+   make migrate-device-and-reload
+   ```
+   Ou em passos: `make migrate-device-install-tokens`, `make migrate-device-pairing-rpcs`, `docker compose -f docker-compose.core.yml restart postgrest`.
+2. **Core novo** (ex.: após `make reset`): as migrações já entram no init; não é preciso fazer nada.
+3. O **proxy Vite** encaminha `/rest` para `localhost:3001`; o 404 vem do PostgREST (função inexistente no schema), não da URL.
+
 ---
 
 ## 💾 Backup e rollback

@@ -13,7 +13,8 @@ export type PrimaryAction =
   | "Activate"
   | "Configure"
   | "Open"
-  | "Upgrade";
+  | "Upgrade"
+  | "ManageDevices";
 
 export interface Module {
   id: string;

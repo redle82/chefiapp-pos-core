@@ -10,8 +10,6 @@
  */
 import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
-import { useTenant } from "../../../../core/tenant/TenantContext";
 import { OSSignature } from "../../../../ui/design-system/sovereign/OSSignature";
 import styles from "./AdminSidebar.module.css";
 
@@ -108,12 +106,6 @@ function findActiveGroup(pathname: string): string | null {
 export function AdminSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { identity } = useRestaurantIdentity();
-  const { tenantId, memberships } = useTenant();
-  const currentMembership = memberships.find(
-    (m) => m.restaurant_id === tenantId,
-  );
-  const role = currentMembership?.role ?? "owner";
 
   // Exclusive accordion: only 1 group open at a time
   const [openGroup, setOpenGroup] = useState<string | null>(() =>
@@ -130,9 +122,6 @@ export function AdminSidebar() {
         {/* Brand: ChefIApp™ OS */}
         <div className={styles.brandSection}>
           <OSSignature state="ember" size="md" />
-          {identity.name && (
-            <div className={styles.restaurantName}>{identity.name}</div>
-          )}
         </div>
 
         {/* Navigation groups — exclusive accordion */}
@@ -190,13 +179,6 @@ export function AdminSidebar() {
             );
           })}
         </nav>
-      </div>
-
-      {/* Footer */}
-      <div className={styles.footer}>
-        <div className={styles.roleLabel}>
-          {role.toUpperCase()} • {identity.name || "ChefIApp OS"}
-        </div>
       </div>
     </aside>
   );

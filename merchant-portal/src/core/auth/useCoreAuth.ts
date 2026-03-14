@@ -9,6 +9,10 @@ import {
   getBackendConfigured,
   getBackendType,
 } from "../infra/backendAdapter";
+import {
+  clearJustLoggedOut,
+  isJustLoggedOut,
+} from "./authKeycloak";
 import type { CoreSession, CoreUser } from "./authTypes";
 
 export interface CoreAuthState {
@@ -43,14 +47,18 @@ export function useCoreAuth(): CoreAuthState {
 
     // Mock session: trial/pilot mode (persisted or via URL)
     if (typeof window !== "undefined") {
-      const isTrialUrl =
-        new URLSearchParams(window.location.search).get("mode") === "trial";
-      const isTrialStored =
-        sessionStorage.getItem("chefiapp_trial_mode") === "true" ||
-        localStorage.getItem("chefiapp_trial_mode") === "true";
-      const isPilot = localStorage.getItem("chefiapp_pilot_mode") === "true";
+      if (isJustLoggedOut()) {
+        clearJustLoggedOut();
+        // Fall through to Keycloak path — do not restore mock
+      } else {
+        const isTrialUrl =
+          new URLSearchParams(window.location.search).get("mode") === "trial";
+        const isTrialStored =
+          sessionStorage.getItem("chefiapp_trial_mode") === "true" ||
+          localStorage.getItem("chefiapp_trial_mode") === "true";
+        const isPilot = localStorage.getItem("chefiapp_pilot_mode") === "true";
 
-      if (isTrialUrl || isTrialStored || (isDebugMode() && isPilot)) {
+        if (isTrialUrl || isTrialStored || (isDebugMode() && isPilot)) {
         const PILOT_USER_UUID = "00000000-0000-0000-0000-000000000002";
         const mockUser: CoreUser = {
           id: PILOT_USER_UUID,
@@ -76,6 +84,7 @@ export function useCoreAuth(): CoreAuthState {
         setLoading(false);
         initializedRef.current = true;
         return;
+        }
       }
     }
 

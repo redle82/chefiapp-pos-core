@@ -10,7 +10,7 @@
 
 | Dimensão | Métrica | Avaliação |
 |----------|---------|-----------|
-| **Monorepo** | 2 workspaces (merchant-portal, customer-portal) | Baixa fragmentação |
+| **Monorepo** | 2 workspaces de app (merchant-portal, mobile-app); customer-portal removido em F5.1 (ver C42) | Baixa fragmentação |
 | **Entry points** | 2 (main_debug.tsx, main-marketing.tsx) | Baixa — separação intencional |
 | **Rotas** | Em `routes/MarketingRoutes.tsx` + `routes/OperationalRoutes.tsx`; App.tsx monta ambos | ✅ Desfragmentado (2026-02) |
 | **App.tsx** | ~218 linhas, ~24 imports | Concentração reduzida |

@@ -45,6 +45,7 @@ import { DashboardLayout } from "../../features/admin/dashboard/components/Dashb
 import { DashboardHomePage } from "../../features/admin/dashboard/pages/DashboardHomePage";
 import { AdminDesktopPage } from "../../features/admin/devices/AdminDesktopPage";
 import { AdminDevicesPage } from "../../features/admin/devices/AdminDevicesPage";
+import { AdminTPVTerminalsPage } from "../../features/admin/devices/AdminTPVTerminalsPage";
 import { ModulesPage } from "../../features/admin/modules/pages/ModulesPage";
 import { ObservabilityPage } from "../../features/admin/observability/pages/ObservabilityPage";
 import { PaymentsLayout } from "../../features/admin/payments/pages/PaymentsLayout";
@@ -414,6 +415,16 @@ export const AdminRoutesFragment = (
         <ManagementAdvisor>
           <DashboardLayout>
             <AdminDevicesPage />
+          </DashboardLayout>
+        </ManagementAdvisor>
+      }
+    />
+    <Route
+      path="/admin/devices/tpv"
+      element={
+        <ManagementAdvisor>
+          <DashboardLayout>
+            <AdminTPVTerminalsPage />
           </DashboardLayout>
         </ManagementAdvisor>
       }

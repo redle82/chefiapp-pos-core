@@ -28,6 +28,14 @@
   margin: 0 0 16px 0;
 }
 
+.inlineCode {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  padding: 2px 6px;
+  background-color: var(--surface-hover, rgba(255,255,255,0.06));
+  border-radius: 4px;
+}
+
 /* ── Form row ── */
 .formRow {
   display: flex;
@@ -87,6 +95,66 @@
   color: var(--color-error);
   font-size: 13px;
   margin-bottom: 12px;
+}
+
+/* ── Desktop pairing (TPV page) ── */
+.desktopPairingPreview {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: var(--card-bg-on-dark);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+}
+
+.desktopPairingCode {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  word-break: break-all;
+  padding: 10px 12px;
+  background-color: var(--bg-primary, #0a0a0a);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.desktopPairingActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.btnCopyCode {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--card-bg-on-dark);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.btnCopyCode:hover {
+  background-color: var(--surface-hover);
+}
+
+.btnOpenDesktopApp {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  background-color: var(--color-brand-gold, #c9a227);
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btnOpenDesktopApp:hover {
+  opacity: 0.95;
 }
 
 /* ── QR display ── */
@@ -237,6 +305,196 @@
   border-radius: 4px;
   background-color: transparent;
   color: var(--color-error);
+  cursor: pointer;
+}
+
+/* ── DesktopDownloadSection (TPV/Admin devices) ── */
+.downloadSection {
+  margin-top: 16px;
+}
+
+.downloadGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.downloadCard {
+  padding: 16px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.downloadCardHighlighted {
+  border-color: var(--color-brand-gold, #c9a227);
+  background-color: rgba(201, 162, 39, 0.08);
+}
+
+.downloadLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--card-bg-on-dark);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.downloadLink:hover {
+  background-color: var(--surface-hover, rgba(255, 255, 255, 0.06));
+}
+
+.downloadIcon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.downloadInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.downloadLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.downloadFile {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.downloadBadge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: var(--color-brand-gold, #c9a227);
+  color: #000;
+}
+
+.downloadUnpublished {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px dashed var(--surface-border);
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.downloadUnpublishedBadge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.downloadNote {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.downloadFooter {
+  margin-top: 12px;
+}
+
+.devBuildCta {
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.devBuildHeader {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.devBuildIcon {
+  font-size: 24px;
+}
+
+.devBuildTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.devBuildDesc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 4px 0 0 0;
+}
+
+.devBuildToggle {
+  margin-top: 12px;
+  padding: 6px 12px;
+  font-size: 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.devBuildSteps {
+  margin-top: 12px;
+  padding-left: 20px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.devBuildSteps ol {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.prodPublishCta {
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.prodEnvList {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.postDownloadVerify {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.postDownloadVerifyLabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.verifyBtn {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-primary);
   cursor: pointer;
 }
 

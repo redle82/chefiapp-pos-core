@@ -65,7 +65,7 @@ vi.mock("../data/modulesDefinitions", () => ({
       icon: "🧾",
       block: "essenciais",
       status: "active",
-      primaryAction: "Abrir",
+      primaryAction: "ManageDevices",
       secondaryAction: "Desactivar",
     },
     {
@@ -75,7 +75,7 @@ vi.mock("../data/modulesDefinitions", () => ({
       icon: "📱",
       block: "essenciais",
       status: "active",
-      primaryAction: "Abrir",
+      primaryAction: "ManageDevices",
       secondaryAction: "Desactivar",
     },
     {
@@ -85,7 +85,7 @@ vi.mock("../data/modulesDefinitions", () => ({
       icon: "📦",
       block: "canais",
       status: "active",
-      primaryAction: "Abrir",
+      primaryAction: "Open",
       secondaryAction: "Desactivar",
     },
   ],
@@ -121,6 +121,7 @@ vi.mock("../components/ModuleCard", () => ({
     secondaryLabel?: string;
     secondaryDisabled?: boolean;
     secondaryTooltip?: string;
+    primaryLabelOverride?: string;
   }) => (
     <div>
       <button
@@ -162,13 +163,13 @@ describe("ModulesPage anti-regression", () => {
       "ChefIApp-Desktop-Setup.exe";
   });
 
-  it("routes AppStaff primary action to canonical web path", () => {
+  it("routes AppStaff primary action to devices management page", () => {
     render(<ModulesPage />);
 
     fireEvent.click(screen.getByTestId("primary-appstaff"));
 
-    expect(openOperationalInNewWindowMock).toHaveBeenCalledTimes(1);
-    expect(openOperationalInNewWindowMock.mock.calls[0]?.[0]).toBe("appstaff");
+    expect(mockNavigate).toHaveBeenCalledWith("/admin/devices");
+    expect(openOperationalInNewWindowMock).not.toHaveBeenCalled();
   });
 
   it("does not render secondary action for AppStaff", () => {
@@ -180,38 +181,13 @@ describe("ModulesPage anti-regression", () => {
   it("without published release, TPV secondary keeps device install action", () => {
     render(<ModulesPage />);
 
-    const tpvSecondary = screen.getByTestId("secondary-tpv");
-    expect(tpvSecondary.textContent).toBe("Instalar dispositivo");
-    expect(tpvSecondary.hasAttribute("disabled")).toBe(false);
+    expect(screen.queryByTestId("secondary-tpv")).toBeNull();
     expect(screen.queryByText("modulesPage.viewDesktopPage")).toBeNull();
   });
 
-  it("without published release, TPV secondary routes to devices with module filter", () => {
-    render(<ModulesPage />);
-
-    fireEvent.click(screen.getByTestId("secondary-tpv"));
-
-    expect(mockNavigate).toHaveBeenCalledWith("/admin/devices?module=tpv");
-  });
-
-  it("with published release, TPV secondary still routes to devices with module filter", () => {
-    // @ts-expect-error tests can mutate env
-    import.meta.env.VITE_DESKTOP_DOWNLOAD_BASE =
-      "https://github.com/goldmonkey777/ChefIApp-POS-CORE/releases/latest/download";
-
-    render(<ModulesPage />);
-
-    const tpvSecondary = screen.getByTestId("secondary-tpv");
-    expect(tpvSecondary.textContent).toBe("Instalar dispositivo");
-    expect(tpvSecondary.hasAttribute("disabled")).toBe(false);
-    expect(screen.queryByText("modulesPage.viewDesktopPage")).toBeNull();
-
-    fireEvent.click(tpvSecondary);
-
-    const allCalls = mockNavigate.mock.calls.map((call) => call[0]);
-    expect(allCalls).toContain("/admin/devices?module=tpv");
-    expect(allCalls).not.toContain("/admin/desktop");
-  });
+  // Secondary behaviour (instalar dispositivo) when há dispositivo local está coberto
+  // pelos testes de fluxo desktop; aqui garantimos apenas que, sem dispositivo local,
+  // não aparece CTA secundário redundante.
 
   it("keeps non-operational modules on their canonical primary path", () => {
     render(<ModulesPage />);
@@ -227,9 +203,9 @@ describe("ModulesPage anti-regression", () => {
 
     expect(source).not.toContain("DeviceInstallDialog");
     expect(source).toContain("useDeviceInstall");
-    expect(source).toContain("openOperationalInNewWindow");
+    expect(source).not.toContain("openOperationalInNewWindow");
     expect(source).not.toContain("wouldGuardAllow");
-    expect(source).toContain("Instalar dispositivo");
+    expect(source).toContain("modules.actionInstallDevice");
   });
 
   it("manifest files exist for web/PWA assets", () => {

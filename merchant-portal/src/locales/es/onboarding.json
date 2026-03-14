@@ -262,7 +262,7 @@
       "errorGeneric": "Error al abrir turno. Inténtalo de nuevo.",
       "errorContinue": "Error al continuar.",
       "registerName": "Caja Principal",
-      "operatorName": "Operador TPV"
+      "operatorName": "Cajero TPV"
     }
   }
 }

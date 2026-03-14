@@ -90,7 +90,8 @@ export function StaffProfilePage() {
             <div style={fieldStyle}>
               <div style={labelStyle}>Nome</div>
               <div style={valueStyle}>
-                {profile?.name ?? (activeWorkerId ? `Operador ${activeWorkerId.slice(0, 8)}` : "—")}
+                {profile?.name ??
+                  (activeWorkerId ? `Utilizador ${activeWorkerId.slice(0, 8)}` : "—")}
               </div>
             </div>
             {profile && (
@@ -134,9 +135,9 @@ export function StaffProfilePage() {
                 {shiftState === "active" ? "Turno ativo" : "Sem turno"}
               </div>
             </div>
-            {activeWorkerId && (
-              <div style={fieldStyle}>
-                <div style={labelStyle}>ID operador</div>
+              {activeWorkerId && (
+            <div style={fieldStyle}>
+              <div style={labelStyle}>ID colaborador</div>
                 <div style={{ fontSize: 12, color: colors.text.tertiary, fontFamily: "monospace" }}>
                   {activeWorkerId}
                 </div>

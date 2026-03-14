@@ -235,12 +235,26 @@ export function DesktopDownloadSection({
             }`}
           >
             {t.href ? (
-              <a
-                href={t.href}
+              <button
+                type="button"
                 className={styles.downloadLink}
-                target="_blank"
-                rel="noopener noreferrer"
                 data-testid={`desktop-download-${t.os}`}
+                onClick={() => {
+                  const url = t.href ?? "";
+                  if (!url || !/^https?:\/\//i.test(url)) return;
+                  try {
+                    const targetOrigin = new URL(url).origin;
+                    const pageOrigin = window.location.origin;
+                    const norm = (o: string) =>
+                      o.replace(/^https?:\/\/127\.0\.0\.1(:\d+)?$/i, "http://localhost$1");
+                    if (norm(targetOrigin) === norm(pageOrigin)) {
+                      return;
+                    }
+                    window.open(url, "_blank", "noopener,noreferrer");
+                  } catch {
+                    window.open(url, "_blank", "noopener,noreferrer");
+                  }
+                }}
               >
                 <span className={styles.downloadIcon}>{t.icon}</span>
                 <div className={styles.downloadInfo}>
@@ -252,7 +266,7 @@ export function DesktopDownloadSection({
                 {t.highlighted && (
                   <span className={styles.downloadBadge}>Tu sistema</span>
                 )}
-              </a>
+              </button>
             ) : (
               /* Edge case: base configured but href build failed */
               <div className={styles.downloadInfo}>

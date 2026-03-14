@@ -11,6 +11,7 @@
  */
 
 import { useTranslation } from "react-i18next";
+import { useFormatLocale } from "../../../core/i18n/useFormatLocale";
 import type { TPVAlert } from "../hooks/useTPVEventBridge";
 
 interface TPVNotificationBarProps {

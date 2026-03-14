@@ -60,7 +60,7 @@ vi.mock("../data/modulesDefinitions", () => ({
       icon: "🧾",
       block: "essenciais",
       status: "active",
-      primaryAction: "Abrir",
+      primaryAction: "ManageDevices",
       secondaryAction: "Desactivar",
     },
   ],
@@ -74,12 +74,14 @@ vi.mock("../components/ModuleCard", () => ({
     onSecondaryAction,
     secondaryLabel,
     secondaryDisabled,
+    primaryLabelOverride,
   }: {
     module: { id: string };
     onPrimaryAction: (id: string) => void;
     onSecondaryAction?: (id: string) => void;
     secondaryLabel?: string;
     secondaryDisabled?: boolean;
+    primaryLabelOverride?: string;
   }) => (
     <div>
       <button
@@ -120,27 +122,21 @@ describe("ModulesPage desktop flow", () => {
     import.meta.env.MODE = "production";
   });
 
-  it("quando não há dispositivo local, clicar Abrir TPV redireciona para /admin/devices com módulo", () => {
+  it("quando não há dispositivo local, clicar em gerir dispositivos de TPV redireciona para /admin/devices/tpv", () => {
     render(<ModulesPage />);
 
     fireEvent.click(screen.getByTestId("primary-tpv"));
 
-    expect(mockNavigate).toHaveBeenCalledWith("/admin/devices?module=tpv");
+    expect(mockNavigate).toHaveBeenCalledWith("/admin/devices/tpv");
   });
 
-  it("secondary TPV mantém ação de instalar dispositivo", () => {
+  it("quando não há dispositivo local, não renderiza ação secundária redundante para TPV", () => {
     render(<ModulesPage />);
 
-    const secondary = screen.getByTestId("secondary-tpv");
-    expect(secondary.textContent).toBe("Instalar dispositivo");
-    expect(secondary.hasAttribute("disabled")).toBe(false);
-
-    fireEvent.click(secondary);
-
-    expect(mockNavigate).toHaveBeenCalledWith("/admin/devices?module=tpv");
+    expect(screen.queryByTestId("secondary-tpv")).toBeNull();
   });
 
-  it("com release publicada, secondary TPV continua a navegar para /admin/devices com módulo", () => {
+  it("com release publicada, continua sem ação secundária quando não há dispositivo local", () => {
     // @ts-expect-error env is typed as readonly in Vite, but we can mutate in tests
     import.meta.env.VITE_DESKTOP_DOWNLOAD_BASE = "https://example.com/download";
     // @ts-expect-error
@@ -150,10 +146,6 @@ describe("ModulesPage desktop flow", () => {
 
     render(<ModulesPage />);
 
-    fireEvent.click(screen.getByTestId("secondary-tpv"));
-
-    const allCalls = mockNavigate.mock.calls.map((call) => call[0]);
-    expect(allCalls).toContain("/admin/devices?module=tpv");
-    expect(allCalls).not.toContain("/admin/desktop");
+    expect(screen.queryByTestId("secondary-tpv")).toBeNull();
   });
 });

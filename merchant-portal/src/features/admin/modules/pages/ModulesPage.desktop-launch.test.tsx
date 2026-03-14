@@ -59,7 +59,7 @@ vi.mock("../data/modulesDefinitions", () => ({
       icon: "🧾",
       block: "essenciais",
       status: "active",
-      primaryAction: "Abrir",
+      primaryAction: "ManageDevices",
       secondaryAction: "Desactivar",
     },
   ],
@@ -74,9 +74,11 @@ vi.mock("../components/ModuleCard", () => ({
   ModuleCard: ({
     module,
     onPrimaryAction,
+    primaryLabelOverride,
   }: {
     module: { id: string };
     onPrimaryAction: (id: string) => void;
+    primaryLabelOverride?: string;
   }) => (
     <button
       type="button"
@@ -108,20 +110,12 @@ describe("ModulesPage desktop launch contract", () => {
     import.meta.env.VITE_DESKTOP_DOWNLOAD_WINDOWS_FILE = "ChefIApp.exe";
   });
 
-  it("com dispositivo TPV vinculado, chama openOperationalInNewWindow para abrir fluxo operacional", () => {
+  it("com dispositivo TPV vinculado, continua a encaminhar o CTA principal para /admin/devices/tpv (gestão de terminais)", () => {
     render(<ModulesPage />);
 
     fireEvent.click(screen.getByTestId("primary-tpv"));
 
-    expect(openOperationalInNewWindowMock).toHaveBeenCalledTimes(1);
-    expect(openOperationalInNewWindowMock.mock.calls[0]?.[0]).toBe("tpv");
-  });
-
-  it("com dispositivo TPV vinculado, não redireciona para /admin/devices no clique primário", () => {
-    render(<ModulesPage />);
-    fireEvent.click(screen.getByTestId("primary-tpv"));
-
-    const allCalls = mockNavigate.mock.calls.map((call) => call[0]);
-    expect(allCalls).not.toContain("/admin/devices?module=tpv");
+    expect(openOperationalInNewWindowMock).not.toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith("/admin/devices/tpv");
   });
 });

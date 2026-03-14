@@ -24,7 +24,34 @@
   - Curto e médio prazo
   - Manutenção contínua
 
-### 3. Handoff e Referência
+### 3. Fase 3 — Conformance Inter-App
+- **[FASE_3_CONFORMANCE_INTER_APP.md](./FASE_3_CONFORMANCE_INTER_APP.md)** ⭐
+  - Épico: conformidade entre merchant-portal, desktop-app e mobile-app
+  - Matriz de conformidade, golden flows, evidence pack, checklist por app
+  - Trabalho remanescente = conformance e validação operacional (não nova arquitetura)
+- **[FASE_3_MERCHANT_PORTAL_EVIDENCE.md](./FASE_3_MERCHANT_PORTAL_EVIDENCE.md)**
+  - Evidence pack do merchant-portal: auth, pairing, persistence, role source, recovery
+  - Referências a código e testes; tabela de conformidade por contrato
+- **[FASE_4_EXPANSAO_CONTROLADA.md](./FASE_4_EXPANSAO_CONTROLADA.md)**
+  - Épico Fase 4: mobile-app, customer-portal, billing produção, observabilidade, rollout readiness
+  - Épicos C4.1–C4.4 e Definition of Done
+- **[WORKSPACES_ALIGNMENT.md](./WORKSPACES_ALIGNMENT.md)**
+  - Onde vive cada workspace (merchant-portal, desktop-app, mobile-app, Core; customer-portal removido em F5.1)
+  - Como testar cada um; contrato mínimo com o Core; gates de release
+- **[C42_CUSTOMER_PORTAL_STATE.md](./C42_CUSTOMER_PORTAL_STATE.md)** (C4.2)
+  - Estado do customer-portal: removido do workspace (F5.1); evidência e decisão em C42 §8
+- **[C41_MOBILE_PHASE3_EVIDENCE.md](./C41_MOBILE_PHASE3_EVIDENCE.md)** (C4.1)
+  - Evidence pack mobile-app / Fase 3 conformance: role from backend, recovery/reinstall, activation flow (9 testes); classificação **ALIGNED**
+- **[FASE_5_CONVERGENCIA_OPERACIONAL.md](./FASE_5_CONVERGENCIA_OPERACIONAL.md)** ⭐ (Fase 5)
+  - Convergência operacional: F5.1–F5.4 fechados (F5.4 limpeza em F6.2). Próxima fase: [Fase 6](./FASE_6_ESTABILIDADE_PROXIMO_CICLO.md)
+- **[F53_GOLDEN_PATH_EVIDENCE.md](./F53_GOLDEN_PATH_EVIDENCE.md)** (F5.3)
+  - Evidence pack golden path inter-app: o que está automatizado vs manual; comando único `audit:fase3-conformance`; pre-release `audit:pre-release`; classificação ALIGNED
+- **[FASE_6_ESTABILIDADE_PROXIMO_CICLO.md](./FASE_6_ESTABILIDADE_PROXIMO_CICLO.md)** ⭐ (Fase 6)
+  - Fase 6: F6.2 e F6.3 fechados; próximo ciclo = Fase 7
+- **[FASE_7_READINESS_ESCALA_OPERACIONAL.md](./FASE_7_READINESS_ESCALA_OPERACIONAL.md)** ⭐ (Fase 7 — operacionalmente fechada)
+  - F7.1 e F7.2 fechados; usar checklist + mapa em toda release. F7.3 em espera consciente (§10). Avaliação de drivers: [AVALIACAO_DRIVERS_POS_FASE7.md](./AVALIACAO_DRIVERS_POS_FASE7.md). Manutenção operacional: [RELATORIO_MANUTENCAO_OPERACIONAL.md](./RELATORIO_MANUTENCAO_OPERACIONAL.md).
+
+### 4. Handoff e Referência
 - **[HANDOFF.md](./HANDOFF.md)** ⭐
   - Documento completo de handoff
   - Estrutura do projeto

@@ -97,38 +97,88 @@ async function seed() {
 
     // Attempt logic (best effort if Anon)
     if (SERVICE_KEY) {
+        // ---------------------------------------------------------------------
+        // Company + Restaurant + Membership (Owner)
+        // ---------------------------------------------------------------------
         // Check gm_companies
-        const { data: companies } = await supabase.from('gm_companies').select('*').eq('owner_id', userId);
-        let companyId = companies?.[0]?.id;
+        const { data: companies } = await supabase
+            .from('gm_companies')
+            .select('*')
+            .eq('owner_id', userId);
+        let companyId = companies?.[0]?.id as string | undefined;
 
         if (!companyId) {
             console.log('🏢 Creating Company...');
-            const { data: newComp, error: compErr } = await supabase.from('gm_companies').insert({
-                owner_id: userId,
-                name: 'GoldMonkey Corp',
-                plan: 'sovereign',
-                status: 'active'
-            }).select().single();
+            const { data: newComp, error: compErr } = await supabase
+                .from('gm_companies')
+                .insert({
+                    owner_id: userId,
+                    name: 'GoldMonkey Corp',
+                    plan: 'sovereign',
+                    status: 'active'
+                })
+                .select()
+                .single();
             if (compErr) {
                 console.warn('Warning: Company create failed:', compErr.message);
             } else {
-                companyId = newComp.id;
+                companyId = newComp?.id;
             }
         }
 
+        let restaurantId: string | undefined;
+
         if (companyId) {
             // Check gm_restaurants
-            const { data: rests } = await supabase.from('gm_restaurants').select('*').eq('owner_id', userId);
+            const { data: rests } = await supabase
+                .from('gm_restaurants')
+                .select('*')
+                .eq('owner_id', userId);
             if (!rests || rests.length === 0) {
                 console.log('🍔 Creating Restaurant...');
-                const { error: restErr } = await supabase.from('gm_restaurants').insert({
-                    company_id: companyId,
-                    owner_id: userId,
-                    name: 'Sovereign Burger Hub',
-                    slug: 'sovereign-burger-hub',
-                    status: 'active'
-                });
-                if (restErr) console.warn('Warning: Restaurant create failed:', restErr.message);
+                const { data: newRest, error: restErr } = await supabase
+                    .from('gm_restaurants')
+                    .insert({
+                        company_id: companyId,
+                        owner_id: userId,
+                        name: 'Sovereign Burger Hub',
+                        slug: 'sovereign-burger-hub',
+                        status: 'active'
+                    })
+                    .select()
+                    .single();
+                if (restErr) {
+                    console.warn('Warning: Restaurant create failed:', restErr.message);
+                } else {
+                    restaurantId = newRest?.id;
+                }
+            } else {
+                restaurantId = rests[0]?.id;
+            }
+        }
+
+        // Ensure membership as OWNER for this restaurant
+        if (restaurantId) {
+            const { data: existingMembers, error: memberErr } = await supabase
+                .from('gm_restaurant_members')
+                .select('*')
+                .eq('restaurant_id', restaurantId)
+                .eq('user_id', userId);
+
+            if (memberErr) {
+                console.warn('Warning: Membership lookup failed:', memberErr.message);
+            } else if (!existingMembers || existingMembers.length === 0) {
+                console.log('👤 Creating OWNER membership for restaurant...');
+                const { error: insertMemberErr } = await supabase
+                    .from('gm_restaurant_members')
+                    .insert({
+                        restaurant_id: restaurantId,
+                        user_id: userId,
+                        role: 'owner'
+                    });
+                if (insertMemberErr) {
+                    console.warn('Warning: Membership create failed:', insertMemberErr.message);
+                }
             }
         }
     } else {

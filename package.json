@@ -5,7 +5,6 @@
   "main": "index.js",
   "workspaces": [
     "merchant-portal",
-    "customer-portal",
     "mobile-app"
   ],
   "directories": {
@@ -65,6 +64,10 @@
     "open:apps": "bash scripts/open-all-apps.sh",
     "test:truth:chaos": "./scripts/truth-chaos.sh",
     "audit:360": "./scripts/audit-360.sh",
+    "audit:billing-core": "ts-node scripts/audit-billing-core.ts",
+    "audit:fase3-conformance": "bash scripts/fase3-conformance-probe.sh",
+    "audit:pre-release": "bash scripts/pre-release-gate.sh",
+    "audit:readiness": "bash scripts/deploy/pre-flight-check.sh",
     "validate:tpv": "npx tsx scripts/validate-tpv-go-nogo.ts",
     "audit:governance": "node scripts/audit-governance.js",
     "audit:governance:update": "node scripts/audit-governance.js --update-baseline",
@@ -85,6 +88,8 @@
     "unsave": "bash scripts/wip-save.sh --undo",
     "switch": "bash scripts/safe-switch.sh",
     "kill:5175": "lsof -ti:5175 | xargs kill -9 2>/dev/null || true",
+    "dev:desktop": "bash scripts/start-desktop-dev.sh",
+    "build:desktop": "cd desktop-app && node scripts/build-electron.mjs",
     "vite:up": "bash scripts/vite-persistent.sh",
     "vite:up:https": "bash scripts/vite-persistent.sh https",
     "vite:down": "bash scripts/vite-persistent.sh stop",

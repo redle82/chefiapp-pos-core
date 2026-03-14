@@ -40,7 +40,7 @@ describe("TPVShiftPage", () => {
       name: "Caixa Principal",
       status: "open",
       openedAt: new Date("2026-02-16T10:00:00Z"),
-      openedBy: "Operador TPV",
+      openedBy: "Caixa TPV",
       openingBalanceCents: 5000,
       totalSalesCents: 25000,
       createdAt: new Date("2026-02-16T10:00:00Z"),
@@ -72,7 +72,7 @@ describe("TPVShiftPage", () => {
       expect.objectContaining({
         restaurantId: "rest-1",
         openingBalanceCents: 1000,
-        openedBy: "Operador TPV",
+        openedBy: "Caixa TPV",
         name: "Caixa Principal",
       }),
     );

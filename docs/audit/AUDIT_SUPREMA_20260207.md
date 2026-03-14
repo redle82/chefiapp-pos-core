@@ -3,6 +3,8 @@
 > Auditor: automated (copilot)
 > Branch: `core/frozen-v1`
 > Commit: `34b1a9b1`
+>
+> **Nota (2026-03):** O ghost workspace `customer-portal` foi resolvido em F5.1 — removido de `package.json` workspaces; ver [C42_CUSTOMER_PORTAL_STATE.md](../roadmap/C42_CUSTOMER_PORTAL_STATE.md) §8.
 
 ---
 
