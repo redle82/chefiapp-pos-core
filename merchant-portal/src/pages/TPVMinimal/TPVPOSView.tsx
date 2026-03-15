@@ -81,6 +81,9 @@ export function TPVPOSView() {
   // Split bill modal state
   const [splitBillOpen, setSplitBillOpen] = useState(false);
   const [splitPayProcessing, setSplitPayProcessing] = useState(false);
+  // Tip state
+  const [tipCents, setTipCents] = useState(0);
+  const [tipModalOpen, setTipModalOpen] = useState(false);
   // Mobile cart drawer state
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
 
@@ -220,6 +223,7 @@ export function TPVPOSView() {
   );
   const taxCents = Math.round(subtotalCents * 0.05);
   const totalCents = subtotalCents + taxCents;
+  const grandTotalCents = totalCents + tipCents;
 
   // ─── Enviar para cozinha (cria pedido no backend) ───────────────
   const handleSendToKitchen = async () => {
@@ -246,18 +250,28 @@ export function TPVPOSView() {
   };
 
   // ─── Confirmar + Pagar (takeaway ou após enviar cozinha) ────────
-  const handleProceed = async () => {
+  // Step 1: open tip modal (or skip in demo mode)
+  const handleProceed = () => {
     if (cart.length === 0 && !isSentToKitchen) return;
 
     // Demo mode: simulate payment without backend
     if (isDemoMode) {
       const demoTotal = cart.reduce((s, i) => s + i.unit_price * i.quantity, 0);
       setCart([]);
+      setTipCents(0);
       toast.success(
-        `🎉 Pagamento simulado em modo demo! Total: ${formatAmount(demoTotal)}`,
+        `Pagamento simulado em modo demo! Total: ${formatAmount(demoTotal)}`,
       );
       return;
     }
+
+    // Show tip selection before payment
+    setTipModalOpen(true);
+  };
+
+  // Step 2: confirm payment after tip selection
+  const handleConfirmPayment = async () => {
+    setTipModalOpen(false);
 
     if (
       bootstrap.coreStatus !== "online" ||
@@ -270,13 +284,19 @@ export function TPVPOSView() {
     try {
       if (isSentToKitchen) {
         // Pedido já no backend → apenas fechar (pagamento)
-        const result = await lifecycle.finalizeOrder(restaurantId, totalCents);
+        const result = await lifecycle.finalizeOrder(
+          restaurantId,
+          grandTotalCents,
+        );
         if (result.success) {
+          const tipMsg =
+            tipCents > 0 ? ` (gorjeta: ${formatAmount(tipCents)})` : "";
           setCart([]);
+          setTipCents(0);
           toast.success(
             `Pedido #${result.orderId?.slice(0, 8)} pago. Total: ${formatAmount(
-              totalCents,
-            )}`,
+              grandTotalCents,
+            )}${tipMsg}`,
           );
         } else {
           toast.error(result.error ?? "Erro ao finalizar pedido.");
@@ -285,12 +305,17 @@ export function TPVPOSView() {
         // Atalho takeaway: cria + fecha atomicamente
         const result = await lifecycle.confirmAndPay(restaurantId, "cash");
         if (result.success) {
+          const tipMsg =
+            tipCents > 0 ? ` (gorjeta: ${formatAmount(tipCents)})` : "";
           setCart([]);
+          setTipCents(0);
           toast.success(
             `Pedido #${result.orderId?.slice(
               0,
               8,
-            )} confirmado e pago. Total: ${formatAmount(totalCents)}`,
+            )} confirmado e pago. Total: ${formatAmount(
+              grandTotalCents,
+            )}${tipMsg}`,
           );
         } else {
           toast.error(result.error ?? "Erro ao criar pedido.");
@@ -536,6 +561,154 @@ export function TPVPOSView() {
           onCancel={() => setSplitBillOpen(false)}
           loading={splitPayProcessing}
         />
+      )}
+
+      {/* Tip Selection Modal */}
+      {tipModalOpen && (
+        <div
+          onClick={() => {
+            setTipModalOpen(false);
+            setTipCents(0);
+          }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.75)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#0a0a0a",
+              border: "1px solid #27272a",
+              borderRadius: 20,
+              width: "min(420px, 92vw)",
+              padding: 24,
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+            }}
+          >
+            <h2 style={{ color: "#fff", fontSize: 20, fontWeight: 700, margin: 0 }}>
+              Gorjeta
+            </h2>
+            <p style={{ color: "#a1a1aa", fontSize: 13, margin: 0 }}>
+              Subtotal: {formatAmount(totalCents)}
+            </p>
+
+            {/* Preset tip buttons */}
+            <div style={{ display: "flex", gap: 8 }}>
+              {[0, 5, 10, 15].map((pct) => {
+                const amount = Math.round(totalCents * (pct / 100));
+                const isSelected = tipCents === amount;
+                return (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => setTipCents(amount)}
+                    style={{
+                      flex: 1,
+                      padding: "12px 0",
+                      background: isSelected ? "#1e1b4b" : "#18181b",
+                      border: isSelected
+                        ? "2px solid #6366f1"
+                        : "2px solid transparent",
+                      borderRadius: 10,
+                      color: isSelected ? "#fff" : "#d4d4d8",
+                      fontWeight: 600,
+                      fontSize: 14,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {pct === 0 ? "Sem" : `${pct}%`}
+                    {pct > 0 && (
+                      <div
+                        style={{ fontSize: 11, color: "#71717a", marginTop: 2 }}
+                      >
+                        {formatAmount(amount)}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Summary */}
+            <div
+              style={{
+                background: "#18181b",
+                padding: 16,
+                borderRadius: 14,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    color: "#71717a",
+                    fontSize: 12,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.8,
+                  }}
+                >
+                  Total com gorjeta
+                </div>
+                <div
+                  style={{ color: "#10b981", fontSize: 24, fontWeight: 800 }}
+                >
+                  {formatAmount(totalCents + tipCents)}
+                </div>
+              </div>
+              {tipCents > 0 && (
+                <div style={{ textAlign: "right" }}>
+                  <div
+                    style={{
+                      color: "#71717a",
+                      fontSize: 12,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Gorjeta
+                  </div>
+                  <div style={{ color: "#e4e4e7", fontSize: 16, fontWeight: 700 }}>
+                    {formatAmount(tipCents)}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Confirm / Skip */}
+            <button
+              type="button"
+              onClick={handleConfirmPayment}
+              disabled={sending}
+              style={{
+                padding: "16px 0",
+                background: "#10b981",
+                border: "none",
+                borderRadius: 14,
+                color: "#fff",
+                fontSize: 16,
+                fontWeight: 700,
+                cursor: sending ? "not-allowed" : "pointer",
+                opacity: sending ? 0.5 : 1,
+              }}
+            >
+              {sending
+                ? "A processar..."
+                : tipCents > 0
+                  ? `Pagar ${formatAmount(totalCents + tipCents)}`
+                  : `Pagar ${formatAmount(totalCents)}`}
+            </button>
+          </div>
+        </div>
       )}
 
       <ToastContainer toasts={toast.toasts} onDismiss={toast.dismiss} />
