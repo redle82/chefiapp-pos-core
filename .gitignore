@@ -31,6 +31,9 @@ public/assets/
 .env.sofia
 .env.function
 
+**/.env.production.backup*
+**/.env.*.backup*
+
 # Sensitive files (CRITICAL - never commit)
 key-check.txt
 *.key
