@@ -106,6 +106,9 @@ merchant-portal/artifacts/
 .agent/*
 !.agent/rules/
 
+# Claude Code worktrees and local state
+.claude/
+
 # Antigravity awesome-skills (external repo, 708+ skills)
 # Update via: cd .agents/skills && git pull
 .agents/skills/
