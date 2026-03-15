@@ -424,7 +424,7 @@ export function GastroLandingPage() {
                   Começar trial gratuito <ArrowRight size={16} />
                 </span>
               </Link>
-              <Link to="/admin/home">
+              <Link to="/op/tpv?mode=trial">
                 <span className="btn-ghost text-base px-8 py-4">
                   Ver o sistema
                 </span>
@@ -587,7 +587,7 @@ export function GastroLandingPage() {
       <section className="pb-20">
         <div className="container">
           <RevealSection>
-            <Link to="/admin/home">
+            <Link to="/op/tpv?mode=trial">
               <div
                 className="relative rounded-2xl overflow-hidden block"
                 style={{
@@ -978,7 +978,7 @@ export function GastroLandingPage() {
                     Começar agora <ArrowRight size={16} />
                   </span>
                 </Link>
-                <Link to="/admin/home">
+                <Link to="/op/tpv?mode=trial">
                   <span className="btn-ghost text-base px-10 py-4">
                     Ver demo ao vivo
                   </span>

@@ -228,11 +228,24 @@ export function BrowserBlockGuard({
         </ol>
       </div>
 
-      <button type="button" className={styles.backLink}>
+      <button
+        type="button"
+        className={styles.backLink}
+        onClick={() => {
+          if (isDesktop) {
+            window.location.href = "chefiapp-pos://open";
+          } else {
+            window.location.href = "/admin/devices";
+          }
+        }}
+      >
         Abrir aplicação {moduleLabel}
       </button>
-      <a href="/admin/devices" className={styles.backLink}>
-        Baixar instalador
+      <a
+        href={isDesktop ? "/admin/devices/tpv" : "/admin/devices"}
+        className={styles.backLink}
+      >
+        {isDesktop ? "Gerir terminais TPV" : "Gerir dispositivos AppStaff"}
       </a>
     </div>
   );

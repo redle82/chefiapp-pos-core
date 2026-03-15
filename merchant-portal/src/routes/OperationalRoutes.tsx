@@ -455,11 +455,7 @@ const InventoryStockMinimal = lazy(() =>
     default: m.InventoryStockMinimal,
   })),
 );
-const KDSMinimal = lazy(() =>
-  import("../pages/KDSMinimal/KDSMinimal").then((m) => ({
-    default: m.KDSMinimal,
-  })),
-);
+// KDSMinimal standalone removed — KDS now lives inside TPV at /op/tpv/kitchen
 
 // pages — Manager
 const ManagerAnalysisPage = lazy(() =>
@@ -798,35 +794,8 @@ export const OperationalRoutesFragment = (
           <Route path="settings" element={<TPVSettingsPage />} />
         </Route>
       </Route>
-      {/* ── BrowserBlockGuard: KDS (desktop only) ── */}
-      <Route
-        element={
-          <BrowserBlockGuard requiredPlatform="desktop" moduleLabel="KDS" />
-        }
-      >
-        <Route
-          path="/op/kds"
-          element={
-            <ErrorBoundary
-              context="KDS"
-              fallback={
-                <GlobalBlockedView
-                  title="KDS indisponível"
-                  description="O módulo de cozinha encontrou um erro. Recarregue a tela para continuar o preparo."
-                  action={{
-                    label: "Recarregar",
-                    onClick: () => window.location.reload(),
-                  }}
-                />
-              }
-            >
-              <OperationalFullscreenWrapper>
-                <KDSMinimal />
-              </OperationalFullscreenWrapper>
-            </ErrorBoundary>
-          }
-        />
-      </Route>
+      {/* KDS lives inside TPV — redirect standalone route */}
+      <Route path="/op/kds" element={<Navigate to="/op/tpv/kitchen" replace />} />
       <Route path="/op/cash" element={<Navigate to="/op/tpv" replace />} />
       <Route path="/op/pos" element={<Navigate to="/op/tpv" replace />} />
       <Route path="/op/pos/*" element={<Navigate to="/op/tpv" replace />} />
@@ -836,8 +805,8 @@ export const OperationalRoutesFragment = (
         element={<Navigate to="/app/staff/home/owner" replace />}
       />
       <Route path="/tpv" element={<Navigate to="/op/tpv" replace />} />
-      <Route path="/kds-minimal" element={<Navigate to="/op/kds" replace />} />
-      <Route path="/kds" element={<Navigate to="/op/kds" replace />} />
+      <Route path="/kds-minimal" element={<Navigate to="/op/tpv/kitchen" replace />} />
+      <Route path="/kds" element={<Navigate to="/op/tpv/kitchen" replace />} />
       <Route path="/tpv-minimal" element={<Navigate to="/op/tpv" replace />} />
 
       <Route
@@ -1127,7 +1096,7 @@ export const OperationalRoutesFragment = (
       />
       <Route
         path="/app/setup/kds"
-        element={<Navigate to="/op/kds" replace />}
+        element={<Navigate to="/op/tpv/kitchen" replace />}
       />
       <Route
         path="/app/setup/estoque"
@@ -1556,6 +1525,10 @@ export const OperationalRoutesFragment = (
       <Route
         path="integrations"
         element={<Navigate to="/admin/config/integrations" replace />}
+      />
+      <Route
+        path="desktop"
+        element={<Navigate to="/admin/devices/tpv" replace />}
       />
       <Route
         path="legal"
