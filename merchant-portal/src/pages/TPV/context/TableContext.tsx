@@ -53,7 +53,18 @@ export const TableProvider: React.FC<{
       }
 
       if (data) {
-        setTables(data as Table[]);
+        // Normalize DB columns → Table interface
+        const normalized = (data as Array<Record<string, unknown>>).map((row) => ({
+          id: row.id as string,
+          restaurant_id: row.restaurant_id as string,
+          number: row.number as number,
+          status: (row.status === "closed" ? "free" : row.status) as Table["status"],
+          seats: (row.seats as number) ?? 4,
+          seated_at: (row.seated_at as string) ?? null,
+          x: (row.pos_x as number) ?? 0,
+          y: (row.pos_y as number) ?? 0,
+        }));
+        setTables(normalized);
       }
     } catch (err) {
       console.error("Failed to fetch tables:", err);

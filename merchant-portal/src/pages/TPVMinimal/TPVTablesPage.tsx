@@ -20,21 +20,11 @@ function TPVTablesContent() {
   const navigate = useNavigate();
   const [actionTableId, setActionTableId] = useState<string | null>(null);
 
-  const mapTables = tables.map((table) => {
-    const raw = table as typeof table & {
-      pos_x?: number;
-      pos_y?: number;
-      zone?: string;
-    };
-    return {
-      ...table,
-      x: raw.pos_x ?? table.x,
-      y: raw.pos_y ?? table.y,
-      seats: table.seats ?? 4,
-      zone: raw.zone,
-      seatedAt: table.seated_at ?? null,
-    };
-  });
+  const mapTables = tables.map((table) => ({
+    ...table,
+    seats: table.seats ?? 4,
+    seatedAt: table.seated_at ?? null,
+  }));
 
   const handleSelectTable = useCallback(
     (tableId: string) => {
