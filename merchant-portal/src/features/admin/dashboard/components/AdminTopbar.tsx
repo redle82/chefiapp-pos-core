@@ -111,7 +111,7 @@ export function AdminTopbar() {
   }, [menuOpen]);
 
   return (
-    <header className={styles.topbar}>
+    <header className={`${styles.topbar} admin-topbar-shell`}>
       <div className={styles.left}>
         <RestaurantHeader
           name={activeRestaurantName}

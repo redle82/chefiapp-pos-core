@@ -24,7 +24,7 @@ export function CatalogLayout({
   }, [runtime?.restaurant_id, setRestaurantId]);
 
   return (
-    <div className="space-y-6">
+    <div className="page-enter admin-content-page space-y-6">
       <AdminPageHeader title={title} subtitle={description} />
 
       <CatalogSubnav />

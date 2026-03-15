@@ -11,6 +11,7 @@ import {
   getTabIsolated,
   setTabIsolated,
 } from "../../../core/storage/TabIsolatedStorage";
+import { isDebugMode } from "../../../core/debugMode";
 import { connectByCode } from "../../../features/auth/connectByCode";
 import { locationsStore } from "../../../features/admin/locations/store/locationsStore";
 import type { Location } from "../../../features/admin/locations/types";
@@ -359,6 +360,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
   // 1. IDENTITY — inicialização síncrona para Owner/Manager (restaurantId+userId) evitam flash de "Inserir Código"
   // TRIAL GUIDE: nunca AUTO-JOIN como owner; mostrar Launcher de Pessoas (connectByCode por persona)
+  const isDebug = isDebugMode();
   const allowAutoJoin = Boolean(restaurantId && userId && !RUNTIME.isTrial);
   const initialContract = allowAutoJoin
     ? ({
@@ -366,6 +368,14 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
         type: "restaurant",
         name: "Seu Restaurante",
         mode: "connected",
+        permissions: ["admin"],
+      } as OperationalContract)
+    : (isDebug || RUNTIME.isTrial) && restaurantId
+    ? ({
+        id: restaurantId,
+        type: "restaurant",
+        name: "Restaurante (Local)",
+        mode: "local",
         permissions: ["admin"],
       } as OperationalContract)
     : null;

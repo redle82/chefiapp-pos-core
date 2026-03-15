@@ -40,28 +40,31 @@ export default function StaffModule() {
     };
   }, []);
 
-  const loading = authLoading || identity.loading || runtime.loading;
   const restaurantId = identity.id || getTabIsolated("chefiapp_restaurant_id");
+  const [forceLoad, setForceLoad] = useState(false);
+  const loading = authLoading || identity.loading || runtime.loading;
 
   // DEBUG: Log loading states to identify blocking state
   useEffect(() => {
-    console.log("[StaffModule] Loading states:", {
-      authLoading,
-      identityLoading: identity.loading,
-      runtimeLoading: runtime.loading,
-      restaurantId,
-      identityId: identity.id,
-    });
+    if (isDebugMode()) {
+      console.log("[StaffModule] Loading states:", {
+        authLoading,
+        identityLoading: identity.loading,
+        runtimeLoading: runtime.loading,
+        restaurantId,
+        identityId: identity.id,
+        isForceLoaded: forceLoad,
+      });
+    }
   }, [
     authLoading,
     identity.loading,
     runtime.loading,
     restaurantId,
     identity.id,
+    forceLoad,
   ]);
 
-  // ESCAPE HATCH: If still loading after 5s, force continue with degraded state
-  const [forceLoad, setForceLoad] = useState(false);
   useEffect(() => {
     if (loading && !forceLoad) {
       const timeout = setTimeout(() => {

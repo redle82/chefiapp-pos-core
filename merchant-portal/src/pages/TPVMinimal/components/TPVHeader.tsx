@@ -206,7 +206,7 @@ export function TPVHeader({
         </span>
         <input
           type="search"
-          placeholder="Search product by name, categories or SKU"
+          placeholder="Pesquisar produto por nome, categoria ou SKU"
           value={searchQuery}
           onChange={(e) => onSearchChange?.(e.target.value)}
           style={{

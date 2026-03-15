@@ -51,7 +51,7 @@ import {
   getInstalledDevice,
   getKdsRestaurantId,
 } from "../../core/storage/installedDeviceStorage";
-import { readTenantIdWithLegacyFallback } from "../../core/tenant/TenantResolver";
+import { getActiveTenant } from "../../core/tenant/TenantResolver";
 import { TerminalEngine } from "../../core/terminal/TerminalEngine";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
 import type { CoreOrderItem, CoreTask } from "../../infra/docker-core/types";
@@ -163,8 +163,9 @@ export function KDSMinimal() {
   }, [identity]);
 
   // Lei do Turno: ao montar o KDS, ler estado do turno na fonte única (Core) para não mostrar "turno fechado" em cache.
-  // useLayoutEffect para disparar o refresh antes do paint e permitir que ORE trate isChecking como loading.
-  useLayoutEffect(() => {
+  // Nota: useEffect (não useLayoutEffect) porque refreshShiftStatus é async e faz setState,
+  // o que causava re-entrada recursiva no commit de layout effects do React.
+  useEffect(() => {
     shift?.refreshShiftStatus?.();
   }, []);
 
@@ -832,7 +833,7 @@ export function KDSMinimal() {
               </div>
               <div>
                 Status: {order.status ?? "—"}
-                {order._unknownStatus && (
+                {(order as any)._unknownStatus && (
                   <span
                     style={{
                       marginLeft: 8,
@@ -913,7 +914,7 @@ export function KDSMinimal() {
                         </div>
                         <ul style={{ listStyle: "none", padding: 0 }}>
                           {kitchenItems.map((item) => {
-                            const itemCreated = new Date(item.created_at);
+                            const itemCreated = new Date(item.created_at || new Date().toISOString());
                             const now = new Date();
                             const prepTimeSeconds =
                               item.prep_time_seconds || 300;
@@ -1152,7 +1153,7 @@ export function KDSMinimal() {
                         </div>
                         <ul style={{ listStyle: "none", padding: 0 }}>
                           {barItems.map((item) => {
-                            const itemCreated = new Date(item.created_at!);
+                            const itemCreated = new Date(item.created_at || new Date().toISOString());
                             const now = new Date();
                             const prepTimeSeconds =
                               item.prep_time_seconds || 300;

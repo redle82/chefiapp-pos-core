@@ -67,7 +67,7 @@ export function AdminReportsOverview() {
   const billsToday = overview?.stats?.totalBills ?? 0;
 
   return (
-    <section aria-label="Relatórios">
+    <section className="page-enter admin-content-page" aria-label="Relatórios">
       {showWelcome && (
         <WelcomeOverlay onDismiss={() => setShowWelcome(false)} />
       )}

@@ -147,7 +147,11 @@ export function ModulesPage() {
   };
 
   return (
-    <div style={{ width: "100%", maxWidth: 960, margin: 0 }} data-runtime-page="ModulesPage">
+    <div
+      className="page-enter admin-content-page"
+      style={{ width: "100%", maxWidth: 960, margin: 0 }}
+      data-runtime-page="ModulesPage"
+    >
       <AdminPageHeader
         title={t("modules.pageTitle")}
         subtitle={t("modules.pageSubtitle")}

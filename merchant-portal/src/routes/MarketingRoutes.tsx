@@ -25,6 +25,7 @@ import { FeaturesPage } from "../pages/Landing/FeaturesPage";
 import { MarketComparisonPage } from "../pages/Landing/MarketComparisonPage";
 import { PricingPage } from "../pages/Landing/PricingPage";
 import { ProductFirstLandingPage } from "../pages/Landing/ProductFirstLandingPage";
+import { GastroLandingPage } from "../pages/LandingGastro/GastroLandingPage";
 import { LandingLocaleProvider } from "../pages/LandingV2/i18n/LandingLocaleContext";
 import { OfficialLandingPage } from "../pages/LandingV2/LandingV2Page";
 import { LegalDPAPage } from "../pages/Legal/LegalDPAPage";
@@ -43,14 +44,12 @@ const AuthFallback = () => <div style={{ minHeight: "100vh", display: "flex", al
 /** Fragment com todas as rotas de marketing — usar como filho direto de <Routes>. */
 export const MarketingRoutesFragment = (
   <Fragment>
-    {/* Public / Marketing — rota canónica da landing: /landing. Aliases legados: /v2, /landing-v2. */}
+    {/* Public / Marketing — landing Gastro 2027 na raiz; OfficialLandingPage em /landing, /v2, /landing-v2. */}
     <Route
       path="/"
       element={
         <PWAOpenToTPVRedirect>
-          <LandingLocaleProvider>
-            <OfficialLandingPage />
-          </LandingLocaleProvider>
+          <GastroLandingPage />
         </PWAOpenToTPVRedirect>
       }
     />

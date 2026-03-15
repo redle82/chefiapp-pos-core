@@ -10,6 +10,7 @@
  * ============================================================ */
 
 .sidebar {
+  /* Accent from theme-gastro-2027 when inside .dashboard-layout, else gold fallback */
   --gm-accent: var(--color-brand-gold, #c9a227);
   --gm-accent-glow: rgba(201, 162, 39, 0.35);
   --gm-accent-bg: rgba(201, 162, 39, 0.08);

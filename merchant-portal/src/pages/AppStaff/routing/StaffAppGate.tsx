@@ -28,9 +28,13 @@ export function StaffAppGate({ children }: { children?: ReactNode } = {}) {
   const hasLocation = !!activeLocation;
   const hasContract = !!operationalContract;
   const hasWorker = !!activeWorkerId;
+
+  // Em debug/trial, permitimos bypass de contrato se houver restaurantId
+  const canBypassContract = isDebugMode() && !!restaurantId;
+
   const gateBlock = !hasLocation
     ? "location"
-    : !hasContract
+    : !hasContract && !canBypassContract
     ? "contract"
     : !hasWorker
     ? "worker"
@@ -62,7 +66,7 @@ export function StaffAppGate({ children }: { children?: ReactNode } = {}) {
   const debugStrip = isDebugMode() ? (
     <div className={gateStyles.debugStrip}>
       {hasLocation && <span>location:✓</span>}
-      {hasContract && <span>contract:✓</span>}
+      {(hasContract || canBypassContract) && <span>contract:✓</span>}
       {hasWorker && <span>worker:✓</span>}
     </div>
   ) : null;
@@ -80,7 +84,7 @@ export function StaffAppGate({ children }: { children?: ReactNode } = {}) {
   // Em debug: só bypass quando já há contrato e worker (senão mostrar Landing com entrada rápida).
   const content = children ?? <Outlet />;
 
-  if (isDebugMode() && operationalContract && activeWorkerId) {
+  if (isDebugMode() && (operationalContract || canBypassContract) && activeWorkerId) {
     return wrapWithDebug(content);
   }
 
@@ -89,7 +93,7 @@ export function StaffAppGate({ children }: { children?: ReactNode } = {}) {
     return wrapWithDebug(<LocationSelectView />);
   }
 
-  if (!operationalContract) {
+  if (!operationalContract && !canBypassContract) {
     return wrapWithDebug(<AppStaffLanding />);
   }
 

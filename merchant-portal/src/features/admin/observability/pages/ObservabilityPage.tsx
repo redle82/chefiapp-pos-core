@@ -130,7 +130,7 @@ export function ObservabilityPage() {
     : styles.valueMuted;
 
   return (
-    <section className={styles.page}>
+    <section className={`${styles.page} page-enter admin-content-page`}>
       <AdminPageHeader
         title="Observabilidade"
         subtitle="Estado do Core e métricas mínimas (1000-ready). Uso interno."

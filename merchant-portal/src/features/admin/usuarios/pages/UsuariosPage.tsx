@@ -7,7 +7,7 @@ import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 
 export function UsuariosPage() {
   return (
-    <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
+    <div className="page-enter admin-content-page" style={{ width: "100%", maxWidth: 960, margin: 0 }}>
       <AdminPageHeader
         title="Usuarios Administradores"
         subtitle="Owners, managers e permisões. Fase 2: invitaciones y roles por ubicación."

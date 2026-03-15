@@ -97,6 +97,8 @@ export const OSCopy = {
     /** Template para construir título: usar com restaurantName. Ex: `${restaurantName} — ${OSCopy.dashboard.comandoCentral}` */
     pageTitleTemplate: "{restaurantName} — Comando Central",
     comandoCentral: "Comando Central",
+    /** Descrição curta do Comando Central (Admin home). */
+    comandoCentralDesc: "Visão geral da sala, vendas e operação.",
     subtitle: "Visão Geral da Operação",
     operation: "Operação Agora",
     priority: "PRIORIDADE IMEDIATA",

@@ -28,7 +28,7 @@ export function PromotionsPage() {
   }, [loadDiscounts]);
 
   return (
-    <div className="space-y-8">
+    <div className="page-enter admin-content-page space-y-8">
       <AdminPageHeader
         title="Promociones y recompensas"
         subtitle="Configure descontos, pontos de fidelidade e ofertas automáticas para os seus clientes. Mantém simples para a equipa, poderoso para o negócio."

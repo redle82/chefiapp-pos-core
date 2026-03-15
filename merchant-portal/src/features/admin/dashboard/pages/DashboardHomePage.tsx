@@ -26,101 +26,24 @@ export function DashboardHomePage() {
 
   return (
     <DashboardLayout>
-      <section
-        style={{
-          background: theme.surface.base,
-          borderBottom: `1px solid ${theme.border.subtle}`,
-          padding: 32,
-          margin: "-16px 0 0 0",
-        }}
-      >
-        <header
-          style={{
-            marginBottom: 32,
-            display: "flex",
-            alignItems: "center",
-            gap: 16,
-          }}
-        >
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 32 32"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <circle cx="16" cy="16" r="16" fill={theme.surface.layer2} />
-            <path
-              d="M11 21L16 13L21 21"
-              stroke={theme.action.base}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <h1
-            style={{
-              fontSize: 26,
-              fontWeight: 800,
-              margin: 0,
-              letterSpacing: "-0.04em",
-              color: theme.action.base,
-            }}
-          >
-            {pageTitle}
-          </h1>
+      <section className="page-enter command-centre-page">
+        <header className="command-centre-header">
+          <h1 className="admin-page-title">{pageTitle}</h1>
+          <p className="admin-page-desc">
+            {OSCopy.dashboard.comandoCentralDesc}
+          </p>
         </header>
         {error && (
-          <div
-            style={{
-              marginBottom: 16,
-              padding: "10px 12px",
-              borderRadius: 8,
-              backgroundColor: theme.destructive.base + "14",
-              border: `1px solid ${theme.destructive.base}`,
-              fontSize: 13,
-              color: theme.destructive.base,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
+          <div className="command-centre-error">
             <span>{OSCopy.dashboard.errorLoad}</span>
-            <button
-              type="button"
-              onClick={reload}
-              style={{
-                padding: "6px 10px",
-                borderRadius: 999,
-                border: "none",
-                backgroundColor: theme.destructive.base,
-                color: theme.destructive.text,
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
+            <button type="button" onClick={reload} className="command-centre-retry">
               {OSCopy.dashboard.retry}
             </button>
           </div>
         )}
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)",
-            gap: 24,
-            marginBottom: 24,
-          }}
-        >
-          <div
-            style={{
-              border: `1px solid ${theme.border.subtle}`,
-              borderRadius: 14,
-              backgroundColor: theme.surface.layer1,
-            }}
-          >
+        <div className="command-centre-grid command-centre-grid-2">
+          <div className="command-centre-card">
             <DonutCard
               loading={loading}
               title={OSCopy.dashboard.stateOfRoom}
@@ -130,13 +53,7 @@ export function DashboardHomePage() {
               occupiedLabel="Mesas ocupadas"
             />
           </div>
-          <div
-            style={{
-              border: `1px solid ${theme.border.subtle}`,
-              borderRadius: 14,
-              backgroundColor: theme.surface.layer1,
-            }}
-          >
+          <div className="command-centre-card">
             <DonutCard
               loading={loading}
               title={OSCopy.dashboard.stateOfSeats}
@@ -150,14 +67,7 @@ export function DashboardHomePage() {
           </div>
         </div>
 
-        <div
-          style={{
-            marginBottom: 24,
-            border: `1px solid ${theme.border.subtle}`,
-            borderRadius: 14,
-            backgroundColor: theme.surface.layer1,
-          }}
-        >
+        <div className="command-centre-card command-centre-card-full">
           <RevenueChartCard
             loading={loading}
             data={data?.revenueByHour ?? []}
@@ -165,21 +75,8 @@ export function DashboardHomePage() {
           />
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0,1.2fr) minmax(0,1fr)",
-            gap: 24,
-            marginBottom: 24,
-          }}
-        >
-          <div
-            style={{
-              border: `1px solid ${theme.border.subtle}`,
-              borderRadius: 14,
-              backgroundColor: theme.surface.layer1,
-            }}
-          >
+        <div className="command-centre-grid command-centre-grid-ratio">
+          <div className="command-centre-card">
             <GeneralStatsCard
               loading={loading}
               general={data?.general}
@@ -190,13 +87,7 @@ export function DashboardHomePage() {
               onPendingClick={() => navigate("/admin/payments/pending")}
             />
           </div>
-          <div
-            style={{
-              border: `1px solid ${theme.border.subtle}`,
-              borderRadius: 14,
-              backgroundColor: theme.surface.layer1,
-            }}
-          >
+          <div className="command-centre-card">
             <SummaryStatsCard
               loading={loading}
               stats={data?.stats}
@@ -205,14 +96,7 @@ export function DashboardHomePage() {
           </div>
         </div>
 
-        <div
-          style={{
-            marginBottom: 24,
-            border: `1px solid ${theme.border.subtle}`,
-            borderRadius: 14,
-            backgroundColor: theme.surface.layer1,
-          }}
-        >
+        <div className="command-centre-card command-centre-card-full">
           <OperationStateCard
             loading={loading}
             operation={data?.operation}

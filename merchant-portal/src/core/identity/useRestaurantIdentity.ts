@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import {
   fetchRestaurantForIdentity,
@@ -170,47 +170,56 @@ export function useRestaurantIdentity() {
             productMode: runtime?.productMode,
           });
 
-          setIdentity({
-            id: row.id,
-            name: canonical.displayName,
-            legalName: canonical.legalName,
-            slug: canonical.slug,
-            isTestLike: env.isTestLike,
-            environmentLabel: env.environmentLabel,
-            city: row.city ?? (isTrial ? "Trial" : "Local desconhecido"),
-            type: row.type ?? "Restaurante",
-            isTrial: !!isTrial,
-            loading: false,
-            ownerName: isTrial ? "Visitante" : "Comandante",
-            logoUrl: row.logo_url ?? undefined,
-            ...(isTrial && {
-              lastPulse: {
-                type: "TRIAL_PULSE",
-                created_at: new Date().toISOString(),
-                payload: { message: "Sistema em modo de trial" },
-              },
-            }),
+          setIdentity((prev) => {
+            // Estabilização: não atualizar se for trial e já tivermos os dados (evita new Date().toISOString() loop)
+            if (isTrial && prev.id === row.id && prev.name === canonical.displayName && !prev.loading) {
+              return prev;
+            }
+            return {
+              id: row.id,
+              name: canonical.displayName,
+              legalName: canonical.legalName,
+              slug: canonical.slug,
+              isTestLike: env.isTestLike,
+              environmentLabel: env.environmentLabel,
+              city: row.city ?? (isTrial ? "Trial" : "Local desconhecido"),
+              type: row.type ?? "Restaurante",
+              isTrial: !!isTrial,
+              loading: false,
+              ownerName: isTrial ? "Visitante" : "Comandante",
+              logoUrl: row.logo_url ?? undefined,
+              ...(isTrial && {
+                lastPulse: {
+                  type: "TRIAL_PULSE",
+                  created_at: prev.lastPulse?.created_at || new Date().toISOString(),
+                  payload: { message: "Sistema em modo de trial" },
+                },
+              }),
+            };
           });
           return;
         }
         // Fallback quando Core não devolve linha (ex.: trial sem fetch)
         if (isTrial) {
-          setIdentity({
-            id: TRIAL_RESTAURANT_ID,
-            name: "Restaurante",
-            city: "Trial",
-            type: "Restaurante",
-            isTrial: true,
-            isTestLike: true,
-            environmentLabel: "TEST",
-            loading: false,
-            ownerName: "Visitante",
-            logoUrl: undefined,
-            lastPulse: {
-              type: "TRIAL_PULSE",
-              created_at: new Date().toISOString(),
-              payload: { message: "Sistema em modo de trial" },
-            },
+          setIdentity((prev) => {
+            if (prev.id === TRIAL_RESTAURANT_ID && !prev.loading) return prev;
+            return {
+              id: TRIAL_RESTAURANT_ID,
+              name: "Restaurante",
+              city: "Trial",
+              type: "Restaurante",
+              isTrial: true,
+              isTestLike: true,
+              environmentLabel: "TEST",
+              loading: false,
+              ownerName: "Visitante",
+              logoUrl: undefined,
+              lastPulse: {
+                type: "TRIAL_PULSE",
+                created_at: prev.lastPulse?.created_at || new Date().toISOString(),
+                payload: { message: "Sistema em modo de trial" },
+              },
+            };
           });
           return;
         }
@@ -263,5 +272,8 @@ export function useRestaurantIdentity() {
     }
   }, [identity.id, identity.loading, identity.name]);
 
-  return { identity, refreshIdentity: hydrate };
+  return useMemo(
+    () => ({ identity, refreshIdentity: hydrate }),
+    [identity, hydrate]
+  );
 }

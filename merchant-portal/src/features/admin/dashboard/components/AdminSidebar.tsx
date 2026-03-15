@@ -125,7 +125,7 @@ export function AdminSidebar() {
   };
 
   return (
-    <aside className={styles.sidebar}>
+    <aside className={`${styles.sidebar} admin-sidebar-shell`}>
       <div className={styles.sidebarInner}>
         {/* Brand: ChefIApp™ OS */}
         <div className={styles.brandSection}>

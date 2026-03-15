@@ -3,6 +3,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -110,13 +111,17 @@ export const ShiftProvider: React.FC<{ children: React.ReactNode }> = ({
     setLastCheckedAt(new Date());
   }, []);
 
-  const value = {
-    isShiftOpen,
-    isChecking,
-    lastCheckedAt,
-    refreshShiftStatus: checkShiftStatus,
-    markShiftOpen,
-  };
+  // Stabilize context value to prevent cascade re-renders in consumers (KDS, TPV)
+  const value = useMemo(
+    () => ({
+      isShiftOpen,
+      isChecking,
+      lastCheckedAt,
+      refreshShiftStatus: checkShiftStatus,
+      markShiftOpen,
+    }),
+    [isShiftOpen, isChecking, lastCheckedAt, checkShiftStatus, markShiftOpen],
+  );
 
   return (
     <ShiftContext.Provider value={value}>{children}</ShiftContext.Provider>

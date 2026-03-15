@@ -164,7 +164,7 @@ export function AdminTPVTerminalsPage() {
 
   return (
     <div
-      className={styles.wrapper}
+      className={`${styles.wrapper} page-enter admin-content-page`}
       data-chefiapp-tpv-mother="true"
       data-runtime-page="AdminTPVTerminalsPage"
     >

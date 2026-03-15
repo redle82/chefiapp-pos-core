@@ -47,7 +47,7 @@ export function TransactionsPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="page-enter admin-content-page space-y-6">
       <AdminPageHeader
         title="Transacciones procesadas"
         subtitle="Pagamentos processados pelos sistemas (Shop, LastPay, Reservas), sem dinheiro externo ou TPV de terceiros."

@@ -185,7 +185,7 @@ export function AdminOrganizationPage() {
   }
 
   return (
-    <div className={styles.wrapper}>
+    <div className={`${styles.wrapper} page-enter admin-content-page`}>
       <AdminPageHeader title="Organização" subtitle={org.name} />
 
       {/* ── Section 1: Company Info ── */}

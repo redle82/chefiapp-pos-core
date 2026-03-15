@@ -56,7 +56,7 @@ export function CustomersPage() {
   };
 
   return (
-    <section className="flex flex-col gap-6">
+    <section className="page-enter admin-content-page flex flex-col gap-6">
       <AdminPageHeader
         title="Clientes"
         subtitle="Veja quem são seus clientes, quanto consomem e como se comportam."

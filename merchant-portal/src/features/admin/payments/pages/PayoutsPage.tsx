@@ -37,7 +37,7 @@ export function PayoutsPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="page-enter admin-content-page space-y-6">
       <AdminPageHeader
         title="Payouts"
         subtitle="Transferências agrupadas para a conta bancária do restaurante."

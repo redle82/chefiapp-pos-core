@@ -75,7 +75,7 @@ export function ClosuresPage() {
   );
 
   return (
-    <section className="flex flex-col gap-6">
+    <section className="page-enter admin-content-page flex flex-col gap-6">
       <AdminPageHeader
         title="Cierres temporales"
         subtitle="Pausa los pedidos online, reservas o entregas para fechas específicas."

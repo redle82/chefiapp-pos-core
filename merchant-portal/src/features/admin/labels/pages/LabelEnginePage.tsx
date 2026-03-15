@@ -302,7 +302,7 @@ export function LabelEnginePage() {
   };
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} page-enter admin-content-page`}>
       <AdminPageHeader title={t("title")} subtitle={t("subtitle")} />
 
       <div className={styles.formCard}>

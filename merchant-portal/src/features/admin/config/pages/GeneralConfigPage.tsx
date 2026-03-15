@@ -13,7 +13,7 @@ import { GeneralCardIntegrations } from "../components/GeneralCardIntegrations";
 
 export function GeneralConfigPage() {
   return (
-    <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
+    <div className="page-enter admin-content-page" style={{ width: "100%", maxWidth: 960, margin: 0 }}>
       <AdminPageHeader
         title="General"
         subtitle="Declaraciones básicas y estables del restaurante. Sin métricas ni operación."

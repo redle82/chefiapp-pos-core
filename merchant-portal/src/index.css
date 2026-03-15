@@ -4,9 +4,11 @@
  *
  * Phase 1 DS Hardening: All values now use design tokens.
  * Import tokens.css for CSS custom properties.
+ * theme-gastro-2027: Admin "Gastro Command 2027" look (portal reference).
  */
 
 @import "./ui/design-system/tokens.css";
+@import "./ui/design-system/theme-gastro-2027.css";
 
 :root {
   /* Core Tokens (Base) */

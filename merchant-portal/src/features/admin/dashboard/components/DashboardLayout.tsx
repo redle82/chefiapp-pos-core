@@ -5,11 +5,8 @@ import { MadeWithLoveFooter } from "../../../../components/MadeWithLoveFooter";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
 import { OSCopy } from "../../../../ui/design-system/sovereign/OSCopy";
-import { colors } from "../../../../ui/design-system/tokens/colors";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopbar } from "./AdminTopbar";
-
-const theme = colors.modes.dashboard;
 
 function getAdminPageSuffix(pathname: string): string {
   if (pathname === "/admin/home" || pathname === "/admin")
@@ -37,13 +34,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div
       className="dashboard-layout"
+      data-theme="gastro-2027"
       style={{
         display: "flex",
         minHeight: "100vh",
-        backgroundColor: theme.surface.base,
-        color: theme.text.primary,
-        fontFamily:
-          "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
       <AdminSidebar />

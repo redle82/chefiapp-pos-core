@@ -8,7 +8,7 @@ import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 
 export function MarcasPage() {
   return (
-    <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
+    <div className="page-enter admin-content-page" style={{ width: "100%", maxWidth: 960, margin: 0 }}>
       <AdminPageHeader
         title="Marcas"
         subtitle="Marca principal y sub-marcas del restaurante."

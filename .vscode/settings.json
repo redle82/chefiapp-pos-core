@@ -54,6 +54,7 @@
   // Python unittest disabled — docker-tests/ contains only JS simulators, not Python tests.
   // This was causing repeated ImportError spam in the Output panel.
   "python.testing.pytestEnabled": false,
-  "python.testing.unittestEnabled": false,
-  "git.ignoreLimitWarning": true
+  "python.testing.unittestEnabled": true,
+  "git.ignoreLimitWarning": true,
+  "python.testing.unittestArgs": ["-v", "-s", ".", "-p", "*test.py"]
 }

@@ -79,7 +79,7 @@ export function ImpresorasPage() {
   }
 
   return (
-    <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
+    <div className="page-enter admin-content-page" style={{ width: "100%", maxWidth: 960, margin: 0 }}>
       <AdminPageHeader
         title="Impressoras"
         subtitle="Impressoras e rotas de impressão por tipo de pedido ou categoria."

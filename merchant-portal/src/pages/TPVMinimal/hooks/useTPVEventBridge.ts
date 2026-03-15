@@ -10,6 +10,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import tpvEventBus, {
   createEvent,
   type KitchenPressurePayload,
+  type OrderExceptionPayload,
+  type TableAlertPayload,
+  type OperatorBroadcastPayload,
   type TPVCentralEventType,
 } from "../../../core/tpv/TPVCentralEvents";
 
@@ -68,7 +71,7 @@ export function useTPVEventBridge() {
     // Order exceptions
     unsubs.push(
       tpvEventBus.on("order.exception", (event) => {
-        const p = event.payload as any;
+        const p = event.payload as OrderExceptionPayload;
         addAlert(
           event.id,
           "order.exception",
@@ -81,7 +84,7 @@ export function useTPVEventBridge() {
     // Table alerts
     unsubs.push(
       tpvEventBus.on("table.alert", (event) => {
-        const p = event.payload as any;
+        const p = event.payload as TableAlertPayload;
         addAlert(
           event.id,
           "table.alert",
@@ -98,7 +101,7 @@ export function useTPVEventBridge() {
     // Operator broadcasts
     unsubs.push(
       tpvEventBus.on("operator.broadcast", (event) => {
-        const p = event.payload as any;
+        const p = event.payload as OperatorBroadcastPayload;
         addAlert(
           event.id,
           "operator.broadcast",

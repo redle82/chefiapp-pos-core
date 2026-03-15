@@ -216,7 +216,11 @@ export function AdminDevicesPage() {
   ];
 
   return (
-    <div className={styles.wrapper} data-runtime-page="AdminDevicesPage" data-appstaff-only="true">
+    <div
+      className={`${styles.wrapper} page-enter admin-content-page`}
+      data-runtime-page="AdminDevicesPage"
+      data-appstaff-only="true"
+    >
       <AdminPageHeader
         title={t("devices.appstaffTitle")}
         subtitle={t("devices.appstaffSubtitle")}

@@ -21,6 +21,7 @@ export function AdminPageHeader({
 }: AdminPageHeaderProps) {
   return (
     <header
+      className="admin-page-header"
       style={{
         marginBottom: 24,
         display: "flex",
@@ -31,26 +32,11 @@ export function AdminPageHeader({
       }}
     >
       <div style={{ minWidth: 0 }}>
-        <h1
-          style={{
-            margin: 0,
-            fontSize: "1.5rem",
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-            color: "var(--heading-page, var(--text-primary))",
-          }}
-        >
+        <h1 className="admin-page-title" style={{ margin: 0 }}>
           {title}
         </h1>
         {subtitle && (
-          <p
-            style={{
-              margin: "4px 0 0",
-              fontSize: "0.875rem",
-              color: "var(--text-secondary)",
-              maxWidth: "60ch",
-            }}
-          >
+          <p className="admin-page-desc" style={{ margin: "4px 0 0", maxWidth: "60ch" }}>
             {subtitle}
           </p>
         )}
