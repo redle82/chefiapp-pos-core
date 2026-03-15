@@ -119,7 +119,7 @@ export function IntegrationsDeliveryPage() {
   };
 
   return (
-    <>
+    <div className="page-enter admin-content-page">
       <AdminPageHeader
         title="Delivery"
         subtitle="GloriaFood, Glovo, Uber Eats, Deliveroo — ativar/desativar por adapter."
@@ -465,6 +465,6 @@ export function IntegrationsDeliveryPage() {
           })}
         </div>
       </section>
-    </>
+    </div>
   );
 }

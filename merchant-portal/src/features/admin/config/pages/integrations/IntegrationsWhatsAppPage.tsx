@@ -156,7 +156,7 @@ export function IntegrationsWhatsAppPage() {
     : "var(--text-secondary)";
 
   return (
-    <>
+    <div className="page-enter admin-content-page">
       <AdminPageHeader
         title="WhatsApp Business"
         subtitle="Canal de entrada (pedidos) e notificações (pedido pronto, alertas)."
@@ -489,6 +489,6 @@ export function IntegrationsWhatsAppPage() {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }

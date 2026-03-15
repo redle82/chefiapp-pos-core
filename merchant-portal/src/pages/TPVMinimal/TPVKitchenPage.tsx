@@ -240,8 +240,9 @@ export function TPVKitchenPage() {
         rawOrders.map(async (order) => {
           const items = await readOrderItems(order.id);
           const status = calculateOrderStatus(order, items);
+          const rawAge = Date.now() - new Date(order.created_at || new Date().toISOString()).getTime();
           const ageMinutes = Math.floor(
-            (Date.now() - new Date(order.created_at).getTime()) / 60_000,
+            (Number.isFinite(rawAge) ? rawAge : 0) / 60_000,
           );
           return {
             order,

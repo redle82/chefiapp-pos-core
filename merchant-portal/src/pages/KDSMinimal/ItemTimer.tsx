@@ -34,9 +34,11 @@ export function ItemTimer({ item }: ItemTimerProps) {
 
   useEffect(() => {
     const calculateTimer = () => {
-      const created = new Date(item.created_at);
+      const created = new Date(item.created_at || new Date().toISOString());
       const now = new Date();
-      const elapsedSeconds = Math.floor((now.getTime() - created.getTime()) / 1000);
+      // Guard: if created_at was invalid, elapsed would be NaN — fallback to 0
+      const rawElapsed = Math.floor((now.getTime() - created.getTime()) / 1000);
+      const elapsedSeconds = Number.isFinite(rawElapsed) ? rawElapsed : 0;
 
       // Prep time do item (snapshot no momento do pedido)
       const expectedSeconds = item.prep_time_seconds || 300; // 5 min padrão se não houver

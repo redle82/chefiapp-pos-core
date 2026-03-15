@@ -18,7 +18,7 @@ export function ReservationsOperationalPage() {
 
   if (!restaurantId) {
     return (
-      <section style={{ padding: 24 }}>
+      <section className="page-enter admin-content-page" style={{ padding: 24 }}>
         <AdminPageHeader
           title="Gestor de reservas"
           subtitle="Lista do dia, status, check-in e cancelamento."
@@ -41,6 +41,7 @@ export function ReservationsOperationalPage() {
 
   return (
     <section
+      className="page-enter admin-content-page"
       style={{ display: "flex", flexDirection: "column", minHeight: 400 }}
     >
       <AdminPageHeader

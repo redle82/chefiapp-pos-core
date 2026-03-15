@@ -5,6 +5,7 @@
  */
 
 import { useLocation, useNavigate } from "react-router-dom";
+import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 import { PublicPresenceFields } from "../../../../pages/Config/PublicPresenceFields";
 import { PublicQRSection } from "../../../../pages/Config/PublicQRSection";
 import { LocationSection } from "../../../../pages/Onboarding/sections/LocationSection";
@@ -25,7 +26,7 @@ export function UbicacionesConfigPage() {
   }
 
   return (
-    <div style={{ maxWidth: 820 }}>
+    <div className="page-enter admin-content-page" style={{ maxWidth: 820 }}>
       <AdminPageHeader
         title="Ubicaciones"
         subtitle="Endereço, mesas e zonas do restaurante."

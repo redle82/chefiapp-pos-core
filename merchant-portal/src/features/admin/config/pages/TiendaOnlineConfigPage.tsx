@@ -96,7 +96,7 @@ export function TiendaOnlineConfigPage() {
   };
 
   return (
-    <div style={{ maxWidth: 720 }}>
+    <div className="page-enter admin-content-page" style={{ maxWidth: 720 }}>
       <AdminPageHeader
         title="Página web do restaurante"
         subtitle="Gerencie a presença online: URL pública, dados de contacto, QR codes."

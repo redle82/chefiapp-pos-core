@@ -122,7 +122,7 @@ export function AdminDesktopPage() {
   );
 
   return (
-    <div className={styles.wrapper}>
+    <div className={`${styles.wrapper} page-enter admin-content-page`}>
       <AdminPageHeader title="Desktop TPV + KDS" subtitle={t("downloadDesc")} />
 
       <AdminSurfaceLayout

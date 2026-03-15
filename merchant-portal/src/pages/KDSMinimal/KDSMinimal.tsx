@@ -28,7 +28,7 @@
  * - useOperationalReadiness("KDS"), useShift, useBootstrapState, useRestaurantRuntime (coreReachable para loadOrders).
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
@@ -74,6 +74,7 @@ import {
 } from "./OrderStatusCalculator";
 import { OriginBadge } from "./OriginBadge";
 import { TaskPanel } from "./TaskPanel";
+import { KDSItemCard } from "./components/KDSItemCard";
 
 /** Seed do Core Docker (06-seed-enterprise). Usar literal para não depender de isDockerBackend() no load do módulo. */
 const SEED_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
@@ -913,228 +914,17 @@ export function KDSMinimal() {
                           {kitchenItems.length !== 1 ? "s" : ""})
                         </div>
                         <ul style={{ listStyle: "none", padding: 0 }}>
-                          {kitchenItems.map((item) => {
-                            const itemCreated = new Date(item.created_at || new Date().toISOString());
-                            const now = new Date();
-                            const prepTimeSeconds =
-                              item.prep_time_seconds || 300;
-                            const expectedReadyAt = new Date(
-                              itemCreated.getTime() + prepTimeSeconds * 1000,
-                            );
-                            const delaySeconds =
-                              (now.getTime() - expectedReadyAt.getTime()) /
-                              1000;
-                            const delayRatio =
-                              prepTimeSeconds > 0
-                                ? delaySeconds / prepTimeSeconds
-                                : 0;
-
-                            // Item já está pronto?
-                            const isItemReady = item.ready_at !== null;
-
-                            // Calcular tempo real vs esperado (métrica)
-                            const actualTimeSeconds =
-                              isItemReady && item.ready_at
-                                ? Math.floor(
-                                    (new Date(item.ready_at).getTime() -
-                                      itemCreated.getTime()) /
-                                      1000,
-                                  )
-                                : Math.floor(
-                                    (now.getTime() - itemCreated.getTime()) /
-                                      1000,
-                                  );
-                            const timeDifference =
-                              actualTimeSeconds - prepTimeSeconds;
-                            const timeDifferenceMinutes = Math.floor(
-                              Math.abs(timeDifference) / 60,
-                            );
-
-                            // Status do item individual
-                            let itemStatus:
-                              | "ready"
-                              | "normal"
-                              | "attention"
-                              | "delay" = "normal";
-                            if (isItemReady) {
-                              itemStatus = "ready";
-                            } else if (delayRatio < 0.1) {
-                              itemStatus = "normal";
-                            } else if (delayRatio < 0.25) {
-                              itemStatus = "attention";
-                            } else {
-                              itemStatus = "delay";
-                            }
-
-                            const itemColors = {
-                              ready: "#6b7280",
-                              normal: "#22c55e",
-                              attention: "#eab308",
-                              delay: "#ef4444",
-                            };
-
-                            // Verificar se item tem tarefa aberta
-                            const itemTask = tasks.find(
-                              (t) =>
-                                t.order_item_id === item.id &&
-                                t.status === "OPEN",
-                            );
-                            const hasTask = !!itemTask;
-
-                            return (
-                              <li
-                                key={item.id}
-                                style={{
-                                  marginBottom: "8px",
-                                  padding: "12px",
-                                  backgroundColor: isItemReady
-                                    ? "rgba(34,197,94,0.1)"
-                                    : hasTask
-                                    ? "rgba(220,38,38,0.1)"
-                                    : VPC.surface,
-                                  borderRadius: "4px",
-                                  border: isItemReady
-                                    ? "1px solid #22c55e"
-                                    : hasTask
-                                    ? "2px solid #dc2626"
-                                    : `1px solid ${VPC.border}`,
-                                  boxShadow: hasTask
-                                    ? "0 0 0 2px rgba(220, 38, 38, 0.2)"
-                                    : "none",
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "8px",
-                                    marginBottom: "4px",
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      color: itemColors[itemStatus],
-                                      fontSize: "16px",
-                                    }}
-                                  >
-                                    {isItemReady
-                                      ? "✅"
-                                      : itemStatus === "delay"
-                                      ? "🔴"
-                                      : itemStatus === "attention"
-                                      ? "🟡"
-                                      : "🟢"}
-                                  </span>
-                                  {hasTask && (
-                                    <span
-                                      style={{
-                                        fontSize: "12px",
-                                        fontWeight: "bold",
-                                        color: "#dc2626",
-                                        backgroundColor: "rgba(220,38,38,0.15)",
-                                        padding: "2px 6px",
-                                        borderRadius: "4px",
-                                      }}
-                                    >
-                                      🧠 TAREFA
-                                    </span>
-                                  )}
-                                  <span style={{ flex: 1, fontWeight: "500" }}>
-                                    {item.name_snapshot} x{item.quantity}
-                                  </span>
-                                  {!isItemReady && <ItemTimer item={item} />}
-                                  {isItemReady && (
-                                    <span
-                                      style={{
-                                        color: "#22c55e",
-                                        fontSize: "12px",
-                                        fontWeight: "bold",
-                                      }}
-                                    >
-                                      ✅ Pronto
-                                    </span>
-                                  )}
-                                  {/* MENU_DERIVATIONS: KDS não exibe preço por item. */}
-                                </div>
-
-                                {/* Métrica: Tempo real vs esperado */}
-                                {isItemReady && (
-                                  <div
-                                    style={{
-                                      fontSize: "11px",
-                                      color: VPC.textDim,
-                                      marginTop: "4px",
-                                    }}
-                                  >
-                                    {timeDifference >= 0
-                                      ? `⏱️ ${timeDifferenceMinutes} min acima do esperado (${Math.floor(
-                                          actualTimeSeconds / 60,
-                                        )} min real vs ${Math.floor(
-                                          prepTimeSeconds / 60,
-                                        )} min esperado)`
-                                      : `⏱️ ${timeDifferenceMinutes} min abaixo do esperado (${Math.floor(
-                                          actualTimeSeconds / 60,
-                                        )} min real vs ${Math.floor(
-                                          prepTimeSeconds / 60,
-                                        )} min esperado)`}
-                                  </div>
-                                )}
-
-                                {/* Botão "Item Pronto" — só permitido quando o pedido já está IN_PREP/PREPARING (evita OPEN→READY rejeitado pelo Core) */}
-                                {!isItemReady && (
-                                  <div style={{ marginTop: "8px" }}>
-                                    <button
-                                      type="button"
-                                      data-testid="kds-item-ready"
-                                      onClick={() =>
-                                        handleMarkItemReady(
-                                          item.id,
-                                          restaurantId,
-                                        )
-                                      }
-                                      disabled={
-                                        markingItem === item.id ||
-                                        (order.status !== "IN_PREP" &&
-                                          order.status !== "PREPARING")
-                                      }
-                                      title={
-                                        order.status === "OPEN"
-                                          ? "Inicie o preparo primeiro"
-                                          : undefined
-                                      }
-                                      style={{
-                                        minHeight: 40,
-                                        padding: "8px 16px",
-                                        fontSize: VPC.fontSizeBase,
-                                        fontWeight: 600,
-                                        backgroundColor:
-                                          markingItem === item.id ||
-                                          (order.status !== "IN_PREP" &&
-                                            order.status !== "PREPARING")
-                                            ? VPC.textMuted
-                                            : VPC.accent,
-                                        color: "#fff",
-                                        border: "none",
-                                        borderRadius: VPC.radius,
-                                        cursor:
-                                          markingItem === item.id ||
-                                          (order.status !== "IN_PREP" &&
-                                            order.status !== "PREPARING")
-                                            ? "wait"
-                                            : "pointer",
-                                      }}
-                                    >
-                                      {markingItem === item.id
-                                        ? "A marcar..."
-                                        : order.status === "OPEN"
-                                        ? "⏳ Inicie o preparo primeiro"
-                                        : "✅ Item pronto"}
-                                    </button>
-                                  </div>
-                                )}
-                              </li>
-                            );
-                          })}
+                          {kitchenItems.map((item) => (
+                            <KDSItemCard
+                              key={item.id}
+                              item={item}
+                              orderStatus={order.status}
+                              restaurantId={restaurantId}
+                              tasks={tasks}
+                              markingItem={markingItem}
+                              onMarkReady={handleMarkItemReady}
+                            />
+                          ))}
                         </ul>
                       </div>
                       <div key="BAR" style={{ marginTop: "16px" }}>
@@ -1152,201 +942,17 @@ export function KDSMinimal() {
                           {barItems.length !== 1 ? "s" : ""})
                         </div>
                         <ul style={{ listStyle: "none", padding: 0 }}>
-                          {barItems.map((item) => {
-                            const itemCreated = new Date(item.created_at || new Date().toISOString());
-                            const now = new Date();
-                            const prepTimeSeconds =
-                              item.prep_time_seconds || 300;
-                            const expectedReadyAt = new Date(
-                              itemCreated.getTime() + prepTimeSeconds * 1000,
-                            );
-                            const delaySeconds =
-                              (now.getTime() - expectedReadyAt.getTime()) /
-                              1000;
-                            const delayRatio =
-                              prepTimeSeconds > 0
-                                ? delaySeconds / prepTimeSeconds
-                                : 0;
-                            const isItemReady = item.ready_at !== null;
-                            const actualTimeSeconds =
-                              isItemReady && item.ready_at
-                                ? Math.floor(
-                                    (new Date(item.ready_at).getTime() -
-                                      itemCreated.getTime()) /
-                                      1000,
-                                  )
-                                : Math.floor(
-                                    (now.getTime() - itemCreated.getTime()) /
-                                      1000,
-                                  );
-                            const timeDifference =
-                              actualTimeSeconds - prepTimeSeconds;
-                            const timeDifferenceMinutes = Math.floor(
-                              Math.abs(timeDifference) / 60,
-                            );
-                            let itemStatus:
-                              | "ready"
-                              | "normal"
-                              | "attention"
-                              | "delay" = "normal";
-                            if (isItemReady) itemStatus = "ready";
-                            else if (delayRatio < 0.1) itemStatus = "normal";
-                            else if (delayRatio < 0.25)
-                              itemStatus = "attention";
-                            else itemStatus = "delay";
-                            const itemColors = {
-                              ready: "#6b7280",
-                              normal: "#22c55e",
-                              attention: "#eab308",
-                              delay: "#ef4444",
-                            };
-                            const itemTask = tasks.find(
-                              (t) =>
-                                t.order_item_id === item.id &&
-                                t.status === "OPEN",
-                            );
-                            const hasTask = !!itemTask;
-                            return (
-                              <li
-                                key={item.id}
-                                style={{
-                                  marginBottom: "8px",
-                                  padding: "12px",
-                                  backgroundColor: isItemReady
-                                    ? "rgba(34,197,94,0.1)"
-                                    : hasTask
-                                    ? "rgba(220,38,38,0.1)"
-                                    : VPC.surface,
-                                  borderRadius: "4px",
-                                  border: isItemReady
-                                    ? "1px solid #22c55e"
-                                    : hasTask
-                                    ? "2px solid #dc2626"
-                                    : `1px solid ${VPC.border}`,
-                                  boxShadow: hasTask
-                                    ? "0 0 0 2px rgba(220, 38, 38, 0.2)"
-                                    : "none",
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "8px",
-                                    marginBottom: "4px",
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      color: itemColors[itemStatus],
-                                      fontSize: "16px",
-                                    }}
-                                  >
-                                    {isItemReady
-                                      ? "✅"
-                                      : itemStatus === "delay"
-                                      ? "🔴"
-                                      : itemStatus === "attention"
-                                      ? "🟡"
-                                      : "🟢"}
-                                  </span>
-                                  {hasTask && (
-                                    <span
-                                      style={{
-                                        fontSize: "12px",
-                                        fontWeight: "bold",
-                                        color: "#dc2626",
-                                        backgroundColor: "rgba(220,38,38,0.15)",
-                                        padding: "2px 6px",
-                                        borderRadius: "4px",
-                                      }}
-                                    >
-                                      🧠 TAREFA
-                                    </span>
-                                  )}
-                                  <span style={{ flex: 1, fontWeight: "500" }}>
-                                    {item.name_snapshot} x{item.quantity}
-                                  </span>
-                                  {!isItemReady && <ItemTimer item={item} />}
-                                  {isItemReady && (
-                                    <span
-                                      style={{
-                                        color: "#22c55e",
-                                        fontSize: "12px",
-                                        fontWeight: "bold",
-                                      }}
-                                    >
-                                      ✅ Pronto
-                                    </span>
-                                  )}
-                                </div>
-                                {isItemReady && (
-                                  <div
-                                    style={{
-                                      fontSize: "11px",
-                                      color: VPC.textDim,
-                                      marginTop: "4px",
-                                    }}
-                                  >
-                                    {timeDifference >= 0
-                                      ? `⏱️ ${timeDifferenceMinutes} min acima do esperado`
-                                      : `⏱️ ${timeDifferenceMinutes} min abaixo do esperado`}
-                                  </div>
-                                )}
-                                {!isItemReady && (
-                                  <div style={{ marginTop: "8px" }}>
-                                    <button
-                                      type="button"
-                                      data-testid="kds-item-ready"
-                                      onClick={() =>
-                                        handleMarkItemReady(
-                                          item.id,
-                                          restaurantId,
-                                        )
-                                      }
-                                      disabled={
-                                        markingItem === item.id ||
-                                        (order.status !== "IN_PREP" &&
-                                          order.status !== "PREPARING")
-                                      }
-                                      title={
-                                        order.status === "OPEN"
-                                          ? "Inicie o preparo primeiro"
-                                          : undefined
-                                      }
-                                      style={{
-                                        minHeight: 40,
-                                        padding: "8px 16px",
-                                        fontSize: VPC.fontSizeBase,
-                                        fontWeight: 600,
-                                        backgroundColor:
-                                          markingItem === item.id ||
-                                          (order.status !== "IN_PREP" &&
-                                            order.status !== "PREPARING")
-                                            ? VPC.textMuted
-                                            : VPC.accent,
-                                        color: "#fff",
-                                        border: "none",
-                                        borderRadius: VPC.radius,
-                                        cursor:
-                                          markingItem === item.id ||
-                                          (order.status !== "IN_PREP" &&
-                                            order.status !== "PREPARING")
-                                            ? "wait"
-                                            : "pointer",
-                                      }}
-                                    >
-                                      {markingItem === item.id
-                                        ? "A marcar..."
-                                        : order.status === "OPEN"
-                                        ? "⏳ Inicie o preparo primeiro"
-                                        : "✅ Item pronto"}
-                                    </button>
-                                  </div>
-                                )}
-                              </li>
-                            );
-                          })}
+                          {barItems.map((item) => (
+                            <KDSItemCard
+                              key={item.id}
+                              item={item}
+                              orderStatus={order.status}
+                              restaurantId={restaurantId}
+                              tasks={tasks}
+                              markingItem={markingItem}
+                              onMarkReady={handleMarkItemReady}
+                            />
+                          ))}
                         </ul>
                       </div>
                     </>
