@@ -183,10 +183,22 @@ export function KDSMinimal() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [markingItem, setMarkingItem] = useState<string | null>(null);
   const [realtimeStatus, setRealtimeStatus] = useState<string>("DISCONNECTED");
-  const [stationFilter, setStationFilter] = useState<"ALL" | "BAR" | "KITCHEN">(
-    "ALL",
+  const [stationFilter, setStationFilterRaw] = useState<"ALL" | "BAR" | "KITCHEN">(
+    () => {
+      const saved = localStorage.getItem("chefiapp_kds_station");
+      return saved === "BAR" || saved === "KITCHEN" ? saved : "ALL";
+    },
   );
-  const [activeTab, setActiveTab] = useState<"ALL" | "BAR" | "KITCHEN">("ALL");
+  const setStationFilter = (v: "ALL" | "BAR" | "KITCHEN") => {
+    setStationFilterRaw(v);
+    localStorage.setItem("chefiapp_kds_station", v);
+  };
+  const [activeTab, setActiveTab] = useState<"ALL" | "BAR" | "KITCHEN">(
+    () => {
+      const saved = localStorage.getItem("chefiapp_kds_station");
+      return saved === "BAR" || saved === "KITCHEN" ? saved : "ALL";
+    },
+  );
   const [tasks, setTasks] = useState<CoreTask[]>([]);
   const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const ordersRef = useRef<number>(0);

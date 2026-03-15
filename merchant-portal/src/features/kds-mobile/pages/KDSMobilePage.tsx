@@ -13,6 +13,7 @@
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import { useStaff } from "../../../pages/AppStaff/context/StaffContext";
 import { KDSMobileGrid, KDSMobileHeader, KDSStatusTabs } from "../components";
 import { useMobileKDS } from "../hooks/useMobileKDS";
@@ -21,6 +22,7 @@ import "../styles/kds-mobile.css";
 export default function KDSMobilePage() {
   const navigate = useNavigate();
   const { restaurantId } = useStaff();
+  const { name: identityName } = useRestaurantIdentity();
 
   const {
     tickets,
@@ -40,8 +42,7 @@ export default function KDSMobilePage() {
     }
   }, [restaurantId, navigate]);
 
-  // Restaurant name (fallback)
-  const restaurantName = "ChefApp KDS"; // TODO: get from API
+  const restaurantName = identityName || "KDS";
 
   // Filter tickets by active tab
   const filteredTickets = tickets.filter((t) => t.status === activeTab);
