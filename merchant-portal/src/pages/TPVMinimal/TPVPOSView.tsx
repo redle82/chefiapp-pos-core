@@ -14,12 +14,13 @@
  *   Takeaway shortcut: "Confirm" → lifecycle.confirmAndPay (create + close atomically)
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useSearchParams } from "react-router-dom";
 import { OrderStatusPanel } from "../../components/pos/OrderStatusPanel";
 import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { useCurrency } from "../../core/currency/useCurrency";
+import { Logger } from "../../core/logger";
 import { createOrderLifecycle } from "../../core/operational/processOrderLifecycle";
 import { useOperationalStore } from "../../core/operational/useOperationalStore";
 import { resolveProductImageUrl } from "../../core/products/resolveProductImageUrl";
@@ -28,6 +29,7 @@ import { EXAMPLE_MENUS } from "../../features/admin/onboarding/exampleMenus";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
 import type { CoreProduct } from "../../infra/readers/RestaurantReader";
 import { readMenuCategories } from "../../infra/readers/RestaurantReader";
+import { SplitBillModalWrapper } from "../TPV/components/SplitBillModalWrapper";
 import { ToastContainer, useToast } from "../../ui/design-system/Toast";
 import { isPlaceholderPhoto } from "../../utils/isPlaceholderPhoto";
 import type { OrderMode } from "./components/OrderModeSelector";
@@ -61,6 +63,7 @@ export function TPVPOSView() {
 
   // Estado do pedido actual (backend source of truth via store)
   const currentOrderStatus = useOperationalStore((s) => s.currentOrder.status);
+  const currentOrderId = useOperationalStore((s) => s.currentOrder.orderId);
 
   const installedRestaurantId = getTpvRestaurantId();
   const runtimeRestaurantId = runtime?.restaurant_id ?? null;
@@ -75,6 +78,9 @@ export function TPVPOSView() {
     null,
   );
   const [sending, setSending] = useState(false);
+  // Split bill modal state
+  const [splitBillOpen, setSplitBillOpen] = useState(false);
+  const [splitPayProcessing, setSplitPayProcessing] = useState(false);
   // Mobile cart drawer state
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
 
@@ -303,6 +309,69 @@ export function TPVPOSView() {
     await lifecycle.cancelOrder(restaurantId);
   };
 
+  // ─── Pagamento parcial (split bill) ──────────────────────────────
+  const handlePayPartial = useCallback(
+    async (amountCents: number, method: "cash" | "card" | "pix") => {
+      const store = useOperationalStore.getState();
+      const orderId = store.currentOrder.orderId;
+      if (!orderId || orderId.startsWith("LOCAL-")) {
+        toast.error("Pedido não foi enviado para cozinha.");
+        return;
+      }
+
+      setSplitPayProcessing(true);
+      try {
+        const { PaymentEngine } = await import(
+          "../../core/tpv/PaymentEngine"
+        );
+
+        // Fetch active cash register (same pattern as TPVMinimal)
+        const regUrl = `${CONFIG.CORE_URL}/rest/v1/gm_cash_registers?restaurant_id=eq.${restaurantId}&status=eq.open&limit=1`;
+        const regRes = await fetch(regUrl, {
+          headers: {
+            apikey: CONFIG.CORE_ANON_KEY,
+            "Content-Type": "application/json",
+          },
+        });
+        const registers = regRes.ok ? await regRes.json() : [];
+        const cashRegisterId = registers?.[0]?.id;
+
+        if (!cashRegisterId) {
+          toast.error("Nenhuma caixa aberta. Abra um turno primeiro.");
+          return;
+        }
+
+        const result = await PaymentEngine.processSplitPayment({
+          orderId,
+          restaurantId,
+          cashRegisterId,
+          amountCents,
+          method,
+        });
+
+        toast.success(
+          `Pagamento parcial de ${formatAmount(amountCents)} registado.`,
+        );
+
+        if (result.isFullyPaid) {
+          // Auto-close the order and reset
+          await lifecycle.finalizeOrder(restaurantId, totalCents);
+          setCart([]);
+          setSplitBillOpen(false);
+          toast.success("Conta totalmente paga!");
+        }
+      } catch (err) {
+        Logger.error("[SplitBill] Payment failed", err);
+        toast.error(
+          err instanceof Error ? err.message : "Erro ao processar pagamento.",
+        );
+      } finally {
+        setSplitPayProcessing(false);
+      }
+    },
+    [restaurantId, totalCents, formatAmount, lifecycle, toast],
+  );
+
   // Calculate cart item count for mobile badge
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -333,7 +402,13 @@ export function TPVPOSView() {
       lifecycle.holdOrder();
       toast.info("Pedido em espera.");
     },
-    onSplitBill: () => toast.info("Divisão de conta em breve."),
+    onSplitBill: () => {
+      if (!isSentToKitchen) {
+        toast.warning("Envie o pedido para cozinha antes de dividir a conta.");
+        return;
+      }
+      setSplitBillOpen(true);
+    },
     disabled: cart.length === 0 || sending,
   };
 
@@ -450,6 +525,18 @@ export function TPVPOSView() {
           <OrderStatusPanel {...statusPanelProps} />
         </div>
       </div>
+
+      {/* Split Bill Modal */}
+      {splitBillOpen && currentOrderId && (
+        <SplitBillModalWrapper
+          orderId={currentOrderId}
+          restaurantId={restaurantId}
+          orderTotal={totalCents}
+          onPayPartial={handlePayPartial}
+          onCancel={() => setSplitBillOpen(false)}
+          loading={splitPayProcessing}
+        />
+      )}
 
       <ToastContainer toasts={toast.toasts} onDismiss={toast.dismiss} />
     </div>
